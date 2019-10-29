@@ -26,15 +26,12 @@ Bio::EnsEMBL::Compara::PipeConfig::AncestralMerge_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::AncestralMerge_conf -password <your_password>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::AncestralMerge_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV
 
 =head1 DESCRIPTION
 
     A pipeline to create the EnsEMBL core database with ancestral sequences merged from different sources.
-
-    In rel.64 it took ~30min to run.
-    In rel.65 it took ~38min to run.
-    In rel.71 it took
 
 =head1 CONTACT
 
@@ -61,20 +58,11 @@ sub default_options {
 
          # The production database itself (will be created). That's where the ancestral sequences will be
         'pipeline_name' => 'ensembl_ancestral_'.$self->o('rel_with_suffix'),
-        'host'          => 'mysql-ens-compara-prod-1',
-        'port'          => 4485,
 
         'merge_script'  => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/copy_ancestral_core.pl'),
 
-        'prev_ancestral_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_ancestral_97',
-
-        # map EPO mlss_ids to their source ancestral db
-        'epo_mlsses' => [ # this table needs to be edited prior to running the pipeline, fish, sauropsids, primates and mammals ancestral DBs ALWAYS need to be defined:
-            [ '1494' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_ancestral_97',], # sauropsids
-            [ '1623' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/carlac_fish_ancestral_core_98',], # fish
-            [ '1632' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/mateus_mammals_ancestral_core_98',], # mammals
-            [ '1628' => 'mysql://ensro@mysql-ens-compara-prod-3:4523/mateus_primates_ancestral_core_98' ], # primates
-        ],
+        'compara_db'        => 'compara_curr',
+        'prev_ancestral_db' => 'ancestral_prev',
 
         # Redefined so that the database name is *not* prefixed with the user name
         'pipeline_db'   => {
@@ -105,7 +93,7 @@ sub pipeline_wide_parameters {
 sub pipeline_create_commands {
     my ($self) = @_;
     return [
-        @{$self->SUPER::pipeline_create_commands},                                                              # inherit database and Hive tables' creation
+        @{$self->SUPER::pipeline_create_commands},    # inherit database and Hive tables' creation
 
         $self->db_cmd().' <'.$self->o('core_schema_sql'),      # add Core tables
     ];
@@ -131,8 +119,11 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_merge_jobs',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist' => $self->o('epo_mlsses'),
-                'column_names' => [ 'mlss_id', 'from_url' ],
+                # Get each EPO mlss id and its corresponding database alias from
+                # ensembl_compara_${CURR_ENSEMBL_RELEASE}
+                'db_conn'      => $self->o('compara_db'),
+                'inputquery'   => 'SELECT mlss.method_link_species_set_id, CONCAT(ssh.name, "_ancestral") FROM method_link_species_set mlss JOIN species_set_header ssh USING (species_set_id) WHERE mlss.method_link_id = 13 AND mlss.first_release IS NOT NULL AND mlss.last_release IS NULL',
+                'column_names' => [ 'mlss_id', 'from_alias' ],
             },
             -flow_into => {
                 2 => [ 'merge_an_ancestor' ],
@@ -143,7 +134,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
                 'to_url' => $self->pipeline_url(),
-                'cmd'    => ['perl', $self->o('merge_script'), qw(--from_url #from_url# --to_url #to_url# --mlss_id #mlss_id#)],
+                'cmd'    => [ 'perl', $self->o('merge_script'), '--reg_conf', $self->o('reg_conf'), qw(--from #from_alias# --to_url #to_url# --mlss_id #mlss_id#) ],
             },
             -hive_capacity  => 1,   # do them one-by-one
             -rc_name => '8Gb_job',

@@ -59,7 +59,6 @@ sub pipeline_analyses_dump_homologies_posttree {
         { -logic_name => 'dump_per_mlss_homologies_tsv',
           -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpHomologiesTSV',
           -parameters => {
-              'db_conn'     => '#compara_db#',
               'hashed_id'   => '#expr(dir_revhash(#mlss_id#))expr#',
               'output_file' => '#homology_dumps_dir#/#hashed_id#/#mlss_id#.#member_type#.homologies.tsv',
               # WHERE hm1.gene_member_id < hm2.gene_member_id avoids duplication of data in different orientation
@@ -67,8 +66,8 @@ sub pipeline_analyses_dump_homologies_posttree {
               'input_query' => q|
                 SELECT
                     h.homology_id, h.description AS homology_type, h.gene_tree_node_id, h.gene_tree_root_id, h.species_tree_node_id,
-                    sm1.gene_member_id, sm1.seq_member_id, sm1.stable_id as seq_member_stable_id, sm1.genome_db_id, hm1.perc_id AS identity,
-                    sm2.gene_member_id AS hom_gene_member_id, sm2.seq_member_id AS hom_seq_member_id, sm2.stable_id as hom_seq_member_stable_id, sm2.genome_db_id AS hom_genome_db_id, hm2.perc_id AS hom_identity
+                    sm1.gene_member_id, sm1.seq_member_id, sm1.stable_id as seq_member_stable_id, sm1.genome_db_id, hm1.perc_id AS identity, hm1.perc_cov AS coverage,
+                    sm2.gene_member_id AS hom_gene_member_id, sm2.seq_member_id AS hom_seq_member_id, sm2.stable_id as hom_seq_member_stable_id, sm2.genome_db_id AS hom_genome_db_id, hm2.perc_id AS hom_identity, hm2.perc_cov AS hom_coverage
                 FROM
                     homology h
                     JOIN (homology_member hm1 JOIN seq_member sm1 USING (seq_member_id)) USING (homology_id)
@@ -79,9 +78,8 @@ sub pipeline_analyses_dump_homologies_posttree {
               |,              
           },
           -hive_capacity => 10,
-        },
-        
-        
+          -rc_name => '500Mb_job',
+        },  
     ];
 }
 

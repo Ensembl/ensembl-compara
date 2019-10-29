@@ -54,9 +54,10 @@ function process_tickets(json) {
         }
 
         var status_name = ticket.fields.status.name;
+	var key = ticket.key;
         var colour = get_node_color_for_jira_status(status_name);
-        //console.log(pipeline_name, run_name, status_name, colour);
-        pipelines[pipeline_name].push( [run_name,colour] );
+        //console.log(pipeline_name, run_name, status_name, colour, key);
+        pipelines[pipeline_name].push( [run_name,colour,key] );
     }
 
     for(pipeline_name in pipelines) {
@@ -69,11 +70,12 @@ function process_tickets(json) {
         table_desc += '<tr><td><u>' + pipeline_name + '</u></td></tr><tr><td></td></tr>';
         var seen_colours = {};
         for(var i=0; i<runs.length; i++) {
-            table_desc += '<tr><td bgcolor="' + runs[i][1] + '" port="' + runs[i][0] + '">' + runs[i][0] + '</td></tr>';
+            table_desc += '<tr><td bgcolor="' + runs[i][1] + '" port="' + runs[i][0] + '" href="https://www.ebi.ac.uk/panda/jira/browse/' + runs[i][2] + '" target="_blank">' + runs[i][0] + '</td></tr>';
             seen_colours[runs[i][1]] = 1;
         }
         table_desc += '</table>';
-        var seen_colours_array = Object.keys(seen_colours);
+        //console.log(table_desc);
+	var seen_colours_array = Object.keys(seen_colours);
         var background_colour = seen_colours_array.length == 1 ? seen_colours_array[0] : 'white';
         var node_desc = "\"" + pipeline_name + '" [fillcolor="' + background_colour + '", label=<' + table_desc + '>, shape="box", style="rounded,filled"];';
         //console.log(pipeline_name, node_desc);

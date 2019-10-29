@@ -249,10 +249,13 @@ my %all_mlss_objects = ();
 # By default, $disable_keys depends on $merge
 $disable_keys //= !$merge;
 
-# print reminder to merge GERP with EPO_LOW_COVERAGE
+# print reminder to merge GERP with EPO_LOW_COVERAGE and PECAN
 my %ml_hash = map { $_ => 1 } @method_link_types;
-if ( $ml_hash{EPO_LOW_COVERAGE} && !($ml_hash{GERP_CONSTRAINED_ELEMENT} && $ml_hash{GERP_CONSERVATION_SCORE}) ) {
-    print "\n** Warning ** GERP_CONSERVATION_SCORE and GERP_CONSTRAINED_ELEMENT should usually be merged with method_link_type EPO_LOW_COVERAGE\n\n";
+my @ml_with_gerp = qw(EPO_LOW_COVERAGE PECAN);
+foreach my $ml (@ml_with_gerp) {
+    if ( $ml_hash{$ml} && !($ml_hash{GERP_CONSTRAINED_ELEMENT} && $ml_hash{GERP_CONSERVATION_SCORE}) ) {
+        print "\n** Warning ** GERP_CONSERVATION_SCORE and GERP_CONSTRAINED_ELEMENT should usually be merged with method_link_type $ml\n\n";
+    }
 }
 
 

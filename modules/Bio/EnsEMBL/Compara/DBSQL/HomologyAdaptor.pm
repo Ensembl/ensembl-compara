@@ -271,8 +271,8 @@ sub fetch_all_by_MethodLinkSpeciesSet {
     if (defined $orthology_type) {
         $orthology_type = [$orthology_type] if ref($orthology_type) ne 'ARRAY';
         if (scalar(@$orthology_type) == 0){
-            #We want to reset the array of binds to avoid cache contaminations from the above bind_param_generic_fetch.
-            $self->{'_bind_param_generic_fetch'} = [];
+            #We need to reset the array of binds to avoid cache contaminations from the above bind_param_generic_fetch.
+            $self->{'_bind_param_generic_fetch'} = undef;
             return [];
         }
         $constraint .= sprintf(' AND h.description IN (%s)', join(',',  map { "'$_'" } @$orthology_type));
@@ -284,7 +284,11 @@ sub fetch_all_by_MethodLinkSpeciesSet {
     }
 
     if (defined $species_tree_node_ids) {
-        return [] unless scalar(@$species_tree_node_ids);
+        if (scalar(@$species_tree_node_ids) == 0) {
+            #We need to reset the array of binds to avoid cache contaminations from the above bind_param_generic_fetch.
+            $self->{'_bind_param_generic_fetch'} = undef;
+            return [];
+        }
         $constraint .= sprintf(' AND h.species_tree_node_id IN (%s)', join(',', @$species_tree_node_ids));
     }
 

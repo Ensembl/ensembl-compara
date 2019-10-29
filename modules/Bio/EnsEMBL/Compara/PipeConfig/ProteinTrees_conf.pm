@@ -614,7 +614,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_fire_posttree',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A'  => [ 'rib_fire_homology_id_mapping' ],
+                '1->A'  => [ 'rib_fire_gene_qc' ],
                 'A->1'  => [ 'backbone_pipeline_finished' ],
             },
         },
@@ -3307,9 +3307,7 @@ sub core_pipeline_analyses {
                 'exclude_list'  => 1,
                 'output_file'   => '#dump_dir#/snapshot_3_after_tree_building.sql.gz',
             },
-            -flow_into  => {
-                1 => WHEN('#do_gene_qc#' => 'get_species_set'),
-            },
+            -hive_capacity => 9, # this prevents too many competing `dump_per_mlss_homologies_tsv` jobs being spawned
         },
 
         {   -logic_name => 'rib_fire_cafe',
@@ -3338,6 +3336,14 @@ sub core_pipeline_analyses {
                     WHEN('#do_hmm_export#' => 'build_HMM_factory'),
                     'rib_fire_rename_labels',
                 ],
+            },
+        },
+        
+        {   -logic_name => 'rib_fire_gene_qc',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => 'get_species_set',
+                'A->1' => 'rib_fire_homology_id_mapping',
             },
         },
 
@@ -3426,6 +3432,11 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'homology_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory',
+            -parameters => {
+                'hashed_mlss_id'            => '#expr(dir_revhash(#homo_mlss_id#))expr#',
+                'homology_flatfile'         => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+                'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homology_id_map.tsv',
+            },
             -hive_capacity => $self->o('homology_dNdS_factory_capacity'),
             -rc_name       => '500Mb_job',
             -flow_into => {
@@ -3438,10 +3449,11 @@ sub core_pipeline_analyses {
         {   -logic_name => 'homology_id_mapping',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
             -parameters => {
-                'prev_rel_db'            => '#mapping_db#',
-                'hashed_mlss_id'         => '#expr(dir_revhash(#homo_mlss_id#))expr#',
-                'homology_flatfile'      => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
-                'prev_homology_flatfile' => '#prev_homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+                'prev_rel_db'               => '#mapping_db#',
+                'hashed_mlss_id'            => '#expr(dir_revhash(#mlss_id#))expr#',
+                'homology_flatfile'         => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
+                'prev_homology_flatfile'    => '#prev_homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
+                'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homology_id_map.tsv',
             },
             -rc_name    => '1Gb_job',
             -flow_into  => {
@@ -3452,10 +3464,11 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'homology_id_mapping_himem',
             -parameters => {
-                'prev_rel_db'            => '#mapping_db#',
-                'hashed_mlss_id'         => '#expr(dir_revhash(#homo_mlss_id#))expr#',
-                'homology_flatfile'      => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
-                'prev_homology_flatfile' => '#prev_homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+                'prev_rel_db'               => '#mapping_db#',
+                'hashed_mlss_id'            => '#expr(dir_revhash(#mlss_id#))expr#',
+                'homology_flatfile'         => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
+                'prev_homology_flatfile'    => '#prev_homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
+                'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homology_id_map.tsv',
             },
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
             -flow_into  => {
@@ -3467,10 +3480,11 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'homology_id_mapping_hugemem',
             -parameters => {
-                'prev_rel_db'            => '#mapping_db#',
-                'hashed_mlss_id'         => '#expr(dir_revhash(#homo_mlss_id#))expr#',
-                'homology_flatfile'      => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
-                'prev_homology_flatfile' => '#prev_homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+                'prev_rel_db'               => '#mapping_db#',
+                'hashed_mlss_id'            => '#expr(dir_revhash(#mlss_id#))expr#',
+                'homology_flatfile'         => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
+                'prev_homology_flatfile'    => '#prev_homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
+                'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homology_id_map.tsv',
             },
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
             -analysis_capacity => 20,
@@ -3554,8 +3568,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'orthology_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthologyStats',
             -parameters => {
-                'hashed_mlss_id'    => '#expr(dir_revhash(#homo_mlss_id#))expr#',
-                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+                'hashed_mlss_id'    => '#expr(dir_revhash(#mlss_id#))expr#',
+                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
             },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('ortho_stats_capacity'),
@@ -3564,8 +3578,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'paralogy_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ParalogyStats',
             -parameters => {
-                'hashed_mlss_id'    => '#expr(dir_revhash(#homo_mlss_id#))expr#',
-                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+                'hashed_mlss_id'    => '#expr(dir_revhash(#mlss_id#))expr#',
+                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
                 'species_tree_label'    => $self->o('use_notung') ? 'binary' : 'default',
             },
             -rc_name       => '500Mb_job',

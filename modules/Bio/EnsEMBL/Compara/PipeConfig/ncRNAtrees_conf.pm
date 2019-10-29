@@ -777,7 +777,7 @@ sub core_pipeline_analyses {
                             %raxml_parameters,
                             'raxml_number_of_cores' => 2,
                             'more_cores_branch'     => 3,
-                            'cmd_max_runtime'       => '43200',
+                            'cmd_max_runtime'       => '86400',
                            },
             -flow_into => {
                            -1 => [ 'pre_sec_struct_tree_4_cores' ], # This analysis also has more memory
@@ -794,7 +794,7 @@ sub core_pipeline_analyses {
                             %raxml_parameters,
                             'raxml_number_of_cores' => 4,
                             'more_cores_branch'     => 3,
-                            'cmd_max_runtime'       => '43200',
+                            'cmd_max_runtime'       => '86400',
                            },
             -flow_into => {
                            -1 => [ 'pre_sec_struct_tree_8_cores' ], # This analysis also has more memory
@@ -853,7 +853,7 @@ sub core_pipeline_analyses {
                             %raxml_parameters,
                             'raxml_number_of_cores' => 2,
                             'more_cores_branch'     => 3,
-                            'cmd_max_runtime'       => '43200',
+                            'cmd_max_runtime'       => '86400',
                            },
             -flow_into => {
                            -1 => [ 'sec_struct_model_tree_4_cores' ],   # This analysis has more cores *and* more memory
@@ -869,7 +869,7 @@ sub core_pipeline_analyses {
                             %raxml_parameters,
                             'raxml_number_of_cores' => 4,
                             'more_cores_branch'     => 3,
-                            'cmd_max_runtime'       => '43200',
+                            'cmd_max_runtime'       => '86400',
                            },
             -flow_into => {
                            -1 => [ 'sec_struct_model_tree_8_cores' ],   # This analysis has more cores *and* more memory
@@ -1055,12 +1055,12 @@ sub core_pipeline_analyses {
                             'treebest_exe'  => $self->o('treebest_exe'),
                             'ktreedist_exe' => $self->o('ktreedist_exe'),
                            },
-            -rc_name => '1Gb_job',
+            -rc_name => '2Gb_job',
         },
 
         {   -logic_name     => 'consensus_cigar_line_prep',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnConsensusCigarLine',
-            -rc_name        => '2Gb_job',
+            -rc_name        => '4Gb_job',
             -batch_size     => 20,
         },
 
@@ -1154,7 +1154,14 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => 'homology_dumps_mlss_id_factory',
-                'A->1' => WHEN('#ref_ortholog_db#' => 'remove_overlapping_homologies', ELSE [ 'homology_stats_factory', 'id_map_mlss_factory' ]),
+                'A->1' => 'rib_fire_homology_processing',
+            },
+        },
+
+        {   -logic_name => 'rib_fire_homology_processing',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                1 => WHEN('#ref_ortholog_db#' => 'remove_overlapping_homologies', ELSE [ 'homology_stats_factory', 'id_map_mlss_factory' ]),
             },
         },
         

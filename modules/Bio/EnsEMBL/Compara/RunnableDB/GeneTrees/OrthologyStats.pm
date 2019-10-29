@@ -68,6 +68,19 @@ sub fetch_input {
     my $genome_dbs   = $mlss->species_set->genome_dbs;
     my $gdb_id_1     = $genome_dbs->[0]->dbID;
     my $gdb_id_2     = $genome_dbs->[1]->dbID;
+    
+    # create map between (potential) component genome_db_ids and their principal genome_db_id
+    my $gdb_map;
+    foreach my $gdb ( @$genome_dbs ) {
+        my $comp_gdbs = $gdb->component_genome_dbs;
+        if ( defined $comp_gdbs->[0] ) {
+            foreach my $comp_gdb ( @$comp_gdbs ) {
+              $gdb_map->{$comp_gdb->dbID} = $gdb->dbID;
+            }
+        } else {
+            $gdb_map->{$gdb->dbID} = $gdb->dbID;
+        }
+    }
 
     my $member_type  = lc $self->param('member_type');
     my $homology_flatfile = $self->param_required('homology_flatfile');
@@ -82,6 +95,8 @@ sub fetch_input {
         my ($homology_type, $gene_tree_node_id, $gene_member_id, $hom_gene_member_id, $genome_db_id, $hom_genome_db_id, 
         $identity, $hom_identity) = ($row->{homology_type}, $row->{gene_tree_node_id}, $row->{gene_member_id}, $row->{hom_gene_member_id}, 
         $row->{genome_db_id}, $row->{hom_genome_db_id}, $row->{identity}, $row->{hom_identity});
+        
+        ( $genome_db_id, $hom_genome_db_id ) = ( $gdb_map->{$genome_db_id}, $gdb_map->{$hom_genome_db_id} );
         
         $stats1{$homology_type}->{$gene_tree_node_id}->{$gene_member_id}->{$genome_db_id}->{"num_homologies"} += 1; # n1
         $stats1{$homology_type}->{$gene_tree_node_id}->{$hom_gene_member_id}->{$hom_genome_db_id}->{"num_homologies"} += 1; # n2

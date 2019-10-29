@@ -117,8 +117,7 @@ sub fetch_input {
 
 =head2 run
 
-	Description: parse Bio::EnsEMBL::Compara::Homology objects to get start and end positions
-	of genes
+	Description: calaculate wga_score based on ortholog ranges, exon ranges and genomic alignment coverage
 
 =cut
 
@@ -168,37 +167,15 @@ sub run {
 
 }
 
-# =head2 write_output
-
-# 	Description: send data to correct dataflow branch!
-
-# =cut
-
-# sub write_output_prep_aln {
-# 	my $self = shift;
-
-# 	my $funnel_dataflow = {
-# 		aln_ranges  => $self->param('aln_ranges'),
-# 		orth_ranges => $self->param('orth_ranges'),
-# 		orth_id     => $self->param('orth_id'),
-# 		orth_exons  => $self->param('orth_exons'),
-# 	};
-
-# 	$self->dataflow_output_id( $funnel_dataflow, 1 ); # to combine_coverage
-# 	# $self->dataflow_output_id( { orth_id => $self->param('orth_id') }, 1 ); # to assign_quality
-# }
-
 =head2 write_output
+
+    flow quality scores to the ortholog_quality table
+    flow homology_ids to assign_quality analysis 
 
 =cut
 
 sub write_output {
 	my $self = shift;
-
-	# print "FLOWING #1: ";
-	# print Dumper $self->param('qual_summary');
-	# print "FLOWING #2: ";
-	# print Dumper $self->param('wga_coverage');
 
 	# flow data
 	$self->dataflow_output_id( $self->param('qual_summary'), 1 );
