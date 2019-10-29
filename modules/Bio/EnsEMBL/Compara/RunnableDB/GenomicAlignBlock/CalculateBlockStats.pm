@@ -78,6 +78,11 @@ sub process_one_block {
         my $genome_db_id = $ga->dnafrag->genome_db_id;
         my $i_length     = sum(map {$_->[1]} grep {$_->[0] eq 'I'} @$cigar_array);
         if ($i_length) {
+            # I elements are removed here to make the Utils::Cigars functions faster.
+            # Since they represent bits that are not aligned to anything, they don't
+            # contribute to the coverage or the depth. It's only the total number of
+            # positions and the number of positions of depth 0 that have to be
+            # increased.
             $depth_by_genome->{$genome_db_id}->{'n_total_pos'}    += $i_length;
             $depth_by_genome->{$genome_db_id}->{'breakdown'}->{0} += $i_length;
             $cigar_array = [grep {$_->[0] ne 'I'} @$cigar_array];
