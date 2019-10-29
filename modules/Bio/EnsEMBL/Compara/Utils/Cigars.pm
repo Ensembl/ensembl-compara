@@ -847,10 +847,11 @@ sub column_iterator {
                         }
                     }
                     return;
+                } else {
+                    my $e = $cigar_lines_arrays[$i]->[ $curr_cigar_elem_index[$i] ];
+                    $curr_cigar_elem_codes[$i]    = $e->[0];
+                    $curr_cigar_elem_lengths[$i]  = $e->[1];
                 }
-                my $e = $cigar_lines_arrays[$i]->[ $curr_cigar_elem_index[$i] ];
-                $curr_cigar_elem_codes[$i]    = $e->[0];
-                $curr_cigar_elem_lengths[$i]  = $e->[1];
             } else {
                 $curr_cigar_elem_lengths[$i] -= $length;
             }
