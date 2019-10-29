@@ -99,10 +99,9 @@ sub compose_sequence_with_cigar {
     my $alignment_string = "";
     my $seq_start = 0;
 
-    throw("Invalid cigar_line '$cigar_line'\n") if $cigar_line !~ /^[0-9A-Z]*$/;
+    throw("Invalid cigar_line '$cigar_line'\n") if $cigar_line !~ /^(([1-9][0-9]*)?[A-Z])*$/;
 
     while ($cigar_line =~ /(\d*)([A-Z])/g) {
-        next if $1 =~ /^0+$/;
 
         my $length = ($1 || 1) * $expansion_factor;
         my $char = $2;
