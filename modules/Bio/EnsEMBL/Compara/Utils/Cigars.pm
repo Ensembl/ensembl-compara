@@ -77,6 +77,30 @@ use List::Util qw(min);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 
+=head2 assert_valid_cigar
+
+  Arg [1]     : String $cigar_line
+  Example     : assert_valid_cigar('3M4D');  # will return
+  Example     : assert_valid_cigar('3M0X');  # will throw an exception
+  Description : Tests the validity of a cigar line, which is:
+                 1) is a sequence of digits and letters
+                 2) the numbers are all non-zero
+                Currently all the letters are allowed in this test, but some
+                methods in Utils::Cigars may only accept a restricted set of
+                letters.
+  Returntype  : none
+  Exceptions  : Throws if the cigar-line doesn't pass the checks
+
+=cut
+
+sub assert_valid_cigar {
+    my $cigar_line = shift;
+    if ($cigar_line !~ /^(([1-9][0-9]*)?[A-Z])*$/) {
+        throw("Invalid cigar_line '$cigar_line'\n")
+    }
+}
+
+
 =head2 compose_sequence_with_cigar
 
   Arg [1]    : String $sequence
@@ -99,7 +123,7 @@ sub compose_sequence_with_cigar {
     my $alignment_string = "";
     my $seq_start = 0;
 
-    throw("Invalid cigar_line '$cigar_line'\n") if $cigar_line !~ /^(([1-9][0-9]*)?[A-Z])*$/;
+    assert_valid_cigar($cigar_line);
 
     while ($cigar_line =~ /(\d*)([A-Z])/g) {
 
@@ -185,10 +209,12 @@ sub cigar_from_alignment_string {
 
 sub expand_cigar {
     my $cigar = shift;
+
+    assert_valid_cigar($cigar);
+
     my $expanded_cigar = '';
     #$cigar =~ s/(\d*)([A-Z])/$2 x ($1||1)/ge; #Expand
     while ($cigar =~ /(\d*)([A-Za-z])/g) {
-        next if $1 =~ /^0+$/;
         $expanded_cigar .= $2 x ($1 || 1);
     }
     return $expanded_cigar;
@@ -226,9 +252,11 @@ sub collapse_cigar {
 
 sub alignment_length_from_cigar {
     my $cigar = shift;
+
+    assert_valid_cigar($cigar);
+
     my $length = 0;
     while ($cigar =~ /(\d*)([A-Za-z])/g) {
-        next if $1 =~ /^0+$/;
         $length += ($1 || 1);
     }
     return $length;
@@ -482,8 +510,11 @@ sub identify_removed_columns {
 
 sub get_cigar_breakout {
     my $cigar = shift;
+
+    assert_valid_cigar($cigar);
+
     my %breakout;
-    while ($cigar =~ /(\d*)([A-Za-z])/g) {
+    while ($cigar =~ /(\d*)([A-Z])/g) {
         $breakout{$2} += $1 || 1;
     }
     return \%breakout;
@@ -502,9 +533,11 @@ sub get_cigar_breakout {
 sub get_cigar_array {
     my $cigar = shift;
     return $cigar if ref($cigar);   # pass-through in case the input already is an array
+
+    assert_valid_cigar($cigar);
+
     my @cigar_array;
-    while ($cigar =~ /(\d*)([A-Za-z])/g) {
-        next if $1 =~ /^0+$/;
+    while ($cigar =~ /(\d*)([A-Z])/g) {
         push(@cigar_array,[$2,$1||1]);
     }
     return \@cigar_array;
