@@ -1741,39 +1741,69 @@ sub _munge_meta {
 
     $self->tree->{'HAVANA_DATAFREEZE_DATE'} = $meta_hash->{'genebuild.havana_datafreeze_date'}[0];
 
+    ## check if there are sample search entries from the ini file
+    my $ini_hash = $self->tree->{'SAMPLE_DATA'};
+
     # check if there are sample search entries defined in meta table
     my @mks = grep { /^sample\./ } keys %{$meta_hash || {}}; 
-    my $shash;
-
-    # Create hash of db values
+    my $mk_hash = {};
     foreach my $k (@mks) {
+      ## Convert key to format used in webcode
       (my $k1 = $k) =~ s/^sample\.//;
-      $shash->{uc $k1} = $meta_hash->{$k}->[0];
+      $mk_hash->{uc $k1} = $meta_hash->{$k}->[0];
     }
-
-    my @iks = keys %{$self->tree->{'SAMPLE_DATA'}||{}};
-    my @all_keys = (@mks, @iks);
-    my %seen;
-
-    ## add in any missing values where text omitted because same as param
-    # but don't override any that have been set in ini file
-    foreach my $key (@all_keys) {
-      next if $seen{$key};
-      my $ini_version = $self->tree->{'SAMPLE_DATA'}{$key};
-      if (!$shash->{$key} && defined($ini_version)) {
-        $shash->{$key} = $ini_version;
+  
+    ## Merge param keys into single set
+    my (%seen, @param_keys, @other_keys);
+    foreach (keys %$mk_hash, keys %{$ini_hash || {}}) {
+      next if $seen{$_};
+      if ($_ =~ /PARAM/) {
+        push @param_keys, $_;
       }
       else {
-        next unless $key =~ /PARAM/;
-        (my $type = $key) =~ s/_PARAM//;
-        unless ($shash->{$type.'_TEXT'}) {
-          $shash->{$type.'_TEXT'} = $shash->{$key};
-        }
-      } 
-      $seen{$key} = 1;
+        push @other_keys, $_;
+      }
+      $seen{$_} = 1;
     }
 
-    $self->tree->{'SAMPLE_DATA'} = $shash if scalar keys %$shash;
+    ## Merge the two sample sets into one hash, giving priority to ini file
+    my $sample_hash = {};
+    foreach my $key (@param_keys) {
+      (my $text_key = $key) =~ s/PARAM/TEXT/;
+
+      if ($ini_hash->{$key}) {
+        $sample_hash->{$key} = $ini_hash->{$key};
+        ## Now set accompanying text
+        if ($ini_hash->{$text_key}) {
+          $sample_hash->{$text_key} = $ini_hash->{$text_key};
+        }
+        else {
+          $sample_hash->{$text_key} = $ini_hash->{$key};
+        }
+      }
+      elsif ($mk_hash->{$key}) {
+        $sample_hash->{$key} = $mk_hash->{$key};
+        ## Now set accompanying text
+        if ($mk_hash->{$text_key}) {
+          $sample_hash->{$text_key} = $mk_hash->{$text_key};
+        }
+        else {
+          $sample_hash->{$text_key} = $mk_hash->{$key};
+        }
+      }
+    }
+    ## Deal with any atypical entries, e.g. search
+    foreach (@other_keys) {
+      next if $sample_hash->{$_};
+      if ($ini_hash->{$_}) {
+        $sample_hash->{$_} = $ini_hash->{$_};
+      }
+      elsif ($mk_hash->{$_}) {
+        $sample_hash->{$_} = $mk_hash->{$_};
+      }
+    }
+
+    $self->tree->{'SAMPLE_DATA'} = $sample_hash if scalar keys %$sample_hash;
 
     # check if the karyotype/list of toplevel regions ( normally chroosomes) is defined in meta table
     @{$self->tree->{'TOPLEVEL_REGIONS'}} = @{$meta_hash->{'regions.toplevel'}} if $meta_hash->{'regions.toplevel'};
