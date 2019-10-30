@@ -32,14 +32,15 @@ Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf
 
 =head1 DESCRIPTION
 
-    Prepare master database for next release
+    Prepare master database of the given division for next release.
 
     WARNING: the previous reports and backups will be removed if the pipeline is
     initialised again for the same division and release.
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf -division <division>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division <division> -additional_species <optional hash>
 
     #1. Update NCBI taxonomy
     #2. Add/update all species to master database

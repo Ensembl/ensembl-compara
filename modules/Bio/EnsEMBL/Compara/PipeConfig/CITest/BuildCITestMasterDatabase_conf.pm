@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::CITest::BuildCITestMasterDatabase_conf
+Bio::EnsEMBL::Compara::PipeConfig::CITest::BuildCITestMasterDatabase_conf
 
 =head1 DESCRIPTION
 
@@ -51,7 +51,8 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::CITest::BuildCITestMasterDatabase_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::CITest::BuildCITestMasterDatabase_conf -dst_host <host> -dst_port <port>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::CITest::BuildCITestMasterDatabase_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -dst_host <host> -dst_port <port>
 
     #1. Create a new master database
     #2. Clone data regions from JSON files located in 'config_dir'/core
@@ -65,7 +66,7 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::CITest::BuildCITestMasterDatabase_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::CITest::BuildCITestMasterDatabase_conf;
 
 use strict;
 use warnings;
@@ -88,11 +89,6 @@ sub default_options {
         'config_dir'    => $self->check_dir_in_ensembl('ensembl-compara/conf/' . $self->o('division')),
         'init_reg_conf' => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/production_init_reg_conf.pl'),
         'reg_conf_tmpl' => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/production_reg_conf_tmpl.pl'),
-
-        # Change working directory
-        'pipeline_name' => 'build_master',
-        'work_dir'      => '/hps/nobackup2/production/ensembl/' . $ENV{'USER'} . '/' . $self->o('division') . '_division/' . $self->o('pipeline_name'),
-        'backups_dir'   => $self->o('work_dir') . '/backups/',
         
         'do_clone_species' => 1,
 

@@ -28,16 +28,18 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::PrepareMasterDatabaseForRelease_conf
+Bio::EnsEMBL::Compara::PipeConfig::Metazoa::PrepareMasterDatabaseForRelease_conf
 
 =head1 DESCRIPTION
 
-    Prepare master database for next release
-
+    Prepare Metazoa master database for next release.
+    
+    WARNING: the previous reports and backups will be removed if the pipeline is
+    initialised again for the same division and release.
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::PrepareMasterDatabaseForRelease_conf
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Metazoa::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 AUTHORSHIP
 
@@ -47,7 +49,7 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::PrepareMasterDatabaseForRelease_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Metazoa::PrepareMasterDatabaseForRelease_conf;
 
 use strict;
 use warnings;
