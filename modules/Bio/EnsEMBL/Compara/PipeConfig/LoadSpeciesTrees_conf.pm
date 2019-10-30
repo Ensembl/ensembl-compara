@@ -26,7 +26,8 @@ Bio::EnsEMBL::Compara::PipeConfig::LoadSpeciesTrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::LoadSpeciesTrees_conf -compara_alias_name compara_curr
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::LoadSpeciesTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -compara_alias_name <db_alias_or_url>
 
 =head1 DESCRIPTION
 
@@ -64,21 +65,15 @@ sub default_options {
 
         'taxon_filters' => [
             # Filters with the default behaviour (strains hidden)
-            [ 'Amniota', 'Amniotes' ],
-            [ 'Mammalia', 'Mammals' ],
-            [ 'Neopterygii', 'Fish' ],
-            [ 'Sauria', 'Sauropsids' ],
+            # [ 'Amniota', 'Amniotes' ],
+            # [ 'Mammalia', 'Mammals' ],
             # Filters with the strains shown, prefix with "str:"
-            [ 'str:Murinae', 'Rat and all mice (incl. strains)' ],
-            [ 'str:Sus', 'All pig breeds' ],
+            # [ 'str:Murinae', 'Rat and all mice (incl. strains)' ],
         ],
         'reference_genomes' => [
             # Which genome_dbs are used references for which clades
-            [ '10090', 'mus_musculus' ],
-            [ '9823',  'sus_scrofa' ],
+            # [ '10090', 'mus_musculus' ],
         ],
-
-        'division'  => 'vertebrates',
     };
 }
 
