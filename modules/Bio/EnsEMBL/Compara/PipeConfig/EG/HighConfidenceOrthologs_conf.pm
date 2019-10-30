@@ -22,15 +22,16 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::HighConfidenceOrthologs_conf
+Bio::EnsEMBL::Compara::PipeConfig::EG::HighConfidenceOrthologs_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf -compara_db mysql://...
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EG::HighConfidenceOrthologs_conf -host mysql-ens-compara-prod-X -port XXXX |
+        -compara_db <db_alias_or_ulr>
 
 =head1 DESCRIPTION
 
-A simple pipeline to populate the high- and low- confidence levels on an EG database
+A simple pipeline to populate the high- and low- confidence levels on an EG Compara database.
 
 =head1 CONTACT
 
@@ -42,7 +43,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::HighConfidenceOrthologs_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EG::HighConfidenceOrthologs_conf;
 
 use strict;
 use warnings;
