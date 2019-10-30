@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::WBParaSiteProteinTrees_conf
+  Bio::EnsEMBL::Compara::PipeConfig::EG::WBParaSiteProteinTrees_conf
 
 =head1 SYNOPSIS
 
@@ -37,9 +37,8 @@ limitations under the License.
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::WBParaSiteProteinTrees_conf \
-        -password <your_password> -mlss_id <your_current_PT_mlss_id> \
-        -division <eg_division> -eg_release <egrelease>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EG::WBParaSiteProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+            -mlss_id <curr_ptree_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -57,13 +56,13 @@ limitations under the License.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::WBParaSiteProteinTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EG::WBParaSiteProteinTrees_conf;
 
 use strict;
 use warnings;
 
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::ProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EG::ProteinTrees_conf');
 
 
 sub default_options {
@@ -83,42 +82,16 @@ sub default_options {
 
       # data directories:
       'work_dir'              =>  $ENV{PARASITE_SCRATCH} . '/compara/' . $self->o('pipeline_name'),
-
-      # "Member" parameters:
-      
-      # blast parameters:
-      
-      # clustering parameters:
       
       # tree building parameters:
       'species_tree_input_file'   =>  $ENV{PARASITE_CONF} . '/compara_guide_tree.wbparasite.tre',
 
       'use_quick_tree_break'      => 0,
-
-    # alignment filtering options
-
-      # species tree reconciliation
-      
-      # homology_dnds parameters:
-      
-      # mapping parameters:
-      
-      # executable locations:
-      
-      # HMM specific parameters (set to 0 or undef if not in use)
-      
-      # hive_capacity values for some analyses:
-      
-      # hive priority for non-LOCAL health_check analysis:
-      
-      
-      # the production database itself (will be created)
-      # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
       
       # the master database for synchronization of various ids (use undef if you don't have a master database)
       'master_db' => '',
 
-      exclude_gene_analysis => {  'macrostomum_lignano_prjna284736' =>  ['mlignano_schatz_gene_bad']  },
+      'exclude_gene_analysis' => {  'macrostomum_lignano_prjna284736' =>  ['mlignano_schatz_gene_bad']  },
       
       'mapped_gene_ratio_per_taxon' => {
           '2759'   => 0.25, #eukaryotes, 
@@ -153,7 +126,6 @@ sub default_options {
     
       # Add the database entries for the core databases of the previous release
       'prev_core_sources_locs'   => 0,
-          
     };
 }
 
@@ -164,10 +136,7 @@ sub tweak_analyses {
   
   $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '1Gb_job';
   $analyses_by_name->{'hcluster_run'}->{'-rc_name'} = '64Gb_job';
-
 }
-
-
 
 
 1;

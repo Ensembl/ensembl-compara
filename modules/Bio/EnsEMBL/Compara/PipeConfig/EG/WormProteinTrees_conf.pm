@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::WormProteinTrees_conf
+  Bio::EnsEMBL::Compara::PipeConfig::EG::WormProteinTrees_conf
 
 =head1 SYNOPSIS
 
@@ -39,9 +39,8 @@ limitations under the License.
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::WormProteinTrees_conf \
-        -password <your_password> -mlss_id <your_current_PT_mlss_id> \
-        -division <eg_division> -eg_release <egrelease>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EG::WormProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+            -mlss_id <curr_ptree_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -59,12 +58,12 @@ limitations under the License.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::WormProteinTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EG::WormProteinTrees_conf;
 
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::ProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EG::ProteinTrees_conf');
 
 
 sub default_options {
@@ -80,14 +79,10 @@ sub default_options {
         
         # custom pipeline name, in case you don't like the default one
         'dbowner' => 'worm',       # Used to prefix the database name (in HiveGeneric_conf)
-        'pipeline_name' => 'compara_homology_WS' . $self->o('ws_release'),
+        'pipeline_name' => 'compara_homology_WS' . $self->o('eg_release'),
 
         # data directories:
         'work_dir'              => '/nfs/nobackup/ensemblgenomes/wormbase/'.$ENV{'USER'}.'/compara/ensembl_compara_'.$self->o('pipeline_name'),
-
-        # blast parameters:
-        
-        # clustering parameters:
         
         # tree building parameters:
         'species_tree_input_file'   => $self->check_file_in_ensembl('compara-conf/compara_guide_tree.wormbase.nh'),
@@ -103,9 +98,6 @@ sub default_options {
         
         # Add the database entries for the core databases of the previous release
         'prev_core_sources_locs'   => 0,
-        
-        # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        'prev_rel_db' => 0,
 
     };
 }

@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsProteinTrees_conf
+  Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsProteinTrees_conf
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,8 @@ limitations under the License.
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsProteinTrees_conf --mlss_id <your_current_PT_mlss_id>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+            -mlss_id <curr_strain_ptree_mlss_id> -collection <strain_collection>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -56,14 +57,14 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsProteinTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsProteinTrees_conf;
 
 use strict;
 use warnings;
 
 use Bio::EnsEMBL::ApiVersion ();
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::ProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ProteinTrees_conf');
 
 
 sub default_options {
@@ -72,38 +73,13 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-    # parameters that are likely to change from execution to another:
-        # You can add a letter to distinguish this run from other runs on the same release
-        #'rel_suffix'            => '',
-        # names of species we don't want to reuse this time
-        'do_not_reuse_list'        => [ ],
-
-
-    #default parameters for the geneset qc
-
-    # data directories:
-
-    # "Member" parameters:
-
-    # blast parameters:
-
-    # clustering parameters:
-
     # tree building parameters:
         'use_raxml'                 => 1,
         'use_dna_for_phylogeny'     => 1,
 
-    # alignment filtering options
-
-    # species tree reconciliation
-
     # mapping parameters:
         'do_stable_id_mapping'      => 0,
         'do_treefam_xref'           => 0,
-
-    # HMM specific parameters (set to 0 or undef if not in use)
-
-    # hive_capacity values for some analyses:
 
     # connection parameters to various databases:
 
@@ -118,15 +94,8 @@ sub default_options {
         'initialise_cafe_pipeline'  => 0,
 
     # Extra analyses
-        # Export HMMs ?
-        'do_hmm_export'                 => 0,
         # Do we want the Gene QC part to run ?
         'do_gene_qc'                    => 0,
-        # Do we extract overall statistics for each pair of species ?
-        'do_homology_stats'             => 1,
-        # Do we need a mapping between homology_ids of this database to another database ?
-        # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
-        'do_homology_id_mapping'                 => 1,
     };
 }
 

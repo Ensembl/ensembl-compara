@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::SusProteinTrees_conf
+  Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::SusProteinTrees_conf
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,8 @@ limitations under the License.
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::SusProteinTrees_conf --mlss_id <your_current_PT_mlss_id>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::SusProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+            -mlss_id <curr_sus_ptree_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -56,14 +57,14 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::SusProteinTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::SusProteinTrees_conf;
 
 use strict;
 use warnings;
 
 use Bio::EnsEMBL::ApiVersion ();
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsProteinTrees_conf');
 
 
 sub default_options {
@@ -73,7 +74,6 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     # Parameters to allow merging different runs of the pipeline
-        'division'              => 'vertebrates',
         'collection'            => 'sus',       # The name of the species-set within that division
         'dbID_range_index'      => 20,
         'label_prefix'          => 'sus_',
@@ -92,11 +92,10 @@ sub default_options {
     # values are lower than in the Verterbates config file because the clustering method is less comprehensive
         'mapped_gene_ratio_per_taxon' => {
             '9821'   => 0.75,    # suidae
-          },
+        },
 
     # GOC parameters
         'goc_taxlevels' => ['Suidae'],
-
     };
 }
 
