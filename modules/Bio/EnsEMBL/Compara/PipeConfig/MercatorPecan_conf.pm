@@ -31,7 +31,8 @@ Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf -password <your_password> -mlss_id <your_current_Pecan_mlss_id>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf -host mysql-ens-compara-prod-X -port XXXX \
+            -division $COMPARA_DIV -mlss_id <curr_pecan_mlss_id> -species_set_name <species_set_name> -reuse_db <db_alias_or_url>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -39,8 +40,6 @@ Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf
 =head1 DESCRIPTION  
 
     The PipeConfig file for MercatorPecan pipeline that should automate most of the pre-execution tasks.
-
-    FYI: it took (3.7 x 24h) to perform the full production run for EnsEMBL release 62.
 
 =head1 CONTACT
 
@@ -69,21 +68,24 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-
     # parameters that are likely to change from execution to another:
 	#pecan mlss_id
 #       'mlss_id'               => 522,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        #'species_set'           => '24amniotes',
 	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
-#	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 	#'species_set_name'      => 'amniotes',
 
     # Automatically set using the above
         'pipeline_name'         => $self->o('species_set_name').'_mercator_pecan_'.$self->o('rel_with_suffix'),
 
     # dependent parameters:
+        'work_dir'              => $self->o('pipeline_dir'),
         'blastdb_dir'           => $self->o('work_dir') . '/blast_db',  
         'mercator_dir'          => $self->o('work_dir') . '/mercator',  
+
+        # Master database
+        'master_db' => 'compara_master',
+        # Previous release data location for reuse
+        # 'reuse_db'  => 'amniotes_pecan_prev',
 
     # blast parameters:
 	'blast_params'          => "-seg 'yes' -best_hit_overhang 0.2 -best_hit_score_edge 0.1 -use_sw_tback",
@@ -106,18 +108,13 @@ sub default_options {
 
     #Gerp default parameters
     'window_sizes'      => [1,10,100,500],
-	    
-    #
+
     #Default statistics
-    #
     'skip_multiplealigner_stats' => 0, #skip this module if set to 1
     'bed_dir' => $self->o('work_dir') . '/bed_dir/',
     'output_dir' => $self->o('work_dir') . '/feature_dumps/',
 
-
-     #
      #Resource requirements
-     #
     'pecan_capacity'        => 500,
     'pecan_himem_capacity'  => 1000,
     'gerp_capacity'         => 500,
