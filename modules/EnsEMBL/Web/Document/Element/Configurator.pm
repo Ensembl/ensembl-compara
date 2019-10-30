@@ -174,7 +174,7 @@ sub init_config {
   
   $self->{'json'} = $view_config->form->{'json'} || {}; #TODO - respect encapsulation
 
-  $self->add_image_config_notes($controller) if $image_config;
+  $self->add_image_config_notes($controller) if ($image_config && !$hub->param('matrix'));
 }
 
 sub add_image_config_notes {
