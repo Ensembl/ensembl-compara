@@ -32,7 +32,12 @@ Bio::EnsEMBL::Compara::PipeConfig::LoadMembers_conf
 
 =head1 DESCRIPTION
 
-    The pipeline will create a database with all the (gene|seq)_members of a collection of species
+    The pipeline will create a database with all the (gene|seq)_members of a collection of species.
+
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -collection <collection_name>
 
 =head1 AUTHORSHIP
 
@@ -41,7 +46,7 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
+Internal methods are usually preceded with an underscore (_).
 
 =cut
 

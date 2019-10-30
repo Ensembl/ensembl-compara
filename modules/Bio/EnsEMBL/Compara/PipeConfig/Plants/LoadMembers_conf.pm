@@ -28,11 +28,15 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::LoadMembers_conf
+Bio::EnsEMBL::Compara::PipeConfig::Plants::LoadMembers_conf
 
 =head1 DESCRIPTION
 
-    Specialized version of the LoadMembers pipeline for Ensembl Genomes
+Specialized version of the LoadMembers pipeline for Plants.
+
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 AUTHORSHIP
 
@@ -45,7 +49,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::LoadMembers_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Plants::LoadMembers_conf;
 
 use strict;
 use warnings;
@@ -60,38 +64,14 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-    # parameters inherited from EnsemblGeneric_conf and very unlikely to be redefined:
-        # It defaults to Bio::EnsEMBL::ApiVersion::software_version()
-        # 'ensembl_release'       => 68,
-
-    # parameters that are likely to change from execution to another:
-        # It is very important to check that this value is current (commented out to make it obligatory to specify)
-        # Change this one to allow multiple runs
-        #'rel_suffix' => 'b',
-
         'division'    => 'plants',
         'collection'  => $self->o('division'),
 
-        # names of species we don't want to reuse this time
-        #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
-        'do_not_reuse_list'     => [ ],
-
     # "Member" parameters:
-        'allow_ambiguity_codes'     => 1,
-        # Genes with these logic_names will be ignored from the pipeline.
-        # Format is { genome_db_id (or name) => [ 'logic_name1', 'logic_name2', ... ] }
-        # An empty string can also be used as the key to define logic_names excluded from *all* species
-        'exclude_gene_analysis'     => {},
-        # Store protein-coding genes
-        'store_coding'              => 1,
         # Store ncRNA genes
         'store_ncrna'               => 0,
         # Store other genes
         'store_others'              => 0,
-
-    #load uniprot members for family pipeline
-        'load_uniprot_members'      => 0,
-
     };
 }
 

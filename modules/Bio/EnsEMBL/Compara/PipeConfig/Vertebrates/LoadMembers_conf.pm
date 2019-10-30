@@ -28,15 +28,15 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::LoadMembers_conf
+Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::LoadMembers_conf
 
 =head1 DESCRIPTION
 
-Specialized version of the LoadMembers pipeline for Vertebrates
+Specialized version of the LoadMembers pipeline for Vertebrates.
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::LoadMembers_conf
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 AUTHORSHIP
 
@@ -49,7 +49,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::LoadMembers_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::LoadMembers_conf;
 
 use strict;
 use warnings;
@@ -64,29 +64,10 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-    # parameters inherited from EnsemblGeneric_conf and very unlikely to be redefined:
-        # It defaults to Bio::EnsEMBL::ApiVersion::software_version()
-        # 'ensembl_release'       => 68,
-
-    # parameters that are likely to change from execution to another:
-        # It is very important to check that this value is current (commented out to make it obligatory to specify)
-        # Change this one to allow multiple runs
-        #'rel_suffix'            => 'b',
         'division'   => 'vertebrates',
-        # 'collection' => $self->o('division'),
-        'collection' => 'vertebrates',
-
-        # names of species we don't want to reuse this time
-        #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
-        'do_not_reuse_list'     => [ ],
+        'collection' => $self->o('division'),
 
     # "Member" parameters:
-        # Store protein-coding genes
-        'store_coding'              => 1,
-        # Store ncRNA genes
-        'store_ncrna'               => 1,
-        # Store other genes
-        'store_others'              => 1,
         # Only needed in e100
         'fix_ncrna_members'         => 1,
 
