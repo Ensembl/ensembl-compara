@@ -19,15 +19,17 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::TBlat_conf
+Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::TBlat_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::TBlat_conf $(mysql-ens-compara-prod-6-ensadmin details hive) -mlss_id_list "[9769,9784,9754,9770,9785,9786,9771,9755,9767,9768,9782,9783,9756,9752,9753]"
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::TBlat_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -mlss_id_list "[9769,9784,9754,9770,9785,9786,9771,9755,9767,9768,9782,9783,9756,9752,9753]" \
+        -pipeline_name ${COMPARA_DIV}_tblat_batchX_${CURR_ENSEMBL_RELEASE}
 
 =head1 DESCRIPTION
 
-Version of the EBI TBlat pipeline used on Vertebrates databases
+Version of the TBlat pipeline used on Vertebrates databases.
 
 =head1 CONTACT
 
@@ -39,11 +41,12 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::TBlat_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::TBlat_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::TBlat_conf');     # We are running TBlat at the EBI
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf');
 
 
 sub default_options {
@@ -51,20 +54,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        # We connect to the databases via the Registry configuration file of the division
-        'master_db'                 => 'compara_master',
-        'curr_core_sources_locs'    => undef,
-        'curr_core_dbs_locs'        => undef,
-
-        # Capacities
-        'pair_aligner_analysis_capacity'    => 100,
-        'pair_aligner_batch_size'           => 3,
-        'chain_hive_capacity'               => 50,
-        'chain_batch_size'                  => 5,
-        'net_hive_capacity'                 => 20,
-        'net_batch_size'                    => 1,
-        'filter_duplicates_hive_capacity'   => 200,
-        'filter_duplicates_batch_size'      => 10,
+        'division' => 'vertebrates',
     };
 }
 

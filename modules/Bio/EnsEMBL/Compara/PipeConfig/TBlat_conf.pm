@@ -25,26 +25,22 @@ Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf
 
     #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
-    #3. Check all default_options in PairAligner_conf.pm, especically:
-        release
-        pipeline_db (-host)
-        resource_classes 
-
     #4. Check all default_options below, especially
         ref_species (if not homo_sapiens)
         default_chunks
         pair_aligner_options
 
     #5. Run init_pipeline.pl script:
-        Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf --dbname drer_onil_tblat_67 --password <your password> --mlss_id 574 --pipeline_db -host=compara1 --ref_species danio_rerio --pipeline_name TBLAT_dr_on_67
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf -host mysql-ens-compara-prod-X -port XXXX \
+            --mlss_id 574
 
     #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
 
 
 =head1 DESCRIPTION  
 
-    This configuaration file gives defaults specific for the translated blat net pipeline. It inherits from PairAligner_conf.pm and parameters here will over-ride the parameters in PairAligner_conf.pm. 
+    This configuration file gives defaults specific for the translated blat net pipeline.
+    It inherits from PairAligner_conf.pm and parameters here will over-ride the parameters in PairAligner_conf.pm.
     Please see PairAligner_conf.pm for general details of the pipeline.
 
 =head1 CONTACT
@@ -69,6 +65,17 @@ sub default_options {
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 
+        # We connect to the databases via the Registry configuration file of the division
+        'master_db'              => 'compara_master',
+        'curr_core_sources_locs' => undef,
+        'curr_core_dbs_locs'     => undef,
+
+        # Work directory
+        'dump_dir' => $self->o('pipeline_dir'),
+
+        # TBlat is used to align the genomes
+        'pair_aligner_exe' => $self->o('blat_exe'),
+
             'default_chunks' => {
                 'reference'   => {'chunk_size' => 1000000,
                     'overlap'    => 10000,
@@ -85,27 +92,30 @@ sub default_options {
                 },
             },
 
-	    #
 	    #Default pair_aligner
-	    #
 	    'pair_aligner_method_link' => [1001, 'TRANSLATED_BLAT_RAW'],
 	    'pair_aligner_logic_name' => 'Blat',
 	    'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::Blat',
 	    'pair_aligner_options' => '-minScore=30 -t=dnax -q=dnax -mask=lower -qMask=lower',
 
-	    #
 	    #Default chain
-	    #
 	    'chain_input_method_link' => [1001, 'TRANSLATED_BLAT_RAW'],
 	    'chain_output_method_link' => [1002, 'TRANSLATED_BLAT_CHAIN'],
 	    'linear_gap' => 'loose',
 
-	    #
 	    #Default net 
-	    #
 	    'net_input_method_link' => [1002, 'TRANSLATED_BLAT_CHAIN'],
 	    'net_output_method_link' => [7, 'TRANSLATED_BLAT_NET'],
 
+        # Capacities
+        'pair_aligner_analysis_capacity'  => 100,
+        'pair_aligner_batch_size'         => 3,
+        'chain_hive_capacity'             => 50,
+        'chain_batch_size'                => 5,
+        'net_hive_capacity'               => 20,
+        'net_batch_size'                  => 1,
+        'filter_duplicates_hive_capacity' => 200,
+        'filter_duplicates_batch_size'    => 10,
 	   };
 }
 

@@ -19,16 +19,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf
+Bio::EnsEMBL::Compara::PipeConfig::EG::TBlat_conf
 
 =head1 SYNOPSIS
 
     #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
-
-    #3. Check all default_options in PairAligner_conf.pm, especically:
-        release
-        pipeline_db (-host)
-        resource_classes 
 
     #4. Check all default_options below, especially
         ref_species (if not homo_sapiens)
@@ -36,16 +31,15 @@ Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf
         pair_aligner_options
 
     #5. Run init_pipeline.pl script:
-        Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf --dbname drer_onil_tblat_67 --password <your password> --mlss_id 574 --pipeline_db -host=compara1 --ref_species danio_rerio --pipeline_name TBLAT_dr_on_67
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EG::TBlat_conf -host mysql-ens-compara-prod-X -port XXXX \
+            --mlss_id 574 -ref_species danio_rerio
 
     #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
 
 
 =head1 DESCRIPTION
 
-    This configuaration file gives defaults specific for the translated blat net pipeline. It inherits from PairAligner_conf.pm and parameters here will over-ride the parameters in PairAligner_conf.pm. 
-    Please see PairAligner_conf.pm for general details of the pipeline.
+Version of the TBlat pipeline used on EG databases.
 
 =head1 CONTACT
 
@@ -57,11 +51,11 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::TBlat_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EG::TBlat_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::TBlat_conf');     # We are running TBlat at the EBI
+use base ('Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf');
 
 
 sub default_options {
@@ -127,16 +121,6 @@ sub default_options {
             'do_compare_to_previous_db' => 0,
             # Net
             'bidirectional' => 1,
-
-            # Capacities
-            'pair_aligner_analysis_capacity' => 100,
-            'pair_aligner_batch_size' => 3,
-            'chain_hive_capacity' => 50,
-            'chain_batch_size' => 5,
-            'net_hive_capacity' => 20,
-            'net_batch_size' => 1,
-            'filter_duplicates_hive_capacity' => 200,
-            'filter_duplicates_batch_size' => 10,
 
 	   };
 }
