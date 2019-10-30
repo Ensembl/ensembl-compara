@@ -67,24 +67,29 @@ sub fetch_input {
 	my $species_set_id = $self->param('species_set_id');
 
 	die "Need either collection or species_set_id to be defined!" unless ( $collection || $species_set_id );
+  #die "collection and species_set_id are mutually exclusive, please pick only one" if ( $collection && $species_set_id );
 
 	my $dba = $self->compara_dba;
 	my $gdb_adaptor = $dba->get_GenomeDBAdaptor;
 	my $ss_adaptor = $dba->get_SpeciesSetAdaptor;
 	
 	my $species_set;
-	if ( $collection ) {
-		$species_set = $ss_adaptor->fetch_collection_by_name($collection);
-	} elsif ( $species_set_id ) {
+  if ( $species_set_id ) {
 		$species_set = $ss_adaptor->fetch_by_dbID($species_set_id);
 		$self->param('collection', $species_set->name); # set this for file naming later
+	} elsif ( $collection ) {
+		$species_set = $ss_adaptor->fetch_collection_by_name($collection);
 	}
 	my @genome_dbs = grep {$_->name ne 'ancestral_sequences'} @{ $species_set->genome_dbs };
 
 	my @gdb_id_list = map { $_->dbID } @genome_dbs;
-	push( @gdb_id_list, @{ $self->param('outgroup_gdbs') } ) if $self->param('outgroup_gdbs');
 	@gdb_id_list = sort {$a <=> $b} @gdb_id_list; 
 	$self->param( 'dataflow_groups', [{ genome_db_ids => \@gdb_id_list, collection => $self->param('collection')}] );
+  
+  #Find outgroup_id
+  my $outgroup_name = $self->param('outgroup');
+  my $outgroup_genome_db = $gdb_adaptor->fetch_by_name_assembly($outgroup_name);
+  $self->param('outgroup_genome_db_id', $outgroup_genome_db->dbID);
 }
 
 sub _print_gdb_list {
@@ -122,6 +127,11 @@ sub write_output {
 		$self->dataflow_output_id( $group_set, 1 );
 		$c++;
 	}
+  
+  $self->dataflow_output_id( {
+    'param_name' =>'outgroup_id',
+    'param_value' => $self->param('outgroup_genome_db_id')
+  }, 2 );
 }
 
 1;

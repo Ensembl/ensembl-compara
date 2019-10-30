@@ -368,7 +368,7 @@ sub phylip_from_matrix {
 	spurt($phylip_file, $reformatted_matrix);
 }
 
-sub _empty_submatrix {
+sub empty_submatrix {
   my ($self, $submatrix) = @_;
 
   my @members = $submatrix->members;

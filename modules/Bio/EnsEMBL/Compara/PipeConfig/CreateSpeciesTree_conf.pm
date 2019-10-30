@@ -55,7 +55,6 @@ sub default_options {
 
         # 'division'        => 'vertebrates',
         'outgroup'        => 'saccharomyces_cerevisiae',
-        'outgroup_id'     => 127,
 
         'output_dir'        => $self->o('pipeline_dir'),
         'sketch_dir'        => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/species_tree/' . $self->o('division') . '_sketches',
@@ -67,7 +66,7 @@ sub default_options {
         'master_db'          => 'compara_master',
 
         'representative_species' => undef,
-        'taxonomic_ranks' => ['order', 'class', 'phylum', 'kingdom'],
+        'taxonomic_ranks' => ['genus', 'family', 'order', 'class', 'phylum', 'kingdom'],
         'custom_groups'   => ['Vertebrata', 'Sauropsida', 'Amniota', 'Tetrapoda'],
 
 
@@ -110,12 +109,14 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::GroupSpecies',
             -flow_into  => {
                 1 => [ 'check_sketches' ],
+                2 => [ '?table_name=pipeline_wide_parameters' ],
             },
             -input_ids => [{
               'sketch_dir'        => $self->o('sketch_dir'),
               'collection'        => $self->o('collection'),
               'species_set_id'    => $self->o('species_set_id'),
               'compara_db'        => $self->o('master_db'),
+              'outgroup'          => $self->o('outgroup'),
             }],
         },
 
@@ -229,7 +230,6 @@ sub pipeline_analyses {
           -parameters => {
               'taxonomic_ranks' => $self->o('taxonomic_ranks'),
               'custom_groups'   => $self->o('custom_groups'  ),
-              'outgroup_id'     => $self->o('outgroup_id'),
           },
           -flow_into => {
               '2->A' => [ 'neighbour_joining_tree' ],
@@ -266,7 +266,6 @@ sub pipeline_analyses {
               'erable_exe'    => $self->o('erable_exe'),
               'unroot_script' => $self->o('unroot_script'),
               'reroot_script' => $self->o('reroot_script'),
-              'outgroup_id'   => $self->o('outgroup_id'),
           },
           -flow_into => {
               1 => ['copy_files_to_sketch_dir'],
