@@ -23,6 +23,11 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::PipeConfig::ImportAltAlleGroupsAsHomologies_conf
 
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportAltAlleGroupsAsHomologies_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV
+
 =head1 DESCRIPTION  
 
 The PipeConfig file for the pipeline that imports alternative alleles as homologies.
@@ -48,9 +53,6 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
-
-        # Only needed if the member_db doesn't have genome_db.locator
-        'division' => 'vertebrates',
 
         'master_db'       => 'compara_master',  # Source of MLSSs
         'member_db'       => 'compara_members', # Source of GenomeDBs and members

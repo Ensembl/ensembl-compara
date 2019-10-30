@@ -32,7 +32,8 @@ Bio::EnsEMBL::Compara::PipeConfig::ImportPatchAlignmentsToRef_conf
 
 =head1 SYNOPSIS
 
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportPatchAlignmentsToRef_conf -host comparaX
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportPatchAlignmentsToRef_conf -host mysql-ens-compara-prod-X -port XXXX
+        -division $COMPARA_DIV
 
 =head1 DESCRIPTION
 
@@ -68,12 +69,10 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         # The master database
-        'master_db'             => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
+        'master_db'             => 'compara_master',
 
         # The method_link_type for this kind of alignments
         'lastz_patch_method'    => 'LASTZ_PATCH',
-
-        'division'              => 'vertebrates',
     };
 }
 
