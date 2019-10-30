@@ -19,12 +19,13 @@ limitations under the License.
 
 =head1 SYNOPSIS
 
-Initialise the pipeline on compara1 and dump the constrained elements of mlss_id 836
-found at cc21_ensembl_compara_86 on compara5
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpConstrainedElements_conf -host mysql-ens-compara-prodX -port XXXX
+        -compara_db $(mysql-ens-compara-prod-X details url ${USER}_mammals_epo_low_coverage_${CURR_ENSEMBL_RELEASE}) \
+        -mlss_id XXXX
 
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpConstrainedElements_conf -compara_db mysql://ensro@compara5/cc21_ensembl_compara_86 -mlss_id 836 -host compara1
+=head1 DESCRIPTION
 
-Dumps are created in a sub-directory of --export_dir, which defaults to scratch109
+    Pipeline to dump the contrained elements as BED and BigBED files.
 
 =cut
 
@@ -45,6 +46,9 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
+
+        # How many species can be dumped in parallel
+        'dump_ce_capacity'    => 50,
 
         # Paths to compara files
         'ce_readme'             => $self->check_file_in_ensembl('ensembl-compara/docs/ftp/constrained_elements.txt'),

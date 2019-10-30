@@ -19,15 +19,12 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::DumpSpeciesTrees_conf
-
-=head1 SYNOPSIS
-
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpSpeciesTrees_conf -compara_db <url_of_the_compara_db>
+Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpSpeciesTrees_conf
 
 =head1 DESCRIPTION  
 
-Dumps all the species-trees from the database
+    This is a partial PipeConfig for most part of the pipeline that dumps all
+    the species-trees from the given compara database.
 
 =head1 CONTACT
 

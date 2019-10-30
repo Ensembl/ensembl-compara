@@ -17,9 +17,10 @@ limitations under the License.
 
 =cut
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
-Pipeline to dump conservation scores as bedGraph and bigWig files
+    This is a partial PipeConfig for most part of the pipeline that dumps the
+    conservation scores as bedGraph and bigWig files.
 
 =cut
 
