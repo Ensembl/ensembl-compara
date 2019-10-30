@@ -17,8 +17,6 @@ limitations under the License.
 
 =cut
 
-
-
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
@@ -29,15 +27,17 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsNcRNAtrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsNcRNAtrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsNcRNAtrees_conf --mlss_id <your_MLSS_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsNcRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -mlss_id <curr_ncrna_mlss_id> -projection_source_species_names <list_of_species_names> \
+        -multifurcation_deletes_all_subnodes <list_of_root_node_to_flatten>
 
 =head1 DESCRIPTION
 
-This is the Vertebrates PipeConfig for the ncRNAtree pipeline.
+This is the Strains/Breeds PipeConfig for the Vertebrates ncRNAtrees pipeline.
 
 =head1 AUTHORSHIP
 
@@ -50,11 +50,12 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsNcRNAtrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsNcRNAtrees_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::ncRNAtrees_conf');
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ncRNAtrees_conf');
 
 sub default_options {
     my ($self) = @_;

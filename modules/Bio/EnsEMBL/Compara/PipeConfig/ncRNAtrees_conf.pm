@@ -32,12 +32,12 @@ Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf --mlss_id <your_mlss_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -collection <collection> -mlss_id <curr_ncrna_mlss_id>
 
 =head1 DESCRIPTION  
 
-This is the ncRNAtree pipeline.
-An example of use can be found in the Example folder.
+This is the ncRNAtrees pipeline.
 
 =head1 AUTHORSHIP
 
@@ -69,8 +69,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-            # User details
-            #'email'                 => 'john.smith@example.com',
+        'work_dir' => $self->o('pipeline_dir'),
 
             # dependent parameters ('work_dir' should be defined)
             'dump_dir'              => $self->o('work_dir') . '/dumps',
@@ -82,20 +81,68 @@ sub default_options {
             #   'ortholog' means that the pipeline will use previously inferred orthologs to perform a cluster projection
             'clustering_mode'           => 'rfam',
 
+        'master_db'   => 'compara_master',
+        'member_db'   => 'compara_members',
+        'prev_rel_db' => 'nctrees_prev',
+        # The following parameter should ideally contain EPO-2X alignments of
+        # all the genomes used in the ncRNA-trees. However, due to release
+        # coordination considerations, this may not be possible. If so, use the
+        # one from the previous release.
+        'epo_db'      => 'compara_prev',
+
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => 14,
         'label_prefix'          => undef,
         'member_type'           => 'ncrna',
 
+        # capacity values for some analysis:
+        'quick_tree_break_capacity'       => 100,
+        'msa_chooser_capacity'            => 200,
+        'other_paralogs_capacity'         => 200,
+        'aligner_for_tree_break_capacity' => 200,
+        'infernal_capacity'               => 200,
+        'orthotree_capacity'              => 200,
+        'treebest_capacity'               => 400,
+        'genomic_tree_capacity'           => 300,
+        'genomic_alignment_capacity'      => 700,
+        'fast_trees_capacity'             => 400,
+        'raxml_capacity'                  => 700,
+        'recover_capacity'                => 150,
+        'ss_picts_capacity'               => 200,
+        'ortho_stats_capacity'            => 10,
+        'homology_id_mapping_capacity'    => 10,
+        'cafe_capacity'                   => 50,
+        'decision_capacity'               => 4,
+
+        # Setting priorities
+        'genomic_alignment_priority'       => 35,
+        'genomic_alignment_himem_priority' => 40,
+
         # How much the pipeline will try to reuse from "prev_rel_db"
             # tree break
             'treebreak_tags_to_copy'   => ['model_id', 'model_name'],
+            'treebreak_gene_count'     => 400,
+
+        # Params for healthchecks;
+        'hc_priority'   => 10,
+        'hc_capacity'   => 40,
+        'hc_batch_size' => 10,
+
+        # RFAM parameters
+        'rfam_ftp_url'           => 'ftp://ftp.ebi.ac.uk/pub/databases/Rfam/12.0/',
+        'rfam_remote_file'       => 'Rfam.cm.gz',
+        'rfam_expanded_basename' => 'Rfam.cm',
+        'rfam_expander'          => 'gunzip ',
+
+        # miRBase database
+        'mirbase_url' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/mirbase_22',
 
             # misc parameters
             'species_tree_input_file'  => '',  # empty value means 'create using genome_db+ncbi_taxonomy information'; can be overriden by a file with a tree in it
-            'binary_species_tree_input_file'   => undef, # you can define your own species_tree for 'CAFE'. It *has* to be binary
+            'binary_species_tree_input_file'   => $self->o('binary_species_tree'), # you can define your own species_tree for 'CAFE'. It *has* to be binary
             'skip_epo'                 => 0,   # Never tried this one. It may fail
             'create_ss_picts'          => 0,
+            'infernal_mxsize'          => 10000,
 
             # ambiguity codes
             'allow_ambiguity_codes'    => 1,
@@ -119,8 +166,7 @@ sub default_options {
             'homology_dumps_dir'       => $self->o('dump_dir'). '/homology_dumps/',
             'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
             'prev_homology_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
-            
-           };
+    };
 }
 
 sub pipeline_create_commands {

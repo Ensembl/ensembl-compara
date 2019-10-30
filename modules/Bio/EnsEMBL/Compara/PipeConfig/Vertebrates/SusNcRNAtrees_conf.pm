@@ -17,8 +17,6 @@ limitations under the License.
 
 =cut
 
-
-
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
@@ -33,11 +31,12 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::SusNcRNAtrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::SusNcRNAtrees_conf --mlss_id <your_MLSS_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::SusNcRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -mlss_id <curr_sus_ncrna_mlss_id>
 
 =head1 DESCRIPTION
 
-This is the Sus PipeConfig for the StrainsNcRNAtree pipeline.
+This is the Sus PipeConfig for the StrainsNcRNAtrees pipeline.
 
 =head1 AUTHORSHIP
 
@@ -50,11 +49,11 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::SusNcRNAtrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::SusNcRNAtrees_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsNcRNAtrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsNcRNAtrees_conf');
 
 sub default_options {
     my ($self) = @_;
@@ -64,11 +63,7 @@ sub default_options {
 
             # Must be given on the command line
             #'mlss_id'          => 40100,
-            # Found automatically if the Core API is in PERL5LIB
-            #'ensembl_release'          => '76',
-            #'rel_suffix'       => '',
 
-            'division'          => 'vertebrates',
             'collection'        => 'sus',       # The name of the species-set within that division
             'dbID_range_index'  => 21,
             'label_prefix'      => 'sus_',
