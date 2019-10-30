@@ -15,9 +15,43 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
+=head1 NAME
 
-## Configuration file for the Epo Low Coverage pipeline
+Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf
+
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -species_set_name <species_set_name> -low_epo_mlss_id <curr_epo_2x_mlss_id> \
+        -base_epo_mlss_id <curr_epo_mlss_id>
+
+=head1 EXAMPLES
+
+    # With GERP (mammals, sauropsids, fish):
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division vertebrates -species_set_name fish -low_epo_mlss_id 1333 -base_epo_mlss_id 1332
+
+    # Without GERP (primates):
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division vertebrates -species_set_name primates -low_epo_mlss_id 1141 -base_epo_mlss_id 1134 -run_gerp 0
+
+=head1 DESCRIPTION
+
+PipeConfig file for the EPO Low Coverage (aka EPO-2X) pipeline.
+
+=head1 CONTACT
+
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
+  
+=head1 AUTHORSHIP
+
+Ensembl Team. Individual contributions can be found in the GIT log.
+
+=cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf;
 
@@ -38,10 +72,18 @@ sub default_options {
 
     'pipeline_name' => $self->o('species_set_name').'_epo_low_coverage_'.$self->o('rel_with_suffix'),
 
+        'master_db' => 'compara_master',
+        # Location of compara db containing EPO/EPO_LOW_COVERAGE alignment to use as a base
+        'epo_db'    => $self->o('species_set_name') . '_epo',
+
 	'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment
 	'base_epo_mlss_id' => $self->o('base_epo_mlss_id'), #mlss_id for the base alignment we're topping up
                                                         # (can be EPO or EPO_LOW_COVERAGE)
 	'mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment, needed for the alignment stats
+
+        # Default location for pairwise alignments (can be a string or an array-ref,
+        # and the database aliases can include '*' as a wildcard character)
+        'pairwise_location' => [ qw(compara_prev lastz_batch_*) ],
 
 	'max_block_size'  => 1000000,                       #max size of alignment before splitting 
 
@@ -53,6 +95,8 @@ sub default_options {
         #Default statistics
         #
         'skip_multiplealigner_stats' => 0, #skip this module if set to 1
+
+        'work_dir'   => $self->o('pipeline_dir'),
         'bed_dir' => $self->o('work_dir') . '/bed_dir/',
         'output_dir' => $self->o('work_dir') . '/feature_dumps/',
     };
@@ -62,7 +106,7 @@ sub pipeline_create_commands {
     my ($self) = @_;
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
-        $self->pipeline_create_commands_rm_mkdir(['output_dir', 'bed_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'output_dir', 'bed_dir']),
 	   ];
 }
 
