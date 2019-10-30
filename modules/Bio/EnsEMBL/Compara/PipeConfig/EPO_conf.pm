@@ -23,28 +23,13 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_conf
 
 =head1 SYNOPSIS
 
-    #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
-
-    #3. Check all default_options, you will probably need to change the following :
-        pipeline_db (-host)
-        resource_classes
-
-    'ensembl_cvs_root_dir' - the path to the compara/hive/ensembl GIT checkouts - set as an environment variable in your shell
-    'compara_anchor_db' - database containing the anchor sequences (entered in the anchor_sequence table)
-    'compara_master' - location of your master db containing relevant info in the genome_db, dnafrag, species_set, method_link* tables
-        The dummy values - you should not need to change these unless they clash with pre-existing values associated with the pairwise alignments you are going to use
-
-    #4. Run init_pipeline.pl script:
-        Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_conf.pm
-
-    #5. Run the "beekeeper.pl ... -sync" and then " -loop" command suggested by init_pipeline.pl
-
-    #6. Fix the code when it crashes
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_conf.pm -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -species_set_name <species_set_name> -mlss_id <curr_epo_mlss_id>
 
 =head1 DESCRIPTION
 
-    This configuaration file gives defaults for mapping (using exonerate at the moment) anchors to a set of target genomes (dumped text files)
+This PipeConfig file gives defaults for mapping (using exonerate at the moment)
+anchors to a set of target genomes (dumped text files).
 
 =head1 CONTACT
 
@@ -77,8 +62,14 @@ sub default_options {
 
         'pipeline_name' => $self->o('species_set_name').'_epo_'.$self->o('rel_with_suffix'),
 
-        # mlss_ids & co. Don't touch and define "mlss_id" on the command line
-        # 'mlss_id' => 825, # epo mlss from master
+        # Databases
+        'compara_master'    => 'compara_master',
+        'ancestral_db'      => $self->o('species_set_name') . '_ancestral',
+        # Database containing the anchors for mapping
+        'compara_anchor_db' => $self->o('species_set_name') . '_epo_anchors',
+        # The previous database to reuse the anchor mappings
+        'reuse_db'          => $self->o('species_set_name') . '_epo_prev',
+
         'ancestral_sequences_name' => 'ancestral_sequences',
 
         # Executable parameters
@@ -87,6 +78,7 @@ sub default_options {
         'gerp_window_sizes' => [1,10,100,500], #gerp window sizes
 
         # Dump directory
+        'work_dir'              => $self->o('pipeline_dir'),
         'enredo_output_file'    => $self->o('work_dir').'/enredo_output.txt',
         'bed_dir'               => $self->o('work_dir').'/bed',
         'feature_dir'           => $self->o('work_dir').'/feature_dump',
@@ -109,6 +101,13 @@ sub default_options {
         'anc_seq_count_cut_off' => 15,
         # Usually set to 0 because we run Gerp on the EPO2X alignment instead
         'run_gerp' => 0,
+
+        # Capacities
+        'low_capacity'                 => 10,
+        'map_anchors_batch_size'       => 20,
+        'map_anchors_capacity'         => 2000,
+        'trim_anchor_align_batch_size' => 20,
+        'trim_anchor_align_capacity'   => 500,
     };
 }
 

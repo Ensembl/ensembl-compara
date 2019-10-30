@@ -38,7 +38,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf
     (which generates a graph of the syntenic regions of the target genomes) 
     and then runs Ortheus (which runs Pecan for generating the MSA) and infers 
     ancestral genome sequences. Finally Gerp may be run to generate constrained elements and 
-    conservation scores from the MSA
+    conservation scores from the MSA.
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,9 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf -password <your_password> -mlss_id <your_current_epo_mlss_id> -species_set_name <the name of the species set> -compara_mapped_anchor_db <db name from epo_pt2 pipeline> -master_db <>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf -host mysql-ens-compara-prod-X -port XXXX \
+            -division $COMPARA_DIV -species_set_name <species_set_name> -mlss_id <curr_epo_mlss_id> \
+            -compara_mapped_anchor_db <db_alias_from_epo_pt2_pipeline> 
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -83,12 +85,16 @@ sub default_options {
 
         # 'mlss_id' => 647, # method_link_species_set_id of the ortheus alignments which will be generated
 
+        'master_db'    => 'compara_master',
+        'ancestral_db' => $self->o('species_set_name') . '_ancestral',
+
         'run_gerp' => 0,
 
         'enredo_params' => ' --min-score 0 --max-gap-length 200000 --max-path-dissimilarity 4 --min-length 10000 '.
     	'--min-regions 2 --min-anchors 3 --max-ratio 3 --simplify-graph 7 --bridges -o ',
 
         # Dump directory
+        'dump_dir' => $self->o('pipeline_dir'),
         'enredo_output_file' => $self->o('dump_dir').'enredo_#mlss_id#.out',
         'bed_dir' => $self->o('dump_dir').'bed_dir',
         'output_dir' => $self->o('dump_dir').'feature_dumps',
