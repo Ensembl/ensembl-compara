@@ -20,33 +20,18 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EPO_pt1_conf
+Bio::EnsEMBL::Compara::PipeConfig::EPOAnchors_conf
 
 =head1 SYNOPSIS
 
-    #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
-
-    #3. Check all default_options, you will probably need to change the following :
-        pipeline_db (-host)
-        resource_classes 
-
-	'compara_pairwise_db' - I'm assuiming that all of your pairwise alignments are in one compara db
-	'reference_genome_db_name' - the production name of the species which is in all your pairwise alignments
-	'main_core_dbs' - the servers(s) hosting most/all of the core (species) dbs
-	'core_db_urls' - any additional core dbs (not in 'main_core_dbs')
-        The dummy values - you should not need to change these unless they clash with pre-existing values associated with the pairwise alignments you are going to use
-
-    #4. Run init_pipeline.pl script:
-        Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_pt1_conf.pm
-
-    #5. Run the "beekeeper.pl ... -sync" and then " -loop" command suggested by init_pipeline.pl
-
-    #6. Fix the code when it crashes
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOAnchors_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -species_set_name <species_set_name> -mlss_id <curr_epo_mlss_id> \
+        -reference_genome_db_name <species_name>
 
 =head1 DESCRIPTION  
 
-    This configuaration file gives defaults for the first part of the EPO pipeline (this part generates the anchors from pairwise alignments). 
+This PipeConfig file generates the anchors from pairwise alignments required by
+the EPO pipeline.
 
 =head1 CONTACT
 
@@ -58,7 +43,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EPO_pt1_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EPOAnchors_conf;
 
 use strict;
 use warnings;
@@ -74,16 +59,25 @@ sub default_options {
       	%{$self->SUPER::default_options},
         'pipeline_name' => 'generate_anchors_' . $self->o('species_set_name').'_'.$self->o('rel_with_suffix'),
 
-      	# parameters that are likely to change from execution to another:
-      	'core_db_version' => 88, # version of the dbs from which to get the pairwise alignments
-      	
+        'master_db'           => 'compara_master',
+        # database containing the pairwise alignments needed to get the overlaps
+        'compara_pairwise_db' => 'compara_curr',
+
+        # Examples of pairs species_name <-> reference_genome_db_name:
+        # 'species_set_name'         => 'sauropsids',
+        # 'reference_genome_db_name' => 'gallus_gallus',
+        # 'species_set_name'         => 'mammals',
+        # 'reference_genome_db_name' => 'homo_sapiens',
+        # 'species_set_name'         => 'fish',
+        # 'reference_genome_db_name' => 'oryzias_latipes',
+
       	# alignment chunk size
       	'chunk_size' => 100000000,
       	# max block size for pecan to align
       	'pecan_block_size' => 1000000,
 
       	'max_frag_diff' => 1.5, # max difference in sizes between non-reference dnafrag and reference to generate the overlaps from
-      	'min_ce_length' => 40, # min length of each sequence in the constrained elenent 
+      	'min_ce_length' => 40, # min length of each sequence in the constrained element 
         'min_anchor_size' => 50, # at least one of the sequences in an anchor must be of this size
       	'max_anchor_seq_len' => 100, # anchors longer than this value will be trimmed
       	'min_number_of_seqs_per_anchor' => 2, # minimum number of sequences in an anchor
@@ -98,8 +92,6 @@ sub pipeline_wide_parameters {
 
 		'compara_pairwise_db' => $self->o('compara_pairwise_db'),
                 'mlss_id'        => $self->o('mlss_id'),
-		# 'main_core_dbs' => $self->o('main_core_dbs'),
-                # 'additional_core_db_urls' => $self->o('additional_core_db_urls'),
 		'min_anchor_size' => $self->o('min_anchor_size'),
 		'min_number_of_seqs_per_anchor' => $self->o('min_number_of_seqs_per_anchor'),
 		'max_number_of_seqs_per_anchor' => $self->o('max_number_of_seqs_per_anchor'),

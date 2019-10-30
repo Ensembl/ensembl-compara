@@ -25,18 +25,9 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt2_conf
 
     #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
-    #3. Check all default_options, you will probably need to change the following :
-        pipeline_db (-host)
-        resource_classes 
-
-	'ensembl_cvs_root_dir' - the path to the compara/hive/ensembl GIT checkouts - set as an environment variable in your shell
-	'compara_anchor_db' - database containing the anchor sequences (entered in the anchor_sequence table)
-	'master_db' - location of your master db containing relevant info in the genome_db, dnafrag, species_set, method_link* tables
-        The dummy values - you should not need to change these unless they clash with pre-existing values associated with the pairwise alignments you are going to use
-
     #4. Run init_pipeline.pl script:
-        Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_pt2_conf.pm
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_pt2_conf -host mysql-ens-compara-prod-X -port XXXX \
+            -division $COMPARA_DIV -species_set_name <species_set_name> -mlss_id <curr_epo_mlss_id>
 
     #5. Run the "beekeeper.pl ... -sync" and then " -loop" command suggested by init_pipeline.pl
 
@@ -44,7 +35,8 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt2_conf
 
 =head1 DESCRIPTION  
 
-    This configuaration file gives defaults for mapping (using exonerate at the moment) anchors to a set of target genomes (dumped text files)
+    This configuaration file gives defaults for mapping (using exonerate at the
+    moment) anchors to a set of target genomes (dumped text files).
 
 =head1 CONTACT
 
@@ -76,6 +68,11 @@ sub default_options {
 
         'pipeline_name' => $self->o('species_set_name').'_epo_anchor_mapping_'.$self->o('rel_with_suffix'),
 
+        'master_db'         => 'compara_master',
+        # database containing the anchors for mapping
+        'compara_anchor_db' => $self->o('species_set_name') . '_epo_anchors',
+        'reuse_db'          => $self->o('species_set_name') . '_epo_prev',
+
         'mapping_params'    => { bestn=>11, gappedextension=>"no", softmasktarget=>"no", percent=>75, showalignment=>"no", model=>"affine:local", },
 
     	# 'mlss_id' => 825, # epo mlss from master
@@ -86,6 +83,13 @@ sub default_options {
     	'anchor_batch_size' => 10,
     	 # max number of sequences to allow in an anchor
     	'anc_seq_count_cut_off' => 15,
+        
+        # Capacities
+        'low_capacity'                  => 10,
+        'map_anchors_batch_size'        => 10,
+        'map_anchors_capacity'          => 1000,
+        'trim_anchor_align_batch_size'  => 20,
+        'trim_anchor_align_capacity'    => 500,
     };
 }
 
