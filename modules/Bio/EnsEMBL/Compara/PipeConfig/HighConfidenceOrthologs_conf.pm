@@ -26,11 +26,12 @@ Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf -compara_db mysql://...
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -compara_db <db_alias_or_ulr>
 
 =head1 DESCRIPTION
 
-A simple pipeline to populate the high- and low- confidence levels on a Compara database
+A simple pipeline to populate the high- and low- confidence levels on a Compara database.
 
 =head1 CONTACT
 
@@ -62,6 +63,14 @@ sub default_options {
         'high_confidence_capacity'    => 20,             # how many mlss_ids can be processed in parallel
         'high_confidence_batch_size'  => 10,            # how many mlss_ids' jobs can be batched together
 
+        # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
+        'threshold_levels' => [ ],
+        # 'threshold_levels' => [
+        #     {
+        #         'taxa'          => [ 'all' ],
+        #         'thresholds'    => [ undef, undef, 25 ],
+        #     },
+        # ],
     };
 }
 
