@@ -95,7 +95,7 @@ sub members {
 
 sub distance {
 	my ($matrix, $s1, $s2, $new_distance) = @_;
-  
+
 	return $matrix->{$s1}->{$s2} unless defined $new_distance;
 	$matrix->{$s1}->{$s2} = $new_distance;
 	$matrix->{$s2}->{$s1} = $new_distance;
@@ -228,8 +228,6 @@ sub prune_gdbs_from_matrix {
 	my $submatrix = Bio::EnsEMBL::Compara::Utils::DistanceMatrix->new();
 	foreach my $gdb1 ( @gdb_id_list ) {
 		foreach my $gdb2 ( @gdb_id_list ) {
-			#print Dumper $submatrix;
-			#print "$gdb1 $gdb2 ".$matrix->distance($gdb1, $gdb2)."\n";
 			
 			next unless defined $matrix->distance($gdb1, $gdb2);
 			$submatrix = $submatrix->distance( $gdb1, $gdb2, $matrix->distance($gdb1, $gdb2) );
@@ -368,14 +366,14 @@ sub phylip_from_matrix {
 	spurt($phylip_file, $reformatted_matrix);
 }
 
-sub _empty_submatrix {
-  my ($self, $submatrix) = @_;
+sub empty_submatrix {
+    my ($self, $submatrix) = @_;
 
-  my @members = $submatrix->members;
-  foreach my $member ( @members ) {
-    return 0 unless $member =~ m/^mrg_/;
-  }
-  return 1;
+    my @members = $submatrix->members;
+    foreach my $member ( @members ) {
+        return 0 unless $member =~ m/^mrg_/;
+    }
+    return 1;
 }
 
 1;

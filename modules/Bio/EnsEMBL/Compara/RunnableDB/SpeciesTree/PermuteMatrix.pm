@@ -60,10 +60,7 @@ sub param_defaults {
     return {
         %{$self->SUPER::param_defaults},
         'min_group_size'  => 4,
-        #'taxonomic_ranks' => ['order', 'class', 'phylum', 'kingdom'],
-        'taxonomic_ranks' => ['genus'],
-        # 'custom_groups'   => ['Vertebrata', 'Sauropsida', 'Amniota', 'Tetrapoda'],
-        # 'outgroup_id' => '127', # outgroup for everything
+        'taxonomic_ranks' => ['genus', 'family', 'order', 'class', 'phylum', 'kingdom'],
 
         # blacklisting certain unreliable genome_dbs will result in:
         # 1. exemption from being outgroups as they are not high quality enough
@@ -97,18 +94,16 @@ sub fetch_input {
 
 	my (@prev_group_ids, %all_groups, @matrices_dataflow, $this_outgroup);
 	foreach my $group_taxon_id ( @tax_groups_ids ) {
-    $group_taxon_id=4527;
 		my $current_group_taxon = $ncbi_adaptor->fetch_node_by_taxon_id($group_taxon_id);
 		print " -- Grouping " . $current_group_taxon->name . "...\n" if $self->debug;
 
 		# extract initial submatrix for the group
 		my @group_gdbs = @{$gdb_adaptor->fetch_all_current_by_ancestral_taxon_id($group_taxon_id)};
-    #print Dumper @group_gdbs;
 		print "\t -- fetching submatrix for " . scalar @group_gdbs . " genomes\n" if $self->debug;
 		my $submatrix = $distance_matrix->prune_gdbs_from_matrix( \@group_gdbs );
 
 		# add an outgroup
-		if ( $group_taxon_id == $ncbi_adaptor->fetch_node_by_name('root')->dbID ) {
+		if ( $group_taxon_id == $self->param('root_id') ) {
 			$this_outgroup = $self->param_required('outgroup_id');
 		} else {
 			($submatrix, $this_outgroup) = $self->_add_outgroup( $submatrix, $distance_matrix );
@@ -123,14 +118,14 @@ sub fetch_input {
 			my $prev_group_gdbs = $gdb_adaptor->fetch_all_current_by_ancestral_taxon_id($prev_group);
 			$submatrix = $submatrix->collapse_group_in_matrix( $prev_group_gdbs, "mrg_$prev_group" );
 		}
-
-    next if $self->_empty_submatrix($submatrix);
+        
+        next if Bio::EnsEMBL::Compara::Utils::DistanceMatrix->empty_submatrix($submatrix);
 
 		# add to dataflow
 		my $mdf = { 
 			group_key => $group_taxon_id, 
 			distance_matrix => $submatrix, 
-			outgroup => $this_outgroup 
+			outgroup => $this_outgroup
 		};
 		push( @matrices_dataflow, $mdf );
 		unshift( @prev_group_ids, $group_taxon_id );
@@ -149,6 +144,7 @@ sub write_output {
 	#     { group_key => $key2, distance_matrix => $matrix2 }, # no outgroup
 	# ]
 	$self->dataflow_output_id( $self->param('matrices_dataflow'), 2 );
+    $self->dataflow_output_id( { root_id => $self->param('root_id') }, 1 );
 }
 
 sub _add_outgroup {
@@ -161,7 +157,6 @@ sub _add_outgroup {
 	foreach my $full_key ( $full_matrix->members ) {
 		next if ( defined $self->param('blacklisted_genome_db_ids') && grep { $full_key eq $_ } @{$self->param('blacklisted_genome_db_ids')} ); # skip any that are on the naughty list
 		next if (grep { $_ eq $full_key } @sub_gdb_ids); # skip any that exist in the submatrix
-    next unless defined $full_matrix->distance($rep_gdb_id, $full_key);
 		if ( $full_matrix->distance($rep_gdb_id, $full_key) < $min_distance ) {
 			$closest_gdb_id = $full_key;
 			$min_distance = $full_matrix->distance($rep_gdb_id, $full_key);
@@ -219,9 +214,18 @@ sub _taxonomic_groups {
 		my $this_gdb_taxon = $ncbi_adaptor->fetch_node_by_taxon_id($gdb->taxon_id);
 		foreach my $rank ( @ranks ) {
 			my $this_rank_taxon = $self->_taxonomic_rank($this_gdb_taxon, $rank);
-			$group_taxon_ids{$this_rank_taxon} = 1 if $this_rank_taxon;
+			$group_taxon_ids{$this_rank_taxon} += 1 if $this_rank_taxon;
 		}
 	}
+
+    # filter ranks shared across all species
+    # only ranks describing subsets of the species set should be included
+    foreach my $key ( keys %group_taxon_ids ) {
+        delete $group_taxon_ids{$key} if $group_taxon_ids{$key} == (scalar(@$gdbs));
+        unless ((scalar keys %group_taxon_ids) < 20) {
+            delete $group_taxon_ids{$key} if $group_taxon_ids{$key} < (scalar(@$gdbs)/10);
+        }
+    }
 
 	# now, add in the additional groupings, if any
 	if ( $self->param('custom_groups') ) {
@@ -240,20 +244,13 @@ sub _taxonomic_groups {
 	my @sorted_taxon_ids = map {$_->dbID} @sorted_taxa;
 
 	# finally, add the root
-	my $root_taxon = $ncbi_adaptor->fetch_node_by_name('root');
-	push(@sorted_taxon_ids, $root_taxon->dbID); # usually 1, but fetch from db just incase
+    my $largest_group = $sorted_taxa[-1];
+    my $root_taxon = $ncbi_adaptor->fetch_parent_for_node($largest_group);
+    
+    push(@sorted_taxon_ids, $root_taxon->dbID); # usually 1, but fetch from db just incase
+    $self->param('root_id', $root_taxon->dbID);
 
 	return @sorted_taxon_ids;
-}
-
-sub _empty_submatrix {
-  my ($self, $submatrix) = @_;
-
-  my @members = $submatrix->members;
-  foreach my $member ( @members ) {
-    return 0 unless $member =~ m/^mrg_/;
-  }
-  return 1;
 }
 
 1;

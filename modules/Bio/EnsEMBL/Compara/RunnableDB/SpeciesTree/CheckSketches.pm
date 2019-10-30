@@ -79,18 +79,6 @@ sub fetch_input {
 		}
 		@genome_dbs = @{ $species_set->genome_dbs };
 	}
-	
-	# # add any optional outgroups
-	# if ( $self->param('outgroup_gdbs') ) {
-	# 	foreach my $gdb_id ( @{ $self->param('outgroup_gdbs') } ) {
-	# 		my $this_gdb = $gdb_adaptor->fetch_by_dbID( $gdb_id );
-	# 		die "Outgroup species genome_db $gdb_id could not be found in the database" unless $this_gdb;
-	# 		push( @genome_dbs, $this_gdb );
-	# 	}
-	# }
-
-	# print "\n\nGENOME_DBS:\n";
-	# print Dumper \@genome_dbs;
 
 	$self->param( 'genome_dbs', \@genome_dbs );
 }
