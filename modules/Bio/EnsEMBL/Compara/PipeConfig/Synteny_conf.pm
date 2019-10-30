@@ -26,15 +26,18 @@ Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf
 This pipeline is using eHive's parameter-stack mechanism, i.e. the jobs
 inherit the parameters of their parents.
 The pipeline should be configured exclusively from the command line, with the
---alignment_db/ptree_db and possibly -pairwise_mlss_id/ortholog_mlss_id parameters. If the latter is
+--alignment_db/ptree_db and possibly --pairwise_mlss_id/ortholog_mlss_id parameters. If the latter is
 skipped, the pipeline will use all the pairwise alignments/orthologs found on the server.
 The pipeline automatically finds the alignments/orthologs that are missing syntenies and
-compute these (incl. the stats)
+compute these (incl. the stats).
 The analysis "compute_synteny_start" can be seeded multiple times.
 Extra parameters like "level", "orient", "minSize1", etc, should also be given
 at the command-line level, and not in this file.
 
-Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf  -pipeline_name <> -ptree_db/alignment_db <>
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -ptree_db/alignment_db <db_alias_or_url> -curr_release_db <db_alias_or_url>
 
 =head1 CONTACT
 
@@ -64,7 +67,11 @@ sub default_options {
             # Connection to the alignment database must be given
             #'alignment_db' => undef,    # alignment database to calculate the syntenies from
             'ptree_db'     => undef,     # protein database to calculate the syntenies from
+            'master_db' => 'compara_master',
+            #'curr_release_db' => undef,
             'ortholog_method_link_types'  => ['ENSEMBL_ORTHOLOGUES'],
+
+            'work_dir'  => $self->o('pipeline_dir'),
 
             # Used to restrict the pipeline to 1 mlss_id
             'pairwise_mlss_id'  => undef,   # if undef, will use all the pairwise alignments found in the alignment db
@@ -102,7 +109,7 @@ sub pipeline_wide_parameters {
         'master_db'     => $self->o('master_db'),
         'alignment_db'    =>  $self->o('alignment_db'),
         'ptree_db'    =>  $self->o('ptree_db'),
-        'curr_release_db' => $self->o('curr_release_db'), #needed if being run as part of release
+        'curr_release_db' => $self->o('curr_release_db'),
             # 'synteny_mlss_id' will be evaluated in the runnables, not here
         'synteny_dir'   => $self->o('work_dir').'/#synteny_mlss_id#/',
         'ortholog_method_link_types' => $self->o('ortholog_method_link_types'),
