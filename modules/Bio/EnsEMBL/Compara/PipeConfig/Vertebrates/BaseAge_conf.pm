@@ -19,18 +19,15 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::BaseAge_conf
+Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::BaseAge_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::BaseAge_conf -password <your_password>
-
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::BaseAge_conf $(mysql-ens-compara-prod-2-ensadmin details hive) \
-                     -compara_db $(mysql-ens-compara-prod-4 details url mateus_mammals_epo_94) \
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::BaseAge_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 DESCRIPTION
 
-    Calculate the age of a base ... at the EBI !
+    Calculate the age of human.
 
 =head1 CONTACT
 
@@ -42,7 +39,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::BaseAge_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::BaseAge_conf;
 
 use strict;
 use warnings;
@@ -57,13 +54,7 @@ sub default_options {
         %{$self->SUPER::default_options},
 
             'ref_species' => 'homo_sapiens',
-            #'pipeline_name' => $self->o('ref_species').'_base_age_'.$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
-
-            'division' => 'vertebrates',
-            
-            #Location url/alias of database to get EPO GenomicAlignTree objects from
-            'compara_db'    => 'compara_curr',
-            'ancestral_db'  => 'ancestral_curr',    # You may set this to undef if compara_db is a databae that contains genome_db locators
+            'division'    => 'vertebrates',
 
             # The name of the alignment
             'species_set_name'  => 'mammals',
@@ -71,14 +62,10 @@ sub default_options {
             # There is a different colour gradient for this clade
             'clade_taxon_id' => 9443,   # this is the taxon_id of Primates
 
-            #Location url of database to get snps from
-            #'variation_url' => 'mysql://anonymous@mysql-ensembl-mirror:4240/' . $self->o('ensembl_release'),
+            # Location url of database to get snps from
             'variation_url' => 'mysql://ensro@mysql-ens-sta-1:4519/homo_sapiens_variation_'.$self->o('ensembl_release').'_38?group=variation',
 
-            #Locations to write output files
-            'bed_dir'        => $self->o('pipeline_dir'),
-
-            #Number of workers to run base_age analysis
+            # Number of workers to run base_age analysis
             'base_age_capacity'        => 100,
 
           };
