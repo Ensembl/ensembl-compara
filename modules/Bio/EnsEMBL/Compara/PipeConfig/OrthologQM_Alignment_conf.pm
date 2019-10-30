@@ -20,29 +20,22 @@ limitations under the License.
 =cut
 
 
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
-	Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf;
+Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf
-
     To run on a species_set:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -species_set_name <species_set_name>
-        or
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -species_set_id <species_set dbID>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -host mysql-ens-compara-prod-X -port XXXX \
+            -member_type <protein_or_ncrna> -species_set_name <species_set_name>
+
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -host mysql-ens-compara-prod-X -port XXXX \
+            -member_type <protein_or_ncrna> -species_set_id <species_set_dbID>
 
     To run on a pair of species:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -species1 homo_sapiens -species2 gallus_gallus
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -host mysql-ens-compara-prod-X -port XXXX \
+            -member_type <protein_or_ncrna> -species1 homo_sapiens -species2 gallus_gallus
 
 =head1 DESCRIPTION
 
@@ -56,6 +49,7 @@ limitations under the License.
     -compara_db         database containing relevant data (this is where final scores will be written)
     -alt_aln_dbs        take alignment objects from different sources (arrayref of urls or aliases)
     -alt_homology_db    take homology objects from a different source
+    -previous_rel_db    reuse scores from a previous release (requires a homology_id_mapping table in compara_db)
 
     Note: If you wish to use homologies from one database, but the alignments live in a different database,
     remember that final scores will be written to the homology table of the appointed compara_db. So, if you'd
@@ -63,15 +57,15 @@ limitations under the License.
     to specify the location of the alignments. Likewise, if you want the scores written to the alignment-containing
     database, assign it as compara_db and use the alt_homology_db option.
 
-    Examples:
-    ---------
+=head1 EXAMPLES
+
     # scores go to homology db, alignments come from afar
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -compara_db compara_alias
-        -alt_aln_dbs [mysql://ro_user@hosty_mchostface/alignments]
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -host mysql-ens-compara-prod-1 -port 4485 \
+        -compara_db compara_alias -alt_aln_dbs [mysql://ro_user@hosty_mchostface/alignments]
 
     # scores go to alignment db
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -compara_db mysql://user:pass@host/alignments
-        -alt_homology_db homology_alias
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -host mysql-ens-compara-prod-1 -port 4485 \
+        -compara_db mysql://user:pass@host/alignments -alt_homology_db homology_alias
 
 =head1 CONTACT
 
@@ -91,7 +85,6 @@ use warnings;
 use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
-# use base ( 'Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf' );
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
@@ -113,6 +106,16 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
+
+        'master_db'   => 'compara_master',
+        # location of homology data. note: wga_score will be written here
+        'compara_db'  => '#expr( (#member_type# eq "protein") ? "compara_ptrees" : "compara_nctrees" )expr#',
+        # if alignments are not all present in compara_db, define alternative db locations
+        'alt_aln_dbs' => [
+            # list of databases with EPO or LASTZ data
+            'compara_curr',
+        ],
+        'previous_rel_db'  => 'compara_prev',
 
         'species1'         => undef,
         'species2'         => undef,
@@ -164,7 +167,7 @@ sub pipeline_wide_parameters {
 
         'ensembl_release'    => $self->o('ensembl_release'),
         'homology_dumps_dir' => $self->o('homology_dumps_dir'),
-        'orth_batch_size'    => 10,
+        'orth_batch_size'    => $self->o('orth_batch_size'),
     };
 }
 
@@ -189,8 +192,6 @@ sub pipeline_analyses {
                 'master_db'        => $self->o('master_db'),
                 'alt_homology_db'  => $self->o('alt_homology_db'),
                 'previous_rel_db'  => $self->o('previous_rel_db'),
-                'member_type'      => $self->o('member_type'),
-                'collection'       => $self->o('collection'),
             }],
         },
 
