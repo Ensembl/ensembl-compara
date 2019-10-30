@@ -19,7 +19,13 @@ limitations under the License.
 
 =head1 SYNOPSIS
 
-Pipeline to dump conservation scores as bedGraph and bigWig files
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpConservationScores_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -compara_db $(mysql-ens-compara-prod-X details url ${USER}_mammals_epo_low_coverage_${CURR_ENSEMBL_RELEASE}) \
+        -mlss_id XXXX
+
+=head1 DESCRIPTION
+
+    Pipeline to dump conservation scores as bedGraph and bigWig files.
 
 =cut
 
@@ -37,6 +43,15 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
+
+        # Where dumps are created
+        'export_dir' => $self->o('pipeline_dir') . '/#mlss_id#/out',
+
+        # Where to keep temporary files
+        'work_dir'   => $self->o('pipeline_dir') . '/#mlss_id#/hash',
+
+        # How many species can be dumped in parallel
+        'capacity'   => 50,
 
         # Paths to compara files
         'cs_readme'             => $self->check_file_in_ensembl('ensembl-compara/docs/ftp/conservation_scores.txt'),

@@ -19,6 +19,8 @@ limitations under the License.
 
 =head1 SYNOPSIS
 
+    This is a partial PipeConfig for most part of the pipeline that dumps the
+    alignments found in 'compara_curr'.
 
 =cut
 

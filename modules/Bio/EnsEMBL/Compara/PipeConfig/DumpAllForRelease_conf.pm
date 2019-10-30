@@ -28,7 +28,8 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf
 The PipeConfig file for the pipeline that performs FTP dumps of everything required for a
 given release. It will detect which pipelines have been run and dump anything new.
 
-Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf -host mysql-ens-compara-prod-X -port XXXX -updated_mlss_ids <optional>
+Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf -host mysql-ens-compara-prod-X -port XXXX \
+             -division $COMPARA_DIV -dump_dir <path> -updated_mlss_ids <optional> -ancestral_db <optional>
 
 =cut
 
@@ -64,7 +65,7 @@ sub default_options {
         #'ftp_root'     => '/gpfs/nobackup/ensembl/carlac/fake_ftp', # Fake e92 FTP used for testing in e93
 
         'compara_db'   => 'compara_curr', # can be URL or reg alias
-        'ancestral_db' => 'ancestral_curr',
+        'ancestral_db' => undef,
 
         # were there lastz patches this release? pass hive pipeline urls if yes, pass undef if no
         #  'lastz_patch_dbs' => [
@@ -91,8 +92,6 @@ sub default_options {
 
 
     	# general settings
-        'division'        => 'vertebrates',
-        'dump_dir'        => '#dump_root#/release-#curr_release#',
 		'lastz_dump_path' => 'maf/ensembl-compara/pairwise_alignments', # where, from the FTP root, is the LASTZ dumps?
         'reuse_prev_rel'  => 1, # copy symlinks from previous release dumps
         #'updated_mlss_ids' => [1142,1143,1134,1141], #the list of mlss_ids that we have re_ran/updated and cannot be detected through first_release

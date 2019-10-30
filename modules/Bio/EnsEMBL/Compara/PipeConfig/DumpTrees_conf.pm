@@ -26,7 +26,8 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -host compara1 -member_type ncrna -clusterset_id murinae
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -member_type ncrna -clusterset_id murinae
 
     By default the pipeline dumps the database named "compara_curr" in the
     registry, but a different database can be selected with -rel_db
@@ -73,9 +74,6 @@ sub default_options {
         #'member_type'       => 'protein',
         # either 'default' or 'murinae'
         #'clusterset_id'     => 'default',
-
-        # Can be "vertebrates", "plants", etc
-        'division'    => 'vertebrates',
 
         'pipeline_name'       => $self->o('member_type').'_'.$self->o('clusterset_id').'_'.$self->o('division').'_'.$self->default_pipeline_name().'_'.$self->o('rel_with_suffix'),
         'rel_db'        => 'compara_curr',

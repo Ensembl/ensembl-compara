@@ -19,16 +19,16 @@ limitations under the License.
 
 =head1 SYNOPSIS
 
-Initialise the pipeline on comparaY and dump the alignments found in the database msa_db_to_dump at comparaX:
+Initialise the pipeline on mysql-ens-compara-prod-X and dump the alignments found in the 'compara_curr' database:
 
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db mysql://ensro@comparaX/msa_db_to_dump --export_dir where/the/dumps/will/be/
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> --export_dir where/the/dumps/will/be/
 
 Dumps are created in a sub-directory of --export_dir, which defaults to scratch109
 
 The pipeline can dump all the alignments it finds on a server, so you can do something like:
 
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db compara_curr
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db compara_prev --format maf --method_link_types EPO
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -format maf -method_link_types EPO
 
 Note that in this case, because the locator field is not set, the registry file needs to include the core databases.
 
@@ -60,17 +60,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        # This pipeline takes the release number from the "ensembl_release"
-        # parameter, which by default comes from the Core API
-        # 'ensembl_release' => 92
-
-        # The division name
-        'division'  => 'vertebrates',
-
         # Compara reference to dump. Can be the "species" name (if loading the Registry via registry)
         # or the url of the database itself
-        # Intentionally left empty
-        #'compara_db' => 'Multi',
+        'compara_db' => 'compara_curr',
 
         'export_dir'    => $self->o('pipeline_dir'),
 

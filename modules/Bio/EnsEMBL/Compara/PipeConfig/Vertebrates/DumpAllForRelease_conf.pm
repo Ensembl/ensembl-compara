@@ -22,18 +22,18 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Plants::DumpAllForRelease_conf
+Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::DumpAllForRelease_conf
 
 =head1 DESCRIPTION
 
 The PipeConfig file for the pipeline that performs FTP dumps of everything required for a
 given release. It will detect which pipelines have been run and dump anything new.
 
-Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::DumpAllForRelease_conf -host mysql-ens-compara-prod-X -port XXXX
+Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::DumpAllForRelease_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Plants::DumpAllForRelease_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::DumpAllForRelease_conf;
 
 use strict;
 use warnings;
@@ -50,9 +50,10 @@ sub default_options {
         #'updated_mlss_ids' => [ 9802, 9803, 9804, 9805, 9806, 9807, 9788, 9789, 9810, 9794, 9809, 9748, 9749, 9750, 9751, 9763, 9764, 9765,
         #                        9766, 9778, 9779, 9780, 9781, 9797, 9798, 9799, 9800, 9801, 9808, 9787, 9813, 9814, 9812 ],
 
-        'dump_dir'         => '#dump_root#/release-'.$self->o('eg_release'),
+        'dump_dir'         => '#dump_root#/release-#curr_release#',
+        'ancestral_db'     => 'ancestral_curr',
 
-        'division'          => 'plants',
+        'division'          => 'vertebrates',
     };
 }
 
