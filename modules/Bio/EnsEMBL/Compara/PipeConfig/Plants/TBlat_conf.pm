@@ -19,15 +19,17 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::TBlat_conf
+Bio::EnsEMBL::Compara::PipeConfig::Plants::TBlat_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::TBlat_conf $(mysql-ens-compara-prod-6-ensadmin details hive) -mlss_id_list "[9769,9784,9754,9770,9785,9786,9771,9755,9767,9768,9782,9783,9756,9752,9753]"
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::TBlat_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -mlss_id_list "[9769,9784,9754,9770,9785,9786,9771,9755,9767,9768,9782,9783,9756,9752,9753]" \
+        -pipeline_name ${COMPARA_DIV}_tblat_batchX_${CURR_ENSEMBL_RELEASE}
 
 =head1 DESCRIPTION
 
-Version of the Ensembl TBlat pipeline used on Plants databases
+Version of the TBlat pipeline used on Plants databases.
 
 =head1 CONTACT
 
@@ -39,11 +41,12 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::TBlat_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Plants::TBlat_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::TBlat_conf');     # Default Vertebrates configuration with a few tweaks for Plants
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf');
 
 
 sub default_options {
