@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Families_conf
+Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::Families_conf
 
 =head1 SYNOPSIS
 
@@ -40,13 +40,14 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Families_conf
 
     #4. Run init_pipeline.pl script:
 
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Families_conf $(mysql-ens-compara-prod-6-ensadmin details script) -mlss_id <your_current_Family_mlss_id>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::Families_conf -host mysql-ens-compara-prod-X -prod XXXX \
+            -mlss_id <curr_family_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
 =head1 DESCRIPTION
 
-The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
+The PipeConfig file for Vertebrates Families pipeline that should automate most of the tasks.
 
 =head1 AUTHORSHIP
 
@@ -59,7 +60,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Families_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::Families_conf;
 
 use strict;
 use warnings;
@@ -73,37 +74,6 @@ sub default_options {
         %{ $self->SUPER::default_options },
 
         'division' => 'vertebrates',
-
-        # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'compara_prev',
-
-        # Once the members are loaded, it is fine to start the families pipeline
-        'member_db' => 'compara_members',
-        # used by the StableIdMapper as the location of the master 'mapping_session' table:
-        'master_db' => 'compara_master', 
-
-        # HMM clustering
-        #'hmm_clustering'      => 0,
-        'hmm_clustering'      => 1,
-
-        # data directories:
-        'warehouse_dir' => '/nfs/production/panda/ensembl/warehouse/compara/production/'.$self->o('ensembl_release').'/Families_'.$self->o('rel_with_suffix'),
-
-        'blast_params' => '',    # By default C++ binary has composition stats on and -seg masking off
-
-        # Thresholds for Mafft resource-classes
-        'max_genes_lowmem_mafft'        =>  8000,
-        'max_genes_singlethread_mafft'  => 50000,
-        'max_genes_computable_mafft'    => 300000,
-
-        # resource requirements:
-        'blast_minibatch_size'    => 25,                         # we want to reach the 1hr average runtime per minibatch
-        'blast_capacity'          => 5000,                       # work both as hive_capacity and resource-level throttle
-        'mafft_capacity'          => 400,
-        'cons_capacity'           => 100,
-        'HMMer_classify_capacity' => 1500,
-
-        'load_uniprot_members_from_member_db' => 1,
     };
 } ## end sub default_options
 
