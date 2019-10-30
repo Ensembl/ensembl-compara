@@ -360,7 +360,11 @@ div.matrix-container-wrapper { position: relative; clear: both; margin-left: 60p
 div.filterMatrix-container, div.matrix-container { width: 100%; height: 100%; overflow: auto; min-height: 280px;}
 
 div.horizontal-sub-header { width: 110px; margin: 0 auto; font-weight: bold; }
-div.vertical-sub-header   { transform: rotate(-90deg); position: absolute; top: 350px; margin-left: -40px; font-weight: bold; }
+
+div.vertical-sub-header   { transform: rotate(-90deg); position: absolute; top: 350px; font-weight: bold; }
+div.ConfigTrackHubMatrixForm div.vertical-sub-header   { margin-left: -40px; }
+div.ConfigRegMatrixForm  div.vertical-sub-header   { margin-left: -20px; }
+
 div.config-key            { padding-bottom: 5px; }
 span.track-key            { width: 15px; height: 15px;  display: inline-block; border: #ccc 1px solid; margin-bottom:-2px; margin-right: 10px;}
 span.track-key.on         { background-color: #0735ba; }
