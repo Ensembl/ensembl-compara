@@ -41,7 +41,8 @@ Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -password <your_password> -mlss_id <your_current_PT_mlss_id>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+            -division $COMPARA_DIV -mlss_id <curr_ptree_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -79,24 +80,17 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-    # User details
-        #'email'                 => 'john.smith@example.com',
-
-    # parameters inherited from EnsemblGeneric_conf and very unlikely to be redefined:
-        # It defaults to Bio::EnsEMBL::ApiVersion::software_version()
-        #'ensembl_release'       => 88,
-
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         #'mlss_id'               => 40077,
-        # Change this one to allow multiple runs
-        #'rel_suffix'            => 'b',
                                          
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
 
         # where to find the list of Compara methods. Unlikely to be changed
         'method_link_dump_file' => $self->check_file_in_ensembl('ensembl-compara/sql/method_link.txt'),
+
+        'pipeline_name' => $self->o('collection') . '_' . $self->o('division').'_protein_trees_'.$self->o('rel_with_suffix'),
 
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => undef,
@@ -119,13 +113,16 @@ sub default_options {
         'plots_dir'             => $self->o('work_dir') . '/plots', # Directory used to store plots and their input files
 
     # "Member" parameters:
-        'allow_ambiguity_codes'     => 0,
+        'allow_ambiguity_codes'     => 1,
         'allow_missing_coordinates' => 0,
         'allow_missing_cds_seqs'    => 0,
 
     # blast parameters:
         # Amount of sequences to be included in each blast job
         'num_sequences_per_blast_job'   => 500,
+
+        # cdhit is used to filter out proteins that are too close to each other
+        'cdhit_identity_threshold'      => 0.99,
 
         # define blast parameters and evalues for ranges of sequence-length
         # Important note: -max_hsps parameter is only available on ncbi-blast-2.3.0 or higher.
@@ -205,10 +202,10 @@ sub default_options {
           },
 
     # mapping parameters:
-        'do_stable_id_mapping'      => 0,
-        'do_treefam_xref'           => 0,
+        'do_stable_id_mapping'      => 1,
+        'do_treefam_xref'           => 1,
         # The TreeFam release to map to
-        'tf_release'                => undef,
+        'tf_release'                => '9_69',
 
     # plots
         #compute Jaccard Index and Gini coefficient (Lorenz curve)
@@ -228,43 +225,44 @@ sub default_options {
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   3,
         'blast_factory_capacity'    =>  50,
-        'blastp_capacity'           => 900,
-        'blastpu_capacity'          => 1000,
+        'blastp_capacity'           => 1500,
+        'blastpu_capacity'          => 150,
         'mcoffee_short_capacity'    => 600,
         'mafft_capacity'            => 2500,
         'mafft_himem_capacity'      => 1200,
         'split_genes_capacity'      => 600,
-        'alignment_filtering_capacity'  => 400,
-        'cluster_tagging_capacity'  => 200,
-        'prottest_capacity'         => 400,
+        'alignment_filtering_capacity'  => 200,
+        'cluster_tagging_capacity'  => 100,
+        'prottest_capacity'         => 200,
         'treebest_capacity'         => 400,
-        'raxml_capacity'            => 400,
+        'raxml_capacity'            => 200,
         'examl_capacity'            => 400,
         'copy_tree_capacity'        => 100,
-        'notung_capacity'           => 400,
+        'notung_capacity'           => 200,
         'ortho_tree_capacity'       => 50,
-        'quick_tree_break_capacity' => 100,
+        'quick_tree_break_capacity' => 1500,
         'build_hmm_capacity'        => 200,
         'ktreedist_capacity'        => 150,
-        'goc_capacity'              => 300,
-        'goc_stats_capacity'        => 5,
+        'goc_capacity'              => 30,
+        'goc_stats_capacity'        => 70,
         'genesetQC_capacity'        => 100,
-        'other_paralogs_capacity'   => 100,
-        'homology_dNdS_capacity'    => 1500,
+        'other_paralogs_capacity'   => 50,
+        'homology_dNdS_capacity'    => 1300,
         'copy_homology_dNdS_capacity'    => 100,
         'homology_dNdS_factory_capacity' =>  10,
-        'hc_capacity'               =>   4,
-        'decision_capacity'         =>   4,
+        'hc_capacity'               => 150,
+        'decision_capacity'         => 150,
         'hc_post_tree_capacity'     => 100,
         'HMMer_classify_capacity'   => 400,
         'loadmembers_capacity'      =>  30,
-        'HMMer_classifyPantherScore_capacity'   => 1500,
+        'HMMer_classifyPantherScore_capacity'   => 1000,
         'HMMer_search_capacity'     => 8000,
         'copy_trees_capacity'       => 50,
         'copy_alignments_capacity'  => 50,
         'mafft_update_capacity'     => 50,
         'raxml_update_capacity'     => 50,
-        'ortho_stats_capacity'      => 1000,
+        'ortho_stats_capacity'      => 10,
+        'cafe_capacity'             => 50,
 
     # hive priority values for some analyses:
         'hc_priority'               => -10,
@@ -282,18 +280,16 @@ sub default_options {
         # Uncomment and update the database locations
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
-        #'master_db' => 'mysql://ensro@compara1:3306/mm14_ensembl_compara_master',
-        'master_db' => undef,
+        'master_db' => 'compara_master',
         'ncbi_db'   => $self->o('master_db'),
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        #'prev_rel_db' => 'mysql://ensro@compara3:3306/mm14_compara_homology_67'
-        'prev_rel_db' => undef,
+        'prev_rel_db' => 'compara_prev',
         # By default, the stable ID mapping is done on the previous release database
         'mapping_db'  => $self->o('prev_rel_db'),
 
         # Where the members come from (as loaded by the LoadMembers pipeline)
-        #'member_db'   => 'mysql://....',
+        'member_db'   => 'compara_members',
 
     # Configuration of the pipeline worklow
 
@@ -304,7 +300,7 @@ sub default_options {
         #   'hmm' means that the pipeline will run an HMM classification
         #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
         #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
-        'clustering_mode'           => 'blastp',
+        'clustering_mode'           => 'hybrid',
 
         # List of species some genes have been projected from
         'projection_source_species_names' => [],
@@ -337,10 +333,16 @@ sub default_options {
         'use_timetree_times'        => 0,
 
     # GOC parameters
-        'goc_reuse_db'                  => undef,
+        # Points to the previous protein trees production database. Will be used for various GOC operations. 
+        # Use "undef" if running the pipeline without reuse.
+        'goc_reuse_db'                  => 'ptrees_prev',
         'goc_taxlevels'                 => [],
         'goc_threshold'                 => undef,
         'calculate_goc_distribution'    => 1,
+
+    # HMM specific parameters
+        'hmm_library_name'              => 'compara_hmm_91.hmm3',
+        'hmmer_search_cutoff'           => '1e-23',
 
     # Extra analyses
         # Export HMMs ?
@@ -357,6 +359,17 @@ sub default_options {
         'homology_dumps_dir'       => $self->o('dump_dir'). '/homology_dumps/',
         'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
         'prev_homology_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
+
+    # non-standard executable locations
+        'treerecs_exe' => '/nfs/production/panda/ensembl/warehouse/compara/alumni/mateus/home/reconcile/Treerecs/bin/Treerecs',
+    };
+}
+
+
+sub resource_classes {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::resource_classes('include_multi_threaded')},  # inherit the standard resource classes, incl. multi-threaded
     };
 }
 

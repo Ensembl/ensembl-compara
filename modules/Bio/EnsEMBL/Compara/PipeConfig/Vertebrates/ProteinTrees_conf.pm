@@ -28,21 +28,26 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::ProteinTrees_conf
+  Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ProteinTrees_conf
+
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -mlss_id <curr_ptree_mlss_id>
 
 =head1 DESCRIPTION
 
-    The Vertebrates PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
+The Vertebrates PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::ProteinTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ProteinTrees_conf;
 
 use strict;
 use warnings;
 
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::ProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf');
 
 
 sub default_options {
@@ -51,47 +56,13 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        # Tag attached to every single tree. Also used to select params - e.g. reg_conf, species_tree 
         'division'      => 'vertebrates',
-
-        'pipeline_name' => $self->o('collection') . '_' . $self->o('division').'_protein_trees_'.$self->o('rel_with_suffix'),
-
-    # User details
-
-    # parameters that are likely to change from execution to another:
-        # You can add a letter to distinguish this run from other runs on the same release
-        
-        #'rel_suffix'            => '',
-        # names of species we don't want to reuse this time
-        'do_not_reuse_list'     => [ ],
-
-    #default parameters for the geneset qc
-
-    # data directories:
-
-    # "Member" parameters:
-        'allow_ambiguity_codes'     => 1,
-
-    # blast parameters:
-        # cdhit is used to filter out proteins that are too close to each other
-        'cdhit_identity_threshold' => 0.99,
 
     # clustering parameters:
         # affects 'hcluster_dump_input_per_genome'
         'outgroups'                     => { 'saccharomyces_cerevisiae' => 2 },
         # File with gene / peptide names that must be excluded from the clusters (e.g. know to disturb the trees)
         'gene_blacklist_file'           => '/nfs/production/panda/ensembl/warehouse/compara/proteintree_blacklist.e82.txt',
-
-    # tree building parameters:
-        'use_raxml'                 => 0,
-        'use_quick_tree_break'      => 1,
-        'use_notung'                => 0,
-
-    # sequence type used on the phylogenetic inferences
-    # It has to be set to 1 for the strains
-        'use_dna_for_phylogeny'     => 0,
-
-    # alignment filtering options
 
     # species tree reconciliation
         # you can define your own species_tree for 'notung' or 'CAFE'. It *has* to be binary
@@ -111,34 +82,8 @@ sub default_options {
             '9443'    => 0.95,    #primates
           },
 
-    # mapping parameters:
-        'do_stable_id_mapping'      => 1,
-        'do_treefam_xref'           => 1,
-        # The TreeFam release to map to
-        'tf_release'                => '9_69',
-
-        # How will the pipeline create clusters (families) ?
-        # Possible values: 'blastp' (default), 'hmm', 'hybrid'
-        #   'blastp' means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
-        #   'hmm' means that the pipeline will run an HMM classification
-        #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
-        #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
-        #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
-        'clustering_mode'           => 'hybrid',
-
         # List of species some genes have been projected from
         'projection_source_species_names' => [ 'homo_sapiens', 'mus_musculus', 'danio_rerio' ],
-
-        # How much the pipeline will try to reuse from "prev_rel_db"
-        # Possible values: 'clusters' (default), 'blastp', 'members'
-        #   'members' means that only the members are copied over, and the rest will be re-computed
-        #   'hmms' is like 'members', but also copies the HMM profiles. It requires that the clustering mode is not 'blastp'  >> UNIMPLEMENTED <<
-        #   'hmm_hits' is like 'hmms', but also copies the HMM hits  >> UNIMPLEMENTED <<
-        #   'blastp' is like 'members', but also copies the blastp hits. It requires that the clustering mode is 'blastp'
-        #   'clusters' is like 'hmm_hits' or 'blastp' (depending on the clustering mode), but also copies the clusters
-        #   'alignments' is like 'clusters', but also copies the alignments  >> UNIMPLEMENTED <<
-        #   'trees' is like 'alignments', but also copies the trees  >> UNIMPLEMENTED <<
-        #   'homologies is like 'trees', but also copies the homologies  >> UNIMPLEMENTED <<
 
     # CAFE parameters
         # Do we want to initialise the CAFE part now ?
@@ -149,11 +94,8 @@ sub default_options {
     # GOC parameters
         'goc_taxlevels'                 => ["Euteleostomi","Ciona"],
         'calculate_goc_distribution'    => 0,
-        'goc_batch_size'                => 20,
 
     # Extra analyses
-        # Export HMMs ?
-        'do_hmm_export'                 => 0,
         # Do we want the Gene QC part to run ?
         'do_gene_qc'                    => 1,
         # Do we extract overall statistics for each pair of species ?

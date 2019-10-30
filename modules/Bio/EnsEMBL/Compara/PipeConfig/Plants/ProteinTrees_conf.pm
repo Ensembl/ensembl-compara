@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::ProteinTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf
 
 =head1 SYNOPSIS
 
@@ -37,27 +37,25 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::ProteinTrees_conf
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::ProteinTrees_conf --mlss_id <your_current_PT_mlss_id>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+            -mlss_id <curr_ptree_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
 
 =head1 DESCRIPTION
 
-    The PipeConfig example file for the Plants version of
-    ProteinTrees pipeline. This file is inherited from & customised further
-    within the Ensembl Genomes infrastructure but this file serves as
-    an example of the type of configuration we perform.
+The Plants PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::ProteinTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf;
 
 use strict;
 use warnings;
 
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::ProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf');
 
 
 sub default_options {
@@ -66,24 +64,25 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-    division => 'plants',
-    # mlss_id  => 40138,
+    'division'   => 'plants',
+    'collection' => $self->o('division'),
 
-    'do_not_reuse_list'     => [ ],
-
-    # How will the pipeline create clusters (families) ?
-    # Possible values: 'blastp' (default), 'hmm', 'hybrid'
-    #   'blastp' means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
-    #   'hmm' means that the pipeline will run an HMM classification
-    #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
-    #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
-    #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
-    'clustering_mode'           => 'hybrid',
+    # clustering parameters:
+        # affects 'hcluster_dump_input_per_genome'
+        'outgroups' => {
+            'homo_sapiens'             => 2,
+            'caenorhabditis_elegans'   => 2,
+            'ciona_savignyi'           => 2,
+            'drosophila_melanogaster'  => 2,
+            'saccharomyces_cerevisiae' => 2,
+        },
+        # File with gene / peptide names that must be excluded from the clusters (e.g. know to disturb the trees)
+        'gene_blacklist_file'          => '/nfs/production/panda/ensembl/warehouse/compara/proteintree_blacklist.e82.txt',
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
-        'species_tree_input_file'   => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/species_tree.topology.nw'),
-        'binary_species_tree_input_file'    => undef,
+        'species_tree_input_file'        => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/species_tree.topology.nw'),
+        'binary_species_tree_input_file' => undef,
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
@@ -96,11 +95,26 @@ sub default_options {
             '33090'   => 0.65,    #plants
             '3193'    => 0.7,     #land plants
             '3041'    => 0.65,    #green algae
-          },
+        },
+
+    # CAFE parameters
+        # Do we want to initialise the CAFE part now ?
+        'initialise_cafe_pipeline'  => 1,
+        #Use Timetree divergence times for the CAFETree internal nodes
+        'use_timetree_times'        => 1,
 
     # GOC parameters
         'goc_taxlevels' => ['asterids', 'fabids', 'malvids', 'Pooideae', 'Oryzoideae', 'Panicoideae'],
+        'calculate_goc_distribution' => 0,
 
+    # Extra analyses
+        # Do we want the Gene QC part to run ?
+        'do_gene_qc'             => 1,
+        # Do we extract overall statistics for each pair of species ?
+        'do_homology_stats'      => 1,
+        # Do we need a mapping between homology_ids of this database to another database ?
+        # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
+        'do_homology_id_mapping' => 1,
     };
 }
 
