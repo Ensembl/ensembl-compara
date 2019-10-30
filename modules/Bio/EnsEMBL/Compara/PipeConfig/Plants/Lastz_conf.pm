@@ -19,33 +19,17 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf
+Bio::EnsEMBL::Compara::PipeConfig::Plants::Lastz_conf
 
 =head1 SYNOPSIS
 
-    #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
-
-    #3. Check all default_options in PairAligner_conf.pm, especically:
-        release
-        pipeline_db (-host)
-        resource_classes 
-
-    #4. Check all default_options below, especially
-        ref_species (if not homo_sapiens)
-        default_chunks
-        pair_aligner_options
-
-    #5. Run init_pipeline.pl script:
-        Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::Lastz_conf --dbname hsap_btau_lastz_64 --password <your password> --mlss_id 534 --pipeline_db -host=compara1 --ref_species homo_sapiens --pipeline_name LASTZ_hs_bt_64 
-
-    #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::Lastz_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -mlss_id_list "[9877,9878,9870,9874]"
 
 
 =head1 DESCRIPTION  
 
-    This configuaration file gives defaults specific for the lastz net pipeline. It inherits from PairAligner_conf.pm and parameters here will over-ride the parameters in PairAligner_conf.pm. 
-    Please see PairAligner_conf.pm for general details of the pipeline.
+This is a Plants configuration file for LastZ pipeline.
 
 =head1 CONTACT
 
@@ -57,11 +41,12 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::Lastz_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Plants::Lastz_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Lastz_conf');  # Inherit from LastZ@EBI config file
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf');
 
 
 sub default_options {
@@ -75,7 +60,7 @@ sub default_options {
         'do_compare_to_previous_db' => 0,
         # Net
         'bidirectional' => 1,
-	   };
+	};
 }
 
 
