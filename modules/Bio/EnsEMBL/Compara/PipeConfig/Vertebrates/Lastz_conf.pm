@@ -15,24 +15,35 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+=head1 NAME
+
+Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::Lastz_conf
+
 =head1 SYNOPSIS
 
-Example 1: 
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Lastz_conf --mlss_id_list "[1596,1583,1570,1562]"
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::Lastz_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -mlss_id_list "[1596,1583,1570,1562]"
 
-Example 2: 
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Lastz_conf --collection hagfish --non_ref_species eptatretus_burgeri
+=head1 DESCRIPTION
 
-Example 3: 
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Lastz_conf --collection collection-e94_new_species_human_lastz -ref_species homo_sapiens
+This is a Vertebrates configuration file for LastZ pipeline.
+
+=head1 CONTACT
+
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Lastz_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::Lastz_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Lastz_conf');  # Inherit from LastZ@EBI config file
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf');
 
 
 sub default_options {
@@ -41,7 +52,7 @@ sub default_options {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 
         'division'  => 'vertebrates',
-	   };
+	};
 }
 
 1;
