@@ -17,14 +17,12 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::GeneMemberHomologyStats_conf
+Bio::EnsEMBL::Compara::PipeConfig::EG::GeneMemberHomologyStats_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl 
-      Bio::EnsEMBL::Compara::PipeConfig::EGGeneMemberHomologyStats_conf 
-      -curr_rel_db mysql://ensrw:XXX\@server/merged_compara_db 
-      -collection collection_name
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EG::GeneMemberHomologyStats_conf -host mysql-ens-compara-prod-X -port XXXX \
+      -curr_rel_db <curr_rel_compara_eg_db_url> -collection <collection_name>
 
 =head1 DESCRIPTION
 
@@ -33,7 +31,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::GeneMemberHomologyStats_conf
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::GeneMemberHomologyStats_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EG::GeneMemberHomologyStats_conf;
 
 use strict;
 use warnings;
@@ -47,14 +45,6 @@ sub default_options {
 
         'compara_db'    => $self->o('curr_rel_db'),     # For backwards compatibility
     }
-}
-
-sub resource_classes {
-  my ($self) = @_;
-  return {
-    %{$self->SUPER::resource_classes},
-    'default' => { 'LSF' => '-q production-rh7' },
-  };
 }
 
 1;

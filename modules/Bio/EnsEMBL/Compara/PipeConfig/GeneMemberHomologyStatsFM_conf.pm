@@ -21,7 +21,8 @@ Bio::EnsEMBL::Compara::PipeConfig::GeneMemberHomologyStatsFM_conf
 
 =head1 SYNOPSIS
 
- init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneMemberHomologyStatsFM_conf -compara_db 'mysql://...'
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneMemberHomologyStatsFM_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -compara_db <curr_rel_compara_eg_db_url> -collection <collection_name>
 
 =head1 DESCRIPTION
 
@@ -47,6 +48,16 @@ use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');   # we don't need Compara tables in this particular case
+
+sub default_options {
+    my ($self) = @_;
+    return {
+        %{ $self->SUPER::default_options() },
+
+        'compara_db' => 'compara_curr',
+        'collection' => undef,
+    };
+}
 
 sub pipeline_analyses {
     my ($self) = @_;
