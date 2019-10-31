@@ -162,8 +162,9 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        'ensembl_release' => $self->o('ensembl_release'),
-        'orth_batch_size' => 10,
+        'ensembl_release'    => $self->o('ensembl_release'),
+        'homology_dumps_dir' => $self->o('homology_dumps_dir'),
+        'orth_batch_size'    => 10,
     };
 }
 
