@@ -21,16 +21,20 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::PostHomologyMerge_conf
+Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PostHomologyMerge_conf
+
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PostHomologyMerge_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 DESCRIPTION
 
-Specific version of PostHomologyMerge for Vertebrates
+Specific version of PostHomologyMerge for Vertebrates.
 
 =cut
 
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::PostHomologyMerge_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PostHomologyMerge_conf;
 
 use strict;
 use warnings;
@@ -50,42 +54,6 @@ sub default_options {
 
         'division'        => 'vertebrates',
         'collection'      => 'default',  # The name of the clusterset_id in which to find the trees
-
-        'do_member_stats_fam'   => 1,
-
-        # # ncRNAs don't have GOC, so we don't want to penalize them for that
-        # 'high_confidence_ranges'    => [
-        #     {
-        #         'range_label'       => 'protein',
-        #         'range_filter'      => '((homology_id < 1400000000) OR (homology_id BETWEEN 1800000000 AND 1900000000) OR (homology_id BETWEEN 2000000000 AND 2100000000))',
-        #     },
-        #     {
-        #         'range_label'       => 'ncrna',
-        #         'range_filter'      => '((homology_id BETWEEN 1400000000 AND 1800000000) OR (homology_id BETWEEN 1900000000 AND 2000000000) OR (homology_id > 2100000000))',
-        #     },
-        # ],
-        # 
-        # # In this structure, the "thresholds" are for resp. the GOC score,
-        # # the WGA coverage and %identity
-        # 'threshold_levels' => [
-        #     {
-        #         'taxa'          => [ 'Apes', 'Murinae' ],
-        #         'thresholds'    => [ 75, 75, 80 ],
-        #     },
-        #     {
-        #         'taxa'          => [ 'Mammalia', 'Aves', 'Percomorpha' ],
-        #         'thresholds'    => [ 75, 75, 50 ],
-        #     },
-        #     {
-        #         'taxa'          => [ 'Euteleostomi', 'Ciona' ],
-        #         'thresholds'    => [ 50, 50, 25 ],
-        #     },
-        #     {
-        #         'taxa'          => [ 'all' ],
-        #         'thresholds'    => [ undef, undef, 25 ],
-        #     },
-        # ],
-
     };
 }
 
