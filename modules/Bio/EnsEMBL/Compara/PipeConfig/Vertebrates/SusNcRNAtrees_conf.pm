@@ -27,7 +27,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::SusNcRNAtrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::SusNcRNAtrees_conf
 
 =head1 SYNOPSIS
 
