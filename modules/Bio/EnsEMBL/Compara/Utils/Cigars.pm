@@ -83,7 +83,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
   Example     : assert_valid_cigar('3M4D');  # will return
   Example     : assert_valid_cigar('3M0X');  # will throw an exception
   Description : Tests the validity of a cigar line, which is:
-                 1) is a sequence of digits and letters
+                 1) is a sequence of digits and upper-case letters
                  2) the numbers are all non-zero
                 Currently all the letters are allowed in this test, but some
                 methods in Utils::Cigars may only accept a restricted set of
@@ -214,7 +214,7 @@ sub expand_cigar {
 
     my $expanded_cigar = '';
     #$cigar =~ s/(\d*)([A-Z])/$2 x ($1||1)/ge; #Expand
-    while ($cigar =~ /(\d*)([A-Za-z])/g) {
+     while ($cigar =~ /(\d*)([A-Z])/g) {
         $expanded_cigar .= $2 x ($1 || 1);
     }
     return $expanded_cigar;
@@ -256,7 +256,7 @@ sub alignment_length_from_cigar {
     assert_valid_cigar($cigar);
 
     my $length = 0;
-    while ($cigar =~ /(\d*)([A-Za-z])/g) {
+     while ($cigar =~ /(\d*)([A-Z])/g) {
         $length += ($1 || 1);
     }
     return $length;
