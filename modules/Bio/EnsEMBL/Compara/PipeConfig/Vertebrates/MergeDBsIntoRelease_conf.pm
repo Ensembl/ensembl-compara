@@ -45,7 +45,7 @@ for alternative configurations.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::MergeDBsIntoRelease_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MergeDBsIntoRelease_conf;
 
 use strict;
 use warnings;
