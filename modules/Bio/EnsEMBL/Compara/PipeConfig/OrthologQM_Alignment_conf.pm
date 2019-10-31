@@ -297,7 +297,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'assign_wga_coverage_score',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::AssignQualityScore',
-            -hive_capacity     => 100,
+            -hive_capacity     => 30,
             -batch_size        => 10,
         },
 
