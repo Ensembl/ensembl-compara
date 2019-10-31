@@ -65,7 +65,6 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'division'   => 'vertebrates',
-        'collection' => $self->o('division'),
 
     # "Member" parameters:
         # Only needed in e100

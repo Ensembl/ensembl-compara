@@ -65,7 +65,6 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'division'    => 'plants',
-        'collection'  => $self->o('division'),
 
     # "Member" parameters:
         # Store ncRNA genes

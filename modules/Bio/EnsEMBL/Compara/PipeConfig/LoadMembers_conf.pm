@@ -32,12 +32,13 @@ Bio::EnsEMBL::Compara::PipeConfig::LoadMembers_conf
 
 =head1 DESCRIPTION
 
-    The pipeline will create a database with all the (gene|seq)_members of a collection of species.
+The pipeline will create a database with all the (gene|seq)_members of a
+collection of species (by default, '<division_name>' collection).
 
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -division $COMPARA_DIV -collection <collection_name>
+        -division $COMPARA_DIV
 
 =head1 AUTHORSHIP
 
@@ -66,6 +67,8 @@ sub default_options {
 
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
+
+        'collection' => $self->o('division'),
 
         # names of species we don't want to reuse this time
         #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
