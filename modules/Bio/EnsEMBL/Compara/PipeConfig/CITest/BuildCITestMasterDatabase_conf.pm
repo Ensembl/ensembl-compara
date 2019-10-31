@@ -51,8 +51,8 @@ Bio::EnsEMBL::Compara::PipeConfig::CITest::BuildCITestMasterDatabase_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::CITest::BuildCITestMasterDatabase_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -dst_host <host> -dst_port <port>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CITest::BuildCITestMasterDatabase_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -dst_host mysql-ens-compara-prod-Y -dst_port YYYY
 
     #1. Create a new master database
     #2. Clone data regions from JSON files located in 'config_dir'/core
