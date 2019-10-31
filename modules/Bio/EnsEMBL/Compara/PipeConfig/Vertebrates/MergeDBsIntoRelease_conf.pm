@@ -22,20 +22,20 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::MergeDBsIntoRelease_conf
+Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MergeDBsIntoRelease_conf
 
 =head1 SYNOPSIS
 
     #1. update all databases' names and locations
 
     #2. initialize the pipeline:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::MergeDBsIntoRelease_conf -host mysql-ens-compara-prod-X -port XXXX
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MergeDBsIntoRelease_conf -host mysql-ens-compara-prod-X -port XXXX
 
     #3. run the beekeeper.pl
 
 =head1 DESCRIPTION
 
-A pipeline to merge some production databases onto the release one.
+A Vertebrates specific pipeline to merge some production databases onto the release one.
 It is currently working well only with the "gene side" of Compara (protein_trees, families and ncrna_trees)
 because synteny_region_id is not ranged by MLSS.
 
@@ -61,15 +61,6 @@ sub default_options {
 
         # How many tables can be dumped and re-created in parallel (too many will slow the process down)
         'copying_capacity'  => 10,
-
-        # Do we want ANALYZE TABLE and OPTIMIZE TABLE on the final tables ?
-        'analyze_optimize'  => 1,
-
-        # Do we want to backup the target merge table before-hand ?
-        'backup_tables'     => 1,
-
-        # Do we want to be very picky and die if a table hasn't been listed above / isn't in the target database ?
-        'die_if_unknown_table'      => 1,
 
         # All the source databases
         # edit the reg_conf file rather than adding URLs
@@ -105,18 +96,6 @@ sub default_options {
             'seq_member_projection' => 'protein_db',
             'peptide_align_feature%' => 'protein_db',
         },
-
-        # In these databases, ignore these tables
-        'ignored_tables'    => {
-            # 'members_db' => [qw(gene transcript)],
-            # 'protein_db'        => [qw(gene_tree_node)],
-            # 'protein_db'        => [qw(all_cov_ortho poor_cov_ortho poor_cov_2 dubious_seqs)],
-            #'family_db' => [qw(gene_member seq_member sequence tmp_job job_summary test_length)],
-             #'mouse_prot_db'  => [qw(gene_member seq_member sequence other_member_sequence exon_boundaries  prev_rel_gene_member seq_member_projection_stable_id hmm_annot)],
-             #'mouse_ncrna_db' => [qw(gene_member seq_member sequence other_member_sequence exon_boundaries  prev_rel_gene_member seq_member_projection_stable_id hmm_annot)],
-            # 'projection_db' => [qw(gene_member seq_member sequence other_member_sequence exon_boundaries seq_member_projection)],
-        },
-
    };
 }
 

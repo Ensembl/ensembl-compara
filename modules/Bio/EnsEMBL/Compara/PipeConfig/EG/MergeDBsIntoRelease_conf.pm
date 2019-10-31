@@ -22,27 +22,27 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EGMergeDBsIntoRelease_conf
+Bio::EnsEMBL::Compara::PipeConfig::EG::MergeDBsIntoRelease_conf
 
 =head1 SYNOPSIS
 
     #1. update all databases' names and locations
 
     #2. initialize the pipeline:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::MergeDBsIntoRelease_conf -password <your_password>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EG::MergeDBsIntoRelease_conf -host mysql-ens-compara-prod-X -port XXXX
 
     #3. run the beekeeper.pl
 
 =head1 DESCRIPTION
 
-A pipeline to merge some production databases onto the release one.
+A Ensembl Genomes specific pipeline to merge some production databases onto the release one.
 It is currently working well only with the "gene side" of Compara
 (protein_trees, families and ncrna_trees)
 because synteny_region_id is not ranged by MLSS.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::MergeDBsIntoRelease_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EG::MergeDBsIntoRelease_conf;
 
 use strict;
 use warnings;
@@ -59,9 +59,6 @@ sub default_options {
   'die_if_unknown_table'    => 0,
 
   'reg_conf' => undef,
-
-  # All the source databases
-  'src_db_aliases' => {},
 
   # The target database
   'curr_rel_db' => undef,
