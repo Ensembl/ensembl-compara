@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf
+Bio::EnsEMBL::Compara::PipeConfig::Legacy::EPO_pt3_conf
 
 =head1 DESCRIPTION
 
@@ -47,7 +47,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf -host mysql-ens-compara-prod-X -port XXXX \
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Legacy::EPO_pt3_conf -host mysql-ens-compara-prod-X -port XXXX \
             -division $COMPARA_DIV -species_set_name <species_set_name> -mlss_id <curr_epo_mlss_id> \
             -compara_mapped_anchor_db <db_alias_from_epo_pt2_pipeline> 
 
@@ -64,7 +64,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Legacy::EPO_pt3_conf;
 
 use strict;
 use warnings;

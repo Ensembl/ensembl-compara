@@ -19,14 +19,14 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EPO_pt2_conf
+Bio::EnsEMBL::Compara::PipeConfig::Legacy::EPO_pt2_conf
 
 =head1 SYNOPSIS
 
     #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_pt2_conf -host mysql-ens-compara-prod-X -port XXXX \
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Legacy::EPO_pt2_conf -host mysql-ens-compara-prod-X -port XXXX \
             -division $COMPARA_DIV -species_set_name <species_set_name> -mlss_id <curr_epo_mlss_id>
 
     #5. Run the "beekeeper.pl ... -sync" and then " -loop" command suggested by init_pipeline.pl
@@ -48,7 +48,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EPO_pt2_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Legacy::EPO_pt2_conf;
 
 use strict;
 use warnings;
