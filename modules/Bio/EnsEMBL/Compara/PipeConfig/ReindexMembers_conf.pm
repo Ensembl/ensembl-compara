@@ -30,6 +30,11 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::PipeConfig::ReindexMembers_conf
 
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -prev_tree_db <db_alias_or_url> -collection <collection> -member_type <protein|ncrna>
+
 =head1 DESCRIPTION
 
 Pipeline to update the member_ids of a gene-tree database (in case the members
@@ -88,6 +93,10 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
+
+        # Where to find the shared databases (use URLs or registry names)
+        'master_db' => 'compara_master',
+        'member_db' => 'compara_members',
 
         # Copy from master db
         'tables_from_master'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name' ],

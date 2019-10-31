@@ -28,17 +28,18 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsReindexMembers_conf
+Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsReindexMembers_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsReindexMembers_conf -collection <collection> -member_type <protein|ncrna>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -collection <collection> -member_type <protein|ncrna>
 
 =head1 EXAMPLES
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsReindexMembers_conf ...
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX ...
 
-e99  # From now on the collection and member_type parameters are only used to name the database, mlss_id is not needed any more
+e99  # From now on the collection and member_type parameters are only used to name the database, mlss_id is not needed anymore
     -prev_tree_db murinae_ptrees_prev  -collection murinae -member_type protein
     -prev_tree_db murinae_nctrees_prev -collection murinae -member_type ncrna
     -prev_tree_db sus_ptrees_prev      -collection sus     -member_type protein
@@ -49,26 +50,10 @@ e98 protein-trees
 e98 ncRNA-trees
     -mlss_id 40126 -member_type protein -prev_rel_db murinae_ptrees_prev  $(mysql-ens-compara-prod-7-ensadmin details hive)
 
-e94 protein-trees
-    -mlss_id 40111 -member_type protein -member_db $(mysql-ens-compara-prod-2 details url waakanni_load_members_94) -prev_rel_db $(mysql-ens-compara-prod-1 details url mateus_murinae_protein_trees_93) $(mysql-ens-compara-prod-1-ensadmin details hive)
-e94 ncRNA-trees
-    -mlss_id 40112 -member_type ncrna -member_db $(mysql-ens-compara-prod-2 details url waakanni_load_members_94) -prev_rel_db $(mysql-ens-compara-prod-1 details url mateus_murinae_ncrna_trees_93) $(mysql-ens-compara-prod-1-ensadmin details hive)
-
-e93 protein-trees
-    -mlss_id 40111 -member_type protein -member_db $(mysql-ens-compara-prod-2 details url mateus_load_members_93) -prev_rel_db $(mysql-ens-compara-prod-3 details url carlac_murinae_reindex_protein_92)
-e93 ncRNA-trees
-    -mlss_id 40112 -member_type ncrna -member_db $(mysql-ens-compara-prod-2 details url mateus_load_members_93) -prev_rel_db $(mysql-ens-compara-prod-2 details url muffato_murinae_ncrna_trees_92)
-
-e91 protein-trees
-    -mlss_id 40111 -member_type protein -member_db $(mysql-ens-compara-prod-2 details url mateus_load_members_91) -prev_rel_db $(mysql-ens-compara-prod-3 details url carlac_murinae_protein_trees_90)
-e91 ncRNA-trees
-    -mlss_id 40112 -member_type ncrna -member_db $(mysql-ens-compara-prod-2 details url mateus_load_members_91) -prev_rel_db $(mysql-ens-compara-prod-4 details url mateus_murinae_nctrees_90)
-
 =head1 DESCRIPTION
 
-A specialized version of ReindexMembers_conf to use in Vertebrates for
-the mouse-strains, although "murinae" is only used to set up the
-pipeline name.
+A specialized version of ReindexMembers pipeline to use in Vertebrates for
+strains/breeds, e.g. murinae or sus.
 
 =head1 AUTHORSHIP
 
@@ -81,7 +66,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsReindexMembers_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsReindexMembers_conf;
 
 use strict;
 use warnings;
@@ -95,16 +80,7 @@ sub default_options {
 
         'division'      => 'vertebrates',
 
-        # Main capacity for the pipeline
-        'copy_capacity'                 => 4,
-
-        # Params for healthchecks;
-        'hc_capacity'                     => 40,
-        'hc_batch_size'                   => 10,
-
-        # Where to find the shared databases (use URLs or registry names)
-        'master_db' => 'compara_master',
-        'member_db' => 'compara_members',
+        'prev_tree_db' => $self->o('collection') . '#expr( (#member_type# eq "protein") ? "_ptrees_prev" : "_nctrees_prev" )expr#',
     };
 }
 
