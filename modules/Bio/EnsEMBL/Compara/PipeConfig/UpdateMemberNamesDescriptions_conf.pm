@@ -23,6 +23,11 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::PipeConfig::UpdateMemberNamesDescriptions_conf
 
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::UpdateMemberNamesDescriptions_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV
+
 =head1 DESCRIPTION  
 
 The PipeConfig file for the pipeline that imports alternative alleles as homologies.
@@ -45,8 +50,6 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'pipeline_name'   => 'member_description_update_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
-
-        'division'        => 'vertebrates',
 
         #Pipeline capacities:
         'update_capacity'                           => '5',
