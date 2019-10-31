@@ -749,7 +749,7 @@ sub compute_alignment_depth {
                 $n_aligned_ids{ $group_ids->[$i] } ++;
             }
         }
-        # "- 1" because the depth is the number of *other* sequences
+        # "- 1" because the depth is the number of *other* groups
         my $this_depth = scalar(keys %n_aligned_ids) - 1;
 
         # Update the counters
