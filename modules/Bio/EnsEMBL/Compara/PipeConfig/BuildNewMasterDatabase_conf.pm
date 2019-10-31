@@ -47,7 +47,7 @@ Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf
     #1. Create a new master database
     #2. Populate it through PrepareMasterDatabaseForRelease pipeline
 
-    For citest division, see Bio::EnsEMBL::Compara::PipeConfig::EBI::CITest::BuildCITestMasterDatabase_conf
+    For citest division, see Bio::EnsEMBL::Compara::PipeConfig::CITest::BuildCITestMasterDatabase_conf
 
 =head1 AUTHORSHIP
 
