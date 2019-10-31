@@ -37,9 +37,8 @@ Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf
 
 =head1 DESCRIPTION  
 
-This is a base configuration file for LastZ pipeline.
-It is not intended to be run on its own, it just turns the generic
-PairAligner pipeline into a LastZ one.
+This is a base configuration file for LastZ pipeline, based on the generic
+PairAligner pipeline.
 
 =head1 CONTACT
 
