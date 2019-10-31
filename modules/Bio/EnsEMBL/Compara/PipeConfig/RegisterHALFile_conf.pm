@@ -32,13 +32,24 @@ export COMPARA_HAL_DIR="path_to_file/data_files/"
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf -mlss_id <mlss_id> -species_name_mapping "{134 => 'C57B6J', ... }"
-
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf -mlss_id 835 -species_name_mapping "{134 => 'C57B6J', 155 => 'rn6',160 => '129S1_SvImJ',161 => 'A_J',162 => 'BALB_cJ',163 => 'C3H_HeJ',164 => 'C57BL_6NJ',165 => 'CAST_EiJ',166 => 'CBA_J',167 => 'DBA_2J',168 => 'FVB_NJ',169 => 'LP_J',170 => 'NOD_ShiLtJ',171 => 'NZO_HlLtJ',172 => 'PWK_PhJ',173 => 'WSB_EiJ',174 => 'SPRET_EiJ', 178 => 'AKR_J'}" -master_db "mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master" -halStats_exe '/nfs/software/ensembl/RHEL7-JUL2017-core2/linuxbrew/bin/halStats' -host "mysql-ens-compara-prod-2.ebi.ac.uk:4522"
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -mlss_id <mlss_id> -species_name_mapping "{134 => 'C57B6J', ... }"
 
 =head1 DESCRIPTION
 
-Mini-pipeline to load the species-tree and the chromosome-name mapping from a HAL file
+Mini-pipeline to load the species-tree and the chromosome-name mapping from a HAL file.
+
+=head1 EXAMPLES
+
+    # default execution for Vertebrates
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf -host mysql-ens-compara-prod-1 -port 4485 \
+        -division vertebrates -mlss_id 835 \
+        -species_name_mapping "{134 => 'C57B6J', 155 => 'rn6',160 => '129S1_SvImJ',161 => 'A_J',162 => 'BALB_cJ',163 => 'C3H_HeJ',164 => 'C57BL_6NJ',165 => 'CAST_EiJ',166 => 'CBA_J',167 => 'DBA_2J',168 => 'FVB_NJ',169 => 'LP_J',170 => 'NOD_ShiLtJ',171 => 'NZO_HlLtJ',172 => 'PWK_PhJ',173 => 'WSB_EiJ',174 => 'SPRET_EiJ', 178 => 'AKR_J'}"
+
+    # changing the location of master_db and halStats_exe
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf -host mysql-ens-compara-prod-1 -port 4485 \
+        -division vertebrates -mlss_id 835 -master_db "mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master" -halStats_exe '/nfs/software/ensembl/RHEL7-JUL2017-core2/linuxbrew/bin/halStats' \
+        -species_name_mapping "{134 => 'C57B6J', 155 => 'rn6',160 => '129S1_SvImJ',161 => 'A_J',162 => 'BALB_cJ',163 => 'C3H_HeJ',164 => 'C57BL_6NJ',165 => 'CAST_EiJ',166 => 'CBA_J',167 => 'DBA_2J',168 => 'FVB_NJ',169 => 'LP_J',170 => 'NOD_ShiLtJ',171 => 'NZO_HlLtJ',172 => 'PWK_PhJ',173 => 'WSB_EiJ',174 => 'SPRET_EiJ', 178 => 'AKR_J'}"
 
 =head1 CONTACT
 
@@ -59,6 +70,16 @@ use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For INPUT_PLUS
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
+
+
+sub default_options {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::default_options},
+
+        'master_db' => 'compara_master',
+    };
+}
 
 
 sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
