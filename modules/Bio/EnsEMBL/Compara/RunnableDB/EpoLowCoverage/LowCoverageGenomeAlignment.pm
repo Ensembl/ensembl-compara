@@ -55,6 +55,7 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment;
+use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 
@@ -411,8 +412,7 @@ sub _parse_results {
 			print "start_X $start_X end_X $end_X subseq_length " . length($subseq) . "\n" if ($self->debug);
 			#print "before cigar_line " . $genomic_align->cigar_line . "\n";
 
-			
-			$genomic_align->cigar_line($start_X . "X" .$genomic_align->cigar_line . $end_X . "X");
+			$genomic_align->cigar_line( Bio::EnsEMBL::Compara::Utils::Cigars::pad_with_x($genomic_align->cigar_line, $start_X, $end_X) );
 
 			#print "after cigar_line " . $genomic_align->cigar_line . "\n";
 
@@ -630,7 +630,7 @@ sub _parse_results {
  	    $end_X = length($seq) - ($start_X+length($subseq));
  	    print "start_X $start_X end_X $end_X subseq_length " . length($subseq) . "\n" if ($self->debug);
 	    
- 	    $genomic_align->cigar_line($start_X . "X" .$genomic_align->cigar_line . $end_X . "X");
+ 	    $genomic_align->cigar_line( Bio::EnsEMBL::Compara::Utils::Cigars::pad_with_x($genomic_align->cigar_line, $start_X, $end_X) );
 	    
 	    #free aligned_sequence now that I've used it to 
 	    #create the cigar_line

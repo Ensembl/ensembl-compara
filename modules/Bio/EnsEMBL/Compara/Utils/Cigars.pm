@@ -72,7 +72,33 @@ use strict;
 use warnings;
 no warnings ('substr');
 
+use List::Util qw(min);
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
+
+
+=head2 assert_valid_cigar
+
+  Arg [1]     : String $cigar_line
+  Example     : assert_valid_cigar('3M4D');  # will return
+  Example     : assert_valid_cigar('3M0X');  # will throw an exception
+  Description : Tests the validity of a cigar line, which is:
+                 1) is a sequence of digits and upper-case letters
+                 2) the numbers are all non-zero
+                Currently all the letters are allowed in this test, but some
+                methods in Utils::Cigars may only accept a restricted set of
+                letters.
+  Returntype  : none
+  Exceptions  : Throws if the cigar-line doesn't pass the checks
+
+=cut
+
+sub assert_valid_cigar {
+    my $cigar_line = shift;
+    if ($cigar_line !~ /^(([1-9][0-9]*)?[A-Z])*$/) {
+        throw("Invalid cigar_line '$cigar_line'\n")
+    }
+}
 
 
 =head2 compose_sequence_with_cigar
@@ -97,16 +123,20 @@ sub compose_sequence_with_cigar {
     my $alignment_string = "";
     my $seq_start = 0;
 
-    throw("Invalid cigar_line '$cigar_line'\n") if $cigar_line !~ /^[0-9A-Z]*$/;
+    assert_valid_cigar($cigar_line);
 
     while ($cigar_line =~ /(\d*)([A-Z])/g) {
 
         my $length = ($1 || 1) * $expansion_factor;
         my $char = $2;
 
-        if ($char eq 'D') {
+        if ($char eq 'D' or $char eq 'G') {
 
             $alignment_string .= "-" x $length;
+
+        } elsif ($char eq 'X') {
+
+            $alignment_string .= "." x $length;
 
         } elsif ($char eq 'M' or $char eq 'I') {
 
@@ -179,9 +209,12 @@ sub cigar_from_alignment_string {
 
 sub expand_cigar {
     my $cigar = shift;
+
+    assert_valid_cigar($cigar);
+
     my $expanded_cigar = '';
     #$cigar =~ s/(\d*)([A-Z])/$2 x ($1||1)/ge; #Expand
-    while ($cigar =~ /(\d*)([A-Za-z])/g) {
+     while ($cigar =~ /(\d*)([A-Z])/g) {
         $expanded_cigar .= $2 x ($1 || 1);
     }
     return $expanded_cigar;
@@ -219,8 +252,11 @@ sub collapse_cigar {
 
 sub alignment_length_from_cigar {
     my $cigar = shift;
+
+    assert_valid_cigar($cigar);
+
     my $length = 0;
-    while ($cigar =~ /(\d*)([A-Za-z])/g) {
+     while ($cigar =~ /(\d*)([A-Z])/g) {
         $length += ($1 || 1);
     }
     return $length;
@@ -243,34 +279,38 @@ sub alignment_length_from_cigar {
 
 sub consensus_cigar_line {
 
-   my @expanded_cigars = map {expand_cigar($_)} @_;
-   my $num_cigars = scalar(@expanded_cigars);
+   my @cigar_lines = @_;
+   my $num_cigars = scalar(@cigar_lines);
 
    my @chars = qw(M m D);
    my $n_chars = scalar(@chars);
    push @chars, $chars[$n_chars-1];
 
-   # Itterate through each character of the expanded cigars.
-   # If there is a 'D' at a given location in any cigar,
-   # set the consensus to 'D', otherwise assume an 'M'.
+   # Iterate through each group of columns of the alignment and decide the
+   # consensus based on the number of 'D's
+   my $cons_cigar = '';
+   my $last_code  = '';
+   my $cur_length = 0;
+   my $cb = sub {
+       my ($pos, $codes, $length) = @_;
 
-   my %cigar_lens = ();
-   $cigar_lens{length($_)}++ for @expanded_cigars;
-   throw("Not all the cigars have the same length !\n") if scalar(keys %cigar_lens) > 1;
-   my $cigar_len = length( $expanded_cigars[0] );
-
-   my $cons_cigar;
-   for( my $i=0; $i<$cigar_len; $i++ ){
-       my $num_deletions = 0;
-       foreach my $cigar (@expanded_cigars) {
-           if ( substr($cigar,$i,1) eq 'D'){
-               $num_deletions++;
+       my $num_deletions = scalar(grep {$_ eq 'D'} @$codes);
+       my $this_code = $chars[int($num_deletions * $n_chars / $num_cigars)];
+       if ($this_code eq $last_code) {
+           $cur_length += $length;
+       } else {
+           if ($cur_length) {
+               $cons_cigar .= _cigar_element($last_code, $cur_length);
            }
+           $last_code = $this_code;
+           $cur_length = $length;
        }
-       $cons_cigar .= $chars[int($num_deletions * $n_chars / $num_cigars)];
+   };
+   column_iterator(\@cigar_lines, $cb, 'group');
+   if ($cur_length) {
+       $cons_cigar .= _cigar_element($last_code, $cur_length);
    }
-
-   return collapse_cigar($cons_cigar);
+   return $cons_cigar;
 }
 
 
@@ -351,22 +391,31 @@ sub cigar_from_two_alignment_strings {
 
 sub minimize_cigars {
 
-    my @expanded_cigars = map {[split(//, expand_cigar($_))]} @_;
-    my $num_cigars = scalar(@expanded_cigars);
-    my $len = scalar(@{$expanded_cigars[0]});
+    my $n_cigars    = scalar(@_);
+    my @new_cigars  = map {''} 1..$n_cigars;
+    my @cig_codes   = @new_cigars;
+    my @cig_lengths = map {0} 1..$n_cigars;
 
-    my @good_i;
-    foreach my $i (0..($len-1)) {
-        if (grep {$_->[$i] eq 'M'} @expanded_cigars) {
-            push @good_i, $i;
+    # Iterate over each group of columns of the alignment and only keep the
+    # columns that have at least 1 M.
+    my $cb = sub {
+        my ($pos, $codes, $length) = @_;
+        if (grep {$_ eq 'M'} @$codes) {
+            for (my $i = 0; $i < $n_cigars; $i++ ) {
+                if ($codes->[$i] eq $cig_codes[$i]) {
+                    $cig_lengths[$i] += $length;
+                } else {
+                    $new_cigars[$i] .= _cigar_element($cig_codes[$i], $cig_lengths[$i]);
+                    $cig_codes[$i]   = $codes->[$i];
+                    $cig_lengths[$i] = $length;
+                }
+            }
         }
+    };
+    column_iterator(\@_, $cb, 'group');
+    for (my $i = 0; $i < $n_cigars; $i++ ) {
+        $new_cigars[$i] .= _cigar_element($cig_codes[$i], $cig_lengths[$i]);
     }
-
-    my @new_cigars;
-    foreach my $exp_cig (@expanded_cigars) {
-        push @new_cigars, collapse_cigar(join('', map {$exp_cig->[$_]} @good_i));
-    }
-
     return @new_cigars;
 }
 
@@ -450,23 +499,25 @@ sub identify_removed_columns {
 =head2 get_cigar_breakout
 
   Arg [1]    : String $cigar_line
-  Example    : my %cigar_breakout = get_cigar_breakout($cigar_line)
-  Description: Return a hash with the quantities of 'M', 'I' and 'D' of the cigar line (like '2M D 3M 2D I 2M')
+  Example    : my $cigar_breakout = get_cigar_breakout($cigar_line)
+  Description: Return a hashref with the quantities of 'M', 'I' and 'D' of the cigar line. E.g. for '2M D 3M 2D I 2M' it will return:
                'M' => 7
                'I' => 1
                'D' => 3
-
-  Returntype : hash
+  Returntype : hashref
 
 =cut
 
 sub get_cigar_breakout {
     my $cigar = shift;
+
+    assert_valid_cigar($cigar);
+
     my %breakout;
-    while ($cigar =~ /(\d*)([A-Za-z])/g) {
+    while ($cigar =~ /(\d*)([A-Z])/g) {
         $breakout{$2} += $1 || 1;
     }
-    return %breakout;
+    return \%breakout;
 }
 
 
@@ -475,15 +526,18 @@ sub get_cigar_breakout {
   Arg [1]    : String $cigar_line
   Example    : my %cigar_breakout = get_cigar_array($cigar_line)
   Description: Return an array of the cigar line, e.g.: [['M', 34], ['D', 12], ['M', 5] ...]
-
   Returntype : arrayref
 
 =cut
 
 sub get_cigar_array {
     my $cigar = shift;
+    return $cigar if ref($cigar);   # pass-through in case the input already is an array
+
+    assert_valid_cigar($cigar);
+
     my @cigar_array;
-    while ($cigar =~ /(\d*)([A-Za-z])/g) {
+    while ($cigar =~ /(\d*)([A-Z])/g) {
         push(@cigar_array,[$2,$1||1]);
     }
     return \@cigar_array;
@@ -587,6 +641,24 @@ sub _cigar_element {
 }
 
 
+=head2 pad_with_x
+
+  Arg [1]     : $cigar_line (string) The original cigar-line
+  Arg [2]     : $start_X (integer). The number of Xs to add before the cigar-line
+  Arg [3]     : $end_X (integer). The number of Xs to add after the cigar-line
+  Example     : my $padded_cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::pad_with_x($cigar_line, 0, 5);
+  Description : Add some X-type cigar elements before and after the cigar-line
+  Returntype  : String
+  Exceptions  : none
+
+=cut
+
+sub pad_with_x {
+    my ($cigar_line, $start_X, $end_X) = @_;
+    return _cigar_element('X', $start_X) . $cigar_line . _cigar_element('X', $end_X);
+}
+
+
 =head2 check_cigar_line
 
     Arg[1]      : Bio::EnsEMBL::Compara::GenomicAlign $genomic_align
@@ -633,5 +705,242 @@ sub check_cigar_line {
     throw("Cigar line ($seq_pos) does not match sequence length $length\n") 
       if ($seq_pos != $length);
 }
+
+
+=head2 compute_alignment_depth
+
+  Arg [1]    : Array-ref of Strings $cigar_lines
+  Arg [2]    : (optional) Array-ref of names (identifiers) giving the group of each cigar-line
+  Example    : compute_alignment_depth($cigar_lines, $genome_db_ids);
+  Description: Returns statistics about the alignment depth (number of aligned sequences) for each sequence. The
+               function returns for each sequence its number of positions (total and aligned), how many positions
+               have each depth level, and the sum of all the depths.
+               Sequences can be grouped, in which case the statistics are returned by group (not by sequence) and the
+               depth represents the number of aligned groups.
+  Returntype : Hash-ref {id => { n_total_pos => XXX, n_aligned_pos => YYY, depth_sum => ZZZ, depth_breakdown => { 0 => aaa, 1 => bbb, ...}}}
+  Exceptions : none
+
+=cut
+
+sub compute_alignment_depth {
+    my $cigar_lines = shift;
+    my $group_ids = shift;
+
+    my $n_cigars = scalar(@$cigar_lines);
+
+    # If no groups are required, consider each sequence individually
+    unless ($group_ids) {
+        $group_ids = [0..($n_cigars-1)];
+    }
+
+    my %depth_sum;
+    my %depth_breakdown;
+    my %n_total_pos;
+    my %n_aligned_pos;
+
+    my $cb = sub {
+        my ($pos, $codes, $length) = @_;
+
+        # Will contain the group_ids that are present on these columns
+        # and the number of sequences they contain
+        my %n_aligned_ids;
+        for (my $i = 0; $i < $n_cigars; $i++ ) {
+            if ( $codes->[$i] eq 'M' ) {
+                $n_aligned_ids{ $group_ids->[$i] } ++;
+            }
+        }
+        # "- 1" because the depth is the number of *other* groups
+        my $this_depth = scalar(keys %n_aligned_ids) - 1;
+
+        # Update the counters
+        foreach my $id (keys %n_aligned_ids) {
+            my $n_pos = $n_aligned_ids{$id} * $length;
+            $depth_breakdown{$id}->{$this_depth} += $n_pos;
+            $n_total_pos{$id} += $n_pos;
+            if ($this_depth) {
+                $n_aligned_pos{$id} += $n_pos;
+                $depth_sum{$id} += $this_depth * $n_pos;
+            }
+        }
+    };
+    column_iterator($cigar_lines, $cb, 'group');
+
+    # Combine everything into a hash
+    my %depth_summary;
+    foreach my $id (keys %n_total_pos) {
+
+        # In case no alignment was found
+        $n_aligned_pos{$id} //= 0;
+        $depth_sum{$id}     //= 0;
+
+        $depth_summary{$id} = {
+            'n_total_pos'       => $n_total_pos{$id},
+            'n_aligned_pos'     => $n_aligned_pos{$id},
+            'depth_sum'         => $depth_sum{$id},
+            'depth_breakdown'   => $depth_breakdown{$id},
+        };
+    }
+    return \%depth_summary;
+}
+
+
+=head2 column_iterator
+
+  Arg [1]    : Array-ref of Strings $cigar_lines
+  Arg [2]    : Reference to the function $callback that is called when scanning the columns of the alignment
+  Arg [3]    : (optional) Boolean $group. If set, will group consecutive columns that have the same status in all sequences
+  Example    : column_iterator($cigar_lines, $callback);
+  Description: Scan the multiple alignment (cigar-lines) and calls back the function for every column with
+               its position and list of cigar codes (usually M or D) .
+               When $group is set, consecutive columns that share the same cigar codes are merged into a
+               single function call.
+               The callback method receives three arguments:
+                - start position: integer, 0-based. The first column of the alignment the call is about
+                - codes: array-ref of single-character strings. The list of CIGAR codes in the same order
+                  as in $cigar_lines
+                - length: integer. Always 1 if $group is not set.
+  Returntype : none
+  Exceptions : none
+
+=cut
+
+sub column_iterator {
+    my $cigar_lines = shift;
+    my $callback    = shift;
+    my $group       = shift;
+
+    my $n_cigars    = scalar(@$cigar_lines);
+
+    return unless $n_cigars;
+    return unless $cigar_lines->[0];
+
+    my @cigar_lines_arrays      = map {get_cigar_array($_)} @$cigar_lines;
+    my @length_cigar_line_array = map {scalar(@$_)} @cigar_lines_arrays;
+    my @curr_cigar_elem_index   = (0) x $n_cigars;
+    my @curr_cigar_elem_codes   = map {$_->[0]->[0]} @cigar_lines_arrays;
+    my @curr_cigar_elem_lengths = map {$_->[0]->[1]} @cigar_lines_arrays;
+    my @d_codes                 = ('D') x $n_cigars;
+
+    # The while loop below identifies groups of identical, consecutive,
+    # columns. When $group is not set, we need to call the callback as many
+    # times as the length of the group.
+    unless ($group) {
+        my $ini_callback = $callback;
+        $callback = sub {
+            my ($pos, $codes, $length) = @_;
+            $ini_callback->($pos + $_, $codes, 1) for 0..($length-1);
+        };
+    }
+
+    my $pos = 0;
+    while (1) { # The exit condition is inside
+
+        # "I" elements are treated separately because they represent
+        # insertions (sequences) that are *not* aligned to the rest
+        for (my $i = 0; $i < $n_cigars; $i++ ) {
+            while ($curr_cigar_elem_codes[$i] eq 'I') { # "while" instead of "if" in case there are consecutive (unmerged) I elements
+                # a I element is virtually a M amongst Ds
+                $d_codes[$i] = 'M';
+                $callback->($pos, \@d_codes, $curr_cigar_elem_lengths[$i]);
+                $pos += $curr_cigar_elem_lengths[$i];
+                $d_codes[$i] = 'D';
+
+                # Move on to the next element
+                $curr_cigar_elem_index[$i] ++;
+                if ($curr_cigar_elem_index[$i] == $length_cigar_line_array[$i]) {
+                    # Mark this element as depleted and break the while loop
+                    $curr_cigar_elem_lengths[$i]  = 0;
+                    last;
+                } else {
+                    my $e = $cigar_lines_arrays[$i]->[ $curr_cigar_elem_index[$i] ];
+                    $curr_cigar_elem_codes[$i]    = $e->[0];
+                    $curr_cigar_elem_lengths[$i]  = $e->[1];
+                }
+            }
+        }
+
+        # Standard elements: find how long the repetition is
+        my $length = min(@curr_cigar_elem_lengths);
+        # Callback
+        $callback->($pos, \@curr_cigar_elem_codes, $length);
+
+        # Move forward
+        $pos += $length;
+        for (my $i = 0; $i < $n_cigars; $i++ ) {
+            if ($curr_cigar_elem_lengths[$i] == $length) {
+                $curr_cigar_elem_index[$i] ++;
+                if ($curr_cigar_elem_index[$i] == $length_cigar_line_array[$i]) {
+                    # This cigar-line has been exhausted. The other ones should be as well
+                    for (my $j = 0; $j < $n_cigars; $j++ ) {
+                        next if $j == $i;
+                        if ($curr_cigar_elem_lengths[$j] != $length) {
+                            throw("Not all the cigars have the same length\n");
+                        } elsif ($curr_cigar_elem_index[$j] != $length_cigar_line_array[$j]-1) {
+                            throw("Not all the cigars have the same length\n");
+                        }
+                    }
+                    return;
+                } else {
+                    my $e = $cigar_lines_arrays[$i]->[ $curr_cigar_elem_index[$i] ];
+                    $curr_cigar_elem_codes[$i]    = $e->[0];
+                    $curr_cigar_elem_lengths[$i]  = $e->[1];
+                }
+            } else {
+                $curr_cigar_elem_lengths[$i] -= $length;
+            }
+        }
+    }
+}
+
+
+=head2 calculate_pairwise_coverage
+
+  Arg [1]    : Array-ref of Strings $cigar_lines
+  Arg [2]    : (optional) Array-ref of names (identifiers) giving the group of each cigar-line
+  Example    : calculate_pairwise_coverage($cigar_lines, $genome_db_ids);
+  Description: Returns pairwise coverage statistics between all the sequences (or groups): total number of positions
+               in the sequences, and number of positions aligned.
+  Returntype : Hash-ref {id1 => { id2 => XXX, ...}, ...}
+  Exceptions : none
+
+=cut
+
+sub calculate_pairwise_coverage {
+    my $cigar_lines = shift;
+    my $group_ids = shift;
+
+    # If no groups are required, consider each sequence individually
+    my $n_cigars = scalar(@$cigar_lines);
+    unless ($group_ids) {
+        $group_ids = [0..($n_cigars-1)];
+    }
+
+    my %pairwise_coverage;
+
+    my $cb = sub {
+        my ($pos, $codes, $length) = @_;
+
+        # Will contain the group_ids that are present on these columns
+        # and the number of sequences they contain
+        my %n_aligned_ids;
+        for (my $i = 0; $i < $n_cigars; $i++ ) {
+            if ( $codes->[$i] eq 'M' ) {
+                $n_aligned_ids{ $group_ids->[$i] } ++;
+            }
+        }
+        my @ids = keys %n_aligned_ids;
+        foreach my $id1 (@ids) {
+            $pairwise_coverage{$id1} //= {};
+            foreach my $id2 (@ids) {
+                if ($id1 ne $id2) {
+                    $pairwise_coverage{$id1}->{$id2} += $length * $n_aligned_ids{$id1};
+                }
+            }
+        }
+    };
+    column_iterator($cigar_lines, $cb, 'group');
+    return \%pairwise_coverage;
+}
+
 
 1;

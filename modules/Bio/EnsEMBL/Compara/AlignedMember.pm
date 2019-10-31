@@ -170,42 +170,16 @@ sub cigar_line {
 }
 
 
-
-=head2 get_cigar_breakout
-
-  Arg [1]     : $cigar_line
-  Example     : %cigar_breakout = $object->get_cigar_breakout($cigar_line);
-  Description : Getter for the cigar_line breackout. It returns the quantities
-                of matches or mismatches (M), deletions (D) and insertions (I).
-
-  Returntype  : hash
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
 sub get_cigar_breakout{
   my $self = shift;
+  deprecate('AlignedMember::get_cigar_breakout is deprecated and will be removed in e102. Use Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout instead');
   return Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($self->{'_cigar_line'});
 }
 
-=head2 get_cigar_array
-
-  Arg [1]     : $cigar_line
-  Example     : @cigar_array = $object->get_cigar_array($cigar_line);
-  Description : Getter for the cigar_line array. It returns an array with the quantities
-                of matches or mismatches (M), deletions (D) and insertions (I).
-
-  Returntype  : hashref
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
 
 sub get_cigar_array{
   my $self = shift;
+  deprecate('AlignedMember::get_cigar_array is deprecated and will be removed in e102. Use Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_array instead');
   return Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_array($self->{'_cigar_line'});
 }
 

@@ -80,6 +80,7 @@ sub default_options {
     };
 }
 
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 sub pipeline_create_commands {
     my ($self) = @_;
@@ -107,7 +108,7 @@ sub pipeline_wide_parameters {
 
 
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
 
     my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self);
@@ -124,7 +125,9 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
-    $analyses_by_name->{'Genomic_Align_Block_Job_Generator'}->{'-parameters'}->{'db_conn'} = '#compara_db#';
+    $analyses_by_name->{'gab_factory'}->{'-parameters'}->{'db_conn'} = '#compara_db#';
+    $analyses_by_name->{'genome_db_factory'}->{'-parameters'}->{'db_conn'} = '#compara_db#';
+    $analyses_by_name->{'genome_length_fetcher'}->{'-parameters'}->{'db_conn'} = '#compara_db#';
 }
 
 
