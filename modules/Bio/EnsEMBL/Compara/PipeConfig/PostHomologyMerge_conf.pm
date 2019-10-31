@@ -23,10 +23,16 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::PipeConfig::PostHomologyMerge_conf
 
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PostHomologyMerge_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -collection <collection>
+
 =head1 DESCRIPTION
 
-The pipeline combines a few steps that are run after having merged the homology-side
-of things in the release database.
+This pipeline imports alternative alleles as homologies. It combines a few
+steps that are run after having merged the homology-side of things in the
+release database.
 
 =cut
 
@@ -55,6 +61,8 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'compara_db'      => 'compara_curr',
+        
+        'do_member_stats_fam' => 1,
 
         #Pipeline capacities:
         # 'update_capacity'                           => 5,

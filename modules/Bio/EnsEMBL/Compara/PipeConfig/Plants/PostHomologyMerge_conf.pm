@@ -21,16 +21,20 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::PostHomologyMerge_conf
+Bio::EnsEMBL::Compara::PipeConfig::Plants::PostHomologyMerge_conf
+
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::PostHomologyMerge_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 DESCRIPTION
 
-The PipeConfig file for the pipeline that imports alternative alleles as homologies.
+Specific version of PostHomologyMerge for Plants.
 
 =cut
 
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::PostHomologyMerge_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Plants::PostHomologyMerge_conf;
 
 use strict;
 use warnings;
@@ -52,26 +56,6 @@ sub default_options {
         'collection'      => 'plants',  # The name of the clusterset_id in which to find the trees
 
         'do_member_stats_fam'   => 0,
-
-
-        # 'high_confidence_ranges'    => [
-        #     {
-        #         'range_label'       => 'protein',
-        #         'range_filter'      => '(homology_id < 1400000000)',
-        #     },
-        # ],
-        # 
-        # # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
-        # 'threshold_levels' => [
-        #     {
-        #         'taxa'          => [ 'Euteleostomi', 'Ciona', 'Panicoideae', 'Oryzinae', 'Pooideae', 'Solanaceae', 'Brassicaceae', 'Malvaceae', 'fabids' ],
-        #         'thresholds'    => [ 50, 50, 25 ],
-        #     },
-        #     {
-        #         'taxa'          => [ 'all' ],
-        #         'thresholds'    => [ undef, undef, 25 ],
-        #     },
-        # ],
     };
 }
 
