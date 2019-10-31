@@ -30,6 +30,11 @@ A pipeline to merge some production databases onto the release one.
 It is currently working well only with the "gene side" of Compara (protein_trees, families and ncrna_trees)
 because synteny_region_id is not ranged by MLSS.
 
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MergeDBsIntoRelease_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV
+
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::MergeDBsIntoRelease_conf;

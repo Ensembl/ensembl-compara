@@ -22,23 +22,27 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::MergeDBsIntoRelease_conf
+Bio::EnsEMBL::Compara::PipeConfig::Plants::MergeDBsIntoRelease_conf
 
 =head1 SYNOPSIS
 
     #1. initialize the pipeline:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::MergeDBsIntoRelease_conf -host mysql-ens-compara-prod-X -port XXXX
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::MergeDBsIntoRelease_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 DESCRIPTION
 
-A pipeline to merge some production databases onto the release one.
+A Plants specific pipeline to merge some production databases onto the release one.
 It is currently working well only with the "gene side" of Compara
 (protein_trees, families and ncrna_trees)
 because synteny_region_id is not ranged by MLSS.
 
+The default parameters work well in the context of a Compara release for Plants (with a well-configured
+Registry file). If the list of source-databases is different, have a look at the bottom of the base file
+for alternative configurations.
+
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::MergeDBsIntoRelease_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Plants::MergeDBsIntoRelease_conf;
 
 use strict;
 use warnings;
@@ -58,9 +62,6 @@ sub default_options {
             'protein_db'    => 'compara_ptrees',
         },
 
-        # The target database
-        'curr_rel_db' => 'compara_curr',
-
         # From these databases, only copy these tables
         'only_tables' => {
             # Cannot be copied by populate_new_database because it doesn't contain the new mapping_session_ids yet
@@ -70,11 +71,6 @@ sub default_options {
         # These tables have a unique source. Content from other databases is ignored
         'exclusive_tables'  => {
             'mapping_session'         => 'master_db',
-        },
-
-        # In these databases, ignore these tables
-        'ignored_tables' => {
-            #'protein_db' => [qw(all_cov_ortho poor_cov_ortho poor_cov_2 dubious_seqs)],
         },
     };
 }
