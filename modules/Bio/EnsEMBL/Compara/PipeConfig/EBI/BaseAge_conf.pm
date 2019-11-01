@@ -73,7 +73,7 @@ sub default_options {
 
             #Location url of database to get snps from
             #'variation_url' => 'mysql://anonymous@mysql-ensembl-mirror:4240/' . $self->o('ensembl_release'),
-            'variation_url' => 'mysql://ensro@mysql-ens-sta-1:4519/homo_sapiens_variation_'.$self->o('ensembl_release').'_38?group=variation',
+            'variation_url' => 'mysql://ensro@mysql-ens-sta-1:4519/homo_sapiens_variation_'.$self->o('ensembl_release').'_38?group=variation&species=homo_sapiens',
 
             #Locations to write output files
             'bed_dir'        => $self->o('pipeline_dir'),
