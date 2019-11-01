@@ -87,6 +87,7 @@ sub pipeline_analyses {
     $pipeline_analyses->[0]->{'-input_ids'} = [
         {
             'compara_db'        => $self->o('compara_db'),
+            'member_type'       => $self->o('member_type'),
             'threshold_levels'  => $self->o('threshold_levels'),
         },
     ];
