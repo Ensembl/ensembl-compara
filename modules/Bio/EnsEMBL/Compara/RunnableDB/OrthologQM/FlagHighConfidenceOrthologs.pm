@@ -55,14 +55,17 @@ sub fetch_input {
 
     my $mlss_id     = $self->param_required('mlss_id');
     my $thresholds  = $self->param_required('thresholds');
+    my $range_label = $self->param_required('range_label');
     my $mlss        = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+    my $range_filter = $self->param('range_filter');
 
     # Common filter we'll apply to all the queries. By default it only filters by mlss_id but can
     # optionally filter by homology_id range (used if we want to apply different thresholds for
     # ncRNAs and protein-coding genes, for instance)
     my $homology_filter = 'method_link_species_set_id = ?';
-    if ($self->param('range_filter')) {
-        $homology_filter .= ' AND ('.$self->param('range_filter').')';
+
+    if ($range_filter) {
+        $homology_filter .= ' AND ('.$range_filter->{$range_label}.')';
     }
 
     # The %identity filter always applies
@@ -106,14 +109,10 @@ sub write_output {
     my $mlss                        = $self->param('mlss');
     my $mlss_id                     = $self->param('mlss_id');
     my $thresholds                  = $self->param('thresholds');
-    my $range_label                 = $self->param('range_label') // '';
+    my $range_label                 = $self->param('range_label');
     my $homology_filter             = $self->param('homology_filter');
     my $high_confidence_condition   = $self->param('high_confidence_condition');
     my $n_hom                       = $self->param('num_homologies');
-
-    if ($range_label) {
-        $range_label .= '_';
-    }
 
     # Initially I wanted to join both tables, group by homology_id and update homology, but I think
     # this approach here is more efficient: set everything to 1, and reset all the rows that don't
@@ -133,8 +132,8 @@ sub write_output {
     my $msg_for_gdb = join(" and ", map {$_->[1]." for genome_db_id=".$_->[0]} @$hc_per_gdb);
     $self->warning("$n_hc / $n_hom homologies are high-confidence ($msg_for_gdb)");
     # Store them
-    $mlss->store_tag("n_${range_label}high_confidence", $n_hc);
-    $mlss->store_tag("n_${range_label}high_confidence_".$_->[0], $_->[1]) for @$hc_per_gdb;
+    $mlss->store_tag("n_${range_label}_high_confidence", $n_hc);
+    $mlss->store_tag("n_${range_label}_high_confidence_".$_->[0], $_->[1]) for @$hc_per_gdb;
 
     # More stats for the metrics that were used for this mlss_id
     if ($high_confidence_condition =~ /goc_score/) {
