@@ -15,15 +15,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys, os
+import sys, os, argparse
 from ete3 import Tree
 
-infile = sys.argv[1]
-if not os.path.isfile(infile):
-	sys.stderr.write("File %s not found", infile)
-	sys.exit(1)
+parser = argparse.ArgumentParser()
+parser.add_argument('-t', '--tree')
+parser.add_argument('-bl', '--branch_lengths', action='store_true')
+parser.add_argument('-v', '--verbose', action='store_true')
+opts = parser.parse_args(sys.argv[1:])
 
-t = Tree(infile)
-root = t.get_tree_root()
-root.unroot()
-print(root.write(format=5))
+if not os.path.isfile(opts.tree):
+	sys.stderr.write("File %s not found", opts.tree)
+	sys.exit(1)
+	 
+t = Tree(opts.tree)
+if opts.verbose == True:
+	orig_root = t.get_tree_root()
+	sys.stderr.write("ORIGINAL TREE:\n" + orig_root.write(format=9) + "\n\n\n")
+
+# intial unroot
+t.unroot()	
+# reroot by midpoint to force unrooting later
+midpoint = t.get_midpoint_outgroup()
+t.set_outgroup(midpoint)
+
+if opts.verbose == True:
+	sys.stderr.write("MIDPOINT ROOTING:\n" + t.write(format=9) + "\n\n\n")
+
+# final forced unrooting of tree to be absolutely sure	
+t.unroot()
+
+if opts.verbose == True:
+	sys.stderr.write("UNROOTED:\n" + t.write(format=9) + "\n\n\n")
+	
+if opts.branch_lengths == True:
+	print(t.write(format=5))
+else:
+	print(t.write(format=9))

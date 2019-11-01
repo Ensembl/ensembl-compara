@@ -135,7 +135,7 @@ sub _write_unrooted_tree {
 	$self->_spurt($rooted_tree_file, $rooted_tree);
 
 	my $unroot_script = $self->param_required('unroot_script');
-	my $unroot_run = $self->run_command("$unroot_script $rooted_tree_file > $outfile");
+	my $unroot_run = $self->run_command("$unroot_script -t $rooted_tree_file > $outfile");
 	die $unroot_run->err if $unroot_run->err;
 }
 
