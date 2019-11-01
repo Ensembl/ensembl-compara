@@ -600,9 +600,8 @@ sub fetch_by_method_link_type_registry_aliases {
   my @genome_dbs;
 
   foreach my $alias (@{$registry_aliases}) {
-    if (Bio::EnsEMBL::Registry->alias_exists($alias)) {
-      my $binomial = Bio::EnsEMBL::Registry->get_alias($alias);
-      my $gdb = $gdba->fetch_by_name_assembly($binomial);
+    if (my $production_name = Bio::EnsEMBL::Registry->get_alias($alias)) {
+      my $gdb = $gdba->fetch_by_name_assembly($production_name);
       if (!$gdb) {
         my $meta_c = Bio::EnsEMBL::Registry->get_adaptor($alias, 'core', 'MetaContainer');
         $gdb = $gdba->fetch_by_name_assembly($meta_c->get_production_name());

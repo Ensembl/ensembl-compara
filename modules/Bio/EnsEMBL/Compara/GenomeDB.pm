@@ -751,7 +751,7 @@ sub sync_with_registry {
         $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($registry_name, 'core');
       }
     }
-    if( not defined($coreDBA) and Bio::EnsEMBL::Registry->alias_exists($self->name)) {
+    if( not defined($coreDBA) and Bio::EnsEMBL::Registry->get_alias($self->name, 'no_warn')) {
       $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($self->name, 'core');
       Bio::EnsEMBL::Registry->add_alias($self->name, $registry_name) if ($registry_name);
     }
