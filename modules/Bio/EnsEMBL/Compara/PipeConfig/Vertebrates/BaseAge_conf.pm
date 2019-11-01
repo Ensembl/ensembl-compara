@@ -64,10 +64,6 @@ sub default_options {
 
             # Location url of database to get snps from
             'variation_url' => 'mysql://ensro@mysql-ens-sta-1:4519/homo_sapiens_variation_'.$self->o('ensembl_release').'_38?group=variation',
-
-            # Number of workers to run base_age analysis
-            'base_age_capacity'        => 100,
-
           };
 }
 
