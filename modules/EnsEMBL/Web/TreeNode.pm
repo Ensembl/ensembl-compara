@@ -100,6 +100,11 @@ sub set_user_setting {
   my $node_id   = $self->id;
   my $user_data = $self->tree->user_data;
 
+  if ($node_id =~ /trackhub_/) {
+    $user_data->{$node_id}{$key} = $value;
+    return 1;
+  }
+
   # If same as default value - remove data
   if (is_same($value, $self->get_data($key))) {
     delete $user_data->{$node_id}{$key};

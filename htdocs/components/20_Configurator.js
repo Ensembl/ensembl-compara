@@ -867,13 +867,16 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     var diff        = false;
     var imageConfig = {};
     var viewConfig  = {};
-
+    var menu_ids    = [];
     $.each(this.subPanels, function (i, id) {
       var conf = Ensembl.EventManager.triggerSpecific('updateConfiguration', id, id, true);
 
       if (conf) {
         $.extend(viewConfig,  conf.viewConfig);
         $.extend(imageConfig, conf.imageConfig);
+        if (conf.menu_id) {
+          menu_ids.push(conf.menu_id);
+        }
         diff = true;
       }
     });
@@ -928,7 +931,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       $.extend(true, this.imageConfig, imageConfig);
       $.extend(true, this.viewConfig,  viewConfig);
 
-      this.updatePage($.extend(saveAs, { image_config: JSON.stringify(imageConfig), view_config: JSON.stringify(viewConfig) }), delayReload);
+      this.updatePage($.extend(saveAs, { 'image_config': JSON.stringify(imageConfig), 'view_config': JSON.stringify(viewConfig), 'menu_ids': JSON.stringify(menu_ids) }), delayReload);
       
       return diff;
     }

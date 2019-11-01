@@ -519,13 +519,14 @@ sub _add_trackhub_node {
 
 sub _add_trackhub_tracks {
   my ($self, $parent, $tracksets, $config, $args) = @_;
-  my $hub       = $self->hub;
+  my $hub   = $self->hub;
   my $menu  = $args->{'menu'};
   my $name  = $args->{'name'};
   my $code  = $args->{'code'};
 
   my $do_matrix = ($config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'}) ? 1 : 0;
   my $count_visible = 0;
+  my $default_trackhub_tracks = {};
 
   foreach my $set (@{$tracksets||[]}) {
     my %tracks;
@@ -665,10 +666,12 @@ sub _add_trackhub_tracks {
     foreach (@{$children||[]}) {
       my $track = $_->data;
       (my $source_name = strip_HTML($track->{'shortLabel'})) =~ s/_/ /g;
+      my $name = 'trackhub_' . $options{'submenu_key'} . '_' . $track->{'track'};
+
       ## Note that we use a duplicate value in description and longLabel, because non-hub files
       ## often have much longer descriptions so we need to distinguish the two
       my $source = {
-                    name            => 'trackhub_' . $options{'submenu_key'} . '_' . $track->{'track'},
+                    name            => $name,
                     source_name     => $source_name,
                     longLabel       => $track->{'longLabel'},
                     description     => $name.': '.$track->{'longLabel'},
@@ -733,6 +736,7 @@ sub _add_trackhub_tracks {
         if ($on_off && $on_off eq 'on') {
           $options{'display'} = $default_display;
           $count_visible++;
+          $default_trackhub_tracks->{$name} = $default_display;
         }
         else {
           $options{'display'} = 'off';
@@ -759,6 +763,7 @@ sub _add_trackhub_tracks {
         if ($on_off && $on_off eq 'on') {
           $options{'display'} = $default_display;
           $count_visible++;
+          $default_trackhub_tracks->{$name} = $default_display;
         }
         else {
           $options{'display'} = 'off';
@@ -785,7 +790,21 @@ sub _add_trackhub_tracks {
     } ## End loop through tracks
     $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
   } ## End loop through tracksets
+
+  # Update session records with tracks that are turned on.
+  $self->updateRecords($default_trackhub_tracks);
+
   $self->{'th_default_count'} += $count_visible;
+}
+
+# Update sessions record with default trackhub tracks
+sub updateRecords {
+  my $self = shift;
+  my $tracks = shift;
+  foreach my $track (keys %$tracks) {
+    my $tracknode = $self->get_node($track);
+    $self->altered($self->update_track_renderer($tracknode, $tracks->{$track}));
+  }
 }
 
 sub _add_trackhub_extras_options {

@@ -694,7 +694,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       $.each(panel.localStoreObj.filterMatrix, function (k, v) {
         if (k.match(/_sep_/)) {
           $.each(panel.localStoreObj.filterMatrix[k].data, function (trackId, data) {
-            config[trackId] = { renderer: (data.show && data.state == "on") ? panel.localStoreObj.matrix[k].renderer : 'off' };
+            config[trackId] = { renderer: (data.show && data.state == "on" && panel.localStoreObj.matrix[k].state !== 'track-off') ? panel.localStoreObj.matrix[k].renderer : 'off' };
           })
         }
       });
@@ -703,7 +703,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     Ensembl.EventManager.trigger('changeMatrixTrackRenderers', config);
 
     $.extend(this.imageConfig, config);
-    return { imageConfig: config };
+    return { imageConfig: config, menu_id: this.node_id };
   },
 
   updateFromTrackLabel: function(update) {
@@ -1175,6 +1175,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       // add 'selected: true/flase' to lookup
       available_LIs.map(function() {
         panel.elLk.lookup[$(this).data('item')].selected = !selected;
+
       });
     }
     else {

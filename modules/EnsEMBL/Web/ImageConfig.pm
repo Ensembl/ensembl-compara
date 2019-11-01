@@ -28,6 +28,7 @@ no warnings "uninitialized";
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities decode_entities);
 use URI::Escape qw(uri_unescape);
+use JSON qw(from_json to_json);
 
 use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Exceptions qw(WebException);
@@ -233,17 +234,29 @@ sub reset_user_settings {
   my $self          = shift;
   my $reset_type    = shift || '';
   my $params        = shift || {};
+  my $menu_ids      = $params->{'menu_ids'} ? from_json($params->{'menu_ids'}) : [];
   my $user_settings = $self->get_user_settings;
   my ($reset_tracks, $reset_order);
-
   my @altered;
 
-  if ($reset_type eq 'reg_matrix') {
+  if ($reset_type eq 'matrix') {
     # Reset all reg matrix tracks
     foreach my $node_key (keys %{$user_settings->{'nodes'} || {}}) {
-      if ($node_key =~/^reg_feats|^seg_Segmentation/) {
+      if ($node_key =~/^reg_feats|^seg_Segmentation|^trackhub_/) {
         if (my $node = $self->get_node($node_key)) {
-          $node->reset_user_settings;
+          # For trackhubs we turn off all tracks and then update the selected ones.
+          # If you do a reset it will reset to default renderers which makes it turn on.
+          if ($node_key =~ /^trackhub_/ ) {
+            foreach my $menu_id (@$menu_ids) {
+              if (index($node_key, $menu_id) > -1) {
+                warn $node_key;
+                $self->update_track_renderer($node, 'off');
+              }
+            }
+          }
+          else {
+            $node->reset_user_settings;
+          }
           push @altered, $node->get_data('name') || $node->get_data('caption') || 1;
         }
       }
@@ -313,7 +326,7 @@ sub update_from_input {
     my $diff = delete $params->{$self->config_type};
 
     # Reset regulation matrix tracks by default
-    $self->altered($self->reset_user_settings('reg_matrix'));
+    $self->altered($self->reset_user_settings('matrix', $params));
 
     if (keys %$diff) {
 
