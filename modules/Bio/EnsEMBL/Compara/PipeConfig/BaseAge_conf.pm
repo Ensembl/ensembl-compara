@@ -82,6 +82,8 @@ sub default_options {
             'chr_sizes_file' => 'chrom.sizes',
             'big_bed_file'   => 'base_age'.$self->o('rel_with_suffix').'.bb',
 
+            # Number of workers to run base_age analysis
+            'base_age_capacity'        => 100,
           };
 }
 
