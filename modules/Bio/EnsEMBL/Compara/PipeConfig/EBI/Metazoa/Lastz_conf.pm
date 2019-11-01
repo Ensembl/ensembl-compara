@@ -19,7 +19,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::Lastz_conf
 
 =head1 SYNOPSIS
 
@@ -37,15 +37,24 @@ Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf
 
     #5. Run init_pipeline.pl script:
         Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::Lastz_conf --dbname hsap_btau_lastz_64 --password <your password> --mlss_id 534 --pipeline_db -host=compara1 --ref_species homo_sapiens --pipeline_name LASTZ_hs_bt_64 
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::Lastz_conf \
+          -host XXX -port XXX -user XXX -password XXX \
+          -hive_force_init 1 \
+          -reg_conf $REG_FILE \
+          -pipeline_name "$tag" \
+          -master_db $COMPARA_MASTER_URL_W \
+          -ensembl_cvs_root_dir $ENSEMBL_ROOT_DIR \
+          -do_compare_to_previous_db 0 \
+          -mlss_id_list "[mlss_id_1,mlss_id_2,...,mlss_id_N]"
 
-    #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
+    #6. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
 
 
 =head1 DESCRIPTION  
 
-    This configuaration file gives defaults specific for the lastz net pipeline. It inherits from PairAligner_conf.pm and parameters here will over-ride the parameters in PairAligner_conf.pm. 
-    Please see PairAligner_conf.pm for general details of the pipeline.
+    This is a Metazoa configuration file for LastZ pipeline.
+    This pipeline inherits from EBI::Lastz_conf (which, in turn, inherits from PairAligner_conf.pm).
+    Please see EBI/Lastz_conf.pm and PairAligner_conf.pm for general details of the pipeline.
 
 =head1 CONTACT
 

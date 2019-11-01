@@ -25,9 +25,20 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::Synteny_conf
 
 This is the EG Metazoa specific version of the general Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf
 
-Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::Synteny_conf  -pipeline_name <> -ptree_db/alignment_db <>
+=head1 SYNOPSIS
 
-#init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::Synteny_conf -pipeline_name synteny_metazoa_42_95 -host mysql-ens-compara-prod-5 -port 4615
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::Synteny_conf \
+  -host mysql-ens-compara-prod-X -port XXXX \
+  -ptree_db/alignment_db <db_alias_or_url>
+
+=head1 EXAMPLE
+
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::Synteny_conf  \
+  -host mysql-ens-compara-prod-X -port XXX ... \
+  -pipeline_name "synteny_${RELEASE_VERSION}" \
+  -hive_force_init 1 \
+  -reg_conf $REG_FILE \
+  -division metazoa
 
 =head1 CONTACT
 
