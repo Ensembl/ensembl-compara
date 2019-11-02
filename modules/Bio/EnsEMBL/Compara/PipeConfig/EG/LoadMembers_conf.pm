@@ -60,6 +60,9 @@ sub default_options {
     # connection parameters to various databases:
         'master_db_is_missing_dnafrags' => 1,
 
+        # list of species that got an annotation update
+        'expected_updates_file' => undef,
+
     # Ensembl-specific databases
         #'staging_loc' => {
             #-host   => 'mysql-ens-sta-1',

@@ -107,6 +107,11 @@ sub default_options {
         # members
         'include_nonreference' => 0,
         'include_patches'      => 0,
+
+        # list of species that got an annotation update
+        # ... assuming the same person has run both pipelines
+        'expected_updates_file' => '/hps/nobackup2/production/ensembl/' . $ENV{'USER'} . '/prep_' . $self->o('division') . '_master_for_rel_' . $self->o('rel_with_suffix') .  '/annotation_updates.list',
+
     };
 }
 
@@ -263,7 +268,16 @@ sub pipeline_analyses {
         {   -logic_name => 'create_reuse_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CreateReuseSpeciesSets',
             -rc_name => '2Gb_job',
-            -flow_into => [ 'nonpolyploid_genome_reuse_factory' ],
+            -flow_into  => [ 'compare_non_reused_genome_list' ],
+        },
+
+        {   -logic_name => 'compare_non_reused_genome_list',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers::CompareNonReusedGenomeList',
+            -parameters => {
+                'expected_updates_file' => $self->o('expected_updates_file'),
+                'current_release'       => $self->o('ensembl_release'),
+            },
+            -flow_into  => [ 'nonpolyploid_genome_reuse_factory' ],
         },
 
         {   -logic_name => 'check_reuse_db_is_patched',

@@ -70,6 +70,7 @@ sub default_options {
         'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
         'xml_file'            => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/mlss_conf.xml'),
         'report_file'         => $self->o( 'work_dir' ) . '/mlss_ids_' . $self->o('division') . '.list',
+        'annotation_file'     => $self->o( 'work_dir' ) . '/annotation_updates.list',
         'master_backup_file'  => $self->o('backups_dir') . '/compara_master_' . $self->o('division') . '.post' . $self->o('ensembl_release') . '.sql',
 
         'patch_dir'   => $self->check_dir_in_ensembl('ensembl-compara/sql/'),
