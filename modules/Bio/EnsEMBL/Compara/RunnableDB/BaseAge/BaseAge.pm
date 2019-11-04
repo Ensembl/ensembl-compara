@@ -122,7 +122,6 @@ sub write_output {
   my $self = shift;
 
   $self->base_age();
-#  $self->quick_base_age();
   return 1;
 }
 
@@ -307,30 +306,6 @@ sub base_age {
     #%$output = ('bed_files' => $sorted_bed_file);
     %$output = ('bed_files' => $bed_file);
     $self->dataflow_output_id($output, 2);
-}
-
-
-#use for debugging the pipeline only
-sub quick_base_age {
-    my ($self) = @_;
-
-    my $seq_region = $self->param('seq_region');
-    my $bed_file = $self->param('bed_dir') . "Test_ages_" . $seq_region . ".bed";
-
-    open (my $bed_fh, '>', $bed_file) || die "ERROR writing ($bed_file) file\n";
-    my $base = 123;
-    my $node_id = 61900000001;
-    my $normalised_age = 500;
-    my $strand = "+";
-    my $rgb = "255,255,255";
-
-    printf $bed_fh "chr%s\t%d\t%d\t%s\t%d\t%s\t%d\t%d\t%s\n", $seq_region, ($base-1), $base, $node_id, $normalised_age, $strand, 0, 0, $rgb;
-
-    close($bed_fh);
-    my $output;
-    %$output = ('bed_files' => $bed_file);
-    $self->dataflow_output_id($output, 2);
-
 }
 
 
