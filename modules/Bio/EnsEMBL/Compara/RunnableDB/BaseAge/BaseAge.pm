@@ -242,6 +242,7 @@ sub base_age {
         #Compare ref sequence with ancestral nodes to find the first difference
         for (my $i = 0; $i < @aligned_seq; $i++) {
             next if ($aligned_seq[$i] eq $gap); #skip gaps in ref sequence
+            my $j = 1;
             my $age = 0;
             my $node_distance = 0;
             my $clade_name = $gdb_name;
@@ -256,6 +257,7 @@ sub base_age {
                         $clade_name = $ancestral_seq->{name};
                         $node_id = $ancestral_seq->{node_id};
                         $node_distance = $ancestral_seq->{node_distance};
+                        $age = $j;
                     } else {
                         #Found a difference between ref and ancestor. Stop
                         #print "DIFF " . ($i+1) . " $base " . $aligned_seq[$i] . " " . $ancestral_seq->{aligned_seq}[$i]. " " . $ancestral_seq->{name} . "\n";
@@ -264,7 +266,7 @@ sub base_age {
                 } else {
                     #print "ANC_GAP " . ($i+1) . " $base " . $aligned_seq[$i] . " " . $ancestral_seq->{aligned_seq}[$i]. " " . $ancestral_seq->{name} . "\n";
                 }
-                $age++;
+                $j++;
             }
             print "age=$age $node_distance $clade_name\n" if ($self->debug);
 
