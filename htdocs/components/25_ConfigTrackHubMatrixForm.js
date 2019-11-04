@@ -109,8 +109,16 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.resize();
     panel.el.find("div#dy-tab div.search-box").hide();
 
+    var url;
+    if (panel.node_id.match(/Blueprint_Hub/)) {
+      url = '/trackhubdata/'+panel.node_id+'.json';
+    }
+    else {
+      url = '/Json/TrackHubData/data?th_species='+species_name+';menu='+panel.node_id+';ictype='+panel.params['image_config_type'];
+    }
+
     $.ajax({
-      url: '/Json/TrackHubData/data?th_species='+species_name+';menu='+panel.node_id+';ictype='+panel.params['image_config_type'],
+      url: url,
       dataType: 'json',
       context: this,
       success: function(data) {
