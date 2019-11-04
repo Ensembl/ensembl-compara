@@ -189,7 +189,7 @@ sub base_age {
         my $max_age = @$ancestors;
         print "max_age $max_age\n" if $self->debug;
 
-        my $root_distance = $reference_node->distance_to_root ;
+        my $root_distance = $reference_node->distance_to_root - $gat->distance_to_parent;
         print "ROOT $root_distance\n" if ($self->debug);
 
         foreach my $this_node (@$ancestors) {
