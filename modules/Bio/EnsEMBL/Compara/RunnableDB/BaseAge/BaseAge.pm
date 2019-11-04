@@ -182,7 +182,7 @@ sub base_age {
 
     foreach my $gat (@$genomic_align_trees) {
         my $tree_string = $gat->newick_format('simple');
-        print "$tree_string\n" if ($self->debug);
+        print "tree: $tree_string\n" if ($self->debug);
                 
         my @aligned_seq;
         my $ancestral_seqs;
@@ -206,14 +206,14 @@ sub base_age {
         }
         my $ancestors = $reference_node->get_all_ancestors;
         my $max_age = @$ancestors;
+        print "max_age $max_age\n" if $self->debug;
 
-        print "ROOT " . $reference_node->distance_to_root . "\n" if ($self->debug);
         my $root_distance = $reference_node->distance_to_root || $def_root_distance;
+        print "ROOT $root_distance\n" if ($self->debug);
 
         foreach my $this_node (@$ancestors) {
             my $node_distance = $this_node->distance_to_node($reference_node);
-            print "node " . $this_node->name . "\n" if ($self->debug);
-            print "node " . $this_node->node_id . " " . $this_node->name . " node " . $node_distance . " parent " . $this_node->distance_to_parent . " " . ($node_distance/$root_distance) . "\n" if ($self->debug);
+            print "node " . $this_node->node_id . " depth $depth " . $this_node->name . " node " . $node_distance . " parent " . $this_node->distance_to_parent . " " . ($node_distance/$root_distance) . "\n" if ($self->debug);
 
             #expect only a single genomic_align for an ancestor
             my $genomic_aligns = $this_node->get_all_genomic_aligns_for_node;
@@ -274,6 +274,8 @@ sub base_age {
                         #print "DIFF " . ($i+1) . " $base " . $aligned_seq[$i] . " " . $ancestral_seq->{aligned_seq}[$i]. " " . $ancestral_seq->{name} . "\n";
                         last;
                     }
+                } else {
+                    #print "ANC_GAP " . ($i+1) . " $base " . $aligned_seq[$i] . " " . $ancestral_seq->{aligned_seq}[$i]. " " . $ancestral_seq->{name} . "\n";
                 }
                 $age++;
             }
