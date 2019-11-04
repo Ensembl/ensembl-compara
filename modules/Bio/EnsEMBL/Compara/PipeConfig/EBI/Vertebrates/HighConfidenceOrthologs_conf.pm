@@ -26,7 +26,8 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::HighConfidenceOrthologs_con
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::HighConfidenceOrthologs_conf
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::HighConfidenceOrthologs_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -collection <collection> -member_type <protein_or_ncrna>
 
 =head1 DESCRIPTION
 
@@ -57,9 +58,13 @@ sub default_options {
 
         'division'   => 'vertebrates',
 
-        # This pipeline will faster if it's run against the production ProteinTree database:
-        # In this case it needs to be run *before* the merge, otherwise the data will not be in the release database.
         'compara_db' => '#expr( (#member_type# eq "protein") ? "compara_ptrees" : "compara_nctrees" )expr#',
+
+        'range_label'  => $self->o('member_type'),
+        'range_filter' => {
+            'protein' => '((homology_id < 1400000000) OR (homology_id BETWEEN 1800000000 AND 1900000000) OR (homology_id BETWEEN 2000000000 AND 2100000000))',
+            'ncrna'   => '((homology_id BETWEEN 1400000000 AND 1800000000) OR (homology_id BETWEEN 1900000000 AND 2000000000) OR (homology_id > 2100000000))',
+        },
 
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
@@ -83,26 +88,14 @@ sub default_options {
     };
 }
 
-
-sub pipeline_analyses {
+sub pipeline_wide_parameters {
     my ($self) = @_;
-    my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs::pipeline_analyses_high_confidence($self);
-    $pipeline_analyses->[0]->{'-input_ids'} = [
-        {
-            'compara_db'        => $self->o('compara_db'),
-            'threshold_levels'  => $self->o('threshold_levels'),
-            'range_label'       => 'protein',
-            'range_filter'      => '((homology_id < 1400000000) OR (homology_id BETWEEN 1800000000 AND 1900000000) OR (homology_id BETWEEN 2000000000 AND 2100000000))',
-        },
-        {
-            'compara_db'        => $self->o('compara_db'),
-            'threshold_levels'  => $self->o('threshold_levels'),
-            'range_label'       => 'ncrna',
-            'range_filter'      => '((homology_id BETWEEN 1400000000 AND 1800000000) OR (homology_id BETWEEN 1900000000 AND 2000000000) OR (homology_id > 2100000000))',
-        },
-    ];
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-    return $pipeline_analyses;
+        'range_filter' => $self->o('range_filter'),
+    }
 }
+
 
 1;

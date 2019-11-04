@@ -198,7 +198,7 @@ sub pipeline_analyses {
             -parameters => {
                 'db_conn'       => '#curr_rel_db#',
                 'expected_size' => '= #n_total_rows#',
-                'inputquery'    => 'SELECT #key# FROM #table#',
+                'query'         => 'SELECT #key# FROM #table#',
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
             -flow_into     => [

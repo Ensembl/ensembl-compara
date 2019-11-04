@@ -26,7 +26,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::HighConfidenceOrthologs_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::HighConfidenceOrthologs_conf
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::HighConfidenceOrthologs_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 DESCRIPTION
 
@@ -56,6 +56,7 @@ sub default_options {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
         'division'    => 'plants',
+        'collection'  => $self->o('division'),
         'member_type' => 'protein',
         'compara_db'  => 'compara_ptrees',
 
@@ -71,15 +72,6 @@ sub default_options {
             },
         ],
     };
-}
-
-sub pipeline_wide_parameters {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-
-        'range_label'  => 'protein',
-    }
 }
 
 
