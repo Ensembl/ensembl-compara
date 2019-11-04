@@ -51,7 +51,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::BaseAge::BaseAge;
 use strict;
 use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-use Bio::EnsEMBL::Variation::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 =head2 fetch_input
@@ -111,13 +110,6 @@ sub fetch_input {
 
   print "mlss " . $mlss->dbID . " seq_region $seq_region $species\n" if ($self->debug);
    
-  #load variation database
-  $reg->load_registry_from_url($self->param('variation_url'));
-
-  #get adaptor to VariationFeature object
-  my $vf_adaptor = $reg->get_adaptor($species, 'variation', 'variationfeature'); 
-  $self->param('vf_adaptor', $vf_adaptor);
-
   #Check bed_dir ends in a final /
   unless ($self->param('bed_dir') =~ /\/$/) {
       $self->param('bed_dir', ($self->param('bed_dir')."/"));
@@ -199,11 +191,6 @@ sub base_age {
         @aligned_seq = split(//,$ref_genomic_align->aligned_sequence);
         $ref_start = $ref_genomic_align->dnafrag_start unless $ref_start;
         
-        #Get snps 
-        my $snp_list = $self->get_snps($ref_genomic_align->get_Slice);
-        if ($snp_list) {
-            print "Number of snps " . (scalar keys %$snp_list) . "\n" if ($self->debug);
-        }
         my $ancestors = $reference_node->get_all_ancestors;
         my $max_age = @$ancestors;
         print "max_age $max_age\n" if $self->debug;
@@ -291,12 +278,7 @@ sub base_age {
                 #Ensure the BED score is larger than 0 for display purposes
                 $normalised_age = 1 if ($normalised_age < 1);
                 
-                #Any base on a snp has an age of -1
-                if ($snp_list->{$base}) {
-                    $age = -1;
-                    $specificity = 'POPULATION';
-                    $rgb = "255,127,0"; #orange
-                } elsif ($age == 0) {
+                if ($age == 0) {
                     $specificity = 'SPECIES';
                     $rgb = "255,0,0"; #red
                 } elsif ($age <= $clade_age) {
@@ -330,32 +312,6 @@ sub base_age {
     $self->dataflow_output_id($output, 2);
 }
 
-
-#Get all snps
-sub get_snps {
-    my ($self, $slice) = @_;
-
-    my $snp_list;
-    my $vf_adaptor = $self->param('vf_adaptor');
-
-    return $snp_list unless ($vf_adaptor);
-    my $vfs = $vf_adaptor->fetch_all_by_Slice($slice); #return ALL variations defined in $slice
-    my $frags;
-
-    foreach my $vf (@{$vfs}){
-        #print "TYPE " . $vf->class_SO_term . "\n";
-        #print "  Variation: ", $vf->variation_name, " with alleles ", $vf->allele_string . " class=" . $vf->class_SO_term . " in chromosome ", $slice->seq_region_name, " and position ", $vf->start,"-",$vf->end, " strand=", $vf->strand, "\n";
-        if ($vf->class_SO_term eq "SNV") {
-            #check start = end
-            if ($vf->seq_region_start == $vf->seq_region_end) {
-                $snp_list->{$vf->seq_region_start} = 1;
-            } else {
-                print "Ignore case where snp start " . $vf->seq_region_start . " does not equal snp end " . $vf->seq_region_end . "\n";
-            }
-        }
-    }
-    return $snp_list;
-}
 
 #use for debugging the pipeline only
 sub quick_base_age {

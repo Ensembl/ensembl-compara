@@ -71,10 +71,6 @@ sub default_options {
             # There is a different colour gradient for this clade
             'clade_taxon_id' => 9443,   # this is the taxon_id of Primates
 
-            #Location url of database to get snps from
-            #'variation_url' => 'mysql://anonymous@mysql-ensembl-mirror:4240/' . $self->o('ensembl_release'),
-            'variation_url' => 'mysql://ensro@mysql-ens-sta-1:4519/homo_sapiens_variation_'.$self->o('ensembl_release').'_38?group=variation&species=homo_sapiens',
-
             #Locations to write output files
             'bed_dir'        => $self->o('pipeline_dir'),
 

@@ -62,9 +62,6 @@ sub default_options {
             #Location url of database to get EPO GenomicAlignTree objects from
             #'compara_db' => 'mysql://ensro@compara3:3306/cc21_mammals_epo_pt3_86',
 
-            #Location url of database to get snps from
-            #'variation_url' => 'mysql://ensro@ens-staging1:3306/homo_sapiens_variation_86_38?group=variation',
-            
             'baseage_autosql' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/baseage_autosql.as'),
 
             #Locations to write output files
@@ -126,7 +123,6 @@ sub pipeline_analyses {
               -parameters => {
                               'compara_db' => $self->o('compara_db'),
                               'ancestral_db' => $self->o('ancestral_db'),
-                              'variation_url' => $self->o('variation_url'),
                               'species_set_name' => $self->o('species_set_name'),
                               'species' => $self->o('ref_species'),
                               'bed_dir' => $self->o('bed_dir'),
