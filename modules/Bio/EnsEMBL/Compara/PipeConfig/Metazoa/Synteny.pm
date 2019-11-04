@@ -19,7 +19,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::Synteny_conf
+Bio::EnsEMBL::Compara::PipeConfig::Metazoa::Synteny_conf
 
 =head1 DESCRIPTION
 
@@ -27,13 +27,13 @@ This is the EG Metazoa specific version of the general Bio::EnsEMBL::Compara::Pi
 
 =head1 SYNOPSIS
 
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::Synteny_conf \
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Metazoa::Synteny_conf \
   -host mysql-ens-compara-prod-X -port XXXX \
   -ptree_db/alignment_db <db_alias_or_url>
 
 =head1 EXAMPLE
 
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::Synteny_conf  \
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Metazoa::Synteny_conf  \
   -host mysql-ens-compara-prod-X -port XXX ... \
   -pipeline_name "synteny_${RELEASE_VERSION}" \
   -hive_force_init 1 \
@@ -50,7 +50,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::Synteny_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Metazoa::Synteny_conf;
 
 use strict;
 use warnings;
@@ -58,7 +58,7 @@ use warnings;
 use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Synteny_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
+use base ('Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf');
 
 sub default_options {
     my ($self) = @_;

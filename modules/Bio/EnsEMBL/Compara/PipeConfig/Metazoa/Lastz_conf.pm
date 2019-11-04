@@ -19,16 +19,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::Lastz_conf
+Bio::EnsEMBL::Compara::PipeConfig::Metazoa::Lastz_conf
 
 =head1 SYNOPSIS
 
     #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
-
-    #3. Check all default_options in PairAligner_conf.pm, especically:
-        release
-        pipeline_db (-host)
-        resource_classes 
 
     #4. Check all default_options below, especially
         ref_species (if not homo_sapiens)
@@ -36,8 +31,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::Lastz_conf
         pair_aligner_options
 
     #5. Run init_pipeline.pl script:
-        Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::Lastz_conf \
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Metazoa::Lastz_conf \
           -host XXX -port XXX -user XXX -password XXX \
           -hive_force_init 1 \
           -reg_conf $REG_FILE \
@@ -53,8 +47,8 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::Lastz_conf
 =head1 DESCRIPTION  
 
     This is a Metazoa configuration file for LastZ pipeline.
-    This pipeline inherits from EBI::Lastz_conf (which, in turn, inherits from PairAligner_conf.pm).
-    Please see EBI/Lastz_conf.pm and PairAligner_conf.pm for general details of the pipeline.
+    This pipeline inherits from Lastz_conf (which, in turn, inherits from PairAligner_conf.pm).
+    Please see Lastz_conf.pm and PairAligner_conf.pm for general details of the pipeline.
 
 =head1 CONTACT
 
@@ -66,11 +60,11 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::Lastz_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Metazoa::Lastz_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Lastz_conf');  # Inherit from LastZ@EBI config file
+use base ('Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf');
 
 sub default_options {
 my ($self) = @_;
