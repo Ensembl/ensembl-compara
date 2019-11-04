@@ -45,6 +45,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For INPUT_PLUS
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -133,10 +134,21 @@ sub pipeline_analyses {
               -hive_capacity => $self->o('base_age_capacity'),
               -rc_name => '4Gb_job',
               -flow_into => {
-                             2 => '?accu_name=bed_files&accu_address={seq_region}',
-                            },
-
+                  2 => { 'sort_bed' => INPUT_PLUS(), },
+              },
             },
+
+            {   -logic_name => 'sort_bed',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+                -parameters => {
+                    'sorted_bed_file'   => '#bed_file#.sort',
+                    'cmd'               => 'sort -k2,2n #bed_file# > #sorted_bed_file#',
+                },
+                -flow_into  => {
+                    1 => '?accu_name=bed_files&accu_address={seq_region}&accu_input_variable=sorted_bed_file',
+                },
+            },
+
              { -logic_name => 'big_bed',
                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BaseAge::BigBed',
                -parameters => {

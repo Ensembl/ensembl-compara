@@ -74,23 +74,11 @@ sub fetch_input {
   my $concat_bed_file = $self->worker_temp_directory . "/concat_ages.bed";
 
   my $bed_files = $self->param('bed_files');
-  #sort alphabetically https://genome.ucsc.edu/goldenPath/help/bigBed.html 
-  #Your BED file must be sorted by chrom then chromStart. You can use the UNIX sort command to do this: sort -k1,1 -k2,2n unsorted.bed > input.bed
-
-  my @ordered_files;
-  foreach my $seq_region (sort {$a cmp $b} keys %$bed_files) {
-      my $sorted_bed_file = $self->sort_bed($bed_files->{$seq_region});
-      push @ordered_files, $sorted_bed_file;
-  }
-  my $file_list = join " ", @ordered_files;
+  my $file_list = join " ", (map {$bed_files->{$_}} sort {$a cmp $b} keys %$bed_files);
   my $cat_cmd = "cat $file_list > $concat_bed_file";
   $self->run_command($cat_cmd, { die_on_failure => 1 });
 
   $self->param('concat_file', $concat_bed_file);
-  #Should be able to delete the original files now
-  #unlink @ordered_files;
-
-  return 1;
 }
 
 sub write_output {
@@ -100,27 +88,8 @@ sub write_output {
   if (-s $concat_file) {
       my $cmd = [$self->param('program'), '-as='.$self->param('baseage_autosql'), '-type=bed3+3', $concat_file, $self->param('chr_sizes'), $self->param('big_bed_file')];
       $self->run_command($cmd, { die_on_failure => 1 });
-  } else {
-      #empty concat_file
-      #unlink $concat_file;
   }
-
-  return 1;
-
 }
-
-sub sort_bed {
-    my ($self, $bed_file) = @_;
-    my $sorted_bed_file = $bed_file . ".sort";
-    return $sorted_bed_file if (-e $sorted_bed_file) and ((-s $sorted_bed_file) == (-s $bed_file));
-    my $sort_cmd = "sort -k2,2n $bed_file > $sorted_bed_file";
-    $self->run_command($sort_cmd, { die_on_failure => 1 });
-    #remove original bed file
-    #unlink $bed_file;
-    return $sorted_bed_file;
-}
-
 
 1;
-
 

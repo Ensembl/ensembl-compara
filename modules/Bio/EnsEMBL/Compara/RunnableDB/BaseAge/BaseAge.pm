@@ -301,10 +301,9 @@ sub base_age {
     close $bed_fh;
 
     #Do not sort here in case the sort command fails, which means having to rerun the entire job
-    #my $sorted_bed_file = sort_bed($bed_file);
-    my $output;
-    #%$output = ('bed_files' => $sorted_bed_file);
-    %$output = ('bed_files' => $bed_file);
+    my $output = {
+        'bed_file'  => $bed_file,
+    };
     $self->dataflow_output_id($output, 2);
 }
 
