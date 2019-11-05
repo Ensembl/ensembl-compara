@@ -258,7 +258,9 @@ sub base_age {
                         last;
                     }
                 } else {
+                    #The ancestor now has a gap. We've got a lineage-specific insertion
                     #print "ANC_GAP " . ($i+1) . " $base " . $aligned_seq[$i] . " " . $ancestral_seq->{aligned_seq}[$i]. " " . $ancestral_seq->{name} . "\n";
+                    last;
                 }
                 $j++;
             }
