@@ -44,7 +44,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     my $self = shift;
