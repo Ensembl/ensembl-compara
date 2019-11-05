@@ -144,6 +144,7 @@ sub pipeline_analyses {
                     'sorted_bed_file'   => '#bed_file#.sort',
                     'cmd'               => 'sort -k2,2n #bed_file# > #sorted_bed_file#',
                 },
+                -rc_name    => '16Gb_job',
                 -flow_into  => {
                     1 => '?accu_name=bed_files&accu_address={seq_region}&accu_input_variable=sorted_bed_file',
                 },
@@ -159,7 +160,7 @@ sub pipeline_analyses {
                                'chr_sizes_file' => $self->o('chr_sizes_file'),
                                'chr_sizes' => '#bed_dir#/#chr_sizes_file#',
                               },
-               -rc_name => '2Gb_job',
+               -rc_name => '16Gb_job',
              },
 
      ];
