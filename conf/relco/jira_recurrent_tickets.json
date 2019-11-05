@@ -29,20 +29,14 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Schema+finalization\n- Update table.sql and create patch files\n- Check the patch files\n- Commit the schema",
-            "summary": "Schema patch files"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Schema+finalization#Schemafinalization-Patchthetestdatabases",
-            "summary": "Patch the test databases"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Schema+finalization",
+            "summary": "Schema finalization"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Code+branching",
-            "summary": "Branch the code"
+            "summary": "Code branching"
          }
       ],
       "summary": "Release <version> preparation"
