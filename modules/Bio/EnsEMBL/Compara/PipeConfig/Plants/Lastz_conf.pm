@@ -64,10 +64,9 @@ sub default_options {
 }
 
 
-sub pipeline_analyses {
+sub tweak_analyses {
     my $self = shift;
-    my $all_analyses = $self->SUPER::pipeline_analyses(@_);
-    my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
+    my $analyses_by_name = shift;
 
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
@@ -83,10 +82,8 @@ sub pipeline_analyses {
         $self->o('pair_aligner_logic_name')."_himem1" => '8Gb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
-        $analyses_by_name{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
+        $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
     }
-
-    return $all_analyses;
 }
 
 

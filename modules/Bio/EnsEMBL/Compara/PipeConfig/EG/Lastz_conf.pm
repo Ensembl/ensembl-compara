@@ -66,56 +66,6 @@ sub default_options {
 
             'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
 
-            'staging_loc1' => {
-                -host   => 'mysql-eg-staging-1.ebi.ac.uk',
-                -port   => 4160,
-                -user   => 'ensro',
-                -pass   => '',
-            },
-            'staging_loc2' => {
-                -host   => 'mysql-eg-staging-2.ebi.ac.uk',
-                -port   => 4275,
-                -user   => 'ensro',
-                -pass   => '',
-            },
-             'prod_loc1' => {
-                -host   => 'mysql-eg-prod-1.ebi.ac.uk',
-                -port   => 4238,
-                -user   => 'ensro',
-                -pass   => '',
-                -db_version => 74,
-            },
-            'livemirror_loc' => {
-                -host   => 'mysql-eg-mirror.ebi.ac.uk',
-                -port   => 4205,
-                -user   => 'ensro',
-                -pass   => '',
-                -db_version => 73,
-            },
-
-            #'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-            'curr_core_sources_locs'    => [ $self->o('prod_loc1') ],
-            'curr_core_dbs_locs'        => '', #if defining core dbs with config file. Define in Lastz_conf.pm or TBlat_conf.pm
-
-
-	    #Alternatively, define location of core databases separately (over-ride curr_core_sources_locs in Pairwise_conf.pm)
-	    #'reference' => {
-	    #	-host           => "host_name",
-	    #	-port           => port,
-	    #	-user           => "user_name",
-	    #	-dbname         => "my_human_database",
-	    #	-species        => "homo_sapiens"
-	    #   },
-            #'non_reference' => {
-	    #	    -host           => "host_name",
-	    #	    -port           => port,
-	    #	    -user           => "user_name",
-	    #	    -dbname         => "my_bushbaby_database",
-	    #	    -species        => "otolemur_garnettii"
-	    #	  },
-	    #'curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ],
-	    #'curr_core_sources_locs'=> '',
-
 	    #Reference species
 #	    'ref_species' => 'homo_sapiens',
 	    'ref_species' => '',
@@ -142,10 +92,9 @@ sub default_options {
 }
 
 
-sub pipeline_analyses {
+sub tweak_analyses {
     my $self = shift;
-    my $all_analyses = $self->SUPER::pipeline_analyses(@_);
-    my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
+    my $analyses_by_name = shift;
 
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
@@ -161,10 +110,8 @@ sub pipeline_analyses {
           $self->o('pair_aligner_logic_name') . "_himem1" => '8Gb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
-        $analyses_by_name{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
+        $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
     }
-
-    return $all_analyses;
 }
 
 

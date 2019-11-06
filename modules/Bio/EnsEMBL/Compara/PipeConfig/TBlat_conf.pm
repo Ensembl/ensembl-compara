@@ -65,14 +65,6 @@ sub default_options {
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 
-        # We connect to the databases via the Registry configuration file of the division
-        'master_db'              => 'compara_master',
-        'curr_core_sources_locs' => undef,
-        'curr_core_dbs_locs'     => undef,
-
-        # Work directory
-        'dump_dir' => $self->o('pipeline_dir'),
-
         # TBlat is used to align the genomes
         'pair_aligner_exe' => $self->o('blat_exe'),
 

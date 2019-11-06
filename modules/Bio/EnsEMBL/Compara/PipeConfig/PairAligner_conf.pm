@@ -90,6 +90,9 @@ sub default_options {
         #The registry file "reg_conf" is automatically set up in the parent class
         'master_db' => 'compara_master',
 
+        # Work directory
+        'dump_dir' => $self->o('pipeline_dir'),
+
 	#Reference species (if not using pairwise configuration file)
         'ref_species' => undef,
         'non_ref_species' => undef,
@@ -144,38 +147,6 @@ sub default_options {
 	'filter_duplicates_rc_name' => '1Gb_job',
     'filter_duplicates_himem_rc_name' => '8Gb_job',
 
-	#
-	#Default pair_aligner
-	#
-   	'pair_aligner_method_link' => [1001, 'LASTZ_RAW'],
-	'pair_aligner_logic_name' => 'LastZ',
-	'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ',
-
-    'pair_aligner_options' => {
-        default => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', # ensembl genomes settings
-        # Vertebrata
-        7742    => 'T=1 K=3000 L=3000 H=2200 O=400 E=30 --ambiguous=iupac',
-        # Catarrhini, Sus, Carnivora
-        9526    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=' . $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/primate.matrix').' --ambiguous=iupac',
-        9822    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 --ambiguous=iupac',
-        33554   => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 --ambiguous=iupac',
-        # Vigna, Solanaceae
-        3913    => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac --matchcount=1000',
-        4070    => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac --matchcount=1000',
-        # Solanum ?
-        #4107    => 'K=5000 L=5000 H=3000 O=400 E=30 --ambiguous=iupac M=10 --notransition --step=20',
-        # Triticum aestivum ?
-        #4565    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 --ambiguous=iupac --matchcount=1000',
-        # Triticae ?
-        # 147389 => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac --identity=75..100 --matchcount=1000',
-    },
-
-        #
-        #Default chain
-        #
-	'chain_input_method_link' => [1001, 'LASTZ_RAW'],
-	'chain_output_method_link' => [1002, 'LASTZ_CHAIN'],
-
 	 #linear_gap=>medium for more closely related species, 'loose' for more distant
 	'linear_gap' => 'medium',
 
@@ -189,8 +160,6 @@ sub default_options {
         #
         #Default net 
         #
-	'net_input_method_link' => [1002, 'LASTZ_CHAIN'],
-        'net_output_method_link' => [16, 'LASTZ_NET'],
         'net_ref_species' => $self->o('ref_species'),  #default to ref_species
         'net_parameters' => {'max_gap'=>'50', 'chainNet_exe'=>$self->o('chainNet_exe')},
   	'bidirectional' => 0,
@@ -198,7 +167,6 @@ sub default_options {
 	#
 	#Default healthcheck
 	#
-	# 'previous_db' => $self->o('livemirror_loc'),
     'previous_db' => 'compara_prev',
 	'prev_release' => 0,   # 0 is the default and it means "take current release number and subtract 1"    
 	'max_percent_diff' => 20,
@@ -253,7 +221,7 @@ sub pipeline_create_commands {
 }
 
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
 
     # Needed to "load" the parameters, i.e. to force them to be substituted
@@ -269,7 +237,6 @@ sub pipeline_analyses {
 				  #'compara_url' => $self->dbconn_2_url('master_db'),
 				   'master_db' => $self->o('master_db'),
 				  'conf_file' => $self->o('conf_file'),
-				  # 'core_dbs' => $self->o('curr_core_dbs_locs'),
 				  'get_species_list' => 1,
 				  }, 
                 -input_ids => [{}],
@@ -318,8 +285,6 @@ sub pipeline_analyses {
 				  'mlss_id' => $self->o('mlss_id'),
 				  'mlss_id_list' => $self->o('mlss_id_list'),
                                   'collection' => $self->o('collection'),
-				  # 'registry_dbs' => $self->o('curr_core_sources_locs'),
-				  # 'core_dbs' => $self->o('curr_core_dbs_locs'),
 				  'master_db' => $self->o('master_db'),
 				  'do_pairwise_gabs' => $self->o('do_pairwise_gabs'), #healthcheck options
 				  'do_compare_to_previous_db' => $self->o('do_compare_to_previous_db'), #healthcheck options
