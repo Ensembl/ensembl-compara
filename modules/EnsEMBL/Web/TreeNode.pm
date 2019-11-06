@@ -154,8 +154,13 @@ sub reset_user_settings {
   my $node_id   = $self->id;
   my $user_data = $self->tree->user_data;
 
+  if ($node_id =~/^trackhub_/) {
+    my $n = $self->get_node($node_id);
+    $self->set_user_setting('display', $n->get_data('display'));
+    return 1;
+  }
   # remove node specific data if it exists
-  if (exists $user_data->{$node_id}) {
+  elsif (exists $user_data->{$node_id}) {
     delete $user_data->{$node_id};
     return 1;
   }

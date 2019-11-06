@@ -792,19 +792,9 @@ sub _add_trackhub_tracks {
   } ## End loop through tracksets
 
   # Update session records with tracks that are turned on.
-  $self->updateRecords($default_trackhub_tracks);
+  $self->{'default_trackhub_tracks'} = $default_trackhub_tracks;
 
   $self->{'th_default_count'} += $count_visible;
-}
-
-# Update sessions record with default trackhub tracks
-sub updateRecords {
-  my $self = shift;
-  my $tracks = shift;
-  foreach my $track (keys %$tracks) {
-    my $tracknode = $self->get_node($track);
-    $self->altered($self->update_track_renderer($tracknode, $tracks->{$track}));
-  }
 }
 
 sub _add_trackhub_extras_options {

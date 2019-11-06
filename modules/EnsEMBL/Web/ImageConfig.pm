@@ -93,6 +93,7 @@ sub _new {
   $self->{'track_order'}      = []; # state changes for track order as saved in db
   $self->{'user_track_count'} = 0;
   $self->{'userdata_threshold'}   = $hub->species_defs->USERDATA_THRESHOLD || 20;
+  $self->{'default_trackhub_tracks'} = {};
 
   return $self;
 }
@@ -241,7 +242,15 @@ sub reset_user_settings {
 
   if ($reset_type eq 'matrix') {
     # Reset all reg matrix tracks
-    foreach my $node_key (keys %{$user_settings->{'nodes'} || {}}) {
+    my @node_keys = [];
+    if (keys %{$user_settings->{'nodes'}}) {
+      @node_keys = keys %{$user_settings->{'nodes'}};
+    }
+    elsif (keys %{$self->{'default_trackhub_tracks'}}) {
+      @node_keys = keys %{$self->{'default_trackhub_tracks'}};
+    }
+
+    foreach my $node_key (@node_keys) {
       if ($node_key =~/^reg_feats|^seg_Segmentation|^trackhub_/) {
         if (my $node = $self->get_node($node_key)) {
           # For trackhubs we turn off all tracks and then update the selected ones.
@@ -249,7 +258,6 @@ sub reset_user_settings {
           if ($node_key =~ /^trackhub_/ ) {
             foreach my $menu_id (@$menu_ids) {
               if (index($node_key, $menu_id) > -1) {
-                warn $node_key;
                 $self->update_track_renderer($node, 'off');
               }
             }
@@ -273,7 +281,6 @@ sub reset_user_settings {
 
   if ($reset_tracks) {
     foreach my $node_key (keys %{$user_settings->{'nodes'} || {}}) {
-
       if (my $node = $self->get_node($node_key)) {
         $node->reset_user_settings;
         push @altered, $node->get_data('name') || $node->get_data('caption') || 1;
@@ -402,6 +409,7 @@ sub update_track_renderer {
     $renderer = $valid{'normal'} ? 'normal' : $renderers->[2] if $renderer ne 'off' && !$valid{$renderer};
 
     if ($node->set_user_setting('display', $renderer)) {
+      warn Data::Dumper::Dumper ['Changed', $node->get_data('name'), $renderer];
       return $node->get_data('name') || $node->get_data('caption') || 1;
     }
   }
