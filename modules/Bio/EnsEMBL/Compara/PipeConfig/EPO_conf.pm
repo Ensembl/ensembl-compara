@@ -80,6 +80,7 @@ sub default_options {
         # mlss_ids & co. Don't touch and define "mlss_id" on the command line
         # 'mlss_id' => 825, # epo mlss from master
         'ancestral_sequences_name' => 'ancestral_sequences',
+        'ancestral_sequences_display_name' => 'Ancestral sequences',
 
         # Executable parameters
         'mapping_params'    => { bestn=>11, gappedextension=>"no", softmasktarget=>"no", percent=>75, showalignment=>"no", model=>"affine:local", },
