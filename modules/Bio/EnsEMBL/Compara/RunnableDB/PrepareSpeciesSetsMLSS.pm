@@ -77,15 +77,21 @@ sub write_output {
     my $self = shift;
 
     my $all_gdbs = $self->param('genome_dbs');
+    $all_gdbs = [grep {$_->is_good_for_alignment == 1} @$all_gdbs] if $self->param('is_good_for_alignment');
+
+    my @param_names;
+    @param_names = @{$self->param('param_names')} if $self->param('param_names');
 
     if (@{$self->param('whole_method_links')}) {
         my $ss = $self->_write_ss($all_gdbs);
         foreach my $ml (@{$self->param('whole_method_links')}) {
             my $mlss = $self->_write_mlss( $ss, $ml );
+            
             # The last method_link listed in whole_method_links will make
-            # the pipeline-wide mlss_id
+            # the pipeline-wide mlss_id, unless param_names have been specified
+            my $this_param_name = shift @param_names || 'mlss_id';
             $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
-                'param_name' => 'mlss_id',
+                'param_name' => $this_param_name,
                 'param_value' => $mlss->dbID
             );
         }
@@ -147,4 +153,3 @@ sub _write_mlss {
 
 
 1;
-
