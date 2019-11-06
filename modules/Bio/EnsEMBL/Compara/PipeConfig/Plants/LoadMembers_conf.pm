@@ -66,6 +66,10 @@ sub default_options {
 
         'division'    => 'plants',
 
+    # names of species we don't want to reuse this time
+        #'do_not_reuse_list' => [ 'oryza_indica', 'vitis_vinifera' ],
+        'do_not_reuse_list' => [ ],
+
     # "Member" parameters:
         # Store ncRNA genes
         'store_ncrna'               => 0,
