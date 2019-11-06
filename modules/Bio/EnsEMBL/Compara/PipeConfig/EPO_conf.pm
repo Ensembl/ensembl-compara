@@ -71,6 +71,7 @@ sub default_options {
         'reuse_db'          => $self->o('species_set_name') . '_epo_prev',
 
         'ancestral_sequences_name' => 'ancestral_sequences',
+        'ancestral_sequences_display_name' => 'Ancestral sequences',
 
         # Executable parameters
         'mapping_params'    => { bestn=>11, gappedextension=>"no", softmasktarget=>"no", percent=>75, showalignment=>"no", model=>"affine:local", },
