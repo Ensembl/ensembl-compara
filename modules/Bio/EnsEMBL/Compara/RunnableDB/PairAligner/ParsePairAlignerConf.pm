@@ -70,7 +70,7 @@ my $verbose = 0;
 sub fetch_input {
     my ($self) = @_;
     if (!$self->param('master_db') && !$self->param('core_dbs') && !$self->param('conf_file')) {
-	throw("No master database is provided so you must set the define the location of core databases using a configuration file ('conf_file') or the 'curr_core_dbs_locs' parameter in the init_pipeline configuration file");
+	throw("No master database is provided so you must set the define the location of core databases using a configuration file ('conf_file')");
     }
 
     #Return if no conf file and trying to get the species list or there is no master_db in which case cannot call
@@ -1334,7 +1334,6 @@ sub populate_database_from_core_db {
 	$genome_db = update_genome_db($species_dba, $self->compara_dba, $species->{genome_db_id});
 
     } elsif ($species->{-dbname}) {
-	#Load form curr_core_dbs_locs in default_options file
 	$species_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(%$species);
 	$genome_db = update_genome_db($species_dba, $self->compara_dba);
     }

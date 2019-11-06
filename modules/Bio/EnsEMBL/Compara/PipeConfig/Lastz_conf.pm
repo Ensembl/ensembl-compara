@@ -63,11 +63,6 @@ sub default_options {
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'master_db' => 'compara_master',
-
-        # Work directory
-        'dump_dir' => $self->o('pipeline_dir'),
-
         # Capacities
         'pair_aligner_analysis_capacity'  => 700,
         'pair_aligner_batch_size'         => 40,
@@ -85,6 +80,25 @@ sub default_options {
 	    'pair_aligner_method_link' => [1001, 'LASTZ_RAW'],
 	    'pair_aligner_logic_name' => 'LastZ',
 	    'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ',
+
+        'pair_aligner_options' => {
+            default => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', # ensembl genomes settings
+            # Vertebrata
+            7742    => 'T=1 K=3000 L=3000 H=2200 O=400 E=30 --ambiguous=iupac',
+            # Catarrhini, Sus, Carnivora
+            9526    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=' . $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/primate.matrix') . ' --ambiguous=iupac',
+            9822    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 --ambiguous=iupac',
+            33554   => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 --ambiguous=iupac',
+            # Vigna, Solanaceae
+            3913    => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac --matchcount=1000',
+            4070    => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac --matchcount=1000',
+            # Solanum ?
+            #4107    => 'K=5000 L=5000 H=3000 O=400 E=30 --ambiguous=iupac M=10 --notransition --step=20',
+            # Triticum aestivum ?
+            #4565    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 --ambiguous=iupac --matchcount=1000',
+            # Triticae ?
+            #147389  => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac --identity=75..100 --matchcount=1000',
+        },
 
 	    #Default chain
 	    'chain_input_method_link' => [1001, 'LASTZ_RAW'],
