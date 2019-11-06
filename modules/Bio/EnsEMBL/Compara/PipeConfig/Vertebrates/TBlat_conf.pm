@@ -24,8 +24,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::TBlat_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::TBlat_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -mlss_id_list "[9769,9784,9754,9770,9785,9786,9771,9755,9767,9768,9782,9783,9756,9752,9753]" \
-        -pipeline_name ${COMPARA_DIV}_tblat_batchX_${CURR_ENSEMBL_RELEASE}
+        -mlss_id 591 -ref_species mus_musculus -pipeline_name ${COMPARA_DIV}_tblat_batchX_${CURR_ENSEMBL_RELEASE}
 
 =head1 DESCRIPTION
 

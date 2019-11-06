@@ -32,16 +32,16 @@ Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf
 
     #5. Run init_pipeline.pl script:
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf -host mysql-ens-compara-prod-X -port XXXX \
-            --mlss_id 574
+            -division vertebrates -ref_species danio_rerio -mlss_id 574
 
     #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
 
 
 =head1 DESCRIPTION  
 
-    This configuration file gives defaults specific for the translated blat net pipeline.
-    It inherits from PairAligner_conf.pm and parameters here will over-ride the parameters in PairAligner_conf.pm.
-    Please see PairAligner_conf.pm for general details of the pipeline.
+This configuration file gives defaults specific for the translated blat net pipeline.
+It inherits from PairAligner_conf.pm and parameters here will over-ride the parameters in PairAligner_conf.pm.
+Please see PairAligner_conf.pm for general details of the pipeline.
 
 =head1 CONTACT
 
