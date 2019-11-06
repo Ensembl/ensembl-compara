@@ -71,7 +71,7 @@ sub default_options {
 
         'reuse_member_db' => undef,
 
-        'curr_file_sources_locs' => [ '/nfs/production/panda/ensembl/warehouse/compara/alumni/mateus/home/qfo/2019/qfo_2019.json' ],
+        'curr_file_sources_locs' => [ $self->o('warehouse_dir') . '/alumni/mateus/home/qfo/2019/qfo_2019.json' ],
 
     #load uniprot members for family pipeline
         'load_uniprot_members'      => 0,

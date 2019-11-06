@@ -163,10 +163,9 @@ sub default_options {
         # HMM specific parameters
         # The location of the HMM library:
         'compara_hmm_library_basedir'               => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/compara_hmm_'.$self->o('ensembl_release')."/",
-        'shared_compara_basedir'                    => '/nfs/production/panda/ensembl/warehouse/compara/',
-        'target_compara_hmm_library_basedir'        => $self->o('shared_compara_basedir') . '/treefam_hmms/compara_hmm_'.$self->o('ensembl_release')."/",
-        'treefam_hmm_library_basedir'               => $self->o('shared_compara_basedir') . '/treefam_hmms/2015-12-18/',
-        'target_treefam_only_hmm_library_basedir'   => $self->o('shared_compara_basedir') . '/2015-12-18_only_TF_hmmer3/',
+        'target_compara_hmm_library_basedir'        => $self->o('warehouse_dir') . '/treefam_hmms/compara_hmm_'.$self->o('ensembl_release')."/",
+        'treefam_hmm_library_basedir'               => $self->o('warehouse_dir') . '/treefam_hmms/2015-12-18/',
+        'target_treefam_only_hmm_library_basedir'   => $self->o('warehouse_dir') . '/2015-12-18_only_TF_hmmer3/',
 
         #README file with the list of all names, genome_ids, assemblies, etc
         'readme_file'                   => $self->o('target_compara_hmm_library_basedir') . '/README_hmm_profiles'.$self->o('ensembl_release').'.txt',

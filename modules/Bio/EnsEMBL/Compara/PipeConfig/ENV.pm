@@ -75,6 +75,7 @@ sub shared_default_options {
 
         # TODO: make a $self method that checks whether this already exists, to prevent clashes like in the LastZ pipeline
         'pipeline_dir'          => '/hps/nobackup2/production/ensembl/' . $ENV{'USER'} . '/' . $self->o('pipeline_name'),
+        'warehouse_dir'         => '/nfs/production/panda/ensembl/warehouse/compara/',
 
         # Where to find the linuxbrew installation
         'linuxbrew_home'        => $ENV{'LINUXBREW_HOME'},

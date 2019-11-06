@@ -52,7 +52,7 @@ sub param_defaults {
     return {
         %{$self->SUPER::param_defaults},
 
-        'ref_tar_path_templ'    => '/nfs/production/panda/ensembl/warehouse/compara/hmms/treefam/multi_division_hmm_lib.%s.tar.gz',
+        'ref_tar_path_templ'    => $self->o('warehouse_dir') . '/hmms/treefam/multi_division_hmm_lib.%s.tar.gz',
         'rel_ftp_tar_path'      => 'compara/multi_division_hmm_lib.tar.gz',
     }
 }

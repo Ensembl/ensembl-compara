@@ -98,7 +98,7 @@ sub default_options {
         'blast_params'    => '', # By default C++ binary has composition stats on and -seg masking off
 
         # data directories:
-        'warehouse_dir' => '/nfs/production/panda/ensembl/warehouse/compara/production/'.$self->o('ensembl_release').'/Families_'.$self->o('rel_with_suffix'),
+        'warehouse_dir' => $self->o('warehouse_dir') . '/production/' . $self->o('ensembl_release') . '/Families_' . $self->o('rel_with_suffix'),
 
         # Thresholds for Mafft resource-classes
         'max_genes_lowmem_mafft'        =>  8000,
