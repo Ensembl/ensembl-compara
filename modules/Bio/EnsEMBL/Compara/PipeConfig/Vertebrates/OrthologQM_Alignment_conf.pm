@@ -1,5 +1,3 @@
-=pod
-
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -19,34 +17,20 @@ limitations under the License.
 
 =cut
 
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::OrthologQM_Alignment_conf
 
 =head1 SYNOPSIS
 
-    For Vertebrates:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::OrthologQM_Alignment_conf -host mysql-ens-compara-prod-X -port XXXX \
-            -member_type <protein_or_ncrna>
-
-    For a specific strain/breed:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::OrthologQM_Alignment_conf -host mysql-ens-compara-prod-X -port XXXX \
-            -member_type <protein_or_ncrna> -collection <murinae_or_sus>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::OrthologQM_Alignment_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -member_type <protein_or_ncrna>
 
 =head1 DESCRIPTION
 
-    This pipeline uses whole genome alignments to calculate the coverage of homologous pairs
-    for Vertebrates. See parent class Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf
-    for additional information.
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
+This pipeline uses whole genome alignments to calculate the coverage of homologous pairs
+for Vertebrates. See parent class Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf
+for additional information.
 
 =cut
 
