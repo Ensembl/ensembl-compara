@@ -427,6 +427,14 @@ sub delete_tree {
     # Make sure the tags are loaded (so that we can access "mcoffee_score")
     $tree->_load_tags;
 
+    # Query to reset gene_member_hom_stats
+    my $gene_member_hom_stats_sql = 'UPDATE gene_member_hom_stats SET gene_trees = 0, orthologues = 0, paralogues = 0, homoeologues = 0 WHERE gene_member_id = ?';
+    for my $leaf (@{$tree->get_all_leaves}) {
+        if ($leaf->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
+            $self->dbc->do($gene_member_hom_stats_sql, undef, $leaf->gene_member_id);
+        }
+    }
+
     # Remove all the nodes but the root
     my $gene_tree_node_Adaptor = $self->db->get_GeneTreeNodeAdaptor;
     for my $node (@{$tree->get_all_nodes}) {
