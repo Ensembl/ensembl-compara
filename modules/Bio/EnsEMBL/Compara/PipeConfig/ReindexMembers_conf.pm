@@ -248,12 +248,20 @@ sub pipeline_analyses {
         {   -logic_name        => 'map_member_ids',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::MapMemberIDs',
             -flow_into         => {
-                2 => 'delete_tree',
+                2 => 'delete_old_member',
                 3 => [
                     '?accu_name=seq_member_id_pairs&accu_address=[]&accu_input_variable=seq_member_ids',
                     '?accu_name=gene_member_id_pairs&accu_address=[]&accu_input_variable=gene_member_ids',
                 ],
-            }
+            },
+        },
+
+        {   -logic_name        => 'delete_old_member',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::DeleteOldMember',
+            -hive_capacity     => 1,    # Because of transactions, concurrent jobs will have deadlocks
+            -flow_into         => {
+                2 => 'delete_tree',
+            },
         },
 
         {   -logic_name        => 'delete_tree',

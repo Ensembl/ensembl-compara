@@ -128,11 +128,11 @@ sub run {
                 push @to_rename, { 'prev' => $previous_members->{$gl}, 'curr' => $current_members->{$gg} };
             } else {
                 # 1-to-many or many-to-many mapping -> we just delete the member
-                push @to_delete, map {$previous_members->{$_}->{'seq_member_id'}} @$lost_gene_member_stable_ids;
+                push @to_delete, map {$previous_members->{$_}} @$lost_gene_member_stable_ids;
             }
         } else {
             # Sequence completely lost
-            push @to_delete, map {$previous_members->{$_}->{'seq_member_id'}} @$lost_gene_member_stable_ids;
+            push @to_delete, map {$previous_members->{$_}} @$lost_gene_member_stable_ids;
         }
     }
 
@@ -152,35 +152,17 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    my $to_rename = $self->param('to_rename');
     my $to_delete = $self->param('to_delete');
+    foreach my $m (@$to_delete) {
+        $self->dataflow_output_id($m, 2);
+    }
 
+    my $to_rename = $self->param('to_rename');
     foreach my $r (@$to_rename) {
         $self->dataflow_output_id( {
                 'seq_member_ids'    => [$r->{'prev'}->{'seq_member_id'},  $r->{'curr'}->{'seq_member_id'}],
                 'gene_member_ids'   => [$r->{'prev'}->{'gene_member_id'}, $r->{'curr'}->{'gene_member_id'}],
             }, 3 );
-    }
-
-    if (scalar(@$to_delete)) {
-        # Find all the trees that need to be deleted
-        my %root_ids_to_delete;
-        my $sql = 'SELECT root_id FROM gene_tree_node JOIN gene_tree_root USING (root_id) WHERE ref_root_id IS NULL AND seq_member_id = ?';
-        my $dbc = $self->compara_dba->dbc;
-        my $sth = $dbc->prepare($sql);
-        foreach my $seq_member_id (@$to_delete) {
-            $dbc->do('DELETE FROM seq_member_projection WHERE source_seq_member_id = ?', undef, $seq_member_id);
-
-            $sth->execute($seq_member_id);
-            my ($tree_id) = $sth->fetchrow_array;
-            $sth->finish;
-            $root_ids_to_delete{$tree_id} = 1 if defined $tree_id;
-        }
-        # Delete them
-        $self->warning( scalar(keys %root_ids_to_delete) . " trees to delete" );
-        foreach my $tree_id (keys %root_ids_to_delete) {
-            $self->dataflow_output_id( { 'gene_tree_id' => $tree_id }, 2 );
-        }
     }
 }
 
