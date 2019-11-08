@@ -217,7 +217,7 @@ sub pipeline_analyses {
         {   -logic_name => 'check_reference_genome',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
-                'query'         => 'SELECT genome_db_id FROM genome_db WHERE name = "#genome_db_name#"'
+                'query'         => 'SELECT genome_db_id FROM genome_db WHERE name = "#genome_db_name#"',
                 'expected_size' => '= 1',
             },
             -flow_into  => [ 'check_taxon_id' ],
