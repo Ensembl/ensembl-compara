@@ -43,20 +43,11 @@ Bio::EnsEMBL::Compara::PipeConfig::Metazoa::Lastz_conf
 
     #6. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
 
-
 =head1 DESCRIPTION  
 
-    This is a Metazoa configuration file for LastZ pipeline.
-    This pipeline inherits from Lastz_conf (which, in turn, inherits from PairAligner_conf.pm).
-    Please see Lastz_conf.pm and PairAligner_conf.pm for general details of the pipeline.
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
+This is a Metazoa configuration file for LastZ pipeline.
+This pipeline inherits from Lastz_conf (which, in turn, inherits from PairAligner_conf.pm).
+Please see Lastz_conf.pm and PairAligner_conf.pm for general details of the pipeline.
 
 =cut
 
@@ -64,44 +55,42 @@ package Bio::EnsEMBL::Compara::PipeConfig::Metazoa::Lastz_conf;
 
 use strict;
 use warnings;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf');
 
 sub default_options {
 my ($self) = @_;
-  return {
-    %{$self->SUPER::default_options},   # inherit the generic ones
-    'division'  => 'metazoa',
-    # healthcheck
-    'do_compare_to_previous_db' => 0,
-    # Net
-    'bidirectional' => 1,
-  };
+    return {
+        %{$self->SUPER::default_options},   # inherit the generic ones
+        'division'  => 'metazoa',
+        # healthcheck
+        'do_compare_to_previous_db' => 0,
+        # Net
+        'bidirectional' => 1,
+    };
 }
 
-sub pipeline_analyses {
-  my $self = shift;
-  my $all_analyses = $self->SUPER::pipeline_analyses(@_);
-  my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
 
-  ## Extend this section to redefine the resource names of some analysis
-  my %overriden_rc_names = (
-    'alignment_nets'            => '2Gb_job',
-    'create_alignment_nets_jobs'=> '2Gb_job',
-    'create_alignment_chains_jobs'  => '4Gb_job',
-    'create_filter_duplicates_jobs'     => '2Gb_job',
-    'create_pair_aligner_jobs'  => '2Gb_job',
-    'populate_new_database' => '8Gb_job',
-    'parse_pair_aligner_conf' => '4Gb_job',
-    'set_internal_ids_collection' => '1Gb_job',
-    $self->o('pair_aligner_logic_name') => '4Gb_job',
-    $self->o('pair_aligner_logic_name')."_himem1" => '8Gb_job',
-  );
+    ## Extend this section to redefine the resource names of some analysis
+    my %overriden_rc_names = (
+        'alignment_nets'            => '2Gb_job',
+        'create_alignment_nets_jobs'=> '2Gb_job',
+        'create_alignment_chains_jobs'  => '4Gb_job',
+        'create_filter_duplicates_jobs'     => '2Gb_job',
+        'create_pair_aligner_jobs'  => '2Gb_job',
+        'populate_new_database' => '8Gb_job',
+        'parse_pair_aligner_conf' => '4Gb_job',
+        'set_internal_ids_collection' => '1Gb_job',
+        $self->o('pair_aligner_logic_name') => '4Gb_job',
+        $self->o('pair_aligner_logic_name')."_himem1" => '8Gb_job',
+    );
 
-  foreach my $logic_name (keys %overriden_rc_names) {
-    $analyses_by_name{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
-  }
-
-  return $all_analyses;
+    foreach my $logic_name (keys %overriden_rc_names) {
+        $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
+    }
 }
 
 1;
