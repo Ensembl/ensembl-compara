@@ -17,43 +17,18 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf
 
-=head1 DESCRIPTION
-
-    The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
-
 =head1 SYNOPSIS
 
-    #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -mlss_id <curr_ptree_mlss_id>
+        
+=head1 DESCRIPTION
 
-    #3. make sure that all default_options are set correctly
-
-    #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
-            -division $COMPARA_DIV -mlss_id <curr_ptree_mlss_id>
-
-    #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
+The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
 
 =cut
 
@@ -63,6 +38,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.5;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC;
@@ -70,7 +46,6 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneSetQC;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree;
 
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
@@ -323,14 +298,14 @@ sub default_options {
 
     # CAFE parameters
         # Do we want to initialise the CAFE part now ?
-        'initialise_cafe_pipeline'  => undef,
+        'initialise_cafe_pipeline' => 1,
         'cafe_lambdas'             => '',  # For now, we don't supply lambdas
         'cafe_struct_tree_str'     => '',  # Not set by default
         'full_species_tree_label'  => 'default',
         'per_family_table'         => 1,
         'cafe_species'             => [],
         #Use Timetree divergence times for the GeneTree internal nodes
-        'use_timetree_times'        => 0,
+        'use_timetree_times'       => 1,
 
     # GOC parameters
         # Points to the previous protein trees production database. Will be used for various GOC operations. 
@@ -338,7 +313,7 @@ sub default_options {
         'goc_reuse_db'                  => 'ptrees_prev',
         'goc_taxlevels'                 => [],
         'goc_threshold'                 => undef,
-        'calculate_goc_distribution'    => 1,
+        'calculate_goc_distribution'    => 0,
 
     # HMM specific parameters
         'hmm_library_name'              => 'compara_hmm_91.hmm3',
@@ -346,14 +321,14 @@ sub default_options {
 
     # Extra analyses
         # Export HMMs ?
-        'do_hmm_export'                 => 0,
+        'do_hmm_export'          => 0,
         # Do we want the Gene QC part to run ?
-        'do_gene_qc'                    => 0,
+        'do_gene_qc'             => 1,
         # Do we extract overall statistics for each pair of species ?
-        'do_homology_stats'             => 0,
+        'do_homology_stats'      => 1,
         # Do we need a mapping between homology_ids of this database to another database ?
         # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
-        'do_homology_id_mapping' => 0,
+        'do_homology_id_mapping' => 1,
         
         # homology dumps options
         'homology_dumps_dir'       => $self->o('dump_dir'). '/homology_dumps/',

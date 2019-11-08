@@ -19,7 +19,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ProteinTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ProteinTrees_conf
 
 =head1 SYNOPSIS
 
@@ -75,24 +75,8 @@ sub default_options {
         # List of species some genes have been projected from
         'projection_source_species_names' => [ 'homo_sapiens', 'mus_musculus', 'danio_rerio' ],
 
-    # CAFE parameters
-        # Do we want to initialise the CAFE part now ?
-        'initialise_cafe_pipeline'  => 1,
-        #Use Timetree divergence times for the CAFETree internal nodes
-        'use_timetree_times'        => 1,
-
     # GOC parameters
         'goc_taxlevels'                 => ["Euteleostomi","Ciona"],
-        'calculate_goc_distribution'    => 0,
-
-    # Extra analyses
-        # Do we want the Gene QC part to run ?
-        'do_gene_qc'                    => 1,
-        # Do we extract overall statistics for each pair of species ?
-        'do_homology_stats'             => 1,
-        # Do we need a mapping between homology_ids of this database to another database ?
-        # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
-        'do_homology_id_mapping'                 => 1,
     };
 }
 

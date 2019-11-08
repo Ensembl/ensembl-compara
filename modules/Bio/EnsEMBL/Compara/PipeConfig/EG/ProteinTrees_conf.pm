@@ -17,15 +17,6 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::EG::ProteinTrees_conf
@@ -45,14 +36,10 @@ Bio::EnsEMBL::Compara::PipeConfig::EG::ProteinTrees_conf
 
 =head1 DESCRIPTION
 
-    The PipeConfig example file for Ensembl Genomes group's version of
-    ProteinTrees pipeline. This file is inherited from & customised further
-    within the Ensembl Genomes infrastructure but this file serves as
-    an example of the type of configuration we perform.
-
-=head1 CONTACT
-
-  Please contact Compara or Ensembl Genomes with questions/suggestions
+The PipeConfig example file for Ensembl Genomes group's version of
+ProteinTrees pipeline. This file is inherited from & customised further
+within the Ensembl Genomes infrastructure but this file serves as
+an example of the type of configuration we perform.
 
 =cut
 
@@ -150,6 +137,10 @@ sub default_options {
         'prev_rel_db' => undef,
 
     # CAFE parameters
+        # Do we want to initialise the CAFE part now ?
+        'initialise_cafe_pipeline'  => 0,
+        #Use Timetree divergence times for the CAFETree internal nodes
+        'use_timetree_times'        => 0,
 
     # GOC parameters
         'goc_taxlevels'             => [],  # this is the default default
@@ -157,11 +148,20 @@ sub default_options {
         'goc_taxlevels_metazoa'     => ['Diptera', 'Hymenoptera', 'Nematoda'],
         'goc_taxlevels_protists'    => [],
         'goc_taxlevels_vb'          => ['Chelicerata', 'Diptera', 'Hemiptera'],
+        'calculate_goc_distribution' => 1,
 
     # Extra analyses
+        # Do we want the Gene QC part to run ?
+        'do_gene_qc'             => 0,
+        # Do we extract overall statistics for each pair of species ?
+        'do_homology_stats'      => 0,
+        # Do we need a mapping between homology_ids of this database to another database ?
+        # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
+        'do_homology_id_mapping' => 0,
         # homology dumps options
         'prev_homology_dumps_dir'   => undef,
         'homology_dumps_shared_dir' => undef,
+
     };
 }
 
