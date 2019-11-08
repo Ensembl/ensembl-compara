@@ -70,7 +70,7 @@ sub default_options {
             [ 'Sauria', 'Sauropsids' ],
             # Filters with the strains shown, prefix with "str:"
             [ 'str:Murinae', 'Rat and all mice (incl. strains)' ],
-            [ 'str:Sus', 'All pig breeds' ],
+            [ 'str:Sus scrofa', 'All pig breeds' ],
         ],
         'reference_genomes' => [
             # Which genome_dbs are used references for which clades
@@ -180,13 +180,23 @@ sub pipeline_analyses {
                 'column_names' => [ 'scientific_name', 'common_name' ],
             },
             -flow_into => {
-                2 => [ 'insert_taxon_filters' ],    # Cannot flow directly into the table because table-dataflows can only reach the eHive database, not #db_conn#
+                2 => [ 'check_taxon_filters' ],
             },
+        },
+
+        {   -logic_name => 'check_taxon_filters',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'query'         => 'SELECT DISTINCT root_id FROM species_tree_root JOIN species_tree_node USING (root_id) WHERE method_link_species_set_id = #method_link_species_set_id# AND node_name = "#scientific_name#"',
+                'expected_size' => '= 2',
+            },
+            -flow_into  => [ 'insert_taxon_filters' ],
         },
 
         {   -logic_name => 'insert_taxon_filters',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
+                # Cannot flow directly into the table because table-dataflows can only reach the eHive database, not #db_conn#
                 # Gets #db_conn# from pipeline_wide_parameters
                 'sql'       => 'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#method_link_species_set_id#, "filter:#scientific_name#", "#common_name#")',
             },
@@ -200,13 +210,32 @@ sub pipeline_analyses {
                 'column_names' => [ 'taxon_id', 'genome_db_name' ],
             },
             -flow_into => {
-                2 => [ 'insert_reference_genomes' ],    # Cannot flow directly into the table because table-dataflows can only reach the eHive database, not #db_conn#
+                2 => [ 'check_reference_genome' ],
             },
+        },
+
+        {   -logic_name => 'check_reference_genome',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'query'         => 'SELECT genome_db_id FROM genome_db WHERE name = "#genome_db_name#"'
+                'expected_size' => '= 1',
+            },
+            -flow_into  => [ 'check_taxon_id' ],
+        },
+
+        {   -logic_name => 'check_taxon_id',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'query'         => 'SELECT DISTINCT root_id FROM species_tree_root JOIN species_tree_node USING (root_id) WHERE method_link_species_set_id = #method_link_species_set_id# AND taxon_id = #taxon_id#',
+                'expected_size' => '= 2',
+            },
+            -flow_into  => [ 'insert_reference_genomes' ],
         },
 
         {   -logic_name => 'insert_reference_genomes',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
+                # Cannot flow directly into the table because table-dataflows can only reach the eHive database, not #db_conn#
                 # Gets #db_conn# from pipeline_wide_parameters
                 'sql'       => 'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#method_link_species_set_id#, "ref_genome:#taxon_id#", "#genome_db_name#")',
             },
