@@ -192,6 +192,7 @@ sub pipeline_wide_parameters {
         'ftp_root'        => $self->o('ftp_root'),
         'division'        => $self->o('division'),
         'genome_dumps_dir'=> $self->o('genome_dumps_dir'),
+        'warehouse_dir'   => $self->o('warehouse_dir'),
 
         # tree params
         'dump_trees_capacity' => $self->o('dump_trees_capacity'),
@@ -340,6 +341,8 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::AddHMMLib',
             -parameters => {
                 'shared_user'   => $self->o('shared_user'),
+                'ref_tar_path_templ' => '#warehouse_dir#/hmms/treefam/multi_division_hmm_lib.%s.tar.gz',
+                'tar_ftp_path'       => '#dump_dir#/compara/multi_division_hmm_lib.tar.gz',
             },
         },
 
