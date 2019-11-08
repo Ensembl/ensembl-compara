@@ -17,8 +17,6 @@ limitations under the License.
 
 =cut
 
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::AddHMMLib

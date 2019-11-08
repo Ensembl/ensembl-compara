@@ -17,58 +17,31 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf
-
-=head1 DESCRIPTION
-
-    The PipeConfig file for Creating HMM profiles pipeline.
-    This pipeline fetches the PANTHER profiles and perform Hmmer searches to classify our sequences and then build the new HMMs.
-    These families are then filtered and processed.
-
+Bio::EnsEMBL::Compara::PipeConfig::CreateHmmProfiles_conf
 
 =head1 SYNOPSIS
 
-    #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CreateHmmProfiles_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -mlss_id <your_mlss_id>
 
-    #2. make sure that all default_options are set correctly
+=head1 DESCRIPTION
 
-    #3. make sure the PANTHER source is correct
-
-    #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CreateHmmProfiles -password <your_password> -mlss_id <your_mlss_id>
-
-    #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
+The PipeConfig file for Creating HMM profiles. This pipeline fetches the
+PANTHER profiles and perform Hmmer searches to classify our sequences and
+then build the new HMMs. These families are then filtered and processed.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::CreateHmmProfiles;
+package Bio::EnsEMBL::Compara::PipeConfig::CreateHmmProfiles_conf;
 
 use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
-
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 

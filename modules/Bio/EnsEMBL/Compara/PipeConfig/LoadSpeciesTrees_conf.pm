@@ -17,9 +17,6 @@ limitations under the License.
 
 =cut
 
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::LoadSpeciesTrees_conf
@@ -35,14 +32,6 @@ A pipeline to load the Compara species-trees into a database.
 Currently, this includes:
  - The tree made automatically from the NCBI taxonomy
  - The binary tree that the Compara team maintains
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
 
 =cut
 

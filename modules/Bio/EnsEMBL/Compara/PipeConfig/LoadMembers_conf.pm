@@ -17,37 +17,19 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::LoadMembers_conf
-
-=head1 DESCRIPTION
-
-The pipeline will create a database with all the (gene|seq)_members of a
-collection of species (by default, '<division_name>' collection).
 
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX \
         -division $COMPARA_DIV
 
-=head1 AUTHORSHIP
+=head1 DESCRIPTION
 
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_).
+The pipeline will create a database with all the (gene|seq)_members of a
+collection of species (by default, '<division_name>' collection).
 
 =cut
 
@@ -57,8 +39,8 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
-
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 

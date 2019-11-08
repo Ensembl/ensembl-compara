@@ -17,15 +17,6 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::ENV
@@ -33,10 +24,6 @@ Bio::EnsEMBL::Compara::PipeConfig::ENV
 =head1 DESCRIPTION
 
 Environment-dependent pipeline configuration,
-
-=head1 CONTACT
-
-  Please contact Compara or Ensembl Genomes with questions/suggestions
 
 =cut
 

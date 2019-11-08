@@ -17,25 +17,9 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf
-
-=head1 DESCRIPTION
-
-    Prepare master database of the given division for next release.
-
-    WARNING: the previous reports and backups will be removed if the pipeline is
-    initialised again for the same division and release.
 
 =head1 SYNOPSIS
 
@@ -47,11 +31,12 @@ Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf
     #3. Update master database's metadata
     #4. Update collections and mlss
 
-=head1 AUTHORSHIP
+=head1 DESCRIPTION
 
-Ensembl Team. Individual contributions can be found in the GIT log.
+Prepare master database of the given division for next release.
 
-=head1 APPENDIX
+WARNING: the previous reports and backups will be removed if the pipeline is
+initialised again for the same division and release.
 
 =cut
 
@@ -61,11 +46,11 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
-
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForRelease;
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub no_compara_schema {};
 

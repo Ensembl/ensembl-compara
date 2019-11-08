@@ -17,45 +17,27 @@ limitations under the License.
 
 =cut
 
-
-=pod 
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::Families_conf
 
 =head1 SYNOPSIS
 
-    #0. make sure that ProteinTree pipeline (whose EnsEMBL peptide members you want to incorporate) is already past member loading stage
-
-    #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
-
-    #3. make sure that all default_options are set correctly
-
-    #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Families_conf -host mysql-ens-compara-prod-X -prod XXXX \
-            -division $COMPARA_DIV -mlss_id <curr_family_mlss_id>
-
-    #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
-
-    #6. Please remember that mapping_session, stable_id_history, member and sequence tables will have to be MERGED in an intelligent way, and not just written over.
-        ReleaseCoordination.txt document explains how to do the merge correctly.
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Families_conf -host mysql-ens-compara-prod-X -prod XXXX \
+        -division $COMPARA_DIV -mlss_id <curr_family_mlss_id>
 
 =head1 DESCRIPTION  
 
 The PipeConfig file for Families pipeline that should automate most of the tasks.
 
-=head1 CONTACT
+Please remember that mapping_session, stable_id_history, member and sequence
+tables will have to be MERGED in an intelligent way, and not just written
+over. ReleaseCoordination.txt document explains how to do the merge correctly.
 
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
+WARNING: make sure that ProteinTree pipeline (whose EnsEMBL peptide members
+you want to incorporate) is already past member loading stage.
 
 =cut
-
-
 
 package Bio::EnsEMBL::Compara::PipeConfig::Families_conf;
 
@@ -63,8 +45,8 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
-
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
