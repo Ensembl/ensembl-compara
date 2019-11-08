@@ -17,10 +17,14 @@ limitations under the License.
 
 =cut
 
+=head1 NAME
+
+Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConservationScores
+
 =head1 DESCRIPTION
 
-    This is a partial PipeConfig for most part of the pipeline that dumps the
-    conservation scores as bedGraph and bigWig files.
+This PipeConfig contains the core analyses required to dump the constrained
+elements as bigBed and conservation scores as bigWig files.
 
 =cut
 

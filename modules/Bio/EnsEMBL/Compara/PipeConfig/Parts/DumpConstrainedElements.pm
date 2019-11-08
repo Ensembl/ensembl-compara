@@ -17,10 +17,14 @@ limitations under the License.
 
 =cut
 
+=head1 NAME
+
+Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConstrainedElements
+
 =head1 DESCRIPTION
 
-    This is a partial PipeConfig for most part of the pipeline that dumps the
-    contrained elements as BED and BigBED files.
+This PipeConfig contains the core analyses required to dump the contrained
+elements as BigBED files.
 
 =cut
 

@@ -17,19 +17,19 @@ limitations under the License.
 
 =cut
 
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf
+
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf -host mysql-ens-compara-prod-X -port XXXX \
+         -division $COMPARA_DIV -dump_dir <path> -updated_mlss_ids <optional> -ancestral_db <optional>
 
 =head1 DESCRIPTION
 
 The PipeConfig file for the pipeline that performs FTP dumps of everything required for a
 given release. It will detect which pipelines have been run and dump anything new.
-
-Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf -host mysql-ens-compara-prod-X -port XXXX \
-             -division $COMPARA_DIV -dump_dir <path> -updated_mlss_ids <optional> -ancestral_db <optional>
 
 =cut
 
@@ -38,9 +38,6 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf;
 
 use strict;
 use warnings;
-use Data::Dumper;
-
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpTrees;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpMultiAlign;
@@ -48,6 +45,8 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpSpeciesTrees;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpAncestralAlleles;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConstrainedElements;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConservationScores;
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;

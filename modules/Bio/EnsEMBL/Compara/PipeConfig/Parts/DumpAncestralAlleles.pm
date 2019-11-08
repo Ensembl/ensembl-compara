@@ -17,10 +17,14 @@ limitations under the License.
 
 =cut
 
+=head1 NAME
+
+Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpAncestralAlleles
+
 =head1 DESCRIPTION
 
-    This is a partial PipeConfig for most part of the pipeline for dumping
-    ancestral alleles for the FTP.
+This PipeConfig contains the core analyses required to dump the ancestral
+alleles.
 
 =cut
 

@@ -17,6 +17,10 @@ limitations under the License.
 
 =cut
 
+=head1 NAME
+
+Bio::EnsEMBL::Compara::PipeConfig::DumpConservationScores_conf
+
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpConservationScores_conf -host mysql-ens-compara-prod-X -port XXXX \
@@ -25,7 +29,7 @@ limitations under the License.
 
 =head1 DESCRIPTION
 
-    Pipeline to dump conservation scores as bedGraph and bigWig files.
+Pipeline to dump conservation scores as bigWig files.
 
 =cut
 
@@ -35,7 +39,9 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For INPUT_PLUS
+
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConservationScores;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 

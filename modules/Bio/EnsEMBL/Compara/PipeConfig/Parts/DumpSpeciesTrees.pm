@@ -19,20 +19,12 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpSpeciesTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpSpeciesTrees
 
 =head1 DESCRIPTION  
 
-    This is a partial PipeConfig for most part of the pipeline that dumps all
-    the species-trees from the given compara database.
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
+This PipeConfig contains the core analyses required to dump all the
+species-trees from the given compara database.
 
 =cut
 
@@ -42,7 +34,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
-
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
 sub pipeline_analyses_dump_species_trees {

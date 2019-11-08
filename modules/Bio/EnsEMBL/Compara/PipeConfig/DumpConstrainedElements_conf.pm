@@ -17,15 +17,19 @@ limitations under the License.
 
 =cut
 
+=head1 NAME
+
+Bio::EnsEMBL::Compara::PipeConfig::DumpConstrainedElements_conf
+
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpConstrainedElements_conf -host mysql-ens-compara-prodX -port XXXX
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpConstrainedElements_conf -host mysql-ens-compara-prodX -port XXXX \
         -compara_db $(mysql-ens-compara-prod-X details url ${USER}_mammals_epo_low_coverage_${CURR_ENSEMBL_RELEASE}) \
         -mlss_id XXXX
 
 =head1 DESCRIPTION
 
-    Pipeline to dump the contrained elements as BED and BigBED files.
+Pipeline to dump the contrained elements as BigBED files.
 
 =cut
 

@@ -17,13 +17,29 @@ limitations under the License.
 
 =cut
 
-##
-## Configuration file for DumpMultiAlign pipeline
+=head1 NAME
+
+Bio::EnsEMBL::Compara::PipeConfig::EG::DumpMultiAlign_conf
+
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EG::DumpMultiAlign_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV
+
+=head1 DESCRIPTION
+
+Specialized version of the DumpMultiAlign pipeline for Ensembl Genomes.
+Please, refer to the parent class for further information.
+
+=cut
+
 package Bio::EnsEMBL::Compara::PipeConfig::EG::DumpMultiAlign_conf;
 
 use strict;
 use warnings;
+
 use Bio::EnsEMBL::Hive::Version 2.4;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf');
 
 sub default_options {

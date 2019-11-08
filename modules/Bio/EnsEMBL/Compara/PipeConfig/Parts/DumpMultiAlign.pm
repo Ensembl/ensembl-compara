@@ -17,10 +17,14 @@ limitations under the License.
 
 =cut
 
-=head1 SYNOPSIS
+=head1 NAME
 
-    This is a partial PipeConfig for most part of the pipeline that dumps the
-    alignments found in 'compara_curr'.
+Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpMultiAlign
+
+=head1 DESCRIPTION
+
+This PipeConfig contains the core analyses required to dump the alignments
+found in 'compara_curr'.
 
 =cut
 

@@ -40,14 +40,6 @@ files are indexed (faidx) to allow fast access with Bio::DB::HTS.
 Furthermore, the genomes that are included in an EPO pipeline will also be
 indexed for exonerate.
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::DumpGenomes_conf;
