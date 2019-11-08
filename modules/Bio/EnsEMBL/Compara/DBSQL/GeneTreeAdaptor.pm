@@ -442,11 +442,16 @@ sub delete_tree {
         $gene_tree_node_Adaptor->delete_node($node);
     }
 
+    # List of all the gene_align_ids that need deleting
+    my %gene_align_ids;
+    $gene_align_ids{$tree->gene_align_id} = 1 if $tree->gene_align_id;
+
     # Only for "default" trees
     unless ($tree->ref_root_id) {
 
         # Linked trees must be removed as well as they refer to the default tree
         foreach my $other_tree (@{$self->fetch_all_linked_trees($tree)}) {
+            $gene_align_ids{$other_tree->gene_align_id} = 1 if $other_tree->gene_align_id;
             $other_tree->preload();
             $self->delete_tree($other_tree);
             $other_tree->release_tree();
@@ -470,12 +475,15 @@ sub delete_tree {
 
     # Only for "default" trees
     unless ($tree->ref_root_id) {
-        # The alignment only if it exists (In NCRecoverEPO we don't have an alignment yet)
-        $gene_tree_node_Adaptor->db->get_GeneAlignAdaptor->delete($tree->gene_align_id) if (defined $tree->gene_align_id);
-
         # Remove the "mcoffee_score" alignment too
         if (my $mcoffee_scores_gene_align_id = $tree->get_value_for_tag('mcoffee_scores_gene_align_id')) {
-            $gene_tree_node_Adaptor->db->get_GeneAlignAdaptor->delete($mcoffee_scores_gene_align_id);
+            $gene_align_ids{$mcoffee_scores_gene_align_id} = 1;
+        }
+
+        # Delete all the alignments (no foreign key problems since all the
+        # trees have been removed by now)
+        foreach my $gene_align_id (keys %gene_align_ids) {
+            $self->db->get_GeneAlignAdaptor->delete($gene_align_id);
         }
 
         # The HMM profile
