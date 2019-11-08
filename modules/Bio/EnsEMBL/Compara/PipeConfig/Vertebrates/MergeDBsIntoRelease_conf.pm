@@ -59,9 +59,6 @@ sub default_options {
         %{$self->SUPER::default_options},
         'division' => 'vertebrates',
 
-        # How many tables can be dumped and re-created in parallel (too many will slow the process down)
-        'copying_capacity'  => 10,
-
         # All the source databases
         # edit the reg_conf file rather than adding URLs
         'src_db_aliases'    => {
