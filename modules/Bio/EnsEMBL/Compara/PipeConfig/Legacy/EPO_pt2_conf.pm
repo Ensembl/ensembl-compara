@@ -35,7 +35,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Legacy::EPO_pt2_conf
 
 =head1 DESCRIPTION  
 
-    This configuaration file gives defaults for mapping (using exonerate at the
+    This configuration file gives defaults for mapping (using exonerate at the
     moment) anchors to a set of target genomes (dumped text files).
 
 =head1 CONTACT
