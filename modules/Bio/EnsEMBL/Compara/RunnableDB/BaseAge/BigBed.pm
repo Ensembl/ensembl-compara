@@ -53,7 +53,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Variation::DBSQL::DBAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
