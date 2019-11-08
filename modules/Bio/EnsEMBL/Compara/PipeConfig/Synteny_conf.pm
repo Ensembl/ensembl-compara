@@ -21,6 +21,11 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf
 
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV [-ptree_db <db_alias_or_url>]
+
 =head1 DESCRIPTION
 
 This pipeline is using eHive's parameter-stack mechanism, i.e. the jobs
@@ -33,19 +38,6 @@ compute these (incl. the stats).
 The analysis "compute_synteny_start" can be seeded multiple times.
 Extra parameters like "level", "orient", "minSize1", etc, should also be given
 at the command-line level, and not in this file.
-
-=head1 SYNOPSIS
-
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -division $COMPARA_DIV -ptree_db/alignment_db <db_alias_or_url> -curr_release_db <db_alias_or_url>
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -65,13 +57,14 @@ sub default_options {
             %{$self->SUPER::default_options},   # inherit the generic ones
 
             # Connection to the alignment database must be given
-            #'alignment_db' => undef,    # alignment database to calculate the syntenies from
-            'ptree_db'     => undef,     # protein database to calculate the syntenies from
-            'master_db' => 'compara_master',
-            #'curr_release_db' => undef,
-            'ortholog_method_link_types'  => ['ENSEMBL_ORTHOLOGUES'],
+            'alignment_db'    => 'compara_curr',     # alignment database to calculate the syntenies from
+            'ptree_db'        => undef,     # protein database to calculate the syntenies from
+            'master_db'       => 'compara_master',
+            'curr_release_db' => 'compara_curr',
 
             'work_dir'  => $self->o('pipeline_dir'),
+
+            'ortholog_method_link_types'  => ['ENSEMBL_ORTHOLOGUES'],
 
             # Used to restrict the pipeline to 1 mlss_id
             'pairwise_mlss_id'  => undef,   # if undef, will use all the pairwise alignments found in the alignment db
