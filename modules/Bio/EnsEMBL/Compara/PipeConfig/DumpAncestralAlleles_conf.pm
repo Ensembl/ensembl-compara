@@ -17,6 +17,10 @@ limitations under the License.
 
 =cut
 
+=head1 NAME
+
+Bio::EnsEMBL::Compara::PipeConfig::DumpAncestralAlleles_conf
+
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAncestralAlleles_conf -host mysql-ens-compara-prod-X -port XXXX \
@@ -24,7 +28,7 @@ limitations under the License.
 
 =head1 DESCRIPTION
 
-    Pipeline for dumping ancestral alleles for the FTP.
+Pipeline for dumping ancestral alleles for the FTP.
 
 =cut
 

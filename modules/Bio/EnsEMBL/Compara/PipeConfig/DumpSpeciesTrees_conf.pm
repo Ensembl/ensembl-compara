@@ -28,15 +28,7 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpSpeciesTrees_conf
 
 =head1 DESCRIPTION  
 
-    Dumps all the species-trees from the the given compara database.
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
+Pipeline to dump all the species-trees from the the given compara database.
 
 =cut
 

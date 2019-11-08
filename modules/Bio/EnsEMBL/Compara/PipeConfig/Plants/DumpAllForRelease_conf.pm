@@ -1,4 +1,3 @@
-
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -18,18 +17,18 @@ limitations under the License.
 
 =cut
 
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::Plants::DumpAllForRelease_conf
 
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::DumpAllForRelease_conf -host mysql-ens-compara-prod-X -port XXXX
+
 =head1 DESCRIPTION
 
-The PipeConfig file for the pipeline that performs FTP dumps of everything required for a
-given release. It will detect which pipelines have been run and dump anything new.
-
-Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::DumpAllForRelease_conf -host mysql-ens-compara-prod-X -port XXXX
+Specialized version of the DumpAllForRelease pipeline for the Plants
+division. Please, refer to the parent class for further information.
 
 =cut
 
