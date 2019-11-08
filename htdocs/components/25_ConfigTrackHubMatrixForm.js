@@ -46,8 +46,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     this.elLk.other_dimensions = {};
 
-    this.elLk.buttonTab       = this.el.find("div.track-tab");
-    this.elLk.breadcrumb      = this.el.find("div.large-breadcrumbs li");
+    this.elLk.buttonTab       = this.el.find("div.track-tab");    
     this.elLk.trackPanel      = this.el.find(".track-panel#track-content");
     this.elLk.matrixContainer = this.el.find('div.matrix-container');
     this.elLk.filterMatrix    = this.el.find('div.filterMatrix-container');
@@ -121,6 +120,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       url: url,
       dataType: 'json',
       context: this,
+      async: false,
       success: function(data) {
         if(this.checkError(data)) {
           console.log("Fetching main trackhub data error....");
@@ -160,12 +160,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         }
       }
       panel.toggleTab({'selectElement': this, 'container': panel.el.find("div.track-menu")});
-      panel.resize();
-    });
-
-    this.elLk.breadcrumb.on("click", function (e) {
-      panel.toggleBreadcrumb(this);
-      e.preventDefault();
       panel.resize();
     });
 
@@ -1630,6 +1624,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         panel.el.find("div.large-breadcrumbs.twoDim").show();
         panel.el.find("div.large-breadcrumbs.multiDim").remove();
       }
+
+      this.elLk.breadcrumb = this.el.find("div.large-breadcrumbs li");
+
+      this.elLk.breadcrumb.on("click", function (e) {
+        panel.toggleBreadcrumb(this);
+        e.preventDefault();
+        panel.resize();
+      });
   },
 
   //function to change the tab in the breadcrumb and show the appropriate content
