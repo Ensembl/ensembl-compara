@@ -272,6 +272,18 @@ sub pipeline_analyses {
         {   -logic_name        => 'reindex_member_ids',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::ReindexMemberIDs',
             -flow_into         => {
+                1 => 'reset_renamed_and_deleted_gene_members',
+            },
+        },
+
+        # Will catch gene_member_hom_stats that could not be reset by
+        # delete_tree because the gene_member_id is also renamed
+        {   -logic_name        => 'reset_renamed_and_deleted_gene_members',
+            -module            => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters        => {
+                'sql'   => 'UPDATE gene_member_hom_stats JOIN gene_member USING (gene_member_id) LEFT JOIN gene_tree_node ON canonical_member_id = seq_member_id SET gene_trees = 0, orthologues = 0, paralogues = 0, homoeologues = 0 WHERE node_id IS NULL AND gene_trees > 0',
+            },
+            -flow_into         => {
                 1 => 'delete_flat_trees_factory',
             },
         },
