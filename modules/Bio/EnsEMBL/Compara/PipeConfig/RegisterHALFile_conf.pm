@@ -20,15 +20,6 @@ limitations under the License.
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf
- ** Note
-Alignments using the _method_ `CACTUS_HAL` or `CACTUS_HAL_PW` require extra
-files to be downloaded from
-<ftp://ftp.ensembl.org/pub/data_files/multi/hal_files/> in order to be fetched with the
-API. The files must have the same name as on the FTP and must be placed
-under `multi/hal_files/` within your directory of choice.
-Finally, you need to define the environment variable `COMPARA_HAL_DIR` to
-the latter.
-export COMPARA_HAL_DIR="path_to_file/data_files/"
 
 =head1 SYNOPSIS
 
@@ -39,25 +30,21 @@ export COMPARA_HAL_DIR="path_to_file/data_files/"
 
 Mini-pipeline to load the species-tree and the chromosome-name mapping from a HAL file.
 
+NOTE: Alignments using the _method_ `CACTUS_HAL` or `CACTUS_HAL_PW` require extra
+files to be downloaded from
+<ftp://ftp.ensembl.org/pub/data_files/multi/hal_files/> in order to be fetched with the
+API. The files must have the same name as on the FTP and must be placed
+under `multi/hal_files/` within your directory of choice.
+Finally, you need to define the environment variable `COMPARA_HAL_DIR` to
+the latter.
+export COMPARA_HAL_DIR="path_to_file/data_files/"
+
 =head1 EXAMPLES
 
     # default execution for Vertebrates
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf -host mysql-ens-compara-prod-1 -port 4485 \
         -division vertebrates -mlss_id 835 \
         -species_name_mapping "{134 => 'C57B6J', 155 => 'rn6',160 => '129S1_SvImJ',161 => 'A_J',162 => 'BALB_cJ',163 => 'C3H_HeJ',164 => 'C57BL_6NJ',165 => 'CAST_EiJ',166 => 'CBA_J',167 => 'DBA_2J',168 => 'FVB_NJ',169 => 'LP_J',170 => 'NOD_ShiLtJ',171 => 'NZO_HlLtJ',172 => 'PWK_PhJ',173 => 'WSB_EiJ',174 => 'SPRET_EiJ', 178 => 'AKR_J'}"
-
-    # changing the location of master_db and halStats_exe
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf -host mysql-ens-compara-prod-1 -port 4485 \
-        -division vertebrates -mlss_id 835 -master_db "mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master" -halStats_exe '/nfs/software/ensembl/RHEL7-JUL2017-core2/linuxbrew/bin/halStats' \
-        -species_name_mapping "{134 => 'C57B6J', 155 => 'rn6',160 => '129S1_SvImJ',161 => 'A_J',162 => 'BALB_cJ',163 => 'C3H_HeJ',164 => 'C57BL_6NJ',165 => 'CAST_EiJ',166 => 'CBA_J',167 => 'DBA_2J',168 => 'FVB_NJ',169 => 'LP_J',170 => 'NOD_ShiLtJ',171 => 'NZO_HlLtJ',172 => 'PWK_PhJ',173 => 'WSB_EiJ',174 => 'SPRET_EiJ', 178 => 'AKR_J'}"
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
