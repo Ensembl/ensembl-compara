@@ -1624,11 +1624,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       var panel = this;
 
       if(panel.multiDimFlag) {
-        panel.el.find("div.large-breadcrumbs.twoDim").hide();
+        panel.el.find("div.large-breadcrumbs.twoDim").remove();
         panel.el.find("div.large-breadcrumbs.multiDim").show();
       } else {
         panel.el.find("div.large-breadcrumbs.twoDim").show();
-        panel.el.find("div.large-breadcrumbs.multiDim").hide();
+        panel.el.find("div.large-breadcrumbs.multiDim").remove();
       }
   },
 
@@ -2312,22 +2312,24 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.elLk.filterTrackBox.find('.filter-rhs-popup').html(popup).css({top: (pos.top + $('div.modal_content')[0].scrollTop) + 20, left: pos.left + $('div.modal_content')[0].scrollLeft}).show();
     panel.elLk.filterTrackBox.find('.filter-rhs-popup input').click($.proxy(function(e) {
       var opt = $(e.currentTarget).val();
-      $.each(Object.keys(panel.elLk.extraDimValToCellMap[data.dimKey].cells), function(i, v) {
-        if (panel.localStoreObj.filterMatrix[v]) {
-          var trackIds = Object.keys(panel.localStoreObj.filterMatrix[v].data);
-          $.each(trackIds, function(i, trackId) {
-            if (opt === "all-on") {
-              panel.updateFilterMatrixStore(panel.localStoreObj.filterMatrix[v], v, "on", "off", 1)
-            }
-            else if(opt ==="all-off") {
-              panel.updateFilterMatrixStore(panel.localStoreObj.filterMatrix[v], v, "off", "on", 1)
-            }
-            else {
-              panel.resetFilterMatrixToDefaults(data.dimKey);
-            }
-          });
-        }
-      });
+      if(opt === "default") {
+        panel.resetFilterMatrixToDefaults(data.dimKey);
+      } else {
+        $.each(Object.keys(panel.elLk.extraDimValToCellMap[data.dimKey].cells), function(i, v) {
+          if (panel.localStoreObj.filterMatrix[v]) {
+            var trackIds = Object.keys(panel.localStoreObj.filterMatrix[v].data);
+            $.each(trackIds, function(i, trackId) {
+              if (opt === "all-on") {
+                panel.updateFilterMatrixStore(panel.localStoreObj.filterMatrix[v], v, "on", "off", 1)
+              }
+              else {
+                panel.updateFilterMatrixStore(panel.localStoreObj.filterMatrix[v], v, "off", "on", 1)
+              }
+            });
+          }
+        });
+      }
+
       panel.setLocalStorage();
       panel.emptyMatrix();
       panel.displayFilterMatrix();
@@ -2713,12 +2715,10 @@ return;
       // e.g. dimKey = analysis_group_sep_CNAG
       var panel = this;
       var cellArray = [];
-      var cellHash;
       if (dimKey) {
         $.each(Object.keys(panel.elLk.extraDimValToCellMap[dimKey].cells), function(i, v) {
           if (panel.localStoreObj.filterMatrix[v]) {
-            cellHash = panel.localStoreObj.filterMatrix[v];
-            update(v, cellHash);
+            update(v, panel.localStoreObj.filterMatrix[v]);
           }
         });
       }
@@ -2726,12 +2726,13 @@ return;
         $.each(panel.localStoreObj.filterMatrix, function(cellKey, cellHash) {
           update(cellKey, cellHash);
         });
+
+        panel.localStoreObj.other_dimensions = $.extend({}, panel.localStoreObj.reset_other_dimensions);
+        panel.setLocalStorage();
+        panel.updateFilterMatrix(cellArray);
+        panel.updateFilterMatrixRHS();        
       }
 
-      panel.localStoreObj.other_dimensions = $.extend({}, panel.localStoreObj.reset_other_dimensions);
-      panel.setLocalStorage();
-      panel.updateFilterMatrix(cellArray);
-      panel.updateFilterMatrixRHS();
 
       function update(cellKey, cellHash) {
         $.each(cellHash.data, function(trackId, statusHash){
