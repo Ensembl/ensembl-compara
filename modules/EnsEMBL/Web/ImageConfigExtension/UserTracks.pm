@@ -736,7 +736,8 @@ sub _add_trackhub_tracks {
         if ($on_off && $on_off eq 'on') {
           $options{'display'} = $default_display;
           $count_visible++;
-          $default_trackhub_tracks->{$name} = $default_display;
+          # Update session records with tracks that are turned on by default
+          $self->{'default_trackhub_tracks'}->{$name} = $default_display;
         }
         else {
           $options{'display'} = 'off';
@@ -763,7 +764,8 @@ sub _add_trackhub_tracks {
         if ($on_off && $on_off eq 'on') {
           $options{'display'} = $default_display;
           $count_visible++;
-          $default_trackhub_tracks->{$name} = $default_display;
+          # Update session records with tracks that are turned on by default
+          $self->{'default_trackhub_tracks'}->{$name} = $default_display;
         }
         else {
           $options{'display'} = 'off';
@@ -790,9 +792,6 @@ sub _add_trackhub_tracks {
     } ## End loop through tracks
     $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
   } ## End loop through tracksets
-
-  # Update session records with tracks that are turned on.
-  $self->{'default_trackhub_tracks'} = $default_trackhub_tracks;
 
   $self->{'th_default_count'} += $count_visible;
 }

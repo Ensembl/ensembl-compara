@@ -242,15 +242,15 @@ sub reset_user_settings {
 
   if ($reset_type eq 'matrix') {
     # Reset all reg matrix tracks
-    my @node_keys = [];
-    if (keys %{$user_settings->{'nodes'}}) {
-      @node_keys = keys %{$user_settings->{'nodes'}};
+    my %node_keys;
+    if ($user_settings->{'nodes'}) {
+      %node_keys = %{$user_settings->{'nodes'}};
     }
-    elsif (keys %{$self->{'default_trackhub_tracks'}}) {
-      @node_keys = keys %{$self->{'default_trackhub_tracks'}};
+    if ($self->{'default_trackhub_tracks'}) {
+      %node_keys = (%node_keys, %{$self->{'default_trackhub_tracks'}});
     }
 
-    foreach my $node_key (@node_keys) {
+    foreach my $node_key (keys %node_keys) {
       if ($node_key =~/^reg_feats|^seg_Segmentation|^trackhub_/) {
         if (my $node = $self->get_node($node_key)) {
           # For trackhubs we turn off all tracks and then update the selected ones.
@@ -409,7 +409,6 @@ sub update_track_renderer {
     $renderer = $valid{'normal'} ? 'normal' : $renderers->[2] if $renderer ne 'off' && !$valid{$renderer};
 
     if ($node->set_user_setting('display', $renderer)) {
-      warn Data::Dumper::Dumper ['Changed', $node->get_data('name'), $renderer];
       return $node->get_data('name') || $node->get_data('caption') || 1;
     }
   }
