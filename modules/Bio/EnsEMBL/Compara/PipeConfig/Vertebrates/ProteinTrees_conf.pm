@@ -17,15 +17,6 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
   Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ProteinTrees_conf
@@ -46,7 +37,6 @@ package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ProteinTrees_conf;
 use strict;
 use warnings;
 
-
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf');
 
 
@@ -62,7 +52,7 @@ sub default_options {
         # affects 'hcluster_dump_input_per_genome'
         'outgroups'                     => { 'saccharomyces_cerevisiae' => 2 },
         # File with gene / peptide names that must be excluded from the clusters (e.g. know to disturb the trees)
-        'gene_blacklist_file'           => '/nfs/production/panda/ensembl/warehouse/compara/proteintree_blacklist.e82.txt',
+        'gene_blacklist_file'           => $self->o('warehouse_dir') . '/proteintree_blacklist.e82.txt',
 
     # species tree reconciliation
         # you can define your own species_tree for 'notung' or 'CAFE'. It *has* to be binary
