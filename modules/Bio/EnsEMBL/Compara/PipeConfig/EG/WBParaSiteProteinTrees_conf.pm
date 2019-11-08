@@ -17,18 +17,9 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::EG::WBParaSiteProteinTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::EG::WBParaSiteProteinTrees_conf
 
 =head1 SYNOPSIS
 
@@ -45,14 +36,10 @@ limitations under the License.
 
 =head1 DESCRIPTION
 
-    The PipeConfig example file for Ensembl Genomes group's version of
-    ProteinTrees pipeline. This file is inherited from & customised further
-    within the Ensembl Genomes infrastructure but this file serves as
-    an example of the type of configuration we perform.
-
-=head1 CONTACT
-
-  Please contact Compara or Ensembl Genomes with questions/suggestions
+The PipeConfig example file for Ensembl Genomes group's version of
+ProteinTrees pipeline. This file is inherited from & customised further
+within the Ensembl Genomes infrastructure but this file serves as
+an example of the type of configuration we perform.
 
 =cut
 
@@ -60,7 +47,6 @@ package Bio::EnsEMBL::Compara::PipeConfig::EG::WBParaSiteProteinTrees_conf;
 
 use strict;
 use warnings;
-
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::EG::ProteinTrees_conf');
 
@@ -91,6 +77,7 @@ sub default_options {
       # the master database for synchronization of various ids (use undef if you don't have a master database)
       'master_db' => '',
 
+      # NOTE: only used in LoadMembers
       'exclude_gene_analysis' => {  'macrostomum_lignano_prjna284736' =>  ['mlignano_schatz_gene_bad']  },
       
       'mapped_gene_ratio_per_taxon' => {

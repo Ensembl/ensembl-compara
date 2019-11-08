@@ -17,31 +17,14 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf
 
 =head1 SYNOPSIS
 
-    #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
-
-    #3. make sure that all default_options are set correctly
-
-    #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
-            -mlss_id <curr_ptree_mlss_id>
-
-    #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
-
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -mlss_id <curr_ptree_mlss_id>
 
 =head1 DESCRIPTION
 
@@ -53,7 +36,6 @@ package Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf;
 
 use strict;
 use warnings;
-
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf');
 
@@ -97,24 +79,8 @@ sub default_options {
             '3041'    => 0.65,    #green algae
         },
 
-    # CAFE parameters
-        # Do we want to initialise the CAFE part now ?
-        'initialise_cafe_pipeline'  => 1,
-        #Use Timetree divergence times for the CAFETree internal nodes
-        'use_timetree_times'        => 1,
-
     # GOC parameters
         'goc_taxlevels' => ['asterids', 'fabids', 'malvids', 'Pooideae', 'Oryzoideae', 'Panicoideae'],
-        'calculate_goc_distribution' => 0,
-
-    # Extra analyses
-        # Do we want the Gene QC part to run ?
-        'do_gene_qc'             => 1,
-        # Do we extract overall statistics for each pair of species ?
-        'do_homology_stats'      => 1,
-        # Do we need a mapping between homology_ids of this database to another database ?
-        # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
-        'do_homology_id_mapping' => 1,
     };
 }
 
