@@ -68,7 +68,7 @@ sub run {
     # Quite a big transaction ahead. Make sure hive_capacity is set to 1 to avoid timeout on other threads !
     $self->call_within_transaction( sub {
         foreach my $s (@{$self->param('sqls')}) {
-            $self->compara_dba->dbc->db_handle->do($s);
+            $self->compara_dba->dbc->do($s);
         }
 
         # genome_db_id is also used in species_tree_node, which is linked from
