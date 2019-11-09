@@ -71,6 +71,7 @@ sub pipeline_analyses_fam_stats {
                     'CREATE TEMPORARY TABLE temp_member_family_counts AS
                      SELECT gene_member_id, COUNT(DISTINCT family_id) AS families
                      FROM family_member JOIN seq_member USING (seq_member_id)
+                     WHERE gene_member_id IS NOT NULL
                      GROUP BY gene_member_id',
                     # Add an index on gene_member_id
                     'ALTER TABLE temp_member_family_counts ADD INDEX (gene_member_id)',
