@@ -24,6 +24,8 @@ package EnsEMBL::Web::Document::HTML::HomeSearch;
 
 use strict;
 
+use List::MoreUtils qw(first_index);
+
 use base qw(EnsEMBL::Web::Document::HTML);
 
 use EnsEMBL::Web::Form;
@@ -82,6 +84,23 @@ sub render {
       %sample_data = %{$species_defs->get_config('MULTI', 'GENERIC_DATA')};
     }
     @keys = qw(GENE_TEXT LOCATION_TEXT VARIATION_TEXT SEARCH_TEXT);
+  }
+
+  ## Remove variation link if species only has VCF variants
+  my $vdb = $hub->species_defs->databases->{'DATABASE_VARIATION'};
+  if ($vdb) {
+    my $no_real_variants = 1;
+    my $counts = $vdb->{'tables'}{'source'}{'counts'};
+    foreach my $key (keys %{$counts||{}}) {
+      if ($counts->{$key} > 0) {
+        $no_real_variants = 0;
+        last;
+      }
+    }
+    if ($no_real_variants) {
+      my $index = first_index {$_ eq 'VARIATION_TEXT'} @keys;
+      splice @keys, $index, 1; 
+    }
   }
 
   if (keys %sample_data) {
