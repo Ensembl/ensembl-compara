@@ -334,7 +334,7 @@ sub default_options {
         'prev_homology_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
 
     # non-standard executable locations
-        'treerecs_exe' => '/nfs/production/panda/ensembl/warehouse/compara/alumni/mateus/home/reconcile/Treerecs/bin/Treerecs',
+        'treerecs_exe' => $self->o('warehouse_dir') . '/alumni/mateus/home/reconcile/Treerecs/bin/Treerecs',
     };
 }
 
