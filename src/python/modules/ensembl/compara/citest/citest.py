@@ -36,14 +36,6 @@ class CITest:
             self.out_file=str_out_dir+"/"+str_pipeline_name+".tst"
 
 
-        def _connect(self, str_url,):
-
-            connection = engine.connect()
-            result = connection.execute("select username from users")
-            for row in result:
-                print("username:", row['username'])
-            connection.close()
-
         def _parse_json_file(self, str_file_path):
             obj_file=open(str_file_path)
             obj_jason=json.loads(obj_file.read())
