@@ -309,8 +309,6 @@ sub default_options {
 
     # GOC parameters
         # Points to the previous protein trees production database. Will be used for various GOC operations. 
-        # Use "undef" if running the pipeline without reuse.
-        'goc_reuse_db'                  => 'ptrees_prev',
         'goc_taxlevels'                 => [],
         'goc_threshold'                 => undef,
         'calculate_goc_distribution'    => 0,
@@ -420,7 +418,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'clustering_mode'   => $self->o('clustering_mode'),
         'reuse_level'       => $self->o('reuse_level'),
         'goc_threshold'                 => $self->o('goc_threshold'),
-        'goc_reuse_db'                  => $self->o('goc_reuse_db'),
         'calculate_goc_distribution'    => $self->o('calculate_goc_distribution'),
         'do_homology_id_mapping'        => $self->o('do_homology_id_mapping'),
         'do_jaccard_index'              => $self->o('do_jaccard_index'),
@@ -3341,7 +3338,7 @@ sub core_pipeline_analyses {
                 'goc_taxlevels'         => $self->o('goc_taxlevels'),
             },
             -flow_into  => {
-                '1->A' => WHEN('(scalar(@{#goc_taxlevels#}) && #goc_reuse_db#) || #do_homology_id_mapping#' => 'id_map_mlss_factory'),
+                '1->A' => WHEN('scalar(@{#goc_taxlevels#}) || #do_homology_id_mapping#' => 'id_map_mlss_factory'),
                 'A->1' => 'group_genomes_under_taxa',
             },
         },

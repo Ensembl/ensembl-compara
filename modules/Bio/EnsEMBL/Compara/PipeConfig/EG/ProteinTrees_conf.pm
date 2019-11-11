@@ -59,9 +59,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-    # parameters that are likely to change from execution to another:
-        'goc_reuse_db' => undef,
-
     # custom pipeline name
         # Used to prefix the database name (in HiveGeneric_conf)
         # Define rel_suffix for re-runs of the pipeline

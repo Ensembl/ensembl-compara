@@ -79,7 +79,6 @@ sub default_options {
         'prev_rel_db'   => undef,
         'ncbi_db'       => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
         'member_db'     => 'mysql://ensro@mysql-ens-compara-prod-6:4616/mateus_qfo_load_members_96',
-        'goc_reuse_db'  => undef,
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
