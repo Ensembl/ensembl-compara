@@ -17,9 +17,6 @@ limitations under the License.
 
 =cut
 
-
-=pod 
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::HighConfidenceOrthologs_conf
@@ -27,19 +24,12 @@ Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::HighConfidenceOrthologs_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::HighConfidenceOrthologs_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -collection <collection> -member_type <protein_or_ncrna>
+        -member_type <protein_or_ncrna>
 
 =head1 DESCRIPTION
 
-A simple pipeline to populate the high- and low- confidence levels on the Vertebrates Compara database.
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
+A simple pipeline to populate the high- and low-confidence levels on the
+Vertebrates Compara database. See parent class for additional information.
 
 =cut
 
@@ -57,6 +47,7 @@ sub default_options {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
         'division'   => 'vertebrates',
+        'collection' => 'default',
 
         'compara_db' => '#expr( (#member_type# eq "protein") ? "compara_ptrees" : "compara_nctrees" )expr#',
 
