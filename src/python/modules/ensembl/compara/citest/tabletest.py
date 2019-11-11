@@ -188,7 +188,6 @@ class TableTest(Test):
                     str_val_tar=lst_fields_tar[i]
                     break
                 i=i+1
-            print("succes "+str(result["succes"]))
             str_info="col:"+str_column+"|val_ref:"+str(str_val_ref)+"|val_tar:"+str(str_val_tar)
             result["info"]=str_info
             result["table"]=str_table_name
@@ -198,7 +197,6 @@ class TableTest(Test):
 
     def _get_column_values(self, obj_connection_engine, str_table, lst_columns):
         # init dictionary
-        print("test column in table "+str_table)
         dic_column={}
         str_request=""
         if len(lst_columns)==1:
@@ -206,11 +204,8 @@ class TableTest(Test):
         else:
             str_request="select "+",".join(lst_columns)+" from "+str_table+";"
         obj_request=text(str_request)
-        print("connecting...")
         obj_connection=obj_connection_engine.connect()
-        print("execute request...")
         obj_result=obj_connection.execute(obj_request)
-        print("retrieving result...")
         for str_col in obj_result.keys():
             dic_column[str(str_col)]=[]
 
@@ -224,10 +219,5 @@ class TableTest(Test):
         obj_connection.close()
         # sort each column to be comparable between ref and target databases.
         for str_col, lst_val in dic_column.items():
-            #i=0
-            #while i < len(lst_val):
-            #    if lst_val[i] is None:
-            #        lst_val[i]="None"
-            #    i=i+1
             dic_column[str_col]=sorted(lst_val)
         return dic_column
