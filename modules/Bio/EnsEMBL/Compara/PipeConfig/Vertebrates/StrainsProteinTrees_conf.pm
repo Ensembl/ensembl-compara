@@ -17,43 +17,19 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsProteinTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsProteinTrees_conf
 
 =head1 SYNOPSIS
 
-    #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
-
-    #3. make sure that all default_options are set correctly
-
-    #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
-            -mlss_id <curr_strain_ptree_mlss_id> -collection <strain_collection>
-
-    #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -mlss_id <curr_strain_ptree_mlss_id> -collection <strain_collection>
 
 =head1 DESCRIPTION
 
-The Vertebrates (strains) PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
+The Vertebrates Strains PipeConfig file for ProteinTrees pipeline that should
+automate most of the pre-execution tasks.
 
 =cut
 
@@ -85,9 +61,6 @@ sub default_options {
 
         # Where to draw the orthologues from
         'ref_ortholog_db'   => 'compara_ptrees',
-
-        # If 'prev_rel_db' above is not set, you need to set all the dbs individually
-        'goc_reuse_db'          => undef,
 
     # CAFE parameters
         # Do we want to initialise the CAFE part now ?
