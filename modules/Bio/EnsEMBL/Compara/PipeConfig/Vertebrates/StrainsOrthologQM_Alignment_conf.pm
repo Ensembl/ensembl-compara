@@ -24,7 +24,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsOrthologQM_Alignment_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsOrthologQM_Alignment_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -member_type <protein_or_ncrna> -collection <murinae_or_sus>
+        -member_type <protein_or_ncrna> -strain_collection <murinae_or_sus>
 
 =head1 DESCRIPTION
 
@@ -45,12 +45,22 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::OrthologQM_Alignment_
 sub default_options {
     my ($self) = @_;
     return {
-        %{$self->SUPER::default_options},   # inherit the generic ones
+        %{$self->SUPER::default_options},
 
-        'collection'  => undef, # undef to force to be passed as an argument
+        'collection'  => $self->o('strain_collection'),
         
         'compara_db'  => '#expr( (#member_type# eq "protein") ? "#collection#_ptrees" : "#collection#_nctrees" )expr#',
     };
 }
+
+sub pipeline_wide_parameters {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},
+
+        'collection' => $self->o('collection'),
+    }
+}
+
 
 1;
