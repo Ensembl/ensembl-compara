@@ -456,6 +456,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   // Redraw matrix as there may be updates to localStore
   // e.g. updateFromTrackLabel method may remove some tracks from the RID view.
   modalOpen: function() {
+    if(!this.localStoreObj || $.isEmptyObject(this.localStoreObj.userLocation)) { return; }
     this.emptyMatrix();
     this.displayFilterMatrix();
     this.displayMatrix();
