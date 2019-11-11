@@ -674,7 +674,7 @@ sub _add_trackhub_tracks {
                     name            => $name,
                     source_name     => $source_name,
                     longLabel       => $track->{'longLabel'},
-                    description     => $name.': '.$track->{'longLabel'},
+                    description     => $options{'submenu_key'}.': '.$track->{'longLabel'},
                     desc_url        => $track->{'description_url'},
                     signal_range    => $track->{'signal_range'},
                     link_template   => $track->{'url'},
