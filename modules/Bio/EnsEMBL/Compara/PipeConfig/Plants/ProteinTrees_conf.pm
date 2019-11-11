@@ -80,7 +80,7 @@ sub default_options {
         },
 
     # GOC parameters
-        'goc_taxlevels' => ['asterids', 'fabids', 'malvids', 'Pooideae', 'Oryzoideae', 'Panicoideae'],
+        'goc_taxlevels' => ['Panicoideae', 'Oryzinae', 'Pooideae', 'Solanaceae', 'Brassicaceae', 'Malvaceae', 'fabids'],
     };
 }
 
