@@ -122,7 +122,9 @@ sub fetch_input {
 =cut
 
 sub run {
-	my $self = shift;	
+	my $self = shift;
+	my $dba  = $self->get_cached_compara_dba('pipeline_url');
+	my $gdba = $dba->get_GenomeDBAdaptor;
 
 	my @orth_batch = @{ $self->param_required('orth_batch') };
 	my %aln_ranges = %{ $self->param_required('aln_ranges') };
@@ -130,8 +132,6 @@ sub run {
 	my (@qual_summary, @orth_ids);
 	foreach my $orth ( @orth_batch ) {
 		my @orth_dnafrags = @{ $orth->{ 'orth_dnafrags'} };
-		my @aln_mlss_ids  = @{ $self->param_required( 'aln_mlss_ids' ) };
-
 		my $orth_ranges    = $orth->{ 'orth_ranges' };
 		my $homo_id        = $orth->{'id'};
 		my $this_aln_range = $aln_ranges{ $homo_id  };
@@ -144,7 +144,11 @@ sub run {
 		if ( defined $exon_ranges ){
 			foreach my $aln_mlss ( keys %{ $this_aln_range } ){
 				foreach my $gdb_id ( sort {$a <=> $b} keys %{ $orth_ranges } ){
-					my $combined_coverage = $self->_combined_coverage( $orth_ranges->{$gdb_id}, $this_aln_range->{$aln_mlss}->{$gdb_id}, $exon_ranges->{$gdb_id} );
+					# Make sure that if this is a component gdb_id it refers back to the principal. The exon and ortholog data is on the components and not on the principal, but the aln_mlss is only on principal
+					my $gdb = $gdba->fetch_by_dbID($gdb_id);
+					my $principal_gdb = $gdb->principal_genome_db;
+					my $principal_gdb_id = $principal_gdb ? $principal_gdb->dbID : $gdb_id;
+					my $combined_coverage = $self->_combined_coverage( $orth_ranges->{$gdb_id}, $this_aln_range->{$aln_mlss}->{$principal_gdb_id}, $exon_ranges->{$gdb_id} );
 					push( @qual_summary, 
 						{ homology_id              => $homo_id, 
 						  genome_db_id             => $gdb_id,
