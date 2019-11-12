@@ -334,7 +334,7 @@ return
             },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self) },
-];
+    ];
 }
 
 sub pipeline_analyses_gerp {

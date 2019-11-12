@@ -70,9 +70,9 @@ sub default_options {
         # database containing the anchors for mapping
         'compara_anchor_db' => $self->o('species_set_name').'_epo_anchors',
         # the previous database to reuse the anchor mappings
-        'reuse_db' => $self->o('species_set_name').'_epo_prev',
+        'reuse_db'          => $self->o('species_set_name').'_epo_prev',
 
-        'ancestral_sequences_name' => 'ancestral_sequences',
+        'ancestral_sequences_name'         => 'ancestral_sequences',
         'ancestral_sequences_display_name' => 'Ancestral sequences',
 
         # Executable parameters
@@ -101,14 +101,14 @@ sub default_options {
         #skip this module if set to 1
         'skip_multiplealigner_stats' => 0,
         # dont dump the MT sequence for mapping
-        'only_nuclear_genome' => 1,
+        'only_nuclear_genome'        => 1,
         # add MT dnafrags separately (1) or not (0) to the dnafrag_region table
         'add_non_nuclear_alignments' => 1,
-         # batch size of grouped anchors to map
-        'anchor_batch_size' => 500, #mammals
+        # batch size of grouped anchors to map
+        'anchor_batch_size'          => 500, #mammals
         #'anchor_batch_size' => 50,  #fish
-         # max number of sequences to allow in an anchor
-        'anc_seq_count_cut_off' => 15,
+        # max number of sequences to allow in an anchor
+        'anc_seq_count_cut_off'      => 15,
 
         # The ancestral_db is created on the same server as the pipeline_db
         'ancestral_db' => { # core ancestral db
@@ -128,13 +128,13 @@ sub default_options {
         'gerp_window_sizes'    => [1,10,100,500],         #gerp window sizes
         
         'low_epo_mlss_id'  => $self->o('low_epo_mlss_id'),  #mlss_id for low coverage epo alignment
-    	'base_epo_mlss_id' => $self->o('high_epo_mlss_id'), #mlss_id for the base alignment we're topping up
+    	  'base_epo_mlss_id' => $self->o('high_epo_mlss_id'), #mlss_id for the base alignment we're topping up
                                                             # (can be EPO or EPO_LOW_COVERAGE)
-        'max_block_size'  => 1000000,                       #max size of alignment before splitting 
+        'max_block_size'   => 1000000,                       #max size of alignment before splitting 
     
         #default location for pairwise alignments (can be a string or an array-ref)
         'pairwise_location' => [ qw(compara_prev lastz_batch_*) ],
-        'epo_db' => $self->pipeline_url(),
+        'epo_db'            => $self->pipeline_url(),
     };
 }
 
@@ -153,7 +153,7 @@ sub pipeline_wide_parameters {
         %{$self->SUPER::pipeline_wide_parameters},
 
         'low_epo_mlss_id'  => $self->o('low_epo_mlss_id'),
-    	'high_epo_mlss_id' => $self->o('high_epo_mlss_id'),
+    	  'high_epo_mlss_id' => $self->o('high_epo_mlss_id'),
         'base_epo_mlss_id' => $self->o('base_epo_mlss_id'),
         'species_set_name' => $self->o('species_set_name'),
 
@@ -197,7 +197,7 @@ sub core_pipeline_analyses {
         },
         
         {   -logic_name => 'mlss_factory',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputlist'    => [ 
                     [
@@ -230,7 +230,7 @@ sub core_pipeline_analyses {
         },    
         
         {   -logic_name => 'set_internal_ids_low_epo',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsCollection',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsCollection',
             -parameters => {
                 method_link_species_set_id => '#low_epo_mlss_id#',
             },
