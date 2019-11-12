@@ -11,7 +11,6 @@ It uses as input the EPO high coverage mammals alignment and finds the last ance
 The bases are coloured depending where in the tree the change occurred.
 For example:
 If there is a change between human and the human/chimp ancestor, the base is coloured red. 
-If there is a change and this corresponds to a human variant, the base is coloured orange.
 If there is a change within primates, the base is coloured on a blue scale, darker blue being a more recent change.
 If there is a change outside primates, the base is coloured on a grey scale, continuing in intensity from the blue scale.
 If there is no change, ie the base is the same throughout the tree, the base is not highlighted. 
@@ -60,7 +59,6 @@ Options most likely to need changing are:
 :release:              Ensembl release
 :mlss_id:              Mlss_id of the high coverage EPO alignment to be used 
 :compara_url:          Database location containing the high coverage EPO alignment 
-:variation_url:        Database location of the variation database for the reference species 
 :big_bed_exe:          Location of bedToBigBed executable
 :big_bed_file:         Filename of bigbed output file
 :name:                 Whether to print the ancestral node name ('name') or node_id ('node_id')
@@ -70,8 +68,6 @@ Options most likely to need changing are:
 :master_db:                    Master database
 :staging_loc1,staging_loc1:    Current ensembl core databases
 :livemirror_loc:               Location of previous release core databases
-
-We will need to wait for the variation database to be finished before running this pipeline.
 
 The path to the 'bed_dir' is created if it does not already exist. The path to the 'big_bed_file' must exist, ideally it can be created in 'bed_dir'.
 

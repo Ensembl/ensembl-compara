@@ -245,12 +245,20 @@ sub pipeline_analyses {
         {   -logic_name        => 'map_member_ids',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::MapMemberIDs',
             -flow_into         => {
-                2 => 'delete_tree',
+                2 => 'delete_old_member',
                 3 => [
                     '?accu_name=seq_member_id_pairs&accu_address=[]&accu_input_variable=seq_member_ids',
                     '?accu_name=gene_member_id_pairs&accu_address=[]&accu_input_variable=gene_member_ids',
                 ],
-            }
+            },
+        },
+
+        {   -logic_name        => 'delete_old_member',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::DeleteOldMember',
+            -hive_capacity     => 1,    # Because of transactions, concurrent jobs will have deadlocks
+            -flow_into         => {
+                2 => 'delete_tree',
+            },
         },
 
         {   -logic_name        => 'delete_tree',
@@ -260,6 +268,18 @@ sub pipeline_analyses {
 
         {   -logic_name        => 'reindex_member_ids',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::ReindexMemberIDs',
+            -flow_into         => {
+                1 => 'reset_renamed_and_deleted_gene_members',
+            },
+        },
+
+        # Will catch gene_member_hom_stats that could not be reset by
+        # delete_tree because the gene_member_id is also renamed
+        {   -logic_name        => 'reset_renamed_and_deleted_gene_members',
+            -module            => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters        => {
+                'sql'   => 'UPDATE gene_member_hom_stats JOIN gene_member USING (gene_member_id) LEFT JOIN gene_tree_node ON canonical_member_id = seq_member_id SET gene_trees = 0, orthologues = 0, paralogues = 0, homoeologues = 0 WHERE node_id IS NULL AND gene_trees > 0',
+            },
             -flow_into         => {
                 1 => 'delete_flat_trees_factory',
             },

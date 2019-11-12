@@ -47,6 +47,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For INPUT_PLUS
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -71,10 +72,6 @@ sub default_options {
             # There is a different colour gradient for this clade
             'clade_taxon_id' => undef,
 
-            # Location url of database to get snps from
-            #'variation_url' => 'mysql://anonymous@mysql-ensembl-mirror:4240/' . $self->o('ensembl_release')
-            'variation_url' => undef,
-            
             'baseage_autosql' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/baseage_autosql.as'),
 
             #Locations to write output files
@@ -138,7 +135,6 @@ sub pipeline_analyses {
               -parameters => {
                               'compara_db' => $self->o('compara_db'),
                               'ancestral_db' => $self->o('ancestral_db'),
-                              'variation_url' => $self->o('variation_url'),
                               'species_set_name' => $self->o('species_set_name'),
                               'species' => $self->o('ref_species'),
                               'bed_dir' => $self->o('bed_dir'),
@@ -149,10 +145,22 @@ sub pipeline_analyses {
               -hive_capacity => $self->o('base_age_capacity'),
               -rc_name => '4Gb_job',
               -flow_into => {
-                             2 => '?accu_name=bed_files&accu_address={seq_region}',
-                            },
-
+                  2 => { 'sort_bed' => INPUT_PLUS(), },
+              },
             },
+
+            {   -logic_name => 'sort_bed',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+                -parameters => {
+                    'sorted_bed_file'   => '#bed_file#.sort',
+                    'cmd'               => 'sort -k2,2n #bed_file# > #sorted_bed_file#',
+                },
+                -rc_name    => '16Gb_job',
+                -flow_into  => {
+                    1 => '?accu_name=bed_files&accu_address={seq_region}&accu_input_variable=sorted_bed_file',
+                },
+            },
+
              { -logic_name => 'big_bed',
                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BaseAge::BigBed',
                -parameters => {
@@ -163,7 +171,7 @@ sub pipeline_analyses {
                                'chr_sizes_file' => $self->o('chr_sizes_file'),
                                'chr_sizes' => '#bed_dir#/#chr_sizes_file#',
                               },
-               -rc_name => '2Gb_job',
+               -rc_name => '16Gb_job',
              },
 
      ];
