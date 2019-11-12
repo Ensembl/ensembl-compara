@@ -199,14 +199,31 @@ class TableTest(Test):
         # init dictionary
         dic_column={}
         str_request=""
-        if len(lst_columns)==1:
+        bool_tag_all=False
+
+        #look if there is a "*" in the list of fields
+        for str_column in lst_columns:
+            if str_column=="*":
+                bool_tag_all=True
+
+        #if there is a star selct all, toherise select the selected tables
+        if bool_tag_all:
+            str_request="select * from "+str_table+";"
+        elif len(lst_columns)==1:
             str_request="select "+lst_columns[0]+" from "+str_table+";"
         else:
             str_request="select "+",".join(lst_columns)+" from "+str_table+";"
+
         obj_request=text(str_request)
         obj_connection=obj_connection_engine.connect()
         obj_result=obj_connection.execute(obj_request)
+
+
         for str_col in obj_result.keys():
+            # if there is a "*" in the lst column then all other columns are
+            # defined to be excluded so we exclud them
+            if bool_tag_all and str(str_col) in lst_columns:
+                continue
             dic_column[str(str_col)]=[]
 
         # convert the result by row into a result by column
@@ -214,6 +231,11 @@ class TableTest(Test):
         for tpl_row in obj_result:
             i=0
             while i < len(lst_column_name):
+                # if there is a "*" in the lst column then all other columns are
+                # defined to be excluded so we exclud them
+                if bool_tag_all and  str(lst_column_name[i]) in lst_columns:
+                    i=i+1
+                    continue
                 dic_column[str(lst_column_name[i])].append(str(tpl_row[i]))
                 i=i+1
         obj_connection.close()
