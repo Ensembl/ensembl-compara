@@ -237,7 +237,7 @@ sub _get_msa_coverage_stats {
     
         my $epo_genome_coverage = $epo_stn->get_value_for_tag('genome_coverage');
         my $epo_genome_length = $epo_stn->get_value_for_tag('genome_length');
-        next unless defined $epo_genome_coverage && defined $epo_genome_length;
+        last unless defined $epo_genome_coverage && defined $epo_genome_length;
         $epo_db_coverage{$ref_gdb_id} = $epo_genome_coverage/$epo_genome_length;
     }
     if( scalar( keys %epo_db_coverage ) == $ref_count ) {
@@ -259,7 +259,7 @@ sub _get_msa_coverage_stats {
     
         my $epo_genome_coverage = $epo_stn->get_value_for_tag('genome_coverage');
         my $epo_genome_length = $epo_stn->get_value_for_tag('genome_length');
-        next unless defined $epo_genome_coverage && defined $epo_genome_length;
+        last unless defined $epo_genome_coverage && defined $epo_genome_length;
         $prev_epo_db_coverage{$ref_gdb_id} = $epo_genome_coverage/$epo_genome_length;
     }
     if( scalar( keys %prev_epo_db_coverage ) == $ref_count ) {

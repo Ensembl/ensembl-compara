@@ -31,14 +31,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_conf
 This PipeConfig file gives defaults for mapping (using exonerate at the moment)
 anchors to a set of target genomes (dumped text files).
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::EPO_conf;

@@ -26,14 +26,6 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOMapAnchors
 Partial PipeConfig file that contains the analyses to align the
 anchors to a set of target genomes using exonerate.
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOMapAnchors;
