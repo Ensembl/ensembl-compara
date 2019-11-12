@@ -11,13 +11,13 @@
       "name":"gene_member",
       "variation":0,
       "lst_group_by":[],
-      "columns":[{"name":"*"}]
+      "columns":[{"name":"*"},{"name":"canonical_member_id"}]
     },
     {
       "name":"exon_boundaries",
       "variation":0,
       "lst_group_by":[],
-      "columns":[{"name":"*"}]
+      "columns":[{"name":"*"},{"name":"gene_member_id"},{"name":"seq_member_id"}]
     },
     {
       "name":"genome_db",
@@ -29,19 +29,19 @@
       "name":"seq_member",
       "variation":0,
       "lst_group_by":[],
-      "columns":[{"name":"*"}]
+      "columns":[{"name":"*"},{"name":"sequence_id"},{"name":"gene_member_id"}]
     },
     {
       "name":"seq_member_projection_stable_id",
       "variation":0,
       "lst_group_by":[],
-      "columns":[{"name":"*"}]
+      "columns":[{"name":"*"},{"name":"target_seq_member_id"}]
     },
     {
       "name":"sequence",
       "variation":0,
       "lst_group_by":[],
-      "columns":[{"name":"*"}]
+      "columns":[{"name":"*"},{"name":"sequence_id"}]
     },
     {
       "name":"species_set",
