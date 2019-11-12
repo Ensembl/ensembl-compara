@@ -112,7 +112,7 @@ sub parse_healthchecks {
         }
         next unless $testcase;
         if ( $header ) {
-            $hc_failures->{$testcase} = "{panel:title=$line}\n";
+            $hc_failures->{$testcase} = "{code:title=$line}\n";
         } else {
             $hc_failures->{$testcase} .= "$line\n";
         }
@@ -120,7 +120,7 @@ sub parse_healthchecks {
     close($hc_fh);
     
     foreach my $testcase ( keys %$hc_failures ) {
-        $hc_failures->{$testcase} .= "{panel}\n";
+        $hc_failures->{$testcase} .= "{code}\n";
     }
     return $hc_failures;
 }
