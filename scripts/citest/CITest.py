@@ -12,10 +12,12 @@ parser.add_argument("--user", type=str,help="db conection user id")
 parser.add_argument("--password", type=str,help="db connection password")
 parser.add_argument("--server", type=str,help="Mysql server adress")
 parser.add_argument("--outdir", type=str,help="out directory where to write the file", default="./")
+parser.add_argument("--print", type=int,help="out directory where to write the file", default=0)
 args = parser.parse_args()
 
 citest=CITest()
 citest.init_citest(args.url_ref, args.url,args.test,args.outdir)
 citest.run_citest()
-citest.print_citest_results()
+if args.print==1:
+    citest.print_citest_results()
 citest.write_citest_results_json()
