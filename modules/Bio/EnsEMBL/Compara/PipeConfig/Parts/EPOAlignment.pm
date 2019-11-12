@@ -17,15 +17,6 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOAlignment
@@ -39,15 +30,6 @@ set of anchor sequences mapped to a set of target genomes. The pipeline runs Enr
 and then runs Ortheus (which runs Pecan for generating the MSA) and infers
 ancestral genome sequences. Finally Gerp may be run to generate constrained elements and
 conservation scores from the MSA
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
 
 =cut
 
@@ -332,8 +314,6 @@ return
                 -batch_size    => 10, 
                 -hive_capacity => 20, 
             },
-
-        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self) },
     ];
 }
 
@@ -342,40 +322,38 @@ sub pipeline_analyses_gerp {
     
     return [
     
-    {   -logic_name => 'set_gerp_neutral_rate',
-        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetGerpNeutralRate',
-        -flow_into => {
-            1 => [ 'dump_mappings_to_file' ],
-            2 => [ '?table_name=pipeline_wide_parameters' ],
+        {   -logic_name => 'set_gerp_neutral_rate',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetGerpNeutralRate',
+            -flow_into => {
+                1 => [ 'dump_mappings_to_file' ],
+                2 => [ '?table_name=pipeline_wide_parameters' ],
+            },
         },
-    },
     
         # ------------------------------------- run gerp - this will populate the constrained_element and conservation_scores tables
-        {
-                -logic_name => 'gerp',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
-                -parameters => {
-                    'window_sizes' => $self->o('gerp_window_sizes'),
-                    'gerp_exe_dir' => $self->o('gerp_exe_dir'),
-                },
-                -max_retry_count => 3,
-                -hive_capacity   => 50,
-                -rc_name         => '2Gb_job',
-                -failed_job_tolerance => 1,
-                -flow_into => {
-                        -1 => [ 'gerp_high_mem' ],
-                },
+        {   -logic_name => 'gerp',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
+            -parameters => {
+                'window_sizes' => $self->o('gerp_window_sizes'),
+                'gerp_exe_dir' => $self->o('gerp_exe_dir'),
+            },
+            -max_retry_count => 3,
+            -hive_capacity   => 50,
+            -rc_name         => '2Gb_job',
+            -failed_job_tolerance => 1,
+            -flow_into => {
+                -1 => [ 'gerp_high_mem' ],
+            },
         },
-        {
-                -logic_name => 'gerp_high_mem',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
-                -parameters => {
-                    'window_sizes' => $self->o('gerp_window_sizes'),
-                    'gerp_exe_dir' => $self->o('gerp_exe_dir'),
-                },
-                -hive_capacity   => 10,
-                -rc_name => '8Gb_job',
-                -failed_job_tolerance => 100,
+        {   -logic_name => 'gerp_high_mem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
+            -parameters => {
+                'window_sizes' => $self->o('gerp_window_sizes'),
+                'gerp_exe_dir' => $self->o('gerp_exe_dir'),
+            },
+            -hive_capacity   => 10,
+            -rc_name => '8Gb_job',
+            -failed_job_tolerance => 100,
         },
     ];
 }
@@ -389,16 +367,15 @@ sub pipeline_analyses_healthcheck {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -meadow_type=> 'LOCAL',
             -flow_into => {
-                           '1->A' => WHEN( '#run_gerp#' => {
-                                 'conservation_score_healthcheck'  => [
-                                                                       {'test' => 'conservation_jobs', 'logic_name'=>'gerp','method_link_type'=>'EPO'},
-                                                                       {'test' => 'conservation_scores'},
-                                                            ],
-                                } ),
-                           'A->1' => WHEN( 'not #skip_multiplealigner_stats#' => [ 'multiplealigner_stats_factory' ],
-                                           ELSE [ 'end_pipeline' ],
-                                     ),
-                          },
+                '1->A' => WHEN( '#run_gerp#' => {
+                    'conservation_score_healthcheck'  => [
+                        {'test' => 'conservation_jobs', 'logic_name'=>'gerp','method_link_type'=>'EPO'},
+                        {'test' => 'conservation_scores'},
+                    ],
+                }),
+                'A->1' => WHEN( 'not #skip_multiplealigner_stats#' => [ 'multiplealigner_stats_factory' ],
+                          ELSE [ 'end_pipeline' ]),
+            },
         },
 
         {   -logic_name => 'conservation_score_healthcheck',
@@ -409,6 +386,8 @@ sub pipeline_analyses_healthcheck {
         {   -logic_name  => 'end_pipeline',
             -module      => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         },
+        
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self) },
     ];
 }
 

@@ -87,11 +87,4 @@ sub pipeline_analyses {
     ];
 }
 
-sub tweak_analyses {
-    my $self = shift;
-    my $analyses_by_name = shift;
-        
-    $analyses_by_name->{'create_default_pairwise_mlss'}->{'-parameters'}->{'use_epo_coverage'} = 1;
-}
-
 1;

@@ -32,14 +32,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf
     - Bio::EnsEMBL::Compara::PipeConfig::EPO_conf
     - Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf;
@@ -65,7 +57,6 @@ sub default_options {
         'pipeline_name' => $self->o('species_set_name').'_epo_'.$self->o('rel_with_suffix'),
         'division'      => 'vertebrates',
         'master_db'     => 'compara_master',
-        'mlss_id'       => undef,
 
         # database containing the anchors for mapping
         'compara_anchor_db' => $self->o('species_set_name').'_epo_anchors',
@@ -124,8 +115,8 @@ sub default_options {
 
         # ----- EpoLowCoverage settings ----- #
 
-        'run_gerp' => 1,
-        'gerp_window_sizes'    => [1,10,100,500],         #gerp window sizes
+        'run_gerp'          => 1,
+        'gerp_window_sizes' => [1,10,100,500], #gerp window sizes
         
         'low_epo_mlss_id'  => $self->o('low_epo_mlss_id'),  #mlss_id for low coverage epo alignment
     	  'base_epo_mlss_id' => $self->o('high_epo_mlss_id'), #mlss_id for the base alignment we're topping up
@@ -234,7 +225,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 method_link_species_set_id => '#low_epo_mlss_id#',
             },
-            -flow_into => [ 'create_neighbour_nodes_jobs_alignment' ],           
+            -flow_into => [ 'update_max_alignment_length' ],           
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOMapAnchors::pipeline_analyses_epo_anchor_mapping($self) },
@@ -275,7 +266,6 @@ sub tweak_analyses {
     };
     $analyses_by_name->{'create_default_pairwise_mlss'}->{'-flow_into'}->{1} = WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ]);
     $analyses_by_name->{'create_default_pairwise_mlss'}->{'-parameters'}->{'prev_epo_db'} = '#reuse_db#';
-    # $analyses_by_name->{'set_gerp_neutral_rate'}->{'-flow_into'}->{1} = 'find_gerp_mlss_ids';
     delete $analyses_by_name->{'set_gerp_neutral_rate'}->{'-flow_into'}->{1};
     
     # link "ortheus*" analyses directly to "low_coverage_genome_alignment"
@@ -293,7 +283,6 @@ sub tweak_analyses {
 
     # add "set_internal_ids_low_epo" to "remove_dodgy_ancestral_blocks"
     $analyses_by_name->{'remove_dodgy_ancestral_blocks'}->{'-flow_into'} = ['set_internal_ids_low_epo'];
-    $analyses_by_name->{'set_internal_ids_low_epo'}->{'-flow_into'} = ['update_max_alignment_length'];
     
     # ensure mlss_ids are flowed with their root_ids
     $analyses_by_name->{'create_neighbour_nodes_jobs_alignment'}->{'-parameters'}->{'inputquery'} = 'SELECT gat2.root_id, ga.method_link_species_set_id as mlss_id FROM genomic_align_tree gat1 LEFT JOIN genomic_align ga USING(node_id) JOIN genomic_align_tree gat2 USING(root_id) WHERE gat2.parent_id  IS NULL AND ga.method_link_species_set_id IS NOT NULL GROUP BY gat2.root_id';
