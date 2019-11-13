@@ -538,7 +538,7 @@ function StickyHeader (table) {
   this.scrollHandler = this.syncHeadScroll.bind(this);
 
   this.observeBody();
-}
+};
 
 StickyHeader.prototype.constructor = StickyHeader;
 
@@ -552,14 +552,27 @@ StickyHeader.prototype.observeBody = function () {
       }
     }.bind(this));
   }.bind(this));
-}
+};
+
+StickyHeader.prototype.handleWindowResize = function () {
+  window.addEventListener('resize', function () {
+    window.requestAnimationFrame(function () {
+      if (this.shouldStickHead()) {
+        this.unstickHead();
+        this.stickHead();
+      } else {
+        this.unstickHead();
+      }
+    }.bind(this));
+  }.bind(this));
+};
 
 StickyHeader.prototype.shouldStickHead = function () {
   var tableBodyBoundingRect = this.tableBody.getBoundingClientRect();
   var tableBodyTop = tableBodyBoundingRect.top;
   var tableBodyBottom = tableBodyBoundingRect.bottom;
   return tableBodyTop < 0 && tableBodyBottom - this.tableHead.offsetHeight > 0;
-}
+};
 
 StickyHeader.prototype.buildStickyHeaderContainer = function () {
   var container = document.createElement('div');
@@ -570,7 +583,7 @@ StickyHeader.prototype.buildStickyHeaderContainer = function () {
   container.style.width = wrapperDimensions.width;
   container.style.overflow = 'hidden';
   return container;
-}
+};
 
 StickyHeader.prototype.getDimensionsForStickyHeaderContainer = function () {
   // sometimes a wide table can be placed inside a horizontally scrollable container,
@@ -595,7 +608,7 @@ StickyHeader.prototype.getDimensionsForStickyHeaderContainer = function () {
     left: refetenceRect.left + 'px',
     width: refetenceRect.width + 'px'
   }
-}
+};
 
 StickyHeader.prototype.stickHead = function () {
   if (this.isHeaderStuck) return;
@@ -620,7 +633,7 @@ StickyHeader.prototype.stickHead = function () {
   
   this.handleTableScroll();
   this.isHeaderStuck = true;
-}
+};
 
 StickyHeader.prototype.handleTableScroll = function () {
   if (!this.scrollableWrapper) {
@@ -628,13 +641,13 @@ StickyHeader.prototype.handleTableScroll = function () {
   }
   this.syncHeadScroll();
   this.scrollableWrapper.addEventListener('scroll', this.scrollHandler);
-}
+};
 
 StickyHeader.prototype.syncHeadScroll = function () {
   var tableParent = this.table.parentElement;
   var offsetLeft = tableParent.scrollLeft;
   this.container.scrollLeft = offsetLeft;
-}
+};
 
 StickyHeader.prototype.setColumnWidths = function () {
   var headColumns = Array.prototype.slice.call(this.tableHead.querySelectorAll('th'));
@@ -652,7 +665,7 @@ StickyHeader.prototype.setColumnWidths = function () {
     });
     this.areColumnWidthsSet = true;
   }
-}
+};
 
 StickyHeader.prototype.unsetColumnWidths = function () {
   if (!this.areColumnWidthsSet) return;
@@ -663,7 +676,7 @@ StickyHeader.prototype.unsetColumnWidths = function () {
     headColumn.style.removeProperty('width');
   });
   this.areColumnWidthsSet = false;
-}
+};
 
 
 StickyHeader.prototype.unstickHead = function () {
@@ -681,4 +694,4 @@ StickyHeader.prototype.unstickHead = function () {
     var tableParent = this.table.parentElement;
     tableParent.removeEventListener('scroll', this.scrollHandler);
   }
-}
+};
