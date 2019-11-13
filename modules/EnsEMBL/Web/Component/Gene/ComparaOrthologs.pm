@@ -70,7 +70,7 @@ sub content {
   my @orthologues = (
     $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb), 
   ); 
-  
+
   my %orthologue_list;
   my %skipped;
 
@@ -278,7 +278,7 @@ sub content {
      
       my $tree_url = $hub->url({
         type   => 'Gene',
-        action => $strain_url.'Compara_Tree' . ($cdb =~ /pan/ ? '/pan_compara' : ''),
+        action => $strain_url . ($cdb =~ /pan/ ? 'PanComparaTree' : 'Compara_Tree'),
         g1     => $stable_id,
         anc    => $orthologue->{'gene_tree_node_id'},
         r      => undef
