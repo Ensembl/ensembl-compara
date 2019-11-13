@@ -160,12 +160,14 @@ sub _write_distribution {
             $n_over_threshold += $distrib_row->[1];
         }
     }
-    $mlss->store_tag($label.'_quality_threshold', $threshold);
+    
     if ( $label =~ /goc/ ) {
+        $mlss->store_tag('goc_quality_threshold', $threshold);
         $mlss->store_tag('perc_orth_above_'.$label.'_thresh', 100*$n_over_threshold/$n_tot);
     } elsif ( $label =~ /wga/ ) {
         # for wga, we want to store the values seperately, so that they can be
         # summarised across protein and ncrna later
+        $mlss->store_tag('wga_quality_threshold', $threshold);
         $mlss->store_tag('orth_above_'.$label.'_thresh', $n_over_threshold);
         $mlss->store_tag('total_'.$label.'_orth_count', $n_tot);
     }
