@@ -269,7 +269,7 @@ CREATE TABLE IF NOT EXISTS panther_annot (
 */
 
 CREATE TABLE hmm_thresholding (
-      seq_member_id             INT(10) UNSIGNED NOT NULL, # FK homology.homology_id
+      seq_member_id             INT(10) UNSIGNED NOT NULL, # FK seq_member.seq_member_id
       root_id                   INT(10) UNSIGNED NOT NULL,
       evalue                    float,
       score                     float,
