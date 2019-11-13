@@ -46,7 +46,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use File::Basename qw/dirname/;
 use File::Path qw/make_path/;
 
-use base ('Bio::EnsEMBL::Hive::RunnableDB::DbCmd');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::DbCmd', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub param_defaults {
@@ -116,6 +116,31 @@ sub fetch_input {
     $compara_dba->dbc->disconnect_if_idle; # hive code will open a new connection regardless
 
     $self->SUPER::fetch_input();
+}
+
+sub write_output {
+    my $self = shift;
+
+    $self->_healthcheck($self->param('healthcheck')) if $self->param('healthcheck');
+
+    $self->SUPER::write_output();
+}
+
+sub _healthcheck {
+    my $self = shift;
+
+    my $hc_type = $self->param('healthcheck');
+    if ( $hc_type eq 'line_count' ) {
+        my $exp_line_count = $self->param('exp_line_count') + 1; # incl header line
+
+        my $output_file = $self->param('output_file');
+        my @wc_output = split(/\s+/, $self->get_command_output("wc -l $output_file"));
+        my $got_line_count = $wc_output[0];
+
+        die "Expected $exp_line_count lines in $output_file, but got $got_line_count\n" if $exp_line_count != $got_line_count;
+    } else {
+        die "Healthcheck type '$hc_type' not recognised";
+    }
 }
 
 1;

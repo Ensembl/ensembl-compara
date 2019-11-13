@@ -23,8 +23,8 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpHomologiesByMLSS_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpPerMLSSHomologies_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -division $COMPARA_DIV -member_type ncrna -clusterset_id murinae
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpHomologiesByMLSS_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -member_type ncrna
 
 =head1 DESCRIPTION
 
