@@ -223,7 +223,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     if(this.disableYdim) {
       panel.el.find('h5.result-header._dyHeader, div#dy, div._dyMatrixHeader').hide();
       panel.el.find('button.reset-button._matrix').css("margin-top","0");
-      panel.el.find('div#dy-tab').addClass("inactive").attr("title","No Experimental evidence is available for this view");
+      panel.el.find('div#dy-tab').addClass("inactive").attr("title","No Experimental evidence is available for this view").hide();
     } else {
       panel.el.find('h5.result-header._dyHeader, div#dy').show();
       panel.el.find('div#dy-tab').removeClass("inactive").attr("title", "");
