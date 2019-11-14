@@ -61,7 +61,7 @@ sub pipeline_analyses_multiple_aligner_stats {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -rc_name    => '500Mb_job',
             -flow_into  => {
-                '2->A' => [ 'multiplealigner_stats' ],
+                '2->A' => { 'multiplealigner_stats' => INPUT_PLUS() },
                 'A->1' => [ 'block_size_distribution' ],
                     1  => [ 'gab_factory' ],
             },

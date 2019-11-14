@@ -44,18 +44,18 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats;
 
 sub pipeline_analyses_all {
     my ($self) = @_;
-    
+
     return [
         @{ pipeline_analyses_db_prepare($self)      },
         @{ pipeline_analyses_epo2x_alignment($self) },
-        @{ pipeline_analyses_db_cleanup($self)      },
+        @{ pipeline_analyses_db_complete($self)     },
         @{ pipeline_analyses_healthcheck($self)     },
     ];
 }
 
 sub pipeline_analyses_db_prepare{
     my ($self) = @_;
-    
+
     return [
         {   -logic_name => 'with_or_without_gerp',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
@@ -64,7 +64,7 @@ sub pipeline_analyses_db_prepare{
                                 ELSE [ 'populate_new_database' ],
                             ),
         },
-        
+
         # ---------------------------------------------[find out the other mlss_ids involved ]---------------------------------------------------
         {   -logic_name => 'find_gerp_mlss_ids',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -167,11 +167,11 @@ sub pipeline_analyses_db_prepare{
             },
             -rc_name => '4Gb_job',
         },
-        
+
         # -------------------------------------------------------------[Load species tree]--------------------------------------------------------
         {   -logic_name    => 'make_species_tree',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
-            -parameters    => { 
+            -parameters    => {
                 'species_tree_input_file' => $self->o('binary_species_tree'),
             },
             -rc_name => '1Gb_job',
@@ -184,7 +184,7 @@ sub pipeline_analyses_epo2x_alignment {
 	my ($self) = @_;
 
     return [
-    
+
         # -------------------------------------------[Set conservation score method_link_species_set_tag ]------------------------------------------
         { -logic_name => 'set_gerp_mlss_tag',
           -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
@@ -208,7 +208,7 @@ sub pipeline_analyses_epo2x_alignment {
                          1 => [ 'set_internal_ids' ],
                         },
         },
-    
+
         # -----------------------------------[Create a list of pairwise mlss found in the default compara database]-------------------------------
         {   -logic_name => 'create_default_pairwise_mlss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::FindPairwiseMlssLocation',
@@ -225,7 +225,7 @@ sub pipeline_analyses_epo2x_alignment {
             },
             -rc_name => '1Gb_job',
         },
-        
+
         {   -logic_name => 'set_gerp_neutral_rate',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetGerpNeutralRate',
             -flow_into => {
@@ -233,7 +233,7 @@ sub pipeline_analyses_epo2x_alignment {
                 2 => [ '?table_name=pipeline_wide_parameters' ],
             },
         },
-        
+
         # -----------------------------------[Run the low coverage alignment]-------------------------------
 
         {   -logic_name => 'low_coverage_genome_alignment',
@@ -286,7 +286,7 @@ sub pipeline_analyses_epo2x_alignment {
             },
             -rc_name => '8Gb_job',
         },
-        
+
         # ---------------------------------------------------------------[Gerp]-------------------------------------------------------------------
         {   -logic_name => 'gerp',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
@@ -312,9 +312,9 @@ sub pipeline_analyses_epo2x_alignment {
     ];
 }
 
-sub pipeline_analyses_db_cleanup {
+sub pipeline_analyses_db_complete {
     my ($self) = @_;
-    
+
     return [
         # ---------------------------------------------------[Delete base alignment]-----------------------------------------------------
         {   -logic_name => 'delete_alignment',
@@ -338,18 +338,6 @@ sub pipeline_analyses_db_cleanup {
                 'method_link_species_set_id'    => $self->o('low_epo_mlss_id'),
             },
             -flow_into => {
-                1 => [ 'update_max_alignment_length' ],
-            },
-            -rc_name => '2Gb_job',
-        },
-
-        # ---------------------------------------------------[Update the max_align data in meta]--------------------------------------------------
-        {   -logic_name => 'update_max_alignment_length',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
-            -parameters => {
-                'method_link_species_set_id' => $self->o('low_epo_mlss_id'),
-            },
-            -flow_into => {
                 1 => [ 'create_neighbour_nodes_jobs_alignment' ],
             },
             -rc_name => '2Gb_job',
@@ -363,7 +351,7 @@ sub pipeline_analyses_db_cleanup {
             },
             -flow_into => {
                 '2->A' => [ 'set_neighbour_nodes' ],
-                'A->1' => [ 'healthcheck_factory' ],
+                'A->1' => [ 'update_max_alignment_length' ],
             },
             -rc_name => '2Gb_job',
         },
@@ -374,7 +362,7 @@ sub pipeline_analyses_db_cleanup {
             -rc_name => '2Gb_job',
             -flow_into => {
                 -1 => [ 'set_neighbour_nodes_himem' ],
-        },
+            },
         },
 
         {   -logic_name => 'set_neighbour_nodes_himem',
@@ -383,12 +371,24 @@ sub pipeline_analyses_db_cleanup {
             -hive_capacity => 20,
             -rc_name => '4Gb_job',
         },
+
+        # ---------------------------------------------------[Update the max_align data in meta]--------------------------------------------------
+        {   -logic_name => 'update_max_alignment_length',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
+            -parameters => {
+                'method_link_species_set_id' => $self->o('low_epo_mlss_id'),
+            },
+            -flow_into => {
+                1 => [ 'healthcheck_factory' ],
+            },
+            -rc_name => '2Gb_job',
+        },
     ];
 }
 
 sub pipeline_analyses_healthcheck {
     my ($self) = @_;
-    
+
     return [
         # -----------------------------------------------------------[Run healthcheck]------------------------------------------------------------
         {   -logic_name => 'healthcheck_factory',
@@ -397,7 +397,7 @@ sub pipeline_analyses_healthcheck {
             -flow_into => {
                 '1->A' => WHEN( '#run_gerp#' => {
                     'conservation_score_healthcheck'  => [
-                        {'test' => 'conservation_jobs', 'logic_name'=>'gerp','method_link_type'=>'EPO_LOW_COVERAGE'}, 
+                        {'test' => 'conservation_jobs', 'logic_name'=>'gerp','method_link_type'=>'EPO_LOW_COVERAGE'},
                         {'test' => 'conservation_scores','method_link_species_set_id'=>'#cs_mlss_id#'},
                     ],
                 } ),
@@ -409,11 +409,11 @@ sub pipeline_analyses_healthcheck {
         {   -logic_name => 'conservation_score_healthcheck',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
         },
-        
+
         {   -logic_name  => 'end_pipeline',
             -module      => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         },
-        
+
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self) },
     ];
 }
