@@ -166,9 +166,10 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
-    # Move "make_species_tree" right after "create_mlss_ss" and disconnect it from "reuse_anchor_align_factory"
+    # Move "make_species_tree" right after "create_mlss_ss" and disconnect it from "dump_mappings_to_file"
     $analyses_by_name->{'create_mlss_ss'}->{'-flow_into'} = [ 'make_species_tree' ];
-    delete $analyses_by_name->{'make_species_tree'}->{'-flow_into'};
+    $analyses_by_name->{'make_species_tree'}->{'-flow_into'} = WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ] );
+    delete $analyses_by_name->{'set_gerp_neutral_rate'}->{'-flow_into'}->{1};
 
     # Do "dump_mappings_to_file" after having trimmed the anchors
     $analyses_by_name->{'trim_anchor_align_factory'}->{'-flow_into'} = {
