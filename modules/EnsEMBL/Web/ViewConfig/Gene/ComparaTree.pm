@@ -150,13 +150,12 @@ sub form_fields {
 sub init_form_non_cacheable {
   ## @override
   my $self  = shift;
+  my $cdb   = shift || $self->{'cdb'} || 'compara';
   my $hub   = $self->hub;
   my $form  = $self->SUPER::init_form_non_cacheable(@_);
   my %other_clustersets;
 
   if($hub->param('g')) {
-    my $function           = $hub->referer->{'ENSEMBL_FUNCTION'};
-    my $cdb                = $function && $function eq 'pan_compara' ? 'compara_pan_ensembl' : 'compara';
     my $database           = $hub->database($cdb);
     my $member             = $database->get_GeneMemberAdaptor->fetch_by_stable_id($hub->core_params->{'g'});
     my $adaptor            = $database->get_GeneTreeAdaptor;
