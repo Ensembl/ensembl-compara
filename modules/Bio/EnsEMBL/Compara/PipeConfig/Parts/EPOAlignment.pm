@@ -45,7 +45,7 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats;
 
 sub pipeline_analyses_epo_alignment {
     my ($self) = @_;
-    
+
     return [
         @{ core_pipeline_analyses_epo_alignment($self) },
         @{ pipeline_analyses_gerp($self)               },
@@ -53,7 +53,7 @@ sub pipeline_analyses_epo_alignment {
     ];
 }
 
-sub core_pipeline_analyses_epo_alignment {    
+sub core_pipeline_analyses_epo_alignment {
 	my ($self) = @_;
 
 return 
@@ -279,22 +279,10 @@ return
         },
 },
 
-# ---------------------------------------------------[Update the max_align data in meta]--------------------------------------------------
             {  -logic_name => 'remove_dodgy_ancestral_blocks',
                -module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::DeleteDodgyAncestralBlocks',
-               -flow_into  => [ 'update_max_alignment_length' ],
+               -flow_into  => [ 'create_neighbour_nodes_jobs_alignment' ],
             },
-
-            {  -logic_name => 'update_max_alignment_length',
-               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
-                -parameters => {
-                               'method_link_species_set_id' => '#mlss_id#',
-                              },  
-               -rc_name => '2Gb_job',
-               -flow_into => {
-                              1 => [ 'create_neighbour_nodes_jobs_alignment' ],
-                             },  
-            },  
 
 # --------------------------------------[Populate the left and right node_id of the genomic_align_tree table]-----------------------------
             {   -logic_name => 'create_neighbour_nodes_jobs_alignment',
@@ -305,7 +293,7 @@ return
                 -rc_name => '2Gb_job',
                 -flow_into => {
                                '2->A' => [ 'set_neighbour_nodes' ],
-                               'A->1' => [ 'healthcheck_factory' ],
+                               'A->1' => [ 'update_max_alignment_length' ],
                               },  
             },  
             {   -logic_name => 'set_neighbour_nodes',
@@ -314,14 +302,26 @@ return
                 -batch_size    => 10, 
                 -hive_capacity => 20, 
             },
+
+            # -----------------------------------[Update the max_align data in meta]--------------------------------------------------
+            {  -logic_name => 'update_max_alignment_length',
+               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
+                -parameters => {
+                    'method_link_species_set_id' => '#mlss_id#',
+                },
+               -rc_name => '2Gb_job',
+               -flow_into => {
+                    1 => [ 'healthcheck_factory' ],
+                },
+            },
     ];
 }
 
 sub pipeline_analyses_gerp {
     my ($self) = @_;
-    
+
     return [
-    
+
         {   -logic_name => 'set_gerp_neutral_rate',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetGerpNeutralRate',
             -flow_into => {
@@ -329,7 +329,7 @@ sub pipeline_analyses_gerp {
                 2 => [ '?table_name=pipeline_wide_parameters' ],
             },
         },
-    
+
         # ------------------------------------- run gerp - this will populate the constrained_element and conservation_scores tables
         {   -logic_name => 'gerp',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
@@ -360,7 +360,7 @@ sub pipeline_analyses_gerp {
 
 sub pipeline_analyses_healthcheck {
     my ($self) = @_;
-    
+
     return [
         # -----------------------------------------------------------[Run healthcheck]------------------------------------------------------------
         {   -logic_name => 'healthcheck_factory',
@@ -382,11 +382,11 @@ sub pipeline_analyses_healthcheck {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
             -rc_name    => '4Gb_job',
         },
-        
+
         {   -logic_name  => 'end_pipeline',
             -module      => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         },
-        
+
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self) },
     ];
 }

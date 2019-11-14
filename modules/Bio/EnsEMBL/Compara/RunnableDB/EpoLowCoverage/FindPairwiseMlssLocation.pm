@@ -218,74 +218,69 @@ sub _optimal_aln_for_genome_db {
 
 sub _get_msa_coverage_stats {
     my ( $self, $ref_gdbs ) = @_;
-    
+
     # if all references have genome_coverage and genome_length tags in the current epo_db, then we will use that
     # otherwise, we will look for the tags in the prev_epo_db
     # finally, if all references are still not covered, we will revert to anchor_align counts
-    
+
     # NOTE: all references must be covered by the same statistic or they are not comparable
-    
+
     my @ref_gdb_ids = keys %$ref_gdbs;
     my $ref_count = scalar @ref_gdb_ids;
-    
+
     # first try coverage from epo_db
-    my %epo_db_coverage;
-    foreach my $ref_gdb_id ( @ref_gdb_ids ) {
-        # first, get the EPO coverage for this reference species
-        my $epo_stn = $self->param('base_gdb_id_2_stn')->{$ref_gdb_id};
-        next unless defined $epo_stn; # skip if the ref isn't in this epo db
-    
-        my $epo_genome_coverage = $epo_stn->get_value_for_tag('genome_coverage');
-        my $epo_genome_length = $epo_stn->get_value_for_tag('genome_length');
-        last unless defined $epo_genome_coverage && defined $epo_genome_length;
-        $epo_db_coverage{$ref_gdb_id} = $epo_genome_coverage/$epo_genome_length;
-    }
-    if( scalar( keys %epo_db_coverage ) == $ref_count ) {
+    my $epo_db_coverage = $self->_epo_coverage($self->param('base_gdb_id_2_stn'), \@ref_gdb_ids);
+    if( scalar( keys %$epo_db_coverage ) == $ref_count ) {
         print "\n-- using EPO coverage from base_location\n\n" if $self->debug;
-        return \%epo_db_coverage;
+        return $epo_db_coverage;
     }
-    
+
     # next try coverage from prev_epo_db
-    my %prev_epo_db_coverage;
-    
-    foreach my $ref_gdb_id ( @ref_gdb_ids ) {
-        my $prev_dba          = $self->get_cached_compara_dba('prev_epo_db');
-        my $prev_mlss         = $prev_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type('EPO')->[0];
-        my $prev_species_tree = $prev_mlss->species_tree;
-        my $prev_gdb_id_2_stn = $prev_species_tree->get_genome_db_id_2_node_hash();
-        
-        my $epo_stn = $prev_gdb_id_2_stn->{$ref_gdb_id};
-        next unless defined $epo_stn; # skip if the ref isn't in this db
-    
-        my $epo_genome_coverage = $epo_stn->get_value_for_tag('genome_coverage');
-        my $epo_genome_length = $epo_stn->get_value_for_tag('genome_length');
-        last unless defined $epo_genome_coverage && defined $epo_genome_length;
-        $prev_epo_db_coverage{$ref_gdb_id} = $epo_genome_coverage/$epo_genome_length;
-    }
-    if( scalar( keys %prev_epo_db_coverage ) == $ref_count ) {
+    my $prev_dba          = $self->get_cached_compara_dba('prev_epo_db');
+    my $prev_mlss         = $prev_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type('EPO')->[0];
+    my $prev_species_tree = $prev_mlss->species_tree;
+    my $prev_gdb_id_2_stn = $prev_species_tree->get_genome_db_id_2_node_hash();
+
+    my $prev_epo_db_coverage = $self->_epo_coverage($prev_gdb_id_2_stn, \@ref_gdb_ids);
+    if( scalar( keys %$prev_epo_db_coverage ) == $ref_count ) {
         print "\n-- using EPO coverage from prev_epo_db\n\n" if $self->debug;
-        return \%prev_epo_db_coverage;
+        return $prev_epo_db_coverage;
     }
-    
+
     # finally, try the anchor_align counts if the above have not covered all refs
     print "\n-- using anchor_align counts from base_location\n\n" if $self->debug;
     return $self->anchor_counts;
 }
 
+sub _epo_coverage {
+    my ($self, $gdb_id_2_stn, $ref_gdb_ids) = @_;
+
+    my %epo_db_coverage;
+    foreach my $ref_gdb_id ( @$ref_gdb_ids ) {
+        # first, get the EPO coverage for this reference species
+        my $epo_stn = $gdb_id_2_stn->{$ref_gdb_id};
+        next unless defined $epo_stn; # skip if the ref isn't in this epo db
+
+        my $epo_genome_coverage = $epo_stn->get_value_for_tag('genome_coverage');
+        my $epo_genome_length = $epo_stn->get_value_for_tag('genome_length');
+        last unless defined $epo_genome_coverage && defined $epo_genome_length;
+        $epo_db_coverage{$ref_gdb_id} = $epo_genome_coverage/$epo_genome_length;
+    }
+
+    return \%epo_db_coverage;
+}
+
 sub anchor_counts {
     my $self = shift;
-    
+
     return $self->param('anchor_counts') if $self->param('anchor_counts');
-    
+
     print "fetching anchor counts\n" if $self->debug;
     my $base_dba = $self->get_cached_compara_dba('base_location');
     my $anchor_count_sql = "SELECT d.genome_db_id, COUNT(*) FROM anchor_align a JOIN dnafrag d USING(dnafrag_id) GROUP BY d.genome_db_id";
-    my $sth = $base_dba->dbc->prepare($anchor_count_sql);
-    $sth->execute();
-    my $results = $sth->fetchall_arrayref;
-    my %anchor_counts = map { $_->[0] => $_->[1] } @$results;
-    $self->param('anchor_counts', \%anchor_counts);
-    return \%anchor_counts;
+    my $anchor_counts = $base_dba->dbc->sql_helper->execute_into_hash( -SQL => $anchor_count_sql);
+    $self->param('anchor_counts', $anchor_counts);
+    return $anchor_counts;
 }
 
 1;
