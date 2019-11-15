@@ -420,6 +420,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.localStoreObj.userLocation = panel.getLocalStorage().userLocation || {};
       panel.localStoreObj["reset_other_dimensions"] = panel.localStoreObj["other_dimensions"] || {};
       panel.setLocalStorage();
+      panel.updateLHMenu();
     }
 
     panel.elLk.filterMatrixObj = filterObj;
@@ -872,6 +873,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.localStoreObj.userLocation.tab = "";
     }
     panel.setLocalStorage();
+    panel.updateLHMenu();
   },
 
   goToUserLocation: function() {
@@ -1128,6 +1130,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     delete panel.localStoreObj[panel.itemDimension(item)][item];
 
     panel.setLocalStorage();
+    panel.updateLHMenu();
   },
 
   updateRHS: function(item) {
@@ -1137,6 +1140,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.updateShowHideLinks(panel.elLk.filterList);
     panel.showResetLink('div#dx, div#dy');
     panel.setLocalStorage();
+    panel.updateLHMenu();
     panel.trackError('div#dx, div#dy');
     panel.enableConfigureButton('div#dx, div#dy');
     if (Object.keys(panel.localStoreObj).length > 0 && panel.localStoreObj.dx) {
@@ -1263,6 +1267,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var itemKeys = Object.keys(clones);
     !panel.loadingState && panel.addToStore(itemKeys); // Dont add to store while loading state from store
     panel.setLocalStorage();
+    panel.updateLHMenu();
   },
 
   // Update selected tracks on the RH panel
@@ -1283,6 +1288,15 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   getLocalStorage: function() {
     return JSON.parse(localStorage.getItem(this.localStorageKey)) || {};
   },
+
+  updateLHMenu: function() {
+    // update LH menu count
+    var panel = this;
+    var menuTotal = panel.localStoreObj.matrix["allSelection"]["state"]["on"];
+    console.log('TOTAL: ', menuTotal);
+    $(panel.menuCountSpan).text(menuTotal);
+  },
+
 
   addToStore: function(items) {
     //Potential fix
@@ -2176,6 +2190,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.cellClick('filter'); //opens popup
     // panel.filterMatrixCellClick(); //opens popup
     panel.setLocalStorage();
+    panel.updateLHMenu();
 
     // enable helptips
     panel.elLk.breadcrumb.filter(".active").attr("id") === 'track-filter' && this.elLk.filterMatrix.find('.xContainer ._ht').helptip({position: {at: 'left+10 bottom+76'}});
@@ -2334,6 +2349,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       }
 
       panel.setLocalStorage();
+      panel.updateLHMenu();
       panel.emptyMatrix();
       panel.displayFilterMatrix();
     }, data));
@@ -2412,6 +2428,7 @@ return;
         }
       }
       panel.setLocalStorage();
+      panel.updateLHMenu();
       panel.updateFilterMatrix(cellArray);
 
     });
@@ -2634,6 +2651,7 @@ return;
     panel.cellClick('config'); //opens popup
     panel.cleanMatrixStore(); //deleting items that are not present anymore
     panel.setLocalStorage();
+    panel.updateLHMenu();
 
     panel.populateConfigTracksResultBox();
 
@@ -2732,6 +2750,7 @@ return;
 
         panel.localStoreObj.other_dimensions = $.extend({}, panel.localStoreObj.reset_other_dimensions);
         panel.setLocalStorage();
+        panel.updateLHMenu();
         panel.updateFilterMatrix(cellArray);
         panel.updateFilterMatrixRHS();        
       }
@@ -2816,6 +2835,7 @@ return;
       }
     });
     panel.setLocalStorage();
+    panel.updateLHMenu();
   },
 
   resetTracks: function() {
@@ -2828,6 +2848,7 @@ return;
       panel.localStoreObj.dy     = {};
       panel.localStoreObj.matrix = {};
       panel.setLocalStorage();
+      panel.updateLHMenu();
       panel.emptyMatrix();
       panel.resetFilter("",true);
       $.each(panel.elLk.resultBox.find('li').not(".noremove"), function(i, ele){
@@ -2974,16 +2995,9 @@ return;
   //
   updateFilterMatrixStore: function(storeObj, cellKey, newState, currentState, all, showValue, allRHS) {
     var panel = this;
-    var trackTotal = parseInt(panel.menuCountSpan.innerHTML);
 
     if(all) { //clicking all in matrix popup
       $.each(storeObj.data, function(trackId, hash){
-        if (hash.state === 'on' && newState === 'off') {
-          trackTotal -= 1;
-        }
-        else if (hash.state === 'off' && newState === 'on') {
-          trackTotal += 1;
-        }
         hash.state = newState;
       });
       panel.localStoreObj.filterMatrix[cellKey].state[currentState] = 0;
@@ -2999,13 +3013,11 @@ return;
             if(storeObj.state != "on") {
               panel.localStoreObj.filterMatrix[cellKey].state.total += 1;
               panel.localStoreObj.filterMatrix[cellKey].state["on"] += 1;
-              trackTotal += 1;
             }
           } else { //not showing track and switch it off
             if(storeObj.show === 1) { 
               panel.localStoreObj.filterMatrix[cellKey].state.total -= 1;
               panel.localStoreObj.filterMatrix[cellKey].state[storeObj.state] -= 1;
-              trackTotal -= 1;
             }
           }
         }
@@ -3013,12 +3025,6 @@ return;
       } else { //clicking element in matrix popup
         panel.localStoreObj.filterMatrix[cellKey].state[currentState] -= 1;
         panel.localStoreObj.filterMatrix[cellKey].state[newState] += 1;
-        if (currentState === 'on' && newState === 'off') {
-          trackTotal -= 1;
-        }
-        else if (currentState === 'off' && newState === 'on') {
-          trackTotal += 1;
-        }
       }
       storeObj.state = newState; // This has to be the last thing to do
     }
@@ -3055,7 +3061,7 @@ return;
       panel.localStoreObj.matrix[cellKey]["reset-state"] = "track-on";
     }
     panel.setLocalStorage();
-    $(panel.menuCountSpan).text(trackTotal);
+    panel.updateLHMenu();
   },
 
   //function to update filte matrix cells (on/off/partial) and show the counts
@@ -3115,6 +3121,7 @@ return;
         }
       });
       panel.setLocalStorage();
+      panel.updateLHMenu();
       return;
     }
     var keyDim      = panel.itemDimension(trackKey);
@@ -3198,6 +3205,7 @@ return;
       });
     }
     panel.setLocalStorage();
+    panel.updateLHMenu();
   },
 
   //function to handle functionalities inside popup (switching off track or changing renderer) and updating state (localstore obj)
