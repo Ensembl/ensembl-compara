@@ -420,7 +420,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.localStoreObj.userLocation = panel.getLocalStorage().userLocation || {};
       panel.localStoreObj["reset_other_dimensions"] = panel.localStoreObj["other_dimensions"] || {};
       panel.setLocalStorage();
-      panel.updateLHMenu();
     }
 
     panel.elLk.filterMatrixObj = filterObj;
@@ -873,7 +872,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.localStoreObj.userLocation.tab = "";
     }
     panel.setLocalStorage();
-    panel.updateLHMenu();
   },
 
   goToUserLocation: function() {
@@ -1130,7 +1128,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     delete panel.localStoreObj[panel.itemDimension(item)][item];
 
     panel.setLocalStorage();
-    panel.updateLHMenu();
   },
 
   updateRHS: function(item) {
@@ -1140,7 +1137,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.updateShowHideLinks(panel.elLk.filterList);
     panel.showResetLink('div#dx, div#dy');
     panel.setLocalStorage();
-    panel.updateLHMenu();
     panel.trackError('div#dx, div#dy');
     panel.enableConfigureButton('div#dx, div#dy');
     if (Object.keys(panel.localStoreObj).length > 0 && panel.localStoreObj.dx) {
@@ -1267,7 +1263,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var itemKeys = Object.keys(clones);
     !panel.loadingState && panel.addToStore(itemKeys); // Dont add to store while loading state from store
     panel.setLocalStorage();
-    panel.updateLHMenu();
   },
 
   // Update selected tracks on the RH panel
@@ -1284,19 +1279,18 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
   setLocalStorage: function() {
     localStorage.setItem(this.localStorageKey, JSON.stringify(this.localStoreObj));
+    // update LH menu count
+    var panel = this;
+    var menuTotal = 0;
+    var matrix = panel.localStoreObj.filterMatrix;
+    for (var column in matrix) {
+      menuTotal += matrix[column]['state']['on'];
+    }
+    $(panel.menuCountSpan).text(menuTotal);
   },
   getLocalStorage: function() {
     return JSON.parse(localStorage.getItem(this.localStorageKey)) || {};
   },
-
-  updateLHMenu: function() {
-    // update LH menu count
-    var panel = this;
-    var menuTotal = panel.localStoreObj.matrix["allSelection"]["state"]["on"];
-    console.log('TOTAL: ', menuTotal);
-    $(panel.menuCountSpan).text(menuTotal);
-  },
-
 
   addToStore: function(items) {
     //Potential fix
@@ -2190,7 +2184,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.cellClick('filter'); //opens popup
     // panel.filterMatrixCellClick(); //opens popup
     panel.setLocalStorage();
-    panel.updateLHMenu();
 
     // enable helptips
     panel.elLk.breadcrumb.filter(".active").attr("id") === 'track-filter' && this.elLk.filterMatrix.find('.xContainer ._ht').helptip({position: {at: 'left+10 bottom+76'}});
@@ -2349,7 +2342,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       }
 
       panel.setLocalStorage();
-      panel.updateLHMenu();
       panel.emptyMatrix();
       panel.displayFilterMatrix();
     }, data));
@@ -2428,7 +2420,6 @@ return;
         }
       }
       panel.setLocalStorage();
-      panel.updateLHMenu();
       panel.updateFilterMatrix(cellArray);
 
     });
@@ -2651,7 +2642,6 @@ return;
     panel.cellClick('config'); //opens popup
     panel.cleanMatrixStore(); //deleting items that are not present anymore
     panel.setLocalStorage();
-    panel.updateLHMenu();
 
     panel.populateConfigTracksResultBox();
 
@@ -2750,7 +2740,6 @@ return;
 
         panel.localStoreObj.other_dimensions = $.extend({}, panel.localStoreObj.reset_other_dimensions);
         panel.setLocalStorage();
-        panel.updateLHMenu();
         panel.updateFilterMatrix(cellArray);
         panel.updateFilterMatrixRHS();        
       }
@@ -2835,7 +2824,6 @@ return;
       }
     });
     panel.setLocalStorage();
-    panel.updateLHMenu();
   },
 
   resetTracks: function() {
@@ -2848,7 +2836,6 @@ return;
       panel.localStoreObj.dy     = {};
       panel.localStoreObj.matrix = {};
       panel.setLocalStorage();
-      panel.updateLHMenu();
       panel.emptyMatrix();
       panel.resetFilter("",true);
       $.each(panel.elLk.resultBox.find('li').not(".noremove"), function(i, ele){
@@ -3061,7 +3048,6 @@ return;
       panel.localStoreObj.matrix[cellKey]["reset-state"] = "track-on";
     }
     panel.setLocalStorage();
-    panel.updateLHMenu();
   },
 
   //function to update filte matrix cells (on/off/partial) and show the counts
@@ -3121,7 +3107,6 @@ return;
         }
       });
       panel.setLocalStorage();
-      panel.updateLHMenu();
       return;
     }
     var keyDim      = panel.itemDimension(trackKey);
@@ -3205,7 +3190,6 @@ return;
       });
     }
     panel.setLocalStorage();
-    panel.updateLHMenu();
   },
 
   //function to handle functionalities inside popup (switching off track or changing renderer) and updating state (localstore obj)
