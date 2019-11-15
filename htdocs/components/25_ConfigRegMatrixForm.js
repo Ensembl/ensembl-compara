@@ -895,7 +895,6 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     delete panel.localStoreObj[panel.itemDimension(item)][item];
 
     panel.setLocalStorage();
-    panel.updateLHMenu();
   },
 
   updateRHS: function(item) {
@@ -1047,18 +1046,15 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
   setLocalStorage: function() {
     localStorage.setItem(this.localStorageKey, JSON.stringify(this.localStoreObj));
-  },
-  getLocalStorage: function() {
-    return JSON.parse(localStorage.getItem(this.localStorageKey)) || {};
-  },
-
-  updateLHMenu: function() {
     // update LH menu count
     var panel = this;
     var menuTotal = panel.localStoreObj.matrix["allSelection"]["state"]["on"];
     menuTotal += panel.localStoreObj.epigenomic_activity["epigenomic_activity"]["state"]["on"];
     menuTotal += panel.localStoreObj.segmentation_features["segmentation_features"]["state"]["on"];
     $(panel.menuCountSpan).text(menuTotal);
+  },
+  getLocalStorage: function() {
+    return JSON.parse(localStorage.getItem(this.localStorageKey)) || {};
   },
 
   addToStore: function(items) {
@@ -1906,7 +1902,6 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.cellClick(); //opens popup
     panel.cleanMatrixStore(); //deleting items that are not present anymore
     panel.setLocalStorage();
-    panel.updateLHMenu();
 
     // enable helptips
     this.elLk.matrixContainer.find('._ht').helptip();
@@ -1999,7 +1994,6 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         panel.filterData($(ele).data('item'));
       });
       panel.updateRHS();
-      panel.updateLHMenu();
       panel.toggleBreadcrumb("#track-select");
     });
   },
@@ -2178,7 +2172,6 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         }
       });
       panel.setLocalStorage();
-      panel.updateLHMenu();
       return;
     }
     var keyDim      = panel.itemDimension(trackKey);
@@ -2262,7 +2255,6 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       });
     }
     panel.setLocalStorage();
-    panel.updateLHMenu();
   },
 
   //function to handle functionalities inside popup (switching off track or changing renderer) and updating state (localstore obj)
