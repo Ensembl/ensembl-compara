@@ -1055,10 +1055,9 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   updateLHMenu: function() {
     // update LH menu count
     var panel = this;
-    var menuTotal = panel.localStoreObj.matrix["allSelection"]["total"];
+    var menuTotal = panel.localStoreObj.matrix["allSelection"]["state"]["on"];
     menuTotal += panel.localStoreObj.epigenomic_activity["epigenomic_activity"]["state"]["on"];
     menuTotal += panel.localStoreObj.segmentation_features["segmentation_features"]["state"]["on"];
-    console.log('TOTAL ', menuTotal);
     $(panel.menuCountSpan).text(menuTotal);
   },
 
