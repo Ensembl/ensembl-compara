@@ -318,6 +318,8 @@ sub default_options {
         'hmmer_search_cutoff'           => '1e-23',
 
     # Extra analyses
+        # compute dNdS for homologies?
+        'do_dnds'                => 0,
         # Export HMMs ?
         'do_hmm_export'          => 0,
         # Do we want the Gene QC part to run ?
@@ -3298,8 +3300,10 @@ sub core_pipeline_analyses {
         {   -logic_name => 'rib_fire_cafe',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A' => WHEN('#initialise_cafe_pipeline#' => 'CAFE_species_tree'),
-                'A->1' => 'rib_fire_homology_stats',
+                1 => [
+                    WHEN('#initialise_cafe_pipeline#' => 'CAFE_species_tree'),
+                    'rib_fire_homology_stats',
+                ],
             },
         },
 
@@ -3327,8 +3331,10 @@ sub core_pipeline_analyses {
         {   -logic_name => 'rib_fire_gene_qc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A' => 'get_species_set',
-                'A->1' => 'rib_fire_homology_id_mapping',
+                1 => [
+                    WHEN('#do_gene_qc#' => 'get_species_set'),
+                    'rib_fire_homology_id_mapping',
+                ],
             },
         },
 
@@ -3338,7 +3344,7 @@ sub core_pipeline_analyses {
                 'goc_taxlevels'         => $self->o('goc_taxlevels'),
             },
             -flow_into  => {
-                '1->A' => WHEN('scalar(@{#goc_taxlevels#}) || #do_homology_id_mapping#' => 'id_map_mlss_factory'),
+                '1->A' => WHEN('#do_homology_id_mapping#' => 'id_map_mlss_factory'),
                 'A->1' => 'group_genomes_under_taxa',
             },
         },
@@ -3367,8 +3373,8 @@ sub core_pipeline_analyses {
                 'taxlevels'             => $self->o('taxlevels'),
             },
             -flow_into => {
-                '2->A' => [ 'mlss_factory' ],
-                'A->1' => [ 'rib_fire_cafe' ],
+                1 => [ 'rib_fire_cafe' ],
+                2 => [ 'rib_fire_dnds' ],
             },
         },
 
@@ -3406,6 +3412,11 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('homology_dNdS_capacity'),
             -rc_name   => '1Gb_job',
             -flow_into => { 1 => { 'homology_id_mapping' => INPUT_PLUS() } },
+        },
+
+        {   -logic_name => 'rib_fire_dnds',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => WHEN('#do_dnds#' => 'mlss_factory'),
         },
 
         {   -logic_name => 'mlss_factory',
