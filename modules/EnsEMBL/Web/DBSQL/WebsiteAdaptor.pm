@@ -93,7 +93,6 @@ sub search_help {
 
 sub fetch_help_by_ids {
   my ($self, $ids) = @_;
-  warn ">>> FETCHING HELP FOR ID @$ids";
   return unless $self->db;
   my $records = [];
 
