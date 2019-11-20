@@ -222,7 +222,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 method_link_species_set_id => '#low_epo_mlss_id#',
             },
-            -flow_into => [ 'create_neighbour_nodes_jobs_alignment' ],
+            -flow_into => [ 'alignment_mlss_factory' ],
         },
 
         {   -logic_name => 'alignment_mlss_factory',
@@ -232,7 +232,7 @@ sub core_pipeline_analyses {
                 'column_names' => ['mlss_id'],
             },
             -flow_into => {
-                2 => ['update_max_alignment_length'],
+                2 => ['create_neighbour_nodes_jobs_alignment'],
             },
         },
 
@@ -290,11 +290,10 @@ sub tweak_analyses {
     $analyses_by_name->{'low_coverage_genome_alignment_himem'}->{'-parameters'}->{'mlss_id'} = '#low_epo_mlss_id#';
 
     # add "set_internal_ids_low_epo" to "remove_dodgy_ancestral_blocks"
-    $analyses_by_name->{'remove_dodgy_ancestral_blocks'}->{'-flow_into'} = ['set_internal_ids_low_epo'];
+    $analyses_by_name->{'remove_dodgy_ancestral_blocks'}->{'-flow_into'} = {'set_internal_ids_low_epo' => {}};
 
-    # run update_max_alignment_length for each mlss and ensure mlss_ids are flowed with their root_ids
-    $analyses_by_name->{'create_neighbour_nodes_jobs_alignment'}->{'-parameters'}->{'inputquery'} = 'SELECT gat2.root_id, ga.method_link_species_set_id as mlss_id FROM genomic_align_tree gat1 LEFT JOIN genomic_align ga USING(node_id) JOIN genomic_align_tree gat2 USING(root_id) WHERE gat2.parent_id  IS NULL AND ga.method_link_species_set_id IS NOT NULL GROUP BY gat2.root_id';
-    $analyses_by_name->{'create_neighbour_nodes_jobs_alignment'}->{'-flow_into'}->{'A->1'} = 'alignment_mlss_factory';
+    # ensure mlss_ids are flowed with their root_ids
+    $analyses_by_name->{'create_neighbour_nodes_jobs_alignment'}->{'-parameters'}->{'inputquery'} = 'SELECT gat2.root_id, #mlss_id# FROM genomic_align_tree gat1 LEFT JOIN genomic_align ga USING(node_id) JOIN genomic_align_tree gat2 USING(root_id) WHERE gat2.parent_id IS NULL AND ga.method_link_species_set_id = #mlss_id# GROUP BY gat2.root_id';
 }
 
 1;
