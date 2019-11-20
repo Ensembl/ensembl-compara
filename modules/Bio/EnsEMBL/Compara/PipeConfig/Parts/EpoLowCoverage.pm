@@ -181,7 +181,7 @@ sub pipeline_analyses_db_prepare{
 }
 
 sub pipeline_analyses_epo2x_alignment {
-	my ($self) = @_;
+    my ($self) = @_;
 
     return [
 
