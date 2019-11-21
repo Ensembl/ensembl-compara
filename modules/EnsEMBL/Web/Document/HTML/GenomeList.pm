@@ -165,7 +165,12 @@ sub _species_list {
 
     my $homepage      = $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Index', '__clear' => 1});
     my $alt_assembly  = $sd->get_config($_, 'SWITCH_ASSEMBLY');
-    my $strainspage   = $species->{$_}{'has_strains'} ? $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Strains', '__clear' => 1}) : 0;
+    my $strainspage   = '';
+    my $strain_type   = '';
+    if ($species->{$_}{'strain_group'}) {
+      $strainspage = $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Strains', '__clear' => 1});
+      $strain_type = $sd->get_config($_, 'STRAIN_TYPE').'s'; 
+    }
 
     my $extra = $_ eq 'Homo_sapiens' ? '<a href="/info/website/tutorials/grch37.html" class="species-extra">Still using GRCh37?</a>' : '';
 
@@ -180,6 +185,7 @@ sub _species_list {
       assembly_v  => $species->{$_}{'assembly_version'},
       favourite   => $fav{$_} ? 1 : 0,
       strainspage => $strainspage,
+      strain_type => $strain_type,
       has_alt     => $alt_assembly ? 1 : 0,
       extra       => $extra,
     };
