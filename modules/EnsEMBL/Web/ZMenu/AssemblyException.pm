@@ -45,11 +45,7 @@ sub content {
   $self->add_entry({
     'label'       => 'What are assembly exceptions?',
     'link_class'  => 'popup',
-    'link'        => $hub->url({
-                      'type'    => 'Help',
-                      'action'  => 'Glossary',
-                      'id'      => 296,
-                      }),
+    'link'        => '/info/genome/genebuild/haplotypes_patches.html',
   });
 }
 
