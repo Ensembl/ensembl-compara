@@ -92,12 +92,13 @@ sub fetch_input {
     my $do_gene_qc = $self->param('do_gene_qc');
     my $qc_status;
     if ( $do_gene_qc ) {
-        my $sql = "SELECT seq_member_id, status FROM gene_member_qc WHERE genome_db_id IN (?, ?)";
-        my $sth = $self->compara_dba->dbc->prepare($sql);
-        $sth->execute($genome_dbs->[0], $genome_dbs->[1]);
-        while( my ($stable_id, $status) = $sth->fetchrow() ) {
-            $qc_status->{$stable_id} = $status;
-        }
+        my @genome_db_ids = map {$_->dbID} @$genome_dbs;
+        my @placeholders  = map {'?'} @$genome_dbs;
+        my $sql = 'SELECT seq_member_id, status FROM gene_member_qc WHERE genome_db_id IN (' . join(', ', @placeholders) . ')';
+        $qc_status = $self->compara_dba->dbc->sql_helper->execute_into_hash(
+            -SQL => $sql,
+            -PARAMS => \@genome_db_ids,
+        );
     }
     
     open( my $hffh, '<', $homology_flatfile ) or die "Cannot open $homology_flatfile for reading";
