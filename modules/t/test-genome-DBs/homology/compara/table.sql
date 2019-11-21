@@ -388,12 +388,6 @@ CREATE TABLE `homology` (
   KEY `gene_tree_root_id` (`gene_tree_root_id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=100990070 DEFAULT CHARSET=latin1;
 
-CREATE TABLE `homology_id_mapping` (
-  `curr_release_homology_id` int(10) unsigned NOT NULL,
-  `prev_release_homology_id` int(10) unsigned NOT NULL,
-  `mlss_id` int(10) unsigned NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
 CREATE TABLE `homology_member` (
   `homology_id` bigint(20) unsigned NOT NULL,
   `gene_member_id` int(10) unsigned NOT NULL,

@@ -501,18 +501,6 @@ CREATE TABLE `ncbi_taxa_node` (
   KEY `right_index` (`right_index`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
-CREATE TABLE `ortholog_goc_metric` (
-  `method_link_species_set_id` int(11) NOT NULL,
-  `homology_id` int(11) NOT NULL,
-  `gene_member_id` int(11) NOT NULL,
-  `stable_id` varchar(128) NOT NULL,
-  `goc_score` int(11) NOT NULL,
-  `left1` int(11) DEFAULT NULL,
-  `left2` int(11) DEFAULT NULL,
-  `right1` int(11) DEFAULT NULL,
-  `right2` int(11) DEFAULT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
 CREATE TABLE `other_member_sequence` (
   `seq_member_id` int(10) unsigned NOT NULL,
   `seq_type` varchar(40) NOT NULL,
