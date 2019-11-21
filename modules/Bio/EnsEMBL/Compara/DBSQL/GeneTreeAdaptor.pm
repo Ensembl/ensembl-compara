@@ -427,6 +427,8 @@ sub delete_tree {
     # Make sure the tags are loaded (so that we can access "mcoffee_score")
     $tree->_load_tags;
 
+    my $root_id = $tree->root->node_id;
+
     # Query to reset gene_member_hom_stats
     my $gene_member_hom_stats_sql = 'UPDATE gene_member_hom_stats SET gene_trees = 0, orthologues = 0, paralogues = 0, homoeologues = 0 WHERE gene_member_id = ?';
     for my $leaf (@{$tree->get_all_leaves}) {
@@ -438,7 +440,7 @@ sub delete_tree {
     # Remove all the nodes but the root
     my $gene_tree_node_Adaptor = $self->db->get_GeneTreeNodeAdaptor;
     for my $node (@{$tree->get_all_nodes}) {
-        next if ($node->node_id() == $tree->root->node_id());
+        next if ($node->node_id() == $root_id);
         $gene_tree_node_Adaptor->delete_node($node);
     }
 
@@ -487,7 +489,6 @@ sub delete_tree {
         }
 
         # The HMM profile
-        my $root_id = $tree->root->node_id;
         $self->dbc->do('DELETE FROM hmm_profile WHERE model_id = ?', undef, $root_id);
     }
 
