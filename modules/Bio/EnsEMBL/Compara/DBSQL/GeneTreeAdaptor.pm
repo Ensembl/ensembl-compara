@@ -424,7 +424,8 @@ sub delete_tree {
 
     assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTree', 'tree');
 
-    # Make sure the tags are loaded (so that we can access "mcoffee_score")
+    # Make sure the tags are loaded (so that we can access the tags that
+    # link to alternative alignments)
     $tree->_load_tags;
 
     my $root_id = $tree->root->node_id;
@@ -477,11 +478,12 @@ sub delete_tree {
 
     # Only for "default" trees
     unless ($tree->ref_root_id) {
-        # Remove the "mcoffee_score" alignment too
-        if (my $mcoffee_scores_gene_align_id = $tree->get_value_for_tag('mcoffee_scores_gene_align_id')) {
-            $gene_align_ids{$mcoffee_scores_gene_align_id} = 1;
+        # Register more alignments
+        foreach my $gene_align_id_tag (qw(mcoffee_scores_gene_align_id filtered_gene_align_id)) {
+            if (my $gene_align_id = $tree->get_value_for_tag($gene_align_id_tag)) {
+                $gene_align_ids{$gene_align_id} = 1;
+            }
         }
-
         # Delete all the alignments (no foreign key problems since all the
         # trees have been removed by now)
         foreach my $gene_align_id (keys %gene_align_ids) {
