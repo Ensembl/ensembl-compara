@@ -15,14 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =head1 DESCRIPTION
 
 This modules contains common methods used when dealing with the
@@ -30,8 +22,6 @@ Compara master database. They can in fact be called on other
 databases too.
 
 - update_dnafrags: updates the DnaFrags of a species
-
-=head1 METHODS
 
 =cut
 
@@ -786,11 +776,7 @@ sub create_self_wga_mlsss {
         # POLYPLOID is the restriction of the alignment on the homoeologues
         my $pp_method = $compara_dba->get_MethodAdaptor->fetch_by_type('POLYPLOID');
         my $pp_mlss = create_mlss($pp_method, $species_set);
-        # Pairwise MLSSs between the components
-        my $sub_aln_mlsss = create_mlsss_on_pairs($aln_method, $gdb->component_genome_dbs);
-        # Those MLSSs should remain internal
-        $_->{_no_release} = 1 for @$sub_aln_mlsss;
-        return [$self_lastz_mlss, $pp_mlss, @$sub_aln_mlsss];
+        return [$self_lastz_mlss, $pp_mlss];
     }
     return [$self_lastz_mlss];
 }
