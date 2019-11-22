@@ -30,32 +30,44 @@ unless ($ENV{ENSEMBL_CVS_ROOT_DIR}) {
 
 my $pipeconfig_path = "$ENV{ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig";
 
-find_and_check('check_file_in_cellar', 'Cellar', sub {
-        my $file = shift;
+find_and_check('check_file_in_cellar', sub {
+        my $file = "$ENV{LINUXBREW_HOME}/Cellar/$_[0]";
         ok(-e $file, "$file exists");
         ok(-r $file, "$file is readable");
     } );
 
-find_and_check('check_exe_in_cellar', 'Cellar', sub {
-        my $file = shift;
+find_and_check('check_exe_in_cellar', sub {
+        my $file = "$ENV{LINUXBREW_HOME}/Cellar/$_[0]";
         ok(-e $file, "$file exists");
         ok(-x $file, "$file is executable");
     } );
 
-find_and_check('check_dir_in_cellar', 'Cellar', sub {
-        my $file = shift;
+find_and_check('check_dir_in_cellar', sub {
+        my $file = "$ENV{LINUXBREW_HOME}/Cellar/$_[0]";
         ok(-e $file, "$file exists");
         ok(-d $file, "$file is a directory");
     } );
 
-find_and_check('check_exe_in_linuxbrew_opt', 'opt', sub {
-        my $file = shift;
+find_and_check('check_exe_in_linuxbrew_opt', sub {
+        my $file = "$ENV{LINUXBREW_HOME}/opt/$_[0]";
         ok(-e $file, "$file exists");
         ok(-x $file, "$file is executable");
     } );
 
+find_and_check('check_exe_in_compara', sub {
+        my $file = "/nfs/production/panda/ensembl/warehouse/compara/software/$_[0]";
+        ok(-e $file, "$file exists");
+        ok(-x $file, "$file is executable");
+    } );
+
+find_and_check('check_dir_in_compara', sub {
+        my $file = "/nfs/production/panda/ensembl/warehouse/compara/software/$_[0]";
+        ok(-e $file, "$file exists");
+        ok(-d $file, "$file is a directory");
+    } );
+
 sub find_and_check {
-    my ($method, $filler, $callback) = @_;
+    my ($method, $callback) = @_;
     my $out = qx(grep -rFH '\$self->$method\(' '$pipeconfig_path');
     my $lastfile = '';
     while ($out =~ /^([^:]*):.*>$method\(["'](.*)["']\)/gm) {
@@ -63,7 +75,7 @@ sub find_and_check {
             note($1);
             $lastfile = $1;
         }
-        $callback->("$ENV{LINUXBREW_HOME}/$filler/$2");
+        $callback->($2);
     }
 }
 
