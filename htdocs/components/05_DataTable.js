@@ -538,6 +538,7 @@ function StickyHeader (table) {
   this.scrollHandler = this.syncHeadScroll.bind(this);
 
   this.observeBody();
+  this.handleWindowResize();
 };
 
 StickyHeader.prototype.constructor = StickyHeader;
