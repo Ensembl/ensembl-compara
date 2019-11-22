@@ -344,28 +344,7 @@ sub table_row {
     $name .= $record_data->{'url'} || sprintf '%s file', $record_data->{'filetype'} || $record_data->{'format'};
   }
 
-  ## Link for valid datahub
-  my ($config_link, $conf_template);
-  if ($record_data->{'format'} eq 'TRACKHUB' && $hub->species_defs->get_config($record_data->{'species'}, 'ASSEMBLY_VERSION') eq $record_data->{'assembly'}) {
-    $conf_template  = $self->_icon({ class => 'config_icon', 'title' => 'Configure hub tracks for '.$hub->species_defs->get_config($record_data->{'species'}, 'SPECIES_COMMON_NAME') });
-    my $sample_data = $hub->species_defs->get_config($record_data->{'species'}, 'SAMPLE_DATA') || {};
-    my $default_loc = $sample_data->{'LOCATION_PARAM'};
-    (my $menu_name = $self->strip_HTML($record_data->{'name'})) =~ s/ /_/g;
-    $config_link = $hub->url({
-        species  => $record_data->{'species'},
-        type     => 'Location',
-        action   => 'View',
-        function => undef,
-        r        => $hub->param('r') || $default_loc,
-    });
-    ## Add menu name here, as we need it in icon link, below this block
-    $config_link .= '#modal_config_viewbottom-'.$menu_name;
-    $name .= sprintf('<br /><a href="%s">Configure hub</a>',
-      $config_link,
-    );
-  }
-
-  my $config_html = $config_link ? sprintf $conf_template, $config_link : '';
+  my $config_html = '';
   my $share_html  = sprintf $share,  $hub->url({ action => 'SelectShare', %url_params });
 
   ## DELETE ICON
@@ -422,9 +401,17 @@ sub table_row {
 
   my $checkbox = sprintf '<input type="checkbox" class="mass_update" value="%s_%s" />', $record_data->{'type'}, $record_data->{'code'};
 
+  my $record_type;
+  if ($record_data->{'type'} =~ /url/i) {
+    $record_type = $record_data->{'format'} eq 'TRACKHUB' ? 'Trackhub' : 'URL';
+  }
+  else {
+    $record_type = ucfirst($record_data->{'type'});
+  }
+
   return {
     check   => $checkbox,
-    type    => $record_data->{'type'} =~ /url/i ? 'URL' : ucfirst($record_data->{'type'}),
+    type    => $record_type,
     status  => ucfirst($record_data->{'status'} || 'Enabled'),
     name    => { value => $name, class => 'wrap editable' },
     species => sprintf('<em>%s</em>', $hub->species_defs->get_config($record_data->{'species'}, 'SPECIES_SCIENTIFIC_NAME')),
