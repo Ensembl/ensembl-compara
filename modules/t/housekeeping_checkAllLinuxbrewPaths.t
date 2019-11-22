@@ -24,6 +24,10 @@ unless ($ENV{LINUXBREW_HOME}) {
     plan skip_all => 'No linuxbrew installation available ($LINUXBREW_HOME missing)';
 }
 
+unless ($ENV{ENSEMBL_CVS_ROOT_DIR}) {
+    plan skip_all => '$ENSEMBL_CVS_ROOT_DIR is not set. Cannot find the PipeConfigs';
+}
+
 my $pipeconfig_path = "$ENV{ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig";
 
 find_and_check('check_file_in_cellar', 'Cellar', sub {
