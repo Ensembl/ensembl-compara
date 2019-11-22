@@ -58,6 +58,7 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf');
 
+
 sub default_options {
 my ($self) = @_;
     return {
@@ -69,6 +70,7 @@ my ($self) = @_;
         'bidirectional' => 1,
     };
 }
+
 
 sub tweak_analyses {
     my $self = shift;
@@ -92,5 +94,6 @@ sub tweak_analyses {
         $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
     }
 }
+
 
 1;
