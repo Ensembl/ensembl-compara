@@ -35,14 +35,6 @@ my $description = q{
 
 populate_new_database.pl
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =head1 DESCRIPTION
 
 This script populates a new database based on the default assemblies
@@ -186,7 +178,6 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Compara::Utils::CopyData qw(:table_copy);
 use Getopt::Long;
-use Data::Dumper;
 
 my $help;
 
@@ -467,6 +458,10 @@ sub get_all_default_genome_dbs {
       my $this_mlss = $method_link_species_set_adaptor->fetch_by_dbID($this_mlss_id);
       foreach my $this_genome_db (@{$this_mlss->species_set->genome_dbs}) {
         $all_species->{$this_genome_db->dbID} = $this_genome_db;
+        # Copy also the components of polyploid genomes
+        if ($this_genome_db->is_polyploid) {
+            $all_species->{$_->dbID} = $_ for @{$this_genome_db->component_genome_dbs};
+        }
       }
     }
     return [values %$all_species];
