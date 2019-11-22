@@ -66,6 +66,7 @@ sub shared_default_options {
 
         # Where to find the linuxbrew installation
         'linuxbrew_home'        => $ENV{'LINUXBREW_HOME'},
+        'compara_software_home' => $self->o('warehouse_dir') . '/software/',
 
         # All the fixed parameters that depend on a "division" parameter
         'config_dir'            => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/conf/'.$self->o('division'),
@@ -140,10 +141,10 @@ sub executable_locations {
         'mpirun_exe'                => $self->check_exe_in_cellar('open-mpi/2.1.1/bin/mpirun'),
         'noisy_exe'                 => $self->check_exe_in_cellar('noisy/1.5.12/bin/noisy'),
         'notung_jar'                => $self->check_file_in_cellar('notung/2.6.0/libexec/Notung-2.6.jar'),
-        'ortheus_bin_dir'           => $self->check_dir_in_cellar('ortheus/0.5.0_1/bin'),
-        'ortheus_c_exe'             => $self->check_exe_in_cellar('ortheus/0.5.0_1/bin/ortheus_core'),
-        'ortheus_lib_dir'           => $self->check_dir_in_cellar('ortheus/0.5.0_1'),
-        'ortheus_py'                => $self->check_exe_in_cellar('ortheus/0.5.0_1/bin/Ortheus.py'),
+        'ortheus_bin_dir'           => $self->check_dir_in_compara('ortheus/rc2/bin'),
+        'ortheus_c_exe'             => $self->check_exe_in_compara('ortheus/rc2/bin/ortheus_core'),
+        'ortheus_lib_dir'           => $self->check_dir_in_compara('ortheus/rc2'),
+        'ortheus_py'                => $self->check_exe_in_compara('ortheus/rc2/bin/Ortheus.py'),
         'pantherScore_path'         => $self->check_dir_in_cellar('pantherscore/1.03'),
         'parse_examl_exe'           => $self->check_exe_in_cellar('examl/3.0.17/bin/parse-examl'),
         'parsimonator_exe'          => $self->check_exe_in_cellar('parsimonator/1.0.2/bin/parsimonator-SSE3'),
@@ -160,7 +161,7 @@ sub executable_locations {
         'samtools_exe'              => $self->check_exe_in_cellar('samtools/1.9/bin/samtools'),
         'semphy_exe'                => $self->check_exe_in_cellar('semphy/2.0b3/bin/semphy'), #semphy program
         'server_exe'                => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/exonerate-server'),
-        'treebest_exe'              => $self->check_exe_in_cellar('treebest/88/bin/treebest'),
+        'treebest_exe'              => $self->check_exe_in_compara('treebest/rc5/bin/treebest'),
         'trimal_exe'                => $self->check_exe_in_cellar('trimal/1.4.1/bin/trimal'),
         'xmllint_exe'               => $self->check_exe_in_linuxbrew_opt('libxml2/bin/xmllint'),
 
