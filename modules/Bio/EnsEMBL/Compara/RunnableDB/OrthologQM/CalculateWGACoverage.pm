@@ -70,9 +70,9 @@ sub fetch_input {
 	my $self = shift;
 
 	my %aln_ranges;
-	my @orth_batch = @{ $self->param_required('orth_batch') };
+	my @orth_info = @{ $self->param_required('orth_info') };
         
-	my $dba = $self->get_cached_compara_dba('pipeline_url');
+	my $dba = $self->get_cached_compara_dba('alignment_db');
 	# if ( $self->param('alt_aln_db') ) { $dba = $self->get_cached_compara_dba('alt_aln_db'); }
 	# else { $dba = $self->compara_dba }
 	my $do_disconnect = $self->dbc && ($dba->dbc ne $self->dbc);
@@ -83,7 +83,7 @@ sub fetch_input {
 
 	$self->db->dbc->disconnect_if_idle if $do_disconnect;
 
-	foreach my $orth ( @orth_batch ) {
+	foreach my $orth ( @orth_info ) {
 		my @orth_dnafrags = @{ $orth->{ 'orth_dnafrags'} };
 		my @aln_mlss_ids  = @{ $self->param_required( 'aln_mlss_ids' ) };
 		
@@ -124,11 +124,11 @@ sub fetch_input {
 sub run {
 	my $self = shift;	
 
-	my @orth_batch = @{ $self->param_required('orth_batch') };
+	my @orth_info  = @{ $self->param_required('orth_info') };
 	my %aln_ranges = %{ $self->param_required('aln_ranges') };
 
 	my (@qual_summary, @orth_ids);
-	foreach my $orth ( @orth_batch ) {
+	foreach my $orth ( @orth_info ) {
 		my @orth_dnafrags = @{ $orth->{ 'orth_dnafrags'} };
 		my @aln_mlss_ids  = @{ $self->param_required( 'aln_mlss_ids' ) };
 
@@ -178,7 +178,7 @@ sub write_output {
 	my $self = shift;
 
 	# flow data
-	$self->dataflow_output_id( $self->param('qual_summary'), 1 );
+	$self->dataflow_output_id( $self->param('qual_summary'), 3 );
 	$self->dataflow_output_id( { orth_ids => $self->param( 'orth_ids' ) }, 2 ); # to assign_quality
 }
 

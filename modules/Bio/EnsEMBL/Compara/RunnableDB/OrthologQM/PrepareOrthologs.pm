@@ -26,7 +26,7 @@ Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs
 =head1 SYNOPSIS
 
     Given two genome_db IDs, fetch and fan out all orthologs that they share.
-    If a previous release database is supplied, only the new/updated orthologs will be dataflowed
+    If a previous wga file is supplied, only the new/updated orthologs will be dataflowed
 
 =head1 DESCRIPTION
 
@@ -36,7 +36,7 @@ Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs
         species1_id       genome_db_id
         species2_id       another genome_db_id
         alt_homology_db   for use as part of a pipeline - specify an alternate location to read homologies from
-        previous_rel_db   database URL for previous release - when defined, the runnable will only dataflow homologies that have changed since previous release
+        previous_wga_file file containing scores from previous release - when defined, the runnable will only dataflow homologies that have changed since previous release
 
     Outputs:
         dataflows homology dbID and start/end positions in a fan
@@ -58,8 +58,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 =head2 fetch_input
 
     Description: Pull orthologs for species 1 and 2 from given flatfile.
-    Homologies may be reused from previous releases by providing the URL in
-    the previous_rel_db param
+    Homologies may be reused from previous releases by providing the file in
+    the previous_wga_file param
 
 =cut
 
@@ -82,8 +82,8 @@ sub fetch_input {
         push @current_homologs, $row;
     }
     
-    if ( defined $self->param('previous_rel_db') ){ # reuse is on
-        my $nonreuse_homologs = $self->_reusable_homologies( $dba, $self->get_cached_compara_dba('previous_rel_db'), \@current_homologs );
+    if ( defined $self->param('previous_wga_file') ){ # reuse is on
+        my $nonreuse_homologs = $self->_reusable_homologies( $dba, \@current_homologs );
         $self->param( 'orth_objects', $nonreuse_homologs );
     }
     else {
@@ -181,48 +181,23 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    my $batch_size = $self->param_required('orth_batch_size');
+    $self->dataflow_output_id( { orth_info => $self->param('orth_info') }, 2 ); # to calculate_coverage
 
-    # split list of orths into chunks/batches
-    my @orth_list = @{ $self->param('orth_info') };
-    my (@batched_orths, @spliced);
-    push @spliced, [ splice @orth_list, 0, $batch_size ] while @orth_list;
-    foreach my $batch ( @spliced ){
-        push( @batched_orths, { orth_batch => $batch } );
-    }
-
-    $self->dataflow_output_id( \@batched_orths, 2 ); # to calculate_coverage
-
-    # split list of reusable scores into chunks/batches
-    if ( defined $self->param('previous_rel_db') ){ # reuse is on
-        print "about to start batching up reusables...\n";
-        my @reuse_list = @{ $self->param('reusables') };
-        print scalar(@reuse_list) . " reusable entries...\n";
-
-        my (@reuse_dataflow, @spliced_reuse);
-        push @spliced_reuse, [ splice @reuse_list, 0, $batch_size ] while @reuse_list;
-        foreach my $batch ( @spliced_reuse ){
-            push( @reuse_dataflow, { reuse_list => $batch } );
-        }
-
-        $self->dataflow_output_id( \@reuse_dataflow, 3 ); # to reuse_wga_score
+    if ( $self->param('previous_wga_file') ){ # reuse is on
+        $self->dataflow_output_id( {orth_mlss_id => $self->param('orth_mlss_id')}, 3 ); # to reuse_wga_score
     }
 }
 
 =head2 _reuse_homologies
 
     Check through list of homologs and check if they can be reused.
-    wga_coverage scores are copied from the previous_rel_db to the current $dba if they meet 2 requirements:
-        1. an ID mapping exists for the homology
-        2. a score exists in the previous_rel_db
+    wga_coverage scores are copied from the previous_wga_file to the current file if an ID mapping exists for the homology
     Homologs not meeting these criteria are returned as an arrayref
 
 =cut
 
 sub _reusable_homologies {
-    my ( $self, $dba, $previous_compara_dba, $current_homologs ) = @_;
-
-    my $previous_homo_adaptor = $previous_compara_dba->get_HomologyAdaptor;
+    my ( $self, $dba, $current_homologs ) = @_;
 
     # first, find reusable homologies based on id mapping file
     my $hom_map_file = $self->param_required('homology_mapping_flatfile');
@@ -248,18 +223,6 @@ sub _reusable_homologies {
             push( @dont_reuse, $h );
         }
     }
-
-    my $previous_homologies = $previous_homo_adaptor->fetch_all_by_dbID_list([keys %old_id_2_new_hom]);
-    # check if wga_coverage has already been calculated for these homologies
-    foreach my $previous_homolog (@$previous_homologies) {
-        next unless defined $previous_homolog->wga_coverage; # score doesn't exist
-        push( @reusables, { homology_id => $old_id_2_new_hom{$previous_homolog->dbID}->{homology_id}, prev_wga_score => $previous_homolog->wga_coverage } );
-        delete $old_id_2_new_hom{$previous_homolog->dbID};
-    }
-    # There is no score for these homologies
-    push @dont_reuse, values %old_id_2_new_hom;
-
-    $self->param('reusables', \@reusables);
 
     # return nonreuable homologies to the pipeline
     return \@dont_reuse;

@@ -43,7 +43,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::AssignQualityScore;
 use strict;
 use warnings;
 use Data::Dumper;
-use DBI;
+# use DBI;
+use File::Basename;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -73,16 +74,23 @@ sub fetch_input {
 sub write_output {
 	my $self = shift;
 
-        $self->dbc->disconnect_if_idle() if $self->dbc;
-
-	my $homology_adaptor = $self->compara_dba->get_HomologyAdaptor;
-	my %max_quality      = %{ $self->param('max_quality') };
-	foreach my $oid ( keys %max_quality ) {
-		$homology_adaptor->update_wga_coverage( $oid, $max_quality{$oid} );
-	} 
-
-	# disconnect from compara_db
+    # disconnect from dbs
     $self->compara_dba->dbc->disconnect_if_idle();
+    $self->dbc->disconnect_if_idle() if $self->dbc;
+
+    my $output_file = $self->param('output_file');
+    $self->run_command( "mkdir -p " . dirname($output_file)) unless -d dirname($output_file);
+    open(my $out_fh, '>>', $output_file) or die "Cannot open $output_file for writing";
+
+    # write header if the file doesn't already exist
+    print $out_fh "homology_id\twga_coverage\n" if ( ! -e $output_file );
+
+    # write scores to file
+	my %max_quality = %{ $self->param('max_quality') };
+	foreach my $oid ( keys %max_quality ) {
+        print $out_fh "$oid\t" . $max_quality{$oid} . "\n";
+	}
+    close $out_fh;
 }
 
 1;

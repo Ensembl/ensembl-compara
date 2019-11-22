@@ -115,7 +115,6 @@ sub default_options {
             # list of databases with EPO or LASTZ data
             'compara_curr',
         ],
-        'previous_rel_db'  => 'compara_prev',
 
         'species1'         => undef,
         'species2'         => undef,
@@ -127,9 +126,13 @@ sub default_options {
         'alt_aln_dbs'      => [ ],
         'alt_homology_db'  => undef,
         
-        # this location should be changed to the pipeline's 'workdir' if the homology pipelines are still in progress
-        # (the files only get copied to 'homology_dumps_shared_basedir' at the end of the pipelines)
-        'homology_dumps_dir' => $self->o('homology_dumps_shared_basedir'),
+        # homology_dumps_dir location should be changed to the homology pipeline's workdir if the pipelines are still in progress
+        # (the files only get copied to 'homology_dumps_shared_dir' at the end of each pipeline)
+        'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
+        'homology_dumps_dir' => $self->o('homology_dumps_shared_dir'),
+
+        'wga_dumps_dir'       => $self->o('pipeline_dir'). '/',
+        'prev_wga_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
 
         'orth_batch_size'  => 10, # set how many orthologs should be flowed at a time
     };
@@ -168,6 +171,11 @@ sub pipeline_wide_parameters {
         'ensembl_release'    => $self->o('ensembl_release'),
         'homology_dumps_dir' => $self->o('homology_dumps_dir'),
         'orth_batch_size'    => $self->o('orth_batch_size'),
+        'member_type'        => $self->o('member_type'),
+
+        'wga_dumps_dir'      => $self->o('wga_dumps_dir'),
+        'prev_wga_dumps_dir' => $self->o('prev_wga_dumps_dir'),
+        'previous_wga_file'  => defined $self->o('prev_wga_dumps_dir') ? '#prev_wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv' : undef,
     };
 }
 
@@ -191,7 +199,6 @@ sub pipeline_analyses {
                 'alt_aln_dbs'      => $self->o('alt_aln_dbs'),
                 'master_db'        => $self->o('master_db'),
                 'alt_homology_db'  => $self->o('alt_homology_db'),
-                'previous_rel_db'  => $self->o('previous_rel_db'),
             }],
         },
 
@@ -272,14 +279,16 @@ sub pipeline_analyses {
         {   -logic_name => 'prepare_orthologs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs',
             -parameters => {
+                'homology_dumps_dir'        => $self->o('homology_dumps_dir'),
                 'hashed_mlss_id'            => '#expr(dir_revhash(#orth_mlss_id#))expr#',
                 'homology_flatfile'         => '#homology_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.homologies.tsv',
                 'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.homology_id_map.tsv',
             },
             -analysis_capacity  =>  50,  # use per-analysis limiter
             -flow_into => {
-                2 => [ 'calculate_wga_coverage' ],
-                3 => [ 'reuse_wga_score' ],
+                # these analyses will write to the same file, so a semaphore is required to prevent clashes
+                '3->A' => [ 'reuse_wga_score' ],
+                'A->2' => [ 'calculate_wga_coverage' ],
             },
             -rc_name  => '2Gb_job',
         },
@@ -288,24 +297,46 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage',
             -hive_capacity => 30,
             -batch_size => 10,
-            -parameters => { pipeline_url => $self->pipeline_url },
+            -parameters => { alignment_db => $self->pipeline_url },
             -flow_into  => {
-                '1'  => [ '?table_name=ortholog_quality' ],
-                '2'  => [ 'assign_wga_coverage_score' ],
+                '3'    => [ '?table_name=ortholog_quality' ],
+                '2->A' => [ 'assign_wga_coverage_score' ],
+                'A->1' => [ 'copy_files_to_shared_loc' ],
             },
             -rc_name => '2Gb_job',
         },
 
         {   -logic_name => 'assign_wga_coverage_score',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::AssignQualityScore',
+            -parameters => {
+                'hashed_mlss_id' => '#expr(dir_revhash(#orth_mlss_id#))expr#',
+                'output_file'    => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
+            },
             -hive_capacity     => 30,
             -batch_size        => 10,
         },
 
         {   -logic_name => 'reuse_wga_score',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::ReuseWGAScore',
+            -parameters => {
+                'homology_dumps_dir'        => $self->o('homology_dumps_dir'),
+                'hashed_mlss_id'            => '#expr(dir_revhash(#orth_mlss_id#))expr#',
+                'previous_wga_file'         => '#prev_wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
+                'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.homology_id_map.tsv',
+                'output_file'               => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
+            },
             -hive_capacity     => 30,
             -batch_size        => 10,
+        },
+
+        {   -logic_name => 'copy_files_to_shared_loc',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'homology_dumps_dir'        => $self->o('homology_dumps_dir'),
+                'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_dir'),
+                'cmd'                       => 'become #shared_user# /bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rt #wga_dumps_dir#/ #homology_dumps_shared_dir#"',
+                'shared_user'               => $self->o('shared_user'),
+            },
         },
 
     ];
