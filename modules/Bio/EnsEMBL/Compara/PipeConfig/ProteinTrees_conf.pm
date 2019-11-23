@@ -430,7 +430,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'use_notung'   => $self->o('use_notung'),
         'use_treerecs' => $self->o('use_treerecs'),
         'use_raxml'    => $self->o('use_raxml'),
-        'do_cafe'   => $self->o('do_cafe'),
+        'do_cafe'      => $self->o('do_cafe'),
         'do_stable_id_mapping'   => $self->o('do_stable_id_mapping'),
         'do_treefam_xref'   => $self->o('do_treefam_xref'),
         'do_homology_stats' => $self->o('do_homology_stats'),
