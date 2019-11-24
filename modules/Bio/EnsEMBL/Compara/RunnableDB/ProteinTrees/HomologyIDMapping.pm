@@ -82,7 +82,6 @@ sub fetch_input {
     my $self = shift;
 
     my $mlss_id         = $self->param_required('mlss_id');
-    my $mlss            = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
     my $prev_mlss_id    = $self->param('previous_mlss_id');
 
     if (defined $prev_mlss_id) {
