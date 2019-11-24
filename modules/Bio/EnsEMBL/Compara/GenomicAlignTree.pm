@@ -1125,9 +1125,7 @@ sub method_link_species_set {
 sub method_link_species_set_id {
   my ($self) = @_;
 
-  my $method_link_species_set_id = $self->get_all_leaves->[0]->genomic_align_group->genomic_align_array->[0]->method_link_species_set->dbID;
-
-  return $method_link_species_set_id;
+  return $self->method_link_species_set->dbID;
 }
 
 sub release_tree {
