@@ -59,7 +59,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
         'chunk_size'        => 1_000_000,
-        'bed_chucnks_dir'   => undef,
     }
 }
 
