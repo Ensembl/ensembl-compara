@@ -481,8 +481,7 @@ sub preload {
         }
 
         # This is like GeneTreeNode::species_tree_node() but more optimal
-        if ($node->has_tag('species_tree_node_id')) {
-            my $stn_id = $self->get_value_for_tag('species_tree_node_id');
+        if (my $stn_id = $self->get_value_for_tag('species_tree_node_id')) {
             unless (exists $stn_id_lookup->{$stn_id}) {
                 die sprintf("The node_id '%s' cannot be found in the species_tree root_id=%s", $stn_id, $self->species_tree->dbID);
             }
