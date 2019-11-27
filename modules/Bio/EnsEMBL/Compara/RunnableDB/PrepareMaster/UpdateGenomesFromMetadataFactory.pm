@@ -53,7 +53,7 @@ sub fetch_input {
 	my $genome_db_adaptor = $self->get_cached_compara_dba('master_db')->get_GenomeDBAdaptor;
 
 	# use metadata script to report genomes that need to be updated
-	my ($genomes_to_update, $renamed_genomes, $genomes_with_assembly_patches, $updated_annotations) = $self->fetch_genome_report($release, $division);
+    my ($genomes_to_update, $renamed_genomes, $genomes_with_assembly_patches, $updated_annotations) = $self->fetch_genome_report($release, $division);
 
     # prepare renaming SQL cmds
     my @rename_cmds;
