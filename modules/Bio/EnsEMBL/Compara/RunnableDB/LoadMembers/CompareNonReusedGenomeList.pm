@@ -32,7 +32,7 @@ This RunnableDB compares the list of genomes that are expected to have an
 annotation update (provided in a file) to the actual list of genomes that
 cannot be reused.
 
-Both lists must match, and the job will fail if there are any references.
+Both lists must match, and the job will fail if there are any differences.
 If a difference happens to be fine, the species can be manually okay-ed
 by adding a parameter named "ok_${species_name}".
 
