@@ -32,6 +32,12 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::IO qw (slurp);
 use Bio::EnsEMBL::Utils::Logger;
 
+# Used to automatically populate the category when none is given
+my %component_to_category = (
+    'Relco tasks'       => 'Production::Relco',
+    'Production tasks'  => 'Production::Tasks',
+);
+
 =head2 new
 
   Arg[-USER]     : (optional) string - a JIRA username. If not given, uses
@@ -99,6 +105,11 @@ sub new {
                      : (optional) arrayref of strings - a list of JIRA
                        components to include the JIRA tickets. By default, no
                        more components are added.
+  Arg[-EXTRA_CATEGORIES]
+                     : (optional) arrayref of strings - a list of JIRA
+                       categories to include the JIRA tickets. By default, the
+                       module will try to populate the categories from the
+                       components on tickets that have no categories.
   Arg[-EXTRA_LABELS] : (optional) arrayref of strings - a list of JIRA labels to
                        include in the JIRA tickets. By default, no more labels
                        are added.
@@ -120,8 +131,8 @@ sub new {
 
 sub create_tickets {
     my $self = shift;
-    my ( $json_str, $json_file, $json_obj, $default_issue_type, $default_priority, $extra_components, $extra_labels, $dry_run ) =
-        rearrange([qw(JSON_STR JSON_FILE JSON_OBJ DEFAULT_ISSUE_TYPE DEFAULT_PRIORITY EXTRA_COMPONENTS EXTRA_LABELS DRY_RUN)], @_);
+    my ( $json_str, $json_file, $json_obj, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels, $dry_run ) =
+        rearrange([qw(JSON_STR JSON_FILE JSON_OBJ DEFAULT_ISSUE_TYPE DEFAULT_PRIORITY EXTRA_COMPONENTS EXTRA_CATEGORIES EXTRA_LABELS DRY_RUN)], @_);
     # Read tickets from either a JSON formated string or a JSON file path
     my $json_ticket_list;
     if ($json_str) {
@@ -143,11 +154,11 @@ sub create_tickets {
     my $jira_tickets = ();
     foreach my $json_ticket ( @$json_ticket_list ) {
         push @$jira_tickets,
-             $self->_json_to_jira($json_ticket, $default_issue_type, $default_priority, $extra_components, $extra_labels);
+             $self->_json_to_jira($json_ticket, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels);
         if ($json_ticket->{subtasks}) {
             foreach my $json_subtask ( @{$json_ticket->{subtasks}} ) {
                 push @{$jira_tickets->[-1]->{subtasks}},
-                     $self->_json_to_jira($json_subtask, 'Sub-task', $default_priority, $extra_components, $extra_labels);
+                     $self->_json_to_jira($json_subtask, 'Sub-task', $default_priority, $extra_components, $extra_categories, $extra_labels);
             }
         }
     }
@@ -324,15 +335,18 @@ sub _validate_division {
                 is provided in $json_hash
   Arg[4]      : (optional) arrayref of strings $extra_components - a list of
                 JIRA components to include in the JIRA ticket
-  Arg[5]      : (optional) arrayref of strings $extra_labels - a list of JIRA
+  Arg[5]      : (optional) arrayref of strings $extra_categories - a list of
+                JIRA categories to include in the JIRA ticket
+  Arg[6]      : (optional) arrayref of strings $extra_labels - a list of JIRA
                 labels to include in the JIRA ticket
   Example     : my $json_hash = {
                     "summary" => "Example task",
                     "description" => "Example for Bio::EnsEMBL::Compara::Utils::JIRA"
                 };
                 my $components = ['Test suite'];
+                my $categories = ['Process::Optimisation'];
                 my $labels = ['Example'];
-                my $ticket = $jira_adaptor->_json_to_jira($json_hash, 'Task', 'Minor', $components, $labels);
+                my $ticket = $jira_adaptor->_json_to_jira($json_hash, 'Task', 'Minor', $components, $categories, $labels);
   Description : Converts the JIRA ticket information provided in the JSON hash
                 to its equivalent JIRA hash and returns it
   Return type : hashref of hashes following the structure of a JIRA ticket
@@ -341,7 +355,7 @@ sub _validate_division {
 =cut
 
 sub _json_to_jira {
-    my ( $self, $json_hash, $default_issue_type, $default_priority, $extra_components, $extra_labels ) = @_;
+    my ( $self, $json_hash, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels ) = @_;
     my %jira_hash;
     $jira_hash{'project'}     = { 'key' => $self->{_project} };
     $jira_hash{'summary'}     = $self->_replace_placeholders($json_hash->{'summary'});
@@ -358,6 +372,24 @@ sub _json_to_jira {
     }
     if ($extra_components) {
         push @{$jira_hash{'components'}}, { 'name' => $_ } for @{$extra_components};
+    }
+    # $jira_hash{'categories'}
+    $jira_hash{'customfield_11333'} = [];
+    if ($json_hash->{'category'}) {
+        push @{$jira_hash{'customfield_11333'}}, { 'value' => $json_hash->{'category'} };
+    } elsif ($json_hash->{'categories'}) {
+        push @{$jira_hash{'customfield_11333'}}, { 'value' => $_ } for @{$json_hash->{'categories'}};
+    }
+    if ($extra_categories) {
+        push @{$jira_hash{'customfield_11333'}}, { 'value' => $_ } for @{$extra_categories};
+    }
+    unless (scalar(@{$jira_hash{'customfield_11333'}})) {
+        # Fallback to automatically setting the categories from the component names
+        foreach my $component (map {$_->{'name'}} @{$jira_hash{'components'}}) {
+            if (exists $component_to_category{$component}) {
+                push @{$jira_hash{'customfield_11333'}}, { 'value' => $component_to_category{$component} };
+            }
+        }
     }
     # $jira_hash{'labels'}
     my @label_list;
