@@ -19,7 +19,7 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::LoadMembers::CompareNonReusedGenomeList
 
-=head1 SYNOPSIS
+=head1 EXAMPLE
 
     standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::LoadMembers::CompareNonReusedGenomeList \
         -compara_db $(mysql-ens-compara-prod-8 details url jalvarez_vertebrates_load_members_99) \
@@ -35,12 +35,38 @@ cannot be reused.
 Both lists must match, and the job will fail if there are any references.
 If a difference happens to be fine, the species can be manually okay-ed
 by adding a parameter named "ok_${species_name}".
-Note: the Runnable respects the "do_not_reuse_list" parameter and won't
-complain that those species are not listed in the file.
 
-Finally, if the file path is not given (undefined), the analysis is
-skipped. This is useful for groups who don't use the ensembl-metadata
-service / the PrepareMasterDatabaseForRelease pipeline.
+The parameters are:
+
+=over
+
+=item expected_updates_file
+
+Optional. The path to the file that contains the names of all genome_dbs
+we expect an update for. If missing, the Runnable will immediately end
+(with a success status). This is useful for groups who don't use the
+ensembl-metadata service / the PrepareMasterDatabaseForRelease pipeline.
+If the parameter is set but the file doesn't exist, the Runnable will fail.
+
+=item current_release
+
+Mandatory. The current release number. Used to filter out the new genomes,
+since they are detected as non-reusable by the LoadMembers but are not
+listed under "updated_annotations" in the metadata report ("new_genomes"
+instead).
+
+=item nonreuse_ss_id
+
+Mandatory. The dbID if the species-set that holds the list of non-reusable
+species.
+
+=item do_not_reuse_list
+
+Optional. The list of species that we didn't want to reuse, regardless
+of their true reusability status. The RunnableDB will not complain about
+those.
+
+=back
 
 =cut
 
