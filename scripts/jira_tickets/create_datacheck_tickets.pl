@@ -107,11 +107,13 @@ foreach my $testcase ( keys %$testcase_failures ) {
 # Add subtasks to the initial ticket
 $dc_task_json_ticket->[0]->{subtasks} = \@json_subtasks;
 my $components = ['Java Healthchecks', 'Production tasks'];
+my $categories = ['Bug::Internal', 'Production::Tasks'];
 # Create all JIRA tickets
 my $dc_task_keys = $jira_adaptor->create_tickets(
     -JSON_OBJ         => $dc_task_json_ticket,
     -DEFAULT_PRIORITY => 'Blocker',
     -EXTRA_COMPONENTS => $components,
+    -EXTRA_CATEGORIES => $categories,
     -DRY_RUN          => $dry_run
 );
 # Create a blocker issue link between the newly created datacheck ticket and the
