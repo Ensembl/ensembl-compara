@@ -58,6 +58,7 @@ sub param_defaults {
     my $self = shift @_;
     return {
         %{ $self->SUPER::param_defaults },
+
         'expected_updates_file' => undef,
         'do_not_reuse_list'     => [],
     };

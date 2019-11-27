@@ -111,7 +111,6 @@ sub default_options {
         # list of species that got an annotation update
         # ... assuming the same person has run both pipelines
         'expected_updates_file' => '/hps/nobackup2/production/ensembl/' . $ENV{'USER'} . '/prep_' . $self->o('division') . '_master_for_rel_' . $self->o('rel_with_suffix') .  '/annotation_updates.list',
-
     };
 }
 
@@ -613,4 +612,3 @@ sub pipeline_analyses {
 }
 
 1;
-
