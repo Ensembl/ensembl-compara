@@ -32,6 +32,10 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::IO qw (slurp);
 use Bio::EnsEMBL::Utils::Logger;
 
+# JIRA identifiers of the custom field used in Compara (ENSCOMPARASW)
+use constant DIVISION_CUSTOM_FIELD_ID => 'customfield_11130';
+use constant CATEGORY_CUSTOM_FIELD_ID => 'customfield_11333';
+
 # Used to automatically populate the category when none is given
 my %component_to_category = (
     'Relco tasks'       => 'Production::Relco',
@@ -374,20 +378,20 @@ sub _json_to_jira {
         push @{$jira_hash{'components'}}, { 'name' => $_ } for @{$extra_components};
     }
     # $jira_hash{'categories'}
-    $jira_hash{'customfield_11333'} = [];
+    $jira_hash{CATEGORY_CUSTOM_FIELD_ID} = [];
     if ($json_hash->{'category'}) {
-        push @{$jira_hash{'customfield_11333'}}, { 'value' => $json_hash->{'category'} };
+        push @{$jira_hash{CATEGORY_CUSTOM_FIELD_ID}}, { 'value' => $json_hash->{'category'} };
     } elsif ($json_hash->{'categories'}) {
-        push @{$jira_hash{'customfield_11333'}}, { 'value' => $_ } for @{$json_hash->{'categories'}};
+        push @{$jira_hash{CATEGORY_CUSTOM_FIELD_ID}}, { 'value' => $_ } for @{$json_hash->{'categories'}};
     }
     if ($extra_categories) {
-        push @{$jira_hash{'customfield_11333'}}, { 'value' => $_ } for @{$extra_categories};
+        push @{$jira_hash{CATEGORY_CUSTOM_FIELD_ID}}, { 'value' => $_ } for @{$extra_categories};
     }
-    unless (scalar(@{$jira_hash{'customfield_11333'}})) {
+    unless (scalar(@{$jira_hash{CATEGORY_CUSTOM_FIELD_ID}})) {
         # Fallback to automatically setting the categories from the component names
         foreach my $component (map {$_->{'name'}} @{$jira_hash{'components'}}) {
             if (exists $component_to_category{$component}) {
-                push @{$jira_hash{'customfield_11333'}}, { 'value' => $component_to_category{$component} };
+                push @{$jira_hash{CATEGORY_CUSTOM_FIELD_ID}}, { 'value' => $component_to_category{$component} };
             }
         }
     }
@@ -410,7 +414,7 @@ sub _json_to_jira {
     }
     # $jira_hash{'division'}
     if ($self->{_division} ne '') {
-        $jira_hash{'customfield_11130'} = { 'value' => $self->{_division} };
+        $jira_hash{DIVISION_CUSTOM_FIELD_ID} = { 'value' => $self->{_division} };
     }
     # $jira_hash{'assignee'}
     if ($json_hash->{'assignee'}) {
