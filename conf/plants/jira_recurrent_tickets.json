@@ -18,14 +18,14 @@
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+Relco+setup",
-            "summary": "Registry Configuration file"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Coredatabasesmirror",
+            "summary": "Copy the core databases"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Coredatabasesmirror",
-            "summary": "Copy the core databases"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Registryconfigurationfile",
+            "summary": "Registry Configuration file"
          },
          {
             "assignee": "<RelCo>",
@@ -66,11 +66,11 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "relco_doc#Releasecoordinationdocumentation-Production",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Intentions+for+release+<version>",
       "subtasks": [{
             "component": "Production tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Plants",
-            "summary": "Protein trees",
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/ProteinTrees_conf.pm]",
+            "summary": "Run the Protein-trees pipeline",
             "name_on_graph": "Protein-trees"
          },
          {
@@ -80,20 +80,21 @@
          },
          {
             "component": "Production tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]",
             "name_on_graph": "Synteny",
             "summary": "Run the Synteny pipeline"
          },
          {
             "component": "Production tasks",
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Plants::OrthologQM_Alignment_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/OrthologQM_Alignment_conf.pm]",
             "summary": "Protein-trees WGA Orthology QC",
             "name_on_graph": "Protein-trees WGA Orthology QC"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
-            "summary": "Run HighConfidenceOrthologs pipeline",
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Plants::HighConfidenceOrthologs_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/HighConfidenceOrthologs_conf.pm]",
+            "summary": "Run the HighConfidenceOrthologs pipeline",
             "name_on_graph": "Protein-trees High Confidence Orthologues"
          }
       ],
@@ -103,7 +104,7 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "relco_doc#Releasecoordinationdocumentation-Endofproductionwindow",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Construction+of+the+release+database",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
@@ -121,19 +122,19 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
-            "summary": "Merge GeneTrees"
+            "summary": "Merge the homology pipelines"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines#Mergethehomologypipelines-PostHomologyMergepipeline",
-            "summary": "PostHomologyMerge_conf pipeline"
+            "summary": "Run the PostHomologyMerge_conf pipeline"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Final+healthchecking+and+testing",
-            "summary": "Run the health-checks"
+            "summary": "Run the healthchecks"
          },
          {
             "component": "Relco tasks",
@@ -162,7 +163,7 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "http://eg-prod-01.ebi.ac.uk:7000/#!/database_handover_submit",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Non-vertebratesdivisions(e.g.Plants,Metazoa)",
             "labels": ["Handover_anchor"],
             "summary": "Handover of release DB"
          }
@@ -172,7 +173,7 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "relco_doc#Releasecoordinationdocumentation-Post-handover",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Production tasks",
@@ -191,17 +192,17 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "relco_doc#Releasecoordinationdocumentation-Testthesites",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites#Testthetestsites-Website",
             "summary": "test the web site"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites#Testthetestsites-RESTserver",
             "summary": "test the REST server"
          }
       ],
