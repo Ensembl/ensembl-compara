@@ -30,16 +30,6 @@
 
 Bio::EnsEMBL::Compara::Production::Analysis::AlignmentNets;
 
-=head1 SYNOPSIS
-
-
-=head1 DESCRIPTION
-
-
-=head1 METHODS
-
-=cut
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. 

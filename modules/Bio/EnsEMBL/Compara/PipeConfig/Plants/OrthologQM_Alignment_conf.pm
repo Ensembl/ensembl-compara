@@ -21,7 +21,7 @@ limitations under the License.
 
 
 =head1 NAME
-	
+
 Bio::EnsEMBL::Compara::PipeConfig::Plants::OrthologQM_Alignment_conf
 
 =head1 SYNOPSIS

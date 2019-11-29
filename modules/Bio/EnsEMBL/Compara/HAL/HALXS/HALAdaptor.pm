@@ -25,7 +25,7 @@ limitations under the License.
 
 =head1 NAME
 
-    Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor
+Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor
 
 =cut
 

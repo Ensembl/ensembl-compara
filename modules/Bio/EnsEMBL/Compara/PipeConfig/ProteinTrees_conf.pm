@@ -25,7 +25,7 @@ Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
         -division $COMPARA_DIV -mlss_id <curr_ptree_mlss_id>
-        
+
 =head1 DESCRIPTION
 
 The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.

@@ -14,11 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-=head1
+=pod
+
     This script fetches data for zebrafish from [http://zfin.org]:
     homo_sapiens            = http://zfin.org/downloads/human_orthos.txt
     drosophila_melanogaster = http://zfin.org/downloads/fly_orthos.txt
     mus_musculus            = http://zfin.org/downloads/mouse_orthos.txt
+
 =cut
 
 use strict;

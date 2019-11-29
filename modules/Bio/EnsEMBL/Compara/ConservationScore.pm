@@ -369,6 +369,7 @@ sub end {
     my $self = shift;
    return $self->position; 
 }
+
 =head2 seq_region_pos
 
   Arg [1]    : (opt) integer

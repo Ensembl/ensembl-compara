@@ -77,6 +77,7 @@ use Bio::EnsEMBL::Compara::Production::Projection::Writer::MultipleWriter;
 
 
 #--- Non-hive methods
+
 =head2 new_without_hive()
 
   Arg [PROJECTION_ENGINE]       : (ProjectionEngine) The projection engine to use to transfer terms 

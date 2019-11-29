@@ -14,14 +14,15 @@
 # limitations under the License.
 
 
+=pod
 
-=head
 desc: This script takes as input the desired coordinates on the genome of a given species and uses the genomic aligns block object and the mapper object to map those coordinates
 to their corresponding aligned coordinates on a target species genome.
 output: the output is an array of paired hash objects each pair respresenting a one to one mapping of the aligned coordinates on both source and target species
 
 ex: perl map_coordinates.pl --mlss_id 225 --source_sp Stickleback --target_sp (optional) --coord_system_name scaffold --seq_region_name scaffold_150 --start 167602 --end 167999
 	perl map_coordinates.pl --mlss_id 1134 --source_sp macaca_fascicularis --coord_system_name chromosome --seq_region_name 5 --start 890166 --end 890366 --target_sp nomascus_leucogenys
+
 =cut
 
 

@@ -46,7 +46,7 @@ developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
 Questions may also be sent to the Ensembl help desk at
 <http://www.ensembl.org/Help/Contact>.
-  
+
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.

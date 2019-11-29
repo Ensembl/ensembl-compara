@@ -280,7 +280,9 @@ sub fetch_all {
 
 
 =head2 fetch_node_by_node_id
+
   Description: Alias for fetch_node_by_taxon_id. Please use the later instead
+
 =cut
 
 sub fetch_node_by_node_id {
