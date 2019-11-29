@@ -339,15 +339,21 @@ foreach my $xml_all_vs_one_node (@{$division_node->findnodes('pairwise_alignment
 foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignments/all_vs_all')}) {
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_one_vs_all_node->getAttribute('method') );
     my $genome_dbs = make_species_set_from_XML_node($xml_one_vs_all_node->getChildrenByTagName('species_set')->[0], $division_genome_dbs);
-    while (my $ref_gdb = shift @$genome_dbs) {
-        push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlsss($compara_dba, $method, $ref_gdb, $_) } for @$genome_dbs;
+    my %dnafrag_counts = map {$_->dbID => $compara_dba->get_DnaFragAdaptor->count_all_reference_by_GenomeDB($_)} @$genome_dbs;
+    # Sort by decreasing number of dnafrags to get the most compact assemblies first
+    my @genome_dbs_by_size = sort {$dnafrag_counts{$b->dbID} <=> $dnafrag_counts{$a->dbID}} @$genome_dbs;
+    while (my $ref_gdb = shift @genome_dbs_by_size) {
+        push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlsss($compara_dba, $method, $ref_gdb, $_) } for @genome_dbs_by_size;
     }
 }
 
 # References between themselves
-while (my $aref1 = shift @refs) {
+my %dnafrag_counts = map {$_->[0]->dbID => $compara_dba->get_DnaFragAdaptor->count_all_reference_by_GenomeDB($_->[0])} @refs;
+# Sort by decreasing number of dnafrags to get the most compact assemblies first
+my @refs_by_size = sort {$dnafrag_counts{$b->[0]->dbID} <=> $dnafrag_counts{$a->[0]->dbID}} @refs;
+while (my $aref1 = shift @refs_by_size) {
     my ($gdb1, $method1, $pool1) = @$aref1;
-    foreach my $aref2 (@refs) {
+    foreach my $aref2 (@refs_by_size) {
         my ($gdb2, $method2, $pool2) = @$aref2;
         # As long as each genome is in the target scope of the other
         if ($pool1->{$gdb2->dbID} and $pool2->{$gdb1->dbID}) {

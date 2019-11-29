@@ -245,6 +245,32 @@ sub fetch_all_by_GenomeDB {
 }
 
 
+=head2 count_all_reference_by_GenomeDB
+
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB
+  Example    : $n_human_toplevels = $dnafrag_adaptor->count_all_reference_by_GenomeDB($human_gdb);
+  Description: Returns the number of reference DnaFrags of the given Bio::EnsEMBL::Compara::GenomeDB
+  Returntype : Integer
+  Exceptions : throw unless $genome_db is a Bio::EnsEMBL::Compara::GenomeDB
+
+=cut
+
+sub count_all_reference_by_GenomeDB {
+    my $self      = shift;
+    my $genome_db = shift;
+
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
+    my $gdb_id = $genome_db->dbID;
+    unless($gdb_id) {
+        $self->throw('GenomeDB does not have a dbID. Is it stored in the db?');
+    }
+
+    my $sql = "df.genome_db_id = ? AND df.is_reference = 1";
+    $self->bind_param_generic_fetch($gdb_id, SQL_INTEGER);
+    return $self->generic_count($sql);
+}
+
+
 =head2 fetch_all_karyotype_DnaFrags_by_GenomeDB
 
   Arg [1]     : Bio::EnsEMBL::Compara::GenomeDB $genome_db
