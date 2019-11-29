@@ -465,14 +465,15 @@ sub core_pipeline_analyses {
     #
     #-------------------------------------------------------------------------------
     my %raxml_decision_params = (
-        # "factor_growth" and "factor" that the number of cores is
-        # increased in relation with the number of genes:
-        # Number of cores x2 if there are 1,000 genes,
-        # Number of cores x3 if there are 2,000 genes, etc
-        'factor_growth'            => 1_000,
-        'factor'                   => '#expr( 1 + #tree_gene_count# / #factor_growth# )expr#',
+        # The number of cores is primarily based on the number of "alignment patterns"
+        # with an extra boost (a multiplier) based on the number of genes
+        'raxml_cores'              => '#expr( #raxml_core_multiplier# * #tree_aln_num_of_patterns# / #raxml_patterns_per_core# )expr#',
+        # This means the number of cores will be x2 when we hit 1,000 genes,
+        # x3 when we hit 2,000 genes, etc
+        'raxml_genes_per_core_mult'=> 1_000,
+        'raxml_core_multiplier'    => '#expr( 1 + #tree_gene_count# / #raxml_genes_per_core_mult# )expr#',
+        # cf the RAxML manual
         'raxml_patterns_per_core'  => $self->o('use_dna_for_phylogeny') ? '500' : '150',
-        'raxml_cores'              => '#expr( #factor# * #tree_aln_num_of_patterns# / #raxml_patterns_per_core# )expr#',
 
         'tags'  => {
             #The default value matches the default dataflow we want: _8_cores analysis.
