@@ -388,7 +388,7 @@ sub _json_to_jira {
         push @{$jira_hash{CATEGORY_CUSTOM_FIELD_ID}}, { 'value' => $_ } for @{$extra_categories};
     }
     unless (scalar(@{$jira_hash{CATEGORY_CUSTOM_FIELD_ID}})) {
-        # Fallback to automatically setting the categories from the component names
+        # Fallback to automatically set the categories from the component names
         foreach my $component (map {$_->{'name'}} @{$jira_hash{'components'}}) {
             if (exists $component_to_category{$component}) {
                 push @{$jira_hash{CATEGORY_CUSTOM_FIELD_ID}}, { 'value' => $component_to_category{$component} };
