@@ -21,6 +21,8 @@
 =cut
 
 use strict;
+use warnings;
+
 use LWP::Simple qw(get);
 use Getopt::Long;
 use DBI;
