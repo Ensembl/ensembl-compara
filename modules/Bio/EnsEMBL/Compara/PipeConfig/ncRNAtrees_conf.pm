@@ -130,7 +130,7 @@ sub default_options {
             'allow_ambiguity_codes'    => 1,
 
             # Do we want to initialise the CAFE part now ?
-            'do_cafe'  => undef,
+            'do_cafe'                  => undef,
             # Data needed for CAFE
             'cafe_lambdas'             => '',  # For now, we don't supply lambdas
             'cafe_struct_tree_str'     => '',  # Not set by default
@@ -180,7 +180,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'member_type'       => $self->o('member_type'),
         'create_ss_picts'   => $self->o('create_ss_picts'),
-        'do_cafe'   => $self->o('do_cafe'),
+        'do_cafe'           => $self->o('do_cafe'),
         'dbID_range_index'  => $self->o('dbID_range_index'),
         'clustering_mode'   => $self->o('clustering_mode'),
     }
