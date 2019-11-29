@@ -15,6 +15,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
 =cut
 
 =head2 DESCRIPTION
@@ -106,11 +107,13 @@ foreach my $testcase ( keys %$testcase_failures ) {
 # Add subtasks to the initial ticket
 $dc_task_json_ticket->[0]->{subtasks} = \@json_subtasks;
 my $components = ['Java Healthchecks', 'Production tasks'];
+my $categories = ['Bug::Internal', 'Production::Tasks'];
 # Create all JIRA tickets
 my $dc_task_keys = $jira_adaptor->create_tickets(
     -JSON_OBJ         => $dc_task_json_ticket,
     -DEFAULT_PRIORITY => 'Blocker',
     -EXTRA_COMPONENTS => $components,
+    -EXTRA_CATEGORIES => $categories,
     -DRY_RUN          => $dry_run
 );
 # Create a blocker issue link between the newly created datacheck ticket and the
