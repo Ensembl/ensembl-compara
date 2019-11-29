@@ -84,7 +84,7 @@ use Bio::EnsEMBL::Compara::Production::Projection::Writer::MultipleWriter;
   Arg [TARGET_GENOME_DB]        : (GenomeDB)  GenomeDB to project terms to
   Arg [WRITE_DBA]               : (DBAdaptor) Required if not given -FILE; used to 
   Arg [FILE]                    : (String) Location of pipeline output; if given a directory it will generate a file name
-  
+
   Example    : See synopsis
   Description: Non-hive version of the object construction to be used with scripts
   Returntype : Bio::EnsEMBL::Compara::Production::Projection::RunnableDB::ProjectOntologyXref

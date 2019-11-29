@@ -33,7 +33,7 @@
     -EPO		-> set if yoiu want the breakpoints from the EPO alignments
 
     -threshold   -> the size of the threshold in kilobase
-	
+
 	-DB_species	-> the species name of the database (usually 'MULTI' for ensembl production dbs)
     -output     -> output file  format : -> ref_chr_id,ref_start,ref_end,nonref_chr_id,non_ref_start,nonref_end, genomic_block_ids
     -debug      -> if you want the debug statements printed to the screen

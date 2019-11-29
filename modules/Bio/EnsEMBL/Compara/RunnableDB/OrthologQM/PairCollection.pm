@@ -36,7 +36,7 @@ Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PairCollection
 		species1 & species2 : names of species of interest
 		species_set_name    : name of species_set
 		species_set_id      : dbID of species set of interest (usually used where species_set_name is ambiguous)
-	
+
 	Output:
 		pairs of genome_db_ids e.g. {species1_id => 150, species2_id => 125} 
 

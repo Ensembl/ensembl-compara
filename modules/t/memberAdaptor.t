@@ -52,7 +52,7 @@ subtest "Test fetch methods", sub {
 
 
     my $member = $ma->fetch_by_stable_id($stable_id);
-    
+
     ok($member);
     ok( $member->dbID,  $member_id);
     ok( $member->stable_id, $stable_id );
@@ -71,10 +71,10 @@ subtest "Test fetch methods", sub {
     ($member_id, $stable_id, $version, $source_name, $taxon_id, $genome_db_id, $sequence_id,
      $gene_member_id, $description, $chr_name, $chr_start, $chr_end, $chr_strand) =
        $compara_dba->dbc->db_handle->selectrow_array("SELECT * FROM member WHERE source_name = 'ENSEMBLPEP' LIMIT 1");
-    
+
     # FIXME should be using SeqMemberAdaptor
     $member = $ma->fetch_by_stable_id($stable_id);
-    
+
     ok($member);
     ok( $member->dbID,  $member_id);
     ok( $member->stable_id, $stable_id );
@@ -89,29 +89,28 @@ subtest "Test fetch methods", sub {
     ok( $member->taxon_id, $taxon_id );
     ok( $member->genome_db_id, $genome_db_id );
     ok( $member->sequence_id );
-    
-    
+
     $multi->hide('compara', 'member');
     $member->{'_dbID'} = undef;
     $member->{'_adaptor'} = undef;
-    
+
     $ma->store($member);
-    
+
     my $sth = $compara_dba->dbc->prepare('SELECT member_id
                                 FROM member
                                 WHERE member_id = ?');
-    
+
     $sth->execute($member->dbID);
-    
+
     ok($member->dbID && ($member->adaptor == $ma));
     debug("member->dbID = " . $member->dbID);
-    
+
     my ($id) = $sth->fetchrow_array;
     $sth->finish;
-    
+
     ok($id && $id == $member->dbID);
     debug("[$id] == [" . $member->dbID . "]?");
-    
+
     $multi->restore('compara', 'member');
 
 

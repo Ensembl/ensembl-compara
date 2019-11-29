@@ -35,10 +35,6 @@ Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::AdjustBranchLengths
 Given a topology tree and a mash distance matrix, recompute branch lengths 
 using erable (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4705742/)
 
-=head1 DESCRIPTION
-
-	
-
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::AdjustBranchLengths;

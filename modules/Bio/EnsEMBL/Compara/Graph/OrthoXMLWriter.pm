@@ -28,19 +28,19 @@ Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter
 =head1 SYNOPSIS
 
   use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
-  
+
   my $string_handle = IO::String->new();
   my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(
     -SOURCE => 'Ensembl', -SOURCE_VERSION => 63, -HANDLE => $string_handle
   );
-  
+
   my $pt = $dba->get_GeneTreeAdaptor()->fetch_by_dbID(3);
-  
+
   $w->write_trees($pt);
   $w->finish(); #YOU MUST CALL THIS TO WRITE THE FINAL TAG
-  
+
   my $xml_scalar_ref = $string_handle->string_ref();
-  
+
   #Or to write to a file via IO::File
   my $file_handle = IO::File->new('output.xml', 'w');
   $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(
@@ -49,7 +49,7 @@ Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter
   $w->write_trees($pt);
   $w->finish(); #YOU MUST CALL THIS TO WRITE THE FINAL TAG
   $file_handle->close();
-  
+
   #Or letting this deal with it
   $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(
     -SOURCE => 'Ensembl', -SOURCE_VERSION => 63, -FILE => 'loc.xml'

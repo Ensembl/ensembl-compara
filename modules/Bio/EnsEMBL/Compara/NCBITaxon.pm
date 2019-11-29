@@ -131,23 +131,23 @@ sub genbank_hidden_flag {
                     split is compatible with BioPerl's Species classification
                     code and will return a data structure compatible with
                     that found in core species MetaContainers.
-                    
+
                     This code is a redevelopment of existing code which
                     descended down the taxonomy which had disadvanatages 
                     when a classification was requested on nodes causing
                     the taxonomy to bi/multi-furcate.
-                    
+
                     Note the String representation does have some disadvantages
                     when working with the poorer end of the taxonomy where
                     species nodes are not well defined. For these situations
                     you are better using the array representation and 
                     capturing the required information from the nodes.
-                    
+
                     Also to maintain the original functionality of the method
                     we filter any species, subspecies or subgenus nodes above
                     the current node. For the true classification always
                     call using the array structure.
-                    
+
                     Recalling this subroutine with the same parameters for
                     separators will return a cached representation. Calling
                     for AS_ARRAY will cause the classificaiton to be 
