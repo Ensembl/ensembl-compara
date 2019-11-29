@@ -3551,7 +3551,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'taxlevels'             => $self->o('goc_taxlevels'),
             },
-            -flow_into  => WHEN( 'scalar(@{#taxlevels#})' => 'goc_entry_point' ),
+            -flow_into  => WHEN('scalar(@{#taxlevels#})' => 'goc_entry_point'),
         },
 
         {   -logic_name => 'homology_stats_factory',

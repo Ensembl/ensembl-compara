@@ -89,7 +89,7 @@ sub default_options {
         'prev_core_sources_locs'   => [ ],
 
         # Do we want to initialise the CAFE part now ?
-        'initialise_cafe_pipeline'  => 0,
+        'do_cafe'  => 0,
 
     };
 }
@@ -111,4 +111,3 @@ sub tweak_analyses {
 }
 
 1;
-

@@ -64,7 +64,7 @@ sub default_options {
 
     # CAFE parameters
         # Do we want to initialise the CAFE part now ?
-        'initialise_cafe_pipeline'  => 0,
+        'do_cafe'  => 0,
 
     # Extra analyses
         # Do we want the Gene QC part to run ?
