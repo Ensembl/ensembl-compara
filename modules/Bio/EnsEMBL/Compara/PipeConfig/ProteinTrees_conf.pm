@@ -2217,7 +2217,7 @@ sub core_pipeline_analyses {
 
             -flow_into  => {
                 '1->A' => WHEN (
-                    '(#raxml_cores# <= 1'                               => 'raxml_parsimony',
+                    '(#raxml_cores# <= 1)'                              => 'raxml_parsimony',
                     '(#raxml_cores# >  1)  && (#raxml_cores# <= 2)'     => 'raxml_parsimony_2_cores',
                     '(#raxml_cores# >  2)  && (#raxml_cores# <= 4)'     => 'raxml_parsimony_4_cores',
                     '(#raxml_cores# >  4)  && (#raxml_cores# <= 8)'     => 'raxml_parsimony_8_cores',
@@ -2422,7 +2422,7 @@ sub core_pipeline_analyses {
 
             -flow_into  => {
                 '1->A' => WHEN (
-                    '(#raxml_cores# <= 1'                               => 'raxml',
+                    '(#raxml_cores# <= 1)'                              => 'raxml',
                     '(#raxml_cores# >  1)  && (#raxml_cores# <= 2)'     => 'raxml_2_cores',
                     '(#raxml_cores# >  2)  && (#raxml_cores# <= 4)'     => 'raxml_4_cores',
                     '(#raxml_cores# >  4)  && (#raxml_cores# <= 8)'     => 'raxml_8_cores',
