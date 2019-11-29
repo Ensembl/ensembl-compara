@@ -49,7 +49,7 @@ Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf
     -compara_db         database containing relevant data (this is where final scores will be written)
     -alt_aln_dbs        take alignment objects from different sources (arrayref of urls or aliases)
     -alt_homology_db    take homology objects from a different source
-    -previous_rel_db    reuse scores from a previous release (requires a homology_id_mapping table in compara_db)
+    -previous_rel_db    reuse scores from a previous release (requires homology_id_mapping files)
 
     Note: If you wish to use homologies from one database, but the alignments live in a different database,
     remember that final scores will be written to the homology table of the appointed compara_db. So, if you'd
