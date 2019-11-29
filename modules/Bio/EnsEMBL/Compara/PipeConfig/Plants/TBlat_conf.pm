@@ -60,9 +60,6 @@ sub default_options {
         # No healthcheck
         'do_compare_to_previous_db' => 0,
         'previous_db'   => undef,
-
-        # Net
-        'bidirectional' => 1,
     };
 }
 
