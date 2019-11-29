@@ -135,7 +135,7 @@ sub default_options {
 
     # CAFE parameters
         # Do we want to initialise the CAFE part now ?
-        'initialise_cafe_pipeline'  => 0,
+        'do_cafe'                   => 0,
         #Use Timetree divergence times for the CAFETree internal nodes
         'use_timetree_times'        => 0,
 

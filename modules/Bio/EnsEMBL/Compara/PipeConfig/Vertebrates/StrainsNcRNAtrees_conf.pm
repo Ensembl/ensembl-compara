@@ -69,7 +69,7 @@ sub default_options {
             'ref_ortholog_db'   => 'compara_nctrees',
 
             # CAFE parameters
-            'initialise_cafe_pipeline'  => 0,
+            'do_cafe'  => 0,
     };
 }   
 
