@@ -1,2 +1,5 @@
 pylint
 pytest
+ete3
+numpy
+six
