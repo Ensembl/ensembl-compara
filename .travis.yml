@@ -1,18 +1,9 @@
 dist: "trusty"
-language: "perl"
-
-perl:
-  - "5.14"
-  - "5.30"
+language: "generic"
 
 env:
-  matrix:
-  - COVERALLS=true
-  - COVERALLS=false
   global:
     secure: bGSZASCtRCcE2VZ3u4hdvjh6CDHe+Uo3MR7B4eobSFFhZVjIN3/DKaGrQYprEeSIB/vb75rveyTheO3qe3lHwq71e18cBk2ulQA6/L0eUJYsoR3u2y7d9whu8dS97IoLzize6hItxJFP8TmRaJBtWqOixyWHNW72X/fKF1a192E=
-
-sudo: false
 
 addons:
   apt:
@@ -65,9 +56,22 @@ jobs:
 
 # Get the matrix to only build coveralls support on the latest Perl
 matrix:
-  exclude:
-    - perl: "5.14"
-      env: COVERALLS=true
-    - perl: "5.30"
+  include:
+    # Test suite (see above) on the minimum Perl version (5.14)
+    - language: perl
+      perl: 5.14
       env: COVERALLS=false
+
+    # Test suite on the latest Perl
+    - language: perl
+      perl: 5.30
+      env: COVERALLS=true
+
+    # Python pylint check
+    - language: python
+      python: 3.6
+      install:
+        - pip install -r requirements.txt
+      script:
+        - ./travisci/pylint_harness.sh
 
