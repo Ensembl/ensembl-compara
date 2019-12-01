@@ -24,12 +24,6 @@ use Test::More;
 use Test::Warnings;
 use Bio::EnsEMBL::Test::TestUtils;
 
-if ( not $ENV{TEST_AUTHOR} ) {
-  my $msg = 'Author test. Set $ENV{TEST_AUTHOR} to a true value to run.';
-  plan( skip_all => $msg );
-}
-
-
 #chdir into the file's target & request cwd() which should be fully resolved now.
 #then go back
 my $file_dir = dirname(__FILE__);

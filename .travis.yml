@@ -67,6 +67,12 @@ matrix:
       perl: 5.30
       env: COVERALLS=true
 
+    # Generic tests (.t -> Perl)
+    - language: perl
+      perl: 5.30
+      script:
+        - env PERL5LIB=$PERL5LIB:$PWD/ensembl/modules:$PWD/ensembl-test/modules:$PWD/ensembl-io/modules prove -r ./travisci/
+
     # Python pylint check
     - language: python
       python: 3.6
