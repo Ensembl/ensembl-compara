@@ -70,7 +70,8 @@ sub find_all_files {
 
     # Recurse into the filesystem
     while ( my $f = shift @queue ) {
-        if ( -d $f ) {
+        if ( -l $f ) {
+        } elsif ( -d $f ) {
             opendir(my $dirh, $f);
             push @queue, map {File::Spec->catfile($f, $_)} File::Spec->no_upwards(readdir $dirh);
             closedir $dirh;
