@@ -35,6 +35,25 @@ use File::Spec;
 use File::Basename qw/dirname/;
 
 
+=head2 get_repository_root
+
+  Description : Return the path to the root of the repository. Note that
+                this is constructed from the path to this module.
+
+=cut
+
+my $repository_root;
+sub get_repository_root {
+    return $repository_root if $repository_root;
+    my $file_dir = dirname(__FILE__);
+    my $original_dir = cwd();
+    chdir($file_dir);
+    my $cur_dir = cwd();
+    chdir($original_dir);
+    $repository_root = File::Spec->catdir($cur_dir, File::Spec->updir(), File::Spec->updir(), File::Spec->updir(), File::Spec->updir(), File::Spec->updir());
+    return $repository_root;
+}
+
 =head2 find_all_files
 
   Description : Return the list of all the files in the repository
@@ -50,12 +69,7 @@ sub find_all_files {
 
     # First populate the top-level sub-directories
     {
-        my $file_dir = dirname(__FILE__);
-        my $original_dir = cwd();
-        chdir($file_dir);
-        my $cur_dir = cwd();
-        chdir($original_dir);
-        my $starting_dir = File::Spec->catdir($cur_dir, File::Spec->updir(), File::Spec->updir(), File::Spec->updir(), File::Spec->updir(), File::Spec->updir());
+        my $starting_dir = get_repository_root();
         my %subdir_ok = map {$_ => 1} qw(modules scripts sql docs travisci xs);
         opendir(my $dirh, $starting_dir);
         my @dir_content = File::Spec->no_upwards(readdir $dirh);

@@ -16,16 +16,11 @@
 use strict;
 use warnings;
 
-use Cwd;
 use File::Spec;
-use File::Basename qw/dirname/;
 use Test::More;
 use Test::Warnings;
 
-if ( not $ENV{TEST_AUTHOR} ) {
-  my $msg = 'Author test. Set $ENV{TEST_AUTHOR} to a true value to run.';
-  plan( skip_all => $msg );
-}
+use Bio::EnsEMBL::Compara::Utils::Test;
 
 eval {
   require Test::Perl::Critic;
@@ -36,27 +31,18 @@ if($@) {
   note $@;
 }
 
-#chdir into the file's target & request cwd() which should be fully resolved now.
-#then go back
-my $file_dir = dirname(__FILE__);
-my $original_dir = cwd();
-chdir($file_dir);
-my $cur_dir = cwd();
-chdir($original_dir);
-my $root = File::Spec->catdir($cur_dir, File::Spec->updir(),File::Spec->updir());
+my $root = Bio::EnsEMBL::Compara::Utils::Test::get_repository_root();
 
 # Configure critic
 Test::Perl::Critic->import(-profile => File::Spec->catfile($root, 'perlcriticrc'), -severity => 5, -verbose => 8);
 
-# The list of sub-directories must be kept up-to-date. This assumes that no
-# files in $root should be checked
-# xs is excluded because the symlinks cause perlcritic to misunderstand the real path
-my @perl_files = map {Perl::Critic::Utils::all_perl_files(File::Spec->catfile($root, $_))} qw(modules scripts sql docs travisci);
+my @all_files = Bio::EnsEMBL::Compara::Utils::Test::find_all_files();
 
-foreach my $perl (@perl_files) {
+foreach my $f (@all_files) {
+  next unless $f =~ /\.(t|p[lm])$/i;
   # Except the fake libraries
-  next if $perl =~ /\/fake_libs\//;
-  critic_ok($perl);
+  next if $f =~ /\/fake_libs\//;
+  critic_ok($f);
 }
 
 done_testing();
