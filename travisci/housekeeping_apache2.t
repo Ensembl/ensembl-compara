@@ -16,28 +16,15 @@
 use strict;
 use warnings;
 
-
-use Cwd;
-use File::Spec;
-use File::Basename qw/dirname/;
 use Test::More;
-use Test::Warnings;
+
 use Bio::EnsEMBL::Test::TestUtils;
+use Bio::EnsEMBL::Compara::Utils::Test;
 
-#chdir into the file's target & request cwd() which should be fully resolved now.
-#then go back
-my $file_dir = dirname(__FILE__);
-my $original_dir = cwd();
-chdir($file_dir);
-my $cur_dir = cwd();
-chdir($original_dir);
-my $root = File::Spec->catdir($cur_dir, File::Spec->updir(),File::Spec->updir());
+my @all_files = Bio::EnsEMBL::Compara::Utils::Test::find_all_files();
 
-# The list of sub-directories must be kept up-to-date. This assumes that no
-# files in $root should be checked
-my @source_files = map {all_source_code(File::Spec->catfile($root, $_))} qw(modules scripts sql docs travisci xs);
-
-foreach my $f (@source_files) {
+foreach my $f (@all_files) {
+    next unless $f =~ /\.([chtr]|p[lmy]|sh|java|(my|pg|)sql|sqlite)$/i;
     # Except the .sql of the test-database dumps
     next if $f =~ /modules\/t\/test-genome-DBs\/.*\.sql$/;
     # Fake libraries
