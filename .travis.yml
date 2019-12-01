@@ -60,22 +60,26 @@ matrix:
     # Test suite (see above) on the minimum Perl version (5.14)
     - language: perl
       perl: 5.14
+      name: "Perl unit tests (minimum Perl version)"
       env: COVERALLS=false
 
     # Test suite on the latest Perl
     - language: perl
       perl: 5.30
+      name: "Perl unit tests (latest Perl)"
       env: COVERALLS=true
 
     # Generic tests (.t -> Perl)
     - language: perl
       perl: 5.30
+      name: "Perl housekeeping"
       script:
         - env PERL5LIB=$PERL5LIB:$PWD/modules:$PWD/ensembl/modules:$PWD/ensembl-test/modules:$PWD/ensembl-io/modules prove -r ./travisci/
 
     # Python pylint check
     - language: python
       python: 3.6
+      name: "Python linter"
       before_install:
         - echo
       install:
