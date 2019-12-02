@@ -24,7 +24,8 @@ function process_ticket(ticket) {
         ticket_info += ' for ' + ticket.fields.customfield_11130.value;
     }
     ticket_info += ' (<i>' + ticket.fields.assignee.name + '</i>)';
-    return ticket_info;
+    ticket_url = '<a href="https://www.ebi.ac.uk/panda/jira/browse/' + ticket.key + '">' + ticket_info + '</a>';
+    return ticket_url;
 }
 
 function process_server(server) { return function(json) {
