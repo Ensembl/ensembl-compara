@@ -43,7 +43,7 @@ function process_division(division) { return function(json) {
         var endpoint = endpoint_ticket_subtasks.replace('__PARENT__', ticket.key);
         console.log(endpoint);
         $.ajax(endpoint, {
-            success: process_task(ticket.key),
+            success: process_task(ticket),
             error: function(jqXHR, status, error) {
                 console.log('Error: ' + (error || jqXHR.crossDomain && 'Cross-Origin Request Blocked' || 'Network issues'));
                 window.alert('Having trouble contacting Jira - please check that you are logged in');
@@ -70,20 +70,35 @@ function process_task(task) { return function(json) {
             default:            n_to_do ++; break;
         }
     }
-    var prog = '';
-    if (n_done) {
-        prog += '<div class="back_jira_green" style="width:' + (100. * n_done / n_tickets) + '%"></div>';
+    var task_key = task.key;
+    if (n_tickets) {
+        var prog = '';
+        if (n_done) {
+            prog += '<div class="back_jira_green" style="width:' + (100. * n_done / n_tickets) + '%"></div>';
+        }
+        if (n_in_progress) {
+            prog += '<div class="back_jira_yellow" style="width:' + (100. * n_in_progress / n_tickets) + '%"></div>';
+        }
+        if (n_to_do) {
+            prog += '<div class="back_jira_blue" style="width:' + (100. * n_to_do / n_tickets) + '%"></div>';
+        }
+        $('#' + task_key).append('<td><div class="task_progress_bar">' + prog + '</div></td>');
+        $('#' + task_key).append('<td class="issue_count"><span class="jira_green">' + n_done + '</span> done,</td>');
+        $('#' + task_key).append('<td class="issue_count"><span class="jira_yellow">' + n_in_progress + '</span> in progress,</td>');
+        $('#' + task_key).append('<td class="issue_count"><span class="jira_blue">' + n_to_do + '</span> to do</td>');
+    } else {
+        var task_status;
+        var colour;
+        switch (task.fields.status.name) {
+            case 'Resolved':    task_status = 'Done';        colour = 'green';  break;
+            case 'Closed':      task_status = 'Done';        colour = 'green';  break;
+            case 'In Progress': task_status = 'In progress'; colour = 'yellow'; break;
+            default:            task_status = 'To do';       colour = 'blue';   break;
+        }
+        var prog = '<div class="back_jira_' + colour + '" style="width:100%"></div>';
+        $('#' + task_key).append('<td><div class="task_progress_bar">' + prog + '</div></td>');
+        $('#' + task_key).append('<td class="issue_count"><i>' + task_status + '</i></td>');
     }
-    if (n_in_progress) {
-        prog += '<div class="back_jira_yellow" style="width:' + (100. * n_in_progress / n_tickets) + '%"></div>';
-    }
-    if (n_to_do) {
-        prog += '<div class="back_jira_blue" style="width:' + (100. * n_to_do / n_tickets) + '%"></div>';
-    }
-    $('#' + task).append('<td><div class="task_progress_bar">' + prog + '</div></td>');
-    $('#' + task).append('<td class="issue_count"><span class="jira_green">' + n_done + '</span> done,</td>');
-    $('#' + task).append('<td class="issue_count"><span class="jira_yellow">' + n_in_progress + '</span> in progress,</td>');
-    $('#' + task).append('<td class="issue_count"><span class="jira_blue">' + n_to_do + '</span> to do</td>');
 } }
 
 for(var j = 0; j < all_divisions.length; j++){
