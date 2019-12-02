@@ -59,6 +59,11 @@ jobs:
 matrix:
   include:
     - language: perl
+      perl: 5.30
+      name: "Housekeeping (all languages)"
+      script: env PERL5LIB=$PERL5LIB:$PWD/modules:$PWD/ensembl/modules:$PWD/ensembl-test/modules:$PWD/ensembl-io/modules prove -r ./travisci/all-housekeeping/
+
+    - language: perl
       perl: 5.14
       name: "Perl unit tests (minimum Perl version)"
       env: COVERALLS=false
@@ -72,11 +77,6 @@ matrix:
       perl: 5.30
       name: "Perl linter"
       script: ./travisci/perl-linter_harness.sh
-
-    - language: perl
-      perl: 5.30
-      name: "Housekeeping (all languages)"
-      script: env PERL5LIB=$PERL5LIB:$PWD/modules:$PWD/ensembl/modules:$PWD/ensembl-test/modules:$PWD/ensembl-io/modules prove -r ./travisci/all-housekeeping/
 
     - language: python
       python: 3.6             # 3.8 is not available on Trusty builds
