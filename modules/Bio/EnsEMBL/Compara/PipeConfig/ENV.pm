@@ -62,6 +62,7 @@ sub shared_default_options {
 
         # TODO: make a $self method that checks whether this already exists, to prevent clashes like in the LastZ pipeline
         'pipeline_dir'          => '/hps/nobackup2/production/ensembl/' . $ENV{'USER'} . '/' . $self->o('pipeline_name'),
+        'shared_hps_dir'        => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user'),
         'warehouse_dir'         => '/nfs/production/panda/ensembl/warehouse/compara/',
 
         # Where to find the linuxbrew installation
@@ -73,15 +74,15 @@ sub shared_default_options {
         # NOTE: Can't use $self->check_file_in_ensembl as long as we don't produce a file for each division
         'reg_conf'              => $self->o('config_dir').'/production_reg_conf.pl',
         'binary_species_tree'   => $self->o('config_dir').'/species_tree.branch_len.nw',
-        'genome_dumps_dir'      => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/genome_dumps/'.$self->o('division').'/',
+        'genome_dumps_dir'      => $self->o('shared_hps_dir') . '/genome_dumps/'.$self->o('division').'/',
 
         # HMM library
         'hmm_library_version'   => '2',
-        'hmm_library_basedir'   => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/treefam_hmms/2019-01-02',
+        'hmm_library_basedir'   => $self->o('shared_hps_dir') . '/treefam_hmms/2019-01-02',
         #'hmm_library_version'   => '3',
-        #'hmm_library_basedir'   => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/compara_hmm_91/',
+        #'hmm_library_basedir'   => $self->o('shared_hps_dir') . '/compara_hmm_91/',
         
-        'homology_dumps_shared_basedir' => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/homology_dumps/'. $self->o('division'),
+        'homology_dumps_shared_basedir' => $self->o('shared_hps_dir') . '/homology_dumps/'. $self->o('division'),
     }
 }
 
