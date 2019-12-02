@@ -58,7 +58,7 @@ jobs:
       perl: 5.30
       name: "Housekeeping (all languages)"
       install:
-        - echo
+        - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
       before_script:
         - echo
       script: env PERL5LIB=$PERL5LIB:$PWD/modules:$PWD/ensembl/modules:$PWD/ensembl-test/modules:$PWD/ensembl-io/modules prove -r ./travisci/all-housekeeping/
@@ -79,7 +79,7 @@ jobs:
       perl: 5.30
       name: "Perl linter"
       install:
-        - echo
+        - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
       before_script:
         - echo
       script: ./travisci/perl-linter_harness.sh
