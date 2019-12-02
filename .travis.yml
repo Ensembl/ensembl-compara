@@ -18,6 +18,7 @@ cache:
   directories:
     - $HOME/deps
 
+# Clone all repositories and setup the directory structure
 before_install:
     - cpanm -nq local::lib
     - eval "$(perl -Mlocal::lib=${HOME}/deps)"
@@ -34,7 +35,7 @@ before_install:
     - git clone --branch release-1-6-9 --depth 1 https://github.com/bioperl/bioperl-run
     - sed -i '/Bio::DB::HTS/d' ensembl-rest/cpanfile
 
-
+# Setup the Perl dependencies and configuration
 install:
     - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
     - cp -f ensembl-rest/travisci/MultiTestDB.conf.travisci ensembl-rest/t/MultiTestDB.conf
@@ -45,6 +46,7 @@ install:
     - cpanm --quiet --installdeps --notest .
     - cpanm --quiet --notest Devel::Cover::Report::Coveralls
 
+# Setup the MySQL server
 before_script:
     - mysql -u root -h localhost -e 'GRANT ALL PRIVILEGES ON *.* TO "travis"@"%"'
 
