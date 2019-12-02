@@ -1,5 +1,5 @@
-dist: "trusty"
-language: "generic"
+dist: trusty
+language: generic
 
 env:
   global:
