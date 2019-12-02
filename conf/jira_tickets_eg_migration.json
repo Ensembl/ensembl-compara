@@ -1,4 +1,5 @@
-[{
+[
+    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
       "description": "Everything we need to do before taking over production of the <Division> division",
