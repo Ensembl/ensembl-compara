@@ -46,7 +46,7 @@ function process_server(server) { return function(json) {
     table.append('</tbody>');
 } }
 
-for(var j = 1; j < 9; j++){
+for(var j = 1; j < 11; j++){
     var endpoint = endpoint_ticket_list.replace('__RELEASE__', release).replace(/__SERVER__/g, j);
     console.log(endpoint);
     $('body').append('<div id="cp' + j + '"></div>');
