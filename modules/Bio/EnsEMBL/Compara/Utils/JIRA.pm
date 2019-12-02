@@ -378,20 +378,20 @@ sub _json_to_jira {
         push @{$jira_hash{'components'}}, { 'name' => $_ } for @{$extra_components};
     }
     # $jira_hash{'categories'}
-    $jira_hash{CATEGORY_CUSTOM_FIELD_ID} = [];
+    $jira_hash{CATEGORY_CUSTOM_FIELD_ID()} = [];
     if ($json_hash->{'category'}) {
-        push @{$jira_hash{CATEGORY_CUSTOM_FIELD_ID}}, { 'value' => $json_hash->{'category'} };
+        push @{$jira_hash{CATEGORY_CUSTOM_FIELD_ID()}}, { 'value' => $json_hash->{'category'} };
     } elsif ($json_hash->{'categories'}) {
-        push @{$jira_hash{CATEGORY_CUSTOM_FIELD_ID}}, { 'value' => $_ } for @{$json_hash->{'categories'}};
+        push @{$jira_hash{CATEGORY_CUSTOM_FIELD_ID()}}, { 'value' => $_ } for @{$json_hash->{'categories'}};
     }
     if ($extra_categories) {
-        push @{$jira_hash{CATEGORY_CUSTOM_FIELD_ID}}, { 'value' => $_ } for @{$extra_categories};
+        push @{$jira_hash{CATEGORY_CUSTOM_FIELD_ID()}}, { 'value' => $_ } for @{$extra_categories};
     }
-    unless (scalar(@{$jira_hash{CATEGORY_CUSTOM_FIELD_ID}})) {
+    unless (scalar(@{$jira_hash{CATEGORY_CUSTOM_FIELD_ID()}})) {
         # Fallback to automatically set the categories from the component names
         foreach my $component (map {$_->{'name'}} @{$jira_hash{'components'}}) {
             if (exists $component_to_category{$component}) {
-                push @{$jira_hash{CATEGORY_CUSTOM_FIELD_ID}}, { 'value' => $component_to_category{$component} };
+                push @{$jira_hash{CATEGORY_CUSTOM_FIELD_ID()}}, { 'value' => $component_to_category{$component} };
             }
         }
     }
@@ -414,7 +414,7 @@ sub _json_to_jira {
     }
     # $jira_hash{'division'}
     if ($self->{_division} ne '') {
-        $jira_hash{DIVISION_CUSTOM_FIELD_ID} = { 'value' => $self->{_division} };
+        $jira_hash{DIVISION_CUSTOM_FIELD_ID()} = { 'value' => $self->{_division} };
     }
     # $jira_hash{'assignee'}
     if ($json_hash->{'assignee'}) {
