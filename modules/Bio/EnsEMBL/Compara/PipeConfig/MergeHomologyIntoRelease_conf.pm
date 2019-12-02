@@ -55,7 +55,7 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
     Description : Implements default_options() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that is used to initialize default options.
                   In addition to the standard things it defines four options:
                     o('copying_capacity')   defines how many tables can be dumped and zipped in parallel
-                
+
                   There are rules dependent on two options that do not have defaults (this makes them mandatory):
                     o('password')       your read-write password for creation and maintenance of the hive database
 

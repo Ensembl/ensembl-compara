@@ -34,10 +34,6 @@ Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::GraftSubtrees
 
 Given a set of trees, graft subtrees together
 
-=head1 DESCRIPTION
-
-	
-
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::GraftSubtrees;

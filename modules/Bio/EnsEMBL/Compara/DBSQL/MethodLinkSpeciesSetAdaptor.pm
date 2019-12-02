@@ -46,14 +46,14 @@ and method_link tables
 
   my $method_link_species_set = $mlssa->fetch_by_method_link_type_species_set_name(
         "EPO", "mammals")
-  
+
   my $method_link_species_sets = $mlssa->fetch_all_by_method_link_type("LASTZ_NET");
 
   my $method_link_species_sets = $mlssa->fetch_all_by_GenomeDB($genome_db);
 
   my $method_link_species_sets = $mlssa->fetch_all_by_method_link_type_GenomeDB(
         "PECAN", $gdb1);
-  
+
   my $method_link_species_set = $mlssa->fetch_by_method_link_type_GenomeDBs(
         "TRANSLATED_BLAT", [$gdb1, $gdb2]);
 

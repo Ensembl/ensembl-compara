@@ -25,7 +25,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::MultiHMMLoadModels
 
-
 =head1 SYNOPSIS
 
 To load RFAM models from the FTP, use these parameters:

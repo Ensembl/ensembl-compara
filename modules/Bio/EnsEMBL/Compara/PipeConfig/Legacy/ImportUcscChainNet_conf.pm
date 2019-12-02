@@ -44,7 +44,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Legacy::ImportUcscChainNet_conf
         pipeline_db (-host)
         resource_classes 
         ref_species (if not homo_sapiens)
-        
+
     #5. Run init_pipeline.pl script: eg for human self alignments
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Legacy::ImportUcscChainNet_conf --dbname hsap_hsap_ucsc_test --password <your_password) -mlss_id 1 --ref_species homo_sapiens --non_ref_species homo_sapiens --chain_file hg19.hg19.all.chain --net_file hg19.hg19.net --ref_chromInfo_file hsap/chromInfo.txt --ref_ucsc_map ctgPos.txt --ucsc_url http://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/
 

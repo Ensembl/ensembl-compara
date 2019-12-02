@@ -23,10 +23,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::CopyTable
 
-=head1 SYNOPSIS
-
-	
-
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::CopyTable;

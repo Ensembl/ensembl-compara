@@ -34,9 +34,6 @@ Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::GroupSpecies
 
 Splits species into groups, depending on the NCBI taxonomy
 
-=head1 DESCRIPTION
- 
-
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::GroupSpecies;

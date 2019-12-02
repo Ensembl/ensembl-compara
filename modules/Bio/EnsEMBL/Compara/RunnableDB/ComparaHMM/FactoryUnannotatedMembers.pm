@@ -30,9 +30,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FactoryUnannotatedMembers
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 
 Fetch sorted list of member_ids and create jobs for the next analysis

@@ -39,7 +39,7 @@ Algorithm::Diff - Compute `intelligent' differences between two files / lists
   @diffs = diff( \@seq1, \@seq2 );
 
   @diffs = diff( \@seq1, \@seq2, $key_generation_function );
-  
+
   traverse_sequences( \@seq1, \@seq2,
                      { MATCH => $callback,
                        DISCARD_A => $callback,
