@@ -79,7 +79,7 @@ matrix:
 
     # Python pylint check
     - language: python
-      python: 3.6
+      python: 3.6             # 3.8 is not available on Trusty builds
       name: "Python linter"
       before_install:
         - echo
