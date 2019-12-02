@@ -148,7 +148,7 @@ sub _dump_fasta {
       $self->complete_early( "Not enough sequences in current anchor - omitting" );
   }
 
-  my $fasta_files;
+  my $fasta_files = '';
   foreach my $anchor_align (@$all_anchor_aligns) {
 
     my $anchor_align_id = $anchor_align->dbID;
@@ -363,4 +363,3 @@ sub get_trimmed_anchor_aligns {
 }
 
 1;
-
