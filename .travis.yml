@@ -50,13 +50,8 @@ before_script:
 
 script: travis_wait 40 "./travisci/perl-unittest_harness.sh"
 
+# What jobs to run and in which order
 jobs:
-  include:
-  - stage: trigger_dependent_builds
-    script: "./travisci/trigger-dependent-build.sh"
-
-# Get the matrix to only build coveralls support on the latest Perl
-matrix:
   include:
     - language: perl
       perl: 5.30
@@ -86,4 +81,11 @@ matrix:
       install:
         - pip install -r requirements.txt
       script: ./travisci/pylint_harness.sh
+
+    - stage: "trigger dependent builds"
+      before_install:
+        - echo
+      install:
+        - echo
+      script: ./travisci/trigger-dependent-build.sh
 
