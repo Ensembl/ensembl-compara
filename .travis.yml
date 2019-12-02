@@ -60,12 +60,12 @@ jobs:
 
     - language: perl
       perl: 5.14
-      name: "Perl unit tests (minimum Perl version)"
+      name: "Perl unit tests on the minimum version"
       env: COVERALLS=false
 
     - language: perl
       perl: 5.30
-      name: "Perl unit tests (latest Perl)"
+      name: "Perl unit tests on the latest version, with code coverage"
       env: COVERALLS=true
 
     - language: perl
