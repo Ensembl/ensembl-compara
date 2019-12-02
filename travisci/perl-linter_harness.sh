@@ -16,8 +16,6 @@
 # limitations under the License.
 
 
-echo "We are running Perl '$TRAVIS_PERL_VERSION'"
-
 # Setup the environment variables
 export PERL5LIB=$PERL5LIB:$PWD/modules
 export PERL5LIB=$PERL5LIB:$PWD/ensembl/modules
