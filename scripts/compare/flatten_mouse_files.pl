@@ -15,10 +15,10 @@
 # limitations under the License.
 
 
-=pod
+=head1 DESCRIPTION
 
-    This script fetches data from MGI and maps its ids with Ensembl stable ids.
-    MGI annotations come dorectly from the web [http://www.genenames.org]
+This script fetches data from MGI and maps its ids with Ensembl stable ids.
+MGI annotations come dorectly from the web [http://www.genenames.org]
 
 =cut
 
