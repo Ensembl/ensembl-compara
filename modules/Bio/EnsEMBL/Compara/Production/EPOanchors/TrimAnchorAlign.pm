@@ -78,7 +78,6 @@ sub fetch_input {
    $self->param('anchor_aligns',[]);
   my $anchor_align_adaptor = $self->compara_dba()->get_AnchorAlignAdaptor();
   ## This method returns a hash at the moment, not the objects
-#   print "Fetching AnchorAligns for Anchor ", $self->param('anchor_id'), " and MLSS ", $self->{'method_link_species_set_id'}, "\n";
   my $anchor_aligns = $anchor_align_adaptor->fetch_all_by_anchor_id_and_mlss_id(
       $self->param('anchor_id'), $self->param('method_link_species_set_id') );
   die "Cannot find any anchor_align with anchor_id = ". $self->param('anchor_id').
@@ -96,16 +95,6 @@ sub fetch_input {
 
 sub run {
   my $self = shift;
-  
-  # if ( $self->debug ) {
-  #   my $personal_debug_dir = "/homes/carlac/gpfs_nobackup/epo_migration_testing/pt2/";
-  #   foreach my $f ( @{ $self->param('fasta_files') } ) {
-  #     my $this_file = $f;
-  #     $this_file =~ s/\/tmp\//$personal_debug_dir/;
-  #     print " --- Copying $f\t->\t$this_file\n";
-  #     system("cp $f $this_file");
-  #   }
-  # }
   
   my @ortheus_cmd = ($self->param('ortheus_c_exe'));
   push @ortheus_cmd, '-A', $self->param_required('fasta_files_hub');
@@ -159,8 +148,7 @@ sub _dump_fasta {
       $self->complete_early( "Not enough sequences in current anchor - omitting" );
   }
 
-  my $fasta_files_hub = $self->worker_temp_directory . "/fasta_files_hub.txt";
-  open(my $hub_file, '>', $fasta_files_hub) or die "Cannot open '$fasta_files_hub': $!";
+  my $fasta_files;
   foreach my $anchor_align (@$all_anchor_aligns) {
 
     my $anchor_align_id = $anchor_align->dbID;
@@ -181,18 +169,16 @@ sub _dump_fasta {
 
     $self->_spurt($file, "$header\n$seq\n");
 
-    print $hub_file "$file\n";
-
+    $fasta_files .= "$file\n";
   }
-  close($hub_file);
-  $self->param('fasta_files_hub', $fasta_files_hub);
+  my $fasta_files_hub_path = $self->worker_temp_directory . "/fasta_files_hub.txt";
+  $self->_spurt($fasta_files_hub_path, $fasta_files);
+  $self->param('fasta_files_hub', $fasta_files_hub_path);
 
   # Dump the tree string into a file
   substr($tree_str, -1, 1, ");");
   my $tree_file_path = $self->worker_temp_directory . "/newick_tree.nw";
-  open(my $tree_file, '>', $tree_file_path) or die "Cannot open '$tree_file_path': $!";
-  print $tree_file $tree_str;
-  close($tree_file);
+  $self->_spurt($tree_file_path, $tree_str);
   $self->param('tree_file', $tree_file_path);
 
   return 1;
