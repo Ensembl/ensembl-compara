@@ -7,11 +7,6 @@ $.urlParam = function(name){
     return decodeURI(results[1]) || 0;
 }
 
-// https://stackoverflow.com/a/3291856
-String.prototype.capitalize = function() {
-    return this.charAt(0).toUpperCase() + this.slice(1);
-}
-
 // fetch ticket status from REST API
 var endpoint_ticket_list = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/search/?jql=project=ENSCOMPARASW+AND+issuetype=Sub-task+AND+fixVersion="Ensembl+__RELEASE__"+AND+(description~"cp__SERVER__*"+OR+description~"prod-__SERVER__*")+AND+status="In+progress"+ORDER+BY+created+ASC,id+ASC&maxResults=500';
 var endpoint_ticket_query = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/issue';
