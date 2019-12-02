@@ -15,14 +15,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-tmpfile=$(mktemp)
 
-pylint --rcfile pylintrc scripts/ | grep -v "\-\-\-\-\-\-\-\-\-" | grep -v "Your code has been rated" | grep -v "\n\n" | sed '/^$/d' > "$tmpfile"
+echo "We are running Perl '$TRAVIS_PERL_VERSION'"
 
-if [ -s "$tmpfile" ]
-then
-    cat "$tmpfile"
-    unlink "$tmpfile"
-    exit 1
+# Setup the environment variables
+export PERL5LIB=$PERL5LIB:$PWD/modules
+export PERL5LIB=$PERL5LIB:$PWD/ensembl/modules
+export PERL5LIB=$PERL5LIB:$PWD/ensembl-test/modules
+export PERL5LIB=$PERL5LIB:$PWD/ensembl-io/modules
+
+prove -r ./travisci/perl-linter/
+rt1=$?
+
+# Check that all the PODs are valid (we don't mind missing PODs at the moment)
+# Note the initial "!" to negate grep's return code
+! find docs modules scripts sql travisci -iname '*.t' -o -iname '*.pl' -o -iname '*.pm' -print0 | xargs -0 podchecker 2>&1 | grep -v ' pod syntax OK' | grep -v 'does not contain any pod commands'
+rt2=$?
+
+if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then
+  exit 0
+else
+  exit 255
 fi
-unlink "$tmpfile"
