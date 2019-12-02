@@ -39,7 +39,7 @@ function process_division(division) { return function(json) {
         var summary = ticket.fields.summary;
         summary = summary.replace('Release ' + release, '');
         summary = summary.replace(division, '');
-        table.append( '<tr id="' + ticket.key + '"><td>' + summary.trim().capitalize() + '</td><td><a href="' + url_jira_issue + ticket.key + '">' + ticket.key + '</a></td><td></td></tr>' );
+        table.append( '<tr id="' + ticket.key + '"><td>' + summary.trim().capitalize() + '</td><td><a href="' + url_jira_issue + ticket.key + '">' + ticket.key + '</a></td></tr>' );
         var endpoint = endpoint_ticket_subtasks.replace('__PARENT__', ticket.key);
         console.log(endpoint);
         $.ajax(endpoint, {
