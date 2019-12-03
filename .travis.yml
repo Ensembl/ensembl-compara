@@ -85,6 +85,29 @@ jobs:
       script: ./travisci/perl-linter_harness.sh
 
     - language: python
+      dist: trusty   # 3.4 is the minimum on xenial
+      python: 3.2
+      name: "Python unit tests on the minimum version"
+      before_install:
+        - echo
+      install:
+        - pip install -r requirements.txt
+      before_script:
+        - echo
+      script: echo
+
+    - language: python
+      python: 3.8
+      name: "Python unit tests on the latest version, with code coverage"
+      before_install:
+        - echo
+      install:
+        - pip install -r requirements.txt
+      before_script:
+        - echo
+      script: echo
+
+    - language: python
       python: 3.8
       name: "Python linter"
       before_install:
