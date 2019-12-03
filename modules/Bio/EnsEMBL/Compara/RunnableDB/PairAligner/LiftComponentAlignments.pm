@@ -78,6 +78,10 @@ sub run {
 }
 
 
+=head2 _lift_gas_and_gabs
+
+=cut
+
 sub _lift_gas_and_gabs {
     my $self = shift;
     
@@ -87,9 +91,9 @@ sub _lift_gas_and_gabs {
 
     # Create the principal MLSS genomic_align_blocks in the correct range
     my $sql0 = "SELECT MIN(genomic_align_id % $magic_number), MAX(genomic_align_id % $magic_number), MIN(genomic_align_block_id % $magic_number), MAX(genomic_align_block_id % $magic_number), COUNT(*), COUNT(DISTINCT genomic_align_id % $magic_number), COUNT(DISTINCT genomic_align_block_id % $magic_number) FROM genomic_align WHERE method_link_species_set_id = ?";
-    my $sql1 = "INSERT INTO genomic_align_block SELECT (genomic_align_block_id % $magic_number) + ?, $principal_mlss_id, score, perc_id, length, group_id, level_id FROM genomic_align_block WHERE method_link_species_set_id = ?";
+    my $sql1 = "INSERT INTO genomic_align_block SELECT (genomic_align_block_id % $magic_number) + ?, ?, score, perc_id, length, group_id, level_id FROM genomic_align_block WHERE method_link_species_set_id = ?";
     # Update the genomic_align_ids and genomic_align_block_ids in genomic_align
-    my $sql2 = "UPDATE genomic_align SET genomic_align_block_id = (genomic_align_block_id % $magic_number) + ?, genomic_align_id = (genomic_align_id % $magic_number) + ?, method_link_species_set_id = $principal_mlss_id WHERE method_link_species_set_id = ?";
+    my $sql2 = "UPDATE genomic_align SET genomic_align_block_id = (genomic_align_block_id % $magic_number) + ?, genomic_align_id = (genomic_align_id % $magic_number) + ?, method_link_species_set_id = ? WHERE method_link_species_set_id = ?";
     # Remove the component MLSS genomic_align_blocks
     my $sql3 = "DELETE FROM genomic_align_block WHERE method_link_species_set_id = ?";
 
@@ -107,8 +111,8 @@ sub _lift_gas_and_gabs {
             # Lift the genomic_aligns and genomic_align_blocks from the
             # component MLSS to the principal MLSS
             print STDERR "Offsets for mlss_id=$mlss_id:\n\tgenomic_align_block_id=$offset_gab\n\tgenomic_align_id=$offset_ga\n";
-            print STDERR (my $nd = $dbc->do($sql1, undef, $offset_gab, $mlss_id)), " rows duplicated in genomic_align_block\n";
-            print STDERR $dbc->do($sql2, undef, $offset_gab, $offset_ga, $mlss_id), " rows of genomic_align redirected to the new entries in genomic_align_block\n";
+            print STDERR (my $nd = $dbc->do($sql1, undef, $offset_gab, $principal_mlss_id, $mlss_id)), " rows duplicated in genomic_align_block\n";
+            print STDERR $dbc->do($sql2, undef, $offset_gab, $offset_ga, $principal_mlss_id, $mlss_id), " rows of genomic_align redirected to the new entries in genomic_align_block\n";
             print STDERR (my $nr = $dbc->do($sql3, undef, $mlss_id)), " rows removed from genomic_align_block\n";
             die "Numbers mismatch: $nd rows duplicated and $nr removed\n" if ($nd != $nr);
             # Update the offsets
@@ -119,18 +123,22 @@ sub _lift_gas_and_gabs {
 }
 
 
+=head2 _update_dnafrags
+
+=cut
+
 sub _update_dnafrags {
     my $self = shift;
     
     my $principal_mlss_id  = $self->param_required('principal_mlss_id');
     
     # Update the dnafrag_ids in genomic_align from component to the principal
-    my $sql = "UPDATE genomic_align ga JOIN dnafrag d1 USING (dnafrag_id) JOIN dnafrag d2 USING (name) SET ga.dnafrag_id = d2.dnafrag_id WHERE d1.dnafrag_id != d2.dnafrag_id AND method_link_species_set_id = $principal_mlss_id";
+    my $sql = "UPDATE genomic_align ga JOIN dnafrag d1 USING (dnafrag_id) JOIN dnafrag d2 USING (name) SET ga.dnafrag_id = d2.dnafrag_id WHERE d1.dnafrag_id != d2.dnafrag_id AND method_link_species_set_id = ?";
 
     # We really need a transaction to ensure we are not screwing the database
     my $dbc = $self->compara_dba->dbc;
     $self->call_within_transaction(sub {
-        print STDERR (my $nr = $dbc->do($sql)), " rows of genomic_align redirected to the principal dnafrags\n";
+        print STDERR (my $nr = $dbc->do($sql, undef, $principal_mlss_id)), " rows of genomic_align redirected to the principal dnafrags\n";
         die "No rows where updated\n" unless $nr;
     });
 }
