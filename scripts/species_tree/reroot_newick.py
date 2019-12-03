@@ -30,7 +30,7 @@ opts = parser.parse_args(sys.argv[1:])
 
 # check arguments
 if not os.path.isfile(opts.tree):
-    sys.stderr.write("File %s not found", opts.tree)
+    sys.stderr.write("File {0} not found".format(opts.tree))
     sys.exit(1)
 
 try:
