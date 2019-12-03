@@ -63,7 +63,7 @@ sub default_options {
         'outgroup'        => 'saccharomyces_cerevisiae',
 
         'output_dir'        => $self->o('pipeline_dir'),
-        'sketch_dir'        => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/species_tree/' . $self->o('division') . '_sketches',
+        'sketch_dir'        => $self->o('shared_hps_dir') . '/species_tree/' . $self->o('division') . '_sketches',
         'write_access_user' => $self->o('shared_user'),
 
         'mash_kmer_size'    => 24,

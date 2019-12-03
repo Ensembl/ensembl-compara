@@ -457,4 +457,22 @@ sub complete_early_if_branch_connected {
 }
 
 
+=head2 die_no_retry
+
+  Example     : $self->die_no_retry("GenomeDB dbID=45 is missing");
+  Description : Make the job "die" with the given error, but also tell eHive
+                that it is not worth retrying the job (the error is not
+                "transient").
+  Returntype  : none
+  Exceptions  : die
+
+=cut
+
+sub die_no_retry {
+    my $self = shift;
+    $self->input_job->transient_error(0);
+    die @_;
+}
+
+
 1;
