@@ -44,52 +44,26 @@ my $test_flatfile = abs_path($0);
 $test_flatfile    =~ s!PrepareOrthologs\.t!homology_flatfiles/wga.test.tsv!;
 my $test_map_file = abs_path($0);
 $test_map_file    =~ s!PrepareOrthologs\.t!homology_flatfiles/prep_orth.hom_map.tsv!;
-print "\n --- test flatfile: $test_flatfile\n";
-print "\n --- test map_file: $test_map_file\n";
+print "--- test flatfile: $test_flatfile\n";
+print "--- test map_file: $test_map_file\n";
 
 # Test on pair of species without reuse #
-$exp_dataflow = [
-	{ orth_batch => [
-		{   id => 101, 
-			orth_ranges => { 134 => [41216073, 41216526], 150 => [33638035, 33638494]}, 
-			orth_dnafrags => [ 
-				{ id => 13705550, start => 41216073, end => 41216526 },
-				{ id => 13955529, start => 33638035, end => 33638494 },
-			],
-			exons => { 134 => [[1,1000]], 150 => [[1,1000]] },
-		}
-	]},
-	{ orth_batch => [
-		{   id => 102, 
-			orth_ranges => { 134 => [41227505, 41227993], 150 => [33638035, 33638494]}, 
-			orth_dnafrags => [
-				{ id => 13705550, start => 41227505, end => 41227993 },
-				{ id => 13955529, start => 33638035, end => 33638494 }
-			],
-			exons => { 134 => [[1,1000]], 150 => [[1,1000]] },
-		}
-	]},
-	{ orth_batch => [
-		{   id => 103, 
-			orth_ranges => { 134 => [41216073, 41216526], 150 => [142645961, 142646467]}, 
-			orth_dnafrags => [
-				{ id => 13705550, start => 41216073,  end => 41216526  },
-				{ id => 13955533, start => 142645961, end => 142646467 },
-			],
-			exons => { 134 => [[1,1000]], 150 => [[1,1000]] },
-		}
-	]},
-];
+$exp_dataflow = { orth_info => [
+    { id => 101, gene_members => [ [9263633, 134], [9274269, 150] ]},
+    { id => 102, gene_members => [ [9263637, 134], [9274269, 150] ]},
+    { id => 103, gene_members => [ [9263633, 134], [9284238, 150] ]},
+]};
 
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs', # module
 	{ # input param hash
+        'orth_mlss_id'      => '12345',
 		'species1_id'       => '150',
 		'species2_id'       => '134',
 		'compara_db'        => $compara_db,
 		'orth_batch_size'   => 1,
 		'homology_flatfile' => $test_flatfile,
-        	'homology_mapping_flatfile' => $test_map_file,
+        'homology_mapping_flatfile' => $test_map_file,
 	},
 	[ # list of events to test for (just 1 event in this case)
 		[ # start event
@@ -105,82 +79,63 @@ my $dba_prev = $multi_db->get_DBAdaptor('cc21_prev_orth_test');
 my $dbc_prev = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $dba_prev->dbc);
 my $prev_compara_db = $dbc_prev->url;
 
-my $exp_dataflow_1 = { # expecting the reusable homology ids
-	previous_rel_db  => $prev_compara_db, #url
-	current_db       => $compara_db,
-	homology_ids     => [[102, 2], [103, 3]],
-};
-
-my $exp_dataflow_2 = [  { orth_batch => 
-	[ 
-		{   id => 101, 
-			orth_ranges => { 134 => [41216073, 41216526], 150 => [33638035, 33638494]}, 
-			orth_dnafrags => [ 
-				{ id => 13705550, start => 41216073, end => 41216526 },
-				{ id => 13955529, start => 33638035, end => 33638494 },
-			],
-			exons => { 134 => [[1,1000]], 150 => [[1,1000]] }, 
-		}
-	]
-}];
+my $exp_dataflow_2 = { orth_info => [
+    { id => 101, gene_members => [ [9263633, 134], [9274269, 150] ]}
+]};
 
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs', # module
 	{ # input param hash
+        'orth_mlss_id'      => '12345',
 		'species1_id'       => '150',
 		'species2_id'       => '134',
 		'compara_db'        => $compara_db,
 		'previous_rel_db'   => $prev_compara_db,
 		'orth_batch_size'   => 1,
-        	'homology_flatfile' => $test_flatfile,
-        	'homology_mapping_flatfile' => $test_map_file,
-	},
-	[ # list of events to test for (just 1 event in this case)
-		[ # start event
-			'DATAFLOW', # event to test for (could be WARNING)
-			$exp_dataflow_2, # expected data flowed out
-			2 # dataflow branch
-		], # end event
-		[
-          'DATAFLOW',
-          [
-          	{ reuse_list => [ { 'prev_wga_score' => '100.00', 'homology_id' => '102' } ] },
-            { reuse_list => [ { 'prev_wga_score' => '100.00', 'homology_id' => '103' } ] },
-          ],
-          3
-        ]
-	]
+        'homology_flatfile' => $test_flatfile,
+        'homology_mapping_flatfile' => $test_map_file,
+        'previous_wga_file'         => 'prev_wga_file.tsv',
+    },
+    [ # list of events to test for
+        [
+            'DATAFLOW',
+            { orth_mlss_id => '12345' },
+            3
+        ],
+        [
+            'DATAFLOW',
+            $exp_dataflow_2,
+            2
+        ],
+    ]
 );
 
 # test reuse output with different batch size
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs', # module
 	{ # input param hash
+        'orth_mlss_id'      => '12345',
 		'species1_id'       => '150',
 		'species2_id'       => '134',
 		'compara_db'        => $compara_db,
 		'previous_rel_db'   => $prev_compara_db,
 		'orth_batch_size'   => 2,
-        	'homology_flatfile' => $test_flatfile,
-        	'homology_mapping_flatfile' => $test_map_file,
-	},
-	[ # list of events to test for (just 1 event in this case)
-		[ # start event
-			'DATAFLOW', # event to test for (could be WARNING)
-			$exp_dataflow_2, # expected data flowed out
-			2 # dataflow branch
-		], # end event
-		[
-          'DATAFLOW',
-          [
-          	{ reuse_list => [
-          		{ 'prev_wga_score' => '100.00', 'homology_id' => '102' },
-                { 'prev_wga_score' => '100.00', 'homology_id' => '103' } 
-            ]},
-          ],
-          3
-        ]
-	]
+        'homology_flatfile' => $test_flatfile,
+        'homology_mapping_flatfile' => $test_map_file,
+        'previous_wga_file'         => 'prev_wga_file.tsv',
+    },
+    [ # list of events to test for
+        [
+            'DATAFLOW',
+            { orth_mlss_id => '12345' },
+            3
+        ],
+        [
+            'DATAFLOW',
+            $exp_dataflow_2,
+            2
+        ],
+    ]
 );
 
 
