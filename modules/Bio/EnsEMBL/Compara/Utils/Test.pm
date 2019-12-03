@@ -58,12 +58,8 @@ my $repository_root;
 
 sub get_repository_root {
     return $repository_root if $repository_root;
-    my $file_dir = dirname(__FILE__);
-    my $original_dir = cwd();
-    chdir($file_dir);
-    my $cur_dir = cwd();
-    chdir($original_dir);
-    $repository_root = File::Spec->catdir($cur_dir, File::Spec->updir(), File::Spec->updir(), File::Spec->updir(), File::Spec->updir(), File::Spec->updir());
+    my $file_dir = dirname(abs_path(__FILE__));
+    $repository_root = File::Spec->catdir($file_dir, File::Spec->updir(), File::Spec->updir(), File::Spec->updir(), File::Spec->updir(), File::Spec->updir());
     return $repository_root;
 }
 
