@@ -17,12 +17,12 @@
 
 tmpfile=$(mktemp)
 
-pylint --rcfile pylintrc scripts/ | grep -v "\-\-\-\-\-\-\-\-\-" | grep -v "Your code has been rated" | grep -v "\n\n" | sed '/^$/d' > "$tmpfile"
+PYLINT_OUTPUT_FILE=$(mktemp)
+PYLINT_ERRORS=$(mktemp)
+pylint --rcfile pylintrc --verbose scripts/ | tee "$PYLINT_OUTPUT_FILE"
+grep -v "\-\-\-\-\-\-\-\-\-" "$PYLINT_OUTPUT_FILE" | grep -v "Your code has been rated" | grep -v "\n\n" | sed '/^$/d' > "$PYLINT_ERRORS"
+! [ -s "$PYLINT_ERRORS" ]
+rt1=$?
+rm "$PYLINT_OUTPUT_FILE" "$PYLINT_ERRORS"
+exit $rt1
 
-if [ -s "$tmpfile" ]
-then
-    cat "$tmpfile"
-    unlink "$tmpfile"
-    exit 1
-fi
-unlink "$tmpfile"
