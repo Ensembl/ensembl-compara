@@ -21,6 +21,7 @@ use Data::Dumper;
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Test::MultiTestDB;
+use Bio::EnsEMBL::Utils::IO qw(slurp);
 
 BEGIN {
     use Test::Most;
@@ -78,6 +79,30 @@ is( $hom_7->goc_score, 75, 'correct score (75) for homology_id 7' );
 my $hom_12 = $homology_adaptor->fetch_by_dbID(12);
 is( $hom_12->goc_score, 100, 'correct score (100) for homology_id 12' );
 
+##############################
+#    Test flatfile output    #
+##############################
+
+my $output_file = "goc.test.out";
+standaloneJob(
+	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::GeneOrderConservation', # module
+	{ # input param hash
+	    'goc_mlss_id'       => $goc_mlss_id,
+        'homology_flatfile' => "$test_flatfile_dir/goc.test.#goc_mlss_id#.tsv",
+        'compara_db'        => $compara_dba->url,
+        'output_file'       => $output_file,
+	}
+);
+
+ok( -e $output_file, 'output file exists' );
+my @goc_contents = map { [split(/\s+/)] } split("\n", slurp($output_file));
+my %goc_file_scores = map { $_->[0] => $_->[1] } @goc_contents;
+is( $goc_file_scores{1},    0, 'correct score (  0) from file for homology_id 1' );
+is( $goc_file_scores{11},  25, 'correct score ( 25) from file for homology_id 11' );
+is( $goc_file_scores{2},   50, 'correct score ( 50) from file for homology_id 2' );
+is( $goc_file_scores{7},   75, 'correct score ( 75) from file for homology_id 7' );
+is( $goc_file_scores{12}, 100, 'correct score (100) from file for homology_id 12' );
+unlink $output_file;
 
 ###################
 # Test polyploidy #
