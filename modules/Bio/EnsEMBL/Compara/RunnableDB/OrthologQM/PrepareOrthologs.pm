@@ -81,7 +81,7 @@ sub fetch_input {
         my $row = map_row_to_header( $line, \@head_cols );
         push @current_homologs, $row;
     }
-    
+
     if ( defined $self->param('previous_wga_file') ){ # reuse is on
         my $nonreuse_homologs = $self->_reusable_homologies( $dba, \@current_homologs );
         $self->param( 'orth_objects', $nonreuse_homologs );
@@ -92,22 +92,8 @@ sub fetch_input {
 
     # Load member info
     # seq_member.has_transcript_edits
-    # gene_member.dnafrag_id, gene_member.dnafrag_start, gene_member.dnafrag_end
-    $self->_load_member_info;
+    $self->_load_seq_member_info;
 
-    # Preload the exon boundaries for the whole genomes even though some of the members will be reused
-    my $sql = 'SELECT gene_member_id, eb.dnafrag_start, eb.dnafrag_end FROM exon_boundaries eb JOIN gene_member USING (gene_member_id) WHERE genome_db_id IN (?,?)';
-    my %exon_boundaries;
-    my $sth = $dba->dbc->prepare($sql);
-    $sth->execute($species1_id, $species2_id);
-    while (my $row = $sth->fetchrow_arrayref()) {
-        my ($gene_member_id, $dnafrag_start, $dnafrag_end) = @$row;
-        push @{ $exon_boundaries{$gene_member_id} }, [$dnafrag_start, $dnafrag_end];
-    }
-    $sth->finish;
-    $self->param('exon_boundaries', \%exon_boundaries);
-
-    # disconnect from compara_db
     $dba->dbc->disconnect_if_idle();
 }
 
@@ -124,18 +110,13 @@ sub run {
     $self->dbc->disconnect_if_idle() if $self->dbc;
 
     my @orth_info;
-    my $c = 0;
-
-    my $exon_boundaries = $self->param('exon_boundaries');
-    my $member_info     = $self->param('member_info');
+    my $member_info = $self->param('member_info');
 
     my @orth_objects = sort {$a->{homology_id} <=> $b->{homology_id}} @{ $self->param('orth_objects') };
     while ( my $orth = shift( @orth_objects ) ) {
         my @seq_member_ids = ($orth->{seq_member_id}, $orth->{hom_seq_member_id});
-        my (%orth_ranges, @orth_dnafrags, %orth_exons);
         my $has_transcript_edits = 0;
         foreach my $sm_id ( @seq_member_ids ){
-            # $has_transcript_edits ||= $sm->has_transcript_edits;
             $has_transcript_edits ||= $member_info->{"seq_member_$sm_id"};
         }
         # When there are transcript edits, the coordinates cannot be
@@ -143,31 +124,10 @@ sub run {
         next if $has_transcript_edits;
         
         my @gene_member_ids = ([$orth->{gene_member_id}, $orth->{genome_db_id}], [$orth->{hom_gene_member_id}, $orth->{hom_genome_db_id}]);
-        foreach my $gm ( @gene_member_ids ) {
-            my ( $gm_id, $gdb_id ) = @$gm;
-            push( @orth_dnafrags, { 
-                id => $member_info->{"gene_member_$gm_id"}->{dnafrag_id}, 
-                start => $member_info->{"gene_member_$gm_id"}->{dnafrag_start}, 
-                end => $member_info->{"gene_member_$gm_id"}->{dnafrag_end} 
-            } );
-            $orth_ranges{$gdb_id} = [ $member_info->{"gene_member_$gm_id"}->{dnafrag_start}, $member_info->{"gene_member_$gm_id"}->{dnafrag_end} ];
-            
-            # get exon locations
-            $orth_exons{$gdb_id} = $exon_boundaries->{$gm_id};
-        }
-
-        
-
         push( @orth_info, { 
-            id       => $orth->{homology_id}, 
-            orth_ranges   => \%orth_ranges, 
-            orth_dnafrags => [sort {$a->{id} <=> $b->{id}} @orth_dnafrags],
-            exons         => \%orth_exons,
-            # may need to add aln_mlss_ids in here!!? 
-            # depends next runnable can see the param through the stack..
+            id            => $orth->{homology_id},
+            gene_members  => \@gene_member_ids,
         } );
-        $c++;
-        # last if $c >= 10;
     }
     $self->param( 'orth_info', \@orth_info );
 }
@@ -181,11 +141,11 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    $self->dataflow_output_id( { orth_info => $self->param('orth_info') }, 2 ); # to calculate_coverage
-
     if ( $self->param('previous_wga_file') ){ # reuse is on
         $self->dataflow_output_id( {orth_mlss_id => $self->param('orth_mlss_id')}, 3 ); # to reuse_wga_score
     }
+
+    $self->dataflow_output_id( { orth_info => $self->param('orth_info') }, 2 ); # to calculate_coverage
 }
 
 =head2 _reuse_homologies
@@ -228,23 +188,20 @@ sub _reusable_homologies {
     return \@dont_reuse;
 }
 
-=head2 _load_member_info
+=head2 _load_seq_member_info
 
 Load info for seq_members and gene_memmbers that are members of a homology
 - seq_member.has_transcript_edits
-- gene_member.dnafrag_id, gene_member.dnafrag_start, gene_member.dnafrag_end
 Store it in a param 'member_info'
 
 =cut
 
-sub _load_member_info {
+sub _load_seq_member_info {
     my $self = shift;
-    
+
     my $dba = $self->param('current_dba');
     my $sm_sql = 'SELECT has_transcript_edits FROM seq_member WHERE seq_member_id = ?';
     my $sm_sth = $dba->dbc->prepare($sm_sql);
-    my $gm_sql = 'SELECT dnafrag_id, dnafrag_start, dnafrag_end FROM gene_member WHERE gene_member_id = ?';
-    my $gm_sth = $dba->dbc->prepare($gm_sql);
 
     my $homologies = $self->param('orth_objects');
     my $member_info;
@@ -255,13 +212,8 @@ sub _load_member_info {
         $member_info->{"seq_member_$sm_id_1"} = $sm_sth->fetchrow_arrayref->[0];
         $sm_sth->execute($sm_id_2);
         $member_info->{"seq_member_$sm_id_2"} = $sm_sth->fetchrow_arrayref->[0];
-        
-        $gm_sth->execute($gm_id_1);
-        $member_info->{"gene_member_$gm_id_1"} = $gm_sth->fetchrow_hashref;
-        $gm_sth->execute($gm_id_2);
-        $member_info->{"gene_member_$gm_id_2"} = $gm_sth->fetchrow_hashref;
     }
-    
+
     $self->param('member_info', $member_info);
 }
 

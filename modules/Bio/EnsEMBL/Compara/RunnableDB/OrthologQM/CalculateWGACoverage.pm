@@ -41,13 +41,17 @@ Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage
 	species2_id		genome_db_id of second species |-> these are only used to limit multiple alignment blocks
 
 	Outputs:
-	Dataflow fan: { 
-			gblock_id => dbID, 
-			gblock_range => [start,end],
-			orth_ranges  => $self->param('orth_ranges'),
-			orth_id      => $self->param('orth_id'),
-			orth_exons   => $self->param('orth_exons'),
-		}
+	Dataflow to ortholog_quality table:
+    {
+        homology_id              => $homology_id,
+        genome_db_id             => $gdb_id,
+        alignment_mlss           => $aln_mlss,
+        combined_exon_coverage   => $combined_coverage->{exon},
+        combined_intron_coverage => $combined_coverage->{intron},
+        quality_score            => $combined_coverage->{score},
+        exon_length              => $combined_coverage->{exon_len},
+        intron_length            => $combined_coverage->{intron_len},
+    }
 
 =cut
 
@@ -69,12 +73,19 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
 	my $self = shift;
 
+    my $hom_dba = $self->param('alt_homology_db') ? $self->get_cached_compara_dba('alt_homology_db') : $self->compara_dba;
+    $self->param('homology_dba', $hom_dba);
+
 	my %aln_ranges;
 	my @orth_info = @{ $self->param_required('orth_info') };
-        
+
+    $self->_load_member_info;
+    $self->_load_exon_boundaries;
+
+    # disconnect from homology_dba
+    $hom_dba->dbc->disconnect_if_idle();
+
 	my $dba = $self->get_cached_compara_dba('alignment_db');
-	# if ( $self->param('alt_aln_db') ) { $dba = $self->get_cached_compara_dba('alt_aln_db'); }
-	# else { $dba = $self->compara_dba }
 	my $do_disconnect = $self->dbc && ($dba->dbc ne $self->dbc);
 	
 	my $mlss_adap       = $dba->get_MethodLinkSpeciesSetAdaptor;
@@ -84,16 +95,16 @@ sub fetch_input {
 	$self->db->dbc->disconnect_if_idle if $do_disconnect;
 
 	foreach my $orth ( @orth_info ) {
-		my @orth_dnafrags = @{ $orth->{ 'orth_dnafrags'} };
+        my ($orth_dnafrags, $orth_ranges) = $self->_orth_dnafrags($orth);
 		my @aln_mlss_ids  = @{ $self->param_required( 'aln_mlss_ids' ) };
-		
-		my $s1_dnafrag = $dnafrag_adaptor->fetch_by_dbID( $orth_dnafrags[0]->{id} );
-		my $s2_dnafrag = $dnafrag_adaptor->fetch_by_dbID( $orth_dnafrags[1]->{id} );
+
+		my $s1_dnafrag = $dnafrag_adaptor->fetch_by_dbID( $orth_dnafrags->[0]->{id} );
+		my $s2_dnafrag = $dnafrag_adaptor->fetch_by_dbID( $orth_dnafrags->[1]->{id} );
 
 		for my $aln_mlss_id ( @aln_mlss_ids ) {
                     my $aln_coords = $gblock_adap->_alignment_coordinates_on_regions($aln_mlss_id,
-                        $orth_dnafrags[0]->{id}, $orth_dnafrags[0]->{start}, $orth_dnafrags[0]->{end},
-                        $orth_dnafrags[1]->{id}, $orth_dnafrags[1]->{start}, $orth_dnafrags[1]->{end},
+                        $orth_dnafrags->[0]->{id}, $orth_dnafrags->[0]->{start}, $orth_dnafrags->[0]->{end},
+                        $orth_dnafrags->[1]->{id}, $orth_dnafrags->[1]->{start}, $orth_dnafrags->[1]->{end},
                     );
 
                     if ( scalar( @$aln_coords ) < 1 ) {
@@ -108,8 +119,8 @@ sub fetch_input {
                     }
                 }
 	}
-	
-	# disconnect from compara_db
+
+	# disconnect from alignment_db
 	$dba->dbc->disconnect_if_idle();
 
 	$self->param( 'aln_ranges', \%aln_ranges );
@@ -129,13 +140,12 @@ sub run {
 
 	my (@qual_summary, @orth_ids);
 	foreach my $orth ( @orth_info ) {
-		my @orth_dnafrags = @{ $orth->{ 'orth_dnafrags'} };
+        my ($orth_dnafrags, $orth_ranges) = $self->_orth_dnafrags($orth);
 		my @aln_mlss_ids  = @{ $self->param_required( 'aln_mlss_ids' ) };
 
-		my $orth_ranges    = $orth->{ 'orth_ranges' };
 		my $homo_id        = $orth->{'id'};
 		my $this_aln_range = $aln_ranges{ $homo_id  };
-		my $exon_ranges    = $orth->{ 'exons' };
+        my $exon_ranges    = $self->_get_exon_ranges_for_orth($orth);
 
 		push( @orth_ids, $homo_id );
 
@@ -154,7 +164,7 @@ sub run {
 						  quality_score            => $combined_coverage->{score},
 						  exon_length              => $combined_coverage->{exon_len},
 						  intron_length            => $combined_coverage->{intron_len},
-						} 
+						}
 					);
 				}
 			}
@@ -307,6 +317,88 @@ sub _quality_score {
 	$score = 100 if ( $score > 100 );
 
 	return $score;
+}
+
+sub _load_exon_boundaries {
+    my ( $self ) = @_;
+
+    my $species1_id = $self->param_required('species1_id');
+    my $species2_id = $self->param_required('species2_id');
+    my $dba = $self->param('homology_dba');
+
+    # Preload the exon boundaries for the whole genomes even though some of the members will be reused
+    my $sql = 'SELECT gene_member_id, eb.dnafrag_start, eb.dnafrag_end FROM exon_boundaries eb JOIN gene_member USING (gene_member_id) WHERE genome_db_id IN (?,?)';
+    my %exon_boundaries;
+    my $sth = $dba->dbc->prepare($sql);
+    $sth->execute($species1_id, $species2_id);
+    while (my $row = $sth->fetchrow_arrayref()) {
+        my ($gene_member_id, $dnafrag_start, $dnafrag_end) = @$row;
+        push @{ $exon_boundaries{$gene_member_id} }, [$dnafrag_start, $dnafrag_end];
+    }
+    $sth->finish;
+    $self->param('exon_boundaries', \%exon_boundaries);
+}
+
+sub _get_exon_ranges_for_orth {
+    my ( $self, $orth ) = @_;
+
+    my $exon_boundaries = $self->param('exon_boundaries');
+    my $gene_members = $orth->{'gene_members'};
+    my %orth_exons;
+    foreach my $member_info ( @$gene_members ) {
+        my ( $gm_id, $gdb_id ) = @$member_info;
+        $orth_exons{$gdb_id} = $exon_boundaries->{$gm_id};
+    }
+    return \%orth_exons;
+}
+
+=head2 _load_member_info
+
+Load info for seq_members and gene_memmbers that are members of a homology
+- seq_member.has_transcript_edits
+- gene_member.dnafrag_id, gene_member.dnafrag_start, gene_member.dnafrag_end
+Store it in a param 'member_info'
+
+=cut
+
+sub _load_member_info {
+    my $self = shift;
+
+    my $dba = $self->param('homology_dba');
+    my $gm_sql = 'SELECT dnafrag_id, dnafrag_start, dnafrag_end FROM gene_member WHERE gene_member_id = ?';
+    my $gm_sth = $dba->dbc->prepare($gm_sql);
+
+    my $homologies = $self->param('orth_info');
+    my $member_info;
+    foreach my $hom ( @$homologies ) {
+        my ( $gm_id_1, $gm_id_2 ) = ( $hom->{gene_members}->[0]->[0], $hom->{gene_members}->[1]->[0] );
+
+        $gm_sth->execute($gm_id_1);
+        $member_info->{"gene_member_$gm_id_1"} = $gm_sth->fetchrow_hashref;
+        $gm_sth->execute($gm_id_2);
+        $member_info->{"gene_member_$gm_id_2"} = $gm_sth->fetchrow_hashref;
+    }
+
+    $self->param('member_info', $member_info);
+}
+
+sub _orth_dnafrags {
+    my ( $self, $orth ) = @_;
+
+    my $member_info  = $self->param('member_info');
+    my $gene_members = $orth->{'gene_members'};
+    my (%orth_ranges, @orth_dnafrags);
+    foreach my $gm ( @$gene_members ) {
+        my ( $gm_id, $gdb_id ) = @$gm;
+        push( @orth_dnafrags, {
+            id => $member_info->{"gene_member_$gm_id"}->{dnafrag_id},
+            start => $member_info->{"gene_member_$gm_id"}->{dnafrag_start},
+            end => $member_info->{"gene_member_$gm_id"}->{dnafrag_end}
+        } );
+        $orth_ranges{$gdb_id} = [ $member_info->{"gene_member_$gm_id"}->{dnafrag_start}, $member_info->{"gene_member_$gm_id"}->{dnafrag_end} ];
+    }
+
+    return ( \@orth_dnafrags, \%orth_ranges );
 }
 
 1;
