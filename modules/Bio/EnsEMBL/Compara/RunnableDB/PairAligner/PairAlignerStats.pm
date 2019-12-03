@@ -106,6 +106,9 @@ sub fetch_input {
   my ($self) = @_;
 
   return if ($self->param('skip'));
+
+  $self->param_required('bed_dir');
+
   #Find the mlss_id from the method_link_type and genome_db_ids
   my $mlss;
   my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -218,7 +221,7 @@ sub dump_bed_file {
        $species_arg  .= " --component ".$genome_db->genome_component if $genome_db->genome_component;
     
     #Check if file already exists
-    my $genome_bed_file = $self->param_required('bed_dir') ."/" . $name . "." . $genome_db->dbID . "." . "genome.bed";
+    my $genome_bed_file = $self->param('bed_dir') ."/" . $name . "." . $genome_db->dbID . "." . "genome.bed";
 
     if (-e $genome_bed_file && !(-z $genome_bed_file)) {
 	print "$genome_bed_file already exists and not empty. Not overwriting.\n";

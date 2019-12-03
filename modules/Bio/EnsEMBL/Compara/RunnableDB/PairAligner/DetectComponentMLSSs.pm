@@ -75,12 +75,8 @@ sub fetch_input {
     my %mlsss;
     foreach my $mlss_id ( @{$net_mlss_ids} ) {
         my $this_mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
-        my $principal_mlss_id = $this_mlss->get_tagvalue('principal_mlss_id');
-        if (defined $principal_mlss_id) {
-            push @{$mlsss{$principal_mlss_id}}, $mlss_id;
-        } else {
-            push @{$mlsss{$mlss_id}}, $mlss_id;
-        }
+        my $main_mlss_id = $this_mlss->get_value_for_tag('principal_mlss_id', $mlss_id);
+        push @{$mlsss{$main_mlss_id}}, $mlss_id;
     }
     $self->param('mlsss', \%mlsss);
 
@@ -98,15 +94,17 @@ sub write_output {
     my $hc_tests = $self->param('hc_tests');
 
     my $column_names = ['mlss_id', 'test'];
-    my @input_list;
-    push @input_list, ['#mlss_id#', $_] for @{$hc_tests};
+    my @input_list = map { ['#mlss_id#', $_] } @{$hc_tests};
 
     foreach my $mlss_id ( keys %{$mlsss} ) {
-        # The principal MLSS id will not be part of the MLSS ids array
-        $self->dataflow_output_id(
-            {'principal_mlss_id' => $mlss_id, 'component_mlss_ids' => $mlsss->{$mlss_id}},
-            3
-        ) if ($mlsss->{$mlss_id}->[0] != $mlss_id);
+        if ($mlsss->{$mlss_id}->[0] != $mlss_id) {
+            # Polyploid PWA/self-alignment: the principal MLSS id will not be
+            # part of the MLSS ids array
+            $self->dataflow_output_id(
+                {'principal_mlss_id' => $mlss_id, 'component_mlss_ids' => $mlsss->{$mlss_id}},
+                3
+            );
+        }
         $self->dataflow_output_id(
             {'mlss_id' => $mlss_id, 'inputlist' => \@input_list, 'column_names' => $column_names},
             2

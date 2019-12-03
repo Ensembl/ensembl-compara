@@ -680,7 +680,7 @@ sub parse_defaults {
                 die "Cannot find tag 'reference_species' for mlss_id $mlss_id" unless $ref_name;
                 my $ref_index = ($mlss_gdbs->[0]->name eq $ref_name) ? 0 : 1;
                 my $ref_gdb   = $mlss_gdbs->[$ref_index];
-                my $non_ref_index = ($ref_index + 1) % 2;
+                my $non_ref_index = 1 - $ref_index;
                 my $non_ref_gdb   = $mlss_gdbs->[$non_ref_index];
                 # To align two polyploid genomes component by component, their
                 # genus has to be the same
