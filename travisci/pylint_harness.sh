@@ -15,11 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-tmpfile=$(mktemp)
+PYTHON_SOURCE_LOCATIONS=('scripts')
 
 PYLINT_OUTPUT_FILE=$(mktemp)
 PYLINT_ERRORS=$(mktemp)
-pylint --rcfile pylintrc --verbose scripts/ | tee "$PYLINT_OUTPUT_FILE"
+pylint --rcfile pylintrc --verbose "${PYTHON_SOURCE_LOCATIONS[@]}" | tee "$PYLINT_OUTPUT_FILE"
 grep -v "\-\-\-\-\-\-\-\-\-" "$PYLINT_OUTPUT_FILE" | grep -v "Your code has been rated" | grep -v "\n\n" | sed '/^$/d' > "$PYLINT_ERRORS"
 ! [ -s "$PYLINT_ERRORS" ]
 rt1=$?
