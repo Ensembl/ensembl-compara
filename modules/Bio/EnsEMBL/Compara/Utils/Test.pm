@@ -56,7 +56,7 @@ sub get_repository_root {
 
 =head2 find_all_files
 
-  Description : Return the list of all the files in the repository
+  Description : Return the list of all the files in the repository.
                 Note that the path to the root of the repository
                 from this file is hardcoded, as is the list of
                 the top-level repository directories.
