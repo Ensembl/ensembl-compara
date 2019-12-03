@@ -80,6 +80,20 @@ sub run {
 
 =head2 _lift_gas_and_gabs
 
+Description : Lifts the genomic_aligns and genomic_align_blocks calculated for
+              the component genomes to their principal genome. To avoid
+              conflicts with foreign keys, it creates the new range of
+              genomic_align_blocks based on the principal MLSS id
+              (method_link_species_set_id * 10**10) and the previously lifted
+              genomic_align_blocks (to avoid collisions), updates the
+              genomic_align_block_ids and method_link_species_set_ids (from
+              the component MLSS id to the principal MLSS id) in the
+              genomic_align table and removes the old genomic_align_blocks.
+              Note that the lifting is performed in a transaction manner. This
+              function is an adaptation of
+              Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsCollection::_setInternalIds()
+              (first transaction), so these two methods should be kept in sync.
+
 =cut
 
 sub _lift_gas_and_gabs {
@@ -124,6 +138,10 @@ sub _lift_gas_and_gabs {
 
 
 =head2 _update_dnafrags
+
+Description : Updates the dnafrag_ids from the component genomes to their
+              principal genome in genomic_align table. Note that the update is
+              performed in a transaction manner.
 
 =cut
 
