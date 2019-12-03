@@ -30,10 +30,24 @@ package Bio::EnsEMBL::Compara::Utils::Test;
 use strict;
 use warnings;
 
-use Cwd;
+use Cwd qw(abs_path);
 use File::Spec;
 use File::Basename qw/dirname/;
 
+=head2 GLOBAL VARIABLES
+
+=over
+
+=item repository_root
+
+The path to the root of the repository. Kept here so that we don't need
+to "compute" it again and again.
+
+=back
+
+=cut
+
+my $repository_root;
 
 =head2 get_repository_root
 
@@ -42,7 +56,6 @@ use File::Basename qw/dirname/;
 
 =cut
 
-my $repository_root;
 sub get_repository_root {
     return $repository_root if $repository_root;
     my $file_dir = dirname(__FILE__);
