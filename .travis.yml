@@ -63,7 +63,7 @@ jobs:
       script: env PERL5LIB=$PERL5LIB:$PWD/modules:$PWD/ensembl/modules:$PWD/ensembl-test/modules:$PWD/ensembl-io/modules prove -r ./travisci/all-housekeeping/
 
     - language: perl
-      dist: trusty   # 5.14 is too old for xenial
+      dist: trusty   # 5.22 is the minimum on xenial
       perl: 5.14
       name: "Perl unit tests on the minimum version"
       env: COVERALLS=false
