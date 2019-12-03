@@ -24,5 +24,12 @@ grep -v "\-\-\-\-\-\-\-\-\-" "$PYLINT_OUTPUT_FILE" | grep -v "Your code has been
 ! [ -s "$PYLINT_ERRORS" ]
 rt1=$?
 rm "$PYLINT_OUTPUT_FILE" "$PYLINT_ERRORS"
-exit $rt1
 
+find "${PYTHON_SOURCE_LOCATIONS[@]}" -name "*.py" -print0 | xargs -0 mypy
+rt2=$?
+
+if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then
+  exit 0
+else
+  exit 255
+fi

@@ -116,7 +116,7 @@ jobs:
         - pip install -r requirements.txt
       before_script:
         - echo
-      script: ./travisci/pylint_harness.sh
+      script: ./travisci/python-linter_harness.sh
 
     - stage: "trigger dependent builds"
       before_install:
