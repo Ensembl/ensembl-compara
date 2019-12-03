@@ -1,5 +1,4 @@
 os: linux
-dist: trusty
 language: generic
 
 env:
@@ -64,6 +63,7 @@ jobs:
       script: env PERL5LIB=$PERL5LIB:$PWD/modules:$PWD/ensembl/modules:$PWD/ensembl-test/modules:$PWD/ensembl-io/modules prove -r ./travisci/all-housekeeping/
 
     - language: perl
+      dist: trusty   # 5.14 is too old for xenial
       perl: 5.14
       name: "Perl unit tests on the minimum version"
       env: COVERALLS=false
@@ -85,7 +85,7 @@ jobs:
       script: ./travisci/perl-linter_harness.sh
 
     - language: python
-      python: 3.6             # 3.8 is not available on Trusty builds
+      python: 3.8
       name: "Python linter"
       before_install:
         - echo
