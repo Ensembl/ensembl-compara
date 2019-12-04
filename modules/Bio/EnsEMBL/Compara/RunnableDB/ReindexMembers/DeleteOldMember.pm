@@ -47,7 +47,15 @@ sub run {
     my $tree_ids = $dbc->sql_helper->execute_simple( -SQL => $sql_tree, -PARAMS => [$self->param('seq_member_id')] );
 
     # Get the gene_align_ids of this member that cannot be found by GeneTreeAdaptor::delete_tree
-    my $sql_aligns = 'SELECT DISTINCT gam.gene_align_id FROM gene_align_member gam LEFT JOIN gene_tree_root gtr USING (gene_align_id) LEFT JOIN gene_tree_root_attr gtra ON mcoffee_scores_gene_align_id = gam.gene_align_id WHERE gtr.root_id IS NULL AND gtra.root_id IS NULL AND seq_member_id = ?';
+    my $sql_aligns = 'SELECT DISTINCT gam.gene_align_id
+                      FROM gene_align_member gam
+                           LEFT JOIN gene_tree_root gtr USING (gene_align_id)
+                           LEFT JOIN gene_tree_root_attr gtra ON mcoffee_scores_gene_align_id = gam.gene_align_id
+                           LEFT JOIN gene_tree_root_tag gtrt ON tag = "filtered_gene_align_id" AND value = gam.gene_align_id
+                      WHERE gtr.root_id IS NULL
+                            AND gtra.root_id IS NULL
+                            AND gtrt.root_id IS NULL
+                            AND seq_member_id = ?';
     my $gene_align_ids = $dbc->sql_helper->execute_simple( -SQL => $sql_aligns, -PARAMS => [$self->param('seq_member_id')] );
 
     # We clean up all tables but gene_tree*, gene_align*, homology* since

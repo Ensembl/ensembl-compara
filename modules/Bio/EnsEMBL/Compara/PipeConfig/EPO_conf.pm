@@ -31,14 +31,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_conf
 This PipeConfig file gives defaults for mapping (using exonerate at the moment)
 anchors to a set of target genomes (dumped text files).
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::EPO_conf;
@@ -71,6 +63,7 @@ sub default_options {
         'reuse_db'          => $self->o('species_set_name') . '_epo_prev',
 
         'ancestral_sequences_name' => 'ancestral_sequences',
+        'ancestral_sequences_display_name' => 'Ancestral sequences',
 
         # Executable parameters
         'mapping_params'    => { bestn=>11, gappedextension=>"no", softmasktarget=>"no", percent=>75, showalignment=>"no", model=>"affine:local", },
@@ -172,9 +165,10 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
-    # Move "make_species_tree" right after "create_mlss_ss" and disconnect it from "reuse_anchor_align_factory"
+    # Move "make_species_tree" right after "create_mlss_ss" and disconnect it from "dump_mappings_to_file"
     $analyses_by_name->{'create_mlss_ss'}->{'-flow_into'} = [ 'make_species_tree' ];
-    delete $analyses_by_name->{'make_species_tree'}->{'-flow_into'};
+    $analyses_by_name->{'make_species_tree'}->{'-flow_into'} = WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ] );
+    delete $analyses_by_name->{'set_gerp_neutral_rate'}->{'-flow_into'}->{1};
 
     # Do "dump_mappings_to_file" after having trimmed the anchors
     $analyses_by_name->{'trim_anchor_align_factory'}->{'-flow_into'} = {

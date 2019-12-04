@@ -56,6 +56,7 @@ The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with an underscore (_)
 
 example : init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAlignerStats_conf -compara_db <> -mlss_id <> -host <> -port <> --reg_conf
+
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::PairAlignerStats_conf;

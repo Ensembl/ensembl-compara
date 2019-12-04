@@ -473,13 +473,28 @@ sub preload {
     # We can't use _load_and_attach_all because _species_tree_node_id
     # is not stored as a key in the hash (it's a tag)
     my $stn_id_lookup = $self->species_tree->get_node_id_2_node_hash();
+    my $gdb_id_lookup = $self->species_tree->get_genome_db_id_2_node_hash();
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_NCBITaxon($self->adaptor->db->get_NCBITaxonAdaptor, [values %$stn_id_lookup]);
     foreach my $node (@$all_nodes) {
         if ($node->is_leaf) {
             $self->SUPER::add_Member($node) if UNIVERSAL::isa($node, 'Bio::EnsEMBL::Compara::GeneTreeMember');
         }
-        # This is like GeneTreeNode::species_tree_node() but using the lookup
-        $node->{_species_tree_node} = $stn_id_lookup->{$node->_species_tree_node_id} if $node->_species_tree_node_id;
+
+        # This is like GeneTreeNode::species_tree_node() but more optimal
+        if (my $stn_id = $self->get_value_for_tag('species_tree_node_id')) {
+            unless (exists $stn_id_lookup->{$stn_id}) {
+                die sprintf("The node_id '%s' cannot be found in the species_tree root_id=%s", $stn_id, $self->species_tree->dbID);
+            }
+            $node->{_species_tree_node} = $stn_id_lookup->{$stn_id};
+        } elsif ($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
+            my $stn = $gdb_id_lookup->{$node->genome_db_id};
+            unless ($stn) {
+                die sprintf("The genome_db_id '%s' cannot be found in the species_tree root_id=%s", $node->genome_db_id, $self->species_tree->dbID);
+            }
+            $node->{'_tags'}->{'species_tree_node_id'} = $stn->node_id;
+            $node->{_species_tree_node} = $stn;
+        }
+
         # This is like GeneTreeNode::lost_taxa() but using the lookup
         $node->{_lost_species_tree_nodes} = [map {$stn_id_lookup->{$_}} @{ $node->get_all_values_for_tag('lost_species_tree_node_id') }];
     }

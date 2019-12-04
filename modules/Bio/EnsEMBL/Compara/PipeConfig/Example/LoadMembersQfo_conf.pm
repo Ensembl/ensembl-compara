@@ -58,6 +58,8 @@ sub default_options {
     #load uniprot members for family pipeline
         'load_uniprot_members'      => 0,
 
+        # list of species that got an annotation update
+        'expected_updates_file' => undef,
     };
 }
 

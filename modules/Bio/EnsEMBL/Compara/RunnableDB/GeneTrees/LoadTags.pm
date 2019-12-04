@@ -41,7 +41,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
     Description : This runnable is used to inject the tags into the job parameters stack.
                   e.g. It can be used to load the tag aln_num_of_patterns to be used by the raxml_decision analysis. 
                   This runnable must be used upstream the target analysis, loading the tags and data-flowing them to the target analysis.
-    
+
                   #e.g. Tags and default values must be declared in the pipeline confuration file:
                   #
                   -parameters =>    {

@@ -62,15 +62,15 @@ subtest "Test fetch methods", sub {
     my $member = $ma->fetch_by_stable_id($member_stable_id);
 
     ok($member);
-    
+
     my $homologies = $ha->fetch_all_by_Member($member);
-    
+
     ok($homologies);
-    
+
     $homologies = $ha->fetch_all_by_Member_method_link_type($member,"$method_link_type");
 
     #print STDERR "nb of homology: ", scalar @{$homology},"\n";
-    
+
     my ($homology_id, $stable_id, $method_link_species_set_id, $description,
         $subtype, $dn, $ds, $n, $s, $lnl, $threshold_on_ds) =
           $compara_dba->dbc->db_handle->selectrow_array("SELECT homology.*
@@ -82,7 +82,7 @@ subtest "Test fetch methods", sub {
         WHERE hm1.member_id = ".$member->dbID." and gdb.name = 'Rattus norvegicus'");
 
     my $homology = $ha->fetch_all_by_Member($member, -TARGET_SPECIES=>"Rattus norvegicus")->[0];
-    
+
     ok( $homology );
     ok( $homology->dbID, $homology_id );
     ok( $homology->stable_id, $stable_id );
@@ -91,36 +91,36 @@ subtest "Test fetch methods", sub {
     ok( $homology->method_link_species_set_id, $method_link_species_set_id );
     ok( $homology->method_link_type, "$method_link_type" );
     ok( $homology->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor") );
-    
+
     $multi->hide('compara', 'homology');
     $multi->hide('compara', 'homology_member');
     $multi->hide('compara', 'method_link_species_set');
-    
+
     $homology->{'_dbID'} = undef;
     $homology->{'_adaptor'} = undef;
     $homology->{'_method_link_species_set_id'} = undef;
-    
+
     $ha->store($homology);
-    
+
     my $sth = $compara_dba->dbc->prepare('SELECT homology_id
                                 FROM homology
                                 WHERE homology_id = ?');
-    
+
     $sth->execute($homology->dbID);
-    
+
     ok($homology->dbID && ($homology->adaptor == $ha));
     debug("homology->dbID = " . $homology->dbID);
-    
+
     my ($id) = $sth->fetchrow_array;
     $sth->finish;
-    
+
     ok($id && $id == $homology->dbID);
     debug("[$id] == [" . $homology->dbID . "]?");
-    
+
     $multi->restore('compara', 'homology');
     $multi->restore('compara', 'homology_member');
     $multi->restore('compara', 'method_link_species_set');
-    
+
     $homologies = $ha->fetch_all_by_method_link_type("$method_link_type");
 
     ok($homologies);

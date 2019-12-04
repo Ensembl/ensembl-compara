@@ -66,7 +66,7 @@ sub default_options {
             'binary_species_tree_input_file' => $self->o('binary_species_tree'), # you can define your own species_tree for 'CAFE'. It *has* to be binary
 
             # CAFE parameters
-            'initialise_cafe_pipeline'  => 1,
+            'do_cafe'  => 1,
             # Use production names here
             'cafe_species'          => ['danio_rerio', 'taeniopygia_guttata', 'callithrix_jacchus', 'pan_troglodytes', 'homo_sapiens', 'mus_musculus'],
     };

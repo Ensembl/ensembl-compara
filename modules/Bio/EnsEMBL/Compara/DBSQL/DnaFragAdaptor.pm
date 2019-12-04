@@ -41,7 +41,7 @@ Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor
   my $dnafrag_adaptor = $reg->get_adaptor("Multi", "compara", "DnaFrag");
 
   $dnafrag_adaptor->store($dnafrag);
-  
+
   $dnafrag = $dnafrag_adaptor->fetch_by_dbID(905406);
   $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($human_genome_db, 'X');
   $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB(

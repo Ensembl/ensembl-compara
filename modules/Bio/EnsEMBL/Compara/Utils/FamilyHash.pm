@@ -45,16 +45,6 @@ sub convert {
   $self->member_src($member_source);
 
   $self->{_cached_seq_aligns} = {};
-=head
-  if ($aligned) {
-      my $aln = $fam->get_SimpleAlign(-SEQ_TYPE => ($self->cdna ? 'cds' : undef), -REMOVE_GAPS => 1);
-      foreach my $seq ($aln->each_seq) {
-          $self->{_cached_seq_aligns}->{$seq->display_id} = $seq->seq;
-      }
-  } else {
-      delete $self->{_cached_seq_aligns};
-  }
-=cut
   return $self->_family_object_to_hash($fam);
 }
 

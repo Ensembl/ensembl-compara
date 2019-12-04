@@ -202,6 +202,7 @@ sub create_genome_db {
     if ($master_object) {
         $genome_db->first_release($master_object->first_release);
         $genome_db->last_release($master_object->last_release);
+        $genome_db->is_good_for_alignment($master_object->is_good_for_alignment);
         $genome_db->_assert_equals($master_object);
         $genome_db->dbID($master_object->dbID);
     } elsif ($asked_genome_db_id) {
@@ -263,4 +264,3 @@ sub iterate_through_registered_species {
 
 
 1;
-

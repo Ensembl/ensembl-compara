@@ -1,24 +1,10 @@
-// https://stackoverflow.com/a/25359264
-$.urlParam = function(name){
-    var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
-    if (results==null) {
-        return null;
-    }
-    return decodeURI(results[1]) || 0;
-}
-
-// https://stackoverflow.com/a/3291856
-String.prototype.capitalize = function() {
-    return this.charAt(0).toUpperCase() + this.slice(1);
-}
 
 // fetch ticket status from REST API
-var endpoint_ticket_list = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/search/?jql=project=ENSCOMPARASW+AND+issuetype=Sub-task+AND+fixVersion="Ensembl+__RELEASE__"+AND+(description~"cp__SERVER__*"+OR+description~"prod-__SERVER__*")+AND+status="In+progress"+ORDER+BY+created+ASC,id+ASC&maxResults=500';
+var endpoint_ticket_list = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/search/?jql=project=ENSCOMPARASW+AND+(description~"cp__SERVER__*"+OR+description~"prod-__SERVER__*")+AND+status="In+progress"+ORDER+BY+created+ASC,id+ASC&maxResults=500';
 var endpoint_ticket_query = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/issue';
 var url_jira_issue = 'https://www.ebi.ac.uk/panda/jira/browse/';
-var release = $.urlParam("release");
 
-$('body').append('<h1>Release ' + release + ' - Server usage dashboard</h1>');
+$('body').append('<h1>Server usage dashboard</h1>');
 
 function process_ticket(ticket) {
     // The ticket information is as follows:
@@ -29,7 +15,8 @@ function process_ticket(ticket) {
         ticket_info += ' for ' + ticket.fields.customfield_11130.value;
     }
     ticket_info += ' (<i>' + ticket.fields.assignee.name + '</i>)';
-    return ticket_info;
+    ticket_url = '<a href="https://www.ebi.ac.uk/panda/jira/browse/' + ticket.key + '">' + ticket_info + '</a>';
+    return ticket_url;
 }
 
 function process_server(server) { return function(json) {
@@ -50,8 +37,8 @@ function process_server(server) { return function(json) {
     table.append('</tbody>');
 } }
 
-for(var j = 1; j < 9; j++){
-    var endpoint = endpoint_ticket_list.replace('__RELEASE__', release).replace(/__SERVER__/g, j);
+for(var j = 1; j < 11; j++){
+    var endpoint = endpoint_ticket_list.replace(/__SERVER__/g, j);
     console.log(endpoint);
     $('body').append('<div id="cp' + j + '"></div>');
     $.ajax(endpoint, {

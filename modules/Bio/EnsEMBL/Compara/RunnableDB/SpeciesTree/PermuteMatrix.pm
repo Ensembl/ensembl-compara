@@ -37,9 +37,6 @@ These submatrices are composed of:
 - taxonomic groups (eg. primates, rodents)
 - stepping up the taxonomy, create groups with more diverse species, but collapsing subclades which already have a tree
 
-=head1 DESCRIPTION
- 
-
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::PermuteMatrix;

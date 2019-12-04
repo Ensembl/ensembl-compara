@@ -19,12 +19,9 @@ limitations under the License.
 
 package Bio::EnsEMBL::Compara::Graph::GenomicAlignTreePhyloXMLWriter;
 
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Graph::GenomicAlignTreePhyloXMLWriter
-
 
 =head1 CONTACT
 
@@ -45,7 +42,6 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Scalar qw(check_ref wrap_array);
 
-=pod
 
 =head2 new()
 
@@ -86,7 +82,6 @@ sub new {
   return $self;
 }
 
-=pod
 
 =head2 compact_alignments()
 
@@ -102,10 +97,6 @@ sub compact_alignments {
   return $self->{compact_alignments};
 }
 
-=pod
-
-
-=pod
 
 =head2 no_sequences()
 

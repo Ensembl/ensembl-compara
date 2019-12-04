@@ -59,6 +59,8 @@ use Bio::EnsEMBL::Compara::Utils::RunCommand;
 sub run_ortheus {
   my $self = shift;
 
+  my $tmp_dir = $self->param('tmp_work_dir') ? $self->param('tmp_work_dir') : $self->worker_temp_directory;
+
   local $ENV{'PATH'} = $self->param_required('ortheus_bin_dir') . ':' . $ENV{'PATH'};
   local $ENV{'CLASSPATH'}  = $self->param_required('pecan_exe_dir');
   local $ENV{'PYTHONPATH'} = $self->param_required('ortheus_lib_dir');
@@ -81,7 +83,7 @@ sub run_ortheus {
   }
 
   #Add -X to fix -ve indices in array bug suggested by BP
-  push @command, '-m', $self->require_executable('java_exe').' '.($self->param('java_options') // ''), '-k', ' -J '.$self->require_executable('exonerate_exe').' -X';
+  push @command, '-m', $self->require_executable('java_exe')." -Djava.io.tmpdir=$tmp_dir ".($self->param('java_options') // ''), '-k', ' -J '.$self->require_executable('exonerate_exe').' -X';
 
   if (defined $self->param('tree_string')) {
     push @command, '-d', $self->param('tree_string');
@@ -102,7 +104,6 @@ sub run_ortheus {
 
   #Capture output messages when running ortheus instead of throwing
   my $prev_dir = Cwd::getcwd;
-  my $tmp_dir = $self->param('tmp_work_dir') ? $self->param('tmp_work_dir') : $self->worker_temp_directory;
   chdir $tmp_dir;
   my $output = tee_merged { system(@command) };
   chdir $prev_dir;

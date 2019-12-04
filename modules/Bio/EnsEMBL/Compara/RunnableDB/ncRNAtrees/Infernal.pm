@@ -543,6 +543,7 @@ sub store_fasta_alignment {
 
     $self->compara_dba->get_GeneAlignAdaptor->store($aln);
     $self->param('alignment_id', $aln->dbID);
+    $self->param('gene_tree')->store_tag('filtered_gene_align_id', $aln->dbID);
 #    $aln->root->release_tree();
 #    $aln->clear();
 

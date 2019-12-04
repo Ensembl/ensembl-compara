@@ -135,7 +135,7 @@ sub default_options {
     # executable locations:
         # HMM specific parameters
         # The location of the HMM library:
-        'compara_hmm_library_basedir'               => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/compara_hmm_'.$self->o('ensembl_release')."/",
+        'compara_hmm_library_basedir'               => $self->o('shared_hps_dir') . '/compara_hmm_'.$self->o('ensembl_release')."/",
         'target_compara_hmm_library_basedir'        => $self->o('warehouse_dir') . '/treefam_hmms/compara_hmm_'.$self->o('ensembl_release')."/",
         'treefam_hmm_library_basedir'               => $self->o('warehouse_dir') . '/treefam_hmms/2015-12-18/',
         'target_treefam_only_hmm_library_basedir'   => $self->o('warehouse_dir') . '/2015-12-18_only_TF_hmmer3/',

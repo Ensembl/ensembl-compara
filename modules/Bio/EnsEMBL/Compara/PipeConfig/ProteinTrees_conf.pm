@@ -25,7 +25,7 @@ Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
         -division $COMPARA_DIV -mlss_id <curr_ptree_mlss_id>
-        
+
 =head1 DESCRIPTION
 
 The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
@@ -298,7 +298,7 @@ sub default_options {
 
     # CAFE parameters
         # Do we want to initialise the CAFE part now ?
-        'initialise_cafe_pipeline' => 1,
+        'do_cafe'                  => 1,
         'cafe_lambdas'             => '',  # For now, we don't supply lambdas
         'cafe_struct_tree_str'     => '',  # Not set by default
         'full_species_tree_label'  => 'default',
@@ -318,6 +318,8 @@ sub default_options {
         'hmmer_search_cutoff'           => '1e-23',
 
     # Extra analyses
+        # compute dNdS for homologies?
+        'do_dnds'                => 0,
         # Export HMMs ?
         'do_hmm_export'          => 0,
         # Do we want the Gene QC part to run ?
@@ -428,7 +430,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'use_notung'   => $self->o('use_notung'),
         'use_treerecs' => $self->o('use_treerecs'),
         'use_raxml'    => $self->o('use_raxml'),
-        'initialise_cafe_pipeline'   => $self->o('initialise_cafe_pipeline'),
+        'do_cafe'      => $self->o('do_cafe'),
         'do_stable_id_mapping'   => $self->o('do_stable_id_mapping'),
         'do_treefam_xref'   => $self->o('do_treefam_xref'),
         'do_homology_stats' => $self->o('do_homology_stats'),
@@ -463,14 +465,15 @@ sub core_pipeline_analyses {
     #
     #-------------------------------------------------------------------------------
     my %raxml_decision_params = (
-        # "factor_growth" and "factor" that the number of cores is
-        # increased in relation with the number of genes:
-        # Number of cores x2 if there are 1,000 genes,
-        # Number of cores x3 if there are 2,000 genes, etc
-        'factor_growth'            => 1_000,
-        'factor'                   => '#expr( 1 + #tree_gene_count# / #factor_growth# )expr#',
+        # The number of cores is primarily based on the number of "alignment patterns"
+        # with an extra boost (a multiplier) based on the number of genes
+        'raxml_cores'              => '#expr( #raxml_core_multiplier# * #tree_aln_num_of_patterns# / #raxml_patterns_per_core# )expr#',
+        # This means the number of cores will be x2 when we hit 1,000 genes,
+        # x3 when we hit 2,000 genes, etc
+        'raxml_genes_per_core_mult'=> 1_000,
+        'raxml_core_multiplier'    => '#expr( 1 + #tree_gene_count# / #raxml_genes_per_core_mult# )expr#',
+        # cf the RAxML manual
         'raxml_patterns_per_core'  => $self->o('use_dna_for_phylogeny') ? '500' : '150',
-        'raxml_cores'              => '#expr( #factor# * #tree_aln_num_of_patterns# / #raxml_patterns_per_core# )expr#',
 
         'tags'  => {
             #The default value matches the default dataflow we want: _8_cores analysis.
@@ -599,7 +602,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_fire_posttree',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A'  => [ 'rib_fire_gene_qc' ],
+                '1->A'  => [ 'rib_group_1' ],
                 'A->1'  => [ 'backbone_pipeline_finished' ],
             },
         },
@@ -2214,7 +2217,7 @@ sub core_pipeline_analyses {
 
             -flow_into  => {
                 '1->A' => WHEN (
-                    '(#raxml_cores# <= 1'                               => 'raxml_parsimony',
+                    '(#raxml_cores# <= 1)'                              => 'raxml_parsimony',
                     '(#raxml_cores# >  1)  && (#raxml_cores# <= 2)'     => 'raxml_parsimony_2_cores',
                     '(#raxml_cores# >  2)  && (#raxml_cores# <= 4)'     => 'raxml_parsimony_4_cores',
                     '(#raxml_cores# >  4)  && (#raxml_cores# <= 8)'     => 'raxml_parsimony_8_cores',
@@ -2419,7 +2422,7 @@ sub core_pipeline_analyses {
 
             -flow_into  => {
                 '1->A' => WHEN (
-                    '(#raxml_cores# <= 1'                               => 'raxml',
+                    '(#raxml_cores# <= 1)'                              => 'raxml',
                     '(#raxml_cores# >  1)  && (#raxml_cores# <= 2)'     => 'raxml_2_cores',
                     '(#raxml_cores# >  2)  && (#raxml_cores# <= 4)'     => 'raxml_4_cores',
                     '(#raxml_cores# >  4)  && (#raxml_cores# <= 8)'     => 'raxml_8_cores',
@@ -3258,6 +3261,47 @@ sub core_pipeline_analyses {
 
 # ---------------------------------------------[homology step]-----------------------------------------------------------------------
 
+        {   -logic_name => 'rib_group_1',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => [
+                    'rib_fire_gene_qc',
+                    'rib_fire_homology_id_mapping',
+                ],
+                'A->1' => 'rib_group_2'
+            },
+        },
+
+        {   -logic_name => 'rib_group_2',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => [
+                    'rib_fire_dnds',
+                    'rib_fire_cafe',
+                    'rib_fire_homology_stats',
+                    'rib_fire_hmm_build',
+                    'rib_fire_goc'
+                ],
+                'A->1' => 'rib_group_3',
+            },
+        },
+
+        {   -logic_name => 'rib_group_3',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => [
+                    'rib_fire_rename_labels',
+                    'rib_fire_move_polyploid',
+                ],
+                'A->1' => 'floating_rib',
+            },
+        },
+
+        {   -logic_name => 'rib_fire_move_polyploid',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => 'polyploid_move_back_factory',
+        },
+
         {   -logic_name => 'polyploid_move_back_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
@@ -3265,9 +3309,7 @@ sub core_pipeline_analyses {
                 'normal_genomes'    => 0,
             },
             -flow_into => {
-                '2->A' => [ 'component_genome_dbs_move_back_factory' ],
-                'A->1' => [ 'floating_rib' ],
-                
+                2 => [ 'component_genome_dbs_move_back_factory' ],
             },
         },
 
@@ -3297,39 +3339,25 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'rib_fire_cafe',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                '1->A' => WHEN('#initialise_cafe_pipeline#' => 'CAFE_species_tree'),
-                'A->1' => 'rib_fire_homology_stats',
-            },
+            -flow_into  => WHEN('#do_cafe#' => 'CAFE_species_tree'),
         },
 
         {   -logic_name => 'rib_fire_homology_stats',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                1 => [
-                    WHEN('#do_homology_stats#' => 'homology_stats_factory'),
-                    'set_default_values',
-                    'rib_fire_hmm_build',
-                ],
-            },
+            -flow_into  => [
+                WHEN('#do_homology_stats#' => 'homology_stats_factory'),
+                'set_default_values',
+            ],
         },
 
         {   -logic_name => 'rib_fire_hmm_build',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                1 => [
-                    WHEN('#do_hmm_export#' => 'build_HMM_factory'),
-                    'rib_fire_rename_labels',
-                ],
-            },
+            -flow_into  => WHEN('#do_hmm_export#' => 'build_HMM_factory'),
         },
-        
+
         {   -logic_name => 'rib_fire_gene_qc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                '1->A' => 'get_species_set',
-                'A->1' => 'rib_fire_homology_id_mapping',
-            },
+            -flow_into  => WHEN('#do_gene_qc#' => 'get_species_set'),
         },
 
         {   -logic_name => 'rib_fire_homology_id_mapping',
@@ -3337,10 +3365,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'goc_taxlevels'         => $self->o('goc_taxlevels'),
             },
-            -flow_into  => {
-                '1->A' => WHEN('scalar(@{#goc_taxlevels#}) || #do_homology_id_mapping#' => 'id_map_mlss_factory'),
-                'A->1' => 'group_genomes_under_taxa',
-            },
+            -flow_into  => WHEN('#do_homology_id_mapping#' => 'id_map_mlss_factory'),
         },
 
         {   -logic_name => 'rib_fire_rename_labels',
@@ -3348,13 +3373,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'label_prefix' => $self->o('label_prefix'),
             },
-            -flow_into  => {
-                # FIXME this assumes that label_prefix is set iff the collection is not "default"
-                1 => [
-                    WHEN('#label_prefix#' => 'rename_labels'),
-                    'rib_fire_goc',
-                ],
-            },
+            -flow_into  => WHEN('#label_prefix#' => 'rename_labels'), # FIXME this assumes that label_prefix is set if the collection is not "default"
         },
 
         {   -logic_name => 'floating_rib',
@@ -3367,8 +3386,7 @@ sub core_pipeline_analyses {
                 'taxlevels'             => $self->o('taxlevels'),
             },
             -flow_into => {
-                '2->A' => [ 'mlss_factory' ],
-                'A->1' => [ 'rib_fire_cafe' ],
+                2 => [ 'mlss_factory' ],
             },
         },
 
@@ -3406,6 +3424,11 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('homology_dNdS_capacity'),
             -rc_name   => '1Gb_job',
             -flow_into => { 1 => { 'homology_id_mapping' => INPUT_PLUS() } },
+        },
+
+        {   -logic_name => 'rib_fire_dnds',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => WHEN('#do_dnds#' => 'group_genomes_under_taxa'),
         },
 
         {   -logic_name => 'mlss_factory',
@@ -3529,10 +3552,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'taxlevels'             => $self->o('goc_taxlevels'),
             },
-            -flow_into  => {
-                '1->A' => WHEN( 'scalar(@{#taxlevels#})' => 'goc_entry_point' ),
-                'A->1' => ['polyploid_move_back_factory'],
-            },
+            -flow_into  => WHEN('scalar(@{#taxlevels#})' => 'goc_entry_point'),
         },
 
         {   -logic_name => 'homology_stats_factory',

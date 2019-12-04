@@ -377,12 +377,12 @@ do {
         1
     );
   ok($slice);
-  
+
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
       $slice, $mlss, "expanded");
 
   ok($align_slice);
-  
+
   ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
   ok($align_slice->get_all_Slices($species_name)->[0]);
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
@@ -390,7 +390,7 @@ do {
   my $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->seq;
   $seq =~ s/\-//g;
   ok($seq, $slice->seq);
-  
+
   debug("DEBUG slice " . @{$align_slice->get_all_Slices($species_name)}. "  $excess_start  $excess_end");
 
   my $other_gene = $align_slice->get_all_Slices($species_name)->[0]->get_all_Genes->[0];
@@ -419,7 +419,7 @@ do {
   }
   my $c_seq2 = substr($condensed_align_slice->get_all_Slices($species_name)->[0]->seq, $excess_start, -$excess_end);
   ok($c_seq1, $c_seq2);
-  
+
   $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->subseq($other_exon->start, $other_exon->end);
   $seq2 = "";
   foreach my $subseq ($seq =~ /([ACTG]+|\-+)/g) {
@@ -450,12 +450,12 @@ do {
         1
     );
   ok($slice);
-  
+
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
       $slice, $mlss, "expanded");
 
   ok($align_slice);
-  
+
   ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
   ok($align_slice->get_all_Slices($species_name)->[0]);
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
@@ -491,7 +491,7 @@ do {
   }
   my $c_seq2 = $condensed_align_slice->get_all_Slices($species_name)->[0]->seq;
   ok($c_seq1, $c_seq2);
-  
+
   $seq = $align_slice->get_all_Slices('Homo sapiens')->[0]->subseq($other_exon->start, $other_exon->end);
   $seq2 = "";
   foreach my $subseq ($seq =~ /([ACTG]+|\-+)/g) {
@@ -565,12 +565,12 @@ do {
         1
     );
   ok($slice);
-  
+
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
       $slice, $mlss, "expanded");
 
   ok($align_slice);
-  
+
   ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
   ok($align_slice->get_all_Slices($species_name)->[0]);
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
@@ -590,12 +590,12 @@ do {
         1
     );
   ok($slice);
-  
+
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
       $slice, $mlss, "expanded");
 
   ok($align_slice);
-  
+
   ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
   ok($align_slice->get_all_Slices($species_name)->[0]);
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
@@ -622,12 +622,12 @@ do {
         1
     );
   ok($slice);
-  
+
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
       $slice, $mlss, "expanded");
 
   ok($align_slice);
-  
+
   ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
   ok($align_slice->get_all_Slices($species_name)->[0]);
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
@@ -647,12 +647,12 @@ do {
         1
     );
   ok($slice);
-  
+
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
       $slice, $mlss, "expanded");
 
   ok($align_slice);
-  
+
   ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
   ok($align_slice->get_all_Slices($species_name)->[0]);
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
@@ -687,12 +687,12 @@ do {
         1
     );
   ok($slice);
-  
+
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
       $slice, $human_rat_blastznet_mlss, "expanded");
 
   ok($align_slice);
-  
+
   ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
   ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
@@ -705,7 +705,7 @@ do {
   my $condensed_align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
       $slice, $human_rat_blastznet_mlss);
   ok($condensed_align_slice);
-  
+
   ok($condensed_align_slice->get_all_Slices('Homo sapiens')->[0]);
   ok($condensed_align_slice->get_all_Slices('Rattus norvegicus')->[0]);
   ok(length($condensed_align_slice->get_all_Slices('Homo sapiens')->[0]->seq),
@@ -778,7 +778,7 @@ do {
     }
     $last_end = $this_row->[1];
   }
-  
+
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
         $slice_seq_region_name,
@@ -787,12 +787,12 @@ do {
         1
     );
   ok($slice);
-  
+
   $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
       $slice, $human_rat_blastznet_mlss, "expanded");
 
   ok($align_slice);
-  
+
   ok($align_slice->get_all_Slices('Homo sapiens')->[0]);
   ok($align_slice->get_all_Slices('Rattus norvegicus')->[0]);
   ok(length($align_slice->get_all_Slices('Homo sapiens')->[0]->seq),

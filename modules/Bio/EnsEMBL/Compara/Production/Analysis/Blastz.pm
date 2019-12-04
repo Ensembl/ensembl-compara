@@ -377,7 +377,7 @@ sub eof {
 
  Arg [1]     : string $commandline (optional)
                command line used to obtain the blastz output which is parsed
-  
+
  Example     : $Blastz->commandline($commandline)
 
  Descritpion : get/set the commandline value and return it
@@ -402,7 +402,7 @@ sub command_line {
 
  Arg [1]     : string $matrix (optional)
                matrix used to obtain the blastz output which is parsed
-  
+
  Example     : $Blastz->matrix($matrix)
 
  Descritpion : get/set the matrix value and return it
@@ -427,7 +427,7 @@ sub matrix {
 
  Arg [1]     : string $options (optional)
                options used to obtain the blastz output which is parsed
-  
+
  Example     : $Blastz->options($options)
 
  Descritpion : get/set the options value and return it
@@ -461,7 +461,7 @@ sub _parsing_initialized {
 
  Arg [1]     : string $seqname (optional)
                name of the query sequence
-  
+
  Example     : $Blastz->seqname($seqname)
 
  Descritpion : get/set the seqname value and return it
@@ -486,7 +486,7 @@ sub seqname {
 
  Arg [1]     : string $hseqname (optional)
                name of the database sequence
-  
+
  Example     : $Blastz->hseqname($hseqname)
 
  Descritpion : get/set the hseqname value and return it
@@ -511,7 +511,7 @@ sub hseqname {
 
  Arg [1]     : int $length (optional)
                sequence length of the query sequence
-  
+
  Example     : $Blastz->length($length)
 
  Descritpion : get/set the length value and return it
@@ -536,7 +536,7 @@ sub length {
 
  Arg [1]     : int $length (optional)
                sequence length of the database sequence
-  
+
  Example     : $Blastz->hlength($length)
 
  Descritpion : get/set the hlength value and return it
@@ -561,7 +561,7 @@ sub hlength {
 
  Arg [1]     : int $strand (optional)
                strand of the query sequence
-  
+
  Example     : $Blastz->strand($strand)
 
  Descritpion : get/set the strand value and return it
@@ -586,7 +586,7 @@ sub strand {
 
  Arg [1]     : int $strand (optional)
                strand of the query sequence
-  
+
  Example     : $Blastz->hstrand($strand)
 
  Descritpion : get/set the hstrand value and return it

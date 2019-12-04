@@ -71,6 +71,17 @@ sub check_exe_in_linuxbrew_opt {
     return $self->o('linuxbrew_home').'/'.$exe_path;
 }
 
+sub check_exe_in_compara {
+    my ($self, $exe_path) = @_;
+    push @{$self->{'_compara_exe_paths'}}, $exe_path;
+    return $self->o('compara_software_home').'/'.$exe_path;
+}
+
+sub check_dir_in_compara {
+    my ($self, $dir_path) = @_;
+    push @{$self->{'_compara_dir_paths'}}, $dir_path;
+    return $self->o('compara_software_home').'/'.$dir_path;
+}
 sub check_exe_in_ensembl {
     my ($self, $exe_path) = @_;
     push @{$self->{'_ensembl_exe_paths'}}, $exe_path;
@@ -113,6 +124,15 @@ sub check_all_executables_exist {
        }
        foreach my $p (@{$self->{'_ensembl_exe_paths'}}) {
            _assert_exe( $ensembl_cvs_root_dir.'/'.$self->substitute(\$p) );
+       }
+   }
+   if (exists $self->root()->{'compara_software_home'}) {
+       my $compara_software_home = $self->root()->{'compara_software_home'};
+       foreach my $p (@{$self->{'_compara_dir_paths'}}) {
+           _assert_dir( $compara_software_home.'/'.$self->substitute(\$p) );
+       }
+       foreach my $p (@{$self->{'_compara_exe_paths'}}) {
+           _assert_exe( $compara_software_home.'/'.$self->substitute(\$p) );
        }
    }
 }

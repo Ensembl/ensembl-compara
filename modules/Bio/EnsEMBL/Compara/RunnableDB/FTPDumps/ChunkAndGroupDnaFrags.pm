@@ -59,7 +59,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
         'chunk_size'        => 1_000_000,
-        'bed_chucnks_dir'   => undef,
     }
 }
 
@@ -135,7 +134,7 @@ sub create_chunks_and_write_chromsize_file {
 
     close $fh;
 
-    push @all_chunksets, $current_chunkset if $current_chunkset and @$current_chunkset;
+    push @all_chunksets, $current_chunkset if @$current_chunkset;
 
     # Healthcheck: the sizes must match
     my $tot_chunk_size = 0;
