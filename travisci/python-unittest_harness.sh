@@ -26,4 +26,12 @@ else
   rt1=0
 fi
 
-exit $rt1
+pytest "${PYTHON_SOURCE_LOCATIONS[@]}"
+rt2=$?
+
+# Return code 5 means "No tests collected". We want this as long as we don't have any tests
+if [[ ($rt1 -eq 0) && ($rt2 -eq 5) ]]; then
+  exit 0
+else
+  exit 255
+fi
