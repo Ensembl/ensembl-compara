@@ -85,32 +85,24 @@ print STDERR "Found " . scalar(@current_lastz_mlsses) . "!\n\n";
 print STDERR "Estimating number of jobs for each method_link_species_set..\n";
 my (%mlss_job_count, %chunk_counts, %chain_job_count, %dnafrag_interval_counts);
 foreach my $mlss ( @current_lastz_mlsses ) {
-    my ($mlss_gdbs, $ref_chunk_count, $non_ref_chunk_count, $filter_dups_job_count);
-    if ( defined $mlss->get_tagvalue('species_set_size') ) {
-        $mlss_gdbs = $mlss->species_set->genome_dbs;
-        $ref_chunk_count = get_ref_chunk_count($mlss_gdbs->[0]);
-        $non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs->[0]);
-        # For polyploid self-alignments the computations should be times 3
-        # instead of 2, but they are separated in their own batch anyway
-	    $filter_dups_job_count = $ref_chunk_count * 2;
-
-        $mlss_job_count{$mlss->dbID}->{self_aln} = 1;
+    my @mlss_gdbs = $mlss->find_pairwise_reference;
+    my $ref_chunk_count = get_ref_chunk_count($mlss_gdbs[0]);
+    my $non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs[1]);
+    my $filter_dups_job_count;
+    if (($mlss_gdbs[0]->name eq $mlss_gdbs[1]->name) && $mlss_gdbs[0]->is_polyploid)  {
+        # Polyploid self-alignment
+        my $num_components = scalar(@{$mlss_gdbs[0]->component_genome_dbs});
+        $filter_dups_job_count = $ref_chunk_count * ($num_components - 1);
     } else {
-	    my $ref_name = $mlss->get_tagvalue('reference_species');
-	    $mlss_gdbs = $mlss->species_set->genome_dbs;
-	    if ( $mlss_gdbs->[0]->name eq $ref_name ) {
-		    $ref_chunk_count = get_ref_chunk_count($mlss_gdbs->[0]);
-		    $non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs->[1]);
-    	} else {
-		    $ref_chunk_count = get_ref_chunk_count($mlss_gdbs->[1]);
-	    	$non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs->[0]);
-    	}
-        $filter_dups_job_count = get_ref_chunk_count($mlss_gdbs->[0]) + get_ref_chunk_count($mlss_gdbs->[1]);
+        # For polyploid PWAs of the same genus, this makes an overestimate as
+        # they will not share all the components
+        $filter_dups_job_count = $ref_chunk_count + get_ref_chunk_count($mlss_gdbs[1]);
+    }
+    # Only non-polyploid self-alignments do not produce chain or net jobs
+    if (($mlss_gdbs[0]->name ne $mlss_gdbs[1]->name) || $mlss_gdbs[0]->is_polyploid) {
         my $chains_job_count = chains_job_count( $mlss );
         $mlss_job_count{$mlss->dbID}->{analysis}->{aln_chains} = $chains_job_count;
         $mlss_job_count{$mlss->dbID}->{analysis}->{aln_nets} = ceil($chains_job_count/2);
-
-        $mlss_job_count{$mlss->dbID}->{self_aln} = 0;
     }
 	my $lastz_job_count = ($ref_chunk_count * $non_ref_chunk_count);
     $mlss_job_count{$mlss->dbID}->{analysis}->{lastz} = $lastz_job_count;
@@ -300,9 +292,7 @@ sub split_mlsses {
 	# as these throw off the grouping and they end up uneven
 	my ($mlss_job_count, @large_mlss_groups);
 	foreach my $k ( keys %$mlss_job_count_full ) {
-        if ( $mlss_job_count_full->{$k}->{self_aln} ) {
-            push( @large_mlss_groups, { mlss_ids => [$k], job_count => $mlss_job_count_full->{$k}->{all} } );
-        } elsif ( $mlss_job_count_full->{$k}->{all} > $max_jobs ) {
+        if ( $mlss_job_count_full->{$k}->{all} > $max_jobs ) {
 			warn "\n** WARNING: MethodLinkSpeciesSet $k exceeds the max_jobs threshold alone **\n";
 			push( @large_mlss_groups, { mlss_ids => [$k], job_count => $mlss_job_count_full->{$k}->{all} } );
 		} else {
