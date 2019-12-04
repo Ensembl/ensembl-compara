@@ -16,39 +16,25 @@
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Utils::ConfigRegistry;
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
-my $curr_release = 98;
+use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::Utils::Registry;
 
-# ---------------------- CURRENT CORE DATABASE ---------------------------------
+my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
+my $prev_release = $curr_release - 1;
+my $curr_eg_release = $ENV{'CURR_EG_RELEASE'};
+my $prev_eg_release = $curr_eg_release - 1;
 
-# The majority of core databases live on staging servers:
-# Bio::EnsEMBL::Registry->load_registry_from_url(
-#     "mysql://ensro\@mysql-ens-sta-1.ebi.ac.uk:4519/$curr_release");
-Bio::EnsEMBL::Registry->load_registry_from_url(
-    "mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
-# Wheat (tiritcum aestivum) is located in a different server between releases:
-# Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-#     -host    => 'mysql-ens-sta-3',
-#     -user    => 'ensro',
-#     -pass    => '',
-#     -port    => 4160,
-#     -species => 'triticum_aestivum',
-#     -dbname  => 'triticum_aestivum_core_45_98_4',
-# );
+# --------------------------- CORE DATABASES -----------------------------------
 
-# ---------------------- COMPARA DATABASE LOCATION -----------------------------
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
 
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host    => 'mysql-ens-compara-prod-7',
-    -user    => 'ensadmin',
-    -pass    => $ENV{'ENSADMIN_PSW'},
-    -port    => 4617,
-    -species => 'compara_master',
-    -dbname  => $ENV{'USER'} . '_compara_master_citest',
-);
+# ----------------------- COMPARA MASTER DATABASE ------------------------------
+
+Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas({
+    'compara_master' => [ 'mysql-ens-compara-prod-8', 'jalvarez_compara_master_citest' ],
+});
+
+# ------------------------------------------------------------------------------
 
 1;
