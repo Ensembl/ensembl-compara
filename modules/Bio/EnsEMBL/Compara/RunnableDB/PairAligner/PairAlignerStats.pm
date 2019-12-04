@@ -126,26 +126,13 @@ sub fetch_input {
   $self->param('mlss_id', $mlss->dbID);
   $self->param('mlss', $mlss);
 
-  my $genome_dbs = $mlss->species_set->genome_dbs;
-  my ($ref_genome_db, $non_ref_genome_db);
-  if (scalar(@{$genome_dbs}) == 1) {
-      # Self-alignment
-      $ref_genome_db = $genome_dbs->[0];
-  } else {
-      if (($genome_dbs->[0]->name eq $mlss->get_value_for_tag('reference_species')) && (!$mlss->has_tag('reference_component')
-          || ($genome_dbs->[0]->genome_component eq $mlss->get_value_for_tag('reference_component')))) {
-          ($ref_genome_db, $non_ref_genome_db) = @$genome_dbs;
-      } else {
-          ($non_ref_genome_db, $ref_genome_db) = @$genome_dbs;
-      }
-  }
-  $non_ref_genome_db ||= $ref_genome_db;
-  $self->param('ref_genome_db', $ref_genome_db);
-  $self->param('non_ref_genome_db', $non_ref_genome_db);
+  my @genome_dbs = $mlss->find_pairwise_reference;
+  $self->param('ref_genome_db', $genome_dbs[0]);
+  $self->param('non_ref_genome_db', $genome_dbs[1]);
 
   #Create url from db_adaptor
-  my $ref_url = $ref_genome_db->db_adaptor->url;
-  my $non_ref_url = $non_ref_genome_db->db_adaptor->url;
+  my $ref_url = $genome_dbs[0]->db_adaptor->url;
+  my $non_ref_url = $genome_dbs[1]->db_adaptor->url;
 
   $self->param('ref_dbc_url', $ref_url);
   $self->param('non_ref_dbc_url', $non_ref_url);

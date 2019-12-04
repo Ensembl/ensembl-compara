@@ -407,6 +407,20 @@ sub filename {
     return $dir;
 }
 
+
+=head2 find_pairwise_reference
+
+  Example     : my $genome_dbs = $mlss->find_pairwise_reference();
+  Description : Returns the genomes involved in this pairwise-alignment MLSS. If
+                declared, the reference genome will be in first position. If
+                not, the usual reference species will be first. If none of the
+                previous conditions apply, the list is sorted alphabetically.
+                For self-alignments, the single genome is returned twice.
+  Return type : array of Bio::EnsEMBL::Compara::GenomeDB objects
+  Exceptions  : none
+
+=cut
+
 sub find_pairwise_reference {
     my $self = shift;
 
@@ -414,28 +428,35 @@ sub find_pairwise_reference {
     die "Cactus alignments are reference-free\n" if $self->method->type eq 'CACTUS_HAL_PW';
     my $genome_dbs = $self->species_set->genome_dbs;
 
-    # first, check for mlss_tags
-    my $ref_name = $self->_getter_setter_for_tag('reference_species');
-    $ref_name ||= '';
-    if ( $genome_dbs->[0]->name eq $ref_name ) {
-        return @$genome_dbs; # list was already in correct order
-    } elsif ( $genome_dbs->[1]->name eq $ref_name ) {
-        return ( $genome_dbs->[1], $genome_dbs->[0] );
-    } else {
-        # if tag is not set, always place usual references at the start
-        my @ref_list = ( 'homo_sapiens', 'mus_musculus', 'gallus_gallus', 'oryzias_latipes' );
-        foreach my $ref_name ( @ref_list ) {
-            if ( grep { $genome_dbs->[0]->name eq $_ } @ref_list ) {
-                return @$genome_dbs; # order was already correct
-            } elsif ( grep { $genome_dbs->[1]->name eq $_ } @ref_list ) {
-                return ( $genome_dbs->[1], $genome_dbs->[0] );
-            }
-        }
+    # For self-alignments, return the single genome twice
+    return ($genome_dbs->[0], $genome_dbs->[0]) if (scalar(@{$genome_dbs}) == 1);
 
-        # finally, give up and return alphabetical order
-        my @sorted = @$genome_dbs;
-        @sorted = sort { $a->name cmp $b->name } @sorted;
-        return @sorted; 
+    # First, check for reference MLSS tags
+    my $ref_name = $self->get_value_for_tag('reference_species', '');
+    my $ref_component = $self->get_value_for_tag('reference_component', '');
+    if (($genome_dbs->[0]->name eq $ref_name) || ($genome_dbs->[0]->genome_component eq $ref_component)) {
+        # List already in correct order
+        return @$genome_dbs;
+    } elsif (($genome_dbs->[1]->name eq $ref_name) || ($genome_dbs->[1]->genome_component eq $ref_component)) {
+        return ($genome_dbs->[1], $genome_dbs->[0]);
+    } elsif ($genome_dbs->[0]->name eq $genome_dbs->[1]->name) {
+        # For polyploid self-alignments, both genomes have the same name, so
+        # sort them alphabetically by component
+        @$genome_dbs = sort { $a->genome_component cmp $b->genome_component } @$genome_dbs;
+        return @$genome_dbs;
+    } else {
+        # In any other case, always place usual references first
+        my @ref_list = qw(homo_sapiens mus_musculus gallus_gallus oryzias_latipes arabidopsis_thaliana vitis_vinifera oryza_sativa);
+        if ( grep { $genome_dbs->[0]->name eq $_ } @ref_list ) {
+            # List already in correct order
+            return @$genome_dbs;
+        } elsif ( grep { $genome_dbs->[1]->name eq $_ } @ref_list ) {
+            return ($genome_dbs->[1], $genome_dbs->[0]);
+        } else {
+            # Return alphabetical order
+            @$genome_dbs = sort { $a->name cmp $b->name } @$genome_dbs;
+            return @$genome_dbs;
+        }
     }
 }
 
