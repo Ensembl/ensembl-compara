@@ -653,14 +653,14 @@ sub parse_defaults {
     	print "\n !! PPA compara_dba : " . $self->compara_dba->url . "\n";
         foreach my $mlss_id ( @mlss_id_list ) {
             my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
-            my $mlss_gdbs = $mlss->species_set->genome_dbs;
+            my @mlss_gdbs = $mlss->find_pairwise_reference;
             my @pair;
-            if (scalar @{ $mlss_gdbs } == 1) {
+            if ($mlss_gdbs[0]->name eq $mlss_gdbs[1]->name) {
                 # Self-alignment
-                if ($mlss_gdbs->[0]->is_polyploid) {
+                if ($mlss_gdbs[0]->is_polyploid) {
                     # To self-align a polyploid genome, align all combinations
                     # of two different components without repetition
-                    my $components = $mlss_gdbs->[0]->component_genome_dbs;
+                    my $components = $mlss_gdbs[0]->component_genome_dbs;
                     while (my $gdb1 = shift @{$components}) {
                         foreach my $gdb2 ( @{$components} ) {
                             push @pair,
@@ -670,24 +670,20 @@ sub parse_defaults {
                         }
                     }
                 } else {
+                    # Pairwise alignments of two components of the same genome
+                    # are handled correctly because we are using both indexes
                     push @pair,
-                         {'ref_genome_db'     => $mlss_gdbs->[0],
-                          'non_ref_genome_db' => $mlss_gdbs->[0]};
+                         {'ref_genome_db'     => $mlss_gdbs[0],
+                          'non_ref_genome_db' => $mlss_gdbs[1]};
                 }
             } else {
                 # Pairwise alignment
-                my $ref_name = $mlss->get_tagvalue('reference_species');
-                die "Cannot find tag 'reference_species' for mlss_id $mlss_id" unless $ref_name;
-                my $ref_index = ($mlss_gdbs->[0]->name eq $ref_name) ? 0 : 1;
-                my $ref_gdb   = $mlss_gdbs->[$ref_index];
-                my $non_ref_index = 1 - $ref_index;
-                my $non_ref_gdb   = $mlss_gdbs->[$non_ref_index];
                 # To align two polyploid genomes component by component, their
                 # genus has to be the same
-                if ($ref_gdb->is_polyploid && $non_ref_gdb->is_polyploid
-                    && ($ref_gdb->taxon->genus eq $non_ref_gdb->taxon->genus)) {
-                    my %ref_components     = map { $_->genome_component => $_ } @{$ref_gdb->component_genome_dbs};
-                    my %non_ref_components = map { $_->genome_component => $_ } @{$non_ref_gdb->component_genome_dbs};
+                if ($mlss_gdbs[0]->is_polyploid && $mlss_gdbs[1]->is_polyploid
+                    && ($mlss_gdbs[0]->taxon->genus eq $mlss_gdbs[1]->taxon->genus)) {
+                    my %ref_components     = map { $_->genome_component => $_ } @{$mlss_gdbs[0]->component_genome_dbs};
+                    my %non_ref_components = map { $_->genome_component => $_ } @{$mlss_gdbs[1]->component_genome_dbs};
                     # Ignore the components that are not present in both genomes
                     foreach my $cpnt (keys %ref_components) {
                         if (exists $non_ref_components{$cpnt}) {
@@ -699,8 +695,8 @@ sub parse_defaults {
                     }
                 } else {
                     push @pair,
-                         {'ref_genome_db'     => $ref_gdb,
-                          'non_ref_genome_db' => $non_ref_gdb};
+                         {'ref_genome_db'     => $mlss_gdbs[0],
+                          'non_ref_genome_db' => $mlss_gdbs[1]};
                 }
             }
             push @$collection, @pair;
