@@ -42,6 +42,14 @@ use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::SqlCmd');
 
+sub param_defaults {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::param_defaults},
+        'dry_run'   => 0,
+    }
+}
+
 sub fetch_input {
     my $self = shift;
 
@@ -55,7 +63,7 @@ sub fetch_input {
         while ( my $line = <$fh> ) {
             my $row = map_row_to_header($line, \@header_cols);
             my $homology_id = $row->{homology_id};
-            die "No homology_id found in $f" unless $homology_id;
+            die "No homology_id found in $f - please check file header line\n" unless $homology_id;
             delete $row->{homology_id};
             foreach my $attrib_name ( keys %$row ) {
                 $hom_attribs{$homology_id}->{$attrib_name} = $row->{$attrib_name};
@@ -76,6 +84,11 @@ sub fetch_input {
 
     $self->param('db_conn', $self->compara_dba);
     $self->param('sql', \@sql_cmds);
+
+    if ( $self->param('dry_run') ){
+        $self->input_job->autoflow(0);
+        $self->complete_early("Dry-run mode : exiting...");
+    }
 }
 
 1;

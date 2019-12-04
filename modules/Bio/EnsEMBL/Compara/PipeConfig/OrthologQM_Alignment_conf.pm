@@ -272,7 +272,8 @@ sub pipeline_analyses {
         {   -logic_name => 'ortholog_mlss_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologMLSSFactory',
             -flow_into  => {
-                2 => [ 'prepare_orthologs' ],
+                '2->A' => [ 'prepare_orthologs' ],
+                'A->1' => [ 'copy_files_to_shared_loc' ],
             }
         },
 
@@ -299,9 +300,8 @@ sub pipeline_analyses {
             -batch_size => 10,
             -parameters => { alignment_db => $self->pipeline_url },
             -flow_into  => {
-                '3'    => [ '?table_name=ortholog_quality' ],
-                '2->A' => [ 'assign_wga_coverage_score' ],
-                'A->1' => [ 'copy_files_to_shared_loc' ],
+                3 => [ '?table_name=ortholog_quality' ],
+                2 => [ 'assign_wga_coverage_score' ],
             },
             -rc_name => '2Gb_job',
         },
@@ -312,8 +312,7 @@ sub pipeline_analyses {
                 'hashed_mlss_id' => '#expr(dir_revhash(#orth_mlss_id#))expr#',
                 'output_file'    => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
             },
-            -hive_capacity     => 30,
-            -batch_size        => 10,
+            -hive_capacity     => 400,
         },
 
         {   -logic_name => 'reuse_wga_score',
@@ -325,8 +324,7 @@ sub pipeline_analyses {
                 'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.homology_id_map.tsv',
                 'output_file'               => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
             },
-            -hive_capacity     => 30,
-            -batch_size        => 10,
+            -hive_capacity     => 400,
         },
 
         {   -logic_name => 'copy_files_to_shared_loc',

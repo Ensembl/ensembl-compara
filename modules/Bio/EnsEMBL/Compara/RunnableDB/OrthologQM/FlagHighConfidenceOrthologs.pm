@@ -116,6 +116,7 @@ sub write_output {
 
     open(my $hfh, '<', $homology_file) or die "Cannot open $homology_file for reading";
     open(my $ofh, '>', $output_file  ) or die "Cannot open $output_file for writing";
+    print $ofh "homology_id\tis_high_confidence\n";
     my $header_line = <$hfh>;
     my @header_cols = split( /\s+/, $header_line );
     my %hc_counts;

@@ -60,8 +60,9 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'high_confidence_capacity'    => 20,             # how many mlss_ids can be processed in parallel
-        'high_confidence_batch_size'  => 10,            # how many mlss_ids' jobs can be batched together
+        'high_confidence_capacity'    => 500,          # how many mlss_ids can be processed in parallel
+        'high_confidence_batch_size'  => 1,            # how many mlss_ids' jobs can be batched together
+        'update_homologies_capacity'  => 10,           # how many homology mlss_ids can be updated in parallel
 
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [ ],
@@ -101,6 +102,10 @@ sub pipeline_wide_parameters {
         'homology_dumps_dir' => $self->o('homology_dumps_dir'),
         'goc_files_dir'      => $self->o('goc_files_dir'),
         'wga_files_dir'      => $self->o('wga_files_dir'),
+        'hashed_mlss_id'     => '#expr(dir_revhash(#mlss_id#))expr#',
+        'goc_file'           => '#goc_files_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.goc.tsv',
+        'wga_file'           => '#wga_files_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.wga.tsv',
+        'high_conf_file'     => '#pipeline_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.high_conf.tsv',
     }
 }
 
