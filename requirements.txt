@@ -3,6 +3,6 @@ pylint
 mypy
 pytest
 # Production
-ete3
 numpy
 six
+ete3
