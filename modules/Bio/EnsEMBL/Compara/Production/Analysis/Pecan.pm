@@ -89,6 +89,7 @@ sub run_pecan {
   }
 
   my @command = ($self->require_executable('java_exe'));
+  push @command, '-Djava.io.tmpdir='.$tmp_dir;
   if ($self->param('java_options')) {
       # FIXME: encode java_options as an array in the PipeConfigs
       push @command, split(/ /, $self->param('java_options'));
