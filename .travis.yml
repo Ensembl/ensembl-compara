@@ -87,7 +87,7 @@ jobs:
 
     - language: python
       dist: trusty   # 3.4 is the minimum on xenial
-      python: 3.2
+      python: 3.3    # minimum version supported by dependencies of pytest
       name: "Python unit tests on the minimum version"
       before_install:
         - echo
