@@ -71,6 +71,10 @@ sub default_options {
         #         'thresholds'    => [ undef, undef, 25 ],
         #     },
         # ],
+
+        'homology_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
+        'goc_files_dir' => $self->o('homology_dumps_dir'),
+        'wga_files_dir' => $self->o('homology_dumps_dir'),
     };
 }
 
@@ -79,12 +83,24 @@ sub default_pipeline_name {         # Instead of ortholog_qm_alignment
     return $self->o('collection') . '_' . $self->o('member_type') . '_high_conf';
 }
 
+sub hive_meta_table {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
+         'hive_use_param_stack'  => 1,           # switch on the param_stack mechanism
+    };
+}
+
 sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        'range_label' => $self->o('member_type'),
+        'range_label'        => $self->o('member_type'),
+        'pipeline_dir'       => $self->o('pipeline_dir'),
+        'homology_dumps_dir' => $self->o('homology_dumps_dir'),
+        'goc_files_dir'      => $self->o('goc_files_dir'),
+        'wga_files_dir'      => $self->o('wga_files_dir'),
     }
 }
 

@@ -84,7 +84,7 @@ Example:
 =item range_filter, range_label
 
 If the pipeline needs to process only a subset of the homologies,
-these can be defined with an additional filter: a SQL condition.
+these can be defined with an additional filter: a list of ranges.
 The statistics will then be stored in the database with the label
 added to their names.
 
@@ -116,21 +116,35 @@ sub pipeline_analyses_high_confidence {
         {   -logic_name => 'mlss_id_for_high_confidence_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::FindMLSSUnderTaxa',
             -flow_into  => {
-                2   => { 'flag_high_confidence_orthologs' => INPUT_PLUS },
+                2   => [ 'flag_high_confidence_orthologs' ],
             },
         },
 
         {   -logic_name    => 'flag_high_confidence_orthologs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::FlagHighConfidenceOrthologs',
             -parameters    => {
-                'thresholds'    => '#expr( #threshold_levels#->[#threshold_index#]->{"thresholds"} )expr#',
+                'thresholds'     => '#expr( #threshold_levels#->[#threshold_index#]->{"thresholds"} )expr#',
+                'hashed_mlss_id' => '#expr(dir_revhash(#mlss_id#))expr#',
+                'goc_file'       => '#goc_files_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.goc.tsv',
+                'wga_file'       => '#wga_files_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.wga.tsv',
+                'homology_file'  => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
+                'high_conf_file' => '#pipeline_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.high_conf.tsv',
             },
             -hive_capacity => $self->o('high_confidence_capacity'),
             -batch_size    => $self->o('high_confidence_batch_size'),
+            -flow_into     => ['update_homology_table'],
+        },
+
+        {   -logic_name => 'update_homology_table',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::UpdateHomologies',
+            -parameters => {
+                attrib_files => [
+                    '#goc_file#', '#wga_file#', '#high_conf_file#'
+                ],
+            },
         },
 
     ];
 }
 
 1;
-

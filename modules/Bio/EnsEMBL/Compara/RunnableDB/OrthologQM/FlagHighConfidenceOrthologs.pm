@@ -32,10 +32,21 @@ Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::FlagHighConfidenceOrthologs
 
 =cut
 
+=head1 DESCRIPTION
+
+    This runnable uses homologies and attributes from flatfiles (homology_file,
+    wga_file, goc_file) to decide whether a homology can be considered 'high confidence'.
+    Writes output in TSV format to 'high_conf_file'.
+
+=cut
+
 package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::FlagHighConfidenceOrthologs;
 
 use strict;
 use warnings;
+use POSIX qw(floor);
+use File::Basename;
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -55,49 +66,31 @@ sub fetch_input {
 
     my $mlss_id     = $self->param_required('mlss_id');
     my $thresholds  = $self->param_required('thresholds');
-    my $range_label = $self->param_required('range_label');
     my $mlss        = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-    my $range_filter = $self->param('range_filter');
-
-    # Common filter we'll apply to all the queries. By default it only filters by mlss_id but can
-    # optionally filter by homology_id range (used if we want to apply different thresholds for
-    # ncRNAs and protein-coding genes, for instance)
-    my $homology_filter = 'method_link_species_set_id = ?';
-
-    if ($range_filter) {
-        $homology_filter .= ' AND ('.$range_filter->{$range_label}.')';
-    }
 
     # The %identity filter always applies
-    my $condition = "perc_id >= ".$thresholds->[2]." AND ";
+    my %external_conditions = (perc_id => $thresholds->[2]);
 
     # Check whether there are GOC and WGA scores for this mlss_id
-    my $sql_score_count = "SELECT COUNT(*), COUNT(goc_score), COUNT(wga_coverage) FROM homology WHERE $homology_filter";
-    my ($n_hom, $has_goc, $has_wga) = $self->compara_dba->dbc->db_handle->selectrow_array($sql_score_count, undef, $mlss_id);
+    my ($n_hom, $has_goc, $has_wga) = $self->check_homology_counts;
 
     # There could be 0 homologies for this mlss
     unless ($n_hom) {
         $self->complete_early("No homologies for mlss_id=$mlss_id. Nothing to do");
     }
 
-    my @external_conditions;
     if ($has_goc and $thresholds->[0]) {
-        push @external_conditions, "(goc_score IS NOT NULL AND goc_score >= ".$thresholds->[0].")";
+        $external_conditions{goc_score} = $thresholds->[0];
     }
     if ($has_wga and $thresholds->[1]) {
-        push @external_conditions, "(wga_coverage IS NOT NULL AND wga_coverage >= ".$thresholds->[1].")";
+        $external_conditions{wga_coverage} = $thresholds->[1];
     }
 
     # Use the independent metrics if possible or fallback to is_tree_compliant
-    if (@external_conditions) {
-        $condition .= "(" . join(" OR ", @external_conditions) . ")";
-    } else {
-        $condition .= "is_tree_compliant = 1";
-    }
+    $external_conditions{is_tree_compliant} = 1 unless scalar(keys %external_conditions) > 0;
 
     $self->param('mlss',                        $mlss);
-    $self->param('homology_filter',             $homology_filter);
-    $self->param('high_confidence_condition',   $condition);
+    $self->param('high_confidence_conditions',  \%external_conditions);
     $self->param('num_homologies',              $n_hom);
 }
 
@@ -107,60 +100,102 @@ sub write_output {
     $self->disconnect_from_hive_database;
 
     my $mlss                        = $self->param('mlss');
-    my $mlss_id                     = $self->param('mlss_id');
-    my $thresholds                  = $self->param('thresholds');
     my $range_label                 = $self->param('range_label');
-    my $homology_filter             = $self->param('homology_filter');
-    my $high_confidence_condition   = $self->param('high_confidence_condition');
-    my $n_hom                       = $self->param('num_homologies');
+    my $range_filter                = $self->param('range_filter')->{$range_label};
+    my $high_confidence_conditions  = $self->param('high_confidence_conditions');
+    my $n_hom                       = $self->param('num_homologies'),
 
-    # Initially I wanted to join both tables, group by homology_id and update homology, but I think
-    # this approach here is more efficient: set everything to 1, and reset all the rows that don't
-    # pass
-    my $sql_sethc = "UPDATE homology SET is_high_confidence = 1 WHERE $homology_filter";
-    my $sql_reset = "UPDATE homology JOIN homology_member USING (homology_id) SET is_high_confidence = 0 WHERE $homology_filter AND NOT ($high_confidence_condition)";
-    $self->compara_dba->dbc->do($sql_sethc, undef, $mlss_id);
-    $self->compara_dba->dbc->do($sql_reset, undef, $mlss_id);
+    my $homology_file = $self->param_required('homology_file');
+    my $wga_file      = $self->param_required('wga_file');
+    my $goc_file      = $self->param_required('goc_file');
+    my $output_file   = $self->param_required('high_conf_file');
+    $self->run_command( "mkdir -p " . dirname($output_file)) unless -e dirname($output_file);
 
-    # Get some statistics for the mlss_tag table
-    my $sql_hc_count         = "SELECT SUM(is_high_confidence) FROM homology WHERE $homology_filter";
-    my $sql_hc_per_gdb_count = "SELECT genome_db_id, COUNT(DISTINCT gene_member_id) FROM homology JOIN homology_member USING (homology_id) JOIN gene_member USING (gene_member_id) WHERE $homology_filter AND is_high_confidence = 1 GROUP BY genome_db_id";
-    my ($n_hc) = $self->compara_dba->dbc->db_handle->selectrow_array($sql_hc_count, undef, $mlss_id);
-    my $hc_per_gdb = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql_hc_per_gdb_count, undef, $mlss_id);
-    
+    my $wga_coverage = $self->_parse_flatfile_into_hash($wga_file, $range_filter);
+    my $goc_scores   = $self->_parse_flatfile_into_hash($goc_file, $range_filter);
+
+    open(my $hfh, '<', $homology_file) or die "Cannot open $homology_file for reading";
+    open(my $ofh, '>', $output_file  ) or die "Cannot open $output_file for writing";
+    my $header_line = <$hfh>;
+    my @header_cols = split( /\s+/, $header_line );
+    my %hc_counts;
+    while ( my $line = <$hfh> ) {
+        my $row = map_row_to_header($line, \@header_cols);
+        my ($homology_id, $is_tree_compliant, $gdb_id_1, $gm_id_1, $perc_id_1, $gdb_id_2, $gm_id_2, $perc_id_2) = (
+            $row->{homology_id}, $row->{is_tree_compliant}, $row->{genome_db_id}, $row->{gene_member_id}, $row->{identity},
+            $row->{hom_genome_db_id}, $row->{hom_gene_member_id}, $row->{hom_identity},
+        );
+
+        if ( $range_filter ) {
+            next unless $self->_match_range_filter($homology_id, $range_filter);
+        }
+
+        # decide if homology is high confidence
+        my $is_high_conf = 1; # default to 1, set to 0 if it fails conditions
+
+        $is_high_conf = 0 unless $perc_id_1 >= $high_confidence_conditions->{perc_id} && $perc_id_2 >= $high_confidence_conditions->{perc_id};
+
+        if ( $is_high_conf && $high_confidence_conditions->{goc_score} ) {
+            $is_high_conf = 0 unless defined $goc_scores->{$homology_id};
+            $is_high_conf = 0 unless ($goc_scores->{$homology_id} || 0) >= $high_confidence_conditions->{goc_score};
+        }
+        if ( $is_high_conf && $high_confidence_conditions->{wga_coverage} ) {
+            $is_high_conf = 0 unless defined $wga_coverage->{$homology_id};
+            $is_high_conf = 0 unless ($wga_coverage->{$homology_id} || 0) >= $high_confidence_conditions->{wga_coverage};
+        }
+        if ( $is_high_conf && $high_confidence_conditions->{is_tree_compliant} ) {
+            $is_high_conf = $is_tree_compliant;
+        }
+        print $ofh "$homology_id\t$is_high_conf\n";
+
+        # collect some statistics for the mlss_tag table
+        $hc_counts{all} += $is_high_conf;
+        $hc_counts{$gdb_id_1}->{$gm_id_1} = 1 if $is_high_conf;
+        $hc_counts{$gdb_id_2}->{$gm_id_2} = 1 if $is_high_conf;
+    }
+    close $hfh;
+    close $ofh;
+
     # Print them
-    my $msg_for_gdb = join(" and ", map {$_->[1]." for genome_db_id=".$_->[0]} @$hc_per_gdb);
+    my $n_hc = $hc_counts{all};
+    delete $hc_counts{all};
+    my %hc_per_gdb = map { $_ => scalar(keys %{$hc_counts{$_}}) } keys %hc_counts;
+    my $msg_for_gdb = join(" and ", map {$hc_per_gdb{$_}." for genome_db_id=".$_} keys %hc_per_gdb);
     $self->warning("$n_hc / $n_hom homologies are high-confidence ($msg_for_gdb)");
     # Store them
     $mlss->store_tag("n_${range_label}_high_confidence", $n_hc);
-    $mlss->store_tag("n_${range_label}_high_confidence_".$_->[0], $_->[1]) for @$hc_per_gdb;
+    $mlss->store_tag("n_${range_label}_high_confidence_".$_, $hc_per_gdb{$_}) for keys %hc_per_gdb;
 
     # More stats for the metrics that were used for this mlss_id
-    if ($high_confidence_condition =~ /goc_score/) {
-        my $sql_goc_distribution = "SELECT goc_score, COUNT(*) FROM homology WHERE $homology_filter GROUP BY goc_score";
-        $self->_write_distribution($mlss, 'goc', $thresholds->[0], $sql_goc_distribution);
+    if ( defined $high_confidence_conditions->{goc_score} ) {
+        $self->_write_distribution($mlss, 'goc', $high_confidence_conditions->{goc_score}, $goc_scores);
     }
-    if ($high_confidence_condition =~ /wga_coverage/) {
-        my $sql_wga_distribution = "SELECT FLOOR(wga_coverage/25)*25, COUNT(*) FROM homology WHERE $homology_filter GROUP BY FLOOR(wga_coverage/25)";
+    if ( defined $high_confidence_conditions->{wga_coverage} ) {
         # unlike goc, wga is calculated on both protein and ncrna - add the range_label to ensure mergeability
-        $self->_write_distribution($mlss, "${range_label}wga", $thresholds->[1], $sql_wga_distribution);
+        $self->_write_distribution($mlss, "${range_label}wga", $high_confidence_conditions->{wga_coverage}, $wga_coverage);
     }
 }
 
 sub _write_distribution {
-    my ($self, $mlss, $label, $threshold, $sql) = @_;
-    my $distrib_array = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql, undef, $mlss->dbID);
+    my ($self, $mlss, $label, $threshold, $scores) = @_;
+
+    my %distrib_hash;
+    foreach my $score ( values %$scores ) {
+        my $floor_score = floor($score/25)*25;
+        $distrib_hash{$floor_score} += 1;
+    }
+
     my $n_tot = 0;
     my $n_over_threshold = 0;
-    foreach my $distrib_row (@$distrib_array) {
-        my $tag = sprintf('n_%s_%s', $label, $distrib_row->[0] // 'null');
-        $mlss->store_tag($tag, $distrib_row->[1]);
-        $n_tot += $distrib_row->[1];
-        if ((defined $distrib_row->[0]) and ($distrib_row->[0] > $threshold)) {
-            $n_over_threshold += $distrib_row->[1];
+    foreach my $distrib_score ( keys %distrib_hash ) {
+        my $tag = sprintf('n_%s_%s', $label, $distrib_score // 'null');
+        $mlss->store_tag($tag, $distrib_hash{$distrib_score});
+        $n_tot += $distrib_hash{$distrib_score};
+        if ((defined $distrib_score) and ($distrib_score > $threshold)) {
+            $n_over_threshold += $distrib_hash{$distrib_score};
         }
     }
-    
+
     if ( $label =~ /goc/ ) {
         $mlss->store_tag('goc_quality_threshold', $threshold);
         $mlss->store_tag('perc_orth_above_'.$label.'_thresh', 100*$n_over_threshold/$n_tot);
@@ -171,6 +206,59 @@ sub _write_distribution {
         $mlss->store_tag('orth_above_'.$label.'_thresh', $n_over_threshold);
         $mlss->store_tag('total_'.$label.'_orth_count', $n_tot);
     }
+}
+
+sub check_homology_counts {
+    my $self = shift;
+
+    my $homology_file = $self->param_required('homology_file');
+    my $wc_hom = $self->_lines_in_file($homology_file);
+    return (0,0,0) if $wc_hom == 0;
+
+    my $wc_goc = $self->_lines_in_file($self->param('goc_file'));
+    my $wc_wga = $self->_lines_in_file($self->param('wga_file'));
+    return ($wc_hom, $wc_goc, $wc_wga);
+}
+
+sub _lines_in_file {
+    my ( $self, $filename ) = @_;
+
+    my @wc_out = split( /\s+/, $self->get_command_output("wc -l $filename") );
+    my $wc_l   = shift @wc_out;
+    return $wc_l - 1; # account for header line
+}
+
+sub _parse_flatfile_into_hash {
+    my ($self, $filename, $filter) = @_;
+
+    my %flatfile_hash;
+    open(my $fh, '<', $filename) or die "Cannot open $filename for reading";
+    my $header = <$fh>;
+    while ( my $line = <$fh> ) {
+        chomp $line;
+        my ( $id, $val ) = split(/\s+/, $line);
+        next if $val eq '';
+        next if $filter && ! $self->_match_range_filter($id, $filter);
+        $flatfile_hash{$id} = $val;
+    }
+    close $fh;
+
+    return \%flatfile_hash;
+}
+
+sub _match_range_filter {
+    my ($self, $id, $filter) = @_;
+
+    my $match = 0;
+    foreach my $range ( @$filter ) {
+        if ( $range->[0] && $range->[1] ) {
+            $match = 1 if $id >= $range->[0] && $id < $range->[1];
+        } else {
+            $match = 1 if $id >= $range->[0];
+        }
+    }
+
+    return $match;
 }
 
 1;

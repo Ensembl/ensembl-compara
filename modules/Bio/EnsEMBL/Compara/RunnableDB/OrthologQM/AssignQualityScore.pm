@@ -60,7 +60,8 @@ sub fetch_input {
 	foreach my $oid ( @orth_ids ){
 		$sth->execute($oid);
 		$max_quality{$oid} = $sth->fetchrow_arrayref->[0] or $self->warning("Cannot find quality scores in db for homology id $oid");
-	}
+        $max_quality{$oid} = 0 unless $max_quality{$oid}; # default to 0 like GOC
+    }
 	
 	$self->param('max_quality', \%max_quality);
 }
@@ -77,13 +78,14 @@ sub write_output {
     # disconnect from dbs
     $self->compara_dba->dbc->disconnect_if_idle();
     $self->dbc->disconnect_if_idle() if $self->dbc;
+    $self->data_dbc->disconnect_if_idle();
 
     my $output_file = $self->param('output_file');
     $self->run_command( "mkdir -p " . dirname($output_file)) unless -d dirname($output_file);
     open(my $out_fh, '>>', $output_file) or die "Cannot open $output_file for writing";
 
-    # write header if the file doesn't already exist
-    print $out_fh "homology_id\twga_coverage\n" if ( ! -e $output_file );
+    # write header if the file is empty
+    print $out_fh "homology_id\twga_coverage\n" if ( -z $output_file );
 
     # write scores to file
 	my %max_quality = %{ $self->param('max_quality') };
