@@ -150,7 +150,7 @@ sub content {
     my $vf_count = $self->_count_variation_features($slice);
     my $warning_content  = "There are ".$self->thousandify($vf_count)." variants for this $object_type, which is too many to display in this page, so <b>only exonic variants</b> are displayed.";
        $warning_content .= " Please use <a href=\"$biomart_link\">BioMart</a> to extract all data." if ($biomart_link ne '');
-    $html .= $self->_warning( "Too many data to display", $warning_content);
+    $html .= $self->_warning( "Too much data to display", $warning_content);
 
     $only_exonic = 1;
   }
