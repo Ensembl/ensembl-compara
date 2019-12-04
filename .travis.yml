@@ -61,7 +61,7 @@ jobs:
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
       before_script:
         - echo
-      script: env PERL5LIB=$PERL5LIB:$PWD/modules:$PWD/ensembl/modules:$PWD/ensembl-test/modules:$PWD/ensembl-io/modules prove -r ./travisci/all-housekeeping/
+      script: ./travisci/all-housekeeping_harness.sh
 
     - language: perl
       dist: trusty   # 5.22 is the minimum on xenial
