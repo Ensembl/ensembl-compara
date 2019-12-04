@@ -1,0 +1,4 @@
+typing
+pylint
+mypy
+pytest
