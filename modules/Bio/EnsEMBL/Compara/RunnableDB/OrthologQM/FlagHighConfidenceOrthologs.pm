@@ -17,15 +17,6 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::FlagHighConfidenceOrthologs
@@ -34,9 +25,9 @@ Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::FlagHighConfidenceOrthologs
 
 =head1 DESCRIPTION
 
-    This runnable uses homologies and attributes from flatfiles (homology_file,
-    wga_file, goc_file) to decide whether a homology can be considered 'high confidence'.
-    Writes output in TSV format to 'high_conf_file'.
+This runnable uses homologies and attributes from flatfiles (homology_file,
+wga_file, goc_file) to decide whether a homology can be considered 'high confidence'.
+Writes output in TSV format to 'high_conf_file'.
 
 =cut
 
@@ -44,8 +35,10 @@ package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::FlagHighConfidenceOrtholo
 
 use strict;
 use warnings;
+
 use POSIX qw(floor);
 use File::Basename;
+
 use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -72,7 +65,7 @@ sub fetch_input {
     my %external_conditions = (perc_id => $thresholds->[2]);
 
     # Check whether there are GOC and WGA scores for this mlss_id
-    my ($n_hom, $has_goc, $has_wga) = $self->check_homology_counts;
+    my ($n_hom, $has_goc, $has_wga) = $self->_check_homology_counts;
 
     # There could be 0 homologies for this mlss
     unless ($n_hom) {
@@ -119,7 +112,7 @@ sub write_output {
     print $ofh "homology_id\tis_high_confidence\n";
     my $header_line = <$hfh>;
     my @header_cols = split( /\s+/, $header_line );
-    my %hc_counts;
+    my (%hc_counts, $n_hc);
     while ( my $line = <$hfh> ) {
         my $row = map_row_to_header($line, \@header_cols);
         my ($homology_id, $is_tree_compliant, $gdb_id_1, $gm_id_1, $perc_id_1, $gdb_id_2, $gm_id_2, $perc_id_2) = (
@@ -132,9 +125,7 @@ sub write_output {
         }
 
         # decide if homology is high confidence
-        my $is_high_conf = 1; # default to 1, set to 0 if it fails conditions
-
-        $is_high_conf = 0 unless $perc_id_1 >= $high_confidence_conditions->{perc_id} && $perc_id_2 >= $high_confidence_conditions->{perc_id};
+        my $is_high_conf = ($perc_id_1 >= $high_confidence_conditions->{perc_id} && $perc_id_2 >= $high_confidence_conditions->{perc_id});
 
         if ( $is_high_conf && $high_confidence_conditions->{goc_score} ) {
             $is_high_conf = 0 unless defined $goc_scores->{$homology_id};
@@ -150,7 +141,7 @@ sub write_output {
         print $ofh "$homology_id\t$is_high_conf\n";
 
         # collect some statistics for the mlss_tag table
-        $hc_counts{all} += $is_high_conf;
+        $n_hc += $is_high_conf;
         $hc_counts{$gdb_id_1}->{$gm_id_1} = 1 if $is_high_conf;
         $hc_counts{$gdb_id_2}->{$gm_id_2} = 1 if $is_high_conf;
     }
@@ -158,14 +149,12 @@ sub write_output {
     close $ofh;
 
     # Print them
-    my $n_hc = $hc_counts{all};
-    delete $hc_counts{all};
     my %hc_per_gdb = map { $_ => scalar(keys %{$hc_counts{$_}}) } keys %hc_counts;
-    my $msg_for_gdb = join(" and ", map {$hc_per_gdb{$_}." for genome_db_id=".$_} keys %hc_per_gdb);
+    my $msg_for_gdb = join(" and ", map {$hc_per_gdb{$_} . " for genome_db_id=" . $_} keys %hc_per_gdb);
     $self->warning("$n_hc / $n_hom homologies are high-confidence ($msg_for_gdb)");
     # Store them
     $mlss->store_tag("n_${range_label}_high_confidence", $n_hc);
-    $mlss->store_tag("n_${range_label}_high_confidence_".$_, $hc_per_gdb{$_}) for keys %hc_per_gdb;
+    $mlss->store_tag("n_${range_label}_high_confidence_" . $_, $hc_per_gdb{$_}) for keys %hc_per_gdb;
 
     # More stats for the metrics that were used for this mlss_id
     if ( defined $high_confidence_conditions->{goc_score} ) {
@@ -209,7 +198,7 @@ sub _write_distribution {
     }
 }
 
-sub check_homology_counts {
+sub _check_homology_counts {
     my $self = shift;
 
     my $homology_file = $self->param_required('homology_file');
@@ -251,12 +240,11 @@ sub _match_range_filter {
     my ($self, $id, $filter) = @_;
 
     my $match = 0;
-    foreach my $range ( @$filter ) {
-        if ( $range->[0] && $range->[1] ) {
-            $match = 1 if $id >= $range->[0] && $id < $range->[1];
-        } else {
-            $match = 1 if $id >= $range->[0];
-        }
+    die "Bad range declaration: at least one value expected, 0 found." unless defined $range->[0];
+    if ( defined $range->[1] ) {
+        $match = 1 if $id >= $range->[0] && $id <= $range->[1];
+    } else {
+        $match = 1 if $id >= $range->[0];
     }
 
     return $match;
