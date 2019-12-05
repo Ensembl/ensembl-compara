@@ -1,0 +1,5 @@
+typing
+pylint
+mypy
+pytest
+pytest-cov

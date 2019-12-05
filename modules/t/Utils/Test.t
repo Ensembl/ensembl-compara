@@ -1,5 +1,4 @@
-#!/homes/carlac/anaconda_ete/bin/python
-
+#!/usr/bin/env perl
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # Copyright [2016-2019] EMBL-European Bioinformatics Institute
 #
@@ -15,31 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Script to root a tree given an outgroup"""
 
-import argparse
-import os
-import sys
+use strict;
+use warnings;
 
-from ete3 import Tree
+use File::Spec;
+use Test::More tests => 2;
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-t', '--tree')
-parser.add_argument('-o', '--outgroup')
-opts = parser.parse_args(sys.argv[1:])
+use_ok('Bio::EnsEMBL::Compara::Utils::Test');
 
-# check arguments
-if not os.path.isfile(opts.tree):
-    sys.stderr.write("File {0} not found".format(opts.tree))
-    sys.exit(1)
+subtest 'get_repository_root' => sub {
+    my $path = Bio::EnsEMBL::Compara::Utils::Test::get_repository_root();
+    ok(-d $path, "Returned a directory");
+    foreach my $subdir (qw(modules scripts sql modules/Bio/EnsEMBL/Compara)) {
+        my $subpath = File::Spec->catdir($path, $subdir);
+        ok(-d $subpath, "$path has a sub-directory named '$subdir'");
+    }
+};
 
-try:
-    opts.outgroup
-except NameError:
-    sys.stderr.write("Outgroup must be defined (--outgroup)")
-    sys.exit(1)
-
-
-t = Tree(opts.tree)
-t.set_outgroup(opts.outgroup)
-print(t.get_tree_root().write(format=5))
+done_testing();

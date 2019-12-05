@@ -1,4 +1,4 @@
-#!/homes/carlac/anaconda_ete/bin/python
+#!/bin/bash
 
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # Copyright [2016-2019] EMBL-European Bioinformatics Institute
@@ -15,31 +15,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Script to root a tree given an outgroup"""
+PYTHON_SOURCE_LOCATIONS=('scripts')
 
-import argparse
-import os
-import sys
+# Check that all the Python files can be compiled
+if [ "$TEST_COMPILATION" = 'true' ]; then
+  find "${PYTHON_SOURCE_LOCATIONS[@]}" -name '*.py' -print0 | xargs -0 travisci/compile.py
+  rt1=$?
+else
+  rt1=0
+fi
 
-from ete3 import Tree
+PYTEST_OPTIONS=()
+if [ "$COVERAGE" = 'true' ]; then
+  PYTEST_OPTIONS+=('--cov=./')
+fi
+pytest "${PYTEST_OPTIONS[@]}" "${PYTHON_SOURCE_LOCATIONS[@]}"
+rt2=$?
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-t', '--tree')
-parser.add_argument('-o', '--outgroup')
-opts = parser.parse_args(sys.argv[1:])
-
-# check arguments
-if not os.path.isfile(opts.tree):
-    sys.stderr.write("File {0} not found".format(opts.tree))
-    sys.exit(1)
-
-try:
-    opts.outgroup
-except NameError:
-    sys.stderr.write("Outgroup must be defined (--outgroup)")
-    sys.exit(1)
-
-
-t = Tree(opts.tree)
-t.set_outgroup(opts.outgroup)
-print(t.get_tree_root().write(format=5))
+# Return code 5 means "No tests collected". We want this as long as we don't have any tests
+if [[ ($rt1 -eq 0) && ($rt2 -eq 5) ]]; then
+  exit 0
+else
+  exit 255
+fi

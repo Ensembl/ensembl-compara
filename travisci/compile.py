@@ -1,4 +1,4 @@
-#!/homes/carlac/anaconda_ete/bin/python
+#!/usr/bin/env python3
 
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # Copyright [2016-2019] EMBL-European Bioinformatics Institute
@@ -15,31 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Script to root a tree given an outgroup"""
 
-import argparse
-import os
+"""Scripts that tests that every module listed as command-line arguments can be compiled"""
 import sys
 
-from ete3 import Tree
-
-parser = argparse.ArgumentParser()
-parser.add_argument('-t', '--tree')
-parser.add_argument('-o', '--outgroup')
-opts = parser.parse_args(sys.argv[1:])
-
-# check arguments
-if not os.path.isfile(opts.tree):
-    sys.stderr.write("File {0} not found".format(opts.tree))
-    sys.exit(1)
-
-try:
-    opts.outgroup
-except NameError:
-    sys.stderr.write("Outgroup must be defined (--outgroup)")
-    sys.exit(1)
-
-
-t = Tree(opts.tree)
-t.set_outgroup(opts.outgroup)
-print(t.get_tree_root().write(format=5))
+for f in sys.argv[1:]:
+    try:
+        compile(open(f).read(), f, 'exec', 0, 1)
+    except SyntaxError as err:
+        print('{}:{}:{}: {}'.format(err.filename, err.lineno, err.offset, err.msg))

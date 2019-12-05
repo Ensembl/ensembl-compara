@@ -16,7 +16,7 @@
 # limitations under the License.
 
 
-echo "We are running Perl '$TRAVIS_PERL_VERSION', Coveralls status is set to '$COVERALLS'"
+echo "We are running Perl '$TRAVIS_PERL_VERSION', Coveralls status is set to '$COVERAGE'"
 
 # Setup the environment variables
 export ENSEMBL_CVS_ROOT_DIR=$PWD
@@ -43,7 +43,7 @@ COMPARA_SCRIPTS=("$PWD/modules/t")
 CORE_SCRIPTS=("$PWD/ensembl/modules/t/compara.t")
 REST_SCRIPTS=("$PWD/ensembl-rest/t/genomic_alignment.t" "$PWD/ensembl-rest/t/info.t" "$PWD/ensembl-rest/t/taxonomy.t" "$PWD/ensembl-rest/t/homology.t" "$PWD/ensembl-rest/t/gene_tree.t" "$PWD/ensembl-rest/t/cafe_tree.t" "$PWD/ensembl-rest/t/family.t")
 
-if [ "$COVERALLS" = 'true' ]; then
+if [ "$COVERAGE" = 'true' ]; then
   EFFECTIVE_PERL5OPT="$ENSEMBL_PERL5OPT"
   ENSEMBL_TESTER_OPTIONS+=('-verbose')
 else
@@ -70,13 +70,8 @@ rt2=$?
 find docs modules scripts sql travisci -iname '*.t' -o -iname '*.pl' -o -iname '*.pm' \! -name 'LoadSynonyms.pm' \! -name 'HALAdaptor.pm' \! -name 'HALXS.pm' -print0 | xargs -0 -n 1 perl -c
 rt4=$?
 
-# Check that all the PODs are valid (we don't mind missing PODs at the moment)
-# Note the initial "!" to negate grep's return code
-! find docs modules scripts sql travisci -iname '*.t' -o -iname '*.pl' -o -iname '*.pm' -print0 | xargs -0 podchecker 2>&1 | grep -v ' pod syntax OK' | grep -v 'does not contain any pod commands'
-rt5=$?
-
-if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) && ($rt4 -eq 0) && ($rt5 -eq 0)]]; then
-  if [ "$COVERALLS" = 'true' ]; then
+if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) && ($rt4 -eq 0)]]; then
+  if [ "$COVERAGE" = 'true' ]; then
     echo "Running Devel::Cover coveralls report"
     cover --nosummary -report coveralls
   fi

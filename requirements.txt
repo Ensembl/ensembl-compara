@@ -1,3 +1,4 @@
-sphinx-rtd-theme
-sphinx
-recommonmark
+numpy
+six
+lxml
+ete3

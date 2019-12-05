@@ -1,18 +1,9 @@
-dist: "trusty"
-language: "perl"
-
-perl:
-  - "5.14"
-  - "5.30"
+os: linux
+language: generic
 
 env:
-  matrix:
-  - COVERALLS=true
-  - COVERALLS=false
   global:
     secure: bGSZASCtRCcE2VZ3u4hdvjh6CDHe+Uo3MR7B4eobSFFhZVjIN3/DKaGrQYprEeSIB/vb75rveyTheO3qe3lHwq71e18cBk2ulQA6/L0eUJYsoR3u2y7d9whu8dS97IoLzize6hItxJFP8TmRaJBtWqOixyWHNW72X/fKF1a192E=
-
-sudo: false
 
 addons:
   apt:
@@ -23,9 +14,11 @@ services:
   - mysql
 
 cache:
+  pip: true
   directories:
     - $HOME/deps
 
+# Clone all repositories and setup the directory structure
 before_install:
     - cpanm -nq local::lib
     - eval "$(perl -Mlocal::lib=${HOME}/deps)"
@@ -42,7 +35,7 @@ before_install:
     - git clone --branch release-1-6-9 --depth 1 https://github.com/bioperl/bioperl-run
     - sed -i '/Bio::DB::HTS/d' ensembl-rest/cpanfile
 
-
+# Setup the Perl dependencies and configuration
 install:
     - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
     - cp -f ensembl-rest/travisci/MultiTestDB.conf.travisci ensembl-rest/t/MultiTestDB.conf
@@ -53,21 +46,95 @@ install:
     - cpanm --quiet --installdeps --notest .
     - cpanm --quiet --notest Devel::Cover::Report::Coveralls
 
+# Setup the MySQL server
 before_script:
     - mysql -u root -h localhost -e 'GRANT ALL PRIVILEGES ON *.* TO "travis"@"%"'
 
-script: travis_wait 40 "./travisci/harness.sh"
 
+# What jobs to run and in which order
 jobs:
   include:
-  - stage: trigger_dependent_builds
-    script: "./travisci/trigger-dependent-build.sh"
+    - language: perl
+      perl: 5.30
+      name: "Housekeeping (all languages)"
+      install:
+        - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
+      before_script:
+        - echo
+      script: ./travisci/all-housekeeping_harness.sh
 
-# Get the matrix to only build coveralls support on the latest Perl
-matrix:
-  exclude:
-    - perl: "5.14"
-      env: COVERALLS=true
-    - perl: "5.30"
-      env: COVERALLS=false
+    - language: perl
+      dist: trusty   # 5.22 is the minimum on xenial
+      perl: 5.14
+      name: "Perl unit tests on the minimum version"
+      env:
+        - COVERAGE=false
+      script: ./travisci/perl-unittest_harness.sh
+
+    - language: perl
+      perl: 5.30
+      name: "Perl unit tests on the latest version, with code coverage"
+      env:
+        - COVERAGE=true
+      script: ./travisci/perl-unittest_harness.sh
+
+    - language: perl
+      perl: 5.30
+      name: "Perl linter"
+      install:
+        - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
+      before_script:
+        - echo
+      script: ./travisci/perl-linter_harness.sh
+
+    - language: python
+      python: 3.5
+      name: "Python unit tests on the minimum version"
+      env:
+        - TEST_COMPILATION=true
+        - COVERAGE=false
+      before_install:
+        - echo
+      install:
+        - pip install --upgrade pytest typing     # The default version doesn't return the expected return code when no tests are present
+        - pip install -r requirements.txt
+      before_script:
+        - echo
+      script: ./travisci/python-unittest_harness.sh
+
+    - language: python
+      python: 3.8
+      name: "Python unit tests on the latest version, with code coverage"
+      env:
+        - TEST_COMPILATION=false    # Because the linters also check that the code compiles
+        - COVERAGE=true
+      before_install:
+        - echo
+      install:
+        - pip install pytest-cov
+        - pip install -r requirements.txt
+      before_script:
+        - echo
+      script: ./travisci/python-unittest_harness.sh
+
+    - language: python
+      python: 3.8
+      name: "Python linter"
+      before_install:
+        - echo
+      install:
+        - pip install pylint mypy
+        - pip install -r requirements.txt
+      before_script:
+        - echo
+      script: ./travisci/python-linter_harness.sh
+
+    - stage: "trigger dependent builds"
+      before_install:
+        - echo
+      install:
+        - echo
+      before_script:
+        - echo
+      script: ./travisci/trigger-dependent-build.sh
 
