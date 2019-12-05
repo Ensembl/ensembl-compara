@@ -59,12 +59,8 @@ my $repository_root;
 sub get_repository_root {
     return $repository_root if $repository_root;
     my $file_dir = dirname(abs_path(__FILE__));
-    if ($file_dir =~ /^(.*\/ensembl-compara)\b/) {
-        $repository_root = $1;
-        return $repository_root;
-    } else {
-        die "Can't find a parent directory named 'ensembl-compara' in '$file_dir'";
-    }
+    $repository_root = File::Spec->catdir($file_dir, File::Spec->updir(), File::Spec->updir(), File::Spec->updir(), File::Spec->updir(), File::Spec->updir());
+    return $repository_root;
 }
 
 =head2 find_all_files
