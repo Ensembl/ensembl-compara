@@ -44,6 +44,7 @@ same).
  perl compare_ftp_dir.pl
     --curr_dir path/to/current/ftp/dir
     --prev_dir path/to/previous/ftp/dir
+    --division <division>
     --bigger | --equal
     [--help]
 
@@ -65,7 +66,7 @@ Prints help message and exits.
 
 =item B<--curr_dir path/to/current/ftp/dir>
 
-The path to the current (new) FTP structure that is being assessed
+The path to the current (new) FTP structure that is being assessed.
 
 =item B<--prev_dir path/to/previous/ftp/dir>
 
@@ -77,6 +78,10 @@ The path to a reference (e.g. the previous) FTP structure to compare against.
 
 =over
 
+=item B<--division>
+
+Mandatory. The division you're working on.
+
 =item B<--bigger | --equal>
 
 One these two options must be provided. The script will then check
@@ -87,9 +92,9 @@ that the new FTP is either bigger or the same as the reference one.
 =head1 EXAMPLES
 
  # In e96, to check that the rsync is complete
- $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/production/compare_ftp_dir.pl -curr_dir /nfs/production/panda/ensembl/production/ensemblftp/release-96/ -prev_dir /hps/nobackup2/production/ensembl/mateus/release_dumps_ensembl_96/release-96 -equal
+ $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/production/compare_ftp_dir.pl -curr_dir /nfs/production/panda/ensembl/production/ensemblftp/release-96/ -prev_dir /hps/nobackup2/production/ensembl/mateus/release_dumps_ensembl_96/release-96 -division vertebrates -equal
  # In e96, to compare against e95
- $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/production/compare_ftp_dir.pl -curr_dir /nfs/production/panda/ensembl/production/ensemblftp/release-96/ -prev_dir /nfs/production/panda/ensembl/production/ensemblftp/release-95/ -bigger
+ $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/production/compare_ftp_dir.pl -curr_dir /nfs/production/panda/ensembl/production/ensemblftp/release-96/ -prev_dir /nfs/production/panda/ensembl/production/ensemblftp/release-95/ -division vertebrates -bigger
 
 =cut
 
@@ -106,6 +111,7 @@ my $curr_base_path;
 my $prev_base_path;
 my $equal;
 my $bigger;
+my $division;
 
 GetOptions(
     'help'          => \$help,
@@ -113,25 +119,38 @@ GetOptions(
     'prev_dir=s'    => \$prev_base_path,
     'bigger'        => \$bigger,
     'equal'         => \$equal,
+    'division=s'    => \$division,
 );
 
 # Print Help and exit if help is requested
-if ($help or !$curr_base_path or !$prev_base_path or ($equal and $bigger) or (!$equal and !$bigger)) {
+if ($help or !$curr_base_path or !$prev_base_path or ($equal and $bigger) or (!$equal and !$bigger) or !$division) {
     pod2usage({-exitvalue => 0, -verbose => 2});
 }
 
-my @compara_dirs = (
-    'bed/ensembl-compara',
-    'compara/conservation_scores',
-    'compara/species_trees',
-    'emf/ensembl-compara/homologies',
-    'emf/ensembl-compara/multiple_alignments',
-    'fasta/ancestral_alleles',
-    'maf/ensembl-compara/multiple_alignments',
-    'maf/ensembl-compara/pairwise_alignments',
-    'tsv/ensembl-compara/homologies',
-    'xml/ensembl-compara/homologies',
-);
+my @compara_dirs;
+if ( $division eq 'vertebrates' ) {
+    @compara_dirs = (
+        'bed/ensembl-compara',
+        'compara/conservation_scores',
+        'compara/species_trees',
+        'emf/ensembl-compara/homologies',
+        'emf/ensembl-compara/multiple_alignments',
+        'fasta/ancestral_alleles',
+        'maf/ensembl-compara/multiple_alignments',
+        'maf/ensembl-compara/pairwise_alignments',
+        'tsv/ensembl-compara/homologies',
+        'xml/ensembl-compara/homologies',
+    );
+} else {
+    @compara_dirs = (
+        'compara/species_trees',
+        'emf/ensembl-compara/homologies',
+        'maf/ensembl-compara/pairwise_alignments',
+        'tsv/ensembl-compara/homologies',
+        'xml/ensembl-compara/homologies',
+    );
+}
+
 my %can_subdirs_be_smaller = map {$_ => 1} (
     'bed/ensembl-compara',
     'compara/conservation_scores',
