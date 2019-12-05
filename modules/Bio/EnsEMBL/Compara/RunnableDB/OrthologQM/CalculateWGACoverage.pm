@@ -25,33 +25,33 @@ Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage
 
 =head1 SYNOPSIS
 
-	Fetch alignment blocks that connect the species of interest, format and dataflow
+Calculate wga_coverage scores for a set of orthologs. Scores are written to the `ortholog_quality`
+table.
 
 =head1 DESCRIPTION
 
-	Inputs:
-	orth_dnafrags	list of dnafrag_ids that cover each member of the homology
-	orth_ranges		(only required for passthrough)
-	orth_id			(only required for passthrough)
-	orth_exons		(only required for passthrough)
-	aln_mlss_ids	arrayref of method_link_species_set_ids for the alignment between these species
-	alt_aln_db		by default, alignments are fetched from the compara_db parameter.
-					to use a different source, define alt_aln_db with a URL to a DB containing alignments
-	species1_id		genome_db_id of first species  |
-	species2_id		genome_db_id of second species |-> these are only used to limit multiple alignment blocks
+    Inputs:
+    species1_id     genome_db_id of first species
+    species2_id     genome_db_id of second species
+    orth_info       list of ortholog information. should contain hashrefs containing the following info:
+                    {id => $homology_id, gene_members => [[gene_member_id_1, genome_db_id_1], [gene_member_id_2, genome_db_id_2]]}
+    alignment_db    arrayref of method_link_species_set_ids for the alignment between these species
+    aln_mlss_ids    arrayref of alignment mlss_ids linking these species
+    alt_homology_db by default, homology seq_member information is fetched from the compara_db parameter.
+                    to use a different source, define alt_homology_db with a URL or alias
 
-	Outputs:
-	Dataflow to ortholog_quality table:
-    {
-        homology_id              => $homology_id,
-        genome_db_id             => $gdb_id,
-        alignment_mlss           => $aln_mlss,
-        combined_exon_coverage   => $combined_coverage->{exon},
-        combined_intron_coverage => $combined_coverage->{intron},
-        quality_score            => $combined_coverage->{score},
-        exon_length              => $combined_coverage->{exon_len},
-        intron_length            => $combined_coverage->{intron_len},
-    }
+    Outputs:
+    Dataflow to ortholog_quality table:
+        {
+            homology_id              => $homology_id,
+            genome_db_id             => $gdb_id,
+            alignment_mlss           => $aln_mlss,
+            combined_exon_coverage   => $combined_coverage->{exon},
+            combined_intron_coverage => $combined_coverage->{intron},
+            quality_score            => $combined_coverage->{score},
+            exon_length              => $combined_coverage->{exon_len},
+            intron_length            => $combined_coverage->{intron_len},
+        }
 
 =cut
 
@@ -73,21 +73,21 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
 	my $self = shift;
 
+    # fetch additional homology info
     my $hom_dba = $self->param('alt_homology_db') ? $self->get_cached_compara_dba('alt_homology_db') : $self->compara_dba;
-    $self->param('homology_dba', $hom_dba);
-
-	my %aln_ranges;
-	my @orth_info = @{ $self->param_required('orth_info') };
-
-    $self->_load_member_info;
-    $self->_load_exon_boundaries;
+    $self->_load_member_info($hom_dba);
+    $self->_load_exon_boundaries($hom_dba);
 
     # disconnect from homology_dba
     $hom_dba->dbc->disconnect_if_idle();
 
+    # fetch alignment info
+    my %aln_ranges;
+    my @orth_info = @{ $self->param_required('orth_info') };
+
 	my $dba = $self->get_cached_compara_dba('alignment_db');
 	my $do_disconnect = $self->dbc && ($dba->dbc ne $self->dbc);
-	
+
 	my $mlss_adap       = $dba->get_MethodLinkSpeciesSetAdaptor;
 	my $gblock_adap     = $dba->get_GenomicAlignBlockAdaptor;
 	my $dnafrag_adaptor = $dba->get_DnaFragAdaptor;
@@ -137,8 +137,8 @@ sub run {
 	my $dba  = $self->get_cached_compara_dba('pipeline_url');
 	my $gdba = $dba->get_GenomeDBAdaptor;
 
-	my @orth_info  = @{ $self->param_required('orth_info') };
-	my %aln_ranges = %{ $self->param_required('aln_ranges') };
+	my @orth_info  = @{ $self->param('orth_info') };
+	my %aln_ranges = %{ $self->param('aln_ranges') };
 
 	my (@qual_summary, @orth_ids);
 
@@ -326,11 +326,11 @@ sub _quality_score {
 }
 
 sub _load_exon_boundaries {
-    my ( $self ) = @_;
+    my ( $self, $dba ) = @_;
 
     my $species1_id = $self->param_required('species1_id');
     my $species2_id = $self->param_required('species2_id');
-    my $dba = $self->param('homology_dba');
+    # my $dba = $self->param('homology_dba');
 
     # Preload the exon boundaries for the whole genomes even though some of the members will be reused
     my $sql = 'SELECT gene_member_id, eb.dnafrag_start, eb.dnafrag_end FROM exon_boundaries eb JOIN gene_member USING (gene_member_id) WHERE genome_db_id IN (?,?)';
@@ -360,17 +360,15 @@ sub _get_exon_ranges_for_orth {
 
 =head2 _load_member_info
 
-Load info for seq_members and gene_memmbers that are members of a homology
-- seq_member.has_transcript_edits
+Load info for seq_members and gene_members that are members of a homology
 - gene_member.dnafrag_id, gene_member.dnafrag_start, gene_member.dnafrag_end
 Store it in a param 'member_info'
 
 =cut
 
 sub _load_member_info {
-    my $self = shift;
+    my ($self, $dba) = @_;
 
-    my $dba = $self->param('homology_dba');
     my $gm_sql = 'SELECT dnafrag_id, dnafrag_start, dnafrag_end FROM gene_member WHERE gene_member_id = ?';
     my $gm_sth = $dba->dbc->prepare($gm_sql);
 
