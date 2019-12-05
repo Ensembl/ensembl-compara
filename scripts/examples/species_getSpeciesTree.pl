@@ -72,7 +72,7 @@ if ($stn_root_id) {
     } else {
         my $all_mlsss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($method);
         die "Could not fetch a MLSS with the method '$method'\n" unless scalar(@$all_mlsss);
-        die "Too many '$method' MLSSs. Set -ss_name to one of: ".join(", ", map {$_->species_set->name} @$all_mlsss);
+        die "Too many '$method' MLSSs. Set -ss_name to one of: ".join(", ", map {$_->species_set->name} @$all_mlsss) if scalar(@$all_mlsss) > 1;
         $mlss = $all_mlsss->[0];
     }
     $species_tree = $mlss->species_tree($label);
