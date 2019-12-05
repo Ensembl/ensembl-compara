@@ -43,7 +43,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::AssignQualityScore;
 use strict;
 use warnings;
 use Data::Dumper;
-# use DBI;
 use File::Basename;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -73,7 +72,7 @@ sub fetch_input {
 =cut
 
 sub write_output {
-	my $self = shift;
+    my $self = shift;
 
     # disconnect from dbs
     $self->compara_dba->dbc->disconnect_if_idle();
@@ -81,18 +80,18 @@ sub write_output {
     $self->data_dbc->disconnect_if_idle();
 
     my $output_file = $self->param('output_file');
-    $self->run_command( "mkdir -p " . dirname($output_file)) unless -d dirname($output_file);
-    open(my $out_fh, '>>', $output_file) or die "Cannot open $output_file for writing";
+    $self->run_command("mkdir -p " . dirname($output_file)) unless -d dirname($output_file);
+    my %max_quality = %{ $self->param('max_quality') };
 
     # write header if the file is empty
-    print $out_fh "homology_id\twga_coverage\n" if ( -z $output_file );
+    my $file_content = '';
+    $file_content = "homology_id\twga_coverage\n" if ( -z $output_file );
 
-    # write scores to file
-	my %max_quality = %{ $self->param('max_quality') };
-	foreach my $oid ( keys %max_quality ) {
-        print $out_fh "$oid\t" . $max_quality{$oid} . "\n";
-	}
-    close $out_fh;
+    # write scores to file (spurt in append mode)
+    $file_content .= join("\n", map(sprintf("%d\t%f", $_, $max_quality{$_}), keys %max_quality));
+    $self->_spurt($output_file, $file_content, 1);
+
+    $self->warning("Scores written to $output_file!");
 }
 
 1;
