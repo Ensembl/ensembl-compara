@@ -19,10 +19,12 @@ use warnings;
 use strict;
 
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Utils::IO qw(:slurp);
+
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::CopyData qw(:table_copy);
+
 use Getopt::Long;
-use File::Slurp;
 
 my ( $help, $reg_conf, $master, $new, $dry_run, @mlss_ids, $mlss_file, $no_seq, $no_gdbs );
 GetOptions(
@@ -37,7 +39,7 @@ GetOptions(
     "no_gdbs!"    => \$no_gdbs,
 );
 
-@mlss_ids = read_file($mlss_file) if $mlss_file;
+@mlss_ids = @{slurp_to_array($mlss_file, 'chomp')} if $mlss_file;
 die &helptext if ( $help || !($master && $new && @mlss_ids) );
 
 my @tables = (
