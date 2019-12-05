@@ -44,7 +44,7 @@ ok(defined($multi) and defined($compara_dba));
 # Test new method
 #
 
-subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::new(ALL)", sub {
+subtest "Test Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new(ALL)", sub {
 
     my $method = new Bio::EnsEMBL::Compara::Method(
                                                    -dbID => 1,
@@ -109,6 +109,10 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::new(ALL)", sub
     my $classification = join(":", map {$_} @{$method_link_species_set->species_set->get_common_classification});
     
     is ($classification, $mlss_classification);
+
+    my @genome_dbs = ($gdb1, $gdb2);
+    is ($method_link_species_set->find_pairwise_reference, @genome_dbs,
+        'Correct genome_dbs and order returned by find_pairwise_reference()');
 
     done_testing();
 };
