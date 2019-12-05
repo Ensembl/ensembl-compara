@@ -18,8 +18,7 @@
 PYTHON_SOURCE_LOCATIONS=('scripts')
 
 # Check that all the Python files can be compiled
-if [ "$TEST_COMPILATION" = 'true' ]
-then
+if [ "$TEST_COMPILATION" = 'true' ]; then
   find "${PYTHON_SOURCE_LOCATIONS[@]}" -name '*.py' -print0 | xargs -0 travisci/compile.py
   rt1=$?
 else
@@ -27,8 +26,7 @@ else
 fi
 
 PYTEST_OPTIONS=()
-if [ "$COVERAGE" = 'true' ]
-then
+if [ "$COVERAGE" = 'true' ]; then
   PYTEST_OPTIONS+=('--cov=./')
 fi
 pytest "${PYTEST_OPTIONS[@]}" "${PYTHON_SOURCE_LOCATIONS[@]}"
