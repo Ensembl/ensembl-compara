@@ -43,7 +43,7 @@ use warnings;
 
 use File::Path;
 
-use Bio::EnsEMBL::Hive::Utils 'stringify', 'destringify';
+use Bio::EnsEMBL::Hive::Utils qw(stringify destringify);
 use Bio::EnsEMBL::Utils::Exception qw(throw verbose);
 
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
@@ -922,6 +922,11 @@ sub write_mlss_entry {
     my $ref_name;
     my $name;
 
+    # Create the name of the new MLSS following the format:
+    #     <species1>[.component]-<species2>[.component] method (on <ref_species>[.component])
+    # For instance, a LASTZ_NET PWA of triticum dicoccoides vs triticum turgidum on component
+    # A, being triticum dicoccoides the reference species, the MLSS name would be:
+    #     Tdico.A-Tturg.A lastz-net (on Tdico.A)
     foreach my $gdb ($ref_genome_db, $non_ref_genome_db) {
         my $species_name = $gdb->name;
         $species_name =~ s/\b(\w)/\U$1/g;
