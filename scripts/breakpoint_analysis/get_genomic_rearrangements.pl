@@ -264,7 +264,7 @@ sub update_merged_blocks{
     my $length = $whole_gblocks_hash_ref->{$block}->length();
 
 	if (%merged_hash) {
-		push $merged_hash{'blocks'}, $block;
+		push @{$merged_hash{'blocks'}}, $block;
 		$merged_hash{'length'} += $length;
 
 		if ($merged_hash{'ref_start'} > $ref_start) {
