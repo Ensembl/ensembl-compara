@@ -67,10 +67,14 @@ rt2=$?
 #fi
 
 # Check that all the Perl files can be compiled
-find docs modules scripts sql travisci -iname '*.t' -o -iname '*.pl' -o -iname '*.pm' \! -name 'LoadSynonyms.pm' \! -name 'HALAdaptor.pm' \! -name 'HALXS.pm' -print0 | xargs -0 -n 1 perl -c
+find docs modules scripts sql travisci -iname '*.t' -print0 | xargs -0 -n 1 perl -c
 rt4=$?
+find docs modules scripts sql travisci -iname '*.pl' -print0 | xargs -0 -n 1 perl -c
+rt5=$?
+find docs modules scripts sql travisci -iname '*.pm' \! -name 'LoadSynonyms.pm' \! -name 'HALAdaptor.pm' \! -name 'HALXS.pm' -print0 | xargs -0 -n 1 perl -c
+rt6=$?
 
-if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) && ($rt4 -eq 0)]]; then
+if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) && ($rt4 -eq 0) && ($rt5 -eq 0) && ($rt6 -eq 0)]]; then
   if [ "$COVERAGE" = 'true' ]; then
     echo "Running Devel::Cover coveralls report"
     cover --nosummary -report coveralls
