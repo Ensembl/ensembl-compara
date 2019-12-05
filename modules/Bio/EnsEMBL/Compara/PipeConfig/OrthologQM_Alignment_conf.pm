@@ -128,10 +128,10 @@ sub default_options {
         
         # homology_dumps_dir location should be changed to the homology pipeline's workdir if the pipelines are still in progress
         # (the files only get copied to 'homology_dumps_shared_dir' at the end of each pipeline)
-        'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
-        'homology_dumps_dir' => $self->o('homology_dumps_shared_dir'),
+        'homology_dumps_dir'        => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'), # where we read the homology dump files from
+        'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'), # where we copy the final wga files to
 
-        'wga_dumps_dir'       => $self->o('pipeline_dir'). '/',
+        'wga_dumps_dir'      => $self->o('pipeline_dir'),
         'prev_wga_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
 
         'orth_batch_size'  => 10, # set how many orthologs should be flowed at a time
@@ -332,8 +332,8 @@ sub pipeline_analyses {
             -parameters => {
                 'homology_dumps_dir'        => $self->o('homology_dumps_dir'),
                 'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_dir'),
-                'cmd'                       => 'become #shared_user# /bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rt #wga_dumps_dir#/ #homology_dumps_shared_dir#"',
                 'shared_user'               => $self->o('shared_user'),
+                'cmd'                       => 'become #shared_user# /bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rt #wga_dumps_dir#/ #homology_dumps_shared_dir#"',
             },
         },
 

@@ -15,15 +15,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::UpdateHomologies
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
 Update the homology table with data from flatfiles. Files should be given as
 an arrayref in the `attrib_files` parameter. File headers match fields in the
@@ -35,9 +31,12 @@ package Bio::EnsEMBL::Compara::RunnableDB::UpdateHomologies;
 
 use warnings;
 use strict;
-use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+
 use Data::Dumper;
+
+use Bio::EnsEMBL::Registry;
+
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::SqlCmd');
@@ -46,7 +45,7 @@ sub param_defaults {
     my ($self) = @_;
     return {
         %{$self->SUPER::param_defaults},
-        'dry_run'   => 0,
+        'dry_run' => 0,
     }
 }
 
@@ -69,6 +68,7 @@ sub fetch_input {
                 $hom_attribs{$homology_id}->{$attrib_name} = $row->{$attrib_name};
             }
         }
+        close $fh;
     }
 
     # generate UPDATE SQL commands for homology table

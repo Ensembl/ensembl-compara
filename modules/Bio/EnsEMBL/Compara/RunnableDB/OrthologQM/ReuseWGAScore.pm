@@ -51,6 +51,7 @@ sub write_output {
         my $row = map_row_to_header( $line, \@head_cols );
         $homology_id_map{$row->{prev_release_homology_id}} = $row->{curr_release_homology_id};
     }
+    close $hmfh;
 
     # loop through previous wga scores and map them to new ids - output to file
     open( my $pwga_fh, '<', $previous_wga_file ) or die "Cannot open $previous_wga_file for reading";
@@ -65,6 +66,7 @@ sub write_output {
         print $out_fh "$curr_hom_id\t$wga_score\n";
     }
     close $out_fh;
+    close $pwga_fh;
 }
 
 1;

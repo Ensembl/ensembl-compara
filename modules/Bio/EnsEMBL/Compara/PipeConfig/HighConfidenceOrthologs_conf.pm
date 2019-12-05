@@ -61,7 +61,6 @@ sub default_options {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
         'high_confidence_capacity'    => 500,          # how many mlss_ids can be processed in parallel
-        'high_confidence_batch_size'  => 1,            # how many mlss_ids' jobs can be batched together
         'update_homologies_capacity'  => 10,           # how many homology mlss_ids can be updated in parallel
 
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
@@ -74,22 +73,14 @@ sub default_options {
         # ],
 
         'homology_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
-        'goc_files_dir' => $self->o('homology_dumps_dir'),
-        'wga_files_dir' => $self->o('homology_dumps_dir'),
+        'goc_files_dir'      => $self->o('homology_dumps_dir'),
+        'wga_files_dir'      => $self->o('homology_dumps_dir'),
     };
 }
 
 sub default_pipeline_name {         # Instead of ortholog_qm_alignment
     my ($self) = @_;
     return $self->o('collection') . '_' . $self->o('member_type') . '_high_conf';
-}
-
-sub hive_meta_table {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
-         'hive_use_param_stack'  => 1,           # switch on the param_stack mechanism
-    };
 }
 
 sub pipeline_wide_parameters {

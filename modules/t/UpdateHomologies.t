@@ -43,15 +43,15 @@ $test_flatfile_dir =~ s!UpdateHomologies\.t!homology_flatfiles/update_homologies
 
 # run in standalone
 standaloneJob(
-	'Bio::EnsEMBL::Compara::RunnableDB::UpdateHomologies',
-	{
+    'Bio::EnsEMBL::Compara::RunnableDB::UpdateHomologies',
+    {
         'compara_db'   => $compara_db,
         'attrib_files' => [
             "$test_flatfile_dir/wga.tsv",
             "$test_flatfile_dir/goc.tsv",
             "$test_flatfile_dir/high_conf.tsv",
         ],
-	},
+    },
 );
 
 # ensure attributes have been written correctly

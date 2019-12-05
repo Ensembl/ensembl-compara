@@ -34,7 +34,7 @@ This pipeline-part analyzes the orthologies and flags the best ones as
 =head2 eHive configuration
 
 This pipeline fires 1 job per orthology MLSS, which are relatively fast
-too, so you will have to set 'high_confidence_batch_size' and 'high_confidence_capacity'.
+too, so you will have to set 'high_confidence_capacity'.
 
 Jobs require less than 100MB of memory.
 
@@ -123,11 +123,10 @@ sub pipeline_analyses_high_confidence {
         {   -logic_name    => 'flag_high_confidence_orthologs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::FlagHighConfidenceOrthologs',
             -parameters    => {
-                'thresholds'     => '#expr( #threshold_levels#->[#threshold_index#]->{"thresholds"} )expr#',
-                'homology_file'  => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
+                'thresholds'    => '#expr( #threshold_levels#->[#threshold_index#]->{"thresholds"} )expr#',
+                'homology_file' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
             },
             -hive_capacity => $self->o('high_confidence_capacity'),
-            -batch_size    => $self->o('high_confidence_batch_size'),
             -flow_into     => [ 'update_homology_table' ],
         },
 

@@ -175,14 +175,14 @@ sub write_output {
 
     if ( $output_file ) {
         print "Writing GOC scores to output file $output_file\n" if $self->debug;
-        open(my $OUT_FH, '>', $output_file) or die "Cannot open $output_file for writing";
-        print $OUT_FH "homology_id\tgoc_score\n";
+        open(my $out_fh, '>', $output_file) or die "Cannot open $output_file for writing";
+        print $out_fh "homology_id\tgoc_score\n";
         foreach my $score ( keys %$goc_scores ) {
             foreach my $homology_id ( @{ $goc_scores->{$score} } ) {
-                print $OUT_FH "$homology_id\t$score\n";
+                print $out_fh "$homology_id\t$score\n";
             }
         }
-        close $OUT_FH;
+        close $out_fh;
         return;
     }
 

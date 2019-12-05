@@ -54,7 +54,7 @@ my $goc_mlss_id = 1001;
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::GeneOrderConservation', # module
 	{ # input param hash
-	    'goc_mlss_id'       => $goc_mlss_id,
+        'goc_mlss_id'       => $goc_mlss_id,
         'homology_flatfile' => "$test_flatfile_dir/goc.test.#goc_mlss_id#.tsv",
         'compara_db'        => $compara_dba->url,
 	}
@@ -87,7 +87,7 @@ my $output_file = "goc.test.out";
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::GeneOrderConservation', # module
 	{ # input param hash
-	    'goc_mlss_id'       => $goc_mlss_id,
+        'goc_mlss_id'       => $goc_mlss_id,
         'homology_flatfile' => "$test_flatfile_dir/goc.test.#goc_mlss_id#.tsv",
         'compara_db'        => $compara_dba->url,
         'output_file'       => $output_file,
