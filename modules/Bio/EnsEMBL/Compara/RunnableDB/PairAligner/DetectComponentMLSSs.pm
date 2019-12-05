@@ -102,9 +102,10 @@ sub write_output {
 
     foreach my $main_mlss_id ( keys %{$component_mlss_ids} ) {
         if (@{$component_mlss_ids->{$main_mlss_id}}) {
-            $self->dataflow_output_id({'principal_mlss_id'  => $main_mlss_id,
-                                       'component_mlss_ids' => $component_mlss_ids->{$main_mlss_id}},
-                                      3);
+            $self->dataflow_output_id({
+                'principal_mlss_id'  => $main_mlss_id,
+                'component_mlss_ids' => $component_mlss_ids->{$main_mlss_id}
+            }, 3);
         }
         $self->dataflow_output_id(
             {'mlss_id' => $main_mlss_id, 'inputlist' => \@input_list, 'column_names' => $column_names},
