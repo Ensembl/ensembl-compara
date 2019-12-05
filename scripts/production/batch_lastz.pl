@@ -111,7 +111,7 @@ foreach my $mlss ( @current_lastz_mlsses ) {
     $mlss_job_count{$mlss->dbID}->{analysis}->{dump_nibs} = $filter_dups_job_count;
     $mlss_job_count{$mlss->dbID}->{analysis}->{exon_stats} = $filter_dups_job_count;
 
-    $mlss_job_count{$k}->{all} = sum(values %{ $mlss_job_count{$mlss->dbID}->{analysis} });
+    $mlss_job_count{$mlss->dbID}->{all} = sum(values %{ $mlss_job_count{$mlss->dbID}->{analysis} });
 
 	print_verbose_summary(\%mlss_job_count, $mlss) if ($verbose);
 	print_very_verbose_summary(\%mlss_job_count, $mlss) if ($very_verbose);
