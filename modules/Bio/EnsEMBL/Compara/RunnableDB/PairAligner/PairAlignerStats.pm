@@ -158,9 +158,9 @@ sub write_output {
 
   return if ($self->param('skip'));
 
-  #Dump bed files if necessary
-  my ($ref_genome_bed) = $self->dump_bed_file($self->param('ref_genome_db'), $self->param('ref_dbc_url'));
-  my ($non_ref_genome_bed) = $self->dump_bed_file($self->param('non_ref_genome_db'), $self->param('non_ref_dbc_url'));
+  # Dump bed files if necessary
+  my $ref_genome_bed     = $self->dump_bed_file($self->param('ref_genome_db'), $self->param('ref_dbc_url'));
+  my $non_ref_genome_bed = $self->dump_bed_file($self->param('non_ref_genome_db'), $self->param('non_ref_dbc_url'));
 
   
   #Create statistics
@@ -218,7 +218,7 @@ sub dump_bed_file {
         $self->run_command($cmd, { die_on_failure => 1 });
     }
 
-    return ($genome_bed_file);
+    return $genome_bed_file;
 }
 
 
