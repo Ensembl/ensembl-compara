@@ -452,7 +452,7 @@ sub find_pairwise_reference {
         if ($genome_dbs->[0]->genome_component eq $ref_component) {
             return @$genome_dbs;
         } elsif ($genome_dbs->[1]->genome_component eq $ref_component) {
-            return ()$genome_dbs->[1], $genome_dbs->[0]);
+            return ($genome_dbs->[1], $genome_dbs->[0]);
         } else {
             @$genome_dbs = sort { $a->genome_component cmp $b->genome_component } @$genome_dbs;
             return @$genome_dbs;
