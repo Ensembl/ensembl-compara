@@ -151,7 +151,7 @@ sub _update_dnafrags {
     my $principal_mlss_id  = $self->param_required('principal_mlss_id');
     my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor();
     my $principal_mlss = $mlss_adaptor->fetch_by_dbID($principal_mlss_id);
-    my $genome_dbs = $principal_mlss->find_pairwise_reference();
+    my @genome_dbs = $principal_mlss->find_pairwise_reference();
     
     # Update the dnafrag_ids in genomic_align from component to the principal
     my $sql = "UPDATE genomic_align ga JOIN dnafrag d1 USING (dnafrag_id) JOIN dnafrag d2 USING (name) SET ga.dnafrag_id = d2.dnafrag_id WHERE d1.genome_db_id = ? AND d2.genome_db_id = ? AND method_link_species_set_id = ?";
@@ -160,7 +160,7 @@ sub _update_dnafrags {
     my $dbc = $self->compara_dba->dbc;
     $self->call_within_transaction(sub {
         my $nr;
-        foreach my $principal_gdb ( @$genome_dbs ) {
+        foreach my $principal_gdb ( @genome_dbs ) {
             my $component_gdbs = $principal_gdb->component_genome_dbs;
             foreach my $gdb ( @{$component_gdbs} ) {
                 $nr += $dbc->do($sql, undef, $principal_gdb->dbID, $gdb->dbID, $principal_mlss_id);
