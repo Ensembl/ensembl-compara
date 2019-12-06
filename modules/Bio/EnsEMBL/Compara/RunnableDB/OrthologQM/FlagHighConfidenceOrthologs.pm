@@ -240,11 +240,13 @@ sub _match_range_filter {
     my ($self, $id, $filter) = @_;
 
     my $match = 0;
-    die "Bad range declaration: at least one value expected, 0 found." unless defined $range->[0];
-    if ( defined $range->[1] ) {
-        $match = 1 if $id >= $range->[0] && $id <= $range->[1];
-    } else {
-        $match = 1 if $id >= $range->[0];
+    foreach my $range ( @$filter ) {
+        die "Bad range declaration: at least one value expected, 0 found." unless defined $range->[0];
+        if ( defined $range->[1] ) {
+            $match = 1 if $id >= $range->[0] && $id <= $range->[1];
+        } else {
+            $match = 1 if $id >= $range->[0];
+        }
     }
 
     return $match;
