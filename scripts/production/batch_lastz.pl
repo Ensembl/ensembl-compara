@@ -86,20 +86,26 @@ print STDERR "Estimating number of jobs for each method_link_species_set..\n";
 my (%mlss_job_count, %chunk_counts, %chain_job_count, %dnafrag_interval_counts);
 foreach my $mlss ( @current_lastz_mlsses ) {
     my @mlss_gdbs = $mlss->find_pairwise_reference;
-    my $ref_chunk_count = get_ref_chunk_count($mlss_gdbs[0]);
-    my $non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs[1]);
-    my $filter_dups_job_count;
-    if (($mlss_gdbs[0]->name eq $mlss_gdbs[1]->name) && $mlss_gdbs[0]->is_polyploid)  {
-        # Polyploid self-alignment
-        my $num_components = scalar(@{$mlss_gdbs[0]->component_genome_dbs});
-        $filter_dups_job_count = $ref_chunk_count * ($num_components - 1);
+    my ($ref_chunk_count, $non_ref_chunk_count, $filter_dups_job_count);
+    if (scalar(@mlss_gdbs) == 1) {
+        # Self-alignment
+        $ref_chunk_count = get_ref_chunk_count($mlss_gdbs[0]);
+        $non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs[0]);
+        if ($mlss_gdbs[0]->is_polyploid) {
+            my $num_components = scalar(@{$mlss_gdbs[0]->component_genome_dbs});
+            $filter_dups_job_count = $ref_chunk_count * ($num_components - 1);
+        } else {
+            $filter_dups_job_count = $ref_chunk_count * 2;
+        }
     } else {
+        $ref_chunk_count = get_ref_chunk_count($mlss_gdbs[0]);
+        $non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs[1]);
         # For polyploid PWAs of the same genus, this makes an overestimate as
         # they will not share all the components
         $filter_dups_job_count = $ref_chunk_count + get_ref_chunk_count($mlss_gdbs[1]);
     }
     # Only non-polyploid self-alignments do not produce chain or net jobs
-    if (($mlss_gdbs[0]->name ne $mlss_gdbs[1]->name) || $mlss_gdbs[0]->is_polyploid) {
+    if ((scalar(@mlss_gdbs) > 1) || $mlss_gdbs[0]->is_polyploid) {
         my $chains_job_count = chains_job_count( $mlss );
         $mlss_job_count{$mlss->dbID}->{analysis}->{aln_chains} = $chains_job_count;
         $mlss_job_count{$mlss->dbID}->{analysis}->{aln_nets} = ceil($chains_job_count/2);
