@@ -655,7 +655,7 @@ sub parse_defaults {
             my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
             my @mlss_gdbs = $mlss->find_pairwise_reference;
             my @pair;
-            if ($mlss_gdbs[0]->name eq $mlss_gdbs[1]->name) {
+            if (scalar(@mlss_gdbs) == 1) {
                 # Self-alignment
                 if ($mlss_gdbs[0]->is_polyploid) {
                     # To self-align a polyploid genome, align all combinations
@@ -670,11 +670,9 @@ sub parse_defaults {
                         }
                     }
                 } else {
-                    # Pairwise alignments of two components of the same genome
-                    # are handled correctly because we are using both indexes
                     push @pair,
                          {'ref_genome_db'     => $mlss_gdbs[0],
-                          'non_ref_genome_db' => $mlss_gdbs[1]};
+                          'non_ref_genome_db' => $mlss_gdbs[0]};
                 }
             } else {
                 # Pairwise alignment
