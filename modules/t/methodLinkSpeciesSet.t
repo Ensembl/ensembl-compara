@@ -39,9 +39,21 @@ my $method_link_species_set;
 ok(defined($multi) and defined($compara_dba));
 
 # Create genome_dbs
-my $gdb1 =  new Bio::EnsEMBL::Compara::GenomeDB(undef, "homo_sapiens", "NCBI36", "9606", "22", "2006-08-Ensembl");
+my $gdb1 =  new Bio::EnsEMBL::Compara::GenomeDB(
+    -name      => 'homo_sapiens',
+    -assembly  => 'NCBI36',
+    -taxon_id  => 9606,
+    -dbID      => 22,
+    -genebuild => '2006-08-Ensembl'
+);
 $gdb1->adaptor($genome_db_adaptor);
-my $gdb2 =  new Bio::EnsEMBL::Compara::GenomeDB(undef, "mus_musculus", "NCBIM36", "10090", "25", "2006-04-Ensembl");
+my $gdb2 =  new Bio::EnsEMBL::Compara::GenomeDB(
+    -name      => 'mus_musculus',
+    -assembly  => 'NCBIM36',
+    -taxon_id  => 10090,
+    -dbID      => 25,
+    -genebuild => '2006-04-Ensembl'
+);
 $gdb2->adaptor($genome_db_adaptor);
 
 #
@@ -97,9 +109,9 @@ subtest "Test Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new(ALL)", sub {
 
 
 subtest "Test Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::find_pairwise_reference", sub {
-    my @genome_dbs = ($gdb1, $gdb2);
-    is ($method_link_species_set->find_pairwise_reference, @genome_dbs,
-        'Correct genome_dbs and order returned');
+    my $genome_dbs = [$gdb1, $gdb2];
+    my @returned_gdbs = $method_link_species_set->find_pairwise_reference();
+    is_deeply(\@returned_gdbs, $genome_dbs, 'Correct genome_dbs and order returned');
 };
 
 done_testing();
