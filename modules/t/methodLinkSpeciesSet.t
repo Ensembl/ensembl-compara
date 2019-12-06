@@ -109,6 +109,7 @@ subtest "Test Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new(ALL)", sub {
 
 
 subtest "Test Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::find_pairwise_reference", sub {
+    $method_link_species_set->add_tag('reference_species', 'homo_sapiens');
     my $genome_dbs = [$gdb1, $gdb2];
     my @returned_gdbs = $method_link_species_set->find_pairwise_reference();
     is_deeply(\@returned_gdbs, $genome_dbs, 'Correct genome_dbs and order returned');
