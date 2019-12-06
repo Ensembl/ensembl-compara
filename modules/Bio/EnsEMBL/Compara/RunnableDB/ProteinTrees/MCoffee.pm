@@ -61,8 +61,6 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
-        'mcoffee_exe_name'      => 't_coffee',              # where to find the t_coffee executable from $mcoffee_home/$mcoffee_exe_dir
-        'mcoffee_exe_dir'       => '/bin/',                 # where to find the t_coffee executable rirectory from $mcoffee_home
         'method'                => 'fmcoffee',              # the style of MCoffee to be run for this alignment
         'options'               => '',
         'cutoff'                => 2,                       # for filtering
@@ -197,15 +195,11 @@ sub get_msa_command_line {
             'EMAIL_4_TCOFFEE=proteintrees@compara.ensembl',
         ));
 
-    my $cmd       = '';
+    my $cmd       = $self->param_required('mcoffee_exe');
     my $prefix    = '';
 
-    my $mcoffee_home = $self->param_required('mcoffee_home');
-    my $mcoffee_exe_name = $self->param_required('mcoffee_exe_name');
-    my $mcoffee_exe_dir = $self->param_required('mcoffee_exe_dir');
     my $extaligners_exe_dir = $self->param_required('extaligners_exe_dir');
     
-    $cmd = "$mcoffee_home/$mcoffee_exe_dir/$mcoffee_exe_name";
     if ($self->param('redo_alnname') and ($self->param('method') eq 'unalign') ) {
         $cmd .= ' '. $self->param('options');
         $cmd .= ' '. $method_string;
@@ -223,7 +217,7 @@ sub get_msa_command_line {
     $prefix .= "export NO_ERROR_REPORT_4_TCOFFEE=1;";
 
     # Add the paths to itself and the other aligners
-    $prefix .= "export PATH=$mcoffee_home/$mcoffee_exe_dir/:$extaligners_exe_dir:\$PATH;";
+    $prefix .= "export PATH=$extaligners_exe_dir:\$PATH;";
 
     return "$prefix $cmd";
 }

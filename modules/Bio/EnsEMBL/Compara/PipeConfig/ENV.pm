@@ -137,7 +137,7 @@ sub executable_locations {
         'mafft_exe'                 => $self->check_exe_in_cellar('mafft/7.427/bin/mafft'),
         'mash_exe'                  => $self->check_exe_in_cellar('mash/2.0/bin/mash'),
         'mcl_bin_dir'               => $self->check_dir_in_cellar('mcl/14-137/bin'),
-        'mcoffee_home'              => $self->check_dir_in_cellar('t-coffee/9.03.r1336_3'),
+        'mcoffee_exe'               => $self->check_exe_in_cellar('t-coffee/9.03.r1336_3/bin/t_coffee'),
         'mercator_exe'              => $self->check_exe_in_cellar('cndsrc/2013.01.11/bin/mercator'),
         'mpirun_exe'                => $self->check_exe_in_cellar('open-mpi/2.1.1/bin/mpirun'),
         'noisy_exe'                 => $self->check_exe_in_cellar('noisy/1.5.12/bin/noisy'),

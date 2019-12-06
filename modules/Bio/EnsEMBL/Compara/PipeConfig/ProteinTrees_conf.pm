@@ -1714,7 +1714,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'cmd_max_runtime'       => '21600',  # 6 hours
                 'method'                => 'cmcoffee',
-                'mcoffee_home'          => $self->o('mcoffee_home'),
+                'mcoffee_exe'           => $self->o('mcoffee_exe'),
                 'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -1,
             },
@@ -1732,7 +1732,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'cmd_max_runtime'       => '43200',     # 12 hours
                 'method'                => 'cmcoffee',
-                'mcoffee_home'          => $self->o('mcoffee_home'),
+                'mcoffee_exe'           => $self->o('mcoffee_exe'),
                 'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -1,
             },
@@ -1774,7 +1774,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'cmd_max_runtime'       => '43200',
                 'method'                => 'cmcoffee',
-                'mcoffee_home'          => $self->o('mcoffee_home'),
+                'mcoffee_exe'           => $self->o('mcoffee_exe'),
                 'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -2,
             },
