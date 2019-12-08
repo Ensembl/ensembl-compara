@@ -217,11 +217,34 @@ return [
  -module => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
  -hive_capacity => 300,
  -rc_name => '8Gb_job',
- -max_retry_count => 1,
  -flow_into      => {
+		-1 => [ 'pecan_huge_mem' ],
 		1 => [ 'gerp_constrained_element' ],
    },
 },  
+
+{
+ -logic_name => 'pecan_huge_mem',
+ -parameters => {
+   'max_block_size'      => $self->o('pecan_block_size'),
+   java_options          => '-server -Xmx24000M',
+   'exonerate_exe'       => $self->o('exonerate_exe'),
+   'pecan_exe_dir'       => $self->o('pecan_exe_dir'),
+   'estimate_tree_exe'   => $self->o('estimate_tree_exe'),
+   'java_exe'            => $self->o('java_exe'),
+   'ortheus_py'          => $self->o('ortheus_py'),
+   'ortheus_lib_dir'     => $self->o('ortheus_lib_dir'),
+   'ortheus_bin_dir'     => $self->o('ortheus_bin_dir'),
+   'semphy_exe'          => $self->o('semphy_exe'),
+ },
+ -module => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
+ -hive_capacity => 300,
+ -rc_name => '32Gb_job',
+ -max_retry_count => 1,
+ -flow_into      => {
+     1 => [ 'gerp_constrained_element' ],
+   },
+},
 
 { # find the most highly constrained regions from the aligned overlaps - this will create entries in the constrained element table
  -logic_name    => 'gerp_constrained_element',
@@ -229,6 +252,20 @@ return [
  -parameters    => { 'window_sizes' => [1,10,100,500], 'gerp_exe_dir' => $self->o('gerp_exe_dir'),
      'constrained_element_method_link_type' => 'EPO_GEN_ANCHORS', 'no_conservation_scores' => 1,
     },
+ -hive_capacity => 100,
+ -batch_size    => 10,
+ -flow_into     => {
+     -1 => 'gerp_constrained_element_himem',
+ },
+},
+
+{
+ -logic_name    => 'gerp_constrained_element_himem',
+ -module => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
+ -parameters    => { 'window_sizes' => [1,10,100,500], 'gerp_exe_dir' => $self->o('gerp_exe_dir'),
+     'constrained_element_method_link_type' => 'EPO_GEN_ANCHORS', 'no_conservation_scores' => 1,
+    },
+ -rc_name => '2Gb_job',
  -hive_capacity => 100,
  -batch_size    => 10,
 },
