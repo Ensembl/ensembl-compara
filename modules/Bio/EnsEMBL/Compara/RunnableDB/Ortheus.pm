@@ -204,7 +204,7 @@ sub detect_pecan_ortheus_errors {
               # Let's discard this job.
               $self->input_job->autoflow(0);
               $self->complete_early( "Pecan failed to align the sequences. Skipping." );
-          } elsif ($err_msg =~ /Exception in thread "main" java.lang.IllegalArgumentException: fromIndex\([-\d]+\) > toIndex\([-\d]+\)/) {
+          } elsif ($err_msg =~ /Exception in thread "main" java.lang.IllegalArgumentException($|:\s+fromIndex\([-\d]+\) > toIndex\([-\d]+\))/) {
               # Not sure why this happens
               # Let's discard this job.
               $self->input_job->autoflow(0);
