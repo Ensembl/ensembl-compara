@@ -796,7 +796,12 @@ sub _run_ortheus {
 
 	print STDOUT "**NEWICK: $newick\nFILES: ", join(" -- ", @$all_files), "\n";
     } else {
-	throw("Ortheus was unable to create a tree: $ortheus_output");
+        sleep 30; # give LSF time to die properly if MEMLIMIT is hit
+        unless (-e $tree_file) {
+            warn "No output at all and not a MEMLIMIT\n";
+            $self->complete_early_if_branch_connected("Not enough memory available in this analysis. New job created in the #-1 branch\n", -1);
+            throw("Ortheus was unable to create a tree: $ortheus_output");
+        }
     }
 }
 
