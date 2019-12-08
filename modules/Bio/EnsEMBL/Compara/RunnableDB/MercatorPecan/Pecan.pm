@@ -84,6 +84,7 @@ use warnings;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::Production::Analysis::Pecan;
 use Bio::EnsEMBL::Compara::Production::Analysis::Ortheus;
+use Bio::EnsEMBL::Compara::RunnableDB::Ortheus;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::NestedSet;
@@ -165,42 +166,21 @@ sub run
 
   $self->compara_dba->dbc->disconnect_if_idle;
 
-  $self->param('more_heap', 0);
   eval {
       my $pecan_gabs = Bio::EnsEMBL::Compara::Production::Analysis::Pecan::run_pecan($self);
       $self->param('pecan_gabs', $pecan_gabs);
   } or do {
-      if ($@ =~ /Java heap space/ || 
-	 $@ =~ /GC overhead limit exceeded/ || 
-         $@ =~ /Cannot allocate memory/ ||
-	 $@ =~ /OutOfMemoryError/ ) {
-	  print "Failed due to insufficient heap space or memory\n";
-	  $self->param('more_heap', 1);
-      } elsif ($@ =~ /Exception in thread "main" java.lang.IllegalArgumentException/m) {
-              # Not sure why this happens
-              # Let's discard this job.
-              $self->input_job->autoflow(0);
-              $self->complete_early( "Pecan failed to align the sequences. Skipping." );
-      } else {
-	  throw("Pecan execution failed $@\n");
-      }
+      Bio::EnsEMBL::Compara::RunnableDB::Ortheus::detect_pecan_ortheus_errors($self, $@);
   };
 }
 
 sub write_output {
     my ($self) = @_;
 
-    #If job failed due to insufficient heap space, flow into new analysis
-    if ($self->param('more_heap')) {
-	#Flow to next memory. 
-        $self->complete_early_if_branch_connected("Need more memory.\n", 2);
-        die "Pecan needs more memory but no other analysis is connected on branch #2";
-    } else {
 	#Job succeeded, write output
         $self->call_within_transaction( sub {
             $self->_write_output;
         } );
-    }
 }
 
 sub _write_output {

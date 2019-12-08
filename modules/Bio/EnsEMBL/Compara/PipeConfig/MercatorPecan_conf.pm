@@ -519,8 +519,7 @@ sub pipeline_analyses {
              -hive_capacity => $self->o('pecan_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
-		 2 => [ 'pecan_mem1'], #retry with more heap memory
-		-1 => [ 'pecan_mem1'], #MEMLIMIT (pecan didn't fail, but lsf did)
+		-1 => [ 'pecan_mem1'],
 		-2 => [ 'pecan_mem1'], #RUNLIMIT
              },
 	    -rc_name => '2Gb_job',
@@ -545,8 +544,7 @@ sub pipeline_analyses {
              -hive_capacity => $self->o('pecan_himem_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
-		 2 => [ 'pecan_mem2'], #retry with even more heap memory
-		-1 => [ 'pecan_mem2'], #MEMLIMIT
+		-1 => [ 'pecan_mem2'],
 		-2 => [ 'pecan_mem2'], #RUNLIMIT
              },
          },
@@ -569,8 +567,7 @@ sub pipeline_analyses {
              -hive_capacity => $self->o('pecan_himem_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
-		 2 => [ 'pecan_mem3'], #retry with even more heap memory
-		-1 => [ 'pecan_mem3'], #MEMLIMIT
+		-1 => [ 'pecan_mem3'],
 		-2 => [ 'pecan_mem3'], #RUNLIMIT
              },
          },
@@ -592,8 +589,7 @@ sub pipeline_analyses {
 	     -rc_name => '32Gb_job',
              -flow_into => {
                  1 => [ 'gerp' ],
-                 2 => [ 'pecan_mem4'], #retry with even more heap memory
-                 -1 => [ 'pecan_mem4'], #MEMLIMIT
+                 -1 => [ 'pecan_mem4'],
                  -2 => [ 'pecan_mem4'], #RUNLIMIT
              },
          },

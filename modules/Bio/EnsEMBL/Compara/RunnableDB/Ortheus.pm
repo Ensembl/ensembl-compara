@@ -166,8 +166,16 @@ sub run {
 
   #Capture error message from ortheus and write it to the job_message table
   if ( $ortheus_output ) {
+      $self->detect_pecan_ortheus_errors();
+  }
+  $self->parse_results();
+}
+
+
+sub detect_pecan_ortheus_errors {
+      my ($self, $merged_output) = @_;
       my (%err_msgs, $traceback, $trace_open);
-      my @lines = split /\n/, $ortheus_output;
+      my @lines = split /\n/, $merged_output;
       foreach my $line (@lines) {
           next if ($line =~ /Arguments received/);
           next if ($line =~ /^total_time/);
@@ -213,10 +221,7 @@ sub run {
               throw("Ortheus ". $self->input_job->analysis->logic_name . " still failed due to insufficient heap space");
           }
       }
-      die "There were errors when running Ortheus. Please investigate\n" if %err_msgs;
-  }
-
-  $self->parse_results();
+      die "There were errors when running Pecan/Ortheus. Please investigate\n" if %err_msgs;
 }
 
 sub write_output {
@@ -477,7 +482,7 @@ sub _write_gerp_dataflow {
 
 #Taken from Analysis/Runnable/Ortheus.pm module
 sub parse_results {
-    my ($self, $run_number) = @_;
+    my ($self) = @_;
 
     #print STDERR 
       ## The output file contains one fasta aligned sequence per original sequence + ancestral sequences.

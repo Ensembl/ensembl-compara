@@ -194,8 +194,7 @@ return [
    },
  -rc_name => '4Gb_job',
  -flow_into      => {
-		2 => [ 'pecan_high_mem' ],  # Pecan complained
-		-1 => [ 'pecan_high_mem' ],  # LSF killed because of MEMLIMIT
+		-1 => [ 'pecan_high_mem' ],
 		1 => [ 'gerp_constrained_element' ],
    },
  -hive_capacity => 300,
