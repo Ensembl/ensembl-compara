@@ -197,7 +197,6 @@ return [
 		-1 => [ 'pecan_high_mem' ],
 		1 => [ 'gerp_constrained_element' ],
    },
- -hive_capacity => 300,
 },
 
 {    
@@ -215,7 +214,6 @@ return [
    'semphy_exe'          => $self->o('semphy_exe'),
  },  
  -module => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
- -hive_capacity => 300,
  -rc_name => '8Gb_job',
  -flow_into      => {
 		-1 => [ 'pecan_huge_mem' ],
@@ -238,7 +236,6 @@ return [
    'semphy_exe'          => $self->o('semphy_exe'),
  },
  -module => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
- -hive_capacity => 300,
  -rc_name => '32Gb_job',
  -max_retry_count => 1,
  -flow_into      => {
@@ -252,7 +249,7 @@ return [
  -parameters    => { 'window_sizes' => [1,10,100,500], 'gerp_exe_dir' => $self->o('gerp_exe_dir'),
      'constrained_element_method_link_type' => 'EPO_GEN_ANCHORS', 'no_conservation_scores' => 1,
     },
- -hive_capacity => 100,
+ -hive_capacity => 500,
  -batch_size    => 10,
  -flow_into     => {
      -1 => 'gerp_constrained_element_himem',
@@ -266,7 +263,7 @@ return [
      'constrained_element_method_link_type' => 'EPO_GEN_ANCHORS', 'no_conservation_scores' => 1,
     },
  -rc_name => '2Gb_job',
- -hive_capacity => 100,
+ -hive_capacity => 500,
  -batch_size    => 10,
 },
 
