@@ -198,7 +198,6 @@ return [
 		1 => [ 'gerp_constrained_element' ],
    },
  -hive_capacity => 300,
- -max_retry_count => 1,
 },
 
 {    
