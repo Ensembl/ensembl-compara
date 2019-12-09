@@ -40,7 +40,7 @@ use Bio::Seq;
 use Bio::SeqIO;
 
 use Bio::EnsEMBL::Hive::Utils qw(dir_revhash);
-use Bio::EnsEMBL::Utils::Scalar qw(assert);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Compara::Locus;
 

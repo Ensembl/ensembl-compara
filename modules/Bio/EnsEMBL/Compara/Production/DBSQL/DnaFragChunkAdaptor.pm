@@ -28,9 +28,9 @@ package Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor;
 use strict;
 use warnings;
 
-use DBI qw(sql_types);
+use DBI qw(:sql_types);
 
-use Bio::EnsEMBL::Utils::Scalar qw(assert);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
