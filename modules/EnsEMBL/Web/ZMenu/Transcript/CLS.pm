@@ -67,6 +67,11 @@ sub content {
   }
 
   $self->add_entry({
+    type  => 'Exon count',
+    label => (scalar @{$transcript->get_all_Exons})
+  }) if $transcript;
+
+  $self->add_entry({
     type  => 'Transcript',
     label => $transcript->stable_id
   }) if $transcript;
