@@ -69,7 +69,6 @@ sub store {
   } else {
       $dbID = $self->generic_insert('dnafrag_chunk', {
               'dnafrag_id'            => $dfc->dnafrag_id,
-              'sequence_id'           => 0,
               'dnafrag_start'         => $dfc->dnafrag_start,
               'dnafrag_end'           => $dfc->dnafrag_end,
               'dnafrag_chunk_set_id'  => $dfc->dnafrag_chunk_set_id,
@@ -152,7 +151,6 @@ sub _columns {
              dfc.dnafrag_id
              dfc.dnafrag_start
              dfc.dnafrag_end
-             dfc.sequence_id
             );
 }
 
@@ -176,7 +174,6 @@ sub _objs_from_sth {
           'dnafrag_id',
           'dnafrag_start',
           'dnafrag_end',
-          'sequence_id',
       ] );
 }
 

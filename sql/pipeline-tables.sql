@@ -34,13 +34,11 @@ CREATE TABLE dnafrag_chunk (
   dnafrag_id                 bigint unsigned NOT NULL DEFAULT 0,
   dnafrag_start              int(10) unsigned NOT NULL DEFAULT 0,
   dnafrag_end                int(10) unsigned NOT NULL DEFAULT 0,
-  sequence_id                int(10) NOT NULL DEFAULT 0,
 
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (dnafrag_chunk_id),
-  UNIQUE KEY uniq_chunk (dnafrag_chunk_set_id, dnafrag_id, dnafrag_start, dnafrag_end),
-  KEY sequence_id (sequence_id)
+  UNIQUE KEY uniq_chunk (dnafrag_chunk_set_id, dnafrag_id, dnafrag_start, dnafrag_end)
 ) ENGINE=InnoDB;
 
 
