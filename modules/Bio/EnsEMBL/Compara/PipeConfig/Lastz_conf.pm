@@ -40,14 +40,6 @@ Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf
 This is a base configuration file for LastZ pipeline, based on the generic
 PairAligner pipeline.
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf;
@@ -110,5 +102,6 @@ sub default_options {
 	    'net_output_method_link' => [16, 'LASTZ_NET'],
 	};
 }
+
 
 1;

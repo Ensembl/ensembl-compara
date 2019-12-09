@@ -17,29 +17,47 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSummary
 
-=cut
-
 =head1 DESCRIPTION
 
-This module updates the method_link_species_set_tag table with pair aligner coding exon statistics from the statistics table
+This module updates the method_link_species_set_tag table with pair aligner
+coding exon statistics from the statistics table.
+
+=over
+
+=item mlss_id
+
+Mandatory. Method link species set ID.
+
+=item method_link_type
+
+Mandatory (if mlss_id missing). Method link type used to retrieve the MLSS of
+the given genome_db_ids.
+
+=item genome_db_ids
+
+Mandatory (if mlss_id missing). List of genome_db_ids used to retrieve their
+MLSS.
+
+=item skip
+
+Optional. Don't run this runnable.
+
+=back
+
+=head1 EXAMPLES
+
+    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSummary \
+        -compara_db $(mysql-ens-compara-prod-8-ensadmin details url jalvarez_shoots_lastz) \
+        -mlss_id 3
 
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with a _
+Internal methods are usually preceded with an underscore (_).
 
 =cut
 
@@ -49,6 +67,7 @@ use strict;
 use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
 
 sub fetch_input {
   my ($self) = @_;
@@ -68,13 +87,8 @@ sub fetch_input {
       }
   }
 
-  my $genome_dbs = $mlss->species_set->genome_dbs;
-  my ($ref_genome_db, $non_ref_genome_db) = @$genome_dbs;
-  unless (($genome_dbs->[0]->name eq $mlss->get_value_for_tag('reference_species'))
-      && (!$mlss->has_tag('reference_component') || ($genome_dbs->[0]->genome_component eq $mlss->get_value_for_tag('reference_component')))) {
-        ($non_ref_genome_db, $ref_genome_db) = @$genome_dbs;
-  }
-  $non_ref_genome_db ||= $ref_genome_db;
+  my ($ref_genome_db, $non_ref_genome_db) = $mlss->find_pairwise_reference;
+  $non_ref_genome_db //= $ref_genome_db;
   $self->param('ref_genome_db', $ref_genome_db);
   $self->param('non_ref_genome_db', $non_ref_genome_db);
 
@@ -120,7 +134,6 @@ sub write_output {
   $method_link_species_set->store_tag("non_ref_uncovered", $uncovered);
 
   return 1;
-
 }
 
 

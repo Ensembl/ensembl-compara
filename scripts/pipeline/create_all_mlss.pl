@@ -22,14 +22,6 @@ use strict;
 
 create_all_mlss.pl
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =head1 DESCRIPTION
 
 This script reads an XML configuration file that describes which analyses
@@ -348,11 +340,6 @@ foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignment
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_one_vs_all_node->getAttribute('method') );
     my $genome_dbs = make_species_set_from_XML_node($xml_one_vs_all_node->getChildrenByTagName('species_set')->[0], $division_genome_dbs);
     while (my $ref_gdb = shift @$genome_dbs) {
-        if ($ref_gdb->is_polyploid) {
-            # We don't do polyploid vs polyploid (yet ?)
-            push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlsss($compara_dba, $method, $ref_gdb, $_) } for grep {!$_->is_polyploid} @$genome_dbs;
-            next;
-        }
         push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlsss($compara_dba, $method, $ref_gdb, $_) } for @$genome_dbs;
     }
 }
