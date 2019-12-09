@@ -496,13 +496,14 @@ sub _configure_ProbeFeature_table {
   my $vendor  = $self->param('vendor');
   my $rows    = [];
 
-  my $column_order = [qw(length loc mismatches)];
+  my $column_order = [qw(length loc)];
   my $custom_columns = {
                         'length'      => {'title' => 'Length', 'sort' => 'numeric'},
                         'loc'         => {'title' => 'Genomic location (strand)', 'sort' => 'position_html'},
-                        'mismatches'  => {'title' => 'Mismatches'},
                         };
   unless ($feature_type =~ /Regulatory/) {
+    push @$column_order, qw(mismatches);
+    $custom_columns->{'mismatches'} = {'title' => 'Mismatches'};  
     unshift @$column_order, qw(name seq);
     $custom_columns->{'name'} = {'title' => 'Probe'};  
     $custom_columns->{'seq'}  = {'title' => 'Sequence'};  

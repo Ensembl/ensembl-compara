@@ -64,7 +64,7 @@ sub convert_to_drawing_parameters {
     my @extra_results = $reg->analysis->description;
     ## Sort out any links/URLs
     if ($extra_results[0] =~ /tarbase/i) {
-      @extra_results = ($self->hub->get_ExtURL_link('Link to Tarbase', 'TARBASE_V8', $mirna_id));
+      @extra_results = ($self->hub->get_ExtURL_link($mirna_id, 'TARBASE_V8', $mirna_id));
     }
     elsif ($extra_results[0] =~ /a href/i) {
       $extra_results[0] =~ s/a href/a rel="external" href/ig;
@@ -91,7 +91,7 @@ sub convert_to_drawing_parameters {
   }
    my $extra_columns = [
                     {'key' => 'gene',     'title' => 'Associated gene'},
-                    {'key' => 'analysis', 'title' => 'Feature analysis', 'sort' => 'html'},
+                    {'key' => 'analysis', 'title' => 'Link to Tarbase', 'sort' => 'html'},
   ];
   return [$results, $extra_columns];
 }

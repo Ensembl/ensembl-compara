@@ -76,7 +76,7 @@ sub convert_to_drawing_parameters {
   }
   my $extra_columns = [
                     {'key' => 'gene',     'title' => 'Associated gene'},
-                    {'key' => 'analysis', 'title' => 'Feature analysis', 'sort' => 'html'},
+                    {'key' => 'analysis', 'title' => 'Link to Tarbase', 'sort' => 'html'},
   ];
   return [$results, $extra_columns];
 }
