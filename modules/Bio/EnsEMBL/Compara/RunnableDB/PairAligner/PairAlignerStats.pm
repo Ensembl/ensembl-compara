@@ -126,7 +126,7 @@ sub fetch_input {
   $self->param('mlss_id', $mlss->dbID);
   $self->param('mlss', $mlss);
 
-  my ($ref_genome_db, $non_ref_genome_db) = $mlss->find_pairwise_references;
+  my ($ref_genome_db, $non_ref_genome_db) = $mlss->find_pairwise_reference;
   $non_ref_genome_db //= $ref_genome_db;
   $self->param('ref_genome_db', $ref_genome_db);
   $self->param('non_ref_genome_db', $non_ref_genome_db);
