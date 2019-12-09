@@ -68,24 +68,21 @@ sub write_output {
   my $chunkSet = $self->param('dnaFragChunkSet');
   #Masking options are stored in the dna_collection
   my $dna_collection = $chunkSet->dna_collection;
-  my $chunk_array = $chunkSet->get_all_DnaFragChunks;
+  my $chunk_array = $chunkSet->load_all_sequences;
 
-  foreach my $chunk ( @{$chunk_array} ) {
-      $chunk->masking($dna_collection->masking);
-      $chunk->fetch_masked_sequence;
-  }
-
-  if (my $dump_loc = $dna_collection->dump_loc) {
-          my $starttime = time();
-          $chunkSet->dump_to_fasta_file($chunkSet->dump_loc_file);
-          if($self->debug){printf("%1.3f secs to dump ChunkSet %d for \"%s\" collection\n", (time()-$starttime), $chunkSet->dbID, $dna_collection->description);}
+  if ($dna_collection->dump_loc) {
+      my $starttime = time();
+      $chunkSet->dump_to_fasta_file($chunkSet->dump_loc_file);
+      printf("%1.3f secs to dump ChunkSet %d for '%s' collection\n", (time() - $starttime), $chunkSet->dbID, $dna_collection->description) if ($self->debug);
       foreach my $chunk (@$chunk_array) {
-              my $starttime = time();
-              $chunk->dump_to_fasta_file($chunk->dump_loc_file($dna_collection));
-              if($self->debug){printf("%1.3f secs to dump Chunk %d for \"%s\" collection\n", (time()-$starttime), $chunk->dbID, $dna_collection->description);}
+          $starttime = time();
+          $chunk->dump_to_fasta_file($chunk->dump_loc_file($dna_collection));
+          printf("%1.3f secs to dump Chunk %d for '%s' collection\n", (time() - $starttime), $chunk->dbID, $dna_collection->description) if ($self->debug);
       }
   }
 
   return 1;
 }
+
+
 1;
