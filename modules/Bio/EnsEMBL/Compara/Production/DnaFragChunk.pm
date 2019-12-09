@@ -17,22 +17,14 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::DnaFragChunk
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_).
 
 =cut
 
@@ -43,16 +35,14 @@ use warnings;
 
 use File::Path;
 use File::Basename;
-use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::Seq;
 use Bio::SeqIO;
 
-use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+use Bio::EnsEMBL::Hive::Utils qw(dir_revhash);
+use Bio::EnsEMBL::Utils::Scalar qw(assert);
 
 use Bio::EnsEMBL::Compara::Locus;
-
-use Bio::EnsEMBL::Hive::Utils 'dir_revhash';
 
 use base ('Bio::EnsEMBL::Compara::Locus', 'Bio::EnsEMBL::Storable');
 
@@ -220,8 +210,7 @@ sub masking {
   return $self->{'_masking'};
 }
 
-sub dump_to_fasta_file
-{
+sub dump_to_fasta_file {
   my $self = shift;
   my $fastafile = shift;
 
@@ -243,8 +232,7 @@ sub dump_to_fasta_file
 #sequence to fastafile. Useful if the sequence is very long eg opossum chr1 & 2
 #Must remember that fastafile should not exist beforehand otherwise it will be 
 #appended to so check if it exists and delete it
-sub dump_chunks_to_fasta_file 
-{
+sub dump_chunks_to_fasta_file {
   my $self = shift;
   my $fastafile = shift;
 

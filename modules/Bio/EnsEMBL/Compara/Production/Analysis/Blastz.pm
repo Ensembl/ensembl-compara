@@ -1,3 +1,5 @@
+=head1 LICENSE
+
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # Copyright [2016-2020] EMBL-European Bioinformatics Institute
 # 
@@ -13,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-=pod
+=cut
 
 =head1 NAME
 
@@ -45,22 +47,18 @@ The constructor only need a filehandle opened on a blastz output file.
 nextAlignment method return a Bio::EnsEMBL::DnaDnaAlignFeature object
 corresponding to the next HSP-like alignment.
 
-=head1 CONTACT
-
-Ensembl development mailing list <http://lists.ensembl.org/mailman/listinfo/dev>
-
 =head1 APPENDIX
 
-The rest of the documentation deals wtih each of the object methods.
-Internal methods are usually preceded by a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_).
 
-=cut 
-
+=cut
 
 package Bio::EnsEMBL::Compara::Production::Analysis::Blastz;
 
-use warnings ;
+use warnings;
 use strict;
+
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange); 
 

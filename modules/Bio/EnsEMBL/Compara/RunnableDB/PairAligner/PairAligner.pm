@@ -17,24 +17,9 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner
-
-=cut
-
-=head1 SYNOPSIS
-
-=cut
 
 =head1 DESCRIPTION
 
@@ -46,12 +31,10 @@ It adds functionality to read and write to a compara databases.
 It takes as input (via input_id or analysis->parameters) DnaFragChunk or DnaFragChunkSet
 objects (via dbID reference) and stores GenomicAlignBlock entries.
 
-=cut
-
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_).
 
 =cut
 
@@ -62,12 +45,15 @@ use warnings;
 
 use Time::HiRes qw(time);
 use File::Basename;
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
+
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
 
 sub param_defaults {
     my $self = shift;

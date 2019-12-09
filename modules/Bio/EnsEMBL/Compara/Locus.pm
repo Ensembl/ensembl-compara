@@ -15,13 +15,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
+=cut
 
 =head1 NAME
 
@@ -82,15 +76,7 @@ The strand of the Locus, on the DnaFrag.
 
 =back
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with a _
-
-=head1 METHODS
-
 =cut
-
 
 package Bio::EnsEMBL::Compara::Locus;
 

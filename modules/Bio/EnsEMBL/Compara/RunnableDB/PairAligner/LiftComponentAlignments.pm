@@ -44,11 +44,6 @@ Mandatory. List of component MLSS ids linked to the principal_mlss_id.
         -compara_db $(mysql-ens-compara-prod-8-ensadmin details url jalvarez_shoots_lastz) \
         -principal_mlss_id 2 -component_mlss_ids [5,6]
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_).
-
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LiftComponentAlignments;

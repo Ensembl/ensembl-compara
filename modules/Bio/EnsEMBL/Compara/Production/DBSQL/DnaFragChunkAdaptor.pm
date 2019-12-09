@@ -17,15 +17,6 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor
@@ -37,14 +28,13 @@ package Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
+use DBI qw(sql_types);
+
+use Bio::EnsEMBL::Utils::Scalar qw(assert);
 
 use Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
-
-use Bio::EnsEMBL::Utils::Scalar qw(:assert);
-
-use DBI qw(:sql_types);
+use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 
 use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 

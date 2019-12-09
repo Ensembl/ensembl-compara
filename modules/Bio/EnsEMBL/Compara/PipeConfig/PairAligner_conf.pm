@@ -35,21 +35,25 @@ Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
 
     #4. Run init_pipeline.pl script:
         Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --pipeline_name hsap_ggor_lastz_64 --password <your_password) --mlss_id 536 --dump_dir /lustre/scratch103/ensembl/kb3/scratch/hive/release_64/hsap_ggor/ --pair_aligner_options "T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=/nfs/users/nfs_k/kb3/work/hive/data/primate.matrix --ambiguous=iupac" --bed_dir /nfs/ensembl/compara/dumps/bed/
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf -host mysql-ens-compara-prod-X -port XXXX \
+            --pipeline_name hsap_ggor_lastz_64 --mlss_id 536 --ambiguous=iupac" --bed_dir /nfs/ensembl/compara/dumps/bed/ \
+            --dump_dir /lustre/scratch103/ensembl/kb3/scratch/hive/release_64/hsap_ggor/ \
+            --pair_aligner_options "T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=/nfs/users/nfs_k/kb3/work/hive/data/primate.matrix
 
         Using a configuration file:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --password <your_password> --reg_conf reg.conf --conf_file input.conf --config_url mysql://user:pass\@host:port/db_name
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf -host mysql-ens-compara-prod-X -port XXXX \
+            --reg_conf reg.conf --conf_file input.conf --config_url mysql://user:pass\@host:port/db_name
 
     #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
 
 
 =head1 DESCRIPTION  
 
-    The PipeConfig file for PairAligner pipeline that should automate most of the tasks. This is in need of further work, especially to deal with multiple pairs of species in the same database. Currently this is dealt with by using the same configuration file as before and the filename should be provided on the command line (--conf_file). 
+The PipeConfig file for PairAligner pipeline that should automate most of the tasks. This is in need of further work, especially to deal with multiple pairs of species in the same database. Currently this is dealt with by using the same configuration file as before and the filename should be provided on the command line (--conf_file). 
 
-    You may need to provide a registry configuration file if the core databases have not been added to staging (--reg_conf).
+You may need to provide a registry configuration file if the core databases have not been added to staging (--reg_conf).
 
-    A single pair of species can be run either by using a configuration file or by providing specific parameters on the command line and using the default values set in this file. On the command line, you must provide the LASTZ_NET mlss which should have been added to the master database (--mlss_id). The directory to which the nib files will be dumped can be specified using --dump_dir or the default location will be used. All the necessary directories are automatically created if they do not already exist. It may be necessary to change the pair_aligner_options default if, for example, doing primate-primate alignments. It is recommended that you provide a meaningful pipeline name (--pipeline_name). The username is automatically prefixed to this, ie --pipeline_name hsap_ggor_lastz_64 will create kb3_hsap_ggor_lastz_64 database. A basic healthcheck is run and output is written to the job_message table. To write to the pairwise configuration database, you must provide the correct config_url. Even if no config_url is given, the statistics are written to the job_message table.
+A single pair of species can be run either by using a configuration file or by providing specific parameters on the command line and using the default values set in this file. On the command line, you must provide the LASTZ_NET mlss which should have been added to the master database (--mlss_id). The directory to which the nib files will be dumped can be specified using --dump_dir or the default location will be used. All the necessary directories are automatically created if they do not already exist. It may be necessary to change the pair_aligner_options default if, for example, doing primate-primate alignments. It is recommended that you provide a meaningful pipeline name (--pipeline_name). The username is automatically prefixed to this, ie --pipeline_name hsap_ggor_lastz_64 will create kb3_hsap_ggor_lastz_64 database. A basic healthcheck is run and output is written to the job_message table. To write to the pairwise configuration database, you must provide the correct config_url. Even if no config_url is given, the statistics are written to the job_message table.
 
 =cut
 
