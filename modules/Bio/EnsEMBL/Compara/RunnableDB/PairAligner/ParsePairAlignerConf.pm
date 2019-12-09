@@ -507,18 +507,12 @@ sub get_chunking {
        $dna_collection->{'include_non_reference'} = $default_chunk->{'include_non_reference'};
    }
 
-   #set the masking if it has not been set
-   unless (defined $dna_collection->{'masking'}) {
-       $dna_collection->{'masking'} = $default_chunk->{'masking'};
-   }
+   # Set masking
+   $dna_collection->{'masking'} = $default_chunk->{'masking'};
    
    unless (defined $dna_collection->{'dump_loc'}) {
        $dna_collection->{'dump_loc'} = $default_chunk->{'dump_loc'};
    }
-   #foreach my $key (keys %{$dna_collection}) {
-   #    print "$key " . $dna_collection->{$key} . "\n";
-   #}
-
 }
 
 sub get_default_chunking {
@@ -554,10 +548,8 @@ sub get_default_chunking {
 	$dna_collection->{'include_non_reference'} = $default_chunk->{'include_non_reference'};
     }
 
-    #masking
-    unless (defined $dna_collection->{'masking'}) {
-	$dna_collection->{'masking'} = $default_chunk->{'masking'};
-    }
+    # Set masking
+    $dna_collection->{'masking'} = $default_chunk->{'masking'};
     
     #dump location (currently never set for non-reference chunking)
     unless (defined $dna_collection->{'dump_loc'}) {
@@ -724,17 +716,6 @@ sub parse_defaults {
 
         } else {
             #all vs all
-
-            #Check that default_chunks->reference is the same as default_chunks->non_reference otherwise there will be
-            #unpredictable consequences ie a dna_collection is not specific to whether the species is ref or non-ref.
-
-            my $default_chunks = $self->param('default_chunks');
-            if ($default_chunks->{'reference'}{'masking'} ne $default_chunks->{'non_reference'}{'masking'}) {
-                throw "The 'default_chunks' parameters MUST be the same for 'reference' and 'non_reference'. Please edit your init_pipeline config file. masking: ref=" . $default_chunks->{'reference'}{'masking'} . " non_ref=" . $default_chunks->{'non_reference'}{'masking'} . "\n";
-            }
-
-            #Have a collection. Make triangular matrix, ordered by genome_db_id?
-            
             #Check the dna_collection is the same for reference and non-reference
             my @ordered_genome_dbs = sort {$b->dbID <=> $a->dbID} @$genome_dbs;
             while (@ordered_genome_dbs) {

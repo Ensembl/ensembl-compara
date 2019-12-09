@@ -105,34 +105,34 @@ sub default_options {
         #NB: this is only used for the raw blocks and the chains. We always use the accurate version for the final nets
 	'quick' => 1,
 
-	#
-	#Default chunking parameters
-	#
-     'default_chunks' => {
+
+    # Default chunking parameters
+    'default_chunks' => {
         'reference'   => { 
             'homo_sapiens' => {
-                'chunk_size' => 30000000,
-    			'overlap'    => 0,
-    			'include_non_reference' => -1, #1  => include non_reference regions (eg human assembly patches)
-    			                               #0  => do not include non_reference regions
-    			                               #-1 => auto-detect (only include non_reference regions if the non-reference species is high-coverage 
-    			                               #ie has chromosomes since these analyses are the only ones we keep up-to-date with the patches-pipeline)
-                'masking' => 'soft',
+                'chunk_size'            => 30000000,
+                'overlap'               => 0,
+                # include_non_reference parameter options:
+                #    1 => include non_reference regions (e.g. human assembly patches)
+                #    0 => do not include non_reference regions
+                #   -1 => auto-detect (only include non_reference regions if the non-reference
+                #         species is high-coverage, i.e. it has chromosomes, since these analyses
+                #         are the only ones we keep up-to-date with the patches-pipeline)
+                'include_non_reference' => -1,
             },
-    	     #non human example
-    		'default' => {
-                'chunk_size'      => 10000000,
-    				'overlap'         => 0,
-    				'masking'         => 'soft',
+            # non human example
+            'default' => {
+                'chunk_size' => 10000000,
+                'overlap'    => 0,
             }
         },
-    		'non_reference' => {
-            'chunk_size'      => 10100000,
-    			'group_set_size'  => 10100000,
-    			'overlap'         => 100000,
-    			'masking'         => 'soft',
+        'non_reference' => {
+            'chunk_size'     => 10100000,
+            'group_set_size' => 10100000,
+            'overlap'        => 100000,
         },
-    	},
+        'masking' => 'soft',
+    },
 	    
         #
 	#Default filter_duplicates
