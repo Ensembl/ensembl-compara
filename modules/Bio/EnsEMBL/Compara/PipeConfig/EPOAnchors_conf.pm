@@ -237,6 +237,28 @@ return [
  },
  -module => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
  -rc_name => '32Gb_job',
+ -flow_into      => {
+     1 => [ 'gerp_constrained_element' ],
+     -1 => [ 'pecan_mammoth' ],
+   },
+},
+
+{
+ -logic_name => 'pecan_mammoth',
+ -parameters => {
+   'max_block_size'      => $self->o('pecan_block_size'),
+   java_options          => '-server -Xmx64000M',
+   'exonerate_exe'       => $self->o('exonerate_exe'),
+   'pecan_exe_dir'       => $self->o('pecan_exe_dir'),
+   'estimate_tree_exe'   => $self->o('estimate_tree_exe'),
+   'java_exe'            => $self->o('java_exe'),
+   'ortheus_py'          => $self->o('ortheus_py'),
+   'ortheus_lib_dir'     => $self->o('ortheus_lib_dir'),
+   'ortheus_bin_dir'     => $self->o('ortheus_bin_dir'),
+   'semphy_exe'          => $self->o('semphy_exe'),
+ },
+ -module => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
+ -rc_name => '96Gb_job',
  -max_retry_count => 1,
  -flow_into      => {
      1 => [ 'gerp_constrained_element' ],
