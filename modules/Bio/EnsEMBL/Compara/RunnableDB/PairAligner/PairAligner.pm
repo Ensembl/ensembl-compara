@@ -96,7 +96,6 @@ sub fetch_input {
   map {$chunks_lookup{$_->dbID} = $_} @{$query_DnaFragChunkSet->get_all_DnaFragChunks};
   $self->param('chunks_lookup', \%chunks_lookup);
 
-  #$db_DnaFragChunkSet->load_all_sequences();
   $query_DnaFragChunkSet->load_all_sequences() unless $query_DnaFragChunkSet->dna_collection->dump_loc && (-s $query_DnaFragChunkSet->dump_loc_file);
 
   throw("Missing method_link_type") unless($self->param('method_link_type'));
@@ -145,7 +144,7 @@ sub _write_output {
       }
       if($self->debug){printf("%d FeaturePairs found\n", scalar(@{$self->param('output')}));}
 
-  #print STDERR (time()-$starttime), " secs to write_output\n";
+  print STDERR (time()-$starttime), " secs to write_output\n" if ($self->debug);
 }
 
 ##########################################
@@ -160,7 +159,11 @@ sub dumpChunkSetToWorkdir
   my $chunkSet   = shift;
 
   my $fastafile = $chunkSet->dump_loc_file;
-  if($self->debug){print("dumpChunkSetToWorkdir : $fastafile already dumped\n");}
+  if (-s $fastafile) {
+      print("dumpChunkSetToWorkdir: $fastafile already dumped\n") if ($self->debug);
+  } else {
+      $chunkSet->dump_to_fasta_file($fastafile);
+  }
   return $fastafile;
 }
 
@@ -171,7 +174,11 @@ sub dumpChunkToWorkdir
   my $dna_collection = shift;
 
   my $fastafile = $chunk->dump_loc_file($dna_collection);
-  if($self->debug){print("dumpChunkToWorkdir : $fastafile already dumped\n");}
+  if (-s $fastafile) {
+      print("dumpChunkToWorkdir: $fastafile already dumped\n") if ($self->debug);
+  } else {
+      $chunk->dump_to_fasta_file($fastafile);
+  }
   return $fastafile;
 }
 
@@ -185,12 +192,10 @@ sub store_featurePair_as_genomicAlignBlock
   
   if($fp->seqname =~ /chunkID(\d*):/) {
     my $chunk_id = $1;
-    #printf("%s => %d\n", $fp->seqname, $chunk_id);
     $qyChunk = $self->param('chunks_lookup')->{$chunk_id};
   }
   if($fp->hseqname =~ /chunkID(\d*):/) {
     my $chunk_id = $1;
-    #printf("%s => %d\n", $fp->hseqname, $chunk_id);
     $dbChunk = $self->param('chunks_lookup')->{$chunk_id};
   }
   unless($qyChunk and $dbChunk) {
@@ -292,7 +297,6 @@ sub compact_cigar_line
 {
   my $cigar_line = shift;
 
-  #print("cigar_line '$cigar_line' => ");
   my @pieces = ( $cigar_line =~ /(\d*[MDI])/g );
   my @new_pieces = ();
   foreach my $piece (@pieces) {
@@ -316,7 +320,6 @@ sub compact_cigar_line
     }
   }
   my $new_cigar_line = join("", @new_pieces);
-  #print(" '$new_cigar_line'\n");
   return $new_cigar_line;
 }
 
