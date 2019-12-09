@@ -117,6 +117,7 @@ return [
             'master_db'      => $self->o('master_db'),
         },
         -input_ids => [{}],
+        -rc_name   => '1Gb_job',
         -flow_into => [ 'set_genome_db_locator_factory' ],
     },
 
@@ -173,6 +174,7 @@ return [
 		2 => [ 'pecan' ],
 		3 => [ '?table_name=dnafrag_region&insertion_method=INSERT_IGNORE' ],
 	},
+ -rc_name => '2Gb_job',
  -hive_capacity => 50,
  -batch_size    => 20,
 },
