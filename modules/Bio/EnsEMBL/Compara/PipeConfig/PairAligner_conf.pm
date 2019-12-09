@@ -106,35 +106,34 @@ sub default_options {
 	'quick' => 1,
 
 
-    # Default chunking parameters
-    'default_chunks' => {
-        'reference'   => { 
-            'homo_sapiens' => {
-                'chunk_size'            => 30000000,
-                'overlap'               => 0,
-                # include_non_reference parameter options:
-                #    1 => include non_reference regions (e.g. human assembly patches)
-                #    0 => do not include non_reference regions
-                #   -1 => auto-detect (only include non_reference regions if the non-reference
-                #         species is high-coverage, i.e. it has chromosomes, since these analyses
-                #         are the only ones we keep up-to-date with the patches-pipeline)
-                'include_non_reference' => -1,
+        # Default chunking parameters
+        'default_chunks' => {
+            'reference' => {
+                'homo_sapiens' => {
+                    'chunk_size'            => 30000000,
+                    'overlap'               => 0,
+                    # include_non_reference parameter options:
+                    #    1 => include non_reference regions (e.g. human assembly patches)
+                    #    0 => do not include non_reference regions
+                    #   -1 => auto-detect (only include non_reference regions if the non-reference species is
+                    #         high-coverage, i.e. has chromosomes, since these analyses are the only ones we keep
+                    #         up-to-date with the patches-pipeline)
+                    'include_non_reference' => -1,
+                },
+                # non human example
+                'default' => {
+                    'chunk_size' => 10000000,
+                    'overlap'    => 0,
+                }
             },
-            # non human example
-            'default' => {
-                'chunk_size' => 10000000,
-                'overlap'    => 0,
-            }
+            'non_reference' => {
+                'chunk_size'     => 10100000,
+                'group_set_size' => 10100000,
+                'overlap'        => 100000,
+            },
+            'masking' => 'soft',
         },
-        'non_reference' => {
-            'chunk_size'     => 10100000,
-            'group_set_size' => 10100000,
-            'overlap'        => 100000,
-        },
-        'masking' => 'soft',
-    },
 	    
-        #
 	#Default filter_duplicates
         #'window_size' => 1000000,
         'window_size' => 10000,
@@ -146,21 +145,15 @@ sub default_options {
 
         'chain_parameters' => {'max_gap'=>'50','linear_gap'=> $self->o('linear_gap'), 'faToNib_exe' => $self->o('faToNib_exe'), 'lavToAxt_exe'=> $self->o('lavToAxt_exe'), 'axtChain_exe'=>$self->o('axtChain_exe'), 'max_blocks_for_chaining' => 100000},
 
-	#
         #Default patch_alignments
-        #
 	'patch_alignments' => 0,  #set to 1 to align the patches of a species to many other species
 
-        #
         #Default net 
-        #
         'net_ref_species' => $self->o('ref_species'),  #default to ref_species
         'net_parameters' => {'max_gap'=>'50', 'chainNet_exe'=>$self->o('chainNet_exe')},
   	'bidirectional' => 1,
 
-	#
 	#Default healthcheck
-	#
     'previous_db' => 'compara_prev',
 	'prev_release' => 0,   # 0 is the default and it means "take current release number and subtract 1"    
 	'max_percent_diff' => 20,
@@ -173,9 +166,7 @@ sub default_options {
         'bed_dir' => $self->o('dump_dir').'/bed_dir',
         'output_dir' => $self->o('dump_dir').'/feature_dumps',
 
-        #
 	#Default pairaligner config
-	#
 	'skip_pairaligner_stats' => 0, #skip this module if set to 1
 
     };
