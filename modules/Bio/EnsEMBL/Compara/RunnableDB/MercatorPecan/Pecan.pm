@@ -170,7 +170,9 @@ sub run
       my $pecan_gabs = Bio::EnsEMBL::Compara::Production::Analysis::Pecan::run_pecan($self);
       $self->param('pecan_gabs', $pecan_gabs);
   } or do {
-      Bio::EnsEMBL::Compara::RunnableDB::Ortheus::detect_pecan_ortheus_errors($self, $@);
+      my $err_msg = $@;
+      Bio::EnsEMBL::Compara::RunnableDB::Ortheus::detect_pecan_ortheus_errors($self, $err_msg);
+      die $err_msg;
   };
 }
 
