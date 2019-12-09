@@ -85,7 +85,6 @@ sub slice {
   return undef unless(my $dba = $self->dnafrag->genome_db->db_adaptor);
 
   my $sliceDBA = $dba->get_SliceAdaptor;
-  #if ($self->dnafrag_end > $self->dnafrag_start) {
 
   #Should be >= to since end can equal start and the slice be one base long
   #If dnafrag_start and dnafrag_end are both 0, set the slice to be whole dnafrag
@@ -123,7 +122,6 @@ sub fetch_masked_sequence {
   printf("getting %smasked sequence...\n", $self->masking ? $self->masking . ' ' : 'un') if $self->{debug};
 
   my $seq = $self->get_sequence($self->masking);
-  #print STDERR "sequence length : ", length($seq),"\n";
   $self->sequence($seq);
   return $seq;
 }
@@ -218,7 +216,6 @@ sub dump_to_fasta_file {
   
   my $bioseq = $self->bioseq;
 
-  #printf("  writing chunk %s\n", $self->display_id);
   open(my $out_fh, '>', $fastafile)
     or $self->throw("Error opening $fastafile for write");
   my $output_seq = Bio::SeqIO->new( -fh => $out_fh, -format => 'Fasta');

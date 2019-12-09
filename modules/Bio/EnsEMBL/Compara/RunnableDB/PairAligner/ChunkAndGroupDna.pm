@@ -85,13 +85,12 @@ sub fetch_input {
 }
 
 
-sub run
-{
+sub run {
   my $self = shift;
 
   # main routine which takes a genome_db_id (from input_id) and
   # access the ensembl_core database, using the SliceAdaptor
-  # it will load all slices, all genes, and all transscripts
+  # it will load all slices, all genes, and all transcripts
   # and convert them into members to be stored into compara
   $self->create_chunks;
   
@@ -99,8 +98,7 @@ sub run
 }
 
 
-sub write_output 
-{  
+sub write_output {
   my $self = shift;
 
   #Create a StoreSequence job for each DnaFragChunkSet object 
@@ -117,15 +115,13 @@ sub write_output
 }
 
 
-
 ######################################
 #
 # subroutines
 #
 #####################################
 
-sub create_chunks
-{
+sub create_chunks {
   my $self      = shift;
 
   my $genome_db = $self->param('genome_db');
@@ -213,21 +209,9 @@ sub create_chunks
   $self->param('chunkset_counter', 1);
   $self->define_new_chunkset;
 
-  #Temporary fix to problem in core when masking haplotypes because the
-  #assembly mapper is cached but shouldn't be
-  #if including haplotypes
-#  my $asm;
-#  if (defined $self->param('include_non_reference')) {
-#      my $asma = $genome_db->db_adaptor->get_AssemblyMapperAdaptor;
-#      my $csa = $genome_db->db_adaptor->get_CoordSystemAdaptor;
-#      my $cs1 = $csa->fetch_by_name("Chromosome",$genome_db->assembly);
-#      my $cs2 = $csa->fetch_by_name("Contig");
-#      $asm = $asma->fetch_by_CoordSystems($cs1,$cs2);
-#  }
   my $starttime = time();
 
   foreach my $chr (@{$chromosomes}) {
-    #print "fetching dnafrag\n";
     if (defined $self->param('region')) {
       unless(scalar @{$chr->get_all_Attributes('toplevel')}) {
         warn "No toplevel attributes, skipping this region";
@@ -238,10 +222,6 @@ sub create_chunks
 
     next if $self->param('only_cellular_component') && ($dnafrag->cellular_component ne $self->param('only_cellular_component'));
 
-    #Uncomment following line to prevent import of missing dnafrags
-    #next unless ($dnafrag);
-
-    #if($dnafrag) { print("  already stores as dbID ", $dnafrag->dbID, "\n"); }
     unless($dnafrag) {
       #
       # try fetching dnafrag for this chromosome
@@ -252,17 +232,11 @@ sub create_chunks
       #
       # create dnafrag for this chromosome
       #
-      #print "loading dnafrag for ".$chr->name."...\n";
       $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($chr, $genome_db);
       $dnafragDBA->store($dnafrag);
     }
     $dnafrag->{'_slice'} = $chr;
     $self->create_dnafrag_chunks($dnafrag, $masking, $chr->start, $chr->end);
-    #Temporary fix to problem in core when masking haplotypes because the
-    #assembly mapper is cached but shouldn't be  
-    #if (defined $asm) {
-#	$asm->flush;
-#    }
   }
 
   print "genome_db ",$genome_db->dbID, " : total time ", (time()-$starttime), " secs\n";
@@ -277,8 +251,6 @@ sub create_dnafrag_chunks {
   my $region_start = (shift or 1);
   my $region_end = (shift or $dnafrag->length);
 
- #return if($dnafrag->display_id =~ /random/);
-
   #If chunk_size is not set then set it to be the fragment length 
   #overlap must be 0 in this case.
   my $chunk_size = $self->param('chunk_size');
@@ -288,11 +260,9 @@ sub create_dnafrag_chunks {
       $overlap = 0;
   }
 
-  #print "dnafrag : ", $dnafrag->display_id, "n";
-  #print "  sequence length : ",$dnafrag->length,"\n";
-  #print "chunk_size $chunk_size\n";
-
-  #my $lasttime = time();
+  print "dnafrag : ", $dnafrag->display_id, "n" if ($self->debug);
+  print "  sequence length : ",$dnafrag->length,"\n" if ($self->debug);
+  print "chunk_size $chunk_size\n" if ($self->debug);
 
   #initialise chunk_start and chunk_end to be the dnafrag start and end
   my $chunk_start = $region_start;
@@ -352,10 +322,8 @@ sub create_dnafrag_chunks {
 
     $chunk_start = $chunk_end - $overlap + 1;
  }
-
-  #print "Done\n";
-  #print scalar(time()-$lasttime), " secs to chunk, and store\n";
 }
+
 
 sub define_new_chunkset {
     my ($self) = @_;
@@ -394,5 +362,6 @@ sub store_chunk_in_chunkset {
     $self->param('current_chunkset')->add_DnaFragChunk($chunk);
     $self->compara_dba->get_DnaFragChunkAdaptor->store($chunk);
 }
+
 
 1;
