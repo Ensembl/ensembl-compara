@@ -131,8 +131,10 @@ sub pipeline_analyses_high_confidence {
         },
 
         {   -logic_name => 'update_homology_table',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::UpdateHomologies',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::UpdateTableFromFile',
             -parameters => {
+                table        => 'homology',
+                primary_key  => 'homology_id',
                 attrib_files => [
                     '#goc_file#', '#wga_file#', '#high_conf_file#'
                 ],
