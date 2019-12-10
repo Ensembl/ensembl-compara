@@ -22,12 +22,12 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Test::MultiTestDB;
 
-BEGIN {
-    use Test::Most;
-}
+use Test::Most;
 
-# check module can be seen and compiled
-use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs'); 
+BEGIN {
+    # check module can be seen and compiled
+    use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs');
+}
 
 my $exp_dataflow;
 
