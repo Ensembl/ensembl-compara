@@ -423,7 +423,7 @@ sub find_pairwise_reference {
     my $genome_dbs = $self->species_set->genome_dbs;
 
     # For self-alignments, return the single genome
-    return $genome_dbs if (scalar(@$genome_dbs) == 1);
+    return @$genome_dbs if (scalar(@$genome_dbs) == 1);
 
     if ($genome_dbs->[0]->name ne $genome_dbs->[1]->name) {
         # Genome vs genome PWA
