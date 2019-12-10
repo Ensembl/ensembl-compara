@@ -330,7 +330,6 @@ sub _load_exon_boundaries {
 
     my $species1_id = $self->param_required('species1_id');
     my $species2_id = $self->param_required('species2_id');
-    # my $dba = $self->param('homology_dba');
 
     # Preload the exon boundaries for the whole genomes even though some of the members will be reused
     my $sql = 'SELECT gene_member_id, eb.dnafrag_start, eb.dnafrag_end FROM exon_boundaries eb JOIN gene_member USING (gene_member_id) WHERE genome_db_id IN (?,?)';
