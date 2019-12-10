@@ -62,19 +62,16 @@ sub fetch_input {
 sub write_output {  
   my ($self) = @_;
 
-  #
-  #Get all the chunks in this dnaFragChunkSet
-  #
+  # Load all the dnaFragChunk sequences in this dnaFragChunkSet
   my $chunkSet = $self->param('dnaFragChunkSet');
-  #Masking options are stored in the dna_collection
-  my $dna_collection = $chunkSet->dna_collection;
-  my $chunk_array = $chunkSet->load_all_sequences;
+  $chunkSet->load_all_sequences;
 
+  my $dna_collection = $chunkSet->dna_collection;
   if ($dna_collection->dump_loc) {
       my $starttime = time();
       $chunkSet->dump_to_fasta_file($chunkSet->dump_loc_file);
       printf("%1.3f secs to dump ChunkSet %d for '%s' collection\n", (time() - $starttime), $chunkSet->dbID, $dna_collection->description) if ($self->debug);
-      foreach my $chunk (@$chunk_array) {
+      foreach my $chunk ( @{$chunkSet->get_all_DnaFragChunks} ) {
           $starttime = time();
           $chunk->dump_to_fasta_file($chunk->dump_loc_file($dna_collection));
           printf("%1.3f secs to dump Chunk %d for '%s' collection\n", (time() - $starttime), $chunk->dbID, $dna_collection->description) if ($self->debug);
