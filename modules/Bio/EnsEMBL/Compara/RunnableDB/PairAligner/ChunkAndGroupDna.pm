@@ -27,11 +27,6 @@ This object chunks the Dna from a genome_db and creates and stores the
 chunks as DnaFragChunk objects are grouped into DnaFragChunkSets in the compara database.
 A DnaFragChunkSet contains one or more DnaFragChunk objects. A DnaFragChunkSet is a member of a DnaCollection.
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_).
-
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ChunkAndGroupDna;
@@ -54,7 +49,6 @@ sub param_defaults {
     return {
         'region'            => undef,
         'group_set_size'    => 0,
-        'flow_chunksets'    => 1,
     }
 }
 
@@ -78,7 +72,7 @@ sub fetch_input {
   throw("Can't fetch genome_db for id=".$self->param('genome_db_id')) unless($self->param('genome_db'));
 
   #using genome_db_id, connect to external core database
-  my $coreDBA = $self->param('genome_db')->db_adaptor();  
+  my $coreDBA = $self->param('genome_db')->db_adaptor();
   throw("Can't connect to genome database for id=".$self->param('genome_db_id')) unless($coreDBA);
   
   return 1;
@@ -95,23 +89,6 @@ sub run {
   $self->create_chunks;
   
   return 1;
-}
-
-
-sub write_output {
-  my $self = shift;
-
-  #Create a StoreSequence job for each DnaFragChunkSet object 
-  #to parallelise the storing of sequences in the Sequence table.
-  if ($self->param('flow_chunksets')) {
-      my $dna_objects = $self->param('dna_collection')->get_all_DnaFragChunkSets;
-      die "No chunks were found" if ( scalar @$dna_objects < 1 );
-      foreach my $dna_object (@$dna_objects) {
-          my $hash_output = { 'chunkSetID' => $dna_object->dbID };
-	    # Use branch2 to send data to StoreSequence:
-            $self->dataflow_output_id($hash_output, 2 );
-      }
-  }
 }
 
 

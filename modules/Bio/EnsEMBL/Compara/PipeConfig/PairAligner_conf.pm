@@ -291,32 +291,16 @@ sub core_pipeline_analyses {
                                'only_cellular_component' => $self->o('only_cellular_component'),
                                'mix_cellular_components' => $self->o('mix_cellular_components'),
 			      },
- 	       -flow_into => {
- 	          2 => [ 'store_sequence' ],
- 	       },
 	       -rc_name => '2Gb_job',
  	    },
- 	    {  -logic_name => 'store_sequence',
- 	       -hive_capacity => 100,
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence',
-	       -flow_into => {
- 	          -1 => [ 'store_sequence_himem' ],
- 	       },
-	       -rc_name => '2Gb_job',
-  	    },
- 	    {  -logic_name => 'store_sequence_himem',
- 	       -hive_capacity => 50,
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence',
-	       -can_be_empty  => 1,
-	       -rc_name => '4Gb_job',
-  	    },
+
  	    {  -logic_name => 'create_pair_aligner_jobs',  #factory
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs',
  	       -parameters => { 
                                'mix_cellular_components' => $self->o('mix_cellular_components'),
                               },
 	       -hive_capacity => 10,
- 	       -wait_for => [ 'store_sequence', 'store_sequence_himem', 'chunk_and_group_dna'  ],
+            -wait_for => [ 'chunk_and_group_dna' ],
 	       -flow_into => {
 			       1 => [ 'check_no_partial_gabs' ],
 			       2 => [ $self->o('pair_aligner_logic_name')  ],
@@ -629,8 +613,9 @@ sub core_pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'lift_to_principal',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LiftComponentAlignments',
+        {   -logic_name      => 'lift_to_principal',
+            -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LiftComponentAlignments',
+            -max_retry_count => 1,
         },
 
         {   -logic_name => 'run_healthchecks',
