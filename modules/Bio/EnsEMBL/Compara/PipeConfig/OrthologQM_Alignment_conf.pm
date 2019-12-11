@@ -311,6 +311,7 @@ sub pipeline_analyses {
             -parameters => {
                 'hashed_mlss_id' => '#expr(dir_revhash(#orth_mlss_id#))expr#',
                 'output_file'    => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
+                'reuse_file'     => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga_reuse.tsv',
             },
             -hive_capacity     => 400,
         },
@@ -322,7 +323,7 @@ sub pipeline_analyses {
                 'hashed_mlss_id'            => '#expr(dir_revhash(#orth_mlss_id#))expr#',
                 'previous_wga_file'         => '#prev_wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
                 'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.homology_id_map.tsv',
-                'output_file'               => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
+                'output_file'               => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga_reuse.tsv',
             },
             -hive_capacity     => 400,
         },
