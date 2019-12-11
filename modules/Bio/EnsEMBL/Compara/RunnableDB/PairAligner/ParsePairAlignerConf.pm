@@ -774,7 +774,6 @@ sub parse_defaults {
 	
 	my @genome_db_ids;
 	#create dna_collections
-	#foreach my $genome_db (@$genome_dbs) {
 	foreach my $genome_db ($pair->{ref_genome_db}, $pair->{non_ref_genome_db}) {
 	    #get and store locator
           $genome_db->locator($genome_db->db_adaptor->locator);
@@ -787,7 +786,6 @@ sub parse_defaults {
 	#create pair_aligners
 	$pair_aligner->{'reference_collection_name'} = $pair->{ref_genome_db}->dbID . " raw";
 	$chain_config->{'reference_collection_name'} = $pair->{ref_genome_db}->dbID . " for chain";
-	#$net_config->{'reference_collection_name'} = $pair->{ref_genome_db}->dbID . " for chain";
 
         #What to do about all vs all which will not have a net_ref_species
         #Check net_ref_species is a member of the pair
@@ -801,16 +799,14 @@ sub parse_defaults {
             throw (sprintf('Net reference species must be either %s (%s) or %s ($s). Currently %s', $pair->{ref_genome_db}->_get_unique_name, $pair->{ref_genome_db}->dbID, $pair->{non_ref_genome_db}->_get_unique_name, $pair->{non_ref_genome_db}->dbID, $self->param('net_ref_species') ));
         }
 
-	my $dna_dump_loc = $self->param('dump_dir') . "/dna/";
 	my $dump_loc = $self->param('dump_dir') . "/" . $pair->{ref_genome_db}->dbID . "_nib_for_chain";
 	
-	%{$dna_collections->{$pair_aligner->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db}, 'dump_loc' => $dna_dump_loc);
+	%{$dna_collections->{$pair_aligner->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db});
 	%{$dna_collections->{$chain_config->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db},
 									      'dump_loc' => $dump_loc);
 
 	$pair_aligner->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->dbID . " raw";;
 	$chain_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->dbID . " for chain";
-	#$net_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->dbID . " for chain";
 
         # self-alignments would have the same names for "reference" and
         # "non-reference" collections otherwise
@@ -822,9 +818,9 @@ sub parse_defaults {
 	    
 	$dump_loc = $self->param('dump_dir') . "/" . $pair->{non_ref_genome_db}->dbID . "_nib_for_chain";
 	
-	%{$dna_collections->{$pair_aligner->{'non_reference_collection_name'}}} = ('genome_db' => $pair->{non_ref_genome_db}, 'dump_loc' => $dna_dump_loc);
+	%{$dna_collections->{$pair_aligner->{'non_reference_collection_name'}}} = ('genome_db' => $pair->{non_ref_genome_db});
 	%{$dna_collections->{$chain_config->{'non_reference_collection_name'}}} = ('genome_db' => $pair->{non_ref_genome_db},
-										   'dump_loc' => $dump_loc);
+									      'dump_loc' => $dump_loc);
 
 	#create unique subdirectory to dump dna using genome_db_ids
 	my $dump_dir_species = join "_", @genome_db_ids;
@@ -842,16 +838,7 @@ sub parse_defaults {
 	    $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'region'} = 
 	      $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'region'};
 	}
-	#Store include_non_reference, if defined, in the chain_config for use in no_chunk_and_group_dna
-#	if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'}) {
-#	    $dna_collections->{$chain_config->{'reference_collection_name'}}->{'include_non_reference'} = 
-#	      $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'};
-#	}
-#	if ($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'include_non_reference'}) {
-#	    $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'include_non_reference'} = 
-#	      $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'include_non_reference'};
-#	}
-	
+
 	push @$pair_aligners, $pair_aligner;
 	push @$chain_configs, $chain_config;
 	push @$net_configs, $net_config;
