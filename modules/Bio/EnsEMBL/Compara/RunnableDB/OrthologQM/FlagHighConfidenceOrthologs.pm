@@ -102,13 +102,14 @@ sub write_output {
     my $n_hom               = $self->param('num_homologies'),
 
     my $homology_file = $self->param_required('homology_file');
-    my $wga_file      = $self->param_required('wga_file');
-    my $goc_file      = $self->param_required('goc_file');
+    my $wga_file      = $self->param('wga_file');
+    my $goc_file      = $self->param('goc_file');
     my $output_file   = $self->param_required('high_conf_file');
     $self->run_command( "mkdir -p " . dirname($output_file)) unless -e dirname($output_file);
 
-    my $wga_coverage = $self->_parse_flatfile_into_hash($wga_file, $range_filter);
-    my $goc_scores   = $self->_parse_flatfile_into_hash($goc_file, $range_filter);
+    my ( $wga_coverage, $goc_scores );
+    $wga_coverage = $self->_parse_flatfile_into_hash($wga_file, $range_filter) if $wga_file;
+    $goc_scores   = $self->_parse_flatfile_into_hash($goc_file, $range_filter) if $goc_file;
 
     open(my $hfh, '<', $homology_file) or die "Cannot open $homology_file for reading";
     open(my $ofh, '>', $output_file  ) or die "Cannot open $output_file for writing";
@@ -209,8 +210,10 @@ sub _check_homology_counts {
     my $wc_hom = $self->_lines_in_file($homology_file);
     return (0,0,0) if $wc_hom == 0;
 
-    my $wc_goc = $self->_lines_in_file($self->param('goc_file'));
-    my $wc_wga = $self->_lines_in_file($self->param('wga_file'));
+    my $goc_file = $self->param('goc_file');
+    my $wc_goc = ( $goc_file && -e $goc_file ) ? $self->_lines_in_file($goc_file) : 0;
+    my $wga_file = $self->param('wga_file');
+    my $wc_wga = ( $wga_file && -e $wga_file ) : $self->_lines_in_file($wga_file) : 0;
     return ($wc_hom, $wc_goc, $wc_wga);
 }
 
