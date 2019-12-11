@@ -368,6 +368,7 @@ sub get_data {
     my $adaptor = $self->bam_adaptor;
     if ($self->{'file_error'}) {
       $self->{_cache}->{_bam_adaptor} = undef;
+      $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
       return [];
     }
 
