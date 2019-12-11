@@ -163,7 +163,7 @@ sub _update_dnafrags {
         foreach my $principal_gdb ( @genome_dbs ) {
             my $component_gdbs = $principal_gdb->component_genome_dbs;
             foreach my $gdb ( @{$component_gdbs} ) {
-                $nr += $dbc->do($sql, undef, $principal_gdb->dbID, $gdb->dbID, $principal_mlss_id);
+                $nr += $dbc->do($sql, undef, $gdb->dbID, $principal_gdb->dbID, $principal_mlss_id);
             }
         }
         die "No rows where updated\n" unless $nr;
