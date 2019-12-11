@@ -26,11 +26,6 @@ Bio::EnsEMBL::Compara::Production::DnaFragChunkSet
 An object to hold a set or group of DnaFragChunk objects.  Used in production to reduce
 overhead of feeding sequences into alignment programs like (b)lastz and exonerate.
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_).
-
 =cut
 
 package Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
@@ -38,11 +33,10 @@ package Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use strict;
 use warnings;
 
-use File::Path;
-use File::Basename;
+use Cwd;
+use File::Spec;
 
 use Bio::EnsEMBL::Hive::Utils qw(dir_revhash);
-use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
@@ -235,7 +229,7 @@ sub load_all_sequences {
 
     foreach my $chunk (@{$self->get_all_DnaFragChunks}) {
         $chunk->masking($self->dna_collection->masking);
-        $chunk->fetch_masked_sequence;
+        $chunk->fetch_masked_sequence();
     }
 }
 
@@ -270,23 +264,22 @@ sub dump_to_fasta_file {
 
 =head2 dump_loc_file
 
-  Example     : $chunk_set->dump_loc_file();
-  Description : Returns the path to this ChunkSet in the dump location of its DnaCollection
+  Arg [1]     : (Optional) string - base directory path. By default, the current
+                working directory.
+  Example     : $chunk_set->dump_loc_file('/tmp');
+  Description : Returns a unique filepath for this DnaFragChunkSet.
   Returntype  : String
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
 
 =cut
 
 sub dump_loc_file {
     my $self = shift;
-    my $dump_loc = $self->dna_collection->dump_loc;
+    my $basedir = shift // cwd();
+
     my $sub_dir  = dir_revhash($self->dbID);
-    return sprintf('%s/%s/chunk_set_%s.fa', $dump_loc, $sub_dir, $self->dbID);
+    my $filename = sprintf('chunk_set_%s.fa', $self->dbID);
+    return File::Spec->catfile($basedir, $sub_dir, $filename);
 }
-
-
 
 
 1;

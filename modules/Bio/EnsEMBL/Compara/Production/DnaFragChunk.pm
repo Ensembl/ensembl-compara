@@ -21,11 +21,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::Production::DnaFragChunk
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_).
-
 =cut
 
 package Bio::EnsEMBL::Compara::Production::DnaFragChunk;
@@ -33,16 +28,14 @@ package Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use strict;
 use warnings;
 
-use File::Path;
-use File::Basename;
+use Cwd;
+use File::Spec;
 
 use Bio::Seq;
 use Bio::SeqIO;
 
 use Bio::EnsEMBL::Hive::Utils qw(dir_revhash);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
-
-use Bio::EnsEMBL::Compara::Locus;
 
 use base ('Bio::EnsEMBL::Compara::Locus', 'Bio::EnsEMBL::Storable');
 
@@ -280,22 +273,21 @@ sub dump_chunks_to_fasta_file {
 
 =head2 dump_loc_file
 
-  Example     : $chunk->dump_loc_file();
-  Description : Returns the path to this Chunk in the dump location of its DnaCollection
+  Arg [1]     : (Optional) string - base directory path. By default, the current
+                working directory.
+  Example     : $chunk->dump_loc_file('/tmp');
+  Description : Returns a unique filepath for this DnaFragChunk.
   Returntype  : String
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
 
 =cut
 
 sub dump_loc_file {
     my $self = shift;
-    my $dna_collection = shift;
+    my $basedir = shift // cwd();
 
-    my $dump_loc = $dna_collection->dump_loc;
     my $sub_dir  = dir_revhash($self->dbID);
-    return sprintf('%s/%s/chunk_%s.fa', $dump_loc, $sub_dir, $self->dbID);
+    my $filename = sprintf('chunk_%s.fa', $self->dbID);
+    return File::Spec->catfile($basedir, $sub_dir, $filename);
 }
 
 
