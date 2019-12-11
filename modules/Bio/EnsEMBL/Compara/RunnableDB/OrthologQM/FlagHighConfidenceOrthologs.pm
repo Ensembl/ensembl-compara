@@ -62,7 +62,7 @@ sub fetch_input {
     my $mlss        = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
 
     # The %identity filter always applies
-    my %external_conditions = (perc_id => $thresholds->[2]);
+    my %conditions = (perc_id => $thresholds->[2]);
 
     # Check whether there are GOC and WGA scores for this mlss_id
     my ($n_hom, $has_goc, $has_wga) = $self->_check_homology_counts;
@@ -72,6 +72,7 @@ sub fetch_input {
         $self->complete_early("No homologies for mlss_id=$mlss_id. Nothing to do");
     }
 
+    my %external_conditions;
     if ($has_goc and $thresholds->[0]) {
         $external_conditions{goc_score} = $thresholds->[0];
     }
@@ -80,11 +81,12 @@ sub fetch_input {
     }
 
     # Use the independent metrics if possible or fallback to is_tree_compliant
-    $external_conditions{is_tree_compliant} = 1 unless scalar(keys %external_conditions) > 0;
+    $conditions{is_tree_compliant} = 1 unless scalar(keys %external_conditions) > 0;
 
-    $self->param('mlss',                        $mlss);
-    $self->param('high_confidence_conditions',  \%external_conditions);
-    $self->param('num_homologies',              $n_hom);
+    $self->param('mlss',                 $mlss);
+    $self->param('conditions',           \%conditions);
+    $self->param('external_conditions',  \%external_conditions);
+    $self->param('num_homologies',       $n_hom);
 }
 
 sub write_output {
@@ -92,11 +94,12 @@ sub write_output {
 
     $self->disconnect_from_hive_database;
 
-    my $mlss                        = $self->param('mlss');
-    my $range_label                 = $self->param('range_label');
-    my $range_filter                = $self->param('range_filter')->{$range_label};
-    my $high_confidence_conditions  = $self->param('high_confidence_conditions');
-    my $n_hom                       = $self->param('num_homologies'),
+    my $mlss                = $self->param('mlss');
+    my $range_label         = $self->param('range_label');
+    my $range_filter        = $self->param('range_filter')->{$range_label};
+    my $conditions          = $self->param('conditions');
+    my $external_conditions = $self->param('external_conditions');
+    my $n_hom               = $self->param('num_homologies'),
 
     my $homology_file = $self->param_required('homology_file');
     my $wga_file      = $self->param_required('wga_file');
@@ -125,17 +128,18 @@ sub write_output {
         }
 
         # decide if homology is high confidence
-        my $is_high_conf = ($perc_id_1 >= $high_confidence_conditions->{perc_id} && $perc_id_2 >= $high_confidence_conditions->{perc_id});
+        my $is_high_conf = ($perc_id_1 >= $conditions->{perc_id} && $perc_id_2 >= $conditions->{perc_id});
 
-        if ( $is_high_conf && $high_confidence_conditions->{goc_score} ) {
-            $is_high_conf = 0 unless defined $goc_scores->{$homology_id};
-            $is_high_conf = 0 unless ($goc_scores->{$homology_id} || 0) >= $high_confidence_conditions->{goc_score};
-        }
-        if ( $is_high_conf && $high_confidence_conditions->{wga_coverage} ) {
-            $is_high_conf = 0 unless defined $wga_coverage->{$homology_id};
-            $is_high_conf = 0 unless ($wga_coverage->{$homology_id} || 0) >= $high_confidence_conditions->{wga_coverage};
-        }
-        if ( $is_high_conf && $high_confidence_conditions->{is_tree_compliant} ) {
+        if ( $external_conditions ) {
+            my ($goc_pass, $wga_pass);
+            if ( $is_high_conf && $external_conditions->{goc_score} ) {
+                $goc_pass = 1 if (defined $goc_scores->{$homology_id}) && ($goc_scores->{$homology_id} >= $external_conditions->{goc_score});
+            }
+            if ( $is_high_conf && $external_conditions->{wga_coverage} ) {
+                $wga_pass = 1 if (defined $wga_coverage->{$homology_id}) && ($wga_coverage->{$homology_id} >= $external_conditions->{wga_coverage});
+            }
+            $is_high_conf = ($goc_pass || $wga_pass);
+        } else {
             $is_high_conf = $is_tree_compliant;
         }
         print $ofh "$homology_id\t$is_high_conf\n";
@@ -157,12 +161,12 @@ sub write_output {
     $mlss->store_tag("n_${range_label}_high_confidence_" . $_, $hc_per_gdb{$_}) for keys %hc_per_gdb;
 
     # More stats for the metrics that were used for this mlss_id
-    if ( defined $high_confidence_conditions->{goc_score} ) {
-        $self->_write_distribution($mlss, 'goc', $high_confidence_conditions->{goc_score}, $goc_scores);
+    if ( defined $external_conditions->{goc_score} ) {
+        $self->_write_distribution($mlss, 'goc', $external_conditions->{goc_score}, $goc_scores);
     }
-    if ( defined $high_confidence_conditions->{wga_coverage} ) {
+    if ( defined $external_conditions->{wga_coverage} ) {
         # unlike goc, wga is calculated on both protein and ncrna - add the range_label to ensure mergeability
-        $self->_write_distribution($mlss, "${range_label}wga", $high_confidence_conditions->{wga_coverage}, $wga_coverage);
+        $self->_write_distribution($mlss, "${range_label}wga", $external_conditions->{wga_coverage}, $wga_coverage);
     }
 }
 
