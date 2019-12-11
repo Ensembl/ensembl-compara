@@ -273,7 +273,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologMLSSFactory',
             -flow_into  => {
                 '2->A' => [ 'prepare_orthologs' ],
-                'A->1' => [ 'copy_files_to_shared_loc' ],
+                'A->1' => WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ),
             }
         },
 
