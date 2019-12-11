@@ -213,7 +213,7 @@ sub _check_homology_counts {
     my $goc_file = $self->param('goc_file');
     my $wc_goc = ( $goc_file && -e $goc_file ) ? $self->_lines_in_file($goc_file) : 0;
     my $wga_file = $self->param('wga_file');
-    my $wc_wga = ( $wga_file && -e $wga_file ) : $self->_lines_in_file($wga_file) : 0;
+    my $wc_wga = ( $wga_file && -e $wga_file ) ? $self->_lines_in_file($wga_file) : 0;
     return ($wc_hom, $wc_goc, $wc_wga);
 }
 
