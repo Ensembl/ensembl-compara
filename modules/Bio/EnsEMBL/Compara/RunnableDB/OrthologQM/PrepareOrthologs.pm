@@ -171,7 +171,7 @@ sub _reusable_homologies {
     }
 
     # now, we split the homologies into reusable and non-reusable (new)
-    my ( @reusables, @dont_reuse );
+    my @dont_reuse;
     my %old_id_2_new_hom;
     foreach my $h ( @$current_homologs ) {
         my $h_id = $h->{homology_id};

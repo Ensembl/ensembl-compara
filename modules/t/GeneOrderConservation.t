@@ -95,8 +95,7 @@ standaloneJob(
 );
 
 ok( -e $output_file, 'output file exists' );
-my @goc_contents = map { [split(/\s+/)] } split("\n", slurp($output_file));
-my %goc_file_scores = map { $_->[0] => $_->[1] } @goc_contents;
+my %goc_file_scores = map { split(/\s+/) } split("\n", slurp($output_file));
 is( $goc_file_scores{1},    0, 'correct score (  0) from file for homology_id 1' );
 is( $goc_file_scores{11},  25, 'correct score ( 25) from file for homology_id 11' );
 is( $goc_file_scores{2},   50, 'correct score ( 50) from file for homology_id 2' );
