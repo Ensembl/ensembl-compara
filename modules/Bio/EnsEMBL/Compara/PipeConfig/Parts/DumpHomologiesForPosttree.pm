@@ -60,7 +60,7 @@ sub pipeline_analyses_dump_homologies_posttree {
               # i.e. we don't need B->A if we already have A->B
               'input_query' => q|
                 SELECT
-                    h.homology_id, h.description AS homology_type, h.gene_tree_node_id, h.gene_tree_root_id, h.species_tree_node_id,
+                    h.homology_id, h.description AS homology_type, h.gene_tree_node_id, h.gene_tree_root_id, h.species_tree_node_id, h.is_tree_compliant,
                     sm1.gene_member_id, sm1.seq_member_id, sm1.stable_id as seq_member_stable_id, sm1.genome_db_id, hm1.perc_id AS identity, hm1.perc_cov AS coverage,
                     sm2.gene_member_id AS hom_gene_member_id, sm2.seq_member_id AS hom_seq_member_id, sm2.stable_id as hom_seq_member_stable_id, sm2.genome_db_id AS hom_genome_db_id, hm2.perc_id AS hom_identity, hm2.perc_cov AS hom_coverage
                 FROM

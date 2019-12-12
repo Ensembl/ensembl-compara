@@ -53,8 +53,16 @@ sub default_options {
 
         'range_label'  => $self->o('member_type'),
         'range_filter' => {
-            'protein' => '((homology_id < 1400000000) OR (homology_id BETWEEN 1800000000 AND 1900000000) OR (homology_id BETWEEN 2000000000 AND 2100000000))',
-            'ncrna'   => '((homology_id BETWEEN 1400000000 AND 1800000000) OR (homology_id BETWEEN 1900000000 AND 2000000000) OR (homology_id > 2100000000))',
+            'protein' => [
+                [ 0,          1400000000 ],
+                [ 1800000000, 1900000000 ],
+                [ 2000000000, 2100000000 ],
+            ],
+            'ncrna'   => [
+                [ 1400000000, 1800000000 ],
+                [ 1900000000, 2000000000 ],
+                [ 2100000000             ], # single value means 2100000000+
+            ],
         },
 
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity

@@ -34,7 +34,7 @@ This pipeline-part analyzes the orthologies and flags the best ones as
 =head2 eHive configuration
 
 This pipeline fires 1 job per orthology MLSS, which are relatively fast
-too, so you will have to set 'high_confidence_batch_size' and 'high_confidence_capacity'.
+too, so you will have to set 'high_confidence_capacity'.
 
 Jobs require less than 100MB of memory.
 
@@ -84,7 +84,7 @@ Example:
 =item range_filter, range_label
 
 If the pipeline needs to process only a subset of the homologies,
-these can be defined with an additional filter: a SQL condition.
+these can be defined with an additional filter: a list of ranges.
 The statistics will then be stored in the database with the label
 added to their names.
 
@@ -124,13 +124,26 @@ sub pipeline_analyses_high_confidence {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::FlagHighConfidenceOrthologs',
             -parameters    => {
                 'thresholds'    => '#expr( #threshold_levels#->[#threshold_index#]->{"thresholds"} )expr#',
+                'homology_file' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
             },
             -hive_capacity => $self->o('high_confidence_capacity'),
-            -batch_size    => $self->o('high_confidence_batch_size'),
+            -flow_into     => [ 'update_homology_table' ],
+        },
+
+        {   -logic_name => 'update_homology_table',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::UpdateTableFromFile',
+            -parameters => {
+                table        => 'homology',
+                primary_key  => 'homology_id',
+                attrib_files => [
+                    '#goc_file#', '#wga_file#', '#high_conf_file#'
+                ],
+            },
+            -hive_capacity => $self->o('update_homologies_capacity'),
+            -priority      => 10, # these are slow - let's get them started ASAP
         },
 
     ];
 }
 
 1;
-

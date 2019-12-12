@@ -91,9 +91,12 @@ sub default_options {
                 'thresholds'    => [ undef, undef, 25 ],
             },
         ],
+
+        # this should be set to your protein tree `homology_dumps_dir`
+        # (can be found in the pipeline_wide_parameters table)
+        'homology_dumps_dir' => $self->o('protein_homology_dumps_dir'),
     };
 }
 
 
 1;
-

@@ -87,7 +87,9 @@ sub pipeline_analyses_goc {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::GeneOrderConservation',
             -parameters => {
                 'hashed_mlss_id'    => '#expr(dir_revhash(#goc_mlss_id#))expr#',
-                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#goc_mlss_id#.#member_type#.homologies.tsv',
+                'flatfile_basename' => '#homology_dumps_dir#/#hashed_mlss_id#/#goc_mlss_id#.#member_type#',
+                'homology_flatfile' => '#flatfile_basename#.homologies.tsv',
+                'output_file'       => '#flatfile_basename#.goc.tsv',
             },
             -flow_into => {
                1 => WHEN(
@@ -105,7 +107,9 @@ sub pipeline_analyses_goc {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::GeneOrderConservation',
             -parameters => {
                 'hashed_mlss_id'    => '#expr(dir_revhash(#goc_mlss_id#))expr#',
-                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#goc_mlss_id#.#member_type#.homologies.tsv',
+                'flatfile_basename' => '#homology_dumps_dir#/#hashed_mlss_id#/#goc_mlss_id#.#member_type#',
+                'homology_flatfile' => '#flatfile_basename#.homologies.tsv',
+                'output_file'       => '#flatfile_basename#.goc.tsv',
             },
             -flow_into => {
                1 => WHEN(

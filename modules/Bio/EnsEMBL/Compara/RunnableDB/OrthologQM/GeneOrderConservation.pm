@@ -170,7 +170,22 @@ sub run {
 sub write_output {
     my $self = shift;
     
-    my $goc_scores = $self->param('goc_scores');
+    my $goc_scores  = $self->param('goc_scores');
+    my $output_file = $self->param('output_file');
+
+    if ( $output_file ) {
+        print "Writing GOC scores to output file $output_file\n" if $self->debug;
+        open(my $out_fh, '>', $output_file) or die "Cannot open $output_file for writing";
+        print $out_fh "homology_id\tgoc_score\n";
+        foreach my $score ( keys %$goc_scores ) {
+            foreach my $homology_id ( @{ $goc_scores->{$score} } ) {
+                print $out_fh "$homology_id\t$score\n";
+            }
+        }
+        close $out_fh;
+        return;
+    }
+
     print "Writing GOC scores to the database\n" if $self->debug;
     $self->compara_dba->dbc->sql_helper->transaction(
         -CALLBACK => sub {
