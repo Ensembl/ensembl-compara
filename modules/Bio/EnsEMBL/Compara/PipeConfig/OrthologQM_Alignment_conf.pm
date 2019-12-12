@@ -334,7 +334,7 @@ sub pipeline_analyses {
                 'homology_dumps_dir'        => $self->o('homology_dumps_dir'),
                 'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_dir'),
                 'shared_user'               => $self->o('shared_user'),
-                'cmd'                       => 'become #shared_user# /bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rt #wga_dumps_dir#/ #homology_dumps_shared_dir#"',
+                'cmd'                       => 'become #shared_user# /bin/bash -c "mkdir -p #homology_dumps_shared_dir# && find #wga_dumps_dir#/ -name \'*.wga.tsv\' -exec cp {} #homology_dumps_shared_dir# \;"',
             },
         },
 
