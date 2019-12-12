@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::DnaFragChunkSet
@@ -34,9 +32,12 @@ use strict;
 use warnings;
 
 use Cwd;
+use File::Basename;
+use File::Path;
 use File::Spec;
 
 use Bio::EnsEMBL::Hive::Utils qw(dir_revhash);
+use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
