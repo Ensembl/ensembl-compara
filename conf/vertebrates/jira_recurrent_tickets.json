@@ -124,51 +124,27 @@
          },
          {
             "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPO_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_conf.pm]",
-            "summary": "Run the Mammal EPO pipeline",
-            "name_on_graph": "EPO:Mammals"
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {lastz_complete} to 1 when relevant LASTZs are ready",
+            "summary": "Run the Mammal EPOwith2x pipeline",
+            "name_on_graph": "EPOwith2x:Mammals"
          },
          {
             "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOLowCoverage_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOLowCoverage_conf.pm]",
-            "summary": "Run the Mammal EPO-2X pipeline",
-            "name_on_graph": "EPO-2X:Mammals"
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {lastz_complete} to 1 when relevant LASTZs are ready",
+            "summary": "Run the Primates EPOwith2x pipeline",
+            "name_on_graph": "EPOwith2x:Primates"
          },
          {
             "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPO_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_conf.pm]",
-            "summary": "Run the Primates EPO pipeline",
-            "name_on_graph": "EPO:Primates"
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {lastz_complete} to 1 when relevant LASTZs are ready",
+            "summary": "Run the Fish EPOwith2x pipeline",
+            "name_on_graph": "EPOwith2x:Fish"
          },
          {
             "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOLowCoverage_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOLowCoverage_conf.pm]",
-            "summary": "Run the Primates EPO-2X pipeline",
-            "name_on_graph": "EPO-2X:Primates"
-         },
-         {
-            "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPO_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_conf.pm]",
-            "summary": "Run the Fish EPO pipeline",
-            "name_on_graph": "EPO:Fish"
-         },
-         {
-            "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOLowCoverage_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOLowCoverage_conf.pm]",
-            "summary": "Run the Fish EPO-2X pipeline",
-            "name_on_graph": "EPO-2X:Fish"
-         },
-         {
-            "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPO_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_conf.pm]",
-            "summary": "Run the Sauropsids EPO pipeline",
-            "name_on_graph": "EPO:Sauropsids"
-         },
-         {
-            "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOLowCoverage_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOLowCoverage_conf.pm]",
-            "summary": "Run the Sauropsids EPO-2X pipeline",
-            "name_on_graph": "EPO-2X:Sauropsids"
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {lastz_complete} to 1 when relevant LASTZs are ready",
+            "summary": "Run the Sauropsids EPOwith2x pipeline",
+            "name_on_graph": "EPOwith2x:Sauropsids"
          },
          {
             "component": "Production tasks",

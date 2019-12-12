@@ -123,6 +123,7 @@ sub default_options {
 
         #default location for pairwise alignments (can be a string or an array-ref)
         'pairwise_location' => [ qw(compara_prev lastz_batch_*) ],
+        'lastz_complete'    => 0, # set to 1 when all relevant LASTZs have complete
         'epo_db'            => $self->pipeline_url(),
     };
 }
@@ -163,7 +164,8 @@ sub pipeline_wide_parameters {
         'epo_db'            => $self->o('epo_db'),
 
         # options
-        'run_gerp' => $self->o('run_gerp'),
+        'run_gerp'       => $self->o('run_gerp'),
+        'lastz_complete' => $self->o('lastz_complete'),
     };
 
 }
@@ -211,10 +213,12 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'setup_low_coverage_alignment',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                '1->A' => 'create_default_pairwise_mlss',
-                'A->1' => 'dump_mappings_to_file',
-            }
+            -flow_into  => ['dump_mappings_to_file', 'check_for_lastz'],
+        },
+
+        {   -logic_name => 'check_for_lastz',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => WHEN( '#lastz_complete#' => [ 'create_default_pairwise_mlss' ]),
         },
 
         {   -logic_name => 'set_internal_ids_low_epo',
@@ -289,8 +293,12 @@ sub tweak_analyses {
     $analyses_by_name->{'low_coverage_genome_alignment_again'}->{'-parameters'}->{'mlss_id'} = '#low_epo_mlss_id#';
     $analyses_by_name->{'low_coverage_genome_alignment_himem'}->{'-parameters'}->{'mlss_id'} = '#low_epo_mlss_id#';
 
+    # block analyses until LASTZ are complete
+    $analyses_by_name->{'low_coverage_genome_alignment'}->{'-wait_for'} = 'create_default_pairwise_mlss';
+    $analyses_by_name->{'gerp'}->{'-wait_for'} = 'set_gerp_neutral_rate';
+
     # add "set_internal_ids_low_epo" to "remove_dodgy_ancestral_blocks"
-    $analyses_by_name->{'remove_dodgy_ancestral_blocks'}->{'-flow_into'} = {'set_internal_ids_low_epo' => {}};
+    $analyses_by_name->{'remove_dodgy_ancestral_blocks'}->{'-flow_into'} = { 1 => { 'set_internal_ids_low_epo' => {} } };
 
     # ensure mlss_ids are flowed with their root_ids
     $analyses_by_name->{'create_neighbour_nodes_jobs_alignment'}->{'-parameters'}->{'inputquery'} = 'SELECT gat2.root_id, #mlss_id# FROM genomic_align_tree gat1 LEFT JOIN genomic_align ga USING(node_id) JOIN genomic_align_tree gat2 USING(root_id) WHERE gat2.parent_id IS NULL AND ga.method_link_species_set_id = #mlss_id# GROUP BY gat2.root_id';
