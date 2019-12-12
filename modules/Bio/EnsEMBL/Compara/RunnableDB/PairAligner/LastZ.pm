@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ
@@ -25,11 +23,6 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ
 
 This object wraps Bio::EnsEMBL::Compara::Production::Analysis::Lastz to add
 functionality to read and write to databases.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_).
 
 =cut
 
@@ -63,13 +56,13 @@ sub run {
   # get the sequences and create the runnable
   #
   my $query_DnaFragChunkSet = $self->param('query_DnaFragChunkSet');
-  my $qyChunkSetFile = $self->dumpChunkSetToWorkdir($query_DnaFragChunkSet);
+  my $qyChunkSetFile = $self->dumpChunkSetToTmp($query_DnaFragChunkSet);
 
+  my $dbChunkSet = $self->param('db_DnaFragChunkSet');
+  $dbChunkSet->load_all_sequences();
   my @db_chunk_files;
-  my $db_dna_collection = $self->param('db_DnaFragChunkSet')->dna_collection;
-  foreach my $db_chunk (@{$self->param('db_DnaFragChunkSet')->get_all_DnaFragChunks}) {
-      $db_chunk->masking($db_dna_collection->masking);
-    push @db_chunk_files, $self->dumpChunkToWorkdir($db_chunk, $db_dna_collection);
+  foreach my $db_chunk ( @{$dbChunkSet->get_all_DnaFragChunks()} ) {
+      push @db_chunk_files, $self->dumpChunkToTmp($db_chunk);
   }
 
   if (@db_chunk_files > 1) {
@@ -95,4 +88,3 @@ sub run {
 
 
 1;
-

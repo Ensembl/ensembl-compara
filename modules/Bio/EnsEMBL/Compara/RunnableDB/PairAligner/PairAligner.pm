@@ -31,11 +31,6 @@ It adds functionality to read and write to a compara databases.
 It takes as input (via input_id or analysis->parameters) DnaFragChunk or DnaFragChunkSet
 objects (via dbID reference) and stores GenomicAlignBlock entries.
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_).
-
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
@@ -83,6 +78,10 @@ sub param_defaults {
 sub fetch_input {
   my( $self) = @_;
 
+  # Add the genome dumps directory to avoid as many connections to external core
+  # databases as possible
+  $self->compara_dba->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
+
   my $query_DnaFragChunkSet = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param_required('qyChunkSetID'));
   $self->param('query_DnaFragChunkSet',$query_DnaFragChunkSet);
   throw("Missing qyChunkSet") unless($query_DnaFragChunkSet);
@@ -96,7 +95,7 @@ sub fetch_input {
   map {$chunks_lookup{$_->dbID} = $_} @{$query_DnaFragChunkSet->get_all_DnaFragChunks};
   $self->param('chunks_lookup', \%chunks_lookup);
 
-  $query_DnaFragChunkSet->load_all_sequences() unless $query_DnaFragChunkSet->dna_collection->dump_loc && (-s $query_DnaFragChunkSet->dump_loc_file);
+  $query_DnaFragChunkSet->load_all_sequences();
 
   throw("Missing method_link_type") unless($self->param('method_link_type'));
 
@@ -153,34 +152,25 @@ sub _write_output {
 #
 ##########################################
 
-sub dumpChunkSetToWorkdir
-{
+sub dumpChunkSetToTmp {
   my $self      = shift;
   my $chunkSet   = shift;
 
-  my $fastafile = $chunkSet->dump_loc_file;
-  if (-s $fastafile) {
-      print("dumpChunkSetToWorkdir: $fastafile already dumped\n") if ($self->debug);
-  } else {
-      $chunkSet->dump_to_fasta_file($fastafile);
-  }
+  my $fastafile = $chunkSet->dump_loc_file($self->worker_temp_directory);
+  $chunkSet->dump_to_fasta_file($fastafile);
   return $fastafile;
 }
 
-sub dumpChunkToWorkdir
-{
+
+sub dumpChunkToTmp {
   my $self = shift;
   my $chunk = shift;
-  my $dna_collection = shift;
 
-  my $fastafile = $chunk->dump_loc_file($dna_collection);
-  if (-s $fastafile) {
-      print("dumpChunkToWorkdir: $fastafile already dumped\n") if ($self->debug);
-  } else {
-      $chunk->dump_to_fasta_file($fastafile);
-  }
+  my $fastafile = $chunk->dump_loc_file($self->worker_temp_directory);
+  $chunk->dump_to_fasta_file($fastafile);
   return $fastafile;
 }
+
 
 sub store_featurePair_as_genomicAlignBlock
 {
