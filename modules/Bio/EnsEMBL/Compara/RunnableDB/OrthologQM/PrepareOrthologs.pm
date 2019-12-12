@@ -170,7 +170,7 @@ sub _reusable_homologies {
         $reuse_homologs->{$row->{curr_release_homology_id}} = $row->{prev_release_homology_id};
     }
 
-    # now, we split the homologies into reusable and non-reusable (new)
+    # find the non-reusable homologies
     my @dont_reuse;
     my %old_id_2_new_hom;
     foreach my $h ( @$current_homologs ) {

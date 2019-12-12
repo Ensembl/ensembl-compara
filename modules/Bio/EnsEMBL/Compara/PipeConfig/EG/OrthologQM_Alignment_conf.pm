@@ -1,5 +1,3 @@
-=pod
-
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -42,7 +40,6 @@ use strict;
 use warnings;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf');
-
 
 sub default_options {
     my ($self) = @_;

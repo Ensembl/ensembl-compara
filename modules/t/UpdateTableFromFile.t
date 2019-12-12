@@ -76,8 +76,6 @@ subtest "Test Bio::EnsEMBL::Compara::RunnableDB::UpdateTableFromFile - homologie
     is( $hom_3->wga_coverage,  '100.00', 'homology_id 3 wga_coverage correct'       );
     is( $hom_3->goc_score,           75, 'homology_id 3 goc_score correct'          );
     is( $hom_3->is_high_confidence,   1, 'homology_id 3 is_high_confidence correct' );
-
-    done_testing();
 };
 
 done_testing();
