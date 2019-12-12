@@ -91,7 +91,7 @@ sub write_output {
     my %max_quality = %{ $self->param('max_quality') };
     open( my $out_fh, $write_mode, $output_file ) or die "Cannot open $output_file for writing";
 
-        # write header if we're starting from an empty file
+    # write header if we're starting from an empty file
     print $out_fh "homology_id\twga_coverage\n" if ( ! -e $reuse_file );
 
     print $out_fh join("\n", map(sprintf("%d\t%f", $_, $max_quality{$_}), keys %max_quality));
