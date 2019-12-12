@@ -82,10 +82,14 @@ sub write_output {
     my $output_file = $self->param('output_file');
     my $reuse_file = $self->param('reuse_file');
     $self->run_command("mkdir -p " . dirname($output_file)) unless -d dirname($output_file);
-    $self->run_command("cp $reuse_file $output_file") if ( -e $reuse_file );
+    my $write_mode = '>';
+    if ( -e $reuse_file ) {
+        $self->run_command("cp $reuse_file $output_file");
+        $write_mode = '>>';
+    }
 
     my %max_quality = %{ $self->param('max_quality') };
-    open( my $out_fh, '>>', $output_file ) or die "Cannot open $output_file for writing";
+    open( my $out_fh, $write_mode, $output_file ) or die "Cannot open $output_file for writing";
 
         # write header if we're starting from an empty file
     print $out_fh "homology_id\twga_coverage\n" if ( ! -e $reuse_file );
