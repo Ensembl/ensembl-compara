@@ -109,7 +109,7 @@ sub parse_healthchecks {
         $line =~ s/\s+$//;
         
         my $header = 0;
-        if ($line =~ /org\.ensembl\.healthcheck\.testcase\.(\S+)/) {
+        if ($line =~ /org\.ensembl\.healthcheck\.(testcase|testgroup)\.(\S+)/) {
             $testcase = $1 . " ($timestamp)";
             $header = 1;
         }
