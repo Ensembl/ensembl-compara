@@ -398,8 +398,21 @@ sub get_pair_aligner {
 	my $non_ref_dna_collection = $dna_collections->{$non_ref_collection_name};
 
         #Set default dna_collection chunking values
-        $self->get_chunking($ref_dna_collection, $self->param('default_chunks')->{'reference'});
-        $self->get_chunking($non_ref_dna_collection, $self->param('default_chunks')->{'non_reference'});
+        my $default_chunks = $self->param('default_chunks');
+        my $ref_gdb_name = $ref_dna_collection->{genome_db}->name;
+        my $ref_default_chunks = $default_chunks->{reference};
+        $self->get_chunking(
+            $ref_dna_collection,
+            $ref_default_chunks->{$ref_gdb_name} || $ref_default_chunks->{default} || $ref_default_chunks,
+            $default_chunks->{masking}
+        );
+        my $non_ref_gdb_name = $non_ref_dna_collection->{genome_db}->name;
+        my $non_ref_default_chunks = $default_chunks->{non_reference};
+        $self->get_chunking(
+            $non_ref_dna_collection,
+            $non_ref_default_chunks->{$non_ref_gdb_name} || $non_ref_default_chunks->{default} || $non_ref_default_chunks,
+            $default_chunks->{masking}
+        );
 
         #Set default pair_aligner values
         unless (defined $pair_aligner->{'method_link'}) {
@@ -481,11 +494,7 @@ sub set_pair_aligner_options {
 #Fill in missing information in the conf file from the default_chunk 
 #
 sub get_chunking {
-   my ($self, $dna_collection, $default_chunk) = @_;
-
-   # need to check if human-specific chunking params exist
-   # incoming structure would be a hash if so
-   $self->get_chunking($dna_collection, $default_chunk->{$dna_collection->{'genome_db'}->name} || $default_chunk->{default}) if exists $default_chunk->{default};
+   my ($self, $dna_collection, $default_chunk, $masking) = @_;
 
    #chunk_size
    unless (defined $dna_collection->{'chunk_size'}) {
@@ -508,7 +517,7 @@ sub get_chunking {
    }
 
    # Set masking
-   $dna_collection->{'masking'} = $default_chunk->{'masking'};
+   $dna_collection->{'masking'} = $masking;
    
    unless (defined $dna_collection->{'dump_loc'}) {
        $dna_collection->{'dump_loc'} = $default_chunk->{'dump_loc'};
@@ -516,12 +525,7 @@ sub get_chunking {
 }
 
 sub get_default_chunking {
-    my ($dna_collection, $default_chunk, $dump_dir_species) = @_;
-
-   # need to check if human-specific chunking params exist
-   # incoming structure would be a hash if so
-   get_default_chunking($dna_collection, $default_chunk->{$dna_collection->{'genome_db'}->name} || $default_chunk->{default}) if exists $default_chunk->{default};
-
+    my ($dna_collection, $default_chunk, $dump_dir_species, $masking) = @_;
 
     #chunk_size
     unless (defined $dna_collection->{'chunk_size'}) {
@@ -549,7 +553,7 @@ sub get_default_chunking {
     }
 
     # Set masking
-    $dna_collection->{'masking'} = $default_chunk->{'masking'};
+    $dna_collection->{'masking'} = $masking;
     
     #dump location (currently never set for non-reference chunking)
     unless (defined $dna_collection->{'dump_loc'}) {
@@ -824,10 +828,27 @@ sub parse_defaults {
 
 	#create unique subdirectory to dump dna using genome_db_ids
 	my $dump_dir_species = join "_", @genome_db_ids;
-	
-	#Set default dna_collection chunking values if required
-	get_default_chunking($dna_collections->{$pair_aligner->{'reference_collection_name'}}, $self->param('default_chunks')->{'reference'}, $dump_dir_species);	
-	get_default_chunking($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}, $self->param('default_chunks')->{'non_reference'}, $dump_dir_species);
+
+        #Set default dna_collection chunking values if required
+        my $default_chunks = $self->param('default_chunks');
+        my $ref_dna_collection = $dna_collections->{$pair_aligner->{reference_collection_name}};
+        my $ref_gdb_name = $ref_dna_collection->{genome_db}->name;
+        my $ref_default_chunks = $default_chunks->{reference};
+        get_default_chunking(
+            $ref_dna_collection,
+            $ref_default_chunks->{$ref_gdb_name} || $ref_default_chunks->{default} || $ref_default_chunks,
+            $dump_dir_species,
+            $default_chunks->{masking}
+        );
+        my $non_ref_dna_collection = $dna_collections->{$pair_aligner->{non_reference_collection_name}};
+        my $non_ref_gdb_name = $non_ref_dna_collection->{genome_db}->name;
+        my $non_ref_default_chunks = $default_chunks->{non_reference};
+        get_default_chunking(
+            $non_ref_dna_collection,
+            $non_ref_default_chunks->{$non_ref_gdb_name} || $non_ref_default_chunks->{default} || $non_ref_default_chunks,
+            $dump_dir_species,
+            $default_chunks->{masking}
+        );
     
 	#Store region, if defined, in the chain_config for use in no_chunk_and_group_dna
 	if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'region'}) {
