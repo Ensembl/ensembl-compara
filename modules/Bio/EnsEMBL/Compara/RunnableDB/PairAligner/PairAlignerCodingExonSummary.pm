@@ -117,10 +117,10 @@ sub write_output {
 
   my $method_link_species_set = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
   $method_link_species_set->store_tag("ref_coding_exon_length", $coding_exon_length);
-  $method_link_species_set->store_tag("ref_matches", $matches);
-  $method_link_species_set->store_tag("ref_mis_matches", $mis_matches);
-  $method_link_species_set->store_tag("ref_insertions", $ref_insertions);
-  $method_link_species_set->store_tag("ref_uncovered", $uncovered);
+  $method_link_species_set->store_tag("ref_matches", $matches // 0);
+  $method_link_species_set->store_tag("ref_mis_matches", $mis_matches // 0);
+  $method_link_species_set->store_tag("ref_insertions", $ref_insertions // 0);
+  $method_link_species_set->store_tag("ref_uncovered", $uncovered // 0);
 
   #Non-ref species
   $sth->execute($self->param('non_ref_genome_db')->dbID, $mlss_id);
@@ -128,10 +128,10 @@ sub write_output {
   #print "coding_exon_length $coding_exon_length $matches $mis_matches $ref_insertions $uncovered\n";
 
   $method_link_species_set->store_tag("non_ref_coding_exon_length", $coding_exon_length);
-  $method_link_species_set->store_tag("non_ref_matches", $matches || 0);
-  $method_link_species_set->store_tag("non_ref_mis_matches", $mis_matches || 0);
-  $method_link_species_set->store_tag("non_ref_insertions", $ref_insertions || 0);
-  $method_link_species_set->store_tag("non_ref_uncovered", $uncovered);
+  $method_link_species_set->store_tag("non_ref_matches", $matches // 0);
+  $method_link_species_set->store_tag("non_ref_mis_matches", $mis_matches // 0);
+  $method_link_species_set->store_tag("non_ref_insertions", $ref_insertions // 0);
+  $method_link_species_set->store_tag("non_ref_uncovered", $uncovered // 0);
 
   return 1;
 }
