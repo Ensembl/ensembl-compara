@@ -39,7 +39,7 @@ my @intervals_in_mbp = (
 
 my $method_link = 'LASTZ_NET';
 
-my ( $help, $reg_conf, $master_db, $release, $exclude_mlss_ids, $dry_run );
+my ( $help, $reg_conf, $master_db, $release, $include_mlss_ids, $exclude_mlss_ids, $dry_run );
 my ( $verbose, $very_verbose );
 $dry_run = 0;
 GetOptions(
@@ -48,6 +48,7 @@ GetOptions(
     "master_db=s"        => \$master_db,
     "release=i"          => \$release,
     "max_jobs=i"         => \$max_jobs,
+    'include_mlss_ids=s' => \$include_mlss_ids,
     'exclude_mlss_ids=s' => \$exclude_mlss_ids,
     'method_link=s'      => \$method_link,
     'dry_run|dry-run!'   => \$dry_run,
@@ -68,9 +69,11 @@ my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $maste
 print STDERR "Fetching current $method_link MethodLinkSpeciesSets from the database..\n";
 my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor();
 my $all_lastz_mlsses = $mlss_adaptor->fetch_all_by_method_link_type($method_link);
+my %mlss_ids_to_include = map {$_ => 1} split(/[\s,]+/, $include_mlss_ids);
 my (@current_lastz_mlsses, %genome_dbs);
 foreach my $this_mlss ( @$all_lastz_mlsses ) {
     if ((($this_mlss->first_release || 0) == $release)
+        || $mlss_ids_to_include{$this_mlss->dbID}
         || (defined $this_mlss->get_tagvalue("rerun_in_$release"))) {
 		next if defined $exclude_mlss_ids && grep { $this_mlss->dbID == $_ } split(/[\s,]+/, $exclude_mlss_ids );
 		push @current_lastz_mlsses, $this_mlss;
