@@ -185,6 +185,7 @@ sub pipeline_wide_parameters {
     return {
         'skip_pairaligner_stats'    => $self->o('skip_pairaligner_stats'),
         'patch_alignments'          => $self->o('patch_alignments'),
+        'genome_dumps_dir'          => $self->o('genome_dumps_dir'),
     };
 }
 
