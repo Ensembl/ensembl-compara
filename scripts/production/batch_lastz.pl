@@ -38,6 +38,7 @@ my @intervals_in_mbp = (
 );
 
 my $method_link = 'LASTZ_NET';
+my $index = 1;
 
 my ( $help, $reg_conf, $master_db, $release, $include_mlss_ids, $exclude_mlss_ids, $dry_run );
 my ( $verbose, $very_verbose );
@@ -51,6 +52,7 @@ GetOptions(
     'include_mlss_ids=s' => \$include_mlss_ids,
     'exclude_mlss_ids=s' => \$exclude_mlss_ids,
     'method_link=s'      => \$method_link,
+    'start_index=i'      => \$index,
     'dry_run|dry-run!'   => \$dry_run,
     'v|verbose!'         => \$verbose,
     'vv|very_verbose!'   => \$very_verbose,
@@ -155,7 +157,6 @@ my %ticket_tmpl = (
 );
 # Generate the command line of each batch and build its corresponding ticket
 my ( @cmd_list, $ticket_list );
-my $index = 1;
 foreach my $group ( @$mlss_groups ) {
     my $this_mlss_list = '"[' . join(',', @{$group->{mlss_ids}}) . ']"';
     my $cmd = "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::${division_pkg_name}::Lastz_conf -mlss_id_list $this_mlss_list -pipeline_name ${division}_lastz_batch${index}_${release} -host mysql-ens-compara-prod-X -port XXXX";
