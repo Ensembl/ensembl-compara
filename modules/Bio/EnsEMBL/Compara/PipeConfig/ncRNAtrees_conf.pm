@@ -204,6 +204,16 @@ sub core_pipeline_analyses {
                      -batch_size        => $self->o('hc_batch_size'),
                     );
 
+    my %raxml_decision_params = (
+        # The number of cores is based on the number of "alignment patterns"
+        # Here we don't have that exact value so approximate it with half
+        # of the number of columns in the alignment (assuming some columns
+        # will be paired and some will be redundant).
+        'raxml_cores'              => '#expr( (#aln_length# / 2) / #raxml_patterns_per_core# )expr#',
+        # 500 is the value advised for DNA alignments
+        'raxml_patterns_per_core'  => 500,
+    );
+
     my %raxml_parameters = (
         'raxml_pthread_exe_sse3'     => $self->o('raxml_pthread_exe_sse3'),
         'raxml_pthread_exe_avx'      => $self->o('raxml_pthread_exe_avx'),
@@ -738,13 +748,15 @@ sub core_pipeline_analyses {
 
             {   -logic_name => 'pre_secondary_structure_decision',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+                -parameters => {
+                    %raxml_decision_params,
+                },
                 -flow_into => {
                     1 => WHEN(
-                        '(#aln_length# <= 200)'                                 => 'pre_sec_struct_tree_1_core',
-                        '( (#aln_length# > 200) && (#aln_length# <= 600) )'     => 'pre_sec_struct_tree_2_cores',
-                        '( (#aln_length# > 600) && (#aln_length# <= 1300) )'    => 'pre_sec_struct_tree_4_cores',
-                        '(#aln_length# > 1300)'                                 => 'pre_sec_struct_tree_8_cores',
-                        #'( #aln_length# > 4000 )'                              => 'pre_sec_struct_tree_16_cores', #Right now it may be an overkill, but it may be necessary in the future.
+                        '(#raxml_cores# <= 1)'                                  => 'pre_sec_struct_tree_1_core',
+                        '(#raxml_cores# >  1)  && (#raxml_cores# <= 2)'         => 'pre_sec_struct_tree_2_cores',
+                        '(#raxml_cores# >  2)  && (#raxml_cores# <= 4)'         => 'pre_sec_struct_tree_4_cores',
+                        '(#raxml_cores# >  4)'                                  => 'pre_sec_struct_tree_8_cores',
                     ),
                 },
                 %decision_analysis_params,
@@ -847,13 +859,16 @@ sub core_pipeline_analyses {
 
             {   -logic_name => 'secondary_structure_decision',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+                -parameters => {
+                    %raxml_decision_params,
+                },
                 -flow_into => {
                     1 => WHEN(
-                        '(#aln_length# <= 200)'                                 => 'sec_struct_model_tree_1_core',
-                        '( (#aln_length# > 200) && (#aln_length# <= 600) )'     => 'sec_struct_model_tree_2_cores',
-                        '( (#aln_length# > 600) && (#aln_length# <= 1300) )'    => 'sec_struct_model_tree_4_cores',
-                        '(#aln_length# > 1300)'                                 => 'sec_struct_model_tree_8_cores',
-                        #'( #aln_length# > 4000 )'                              => 'sec_struct_model_tree_16_cores', #Right now it may be an overkill, but it may be necessary in the future.
+                        # We should take the model into account to be more accurate
+                        '(#raxml_cores# <= 1)'                                  => 'sec_struct_model_tree_1_core',
+                        '(#raxml_cores# >  1)  && (#raxml_cores# <= 2)'         => 'sec_struct_model_tree_2_cores',
+                        '(#raxml_cores# >  2)  && (#raxml_cores# <= 4)'         => 'sec_struct_model_tree_4_cores',
+                        '(#raxml_cores# >  4)'                                  => 'sec_struct_model_tree_8_cores',
                     ),
                 },
                 %decision_analysis_params,
