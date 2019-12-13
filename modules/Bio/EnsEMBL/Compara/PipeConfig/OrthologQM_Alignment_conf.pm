@@ -176,6 +176,8 @@ sub pipeline_wide_parameters {
         'wga_dumps_dir'      => $self->o('wga_dumps_dir'),
         'prev_wga_dumps_dir' => $self->o('prev_wga_dumps_dir'),
         'previous_wga_file'  => defined $self->o('prev_wga_dumps_dir') ? '#prev_wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv' : undef,
+
+        'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_dir'),
     };
 }
 
@@ -212,6 +214,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'select_mlss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::SelectMLSS',
+            -parameters => { 'current_release' => $self->o('ensembl_release') },
             -flow_into  => {
                 1 => [ '?accu_name=alignment_mlsses&accu_address=[]&accu_input_variable=accu_dataflow' ],
                 2 => [ '?accu_name=mlss_db_mapping&accu_address={mlss_id}&accu_input_variable=mlss_db' ],
@@ -273,14 +276,13 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologMLSSFactory',
             -flow_into  => {
                 '2->A' => [ 'prepare_orthologs' ],
-                'A->1' => WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ),
+                'A->1' => [ 'check_file_copy' ],
             }
         },
 
         {   -logic_name => 'prepare_orthologs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs',
             -parameters => {
-                'homology_dumps_dir'        => $self->o('homology_dumps_dir'),
                 'hashed_mlss_id'            => '#expr(dir_revhash(#orth_mlss_id#))expr#',
                 'homology_flatfile'         => '#homology_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.homologies.tsv',
                 'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.homology_id_map.tsv',
@@ -319,7 +321,6 @@ sub pipeline_analyses {
         {   -logic_name => 'reuse_wga_score',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::ReuseWGAScore',
             -parameters => {
-                'homology_dumps_dir'        => $self->o('homology_dumps_dir'),
                 'hashed_mlss_id'            => '#expr(dir_revhash(#orth_mlss_id#))expr#',
                 'previous_wga_file'         => '#prev_wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
                 'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.homology_id_map.tsv',
@@ -328,11 +329,14 @@ sub pipeline_analyses {
             -hive_capacity     => 400,
         },
 
+        {   -logic_name  => 'check_file_copy',
+            -module      => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into   => WHEN( '#homology_dumps_shared_dir#' => 'copy_files_to_shared_loc' ),
+        },
+
         {   -logic_name => 'copy_files_to_shared_loc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'homology_dumps_dir'        => $self->o('homology_dumps_dir'),
-                'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_dir'),
                 'shared_user'               => $self->o('shared_user'),
                 'cmd'                       => 'become #shared_user# /bin/bash -c "mkdir -p #homology_dumps_shared_dir# && find #wga_dumps_dir#/ -name \'*.wga.tsv\' -exec cp {} #homology_dumps_shared_dir# \;"',
             },

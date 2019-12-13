@@ -83,7 +83,16 @@ sub fetch_input {
     }
 
     if ( defined $self->param('previous_wga_file') ){ # reuse is on
-        my $nonreuse_homologs = $self->_reusable_homologies( $dba, \@current_homologs );
+        my $nonreuse_homologs = $self->_nonreusable_homologies( \@current_homologs );
+        my $num_nonreuse = scalar @$nonreuse_homologs;
+        my $num_homologs = scalar @current_homologs;
+        $self->warning(
+            sprintf("%d/%d reusable homologies for mlss_id %d", (
+                ($num_homologs-$num_nonreuse),
+                $num_homologs,
+                $self->param_required('orth_mlss_id')
+            ))
+        );
         $self->param( 'orth_objects', $nonreuse_homologs );
     }
     else {
@@ -148,7 +157,7 @@ sub write_output {
     $self->dataflow_output_id( { orth_info => $self->param('orth_info') }, 2 ); # to calculate_coverage
 }
 
-=head2 _reuse_homologies
+=head2 _nonreusable_homologies
 
     Check through list of homologs and check if they can be reused.
     wga_coverage scores are copied from the previous_wga_file to the current file if an ID mapping exists for the homology
@@ -156,10 +165,13 @@ sub write_output {
 
 =cut
 
-sub _reusable_homologies {
-    my ( $self, $dba, $current_homologs ) = @_;
+sub _nonreusable_homologies {
+    my ( $self, $current_homologs ) = @_;
 
-    # first, find reusable homologies based on id mapping file
+    # if new alignments have been run, do not reuse
+    return $current_homologs if $self->param_required('new_alignment');
+
+    # otherwise, check for reusable homologies based on id mapping file
     my $hom_map_file = $self->param_required('homology_mapping_flatfile');
     my $reuse_homologs;
     open( my $hmfh, '<', $hom_map_file ) or die "Cannot open $hom_map_file for reading";
@@ -170,7 +182,7 @@ sub _reusable_homologies {
         $reuse_homologs->{$row->{curr_release_homology_id}} = $row->{prev_release_homology_id};
     }
 
-    # find the non-reusable homologies
+    # gather the non-reusable homologies
     my @dont_reuse;
     my %old_id_2_new_hom;
     foreach my $h ( @$current_homologs ) {
