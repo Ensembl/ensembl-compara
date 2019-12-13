@@ -86,7 +86,7 @@ print STDERR "Found " . scalar(@current_lastz_mlsses) . "!\n\n";
 
 # calculate number of jobs per-mlss
 print STDERR "Estimating number of jobs for each method_link_species_set..\n";
-my (%mlss_job_count, %chunk_counts, %chain_job_count, %dnafrag_interval_counts);
+my (%mlss_job_count, %chunk_counts, %chain_job_count, %dnafrag_interval_counts, %nets_job_count);
 foreach my $mlss ( @current_lastz_mlsses ) {
     my @mlss_gdbs = $mlss->find_pairwise_reference;
     my ($ref_chunk_count, $non_ref_chunk_count, $filter_dups_job_count);
@@ -111,7 +111,7 @@ foreach my $mlss ( @current_lastz_mlsses ) {
     if ((scalar(@mlss_gdbs) > 1) || $mlss_gdbs[0]->is_polyploid) {
         my $chains_job_count = chains_job_count( $mlss );
         $mlss_job_count{$mlss->dbID}->{analysis}->{aln_chains} = $chains_job_count;
-        $mlss_job_count{$mlss->dbID}->{analysis}->{aln_nets} = ceil($chains_job_count/2);
+        $mlss_job_count{$mlss->dbID}->{analysis}->{aln_nets} = nets_job_count($mlss_gdbs[0]);
     }
 	my $lastz_job_count = ($ref_chunk_count * $non_ref_chunk_count);
     $mlss_job_count{$mlss->dbID}->{analysis}->{lastz} = $lastz_job_count;
@@ -291,6 +291,22 @@ sub combined_interval_probability {
 	# print "t1_prob = $t1_prob ; t2_prob = $t2_prob\n";
 
 	return $t1_prob*$t2_prob;
+}
+
+
+sub nets_job_count {
+	my ($genome_db) = @_;
+
+	return $nets_job_count{$genome_db->dbID} if $nets_job_count{$genome_db->dbID};
+
+	my $chunk_size = 500000;
+	my $sql = "select sum(ceil(length/$chunk_size)) from dnafrag where genome_db_id = ? and is_reference = 1";
+	# print "NETTING_SQL : '$sql' on " . $genome_db->dbID . "\n";
+	my $sth = $dba->dbc->prepare($sql);
+	$sth->execute($genome_db->dbID);
+	my ($count) = $sth->fetchrow_array();
+	$nets_job_count{$genome_db->dbID} = $count;
+	return $count;
 }
 
 
