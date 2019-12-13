@@ -62,6 +62,7 @@ standaloneJob(
 		'species2_id'       => '134',
 		'compara_db'        => $compara_db,
 		'orth_batch_size'   => 1,
+        'new_alignment'     => 0,
         'homology_flatfile'         => $test_flatfile,
         'homology_mapping_flatfile' => $test_map_file,
 	},
@@ -92,11 +93,16 @@ standaloneJob(
 		'compara_db'        => $compara_db,
 		'previous_rel_db'   => $prev_compara_db,
 		'orth_batch_size'   => 1,
+        'new_alignment'     => 0,
         'homology_flatfile'         => $test_flatfile,
         'homology_mapping_flatfile' => $test_map_file,
         'previous_wga_file'         => 'prev_wga_file.tsv',
     },
     [ # list of events to test for
+        [
+            'WARNING',
+            '2/3 reusable homologies for mlss_id 12345'
+        ],
         [
             'DATAFLOW',
             { orth_mlss_id => '12345' },
@@ -120,11 +126,16 @@ standaloneJob(
 		'compara_db'        => $compara_db,
 		'previous_rel_db'   => $prev_compara_db,
 		'orth_batch_size'   => 2,
+        'new_alignment'     => 0,
         'homology_flatfile'         => $test_flatfile,
         'homology_mapping_flatfile' => $test_map_file,
         'previous_wga_file'         => 'prev_wga_file.tsv',
     },
     [ # list of events to test for
+        [
+            'WARNING',
+            '2/3 reusable homologies for mlss_id 12345'
+        ],
         [
             'DATAFLOW',
             { orth_mlss_id => '12345' },
