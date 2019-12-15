@@ -365,7 +365,7 @@ return [
     'min_anchor_seq_len' => $self->o('min_ce_length'),
  },
  -batch_size    => 10,
- -hive_capacity => 10,
+ -hive_capacity => 100,
 },
 ];
 }	
