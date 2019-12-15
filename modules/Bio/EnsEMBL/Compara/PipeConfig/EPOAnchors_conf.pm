@@ -310,6 +310,7 @@ return [
  -parameters => {
     'inputquery'      => "SELECT DISTINCT(anchor_id) AS anchor_id FROM anchor_align WHERE method_link_species_set_id = #mlss_id# AND untrimmed_anchor_align_id IS NULL",
  },  
+ -rc_name => '4Gb_job',
  -flow_into => {
     '2->A' => [ 'trim_anchor_align' ],
     'A->1' => [ 'load_anchor_sequence_factory' ],
@@ -325,6 +326,7 @@ return [
   },
  -hive_capacity => 100,
  -batch_size    => 10,
+ -rc_name => '2Gb_job',
  -flow_into     => {
      -1 => [ 'trim_anchor_align_himem' ],
  }
@@ -348,6 +350,7 @@ return [
  -parameters => {
 	'inputquery'  => 'SELECT DISTINCT(anchor_id) AS anchor_id FROM anchor_align WHERE method_link_species_set_id = #mlss_id# AND untrimmed_anchor_align_id IS NOT NULL',
   },
+ -rc_name => '2Gb_job',
  -flow_into => {
 	2 => [ 'load_anchor_sequence' ],	
   }, 
