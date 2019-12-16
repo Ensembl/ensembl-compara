@@ -80,6 +80,9 @@ sub fetch_input {
 	# allow user defined MLSS ID,
 	# but check that mlss pertains to this set of species
 	if ( defined $aln_mlss_ids ) {
+        # trigger no reuse if mlss_ids have been passed by user
+        $self->param( 'new_alignment', 1 );
+
 		foreach my $mlss_id ( @{$aln_mlss_ids} ){
 			my $this_mlss = $mlss_adap->fetch_by_dbID($mlss_id);
 			die "Could not find method_link_species_set (id $mlss_id)" unless ( defined $this_mlss );

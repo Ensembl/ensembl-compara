@@ -130,7 +130,7 @@ $exp_br1_dataflow = {
         'aln_mlss_ids'  => [647],
         'species1_id'   => '112',
         'species2_id'   => '142',
-        'new_alignment' => 0,
+        'new_alignment' => 1,
 	}
 };
 
