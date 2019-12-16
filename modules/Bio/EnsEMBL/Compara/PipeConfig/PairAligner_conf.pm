@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
@@ -241,7 +239,7 @@ sub core_pipeline_analyses {
 				  'mlss_id_list'   => $self->o('mlss_id_list'),
                   'collection'     => $self->o('collection'),
                   'master_db'      => $self->o('master_db'),
-                  'only_cellular_component' => $self->o('only_cellular_component'),
+                  'cellular_component' => $self->o('only_cellular_component'),
 				 },
 	       -flow_into => {
 			      1 => [ 'parse_pair_aligner_conf' ],
