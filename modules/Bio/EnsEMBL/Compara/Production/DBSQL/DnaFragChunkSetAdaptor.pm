@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkSetAdaptor
@@ -28,12 +26,12 @@ package Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkSetAdaptor;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
-use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
+use DBI qw(:sql_types);
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
-use DBI qw(:sql_types);
+use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
+use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 
 use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 

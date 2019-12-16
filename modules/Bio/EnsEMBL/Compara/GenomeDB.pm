@@ -15,14 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::GenomeDB
@@ -30,8 +22,6 @@ Bio::EnsEMBL::Compara::GenomeDB
 =head1 DESCRIPTION
 
 The GenomeDB object stores information about each species including the taxon id, species name, assembly, genebuild and the location of the core database.
-
-=head1 SYNOPSIS
 
 The end-user is probably only interested in the following methods:
  - dBID() # this value is also called genome_db_id
@@ -52,17 +42,7 @@ More advanced use-cases include:
 
 The constructor is able to confront the asked parameters (taxon_id, assembly, etc) to the ones that are actually stored in the core database if the db_adaptor parameter is given.
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
-
-=head1 METHODS
-
 =cut
-
-
-# Let the code begin...
-
 
 package Bio::EnsEMBL::Compara::GenomeDB;
 

@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::PopulateNewDatabase
@@ -26,19 +24,12 @@ Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::PopulateNewDatabase
 Runs the $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/populate_new_database.pl
 script, dealing with missing parameters.
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_).
-
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::PopulateNewDatabase;
 
 use strict;
 use warnings;
-
-use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Hive::Utils ('destringify');
 
