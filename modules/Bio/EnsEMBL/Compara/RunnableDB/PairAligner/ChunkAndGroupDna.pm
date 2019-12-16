@@ -15,17 +15,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ChunkAndGroupDna
 
 =head1 DESCRIPTION
 
-This object chunks the Dna from a genome_db and creates and stores the
-chunks as DnaFragChunk objects are grouped into DnaFragChunkSets in the compara database.
-A DnaFragChunkSet contains one or more DnaFragChunk objects. A DnaFragChunkSet is a member of a DnaCollection.
+This object chunks the DNA from a genome_db and creates and stores the chunks as
+DnaFragChunk objects are grouped into DnaFragChunkSets in the compara database.
+A DnaFragChunkSet contains one or more DnaFragChunk objects. A DnaFragChunkSet
+is a member of a DnaCollection.
 
 =cut
 
@@ -70,10 +69,6 @@ sub fetch_input {
   #get the Compara::GenomeDB object for the genome_db_id
   $self->param('genome_db', $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id')));
   throw("Can't fetch genome_db for id=".$self->param('genome_db_id')) unless($self->param('genome_db'));
-
-  #using genome_db_id, connect to external core database
-  my $coreDBA = $self->param('genome_db')->db_adaptor();
-  throw("Can't connect to genome database for id=".$self->param('genome_db_id')) unless($coreDBA);
   
   return 1;
 }
@@ -123,110 +118,45 @@ sub create_chunks {
   }
   throw("couldn't get a DnaCollection for ChunkAndGroup analysis\n") unless($self->param('dna_collection'));
   
-
-  my $SliceAdaptor = $genome_db->db_adaptor->get_SliceAdaptor;
-  my $dnafragDBA = $self->compara_dba->get_DnaFragAdaptor;
-
-  my $chromosomes = [];
-  my $preloaded_dnafrags = {};
-
- $genome_db->db_adaptor->dbc->prevent_disconnect( sub {
-
-  my %single_fetch_components = ('PT' => 1, 'MT' => 1);
-  if ($self->param('only_cellular_component') and $single_fetch_components{$self->param('only_cellular_component')}){
-      # Optimization: for these components, we expect there is a single seq_region
-      my $this_slice = $SliceAdaptor->fetch_by_region('toplevel', $self->param('only_cellular_component'));
-      push(@$chromosomes, $this_slice);
-
-  } elsif(defined $self->param('region')) {
-    #Support list of regions
-    my @regions = split(/,/, $self->param('region'));  
-
-    foreach my $region (@regions) {
-        my ($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end) = split(/:/,  $region);
-        if (defined $seq_region_name && $seq_region_name ne "") {
-            print("fetch by region coord:$coord_system_name seq_name:$seq_region_name\n");
-            my $slice;
-            if (defined $seq_region_start && defined $seq_region_end) {
-                $slice = $SliceAdaptor->fetch_by_region($coord_system_name, $seq_region_name, $seq_region_start, $seq_region_end);
-                push @{$chromosomes}, $slice;
-            } else {
-                if (defined $self->param('include_non_reference')) {
-                    $slice = $SliceAdaptor->fetch_by_region_unique($coord_system_name, $seq_region_name);
-		    #If slice is not defined, try calling fetch_by_region instead
-		    if (scalar @$slice == 0) {
-			$slice = $SliceAdaptor->fetch_by_region($coord_system_name, $seq_region_name);
-			push @{$chromosomes}, $slice;
-		    } else {
-			push @{$chromosomes}, @$slice;
-		    }
-                } else {
-                    $slice = $SliceAdaptor->fetch_by_region($coord_system_name, $seq_region_name);
-                    push @{$chromosomes}, $slice;
-                }
-            }
-        } else {
-            print("fetch by region coord:$coord_system_name\n");
-            push @{$chromosomes}, $SliceAdaptor->fetch_all($coord_system_name);
-        }
-    }
-  } elsif ($genome_db->genome_component) {
-      # We're asked to align a genome component: only take the seq_regions
-      # of that component
-      $chromosomes = $SliceAdaptor->fetch_all_by_genome_component($genome_db->genome_component);
-  } else {
-      #default for $include_non_reference = 0, $include_duplicates = 0
-    $chromosomes = $SliceAdaptor->fetch_all('toplevel',undef, $self->param('include_non_reference'), $self->param('include_duplicates'));
-    $preloaded_dnafrags = { map {$_->name => $_} @{ $dnafragDBA->fetch_all_by_GenomeDB($genome_db) } }
-  }
- } );
-
-  print("number of seq_regions ".scalar @{$chromosomes}."\n");
-
-  $self->param('chunkset_counter', 1);
-  $self->define_new_chunkset;
-
-  my $starttime = time();
-
-  foreach my $chr (@{$chromosomes}) {
+    my $dnafrag_dba = $self->compara_dba->get_DnaFragAdaptor;
+    my $dnafrags = {};
     if (defined $self->param('region')) {
-      unless(scalar @{$chr->get_all_Attributes('toplevel')}) {
-        warn "No toplevel attributes, skipping this region";
-      }
+        # Support list of regions as a string in CSV format as follows:
+        #     chromosome:1,scaffold:KN149822.1:25:1560,chromosome:2::154200
+        my @region_list = split(/,/, $self->param('region'));
+        my %regions;
+        foreach my $region ( @region_list ) {
+            my ($coord_system_name, $region_name, $region_start, $region_end) = split(/:/, $region);
+            my $region_dnafrag = $dnafrag_dba->fetch_by_GenomeDB_and_name($genome_db, $region_name);
+            die "Unknown dnafrag region '$region_name'\n" unless $region_dnafrag;
+            $region_dnafrag->{_start} = $region_start if $region_start;
+            $region_dnafrag->{_end} = $region_end if $region_end;
+            $dnafrags->{"$coord_system_name:$region_name"} = $region_dnafrag;
+        }
+    } else {
+        my $dnafrag_list = $dnafrag_dba->fetch_all_by_GenomeDB(
+            $genome_db,
+            -COORD_SYSTEM_NAME  => 'toplevel',
+            -IS_REFERENCE       => $self->param('include_non_reference') ? undef : 1,
+            -CELLULAR_COMPONENT => $self->param('only_cellular_component'),
+        );
+        $dnafrags = { map {$_->coord_system_name . ':' . $_->name => $_} @$dnafrag_list };
     }
 
-    my $dnafrag = ($preloaded_dnafrags->{$chr->seq_region_name} || $dnafragDBA->fetch_by_GenomeDB_and_name($genome_db, $chr->seq_region_name));
-
-    next if $self->param('only_cellular_component') && ($dnafrag->cellular_component ne $self->param('only_cellular_component'));
-
-    unless($dnafrag) {
-      #
-      # try fetching dnafrag for this chromosome
-      #
-      $dnafrag = $dnafragDBA->fetch_by_GenomeDB_and_name($genome_db, $chr);
-    }
-    unless($dnafrag) {
-      #
-      # create dnafrag for this chromosome
-      #
-      $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($chr, $genome_db);
-      $dnafragDBA->store($dnafrag);
-    }
-    $dnafrag->{'_slice'} = $chr;
-    $self->create_dnafrag_chunks($dnafrag, $masking, $chr->start, $chr->end);
-  }
-
-  print "genome_db ",$genome_db->dbID, " : total time ", (time()-$starttime), " secs\n";
-
+    my $starttime = time();
+    $self->param('chunkset_counter', 1);
+    $self->define_new_chunkset;
+    $self->create_dnafrag_chunks($dnafrags->{$_}, $masking) for keys %$dnafrags;
+    printf "genome_db_id %s : total time %d secs\n", $genome_db->dbID, time() - $starttime;
 }
-
 
 sub create_dnafrag_chunks {
   my $self = shift;
   my $dnafrag = shift;
   my $masking = shift;
-  my $region_start = (shift or 1);
-  my $region_end = (shift or $dnafrag->length);
+
+  my $region_start = (exists $dnafrag->{_start}) ? $dnafrag->{_start} : 1;
+  my $region_end = (exists $dnafrag->{_end}) ? $dnafrag->{_end} : $dnafrag->length;
 
   #If chunk_size is not set then set it to be the fragment length 
   #overlap must be 0 in this case.
@@ -285,14 +215,12 @@ sub create_dnafrag_chunks {
 
         #Create new current_chunkset object
         $self->define_new_chunkset;
-
         $self->store_chunk_in_chunkset($chunk);
 
       if($self->debug) {
         printf("dna_collection : chunk (%d) %s\n",$chunk->dbID, $chunk->display_id);
       }
   }
-    
 
     #This is very important, otherwise it leaks
     undef($chunk->{'_sequence'});
