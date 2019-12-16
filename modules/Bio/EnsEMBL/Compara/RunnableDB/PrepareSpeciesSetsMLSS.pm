@@ -56,6 +56,7 @@ sub param_defaults {
         'whole_method_links'        => [],
         'singleton_method_links'    => [],
         'pairwise_method_links'     => [],
+        'store_reuse_ss'            => 1,
     };
 }
 
@@ -113,8 +114,12 @@ sub write_output {
         $self->_write_all_pairs( $ml, [@noncomponent_gdbs]);
     }
 
-    # Finish with the call to SUPER which will save the pipeline-wide parameters
-    $self->SUPER::write_output();
+    if ( $self->param('store_reuse_ss') ) {
+        # Finish with the call to SUPER which will save the reuse species sets into pipeline-wide parameters
+        $self->SUPER::write_output();
+    } else {
+        $self->db->hive_pipeline->save_collections();
+    }
 }
 
 
@@ -161,6 +166,7 @@ sub genome_dbs {
     foreach my $gdb ( @{$self->param('genome_dbs')} ) {
         push @filtered_gdbs, $gdb if grep { $gdb->dbID == $_->dbID } @$filter_gdbs;
     }
+    $self->param('genome_dbs', \@filtered_gdbs);
     return \@filtered_gdbs;
 }
 

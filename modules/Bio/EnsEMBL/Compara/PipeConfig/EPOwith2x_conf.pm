@@ -195,15 +195,17 @@ sub core_pipeline_analyses {
                         ['EPO'],
                         ['high_epo_mlss_id'],
                         '#high_epo_mlss_id#',
+                        1, # store reuse species sets for high coverage species
                     ],
                     [
                         '#low_epo_mlss_id#',
                         ['EPO_LOW_COVERAGE', 'GERP_CONSTRAINED_ELEMENT', 'GERP_CONSERVATION_SCORE'],
                         ['low_epo_mlss_id', 'ce_mlss_id', 'cs_mlss_id'],
-                        undef
+                        undef,
+                        0 # do not store reuse species sets for low coverage species
                     ],
                 ],
-                'column_names' => [ 'mlss_id', 'whole_method_links', 'param_names', 'filter_by_mlss_id' ],
+                'column_names' => [ 'mlss_id', 'whole_method_links', 'param_names', 'filter_by_mlss_id', 'store_reuse_ss' ],
             },
             -flow_into  => {
                 '2->A' => 'create_mlss_ss',
