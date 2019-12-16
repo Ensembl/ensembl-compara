@@ -292,54 +292,54 @@ sub core_pipeline_analyses {
 	       -rc_name => '2Gb_job',
  	    },
 
- 	    {  -logic_name => 'create_pair_aligner_jobs',  #factory
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs',
- 	       -parameters => { 
-                               'mix_cellular_components' => $self->o('mix_cellular_components'),
-                              },
-	       -hive_capacity => 10,
-            -wait_for => [ 'chunk_and_group_dna' ],
-	       -flow_into => {
-			       1 => [ 'check_no_partial_gabs' ],
-			       2 => [ $self->o('pair_aligner_logic_name')  ],
-			   },
-	       -rc_name => '1Gb_job',
- 	    },
- 	    {  -logic_name => $self->o('pair_aligner_logic_name'),
- 	       -module     => $self->o('pair_aligner_module'),
- 	       -analysis_capacity => $self->o('pair_aligner_analysis_capacity'),
- 	       -batch_size => $self->o('pair_aligner_batch_size'),
-	       -parameters => { 
-			       'pair_aligner_exe' => $self->o('pair_aligner_exe'),
-			      },
-           -wait_for  => [ 'create_pair_aligner_jobs'  ],
-	       -flow_into => {
-			      -1 => [ $self->o('pair_aligner_logic_name') . '_himem1' ],  # MEMLIMIT
-			     },
-	       -rc_name => '2Gb_job',
-	    },
-	    {  -logic_name => $self->o('pair_aligner_logic_name') . "_himem1",
- 	       -module     => $self->o('pair_aligner_module'),
- 	       -analysis_capacity => $self->o('pair_aligner_analysis_capacity'),
-	       -parameters => { 
-			       'pair_aligner_exe' => $self->o('pair_aligner_exe'),
-			      },
-           -wait_for   => [ 'create_pair_aligner_jobs'  ],
- 	       -batch_size => $self->o('pair_aligner_batch_size'),
-	       -can_be_empty  => 1,
-	       -rc_name => '8Gb_job',
-	    },
-            {   -logic_name => 'check_no_partial_gabs',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SqlHealthChecks',
-                -parameters => {
-                    'mode'          => 'gab_inconsistencies',
-                },
- 	       -wait_for =>  [ $self->o('pair_aligner_logic_name'), $self->o('pair_aligner_logic_name') . "_himem1" ],
-	       -flow_into => {
-			      1 => [ 'update_max_alignment_length_before_FD' ],
-			     },
-	    },
- 	    {  -logic_name => 'update_max_alignment_length_before_FD',
+        {   -logic_name    => 'create_pair_aligner_jobs',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs',
+            -parameters    => {
+                'mix_cellular_components' => $self->o('mix_cellular_components'),
+            },
+            -flow_into     => {
+                '2->A' => [ $self->o('pair_aligner_logic_name')  ],
+                'A->1' => [ 'check_no_partial_gabs' ],
+            },
+            -wait_for      => [ 'chunk_and_group_dna' ],
+            -hive_capacity => 10,
+            -rc_name       => '1Gb_job',
+        },
+
+        {   -logic_name        => $self->o('pair_aligner_logic_name'),
+            -module            => $self->o('pair_aligner_module'),
+            -parameters        => {
+                'pair_aligner_exe' => $self->o('pair_aligner_exe'),
+            },
+            -flow_into         => {
+                -1 => [ $self->o('pair_aligner_logic_name') . '_himem' ],  # MEMLIMIT
+            },
+            -analysis_capacity => $self->o('pair_aligner_analysis_capacity'),
+            -batch_size        => $self->o('pair_aligner_batch_size'),
+            -rc_name           => '2Gb_job',
+        },
+
+        {   -logic_name        => $self->o('pair_aligner_logic_name') . '_himem',
+            -module            => $self->o('pair_aligner_module'),
+            -parameters        => {
+                'pair_aligner_exe' => $self->o('pair_aligner_exe'),
+            },
+            -analysis_capacity => $self->o('pair_aligner_analysis_capacity'),
+            -batch_size        => $self->o('pair_aligner_batch_size'),
+            -rc_name           => '8Gb_job',
+        },
+
+        {   -logic_name => 'check_no_partial_gabs',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SqlHealthChecks',
+            -parameters => {
+                'mode' => 'gab_inconsistencies',
+            },
+            -flow_into  => {
+                1 => [ 'update_max_alignment_length_before_FD' ],
+            },
+        },
+
+	    {  -logic_name => 'update_max_alignment_length_before_FD',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
  	       -parameters => { 
 			       'quick' => $self->o('quick'),
@@ -351,7 +351,6 @@ sub core_pipeline_analyses {
  	    },
  	    {  -logic_name => 'create_filter_duplicates_jobs', #factory
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs',
- 	       -parameters => { },
  	       -wait_for =>  [ 'update_max_alignment_length_before_FD' ],
 	        -flow_into => {
 			       2 => { 'filter_duplicates' => INPUT_PLUS() },
@@ -399,93 +398,61 @@ sub core_pipeline_analyses {
                                'only_cellular_component' => $self->o('only_cellular_component'),
                                'mix_cellular_components' => $self->o('mix_cellular_components'),
 			      },
-	       -flow_into => {
-			      2 => [ 'dump_large_nib_for_chains' ],
-			     },
 	       -wait_for  => ['update_max_alignment_length_after_FD' ],
 	       -rc_name => '2Gb_job',
  	    },
- 	    {  -logic_name => 'dump_large_nib_for_chains',
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
- 	       -parameters => {
-			       'faToNib_exe' => $self->o('faToNib_exe'),
-			       'dump_min_nib_size' => $self->o('dump_min_nib_size'),
-                               'overwrite'=>1,
-			      },
-	       -hive_capacity => 10,
-	       -flow_into => {
-			      -1 => [ 'dump_large_nib_for_chains_himem' ],  # MEMLIMIT
-			     },
-	       -rc_name => '2Gb_job',
- 	    },
-	    {  -logic_name => 'dump_large_nib_for_chains_himem',
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
- 	       -parameters => {
-			       'faToNib_exe' => $self->o('faToNib_exe'),
-			       'dump_min_nib_size' => $self->o('dump_min_nib_size'),
-                               'overwrite'=>1,
-			      },
-	       -hive_capacity => 10,
-	       -can_be_empty  => 1,
-	       -rc_name => '8Gb_job',
- 	    },
- 	    {  -logic_name => 'create_alignment_chains_jobs',
-		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentChainsJobs',
-		-parameters => { }, 
-		-flow_into => {
-#			      1 => [ 'update_max_alignment_length_after_chain' ],
-			      1 => [ 'remove_inconsistencies_after_chain' ],
-			      2 => [ 'alignment_chains' ],
-			     },
-               -wait_for => [ 'no_chunk_and_group_dna', 'dump_large_nib_for_chains', 'dump_large_nib_for_chains_himem' ],
-	       -rc_name => '2Gb_job',
- 	    },
- 	    {  -logic_name => 'alignment_chains',
- 	       -hive_capacity => $self->o('chain_hive_capacity'),
- 	       -batch_size => $self->o('chain_batch_size'),
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains',
- 	       -parameters => $self->o('chain_parameters'),
-           -max_retry_count => 10,
-	       -flow_into => {
-			      -1 => [ 'alignment_chains_himem' ],  # MEMLIMIT
-			     },
-               -wait_for   => [ 'create_alignment_chains_jobs' ],
-	       -rc_name => '2Gb_job',
- 	    },
-	    {  -logic_name => 'alignment_chains_himem',
-	       -hive_capacity => $self->o('chain_hive_capacity'),
- 	       -batch_size => 1,
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains',
- 	       -parameters => $self->o('chain_parameters'),
-	       -can_be_empty  => 1,
-           -max_retry_count => 10,
-	       -rc_name => '8Gb_job',
-	       -flow_into => {
-			      -1 => [ 'alignment_chains_super_himem' ],  # MEMLIMIT
-			     },
-           -wait_for => ['alignment_chains'],
-	       -can_be_empty  => 1,
- 	    },
-        {   -logic_name => 'alignment_chains_super_himem',
-            -hive_capacity => $self->o('chain_hive_capacity'),
-            -batch_size => 1,
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains',
-            -parameters => $self->o('chain_parameters'),
-            -can_be_empty  => 1,
-            -max_retry_count => 10,
-            -rc_name => '16Gb_job',
-            -wait_for => ['alignment_chains'],
-            -can_be_empty  => 1,
+
+        {   -logic_name => 'create_alignment_chains_jobs',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentChainsJobs',
+            -flow_into  => {
+                '2->A' => [ 'alignment_chains' ],
+                'A->1' => [ 'remove_inconsistencies_after_chain' ],
+            },
+            -wait_for   => [ 'no_chunk_and_group_dna' ],
+            -rc_name    => '2Gb_job',
         },
-	    {
-	     -logic_name => 'remove_inconsistencies_after_chain',
-	     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
-	     -flow_into => {
-			      1 => [ 'update_max_alignment_length_after_chain' ],
-			   },
-	     -wait_for =>  [ 'alignment_chains', 'alignment_chains_himem', 'alignment_chains_super_himem' ],
-	     -rc_name => '1Gb_job',
-	    },
+
+        {   -logic_name      => 'alignment_chains',
+            -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains',
+            -parameters      => $self->o('chain_parameters'),
+            -flow_into       => {
+                -1 => [ 'alignment_chains_himem' ],  # MEMLIMIT
+            },
+            -batch_size      => $self->o('chain_batch_size'),
+            -hive_capacity   => $self->o('chain_hive_capacity'),
+            -rc_name         => '2Gb_job',
+            -max_retry_count => 10,
+        },
+
+        {   -logic_name      => 'alignment_chains_himem',
+            -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains',
+            -parameters      => $self->o('chain_parameters'),
+            -flow_into       => {
+                -1 => [ 'alignment_chains_hugemem' ],  # MEMLIMIT
+            },
+            -batch_size      => 1,
+            -hive_capacity   => $self->o('chain_hive_capacity'),
+            -rc_name         => '8Gb_job',
+            -max_retry_count => 10,
+        },
+
+        {   -logic_name      => 'alignment_chains_hugemem',
+            -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains',
+            -parameters      => $self->o('chain_parameters'),
+            -batch_size      => 1,
+            -hive_capacity   => $self->o('chain_hive_capacity'),
+            -rc_name         => '16Gb_job',
+            -max_retry_count => 10,
+        },
+
+        {   -logic_name => 'remove_inconsistencies_after_chain',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
+            -flow_into  => {
+                1 => [ 'update_max_alignment_length_after_chain' ],
+			},
+            -rc_name    => '1Gb_job',
+        },
+
 	    {  -logic_name => 'update_max_alignment_length_after_chain',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
  	       -parameters => { 

@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::DnaCollectionAdaptor
@@ -38,24 +27,21 @@ Used in production to encapsulate particular genome/region/chunk/group DNA set
 from the others.  To allow system to blast against self, and isolate different 
 chunk/group sets of the same genome from each other.
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
-
 =cut
 
 package Bio::EnsEMBL::Compara::Production::DBSQL::DnaCollectionAdaptor;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Compara::Production::DnaCollection;
-use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
-use Bio::EnsEMBL::Hive::Utils 'stringify';
 
+use DBI qw(:sql_types);
+
+use Bio::EnsEMBL::Hive::Utils 'stringify';
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
-use DBI qw(:sql_types);
+use Bio::EnsEMBL::Compara::Production::DnaCollection;
+use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 
 use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
@@ -88,7 +74,6 @@ sub store {
     } else {
         $dbID = $self->generic_insert('dna_collection', {
                 'description'       => $collection->description,
-                'dump_loc'          => $collection->dump_loc,
                 'masking'           => $collection->masking,
             }, 'dna_collection_id');
     }
@@ -144,7 +129,6 @@ sub _columns {
 
   return qw (dc.dna_collection_id
              dc.description
-             dc.dump_loc
              dc.masking);
 }
 
@@ -161,7 +145,6 @@ sub _objs_from_sth {
   return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::Production::DnaCollection', [
           'dbID',
           '_description',
-          '_dump_loc',
           '_masking',
       ] );
 }

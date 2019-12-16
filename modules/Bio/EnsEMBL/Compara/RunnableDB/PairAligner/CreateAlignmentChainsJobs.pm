@@ -15,43 +15,19 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentChainsJobs
 
-=cut
-
 =head1 SYNOPSIS
 
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $runnableDB = Bio::EnsEMBL::Compara::RunnableDB::CreateAlignmentChainsJobs->new (
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$runnableDB->fetch_input(); #reads from DB
-$runnableDB->run();
-$runnableDB->write_output(); #writes to DB
-
-=cut
-
-=head1 DESCRIPTION
-
-=cut
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with a _
+    my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
+    my $runnableDB = Bio::EnsEMBL::Compara::RunnableDB::CreateAlignmentChainsJobs->new (
+                                                        -input_id   => $input_id
+                                                        -analysis   => $analysis );
+    $runnableDB->fetch_input(); #reads from DB
+    $runnableDB->run();
+    $runnableDB->write_output(); #writes to DB
 
 =cut
 
@@ -64,6 +40,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+
 sub param_defaults {
     my $self = shift;
     return {
@@ -72,6 +49,7 @@ sub param_defaults {
         'max_blocks_for_chaining'   => undef,   # If too many blocks, chaining may hang, so we allow here a maximum number of blocks (undef === no filter)
     };
 }
+
 
 sub fetch_input {
   my $self = shift;
@@ -100,21 +78,12 @@ sub fetch_input {
   throw("unable to find method_link_species_set for mlss_id=",$self->param('input_mlss_id')) unless(defined($self->param('method_link_species_set')));
 
   $self->print_params;
-    
   
   return 1;
 }
 
 
-sub run
-{
-  my $self = shift;
-  return 1;
-}
-
-
-sub write_output
-{
+sub write_output {
   my $self = shift;
   $self->createAlignmentChainsJobs();
   return 1;
@@ -138,8 +107,7 @@ sub print_params {
 }
 
 
-sub createAlignmentChainsJobs
-{
+sub createAlignmentChainsJobs {
   my $self = shift;
 
   my (%qy_dna_hash, %tg_dna_hash);
@@ -196,24 +164,6 @@ sub createAlignmentChainsJobs
       $input_hash->{'input_mlss_id'} = $self->param('method_link_species_set')->dbID;
       $input_hash->{'output_mlss_id'} = $self->param('output_mlss_id');
 
-      if ($self->param('query_collection')->dump_loc) {
-        my $nib_file = $self->param('query_collection')->dump_loc 
-            . "/" 
-            . $qy_dna_hash{$qy_dnafrag_id}->name 
-            . ".nib";
-        if (-e $nib_file) {
-          $input_hash->{'query_nib_dir'} = $self->param('query_collection')->dump_loc;
-        }
-      }
-      if ($self->param('target_collection')->dump_loc) {
-        my $nib_file = $self->param('target_collection')->dump_loc 
-            . "/" 
-            . $tg_dna_hash{$tg_dnafrag_id}->name
-            . ".nib";
-        if (-e $nib_file) {
-          $input_hash->{'target_nib_dir'} = $self->param('target_collection')->dump_loc;
-        }
-      }
       $reverse_pairs->{$tg_dnafrag_id}->{$qy_dnafrag_id} = 1;
 
       $self->dataflow_output_id($input_hash, 2);

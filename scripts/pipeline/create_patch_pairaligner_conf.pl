@@ -14,25 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 create_patch_pairaligner_conf.pl
 
 =head1 SYNOPSIS
 
- create_patch_pairaligner_conf.pl --help  
+    create_patch_pairaligner_conf.pl --help
 
- create_patch_pairaligner_conf.pl --reg_conf path/to/production_reg.conf --patched_species homo_sapiens --dump_dir /lustre/scratch109/ensembl/kb3/scratch/hive/release_68/nib_files --patches chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1 > lastz.conf
+    create_patch_pairaligner_conf.pl --reg_conf path/to/production_reg.conf --patched_species homo_sapiens \\
+        --patches chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,\\
+        chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,\\
+        chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1 > lastz.conf
 
 =head1 DESCRIPTION
 
@@ -67,9 +60,6 @@ List of non-reference pair aligner species. This is not normally required since 
 =item B<[--patched_species]>
 Reference species. Default homo_sapiens
 
-=item B<[--dump_dir]>
-Location to dump the nib files
-
 =item B<--patches>
 Patches to run the PairAligner on.
 List of patches in the form: 
@@ -88,14 +78,14 @@ Note that setting this option to 0 implies that --species contains a single spec
 use strict;
 use warnings;
 
+use Getopt::Long;
+
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
-use Getopt::Long;
 
 my $patched_species;
 my $reg_conf;
 my $compara_master = "compara_master";
-my $dump_dir;
 my $patches;
 my $species = [];
 my $skip_species = [];
@@ -114,7 +104,6 @@ GetOptions(
   'reg_conf=s' => \$reg_conf,
   'compara_master=s' => \$compara_master,
   'patched_species=s' => \$patched_species,
-  'dump_dir=s' => \$dump_dir,
   'patches=s' => \$patches,
   'species=s@' => $species,
   'skip_species=s@' => $skip_species,
@@ -134,10 +123,6 @@ my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
 my $patched_genome_db = $genome_db_adaptor->fetch_by_registry_name($patched_species);
 my @all_genome_dbs = ($patched_genome_db);
 print STDERR "Generating a configuration file for $patched_species\n";
-
-#Set default dump_dir
-$dump_dir = "/hps/nobackup2/production/ensembl/" . $ENV{USER} ."/release_" . $patched_genome_db->db_adaptor->get_MetaContainer->get_schema_version() . "_patches/nib_files/" unless ($dump_dir);
-print STDERR "NIB files will be dumped in $dump_dir\n";
 
 #find list of LASTZ_NET alignments in master
 my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -411,7 +396,6 @@ if ($print_dna_collection2) {
     print " 'genome_name_assembly'  => '" . $ref_gdb->name . ":" . $ref_gdb->assembly . "',\n";
     print " 'region'                => \'$patches\',\n" if $patched_species_is_alignment_reference;
     print " 'include_non_reference' => " . $dna_collection->{$ref_mammal}{'include_non_reference'} . ",\n";  #assume same for mammal or primate
-    print " 'dump_loc'              => '" . $dump_dir . "/" . $ref_gdb->name . "_nib_for_chain'\n";
     print "},\n";
 
     foreach my $genome_db (sort {$a->dbID <=> $b->dbID} @all_but_ref_gdbs) {
@@ -423,7 +407,6 @@ if ($print_dna_collection2) {
         if ($dna_collection->{mammal}{'include_non_reference'}) {
             print " 'include_non_reference' => " . $dna_collection->{mammal}{'include_non_reference'} . ",\n";  
         }
-	print " 'dump_loc'              => '" . $dump_dir . "/" . $genome_db->name . "_nib_for_chain'\n";
 	print "},\n";
     }
 }

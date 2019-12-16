@@ -106,7 +106,6 @@ sub create_chunks {
 
     $self->param('dna_collection', new Bio::EnsEMBL::Compara::Production::DnaCollection);
     $self->param('dna_collection')->description($self->param('collection_name'));
-    $self->param('dna_collection')->dump_loc($self->param('dump_loc')) if(defined($self->param('dump_loc')));
     $self->param('dna_collection')->masking($masking) if(defined($masking));
     $self->param('dna_collection')->adaptor($collectionDBA);
 
@@ -117,7 +116,7 @@ sub create_chunks {
       throw("Must define either a collection_id or a collection_name");
   }
   throw("couldn't get a DnaCollection for ChunkAndGroup analysis\n") unless($self->param('dna_collection'));
-  
+
     my $dnafrag_dba = $self->compara_dba->get_DnaFragAdaptor;
     my $dnafrags = {};
     if (defined $self->param('region')) {

@@ -49,11 +49,11 @@ sub run_chains {
   my ($self) = @_;
 
   $self->cleanup_worker_temp_directory;
-  my $workdir = $self->worker_temp_directory;
+  my $tmp_dir = $self->worker_temp_directory;
 
   my $query_name = $self->param('query_dnafrag')->name;
 
-  my $work_dir = $workdir . "/$query_name.$$.AxtChain";
+  my $work_dir = "$tmp_dir/$query_name.$$.AxtChain";
   my $lav_file = "$work_dir/$query_name.lav";
   my $axt_file = "$work_dir/$query_name.axt";
   my $chain_file = "$work_dir/$query_name.chain";
@@ -65,12 +65,6 @@ sub run_chains {
   # write the query in nib format 
   # for use by lavToAxt;
   #################################
-  if ($self->param('query_nib_dir')) {
-    $query_nib_dir = $self->param('query_nib_dir');
-    if (not -d $query_nib_dir) {
-      throw("Could not find query nib file directory:" . $query_nib_dir);
-    }
-  } else { 
     $query_nib_dir = "$work_dir/query_nib";
     mkdir $query_nib_dir;
 
@@ -89,19 +83,11 @@ sub run_chains {
     
     $self->run_command([$self->param_required('faToNib_exe'), "$query_nib_dir/$query_name.fa", "$query_nib_dir/$query_name.nib"], { die_on_failure => 1 });
     push @nib_files, "$query_nib_dir/$query_name.nib";
-  }  
   
   #################################
   # write the targets in nib format 
   # for use by lavToAxt;
   #################################  
-  if ($self->param('target_nib_dir')) {
-    $target_nib_dir = $self->param('target_nib_dir');
-    if (not -d $target_nib_dir) {
-      throw("Could not fine target nib file directory:" . $target_nib_dir);
-    } else {
-    }
-  } else {
     $target_nib_dir =  "$work_dir/target_nib";
     mkdir $target_nib_dir;
 
@@ -118,7 +104,6 @@ sub run_chains {
       $self->run_command([$self->param_required('faToNib_exe'), "$target_nib_dir/$target_name.fa", "$target_nib_dir/$target_name.nib"], { die_on_failure => 1 });
       push @nib_files, "$target_nib_dir/$target_name.nib";
     }
-  }  
   
   ##############################
   # write features in lav format
