@@ -166,7 +166,7 @@ sub run {
 
   #Capture error message from ortheus and write it to the job_message table
   if ( $ortheus_output ) {
-      $self->detect_pecan_ortheus_errors();
+      $self->detect_pecan_ortheus_errors($ortheus_output);
   }
   $self->parse_results();
 }
