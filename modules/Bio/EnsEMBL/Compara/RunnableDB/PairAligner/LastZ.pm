@@ -66,7 +66,7 @@ sub run {
   }
 
   if (@db_chunk_files > 1) {
-    $self->warning("you have given a chunkset for the database; dumped individual chunks and creating a runnable for each one");
+    $self->warning("the given chunkset cotains more than one chunk: creating one runnable per chunk");
   }
 
   if($self->debug) {

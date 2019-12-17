@@ -433,7 +433,7 @@ sub get_sequence {
         # Coordinates are 0-based
         $seq = $faidx_helper->get_sequence2_no_length($self->dnafrag_id, $self->dnafrag_start-1, $self->dnafrag_end-1);
         die "sequence length doesn't match !" if CORE::length($seq) != ($self->dnafrag_end-$self->dnafrag_start+1);
-        reverse_comp(\$seq) if (defined $self->dnafrag_strand) && ($self->dnafrag_strand < 0);
+        reverse_comp(\$seq) if $self->dnafrag_strand < 0;
     } else {
         $self->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
             if ($mask) {

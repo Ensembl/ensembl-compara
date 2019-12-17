@@ -336,7 +336,7 @@ if ($old_dba and !$skip_data) {
   copy_all_species_tres($old_dba, $new_dba, $all_default_method_link_species_sets);
 
 ## Copy DNA-DNA alignments
-  copy_dna_dna_alignments($old_dba, $new_dba, $all_default_method_link_species_sets);
+  copy_dna_to_dna_alignments($old_dba, $new_dba, $all_default_method_link_species_sets);
   exit(0) if ( $alignments_only );
 ## Copy Ancestor dnafrags
   copy_ancestor_dnafrag($old_dba, $new_dba, $all_default_method_link_species_sets);
@@ -701,7 +701,7 @@ sub copy_all_species_tres {
 }
 
 
-=head2 copy_dna_dna_alignments
+=head2 copy_dna_to_dna_alignments
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba
   Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba
@@ -715,7 +715,7 @@ sub copy_all_species_tres {
 
 =cut
 
-sub copy_dna_dna_alignments {
+sub copy_dna_to_dna_alignments {
   my ($old_dba, $new_dba, $method_link_species_sets) = @_;
 
   # Keys are disabled / enabled only once for the whole loop
