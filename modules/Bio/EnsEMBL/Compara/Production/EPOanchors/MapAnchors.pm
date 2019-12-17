@@ -280,12 +280,13 @@ sub start_server_on_port {
   $self->param('server_pid', $pid);
 
   my $cycles = 0;
-  while ($cycles < 50) {
-      sleep 5;
+  my $seconds_by_cycle = 10;
+  while ($cycles*$seconds_by_cycle < 12*3600) { # Half a day ought to be enough
+      sleep $seconds_by_cycle;
       $cycles++;
       my $started_message = $self->get_command_output(['tail', '-1', $log_file]);
       if ($started_message =~ /listening on port/) {
-          $self->say_with_header("Server started on port $port after $cycles cycles");
+          $self->say_with_header("Server started on port $port after $cycles cycles of $seconds_by_cycle seconds");
           return 1;
 
       } elsif ($started_message =~ /Address already in use/) {
