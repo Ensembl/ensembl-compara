@@ -21,21 +21,10 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors
 
-=head1 SYNOPSIS
-
-$exonate_anchors->fetch_input();
-$exonate_anchors->run();
-$exonate_anchors->write_output(); writes to database
-
 =head1 DESCRIPTION
 
 Given a database with anchor sequences and a target genome. This modules exonerates 
 the anchors against the target genome.
-
-=head1 AUTHOR
-
-Stephen Fitzgerald
-
 
 =head1 CONTACT
 
@@ -44,11 +33,6 @@ developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
 Questions may also be sent to the Ensembl help desk at
 <http://www.ensembl.org/Help/Contact>.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
 
 =cut
 
