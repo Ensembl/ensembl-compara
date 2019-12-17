@@ -725,16 +725,18 @@ sub parse_defaults {
 	    warn("The default net_output_method_link " . $self->param('default_net_output')->[1] . " is not the same as the type " . $mlss->method->type . " of the mlss_id (" . $mlss->dbID .") used. Using " . $self->param('default_net_output')->[1] .".\n");
 	}
 	
-	my @genome_db_ids;
-	#create dna_collections
-	foreach my $genome_db ($pair->{ref_genome_db}, $pair->{non_ref_genome_db}) {
-	    #get and store locator
-          $genome_db->locator($genome_db->db_adaptor->locator);
-	    $self->compara_dba->get_GenomeDBAdaptor->store($genome_db);
-	    
-	    push @genome_db_ids, $genome_db->dbID;
-	    
-	}
+    foreach my $genome_db ($pair->{ref_genome_db}, $pair->{non_ref_genome_db}) {
+        next if defined $genome_db->locator();
+        # Get and store locator
+        $genome_db->locator($genome_db->db_adaptor->locator);
+        $self->compara_dba->get_GenomeDBAdaptor->store($genome_db);
+        if (defined $pair->{principal_mlss_id}) {
+            # Get and store locator of the principal genome db
+            my $principal_gdb = $genome_db->principal_genome_db();
+            $principal_gdb->locator($principal_gdb->db_adaptor->locator);
+            $self->compara_dba->get_GenomeDBAdaptor->store($principal_gdb);
+        }
+    }
 	
 	#create pair_aligners
 	$pair_aligner->{'reference_collection_name'} = $pair->{ref_genome_db}->dbID . " raw";
