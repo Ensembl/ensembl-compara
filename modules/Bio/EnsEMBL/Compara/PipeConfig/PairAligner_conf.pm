@@ -420,7 +420,7 @@ sub core_pipeline_analyses {
             },
             -batch_size      => $self->o('chain_batch_size'),
             -hive_capacity   => $self->o('chain_hive_capacity'),
-            -rc_name         => '2Gb_job',
+            -rc_name         => '4Gb_job',
             -max_retry_count => 10,
         },
 
@@ -467,7 +467,7 @@ sub core_pipeline_analyses {
 			       1 => [ 'remove_inconsistencies_after_net' ],
 			       2 => [ 'alignment_nets' ],
 			      },
- 	       -wait_for => [ 'update_max_alignment_length_after_chain', 'remove_inconsistencies_after_chain' ],
+            -wait_for => [ 'update_max_alignment_length_after_chain' ],
 	       -rc_name => '1Gb_job',
  	    },
  	    {  -logic_name => 'alignment_nets',
