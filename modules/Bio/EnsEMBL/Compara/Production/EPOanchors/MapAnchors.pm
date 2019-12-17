@@ -111,11 +111,17 @@ sub fetch_input {
         $anchor_dba->dbc->disconnect_if_idle;
 	$self->param('query_file', $query_file);
         $self->param('all_anchor_ids', [keys %all_anchor_ids]);
+
         $self->param('target_file', $genome_db_file);
+        $self->preload_file_in_memory($genome_db_file);
 
         return unless $self->param('with_server');
+
         die "Indexes for $genome_db_file doen't exist" unless -e "$genome_db_file.esd";
+        $self->preload_file_in_memory("$genome_db_file.esd");
         die "Indexes for $genome_db_file doen't exist" unless -e "$genome_db_file.esi";
+        $self->preload_file_in_memory("$genome_db_file.esi");
+
         $self->param('index_file', "$genome_db_file.esi");
         $self->start_server;
 }

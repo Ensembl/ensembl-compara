@@ -303,6 +303,26 @@ sub _spurt {
 }
 
 
+=head2 preload_file_in_memory
+
+  Arg[1]      : String $filename
+  Example     : $self->preload_file_in_memory($exonerate_esi_file);
+  Description : Load the file into memory. Note that we can't guarantee that
+                the file will remain in memory thereafter.
+                Note: the current implementation uses "cat", which is considered
+                a poor man's trick. Consider using "vmtouch" if that doesn't work
+                well enough.
+  Returntype  : none
+  Exceptions  : Throws if preloading fails
+
+=cut
+
+sub preload_file_in_memory {
+    my ($self, $file_name) = @_;
+    $self->run_command("cat $file_name > /dev/null", { die_on_failure => 1 });
+}
+
+
 =head2 require_executable
 
 Checks that the parameter is defined, and that the file is executable

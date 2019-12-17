@@ -114,8 +114,6 @@ sub fetch_input {
 
         # Target species are all mixed
         print STDERR "Using the blast database provided: ", $self->param('blast_db'), "\n" if $self->debug;
-        # Loads the files into memory
-        $self->run_command(sprintf('cat %s* > /dev/null', $self->param('blast_db')), { die_on_failure => 1 });
         $self->param('all_blast_db')->{$self->param('blast_db')} = undef;
 
         #Depending on the amount of sequences and blast version.
@@ -123,23 +121,19 @@ sub fetch_input {
         #                           unannotated.fasta.00.pog
         #                           unannotated.fasta.01.pog
         my $fastafile = $self->param('blast_db');
-        my @phr = glob("$fastafile*.phr");
-        my @pin = glob("$fastafile*.pin");
-        my @pog = glob("$fastafile*.pog");
-        my @psd = glob("$fastafile*.psd");
-        my @psi = glob("$fastafile*.psi");
-        my @psq = glob("$fastafile*.psq");
 
-        my %db_files = ( 'phr' => \@phr, 'pin' => \@pin, 'pog' => \@pog, 'psd' => \@psd, 'psi' => \@psi, 'psq' => \@psq );
-
-        foreach my $ext ( keys %db_files ) {
+        foreach my $ext (qw(phr pin pog psd psi psq)) {
+            my @files = glob("$fastafile*.$ext");
             #Check if we have at least one file per each extension type
-            die "Cound no find blast_db: $ext" if(scalar(@{$db_files{$ext}}) < 1);
-            foreach my $file ( @{ $db_files{$ext} } ) {
+            die "Cound no find blast_db: $ext" unless @files;
+            foreach my $file (@files) {
                 #Check if all files exist and have a nonzero size 
                 die "Missing blast index: $file\n" unless -e "$file" and -s "$file";
             }
         }
+
+        # Loads the files into memory
+        $self->preload_file_in_memory("$fastafile*");   # Note the wildcard
 
     } elsif ($self->param('target_genome_db_id')) {
 
