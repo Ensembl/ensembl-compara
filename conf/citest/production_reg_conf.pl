@@ -29,15 +29,18 @@ my $prev_eg_release = $curr_eg_release - 1;
 
 # FORMAT: species/alias name => [ host, db_name ]
 my $core_dbs = {
-    'gallus_gallus' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_145045_gallus_gallus_core_99_6' ],
-    'anolis_carolinensis' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_144942_anolis_carolinensis_core_99_2' ],
-    'danio_rerio' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_144942_danio_rerio_core_99_11' ],
-    'pan_troglodytes' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_145200_pan_troglodytes_core_99_3' ],
-    'homo_sapiens' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_144942_homo_sapiens_core_99_38' ],
-    'mus_musculus' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_144942_mus_musculus_core_99_38' ],
-    'canis_familiaris' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_145000_canis_familiaris_core_99_31' ],
-    'triticum_aestivum' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_145250_triticum_aestivum_core_46_99_4' ],
-    'lepisosteus_oculatus' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_145148_lepisosteus_oculatus_core_99_1' ],
+    'gallus_gallus' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_171914_gallus_gallus_core_99_6' ],
+    'anolis_carolinensis' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_171914_anolis_carolinensis_core_99_2' ],
+    'danio_rerio' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_171914_danio_rerio_core_99_11' ],
+    'pan_troglodytes' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172257_pan_troglodytes_core_99_3' ],
+    'homo_sapiens' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172232_homo_sapiens_core_99_38' ],
+    'mus_musculus' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_171914_mus_musculus_core_99_38' ],
+    'saccharum_spontaneum' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172404_saccharum_spontaneum_core_46_99_1' ],
+    'triticum_urartu' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172551_triticum_urartu_core_46_99_1' ],
+    'canis_familiaris' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172016_canis_familiaris_core_99_31' ],
+    'triticum_aestivum' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172533_triticum_aestivum_core_46_99_4' ],
+    'triticum_dicoccoides' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172249_triticum_dicoccoides_core_46_99_1' ],
+    'lepisosteus_oculatus' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172445_lepisosteus_oculatus_core_99_1' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $core_dbs );
@@ -130,7 +133,7 @@ my $ancestral_dbs = {
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', 'ncbi_taxonomy' ],
+    'ncbi_taxonomy' => [ 'mysql-ens-mirror-3', 'ncbi_taxonomy' ],
 });
 
 # ------------------------------------------------------------------------------

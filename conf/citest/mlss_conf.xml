@@ -2,12 +2,9 @@
 <compara_db division="citest">
 
     <pairwise_alignments>
-        <!-- Use human as reference species for all chordates -->
-        <one_vs_all method="LASTZ_NET" ref_genome="homo_sapiens">
-            <species_set>
-                <taxonomic_group taxon_name="Chordata"/>
-            </species_set>
-        </one_vs_all>
+      <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="saccharum_spontaneum" />
+      <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="triticum_dicoccoides" />
+      <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="triticum_urartu" />
     </pairwise_alignments>
 
     <multiple_alignments>
@@ -32,7 +29,6 @@
                 <taxonomic_group taxon_name="Amniota" only_good_for_alignment="1"/>
             </species_set>
         </multiple_alignment>
-
     </multiple_alignments>
 
     <self_alignments>
