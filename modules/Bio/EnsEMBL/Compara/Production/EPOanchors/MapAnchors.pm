@@ -117,7 +117,6 @@ sub fetch_input {
         die "Indexes for $genome_db_file doen't exist" unless -e "$genome_db_file.esd";
         die "Indexes for $genome_db_file doen't exist" unless -e "$genome_db_file.esi";
         $self->param('index_file', "$genome_db_file.esi");
-        $self->param('max_connections', 1);
         $self->start_server;
 }
 
@@ -274,9 +273,8 @@ sub start_server_on_port {
 
   my $server_exe = $self->param_required('server_exe');
   my $index_file = $self->param_required('index_file');
-  my $max_connections = $self->param_required('max_connections');
   my $log_file = $self->worker_temp_directory . "/server_gdb_". $self->param_required('genome_db_id'). '.log.' . ($self->worker->dbID // 'standalone');
-  my $command = "$server_exe $index_file --maxconnections $max_connections --port $port &> $log_file";
+  my $command = "$server_exe $index_file --maxconnections 1 --port $port &> $log_file";
 
   $self->say_with_header("Starting the server: $command");
   my $pid;
