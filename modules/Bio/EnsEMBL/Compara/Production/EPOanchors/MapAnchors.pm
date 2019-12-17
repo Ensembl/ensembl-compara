@@ -81,7 +81,7 @@ sub fetch_input {
         my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param_required('genome_db_id'));
         my $genome_db_file = $genome_db->_get_genome_dump_path($self->param_required('genome_dumps_dir'));
         die "$genome_db_file doesn't exist" unless -e $genome_db_file;
-        $self->dbc->disconnect_if_idle();
+        $self->dbc->disconnect_if_idle() if $self->dbc;
         $self->param_required('mlss_id');
         my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
         my $sth;
@@ -123,7 +123,7 @@ sub fetch_input {
 
 sub run {
 	my ($self) = @_;
-        $self->dbc->disconnect_if_idle();
+        $self->dbc->disconnect_if_idle() if $self->dbc;
 	my $program = $self->param_required('mapping_exe');
 	my $query_file = $self->param_required('query_file');
 	my $target_file = $self->param_required('target_file');
