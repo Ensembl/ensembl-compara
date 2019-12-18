@@ -1803,6 +1803,16 @@ sub _munge_meta {
       }
     }
 
+    ## Finally deduplicate any values
+    my $dedupe = {};
+    while (my($k,$v) = each(%$sample_hash)) {
+      next unless $k =~ /TEXT/;
+      if ($dedupe->{$v}) {
+        delete $sample_hash->{$k};
+      }
+      $dedupe->{$v}++;
+    }
+
     $self->tree->{'SAMPLE_DATA'} = $sample_hash if scalar keys %$sample_hash;
 
     # check if the karyotype/list of toplevel regions ( normally chroosomes) is defined in meta table
