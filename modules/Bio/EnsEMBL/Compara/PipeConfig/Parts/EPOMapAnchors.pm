@@ -191,7 +191,6 @@ sub pipeline_analyses_epo_anchor_mapping {
 		},
                 -flow_into => {
                     2 => { 'map_anchors' => INPUT_PLUS() },
-                    3 => [ '?accu_name=inputlist&accu_address=[]&accu_input_variable=anchor_id' ],
                     -1 => 'map_anchors_himem',
                 },
                 -batch_size => $self->o('map_anchors_batch_size'),
@@ -211,7 +210,6 @@ sub pipeline_analyses_epo_anchor_mapping {
 		},
                 -flow_into => {
                     2 => { 'map_anchors_himem' => INPUT_PLUS() },
-                    3 => [ '?accu_name=inputlist&accu_address=[]&accu_input_variable=anchor_id' ],
                 },
                 -batch_size => $self->o('map_anchors_batch_size'),
                 -hive_capacity => $self->o('map_anchors_capacity'),
@@ -248,11 +246,9 @@ sub pipeline_analyses_epo_anchor_mapping {
             },
 
             {   -logic_name     => 'missing_anchors_factory',
-                -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+                -module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::MissingAnchorsFactory',
                 -parameters => {
-                    'contiguous'    => 0,
-                    'step'          => 50,
-                    'column_names'  => [ 'anchor_id' ],
+                    'anchor_batch_size' => 50,
                 },
                 -rc_name => '16Gb_job',
                 -flow_into => {

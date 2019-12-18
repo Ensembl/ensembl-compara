@@ -83,18 +83,15 @@ sub fetch_input {
         $max_anc_id = $self->param('max_anchor_id');
 	$sth->execute( $min_anc_id, $max_anc_id );
         }
-        my %all_anchor_ids;
 	my $query_file = $self->worker_temp_directory  . "anchors." . join ("-", $min_anc_id, $max_anc_id );
 	open(my $fh, '>', $query_file) || die("Couldn't open $query_file");
 	foreach my $anc_seq( @{ $sth->fetchall_arrayref } ){
-                $all_anchor_ids{$anc_seq->[0]} = 1;
 		print $fh ">", $anc_seq->[0], "\n", $anc_seq->[1], "\n";
 	}
         close($fh);
         $sth->finish;
         $anchor_dba->dbc->disconnect_if_idle;
 	$self->param('query_file', $query_file);
-        $self->param('all_anchor_ids', [keys %all_anchor_ids]);
 
         $self->param('target_file', $genome_db_file);
         $self->preload_file_in_memory($genome_db_file);
@@ -141,14 +138,6 @@ sub run {
 
         if ($self->param('retry')) {
             $self->warning('Server started after '.$self->param('retry').' attempts');
-        }
-
-        # Since exonerate-server seems to be missing some hits, we fallback
-        # to a standard exonerate alignment when a hit is missing
-        foreach my $anchor_id (@{$self->param('all_anchor_ids')}) {
-            unless ($hits and $hits->{$anchor_id}) {
-                $self->dataflow_output_id( { 'anchor_id' => $anchor_id }, 3);
-            }
         }
 
 	if (!$hits) {
