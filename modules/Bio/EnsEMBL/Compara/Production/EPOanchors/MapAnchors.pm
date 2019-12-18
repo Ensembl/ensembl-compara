@@ -235,14 +235,16 @@ sub start_server {
         $self->param('target_file', "localhost:$candidate_port");
     } else {
         # If we can't start the server on one port, there is more than 80%
-        # chance we'll have to try several more ports. Instead of spending
-        # too much time, we just bail out !
+        # chance that it won't just work on the next random port, and
+        # we'll have to try even more ports. Instead of spending too much
+        # time we just give up !
         my $retry = $self->param('retry') + 1;
         if ($retry > 20) {
             die "Still failing to start the server after $retry attempts";
         }
         $self->dataflow_output_id( { 'retry' => $retry }, 2);
         $self->input_job->lethal_for_worker(1); # Since the host is not cooperating, we should leave
+        # Note: we do a controlled exit to distinguish from uncaught errors
         $self->complete_early('Port already taken. New job created');
     }
 }
