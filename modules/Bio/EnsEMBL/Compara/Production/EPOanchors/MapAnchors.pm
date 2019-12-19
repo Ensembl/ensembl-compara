@@ -48,17 +48,6 @@ use POSIX ":sys_wait_h";
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub pre_cleanup {
-    my ($self) = @_;
-    if ($self->param('_range_list')) {
-        $self->compara_dba->dbc->do(sprintf('DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id IN (%s) AND genome_db_id = ?', join(',', @{$self->param('_range_list')})),
-            undef, $self->param_required('genome_db_id'));
-    } else {
-        $self->compara_dba->dbc->do('DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id BETWEEN ? AND ? AND genome_db_id = ?',
-            undef, $self->param_required('min_anchor_id'), $self->param_required('max_anchor_id'), $self->param_required('genome_db_id'));
-    }
-}
-
 sub fetch_input {
 	my ($self) = @_;
 
@@ -146,6 +135,16 @@ sub run {
 
 sub write_output {
     my ($self) = @_;
+
+    # Delete previous mapping
+    if ($self->param('_range_list')) {
+        my $sql = sprintf('DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id IN (%s) AND genome_db_id = ?', join(',', @{$self->param('_range_list')}));
+        $self->compara_dba->dbc->do($sql, undef, $self->param('genome_db_id'));
+    } else {
+        my $sql = 'DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id BETWEEN ? AND ? AND genome_db_id = ?';
+        $self->compara_dba->dbc->do($sql, undef, $self->param('min_anchor_id'), $self->param('max_anchor_id'), $self->param('genome_db_id'));
+    }
+
     my $anchor_align_adaptor = $self->compara_dba()->get_adaptor("AnchorAlign");
     if (my $records = $self->param('records')) {
         $anchor_align_adaptor->store_exonerate_hits($records);
