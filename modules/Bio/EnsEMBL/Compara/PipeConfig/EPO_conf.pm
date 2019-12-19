@@ -98,8 +98,7 @@ sub default_options {
         # add MT dnafrags separately (1) or not (0) to the dnafrag_region table
         'add_non_nuclear_alignments' => 1,
          # batch size of grouped anchors to map
-        'anchor_batch_size' => 500, #mammals
-        #'anchor_batch_size' => 50,  #fish
+        'anchor_batch_size' => 500,
         # Usually set to 0 because we run Gerp on the EPO2X alignment instead
         'run_gerp' => 0,
 
