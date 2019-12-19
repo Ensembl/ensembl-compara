@@ -69,21 +69,15 @@ sub fetch_input {
         $self->param_required('mlss_id');
         my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
         my $sth;
-        my $min_anc_id;
-        my $max_anc_id;
         if ($self->param('_range_list')) {
             $sth = $anchor_dba->dbc->prepare(sprintf('SELECT anchor_id, sequence FROM anchor_sequence WHERE anchor_id IN (%s)', join(',', @{$self->param('_range_list')})));
-            $min_anc_id = $self->param('_range_list')->[0];
-            $max_anc_id = $self->param('_range_list')->[-1];
             $sth->execute;
-
         } else {
         $sth = $anchor_dba->dbc->prepare("SELECT anchor_id, sequence FROM anchor_sequence WHERE anchor_id BETWEEN  ? AND ?");
-        $min_anc_id = $self->param('min_anchor_id');
-        $max_anc_id = $self->param('max_anchor_id');
-	$sth->execute( $min_anc_id, $max_anc_id );
+            $sth->execute( $self->param_required('min_anchor_id'), $self->param_required('max_anchor_id') );
         }
-	my $query_file = $self->worker_temp_directory  . "anchors." . join ("-", $min_anc_id, $max_anc_id );
+
+	my $query_file = $self->worker_temp_directory  . "anchors.fa";
 	open(my $fh, '>', $query_file) || die("Couldn't open $query_file");
 	foreach my $anc_seq( @{ $sth->fetchall_arrayref } ){
 		print $fh ">", $anc_seq->[0], "\n", $anc_seq->[1], "\n";
