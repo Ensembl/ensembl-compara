@@ -20,6 +20,7 @@
 import sys
 import re
 import argparse
+from typing import Dict, Any
 from datetime import timedelta
 
 from sqlalchemy import create_engine
@@ -84,7 +85,7 @@ def main(argv: list) -> None:
     # loop through roles and find runtime gaps
     runtime_gaps = []
     mins15 = timedelta(minutes=15)
-    prev_role = {}
+    prev_role = {} # type: Dict[str, Any]
     pipeline_start = ''
     for role in role_list:
         try:
