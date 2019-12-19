@@ -95,7 +95,6 @@ sub run {
 	my $max_size_diff = $self->param('max_frag_diff');
 	my $overlapping_gabs = $self->param('overlapping_gabs');
 	my $min_number_of_seqs_per_anchor = $self->param('min_number_of_seqs_per_anchor');
-	my $max_number_of_seqs_per_anchor = $self->param('max_number_of_seqs_per_anchor');
 	for(my$i=0;$i<@{ $overlapping_gabs }-1;$i++) { # find the overlapping gabs for a ref-dnafrag chunk 
 		my $temp_end = $overlapping_gabs->[$i]->[1];
 		for(my$j=$i+1;$j<@{ $overlapping_gabs };$j++) {	
