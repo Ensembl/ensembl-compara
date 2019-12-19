@@ -94,7 +94,6 @@ sub run {
 	([],[],[],[]);
 	my $max_size_diff = $self->param('max_frag_diff');
 	my $overlapping_gabs = $self->param('overlapping_gabs');
-	my $min_number_of_seqs_per_anchor = $self->param('min_number_of_seqs_per_anchor');
 	for(my$i=0;$i<@{ $overlapping_gabs }-1;$i++) { # find the overlapping gabs for a ref-dnafrag chunk 
 		my $temp_end = $overlapping_gabs->[$i]->[1];
 		for(my$j=$i+1;$j<@{ $overlapping_gabs };$j++) {	
@@ -119,14 +118,11 @@ sub run {
 				#count the number of non_ref org hits per base
 			}
 		}
-		foreach my $base(sort {$a <=> $b} keys %bases) {
-			if((keys %{$bases{$base}}) >= $min_number_of_seqs_per_anchor) {
-				push(@bases, $base);
-			}
-		}	
+		# Need at lest two sequences to make an alignment
+		@bases = grep {scalar(keys %{$bases{$_}}) >= 2} sort {$a <=> $b} keys %bases;
 		if(@bases){
 			if( $bases[-1] - $bases[0] + 1 >= $self->param('min_anchor_size') ){
-				# $reference_positions holds the regions of the ref genome which have >= $min_number_of_seqs_per_anchor and whose span is >= min_anchor_size
+				# $reference_positions holds the regions of the ref genome which have at least 2 sequences and whose span is >= min_anchor_size
 				push( @$reference_positions, [ $bases[0], $bases[-1] ] ); 
 			}
 		}
