@@ -92,8 +92,6 @@ sub pipeline_wide_parameters {
 
 		'compara_pairwise_db' => $self->o('compara_pairwise_db'),
                 'mlss_id'        => $self->o('mlss_id'),
-		'min_anchor_size' => $self->o('min_anchor_size'),
-		'max_frag_diff' => $self->o('max_frag_diff'),
 	        'reference_genome_db_name' => $self->o('reference_genome_db_name'),
                 'genome_dumps_dir'      => $self->o('genome_dumps_dir'),
 	};
@@ -168,6 +166,10 @@ return [
 { # finds the overlaps between the pairwise lignments and populates the dnafrag_region and synteny_region tables with the overlaps  
  -logic_name	=> 'find_pairwise_overlaps',
  -module		=> 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindPairwiseOverlaps',
+ -parameters	=> {
+     'min_anchor_size' => $self->o('min_anchor_size'),
+     'max_frag_diff' => $self->o('max_frag_diff'),
+ },
  -flow_into	=> {
 		2 => [ 'pecan' ],
 		3 => [ '?table_name=dnafrag_region&insertion_method=INSERT_IGNORE' ],
