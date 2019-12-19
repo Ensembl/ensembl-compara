@@ -66,14 +66,13 @@ sub run {
     my $batch_size = $self->param_required('anchor_batch_size');
     die "'anchor_batch_size' must be non-zero\n" unless $batch_size;
     my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
-    my $sth = $anchor_dba->dbc->prepare("SELECT anchor_id, COUNT(*) ct FROM anchor_sequence GROUP BY anchor_id ORDER BY anchor_id");
+    my $sth = $anchor_dba->dbc->prepare("SELECT DISTINCT anchor_id FROM anchor_sequence ORDER BY anchor_id");
     $sth->execute();
     my $count = 1;
     my @anchor_ids;
     my $min_anchor_id;
     my $max_anchor_id;
     while( my $ref = $sth->fetchrow_arrayref() ){
-        next if($ref->[1] > $self->param('anc_seq_count_cut_off'));
         if (($count % $batch_size) == 1) {
             $min_anchor_id = $ref->[0];
             $max_anchor_id = $ref->[0];

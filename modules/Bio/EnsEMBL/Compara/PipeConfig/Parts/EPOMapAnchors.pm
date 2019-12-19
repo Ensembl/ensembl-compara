@@ -170,7 +170,6 @@ sub pipeline_analyses_epo_anchor_mapping {
 	    {	-logic_name     => 'map_anchors_factory',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchorsFactory',
 		-parameters     => {
-			'anc_seq_count_cut_off' => $self->o('anc_seq_count_cut_off'),
 			'anchor_batch_size' => $self->o('anchor_batch_size'),
 		},
 		-flow_into => {

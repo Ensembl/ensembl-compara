@@ -100,8 +100,6 @@ sub default_options {
          # batch size of grouped anchors to map
         'anchor_batch_size' => 500, #mammals
         #'anchor_batch_size' => 50,  #fish
-         # max number of sequences to allow in an anchor
-        'anc_seq_count_cut_off' => 15,
         # Usually set to 0 because we run Gerp on the EPO2X alignment instead
         'run_gerp' => 0,
 
