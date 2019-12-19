@@ -88,12 +88,12 @@ sub run {
     if (defined $min_anchor_id) {
         push @anchor_ids, { 'min_anchor_id' => $min_anchor_id, 'max_anchor_id' => $max_anchor_id };
     }
-    $self->param('query_and_target', \@anchor_ids);
+    $self->param('anchor_id_intervals', \@anchor_ids);
 }
 
 sub write_output {
 	my ($self) = @_;
-	$self->dataflow_output_id( $self->param('query_and_target'), 2);
+	$self->dataflow_output_id( $self->param('anchor_id_intervals'), 2);
 }
 
 1;
