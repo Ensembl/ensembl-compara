@@ -80,8 +80,9 @@ sub default_options {
       	'min_ce_length' => 40, # min length of each sequence in the constrained element 
         'min_anchor_size' => 50, # at least one of the sequences in an anchor must be of this size
       	'max_anchor_seq_len' => 100, # anchors longer than this value will be trimmed
-      	'min_number_of_seqs_per_anchor' => 2, # minimum number of sequences in an anchor
-      	'max_number_of_seqs_per_anchor' => 30, # maximum number of sequences in an anchor - can happen due to duplicates or repeats
+
+        # Given as a factor of the number of species used to build anchors
+        'max_number_of_seqs_per_anchor' => 2, # maximum number of sequences in an anchor - can happen due to duplicates or repeats
     };
 }
 
@@ -363,6 +364,7 @@ return [
     'input_method_link_species_set_id' => '#mlss_id#',
     'max_anchor_seq_len' => $self->o('max_anchor_seq_len'),
     'min_anchor_seq_len' => $self->o('min_ce_length'),
+    'max_number_of_seqs_per_anchor' => $self->o('max_number_of_seqs_per_anchor'),
  },
  -batch_size    => 10,
  -hive_capacity => 100,

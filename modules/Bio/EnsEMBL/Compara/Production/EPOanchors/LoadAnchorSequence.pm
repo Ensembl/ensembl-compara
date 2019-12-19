@@ -80,6 +80,13 @@ sub fetch_input {
 			$self->complete_early("Anchor didn't pass the threshold: ratio=$ratio threshold=".$self->param('max_n_proportion'));
 		}
 	}
+
+        my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($trimmed_anchor_mlssid);
+        my $n_genomes = $mlss->species_set->size;
+        if (scalar(@anchor) > $self->param_required('max_number_of_seqs_per_anchor')*$n_genomes) {
+            $self->complete_early(sprintf('Not storing this anchor set because there are too many sequences (%d)', scalar(@anchor)));
+        }
+
 	$self->param('anchor', \@anchor);
 }
 
