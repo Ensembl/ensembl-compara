@@ -76,12 +76,8 @@ sub default_options {
                 'thresholds'    => [ 75, 75, 50 ],
             },
             {
-                'taxa'          => [ 'Euteleostomi', 'Ciona' ],
-                'thresholds'    => [ 50, 50, 25 ],
-            },
-            {
                 'taxa'          => [ 'all' ],
-                'thresholds'    => [ undef, undef, 25 ],
+                'thresholds'    => [ 50, 50, 25 ],
             },
         ],
     };

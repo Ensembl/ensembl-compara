@@ -58,7 +58,9 @@ apply on their homologies.
 When a taxon is considered, all the MLSSs that join two species below it
 will be selected. The filter consists of three thresholds: the minimum values
 for respectively the GOC score, the WGA coverage and the minimum percentage
-of identity of the pair of orthologues.
+of identity of the pair of orthologues. If there is no GOC/WGA scores for a
+given mlss_id or if no filter is set, the pipeline will fallback to using
+the is_tree_compliant flag together with the percentage of identity.
 
 Example:
 
@@ -72,12 +74,8 @@ Example:
                 'thresholds'    => [ 75, 75, 50 ],
             },
             {
-                'taxa'          => [ 'Euteleostomi' ],
-                'thresholds'    => [ 50, 50, 25 ],
-            },
-            {
                 'taxa'          => [ 'all' ],
-                'thresholds'    => [ undef, undef, 25 ],
+                'thresholds'    => [ 50, 50, 25 ],
             },
         ],
 

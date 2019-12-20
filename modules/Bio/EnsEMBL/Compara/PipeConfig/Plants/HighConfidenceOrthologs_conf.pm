@@ -63,12 +63,8 @@ sub default_options {
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
             {
-                'taxa'          => [ 'asterids', 'fabids', 'malvids', 'Pooideae', 'Oryzinae', 'Panicoideae' ],
-                'thresholds'    => [ 50, 50, 25 ],
-            },
-            {
                 'taxa'          => [ 'all' ],
-                'thresholds'    => [ undef, undef, 25 ],
+                'thresholds'    => [ 50, 50, 25 ],
             },
         ],
     };
