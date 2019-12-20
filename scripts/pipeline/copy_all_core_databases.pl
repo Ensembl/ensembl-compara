@@ -61,7 +61,7 @@ See L<--ensadmin_psw> to define the ensadmin password
 =item B<[-u|--endpoint_uri]>
 
 The URI of the Ensembl Production Self-Service REST API. Defaults to
-http://ens-prod-1.ebi.ac.uk:8000/dbcopy/
+http://production-services.ensembl.org/api/${division}/db/
 
 =item B<[-c|--db_copy_client]>
 
@@ -137,7 +137,7 @@ if (not $target_server_url) {
 die "--division <division> must be provided\n" unless $division;
 
 $release            ||= software_version();
-$endpoint_uri       ||= 'http://ens-prod-1.ebi.ac.uk:8000/dbcopy/';
+$endpoint_uri       ||= "http://production-services.ensembl.org/api/$division/db/";
 $source_server_url  ||= $division eq 'vertebrates' ? 'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/' : 'mysql://ensro@mysql-ens-sta-3.ebi.ac.uk:4160/';
 $target_server_url  ||= "mysql://ensadmin:$ensadmin_psw\@mysql-ens-vertannot-staging.ebi.ac.uk:4573/";
 
