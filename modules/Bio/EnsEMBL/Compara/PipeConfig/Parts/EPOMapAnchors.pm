@@ -176,7 +176,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                         '2->A' => { 'map_anchors' => INPUT_PLUS() },
                         'A->1' => [ 'missing_anchors_factory' ],
 		},
-		-rc_name => '8Gb_job',
+		-rc_name => '4Gb_job',
 		-hive_capacity => $self->o('low_capacity'),
 	    },
 
@@ -194,7 +194,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                 },
                 -batch_size => $self->o('map_anchors_batch_size'),
                 -hive_capacity => $self->o('map_anchors_capacity'),
-                -rc_name => '8Gb_job',
+                -rc_name => '4Gb_job',
                 -priority => -10,
 		-max_retry_count => 1,
 	    },
@@ -242,7 +242,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                 },
                 -batch_size => $self->o('map_anchors_batch_size'),
                 -hive_capacity => $self->o('map_anchors_capacity'),
-                -rc_name => '16Gb_job',
+                -rc_name => '32Gb_job',
                 -max_retry_count => 1,
             },
 
@@ -251,7 +251,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                 -parameters => {
                     'anchor_batch_size' => 50,
                 },
-                -rc_name => '16Gb_job',
+                -rc_name   => '500Mb_job',
                 -flow_into => {
                     2 => { 'map_anchors_no_server' => INPUT_PLUS(), },
                 },
