@@ -194,7 +194,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                 },
                 -batch_size => $self->o('map_anchors_batch_size'),
                 -hive_capacity => $self->o('map_anchors_capacity'),
-                -rc_name => '4Gb_job',
+                -rc_name => '8Gb_job',
                 -priority => -10,
 		-max_retry_count => 1,
 	    },
