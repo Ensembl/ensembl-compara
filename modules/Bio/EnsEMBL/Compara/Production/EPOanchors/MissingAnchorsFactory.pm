@@ -85,6 +85,7 @@ sub fetch_input {
 
     $sth1->finish;
     $sth2->finish;
+    $anchor_dba->dbc->disconnect_if_idle();
 }
 
 sub write_output {
