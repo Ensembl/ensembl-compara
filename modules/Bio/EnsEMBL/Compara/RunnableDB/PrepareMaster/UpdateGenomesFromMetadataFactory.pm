@@ -53,7 +53,7 @@ sub fetch_input {
 	my $genome_db_adaptor = $self->get_cached_compara_dba('master_db')->get_GenomeDBAdaptor;
 
 	# use metadata script to report genomes that need to be updated
-    my ($genomes_to_update, $renamed_genomes, $genomes_with_assembly_patches, $updated_annotations) = $self->fetch_genome_report($release, $division);
+	my ($genomes_to_update, $renamed_genomes, $genomes_with_assembly_patches) = $self->fetch_genome_report($release, $division);
 
     # prepare renaming SQL cmds
     my @rename_cmds;
@@ -67,23 +67,36 @@ sub fetch_input {
 	my $list_cmd = "perl $list_genomes_script $metadata_script_options";
 	my @release_genomes = $self->get_command_output($list_cmd);
 	chomp @release_genomes;
+	if ($division ne "pan"){
     die "No genomes reported for release" unless @release_genomes;
+	}
 
     # check if additional species have been defined and include them
     # in the appropriate data structures
-    if ( $self->param('additional_species') ) {
+  	if ( $self->param('additional_species') ) {
         my $additional_species = $self->param('additional_species');
         foreach my $additional_div ( keys %$additional_species ) {
             # first, add them to the release_genomes
             my @add_species_for_div = @{$additional_species->{$additional_div}};
             push( @release_genomes, @add_species_for_div );
 
+						# check for each additonal species in each division that the productioin name is correct
+						$metadata_script_options = "\$(mysql-ens-meta-prod-1 details script) --release $release --division $additional_div";
+						$list_cmd = "perl $list_genomes_script $metadata_script_options";
+						my @additional_release_genomes = $self->get_command_output($list_cmd);
+						chomp @additional_release_genomes;
+						my %additional_genome = map {$_ => 1} @additional_release_genomes;
+						foreach my $genome (@add_species_for_div) {
+							  if (not exists($additional_genome{$genome})){
+										die "'$genome' from division $additional_div does not exist in the metadata database!\n";
+								}
+						}
+
             # check if they've been updated this release too
-            my ($updated_add_species, $renamed_add_species, $patched_add_species, $updated_gen_add_species) = $self->fetch_genome_report($release, $additional_div);
+            my ($updated_add_species, $renamed_add_species, $patched_add_species) = $self->fetch_genome_report($release, $additional_div);
             foreach my $add_species_name ( @add_species_for_div ) {
                 push( @$genomes_to_update, $add_species_name ) if grep { $add_species_name eq $_ } @$updated_add_species;
                 push( @$genomes_with_assembly_patches, $add_species_name ) if grep { $add_species_name eq $_ } @$patched_add_species;
-                push( @$updated_annotations, $add_species_name ) if grep { $add_species_name eq $_ } @$updated_gen_add_species;
                 if (my $old_name = $renamed_add_species->{$add_species_name}) {
                     # We have the new name in the PipeConfig. Still need to update the database
                     push @rename_cmds, "UPDATE genome_db SET name = '$add_species_name' WHERE name = '$old_name' AND first_release IS NOT NULL AND last_release IS NULL";
@@ -106,9 +119,6 @@ sub fetch_input {
 
     print "GENOMES_WITH_ASSEMBLY_PATCHES!! ";
     print Dumper $genomes_with_assembly_patches;
-
-    print "GENOMES_WITH_UPDATED_ANNOTATION!! ";
-    print Dumper $updated_annotations;
 
     # check that there have been no changes in dnafrags vs core slices
     my %g2update = map { $_ => 1 } @$genomes_to_update;
@@ -137,7 +147,6 @@ sub fetch_input {
 
     $self->param('genomes_to_update', $genomes_to_update);
     $self->param('genomes_with_assembly_patches', $genomes_with_assembly_patches);
-    $self->param('genomes_with_updated_annotation', $updated_annotations);
 	$self->param('genomes_to_retire', \@to_retire);
 }
 
@@ -155,22 +164,17 @@ sub write_output {
 
     my @patched_genomes_dataflow = map { {species_name => $_} } @{ $self->param('genomes_with_assembly_patches') };
     $self->dataflow_output_id( \@patched_genomes_dataflow, 5 );
-
-    $self->_spurt(
-        $self->param_required('annotation_file'),
-        join("\n", @{$self->param('genomes_with_updated_annotation')}),
-    );
 }
 
 sub fetch_genome_report {
     my ( $self, $release, $division ) = @_;
-    
+
     my $work_dir = $self->param_required('work_dir');
     my $report_genomes_script = $self->param_required('report_genomes_script');
     my $metadata_script_options = "\$(mysql-ens-meta-prod-1 details script) --release $release --division $division";
     my $report_cmd = "perl $report_genomes_script $metadata_script_options -output_format json --dump_path $work_dir";
     my $report_out = $self->get_command_output($report_cmd);
-    
+
     # add the division name output file
     my $report_file = "$work_dir/report_updates.json";
     my $report_file_with_div = $report_file;
@@ -184,7 +188,6 @@ sub fetch_genome_report {
 
     my @new_genomes = keys %{$decoded_meta_report->{new_genomes}};
     my %renamed_genomes = map { $_->{name} => $_->{old_name} } values %{$decoded_meta_report->{renamed_genomes}};
-    my @updated_annotations = map {$_->{name}} @{$decoded_meta_report->{updated_annotations}};
 
     my @genomes_with_assembly_patches;
     my @updated_assemblies;
@@ -200,7 +203,7 @@ sub fetch_genome_report {
         push @updated_assemblies, $genome;
     }
 
-    return ([@new_genomes, @updated_assemblies], \%renamed_genomes, \@genomes_with_assembly_patches, \@updated_annotations);
+    return ([@new_genomes, @updated_assemblies], \%renamed_genomes, \@genomes_with_assembly_patches);
 }
 
 1;
