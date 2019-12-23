@@ -56,11 +56,21 @@ sub default_options {
 
         # Databases
         'compara_master'    => 'compara_master',
-        'ancestral_db'      => $self->o('species_set_name') . '_ancestral',
         # Database containing the anchors for mapping
         'compara_anchor_db' => $self->o('species_set_name') . '_epo_anchors',
         # The previous database to reuse the anchor mappings
         'reuse_db'          => $self->o('species_set_name') . '_epo_prev',
+
+        # The ancestral_db is created on the same server as the pipeline_db
+        'ancestral_db' => {
+            -driver   => $self->o('pipeline_db', '-driver'),
+            -host     => $self->o('pipeline_db', '-host'),
+            -port     => $self->o('pipeline_db', '-port'),
+            -species  => $self->o('ancestral_sequences_name'),
+            -user     => $self->o('pipeline_db', '-user'),
+            -pass     => $self->o('pipeline_db', '-pass'),
+            -dbname   => $self->o('dbowner').'_'.$self->o('species_set_name').'_ancestral_core_'.$self->o('rel_with_suffix'),
+        },
 
         'ancestral_sequences_name' => 'ancestral_sequences',
         'ancestral_sequences_display_name' => 'Ancestral sequences',
