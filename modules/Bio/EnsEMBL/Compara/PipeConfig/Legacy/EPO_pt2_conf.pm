@@ -79,8 +79,8 @@ sub default_options {
     	
     	 # dont dump the MT sequence for mapping
     	'only_nuclear_genome' => 1,
-    	 # batch size of grouped anchors to map
-    	'anchor_batch_size' => 10,
+        # batch size of anchor sequences to map
+        'anchor_batch_size' => 1000,
         
         # Capacities
         'low_capacity'                  => 10,

@@ -94,8 +94,8 @@ sub default_options {
         'only_nuclear_genome'        => 1,
         # add MT dnafrags separately (1) or not (0) to the dnafrag_region table
         'add_non_nuclear_alignments' => 1,
-        # batch size of grouped anchors to map
-        'anchor_batch_size'          => 500,
+        # batch size of anchor sequences to map
+        'anchor_batch_size'          => 1000,
 
         # The ancestral_db is created on the same server as the pipeline_db
         'ancestral_db' => { # core ancestral db

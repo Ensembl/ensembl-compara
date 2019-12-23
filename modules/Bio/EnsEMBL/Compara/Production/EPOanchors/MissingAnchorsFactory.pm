@@ -42,7 +42,7 @@ sub fetch_input {
     my ($self) = @_;
 
     my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
-    my $sql1 = 'SELECT DISTINCT anchor_id FROM anchor_sequence ORDER BY anchor_id';
+    my $sql1 = 'SELECT anchor_id, COUNT(*) AS num_seq FROM anchor_sequence GROUP BY anchor_id ORDER BY anchor_id';
     my $sth1 = $anchor_dba->dbc->prepare($sql1, { 'mysql_use_result' => 1});
     $sth1->execute();
     my $fetch_sub1 = sub {
@@ -59,43 +59,65 @@ sub fetch_input {
     };
     my $iterator2 = Bio::EnsEMBL::Utils::Iterator->new($fetch_sub2);
 
-    my @missing_anchor_ids;
+    $self->_init_missing_anchor_ids;
     while ($iterator1->has_next()) {
-        my ($anchor_id1) = @{$iterator1->next()};
+        my ($anchor_id1, $n_seq1) = @{$iterator1->next()};
         unless ($iterator2->has_next()) {
             while ($iterator1->has_next()) {
-                push @missing_anchor_ids, $anchor_id1;
-                my ($anchor_id1) = @{$iterator1->next()};
+                $self->_register_missing_anchor_id($anchor_id1, $n_seq1);
+                my ($anchor_id1, $n_seq1) = @{$iterator1->next()};
             }
             last;
         }
         my ($anchor_id2) = @{$iterator2->next()};
         while ($iterator1->has_next() and $anchor_id1 < $anchor_id2) {
-            push @missing_anchor_ids, $anchor_id1;
-            ($anchor_id1) = @{$iterator1->next()};
+            $self->_register_missing_anchor_id($anchor_id1, $n_seq1);
+            ($anchor_id1, $n_seq1) = @{$iterator1->next()};
         }
 
         if ($anchor_id1 != $anchor_id2) {
             die "Found anchor_id $anchor_id2 in the anchor_align table but it doesn't exist in the anchor_sequence table !";
         }
     }
+    $self->_finalize_missing_anchor_ids;
+
     $sth1->finish;
     $sth2->finish;
-
-    # All these will have to be flown against every genome
-    $self->param('missing_anchor_ids', \@missing_anchor_ids);
 }
 
 sub write_output {
     my ($self) = @_;
 
-    my $anchor_batch_size  = $self->param_required('anchor_batch_size');
-    my $missing_anchor_ids = $self->param('missing_anchor_ids');
-    while (@$missing_anchor_ids){
-        my @anchor_ids = splice(@$missing_anchor_ids, 0, $anchor_batch_size);
-        $self->dataflow_output_id( {'anchor_ids' => \@anchor_ids}, 2 );
+    foreach my $anchor_ids (@{$self->param('anchor_id_batches')}) {
+        $self->dataflow_output_id( {'anchor_ids' => $anchor_ids}, 2 );
     }
 }
+
+sub _init_missing_anchor_ids {
+    my $self = shift;
+    $self->param('anchor_id_batches', []);
+    $self->param('anchor_id_buffer',  []);
+    $self->param('anchor_seq_count',  0);
+}
+
+sub _register_missing_anchor_id {
+    my ($self, $anchor_id, $num_sequences) = @_;
+    if ($self->param('anchor_seq_count')) {
+        if (($self->param('anchor_seq_count') + $num_sequences) > $self->param('anchor_batch_size')) {
+            push @{$self->param('anchor_id_batches')}, $self->param('anchor_id_buffer');
+            $self->param('anchor_id_buffer', []);
+            $self->param('anchor_seq_count', 0);
+        }
+    }
+    push @{$self->param('anchor_id_buffer')}, $anchor_id;
+    $self->param('anchor_seq_count', $self->param('anchor_seq_count') + $num_sequences);
+}
+
+sub _finalize_missing_anchor_ids {
+    my $self = shift;
+    push @{$self->param('anchor_id_batches')}, $self->param('anchor_id_buffer') if $self->param('anchor_seq_count');
+}
+
 
 1;
 

@@ -249,7 +249,7 @@ sub pipeline_analyses_epo_anchor_mapping {
             {   -logic_name     => 'missing_anchors_factory',
                 -module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::MissingAnchorsFactory',
                 -parameters => {
-                    'anchor_batch_size' => 50,
+                    'anchor_batch_size' => 100,
                 },
                 -rc_name   => '500Mb_job',
                 -flow_into => {

@@ -66,26 +66,24 @@ sub run {
     my $batch_size = $self->param_required('anchor_batch_size');
     die "'anchor_batch_size' must be non-zero\n" unless $batch_size;
     my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
-    my $sth = $anchor_dba->dbc->prepare("SELECT DISTINCT anchor_id FROM anchor_sequence ORDER BY anchor_id");
+    my $sth = $anchor_dba->dbc->prepare("SELECT anchor_id, COUNT(*) AS num_seq FROM anchor_sequence GROUP BY anchor_id ORDER BY anchor_id");
     $sth->execute();
-    my $count = 1;
+    my $count = 0;
     my @anchor_ids;
     my $min_anchor_id;
     my $max_anchor_id;
     while( my $ref = $sth->fetchrow_arrayref() ){
-        if (($count % $batch_size) == 1) {
-            $min_anchor_id = $ref->[0];
-            $max_anchor_id = $ref->[0];
-        } else {
-            $max_anchor_id = $ref->[0];
+        if ($count) {
+            if (($count+$ref->[1]) > $batch_size) {
+                push @anchor_ids, { 'min_anchor_id' => $min_anchor_id, 'max_anchor_id' => $max_anchor_id };
+                $count = 0;
+            }
         }
-        unless ($count % $batch_size) {
-            push @anchor_ids, { 'min_anchor_id' => $min_anchor_id, 'max_anchor_id' => $max_anchor_id };
-            $min_anchor_id = undef;
-        }
-        $count++;
+        $min_anchor_id = $ref->[0] unless $count;
+        $max_anchor_id = $ref->[0];
+        $count += $ref->[1];
     }
-    if (defined $min_anchor_id) {
+    if ($count) {
         push @anchor_ids, { 'min_anchor_id' => $min_anchor_id, 'max_anchor_id' => $max_anchor_id };
     }
     $self->param('anchor_id_intervals', \@anchor_ids);
