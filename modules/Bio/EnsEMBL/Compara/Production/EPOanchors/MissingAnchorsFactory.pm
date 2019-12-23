@@ -43,48 +43,29 @@ sub fetch_input {
 
     $self->param_required('anchor_batch_size');
 
+    my $genome_db_id = $self->param_required('genome_db_id');
+    my $sql2 = 'SELECT DISTINCT anchor_id FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE genome_db_id = ?';
+    my $aligned_anchor_ids = $self->compara_dba->dbc->sql_helper->execute_simple(
+        -SQL    => $sql2,
+        -PARAMS => [$genome_db_id],
+    );
+    my %aligned_anchor_ids = map {$_ => 1} @$aligned_anchor_ids;
+    $self->compara_dba->dbc->disconnect_if_idle();
+
     my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
-    my $sql1 = 'SELECT anchor_id, COUNT(*) AS num_seq FROM anchor_sequence GROUP BY anchor_id ORDER BY anchor_id';
+    my $sql1 = 'SELECT anchor_id, COUNT(*) AS num_seq FROM anchor_sequence GROUP BY anchor_id';
     my $sth1 = $anchor_dba->dbc->prepare($sql1, { 'mysql_use_result' => 1});
     $sth1->execute();
-    my $fetch_sub1 = sub {
-        return $sth1->fetchrow_arrayref;
-    };
-    my $iterator1 = Bio::EnsEMBL::Utils::Iterator->new($fetch_sub1);
-
-    my $genome_db_id = $self->param_required('genome_db_id');
-    my $sql2 = 'SELECT DISTINCT anchor_id FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE genome_db_id = ? ORDER BY anchor_id';
-    my $sth2 = $self->compara_dba->dbc->prepare($sql2, { 'mysql_use_result' => 1});
-    $sth2->execute($genome_db_id);
-    my $fetch_sub2 = sub {
-        return $sth2->fetchrow_arrayref;
-    };
-    my $iterator2 = Bio::EnsEMBL::Utils::Iterator->new($fetch_sub2);
 
     $self->_init_missing_anchor_ids;
-    while ($iterator1->has_next()) {
-        my ($anchor_id1, $n_seq1) = @{$iterator1->next()};
-        unless ($iterator2->has_next()) {
-            while ($iterator1->has_next()) {
-                $self->_register_missing_anchor_id($anchor_id1, $n_seq1);
-                my ($anchor_id1, $n_seq1) = @{$iterator1->next()};
-            }
-            last;
-        }
-        my ($anchor_id2) = @{$iterator2->next()};
-        while ($iterator1->has_next() and $anchor_id1 < $anchor_id2) {
-            $self->_register_missing_anchor_id($anchor_id1, $n_seq1);
-            ($anchor_id1, $n_seq1) = @{$iterator1->next()};
-        }
-
-        if ($anchor_id1 != $anchor_id2) {
-            die "Found anchor_id $anchor_id2 in the anchor_align table but it doesn't exist in the anchor_sequence table !";
+    while (my $row = $sth1->fetch) {
+        unless ($aligned_anchor_ids{$row->[0]}) {
+            $self->_register_missing_anchor_id(@$row);
         }
     }
     $self->_finalize_missing_anchor_ids;
 
     $sth1->finish;
-    $sth2->finish;
     $anchor_dba->dbc->disconnect_if_idle();
 }
 
