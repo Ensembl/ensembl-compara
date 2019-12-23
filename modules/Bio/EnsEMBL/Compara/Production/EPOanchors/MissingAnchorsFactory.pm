@@ -41,6 +41,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my ($self) = @_;
 
+    $self->param_required('anchor_batch_size');
+
     my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
     my $sql1 = 'SELECT anchor_id, COUNT(*) AS num_seq FROM anchor_sequence GROUP BY anchor_id ORDER BY anchor_id';
     my $sth1 = $anchor_dba->dbc->prepare($sql1, { 'mysql_use_result' => 1});
