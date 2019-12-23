@@ -67,12 +67,15 @@ sub fetch_input {
         }
 
 	my $query_file = $self->worker_temp_directory  . "anchors.fa";
+	my $n = 0;
 	open(my $fh, '>', $query_file) || die("Couldn't open $query_file");
 	foreach my $anc_seq( @{ $sth->fetchall_arrayref } ){
 		print $fh ">", $anc_seq->[0], "\n", $anc_seq->[1], "\n";
+		$n++;
 	}
         close($fh);
         $sth->finish;
+        $self->die_no_retry("No anchors to align") unless $n;
         $anchor_dba->dbc->disconnect_if_idle;
 	$self->param('query_file', $query_file);
 
