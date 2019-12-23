@@ -656,7 +656,7 @@ sub _print {    ## DEPRECATED
 
 sub toString {
     my $self = shift;
-    my $str = sprintf('ConservationScore %f (vs %f) at position %d of genomic_align_block_id=%d', $self->observed_score, $self->expected_score, $self->position, $self->genomic_align_block_id);
+    my $str = sprintf('ConservationScore %.2f vs %.2f = %.2f at position %d (on genomic_align_block_id=%d)', $self->observed_score, $self->expected_score, $self->diff_score, $self->seq_region_pos, $self->genomic_align_block_id);
     return $str;
 }
 
