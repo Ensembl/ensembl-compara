@@ -626,7 +626,7 @@ CREATE TABLE synteny_region (
 
 CREATE TABLE dnafrag (
   dnafrag_id                  bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  length                      int(11) DEFAULT 0 NOT NULL,
+  length                      int unsigned DEFAULT 0 NOT NULL,
   name                        varchar(255) DEFAULT '' NOT NULL,
   genome_db_id                int(10) unsigned NOT NULL, # FK genome_db.genome_db_id
   coord_system_name           varchar(40) DEFAULT '' NOT NULL,
@@ -1340,8 +1340,8 @@ CREATE TABLE peptide_align_feature (
   hgenome_db_id               int(10) unsigned, # FK genome.genome_id
   qstart                      int(10) DEFAULT 0 NOT NULL,
   qend                        int(10) DEFAULT 0 NOT NULL,
-  hstart                      int(11) DEFAULT 0 NOT NULL,
-  hend                        int(11) DEFAULT 0 NOT NULL,
+  hstart                      int unsigned DEFAULT 0 NOT NULL,
+  hend                        int unsigned DEFAULT 0 NOT NULL,
   score                       double(16,4) DEFAULT 0.0000 NOT NULL,
   evalue                      double not null,
   align_length                int(10) not null,
@@ -2257,4 +2257,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_100_101_c.sql|mlss_attr.n_goc_null');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_100_101_d.sql|gat.node_ids');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_100_101_e.sql|positive_int');
 

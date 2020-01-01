@@ -241,8 +241,8 @@ CREATE TABLE IF NOT EXISTS panther_annot (
 	ensembl_id char(50) NOT NULL,
 	ensembl_div char(15) NOT NULL,
 	panther_family_id char(15) NOT NULL,
-	start int(11) NOT NULL,
-	end int(11) NOT NULL,
+	start int unsigned NOT NULL,
+	end int unsigned NOT NULL,
 	score int(11) NOT NULL,
 	evalue char(25) NOT NULL,
 
