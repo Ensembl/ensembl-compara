@@ -746,13 +746,13 @@ CREATE TABLE genomic_align_block (
 */
 
 CREATE TABLE genomic_align_tree (
-  node_id                     bigint(20) unsigned NOT NULL AUTO_INCREMENT, # internal id, FK genomic_align.node_id
-  parent_id                   bigint(20) unsigned DEFAULT NULL,
-  root_id                     bigint(20) unsigned NOT NULL default 0,
+  node_id                     bigint unsigned NOT NULL AUTO_INCREMENT, # internal id, FK genomic_align.node_id
+  parent_id                   bigint unsigned DEFAULT NULL,
+  root_id                     bigint unsigned NOT NULL default 0,
   left_index                  int(10) NOT NULL default 0,
   right_index                 int(10) NOT NULL default 0,
-  left_node_id                bigint(20) unsigned,
-  right_node_id               bigint(20) unsigned,
+  left_node_id                bigint unsigned,
+  right_node_id               bigint unsigned,
   distance_to_parent          double NOT NULL default 1,
 
   PRIMARY KEY node_id (node_id),
@@ -831,7 +831,7 @@ CREATE TABLE genomic_align (
   dnafrag_strand              tinyint(4) DEFAULT 0 NOT NULL,
   cigar_line                  mediumtext NOT NULL,
   visible                     tinyint(2) unsigned DEFAULT 1 NOT NULL,
-  node_id                     bigint(20) unsigned DEFAULT NULL,
+  node_id                     bigint unsigned DEFAULT NULL,
 
   FOREIGN KEY (genomic_align_block_id) REFERENCES genomic_align_block(genomic_align_block_id),
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
@@ -904,7 +904,7 @@ CREATE TABLE conservation_score (
 */
 
 CREATE TABLE constrained_element (
-  constrained_element_id bigint(20) unsigned NOT NULL,
+  constrained_element_id bigint unsigned NOT NULL,
   dnafrag_id bigint unsigned NOT NULL,
   dnafrag_start int(12) unsigned NOT NULL,
   dnafrag_end int(12) unsigned NOT NULL,
@@ -1921,7 +1921,7 @@ CREATE TABLE hmm_curated_annot (
 */
 
 CREATE TABLE homology (
-  homology_id                 bigint(20) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  homology_id                 bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
   description                 ENUM('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','gene_split','between_species_paralog','alt_allele','homoeolog_one2one','homoeolog_one2many','homoeolog_many2many') NOT NULL,
   is_tree_compliant           tinyint(1) NOT NULL DEFAULT 0,
@@ -2098,7 +2098,7 @@ The alignment will be:<br />
 */
 
 CREATE TABLE homology_member (
-  homology_id                 bigint(20) unsigned NOT NULL, # FK homology.homology_id
+  homology_id                 bigint unsigned NOT NULL, # FK homology.homology_id
   gene_member_id              int(10) unsigned NOT NULL, # FK gene_member.gene_member_id
   seq_member_id               int(10) unsigned, # FK seq_member.seq_member_id
   cigar_line                  mediumtext,

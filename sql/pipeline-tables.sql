@@ -98,10 +98,10 @@ CREATE TABLE dna_collection (
 
 
 CREATE TABLE `anchor_sequence` (
-  `anchor_seq_id` bigint(20) unsigned NOT NULL auto_increment,
+  `anchor_seq_id` bigint unsigned NOT NULL auto_increment,
   `method_link_species_set_id` int(10) unsigned default NULL,
-  `anchor_id` bigint(20) unsigned default NULL,
-  `dnafrag_id` bigint(20) unsigned default NULL,
+  `anchor_id` bigint unsigned default NULL,
+  `dnafrag_id` bigint unsigned default NULL,
   `start` int(20) unsigned default NULL,
   `end` int(20) unsigned default NULL,
   `strand` tinyint(4) default '0',
@@ -121,10 +121,10 @@ CREATE TABLE `anchor_sequence` (
 
 
 CREATE TABLE `anchor_align` (
-  `anchor_align_id` bigint(20) unsigned NOT NULL auto_increment,
+  `anchor_align_id` bigint unsigned NOT NULL auto_increment,
   `method_link_species_set_id` int(10) unsigned default NULL,
-  `anchor_id` bigint(20) unsigned default NULL,
-  `dnafrag_id` bigint(20) unsigned default NULL,
+  `anchor_id` bigint unsigned default NULL,
+  `dnafrag_id` bigint unsigned default NULL,
   `dnafrag_start` int(20) default NULL,
   `dnafrag_end` int(20) default NULL,
   `dnafrag_strand` tinyint(4) default NULL,
@@ -132,7 +132,7 @@ CREATE TABLE `anchor_align` (
   `num_of_organisms` smallint(5) unsigned default NULL,
   `num_of_sequences` smallint(5) unsigned default NULL,
   `evalue` varchar(10) default NULL,
-  `untrimmed_anchor_align_id` bigint(20) unsigned default NULL,
+  `untrimmed_anchor_align_id` bigint unsigned default NULL,
   `is_overlapping` tinyint(1) not null default 0,
   PRIMARY KEY  (`anchor_align_id`),
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
