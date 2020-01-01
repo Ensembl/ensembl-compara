@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2019] EMBL-European Bioinformatics Institute
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -656,7 +656,7 @@ sub _print {    ## DEPRECATED
 
 sub toString {
     my $self = shift;
-    my $str = sprintf('ConservationScore %f (vs %f) at position %d of genomic_align_block_id=%d', $self->observed_score, $self->expected_score, $self->position, $self->genomic_align_block_id);
+    my $str = sprintf('ConservationScore %.2f vs %.2f = %.2f at position %d (on genomic_align_block_id=%d)', $self->observed_score, $self->expected_score, $self->diff_score, $self->seq_region_pos, $self->genomic_align_block_id);
     return $str;
 }
 

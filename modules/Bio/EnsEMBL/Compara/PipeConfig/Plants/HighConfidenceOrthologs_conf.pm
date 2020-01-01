@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2019] EMBL-European Bioinformatics Institute
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -63,12 +63,8 @@ sub default_options {
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
             {
-                'taxa'          => [ 'asterids', 'fabids', 'malvids', 'Pooideae', 'Oryzinae', 'Panicoideae' ],
-                'thresholds'    => [ 50, 50, 25 ],
-            },
-            {
                 'taxa'          => [ 'all' ],
-                'thresholds'    => [ undef, undef, 25 ],
+                'thresholds'    => [ 50, 50, 25 ],
             },
         ],
     };

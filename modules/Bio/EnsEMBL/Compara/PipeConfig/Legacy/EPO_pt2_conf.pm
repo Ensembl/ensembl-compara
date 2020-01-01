@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2019] EMBL-European Bioinformatics Institute
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -79,14 +79,12 @@ sub default_options {
     	
     	 # dont dump the MT sequence for mapping
     	'only_nuclear_genome' => 1,
-    	 # batch size of grouped anchors to map
-    	'anchor_batch_size' => 10,
-    	 # max number of sequences to allow in an anchor
-    	'anc_seq_count_cut_off' => 15,
+        # batch size of anchor sequences to map
+        'anchor_batch_size' => 1000,
         
         # Capacities
         'low_capacity'                  => 10,
-        'map_anchors_batch_size'        => 10,
+        'map_anchors_batch_size'        => 5,
         'map_anchors_capacity'          => 1000,
         'trim_anchor_align_batch_size'  => 20,
         'trim_anchor_align_capacity'    => 500,

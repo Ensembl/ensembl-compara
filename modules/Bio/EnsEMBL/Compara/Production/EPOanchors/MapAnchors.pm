@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2019] EMBL-European Bioinformatics Institute
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,21 +21,10 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors
 
-=head1 SYNOPSIS
-
-$exonate_anchors->fetch_input();
-$exonate_anchors->run();
-$exonate_anchors->write_output(); writes to database
-
 =head1 DESCRIPTION
 
 Given a database with anchor sequences and a target genome. This modules exonerates 
 the anchors against the target genome.
-
-=head1 AUTHOR
-
-Stephen Fitzgerald
-
 
 =head1 CONTACT
 
@@ -44,11 +33,6 @@ developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
 Questions may also be sent to the Ensembl help desk at
 <http://www.ensembl.org/Help/Contact>.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
 
 =cut
 
@@ -64,66 +48,54 @@ use POSIX ":sys_wait_h";
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub pre_cleanup {
-    my ($self) = @_;
-    if ($self->param('_range_list')) {
-        $self->compara_dba->dbc->do(sprintf('DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id IN (%s) AND genome_db_id = ?', join(',', @{$self->param('_range_list')})),
-            undef, $self->param_required('genome_db_id'));
-    } else {
-        $self->compara_dba->dbc->do('DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id BETWEEN ? AND ? AND genome_db_id = ?',
-            undef, $self->param_required('min_anchor_id'), $self->param_required('max_anchor_id'), $self->param_required('genome_db_id'));
-    }
-}
-
 sub fetch_input {
 	my ($self) = @_;
 
         my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param_required('genome_db_id'));
         my $genome_db_file = $genome_db->_get_genome_dump_path($self->param_required('genome_dumps_dir'));
         die "$genome_db_file doesn't exist" unless -e $genome_db_file;
-        $self->dbc->disconnect_if_idle();
+        $self->dbc->disconnect_if_idle() if $self->dbc;
         $self->param_required('mlss_id');
         my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
         my $sth;
-        my $min_anc_id;
-        my $max_anc_id;
         if ($self->param('_range_list')) {
             $sth = $anchor_dba->dbc->prepare(sprintf('SELECT anchor_id, sequence FROM anchor_sequence WHERE anchor_id IN (%s)', join(',', @{$self->param('_range_list')})));
-            $min_anc_id = $self->param('_range_list')->[0];
-            $max_anc_id = $self->param('_range_list')->[-1];
             $sth->execute;
-
         } else {
         $sth = $anchor_dba->dbc->prepare("SELECT anchor_id, sequence FROM anchor_sequence WHERE anchor_id BETWEEN  ? AND ?");
-        $min_anc_id = $self->param('min_anchor_id');
-        $max_anc_id = $self->param('max_anchor_id');
-	$sth->execute( $min_anc_id, $max_anc_id );
+            $sth->execute( $self->param_required('min_anchor_id'), $self->param_required('max_anchor_id') );
         }
-        my %all_anchor_ids;
-	my $query_file = $self->worker_temp_directory  . "anchors." . join ("-", $min_anc_id, $max_anc_id );
+
+	my $query_file = $self->worker_temp_directory  . "anchors.fa";
+	my $n = 0;
 	open(my $fh, '>', $query_file) || die("Couldn't open $query_file");
 	foreach my $anc_seq( @{ $sth->fetchall_arrayref } ){
-                $all_anchor_ids{$anc_seq->[0]} = 1;
 		print $fh ">", $anc_seq->[0], "\n", $anc_seq->[1], "\n";
+		$n++;
 	}
         close($fh);
         $sth->finish;
+        $self->die_no_retry("No anchors to align") unless $n;
         $anchor_dba->dbc->disconnect_if_idle;
 	$self->param('query_file', $query_file);
-        $self->param('all_anchor_ids', [keys %all_anchor_ids]);
+
         $self->param('target_file', $genome_db_file);
+        $self->preload_file_in_memory($genome_db_file);
 
         return unless $self->param('with_server');
+
+        die "Indexes for $genome_db_file doen't exist" unless -e "$genome_db_file.esd";
+        $self->preload_file_in_memory("$genome_db_file.esd");
         die "Indexes for $genome_db_file doen't exist" unless -e "$genome_db_file.esi";
+        $self->preload_file_in_memory("$genome_db_file.esi");
+
         $self->param('index_file', "$genome_db_file.esi");
-        $self->param('log_file', $self->worker_temp_directory . "/server_gdb_". $self->param_required('genome_db_id'). '.log.' . ($self->worker->dbID // 'standalone'));
-        $self->param('max_connections', 1);
         $self->start_server;
 }
 
 sub run {
 	my ($self) = @_;
-        $self->dbc->disconnect_if_idle();
+        $self->dbc->disconnect_if_idle() if $self->dbc;
 	my $program = $self->param_required('mapping_exe');
 	my $query_file = $self->param_required('query_file');
 	my $target_file = $self->param_required('target_file');
@@ -154,14 +126,6 @@ sub run {
             $self->warning('Server started after '.$self->param('retry').' attempts');
         }
 
-        # Since exonerate-server seems to be missing some hits, we fallback
-        # to a standard exonerate alignment when a hit is missing
-        foreach my $anchor_id (@{$self->param('all_anchor_ids')}) {
-            unless ($hits and $hits->{$anchor_id}) {
-                $self->dataflow_output_id( { 'anchor_id' => $anchor_id }, 3);
-            }
-        }
-
 	if (!$hits) {
 		$self->warning("Exonerate didn't find any hits");
 		return;
@@ -174,6 +138,16 @@ sub run {
 
 sub write_output {
     my ($self) = @_;
+
+    # Delete previous mapping
+    if ($self->param('_range_list')) {
+        my $sql = sprintf('DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id IN (%s) AND genome_db_id = ?', join(',', @{$self->param('_range_list')}));
+        $self->compara_dba->dbc->do($sql, undef, $self->param('genome_db_id'));
+    } else {
+        my $sql = 'DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id BETWEEN ? AND ? AND genome_db_id = ?';
+        $self->compara_dba->dbc->do($sql, undef, $self->param('min_anchor_id'), $self->param('max_anchor_id'), $self->param('genome_db_id'));
+    }
+
     my $anchor_align_adaptor = $self->compara_dba()->get_adaptor("AnchorAlign");
     if (my $records = $self->param('records')) {
         $anchor_align_adaptor->store_exonerate_hits($records);
@@ -257,14 +231,16 @@ sub start_server {
         $self->param('target_file', "localhost:$candidate_port");
     } else {
         # If we can't start the server on one port, there is more than 80%
-        # chance we'll have to try several more ports. Instead of spending
-        # too much time, we just bail out !
+        # chance that it won't just work on the next random port, and
+        # we'll have to try even more ports. Instead of spending too much
+        # time we just give up !
         my $retry = $self->param('retry') + 1;
         if ($retry > 20) {
             die "Still failing to start the server after $retry attempts";
         }
         $self->dataflow_output_id( { 'retry' => $retry }, 2);
         $self->input_job->lethal_for_worker(1); # Since the host is not cooperating, we should leave
+        # Note: we do a controlled exit to distinguish from uncaught errors
         $self->complete_early('Port already taken. New job created');
     }
 }
@@ -274,9 +250,8 @@ sub start_server_on_port {
 
   my $server_exe = $self->param_required('server_exe');
   my $index_file = $self->param_required('index_file');
-  my $max_connections = $self->param_required('max_connections');
-  my $log_file = $self->param('log_file');
-  my $command = "$server_exe $index_file --maxconnections $max_connections --port $port &> $log_file";
+  my $log_file = $self->worker_temp_directory . "/server_gdb_". $self->param_required('genome_db_id'). '.log.' . ($self->worker->dbID // 'standalone');
+  my $command = "$server_exe $index_file --maxconnections 1 --port $port &> $log_file";
 
   $self->say_with_header("Starting the server: $command");
   my $pid;
@@ -292,12 +267,13 @@ sub start_server_on_port {
   $self->param('server_pid', $pid);
 
   my $cycles = 0;
-  while ($cycles < 50) {
-      sleep 5;
+  my $seconds_by_cycle = 10;
+  while ($cycles*$seconds_by_cycle < 12*3600) { # Half a day ought to be enough
+      sleep $seconds_by_cycle;
       $cycles++;
       my $started_message = $self->get_command_output(['tail', '-1', $log_file]);
       if ($started_message =~ /listening on port/) {
-          $self->say_with_header("Server started on port $port after $cycles cycles");
+          $self->say_with_header("Server started on port $port after $cycles cycles of $seconds_by_cycle seconds");
           return 1;
 
       } elsif ($started_message =~ /Address already in use/) {

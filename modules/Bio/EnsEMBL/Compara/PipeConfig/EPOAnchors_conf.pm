@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2019] EMBL-European Bioinformatics Institute
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -80,8 +80,9 @@ sub default_options {
       	'min_ce_length' => 40, # min length of each sequence in the constrained element 
         'min_anchor_size' => 50, # at least one of the sequences in an anchor must be of this size
       	'max_anchor_seq_len' => 100, # anchors longer than this value will be trimmed
-      	'min_number_of_seqs_per_anchor' => 2, # minimum number of sequences in an anchor
-      	'max_number_of_seqs_per_anchor' => 30, # maximum number of sequences in an anchor - can happen due to duplicates or repeats
+
+        # Given as a factor of the number of species used to build anchors
+        'max_number_of_seqs_per_anchor' => 2, # maximum number of sequences in an anchor - can happen due to duplicates or repeats
     };
 }
 
@@ -92,10 +93,6 @@ sub pipeline_wide_parameters {
 
 		'compara_pairwise_db' => $self->o('compara_pairwise_db'),
                 'mlss_id'        => $self->o('mlss_id'),
-		'min_anchor_size' => $self->o('min_anchor_size'),
-		'min_number_of_seqs_per_anchor' => $self->o('min_number_of_seqs_per_anchor'),
-		'max_number_of_seqs_per_anchor' => $self->o('max_number_of_seqs_per_anchor'),
-		'max_frag_diff' => $self->o('max_frag_diff'),
 	        'reference_genome_db_name' => $self->o('reference_genome_db_name'),
                 'genome_dumps_dir'      => $self->o('genome_dumps_dir'),
 	};
@@ -170,6 +167,10 @@ return [
 { # finds the overlaps between the pairwise lignments and populates the dnafrag_region and synteny_region tables with the overlaps  
  -logic_name	=> 'find_pairwise_overlaps',
  -module		=> 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindPairwiseOverlaps',
+ -parameters	=> {
+     'min_anchor_size' => $self->o('min_anchor_size'),
+     'max_frag_diff' => $self->o('max_frag_diff'),
+ },
  -flow_into	=> {
 		2 => [ 'pecan' ],
 		3 => [ '?table_name=dnafrag_region&insertion_method=INSERT_IGNORE' ],
@@ -363,6 +364,7 @@ return [
     'input_method_link_species_set_id' => '#mlss_id#',
     'max_anchor_seq_len' => $self->o('max_anchor_seq_len'),
     'min_anchor_seq_len' => $self->o('min_ce_length'),
+    'max_number_of_seqs_per_anchor' => $self->o('max_number_of_seqs_per_anchor'),
  },
  -batch_size    => 10,
  -hive_capacity => 100,

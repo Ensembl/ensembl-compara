@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2019] EMBL-European Bioinformatics Institute
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -56,11 +56,21 @@ sub default_options {
 
         # Databases
         'compara_master'    => 'compara_master',
-        'ancestral_db'      => $self->o('species_set_name') . '_ancestral',
         # Database containing the anchors for mapping
         'compara_anchor_db' => $self->o('species_set_name') . '_epo_anchors',
         # The previous database to reuse the anchor mappings
         'reuse_db'          => $self->o('species_set_name') . '_epo_prev',
+
+        # The ancestral_db is created on the same server as the pipeline_db
+        'ancestral_db' => {
+            -driver   => $self->o('pipeline_db', '-driver'),
+            -host     => $self->o('pipeline_db', '-host'),
+            -port     => $self->o('pipeline_db', '-port'),
+            -species  => $self->o('ancestral_sequences_name'),
+            -user     => $self->o('pipeline_db', '-user'),
+            -pass     => $self->o('pipeline_db', '-pass'),
+            -dbname   => $self->o('dbowner').'_'.$self->o('species_set_name').'_ancestral_core_'.$self->o('rel_with_suffix'),
+        },
 
         'ancestral_sequences_name' => 'ancestral_sequences',
         'ancestral_sequences_display_name' => 'Ancestral sequences',
@@ -87,17 +97,14 @@ sub default_options {
         'only_nuclear_genome' => 1,
         # add MT dnafrags separately (1) or not (0) to the dnafrag_region table
         'add_non_nuclear_alignments' => 1,
-         # batch size of grouped anchors to map
-        'anchor_batch_size' => 500, #mammals
-        #'anchor_batch_size' => 50,  #fish
-         # max number of sequences to allow in an anchor
-        'anc_seq_count_cut_off' => 15,
+         # batch size of anchor sequences to map
+        'anchor_batch_size' => 1000,
         # Usually set to 0 because we run Gerp on the EPO2X alignment instead
         'run_gerp' => 0,
 
         # Capacities
         'low_capacity'                 => 10,
-        'map_anchors_batch_size'       => 20,
+        'map_anchors_batch_size'       => 5,
         'map_anchors_capacity'         => 2000,
         'trim_anchor_align_batch_size' => 20,
         'trim_anchor_align_capacity'   => 500,

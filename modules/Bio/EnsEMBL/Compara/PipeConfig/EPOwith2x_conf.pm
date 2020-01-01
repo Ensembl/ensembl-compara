@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2019] EMBL-European Bioinformatics Institute
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ sub default_options {
 
         # Capacities
         'low_capacity'                  => 10,
-        'map_anchors_batch_size'        => 20,
+        'map_anchors_batch_size'        => 5,
         'map_anchors_capacity'          => 2000,
         'trim_anchor_align_batch_size'  => 20,
         'trim_anchor_align_capacity'    => 500,
@@ -94,11 +94,8 @@ sub default_options {
         'only_nuclear_genome'        => 1,
         # add MT dnafrags separately (1) or not (0) to the dnafrag_region table
         'add_non_nuclear_alignments' => 1,
-        # batch size of grouped anchors to map
-        'anchor_batch_size'          => 500, #mammals
-        #'anchor_batch_size' => 50,  #fish
-        # max number of sequences to allow in an anchor
-        'anc_seq_count_cut_off'      => 15,
+        # batch size of anchor sequences to map
+        'anchor_batch_size'          => 1000,
 
         # The ancestral_db is created on the same server as the pipeline_db
         'ancestral_db' => { # core ancestral db
@@ -195,15 +192,17 @@ sub core_pipeline_analyses {
                         ['EPO'],
                         ['high_epo_mlss_id'],
                         '#high_epo_mlss_id#',
+                        1, # store reuse species sets for high coverage species
                     ],
                     [
                         '#low_epo_mlss_id#',
                         ['EPO_LOW_COVERAGE', 'GERP_CONSTRAINED_ELEMENT', 'GERP_CONSERVATION_SCORE'],
                         ['low_epo_mlss_id', 'ce_mlss_id', 'cs_mlss_id'],
-                        undef
+                        undef,
+                        0 # do not store reuse species sets for low coverage species
                     ],
                 ],
-                'column_names' => [ 'mlss_id', 'whole_method_links', 'param_names', 'filter_by_mlss_id' ],
+                'column_names' => [ 'mlss_id', 'whole_method_links', 'param_names', 'filter_by_mlss_id', 'store_reuse_ss' ],
             },
             -flow_into  => {
                 '2->A' => 'create_mlss_ss',

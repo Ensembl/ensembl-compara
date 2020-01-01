@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2019] EMBL-European Bioinformatics Institute
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -80,6 +80,13 @@ sub fetch_input {
 			$self->complete_early("Anchor didn't pass the threshold: ratio=$ratio threshold=".$self->param('max_n_proportion'));
 		}
 	}
+
+        my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($trimmed_anchor_mlssid);
+        my $n_genomes = $mlss->species_set->size;
+        if (scalar(@anchor) > $self->param_required('max_number_of_seqs_per_anchor')*$n_genomes) {
+            $self->complete_early(sprintf('Not storing this anchor set because there are too many sequences (%d)', scalar(@anchor)));
+        }
+
 	$self->param('anchor', \@anchor);
 }
 

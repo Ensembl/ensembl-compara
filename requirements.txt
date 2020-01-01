@@ -2,3 +2,4 @@ numpy
 six
 lxml
 ete3
+sqlalchemy

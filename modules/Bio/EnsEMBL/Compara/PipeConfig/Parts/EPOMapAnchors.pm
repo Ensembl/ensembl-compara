@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2019] EMBL-European Bioinformatics Institute
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -170,14 +170,13 @@ sub pipeline_analyses_epo_anchor_mapping {
 	    {	-logic_name     => 'map_anchors_factory',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchorsFactory',
 		-parameters     => {
-			'anc_seq_count_cut_off' => $self->o('anc_seq_count_cut_off'),
 			'anchor_batch_size' => $self->o('anchor_batch_size'),
 		},
 		-flow_into => {
                         '2->A' => { 'map_anchors' => INPUT_PLUS() },
                         'A->1' => [ 'missing_anchors_factory' ],
 		},
-		-rc_name => '8Gb_job',
+		-rc_name => '4Gb_job',
 		-hive_capacity => $self->o('low_capacity'),
 	    },
 
@@ -191,7 +190,6 @@ sub pipeline_analyses_epo_anchor_mapping {
 		},
                 -flow_into => {
                     2 => { 'map_anchors' => INPUT_PLUS() },
-                    3 => [ '?accu_name=inputlist&accu_address=[]&accu_input_variable=anchor_id' ],
                     -1 => 'map_anchors_himem',
                 },
                 -batch_size => $self->o('map_anchors_batch_size'),
@@ -211,7 +209,6 @@ sub pipeline_analyses_epo_anchor_mapping {
 		},
                 -flow_into => {
                     2 => { 'map_anchors_himem' => INPUT_PLUS() },
-                    3 => [ '?accu_name=inputlist&accu_address=[]&accu_input_variable=anchor_id' ],
                 },
                 -batch_size => $self->o('map_anchors_batch_size'),
                 -hive_capacity => $self->o('map_anchors_capacity'),
@@ -224,6 +221,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                 -parameters => {
                     'mapping_exe' => $self->o('exonerate_exe'),
                     'mapping_params' => $self->o('mapping_params'),
+                    '_range_list'   => '#anchor_ids#',
                 },
                 -flow_into => {
                     -1 => 'map_anchors_no_server_himem',
@@ -240,21 +238,20 @@ sub pipeline_analyses_epo_anchor_mapping {
                 -parameters => {
                     'mapping_exe' => $self->o('exonerate_exe'),
                     'mapping_params' => $self->o('mapping_params'),
+                    '_range_list'   => '#anchor_ids#',
                 },
                 -batch_size => $self->o('map_anchors_batch_size'),
                 -hive_capacity => $self->o('map_anchors_capacity'),
-                -rc_name => '16Gb_job',
+                -rc_name => '32Gb_job',
                 -max_retry_count => 1,
             },
 
             {   -logic_name     => 'missing_anchors_factory',
-                -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+                -module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::MissingAnchorsFactory',
                 -parameters => {
-                    'contiguous'    => 0,
-                    'step'          => 50,
-                    'column_names'  => [ 'anchor_id' ],
+                    'anchor_batch_size' => 100,
                 },
-                -rc_name => '16Gb_job',
+                -rc_name   => '500Mb_job',
                 -flow_into => {
                     2 => { 'map_anchors_no_server' => INPUT_PLUS(), },
                 },

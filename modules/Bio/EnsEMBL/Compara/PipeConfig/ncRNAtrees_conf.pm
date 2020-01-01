@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2019] EMBL-European Bioinformatics Institute
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -864,11 +864,10 @@ sub core_pipeline_analyses {
                 },
                 -flow_into => {
                     1 => WHEN(
-                        # We should take the model into account to be more accurate
-                        '(#raxml_cores# <= 1)'                                  => 'sec_struct_model_tree_1_core',
-                        '(#raxml_cores# >  1)  && (#raxml_cores# <= 2)'         => 'sec_struct_model_tree_2_cores',
-                        '(#raxml_cores# >  2)  && (#raxml_cores# <= 4)'         => 'sec_struct_model_tree_4_cores',
-                        '(#raxml_cores# >  4)'                                  => 'sec_struct_model_tree_8_cores',
+                        # Tested in e99. Using more than 2 cores slows
+                        # down RAxML by a factor 10
+                        '#raxml_cores# <= 1'    => 'sec_struct_model_tree_1_core',
+                        ELSE                       'sec_struct_model_tree_2_cores',
                     ),
                 },
                 %decision_analysis_params,
