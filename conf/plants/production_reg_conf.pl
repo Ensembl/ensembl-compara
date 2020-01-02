@@ -30,10 +30,10 @@ use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Utils::Registry;
 
-my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
-my $prev_release = $curr_release - 1;
-my $curr_eg_release = $curr_release - 53;
-my $prev_eg_release = $curr_eg_release - 1;
+my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'}-1;
+my $prev_release = $curr_release - 2;
+my $curr_eg_release = $curr_release - 54;
+my $prev_eg_release = $curr_eg_release - 2;
 
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
@@ -74,7 +74,7 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-5', 'cristig_plants_load_members_99'  ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-5', 'cristig_plants_load_members_99' ],
     'compara_ptrees'   => [ 'mysql-ens-compara-prod-3', 'cristig_default_plants_protein_trees_99' ],
     'ptrees_prev'      => [ 'mysql-ens-compara-prod-5', 'jalvarez_default_plants_protein_trees_98' ],
 
@@ -83,6 +83,14 @@ my $compara_dbs = {
 
     # synteny
     'compara_syntenies' => [ 'mysql-ens-compara-prod-1', 'cristig_plants_synteny_99' ],
+    
+    #EPO anchors
+    'rice_epo_anchors' => [ 'mysql-ens-compara-prod-5', 'cristig_generate_anchors_rice_99' ],
+    
+    #EPO
+    'rice_epo'     => [ 'mysql-ens-compara-prod-5', 'cristig_rice_epo_test5' ],
+    'rice_epo_low' => [ 'mysql-ens-compara-prod-5', 'cristig_rice_epo_low_coverage_test' ],
+    
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );

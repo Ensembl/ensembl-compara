@@ -74,7 +74,7 @@ sub fetch_input {
 
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
 
-    if (($mlss->name =~ /(sauropsid|bird)/i) || ($self->dbc && ($self->dbc->dbname =~ /(sauropsid|bird)/i))) {
+    if (($mlss->name =~ /(sauropsid|bird|plant|rice)/i) || ($self->dbc && ($self->dbc->dbname =~ /(sauropsid|bird|plant|rice)/i))) {
         # A bit of institutional knowledge. This value was found to be
         # better years ago, at at time we only had 3 birds
         # MM: in Mar 2019, on the 34-sauropsids alignment, this threshold
