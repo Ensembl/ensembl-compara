@@ -62,4 +62,14 @@ create_db "$(${server} details url)${USER}_schema_patch_test_new" "${ENSEMBL_CVS
 dump_schema "${server}" "${USER}_schema_patch_test_new" > new_schema.sql
 db_cmd.pl -url "$(${server} details url)${USER}_schema_patch_test_new" -sql 'DROP DATABASE'
 
-sdiff -w 200 -bs patched_old_schema.sql new_schema.sql
+echo
+echo '***********************************************************************************************************************'
+echo 'Here comes the diff. If you see anything below, it means that there is a discrepancy between the schema and the patches'
+echo '***********************************************************************************************************************'
+echo
+
+sanitize_schema () {
+    cat "$1" | grep -v '^-- Host:' | grep -v '^-- Dump completed on '
+}
+
+sdiff -w 200 -bs <(sanitize_schema patched_old_schema.sql) <(sanitize_schema new_schema.sql) | tee schemas.diff
