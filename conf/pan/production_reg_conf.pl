@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2019] EMBL-European Bioinformatics Institute
+# Copyright [2016-2020] EMBL-European Bioinformatics Institute
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -70,19 +70,15 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-7', 'ensembl_compara_master_pan' ],
-   # 'compara_curr'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${curr_eg_release}_${curr_release}" ],
-   # 'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
+   # 'compara_curr'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${curr_eg_release}_${curr_release}" ],
+   # 'compara_prev'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homolog_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'  => [ 'mysql-ens-compara-prod-5', 'cristig_plants_load_members_99'  ],
-    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-3', 'cristig_default_plants_protein_trees_99' ],
-    #'ptrees_prev'      => [ 'mysql-ens-compara-prod-5', 'jalvarez_default_plants_protein_trees_98' ],
+    #'compara_members'  => [ '', ''  ],
+    #'compara_ptrees'   => [ '', '' ],
+    #'ptrees_prev'      => [ 'mysql-ens-compara-prod-7', 'dthybert_pan_protein_trees_99' ],
 
-    # LASTZ dbs
-    #'lastz' => [ 'mysql-ens-compara-prod-5', 'cristig_plants_lastz_batch1_99' ],
 
-    # synteny
-    #compara_syntenies' => [ 'mysql-ens-compara-prod-1', 'cristig_plants_synteny_99' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );

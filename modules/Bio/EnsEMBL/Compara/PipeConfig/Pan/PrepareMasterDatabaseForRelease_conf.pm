@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2019] EMBL-European Bioinformatics Institute
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,7 +53,8 @@ sub default_options {
 
         'division'               => 'pan',
         'additional_species'     => {
-            'vertebrates' => ['xenopus_tropicalis',
+            'vertebrates' => [
+                              'xenopus_tropicalis',
                               'pongo_abelii',
                               'pan_troglodytes',
                               'mus_musculus',
@@ -63,8 +64,10 @@ sub default_options {
                               'gallus_gallus',
                               'danio_rerio',
                               'ciona_savignyi',
-                              'anolis_carolinensis',],
-            'protist'     => ['thecamonas_trahens_atcc_50062_gca_000142905',
+                              'anolis_carolinensis'
+                              ],
+            'protist'     => [
+                              'thecamonas_trahens_atcc_50062_gca_000142905',
                               'tetrahymena_thermophila',
                               'plasmodium_falciparum',
                               'phytophthora_infestans',
@@ -76,8 +79,10 @@ sub default_options {
                               'emiliania_huxleyi',
                               'dictyostelium_discoideum',
                               'cryptomonas_paramecium_gca_000194455',
-                              'bigelowiella_natans'],
-            'plants'      => ['vitis_vinifera',
+                              'bigelowiella_natans'
+                              ],
+            'plants'      => [
+                              'vitis_vinifera',
                               'solanum_lycopersicum',
                               'selaginella_moellendorffii',
                               'physcomitrella_patens',
@@ -87,8 +92,10 @@ sub default_options {
                               'chlamydomonas_reinhardtii',
                               'brachypodium_distachyon',
                               'arabidopsis_thaliana',
-                              'amborella_trichopoda'],
-            'metazoa'     => ['zootermopsis_nevadensis',
+                              'amborella_trichopoda'
+                              ],
+            'metazoa'     => [
+                              'zootermopsis_nevadensis',
                               'trichoplax_adhaerens',
                               'tribolium_castaneum',
                               'tetranychus_urticae',
@@ -111,15 +118,19 @@ sub default_options {
                               'apis_mellifera',
                               'anopheles_gambiae',
                               'amphimedon_queenslandica',
-                              'aedes_aegypti_lvpagwg'],
-            'fungi'       => ['zymoseptoria_tritici',
+                              'aedes_aegypti_lvpagwg'
+                              ],
+            'fungi'       => [
+                              'zymoseptoria_tritici',
                               'ustilago_maydis',
                               'schizosaccharomyces_pombe',
                               'saccharomyces_cerevisiae',
                               'puccinia_graminis',
                               'neurospora_crassa',
-                              'aspergillus_nidulans'],
-            'bacteria'    => ['yersinia_pestis_biovar_microtus_str_91001',
+                              'aspergillus_nidulans'
+                              ],
+            'bacteria'    => [
+                              'yersinia_pestis_biovar_microtus_str_91001',
                               'xanthomonas_campestris_pv_campestris_str_atcc_33913',
                               'wolbachia_endosymbiont_of_drosophila_melanogaster',
                               'vibrio_fischeri_es114',
@@ -241,7 +252,8 @@ sub default_options {
                               'aeropyrum_pernix_k1',
                               'aeromonas_hydrophila_subsp_hydrophila_atcc_7966',
                               'actinobacillus_pleuropneumoniae_serovar_5b_str_l20',
-                              'acinetobacter_baumannii_aye']
+                              'acinetobacter_baumannii_aye'
+                              ]
         },
     };
 }
