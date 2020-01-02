@@ -18,7 +18,7 @@
 server=mysql-ens-compara-prod-1-ensadmin
 
 this_release=$(perl -e 'use Bio::EnsEMBL::ApiVersion; print software_version();')
-last_release=$(($this_release-1))
+last_release=$((this_release - 1))
 
 
 function do_exit () {
