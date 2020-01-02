@@ -112,6 +112,7 @@ CREATE TABLE `anchor_sequence` (
   `sequence` varchar(250) default '',
   `length` int(20) unsigned default NULL,
   PRIMARY KEY  (`anchor_seq_id`),
+  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
   KEY `anchor_id_mlss_id` (`anchor_id`, `method_link_species_set_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
@@ -138,6 +139,7 @@ CREATE TABLE `anchor_align` (
   `untrimmed_anchor_align_id` bigint(20) unsigned default NULL,
   `is_overlapping` tinyint(1) not null default 0,
   PRIMARY KEY  (`anchor_align_id`),
+  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
   KEY `untrimmed_anchor_align_id` (`untrimmed_anchor_align_id`),
   KEY `anchor_id_mlss_id` (`anchor_id`,`method_link_species_set_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
@@ -177,6 +179,7 @@ CREATE TABLE ktreedist_score (
   symm_difference int(10) unsigned DEFAULT NULL,
   n_partitions int(10) unsigned DEFAULT NULL,
   PRIMARY KEY tag_node_id (node_id,tag),
+  FOREIGN KEY (node_id) REFERENCES gene_tree_root(root_id),
   KEY tag (tag)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
