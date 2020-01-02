@@ -16,6 +16,7 @@
 # limitations under the License.
 
 server=mysql-ens-compara-prod-1-ensadmin
+server_prev=mysql-ens-mirror-1
 
 this_release=$(perl -e 'use Bio::EnsEMBL::ApiVersion; print software_version();')
 last_release=$((this_release - 1))
@@ -47,9 +48,9 @@ function create_db () {
 
 
 # Load, patch and dump the old schema
-dump_schema mysql-ens-mirror-1 ensembl_compara_${last_release} > old_schema.sql
+dump_schema "$server_prev" ensembl_compara_${last_release} > old_schema.sql
 create_db "$(${server} details url)${USER}_schema_patch_test_old_patched" old_schema.sql
-mysql-ens-mirror-1 mysqldump --skip-lock-tables ensembl_compara_${last_release} meta | db_cmd.pl -url "$(${server} details url)${USER}_schema_patch_test_old_patched"
+"$server_prev" mysqldump --skip-lock-tables ensembl_compara_${last_release} meta | db_cmd.pl -url "$(${server} details url)${USER}_schema_patch_test_old_patched"
 
 "${ENSEMBL_CVS_ROOT_DIR}/ensembl/misc-scripts/schema_patcher.pl" $(${server} details script) --database "${USER}_schema_patch_test_old_patched" --type compara --from "${last_release}" --release "${this_release}" --verbose
 
