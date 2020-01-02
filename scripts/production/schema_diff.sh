@@ -35,14 +35,14 @@ which db_cmd.pl > /dev/null || do_exit "db_cmd.pl not found in the path"
 
 
 function dump_schema () {
-    "$1" mysqldump --no-data --skip-add-drop-table --skip-lock-tables $2 | sed 's/AUTO_INCREMENT=[0-9]*\b//'
+    "$1" mysqldump --no-data --skip-add-drop-table --skip-lock-tables "$2" | sed 's/AUTO_INCREMENT=[0-9]*\b//'
 }
 
 function create_db () {
-  db_cmd.pl -url $1 -sql 'DROP DATABASE if exists'
-  db_cmd.pl -url $1 -sql 'CREATE DATABASE'
-  db_cmd.pl -url $1 < $2
-  db_cmd.pl -url $1 -sql "SHOW TABLES LIKE 'peptide_align_feature_%'" -- -N | sed 's/^/DROP TABLE /' | sed 's/$/;/' | db_cmd.pl -url $1 
+  db_cmd.pl -url "$1" -sql 'DROP DATABASE if exists'
+  db_cmd.pl -url "$1" -sql 'CREATE DATABASE'
+  db_cmd.pl -url "$1" < "$2"
+  db_cmd.pl -url "$1" -sql "SHOW TABLES LIKE 'peptide_align_feature_%'" -- -N | sed 's/^/DROP TABLE /' | sed 's/$/;/' | db_cmd.pl -url "$1"
 }
 
 
@@ -51,13 +51,13 @@ dump_schema mysql-ens-mirror-1 ensembl_compara_${last_release} > old_schema.sql
 create_db "$(${server} details url)${USER}_schema_patch_test_old_patched" old_schema.sql
 mysql-ens-mirror-1 mysqldump --skip-lock-tables ensembl_compara_${last_release} meta | db_cmd.pl -url "$(${server} details url)${USER}_schema_patch_test_old_patched"
 
-${ENSEMBL_CVS_ROOT_DIR}/ensembl/misc-scripts/schema_patcher.pl $(${server} details script) --database ${USER}_schema_patch_test_old_patched --type compara --from ${last_release} --release ${this_release} --verbose
+"${ENSEMBL_CVS_ROOT_DIR}/ensembl/misc-scripts/schema_patcher.pl" $(${server} details script) --database "${USER}_schema_patch_test_old_patched" --type compara --from "${last_release}" --release "${this_release}" --verbose
 
 dump_schema "${server}" "${USER}_schema_patch_test_old_patched" > patched_old_schema.sql
 db_cmd.pl -url "$(${server} details url)${USER}_schema_patch_test_old_patched" -sql 'DROP DATABASE'
 
 # Load and dump the new schema
-create_db "$(${server} details url)${USER}_schema_patch_test_new" ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/sql/table.sql
+create_db "$(${server} details url)${USER}_schema_patch_test_new" "${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/sql/table.sql"
 dump_schema "${server}" "${USER}_schema_patch_test_new" > new_schema.sql
 db_cmd.pl -url "$(${server} details url)${USER}_schema_patch_test_new" -sql 'DROP DATABASE'
 
