@@ -30,10 +30,10 @@ use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Utils::Registry;
 
-my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'}-1;
-my $prev_release = $curr_release - 2;
-my $curr_eg_release = $curr_release - 54;
-my $prev_eg_release = $curr_eg_release - 2;
+my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
+my $prev_release = $curr_release - 1;
+my $curr_eg_release = $curr_release - 53;
+my $prev_eg_release = $curr_eg_release - 1;
 
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
