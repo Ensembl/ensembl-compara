@@ -42,13 +42,6 @@ time_pipeline.py -url <database_url> [options]
     sys.exit(1)
 
 
-def row2dict(row: dict) -> dict:
-    """ convert an sqlalchemy row to a python dictionary """
-    d = {}
-    for key in row.keys():
-        d[key] = row[key]
-    return d
-
 def formulate_condition(analyses_pattern: str) -> str:
     """ formulate WHERE SQL condition from analyses_pattern """
     condition = ''
@@ -102,10 +95,10 @@ def main(argv: list) -> None:
                     runtime_gaps.append(gap_desc)
         except KeyError:
             pipeline_start = role['when_started']
-            prev_role = row2dict(role)
+            prev_role = dict(role)
 
         if role['when_finished'] > prev_role['when_finished']:
-            prev_role = row2dict(role)
+            prev_role = dict(role)
 
     # get overall timings
     pipeline_finish = prev_role['when_finished']
