@@ -518,9 +518,14 @@ sub _get_target_slice_table {
       #HACK - have a guess based on the mlss name. Better to have this in the mlss_tag table in the database
     if ($method_link_species_set->name =~ /mammals/) {
       $other_species = "homo_sapiens";
-    } elsif ($method_link_species_set->name =~ /fish/) {
+    } 
+    elsif ($method_link_species_set->name =~ /fish/) {
       $other_species = "oryzias_latipes";
-    } else {
+    }
+    elsif ($method_link_species_set->name =~ /pig/) {
+      $other_species = "sus_scrofa";
+    } 
+    else {
       #sauropsids
       $other_species = "gallus_gallus";
     }
