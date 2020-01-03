@@ -44,8 +44,6 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
 
 =cut
 

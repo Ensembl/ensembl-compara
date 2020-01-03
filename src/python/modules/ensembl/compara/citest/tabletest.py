@@ -1,7 +1,6 @@
 
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the
-# EMBL-European Bioinformatics Institute
-# Copyright [2016-2019] EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016-2020] EMBL-European Bioinformatics Institute
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +19,6 @@
 """
 
 
-#from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 from ensembl.compara.citest.test import Test
 
@@ -72,6 +70,27 @@ class TableTest(Test):
             str_table_name = dic_tabl_test["name"]
             if not str_table_name in lst_tables_database:
                 raise Exception("Error: table name '" + str_table_name + "' is not in the database")
+
+    @staticmethod
+    def _get_title_value_line(lst_titles, lst_values):
+        """Create a title value string
+
+        This method create a title value string with the folowing format:
+        'title1:value1|title2:value2|...|titlen:valuen'
+        Args:
+            lst_titles: this argument is the list of titles
+            lst_values: this argument is the list of values. The values need to be in
+                        the corresponding order of the titles.
+            Returns:
+                string line formated title1:value1|title2:value2|...|titlen:valuen
+
+            Raises:
+                AssertionError if lst_titles and lst_values do not have the same number of elements
+        """
+        # we need to make sure that the two list has the same number of elements
+        assert len(lst_titles) == len(lst_values), "different number of elements in values and titles"
+        str_info = "|".join("{}:{}".format(*t) for t in zip(lst_titles, lst_values))
+        return str_info
 
     @staticmethod
     def _get_pipeline_table(obj_connection_engine):
@@ -141,15 +160,19 @@ class TableTest(Test):
         int_nb_row_ref = self._get_number_row(self.ref_connection_engine, str_table_name)
         int_nb_row_tar = self._get_number_row(self.target_connection_engine, str_table_name)
         int_variation = int(int_nb_row_ref*flt_variation)
-        result["succes"] = 0
+        result["success"] = 0
         if abs(int_nb_row_ref - int_nb_row_tar) <= int_variation: # if the test is succesful
-            result["succes"] = 1
+            result["success"] = 1
 
         #populate results with test information
-        str_info = "ref:" + str(int_nb_row_ref)+"|"+"tar:"+str(int_nb_row_tar)
-        str_info = str_info + "|var:"+str(int_nb_row_ref - int_nb_row_tar)
-        str_info = str_info + "|exp:"+str(int_variation)
-        result["info"] = str_info
+        str_info = "ref:" + str(int_nb_row_ref) + "|" + "tar:" + str(int_nb_row_tar)
+        str_info = str_info + "|var:" + str(int_nb_row_ref - int_nb_row_tar)
+        str_info = str_info + "|exp:" + str(int_variation)
+
+        lst_titles = ["ref", "tar", "var", "exp"]
+        lst_values = [str(int_nb_row_ref), str(int_nb_row_tar),
+                      str(int_nb_row_ref - int_nb_row_tar), str(int_variation)]
+        result["info"] = self._get_title_value_line(lst_titles, lst_values)
         result["table"] = str_table_name
         result["type"] = "nb_row"
         self.test_results.append(result)
@@ -165,7 +188,7 @@ class TableTest(Test):
             Returns:
                 the number of row (int)
         """
-        str_request = "select count(*) from "+str_table_name+";"
+        str_request = "SELECT COUNT(*) FROM "+str_table_name+";"
         obj_request = text(str_request)
         obj_connection = obj_connection_engine.connect()
         obj_result = obj_connection.execute(obj_request)
@@ -223,15 +246,15 @@ class TableTest(Test):
 
             ## test if the bunber of group are similar between the two datases
             result = {}
-            result["succes"] = 1
-            str_info = "grp:"+str_group_by+"|ref:"+str(len(lst_result_ref))
-            str_info = str_info + "|tar:"+str(len(lst_result_tar))
-            result["info"] = str_info
+            result["success"] = 1
+            lst_titles = ["grp", "ref", "tar"]
+            lst_values = [str_group_by, str(len(lst_result_ref)), str(len(lst_result_tar))]
+            result["info"] = self._get_title_value_line(lst_titles, lst_values)
             result["table"] = str_table_name
             result["type"] = "nb_row_grp"
             # if the number of group is not the same then faillure
             if len(lst_result_ref) != len(lst_result_tar):
-                result["succes"] = 0
+                result["success"] = 0
                 self.test_results.append(result)
                 return
 
@@ -244,21 +267,22 @@ class TableTest(Test):
                 tpl_res_ref = lst_result_ref[i]
                 tpl_res_tar = lst_result_tar[i]
                 if tpl_res_ref[1] != tpl_res_tar[1]:
-                    result["succes"] = 0
-                    result["info"] = result["info"]+"|ref_grp_val:"+tpl_res_ref[1]
-                    result["info"] = result["info"]+"|tar_grp_val:"+tpl_res_ref[2]
+                    result["success"] = 0
+                    lst_titles = ["ref_grp_val", "tar_grp_val"]
+                    lst_values = [str(tpl_res_ref[1]), str(tpl_res_ref[2])]
+                    result["info"] = self._get_title_value_line(lst_titles, lst_values)
                     self.test_results.append(result)
                     return
                 flt_variation = 0.0
                 #we authorise variation in the number of memebers belonging to each groups
                 if tpl_res_ref[1] in dic_autorised_variation:
                     flt_variation = dic_autorised_variation[lst_result_ref[i][1]]
-                if abs(tpl_res_ref[0]-tpl_res_tar[0]) > (flt_variation*tpl_res_ref[0]):
-                    result["succes"] = 0
-                    result["info"] = result["info"] + "|ref_grp_val:"+tpl_res_ref[1]
-                    result["info"] = result["info"] + "|ref_grp_nb:"+str(tpl_res_ref[0])
-                    result["info"] = result["info"] + "|tar_grp_val:"+tpl_res_tar[1]
-                    result["info"] = result["info"] + "|tar_grp_nb:"+str(tpl_res_tar[0])
+                if abs(tpl_res_ref[0] - tpl_res_tar[0]) > (flt_variation * tpl_res_ref[0]):
+                    result["success"] = 0
+                    lst_titles = ["ref_grp_val", "ref_grp_nb", "tar_grp_val", "tar_grp_nb"]
+                    lst_values = [str(tpl_res_ref[1]), str(tpl_res_ref[0]),
+                                  str(tpl_res_tar[1]), str(tpl_res_tar[0])]
+                    result["info"] = self._get_title_value_line(lst_titles, lst_values)
                     self.test_results.append(result)
                 i = i + 1
             self.test_results.append(result)
@@ -277,8 +301,8 @@ class TableTest(Test):
                 and group name is the value for a given group.
         """
         lst_result = []
-        str_request = "select count(*),"+str_group_by+" from "+str_table_name
-        str_request = str_request + " group by "+str_group_by+";"
+        str_request = "SELECT COUNT(*)," + str_group_by + " FROM " + str_table_name
+        str_request = str_request + " GROUP BY " + str_group_by + ";"
         obj_request = text(str_request)
         obj_connection = obj_connection_engine.connect()
         obj_result = obj_connection.execute(obj_request)
@@ -312,22 +336,27 @@ class TableTest(Test):
         dic_column_tar = self._get_column_values(self.target_connection_engine,
                                                  str_table_name, lst_col)
 
+
+        # in this loop we comapre the fields of each column between
+        # the reference and target db. If not similar then no succes.
         for str_column, lst_fields_ref in dic_column_ref.items():
             lst_fields_tar = dic_column_tar[str_column]
             i = 0
             result = {}
-            result["succes"] = 1
+            result["success"] = 1
             str_val_ref = ""
             str_val_tar = ""
             while i < len(lst_fields_ref):
                 if lst_fields_ref[i] != lst_fields_tar[i]:
-                    result["succes"] = 0
+                    result["success"] = 0
                     str_val_ref = lst_fields_ref[i]
                     str_val_tar = lst_fields_tar[i]
                     break
                 i = i + 1
-            str_info = "col:"+str_column+"|val_ref:"+str(str_val_ref)+"|val_tar:"+str(str_val_tar)
-            result["info"] = str_info
+
+            lst_titles = ["col", "val_ref", "val_tar"]
+            lst_values = [str_column, str_val_ref, str_val_tar]
+            result["info"] = self._get_title_value_line(lst_titles, lst_values)
             result["table"] = str_table_name
             result["type"] = "column"
             self.test_results.append(result)
@@ -362,11 +391,11 @@ class TableTest(Test):
 
         str_request = ""
         if bool_tag_all:#if bool_tag_all is true then select all collumn from the table
-            str_request = "select * from "+str_table+";"
+            str_request = "SELECT * FROM " + str_table + ";"
         elif len(lst_columns) == 1:
-            str_request = "select "+lst_columns[0]+" from "+str_table+";"
+            str_request = "SELECT " + lst_columns[0] + " FROM " + str_table + ";"
         else:
-            str_request = "select "+",".join(lst_columns)+" from "+str_table+";"
+            str_request = "SELECT " + ",".join(lst_columns) + " FROM " + str_table + ";"
 
         obj_request = text(str_request)
         obj_connection = obj_connection_engine.connect()

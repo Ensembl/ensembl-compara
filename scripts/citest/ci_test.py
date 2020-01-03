@@ -1,7 +1,5 @@
-
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the
-# EMBL-European Bioinformatics Institute
-# Copyright [2016-2019] EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016-2020] EMBL-European Bioinformatics Institute
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +29,7 @@ parser.add_argument("--url_ref", type=str,
 parser.add_argument("--test", type=str, help="JSON test file", required=True)
 parser.add_argument("--user", type=str, help="db conection user id")
 parser.add_argument("--password", type=str, help="db connection password")
-parser.add_argument("--server", type=str, help="Mysql server address")
+parser.add_argument("--server", type=str, help="MySQL server address")
 parser.add_argument("--outdir", type=str, help="out directory where to write the file",
                     default="./")
 parser.add_argument("--print", type=int,
