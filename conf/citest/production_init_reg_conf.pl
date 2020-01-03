@@ -22,29 +22,19 @@ use Bio::EnsEMBL::Compara::Utils::Registry;
 
 my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
 my $prev_release = $curr_release - 1;
+my $curr_eg_release = $ENV{'CURR_EG_RELEASE'};
+my $prev_eg_release = $curr_eg_release - 1;
 
-# ---------------------CURRENT CORE DATABASES------------------------
+# --------------------------- CORE DATABASES -----------------------------------
 
-# The majority of core databases live on staging servers:
-# Bio::EnsEMBL::Registry->load_registry_from_url(
-#    "mysql://ensro\@mysql-ens-sta-1.ebi.ac.uk:4519/$curr_release");
-Bio::EnsEMBL::Registry->load_registry_from_url(
-    "mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
 
-# Add in extra cores from genebuild server:
-# my $extra_core_dbs = {
-#     'cyprinus_carpio_german_mirror' => [ 'mysql-ens-vertannot-staging', "cyprinus_carpio_germanmirror_core_99_10" ],
-#     'cyprinus_carpio_hebao_red'     => [ 'mysql-ens-vertannot-staging', "cyprinus_carpio_hebaored_core_99_10" ],
-# };
-#
-# Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $extra_core_dbs );
-
-#---------------------COMPARA DATABASE LOCATIONS---------------------
+# ----------------------- COMPARA MASTER DATABASE ------------------------------
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas({
-    'compara_master' => [ 'mysql-ens-compara-prod-8', $ENV{'USER'} . '_compara_master_citest' ],
+    'compara_master' => [ 'mysql-ens-compara-prod-8', 'jalvarez_compara_master_citest' ],
 });
 
-# -------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 1;

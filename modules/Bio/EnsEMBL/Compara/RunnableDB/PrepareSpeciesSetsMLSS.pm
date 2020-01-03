@@ -76,16 +76,21 @@ sub fetch_input {
 sub write_output {
     my $self = shift;
 
-    my $all_gdbs = $self->param('genome_dbs');
+    my $all_gdbs = $self->genome_dbs;
+
+    my @param_names;
+    @param_names = @{$self->param('param_names')} if $self->param('param_names');
 
     if (@{$self->param('whole_method_links')}) {
         my $ss = $self->_write_ss($all_gdbs);
         foreach my $ml (@{$self->param('whole_method_links')}) {
             my $mlss = $self->_write_mlss( $ss, $ml );
+
             # The last method_link listed in whole_method_links will make
-            # the pipeline-wide mlss_id
+            # the pipeline-wide mlss_id, unless param_names have been specified
+            my $this_param_name = shift @param_names || 'mlss_id';
             $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
-                'param_name' => 'mlss_id',
+                'param_name' => $this_param_name,
                 'param_value' => $mlss->dbID
             );
         }
@@ -145,6 +150,18 @@ sub _write_mlss {
     return $mlss;
 }
 
+sub genome_dbs {
+    my $self = shift;
+
+    return $self->param('genome_dbs') unless $self->param('filter_by_mlss_id');
+
+    my $filter_mlss = $self->param('reference_dba')->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('filter_by_mlss_id'));
+    my $filter_gdbs = $filter_mlss->species_set->genome_dbs;
+    my @filtered_gdbs;
+    foreach my $gdb ( @{$self->param('genome_dbs')} ) {
+        push @filtered_gdbs, $gdb if grep { $gdb->dbID == $_->dbID } @$filter_gdbs;
+    }
+    return \@filtered_gdbs;
+}
 
 1;
-

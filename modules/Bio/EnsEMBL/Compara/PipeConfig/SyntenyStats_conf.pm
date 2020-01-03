@@ -21,9 +21,14 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf
 
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV
+
 =head1 DESCRIPTION  
 
-Calculate synteny coverage statistics across a whole division (or any Registry alias)
+Calculate synteny coverage statistics across a whole division (or any Registry alias).
 
 =cut
 
@@ -38,7 +43,6 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'division'     => 'vertebrates',
 
         'compara_db'    => 'compara_curr',
     };

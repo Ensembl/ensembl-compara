@@ -17,8 +17,6 @@ limitations under the License.
 
 =cut
 
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::AddHMMLib
@@ -29,11 +27,9 @@ Will add a symlink to the HMM library to the FTP. The library is a
 compressed tar archive that will automatically be generated if missing or
 invalid.
 
-The reference tar archive is expected in
-/nfs/production/panda/ensembl/warehouse/compara/hmms/treefam/ and will be
-named according to the template "ref_tar_path_templ". The symlink will be
-put under the dir/name "rel_ftp_tar_path". If needed, the archive will be
-generated from "hmm_library_basedir".
+The reference tar archive is given in "ref_tar_path_templ" and the symlink
+will be put under the dir/name given in "tar_ftp_path". If needed, the
+archive will be generated from "hmm_library_basedir".
 
 =cut
 
@@ -42,20 +38,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::AddHMMLib;
 use warnings;
 use strict;
 
-use File::Spec;
 use File::Basename;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
-sub param_defaults {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::param_defaults},
-
-        'ref_tar_path_templ'    => '/nfs/production/panda/ensembl/warehouse/compara/hmms/treefam/multi_division_hmm_lib.%s.tar.gz',
-        'rel_ftp_tar_path'      => 'compara/multi_division_hmm_lib.tar.gz',
-    }
-}
 
 sub run {
     my $self = shift;
@@ -90,7 +75,7 @@ sub run {
         $self->run_command($cmd, { die_on_failure => 1, });
     }
 
-    my $tar_ftp_path = File::Spec->catfile($self->param_required('dump_dir'), $self->param_required('rel_ftp_tar_path'));
+    my $tar_ftp_path = $self->param_required('tar_ftp_path');
     # Create the directory
     my $cmd1 = ['mkdir', '-p', dirname($tar_ftp_path)];
     $self->run_command($cmd1, { die_on_failure => 1, });

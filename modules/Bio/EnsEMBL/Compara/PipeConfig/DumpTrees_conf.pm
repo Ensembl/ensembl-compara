@@ -17,31 +17,21 @@ limitations under the License.
 
 =cut
 
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -host compara1 -member_type ncrna -clusterset_id murinae
-
-    By default the pipeline dumps the database named "compara_curr" in the
-    registry, but a different database can be selected with -rel_db
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -member_type ncrna -clusterset_id murinae
 
 =head1 DESCRIPTION
 
-    This pipeline dumps all the gene-trees and homologies under #base_dir#
+Pipeline to dump all the gene-trees and homologies under #base_dir#.
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
+By default, the pipeline dumps the database named "compara_curr" in the
+registry, but a different database can be selected with --rel_db.
 
 =cut
 
@@ -73,9 +63,6 @@ sub default_options {
         #'member_type'       => 'protein',
         # either 'default' or 'murinae'
         #'clusterset_id'     => 'default',
-
-        # Can be "vertebrates", "plants", etc
-        'division'    => 'vertebrates',
 
         'pipeline_name'       => $self->o('member_type').'_'.$self->o('clusterset_id').'_'.$self->o('division').'_'.$self->default_pipeline_name().'_'.$self->o('rel_with_suffix'),
         'rel_db'        => 'compara_curr',

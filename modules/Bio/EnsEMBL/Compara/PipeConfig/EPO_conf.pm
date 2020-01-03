@@ -23,36 +23,13 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_conf
 
 =head1 SYNOPSIS
 
-    #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
-
-    #3. Check all default_options, you will probably need to change the following :
-        pipeline_db (-host)
-        resource_classes
-
-    'ensembl_cvs_root_dir' - the path to the compara/hive/ensembl GIT checkouts - set as an environment variable in your shell
-    'compara_anchor_db' - database containing the anchor sequences (entered in the anchor_sequence table)
-    'compara_master' - location of your master db containing relevant info in the genome_db, dnafrag, species_set, method_link* tables
-        The dummy values - you should not need to change these unless they clash with pre-existing values associated with the pairwise alignments you are going to use
-
-    #4. Run init_pipeline.pl script:
-        Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_conf.pm
-
-    #5. Run the "beekeeper.pl ... -sync" and then " -loop" command suggested by init_pipeline.pl
-
-    #6. Fix the code when it crashes
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_conf.pm -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -species_set_name <species_set_name> -mlss_id <curr_epo_mlss_id>
 
 =head1 DESCRIPTION
 
-    This configuaration file gives defaults for mapping (using exonerate at the moment) anchors to a set of target genomes (dumped text files)
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
+This PipeConfig file gives defaults for mapping (using exonerate at the moment)
+anchors to a set of target genomes (dumped text files).
 
 =cut
 
@@ -77,9 +54,16 @@ sub default_options {
 
         'pipeline_name' => $self->o('species_set_name').'_epo_'.$self->o('rel_with_suffix'),
 
-        # mlss_ids & co. Don't touch and define "mlss_id" on the command line
-        # 'mlss_id' => 825, # epo mlss from master
+        # Databases
+        'compara_master'    => 'compara_master',
+        'ancestral_db'      => $self->o('species_set_name') . '_ancestral',
+        # Database containing the anchors for mapping
+        'compara_anchor_db' => $self->o('species_set_name') . '_epo_anchors',
+        # The previous database to reuse the anchor mappings
+        'reuse_db'          => $self->o('species_set_name') . '_epo_prev',
+
         'ancestral_sequences_name' => 'ancestral_sequences',
+        'ancestral_sequences_display_name' => 'Ancestral sequences',
 
         # Executable parameters
         'mapping_params'    => { bestn=>11, gappedextension=>"no", softmasktarget=>"no", percent=>75, showalignment=>"no", model=>"affine:local", },
@@ -87,6 +71,7 @@ sub default_options {
         'gerp_window_sizes' => [1,10,100,500], #gerp window sizes
 
         # Dump directory
+        'work_dir'              => $self->o('pipeline_dir'),
         'enredo_output_file'    => $self->o('work_dir').'/enredo_output.txt',
         'bed_dir'               => $self->o('work_dir').'/bed',
         'feature_dir'           => $self->o('work_dir').'/feature_dump',
@@ -109,6 +94,13 @@ sub default_options {
         'anc_seq_count_cut_off' => 15,
         # Usually set to 0 because we run Gerp on the EPO2X alignment instead
         'run_gerp' => 0,
+
+        # Capacities
+        'low_capacity'                 => 10,
+        'map_anchors_batch_size'       => 20,
+        'map_anchors_capacity'         => 2000,
+        'trim_anchor_align_batch_size' => 20,
+        'trim_anchor_align_capacity'   => 500,
     };
 }
 
@@ -173,9 +165,10 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
-    # Move "make_species_tree" right after "create_mlss_ss" and disconnect it from "reuse_anchor_align_factory"
+    # Move "make_species_tree" right after "create_mlss_ss" and disconnect it from "dump_mappings_to_file"
     $analyses_by_name->{'create_mlss_ss'}->{'-flow_into'} = [ 'make_species_tree' ];
-    delete $analyses_by_name->{'make_species_tree'}->{'-flow_into'};
+    $analyses_by_name->{'make_species_tree'}->{'-flow_into'} = WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ] );
+    delete $analyses_by_name->{'set_gerp_neutral_rate'}->{'-flow_into'}->{1};
 
     # Do "dump_mappings_to_file" after having trimmed the anchors
     $analyses_by_name->{'trim_anchor_align_factory'}->{'-flow_into'} = {

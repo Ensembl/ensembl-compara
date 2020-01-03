@@ -26,11 +26,12 @@ Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf -compara_db mysql://...
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -compara_db <db_alias_or_ulr>
 
 =head1 DESCRIPTION
 
-A simple pipeline to populate the high- and low- confidence levels on a Compara database
+A simple pipeline to populate the high- and low- confidence levels on a Compara database.
 
 =head1 CONTACT
 
@@ -59,10 +60,44 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'high_confidence_capacity'    => 20,             # how many mlss_ids can be processed in parallel
-        'high_confidence_batch_size'  => 10,            # how many mlss_ids' jobs can be batched together
+        'high_confidence_capacity'    => 500,          # how many mlss_ids can be processed in parallel
+        'update_homologies_capacity'  => 10,           # how many homology mlss_ids can be updated in parallel
 
+        # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
+        'threshold_levels' => [ ],
+        # 'threshold_levels' => [
+        #     {
+        #         'taxa'          => [ 'all' ],
+        #         'thresholds'    => [ undef, undef, 25 ],
+        #     },
+        # ],
+
+        'homology_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
+        'goc_files_dir'      => $self->o('homology_dumps_dir'),
+        'wga_files_dir'      => $self->o('homology_dumps_dir'),
     };
+}
+
+sub default_pipeline_name {         # Instead of ortholog_qm_alignment
+    my ($self) = @_;
+    return $self->o('collection') . '_' . $self->o('member_type') . '_high_conf';
+}
+
+sub pipeline_wide_parameters {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+
+        'range_label'        => $self->o('member_type'),
+        'pipeline_dir'       => $self->o('pipeline_dir'),
+        'homology_dumps_dir' => $self->o('homology_dumps_dir'),
+        'goc_files_dir'      => $self->o('goc_files_dir'),
+        'wga_files_dir'      => $self->o('wga_files_dir'),
+        'hashed_mlss_id'     => '#expr(dir_revhash(#mlss_id#))expr#',
+        'goc_file'           => '#goc_files_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.goc.tsv',
+        'wga_file'           => '#wga_files_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.wga.tsv',
+        'high_conf_file'     => '#pipeline_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.high_conf.tsv',
+    }
 }
 
 sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
@@ -73,6 +108,7 @@ sub pipeline_analyses {
     $pipeline_analyses->[0]->{'-input_ids'} = [
         {
             'compara_db'        => $self->o('compara_db'),
+            'member_type'       => $self->o('member_type'),
             'threshold_levels'  => $self->o('threshold_levels'),
         },
     ];
@@ -81,4 +117,3 @@ sub pipeline_analyses {
 }
 
 1;
-

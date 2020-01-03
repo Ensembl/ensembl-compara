@@ -18,7 +18,7 @@
 =pod
 
 =head1 DESCRIPTION
- 
+
  This script finds the number of collinear genomic blocks in an alignment. Information about the blocks are written to the given output file (this files tend to be 20mb and upwards in size).
  The threshold is used to determined 1: if a block is a non colinear block is big enough to be a valid breakpoint in the the genome and 2: if a block or colinear blocks should be printed to the output file.
  Also inversion bigger than the threshold are reported as breakpoints.
@@ -33,12 +33,11 @@
     -EPO		-> set if yoiu want the breakpoints from the EPO alignments
 
     -threshold   -> the size of the threshold in kilobase
-	
+
 	-DB_species	-> the species name of the database (usually 'MULTI' for ensembl production dbs)
     -output     -> output file  format : -> ref_chr_id,ref_start,ref_end,nonref_chr_id,non_ref_start,nonref_end, genomic_block_ids
     -debug      -> if you want the debug statements printed to the screen
     example run : perl get_genomic_rearrangements.pl -species1 mus_caroli -species2 mus_pahari -threshold 10 -DB_species <mice_merged> -EPO <0/1> -output trial_b -reg_conf /nfs/users/nfs_w/wa2/Mouse_rearrangement_project/mouse_reg_livemirror_03_16.conf
-
 
 =cut
 
@@ -265,7 +264,7 @@ sub update_merged_blocks{
     my $length = $whole_gblocks_hash_ref->{$block}->length();
 
 	if (%merged_hash) {
-		push $merged_hash{'blocks'}, $block;
+		push @{$merged_hash{'blocks'}}, $block;
 		$merged_hash{'length'} += $length;
 
 		if ($merged_hash{'ref_start'} > $ref_start) {

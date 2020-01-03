@@ -15,6 +15,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
 =cut
 
 =head2 SUMMARY
@@ -85,11 +86,13 @@ foreach my $testcase ( keys %$testcase_failures ) {
 # Add subtasks to the initial ticket
 $hc_task_json_ticket->[0]->{subtasks} = \@json_subtasks;
 my $components = ['Java Healthchecks', 'Production tasks'];
+my $categories = ['Bug::Internal', 'Production::Tasks'];
 # Create all JIRA tickets
 my $hc_task_keys = $jira_adaptor->create_tickets(
     -JSON_OBJ         => $hc_task_json_ticket,
     -DEFAULT_PRIORITY => 'Blocker',
     -EXTRA_COMPONENTS => $components,
+    -EXTRA_CATEGORIES => $categories,
     -DRY_RUN          => $dry_run
 );
 # Create a blocker issue link between the newly created HC ticket and the
@@ -106,13 +109,13 @@ sub parse_healthchecks {
         $line =~ s/\s+$//;
         
         my $header = 0;
-        if ($line =~ /org\.ensembl\.healthcheck\.testcase\.(\S+)/) {
+        if ($line =~ /org\.ensembl\.healthcheck\.(testcase|testgroup)\.(\S+)/) {
             $testcase = $1 . " ($timestamp)";
             $header = 1;
         }
         next unless $testcase;
         if ( $header ) {
-            $hc_failures->{$testcase} = "{panel:title=$line}\n";
+            $hc_failures->{$testcase} = "{code:title=$line}\n";
         } else {
             $hc_failures->{$testcase} .= "$line\n";
         }
@@ -120,7 +123,7 @@ sub parse_healthchecks {
     close($hc_fh);
     
     foreach my $testcase ( keys %$hc_failures ) {
-        $hc_failures->{$testcase} .= "{panel}\n";
+        $hc_failures->{$testcase} .= "{code}\n";
     }
     return $hc_failures;
 }

@@ -143,7 +143,6 @@ a) Parameters which may need changing:
 :master_db:                   Master database
 :staging_loc1,staging_loc1:   Current ensembl core databases
 :livemirror_loc:              location of previous release core databases
-:curr_core_sources_locs:      Location of core databases. These are used to fill in the 'location' field of the genome_db table.
 
 b) If you are not using a master database, remember to unset the master_db parameter:
 
@@ -156,57 +155,19 @@ Lastz_conf.pm, Lastz_primate_conf.pm or TBlat_conf.pm
 
 Options you may wish to change:
 
-a) The location of the core databases is defined in PairAligner_conf.pm and defaults to the staging servers. However, the location of the core databases can be defined specifically and the 'curr_core_dbs_locs' set. You must set curr_core_sources_locs to '' to over-ride the default values given in PairAligner_conf.pm. This is useful when using a local core database.
+a) ``ref_species``. This defines the which species in the pair to use as the reference. The other is automatically the non-reference.
 
-::
+b) ``default_chunks``. Chunking parameters for the reference and non-reference species.
 
-    'reference' => {
-            -host           => "host_name",
-            -port           => port,
-            -user           => "user_name",
-            -dbname         => "my_human_database",
-            -species        => "homo_sapiens"
-             },
-    'non_reference' => {
-                -host           => "host_name",
-                -port           => port,
-                -user           => "user_name",
-                -dbname         => "my_bushbaby_database",
-                -species        => "otolemur_garnettii"
-              },
-    'curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ],
-    'curr_core_sources_locs'=> '',
+Especially, you may want to change ``masking`` to mask the repeat elements:
 
-b) ``ref_species``. This defines the which species in the pair to use as the reference. The other is automatically the non-reference.
+* *undef*: no masking
+* ``soft``: soft masking
+* ``hard``: hard masking
 
-c) ``default_chunks``. Chunking parameters for the reference and non-reference species.
+c) ``pair_aligner_options``
 
-Especially, you may want to change ``masking_options`` to mask only certain
-type of repeat logic_name analysis, e.g.
-
-* ``'masking_options' => "{default_soft_masking => 1}"``, 0 for hard masking, comment the line for no masking
-* ``'masking_options' => "{default_soft_masking => 1, logic_names => ["RepeatMask", "Dust", "TRF"]}"``, if you want to mask only certain type of repeat logic_name analysis.
-
-Then you can add the ``masking_options_file`` parameter and point at a file
-containing a perl hash reference of the following format::
-
-    {
-    "repeat_name_L1P" => 0,
-    "repeat_class_SINE/Alu" => 0,
-    "repeat_name_L1PA7" => 0,
-    "repeat_name_L1PA3" => 0,
-    "repeat_name_PRIMA4-int" => 0
-    }
-
-You can set the masking to 0 (hard) or 1 (soft) for particular repeat_name or repeat_class as defined in the repeat_consensus
-table in the core database.
-
-If both ``masking_options_file`` and ``masking_options`` are specified, ``masking_options_file`` has priority over ``masking_options``.
-
-
-d) ``pair_aligner_options``
-
-e) ``cellular-component`` restrictions
+d) ``cellular-component`` restrictions
 
 :``only_cellular_component``: Name of the only cellular-component that should be loaded. Useful when topping up the alignment with MT. Otherwise, leave undefined
 :``mix_cellular_components``: By default, the nuclear genome is only aligned against itself, MT only against itself, etc. Switch this option on to allow cross-components alignments
@@ -311,37 +272,31 @@ Examples
 A number of example pipelines have been set up over a small region for human vs mouse and human vs rat.
 The master database is set to be a compara release for these tests and the human/mouse method_link_species_set is 601 for LASTZ_NET alignments. Since the examples use lastz, the final LASTZ_NET mlss_id will not be 601. In normal situations, the mlss_id set in the master will correspond to the mlss_id in the pipeline database. 
 
-1) Master database and a method_link_species_set. Define core databases using 'curr_core_sources_locs'.
-
-::
-
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMaster_conf -dbname hsap_mmus_pairaligner_test -password *** -dump_dir /location/of/dir/to/dump/nib_files/ -host compara3 -mlss_id 601 --ref_species homo_sapiens
-
-2) Master database and a method_link_species_set. Define core databases using registry file
+1) Master database and a method_link_species_set. Define core databases using registry file
 
 ::
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMasterReg_conf -dbname hsap_mmus_pairaligner_test -password *** -dump_dir /location/of/dir/to/dump/nib_files/ -host compara3 -mlss_id 601 -reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/reg.conf --ref_species homo_sapiens
- 
-3) Master database and a method_link_species_set. Define core databases directly in pipeline config file
+
+2) Master database and a method_link_species_set. Define core databases directly in pipeline config file
 
 ::
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMasterCore_conf -dbname hsap_mmus_pairaligner_test -password *** -dump_dir /location/of/dir/to/dump/nib_files/ -host compara3 --mlss_id 601 --ref_species homo_sapiens
 
-4) Master database and a pairwise alignment configuration file. Run human vs mouse and human vs rat alignments.
+3) Master database and a pairwise alignment configuration file. Run human vs mouse and human vs rat alignments.
 
 ::
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMasterConf_conf -dbname hsap_rodent_pairaligner_test  -password *** -conf_file $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/lastz.conf -host compara3
 
-5) No master and pairwise alignment configuration file. Run human vs mouse and human vs rat alignments
+4) No master and pairwise alignment configuration file. Run human vs mouse and human vs rat alignments
 
 ::
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzNoMasterConf_conf -dbname hsap_rodent_pairaligner_test  -password *** -conf_file $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/lastz.conf -dump_dir /location/of/dir/to/dump/nib_files/ -host compara3 
 
-6) No master. Define core databases directly in the pipeline config file
+5) No master. Define core databases directly in the pipeline config file
 
 ::
 

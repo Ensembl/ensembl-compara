@@ -61,9 +61,9 @@ sub pipeline_analyses_multiple_aligner_stats {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -rc_name    => '500Mb_job',
             -flow_into  => {
-                '2->A' => [ 'multiplealigner_stats' ],
+                '2->A' => { 'multiplealigner_stats' => INPUT_PLUS() },
                 'A->1' => [ 'block_size_distribution' ],
-                    #1  => ['gab_stats_semaphore_holder'],
+                    1  => [ 'gab_factory' ],
             },
         },
 
@@ -93,60 +93,61 @@ sub pipeline_analyses_multiple_aligner_stats {
             },
         },
 
-        {   -logic_name => 'gab_stats_semaphore_holder',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                '1->A' => ['Genomic_Align_Block_Job_Generator'],
-                'A->1' => ['backbone_summary_job_generator']
-                },
-        },
-
-        {   -logic_name => 'Genomic_Align_Block_Job_Generator',
+        {   -logic_name => 'gab_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                            'mlss_id'  => $self->o('mlss_id'),
                             'contiguous'  => 0,
+                            'step'        => 50,
                             'inputquery'  => 'SELECT DISTINCT genomic_align_block_id FROM genomic_align WHERE method_link_species_set_id = #mlss_id# AND dnafrag_id < 10000000000',
                         },
             -rc_name    => '4Gb_job',
             -flow_into  => {
-                2 => ['alignment_depth_calculator','pw_aligned_base_calculator'],
+                '2->A' => { 'per_block_stats' => { 'genomic_align_block_ids' => '#_range_list#' } },
+                '1->A' => ['genome_db_factory'],
+                'A->1' => ['block_stats_aggregator']
                 },
         },
 
-        {   -logic_name =>  'alignment_depth_calculator',
-            -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::AlignmentDepthCalculator',
-            -rc_name    => '2Gb_job',
+        {   -logic_name => 'genome_db_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'    => 'SELECT genome_db_id FROM method_link_species_set JOIN species_set USING (species_set_id) WHERE method_link_species_set_id = #mlss_id#',
+            },
             -flow_into  => {
-                2 => [ '?accu_name=aligned_positions_counter&accu_address={genome_db_id}[]&accu_input_variable=num_of_aligned_positions' ],
-                3 => [ '?accu_name=aligned_sequences_counter&accu_address={genome_db_id}[]&accu_input_variable=sum_aligned_seq'],
+                2 => [ 'genome_length_fetcher' ],
             },
         },
 
-        {   -logic_name =>  'pw_aligned_base_calculator',
-            -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::CalculatePwAlignedBases',
-            -rc_name    => '2Gb_job',
+        {   -logic_name => 'genome_length_fetcher',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'    => 'SELECT SUM(length) AS genome_length FROM dnafrag WHERE genome_db_id = #genome_db_id#',
+            },
             -flow_into  => {
-                2 => [ '?accu_name=aligned_bases_counter&accu_address={frm_genome_db_id}{to_genome_db_id}[]&accu_input_variable=no_of_aligned_bases' ]
+                2 => [ '?accu_name=genome_length&accu_address={genome_db_id}' ],
             },
         },
 
-        {   -logic_name => 'backbone_summary_job_generator',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MWGAStatsSummarizer',
-            -rc_name    => '8Gb_job',
-            -flow_into  =>  {
-                2 => 'compute_genome_alignment_depth',
-                3 => 'compute_genomes_pw_aligned_bases',
-                },
+        {   -logic_name =>  'per_block_stats',
+            -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::CalculateBlockStats',
+            -rc_name    => '2Gb_job',
+            -flow_into  => {
+                2 => [
+                    '?accu_name=num_of_positions&accu_address={genome_db_id}[]',
+                    '?accu_name=num_of_aligned_positions&accu_address={genome_db_id}[]',
+                    '?accu_name=num_of_other_seq_positions&accu_address={genome_db_id}[]',
+                ],
+                3 => [
+                    '?accu_name=depth_by_genome&accu_address={genome_db_id}{depth}[]&accu_input_variable=num_of_positions',
+                ],
+                4 => [
+                    '?accu_name=pairwise_coverage&accu_address={from_genome_db_id}{to_genome_db_id}[]&accu_input_variable=num_of_aligned_positions',
+                ],
+            },
         },
 
-        {   -logic_name => 'compute_genome_alignment_depth',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::DetermineGenomeAlignmentDepth',
-            -rc_name    => '8Gb_job',
-        },
-
-        {   -logic_name => 'compute_genomes_pw_aligned_bases',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::DetermineGenomePwAlignedBases',
+        {   -logic_name => 'block_stats_aggregator',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::BlockStatsAggregator',
             -rc_name    => '8Gb_job',
         },
 

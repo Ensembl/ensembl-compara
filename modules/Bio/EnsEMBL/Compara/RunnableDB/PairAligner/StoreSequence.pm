@@ -83,7 +83,7 @@ sub write_output {
       
       #Store sequence in Sequence table
       foreach my $chunk (@$chunk_array) {
-          $chunk->masking_options($dna_collection->masking_options);
+          $chunk->masking($dna_collection->masking);
           unless ($chunk->sequence) {
               $chunk->fetch_masked_sequence;
 	      $self->compara_dba->get_DnaFragChunkAdaptor->update_sequence($chunk);

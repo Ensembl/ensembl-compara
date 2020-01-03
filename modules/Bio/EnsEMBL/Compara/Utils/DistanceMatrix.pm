@@ -223,11 +223,13 @@ sub add_taxonomic_distance {
 
 sub prune_gdbs_from_matrix {
 	my ( $matrix, $gdb_list ) = @_;
-	
 	my @gdb_id_list = map {$_->dbID} @$gdb_list;
+	@gdb_id_list = grep { defined && m/[^\s]/ } @gdb_id_list;
 	my $submatrix = Bio::EnsEMBL::Compara::Utils::DistanceMatrix->new();
 	foreach my $gdb1 ( @gdb_id_list ) {
 		foreach my $gdb2 ( @gdb_id_list ) {
+			
+			next unless defined $matrix->distance($gdb1, $gdb2);
 			$submatrix = $submatrix->distance( $gdb1, $gdb2, $matrix->distance($gdb1, $gdb2) );
 		}
 	}
@@ -362,6 +364,16 @@ sub phylip_from_matrix {
 		$reformatted_matrix = "    $species_count\n" . $reformatted_matrix;
 	}
 	spurt($phylip_file, $reformatted_matrix);
+}
+
+sub empty_submatrix {
+    my ($self, $submatrix) = @_;
+
+    my @members = $submatrix->members;
+    foreach my $member ( @members ) {
+        return 0 unless $member =~ m/^mrg_/;
+    }
+    return 1;
 }
 
 1;

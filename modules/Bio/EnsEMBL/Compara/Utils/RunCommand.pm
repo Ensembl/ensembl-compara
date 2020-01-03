@@ -80,8 +80,9 @@ sub new_and_exec {
     print STDERR "COMMAND: $flat_cmd\n" if ($debug);
     print STDERR "TIMEOUT: $timeout\n" if ($timeout and $debug);
     $runCmd->run($timeout);
-    print STDERR "OUTPUT: ", $runCmd->out, "\n" if ($debug);
-    print STDERR "ERROR : ", $runCmd->err, "\n\n" if ($debug);
+    print STDERR $runCmd->exit_code ? 'FAILURE' : 'SUCCESS', " !\n" if ($debug);
+    print STDERR "STANDARD OUTPUT: ", $runCmd->out, "\n" if ($debug);
+    print STDERR "STANDARD ERROR : ", $runCmd->err, "\n\n" if ($debug);
 
     if (($runCmd->exit_code >= 256) or (($options->{'use_bash_pipefail'} or $use_bash_errexit) and ($runCmd->exit_code >= 128))) {
         # The process was killed. Perhaps a MEMLIMIT ? Wait a little bit to

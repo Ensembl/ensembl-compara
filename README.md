@@ -2,7 +2,6 @@
 
 [![Build Status](https://travis-ci.org/Ensembl/ensembl-compara.svg?branch=master)](https://travis-ci.org/Ensembl/ensembl-compara)
 [![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-compara/badge.svg?branch=master&service=github)](https://coveralls.io/github/Ensembl/ensembl-compara?branch=master)
-[![Documentation Status](https://readthedocs.org/projects/ensembl-compara/badge/?version=master)](http://ensembl-compara.readthedocs.io/en/master/)
 
 The Ensembl Compara API (Application Programme Interface) serves as a
 middle layer between the underlying MySQL database and the user's script.
@@ -14,8 +13,6 @@ the Ensembl website: <http://www.ensembl.org/info/docs/api/compara/>
 
 See [the main Ensembl repository](https://github.com/Ensembl/ensembl/blob/master/CONTRIBUTING.md)
 for the guidelines on user contributions.
-
-Additional documentation regarding our internal procedures are temporarily available on [Read The Docs](http://ensembl-compara.readthedocs.io/en/master/)
 
 ## Installation
 

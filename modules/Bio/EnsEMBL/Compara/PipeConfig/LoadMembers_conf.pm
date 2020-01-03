@@ -17,31 +17,19 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::LoadMembers_conf
 
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV
+
 =head1 DESCRIPTION
 
-    The pipeline will create a database with all the (gene|seq)_members of a collection of species
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
+The pipeline will create a database with all the (gene|seq)_members of a
+collection of species (by default, '<division_name>' collection).
 
 =cut
 
@@ -51,8 +39,8 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
-
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
@@ -61,6 +49,8 @@ sub default_options {
 
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
+
+        'collection' => $self->o('division'),
 
         # names of species we don't want to reuse this time
         #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
@@ -117,6 +107,10 @@ sub default_options {
         # members
         'include_nonreference' => 0,
         'include_patches'      => 0,
+
+        # list of species that got an annotation update
+        # ... assuming the same person has run both pipelines
+        'expected_updates_file' => $self->o('shared_hps_dir') . '/ensembl-metadata/annotation_updates.' . $self->o('division') . '.' . $self->o('ensembl_release') . '.list',
     };
 }
 
@@ -273,7 +267,16 @@ sub pipeline_analyses {
         {   -logic_name => 'create_reuse_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CreateReuseSpeciesSets',
             -rc_name => '2Gb_job',
-            -flow_into => [ 'nonpolyploid_genome_reuse_factory' ],
+            -flow_into  => [ 'compare_non_reused_genome_list' ],
+        },
+
+        {   -logic_name => 'compare_non_reused_genome_list',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers::CompareNonReusedGenomeList',
+            -parameters => {
+                'expected_updates_file' => $self->o('expected_updates_file'),
+                'current_release'       => $self->o('ensembl_release'),
+            },
+            -flow_into  => [ 'nonpolyploid_genome_reuse_factory' ],
         },
 
         {   -logic_name => 'check_reuse_db_is_patched',
@@ -609,4 +612,3 @@ sub pipeline_analyses {
 }
 
 1;
-

@@ -50,51 +50,14 @@ package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FilterGappyClusters;
 use strict;
 use warnings;
 
-use Data::Dumper;
-
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
-sub fetch_input {
-    my $self = shift @_;
-    $self->param( 'gene_tree_id',      $self->param_required('gene_tree_id') );
-    $self->param( 'gene_tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor );
-    $self->param( 'gene_tree',         $self->param('gene_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) ) or die "Could not fetch gene_tree with gene_tree_id='" . $self->param('gene_tree_id');
-
-    #Fetch tags
-    $self->param( 'cigar_lines', $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_gene_align_id( $self->param('gene_tree')->gene_align_id ) );
-}
+use base ('Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::AlignmentFilteringTagging');
 
 sub run {
     my $self = shift @_;
 
-    #Amount of positions on the alignment
-    my $sum = 0;
-
-    #Quantity of gaps in the alignment
-    my $gaps = 0;
-
-    foreach my $member ( @{ $self->param('cigar_lines') } ) {
-
-        #get cigar line
-        my $cigar_line = $member->cigar_line;
-
-        #break the cigar line
-        my %break = $member->get_cigar_breakout( $member->cigar_line );
-
-        #get percentages
-        foreach my $k ( sort keys %break ) {
-            $sum += $break{$k};
-            if ( $k eq "D" ) {
-                $gaps += $break{$k};
-            }
-        }
-    }
-
-    $self->param( 'gappiness', $gaps/$sum );
-    print "sum:$gaps|$sum\ngappiness:" . $self->param('gappiness') . "\n" if ( $self->debug );
-
-
-} ## end sub run
+    my $gappiness = $self->_get_gappiness();
+    $self->param( 'gappiness', $gappiness );
+}
 
 sub write_output {
     my $self = shift @_;
@@ -108,11 +71,5 @@ sub write_output {
         $self->param('gene_tree_adaptor')->change_clusterset( $self->param('gene_tree'), "filter_level_2" );
     };
 }
-
-##########################################
-#
-# internal methods
-#
-##########################################
 
 1;

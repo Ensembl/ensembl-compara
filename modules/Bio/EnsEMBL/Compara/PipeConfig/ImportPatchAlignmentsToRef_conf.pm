@@ -17,34 +17,34 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::ImportPatchAlignmentsToRef_conf
 
 =head1 SYNOPSIS
 
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportPatchAlignmentsToRef_conf -host comparaX
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportPatchAlignmentsToRef_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV
 
 =head1 DESCRIPTION
 
 Pipeline to import the alignments between patches / haplotypes and primary
-regions.  The original data are in the core database and only need to be
+regions. The original data are in the core database and only need to be
 transformed into genomic_align(_block) entries.
 
-The resulting database can be merged into the release database with copy_data.pl
+The resulting database can be merged into the release database with copy_data.pl.
 
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
+
+=head1 CONTACT
+
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 APPENDIX
 
@@ -68,12 +68,10 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         # The master database
-        'master_db'             => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
+        'master_db'             => 'compara_master',
 
         # The method_link_type for this kind of alignments
         'lastz_patch_method'    => 'LASTZ_PATCH',
-
-        'division'              => 'vertebrates',
     };
 }
 

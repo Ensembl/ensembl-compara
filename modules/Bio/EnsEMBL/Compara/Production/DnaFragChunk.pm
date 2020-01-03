@@ -50,6 +50,8 @@ use Bio::SeqIO;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
+use Bio::EnsEMBL::Compara::Locus;
+
 use Bio::EnsEMBL::Hive::Utils 'dir_revhash';
 
 use base ('Bio::EnsEMBL::Compara::Locus', 'Bio::EnsEMBL::Storable');
@@ -115,11 +117,6 @@ sub slice {
                and from the external core database associated with the slice
                it extracts the masked DNA sequence.
                Returns as Bio::Seq object.  does not cache sequence internally
-  Arg [1]    : (int or string) masked status of the sequence [optional]
-                0 or ''     = unmasked (default)
-                1 or 'hard' = masked
-                2 or 'soft' = soft-masked
-  Arg[2]     : (ref to hash) hash of masking options [optional]
   Example    : $bioseq = $chunk->get_sequence(1);
   Returntype : Bio::Seq or undef if a problem
   Exceptions : none
@@ -133,56 +130,11 @@ sub fetch_masked_sequence {
   return undef unless($self->dnafrag);
   return undef unless($self->dnafrag->genome_db);
   return undef unless(my $dba = $self->dnafrag->genome_db->db_adaptor);
-  my $seq;
-  $dba->dbc->prevent_disconnect( sub {
-      $seq = $self->_fetch_masked_sequence();
-  } );
-  return $seq;
-}
 
-sub _fetch_masked_sequence {
-  my $self = shift;
+  printf("getting %smasked sequence...\n", $self->masking ? $self->masking . ' ' : 'un') if $self->{debug};
 
-  return undef unless(my $slice = $self->slice());
-
-  my $seq;
-  my $id = $self->display_id;
-  my $masking_options;
-  my $starttime = time();
-
-  if(defined($self->masking_options)) {
-    $masking_options = eval($self->masking_options);
-    my $logic_names = $masking_options->{'logic_names'};
-    my $soft_masking = $masking_options->{'default_soft_masking'} // 1;
-    #printf("getting %s masked sequence...\n", $soft_masking ? 'SOFT' : 'HARD');
-
-    my $masked_slice = $slice->get_repeatmasked_seq($logic_names, $soft_masking, $masking_options);
-    $seq = Bio::PrimarySeq->new( -id => $id, -seq => $masked_slice->seq);
-  }
-  else {  # no masking options set, so get unmasked sequence
-    #print "getting UNMASKED sequence...\n";
-    $seq = Bio::PrimarySeq->new( -id => $id, -seq => $slice->seq);
-  }
-
-  #print ((time()-$starttime), " secs\n");
-
-  #print STDERR "sequence length : ",$seq->length,"\n";
-  $seq = $seq->seq;
-
-  if (defined $masking_options) {
-    foreach my $ae (@{$slice->get_all_AssemblyExceptionFeatures}) {
-      next unless (defined $masking_options->{"assembly_exception_type_" . $ae->type});
-      my $length = $ae->end - $ae->start + 1;
-      if ($masking_options->{"assembly_exception_type_" . $ae->type} == 0) {
-        my $padstr = 'N' x $length;
-        substr ($seq, $ae->start, $length) = $padstr;
-      } elsif ($masking_options->{"assembly_exception_type_" . $ae->type} == 1) {
-        my $padstr = lc substr ($seq, $ae->start, $length);
-        substr ($seq, $ae->start, $length) = $padstr;
-      }
-    }
-  }
-
+  my $seq = $self->get_sequence($self->masking);
+  #print STDERR "sequence length : ", length($seq),"\n";
   $self->sequence($seq);
   return $seq;
 }
@@ -277,12 +229,12 @@ sub sequence {
   return $self->{'_sequence'};
 }
 
-sub masking_options {
+sub masking {
   my $self = shift;
   if(@_) {
-    $self->{'_masking_options'} = shift;
+    $self->{'_masking'} = shift;
   }
-  return $self->{'_masking_options'};
+  return $self->{'_masking'};
 }
 
 sub dump_to_fasta_file

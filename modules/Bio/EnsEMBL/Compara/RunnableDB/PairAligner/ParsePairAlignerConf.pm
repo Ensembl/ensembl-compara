@@ -17,15 +17,6 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ParsePairAlignerConf 
@@ -49,19 +40,18 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ParsePairAlignerConf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 use File::Path;
+
+use Bio::EnsEMBL::Hive::Utils qw(stringify destringify);
+use Bio::EnsEMBL::Utils::Exception qw(throw verbose);
 
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw verbose);
-use Bio::EnsEMBL::Hive::Utils 'stringify', 'destringify';
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-use Data::Dumper;
-$Data::Dumper::Maxdepth = 2;
 
 my $verbose = 0;
 
@@ -70,7 +60,7 @@ my $verbose = 0;
 sub fetch_input {
     my ($self) = @_;
     if (!$self->param('master_db') && !$self->param('core_dbs') && !$self->param('conf_file')) {
-	throw("No master database is provided so you must set the define the location of core databases using a configuration file ('conf_file') or the 'curr_core_dbs_locs' parameter in the init_pipeline configuration file");
+	throw("No master database is provided so you must set the define the location of core databases using a configuration file ('conf_file')");
     }
 
     #Return if no conf file and trying to get the species list or there is no master_db in which case cannot call
@@ -517,16 +507,11 @@ sub get_chunking {
        $dna_collection->{'include_non_reference'} = $default_chunk->{'include_non_reference'};
    }
 
-   #set masking_option if neither masking_option_file or masking_options has been set
-   unless (defined $dna_collection->{'masking_options'} || defined $dna_collection->{'masking_options_file'}) {
-       $dna_collection->{'masking_options'} = $default_chunk->{'masking_options'};
+   #set the masking if it has not been set
+   unless (defined $dna_collection->{'masking'}) {
+       $dna_collection->{'masking'} = $default_chunk->{'masking'};
    }
    
-   #Check that only masking_options OR masking_options_file have been defined
-   if (defined $dna_collection->{'masking_options'} && defined $dna_collection->{'masking_options_file'}) {
-       throw("Both masking_options and masking_options_file have been defined. Please only define EITHER masking_options OR masking_options_file");
-   }
-
    unless (defined $dna_collection->{'dump_loc'}) {
        $dna_collection->{'dump_loc'} = $default_chunk->{'dump_loc'};
    }
@@ -564,19 +549,14 @@ sub get_default_chunking {
 	$dna_collection->{'region'} = $default_chunk->{'region'};
     }
  
-    #include_non_reference (haplotypes) and masking_options
+    #include_non_reference (haplotypes)
     unless (defined $dna_collection->{'include_non_reference'}) {
 	$dna_collection->{'include_non_reference'} = $default_chunk->{'include_non_reference'};
     }
 
-    #masking option file (currently only set for human which is always reference)
-    unless (defined $dna_collection->{'masking_options_file'}) {
-	$dna_collection->{'masking_options_file'} = $default_chunk->{'masking_options_file'};
-    }
-
-    #masking_option
-    unless (defined $dna_collection->{'masking_options'}) {
-	$dna_collection->{'masking_options'} = $default_chunk->{'masking_options'};
+    #masking
+    unless (defined $dna_collection->{'masking'}) {
+	$dna_collection->{'masking'} = $default_chunk->{'masking'};
     }
     
     #dump location (currently never set for non-reference chunking)
@@ -671,27 +651,54 @@ sub parse_defaults {
 
     	my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
     	print "\n !! PPA compara_dba : " . $self->compara_dba->url . "\n";
-    	foreach my $mlss_id ( @mlss_id_list ) {
-    		my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
-    		# read reference from method_link_species_set_tag table
-    		# this should be set prior to running the pipeline by the create_mlss script
-    		my $ref_name = $mlss->get_tagvalue('reference_species');
-    		die "Cannot find tag 'reference_species' for mlss_id $mlss_id" unless $ref_name;
-    		my $pair;
-    		my $mlss_gdbs = $mlss->species_set->genome_dbs;
-    		if ( $mlss_gdbs->[0]->name eq $ref_name ) {
-    			$pair = { 
-    				'ref_genome_db'     => $mlss_gdbs->[0],
-    				'non_ref_genome_db' => $mlss_gdbs->[1],
-    			};
-    		} else {
-    			$pair = { 
-    				'ref_genome_db'     => $mlss_gdbs->[1],
-    				'non_ref_genome_db' => $mlss_gdbs->[0],
-    			};
-    		}
-    		push @$collection, $pair;
-    	} 
+        foreach my $mlss_id ( @mlss_id_list ) {
+            my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
+            my @mlss_gdbs = $mlss->find_pairwise_reference;
+            my @pair;
+            if (scalar(@mlss_gdbs) == 1) {
+                # Self-alignment
+                if ($mlss_gdbs[0]->is_polyploid) {
+                    # To self-align a polyploid genome, align all combinations
+                    # of two different components without repetition
+                    my $components = $mlss_gdbs[0]->component_genome_dbs;
+                    while (my $gdb1 = shift @{$components}) {
+                        foreach my $gdb2 ( @{$components} ) {
+                            push @pair,
+                                 {'ref_genome_db'     => $gdb1,
+                                  'non_ref_genome_db' => $gdb2,
+                                  'principal_mlss_id' => $mlss_id};
+                        }
+                    }
+                } else {
+                    push @pair,
+                         {'ref_genome_db'     => $mlss_gdbs[0],
+                          'non_ref_genome_db' => $mlss_gdbs[0]};
+                }
+            } else {
+                # Pairwise alignment
+                # To align two polyploid genomes component by component, their
+                # genus has to be the same
+                if ($mlss_gdbs[0]->is_polyploid && $mlss_gdbs[1]->is_polyploid
+                    && ($mlss_gdbs[0]->taxon->genus eq $mlss_gdbs[1]->taxon->genus)) {
+                    my %ref_components     = map { $_->genome_component => $_ } @{$mlss_gdbs[0]->component_genome_dbs};
+                    my %non_ref_components = map { $_->genome_component => $_ } @{$mlss_gdbs[1]->component_genome_dbs};
+                    # Ignore the components that are not present in both genomes
+                    foreach my $cpnt (keys %ref_components) {
+                        if (exists $non_ref_components{$cpnt}) {
+                            push @pair,
+                                 {'ref_genome_db'     => $ref_components{$cpnt},
+                                  'non_ref_genome_db' => $non_ref_components{$cpnt},
+                                  'principal_mlss_id' => $mlss_id};
+                        }
+                    }
+                } else {
+                    push @pair,
+                         {'ref_genome_db'     => $mlss_gdbs[0],
+                          'non_ref_genome_db' => $mlss_gdbs[1]};
+                }
+            }
+            push @$collection, @pair;
+        }
     } elsif (@$genome_dbs > 2) {
 
         if ($self->param('ref_species')) {
@@ -721,11 +728,9 @@ sub parse_defaults {
             #Check that default_chunks->reference is the same as default_chunks->non_reference otherwise there will be
             #unpredictable consequences ie a dna_collection is not specific to whether the species is ref or non-ref.
 
-            my @chunk_keys_checks = ( "masking_options_file", "masking_options" );
-            foreach my $key (@chunk_keys_checks) {
-                if ($self->param('default_chunks')->{'reference'}{$key} ne $self->param('default_chunks')->{'non_reference'}{$key}) {
-                    throw "The default_chunks parameters MUST be the same for reference and non_reference. Please edit your init_pipeline config file. $key: ref=" . $self->param('default_chunks')->{'reference'}{$key} . " non_ref=" . $self->param('default_chunks')->{'non_reference'}{$key} . "\n";
-                }
+            my $default_chunks = $self->param('default_chunks');
+            if ($default_chunks->{'reference'}{'masking'} ne $default_chunks->{'non_reference'}{'masking'}) {
+                throw "The 'default_chunks' parameters MUST be the same for 'reference' and 'non_reference'. Please edit your init_pipeline config file. masking: ref=" . $default_chunks->{'reference'}{'masking'} . " non_ref=" . $default_chunks->{'non_reference'}{'masking'} . "\n";
             }
 
             #Have a collection. Make triangular matrix, ordered by genome_db_id?
@@ -775,9 +780,11 @@ sub parse_defaults {
 	%$chain_config = ('input_method_link' => $self->param('default_chain_input'),
 			  'output_method_link' => $self->param('default_chain_output'));
 	
-	my $net_config = {};
-	%$net_config = ('input_method_link' => $self->param('default_net_input'),
-			'output_method_link' => $self->param('default_net_output'));
+    my $net_config = {
+        'input_method_link'  => $self->param('default_net_input'),
+        'output_method_link' => $self->param('default_net_output'),
+        'principal_mlss_id'  => $pair->{'principal_mlss_id'},
+    };
 
 	#If used input mlss, check if the method_link_type is the same as the value defined in the conf file used in init_pipeline
 	if ($mlss && ($self->param('default_net_output')->[1] ne $mlss->method->type)) {
@@ -913,10 +920,17 @@ sub write_mlss_entry {
     my $ref_name;
     my $name;
 
-    foreach my $species_name ($ref_genome_db->name, $non_ref_genome_db->name) {
+    # Create the name of the new MLSS following the format:
+    #     <species1>[.component]-<species2>[.component] method (on <ref_species>[.component])
+    # For instance, a LASTZ_NET PWA of triticum dicoccoides vs triticum turgidum on component
+    # A, being triticum dicoccoides the reference species, the MLSS name would be:
+    #     Tdico.A-Tturg.A lastz-net (on Tdico.A)
+    foreach my $gdb ($ref_genome_db, $non_ref_genome_db) {
+        my $species_name = $gdb->name;
         $species_name =~ s/\b(\w)/\U$1/g;
-        $species_name =~ s/(\S)\S+\_/$1\./;
+        $species_name =~ s/(\S)\S+\_/$1/;
         $species_name = substr($species_name, 0, 5);
+        $species_name .= '.' . $gdb->genome_component if ($gdb->genome_component);
         $ref_name = $species_name unless ($ref_name);
         $name .= $species_name."-";
     }
@@ -1000,33 +1014,17 @@ sub write_parameters_to_mlss_tag {
             #skip dump_loc
             next if (defined $ref_dna_collection->{$key} && $key eq "dump_loc");
             
-            #Convert masking_options_file to $ENSEMBL_CVS_ROOT_DIR if defined
-            if ($key eq "masking_options_file") {
-                my $ensembl_cvs_root_dir = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
-                if ($ENV{'ENSEMBL_CVS_ROOT_DIR'} && $ref_dna_collection->{$key} =~ /^$ensembl_cvs_root_dir(.*)/) {
-                    $ref_collection->{$key} = '$ENSEMBL_CVS_ROOT_DIR'.$1;
-                }
-            } else {
                 $ref_collection->{$key} =  $ref_dna_collection->{$key};
-            }
         }
     }
     my $non_ref_collection;
     
     foreach my $key (keys %$non_ref_dna_collection) {
         if (defined $non_ref_dna_collection->{$key} && $key ne "genome_db") {
-            #Convert masking_options_file to $ENSEMBL_CVS_ROOT_DIR if defined
             #skip dump_loc
             next if (defined $non_ref_dna_collection->{$key} && $key eq "dump_loc");
             
-            if ($key eq "masking_options_file") {
-                my $ensembl_cvs_root_dir = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
-                if ($ENV{'ENSEMBL_CVS_ROOT_DIR'} && $non_ref_dna_collection->{$key} =~ /^$ensembl_cvs_root_dir(.*)/) {
-                    $non_ref_collection->{$key} = '$ENSEMBL_CVS_ROOT_DIR'.$1;
-                }
-            } else {
                 $non_ref_collection->{$key} =  $non_ref_dna_collection->{$key};
-            }
         }
     }
     #print "mlss_id " . $mlss->dbID . "\n";
@@ -1169,8 +1167,6 @@ sub create_net_dataflows {
     my ($self) = @_;
 
     my $dna_collections = $self->param('dna_collections');
-    my $pair_aligners = $self->param('pair_aligners');
-    my $chain_configs = $self->param('chain_configs');
     my $net_configs = $self->param('net_configs');
     my $all_configs = $self->param('all_configs');
     my $bidirectional = $self->param('bidirectional');
@@ -1188,6 +1184,7 @@ sub create_net_dataflows {
 
 	$mlss->store_tag("reference_species", $ref_species_name);
 	$mlss->store_tag("non_reference_species", $non_ref_species_name);
+    $mlss->store_tag("principal_mlss_id", $net_config->{'principal_mlss_id'}) if $net_config->{'principal_mlss_id'};
 
         if ($dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->genome_component) {
             $mlss->store_tag('reference_component', $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->genome_component);
@@ -1254,30 +1251,10 @@ sub create_net_dataflows {
            $self->dataflow_output_id($ref_output_hash,10);
            $self->dataflow_output_id($non_ref_output_hash,10);
        }
-
-	#Dataflow to healthcheck
-
-	if ($self->param('do_pairwise_gabs')) {
-	    my $healthcheck_hash = {};
-	    %$healthcheck_hash = ('test' => 'pairwise_gabs',
-				  'mlss_id' => $net_config->{'mlss_id'});
-	    $self->dataflow_output_id($healthcheck_hash, 8);
-	}
-
-	if ($self->param('do_compare_to_previous_db')) {
-	    my $healthcheck_hash = {};
-	    %$healthcheck_hash = ('test' => 'compare_to_previous_db',
-				  'mlss_id' => $net_config->{'mlss_id'});
-	    $self->dataflow_output_id($healthcheck_hash, 8);
-	}
-
-	#Dataflow to pairaligner_stats
-	my $pairaligner_hash = {};
-	%$pairaligner_hash = ('mlss_id' => $net_config->{'mlss_id'},
-			      'raw_mlss_id' => $pairaligner_config->{'mlss_id'});
-
-	$self->dataflow_output_id($pairaligner_hash,7);
     }
+
+    my @net_mlss_ids = map { $_->{'mlss_id'} } @{$net_configs};
+    $self->dataflow_output_id({'net_mlss_ids' => \@net_mlss_ids}, 9);
 }
 
 #
@@ -1362,7 +1339,6 @@ sub populate_database_from_core_db {
 	$genome_db = update_genome_db($species_dba, $self->compara_dba, $species->{genome_db_id});
 
     } elsif ($species->{-dbname}) {
-	#Load form curr_core_dbs_locs in default_options file
 	$species_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(%$species);
 	$genome_db = update_genome_db($species_dba, $self->compara_dba);
     }

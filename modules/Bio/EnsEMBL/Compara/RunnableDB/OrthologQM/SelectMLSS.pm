@@ -61,12 +61,11 @@ sub fetch_input {
 
 	my (@aln_mlss_ids, $dba);
 
-	my $species1_id  = $self->param_required('species1_id');
-	my $species2_id  = $self->param_required('species2_id');
-	my $aln_mlss_ids = $self->param( 'aln_mlss_ids' );
+    my $species1_id     = $self->param_required('species1_id');
+    my $species2_id     = $self->param_required('species2_id');
+    my $current_release = $self->param_required('current_release');
+    my $aln_mlss_ids    = $self->param( 'aln_mlss_ids' );
 
-	# if ( $self->param('alt_aln_db') ) { $dba = $self->get_cached_compara_dba('alt_aln_db'); }
-	# else { $dba = $self->compara_dba }
 	$dba = $self->get_cached_compara_dba('master_db');
 
 	# find GenomeDBs for each species
@@ -81,6 +80,9 @@ sub fetch_input {
 	# allow user defined MLSS ID,
 	# but check that mlss pertains to this set of species
 	if ( defined $aln_mlss_ids ) {
+        # trigger no reuse if mlss_ids have been passed by user
+        $self->param( 'new_alignment', 1 );
+
 		foreach my $mlss_id ( @{$aln_mlss_ids} ){
 			my $this_mlss = $mlss_adap->fetch_by_dbID($mlss_id);
 			die "Could not find method_link_species_set (id $mlss_id)" unless ( defined $this_mlss );
@@ -111,11 +113,11 @@ sub fetch_input {
 
 	my $common_mlss_list = $self->_overlap( $mlss_list_s1, $mlss_list_s2 );
 
-	# }
-	
+    my $new_alignment = 0;
 	if ( defined $common_mlss_list ){
 		foreach my $common_mlss ( @{ $common_mlss_list } ) {
 			next unless $common_mlss->is_current;
+            $new_alignment = 1 if $common_mlss->first_release == $current_release;
 			push( @aln_mlss_ids, $common_mlss->dbID );
 			$self->warning( "Found EPO alignment. mlss_id = " . $common_mlss->dbID );
 		}
@@ -123,6 +125,7 @@ sub fetch_input {
 	# Last, look for a LASTZ aln between pair
 	my $lastz = $mlss_adap->fetch_by_method_link_type_genome_db_ids( "LASTZ_NET", [ $species1_gdb->dbID, $species2_gdb->dbID ] );
 	if ( defined $lastz && $lastz->is_current ) {
+        $new_alignment = 1 if $lastz->first_release == $current_release;
 		push( @aln_mlss_ids, $lastz->dbID );
 		$self->warning( "Found LASTZ alignment. mlss_id = " . $lastz->dbID );
 	}
@@ -132,10 +135,8 @@ sub fetch_input {
 		$self->complete_early($exit_msg);
 	}
 
-	# Find alignment db for these mlsses
-	# $self->_map_mlss_to_db( \@aln_mlss_ids );
-
 	$self->param( 'aln_mlss_ids', \@aln_mlss_ids );
+    $self->param( 'new_alignment', $new_alignment );
 }
 
 sub write_output {
@@ -144,9 +145,10 @@ sub write_output {
 	my ( $species1_id, $species2_id ) = ( $self->param( 'species1_id' ), $self->param( 'species2_id' ) );
 
 	my $accu_dataflow = {
-		'species1_id'  => $species1_id,
-		'species2_id'  => $species2_id,
-		'aln_mlss_ids' => $self->param( 'aln_mlss_ids' ),
+        'species1_id'   => $species1_id,
+        'species2_id'   => $species2_id,
+        'aln_mlss_ids'  => $self->param( 'aln_mlss_ids' ),
+        'new_alignment' => $self->param( 'new_alignment' ),
 	};
 	$self->param('accu_dataflow', $accu_dataflow);
 
@@ -159,15 +161,6 @@ sub write_output {
 		my $this_dataflow = { mlss_id => $mlss_id, mlss_db => $mlss_db_map->{$mlss_id} };
 		$self->dataflow_output_id( $this_dataflow, 2 ); # to accu
 	}
-	
-
-	# print "FLOWING #1: ", Dumper { mlss => $self->param('aln_mlss_ids') };
-	# print "FLOWING #2: ", Dumper $dataflow;
-
-	# $self->dataflow_output_id( { mlss => $self->param('aln_mlss_ids') }, 1 ); # to write_threshold
-	# $self->dataflow_output_id( $dataflow, 2 ); # to prepare_orthologs
-	# $self->dataflow_output_id( {}, 3 );
-
 }
 
 sub _overlap {
@@ -187,7 +180,6 @@ sub _map_mlss_to_db {
 	my ( $self, $mlsses ) = @_;
 
 	my $aln_dbs = $self->param('alt_aln_dbs');
-	# my %mlss_db_mapping = %{ $self->param('mlss_db_mapping') };
 	my %mlss_db_mapping;
 
 	if ( $aln_dbs and scalar @$aln_dbs > 0 ) {
@@ -212,8 +204,6 @@ sub _map_mlss_to_db {
 			$mlss_db_mapping{$this_mlss_id} = $self->param('compara_db');
 		}
 	}
-
-	# $self->param('mlss_db_mapping', \%mlss_db_mapping);
 
 	# check all have been mapped
 	foreach my $this_mlss_id ( @$mlsses ) {

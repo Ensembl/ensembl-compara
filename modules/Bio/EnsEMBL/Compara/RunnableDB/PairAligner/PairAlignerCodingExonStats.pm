@@ -17,39 +17,50 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats
 
-=cut
-
-=head1 SYNOPSIS
-
-$module->fetch_input
-
-$module->run
-
-$module->write_output
-
-=cut
-
 =head1 DESCRIPTION
 
-This module populuates the temporary table 'statistics' with coding exon statistics (matches, mis-matches, insertions and uncovered)
+This module populuates the temporary table 'statistics' with coding exon
+statistics (matches, mis-matches, insertions and uncovered).
+
+=over
+
+=item mlss_id
+
+Mandatory. Method link species set ID.
+
+=item dnafrag_id
+
+Mandatory. DNAFrag ID of one of the genomes involved in the given mlss_id.
+
+=item genome_dumps_dir
+
+Optional. Location of the genome dumps.
+
+=item registry_dbs
+
+Optional. List of registry databases. By default, these are provided by the
+registry configuration file.
+
+=item db_conn
+
+Optional. Compara database url. By default, compara_db is used.
+
+=back
+
+=head1 EXAMPLES
+
+    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats \
+        -compara_db $(mysql-ens-compara-prod-8-ensadmin details url jalvarez_shoots_lastz) \
+        -mlss_id 1 -dnafrag_id 1
 
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with a _
+Internal methods are usually preceded with an underscore (_).
 
 =cut
 
@@ -61,6 +72,7 @@ use warnings;
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
 
 sub fetch_input {
   my ($self) = @_;
@@ -78,9 +90,6 @@ sub fetch_input {
   return 1;
 }
 
-=head2 run
-
-=cut
 
 sub run {
   my $self = shift;
@@ -100,7 +109,7 @@ sub run {
   my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor;
   my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
-  my $mlss_id = $self->param('mlss_id');
+  my $mlss_id = $self->param_required('mlss_id');
   my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
   $_->db_adaptor->dbc->disconnect_when_inactive(0) for @{ $mlss->species_set->genome_dbs };
 
@@ -213,6 +222,7 @@ sub run {
   return 1;
 }
 
+
 sub write_output {
   my $self = shift;
 
@@ -232,6 +242,7 @@ sub write_output {
   return 1;
 
 }
+
 
 sub get_coding_exon_regions {
   my ($this_slice, $regions) = @_;
@@ -356,5 +367,6 @@ sub restrict_overlapping_genomic_align_blocks {
 
     return $restricted_gabs;
 }
+
 
 1;

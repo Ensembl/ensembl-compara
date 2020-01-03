@@ -72,20 +72,20 @@ CREATE TABLE dnafrag_chunk_set (
 -- overview: The dna_collection table is
 --           linked to the dnafrag_chunk_set table and the dnafrag_chunk_set table is linked to the
 --           dnafrag_chunk table. The dna_collection table holds information relevant to all the
---           the underlying dnafrag_chunks ie dump_loc and masking_options. The description field is a unique
+--           the underlying dnafrag_chunks ie dump_loc and masking. The description field is a unique
 --           identifier and is used to retrieve a specific dna_collection since this is known prior
 --           to storage.
 -- semantics:
 --   dna_collection_id   - primary key
 --   description         - unique description of collection
 --   dump_loc            - directory path to dump files
---   masking_options     - masking options
+--   masking             - masking mode (NULL, "soft" or "hard)
 
 CREATE TABLE dna_collection (
  dna_collection_id       int(10) NOT NULL auto_increment,
  description             varchar(255),
  dump_loc                varchar(255),
- masking_options         mediumtext,
+ masking                 varchar(4),
 
  PRIMARY KEY (dna_collection_id),
  UNIQUE (description)
@@ -269,7 +269,7 @@ CREATE TABLE IF NOT EXISTS panther_annot (
 */
 
 CREATE TABLE hmm_thresholding (
-      seq_member_id             INT(10) UNSIGNED NOT NULL, # FK homology.homology_id
+      seq_member_id             INT(10) UNSIGNED NOT NULL, # FK seq_member.seq_member_id
       root_id                   INT(10) UNSIGNED NOT NULL,
       evalue                    float,
       score                     float,
@@ -302,25 +302,3 @@ CREATE TABLE `seq_member_id_current_reused_map` (
   PRIMARY KEY (stable_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
-
--- ----------------------------------------------------------------------------------
---
--- Table structure for table 'homology_id_mapping'
---
--- overview: Mapping between homology_id in this database and the previous one
---
--- semantics:
---   curr_release_homology_id  - homology_id in this database
---   prev_release_homology_id  - homology_id in the previous database
---   mlss_id                   - method_link_species_set_id of this homology
-
-CREATE TABLE homology_id_mapping (
-	curr_release_homology_id  INT UNSIGNED NOT NULL,
-	prev_release_homology_id  INT UNSIGNED NOT NULL,
-	mlss_id                   INT UNSIGNED NOT NULL,
-	PRIMARY KEY (curr_release_homology_id),
-	UNIQUE KEY (prev_release_homology_id),
-	FOREIGN KEY (curr_release_homology_id) REFERENCES homology(homology_id),
-	FOREIGN KEY (mlss_id) REFERENCES method_link_species_set(method_link_species_set_id),
-	INDEX (mlss_id)
-) ENGINE=InnoDB;

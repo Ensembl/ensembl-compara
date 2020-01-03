@@ -17,11 +17,18 @@ limitations under the License.
 
 =cut
 
-=head1 SYNOPSIS
- 
- Pipeline for dumping ancestral alleles for the FTP.
+=head1 NAME
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAncestralAlleles_conf 
+Bio::EnsEMBL::Compara::PipeConfig::DumpAncestralAlleles_conf
+
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAncestralAlleles_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV
+
+=head1 DESCRIPTION
+
+Pipeline for dumping ancestral alleles for the FTP.
 
 =cut
 
@@ -41,8 +48,6 @@ sub default_options {
 
         'compara_db' => 'compara_curr',
         'ancestral_db' => 'ancestral_curr', # assume reg_conf is up-to-date
-
-        'division'  => 'vertebrates',
 
         'dump_dir'    => $self->o('pipeline_dir'),
     };

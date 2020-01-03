@@ -16,11 +16,11 @@
 
 =pod
 
-=head2 SYNOPSIS
+=head1 SYNOPSIS
 
     verify_ancestral_dnafrags.pl -compara $(mysql-ensembl details url ensembl_compara_89) -ancestral $(mysql-ensembl details url ensembl_ancestral_89)
 
-=head2 DESCRIPTION
+=head1 DESCRIPTION
 
 Check that the ancestral dnafrags of the compara database are in sync
 with the seq_regions of the ancestral (core) database

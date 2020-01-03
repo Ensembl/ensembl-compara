@@ -35,7 +35,7 @@ Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor - Object adaptor to acces
   Connecting to the database using the Registry
 
      use Bio::EnsEMBL::Registry;
- 
+
      my $reg = "Bio::EnsEMBL::Registry";
 
       $reg->load_registry_from_db(-host=>"ensembldb.ensembl.org", -user=>"anonymous");

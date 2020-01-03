@@ -43,7 +43,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::AssignQualityScore;
 use strict;
 use warnings;
 use Data::Dumper;
-use DBI;
+use File::Basename;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -59,30 +59,45 @@ sub fetch_input {
 	foreach my $oid ( @orth_ids ){
 		$sth->execute($oid);
 		$max_quality{$oid} = $sth->fetchrow_arrayref->[0] or $self->warning("Cannot find quality scores in db for homology id $oid");
-	}
+        $max_quality{$oid} = 0 unless $max_quality{$oid}; # default to 0 like GOC
+    }
 	
 	$self->param('max_quality', \%max_quality);
 }
 
 =head2 write_output
 
-	Description: write avg score to homology table & threshold to mlss_tag
+Description: write avg score to file
 
 =cut
 
 sub write_output {
-	my $self = shift;
+    my $self = shift;
 
-        $self->dbc->disconnect_if_idle() if $self->dbc;
-
-	my $homology_adaptor = $self->compara_dba->get_HomologyAdaptor;
-	my %max_quality      = %{ $self->param('max_quality') };
-	foreach my $oid ( keys %max_quality ) {
-		$homology_adaptor->update_wga_coverage( $oid, $max_quality{$oid} );
-	} 
-
-	# disconnect from compara_db
+    # disconnect from dbs
     $self->compara_dba->dbc->disconnect_if_idle();
+    $self->dbc->disconnect_if_idle() if $self->dbc;
+    $self->data_dbc->disconnect_if_idle();
+
+    my $output_file = $self->param('output_file');
+    my $reuse_file = $self->param('reuse_file');
+    $self->run_command("mkdir -p " . dirname($output_file)) unless -d dirname($output_file);
+    my $write_mode = '>';
+    if ( -e $reuse_file ) {
+        $self->run_command("cp $reuse_file $output_file");
+        $write_mode = '>>';
+    }
+
+    my %max_quality = %{ $self->param('max_quality') };
+    open( my $out_fh, $write_mode, $output_file ) or die "Cannot open $output_file for writing";
+
+    # write header if we're starting from an empty file
+    print $out_fh "homology_id\twga_coverage\n" if ( ! -e $reuse_file );
+
+    print $out_fh join("\n", map(sprintf("%d\t%f", $_, $max_quality{$_}), keys %max_quality));
+    close $out_fh;
+
+    $self->warning("Scores written to $output_file!");
 }
 
 1;

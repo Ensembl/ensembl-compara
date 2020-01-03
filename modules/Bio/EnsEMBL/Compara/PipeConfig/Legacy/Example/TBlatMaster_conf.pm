@@ -74,15 +74,14 @@ sub default_options {
 					       'dump_dir' => $self->o('dump_dir'),
 					       #human
 					       'include_non_reference' => 1,
-					       'masking_options_file' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/human36.spec'),
 					       'region' => 'chromosome:22',
 					       #non-human
-					       #'masking_options' => '{default_soft_masking => 1}',
+					       #'masking'         => 'soft',
 					      },
    			    'non_reference' => {'chunk_size'      => 25000,
    						'group_set_size'  => 10000000,
    						'overlap'         => 10000,
-   						'masking_options' => '{default_soft_masking => 1}',
+   						'masking'         => 'soft',
                                                 'region'          => 'chromosome:15',
 					       },
    			    },

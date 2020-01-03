@@ -1851,7 +1851,7 @@ CREATE TABLE hmm_profile (
 --   KEY (hmm_id)
 
 CREATE TABLE hmm_annot (
-  seq_member_id              int(10) unsigned NOT NULL, # FK homology.homology_id
+  seq_member_id              int(10) unsigned NOT NULL,
   model_id                   varchar(40) DEFAULT NULL,
   evalue                     float,
 
@@ -1923,7 +1923,7 @@ CREATE TABLE hmm_curated_annot (
 */
 
 CREATE TABLE homology (
-  homology_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  homology_id                 bigint(20) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
   description                 ENUM('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','gene_split','between_species_paralog','alt_allele','homoeolog_one2one','homoeolog_one2many','homoeolog_many2many') NOT NULL,
   is_tree_compliant           tinyint(1) NOT NULL DEFAULT 0,
@@ -2100,7 +2100,7 @@ The alignment will be:<br />
 */
 
 CREATE TABLE homology_member (
-  homology_id                 int(10) unsigned NOT NULL, # FK homology.homology_id
+  homology_id                 bigint(20) unsigned NOT NULL, # FK homology.homology_id
   gene_member_id              int(10) unsigned NOT NULL, # FK gene_member.gene_member_id
   seq_member_id               int(10) unsigned, # FK seq_member.seq_member_id
   cigar_line                  mediumtext,
@@ -2245,11 +2245,12 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '99');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '101');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_98_99_a.sql|schema_version');
+  VALUES (NULL, 'patch', 'patch_100_101_a.sql|schema_version');
+

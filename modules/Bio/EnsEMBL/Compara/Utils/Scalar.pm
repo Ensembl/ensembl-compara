@@ -80,7 +80,7 @@ our @EXPORT_OK;
                 a boolean indicating the situation.
 
                 Undefs cause exception circumstances.
-                
+
                 You can turn assertions off by using the global variable
                 $Bio::EnsEMBL::Utils::Scalar::ASSERTIONS = 0
   Returntype  : Boolean; true if we managed to get to the return

@@ -22,20 +22,21 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Getopt::Long;
 
-my ( $help, $reg_conf, $compara_db, $ftp_root, $release );
+my ( $help, $reg_conf, $compara_db, $ftp_root, $release, $division );
 GetOptions(
     "help"         => \$help,
     "reg_conf=s"   => \$reg_conf,
     "compara_db=s" => \$compara_db,
     "ftp_root=s"   => \$ftp_root,
     "release=i"    => \$release,
+    "division=s"   => \$division,
 );
 
 $release  = $ENV{CURR_ENSEMBL_RELEASE} unless $release;
 $ftp_root = $ENV{ENSEMBL_FTP} . "/release-$release/" unless $ftp_root;
 
 die "FTP root '$ftp_root' does not exist\n" unless -e $ftp_root;
-die &helptext if ( $help || !($reg_conf && $compara_db) );
+die &helptext if ( $help || !($reg_conf && $compara_db && $division) );
 
 my %ftp_file_per_mlss = (
 	LASTZ_NET                => 'maf/ensembl-compara/pairwise_alignments/#mlss_filename#*.tar*',
@@ -44,8 +45,8 @@ my %ftp_file_per_mlss = (
 	PECAN                    => 'maf/ensembl-compara/multiple_alignments/#mlss_filename#/*',
 	GERP_CONSTRAINED_ELEMENT => 'bed/ensembl-compara/#mlss_filename#/*',
 	GERP_CONSERVATION_SCORE  => 'compara/conservation_scores/#mlss_filename#/*',
-    PROTEIN_TREES            => "xml/ensembl-compara/homologies/Compara.$release.protein_#collection_name#.alltrees.orthoxml.xml.gz",
-    NC_TREES                 => "xml/ensembl-compara/homologies/Compara.$release.ncrna_#collection_name#.alltrees.orthoxml.xml.gz",
+    PROTEIN_TREES            => "xml/ensembl-compara/homologies/Compara.$release.protein_#clusterset_id#.alltrees.orthoxml.xml.gz",
+    NC_TREES                 => "xml/ensembl-compara/homologies/Compara.$release.ncrna_#clusterset_id#.alltrees.orthoxml.xml.gz",
     ENSEMBL_ORTHOLOGUES      => 'tsv/ensembl-compara/homologies/#species_name#/*',
     ENSEMBL_PARALOGUES       => 'tsv/ensembl-compara/homologies/#species_name#/*',
     SPECIES_TREE             => 'compara/species_trees/*.nh',
@@ -81,6 +82,17 @@ foreach my $mlss ( @$mlsses ) {
         $file_for_type = "$ftp_root/$file_for_type";
         my @files = glob $file_for_type;
         die "Could not find file for MethodLinkSpeciesSet dbID " . $mlss->dbID . " (" . $mlss->name . "): $file_for_type" unless -e $files[0];
+    } elsif ( $file_for_type =~ /#clusterset_id#/ ) {
+        my $clusterset_id = 'default';
+        if ( $division eq 'vertebrates' ) {
+            my $collection_name = $mlss->species_set->name;
+            $collection_name =~ s/collection-//;
+            $clusterset_id = $collection_name;
+        }
+        $file_for_type =~ s/#clusterset_id#/$clusterset_id/;
+        $file_for_type = "$ftp_root/$file_for_type";
+        my @files = glob $file_for_type;
+        die "Could not find file for MethodLinkSpeciesSet dbID " . $mlss->dbID . " (" . $mlss->name . "): $file_for_type" unless -e $files[0];
     } elsif ( $file_for_type =~ /#species_name#/ ) {
         $file_for_type = "$ftp_root/$file_for_type";
         foreach my $gdb ( @{ $mlss->species_set->genome_dbs } ) {
@@ -101,7 +113,7 @@ print "All MethodLinkSpeciesSets found in FTP\n\n";
 sub helptext {
 	my $msg = <<HELPEND;
 
-Usage: perl verify_ftp_dumps.pl --reg_conf <registry config> --compara_db <alias or url> [--release <release number> --ftp_root <path to FTP root>]
+Usage: perl verify_ftp_dumps.pl --reg_conf <registry config> --compara_db <alias or url> -division <division> [--release <release number> --ftp_root <path to FTP root>]
 
 HELPEND
 	return $msg;

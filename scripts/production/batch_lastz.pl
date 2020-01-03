@@ -27,8 +27,6 @@ use POSIX;
 use List::Util qw(sum);
 use Number::Format 'format_number';
 
-#use Data::Dumper;
-
 my $max_jobs = 6000000; # max 6 million rows allowed in job table
 
 my @intervals_in_mbp = (
@@ -40,8 +38,9 @@ my @intervals_in_mbp = (
 );
 
 my $method_link = 'LASTZ_NET';
+my $index = 1;
 
-my ( $help, $reg_conf, $master_db, $release, $exclude_mlss_ids, $dry_run );
+my ( $help, $reg_conf, $master_db, $release, $include_mlss_ids, $exclude_mlss_ids, $dry_run );
 my ( $verbose, $very_verbose );
 $dry_run = 0;
 GetOptions(
@@ -50,12 +49,16 @@ GetOptions(
     "master_db=s"        => \$master_db,
     "release=i"          => \$release,
     "max_jobs=i"         => \$max_jobs,
+    'include_mlss_ids=s' => \$include_mlss_ids,
     'exclude_mlss_ids=s' => \$exclude_mlss_ids,
     'method_link=s'      => \$method_link,
+    'start_index=i'      => \$index,
     'dry_run|dry-run!'   => \$dry_run,
     'v|verbose!'         => \$verbose,
     'vv|very_verbose!'   => \$very_verbose,
 );
+
+die "WARNING: this script is not tailored for $method_link yet\n" if ($method_link ne 'LASTZ_NET');
 
 $release = $ENV{CURR_ENSEMBL_RELEASE} unless $release;
 die &helptext if ( $help || ($reg_conf && !$master_db) || !$master_db );
@@ -64,13 +67,15 @@ my $registry = 'Bio::EnsEMBL::Registry';
 $registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing") if $reg_conf;
 my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $master_db );
 
-# fetch the newest LASTZs and the full list of genome dbs
-print STDERR "Fetching current LASTZ_NET MethodLinkSpeciesSets from the database..\n";
+# fetch the newest method_link MLSSs
+print STDERR "Fetching current $method_link MethodLinkSpeciesSets from the database..\n";
 my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor();
 my $all_lastz_mlsses = $mlss_adaptor->fetch_all_by_method_link_type($method_link);
+my %mlss_ids_to_include = map {$_ => 1} split(/[\s,]+/, $include_mlss_ids);
 my (@current_lastz_mlsses, %genome_dbs);
 foreach my $this_mlss ( @$all_lastz_mlsses ) {
     if ((($this_mlss->first_release || 0) == $release)
+        || $mlss_ids_to_include{$this_mlss->dbID}
         || (defined $this_mlss->get_tagvalue("rerun_in_$release"))) {
 		next if defined $exclude_mlss_ids && grep { $this_mlss->dbID == $_ } split(/[\s,]+/, $exclude_mlss_ids );
 		push @current_lastz_mlsses, $this_mlss;
@@ -83,67 +88,46 @@ print STDERR "Found " . scalar(@current_lastz_mlsses) . "!\n\n";
 
 # calculate number of jobs per-mlss
 print STDERR "Estimating number of jobs for each method_link_species_set..\n";
-my (%mlss_job_count, %chunk_counts, %chain_dnafrag_counts, %chain_job_count, %dnafrag_interval_counts);
-# my %total_job_count;
+my (%mlss_job_count, %chunk_counts, %chain_job_count, %dnafrag_interval_counts, %nets_job_count);
 foreach my $mlss ( @current_lastz_mlsses ) {
-    my ($mlss_gdbs, $ref_chunk_count, $non_ref_chunk_count, $filter_dups_job_count);
-    if ( defined $mlss->get_tagvalue('species_set_size') ) {
-        $mlss_gdbs = $mlss->species_set->genome_dbs;
-        $ref_chunk_count = get_ref_chunk_count($mlss_gdbs->[0]);
-        $non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs->[0]);
-	    $filter_dups_job_count = $ref_chunk_count * 2;
-        $mlss_job_count{$mlss->dbID}->{self_aln} = 1;
+    my @mlss_gdbs = $mlss->find_pairwise_reference;
+    my ($ref_chunk_count, $non_ref_chunk_count, $filter_dups_job_count);
+    if (scalar(@mlss_gdbs) == 1) {
+        # Self-alignment
+        $ref_chunk_count = get_ref_chunk_count($mlss_gdbs[0]);
+        $non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs[0]);
+        if ($mlss_gdbs[0]->is_polyploid) {
+            my $num_components = scalar(@{$mlss_gdbs[0]->component_genome_dbs});
+            $filter_dups_job_count = $ref_chunk_count * ($num_components - 1);
+        } else {
+            $filter_dups_job_count = $ref_chunk_count * 2;
+        }
     } else {
-	    my $ref_name = $mlss->get_tagvalue('reference_species');
-	    $mlss_gdbs = $mlss->species_set->genome_dbs;
-	    if ( $mlss_gdbs->[0]->name eq $ref_name ) {
-		    $ref_chunk_count = get_ref_chunk_count($mlss_gdbs->[0]);
-		    $non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs->[1]);
-    	} else {
-		    $ref_chunk_count = get_ref_chunk_count($mlss_gdbs->[1]);
-	    	$non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs->[0]);
-    	}
-        $filter_dups_job_count = get_ref_chunk_count($mlss_gdbs->[0]) + get_ref_chunk_count($mlss_gdbs->[1]);
-
-        # my ( $dnaf_count_1, $dnaf_count_2 ) = (chains_dnafrag_count($mlss_gdbs->[0]), chains_dnafrag_count($mlss_gdbs->[1]));
-        # my ( $gdb_name_1, $gdb_name_2 ) = ( $mlss_gdbs->[0]->name, $mlss_gdbs->[1]->name );
-        # print "dnaf_count $gdb_name_1: $dnaf_count_1; dnaf_count $gdb_name_2: $dnaf_count_2\n";
-        # my $chains_job_count = $dnaf_count_1 * $dnaf_count_2;
-        my $chains_job_count = chains_job_count( $mlss );
-        # my $chains_job_count = ceil($lastz_job_count/3); # generally, this is ~0.3333 of LastZ jobs
-        $mlss_job_count{$mlss->dbID}->{aln_chains} = $chains_job_count;
-        #$total_job_count{aln_chains} += $chains_job_count;
-        $mlss_job_count{$mlss->dbID}->{aln_nets} = ceil($chains_job_count/2);
-        #$total_job_count{aln_nets} += ceil($chains_job_count/2); # alignment_nets = ~ half chain jobs
-
-        $mlss_job_count{$mlss->dbID}->{self_aln} = 0;
+        $ref_chunk_count = get_ref_chunk_count($mlss_gdbs[0]);
+        $non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs[1]);
+        # For polyploid PWAs of the same genus, this makes an overestimate as
+        # they will not share all the components
+        $filter_dups_job_count = $ref_chunk_count + get_ref_chunk_count($mlss_gdbs[1]);
     }
-
+    # Only non-polyploid self-alignments do not produce chain or net jobs
+    if ((scalar(@mlss_gdbs) > 1) || $mlss_gdbs[0]->is_polyploid) {
+        my $chains_job_count = chains_job_count( $mlss );
+        $mlss_job_count{$mlss->dbID}->{analysis}->{aln_chains} = $chains_job_count;
+        ## 3 because we need to include filter_duplicates_net, which has about 2x as many jobs as alignment_nets
+        $mlss_job_count{$mlss->dbID}->{analysis}->{aln_nets} = 3 * (nets_job_count($mlss_gdbs[0]) + nets_job_count($mlss_gdbs[1]));
+    }
 	my $lastz_job_count = ($ref_chunk_count * $non_ref_chunk_count);
-	$mlss_job_count{$mlss->dbID}->{lastz} = $lastz_job_count;
-	# $total_job_count{lastz} += $lastz_job_count;
+    $mlss_job_count{$mlss->dbID}->{analysis}->{lastz} = $lastz_job_count;
+    $mlss_job_count{$mlss->dbID}->{analysis}->{filter_dups} = $filter_dups_job_count;
+    # dump_large_nib_for_chains and coding_exon_stats are usually around the same value
+    $mlss_job_count{$mlss->dbID}->{analysis}->{dump_nibs} = $filter_dups_job_count;
+    $mlss_job_count{$mlss->dbID}->{analysis}->{exon_stats} = $filter_dups_job_count;
 
-	$mlss_job_count{$mlss->dbID}->{filter_dups} = $filter_dups_job_count;
-	# $total_job_count{filter_dups} += $filter_dups_job_count;
-	# dump_large_nib_for_chains and coding_exon_stats are usually around the same value
-	$mlss_job_count{$mlss->dbID}->{dump_nibs} = $filter_dups_job_count;
-	# $total_job_count{dump_nibs} += $filter_dups_job_count;
-	$mlss_job_count{$mlss->dbID}->{exon_stats} = $filter_dups_job_count;
-	# $total_job_count{exon_stats} += $filter_dups_job_count;
+    $mlss_job_count{$mlss->dbID}->{all} = sum(values %{ $mlss_job_count{$mlss->dbID}->{analysis} });
 
 	print_verbose_summary(\%mlss_job_count, $mlss) if ($verbose);
 	print_very_verbose_summary(\%mlss_job_count, $mlss) if ($very_verbose);
 }
-
-foreach my $k ( keys %mlss_job_count ) {
-	$mlss_job_count{$k}->{all} = sum(values %{ $mlss_job_count{$k} });
-}
-
-# print "\n\n\nMLSS JOB COUNT: \n";
-# print Dumper \%mlss_job_count;
-# print "\nTOTAL JOB COUNT: \n";
-# print Dumper \%total_job_count;
-# print "total total : " . format_number(sum(values %total_job_count)) . "\n";
 
 print STDERR "Splitting method_link_species_sets into groups (max jobs per group: $max_jobs)..\n";
 my $mlss_groups = split_mlsses(\%mlss_job_count);
@@ -173,10 +157,9 @@ my %ticket_tmpl = (
 );
 # Generate the command line of each batch and build its corresponding ticket
 my ( @cmd_list, $ticket_list );
-my $index = 1;
 foreach my $group ( @$mlss_groups ) {
-	my $this_mlss_list = '"[' . join(',', @{$group->{mlss_ids}}) . ']"';
-    my $cmd = "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::${division_pkg_name}::Lastz_conf -mlss_id_list $this_mlss_list -pipeline_name ${division}_lastz_batch${index}_${release} -host mysql-ens-compara-prod-X -port XXXX";
+    my $this_mlss_list = '"[' . join(',', @{$group->{mlss_ids}}) . ']"';
+    my $cmd = "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::${division_pkg_name}::Lastz_conf -mlss_id_list $this_mlss_list -pipeline_name ${division}_lastz_batch${index}_${release} -host mysql-ens-compara-prod-X -port XXXX";
     push @cmd_list, $cmd;
     # Copy the template and add the specific details for this group
     my $ticket = { %ticket_tmpl };
@@ -313,6 +296,22 @@ sub combined_interval_probability {
 }
 
 
+sub nets_job_count {
+	my ($genome_db) = @_;
+
+	return $nets_job_count{$genome_db->dbID} if $nets_job_count{$genome_db->dbID};
+
+	my $chunk_size = 500000;
+	my $sql = "select sum(ceil(length/$chunk_size)) from dnafrag where genome_db_id = ? and is_reference = 1";
+	# print "NETTING_SQL : '$sql' on " . $genome_db->dbID . "\n";
+	my $sth = $dba->dbc->prepare($sql);
+	$sth->execute($genome_db->dbID);
+	my ($count) = $sth->fetchrow_array();
+	$nets_job_count{$genome_db->dbID} = $count;
+	return $count;
+}
+
+
 sub split_mlsses {
 	my $mlss_job_count_full = shift;
 
@@ -320,11 +319,9 @@ sub split_mlsses {
 	# as these throw off the grouping and they end up uneven
 	my ($mlss_job_count, @large_mlss_groups);
 	foreach my $k ( keys %$mlss_job_count_full ) {
-		if ( $mlss_job_count_full->{$k}->{all} > $max_jobs ) {
+        if ( $mlss_job_count_full->{$k}->{all} > $max_jobs ) {
 			warn "\n** WARNING: MethodLinkSpeciesSet $k exceeds the max_jobs threshold alone **\n";
 			push( @large_mlss_groups, { mlss_ids => [$k], job_count => $mlss_job_count_full->{$k}->{all} } );
-        } elsif ( $mlss_job_count_full->{$k}->{self_aln} ) {
-            push( @large_mlss_groups, { mlss_ids => [$k], job_count => $mlss_job_count_full->{$k}->{all} } );
 		} else {
 			$mlss_job_count->{$k} = $mlss_job_count_full->{$k};
 		}
@@ -372,23 +369,22 @@ sub split_mlsses {
 }
 
 sub print_verbose_summary {
-	my ($mlss_job_count, $mlss) = @_;
+    my ($mlss_job_count, $mlss) = @_;
 
-	my $this_mlss_total = sum( values %{ $mlss_job_count->{$mlss->dbID} } );
-	print $mlss->name . " (dbID: " . $mlss->dbID . "):\t$this_mlss_total\n";
+    my $this_mlss_total = $mlss_job_count->{$mlss->dbID}->{all};
+    print $mlss->name . " (dbID: " . $mlss->dbID . "):\t$this_mlss_total\n";
 }
 
 sub print_very_verbose_summary {
-	my ($mlss_job_count, $mlss) = @_;
+    my ($mlss_job_count, $mlss) = @_;
 
-	print $mlss->name . " (dbID: " . $mlss->dbID . "):\n";
-	my $this_mlss_total = 0;
-	foreach my $logic_name ( keys %{ $mlss_job_count->{$mlss->dbID} } ) {
-		my $this_count = $mlss_job_count->{$mlss->dbID}->{$logic_name};
-		print "\t$logic_name:\t$this_count\n";
-		$this_mlss_total += $this_count;
-	}
-	print "Total:\t$this_mlss_total\n\n";
+    print $mlss->name . " (dbID: " . $mlss->dbID . "):\n";
+    my $this_mlss_total = $mlss_job_count->{$mlss->dbID}->{all};
+    foreach my $logic_name ( keys %{ $mlss_job_count->{$mlss->dbID}->{analysis} } ) {
+        my $this_count = $mlss_job_count->{$mlss->dbID}->{analysis}->{$logic_name};
+        print "\t$logic_name:\t$this_count\n";
+    }
+    print "Total:\t$this_mlss_total\n\n";
 }
 
 sub helptext {
@@ -397,7 +393,7 @@ sub helptext {
 Usage: batch_lastz.pl --master_db <master url or alias> --release <release number>
 
 Options:
-	master_db        : url or registry alias of master db containing LASTZ MLSSes (required)
+	master_db        : url or registry alias of master db containing the method_link MLSSes (required)
 	release          : current release version (required)
 	reg_conf         : registry config file (required if using alias for master)
 	max_jobs         : maximum number of jobs allowed per-database (default: 6,000,000)

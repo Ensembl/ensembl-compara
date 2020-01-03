@@ -29,7 +29,7 @@ Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
         pipeline_db (-host)
         resource_classes 
         ref_species (if not homo_sapiens)
-        default_chunks (especially if the reference is not human, since the masking_option_file option will have to be changed)
+        default_chunks
         pair_aligner_options (eg if doing primate-primate alignments)
         bed_dir if running pairaligner_stats module
 
@@ -51,15 +51,6 @@ Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
 
     A single pair of species can be run either by using a configuration file or by providing specific parameters on the command line and using the default values set in this file. On the command line, you must provide the LASTZ_NET mlss which should have been added to the master database (--mlss_id). The directory to which the nib files will be dumped can be specified using --dump_dir or the default location will be used. All the necessary directories are automatically created if they do not already exist. It may be necessary to change the pair_aligner_options default if, for example, doing primate-primate alignments. It is recommended that you provide a meaningful pipeline name (--pipeline_name). The username is automatically prefixed to this, ie --pipeline_name hsap_ggor_lastz_64 will create kb3_hsap_ggor_lastz_64 database. A basic healthcheck is run and output is written to the job_message table. To write to the pairwise configuration database, you must provide the correct config_url. Even if no config_url is given, the statistics are written to the job_message table.
 
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf;
@@ -71,6 +62,7 @@ use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
+
 
 sub default_options {
     my ($self) = @_;
@@ -89,6 +81,9 @@ sub default_options {
 
         #The registry file "reg_conf" is automatically set up in the parent class
         'master_db' => 'compara_master',
+
+        # Work directory
+        'dump_dir' => $self->o('pipeline_dir'),
 
 	#Reference species (if not using pairwise configuration file)
         'ref_species' => undef,
@@ -120,22 +115,20 @@ sub default_options {
     			                               #0  => do not include non_reference regions
     			                               #-1 => auto-detect (only include non_reference regions if the non-reference species is high-coverage 
     			                               #ie has chromosomes since these analyses are the only ones we keep up-to-date with the patches-pipeline)
-                'masking_options' => '{default_soft_masking => 1}',
-                # if you have a specific selection of repeat elements for the masking
-                #'masking_options_file' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/human36.spec'),
+                'masking' => 'soft',
             },
     	     #non human example
     		'default' => {
                 'chunk_size'      => 10000000,
     				'overlap'         => 0,
-    				'masking_options' => '{default_soft_masking => 1}'
+    				'masking'         => 'soft',
             }
         },
     		'non_reference' => {
             'chunk_size'      => 10100000,
     			'group_set_size'  => 10100000,
     			'overlap'         => 100000,
-    			'masking_options' => '{default_soft_masking => 1}'
+    			'masking'         => 'soft',
         },
     	},
 	    
@@ -145,38 +138,6 @@ sub default_options {
         'window_size' => 10000,
 	'filter_duplicates_rc_name' => '1Gb_job',
     'filter_duplicates_himem_rc_name' => '8Gb_job',
-
-	#
-	#Default pair_aligner
-	#
-   	'pair_aligner_method_link' => [1001, 'LASTZ_RAW'],
-	'pair_aligner_logic_name' => 'LastZ',
-	'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ',
-
-    'pair_aligner_options' => {
-        default => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', # ensembl genomes settings
-        # Vertebrata
-        7742    => 'T=1 K=3000 L=3000 H=2200 O=400 E=30 --ambiguous=iupac',
-        # Catarrhini, Sus, Carnivora
-        9526    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=' . $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/primate.matrix').' --ambiguous=iupac',
-        9822    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 --ambiguous=iupac',
-        33554   => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 --ambiguous=iupac',
-        # Vigna, Solanaceae
-        3913    => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac --matchcount=1000',
-        4070    => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac --matchcount=1000',
-        # Solanum ?
-        #4107    => 'K=5000 L=5000 H=3000 O=400 E=30 --ambiguous=iupac M=10 --notransition --step=20',
-        # Triticum aestivum ?
-        #4565    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 --ambiguous=iupac --matchcount=1000',
-        # Triticae ?
-        # 147389 => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac --identity=75..100 --matchcount=1000',
-    },
-
-        #
-        #Default chain
-        #
-	'chain_input_method_link' => [1001, 'LASTZ_RAW'],
-	'chain_output_method_link' => [1002, 'LASTZ_CHAIN'],
 
 	 #linear_gap=>medium for more closely related species, 'loose' for more distant
 	'linear_gap' => 'medium',
@@ -191,16 +152,13 @@ sub default_options {
         #
         #Default net 
         #
-	'net_input_method_link' => [1002, 'LASTZ_CHAIN'],
-        'net_output_method_link' => [16, 'LASTZ_NET'],
         'net_ref_species' => $self->o('ref_species'),  #default to ref_species
         'net_parameters' => {'max_gap'=>'50', 'chainNet_exe'=>$self->o('chainNet_exe')},
-  	'bidirectional' => 0,
+  	'bidirectional' => 1,
 
 	#
 	#Default healthcheck
 	#
-	# 'previous_db' => $self->o('livemirror_loc'),
     'previous_db' => 'compara_prev',
 	'prev_release' => 0,   # 0 is the default and it means "take current release number and subtract 1"    
 	'max_percent_diff' => 20,
@@ -227,6 +185,7 @@ sub pipeline_wide_parameters {
     return {
         'skip_pairaligner_stats'    => $self->o('skip_pairaligner_stats'),
         'patch_alignments'          => $self->o('patch_alignments'),
+        'genome_dumps_dir'          => $self->o('genome_dumps_dir'),
     };
 }
 
@@ -255,7 +214,7 @@ sub pipeline_create_commands {
 }
 
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
 
     # Needed to "load" the parameters, i.e. to force them to be substituted
@@ -271,7 +230,6 @@ sub pipeline_analyses {
 				  #'compara_url' => $self->dbconn_2_url('master_db'),
 				   'master_db' => $self->o('master_db'),
 				  'conf_file' => $self->o('conf_file'),
-				  # 'core_dbs' => $self->o('curr_core_dbs_locs'),
 				  'get_species_list' => 1,
 				  }, 
                 -input_ids => [{}],
@@ -292,7 +250,6 @@ sub pipeline_analyses {
                   'collection'     => $self->o('collection'),
                   'master_db'      => $self->o('master_db'),
                   'only_cellular_component' => $self->o('only_cellular_component'),
-
 				 },
 	       -flow_into => {
 			      1 => [ 'parse_pair_aligner_conf' ],
@@ -320,11 +277,7 @@ sub pipeline_analyses {
 				  'mlss_id' => $self->o('mlss_id'),
 				  'mlss_id_list' => $self->o('mlss_id_list'),
                                   'collection' => $self->o('collection'),
-				  # 'registry_dbs' => $self->o('curr_core_sources_locs'),
-				  # 'core_dbs' => $self->o('curr_core_dbs_locs'),
 				  'master_db' => $self->o('master_db'),
-				  'do_pairwise_gabs' => $self->o('do_pairwise_gabs'), #healthcheck options
-				  'do_compare_to_previous_db' => $self->o('do_compare_to_previous_db'), #healthcheck options
 				  'bidirectional' => $self->o('bidirectional'),
   				  }, 
 		-flow_into => {
@@ -335,8 +288,7 @@ sub pipeline_analyses {
 			       5 => [ 'create_alignment_chains_jobs' ],
 			       6 => [ 'create_alignment_nets_jobs' ],
 			       10 => [ 'create_filter_duplicates_net_jobs' ],
-			       7 => [ 'pairaligner_stats' ],
-			       8 => [ 'healthcheck' ],
+			       9 => [ 'detect_component_mlsss' ],
 			      },
 	       -rc_name => '1Gb_job',
   	    },
@@ -679,47 +631,72 @@ sub pipeline_analyses {
               -analysis_capacity => 1,
               -rc_name => '8Gb_job',
           },
-	    { -logic_name => 'healthcheck',
-	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
-	      -parameters => {
-			      'previous_db' => $self->o('previous_db'),
-			      'ensembl_release' => $self->o('ensembl_release'),
-			      'prev_release' => $self->o('prev_release'),
-			      'max_percent_diff' => $self->o('patch_alignments') ? $self->o('max_percent_diff_patches') : $self->o('max_percent_diff'),
-			     },
-	      -wait_for => [ 'set_internal_ids_collection' ],
-	      -rc_name => '1Gb_job',
-	    },
-	    { -logic_name => 'pairaligner_stats',
-	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats',
-	      -parameters => {
-			      # 'skip' => $self->o('skip_pairaligner_stats'),
-            'skip' => '#expr( #skip_pairaligner_stats# || #patch_alignments# )expr#',
-			      'dump_features' => $self->o('dump_features_exe'),
-			      'compare_beds' => $self->o('compare_beds_exe'),
-			      'create_pair_aligner_page' => $self->o('create_pair_aligner_page_exe'),
-			      'bed_dir' => $self->o('bed_dir'),
-			      'ensembl_release' => $self->o('ensembl_release'),
-			      'reg_conf' => $self->o('reg_conf'),
-			      'output_dir' => $self->o('output_dir'),
-			     },
-	      -wait_for =>  [ 'healthcheck' ],
-              -flow_into => {
-                  'A->1' => [ 'coding_exon_stats_summary' ],
-                  '2->A' => [ 'coding_exon_stats' ],
-			     },
-	      -rc_name => '2Gb_job',
-	    },
-            {   -logic_name => 'coding_exon_stats',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats',
-                -hive_capacity => 5,
-                -rc_name => '2Gb_job',
+
+        {   -logic_name => 'detect_component_mlsss',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DetectComponentMLSSs',
+            -parameters => {
+                'do_pairwise_gabs'          => $self->o('do_pairwise_gabs'),
+                'do_compare_to_previous_db' => $self->o('do_compare_to_previous_db'),
             },
-            {   -logic_name => 'coding_exon_stats_summary',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSummary',
-                -rc_name => '1Gb_job',
+            -wait_for   => [ 'set_internal_ids_collection' ],
+            -flow_into  => {
+                '3->A' => [ 'lift_to_principal' ],
+                'A->2' => [ 'run_healthchecks' ],
             },
-	   ];
+        },
+
+        {   -logic_name => 'lift_to_principal',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LiftComponentAlignments',
+        },
+
+        {   -logic_name => 'run_healthchecks',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -flow_into  => {
+                '2->A' => [ 'healthcheck' ],
+                'A->1' => [ 'pairaligner_stats' ],
+            },
+        },
+
+        {   -logic_name => 'healthcheck',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
+            -parameters => {
+                'previous_db'      => $self->o('previous_db'),
+                'ensembl_release'  => $self->o('ensembl_release'),
+                'prev_release'     => $self->o('prev_release'),
+                'max_percent_diff' => $self->o('patch_alignments') ? $self->o('max_percent_diff_patches') : $self->o('max_percent_diff'),
+            },
+            -rc_name    => '1Gb_job',
+        },
+
+        {   -logic_name => 'pairaligner_stats',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats',
+            -parameters => {
+                'skip'                     => '#expr( #skip_pairaligner_stats# || #patch_alignments# )expr#',
+                'dump_features'            => $self->o('dump_features_exe'),
+                'compare_beds'             => $self->o('compare_beds_exe'),
+                'create_pair_aligner_page' => $self->o('create_pair_aligner_page_exe'),
+                'bed_dir'                  => $self->o('bed_dir'),
+                'output_dir'               => $self->o('output_dir'),
+            },
+            -flow_into  => {
+                '2->A' => [ 'coding_exon_stats' ],
+                'A->1' => [ 'coding_exon_stats_summary' ],
+            },
+            -rc_name    => '2Gb_job',
+        },
+
+        {   -logic_name    => 'coding_exon_stats',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats',
+            -hive_capacity => 5,
+            -rc_name       => '2Gb_job',
+        },
+
+        {   -logic_name => 'coding_exon_stats_summary',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSummary',
+            -rc_name    => '1Gb_job',
+        },
+    ];
 }
+
 
 1;

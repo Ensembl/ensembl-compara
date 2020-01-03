@@ -17,11 +17,14 @@ limitations under the License.
 
 =cut
 
-=head1 SYNOPSIS
+=head1 NAME
 
-Pipeline analyses for dumping ancestral alleles for the FTP.
+Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpAncestralAlleles
 
-See Bio::EnsEMBL::Compara::PipeConfig::DumpAncestralAlleles_conf for more information.
+=head1 DESCRIPTION
+
+This PipeConfig contains the core analyses required to dump the ancestral
+alleles.
 
 =cut
 

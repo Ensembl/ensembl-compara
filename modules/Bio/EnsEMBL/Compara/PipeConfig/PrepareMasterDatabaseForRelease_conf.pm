@@ -17,40 +17,26 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf
 
-=head1 DESCRIPTION
-
-    Prepare master database for next release
-
-    WARNING: the previous reports and backups will be removed if the pipeline is
-    initialised again for the same division and release.
-
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf -division <division>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division <division> -additional_species <optional hash>
 
     #1. Update NCBI taxonomy
     #2. Add/update all species to master database
     #3. Update master database's metadata
     #4. Update collections and mlss
 
-=head1 AUTHORSHIP
+=head1 DESCRIPTION
 
-Ensembl Team. Individual contributions can be found in the GIT log.
+Prepare master database of the given division for next release.
 
-=head1 APPENDIX
+WARNING: the previous reports and backups will be removed if the pipeline is
+initialised again for the same division and release.
 
 =cut
 
@@ -60,11 +46,11 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
-
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForRelease;
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub no_compara_schema {};
 
@@ -84,6 +70,7 @@ sub default_options {
         'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
         'xml_file'            => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/mlss_conf.xml'),
         'report_file'         => $self->o( 'work_dir' ) . '/mlss_ids_' . $self->o('division') . '.list',
+        'annotation_file'     => $self->o('shared_hps_dir') . '/ensembl-metadata/annotation_updates.' . $self->o('division') . '.' . $self->o('ensembl_release') . '.list',
         'master_backup_file'  => $self->o('backups_dir') . '/compara_master_' . $self->o('division') . '.post' . $self->o('ensembl_release') . '.sql',
 
         'patch_dir'   => $self->check_dir_in_ensembl('ensembl-compara/sql/'),
@@ -94,7 +81,6 @@ sub default_options {
         'list_genomes_script'    => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
         'report_genomes_script'  => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
         'update_metadata_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
-        'assembly_patch_species' => [],
         'additional_species'     => {},
         # Example:
         #'additional_species'     => {'vertebrates' => ['homo_sapiens', 'drosophila_melanogaster'],},

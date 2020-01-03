@@ -17,35 +17,17 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::Example::LoadMembersQfo_conf
 
-=head1 DESCRIPTION
-
-Specialized version of the LoadMembers pipeline for Quest-for-Orthologs dataset
-
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LoadMembersQfo_conf
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LoadMembersQfo_conf -host mysql-ens-compara-prod-X -port XXXX
 
-=head1 AUTHORSHIP
+=head1 DESCRIPTION
 
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
+Specialized version of the LoadMembers pipeline for Quest-for-Orthologs dataset.
 
 =cut
 
@@ -64,14 +46,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-    # parameters inherited from EnsemblGeneric_conf and very unlikely to be redefined:
-        # It defaults to Bio::EnsEMBL::ApiVersion::software_version()
-        # 'ensembl_release'       => 68,
-
-    # parameters that are likely to change from execution to another:
-        # It is very important to check that this value is current (commented out to make it obligatory to specify)
-        # Change this one to allow multiple runs
-        #'rel_suffix'            => 'b',
         'division'      => 'qfo',
         'collection'    => undef,
         'master_db'     => undef,
@@ -79,27 +53,13 @@ sub default_options {
 
         'reuse_member_db' => undef,
 
-        'curr_file_sources_locs'    => [ '/homes/mateus/qfo/2019/qfo_2019.json' ],    # It can be a list of JSON files defining an additionnal set of species
-
-    # custom pipeline name, in case you don't like the default one
-        # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
-        #'pipeline_name'        => 'load_members'.$self->o('rel_with_suffix'),
-
-        # names of species we don't want to reuse this time
-        #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
-        'do_not_reuse_list'     => [ ],
-
-    # "Member" parameters:
-        # Store protein-coding genes
-        'store_coding'              => 1,
-        # Store ncRNA genes
-        'store_ncrna'               => 1,
-        # Store other genes
-        'store_others'              => 1,
+        'curr_file_sources_locs' => [ $self->o('warehouse_dir') . '/alumni/mateus/home/qfo/2019/qfo_2019.json' ],
 
     #load uniprot members for family pipeline
         'load_uniprot_members'      => 0,
 
+        # list of species that got an annotation update
+        'expected_updates_file' => undef,
     };
 }
 

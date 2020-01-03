@@ -17,19 +17,13 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::MethodLinkSpeciesSet -
-Relates every method_link with the species_set for which it has been used
+Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+
+=head1 DESCRIPTION
+
+Relates every method_link with the species_set for which it has been used.
 
 =head1 SYNOPSIS
 
@@ -61,11 +55,10 @@ GET VALUES
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_).
 
 =cut
-
-
 
 package Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
@@ -75,6 +68,7 @@ use warnings;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+
 use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::SpeciesSet;
 
@@ -407,6 +401,20 @@ sub filename {
     return $dir;
 }
 
+
+=head2 find_pairwise_reference
+
+  Example     : my $genome_dbs = $mlss->find_pairwise_reference();
+  Description : Returns the genomes involved in this pairwise-alignment MLSS. If
+                declared, the reference genome will be in first position. If
+                not, the usual reference species will be first. If none of the
+                previous conditions apply, the list is sorted alphabetically.
+                Note that for self-alignments only one genome is returned.
+  Return type : array of Bio::EnsEMBL::Compara::GenomeDB objects
+  Exceptions  : none
+
+=cut
+
 sub find_pairwise_reference {
     my $self = shift;
 
@@ -414,28 +422,41 @@ sub find_pairwise_reference {
     die "Cactus alignments are reference-free\n" if $self->method->type eq 'CACTUS_HAL_PW';
     my $genome_dbs = $self->species_set->genome_dbs;
 
-    # first, check for mlss_tags
-    my $ref_name = $self->_getter_setter_for_tag('reference_species');
-    $ref_name ||= '';
-    if ( $genome_dbs->[0]->name eq $ref_name ) {
-        return @$genome_dbs; # list was already in correct order
-    } elsif ( $genome_dbs->[1]->name eq $ref_name ) {
-        return ( $genome_dbs->[1], $genome_dbs->[0] );
-    } else {
-        # if tag is not set, always place usual references at the start
-        my @ref_list = ( 'homo_sapiens', 'mus_musculus', 'gallus_gallus', 'oryzias_latipes' );
-        foreach my $ref_name ( @ref_list ) {
+    # For self-alignments, return the single genome
+    return @$genome_dbs if (scalar(@$genome_dbs) == 1);
+
+    if ($genome_dbs->[0]->name ne $genome_dbs->[1]->name) {
+        # Genome vs genome PWA
+        my $ref_name = $self->get_value_for_tag('reference_species', '');
+        if ($genome_dbs->[0]->name eq $ref_name) {
+            return @$genome_dbs;
+        } elsif ($genome_dbs->[1]->name eq $ref_name) {
+            return ($genome_dbs->[1], $genome_dbs->[0]);
+        } else {
+            # In any other case, always place usual references first
+            my @ref_list = qw(homo_sapiens mus_musculus gallus_gallus oryzias_latipes arabidopsis_thaliana vitis_vinifera oryza_sativa);
             if ( grep { $genome_dbs->[0]->name eq $_ } @ref_list ) {
-                return @$genome_dbs; # order was already correct
+                # List already in correct order
+                return @$genome_dbs;
             } elsif ( grep { $genome_dbs->[1]->name eq $_ } @ref_list ) {
-                return ( $genome_dbs->[1], $genome_dbs->[0] );
+                return ($genome_dbs->[1], $genome_dbs->[0]);
+            } else {
+                # Return alphabetical order on name
+                @$genome_dbs = sort { $a->name cmp $b->name } @$genome_dbs;
+                return @$genome_dbs;
             }
         }
-
-        # finally, give up and return alphabetical order
-        my @sorted = @$genome_dbs;
-        @sorted = sort { $a->name cmp $b->name } @sorted;
-        return @sorted; 
+    } else {
+        # Same genome: component vs component PWA
+        my $ref_component = $self->get_value_for_tag('reference_component', '');
+        if ($genome_dbs->[0]->genome_component eq $ref_component) {
+            return @$genome_dbs;
+        } elsif ($genome_dbs->[1]->genome_component eq $ref_component) {
+            return ($genome_dbs->[1], $genome_dbs->[0]);
+        } else {
+            @$genome_dbs = sort { $a->genome_component cmp $b->genome_component } @$genome_dbs;
+            return @$genome_dbs;
+        }
     }
 }
 

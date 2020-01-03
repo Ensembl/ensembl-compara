@@ -42,33 +42,27 @@ sub pipeline_analyses_dump_homologies_posttree {
     my ($self) = @_;
     return [
         {   -logic_name => 'homology_dumps_mlss_id_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'methods'   => {
-                    'ENSEMBL_ORTHOLOGUES'  => 2,
-                    'ENSEMBL_PARALOGUES'   => 2,
-                    'ENSEMBL_HOMOEOLOGUES' => 2,
-                },
+                'inputquery' => 'SELECT method_link_species_set_id AS mlss_id, COUNT(*) as exp_line_count FROM homology GROUP BY method_link_species_set_id',
             },
             -flow_into => {
                 2 => [ 'dump_per_mlss_homologies_tsv' ],
-                # 'A->1' => [ 'dump_funnel' ],
             },
         },
-        
+
         { -logic_name => 'dump_per_mlss_homologies_tsv',
           -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpHomologiesTSV',
           -parameters => {
-              'db_conn'     => '#compara_db#',
               'hashed_id'   => '#expr(dir_revhash(#mlss_id#))expr#',
               'output_file' => '#homology_dumps_dir#/#hashed_id#/#mlss_id#.#member_type#.homologies.tsv',
               # WHERE hm1.gene_member_id < hm2.gene_member_id avoids duplication of data in different orientation
               # i.e. we don't need B->A if we already have A->B
               'input_query' => q|
                 SELECT
-                    h.homology_id, h.description AS homology_type, h.gene_tree_node_id, h.gene_tree_root_id, h.species_tree_node_id,
-                    sm1.gene_member_id, sm1.seq_member_id, sm1.stable_id as seq_member_stable_id, sm1.genome_db_id, hm1.perc_id AS identity,
-                    sm2.gene_member_id AS hom_gene_member_id, sm2.seq_member_id AS hom_seq_member_id, sm2.stable_id as hom_seq_member_stable_id, sm2.genome_db_id AS hom_genome_db_id, hm2.perc_id AS hom_identity
+                    h.homology_id, h.description AS homology_type, h.gene_tree_node_id, h.gene_tree_root_id, h.species_tree_node_id, h.is_tree_compliant,
+                    sm1.gene_member_id, sm1.seq_member_id, sm1.stable_id as seq_member_stable_id, sm1.genome_db_id, hm1.perc_id AS identity, hm1.perc_cov AS coverage,
+                    sm2.gene_member_id AS hom_gene_member_id, sm2.seq_member_id AS hom_seq_member_id, sm2.stable_id as hom_seq_member_stable_id, sm2.genome_db_id AS hom_genome_db_id, hm2.perc_id AS hom_identity, hm2.perc_cov AS hom_coverage
                 FROM
                     homology h
                     JOIN (homology_member hm1 JOIN seq_member sm1 USING (seq_member_id)) USING (homology_id)
@@ -76,12 +70,12 @@ sub pipeline_analyses_dump_homologies_posttree {
                 WHERE
                     hm1.gene_member_id < hm2.gene_member_id
                     #extra_filter#
-              |,              
+              |,
+              'healthcheck' => 'line_count',
           },
           -hive_capacity => 10,
-        },
-        
-        
+          -rc_name => '500Mb_job',
+        },  
     ];
 }
 

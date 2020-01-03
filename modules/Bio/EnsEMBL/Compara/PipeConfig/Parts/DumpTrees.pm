@@ -17,31 +17,14 @@ limitations under the License.
 
 =cut
 
-
-=pod
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf
-
-=head1 SYNOPSIS
-
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -host compara1 -member_type ncrna -clusterset_id murinae
-
-    By default the pipeline dumps the database named "compara_curr" in the
-    registry, but a different database can be selected with -rel_db
+Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpTrees
 
 =head1 DESCRIPTION
 
-    This pipeline dumps all the gene-trees and homologies under #base_dir#
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
+This PipeConfig contains the core analyses required to dump all the
+gene-trees and homologies under #base_dir#.
 
 =cut
 

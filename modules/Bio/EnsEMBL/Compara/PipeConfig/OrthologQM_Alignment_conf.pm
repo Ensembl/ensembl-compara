@@ -20,29 +20,22 @@ limitations under the License.
 =cut
 
 
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
-	Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf;
+Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf
-
     To run on a species_set:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -species_set_name <species_set_name>
-        or
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -species_set_id <species_set dbID>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -host mysql-ens-compara-prod-X -port XXXX \
+            -member_type <protein_or_ncrna> -species_set_name <species_set_name>
+
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -host mysql-ens-compara-prod-X -port XXXX \
+            -member_type <protein_or_ncrna> -species_set_id <species_set_dbID>
 
     To run on a pair of species:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -species1 homo_sapiens -species2 gallus_gallus
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -host mysql-ens-compara-prod-X -port XXXX \
+            -member_type <protein_or_ncrna> -species1 homo_sapiens -species2 gallus_gallus
 
 =head1 DESCRIPTION
 
@@ -56,6 +49,7 @@ limitations under the License.
     -compara_db         database containing relevant data (this is where final scores will be written)
     -alt_aln_dbs        take alignment objects from different sources (arrayref of urls or aliases)
     -alt_homology_db    take homology objects from a different source
+    -previous_rel_db    reuse scores from a previous release (requires homology_id_mapping files)
 
     Note: If you wish to use homologies from one database, but the alignments live in a different database,
     remember that final scores will be written to the homology table of the appointed compara_db. So, if you'd
@@ -63,15 +57,15 @@ limitations under the License.
     to specify the location of the alignments. Likewise, if you want the scores written to the alignment-containing
     database, assign it as compara_db and use the alt_homology_db option.
 
-    Examples:
-    ---------
+=head1 EXAMPLES
+
     # scores go to homology db, alignments come from afar
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -compara_db compara_alias
-        -alt_aln_dbs [mysql://ro_user@hosty_mchostface/alignments]
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -host mysql-ens-compara-prod-1 -port 4485 \
+        -compara_db compara_alias -alt_aln_dbs [mysql://ro_user@hosty_mchostface/alignments]
 
     # scores go to alignment db
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -compara_db mysql://user:pass@host/alignments
-        -alt_homology_db homology_alias
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -host mysql-ens-compara-prod-1 -port 4485 \
+        -compara_db mysql://user:pass@host/alignments -alt_homology_db homology_alias
 
 =head1 CONTACT
 
@@ -91,7 +85,6 @@ use warnings;
 use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
-# use base ( 'Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf' );
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
@@ -114,6 +107,15 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+        'master_db'   => 'compara_master',
+        # location of homology data. note: wga_score will be written here
+        'compara_db'  => '#expr( (#member_type# eq "protein") ? "compara_ptrees" : "compara_nctrees" )expr#',
+        # if alignments are not all present in compara_db, define alternative db locations
+        'alt_aln_dbs' => [
+            # list of databases with EPO or LASTZ data
+            'compara_curr',
+        ],
+
         'species1'         => undef,
         'species2'         => undef,
         'species_set_name' => undef,
@@ -123,6 +125,14 @@ sub default_options {
         # 'alt_aln_dbs'      => undef,
         'alt_aln_dbs'      => [ ],
         'alt_homology_db'  => undef,
+        
+        # homology_dumps_dir location should be changed to the homology pipeline's workdir if the pipelines are still in progress
+        # (the files only get copied to 'homology_dumps_shared_dir' at the end of each pipeline)
+        'homology_dumps_dir'        => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'), # where we read the homology dump files from
+        'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'), # where we copy the final wga files to
+
+        'wga_dumps_dir'      => $self->o('pipeline_dir'),
+        'prev_wga_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
 
         'orth_batch_size'  => 10, # set how many orthologs should be flowed at a time
     };
@@ -158,8 +168,16 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        'ensembl_release' => $self->o('ensembl_release'),
-        'orth_batch_size' => 10,
+        'ensembl_release'    => $self->o('ensembl_release'),
+        'homology_dumps_dir' => $self->o('homology_dumps_dir'),
+        'orth_batch_size'    => $self->o('orth_batch_size'),
+        'member_type'        => $self->o('member_type'),
+
+        'wga_dumps_dir'      => $self->o('wga_dumps_dir'),
+        'prev_wga_dumps_dir' => $self->o('prev_wga_dumps_dir'),
+        'previous_wga_file'  => defined $self->o('prev_wga_dumps_dir') ? '#prev_wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv' : undef,
+
+        'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_dir'),
     };
 }
 
@@ -183,9 +201,6 @@ sub pipeline_analyses {
                 'alt_aln_dbs'      => $self->o('alt_aln_dbs'),
                 'master_db'        => $self->o('master_db'),
                 'alt_homology_db'  => $self->o('alt_homology_db'),
-                'previous_rel_db'  => $self->o('previous_rel_db'),
-                'member_type'      => $self->o('member_type'),
-                'collection'       => $self->o('collection'),
             }],
         },
 
@@ -199,6 +214,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'select_mlss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::SelectMLSS',
+            -parameters => { 'current_release' => $self->o('ensembl_release') },
             -flow_into  => {
                 1 => [ '?accu_name=alignment_mlsses&accu_address=[]&accu_input_variable=accu_dataflow' ],
                 2 => [ '?accu_name=mlss_db_mapping&accu_address={mlss_id}&accu_input_variable=mlss_db' ],
@@ -218,7 +234,7 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 '3->C' => [ 'copy_genomic_align_blocks', 'copy_mlss_tags' ],
-                'C->2' => [ 'copy_funnel' ]
+                'C->2' => [ 'ortholog_mlss_factory' ]
             },
             -analysis_capacity => 1,
             -rc_name => '1Gb_job'
@@ -256,19 +272,26 @@ sub pipeline_analyses {
             -analysis_capacity => 1,
         },
 
-        {   -logic_name => 'copy_funnel',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CopyFunnel',
+        {   -logic_name => 'ortholog_mlss_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologMLSSFactory',
             -flow_into  => {
-                2 => [ 'prepare_orthologs' ],
+                '2->A' => [ 'prepare_orthologs' ],
+                'A->1' => [ 'check_file_copy' ],
             }
         },
 
         {   -logic_name => 'prepare_orthologs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs',
+            -parameters => {
+                'hashed_mlss_id'            => '#expr(dir_revhash(#orth_mlss_id#))expr#',
+                'homology_flatfile'         => '#homology_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.homologies.tsv',
+                'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.homology_id_map.tsv',
+            },
             -analysis_capacity  =>  50,  # use per-analysis limiter
             -flow_into => {
-                2 => [ 'calculate_wga_coverage' ],
-                3 => [ 'reuse_wga_score' ],
+                # these analyses will write to the same file, so a semaphore is required to prevent clashes
+                '3->A' => [ 'reuse_wga_score' ],
+                'A->2' => [ 'calculate_wga_coverage' ],
             },
             -rc_name  => '2Gb_job',
         },
@@ -277,24 +300,46 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage',
             -hive_capacity => 30,
             -batch_size => 10,
-            -parameters => { pipeline_url => $self->pipeline_url },
+            -parameters => { alignment_db => $self->pipeline_url },
             -flow_into  => {
-                '1'  => [ '?table_name=ortholog_quality' ],
-                '2'  => [ 'assign_wga_coverage_score' ],
+                3 => [ '?table_name=ortholog_quality' ],
+                2 => [ 'assign_wga_coverage_score' ],
             },
             -rc_name => '2Gb_job',
         },
 
         {   -logic_name => 'assign_wga_coverage_score',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::AssignQualityScore',
-            -hive_capacity     => 100,
-            -batch_size        => 10,
+            -parameters => {
+                'hashed_mlss_id' => '#expr(dir_revhash(#orth_mlss_id#))expr#',
+                'output_file'    => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
+                'reuse_file'     => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga_reuse.tsv',
+            },
+            -hive_capacity     => 400,
         },
 
         {   -logic_name => 'reuse_wga_score',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::ReuseWGAScore',
-            -hive_capacity     => 30,
-            -batch_size        => 10,
+            -parameters => {
+                'hashed_mlss_id'            => '#expr(dir_revhash(#orth_mlss_id#))expr#',
+                'previous_wga_file'         => '#prev_wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
+                'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.homology_id_map.tsv',
+                'output_file'               => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga_reuse.tsv',
+            },
+            -hive_capacity     => 400,
+        },
+
+        {   -logic_name  => 'check_file_copy',
+            -module      => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into   => WHEN( '#homology_dumps_shared_dir#' => 'copy_files_to_shared_loc' ),
+        },
+
+        {   -logic_name => 'copy_files_to_shared_loc',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'shared_user'               => $self->o('shared_user'),
+                'cmd'                       => 'become #shared_user# /bin/bash -c "mkdir -p #homology_dumps_shared_dir# && find #wga_dumps_dir#/ -name \'*.wga.tsv\' -exec cp {} #homology_dumps_shared_dir# \;"',
+            },
         },
 
     ];

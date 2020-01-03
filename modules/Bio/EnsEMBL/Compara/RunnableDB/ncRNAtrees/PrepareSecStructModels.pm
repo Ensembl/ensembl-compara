@@ -221,12 +221,17 @@ sub _run_bootstrap_raxml {
 
         #RAxML can be stuck ... restarting
         $self->warning( sprintf("Timeout reached, it is better to restart RAxML for 'PrepareSecStructModels'.\n") );
-        $command = $self->run_command( "cd $worker_temp_directory; rm RAxML_*; $cmd", { timeout => $self->param('cmd_max_runtime') } );
+        if (defined( $self->param('more_cores_branch') )) {
+            $command = $self->run_command( "cd $worker_temp_directory; rm RAxML_*; $cmd", { timeout => $self->param('cmd_max_runtime') } );
+        } else {
+            $command = $self->run_command( "cd $worker_temp_directory; rm RAxML_*; $cmd" );
+        }
 
-        if ( ( $command->exit_code == -2 ) && defined( $self->param('more_cores_branch') ) ) {
+        if ( $command->exit_code == -2 ) {
             $self->input_job->autoflow(0);
             $self->dataflow_output_id( undef, $self->param('more_cores_branch') );
-            $self->complete_early("Could no complete RAxML (PrepareSecStructModels) within 12 hours. Dataflowing to the next level capacity.");
+            my $n_hours = $self->param('cmd_max_runtime')/3600;
+            $self->complete_early("Could no complete RAxML (PrepareSecStructModels) within $n_hours hours. Dataflowing to the next level capacity.");
         }
     }
     if ($command->exit_code) {

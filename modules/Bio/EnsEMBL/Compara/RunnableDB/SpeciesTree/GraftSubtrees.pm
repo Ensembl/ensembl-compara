@@ -34,10 +34,6 @@ Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::GraftSubtrees
 
 Given a set of trees, graft subtrees together
 
-=head1 DESCRIPTION
-
-	
-
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::GraftSubtrees;
@@ -59,8 +55,7 @@ sub run {
 
 	my %trees = %{ $self->param('trees')}; # assuming { group_id => { tree => newick_string, outgroup => outgroup_id } }
 
-	# my $root_tree = $trees{root}->{tree};
-	my $root_tree = $trees{1}->{tree};
+	my $root_tree = $trees{$self->param_required('root_id')}->{tree};
 	my $final_tree = $root_tree;
 
 	print "original tree: $final_tree\n" if $self->debug;
@@ -90,9 +85,11 @@ sub run {
 	}
 
 	# do final reroot on overall outgroup
-	my $overall_outgroup = $self->param('outgroup_genome_db_id');
+	my $overall_outgroup = $self->param('outgroup_id');
 	$final_tree = $self->_root_newick_on_outgroup( $final_tree, "gdb$overall_outgroup" ) if defined $overall_outgroup;
-
+  
+	die "Final tree is empty" if $final_tree eq "";
+	
 	print "ultimate tree (?) : $final_tree\n\n";
 
 	$self->param('final_tree', $final_tree);

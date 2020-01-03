@@ -17,18 +17,19 @@ limitations under the License.
 
 =cut
 
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf
+
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf -host mysql-ens-compara-prod-X -port XXXX \
+         -division $COMPARA_DIV -dump_dir <path> -updated_mlss_ids <optional> -ancestral_db <optional>
 
 =head1 DESCRIPTION
 
 The PipeConfig file for the pipeline that performs FTP dumps of everything required for a
 given release. It will detect which pipelines have been run and dump anything new.
-
-Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf -host mysql-ens-compara-prod-X -port XXXX -updated_mlss_ids <optional>
 
 =cut
 
@@ -37,9 +38,6 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf;
 
 use strict;
 use warnings;
-use Data::Dumper;
-
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpTrees;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpMultiAlign;
@@ -47,6 +45,8 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpSpeciesTrees;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpAncestralAlleles;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConstrainedElements;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConservationScores;
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
@@ -64,7 +64,7 @@ sub default_options {
         #'ftp_root'     => '/gpfs/nobackup/ensembl/carlac/fake_ftp', # Fake e92 FTP used for testing in e93
 
         'compara_db'   => 'compara_curr', # can be URL or reg alias
-        'ancestral_db' => 'ancestral_curr',
+        'ancestral_db' => undef,
 
         # were there lastz patches this release? pass hive pipeline urls if yes, pass undef if no
         #  'lastz_patch_dbs' => [
@@ -91,8 +91,6 @@ sub default_options {
 
 
     	# general settings
-        'division'        => 'vertebrates',
-        'dump_dir'        => '#dump_root#/release-#curr_release#',
 		'lastz_dump_path' => 'maf/ensembl-compara/pairwise_alignments', # where, from the FTP root, is the LASTZ dumps?
         'reuse_prev_rel'  => 1, # copy symlinks from previous release dumps
         #'updated_mlss_ids' => [1142,1143,1134,1141], #the list of mlss_ids that we have re_ran/updated and cannot be detected through first_release
@@ -194,6 +192,7 @@ sub pipeline_wide_parameters {
         'ftp_root'        => $self->o('ftp_root'),
         'division'        => $self->o('division'),
         'genome_dumps_dir'=> $self->o('genome_dumps_dir'),
+        'warehouse_dir'   => $self->o('warehouse_dir'),
 
         # tree params
         'dump_trees_capacity' => $self->o('dump_trees_capacity'),
@@ -342,6 +341,8 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::AddHMMLib',
             -parameters => {
                 'shared_user'   => $self->o('shared_user'),
+                'ref_tar_path_templ' => '#warehouse_dir#/hmms/treefam/multi_division_hmm_lib.%s.tar.gz',
+                'tar_ftp_path'       => '#dump_dir#/compara/multi_division_hmm_lib.tar.gz',
             },
         },
 

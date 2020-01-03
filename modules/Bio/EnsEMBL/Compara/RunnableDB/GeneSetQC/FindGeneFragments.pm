@@ -61,6 +61,9 @@ use strict;
 use warnings;
 use Data::Dumper;
 use List::Util qw( min max );
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
+use Bio::EnsEMBL::Hive::Utils qw(dir_revhash);
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 param_defaults
@@ -92,7 +95,7 @@ sub fetch_input {
   # get the seq_member_id of the split_genes
   unless($self->param_required('gene_status') eq 'orphaned') { 
     my %split_genes = map{$_ => 1} @{$self->data_dbc->db_handle->selectcol_arrayref('SELECT seq_member_id from gene_member_qc where status = "split-gene" AND genome_db_id= ?', undef, $self->param_required('genome_db_id') )};
-    print Dumper(%split_genes) if $self->debug(); 
+    print Dumper \%split_genes if $self->debug(); 
     $self->param('split_genes_hash', \%split_genes);
     $self->compara_dba->dbc->disconnect_if_idle;
   }
@@ -127,52 +130,91 @@ sub run {
         }
     }
     elsif ($self->param_required('gene_status') eq 'orphaned') {
-      $sql = 'SELECT mg.stable_id FROM gene_member mg LEFT JOIN gene_tree_node gtn ON (mg.canonical_member_id = gtn.seq_member_id) WHERE gtn.seq_member_id IS NULL AND mg.genome_db_id = ?';
+      $sql = 'SELECT mg.stable_id, mg.canonical_member_id FROM gene_member mg LEFT JOIN gene_tree_node gtn ON (mg.canonical_member_id = gtn.seq_member_id) WHERE gtn.seq_member_id IS NULL AND mg.genome_db_id = ?';
       my $sth = $self->compara_dba->dbc->prepare($sql);
       $sth->execute($genome_db_id);
 
       while (my $row = $sth->fetchrow_hashref()) {
-        $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'gene_member_stable_id' => $row->{stable_id}, 'status' => "orphaned-gene" }, 2);
+        $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'gene_member_stable_id' => $row->{stable_id}, 'seq_member_id' => $row->{canonical_member_id}, 'status' => "orphaned-gene" }, 2);
       }
 
     } else {
-      my $coverage_threshold  = $self->param_required('coverage_threshold');
-      my $species_threshold   = $self->param_required('species_threshold');
-      my $split_genes         = $self->param_required('split_genes_hash');
-      my $status;
-      if ($self->param_required('gene_status') eq 'longer') {
-        $status = "long-gene";
-        $sql = 'SELECT gm1.stable_id, hm1.gene_member_id, hm1.seq_member_id, COUNT(*) AS n_orth, COUNT(DISTINCT sm2.genome_db_id) AS n_species, AVG(hm1.perc_cov) AS avg_cov 
-                    FROM homology_member hm1 JOIN gene_member gm1 USING (gene_member_id) 
-                    JOIN (homology_member hm2 JOIN seq_member sm2 USING (seq_member_id)) USING (homology_id) 
-                    WHERE gm1.genome_db_id = ? AND hm1.gene_member_id != hm2.gene_member_id AND sm2.genome_db_id != gm1.genome_db_id GROUP BY hm1.gene_member_id';
-      } elsif ($self->param_required('gene_status') eq 'shorter') {
-        $status = "short-gene";
-        $sql = 'SELECT gm1.stable_id, hm1.gene_member_id, hm1.seq_member_id, COUNT(*) AS n_orth, COUNT(DISTINCT sm2.genome_db_id) AS n_species, AVG(hm2.perc_cov) AS avg_cov 
-                  FROM homology_member hm1 JOIN gene_member gm1 USING (gene_member_id) 
-                  JOIN (homology_member hm2 JOIN seq_member sm2 USING (seq_member_id)) USING (homology_id) 
-                  WHERE gm1.genome_db_id = ? AND hm1.gene_member_id != hm2.gene_member_id AND sm2.genome_db_id != gm1.genome_db_id GROUP BY hm1.gene_member_id';
-      } 
+        my $coverage_threshold  = $self->param_required('coverage_threshold');
+        my $species_threshold   = $self->param_required('species_threshold');
+        my $split_genes         = $self->param_required('split_genes_hash');
     
-      my $sth = $self->compara_dba->dbc->prepare($sql);
-      $sth->execute($genome_db_id);
-      while (my $row = $sth->fetchrow_hashref()) {
+        # first, fetch gene_member stable_ids
+        print "Fetching gene_member stable_id info\n" if $self->debug;
+        my $gm_sql = "SELECT gene_member_id, stable_id FROM gene_member WHERE genome_db_id = ?";
+        my $gm_sth = $self->compara_dba->dbc->prepare($gm_sql);
+        $gm_sth->execute($genome_db_id);
+        my $gm_stable_id_map = $gm_sth->fetchall_hashref('gene_member_id');
 
-      # Split genes are known to be fragments, but they have been merged with their counterpart
-        next if $split_genes->{$row->{seq_member_id}};
-
-      # We'll only consider the genes that have a low average coverage over a minimum number of species
-#      print Dumper($row->{n_species});
-#     print "  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
-#     die;
-        next if $row->{avg_cov} >= $coverage_threshold;
-        next if $row->{n_species} < $species_threshold;
-
-
-        warn join("\t", $row->{stable_id}, $row->{n_species}, $row->{n_orth}, $row->{avg_cov}), "\n" if $self->debug(); 
-        $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'gene_member_stable_id' => $row->{stable_id}, 'seq_member_id' => $row->{seq_member_id}, 'n_species' => $row->{n_species}, 'n_orth' => $row->{n_orth}, 'avg_cov' => $row->{avg_cov}, 'status' => $status }, 2);
-
-      }
+        my $coverage_stats;
+        print "Finding homology dump files\n" if $self->debug;
+        my $homology_dump_files = $self->_get_homology_dumps_for_genome_db($genome_db_id);
+        print Dumper $homology_dump_files if $self->debug;
+        foreach my $hom_dump ( @$homology_dump_files ) {
+            open( my $hdh, '<', $hom_dump ) or die "Cannot open $hom_dump for reading\n";
+            my $header = <$hdh>;
+            my @head_cols = split(/\s+/, $header);
+            
+            # grab the first line of the file to check whether the genome_db of interest
+            # is genome_db_id or hom_genome_db_id - we don't know which it will be.
+            # we'll either use genome_db_id, seq_member_id, etc *OR* hom_genome_db_id, hom_seq_member_id, etc
+            my $line = <$hdh>;
+            my $row = map_row_to_header( $line, \@head_cols );
+            my ( $this, $that ) = $row->{genome_db_id} == $genome_db_id ? ('', 'hom_') : ('hom_', '');
+            
+            while ( $line ) {
+                $row = map_row_to_header( $line, \@head_cols );
+                
+                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{genome_db_id}  = $row->{$this . 'genome_db_id'};
+                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{seq_member_id} = $row->{$this . 'seq_member_id'};
+                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{n_orth}++;
+                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{genome_dbs}->{$row->{$that . 'genome_db_id'}} = 1;
+                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{total_cov} += $row->{$this . 'coverage'};
+                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{total_hom_cov} += $row->{$that . 'coverage'};
+                
+                $line = <$hdh>;
+            }
+            close $hdh;
+        }
+        
+        foreach my $gm_id ( keys %$coverage_stats ) {
+            my $these_stats = $coverage_stats->{$gm_id};
+            # check species
+            my $n_species = scalar(keys %{$these_stats->{genome_dbs}});
+            next if $n_species < $species_threshold;
+            
+            # check coverage for long or short genes
+            my ($gene_status, $this_avg_cov);
+            my $avg_cov = $these_stats->{total_cov}/$these_stats->{n_orth};
+            my $avg_hom_cov = $these_stats->{total_hom_cov}/$these_stats->{n_orth};
+            if ( $avg_cov <= $coverage_threshold && $avg_hom_cov <= $coverage_threshold ) {
+                # if both coverages are low, it's probably just a distant homology
+                next; # do not report these
+            } elsif ( $avg_cov <= $coverage_threshold ) {
+                $gene_status = 'long-gene';
+                $this_avg_cov = $avg_cov;
+            } elsif ( $avg_hom_cov <= $coverage_threshold ) {
+                $gene_status = 'short-gene';
+                $this_avg_cov = $avg_hom_cov;
+            }
+            next unless defined $gene_status;
+            
+            my $dataflow = {
+                'genome_db_id'          => $these_stats->{genome_db_id},
+                'gene_member_stable_id' => $gm_stable_id_map->{$gm_id}->{stable_id},
+                'seq_member_id'         => $these_stats->{seq_member_id},
+                'n_species'             => $n_species,
+                'n_orth'                => $these_stats->{n_orth},
+                'avg_cov'               => $this_avg_cov,
+                'status'                => $gene_status,
+            };
+            
+            $self->dataflow_output_id($dataflow, 2);
+        }
     }
     #disconnect compara database
   $self->compara_dba->dbc->disconnect_if_idle;
@@ -245,6 +287,18 @@ sub _is_very_ambiguous {
     }
 
 } ## end sub _is_very_ambiguous
+
+sub _get_homology_dumps_for_genome_db {
+    my ( $self, $gdb_id ) = @_;
+    
+    my $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
+    my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+    my @mlss_ids = map {$_->dbID} @{ $mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('ENSEMBL_ORTHOLOGUES', $gdb) };
+    
+    my $homology_dumps_dir = $self->param_required('homology_dumps_dir');
+    my @homology_dump_files = map {"$homology_dumps_dir/" . dir_revhash($_) . "/$_.protein.homologies.tsv"} @mlss_ids;
+    return \@homology_dump_files;
+}
 
 
 1;

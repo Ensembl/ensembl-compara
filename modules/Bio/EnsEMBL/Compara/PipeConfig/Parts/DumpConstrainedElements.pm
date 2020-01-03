@@ -17,14 +17,14 @@ limitations under the License.
 
 =cut
 
-=head1 SYNOPSIS
+=head1 NAME
 
-Initialise the pipeline on compara1 and dump the constrained elements of mlss_id 836
-found at cc21_ensembl_compara_86 on compara5
+Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConstrainedElements
 
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpConstrainedElements_conf -compara_db mysql://ensro@compara5/cc21_ensembl_compara_86 -mlss_id 836 -host compara1
+=head1 DESCRIPTION
 
-Dumps are created in a sub-directory of --export_dir, which defaults to scratch109
+This PipeConfig contains the core analyses required to dump the contrained
+elements as BigBED files.
 
 =cut
 

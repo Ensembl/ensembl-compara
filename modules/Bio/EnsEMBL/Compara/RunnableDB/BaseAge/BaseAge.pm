@@ -51,7 +51,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::BaseAge::BaseAge;
 use strict;
 use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-use Bio::EnsEMBL::Variation::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 =head2 fetch_input
@@ -82,6 +81,8 @@ sub fetch_input {
   $genome_db->db_adaptor->dbc->disconnect_when_inactive(0);
   $self->param('ref_genome_db', $genome_db);
 
+  my $anc_genome_db = $genome_db_adaptor->fetch_by_name_assembly('ancestral_sequences');
+
   my $reg = "Bio::EnsEMBL::Registry";
 
   # Ancestral database explicitly set
@@ -89,15 +90,10 @@ sub fetch_input {
       if (!$reg->get_DBAdaptor($ancestral_db, 'core')) {
           throw("Cannot find '$ancestral_db' in the Registry");
       }
-      if ($reg->get_DBAdaptor('ancestral_sequences', 'core')) {
-          warn "Overriding the 'ancestral_sequences' Registry entry";
-          $reg->remove_DBAdaptor('ancestral_sequences', 'core');
-      }
-      $reg->add_alias($ancestral_db, 'ancestral_sequences');
       warn "Will connect to the ancestral database '$ancestral_db'\n";
+      $anc_genome_db->db_adaptor( $reg->get_DBAdaptor($ancestral_db, 'core') );
   }
 
-  my $anc_genome_db = $genome_db_adaptor->fetch_by_name_assembly('ancestral_sequences');
   $anc_genome_db->db_adaptor->dbc->disconnect_when_inactive(0);
 
   my $slice_adaptor = $genome_db->db_adaptor->get_SliceAdaptor;
@@ -114,13 +110,6 @@ sub fetch_input {
 
   print "mlss " . $mlss->dbID . " seq_region $seq_region $species\n" if ($self->debug);
    
-  #load variation database
-  $reg->load_registry_from_url($self->param('variation_url'));
-
-  #get adaptor to VariationFeature object
-  my $vf_adaptor = $reg->get_adaptor($species, 'variation', 'variationfeature'); 
-  $self->param('vf_adaptor', $vf_adaptor);
-
   #Check bed_dir ends in a final /
   unless ($self->param('bed_dir') =~ /\/$/) {
       $self->param('bed_dir', ($self->param('bed_dir')."/"));
@@ -133,7 +122,6 @@ sub write_output {
   my $self = shift;
 
   $self->base_age();
-#  $self->quick_base_age();
   return 1;
 }
 
@@ -172,11 +160,6 @@ sub base_age {
     my $clade = $compara_dba->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($self->param('clade_taxon_id'))->scientific_name();
     my $all_clade_species_name = {map {$_->get_short_name => 1} @{ $compara_dba->get_GenomeDBAdaptor->fetch_all_by_ancestral_taxon_id($self->param('clade_taxon_id')) } };
 
-    my $species_tree = $mlss->species_tree;
-    my $ref_stn = $species_tree->root->find_leaves_by_field('genome_db_id', $dnafrag->genome_db_id)->[0];
-    my $def_root_distance = $ref_stn->distance_to_root;
-    print "STROOT " . $def_root_distance . "\n" if ($self->debug);
-
     print "CLADE $clade\n" if ($self->debug);
 
     #generate bed_file location
@@ -185,7 +168,7 @@ sub base_age {
 
     foreach my $gat (@$genomic_align_trees) {
         my $tree_string = $gat->newick_format('simple');
-        print "$tree_string\n" if ($self->debug);
+        print "tree: $tree_string\n" if ($self->debug);
                 
         my @aligned_seq;
         my $ancestral_seqs;
@@ -202,21 +185,16 @@ sub base_age {
         @aligned_seq = split(//,$ref_genomic_align->aligned_sequence);
         $ref_start = $ref_genomic_align->dnafrag_start unless $ref_start;
         
-        #Get snps 
-        my $snp_list = $self->get_snps($ref_genomic_align->get_Slice);
-        if ($snp_list) {
-            print "Number of snps " . (scalar keys %$snp_list) . "\n" if ($self->debug);
-        }
         my $ancestors = $reference_node->get_all_ancestors;
         my $max_age = @$ancestors;
+        print "max_age $max_age\n" if $self->debug;
 
-        print "ROOT " . $reference_node->distance_to_root . "\n" if ($self->debug);
-        my $root_distance = $reference_node->distance_to_root || $def_root_distance;
+        my $root_distance = $reference_node->distance_to_root - $gat->distance_to_parent;
+        print "ROOT $root_distance\n" if ($self->debug);
 
         foreach my $this_node (@$ancestors) {
             my $node_distance = $this_node->distance_to_node($reference_node);
-            print "node " . $this_node->name . "\n" if ($self->debug);
-            print "node " . $this_node->node_id . " " . $this_node->name . " node " . $node_distance . " parent " . $this_node->distance_to_parent . " " . ($node_distance/$root_distance) . "\n" if ($self->debug);
+            print "node " . $this_node->node_id . " depth $depth " . $this_node->name . " node " . $node_distance . " parent " . $this_node->distance_to_parent . " " . ($node_distance/$root_distance) . "\n" if ($self->debug);
 
             #expect only a single genomic_align for an ancestor
             my $genomic_aligns = $this_node->get_all_genomic_aligns_for_node;
@@ -258,6 +236,7 @@ sub base_age {
         #Compare ref sequence with ancestral nodes to find the first difference
         for (my $i = 0; $i < @aligned_seq; $i++) {
             next if ($aligned_seq[$i] eq $gap); #skip gaps in ref sequence
+            my $j = 1;
             my $age = 0;
             my $node_distance = 0;
             my $clade_name = $gdb_name;
@@ -272,13 +251,18 @@ sub base_age {
                         $clade_name = $ancestral_seq->{name};
                         $node_id = $ancestral_seq->{node_id};
                         $node_distance = $ancestral_seq->{node_distance};
+                        $age = $j;
                     } else {
                         #Found a difference between ref and ancestor. Stop
                         #print "DIFF " . ($i+1) . " $base " . $aligned_seq[$i] . " " . $ancestral_seq->{aligned_seq}[$i]. " " . $ancestral_seq->{name} . "\n";
                         last;
                     }
+                } else {
+                    #The ancestor now has a gap. We've got a lineage-specific insertion
+                    #print "ANC_GAP " . ($i+1) . " $base " . $aligned_seq[$i] . " " . $ancestral_seq->{aligned_seq}[$i]. " " . $ancestral_seq->{name} . "\n";
+                    last;
                 }
-                $age++;
+                $j++;
             }
             print "age=$age $node_distance $clade_name\n" if ($self->debug);
 
@@ -292,12 +276,7 @@ sub base_age {
                 #Ensure the BED score is larger than 0 for display purposes
                 $normalised_age = 1 if ($normalised_age < 1);
                 
-                #Any base on a snp has an age of -1
-                if ($snp_list->{$base}) {
-                    $age = -1;
-                    $specificity = 'POPULATION';
-                    $rgb = "255,127,0"; #orange
-                } elsif ($age == 0) {
+                if ($age == 0) {
                     $specificity = 'SPECIES';
                     $rgb = "255,0,0"; #red
                 } elsif ($age <= $clade_age) {
@@ -324,61 +303,10 @@ sub base_age {
     close $bed_fh;
 
     #Do not sort here in case the sort command fails, which means having to rerun the entire job
-    #my $sorted_bed_file = sort_bed($bed_file);
-    my $output;
-    #%$output = ('bed_files' => $sorted_bed_file);
-    %$output = ('bed_files' => $bed_file);
+    my $output = {
+        'bed_file'  => $bed_file,
+    };
     $self->dataflow_output_id($output, 2);
-}
-
-
-#Get all snps
-sub get_snps {
-    my ($self, $slice) = @_;
-
-    my $snp_list;
-    my $vf_adaptor = $self->param('vf_adaptor');
-
-    return $snp_list unless ($vf_adaptor);
-    my $vfs = $vf_adaptor->fetch_all_by_Slice($slice); #return ALL variations defined in $slice
-    my $frags;
-
-    foreach my $vf (@{$vfs}){
-        #print "TYPE " . $vf->class_SO_term . "\n";
-        #print "  Variation: ", $vf->variation_name, " with alleles ", $vf->allele_string . " class=" . $vf->class_SO_term . " in chromosome ", $slice->seq_region_name, " and position ", $vf->start,"-",$vf->end, " strand=", $vf->strand, "\n";
-        if ($vf->class_SO_term eq "SNV") {
-            #check start = end
-            if ($vf->seq_region_start == $vf->seq_region_end) {
-                $snp_list->{$vf->seq_region_start} = 1;
-            } else {
-                print "Ignore case where snp start " . $vf->seq_region_start . " does not equal snp end " . $vf->seq_region_end . "\n";
-            }
-        }
-    }
-    return $snp_list;
-}
-
-#use for debugging the pipeline only
-sub quick_base_age {
-    my ($self) = @_;
-
-    my $seq_region = $self->param('seq_region');
-    my $bed_file = $self->param('bed_dir') . "Test_ages_" . $seq_region . ".bed";
-
-    open (my $bed_fh, '>', $bed_file) || die "ERROR writing ($bed_file) file\n";
-    my $base = 123;
-    my $node_id = 61900000001;
-    my $normalised_age = 500;
-    my $strand = "+";
-    my $rgb = "255,255,255";
-
-    printf $bed_fh "chr%s\t%d\t%d\t%s\t%d\t%s\t%d\t%d\t%s\n", $seq_region, ($base-1), $base, $node_id, $normalised_age, $strand, 0, 0, $rgb;
-
-    close($bed_fh);
-    my $output;
-    %$output = ('bed_files' => $bed_file);
-    $self->dataflow_output_id($output, 2);
-
 }
 
 

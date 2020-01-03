@@ -17,42 +17,18 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf
 
-=head1 DESCRIPTION
-
-    The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
-
 =head1 SYNOPSIS
 
-    #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -mlss_id <curr_ptree_mlss_id>
 
-    #3. make sure that all default_options are set correctly
+=head1 DESCRIPTION
 
-    #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -password <your_password> -mlss_id <your_current_PT_mlss_id>
-
-    #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
+The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
 
 =cut
 
@@ -62,6 +38,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.5;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC;
@@ -69,7 +46,6 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneSetQC;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree;
 
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
@@ -79,24 +55,17 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-    # User details
-        #'email'                 => 'john.smith@example.com',
-
-    # parameters inherited from EnsemblGeneric_conf and very unlikely to be redefined:
-        # It defaults to Bio::EnsEMBL::ApiVersion::software_version()
-        #'ensembl_release'       => 88,
-
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         #'mlss_id'               => 40077,
-        # Change this one to allow multiple runs
-        #'rel_suffix'            => 'b',
                                          
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
 
         # where to find the list of Compara methods. Unlikely to be changed
         'method_link_dump_file' => $self->check_file_in_ensembl('ensembl-compara/sql/method_link.txt'),
+
+        'pipeline_name' => $self->o('collection') . '_' . $self->o('division').'_protein_trees_'.$self->o('rel_with_suffix'),
 
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => undef,
@@ -119,13 +88,16 @@ sub default_options {
         'plots_dir'             => $self->o('work_dir') . '/plots', # Directory used to store plots and their input files
 
     # "Member" parameters:
-        'allow_ambiguity_codes'     => 0,
+        'allow_ambiguity_codes'     => 1,
         'allow_missing_coordinates' => 0,
         'allow_missing_cds_seqs'    => 0,
 
     # blast parameters:
         # Amount of sequences to be included in each blast job
         'num_sequences_per_blast_job'   => 500,
+
+        # cdhit is used to filter out proteins that are too close to each other
+        'cdhit_identity_threshold'      => 0.99,
 
         # define blast parameters and evalues for ranges of sequence-length
         # Important note: -max_hsps parameter is only available on ncbi-blast-2.3.0 or higher.
@@ -205,10 +177,10 @@ sub default_options {
           },
 
     # mapping parameters:
-        'do_stable_id_mapping'      => 0,
-        'do_treefam_xref'           => 0,
+        'do_stable_id_mapping'      => 1,
+        'do_treefam_xref'           => 1,
         # The TreeFam release to map to
-        'tf_release'                => undef,
+        'tf_release'                => '9_69',
 
     # plots
         #compute Jaccard Index and Gini coefficient (Lorenz curve)
@@ -228,43 +200,44 @@ sub default_options {
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   3,
         'blast_factory_capacity'    =>  50,
-        'blastp_capacity'           => 900,
-        'blastpu_capacity'          => 1000,
+        'blastp_capacity'           => 1500,
+        'blastpu_capacity'          => 150,
         'mcoffee_short_capacity'    => 600,
         'mafft_capacity'            => 2500,
         'mafft_himem_capacity'      => 1200,
         'split_genes_capacity'      => 600,
-        'alignment_filtering_capacity'  => 400,
-        'cluster_tagging_capacity'  => 200,
-        'prottest_capacity'         => 400,
+        'alignment_filtering_capacity'  => 200,
+        'cluster_tagging_capacity'  => 100,
+        'prottest_capacity'         => 200,
         'treebest_capacity'         => 400,
-        'raxml_capacity'            => 400,
+        'raxml_capacity'            => 200,
         'examl_capacity'            => 400,
         'copy_tree_capacity'        => 100,
-        'notung_capacity'           => 400,
+        'notung_capacity'           => 200,
         'ortho_tree_capacity'       => 50,
-        'quick_tree_break_capacity' => 100,
+        'quick_tree_break_capacity' => 1500,
         'build_hmm_capacity'        => 200,
         'ktreedist_capacity'        => 150,
-        'goc_capacity'              => 300,
-        'goc_stats_capacity'        => 5,
+        'goc_capacity'              => 30,
+        'goc_stats_capacity'        => 70,
         'genesetQC_capacity'        => 100,
-        'other_paralogs_capacity'   => 100,
-        'homology_dNdS_capacity'    => 1500,
+        'other_paralogs_capacity'   => 50,
+        'homology_dNdS_capacity'    => 1300,
         'copy_homology_dNdS_capacity'    => 100,
         'homology_dNdS_factory_capacity' =>  10,
-        'hc_capacity'               =>   4,
-        'decision_capacity'         =>   4,
+        'hc_capacity'               => 150,
+        'decision_capacity'         => 150,
         'hc_post_tree_capacity'     => 100,
         'HMMer_classify_capacity'   => 400,
         'loadmembers_capacity'      =>  30,
-        'HMMer_classifyPantherScore_capacity'   => 1500,
+        'HMMer_classifyPantherScore_capacity'   => 1000,
         'HMMer_search_capacity'     => 8000,
         'copy_trees_capacity'       => 50,
         'copy_alignments_capacity'  => 50,
         'mafft_update_capacity'     => 50,
         'raxml_update_capacity'     => 50,
-        'ortho_stats_capacity'      => 1000,
+        'ortho_stats_capacity'      => 10,
+        'cafe_capacity'             => 50,
 
     # hive priority values for some analyses:
         'hc_priority'               => -10,
@@ -282,18 +255,16 @@ sub default_options {
         # Uncomment and update the database locations
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
-        #'master_db' => 'mysql://ensro@compara1:3306/mm14_ensembl_compara_master',
-        'master_db' => undef,
+        'master_db' => 'compara_master',
         'ncbi_db'   => $self->o('master_db'),
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        #'prev_rel_db' => 'mysql://ensro@compara3:3306/mm14_compara_homology_67'
-        'prev_rel_db' => undef,
+        'prev_rel_db' => 'compara_prev',
         # By default, the stable ID mapping is done on the previous release database
         'mapping_db'  => $self->o('prev_rel_db'),
 
         # Where the members come from (as loaded by the LoadMembers pipeline)
-        #'member_db'   => 'mysql://....',
+        'member_db'   => 'compara_members',
 
     # Configuration of the pipeline worklow
 
@@ -304,7 +275,7 @@ sub default_options {
         #   'hmm' means that the pipeline will run an HMM classification
         #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
         #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
-        'clustering_mode'           => 'blastp',
+        'clustering_mode'           => 'hybrid',
 
         # List of species some genes have been projected from
         'projection_source_species_names' => [],
@@ -327,37 +298,53 @@ sub default_options {
 
     # CAFE parameters
         # Do we want to initialise the CAFE part now ?
-        'initialise_cafe_pipeline'  => undef,
+        'do_cafe'                  => 1,
         'cafe_lambdas'             => '',  # For now, we don't supply lambdas
         'cafe_struct_tree_str'     => '',  # Not set by default
         'full_species_tree_label'  => 'default',
         'per_family_table'         => 1,
         'cafe_species'             => [],
         #Use Timetree divergence times for the GeneTree internal nodes
-        'use_timetree_times'        => 0,
+        'use_timetree_times'       => 1,
 
     # GOC parameters
-        'goc_reuse_db'                  => undef,
+        # Points to the previous protein trees production database. Will be used for various GOC operations. 
         'goc_taxlevels'                 => [],
         'goc_threshold'                 => undef,
-        'calculate_goc_distribution'    => 1,
+        'calculate_goc_distribution'    => 0,
+
+    # HMM specific parameters
+        'hmm_library_name'              => 'compara_hmm_91.hmm3',
+        'hmmer_search_cutoff'           => '1e-23',
 
     # Extra analyses
+        # compute dNdS for homologies?
+        'do_dnds'                => 0,
         # Export HMMs ?
-        'do_hmm_export'                 => 0,
+        'do_hmm_export'          => 0,
         # Do we want the Gene QC part to run ?
-        'do_gene_qc'                    => 0,
+        'do_gene_qc'             => 1,
         # Do we extract overall statistics for each pair of species ?
-        'do_homology_stats'             => 0,
+        'do_homology_stats'      => 1,
         # Do we need a mapping between homology_ids of this database to another database ?
         # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
-        'do_homology_id_mapping' => 0,
+        'do_homology_id_mapping' => 1,
         
         # homology dumps options
         'homology_dumps_dir'       => $self->o('dump_dir'). '/homology_dumps/',
         'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
-        'prev_release'  => '#expr( #ensembl_release# - 1 )expr#', # for homology_id_mapping
         'prev_homology_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
+
+    # non-standard executable locations
+        'treerecs_exe' => $self->o('warehouse_dir') . '/alumni/mateus/home/reconcile/Treerecs/bin/Treerecs',
+    };
+}
+
+
+sub resource_classes {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::resource_classes('include_multi_threaded')},  # inherit the standard resource classes, incl. multi-threaded
     };
 }
 
@@ -433,7 +420,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'clustering_mode'   => $self->o('clustering_mode'),
         'reuse_level'       => $self->o('reuse_level'),
         'goc_threshold'                 => $self->o('goc_threshold'),
-        'goc_reuse_db'                  => $self->o('goc_reuse_db'),
         'calculate_goc_distribution'    => $self->o('calculate_goc_distribution'),
         'do_homology_id_mapping'        => $self->o('do_homology_id_mapping'),
         'do_jaccard_index'              => $self->o('do_jaccard_index'),
@@ -444,7 +430,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'use_notung'   => $self->o('use_notung'),
         'use_treerecs' => $self->o('use_treerecs'),
         'use_raxml'    => $self->o('use_raxml'),
-        'initialise_cafe_pipeline'   => $self->o('initialise_cafe_pipeline'),
+        'do_cafe'      => $self->o('do_cafe'),
         'do_stable_id_mapping'   => $self->o('do_stable_id_mapping'),
         'do_treefam_xref'   => $self->o('do_treefam_xref'),
         'do_homology_stats' => $self->o('do_homology_stats'),
@@ -479,14 +465,15 @@ sub core_pipeline_analyses {
     #
     #-------------------------------------------------------------------------------
     my %raxml_decision_params = (
-        # "factor_growth" and "factor" that the number of cores is
-        # increased in relation with the number of genes:
-        # Number of cores x2 if there are 1,000 genes,
-        # Number of cores x3 if there are 2,000 genes, etc
-        'factor_growth'            => 1_000,
-        'factor'                   => '#expr( 1 + #tree_gene_count# / #factor_growth# )expr#',
+        # The number of cores is primarily based on the number of "alignment patterns"
+        # with an extra boost (a multiplier) based on the number of genes
+        'raxml_cores'              => '#expr( #raxml_core_multiplier# * #tree_aln_num_of_patterns# / #raxml_patterns_per_core# )expr#',
+        # This means the number of cores will be x2 when we hit 1,000 genes,
+        # x3 when we hit 2,000 genes, etc
+        'raxml_genes_per_core_mult'=> 1_000,
+        'raxml_core_multiplier'    => '#expr( 1 + #tree_gene_count# / #raxml_genes_per_core_mult# )expr#',
+        # cf the RAxML manual
         'raxml_patterns_per_core'  => $self->o('use_dna_for_phylogeny') ? '500' : '150',
-        'raxml_cores'              => '#expr( #factor# * #tree_aln_num_of_patterns# / #raxml_patterns_per_core# )expr#',
 
         'tags'  => {
             #The default value matches the default dataflow we want: _8_cores analysis.
@@ -615,7 +602,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_fire_posttree',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A'  => [ 'rib_fire_homology_id_mapping' ],
+                '1->A'  => [ 'rib_group_1' ],
                 'A->1'  => [ 'backbone_pipeline_finished' ],
             },
         },
@@ -1727,7 +1714,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'cmd_max_runtime'       => '21600',  # 6 hours
                 'method'                => 'cmcoffee',
-                'mcoffee_home'          => $self->o('mcoffee_home'),
+                'mcoffee_exe'           => $self->o('mcoffee_exe'),
                 'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -1,
             },
@@ -1745,7 +1732,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'cmd_max_runtime'       => '43200',     # 12 hours
                 'method'                => 'cmcoffee',
-                'mcoffee_home'          => $self->o('mcoffee_home'),
+                'mcoffee_exe'           => $self->o('mcoffee_exe'),
                 'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -1,
             },
@@ -1787,7 +1774,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'cmd_max_runtime'       => '43200',
                 'method'                => 'cmcoffee',
-                'mcoffee_home'          => $self->o('mcoffee_home'),
+                'mcoffee_exe'           => $self->o('mcoffee_exe'),
                 'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -2,
             },
@@ -2230,7 +2217,7 @@ sub core_pipeline_analyses {
 
             -flow_into  => {
                 '1->A' => WHEN (
-                    '(#raxml_cores# <= 1'                               => 'raxml_parsimony',
+                    '(#raxml_cores# <= 1)'                              => 'raxml_parsimony',
                     '(#raxml_cores# >  1)  && (#raxml_cores# <= 2)'     => 'raxml_parsimony_2_cores',
                     '(#raxml_cores# >  2)  && (#raxml_cores# <= 4)'     => 'raxml_parsimony_4_cores',
                     '(#raxml_cores# >  4)  && (#raxml_cores# <= 8)'     => 'raxml_parsimony_8_cores',
@@ -2435,7 +2422,7 @@ sub core_pipeline_analyses {
 
             -flow_into  => {
                 '1->A' => WHEN (
-                    '(#raxml_cores# <= 1'                               => 'raxml',
+                    '(#raxml_cores# <= 1)'                              => 'raxml',
                     '(#raxml_cores# >  1)  && (#raxml_cores# <= 2)'     => 'raxml_2_cores',
                     '(#raxml_cores# >  2)  && (#raxml_cores# <= 4)'     => 'raxml_4_cores',
                     '(#raxml_cores# >  4)  && (#raxml_cores# <= 8)'     => 'raxml_8_cores',
@@ -3274,6 +3261,47 @@ sub core_pipeline_analyses {
 
 # ---------------------------------------------[homology step]-----------------------------------------------------------------------
 
+        {   -logic_name => 'rib_group_1',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => [
+                    'rib_fire_gene_qc',
+                    'rib_fire_homology_id_mapping',
+                ],
+                'A->1' => 'rib_group_2'
+            },
+        },
+
+        {   -logic_name => 'rib_group_2',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => [
+                    'rib_fire_dnds',
+                    'rib_fire_cafe',
+                    'rib_fire_homology_stats',
+                    'rib_fire_hmm_build',
+                    'rib_fire_goc'
+                ],
+                'A->1' => 'rib_group_3',
+            },
+        },
+
+        {   -logic_name => 'rib_group_3',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => [
+                    'rib_fire_rename_labels',
+                    'rib_fire_move_polyploid',
+                ],
+                'A->1' => 'floating_rib',
+            },
+        },
+
+        {   -logic_name => 'rib_fire_move_polyploid',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => 'polyploid_move_back_factory',
+        },
+
         {   -logic_name => 'polyploid_move_back_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
@@ -3281,9 +3309,7 @@ sub core_pipeline_analyses {
                 'normal_genomes'    => 0,
             },
             -flow_into => {
-                '2->A' => [ 'component_genome_dbs_move_back_factory' ],
-                'A->1' => [ 'floating_rib' ],
-                
+                2 => [ 'component_genome_dbs_move_back_factory' ],
             },
         },
 
@@ -3308,38 +3334,30 @@ sub core_pipeline_analyses {
                 'exclude_list'  => 1,
                 'output_file'   => '#dump_dir#/snapshot_3_after_tree_building.sql.gz',
             },
-            -flow_into  => {
-                1 => WHEN('#do_gene_qc#' => 'get_species_set'),
-            },
+            -hive_capacity => 9, # this prevents too many competing `dump_per_mlss_homologies_tsv` jobs being spawned
         },
 
         {   -logic_name => 'rib_fire_cafe',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                '1->A' => WHEN('#initialise_cafe_pipeline#' => 'CAFE_species_tree'),
-                'A->1' => 'rib_fire_homology_stats',
-            },
+            -flow_into  => WHEN('#do_cafe#' => 'CAFE_species_tree'),
         },
 
         {   -logic_name => 'rib_fire_homology_stats',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                1 => [
-                    WHEN('#do_homology_stats#' => 'homology_stats_factory'),
-                    'set_default_values',
-                    'rib_fire_hmm_build',
-                ],
-            },
+            -flow_into  => [
+                WHEN('#do_homology_stats#' => 'homology_stats_factory'),
+                'set_default_values',
+            ],
         },
 
         {   -logic_name => 'rib_fire_hmm_build',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                1 => [
-                    WHEN('#do_hmm_export#' => 'build_HMM_factory'),
-                    'rib_fire_rename_labels',
-                ],
-            },
+            -flow_into  => WHEN('#do_hmm_export#' => 'build_HMM_factory'),
+        },
+
+        {   -logic_name => 'rib_fire_gene_qc',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => WHEN('#do_gene_qc#' => 'get_species_set'),
         },
 
         {   -logic_name => 'rib_fire_homology_id_mapping',
@@ -3347,10 +3365,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'goc_taxlevels'         => $self->o('goc_taxlevels'),
             },
-            -flow_into  => {
-                '1->A' => WHEN('(scalar(@{#goc_taxlevels#}) && #goc_reuse_db#) || #do_homology_id_mapping#' => 'id_map_mlss_factory'),
-                'A->1' => 'group_genomes_under_taxa',
-            },
+            -flow_into  => WHEN('#do_homology_id_mapping#' => 'id_map_mlss_factory'),
         },
 
         {   -logic_name => 'rib_fire_rename_labels',
@@ -3358,13 +3373,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'label_prefix' => $self->o('label_prefix'),
             },
-            -flow_into  => {
-                # FIXME this assumes that label_prefix is set iff the collection is not "default"
-                1 => [
-                    WHEN('#label_prefix#' => 'rename_labels'),
-                    'rib_fire_goc',
-                ],
-            },
+            -flow_into  => WHEN('#label_prefix#' => 'rename_labels'), # FIXME this assumes that label_prefix is set if the collection is not "default"
         },
 
         {   -logic_name => 'floating_rib',
@@ -3377,8 +3386,7 @@ sub core_pipeline_analyses {
                 'taxlevels'             => $self->o('taxlevels'),
             },
             -flow_into => {
-                '2->A' => [ 'mlss_factory' ],
-                'A->1' => [ 'rib_fire_cafe' ],
+                2 => [ 'mlss_factory' ],
             },
         },
 
@@ -3418,6 +3426,11 @@ sub core_pipeline_analyses {
             -flow_into => { 1 => { 'homology_id_mapping' => INPUT_PLUS() } },
         },
 
+        {   -logic_name => 'rib_fire_dnds',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => WHEN('#do_dnds#' => 'group_genomes_under_taxa'),
+        },
+
         {   -logic_name => 'mlss_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
             -flow_into => {
@@ -3427,6 +3440,11 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'homology_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory',
+            -parameters => {
+                'hashed_mlss_id'            => '#expr(dir_revhash(#homo_mlss_id#))expr#',
+                'homology_flatfile'         => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+                'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homology_id_map.tsv',
+            },
             -hive_capacity => $self->o('homology_dNdS_factory_capacity'),
             -rc_name       => '500Mb_job',
             -flow_into => {
@@ -3439,10 +3457,11 @@ sub core_pipeline_analyses {
         {   -logic_name => 'homology_id_mapping',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
             -parameters => {
-                'prev_rel_db'            => '#mapping_db#',
-                'hashed_mlss_id'         => '#expr(dir_revhash(#homo_mlss_id#))expr#',
-                'homology_flatfile'      => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
-                'prev_homology_flatfile' => '#prev_homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+                'prev_rel_db'               => '#mapping_db#',
+                'hashed_mlss_id'            => '#expr(dir_revhash(#mlss_id#))expr#',
+                'homology_flatfile'         => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
+                'prev_homology_flatfile'    => '#prev_homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
+                'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homology_id_map.tsv',
             },
             -rc_name    => '1Gb_job',
             -flow_into  => {
@@ -3453,10 +3472,11 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'homology_id_mapping_himem',
             -parameters => {
-                'prev_rel_db'            => '#mapping_db#',
-                'hashed_mlss_id'         => '#expr(dir_revhash(#homo_mlss_id#))expr#',
-                'homology_flatfile'      => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
-                'prev_homology_flatfile' => '#prev_homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+                'prev_rel_db'               => '#mapping_db#',
+                'hashed_mlss_id'            => '#expr(dir_revhash(#mlss_id#))expr#',
+                'homology_flatfile'         => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
+                'prev_homology_flatfile'    => '#prev_homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
+                'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homology_id_map.tsv',
             },
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
             -flow_into  => {
@@ -3468,10 +3488,11 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'homology_id_mapping_hugemem',
             -parameters => {
-                'prev_rel_db'            => '#mapping_db#',
-                'hashed_mlss_id'         => '#expr(dir_revhash(#homo_mlss_id#))expr#',
-                'homology_flatfile'      => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
-                'prev_homology_flatfile' => '#prev_homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+                'prev_rel_db'               => '#mapping_db#',
+                'hashed_mlss_id'            => '#expr(dir_revhash(#mlss_id#))expr#',
+                'homology_flatfile'         => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
+                'prev_homology_flatfile'    => '#prev_homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
+                'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homology_id_map.tsv',
             },
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
             -analysis_capacity => 20,
@@ -3531,10 +3552,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'taxlevels'             => $self->o('goc_taxlevels'),
             },
-            -flow_into  => {
-                '1->A' => WHEN( 'scalar(@{#taxlevels#})' => 'goc_entry_point' ),
-                'A->1' => ['polyploid_move_back_factory'],
-            },
+            -flow_into  => WHEN('scalar(@{#taxlevels#})' => 'goc_entry_point'),
         },
 
         {   -logic_name => 'homology_stats_factory',
@@ -3555,8 +3573,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'orthology_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthologyStats',
             -parameters => {
-                'hashed_mlss_id'    => '#expr(dir_revhash(#homo_mlss_id#))expr#',
-                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+                'hashed_mlss_id'    => '#expr(dir_revhash(#mlss_id#))expr#',
+                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
             },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('ortho_stats_capacity'),
@@ -3565,8 +3583,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'paralogy_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ParalogyStats',
             -parameters => {
-                'hashed_mlss_id'    => '#expr(dir_revhash(#homo_mlss_id#))expr#',
-                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+                'hashed_mlss_id'    => '#expr(dir_revhash(#mlss_id#))expr#',
+                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
                 'species_tree_label'    => $self->o('use_notung') ? 'binary' : 'default',
             },
             -rc_name       => '500Mb_job',
@@ -3590,7 +3608,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'copy_dumps_to_shared_loc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd' => 'become #shared_user# && mkdir -p #homology_dumps_shared_dir# && rsync -rt #homology_dumps_dir#/ #homology_dumps_shared_dir#',
+                'cmd'         => 'become #shared_user# /bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rt #homology_dumps_dir#/ #homology_dumps_shared_dir#"',
+                'shared_user' => $self->o('shared_user'),
             },
         },
 

@@ -33,7 +33,7 @@ Bio::EnsEMBL::Compara::ConstrainedElement - constrained element data produced by
 =head1 SYNOPSIS
 
   use Bio::EnsEMBL::Compara::ConstrainedElement;
-  
+
   my $constrained_element = new Bio::EnsEMBL::Compara::ConstrainedElement(
           -adaptor => $constrained_element_adaptor,
           -method_link_species_set_id => $method_link_species_set_id,

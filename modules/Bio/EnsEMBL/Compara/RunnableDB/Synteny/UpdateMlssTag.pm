@@ -64,10 +64,10 @@ sub run {
             last;
         }
     }
-    $self->compara_dba->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, "synteny_mlss_id", ?)', undef, $source_mlss_id, $self->param('synteny_mlss_id') );
-    $self->compara_dba->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, ?, ?)', undef, $self->param('synteny_mlss_id'), $source_mlss_id_name, $source_mlss_id );
-    $self->param('master_dba')->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, "synteny_mlss_id", ?)', undef, $source_mlss_id, $self->param('synteny_mlss_id') );
-    $self->param('master_dba')->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, ?, ?)', undef, $self->param('synteny_mlss_id'), $source_mlss_id_name, $source_mlss_id );
+    $self->compara_dba->dbc->do('INSERT INTO method_link_species_set_tag VALUES (?, "synteny_mlss_id", ?)', undef, $source_mlss_id, $self->param('synteny_mlss_id') );
+    $self->compara_dba->dbc->do('INSERT INTO method_link_species_set_tag VALUES (?, ?, ?)', undef, $self->param('synteny_mlss_id'), $source_mlss_id_name, $source_mlss_id );
+    $self->param('master_dba')->dbc->do('INSERT INTO method_link_species_set_tag VALUES (?, "synteny_mlss_id", ?)', undef, $source_mlss_id, $self->param('synteny_mlss_id') );
+    $self->param('master_dba')->dbc->do('INSERT INTO method_link_species_set_tag VALUES (?, ?, ?)', undef, $self->param('synteny_mlss_id'), $source_mlss_id_name, $source_mlss_id );
 }
 
 1;

@@ -276,11 +276,9 @@ if ($pair_aligner_config->{method_link_type} eq "BLASTZ_NET" ||
 	$template->param(NON_REF_OVERLAP => format_number($non_ref_dna_collection_config->{overlap}));
 	$template->param(NON_REF_GROUP_SET_SIZE => format_number($non_ref_dna_collection_config->{group_set_size}));
 	#Masking variables
-	$template->param(REF_MASKING => $ref_dna_collection_config->{masking_options}) if ($ref_dna_collection_config->{masking_options});
-	$template->param(REF_MASKING => $ref_dna_collection_config->{masking_options_file}) if ($ref_dna_collection_config->{masking_options_file});
+	$template->param(REF_MASKING => $ref_dna_collection_config->{masking}) if ($ref_dna_collection_config->{masking});
 
-	$template->param(NON_REF_MASKING => $non_ref_dna_collection_config->{masking_options}) if ($non_ref_dna_collection_config->{masking_options});
-	$template->param(NON_REF_MASKING => $non_ref_dna_collection_config->{masking_options_file}) if ($non_ref_dna_collection_config->{masking_options_file});
+	$template->param(NON_REF_MASKING => $non_ref_dna_collection_config->{masking}) if ($non_ref_dna_collection_config->{masking});
 	
     }
 } elsif ($pair_aligner_config->{method_link_type} eq "TRANSLATED_BLAT_NET" &&
@@ -302,10 +300,8 @@ if ($pair_aligner_config->{method_link_type} eq "BLASTZ_NET" ||
     $template->param(NON_REF_OVERLAP => format_number($non_ref_dna_collection_config->{overlap}));
     $template->param(NON_REF_GROUP_SET_SIZE => format_number($non_ref_dna_collection_config->{group_set_size}));
     #Masking variables
-    $template->param(REF_MASKING => $ref_dna_collection_config->{masking_options}) if ($ref_dna_collection_config->{masking_options});
-    $template->param(REF_MASKING => $ref_dna_collection_config->{masking_options_file}) if ($ref_dna_collection_config->{masking_options_file});
-    $template->param(NON_REF_MASKING => $non_ref_dna_collection_config->{masking_options}) if ($non_ref_dna_collection_config->{masking_options});
-    $template->param(NON_REF_MASKING => $non_ref_dna_collection_config->{masking_options_file}) if ($non_ref_dna_collection_config->{masking_options_file});
+    $template->param(REF_MASKING => $ref_dna_collection_config->{masking}) if ($ref_dna_collection_config->{masking});
+    $template->param(NON_REF_MASKING => $non_ref_dna_collection_config->{masking}) if ($non_ref_dna_collection_config->{masking});
     
 }
 

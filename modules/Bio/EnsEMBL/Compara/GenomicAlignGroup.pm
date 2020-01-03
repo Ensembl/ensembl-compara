@@ -33,7 +33,7 @@ Bio::EnsEMBL::Compara::GenomicAlignGroup - Defines groups of genomic aligned seq
 =head1 SYNOPSIS
 
   use Bio::EnsEMBL::Compara::GenomicAlignGroup;
-  
+
   my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup (
           -adaptor => $genomic_align_group_adaptor,
           -genomic_align_array => [$genomic_align1, $genomic_align2...]

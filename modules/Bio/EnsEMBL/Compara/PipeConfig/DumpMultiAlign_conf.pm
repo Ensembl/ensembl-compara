@@ -17,31 +17,28 @@ limitations under the License.
 
 =cut
 
+=head1 NAME
+
+Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf
+
 =head1 SYNOPSIS
 
-Initialise the pipeline on comparaY and dump the alignments found in the database msa_db_to_dump at comparaX:
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV
 
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db mysql://ensro@comparaX/msa_db_to_dump --export_dir where/the/dumps/will/be/
+=head1 DESCRIPTION
 
-Dumps are created in a sub-directory of --export_dir, which defaults to scratch109
+Pipeline to dump all the multiple sequence alignments from the given
+compara database. To dump only certain method link (ml) types, set them
+in --method_link_types with the following regex: ml(:ml)*.
+E.g.: --method_link_types EPO:PECAN
 
-The pipeline can dump all the alignments it finds on a server, so you can do something like:
+The dumps are located in the pipeline's directory. This can be changed by
+setting --export_dir.
 
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db compara_curr
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db compara_prev --format maf --method_link_types EPO
-
-Note that in this case, because the locator field is not set, the registry file needs to include the core databases.
-
-Format can be "emf", "maf", or anything BioPerl can provide (the pipeline will fail in the latter case, so
-come and talk to us). It also accepts "emf+maf" to generate both emf and maf files
-
-
-Release 65
-
- epo 6 way: 3.4 hours
- epo 12 way: 2.7 hours
- mercator/pecan 19 way: 5.5 hours
- low coverage epo 35 way: 43 hours (1.8 days)
+The pipeline generates both EMF and MAF files ("emf+maf"). This can be
+changed by setting --format to "emf", "maf", or anything BioPerl can
+provide.
 
 =cut
 
@@ -60,17 +57,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        # This pipeline takes the release number from the "ensembl_release"
-        # parameter, which by default comes from the Core API
-        # 'ensembl_release' => 92
-
-        # The division name
-        'division'  => 'vertebrates',
-
         # Compara reference to dump. Can be the "species" name (if loading the Registry via registry)
         # or the url of the database itself
-        # Intentionally left empty
-        #'compara_db' => 'Multi',
+        'compara_db' => 'compara_curr',
 
         'export_dir'    => $self->o('pipeline_dir'),
 

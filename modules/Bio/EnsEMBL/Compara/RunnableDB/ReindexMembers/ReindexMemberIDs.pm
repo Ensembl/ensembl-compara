@@ -108,6 +108,8 @@ sub sort_pairs {
     my $self = shift;
     my $pairs = shift;
 
+    $self->warning(scalar(@$pairs). " initial pairs");
+
     # Since only identical members can be reindexed, a given source index
     # can only be renamed once at most, and an index can only be targetted
     # once. This means that if we combine the pairs into a graph, there is
@@ -154,7 +156,7 @@ sub sort_pairs {
     }
 
     $self->warning("$n_loops loops");
-    $self->warning(scalar(@sorted_pairs). " pairs");
+    $self->warning(scalar(@sorted_pairs). " pairs to apply");
     if (scalar(@$pairs) != (scalar(@sorted_pairs)-$n_loops)) {
         die scalar(@$pairs), " ", scalar(@sorted_pairs), " ", $n_loops;
     }

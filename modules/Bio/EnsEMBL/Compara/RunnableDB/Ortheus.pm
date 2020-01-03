@@ -97,6 +97,7 @@ use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::GenomicAlignTree;
+use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
 use Bio::EnsEMBL::Compara::Production::Analysis::Ortheus;
 
@@ -165,8 +166,16 @@ sub run {
 
   #Capture error message from ortheus and write it to the job_message table
   if ( $ortheus_output ) {
+      $self->detect_pecan_ortheus_errors($ortheus_output);
+  }
+  $self->parse_results();
+}
+
+
+sub detect_pecan_ortheus_errors {
+      my ($self, $merged_output) = @_;
       my (%err_msgs, $traceback, $trace_open);
-      my @lines = split /\n/, $ortheus_output;
+      my @lines = split /\n/, $merged_output;
       foreach my $line (@lines) {
           next if ($line =~ /Arguments received/);
           next if ($line =~ /^total_time/);
@@ -195,7 +204,7 @@ sub run {
               # Let's discard this job.
               $self->input_job->autoflow(0);
               $self->complete_early( "Pecan failed to align the sequences. Skipping." );
-          } elsif ($err_msg =~ /Exception in thread "main" java.lang.IllegalArgumentException: fromIndex\([-\d]+\) > toIndex\([-\d]+\)/) {
+          } elsif ($err_msg =~ /Exception in thread "main" java.lang.IllegalArgumentException($|:\s+fromIndex\([-\d]+\) > toIndex\([-\d]+\))/) {
               # Not sure why this happens
               # Let's discard this job.
               $self->input_job->autoflow(0);
@@ -212,10 +221,7 @@ sub run {
               throw("Ortheus ". $self->input_job->analysis->logic_name . " still failed due to insufficient heap space");
           }
       }
-      die "There were errors when running Ortheus. Please investigate\n" if %err_msgs;
-  }
-
-  $self->parse_results();
+      die "There were errors when running Pecan/Ortheus. Please investigate\n" if %err_msgs;
 }
 
 sub write_output {
@@ -476,7 +482,7 @@ sub _write_gerp_dataflow {
 
 #Taken from Analysis/Runnable/Ortheus.pm module
 sub parse_results {
-    my ($self, $run_number) = @_;
+    my ($self) = @_;
 
     #print STDERR 
       ## The output file contains one fasta aligned sequence per original sequence + ancestral sequences.
@@ -607,7 +613,7 @@ sub parse_results {
 
 			print "start_X $start_X end_X $end_X subseq_length " . length($subseq) . "\n" if ($self->debug);
 
-			$genomic_align->cigar_line($start_X . "X" .$genomic_align->cigar_line . $end_X . "X");
+			$genomic_align->cigar_line( Bio::EnsEMBL::Compara::Utils::Cigars::pad_with_x($genomic_align->cigar_line, $start_X, $end_X) );
 
 			#my $aln_seq = "." x $start_X;
 			#$aln_seq .= $genomic_align->aligned_sequence();
@@ -780,7 +786,7 @@ sub parse_results {
 	    $end_X = length($seq) - ($start_X+length($subseq));
 	    print "start_X $start_X end_X $end_X subseq_length " . length($subseq) . "\n" if ($self->debug);
 	    
-	    $genomic_align->cigar_line($start_X . "X" .$genomic_align->cigar_line . $end_X . "X");
+	    $genomic_align->cigar_line( Bio::EnsEMBL::Compara::Utils::Cigars::pad_with_x($genomic_align->cigar_line, $start_X, $end_X) );
 	    my $aln_seq = "." x $start_X;
 	    $aln_seq .= $genomic_align->aligned_sequence();
 	    $aln_seq .= "." x $end_X;

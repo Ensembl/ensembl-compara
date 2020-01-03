@@ -64,8 +64,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $mlss_id = $self->param_required('mlss_id');
-
     if(my $codeml_parameters_file = $self->param('codeml_parameters_file')) {
         if(-r $codeml_parameters_file) {
             $self->param('codeml_parameters', do($codeml_parameters_file) );
@@ -83,6 +81,11 @@ sub fetch_input {
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $sms);
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, 'cds', $sms);
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $sms);
+    if ($self->debug) {
+        $_->method_link_species_set->_load_tags() for @$homologies;
+        Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->compara_dba->get_GeneMemberAdaptor, $sms);
+        Bio::EnsEMBL::Compara::Utils::Preloader::load_all_SpeciesTreeNodes($self->compara_dba->get_SpeciesTreeNodeAdaptor, $homologies);
+    }
 
     $self->param('homologies', $homologies);
 }
@@ -90,6 +93,7 @@ sub fetch_input {
 
 sub run {
     my $self = shift @_;
+    $self->compara_dba->dbc->disconnect_if_idle();
 
     my $homologies        = $self->param('homologies');
     my $codeml_parameters = $self->param_required('codeml_parameters');
@@ -143,7 +147,10 @@ sub calc_genetic_distance {
 
   # Temporary files
   $codeml->save_tempfiles(1) if $self->worker && !$self->worker->perform_cleanup;
-  $codeml->tempdir($self->worker_temp_directory);
+  # In codeml paths are encoded in char[96]. Since File::Temp::tempfile
+  # creates random names of 10 characters and strings in C must end with
+  # \0, the directory has to be 85 characters at most
+  $codeml->tempdir($self->worker_temp_directory) if length($self->worker_temp_directory) <= 85;
 
   my $possible_exe = $self->param('codeml_exe');
   if($possible_exe) {
@@ -179,8 +186,6 @@ sub calc_genetic_distance {
       15 => 10, # deprecated ?? Not listed on https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi but is on http://www.bioinformatics.org/jambw/2/3/TranslationTables.html#SG15
   );
   $codeml->set_parameter("icode", $genbank_to_codeml{$codon_table_id}) if exists $genbank_to_codeml{$codon_table_id};
-
-  $self->compara_dba->dbc->disconnect_if_idle();
 
   my ($rc,$parser) = $codeml->run();
   if($rc == 0) {

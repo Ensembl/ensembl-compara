@@ -89,6 +89,7 @@ sub run_pecan {
   }
 
   my @command = ($self->require_executable('java_exe'));
+  push @command, '-Djava.io.tmpdir='.$tmp_dir;
   if ($self->param('java_options')) {
       # FIXME: encode java_options as an array in the PipeConfigs
       push @command, split(/ /, $self->param('java_options'));
@@ -124,7 +125,7 @@ sub run_pecan {
 
   unless (-e $alignment_file) {
       # Note that this error message will be caught by RunnableDB::MercatorPecan::Pecan
-      # and will trigger a dataflow on branch #2
+      # and will trigger a dataflow on branch #-1
       warn "No output at all and not a MEMLIMIT\n";
       die "Probably a Java heap space error\n";
   }

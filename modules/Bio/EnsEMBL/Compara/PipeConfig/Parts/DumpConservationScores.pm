@@ -17,9 +17,14 @@ limitations under the License.
 
 =cut
 
-=head1 SYNOPSIS
+=head1 NAME
 
-Pipeline to dump conservation scores as bedGraph and bigWig files
+Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConservationScores
+
+=head1 DESCRIPTION
+
+This PipeConfig contains the core analyses required to dump the constrained
+elements as bigBed and conservation scores as bigWig files.
 
 =cut
 

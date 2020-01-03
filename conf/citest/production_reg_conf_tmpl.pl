@@ -23,32 +23,17 @@ use Bio::EnsEMBL::Compara::Utils::Registry;
 my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
 my $prev_release = $curr_release - 1;
 
-# ----------------------CITEST CORE DATABASES------------------------
+my $curr_eg_release = $ENV{'CURR_EG_RELEASE'};
+my $prev_eg_release = $curr_eg_release - 1;
+
+# ---------------------------- CORE DATABASES ----------------------------------
 
 # FORMAT: species/alias name => [ host, db_name ]
-my $citest_core_dbs = {}; # TAG: <core_dbs_hash>
+my $core_dbs = {}; # TAG: <core_dbs_hash>
 
-Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $citest_core_dbs );
+Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $core_dbs );
 
-# ---------------------PREVIOUS CORE DATABASES-----------------------
-
-# Previous release core databases will ONLY be required by:
-#   * PrepareMasterDatabaseForRelease_conf
-#   * LoadMembers_conf
-#   * MercatorPecan_conf
-# !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
-
-# my $suffix_separator = '__cut_here__';
-# Bio::EnsEMBL::Registry->load_registry_from_db(
-#    -host           => 'mysql-ens-mirror-1',
-#    -port           => 4240,
-#    -user           => 'ensro',
-#    -pass           => '',
-#    -db_version     => $prev_release,
-#    -species_suffix => $suffix_separator.$prev_release,
-# );
-
-#---------------------COMPARA DATABASE LOCATIONS---------------------
+# --------------------------- COMPARA DATABASES --------------------------------
 
 # FORMAT: species/alias name => [ host, db_name ]
 my $compara_dbs = {
@@ -121,20 +106,22 @@ my $compara_dbs = {
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
-# ----------------------NON-COMPARA DATABASES------------------------
+# ------------------------- NON-COMPARA DATABASES ------------------------------
 
-# my $ancestral_dbs = {
-#     'ancestral_prev' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
-#     'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
-# };
+my $ancestral_dbs = {
+    'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
+    'ancestral_prev' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
 
-# Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
+    # 'mammals_ancestral'    => [ 'mysql-ens-compara-prod-5', 'jalvarez_mammals_ancestral_core_99' ],
+    # 'primates_ancestral'   => [ 'mysql-ens-compara-prod-3', 'mateus_primates_ancestral_core_98' ],
+    # 'sauropsids_ancestral' => [ 'mysql-ens-compara-prod-8', 'dthybert_sauropsids_ancestral_core_99' ],
+    # 'fish_ancestral'       => [ 'mysql-ens-compara-prod-1', 'cristig_fish_ancestral_core_99' ],
+};
 
-# NCBI taxonomy database (also maintained by production team):
+Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
+
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
     'ncbi_taxonomy' => [ 'mysql-ens-sta-1', 'ncbi_taxonomy' ],
 });
-
-# -------------------------------------------------------------------
 
 1;

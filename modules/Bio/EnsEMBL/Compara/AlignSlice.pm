@@ -48,13 +48,13 @@ whilst the other Bio::EnsEMBL::Compara::AlignSlice::Slice objects might be made 
 genomic sequences, depending on the set of alignments. Here is a graphical representation:
 
   ref.Slice    **************************************************************
-  
+
   alignments    11111111111
                                2222222222222222
                                                      33333333333333333
 
   resulting Bio::EnsEMBL::Compara::AlignSlice:
-  
+
   AS::Slice 1  **************************************************************
   AS::Slice 2  .11111111111....2222222222222222......33333333333333333.......
 
@@ -79,7 +79,7 @@ Here is a graphical example showing this problem:
 
   ALN 1:   Human (ref) CTGTGAAAA----CCCCATTAGG
            Mouse (1)     CTGAAAATTTTCCCC
-  
+
   ALN 2:   Human (ref) CTGTGAAAA---CCCCATTAGG
            Mouse (1)         AAAGGGCCCCATTA
 
@@ -127,7 +127,7 @@ map features from one species onto the others.
 =head1 SYNOPSIS
 
   use Bio::EnsEMBL::Compara::AlignSlice;
-  
+
   ## You may create your own AlignSlice objects but if you are interested in
   ## getting AlignSlice built with data from an EnsEMBL Compara database you
   ## should consider using the Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor

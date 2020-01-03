@@ -72,7 +72,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping;
 
 use strict;
 use warnings;
-use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::Utils::CopyData qw(:insert);
 use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
@@ -83,7 +82,6 @@ sub fetch_input {
     my $self = shift;
 
     my $mlss_id         = $self->param_required('mlss_id');
-    my $mlss            = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
     my $prev_mlss_id    = $self->param('previous_mlss_id');
 
     if (defined $prev_mlss_id) {
@@ -144,7 +142,13 @@ sub _fetch_and_map_previous_homologies_from_file {
     my (%hash_previous_homologies, @homology_mapping);
 
     my $prev_homology_flatfile = $self->param_required('prev_homology_flatfile');
-    open(my $p_hom_handle, '<', $prev_homology_flatfile) or die "Cannot open $prev_homology_flatfile";
+    unless ( -e $prev_homology_flatfile ) {
+        # it's a brand new homology and no previous dump exists
+        $self->param('homology_mapping', []);
+        return;
+    }
+    
+    open(my $p_hom_handle, '<', $prev_homology_flatfile) or die "Cannot read previous homologies from $prev_homology_flatfile";
     my $pff_header = <$p_hom_handle>;
     my @pff_head_cols = split(/\s+/, $pff_header);
     while ( my $line = <$p_hom_handle> ) {
@@ -156,7 +160,7 @@ sub _fetch_and_map_previous_homologies_from_file {
     close $p_hom_handle;
     
     my $curr_homology_flatfile = $self->param_required('homology_flatfile');
-    open(my $hom_handle, '<', $curr_homology_flatfile) or die "Cannot open $curr_homology_flatfile";
+    open(my $hom_handle, '<', $curr_homology_flatfile) or die "Cannot read current homologies from $curr_homology_flatfile";
     my $hff_header = <$hom_handle>;
     my @hff_head_cols = split(/\s+/, $hff_header);
     while ( my $line = <$hom_handle> ) {
@@ -165,7 +169,7 @@ sub _fetch_and_map_previous_homologies_from_file {
         my $stable_id_key = sprintf('%s_%s', $sm1_stable_id, $sm2_stable_id);
         my $prev_homology_id = $hash_previous_homologies{$stable_id_key};
         
-        push( @homology_mapping, [$mlss_id, $prev_homology_id, $curr_homology_id] ) if $prev_homology_id;
+        push( @homology_mapping, [$prev_homology_id, $curr_homology_id] ) if $prev_homology_id;
     }
     close $hom_handle;
         
@@ -174,11 +178,17 @@ sub _fetch_and_map_previous_homologies_from_file {
 
 
 sub write_output {
-	my $self = shift;
+    my $self = shift;
 
-	print "INSERTING " if $self->debug;
-	print Dumper $self->param('homology_mapping') if $self->debug;
-    bulk_insert($self->compara_dba->dbc, 'homology_id_mapping', $self->param('homology_mapping'), ['mlss_id', 'prev_release_homology_id', 'curr_release_homology_id'], 'INSERT IGNORE');
+    my $homology_mapping = $self->param('homology_mapping');
+    my $homology_mapping_file = $self->param_required('homology_mapping_flatfile');
+    print "Writing mapping to $homology_mapping_file" if $self->debug;
+    open( my $hmfh, '>', $homology_mapping_file );
+    print $hmfh "prev_release_homology_id\tcurr_release_homology_id\n";
+    foreach my $map ( @$homology_mapping ) {
+        print $hmfh join("\t", @$map) . "\n";
+    }
+    close $hmfh;
 }
 
 1;

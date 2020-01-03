@@ -23,19 +23,12 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpSpeciesTrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpSpeciesTrees_conf -compara_db <url_of_the_compara_db>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpSpeciesTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -compara_db compara_curr
 
 =head1 DESCRIPTION  
 
-Dumps all the species-trees from the database
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
+Pipeline to dump all the species-trees from the the given compara database.
 
 =cut
 
@@ -52,8 +45,6 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
-
-        'division'          => 'vertebrates',
 
         #Locations to write output files
         'dump_dir'          => $self->o('pipeline_dir'),

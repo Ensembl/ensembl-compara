@@ -17,18 +17,14 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::ReindexMembers_conf
+
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -prev_tree_db <db_alias_or_url> -collection <collection> -member_type <protein|ncrna>
 
 =head1 DESCRIPTION
 
@@ -53,16 +49,13 @@ The location of the freshest load of members
 The location of the gene-trees database. the pipeline will copy all the relevant
 tables from there, and reindex the member_ids to make them match the new members.
 
+=item member_type
+
+Member type (protein or ncrna) used B<only> to name the pipeline database. The
+pipeline will automatically discover the member type of the database being
+reindexed.
+
 =back
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
 
 =cut
 
@@ -72,10 +65,10 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 
 use Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf;
 
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
@@ -88,6 +81,10 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
+
+        # Where to find the shared databases (use URLs or registry names)
+        'master_db' => 'compara_master',
+        'member_db' => 'compara_members',
 
         # Copy from master db
         'tables_from_master'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name' ],
@@ -248,12 +245,20 @@ sub pipeline_analyses {
         {   -logic_name        => 'map_member_ids',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::MapMemberIDs',
             -flow_into         => {
-                2 => 'delete_tree',
+                2 => 'delete_old_member',
                 3 => [
                     '?accu_name=seq_member_id_pairs&accu_address=[]&accu_input_variable=seq_member_ids',
                     '?accu_name=gene_member_id_pairs&accu_address=[]&accu_input_variable=gene_member_ids',
                 ],
-            }
+            },
+        },
+
+        {   -logic_name        => 'delete_old_member',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::DeleteOldMember',
+            -hive_capacity     => 1,    # Because of transactions, concurrent jobs will have deadlocks
+            -flow_into         => {
+                2 => 'delete_tree',
+            },
         },
 
         {   -logic_name        => 'delete_tree',
@@ -263,6 +268,18 @@ sub pipeline_analyses {
 
         {   -logic_name        => 'reindex_member_ids',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::ReindexMemberIDs',
+            -flow_into         => {
+                1 => 'reset_renamed_and_deleted_gene_members',
+            },
+        },
+
+        # Will catch gene_member_hom_stats that could not be reset by
+        # delete_tree because the gene_member_id is also renamed
+        {   -logic_name        => 'reset_renamed_and_deleted_gene_members',
+            -module            => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters        => {
+                'sql'   => 'UPDATE gene_member_hom_stats JOIN gene_member USING (gene_member_id) LEFT JOIN gene_tree_node ON canonical_member_id = seq_member_id SET gene_trees = 0, orthologues = 0, paralogues = 0, homoeologues = 0 WHERE node_id IS NULL AND gene_trees > 0',
+            },
             -flow_into         => {
                 1 => 'delete_flat_trees_factory',
             },

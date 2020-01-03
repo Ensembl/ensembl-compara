@@ -17,29 +17,22 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf;
 
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -compara_db <db_alias_or_url> -goc_mlss_id <mlss_id> [-goc_threshold <>]
+
 =head1 DESCRIPTION
 
-    if a default threshold is not given the pipeline will use the genetic distance between the pair species to choose between a threshold of 50 and 75 percent.
-	http://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Quality+metrics+for+the+orthologs
+If a default threshold is not given the pipeline will use the genetic distance
+between the pair species to choose between a threshold of 50 and 75 percent.
+http://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Quality+metrics+for+the+orthologs
 
-
-Example initialization (to compute GOC on a single -orthology- MLSS)
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf -goc_mlss_id <20620> -goc_threshold (optional) -pipeline_name <GConserve_trial> -host <host_server> [-goc_reuse_db <>] -compara_db <>
-
-Alternatively, set goc_taxlevels instead of goc_mlss_id to work on multiple taxa
+Alternatively, set goc_taxlevels instead of goc_mlss_id to work on multiple taxa.
 
 =cut
 
@@ -51,8 +44,10 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;  
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
+
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC;
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub hive_meta_table {
     my ($self) = @_;
@@ -78,13 +73,11 @@ sub default_options {
         'goc_taxlevels' => ["Euteleostomi","Ciona"],
         # Plants
         #'goc_taxlevels' => ['solanum', 'fabids', 'Brassicaceae', 'Pooideae', 'Oryzoideae', 'Panicoideae'],
-        'goc_reuse_db'  => undef,
         'calculate_goc_distribution'    => 1,
         'goc_threshold' => 50,
 
         # Capacities and batch-sizes
         'goc_capacity'          => 30,
-        'goc_batch_size'        => 20,
         'goc_stats_capacity'    => 5,
     };
 }
@@ -97,7 +90,6 @@ sub pipeline_wide_parameters {
         'goc_mlss_id' => $self->o('goc_mlss_id'),
         'compara_db' => $self->o('compara_db'),
         'goc_threshold'  => $self->o('goc_threshold'),
-        'goc_reuse_db'     => $self->o('goc_reuse_db'),
 	'calculate_goc_distribution'  => $self->o('calculate_goc_distribution'),
         'goc_capacity'   => $self->o('goc_capacity'),
     };

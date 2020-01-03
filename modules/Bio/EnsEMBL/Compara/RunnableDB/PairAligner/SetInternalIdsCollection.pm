@@ -75,6 +75,8 @@ sub run {
 
 
 sub _setInternalIds {
+    # NOTE: the code regarding the first transaction of this function should be kept in sync with
+    # Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LiftComponentAlignments::_lift_gas_and_gabs()
     my $self = shift;
 
     my $mlss_id = $self->param('method_link_species_set_id');

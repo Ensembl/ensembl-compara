@@ -17,39 +17,74 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats
 
-=cut
-
-=head1 SYNOPSIS
-
-$module->fetch_input
-
-$module->run
-
-$module->write_output
-
-=cut
-
 =head1 DESCRIPTION
 
-This module updates the method_link_species_set_tag table with pair aligner statistics by firstly adding any new bed files to the correct directory and running compare_beds to generate the statistics
+This module updates the method_link_species_set_tag table with pair aligner
+statistics by firstly adding any new bed files to the correct directory and
+running compare_beds to generate the statistics.
+
+=over
+
+=item mlss_id
+
+Mandatory. Method link species set ID.
+
+=item method_link_type
+
+Mandatory (if mlss_id missing). Method link type used to retrieve the MLSS of
+the given genome_db_ids.
+
+=item genome_db_ids
+
+Mandatory (if mlss_id missing). List of genome_db_ids used to retrieve their
+MLSS.
+
+=item bed_dir
+
+Mandatory. Location to dump the BED files.
+
+=item compare_beds
+
+Mandatory. Script to compare the overlap between two BED files to generate
+the stats.
+
+=item create_pair_aligner_page
+
+Mandatory. Script to generate the configuration parameters and coverage for a
+pairwise alignment.
+
+=item dump_features
+
+Mandatory. Script to dump the selected features in to a BED file.
+
+=item output_dir
+
+Optional. Location to dump the feature BED files.
+
+=item skip
+
+Optional. Don't run this runnable.
+
+=back
+
+=head1 EXAMPLES
+
+    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats \
+        -compara_db $(mysql-ens-compara-prod-8-ensadmin details url jalvarez_plants_lastz_polyploid_99) \
+        -mlss_id 9880 -bed_dir /hps/nobackup2/production/ensembl/jalvarez/plants_lastz_polyploid_99/bed_dir \
+        -compare_beds $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/compare_beds.pl \
+        -create_pair_aligner_page $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/report/create_pair_aligner_page.pl \
+        -dump_features $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/dumps/dump_features.pl \
+        -output_dir /hps/nobackup2/production/ensembl/jalvarez/plants_lastz_polyploid_99/feature_dumps
 
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with a _
+Internal methods are usually preceded with an underscore (_).
 
 =cut
 
@@ -61,24 +96,19 @@ use warnings;
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 use Bio::EnsEMBL::Utils::URI;
+
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-=head2 fetch_input
-
-  Implementation of the Bio::EnsEMBL::Hive::Process interface
-
-=cut
 
 sub fetch_input {
   my ($self) = @_;
 
   return if ($self->param('skip'));
-  #Default directory containing bed files.
-  if (!defined $self->param('bed_dir')) {
-      die ("Must define a location to dump the bed files using the parameter 'bed_dir'");
-  }
+
+  $self->param_required('bed_dir');
+
   #Find the mlss_id from the method_link_type and genome_db_ids
   my $mlss;
   my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -96,13 +126,8 @@ sub fetch_input {
   $self->param('mlss_id', $mlss->dbID);
   $self->param('mlss', $mlss);
 
-  my $genome_dbs = $mlss->species_set->genome_dbs;
-  my ($ref_genome_db, $non_ref_genome_db) = @$genome_dbs;
-  unless (($genome_dbs->[0]->name eq $mlss->get_value_for_tag('reference_species'))
-      && (!$mlss->has_tag('reference_component') || ($genome_dbs->[0]->genome_component eq $mlss->get_value_for_tag('reference_component')))) {
-        ($non_ref_genome_db, $ref_genome_db) = @$genome_dbs;
-  }
-  $non_ref_genome_db ||= $ref_genome_db;
+  my ($ref_genome_db, $non_ref_genome_db) = $mlss->find_pairwise_reference;
+  $non_ref_genome_db //= $ref_genome_db;
   $self->param('ref_genome_db', $ref_genome_db);
   $self->param('non_ref_genome_db', $non_ref_genome_db);
 
@@ -119,9 +144,6 @@ sub fetch_input {
   return 1;
 }
 
-=head2 run
-
-=cut
 
 sub run {
   my $self = shift;
@@ -132,18 +154,14 @@ sub run {
 }
 
 
-=head2 write_output
-
-=cut
-
 sub write_output {
   my ($self) = @_;
 
   return if ($self->param('skip'));
 
-  #Dump bed files if necessary
-  my ($ref_genome_bed) = $self->dump_bed_file($self->param('ref_genome_db'), $self->param('ref_dbc_url'), $self->param('reg_conf'));
-  my ($non_ref_genome_bed) = $self->dump_bed_file($self->param('non_ref_genome_db'), $self->param('non_ref_dbc_url'), $self->param('reg_conf'));
+  # Dump bed files if necessary
+  my $ref_genome_bed     = $self->dump_bed_file($self->param('ref_genome_db'), $self->param('ref_dbc_url'));
+  my $non_ref_genome_bed = $self->dump_bed_file($self->param('non_ref_genome_db'), $self->param('non_ref_dbc_url'));
 
   
   #Create statistics
@@ -184,7 +202,7 @@ sub write_output {
 #regions. If a file of that convention already exists, it will not be overwritten.
 #
 sub dump_bed_file {
-    my ($self, $genome_db, $dbc_url, $reg_conf) = @_;
+    my ($self, $genome_db, $dbc_url) = @_;
 
     my $name = $genome_db->_get_unique_name; #get production_name
     my $species_arg   = "--species ".$genome_db->name;
@@ -201,7 +219,7 @@ sub dump_bed_file {
         $self->run_command($cmd, { die_on_failure => 1 });
     }
 
-    return ($genome_bed_file);
+    return $genome_bed_file;
 }
 
 
@@ -335,5 +353,6 @@ sub run_create_pair_aligner_page {
 
     $self->run_command($cmd, { die_on_failure => 1 });
 }
+
 
 1;

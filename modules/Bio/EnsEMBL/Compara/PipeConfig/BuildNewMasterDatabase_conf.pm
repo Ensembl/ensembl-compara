@@ -17,43 +17,29 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf
 
-=head1 DESCRIPTION
-
-    Create a new master database from scratch via a predefined registry
-    configuration file with the desired core database(s) from where the species/
-    genome information will be copied.
-
-    WARNING: the previous reports and backups will be removed if the pipeline is
-    initialised again for the same division and release.
-
 =head1 SYNOPSIS
 
     Usage for non-test divisions:
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf -division <division>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV
 
     #1. Create a new master database
     #2. Populate it through PrepareMasterDatabaseForRelease pipeline
 
-    For citest division, see Bio::EnsEMBL::Compara::PipeConfig::EBI::CITest::BuildCITestMasterDatabase_conf
+    For citest division, see Bio::EnsEMBL::Compara::PipeConfig::CITest::BuildCITestMasterDatabase_conf
 
-=head1 AUTHORSHIP
+=head1 DESCRIPTION
 
-Ensembl Team. Individual contributions can be found in the GIT log.
+Create a new master database from scratch via a predefined registry
+configuration file with the desired core database(s) from where the species/
+genome information will be copied.
 
-=head1 APPENDIX
+WARNING: the previous reports and backups will be removed if the pipeline is
+initialised again for the same division and release.
 
 =cut
 
@@ -63,11 +49,11 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
-
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForRelease;
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub no_compara_schema {};
 
@@ -103,13 +89,13 @@ sub default_options {
         'create_all_mlss_exe'     => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
         'xml_file'                => $self->o('config_dir') . '/mlss_conf.xml',
         'report_file'             => $self->o('work_dir') . '/mlss_ids_' . $self->o('division') . '.list',
+        'annotation_file'         => undef,
         'master_backup_file'      => $self->o('backups_dir') . '/new_master_' . $self->o('division') . '.sql',
         'patch_dir'               => $self->check_dir_in_ensembl('ensembl-compara/sql/'),
         'alias_file'              => $self->check_file_in_ensembl('ensembl-compara/scripts/taxonomy/ensembl_aliases.sql'),
         'list_genomes_script'     => undef, # required but not used: do_update_from_metadata = 0
         'report_genomes_script'   => undef, # required but not used: do_update_from_metadata = 0
         'update_metadata_script'  => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
-        'assembly_patch_species'  => [], # by default, skip this step
         'additional_species'      => {}, # by default, skip this step
         'do_update_from_metadata' => 0,
         'do_load_lrg_dnafrags'    => 0,

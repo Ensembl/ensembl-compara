@@ -33,7 +33,7 @@ Bio::EnsEMBL::Compara::GenomicAlignBlock - Alignment of two or more pieces of ge
 =head1 SYNOPSIS
 
   use Bio::EnsEMBL::Compara::GenomicAlignBlock;
-  
+
   my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
           -adaptor => $genomic_align_block_adaptor,
           -method_link_species_set => $method_link_species_set,

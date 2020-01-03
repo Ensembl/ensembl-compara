@@ -17,15 +17,6 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::ENV
@@ -33,10 +24,6 @@ Bio::EnsEMBL::Compara::PipeConfig::ENV
 =head1 DESCRIPTION
 
 Environment-dependent pipeline configuration,
-
-=head1 CONTACT
-
-  Please contact Compara or Ensembl Genomes with questions/suggestions
 
 =cut
 
@@ -67,29 +54,35 @@ sub shared_default_options {
         # Shared user used for shared files across all of Compara
         'shared_user'           => 'compara_ensembl',
 
+        # Previous EnsEMBL release number
+        'prev_release'          => Bio::EnsEMBL::ApiVersion::software_version()-1,
+
         # EG release number
         'eg_release'            => Bio::EnsEMBL::ApiVersion::software_version()-53,
 
         # TODO: make a $self method that checks whether this already exists, to prevent clashes like in the LastZ pipeline
         'pipeline_dir'          => '/hps/nobackup2/production/ensembl/' . $ENV{'USER'} . '/' . $self->o('pipeline_name'),
+        'shared_hps_dir'        => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user'),
+        'warehouse_dir'         => '/nfs/production/panda/ensembl/warehouse/compara/',
 
         # Where to find the linuxbrew installation
         'linuxbrew_home'        => $ENV{'LINUXBREW_HOME'},
+        'compara_software_home' => $self->o('warehouse_dir') . '/software/',
 
         # All the fixed parameters that depend on a "division" parameter
         'config_dir'            => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/conf/'.$self->o('division'),
         # NOTE: Can't use $self->check_file_in_ensembl as long as we don't produce a file for each division
         'reg_conf'              => $self->o('config_dir').'/production_reg_conf.pl',
         'binary_species_tree'   => $self->o('config_dir').'/species_tree.branch_len.nw',
-        'genome_dumps_dir'      => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/genome_dumps/'.$self->o('division').'/',
+        'genome_dumps_dir'      => $self->o('shared_hps_dir') . '/genome_dumps/'.$self->o('division').'/',
 
         # HMM library
         'hmm_library_version'   => '2',
-        'hmm_library_basedir'   => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/treefam_hmms/2019-01-02',
+        'hmm_library_basedir'   => $self->o('shared_hps_dir') . '/treefam_hmms/2019-01-02',
         #'hmm_library_version'   => '3',
-        #'hmm_library_basedir'   => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/compara_hmm_91/',
+        #'hmm_library_basedir'   => $self->o('shared_hps_dir') . '/compara_hmm_91/',
         
-        'homology_dumps_shared_basedir' => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/homology_dumps/'. $self->o('division'),
+        'homology_dumps_shared_basedir' => $self->o('shared_hps_dir') . '/homology_dumps/'. $self->o('division'),
     }
 }
 
@@ -144,15 +137,15 @@ sub executable_locations {
         'mafft_exe'                 => $self->check_exe_in_cellar('mafft/7.427/bin/mafft'),
         'mash_exe'                  => $self->check_exe_in_cellar('mash/2.0/bin/mash'),
         'mcl_bin_dir'               => $self->check_dir_in_cellar('mcl/14-137/bin'),
-        'mcoffee_home'              => $self->check_dir_in_cellar('t-coffee/9.03.r1336_3'),
+        'mcoffee_exe'               => $self->check_exe_in_cellar('t-coffee/9.03.r1336_3/bin/t_coffee'),
         'mercator_exe'              => $self->check_exe_in_cellar('cndsrc/2013.01.11/bin/mercator'),
         'mpirun_exe'                => $self->check_exe_in_cellar('open-mpi/2.1.1/bin/mpirun'),
         'noisy_exe'                 => $self->check_exe_in_cellar('noisy/1.5.12/bin/noisy'),
         'notung_jar'                => $self->check_file_in_cellar('notung/2.6.0/libexec/Notung-2.6.jar'),
-        'ortheus_bin_dir'           => $self->check_dir_in_cellar('ortheus/0.5.0_1/bin'),
-        'ortheus_c_exe'             => $self->check_exe_in_cellar('ortheus/0.5.0_1/bin/ortheus_core'),
-        'ortheus_lib_dir'           => $self->check_dir_in_cellar('ortheus/0.5.0_1'),
-        'ortheus_py'                => $self->check_exe_in_cellar('ortheus/0.5.0_1/bin/Ortheus.py'),
+        'ortheus_bin_dir'           => $self->check_dir_in_compara('ortheus/rc3/bin'),
+        'ortheus_c_exe'             => $self->check_exe_in_compara('ortheus/rc3/bin/ortheus_core'),
+        'ortheus_lib_dir'           => $self->check_dir_in_compara('ortheus/rc3'),
+        'ortheus_py'                => $self->check_exe_in_compara('ortheus/rc3/bin/Ortheus.py'),
         'pantherScore_path'         => $self->check_dir_in_cellar('pantherscore/1.03'),
         'parse_examl_exe'           => $self->check_exe_in_cellar('examl/3.0.17/bin/parse-examl'),
         'parsimonator_exe'          => $self->check_exe_in_cellar('parsimonator/1.0.2/bin/parsimonator-SSE3'),
@@ -169,7 +162,7 @@ sub executable_locations {
         'samtools_exe'              => $self->check_exe_in_cellar('samtools/1.9/bin/samtools'),
         'semphy_exe'                => $self->check_exe_in_cellar('semphy/2.0b3/bin/semphy'), #semphy program
         'server_exe'                => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/exonerate-server'),
-        'treebest_exe'              => $self->check_exe_in_cellar('treebest/88/bin/treebest'),
+        'treebest_exe'              => $self->check_exe_in_compara('treebest/rc5/bin/treebest'),
         'trimal_exe'                => $self->check_exe_in_cellar('trimal/1.4.1/bin/trimal'),
         'xmllint_exe'               => $self->check_exe_in_linuxbrew_opt('libxml2/bin/xmllint'),
 
@@ -213,6 +206,7 @@ sub resource_classes_single_thread {
         '32Gb_job'     => {'LSF' => ['-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"', $reg_requirement],             'LOCAL' => [ '', $reg_requirement ] },
         '48Gb_job'     => {'LSF' => ['-C0 -M48000 -R"select[mem>48000] rusage[mem=48000]"', $reg_requirement],             'LOCAL' => [ '', $reg_requirement ] },
         '64Gb_job'     => {'LSF' => ['-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"', $reg_requirement],             'LOCAL' => [ '', $reg_requirement ] },
+        '96Gb_job'     => {'LSF' => ['-C0 -M96000 -R"select[mem>96000] rusage[mem=96000]"', $reg_requirement],             'LOCAL' => [ '', $reg_requirement ] },
         '512Gb_job'    => {'LSF' => ['-C0 -M512000 -R"select[mem>512000] rusage[mem=512000]"', $reg_requirement],          'LOCAL' => [ '', $reg_requirement ] },
 
         '250Mb_6_hour_job' => {'LSF' => ['-C0 -W 6:00 -M250   -R"select[mem>250]   rusage[mem=250]"',  $reg_requirement],  'LOCAL' => [ '', $reg_requirement ] },

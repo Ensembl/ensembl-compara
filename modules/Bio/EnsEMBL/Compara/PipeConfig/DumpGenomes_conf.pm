@@ -21,6 +21,16 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::PipeConfig::DumpGenomes_conf
 
+=head1 SYNOPSIS
+
+    # Typical invocation
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpGenomes_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV
+
+    # Different species-set
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpGenomes_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -collection_name '' -mlss_id 1234
+
 =head1 DESCRIPTION
 
 Pipeline to dump the genomic sequences of a given species-set. All masking
@@ -29,18 +39,6 @@ files are indexed (faidx) to allow fast access with Bio::DB::HTS.
 
 Furthermore, the genomes that are included in an EPO pipeline will also be
 indexed for exonerate.
-
-=head1 SYNOPSIS
-
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::DumpGenomes_conf -division $COMPARA_DIV
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -57,6 +55,30 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
 sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
+
+
+sub default_options {
+    my ($self) = @_;
+
+    return {
+        %{$self->SUPER::default_options},
+
+        # Which species-set to dump
+        'species_set_id'    => undef,
+        'species_set_name'  => undef,
+        'collection_name'   => $self->o('division'),
+        'mlss_id'           => undef,
+        'all_current'       => undef,
+
+        # the master database to get the genome_dbs
+        'master_db'         => 'compara_master',
+        # the pipeline won't redump genomes unless their size is different, or listed here
+        'force_redump'      => [],
+
+        # Capacities
+        'dump_capacity'     => 10,
+    };
+}
 
 
 sub pipeline_create_commands {

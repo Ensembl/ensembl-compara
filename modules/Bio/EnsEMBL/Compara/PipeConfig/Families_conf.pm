@@ -17,44 +17,27 @@ limitations under the License.
 
 =cut
 
-
-=pod 
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::Families_conf
 
 =head1 SYNOPSIS
 
-    #0. make sure that ProteinTree pipeline (whose EnsEMBL peptide members you want to incorporate) is already past member loading stage
-
-    #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
-
-    #3. make sure that all default_options are set correctly
-
-    #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Families_conf -password <your_password>
-
-    #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
-
-    #6. Please remember that mapping_session, stable_id_history, member and sequence tables will have to be MERGED in an intelligent way, and not just written over.
-        ReleaseCoordination.txt document explains how to do the merge correctly.
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Families_conf -host mysql-ens-compara-prod-X -prod XXXX \
+        -division $COMPARA_DIV -mlss_id <curr_family_mlss_id>
 
 =head1 DESCRIPTION  
 
-The PipeConfig file for Families pipeline that should automate most of the tasks
+The PipeConfig file for Families pipeline that should automate most of the tasks.
 
-=head1 CONTACT
+Please remember that mapping_session, stable_id_history, member and sequence
+tables will have to be MERGED in an intelligent way, and not just written
+over. ReleaseCoordination.txt document explains how to do the merge correctly.
 
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
+WARNING: make sure that ProteinTree pipeline (whose EnsEMBL peptide members
+you want to incorporate) is already past member loading stage.
 
 =cut
-
-
 
 package Bio::EnsEMBL::Compara::PipeConfig::Families_conf;
 
@@ -62,8 +45,8 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
-
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
@@ -73,9 +56,16 @@ sub default_options {
 
         'file_basename' => $self->o('pipeline_name'),
 
+        # used by the StableIdMapper as the reference:
+        'prev_rel_db' => 'compara_prev',
+
+        # Once the members are loaded, it is fine to start the families pipeline
+        'member_db' => 'compara_members',
+        # used by the StableIdMapper as the location of the master 'mapping_session' table:
+        'master_db' => 'compara_master', 
+
         # HMM clustering
-        #'hmm_clustering'  => 0,
-        #'hmm_library_basedir'       => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
+        'hmm_clustering'  => 1,
         'discard_uniprot_only_clusters' => 1,
 
         # data directories:
@@ -87,14 +77,22 @@ sub default_options {
         'uniprot_rel_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/reldate.txt',
         'uniprot_ftp_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',
 
-        #'blast_params'    => '', # By default C++ binary has composition stats on and -seg masking off
+        'blast_params'    => '', # By default C++ binary has composition stats on and -seg masking off
+
+        # data directories:
+        'warehouse_dir' => $self->o('warehouse_dir') . '/production/' . $self->o('ensembl_release') . '/Families_' . $self->o('rel_with_suffix'),
+
+        # Thresholds for Mafft resource-classes
+        'max_genes_lowmem_mafft'        =>  8000,
+        'max_genes_singlethread_mafft'  => 50000,
+        'max_genes_computable_mafft'    => 300000,
 
         #resource requirements:
         'blast_minibatch_size'  => 25,  # we want to reach the 1hr average runtime per minibatch
         'blast_capacity'  => 5000,                                  # work both as hive_capacity and resource-level throttle
         'mafft_capacity'  =>  400,
         'cons_capacity'   =>  100,
-        'HMMer_classify_capacity' => 100,
+        'HMMer_classify_capacity' => 1500,
 
     };
 }

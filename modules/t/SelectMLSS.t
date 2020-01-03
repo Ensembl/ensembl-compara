@@ -22,37 +22,41 @@ use Data::Dumper;
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Test::MultiTestDB;
+use Bio::EnsEMBL::ApiVersion ();
+
+use Test::Most;
 
 BEGIN {
-    use Test::Most;
+    # check module can be seen and compiled
+    use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::SelectMLSS'); 
 }
-
-# check module can be seen and compiled
-use_ok('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::SelectMLSS'); 
 
 # Load test DB #
 my $multi_db = Bio::EnsEMBL::Test::MultiTestDB->new('orth_qm_wga');
 my $dba = $multi_db->get_DBAdaptor('cc21_select_mlss');
 my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $dba->dbc);
 my $compara_db = $dbc->url;
+my $curr_release = Bio::EnsEMBL::ApiVersion::software_version();
 
 # Test pair of species sharing an EPO aln #
 my $exp_br1_dataflow = {
 	species => '112 - 142',
 	accu_dataflow => {
-		'aln_mlss_ids' => [647, 634],
-		'species1_id' => '112',
-		'species2_id' => '142'
+        'aln_mlss_ids'  => [647, 634],
+        'species1_id'   => '112',
+        'species2_id'   => '142',
+        'new_alignment' => 0,
 	}
 };
 
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::SelectMLSS', # module
 	{ # input param hash
-		'species1_id' => '112',
-		'species2_id' => '142',
-		'compara_db'  => $compara_db,
-		'master_db'   => $compara_db,
+        'species1_id'     => '112',
+        'species2_id'     => '142',
+        'compara_db'      => $compara_db,
+        'master_db'       => $compara_db,
+        'current_release' => $curr_release,
 	},
 	[ # list of events to test for (just 1 event in this case)
 		[
@@ -85,19 +89,21 @@ standaloneJob(
 $exp_br1_dataflow = {
 	species => '150 - 142',
 	accu_dataflow => {
-		'aln_mlss_ids' => [719],
-		'species1_id' => '150',
-		'species2_id' => '142'
+        'aln_mlss_ids' => [719],
+        'species1_id' => '150',
+        'species2_id' => '142',
+        'new_alignment' => 0,
 	}
 };
 
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::SelectMLSS', # module
 	{ # input param hash
-		'species1_id' => '150',
-		'species2_id' => '142',
-		'compara_db'  => $compara_db,
-		'master_db'   => $compara_db,
+        'species1_id'     => '150',
+        'species2_id'     => '142',
+        'compara_db'      => $compara_db,
+        'master_db'       => $compara_db,
+        'current_release' => $curr_release,
 	},
 	[ # list of events to test for (just 1 event in this case)
 		[
@@ -121,20 +127,22 @@ standaloneJob(
 $exp_br1_dataflow = {
 	species => '112 - 142',
 	accu_dataflow => {
-		'aln_mlss_ids' => [647],
-		'species1_id' => '112',
-		'species2_id' => '142'
+        'aln_mlss_ids'  => [647],
+        'species1_id'   => '112',
+        'species2_id'   => '142',
+        'new_alignment' => 1,
 	}
 };
 
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::SelectMLSS', # module
 	{ # input param hash
-		'species1_id'    => '112',
-		'species2_id'    => '142',
-        'aln_mlss_ids'   => ['647'],
-		'compara_db'     => $compara_db,
-		'master_db'      => $compara_db,
+        'species1_id'     => '112',
+        'species2_id'     => '142',
+        'aln_mlss_ids'    => ['647'],
+        'compara_db'      => $compara_db,
+        'master_db'       => $compara_db,
+        'current_release' => $curr_release,
 	},
 	[
 		[ # start event
@@ -151,4 +159,3 @@ standaloneJob(
 );
 
 done_testing();
-
