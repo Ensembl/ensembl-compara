@@ -3,3 +3,4 @@ six
 lxml
 ete3
 sqlalchemy
+mysqlclient
