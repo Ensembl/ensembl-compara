@@ -79,7 +79,9 @@ def main(argv: list) -> None:
     runtime_gaps = []
     mins15 = timedelta(minutes=15)
     prev_role = {} # type: Dict[str, Any]
+    now = datetime.now()
     pipeline_start = ''
+    pipeline_total_runtime = timedelta()
     for role in role_list:
 
         # Initalize start/finish times
@@ -106,6 +108,8 @@ def main(argv: list) -> None:
             if (role['when_finished'] is None) or (role['when_finished'] > prev_role['when_finished']):
                 prev_role = dict(role)
 
+        pipeline_total_runtime += (role['when_finished'] or now) - role['when_started']
+
     if pipeline_start == '':
         print("Pipeline hasn't started yet !")
         sys.exit(1)
@@ -117,6 +121,7 @@ def main(argv: list) -> None:
     for gap in runtime_gaps:
         gaps_total += gap['gap']
     pipeline_net_time = pipeline_gross_time - gaps_total
+    average_running_jobs = pipeline_total_runtime.total_seconds() / pipeline_gross_time.total_seconds()
 
     # print summaries
     print("\nPipeline duration summary:")
@@ -126,6 +131,8 @@ def main(argv: list) -> None:
         print("\t- began at %s and still running" % pipeline_start)
     print("\t- %s including runtime gaps" % pipeline_gross_time)
     print("\t- %s excluding runtime gaps" % pipeline_net_time)
+    print("\t- %s total runtime" % pipeline_total_runtime)
+    print("\t- %.1f running jobs on average" % average_running_jobs)
     print("\t- %d gaps detected, totalling %s" % (len(runtime_gaps), gaps_total))
 
     if opts.gap_list:
