@@ -1,7 +1,6 @@
 
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and
-# the EMBL-European Bioinformatics Institute
-# Copyright [2016-2019] EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016-2020] EMBL-European Bioinformatics Institute
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,15 +15,15 @@
 # limitations under the License.
 
 
+"""Module describing the CITest main class.
+"""
 
 import json
 
 from sqlalchemy import create_engine
 from ensembl.compara.citest.tabletest import TableTest
-"""Module describing the CITest main class.
-"""
 
-#
+
 class CITest:
     """This class implement generic testing for the Ensembl compara pipeline
     """
@@ -128,7 +127,7 @@ class CITest:
         str_pipeline_name = self.test_parameters["Pipeline_citest"]["pipeline_name"]
         for dic_result in self.table_test_results:
             lst_to_string = [str_pipeline_name, dic_result["table"]]
-            lst_to_string = lst_to_string + [dic_result["type"], str(dic_result["succes"])]
+            lst_to_string = lst_to_string + [dic_result["type"], str(dic_result["success"])]
             lst_to_string = lst_to_string + [dic_result["info"]]
             str_line = "\t".join(lst_to_string)
             print(str_line)
@@ -148,7 +147,7 @@ class CITest:
         with open(self.out_file, "w") as obj_file:
             for dic_result in self.table_test_results:
                 lst_to_string = [str_pipeline_name, dic_result["table"], dic_result["type"]]
-                lst_to_string = lst_to_string + [str(dic_result["succes"]), dic_result["info"]]
+                lst_to_string = lst_to_string + [str(dic_result["success"]), dic_result["info"]]
                 str_line = "\t".join(lst_to_string)
                 obj_file.write(str_line+"\n")
             for dic_result in self.file_test_results:
