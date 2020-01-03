@@ -21,7 +21,7 @@ import sys
 import re
 import argparse
 from typing import Dict, Any
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from sqlalchemy import create_engine
 
@@ -87,7 +87,8 @@ def main(argv: list) -> None:
             pipeline_start = role['when_started']
             prev_role = dict(role)
 
-        else:
+        # Skip this if the pipeline is stil running
+        elif prev_role['when_finished'] is not None:
 
             # Gap detection
             if role['when_started'] > prev_role['when_finished']:
@@ -102,12 +103,16 @@ def main(argv: list) -> None:
                     }
                     runtime_gaps.append(gap_desc)
 
-            if role['when_finished'] > prev_role['when_finished']:
+            if (role['when_finished'] is None) or (role['when_finished'] > prev_role['when_finished']):
                 prev_role = dict(role)
+
+    if pipeline_start == '':
+        print("Pipeline hasn't started yet !")
+        sys.exit(1)
 
     # get overall timings
     pipeline_finish = prev_role['when_finished']
-    pipeline_gross_time = pipeline_finish - pipeline_start
+    pipeline_gross_time = (pipeline_finish or now) - pipeline_start
     gaps_total = timedelta(minutes=0)
     for gap in runtime_gaps:
         gaps_total += gap['gap']
@@ -115,7 +120,10 @@ def main(argv: list) -> None:
 
     # print summaries
     print("\nPipeline duration summary:")
-    print("\t- began at %s and ended at %s" % (pipeline_start, pipeline_finish))
+    if pipeline_finish:
+        print("\t- began at %s and ended at %s" % (pipeline_start, pipeline_finish))
+    else:
+        print("\t- began at %s and still running" % pipeline_start)
     print("\t- %s including runtime gaps" % pipeline_gross_time)
     print("\t- %s excluding runtime gaps" % pipeline_net_time)
     print("\t- %d gaps detected, totalling %s" % (len(runtime_gaps), gaps_total))
