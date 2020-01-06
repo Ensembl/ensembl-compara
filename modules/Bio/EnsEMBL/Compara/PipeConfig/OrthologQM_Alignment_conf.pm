@@ -122,6 +122,8 @@ sub default_options {
         'species_set_id'   => undef,
         'ref_species'      => undef,
 
+        'homology_method_link_types' => ['ENSEMBL_ORTHOLOGUES'],
+
         # 'alt_aln_dbs'      => undef,
         'alt_aln_dbs'      => [ ],
         'alt_homology_db'  => undef,
@@ -274,6 +276,9 @@ sub pipeline_analyses {
 
         {   -logic_name => 'ortholog_mlss_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologMLSSFactory',
+            -parameters => {
+                'method_link_types' => $self->o('homology_method_link_types'),
+            },
             -flow_into  => {
                 '2->A' => [ 'prepare_orthologs' ],
                 'A->1' => [ 'check_file_copy' ],

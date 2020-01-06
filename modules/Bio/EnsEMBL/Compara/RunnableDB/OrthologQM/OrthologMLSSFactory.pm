@@ -45,9 +45,12 @@ sub fetch_input {
     my $aln_mlsss = $self->param_required('alignment_mlsses');
     my @orth_mlss_dataflow;
     foreach my $aln_info ( @$aln_mlsss ) {
-        my $orth_mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$aln_info->{species1_id}, $aln_info->{species2_id}]);
-        $aln_info->{orth_mlss_id} = $orth_mlss->dbID;
-        push @orth_mlss_dataflow, $aln_info;
+        foreach my $method_link_type ( @{ $self->param_required('method_link_types') } ) {
+            my %this_mlss_dataflow = %$aln_info;
+            my $orth_mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type, [$aln_info->{species1_id}, $aln_info->{species2_id}]);
+            $this_mlss_dataflow{orth_mlss_id} = $orth_mlss->dbID;
+            push @orth_mlss_dataflow, \%this_mlss_dataflow;
+        }
     }
     
     $self->param('orth_mlss_dataflow', \@orth_mlss_dataflow);

@@ -61,6 +61,8 @@ sub default_options {
         'collection'    => $self->o('division'),
         'member_type'   => 'protein',
 
+        'homology_method_link_types' => ['ENSEMBL_ORTHOLOGUES', 'ENSEMBL_HOMOEOLOGUES'],
+
         'species_set_name' => 'collection-' . $self->o('collection'),
     };
 }
