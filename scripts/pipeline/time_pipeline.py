@@ -102,8 +102,8 @@ def main(argv: list) -> None:
                     }
                     runtime_gaps.append(gap_desc)
 
-        if role['when_finished'] > prev_role['when_finished']:
-            prev_role = dict(role)
+            if role['when_finished'] > prev_role['when_finished']:
+                prev_role = dict(role)
 
     # get overall timings
     pipeline_finish = prev_role['when_finished']
