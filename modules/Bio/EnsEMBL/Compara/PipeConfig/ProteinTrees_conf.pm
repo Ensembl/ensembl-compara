@@ -3120,7 +3120,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'quick_tree_break',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak',
             -parameters => {
-                'quicktree_exe'     => $self->o('quicktree_exe'),
+                'quicktree_exe'         => $self->o('quicktree_exe'),
+                'treebest_exe'          => $self->o('treebest_exe'),
                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
@@ -3134,7 +3135,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'quick_tree_break_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak',
             -parameters => {
-                'quicktree_exe'     => $self->o('quicktree_exe'),
+                'quicktree_exe'         => $self->o('quicktree_exe'),
+                'treebest_exe'          => $self->o('treebest_exe'),
                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
