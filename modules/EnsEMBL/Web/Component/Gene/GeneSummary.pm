@@ -262,7 +262,6 @@ sub content {
     foreach my $next (@$cv_terms) {
       $text .= "<p>$next</p>";
     }
-    my $label = qq(Annotation Attributes [<a href="/info/website/glossary.html class="constant">Definitions</a>]);
     $table->add_row('Annotation Attributes', $text) if $text;;
   }
 
