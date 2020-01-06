@@ -32,7 +32,7 @@ use Bio::EnsEMBL::Compara::Utils::Registry;
 
 my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
 my $prev_release = $curr_release - 1;
-my $curr_eg_release = $curr_release - 53;
+my $curr_eg_release = $ENV{'CURR_EG_RELEASE'};
 my $prev_eg_release = $curr_eg_release - 1;
 
 # ---------------------- CURRENT CORE DATABASES----------------------------------
@@ -70,15 +70,13 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-7', 'ensembl_compara_master_pan' ],
-   # 'compara_curr'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${curr_eg_release}_${curr_release}" ],
-   # 'compara_prev'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homolog_${prev_eg_release}_${prev_release}" ],
+    # 'compara_curr'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${curr_eg_release}_${curr_release}" ],
+    # 'compara_prev'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homolog_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
     #'compara_members'  => [ '', ''  ],
     #'compara_ptrees'   => [ '', '' ],
     #'ptrees_prev'      => [ 'mysql-ens-compara-prod-7', 'dthybert_pan_protein_trees_99' ],
-
-
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -87,7 +85,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-        'ncbi_taxonomy' => [ 'mysql-ens-sta-1', 'ncbi_taxonomy' ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', 'ncbi_taxonomy' ],
     });
 
 # -------------------------------------------------------------------
