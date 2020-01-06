@@ -81,7 +81,15 @@ def main(argv: list) -> None:
     prev_role = {} # type: Dict[str, Any]
     pipeline_start = ''
     for role in role_list:
-        try:
+
+        # Initalize start/finish times
+        if pipeline_start == '':
+            pipeline_start = role['when_started']
+            prev_role = dict(role)
+
+        else:
+
+            # Gap detection
             if role['when_started'] > prev_role['when_finished']:
                 this_gap = role['when_started'] - prev_role['when_finished']
                 if this_gap > mins15:
@@ -93,9 +101,6 @@ def main(argv: list) -> None:
                         'gap': this_gap
                     }
                     runtime_gaps.append(gap_desc)
-        except KeyError:
-            pipeline_start = role['when_started']
-            prev_role = dict(role)
 
         if role['when_finished'] > prev_role['when_finished']:
             prev_role = dict(role)
