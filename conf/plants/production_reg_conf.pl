@@ -83,6 +83,13 @@ my $compara_dbs = {
 
     # synteny
     'compara_syntenies' => [ 'mysql-ens-compara-prod-1', 'cristig_plants_synteny_99' ],
+
+    # EPO dbs
+    ## rice
+    'rice_epo'         => [ 'mysql-ens-compara-prod-5', 'cristig_rice_epo_test5' ],
+    #'rice_epo_prev'    => [ 'mysql-ens-compara-prod-5', 'cristig_rice_epo_test5' ],
+    'rice_epo_low'     => [ 'mysql-ens-compara-prod-5', 'cristig_rice_epo_low_coverage_test' ],
+    'rice_epo_anchors' => [ 'mysql-ens-compara-prod-5', 'cristig_generate_anchors_rice_99' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );

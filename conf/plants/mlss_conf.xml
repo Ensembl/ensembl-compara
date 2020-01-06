@@ -54,6 +54,23 @@
 
   </pairwise_alignments>
 
+  <multiple_alignments>
+    <!-- Rice -->
+    <multiple_alignment method="EPO">
+      <species_set name="rice">
+        <taxonomic_group taxon_name="Oryza" only_good_for_alignment="1"/>
+        <genome name="oryza_brachyantha" exclude="1"/>
+        <genome name="oryza_punctata" exclude="1"/>
+      </species_set>
+    </multiple_alignment>
+    <multiple_alignment method="EPO_LOW_COVERAGE">
+      <species_set name="rice">
+        <taxonomic_group taxon_name="Oryza"/>
+      </species_set>
+    </multiple_alignment>
+
+  </multiple_alignments>
+
   <self_alignments>
     <genome name="triticum_aestivum"/>
     <genome name="triticum_dicoccoides"/>

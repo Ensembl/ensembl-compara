@@ -81,6 +81,12 @@
          },
          {
             "component": "Production tasks",
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Plants::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/EPOwith2x_conf.pm]",
+            "summary": "Run the Rice EPOwith2x pipeline",
+            "name_on_graph": "EPOwith2x:Rice"
+         },
+         {
+            "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]",
             "name_on_graph": "Synteny",
             "summary": "Run the Synteny pipeline"
