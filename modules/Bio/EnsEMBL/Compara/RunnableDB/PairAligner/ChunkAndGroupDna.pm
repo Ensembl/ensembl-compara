@@ -22,7 +22,7 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ChunkAndGroupDna
 =head1 DESCRIPTION
 
 This object chunks the DNA from a genome_db and creates and stores the chunks as
-DnaFragChunk objects are grouped into DnaFragChunkSets in the compara database.
+DnaFragChunk objects, which are grouped into DnaFragChunkSets in the compara database.
 A DnaFragChunkSet contains one or more DnaFragChunk objects. A DnaFragChunkSet
 is a member of a DnaCollection.
 
