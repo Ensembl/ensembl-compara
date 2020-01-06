@@ -325,7 +325,7 @@ sub transcript_table {
       if (my $mane_attrib = $trans_attribs->{$tsi}{$MANE_attrib_code}) {
         my $refseq_id = $mane_attrib->value;
         $refseq_url  = $hub->get_ExtURL_link($refseq_id, 'REFSEQ_MRNA', $refseq_id);
-        push @flags, helptip($mane_attrib->name, get_glossary_entry($hub, $mane_attrib->name)); 
+        push @flags, helptip($mane_attrib->name, get_glossary_entry($hub, 'MANE Select'));
       }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;
