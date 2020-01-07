@@ -58,8 +58,8 @@ sub fetch_input {
         $self->param_required('mlss_id');
         my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
         my $sth;
-        if ($self->param('_range_list')) {
-            $sth = $anchor_dba->dbc->prepare(sprintf('SELECT anchor_id, sequence FROM anchor_sequence WHERE anchor_id IN (%s)', join(',', @{$self->param('_range_list')})));
+        if ($self->param('anchor_ids')) {
+            $sth = $anchor_dba->dbc->prepare(sprintf('SELECT anchor_id, sequence FROM anchor_sequence WHERE anchor_id IN (%s)', join(',', @{$self->param('anchor_ids')})));
             $sth->execute;
         } else {
         $sth = $anchor_dba->dbc->prepare("SELECT anchor_id, sequence FROM anchor_sequence WHERE anchor_id BETWEEN  ? AND ?");
@@ -140,8 +140,8 @@ sub write_output {
     my ($self) = @_;
 
     # Delete previous mapping
-    if ($self->param('_range_list')) {
-        my $sql = sprintf('DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id IN (%s) AND genome_db_id = ?', join(',', @{$self->param('_range_list')}));
+    if ($self->param('anchor_ids')) {
+        my $sql = sprintf('DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id IN (%s) AND genome_db_id = ?', join(',', @{$self->param('anchor_ids')}));
         $self->compara_dba->dbc->do($sql, undef, $self->param('genome_db_id'));
     } else {
         my $sql = 'DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id BETWEEN ? AND ? AND genome_db_id = ?';
