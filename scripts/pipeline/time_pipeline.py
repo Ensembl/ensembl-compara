@@ -53,8 +53,9 @@ def formulate_condition(analyses_pattern: str) -> str:
             condition = " WHERE analysis_id IN (%s)" % analyses_pattern
     return condition
 
-def main(argv: list) -> None:
-    """ main """
+
+def parse_args(argv: list) -> argparse.Namespace:
+    """ parse the command-line arguments """
     parser = argparse.ArgumentParser()
     parser.add_argument('-url', '--database_url')
     parser.add_argument('-a', '--analyses_pattern')
@@ -63,6 +64,12 @@ def main(argv: list) -> None:
 
     if not opts.database_url:
         die_with_help()
+
+    return opts
+
+
+def main(opts: argparse.Namespace) -> None:
+    """ main """
 
     # figure out analyses_pattern
     condition = formulate_condition(opts.analyses_pattern)
@@ -136,19 +143,23 @@ def main(argv: list) -> None:
     print("\t- %d gaps detected, totalling %s" % (len(runtime_gaps), gaps_total))
 
     if opts.gap_list:
-        print("\nGaps list:")
-        for gap in runtime_gaps:
-            analysis_str = ''
-            if gap['analysis_a'] == gap['analysis_b']:
-                analysis_str = 'during %s' % gap['analysis_a']
-            else:
-                analysis_str = 'between %s and %s' % (gap['analysis_a'], gap['analysis_b'])
-            print(
-                "\t- %s between role_ids %d and %d (%s)" %
-                (gap['gap'], gap['role_id_a'], gap['role_id_b'], analysis_str)
-            )
+        print(runtime_gaps)
 
     print()
 
+def print_gaps(runtime_gaps: list) -> None:
+    """print the runtime gaps identified above"""
+    print("\nGaps list:")
+    for gap in runtime_gaps:
+        analysis_str = ''
+        if gap['analysis_a'] == gap['analysis_b']:
+            analysis_str = 'during %s' % gap['analysis_a']
+        else:
+            analysis_str = 'between %s and %s' % (gap['analysis_a'], gap['analysis_b'])
+        print(
+            "\t- %s between role_ids %d and %d (%s)" %
+            (gap['gap'], gap['role_id_a'], gap['role_id_b'], analysis_str)
+        )
+
 if __name__ == "__main__":
-    main(sys.argv)
+    main(parse_args(sys.argv))
