@@ -20,7 +20,7 @@
 import sys
 import re
 import argparse
-from typing import Dict, Any
+from typing import Dict, Any, Union
 from datetime import datetime, timedelta
 
 from sqlalchemy import create_engine
@@ -80,7 +80,7 @@ def main(argv: list) -> None:
     mins15 = timedelta(minutes=15)
     prev_role = {} # type: Dict[str, Any]
     now = datetime.now()
-    pipeline_start = ''
+    pipeline_start = '' # type: Union[Any, datetime]
     pipeline_total_runtime = timedelta()
     for role in role_list:
 
