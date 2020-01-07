@@ -29,9 +29,10 @@ use Test::More;
 use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Utils::IO qw/work_with_file/;
 
+my $compara_dir = File::Basename::dirname(File::Basename::dirname(File::Basename::dirname(Cwd::realpath($0))));
 # Initialize a MultiTestDB object
 my $multitestdb = bless {}, 'Bio::EnsEMBL::Test::MultiTestDB';
-$multitestdb->curr_dir( File::Basename::dirname(Cwd::realpath($0)) );
+$multitestdb->curr_dir("${compara_dir}/modules/t");
 $multitestdb->_rebless;
 $multitestdb->species('compara');
 
@@ -101,7 +102,7 @@ sub read_sqls {
     # don't need
     my $all_sql = '';
     foreach my $file_name (qw(table.sql pipeline-tables.sql)) {
-        my $sql_file = $ENV{ENSEMBL_CVS_ROOT_DIR} . '/ensembl-compara/sql/' . $file_name;
+        my $sql_file = "${compara_dir}/sql/${file_name}";
         note("Reading SQL from '$sql_file'");
         work_with_file($sql_file, 'r', sub {
                 my ($fh) = @_;
