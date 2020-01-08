@@ -98,6 +98,8 @@ sub default_options {
 	    #Default net 
 	    'net_input_method_link' => [1002, 'LASTZ_CHAIN'],
 	    'net_output_method_link' => [16, 'LASTZ_NET'],
+
+        'component_method_link' => [1003, 'COMPONENT_LASTZ_NET'],
 	};
 }
 

@@ -714,10 +714,11 @@ sub parse_defaults {
 	%$chain_config = ('input_method_link' => $self->param('default_chain_input'),
 			  'output_method_link' => $self->param('default_chain_output'));
 	
+    #
     my $net_config = {
         'input_method_link'  => $self->param('default_net_input'),
-        'output_method_link' => $self->param('default_net_output'),
-        'principal_mlss_id'  => $pair->{'principal_mlss_id'},
+        'output_method_link' => ($pair->{principal_mlss_id}) ? $self->param('component_net_output') : $self->param('default_net_output'),
+        'principal_mlss_id'  => $pair->{principal_mlss_id},
     };
 
 	#If used input mlss, check if the method_link_type is the same as the value defined in the conf file used in init_pipeline

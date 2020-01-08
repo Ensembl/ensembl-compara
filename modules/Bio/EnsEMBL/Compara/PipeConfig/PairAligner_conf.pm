@@ -269,6 +269,7 @@ sub core_pipeline_analyses {
                                   'collection' => $self->o('collection'),
 				  'master_db' => $self->o('master_db'),
 				  'bidirectional' => $self->o('bidirectional'),
+                  'component_net_output' => $self->o('component_method_link'),
   				  }, 
 		-flow_into => {
 			       1 => [ 'create_pair_aligner_jobs'],
