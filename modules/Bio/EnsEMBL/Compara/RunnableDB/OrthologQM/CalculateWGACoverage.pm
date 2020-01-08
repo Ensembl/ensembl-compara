@@ -134,7 +134,7 @@ sub fetch_input {
 
 sub run {
 	my $self = shift;
-	my $dba  = $self->get_cached_compara_dba('pipeline_url');
+	my $dba  = $self->get_cached_compara_dba('alignment_db');
 	my $gdba = $dba->get_GenomeDBAdaptor;
 
 	my @orth_info  = @{ $self->param('orth_info') };

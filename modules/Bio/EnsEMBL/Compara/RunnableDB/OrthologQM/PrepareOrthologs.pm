@@ -150,7 +150,7 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    if ( $self->param('previous_wga_file') ){ # reuse is on
+    if ( $self->param('reuse') ){
         $self->dataflow_output_id( {orth_mlss_id => $self->param('orth_mlss_id')}, 3 ); # to reuse_wga_score
     }
 
@@ -169,10 +169,20 @@ sub _nonreusable_homologies {
     my ( $self, $current_homologs ) = @_;
 
     # if new alignments have been run, do not reuse
-    return $current_homologs if $self->param_required('new_alignment');
+    if ( $self->param_required('new_alignment') ) {
+        $self->param('reuse', 0);
+        return $current_homologs;
+    }
 
     # otherwise, check for reusable homologies based on id mapping file
     my $hom_map_file = $self->param_required('homology_mapping_flatfile');
+    # can't reuse anything if the file doesn't exist..
+    unless ( -e  $hom_map_file ) {
+        $self->warning("id mapping file not found - no reuse possible");
+        $self->param('reuse', 0);
+        return $current_homologs;
+    }
+
     my $reuse_homologs;
     open( my $hmfh, '<', $hom_map_file ) or die "Cannot open $hom_map_file for reading";
     my $header = <$hmfh>;
@@ -195,6 +205,8 @@ sub _nonreusable_homologies {
             push( @dont_reuse, $h );
         }
     }
+
+    $self->param('reuse', 1);
 
     # return nonreuable homologies to the pipeline
     return \@dont_reuse;

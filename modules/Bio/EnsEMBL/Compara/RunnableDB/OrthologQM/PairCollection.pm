@@ -111,37 +111,34 @@ sub fetch_input {
 		die "Cannot find species_set with id '$species_set_id' in db ($compara_db)" unless ( defined $ss );
 	}
 
-	my $gdb_list = $ss->genome_dbs;
-	my @species_list;
-	foreach my $gdb ( @{ $gdb_list } ) {
-		push( @species_list, $gdb->dbID );
-	}
-	$self->param( 'genome_db_ids', \@species_list );
+    $self->param( 'genome_dbs', $ss->genome_dbs );
 }
 
 sub run {
 	my $self = shift;
 
-	my @species_list = @{ $self->param( 'genome_db_ids' ) };
+	my @species_list = @{ $self->param( 'genome_dbs' ) };
 	my $ref_gdb_id   = $self->param('ref_gdb_id');
 	my $ss_id        = $self->param('species_set_id');
 
 	my @pairs;
 	if ( $ref_gdb_id ) { # ref vs all
 		foreach my $s ( @species_list ){
-			next if $s == $ref_gdb_id;
-			my $this_pair = {'species1_id' => $ref_gdb_id, 'species2_id' => $s};
-			$this_pair->{species_set_id} = $ss_id if ( $ss_id );
+			next if $s->dbID == $ref_gdb_id;
+			my $this_pair = {'species1_id' => $ref_gdb_id, 'species2_id' => $s->dbID};
 			push( @pairs, $this_pair );
 		}
 	}
 	else { # all vs all
 		my @ref_list = @species_list;
 		while( my $r = shift @ref_list ){
+            # handle polyploid genomes - we want to include homoeologues
+            if ( $r->is_polyploid ) {
+                push( @pairs, {'species1_id' => $r->dbID, 'species2_id' => $r->dbID} );
+            }
 			my @nonref_list = @ref_list;
 			foreach my $nr ( @nonref_list ){
-				my $this_pair = {'species1_id' =>$r, 'species2_id' => $nr};
-				$this_pair->{species_set_id} = $ss_id if ( $ss_id );
+				my $this_pair = {'species1_id' => $r->dbID, 'species2_id' => $nr->dbID};
 				push( @pairs, $this_pair );
 			}
 		}

@@ -48,6 +48,7 @@ sub fetch_input {
         foreach my $method_link_type ( @{ $self->param_required('method_link_types') } ) {
             my %this_mlss_dataflow = %$aln_info;
             my $orth_mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method_link_type, [$aln_info->{species1_id}, $aln_info->{species2_id}]);
+            next unless $orth_mlss;
             $this_mlss_dataflow{orth_mlss_id} = $orth_mlss->dbID;
             push @orth_mlss_dataflow, \%this_mlss_dataflow;
         }
