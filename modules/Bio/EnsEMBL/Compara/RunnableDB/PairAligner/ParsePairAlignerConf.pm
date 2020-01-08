@@ -739,7 +739,7 @@ sub parse_defaults {
     }
 	
 	#create pair_aligners
-	$pair_aligner->{'reference_collection_name'} = $pair->{ref_genome_db}->dbID . " raw";
+	$pair_aligner->{'reference_collection_name'} = $pair->{ref_genome_db}->dbID . " raw (ref)";
 	$chain_config->{'reference_collection_name'} = $pair->{ref_genome_db}->dbID . " for chain";
 
         #What to do about all vs all which will not have a net_ref_species
@@ -757,7 +757,7 @@ sub parse_defaults {
 	%{$dna_collections->{$pair_aligner->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db});
 	%{$dna_collections->{$chain_config->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db});
 
-	$pair_aligner->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->dbID . " raw";;
+	$pair_aligner->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->dbID . " raw (non-ref)";
 	$chain_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->dbID . " for chain";
 
         # self-alignments would have the same names for "reference" and
