@@ -917,7 +917,7 @@ sub dnafrags_match_core_slices {
         if ( @differing_lens ) {
             print scalar @differing_lens . " dnafrags differ in length from their core counterparts:\n";
             foreach my $d_name ( @differing_lens ) {
-                print "\t$d_name lengths: compara=" . $dnafrag_len_by_name{$d_name} . ", core=" . $slice_len_by_name{$d_name} . "\n";
+                print "\t$d_name lengths: compara=" . ($dnafrag_len_by_name{$d_name} || 'NA') . ", core=" . ($slice_len_by_name{$d_name} || 'NA') . "\n";
             }
         }
 

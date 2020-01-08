@@ -115,9 +115,14 @@ sub fetch_input {
     my $master_dba = $self->get_cached_compara_dba('master_db');
 	foreach my $species_name ( @release_genomes ) {
 		next if $g2update{$species_name}; # we already know these have changed
-        $species_name = $renamed_genomes->{$species_name} if $renamed_genomes->{$species_name}; # if it's been renamed only, still check if frags are stable
+        my $core_dba;
+        if ( $renamed_genomes->{$species_name} ) { # if it's been renamed only, still check if frags are stable
+            $core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($species_name, 'core');
+            $species_name = $renamed_genomes->{$species_name};
+        }
         print "fetching and checking $species_name\n";
 		my $gdb = $genome_db_adaptor->fetch_by_name_assembly($species_name);
+        $gdb->db_adaptor($core_dba) if defined $core_dba;
         my $slices_to_ignore;
         $slices_to_ignore = 'LRG' if $species_name eq 'homo_sapiens';
 		my $dnafrags_match = Bio::EnsEMBL::Compara::Utils::MasterDatabase->dnafrags_match_core_slices($master_dba, $gdb, $slices_to_ignore);
