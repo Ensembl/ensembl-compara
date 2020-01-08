@@ -70,7 +70,7 @@ CREATE TABLE dnafrag_chunk_set (
 -- overview: The dna_collection table is
 --           linked to the dnafrag_chunk_set table and the dnafrag_chunk_set table is linked to the
 --           dnafrag_chunk table. The dna_collection table holds information relevant to all the
---           the underlying dnafrag_chunks ie masking. The description field is a unique
+--           underlying dnafrag_chunks ie masking. The description field is a unique
 --           identifier and is used to retrieve a specific dna_collection since this is known prior
 --           to storage.
 -- semantics:
