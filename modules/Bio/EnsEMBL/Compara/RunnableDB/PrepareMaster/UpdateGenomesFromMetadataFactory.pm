@@ -184,7 +184,7 @@ sub fetch_genome_report {
 
     my @new_genomes = keys %{$decoded_meta_report->{new_genomes}};
     my %renamed_genomes = map { $_->{name} => $_->{old_name} } values %{$decoded_meta_report->{renamed_genomes}};
-    my @updated_annotations = map {$_->{name}} @{$decoded_meta_report->{updated_annotations}};
+    my @updated_annotations = map {$_->{name}} values %{$decoded_meta_report->{updated_annotations}};
 
     my @genomes_with_assembly_patches;
     my @updated_assemblies;
