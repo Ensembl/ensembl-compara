@@ -86,7 +86,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
     'ncbi_taxonomy' => [ 'mysql-ens-sta-1', 'ncbi_taxonomy' ],
-    });
+});
 
 # -------------------------------------------------------------------
 
