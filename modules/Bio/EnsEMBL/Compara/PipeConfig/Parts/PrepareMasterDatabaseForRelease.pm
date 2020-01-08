@@ -264,7 +264,18 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'src_db_conn' => $self->o('master_db'),
                 'output_file' => $self->o('master_backup_file'),
             },
+            -flow_into  => [ 'copy_annotations_to_shared_loc' ],
             -rc_name => '1Gb_job',
+        },
+
+        {   -logic_name => 'copy_annotations_to_shared_loc',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'shared_user'     => $self->o('shared_user'),
+                'annotation_file' => $self->o('annotation_file'),
+                'shared_hps_dir'  => $self->o('shared_hps_dir'),
+                'cmd'             => 'become #shared_user# cp -u #annotation_file# #shared_hps_dir#/ensembl-metadata/',
+            },
         },
     ];
 }
