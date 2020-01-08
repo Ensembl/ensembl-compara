@@ -605,9 +605,11 @@ sub parse_defaults {
                 if ($mlss_gdbs[0]->is_polyploid) {
                     # To self-align a polyploid genome, align all combinations
                     # of two different components without repetition
-                    my $components = $mlss_gdbs[0]->component_genome_dbs;
-                    while (my $gdb1 = shift @{$components}) {
-                        foreach my $gdb2 ( @{$components} ) {
+                    # Sort components alphabetically so the same order is
+                    # followed in every PWA
+                    my @components = sort {$a cmp $b} @{$mlss_gdbs[0]->component_genome_dbs};
+                    while (my $gdb1 = shift @components) {
+                        foreach my $gdb2 ( @components ) {
                             push @pair,
                                  {'ref_genome_db'     => $gdb1,
                                   'non_ref_genome_db' => $gdb2,
@@ -627,8 +629,11 @@ sub parse_defaults {
                     && ($mlss_gdbs[0]->taxon->genus eq $mlss_gdbs[1]->taxon->genus)) {
                     my %ref_components     = map { $_->genome_component => $_ } @{$mlss_gdbs[0]->component_genome_dbs};
                     my %non_ref_components = map { $_->genome_component => $_ } @{$mlss_gdbs[1]->component_genome_dbs};
+                    # Sort components alphabetically so the same order is
+                    # followed in every PWA
+                    my @components = sort {$a cmp $b} keys %ref_components;
                     # Ignore the components that are not present in both genomes
-                    foreach my $cpnt (keys %ref_components) {
+                    foreach my $cpnt ( @components ) {
                         if (exists $non_ref_components{$cpnt}) {
                             push @pair,
                                  {'ref_genome_db'     => $ref_components{$cpnt},
