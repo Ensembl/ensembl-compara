@@ -719,7 +719,7 @@ sub parse_defaults {
 	%$chain_config = ('input_method_link' => $self->param('default_chain_input'),
 			  'output_method_link' => $self->param('default_chain_output'));
 	
-    #
+    # Assign the corresponding method link: LASTZ_NET or COMPONENT_LASTZ_NET
     my $net_config = {
         'input_method_link'  => $self->param('default_net_input'),
         'output_method_link' => ($pair->{principal_mlss_id}) ? $self->param('component_net_output') : $self->param('default_net_output'),
