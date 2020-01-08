@@ -67,7 +67,12 @@ sub fetch_input {
 	my $list_cmd = "perl $list_genomes_script $metadata_script_options";
 	my @release_genomes = $self->get_command_output($list_cmd);
 	chomp @release_genomes;
-    die "No genomes reported for release" unless @release_genomes;
+
+    #if pan do not die becasue the list of species used in pan is
+    #exclusively described in param('additional_species')
+    if ($division ne "pan"){
+        die "No genomes reported for release" unless @release_genomes;
+    }
 
     # check if additional species have been defined and include them
     # in the appropriate data structures
@@ -77,7 +82,17 @@ sub fetch_input {
             # first, add them to the release_genomes
             my @add_species_for_div = @{$additional_species->{$additional_div}};
             push( @release_genomes, @add_species_for_div );
-
+            # check for each additonal species in each division that the productioin name is correct
+            $metadata_script_options = "\$(mysql-ens-meta-prod-1 details script) --release $release --division $additional_div";
+            $list_cmd = "perl $list_genomes_script $metadata_script_options";
+            my @additional_release_genomes = $self->get_command_output($list_cmd);
+            chomp @additional_release_genomes;
+            my %additional_genome = map {$_ => 1} @additional_release_genomes;
+            foreach my $genome (@add_species_for_div) {
+                if (not exists($additional_genome{$genome})){
+                    die "'$genome' from division $additional_div does not exist in the metadata database!\n";
+                }
+            }
             # check if they've been updated this release too
             my ($updated_add_species, $renamed_add_species, $patched_add_species, $updated_gen_add_species) = $self->fetch_genome_report($release, $additional_div);
             foreach my $add_species_name ( @add_species_for_div ) {
@@ -169,13 +184,13 @@ sub write_output {
 
 sub fetch_genome_report {
     my ( $self, $release, $division ) = @_;
-    
+
     my $work_dir = $self->param_required('work_dir');
     my $report_genomes_script = $self->param_required('report_genomes_script');
     my $metadata_script_options = "\$(mysql-ens-meta-prod-1 details script) --release $release --division $division";
     my $report_cmd = "perl $report_genomes_script $metadata_script_options -output_format json --dump_path $work_dir";
     my $report_out = $self->get_command_output($report_cmd);
-    
+
     # add the division name output file
     my $report_file = "$work_dir/report_updates.json";
     my $report_file_with_div = $report_file;
