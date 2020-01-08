@@ -143,7 +143,7 @@ def main(opts: argparse.Namespace) -> None:
     print("\t- %d gaps detected, totalling %s" % (len(runtime_gaps), gaps_total))
 
     if opts.gap_list:
-        print(runtime_gaps)
+        print_gaps(runtime_gaps)
 
     print()
 
