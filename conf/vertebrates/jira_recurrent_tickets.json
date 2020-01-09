@@ -137,6 +137,12 @@
          {
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {lastz_complete} to 1 when relevant LASTZs are ready",
+            "summary": "Run the Pigs EPOwith2x pipeline",
+            "name_on_graph": "EPOwith2x:Pigs"
+         },
+         {
+            "component": "Production tasks",
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {lastz_complete} to 1 when relevant LASTZs are ready",
             "summary": "Run the Fish EPOwith2x pipeline",
             "name_on_graph": "EPOwith2x:Fish"
          },
