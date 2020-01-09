@@ -89,7 +89,7 @@ sub fetch_input {
 		die "Cannot find $species1 in the database\n" unless ( defined $species1_gdb );
 		die "Cannot find $species2 in the database\n" unless ( defined $species2_gdb );
 
-		$self->param( 'genome_db_ids', [ $species1_gdb->dbID, $species2_gdb->dbID ] );
+		$self->param( 'genome_dbs', [ $species1_gdb, $species2_gdb ] );
 
 		return 1;
 	}

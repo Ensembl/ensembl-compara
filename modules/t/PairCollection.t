@@ -38,32 +38,26 @@ my $compara_db = $dbc->url;
 # Test with species_set_name #
 my $exp_dataflow = [
 	{
-	'species_set_id' => '35399',
 	'species1_id' => '87',
 	'species2_id' => '111'
 	},
 	{
-	'species_set_id' => '35399',
 	'species1_id' => '87',
 	'species2_id' => '112'
 	},
 	{
-	'species_set_id' => '35399',
 	'species1_id' => '87',
 	'species2_id' => '142'
 	},
 	{
-	'species_set_id' => '35399',
 	'species1_id' => '111',
 	'species2_id' => '112'
 	},
 	{
-	'species_set_id' => '35399',
 	'species1_id' => '111',
 	'species2_id' => '142'
 	},
 	{
-	'species_set_id' => '35399',
 	'species1_id' => '112',
 	'species2_id' => '142'
 	}
@@ -103,17 +97,14 @@ standaloneJob(
 # Test with reference
 $exp_dataflow = [
 	{
-	'species_set_id' => '35399',
 	'species1_id' => '87',
 	'species2_id' => '111'
 	},
 	{
-	'species_set_id' => '35399',
 	'species1_id' => '87',
 	'species2_id' => '112'
 	},
 	{
-	'species_set_id' => '35399',
 	'species1_id' => '87',
 	'species2_id' => '142'
 	},
