@@ -148,6 +148,8 @@ sub default_options {
         'calculate_goc_distribution' => 1,
 
     # Extra analyses
+        # compute dNdS for homologies?
+        'do_dnds'                => 1,
         # Do we want the Gene QC part to run ?
         'do_gene_qc'             => 0,
         # Do we extract overall statistics for each pair of species ?
