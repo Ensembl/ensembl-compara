@@ -26,7 +26,7 @@
     <one_vs_all method="LASTZ_NET" ref_genome="medicago_truncatula" against="fabids"/>
     <one_vs_all method="LASTZ_NET" ref_genome="brachypodium_distachyon" against="Triticeae"/>
     <one_vs_all method="LASTZ_NET" ref_genome="solanum_lycopersicum" against="asterids"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="theobroma_cacao" against="malvids"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="theobroma_cacao_criollo" against="malvids"/>
 
     <!-- Rice all v all -->
     <all_vs_all method="LASTZ_NET">

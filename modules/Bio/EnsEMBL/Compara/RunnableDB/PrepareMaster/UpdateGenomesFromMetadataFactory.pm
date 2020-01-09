@@ -125,6 +125,9 @@ sub fetch_input {
     print "GENOMES_WITH_UPDATED_ANNOTATION!! ";
     print Dumper $updated_annotations;
 
+    print "GENOMES_TO_RENAME!! ";
+    print Dumper $renamed_genomes;
+
     # check that there have been no changes in dnafrags vs core slices
     my %g2update = map { $_ => 1 } @$genomes_to_update;
     my $master_dba = $self->get_cached_compara_dba('master_db');
