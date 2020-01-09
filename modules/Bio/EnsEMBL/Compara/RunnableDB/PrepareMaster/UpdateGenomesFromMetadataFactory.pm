@@ -210,11 +210,15 @@ sub fetch_genome_report {
     my @updated_assemblies;
     foreach my $genome (keys %{$decoded_meta_report->{updated_assemblies}}) {
         my $genome_report = $decoded_meta_report->{updated_assemblies}->{$genome};
-        if ($genome_report->{old_assembly} =~ /^(GRC[^\.]*)/) {
-            if ($genome_report->{assembly} =~ /^$1\.p/) {
-                # e.g. GRCh38.p12 vs GRCh38.p13
+        if ($genome_report->{old_assembly} eq $genome_report->{assembly}) {
+            if ($genome_report->{old_assembly} =~ /^GRC[a-z][0-9]+/) {
+                # GRC patch assembly update
                 push @genomes_with_assembly_patches, $genome;
                 next;
+            } else {
+                # Update of an assembly with the same name, this can be
+                # quite dangerous but we don't do anything here as it will
+                # be assessed when update_genome fails.
             }
         }
         push @updated_assemblies, $genome;
