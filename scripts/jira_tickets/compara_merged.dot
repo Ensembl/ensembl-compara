@@ -2,7 +2,7 @@ digraph {
     "Patches against their primary assembly";
     "Patches against other species";
 
-    "Genome dumps" -> "Species-tree";
+    "Genome dumps" -> { "Species-tree", "LastZ" };
     "Species-tree" -> { "EPOwith2x", "Mercator Pecan", "Protein-trees" };
     "All LastZ" -> "EPOwith2x";
     "Member loading" -> { "Protein-trees", "ncRNA-trees", "Families", "Gene-tree reindexing", "Alt-alleles import" };
@@ -23,5 +23,5 @@ digraph {
     "ncRNA-trees" -> "ncRNA-trees" [style="dashed", fontsize="8", label="Orthologues\nonly", headport="Murinae:e", tailport="Default vertebrates:e"];
 
     // Helps laying out the graph
-    {rank = same; "Genome dumps"; "LastZ"; "Member loading"; }
+    {rank = same; "Genome dumps"; "Member loading"; }
 }
