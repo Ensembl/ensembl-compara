@@ -64,7 +64,7 @@
 
     <!-- Mammals -->
     <one_vs_all method="LASTZ_NET" ref_genome="monodelphis_domestica" against="Metatheria" ref_amongst="Amniota"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="canis_familiaris" against="Carnivora" ref_amongst="Eutheria"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="canis_lupus_familiaris" against="Carnivora" ref_amongst="Eutheria"/>
     <one_vs_all method="LASTZ_NET" ref_genome="felis_catus" against="Feliformia" ref_amongst="Carnivora"/>
 
     <one_vs_all method="LASTZ_NET" ref_genome="bos_taurus" ref_amongst="Eutheria">

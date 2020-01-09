@@ -57,15 +57,15 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
 #   * MercatorPecan_conf
 # !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
 
-# my $suffix_separator = '__cut_here__';
-# Bio::EnsEMBL::Registry->load_registry_from_db(
-#    -host           => 'mysql-ens-mirror-1',
-#    -port           => 4240,
-#    -user           => 'ensro',
-#    -pass           => '',
-#    -db_version     => $prev_release,
-#    -species_suffix => $suffix_separator.$prev_release,
-# );
+my $suffix_separator = '__cut_here__';
+Bio::EnsEMBL::Registry->load_registry_from_db(
+   -host           => 'mysql-ens-mirror-1',
+   -port           => 4240,
+   -user           => 'ensro',
+   -pass           => '',
+   -db_version     => $prev_release,
+   -species_suffix => $suffix_separator.$prev_release,
+);
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
@@ -97,39 +97,40 @@ my $compara_dbs = {
     'sus_nctrees_prev'      => [ 'mysql-ens-compara-prod-5', 'muffato_sus_vertebrates_ncrna_trees_98' ],
 
     # LASTZ dbs
-    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-3', 'carlac_vertebrates_lastz_batch_1_99' ],
-    'lastz_batch_2'    => [ 'mysql-ens-compara-prod-6', 'jalvarez_vertebrates_lastz_batch2_99' ],
-    'lastz_batch_3'    => [ 'mysql-ens-compara-prod-2', 'carlac_vertebrates_lastz_batch3_99' ],
-    'lastz_batch_4'    => [ 'mysql-ens-compara-prod-4', 'dthybert_vertebrates_lastz_batch4_99' ],
-    'lastz_batch_5'    => [ 'mysql-ens-compara-prod-1', 'cristig_vertebrates_lastz_batch5_99' ],
-    'lastz_batch_6'    => [ 'mysql-ens-compara-prod-7', 'muffato_vertebrates_lastz_batch6_99' ],
-    'lastz_batch_7'    => [ 'mysql-ens-compara-prod-4', 'dthybert_vertebrates_lastz_batch7_99' ],
-    'lastz_batch_8'    => [ 'mysql-ens-compara-prod-7', 'muffato_vertebrates_lastz_batch8_99' ],
-    'lastz_batch_9'    => [ 'mysql-ens-compara-prod-1', 'carlac_vertebrates_lastz_batch9_99' ],
-    'lastz_batch_10'   => [ 'mysql-ens-compara-prod-6', 'jalvarez_vertebrates_lastz_batch10_99' ],
-    'lastz_batch_11'   => [ 'mysql-ens-compara-prod-2', 'carlac_vertebrates_lastz_batch11_99' ],
-    'lastz_batch_12'   => [ 'mysql-ens-compara-prod-4', 'dthybert_vertebrates_lastz_batch12_99' ],
-    'lastz_batch_13'   => [ 'mysql-ens-compara-prod-7', 'muffato_vertebrates_lastz_batch13_99' ],
-    'lastz_batch_14'   => [ 'mysql-ens-compara-prod-1', 'carlac_vertebrates_lastz_batch14_99' ],
-    'lastz_batch_15'   => [ 'mysql-ens-compara-prod-2', 'carlac_vertebrates_lastz_batch15_99' ],
-
+    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-2', 'muffato_vertebrates_lastz_batch1_100' ],
+    'lastz_batch_2'    => [ 'mysql-ens-compara-prod-3', 'muffato_vertebrates_lastz_batch2_100' ],
+    'lastz_batch_3'    => [ 'mysql-ens-compara-prod-4', 'muffato_vertebrates_lastz_batch3_100' ],
+    'lastz_batch_4'    => [ 'mysql-ens-compara-prod-5', 'muffato_vertebrates_lastz_batch4_100' ],
+    'lastz_batch_5'    => [ 'mysql-ens-compara-prod-6', 'muffato_vertebrates_lastz_batch5_100' ],
+    'lastz_batch_6'    => [ 'mysql-ens-compara-prod-10', 'muffato_vertebrates_lastz_batch6_100' ],
+    'lastz_batch_7'    => [ 'mysql-ens-compara-prod-2', 'muffato_vertebrates_lastz_batch7_100' ],
+    'lastz_batch_8'    => [ 'mysql-ens-compara-prod-2', 'muffato_vertebrates_lastz_batch8_100' ],
+    'lastz_batch_9'    => [ 'mysql-ens-compara-prod-1', 'muffato_vertebrates_lastz_batch9_100' ],
+    'lastz_batch_10'   => [ 'mysql-ens-compara-prod-10', 'muffato_vertebrates_lastz_batch10_100' ],
+    'lastz_batch_11'   => [ 'mysql-ens-compara-prod-6', 'muffato_vertebrates_lastz_batch11_100' ],
+    'lastz_batch_12'   => [ 'mysql-ens-compara-prod-9', 'muffato_vertebrates_lastz_batch12_100' ],
+    'lastz_batch_13'   => [ 'mysql-ens-compara-prod-10', 'muffato_vertebrates_lastz_batch13_100' ],
+    'lastz_batch_14'   => [ 'mysql-ens-compara-prod-1', 'muffato_vertebrates_lastz_batch14_100' ],
+    'lastz_batch_15'   => [ 'mysql-ens-compara-prod-1', 'muffato_vertebrates_lastz_batch15_100' ],
+    'lastz_batch_16'   => [ 'mysql-ens-compara-prod-4', 'muffato_vertebrates_lastz_batch16_100' ],
+    'lastz_batch_17'   => [ 'mysql-ens-compara-prod-6', 'muffato_vertebrates_lastz_batch17_100' ],
 
     # EPO dbs
     ## mammals
     'mammals_epo'         => [ 'mysql-ens-compara-prod-5', 'jalvarez_mammals_epo_99' ],
-    'mammals_epo_prev'    => [ 'mysql-ens-compara-prod-2', 'mateus_mammals_epo_98' ],
+    'mammals_epo_prev'    => [ 'mysql-ens-compara-prod-2', 'mateus_mammals_epo_99' ],
     'mammals_epo_low'     => [ 'mysql-ens-compara-prod-6', 'jalvarez_mammals_epo_low_coverage_99' ],
     'mammals_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## sauropsids
     'sauropsids_epo'         => [ 'mysql-ens-compara-prod-8', 'dthybert_sauropsids_epo_99' ],
-    'sauropsids_epo_prev'    => [ 'mysql-ens-compara-prod-3', 'carlac_sauropsids_epo_96' ],
+    'sauropsids_epo_prev'    => [ 'mysql-ens-compara-prod-3', 'carlac_sauropsids_epo_99' ],
     'sauropsids_epo_low'     => [ 'mysql-ens-compara-prod-6', 'dthybert_sauropsids_epo_low_coverage_99' ],
     'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
 
     ## fish
     'fish_epo'         => [ 'mysql-ens-compara-prod-1', 'cristig_fish_epo_99' ],
-    'fish_epo_prev'    => [ 'mysql-ens-compara-prod-1', 'carlac_fish_epo_98' ],
+    'fish_epo_prev'    => [ 'mysql-ens-compara-prod-1', 'carlac_fish_epo_99' ],
     'fish_epo_low'     => [ 'mysql-ens-compara-prod-1', 'cristig_fish_epo_low_coverage_99' ],
     'fish_epo_anchors' => [ 'mysql-ens-compara-prod-8', 'muffato_generate_anchors_fish_100' ],
 
@@ -148,7 +149,7 @@ my $compara_dbs = {
 
     # other alignments
     'amniotes_pecan'      => [ 'mysql-ens-compara-prod-7', 'muffato_amniotes_mercator_pecan_99' ],
-    'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-4', 'carlac_amniotes_mercator_pecan_98' ],
+    'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-4', 'carlac_amniotes_mercator_pecan_99' ],
 
     'compara_syntenies'   => [ 'mysql-ens-compara-prod-5', 'jalvarez_vertebrates_synteny_99' ],
 
@@ -174,7 +175,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', 'ncbi_taxonomy' ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', "ncbi_taxonomy_$curr_release" ],
 });
 
 # -------------------------------------------------------------------
