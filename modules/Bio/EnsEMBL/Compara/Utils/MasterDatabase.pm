@@ -826,6 +826,7 @@ sub create_multiple_wga_mlsss {
         $principal_species = 'gallus_gallus'   if ($mlsss[0]->name =~ /sauropsids/);
         $principal_species = 'oryzias_latipes' if ($mlsss[0]->name =~ /fish/);
         $principal_species = 'sus_scrofa'      if ($mlsss[0]->name =~ /pig/);
+        die "Unexpected EPO_LOW_COVERAGE MLSS: cannot set a principal species\n" unless $principal_species;
         $mlsss[0]->add_tag('principal_species', $principal_species);
     }
        
