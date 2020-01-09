@@ -133,7 +133,7 @@ my $ancestral_dbs = {
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-mirror-3', 'ncbi_taxonomy' ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', "ncbi_taxonomy_$curr_release" ],
 });
 
 # ------------------------------------------------------------------------------
