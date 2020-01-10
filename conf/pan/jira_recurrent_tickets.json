@@ -108,11 +108,6 @@
             "summary": "test the downloads"
          },
          {
-            "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Documentation&Statistics",
-            "summary": "test the documentation and statistics"
-         },
-         {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Non-vertebratesdivisions(e.g.Plants,Metazoa)",
