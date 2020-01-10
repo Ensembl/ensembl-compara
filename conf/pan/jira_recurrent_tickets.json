@@ -1,0 +1,163 @@
+[
+    {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+setup",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+Relco+setup",
+            "summary": "Patch the reused databases"
+         }
+      ],
+      "summary": "<Division> Release <version> Relco setup"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Coredatabasesmirror",
+            "summary": "Copy the core databases"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Registryconfigurationfile",
+            "summary": "Registry Configuration file"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141",
+            "summary": "Prepare the master database"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Members",
+            "summary": "Run the member loading pipeline",
+            "name_on_graph": "Member loading"
+         }
+      ],
+      "summary": "<Division> Release <version> Production setup"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Intentions+for+release+<version>",
+      "subtasks": [{
+            "component": "Production tasks",
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/ProteinTrees_conf.pm]",
+            "summary": "Run the Protein-trees pipeline",
+            "name_on_graph": "Protein-trees"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Plants::HighConfidenceOrthologs_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/HighConfidenceOrthologs_conf.pm]",
+            "summary": "Run the HighConfidenceOrthologs pipeline",
+            "name_on_graph": "Protein-trees High Confidence Orthologues"
+         }
+      ],
+      "labels": ["Production_anchor"],
+      "summary": "<Division> Release <version> Production pipelines"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Construction+of+the+release+database",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Creation+of+a+new+release+database",
+            "summary": "Create Release Database"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
+            "summary": "Merge the homology pipelines"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines#Mergethehomologypipelines-PostHomologyMergepipeline",
+            "summary": "Run the PostHomologyMerge_conf pipeline"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Final+healthchecking+and+testing",
+            "summary": "Run the healthchecks"
+         },
+         {
+            "component": "Relco tasks",
+            "summary": "Ask the <Division> team to test the staging server"
+         },
+         {
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Homologyside",
+            "summary": "test the homologies data"
+         },
+         {
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Downloads",
+            "summary": "test the downloads"
+         },
+         {
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Documentation&Statistics",
+            "summary": "test the documentation and statistics"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Non-vertebratesdivisions(e.g.Plants,Metazoa)",
+            "labels": ["Handover_anchor"],
+            "summary": "Handover of release DB"
+         }
+      ],
+      "summary": "<Division> Release <version> Database merge and handover"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps",
+            "summary": "Data dump"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "Update the jira_recurrent_tickets.json with any changes to the release process or tasks that has taken during the current release",
+            "summary": "Update conf/<division>/jira_recurrent_tickets.json"
+         }
+      ],
+      "summary": "<Division> Release <version> Post-handover"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites#Testthetestsites-Website",
+            "summary": "test the web site"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites#Testthetestsites-RESTserver",
+            "summary": "test the REST server"
+         }
+      ],
+      "summary": "<Division> Release <version> Final checks before public release"
+   }
+]
