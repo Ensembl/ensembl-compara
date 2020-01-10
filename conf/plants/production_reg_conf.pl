@@ -74,15 +74,17 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-5', 'cristig_plants_load_members_99'  ],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-3', 'cristig_default_plants_protein_trees_99' ],
-    'ptrees_prev'      => [ 'mysql-ens-compara-prod-5', 'jalvarez_default_plants_protein_trees_98' ],
+    #'compara_members'  => [ 'mysql-ens-compara-prod-7', 'dthybert_plants_load_members_100'],
+    #'compara_ptrees'   => [ '', '' ],
+    'ptrees_prev'      => [ 'mysql-ens-compara-prod-3', 'cristig_default_plants_protein_trees_99' ],
 
     # LASTZ dbs
-    'lastz' => [ 'mysql-ens-compara-prod-5', 'cristig_plants_lastz_batch1_99' ],
-
-    # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-1', 'cristig_plants_synteny_99' ],
+    'lastz_batch_1' => [ 'mysql-ens-compara-prod-6', 'muffato_plants_lastz_batch1d_100' ],
+    'lastz_batch_2' => [ 'mysql-ens-compara-prod-1', 'muffato_plants_lastz_batch2d_100' ],
+    #'lastz_batch_2c' => [ 'mysql-ens-compara-prod-3', 'muffato_plants_lastz_batch2c_100' ],
+    
+   # synteny
+   # 'compara_syntenies' => [ 'mysql-ens-compara-prod-1', 'cristig_plants_synteny_99' ],
 
     # EPO dbs
     ## rice
@@ -98,7 +100,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-        'ncbi_taxonomy' => [ 'mysql-ens-sta-1', 'ncbi_taxonomy' ],
+        'ncbi_taxonomy' => [ 'mysql-ens-sta-1', "ncbi_taxonomy_$curr_release" ],
     });
 
 # -------------------------------------------------------------------
