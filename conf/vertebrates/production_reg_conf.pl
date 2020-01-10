@@ -57,15 +57,15 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
 #   * MercatorPecan_conf
 # !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
 
-my $suffix_separator = '__cut_here__';
-Bio::EnsEMBL::Registry->load_registry_from_db(
-   -host           => 'mysql-ens-mirror-1',
-   -port           => 4240,
-   -user           => 'ensro',
-   -pass           => '',
-   -db_version     => $prev_release,
-   -species_suffix => $suffix_separator.$prev_release,
-);
+#my $suffix_separator = '__cut_here__';
+#Bio::EnsEMBL::Registry->load_registry_from_db(
+#   -host           => 'mysql-ens-mirror-1',
+#   -port           => 4240,
+#   -user           => 'ensro',
+#   -pass           => '',
+#   -db_version     => $prev_release,
+#   -species_suffix => $suffix_separator.$prev_release,
+#);
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
@@ -114,6 +114,15 @@ my $compara_dbs = {
     'lastz_batch_15'   => [ 'mysql-ens-compara-prod-1', 'muffato_vertebrates_lastz_batch15_100' ],
     'lastz_batch_16'   => [ 'mysql-ens-compara-prod-4', 'muffato_vertebrates_lastz_batch16_100' ],
     'lastz_batch_17'   => [ 'mysql-ens-compara-prod-6', 'muffato_vertebrates_lastz_batch17_100' ],
+    'lastz_batch_18'    => [ 'mysql-ens-compara-prod-3', 'carlac_vertebrates_lastz_batch18_100' ],
+    'lastz_batch_19'    => [ 'mysql-ens-compara-prod-4', 'carlac_vertebrates_lastz_batch19_100' ],
+    'lastz_batch_20'   => [ 'mysql-ens-compara-prod-2', 'cristig_vertebrates_lastz_batch20_100' ],
+    'lastz_batch_21'   => [ 'mysql-ens-compara-prod-5', 'jalvarez_vertebrates_lastz_batch21_100' ],
+    'lastz_batch_22'   => [ 'mysql-ens-compara-prod-8', 'jalvarez_vertebrates_lastz_batch22_100' ],
+    'lastz_batch_23'   => [ 'mysql-ens-compara-prod-9', 'cristig_vertebrates_lastz_batch23_100' ],
+    'lastz_batch_24'   => [ 'mysql-ens-compara-prod-10', 'muffato_vertebrates_lastz_batch24_100' ],
+    'lastz_batch_25'   => [ 'mysql-ens-compara-prod-1', 'cristig_vertebrates_lastz_batch25_100' ],
+    'lastz_batch_26'   => [ 'mysql-ens-compara-prod-4', 'carlac_vertebrates_lastz_batch26_100' ],
 
     # EPO dbs
     ## mammals
