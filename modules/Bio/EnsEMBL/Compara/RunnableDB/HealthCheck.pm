@@ -373,12 +373,23 @@ sub _run_pairwise_gabs_test {
                      "SELECT COUNT(*) FROM genomic_align_block gab LEFT JOIN genomic_align USING (genomic_align_block_id) WHERE gab.method_link_species_set_id = \"$this_method_link_species_set_id\"");
 
       ## Get the number of genomic_align_blocks which don't have 2 genomic_aligns
-      my $count3 =  $self->compara_dba->dbc->db_handle->selectrow_array(
-	"SELECT COUNT(*) FROM (SELECT * FROM genomic_align WHERE method_link_species_set_id = \"$this_method_link_species_set_id\" GROUP BY genomic_align_block_id HAVING COUNT(*)!=2) cnt");
+      my $count3 = $self->compara_dba->dbc->db_handle->selectrow_array(qq/
+          SELECT COUNT(*) FROM (
+              SELECT genomic_align_block_id FROM genomic_align_block gab
+              LEFT JOIN genomic_align ga USING (genomic_align_block_id)
+              WHERE gab.method_link_species_set_id = $this_method_link_species_set_id
+              GROUP BY genomic_align_block_id HAVING COUNT(*) != 2
+          ) AS t
+      /);
+      print "$count3\n";
 
       #get the name for the method_link_species_set_id
       my $name = $self->compara_dba->dbc->db_handle->selectrow_array(
 		   "SELECT name FROM method_link_species_set WHERE method_link_species_set_id = \"$this_method_link_species_set_id\"");
+
+      $self->warning("Number of genomic_align_blocks for $name = $count1");
+      $self->warning("Number of genomic_aligns for $name = $count2 2*$count1=" . ($count1*2));
+      $self->warning("Number of genomic_align_blocks which don't have 2 genomic_aligns for $name = $count3");
 
       #should be twice as many genomic_aligns as genomic_align_blocks for
       #pairwise alignments
@@ -389,10 +400,6 @@ sub _run_pairwise_gabs_test {
       if ($count3 != 0) {
 	  die("There are $count3 genomic_align_blocks which don't have 2 genomic_aligns for $name!\n");
       }
-
-      $self->warning("Number of genomic_align_blocks for $name = $count1");
-      $self->warning("Number of genomic_aligns for $name = $count2 2*$count1=" . ($count1*2));
-      $self->warning("Number of genomic_align_blocks which don't have 2 genomic_aligns for $name = $count3");
   }
 }
 
