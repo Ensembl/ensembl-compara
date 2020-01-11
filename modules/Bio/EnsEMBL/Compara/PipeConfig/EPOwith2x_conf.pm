@@ -265,6 +265,7 @@ sub tweak_analyses {
     delete $analyses_by_name->{'make_species_tree'}->{'-flow_into'};
 
     # set mlss_id for anchor mapping
+    $analyses_by_name->{'reuse_anchor_align'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
     $analyses_by_name->{'map_anchors'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
     $analyses_by_name->{'map_anchors_himem'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
     $analyses_by_name->{'map_anchors_no_server'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
