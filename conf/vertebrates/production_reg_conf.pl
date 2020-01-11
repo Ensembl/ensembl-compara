@@ -139,7 +139,7 @@ my $compara_dbs = {
 
     ## fish
     'fish_epo'         => [ 'mysql-ens-compara-prod-1', 'cristig_fish_epo_99' ],
-    'fish_epo_prev'    => [ 'mysql-ens-compara-prod-1', 'carlac_fish_epo_99' ],
+    'fish_epo_prev'    => [ 'mysql-ens-compara-prod-10', 'muffato_fish_epo_100d' ],
     'fish_epo_low'     => [ 'mysql-ens-compara-prod-1', 'cristig_fish_epo_low_coverage_99' ],
     'fish_epo_anchors' => [ 'mysql-ens-compara-prod-8', 'muffato_generate_anchors_fish_100' ],
 
