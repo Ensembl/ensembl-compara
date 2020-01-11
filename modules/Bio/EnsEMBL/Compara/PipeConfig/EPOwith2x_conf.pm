@@ -205,7 +205,7 @@ sub core_pipeline_analyses {
                 'column_names' => [ 'mlss_id', 'whole_method_links', 'param_names', 'filter_by_mlss_id', 'store_reuse_ss' ],
             },
             -flow_into  => {
-                '2->A' => 'create_mlss_ss',
+                '2->A' => { 'create_mlss_ss' => INPUT_PLUS() },
                 'A->1' => 'set_gerp_mlss_tag',
             }
         },
