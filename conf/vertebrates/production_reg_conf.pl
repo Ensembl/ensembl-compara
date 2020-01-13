@@ -57,15 +57,15 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
 #   * MercatorPecan_conf
 # !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
 
-#my $suffix_separator = '__cut_here__';
-#Bio::EnsEMBL::Registry->load_registry_from_db(
+# my $suffix_separator = '__cut_here__';
+# Bio::EnsEMBL::Registry->load_registry_from_db(
 #   -host           => 'mysql-ens-mirror-1',
 #   -port           => 4240,
 #   -user           => 'ensro',
 #   -pass           => '',
 #   -db_version     => $prev_release,
 #   -species_suffix => $suffix_separator.$prev_release,
-#);
+# );
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
@@ -83,18 +83,18 @@ my $compara_dbs = {
     # homology dbs
     'compara_members'       => [ 'mysql-ens-compara-prod-8', 'jalvarez_vertebrates_load_members_99' ],
     'compara_ptrees'        => [ 'mysql-ens-compara-prod-2', 'carlac_default_vertebrates_protein_trees_99' ],
-    'ptrees_prev'           => [ 'mysql-ens-compara-prod-2', 'mateus_default_vertebrates_protein_trees_98' ],
+    'ptrees_prev'           => [ 'mysql-ens-compara-prod-2', 'carlac_default_vertebrates_protein_trees_99' ],
     'compara_families'      => [ 'mysql-ens-compara-prod-8', 'jalvarez_vertebrates_families_99' ],
     'compara_nctrees'       => [ 'mysql-ens-compara-prod-7', 'muffato_default_vertebrates_ncrna_trees_99' ],
-    'nctrees_prev'          => [ 'mysql-ens-compara-prod-7', 'muffato_default_vertebrates_ncrna_trees_98' ],
+    'nctrees_prev'          => [ 'mysql-ens-compara-prod-7', 'muffato_default_vertebrates_ncrna_trees_99' ],
     'murinae_ptrees'        => [ 'mysql-ens-compara-prod-7', 'muffato_murinae_ptrees_prev_reindexed_99' ],
     'murinae_nctrees'       => [ 'mysql-ens-compara-prod-7', 'muffato_murinae_nctrees_prev_reindexed_99' ],
-    'murinae_ptrees_prev'   => [ 'mysql-ens-compara-prod-5', 'muffato_murinae_protein_trees_96b' ],
-    'murinae_nctrees_prev'  => [ 'mysql-ens-compara-prod-5', 'muffato_murinae_nctrees_96' ],
+    'murinae_ptrees_prev'   => [ 'mysql-ens-compara-prod-7', 'muffato_murinae_ptrees_prev_reindexed_99' ],
+    'murinae_nctrees_prev'  => [ 'mysql-ens-compara-prod-7', 'muffato_murinae_nctrees_prev_reindexed_99' ],
     'sus_ptrees'            => [ 'mysql-ens-compara-prod-7', 'muffato_sus_ptrees_prev_reindexed_99' ],
     'sus_nctrees'           => [ 'mysql-ens-compara-prod-7', 'muffato_sus_nctrees_prev_reindexed_99' ],
-    'sus_ptrees_prev'       => [ 'mysql-ens-compara-prod-1', 'carlac_sus_vertebrates_protein_trees_98' ],
-    'sus_nctrees_prev'      => [ 'mysql-ens-compara-prod-5', 'muffato_sus_vertebrates_ncrna_trees_98' ],
+    'sus_ptrees_prev'       => [ 'mysql-ens-compara-prod-7', 'muffato_sus_ptrees_prev_reindexed_99' ],
+    'sus_nctrees_prev'      => [ 'mysql-ens-compara-prod-7', 'muffato_sus_nctrees_prev_reindexed_99' ],
 
     # LASTZ dbs
     'lastz_batch_1'    => [ 'mysql-ens-compara-prod-2', 'muffato_vertebrates_lastz_batch1_100' ],
@@ -133,7 +133,7 @@ my $compara_dbs = {
 
     ## sauropsids
     'sauropsids_epo'         => [ 'mysql-ens-compara-prod-8', 'dthybert_sauropsids_epo_99' ],
-    'sauropsids_epo_prev'    => [ 'mysql-ens-compara-prod-3', 'carlac_sauropsids_epo_99' ],
+    'sauropsids_epo_prev'    => [ 'mysql-ens-compara-prod-8', 'dthybert_sauropsids_epo_99' ],
     'sauropsids_epo_low'     => [ 'mysql-ens-compara-prod-6', 'dthybert_sauropsids_epo_low_coverage_99' ],
     'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
 
@@ -158,7 +158,7 @@ my $compara_dbs = {
 
     # other alignments
     'amniotes_pecan'      => [ 'mysql-ens-compara-prod-7', 'muffato_amniotes_mercator_pecan_99' ],
-    'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-4', 'carlac_amniotes_mercator_pecan_99' ],
+    'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-7', 'muffato_amniotes_mercator_pecan_99' ],
 
     'compara_syntenies'   => [ 'mysql-ens-compara-prod-5', 'jalvarez_vertebrates_synteny_99' ],
 
