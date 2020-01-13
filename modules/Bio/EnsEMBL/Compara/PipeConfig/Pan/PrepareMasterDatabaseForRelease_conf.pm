@@ -64,7 +64,7 @@ sub default_options {
                               'ciona_savignyi',
                               'anolis_carolinensis'
                               ],
-            'protist'     => [
+            'protists'     => [
                               'thecamonas_trahens_atcc_50062_gca_000142905',
                               'tetrahymena_thermophila',
                               'plasmodium_falciparum',
