@@ -280,6 +280,9 @@ sub tweak_analyses {
     $analyses_by_name->{'create_default_pairwise_mlss'}->{'-parameters'}->{'prev_epo_db'} = '#reuse_db#';
     delete $analyses_by_name->{'set_gerp_neutral_rate'}->{'-flow_into'}->{1};
 
+    # Make Enredo work only on the high-coverage genomes
+    $analyses_by_name->{'load_dnafrag_region'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
+
     # link "ortheus*" analyses directly to "low_coverage_genome_alignment"
     $analyses_by_name->{'ortheus'}->{'-flow_into'}->{1} = 'low_coverage_genome_alignment';
     $analyses_by_name->{'ortheus'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';

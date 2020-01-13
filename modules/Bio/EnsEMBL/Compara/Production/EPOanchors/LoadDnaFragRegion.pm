@@ -131,8 +131,9 @@ sub write_output {
 
 	# get the genome_db names from the genome_db table in the production db
 	my $genome_db_adaptor = $self->compara_dba()->get_adaptor("GenomeDB");
+	my $genome_dbs = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'))->species_set->genome_dbs;
 	my $genome_db_names_from_db;
-	foreach my $genome_db(sort {$a->name cmp $b->name} @{ $genome_db_adaptor->fetch_all }){
+	foreach my $genome_db(sort {$a->name cmp $b->name} @$genome_dbs){
 		$genome_db_names_from_db .= $genome_db->name.":" if $genome_db->taxon_id;
 	}
 	# check the species names from the file against those from the db
