@@ -54,7 +54,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name' => $self->o('species_set_name').'_epo_'.$self->o('rel_with_suffix'),
+        'pipeline_name' => $self->o('species_set_name').'_epo_with2x_'.$self->o('rel_with_suffix'),
         'master_db'     => 'compara_master',
 
         # database containing the anchors for mapping
