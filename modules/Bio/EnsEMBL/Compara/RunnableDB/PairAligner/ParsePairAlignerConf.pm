@@ -55,8 +55,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 my $verbose = 0;
 
-#my $suffix_separator = '__cut_here__';
-
 sub fetch_input {
     my ($self) = @_;
     if (!$self->param('master_db') && !$self->param('core_dbs') && !$self->param('conf_file')) {
@@ -1306,12 +1304,8 @@ sub print_conf {
 sub load_registry_dbs {
     my ($registry_dbs) = @_;
     
-    #my $registry_dbs = $these_registry_dbs->[0];
-
-    #my $species_name = $self->param('species_name');
     for(my $r_ind=0; $r_ind<scalar(@$registry_dbs); $r_ind++) {
 	
-	#Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $suffix_separator.$r_ind );
 	Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -verbose=>1);
 
     } # try next registry server
