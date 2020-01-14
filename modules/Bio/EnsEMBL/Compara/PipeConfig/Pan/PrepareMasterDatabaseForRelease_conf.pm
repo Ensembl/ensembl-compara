@@ -55,6 +55,7 @@ sub default_options {
                               'xenopus_tropicalis',
                               'pongo_abelii',
                               'pan_troglodytes',
+                              'ornithorhynchus_anatinus',
                               'mus_musculus',
                               'monodelphis_domestica',
                               'homo_sapiens',
