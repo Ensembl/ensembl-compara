@@ -98,6 +98,7 @@ sub tweak_analyses {
         $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
     }
     $analyses_by_name->{'CAFE_analysis'}->{'-parameters'}{'pvalue_lim'} = 1;
+    $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;
 }
 
 
