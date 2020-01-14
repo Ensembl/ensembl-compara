@@ -665,6 +665,7 @@ sub core_pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak',
                 -parameters => {
                                 'quicktree_exe'     => $self->o('quicktree_exe'),
+                                'treebest_exe'      => $self->o('treebest_exe'),
                                 'tags_to_copy'      => $self->o('treebreak_tags_to_copy'),
                                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
                                },
