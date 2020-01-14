@@ -56,16 +56,18 @@ sub _get_dom_tree {
   }
 
   my $sitename  = $self->hub->species_defs->ENSEMBL_SITETYPE;
-  my $list_html = sprintf qq(<h3>All genomes</h3>
-    %s
-    <ul class="space-above">
-      <li><a href="%s">View full list of all %s species</a></li>
-      <li class="customise-species-list"><a class="_list_edit modal_link" href="%s">Edit your favourites</a></li>
-    </ul>
-    ), 
-    $self->add_species_dropdown, $self->species_list_url, $sitename, $hub->url({qw(type Account action Login)});
+  my @ok_species = $sd->valid_species;
+  if (scalar @ok_species > 1) {
+    my $list_html = sprintf qq(<h3>All genomes</h3>
+      %s
+      <ul class="space-above">
+        <li><a href="%s">View full list of all %s species</a></li>
+        <li class="customise-species-list"><a class="_list_edit modal_link" href="%s">Edit your favourites</a></li>
+      </ul>
+      ), 
+      $self->add_species_dropdown, $self->species_list_url, $sitename, $hub->url({qw(type Account action Login)});
 
-  my $sort_html = qq(<p>For easy access to commonly used genomes, drag from the bottom list to the top one</p>
+    my $sort_html = qq(<p>For easy access to commonly used genomes, drag from the bottom list to the top one</p>
         <p><strong>Favourites</strong></p>
           <ul class="_favourites"></ul>
         <p><strong>Other available species</strong></p>
@@ -73,9 +75,9 @@ sub _get_dom_tree {
         <p><a href="#Done" class="button _list_done">Done</a>
           <a href="#Reset" class="button _list_reset">Restore default list</a></p>);
 
-  return $self->dom->create_element('div', {
-    'class'       => 'column_wrapper',
-    'children'    => [{
+    return $self->dom->create_element('div', {
+      'class'       => 'column_wrapper',
+      'children'    => [{
               'node_name'   => 'div',
               'class'       => 'column-two static_all_species',
               'inner_HTML'  => $list_html,
@@ -136,6 +138,35 @@ sub _get_dom_tree {
                       }]
           }]
     });
+  }
+  else {
+    my $species       = $ok_species[0];
+    my $info          = $hub->get_species_info($species);
+    my $homepage      = $hub->url({'species' => $species, 'type' => 'Info', 'function' => 'Index', '__clear' => 1});
+    my $img_url       = $sd->img_url || '';
+    my $sp_info = {
+      homepage    => $homepage,
+      name        => $info->{'name'},
+      img         => sprintf('%sspecies/%s.png', $img_url, $species),
+      common      => $info->{'common'},
+      assembly    => $info->{'assembly'},
+    };
+    my $species_html = $template =~ s/\{\{species\.(\w+)}\}/my $replacement = $sp_info->{$1};/gre;
+    return $self->dom->create_element('div', {
+      'class'       => 'column_wrapper',
+      'children'    => [{
+                        'node_name'   => 'div',
+                        'class'       => 'column-two fave-genomes',
+                        'children'    => [{
+                                          'node_name'   => 'h3',
+                                          'inner_HTML'  => 'Available genomes'
+                                          }, {
+                                          'node_name'   => 'div',
+                                          'inner_HTML'  => $species_html
+                                        }]
+                        }]
+    });
+  }
 }
 
 sub add_species_dropdown { '<p><select class="fselect _all_species"><option value="">-- Select a species --</option></select></p>' }
