@@ -71,7 +71,7 @@ my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-7', 'ensembl_compara_master_pan' ],
     # 'compara_curr'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${curr_eg_release}_${curr_release}" ],
-    # 'compara_prev'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homolog_${prev_eg_release}_${prev_release}" ],
+    'compara_prev'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
     #'compara_members'  => [ '', ''  ],
