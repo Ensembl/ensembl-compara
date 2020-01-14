@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor
@@ -37,14 +26,13 @@ package Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
-
-use Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
+use DBI qw(:sql_types);
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
-use DBI qw(:sql_types);
+use Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor;
+use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 
 use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
@@ -71,8 +59,6 @@ sub store {
 
   assert_ref($dfc, 'Bio::EnsEMBL::Compara::Production::DnaFragChunk', 'dfc');
 
-  $dfc->sequence_id($self->db->get_SequenceAdaptor->store($dfc->sequence)) if $dfc->sequence;
-
   my $dbID;
 
   if (my $other_dfc = $self->_synchronise($dfc)) {
@@ -81,7 +67,6 @@ sub store {
   } else {
       $dbID = $self->generic_insert('dnafrag_chunk', {
               'dnafrag_id'            => $dfc->dnafrag_id,
-              'sequence_id'           => $dfc->sequence_id // 0,
               'dnafrag_start'         => $dfc->dnafrag_start,
               'dnafrag_end'           => $dfc->dnafrag_end,
               'dnafrag_chunk_set_id'  => $dfc->dnafrag_chunk_set_id,
@@ -92,29 +77,6 @@ sub store {
   return $dfc;
 }
 
-
-sub update_sequence
-{
-  my $self = shift;
-  my $dfc  = shift;
-
-  return 0 unless($dfc);
-  return 0 unless($dfc->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk'));
-  return 0 unless($dfc->dbID);
-  return 0 unless(defined($dfc->sequence));
-  return 0 unless(length($dfc->sequence) <= ($self->_max_allowed_packed-500000));  #limited by myslwd max_allowed_packet=12M
-
-  my $seqDBA = $self->db->get_SequenceAdaptor;
-  my $newSeqID = $seqDBA->store($dfc->sequence);
-
-  return if($dfc->sequence_id == $newSeqID); #sequence unchanged
-
-  my $sth = $self->prepare("UPDATE dnafrag_chunk SET sequence_id=? where dnafrag_chunk_id=?");
-  $sth->execute($newSeqID, $dfc->dbID);
-  $sth->finish();
-  $dfc->sequence_id($newSeqID);
-  return $newSeqID;
-}
 
 # Should be in DBConnection, but not sure Core would like it
 sub _max_allowed_packed {
@@ -187,7 +149,6 @@ sub _columns {
              dfc.dnafrag_id
              dfc.dnafrag_start
              dfc.dnafrag_end
-             dfc.sequence_id
             );
 }
 
@@ -211,7 +172,6 @@ sub _objs_from_sth {
           'dnafrag_id',
           'dnafrag_start',
           'dnafrag_end',
-          'sequence_id',
       ] );
 }
 

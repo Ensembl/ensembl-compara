@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ParsePairAlignerConf 
@@ -193,9 +191,6 @@ sub write_output {
 	    }
 	}
 	$self->dataflow_output_id($output_hash,2);
-        if (defined $dna_collections->{$dna_collection}->{'dump_loc'}) {
-            mkpath($dna_collections->{$dna_collection}->{'dump_loc'});
-        }
     }
 
     #Write method_link and method_link_species_set entries for chains and nets
@@ -398,8 +393,21 @@ sub get_pair_aligner {
 	my $non_ref_dna_collection = $dna_collections->{$non_ref_collection_name};
 
         #Set default dna_collection chunking values
-        $self->get_chunking($ref_dna_collection, $self->param('default_chunks')->{'reference'});
-        $self->get_chunking($non_ref_dna_collection, $self->param('default_chunks')->{'non_reference'});
+        my $default_chunks = $self->param('default_chunks');
+        my $ref_gdb_name = $ref_dna_collection->{genome_db}->name;
+        my $ref_default_chunks = $default_chunks->{reference};
+        get_default_chunking(
+            $ref_dna_collection,
+            $ref_default_chunks->{$ref_gdb_name} || $ref_default_chunks->{default} || $ref_default_chunks,
+            $default_chunks->{masking}
+        );
+        my $non_ref_gdb_name = $non_ref_dna_collection->{genome_db}->name;
+        my $non_ref_default_chunks = $default_chunks->{non_reference};
+        get_default_chunking(
+            $non_ref_dna_collection,
+            $non_ref_default_chunks->{$non_ref_gdb_name} || $non_ref_default_chunks->{default} || $non_ref_default_chunks,
+            $default_chunks->{masking}
+        );
 
         #Set default pair_aligner values
         unless (defined $pair_aligner->{'method_link'}) {
@@ -480,54 +488,8 @@ sub set_pair_aligner_options {
 #
 #Fill in missing information in the conf file from the default_chunk 
 #
-sub get_chunking {
-   my ($self, $dna_collection, $default_chunk) = @_;
-
-   # need to check if human-specific chunking params exist
-   # incoming structure would be a hash if so
-   $self->get_chunking($dna_collection, $default_chunk->{$dna_collection->{'genome_db'}->name} || $default_chunk->{default}) if exists $default_chunk->{default};
-
-   #chunk_size
-   unless (defined $dna_collection->{'chunk_size'}) {
-       $dna_collection->{'chunk_size'} = $default_chunk->{'chunk_size'};
-   }
-   
-   #group_set_size
-   unless (defined $dna_collection->{'group_set_size'}) {
-     $dna_collection->{'group_set_size'} = $default_chunk->{'group_set_size'};
-   }
-
-   #overlap
-   unless (defined $dna_collection->{'overlap'}) {
-       $dna_collection->{'overlap'} = $default_chunk->{'overlap'};
-   }
-   
-   #include_non_reference (haplotypes)
-   unless (defined $dna_collection->{'include_non_reference'}) {
-       $dna_collection->{'include_non_reference'} = $default_chunk->{'include_non_reference'};
-   }
-
-   #set the masking if it has not been set
-   unless (defined $dna_collection->{'masking'}) {
-       $dna_collection->{'masking'} = $default_chunk->{'masking'};
-   }
-   
-   unless (defined $dna_collection->{'dump_loc'}) {
-       $dna_collection->{'dump_loc'} = $default_chunk->{'dump_loc'};
-   }
-   #foreach my $key (keys %{$dna_collection}) {
-   #    print "$key " . $dna_collection->{$key} . "\n";
-   #}
-
-}
-
 sub get_default_chunking {
-    my ($dna_collection, $default_chunk, $dump_dir_species) = @_;
-
-   # need to check if human-specific chunking params exist
-   # incoming structure would be a hash if so
-   get_default_chunking($dna_collection, $default_chunk->{$dna_collection->{'genome_db'}->name} || $default_chunk->{default}) if exists $default_chunk->{default};
-
+    my ($dna_collection, $default_chunk, $masking) = @_;
 
     #chunk_size
     unless (defined $dna_collection->{'chunk_size'}) {
@@ -554,25 +516,8 @@ sub get_default_chunking {
 	$dna_collection->{'include_non_reference'} = $default_chunk->{'include_non_reference'};
     }
 
-    #masking
-    unless (defined $dna_collection->{'masking'}) {
-	$dna_collection->{'masking'} = $default_chunk->{'masking'};
-    }
-    
-    #dump location (currently never set for non-reference chunking)
-    unless (defined $dna_collection->{'dump_loc'}) {
-	$dna_collection->{'dump_loc'} = $default_chunk->{'dump_loc'};
-    }
-
-    unless (defined $dna_collection->{'dump_loc'}) {
-	if (defined $default_chunk->{'dump_dir'}) {
-	    $dna_collection->{'dump_loc'} = $default_chunk->{'dump_dir'} . "/" . $dump_dir_species . "/" . $dna_collection->{'genome_db'}->dbID . "_" . $dna_collection->{'genome_db'}->_get_unique_name;
-	}
-    }
-    
-    #foreach my $key (keys %{$dna_collection}) {
-	#print "    $key " . $dna_collection->{$key} . "\n";
-    #}
+    # Set masking
+    $dna_collection->{'masking'} = $masking;
 }
 
 sub get_chain_configs {
@@ -660,9 +605,11 @@ sub parse_defaults {
                 if ($mlss_gdbs[0]->is_polyploid) {
                     # To self-align a polyploid genome, align all combinations
                     # of two different components without repetition
-                    my $components = $mlss_gdbs[0]->component_genome_dbs;
-                    while (my $gdb1 = shift @{$components}) {
-                        foreach my $gdb2 ( @{$components} ) {
+                    # Sort components alphabetically so the same order is
+                    # followed in every PWA
+                    my @components = sort {$a cmp $b} @{$mlss_gdbs[0]->component_genome_dbs};
+                    while (my $gdb1 = shift @components) {
+                        foreach my $gdb2 ( @components ) {
                             push @pair,
                                  {'ref_genome_db'     => $gdb1,
                                   'non_ref_genome_db' => $gdb2,
@@ -682,8 +629,11 @@ sub parse_defaults {
                     && ($mlss_gdbs[0]->taxon->genus eq $mlss_gdbs[1]->taxon->genus)) {
                     my %ref_components     = map { $_->genome_component => $_ } @{$mlss_gdbs[0]->component_genome_dbs};
                     my %non_ref_components = map { $_->genome_component => $_ } @{$mlss_gdbs[1]->component_genome_dbs};
+                    # Sort components alphabetically so the same order is
+                    # followed in every PWA
+                    my @components = sort {$a cmp $b} keys %ref_components;
                     # Ignore the components that are not present in both genomes
-                    foreach my $cpnt (keys %ref_components) {
+                    foreach my $cpnt ( @components ) {
                         if (exists $non_ref_components{$cpnt}) {
                             push @pair,
                                  {'ref_genome_db'     => $ref_components{$cpnt},
@@ -724,17 +674,6 @@ sub parse_defaults {
 
         } else {
             #all vs all
-
-            #Check that default_chunks->reference is the same as default_chunks->non_reference otherwise there will be
-            #unpredictable consequences ie a dna_collection is not specific to whether the species is ref or non-ref.
-
-            my $default_chunks = $self->param('default_chunks');
-            if ($default_chunks->{'reference'}{'masking'} ne $default_chunks->{'non_reference'}{'masking'}) {
-                throw "The 'default_chunks' parameters MUST be the same for 'reference' and 'non_reference'. Please edit your init_pipeline config file. masking: ref=" . $default_chunks->{'reference'}{'masking'} . " non_ref=" . $default_chunks->{'non_reference'}{'masking'} . "\n";
-            }
-
-            #Have a collection. Make triangular matrix, ordered by genome_db_id?
-            
             #Check the dna_collection is the same for reference and non-reference
             my @ordered_genome_dbs = sort {$b->dbID <=> $a->dbID} @$genome_dbs;
             while (@ordered_genome_dbs) {
@@ -780,10 +719,11 @@ sub parse_defaults {
 	%$chain_config = ('input_method_link' => $self->param('default_chain_input'),
 			  'output_method_link' => $self->param('default_chain_output'));
 	
+    # Assign the corresponding method link: LASTZ_NET or COMPONENT_LASTZ_NET
     my $net_config = {
         'input_method_link'  => $self->param('default_net_input'),
-        'output_method_link' => $self->param('default_net_output'),
-        'principal_mlss_id'  => $pair->{'principal_mlss_id'},
+        'output_method_link' => ($pair->{principal_mlss_id}) ? $self->param('component_net_output') : $self->param('default_net_output'),
+        'principal_mlss_id'  => $pair->{principal_mlss_id},
     };
 
 	#If used input mlss, check if the method_link_type is the same as the value defined in the conf file used in init_pipeline
@@ -791,22 +731,22 @@ sub parse_defaults {
 	    warn("The default net_output_method_link " . $self->param('default_net_output')->[1] . " is not the same as the type " . $mlss->method->type . " of the mlss_id (" . $mlss->dbID .") used. Using " . $self->param('default_net_output')->[1] .".\n");
 	}
 	
-	my @genome_db_ids;
-	#create dna_collections
-	#foreach my $genome_db (@$genome_dbs) {
-	foreach my $genome_db ($pair->{ref_genome_db}, $pair->{non_ref_genome_db}) {
-	    #get and store locator
-          $genome_db->locator($genome_db->db_adaptor->locator);
-	    $self->compara_dba->get_GenomeDBAdaptor->store($genome_db);
-	    
-	    push @genome_db_ids, $genome_db->dbID;
-	    
-	}
+    foreach my $genome_db ($pair->{ref_genome_db}, $pair->{non_ref_genome_db}) {
+        next if defined $genome_db->locator();
+        # Get and store locator
+        $genome_db->locator($genome_db->db_adaptor->locator);
+        $self->compara_dba->get_GenomeDBAdaptor->store($genome_db);
+        if (defined $pair->{principal_mlss_id}) {
+            # Get and store locator of the principal genome db
+            my $principal_gdb = $genome_db->principal_genome_db();
+            $principal_gdb->locator($principal_gdb->db_adaptor->locator);
+            $self->compara_dba->get_GenomeDBAdaptor->store($principal_gdb);
+        }
+    }
 	
 	#create pair_aligners
-	$pair_aligner->{'reference_collection_name'} = $pair->{ref_genome_db}->dbID . " raw";
+	$pair_aligner->{'reference_collection_name'} = $pair->{ref_genome_db}->dbID . " raw (ref)";
 	$chain_config->{'reference_collection_name'} = $pair->{ref_genome_db}->dbID . " for chain";
-	#$net_config->{'reference_collection_name'} = $pair->{ref_genome_db}->dbID . " for chain";
 
         #What to do about all vs all which will not have a net_ref_species
         #Check net_ref_species is a member of the pair
@@ -819,17 +759,12 @@ sub parse_defaults {
         } else {
             throw (sprintf('Net reference species must be either %s (%s) or %s ($s). Currently %s', $pair->{ref_genome_db}->_get_unique_name, $pair->{ref_genome_db}->dbID, $pair->{non_ref_genome_db}->_get_unique_name, $pair->{non_ref_genome_db}->dbID, $self->param('net_ref_species') ));
         }
-
-	my $dna_dump_loc = $self->param('dump_dir') . "/dna/";
-	my $dump_loc = $self->param('dump_dir') . "/" . $pair->{ref_genome_db}->dbID . "_nib_for_chain";
 	
-	%{$dna_collections->{$pair_aligner->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db}, 'dump_loc' => $dna_dump_loc);
-	%{$dna_collections->{$chain_config->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db},
-									      'dump_loc' => $dump_loc);
+	%{$dna_collections->{$pair_aligner->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db});
+	%{$dna_collections->{$chain_config->{'reference_collection_name'}}} = ('genome_db' => $pair->{ref_genome_db});
 
-	$pair_aligner->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->dbID . " raw";;
+	$pair_aligner->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->dbID . " raw (non-ref)";
 	$chain_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->dbID . " for chain";
-	#$net_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->dbID . " for chain";
 
         # self-alignments would have the same names for "reference" and
         # "non-reference" collections otherwise
@@ -838,19 +773,28 @@ sub parse_defaults {
             $pair_aligner->{'non_reference_collection_name'} .= ' again';
             $chain_config->{'non_reference_collection_name'} .= ' again';
         }
-	    
-	$dump_loc = $self->param('dump_dir') . "/" . $pair->{non_ref_genome_db}->dbID . "_nib_for_chain";
-	
-	%{$dna_collections->{$pair_aligner->{'non_reference_collection_name'}}} = ('genome_db' => $pair->{non_ref_genome_db}, 'dump_loc' => $dna_dump_loc);
-	%{$dna_collections->{$chain_config->{'non_reference_collection_name'}}} = ('genome_db' => $pair->{non_ref_genome_db},
-										   'dump_loc' => $dump_loc);
 
-	#create unique subdirectory to dump dna using genome_db_ids
-	my $dump_dir_species = join "_", @genome_db_ids;
-	
-	#Set default dna_collection chunking values if required
-	get_default_chunking($dna_collections->{$pair_aligner->{'reference_collection_name'}}, $self->param('default_chunks')->{'reference'}, $dump_dir_species);	
-	get_default_chunking($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}, $self->param('default_chunks')->{'non_reference'}, $dump_dir_species);
+	%{$dna_collections->{$pair_aligner->{'non_reference_collection_name'}}} = ('genome_db' => $pair->{non_ref_genome_db});
+	%{$dna_collections->{$chain_config->{'non_reference_collection_name'}}} = ('genome_db' => $pair->{non_ref_genome_db});
+
+        #Set default dna_collection chunking values if required
+        my $default_chunks = $self->param('default_chunks');
+        my $ref_dna_collection = $dna_collections->{$pair_aligner->{reference_collection_name}};
+        my $ref_gdb_name = $ref_dna_collection->{genome_db}->name;
+        my $ref_default_chunks = $default_chunks->{reference};
+        get_default_chunking(
+            $ref_dna_collection,
+            $ref_default_chunks->{$ref_gdb_name} || $ref_default_chunks->{default} || $ref_default_chunks,
+            $default_chunks->{masking}
+        );
+        my $non_ref_dna_collection = $dna_collections->{$pair_aligner->{non_reference_collection_name}};
+        my $non_ref_gdb_name = $non_ref_dna_collection->{genome_db}->name;
+        my $non_ref_default_chunks = $default_chunks->{non_reference};
+        get_default_chunking(
+            $non_ref_dna_collection,
+            $non_ref_default_chunks->{$non_ref_gdb_name} || $non_ref_default_chunks->{default} || $non_ref_default_chunks,
+            $default_chunks->{masking}
+        );
     
 	#Store region, if defined, in the chain_config for use in no_chunk_and_group_dna
 	if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'region'}) {
@@ -861,16 +805,7 @@ sub parse_defaults {
 	    $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'region'} = 
 	      $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'region'};
 	}
-	#Store include_non_reference, if defined, in the chain_config for use in no_chunk_and_group_dna
-#	if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'}) {
-#	    $dna_collections->{$chain_config->{'reference_collection_name'}}->{'include_non_reference'} = 
-#	      $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'};
-#	}
-#	if ($dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'include_non_reference'}) {
-#	    $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'include_non_reference'} = 
-#	      $dna_collections->{$pair_aligner->{'non_reference_collection_name'}}->{'include_non_reference'};
-#	}
-	
+
 	push @$pair_aligners, $pair_aligner;
 	push @$chain_configs, $chain_config;
 	push @$net_configs, $net_config;
@@ -1011,9 +946,6 @@ sub write_parameters_to_mlss_tag {
     my $ref_collection;
     foreach my $key (keys %$ref_dna_collection) {
         if (defined $ref_dna_collection->{$key} && $key ne "genome_db") {
-            #skip dump_loc
-            next if (defined $ref_dna_collection->{$key} && $key eq "dump_loc");
-            
                 $ref_collection->{$key} =  $ref_dna_collection->{$key};
         }
     }
@@ -1021,9 +953,6 @@ sub write_parameters_to_mlss_tag {
     
     foreach my $key (keys %$non_ref_dna_collection) {
         if (defined $non_ref_dna_collection->{$key} && $key ne "genome_db") {
-            #skip dump_loc
-            next if (defined $non_ref_dna_collection->{$key} && $key eq "dump_loc");
-            
                 $non_ref_collection->{$key} =  $non_ref_dna_collection->{$key};
         }
     }

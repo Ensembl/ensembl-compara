@@ -15,24 +15,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::DnaFragChunk
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
 
 =cut
 
@@ -41,18 +26,16 @@ package Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use strict;
 use warnings;
 
-use File::Path;
+use Cwd;
 use File::Basename;
-use Time::HiRes qw(time gettimeofday tv_interval);
+use File::Path;
+use File::Spec;
 
 use Bio::Seq;
 use Bio::SeqIO;
 
+use Bio::EnsEMBL::Hive::Utils qw(dir_revhash);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
-
-use Bio::EnsEMBL::Compara::Locus;
-
-use Bio::EnsEMBL::Hive::Utils 'dir_revhash';
 
 use base ('Bio::EnsEMBL::Compara::Locus', 'Bio::EnsEMBL::Storable');
 
@@ -95,7 +78,6 @@ sub slice {
   return undef unless(my $dba = $self->dnafrag->genome_db->db_adaptor);
 
   my $sliceDBA = $dba->get_SliceAdaptor;
-  #if ($self->dnafrag_end > $self->dnafrag_start) {
 
   #Should be >= to since end can equal start and the slice be one base long
   #If dnafrag_start and dnafrag_end are both 0, set the slice to be whole dnafrag
@@ -113,14 +95,13 @@ sub slice {
 
 =head2 fetch_masked_sequence
 
-  Description: Meta method which uses the slice associated with this chunk
-               and from the external core database associated with the slice
-               it extracts the masked DNA sequence.
-               Returns as Bio::Seq object.  does not cache sequence internally
-  Example    : $bioseq = $chunk->get_sequence(1);
-  Returntype : Bio::Seq or undef if a problem
+  Description: Return the sequence of this genomic location. If possible, the
+               sequence will be read from an indexed Fasta file; otherwise from
+               the core database. It will return an unmasked sequence unless
+               indicated otherwise previously with masking().
+  Example    : $seq = $chunk->fetch_masked_sequence();
+  Returntype : String
   Exceptions : none
-  Caller     : general
 
 =cut
 
@@ -134,7 +115,6 @@ sub fetch_masked_sequence {
   printf("getting %smasked sequence...\n", $self->masking ? $self->masking . ' ' : 'un') if $self->{debug};
 
   my $seq = $self->get_sequence($self->masking);
-  #print STDERR "sequence length : ", length($seq),"\n";
   $self->sequence($seq);
   return $seq;
 }
@@ -182,15 +162,9 @@ sub display_id {
 
 sub bioseq {
   my $self = shift;
-
-  my $seq_str = $self->sequence();
-  if(not defined $seq_str) {
-    $seq_str = $self->fetch_masked_sequence;
-  }
   
-  return Bio::Seq->new(-seq        => $seq_str,
+  return Bio::Seq->new(-seq        => $self->sequence(),
                        -display_id => $self->display_id(),
-                       -primary_id => $self->sequence_id(),
                        );
 }
 
@@ -207,24 +181,14 @@ sub dnafrag_chunk_set_id {
   return $self->{'dnafrag_chunk_set_id'};
 }
 
-sub sequence_id {
-  my $self = shift;
-  return $self->{'sequence_id'} = shift if(@_);
-  return $self->{'sequence_id'};
-}
-
 sub sequence {
   my $self = shift;
   if(@_) {
     $self->{'_sequence'} = shift;
-    $self->sequence_id(0);
   }
 
-  return $self->{'_sequence'} if(defined($self->{'_sequence'}));
-
-  #lazy load the sequence if sequence_id is set
-  if(defined($self->sequence_id()) and defined($self->adaptor())) {
-    $self->{'_sequence'} = $self->adaptor->db->get_SequenceAdaptor->fetch_by_dbID($self->sequence_id);
+  if (! defined $self->{'_sequence'}) {
+      $self->fetch_masked_sequence();
   }
   return $self->{'_sequence'};
 }
@@ -237,8 +201,7 @@ sub masking {
   return $self->{'_masking'};
 }
 
-sub dump_to_fasta_file
-{
+sub dump_to_fasta_file {
   my $self = shift;
   my $fastafile = shift;
 
@@ -246,7 +209,6 @@ sub dump_to_fasta_file
   
   my $bioseq = $self->bioseq;
 
-  #printf("  writing chunk %s\n", $self->display_id);
   open(my $out_fh, '>', $fastafile)
     or $self->throw("Error opening $fastafile for write");
   my $output_seq = Bio::SeqIO->new( -fh => $out_fh, -format => 'Fasta');
@@ -260,8 +222,7 @@ sub dump_to_fasta_file
 #sequence to fastafile. Useful if the sequence is very long eg opossum chr1 & 2
 #Must remember that fastafile should not exist beforehand otherwise it will be 
 #appended to so check if it exists and delete it
-sub dump_chunks_to_fasta_file 
-{
+sub dump_chunks_to_fasta_file {
   my $self = shift;
   my $fastafile = shift;
 
@@ -312,22 +273,21 @@ sub dump_chunks_to_fasta_file
 
 =head2 dump_loc_file
 
-  Example     : $chunk->dump_loc_file();
-  Description : Returns the path to this Chunk in the dump location of its DnaCollection
+  Arg [1]     : (Optional) string - base directory path. By default, the current
+                working directory.
+  Example     : $chunk->dump_loc_file('/tmp');
+  Description : Returns a unique filepath for this DnaFragChunk.
   Returntype  : String
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
 
 =cut
 
 sub dump_loc_file {
     my $self = shift;
-    my $dna_collection = shift;
+    my $basedir = shift // cwd();
 
-    my $dump_loc = $dna_collection->dump_loc;
     my $sub_dir  = dir_revhash($self->dbID);
-    return sprintf('%s/%s/chunk_%s.fa', $dump_loc, $sub_dir, $self->dbID);
+    my $filename = sprintf('chunk_%s.fa', $self->dbID);
+    return File::Spec->catfile($basedir, $sub_dir, $filename);
 }
 
 

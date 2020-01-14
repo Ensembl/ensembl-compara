@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::DnaFragChunkSet
@@ -35,10 +24,6 @@ Bio::EnsEMBL::Compara::Production::DnaFragChunkSet
 An object to hold a set or group of DnaFragChunk objects.  Used in production to reduce
 overhead of feeding sequences into alignment programs like (b)lastz and exonerate.
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
-
 =cut
 
 package Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
@@ -46,13 +31,14 @@ package Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use strict;
 use warnings;
 
-use File::Path;
+use Cwd;
 use File::Basename;
+use File::Path;
+use File::Spec;
 
+use Bio::EnsEMBL::Hive::Utils qw(dir_revhash);
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
-
-use Bio::EnsEMBL::Hive::Utils 'dir_revhash';
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
@@ -242,30 +228,9 @@ sub total_basepairs {
 sub load_all_sequences {
     my $self = shift;
 
-    if ($self->count == 1) {
-
-        my $chunk = $self->get_all_DnaFragChunks()->[0];
-        unless($chunk->sequence) {
-            $chunk->masking($self->dna_collection->masking);
-            # Will fetch the masked sequence from the core db and cache it in the object
-            $chunk->fetch_masked_sequence();
-        }
-
-    } else {
-
-        my $sequences = $self->adaptor->db->get_SequenceAdaptor->fetch_all_by_chunk_set_id($self->dbID);
-
-        foreach my $chunk (@{$self->get_all_DnaFragChunks}) {
-
-            if (my $this_seq_id = $chunk->sequence_id) {
-                $chunk->sequence($sequences->{$this_seq_id}); #this sets $chunk->sequence_id=0
-                $chunk->sequence_id($this_seq_id); #reset seq_id
-            } else {
-                $chunk->masking($self->dna_collection->masking);
-                # Will fetch the masked sequence from the core db and cache it in the object
-                $chunk->fetch_masked_sequence();
-            }
-        }
+    foreach my $chunk (@{$self->get_all_DnaFragChunks}) {
+        $chunk->masking($self->dna_collection->masking);
+        $chunk->fetch_masked_sequence();
     }
 }
 
@@ -300,23 +265,22 @@ sub dump_to_fasta_file {
 
 =head2 dump_loc_file
 
-  Example     : $chunk_set->dump_loc_file();
-  Description : Returns the path to this ChunkSet in the dump location of its DnaCollection
+  Arg [1]     : (Optional) string - base directory path. By default, the current
+                working directory.
+  Example     : $chunk_set->dump_loc_file('/tmp');
+  Description : Returns a unique filepath for this DnaFragChunkSet.
   Returntype  : String
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
 
 =cut
 
 sub dump_loc_file {
     my $self = shift;
-    my $dump_loc = $self->dna_collection->dump_loc;
+    my $basedir = shift // cwd();
+
     my $sub_dir  = dir_revhash($self->dbID);
-    return sprintf('%s/%s/chunk_set_%s.fa', $dump_loc, $sub_dir, $self->dbID);
+    my $filename = sprintf('chunk_set_%s.fa', $self->dbID);
+    return File::Spec->catfile($basedir, $sub_dir, $filename);
 }
-
-
 
 
 1;

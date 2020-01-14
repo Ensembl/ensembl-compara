@@ -15,26 +15,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner
-
-=cut
-
-=head1 SYNOPSIS
-
-=cut
 
 =head1 DESCRIPTION
 
@@ -48,26 +31,22 @@ objects (via dbID reference) and stores GenomicAlignBlock entries.
 
 =cut
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
-
-=cut
-
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
 
 use strict;
 use warnings;
 
-use Time::HiRes qw(time gettimeofday tv_interval);
+use Time::HiRes qw(time);
 use File::Basename;
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
+
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
 
 sub param_defaults {
     my $self = shift;
@@ -97,6 +76,10 @@ sub param_defaults {
 sub fetch_input {
   my( $self) = @_;
 
+  # Add the genome dumps directory to avoid as many connections to external core
+  # databases as possible
+  $self->compara_dba->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
+
   my $query_DnaFragChunkSet = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param_required('qyChunkSetID'));
   $self->param('query_DnaFragChunkSet',$query_DnaFragChunkSet);
   throw("Missing qyChunkSet") unless($query_DnaFragChunkSet);
@@ -110,8 +93,7 @@ sub fetch_input {
   map {$chunks_lookup{$_->dbID} = $_} @{$query_DnaFragChunkSet->get_all_DnaFragChunks};
   $self->param('chunks_lookup', \%chunks_lookup);
 
-  #$db_DnaFragChunkSet->load_all_sequences();
-  $query_DnaFragChunkSet->load_all_sequences() unless $query_DnaFragChunkSet->dna_collection->dump_loc && (-s $query_DnaFragChunkSet->dump_loc_file);
+  $query_DnaFragChunkSet->load_all_sequences();
 
   throw("Missing method_link_type") unless($self->param('method_link_type'));
 
@@ -159,7 +141,7 @@ sub _write_output {
       }
       if($self->debug){printf("%d FeaturePairs found\n", scalar(@{$self->param('output')}));}
 
-  #print STDERR (time()-$starttime), " secs to write_output\n";
+  print STDERR (time()-$starttime), " secs to write_output\n" if ($self->debug);
 }
 
 ##########################################
@@ -168,62 +150,25 @@ sub _write_output {
 #
 ##########################################
 
-sub dumpChunkSetToWorkdir
-{
+sub dumpChunkSetToTmp {
   my $self      = shift;
   my $chunkSet   = shift;
 
-  if ($chunkSet->dna_collection->dump_loc) {
-      my $fastafile = $chunkSet->dump_loc_file;
-      if (-s $fastafile) {
-          if($self->debug){print("dumpChunkSetToWorkdir : $fastafile already dumped\n");}
-          return $fastafile
-      }
-  }
-
-  my $starttime = time();
-
-  my $fastafile = $self->worker_temp_directory. "/chunk_set_". $chunkSet->dbID .".fasta";
-
-  $fastafile =~ s/\/\//\//g;  # converts any // in path to /
-  return $fastafile if(-e $fastafile);
-
-  if($self->debug){printf("dumpChunkSetToWorkdir : %s : %d chunks\n", $fastafile, $chunkSet->count());}
-
+  my $fastafile = $chunkSet->dump_loc_file($self->worker_temp_directory);
   $chunkSet->dump_to_fasta_file($fastafile);
-
-  if($self->debug){printf("  %1.3f secs to dump\n", (time()-$starttime));}
-  return $fastafile
+  return $fastafile;
 }
 
-sub dumpChunkToWorkdir
-{
+
+sub dumpChunkToTmp {
   my $self = shift;
   my $chunk = shift;
-  my $dna_collection = shift;
 
-  if ($dna_collection->dump_loc) {
-      my $fastafile = $chunk->dump_loc_file($dna_collection);
-      if (-s $fastafile) {
-          if($self->debug){print("dumpChunkToWorkdir : $fastafile already dumped\n");}
-          return $fastafile
-      }
-  }
-
-  my $starttime = time();
-
-  my $fastafile = $self->worker_temp_directory . "/chunk_" . $chunk->dbID . ".fasta";
-  $fastafile =~ s/\/\//\//g;  # converts any // in path to /
-  return $fastafile if(-e $fastafile);
-
-  if($self->debug){print("dumpChunkToWorkdir : $fastafile\n");}
-
+  my $fastafile = $chunk->dump_loc_file($self->worker_temp_directory);
   $chunk->dump_to_fasta_file($fastafile);
-
-  if($self->debug){printf("  %1.3f secs to dump\n", (time()-$starttime));}
-
-  return $fastafile
+  return $fastafile;
 }
+
 
 sub store_featurePair_as_genomicAlignBlock
 {
@@ -235,12 +180,10 @@ sub store_featurePair_as_genomicAlignBlock
   
   if($fp->seqname =~ /chunkID(\d*):/) {
     my $chunk_id = $1;
-    #printf("%s => %d\n", $fp->seqname, $chunk_id);
     $qyChunk = $self->param('chunks_lookup')->{$chunk_id};
   }
   if($fp->hseqname =~ /chunkID(\d*):/) {
     my $chunk_id = $1;
-    #printf("%s => %d\n", $fp->hseqname, $chunk_id);
     $dbChunk = $self->param('chunks_lookup')->{$chunk_id};
   }
   unless($qyChunk and $dbChunk) {
@@ -342,7 +285,6 @@ sub compact_cigar_line
 {
   my $cigar_line = shift;
 
-  #print("cigar_line '$cigar_line' => ");
   my @pieces = ( $cigar_line =~ /(\d*[MDI])/g );
   my @new_pieces = ();
   foreach my $piece (@pieces) {
@@ -366,7 +308,6 @@ sub compact_cigar_line
     }
   }
   my $new_cigar_line = join("", @new_pieces);
-  #print(" '$new_cigar_line'\n");
   return $new_cigar_line;
 }
 

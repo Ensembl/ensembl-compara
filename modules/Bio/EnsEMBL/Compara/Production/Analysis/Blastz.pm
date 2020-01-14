@@ -1,23 +1,23 @@
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
-# 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-#      http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+=head1 LICENSE
 
-=pod
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::Production::Analysis::Blastz - Ensembl specific blastz output parser
+Bio::EnsEMBL::Compara::Production::Analysis::Blastz
 
 =head1 SYNOPSIS
 
@@ -45,22 +45,13 @@ The constructor only need a filehandle opened on a blastz output file.
 nextAlignment method return a Bio::EnsEMBL::DnaDnaAlignFeature object
 corresponding to the next HSP-like alignment.
 
-=head1 CONTACT
-
-Ensembl development mailing list <http://lists.ensembl.org/mailman/listinfo/dev>
-
-=head1 APPENDIX
-
-The rest of the documentation deals wtih each of the object methods.
-Internal methods are usually preceded by a _
-
-=cut 
-
+=cut
 
 package Bio::EnsEMBL::Compara::Production::Analysis::Blastz;
 
-use warnings ;
+use warnings;
 use strict;
+
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange); 
 
@@ -297,7 +288,7 @@ sub nextAlignment {
 	$feature_pair->percent_id($average_pecent_id);
       }
 
-      my $alignment = new Bio::EnsEMBL::DnaDnaAlignFeature(-features => \@feature_pairs);
+      my $alignment = new Bio::EnsEMBL::DnaDnaAlignFeature(-features => \@feature_pairs, -align_type => 'ensembl');
       my $key = "";
       map {$key .= $alignment->$_ . "_"} qw(seqname start end strand hseqname hstart hend hstrand score cigar_string);
       if (defined $self->{'_alignment_reported_before'}{$key}) {

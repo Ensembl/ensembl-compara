@@ -1,42 +1,25 @@
 =head1 LICENSE
 
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
-# 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-#      http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
-=head1 CONTACT
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+     http://www.apache.org/licenses/LICENSE-2.0
 
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
-=cut
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::Analysis::AlignmentChains
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
-
 =cut
-
-# Let the code begin...
 
 package Bio::EnsEMBL::Compara::Production::Analysis::AlignmentChains;
 
@@ -46,9 +29,7 @@ use strict;
 use Bio::SeqIO;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-
 use Bio::EnsEMBL::DnaDnaAlignFeature;
-
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing');
 
@@ -68,11 +49,11 @@ sub run_chains {
   my ($self) = @_;
 
   $self->cleanup_worker_temp_directory;
-  my $workdir = $self->worker_temp_directory;
+  my $tmp_dir = $self->worker_temp_directory;
 
   my $query_name = $self->param('query_dnafrag')->name;
 
-  my $work_dir = $workdir . "/$query_name.$$.AxtChain";
+  my $work_dir = "$tmp_dir/$query_name.$$.AxtChain";
   my $lav_file = "$work_dir/$query_name.lav";
   my $axt_file = "$work_dir/$query_name.axt";
   my $chain_file = "$work_dir/$query_name.chain";
@@ -84,12 +65,6 @@ sub run_chains {
   # write the query in nib format 
   # for use by lavToAxt;
   #################################
-  if ($self->param('query_nib_dir')) {
-    $query_nib_dir = $self->param('query_nib_dir');
-    if (not -d $query_nib_dir) {
-      throw("Could not fine query nib file directory:" . $query_nib_dir);
-    }
-  } else { 
     $query_nib_dir = "$work_dir/query_nib";
     mkdir $query_nib_dir;
 
@@ -108,19 +83,11 @@ sub run_chains {
     
     $self->run_command([$self->param_required('faToNib_exe'), "$query_nib_dir/$query_name.fa", "$query_nib_dir/$query_name.nib"], { die_on_failure => 1 });
     push @nib_files, "$query_nib_dir/$query_name.nib";
-  }  
   
   #################################
   # write the targets in nib format 
   # for use by lavToAxt;
   #################################  
-  if ($self->param('target_nib_dir')) {
-    $target_nib_dir = $self->param('target_nib_dir');
-    if (not -d $target_nib_dir) {
-      throw("Could not fine target nib file directory:" . $target_nib_dir);
-    } else {
-    }
-  } else {
     $target_nib_dir =  "$work_dir/target_nib";
     mkdir $target_nib_dir;
 
@@ -137,7 +104,6 @@ sub run_chains {
       $self->run_command([$self->param_required('faToNib_exe'), "$target_nib_dir/$target_name.fa", "$target_nib_dir/$target_name.nib"], { die_on_failure => 1 });
       push @nib_files, "$target_nib_dir/$target_name.nib";
     }
-  }  
   
   ##############################
   # write features in lav format

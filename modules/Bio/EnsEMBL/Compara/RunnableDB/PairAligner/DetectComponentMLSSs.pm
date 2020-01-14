@@ -51,11 +51,6 @@ after the data has been lifted?
         -compara_db $(mysql-ens-compara-prod-8-ensadmin details url jalvarez_shoots_lastz) \
         -net_mlss_ids [5,6] -do_pairwise_gabs 1
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_).
-
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DetectComponentMLSSs;

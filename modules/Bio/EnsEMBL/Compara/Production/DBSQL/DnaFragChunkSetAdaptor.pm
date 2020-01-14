@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkSetAdaptor
@@ -37,12 +26,12 @@ package Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkSetAdaptor;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
-use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
+use DBI qw(:sql_types);
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
-use DBI qw(:sql_types);
+use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
+use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 
 use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
@@ -119,6 +108,7 @@ sub _tables {
   return (['dnafrag_chunk_set', 'sc']);
 }
 
+
 sub _columns {
   my $self = shift;
 
@@ -126,6 +116,7 @@ sub _columns {
              sc.description
              sc.dnafrag_chunk_set_id);
 }
+
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
@@ -139,5 +130,3 @@ sub _objs_from_sth {
 
 
 1;
-
-

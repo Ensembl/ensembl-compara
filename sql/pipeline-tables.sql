@@ -34,13 +34,11 @@ CREATE TABLE dnafrag_chunk (
   dnafrag_id                 bigint unsigned NOT NULL DEFAULT 0,
   dnafrag_start              int(10) unsigned NOT NULL DEFAULT 0,
   dnafrag_end                int(10) unsigned NOT NULL DEFAULT 0,
-  sequence_id                int(10) NOT NULL DEFAULT 0,
 
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (dnafrag_chunk_id),
-  UNIQUE KEY uniq_chunk (dnafrag_chunk_set_id, dnafrag_id, dnafrag_start, dnafrag_end),
-  KEY sequence_id (sequence_id)
+  UNIQUE KEY uniq_chunk (dnafrag_chunk_set_id, dnafrag_id, dnafrag_start, dnafrag_end)
 ) ENGINE=InnoDB;
 
 
@@ -72,19 +70,17 @@ CREATE TABLE dnafrag_chunk_set (
 -- overview: The dna_collection table is
 --           linked to the dnafrag_chunk_set table and the dnafrag_chunk_set table is linked to the
 --           dnafrag_chunk table. The dna_collection table holds information relevant to all the
---           the underlying dnafrag_chunks ie dump_loc and masking. The description field is a unique
+--           underlying dnafrag_chunks ie masking. The description field is a unique
 --           identifier and is used to retrieve a specific dna_collection since this is known prior
 --           to storage.
 -- semantics:
 --   dna_collection_id   - primary key
 --   description         - unique description of collection
---   dump_loc            - directory path to dump files
 --   masking             - masking mode (NULL, "soft" or "hard)
 
 CREATE TABLE dna_collection (
  dna_collection_id       int(10) NOT NULL auto_increment,
  description             varchar(255),
- dump_loc                varchar(255),
  masking                 varchar(4),
 
  PRIMARY KEY (dna_collection_id),

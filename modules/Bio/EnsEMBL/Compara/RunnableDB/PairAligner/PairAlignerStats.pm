@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats
@@ -81,11 +79,6 @@ Optional. Don't run this runnable.
         -dump_features $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/dumps/dump_features.pl \
         -output_dir /hps/nobackup2/production/ensembl/jalvarez/plants_lastz_polyploid_99/feature_dumps
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_).
-
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats;
@@ -94,7 +87,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
-use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
+use Bio::EnsEMBL::Hive::Utils qw( stringify );
 use Bio::EnsEMBL::Utils::URI;
 
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;

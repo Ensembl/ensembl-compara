@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains
@@ -46,15 +35,13 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Utils::Exception qw(throw );
 
+use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 use base ('Bio::EnsEMBL::Compara::Production::Analysis::AlignmentChains');
 
-
-############################################################
 
 =head2 fetch_input
 
@@ -69,6 +56,10 @@ sub fetch_input {
   my( $self) = @_; 
 
   $self->SUPER::fetch_input;
+
+  # Add the genome dumps directory to avoid as many connections to external core
+  # databases as possible
+  $self->compara_dba->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
 
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my $dafa = $self->compara_dba->get_DnaAlignFeatureAdaptor;
@@ -154,35 +145,21 @@ sub fetch_input {
   $self->compara_dba->dbc->disconnect_if_idle();
   # Let's keep the number of connections / disconnections to the minimum
   $qy_gdb->db_adaptor->dbc->prevent_disconnect( sub {
-      my $query_nib_dir = $self->param('query_nib_dir');
-      # If there is no .nib file, preload the sequence
-      if ($query_nib_dir and (-d $query_nib_dir) and (-e $query_nib_dir . "/" . $self->param('query_dnafrag')->name . ".nib")) {
-          print STDERR "reusing the query nib file ". $query_nib_dir . "/" . $self->param('query_dnafrag')->name . ".nib" . "\n";
-      } else {
-          print STDERR "fetching the query sequence\n";
-          my $query_slice = $self->param('query_dnafrag')->slice;
-          $self->param('query_slice', $query_slice);
-          $query_slice->{'seq'} = $query_slice->seq;
-          print STDERR length($query_slice->{'seq'}), " bp\n";
-          $self->param('query_nib_dir', undef);
-      }
+      print STDERR "fetching the query sequence\n";
+      my $query_slice = $self->param('query_dnafrag')->slice;
+      $self->param('query_slice', $query_slice);
+      $query_slice->{'seq'} = $query_slice->seq;
+      print STDERR length($query_slice->{'seq'}), " bp\n";
   } );
 
   $tg_gdb->db_adaptor->dbc->prevent_disconnect( sub {
       my $target_dnafrag = $self->param('target_dnafrag');
-      my $target_nib_dir = $self->param('target_nib_dir');
       $self->param('target_dnafrags', {$target_dnafrag->name => $target_dnafrag});
-      # If there is no .nib file, preload the sequence
-      if ($target_nib_dir and (-d $target_nib_dir) and (-e $target_nib_dir . "/" . $target_dnafrag->name . ".nib")) {
-          print STDERR "reusing the target nib file" . $target_nib_dir . "/" . $target_dnafrag->name . ".nib" . "\n";
-      } else {
-          my $target_slice = $target_dnafrag->slice;
-          $self->param('target_slices', {$target_dnafrag->name => $target_slice});
-          print STDERR "fetching the target sequence\n";
-          $target_slice->{'seq'} = $target_slice->seq;
-          print STDERR length($target_slice->{'seq'}), " bp\n";
-          $self->param('target_nib_dir', undef);
-      }
+      my $target_slice = $target_dnafrag->slice;
+      $self->param('target_slices', {$target_dnafrag->name => $target_slice});
+      print STDERR "fetching the target sequence\n";
+      $target_slice->{'seq'} = $target_slice->seq;
+      print STDERR length($target_slice->{'seq'}), " bp\n";
   } );
 }
 

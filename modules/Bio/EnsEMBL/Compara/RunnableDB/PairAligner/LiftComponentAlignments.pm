@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LiftComponentAlignments
@@ -44,11 +42,6 @@ Mandatory. List of component MLSS ids linked to the principal_mlss_id.
         -compara_db $(mysql-ens-compara-prod-8-ensadmin details url jalvarez_shoots_lastz) \
         -principal_mlss_id 2 -component_mlss_ids [5,6]
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_).
-
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LiftComponentAlignments;
@@ -75,6 +68,7 @@ sub run {
 
     $self->_lift_gas_and_gabs();
     $self->_update_dnafrags();
+    $self->_lift_mlss_tags();
 }
 
 
@@ -169,6 +163,47 @@ sub _update_dnafrags {
         die "No rows where updated\n" unless $nr;
         print STDERR "$nr rows of genomic_align redirected to the principal dnafrags\n";
     });
+}
+
+
+=head2 _lift_mlss_tags
+
+Description : Lifts the component MLSS tags to the principal MLSS.
+
+=cut
+
+sub _lift_mlss_tags {
+    my $self = shift;
+
+    my $principal_mlss_id  = $self->param_required('principal_mlss_id');
+    my $component_mlss_ids = $self->param_required('component_mlss_ids');
+
+    my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor();
+    my $principal_mlss = $mlss_adaptor->fetch_by_dbID($principal_mlss_id);
+    my @component_mlsss;
+    push @component_mlsss, $mlss_adaptor->fetch_by_dbID($_) for @$component_mlss_ids;
+
+    # The principal 'max_align' tag will contain the maximum value of all its
+    # component 'max_align' tags
+    my $max_align;
+    foreach my $mlss ( @component_mlsss ) {
+        my $component_max_align = $mlss->get_value_for_tag('max_align');
+        $max_align = $component_max_align if ( $component_max_align > $max_align );
+    }
+    $principal_mlss->store_tag('max_align', $max_align);
+
+    # Get the missing tags from the first component (should be the same value
+    # for all of them) and add them to the principal
+    my $ref_species = $component_mlsss[0]->get_value_for_tag('reference_species');
+    $principal_mlss->store_tag('reference_species', $ref_species);
+    my $non_ref_species = $component_mlsss[0]->get_value_for_tag('non_reference_species');
+    $principal_mlss->store_tag('non_reference_species', $non_ref_species);
+    my $ref_dna_collection = $component_mlsss[0]->get_value_for_tag('ref_dna_collection');
+    $principal_mlss->store_tag('ref_dna_collection', $ref_dna_collection);
+    my $non_ref_dna_collection = $component_mlsss[0]->get_value_for_tag('non_ref_dna_collection');
+    $principal_mlss->store_tag('non_ref_dna_collection', $non_ref_dna_collection);
+    my $param = $component_mlsss[0]->get_value_for_tag('param');
+    $principal_mlss->store_tag('param', $param);
 }
 
 
