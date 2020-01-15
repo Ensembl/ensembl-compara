@@ -121,6 +121,7 @@ sub default_options {
         'species_set_name' => undef,
         'species_set_id'   => undef,
         'ref_species'      => undef,
+        'collection'       => 'default',
 
         # 'alt_aln_dbs'      => undef,
         'alt_aln_dbs'      => [ ],

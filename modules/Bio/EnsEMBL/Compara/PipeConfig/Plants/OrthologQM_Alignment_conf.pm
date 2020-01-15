@@ -58,10 +58,8 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'division'      => 'plants',
-        'collection'    => $self->o('division'),
         'member_type'   => 'protein',
-
-        'species_set_name' => 'collection-' . $self->o('collection'),
+        'species_set_name' => 'collection-plants',
     };
 }
 
