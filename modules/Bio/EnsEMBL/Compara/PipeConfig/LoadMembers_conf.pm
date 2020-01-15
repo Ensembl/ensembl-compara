@@ -215,7 +215,7 @@ sub pipeline_analyses {
                 'all_current'       => 1,
                 'extra_parameters'  => [ 'locator' ],
             },
-            -rc_name => '4Gb_job',
+            -rc_name => '2Gb_job',
             -flow_into => {
                 '2->A' => {
                     'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' },
@@ -230,7 +230,7 @@ sub pipeline_analyses {
                 'db_version'    => $self->o('ensembl_release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
-            -rc_name => '1Gb_job',
+            -rc_name => '2Gb_job',
             -flow_into  => [ 'check_reusability' ],
             -hive_capacity => $self->o('loadmembers_capacity'),
             -batch_size => $self->o('loadmembers_capacity'),    # Simple heuristic
@@ -257,7 +257,7 @@ sub pipeline_analyses {
                 'current_release'   => $self->o('ensembl_release'),
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
-            -rc_name => '1Gb_job',
+            -rc_name => '2Gb_job',
             -flow_into => {
                 2 => '?accu_name=reused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
                 3 => '?accu_name=nonreused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
@@ -266,7 +266,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'create_reuse_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CreateReuseSpeciesSets',
-            -rc_name => '2Gb_job',
             -flow_into  => [ 'compare_non_reused_genome_list' ],
         },
 
