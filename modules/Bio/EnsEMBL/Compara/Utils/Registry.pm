@@ -155,6 +155,7 @@ sub add_dbas {
 
 =head2 get_port
 
+  Arg[1]      : String $host. Host name
   Example     : Bio::EnsEMBL::Compara::Utils::Registry::get_port('mysql-ens-compara-prod-1');
   Description : Run the associated mysql-cmd to get the port of this host
   Returntype  : Integer
@@ -175,6 +176,7 @@ sub get_port {
 
 =head2 get_rw_user
 
+  Arg[1]      : String $host. Host name
   Example     : Bio::EnsEMBL::Compara::Utils::Registry::get_rw_user('mysql-ens-compara-prod-1');
   Description : Run the associated mysql-cmd to get the read+write username for this host
   Returntype  : String
@@ -200,6 +202,7 @@ sub get_rw_user {
 
 =head2 get_rw_pass
 
+  Arg[1]      : String $host. Host name
   Example     : Bio::EnsEMBL::Compara::Utils::Registry::get_rw_pass('mysql-ens-compara-prod-1');
   Description : Run the associated mysql-cmd to get the password of this host's read+write user
   Returntype  : String
