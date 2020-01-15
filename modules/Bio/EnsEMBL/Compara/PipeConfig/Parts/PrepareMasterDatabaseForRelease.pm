@@ -168,7 +168,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'reg_conf'               => $self->o('reg_conf'),
                 'master_db'              => $self->o('master_db'),
                 'division'               => $self->o('division'),
-                'cmd' => 'perl #update_metadata_script# --reg_conf #reg_conf# --compara #master_db# --division #division#'
+                'cmd' => 'perl #update_metadata_script# --reg_conf #reg_conf# --compara #master_db# --division #division# --nocheck_species_missing_from_compara'
             },
             -flow_into  => WHEN(
                 '#do_load_lrg_dnafrags#' => 'load_lrg_dnafrags',
