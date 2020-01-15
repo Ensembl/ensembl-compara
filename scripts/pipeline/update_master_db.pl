@@ -154,7 +154,6 @@ my %genome_db_names = map {$_->name => 1} @{$genome_db_adaptor->fetch_all};
 
 foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')}) {
 
-    next if $db_adaptor->species =~ /__cut_here__/;
     next if $db_adaptor->dbc->dbname =~ /^ensembl_ancestral_/;
     next if $db_adaptor->dbc->dbname =~ /_ancestral_core_/;
 

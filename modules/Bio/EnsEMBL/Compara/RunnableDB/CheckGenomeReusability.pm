@@ -47,10 +47,10 @@ use Scalar::Util qw(looks_like_number);
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::GenomeDB;
+use Bio::EnsEMBL::Compara::Utils::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-my $suffix_separator = '__cut_here__';
 
 sub param_defaults {
     my $self = shift;
@@ -151,7 +151,7 @@ sub fetch_input {
             # now use the registry to find the previous release core database candidate:
             Bio::EnsEMBL::Registry->no_version_check(1);
             my $prev_release = $self->param_required('current_release') - 1;
-            $prev_core_dba = $self->param('prev_core_dba', Bio::EnsEMBL::Registry->get_DBAdaptor($species_name.$suffix_separator.$prev_release, 'core'));
+            $prev_core_dba = $self->param('prev_core_dba', Bio::EnsEMBL::Compara::Utils::Registry::get_previous_core_DBAdaptor($species_name, $prev_release));
 
         } else {
 

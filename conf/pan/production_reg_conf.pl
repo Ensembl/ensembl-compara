@@ -52,34 +52,37 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
-# !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
-#my $suffix_separator = '__cut_here__';
-#Bio::EnsEMBL::Registry->load_registry_from_db(
-#    -host   => 'mysql-ens-mirror-1',
-#    -port   => 4240,
-#    -user   => 'ensro',
-#    -pass   => '',
-#    -db_version     => $prev_release,
-#    -species_suffix => $suffix_separator.$prev_release,
-#);
-#Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae'.$suffix_separator.$prev_release, 'core'); # never use Vertebrates' version of yeast
-#Bio::EnsEMBL::Registry->load_registry_from_db(
-#    -host   => 'mysql-ens-mirror-3',
-#    -port   => 4275,
-#    -user   => 'ensro',
-#    -pass   => '',
-#    -db_version     => $prev_release,
-#    -species_suffix => $suffix_separator.$prev_release,
-#);
-# Bacteria server: all species used in Pan happen to be in this database
-#Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-#    -host   => 'mysql-ens-mirror-4',
-#    -port   => 4495,
-#    -user   => 'ensro',
-#    -pass   => '',
-#    -dbname => "bacteria_0_collection_core_${prev_eg_release}_${prev_release}_1",
-#    -species_suffix => $suffix_separator.$prev_release,
-#);
+*Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
+    my $release_number  = shift;
+    my $species_suffix  = Bio::EnsEMBL::Compara::Utils::Registry::SUFFIX_SEPARATOR.$release_number;
+
+    Bio::EnsEMBL::Registry->load_registry_from_db(
+        -host   => 'mysql-ens-mirror-1',
+        -port   => 4240,
+        -user   => 'ensro',
+        -pass   => '',
+        -db_version     => $release_number,
+        -species_suffix => $species_suffix,
+    );
+    Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae'.$species_suffix, 'core'); # never use Vertebrates' version of yeast
+    Bio::EnsEMBL::Registry->load_registry_from_db(
+        -host   => 'mysql-ens-mirror-3',
+        -port   => 4275,
+        -user   => 'ensro',
+        -pass   => '',
+        -db_version     => $release_number,
+        -species_suffix => $species_suffix,
+    );
+    # Bacteria server: all species used in Pan happen to be in this database
+    Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+        -host   => 'mysql-ens-mirror-4',
+        -port   => 4495,
+        -user   => 'ensro',
+        -pass   => '',
+        -dbname => "bacteria_0_collection_core_".($release_number-53)."_${release_number}_1",
+        -species_suffix => $species_suffix,
+    );
+};
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 

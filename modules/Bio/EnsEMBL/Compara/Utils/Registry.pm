@@ -60,6 +60,8 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
+use constant SUFFIX_SEPARATOR => '__cut_here__';
+
 my %ports;
 my %rw_users;
 my %rw_passwords;
@@ -107,6 +109,26 @@ sub load_collection_core_database {
         },
     );
     $dbc->disconnect_if_idle;
+}
+
+
+=head2 load_previous_core_databases_if_needed
+
+  Arg[1]      : Integer $release_number
+  Example     : Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases_if_needed($current_release-1);
+  Description : Wrapper around load_previous_core_databases to only call it once
+  Returntype  : none
+  Exceptions  : none
+
+=cut
+
+my %loaded_previous;
+sub load_previous_core_databases_if_needed {
+    my ($release_number) = @_;
+    return unless defined &load_previous_core_databases;
+    return if $loaded_previous{$release_number};
+    load_previous_core_databases(@_);
+    $loaded_previous{$release_number} = 1;
 }
 
 
@@ -190,6 +212,31 @@ sub add_dbas {
             @_,
         );
     }
+}
+
+
+=pod
+
+=head1 REGISTRY QUERY METHODS
+
+=cut
+
+=head2 get_previous_core_DBAdaptor
+
+  Arg[1]      : String $species_name. Name of the species
+  Arg[2]      : Integer $release_number. Release number
+  Example     : Bio::EnsEMBL::Compara::Utils::Registry::get_previous_core_DBAdaptor('homo_sapiens', 98);
+  Description : Returns the DBAdaptor of the species in the required release. The Registry for that release
+                will automatically be populated using load_previous_core_databases
+  Returntype  : Bio::EnsEMBL::DBSQL::DBAdaptor
+  Exceptions  : none
+
+=cut
+
+sub get_previous_core_DBAdaptor {
+    my ($species_name, $release_number) = @_;
+    Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases_if_needed($release_number);
+    return Bio::EnsEMBL::Registry->get_DBAdaptor($species_name . SUFFIX_SEPARATOR . $release_number, 'core');
 }
 
 
