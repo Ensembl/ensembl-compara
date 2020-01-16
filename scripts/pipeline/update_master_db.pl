@@ -150,6 +150,8 @@ my $genome_db_adaptor = $compara_db->get_GenomeDBAdaptor();
 my %found_genome_db_ids = ();
 my $has_errors = 0;
 
+my %genome_db_names = map {$_->name => 1} @{$genome_db_adaptor->fetch_all};
+
 foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')}) {
 
     next if $db_adaptor->species =~ /__cut_here__/;
@@ -170,11 +172,11 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
 
     # Get the production name and assembly to fetch our GenomeDBs
     my $mc = $db_adaptor->get_MetaContainer();
-    if ($division and $mc->get_division and (lc $mc->get_division ne $division)) {
+    my $that_species = $mc->get_production_name();
+    if (!$genome_db_names{$that_species} and $division and $mc->get_division and (lc $mc->get_division ne $division)) {
         $db_adaptor->dbc->disconnect_if_idle();
         next;
     }
-    my $that_species = $mc->get_production_name();
     my $that_assembly = $db_adaptor->assembly_name();
     unless ($that_species) {
         warn sprintf("Skipping %s (no species name found: a compara_ancestral database ?).\n", $db_adaptor->dbc->locator);
