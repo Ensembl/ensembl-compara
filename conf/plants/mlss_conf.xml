@@ -15,6 +15,12 @@
 
   </collections> -->
 
+  <!-- Rice species tree including nearest grass relative -->
+  <collection name="rice-with-outgroup">
+    <taxonomic_group taxon_name="Oryza"/>
+    <genome name="leersia_perrieri"/>
+  </collection>
+
   <pairwise_alignments>
 
     <!-- First, our top 3 species, which are references for all land plants -->
