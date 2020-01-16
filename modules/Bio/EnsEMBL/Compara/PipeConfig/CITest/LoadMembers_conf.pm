@@ -25,7 +25,7 @@ Bio::Bio::EnsEMBL::Compara::PipeConfig::CITest::LoadMembers_conf
 
 =head1 DESCRIPTION
 
-This is a CITest configuration file for LastZ pipeline. Please, refer to the
+This is a CITest configuration file for LoadMembers pipeline. Please, refer to the
 parent class for further information.
 
 =cut
