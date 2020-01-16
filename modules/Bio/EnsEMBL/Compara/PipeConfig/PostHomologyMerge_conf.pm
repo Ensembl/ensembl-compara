@@ -26,7 +26,7 @@ Bio::EnsEMBL::Compara::PipeConfig::PostHomologyMerge_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PostHomologyMerge_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -division $COMPARA_DIV -collection <collection>
+        -division $COMPARA_DIV
 
 =head1 DESCRIPTION
 

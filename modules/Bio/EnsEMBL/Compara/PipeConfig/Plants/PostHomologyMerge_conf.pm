@@ -53,7 +53,6 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'division'        => 'plants',
-        'collection'      => 'plants',  # The name of the clusterset_id in which to find the trees
 
         'do_member_stats_fam'   => 0,
     };
