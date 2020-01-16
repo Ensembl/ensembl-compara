@@ -55,6 +55,8 @@ sub default_options {
             '33090'   => 0.65,    #plants
             '3193'    => 0.7,     #land plants
             '3041'    => 0.65,    #green algae
+            '3027'    => 0.4,     #cryptomonads
+            '2611341' => 0.4,     #Metamonada
         },
 
     # plots
