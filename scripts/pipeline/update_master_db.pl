@@ -153,7 +153,8 @@ my $has_errors = 0;
 foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')}) {
 
     next if $db_adaptor->species =~ /__cut_here__/;
-    next if $db_adaptor->dbc->dbname =~ /ensembl_ancestral/;
+    next if $db_adaptor->dbc->dbname =~ /^ensembl_ancestral_/;
+    next if $db_adaptor->dbc->dbname =~ /_ancestral_core_/;
 
     eval {
         $db_adaptor->dbc->connect();
