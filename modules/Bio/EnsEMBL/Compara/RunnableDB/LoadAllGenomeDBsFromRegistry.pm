@@ -71,14 +71,13 @@ sub get_all_core_dbas {
     my $registry_dbs = $self->param('registry_dbs') || [];
     my $registry_files = $self->param('registry_files') || [];
 
-    # Anything that would already be there from the reg_conf parameter
-    my @core_dba_list = @{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')};
-
     for(my $r_ind=0; $r_ind<scalar(@$registry_dbs); $r_ind++) {
         $registry_dbs->[$r_ind]->{'-db_version'} = $self->param('db_version') if $self->param('db_version') and not $registry_dbs->[$r_ind]->{'-db_version'};
         Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $suffix_separator.$r_ind, -db_version => $registry_dbs->[$r_ind]->{'-db_version'}, -verbose => '1');
-        push @core_dba_list, @{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')};
     }
+
+    # Anything that is in the Registry
+    my @core_dba_list = @{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')};
 
     for(my $r_ind=0; $r_ind<scalar(@$registry_files); $r_ind++) {
 
