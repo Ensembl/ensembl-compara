@@ -55,12 +55,59 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::DBSQL::DBConnection;
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
 my %ports;
 my %rw_users;
 my %rw_passwords;
+
+
+=head2 load_collection_core_database
+
+  Example     : Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+                  -host   => 'mysql-ens-sta-4',
+                  -port   => 4494,
+                  -user   => 'ensro',
+                  -pass   => '',
+                  -dbname => "bacteria_0_collection_core_${curr_eg_release}_${curr_release}_1",
+                );
+  Description : Add a DBAdaptor for every species found in the database. See the constructor of
+                Bio::EnsEMBL::DBSQL::DBAdaptor and Bio::EnsEMBL::DBSQL::DBConnection for a
+                description of the available arguments.
+  Returntype  : none
+  Exceptions  : none
+
+=cut
+
+sub load_collection_core_database {
+    my @args = @_;
+    my ($verbose, $species_suffix) = rearrange( [qw(VERBOSE SPECIES_SUFFIX)], @args);
+
+    $species_suffix //= '';
+
+    my $dbc = new Bio::EnsEMBL::DBSQL::DBConnection(@args);
+    $dbc->sql_helper->execute_no_return(
+        -SQL        => q{SELECT species_id, meta_value FROM meta WHERE meta_key = 'species.db_name'},
+        -CALLBACK   => sub {
+            my ($species_id, $species_name) = @{$_[0]};
+
+            my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+                -group           => 'core',
+                -species         => $species_name.$species_suffix,
+                -species_id      => $species_id,
+                -multispecies_db => 1,
+                @args,
+            );
+            if ($verbose) {
+                printf( "Species '%s' (id:%d) loaded from database '%s'\n", $species_name, $species_id, $dbc->dbname );
+            }
+        },
+    );
+    $dbc->disconnect_if_idle;
+}
 
 
 =head2 add_core_dbas
