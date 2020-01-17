@@ -93,6 +93,7 @@ sub tweak_analyses {
         'hcluster_parse_output'     => '1Gb_job',
         'split_genes'               => 'default',   # This is 250Mb
         'CAFE_species_tree'         => '24Gb_job',
+        'expand_clusters_with_projections' => '500Mb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
