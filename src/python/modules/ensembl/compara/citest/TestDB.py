@@ -28,16 +28,16 @@ from sqlalchemy import create_engine
 from sqlalchemy.schema import MetaData
 
 
-class DBTestException(Exception):
+class TestDBException(Exception):
     """Exception subclass created to handle test failures separatedly from unexpected exceptions."""
     pass
 
 
 # Hide the exception traceback only for those exceptions raised intentionally due to a failed test
-__tracebackhide__ = operator.methodcaller("errisinstance", DBTestException)
+__tracebackhide__ = operator.methodcaller("errisinstance", TestDBException)
 
 
-class DBTest:
+class TestDB:
     """Generic tests to compare two (analogous) Ensembl Compara MySQL databases.
 
     Args:
@@ -96,22 +96,21 @@ class DBTest:
         ref_data = pandas.DataFrame(result.fetchall(), columns=result.keys())
         result = self.target_engine.execute(sql_query)
         target_data = pandas.DataFrame(result.fetchall(), columns=result.keys())
-        # Check if the size of the returned tables is the same
-        request.node.report_info = {"table": table_name}
+        # Check if the size of the returned tables are the same
+        request.node.report_info["table"] = table_name
         if ref_data.shape != target_data.shape:
             request.node.report_info["info"] = [("ref", ref_data.shape), ("target", target_data.shape)]
-            raise DBTestException(
+            raise TestDBException(
                 "Different number of groups ({}) for table '{}'".format(group_by, table_name))
-        # Check if the number of rows (per group) is the same
+        # Check if the number of rows (per group) are the same
         difference = abs(ref_data["nrows"] - target_data["nrows"])
         allowed_variation = numpy.ceil(ref_data["nrows"] * variation)
         request.node.report_info["info"] = [
             ("ref", ref_data), ("target", target_data),
             ("var", difference), ("exp", allowed_variation)
         ]
-        print(difference > allowed_variation)
         if numpy.any(difference > allowed_variation):
-            raise DBTestException(
+            raise TestDBException(
                 "The difference in number of rows for table '{}' exceeds the allowed variation ({})".format(
                     table_name, variation)
             )
@@ -149,15 +148,22 @@ class DBTest:
         ref_data = pandas.DataFrame(result.fetchall(), columns=result.keys())
         result = self.target_engine.execute(sql_query)
         target_data = pandas.DataFrame(result.fetchall(), columns=result.keys())
+        # Check if the size of the returned tables are the same
+        if ref_data.shape != target_data.shape:
+            request.node.report_info["info"] = [("ref", ref_data.shape), ("target", target_data.shape)]
+            message = "Different number of rows in table '{}'".format(table_name)
+            if len(columns) != len(self.ref_metadata.tables[table_name].columns):
+                message += " (columns {})".format(", ".join(columns))
+            raise TestDBException(message)
         # Compare the content of both dataframes, sorting them first to ensure they are comparable
         ref_data.sort_values(by=columns, inplace=True, kind="mergesort")
         target_data.sort_values(by=columns, inplace=True, kind="mergesort")
-        request.node.report_info = {
+        request.node.report_info.update({
             "table": table_name,
             "info":  [("ref", ref_data), ("target", target_data)]
-        }
+        })
         if not ref_data.equals(target_data):
-            raise DBTestException(
+            raise TestDBException(
                 "Table '{}' has different content for columns {}".format(table_name, ", ".join(columns)))
 
     @staticmethod

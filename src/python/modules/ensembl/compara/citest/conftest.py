@@ -24,7 +24,7 @@ from _pytest.main import Session
 from _pytest.python import Metafunc
 from _pytest.runner import CallInfo, TestReport
 
-from ensembl.compara.citest import DBTest
+from ensembl.compara.citest import TestDB
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -135,7 +135,7 @@ def get_test_data(json_file: str, ref_url: str, target_url: str) -> Dict:
         # If no reference database is passed, use the default one defined in the JSON file
         if not ref_url:
             ref_url = data["reference_db"]
-        db_test_handler = DBTest.DBTest(ref_url=ref_url, target_url=target_url)
+        db_test_handler = TestDB.TestDB(ref_url=ref_url, target_url=target_url)
         for table in data["database"]:
             for test in data["database"][table]:
                 # Add extra parameters required for the test

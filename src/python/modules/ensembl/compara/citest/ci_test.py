@@ -30,4 +30,5 @@ def test_pipeline_db(request: FixtureRequest, db_test_data: Dict) -> None:
     """
     db_test_handler = db_test_data["db_test_handler"]
     test_method = "test_" + db_test_data["test"]
+    request.node.report_info = {"test": test_method}
     getattr(db_test_handler, test_method)(request, db_test_data["table"], **db_test_data)
