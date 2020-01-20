@@ -96,7 +96,7 @@ sub write_output {
 
     my $mlss                = $self->param('mlss');
     my $range_label         = $self->param('range_label');
-    my $range_filter        = $self->param('range_filter')->{$range_label};
+    my $range_filter        = $self->param('range_filter') ? $self->param('range_filter')->{$range_label} : undef;
     my $conditions          = $self->param('conditions');
     my $external_conditions = $self->param('external_conditions');
     my $n_hom               = $self->param('num_homologies'),
