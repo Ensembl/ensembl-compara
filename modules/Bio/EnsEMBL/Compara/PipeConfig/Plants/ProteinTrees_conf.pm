@@ -88,14 +88,7 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
-    ## Extend this section to redefine the parameters of some analyses
-    # turn off projections
-    # $analyses_by_name->{'insert_member_projections'}->{'-parameters'}->{'source_species_names'} = [];
-    # prevent principal components from being flowed
-    # $analyses_by_name->{'member_copy_factory'}->{'-parameters'}->{'polyploid_genomes'} = 0;
-
-    ## Here we bump the resource class of some commonly MEMLIMIT
-    ## failing analyses. Are these really EG specific?
+    ## Here we adjust the resource class of some analyses to the Plants division
     $analyses_by_name->{'mcoffee'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'mcoffee_himem'}->{'-rc_name'} = '32Gb_job';
     $analyses_by_name->{'mafft'}->{'-rc_name'} = '8Gb_2c_job';
