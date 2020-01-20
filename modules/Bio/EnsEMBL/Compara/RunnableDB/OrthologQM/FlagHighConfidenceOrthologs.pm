@@ -129,7 +129,7 @@ sub write_output {
         }
 
         # decide if homology is high confidence
-        my $is_high_conf = ($perc_id_1 >= $conditions->{perc_id} && $perc_id_2 >= $conditions->{perc_id});
+        my $is_high_conf = ($perc_id_1 >= $conditions->{perc_id} && $perc_id_2 >= $conditions->{perc_id}) ? 1 : 0;
 
         if ( %$external_conditions ) {
             my ($goc_pass, $wga_pass);
@@ -139,7 +139,7 @@ sub write_output {
             if ( $is_high_conf && $external_conditions->{wga_coverage} ) {
                 $wga_pass = 1 if (defined $wga_coverage->{$homology_id}) && ($wga_coverage->{$homology_id} >= $external_conditions->{wga_coverage});
             }
-            $is_high_conf = ($goc_pass || $wga_pass);
+            $is_high_conf = ($goc_pass || $wga_pass) ? 1 : 0;
         } elsif ( $is_high_conf ) {
             $is_high_conf = $is_tree_compliant;
         }
