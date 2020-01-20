@@ -15,6 +15,7 @@
 """Local hook and fixture implementations for the Continuous Integration Test (CITest) suite."""
 
 import json
+import os
 import re
 from typing import Dict
 
@@ -34,7 +35,9 @@ def pytest_addoption(parser: Parser) -> None:
     Args:
         parser: Command line option parser.
     """
-    parser.addoption("--json-file", action="store", required=True, metavar="JSON_FILE", dest="json_file",
+    parser.addoption("--pipeline", action="store", metavar="NAME", dest="pipeline_name",
+                     help="name of the pipeline to be tested")
+    parser.addoption("--json-file", action="store", metavar="JSON_FILE", dest="json_file",
                      help="CITest configuration JSON file")
     parser.addoption("--ref-url", action="store", metavar="URL", dest="ref_url",
                      help="URL to the reference database")
@@ -48,7 +51,15 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
     Args:
         metafunc: Container of the test configuration values.
     """
-    json_file = metafunc.config.getoption("json_file")
+    # --pipeline or --json-file argument required
+    pipeline_name = metafunc.config.getoption("pipeline_name")
+    if pipeline_name:
+        json_file = os.path.join(
+            os.environ['ENSEMBL_CVS_ROOT_DIR'],
+            *["ensembl-compara", "src", "python", "conf", "citest", "pipelines", pipeline_name + ".json"]
+        )
+    else:
+        json_file = metafunc.config.getoption("json_file")
     ref_url = metafunc.config.getoption("ref_url")
     target_url = metafunc.config.getoption("target_url")
     test_data = get_test_data(json_file, ref_url, target_url)
@@ -89,7 +100,19 @@ def pytest_sessionfinish(session: Session, exitstatus: int) -> None:
     """
     report_list = [report for report in session.report.values()]
     # Save full report in a JSON file
-    with open("test_report.json", "w") as f:
+    pipeline_name = session.config.getoption("pipeline_name")
+    if pipeline_name:
+        report_file = pipeline_name + ".report.json"
+    else:
+        json_file = os.path.basename(session.config.getoption("json_file"))
+        report_file = json_file.rsplit(".", 1)[0] + ".report.json"
+    # Make sure not to overwrite previous reports
+    if os.path.isfile(report_file):
+        i = 1
+        while os.path.isfile("{}.{}".format(report_file, i)):
+            i += 1
+        report_file = "{}.{}".format(report_file, i)
+    with open(report_file, "w") as f:
         json_report = {} # type: Dict
         for report in report_list:
             test_run = re.sub(r'\[.+\]', '', report.location[-1])
