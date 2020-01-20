@@ -15,11 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::Pan::HighConfidenceOrthologs_conf
@@ -31,14 +26,6 @@ Bio::EnsEMBL::Compara::PipeConfig::Pan::HighConfidenceOrthologs_conf
 =head1 DESCRIPTION
 
 A simple pipeline to populate the high- and low- confidence levels on an Pan Compara database.
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
