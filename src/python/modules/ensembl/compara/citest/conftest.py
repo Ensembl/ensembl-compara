@@ -36,7 +36,7 @@ def pytest_addoption(parser: Parser) -> None:
         parser: Command line option parser.
     """
     parser.addoption("--pipeline", action="store", metavar="NAME", dest="pipeline_name",
-                     help="name of the pipeline to be tested")
+                     help="name of the pipeline to be tested (without '_conf' suffix)")
     parser.addoption("--json-file", action="store", metavar="JSON_FILE", dest="json_file",
                      help="CITest configuration JSON file")
     parser.addoption("--ref-url", action="store", metavar="URL", dest="ref_url",
