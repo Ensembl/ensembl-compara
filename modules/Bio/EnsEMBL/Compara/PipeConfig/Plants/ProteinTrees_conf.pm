@@ -98,8 +98,8 @@ sub tweak_analyses {
     ## failing analyses. Are these really EG specific?
     $analyses_by_name->{'mcoffee'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'mcoffee_himem'}->{'-rc_name'} = '32Gb_job';
-    $analyses_by_name->{'mafft'}->{'-rc_name'} = '8Gb_job';
-    $analyses_by_name->{'mafft_himem'}->{'-rc_name'} = '32Gb_job';
+    $analyses_by_name->{'mafft'}->{'-rc_name'} = '8Gb_2c_job';
+    $analyses_by_name->{'mafft_himem'}->{'-rc_name'} = '32Gb_4c_job';
     $analyses_by_name->{'treebest'}->{'-rc_name'} = '4Gb_job';
     $analyses_by_name->{'ortho_tree_himem'}->{'-rc_name'} = '4Gb_job';
     $analyses_by_name->{'members_against_allspecies_factory'}->{'-rc_name'} = '2Gb_job';
@@ -116,7 +116,7 @@ sub tweak_analyses {
     $analyses_by_name->{'HMMer_classifyPantherScore'}->{'-hive_capacity'} = '2000';
 
     $analyses_by_name->{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
-    $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_job';
+    $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_6_hour_job';
 }
 
 
