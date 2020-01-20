@@ -1,5 +1,4 @@
 {
-    "pipeline_name": "genome_dumps",
     "reference_db": "mysql://ensro@mysql-ens-compara-prod-8:4618/jalvarez_citest_dump_genomes_99",
     "database": {
         "job": [
