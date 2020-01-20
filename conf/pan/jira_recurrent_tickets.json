@@ -95,10 +95,6 @@
          },
          {
             "component": "Relco tasks",
-            "summary": "Ask the <Division> team to test the staging server"
-         },
-         {
-            "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Homologyside",
             "summary": "test the homologies data"
          },
