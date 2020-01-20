@@ -108,8 +108,8 @@ sub write_output {
     $self->run_command( "mkdir -p " . dirname($output_file)) unless -e dirname($output_file);
 
     my ( $wga_coverage, $goc_scores );
-    $wga_coverage = $self->_parse_flatfile_into_hash($wga_file, $range_filter) if $wga_file;
-    $goc_scores   = $self->_parse_flatfile_into_hash($goc_file, $range_filter) if $goc_file;
+    $wga_coverage = $self->_parse_flatfile_into_hash($wga_file, $range_filter) if $wga_file && -e $wga_file;;
+    $goc_scores   = $self->_parse_flatfile_into_hash($goc_file, $range_filter) if $goc_file && -e $goc_file;
 
     open(my $hfh, '<', $homology_file) or die "Cannot open $homology_file for reading";
     open(my $ofh, '>', $output_file  ) or die "Cannot open $output_file for writing";
