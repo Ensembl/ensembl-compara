@@ -204,7 +204,7 @@ sub _summarise_core_tables {
   );
   my $analysis = {};
   foreach my $a_aref (@$t_aref) { 
-    my $web_data = $a_aref->[6] ? from_json($a_aref->[6]) : {};}
+    my $web_data = $a_aref->[6] ? from_json($a_aref->[6]) : {};
     $analysis->{ $a_aref->[0] } = {
       'logic_name'  => $a_aref->[1],
       'name'        => $a_aref->[3],
