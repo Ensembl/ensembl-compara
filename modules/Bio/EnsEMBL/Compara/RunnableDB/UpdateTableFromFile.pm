@@ -55,6 +55,7 @@ sub fetch_input {
     my %attribs;
     my @attrib_files = @{$self->param('attrib_files')};
     foreach my $f ( @attrib_files ) {
+        die "Empty element found in the 'attrib_files' list" unless $f;
         open( my $fh, '<', $f ) or die "Cannot open $f for reading";
         my $header = <$fh>;
         my @header_cols = split( /\s+/, $header );
