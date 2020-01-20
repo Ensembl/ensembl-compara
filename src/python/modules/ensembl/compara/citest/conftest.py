@@ -15,6 +15,7 @@
 """Local hook and fixture implementations for the Continuous Integration Test (CITest) suite."""
 
 import json
+import re
 from typing import Dict
 
 import pytest
@@ -52,7 +53,7 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
     target_url = metafunc.config.getoption("target_url")
     test_data = get_test_data(json_file, ref_url, target_url)
     # Load the parameters for each test
-    metafunc.parametrize('db_test_data', test_data["database"], indirect=True)
+    metafunc.parametrize("db_test_data", test_data["database"], indirect=True)
     # TODO: parametrize all files tests (once class is available)
 
 
@@ -86,12 +87,26 @@ def pytest_sessionfinish(session: Session, exitstatus: int) -> None:
         session: Pytest Session object.
         existatus: Status which pytest will return to the system.
     """
-    print("\nrun status code:", exitstatus)
-    passed_amount = sum(1 for report in session.report.values() if report.passed)
-    failed_amount = sum(1 for report in session.report.values() if report.failed)
-    print("there are {} passed and {} failed tests".format(passed_amount, failed_amount))
-    # for report in session.report.values():
-    #     print(report.report_info)
+    report_list = [report for report in session.report.values()]
+    # Save full report in a JSON file
+    with open("test_report.json", "w") as f:
+        json_report = {} # type: Dict
+        for report in report_list:
+            test_run = re.sub(r'\[.+\]', '', report.location[-1])
+            test_report = json_report.setdefault(test_run, {})
+            table_report = test_report.setdefault(report.test_params["table"], {})
+            subtest = report.test_params["test"]
+            info = {"args":   {k: v for k, v in report.test_params.items() if k not in ["table", "test"]},
+                    "status": report.outcome.capitalize()}
+            if report.failed:
+                info["error"] = {"message": report.longrepr.reprcrash.message,
+                                 "details": report.error_info}
+            table_report.setdefault(subtest, []).append(info)
+        json.dump(json_report, f, indent=4, sort_keys=True)
+    # Print summary
+    total = len(report_list)
+    failed = sum(1 for report in report_list if report.failed)
+    print("\n{} out of {} tests ok".format(total-failed, total))
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -107,9 +122,16 @@ def pytest_runtest_makereport(item: pytest.Item, call: CallInfo) -> TestReport:
     """
     outcome = yield
     report = outcome.get_result()
-    if report.when == 'call':
+    if report.when == "call":
         # Update the test report adding our custom report_info
-        report.report_info = getattr(item, 'report_info', 0)
+        report.error_info = getattr(item, "error_info", 0)
+        if "db_test_data" in item.fixturenames:
+            report.test_params = item.funcargs["db_test_data"]
+            del report.test_params["db_test_handler"]
+        # TODO: Once class is available, uncomment following lines
+        # elif "files_test_data" in item.fixturenames:
+        #     report.test_params = item.funcargs["files_test_data"]
+        #     del report.test_params["files_test_handler"]
         item.session.report[item] = report
 
 

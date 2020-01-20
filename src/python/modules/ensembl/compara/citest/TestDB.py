@@ -97,19 +97,20 @@ class TestDB:
         result = self.target_engine.execute(sql_query)
         target_data = pandas.DataFrame(result.fetchall(), columns=result.keys())
         # Check if the size of the returned tables are the same
-        request.node.report_info["table"] = table_name
         if ref_data.shape != target_data.shape:
-            request.node.report_info["info"] = [("ref", ref_data.shape), ("target", target_data.shape)]
+            request.node.error_info = {"expected": ref_data.shape[0],
+                                       "found":    target_data.shape[0],
+                                       "query":    sql_query.strip()}
             raise TestDBException(
                 "Different number of groups ({}) for table '{}'".format(group_by, table_name))
         # Check if the number of rows (per group) are the same
         difference = abs(ref_data["nrows"] - target_data["nrows"])
         allowed_variation = numpy.ceil(ref_data["nrows"] * variation)
-        request.node.report_info["info"] = [
-            ("ref", ref_data), ("target", target_data),
-            ("var", difference), ("exp", allowed_variation)
-        ]
-        if numpy.any(difference > allowed_variation):
+        failing_rows = difference > allowed_variation
+        if failing_rows.any():
+            request.node.error_info = {"expected": ref_data.loc[failing_rows].values.tolist(),
+                                       "found":    target_data.loc[failing_rows].values.tolist(),
+                                       "query":    sql_query.strip()}
             raise TestDBException(
                 "The difference in number of rows for table '{}' exceeds the allowed variation ({})".format(
                     table_name, variation)
@@ -150,7 +151,9 @@ class TestDB:
         target_data = pandas.DataFrame(result.fetchall(), columns=result.keys())
         # Check if the size of the returned tables are the same
         if ref_data.shape != target_data.shape:
-            request.node.report_info["info"] = [("ref", ref_data.shape), ("target", target_data.shape)]
+            request.node.error_info = {"expected": ref_data.shape[0],
+                                       "found":    target_data.shape[0],
+                                       "query":    sql_query.strip()}
             message = "Different number of rows in table '{}'".format(table_name)
             if len(columns) != len(self.ref_metadata.tables[table_name].columns):
                 message += " (columns {})".format(", ".join(columns))
@@ -158,11 +161,11 @@ class TestDB:
         # Compare the content of both dataframes, sorting them first to ensure they are comparable
         ref_data.sort_values(by=columns, inplace=True, kind="mergesort")
         target_data.sort_values(by=columns, inplace=True, kind="mergesort")
-        request.node.report_info.update({
-            "table": table_name,
-            "info":  [("ref", ref_data), ("target", target_data)]
-        })
-        if not ref_data.equals(target_data):
+        failing_rows = ref_data.ne(target_data).any(axis="columns")
+        if failing_rows.any():
+            request.node.error_info = {"expected": ref_data.loc[failing_rows].values.tolist(),
+                                       "found":    target_data.loc[failing_rows].values.tolist(),
+                                       "query":    sql_query.strip()}
             raise TestDBException(
                 "Table '{}' has different content for columns {}".format(table_name, ", ".join(columns)))
 
