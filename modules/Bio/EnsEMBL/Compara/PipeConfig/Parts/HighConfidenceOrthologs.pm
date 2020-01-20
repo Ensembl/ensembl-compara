@@ -116,6 +116,7 @@ sub pipeline_analyses_high_confidence {
             -flow_into  => {
                 2   => { 'flag_high_confidence_orthologs' => INPUT_PLUS },
             },
+            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name    => 'flag_high_confidence_orthologs',
@@ -124,6 +125,7 @@ sub pipeline_analyses_high_confidence {
                 'thresholds'    => '#expr( #threshold_levels#->[#threshold_index#]->{"thresholds"} )expr#',
                 'homology_file' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
             },
+            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('high_confidence_capacity'),
             -flow_into     => [ 'update_homology_table' ],
         },
@@ -137,6 +139,7 @@ sub pipeline_analyses_high_confidence {
                     '#goc_file#', '#wga_file#', '#high_conf_file#'
                 ],
             },
+            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('update_homologies_capacity'),
             -priority      => 10, # these are slow - let's get them started ASAP
         },
