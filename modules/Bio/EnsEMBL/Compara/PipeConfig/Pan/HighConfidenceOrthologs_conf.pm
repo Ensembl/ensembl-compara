@@ -63,31 +63,11 @@ sub default_options {
         'threshold_levels' => [
             {
                 'taxa'          => [ 'Apes', 'Murinae' ],
-                'thresholds'    => [ 75, 75, 80 ],
+                'thresholds'    => [ undef, undef, 80 ],
             },
             {
                 'taxa'          => [ 'Mammalia', 'Aves', 'Percomorpha' ],
-                'thresholds'    => [ 75, 75, 50 ],
-            },
-            {
-                'taxa'          => [ 'Euteleostomi', 'Ciona' ],
-                'thresholds'    => [ 50, 50, 25 ],
-            },
-            {
-                'taxa'          => [ 'Panicoideae', 'Oryzinae', 'Pooideae', 'Solanaceae', 'Brassicaceae', 'Malvaceae', 'fabids' ],
-                'thresholds'    => [ 50, 50, 25 ],
-            },
-            {
-                'taxa'          => [ 'Aculeata', 'Anophelinae', 'Caenorhabditis', 'Drosophila', 'Glossinidae', 'Onchocercidae' ],
-                'thresholds'    => [ 50, 50, 25 ],
-            },
-            {
-                'taxa'          => [ 'Brachycera', 'Culicinae', 'Hemiptera', 'Phlebotominae' ],
-                'thresholds'    => [ 25, 25, 25 ],
-            },
-            {
-                'taxa'          => [ 'Chelicerata', 'Diptera', 'Hymenoptera', 'Nematoda' ],
-                'thresholds'    => [ undef, undef, 25 ],
+                'thresholds'    => [ undef, undef, 50 ],
             },
             {
                 'taxa'          => [ 'all' ],
