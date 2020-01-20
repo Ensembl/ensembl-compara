@@ -84,10 +84,21 @@ sub tweak_analyses {
     my $analyses_by_name = shift;
 
     ## Here we adjust the resource class of some analyses to the Pan division
-    $analyses_by_name->{'hcluster_run'}->{'-rc_name'} = '1Gb_job';
-    $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '2Gb_job';
-    $analyses_by_name->{'tree_building_entry_point'}->{'-rc_name'} = '500Mb_job';
-    $analyses_by_name->{'HMMer_classifyPantherScore'}->{'-rc_name'} = '2Gb_job';
+    ## Extend this section to redefine the resource names of some analysis
+    my %overriden_rc_names = (
+        'HMMer_classifyPantherScore'    => '2Gb_job',
+        'hcluster_run'                  => '1Gb_job',
+        'hcluster_parse_output'         => '2Gb_job',
+        # Many decision-type analyses take more memory for Pan. Because of the fatter Registry ?
+        'tree_building_entry_point'     => '500Mb_job',
+        'treebest_decision'             => '500Mb_job',
+        'hc_post_tree'                  => '500Mb_job',
+        'ortho_tree_decision'           => '500Mb_job',
+        'hc_tree_homologies'            => '500Mb_job',
+    );
+    foreach my $logic_name (keys %overriden_rc_names) {
+        $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
+    }
 }
 
 
