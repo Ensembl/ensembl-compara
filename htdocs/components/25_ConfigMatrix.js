@@ -434,7 +434,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
           track = $(this);
           if (track.hasClass('on') !== on[i]) {
             panel.elLk.options.filter('.' + track.data('track').colClass).find('.on').html(function (j, html) {
-              return parseInt(html, 10) + panel.params.defaultRenderers[$(this).parents('td.opt')[0].title] * off;
+              return parseInt(html, 10) * off;
             });
           }
         });
