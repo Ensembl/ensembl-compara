@@ -12,13 +12,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""EnsEMBL Compara's Python software information."""
-
-name = "EnsEMBL"
-
-__version__ = "1.0"
-
-__copyright__ = "Copyright 2020, EMBL-European Bioinformatics Institute"
-__license__ = "Apache"
-__maintainer__ = "Compara team"
-__status__ = "Development"
