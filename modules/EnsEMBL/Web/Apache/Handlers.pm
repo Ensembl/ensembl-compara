@@ -534,7 +534,14 @@ sub handler {
   }
 
   # give up if no response code was set by any of the handlers
-  return DECLINED unless defined $response_code;
+  if (not defined $response_code) {
+    # when the request is declined, it will eventually be treated by Apache as a 404,
+    # at which point its uri will be re-written to /Error (see httpd.conf);
+    # so let's keep the original uri in a custom header
+    # (not using the standard Referer header, because a referrer is a full url, with protocol and hostname)
+    $r->headers_in->add('X-Declined-From' => $r->unparsed_uri);
+    return DECLINED;
+  }
 
   # kill off the process when it grows too large
   # Rely on OOB now. (Mart exceeds what this package can handle)
