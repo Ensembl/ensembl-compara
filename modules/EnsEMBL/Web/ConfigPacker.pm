@@ -1049,6 +1049,9 @@ sub _summarise_website_db {
                                                               };
       }
     }
+    else {
+      $self->db_tree->{'ENSEMBL_GLOSSARY'} = {};
+    }
 
     ## Get biotype definitions
     my $terms_endpoint = $ols.'/terms';
@@ -1081,6 +1084,7 @@ sub _fetch_ols_term {
   my ($self, $url) = @_;
   my %result;
   my $term = $self->_get_rest_data($url);
+  return {} unless $term;
   my $children_link = $term->{_links}->{children}->{href};
 
   $result{label} = $term->{label};
@@ -1097,6 +1101,7 @@ sub _fetch_children_ols_terms {
   my ($self, $url) = @_;
 
   my $response = $self->_get_rest_data($url);
+  return {} unless $response;
   my $children = $response->{_embedded}->{terms};
 
   return map {
