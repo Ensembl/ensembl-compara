@@ -58,7 +58,7 @@ sub default_options {
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         #'mlss_id'               => 40077,
-                                         
+
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
 
@@ -308,7 +308,7 @@ sub default_options {
         'use_timetree_times'       => 1,
 
     # GOC parameters
-        # Points to the previous protein trees production database. Will be used for various GOC operations. 
+        # Points to the previous protein trees production database. Will be used for various GOC operations.
         'goc_taxlevels'                 => [],
         'goc_threshold'                 => undef,
         'calculate_goc_distribution'    => 0,
@@ -329,7 +329,7 @@ sub default_options {
         # Do we need a mapping between homology_ids of this database to another database ?
         # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
         'do_homology_id_mapping' => 1,
-        
+
         # homology dumps options
         'homology_dumps_dir'       => $self->o('dump_dir'). '/homology_dumps/',
         'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
@@ -590,7 +590,7 @@ sub core_pipeline_analyses {
                 'A->1'  => [ 'backbone_fire_homology_dumps' ],
             },
         },
-        
+
         {   -logic_name => 'backbone_fire_homology_dumps',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
@@ -615,9 +615,9 @@ sub core_pipeline_analyses {
                 'output_file'   => '#dump_dir#/snapshot_4_pipeline_finished.sql.gz',
             },
             -rc_name    => '500Mb_job',
-            -flow_into  => [ 
+            -flow_into  => [
                 'notify_pipeline_completed',
-                WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ), 
+                WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ),
             ],
         },
 
@@ -1513,7 +1513,7 @@ sub core_pipeline_analyses {
             ),
             -rc_name => '500Mb_job',
         },
-        
+
         {   -logic_name => 'check_strains_cluster_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
@@ -1688,7 +1688,7 @@ sub core_pipeline_analyses {
                 'output_gini_file'   => '#plots_dir#/gini_coefficient.out',
                 'output_gini_pdf'    => '#plots_dir#/gini_coefficient.pdf',
             },
-            -rc_name       => '500Mb_job',
+            -rc_name       => '2Gb_job',
         },
 
         {   -logic_name     => 'write_stn_tags',
@@ -2447,7 +2447,7 @@ sub core_pipeline_analyses {
             -rc_name => '8Gb_8c_mpi',
             -flow_into => {
                -1 => [ 'examl_8_cores_himem' ],  # MEMLIMIT
-               -2 => [ 'examl_16_cores' ],       # RUNTIME 
+               -2 => [ 'examl_16_cores' ],       # RUNTIME
             }
         },
 
@@ -2518,7 +2518,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '8Gb_64c_mpi',
-            -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 64 cores. It will probably not converge. 
+            -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 64 cores. It will probably not converge.
             -flow_into => {
                -1 => [ 'examl_64_cores_himem' ],  # MEMLIMIT
                -2 => [ 'fasttree' ],  # RUNLIMIT
@@ -3606,7 +3606,7 @@ sub core_pipeline_analyses {
              -logic_name => 'remove_overlapping_homologies',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveOverlappingHomologies',
         },
-        
+
         {   -logic_name => 'copy_dumps_to_shared_loc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
