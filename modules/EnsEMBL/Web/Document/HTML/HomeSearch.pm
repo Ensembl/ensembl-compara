@@ -116,6 +116,17 @@ sub render {
     my $species_info = $hub->get_species_info;
     my %species      = map { $species_info->{$_}{'common'} => $_ } grep { $species_info->{$_}{'is_reference'} } sort keys %$species_info;
     my %common_names = reverse %species;
+    my $values = [
+                  {'value' => '', 'caption' => 'All species'},
+                  {'value' => 'help', 'caption' => 'Help and Documentation' },
+                  {'value' => '', 'caption' => '---', 'disabled' => 1},
+                  ];
+    ## If more than one species, show favourites
+    if (scalar keys %species > 1) {
+        push @$values, map({ $common_names{$_} ? {'value' => $_, 'caption' => $common_names{$_}, 'group' => 'Favourite species'} : ()} @$favourites);
+        push @$values, {'value' => '', 'caption' => '---', 'disabled' => 1};
+    }
+    push @$values, map({'value' => $species{$_}, 'caption' => $_}, sort { uc $a cmp uc $b } keys %species);
 
     $field->add_element({
       'type'    => 'dropdown',
@@ -123,14 +134,7 @@ sub render {
       'label'   => 'Search',
       'id'      => 'species',
       'class'   => 'input',
-      'values'  => [
-        {'value' => '', 'caption' => 'All species'},
-        {'value' => 'help', 'caption' => 'Help and Documentation' },
-        {'value' => '', 'caption' => '---', 'disabled' => 1},
-        map({ $common_names{$_} ? {'value' => $_, 'caption' => $common_names{$_}, 'group' => 'Favourite species'} : ()} @$favourites),
-        {'value' => '', 'caption' => '---', 'disabled' => 1},
-        map({'value' => $species{$_}, 'caption' => $_}, sort { uc $a cmp uc $b } keys %species)
-      ]
+      'values'  => $values,
     }, $inline)->first_child->after('label', {'inner_HTML' => '&nbsp;for', 'for' => 'q'});
 
   }
