@@ -22,12 +22,24 @@ from _pytest.fixtures import FixtureRequest
 
 
 def test_pipeline_db(request: FixtureRequest, db_test_data: Dict) -> None:
-    """Test the database-side of the pipeline.
+    """Test the database side of the pipeline.
 
     Args:
         request: Special fixture providing information of the requesting test function.
         db_test_data: Database test data (fixture).
     """
-    db_test_handler = db_test_data["db_test_handler"]
+    test_db_handler = db_test_data["test_db_handler"]
     test_method = "test_" + db_test_data["test"]
-    getattr(db_test_handler, test_method)(request, db_test_data["table"], **db_test_data)
+    getattr(test_db_handler, test_method)(request, db_test_data["table"], **db_test_data["args"])
+
+
+def test_pipeline_files(request: FixtureRequest, files_test_data: Dict) -> None:
+    """Test the file system side of the pipeline.
+
+    Args:
+        request: Special fixture providing information of the requesting test function.
+        files_test_data: Files test data (fixture).
+    """
+    test_files_handler = files_test_data["test_files_handler"]
+    test_method = "test_" + files_test_data["test"]
+    getattr(test_files_handler, test_method)(request, **files_test_data["args"])
