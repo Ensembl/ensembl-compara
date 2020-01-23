@@ -15,6 +15,7 @@
 """Module docstring"""
 # TODO: write module docstring
 
+from collections import OrderedDict
 from logging import Logger
 import operator
 import re
@@ -60,8 +61,8 @@ class TestDB:
         self.target_metadata = MetaData(bind=self.target_engine)
         self.target_metadata.reflect()
 
-    def test_num_rows(self, request: FixtureRequest, table_name: str, *args, variation: float = 0.0,
-                      group_by: Union[str, List] = "", filter_by: Union[str, List] = "", **kwargs) -> None:
+    def test_num_rows(self, request: FixtureRequest, table_name: str, variation: float = 0.0,
+                      group_by: Union[str, List] = None, filter_by: Union[str, List] = None) -> None:
         """Compares the number of rows of the given table between reference and target databases.
 
         If group_by is provided, the number of rows will be compared per group, applying the same variation
@@ -80,11 +81,15 @@ class TestDB:
             group_by: Group rows by column(s), and count the number of rows per group.
             filter_by: Filter rows by one or more conditions. If a list is provided, the elements will be
                 joined by "AND".
+
+        Raise:
+            TestDBException: If group_by is provided and the number of groups is different; or if the number
+                of rows differ for at least one group.
         """
         # Compose the sql query from the given parameters
         sql_filter = self._get_sql_filter(filter_by)
         if group_by:
-            if isinstance(group_by, list):
+            if (group_by is None) or isinstance(group_by, list):
                 group_by = ", ".join(group_by)
             # ORDER BY to ensure that the results are always in the same order (for the same groups)
             sql_query = "SELECT {0}, COUNT(*) as nrows FROM {1} {2} GROUP BY {0} ORDER BY {0}".format(
@@ -98,9 +103,12 @@ class TestDB:
         target_data = pandas.DataFrame(result.fetchall(), columns=result.keys())
         # Check if the size of the returned tables are the same
         if ref_data.shape != target_data.shape:
-            request.node.error_info = {"expected": ref_data.shape[0],
-                                       "found":    target_data.shape[0],
-                                       "query":    sql_query.strip()}
+            request.node.error_info = OrderedDict([
+                ("expected", ref_data.shape[0]),
+                ("found", target_data.shape[0]),
+                ("query", sql_query.strip())
+            ])
+            # Note: the shape can only be different if group_by is given
             raise TestDBException(
                 "Different number of groups ({}) for table '{}'".format(group_by, table_name))
         # Check if the number of rows (per group) are the same
@@ -108,17 +116,19 @@ class TestDB:
         allowed_variation = numpy.ceil(ref_data["nrows"] * variation)
         failing_rows = difference > allowed_variation
         if failing_rows.any():
-            request.node.error_info = {"expected": ref_data.loc[failing_rows].values.tolist(),
-                                       "found":    target_data.loc[failing_rows].values.tolist(),
-                                       "query":    sql_query.strip()}
+            request.node.error_info = OrderedDict([
+                # Save the table information in a readable format
+                ("expected", ref_data.loc[failing_rows].to_string(index=False).splitlines()),
+                ("found", target_data.loc[failing_rows].to_string(index=False).splitlines()),
+                ("query", sql_query.strip())
+            ])
             raise TestDBException(
                 "The difference in number of rows for table '{}' exceeds the allowed variation ({})".format(
                     table_name, variation)
             )
 
-    def test_table_content(self, request: FixtureRequest, table_name: str, *args,
-                           columns: Union[str, List] = "", filter_by: Union[str, List] = "",
-                           **kwargs) -> None:
+    def test_content(self, request: FixtureRequest, table_name: str, columns: Union[str, List] = None,
+                     filter_by: Union[str, List] = None) -> None:
         """Compares the content of the given table between reference and target databases.
 
         The comparison is made only for the selected columns. The data and the data type of each column have
@@ -132,9 +142,12 @@ class TestDB:
                 start of each column name, e.g. "-job_id" will make all columns but "job_id" to be included.
             filter_by: Filter rows by one or more conditions. If a list is provided, the elements will be
                 joined by the AND operator.
+
+        Raise:
+            TestDBException: If the number of rows differ; or if one or more rows have different content.
         """
         sql_filter = self._get_sql_filter(filter_by)
-        if isinstance(columns, str):
+        if (columns is None) or isinstance(columns, str):
             columns = [columns] if columns else []
         if (not columns or all(col.startswith("-") for col in columns)):
             # Retrieve all the columns from the table and remove those in the exclusion list
@@ -151,26 +164,28 @@ class TestDB:
         target_data = pandas.DataFrame(result.fetchall(), columns=result.keys())
         # Check if the size of the returned tables are the same
         if ref_data.shape != target_data.shape:
-            request.node.error_info = {"expected": ref_data.shape[0],
-                                       "found":    target_data.shape[0],
-                                       "query":    sql_query.strip()}
-            message = "Different number of rows in table '{}'".format(table_name)
-            if len(columns) != len(self.ref_metadata.tables[table_name].columns):
-                message += " (columns {})".format(", ".join(columns))
-            raise TestDBException(message)
+            request.node.error_info = OrderedDict([
+                ("expected", ref_data.shape[0]),
+                ("found", target_data.shape[0]),
+                ("query", sql_query.strip())
+            ])
+            raise TestDBException("Different number of rows in table '{}'".format(table_name))
         # Compare the content of both dataframes, sorting them first to ensure they are comparable
         ref_data.sort_values(by=columns, inplace=True, kind="mergesort")
         target_data.sort_values(by=columns, inplace=True, kind="mergesort")
         failing_rows = ref_data.ne(target_data).any(axis="columns")
         if failing_rows.any():
-            request.node.error_info = {"expected": ref_data.loc[failing_rows].values.tolist(),
-                                       "found":    target_data.loc[failing_rows].values.tolist(),
-                                       "query":    sql_query.strip()}
+            request.node.error_info = OrderedDict([
+                # Save the table information in a readable format
+                ("expected", ref_data.loc[failing_rows].to_string(index=False).splitlines()),
+                ("found", target_data.loc[failing_rows].to_string(index=False).splitlines()),
+                ("query", sql_query.strip())
+            ])
             raise TestDBException(
                 "Table '{}' has different content for columns {}".format(table_name, ", ".join(columns)))
 
     @staticmethod
-    def _get_sql_filter(filter_by: Union[str, List]) -> str:
+    def _get_sql_filter(filter_by: Union[str, List, None]) -> str:
         """Returns an SQL WHERE clause including all the given conditions.
 
         If more than one condition is given, they will be joined by the AND operator and put inside
