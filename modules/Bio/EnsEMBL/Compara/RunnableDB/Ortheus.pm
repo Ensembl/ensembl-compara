@@ -806,7 +806,8 @@ sub parse_results {
     $self->remove_empty_cols($tree);
     print $tree->_simple_newick, "\n";
     print join(" -- ", map {$_."+".$_->node_id."+".$_->name} (@{$tree->get_all_nodes()})), "\n";
-    $self->param('output', [$tree]);
+    my $trees = $self->split_if_empty_ancestral_seq($tree);
+    $self->param('output', $trees);
 
 #     foreach my $ga_node (@{$tree->get_all_nodes}) {
 # 	if ($ga_node) {
@@ -826,6 +827,28 @@ sub parse_results {
 
 
 }
+
+
+sub split_if_empty_ancestral_seq {
+    my ($self, $genomic_align_tree) = @_;
+
+    my $root_genomic_align = $genomic_align_tree->genomic_align_group->get_all_GenomicAligns->[0];
+
+    # If there is an actual sequence, we're good
+    return [$genomic_align_tree] if length($root_genomic_align->original_sequence);
+
+    # Otherwise, need to replace the tree by its two sub-trees
+    my @subtrees;
+    foreach my $genomic_align_node (@{$genomic_align_tree->children}) {
+        $genomic_align_node->disavow_parent;
+        # Provided they have more than 1 sequence
+        unless ($genomic_align_node->is_leaf) {
+            push @subtrees, @{ $self->split_if_empty_ancestral_seq($genomic_align_node) };
+        }
+    }
+    return \@subtrees;
+}
+
 
 sub remove_empty_cols {
     my ($self, $tree) = @_;
