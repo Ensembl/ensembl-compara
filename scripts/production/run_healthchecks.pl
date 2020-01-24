@@ -14,6 +14,73 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+=head1 NAME
+
+run_healthchecks.pl
+
+=head1 DESCRIPTION
+
+This script is a wrapper around ensj-healthcheck's run-configurable-testrunner.sh
+which accepts production_reg_conf-based configuration and automatically sets
+the correct host/port parameters for the division being tested.
+
+=head1 SYNOPSIS
+
+  perl run_healthchecks.pl $COMPARA_REG compara_curr -g ComparaAll
+
+  perl run_healthchecks.pl \
+    --reg_conf registry_configuration_file --reg_alias compara_curr \
+    -t org.ensembl.healthcheck.testcase.compara.MLSSTagGERPMSA --repair
+
+=head1 ARGUMENTS
+
+The script reads these arguments and passes the other ones straight to run-configurable-testrunner.sh
+
+=head2 DATABASE SETUP
+
+=over
+
+=item B<[--url mysql://user[:passwd]@host[:port]/dbname]>
+
+URL of the database to test
+
+=item B<[--reg_conf registry_configuration_file]>
+
+The Bio::EnsEMBL::Registry configuration file. If none given and no URL is
+given, the one set in ENSEMBL_REGISTRY will be used if defined, if not
+~/.ensembl_init will be used.
+
+=item B<[--reg_type reg_type]>
+
+The "type" or "group" under which the database is to be found in the Registry.
+
+=item B<[--reg_alias|--reg_name name]>
+
+The name or "species" under which the database is to be found in the Registry.
+
+=back
+
+=head2 HEALTHCHECK SETUP
+
+=over
+
+=item B<[--ensj-testrunner /path/to/run-configurable-testrunner.sh]>
+
+The path to run-configurable-testrunner.sh. If not given a default will be
+formed using the ENSEMBL_CVS_ROOT_DIR environment variable.
+
+=item B<[--ensj-json-config /path/to/ensj-healthcheck.json]>
+
+The path to ensj-healthcheck.json. If not given a default will be formed
+using the ENSEMBL_CVS_ROOT_DIR environment variable.
+
+=item B<[--repair]>
+
+Use this flag if you want to use the "repair" mode of the healtcheck.
+
+=back
+
+=cut
 
 use strict;
 use warnings;
