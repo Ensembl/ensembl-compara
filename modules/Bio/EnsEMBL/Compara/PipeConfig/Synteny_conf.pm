@@ -305,6 +305,9 @@ sub pipeline_analyses {
 
         {   -logic_name => 'update_mlss_tag_table',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::UpdateMlssTag',
+            -parameters => {
+                'curr_release' => $self->o('ensembl_release'),
+            },
         },
 
    ];
