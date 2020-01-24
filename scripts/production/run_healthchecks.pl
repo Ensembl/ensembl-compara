@@ -95,10 +95,8 @@ if ($repair) {
 # Division-specific configuration
 foreach my $key (qw(host1 host2 host3 secondary.host)) {
 
-    my $key_prefix = $key;
-    my $key_suffix = $key;
-    $key_prefix =~ s/host.*//;
-    $key_suffix =~ s/.*host//;
+    # Extract the prefix and the suffix to form the other arguments
+    my ($key_prefix, $key_suffix) = split('host', $key);
 
     # Configure the host if it is set
     if (my $host = $ensj_config->{$key}) {
