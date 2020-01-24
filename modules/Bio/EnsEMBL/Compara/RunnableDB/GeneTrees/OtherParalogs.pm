@@ -349,9 +349,6 @@ sub get_ancestor_species_hash
             }
             print "super-tree leaf=", $node->node_id, " subtrees=", scalar(@$subsubtrees), " children=", scalar(@$leaves), "\n";
         }
-        eval {
-            $self->dataflow_output_id({'gene_tree_id' => $child->node_id, 'tree_num_genes' => scalar(@$leaves)}, 2) if ($self->param('dataflow_subclusters'));
-        };
         $child->disavow_parent;
 
         foreach my $leaf (@$leaves) {

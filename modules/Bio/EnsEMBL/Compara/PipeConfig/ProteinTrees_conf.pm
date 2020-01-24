@@ -3139,7 +3139,7 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
             -rc_name   => '2Gb_job',
             -flow_into => {
-                1 => 'other_paralogs',
+                1 => [ 'other_paralogs', 'subcluster_factory' ],
                 -1 => 'quick_tree_break_himem',
             },
         },
@@ -3153,32 +3153,35 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
             -rc_name   => '4Gb_job',
-            -flow_into => [ 'other_paralogs_himem' ],
+            -flow_into => [ 'other_paralogs_himem', 'subcluster_factory' ],
         },
 
         {   -logic_name     => 'other_paralogs',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
-            -parameters     => {
-                'dataflow_subclusters' => 1,
-            },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
             -flow_into      => {
                 -1 => [ 'other_paralogs_himem', ],
-                2 => [ 'tree_backup' ],
                 3 => [ 'other_paralogs' ],
             }
         },
 
         {   -logic_name     => 'other_paralogs_himem',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
-            -parameters     => {
-                'dataflow_subclusters' => 1,
-            },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
             -rc_name        => '500Mb_job',
             -flow_into      => {
-                2 => [ 'tree_backup' ],
                 3 => [ 'other_paralogs_himem' ],
+            }
+        },
+
+        {   -logic_name     => 'subcluster_factory',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters     => {
+                'inputquery'    => 'SELECT gtn1.root_id AS gene_tree_id, gene_count AS tree_gene_count FROM (gene_tree_node gtn1 JOIN gene_tree_root_attr USING (root_id)) JOIN gene_tree_node gtn2 ON gtn1.parent_id = gtn2.node_id WHERE gtn1.root_id != gtn2.root_id AND gtn2.root_id = #gene_tree_id#',
+            },
+            -hive_capacity  => $self->o('other_paralogs_capacity'),
+            -flow_into      => {
+                2 => [ 'tree_backup' ],
             }
         },
 
