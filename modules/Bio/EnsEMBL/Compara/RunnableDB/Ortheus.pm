@@ -227,7 +227,6 @@ sub detect_pecan_ortheus_errors {
 sub write_output {
     my ($self) = @_;
 
-    print "WRITE OUTPUT\n" if $self->debug;
 	my $compara_conn = $self->compara_dba->dbc;
 	my $ancestor_genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly("ancestral_sequences");
 	my $ancestral_conn = $ancestor_genome_db->db_adaptor->dbc;
