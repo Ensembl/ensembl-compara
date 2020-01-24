@@ -811,7 +811,7 @@ sub print {
   }
   print "  " x $level, $mark,
       "[", $self->node_id, "/", ($self->original_strand?"+":"-"), "] ",
-      $self->genomic_align_group ? (
+      $self->genomic_align_group && $self->genomic_align_group->dnafrag ? (
       $self->genomic_align_group->genome_db->name,":",
       $self->genomic_align_group->dnafrag->name,":",
       $self->genomic_align_group->dnafrag_start,":",
