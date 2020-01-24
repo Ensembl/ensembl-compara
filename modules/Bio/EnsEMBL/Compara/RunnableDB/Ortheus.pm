@@ -803,10 +803,10 @@ sub parse_results {
 	}
     }
 
-    $self->remove_empty_cols($tree);
     print $tree->_simple_newick, "\n";
     print join(" -- ", map {$_."+".$_->node_id."+".$_->name} (@{$tree->get_all_nodes()})), "\n";
     my $trees = $self->split_if_empty_ancestral_seq($tree);
+    $self->remove_empty_cols($_) for @$trees;
     $self->param('output', $trees);
 
 #     foreach my $ga_node (@{$tree->get_all_nodes}) {
