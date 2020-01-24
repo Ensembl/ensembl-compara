@@ -71,7 +71,7 @@ sub default_options {
         # Do we want the Gene QC part to run ?
         'do_gene_qc'             => 0,
         # Do we extract overall statistics for each pair of species ?
-        'do_homology_stats'      => 0,
+        'do_homology_stats'      => 1,
         # Do we need a mapping between homology_ids of this database to another database ?
         # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
         'do_homology_id_mapping' => 0,
