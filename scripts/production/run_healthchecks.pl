@@ -58,6 +58,12 @@ The "type" or "group" under which the database is to be found in the Registry.
 
 The name or "species" under which the database is to be found in the Registry.
 
+=item B<[--compara_master|--master_db name_or_url]>
+
+A reference to the master database to compare against. Can be either a
+Registry alias (assumed to be in the "compara" group/type) or a URL.
+Defaults to 'compara_master', i.e. a Registry lookup.
+
 =back
 
 =head2 HEALTHCHECK SETUP
@@ -96,14 +102,19 @@ use Bio::EnsEMBL::Utils::IO qw(:slurp);
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::Registry;
 
-my ($url, $reg_conf, $reg_type, $reg_alias);
+my ($url, $reg_conf, $reg_type, $reg_alias, $master_db);
 my ($repair, $ensj_testrunner, $ensj_json_config);
 
+# Default values
+$master_db = 'compara_master';
+
+# Arguments parsing
 GetOptions(
     'url=s'                         => \$url,
     'reg_conf|regfile|reg_file=s'   => \$reg_conf,
     'reg_type=s'                    => \$reg_type,
     'reg_alias|regname|reg_name=s'  => \$reg_alias,
+    'master_db|compara_master=s'    => \$master_db,
     'ensj-testrunner=s'             => \$ensj_testrunner,
     'ensj-json-config=s'            => \$ensj_json_config,
     'repair'                        => \$repair,
@@ -156,6 +167,15 @@ if ($repair) {
 } else {
     push @params, (
         '--user'    =>  'ensro',
+    );
+}
+
+# Add the master database if one is available (otherwise defaults to ensj-healthcheck name matching)
+if ($master_db) {
+    my $master_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($master_db);
+    die "Cannot find a database with the alias '$master_db' in the Registry" unless $master_dba;
+    push @params, (
+        '--compara_master.database', $master_dba->dbc->dbname,
     );
 }
 
