@@ -1,4 +1,3 @@
-
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -16,24 +15,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::Synteny::DeleteSynteny
-
-=cut
-
-=head1 SYNOPSIS
 
 =cut
 
@@ -71,11 +55,13 @@ sub run {
     $self->compara_dba->dbc->do('DELETE FROM method_link_species_set WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
 
     # And the mlss entry in the master database
+    $self->param('master_dba')->dbc->do('DELETE FROM method_link_species_set_tag WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
     $self->param('master_dba')->dbc->do('DELETE FROM method_link_species_set WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
     # But also register in the master database that this pair of species is a lost cause
     $self->param('master_dba')->dbc->do('REPLACE INTO method_link_species_set_tag VALUES (?, "low_synteny_coverage", ?)', undef, $self->param('mlss_id'), $mlss_tag_value);
 
     # And the mlss entry in the release database because they would have been copied by copy data from master db earlier in the release
+    $self->param('curr_release_dba')->dbc->do('DELETE FROM method_link_species_set_tag WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
     $self->param('curr_release_dba')->dbc->do('DELETE FROM method_link_species_set WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
 
 }
