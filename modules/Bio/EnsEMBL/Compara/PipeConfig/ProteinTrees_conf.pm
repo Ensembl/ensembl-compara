@@ -318,6 +318,8 @@ sub default_options {
     # Extra analyses
         # gain/loss analysis ?
         'do_cafe'                => 1,
+        # gene order conservation ?
+        'do_goc'                 => 1,
         # compute dNdS for homologies?
         'do_dnds'                => 0,
         # Export HMMs ?
@@ -430,6 +432,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'use_notung'   => $self->o('use_notung'),
         'use_treerecs' => $self->o('use_treerecs'),
         'use_raxml'    => $self->o('use_raxml'),
+        'do_goc'       => $self->o('do_goc'),
         'do_cafe'      => $self->o('do_cafe'),
         'do_stable_id_mapping'   => $self->o('do_stable_id_mapping'),
         'do_treefam_xref'   => $self->o('do_treefam_xref'),
@@ -3551,10 +3554,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'rib_fire_goc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -parameters => {
-                'taxlevels'             => $self->o('goc_taxlevels'),
-            },
-            -flow_into  => WHEN('scalar(@{#taxlevels#})' => 'goc_entry_point'),
+            -flow_into  => WHEN('#do_goc#' => 'goc_entry_point'),
         },
 
         {   -logic_name => 'homology_stats_factory',

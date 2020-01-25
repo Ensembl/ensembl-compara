@@ -66,6 +66,8 @@ sub default_options {
     # Extra analyses
         # gain/loss analysis ?
         'do_cafe'                => 0,
+        # gene order conservation ?
+        'do_goc'                 => 0,
         # Do we want the Gene QC part to run ?
         'do_gene_qc'             => 0,
         # Do we extract overall statistics for each pair of species ?
