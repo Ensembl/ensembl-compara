@@ -3367,9 +3367,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'rib_fire_homology_id_mapping',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -parameters => {
-                'goc_taxlevels'         => $self->o('goc_taxlevels'),
-            },
             -flow_into  => WHEN('#do_homology_id_mapping#' => 'id_map_mlss_factory'),
         },
 
