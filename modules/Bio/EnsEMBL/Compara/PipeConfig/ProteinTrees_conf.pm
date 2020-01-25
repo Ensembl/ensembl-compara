@@ -297,8 +297,6 @@ sub default_options {
         'ref_ortholog_db'           => undef,
 
     # CAFE parameters
-        # Do we want to initialise the CAFE part now ?
-        'do_cafe'                  => 1,
         'cafe_lambdas'             => '',  # For now, we don't supply lambdas
         'cafe_struct_tree_str'     => '',  # Not set by default
         'full_species_tree_label'  => 'default',
@@ -318,6 +316,8 @@ sub default_options {
         'hmmer_search_cutoff'           => '1e-23',
 
     # Extra analyses
+        # gain/loss analysis ?
+        'do_cafe'                => 1,
         # compute dNdS for homologies?
         'do_dnds'                => 0,
         # Export HMMs ?

@@ -63,11 +63,9 @@ sub default_options {
         #compute Jaccard Index and Gini coefficient (Lorenz curve)
         'do_jaccard_index'          => 0,
 
-    # CAFE parameters
-        # Do we want to initialise the CAFE part now ?
-        'do_cafe'                  => 0,
-
     # Extra analyses
+        # gain/loss analysis ?
+        'do_cafe'                => 0,
         # Do we want the Gene QC part to run ?
         'do_gene_qc'             => 0,
         # Do we extract overall statistics for each pair of species ?

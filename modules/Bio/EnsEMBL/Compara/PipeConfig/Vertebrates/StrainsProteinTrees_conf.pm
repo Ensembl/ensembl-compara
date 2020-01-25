@@ -62,11 +62,9 @@ sub default_options {
         # Where to draw the orthologues from
         'ref_ortholog_db'   => 'compara_ptrees',
 
-    # CAFE parameters
-        # Do we want to initialise the CAFE part now ?
-        'do_cafe'  => 0,
-
     # Extra analyses
+        # gain/loss analysis ?
+        'do_cafe'                => 0,
         # Do we want the Gene QC part to run ?
         'do_gene_qc'                    => 0,
     };
