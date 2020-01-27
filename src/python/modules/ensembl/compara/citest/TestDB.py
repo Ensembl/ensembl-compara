@@ -102,29 +102,21 @@ class TestDB:
         target_data = pandas.DataFrame(result.fetchall(), columns=result.keys())
         # Check if the size of the returned tables are the same
         if ref_data.shape != target_data.shape:
-            request.node.error_info = OrderedDict([
-                ("expected", ref_data.shape[0]),
-                ("found", target_data.shape[0]),
-                ("query", sql_query.strip())
-            ])
+            expected = ref_data.shape[0]
+            found = target_data.shape[0]
             # Note: the shape can only be different if group_by is given
-            raise TestDBException(
-                "Different number of groups ({}) for table '{}'".format(group_by, table_name))
+            message = "Different number of groups ({}) for table '{}'".format(group_by, table_name)
+            self._report_error(request, expected, found, sql_query, message)
         # Check if the number of rows (per group) are the same
         difference = abs(ref_data["nrows"] - target_data["nrows"])
         allowed_variation = numpy.ceil(ref_data["nrows"] * variation)
         failing_rows = difference > allowed_variation
         if failing_rows.any():
-            request.node.error_info = OrderedDict([
-                # Save the table information in a readable format
-                ("expected", ref_data.loc[failing_rows].to_string(index=False).splitlines()),
-                ("found", target_data.loc[failing_rows].to_string(index=False).splitlines()),
-                ("query", sql_query.strip())
-            ])
-            raise TestDBException(
-                "The difference in number of rows for table '{}' exceeds the allowed variation ({})".format(
-                    table_name, variation)
-            )
+            expected = ref_data.loc[failing_rows].to_string(index=False).splitlines()
+            found = target_data.loc[failing_rows].to_string(index=False).splitlines()
+            message = ("The difference in number of rows for table '{}' exceeds the allowed variation "
+                       "({})").format(table_name, variation)
+            self._report_error(request, expected, found, sql_query, message)
 
     def test_content(self, request: FixtureRequest, table_name: str, columns: Union[str, List] = None,
                      filter_by: Union[str, List] = None) -> None:
@@ -163,25 +155,19 @@ class TestDB:
         target_data = pandas.DataFrame(result.fetchall(), columns=result.keys())
         # Check if the size of the returned tables are the same
         if ref_data.shape != target_data.shape:
-            request.node.error_info = OrderedDict([
-                ("expected", ref_data.shape[0]),
-                ("found", target_data.shape[0]),
-                ("query", sql_query.strip())
-            ])
-            raise TestDBException("Different number of rows in table '{}'".format(table_name))
+            expected = ref_data.shape[0]
+            found = target_data.shape[0]
+            message = "Different number of rows in table '{}'".format(table_name)
+            self._report_error(request, expected, found, sql_query, message)
         # Compare the content of both dataframes, sorting them first to ensure they are comparable
         ref_data.sort_values(by=columns, inplace=True, kind="mergesort")
         target_data.sort_values(by=columns, inplace=True, kind="mergesort")
         failing_rows = ref_data.ne(target_data).any(axis="columns")
         if failing_rows.any():
-            request.node.error_info = OrderedDict([
-                # Save the table information in a readable format
-                ("expected", ref_data.loc[failing_rows].to_string(index=False).splitlines()),
-                ("found", target_data.loc[failing_rows].to_string(index=False).splitlines()),
-                ("query", sql_query.strip())
-            ])
-            raise TestDBException(
-                "Table '{}' has different content for columns {}".format(table_name, ", ".join(columns)))
+            expected = ref_data.loc[failing_rows].to_string(index=False).splitlines()
+            found = target_data.loc[failing_rows].to_string(index=False).splitlines()
+            message = "Table '{}' has different content for columns {}".format(table_name, ", ".join(columns))
+            self._report_error(request, expected, found, sql_query, message)
 
     @staticmethod
     def _get_sql_filter(filter_by: Union[str, List, None]) -> str:
@@ -205,3 +191,21 @@ class TestDB:
             filter_by = re.sub(r'(?<!%)%(?!%)', '%%', filter_by)
             sql_filter = "WHERE ({})".format(filter_by)
         return sql_filter
+
+    @staticmethod
+    def _report_error(request: FixtureRequest, expected: List, found: List, query: str, message: str) -> None:
+        """Raises TestDBException with the given message after adding the error information to the report.
+
+        Args:
+            request: Special fixture providing information of the requesting test function.
+            expected: List of expected values. Can contain additional information.
+            found: List of found values. Can contain additional information.
+            query: SQL query that can help debug the error.
+            message: Error message to display.
+        """
+        request.node.error_info = OrderedDict([
+            ("expected", expected),
+            ("found", found),
+            ("query", query.strip())
+        ])
+        raise TestDBException(message)
