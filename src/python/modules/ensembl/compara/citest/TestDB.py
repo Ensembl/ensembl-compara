@@ -156,6 +156,7 @@ class TestDB:
         result = self.target_engine.execute(sql_query)
         target_data = pandas.DataFrame(result.fetchall(), columns=result.keys())
         # Check if the size of the returned tables are the same
+        # Note: although not necessary, this control provides a better error message
         if ref_data.shape != target_data.shape:
             expected = ref_data.shape[0]
             found = target_data.shape[0]
