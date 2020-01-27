@@ -31,7 +31,6 @@ from sqlalchemy.schema import MetaData
 
 class TestDBException(Exception):
     """Exception subclass created to handle test failures separatedly from unexpected exceptions."""
-    pass
 
 
 # Hide the exception traceback only for those exceptions raised intentionally due to a failed test
