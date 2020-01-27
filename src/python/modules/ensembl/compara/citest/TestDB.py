@@ -112,8 +112,10 @@ class TestDB:
         allowed_variation = numpy.ceil(ref_data["nrows"] * variation)
         failing_rows = difference > allowed_variation
         if failing_rows.any():
-            expected = ref_data.loc[failing_rows].to_string(index=False).splitlines()
-            found = target_data.loc[failing_rows].to_string(index=False).splitlines()
+            expected_data = ref_data.loc[failing_rows]
+            expected = [] if expected_data.empty else expected_data.to_string(index=False).splitlines()
+            found_data = target_data.loc[failing_rows]
+            found = [] if found_data.empty else found_data.to_string(index=False).splitlines()
             message = ("The difference in number of rows for table '{}' exceeds the allowed variation "
                        "({})").format(table_name, variation)
             self._report_error(request, expected, found, sql_query, message)
@@ -164,8 +166,10 @@ class TestDB:
         target_data.sort_values(by=columns, inplace=True, kind="mergesort")
         failing_rows = ref_data.ne(target_data).any(axis="columns")
         if failing_rows.any():
-            expected = ref_data.loc[failing_rows].to_string(index=False).splitlines()
-            found = target_data.loc[failing_rows].to_string(index=False).splitlines()
+            expected_data = ref_data.loc[failing_rows]
+            expected = [] if expected_data.empty else expected_data.to_string(index=False).splitlines()
+            found_data = target_data.loc[failing_rows]
+            found = [] if found_data.empty else found_data.to_string(index=False).splitlines()
             message = "Table '{}' has different content for columns {}".format(table_name, ", ".join(columns))
             self._report_error(request, expected, found, sql_query, message)
 
