@@ -139,10 +139,9 @@ def pytest_sessionfinish(session: Session, exitstatus: int) -> None:
                     test["status"] = report.outcome.capitalize()
                     if report.failed:
                         failed += 1
-                        test["error"] = OrderedDict([
-                            ("message", report.longrepr.reprcrash.message),
-                            ("details", report.error_info)
-                        ])
+                        test["error"] = OrderedDict([("message", report.longrepr.reprcrash.message)])
+                        if report.error_info:
+                            test["error"]["details"] = report.error_info
                     break
         # Save full report in a JSON file
         report_filename = os.path.basename(config_filename).rsplit(".", 1)[0] + ".report.json"
