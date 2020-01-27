@@ -70,8 +70,8 @@ class TestDB:
 
         Note:
             The ceiling function is applied to round the allowed variation in order to compare two integers.
-            Thus, the test may pass even if the row difference between both databases is greater than the
-            exact allowed variation, e.g. row difference is 2 and the allowed variation is 1,4.
+            Thus, the test may pass even if the difference between two files is greater than the exact allowed
+            variation, e.g. the test will pass if the difference is 2 and the allowed variation is 1,4.
 
         Args:
             request: Special fixture providing information of the requesting test function.
