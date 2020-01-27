@@ -19,7 +19,7 @@ from collections import OrderedDict
 from logging import Logger
 import operator
 import re
-from typing import List, Union
+from typing import Any, List, Union
 
 import numpy
 import pandas
@@ -193,13 +193,13 @@ class TestDB:
         return sql_filter
 
     @staticmethod
-    def _report_error(request: FixtureRequest, expected: List, found: List, query: str, message: str) -> None:
+    def _report_error(request: FixtureRequest, expected: Any, found: Any, query: str, message: str) -> None:
         """Raises TestDBException with the given message after adding the error information to the report.
 
         Args:
             request: Special fixture providing information of the requesting test function.
-            expected: List of expected values. Can contain additional information.
-            found: List of found values. Can contain additional information.
+            expected: Expected values.
+            found: Found values.
             query: SQL query that can help debug the error.
             message: Error message to display.
         """
