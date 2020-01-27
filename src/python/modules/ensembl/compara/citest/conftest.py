@@ -109,50 +109,46 @@ def pytest_sessionstart(session: Session) -> None:
 def pytest_sessionfinish(session: Session, exitstatus: int) -> None:
     """Generate a custom report before returning the exit status to the system.
 
-    Note:
-        No report will be generated if no tests have been run.
-
     Args:
         session: Pytest Session object.
         existatus: Status which pytest will return to the system.
     """
-    report_list = [report for report in session.report.values()]
+    report_list = session.report.values()
     total = len(report_list)
     failed = 0
-    if total:
-        # Use the configuration JSON file as template for the report
-        config_filename = get_config_filename(session.config)
-        with open(config_filename) as f:
-            full_report = json.load(f, object_pairs_hook=OrderedDict)
-        # Add the target information
-        full_report["target_db"] = session.config.getoption("target_url")
-        full_report["target_dir"] = session.config.getoption("target_path")
-        # Add the reported information of each test
-        for report in report_list:
-            test_run = re.sub(r'\[.*\]', '', report.location[-1])
-            if test_run.endswith("db"):
-                test_list = full_report["database_tests"][report.test_args["table"]]
-            else:
-                test_list = full_report["files_tests"]
-            for test in test_list:
-                if (test["test"] == report.test_args["test"]) and (test["args"] == report.test_args["args"]):
-                    test["status"] = report.outcome.capitalize()
-                    if report.failed:
-                        failed += 1
-                        test["error"] = OrderedDict([("message", report.longrepr.reprcrash.message)])
-                        if report.error_info:
-                            test["error"]["details"] = report.error_info
-                    break
-        # Save full report in a JSON file
-        report_filename = os.path.basename(config_filename).rsplit(".", 1)[0] + ".report.json"
-        # Make sure not to overwrite previous reports
-        if os.path.isfile(report_filename):
-            i = 1
-            while os.path.isfile("{}.{}".format(report_filename, i)):
-                i += 1
-            report_filename = "{}.{}".format(report_filename, i)
-        with open(report_filename, "w") as f:
-            json.dump(full_report, f, indent=4)
+    # Use the configuration JSON file as template for the report
+    config_filename = get_config_filename(session.config)
+    with open(config_filename) as f:
+        full_report = json.load(f, object_pairs_hook=OrderedDict)
+    # Add the target information
+    full_report["target_db"] = session.config.getoption("target_url")
+    full_report["target_dir"] = session.config.getoption("target_path")
+    # Add the reported information of each test
+    for report in report_list:
+        test_run = re.sub(r'\[.*\]', '', report.location[-1])
+        if test_run.endswith("db"):
+            test_list = full_report["database_tests"][report.test_args["table"]]
+        else:
+            test_list = full_report["files_tests"]
+        for test in test_list:
+            if (test["test"] == report.test_args["test"]) and (test["args"] == report.test_args["args"]):
+                test["status"] = report.outcome.capitalize()
+                if report.failed:
+                    failed += 1
+                    test["error"] = OrderedDict([("message", report.longrepr.reprcrash.message)])
+                    if report.error_info:
+                        test["error"]["details"] = report.error_info
+                break
+    # Save full report in a JSON file
+    report_filename = os.path.basename(config_filename).rsplit(".", 1)[0] + ".report.json"
+    # Make sure not to overwrite previous reports
+    if os.path.isfile(report_filename):
+        i = 1
+        while os.path.isfile("{}.{}".format(report_filename, i)):
+            i += 1
+        report_filename = "{}.{}".format(report_filename, i)
+    with open(report_filename, "w") as f:
+        json.dump(full_report, f, indent=4)
     # Print summary
     print("\n{} out of {} tests ok".format(total - failed, total))
 
