@@ -586,12 +586,12 @@ sub ancestor {
 
   ### Variation_object_calls 
   ### a
-  ### Example    : $object->ancestral_allele;
+  ### Example    : $object->get_selected_variation_feature->ancestral_allele;
   ### Description: returns the ancestral allele for the variation
   ### Returns String
 
   my $self = shift;
-  return $self->vari->ancestral_allele;
+  return $self->get_selected_variation_feature->ancestral_allele;
 }
 
 
