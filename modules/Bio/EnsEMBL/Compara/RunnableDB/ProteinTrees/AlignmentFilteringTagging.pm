@@ -60,9 +60,6 @@ sub run {
     my $shrinking_factor = $self->_get_shrinking_factor( $n_removed_columns );
     $self->param( 'shrinking_factor', $shrinking_factor );
 
-    my $gene_count = scalar( @{$self->param('aligned_members')} );
-    $self->param( 'gene_count', $gene_count );
-
     my $gappiness = $self->_get_gappiness();
     my $aligned_proportion = 1-$gappiness;
     $self->param( 'gappiness', $gappiness );
@@ -77,7 +74,6 @@ sub write_output {
     $self->param('gene_tree')->store_tag( 'aln_n_removed_columns',   $self->param('n_removed_columns') );
     $self->param('gene_tree')->store_tag( 'aln_shrinking_factor',    $self->param('shrinking_factor') );
     $self->param('gene_tree')->store_tag( 'aln_after_filter_length', $self->param('after_filter_length') );
-    $self->param('gene_tree')->store_tag( 'gene_count',              $self->param('gene_count') );
     $self->param('gene_tree')->store_tag( 'gappiness',               $self->param('gappiness') );
     $self->param('gene_tree')->store_tag( 'aligned_proportion',      $self->param('aligned_proportion') );
     $self->param('gene_tree')->store_tag( 'alignment_depth',         $self->param('alignment_depth') );
