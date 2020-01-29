@@ -25,4 +25,4 @@ ALTER TABLE species_tree_root
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_74_75c.sql|species_tree_root_256');
+  VALUES (NULL, 'patch', 'patch_74_75_c.sql|species_tree_root_256');
