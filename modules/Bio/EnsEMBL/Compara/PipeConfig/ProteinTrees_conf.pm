@@ -3165,7 +3165,7 @@ sub core_pipeline_analyses {
             -flow_into      => {
                 -1 => [ 'other_paralogs_himem', ],
                 2 => [ 'tree_backup' ],
-                3 => { 'other_paralogs' => INPUT_PLUS },
+                3 => [ 'other_paralogs' ],
             }
         },
 
@@ -3178,7 +3178,7 @@ sub core_pipeline_analyses {
             -rc_name        => '500Mb_job',
             -flow_into      => {
                 2 => [ 'tree_backup' ],
-                3 => { 'other_paralogs_himem' => INPUT_PLUS },
+                3 => [ 'other_paralogs_himem' ],
             }
         },
 
@@ -3214,7 +3214,7 @@ sub core_pipeline_analyses {
             -rc_name        => '1Gb_job',
             -flow_into      => {
                 -1 => [ 'panther_paralogs_himem', ],
-                3 => { 'panther_paralogs' => INPUT_PLUS },
+                3 => [ 'panther_paralogs' ],
             }
         },
 
@@ -3223,7 +3223,7 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('other_paralogs_capacity'),
             -rc_name        => '4Gb_job',
             -flow_into      => {
-                3 => { 'panther_paralogs_himem' => INPUT_PLUS },
+                3 => [ 'panther_paralogs_himem' ],
             }
         },
 
