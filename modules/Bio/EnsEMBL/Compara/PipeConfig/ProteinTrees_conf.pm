@@ -1651,7 +1651,10 @@ sub core_pipeline_analyses {
                     '(#tree_gene_count# >= #mafft_gene_count#         and #tree_gene_count# < #mafft_himem_gene_count#)     or      (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)'  => 'mafft',
                     '(#tree_gene_count# >= #mafft_himem_gene_count#)                                                        or      (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)'  => 'mafft_himem',
                 ),
-                'A->1' => 'exon_boundaries_prep',
+                'A->1' => WHEN(
+                    '#is_already_supertree#' => 'panther_paralogs',
+                    ELSE 'exon_boundaries_prep',
+                ),
             },
             %decision_analysis_params,
         },
@@ -1839,8 +1842,7 @@ sub core_pipeline_analyses {
             -flow_into      => {
                 -1 => 'exon_boundaries_prep_himem',
                 1 => WHEN(
-                    '#is_already_supertree#' => 'panther_paralogs',
-                    '!#is_already_supertree# and #use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
+                    '#use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
                     ELSE 'aln_tagging',
                 ),
             },
@@ -1855,8 +1857,7 @@ sub core_pipeline_analyses {
                 'treebreak_gene_count'      => $self->o('treebreak_gene_count'),
             },
             -flow_into      => WHEN(
-                '#is_already_supertree#' => 'panther_paralogs',
-                '!#is_already_supertree# and #use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
+                '#use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
                 ELSE 'aln_tagging',
             ),
             -rc_name    => '2Gb_job',
