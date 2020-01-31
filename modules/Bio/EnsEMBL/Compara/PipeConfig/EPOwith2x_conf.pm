@@ -304,7 +304,7 @@ sub tweak_analyses {
     $analyses_by_name->{'remove_dodgy_ancestral_blocks'}->{'-flow_into'} = { 1 => { 'set_internal_ids_low_epo' => {} } };
 
     # ensure mlss_ids are flowed with their root_ids
-    $analyses_by_name->{'create_neighbour_nodes_jobs_alignment'}->{'-parameters'}->{'inputquery'} = 'SELECT gat2.root_id, #mlss_id# FROM genomic_align_tree gat1 LEFT JOIN genomic_align ga USING(node_id) JOIN genomic_align_tree gat2 USING(root_id) WHERE gat2.parent_id IS NULL AND ga.method_link_species_set_id = #mlss_id# GROUP BY gat2.root_id';
+    $analyses_by_name->{'create_neighbour_nodes_jobs_alignment'}->{'-parameters'}->{'inputquery'} = 'SELECT gat2.root_id, #mlss_id# as mlss_id FROM genomic_align_tree gat1 LEFT JOIN genomic_align ga USING(node_id) JOIN genomic_align_tree gat2 USING(root_id) WHERE gat2.parent_id IS NULL AND ga.method_link_species_set_id = #mlss_id# GROUP BY gat2.root_id';
 }
 
 1;
