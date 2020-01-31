@@ -88,6 +88,8 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
+    $analyses_by_name->{'join_panther_subfam'}->{'-parameters'}->{'exclude_list'} = [ 'PTHR24420' ];
+
     ## Here we adjust the resource class of some analyses to the Plants division
     $analyses_by_name->{'mcoffee'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'mcoffee_himem'}->{'-rc_name'} = '32Gb_job';

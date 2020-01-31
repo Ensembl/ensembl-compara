@@ -57,6 +57,7 @@ sub param_defaults {
         'member_type'           => 'protein',
         'sort_clusters'         => 1,
         'immediate_dataflow'    => 1,
+        'exclude_list'          => [],
     };
 }
 
@@ -74,11 +75,13 @@ sub fetch_input {
     );
     $gta->_load_tagvalues_multiple($all_trees);
 
+    my %excluded_panther_ids = map {$_ => 1} @{ $self->param_required('exclude_list') };
+
     # Group the trees when they have the same PTHR stem
     my %panther_fam;
     foreach my $tree (@$all_trees) {
         if ($tree->get_value_for_tag('model_id', '') =~ /(PTHR\d+)_SF\d+/) {
-            push @{$panther_fam{$1}}, $tree;
+            push @{$panther_fam{$1}}, $tree unless $excluded_panther_ids{$1};
         }
     }
     $self->param('panther_fam', \%panther_fam);
