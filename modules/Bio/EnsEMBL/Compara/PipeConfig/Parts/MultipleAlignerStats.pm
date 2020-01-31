@@ -111,7 +111,7 @@ sub pipeline_analyses_multiple_aligner_stats {
         {   -logic_name => 'genome_db_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'    => 'SELECT genome_db_id FROM method_link_species_set JOIN species_set USING (species_set_id) WHERE method_link_species_set_id = #mlss_id#',
+                'inputquery'    => 'SELECT genome_db_id, method_link_species_set_id FROM method_link_species_set JOIN species_set USING (species_set_id) WHERE method_link_species_set_id = #mlss_id#',
             },
             -flow_into  => {
                 2 => [ 'genome_length_fetcher' ],
