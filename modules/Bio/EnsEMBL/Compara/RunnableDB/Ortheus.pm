@@ -967,10 +967,11 @@ sub get_species_tree {
       return $self->param('species_tree');
   }
 
-  my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'), 'default')->root;
+  my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
+  my $species_tree = $mlss->species_tree->root;
 
   #if the tree leaves are species names, need to convert these into genome_db_ids
-  my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
+  my $genome_dbs = $mlss->species_set->genome_dbs;
 
   my %leaf_check;
   foreach my $genome_db (@$genome_dbs) {
