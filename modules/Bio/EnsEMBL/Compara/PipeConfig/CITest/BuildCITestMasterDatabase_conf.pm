@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::CITest::BuildCITestMasterDatabase_conf
@@ -73,6 +71,7 @@ sub default_options {
         'config_dir'    => $self->check_dir_in_ensembl('ensembl-compara/conf/' . $self->o('division')),
         'init_reg_conf' => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/production_init_reg_conf.pl'),
         'reg_conf_tmpl' => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/production_reg_conf_tmpl.pl'),
+        'ensj_conf'     => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/ensj-healthcheck.json'),
         
         'do_clone_species' => 1,
 
@@ -92,10 +91,12 @@ sub pipeline_create_commands {
         # healthchecks database properties file
         'cp ' . $self->o('reg_conf') . ' ' . $self->o('backups_dir') . '/production_reg_' . $self->o('division') . '_conf.pl',
         'cp ' . $self->o('java_hc_db_prop') . ' ' . $self->o('backups_dir') . '/database.defaults.properties',
+        'cp ' . $self->o('ensj_conf') . ' ' . $self->o('backups_dir') . '/' . $self->o('division') . '_ensj-healthcheck.json',
         # Replace the backed-up files by their default content to ensure a safe
         # setup to start of the pipeline
         'pushd ' . $self->o('compara_dir') . '; git checkout -- ' . $self->o('reg_conf') . '; popd',
         'pushd ' . $self->o('java_hc_dir') . '; git checkout -- ' . $self->o('java_hc_db_prop') . '; popd',
+        'pushd ' . $self->o('ensj_conf') . '; git checkout -- ' . $self->o('ensj_conf') . '; popd',
     ];
 }
 

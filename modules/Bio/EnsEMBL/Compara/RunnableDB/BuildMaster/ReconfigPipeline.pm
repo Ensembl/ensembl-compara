@@ -15,10 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::ReconfigPipeline
@@ -48,6 +44,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::ReconfigPipeline;
 
 use warnings;
 use strict;
+
 use Bio::EnsEMBL::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -81,6 +78,7 @@ sub run {
     my $core_dbs_hash   = $self->param_required('core_dbs_hash');
     my $master_db_info  = $self->param_required('master_db_info');
     my $java_hc_db_prop = $self->param_required('java_hc_db_prop');
+    my $ensj_conf       = $self->param_required('ensj_conf');
     my $dst_host        = $self->param_required('dst_host');
     my $dst_port        = $self->param_required('dst_port');
     # Find the tag '<core_dbs_hash>' in the registry configuration file template
@@ -99,6 +97,12 @@ sub run {
     $content =~ s/(^)(host[12]?[ ]*=)[ ]*[\w\.-]+/$1$2 $dst_host/gm;
     $content =~ s/(^)(port[12]?[ ]*=)[ ]*\d+/$1$2 $dst_port/gm;
     $self->_spurt($java_hc_db_prop, $content);
+    # And in the compara ensj-healthcheck configuration file
+    $content = encode_json({
+        'host1'          => $dst_host,
+        'secondary.host' => $dst_host
+    });
+    $self->_spurt($ensj_conf, $content);
 }
 
 1;
