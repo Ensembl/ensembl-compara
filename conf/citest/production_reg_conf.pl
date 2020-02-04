@@ -6,7 +6,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#      http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,16 +29,16 @@ my $prev_eg_release = $curr_eg_release - 1;
 
 # FORMAT: species/alias name => [ host, db_name ]
 my $core_dbs = {
-    'gallus_gallus' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_171914_gallus_gallus_core_99_6' ],
-    'anolis_carolinensis' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_171914_anolis_carolinensis_core_99_2' ],
-    'danio_rerio' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_171914_danio_rerio_core_99_11' ],
-    'pan_troglodytes' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172257_pan_troglodytes_core_99_3' ],
-    'homo_sapiens' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172232_homo_sapiens_core_99_38' ],
-    'mus_musculus' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_171914_mus_musculus_core_99_38' ],
+    'gallus_gallus'        => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_171914_gallus_gallus_core_99_6' ],
+    'anolis_carolinensis'  => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_171914_anolis_carolinensis_core_99_2' ],
+    'danio_rerio'          => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_171914_danio_rerio_core_99_11' ],
+    'pan_troglodytes'      => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172257_pan_troglodytes_core_99_3' ],
+    'homo_sapiens'         => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172232_homo_sapiens_core_99_38' ],
+    'mus_musculus'         => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_171914_mus_musculus_core_99_38' ],
     'saccharum_spontaneum' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172404_saccharum_spontaneum_core_46_99_1' ],
-    'triticum_urartu' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172551_triticum_urartu_core_46_99_1' ],
-    'canis_familiaris' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172016_canis_familiaris_core_99_31' ],
-    'triticum_aestivum' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172533_triticum_aestivum_core_46_99_4' ],
+    'triticum_urartu'      => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172551_triticum_urartu_core_46_99_1' ],
+    'canis_familiaris'     => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172016_canis_familiaris_core_99_31' ],
+    'triticum_aestivum'    => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172533_triticum_aestivum_core_46_99_4' ],
     'triticum_dicoccoides' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172249_triticum_dicoccoides_core_46_99_1' ],
     'lepisosteus_oculatus' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172445_lepisosteus_oculatus_core_99_1' ],
 };

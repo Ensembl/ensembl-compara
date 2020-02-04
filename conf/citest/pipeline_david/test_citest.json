@@ -1,0 +1,16 @@
+{"Pipeline_citest" : {
+  "pipeline_name":"load_member",
+  "tables":[
+    {"name":"dnafrag",
+     "variation":0,
+     "lst_group_by":[],
+     "columns":[{"name":"*"}]
+    },
+    {"name":"gene_member",
+      "variation":0,
+      "lst_group_by":[{"name":"genome_db_id","variations":[{"group":"1", "var":0}, {"group":"2", "var":0}, {"group":"3", "var":0}]}],
+      "columns": [{"name":"*"},{"name":"canonical_member_id"}]
+    }],
+  "files":[]
+  }
+}
