@@ -21,7 +21,7 @@ Bio::Bio::EnsEMBL::Compara::PipeConfig::CITest::LoadMembers_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CITest::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 DESCRIPTION
 
