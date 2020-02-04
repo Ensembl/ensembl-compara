@@ -138,7 +138,7 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
           var spEntry = {'label' : species.common + ' (' + species.name + ')', 'url' : species.homepage};
           speciesList.push(spEntry);
         }); 
-        response(speciesList);
+        response(panel.filterArray(speciesList, request.term));
       }
     }).data("ui-autocomplete")._renderItem = function (ul, item) {
       ul.addClass('ss-autocomplete');
@@ -147,6 +147,26 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
       item.label = item.label.replace(regex, "<span class='ss-ac-highlight'>$1</span>");
       return $("<li/>").data("ui-autocomplete-item", item).addClass('ss-ac-result-li').append("<a href='" + item.url + "' class='ss-ac-result'>" + item.label + "</a>").appendTo(ul);
     };
+  },
+
+  filterArray: function(array, term) {
+    term = term.replace(/[^a-zA-Z0-9 ]/g, '').toUpperCase();
+    var matcher = new RegExp( $.ui.autocomplete.escapeRegex(term), "i" );
+    var matches = $.grep( array, function(item) {
+      return item && matcher.test( item.label.replace(/[^a-zA-Z0-9 ]/g, '') );
+    });
+    matches.sort(function(a, b) {
+      // give priority to matches that begin with the term
+      var aBegins = a.label.toUpperCase().substr(0, term.length) == term;
+      var bBegins = b.label.toUpperCase().substr(0, term.length) == term;
+
+      if (aBegins == bBegins) {
+        if (a.label == b.label) return 0;
+        return a.label < b.label ? -1 : 1;
+      }
+      return aBegins ? -1 : 1;
+    });
+    return matches;
   },
 
   renderDropdown: function() {
