@@ -22,6 +22,7 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
     this.elLk.container   = this.el.find('._species_fav_container');
     this.elLk.list        = this.el.find('._species_sort_container');
     this.elLk.dropdown    = this.el.find('select._all_species');
+    this.elLk.finder      = this.el.find('.finder input');
     this.elLk.buttonEdit  = this.el.find('a._list_edit');
     this.elLk.buttonDone  = this.el.find('a._list_done');
     this.elLk.buttonReset = this.el.find('a._list_reset');
@@ -63,7 +64,8 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
     });
 
     this.refreshFav();
-    this.renderDropdown();
+    this.initAutoComplete();
+    //this.renderDropdown();
   },
 
   renderFav: function () {
@@ -123,6 +125,28 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
   toggleList: function(flag) {
     this.elLk.list.toggleClass('hidden', !flag);
     this.elLk.buttonEdit.toggle(!flag);
+  },
+
+
+  initAutoComplete: function() {
+    var panel = this;
+    this.elLk.finder.autocomplete({
+      minLength: 3,
+      source: function(request, response) {
+        var speciesList = $();
+        $.each(panel.allSpecies, function(i, species) {
+          var spEntry = {'label' : species.common + ' (' + species.name + ')', 'url' : species.homepage};
+          speciesList.push(spEntry);
+        }); 
+        response(speciesList);
+      }
+    }).data("ui-autocomplete")._renderItem = function (ul, item) {
+      ul.addClass('ss-autocomplete');
+      // highlight the term within each match
+      var regex = new RegExp("(?![^&;]+;)(?!<[^<>]*)(" + $.ui.autocomplete.escapeRegex(this.term) + ")(?![^<>]*>)(?![^&;]+;)", "gi");
+      item.label = item.label.replace(regex, "<span class='ss-ac-highlight'>$1</span>");
+      return $("<li/>").data("ui-autocomplete-item", item).addClass('ss-ac-result-li').append("<a href='" + item.url + "' class='ss-ac-result'>" + item.label + "</a>").appendTo(ul);
+    };
   },
 
   renderDropdown: function() {
