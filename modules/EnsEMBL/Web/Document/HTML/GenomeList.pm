@@ -63,12 +63,12 @@ sub _get_dom_tree {
   if (scalar @ok_species > 1) {
     my $list_html = sprintf qq(<h3>Find a genome</h3>
       %s
-      <h3 class="space-above">Featured genomes</h3>
+      <h3 class="space-above">Genome collections</h3>
       %s
       <p><a href="%s">View full list of all %s species</a></p>
       ), 
       $self->add_species_selector,
-      $self->add_featured_genomes, 
+      $self->add_genome_groups, 
       $self->species_list_url, $sitename;
 
     my $sort_html = qq(<p>For easy access to commonly used genomes, drag from the bottom list to the top one</p>
@@ -192,7 +192,7 @@ sub add_species_selector {
   return $html;
 }
 
-sub add_featured_genomes {
+sub add_genome_groups {
   my $self = shift;
   
   my $html = '';
