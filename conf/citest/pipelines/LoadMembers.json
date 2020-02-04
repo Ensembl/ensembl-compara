@@ -1,65 +1,63 @@
 {
-    "pipeline_name": "load_members",
     "reference_db": "mysql://ensro@mysql-ens-compara-prod-6:4616/dthybert_citest_load_members_99",
-    "database": {
+    "database_tests": {
         "dnafrag": [
             {   "test": "num_rows"
             },
-            {   "test": "table_content" }
+            {   "test": "content" }
         ],
         "gene_member": [
             {   "test": "num_rows"
             },
-            {   "test": "table_content",
+            {   "test": "content",
                 "columns": "-canonical_member_id"
             }
         ],
         "exon_boundaries": [
             {   "test": "num_rows"
             },
-            {   "test": "table_content",
+            {   "test": "content",
                 "columns": ["-gene_member_id", "-seq_member_id"]
             }
         ],
         "genome_db": [
             {   "test": "num_rows"
             },
-            {   "test": "table_content"
+            {   "test": "content"
             }
         ],
         "seq_member": [
             {   "test": "num_rows"
             },
-            {   "test": "table_content",
+            {   "test": "content",
                 "columns": ["-sequence_id", "-gene_member_id"]
             }
         ],
         "seq_member_projection_stable_id": [
             {   "test": "num_rows"
             },
-            {   "test": "table_content",
+            {   "test": "content",
                 "columns": "-target_seq_member_id"
             }
         ],
         "sequence": [
             {   "test": "num_rows"
             },
-            {   "test": "table_content",
+            {   "test": "content",
                 "columns": "-sequence_id"
             }
         ],
         "species_set": [
             {   "test": "num_rows"
             },
-            {   "test": "table_content"
+            {   "test": "content"
             }
         ],
         "species_set_header": [
             {   "test": "num_rows"
             },
-            {   "test": "table_content"
+            {   "test": "content"
             }
         ]
-    },
-    "files" : {}
+    }
 }
