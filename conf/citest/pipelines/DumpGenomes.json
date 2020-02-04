@@ -1,26 +1,39 @@
 {
     "reference_db": "mysql://ensro@mysql-ens-compara-prod-8:4618/jalvarez_citest_dump_genomes_99",
-    "database": {
+    "reference_dir": "/hps/nobackup2/production/ensembl/jalvarez/genome_dumps",
+    "database_tests": {
         "job": [
             {
                 "test": "num_rows",
-                "variation": 0,
-                "group_by": "analysis_id"
-            },
-            {
-                "test": "table_content",
-                "columns": ["role_id", "job_id"]
-            },
-            {
-                "test": "table_content"
+                "args": {
+                    "variation": 0,
+                    "group_by": "analysis_id",
+                    "filter_by": "analysis_id > 1"
+                }
             }
         ],
         "analysis_base": [
             {
-                "test": "num_rows",
-                "filter_by": ["analysis_id < 3", "logic_name LIKE '%unmasked'"]
+                "test": "content",
+                "args": {
+                    "columns": ["analysis_id", "logic_name"]
+                }
             }
         ]
     },
-    "files": {}
+    "files_tests": [
+        {
+            "test": "size",
+            "args": {
+                "variation": 0
+            }
+        },
+        {
+            "test": "size",
+            "args": {
+                "variation": 0.1,
+                "paths": ["0"]
+            }
+        }
+    ]
 }
