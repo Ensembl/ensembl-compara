@@ -54,18 +54,22 @@ sub _get_dom_tree {
   for (0..$self->SPECIES_DISPLAY_LIMIT-1) {
     $prehtml .= $template =~ s/\{\{species\.(\w+)}\}/my $replacement = $species->[$_]{$1};/gre if $species->[$_] && $species->[$_]->{'favourite'};
   }
+  $prehtml .= sprintf qq(
+        <p class="customise-species-list"><a class="_list_edit modal_link" href="%s">Edit your favourites</a></p>
+    ), $hub->url({qw(type Account action Login)});
 
-  my $sitename  = $self->hub->species_defs->ENSEMBL_SITETYPE;
   my @ok_species = $sd->valid_species;
+  my $sitename  = $self->hub->species_defs->ENSEMBL_SITETYPE;
   if (scalar @ok_species > 1) {
-    my $list_html = sprintf qq(<h3>All genomes</h3>
+    my $list_html = sprintf qq(<h3>Find a genome</h3>
       %s
-      <ul class="space-above">
-        <li><a href="%s">View full list of all %s species</a></li>
-        <li class="customise-species-list"><a class="_list_edit modal_link" href="%s">Edit your favourites</a></li>
-      </ul>
+      <h3 class="space-above">Featured genomes</h3>
+      %s
+      <p><a href="%s">View full list of all %s species</a></p>
       ), 
-      $self->add_species_dropdown, $self->species_list_url, $sitename, $hub->url({qw(type Account action Login)});
+      $self->add_species_selector,
+      $self->add_featured_genomes, 
+      $self->species_list_url, $sitename;
 
     my $sort_html = qq(<p>For easy access to commonly used genomes, drag from the bottom list to the top one</p>
         <p><strong>Favourites</strong></p>
@@ -167,6 +171,66 @@ sub _get_dom_tree {
                         }]
     });
   }
+}
+
+sub add_species_selector {
+  my $self = shift;
+  my $finder_prompt = 'Start typing the name of a species...';
+
+  my $html = qq(
+    <div class="taxon_tree_master hidden"></div>
+    <div class="species_select_container">
+      <div class="taxon_selector_tree">
+        <div class="content">
+          <div class="finder">
+            <input type="text" autofocus class="ui-autocomplete-input inactive" title="$finder_prompt" placeholder="$finder_prompt" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  return $html;
+}
+
+sub add_featured_genomes {
+  my $self = shift;
+  
+  my $html = '';
+  
+  my @featured = (
+                   {
+                    'url'   => 'Sus_scrofa/Info/Strains/',
+                    'img'   => 'Sus_scrofa.png',
+                    'name'  => 'Pig breeds',
+                    'more'  => qq(<a href="/Sus_scrofa/" class="nodeco">Pig reference genome</a> and <a href="Sus_scrofa/Info/Strains/" class="nodeco">12 additional breeds</a>),
+                    },
+                  );
+
+  foreach my $item (@featured) {
+    $html .= sprintf qq(
+<div class="species-box-outer">
+  <div class="species-box">
+    <a href="%s"><img src="/i/species/%s" alt="%s" title="Browse %s" class="badge-48"/></a>
+    ), $item->{'url'}, $item->{'img'}, $item->{'name'}, $item->{'name'};
+
+    if ($item->{'link_title'}) {
+      $html .= sprintf '<a href="%s" class="species-name">%s</a>', $item->{'url'}, $item->{'name'};
+    }
+    else {
+      $html .= sprintf '<span class="species-name">%s</span>', $item->{'name'};
+    }
+
+    if ($item->{'more'}) {
+      $html .= sprintf '<div class="assembly">%s</div>', $item->{'more'};
+    }
+
+    $html .= qq(
+  </div>
+</div>
+    );
+  } 
+
+  return $html;
 }
 
 sub add_species_dropdown { '<p><select class="fselect _all_species"><option value="">-- Select a species --</option></select></p>' }

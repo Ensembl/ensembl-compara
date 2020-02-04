@@ -83,7 +83,7 @@ div.species-box-outer { height: 88px; }
 div.species-box     { margin: 0 0 8px; overflow: hidden; padding-left: 58px; }
 img.species-img     { display: block; border-radius: 7px; -moz-border-radius: 7px; -webkit-border-radius: 7px; }
 div.species-box img { display: block; border-radius: 7px;  -moz-border-radius: 7px; -webkit-border-radius: 7px; margin-left: -58px; float: left; border: 1px solid #ccc; }
-.species-box a.species-name { display: block; word-wrap: break-word; font-size: 110%; text-decoration: none; font-weight: bold; margin-bottom: 4px; margin-right:8px; }
+.species-box .species-name { display: block; word-wrap: break-word; font-size: 110%; text-decoration: none; font-weight: bold; margin-bottom: 4px; margin-right:8px; }
 .species-box div.assembly { word-wrap: break-word; margin-right:8px; }
 
 div.annotation-stats  { margin-left:16px; }
