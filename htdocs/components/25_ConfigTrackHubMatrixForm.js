@@ -189,7 +189,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     });
 
     this.el.find('.view-track, .view-track-button, button.showMatrix').on('click', function() {
-      if($(this).hasClass('_edit') || ($(this).hasClass('view-track') && $(this).hasClass('active')) || ($(this).hasClass('view-track-button') && $(this).hasClass('active'))) {
+      if($(this).hasClass('_edit') || ($(this).hasClass('view-track') && !$(this).hasClass('inactive')) || ($(this).hasClass('view-track-button') && $(this).hasClass('active'))) {
         panel.addExtraDimensions();
         Ensembl.EventManager.trigger('modalClose');
       }
@@ -1361,9 +1361,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           panel.toggleButton();
         } else {
           // Configuration button click
-          panel.elLk.filterTrackBox.hide();
-          panel.elLk.resultBox.hide();
-          panel.elLk.configResultBox.show();
+          if (panel.multiDimFlag) {
+            panel.elLk.filterTrackBox.hide();
+            panel.elLk.resultBox.hide();
+            panel.elLk.configResultBox.show();
+          }
           panel.toggleTab({'selectElement': tabClick, 'container': panel.el.find("div.large-breadcrumbs")});
           panel.toggleButton();
         }
@@ -1664,9 +1666,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     }
 
     if(panel.el.find(element).attr('id') === 'track-display' && !panel.el.find(element).hasClass('inactive')) {
-      panel.elLk.filterTrackBox.hide();
-      panel.elLk.resultBox.hide();
-      panel.elLk.configResultBox.show();
+      if (panel.multiDimFlag) {
+        panel.elLk.filterTrackBox.hide();
+        panel.elLk.resultBox.hide();
+        panel.elLk.configResultBox.show();
+      }
       panel.emptyMatrix();
       panel.displayMatrix();
     }
@@ -2643,7 +2647,7 @@ return;
     panel.cleanMatrixStore(); //deleting items that are not present anymore
     panel.setLocalStorage();
 
-    panel.populateConfigTracksResultBox();
+    panel.multiDimFlag && panel.populateConfigTracksResultBox();
 
     // enable helptips
     panel.elLk.breadcrumb.filter(".active").attr("id") === 'track-display' && this.elLk.matrixContainer.find('.xContainer ._ht').helptip({position: {at: 'left+10 bottom+76'}});
