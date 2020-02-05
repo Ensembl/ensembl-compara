@@ -27,9 +27,7 @@ Bio::EnsEMBL::Compara::RunnableDB::RunJavaHealthCheck
 
 Runs an EnsEMBL Java Healthcheck (see https://github.com/Ensembl/ensj-healthcheck)
 Requires several inputs:
-    'java_hc_dir' : path to ensj-healthcheck root dir
     'output_file' : to pipe the output from java to
-    'release'     : release number
     'compara_db'  : db to run the HC on
     ['testgroup'|'testcase'] : either a testgroup or testcase must be defined (see
                                ensj-healthcheck for more)
@@ -69,18 +67,19 @@ sub fetch_input {
         $self->param('output_file', $hc_output_file);
     }
 
-    my $java_hc_dir    = $self->param_required('java_hc_dir');
-    my $release        = $self->param_required('release');
-
-    my $compara_dbc = $self->compara_dba->dbc;
-    my $host        = $compara_dbc->host;
-    my $db_name     = $compara_dbc->dbname;
-
-    my $cmd = "cd $java_hc_dir; ./run-configurable-testrunner.sh \$($host details script) -d $db_name --release $release ";
+    my $cmd = join(' ',
+        $self->param_required('run_healthchecks_exe'),
+        '--url'                 => $self->compara_dba->url,
+        '--ensj-json-config'    => $self->param_required('ensj_conf'),
+        '--ensj-testrunner'     => $self->param_required('ensj_testrunner_exe'),
+    );
 
     if ( $self->param('master_db') ) {
-        my $master_dbc = $self->get_cached_compara_dba('master_db')->dbc;
-        $cmd .= "--compara_master.database " . $master_dbc->dbname . " ";
+        my $master_url = $self->get_cached_compara_dba('master_db')->url;
+        $cmd .= "--master_db " . $master_url . " ";
+    } else {
+        # Since there is no registry, we can't even default to "compara_master"
+        $cmd .= " --master_db '' ";
     }
 
     if( $self->param('testgroup') ) {

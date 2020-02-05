@@ -76,7 +76,6 @@ sub default_options {
         'patch_dir'   => $self->check_dir_in_ensembl('ensembl-compara/sql/'),
         'schema_file' => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
         'alias_file'  => $self->check_file_in_ensembl('ensembl-compara/scripts/taxonomy/ensembl_aliases.sql'),
-        'java_hc_dir' => $self->check_dir_in_ensembl('ensj-healthcheck/'),
 
         'list_genomes_script'    => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
         'report_genomes_script'  => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
