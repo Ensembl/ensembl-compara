@@ -55,6 +55,18 @@ sub _get_dom_tree {
     $prehtml .= $template =~ s/\{\{species\.(\w+)}\}/my $replacement = $species->[$_]{$1};/gre if $species->[$_] && $species->[$_]->{'favourite'};
   }
 
+  ## Needed for autocomplete
+  my $strains = [];
+  foreach my $sp (@$species) {
+    if ($sp->{'strainspage'}) {
+      push @$strains, {
+                      'homepage'  => $sp->{'strainspage'},
+                      'name'      => $sp->{'name'},,
+                      'common'    => (sprintf '%s %s', $sp->{'common'}, $sp->{'strain_type'}),
+                      };
+    }
+  }
+
   my @ok_species = $sd->valid_species;
   my $sitename  = $self->hub->species_defs->ENSEMBL_SITETYPE;
   if (scalar @ok_species > 1) {
@@ -114,6 +126,11 @@ sub _get_dom_tree {
                         'class'       => 'js_param json',
                         'name'        => 'species_list',
                         'value'       => encode_entities(to_json($species))
+                      }, {
+                        'node_name'   => 'inputhidden',
+                        'class'       => 'js_param json',
+                        'name'        => 'strains_list',
+                        'value'       => encode_entities(to_json($strains))
                       }, {
                         'node_name'   => 'inputhidden',
                         'class'       => 'js_param',

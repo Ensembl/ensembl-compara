@@ -28,6 +28,7 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
     this.elLk.buttonReset = this.el.find('a._list_reset');
 
     this.allSpecies       = this.params['species_list'] || [];
+    this.allStrains       = this.params['strains_list'] || [];
     this.favTemplate      = this.params['fav_template'];
     this.listTemplate     = this.params['list_template'];
     this.refreshURL       = this.params['ajax_refresh_url'];
@@ -138,6 +139,12 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
           var spEntry = {'label' : species.common + ' (' + species.name + ')', 'url' : species.homepage};
           speciesList.push(spEntry);
         }); 
+        // Add strain groups
+        $.each(panel.allStrains, function(i, strain) {
+          var spEntry = {'label' : strain.common + ' (' + strain.name + ')', 'url' : strain.homepage};
+          speciesList.push(spEntry);
+        }); 
+        
         response(panel.filterArray(speciesList, request.term));
       }
     }).data("ui-autocomplete")._renderItem = function (ul, item) {
