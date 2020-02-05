@@ -121,7 +121,7 @@ GetOptions(
 );
 
 unless ($url or ($reg_conf and $reg_alias)) {
-    print "\nNeither --url nor --reg_conf and --reg_alias is not defined. The URL should be something like mysql://ensro\@compara1:3306/kb3_ensembl_compara_59\nEXIT 2\n\n";
+    print "\nNeither --url nor --reg_conf and --reg_alias are defined. The URL should be something like mysql://ensro\@compara1:3306/kb3_ensembl_compara_59\nEXIT 2\n\n";
     exit 2;
 }
 
@@ -208,4 +208,3 @@ print "Executing: ", join(" ", $ensj_testrunner, @params, @ARGV), "\n\n";
 # Need to change directory because database.default.properties is read from the current directory
 chdir dirname($ensj_testrunner);
 exec($ensj_testrunner, @params, @ARGV);
-
