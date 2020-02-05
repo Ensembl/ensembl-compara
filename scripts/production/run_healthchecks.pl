@@ -160,9 +160,9 @@ my @params = (
 # RO or RW user depending on the --repair option
 if ($repair) {
     push @params, (
-        '--user'    =>  Bio::EnsEMBL::Compara::Utils::Registry::get_rw_user($dba->dbc->host),
-        '--password'=>  Bio::EnsEMBL::Compara::Utils::Registry::get_rw_pass($dba->dbc->host),
-        '--repair'  => 1,
+        '--user'     =>  Bio::EnsEMBL::Compara::Utils::Registry::get_rw_user($dba->dbc->host),
+        '--password' =>  Bio::EnsEMBL::Compara::Utils::Registry::get_rw_pass($dba->dbc->host),
+        '--repair'   => 1,
     );
 } else {
     push @params, (
