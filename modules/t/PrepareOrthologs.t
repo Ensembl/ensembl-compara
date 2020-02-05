@@ -65,6 +65,7 @@ standaloneJob(
         'new_alignment'     => 0,
         'homology_flatfile'         => $test_flatfile,
         'homology_mapping_flatfile' => $test_map_file,
+        'previous_wga_file'         => 'Not/a/real/file.txt',
 	},
 	[ # list of events to test for (just 1 event in this case)
 		[ # start event
