@@ -132,6 +132,57 @@ sub load_previous_core_databases_if_needed {
 }
 
 
+=head2 remove_species
+
+  Arg[1]      : Arrayref of species names $species_names.
+  Arg[2]      : String $species_suffix (optional, defaults to '')
+  Example     : Bio::EnsEMBL::Compara::Utils::Registry::remove_species(['saccharomyces_cerevisiae']);
+                Bio::EnsEMBL::Compara::Utils::Registry::remove_species(['saccharomyces_cerevisiae', 'drosophila_melanogaster'], '__cut_here__99');
+  Description : Remove the given species from the Registry
+  Returntype  : none
+  Exceptions  : none
+
+=cut
+
+sub remove_species {
+    my $species_names = shift;
+    my $species_suffix = shift;
+
+    $species_suffix //= '';
+
+    foreach my $name (@$species_names) {
+        foreach my $group (qw(core otherfeatures variation funcgen)) {
+            Bio::EnsEMBL::Registry->remove_DBAdaptor("${name}${species_suffix}", $group);
+        }
+    }
+}
+
+
+=head2 remove_multi
+
+  Arg[1]      : Arrayref of group names $groups. Optional, defaults to all groups
+  Arg[2]      : String $species_suffix (optional, defaults to '')
+  Example     : Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
+                Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, '__cut_here__99');
+  Description : Remove the given species from the Registry
+  Returntype  : none
+  Exceptions  : none
+
+=cut
+
+sub remove_multi {
+    my $groups = shift;
+    my $species_suffix = shift;
+
+    $groups //= [qw(compara metadata ontology production stable_ids taxonomy)];
+    $species_suffix //= '';
+
+    foreach my $group (@$groups) {
+        Bio::EnsEMBL::Registry->remove_DBAdaptor("multi${species_suffix}", $group);
+    }
+}
+
+
 =head2 add_core_dbas
 
   Example     : Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $core_dbs );

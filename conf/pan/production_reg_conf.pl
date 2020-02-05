@@ -35,25 +35,16 @@ my $prev_release = $curr_release - 1;
 my $curr_eg_release = $ENV{'CURR_EG_RELEASE'};
 my $prev_eg_release = $curr_eg_release - 1;
 
-
-## To avoid warnings
-sub cleanup_adaptors_from_vertebrates_server {
-    my $species_suffix = shift;
-    foreach my $s (qw(saccharomyces_cerevisiae drosophila_melanogaster caenorhabditis_elegans)) {
-        foreach my $g (qw(core otherfeatures variation funcgen)) {
-            Bio::EnsEMBL::Registry->remove_DBAdaptor("${s}${species_suffix}", $g);
-        }
-    }
-    foreach my $g (qw(ontology taxonomy)) {
-        Bio::EnsEMBL::Registry->remove_DBAdaptor("multi${species_suffix}", $g);
-    }
-}
-
+# Species found on both vertebrates and non-vertebrates servers
+my @overlap_species = qw(saccharomyces_cerevisiae drosophila_melanogaster caenorhabditis_elegans);
 
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1:4519/$curr_release");
-cleanup_adaptors_from_vertebrates_server('');
+# But remove the non-vertebrates species
+Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
+Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
+# Non-Vertebrates server
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
 # Bacteria server: all species used in Pan happen to be in this database
 Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
@@ -79,7 +70,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
         -db_version     => $release_number,
         -species_suffix => $species_suffix,
     );
-    cleanup_adaptors_from_vertebrates_server($species_suffix);
+    Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, $species_suffix);
+    Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, $species_suffix);
     Bio::EnsEMBL::Registry->load_registry_from_db(
         -host   => 'mysql-ens-mirror-3',
         -port   => 4275,
