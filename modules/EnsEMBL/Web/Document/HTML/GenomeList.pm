@@ -54,9 +54,6 @@ sub _get_dom_tree {
   for (0..$self->SPECIES_DISPLAY_LIMIT-1) {
     $prehtml .= $template =~ s/\{\{species\.(\w+)}\}/my $replacement = $species->[$_]{$1};/gre if $species->[$_] && $species->[$_]->{'favourite'};
   }
-  $prehtml .= sprintf qq(
-        <p class="customise-species-list"><a class="_list_edit modal_link" href="%s">Edit your favourites</a></p>
-    ), $hub->url({qw(type Account action Login)});
 
   my @ok_species = $sd->valid_species;
   my $sitename  = $self->hub->species_defs->ENSEMBL_SITETYPE;
@@ -74,10 +71,13 @@ sub _get_dom_tree {
     my $sort_html = qq(<p>For easy access to commonly used genomes, drag from the bottom list to the top one</p>
         <p><strong>Favourites</strong></p>
           <ul class="_favourites"></ul>
+        <p><a href="#Done" class="button _list_done">Done</a>
+          <a href="#Reset" class="button _list_reset">Restore default list</a></p>
         <p><strong>Other available species</strong></p>
           <ul class="_species"></ul>
-        <p><a href="#Done" class="button _list_done">Done</a>
-          <a href="#Reset" class="button _list_reset">Restore default list</a></p>);
+          );
+
+    my $edit_icon = sprintf qq(<a href="%s" class="_list_edit modal_link"><img src="/i/16/pencil.png" class="left-half-margin" title="Edit your favourites"></a>), $hub->url({qw(type Account action Login)});
 
     return $self->dom->create_element('div', {
       'class'       => 'column_wrapper',
@@ -90,15 +90,15 @@ sub _get_dom_tree {
               'class'       => 'column-two fave-genomes',
               'children'    => [{
                         'node_name'   => 'h3',
-                        'inner_HTML'  => 'Favourite genomes'
-                      }, {
-                        'node_name'   => 'div',
-                        'class'       => [qw(_species_fav_container species-list)],
-                        'inner_HTML'  => $prehtml
+                        'inner_HTML'  => "Favourite genomes $edit_icon",
                       }, {
                         'node_name'   => 'div',
                         'class'       => [qw(_species_sort_container reorder_species clear hidden)],
                         'inner_HTML'  => $sort_html
+                      }, {
+                        'node_name'   => 'div',
+                        'class'       => [qw(_species_fav_container species-list)],
+                        'inner_HTML'  => $prehtml
                       }, {
                         'node_name'   => 'inputhidden',
                         'class'       => 'js_param',
