@@ -700,9 +700,7 @@ sub _summarise_funcgen_db {
   foreach my $a_aref (@$t_aref) {
     my $desc;
     { no warnings; $desc = eval($a_aref->[4]) || $a_aref->[4]; }    
-    (my $web_data = $a_aref->[6]) =~ s/^[^{]+//; ## Strip out "crap" at front and end! probably some q(')s
-    $web_data     =~ s/[^}]+$//;
-    $web_data     = eval($web_data) || {};
+    my $web_data = $a_aref->[6] ? from_json($a_aref->[6]) : {};
     
     $analysis->{$a_aref->[0]} = {
       'logic_name'  => $a_aref->[1],
