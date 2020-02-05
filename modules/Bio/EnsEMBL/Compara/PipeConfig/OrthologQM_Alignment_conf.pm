@@ -115,6 +115,8 @@ sub default_options {
             # list of databases with EPO or LASTZ data
             'compara_curr',
         ],
+        # 'alt_aln_dbs'      => [ ],
+        'alt_homology_db'  => undef,
 
         'species1'         => undef,
         'species2'         => undef,
@@ -123,10 +125,6 @@ sub default_options {
         'ref_species'      => undef,
         'collection'       => 'default',
 
-        # 'alt_aln_dbs'      => undef,
-
-        'alt_homology_db'  => undef,
-        
         # homology_dumps_dir location should be changed to the homology pipeline's workdir if the pipelines are still in progress
         # (the files only get copied to 'homology_dumps_shared_dir' at the end of each pipeline)
         'homology_dumps_dir'        => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'), # where we read the homology dump files from
@@ -303,7 +301,6 @@ sub pipeline_analyses {
             -batch_size => 10,
             -parameters => {
                 alignment_db => $self->pipeline_url,
-                pipeline_url => $self->pipeline_url,
             },
             -flow_into  => {
                 3 => [ '?table_name=ortholog_quality' ],
