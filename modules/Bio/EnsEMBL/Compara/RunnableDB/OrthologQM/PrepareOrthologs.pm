@@ -150,7 +150,7 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    if ( -e -f $self->param('previous_wga_file') ){ # reuse is on
+    if ( -e $self->param('previous_wga_file') ){ # reuse is on
         $self->dataflow_output_id( {orth_mlss_id => $self->param('orth_mlss_id')}, 3 ); # to reuse_wga_score
     }
 
