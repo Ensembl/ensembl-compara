@@ -63,7 +63,7 @@ sub _get_dom_tree {
   if (scalar @ok_species > 1) {
     my $list_html = sprintf qq(<h3>Find a genome</h3>
       %s
-      <h3 class="space-above">Genome collections</h3>
+      <h3 class="space-above"></h3>
       %s
       <p><a href="%s">View full list of all %s species</a></p>
       ), 
