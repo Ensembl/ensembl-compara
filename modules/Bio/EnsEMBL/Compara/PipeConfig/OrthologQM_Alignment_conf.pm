@@ -124,7 +124,7 @@ sub default_options {
         'collection'       => 'default',
 
         # 'alt_aln_dbs'      => undef,
-        'alt_aln_dbs'      => [ ],
+
         'alt_homology_db'  => undef,
         
         # homology_dumps_dir location should be changed to the homology pipeline's workdir if the pipelines are still in progress
@@ -301,7 +301,10 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage',
             -hive_capacity => 30,
             -batch_size => 10,
-            -parameters => { alignment_db => $self->pipeline_url },
+            -parameters => {
+                alignment_db => $self->pipeline_url,
+                pipeline_url => $self->pipeline_url,
+            },
             -flow_into  => {
                 3 => [ '?table_name=ortholog_quality' ],
                 2 => [ 'assign_wga_coverage_score' ],
