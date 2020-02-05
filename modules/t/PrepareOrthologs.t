@@ -42,9 +42,12 @@ my $compara_db = $dbc->url;
 use Cwd 'abs_path';
 my $test_flatfile = abs_path($0);
 $test_flatfile    =~ s!PrepareOrthologs\.t!homology_flatfiles/wga.test.tsv!;
+my $test_prev_flatfile = abs_path($0);
+$test_prev_flatfile    =~ s!PrepareOrthologs\.t!homology_flatfiles/wga_prev.test.tsv!;
 my $test_map_file = abs_path($0);
 $test_map_file    =~ s!PrepareOrthologs\.t!homology_flatfiles/prep_orth.hom_map.tsv!;
 print "--- test flatfile: $test_flatfile\n";
+print "--- test prev_flatfile: $test_prev_flatfile\n";
 print "--- test map_file: $test_map_file\n";
 
 # Test on pair of species without reuse #
@@ -97,7 +100,7 @@ standaloneJob(
         'new_alignment'     => 0,
         'homology_flatfile'         => $test_flatfile,
         'homology_mapping_flatfile' => $test_map_file,
-        'previous_wga_file'         => 'prev_wga_file.tsv',
+        'previous_wga_file'         => $test_prev_flatfile,
     },
     [ # list of events to test for
         [
@@ -130,7 +133,7 @@ standaloneJob(
         'new_alignment'     => 0,
         'homology_flatfile'         => $test_flatfile,
         'homology_mapping_flatfile' => $test_map_file,
-        'previous_wga_file'         => 'prev_wga_file.tsv',
+        'previous_wga_file'         => $test_prev_flatfile,
     },
     [ # list of events to test for
         [
