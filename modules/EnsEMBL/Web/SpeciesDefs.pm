@@ -810,10 +810,38 @@ sub _parse {
       }
     }
     
-    # Populate taxonomy division using e_divisions.json template
+    ## Species-specific munging
     if ($species ne "MULTI" && $species ne "databases") {
+
       my $scientific_name = $config_packer->tree->{'SPECIES_SCIENTIFIC_NAME'};
       my $common_name = $config_packer->tree->{'SPECIES_DB_COMMON_NAME'};
+
+      ## Assign an image to this species
+      my $no_image = 1;
+      my $image_dir = $SiteDefs::SPECIES_IMAGE_DIR;
+      if ($image_dir) {
+        ## This site has individual species images for all/most species
+        ## So check if it exists
+        my $image_path = $image_dir.'/'.$species_key.'.png';
+        if (-e $image_path) {
+          $tree->{$species}{'SPECIES_IMAGE'} = $species_key;
+          $no_image = 0;
+        }
+        elsif ($config_packer->tree->{'SPECIES_STRAIN'}) {
+          ## Use the parent image for this strain
+          (my $image_name = $scientific_name) =~ s/ /_/g;
+          $image_path = $image_dir.'/'.$image_name.'.png';
+          if (-e $image_path) {
+            $tree->{$species}{'SPECIES_IMAGE'} = $image_name;
+            $no_image = 0;
+          }
+        }
+      }
+      if ($no_image) {
+        $tree->{$species}{'SPECIES_IMAGE'} = $config_packer->tree->{'SPECIES_GROUP'};
+      }
+
+      # Populate taxonomy division using e_divisions.json template
       push @{$species_to_assembly->{$common_name}}, $config_packer->tree->{'ASSEMBLY_VERSION'};
       my $taxonomy = $config_packer->tree->{TAXONOMY};
       my $children = [];

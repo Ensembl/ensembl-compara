@@ -168,7 +168,7 @@ sub _get_dom_tree {
     my $sp_info = {
       homepage    => $homepage,
       name        => $info->{'name'},
-      img         => sprintf('%sspecies/%s.png', $img_url, $species),
+      img         => sprintf('%sspecies/%s.png', $img_url, $info->{'image'}),
       common      => $info->{'common'},
       assembly    => $info->{'assembly'},
     };
@@ -295,7 +295,7 @@ sub _species_list {
       group       => $species->{$_}{'group'},
       homepage    => $homepage,
       name        => $species->{$_}{'name'},
-      img         => sprintf('%sspecies/%s.png', $img_url, $_),
+      img         => sprintf('%sspecies/%s.png', $img_url, $species->{$_}{'image'}),
       common      => $species->{$_}{'common'},
       assembly    => $species->{$_}{'assembly'},
       assembly_v  => $species->{$_}{'assembly_version'},
