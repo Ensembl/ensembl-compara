@@ -838,7 +838,8 @@ sub _parse {
         }
       }
       if ($no_image) {
-        $tree->{$species}{'SPECIES_IMAGE'} = $config_packer->tree->{'SPECIES_GROUP'};
+        my $labels                         = $config_packer->tree->{'TAXON_LABEL'};  
+        $tree->{$species}{'SPECIES_IMAGE'} = $labels->{$config_packer->tree->{'SPECIES_GROUP'}};
       }
 
       # Populate taxonomy division using e_divisions.json template
