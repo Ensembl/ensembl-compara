@@ -53,10 +53,9 @@ sub write_output {
 
   my $compara_dba = $self->compara_dba;
   my $genome_db   = $self->param('genome_db');
-  my $release     = $self->param_required('release');
   my $report_file = $self->param_required('work_dir') . '/assembly_patches.' . $self->param_required('species_name') . '.txt';
 
-  Bio::EnsEMBL::Compara::Utils::MasterDatabase::load_assembly_patches($compara_dba, $genome_db, $release, $report_file);
+  Bio::EnsEMBL::Compara::Utils::MasterDatabase::load_assembly_patches($compara_dba, $genome_db, $report_file);
 }
 
 1;

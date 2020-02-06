@@ -150,8 +150,7 @@ sub fetch_input {
             
             # now use the registry to find the previous release core database candidate:
             Bio::EnsEMBL::Registry->no_version_check(1);
-            my $prev_release = $self->param_required('current_release') - 1;
-            $prev_core_dba = $self->param('prev_core_dba', Bio::EnsEMBL::Compara::Utils::Registry::get_previous_core_DBAdaptor($species_name, $prev_release));
+            $prev_core_dba = $self->param('prev_core_dba', Bio::EnsEMBL::Compara::Utils::Registry::get_previous_core_DBAdaptor($species_name));
 
         } else {
 

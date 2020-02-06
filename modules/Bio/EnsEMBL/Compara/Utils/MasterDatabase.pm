@@ -410,7 +410,6 @@ sub load_lrgs {
 sub load_assembly_patches {
     my $compara_dba = shift;
     my $genome_db   = shift;
-    my $release     = shift;
     my $report_file = shift;
 
     die "Patches are only available for GRC species" unless $genome_db->assembly =~ /^GRC/;
@@ -423,8 +422,7 @@ sub load_assembly_patches {
     my @curr_patches_seq_region_ids = map { $_->[1] } @$curr_patches;
     my %curr_patches_by_name = map { $_->[0] => {seq_region_id => $_->[1], date => $_->[2]} } @$curr_patches;
 
-    # $release = $species_db->dbc->db_version;
-    my $prev_species_db = Bio::EnsEMBL::Compara::Utils::Registry::get_previous_core_DBAdaptor($genome_db->name, $release-1);
+    my $prev_species_db = Bio::EnsEMBL::Compara::Utils::Registry::get_previous_core_DBAdaptor($genome_db->name);
     my $prev_patches_sth = $prev_species_db->dbc->prepare($find_patches_sql);
     $prev_patches_sth->execute;
     my $prev_patches = $prev_patches_sth->fetchall_arrayref;

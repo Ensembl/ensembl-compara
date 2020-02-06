@@ -59,26 +59,23 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
 
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
-    my $release_number  = shift;
-    my $species_suffix  = Bio::EnsEMBL::Compara::Utils::Registry::SUFFIX_SEPARATOR.$release_number;
-
     Bio::EnsEMBL::Registry->load_registry_from_db(
         -host   => 'mysql-ens-mirror-1',
         -port   => 4240,
         -user   => 'ensro',
         -pass   => '',
-        -db_version     => $release_number,
-        -species_suffix => $species_suffix,
+        -db_version     => $prev_release,
+        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
     );
-    Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, $species_suffix);
-    Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, $species_suffix);
+    Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
+    Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
     Bio::EnsEMBL::Registry->load_registry_from_db(
         -host   => 'mysql-ens-mirror-3',
         -port   => 4275,
         -user   => 'ensro',
         -pass   => '',
-        -db_version     => $release_number,
-        -species_suffix => $species_suffix,
+        -db_version     => $prev_release,
+        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
     );
     # Bacteria server: all species used in Pan happen to be in this database
     Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
@@ -86,8 +83,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
         -port   => 4495,
         -user   => 'ensro',
         -pass   => '',
-        -dbname => "bacteria_0_collection_core_".($release_number-53)."_${release_number}_1",
-        -species_suffix => $species_suffix,
+        -dbname => "bacteria_0_collection_core_${prev_eg_release}_${prev_release}_1",
+        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
     );
 };
 
