@@ -167,7 +167,7 @@ sub write_output {
 	if($self->param('add_non_nuclear_alignments')) {
 		my $max_synteny_region_id = $synteny_region_ids[-1]->{'synteny_region_id'} + 1;
 		$sth2->execute($max_synteny_region_id, $self->param('mlss_id'));
-		my $sth_mt = $self->dbc->prepare("SELECT dnafrag_id, length FROM dnafrag JOIN species_set USING (genome_db_id) JOIN method_link_species_set USING (species_set_id) WHERE cellular_component =\"MT\" AND method_link_species_set_id = ?);
+		my $sth_mt = $self->dbc->prepare("SELECT dnafrag_id, length FROM dnafrag JOIN species_set USING (genome_db_id) JOIN method_link_species_set USING (species_set_id) WHERE cellular_component =\"MT\" AND method_link_species_set_id = ?");
 		$sth_mt->execute($self->param('mlss_id'));
 		foreach my $dnafrag_region ( @{ $sth_mt->fetchall_arrayref } ) {
 			$sth1->execute($max_synteny_region_id, $dnafrag_region->[0], 1, $dnafrag_region->[1], 1);
