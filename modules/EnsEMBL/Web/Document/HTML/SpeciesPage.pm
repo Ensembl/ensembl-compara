@@ -96,13 +96,9 @@ sub render {
   }
 
   ## Display all the species in data table
-  my $html = '<h3 class="clear-left">Available genomes</h3>';
+  my $html;
 
-  if ($species_defs->ENSEMBL_SERVERNAME eq 'grch37.ensembl.org') {
-    ## Hardcode this because the version is actually updated when the site is upgraded
-    $html .= qq(<div class="info-box"><p>N.B. The table below shows only those species that were included in release 75 - for an up-to-date list, please see our main site at <a href="//www.ensembl.org/">www.ensembl.org</a>.</p></div>);
-  }
-  elsif ($sitename =~ /Archive/) {
+  if ($sitename =~ /Archive/) {
     $html .= qq(<div class="info-box"><p>N.B. The table below shows only those species that were included in release $version - for an up-to-date list, please see our main site at <a href="//www.ensembl.org/">www.ensembl.org</a>.</p></div>);
   }
   elsif ($hub->species_defs->multidb->{'DATABASE_ARCHIVE'}{'NAME'}) {
