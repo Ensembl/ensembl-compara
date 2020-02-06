@@ -213,15 +213,7 @@ sub add_genome_groups {
   my $self = shift;
   
   my $html = '';
-  
-  my @featured = (
-                   {
-                    'url'   => 'Sus_scrofa/Info/Strains/',
-                    'img'   => 'Sus_scrofa.png',
-                    'name'  => 'Pig breeds',
-                    'more'  => qq(<a href="/Sus_scrofa/" class="nodeco">Pig reference genome</a> and <a href="Sus_scrofa/Info/Strains/" class="nodeco">12 additional breeds</a>),
-                    },
-                  );
+  my @featured = $self->get_featured_genomes; 
 
   foreach my $item (@featured) {
     $html .= sprintf qq(
@@ -249,6 +241,18 @@ sub add_genome_groups {
 
   return $html;
 }
+
+sub get_featured_genomes {
+  return (
+           {
+            'url'   => 'Sus_scrofa/Info/Strains/',
+            'img'   => 'Sus_scrofa.png',
+            'name'  => 'Pig breeds',
+            'more'  => qq(<a href="/Sus_scrofa/" class="nodeco">Pig reference genome</a> and <a href="Sus_scrofa/Info/Strains/" class="nodeco">12 additional breeds</a>),
+           },
+          );
+}
+
 
 sub add_species_dropdown { '<p><select class="fselect _all_species"><option value="">-- Select a species --</option></select></p>' }
 
