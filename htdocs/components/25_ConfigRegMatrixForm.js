@@ -1044,14 +1044,22 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     });
   },
 
-  setLocalStorage: function() {
-    localStorage.setItem(this.localStorageKey, JSON.stringify(this.localStoreObj));
+  updateLHMenu: function() {
     // update LH menu count
     var panel = this;
-    var menuTotal = panel.localStoreObj.matrix["allSelection"]["state"]["on"];
-    menuTotal += panel.localStoreObj.epigenomic_activity["epigenomic_activity"]["state"]["on"];
-    menuTotal += panel.localStoreObj.segmentation_features["segmentation_features"]["state"]["on"];
+    var menuTotal = 0;
+    var matrixObj = panel.localStoreObj.matrix;
+    for (var column in matrixObj) {
+      if (column.match('_sep_') && matrixObj[column]['state']) {
+        (matrixObj[column]['state'] === 'track-on') && menuTotal++;
+      }
+    }
     $(panel.menuCountSpan).text(menuTotal);
+  },
+
+  setLocalStorage: function() {
+    localStorage.setItem(this.localStorageKey, JSON.stringify(this.localStoreObj));
+    this.updateLHMenu()
   },
   getLocalStorage: function() {
     return JSON.parse(localStorage.getItem(this.localStorageKey)) || {};

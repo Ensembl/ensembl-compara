@@ -1156,10 +1156,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     for (var column in matrixObj) {
       if (column.match('_sep_') && matrixObj[column]['state']) {
         if (this.multiDimFlag) {
-          menuTotal+=matrixObj[column]['state'].on
+          menuTotal+=matrixObj[column]['state'].on;
         }
         else {
-          (matrixObj[column]['state'] === 'track-on') && menuTotal++
+          (matrixObj[column]['state'] === 'track-on') && menuTotal++;
         };
       }
     }
