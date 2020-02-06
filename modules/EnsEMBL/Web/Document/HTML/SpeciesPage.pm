@@ -172,18 +172,23 @@ sub render {
 # Return array of columns
 sub table_columns {
   my $self = shift;
+  my $sd = $self->hub->species_defs; 
 
   my $columns = [
-      { key => 'common',      title => 'Common name',     width => '40%', align => 'left', sort => 'html'   },
+      { key => 'common',      title => 'Common name',     width => '25%', align => 'left', sort => 'html'   },
       { key => 'species',     title => 'Scientific name', width => '25%', align => 'left', sort => 'string' },
       { key => 'taxon_id',    title => 'Taxon ID',        width => '10%', align => 'left', sort => 'numeric' },
       { key => 'assembly',    title => 'Ensembl Assembly',width => '10%', align => 'left' },
       { key => 'accession',   title => 'Accession',       width => '10%', align => 'left' },
       { key => 'genebuild',   title => 'Genebuild Method', width => '10%', align => 'left' },
-      { key => 'variation',   title => 'Variation database',  width => '5%', align => 'center', sort => 'string' },
-      { key => 'regulation',  title => 'Regulation database', width => '5%', align => 'center', sort => 'string' },
   ];
-  if ($self->hub->species_defs->ENSEMBL_SITETYPE !~ /Archive/) {
+  unless ($sd->NO_VARIATION) { 
+    push @$columns, { key => 'variation',   title => 'Variation database',  width => '5%', align => 'center', sort => 'string' };
+  }
+  unless ($sd->NO_REGULATION) { 
+    push @$columns, { key => 'regulation',  title => 'Regulation database', width => '5%', align => 'center', sort => 'string' };
+  }
+  if (scalar keys %{$self->get_pre_species||{}}) {
     push @$columns, { key => 'pre', title => 'Pre assembly', width => '5%', align => 'left' };
   }
 
