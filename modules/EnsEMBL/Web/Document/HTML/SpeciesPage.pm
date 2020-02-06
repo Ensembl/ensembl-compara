@@ -141,7 +141,7 @@ sub render {
     }
     $table->add_row({
         'common' => sprintf('<a href="%s%s/"><img src="/i/species/%s.png" alt="%s" class="badge-48" style="float:left;padding-right:4px;%s" /></a>%s',
-                        $img_url, $dir,  $dir, $common, $image_fade, $sp_link),
+                        $img_url, $dir,  $info->{'image'}, $common, $image_fade, $sp_link),
       'species'     => '<i>'.$name.'</i>',
       'taxon_id'    => $info->{'taxon_id'},
       'assembly'    => $info->{'assembly'},
