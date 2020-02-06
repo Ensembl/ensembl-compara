@@ -168,7 +168,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'reg_conf'               => $self->o('reg_conf'),
                 'master_db'              => $self->o('master_db'),
                 'division'               => $self->o('division'),
-                'cmd' => 'perl #update_metadata_script# --reg_conf #reg_conf# --compara #master_db# --division #division#'
+                'cmd' => 'perl #update_metadata_script# --reg_conf #reg_conf# --compara #master_db# --division #division# --nocheck_species_missing_from_compara'
             },
             -flow_into  => WHEN(
                 '#do_load_lrg_dnafrags#' => 'load_lrg_dnafrags',
@@ -264,7 +264,18 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'src_db_conn' => $self->o('master_db'),
                 'output_file' => $self->o('master_backup_file'),
             },
+            -flow_into  => [ 'copy_annotations_to_shared_loc' ],
             -rc_name => '1Gb_job',
+        },
+
+        {   -logic_name => 'copy_annotations_to_shared_loc',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'shared_user'     => $self->o('shared_user'),
+                'annotation_file' => $self->o('annotation_file'),
+                'shared_hps_dir'  => $self->o('shared_hps_dir'),
+                'cmd'             => 'become #shared_user# cp -u #annotation_file# #shared_hps_dir#/ensembl-metadata/',
+            },
         },
     ];
 }

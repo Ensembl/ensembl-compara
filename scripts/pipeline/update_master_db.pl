@@ -148,11 +148,15 @@ Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
 my $compara_db = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
 my $genome_db_adaptor = $compara_db->get_GenomeDBAdaptor();
 my %found_genome_db_ids = ();
+my $has_errors = 0;
+
+my %genome_db_names = map {$_->name => 1} @{$genome_db_adaptor->fetch_all};
 
 foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')}) {
 
     next if $db_adaptor->species =~ /__cut_here__/;
-    next if $db_adaptor->dbc->dbname =~ /ensembl_ancestral/;
+    next if $db_adaptor->dbc->dbname =~ /^ensembl_ancestral_/;
+    next if $db_adaptor->dbc->dbname =~ /_ancestral_core_/;
 
     eval {
         $db_adaptor->dbc->connect();
@@ -168,11 +172,11 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
 
     # Get the production name and assembly to fetch our GenomeDBs
     my $mc = $db_adaptor->get_MetaContainer();
-    if ($division and $mc->get_division and (lc $mc->get_division ne $division)) {
+    my $that_species = $mc->get_production_name();
+    if (!$genome_db_names{$that_species} and $division and $mc->get_division and (lc $mc->get_division ne $division)) {
         $db_adaptor->dbc->disconnect_if_idle();
         next;
     }
-    my $that_species = $mc->get_production_name();
     my $that_assembly = $db_adaptor->assembly_name();
     unless ($that_species) {
         warn sprintf("Skipping %s (no species name found: a compara_ancestral database ?).\n", $db_adaptor->dbc->locator);
@@ -197,7 +201,9 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
             $proper_genome_db->adaptor($genome_db_adaptor);
             warn "> Differences for '$that_species' (assembly '$that_assembly')\n\t".($proper_genome_db->toString)."\n\t".($master_genome_db->toString)."\n$diffs\n";
             $proper_genome_db->dbID($master_genome_db->dbID);
-            unless ($dry_run) {
+            if ($dry_run) {
+                $has_errors = 1;
+            } else {
                 $genome_db_adaptor->update($proper_genome_db);
                 warn "\t> Successfully updated the master database\n";
             }
@@ -207,6 +213,7 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
             warn "> '$that_species' (assembly '$that_assembly') is in the master database, but is not yet 'current' (i.e. first/last_release are not properly set). It should be fixed after running edit_collection.pl\n";
         }
     } elsif ($check_species_missing_from_compara) {
+        $has_errors = 1;
         warn "> Could not find the species '$that_species' (assembly '$that_assembly') in the genome_db table. You should probably add it.\n";
     }
 
@@ -222,6 +229,7 @@ if ($check_species_with_no_core) {
         # the ancestral database is only ready towards the end of the release
         next if $master_genome_db->name eq 'ancestral_sequences';
         if ($master_genome_db->is_current and not $found_genome_db_ids{$master_genome_db->dbID}) {
+            $has_errors = 1;
             if ($master_genome_db->locator) {
                 warn "> The following genome_db entry has a locator in the master database. You should check that it really needs it.\n";
             } else {
@@ -231,4 +239,5 @@ if ($check_species_with_no_core) {
     }
 }
 
+exit $has_errors;
 

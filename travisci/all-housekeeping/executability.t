@@ -1,0 +1,42 @@
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+use strict;
+use warnings;
+
+use Test::More;
+
+use Bio::EnsEMBL::Test::TestUtils;
+use Bio::EnsEMBL::Compara::Utils::Test;
+
+my @all_files = Bio::EnsEMBL::Compara::Utils::Test::find_all_files();
+
+my @executable_extensions = qw(pl py r sh);
+my $regex_str = join(q{|}, map {qq{\\.$_\$}} @executable_extensions);
+my $regex = qr/($regex_str)/;
+
+foreach my $f (@all_files) {
+    # General exclusions
+    next if $f =~/\/blib\//;
+    # General rule
+    my $should_be_executable = ($f =~ /$regex/);
+    # Exceptions
+    $should_be_executable = '' if $f =~ /\/docs\/conf.py$/;
+    $should_be_executable = '' if $f =~ /production.*reg_conf.*\.pl$/;
+    # Test
+    is(-x $f, $should_be_executable, "$f is executable");
+}
+
+done_testing();

@@ -58,9 +58,8 @@ jobs:
       perl: 5.30
       name: "Housekeeping (all languages)"
       install:
+        - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
-      before_script:
-        - echo
       script: ./travisci/all-housekeeping_harness.sh
 
     - language: perl

@@ -267,17 +267,18 @@ sub create_species_tree {
 =cut
 
 sub new_from_newick {
-    my ($self, $newick, $compara_dba) = @_;
+    my ($self, $newick, $compara_dba, @args) = @_;
+
+    my ($mlss_id) = rearrange([qw(MLSS_ID)], @args);
 
     my $species_tree_root = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $newick, 'Bio::EnsEMBL::Compara::SpeciesTreeNode' );
     $species_tree_root = $species_tree_root->minimize_tree;     # The user-defined trees may have some 1-child nodes
 
     # Let's try to find genome_dbs and ncbi taxa
-    my $gdb_a = $compara_dba->get_GenomeDBAdaptor;
-
+    my $genome_dbs = $mlss_id ? $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id)->species_set->genome_dbs : $compara_dba->get_GenomeDBAdaptor->fetch_all();
     # We need to build a hash locally because # $gdb_a->fetch_by_name_assembly()
     # doesn't return non-default assemblies, which can be the case !
-    my %all_genome_dbs = map {(lc $_->name) => $_} (grep {not $_->genome_component} @{$gdb_a->fetch_all});
+    my %all_genome_dbs = map {(lc $_->name) => $_} (grep {not $_->genome_component} @$genome_dbs);
 
     # First, we remove the extra species that the tree may contain
     foreach my $node (@{$species_tree_root->get_all_leaves}) {

@@ -54,7 +54,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name' => $self->o('species_set_name').'_epo_'.$self->o('rel_with_suffix'),
+        'pipeline_name' => $self->o('species_set_name').'_epo_with2x_'.$self->o('rel_with_suffix'),
         'master_db'     => 'compara_master',
 
         # database containing the anchors for mapping
@@ -205,7 +205,7 @@ sub core_pipeline_analyses {
                 'column_names' => [ 'mlss_id', 'whole_method_links', 'param_names', 'filter_by_mlss_id', 'store_reuse_ss' ],
             },
             -flow_into  => {
-                '2->A' => 'create_mlss_ss',
+                '2->A' => { 'create_mlss_ss' => INPUT_PLUS() },
                 'A->1' => 'set_gerp_mlss_tag',
             }
         },
@@ -265,6 +265,7 @@ sub tweak_analyses {
     delete $analyses_by_name->{'make_species_tree'}->{'-flow_into'};
 
     # set mlss_id for anchor mapping
+    $analyses_by_name->{'reuse_anchor_align'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
     $analyses_by_name->{'map_anchors'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
     $analyses_by_name->{'map_anchors_himem'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
     $analyses_by_name->{'map_anchors_no_server'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
@@ -278,6 +279,9 @@ sub tweak_analyses {
     $analyses_by_name->{'create_default_pairwise_mlss'}->{'-flow_into'}->{1} = WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ]);
     $analyses_by_name->{'create_default_pairwise_mlss'}->{'-parameters'}->{'prev_epo_db'} = '#reuse_db#';
     delete $analyses_by_name->{'set_gerp_neutral_rate'}->{'-flow_into'}->{1};
+
+    # Make Enredo work only on the high-coverage genomes
+    $analyses_by_name->{'load_dnafrag_region'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
 
     # link "ortheus*" analyses directly to "low_coverage_genome_alignment"
     $analyses_by_name->{'ortheus'}->{'-flow_into'}->{1} = 'low_coverage_genome_alignment';
@@ -300,7 +304,7 @@ sub tweak_analyses {
     $analyses_by_name->{'remove_dodgy_ancestral_blocks'}->{'-flow_into'} = { 1 => { 'set_internal_ids_low_epo' => {} } };
 
     # ensure mlss_ids are flowed with their root_ids
-    $analyses_by_name->{'create_neighbour_nodes_jobs_alignment'}->{'-parameters'}->{'inputquery'} = 'SELECT gat2.root_id, #mlss_id# FROM genomic_align_tree gat1 LEFT JOIN genomic_align ga USING(node_id) JOIN genomic_align_tree gat2 USING(root_id) WHERE gat2.parent_id IS NULL AND ga.method_link_species_set_id = #mlss_id# GROUP BY gat2.root_id';
+    $analyses_by_name->{'create_neighbour_nodes_jobs_alignment'}->{'-parameters'}->{'inputquery'} = 'SELECT gat2.root_id, #mlss_id# as mlss_id FROM genomic_align_tree gat1 LEFT JOIN genomic_align ga USING(node_id) JOIN genomic_align_tree gat2 USING(root_id) WHERE gat2.parent_id IS NULL AND ga.method_link_species_set_id = #mlss_id# GROUP BY gat2.root_id';
 }
 
 1;

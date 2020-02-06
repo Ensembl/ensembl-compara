@@ -95,8 +95,19 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 sub assert_valid_cigar {
     my $cigar_line = shift;
-    if ($cigar_line !~ /^(([1-9][0-9]*)?[A-Z])*$/) {
-        throw("Invalid cigar_line '$cigar_line'\n")
+
+    # complex regular subexpression recursion limit can be exceeded on very long strings
+    # split on letters for long strings, use regex on shorter ones
+    if ( length($cigar_line) > 70000 ) {
+        my @cigar_numbers = split(/[A-Z]/, $cigar_line);
+        foreach my $cigar_num ( @cigar_numbers ) {
+            next if ( $cigar_num eq '' || ($cigar_num =~ /^[0-9]+$/ && $cigar_num > 0) );
+            throw("Invalid cigar_line '$cigar_line'\n");
+        }
+    } else {
+        if ($cigar_line !~ /^(([1-9][0-9]*)?[A-Z])*$/) {
+            throw("Invalid cigar_line '$cigar_line'\n");
+        }
     }
 }
 

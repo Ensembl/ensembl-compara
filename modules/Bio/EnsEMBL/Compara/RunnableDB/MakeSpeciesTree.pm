@@ -82,7 +82,14 @@ sub fetch_input {
         my $species_tree_string = $self->_slurp($species_tree_input_file);
 #        chomp $species_tree_string;
 
-        $species_tree_root = Bio::EnsEMBL::Compara::Utils::SpeciesTree->new_from_newick( $species_tree_string, $self->compara_dba );
+        my @tree_creation_args = ();
+        foreach my $config_param (qw(mlss_id)) {
+            if (defined(my $config_value = $self->param($config_param))) {
+                push @tree_creation_args, ("-$config_param", $config_value);
+            }
+        }
+
+        $species_tree_root = Bio::EnsEMBL::Compara::Utils::SpeciesTree->new_from_newick( $species_tree_string, $self->compara_dba, @tree_creation_args );
 
     } else {    # generate the tree from the database+params
 

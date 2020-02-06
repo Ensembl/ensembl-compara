@@ -131,8 +131,9 @@ sub write_output {
 
 	# get the genome_db names from the genome_db table in the production db
 	my $genome_db_adaptor = $self->compara_dba()->get_adaptor("GenomeDB");
+	my $genome_dbs = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'))->species_set->genome_dbs;
 	my $genome_db_names_from_db;
-	foreach my $genome_db(sort {$a->name cmp $b->name} @{ $genome_db_adaptor->fetch_all }){
+	foreach my $genome_db(sort {$a->name cmp $b->name} @$genome_dbs){
 		$genome_db_names_from_db .= $genome_db->name.":" if $genome_db->taxon_id;
 	}
 	# check the species names from the file against those from the db
@@ -166,8 +167,8 @@ sub write_output {
 	if($self->param('add_non_nuclear_alignments')) {
 		my $max_synteny_region_id = $synteny_region_ids[-1]->{'synteny_region_id'} + 1;
 		$sth2->execute($max_synteny_region_id, $self->param('mlss_id'));
-		my $sth_mt = $self->dbc->prepare("SELECT dnafrag_id, length FROM dnafrag WHERE cellular_component =\"MT\"");
-		$sth_mt->execute;
+		my $sth_mt = $self->dbc->prepare("SELECT dnafrag_id, length FROM dnafrag JOIN species_set USING (genome_db_id) JOIN method_link_species_set USING (species_set_id) WHERE cellular_component =\"MT\" AND method_link_species_set_id = ?);
+		$sth_mt->execute($self->param('mlss_id'));
 		foreach my $dnafrag_region ( @{ $sth_mt->fetchall_arrayref } ) {
 			$sth1->execute($max_synteny_region_id, $dnafrag_region->[0], 1, $dnafrag_region->[1], 1);
 		}

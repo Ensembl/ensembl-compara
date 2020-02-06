@@ -49,7 +49,7 @@ sub fetch_input {
     my @current_species;
 
     #Fetching all current assemblies:
-    my $get_current_assemblies_sql = "SELECT name FROM genome_db WHERE first_release IS NOT NULL AND last_release IS NULL";
+    my $get_current_assemblies_sql = 'SELECT name FROM genome_db WHERE first_release IS NOT NULL AND last_release IS NULL AND name != "ancestral_sequences"';
     my $sth = $master_dba->dbc->prepare( $get_current_assemblies_sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
     while ( my $name = $sth->fetchrow() ) {

@@ -1726,7 +1726,7 @@ CREATE TABLE `gene_tree_root_attr` (
 
 CREATE TABLE gene_tree_node_attr (
   node_id                         INT(10) UNSIGNED NOT NULL,
-  node_type                       ENUM("duplication", "dubious", "speciation", "sub-speciation", "gene_split"),
+  node_type                       ENUM('duplication', 'dubious', 'speciation', 'sub-speciation', 'gene_split'),
   species_tree_node_id            INT(10) UNSIGNED,
   bootstrap                       TINYINT UNSIGNED,
   duplication_confidence_score    DOUBLE(5,4),

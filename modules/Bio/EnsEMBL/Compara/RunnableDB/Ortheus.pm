@@ -204,7 +204,7 @@ sub detect_pecan_ortheus_errors {
               # Let's discard this job.
               $self->input_job->autoflow(0);
               $self->complete_early( "Pecan failed to align the sequences. Skipping." );
-          } elsif ($err_msg =~ /Exception in thread "main" java.lang.IllegalArgumentException($|:\s+fromIndex\([-\d]+\) > toIndex\([-\d]+\))/) {
+          } elsif ($err_msg =~ /Exception in thread "main" java.lang.IllegalArgumentException($|:\s+fromIndex\([-\d]+\) > toIndex\([-\d]+\)|:\sNegative capacity)/) {
               # Not sure why this happens
               # Let's discard this job.
               $self->input_job->autoflow(0);
@@ -227,7 +227,6 @@ sub detect_pecan_ortheus_errors {
 sub write_output {
     my ($self) = @_;
 
-    print "WRITE OUTPUT\n" if $self->debug;
 	my $compara_conn = $self->compara_dba->dbc;
 	my $ancestor_genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly("ancestral_sequences");
 	my $ancestral_conn = $ancestor_genome_db->db_adaptor->dbc;
@@ -804,10 +803,11 @@ sub parse_results {
 	}
     }
 
-    $self->remove_empty_cols($tree);
     print $tree->_simple_newick, "\n";
     print join(" -- ", map {$_."+".$_->node_id."+".$_->name} (@{$tree->get_all_nodes()})), "\n";
-    $self->param('output', [$tree]);
+    my $trees = $self->split_if_empty_ancestral_seq($tree);
+    $self->remove_empty_cols($_) for @$trees;
+    $self->param('output', $trees);
 
 #     foreach my $ga_node (@{$tree->get_all_nodes}) {
 # 	if ($ga_node) {
@@ -827,6 +827,28 @@ sub parse_results {
 
 
 }
+
+
+sub split_if_empty_ancestral_seq {
+    my ($self, $genomic_align_tree) = @_;
+
+    my $root_genomic_align = $genomic_align_tree->genomic_align_group->get_all_GenomicAligns->[0];
+
+    # If there is an actual sequence, we're good
+    return [$genomic_align_tree] if length($root_genomic_align->original_sequence);
+
+    # Otherwise, need to replace the tree by its two sub-trees
+    my @subtrees;
+    foreach my $genomic_align_node (@{$genomic_align_tree->children}) {
+        $genomic_align_node->disavow_parent;
+        # Provided they have more than 1 sequence
+        unless ($genomic_align_node->is_leaf) {
+            push @subtrees, @{ $self->split_if_empty_ancestral_seq($genomic_align_node) };
+        }
+    }
+    return \@subtrees;
+}
+
 
 sub remove_empty_cols {
     my ($self, $tree) = @_;
@@ -945,10 +967,11 @@ sub get_species_tree {
       return $self->param('species_tree');
   }
 
-  my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'), 'default')->root;
+  my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
+  my $species_tree = $mlss->species_tree->root;
 
   #if the tree leaves are species names, need to convert these into genome_db_ids
-  my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
+  my $genome_dbs = $mlss->species_set->genome_dbs;
 
   my %leaf_check;
   foreach my $genome_db (@$genome_dbs) {

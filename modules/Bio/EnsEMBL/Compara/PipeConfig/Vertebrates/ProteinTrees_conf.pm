@@ -93,11 +93,13 @@ sub tweak_analyses {
         'hcluster_parse_output'     => '1Gb_job',
         'split_genes'               => 'default',   # This is 250Mb
         'CAFE_species_tree'         => '24Gb_job',
+        'expand_clusters_with_projections' => '500Mb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
     }
     $analyses_by_name->{'CAFE_analysis'}->{'-parameters'}{'pvalue_lim'} = 1;
+    $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;
 }
 
 

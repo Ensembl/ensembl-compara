@@ -47,7 +47,6 @@ sub default_options {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
         'division'   => 'vertebrates',
-        'collection' => 'default',
 
         'compara_db' => '#expr( (#member_type# eq "protein") ? "compara_ptrees" : "compara_nctrees" )expr#',
 

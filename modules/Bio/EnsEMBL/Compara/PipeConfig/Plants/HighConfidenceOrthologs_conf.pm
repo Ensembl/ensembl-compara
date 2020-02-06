@@ -56,7 +56,6 @@ sub default_options {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
         'division'    => 'plants',
-        'collection'  => $self->o('division'),
         'member_type' => 'protein',
         'compara_db'  => 'compara_ptrees',
 

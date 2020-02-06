@@ -47,7 +47,6 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     'division'   => 'plants',
-    'collection' => $self->o('division'),
 
     # clustering parameters:
         # affects 'hcluster_dump_input_per_genome'
@@ -89,20 +88,12 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
-    ## Extend this section to redefine the parameters of some analyses
-    # turn off projections
-    # $analyses_by_name->{'insert_member_projections'}->{'-parameters'}->{'source_species_names'} = [];
-    # prevent principal components from being flowed
-    # $analyses_by_name->{'member_copy_factory'}->{'-parameters'}->{'polyploid_genomes'} = 0;
-
-    ## Here we bump the resource class of some commonly MEMLIMIT
-    ## failing analyses. Are these really EG specific?
+    ## Here we adjust the resource class of some analyses to the Plants division
     $analyses_by_name->{'mcoffee'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'mcoffee_himem'}->{'-rc_name'} = '32Gb_job';
-    $analyses_by_name->{'mafft'}->{'-rc_name'} = '8Gb_job';
-    $analyses_by_name->{'mafft_himem'}->{'-rc_name'} = '32Gb_job';
+    $analyses_by_name->{'mafft'}->{'-rc_name'} = '8Gb_2c_job';
+    $analyses_by_name->{'mafft_himem'}->{'-rc_name'} = '32Gb_4c_job';
     $analyses_by_name->{'treebest'}->{'-rc_name'} = '4Gb_job';
-    $analyses_by_name->{'ortho_tree_himem'}->{'-rc_name'} = '4Gb_job';
     $analyses_by_name->{'members_against_allspecies_factory'}->{'-rc_name'} = '2Gb_job';
     $analyses_by_name->{'members_against_nonreusedspecies_factory'}->{'-rc_name'} = '2Gb_job';
     $analyses_by_name->{'hcluster_run'}->{'-rc_name'} = '1Gb_job';
@@ -115,9 +106,8 @@ sub tweak_analyses {
     $analyses_by_name->{'threshold_on_dS'}->{'-rc_name'}          = '1Gb_job';
     $analyses_by_name->{'HMMer_classifyPantherScore'}->{'-rc_name'} = '2Gb_job';
     $analyses_by_name->{'HMMer_classifyPantherScore'}->{'-hive_capacity'} = '2000';
-
-    $analyses_by_name->{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
-    $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_job';
+    $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_6_hour_job';
+    $analyses_by_name->{'get_species_set'}->{'-parameters'}->{'polyploid_genomes'} = 0;
 }
 
 

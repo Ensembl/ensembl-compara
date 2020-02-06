@@ -15,6 +15,12 @@
 
   </collections> -->
 
+  <!-- Rice species tree including nearest grass relative -->
+  <collection name="rice-with-outgroup">
+    <taxonomic_group taxon_name="Oryza"/>
+    <genome name="leersia_perrieri"/>
+  </collection>
+
   <pairwise_alignments>
 
     <!-- First, our top 3 species, which are references for all land plants -->
@@ -26,7 +32,7 @@
     <one_vs_all method="LASTZ_NET" ref_genome="medicago_truncatula" against="fabids"/>
     <one_vs_all method="LASTZ_NET" ref_genome="brachypodium_distachyon" against="Triticeae"/>
     <one_vs_all method="LASTZ_NET" ref_genome="solanum_lycopersicum" against="asterids"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="theobroma_cacao" against="malvids"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="theobroma_cacao_criollo" against="malvids"/>
 
     <!-- Rice all v all -->
     <all_vs_all method="LASTZ_NET">
@@ -53,6 +59,23 @@
     </all_vs_all>
 
   </pairwise_alignments>
+
+  <multiple_alignments>
+    <!-- Rice -->
+    <multiple_alignment method="EPO">
+      <species_set name="rice">
+        <taxonomic_group taxon_name="Oryza" only_good_for_alignment="1"/>
+        <genome name="oryza_brachyantha" exclude="1"/>
+        <genome name="oryza_punctata" exclude="1"/>
+      </species_set>
+    </multiple_alignment>
+    <multiple_alignment method="EPO_LOW_COVERAGE">
+      <species_set name="rice">
+        <taxonomic_group taxon_name="Oryza"/>
+      </species_set>
+    </multiple_alignment>
+
+  </multiple_alignments>
 
   <self_alignments>
     <genome name="triticum_aestivum"/>

@@ -148,6 +148,8 @@ sub default_options {
         'calculate_goc_distribution' => 1,
 
     # Extra analyses
+        # compute dNdS for homologies?
+        'do_dnds'                => 1,
         # Do we want the Gene QC part to run ?
         'do_gene_qc'             => 0,
         # Do we extract overall statistics for each pair of species ?
@@ -171,8 +173,8 @@ sub tweak_analyses {
     ## Here we bump the resource class of some commonly MEMLIMIT failing analyses.
     $analyses_by_name->{'mcoffee'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'mcoffee_himem'}->{'-rc_name'} = '32Gb_job';
-    $analyses_by_name->{'mafft'}->{'-rc_name'} = '8Gb_job';
-    $analyses_by_name->{'mafft_himem'}->{'-rc_name'} = '32Gb_job';
+    $analyses_by_name->{'mafft'}->{'-rc_name'} = '8Gb_2c_job';
+    $analyses_by_name->{'mafft_himem'}->{'-rc_name'} = '32Gb_4c_job';
     $analyses_by_name->{'treebest'}->{'-rc_name'} = '4Gb_job';
     $analyses_by_name->{'ortho_tree_himem'}->{'-rc_name'} = '4Gb_job';
     $analyses_by_name->{'members_against_allspecies_factory'}->{'-rc_name'} = '2Gb_job';

@@ -173,7 +173,7 @@ sub run {
     print "ini_root: ", $supertree->root, "\n";
     print "tree_root: ", $tree->root, "\n";
 
-    $self->do_quicktree_loop($supertree->root);
+    $self->do_quicktree_loop($supertree);
     print_supertree($supertree->root, "");
 }
 
@@ -252,20 +252,20 @@ sub post_cleanup {
 
 sub do_quicktree_loop {
     my $self = shift;
-    my $supertree_root = shift;
+    my $supertree = shift;
     
     # create map for genome_db_id => species_tree_nodes
-    my $stn_map = $supertree_root->species_tree->get_genome_db_id_2_node_hash;
+    my $stn_map = $supertree->species_tree->get_genome_db_id_2_node_hash;
     
     # generate alignment file
-    my $input_aln_species = $self->dumpTreeMultipleAlignmentToWorkdir($supertree_root->children->[0]->get_AlignedMemberSet(), 'stockholm', {-APPEND_SPECIES_TREE_NODE_ID => $stn_map});
+    my $input_aln_species = $self->dumpTreeMultipleAlignmentToWorkdir($supertree->root->children->[0]->get_AlignedMemberSet(), 'stockholm', {-APPEND_SPECIES_TREE_NODE_ID => $stn_map});
     my $quicktree_newick_string = $self->run_quicktreebreak($input_aln_species);
     my $treebest_rooted_string = $self->run_treebest_sdi($quicktree_newick_string, 1);
     my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($treebest_rooted_string);
         
     # loop over trees/subtrees until they abide by the treebreak_gene_count size threshold
     my @todo = ();
-    push @todo, [$newtree, $supertree_root];
+    push @todo, [$newtree, $supertree->root];
     while (scalar(@todo)) {
         my $args = shift @todo;
         my $res = $self->generate_subtrees(@$args);
@@ -277,7 +277,7 @@ sub do_quicktree_loop {
             }
         }
     }
-    $self->rec_update_indexing($supertree_root);
+    $self->rec_update_indexing($supertree->root);
 }
 
 
@@ -369,6 +369,7 @@ sub generate_subtrees {
         }
         # Broke down to half, happy with it
         print STDERR "QuickTreeBreak iterate -- $max_num_leaves (goal: $half_count)\n"; # if ($self->debug);
+        die "Tree is empty - cannot break" if $max_num_leaves == 0;
         if ($max_num_leaves <= $half_count) {
             $keep_breaking = 0;
         }
@@ -392,7 +393,8 @@ sub generate_subtrees {
 
     my %in_cluster1;
     foreach my $leaf (@{$max_subtree->get_all_leaves}) {
-        $in_cluster1{$leaf->name} = 1;
+        my ($leaf_seq_member_id, $leaf_species_tree_node_id) = split('_', $leaf->name);
+        $in_cluster1{$leaf_seq_member_id} = 1;
     }
 
     foreach my $leaf (@{$members}) {

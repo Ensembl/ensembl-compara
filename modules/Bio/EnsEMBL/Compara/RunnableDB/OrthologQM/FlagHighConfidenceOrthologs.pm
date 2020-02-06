@@ -96,7 +96,7 @@ sub write_output {
 
     my $mlss                = $self->param('mlss');
     my $range_label         = $self->param('range_label');
-    my $range_filter        = $self->param('range_filter')->{$range_label};
+    my $range_filter        = $self->param('range_filter') ? $self->param('range_filter')->{$range_label} : undef;
     my $conditions          = $self->param('conditions');
     my $external_conditions = $self->param('external_conditions');
     my $n_hom               = $self->param('num_homologies'),
@@ -108,8 +108,8 @@ sub write_output {
     $self->run_command( "mkdir -p " . dirname($output_file)) unless -e dirname($output_file);
 
     my ( $wga_coverage, $goc_scores );
-    $wga_coverage = $self->_parse_flatfile_into_hash($wga_file, $range_filter) if $wga_file;
-    $goc_scores   = $self->_parse_flatfile_into_hash($goc_file, $range_filter) if $goc_file;
+    $wga_coverage = $self->_parse_flatfile_into_hash($wga_file, $range_filter) if $wga_file && -e $wga_file;;
+    $goc_scores   = $self->_parse_flatfile_into_hash($goc_file, $range_filter) if $goc_file && -e $goc_file;
 
     open(my $hfh, '<', $homology_file) or die "Cannot open $homology_file for reading";
     open(my $ofh, '>', $output_file  ) or die "Cannot open $output_file for writing";
@@ -129,7 +129,7 @@ sub write_output {
         }
 
         # decide if homology is high confidence
-        my $is_high_conf = ($perc_id_1 >= $conditions->{perc_id} && $perc_id_2 >= $conditions->{perc_id});
+        my $is_high_conf = ($perc_id_1 >= $conditions->{perc_id} && $perc_id_2 >= $conditions->{perc_id}) ? 1 : 0;
 
         if ( %$external_conditions ) {
             my ($goc_pass, $wga_pass);
@@ -139,7 +139,7 @@ sub write_output {
             if ( $is_high_conf && $external_conditions->{wga_coverage} ) {
                 $wga_pass = 1 if (defined $wga_coverage->{$homology_id}) && ($wga_coverage->{$homology_id} >= $external_conditions->{wga_coverage});
             }
-            $is_high_conf = ($goc_pass || $wga_pass);
+            $is_high_conf = ($goc_pass || $wga_pass) ? 1 : 0;
         } elsif ( $is_high_conf ) {
             $is_high_conf = $is_tree_compliant;
         }

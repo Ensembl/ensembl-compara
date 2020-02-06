@@ -24,8 +24,8 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Pre-release+checks#Pre-releasechecks-CheckthespaceontheMySQLservers",
-            "summary": "Make some space on the Compara MySQL servers"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Pre-release+checks#Pre-releasechecks-MakesomespaceontheMySQLservers",
+            "summary": "Make some space on the MySQL servers"
          },
          {
             "assignee": "<RelCo>",

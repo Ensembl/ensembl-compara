@@ -58,12 +58,10 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'division'      => 'plants',
-        'collection'    => $self->o('division'),
         'member_type'   => 'protein',
+        'species_set_name' => 'collection-plants',
 
         'homology_method_link_types' => ['ENSEMBL_ORTHOLOGUES', 'ENSEMBL_HOMOEOLOGUES'],
-
-        'species_set_name' => 'collection-' . $self->o('collection'),
     };
 }
 

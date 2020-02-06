@@ -801,7 +801,7 @@ sub print {
   my $level = shift;
   my $reference_genomic_align = shift;
   if (!$level) {
-    print STDERR $self->newick_format(), "\n";
+    print $self->newick_format('ryo', '%{n}'), "\n";
     $reference_genomic_align = ($self->reference_genomic_align or "");
   }
   $level++;
@@ -809,9 +809,9 @@ sub print {
   if (grep {$_ eq $reference_genomic_align} @{$self->get_all_genomic_aligns_for_node}) {
     $mark = "* ";
   }
-  print STDERR "  " x $level, $mark,
+  print "  " x $level, $mark,
       "[", $self->node_id, "/", ($self->original_strand?"+":"-"), "] ",
-      $self->genomic_align_group ? (
+      $self->genomic_align_group && $self->genomic_align_group->dnafrag ? (
       $self->genomic_align_group->genome_db->name,":",
       $self->genomic_align_group->dnafrag->name,":",
       $self->genomic_align_group->dnafrag_start,":",

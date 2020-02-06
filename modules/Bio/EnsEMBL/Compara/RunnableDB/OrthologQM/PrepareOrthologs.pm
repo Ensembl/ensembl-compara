@@ -82,7 +82,7 @@ sub fetch_input {
         push @current_homologs, $row;
     }
 
-    if ( defined $self->param('previous_wga_file') ){ # reuse is on
+    if ( -e $self->param('previous_wga_file') ){ # reuse is on
         my $nonreuse_homologs = $self->_nonreusable_homologies( \@current_homologs );
         my $num_nonreuse = scalar @$nonreuse_homologs;
         my $num_homologs = scalar @current_homologs;

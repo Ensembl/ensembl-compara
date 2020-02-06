@@ -70,7 +70,7 @@
       "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Intentions+for+release+<version>",
       "subtasks": [{
             "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::Families_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/Families_conf.pm]",
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Families_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Families_conf.pm]",
             "summary": "Run the Family pipeline",
             "name_on_graph": "Families"
          },
@@ -124,25 +124,31 @@
          },
          {
             "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {lastz_complete} to 1 when relevant LASTZs are ready",
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Mammal EPOwith2x pipeline",
             "name_on_graph": "EPOwith2x:Mammals"
          },
          {
             "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {lastz_complete} to 1 when relevant LASTZs are ready",
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Primates EPOwith2x pipeline",
             "name_on_graph": "EPOwith2x:Primates"
          },
          {
             "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {lastz_complete} to 1 when relevant LASTZs are ready",
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "summary": "Run the Pigs EPOwith2x pipeline",
+            "name_on_graph": "EPOwith2x:Pigs"
+         },
+         {
+            "component": "Production tasks",
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Fish EPOwith2x pipeline",
             "name_on_graph": "EPOwith2x:Fish"
          },
          {
             "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {lastz_complete} to 1 when relevant LASTZs are ready",
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Sauropsids EPOwith2x pipeline",
             "name_on_graph": "EPOwith2x:Sauropsids"
          },

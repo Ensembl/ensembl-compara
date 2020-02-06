@@ -53,7 +53,6 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'division'        => 'vertebrates',
-        'collection'      => 'default',  # The name of the clusterset_id in which to find the trees
     };
 }
 

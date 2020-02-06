@@ -15,24 +15,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::Synteny::UpdateMlssTag
-
-=cut
-
-=head1 SYNOPSIS
 
 =cut
 
@@ -47,17 +32,23 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift;
 
+    $self->param_required('curr_release');
     $self->param_required('synteny_mlss_id');
     $self->param('master_dba', $self->get_cached_compara_dba('master_db'));
     # Trick to elevate the privileges on this session only
     $self->elevate_privileges($self->param('master_dba')->dbc);
 }
 
+
 sub run {
     my $self = shift;
 
+    my $synteny_mlss_id = $self->param('synteny_mlss_id');
+    my $synteny_mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor()->fetch_by_dbID($synteny_mlss_id);
+    my $tag = 'rerun_in_' . $self->param('curr_release');
+    return if $synteny_mlss->get_value_for_tag($tag);
+
     my ($source_mlss_id, $source_mlss_id_name);
-    # foreach my $s (qw(alignment_mlss_id orthologue_mlss_id)) {
     foreach my $s (qw(pairwise_mlss_id orthologue_mlss_id)) {
         if ($source_mlss_id = $self->param($s)) {
             $source_mlss_id_name = $s;

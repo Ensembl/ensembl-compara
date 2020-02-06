@@ -1,6 +1,6 @@
 
 // fetch ticket status from REST API
-var endpoint_ticket_list = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/search/?jql=project=ENSCOMPARASW+AND+(description~"cp__SERVER__"+OR+description~"prod-__SERVER__")+AND+status="In+progress"+ORDER+BY+created+ASC,id+ASC&maxResults=500';
+var endpoint_ticket_list = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/search/?jql=project=ENSCOMPARASW+AND+(description~"cp__SERVER__"+OR+description~"cp__SERVER__-w"+OR+description~"prod-__SERVER__"+OR+description~"prod-__SERVER__-ensadmin")+AND+status="In+progress"+ORDER+BY+created+ASC,id+ASC&maxResults=500';
 var endpoint_ticket_query = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/issue';
 var url_jira_issue = 'https://www.ebi.ac.uk/panda/jira/browse/';
 

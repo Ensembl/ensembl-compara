@@ -30,6 +30,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::ReuseWGAScore;
 use strict;
 use warnings;
 use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
+use File::Basename qw/dirname/;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

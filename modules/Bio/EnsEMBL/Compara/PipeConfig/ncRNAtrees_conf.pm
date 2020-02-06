@@ -665,6 +665,7 @@ sub core_pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak',
                 -parameters => {
                                 'quicktree_exe'     => $self->o('quicktree_exe'),
+                                'treebest_exe'      => $self->o('treebest_exe'),
                                 'tags_to_copy'      => $self->o('treebreak_tags_to_copy'),
                                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
                                },
@@ -1214,7 +1215,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'copy_dumps_to_shared_loc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'         => 'become #shared_user# /bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rt #homology_dumps_dir#/ #homology_dumps_shared_dir#"',
+                'cmd'         => 'become #shared_user# /bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtp #homology_dumps_dir#/ #homology_dumps_shared_dir#"',
                 'shared_user' => $self->o('shared_user'),
             },
         },

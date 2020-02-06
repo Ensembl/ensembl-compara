@@ -399,7 +399,7 @@ sub format_newick {
   my $newick = $self->_internal_format_newick($tree);
   return $newick if $newick =~ /^\(/;
   # account for cases where input tree is a single node
-  return '(' . $tree->node_name . ")$newick";
+  return '(' . $tree->name . ")$newick";
 }
 
 sub _internal_format_newick {
