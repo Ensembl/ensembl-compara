@@ -628,8 +628,10 @@ sub _expand_database_templates {
         $tree->{'databases'}{'DATABASE_'.$_} = $db_name;
       }
       else {
-        print STDERR "\t  [WARN] CORE DATABASE NOT FOUND - looking for '$db_name'\n" if $_ eq 'CORE';
-        $self->_info_line('Databases', "-- database $db_name not available") if $SiteDefs::ENSEMBL_WARN_DATABASES;
+        unless ($filename eq 'MULTI' && $SiteDefs::NO_COMPARA) {
+          print STDERR "\t  [WARN] CORE DATABASE NOT FOUND - looking for '$db_name'\n" if $_ eq 'CORE';
+          $self->_info_line('Databases', "-- database $db_name not available") if $SiteDefs::ENSEMBL_WARN_DATABASES;
+        }
       }
     }
   }
