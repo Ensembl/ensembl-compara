@@ -65,7 +65,18 @@ sub content {
       # my @idxs = @{$hub->species_defs->ENSEMBL_SEARCH_IDXS};
 	
       # the first value is the search method/species ini term. The second value is the display label.
-      my @order_results = ( ['Gene', 'Gene or Gene Product' ], [ 'Marker', 'Genetic Marker'], [ 'OligoProbe', 'Array Probe Set' ], [ 'SNP', 'SNP'], [ 'Domain', 'InterPro Domain'], [ 'Family', 'Gene Family'], ['GenomicAlignment', 'Sequence Aligned to Genome, eg. EST or Protein' ], [ 'Sequence', 'Genomic Region, eg. Clone or Contig' ], [ 'QTL', 'QTL' ]  ); 
+      my @order_results = ( ['Gene', 'Gene or Gene Product' ], [ 'Marker', 'Genetic Marker']);
+      if ($hub->species_defs->databases->{'DATABASE_FUNCGEN'}) {
+        push @order_results,  [ 'OligoProbe', 'Array Probe Set' ];
+      }
+      if ($hub->species_defs->databases->{'DATABASE_VARIATION'}) {
+        push @order_results, [ 'SNP', 'Variants'];
+      }
+      push @order_results, [ 'Domain', 'InterPro Domain'];
+      if ($hub->species_defs->databases->{'COMPARA'}) {
+        push @order_results, [ 'Family', 'Gene Family'];
+      }
+      push @order_results, (['GenomicAlignment', 'Sequence Aligned to Genome, eg. EST or Protein' ], [ 'Sequence', 'Genomic Region, eg. Clone or Contig' ], [ 'QTL', 'QTL' ]); 
 
       foreach my $search_ref ( @order_results ) {
         my $search_index = $search_ref->[0];
