@@ -66,7 +66,7 @@ sub default_options {
         # gain/loss analysis ?
         'do_cafe'                => 0,
         # Do we want the Gene QC part to run ?
-        'do_gene_qc'                    => 0,
+        'do_gene_qc'             => 0,
     };
 }
 
