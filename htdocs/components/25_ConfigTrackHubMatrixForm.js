@@ -1147,6 +1147,24 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.displayMatrix();
     }
   },
+  
+  updateLHMenu: function() {
+    // update LH menu count
+    var panel = this;
+    var menuTotal = 0;
+    var matrixObj = this.multiDimFlag ? panel.localStoreObj.filterMatrix : panel.localStoreObj.matrix;
+    for (var column in matrixObj) {
+      if (column.match('_sep_') && matrixObj[column]['state']) {
+        if (this.multiDimFlag) {
+          menuTotal+=matrixObj[column]['state'].on
+        }
+        else {
+          (matrixObj[column]['state'] === 'track-on') && menuTotal++
+        };
+      }
+    }
+    $(panel.menuCountSpan).text(menuTotal);
+  },
 
   //Function to select filters and adding/removing them in the relevant panel
   selectBox: function(ele) {
@@ -1279,14 +1297,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
   setLocalStorage: function() {
     localStorage.setItem(this.localStorageKey, JSON.stringify(this.localStoreObj));
-    // update LH menu count
-    var panel = this;
-    var menuTotal = 0;
-    var matrix = panel.localStoreObj.filterMatrix;
-    for (var column in matrix) {
-      menuTotal += matrix[column]['state']['on'];
-    }
-    $(panel.menuCountSpan).text(menuTotal);
+    this.updateLHMenu();
   },
   getLocalStorage: function() {
     return JSON.parse(localStorage.getItem(this.localStorageKey)) || {};
@@ -1694,7 +1705,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
   createTooltipText: function(key, id) {
     if (key === undefined && id === undefined) return;
-
 
     if (this.elLk.filterMatrixObj[key] && this.elLk.filterMatrixObj[key][id]) {
       var shortLabel = this.elLk.filterMatrixObj[key][id].shortLabel ? this.elLk.filterMatrixObj[key][id].shortLabel : id;
@@ -2192,8 +2202,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     // enable helptips
     panel.elLk.breadcrumb.filter(".active").attr("id") === 'track-filter' && this.elLk.filterMatrix.find('.xContainer ._ht').helptip({position: {at: 'left+10 bottom+76'}});
     panel.elLk.breadcrumb.filter(".active").attr("id") === 'track-filter' && this.elLk.filterMatrix.find('.yContainer ._ht').helptip({position: {at: 'center bottom-15'}});
-
-
 
     this.updateFilterMatrixRHS();
 
@@ -2879,13 +2887,12 @@ return;
     $.each(panel.localStoreObj.filterMatrix[key].data, function(id, hash){
       var selected = hash.state === "on" ? "selected" : "";
       var shortLabel = panel.elLk.filterMatrixObj[key][id].shortLabel;
-      if(hash.show === 1) { 
+      if(hash.show === 1) {
         li_html += '<li data-track-id="' + id + '" class="_ht" title="'+ panel.createTooltipText(key,id) +'"><span class="fancy-checkbox '+selected+'" data-cell="'+key+'"></span><text>' + shortLabel + '</text></li>';
       }
     });
     ul.html(li_html);
     ul.parent().show();
-    ul.find('._ht').helptip({position: {at: 'center bottom-15'}});
   },
 
   cellClick: function(matrix) {
@@ -2979,6 +2986,7 @@ return;
       // Register filter matrix only when it is multi dimensional
       // panel.multiDimFlag && matrix === 'filter' && panel.registerFilterMatrixCellClickEvent();
       matrix === 'config' && new panel.dropDown(panel, boxRender);
+      $('.track-popup._filterMatrix').find('._ht').helptip({position: {at: 'center bottom-15'}});
     });
   },
 
