@@ -52,10 +52,6 @@ sub default_options {
         #'do_not_reuse_list' => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
         'do_not_reuse_list' => [ ],
 
-    # "Member" parameters:
-        # Only needed in e100
-        'fix_ncrna_members'         => 1,
-
     #load uniprot members for family pipeline
         'load_uniprot_members'      => 1,
 
