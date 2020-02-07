@@ -202,26 +202,7 @@ sub pipeline_analyses {
                 'biotype_filter'        => 'biotype_group IN ("coding","LRG")',
             },
             -analysis_capacity => 10,
-            # -flow_into         => WHEN('#name# eq "homo_sapiens"' => 'copy_freshest_dnafrags_from_master'),
         },
-
-        # !!! LRGs now loaded by LoadMembers pipeline !!!
-
-        # {   -logic_name    => 'copy_freshest_dnafrags_from_master',
-        #     -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-        #     -parameters    => {
-        #         'mode'          => 'insertignore',
-        #         'src_db_conn'   => '#master_db#',
-        #         'table'         => 'dnafrag',
-        #         'where'         => 'genome_db_id = #genome_db_id# AND coord_system_name = "lrg"',
-        #     },
-        #     -flow_into     => 'load_lrg_genes',
-        # },
-
-        # {   -logic_name => 'load_lrg_genes',
-        #     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadLRGs',
-        #     -rc_name    =>  '500Mb_job',
-        # },
 
         {   -logic_name         => 'hc_nonref_members',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::Families::SqlHealthChecks',
