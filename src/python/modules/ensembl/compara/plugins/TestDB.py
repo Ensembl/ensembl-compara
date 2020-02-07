@@ -154,10 +154,8 @@ class TestDBItem(pytest.Item):
         else:
             sql_query = "SELECT COUNT(*) as nrows FROM {} {}".format(self.table, sql_filter)
         # Get the number of rows for both databases
-        result = self.ref_db.execute(sql_query)
-        ref_data = pandas.DataFrame(result.fetchall(), columns=result.keys())
-        result = self.target_db.execute(sql_query)
-        target_data = pandas.DataFrame(result.fetchall(), columns=result.keys())
+        ref_data = pandas.read_sql_query(sql_query, self.ref_db.bind)
+        target_data = pandas.read_sql_query(sql_query, self.target_db.bind)
         # Check if the size of the returned tables are the same
         if ref_data.shape != target_data.shape:
             expected = ref_data.shape[0]
@@ -208,10 +206,8 @@ class TestDBItem(pytest.Item):
         # Compose the sql query from the given parameters
         sql_query = "SELECT `{}` FROM {} {}".format("`,`".join(columns), self.table, sql_filter)
         # Get the table content for the selected columns
-        result = self.ref_db.execute(sql_query)
-        ref_data = pandas.DataFrame(result.fetchall(), columns=result.keys())
-        result = self.target_db.execute(sql_query)
-        target_data = pandas.DataFrame(result.fetchall(), columns=result.keys())
+        ref_data = pandas.read_sql_query(sql_query, self.ref_db.bind)
+        target_data = pandas.read_sql_query(sql_query, self.target_db.bind)
         # Check if the size of the returned tables are the same
         # Note: although not necessary, this control provides a better error message
         if ref_data.shape != target_data.shape:
