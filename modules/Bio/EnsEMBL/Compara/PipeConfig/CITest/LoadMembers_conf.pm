@@ -51,9 +51,6 @@ sub default_options {
         #'do_not_reuse_list' => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
         'do_not_reuse_list' => [ ],
 
-        # "Member" parameters:
-        'fix_ncrna_members' => 1,  # Only needed in e100
-
         # Load non reference sequences and patches for fresh members
         'include_nonreference' => 0,
         'include_patches'      => 0,
