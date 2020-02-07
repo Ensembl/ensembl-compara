@@ -2,9 +2,9 @@
 <compara_db division="citest">
 
     <pairwise_alignments>
-      <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="saccharum_spontaneum" />
-      <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="triticum_dicoccoides" />
-      <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="triticum_urartu" />
+        <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="saccharum_spontaneum" />
+        <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="triticum_dicoccoides" />
+        <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="triticum_urartu" />
     </pairwise_alignments>
 
     <multiple_alignments>
