@@ -146,11 +146,11 @@ class TestDBItem(pytest.Item):
         # Compose the sql query from the given parameters
         sql_filter = self._get_sql_filter(filter_by)
         if group_by:
-            if isinstance(group_by, list):
-                group_by = ", ".join(group_by)
+            if isinstance(group_by, str):
+                group_by = [group_by]
             # ORDER BY to ensure that the results are always in the same order (for the same groups)
-            sql_query = "SELECT {0}, COUNT(*) as nrows FROM {1} {2} GROUP BY {0} ORDER BY {0}".format(
-                group_by, self.table, sql_filter)
+            sql_query = "SELECT `{0}`, COUNT(*) as nrows FROM {1} {2} GROUP BY `{0}` ORDER BY `{0}`".format(
+                "`,`".join(group_by), self.table, sql_filter)
         else:
             sql_query = "SELECT COUNT(*) as nrows FROM {} {}".format(self.table, sql_filter)
         # Get the number of rows for both databases
@@ -161,7 +161,7 @@ class TestDBItem(pytest.Item):
             expected = ref_data.shape[0]
             found = target_data.shape[0]
             # Note: the shape can only be different if group_by is given
-            message = "Different number of groups ({}) for table '{}'".format(group_by, self.table)
+            message = "Different number of groups ({}) for table '{}'".format(", ".join(group_by), self.table)
             raise FailedDBTestException(expected, found, sql_query, message)
         # Check if the number of rows (per group) are the same
         difference = abs(ref_data['nrows'] - target_data['nrows'])
