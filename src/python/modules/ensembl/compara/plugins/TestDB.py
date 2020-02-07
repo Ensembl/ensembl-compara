@@ -106,7 +106,7 @@ class TestDBItem(pytest.Item):
             style: Traceback print mode (``auto``/``long``/``short``/``line``/``native``/``no``).
 
         """
-        if isinstance(excinfo.value, TestDBException):
+        if isinstance(excinfo.value, FailedDBTestException):
             self.error_info['expected'] = excinfo.value.args[0]
             self.error_info['found'] = excinfo.value.args[1]
             self.error_info['query'] = excinfo.value.args[2].strip()
@@ -160,8 +160,8 @@ class TestDBItem(pytest.Item):
             filter_by: Filter rows by one or more conditions (joined by the AND operator).
 
         Raise:
-            TestDBException: If `group_by` is provided and the number of groups is different; or if the number
-                of rows differ for at least one group.
+            FailedDBTestException: If `group_by` is provided and the number of groups is different; or if the
+                number of rows differ for at least one group.
 
         """
         # Compose the sql query from the given parameters
@@ -185,7 +185,7 @@ class TestDBItem(pytest.Item):
             found = target_data.shape[0]
             # Note: the shape can only be different if group_by is given
             message = "Different number of groups ({}) for table '{}'".format(group_by, self.table)
-            raise TestDBException(expected, found, sql_query, message)
+            raise FailedDBTestException(expected, found, sql_query, message)
         # Check if the number of rows (per group) are the same
         difference = abs(ref_data['nrows'] - target_data['nrows'])
         allowed_variation = numpy.ceil(ref_data['nrows'] * variation)
@@ -197,7 +197,7 @@ class TestDBItem(pytest.Item):
             found = [] if found_data.empty else found_data.to_string(index=False).splitlines()
             message = ("The difference in number of rows for table '{}' exceeds the allowed variation "
                        "({})").format(self.table, variation)
-            raise TestDBException(expected, found, sql_query, message)
+            raise FailedDBTestException(expected, found, sql_query, message)
 
     def test_content(self, columns: Union[str, List] = None, filter_by: Union[str, List] = None) -> None:
         """Compares the content between reference and target tables.
@@ -213,7 +213,8 @@ class TestDBItem(pytest.Item):
             filter_by: Filter rows by one or more conditions (joined by the AND operator).
 
         Raise:
-            TestDBException: If the number of rows differ; or if one or more rows have different content.
+            FailedDBTestException: If the number of rows differ; or if one or more rows have different
+                content.
 
         """
         sql_filter = self._get_sql_filter(filter_by)
@@ -238,7 +239,7 @@ class TestDBItem(pytest.Item):
             expected = ref_data.shape[0]
             found = target_data.shape[0]
             message = "Different number of rows in table '{}'".format(self.table)
-            raise TestDBException(expected, found, sql_query, message)
+            raise FailedDBTestException(expected, found, sql_query, message)
         # Compare the content of both dataframes, sorting them first to ensure they are comparable
         ref_data.sort_values(by=columns, inplace=True, kind='mergesort')
         target_data.sort_values(by=columns, inplace=True, kind='mergesort')
@@ -249,8 +250,8 @@ class TestDBItem(pytest.Item):
             found_data = target_data.loc[failing_rows]
             found = [] if found_data.empty else found_data.to_string(index=False).splitlines()
             message = "Table '{}' has different content for columns {}".format(self.table, ", ".join(columns))
-            raise TestDBException(expected, found, sql_query, message)
+            raise FailedDBTestException(expected, found, sql_query, message)
 
 
-class TestDBException(Exception):
+class FailedDBTestException(Exception):
     """Exception subclass created to handle test failures separatedly from unexpected exceptions."""
