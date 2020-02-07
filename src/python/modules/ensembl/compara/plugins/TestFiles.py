@@ -257,8 +257,15 @@ class TestFilesItem(pytest.Item):
         self.error_info = OrderedDict()  # type: OrderedDict
 
     def runtest(self) -> None:
-        """Execute the selected test function with the given arguments."""
+        """Execute the selected test function with the given arguments.
+
+        Raises:
+            SyntaxError: If the test function to call does not exist.
+
+        """
         test_method = 'test_' + self.name
+        if not hasattr(self, test_method):
+            raise SyntaxError("Test '{}' not found".format(self.name))
         getattr(self, test_method)(**self.args)
 
     def repr_failure(self, excinfo: ExceptionInfo, style: str = None
