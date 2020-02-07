@@ -85,6 +85,7 @@ sub default_options {
         'dump_dir'              => $self->o('work_dir') . '/dumps',
         'dump_pafs_dir'         => $self->o('dump_dir') . '/pafs',
         'examl_dir'             => $self->o('work_dir') . '/examl',
+        'tmp_dir'               => $self->o('work_dir') . '/tmp',
         'plots_dir'             => $self->o('work_dir') . '/plots', # Directory used to store plots and their input files
 
     # "Member" parameters:
@@ -386,7 +387,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
-        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'cluster_dir', 'dump_dir', 'dump_pafs_dir', 'examl_dir', 'fasta_dir', 'plots_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'cluster_dir', 'dump_dir', 'dump_pafs_dir', 'examl_dir', 'tmp_dir', 'fasta_dir', 'plots_dir']),
         $self->pipeline_create_commands_lfs_setstripe('fasta_dir'),
     ];
 }
@@ -1813,6 +1814,7 @@ sub core_pipeline_analyses {
                 'mafft_exe'                  => $self->o('mafft_exe'),
                 'mafft_threads'              => 8,
                 'mafft_mode'                 => '--retree 1 --memsavetree --memsave',
+                'tmp_dir'                    => $self->o('tmp_dir'),
             },
             -hive_capacity        => $self->o('mafft_himem_capacity'),
             -rc_name    => '16Gb_8c_job',
@@ -1828,6 +1830,7 @@ sub core_pipeline_analyses {
                 'mafft_exe'     => $self->o('mafft_exe'),
                 'mafft_threads' => 16,
                 'mafft_mode'    => '--retree 1 --memsavetree --memsave',
+                'tmp_dir'       => $self->o('tmp_dir'),
             },
             -hive_capacity => $self->o('mafft_himem_capacity'),
             -rc_name       => '128Gb_16c_job',
