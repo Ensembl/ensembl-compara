@@ -49,6 +49,7 @@ sub render {
     my $info    = {
         'dir'         => $sp,
         'common'      => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'),
+        'image'       => $species_defs->get_config($sp, 'SPECIES_IMAGE'),
         'status'      => 'live',
         'sci_name'    => $species_defs->get_config($sp, 'SPECIES_SCIENTIFIC_NAME'),
         'assembly'    => $species_defs->get_config($sp, 'ASSEMBLY_NAME'),
