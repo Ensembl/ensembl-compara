@@ -146,7 +146,7 @@ class TestDBItem(pytest.Item):
         # Compose the sql query from the given parameters
         sql_filter = self._get_sql_filter(filter_by)
         if group_by:
-            if (group_by is None) or isinstance(group_by, list):
+            if isinstance(group_by, list):
                 group_by = ", ".join(group_by)
             # ORDER BY to ensure that the results are always in the same order (for the same groups)
             sql_query = "SELECT {0}, COUNT(*) as nrows FROM {1} {2} GROUP BY {0} ORDER BY {0}".format(
