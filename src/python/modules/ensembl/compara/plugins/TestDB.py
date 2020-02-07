@@ -20,7 +20,6 @@ pipeline. The main class, TestDBItem, has been designed and implemented to be us
 """
 
 from collections import OrderedDict
-import re
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy
@@ -29,29 +28,9 @@ import py
 import pytest
 from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionInfo
 from _pytest.fixtures import FixtureLookupErrorRepr
-import sqlalchemy
+from sqlalchemy import text
 
-
-class DBConn(sqlalchemy.schema.MetaData):
-    """Database connection that holds the collection of Table objects and their associated schema.
-
-    Args:
-        url: URL to the database, e.g. "mysql://ensro@mysql-ens-compara-prod-8:4618/my_db".
-
-    """
-    def __init__(self, url: str) -> None:
-        # Automatically create the database connection and load all tables
-        super().__init__(bind=url)
-        self.reflect()
-
-    def execute(self, query: str) -> sqlalchemy.engine.ResultProxy:
-        """Returns the result of executing the given SQL query against the database.
-
-        Args:
-            query: SQL query.
-
-        """
-        return self.bind.execute(query)
+from ensembl.compara.db.DBConnection import DBConnection
 
 
 class TestDBItem(pytest.Item):
@@ -73,8 +52,8 @@ class TestDBItem(pytest.Item):
         error_info (OrderedDict): Additional information provided when a test fails.
 
     """
-    def __init__(self, name: str, parent: pytest.Item, ref_db: DBConn, target_db: DBConn, table: str,
-                 args: Dict) -> None:
+    def __init__(self, name: str, parent: pytest.Item, ref_db: DBConnection, target_db: DBConnection,
+                 table: str, args: Dict) -> None:
         super().__init__(name, parent)
         self.ref_db = ref_db
         self.target_db = target_db

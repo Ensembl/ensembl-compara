@@ -29,6 +29,7 @@ import pytest
 from _pytest.config.argparsing import Parser
 from _pytest.runner import TestReport
 
+from ensembl.compara.db.DBConnection import DBConnection
 from ensembl.compara.plugins import TestDB, TestFiles
 
 
@@ -134,8 +135,8 @@ class JsonFile(pytest.File):
             assert ref_url, "Required argument '--ref-db' or 'reference_db' key in JSON file"
             target_url = self.config.getoption('target_db', raw.get('target_db', ''), True)
             assert target_url, "Required argument '--target-db' or 'target_db' key in JSON file"
-            ref_db = TestDB.DBConn(ref_url)
-            target_db = TestDB.DBConn(target_url)
+            ref_db = DBConnection(ref_url)
+            target_db = DBConnection(target_url)
             for table, test_list in raw['database_tests'].items():
                 for test in test_list:
                     # Ensure required keys are present in every test
