@@ -816,31 +816,6 @@ sub _parse {
       my $scientific_name = $config_packer->tree->{'SPECIES_SCIENTIFIC_NAME'};
       my $common_name = $config_packer->tree->{'SPECIES_DB_COMMON_NAME'};
 
-      ## Assign an image to this species
-      my $no_image = 1;
-      my $image_dir = $SiteDefs::SPECIES_IMAGE_DIR;
-      if ($image_dir) {
-        ## This site has individual species images for all/most species
-        ## So check if it exists
-        my $image_path = $image_dir.'/'.$species_key.'.png';
-        if (-e $image_path) {
-          $tree->{$species}{'SPECIES_IMAGE'} = $species_key;
-          $no_image = 0;
-        }
-        elsif ($config_packer->tree->{'SPECIES_STRAIN'}) {
-          ## Use the parent image for this strain
-          (my $image_name = $scientific_name) =~ s/ /_/g;
-          $image_path = $image_dir.'/'.$image_name.'.png';
-          if (-e $image_path) {
-            $tree->{$species}{'SPECIES_IMAGE'} = $image_name;
-            $no_image = 0;
-          }
-        }
-      }
-      if ($no_image) {
-        my $labels                         = $config_packer->tree->{'TAXON_LABEL'};  
-        $tree->{$species}{'SPECIES_IMAGE'} = $labels->{$config_packer->tree->{'SPECIES_GROUP'}};
-      }
 
       # Populate taxonomy division using e_divisions.json template
       push @{$species_to_assembly->{$common_name}}, $config_packer->tree->{'ASSEMBLY_VERSION'};
@@ -927,6 +902,7 @@ sub _parse {
   ## Final munging
   my $datasets = [];
   my $aliases  = $tree->{'MULTI'}{'ENSEMBL_SPECIES_URL_MAP'};
+  my $labels    = $tree->{'MULTI'}{'TAXON_LABEL'};  
   foreach my $prodname (@$SiteDefs::PRODUCTION_NAMES) {
     my $url = $tree->{$prodname}{'SPECIES_URL'};
     if ($url) {
@@ -941,9 +917,44 @@ sub _parse {
         delete $tree->{$prodname};
       }
       push @$datasets, $url;
+    
+      ## Assign an image to this species
+      my $image_dir = $SiteDefs::SPECIES_IMAGE_DIR;
+      my $no_image  = 1;
+      if ($image_dir) {
+        ## This site has individual species images for all/most species
+        ## So check if it exists
+        my $image_path = $image_dir.'/'.$url.'.png';
+        if (-e $image_path) {
+          $tree->{$url}{'SPECIES_IMAGE'} = $url;
+          $no_image = 0;
+        }
+        elsif ($tree->{$url}{'SPECIES_STRAIN'}) {
+          ## Look for a strain image (needed for pig)
+          my $parent_image = ucfirst($tree->{$url}{'STRAIN_GROUP'});
+          my $strain_image = $parent_image.'_'.$tree->{$url}{'STRAIN_TYPE'};
+          $image_path =  $image_dir.'/'.$strain_image.'.png';
+          if (-e $image_path) {
+            $tree->{$url}{'SPECIES_IMAGE'} = $strain_image;
+            $no_image = 0;
+          }
+          else {
+            ## Use the parent image for this strain
+            $image_path = $image_dir.'/'.$parent_image.'.png';
+            if (-e $image_path) {
+              $tree->{$url}{'SPECIES_IMAGE'} = $parent_image;
+              $no_image = 0;
+            }
+          }
+        }
+      }
+      if ($no_image) {
+        my $clade = $tree->{$url}{'SPECIES_GROUP'};
+        $tree->{$url}{'SPECIES_IMAGE'} = $labels->{$clade};
+      }
     }
     else {
-      warn ">>> SPECIES $prodname has no URL defined";
+      warn "!!! SPECIES $prodname has no URL defined";
     }
   } 
   $tree->{'MULTI'}{'ENSEMBL_DATASETS'} = $datasets;
