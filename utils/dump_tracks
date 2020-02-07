@@ -55,12 +55,14 @@ foreach my $sp (@species) {
   ## Create an imageconfig object
   my $conf = EnsEMBL::Web::ImageConfig::locationfake->new($hub, $sp, 'Location');
   $conf->load_tracks;
- 
-  my $path = $dir.'/'.$sp.'.tsv'; 
+
+  my $assembly = $hub->species_defs->get_config($sp, 'ASSEMBLY_VERSION'); 
+  my $path = $dir.'/'.$sp.'_'.$assembly.'.tsv'; 
+
   print "Outputting track data for $sp to $path\n";
   open(my $fh, '>', $path) or die "Could not open file '$path' $!";
 
-  my $content = dump_tracks($conf, $sp, $hub->species_defs->ASSEMBLY_NAME);
+  my $content = dump_tracks($conf, $sp, $assembly);
   print $fh $content;
   close $fh;
 }
