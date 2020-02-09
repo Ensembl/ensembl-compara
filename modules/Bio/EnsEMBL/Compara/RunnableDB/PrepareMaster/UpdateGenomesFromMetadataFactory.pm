@@ -182,7 +182,7 @@ sub write_output {
 
     $self->_spurt(
         $self->param_required('annotation_file'),
-        join("\n", @{$self->param('genomes_with_updated_annotation')}),
+        join("\n", @{$self->param('genomes_to_update')}, @{$self->param('genomes_with_updated_annotation')}),
     );
 }
 
