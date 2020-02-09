@@ -52,6 +52,7 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'division'               => 'plants',
+        'assembly_patch_species' => [ 'homo_sapiens' ],
         'additional_species'     => {
             'vertebrates' => ['homo_sapiens', 'caenorhabditis_elegans', 'ciona_savignyi', 'drosophila_melanogaster', 'saccharomyces_cerevisiae'],
         },

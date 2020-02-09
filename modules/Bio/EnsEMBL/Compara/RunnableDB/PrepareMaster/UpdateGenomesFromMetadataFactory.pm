@@ -54,7 +54,7 @@ sub fetch_input {
 	my $genome_db_adaptor = $self->get_cached_compara_dba('master_db')->get_GenomeDBAdaptor;
 
 	# use metadata script to report genomes that need to be updated
-    my ($genomes_to_update, $renamed_genomes, $genomes_with_assembly_patches, $updated_annotations) = $self->fetch_genome_report($release, $division);
+    my ($genomes_to_update, $renamed_genomes, $updated_annotations) = $self->fetch_genome_report($release, $division);
 
     # prepare renaming SQL cmds
     my @rename_cmds;
@@ -95,10 +95,9 @@ sub fetch_input {
                 }
             }
             # check if they've been updated this release too
-            my ($updated_add_species, $renamed_add_species, $patched_add_species, $updated_gen_add_species) = $self->fetch_genome_report($release, $additional_div);
+            my ($updated_add_species, $renamed_add_species, $updated_gen_add_species) = $self->fetch_genome_report($release, $additional_div);
             foreach my $add_species_name ( @add_species_for_div ) {
                 push( @$genomes_to_update, $add_species_name ) if grep { $add_species_name eq $_ } @$updated_add_species;
-                push( @$genomes_with_assembly_patches, $add_species_name ) if grep { $add_species_name eq $_ } @$patched_add_species;
                 push( @$updated_annotations, $add_species_name ) if grep { $add_species_name eq $_ } @$updated_gen_add_species;
                 if (my $old_name = $renamed_add_species->{$add_species_name}) {
                     # We have the new name in the PipeConfig. Still need to update the database
@@ -119,9 +118,6 @@ sub fetch_input {
 
     print "GENOME_LIST!! ";
     print Dumper \@release_genomes;
-
-    print "GENOMES_WITH_ASSEMBLY_PATCHES!! ";
-    print Dumper $genomes_with_assembly_patches;
 
     print "GENOMES_WITH_UPDATED_ANNOTATION!! ";
     print Dumper $updated_annotations;
@@ -160,7 +156,6 @@ sub fetch_input {
     die "Percentage of genomes to retire seems too high ($perc_to_retire\%)" if $perc_to_retire >= 20;
 
     $self->param('genomes_to_update', $genomes_to_update);
-    $self->param('genomes_with_assembly_patches', $genomes_with_assembly_patches);
     $self->param('genomes_with_updated_annotation', $updated_annotations);
 	$self->param('genomes_to_retire', \@to_retire);
 }
@@ -176,9 +171,6 @@ sub write_output {
 
     my @rename_genomes_dataflow = map { {sql => [$_]} } @{ $self->param('rename_cmds') };
     $self->dataflow_output_id( \@rename_genomes_dataflow, 4 );
-
-    my @patched_genomes_dataflow = map { {species_name => $_} } @{ $self->param('genomes_with_assembly_patches') };
-    $self->dataflow_output_id( \@patched_genomes_dataflow, 5 );
 
     $self->_spurt(
         $self->param_required('annotation_file'),
@@ -208,28 +200,11 @@ sub fetch_genome_report {
     # print Dumper $decoded_meta_report;
 
     my @new_genomes = keys %{$decoded_meta_report->{new_genomes}};
+    my @updated_assemblies = keys %{$decoded_meta_report->{updated_assemblies}};
     my %renamed_genomes = map { $_->{name} => $_->{old_name} } values %{$decoded_meta_report->{renamed_genomes}};
     my @updated_annotations = map {$_->{name}} values %{$decoded_meta_report->{updated_annotations}};
 
-    my @genomes_with_assembly_patches;
-    my @updated_assemblies;
-    foreach my $genome (keys %{$decoded_meta_report->{updated_assemblies}}) {
-        my $genome_report = $decoded_meta_report->{updated_assemblies}->{$genome};
-        if ($genome_report->{old_assembly} eq $genome_report->{assembly}) {
-            if ($genome_report->{old_assembly} =~ /^GRC[a-z][0-9]+/) {
-                # GRC patch assembly update
-                push @genomes_with_assembly_patches, $genome;
-                next;
-            } else {
-                # Update of an assembly with the same name, this can be
-                # quite dangerous but we don't do anything here as it will
-                # be assessed when update_genome fails.
-            }
-        }
-        push @updated_assemblies, $genome;
-    }
-
-    return ([@new_genomes, @updated_assemblies], \%renamed_genomes, \@genomes_with_assembly_patches, \@updated_annotations);
+    return ([@new_genomes, @updated_assemblies], \%renamed_genomes, \@updated_annotations);
 }
 
 1;
