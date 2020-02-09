@@ -416,7 +416,7 @@ sub load_assembly_patches {
     my($suffix_separator) = rearrange([qw(SUFFIX_SEPARATOR)], @_);
     $suffix_separator = '__cut_here__' unless $suffix_separator;
 
-    die "Patches are only available for GRC species" unless $genome_db->assembly =~ /GRC/;
+    die "Patches are only available for GRC species" unless $genome_db->assembly =~ /^GRC/;
     my $find_patches_sql = "SELECT s.name, s.seq_region_id, a.value FROM seq_region s JOIN seq_region_attrib a USING(seq_region_id) JOIN attrib_type t USING(attrib_type_id) WHERE t.code IN ('patch_fix', 'patch_novel')";
 
     my $species_db = $genome_db->db_adaptor;
