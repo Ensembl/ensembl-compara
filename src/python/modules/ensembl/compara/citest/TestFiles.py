@@ -56,11 +56,11 @@ class DirCmp:
         assert os.path.exists(target_path), "Target path '{}' not found".format(target_path)
         # Get the directory trees for the given reference and target paths
         self.ref_path = os.path.abspath(ref_path)
-        self._ref_tree_only = self._get_dir_cmp(self.ref_path)
+        self._ref_tree_only = self._get_dir_tree(self.ref_path)
         if os.path.isfile(self.ref_path):
             self.ref_path = os.path.dirname(self.ref_path)
         self.target_path = os.path.abspath(target_path)
-        self._target_tree_only = self._get_dir_cmp(self.target_path)
+        self._target_tree_only = self._get_dir_tree(self.target_path)
         if os.path.isfile(self.target_path):
             self.target_path = os.path.dirname(self.target_path)
         self.common_tree = copy.deepcopy(self.ref_only)
@@ -94,7 +94,7 @@ class DirCmp:
         cmp_trees(self._ref_tree_only, self._target_tree_only, self.common_tree)
 
     @staticmethod
-    def _get_dir_cmp(path: str) -> Dict:
+    def _get_dir_tree(path: str) -> Dict:
         """Returns the directory tree rooted at the given path.
 
         Note:
