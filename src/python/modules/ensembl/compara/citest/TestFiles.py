@@ -19,23 +19,18 @@ pipeline. The main class, TestFilesItem, has been designed and implemented to be
 
 """
 
-from collections import OrderedDict
 import copy
 import filecmp
 from functools import reduce
 import operator
 import os
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Union
 
-import pandas
-import py
 import pytest
 from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionInfo
 from _pytest.fixtures import FixtureLookupErrorRepr
 
-
-# Allow displaying paths up to 100 characters before truncating them with an ellipsis
-pandas.set_option('max_colwidth', 100)
+from ensembl.compara.citest.CITest import CITestItem
 
 
 class DirCmp:
@@ -234,7 +229,7 @@ class DirCmp:
         return [os.path.join(path, rel_path) for rel_path in tree_files]
 
 
-class TestFilesItem(pytest.Item):
+class TestFilesItem(CITestItem):
     """Generic tests to compare two (analogous) Ensembl Compara files (or directories).
 
     Args:
@@ -245,27 +240,11 @@ class TestFilesItem(pytest.Item):
 
     Attributes:
         dir_cmp (DirCmp): Directory comparison object to run the test against.
-        args (Dict): Arguments to pass to the test call.
-        error_info (OrderedDict): Additional information provided when a test fails.
 
     """
     def __init__(self, name: str, parent: pytest.Item, dir_cmp: DirCmp, args: Dict) -> None:
-        super().__init__(name, parent)
+        super().__init__(name, parent, args)
         self.dir_cmp = dir_cmp
-        self.args = args
-        self.error_info = OrderedDict()  # type: OrderedDict
-
-    def runtest(self) -> None:
-        """Execute the selected test function with the given arguments.
-
-        Raises:
-            SyntaxError: If the test function to call does not exist.
-
-        """
-        test_method = 'test_' + self.name
-        if not hasattr(self, test_method):
-            raise SyntaxError("Test '{}' not found".format(self.name))
-        getattr(self, test_method)(**self.args)
 
     def repr_failure(self, excinfo: ExceptionInfo, style: str = None
                     ) -> Union[str, ReprExceptionInfo, ExceptionChainRepr, FixtureLookupErrorRepr]:
@@ -288,9 +267,9 @@ class TestFilesItem(pytest.Item):
             return "Reference and target directory trees are not the same\n"
         return super().repr_failure(excinfo, style)
 
-    def reportinfo(self) -> Tuple[Union[py.path.local, str], Optional[int], str]:
-        """Returns the location, the exit status and the header of the report section."""
-        return self.fspath, None, "File test: {}".format(self.name)
+    def get_report_header(self) -> str:
+        """Returns the header to display in the error report."""
+        return "File test: {}".format(self.name)
 
     def test_size(self, variation: float = 0.0, paths: Union[str, List] = None) -> None:
         """Compares the size (in bytes) between reference and target files.

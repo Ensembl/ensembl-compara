@@ -19,20 +19,19 @@ pipeline. The main class, TestDBItem, has been designed and implemented to be us
 
 """
 
-from collections import OrderedDict
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Union
 
 import pandas
-import py
 import pytest
 from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionInfo
 from _pytest.fixtures import FixtureLookupErrorRepr
 from sqlalchemy import text
 
+from ensembl.compara.citest.CITest import CITestItem
 from ensembl.compara.db.DBConnection import DBConnection
 
 
-class TestDBItem(pytest.Item):
+class TestDBItem(CITestItem):
     """Generic tests to compare a table in two (analogous) Ensembl Compara MySQL databases.
 
     Args:
@@ -47,30 +46,14 @@ class TestDBItem(pytest.Item):
         ref_db (DBConn): Database connectivity and features of the reference database.
         target_db (DBConn): Database connectivity and features of the target database.
         table (str): Table to be tested.
-        args (Dict): Arguments to pass to the test call.
-        error_info (OrderedDict): Additional information provided when a test fails.
 
     """
     def __init__(self, name: str, parent: pytest.Item, ref_db: DBConnection, target_db: DBConnection,
                  table: str, args: Dict) -> None:
-        super().__init__(name, parent)
+        super().__init__(name, parent, args)
         self.ref_db = ref_db
         self.target_db = target_db
         self.table = table
-        self.args = args
-        self.error_info = OrderedDict()  # type: OrderedDict
-
-    def runtest(self) -> None:
-        """Execute the selected test function with the given arguments.
-
-        Raises:
-            SyntaxError: If the test function to call does not exist.
-
-        """
-        test_method = 'test_' + self.name
-        if not hasattr(self, test_method):
-            raise SyntaxError("Test '{}' not found".format(self.name))
-        getattr(self, test_method)(**self.args)
 
     def repr_failure(self, excinfo: ExceptionInfo, style: str = None
                     ) -> Union[str, ReprExceptionInfo, ExceptionChainRepr, FixtureLookupErrorRepr]:
@@ -91,9 +74,9 @@ class TestDBItem(pytest.Item):
             return excinfo.value.args[3] + "\n"
         return super().repr_failure(excinfo, style)
 
-    def reportinfo(self) -> Tuple[Union[py.path.local, str], Optional[int], str]:
-        """Returns the location, the exit status and the header of the report section."""
-        return self.fspath, None, "Database table: {}, test: {}".format(self.table, self.name)
+    def get_report_header(self) -> str:
+        """Returns the header to display in the error report."""
+        return "Database table: {}, test: {}".format(self.table, self.name)
 
     @staticmethod
     def _get_sql_filter(filter_by: Union[str, List, None]) -> str:
