@@ -129,6 +129,11 @@ sub get_redirect_uri {
      return $uri =~ s/docs/genome/r;
  }
 
+  ## Broken links in old genebuild PDFs
+  if ($uri =~ /\/info\/docs\/genebuild\/genome_annotation.html/) {
+     return $uri =~ s/genome_annotation/index/r;
+ }
+
   ## For stable id URL (eg. /id/ENSG000000nnnnnn) or malformed Gene URL with g param
   if ($uri =~ m/^\/(id|loc)\/(.+)/i || ($uri =~ m|^/Gene\W| && $uri =~ /[\&\;\?]{1}(g)=([^\&\;]+)/)) {
     return stable_id_redirect_uri($1 eq 'loc' ? 'loc' : 'id', $2);

@@ -1530,7 +1530,7 @@ sub add_sequence_variations_meta {
 
     # get the node onto which we're going to add this item, then append it
 #    if ($menu_item->{'long_name'} =~ /^all/i || $menu_item->{'long_name'} =~ /^sequence variants/i) {
-    if ($menu_item->{'long_name'} =~ /^sequence variants/i) {
+    if ($menu_item->{'long_name'} =~ /^sequence variants/i && ref $self !~ /fake/) {
       ($menu_item->{'parent'} && $self->get_node($menu_item->{'parent'}) || $menu)->prepend($node) if $node;
     }
     else {
