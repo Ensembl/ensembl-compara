@@ -44,8 +44,6 @@ class DirCmp:
         ref_path (str): Reference's root path.
         target_path (str): Target's root path.
         common_tree (dict): Directory tree shared between reference and target paths.
-        ref_only (dict): Directory tree of directories/files only found in the reference.
-        target_only (dict): Directory tree of directories/files only found in the target.
 
     Raises:
         AssertionError: If reference or target paths do not exist.
@@ -63,7 +61,7 @@ class DirCmp:
         self._target_tree_only = self._get_dir_tree(self.target_path)
         if os.path.isfile(self.target_path):
             self.target_path = os.path.dirname(self.target_path)
-        self.common_tree = copy.deepcopy(self.ref_only)
+        self.common_tree = copy.deepcopy(self.get_ref_only())
         # Recursive nested function (closure) to compare reference and target trees and build the common one
         def cmp_trees(ref_node: Dict, target_node: Dict, common_node: Dict) -> None:
             """Compares reference and target trees, moving their shared structure to the common tree."""
@@ -190,8 +188,6 @@ class DirCmp:
         """
         return self._prune_tree(self._ref_tree_only, paths)
 
-    ref_only = property(get_ref_only)  # Read-only property
-
     def get_target_only(self, paths: Union[str, List] = None) -> Dict:
         """Returns the target-only directory tree that only includes the given paths.
 
@@ -200,8 +196,6 @@ class DirCmp:
 
         """
         return self._prune_tree(self._target_tree_only, paths)
-
-    target_only = property(get_target_only)  # Read-only property
 
     def apply_test(self, test_func: Callable, paths: Union[str, List] = None) -> List:
         """Returns the files in the common directory tree for which the test function returns False.
