@@ -24,7 +24,7 @@ import filecmp
 from functools import reduce
 import operator
 import os
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict, Iterator, List, Union
 
 import pytest
 from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionInfo
@@ -154,17 +154,17 @@ class DirCmp:
         return pruned_tree
 
     @staticmethod
-    def _eval_tree(root: Dict, test_func: Callable) -> List:
-        """Returns the files in the directory tree for which the test function returns False.
+    def _eval_tree(root: Dict, test_func: Callable) -> Iterator[str]:
+        """Yields each file in the directory tree for which the test function returns True.
 
         Args:
             test_func: Test function to apply to each file. It has to match the following interface::
+
                 def test_func(file: str) -> bool:
                     ...
 
         """
         nodes_left = [('', root)]
-        mismatches = []
         while nodes_left:
             rel_path, node = nodes_left.pop()
             for dirname, dir_content in node.items():
@@ -175,9 +175,8 @@ class DirCmp:
                     # Apply test_func() to each file
                     for filename in dir_content:
                         filepath = os.path.join(rel_path, filename)
-                        if not test_func(filepath):
-                            mismatches.append(filepath)
-        return mismatches
+                        if test_func(filepath):
+                            yield filepath
 
     def get_ref_only(self, paths: Union[str, List] = None) -> Dict:
         """Returns the reference-only directory tree that only includes the given paths.
@@ -198,16 +197,19 @@ class DirCmp:
         return self._prune_tree(self._target_tree_only, paths)
 
     def apply_test(self, test_func: Callable, paths: Union[str, List] = None) -> List:
-        """Returns the files in the common directory tree for which the test function returns False.
+        """Returns the files in the common directory tree for which the test function returns True.
 
         Args:
             test_func: Test function to apply to each file. It has to match the following interface::
-                    def test_func(file: str) -> bool:
+
+                def test_func(file: str) -> bool:
+                    ...
+
             paths: Relative directory path(s) to evaluate.
 
         """
         tree_to_traverse = self._prune_tree(self.common_tree, paths, True)
-        return self._eval_tree(tree_to_traverse, test_func)
+        return [filepath for filepath in self._eval_tree(tree_to_traverse, test_func)]
 
     def flatten(self, root: Dict, path: str = "") -> List:
         """Returns the flattened directory tree, i.e. list of file paths.
@@ -217,9 +219,9 @@ class DirCmp:
             path: Path to prepend to every file's relative path.
 
         """
-        # Passing a function that always returns False makes _eval_tree() return a list containing every file
+        # Passing a function that always returns True makes _eval_tree() return a list containing every file
         # in the directory tree
-        tree_files = self._eval_tree(root, lambda x: False)
+        tree_files = self._eval_tree(root, lambda x: True)
         return [os.path.join(path, rel_path) for rel_path in tree_files]
 
 
@@ -282,10 +284,10 @@ class TestFilesItem(CITestItem):
         """
         # Nested function (closure) to compare the reference and target file sizes
         def cmp_file_size(filepath: str) -> bool:
-            """Returns True if target file size is within the allowed variation, False otherwise."""
+            """Returns True if target file size is larger than the allowed variation, False otherwise."""
             ref_size = os.path.getsize(os.path.join(self.dir_cmp.ref_path, filepath))
             target_size = os.path.getsize(os.path.join(self.dir_cmp.target_path, filepath))
-            return abs(ref_size - target_size) <= (ref_size * variation)
+            return abs(ref_size - target_size) > (ref_size * variation)
         # Traverse the common directory tree, comparing every reference and target file sizes
         mismatches = self.dir_cmp.apply_test(cmp_file_size, paths)
         # Load the lists of files either in the reference or the target (but not in both)
@@ -314,10 +316,10 @@ class TestFilesItem(CITestItem):
         """
         # Nested function (closure) to compare the reference and target files
         def cmp_file_content(filepath: str) -> bool:
-            """Returns True if reference and target files are equal, False otherwise."""
+            """Returns True if reference and target files differ, False otherwise."""
             ref_filepath = os.path.join(self.dir_cmp.ref_path, filepath)
             target_filepath = os.path.join(self.dir_cmp.target_path, filepath)
-            return filecmp.cmp(ref_filepath, target_filepath)
+            return not filecmp.cmp(ref_filepath, target_filepath)
         # Traverse the common directory tree, comparing every reference and target files
         mismatches = self.dir_cmp.apply_test(cmp_file_content, paths)
         # Load the lists of files either in the reference or the target (but not in both)
