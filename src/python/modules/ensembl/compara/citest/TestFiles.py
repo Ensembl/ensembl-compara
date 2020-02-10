@@ -106,9 +106,12 @@ class DirCmp:
             tree_dict = {'.': set(os.path.basename(path))}  # type: Dict
         else:
             tree_dict = {'': {}}
+            # Breadth First traversal of the directory tree
             for dirpath, dirnames, filenames in os.walk(path):
+                # Transform dirpath into a relative path (from the root path)
                 dirpath = dirpath.replace(path, '')
                 subtree = reduce(operator.getitem, dirpath.split(os.sep), tree_dict)
+                # Initialise the subdirectories to guarantee reduce() will find them
                 subtree.update({name: {} for name in dirnames})
                 subtree['.'] = set(filenames)
             tree_dict = tree_dict['']
