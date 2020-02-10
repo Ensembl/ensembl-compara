@@ -104,6 +104,7 @@ sub default_options {
         # members
         'include_nonreference' => 0,
         'include_patches'      => 0,
+        'include_lrg'          => 0,
 
         # list of species that got an annotation update
         # ... assuming the same person has run both pipelines
@@ -481,6 +482,7 @@ sub pipeline_analyses {
                 'exclude_gene_analysis'         => $self->o('exclude_gene_analysis'),
                 'include_nonreference'          => $self->o('include_nonreference'),
                 'include_patches'               => $self->o('include_patches'),
+                'include_lrg'                   => $self->o('include_lrg'),
                 'store_coding'                  => $self->o('store_coding'),
                 'store_ncrna'                   => $self->o('store_ncrna'),
                 'store_others'                  => $self->o('store_others'),
