@@ -140,8 +140,8 @@ class JsonFile(pytest.File):
             for table, test_list in pipeline_tests['database_tests'].items():
                 for test in test_list:
                     # Ensure required keys are present in every test
-                    assert 'test' in test, "Missing argument 'test' in database_tests['{}'].".format(table)
-                    assert 'args' in test, "Missing argument 'args' in database_tests['{}']['{}'].".format(
+                    assert 'test' in test, "Missing argument 'test' in database_tests['{}']".format(table)
+                    assert 'args' in test, "Missing argument 'args' in database_tests['{}']['{}']".format(
                         table, test['test'])
                     yield TestDB.TestDBItem(test['test'], self, ref_db, target_db, table, test['args'])
         if 'files_tests' in pipeline_tests:
@@ -153,6 +153,15 @@ class JsonFile(pytest.File):
             dir_cmp = TestFiles.DirCmp(ref_path=ref_path, target_path=target_path)
             for i, test in enumerate(pipeline_tests['files_tests'], 1):
                 # Ensure required keys are present in every test
-                assert 'test' in test, "Missing argument 'test' in files_tests #{}.".format(i)
-                assert 'args' in test, "Missing argument 'args' in files_tests #{}.".format(i)
+                assert 'test' in test, "Missing argument 'test' in files_tests #{}".format(i)
+                assert 'args' in test, "Missing argument 'args' in files_tests #{}".format(i)
+                # Parse special arguments
+                if 'ignore_cols' in test['args']:
+                    assert 'columns' not in test['args'], ("Cannot declare both 'columns' and 'ignore_cols' "
+                                                           "arguments in files_tests #{}").format(i)
+                    if isinstance(test['args']['ignore_cols'], str):
+                        test['args']['columns'] = '-' + test['args']['ignore_cols']
+                    else:
+                        test['args']['columns'] = ['-' + col for col in test['args']['ignore_cols']]
+                    del test['args']['ignore_cols']
                 yield TestFiles.TestFilesItem(test['test'], self, dir_cmp, test['args'])
