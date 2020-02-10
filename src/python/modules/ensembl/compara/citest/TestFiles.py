@@ -27,7 +27,6 @@ import operator
 import os
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
-import numpy
 import pandas
 import py
 import pytest
@@ -298,11 +297,6 @@ class TestFilesItem(pytest.Item):
 
         Only the selected relative directory paths (and their subdirectories) will be compared.
 
-        Note:
-            The ceiling function is applied to round the allowed variation in order to compare two integers.
-            Thus, the test may pass even if the difference between two files is greater than the exact allowed
-            variation, e.g. the test will pass if the difference is 2 and the allowed variation is 1,4.
-
         Args:
             variation: Allowed size variation between reference and target files.
             paths: Relative directory path(s) to be compared.
@@ -318,7 +312,7 @@ class TestFilesItem(pytest.Item):
             """Returns True if target file size is within the allowed variation, False otherwise."""
             ref_size = os.path.getsize(os.path.join(self.dir_cmp.ref_path, filepath))
             target_size = os.path.getsize(os.path.join(self.dir_cmp.target_path, filepath))
-            return abs(ref_size - target_size) <= numpy.ceil(ref_size * variation)
+            return abs(ref_size - target_size) <= (ref_size * variation)
         # Traverse the common directory tree, comparing every reference and target file sizes
         mismatches = self.dir_cmp.apply_test(cmp_file_size, paths)
         # Load the lists of files either in the reference or the target (but not in both)

@@ -22,7 +22,6 @@ pipeline. The main class, TestDBItem, has been designed and implemented to be us
 from collections import OrderedDict
 from typing import Dict, List, Optional, Tuple, Union
 
-import numpy
 import pandas
 import py
 import pytest
@@ -128,11 +127,6 @@ class TestDBItem(pytest.Item):
         to all of them. If `filter_by` is provided, only the rows matching all the given conditions will be
         compared.
 
-        Note:
-            The ceiling function is applied to round the allowed variation in order to compare two integers.
-            Thus, the test may pass even if the difference between two files is greater than the exact allowed
-            variation, e.g. the test will pass if the difference is 2 and the allowed variation is 1,4.
-
         Args:
             variation: Allowed variation between reference and target tables.
             group_by: Group rows by column(s), and count the number of rows per group.
@@ -165,7 +159,7 @@ class TestDBItem(pytest.Item):
             raise FailedDBTestException(expected, found, sql_query, message)
         # Check if the number of rows (per group) are the same
         difference = abs(ref_data['nrows'] - target_data['nrows'])
-        allowed_variation = numpy.ceil(ref_data['nrows'] * variation)
+        allowed_variation = ref_data['nrows'] * variation
         failing_rows = difference > allowed_variation
         if failing_rows.any():
             expected_data = ref_data.loc[failing_rows]
