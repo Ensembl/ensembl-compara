@@ -14,4 +14,4 @@
 # limitations under the License.
 """Local hook, fixture and plugin requirements for the CITest suite."""
 
-pytest_plugins = "ensembl.compara.plugins.pytest_citest"
+pytest_plugins = "ensembl.compara.citest.pytest_citest"

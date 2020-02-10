@@ -30,7 +30,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.runner import TestReport
 
 from ensembl.compara.db.DBConnection import DBConnection
-from ensembl.compara.plugins import TestDB, TestFiles
+from ensembl.compara.citest import TestDB, TestFiles
 
 
 @pytest.hookimpl()
