@@ -42,21 +42,32 @@ sub content {
 
   $self->{'img_link'} = qq(<a class="nodeco _ht _ht_track" href="%s" title="%s"><img src="${img_url}96/%s.png" alt="" class="bordered" />%s</a>);
 
-  return sprintf('
-    <div class="round-box tinted-box unbordered"><h2>Search %s</h2>%s</div>
+  ## Mandatory search box
+  my $html = sprintf '<div class="round-box tinted-box unbordered"><h2>Search %s</h2>%s</div>', 
+              $common_name eq $sci_name ? "<i>$sci_name</i>" : sprintf('%s (<i>%s</i>)', $common_name, $sci_name),
+              EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render;
+
+  ## Assembly and genebuild - also mandatory
+  $html .= sprintf('
     <div class="box-left"><div class="round-box tinted-box unbordered">%s</div></div>
-    <div class="box-right"><div class="round-box tinted-box unbordered">%s</div></div>
-    <div class="box-left"><div class="round-box tinted-box unbordered">%s</div></div>
-    <div class="box-right"><div class="round-box tinted-box unbordered">%s</div></div>
-    %s',
-    $common_name eq $sci_name ? "<i>$sci_name</i>" : sprintf('%s (<i>%s</i>)', $common_name, $sci_name),
-    EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render,
+    <div class="box-right"><div class="round-box tinted-box unbordered">%s</div></div>',
     $self->assembly_text,
-    $self->genebuild_text,
-    $self->compara_text,
-    $self->variation_text,
-    $hub->database('funcgen') ? '<div class="box-left"><div class="round-box tinted-box unbordered">' . $self->funcgen_text . '</div></div>' : ''
-  );
+    $self->genebuild_text);
+
+  ## Other sections - may not be present on some species or  sites
+  my @opt_sections  = ($self->compara_text, $self->variation_text, $self->funcgen_text);
+  my @box_sides     = ('left', 'right');
+  my $i = 0;
+
+  foreach my $section (@opt_sections) {
+    next unless $section; 
+    my $j = $i % 2;
+    my $side = $box_sides[$j];
+    $html .= qq(<div class="box-$side"><div class="round-box tinted-box unbordered">$section</div></div>);
+    $i++;
+  }
+
+  return $html;
 }
 
 sub assembly_text {
@@ -345,6 +356,8 @@ sub variation_text {
 sub funcgen_text {
   my $self         = shift;
   my $hub          = $self->hub;
+  return unless $hub->database('funcgen');
+
   my $species_defs = $hub->species_defs;
   my $sample_data  = $species_defs->SAMPLE_DATA;
   
