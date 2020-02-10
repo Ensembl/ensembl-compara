@@ -5,35 +5,14 @@
         "job": [
             {
                 "test": "num_rows",
-                "args": {
-                    "variation": 0,
-                    "group_by": "analysis_id",
-                    "filter_by": "analysis_id > 1"
-                }
-            }
-        ],
-        "analysis_base": [
-            {
-                "test": "content",
-                "args": {
-                    "columns": ["analysis_id", "logic_name"]
-                }
+                "args": {}
             }
         ]
     },
     "files_tests": [
         {
-            "test": "size",
-            "args": {
-                "variation": 0
-            }
-        },
-        {
-            "test": "size",
-            "args": {
-                "variation": 0.1,
-                "paths": ["0"]
-            }
+            "test": "content",
+            "args": {}
         }
     ]
 }

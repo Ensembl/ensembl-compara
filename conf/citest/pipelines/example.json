@@ -1,0 +1,47 @@
+{
+    "reference_db": "mysql://ensro@mysql-ens-compara-prod-8:4618/jalvarez_citest_dump_genomes_99",
+    "target_db": "mysql://ensro@mysql-ens-compara-prod-8:4618/jalvarez_citest_dump_genomes_99b",
+    "reference_dir": "/hps/nobackup2/production/ensembl/jalvarez/genome_dumps_2",
+    "target_dir": "/hps/nobackup2/production/ensembl/jalvarez/genome_dumps_3",
+    "database_tests": {
+        "job": [
+            {
+                "test": "num_rows",
+                "args": {
+                    "variation": 0,
+                    "group_by": "analysis_id",
+                    "filter_by": "analysis_id > 1"
+                }
+            }
+        ],
+        "analysis_base": [
+            {
+                "test": "content",
+                "args": {
+                    "columns": ["analysis_id", "logic_name"]
+                }
+            }
+        ],
+        "log_message": [
+            {
+                "test": "content",
+                "args": {
+                    "columns": "-when_logged"
+                }
+            }
+        ]
+    },
+    "files_tests": [
+        {
+            "test": "size",
+            "args": {}
+        },
+        {
+            "test": "size",
+            "args": {
+                "variation": 0.1,
+                "paths": ["0"]
+            }
+        }
+    ]
+}
