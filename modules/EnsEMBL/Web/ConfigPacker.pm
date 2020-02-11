@@ -204,22 +204,13 @@ sub _summarise_core_tables {
   );
   my $analysis = {};
   foreach my $a_aref (@$t_aref) { 
-    ## Strip out "crap" at front and end! probably some q(')s...
-    ( my $A = $a_aref->[6] ) =~ s/^[^{]+//;
-    $A =~ s/[^}]+$//;
-    my $T = eval($A);
-    if (ref($T) ne 'HASH') {
-      if ($A) {
-        warn "Deleting web_data for $db_key:".$a_aref->[1].", check for syntax error";
-      }
-      $T = {};
-    }
+    my $web_data = $a_aref->[6] ? from_json($a_aref->[6]) : {};
     $analysis->{ $a_aref->[0] } = {
       'logic_name'  => $a_aref->[1],
       'name'        => $a_aref->[3],
       'description' => $a_aref->[4],
       'displayable' => $a_aref->[5],
-      'web_data'    => $T
+      'web_data'    => $web_data,
     };
   }
   ## Set last repeat mask date whilst we're at it, as needed by BLAST configuration, below
@@ -709,9 +700,7 @@ sub _summarise_funcgen_db {
   foreach my $a_aref (@$t_aref) {
     my $desc;
     { no warnings; $desc = eval($a_aref->[4]) || $a_aref->[4]; }    
-    (my $web_data = $a_aref->[6]) =~ s/^[^{]+//; ## Strip out "crap" at front and end! probably some q(')s
-    $web_data     =~ s/[^}]+$//;
-    $web_data     = eval($web_data) || {};
+    my $web_data = $a_aref->[6] ? from_json($a_aref->[6]) : {};
     
     $analysis->{$a_aref->[0]} = {
       'logic_name'  => $a_aref->[1],
