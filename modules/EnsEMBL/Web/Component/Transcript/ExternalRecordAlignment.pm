@@ -64,7 +64,7 @@ sub get_data {
 
     my $alignment = $object->get_alignment($ext_seq->{'sequence'}, $trans_seq, $seq_type);
     my $munged    = $seq_type eq 'PEP' ? $self->_munge_psw($alignment, $psv, $hit_id)
-                                       : $self->_munge_matcher($alignment, $tsv, $hit_id);; 
+                                       : $self->_munge_matcher($alignment, $tsv, $hit_id);
 
     $data->{'description'}{'content'} = $seq_type eq 'PEP'
       ? qq(Alignment between external feature $hit_id and translation of transcript $tsv)
@@ -91,7 +91,6 @@ sub _munge_psw {
   my $col_1_width = length($psv) > length($hit_id) ? length($psv) : length($hit_id);
   $col_1_width   += 2;
   my $col_2_width = 5;
-  my $col_3_width;
   my $col_1_pattern = '%-0'.$col_1_width.'s'; 
   my $col_2_pattern = '%-0'.$col_2_width.'s';
 
@@ -103,7 +102,10 @@ sub _munge_psw {
       }
       else {
         ## Identifier plus sequence
-        my ($id, $seq) = split(/\s+/, $line);
+        my @line_parts = split(/\s+/, $line);
+        # no matter how many intermediate elements a line contains, the identifier is always first and the sequence always last
+        my $id = $line_parts[0];
+        my $seq = $line_parts[-1];
 
         ## Add the correct identifier
         my $identifier = ($line_count % 3 == 0) ? $psv : $hit_id;
