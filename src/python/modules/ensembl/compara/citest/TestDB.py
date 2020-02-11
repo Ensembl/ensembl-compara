@@ -19,13 +19,13 @@ pipeline. The main class, TestDBItem, has been designed and implemented to be us
 
 """
 
+import re
 from typing import Dict, List, Union
 
 import pandas
 import pytest
 from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionInfo
 from _pytest.fixtures import FixtureLookupErrorRepr
-from sqlalchemy import text
 
 from ensembl.compara.citest.CITest import CITestItem
 from ensembl.compara.db.DBConnection import DBConnection
@@ -72,6 +72,8 @@ class TestDBItem(CITestItem):
             self.error_info['found'] = excinfo.value.args[1]
             self.error_info['query'] = excinfo.value.args[2].strip()
             return excinfo.value.args[3] + "\n"
+        elif isinstance(excinfo.value, AssertionError):
+            return excinfo.value.args[0] + "\n"
         return super().repr_failure(excinfo, style)
 
     def get_report_header(self) -> str:
@@ -153,32 +155,36 @@ class TestDBItem(CITestItem):
                        "({})").format(self.table, variation)
             raise FailedDBTestException(expected, found, sql_query, message)
 
-    def test_content(self, columns: Union[str, List] = None, filter_by: Union[str, List] = None) -> None:
+    def test_content(self, *, columns: Union[str, List] = None, ignore_columns: Union[str, List] = None,
+                     filter_by: Union[str, List] = None) -> None:
         """Compares the content between reference and target tables.
 
-        The comparison is made only for the selected columns. The data and the data type of each column have
-        to be the same in both tables in order to be considered equal.
+        The data and the data type of each column have to be the same in both tables in order to be considered
+        equal.
 
         Args:
-            columns: Columns to take into account in the comparison. If an empty string/list is provided, all
-                columns will be included. Alternatively, it can be an exclusion list by adding ``-`` at the
-                start of each column name, e.g. ``-job_id`` will make all columns but ``job_id`` to be
-                included.
+            columns: Columns to take into account in the comparison.
+            ignore_columns: Columns to exclude in the comparison, i.e. all columns but those included in this
+                parameter will be compared.
             filter_by: Filter rows by one or more conditions (joined by the AND operator).
 
         Raise:
+            AssertionError: If both ``columns`` and ``ignore_columns`` are provided.
             FailedDBTestException: If the number of rows differ; or if one or more rows have different
                 content.
 
         """
+        assert not (columns and ignore_columns), "Expected only 'columns' or 'ignore_columns', not both"
         sql_filter = self._get_sql_filter(filter_by)
         if (columns is None) or isinstance(columns, str):
             columns = [columns] if columns else []
-        if (not columns or all(col.startswith('-') for col in columns)):
+        if isinstance(ignore_columns, str):
+            ignore_columns = [ignore_columns] if ignore_columns else []
+        if ignore_columns:
             # Retrieve every column from the table and remove those in the exclusion list
             ref_columns = [col.name for col in self.ref_db.tables[self.table].columns]
-            for col in columns:
-                ref_columns.remove(col[1:])
+            for col in ignore_columns:
+                ref_columns.remove(col)
             columns = ref_columns
         # Compose the sql query from the given parameters
         sql_query = "SELECT `{}` FROM {} {}".format("`,`".join(columns), self.table, sql_filter)
