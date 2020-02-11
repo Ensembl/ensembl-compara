@@ -156,12 +156,12 @@ class JsonFile(pytest.File):
                 assert 'test' in test, "Missing argument 'test' in files_tests #{}".format(i)
                 assert 'args' in test, "Missing argument 'args' in files_tests #{}".format(i)
                 # Parse special arguments
-                if 'ignore_cols' in test['args']:
-                    assert 'columns' not in test['args'], ("Cannot declare both 'columns' and 'ignore_cols' "
-                                                           "arguments in files_tests #{}").format(i)
-                    if isinstance(test['args']['ignore_cols'], str):
+                if 'ignore_columns' in test['args']:
+                    assert 'columns' not in test['args'], ("Cannot declare both 'columns' and 'ignore_"
+                                                           "columns' arguments in files_tests #{}").format(i)
+                    if isinstance(test['args']['ignore_columns'], str):
                         test['args']['columns'] = '-' + test['args']['ignore_cols']
                     else:
-                        test['args']['columns'] = ['-' + col for col in test['args']['ignore_cols']]
-                    del test['args']['ignore_cols']
+                        test['args']['columns'] = ['-' + col for col in test['args']['ignore_columns']]
+                    del test['args']['ignore_columns']
                 yield TestFiles.TestFilesItem(test['test'], self, dir_cmp, test['args'])

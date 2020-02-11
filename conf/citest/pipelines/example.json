@@ -26,7 +26,7 @@
             {
                 "test": "content",
                 "args": {
-                    "ignore_cols": "when_logged"
+                    "ignore_columns": ["when_logged"]
                 }
             }
         ]
