@@ -10,14 +10,18 @@
             {   "test": "num_rows"
             },
             {   "test": "content",
-                "ignore_columns": "canonical_member_id"
+                "args": {
+                    "ignore_columns": "canonical_member_id"
+                }
             }
         ],
         "exon_boundaries": [
             {   "test": "num_rows"
             },
             {   "test": "content",
-                "ignore_columns": ["gene_member_id", "seq_member_id"]
+                "args": {
+                    "ignore_columns": ["gene_member_id", "seq_member_id"]
+                }
             }
         ],
         "genome_db": [
@@ -30,21 +34,27 @@
             {   "test": "num_rows"
             },
             {   "test": "content",
-                "ignore_columns": ["sequence_id", "gene_member_id"]
+                "args": {
+                    "ignore_columns": ["sequence_id", "gene_member_id"]
+                }
             }
         ],
         "seq_member_projection_stable_id": [
             {   "test": "num_rows"
             },
             {   "test": "content",
-                "ignore_columns": "target_seq_member_id"
+                "args": {
+                    "ignore_columns": "target_seq_member_id"
+                }
             }
         ],
         "sequence": [
             {   "test": "num_rows"
             },
             {   "test": "content",
-                "ignore_columns": "sequence_id"
+                "args": {
+                    "ignore_columns": "sequence_id"
+                }
             }
         ],
         "species_set": [
