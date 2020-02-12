@@ -168,8 +168,8 @@ my $ancestral_dbs = {
     'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
 
     'mammals_ancestral'    => [ 'mysql-ens-compara-prod-6', 'carlac_mammals_ancestral_core_100' ],
-    'primates_ancestral'   => [ 'mysql-ens-compara-prod-3', 'mateus_primates_ancestral_core_98' ],
-    'sauropsids_ancestral' => [ 'mysql-ens-compara-prod-9', 'dthybert_sauropsids_ancestral_core_100' ],
+    'primates_ancestral'   => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
+    'sauropsids_ancestral' => [ 'mysql-ens-compara-prod-9', 'muffato_sauropsids_ancestral_core_100' ],
     'fish_ancestral'       => [ 'mysql-ens-compara-prod-10', 'muffato_fish_ancestral_core_100' ],
 };
 

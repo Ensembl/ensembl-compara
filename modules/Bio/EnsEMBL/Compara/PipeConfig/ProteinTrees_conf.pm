@@ -3287,6 +3287,7 @@ sub core_pipeline_analyses {
                 '1->A' => [
                     'rib_fire_gene_qc',
                     'rib_fire_homology_id_mapping',
+                    'rib_fire_cafe',
                 ],
                 'A->1' => 'rib_group_2'
             },
@@ -3297,7 +3298,6 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 '1->A' => [
                     'rib_fire_dnds',
-                    'rib_fire_cafe',
                     'rib_fire_homology_stats',
                     'rib_fire_hmm_build',
                     'rib_fire_goc'

@@ -88,6 +88,9 @@ sub write_output {
       my $cmd = [$self->param('program'), '-as='.$self->param('baseage_autosql'), '-type=bed3+3', $concat_file, $self->param('chr_sizes'), $self->param('big_bed_file')];
       $self->run_command($cmd, { die_on_failure => 1 });
   }
+  else {
+      die "$concat_file empty so cannot produce Big Bed file";
+  }
 }
 
 1;
