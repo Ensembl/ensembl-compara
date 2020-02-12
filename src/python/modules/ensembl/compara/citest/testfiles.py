@@ -27,8 +27,8 @@ import pytest
 from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionInfo
 from _pytest.fixtures import FixtureLookupErrorRepr
 
-from ensembl.compara.citest.CITest import CITestItem
-from ensembl.compara.filecmp.DirCmp import DirCmp
+from ensembl.compara.citest.citest import CITestItem
+from ensembl.compara.filecmp.dircmp import DirCmp
 
 
 class TestFilesItem(CITestItem):

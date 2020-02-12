@@ -29,8 +29,9 @@ import pytest
 from _pytest.config.argparsing import Parser
 from _pytest.runner import TestReport
 
-from ensembl.compara.db.DBConnection import DBConnection
-from ensembl.compara.citest import TestDB, TestFiles
+from ensembl.compara.db.dbconnection import DBConnection
+from ensembl.compara.filecmp.dircmp import DirCmp
+from ensembl.compara.citest import testdb, testfiles
 
 
 @pytest.hookimpl()
@@ -82,7 +83,7 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
     # Add the reported information of each test
     failed = 0
     for item, report in session.report.items():
-        if isinstance(item, TestDB.TestDBItem):
+        if isinstance(item, testdb.TestDBItem):
             test_list = full_report['database_tests'][item.table]
         else:
             test_list = full_report['files_tests']
@@ -117,8 +118,8 @@ class JsonFile(pytest.File):
         """Parses the JSON file and loads all the tests.
 
         Returns:
-            Iterator of ``TestDB.TestDBItem`` or ``TestFiles.TestFilesItem`` objects (depending on the tests
-            included in the JSON file).
+            Iterator of :class:`~testdb.TestDBItem` or :class:`~testfiles.TestFilesItem` objects (depending on
+            the tests included in the JSON file).
 
         Raises:
             AssertionError: If the reference or target information is missing for the database or files tests;
@@ -143,16 +144,16 @@ class JsonFile(pytest.File):
                     assert 'test' in test, "Missing argument 'test' in database_tests['{}']".format(table)
                     assert 'args' in test, "Missing argument 'args' in database_tests['{}']['{}']".format(
                         table, test['test'])
-                    yield TestDB.TestDBItem(test['test'], self, ref_db, target_db, table, test['args'])
+                    yield testdb.TestDBItem(test['test'], self, ref_db, target_db, table, test['args'])
         if 'files_tests' in pipeline_tests:
             # Load the reference and target directory paths
             ref_path = self.config.getoption('ref_dir', pipeline_tests.get('reference_dir', ''), True)
             assert ref_path, "Required argument '--ref-dir' or 'reference_dir' key in JSON file"
             target_path = self.config.getoption('target_dir', pipeline_tests.get('target_dir', ''), True)
             assert target_path, "Required argument '--target-dir' or 'target_dir' key in JSON file"
-            dir_cmp = TestFiles.DirCmp(ref_path=ref_path, target_path=target_path)
+            dir_cmp = DirCmp(ref_path=ref_path, target_path=target_path)
             for i, test in enumerate(pipeline_tests['files_tests'], 1):
                 # Ensure required keys are present in every test
                 assert 'test' in test, "Missing argument 'test' in files_tests #{}".format(i)
                 assert 'args' in test, "Missing argument 'args' in files_tests #{}".format(i)
-                yield TestFiles.TestFilesItem(test['test'], self, dir_cmp, test['args'])
+                yield testfiles.TestFilesItem(test['test'], self, dir_cmp, test['args'])

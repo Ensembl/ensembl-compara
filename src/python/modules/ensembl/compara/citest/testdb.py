@@ -27,8 +27,8 @@ import pytest
 from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionInfo
 from _pytest.fixtures import FixtureLookupErrorRepr
 
-from ensembl.compara.citest.CITest import CITestItem
-from ensembl.compara.db.DBConnection import DBConnection
+from ensembl.compara.citest.citest import CITestItem
+from ensembl.compara.db.dbconnection import DBConnection
 
 
 class TestDBItem(CITestItem):
