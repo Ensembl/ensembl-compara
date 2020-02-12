@@ -54,27 +54,26 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
-# !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
-#my $suffix_separator = '__cut_here__';
-#Bio::EnsEMBL::Registry->load_registry_from_db(
-#    -host   => 'mysql-ens-mirror-3',
-#    -port   => 4275,
-#    -user   => 'ensro',
-#    -pass   => '',
-#    -db_version     => $prev_release,
-#    -species_suffix => $suffix_separator.$prev_release,
-#);
-# Never use EG's version of yeast & co
-#Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, $suffix_separator.$prev_release);
-#Bio::EnsEMBL::Compara::Utils::Registry::remove_multi($suffix_separator.$prev_release);
-#Bio::EnsEMBL::Registry->load_registry_from_db(
-#    -host   => 'mysql-ens-mirror-1',
-#    -port   => 4240,
-#    -user   => 'ensro',
-#    -pass   => '',
-#    -db_version     => $prev_release,
-#    -species_suffix => $suffix_separator.$prev_release,
-#);
+*Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
+    Bio::EnsEMBL::Registry->load_registry_from_db(
+        -host   => 'mysql-ens-mirror-3',
+        -port   => 4275,
+        -user   => 'ensro',
+        -pass   => '',
+        -db_version     => $prev_release,
+        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
+    );
+    Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
+    Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
+    Bio::EnsEMBL::Registry->load_registry_from_db(
+        -host   => 'mysql-ens-mirror-1',
+        -port   => 4240,
+        -user   => 'ensro',
+        -pass   => '',
+        -db_version     => $prev_release,
+        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
+    );
+};
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
 

@@ -49,21 +49,17 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
-# previous release core databases will ONLY be required by:
-#   * PrepareMasterDatabaseForRelease_conf
-#   * LoadMembers_conf
-#   * MercatorPecan_conf
-# !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
-
-# my $suffix_separator = '__cut_here__';
-# Bio::EnsEMBL::Registry->load_registry_from_db(
-#   -host           => 'mysql-ens-mirror-1',
-#   -port           => 4240,
-#   -user           => 'ensro',
-#   -pass           => '',
-#   -db_version     => $prev_release,
-#   -species_suffix => $suffix_separator.$prev_release,
-# );
+# previous release core databases will be required by PrepareMasterDatabaseForRelease, LoadMembers and MercatorPecan
+*Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
+    Bio::EnsEMBL::Registry->load_registry_from_db(
+        -host   => 'mysql-ens-mirror-1',
+        -port   => 4240,
+        -user   => 'ensro',
+        -pass   => '',
+        -db_version     => $prev_release,
+        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
+    );
+};
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
