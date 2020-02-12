@@ -118,7 +118,7 @@ class JsonFile(pytest.File):
         """Parses the JSON file and loads all the tests.
 
         Returns:
-            Iterator of :class:`~testdb.TestDBItem` or :class:`~testfiles.TestFilesItem` objects (depending on
+            Iterator of :class:`testdb.TestDBItem` or :class:`testfiles.TestFilesItem` objects (depending on
             the tests included in the JSON file).
 
         Raises:
