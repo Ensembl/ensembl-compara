@@ -373,7 +373,10 @@ sub synonyms {
       @urls = map { s/%23/#/; $_ } map $hub->get_ExtURL_link($_, 'OMIM', $url_ids{$_}), @ids;
     }
     elsif ($db =~ /clinvar/i) {
-      @urls = map $hub->get_ExtURL_link($_, 'CLINVAR', $_), @ids;
+      foreach (@ids) {
+        next if /^RCV/; # don't display RCVs as synonyms
+        push @urls, $hub->get_ExtURL_link($_, 'CLINVAR', $_);
+      }
     }
     elsif ($db =~ /Uniprot/) {
       push @urls, $hub->get_ExtURL_link($_, 'UNIPROT_VARIATION', $_) for @ids;
