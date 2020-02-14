@@ -197,7 +197,7 @@ sub add_species_selector {
   my $html = qq(
     <div class="taxon_tree_master hidden"></div>
     <div class="species_select_container">
-      <div class="taxon_selector_tree">
+      <div class="species_homepage_selector">
         <div class="content">
           <div class="finder">
             <input type="text" autofocus class="ui-autocomplete-input inactive" title="$finder_prompt" placeholder="$finder_prompt" />
