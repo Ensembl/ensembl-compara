@@ -136,7 +136,8 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
       source: function(request, response) {
         var speciesList = $();
         $.each(panel.allSpecies, function(i, species) {
-          var spEntry = {'label' : species.common + ' (' + species.name + ')', 'url' : species.homepage};
+          var label = species.common === species.name ? species.name : species.common + ' (' + species.name + ')'
+          var spEntry = {'label' : label, 'url' : species.homepage};
           speciesList.push(spEntry);
         }); 
         // Add strain groups
