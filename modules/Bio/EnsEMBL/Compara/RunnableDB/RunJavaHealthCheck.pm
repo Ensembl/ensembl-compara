@@ -29,6 +29,9 @@ Runs an EnsEMBL Java Healthcheck (see https://github.com/Ensembl/ensj-healthchec
 Requires several inputs:
     'output_file' : to pipe the output from java to
     'compara_db'  : db to run the HC on
+    'run_healthchecks_exe'   : path to compara run_healthchecks script
+    'ensj_testrunner_exe'    : path to ensj-healthcheck testrunner script
+    'ensj_conf'              : path to compara ensj-healthcheck JSON configuration file
     ['testgroup'|'testcase'] : either a testgroup or testcase must be defined (see
                                ensj-healthcheck for more)
     'forgive'     : forgive failures of the HCs and autoflow

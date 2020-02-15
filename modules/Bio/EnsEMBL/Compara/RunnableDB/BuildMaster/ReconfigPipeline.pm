@@ -31,6 +31,8 @@ Requires several inputs:
     'reg_conf'        : full path to the registry configuration file
     'reg_conf_tmpl'   : full path to the registry configuration template file
     'master_db'       : new master database
+    'ensj_conf'       : full path to 'ensj-healthcheck.json' file (used to run
+                        Java healthchecks)
     'backups_dir'     : full path to the pipeline's backup directory
     'dst_host'        : host name where the cloned core databases have been created
     'dst_port'        : host port
