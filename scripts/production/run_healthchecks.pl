@@ -42,7 +42,7 @@ The script reads these arguments and passes the other ones straight to run-confi
 
 =item B<[--url mysql://user[:passwd]@host[:port]/dbname]>
 
-URL of the database to test
+URL of the database to test.
 
 =item B<[--reg_conf registry_configuration_file]>
 

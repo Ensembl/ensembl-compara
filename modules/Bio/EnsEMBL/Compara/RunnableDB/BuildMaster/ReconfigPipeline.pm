@@ -87,7 +87,8 @@ sub run {
     $content =~ s/'', '' ], # TAG: <master_db_info>/$master_db_info],/;
     # Modify the registry configuration file
     $self->_spurt($reg_conf, $content);
-    # And in the compara ensj-healthcheck configuration file
+    # All cloned core databases are in the same server, so update that information
+    # in the compara ensj-healthcheck configuration file
     $content = encode_json({
         'host1'          => $dst_host,
         'secondary.host' => $dst_host
