@@ -35,35 +35,45 @@ my $prev_release = $curr_release - 1;
 my $curr_eg_release = $curr_release - 53;
 my $prev_eg_release = $curr_eg_release - 1;
 
+# Species found on both vertebrates and non-vertebrates servers
+my @overlap_species = qw(saccharomyces_cerevisiae drosophila_melanogaster caenorhabditis_elegans);
+
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
-# most cores are on EG servers, but some are on ensembl's vertannot-staging
+# Use our mirror (which has all the databases)
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
+
+# Or use the official staging servers
 #Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
-#Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae', 'core'); # never use EG's version of yeast
+# and remove the Non-Vertebrates version of the shared species
+#Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
+#Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
+# before loading the Vertebrates version
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1:4519/$curr_release");
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
-# !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
-#my $suffix_separator = '__cut_here__';
-#Bio::EnsEMBL::Registry->load_registry_from_db(
-#    -host   => 'mysql-ens-mirror-3',
-#    -port   => 4275,
-#    -user   => 'ensro',
-#    -pass   => '',
-#    -db_version     => $prev_release,
-#    -species_suffix => $suffix_separator.$prev_release,
-#);
-#Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae'.$suffix_separator.$prev_release, 'core'); # never use EG's version of yeast
-#Bio::EnsEMBL::Registry->load_registry_from_db(
-#    -host   => 'mysql-ens-mirror-1',
-#    -port   => 4240,
-#    -user   => 'ensro',
-#    -pass   => '',
-#    -db_version     => $prev_release,
-#    -species_suffix => $suffix_separator.$prev_release,
-#);
+*Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
+    Bio::EnsEMBL::Registry->load_registry_from_db(
+        -host   => 'mysql-ens-mirror-3',
+        -port   => 4275,
+        -user   => 'ensro',
+        -pass   => '',
+        -db_version     => $prev_release,
+        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
+    );
+    Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
+    Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
+    Bio::EnsEMBL::Registry->load_registry_from_db(
+        -host   => 'mysql-ens-mirror-1',
+        -port   => 4240,
+        -user   => 'ensro',
+        -pass   => '',
+        -db_version     => $prev_release,
+        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
+    );
+};
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
 

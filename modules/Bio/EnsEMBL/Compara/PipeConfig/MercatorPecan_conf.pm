@@ -244,7 +244,6 @@ sub pipeline_analyses {
             -parameters => {
 		        'reuse_db'          => $self->o('reuse_db'),
 		        'do_not_reuse_list' => $self->o('do_not_reuse_list'),
-                'current_release'   => $self->o('ensembl_release'),
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {

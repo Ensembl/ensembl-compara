@@ -35,10 +35,16 @@ my $prev_release = $curr_release - 1;
 my $curr_eg_release = $ENV{'CURR_EG_RELEASE'};
 my $prev_eg_release = $curr_eg_release - 1;
 
+# Species found on both vertebrates and non-vertebrates servers
+my @overlap_species = qw(saccharomyces_cerevisiae drosophila_melanogaster caenorhabditis_elegans);
+
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1:4519/$curr_release");
-Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae');    # never use Vertebrates' version of yeast
+# But remove the non-vertebrates species
+Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
+Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
+# Non-Vertebrates server
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
 # Bacteria server: all species used in Pan happen to be in this database
 Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
@@ -52,34 +58,35 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
-# !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
-#my $suffix_separator = '__cut_here__';
-#Bio::EnsEMBL::Registry->load_registry_from_db(
-#    -host   => 'mysql-ens-mirror-1',
-#    -port   => 4240,
-#    -user   => 'ensro',
-#    -pass   => '',
-#    -db_version     => $prev_release,
-#    -species_suffix => $suffix_separator.$prev_release,
-#);
-#Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae'.$suffix_separator.$prev_release, 'core'); # never use Vertebrates' version of yeast
-#Bio::EnsEMBL::Registry->load_registry_from_db(
-#    -host   => 'mysql-ens-mirror-3',
-#    -port   => 4275,
-#    -user   => 'ensro',
-#    -pass   => '',
-#    -db_version     => $prev_release,
-#    -species_suffix => $suffix_separator.$prev_release,
-#);
-# Bacteria server: all species used in Pan happen to be in this database
-#Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-#    -host   => 'mysql-ens-mirror-4',
-#    -port   => 4495,
-#    -user   => 'ensro',
-#    -pass   => '',
-#    -dbname => "bacteria_0_collection_core_${prev_eg_release}_${prev_release}_1",
-#    -species_suffix => $suffix_separator.$prev_release,
-#);
+*Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
+    Bio::EnsEMBL::Registry->load_registry_from_db(
+        -host   => 'mysql-ens-mirror-1',
+        -port   => 4240,
+        -user   => 'ensro',
+        -pass   => '',
+        -db_version     => $prev_release,
+        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
+    );
+    Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
+    Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
+    Bio::EnsEMBL::Registry->load_registry_from_db(
+        -host   => 'mysql-ens-mirror-3',
+        -port   => 4275,
+        -user   => 'ensro',
+        -pass   => '',
+        -db_version     => $prev_release,
+        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
+    );
+    # Bacteria server: all species used in Pan happen to be in this database
+    Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+        -host   => 'mysql-ens-mirror-4',
+        -port   => 4495,
+        -user   => 'ensro',
+        -pass   => '',
+        -dbname => "bacteria_0_collection_core_${prev_eg_release}_${prev_release}_1",
+        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
+    );
+};
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 

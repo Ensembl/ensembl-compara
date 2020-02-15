@@ -35,6 +35,7 @@ use Bio::EnsEMBL::Utils::IO qw/:spurt/;
 
 use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+use Bio::EnsEMBL::Compara::Utils::Registry;
 
 use Data::Dumper;
 $Data::Dumper::Maxdepth=3;
@@ -407,14 +408,9 @@ sub load_lrgs {
 =cut
 
 sub load_assembly_patches {
-    # my ($compara_dba, $genome_db, $release, $report_file) = @_;
     my $compara_dba = shift;
     my $genome_db   = shift;
-    my $release     = shift;
     my $report_file = shift;
-
-    my($suffix_separator) = rearrange([qw(SUFFIX_SEPARATOR)], @_);
-    $suffix_separator = '__cut_here__' unless $suffix_separator;
 
     die "Patches are only available for GRC species" unless $genome_db->assembly =~ /^GRC/;
     my $find_patches_sql = "SELECT s.name, s.seq_region_id, a.value FROM seq_region s JOIN seq_region_attrib a USING(seq_region_id) JOIN attrib_type t USING(attrib_type_id) WHERE t.code IN ('patch_fix', 'patch_novel')";
@@ -426,8 +422,7 @@ sub load_assembly_patches {
     my @curr_patches_seq_region_ids = map { $_->[1] } @$curr_patches;
     my %curr_patches_by_name = map { $_->[0] => {seq_region_id => $_->[1], date => $_->[2]} } @$curr_patches;
 
-    # $release = $species_db->dbc->db_version;
-    my $prev_species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($genome_db->name.$suffix_separator.($release-1), 'core');
+    my $prev_species_db = Bio::EnsEMBL::Compara::Utils::Registry::get_previous_core_DBAdaptor($genome_db->name);
     my $prev_patches_sth = $prev_species_db->dbc->prepare($find_patches_sql);
     $prev_patches_sth->execute;
     my $prev_patches = $prev_patches_sth->fetchall_arrayref;
