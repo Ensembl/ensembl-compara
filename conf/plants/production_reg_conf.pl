@@ -45,10 +45,10 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 
 # Or use the official staging servers
 #Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
-# and remove the NV version of the shared species
+# and remove the Non-Vertebrates version of the shared species
 #Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
 #Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
-# before loading the V version
+# before loading the Vertebrates version
 #Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1:4519/$curr_release");
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
