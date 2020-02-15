@@ -122,7 +122,7 @@ GetOptions(
 
 unless ($url or ($reg_conf and $reg_alias)) {
     print "\nNeither --url nor --reg_conf and --reg_alias are defined. The URL should be something like mysql://ensro\@compara1:3306/kb3_ensembl_compara_59\nEXIT 2\n\n";
-    exit 2;
+    exit 1;
 }
 
 if ($reg_conf) {
