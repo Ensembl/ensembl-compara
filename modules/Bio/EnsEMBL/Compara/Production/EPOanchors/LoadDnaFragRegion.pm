@@ -165,20 +165,20 @@ sub write_output {
 	}
 	# add the MTs to the dnafrag_region table
 	if($self->param('add_non_nuclear_alignments')) {
-		my $sth_mt = $self->dbc->prepare("SELECT dnafrag_id, length FROM dnafrag WHERE cellular_component =\"MT\"");
+        my $sth_mt = $self->dbc->prepare("SELECT dnafrag_id, length FROM dnafrag JOIN species_set USING (genome_db_id) JOIN method_link_species_set USING (species_set_id) WHERE cellular_component =\"MT\" AND method_link_species_set_id = ?");
         $sth_mt->execute;
         my @mt_dna_frag= @{ $sth_mt->fetchall_arrayref };
         if ( scalar   @mt_dna_frag > 1){
             my $max_synteny_region_id = $synteny_region_ids[-1]->{'synteny_region_id'} + 1;
             $sth2->execute($max_synteny_region_id, $self->param('mlss_id'));
             foreach my $dnafrag_region ( @{ $sth_mt->fetchall_arrayref } ) {
-			             $sth1->execute($max_synteny_region_id, $dnafrag_region->[0], 1, $dnafrag_region->[1], 1);
-		    }
+                $sth1->execute($max_synteny_region_id, $dnafrag_region->[0], 1, $dnafrag_region->[1], 1);
+            }
+            push(@synteny_region_ids, {synteny_region_id => $max_synteny_region_id});
         }
-		push(@synteny_region_ids, {synteny_region_id => $max_synteny_region_id});
-	}
-	$self->dataflow_output_id( $self->param('dfrs_with_zero_st'), 2 ); # zero strand, so flow to a job factory to set up bl2seq jobs
-	$self->dataflow_output_id( \@synteny_region_ids, 3 ); # no zero strand, so flow to a job factory to set up ortheus
+    }
+    $self->dataflow_output_id( $self->param('dfrs_with_zero_st'), 2 ); # zero strand, so flow to a job factory to set up bl2seq jobs
+    $self->dataflow_output_id( \@synteny_region_ids, 3 ); # no zero strand, so flow to a job factory to set up ortheus
 }
 
 1;
