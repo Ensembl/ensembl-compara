@@ -426,10 +426,10 @@ sub get_alignments {
                                         : $hub->viewconfig;
   my $alignments_session_data = $viewconfig->get_alignments_selector_settings;
 
-  if (keys %{$alignments_session_data->{$species}} && $alignments_session_data->{$species}->{align} == $align) {
+  if (keys %{$alignments_session_data->{$species}} && $alignments_session_data->{$species}->{'align'} == $align) {
     while (my($k,$v) = each (%{$alignments_session_data->{$species}})) {
       next unless ($k =~ /species_${align}_(.+)/ && $v eq 'yes');
-      push @selected_species, $1 unless $1 =~ /^$species$/i;
+      push @selected_species, $1;
     }
   }
   else {
