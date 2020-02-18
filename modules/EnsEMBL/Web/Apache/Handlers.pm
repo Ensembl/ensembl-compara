@@ -108,6 +108,11 @@ sub get_redirect_uri {
   if ($uri =~ /\/Multi\/psychic/) {
     return $uri =~ s/\/Multi\/psychic/\/Multi\/Psychic/r;
   }
+  
+  ## Redirect incoming search links from ensemblgenomes.org 
+  if ($uri =~ /\/common\/psychic/) {
+    return $uri =~ s/\/common\/psychic/\/Multi\/Psychic/r;
+  }
 
   ## quick fix for solr autocomplete js bug
   if ($uri =~ /undefined\//) {
