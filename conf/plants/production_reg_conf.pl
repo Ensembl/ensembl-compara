@@ -76,7 +76,6 @@ my $compara_dbs = {
     # homology dbs
     'compara_members'  => [ 'mysql-ens-compara-prod-7', 'dthybert_plants_load_members_100'],
     'compara_ptrees'   => [ 'mysql-ens-compara-prod-3', 'dthybert_plants_plants_protein_trees_100' ],
-    'ptrees_prev'      => [ 'mysql-ens-compara-prod-3', 'cristig_default_plants_protein_trees_99' ],
 
     # LASTZ dbs
     'lastz_batch_1' => [ 'mysql-ens-compara-prod-6', 'muffato_plants_lastz_batch1d_100' ],
