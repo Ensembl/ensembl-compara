@@ -397,9 +397,11 @@ Options:
 	release          : current release version (required)
 	reg_conf         : registry config file (required if using alias for master)
 	max_jobs         : maximum number of jobs allowed per-database (default: 6,000,000)
+	include_mlss_ids : list of comma separated MLSS IDs to add
 	exclude_mlss_ids : list of MLSS IDs to ignore (if they've already been run).
 	                   list should be comma separated values.
 	method_link      : method used to select MLSSes (default: LASTZ_NET)
+	start_index      : number to assign to the first batch (default: 1)
 	dry_run|dry-run  : in dry-run mode, the JIRA tickets will not be submitted to the JIRA
 	                   server (default: off)
 	v|verbose        : print out per-mlss job count estimates
