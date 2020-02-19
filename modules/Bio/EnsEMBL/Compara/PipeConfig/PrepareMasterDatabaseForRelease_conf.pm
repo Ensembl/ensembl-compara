@@ -24,7 +24,10 @@ Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -division <division> -additional_species <optional hash>
+        -division <division>
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division <division> -additional_species <optional hash> -meta_host <alternative metadata host>
 
     #1. Update NCBI taxonomy
     #2. Add/update all species to master database
@@ -88,6 +91,8 @@ sub default_options {
         'do_update_from_metadata' => 1,
         'do_load_lrg_dnafrags'    => 0,
         'do_load_timetree'        => 0,
+
+        'meta_host' => 'mysql-ens-meta-prod-1',
     };
 }
 

@@ -47,9 +47,10 @@ sub fetch_input {
 	my $self = shift;
 
 	my $list_genomes_script = $self->param_required('list_genomes_script');
+    my $meta_host = $self->param_required('meta_host');
 	my $release = $self->param_required('release');
 	my $division = $self->param_required('division');
-	my $metadata_script_options = "\$(mysql-ens-meta-prod-1 details script) --release $release --division $division";
+	my $metadata_script_options = "\$($meta_host details script) --release $release --division $division";
 	my $genome_db_adaptor = $self->get_cached_compara_dba('master_db')->get_GenomeDBAdaptor;
 
 	# use metadata script to report genomes that need to be updated
@@ -83,7 +84,7 @@ sub fetch_input {
             my @add_species_for_div = @{$additional_species->{$additional_div}};
             push( @release_genomes, @add_species_for_div );
             # check for each additonal species in each division that the productioin name is correct
-            $metadata_script_options = "\$(mysql-ens-meta-prod-1 details script) --release $release --division $additional_div";
+            $metadata_script_options = "\$($meta_host details script) --release $release --division $additional_div";
             $list_cmd = "perl $list_genomes_script $metadata_script_options";
             my @additional_release_genomes = $self->get_command_output($list_cmd);
             chomp @additional_release_genomes;
@@ -188,9 +189,10 @@ sub write_output {
 sub fetch_genome_report {
     my ( $self, $release, $division ) = @_;
 
+    my $meta_host = $self->param_required('meta_host');
     my $work_dir = $self->param_required('work_dir');
     my $report_genomes_script = $self->param_required('report_genomes_script');
-    my $metadata_script_options = "\$(mysql-ens-meta-prod-1 details script) --release $release --division $division";
+    my $metadata_script_options = "\$($meta_host details script) --release $release --division $division";
     my $report_cmd = "perl $report_genomes_script $metadata_script_options -output_format json --dump_path $work_dir";
     my $report_out = $self->get_command_output($report_cmd);
 

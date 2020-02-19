@@ -123,6 +123,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'additional_species'    => $self->o('additional_species'),
                 'work_dir'              => $self->o('work_dir'),
                 'annotation_file'       => $self->o('annotation_file'),
+                'meta_host'             => $self->o('meta_host'),
             },
             -flow_into  => {
                 '2->A' => [ 'add_species_into_master' ],
