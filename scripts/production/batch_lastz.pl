@@ -116,7 +116,7 @@ foreach my $mlss ( @current_lastz_mlsses ) {
         my $chains_job_count = chains_job_count( $mlss );
         $mlss_job_count{$mlss->dbID}->{analysis}->{aln_chains} = $chains_job_count;
         ## 3 because we need to include filter_duplicates_net, which has about 2x as many jobs as alignment_nets
-        $mlss_job_count{$mlss->dbID}->{analysis}->{aln_nets} = 3 * (nets_job_count($mlss_gdbs[0]) + nets_job_count($mlss_gdbs[1]));
+        $mlss_job_count{$mlss->dbID}->{analysis}->{aln_nets} = 3 * (nets_job_count($mlss_gdbs[0]) + nets_job_count($mlss_gdbs[-1]));
     }
 	my $lastz_job_count = ($ref_chunk_count * $non_ref_chunk_count);
     $mlss_job_count{$mlss->dbID}->{analysis}->{lastz} = $lastz_job_count;
@@ -261,7 +261,7 @@ sub chains_job_count {
 	# partition and count dnafrags
 	my $paired_interval_counts;
 	my $interval_counts1 = n_dnafrags_by_interval( $gdb1 );
-	my $interval_counts2 = n_dnafrags_by_interval( $gdb2 );
+	my $interval_counts2 = $gdb2 ? n_dnafrags_by_interval( $gdb2 ) : $interval_counts1;
 	foreach my $int1 ( keys %$interval_counts1 ) {
 		foreach my $int2 ( keys %$interval_counts2 ) {
 			#print "$int1:$int2 -> ", $interval_counts1->{$int1} * $interval_counts2->{$int2}, "\n";
