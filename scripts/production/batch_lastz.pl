@@ -40,8 +40,9 @@ my @intervals_in_mbp = (
 my $method_link = 'LASTZ_NET';
 my $index = 1;
 
-my ( $help, $reg_conf, $master_db, $release, $include_mlss_ids, $exclude_mlss_ids, $dry_run );
+my ( $help, $reg_conf, $master_db, $release, $include_mlss_ids, $exclude_mlss_ids, $jira_off, $dry_run );
 my ( $verbose, $very_verbose );
+$jira_off = 0;
 $dry_run = 0;
 GetOptions(
     "help"               => \$help,
@@ -53,6 +54,7 @@ GetOptions(
     'exclude_mlss_ids=s' => \$exclude_mlss_ids,
     'method_link=s'      => \$method_link,
     'start_index=i'      => \$index,
+    'jira_off|jira-off!' => \$jira_off,
     'dry_run|dry-run!'   => \$dry_run,
     'v|verbose!'         => \$verbose,
     'vv|very_verbose!'   => \$very_verbose,
@@ -138,48 +140,60 @@ my $mlss_groups = split_mlsses(\%mlss_job_count);
 my $division = $dba->get_division();
 my $division_pkg_name = Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf->get_division_package_name($division);
 
-# Get a new Utils::JIRA object to create the tickets for the given division and
-# release
-my $jira_adaptor = new Bio::EnsEMBL::Compara::Utils::JIRA(-DIVISION => $division, -RELEASE => $release);
-# Get the parent JIRA ticket key, i.e. the production pipelines JIRA ticket for
-# the given division and release
-my $jql = 'labels=Production_anchor';
-my $existing_tickets = $jira_adaptor->fetch_tickets($jql);
-# Check that we have actually found the ticket (and only one)
-die 'Cannot find any ticket with the label "Production_anchor"' if (! $existing_tickets->{total});
-die 'Found more than one ticket with the label "Production_anchor"' if ($existing_tickets->{total} > 1);
-my $jira_prod_key = $existing_tickets->{issues}->[0]->{key};
-# Create the subtask JIRA ticket template
-my %ticket_tmpl = (
-    'parent'        => $jira_prod_key,
-    'name_on_graph' => 'LastZ',
-    'components'    => ['Pairwise pipeline', 'Production tasks']
-);
+my ($jira_adaptor, %ticket_tmpl);
+unless ($jira_off) {
+    # Get a new Utils::JIRA object to create the tickets for the given division and
+    # release
+    $jira_adaptor = new Bio::EnsEMBL::Compara::Utils::JIRA(-DIVISION => $division, -RELEASE => $release);
+    # Get the parent JIRA ticket key, i.e. the production pipelines JIRA ticket for
+    # the given division and release
+    my $jql = 'labels=Production_anchor';
+    my $existing_tickets = $jira_adaptor->fetch_tickets($jql);
+    # Check that we have actually found the ticket (and only one)
+    die 'Cannot find any ticket with the label "Production_anchor"' if (! $existing_tickets->{total});
+    die 'Found more than one ticket with the label "Production_anchor"' if ($existing_tickets->{total} > 1);
+    my $jira_prod_key = $existing_tickets->{issues}->[0]->{key};
+    # Create the subtask JIRA ticket template
+    %ticket_tmpl = (
+        'parent'        => $jira_prod_key,
+        'name_on_graph' => 'LastZ',
+        'components'    => ['Pairwise pipeline', 'Production tasks']
+    );
+}
 # Generate the command line of each batch and build its corresponding ticket
 my ( @cmd_list, $ticket_list );
 foreach my $group ( @$mlss_groups ) {
     my $this_mlss_list = '"[' . join(',', @{$group->{mlss_ids}}) . ']"';
     my $cmd = "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::${division_pkg_name}::Lastz_conf -mlss_id_list $this_mlss_list -pipeline_name ${division}_lastz_batch${index}_${release} -host mysql-ens-compara-prod-X -port XXXX";
     push @cmd_list, $cmd;
-    # Copy the template and add the specific details for this group
-    my $ticket = { %ticket_tmpl };
-    $ticket->{'summary'} = "LastZ batch $index";
-    $ticket->{'description'} = sprintf("{code:bash}%s{code}", $cmd);
-    push @$ticket_list, $ticket;
+    unless ($jira_off) {
+        # Copy the template and add the specific details for this group
+        my $ticket = { %ticket_tmpl };
+        $ticket->{'summary'} = "LastZ batch $index";
+        $ticket->{'description'} = sprintf("{code:bash}%s{code}", $cmd);
+        push @$ticket_list, $ticket;
+    }
     $index++;
 }
-# Create all JIRA tickets
-my $subtask_keys = $jira_adaptor->create_tickets(
-    -JSON_OBJ           => $ticket_list,
-    -DEFAULT_ISSUE_TYPE => 'Sub-task',
-    -DRY_RUN            => $dry_run
-);
+my $subtask_keys;
+unless ($jira_off) {
+    # Create all JIRA tickets
+    $subtask_keys = $jira_adaptor->create_tickets(
+        -JSON_OBJ           => $ticket_list,
+        -DEFAULT_ISSUE_TYPE => 'Sub-task',
+        -DRY_RUN            => $dry_run
+    );
+}
 # Finally, print each batch command line
 print "\nPipeline commands:\n------------------\n";
 for my $i (0 .. $#cmd_list) {
     my $cmd = $cmd_list[$i];
-    my $jira_key = $subtask_keys->[$i];
-    print "[$jira_key] $cmd\n";
+    if ($jira_off) {
+        print "$cmd\n";
+    } else {
+        my $jira_key = $subtask_keys->[$i];
+        print "[$jira_key] $cmd\n";
+    }
 }
 
 sub get_ref_chunk_count {
@@ -393,19 +407,20 @@ sub helptext {
 Usage: batch_lastz.pl --master_db <master url or alias> --release <release number>
 
 Options:
-	master_db        : url or registry alias of master db containing the method_link MLSSes (required)
-	release          : current release version (required)
-	reg_conf         : registry config file (required if using alias for master)
-	max_jobs         : maximum number of jobs allowed per-database (default: 6,000,000)
-	include_mlss_ids : list of comma separated MLSS IDs to add
-	exclude_mlss_ids : list of MLSS IDs to ignore (if they've already been run).
-	                   list should be comma separated values.
-	method_link      : method used to select MLSSes (default: LASTZ_NET)
-	start_index      : number to assign to the first batch (default: 1)
-	dry_run|dry-run  : in dry-run mode, the JIRA tickets will not be submitted to the JIRA
-	                   server (default: off)
-	v|verbose        : print out per-mlss job count estimates
-	vv|very_verbose  : print out per-analysis, per-mlss job count estimates
+	master_db         : url or registry alias of master db containing the method_link MLSSes (required)
+	release           : current release version (required)
+	reg_conf          : registry config file (required if using alias for master)
+	max_jobs          : maximum number of jobs allowed per-database (default: 6,000,000)
+	include_mlss_ids  : list of comma separated MLSS IDs to add
+	exclude_mlss_ids  : list of MLSS IDs to ignore (if they've already been run).
+	                    list should be comma separated values.
+	method_link       : method used to select MLSSes (default: LASTZ_NET)
+	start_index       : number to assign to the first batch (default: 1)
+	jira_off|jira-off : do not submit JIRA tickets to the JIRA server (default: tickets are submitted)
+	dry_run|dry-run   : in dry-run mode, the JIRA tickets will not be submitted to the JIRA
+	                    server (default: off)
+	v|verbose         : print out per-mlss job count estimates
+	vv|very_verbose   : print out per-analysis, per-mlss job count estimates
 
 HELPEND
 	return $msg;
