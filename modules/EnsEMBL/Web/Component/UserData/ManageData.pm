@@ -351,11 +351,8 @@ sub table_row {
   #my $delete_class = $sharers ? 'modal_confirm' : 'modal_link';
   #my $title        = $sharers ? ' title="This data is shared with other users"' : '';
   my $title = '';
-  my $delete_function;
   my $delete_class = 'modal_link';
-  if ($record_data->{'format'} eq 'TRACKHUB') {
-    $delete_class .= ' _clear_localcache';
-  }
+  my $delete_function;
 
   if ($multi_trackhub) { 
     my @species_list;
@@ -367,10 +364,6 @@ sub table_row {
   my $delete = $self->_icon({ link_class => $delete_class, class => 'delete_icon', title => $title });
   if ($record_data->{'format'} eq 'TRACKHUB') {
     $delete_function = 'delete_trackhub';
-    foreach my $cache_id (keys %{$record_data->{'cache_ids'}||{}}) {
-      my $trackhub_key = $cache_id.'-TrackHubMatrix-'.$record_data->{'species'};
-      $delete .= qq(<input class="hidden _trackhub_key" name="$menu_name" value="$trackhub_key" />);
-    }
   }
   else {
     $delete_function = lc($record_data->{'type'}) eq 'url' ? 'delete_remote' : 'delete_upload';
