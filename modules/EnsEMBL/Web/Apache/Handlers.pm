@@ -109,9 +109,9 @@ sub get_redirect_uri {
     return $uri =~ s/\/Multi\/psychic/\/Multi\/Psychic/r;
   }
   
-  ## Redirect incoming search links from ensemblgenomes.org 
-  if ($uri =~ /\/common\/psychic/) {
-    return $uri =~ s/\/common\/psychic/\/Multi\/Psychic/r;
+  ## Handle id lookups from ensemblgenomes.org to the corresponding page
+  if ($uri =~ /\/common\/psychic/ && $uri =~ /[\&\;\?]{1}q=([^\&\;]+)/ ) {
+    return stable_id_redirect_uri('id', $1)
   }
 
   ## quick fix for solr autocomplete js bug
