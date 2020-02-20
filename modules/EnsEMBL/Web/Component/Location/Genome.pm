@@ -170,6 +170,7 @@ sub _render_features {
           foreach (sort keys %$features) {
             my $pretty = $feature_display_name->{$_} || $self->decamel($_);
             $pretty = 'Transcript' if $pretty eq 'Probe Transcript';
+            $pretty = 'Gene' if $pretty eq 'Regulatory Feature';
             $pretty .= 's' if $mapped_features > 1;
             $names{$_} = $pretty;
           }
@@ -494,15 +495,19 @@ sub _configure_ProbeFeature_table {
   my $array   = $self->param('array');
   my $vendor  = $self->param('vendor');
   my $rows    = [];
-  
-  my $column_order = [qw(name seq length loc mismatches)];
+
+  my $column_order = [qw(length loc)];
   my $custom_columns = {
-                        'name'        => {'title' => 'Probe'},
-                        'seq'         => {'title' => 'Sequence'},
                         'length'      => {'title' => 'Length', 'sort' => 'numeric'},
                         'loc'         => {'title' => 'Genomic location (strand)', 'sort' => 'position_html'},
-                        'mismatches'  => {'title' => 'Mismatches'},
                         };
+  unless ($feature_type =~ /Regulatory/) {
+    push @$column_order, qw(mismatches);
+    $custom_columns->{'mismatches'} = {'title' => 'Mismatches'};  
+    unshift @$column_order, qw(name seq);
+    $custom_columns->{'name'} = {'title' => 'Probe'};  
+    $custom_columns->{'seq'}  = {'title' => 'Sequence'};  
+  }
 
   my $header = sprintf('Probe features for %s | %s', $self->param('id'), $array);
  
@@ -551,10 +556,7 @@ sub _configure_RegulatoryFeature_table {
   my $info = $self->_configure_ProbeFeature_table($feature_type, $feature_set);
   ## Override default header
   my $rf_id     = $self->hub->param('id');
-  my $ids       = join(', ', $rf_id);
-  my $count     = scalar @{$feature_set->[0]};
-  my $plural    = $count > 1 ? 'Factors' : 'Factor';
-  $info->{'header'} = "Regulatory Features associated with Regulatory $plural $ids";
+  $info->{'header'} = "Genes associated with Regulatory Factor $rf_id";
   return $info;
 }
 

@@ -114,7 +114,7 @@ sub content {
                             'values'        => $values,
                             'value'         => $hub->param('data_type') || '',
       });
-   
+
       $fieldset->add_field({
                             'type'          => 'String',
                             'name'          => 'query',
@@ -122,7 +122,7 @@ sub content {
                             'value'         => $hub->param('query') || '',
                             'notes'         => 'Hint: Leave "text search" empty to show all track hubs for this species',
       });
- 
+
       $fieldset->add_button({
                             'type'          => 'Submit',
                             'name'          => 'submit_button',

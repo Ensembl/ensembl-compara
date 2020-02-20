@@ -55,6 +55,7 @@ sub render {
                                                   'name'  => sprintf('%s Comparative Genomics - EMF files', $sitename),
                                                   'description' => 'Alignments of resequencing data for Ensembl vertebrate species',
                                                   'fileFormat' => 'emf',
+                                                  'encodingFormat' => 'text/plain',
                                                   'contentURL'  => sprintf('%s/emf/ensembl-compara/', $sd->ENSEMBL_FTP_URL), 
                               }],
                           },

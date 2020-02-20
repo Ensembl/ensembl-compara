@@ -19,8 +19,8 @@ limitations under the License.
 
 package EnsEMBL::Web::DBHub;
 
-### A centralised object giving access to data base connections
-### This object can be safely used in scripts where the process in not a web based request
+### A centralised object giving access to database connections
+### This object can be safely used in scripts where the process is not a web based request
 
 use strict;
 use warnings;
@@ -36,6 +36,7 @@ use parent qw(EnsEMBL::Web::Root);
 
 sub species       :Accessor;
 sub species_defs  :Accessor;
+sub input         :Accessor;
 
 sub new {
   ## @constructor
@@ -96,5 +97,55 @@ sub get_adaptor {
 
   return $adaptor;
 }
+
+sub param {
+  # @status - being changed to not deal with viewconfig params (only CGI params)
+  my $self = shift;
+  return unless $self->input;
+
+  if (@_) {
+    my @T = map _sanitize($_), $self->input->param(@_);
+    return wantarray ? @T : $T[0] if @T;
+
+    my $view_config = $self->viewconfig;
+
+    if ($view_config) {
+
+      my @caller;
+      my $i = 0;
+      while (1) {
+        my @c = caller($i++);
+        last if $c[3] !~ /::param$/;
+        @caller = @c;
+      }
+
+      if (@_ > 1) {
+        warn sprintf "ERROR: Setting view_config from hub at %s line %s\n", $caller[1], $caller[2];
+      }
+      $view_config->set(@_) if @_ > 1;
+      my @val = $view_config->get(@_);
+
+      return wantarray ? @val : $val[0];
+    }
+
+    return wantarray ? () : undef;
+  } else {
+    my @params      = map _sanitize($_), $self->input->param;
+    my $view_config = $self->viewconfig;
+
+    push @params, $view_config->options if $view_config;
+    my %params = map { $_, 1 } @params; # Remove duplicates
+
+    return keys %params;
+  }
+}
+
+sub session           { return undef; };
+sub cache             { return undef; };
+sub image_width       { return undef; };
+sub web_proxy         { return undef; };
+sub ie_version        { return undef; };
+sub get_record_data   { return undef; };
+
 
 1;

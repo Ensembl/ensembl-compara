@@ -146,7 +146,7 @@ sub print_wga_stats {
         $html .= sprintf('<h1>%s</h1>', $mlss->name);
         $html .= qq{<p>This alignment has been generated in $site release $rel and is composed of $nblocks blocks (up to $max_align&nbsp;bp long).</p>};
         $html .= $self->error_message('API access', sprintf(
-              '<p>This alignment set can be accessed using the Compara API via the Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor using the <em>method_link_type</em> "<b>%s</b>" and either the <em>species_set_name</em> "<b>%s</b>".</p>', $mlss->method->type, $mlss->species_set->name), 'info');
+              '<p>This alignment set can be accessed using the Compara API via the Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor using the <em>method_link_type</em> "<b>%s</b>" and the <em>species_set_name</em> "<b>%s</b>".</p>', $mlss->method->type, $mlss->species_set->name), 'info');
 
         my $table = EnsEMBL::Web::Document::Table->new([
           { key => 'species', title => 'Species',         width => '22%', align => 'left', sort => 'string' },

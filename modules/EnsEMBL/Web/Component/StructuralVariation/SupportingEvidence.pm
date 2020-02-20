@@ -230,8 +230,8 @@ sub supporting_evidence_table {
      push(@$columns,{ key => 'phen', sort => 'string', title => 'Phenotype(s)' });
     };
     
-    if ($self->hub->species ne 'Homo_sapiens' && $has_data{'str'}) {  
-     push(@$columns,{ key => 'strain', sort => 'string', title => 'Strain' });
+    if ($has_data{'str'}) {  
+     push(@$columns,{ key => 'strain', sort => 'string', title => ucfirst $hub->species_defs->STRAIN_TYPE });
     };
 
     my $ssv_count   = scalar(@{$ssvs});

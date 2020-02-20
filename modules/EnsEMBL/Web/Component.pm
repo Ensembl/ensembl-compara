@@ -238,6 +238,9 @@ sub get_content {
   if (!$content) {
     if($function && $self->can($function)) {
       $content = $self->$function;
+      if ($function eq 'pan_compara') {
+        $content = $self->header.$self->content_buttons.$content;
+      }
     } else {
       $content = $self->content; # Force sequence-point before buttons call.
       $content = $self->header.$self->content_buttons.$content;

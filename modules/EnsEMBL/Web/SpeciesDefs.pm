@@ -829,7 +829,7 @@ sub _parse {
         };
 
         if ($strain_group && $strain_name !~ /reference/) {
-          $child->{type} = $strain_group . ' strains';
+          $child->{type} = $strain_group . ' ' . $config_packer->tree->{'STRAIN_TYPE'}. 's';
         }
         elsif($strain_group && $strain_name =~ /reference/) {
           # Create display name for Reference species

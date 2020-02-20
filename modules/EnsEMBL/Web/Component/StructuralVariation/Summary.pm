@@ -421,7 +421,7 @@ sub get_strains {
     push(@strain,$svs->strain->name) if ($svs->strain);
   }
 
-  return scalar @strain ? ['Strain', join(', ', @strain)] : ();
+  return scalar @strain ? [ucfirst($self->hub->species_defs->STRAIN_TYPE), join(', ', @strain)] : ();
 }
 
 sub clinical_significance {

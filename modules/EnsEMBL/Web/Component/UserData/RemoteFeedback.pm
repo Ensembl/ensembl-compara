@@ -120,19 +120,6 @@ sub get_message {
 
   ## We should only reach this step if the trackhub has a mixture of available species/assemblies 
   ## and unavailable ones, and therefore we want to warn the user before proceeding
-  if ($trackhub_ok) {
-    my $menu_id     = clean_id($hub->param('name'));
-    if ($page_action eq 'Multi') {
-      foreach (keys %{$hub->referer->{'params'}}) {
-        next unless $_ =~ /^[r|s]\d*$/;
-        $params->{$_} = $hub->referer->{'params'}{$_}[0];  
-      } 
-    }
-    my $url = $hub->url($params);
-    my $config = $page_action eq 'Multi' ? 'multibottom' : 'viewbottom';
-    $message .= sprintf('</p><p><a href="%s#modal_config_%s-%s">Configure your hub</a>', $url, $config, $menu_id);
-  }
-
   if ($try_archive) {
     my $archive_site = $hub->species_defs->get_config($species, 'SWITCH_ARCHIVE_URL');
     if ($archive_site) {

@@ -204,22 +204,13 @@ sub _summarise_core_tables {
   );
   my $analysis = {};
   foreach my $a_aref (@$t_aref) { 
-    ## Strip out "crap" at front and end! probably some q(')s...
-    ( my $A = $a_aref->[6] ) =~ s/^[^{]+//;
-    $A =~ s/[^}]+$//;
-    my $T = eval($A);
-    if (ref($T) ne 'HASH') {
-      if ($A) {
-        warn "Deleting web_data for $db_key:".$a_aref->[1].", check for syntax error";
-      }
-      $T = {};
-    }
+    my $web_data = $a_aref->[6] ? from_json($a_aref->[6]) : {};
     $analysis->{ $a_aref->[0] } = {
       'logic_name'  => $a_aref->[1],
       'name'        => $a_aref->[3],
       'description' => $a_aref->[4],
       'displayable' => $a_aref->[5],
-      'web_data'    => $T
+      'web_data'    => $web_data,
     };
   }
   ## Set last repeat mask date whilst we're at it, as needed by BLAST configuration, below
@@ -709,9 +700,7 @@ sub _summarise_funcgen_db {
   foreach my $a_aref (@$t_aref) {
     my $desc;
     { no warnings; $desc = eval($a_aref->[4]) || $a_aref->[4]; }    
-    (my $web_data = $a_aref->[6]) =~ s/^[^{]+//; ## Strip out "crap" at front and end! probably some q(')s
-    $web_data     =~ s/[^}]+$//;
-    $web_data     = eval($web_data) || {};
+    my $web_data = $a_aref->[6] ? from_json($a_aref->[6]) : {};
     
     $analysis->{$a_aref->[0]} = {
       'logic_name'  => $a_aref->[1],
@@ -1049,6 +1038,9 @@ sub _summarise_website_db {
                                                               };
       }
     }
+    else {
+      $self->db_tree->{'ENSEMBL_GLOSSARY'} = {};
+    }
 
     ## Get biotype definitions
     my $terms_endpoint = $ols.'/terms';
@@ -1081,6 +1073,7 @@ sub _fetch_ols_term {
   my ($self, $url) = @_;
   my %result;
   my $term = $self->_get_rest_data($url);
+  return {} unless $term;
   my $children_link = $term->{_links}->{children}->{href};
 
   $result{label} = $term->{label};
@@ -1097,6 +1090,7 @@ sub _fetch_children_ols_terms {
   my ($self, $url) = @_;
 
   my $response = $self->_get_rest_data($url);
+  return {} unless $response;
   my $children = $response->{_embedded}->{terms};
 
   return map {
@@ -1637,6 +1631,7 @@ sub _munge_meta {
     provider.logo                 PROVIDER_LOGO
     species.strain                SPECIES_STRAIN
     species.strain_group          STRAIN_GROUP
+    strain.type                   STRAIN_TYPE
     genome.assembly_type          GENOME_ASSEMBLY_TYPE
     gencode.version               GENCODE_VERSION
   );
@@ -1714,6 +1709,11 @@ sub _munge_meta {
     
     $self->tree->{'SPECIES_META_ID'} = $species_id;
 
+    ## fall back to 'strain' if no strain type set
+    if (!$self->tree->{'STRAIN_TYPE'}) {
+      $self->tree->{'STRAIN_TYPE'} = 'strain';
+    }
+
     ## Munge genebuild info
     my @A = split '-', $meta_hash->{'genebuild.start_date'}[0];
     
@@ -1735,39 +1735,79 @@ sub _munge_meta {
 
     $self->tree->{'HAVANA_DATAFREEZE_DATE'} = $meta_hash->{'genebuild.havana_datafreeze_date'}[0];
 
+    ## check if there are sample search entries from the ini file
+    my $ini_hash = $self->tree->{'SAMPLE_DATA'};
+
     # check if there are sample search entries defined in meta table
     my @mks = grep { /^sample\./ } keys %{$meta_hash || {}}; 
-    my $shash;
-
-    # Create hash of db values
+    my $mk_hash = {};
     foreach my $k (@mks) {
+      ## Convert key to format used in webcode
       (my $k1 = $k) =~ s/^sample\.//;
-      $shash->{uc $k1} = $meta_hash->{$k}->[0];
+      $mk_hash->{uc $k1} = $meta_hash->{$k}->[0];
     }
-
-    my @iks = keys %{$self->tree->{'SAMPLE_DATA'}||{}};
-    my @all_keys = (@mks, @iks);
-    my %seen;
-
-    ## add in any missing values where text omitted because same as param
-    # but don't override any that have been set in ini file
-    foreach my $key (@all_keys) {
-      next if $seen{$key};
-      my $ini_version = $self->tree->{'SAMPLE_DATA'}{$key};
-      if (!$shash->{$key} && defined($ini_version)) {
-        $shash->{$key} = $ini_version;
+  
+    ## Merge param keys into single set
+    my (%seen, @param_keys, @other_keys);
+    foreach (keys %$mk_hash, keys %{$ini_hash || {}}) {
+      next if $seen{$_};
+      if ($_ =~ /PARAM/) {
+        push @param_keys, $_;
       }
       else {
-        next unless $key =~ /PARAM/;
-        (my $type = $key) =~ s/_PARAM//;
-        unless ($shash->{$type.'_TEXT'}) {
-          $shash->{$type.'_TEXT'} = $shash->{$key};
-        }
-      } 
-      $seen{$key} = 1;
+        push @other_keys, $_;
+      }
+      $seen{$_} = 1;
     }
 
-    $self->tree->{'SAMPLE_DATA'} = $shash if scalar keys %$shash;
+    ## Merge the two sample sets into one hash, giving priority to ini file
+    my $sample_hash = {};
+    foreach my $key (@param_keys) {
+      (my $text_key = $key) =~ s/PARAM/TEXT/;
+
+      if ($ini_hash->{$key}) {
+        $sample_hash->{$key} = $ini_hash->{$key};
+        ## Now set accompanying text
+        if ($ini_hash->{$text_key}) {
+          $sample_hash->{$text_key} = $ini_hash->{$text_key};
+        }
+        else {
+          $sample_hash->{$text_key} = $ini_hash->{$key};
+        }
+      }
+      elsif ($mk_hash->{$key}) {
+        $sample_hash->{$key} = $mk_hash->{$key};
+        ## Now set accompanying text
+        if ($mk_hash->{$text_key}) {
+          $sample_hash->{$text_key} = $mk_hash->{$text_key};
+        }
+        else {
+          $sample_hash->{$text_key} = $mk_hash->{$key};
+        }
+      }
+    }
+    ## Deal with any atypical entries, e.g. search
+    foreach (@other_keys) {
+      next if $sample_hash->{$_};
+      if ($ini_hash->{$_}) {
+        $sample_hash->{$_} = $ini_hash->{$_};
+      }
+      elsif ($mk_hash->{$_}) {
+        $sample_hash->{$_} = $mk_hash->{$_};
+      }
+    }
+
+    ## Finally deduplicate any values
+    my $dedupe = {};
+    while (my($k,$v) = each(%$sample_hash)) {
+      next unless $k =~ /TEXT/;
+      if ($dedupe->{$v}) {
+        delete $sample_hash->{$k};
+      }
+      $dedupe->{$v}++;
+    }
+
+    $self->tree->{'SAMPLE_DATA'} = $sample_hash if scalar keys %$sample_hash;
 
     # check if the karyotype/list of toplevel regions ( normally chroosomes) is defined in meta table
     @{$self->tree->{'TOPLEVEL_REGIONS'}} = @{$meta_hash->{'regions.toplevel'}} if $meta_hash->{'regions.toplevel'};

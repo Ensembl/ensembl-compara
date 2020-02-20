@@ -76,6 +76,7 @@ body.ie6 .spinner { background-color: [[WHITE]]; border-color: [[WHITE]]; height
 .no-left-margin   { margin-left:    0     !important; }
 .no-right-margin  { margin-right:   0     !important; }
 .half-margin      { margin-bottom:  0.5em !important; }
+.left-half-margin { margin-left:    0.5em !important; }
 
 /*----------------------------------------------------------------------
   jQuery resizable handles

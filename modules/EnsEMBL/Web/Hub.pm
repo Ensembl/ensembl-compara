@@ -358,7 +358,8 @@ sub get_species_info {
         'group'             => $species_defs->get_config($_, 'SPECIES_GROUP'),
         'strain'            => $strain,
         'is_reference'      => $is_reference,
-        'strain_group' => $strain_group,
+        'strain_group'      => $strain_group,
+        'strain_type'       => $species_defs->get_config($_, 'STRAIN_TYPE'),
       } unless exists $self->{'_species_info'}{$_};
     }
 

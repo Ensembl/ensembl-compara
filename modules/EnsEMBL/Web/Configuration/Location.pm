@@ -148,8 +148,9 @@ sub populate_tree {
     )],
     { 'availability' => 'slice has_strains', 'concise' => 'Resequencing Alignments' }
   ));
- 
-  $variation_menu->append($self->create_node('Strain', 'Strain table',
+
+  my $strain_type = ucfirst $hub->species_defs->STRAIN_TYPE;  
+  $variation_menu->append($self->create_node('Strain', "$strain_type table",
     [qw(
       botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
       strain  EnsEMBL::Web::Component::Location::StrainTable

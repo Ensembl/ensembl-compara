@@ -325,7 +325,7 @@ sub transcript_table {
       if (my $mane_attrib = $trans_attribs->{$tsi}{$MANE_attrib_code}) {
         my $refseq_id = $mane_attrib->value;
         $refseq_url  = $hub->get_ExtURL_link($refseq_id, 'REFSEQ_MRNA', $refseq_id);
-        push @flags, helptip($mane_attrib->name, get_glossary_entry($hub, $mane_attrib->name)); 
+        push @flags, helptip($mane_attrib->name, get_glossary_entry($hub, 'MANE Select'));
       }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;
@@ -405,6 +405,7 @@ sub transcript_table {
 
   if(@proj_attrib && $self->hub->species_defs->IS_STRAIN_OF) {
     (my $ref_gene = $proj_attrib[0]->value) =~ s/\.\d+$//;
+    my $strain_type = $hub->species_defs->STRAIN_TYPE;
     
     if($ref_gene) {
       #copied from apache/handler, just need this one line to get the matching species for the stable_id (use ensembl_stable_id database)
@@ -420,13 +421,13 @@ sub transcript_table {
           action  => 'Summary',
           g       => $ref_gene
         });
-        $table->add_row('Reference strain equivalent', qq{<a href="$ref_url">$ref_gene_name</a>});
+        $table->add_row("Reference $strain_type equivalent", qq{<a href="$ref_url">$ref_gene_name</a>});
       }
       else {
-        $table->add_row('Reference strain equivalent',"None");
+        $table->add_row("Reference $strain_type equivalent","None");
       }  
     } else {
-      $table->add_row('Reference strain equivalent',"None");
+      $table->add_row("Reference $strain_type equivalent","None");
     }
 
   }
@@ -919,9 +920,9 @@ sub check_for_missing_species {
     elsif (defined $slice and !$aligned_species{$_} and $_ ne 'ancestral_sequences') {
       my $sp_prod = $hub->species_defs->production_name_mapping($_);
 
-      my $key = ($species_info->{$sp_prod}->{strain_group} && $species_info->{$sp_prod}->{strain} !~ /reference/) ? 
-              'strains' : 'species';
-      push @{$missing_hash->{$key}}, $species_info->{$sp_prod}->{common};
+      my $key = ($species_info->{$sp_prod}{strain_group} && $species_info->{$sp_prod}{strain} !~ /reference/) ? 
+              $species_info->{$sp_prod}{strain_type}.'s' : 'species';
+      push @{$missing_hash->{$key}}, $species_info->{$sp_prod}{common};
       push @missing, $species_defs->production_name_mapping($_);
     }
   }
@@ -954,7 +955,8 @@ sub check_for_missing_species {
 
       if ($missing_hash->{strains}) {
         $count = scalar @{$missing_hash->{strains}};
-        $str .= "$count strain";
+        my $strain_type = $hub->species_defs->STRAIN_TYPE || 'strain';
+        $str .= "$count $strain_type";
         $str .= 's' if $count > 1;
       }
 

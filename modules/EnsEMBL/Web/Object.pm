@@ -357,8 +357,9 @@ sub get_slices {
       cigar_line        => $cigar_line,
     };
     if ($name eq 'Ancestral_sequences') {
-        $counter++;
-        my $ga_node = $formatted_slices[-1]->{underlying_slices}->[0]->{_node_in_tree};
+      $counter++;
+      my $ga_node = $formatted_slices[-1]->{underlying_slices}->[0]->{_node_in_tree};
+      if ($ga_node) {
         my $removed_species = $_->{_align_slice}->{_removed_species};
         # The current slice has to be discarded if it is an ancestral node
         # that fully maps to hidden species on one of its sides
@@ -370,6 +371,7 @@ sub get_slices {
         } else {
           pop @formatted_slices;
         }
+      }
     }
 
     $length ||= $_->length; # Set the slice length value for the reference slice only
@@ -424,10 +426,10 @@ sub get_alignments {
                                         : $hub->viewconfig;
   my $alignments_session_data = $viewconfig->get_alignments_selector_settings;
 
-  if (keys %{$alignments_session_data->{$species}} && $alignments_session_data->{$species}->{$align} == $align) {
+  if (keys %{$alignments_session_data->{$species}} && $alignments_session_data->{$species}->{'align'} == $align) {
     while (my($k,$v) = each (%{$alignments_session_data->{$species}})) {
       next unless ($k =~ /species_${align}_(.+)/ && $v eq 'yes');
-      push @selected_species, $1 unless $1 =~ /^$species$/i;
+      push @selected_species, $1;
     }
   }
   else {

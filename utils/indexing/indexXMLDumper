@@ -202,6 +202,7 @@ foreach (@indexes) {
 my %strain_parent_common_names = (
   mus_musculus => 'Mouse',
   sus_scrofa   => 'Pig',
+  canis_lupus_familiaris => 'Dog',
 );
 
 # if the SPECIES is set to ALL grab them all from the config...

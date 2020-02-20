@@ -222,7 +222,7 @@ function draw(release) {
             if (d3.event.defaultPrevented) return; // click suppressed
             d = toggleChildren(d);
             update(d);
-            centerNode(d);
+            // centerNode(d);
             displaySpeciesInfo(d);
         }
 

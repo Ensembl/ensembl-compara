@@ -143,15 +143,6 @@ sub _fetch_data {
   }
   return [] unless $url;
 
-  my $check;
-
-  if ($check->{'error'}) {
-    my $error = $self->{'my_config'}->get('on_error');
-    $error ||=  $check->{'error'}[0];
-    $self->no_file($error);
-    return [];
-  }
-
   my $args      = { 'options' => {
                                   'hub'         => $hub,
                                   'config_type' => $self->{'config'}{'type'},
@@ -216,10 +207,13 @@ sub _fetch_data {
 
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($slice, $metadata, $whole_chromosome);
+    # Don't cache here, it's not properly managed. Rely on main cache layer.
+    return $data;
   }
-
-  # Don't cache here, it's not properly managed. Rely on main cache layer.
-  return $data;
+  else {
+    $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
+    return [];
+  }
 }
 
 sub bins {
