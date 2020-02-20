@@ -45,8 +45,9 @@ sub add_symlinks {
   ## Adds symlinks to the $out array that are matching with any of the literal paths already present in the $out
   ## @param (Arrayref) Literal paths array - the symlink paths get added to the same array
   ## @param (Hashref) Symlinks already done - needed to avoid infinite recursion
-  my ($out, $done) = @_;
+  my ($out, $done,$depth) = @_;
 
+  return unless $depth;
   foreach my $here (@$out) {
     if (opendir(my $dir, $here)) {
       foreach my $link (grep { !$done->{$_} } grep -l, map "$here/$_", readdir($dir)) {
@@ -57,7 +58,7 @@ sub add_symlinks {
         foreach my $matching_dest (grep { $_ eq $dest } @$out) {
           push @$out, map { $_ =~ s/^\Q$matching_dest\E/$link/r } grep { m/^\Q$matching_dest\E/ } @$out;
           $done->{$link} = 1;
-          add_symlinks($out, $done);
+          add_symlinks($out, $done,$depth-1);
         }
       }
       closedir $dir;
@@ -72,7 +73,7 @@ $SiteDefs::ENSEMBL_IDENTITIES = [
     my @path      = grep $_, split m!/!, $SiteDefs::ENSEMBL_SERVERROOT;
     my (@paths, @out);
     follow_paths([],\@path,\@paths);
-    add_symlinks(\@paths, {});
+    add_symlinks(\@paths, {},5);
     foreach my $host (uniq('', $hostname, $hostname =~ s/\..*//r)) {
       push @out, map {"unix:$host:$_"} @paths;
       push @out, "host:$host";
