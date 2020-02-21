@@ -1,22 +1,17 @@
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-"""CITest plugin for pytest.
+"""
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
-Pytest plugin that defines a set hooks and classes to parse and run tests for the Continuous Integration Test
-(CITest) suite.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 """
 
 from collections import OrderedDict
@@ -29,9 +24,9 @@ import pytest
 from _pytest.config.argparsing import Parser
 from _pytest.runner import TestReport
 
-from ensembl.compara.db.dbconnection import DBConnection
-from ensembl.compara.filecmp.dircmp import DirCmp
-from ensembl.compara.citest import testdb, testfiles
+from compara.citest import testdb, testfiles
+from compara.db.dbconnection import DBConnection
+from compara.filecmp.dircmp import DirCmp
 
 
 @pytest.hookimpl()
@@ -102,14 +97,14 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
     # Make sure not to overwrite previous reports
     if os.path.isfile(report_filename):
         i = 1
-        while os.path.isfile("{}.{}".format(report_filename, i)):
+        while os.path.isfile(f"{report_filename}.{i}"):
             i += 1
-        report_filename = "{}.{}".format(report_filename, i)
+        report_filename = f"{report_filename}.{i}"
     with open(report_filename, "w") as f:
         json.dump(full_report, f, indent=4)
     # Print summary in STDOUT
     total = len(session.report)
-    print("\n{} out of {} tests ok".format(total - failed, total))
+    print(f"\n{total - failed} out of {total} tests ok")
 
 
 class JsonFile(pytest.File):
@@ -136,15 +131,15 @@ class JsonFile(pytest.File):
             assert ref_url, "Required argument '--ref-db' or 'reference_db' key in JSON file"
             target_url = self.config.getoption('target_db', pipeline_tests.get('target_db', ''), True)
             assert target_url, "Required argument '--target-db' or 'target_db' key in JSON file"
-            ref_db = DBConnection(ref_url)
-            target_db = DBConnection(target_url)
+            ref_dbc = DBConnection(ref_url)
+            target_dbc = DBConnection(target_url)
             for table, test_list in pipeline_tests['database_tests'].items():
                 for test in test_list:
                     # Ensure required keys are present in every test
-                    assert 'test' in test, "Missing argument 'test' in database_tests['{}']".format(table)
-                    assert 'args' in test, "Missing argument 'args' in database_tests['{}']['{}']".format(
-                        table, test['test'])
-                    yield testdb.TestDBItem(test['test'], self, ref_db, target_db, table, test['args'])
+                    assert 'test' in test, f"Missing argument 'test' in database_tests['{table}']"
+                    assert 'args' in test, \
+                        f"Missing argument 'args' in database_tests['{table}']['{test['test']}']"
+                    yield testdb.TestDBItem(test['test'], self, ref_dbc, target_dbc, table, test['args'])
         if 'files_tests' in pipeline_tests:
             # Load the reference and target directory paths
             ref_path = self.config.getoption('ref_dir', pipeline_tests.get('reference_dir', ''), True)
@@ -154,6 +149,6 @@ class JsonFile(pytest.File):
             dir_cmp = DirCmp(ref_path=ref_path, target_path=target_path)
             for i, test in enumerate(pipeline_tests['files_tests'], 1):
                 # Ensure required keys are present in every test
-                assert 'test' in test, "Missing argument 'test' in files_tests #{}".format(i)
-                assert 'args' in test, "Missing argument 'args' in files_tests #{}".format(i)
+                assert 'test' in test, f"Missing argument 'test' in files_tests #{i}"
+                assert 'args' in test, f"Missing argument 'args' in files_tests #{i}"
                 yield testfiles.TestFilesItem(test['test'], self, dir_cmp, test['args'])
