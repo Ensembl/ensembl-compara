@@ -22,7 +22,7 @@ from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionI
 from _pytest.fixtures import FixtureLookupErrorRepr
 import sqlalchemy
 from sqlalchemy import func
-from sqlalchemy.sql.expression import select
+from sqlalchemy.sql.expression import select, text
 
 from compara import to_list
 from compara.citest import CITestItem
@@ -106,7 +106,7 @@ class TestDBItem(CITestItem):
             # ORDER BY to ensure that the results are always in the same order (for the same groups)
             query = query.group_by(*columns).order_by(*columns)
         for clause in to_list(filter_by):
-            query = query.where(clause)
+            query = query.where(text(clause))
         # Get the number of rows for both databases
         ref_data = pandas.read_sql_query(query, self.ref_db.connect())
         target_data = pandas.read_sql_query(query, self.target_db.connect())
@@ -164,7 +164,7 @@ class TestDBItem(CITestItem):
             columns = [table.columns[col] for col in to_list(columns)]
         query = select(columns)
         for clause in to_list(filter_by):
-            query = query.where(clause)
+            query = query.where(text(clause))
         # Get the table content for the selected columns
         ref_data = pandas.read_sql_query(query, self.ref_db.connect())
         target_data = pandas.read_sql_query(query, self.target_db.connect())
