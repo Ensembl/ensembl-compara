@@ -1,216 +1,135 @@
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-"""Directory tree comparison to explore the similarities between reference and target directory trees."""
+"""
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
-import copy
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
 from functools import reduce
-import operator
+from itertools import filterfalse
 import os
-from typing import Callable, Dict, Iterator, List, Union
+from pathlib import Path
+from typing import Callable, Dict, Iterator, List, TypeVar
+
+
+# Create the PathLike type as an alias for supported types a path can be stored into
+PathLike = TypeVar('PathLike', str, os.PathLike)
 
 
 class DirCmp:
-    """Directory comparison object, to compare reference and target directory trees.
+    """Directory comparison object to compare reference and target directory trees.
 
     Args:
-        ref_path: Reference's root path, e.g. "/home/user/pipelines/reference".
-        target_path: Target's root path, e.g. "/home/user/pipelines/target".
+        ref_path: Reference's root path, e.g. ``/home/user/pipelines/reference``.
+        target_path: Target's root path, e.g. ``/home/user/pipelines/target``.
 
     Attributes:
-        ref_path (str): Reference's root path.
-        target_path (str): Target's root path.
-        common_tree (dict): Directory tree shared between reference and target paths.
-
-    Raises:
-        AssertionError: If reference or target paths do not exist.
+        ref_path (Path): Reference's directory path.
+        target_path (Path): Target's directory path.
+        common_files (Set[str]): Files shared between reference and target directories.
+        ref_only (Set[str]): Files/subdirectories only found in the reference directory.
+        target_only (Set[str]): Files/subdirectories only found in the target directory.
+        subdirs (Dict[Path, DirCmp]): Shared subdirectories between reference and target directories.
 
     """
-    def __init__(self, ref_path: str, target_path: str):
-        assert os.path.exists(ref_path), "Reference path '{}' not found".format(ref_path)
-        assert os.path.exists(target_path), "Target path '{}' not found".format(target_path)
-        # Get the directory trees for the given reference and target paths
-        self.ref_path = os.path.abspath(ref_path)
-        self._ref_tree_only = self._get_dir_tree(self.ref_path)
-        if os.path.isfile(self.ref_path):
-            self.ref_path = os.path.dirname(self.ref_path)
-        self.target_path = os.path.abspath(target_path)
-        self._target_tree_only = self._get_dir_tree(self.target_path)
-        if os.path.isfile(self.target_path):
-            self.target_path = os.path.dirname(self.target_path)
-        self.common_tree = copy.deepcopy(self.get_ref_only())
-        # Recursive nested function (closure) to compare reference and target trees and build the common one
-        def cmp_trees(ref_node: Dict, target_node: Dict, common_node: Dict) -> None:
-            """Compares reference and target trees, moving their shared structure to the common tree."""
-            ref_dirnames = set(ref_node.keys())
-            target_dirnames = set(target_node.keys())
-            # Remove directories only found on the reference tree
-            for dirname in ref_dirnames.difference(target_dirnames):
-                del common_node[dirname]
-            for dirname in common_node.keys():
-                if dirname != '.':
-                    cmp_trees(ref_node[dirname], target_node[dirname], common_node[dirname])
-                else:
-                    # Remove files only found on the reference tree
-                    for filename in ref_node[dirname].difference(target_node[dirname]):
-                        common_node[dirname].remove(filename)
-                    # Remove common files from reference and target trees
-                    for filename in common_node[dirname]:
-                        ref_node[dirname].remove(filename)
-                        target_node[dirname].remove(filename)
-                # Remove emptied directories
-                if not common_node[dirname]:
-                    del common_node[dirname]
-                if not ref_node[dirname]:
-                    del ref_node[dirname]
-                if not target_node[dirname]:
-                    del target_node[dirname]
-        # Compare the directory trees from their root
-        cmp_trees(self._ref_tree_only, self._target_tree_only, self.common_tree)
+    def __init__(self, ref_path: PathLike, target_path: PathLike) -> None:
+        self.ref_path = Path(ref_path)
+        ref_dirnames, ref_filenames = next(os.walk(self.ref_path))[1:]
+        ref_dnames = set(ref_dirnames)
+        ref_fnames = set(ref_filenames)
+        self.target_path = Path(target_path)
+        target_dirnames, target_filenames = next(os.walk(self.target_path))[1:]
+        target_dnames = set(target_dirnames)
+        target_fnames = set(target_filenames)
+        self.common_files = ref_fnames & target_fnames
+        # Get files/subdirectories only present in the reference directory
+        self.ref_only = ref_fnames - target_fnames
+        self.ref_only |= set(map(lambda x: os.path.join(x, '*'), ref_dnames - target_dnames))
+        # Get files/subdirectories only present in the target directory
+        self.target_only = target_fnames - ref_fnames
+        self.target_only |= set(map(lambda x: os.path.join(x, '*'), target_dnames - ref_dnames))
+        self.subdirs = {}  # type: Dict[Path, DirCmp]
+        for dirname in ref_dnames & target_dnames:
+            self.subdirs[Path(dirname)] = DirCmp(self.ref_path / dirname, self.target_path / dirname)
 
-    @staticmethod
-    def _get_dir_tree(path: str) -> Dict:
-        """Returns the directory tree rooted at the given path.
+    def _traverse(self, attr: str, *paths: PathLike) -> Iterator[str]:
+        """Yields each element of the requested attribute found in the directory tree(s).
 
-        Note:
-            Files of each folder will be under the key ``.``.
+        This method traverses the shared directory tree in breadth-first order.
 
         Args:
-            path: Root path.
-
-        """
-        if os.path.isfile(path):
-            tree_dict = {'.': set(os.path.basename(path))}  # type: Dict
-        else:
-            tree_dict = {'': {}}
-            # Breadth First traversal of the directory tree
-            for dirpath, dirnames, filenames in os.walk(path):
-                # Transform dirpath into a relative path (from the root path)
-                dirpath = dirpath.replace(path, '')
-                subtree = reduce(operator.getitem, dirpath.split(os.sep), tree_dict)
-                # Initialise the subdirectories to guarantee reduce() will find them
-                subtree.update({name: {} for name in dirnames})
-                subtree['.'] = set(filenames)
-            tree_dict = tree_dict['']
-        return tree_dict
-
-    @staticmethod
-    def _prune_tree(root: Dict, paths: Union[str, List] = None, raise_err: bool = False) -> Dict:
-        """Returns a pruned directory tree that only includes the given paths.
-
-        Note:
-            If `paths` is empty, it returns `root`.
-
-        Args:
-            root: Directory tree.
-            paths: Relative directory path(s) to include.
-            raise_err: Raise exception flag.
+            attr: Attribute to return, i.e. ``common_files``, ``ref_only`` or ```target_only``.
+            *paths: Relative directory paths to traverse.
 
         Raises:
-            ValueError: if `raise_err` is True and any relative path is not part of the directory tree.
+            ValueError: If one of `paths` is not part of the shared directory tree.
 
         """
-        if not paths:
-            return root
-        # Make sure paths is a list
-        if isinstance(paths, str):
-            paths = [paths]
-        pruned_tree = {}  # type: Dict
+        nodes_left = []
+        # Fetch and append the root node of each relative path
         for rel_path in paths:
-            # Normalize relative path to ensure reduce() finds it correctly
-            dirnames = os.path.normpath(rel_path).split(os.path.sep)
             try:
-                tree_node = reduce(operator.getitem, dirnames, root)
+                node = reduce(lambda x, y: x.subdirs[Path(y)], Path(rel_path).parts, self)
             except KeyError:
-                if raise_err:
-                    # Suppress exception context to display only the ValueError
-                    raise ValueError("Path '{}' not found in the directory tree".format(rel_path)) from None
-                continue
-            # Create/find the path in the pruned tree and attach the subtree
-            pruned_node = pruned_tree
-            for name in dirnames[:-1]:
-                pruned_node = pruned_node.setdefault(name, {})
-            pruned_node[dirnames[-1]] = tree_node
-        return pruned_tree
-
-    @staticmethod
-    def _eval_tree(root: Dict, test_func: Callable) -> Iterator[str]:
-        """Yields each file in the directory tree for which the test function returns True.
-
-        Args:
-            test_func: Test function to apply to each file. It has to match the following interface::
-
-                def test_func(file: str) -> bool:
-                    ...
-
-        """
-        nodes_left = [('', root)]
+                # Suppress exception context to display only the ValueError
+                raise ValueError(f"Path '{rel_path}' not found in shared directory tree") from None
+            nodes_left.append((Path(rel_path), node))
+        # If no nodes were added, add the root as the starting point
+        if not nodes_left:
+            nodes_left.append((Path(), self))
         while nodes_left:
-            rel_path, node = nodes_left.pop()
-            for dirname, dir_content in node.items():
-                if dirname != '.':
-                    # Append dirname to the list of directories left to evaluate
-                    nodes_left.append((os.path.join(rel_path, dirname), dir_content))
-                else:
-                    # Apply test_func() to each file
-                    for filename in dir_content:
-                        filepath = os.path.join(rel_path, filename)
-                        if test_func(filepath):
-                            yield filepath
+            dirname, node = nodes_left.pop()
+            # Append subdirectories to the list of directories left to traverse
+            nodes_left.extend([(dirname / subdir, subnode) for subdir, subnode in node.subdirs.items()])
+            for file in getattr(node, attr):
+                yield str(dirname / file)
 
-    def get_ref_only(self, paths: Union[str, List] = None) -> Dict:
-        """Returns the reference-only directory tree that only includes the given paths.
-
-        Args:
-            paths: Relative directory path(s) to include.
-
-        """
-        return self._prune_tree(self._ref_tree_only, paths)
-
-    def get_target_only(self, paths: Union[str, List] = None) -> Dict:
-        """Returns the target-only directory tree that only includes the given paths.
-
-        Args:
-            paths: Relative directory path(s) to include.
-
-        """
-        return self._prune_tree(self._target_tree_only, paths)
-
-    def apply_test(self, test_func: Callable, paths: Union[str, List] = None) -> List:
-        """Returns the files in the common directory tree for which the test function returns True.
+    def apply_test(self, test_func: Callable, *paths: PathLike) -> List[str]:
+        """Returns the files in the shared directory tree for which the test function returns False.
 
         Args:
             test_func: Test function to apply to each file. It has to match the following interface::
 
-                def test_func(file: str) -> bool:
+                def test_func(file: PathLike) -> bool:
                     ...
 
-            paths: Relative directory path(s) to evaluate.
+            *paths: Relative directory paths to evaluate.
 
         """
-        tree_to_traverse = self._prune_tree(self.common_tree, paths, True)
-        return [filepath for filepath in self._eval_tree(tree_to_traverse, test_func)]
+        return list(filterfalse(test_func, self._traverse('common_files', *paths)))
 
-    def flatten(self, root: Dict, path: str = "") -> List:
-        """Returns the flattened directory tree, i.e. list of file paths.
+    def common_list(self, *paths: PathLike) -> List[str]:
+        """Returns the files/directories found in the shared directory tree.
 
         Args:
-            tree_root: Directory tree.
-            path: Path to prepend to every file's relative path.
+            *paths: Relative directory paths to return.
 
         """
-        # Passing a function that always returns True makes _eval_tree() return a list containing every file
-        # in the directory tree
-        tree_files = self._eval_tree(root, lambda x: True)
-        return [os.path.join(path, rel_path) for rel_path in tree_files]
+        return list(self._traverse('common_files', *paths))
+
+    def ref_only_list(self, *paths: PathLike) -> List[str]:
+        """Returns the files/directories only found in the reference directory tree.
+
+        Args:
+            *paths: Relative directory paths to return.
+
+        """
+        return list(self._traverse('ref_only', *paths))
+
+    def target_only_list(self, *paths: PathLike) -> List[str]:
+        """Returns the files/directories only found in the target directory tree.
+
+        Args:
+            *paths: Relative directory paths to return.
+
+        """
+        return list(self._traverse('target_only', *paths))
