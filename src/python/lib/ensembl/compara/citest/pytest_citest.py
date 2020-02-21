@@ -33,9 +33,9 @@ from compara.filecmp.dircmp import DirCmp
 def pytest_addoption(parser: Parser) -> None:
     """Register argparse-style options for CITest."""
     group = parser.getgroup("continuous integration test (citest)")
-    group.addoption('--ref-db', action='store', metavar='URL', dest='ref_db',
+    group.addoption('--reference-db', action='store', metavar='URL', dest='reference_db',
                     help="URL to the reference database")
-    group.addoption('--ref-dir', action='store', metavar='PATH', dest='ref_dir',
+    group.addoption('--reference-dir', action='store', metavar='PATH', dest='reference_dir',
                     help="Path to reference's root directory")
     group.addoption('--target-db', action='store', metavar='URL', dest='target_db',
                     help="URL to the target database")
@@ -71,10 +71,8 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
     with open(config_filename) as f:
         full_report = json.load(f, object_pairs_hook=OrderedDict)
     # Update/add global information
-    full_report['reference_db'] = session.config.getoption('ref_db', full_report.get('reference_db'), True)
-    full_report['reference_dir'] = session.config.getoption('ref_dir', full_report.get('reference_dir'), True)
-    full_report['target_db'] = session.config.getoption('target_db', full_report.get('target_db'), True)
-    full_report['target_dir'] = session.config.getoption('target_dir', full_report.get('target_dir'), True)
+    for arg in ['reference_db', 'reference_dir', 'target_db', 'target_dir']:
+        full_report[arg] = session.config.getoption(arg, full_report.get(arg), True)
     # Add the reported information of each test
     failed = 0
     for item, report in session.report.items():
