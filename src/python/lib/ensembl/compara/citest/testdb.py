@@ -1,34 +1,32 @@
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-"""Database framework for the Continuous Integration Test (CITest) suite.
+"""
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
-This module defines the required classes to connect and test databases from different runs of the same
-pipeline. The main class, TestDBItem, has been designed and implemented to be used with ``pytest``.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 """
 
-import re
 from typing import Dict, List, Union
 
 import pandas
 import pytest
 from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionInfo
 from _pytest.fixtures import FixtureLookupErrorRepr
+import sqlalchemy
+from sqlalchemy import func
+from sqlalchemy.sql.expression import select
 
-from ensembl.compara.citest.citest import CITestItem
-from ensembl.compara.db.dbconnection import DBConnection
+from compara import to_list
+from compara.citest import CITestItem
+from compara.db import DBConnection
 
 
 class TestDBItem(CITestItem):
@@ -70,7 +68,7 @@ class TestDBItem(CITestItem):
         if isinstance(excinfo.value, FailedDBTestException):
             self.error_info['expected'] = excinfo.value.args[0]
             self.error_info['found'] = excinfo.value.args[1]
-            self.error_info['query'] = excinfo.value.args[2].strip()
+            self.error_info['query'] = str(excinfo.value.args[2]).replace('\n', '').strip()
             return excinfo.value.args[3] + "\n"
         elif isinstance(excinfo.value, AssertionError):
             return excinfo.value.args[0] + "\n"
@@ -78,31 +76,7 @@ class TestDBItem(CITestItem):
 
     def get_report_header(self) -> str:
         """Returns the header to display in the error report."""
-        return "Database table: {}, test: {}".format(self.table, self.name)
-
-    @staticmethod
-    def _get_sql_filter(filter_by: Union[str, List, None]) -> str:
-        """Returns an SQL WHERE clause including all the given conditions.
-
-        If more than one condition is given, they will be joined by the AND operator and put inside
-        parenthesis. Symbols that can be considered placeholders by sqlalchemy (like ``%``) will be doubled
-        (``%%``) to keep their initial meaning.
-
-        Args:
-            filter_by: Condition(s) to be combined in the WHERE statement.
-
-        Returns:
-            An empty string if `filter_by` is empty, the SQL WHERE clause otherwise.
-
-        """
-        sql_filter = ""
-        if filter_by:
-            if isinstance(filter_by, list):
-                filter_by = ") AND (".join(filter_by)
-            # Single percentage symbols ("%") are interpreted as placeholders, so double them up
-            filter_by = re.sub(r'(?<!%)%(?!%)', '%%', filter_by)
-            sql_filter = "WHERE ({})".format(filter_by)
-        return sql_filter
+        return f"Database table: {self.table}, test: {self.name}"
 
     def test_num_rows(self, variation: float = 0.0, group_by: Union[str, List] = None,
                       filter_by: Union[str, List] = None) -> None:
@@ -122,26 +96,30 @@ class TestDBItem(CITestItem):
                 number of rows differ for at least one group.
 
         """
-        # Compose the sql query from the given parameters
-        sql_filter = self._get_sql_filter(filter_by)
-        if group_by:
-            if isinstance(group_by, str):
-                group_by = [group_by]
+        # Compose the sql query from the given parameters (both databases should have the same table schema)
+        table = self.ref_db.tables[self.table]
+        columns = [table.columns[col] for col in to_list(group_by)]
+        # Use primary key in count to improve the query performance
+        primary_key = table.primary_key.columns.values()[0].name
+        query = select(columns + [func.count(table.columns[primary_key]).label('nrows')])
+        if columns:
             # ORDER BY to ensure that the results are always in the same order (for the same groups)
-            sql_query = "SELECT `{0}`, COUNT(*) as nrows FROM {1} {2} GROUP BY `{0}` ORDER BY `{0}`".format(
-                "`,`".join(group_by), self.table, sql_filter)
-        else:
-            sql_query = "SELECT COUNT(*) as nrows FROM {} {}".format(self.table, sql_filter)
+            query = query.group_by(*columns).order_by(*columns)
+        for clause in to_list(filter_by):
+            query = query.where(clause)
         # Get the number of rows for both databases
-        ref_data = pandas.read_sql_query(sql_query, self.ref_db.bind)
-        target_data = pandas.read_sql_query(sql_query, self.target_db.bind)
+        ref_data = pandas.read_sql_query(query, self.ref_db.connect())
+        target_data = pandas.read_sql_query(query, self.target_db.connect())
         # Check if the size of the returned tables are the same
         if ref_data.shape != target_data.shape:
             expected = ref_data.shape[0]
             found = target_data.shape[0]
-            # Note: the shape can only be different if group_by is given
-            message = "Different number of groups ({}) for table '{}'".format(", ".join(group_by), self.table)
-            raise FailedDBTestException(expected, found, sql_query, message)
+            # Note that the shape can only be different if group_by is given
+            message = (
+                f"Different number of groups ({', '.join([c.name for c in columns])}) for table "
+                f"'{self.table}'"
+            )
+            raise FailedDBTestException(expected, found, query, message)
         # Check if the number of rows (per group) are the same
         difference = abs(ref_data['nrows'] - target_data['nrows'])
         allowed_variation = ref_data['nrows'] * variation
@@ -151,9 +129,11 @@ class TestDBItem(CITestItem):
             expected = [] if expected_data.empty else expected_data.to_string(index=False).splitlines()
             found_data = target_data.loc[failing_rows]
             found = [] if found_data.empty else found_data.to_string(index=False).splitlines()
-            message = ("The difference in number of rows for table '{}' exceeds the allowed variation "
-                       "({})").format(self.table, variation)
-            raise FailedDBTestException(expected, found, sql_query, message)
+            message = (
+                f"The difference in number of rows for table '{self.table}' exceeds the allowed variation "
+                f"({variation})"
+            )
+            raise FailedDBTestException(expected, found, query, message)
 
     def test_content(self, *, columns: Union[str, List] = None, ignore_columns: Union[str, List] = None,
                      filter_by: Union[str, List] = None) -> None:
@@ -175,29 +155,26 @@ class TestDBItem(CITestItem):
 
         """
         assert not (columns and ignore_columns), "Expected only 'columns' or 'ignore_columns', not both"
-        sql_filter = self._get_sql_filter(filter_by)
-        if (columns is None) or isinstance(columns, str):
-            columns = [columns] if columns else []
-        if isinstance(ignore_columns, str):
-            ignore_columns = [ignore_columns] if ignore_columns else []
+        # Compose the sql query from the given parameters (both databases should have the same table schema)
+        table = self.ref_db.tables[self.table]
         if ignore_columns:
-            # Retrieve every column from the table and remove those in the exclusion list
-            ref_columns = [col.name for col in self.ref_db.tables[self.table].columns]
-            for col in ignore_columns:
-                ref_columns.remove(col)
-            columns = ref_columns
-        # Compose the sql query from the given parameters
-        sql_query = "SELECT `{}` FROM {} {}".format("`,`".join(columns), self.table, sql_filter)
+            ignore_columns = to_list(ignore_columns)
+            columns = [col for col in table.columns if col.name not in ignore_columns]
+        else:
+            columns = [table.columns[col] for col in to_list(columns)]
+        query = select(columns)
+        for clause in to_list(filter_by):
+            query = query.where(clause)
         # Get the table content for the selected columns
-        ref_data = pandas.read_sql_query(sql_query, self.ref_db.bind)
-        target_data = pandas.read_sql_query(sql_query, self.target_db.bind)
+        ref_data = pandas.read_sql_query(query, self.ref_db.connect())
+        target_data = pandas.read_sql_query(query, self.target_db.connect())
         # Check if the size of the returned tables are the same
         # Note: although not necessary, this control provides a better error message
         if ref_data.shape != target_data.shape:
             expected = ref_data.shape[0]
             found = target_data.shape[0]
-            message = "Different number of rows in table '{}'".format(self.table)
-            raise FailedDBTestException(expected, found, sql_query, message)
+            message = f"Different number of rows in table '{self.table}'"
+            raise FailedDBTestException(expected, found, query, message)
         # Compare the content of both dataframes, sorting them first to ensure they are comparable
         ref_data.sort_values(by=columns, inplace=True, kind='mergesort')
         target_data.sort_values(by=columns, inplace=True, kind='mergesort')
@@ -207,8 +184,11 @@ class TestDBItem(CITestItem):
             expected = [] if expected_data.empty else expected_data.to_string(index=False).splitlines()
             found_data = target_data.loc[failing_rows]
             found = [] if found_data.empty else found_data.to_string(index=False).splitlines()
-            message = "Table '{}' has different content for columns {}".format(self.table, ", ".join(columns))
-            raise FailedDBTestException(expected, found, sql_query, message)
+            message = (
+                f"Table '{self.table}' has different content for columns "
+                f"{', '.join([c.name for c in columns])}"
+            )
+            raise FailedDBTestException(expected, found, query, message)
 
 
 class FailedDBTestException(Exception):
