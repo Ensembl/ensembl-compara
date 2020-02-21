@@ -45,15 +45,10 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'division'   => 'citest',
-        'collection' => 'citest',
 
         # Names of species we don't want to reuse this time
         #'do_not_reuse_list' => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
         'do_not_reuse_list' => [ ],
-
-        # Load non reference sequences and patches for fresh members
-        'include_nonreference' => 0,
-        'include_patches'      => 0,
 
         # Run the pipeline without reuse
         'reuse_member_db' => undef,
