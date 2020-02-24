@@ -24,9 +24,9 @@ import pytest
 from _pytest.config.argparsing import Parser
 from _pytest.runner import TestReport
 
-from compara.citest import testdb, testfiles
-from compara.db.dbconnection import DBConnection
-from compara.filecmp.dircmp import DirCmp
+from compara.citest import TestDBItem, TestFilesItem
+from compara.db import DBConnection
+from compara.filecmp import DirCmp
 
 
 @pytest.hookimpl()
@@ -76,7 +76,7 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
     # Add the reported information of each test
     failed = 0
     for item, report in session.report.items():
-        if isinstance(item, testdb.TestDBItem):
+        if isinstance(item, TestDBItem):
             test_list = full_report['database_tests'][item.table]
         else:
             test_list = full_report['files_tests']
@@ -111,7 +111,7 @@ class JsonFile(pytest.File):
         """Parses the JSON file and loads all the tests.
 
         Returns:
-            Iterator of :class:`testdb.TestDBItem` or :class:`testfiles.TestFilesItem` objects (depending on
+            Iterator of :class:`testdb.TestDBItem` or :class:`TestFilesItem` objects (depending on
             the tests included in the JSON file).
 
         Raises:
@@ -137,7 +137,7 @@ class JsonFile(pytest.File):
                     assert 'test' in test, f"Missing argument 'test' in database_tests['{table}']"
                     assert 'args' in test, \
                         f"Missing argument 'args' in database_tests['{table}']['{test['test']}']"
-                    yield testdb.TestDBItem(test['test'], self, ref_dbc, target_dbc, table, test['args'])
+                    yield TestDBItem(test['test'], self, ref_dbc, target_dbc, table, test['args'])
         if 'files_tests' in pipeline_tests:
             # Load the reference and target directory paths
             ref_path = self.config.getoption('ref_dir', pipeline_tests.get('reference_dir', ''), True)
@@ -149,4 +149,4 @@ class JsonFile(pytest.File):
                 # Ensure required keys are present in every test
                 assert 'test' in test, f"Missing argument 'test' in files_tests #{i}"
                 assert 'args' in test, f"Missing argument 'args' in files_tests #{i}"
-                yield testfiles.TestFilesItem(test['test'], self, dir_cmp, test['args'])
+                yield TestFilesItem(test['test'], self, dir_cmp, test['args'])

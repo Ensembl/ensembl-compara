@@ -20,12 +20,11 @@ import pandas
 import pytest
 from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionInfo
 from _pytest.fixtures import FixtureLookupErrorRepr
-import sqlalchemy
 from sqlalchemy import func
 from sqlalchemy.sql.expression import select, text
 
 from compara import to_list
-from compara.citest import CITestItem
+from compara.citest._citest import CITestItem
 from compara.db import DBConnection
 
 
@@ -70,7 +69,7 @@ class TestDBItem(CITestItem):
             self.error_info['found'] = excinfo.value.args[1]
             self.error_info['query'] = str(excinfo.value.args[2]).replace('\n', '').strip()
             return excinfo.value.args[3] + "\n"
-        elif isinstance(excinfo.value, AssertionError):
+        if isinstance(excinfo.value, AssertionError):
             return excinfo.value.args[0] + "\n"
         return super().repr_failure(excinfo, style)
 
@@ -108,8 +107,8 @@ class TestDBItem(CITestItem):
         for clause in to_list(filter_by):
             query = query.where(text(clause))
         # Get the number of rows for both databases
-        ref_data = pandas.read_sql_query(query, self.ref_db.connect())
-        target_data = pandas.read_sql_query(query, self.target_db.connect())
+        ref_data = pandas.read_sql(query, self.ref_db.connect())
+        target_data = pandas.read_sql(query, self.target_db.connect())
         # Check if the size of the returned tables are the same
         if ref_data.shape != target_data.shape:
             expected = ref_data.shape[0]
@@ -166,8 +165,8 @@ class TestDBItem(CITestItem):
         for clause in to_list(filter_by):
             query = query.where(text(clause))
         # Get the table content for the selected columns
-        ref_data = pandas.read_sql_query(query, self.ref_db.connect())
-        target_data = pandas.read_sql_query(query, self.target_db.connect())
+        ref_data = pandas.read_sql(query, self.ref_db.connect())
+        target_data = pandas.read_sql(query, self.target_db.connect())
         # Check if the size of the returned tables are the same
         # Note: although not necessary, this control provides a better error message
         if ref_data.shape != target_data.shape:

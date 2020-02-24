@@ -59,4 +59,3 @@ class CITestItem(ABC, pytest.Item):
     @abstractmethod
     def get_report_header(self) -> str:
         """Returns the header to display in the error report."""
-        pass

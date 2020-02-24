@@ -23,7 +23,7 @@ from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionI
 from _pytest.fixtures import FixtureLookupErrorRepr
 
 from compara import to_list
-from compara.citest import CITestItem
+from compara.citest._citest import CITestItem
 from compara.filecmp import DirCmp, PathLike
 
 
@@ -103,7 +103,7 @@ class TestFilesItem(CITestItem):
                 f"({variation})"
             )
             raise FailedFilesTestException(ref_only, target_only, mismatches, message)
-        elif ref_only or target_only:
+        if ref_only or target_only:
             raise FailedFilesTestException(ref_only, target_only, mismatches, '')
 
     def test_content(self, paths: Union[PathLike, List] = None) -> None:
@@ -136,7 +136,7 @@ class TestFilesItem(CITestItem):
             num_mms = len(mismatches)
             message = f"Found {num_mms} file{'s' if num_mms > 1 else ''} with different content"
             raise FailedFilesTestException(ref_only, target_only, mismatches, message)
-        elif ref_only or target_only:
+        if ref_only or target_only:
             raise FailedFilesTestException(ref_only, target_only, mismatches, '')
 
 
