@@ -14,11 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from collections import deque
 from functools import reduce
 from itertools import filterfalse
 import os
 from pathlib import Path
-from typing import Callable, Dict, Iterator, List, TypeVar
+from typing import Callable, Deque, Dict, Iterator, List, Tuple, TypeVar
 
 
 # Create the PathLike type as an alias for supported types a path can be stored into
@@ -74,7 +75,7 @@ class DirCmp:
             ValueError: If one of `paths` is not part of the shared directory tree.
 
         """
-        nodes_left = []
+        nodes_left = deque()  # type: Deque[Tuple[Path, DirCmp]]
         # Fetch and append the root node of each relative path
         for rel_path in paths:
             try:
