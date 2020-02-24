@@ -44,6 +44,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use File::Basename;
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header parse_flatfile_into_hash);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -61,7 +62,7 @@ sub fetch_input {
 		$max_quality{$oid} = $sth->fetchrow_arrayref->[0] or $self->warning("Cannot find quality scores in db for homology id $oid");
         $max_quality{$oid} = 0 unless $max_quality{$oid}; # default to 0 like GOC
     }
-	
+
 	$self->param('max_quality', \%max_quality);
 }
 
@@ -98,6 +99,29 @@ sub write_output {
     close $out_fh;
 
     $self->warning("Scores written to $output_file!");
+
+    my $member_type = $self->param('member_type');
+    my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor();
+    #my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
+    my $wga_coverage = parse_flatfile_into_hash($self, $output_file);
+    #$self->_write_distribution($mlss, "${member_type}_wga", $wga_coverage);
+}
+
+sub _write_distribution {
+    my ($self, $mlss, $label, $scores) = @_;
+
+    my %distrib_hash;
+    foreach my $score ( values %$scores ) {
+        my $floor_score = int($score/25)*25;
+        $distrib_hash{$floor_score} += 1;
+    }
+
+    my $n_tot = 0;
+    my $n_over_threshold = 0;
+    foreach my $distrib_score ( keys %distrib_hash ) {
+        my $tag = sprintf('n_%s_%s', $label, $distrib_score // 'null');
+        $mlss->store_tag($tag, $distrib_hash{$distrib_score});
+    }
 }
 
 1;

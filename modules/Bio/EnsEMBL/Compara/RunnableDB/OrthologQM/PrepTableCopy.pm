@@ -37,7 +37,9 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 sub fetch_input {
 	my $self = shift;
@@ -95,6 +97,9 @@ sub write_output {
 	} else {
 		@copy_dataflow = @{ $self->_split_into_chunks($self->param('uniq_mlss_list'), $chunk_size, $self->param('compara_db')) };
 	}
+
+    $self->_check_alignments_exist(\@copy_dataflow);
+
 	$self->dataflow_output_id( { mlss => $self->param('uniq_mlss_list') }, 1 ); # to write_threshold
 	$self->dataflow_output_id( \@copy_dataflow, 3 ); # to copy_alignment_tables
 	$self->dataflow_output_id( {}, 2 ); # to copy_funnel
@@ -111,6 +116,22 @@ sub _split_into_chunks {
 		$x++;
 	}
 	return \@chunks;
+}
+
+sub _check_alignments_exist {
+    my ($self, $db_conns) = @_;
+
+    foreach my $x ( @$db_conns ) {
+        my ($mlss_list, $db_conn) = ( $x->{mlss_id_list}, $x->{src_db_conn} );
+        my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($db_conn);
+        my $sql = "SELECT * FROM genomic_align_block WHERE method_link_species_set_id = ? LIMIT 1";
+        my $sth = $dba->dbc->prepare($sql);
+        foreach my $mlss_id ( @$mlss_list ) {
+            $sth->execute($mlss_id);
+            my $results = $sth->fetchrow_arrayref;
+            die "Cannot find alignments for mlss_id $mlss_id in $db_conn\n" unless $results;
+        }
+    }
 }
 
 1;

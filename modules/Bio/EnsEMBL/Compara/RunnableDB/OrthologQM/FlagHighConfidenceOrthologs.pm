@@ -39,7 +39,7 @@ use warnings;
 use POSIX qw(floor);
 use File::Basename;
 
-use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header parse_flatfile_into_hash);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -108,8 +108,8 @@ sub write_output {
     $self->run_command( "mkdir -p " . dirname($output_file)) unless -e dirname($output_file);
 
     my ( $wga_coverage, $goc_scores );
-    $wga_coverage = $self->_parse_flatfile_into_hash($wga_file, $range_filter) if $wga_file && -e $wga_file;;
-    $goc_scores   = $self->_parse_flatfile_into_hash($goc_file, $range_filter) if $goc_file && -e $goc_file;
+    $wga_coverage = $self->parse_flatfile_into_hash($wga_file, $range_filter) if $wga_file && -e $wga_file;
+    $goc_scores   = $self->parse_flatfile_into_hash($goc_file, $range_filter) if $goc_file && -e $goc_file;
 
     open(my $hfh, '<', $homology_file) or die "Cannot open $homology_file for reading";
     open(my $ofh, '>', $output_file  ) or die "Cannot open $output_file for writing";
@@ -183,8 +183,6 @@ sub _write_distribution {
     my $n_tot = 0;
     my $n_over_threshold = 0;
     foreach my $distrib_score ( keys %distrib_hash ) {
-        my $tag = sprintf('n_%s_%s', $label, $distrib_score // 'null');
-        $mlss->store_tag($tag, $distrib_hash{$distrib_score});
         $n_tot += $distrib_hash{$distrib_score};
         if ((defined $distrib_score) and ($distrib_score > $threshold)) {
             $n_over_threshold += $distrib_hash{$distrib_score};
@@ -223,24 +221,6 @@ sub _lines_in_file {
     my @wc_out = split( /\s+/, $self->get_command_output("wc -l $filename") );
     my $wc_l   = shift @wc_out;
     return $wc_l - 1; # account for header line
-}
-
-sub _parse_flatfile_into_hash {
-    my ($self, $filename, $filter) = @_;
-
-    my %flatfile_hash;
-    open(my $fh, '<', $filename) or die "Cannot open $filename for reading";
-    my $header = <$fh>;
-    while ( my $line = <$fh> ) {
-        chomp $line;
-        my ( $id, $val ) = split(/\s+/, $line);
-        next if $val eq '';
-        next if $filter && ! $self->_match_range_filter($id, $filter);
-        $flatfile_hash{$id} = $val;
-    }
-    close $fh;
-
-    return \%flatfile_hash;
 }
 
 sub _match_range_filter {

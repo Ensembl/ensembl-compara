@@ -207,6 +207,13 @@ sub _map_mlss_to_db {
 
 	# check all have been mapped
 	foreach my $this_mlss_id ( @$mlsses ) {
+        my $mlss_adap = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+        unless ( $mlss_db_mapping{$this_mlss_id} ) {
+            my $this_mlss = $mlss_adap->fetch_by_dbID($this_mlss_id);
+            if ( $this_mlss ) {
+                $mlss_db_mapping{$this_mlss->dbID} = $self->param('master_db');
+            }
+        }
 		die "MLSS $this_mlss_id can't be found in the given alignment databases\n" unless ( $mlss_db_mapping{$this_mlss_id} );
 	}
 	return \%mlss_db_mapping;

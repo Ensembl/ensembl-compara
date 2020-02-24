@@ -121,6 +121,7 @@ sub fetch_input {
       
     $self->param('gene_member_strand', \%gene_member_strand);
     $self->param('neighbourhood', \%neighbourhood);
+    $self->param('mlss', $mlss);
 }
 
 sub run {
@@ -172,6 +173,11 @@ sub write_output {
     
     my $goc_scores  = $self->param('goc_scores');
     my $output_file = $self->param('output_file');
+    my $mlss        = $self->param_required('mlss');
+
+    print "Writing distributions to the database\n" if $self->debug;
+    $self->_write_distribution($mlss, 'goc', $goc_scores);
+    print "Distributions written!\n\n" if $self->debug;
 
     if ( $output_file ) {
         print "Writing GOC scores to output file $output_file\n" if $self->debug;
@@ -457,6 +463,23 @@ sub _split_polyploid_goc {
             }
             $self->complete_early("Got ENSEMBL_ORTHOLOGUES on polyploids, so dataflowed 1 job per component genome_db\n");
         }
+    }
+}
+
+sub _write_distribution {
+    my ($self, $mlss, $label, $scores) = @_;
+
+    my %distrib_hash;
+    foreach my $score ( values %$scores ) {
+        my $floor_score = int($score/25)*25;
+        $distrib_hash{$floor_score} += 1;
+    }
+
+    my $n_tot = 0;
+    my $n_over_threshold = 0;
+    foreach my $distrib_score ( keys %distrib_hash ) {
+        my $tag = sprintf('n_%s_%s', $label, $distrib_score // 'null');
+        $mlss->store_tag($tag, $distrib_hash{$distrib_score});
     }
 }
 
