@@ -158,10 +158,12 @@ class TestDBItem(CITestItem):
         table = self.ref_db.tables[self.table]
         if ignore_columns:
             ignore_columns = to_list(ignore_columns)
-            columns = [col for col in table.columns if col.name not in ignore_columns]
+            db_columns = [col for col in table.columns if col.name not in ignore_columns]
+            columns = [col.name for col in db_columns]
         else:
-            columns = [table.columns[col] for col in to_list(columns)]
-        query = select(columns)
+            columns = to_list(columns)
+            db_columns = [table.columns[col] for col in columns]
+        query = select(db_columns)
         for clause in to_list(filter_by):
             query = query.where(text(clause))
         # Get the table content for the selected columns
@@ -183,10 +185,7 @@ class TestDBItem(CITestItem):
             expected = [] if expected_data.empty else expected_data.to_string(index=False).splitlines()
             found_data = target_data.loc[failing_rows]
             found = [] if found_data.empty else found_data.to_string(index=False).splitlines()
-            message = (
-                f"Table '{self.table}' has different content for columns "
-                f"{', '.join([c.name for c in columns])}"
-            )
+            message = f"Table '{self.table}' has different content for columns {', '.join(columns)}"
             raise FailedDBTestException(expected, found, query, message)
 
 
