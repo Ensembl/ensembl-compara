@@ -76,7 +76,7 @@ sub _get_dom_tree {
       %s
       <p><a href="%s">View full list of all %s species</a></p>
       ), 
-      $self->add_species_selector,
+      $self->add_species_dropdown,
       $self->add_genome_groups, 
       $self->species_list_url, $sitename;
 
