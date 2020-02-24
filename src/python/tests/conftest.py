@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import os
+# import os
 
 import pytest
 from _pytest.config.argparsing import Parser
@@ -25,5 +25,5 @@ def pytest_addoption(parser: Parser) -> None:
     """Register argparse-style options for Compara's unitary testing."""
     group = parser.getgroup("compara unitary test")
     group.addoption('--server', action='store', metavar='URL', dest='server',
-                    default=f'mysql://ensadmin:{os.environ["ENSADMIN_PSW"]}@mysql-ens-compara-prod-1:4485/',
+                    # default=f'mysql://ensadmin:{os.environ["ENSADMIN_PSW"]}@mysql-ens-compara-prod-1:4485/',
                     help="URL to the server where to create the test database(s)")
