@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf
@@ -72,12 +70,10 @@ sub default_options {
         'method_link_dump'  => $self->check_file_in_ensembl('ensembl-compara/sql/method_link.txt'),
         'clone_core_db_exe' => $self->check_exe_in_ensembl('ensembl-test/scripts/clone_core_database.pl'),
 
-        'java_hc_dir'     => $self->check_dir_in_ensembl('ensj-healthcheck/'),
-        'java_hc_db_prop' => $self->check_file_in_ensembl('ensj-healthcheck/database.defaults.properties'),
-
         'init_reg_conf' => $self->o('reg_conf'), # needed to create the new master database
         # Parameters required for citest division only
         'reg_conf_tmpl' => undef,
+        'ensj_conf'     => undef,
         'dst_host'      => undef,
         'dst_port'      => undef,
         
@@ -208,7 +204,7 @@ sub pipeline_analyses {
             -parameters => {
                 'reg_conf'        => $self->o('reg_conf'),
                 'reg_conf_tmpl'   => $self->o('reg_conf_tmpl'),
-                'java_hc_db_prop' => $self->o('java_hc_db_prop'),
+                'ensj_conf'       => $self->o('ensj_conf'),
                 'dst_host'        => $self->o('dst_host'),
                 'dst_port'        => $self->o('dst_port'),
             },

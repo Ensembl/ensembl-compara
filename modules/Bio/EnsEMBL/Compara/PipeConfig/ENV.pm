@@ -73,6 +73,7 @@ sub shared_default_options {
         'config_dir'            => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/conf/'.$self->o('division'),
         # NOTE: Can't use $self->check_file_in_ensembl as long as we don't produce a file for each division
         'reg_conf'              => $self->o('config_dir').'/production_reg_conf.pl',
+        'ensj_conf'             => $self->o('config_dir').'/ensj-healthcheck.json',
         'binary_species_tree'   => $self->o('config_dir').'/species_tree.branch_len.nw',
         'genome_dumps_dir'      => $self->o('shared_hps_dir') . '/genome_dumps/'.$self->o('division').'/',
 
@@ -181,6 +182,10 @@ sub executable_locations {
         'emf2maf_program'                   => $self->check_exe_in_ensembl('ensembl-compara/scripts/dumps/emf2maf.pl'),
         'epo_stats_report_exe'              => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/epo_stats.pl'),
         'populate_new_database_exe'         => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/populate_new_database.pl'),
+        'run_healthchecks_exe'              => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/run_healthchecks.pl'),
+
+        # Internal dependencies (Ensembl scripts)
+        'ensj_testrunner_exe'               => $self->check_exe_in_ensembl('ensj-healthcheck/run-configurable-testrunner.sh'),
 
         # Other dependencies (non executables)
         'core_schema_sql'                   => $self->check_file_in_ensembl('ensembl/sql/table.sql'),
