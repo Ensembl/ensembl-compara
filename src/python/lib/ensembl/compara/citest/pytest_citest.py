@@ -1,4 +1,5 @@
 """
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +27,7 @@ from _pytest.runner import TestReport
 
 from compara.citest import TestDBItem, TestFilesItem
 from compara.db import DBConnection
-from compara.filecmp import DirCmp
+from compara.utils import DirCmp
 
 
 @pytest.hookimpl()

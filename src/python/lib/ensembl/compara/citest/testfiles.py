@@ -1,4 +1,5 @@
 """
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,9 +23,8 @@ import pytest
 from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionInfo
 from _pytest.fixtures import FixtureLookupErrorRepr
 
-from compara import to_list
-from compara.citest._citest import CITestItem
-from compara.filecmp import DirCmp, PathLike
+from compara.utils import DirCmp, PathLike, to_list
+from ._citest import CITestItem
 
 
 class TestFilesItem(CITestItem):
@@ -87,10 +87,10 @@ class TestFilesItem(CITestItem):
         paths = to_list(paths)
         # Nested function (closure) to compare the reference and target file sizes
         def cmp_file_size(filepath: PathLike) -> bool:
-            """Returns True if target file size is within the allowed variation, False otherwise."""
+            """Returns True if target file size is larger than the allowed variation, False otherwise."""
             ref_size = os.path.getsize(self.dir_cmp.ref_path / filepath)
             target_size = os.path.getsize(self.dir_cmp.target_path / filepath)
-            return abs(ref_size - target_size) <= (ref_size * variation)
+            return abs(ref_size - target_size) > (ref_size * variation)
         # Traverse the common directory tree, comparing every reference and target file sizes
         mismatches = self.dir_cmp.apply_test(cmp_file_size, *paths)
         # Load the lists of files either in the reference or the target (but not in both)
@@ -123,10 +123,10 @@ class TestFilesItem(CITestItem):
         paths = to_list(paths)
         # Nested function (closure) to compare the reference and target files
         def cmp_file_content(filepath: PathLike) -> bool:
-            """Returns True if reference and target files are equal, False otherwise."""
+            """Returns True if reference and target files differ, False otherwise."""
             ref_filepath = str(self.dir_cmp.ref_path / filepath)
             target_filepath = str(self.dir_cmp.target_path / filepath)
-            return filecmp.cmp(ref_filepath, target_filepath)
+            return not filecmp.cmp(ref_filepath, target_filepath)
         # Traverse the common directory tree, comparing every reference and target files
         mismatches = self.dir_cmp.apply_test(cmp_file_content, *paths)
         # Load the lists of files either in the reference or the target (but not in both)

@@ -1,4 +1,5 @@
 """
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,7 +67,7 @@ class DBConnection:
         """Returns a dictionary of :class:`~sqlalchemy.schema.Table` objects keyed to their name."""
         return self._metadata.tables
 
-    def get_pk_columns(self, table: str) -> List[str]:
+    def get_primary_key_columns(self, table: str) -> List[str]:
         """Returns the list of primary key column names for the given table.
 
         Args:

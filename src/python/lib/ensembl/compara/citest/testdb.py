@@ -1,4 +1,5 @@
 """
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,9 +24,9 @@ from _pytest.fixtures import FixtureLookupErrorRepr
 from sqlalchemy import func
 from sqlalchemy.sql.expression import select, text
 
-from compara import to_list
-from compara.citest._citest import CITestItem
 from compara.db import DBConnection
+from compara.utils import to_list
+from ._citest import CITestItem
 
 
 class TestDBItem(CITestItem):
@@ -99,7 +100,7 @@ class TestDBItem(CITestItem):
         table = self.ref_db.tables[self.table]
         columns = [table.columns[col] for col in to_list(group_by)]
         # Use primary key in count to improve the query performance
-        primary_key = table.primary_key.columns.values()[0].name
+        primary_key = self.ref_db.get_primary_key_columns(self.table)[0]
         query = select(columns + [func.count(table.columns[primary_key]).label('nrows')])
         if columns:
             # ORDER BY to ensure that the results are always in the same order (for the same groups)

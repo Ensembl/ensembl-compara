@@ -1,4 +1,5 @@
 """
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +17,6 @@ limitations under the License.
 
 from collections import deque
 from functools import reduce
-from itertools import filterfalse
 import os
 from pathlib import Path
 from typing import Callable, Deque, Dict, Iterator, List, Tuple, TypeVar
@@ -95,7 +95,7 @@ class DirCmp:
                 yield str(dirname / file)
 
     def apply_test(self, test_func: Callable, *paths: PathLike) -> List[str]:
-        """Returns the files in the shared directory tree for which the test function returns False.
+        """Returns the files in the shared directory tree for which the test function returns True.
 
         Args:
             test_func: Test function to apply to each file. It has to match the following interface::
@@ -106,7 +106,7 @@ class DirCmp:
             *paths: Relative directory paths to evaluate.
 
         """
-        return list(filterfalse(test_func, self._traverse('common_files', *paths)))
+        return list(filter(test_func, self._traverse('common_files', *paths)))
 
     def common_list(self, *paths: PathLike) -> List[str]:
         """Returns the files/directories found in the shared directory tree.

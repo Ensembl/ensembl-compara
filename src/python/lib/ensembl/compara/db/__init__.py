@@ -1,4 +1,5 @@
 """
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,4 +15,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from .dbconnection import DBConnection, Query, URL
+from .dbconnection import *
