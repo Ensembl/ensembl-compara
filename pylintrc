@@ -27,3 +27,6 @@ enable=
 # Maximum number of characters on a single line.
 max-line-length=110
 
+# Remove error "Module 'py' has no 'path' member (no-member)" (https://py.readthedocs.io/en/latest/path.html)
+# Remove error "Generator 'generator' has no 'ne' member (no-member)": the variable is actually a pandas.DataFrame object
+generated-members=py.*
