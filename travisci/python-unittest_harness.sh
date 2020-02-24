@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PYTHON_SOURCE_LOCATIONS=('src/python/tests')
+PYTHON_SOURCE_LOCATIONS=('scripts' 'src/python/tests')
 
 # Check that all the Python files can be compiled
 if [ "$TEST_COMPILATION" = 'true' ]; then
