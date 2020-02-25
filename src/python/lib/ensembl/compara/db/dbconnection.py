@@ -63,6 +63,11 @@ class DBConnection:
         return self._engine.url.host
 
     @property
+    def dialect(self) -> str:
+        """Returns the SQLAlchemy database dialect of the database host."""
+        return self._engine.name
+
+    @property
     def tables(self) -> Dict[str, sqlalchemy.schema.Table]:
         """Returns a dictionary of :class:`~sqlalchemy.schema.Table` objects keyed to their name."""
         return self._metadata.tables
