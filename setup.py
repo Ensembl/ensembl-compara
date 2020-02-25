@@ -33,7 +33,7 @@ with open(Path(__file__).parent / 'VERSION') as f:
 def import_requirements():
     """Import ``requirements.txt`` file located at the root of the repository."""
     with open(Path(__file__).parent / 'requirements.txt') as file:
-        return [line.strip(' \n') for line in file.readlines()]
+        return [line.rstrip() for line in file.readlines()]
 
 
 setup(
