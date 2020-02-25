@@ -39,7 +39,7 @@ def import_requirements():
 setup(
     name='ensembl-compara',
     version=version,
-    description="Ensembl Compara's python library",
+    description="Ensembl Compara's Python library",
     long_description=readme,
     author='Ensembl Compara',
     author_email='dev@ensembl.org',
