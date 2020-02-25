@@ -14,16 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-# import os
+import json
+import os
+from pathlib import Path
 
 import pytest
 from _pytest.config.argparsing import Parser
+import sqlalchemy
 
 
 @pytest.hookimpl()
 def pytest_addoption(parser: Parser) -> None:
     """Register argparse-style options for Compara's unitary testing."""
+    # Load default host information
+    with open(Path(__file__).parent / 'default_host.json') as f:
+        host = json.load(f)
+    if host['password'].startswith('$'):
+        host['password'] = os.environ[host['password'][1:]]
+    # Add the Compara unitary test parameters to pytest parser
     group = parser.getgroup("compara unitary test")
     group.addoption('--server', action='store', metavar='URL', dest='server',
-                    # default=f'mysql://ensadmin:{os.environ["ENSADMIN_PSW"]}@mysql-ens-compara-prod-1:4485/',
+                    default=str(sqlalchemy.engine.url.URL(**host)),
                     help="URL to the server where to create the test database(s)")
