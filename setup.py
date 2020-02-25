@@ -15,19 +15,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import os
 from pathlib import Path
 
 from setuptools import setup, find_packages
 
 
-with open(os.path.join(os.path.dirname(__file__), 'README.md')) as f:
+with open(Path(__file__).parent / 'README.md') as f:
     readme = f.read()
 
-with open(os.path.join(os.path.dirname(__file__), 'LICENSE')) as f:
+with open(Path(__file__).parent / 'LICENSE') as f:
     license_ct = f.read()
 
-with open(os.path.join(os.path.dirname(__file__), 'VERSION')) as f:
+with open(Path(__file__).parent / 'VERSION') as f:
     version = f.read()
 
 
