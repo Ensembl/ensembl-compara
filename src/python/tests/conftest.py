@@ -29,6 +29,7 @@ def pytest_addoption(parser: Parser) -> None:
     # Load default host information
     with open(Path(__file__).parent / 'default_host.json') as f:
         host = json.load(f)
+    # If password starts with '$', treat it as an environment variable that needs to be resolved
     if host['password'].startswith('$'):
         host['password'] = os.environ[host['password'][1:]]
     # Add the Compara unitary test parameters to pytest parser
