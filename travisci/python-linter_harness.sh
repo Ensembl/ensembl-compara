@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PYTHON_SOURCE_LOCATIONS=('scripts' 'src/python/lib/ensembl/compara')
+PYTHON_SOURCE_LOCATIONS=('scripts' 'src/python/lib/ensembl/compara' 'src/python/tests')
 
 PYLINT_OUTPUT_FILE=$(mktemp)
 PYLINT_ERRORS=$(mktemp)
