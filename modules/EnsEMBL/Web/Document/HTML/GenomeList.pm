@@ -70,7 +70,7 @@ sub _get_dom_tree {
   my @ok_species = $sd->valid_species;
   my $sitename  = $self->hub->species_defs->ENSEMBL_SITETYPE;
   if (scalar @ok_species > 1) {
-    my $list_html = sprintf qq(<h3>Find a genome</h3>
+    my $list_html = sprintf qq(<h3>All genomes</h3>
       %s
       <h3 class="space-above"></h3>
       %s
