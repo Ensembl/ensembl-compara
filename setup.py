@@ -43,7 +43,7 @@ setup(
     description="Ensembl Compara's python library",
     long_description=readme,
     author='Ensembl Compara',
-    author_email='ensembl-compara@ebi.ac.uk',
+    author_email='dev@ensembl.org',
     url='https://github.com/Ensembl/ensembl-compara',
     license=license_ct,
     packages=find_packages(where='src/ptyhon', exclude=('tests')),
