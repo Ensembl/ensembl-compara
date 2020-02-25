@@ -24,8 +24,8 @@ from _pytest.fixtures import FixtureLookupErrorRepr
 from sqlalchemy import func
 from sqlalchemy.sql.expression import select, text
 
-from compara.db import DBConnection
-from compara.utils import to_list
+from ..db import DBConnection
+from ..utils import to_list
 from ._citest import CITestItem
 
 

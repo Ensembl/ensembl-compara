@@ -23,7 +23,7 @@ import pytest
 from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionInfo
 from _pytest.fixtures import FixtureLookupErrorRepr
 
-from compara.utils import DirCmp, PathLike, to_list
+from ..utils import DirCmp, PathLike, to_list
 from ._citest import CITestItem
 
 

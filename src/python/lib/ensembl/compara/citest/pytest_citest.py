@@ -25,9 +25,9 @@ import pytest
 from _pytest.config.argparsing import Parser
 from _pytest.runner import TestReport
 
-from compara.citest import TestDBItem, TestFilesItem
-from compara.db import DBConnection
-from compara.utils import DirCmp
+from ..db import DBConnection
+from ..utils import DirCmp
+from . import TestDBItem, TestFilesItem
 
 
 @pytest.hookimpl()
