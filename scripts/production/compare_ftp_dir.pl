@@ -254,7 +254,7 @@ foreach my $d (@compara_dirs) {
     subtest $d, sub {
         # A) Check completeness
         ok(-d $curr_dir, "Directory exists");
-        next unless -d $curr_dir;
+        return unless -d $curr_dir;
         my $stats_curr = extract_stats($curr_dir);
         my $stats_prev = extract_stats($prev_dir);
         if (($d eq 'bed/ensembl-compara') or ($d eq 'compara/conservation_scores')) {
