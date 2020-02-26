@@ -100,7 +100,13 @@ foreach my $mlss ( @$mlsses ) {
             my $this_species_name = $gdb->name;
             $this_species_file_for_type =~ s/#species_name#/$this_species_name/;
             my @files = glob $this_species_file_for_type;
-            die "Could not find file for MethodLinkSpeciesSet dbID " . $mlss->dbID . " (" . $mlss->name . "): $this_species_file_for_type" unless scalar(@files) && -e $files[0];
+            unless (scalar(@files) && -e $files[0]) {
+                # Try with a collection
+                my $this_collection_species_file_for_type = $file_for_type;
+                $this_collection_species_file_for_type =~ s/#species_name#/*_collection\/$this_species_name/;
+                @files = glob $this_collection_species_file_for_type;
+                die "Could not find file for MethodLinkSpeciesSet dbID " . $mlss->dbID . " (" . $mlss->name . "): $this_species_file_for_type" unless scalar(@files) && -e $files[0];
+            }
         }
     } else {
         $file_for_type = "$ftp_root/$file_for_type";
