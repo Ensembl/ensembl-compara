@@ -74,14 +74,14 @@ foreach my $mlss ( @$mlsses ) {
             $file_for_type =~ s/$orig_mlss_filename/$mlss_filename/;
             @files = glob $file_for_type;
         }
-        die "Could not find file for MethodLinkSpeciesSet dbID " . $mlss->dbID . " (" . $mlss->name . "): $file_for_type" unless -e $files[0];
+        die "Could not find file for MethodLinkSpeciesSet dbID " . $mlss->dbID . " (" . $mlss->name . "): $file_for_type" unless scalar(@files) && -e $files[0];
     } elsif ( $file_for_type =~ /#collection_name#/ ) {
         my $collection_name = $mlss->species_set->name;
         $collection_name =~ s/collection-//;
         $file_for_type =~ s/#collection_name#/$collection_name/;
         $file_for_type = "$ftp_root/$file_for_type";
         my @files = glob $file_for_type;
-        die "Could not find file for MethodLinkSpeciesSet dbID " . $mlss->dbID . " (" . $mlss->name . "): $file_for_type" unless -e $files[0];
+        die "Could not find file for MethodLinkSpeciesSet dbID " . $mlss->dbID . " (" . $mlss->name . "): $file_for_type" unless scalar(@files) && -e $files[0];
     } elsif ( $file_for_type =~ /#clusterset_id#/ ) {
         my $clusterset_id = 'default';
         if ( $division eq 'vertebrates' ) {
@@ -92,7 +92,7 @@ foreach my $mlss ( @$mlsses ) {
         $file_for_type =~ s/#clusterset_id#/$clusterset_id/;
         $file_for_type = "$ftp_root/$file_for_type";
         my @files = glob $file_for_type;
-        die "Could not find file for MethodLinkSpeciesSet dbID " . $mlss->dbID . " (" . $mlss->name . "): $file_for_type" unless -e $files[0];
+        die "Could not find file for MethodLinkSpeciesSet dbID " . $mlss->dbID . " (" . $mlss->name . "): $file_for_type" unless scalar(@files) && -e $files[0];
     } elsif ( $file_for_type =~ /#species_name#/ ) {
         $file_for_type = "$ftp_root/$file_for_type";
         foreach my $gdb ( @{ $mlss->species_set->genome_dbs } ) {
@@ -100,12 +100,12 @@ foreach my $mlss ( @$mlsses ) {
             my $this_species_name = $gdb->name;
             $this_species_file_for_type =~ s/#species_name#/$this_species_name/;
             my @files = glob $this_species_file_for_type;
-            die "Could not find file for MethodLinkSpeciesSet dbID " . $mlss->dbID . " (" . $mlss->name . "): $this_species_file_for_type" unless -e $files[0];
+            die "Could not find file for MethodLinkSpeciesSet dbID " . $mlss->dbID . " (" . $mlss->name . "): $this_species_file_for_type" unless scalar(@files) && -e $files[0];
         }
     } else {
         $file_for_type = "$ftp_root/$file_for_type";
         my @files = glob $file_for_type;
-        die "Could not find file for MethodLinkSpeciesSet dbID " . $mlss->dbID . " (" . $mlss->name . "): $file_for_type" unless -e $files[0];
+        die "Could not find file for MethodLinkSpeciesSet dbID " . $mlss->dbID . " (" . $mlss->name . "): $file_for_type" unless scalar(@files) && -e $files[0];
     }
 }
 print "All MethodLinkSpeciesSets found in FTP\n\n";
