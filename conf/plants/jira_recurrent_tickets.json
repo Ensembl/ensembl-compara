@@ -128,6 +128,12 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Creation+of+a+new+ancestral+database",
+            "summary": "Build a new ancestral sequence core database"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
             "summary": "Merge the homology pipelines"
          },
@@ -173,7 +179,13 @@
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Non-vertebratesdivisions(e.g.Plants,Metazoa)",
             "labels": ["Handover_anchor"],
             "summary": "Handover of release DB"
-         }
+        },
+        {
+           "assignee": "<RelCo>",
+           "component": "Relco tasks",
+           "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Vertebrates",
+           "summary": "Handover of ancestral DB"
+        }
       ],
       "summary": "<Division> Release <version> Database merge and handover"
    },
