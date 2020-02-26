@@ -158,7 +158,7 @@ n_goc_labels   = c('GOC score = 0', 'GOC score = 25', 'GOC score = 50', 'GOC sco
 heatmap_col    = rev(heat.colors(10))
 barplot_col    = rainbow(length(n_goc_cols))
 
-goc_100_matrix
+#goc_100_matrix
 
 #-------------------------------------------------------------------------
 #                               Heatmaps
