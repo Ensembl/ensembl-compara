@@ -215,10 +215,10 @@ for (ref_species in levels(reference_species$V1)) {
     sorted_taxon_list = rev(taxon_list)
 
     list = c("Crocodylia" = "chartreuse4"
-              , "Birds" = "blue"
+              , "Aves" = "blue"
               , "Squamata" = "darkorange2"
-              , "Mammals" = "red"
-              , "Fish" = "darkcyan"
+              , "Mammalia" = "red"
+              , "Neopterygii" = "darkcyan"
               , "Testudines" = "black"
               , "Amphibia" = "deeppink")
 
@@ -252,10 +252,10 @@ for (ref_species in levels(reference_species$V1)) {
     sorted_taxon_list <- rev(taxon_list)
 
     list <- c("Crocodylia" = "chartreuse4"
-              , "Birds" = "blue"
+              , "Aves" = "blue"
               , "Squamata" = "darkorange2"
-              , "Mammals" = "red"
-              , "Fish" = "darkcyan"
+              , "Mammalia" = "red"
+              , "Neopterygii" = "darkcyan"
               , "Testudines" = "black"
               , "Amphibia" = "deeppink")
 
