@@ -110,13 +110,11 @@ class DBConnection:
         """Returns a new :class:`~sqlalchemy.engine.Connection` object."""
         return self._engine.connect()
 
-    @contextlib.contextmanager
     def begin(self, *args) -> sqlalchemy.engine.Connection:
         """Returns a context manager delivering a :class:`~sqlalchemy.engine.Connection` with a
         :class:`~sqlalchemy.engine.Transaction` established.
         """
-        with self._engine.begin(*args) as conn:
-            yield conn
+        return self._engine.begin(*args)
 
     def execute(self, statement: Query, *multiparams, **params) -> sqlalchemy.engine.ResultProxy:
         """Executes the given SQL query and returns a :class:`~sqlalchemy.engine.ResultProxy`.
