@@ -141,6 +141,13 @@ if ( $division eq 'vertebrates' ) {
         'tsv/ensembl-compara/homologies',
         'xml/ensembl-compara/homologies',
     );
+} elsif ( $division =~ /^pan($|[^a-z])/ ) {
+    @compara_dirs = (
+        'compara/species_trees',
+        'emf/ensembl-compara/homologies',
+        'tsv/ensembl-compara/homologies',
+        'xml/ensembl-compara/homologies',
+    );
 } else {
     @compara_dirs = (
         'compara/species_trees',
