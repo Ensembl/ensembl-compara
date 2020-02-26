@@ -17,7 +17,7 @@ limitations under the License.
 
 from pathlib import Path
 
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 
 
 with open(Path(__file__).parent / 'README.md') as f:
@@ -46,7 +46,8 @@ setup(
     url='https://www.ensembl.org',
     download_url='https://github.com/Ensembl/ensembl-compara',
     license=license_ct,
-    packages=find_packages(where='src/ptyhon', exclude=('tests')),
+    package_dir={"": "src/python/lib"},
+    packages=find_namespace_packages(where='lib'),
     install_requires=import_requirements(),
     classifiers=[
         "Development Status :: 3 - Alpha",
