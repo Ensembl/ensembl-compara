@@ -210,9 +210,13 @@ for (ref_species in levels(reference_species$V1)) {
     raw_data$Species = as.factor(sapply(raw_data$Species, function(x){paste(toupper(substring(x, 1,1)), chartr(old="_", new=" ", substring(x, 2)), sep="")}))
 
     x = raw_data[raw_data$GOC == "100",]
+    s = x$Proportion
+    #y = raw_data[raw_data$GOC == "75",]
+    #z = raw_data[raw_data$GOC == "50",]
+    #s = x$Proportion + y$Proportion + z$Proportion
 
-    species_list = x[rev(order(x$Proportion)),]$Species
-    taxon_list = x[rev(order(x$Proportion)),]$taxon
+    species_list = x[rev(order(s)),]$Species
+    taxon_list = x[rev(order(s)),]$taxon
     sorted_species_list = rev(species_list)
     sorted_taxon_list = rev(taxon_list)
 
@@ -233,6 +237,7 @@ for (ref_species in levels(reference_species$V1)) {
         ref_species = "tuatara"
     }
     graph_title = paste("GOC score distribution (reference: ", ref_species, "), ordered by GOC=100",sep='')
+    #graph_title = paste("GOC score distribution (reference: ", ref_species, "), ordered by GOC>=50",sep='')
 
     print (ggplot(data = raw_data, aes(x = Species, y = Proportion, fill = GOC, colour = Taxonomy))
                 + geom_bar(stat="identity", size = 0)
