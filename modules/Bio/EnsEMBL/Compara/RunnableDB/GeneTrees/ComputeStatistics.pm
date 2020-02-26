@@ -47,7 +47,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my $self = shift @_;
-    my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => $self->param( 'member_type' ), -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
+    my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => $self->param( 'member_type' ), -clusterset_id => 'default' )->[0] or $self->die_no_retry("Could not fetch groupset tree");
     $self->param('clusterset_tree', $clusterset_tree);
 }
 

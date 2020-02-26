@@ -53,7 +53,7 @@ sub fetch_input {
 
     my $mlss_id     = $self->param_required('mlss_id');
     
-    my $mlss        = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
+    my $mlss        = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or $self->die_no_retry("Could not fetch mlss with dbID=$mlss_id");
     my $genome_dbs  = $mlss->species_set->genome_dbs();
 
     my %selected_gdb_ids = ();

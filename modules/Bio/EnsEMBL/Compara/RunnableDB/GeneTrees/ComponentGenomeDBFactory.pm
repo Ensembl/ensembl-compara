@@ -47,7 +47,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param_required('genome_db_id')) or die "Could not fetch genome_db with dbID=".$self->param('genome_db_id');
+    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param_required('genome_db_id')) or $self->die_no_retry("Could not fetch genome_db with dbID=".$self->param('genome_db_id'));
     die $genome_db->name." is not a polyploid !\n" unless $genome_db->is_polyploid;
     $self->param('genome_db', $genome_db);
 }

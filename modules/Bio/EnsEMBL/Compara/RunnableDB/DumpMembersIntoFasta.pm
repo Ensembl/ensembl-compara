@@ -83,7 +83,7 @@ sub fetch_input {
     my $fasta_file;
     if ( scalar @gdb_ids == 1 ) {
         my $genome_db_id = $gdb_ids[0];
-        my $genome_db = $gdb_adaptor->fetch_by_dbID($genome_db_id) or die "cannot fetch GenomeDB with id '$genome_db_id'";
+        my $genome_db = $gdb_adaptor->fetch_by_dbID($genome_db_id) or $self->die_no_retry("cannot fetch GenomeDB with id '$genome_db_id'");
 
         $fasta_file = $self->param('fasta_dir') . '/' . $genome_db->name() . '_' . $genome_db->assembly() . ($genome_db->genome_component ? '_comp_'.$genome_db->genome_component : '') . '.fasta';
     } else {

@@ -74,7 +74,7 @@ sub fetch_input {
     $genome_db_adaptor->_id_cache->clear_cache();
 
     my $genome_db_id = $self->param('genome_db_id');
-    my $genome_db    = $genome_db_adaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with genome_db_id='$genome_db_id'";
+    my $genome_db    = $genome_db_adaptor->fetch_by_dbID($genome_db_id) or $self->die_no_retry("Could not fetch genome_db with genome_db_id='$genome_db_id'");
     my $species_name = $genome_db->name();
 
     # For polyploid genomes, the reusability is only assessed on the principal genome

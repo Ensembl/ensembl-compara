@@ -71,7 +71,7 @@ sub fetch_input {
 
     my $gene_tree_id    = $self->param_required('gene_tree_id');
     my $tree_adaptor    = $self->compara_dba->get_GeneTreeAdaptor;
-    my $gene_tree       = $tree_adaptor->fetch_by_dbID( $gene_tree_id ) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
+    my $gene_tree       = $tree_adaptor->fetch_by_dbID( $gene_tree_id ) or $self->die_no_retry("Could not fetch gene_tree with gene_tree_id='$gene_tree_id'");
     my $alignment       = $gene_tree->alignment();
 
     $self->param('alignment', $alignment);

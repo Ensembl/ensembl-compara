@@ -120,7 +120,7 @@ sub fetch_input {
     $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
 
     my $tree_id = $self->param_required('gene_tree_id');
-    my $gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
+    my $gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($tree_id) or $self->die_no_retry("Could not fetch gene_tree with tree_id='$tree_id'");
     if ($self->param('input_clusterset_id') and $self->param('input_clusterset_id') ne 'default') {
         $gene_tree = $gene_tree->alternative_trees->{$self->param('input_clusterset_id')};
         die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $gene_tree;

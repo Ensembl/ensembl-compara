@@ -73,10 +73,10 @@ sub fetch_input {
 
     if (my $genome_db_id = $self->param('genome_db_id')) {
         assert_integer($genome_db_id, 'genome_db_id');
-        $genome_db = $self->compara_dba()->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch GenomeDB with dbID=$genome_db_id";
+        $genome_db = $self->compara_dba()->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or $self->die_no_retry("Could not fetch GenomeDB with dbID=$genome_db_id");
 
     } elsif (my $genome_db_name = $self->param_required('genome_db_name')) {
-        $genome_db = $self->compara_dba()->get_GenomeDBAdaptor->fetch_by_name_assembly($genome_db_name) or die "Could not fetch GenomeDB with name=$genome_db_name";
+        $genome_db = $self->compara_dba()->get_GenomeDBAdaptor->fetch_by_name_assembly($genome_db_name) or $self->die_no_retry("Could not fetch GenomeDB with name=$genome_db_name");
 
     }
 
