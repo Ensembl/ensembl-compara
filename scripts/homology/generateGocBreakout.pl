@@ -74,7 +74,7 @@ while ( my @row1 = $sth1->fetchrow_array() ) {
         push( @{ $names{$mlss_id}{'names'} }, $row2[0] );
     }
 
-    my $sql3 = "SELECT goc_score , COUNT(*) FROM homology where method_link_species_set_id = $row1[0] GROUP BY goc_score";
+    my $sql3 = "SELECT goc_score , COUNT(*) FROM homology where method_link_species_set_id = $mlss_id GROUP BY goc_score";
     my $sth3 = $dbh->prepare($sql3);
     $sth3->execute();
     my $total = 0;
@@ -84,6 +84,10 @@ while ( my @row1 = $sth1->fetchrow_array() ) {
         }
         $mlss_ids{$mlss_id}{ $row3[0] } = $row3[1];
         $total += $row3[1];
+    }
+    if ($mlss_ids{$mlss_id}{'NULL'}) {
+        $mlss_ids{$mlss_id}{'0'} += $mlss_ids{$mlss_id}{'NULL'};
+        delete $mlss_ids{$mlss_id}{'NULL'};
     }
 
     foreach my $goc_score ( sort keys %{ $mlss_ids{$mlss_id} } ) {
@@ -179,7 +183,7 @@ foreach my $reference (@references) {
         my $names = join( "", @{ $names{$mlss_id}{'names'} } );
 
         #forcing all scores to be declared:
-        my @scores = ( "NULL", "0", "25", "50", "75", "100" );
+        my @scores = ( "0", "25", "50", "75", "100" );
         foreach my $score (@scores) {
             if ( !$mlss_ids{$mlss_id}{$score} ) {
                 $mlss_ids{$mlss_id}{$score} = 0;
@@ -193,7 +197,7 @@ foreach my $reference (@references) {
 
             foreach my $goc_score ( sort num keys %{ $mlss_ids{$mlss_id} } ) {
                 print $fh_out "$names;$mlss_ids{$mlss_id}{$goc_score};X_$goc_score;$colors{$taxon{$names}}\n";
-                if (($goc_score < 50) || ($goc_score eq "NULL")){
+                if ($goc_score < 50) {
                         $sum_under_50 += $mlss_ids{$mlss_id}{$goc_score}; 
                 }else{
                         $sum_above_50 += $mlss_ids{$mlss_id}{$goc_score}; 
