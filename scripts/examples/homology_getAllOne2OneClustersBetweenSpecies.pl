@@ -47,8 +47,8 @@ my $gene_member_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara"
 # The script will download the one2one orthologies between it and all the
 # other species, and combine the sets
 
-my @list_of_species = ("tuatara","gallus_gallus", "alligator_sinensis", "chelonia_mydas", "anolis_carolinensis", "ophiophagus_hannah", "ophisaurus_gracilis", "gekko_japonicus", "homo_sapiens", "xenopus_tropicalis", "lepisosteus_oculatus");
-#my @list_of_species = ("alligator_mississippiensis","alligator_sinensis","anas_platyrhynchos","anolis_carolinensis","chelonia_mydas","chrysemys_picta","danio_rerio","ficedula_albicollis","gallus_gallus","gekko_japonicus","homo_sapiens","lepisosteus_oculatus","meleagris_gallopavo","monodelphis_domestica","mus_musculus","ophiophagus_hannah","ophisaurus_gracilis","ornithorhynchus_anatinus","pelodiscus_sinensis","pogona_vitticeps","protobothrops_mucrosquamatus","python_molurus_bivittatus","taeniopygia_guttata","thamnophis_sirtalis","tuatara","xenopus_tropicalis");
+my @list_of_species = ("sphenodon_punctatus","gallus_gallus", "alligator_sinensis", "chelonia_mydas", "anolis_carolinensis", "ophiophagus_hannah", "ophisaurus_gracilis", "gekko_japonicus", "homo_sapiens", "xenopus_tropicalis", "lepisosteus_oculatus");
+#my @list_of_species = ("alligator_mississippiensis","alligator_sinensis","anas_platyrhynchos","anolis_carolinensis","chelonia_mydas","chrysemys_picta","danio_rerio","ficedula_albicollis","gallus_gallus","gekko_japonicus","homo_sapiens","lepisosteus_oculatus","meleagris_gallopavo","monodelphis_domestica","mus_musculus","ophiophagus_hannah","ophisaurus_gracilis","ornithorhynchus_anatinus","pelodiscus_sinensis","pogona_vitticeps","protobothrops_mucrosquamatus","python_molurus_bivittatus","taeniopygia_guttata","thamnophis_sirtalis","sphenodon_punctatus","xenopus_tropicalis");
 
 my @gdbs = @{ $genome_db_adaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => \@list_of_species) };
 my @all_species_names = sort(map {$_->name} @gdbs);

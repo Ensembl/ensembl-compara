@@ -122,7 +122,7 @@ $taxon{'protobothrops_mucrosquamatus'} = "Squamata";
 $taxon{'python_molurus_bivittatus'}    = "Squamata";
 $taxon{'taeniopygia_guttata'}          = "Birds";
 $taxon{'thamnophis_sirtalis'}          = "Squamata";
-$taxon{'tuatara'}                      = "Squamata";
+$taxon{'sphenodon_punctatus'}          = "Squamata";
 $taxon{'xenopus_tropicalis'}           = "Amphibia";
 
 #Define the colours to plot
@@ -147,7 +147,7 @@ while ( my @row = $sth4->fetchrow_array() ) {
 }
 
 #Define which species to use as references:
-my @references = ( "homo_sapiens", "tuatara" );
+my @references = ( "homo_sapiens", "sphenodon_punctatus" );
 
 foreach my $reference (@references) {
     #File with breakout of the different GOC levels

@@ -59,11 +59,11 @@ close($fh_species_list);
 
 # The wanted/unwanted species
 #my $species_list = {"rat"=>1, "cow"=>1, "mouse"=>1, "tetraodon"=>0};
-#my $species_list = { "tuatara"=>1, "gallus_gallus"=>1, "alligator_sinensis"=>1 };
+#my $species_list = { "sphenodon_punctatus"=>1, "gallus_gallus"=>1, "alligator_sinensis"=>1 };
 
-#my $species_list = {"gallus_gallus"=>1, "alligator_sinensis"=>1, "chelonia_mydas"=>1, "anolis_carolinensis"=>1, "ophiophagus_hannah"=>1, "ophisaurus_gracilis"=>1, "gekko_japonicus"=>1, "tuatara"=>1, "homo_sapiens"=>1, "xenopus_tropicalis"=>1, "lepisosteus_oculatus"=>1};
+#my $species_list = {"gallus_gallus"=>1, "alligator_sinensis"=>1, "chelonia_mydas"=>1, "anolis_carolinensis"=>1, "ophiophagus_hannah"=>1, "ophisaurus_gracilis"=>1, "gekko_japonicus"=>1, "sphenodon_punctatus"=>1, "homo_sapiens"=>1, "xenopus_tropicalis"=>1, "lepisosteus_oculatus"=>1};
 
-#my $species_list = {"alligator_mississippiensis"=>1, "alligator_sinensis"=>1, "anas_platyrhynchos"=>1, "anolis_carolinensis"=>1, "chelonia_mydas"=>1, "chrysemys_picta"=>1, "danio_rerio"=>1, "ficedula_albicollis"=>1, "gallus_gallus"=>1, "gekko_japonicus"=>1, "homo_sapiens"=>1, "lepisosteus_oculatus"=>1, "meleagris_gallopavo"=>1, "monodelphis_domestica"=>1, "mus_musculus"=>1, "ophiophagus_hannah"=>1, "ophisaurus_gracilis"=>1, "ornithorhynchus_anatinus"=>1, "pelodiscus_sinensis"=>1, "pogona_vitticeps"=>1, "protobothrops_mucrosquamatus"=>1, "python_molurus_bivittatus"=>1, "taeniopygia_guttata"=>1, "thamnophis_sirtalis"=>1, "tuatara"=>1, "xenopus_tropicalis"=>1};
+#my $species_list = {"alligator_mississippiensis"=>1, "alligator_sinensis"=>1, "anas_platyrhynchos"=>1, "anolis_carolinensis"=>1, "chelonia_mydas"=>1, "chrysemys_picta"=>1, "danio_rerio"=>1, "ficedula_albicollis"=>1, "gallus_gallus"=>1, "gekko_japonicus"=>1, "homo_sapiens"=>1, "lepisosteus_oculatus"=>1, "meleagris_gallopavo"=>1, "monodelphis_domestica"=>1, "mus_musculus"=>1, "ophiophagus_hannah"=>1, "ophisaurus_gracilis"=>1, "ornithorhynchus_anatinus"=>1, "pelodiscus_sinensis"=>1, "pogona_vitticeps"=>1, "protobothrops_mucrosquamatus"=>1, "python_molurus_bivittatus"=>1, "taeniopygia_guttata"=>1, "thamnophis_sirtalis"=>1, "sphenodon_punctatus"=>1, "xenopus_tropicalis"=>1};
 
 # Auto-configure the registry
 #Bio::EnsEMBL::Registry->load_registry_from_db(-host=>'ensembldb.ensembl.org', -user=>'anonymous') ;
