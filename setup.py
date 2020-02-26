@@ -26,7 +26,7 @@ with open(Path(__file__).parent / 'README.md') as f:
 with open(Path(__file__).parent / 'LICENSE') as f:
     license_ct = f.read()
 
-with open(Path(__file__).parent / 'VERSION') as f:
+with open(Path(__file__).parent / 'PIP_VERSION') as f:
     version = f.read()
 
 
