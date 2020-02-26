@@ -72,6 +72,10 @@ See conf/vertebrates/mlss_conf.xml for an example
 
 The RelaxNG definition of the XML files. Defaults to $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/compara_db_config.rng
 
+=item B<[--output_file output_file]>
+
+Optional. Print report in the given file instead of STDOUT.
+
 =back
 
 =head2 BEHAVIOUR CONFIGURATION
@@ -417,6 +421,8 @@ foreach my $st_node (@{$division_node->findnodes('species_trees/species_tree')})
     push @mlsss, Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_mlss($st_method, $species_set);
 }
 
+my $method_adaptor = $compara_dba->get_MethodAdaptor;
+my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
 my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 my %mlss_ids_to_find = map {$_->dbID => $_} @{$mlss_adaptor->fetch_all_current};
 
@@ -464,6 +470,13 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             if (!$exist_mlss and ($mlss->method->type eq 'LASTZ_NET')) {
                 # allow for cases where BLASTZ_NET is not in the method_link table - this is the case for EG
                 $exist_mlss = $mlss_adaptor->fetch_by_method_link_type_GenomeDBs('BLASTZ_NET', $mlss->species_set->genome_dbs) if ($compara_dba->get_MethodAdaptor->fetch_by_type('BLASTZ_NET'));
+            }
+            if (!$exist_mlss) {
+                # Check if either the method or the species_set are already in the database
+                my $exist_method = $method_adaptor->fetch_by_type($mlss->method->type);
+                $mlss->method($exist_method) if $exist_method;
+                my $exist_ss = $ss_adaptor->fetch_by_GenomeDBs($mlss->species_set->genome_dbs);
+                $mlss->species_set($exist_ss) if $exist_ss;
             }
             if ($exist_mlss and ($exist_mlss->is_current || $mlss->{_no_release})) {
                 push @mlsss_existing, $exist_mlss;
