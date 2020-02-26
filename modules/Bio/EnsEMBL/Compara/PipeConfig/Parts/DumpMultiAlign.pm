@@ -43,12 +43,8 @@ sub pipeline_analyses_dump_multi_align {
             -parameters    => {
                 'method_link_types' => $self->o('method_link_types'),
                 'from_first_release' => $self->o('ensembl_release'),
+                'species_priority'   => $self->o('epo_reference_species'),
             },
-            # -input_ids     => [
-            #     {
-            #         'mlss_id'           => $self->o('mlss_id'),
-            #     },
-            # ],
             -flow_into      => {
                 '2->A' => [ 'count_blocks' ],
                 'A->2' => [ 'md5sum_aln_factory' ],
