@@ -224,6 +224,11 @@ for (ref_species in levels(reference_species$V1)) {
     raw_data$species = factor(raw_data$species, levels = sorted_species_list)
     raw_data$taxonomy = sapply(raw_data$taxon, function(x){attributes(list[list == x])[[1]]})
 
+    if (ref_species == "homo_sapiens") {
+        ref_species = "human"
+    } else if (ref_species == "sphenodon_punctatus") {
+        ref_species = "tuatara"
+    }
     graph_title = paste("GOC scores, ordered by GOC=100, reference: ",ref_species,sep='')
 
     print (ggplot(data = raw_data, aes(x = species, y = goc, fill = threshold, colour = taxonomy))
@@ -261,6 +266,11 @@ for (ref_species in levels(reference_species$V1)) {
     raw_data$species <- factor(raw_data$species, levels = sorted_species_list)
     raw_data$taxonomy <- sapply(raw_data$taxon, function(x){attributes(list[list == x])[[1]]})
 
+    if (ref_species == "homo_sapiens") {
+        ref_species = "human"
+    } else if (ref_species == "sphenodon_punctatus") {
+        ref_species = "tuatara"
+    }
     graph_title = paste("GOC scores above and under 50, reference: ",ref_species,sep='')
 
     print (ggplot(data = raw_data, aes(x = species, y = goc, fill = threshold, colour = taxonomy))
