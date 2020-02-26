@@ -92,13 +92,14 @@ class TestDBItem(CITestItem):
             filter_by: Filter rows by one or more conditions (joined by the AND operator).
 
         Raise:
-            FailedDBTestException: If `group_by` is provided and the number of groups is different; or if the
+            FailedDBTestException: If `group_by` is provided and the groups returned are different; or if the
                 number of rows differ for at least one group.
 
         """
         # Compose the sql query from the given parameters (both databases should have the same table schema)
         table = self.ref_db.tables[self.table]
-        columns = [table.columns[col] for col in to_list(group_by)]
+        group_by = to_list(group_by)
+        columns = [table.columns[col] for col in group_by]
         # Use primary key in count to improve the query performance
         primary_key = self.ref_db.get_primary_key_columns(self.table)[0]
         query = select(columns + [func.count(table.columns[primary_key]).label('nrows')])
@@ -110,16 +111,21 @@ class TestDBItem(CITestItem):
         # Get the number of rows for both databases
         ref_data = pandas.read_sql(query, self.ref_db.connect())
         target_data = pandas.read_sql(query, self.target_db.connect())
-        # Check if the size of the returned tables are the same
-        if ref_data.shape != target_data.shape:
-            expected = ref_data.shape[0]
-            found = target_data.shape[0]
+        # Check if the number of groups returned are the same
+        if len(ref_data.index) != len(target_data.index):
+            expected = len(ref_data.index)
+            found = len(target_data.index)
             # Note that the shape can only be different if group_by is given
-            message = (
-                f"Different number of groups ({', '.join([c.name for c in columns])}) for table "
-                f"'{self.table}'"
-            )
+            message = f"Different number of groups found ({', '.join(group_by)}) for table '{self.table}'"
             raise FailedDBTestException(expected, found, query, message)
+        # When group_by, check if the groups returned are the same too
+        if group_by:
+            merged_data = pandas.merge(ref_data, target_data, on=group_by)
+            if len(ref_data.index) != len(merged_data.index):
+                expected = ref_data.to_string(index=False).splitlines()
+                found = target_data.to_string(index=False).splitlines()
+                message = f"Different groups found ({', '.join(group_by)}) for table '{self.table}'"
+                raise FailedDBTestException(expected, found, query, message)
         # Check if the number of rows (per group) are the same
         difference = abs(ref_data['nrows'] - target_data['nrows'])
         allowed_variation = ref_data['nrows'] * variation
