@@ -87,7 +87,7 @@ jobs:
       script: ./travisci/perl-linter_harness.sh
 
     - language: python
-      python: 3.5
+      python: 3.6
       name: "Python unit tests on the minimum version"
       env:
         - TEST_COMPILATION=true
@@ -136,4 +136,3 @@ jobs:
       before_script:
         - echo
       script: ./travisci/trigger-dependent-build.sh
-

@@ -15,7 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PYTHON_SOURCE_LOCATIONS=('scripts')
+PYTHON_SOURCE_LOCATIONS=('scripts' 'src/python/tests')
+
+# Setup the environment variables
+export ENSADMIN_PSW='dummy_pwd'
 
 # Check that all the Python files can be compiled
 if [ "$TEST_COMPILATION" = 'true' ]; then
@@ -29,7 +32,7 @@ PYTEST_OPTIONS=()
 if [ "$COVERAGE" = 'true' ]; then
   PYTEST_OPTIONS+=('--cov=./')
 fi
-pytest "${PYTEST_OPTIONS[@]}" "${PYTHON_SOURCE_LOCATIONS[@]}"
+pytest "${PYTEST_OPTIONS[@]}" "${PYTHON_SOURCE_LOCATIONS[@]}" --server "mysql://travis@127.0.0.1:3306/"
 rt2=$?
 
 # Return code 5 means "No tests collected". We want this as long as we don't have any tests

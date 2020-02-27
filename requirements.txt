@@ -5,3 +5,4 @@ ete3
 sqlalchemy
 mysqlclient
 requests
+pandas

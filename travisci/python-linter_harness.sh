@@ -15,17 +15,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PYTHON_SOURCE_LOCATIONS=('scripts')
+PYTHON_SOURCE_LOCATIONS=('scripts' 'src/python')
 
 PYLINT_OUTPUT_FILE=$(mktemp)
 PYLINT_ERRORS=$(mktemp)
-pylint --rcfile pylintrc --verbose "${PYTHON_SOURCE_LOCATIONS[@]}" | tee "$PYLINT_OUTPUT_FILE"
+find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" -print0 | xargs -0 pylint --rcfile pylintrc --verbose | tee "$PYLINT_OUTPUT_FILE"
 grep -v "\-\-\-\-\-\-\-\-\-" "$PYLINT_OUTPUT_FILE" | grep -v "Your code has been rated" | grep -v "\n\n" | sed '/^$/d' > "$PYLINT_ERRORS"
 ! [ -s "$PYLINT_ERRORS" ]
 rt1=$?
 rm "$PYLINT_OUTPUT_FILE" "$PYLINT_ERRORS"
 
-find "${PYTHON_SOURCE_LOCATIONS[@]}" -name "*.py" -print0 | xargs -0 mypy
+find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" -print0 | xargs -0 mypy --config-file mypy.ini
 rt2=$?
 
 if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then
