@@ -214,6 +214,11 @@ sub detect_pecan_ortheus_errors {
               # Let's discard this job.
               $self->input_job->autoflow(0);
               $self->complete_early( "Pecan failed to align the sequences. Skipping." );
+          } elsif ($err_msg =~ /Zero prob, so I have no choice but to exit, sorry/) {
+              # Not sure why this happens
+              # Let's discard this job.
+              $self->input_job->autoflow(0);
+              $self->complete_early( "Pecan failed to align the sequences. Skipping." );
           } elsif ($err_msg =~ /Java heap space/ || $err_msg =~ /GC overhead limit exceeded/ || $err_msg =~ /Cannot allocate memory/ || $err_msg =~ /OutOfMemoryError/) {
 
               #Flow to next memory.
