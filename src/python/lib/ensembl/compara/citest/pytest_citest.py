@@ -18,7 +18,7 @@ limitations under the License.
 from collections import OrderedDict
 import json
 import os
-from typing import Iterator, Optional
+from typing import Dict, Iterator, Optional
 
 import py
 import pytest
@@ -126,12 +126,8 @@ class JsonFile(pytest.File):
         # Parse each test and load it
         if 'database_tests' in pipeline_tests:
             # Load the reference and target DBs
-            ref_url = self.config.getoption('ref_db', pipeline_tests.get('reference_db', ''), True)
-            if not ref_url:
-                raise ValueError("Required argument '--ref-db' or 'reference_db' key in JSON file")
-            target_url = self.config.getoption('target_db', pipeline_tests.get('target_db', ''), True)
-            if not target_url:
-                raise ValueError("Required argument '--target-db' or 'target_db' key in JSON file")
+            ref_url = self._get_arg(pipeline_tests, 'reference_db')
+            target_url = self._get_arg(pipeline_tests, 'target_db')
             ref_dbc = DBConnection(ref_url)
             target_dbc = DBConnection(target_url)
             for table, test_list in pipeline_tests['database_tests'].items():
@@ -145,12 +141,8 @@ class JsonFile(pytest.File):
                     yield TestDBItem(test['test'], self, ref_dbc, target_dbc, table, test['args'])
         if 'files_tests' in pipeline_tests:
             # Load the reference and target directory paths
-            ref_path = self.config.getoption('ref_dir', pipeline_tests.get('reference_dir', ''), True)
-            if not ref_path:
-                raise ValueError("Required argument '--ref-dir' or 'reference_dir' key in JSON file")
-            target_path = self.config.getoption('target_dir', pipeline_tests.get('target_dir', ''), True)
-            if not target_path:
-                raise ValueError("Required argument '--target-dir' or 'target_dir' key in JSON file")
+            ref_path = self._get_arg(pipeline_tests, 'reference_dir')
+            target_path = self._get_arg(pipeline_tests, 'target_dir')
             dir_cmp = DirCmp(ref_path=ref_path, target_path=target_path)
             for i, test in enumerate(pipeline_tests['files_tests'], 1):
                 # Ensure required keys are present in every test
@@ -159,3 +151,20 @@ class JsonFile(pytest.File):
                 if 'args' not in test:
                     raise AttributeError(f"Missing argument 'args' in files_tests #{i}")
                 yield TestFilesItem(test['test'], self, dir_cmp, test['args'])
+
+    def _get_arg(self, pipeline_tests: Dict, name: str) -> str:
+        """Returns the requested parameter from the command line (priority) or the JSON configuration file.
+
+        Args:
+            pipeline_tests: Pipeline tests and their configuration.
+            name: Parameter name.
+
+        Raises:
+            ValueError: If the parameter has not been set in neither the command line nor the JSON
+                configuration file.
+
+        """
+        argument = self.config.getoption(name, pipeline_tests.get(name, ''), True)
+        if not argument:
+            raise ValueError(f"Required argument '--{name.replace('_', '-')}' or '{name}' key in JSON file")
+        return argument
