@@ -160,7 +160,8 @@ class TestDBItem(CITestItem):
                 content.
 
         """
-        assert not (columns and ignore_columns), "Expected only 'columns' or 'ignore_columns', not both"
+        if columns and ignore_columns:
+            raise FailedDBTestException("Expected only 'columns' or 'ignore_columns', not both")
         # Compose the sql query from the given parameters (both databases should have the same table schema)
         table = self.ref_db.tables[self.table]
         if ignore_columns:

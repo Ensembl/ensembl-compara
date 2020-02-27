@@ -127,27 +127,35 @@ class JsonFile(pytest.File):
         if 'database_tests' in pipeline_tests:
             # Load the reference and target DBs
             ref_url = self.config.getoption('ref_db', pipeline_tests.get('reference_db', ''), True)
-            assert ref_url, "Required argument '--ref-db' or 'reference_db' key in JSON file"
+            if not ref_url:
+                raise ValueError("Required argument '--ref-db' or 'reference_db' key in JSON file")
             target_url = self.config.getoption('target_db', pipeline_tests.get('target_db', ''), True)
-            assert target_url, "Required argument '--target-db' or 'target_db' key in JSON file"
+            if not target_url:
+                raise ValueError("Required argument '--target-db' or 'target_db' key in JSON file")
             ref_dbc = DBConnection(ref_url)
             target_dbc = DBConnection(target_url)
             for table, test_list in pipeline_tests['database_tests'].items():
                 for test in test_list:
                     # Ensure required keys are present in every test
-                    assert 'test' in test, f"Missing argument 'test' in database_tests['{table}']"
-                    assert 'args' in test, \
-                        f"Missing argument 'args' in database_tests['{table}']['{test['test']}']"
+                    if 'test' not in test:
+                        raise AttributeError(f"Missing argument 'test' in database_tests['{table}']")
+                    if 'args' not in test:
+                        raise AttributeError(
+                            f"Missing argument 'args' in database_tests['{table}']['{test['test']}']")
                     yield TestDBItem(test['test'], self, ref_dbc, target_dbc, table, test['args'])
         if 'files_tests' in pipeline_tests:
             # Load the reference and target directory paths
             ref_path = self.config.getoption('ref_dir', pipeline_tests.get('reference_dir', ''), True)
-            assert ref_path, "Required argument '--ref-dir' or 'reference_dir' key in JSON file"
+            if not ref_path:
+                raise ValueError("Required argument '--ref-dir' or 'reference_dir' key in JSON file")
             target_path = self.config.getoption('target_dir', pipeline_tests.get('target_dir', ''), True)
-            assert target_path, "Required argument '--target-dir' or 'target_dir' key in JSON file"
+            if not target_path:
+                raise ValueError("Required argument '--target-dir' or 'target_dir' key in JSON file")
             dir_cmp = DirCmp(ref_path=ref_path, target_path=target_path)
             for i, test in enumerate(pipeline_tests['files_tests'], 1):
                 # Ensure required keys are present in every test
-                assert 'test' in test, f"Missing argument 'test' in files_tests #{i}"
-                assert 'args' in test, f"Missing argument 'args' in files_tests #{i}"
+                if 'test' not in test:
+                    raise AttributeError(f"Missing argument 'test' in files_tests #{i}")
+                if 'args' not in test:
+                    raise AttributeError(f"Missing argument 'args' in files_tests #{i}")
                 yield TestFilesItem(test['test'], self, dir_cmp, test['args'])
