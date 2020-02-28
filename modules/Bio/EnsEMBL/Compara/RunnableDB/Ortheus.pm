@@ -343,15 +343,12 @@ sub _write_output {
   	   }
 	   $gata->store_group($split_trees);
 	   foreach my $tree (@$split_trees) {
-	       $self->_write_gerp_dataflow($tree->modern_genomic_align_block_id,
-					   $mlss);
+	       $self->_write_gerp_dataflow($tree->modern_genomic_align_block_id);
 	       
 	   }
        } else {
 	   $gata->store($genomic_align_tree, $skip_left_right_index);
-	   $self->_write_gerp_dataflow(
-			    $genomic_align_tree->modern_genomic_align_block_id,
-			    $mlss);
+	   $self->_write_gerp_dataflow($genomic_align_tree->modern_genomic_align_block_id)
        }
    }
 	#DO NOT COMMENT THIS OUT!!! (at least not permenantly). Needed
@@ -476,11 +473,9 @@ sub _trim_gab_right {
 }
 
 sub _write_gerp_dataflow {
-    my ($self, $gab_id, $mlss) = @_;
+    my ($self, $gab_id) = @_;
     
-    my @species_set = map {$_->dbID} @{$mlss->species_set->genome_dbs()};
-    
-    my $output_id = { genomic_align_block_id => $gab_id, species_set => \@species_set };
+    my $output_id = { genomic_align_block_id => $gab_id };
     $self->dataflow_output_id($output_id);
 }
 
