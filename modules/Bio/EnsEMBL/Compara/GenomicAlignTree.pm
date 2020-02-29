@@ -657,7 +657,7 @@ sub restrict_between_alignment_positions {
 
   #Get all the nodes and restrict but only remove leaves if necessary. Call minimize_tree at the end to 
   #remove the internal nodes
-  foreach my $this_node (@{$genomic_align_tree->get_all_nodes}) {
+  foreach my $this_node (reverse @{$genomic_align_tree->get_all_nodes}) {
     my $genomic_align_group = $this_node->genomic_align_group;
     next if (!$genomic_align_group);
     my $new_genomic_aligns = [];
