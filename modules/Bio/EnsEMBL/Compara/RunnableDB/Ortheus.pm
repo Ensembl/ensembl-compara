@@ -339,7 +339,7 @@ sub _write_output {
   		   $end = $genomic_align_tree->length;
   	       }
   	       my $new_gat = $genomic_align_tree->restrict_between_alignment_positions($start, $end, "skip_empty_GenomicAligns");
-	       push @$split_trees, $new_gat;
+	       push @$split_trees, $new_gat if scalar(@{$new_gat->get_all_leaves}) >= 2;
   	   }
 	   $gata->store_group($split_trees);
 	   foreach my $tree (@$split_trees) {
