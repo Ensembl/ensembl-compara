@@ -62,7 +62,6 @@ sub fetch_input {
     $self->param( 'gene_tree_id',      $self->param_required('gene_tree_id') );
     $self->param( 'gene_tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor );
     $self->param( 'gene_tree',         $self->param('gene_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) ) or $self->die_no_retry("Could not fetch gene_tree with gene_tree_id='" . $self->param('gene_tree_id'));
-    $self->param( 'gene_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID( $self->param('gene_tree_id') ) ) or die "Could not fetch gene_tree with gene_tree_id='" . $self->param('gene_tree_id');
 
     #Fetch tags
     $self->param( 'gene_count',          $self->param('gene_tree')->get_value_for_tag('gene_count') );
