@@ -121,7 +121,7 @@ GetOptions(
 );
 
 unless ($url or ($reg_conf and $reg_alias)) {
-    print "\nNeither --url nor --reg_conf and --reg_alias are defined. The URL should be something like mysql://ensro\@compara1:3306/kb3_ensembl_compara_59\n\n";
+    print "\nNeither --url nor --reg_conf and --reg_alias are defined. Some of those are needed to refer to the database being tested\n\n";
     exit 1;
 }
 
