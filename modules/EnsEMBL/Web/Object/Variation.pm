@@ -591,7 +591,12 @@ sub ancestor {
   ### Returns String
 
   my $self = shift;
-  return $self->get_selected_variation_feature->ancestral_allele;
+
+  my $anc_allele;
+  if($self->get_selected_variation_feature) {
+    $anc_allele = $self->get_selected_variation_feature->ancestral_allele;
+  }
+  return $anc_allele;
 }
 
 
