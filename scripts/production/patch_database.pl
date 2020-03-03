@@ -25,10 +25,7 @@ taking connection details from a production_reg_conf file.
 
 =head1 SYNOPSIS
 
-  perl patch_database.pl $COMPARA_REG compara_curr -group compara
-
-  perl patch_database.pl \
-    --reg_conf registry_configuration_file --reg_alias compara_curr
+  perl patch_database.pl $COMPARA_REG compara_prev
 
 =head1 ARGUMENTS
 
