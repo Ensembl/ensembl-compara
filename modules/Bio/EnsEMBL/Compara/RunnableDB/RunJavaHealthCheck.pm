@@ -79,7 +79,7 @@ sub fetch_input {
 
     if ( $self->param('master_db') ) {
         my $master_url = $self->get_cached_compara_dba('master_db')->url;
-        $cmd .= "--master_db " . $master_url . " ";
+        $cmd .= " --master_db " . $master_url . " ";
     } else {
         # Since there is no registry, we can't even default to "compara_master"
         $cmd .= " --master_db '' ";
