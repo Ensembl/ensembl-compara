@@ -39,6 +39,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
+use Bio::EnsEMBL::Compara::Utils::DistributionTag qw(write_n_tag);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -173,10 +174,10 @@ sub write_output {
     
     my $goc_scores  = $self->param('goc_scores');
     my $output_file = $self->param('output_file');
-    my $mlss        = $self->param_required('mlss');
+    my $mlss        = $self->param('mlss');
 
     print "Writing n_goc_score to the database\n" if $self->debug;
-    $self->_write_n_tag($mlss, 'goc', $goc_scores);
+    $self->write_n_tag($mlss, 'goc', $goc_scores);
     print "Tag: n_goc_score written!\n\n" if $self->debug;
 
     if ( $output_file ) {
@@ -463,23 +464,6 @@ sub _split_polyploid_goc {
             }
             $self->complete_early("Got ENSEMBL_ORTHOLOGUES on polyploids, so dataflowed 1 job per component genome_db\n");
         }
-    }
-}
-
-sub _write_n_tag {
-    my ($self, $mlss, $label, $scores) = @_;
-
-    my %distrib_hash;
-    foreach my $score ( values %$scores ) {
-        my $floor_score = int($score/25)*25;
-        $distrib_hash{$floor_score} += 1;
-    }
-
-    my $n_tot = 0;
-    my $n_over_threshold = 0;
-    foreach my $distrib_score ( keys %distrib_hash ) {
-        my $tag = sprintf('n_%s_%s', $label, $distrib_score // 'null');
-        $mlss->store_tag($tag, $distrib_hash{$distrib_score});
     }
 }
 

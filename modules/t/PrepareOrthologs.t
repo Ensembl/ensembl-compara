@@ -56,14 +56,14 @@ $exp_dataflow = { orth_info => [
     { id => 102, gene_members => [ [9263637, 134], [9274269, 150] ]},
     { id => 103, gene_members => [ [9263633, 134], [9284238, 150] ]},
 ],
-    aln_mlss_ids => 54321,
+    aln_mlss_ids => [54321],
 };
 
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs', # module
 	{ # input param hash
         'orth_mlss_id'      => '12345',
-        'aln_mlss_ids'      => '54321',
+        'aln_mlss_ids'      => ['54321'],
 		'species1_id'       => '150',
 		'species2_id'       => '134',
 		'compara_db'        => $compara_db,
@@ -90,14 +90,14 @@ my $prev_compara_db = $dbc_prev->url;
 my $exp_dataflow_2 = { orth_info => [
     { id => 101, gene_members => [ [9263633, 134], [9274269, 150] ]}
 ],
-    aln_mlss_ids => 54321,
+    aln_mlss_ids => [54321],
 };
 
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs', # module
 	{ # input param hash
         'orth_mlss_id'      => '12345',
-        'aln_mlss_ids'      => '54321',
+        'aln_mlss_ids'      => ['54321'],
 		'species1_id'       => '150',
 		'species2_id'       => '134',
 		'compara_db'        => $compara_db,
@@ -131,7 +131,7 @@ standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs', # module
 	{ # input param hash
         'orth_mlss_id'      => '12345',
-        'aln_mlss_ids'      => '54321',
+        'aln_mlss_ids'      => ['54321'],
 		'species1_id'       => '150',
 		'species2_id'       => '134',
 		'compara_db'        => $compara_db,

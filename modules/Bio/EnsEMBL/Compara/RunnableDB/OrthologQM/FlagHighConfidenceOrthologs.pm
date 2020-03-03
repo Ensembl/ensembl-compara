@@ -39,7 +39,7 @@ use warnings;
 use POSIX qw(floor);
 use File::Basename;
 
-use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header parse_flatfile_into_hash);
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header parse_flatfile_into_hash match_range_filter);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -125,7 +125,7 @@ sub write_output {
         );
 
         if ( $range_filter ) {
-            next unless $self->_match_range_filter($homology_id, $range_filter);
+            next unless $self->match_range_filter($homology_id, $range_filter);
         }
 
         # decide if homology is high confidence
@@ -221,22 +221,6 @@ sub _lines_in_file {
     my @wc_out = split( /\s+/, $self->get_command_output("wc -l $filename") );
     my $wc_l   = shift @wc_out;
     return $wc_l - 1; # account for header line
-}
-
-sub _match_range_filter {
-    my ($self, $id, $filter) = @_;
-
-    my $match = 0;
-    foreach my $range ( @$filter ) {
-        die "Bad range declaration: at least one value expected, 0 found." unless defined $range->[0];
-        if ( defined $range->[1] ) {
-            $match = 1 if $id >= $range->[0] && $id <= $range->[1];
-        } else {
-            $match = 1 if $id >= $range->[0];
-        }
-    }
-
-    return $match;
 }
 
 1;
