@@ -89,12 +89,11 @@ sub pipeline_create_commands {
 
         # Make a backup of the current registry configuration file and the Java
         # healthchecks database properties file
-        'cp ' . $self->o('reg_conf') . ' ' . $self->o('backups_dir') . '/production_reg_' . $self->o('division') . '_conf.pl',
+        'cp ' . $self->o('reg_conf') . ' ' . $self->o('backups_dir') . '/' . $self->o('division') . '_production_reg_conf.pl',
         'cp ' . $self->o('ensj_conf') . ' ' . $self->o('backups_dir') . '/' . $self->o('division') . '_ensj-healthcheck.json',
         # Replace the backed-up files by their default content to ensure a safe
         # setup to start of the pipeline
-        'pushd ' . $self->o('compara_dir') . '; git checkout -- ' . $self->o('reg_conf') . '; popd',
-        'pushd ' . $self->o('ensj_conf') . '; git checkout -- ' . $self->o('ensj_conf') . '; popd',
+        'pushd ' . $self->o('compara_dir') . ' > /dev/null; git checkout -- ' . $self->o('reg_conf') . ' ' . $self->o('ensj_conf') . '; popd > /dev/null',
     ];
 }
 
