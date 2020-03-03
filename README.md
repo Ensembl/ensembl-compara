@@ -65,14 +65,14 @@ Note that on some Ubuntu installations, you may have to do this as well:
 
 Now, we need to set up the Compara API:
 
-	cd ensembl-compara/xs/HALXS
+	cd ensembl-compara/src/perl/xs/HALXS
 	perl Makefile-progressiveCactus.PL path/to/cactus
 	make
 
 If you have the `PROGRESSIVE_CACTUS_DIR` environment variable defined, you
 can skip `path/to/cactus` on the Makefile command-line, e.g.:
 
-	cd ensembl-compara/xs/HALXS
+	cd ensembl-compara/src/perl/xs/HALXS
 	perl Makefile-progressiveCactus.PL
 	make
 
@@ -86,7 +86,7 @@ On the EBI main cluster, *do not* load
 If you have a Linuxbrew installation of Ensembl that includes HAL, do this
 instead:
 
-	cd ensembl-compara/xs/HALXS
+	cd ensembl-compara/src/perl/xs/HALXS
 	perl Makefile-Linuxbrew.PL path/to/linuxbrew_home
 	make
 
@@ -105,7 +105,7 @@ need to install these two libraries:
 You will have to patch `sonLib/include.mk` like in the progressiveCactus
 instructions above. Then run this makefile
 
-	cd ensembl-compara/xs/HALXS
+	cd ensembl-compara/src/perl/xs/HALXS
 	perl Makefile-hdf5@OS.PL path/to/sonLib path/to/hal
 	make
 
@@ -115,7 +115,7 @@ If you can't have hdf5 installed system-wide, install it manually from:
 
 And run this makefile
 
-	cd ensembl-compara/xs/HALXS
+	cd ensembl-compara/src/perl/xs/HALXS
 	perl Makefile.PL path/to/hdf5 path/to/sonLib path/to/hal
 	make
 
