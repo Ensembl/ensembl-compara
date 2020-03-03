@@ -583,7 +583,7 @@ sub to_VCF {
   my $vcf_rep = $vf->to_VCF_record();
   return unless $vcf_rep && @$vcf_rep;
   
-  return '<span style="font-family:Courier,monospace;white-space:nowrap;margin-left:5px;padding:2px 4px;background-color:#F6F6F6">'.join("&nbsp;&nbsp;", map {encode_entities($_)} @{$vcf_rep}[0..4]).'</span>';
+  return '<span style="font-family:Courier,monospace;word-break:break-all;margin-left:5px;padding:2px 4px;background-color:#F6F6F6">'.join("&nbsp;&nbsp;", map {encode_entities($_)} @{$vcf_rep}[0..4]).'</span>';
 }
 
 sub location {
