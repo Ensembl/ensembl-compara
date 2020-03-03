@@ -25,14 +25,11 @@ taking its location from a production_reg_conf file.
 
 =head1 SYNOPSIS
 
-  perl backup_master.pl $COMPARA_REG compara_curr -group compara
+  perl backup_master.pl --reg_conf $COMPARA_REG_PATH
 
-  perl backup_master.pl \
-    --reg_conf registry_configuration_file --reg_alias compara_curr
+  perl backup_master.pl $COMPARA_REG compara_master --label "pre100"
 
 =head1 ARGUMENTS
-
-The script reads these arguments and passes the other ones straight to run-configurable-testrunner.sh
 
 =head2 DATABASE SETUP
 
@@ -51,6 +48,7 @@ given, the one set in ENSEMBL_REGISTRY will be used if defined, if not
 =item B<[--reg_type reg_type]>
 
 The "type" or "group" under which the database is to be found in the Registry.
+Defaults to "compara".
 
 =item B<[--reg_alias|--reg_name name]>
 
