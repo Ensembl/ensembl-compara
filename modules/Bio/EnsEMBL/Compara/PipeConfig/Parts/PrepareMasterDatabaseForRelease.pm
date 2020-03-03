@@ -267,7 +267,9 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'src_db_conn' => $self->o('master_db'),
                 'output_file' => $self->o('master_backup_file'),
             },
-            -flow_into  => [ 'copy_annotations_to_shared_loc' ],
+            -flow_into  => WHEN(
+                '#do_update_from_metadata#' => 'copy_annotations_to_shared_loc'
+            ),
             -rc_name => '1Gb_job',
         },
 
