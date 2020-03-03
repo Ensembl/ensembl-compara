@@ -45,6 +45,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::ReconfigPipeline;
 use warnings;
 use strict;
 
+use JSON;
+
 use Bio::EnsEMBL::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -91,7 +93,7 @@ sub run {
     $self->_spurt($reg_conf, $content);
     # All cloned core databases are in the same server, so update that information
     # in the compara ensj-healthcheck configuration file
-    $content = encode_json({
+    $content = JSON->new->pretty->encode({
         'host1'          => $dst_host,
         'secondary.host' => $dst_host
     });
