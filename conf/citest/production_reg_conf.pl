@@ -29,18 +29,19 @@ my $prev_eg_release = $curr_eg_release - 1;
 
 # FORMAT: species/alias name => [ host, db_name ]
 my $core_dbs = {
-    'gallus_gallus'        => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_171914_gallus_gallus_core_99_6' ],
-    'anolis_carolinensis'  => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_171914_anolis_carolinensis_core_99_2' ],
-    'danio_rerio'          => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_171914_danio_rerio_core_99_11' ],
-    'pan_troglodytes'      => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172257_pan_troglodytes_core_99_3' ],
-    'homo_sapiens'         => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172232_homo_sapiens_core_99_38' ],
-    'mus_musculus'         => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_171914_mus_musculus_core_99_38' ],
-    'saccharum_spontaneum' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172404_saccharum_spontaneum_core_46_99_1' ],
-    'triticum_urartu'      => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172551_triticum_urartu_core_46_99_1' ],
-    'canis_familiaris'     => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172016_canis_familiaris_core_99_31' ],
-    'triticum_aestivum'    => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172533_triticum_aestivum_core_46_99_4' ],
-    'triticum_dicoccoides' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172249_triticum_dicoccoides_core_46_99_1' ],
-    'lepisosteus_oculatus' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191217_172445_lepisosteus_oculatus_core_99_1' ],
+    'gallus_gallus'        => [ 'mysql-ens-compara-prod-10', 'citest_gallus_gallus_core_99_6' ],
+    'ciona_intestinalis'   => [ 'mysql-ens-compara-prod-10', 'citest_ciona_intestinalis_core_99_3' ],
+    'anolis_carolinensis'  => [ 'mysql-ens-compara-prod-10', 'citest_anolis_carolinensis_core_99_2' ],
+    'danio_rerio'          => [ 'mysql-ens-compara-prod-10', 'citest_danio_rerio_core_99_11' ],
+    'homo_sapiens'         => [ 'mysql-ens-compara-prod-10', 'citest_homo_sapiens_core_99_38' ],
+    'pan_troglodytes'      => [ 'mysql-ens-compara-prod-10', 'citest_pan_troglodytes_core_99_3' ],
+    'mus_musculus'         => [ 'mysql-ens-compara-prod-10', 'citest_mus_musculus_core_99_38' ],
+    'saccharum_spontaneum' => [ 'mysql-ens-compara-prod-10', 'citest_saccharum_spontaneum_core_46_99_1' ],
+    'triticum_urartu'      => [ 'mysql-ens-compara-prod-10', 'citest_triticum_urartu_core_46_99_1' ],
+    'canis_familiaris'     => [ 'mysql-ens-compara-prod-10', 'citest_canis_familiaris_core_99_31' ],
+    'triticum_aestivum'    => [ 'mysql-ens-compara-prod-10', 'citest_triticum_aestivum_core_46_99_4' ],
+    'triticum_dicoccoides' => [ 'mysql-ens-compara-prod-10', 'citest_triticum_dicoccoides_core_46_99_1' ],
+    'lepisosteus_oculatus' => [ 'mysql-ens-compara-prod-10', 'citest_lepisosteus_oculatus_core_99_1' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $core_dbs );
@@ -50,36 +51,36 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $core_dbs );
 # FORMAT: species/alias name => [ host, db_name ]
 my $compara_dbs = {
     # General compara dbs
-    'compara_master' => [ 'mysql-ens-compara-prod-8', 'jalvarez_compara_master_citest' ],
-    # 'compara_curr'   => [ 'mysql-ens-compara-prod-', "compara_citest_$curr_release" ],
-    # 'compara_prev'   => [ 'mysql-ens-compara-prod-', "compara_citest_$prev_release" ],
+    'compara_master' => [ 'mysql-ens-compara-prod-10', 'ensembl_compara_master_citest' ],
+    # 'compara_curr'   => [ 'mysql-ens-compara-prod-10', "compara_citest_$curr_release" ],
+    # 'compara_prev'   => [ 'mysql-ens-compara-prod-10', "compara_citest_$prev_release" ],
 
     # Homology dbs
-    # 'compara_members'      => [ 'mysql-ens-compara-prod-', '' ],
-    # 'compara_ptrees'       => [ 'mysql-ens-compara-prod-', '' ],
-    # 'ptrees_prev'          => [ 'mysql-ens-compara-prod-', '' ],
-    # 'compara_families'     => [ 'mysql-ens-compara-prod-', '' ],
-    # 'compara_nctrees'      => [ 'mysql-ens-compara-prod-', '' ],
-    # 'nctrees_prev'         => [ 'mysql-ens-compara-prod-', '' ],
+    # 'compara_members'      => [ 'mysql-ens-compara-prod-10', '' ],
+    # 'compara_ptrees'       => [ 'mysql-ens-compara-prod-10', '' ],
+    # 'ptrees_prev'          => [ 'mysql-ens-compara-prod-10', '' ],
+    # 'compara_families'     => [ 'mysql-ens-compara-prod-10', '' ],
+    # 'compara_nctrees'      => [ 'mysql-ens-compara-prod-10', '' ],
+    # 'nctrees_prev'         => [ 'mysql-ens-compara-prod-10', '' ],
 
     # LastZ dbs
-    # 'lastz_batch_1'  => [ 'mysql-ens-compara-prod-', '' ],
+    # 'lastz_batch_1'  => [ 'mysql-ens-compara-prod-10', '' ],
 
     # EPO dbs
     ## Mammals with feathers
-    # 'mammals_with_feathers_epo'         => [ 'mysql-ens-compara-prod-', '' ],
-    # 'mammals_with_feathers_prev'        => [ 'mysql-ens-compara-prod-', '' ],
-    # 'mammals_with_feathers_epo_low'     => [ 'mysql-ens-compara-prod-', '' ],
-    # 'mammals_with_feathers_epo_anchors' => [ 'mysql-ens-compara-prod-', '' ],
+    # 'mammals_with_feathers_epo'         => [ 'mysql-ens-compara-prod-10', '' ],
+    # 'mammals_with_feathers_prev'        => [ 'mysql-ens-compara-prod-10', '' ],
+    # 'mammals_with_feathers_epo_low'     => [ 'mysql-ens-compara-prod-10', '' ],
+    # 'mammals_with_feathers_epo_anchors' => [ 'mysql-ens-compara-prod-10', '' ],
 
     # Other alignments
-    # 'amniotes_pecan'      => [ 'mysql-ens-compara-prod-', '' ],
-    # 'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-', '' ],
+    # 'amniotes_pecan'      => [ 'mysql-ens-compara-prod-10', '' ],
+    # 'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-10', '' ],
 
-    # 'compara_syntenies' => [ 'mysql-ens-compara-prod-', '' ],
+    # 'compara_syntenies' => [ 'mysql-ens-compara-prod-10', '' ],
 
     # Miscellaneous
-    # 'alt_allele_projection' => [ 'mysql-ens-compara-prod-', '' ],
+    # 'alt_allele_projection' => [ 'mysql-ens-compara-prod-10', '' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -90,7 +91,7 @@ my $ancestral_dbs = {
     'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
     'ancestral_prev' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
 
-    # 'mammals_with_feathers_ancestral' => [ 'mysql-ens-compara-prod-', '' ],
+    # 'mammals_with_feathers_ancestral' => [ 'mysql-ens-compara-prod-10', '' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
