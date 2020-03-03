@@ -8,6 +8,17 @@
 
 ----
 
+# Deprecated namespaces scheduled for deletion
+
+_All modules under these namespaces will be deleted_
+
+* `Bio::EnsEMBL::Compara::Filter` in Ensembl 101
+* `Bio::EnsEMBL::Compara::Production::Projection` in Ensembl 101
+
+_All files (e.g. scripts) under these directories will be deleted_
+
+* `scripts/projection` in Ensembl 101
+
 # Deprecated methods scheduled for deletion
 
 * `AlignedMember::get_cigar_breakout()` in Ensembl 102
