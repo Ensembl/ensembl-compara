@@ -108,8 +108,8 @@ if (@ARGV) {
     die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
 }
 
-unless ($url or ($reg_conf and $reg_alias)) {
-    print "\nNeither --url nor --reg_conf and --reg_alias are defined. Some of those are needed to refer to the database being tested\n\n";
+unless ($url or $reg_conf) {
+    print "\nNeither --url nor --reg_conf are defined. Some of those are needed to refer to the database being tested\n\n";
     exit 1;
 }
 
