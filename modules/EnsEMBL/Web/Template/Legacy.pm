@@ -20,7 +20,6 @@ limitations under the License.
 package EnsEMBL::Web::Template::Legacy;
 
 ### Legacy page template, used by standard HTML pages
-
 use parent qw(EnsEMBL::Web::Template);
 
 use HTML::Entities qw(encode_entities);
@@ -117,6 +116,11 @@ sub render_masthead {
   return qq(
   <div id="min_width_container">
     <div id="min_width_holder">
+    
+    <!-- Announcement Banner -->    
+        $elements->{'tmp_message'}->{'announcement_banner_message'}
+    <!-- /Announcement Banner -->
+
       <div id="masthead" class="js_panel$masthead_class">
         <input type="hidden" class="panel_type" value="Masthead" />
         <div class="logo_holder">$elements->{'logo'}</div>
@@ -233,7 +237,7 @@ sub render_page_end {
   <input type="hidden" id="ensembl_image_root" name="ensembl_image_root" value="$ensembl_image_root" />
   <input type="hidden" id="max_region_length" name="max_region_length" value="$max_region_length" />
     $elements->{'modal'}
-    $elements->{'tmp_message'}
+    $elements->{'tmp_message'}->{'popup_message'}
     $elements->{'body_javascript'}
   );
   
