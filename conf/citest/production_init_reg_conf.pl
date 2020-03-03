@@ -45,7 +45,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-mirror-
 # ----------------------- COMPARA MASTER DATABASE ------------------------------
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas({
-    'compara_master' => [ 'mysql-ens-compara-prod-8', 'jalvarez_compara_master_citest' ],
+    'compara_master' => [ 'mysql-ens-compara-prod-10', 'ensembl_compara_master_citest' ],
 });
 
 # ------------------------------------------------------------------------------
