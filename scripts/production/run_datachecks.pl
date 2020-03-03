@@ -57,7 +57,6 @@ The "type" or "group" under which the database is to be found in the Registry.
 =item B<[--reg_alias|--reg_name name]>
 
 The name or "species" under which the database is to be found in the Registry.
-Defaults to "compara_curr"
 
 =item B<[--prev_url mysql://user[:passwd]@host[:port]/dbname]>
 
@@ -108,8 +107,8 @@ GetOptions(
     'dc-runner=s'                   => \$dc_runner,
 );
 
-unless (($url and $prev_url) or $reg_conf) {
-    print "\nWithout the registry, both --url and --prev_url must be given\n\n";
+unless (($url and $prev_url) or ($reg_conf and $reg_alias)) {
+    print "\nThe script requires either URLs (--url, --prev_url) or a registry configuration (--reg_conf, --reg_alias, --prev_alias).\n\n";
     exit 1;
 }
 
@@ -122,9 +121,9 @@ die "'$dc_runner' is not a valid executable" unless -x $dc_runner;
 if ($reg_conf) {
     Bio::EnsEMBL::Registry->load_all($reg_conf);
 }
-my $dba = $url
-    ? Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -URL => $url )
-    : Bio::EnsEMBL::Registry->get_DBAdaptor( $reg_alias || 'compara_curr', $reg_type || 'compara' );
+my $dba = $reg_alias
+    ? Bio::EnsEMBL::Registry->get_DBAdaptor( $reg_alias, $reg_type || 'compara' )
+    : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -URL => $url );
 
 # Common parameters
 my @params = (
