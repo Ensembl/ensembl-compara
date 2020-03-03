@@ -65,6 +65,12 @@ Defaults to "compara_master".
 
 Where to store the dumps. Defaults to the shared warehouse directory.
 
+=item B<[--username username]>
+
+Name of the user used to create the dumps.
+Defaults to "compara_ensembl". Set this to an empty string to create the
+backup as yourself.
+
 =item B<[--label str]>
 
 Label to add to the file name
@@ -85,7 +91,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::Registry;
 
 my ($url, $reg_conf, $reg_type, $reg_alias);
-my ($dump_path, $label);
+my ($dump_path, $username, $label);
 
 # Arguments parsing
 GetOptions(
@@ -94,6 +100,7 @@ GetOptions(
     'reg_type=s'                    => \$reg_type,
     'reg_alias|regname|reg_name=s'  => \$reg_alias,
     'dump_path=s'                   => \$dump_path,
+    'username=s'                    => \$username,
     'label=s'                       => \$label,
 ) or die "Error in command line arguments\n";
 
@@ -121,11 +128,16 @@ my @params = (
     '--user'    => 'ensro',
 );
 
-$dump_path ||= '/nfs/production/panda/ensembl/warehouse/compara/master_db_dumps';
-
+$dump_path //= '/nfs/production/panda/ensembl/warehouse/compara/master_db_dumps';
+$username  //= 'compara_ensembl';
 my $date = strftime '%Y%m%d', localtime;
 my $dump_name = "ensembl_compara_master_${division}.${date}" . ($label ? ".$label" : ''). ".sql";
 
 my $cmd = join(' ', 'mysqldump', @params, $dba->dbc->dbname, '>', "$dump_path/$dump_name");
-print "Executing: $cmd\n\n";
-exec('sudo', -u => 'compara_ensembl', '/bin/bash', -c => $cmd);
+if ($username) {
+    print "Executing as $username: $cmd\n\n";
+    exec('sudo', -u => $username, '/bin/bash', -c => $cmd);
+} else {
+    print "Executing: $cmd\n\n";
+    exec('/bin/bash', -c => $cmd);
+}
