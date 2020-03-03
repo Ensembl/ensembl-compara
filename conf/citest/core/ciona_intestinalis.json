@@ -1,0 +1,15 @@
+{
+    "ciona_intestinalis" : {
+        "core" : {
+            "regions" : [
+                ["1",   13713,  988851],
+                ["1", 7005490, 7796227],
+                ["7", 5475124, 6125209]
+            ],
+            "adaptors" : [
+                {"name" : "gene"},
+                {"name" : "repeatfeature"}
+            ]
+        }
+    }
+}

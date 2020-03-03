@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <compara_db division="citest">
 
+    <collections>
+        <collection name="chordata">
+            <taxonomic_group taxon_name="Chordata"/>
+        </collection>
+    </collections>
+
     <pairwise_alignments>
         <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="saccharum_spontaneum" />
         <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="triticum_dicoccoides" />
@@ -37,16 +43,16 @@
     </self_alignments>
 
     <families>
-        <family collection="citest"/>
+        <family collection="chordata"/>
     </families>
 
     <gene_trees>
-        <protein_trees collection="citest"/>
-        <nc_trees collection="citest"/>
+        <protein_trees collection="chordata"/>
+        <nc_trees collection="chordata"/>
     </gene_trees>
 
     <species_trees>
-        <species_tree collection="citest"/>
+        <species_tree collection="chordata"/>
     </species_trees>
 
 </compara_db>
