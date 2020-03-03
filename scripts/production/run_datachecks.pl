@@ -20,7 +20,7 @@ run_datachecks.pl
 
 =head1 DESCRIPTION
 
-This script is a wrapper around ensembl-datacheck's eponym script which
+This script is a wrapper around ensembl-datacheck's eponym script that
 accepts our production_reg_conf-based configuration and automatically sets
 the connection details of the database being tested and the previous one.
 
@@ -65,7 +65,7 @@ URL of the previous database.
 =item B<[--prev_alias|--prev_reg_name name]>
 
 The name or "species" under which the previous database is to be found in the Registry.
-Defaults to "compara_prev"
+Defaults to "compara_prev".
 
 =back
 
