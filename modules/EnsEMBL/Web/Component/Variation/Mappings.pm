@@ -541,6 +541,7 @@ sub _sort_start_end {
     } else {
       $end   = $length if ($length && $length < $end);
       $start = $length if ($length && $length < $start);
+      $start = 1 if ($start < 0);
       return join("-", sort {$a <=> $b} ($start, $end));
     }
   } else {
