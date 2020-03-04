@@ -37,7 +37,7 @@ This RunnableDB module is part of the DumpMultiAlign pipeline.
 =head1 DESCRIPTION
 
 This RunnableDB module generates DumpMultiAlign jobs from genomic_align_blocks
-on the chromosomes which do not contain species. The jobs are split into 
+on the chromosomes which do not contain species. The jobs are split into
 $split_size chunks
 
 =cut
@@ -101,7 +101,7 @@ sub write_output {
     my $start_gab_id ;
     my $end_gab_id;
     my $chunk = 1;
-    
+
     #Create a table (other_gab) to store the genomic_align_block_ids
     my $sql_cmd = "INSERT IGNORE INTO other_gab (genomic_align_block_id) VALUES (?)";
     my $dump_sth = $self->data_dbc->prepare($sql_cmd);
@@ -123,7 +123,6 @@ sub write_output {
                     'extra_args'            =>  [],
                     'num_blocks'            =>  $gab_num,
                 };
-
                 #print "skip $output_id\n";
                 $self->dataflow_output_id($output_id, 2);
             }
@@ -135,9 +134,10 @@ sub write_output {
 
 	    my $this_num_blocks = $split_size;
 	    if ($gab_num == @$gab_ids) {
-		$this_num_blocks = (@$gab_ids % $split_size);
-	    }
-
+            #specific case when the total number of gab is a mutliple of $split_size
+            if($gab_num % $split_size == 0){$this_num_blocks=$split_size;}
+            else{$this_num_blocks = (@$gab_ids % $split_size);}
+        }
 	    #Write out cmd from DumpMultiAlign
 	    #Used to create a file of genomic_align_block_ids to pass to
 	    #DumpMultiAlign
@@ -149,8 +149,7 @@ sub write_output {
                              'extra_args'            =>  ['--chunk_num', $chunk],
                              'num_blocks'            =>  $this_num_blocks,
                             };
-
-	    #print "skip $output_id\n";
+	    #print "skip $output_id\n#";
 	    $self->dataflow_output_id($output_id, 2);
 	    undef($start_gab_id);
 	    $chunk++;
