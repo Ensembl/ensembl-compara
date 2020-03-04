@@ -100,7 +100,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
         'reg_conf'          => $self->o('reg_conf'),
-        'shared_user'       => $self->o('shared_user'),
         'compara_db'        => $self->o('master_db'),
         'genome_dumps_dir'  => $self->o('genome_dumps_dir'),
     };
@@ -161,7 +160,7 @@ sub pipeline_analyses {
                 'output_file'   => '#genome_dump_file#.fai',
                 'command'       => '#samtools_exe# faidx #input_file#',
                 # Rerun the command if the output file is missing or if the input file has been recently modified
-                'cmd'           => '(test -e #output_file# && test #input_file# -ot #output_file#) || become #shared_user# #command#',
+                'cmd'           => '(test -e #output_file# && test #input_file# -ot #output_file#) || #command#',
             },
         },
 
@@ -175,7 +174,7 @@ sub pipeline_analyses {
                 'command'       => '#fasta2esd_exe# #input_file# #tmp_file#',
                 # 1. Rerun the command if the output file is missing or if the input file has been recently modified
                 # 2. Run the command in a pseudo-transaction manner, i.e.  the output file is only modified if the command succeeds
-                'cmd'           => '(test -e #output_file# && test #input_file# -ot #output_file#) || (become #shared_user# rm --force #tmp_file# && become #shared_user# #command# && become #shared_user# mv --force #tmp_file# #output_file#)',
+                'cmd'           => '(test -e #output_file# && test #input_file# -ot #output_file#) || (rm --force #tmp_file# && #command# && mv --force #tmp_file# #output_file#)',
             },
             -flow_into  => [ 'build_exonerate_esi_index' ],
             -rc_name    => '2Gb_job',
@@ -191,7 +190,7 @@ sub pipeline_analyses {
                 'command'       => '#esd2esi_exe# #input_file# #tmp_file#',
                 # 1. Rerun the command if the output file is missing or if the input file has been recently modified
                 # 2. Run the command in a pseudo-transaction manner, i.e.  the output file is only modified if the command succeeds
-                'cmd'           => '(test -e #output_file# && test #input_file# -ot #output_file#) || (become #shared_user# rm --force #tmp_file# && become #shared_user# #command# && become #shared_user# mv --force #tmp_file# #output_file#)',
+                'cmd'           => '(test -e #output_file# && test #input_file# -ot #output_file#) || (rm --force #tmp_file# && #command# && mv --force #tmp_file# #output_file#)',
             },
             -rc_name    => '2Gb_job',
         },
