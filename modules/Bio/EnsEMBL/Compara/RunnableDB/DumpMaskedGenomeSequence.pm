@@ -129,7 +129,6 @@ sub run {
     my $self = shift;
 
     # Get the filenames
-    my $shared_user      = $self->param_required('shared_user');
     my $genome_db        = $self->param('genome_db');
     my $tmp_dump_file    = $self->param('genome_dump_file');
     my $soft_masked_file = $self->param('soft_masked_file');
@@ -139,16 +138,16 @@ sub run {
     die "$tmp_dump_file is empty" unless $ref_size;
 
     # Assuming all three files are in the same directory
-    my $cmd = ['become', $shared_user, 'mkdir', '-p', dirname($soft_masked_file)];
+    my $cmd = ['mkdir', '-p', dirname($soft_masked_file)];
     $self->run_command($cmd, { die_on_failure => 1 });
 
-    # Copy the file
-    $cmd = ['become', $shared_user, 'cp', '--force', '--preserve=timestamps', $tmp_dump_file, $soft_masked_file];
+    # Copy the file (making sure the file permissions are correct regarless of the user's umask)
+    $cmd = ['install', '--preserve-timestamps', '--mode=664', $tmp_dump_file, $soft_masked_file];
     $self->run_command($cmd, { die_on_failure => 1 });
     die "$soft_masked_file size mismatch" if $ref_size != -s $soft_masked_file;
 
     # Convert to hard-masked
-    $cmd = qq{become $shared_user bash -c "tr a-z N < '$tmp_dump_file' > '$hard_masked_file'"};
+    $cmd = qq{bash -c "tr a-z N < '$tmp_dump_file' > '$hard_masked_file'"};
     $self->run_command($cmd, { die_on_failure => 1 });
     die "$hard_masked_file size mismatch" if $ref_size != -s $hard_masked_file;
 

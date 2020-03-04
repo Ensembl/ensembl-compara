@@ -127,7 +127,6 @@ sub run {
     my $self = shift;
 
     # Get the filenames
-    my $shared_user      = $self->param_required('shared_user');
     my $genome_db        = $self->param('genome_db');
     my $tmp_dump_file    = $self->param('genome_dump_file');
     my $unmasked_file    = $self->param('unmasked_file');
@@ -136,11 +135,11 @@ sub run {
     die "$tmp_dump_file is empty" unless $ref_size;
 
     # Make the directory
-    my $cmd = ['become', $shared_user, 'mkdir', '-p', dirname($unmasked_file)];
+    my $cmd = ['mkdir', '-p', dirname($unmasked_file)];
     $self->run_command($cmd, { die_on_failure => 1 });
 
-    # Copy the file
-    $cmd = ['become', $shared_user, 'cp', '--force', '--preserve=timestamps', $tmp_dump_file, $unmasked_file];
+    # Copy the file (making sure the file permissions are correct regarless of the user's umask)
+    $cmd = ['install', '--preserve-timestamps', '--mode=664', $tmp_dump_file, $unmasked_file];
     $self->run_command($cmd, { die_on_failure => 1 });
     die "$unmasked_file size mismatch" if $ref_size != -s $unmasked_file;
 
