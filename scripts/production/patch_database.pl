@@ -97,6 +97,11 @@ unless ($url or ($reg_conf and $reg_alias)) {
     exit 1;
 }
 
+if ($url and $reg_alias) {
+    print "\nERROR: Both --url and --reg_alias are defined. Don't know which one to use\n\n";
+    exit 1;
+}
+
 if ($reg_conf) {
     Bio::EnsEMBL::Registry->load_all($reg_conf);
 }

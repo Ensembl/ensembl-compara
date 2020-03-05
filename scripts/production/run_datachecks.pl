@@ -112,6 +112,16 @@ unless (($url and $prev_url) or ($reg_conf and $reg_alias)) {
     exit 1;
 }
 
+if ($url and $reg_alias) {
+    print "\nERROR: Both --url and --reg_alias are defined. Don't know which one to use\n\n";
+    exit 1;
+}
+
+if ($prev_url and $prev_alias) {
+    print "\nERROR: Both --prev_url and --prev_alias are defined. Don't know which one to use\n\n";
+    exit 1;
+}
+
 unless ($dc_runner) {
     die "Need to give the --dc-runner option or set the ENSEMBL_CVS_ROOT_DIR environment variable to use the default" unless $ENV{ENSEMBL_CVS_ROOT_DIR};
     $dc_runner = $ENV{ENSEMBL_CVS_ROOT_DIR} . '/ensembl-datacheck/scripts/run_datachecks.pl';
@@ -140,7 +150,6 @@ if ($reg_conf) {
 }
 
 if ($prev_url) {
-    die "Both --prev_url and --prev_alias were given. Please choose !" if $prev_alias;
     push @params, (
         '--old_server_uri' => $prev_url,
     );
