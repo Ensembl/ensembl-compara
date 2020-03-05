@@ -127,15 +127,15 @@ my $dba = $reg_alias
 
 # Common parameters
 my @params = (
-    '--host'    => $dba->dbc->host,
-    '--port'    => $dba->dbc->port,
-    '--user'    => 'ensro',             # Fallback to ensro to ensure we don't write to it by accident
-    '--dbname'  => $dba->dbc->dbname,
+    '--host'   => $dba->dbc->host,
+    '--port'   => $dba->dbc->port,
+    '--user'   => 'ensro',             # Fallback to ensro to ensure we don't write to it by accident
+    '--dbname' => $dba->dbc->dbname,
 );
 
 if ($reg_conf) {
     push @params, (
-        '--registry_file'   => $reg_conf,
+        '--registry_file' => $reg_conf,
     );
 }
 

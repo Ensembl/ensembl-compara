@@ -116,11 +116,11 @@ if ($dba->dbc->user eq 'ensro') {
 }
 
 my @params = (
-    '--host'    => $dba->dbc->host,
-    '--port'    => $dba->dbc->port,
-    '--user'    => Bio::EnsEMBL::Compara::Utils::Registry::get_rw_user($dba->dbc->host),
-    '--pass'    => Bio::EnsEMBL::Compara::Utils::Registry::get_rw_pass($dba->dbc->host),
-    '--database'    => $dba->dbc->dbname,
+    '--host'     => $dba->dbc->host,
+    '--port'     => $dba->dbc->port,
+    '--user'     => Bio::EnsEMBL::Compara::Utils::Registry::get_rw_user($dba->dbc->host),
+    '--pass'     => Bio::EnsEMBL::Compara::Utils::Registry::get_rw_pass($dba->dbc->host),
+    '--database' => $dba->dbc->dbname,
 );
 
 print "Executing: ", join(" ", $schema_patcher, @params), "\n\n";
