@@ -93,7 +93,7 @@ if (@ARGV) {
 }
 
 unless ($url or ($reg_conf and $reg_alias)) {
-    print "\nNeither --url nor --reg_conf and --reg_alias are defined. Some of those are needed to refer to the database being patched\n\n";
+    print "\nERROR: Neither --url nor --reg_conf and --reg_alias are defined. Some of those are needed to refer to the database being patched\n\n";
     exit 1;
 }
 
@@ -108,7 +108,7 @@ unless ($schema_patcher) {
     die "Need to give the --schema_patcher option or set the ENSEMBL_CVS_ROOT_DIR environment variable to use the default" unless $ENV{ENSEMBL_CVS_ROOT_DIR};
     $schema_patcher = $ENV{ENSEMBL_CVS_ROOT_DIR} . '/ensembl/misc-scripts/schema_patcher.pl';
 }
-die "'$schema_patcher' is not a valid executable" unless -x $schema_patcher;
+die "ERROR: '$schema_patcher' is not a valid executable" unless -x $schema_patcher;
 
 
 if ($dba->dbc->user eq 'ensro') {

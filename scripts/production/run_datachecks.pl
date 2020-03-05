@@ -108,7 +108,7 @@ GetOptions(
 );
 
 unless (($url and $prev_url) or ($reg_conf and $reg_alias)) {
-    print "\nThe script requires either URLs (--url, --prev_url) or a registry configuration (--reg_conf, --reg_alias, --prev_alias).\n\n";
+    print "\nERROR: The script requires either URLs (--url, --prev_url) or a registry configuration (--reg_conf, --reg_alias, --prev_alias).\n\n";
     exit 1;
 }
 
@@ -116,7 +116,7 @@ unless ($dc_runner) {
     die "Need to give the --dc-runner option or set the ENSEMBL_CVS_ROOT_DIR environment variable to use the default" unless $ENV{ENSEMBL_CVS_ROOT_DIR};
     $dc_runner = $ENV{ENSEMBL_CVS_ROOT_DIR} . '/ensembl-datacheck/scripts/run_datachecks.pl';
 }
-die "'$dc_runner' is not a valid executable" unless -x $dc_runner;
+die "ERROR: '$dc_runner' is not a valid executable" unless -x $dc_runner;
 
 if ($reg_conf) {
     Bio::EnsEMBL::Registry->load_all($reg_conf);
@@ -147,7 +147,7 @@ if ($prev_url) {
 } else {
     $prev_alias ||= 'compara_prev';
     my $prev_dba = Bio::EnsEMBL::Registry->get_DBAdaptor( $prev_alias, $reg_type || 'compara' );
-    die "Cannot find the alias '$prev_alias' in the Registry" unless $prev_dba;
+    die "ERROR: Cannot find the alias '$prev_alias' in the Registry" unless $prev_dba;
     push @params, (
         '--old_server_uri' => $prev_dba->url,
     );

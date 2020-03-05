@@ -108,7 +108,7 @@ if (@ARGV) {
 }
 
 unless ($url or $reg_conf) {
-    print "\nNeither --url nor --reg_conf are defined. Some of those are needed to refer to the database being dumped\n\n";
+    print "\nERROR: Neither --url nor --reg_conf are defined. Some of those are needed to refer to the database being dumped\n\n";
     exit 1;
 }
 
