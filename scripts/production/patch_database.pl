@@ -46,6 +46,7 @@ given, the one set in ENSEMBL_REGISTRY will be used if defined, if not
 =item B<[--reg_type reg_type]>
 
 The "type" or "group" under which the database is to be found in the Registry.
+Defaults to "compara".
 
 =item B<[--reg_alias|--reg_name name]>
 
