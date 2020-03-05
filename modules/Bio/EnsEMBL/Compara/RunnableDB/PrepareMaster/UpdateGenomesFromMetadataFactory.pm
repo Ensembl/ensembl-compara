@@ -138,9 +138,7 @@ sub fetch_input {
         print "fetching and checking $species_name\n";
 		my $gdb = $genome_db_adaptor->fetch_by_name_assembly($species_name);
         $gdb->db_adaptor($core_dba) if defined $core_dba;
-        my $slices_to_ignore;
-        $slices_to_ignore = 'LRG' if $species_name eq 'homo_sapiens';
-		my $dnafrags_match = Bio::EnsEMBL::Compara::Utils::MasterDatabase->dnafrags_match_core_slices($master_dba, $gdb, $slices_to_ignore);
+        my $dnafrags_match = Bio::EnsEMBL::Compara::Utils::MasterDatabase->dnafrags_match_core_slices($master_dba, $gdb);
 		die "DnaFrags do not match core for $species_name" unless $dnafrags_match;
 	}
 
