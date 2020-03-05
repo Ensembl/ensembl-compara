@@ -26,11 +26,11 @@ the connection details of the database being tested and the previous one.
 
 =head1 SYNOPSIS
 
-  perl run_datachecks.pl $COMPARA_REG compara_curr -group compara
+    perl run_datachecks.pl $COMPARA_REG compara_curr --group compara
 
-  perl run_datachecks.pl \
-    --reg_conf registry_configuration_file --reg_alias compara_curr \
-    -name CompareMSANames
+    perl run_datachecks.pl \
+        --reg_conf registry_configuration_file --reg_alias compara_curr \
+        --name CompareMSANames
 
 =head1 ARGUMENTS
 

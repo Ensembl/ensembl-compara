@@ -25,9 +25,9 @@ taking its location from a production_reg_conf file.
 
 =head1 SYNOPSIS
 
-  perl backup_master.pl --reg_conf $COMPARA_REG_PATH
+    perl backup_master.pl --reg_conf $COMPARA_REG_PATH
 
-  perl backup_master.pl $COMPARA_REG compara_master --label "pre100"
+    perl backup_master.pl $COMPARA_REG compara_master --label "pre100"
 
 =head1 ARGUMENTS
 
