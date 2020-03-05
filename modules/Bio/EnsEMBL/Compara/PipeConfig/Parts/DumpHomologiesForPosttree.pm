@@ -42,9 +42,13 @@ sub pipeline_analyses_dump_homologies_posttree {
     my ($self) = @_;
     return [
         {   -logic_name => 'homology_dumps_mlss_id_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
             -parameters => {
-                'inputquery' => 'SELECT method_link_species_set_id AS mlss_id, COUNT(*) as exp_line_count FROM homology GROUP BY method_link_species_set_id',
+                'methods'    => {
+                    'ENSEMBL_PARALOGUES'    => 2,
+                    'ENSEMBL_ORTHOLOGUES'   => 2,
+                },
+                'line_count' => 1,
             },
             -flow_into => {
                 2 => [ 'dump_per_mlss_homologies_tsv' ],

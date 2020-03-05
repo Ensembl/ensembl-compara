@@ -71,10 +71,36 @@ sub write_output {
     foreach my $method (keys %$methods) {
         my $branch_number = $methods->{$method};
         my $mlsss = $mlss_a->fetch_all_by_method_link_type($method);
-        foreach my $mlss (@$mlsss) {
-            $self->dataflow_output_id( { 'mlss_id' => $mlss->dbID }, $branch_number);
+
+        if ( $self->param('line_count') ) {
+            foreach my $mlss ( @$mlsss ) {
+                my $line_count = $self->_get_line_count($mlss);
+                $self->dataflow_output_id( { 'mlss_id' => $mlss->dbID, 'exp_line_count' => $line_count }, $branch_number);
+            }
+        }
+        else {
+            foreach my $mlss ( @$mlsss ) {
+                $self->dataflow_output_id( { 'mlss_id' => $mlss->dbID }, $branch_number);
+            }
         }
     }
 }
 
+sub _get_line_count {
+    my ($self, $mlss) = @_;
+    my $adaptor;
+
+    if ($mlss->method->class =~ /homology/i) {
+        $adaptor = $self->compara_dba->get_HomologyAdaptor;
+    }
+    elsif ($mlss->method->class =~ /synteny/i) {
+        $adaptor = $self->compara_dba->get_SyntenyRegionAdaptor;
+    }
+    else {
+        return;
+    }
+
+    my $allitems = $adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
+    return scalar(@$allitems);
+}
 1;

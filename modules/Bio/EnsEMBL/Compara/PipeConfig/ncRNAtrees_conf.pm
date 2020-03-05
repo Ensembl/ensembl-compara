@@ -1204,21 +1204,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'rib_fire_homology_dumps',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A' => 'mlss_id_factory_for_homology_dumps',
+                '1->A' => 'homology_dumps_mlss_id_factory',
                 'A->1' => 'rib_fire_homology_processing',
-            },
-        },
-
-        {   -logic_name => 'mlss_id_factory_for_homology_dumps',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
-            -parameters => {
-                'methods'   => {
-                    'ENSEMBL_ORTHOLOGUES'   => 2,
-                    'ENSEMBL_PARALOGUES'    => 2,
-                },
-            },
-            -flow_into => {
-                2 => [ 'dump_per_mlss_homologies_tsv' ],
             },
         },
 
@@ -1241,10 +1228,6 @@ sub core_pipeline_analyses {
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_hom_stats($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree::pipeline_analyses_dump_homologies_posttree($self) },
     ];
-}
-
-sub analyses_to_remove {
-    return ['homology_dumps_mlss_id_factory'];
 }
 
 1;
