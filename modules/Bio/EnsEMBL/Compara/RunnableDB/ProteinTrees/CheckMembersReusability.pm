@@ -89,6 +89,11 @@ sub hash_all_exons_from_dba {
          WHERE cs.species_id =?
     };
 
+    # Filter out unwanted regions
+    unless ($self->param('include_lrg')) {
+        $sql .= ' AND cs.name != "lrg"';
+    }
+
     return $self->hash_rows_from_dba($dba, $sql, $dba->species_id());
 }
 

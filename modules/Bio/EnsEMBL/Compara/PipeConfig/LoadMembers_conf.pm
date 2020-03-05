@@ -252,6 +252,7 @@ sub pipeline_analyses {
                 # 'registry_dbs'      => $self->o('prev_core_sources_locs'),
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
                 'reuse_db'          => '#reuse_member_db#',
+                'include_lrg'       => $self->o('include_lrg'),
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '2Gb_job',
