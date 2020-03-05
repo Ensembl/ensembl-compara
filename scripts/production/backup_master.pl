@@ -37,7 +37,7 @@ taking its location from a production_reg_conf file.
 
 =item B<[--url mysql://user[:passwd]@host[:port]/dbname]>
 
-URL of the database to test.
+URL of the database to dump.
 
 =item B<[--reg_conf registry_configuration_file]>
 
@@ -73,7 +73,7 @@ backup as yourself.
 
 =item B<[--label str]>
 
-Label to add to the file name
+Label to append to the dump file name.
 
 =back
 
@@ -109,7 +109,7 @@ if (@ARGV) {
 }
 
 unless ($url or $reg_conf) {
-    print "\nNeither --url nor --reg_conf are defined. Some of those are needed to refer to the database being tested\n\n";
+    print "\nNeither --url nor --reg_conf are defined. Some of those are needed to refer to the database being dumped\n\n";
     exit 1;
 }
 

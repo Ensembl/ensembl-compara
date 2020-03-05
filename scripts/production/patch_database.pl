@@ -35,7 +35,7 @@ taking connection details from a production_reg_conf file.
 
 =item B<[--url mysql://user[:passwd]@host[:port]/dbname]>
 
-URL of the database to test.
+URL of the database to patch.
 
 =item B<[--reg_conf registry_configuration_file]>
 
@@ -93,7 +93,7 @@ if (@ARGV) {
 }
 
 unless ($url or ($reg_conf and $reg_alias)) {
-    print "\nNeither --url nor --reg_conf and --reg_alias are defined. Some of those are needed to refer to the database being tested\n\n";
+    print "\nNeither --url nor --reg_conf and --reg_alias are defined. Some of those are needed to refer to the database being patched\n\n";
     exit 1;
 }
 
