@@ -93,9 +93,9 @@ my $blocked_ticket_key = find_handover_ticket($jira_adaptor);
 my $dc_task_json_ticket = [{
     assignee    => $jira_adaptor->{_user},
     summary     => "$dc_basename ($timestamp)",
-    description => "Datacheck failures raised on $timestamp\nFrom file: $dc_abs_path",
+    description => "Datacheck failures raised on $timestamp\nFrom file: {{$dc_abs_path}}",
 }];
-# Create subtask tickets for each datacheck failure
+# Create subtask tickets for each datacheck subtest failure
 my @json_subtasks;
 foreach my $testcase ( keys %$testcase_failures ) {
     my $failure_subtask_json = {
@@ -124,6 +124,7 @@ sub parse_datachecks {
     my ($dc_file, $timestamp) = @_;
     open(my $dc_fh, '<', $dc_file) or die "Cannot open $dc_file for reading";
     my ($test, $testcase, $dc_failures);
+    my $capture_failure = 0;
     while (my $line = <$dc_fh>) {
         # Remove any spaces/tabs at the end of the line
         $line =~ s/\s+$//;
@@ -132,21 +133,26 @@ sub parse_datachecks {
             $test = $1;
             next;
         }
-        # Get the test case number and summary that has failed
-        if ($line =~ /^[ ]{8}not ok (\d+) - (.+)$/) {
-            $testcase = "${test} subtest $1 ($timestamp)";
-            $dc_failures->{$testcase} = "{code:title=$2}\n";
-            next;
-        }
+
         # Save all the information provided about the failure
-        if ($line =~ /^[ ]{8}#   (.+)$/) {
-            $dc_failures->{$testcase} .= "$1\n";
+        if ( $line =~ /^[ ]{8}(not ok .+)$/ ) {
+            $capture_failure = 1;
+            $dc_failures->{$test} .= "$1\n";
+        } elsif ( $line =~ /^[ ]{8}(#.+)$/) {
+            $dc_failures->{$test} .= "$1\n" if $capture_failure;
+        } else {
+            $capture_failure = 0;
         }
     }
     close($dc_fh);
-    # Close all code blocks created
-    foreach my $testcase ( keys %$dc_failures ) {
-        $dc_failures->{$testcase} .= "{code}\n";
+
+    # Wrap failure details in code blocks
+    foreach my $subtest ( keys %$dc_failures ) {
+        $dc_failures->{$subtest} = sprintf("%s\n%s\n%s\n", (
+            "{code:title=Subtest $subtest}",
+            $dc_failures->{$subtest},
+            "{code}"
+        ));
     }
     return $dc_failures;
 }
