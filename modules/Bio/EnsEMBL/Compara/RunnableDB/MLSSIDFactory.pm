@@ -97,10 +97,9 @@ sub _get_line_count {
         $adaptor = $self->compara_dba->get_SyntenyRegionAdaptor;
     }
     else {
-        return;
+        die "_get_line_count does not support method: " . $mlss->method->type;
     }
-
-    my $allitems = $adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
-    return scalar(@$allitems);
+    my $line_count = $adaptor->count_by_mlss_id($mlss->dbID);
+    return $line_count;
 }
 1;
