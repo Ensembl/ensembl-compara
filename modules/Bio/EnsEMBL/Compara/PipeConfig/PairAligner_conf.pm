@@ -120,8 +120,9 @@ sub default_options {
                 },
                 # non human example
                 'default' => {
-                    'chunk_size' => 10000000,
-                    'overlap'    => 0,
+                    'chunk_size'     => 10000000,
+                    'group_set_size' => 10100000,
+                    'overlap'        => 0,
                 }
             },
             'non_reference' => {
@@ -131,7 +132,7 @@ sub default_options {
             },
             'masking' => 'soft',
         },
-	    
+
 	#Default filter_duplicates
         #'window_size' => 1000000,
         'window_size' => 10000,
