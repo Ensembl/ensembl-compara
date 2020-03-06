@@ -456,7 +456,8 @@ sub howsitgoing {
   $r->print("\n");
 
   my $uptime = time - $start_time;
-  $r->print("uptime: $uptime\n");
+  my $host = hostname;
+  $r->print("uptime: $uptime\n$host\n");
 }
 
 sub handler {
