@@ -87,7 +87,7 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
         # In case it doesn't exist yet
-        'become ' . $self->o('shared_user') . ' mkdir -p '.$self->o('genome_dumps_dir'),
+        ($self->o('shared_user') ? 'become ' . $self->o('shared_user') : '') . ' mkdir -p ' . $self->o('genome_dumps_dir'),
         # The files are going to be accessed by many processes in parallel
         $self->pipeline_create_commands_lfs_setstripe('genome_dumps_dir', $self->o('shared_user')),
     ];
