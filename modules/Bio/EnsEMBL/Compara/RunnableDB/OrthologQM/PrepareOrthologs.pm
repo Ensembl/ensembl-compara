@@ -154,7 +154,7 @@ sub write_output {
         $self->dataflow_output_id( {orth_mlss_id => $self->param('orth_mlss_id')}, 3 ); # to reuse_wga_score
     }
 
-    $self->dataflow_output_id( { orth_info => $self->param('orth_info') }, 2 ); # to calculate_coverage
+    $self->dataflow_output_id( { orth_info => $self->param('orth_info'), aln_mlss_ids => $self->param('aln_mlss_ids') }, 2 ); # to calculate_coverage
 }
 
 =head2 _nonreusable_homologies

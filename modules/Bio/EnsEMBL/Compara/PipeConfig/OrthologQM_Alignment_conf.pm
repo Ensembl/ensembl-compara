@@ -321,6 +321,7 @@ sub pipeline_analyses {
                 'hashed_mlss_id' => '#expr(dir_revhash(#orth_mlss_id#))expr#',
                 'output_file'    => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
                 'reuse_file'     => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga_reuse.tsv',
+                'alignment_db'   => $self->pipeline_url,
             },
             -hive_capacity     => 400,
         },

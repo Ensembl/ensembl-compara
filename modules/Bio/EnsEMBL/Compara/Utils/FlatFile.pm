@@ -38,6 +38,8 @@ our @EXPORT_OK;
 
 @EXPORT_OK = qw(
     map_row_to_header
+    parse_flatfile_into_hash
+    match_range_filter
 );
 %EXPORT_TAGS = (
   all     => [@EXPORT_OK]
@@ -71,6 +73,52 @@ sub map_row_to_header {
         $row->{$head_cols[$i]} = $cols[$i];
     }
     return $row;
+}
+
+=head2 parse_flatfile_into_hash
+
+    A two column file is parsed into $column_1->$column_2
+
+=cut
+
+sub parse_flatfile_into_hash {
+    my ($self, $filename, $filter) = @_;
+
+    my %flatfile_hash;
+    open(my $fh, '<', $filename) or die "Cannot open $filename for reading";
+    my $header = <$fh>;
+    while ( my $line = <$fh> ) {
+        chomp $line;
+        my ( $id, $val ) = split(/\s+/, $line);
+        next if $val eq '';
+        next if $filter && ! $self->match_range_filter($id, $filter);
+        $flatfile_hash{$id} = $val;
+    }
+    close $fh;
+
+    return \%flatfile_hash;
+}
+
+=head2 match_range_filter
+
+    Range filter to collect appropriate ncrna or protein ids
+
+=cut
+
+sub match_range_filter {
+    my ($self, $id, $filter) = @_;
+
+    my $match = 0;
+    foreach my $range ( @$filter ) {
+        die "Bad range declaration: at least one value expected, 0 found." unless defined $range->[0];
+        if ( defined $range->[1] ) {
+            $match = 1 if $id >= $range->[0] && $id <= $range->[1];
+        } else {
+            $match = 1 if $id >= $range->[0];
+        }
+    }
+
+    return $match;
 }
 
 1;

@@ -44,6 +44,8 @@ use strict;
 use warnings;
 use Data::Dumper;
 use File::Basename;
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
+use Bio::EnsEMBL::Compara::Utils::DistributionTag qw(write_n_tag);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -61,7 +63,7 @@ sub fetch_input {
 		$max_quality{$oid} = $sth->fetchrow_arrayref->[0] or $self->warning("Cannot find quality scores in db for homology id $oid");
         $max_quality{$oid} = 0 unless $max_quality{$oid}; # default to 0 like GOC
     }
-	
+
 	$self->param('max_quality', \%max_quality);
 }
 
@@ -78,6 +80,11 @@ sub write_output {
     $self->compara_dba->dbc->disconnect_if_idle();
     $self->dbc->disconnect_if_idle() if $self->dbc;
     $self->data_dbc->disconnect_if_idle();
+
+    my $member_type = $self->param_required('member_type');
+    my $dba  = $self->get_cached_compara_dba('alignment_db');
+    my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor();
+    my @aln_mlss_ids  = @{ $self->param_required( 'aln_mlss_ids' ) };
 
     my $output_file = $self->param('output_file');
     my $reuse_file = $self->param('reuse_file');
@@ -98,6 +105,13 @@ sub write_output {
     close $out_fh;
 
     $self->warning("Scores written to $output_file!");
+
+    foreach my $mlss_id ( @aln_mlss_ids ) {
+        my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
+        print "Writing n_${member_type}_wga_score to the database\n" if $self->debug;
+        $self->write_n_tag($mlss, "${member_type}_wga", \%max_quality);
+        print "Tag: n_${member_type}_wga_score written!\n\n" if $self->debug;
+    }
 }
 
 1;
