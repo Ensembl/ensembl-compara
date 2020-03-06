@@ -340,7 +340,6 @@ sub pipeline_analyses {
         {   -logic_name => 'add_hmm_lib',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::AddHMMLib',
             -parameters => {
-                'shared_user'   => $self->o('shared_user'),
                 'ref_tar_path_templ' => '#warehouse_dir#/hmms/treefam/multi_division_hmm_lib.%s.tar.gz',
                 'tar_ftp_path'       => '#dump_dir#/compara/multi_division_hmm_lib.tar.gz',
             },

@@ -71,7 +71,7 @@ sub run {
     # Otherwise regenerate it
     unless ($is_tar_file_ok) {
         # Tar from the parent directory
-        my $cmd = ['become', $self->param_required('shared_user'), 'tar', 'czf', $ref_tar_path, '-C', dirname($hmm_library_basedir), $library_name];
+        my $cmd = ['tar', 'czf', $ref_tar_path, '-C', dirname($hmm_library_basedir), $library_name];
         $self->run_command($cmd, { die_on_failure => 1, });
     }
 

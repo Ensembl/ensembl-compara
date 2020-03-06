@@ -1215,8 +1215,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'copy_dumps_to_shared_loc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'         => 'become #shared_user# /bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtp #homology_dumps_dir#/ #homology_dumps_shared_dir#"',
-                'shared_user' => $self->o('shared_user'),
+                'cmd'         => '/bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtp #homology_dumps_dir#/ #homology_dumps_shared_dir#"',
             },
         },
 

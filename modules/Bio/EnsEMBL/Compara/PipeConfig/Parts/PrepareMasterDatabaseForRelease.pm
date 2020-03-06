@@ -271,10 +271,9 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'copy_annotations_to_shared_loc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'shared_user'     => $self->o('shared_user'),
                 'annotation_file' => $self->o('annotation_file'),
                 'shared_hps_dir'  => $self->o('shared_hps_dir'),
-                'cmd'             => 'become #shared_user# cp -u #annotation_file# #shared_hps_dir#/ensembl-metadata/',
+                'cmd'             => 'install -C --mode=664 #annotation_file# #shared_hps_dir#/ensembl-metadata/',
             },
         },
     ];
