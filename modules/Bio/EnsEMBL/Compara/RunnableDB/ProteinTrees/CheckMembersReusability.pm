@@ -94,6 +94,18 @@ sub hash_all_exons_from_dba {
         $sql .= ' AND cs.name != "lrg"';
     }
 
+    # Filter out unwanted biotypes
+    unless ($self->param('store_coding')) {
+        $sql .= ' AND b.biotype_group NOT IN ("coding", "lrg")';
+    }
+    unless ($self->param('store_ncrna')) {
+        $sql .= ' AND b.biotype_group NOT LIKE "%noncoding"';
+    }
+    unless ($self->param('store_others')) {
+        # Others = neither coding nor noncoding, so "no others" = only coding or noncoding
+        $sql .= ' AND (b.biotype_group IN ("coding", "lrg") OR b.biotype_group LIKE "%noncoding")';
+    }
+
     return $self->hash_rows_from_dba($dba, $sql, $dba->species_id());
 }
 
