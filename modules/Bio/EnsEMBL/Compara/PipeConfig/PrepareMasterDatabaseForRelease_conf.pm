@@ -89,7 +89,6 @@ sub default_options {
         #'additional_species'     => {'vertebrates' => ['homo_sapiens', 'drosophila_melanogaster'],},
 
         'do_update_from_metadata' => 1,
-        'do_load_lrg_dnafrags'    => 0,
         'do_load_timetree'        => 0,
 
         'meta_host' => 'mysql-ens-meta-prod-1',
@@ -117,7 +116,6 @@ sub pipeline_wide_parameters {
         'hc_version' => 1,
         # Define the flags so they can be seen by Parts::PrepareMasterDatabaseForRelease
         'do_update_from_metadata' => $self->o('do_update_from_metadata'),
-        'do_load_lrg_dnafrags'    => $self->o('do_load_lrg_dnafrags'),
         'do_load_timetree'        => $self->o('do_load_timetree'),
     };
 }

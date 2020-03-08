@@ -377,26 +377,6 @@ sub _update_component_genome_dbs {
     return \@gdbs;
 }
 
-=head2 load_lrgs
-
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Description : This method loads new LRGs from the core database
-  Returns     : -none-
-  Exceptions  :
-
-=cut
-
-sub load_lrgs {
-    my ($compara_dba, $genome_db) = @_;
-
-    die "LRGs are only available for human" unless $genome_db->name eq 'homo_sapiens';
-
-    my $species_db = $genome_db->db_adaptor;
-    print "Fetching LRG DnaFrags from " . $species_db->dbc->host . "/" . $species_db->dbc->dbname . "\n";
-    my $new_lrg_dnafrags = update_dnafrags($compara_dba, $genome_db, $species_db, -COORD_SYSTEM => 'lrg');
-}
-
 =head2 load_assembly_patches
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba

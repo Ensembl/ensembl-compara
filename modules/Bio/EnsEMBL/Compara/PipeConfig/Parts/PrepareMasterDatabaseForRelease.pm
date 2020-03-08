@@ -170,17 +170,6 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'division'               => $self->o('division'),
                 'cmd' => 'perl #update_metadata_script# --reg_conf #reg_conf# --compara #master_db# --division #division# --nocheck_species_missing_from_compara'
             },
-            -flow_into  => WHEN(
-                '#do_load_lrg_dnafrags#' => 'load_lrg_dnafrags',
-                ELSE 'assembly_patch_factory',
-            ),
-        },
-
-        {   -logic_name => 'load_lrg_dnafrags',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::LoadLRGDnaFrags',
-            -parameters => {
-                'compara_db' => $self->o('master_db'),
-            },
             -flow_into  => [ 'assembly_patch_factory' ],
         },
 

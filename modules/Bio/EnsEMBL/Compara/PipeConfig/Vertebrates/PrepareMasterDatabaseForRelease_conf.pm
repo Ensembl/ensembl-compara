@@ -53,7 +53,6 @@ sub default_options {
 
         'division'               => 'vertebrates',
         'assembly_patch_species' => [ 'homo_sapiens', 'mus_musculus', 'danio_rerio' ],
-        'do_load_lrg_dnafrags'   => 1,
         'do_load_timetree'       => 1,
     };
 }

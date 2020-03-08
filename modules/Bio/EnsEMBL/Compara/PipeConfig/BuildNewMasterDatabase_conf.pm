@@ -94,7 +94,6 @@ sub default_options {
         'assembly_patch_species'  => [], # by default, skip this step
         'additional_species'      => {}, # by default, skip this step
         'do_update_from_metadata' => 0,
-        'do_load_lrg_dnafrags'    => 0,
         'do_load_timetree'        => 0,
         'meta_host'               => undef, # required but not used: do_update_from_metadata = 0
     };
@@ -127,7 +126,6 @@ sub pipeline_wide_parameters {
         
         # Define the flags so they can be seen by Parts::PrepareMasterDatabaseForRelease
         'do_update_from_metadata' => $self->o('do_update_from_metadata'),
-        'do_load_lrg_dnafrags'    => $self->o('do_load_lrg_dnafrags'),
         'do_load_timetree'        => $self->o('do_load_timetree'),
     };
 }

@@ -76,7 +76,6 @@ sub default_options {
         'do_clone_species' => 1,
 
         # PrepareMasterDatabaseForRelease pipeline configuration:
-        'do_load_lrg_dnafrags' => 1,
         'do_load_timetree'     => 1,
     };
 }
