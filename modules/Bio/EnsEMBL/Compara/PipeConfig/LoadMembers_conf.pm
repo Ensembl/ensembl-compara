@@ -256,6 +256,8 @@ sub pipeline_analyses {
                 'store_ncrna'       => $self->o('store_ncrna'),
                 'store_others'      => $self->o('store_others'),
                 'include_lrg'       => $self->o('include_lrg'),
+                'include_patches'   => $self->o('include_patches'),
+                'include_nonreference' => $self->o('include_nonreference'),
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '2Gb_job',

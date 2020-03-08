@@ -93,6 +93,12 @@ sub hash_all_exons_from_dba {
     unless ($self->param('include_lrg')) {
         $sql .= ' AND cs.name != "lrg"';
     }
+    unless ($self->param('include_nonreference')) {
+        $sql .= ' AND sr.seq_region_id NOT IN (SELECT seq_region_id FROM seq_region_attrib JOIN attrib_type USING (attrib_type_id) WHERE code = "non_ref")';
+    }
+    unless ($self->param('include_patches')) {
+        $sql .= ' AND sr.seq_region_id NOT IN (SELECT seq_region_id FROM seq_region_attrib JOIN attrib_type USING (attrib_type_id) WHERE code IN ("patch_fix","patch_novel"))';
+    }
 
     # Filter out unwanted biotypes
     unless ($self->param('store_coding')) {
