@@ -68,7 +68,7 @@ sub update_dnafrags {
     $species_dba = $genome_db->db_adaptor unless $species_dba;
     my $gdb_slices = $genome_db->genome_component
         ? $species_dba->get_SliceAdaptor->fetch_all_by_genome_component($genome_db->genome_component)
-        : $species_dba->get_SliceAdaptor->fetch_all($coord_system_name, undef, 1, 1, 1);
+        : $species_dba->get_SliceAdaptor->fetch_all($coord_system_name, undef, 1, 1, 1);   # no coord_system version, include_non_reference=1, include_duplicates=1, include_lrg=1)
     die "Could not fetch any $coord_system_name slices from ".$genome_db->name() unless(scalar(@$gdb_slices));
 
     # fetch current dnafrags, to detect deprecations
