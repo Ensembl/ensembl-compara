@@ -85,7 +85,7 @@ foreach my $testcase ( keys %$testcase_failures ) {
 }
 # Add subtasks to the initial ticket
 $hc_task_json_ticket->[0]->{subtasks} = \@json_subtasks;
-my $components = ['Java Healthchecks', 'Production tasks'];
+my $components = ['Datachecks', 'Production tasks'];
 my $categories = ['Bug::Internal', 'Production::Tasks'];
 # Create all JIRA tickets
 my $hc_task_keys = $jira_adaptor->create_tickets(
