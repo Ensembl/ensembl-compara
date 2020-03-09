@@ -46,13 +46,13 @@ URL of the database to test.
 
 =item B<[--reg_conf registry_configuration_file]>
 
-The Bio::EnsEMBL::Registry configuration file. If none given and no URL is
-given, the one set in ENSEMBL_REGISTRY will be used if defined, if not
-~/.ensembl_init will be used.
+The Bio::EnsEMBL::Registry configuration file. Must be given to refer to
+one of the databases by registry name (alias) instead of URLs.
 
 =item B<[--reg_type reg_type]>
 
 The "type" or "group" under which the database is to be found in the Registry.
+Defaults to "compara".
 
 =item B<[--reg_alias|--reg_name name]>
 
