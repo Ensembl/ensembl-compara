@@ -19,12 +19,15 @@ import filecmp
 import os
 from typing import Dict, List, Union
 
+import Bio
 import pytest
 from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionInfo
 from _pytest.fixtures import FixtureLookupErrorRepr
 
 from ..utils import DirCmp, PathLike, to_list
 from ._citest import CITestItem
+
+from ete3 import Tree
 
 
 class TestFilesItem(CITestItem):
@@ -125,6 +128,13 @@ class TestFilesItem(CITestItem):
             """Returns True if reference and target `filepath` differ, False otherwise."""
             ref_filepath = str(self.dir_cmp.ref_path / filepath)
             target_filepath = str(self.dir_cmp.target_path / filepath)
+            # If files are newick format, the newick trees need to be read and compared
+            if ref_filepath.endswith(('.nw','.nwk','.newick','.nh')):
+                ref_tree = Tree(ref_filepath)
+                target_tree = Tree(target_filepath)
+                rf, max_rf, common_leaves, ref_parts, target_parts = ref_tree.robinson_foulds(target_tree)
+                # Check the partitions returned from robinson_foulds match between ref and target
+                return ref_parts != target_parts
             return not filecmp.cmp(ref_filepath, target_filepath)
         # Traverse the common directory tree, comparing every reference and target files
         mismatches = self.dir_cmp.apply_test(cmp_file_content, patterns, paths)
