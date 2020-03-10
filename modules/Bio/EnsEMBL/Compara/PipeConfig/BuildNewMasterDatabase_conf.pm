@@ -73,7 +73,6 @@ sub default_options {
         'init_reg_conf' => $self->o('reg_conf'), # needed to create the new master database
         # Parameters required for citest division only
         'reg_conf_tmpl' => undef,
-        'ensj_conf'     => undef,
         'dst_host'      => undef,
         'dst_port'      => undef,
         
