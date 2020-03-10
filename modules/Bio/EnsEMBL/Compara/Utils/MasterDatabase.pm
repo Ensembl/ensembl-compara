@@ -419,6 +419,7 @@ sub load_assembly_patches {
     my $curr_patches_sth = $species_db->dbc->prepare($find_patches_sql);
     $curr_patches_sth->execute;
     my $curr_patches = $curr_patches_sth->fetchall_arrayref;
+    $curr_patches_sth->finish;
     my @curr_patches_seq_region_ids = map { $_->[1] } @$curr_patches;
     my %curr_patches_by_name = map { $_->[0] => {seq_region_id => $_->[1], date => $_->[2]} } @$curr_patches;
 
@@ -426,6 +427,7 @@ sub load_assembly_patches {
     my $prev_patches_sth = $prev_species_db->dbc->prepare($find_patches_sql);
     $prev_patches_sth->execute;
     my $prev_patches = $prev_patches_sth->fetchall_arrayref;
+    $prev_patches_sth->finish;
     my %prev_patches_by_name = map { $_->[0] => {seq_region_id => $_->[1], date => $_->[2]} } @$prev_patches;
 
     # now detect the differences and choose the appropriate action:
