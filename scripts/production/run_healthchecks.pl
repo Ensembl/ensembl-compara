@@ -158,7 +158,7 @@ my @params = (
     '--host'    => $dba->dbc->host,
     '--port'    => $dba->dbc->port,
     '--driver'  => 'org.gjt.mm.mysql.Driver',
-    '--release' => $ENV{CURR_ENSEMBL_RELEASE} || software_version(),
+    '--release' => $dba->get_MetaContainer->get_schema_version,
     '--test_databases'  => $dba->dbc->dbname,
 );
 
