@@ -1006,6 +1006,7 @@ sub dumpPhenotype {
      SELECT p.description, p.phenotype_id
        FROM phenotype p, phenotype_feature pf
       WHERE p.phenotype_id = pf.phenotype_id
+        AND p.class_attrib_id !=663
         AND pf.is_significant = 1
       GROUP BY p.phenotype_id),'description');
   foreach my $phen (keys %$phenotype_info) {
