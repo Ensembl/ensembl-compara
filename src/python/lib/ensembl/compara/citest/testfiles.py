@@ -19,15 +19,13 @@ import filecmp
 import os
 from typing import Dict, List, Union
 
-import Bio
+from ete3 import Tree
 import pytest
-from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionInfo
 from _pytest.fixtures import FixtureLookupErrorRepr
+from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionInfo
 
 from ..utils import DirCmp, PathLike, to_list
 from ._citest import CITestItem
-
-from ete3 import Tree
 
 
 class TestFilesItem(CITestItem):
@@ -130,11 +128,21 @@ class TestFilesItem(CITestItem):
             target_filepath = str(self.dir_cmp.target_path / filepath)
             # If files are newick format, the newick trees need to be read and compared
             if ref_filepath.endswith(('.nw','.nwk','.newick','.nh')):
-                ref_tree = Tree(ref_filepath)
-                target_tree = Tree(target_filepath)
-                rf, max_rf, common_leaves, ref_parts, target_parts = ref_tree.robinson_foulds(target_tree)
-                # Check the partitions returned from robinson_foulds match between ref and target
-                return ref_parts != target_parts
+                ref_tree = Tree(ref_filepath, format=5)
+                target_tree = Tree(target_filepath, format=5)
+                # Check the sum of the distances between each node
+                ref_sum = 0
+                target_sum = 0
+                for leaf in ref_tree:
+                    ref_sum += leaf.get_distance(ref_tree)
+                for leaf in target_tree:
+                    target_sum += leaf.get_distance(target_tree)
+                if ref_sum != target_sum:
+                    return ref_sum != target_sum
+                # Check the leaves all match
+                ref_leaves = ref_tree.get_leaf_names()
+                target_leaves = target_tree.get_leaf_names()
+                return sorted(ref_leaves) != sorted(target_leaves)
             return not filecmp.cmp(ref_filepath, target_filepath)
         # Traverse the common directory tree, comparing every reference and target files
         mismatches = self.dir_cmp.apply_test(cmp_file_content, patterns, paths)

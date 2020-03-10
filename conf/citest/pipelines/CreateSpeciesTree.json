@@ -1,22 +1,10 @@
 {
-    "reference_dir": "ensembl-compara/conf/citest/",
+    "reference_dir": "/hps/nobackup2/production/ensembl/cristig/species_tree2/",
     "target_dir": "/hps/nobackup2/production/ensembl/cristig/species_tree/",
-    "database_tests": {
-        "job": [
-            {
-                "test": "num_rows",
-                "args": {
-                    "variation": 0.2,
-                    "filter_by": "analysis_id = 10"
-                }
-            }
-        ]
-    },
     "files_tests": [
         {
             "test": "content",
             "args": {
-                "paths": ["species_tree.branch_len.nw"]
             }
         }
     ]
