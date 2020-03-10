@@ -377,18 +377,18 @@ sub _update_component_genome_dbs {
     return \@gdbs;
 }
 
-=head2 load_assembly_patches
+=head2 list_assembly_patches
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
   Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Description : This method loads new assembly patches from the core database
+  Description : This method lists the new assembly patches from the core database
   Returns     : -none-
   Exceptions  :
 
 =cut
 
-sub load_assembly_patches {
-    my $compara_dba = shift;
+sub list_assembly_patches {
+    my $compara_dba = shift;    # Pointer to the *previous* database, in order to get the deprecated dnafrag_ids
     my $genome_db   = shift;
     my $report_file = shift;
 
@@ -415,8 +415,7 @@ sub load_assembly_patches {
     # 2. changed patches (present in both, but dates differ) = add dnafrag to depr list && add slice to load patch list
     # 3. new patches (not present in prev, present in curr) = add slice to load patch list
     my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor;
-    my $slice_adaptor = $species_db->get_SliceAdaptor;
-    my ( @depr_patch_dnafrags, @load_patch_slices );
+    my @depr_patch_dnafrags;
     my ( @new_patches, @changed_patches, @deleted_patches ); # store names for reports only
     foreach my $patch_name ( keys %prev_patches_by_name ) {
         if ( !defined $curr_patches_by_name{$patch_name} ) {
@@ -427,15 +426,11 @@ sub load_assembly_patches {
             push @changed_patches, $patch_name;
             my $changed_patch_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_name($genome_db, $patch_name);
             push @depr_patch_dnafrags, $changed_patch_dnafrag;
-            my $curr_patch_slice = $slice_adaptor->fetch_by_seq_region_id($curr_patches_by_name{$patch_name}->{seq_region_id});
-            push @load_patch_slices, $curr_patch_slice;
         }
     }
     foreach my $patch_name ( keys %curr_patches_by_name ) {
         if ( !defined $prev_patches_by_name{$patch_name} ) {
             push @new_patches, $patch_name;
-            my $new_patch_slice = $slice_adaptor->fetch_by_seq_region_id($curr_patches_by_name{$patch_name}->{seq_region_id});
-            push @load_patch_slices, $new_patch_slice;
         }
     }
 
@@ -460,9 +455,6 @@ sub load_assembly_patches {
     } else {
         print $report;
     }
-
-    _load_dnafrags_from_slices($compara_dba, $genome_db, \@load_patch_slices, []);
-    _remove_deprecated_dnafrags($compara_dba, \@depr_patch_dnafrags);
 }
 
 =head2 print_method_link_species_sets_to_update_by_genome_db

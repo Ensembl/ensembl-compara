@@ -109,10 +109,30 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'mode'    => 'taxonomy',
                 'db_conn' => $self->o('master_db'),
             },
-            -flow_into  => WHEN(
-                '#do_update_from_metadata#' => 'update_genome_from_metadata_factory',
-                ELSE 'update_genome_from_registry_factory',
-            ),
+            -flow_into  => ['assembly_patch_factory'],
+        },
+
+        {   -logic_name => 'assembly_patch_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputlist'    => $self->o('assembly_patch_species'),
+                'column_names' => ['species_name'],
+            },
+            -flow_into  => {
+                '2->A' => [ 'list_assembly_patches' ],
+                'A->1' => WHEN(
+                    '#do_update_from_metadata#' => 'update_genome_from_metadata_factory',
+                    ELSE 'update_genome_from_registry_factory',
+                ),
+            },
+        },
+
+        {   -logic_name => 'list_assembly_patches',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::ListChangedAssemblyPatches',
+            -parameters => {
+                'compara_db' => $self->o('master_db'),
+                'work_dir'   => $self->o('work_dir'),
+            },
         },
 
         {   -logic_name => 'update_genome_from_metadata_factory',
@@ -170,27 +190,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'division'               => $self->o('division'),
                 'cmd' => 'perl #update_metadata_script# --reg_conf #reg_conf# --compara #master_db# --division #division# --nocheck_species_missing_from_compara'
             },
-            -flow_into  => [ 'assembly_patch_factory' ],
-        },
-
-         {  -logic_name => 'assembly_patch_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputlist'    => $self->o('assembly_patch_species'),
-                'column_names' => ['species_name'],
-            },
-            -flow_into  => {
-                '2->A' => [ 'load_assembly_patches' ],
-                'A->1' => [ 'update_collection' ],
-            },
-        },
-
-        {   -logic_name => 'load_assembly_patches',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::LoadAssemblyPatches',
-            -parameters => {
-                'compara_db' => $self->o('master_db'),
-                'work_dir'   => $self->o('work_dir'),
-            },
+            -flow_into  => [ 'update_collection' ],
         },
 
         {   -logic_name => 'update_collection',
