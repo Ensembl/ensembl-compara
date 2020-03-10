@@ -28,6 +28,7 @@ Bio::EnsEMBL::Compara::RunnableDB::RunJavaHealthCheck
 Runs an EnsEMBL Java Healthcheck (see https://github.com/Ensembl/ensj-healthcheck)
 Requires several inputs:
     'output_file' : to pipe the output from java to
+    'release'     : release number
     'compara_db'  : db to run the HC on
     'run_healthchecks_exe'   : path to compara run_healthchecks script
     'ensj_testrunner_exe'    : path to ensj-healthcheck testrunner script
@@ -76,6 +77,10 @@ sub fetch_input {
         '--ensj-json-config'    => $self->param_required('ensj_conf'),
         '--ensj-testrunner'     => $self->param_required('ensj_testrunner_exe'),
     );
+
+    if ( $self->param('release') ) {
+        $cmd .= ' --release ' . $self->param('release') . ' ';
+    }
 
     if ( $self->param('master_db') ) {
         my $master_url = $self->get_cached_compara_dba('master_db')->url;
