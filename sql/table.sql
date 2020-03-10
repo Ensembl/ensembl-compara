@@ -169,7 +169,7 @@ CREATE TABLE genome_db (
   has_karyotype			tinyint(1) NOT NULL DEFAULT 0,
   is_good_for_alignment       TINYINT(1) NOT NULL DEFAULT 0,
   genome_component            varchar(5) DEFAULT NULL,
-  strain_name                 varchar(40) DEFAULT NULL,
+  strain_name                 varchar(100) DEFAULT NULL,
   display_name                varchar(255) DEFAULT NULL,
   locator                     varchar(400),
   first_release               smallint,
@@ -2253,4 +2253,6 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_100_101_a.sql|schema_version');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_100_101_b.sql|genome_db.strain_name');
 
