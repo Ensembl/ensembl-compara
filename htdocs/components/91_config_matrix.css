@@ -263,6 +263,7 @@ div.tabs.dy                                                        { margin-top:
 
 /* large breadcrumbs */
 .large-breadcrumbs                              { margin-left: 16px; min-width: 650px; width:auto; }
+.large-breadcrumbs.twoDim                       { min-width: 450px; }
 .large-breadcrumbs.multiDim                     { display: none; }
 .large-breadcrumbs ul                           { padding: 0px; list-style: none; overflow: hidden; height: 32px; margin: 0px; margin-top: 5px !important; }
 .large-breadcrumbs ul li.active                 { }

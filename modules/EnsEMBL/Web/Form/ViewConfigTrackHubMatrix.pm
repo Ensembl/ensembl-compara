@@ -35,7 +35,6 @@ sub breadcrumb_html {
         <ul>
           <li class="active _track-select" id="track-select"><a href="#"><span class="circle crumb-number">1</span>Select tracks</a><span class="hidden content-id">track-content</span></li>
           <li class="inactive _configure" id="track-display"><a href="#"><span class="circle crumb-number">2</span>Configure track display</a><span class="hidden content-id">configuration-content</span></li>
-          <li class="inactive view-track"><a href="#"><span class="circle crumb-number">3</span>View tracks</a></li>
         </ul>
       </div>
       <div class="large-breadcrumbs multiDim">
