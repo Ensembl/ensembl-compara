@@ -143,6 +143,7 @@ sub default_options {
         'masked_seq'          => 1,
         'method_link_types'   => 'BLASTZ_NET:TRANSLATED_BLAT:TRANSLATED_BLAT_NET:LASTZ_NET:PECAN:EPO:EPO_LOW_COVERAGE',
         'split_by_chromosome' => 1,
+        'epo_reference_species' => [],
 
         # tree dump options
         'clusterset_id' => undef,
@@ -276,6 +277,7 @@ sub pipeline_analyses {
                 '7'    => [ 'DumpMultiAlignPatches_start'   ],
                 '8'    => [ 'create_ftp_skeleton'           ],
             },
+            -rc_name    => '1Gb_job',
         },
 
         #------------------------------------------------------------------#
