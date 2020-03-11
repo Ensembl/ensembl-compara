@@ -15,26 +15,31 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import json
 import os
 from pathlib import Path
 
 import pytest
+from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 import sqlalchemy
 
 
 @pytest.hookimpl()
 def pytest_addoption(parser: Parser) -> None:
-    """Register argparse-style options for Compara's unitary testing."""
-    # Load default host information
-    with open(Path(__file__).parent / 'default_host.json') as f:
-        host = json.load(f)
-    # If password starts with '$', treat it as an environment variable that needs to be resolved
-    if host['password'].startswith('$'):
-        host['password'] = os.environ[host['password'][1:]]
+    """Registers argparse-style options for Compara's unit testing."""
     # Add the Compara unitary test parameters to pytest parser
-    group = parser.getgroup("compara unitary test")
-    group.addoption('--server', action='store', metavar='URL', dest='server',
-                    default=str(sqlalchemy.engine.url.URL(**host)),
-                    help="URL to the server where to create the test database(s)")
+    group = parser.getgroup("compara unit testing")
+    group.addoption('--server', action='store', metavar='URL', dest='server', required=True,
+                    help="URL to the server where to create the test database(s).")
+    group.addoption('--keep-data', action='store_true', dest='keep_data',
+                    help="Do not remove test databases/temp directories. Default: False")
+
+
+def pytest_configure(config: Config) -> None:
+    """Adds global variables and configuration attributes required by most tests."""
+    # Load server information
+    server_url = sqlalchemy.engine.url.make_url(config.getoption('server'))
+    # If password starts with '$', treat it as an environment variable that needs to be resolved
+    if server_url.password.startswith('$'):
+        server_url.password = os.environ[server_url.password[1:]]
+        config.option.server = str(server_url)
