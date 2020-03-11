@@ -141,8 +141,8 @@ class JsonFile(pytest.File):
                     yield TestDBItem(test['test'], self, ref_dbc, target_dbc, table, test['args'])
         if 'files_tests' in pipeline_tests:
             # Load the reference and target directory paths
-            ref_path = self._get_arg(pipeline_tests, 'reference_dir')
-            target_path = self._get_arg(pipeline_tests, 'target_dir')
+            ref_path = os.path.expandvars(self._get_arg(pipeline_tests, 'reference_dir'))
+            target_path = os.path.expandvars(self._get_arg(pipeline_tests, 'target_dir'))
             dir_cmp = DirCmp(ref_path=ref_path, target_path=target_path)
             for i, test in enumerate(pipeline_tests['files_tests'], 1):
                 # Ensure required keys are present in every test
