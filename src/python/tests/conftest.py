@@ -17,11 +17,17 @@ limitations under the License.
 
 import os
 from pathlib import Path
+import shutil
+from typing import Any, Generator, Optional
 
 import pytest
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
+from _pytest.fixtures import FixtureRequest
+from _pytest.tmpdir import TempPathFactory
 import sqlalchemy
+
+from ensembl.compara.db import UnitTestDB
 
 
 @pytest.hookimpl()
@@ -43,3 +49,39 @@ def pytest_configure(config: Config) -> None:
     if server_url.password and server_url.password.startswith('$'):
         server_url.password = os.environ[server_url.password[1:]]
         config.option.server = str(server_url)
+    # Add global variables
+    pytest.dbs_dir = Path(__file__).parent / 'databases'
+
+
+@pytest.fixture(name='db_factory', scope='session')
+def db_factory_(request: FixtureRequest) -> Generator:
+    """Yields a unit test database (:class:`UnitTestDB`) factory."""
+    created = []
+    server_url = request.config.getoption('server')
+    def db_factory(src: str, name: Optional[str] = None) -> UnitTestDB:
+        """Returns a :class:`UnitTestDB` object for the newly created unit test database `name` from `src`.
+
+        Args:
+            src: Relative directory path where the test database schema and content files are located. The
+                starting directory is ``ensembl-compara/src/python/tests/databases``.
+            name: Name to give to the new database (it will be prefixed by the username).
+
+        """
+        test_db = UnitTestDB(server_url, pytest.dbs_dir / src, name)
+        created.append(test_db)
+        return test_db
+    yield db_factory
+    # Drop the unit test databases unless the user has requested to keep them
+    if not request.config.getoption('keep_data'):
+        for test_db in created:
+            test_db.drop()
+
+
+@pytest.fixture(scope='session')
+def tmp_dir(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Generator:
+    """Yields a :class:`Path` object pointing to a newly created temporary directory."""
+    tmpdir = tmp_path_factory.mktemp('')
+    yield tmpdir
+    # Delete the temporary directory unless the user has requested to keep it
+    if not request.config.getoption("keep_data"):
+        shutil.rmtree(tmpdir)
