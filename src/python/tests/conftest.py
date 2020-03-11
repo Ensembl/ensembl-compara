@@ -40,6 +40,6 @@ def pytest_configure(config: Config) -> None:
     # Load server information
     server_url = sqlalchemy.engine.url.make_url(config.getoption('server'))
     # If password starts with '$', treat it as an environment variable that needs to be resolved
-    if server_url.password.startswith('$'):
+    if server_url.password and server_url.password.startswith('$'):
         server_url.password = os.environ[server_url.password[1:]]
         config.option.server = str(server_url)
