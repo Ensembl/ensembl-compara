@@ -43,7 +43,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-ens-mirror-3
 
 my $compara_dbs = {
     'compara_master'    => [ 'mysql-ens-compara-prod-4', 'ensembl_compara_master_create_hmm' ],
-    'compara_members'   => [ 'mysql-ens-compara-prod-4', 'muffato_pan_load_members_100'  ],
+    'compara_members'   => [ 'mysql-ens-compara-prod-4', 'muffato_create_hmm_load_members_101'  ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
