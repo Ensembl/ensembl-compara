@@ -41,9 +41,9 @@ class DBConnection:
         self._engine = create_engine(url)
         self._load_metadata()
 
-    def _load_metadata(self) -> None:
+    def load_metadata(self) -> None:
         """Loads the metadata information of the database."""
-        # Just reflect() is not enough as it would not delete tables that no longer exist
+        # Note: Just reflect() is not enough as it would not delete tables that no longer exist
         self._metadata = sqlalchemy.MetaData(bind=self._engine)
         self._metadata.reflect()
 
