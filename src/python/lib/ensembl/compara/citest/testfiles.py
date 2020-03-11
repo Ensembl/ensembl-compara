@@ -69,14 +69,14 @@ class TestFilesItem(CITestItem):
         """Returns the header to display in the error report."""
         return f"File test: {self.name}"
 
-    def test_size(self, variation: float = 0.0, paths: Union[PathLike, List] = None) -> None:
+    def test_size(self, variation: float = 0.0, patterns: Union[str, List] = None,
+                  paths: Union[PathLike, List] = None) -> None:
         """Compares the size (in bytes) between reference and target files.
-
-        Only the selected relative directory paths (and their subdirectories) will be compared.
 
         Args:
             variation: Allowed size variation between reference and target files.
-            paths: Relative directory path(s) to be compared.
+            patterns: The filenames of the files tested will match at least one of these glob patterns.
+            paths: Relative directory/file path(s) to be compared (including their subdirectories).
 
         Raises:
             FailedFilesTestException: If at least one file differ in size between reference and target; or if
@@ -87,15 +87,15 @@ class TestFilesItem(CITestItem):
         paths = to_list(paths)
         # Nested function (closure) to compare the reference and target file sizes
         def cmp_file_size(filepath: PathLike) -> bool:
-            """Returns True if target file size is larger than the allowed variation, False otherwise."""
+            """Returns True if target `filepath` size is larger than allowed variation, False otherwise."""
             ref_size = os.path.getsize(self.dir_cmp.ref_path / filepath)
             target_size = os.path.getsize(self.dir_cmp.target_path / filepath)
             return abs(ref_size - target_size) > (ref_size * variation)
         # Traverse the common directory tree, comparing every reference and target file sizes
-        mismatches = self.dir_cmp.apply_test(cmp_file_size, *paths)
-        # Load the lists of files either in the reference or the target (but not in both)
-        ref_only = self.dir_cmp.ref_only_list(*paths)
-        target_only = self.dir_cmp.target_only_list(*paths)
+        mismatches = self.dir_cmp.apply_test(cmp_file_size, patterns, paths)
+        # Check if there are files either in the reference or the target (but not in both)
+        ref_only = self.dir_cmp.ref_only_list(patterns, paths)
+        target_only = self.dir_cmp.target_only_list(patterns, paths)
         if mismatches:
             num_mms = len(mismatches)
             message = (
@@ -106,13 +106,12 @@ class TestFilesItem(CITestItem):
         if ref_only or target_only:
             raise FailedFilesTestException(ref_only, target_only, mismatches, '')
 
-    def test_content(self, paths: Union[PathLike, List] = None) -> None:
+    def test_content(self, patterns: Union[str, List] = None, paths: Union[PathLike, List] = None) -> None:
         """Compares the content (byte-by-byte) between reference and target files.
 
-        Only the selected relative directory paths (and their subdirectories) will be compared.
-
         Args:
-            paths: Relative directory path(s) to be compared.
+            patterns: Glob patterns the filenames need to match (at least one).
+            paths: Relative directory/file path(s) to be compared (including their subdirectories).
 
         Raises:
             FailedFilesTestException: If at least one file differ between reference and target; or if
@@ -123,15 +122,15 @@ class TestFilesItem(CITestItem):
         paths = to_list(paths)
         # Nested function (closure) to compare the reference and target files
         def cmp_file_content(filepath: PathLike) -> bool:
-            """Returns True if reference and target files differ, False otherwise."""
+            """Returns True if reference and target `filepath` differ, False otherwise."""
             ref_filepath = str(self.dir_cmp.ref_path / filepath)
             target_filepath = str(self.dir_cmp.target_path / filepath)
             return not filecmp.cmp(ref_filepath, target_filepath)
         # Traverse the common directory tree, comparing every reference and target files
-        mismatches = self.dir_cmp.apply_test(cmp_file_content, *paths)
-        # Load the lists of files either in the reference or the target (but not in both)
-        ref_only = self.dir_cmp.ref_only_list(*paths)
-        target_only = self.dir_cmp.target_only_list(*paths)
+        mismatches = self.dir_cmp.apply_test(cmp_file_content, patterns, paths)
+        # Check if there are files either in the reference or the target (but not in both)
+        ref_only = self.dir_cmp.ref_only_list(patterns, paths)
+        target_only = self.dir_cmp.target_only_list(patterns, paths)
         if mismatches:
             num_mms = len(mismatches)
             message = f"Found {num_mms} file{'s' if num_mms > 1 else ''} with different content"
