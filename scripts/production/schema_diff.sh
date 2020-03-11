@@ -30,7 +30,7 @@ function do_exit () {
 [[ "${this_release}" == "" ]] && do_exit 'Cannot find the Ensembl API version'
 [[ "${USER}" == "" ]] && do_exit "'USER' is not defined"
 [[ "${ENSEMBL_CVS_ROOT_DIR}" == "" ]] && do_exit "'ENSEMBL_CVS_ROOT_DIR' is not defined"
-which db_cmd.pl > /dev/null || do_exit "db_cmd.pl not found in the path"
+command -v db_cmd.pl > /dev/null || do_exit "db_cmd.pl not found in the path"
 [[ -e ${ENSEMBL_CVS_ROOT_DIR}/ensembl/misc-scripts/schema_patcher.pl ]] || do_exit "schema_patcher.pl not found in ${ENSEMBL_CVS_ROOT_DIR}/ensembl/misc-scripts/"
 
 
