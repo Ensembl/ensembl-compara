@@ -65,8 +65,8 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
     });
 
     this.refreshFav();
-    this.initAutoComplete();
-    //this.renderDropdown();
+    //this.initAutoComplete();
+    this.renderDropdown();
   },
 
   renderFav: function () {
