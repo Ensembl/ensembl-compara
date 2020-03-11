@@ -15,6 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Useful for debugging (will show the commands being run)
+#set -x
+
 server=mysql-ens-compara-prod-1-ensadmin
 server_prev=mysql-ens-mirror-1
 
