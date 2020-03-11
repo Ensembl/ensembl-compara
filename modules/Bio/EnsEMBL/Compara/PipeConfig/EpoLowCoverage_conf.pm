@@ -120,6 +120,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
             'run_gerp' => $self->o('run_gerp'),
             'genome_dumps_dir' => $self->o('genome_dumps_dir'),
             'reg_conf' => $self->o('reg_conf'),
+            'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),
+            'base_epo_mlss_id' => $self->o('base_epo_mlss_id'),
     };
 }
 
