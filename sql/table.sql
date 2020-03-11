@@ -367,7 +367,6 @@ CREATE TABLE method_link_species_set_tag (
 @desc This table contains the distribution of the gene order conservation scores 
 @colour   #3CB371
 @column method_link_species_set_id          internal unique ID for the orthologs
-@column n_goc_null                            the number of orthologs for with no neighbors
 @column n_goc_0                               the number of orthologs with no gene order conservation among their neighbours
 @column n_goc_25                              the number of orthologs with 25% gene order conservation among their neighbours
 @column n_goc_50                              the number of orthologs with 50% gene order conservation among their neighbours
@@ -385,7 +384,6 @@ CREATE TABLE method_link_species_set_tag (
 
 CREATE TABLE method_link_species_set_attr (
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
-  n_goc_null                    int,
   n_goc_0                       int,
   n_goc_25                      int,
   n_goc_50                      int,
@@ -2255,4 +2253,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_100_101_a.sql|schema_version');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_100_101_b.sql|genome_db.strain_name');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_100_101_c.sql|mlss_attr.n_goc_null');
 
