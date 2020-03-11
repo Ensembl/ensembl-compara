@@ -28,7 +28,7 @@ from ..utils import DirCmp, PathLike, to_list
 from ._citest import CITestItem
 
 
-class TestFilesItem(CITestItem):
+class CITestFilesItem(CITestItem):
     """Generic tests to compare two (analogous) Ensembl Compara files (or directories).
 
     Args:
@@ -50,20 +50,18 @@ class TestFilesItem(CITestItem):
         """Returns the failure representation that will be displayed in the report section.
 
         Note:
-            This method is called when ``self.runtest()`` raises an exception.
+            This method is called when :meth:``CITestFilesItem.runtest()`` raises an exception.
 
         Args:
             excinfo: Exception information with additional support for navigating and traceback.
             style: Traceback print mode (``auto``/``long``/``short``/``line``/``native``/``no``).
 
         """
-        if isinstance(excinfo.value, FailedFilesTestException):
-            self.error_info['reference_only'] = excinfo.value.args[0]
-            self.error_info['target_only'] = excinfo.value.args[1]
-            self.error_info['mismatches'] = excinfo.value.args[2]
-            if excinfo.value.args[3]:
-                return excinfo.value.args[3] + "\n"
-            return "Reference and target directory trees are not the same\n"
+        if isinstance(excinfo.value, CITestFilesError):
+            self.error_info['mismatches'] = excinfo.value.mismatches
+            self.error_info['reference_only'] = excinfo.value.ref_only
+            self.error_info['target_only'] = excinfo.value.target_only
+            return excinfo.value.args[0] + "\n"
         return super().repr_failure(excinfo, style)
 
     def get_report_header(self) -> str:
@@ -80,9 +78,8 @@ class TestFilesItem(CITestItem):
             paths: Relative directory/file path(s) to be compared (including their subdirectories).
 
         Raises:
-            FailedFilesTestException: If at least one file differ in size between reference and target; or if
-                reference and target directory trees differ (for any selected path).
-            ValueError: If at least one selected path is not part of the common directory tree.
+            CITestFilesTreeError: If reference and target directory trees differ (for any selected path).
+            CITestFilesSizeError: If at least one file differ in size between reference and target.
 
         """
         paths = to_list(paths)
@@ -98,14 +95,9 @@ class TestFilesItem(CITestItem):
         ref_only = self.dir_cmp.ref_only_list(patterns, paths)
         target_only = self.dir_cmp.target_only_list(patterns, paths)
         if mismatches:
-            num_mms = len(mismatches)
-            message = (
-                f"{num_mms} file{'s' if num_mms > 1 else ''} differ in size more than the allowed variation "
-                f"({variation})"
-            )
-            raise FailedFilesTestException(ref_only, target_only, mismatches, message)
+            raise CITestFilesSizeError(mismatches, ref_only, target_only)
         if ref_only or target_only:
-            raise FailedFilesTestException(ref_only, target_only, mismatches, '')
+            raise CITestFilesTreeError(ref_only, target_only)
 
     def test_content(self, patterns: Union[str, List] = None, paths: Union[PathLike, List] = None) -> None:
         """Compares the content (byte-by-byte) between reference and target files.
@@ -115,9 +107,8 @@ class TestFilesItem(CITestItem):
             paths: Relative directory/file path(s) to be compared (including their subdirectories).
 
         Raises:
-            FailedFilesTestException: If at least one file differ between reference and target; or if
-                reference and target directory trees differ (for any selected path).
-            ValueError: If at least one selected path is not part of the common directory tree.
+            CITestFilesTreeError: If reference and target directory trees differ (for any selected path).
+            CITestFilesContentError: If at least one file differ between reference and target.
 
         """
         paths = to_list(paths)
@@ -150,12 +141,53 @@ class TestFilesItem(CITestItem):
         ref_only = self.dir_cmp.ref_only_list(patterns, paths)
         target_only = self.dir_cmp.target_only_list(patterns, paths)
         if mismatches:
-            num_mms = len(mismatches)
-            message = f"Found {num_mms} file{'s' if num_mms > 1 else ''} with different content"
-            raise FailedFilesTestException(ref_only, target_only, mismatches, message)
+            raise CITestFilesContentError(mismatches, ref_only, target_only)
         if ref_only or target_only:
-            raise FailedFilesTestException(ref_only, target_only, mismatches, '')
+            raise CITestFilesTreeError(ref_only, target_only)
 
 
-class FailedFilesTestException(Exception):
-    """Exception subclass created to handle test failures separatedly from unexpected exceptions."""
+class CITestFilesError(Exception):
+    """Exception subclass created to handle test failures separatedly from unexpected exceptions.
+
+    Args:
+        message: Error message to display.
+        ref_only: Files/directories only found in the reference directory tree.
+        target_only: Files/directories only found in the target directory tree.
+        mismatches: Files that differ between reference and target directory trees.
+
+    Attributes:
+        ref_only (List[str]): Files/directories only found in the reference directory tree.
+        target_only (List[str]): Files/directories only found in the target directory tree.
+        mismatches (List[str]): Files that differ between reference and target directory trees.
+
+    """
+    def __init__(self, message: str, mismatches: List, ref_only: List, target_only: List) -> None:
+        if not message:
+            message = "Reference and target directory trees are not the same"
+        super().__init__(message)
+        self.mismatches = mismatches
+        self.ref_only = ref_only
+        self.target_only = target_only
+
+
+class CITestFilesTreeError(CITestFilesError):
+    """Exception raised when comparing the file sizes between reference and target directory trees."""
+    def __init__(self, ref_only: List, target_only: List) -> None:
+        super().__init__("Reference and target directory trees are not the same", [], ref_only, target_only)
+
+
+class CITestFilesSizeError(CITestFilesError):
+    """Exception raised when comparing the file sizes between reference and target directory trees."""
+    def __init__(self, mismatches: List, ref_only: List, target_only: List) -> None:
+        num_mms = len(mismatches)
+        message = (f"Found {num_mms} file{'s' if num_mms > 1 else ''} that differ in size more than the "
+                   "allowed variation")
+        super().__init__(message, mismatches, ref_only, target_only)
+
+
+class CITestFilesContentError(CITestFilesError):
+    """Exception raised when comparing the file contents between reference and target directory trees."""
+    def __init__(self, mismatches: List, ref_only: List, target_only: List) -> None:
+        num_mms = len(mismatches)
+        message = f"Found {num_mms} file{'s' if num_mms > 1 else ''} with different content"
+        super().__init__(message, mismatches, ref_only, target_only)

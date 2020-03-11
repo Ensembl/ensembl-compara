@@ -27,21 +27,21 @@ from _pytest.runner import TestReport
 
 from ..db import DBConnection
 from ..utils import DirCmp
-from . import TestDBItem, TestFilesItem
+from . import CITestDBItem, CITestFilesItem
 
 
 @pytest.hookimpl()
 def pytest_addoption(parser: Parser) -> None:
-    """Register argparse-style options for CITest."""
+    """Registers argparse-style options for CITest."""
     group = parser.getgroup("continuous integration test (citest)")
     group.addoption('--reference-db', action='store', metavar='URL', dest='reference_db',
-                    help="URL to the reference database")
+                    help="URL to reference database")
     group.addoption('--reference-dir', action='store', metavar='PATH', dest='reference_dir',
-                    help="Path to reference's root directory")
+                    help="Path to reference root directory")
     group.addoption('--target-db', action='store', metavar='URL', dest='target_db',
-                    help="URL to the target database")
+                    help="URL to target database")
     group.addoption('--target-dir', action='store', metavar='PATH', dest='target_dir',
-                    help="Path to target's root directory")
+                    help="Path to target root directory")
 
 
 def pytest_collect_file(parent: pytest.Session, path: py.path.local) -> Optional[pytest.File]:
@@ -52,7 +52,7 @@ def pytest_collect_file(parent: pytest.Session, path: py.path.local) -> Optional
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:
-    """Add required variables to the session before entering the run test loop."""
+    """Adds required variables to the session before entering the run test loop."""
     session.report = {}
 
 
@@ -66,7 +66,7 @@ def pytest_runtest_makereport(item: pytest.Item) -> TestReport:
 
 
 def pytest_sessionfinish(session: pytest.Session) -> None:
-    """Generate a custom report before returning the exit status to the system."""
+    """Generates a custom report before returning the exit status to the system."""
     # Use the configuration JSON file as template for the report
     config_filename = session.config.getoption('file_or_dir')[0]
     with open(config_filename) as f:
@@ -77,7 +77,7 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
     # Add the reported information of each test
     failed = 0
     for item, report in session.report.items():
-        if isinstance(item, TestDBItem):
+        if isinstance(item, CITestDBItem):
             test_list = full_report['database_tests'][item.table]
         else:
             test_list = full_report['files_tests']
@@ -112,12 +112,11 @@ class JsonFile(pytest.File):
         """Parses the JSON file and loads all the tests.
 
         Returns:
-            Iterator of :class:`testdb.TestDBItem` or :class:`TestFilesItem` objects (depending on
-            the tests included in the JSON file).
+            Iterator of :class:`testdb.CITestDBItem` or :class:`testfiles.CITestFilesItem` objects (depending
+            on the the tests included in the JSON file).
 
         Raises:
-            AssertionError: If the reference or target information is missing for the database or files tests;
-                or if ``test`` or ``args`` keys are missing in any test.
+            AttributeError: If ``test`` or ``args`` keys are missing in any test.
 
         """
         # Load the JSON file
@@ -138,7 +137,7 @@ class JsonFile(pytest.File):
                     if 'args' not in test:
                         raise AttributeError(
                             f"Missing argument 'args' in database_tests['{table}']['{test['test']}']")
-                    yield TestDBItem(test['test'], self, ref_dbc, target_dbc, table, test['args'])
+                    yield CITestDBItem(test['test'], self, ref_dbc, target_dbc, table, test['args'])
         if 'files_tests' in pipeline_tests:
             # Load the reference and target directory paths
             ref_path = os.path.expandvars(self._get_arg(pipeline_tests, 'reference_dir'))
@@ -150,7 +149,7 @@ class JsonFile(pytest.File):
                     raise AttributeError(f"Missing argument 'test' in files_tests #{i}")
                 if 'args' not in test:
                     raise AttributeError(f"Missing argument 'args' in files_tests #{i}")
-                yield TestFilesItem(test['test'], self, dir_cmp, test['args'])
+                yield CITestFilesItem(test['test'], self, dir_cmp, test['args'])
 
     def _get_arg(self, pipeline_tests: Dict, name: str) -> str:
         """Returns the requested parameter from the command line (priority) or the JSON configuration file.

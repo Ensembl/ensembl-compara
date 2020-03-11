@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Union
 
 import pandas
 import pytest
@@ -24,33 +24,33 @@ from _pytest.fixtures import FixtureLookupErrorRepr
 from sqlalchemy import func
 from sqlalchemy.sql.expression import select, text
 
-from ..db import DBConnection
+from ..db import Query, DBConnection
 from ..utils import to_list
 from ._citest import CITestItem
 
 
-class TestDBItem(CITestItem):
+class CITestDBItem(CITestItem):
     """Generic tests to compare a table in two (analogous) Ensembl Compara MySQL databases.
 
     Args:
         name: Name of the test to run.
         parent: The parent collector node.
-        ref_db: Database connectivity and features of the reference database.
-        target_db: Database connectivity and features of the target database.
+        ref_dbc: Reference database connection handler.
+        target_dbc: Target database connection handler.
         table: Table to be tested.
         args: Arguments to pass to the test call.
 
     Attributes:
-        ref_db (DBConn): Database connectivity and features of the reference database.
-        target_db (DBConn): Database connectivity and features of the target database.
+        ref_dbc (DBConnection): Reference database connection handler.
+        target_dbc (DBConnection): Target database connection handler.
         table (str): Table to be tested.
 
     """
-    def __init__(self, name: str, parent: pytest.Item, ref_db: DBConnection, target_db: DBConnection,
+    def __init__(self, name: str, parent: pytest.Item, ref_dbc: DBConnection, target_dbc: DBConnection,
                  table: str, args: Dict) -> None:
         super().__init__(name, parent, args)
-        self.ref_db = ref_db
-        self.target_db = target_db
+        self.ref_dbc = ref_dbc
+        self.target_dbc = target_dbc
         self.table = table
 
     def repr_failure(self, excinfo: ExceptionInfo, style: str = None
@@ -58,19 +58,19 @@ class TestDBItem(CITestItem):
         """Returns the failure representation that will be displayed in the report section.
 
         Note:
-            This method is called when ``self.runtest()`` raises an exception.
+            This method is called when :meth:``CITestDBItem.runtest()`` raises an exception.
 
         Args:
             excinfo: Exception information with additional support for navigating and traceback.
             style: Traceback print mode (``auto``/``long``/``short``/``line``/``native``/``no``).
 
         """
-        if isinstance(excinfo.value, FailedDBTestException):
-            self.error_info['expected'] = excinfo.value.args[0]
-            self.error_info['found'] = excinfo.value.args[1]
-            self.error_info['query'] = str(excinfo.value.args[2]).replace('\n', '').strip()
-            return excinfo.value.args[3] + "\n"
-        if isinstance(excinfo.value, AssertionError):
+        if isinstance(excinfo.value, CITestDBError):
+            self.error_info['expected'] = excinfo.value.expected
+            self.error_info['found'] = excinfo.value.found
+            self.error_info['query'] = excinfo.value.query
+            return excinfo.value.args[0] + "\n"
+        if isinstance(excinfo.value, TypeError):
             return excinfo.value.args[0] + "\n"
         return super().repr_failure(excinfo, style)
 
@@ -82,9 +82,7 @@ class TestDBItem(CITestItem):
                       filter_by: Union[str, List] = None) -> None:
         """Compares the number of rows between reference and target tables.
 
-        If `group_by` is provided, the number of rows will be compared per group, applying the same variation
-        to all of them. If `filter_by` is provided, only the rows matching all the given conditions will be
-        compared.
+        If `group_by` is provided, the same variation will be applied to each group.
 
         Args:
             variation: Allowed variation between reference and target tables.
@@ -92,16 +90,17 @@ class TestDBItem(CITestItem):
             filter_by: Filter rows by one or more conditions (joined by the AND operator).
 
         Raise:
-            FailedDBTestException: If `group_by` is provided and the groups returned are different; or if the
-                number of rows differ for at least one group.
+            CITestDBGroupingError: If `group_by` is provided and the groups returned are different.
+            CITestDBNumRowsError: If the number of rows differ more than the expected variation for at least
+                one group.
 
         """
-        # Compose the sql query from the given parameters (both databases should have the same table schema)
-        table = self.ref_db.tables[self.table]
+        # Compose the SQL query from the given parameters (both databases should have the same table schema)
+        table = self.ref_dbc.tables[self.table]
         group_by = to_list(group_by)
         columns = [table.columns[col] for col in group_by]
         # Use primary key in count to improve the query performance
-        primary_key = self.ref_db.get_primary_key_columns(self.table)[0]
+        primary_key = self.ref_dbc.get_primary_key_columns(self.table)[0]
         query = select(columns + [func.count(table.columns[primary_key]).label('nrows')])
         if columns:
             # ORDER BY to ensure that the results are always in the same order (for the same groups)
@@ -109,37 +108,23 @@ class TestDBItem(CITestItem):
         for clause in to_list(filter_by):
             query = query.where(text(clause))
         # Get the number of rows for both databases
-        ref_data = pandas.read_sql(query, self.ref_db.connect())
-        target_data = pandas.read_sql(query, self.target_db.connect())
-        # Check if the number of groups returned are the same
-        if len(ref_data.index) != len(target_data.index):
-            expected = len(ref_data.index)
-            found = len(target_data.index)
-            # Note that the shape can only be different if group_by is given
-            message = f"Different number of groups found ({', '.join(group_by)}) for table '{self.table}'"
-            raise FailedDBTestException(expected, found, query, message)
-        # When group_by, check if the groups returned are the same too
+        ref_data = pandas.read_sql(query, self.ref_dbc.connect())
+        target_data = pandas.read_sql(query, self.target_dbc.connect())
         if group_by:
-            merged_data = pandas.merge(ref_data, target_data, on=group_by)
-            if len(ref_data.index) != len(merged_data.index):
-                expected = ref_data.to_string(index=False).splitlines()
-                found = target_data.to_string(index=False).splitlines()
-                message = f"Different groups found ({', '.join(group_by)}) for table '{self.table}'"
-                raise FailedDBTestException(expected, found, query, message)
-        # Check if the number of rows (per group) are the same
+            # Check if the groups returned are the same
+            merged_data = ref_data.merge(target_data, on=group_by, how='outer', indicator=True)
+            if not merged_data[merged_data['_merge'] != 'both'].empty:
+                # Remove columns "nrows_x", "nrows_y" and "_merge" in the dataframes to include in the report
+                ref_only = merged_data[merged_data['_merge'] == 'left_only'].iloc[:, :-3]
+                target_only = merged_data[merged_data['_merge'] == 'right_only'].iloc[:, :-3]
+                raise CITestDBGroupingError(self.table, ref_only, target_only, query)
+        # Check if the number of rows (per group) are within the allowed variation
         difference = abs(ref_data['nrows'] - target_data['nrows'])
         allowed_variation = ref_data['nrows'] * variation
         failing_rows = difference > allowed_variation
         if failing_rows.any():
-            expected_data = ref_data.loc[failing_rows]
-            expected = [] if expected_data.empty else expected_data.to_string(index=False).splitlines()
-            found_data = target_data.loc[failing_rows]
-            found = [] if found_data.empty else found_data.to_string(index=False).splitlines()
-            message = (
-                f"The difference in number of rows for table '{self.table}' exceeds the allowed variation "
-                f"({variation})"
-            )
-            raise FailedDBTestException(expected, found, query, message)
+            raise CITestDBNumRowsError(self.table, ref_data.loc[failing_rows], target_data.loc[failing_rows],
+                                       query)
 
     def test_content(self, *, columns: Union[str, List] = None, ignore_columns: Union[str, List] = None,
                      filter_by: Union[str, List] = None) -> None:
@@ -155,47 +140,88 @@ class TestDBItem(CITestItem):
             filter_by: Filter rows by one or more conditions (joined by the AND operator).
 
         Raise:
-            AssertionError: If both ``columns`` and ``ignore_columns`` are provided.
-            FailedDBTestException: If the number of rows differ; or if one or more rows have different
-                content.
+            TypeError: If both ``columns`` and ``ignore_columns`` are provided.
+            CITestDBNumRowsError: If the number of rows differ.
+            CITestDBContentError: If one or more rows have different content.
 
         """
         if columns and ignore_columns:
-            raise FailedDBTestException("Expected only 'columns' or 'ignore_columns', not both")
-        # Compose the sql query from the given parameters (both databases should have the same table schema)
-        table = self.ref_db.tables[self.table]
-        if ignore_columns:
+            raise TypeError("Expected either 'columns' or 'ignore_columns', not both")
+        # Compose the SQL query from the given parameters (both databases should have the same table schema)
+        table = self.ref_dbc.tables[self.table]
+        if columns:
+            columns = to_list(columns)
+            db_columns = [table.columns[col] for col in columns]
+        else:
             ignore_columns = to_list(ignore_columns)
             db_columns = [col for col in table.columns if col.name not in ignore_columns]
             columns = [col.name for col in db_columns]
-        else:
-            columns = to_list(columns)
-            db_columns = [table.columns[col] for col in columns]
         query = select(db_columns)
         for clause in to_list(filter_by):
             query = query.where(text(clause))
         # Get the table content for the selected columns
-        ref_data = pandas.read_sql(query, self.ref_db.connect())
-        target_data = pandas.read_sql(query, self.target_db.connect())
+        ref_data = pandas.read_sql(query, self.ref_dbc.connect())
+        target_data = pandas.read_sql(query, self.target_dbc.connect())
         # Check if the size of the returned tables are the same
         # Note: although not necessary, this control provides a better error message
         if ref_data.shape != target_data.shape:
-            expected = ref_data.shape[0]
-            found = target_data.shape[0]
-            message = f"Different number of rows in table '{self.table}'"
-            raise FailedDBTestException(expected, found, query, message)
-        # Compare the content of both dataframes, sorting them first to ensure they are comparable
-        ref_data.sort_values(by=columns, inplace=True, kind='mergesort')
-        target_data.sort_values(by=columns, inplace=True, kind='mergesort')
-        failing_rows = ref_data.ne(target_data).any(axis='columns')
-        if failing_rows.any():
-            expected_data = ref_data.loc[failing_rows]
-            expected = [] if expected_data.empty else expected_data.to_string(index=False).splitlines()
-            found_data = target_data.loc[failing_rows]
-            found = [] if found_data.empty else found_data.to_string(index=False).splitlines()
-            message = f"Table '{self.table}' has different content for columns {', '.join(columns)}"
-            raise FailedDBTestException(expected, found, query, message)
+            raise CITestDBNumRowsError(self.table, ref_data.shape[0], target_data.shape[0], query)
+        # Compare the content of both dataframes
+        merged_data = ref_data.merge(target_data, how='outer', indicator=True)
+        if not merged_data[merged_data['_merge'] != 'both'].empty:
+            # Remove column "_merge" in the dataframes to include in the report
+            ref_only = merged_data[merged_data['_merge'] == 'left_only'].iloc[:, :-1]
+            target_only = merged_data[merged_data['_merge'] == 'right_only'].iloc[:, :-1]
+            raise CITestDBContentError(self.table, ref_only, target_only, query)
 
 
-class FailedDBTestException(Exception):
-    """Exception subclass created to handle test failures separatedly from unexpected exceptions."""
+class CITestDBError(Exception):
+    """Exception subclass created to handle test failures separatedly from unexpected exceptions.
+
+    Args:
+        message: Error message to display.
+        expected: Expected value(s) (reference database).
+        found: Value(s) found (target database).
+        query: SQL query used to retrieve the information.
+
+    Attributes:
+        expected (Any): Expected value(s) (reference database).
+        found (Any): Value(s) found (target database).
+        query (Query): SQL query used to retrieve the information.
+
+    """
+    def __init__(self, message: str, expected: Any, found: Any, query: Query) -> None:
+        super().__init__(message)
+        self.expected = self._parse_data(expected)
+        self.found = self._parse_data(found)
+        self.query = str(query).replace('\n', '').strip()
+
+    @staticmethod
+    def _parse_data(data: Any) -> Any:
+        """Returns a list representation of `data` if it is a dataframe, `data` otherwise."""
+        if isinstance(data, pandas.DataFrame):
+            # Avoid the default list representation for empty dataframes:
+            #     ['Empty DataFrame', 'Columns: []', 'Index: []']
+            return [] if data.empty else data.to_string(index=False).splitlines()
+        return data
+
+
+class CITestDBGroupingError(CITestDBError):
+    """Exception raised when `table` returns different groups for reference and target databases."""
+    def __init__(self, table: str, *args: Any) -> None:
+        message = f"Different groups found for table '{table}'"
+        super().__init__(message, *args)
+
+
+class CITestDBNumRowsError(CITestDBError):
+    """Exception raised when `table` has different number of rows in reference and target databases."""
+    def __init__(self, table: str, *args: Any) -> None:
+        message = f"Different number of rows for table '{table}'"
+        super().__init__(message, *args)
+
+
+class CITestDBContentError(CITestDBError):
+    """Exception raised when `table` has different content in reference and target databases."""
+    def __init__(self, table: str, *args: Any) -> None:
+        message = f"Different content found in table '{table}'"
+        super().__init__(message, *args)
