@@ -42,7 +42,7 @@ class CITestItem(ABC, pytest.Item):
         self.error_info = OrderedDict()  # type: OrderedDict
 
     def runtest(self) -> None:
-        """Execute the selected test function with the given arguments.
+        """Executes the selected test function with the given arguments.
 
         Raises:
             SyntaxError: If the test function to call does not exist.
