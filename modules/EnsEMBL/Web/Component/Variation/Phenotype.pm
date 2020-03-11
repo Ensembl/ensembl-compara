@@ -148,6 +148,7 @@ sub table_data {
   my $variation_names = 'variation_names';
   my @stats_col = ('p_value','odds_ratio','beta_coef');
   my $submitter_max_length = 20;
+  my $skip_phenotypes_link = 'non_specified';
 
   foreach my $pf (@$external_data) {
 
@@ -167,10 +168,12 @@ sub table_data {
     }
 
     my $id                   = $pf->{'_phenotype_id'};
+    my $phenotype_class      = $pf->{'_phenotype_class_attrib'};
     my $pf_id                = $pf->dbID;
     my $source_name          = $pf->source_name;
     my $study_name           = $pf->study ? $pf->study->name : '';
-    my $disease_url          = $hub->url({ type => 'Phenotype', action => 'Locations', ph => $id, name => $disorder });
+    my $disease_url          = "";
+    $disease_url             = $hub->url({ type => 'Phenotype', action => 'Locations', ph => $id, name => $disorder }) unless $phenotype_class eq $skip_phenotypes_link;
     my $external_id          = ($pf->external_id) ? $pf->external_id : $study_name;
     my $external_reference   = $self->external_reference_link($pf->external_reference) || $pf->external_reference; # use raw value if can't be made into a link
     my $associated_studies   = $pf->associated_studies; # List of Study objects
