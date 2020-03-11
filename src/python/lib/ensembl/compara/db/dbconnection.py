@@ -19,7 +19,7 @@ import contextlib
 from typing import Dict, List, TypeVar
 
 import sqlalchemy
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import select
 
@@ -148,3 +148,37 @@ class DBConnection:
         finally:
             # Whatever happens, make sure the session is closed
             session.close()
+
+    @contextlib.contextmanager
+    def test_session_scope(self) -> Session:
+        """Provides a transactional scope around a series of operations that will be rolled back at the end.
+
+        Note:
+            The MySQL default storage engine MyISAM does not support rollback transactions, so all the
+            modifications performed to the database will persist.
+
+        """
+        # Connect to the database
+        connection = self.connect()
+        # Begin a non-ORM transaction
+        transaction = connection.begin()
+        # Bind an individual Session to the connection
+        session = Session(bind=connection)
+        # Start the session in a SAVEPOINT
+        session.begin_nested()
+        # Define a new transaction event
+        @event.listens_for(session, "after_transaction_end")
+        def restart_savepoint(session, transaction):
+            """Reopen a SAVEPOINT whenever the previous one ends."""
+            if transaction.nested and not transaction._parent.nested:
+                # Ensure that state is expired the same way session.commit() at the top level normally does
+                session.expire_all()
+                session.begin_nested()
+        try:
+            yield session
+        finally:
+            # Whatever happens, make sure the session and connection are closed, rolling back everything done
+            # with the session (including calls to commit())
+            session.close()
+            transaction.rollback()
+            connection.close()
