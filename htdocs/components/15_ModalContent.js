@@ -135,7 +135,6 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       data: data,
       dataType: 'json',
       context: this,
-      iframe: !!form.find('input[type=file]').length,
       form: form,
       success: function (json) {
         if (json.redirectURL && json.redirectType === 'modal') {
