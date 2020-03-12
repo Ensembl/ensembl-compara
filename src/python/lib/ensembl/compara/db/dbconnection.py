@@ -14,6 +14,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+# Disable protected-access and unused-variable in pylint to avoid warnings from
+# DBConnection.test_session_scope()
+# pylint: disable=protected-access,unused-variable
 
 import contextlib
 from typing import Dict, List, TypeVar
