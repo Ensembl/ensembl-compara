@@ -206,6 +206,13 @@ class CITestDBError(Exception):
         return data
 
 
+class CITestDBContentError(CITestDBError):
+    """Exception raised when `table` has different content in reference and target databases."""
+    def __init__(self, table: str, *args: Any) -> None:
+        message = f"Different content found in table '{table}'"
+        super().__init__(message, *args)
+
+
 class CITestDBGroupingError(CITestDBError):
     """Exception raised when `table` returns different groups for reference and target databases."""
     def __init__(self, table: str, *args: Any) -> None:
@@ -217,11 +224,4 @@ class CITestDBNumRowsError(CITestDBError):
     """Exception raised when `table` has different number of rows in reference and target databases."""
     def __init__(self, table: str, *args: Any) -> None:
         message = f"Different number of rows for table '{table}'"
-        super().__init__(message, *args)
-
-
-class CITestDBContentError(CITestDBError):
-    """Exception raised when `table` has different content in reference and target databases."""
-    def __init__(self, table: str, *args: Any) -> None:
-        message = f"Different content found in table '{table}'"
         super().__init__(message, *args)

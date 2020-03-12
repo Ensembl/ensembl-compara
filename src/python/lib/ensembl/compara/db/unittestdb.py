@@ -29,6 +29,32 @@ from ..utils import PathLike
 from .dbconnection import DBConnection, Query, URL
 
 
+def create_databases(url: URL, dump_dir: PathLike) -> Iterator['UnitTestDB']:
+    """Yields a :class:`UnitTestDB` object per database created.
+
+    Args:
+        url: URL of the server hosting the databases, e.g. ``mysql://user:passwd@localhost:3306/``, or SQLite
+            root path URL, e.g. ``sqlite:////path/to/folder``.
+        dump_dir: Directory path with one subdirectory per database to create. Each subdirectory has to
+            contain the database schema in ``table.sql`` and can contain TSV data files (without headers),
+            one per table following the convention ``<table_name>.txt``. Each database will be named after
+            the subdirectory used to create it.
+
+    Raises:
+        ValueError: If `dump_dir` is not an existing directory.
+
+    """
+    if not os.path.isdir(dump_dir):
+        raise ValueError("'dump_dir' must be a valid path to a directory")
+    dialect = make_url(url).get_dialect()
+    for element in os.scandir(dump_dir):
+        if element.is_dir():
+            if dialect == 'sqlite':
+                yield UnitTestDB(url + '/' + element.name, element.path, None)
+            else:
+                yield UnitTestDB(url, element.path, None)
+
+
 def parse_sql_file(filepath: Union[bytes, PathLike]) -> Iterator[sqlalchemy.sql.expression.TextClause]:
     """Yields each SQL query found parsing the given SQL file.
 
@@ -57,32 +83,6 @@ def parse_sql_file(filepath: Union[bytes, PathLike]) -> Iterator[sqlalchemy.sql.
                     if query.endswith(';'):
                         yield text(query)
                         query = ''
-
-
-def create_databases(url: URL, dump_dir: PathLike) -> Iterator['UnitTestDB']:
-    """Yields a :class:`UnitTestDB` object per database created.
-
-    Args:
-        url: URL of the server hosting the databases, e.g. ``mysql://user:passwd@localhost:3306/``, or SQLite
-            root path URL, e.g. ``sqlite:////path/to/folder``.
-        dump_dir: Directory path with one subdirectory per database to create. Each subdirectory has to
-            contain the database schema in ``table.sql`` and can contain TSV data files (without headers),
-            one per table following the convention ``<table_name>.txt``. Each database will be named after
-            the subdirectory used to create it.
-
-    Raises:
-        ValueError: If `dump_dir` is not an existing directory.
-
-    """
-    if not os.path.isdir(dump_dir):
-        raise ValueError("'dump_dir' must be a valid path to a directory")
-    dialect = make_url(url).get_dialect()
-    for element in os.scandir(dump_dir):
-        if element.is_dir():
-            if dialect == 'sqlite':
-                yield UnitTestDB(url + '/' + element.name, element.path, None)
-            else:
-                yield UnitTestDB(url, element.path, None)
 
 
 class UnitTestDB:

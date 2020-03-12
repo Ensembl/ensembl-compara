@@ -170,10 +170,12 @@ class CITestFilesError(Exception):
         self.target_only = target_only
 
 
-class CITestFilesTreeError(CITestFilesError):
-    """Exception raised when comparing the file sizes between reference and target directory trees."""
-    def __init__(self, ref_only: List, target_only: List) -> None:
-        super().__init__("Reference and target directory trees are not the same", [], ref_only, target_only)
+class CITestFilesContentError(CITestFilesError):
+    """Exception raised when comparing the file contents between reference and target directory trees."""
+    def __init__(self, mismatches: List, ref_only: List, target_only: List) -> None:
+        num_mms = len(mismatches)
+        message = f"Found {num_mms} file{'s' if num_mms > 1 else ''} with different content"
+        super().__init__(message, mismatches, ref_only, target_only)
 
 
 class CITestFilesSizeError(CITestFilesError):
@@ -185,9 +187,7 @@ class CITestFilesSizeError(CITestFilesError):
         super().__init__(message, mismatches, ref_only, target_only)
 
 
-class CITestFilesContentError(CITestFilesError):
-    """Exception raised when comparing the file contents between reference and target directory trees."""
-    def __init__(self, mismatches: List, ref_only: List, target_only: List) -> None:
-        num_mms = len(mismatches)
-        message = f"Found {num_mms} file{'s' if num_mms > 1 else ''} with different content"
-        super().__init__(message, mismatches, ref_only, target_only)
+class CITestFilesTreeError(CITestFilesError):
+    """Exception raised when comparing the file sizes between reference and target directory trees."""
+    def __init__(self, ref_only: List, target_only: List) -> None:
+        super().__init__("Reference and target directory trees are not the same", [], ref_only, target_only)
