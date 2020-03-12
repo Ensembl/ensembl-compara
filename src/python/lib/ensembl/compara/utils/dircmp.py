@@ -101,19 +101,22 @@ class DirCmp:
         if not nodes_left:
             nodes_left.append((Path(), self))
         patterns = to_list(patterns)
+        if patterns:
+            # Add "*/*" pattern to keep reference- / target-only subdirectories (based on attr)
+            patterns.append(f'*{os.path.sep}*')
         while nodes_left:
             dirname, node = nodes_left.pop()
             # Append subdirectories to the list of directories left to traverse
             nodes_left.extend([(dirname / subdir, subnode) for subdir, subnode in node.subdirs.items()])
             if patterns:
-                # Get every file of the requested attribute that matches at least one of the patterns
+                # Get every element of the requested attribute that matches at least one of the patterns
                 mapping = map(functools.partial(fnmatch.filter, getattr(node, attr)), patterns)
-                # Remove filename repetitions result of a filename matching more than one pattern
-                files = set(itertools.chain(*mapping))
+                # Remove element repetitions, result of its name matching more than one pattern
+                elements = set(itertools.chain(*mapping))
             else:
-                files = getattr(node, attr)
-            for filename in files:
-                yield str(dirname / str(filename))
+                elements = getattr(node, attr)
+            for ename in elements:
+                yield str(dirname / str(ename))
 
     def apply_test(self, test_func: Callable, patterns: Union[str, List] = None,
                    paths: Union[PathLike, List] = None) -> List[str]:
