@@ -17,6 +17,10 @@
 
 PYTHON_SOURCE_LOCATIONS=('scripts' 'src/python')
 
+# Setup the environment variables
+export PYTHONPATH=$PYTHONPATH:$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')
+export MYPYPATH=$MYPYPATH:$PWD/src/python/lib
+
 PYLINT_OUTPUT_FILE=$(mktemp)
 PYLINT_ERRORS=$(mktemp)
 find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" -print0 | xargs -0 pylint --rcfile pylintrc --verbose | tee "$PYLINT_OUTPUT_FILE"
@@ -25,7 +29,6 @@ grep -v "\-\-\-\-\-\-\-\-\-" "$PYLINT_OUTPUT_FILE" | grep -v "Your code has been
 rt1=$?
 rm "$PYLINT_OUTPUT_FILE" "$PYLINT_ERRORS"
 
-export MYPYPATH=$PWD/src/python/lib
 find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" -print0 | xargs -0 mypy --config-file mypy.ini --namespace-packages
 rt2=$?
 

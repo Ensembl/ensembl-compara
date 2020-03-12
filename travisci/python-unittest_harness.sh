@@ -19,6 +19,7 @@ PYTHON_SOURCE_LOCATIONS=('scripts' 'src/python/tests')
 
 # Setup the environment variables
 export ENSADMIN_PSW='dummy_pwd'
+export PYTHONPATH=$PYTHONPATH:$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')
 
 # Check that all the Python files can be compiled
 if [ "$TEST_COMPILATION" = 'true' ]; then

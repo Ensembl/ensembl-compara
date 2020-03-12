@@ -97,6 +97,7 @@ jobs:
       install:
         - pip install --upgrade pytest typing     # The default version doesn't return the expected return code when no tests are present
         - pip install -r requirements.txt
+        - pip install .
       before_script:
         - echo
       script: ./travisci/python-unittest_harness.sh
@@ -112,6 +113,7 @@ jobs:
       install:
         - pip install pytest-cov
         - pip install -r requirements.txt
+        - pip install .
       before_script:
         - echo
       script: ./travisci/python-unittest_harness.sh
@@ -124,6 +126,7 @@ jobs:
       install:
         - pip install pylint mypy
         - pip install -r requirements.txt
+        - pip install .
       before_script:
         - echo
       script: ./travisci/python-linter_harness.sh
