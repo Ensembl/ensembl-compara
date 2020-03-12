@@ -34,9 +34,6 @@
     <one_vs_all method="LASTZ_NET" ref_genome="solanum_lycopersicum" against="asterids"/>
     <one_vs_all method="LASTZ_NET" ref_genome="theobroma_cacao_criollo" against="malvids"/>
 
-    <!-- Rice all v all -->
-    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa" against="Oryza"/>
-
     <!-- Vigna all v all -->
     <all_vs_all method="LASTZ_NET">
         <species_set>
