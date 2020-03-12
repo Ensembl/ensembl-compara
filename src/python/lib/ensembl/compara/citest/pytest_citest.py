@@ -27,7 +27,8 @@ from _pytest.runner import TestReport
 
 from ..db import DBConnection
 from ..utils import DirCmp
-from . import CITestDBItem, CITestFilesItem
+from .testdb import CITestDBItem
+from .testfiles import CITestFilesItem
 
 
 @pytest.hookimpl()

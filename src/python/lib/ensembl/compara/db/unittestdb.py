@@ -26,7 +26,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine.url import make_url
 
 from ..utils import PathLike
-from . import DBConnection, Query, URL
+from .dbconnection import DBConnection, Query, URL
 
 
 def parse_sql_file(filepath: Union[bytes, PathLike]) -> Iterator[sqlalchemy.sql.expression.TextClause]:
