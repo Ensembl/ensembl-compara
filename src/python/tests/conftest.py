@@ -51,6 +51,7 @@ def pytest_configure(config: Config) -> None:
         config.option.server = str(server_url)
     # Add global variables
     pytest.dbs_dir = Path(__file__).parent / 'databases'
+    pytest.get_param_repr = get_param_repr
 
 
 @pytest.fixture(name='db_factory', scope='session')
@@ -85,3 +86,21 @@ def tmp_dir(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Gener
     # Delete the temporary directory unless the user has requested to keep it
     if not request.config.getoption("keep_data"):
         shutil.rmtree(tmpdir)
+
+
+def get_param_repr(arg: Any) -> Optional[str]:
+    """Returns a string representation of `arg` if it is a dictionary or a list, `None` otherwise.
+
+    Note:
+        `None` will tell pytest to use its default internal representation of `arg`.
+
+    """
+    if isinstance(arg, dict):
+        str_repr = ''
+        for key, value in arg.items():
+            value_repr = get_param_repr(value)
+            str_repr += f"{key}: {value_repr if value_repr else value}; "
+        return '{' + str_repr[:-2] + '}'
+    if isinstance(arg, list):
+        return '[' + ', '.join(arg) + ']'
+    return None
