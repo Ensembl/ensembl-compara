@@ -42,7 +42,7 @@ class DBConnection:
     """
     def __init__(self, url: URL) -> None:
         self._engine = create_engine(url)
-        self._load_metadata()
+        self.load_metadata()
 
     def load_metadata(self) -> None:
         """Loads the metadata information of the database."""
@@ -119,6 +119,10 @@ class DBConnection:
         """
         return self._engine.begin(*args)
 
+    def dispose(self) -> None:
+        """Disposes of the connection pool."""
+        self._engine.dispose()
+
     def execute(self, statement: Query, *multiparams, **params) -> sqlalchemy.engine.ResultProxy:
         """Executes the given SQL query and returns a :class:`~sqlalchemy.engine.ResultProxy`.
 
@@ -133,7 +137,7 @@ class DBConnection:
 
     @contextlib.contextmanager
     def session_scope(self) -> Session:
-        """Provide a transactional scope around a series of operations with rollback in case of failure.
+        """Provides a transactional scope around a series of operations with rollback in case of failure.
 
         Note:
             The MySQL default storage engine MyISAM does not support rollback transactions, so all the
