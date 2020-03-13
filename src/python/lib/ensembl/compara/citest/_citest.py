@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from collections import OrderedDict
 from typing import Dict, Optional, Tuple, Union
 
@@ -23,7 +23,11 @@ import py
 import pytest
 
 
-class CITestItem(ABC, pytest.Item):
+class CITestMeta(ABCMeta, type(pytest.Item)):  # type: ignore
+    """Metaclass required to solve the metaclass conflict in CITestItem."""
+
+
+class CITestItem(ABC, pytest.Item, metaclass=CITestMeta):
     """Abstract class of the test set to compare two (analogous) Ensembl Compara elements.
 
     Args:
