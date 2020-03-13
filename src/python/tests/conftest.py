@@ -81,7 +81,7 @@ def db_factory_(request: FixtureRequest) -> Generator:
 @pytest.fixture(scope='session')
 def tmp_dir(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Generator:
     """Yields a :class:`Path` object pointing to a newly created temporary directory."""
-    tmpdir = tmp_path_factory.mktemp('')
+    tmpdir = tmp_path_factory.mktemp(request.node.name)
     yield tmpdir
     # Delete the temporary directory unless the user has requested to keep it
     if not request.config.getoption("keep_data"):
