@@ -591,11 +591,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.getContent();
   },
   
-  getContent: function () {
+  getContent: function (linkEle, href) {
     var panel  = this;
     var active = this.elLk.links.filter('.active').children('a')[0];
     var url, configDiv, subset;
-    
     function favouriteTracks() {
       var trackId, li, type;
       var external = $.extend({}, panel.externalFavourites);
@@ -709,16 +708,14 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       ul = lis = null;
     }
     
-    function addSection(configDiv) {
+    function addSection(configDiv, linkEle) {
       configDiv.html('<div class="spinner">Loading Content</div>');
-      
       $.ajax({
         url: url,
         cache: false, // Cache buster for IE
         dataType: 'json',
         success: function (json) {
           var width = configDiv.width(); // Calculate width of div before adding content - much faster to do it now
-          
           configDiv.detach().html(json.content).insertAfter(panel.elLk.form); // fix for Chrome being slow when inserting a large content into an already large form.
           
           var panelDiv = $('.js_panel', configDiv);
@@ -727,7 +724,8 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
             Ensembl.EventManager.trigger('createPanel', panelDiv[0].id, json.panelType, $.extend(json.params, {
               links:        panel.elLk.links.filter('.active').parents('li.parent').andSelf(),
               parentTracks: panel.tracks,
-              width:        width
+              width:        width,
+              clickedLink:  linkEle
             }));
             
             panel.subPanels.push(panelDiv[0].id);
@@ -770,7 +768,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     if ($(active).attr('href') !== '#') { // $(active).attr('href') if href is set to # in HTML, $(active).attr('href') is '#', but active.href is window.location.href + '#'
       url = active.href;
     }
-    
     active = active.className;
     
     if (active.indexOf('-') !== -1) {
@@ -792,6 +789,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       case 'active_tracks':
         this.elLk.configs.hide().filter('.on').show().parents('li, div.subset, div.config').show();
         this.elLk.configDivs.filter('.functional').find('.hidden-caption').show();
+  
+        // Hide trackhub tracks
+        this.elLk.configDivs.filter('.trackhub').hide();
+
         break;
       
       case 'favourite_tracks':
@@ -806,8 +807,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         this.addTracks(active);
         
         configDiv = this.elLk.configDivs.filter('.' + active).each(show);
-        
-        if (subset) {
+       
+        if (configDiv.hasClass('trackhub') && !subset) {
+          // Hide subsections on trackhub parent page
+          configDiv.children('.multiple').each(function () { this.style.display = 'none' });
+        } 
+        else if (subset) {
           configDiv.children('.' + subset).addClass('active').each(show).siblings(':not(.config_header)').map(function () {
             if (this.style.display !== 'none') {
               this.style.display = 'none';
@@ -834,7 +839,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         if (url) {
           if (!configDiv.children().length) {
             this.addTracks(this.elLk.links.filter('.active').parent().siblings('a').attr('class')); // Add the tracks in the parent panel, for safety
-            addSection(configDiv);
+            addSection(configDiv, linkEle);
           }
           
           configDiv.data('active', true);
@@ -862,13 +867,16 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     var diff        = false;
     var imageConfig = {};
     var viewConfig  = {};
-
+    var menu_ids    = [];
     $.each(this.subPanels, function (i, id) {
       var conf = Ensembl.EventManager.triggerSpecific('updateConfiguration', id, id, true);
 
       if (conf) {
         $.extend(viewConfig,  conf.viewConfig);
         $.extend(imageConfig, conf.imageConfig);
+        if (conf.menu_id) {
+          menu_ids.push(conf.menu_id);
+        }
         diff = true;
       }
     });
@@ -923,7 +931,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       $.extend(true, this.imageConfig, imageConfig);
       $.extend(true, this.viewConfig,  viewConfig);
 
-      this.updatePage($.extend(saveAs, { image_config: JSON.stringify(imageConfig), view_config: JSON.stringify(viewConfig) }), delayReload);
+      this.updatePage($.extend(saveAs, { 'image_config': JSON.stringify(imageConfig), 'view_config': JSON.stringify(viewConfig), 'menu_ids': JSON.stringify(menu_ids) }), delayReload);
       
       return diff;
     }

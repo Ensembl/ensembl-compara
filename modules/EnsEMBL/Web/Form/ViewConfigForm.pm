@@ -238,7 +238,9 @@ sub _add_imageconfig_menu {
   my $caption     = $node->get_data('caption');
   my $desc        = $node->get_data('description');
   my $parent_menu = $tree->append_node($section, { 'caption' => $caption, 'class' => $section, 'url' => '#' }); # LHS menu
-  my $div         = $self->append_child('div', { 'class' => ['config', $section] }); # RHS section
+  my $div_classes = ['config', $section];
+  push @$div_classes, 'trackhub' if $node->get_data('trackhub_menu');
+  my $div         = $self->append_child('div', { 'class' => $div_classes }); # RHS section
 
   # Add the main menu
   $div->append_child('h2', {'class' => 'config_header', 'inner_HTML' => $caption});
@@ -252,10 +254,13 @@ sub _add_imageconfig_menu {
     # If all children are menus
     if (scalar @child_nodes && !grep $_->get_data('node_type') ne 'menu', @child_nodes) {
       my $first = 'first ';
+      my $multi = scalar(@child_nodes) > 1 ? 'multiple ' : '';
 
       foreach my $child (@child_nodes) {
         my $id      = $child->id;
-        my $parent  = $div->append_child('div', { 'class' => "subset $first$id" });
+        ## Matrices by definition have multiple tracks under a subheader
+        $multi = 'multiple ' if $child->get_data('menu') eq 'matrix';
+        my $parent  = $div->append_child('div', { 'class' => "subset $multi$first$id" });
 
         $self->_build_imageconfig_menus($child, $parent, $section, $id);
         $first = '';
@@ -470,7 +475,17 @@ sub _add_select_all {
   my $matrix            = $node->get_data('menu') eq 'matrix';
 
   # Don't add a select all if there is only one child
+  # - but tracks that appear on both strands will manifest as two nodes, so be careful!
+  my $single_track = 0;
   if (scalar @child_nodes == 1) {
+    $single_track = 1;
+  }
+  elsif (scalar @child_nodes == 2 && $child_nodes[0]{'data'}{'caption'} eq $child_nodes[1]{'data'}{'caption'}
+        && $child_nodes[0]{'data'}{'drawing_strand'} ne $child_nodes[1]{'data'}{'drawing_strand'}) {
+    $single_track = 1;
+  }
+
+  if ($single_track) {
     # Add an h3 caption if there isn't going to be a select all for this menu (submenus will have select all)
     $menu->before('h3', { inner_HTML => $caption }) if $caption && !$single_menu && (($external_children == 1 && $external) || $external_children != 1);
 

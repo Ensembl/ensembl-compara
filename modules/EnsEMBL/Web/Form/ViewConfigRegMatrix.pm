@@ -23,78 +23,99 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::Form::ViewConfigMatrixForm);
 
+sub get_js_panel {
+  return 'ConfigRegMatrixForm';
+}
+
+sub breadcrumb_html {
+  my ($self)  = @_;
+
+  my $html = qq(
+      <div class="large-breadcrumbs">
+        <ul>
+          <li class="active _track-select" id="track-select"><a href="#"><span class="circle crumb-number">1</span>Select tracks</a><span class="hidden content-id">track-content</span></li>
+          <li class="inactive _configure" id="track-display"><a href="#"><span class="circle crumb-number">2</span>Configure track display</a><span class="hidden content-id">configuration-content</span></li>
+          <li class="inactive view-track"><a href="#"><span class="circle crumb-number">3</span>View tracks</a></li>
+        </ul>
+      </div>
+  );
+
+  return $html;
+}
+
 sub configuration_content {
   my ($self, $dimX, $dimY) = @_;
 
-  return qq(      
-      <div class="track-panel track-configuration" id="configuration-content">
+  return qq(
+      <div class="track-panel track-configuration reg-matrix" id="configuration-content">
         <div class="vertical-sub-header">$dimX</div>
         <div class="configuration-legend">
           <div class="config-key"><span class="track-key on"></span>Data track on</div>
           <div class="config-key"><span class="track-key off"></span>Data track off</div>
           <div class="config-key"><span class="track-key no-data"></span>No data</div>
-          <div class="config-key"><span class="track-key peak"><img src="/i/render/peak_blue50.svg" /></span>Peaks</div>
-          <div class="config-key"><span class="track-key signal"><img src="/i/render/signal_blue50.svg" /></span>Signal</div>
+          <div class="config-key"><span class="track-key peak"><img src="/i/svg/peak_blue50.svg" /></span>Peaks</div>
+          <div class="config-key"><span class="track-key signal"><img src="/i/svg/signal_blue50.svg" /></span>Signal</div>
         </div>
         <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
         <button class="fade-button reset-button _matrix">Reset</button>
-        <div class="track-popup column-cell">
-          <ul>
-            <li>
-              <label class="switch"><input type="checkbox" name="column-switch"><span class="slider round"></span><span class="switch-label">Column</span></label>
-            </li>
-          </ul>
-          <ul>
-            <li>
-              <label class="switch"><input type="checkbox" name="cell-switch"><span class="slider round"></span><span class="switch-label">Cell</span></label>
-            </li>
-          </ul>
+        <div class="matrix-container-wrapper">
+          <div class="hidebox"></div>
+          <div class="matrix-container"></div>
+          <div class="track-popup column-cell">
+            <ul>
+              <li>
+                <label class="switch"><input type="checkbox" name="column-switch"><span class="slider round"></span><span class="switch-label">Column</span></label>
+              </li>
+            </ul>
+            <ul>
+              <li>
+                <label class="switch"><input type="checkbox" name="cell-switch"><span class="slider round"></span><span class="switch-label">Cell</span></label>
+              </li>
+            </ul>
+          </div>
+          <div class="track-popup peak-signal">
+            <ul>
+              <li>
+                <label class="switch"><input type="checkbox" name="column-switch"><span class="slider round"></span><span class="switch-label">Column</span></label><input type='radio' name="column-radio" class="_peak-signal" /><text>Peaks & signal</text>  
+              </li>
+              <li><input type='radio' name="column-radio" class="_peak"/><text>Peaks</text></li>
+              <li><input type='radio' name="column-radio" class="_signal"/><text>Signal</text></li>
+            </ul>
+            <ul>
+              <li>
+                <label class="switch"><input type="checkbox" name="row-switch"><span class="slider round"></span><span class="switch-label">Row</span></label><input type='radio' name="row-radio" class="_peak-signal"/><text>Peaks & signal</text>
+              </li>
+              <li>
+                <input type='radio' name="row-radio" class="_peak"/><text>Peaks</text>
+              </li>
+              <li>
+                <input type='radio' name="row-radio" class="_signal"/><text>Signal</text>
+              </li>
+            </ul>
+            <ul>
+              <li>
+                <label class="switch"><input type="checkbox" name="cell-switch"><span class="slider round"></span><span class="switch-label">Cell</span></label><input type='radio' name="cell-radio" class="_peak-signal"/><text>Peaks & signal</text>
+              </li>
+              <li>
+                <input type='radio' name="cell-radio" class="_peak"/><text>Peaks</text>
+              </li>
+              <li>
+                <input type='radio' name="cell-radio" class="_signal"/><text>Signal</text>
+              </li>
+            </ul>
+            <ul>
+              <li>
+                <label class="switch"><input type="checkbox" name="all-switch"><span class="slider round"></span><span class="switch-label">All</span></label><input type='radio' name="all-radio" class="_peak-signal"/><text>Peaks & signal</text>
+              </li>
+              <li>
+                <input type='radio' name="all-radio" class="_peak"/><text>Peaks</text>
+              </li>
+              <li>
+                <input type='radio' name="all-radio" class="_signal"/><text>Signal</text>
+              </li>
+            </ul>          
+          </div>
         </div>
-        <div class="track-popup peak-signal">
-          <ul>
-            <li>
-              <label class="switch"><input type="checkbox" name="column-switch"><span class="slider round"></span><span class="switch-label">Column</span></label><input type='radio' name="column-radio" class="_peak-signal" /><text>Peaks & signal</text>  
-            </li>
-            <li><input type='radio' name="column-radio" class="_peak"/><text>Peaks</text></li>
-            <li><input type='radio' name="column-radio" class="_signal"/><text>Signal</text></li>
-          </ul>
-          <ul>
-            <li>
-              <label class="switch"><input type="checkbox" name="row-switch"><span class="slider round"></span><span class="switch-label">Row</span></label><input type='radio' name="row-radio" class="_peak-signal"/><text>Peaks & signal</text>
-            </li>
-            <li>
-              <input type='radio' name="row-radio" class="_peak"/><text>Peaks</text>
-            </li>
-            <li>
-              <input type='radio' name="row-radio" class="_signal"/><text>Signal</text>
-            </li>
-          </ul>
-          <ul>
-            <li>
-              <label class="switch"><input type="checkbox" name="cell-switch"><span class="slider round"></span><span class="switch-label">Cell</span></label><input type='radio' name="cell-radio" class="_peak-signal"/><text>Peaks & signal</text>
-            </li>
-            <li>
-              <input type='radio' name="cell-radio" class="_peak"/><text>Peaks</text>
-            </li>
-            <li>
-              <input type='radio' name="cell-radio" class="_signal"/><text>Signal</text>
-            </li>
-          </ul>
-          <ul>
-            <li>
-              <label class="switch"><input type="checkbox" name="all-switch"><span class="slider round"></span><span class="switch-label">All</span></label><input type='radio' name="all-radio" class="_peak-signal"/><text>Peaks & signal</text>
-            </li>
-            <li>
-              <input type='radio' name="all-radio" class="_peak"/><text>Peaks</text>
-            </li>
-            <li>
-              <input type='radio' name="all-radio" class="_signal"/><text>Signal</text>
-            </li>
-          </ul>          
-        </div>
-        <div class="hidebox"></div>
-        <div class="matrix-container">
-        </div>        
       </div>
 
       <div class="result-box">
