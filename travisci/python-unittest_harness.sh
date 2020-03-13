@@ -36,8 +36,7 @@ fi
 pytest "${PYTEST_OPTIONS[@]}" "${PYTHON_SOURCE_LOCATIONS[@]}" --server "mysql://travis@127.0.0.1:3306/"
 rt2=$?
 
-# Return code 5 means "No tests collected". We want this as long as we don't have any tests
-if [[ ($rt1 -eq 0) && ($rt2 -eq 5) ]]; then
+if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then
   exit 0
 else
   exit 255
