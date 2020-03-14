@@ -16,7 +16,7 @@
 # limitations under the License.
 
 
-echo "We are running Perl '$TRAVIS_PERL_VERSION', Coveralls status is set to '$COVERAGE'"
+echo "We are running Perl '$TRAVIS_PERL_VERSION', Coverage reporting is set to '$COVERAGE'"
 
 # Setup the environment variables
 export ENSEMBL_CVS_ROOT_DIR=$PWD

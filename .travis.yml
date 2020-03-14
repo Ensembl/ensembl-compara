@@ -46,6 +46,7 @@ install:
     - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
     - cpanm --quiet --installdeps --notest .
     - cpanm --quiet --notest Devel::Cover::Report::Coveralls
+    - cpanm --quiet --notest Devel::Cover::Report::Codecov
 
 # Setup the MySQL server
 before_script:
@@ -79,6 +80,7 @@ jobs:
       script: ./travisci/perl-unittest_harness.sh
       after_success:
         - cover --nosummary -report coveralls
+        - cover --nosummary -report codecov
 
     - language: perl
       perl: 5.30
@@ -112,13 +114,14 @@ jobs:
       before_install:
         - echo
       install:
-        - pip install pytest-cov coveralls
+        - pip install pytest-cov coveralls codecov
         - pip install -r requirements.txt .
       before_script:
         - echo
       script: ./travisci/python-unittest_harness.sh
       after_success:
         - coveralls
+        - codecov
 
     - language: python
       python: 3.8
