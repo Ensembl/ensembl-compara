@@ -76,6 +76,8 @@ jobs:
       env:
         - COVERAGE=true
       script: ./travisci/perl-unittest_harness.sh
+      after_success:
+        - cover --nosummary -report coveralls
 
     - language: perl
       perl: 5.30

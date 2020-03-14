@@ -75,11 +75,7 @@ find docs modules scripts sql travisci -iname '*.pm' \! -name 'LoadSynonyms.pm' 
 rt6=$?
 
 if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) && ($rt4 -eq 0) && ($rt5 -eq 0) && ($rt6 -eq 0)]]; then
-  if [ "$COVERAGE" = 'true' ]; then
-    echo "Running Devel::Cover coveralls report"
-    cover --nosummary -report coveralls
-  fi
-  exit $?
+  exit 0
 else
   exit 255
 fi
