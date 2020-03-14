@@ -3,7 +3,8 @@ language: generic
 
 env:
   global:
-    secure: bGSZASCtRCcE2VZ3u4hdvjh6CDHe+Uo3MR7B4eobSFFhZVjIN3/DKaGrQYprEeSIB/vb75rveyTheO3qe3lHwq71e18cBk2ulQA6/L0eUJYsoR3u2y7d9whu8dS97IoLzize6hItxJFP8TmRaJBtWqOixyWHNW72X/fKF1a192E=
+    - secure: bGSZASCtRCcE2VZ3u4hdvjh6CDHe+Uo3MR7B4eobSFFhZVjIN3/DKaGrQYprEeSIB/vb75rveyTheO3qe3lHwq71e18cBk2ulQA6/L0eUJYsoR3u2y7d9whu8dS97IoLzize6hItxJFP8TmRaJBtWqOixyWHNW72X/fKF1a192E=
+    - COVERALLS_PARALLEL=true
 
 addons:
   apt:
@@ -111,11 +112,13 @@ jobs:
       before_install:
         - echo
       install:
-        - pip install pytest-cov
+        - pip install pytest-cov coveralls
         - pip install -r requirements.txt .
       before_script:
         - echo
       script: ./travisci/python-unittest_harness.sh
+      after_success:
+        - coveralls
 
     - language: python
       python: 3.8
@@ -129,3 +132,5 @@ jobs:
         - echo
       script: ./travisci/python-linter_harness.sh
 
+notifications:
+  webhooks: https://coveralls.io/webhook
