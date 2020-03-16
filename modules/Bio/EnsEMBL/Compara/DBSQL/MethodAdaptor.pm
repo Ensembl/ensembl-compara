@@ -63,6 +63,8 @@ package Bio::EnsEMBL::Compara::DBSQL::MethodAdaptor;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Utils::Exception qw(deprecate);
+
 use Bio::EnsEMBL::Compara::Method;
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
 
