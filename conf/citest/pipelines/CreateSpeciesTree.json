@@ -1,11 +1,10 @@
 {
     "reference_dir": "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/citest/",
-    "target_dir": "",
     "files_tests": [
         {
             "test": "content",
             "args": {
-                "paths": ["species_tree.branch_len.nw"]
+                "patterns": ["species_tree.branch_len.nw"]
             }
         }
     ]
