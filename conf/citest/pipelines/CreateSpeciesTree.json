@@ -1,10 +1,11 @@
 {
-    "reference_dir": "/hps/nobackup2/production/ensembl/cristig/species_tree2/",
-    "target_dir": "/hps/nobackup2/production/ensembl/cristig/species_tree/",
+    "reference_dir": "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/citest/",
+    "target_dir": "",
     "files_tests": [
         {
             "test": "content",
             "args": {
+                "paths": ["species_tree.branch_len.nw"]
             }
         }
     ]
