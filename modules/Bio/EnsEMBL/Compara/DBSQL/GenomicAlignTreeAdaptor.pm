@@ -727,7 +727,8 @@ sub store_node {
     $parent_id = $node->parent->node_id ;
     $root_id = $node->root->node_id;
   }
-  #printf("inserting parent_id = %d, root_id = %d dist=%s\n", $parent_id, $root_id, $node->distance_to_parent);
+
+  # printf("inserting parent_id = %d, root_id = %d dist=%s\n", ($parent_id || 'undef'), $root_id, $node->distance_to_parent);
 
   my $sth = $self->prepare("INSERT INTO genomic_align_tree 
                              (node_id,
@@ -736,7 +737,7 @@ sub store_node {
                               left_index,
                               right_index,
                               distance_to_parent)  VALUES (?,?,?,?,?,?)");
-  $sth->execute(undef, $parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent);
+  $sth->execute(undef, ($parent_id || undef), $root_id, $node->left_index, $node->right_index, $node->distance_to_parent);
   #print STDERR "LAST ID: ", $self->dbc->db_handle->last_insert_id(undef, undef, 'genomic_align_tree', 'node_id'), "\n";
   $node->node_id( $self->dbc->db_handle->last_insert_id(undef, undef, 'genomic_align_tree', 'node_id') );
   $sth->finish;
@@ -794,17 +795,37 @@ sub delete {
     return;
   }
 
-  my $sth = $self->prepare(
-      "DELETE
-        genomic_align_tree.*,
-        genomic_align.*,
-        genomic_align_block.*
-      FROM
-        genomic_align_tree
-        LEFT JOIN genomic_align USING (node_id)
-        LEFT JOIN genomic_align_block USING (genomic_align_block_id)
-      WHERE root_id = ?");
-  $sth->execute($root->node_id);
+    # first, delete genomic_align and genomic_align_block
+    # objects (FK constraint)
+    my $ga_sth = $self->prepare(
+        "DELETE FROM genomic_align
+        WHERE genomic_align_block_id = ?"
+    );
+    my $gab_sth = $self->prepare(
+        "DELETE FROM genomic_align_block
+        WHERE genomic_align_block_id = ?"
+    );
+    my $gat_gab_id = $root->get_all_leaves->[0]->get_all_genomic_aligns_for_node->[0]->genomic_align_block_id;
+    $ga_sth->execute($gat_gab_id);
+    $gab_sth->execute($gat_gab_id);
+
+    my $tree_update_sth = $self->prepare(
+        "UPDATE genomic_align_tree SET root_id = NULL WHERE node_id = ?"
+    );
+    my $tree_delete_sth = $self->prepare(
+      "DELETE FROM genomic_align_tree WHERE node_id = ?"
+    );
+
+    # sort the nodes so that child nodes get deleted before
+    # their parents (FK constraint)
+    my $nodes = $root->get_all_nodes;
+    my @sorted_nodes = sort { $b->dbID <=> $a->dbID } @$nodes;
+    foreach my $node ( @sorted_nodes ) {
+        # first, update the root_id to break the FK constraint
+        $tree_update_sth->execute($node->node_id);
+        # then we can delete the entry
+        $tree_delete_sth->execute($node->node_id);
+    }
 }
 
 

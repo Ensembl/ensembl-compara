@@ -401,7 +401,6 @@ CREATE TABLE method_link_species_set_attr (
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
-
 /**
 @header Taxonomy and species-tree
 @table species_tree_node
@@ -437,7 +436,9 @@ CREATE TABLE `species_tree_node` (
   `node_name` VARCHAR(255),
 
   FOREIGN KEY (`taxon_id`) REFERENCES ncbi_taxa_node(taxon_id),
-  FOREIGN KEY (`genome_db_id`) REFERENCES genome_db(genome_db_id), 
+  FOREIGN KEY (`genome_db_id`) REFERENCES genome_db(genome_db_id),
+  FOREIGN KEY (`parent_id`) REFERENCES species_tree_node(node_id),
+  FOREIGN KEY (`root_id`) REFERENCES species_tree_node(node_id),
   PRIMARY KEY (`node_id`),
   KEY `parent_id` (`parent_id`),
   KEY `root_id` (`root_id`,`left_index`)
@@ -469,7 +470,6 @@ CREATE TABLE `species_tree_root` (
 
   PRIMARY KEY (root_id)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
 
 /**
 @table species_tree_node_tag
@@ -746,7 +746,7 @@ CREATE TABLE genomic_align_block (
 */
 
 CREATE TABLE genomic_align_tree (
-  node_id                     bigint unsigned NOT NULL AUTO_INCREMENT, # internal id, FK genomic_align.node_id
+  node_id                     bigint unsigned NOT NULL AUTO_INCREMENT, -- internal id, FK genomic_align.node_id
   parent_id                   bigint unsigned DEFAULT NULL,
   root_id                     bigint unsigned NOT NULL default 0,
   left_index                  int(10) NOT NULL default 0,
@@ -755,6 +755,9 @@ CREATE TABLE genomic_align_tree (
   right_node_id               bigint unsigned,
   distance_to_parent          double NOT NULL default 1,
 
+  FOREIGN KEY (`parent_id`) REFERENCES genomic_align_tree(node_id),
+  FOREIGN KEY (`left_node_id`) REFERENCES genomic_align_tree(node_id),
+  FOREIGN KEY (`right_node_id`) REFERENCES genomic_align_tree(node_id),
   PRIMARY KEY node_id (node_id),
   KEY parent_id (parent_id),
   KEY left_index (root_id, left_index)
@@ -2259,4 +2262,3 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_100_101_d.sql|gat.node_ids');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_100_101_e.sql|positive_int');
-
