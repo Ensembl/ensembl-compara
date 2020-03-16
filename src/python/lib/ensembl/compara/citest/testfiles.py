@@ -127,7 +127,7 @@ class TestFilesItem(CITestItem):
             ref_filepath = str(self.dir_cmp.ref_path / filepath)
             target_filepath = str(self.dir_cmp.target_path / filepath)
             # If files are newick format, the newick trees need to be read and compared
-            if ref_filepath.endswith(('.nw','.nwk','.newick','.nh')):
+            if ref_filepath.endswith(('.nw', '.nwk', '.newick', '.nh')):
                 ref_tree = Tree(ref_filepath, format=5)
                 target_tree = Tree(target_filepath, format=5)
                 # Check the sum of the distances between each node
