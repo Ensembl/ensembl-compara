@@ -303,7 +303,7 @@ sub initialize_new {
   $config->{$_} = ($self->param($_) eq 'on') ? 1 : 0 for qw(exons exons_case codons coding_seq translation rna snp_display utr hide_long_snps hide_rare_snps);
   $config->{'codons'}      = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
  
-  if ($self->param('line_numbering') ne 'off') {
+  if ($self->param('line_numbering') && $self->param('line_numbering') ne 'off') {
     $config->{'line_numbering'} = 'on';
     $config->{'number'}         = 1;
   }
