@@ -318,13 +318,7 @@ sub pipeline_analyses_db_complete {
     return [
         # ---------------------------------------------------[Delete base alignment]-----------------------------------------------------
         {   -logic_name => 'delete_alignment',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters => {
-                'sql' => [
-                    'DELETE gat, ga FROM genomic_align_tree gat JOIN genomic_align ga USING (node_id) WHERE method_link_species_set_id=' . $self->o('base_epo_mlss_id'),
-                    'DELETE FROM genomic_align_block WHERE method_link_species_set_id=' . $self->o('base_epo_mlss_id'),
-                ],
-            },
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::DeleteEPO',
             -flow_into => {
                 1 => [ 'set_internal_ids_again' ],
             },

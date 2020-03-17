@@ -809,23 +809,20 @@ sub delete {
     $ga_sth->execute($gat_gab_id);
     $gab_sth->execute($gat_gab_id);
 
+    # next, set FK constrained values to NULL and
+    # delete genomic_align_tree entries
     my $tree_update_sth = $self->prepare(
-        "UPDATE genomic_align_tree SET root_id = NULL WHERE node_id = ?"
+        "UPDATE genomic_align_tree SET
+            parent_id = NULL,
+            left_node_id = NULL,
+            right_node_id = NULL
+        WHERE root_id = ?"
     );
     my $tree_delete_sth = $self->prepare(
-      "DELETE FROM genomic_align_tree WHERE node_id = ?"
+      "DELETE FROM genomic_align_tree WHERE root_id = ?"
     );
-
-    # sort the nodes so that child nodes get deleted before
-    # their parents (FK constraint)
-    my $nodes = $root->get_all_nodes;
-    my @sorted_nodes = sort { $b->dbID <=> $a->dbID } @$nodes;
-    foreach my $node ( @sorted_nodes ) {
-        # first, update the root_id to break the FK constraint
-        $tree_update_sth->execute($node->node_id);
-        # then we can delete the entry
-        $tree_delete_sth->execute($node->node_id);
-    }
+    $tree_update_sth->execute($root->node_id);
+    $tree_delete_sth->execute($root->node_id);
 }
 
 
