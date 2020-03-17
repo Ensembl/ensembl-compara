@@ -84,7 +84,7 @@ sub _setInternalIds {
 
     # Write new blocks in the correct range
     my $sql0 = "SELECT MIN(genomic_align_id % $magic_number), MIN(genomic_align_block_id % $magic_number), COUNT(*), COUNT(DISTINCT genomic_align_id % $magic_number), COUNT(DISTINCT genomic_align_block_id % $magic_number) FROM genomic_align WHERE (FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id OR FLOOR(genomic_align_id / $magic_number) != method_link_species_set_id) AND method_link_species_set_id = ?";
-    my $sql1 = "INSERT INTO genomic_align_block SELECT (genomic_align_block_id % $magic_number) + ?, method_link_species_set_id, score , perc_id, length , group_id , level_id FROM genomic_align_block WHERE FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id AND method_link_species_set_id = ?";
+    my $sql1 = "INSERT INTO genomic_align_block SELECT (genomic_align_block_id % $magic_number) + ?, method_link_species_set_id, score , perc_id, length , group_id , level_id, direction FROM genomic_align_block WHERE FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id AND method_link_species_set_id = ?";
     # Update the dbIDs in genomic_align
     my $sql2gai = "UPDATE genomic_align SET genomic_align_id = ? + (genomic_align_id % $magic_number) WHERE FLOOR(genomic_align_id / $magic_number) != method_link_species_set_id AND method_link_species_set_id = ?";
     my $sql2gabi = "UPDATE genomic_align SET genomic_align_block_id = ? + (genomic_align_block_id % $magic_number) WHERE FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id  AND method_link_species_set_id = ?";

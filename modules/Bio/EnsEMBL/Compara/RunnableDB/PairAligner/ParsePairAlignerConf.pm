@@ -1143,6 +1143,7 @@ sub create_net_dataflows {
 			 'target_collection_name' => $net_config->{'non_reference_collection_name'},
 			 'input_mlss_id' => $chain_config->{'mlss_id'},
 			 'output_mlss_id' => $net_config->{'mlss_id'},
+             'direction' => 1,
 			);
 	$self->dataflow_output_id($output_hash,6);
 
@@ -1155,6 +1156,7 @@ sub create_net_dataflows {
                             'target_collection_name' => $net_config->{'reference_collection_name'},
                             'input_mlss_id' => $chain_config->{'mlss_id'},
                             'output_mlss_id' => $net_config->{'mlss_id'},
+                            'direction' => 2,
                );
            $self->dataflow_output_id($output_hash,6);
 
