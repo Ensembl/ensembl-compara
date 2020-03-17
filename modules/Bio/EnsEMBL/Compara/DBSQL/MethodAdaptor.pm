@@ -129,8 +129,9 @@ sub _objs_from_sth {
 
 sub fetch_by_type {
     my ($self, $type) = @_;
-    if ($type =~ /EPO/i) {
-        deprecate("EPO & EPO_LOW_COVERAGE are deprecated and will be replaced by EPO_CORE and EPO_EXTENDED in release 101.");
+    if ($type =~ /EPO_LOW_COVERAGE/i) {
+        deprecate("EPO_LOW_COVERAGE is deprecated and will be replaced by EPO_EXTENDED in release 101.");
+        $type = "EPO_EXTENDED";
     }
     return $self->_id_cache->get_by_additional_lookup('type', uc $type);
 }
