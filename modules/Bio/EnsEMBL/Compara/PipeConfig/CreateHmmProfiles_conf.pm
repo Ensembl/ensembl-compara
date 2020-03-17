@@ -221,12 +221,11 @@ sub default_options {
         # Uncomment and update the database locations
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/treefam_master',
-        #'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
+        'master_db' => 'compara_master',
         'ncbi_db'   => $self->o('master_db'),
 
         # Where the members come from (as loaded by the LoadMembers pipeline)
-        'member_db' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/mateus_load_members_tf_90',
+        'member_db' => 'compara_members',
 
     };
 }
