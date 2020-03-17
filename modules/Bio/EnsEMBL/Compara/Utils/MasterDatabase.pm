@@ -866,17 +866,15 @@ sub _mean {
 
     Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
     Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-    Arg[3]      : (optional) String $ignore
     Description : This method compares the given $genome_db DnaFrags with
                   the toplevel Slices from its corresponding core database.
-                  Can optionally ignore any slices or frags matching $ignore.
     Returns     : 1 upon match; 0 upon mismatch
     Exceptions  :
 
 =cut
 
 sub dnafrags_match_core_slices {
-    my ( $self, $compara_dba, $genome_db, $ignore ) = @_;
+    my ( $self, $compara_dba, $genome_db ) = @_;
 
     my $species_dba = $genome_db->db_adaptor;
     my $gdb_slices  = $genome_db->genome_component
@@ -890,14 +888,12 @@ sub dnafrags_match_core_slices {
 
     my (@missing_dnafrags, @differing_lens);
     foreach my $s_name ( keys %slice_len_by_name ) {
-        next if $ignore && $s_name =~ /$ignore/;
         push( @missing_dnafrags, $s_name ) unless defined $dnafrag_len_by_name{$s_name};
         push( @differing_lens, $s_name ) unless $dnafrag_len_by_name{$s_name} == $slice_len_by_name{$s_name};
     }
 
     my (@missing_slices, @differing_slices);
     foreach my $d_name ( keys %dnafrag_len_by_name ) {
-        next if $ignore && $d_name =~ /$ignore/;
         push( @missing_slices, $d_name ) unless defined $slice_len_by_name{$d_name};
         push( @differing_slices, $d_name ) unless $dnafrag_len_by_name{$d_name} == $slice_len_by_name{$d_name};
     }
