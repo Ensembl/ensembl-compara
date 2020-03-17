@@ -63,7 +63,6 @@ sub default_options {
         'outgroup'        => 'saccharomyces_cerevisiae',
 
         'output_dir'        => $self->o('pipeline_dir'),
-        'sketch_dir'        => $self->o('shared_hps_dir') . '/species_tree/' . $self->o('division') . '_sketches',
         'write_access_user' => $self->o('shared_user'),
 
         'mash_kmer_size'    => 24,
@@ -90,6 +89,10 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
         $self->pipeline_create_commands_rm_mkdir('output_dir'),
+        # In case it doesn't exist yet
+        ($self->o('shared_user') ? 'become ' . $self->o('shared_user') : '') . ' mkdir -p ' . $self->o('sketch_dir'),
+        # The files are going to be accessed by many processes in parallel
+        $self->pipeline_create_commands_lfs_setstripe('sketch_dir', $self->o('shared_user')),
     ];
 }
 

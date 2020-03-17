@@ -76,6 +76,7 @@ sub shared_default_options {
         'ensj_conf'             => $self->o('config_dir').'/ensj-healthcheck.json',
         'binary_species_tree'   => $self->o('config_dir').'/species_tree.branch_len.nw',
         'genome_dumps_dir'      => $self->o('shared_hps_dir') . '/genome_dumps/'.$self->o('division').'/',
+        'sketch_dir'            => $self->o('shared_hps_dir') . '/species_tree/' . $self->o('division') . '_sketches/',
 
         # HMM library
         'hmm_library_version'   => '2',
