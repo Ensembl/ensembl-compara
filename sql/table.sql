@@ -714,6 +714,7 @@ CREATE TABLE genomic_align_block (
   length                      int(10) NOT NULL,
   group_id                    bigint unsigned DEFAULT NULL,
   level_id                    tinyint(2) unsigned DEFAULT 0 NOT NULL,
+  direction                   tinyint(1) unsigned DEFAULT NULL,
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
@@ -2262,3 +2263,5 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_100_101_d.sql|gat.node_ids');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_100_101_e.sql|positive_int');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_100_101_f.sql|gab.direction');
