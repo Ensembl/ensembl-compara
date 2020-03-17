@@ -242,15 +242,17 @@ sub _get_msa_coverage_stats {
     }
 
     # next try coverage from prev_epo_db
-    my $prev_dba          = $self->get_cached_compara_dba('prev_epo_db');
-    my $prev_mlss         = $prev_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type('EPO')->[0];
-    my $prev_species_tree = $prev_mlss->species_tree;
-    my $prev_gdb_id_2_stn = $prev_species_tree->get_genome_db_id_2_node_hash();
+    if ( $self->param('prev_epo_db') ) {
+        my $prev_dba          = $self->get_cached_compara_dba('prev_epo_db');
+        my $prev_mlss         = $prev_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type('EPO')->[0];
+        my $prev_species_tree = $prev_mlss->species_tree;
+        my $prev_gdb_id_2_stn = $prev_species_tree->get_genome_db_id_2_node_hash();
 
-    my $prev_epo_db_coverage = $self->_epo_coverage($prev_gdb_id_2_stn, \@ref_gdb_ids);
-    if( scalar( keys %$prev_epo_db_coverage ) == $ref_count ) {
-        print "\n-- using EPO coverage from prev_epo_db\n\n" if $self->debug;
-        return $prev_epo_db_coverage;
+        my $prev_epo_db_coverage = $self->_epo_coverage($prev_gdb_id_2_stn, \@ref_gdb_ids);
+        if( scalar( keys %$prev_epo_db_coverage ) == $ref_count ) {
+            print "\n-- using EPO coverage from prev_epo_db\n\n" if $self->debug;
+            return $prev_epo_db_coverage;
+        }
     }
 
     # finally, try the anchor_align counts if the above have not covered all refs
