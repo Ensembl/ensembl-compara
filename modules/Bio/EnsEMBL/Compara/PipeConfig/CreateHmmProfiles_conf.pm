@@ -57,7 +57,7 @@ sub default_options {
     # custom pipeline name, in case you don't like the default one
         # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
         # Tag attached to every single tree
-        'division'              => undef,
+        'division'              => 'create_hmm',
 
     #default parameters for the geneset qc
 
