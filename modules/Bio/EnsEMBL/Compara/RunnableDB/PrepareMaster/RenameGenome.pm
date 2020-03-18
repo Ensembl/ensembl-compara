@@ -123,12 +123,12 @@ sub run {
 
     # Rename the genome in the mlss_conf.xml and species tree files
     my $content = $self->_slurp($xml_file);
-    $content =~ s/$old_name/$new_name/;
+    $content =~ s/"$old_name"/"$new_name"/;
     $self->_spurt($xml_file, $content);
     print "\nUpdated content of $xml_file\n" if $self->debug;
     if (defined $species_tree) {
         $content = $self->_slurp($species_tree);
-        $content =~ s/$old_name/$new_name/;
+        $content =~ s/([\(\),:])$old_name([\(\),:])/$1$new_name$2/;
         $self->_spurt($species_tree, $content);
         print "Updated content of $species_tree\n" if $self->debug;
     }
@@ -136,22 +136,22 @@ sub run {
     my $subdir = Bio::EnsEMBL::Hive::Utils::dir_revhash($genome_db->dbID);
     my $dumps_path = "$genome_dumps_dir/$subdir";
     # Rename *.fa and *.fai files
-    my @fasta_files = glob qq(${dumps_path}/${old_name}*.fa ${dumps_path}/${old_name}*.fai);
+    my @fasta_files = glob qq(${dumps_path}/${old_name}.*.fa ${dumps_path}/${old_name}.*.fai);
     foreach my $file (@fasta_files) {
         (my $new_fname = $file) =~ s/$old_name/$new_name/;
         rename $file, $new_fname;
     }
     print "\nFiles renamed:\n", join("\n", @fasta_files), "\n" if $self->debug;
     # Exonerate and sketch files cannot be renamed: they need to be regenerated with the updated name
-    my @files_to_rm = glob qq(${dumps_path}/${old_name}*.es?);
-    push @files_to_rm, glob qq(${sketch_dir}/${old_name}*);
+    my @files_to_rm = glob qq(${dumps_path}/${old_name}.*.es?);
+    push @files_to_rm, glob qq(${sketch_dir}/${old_name}.*);
     # Delete also every collection sketch file related with the renamed genome
     my $ssa = $dba_hash->{$master_db}->get_SpeciesSetAdaptor();
     my @collections = grep { $_->size > 2 } @{ $ssa->fetch_all_by_GenomeDB($genome_db) };
     foreach my $set ( @collections ) {
-        # Match and delete both "collection-<name>*" and "<name>*" files (using "*<name>*")
+        # Match and delete both "collection-<name>.*" and "<name>.*" files (using "*<name>.*")
         (my $set_name = $set->name) =~ s/collection-/*/;
-        push @files_to_rm, glob qq(${sketch_dir}/${set_name}*);
+        push @files_to_rm, glob qq(${sketch_dir}/${set_name}.*);
     }
     unlink @files_to_rm;
     print "\nFiles removed:\n" . join("\n", @files_to_rm) . "\n" if $self->debug;
