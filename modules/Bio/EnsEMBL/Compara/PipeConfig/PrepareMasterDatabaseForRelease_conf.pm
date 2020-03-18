@@ -68,6 +68,7 @@ sub default_options {
         'backups_dir' => $self->o('work_dir') . '/master_backups/',
 
         'master_db'           => 'compara_master',
+        'prev_dbs'            => ['*_prev'],
         'taxonomy_db'         => 'ncbi_taxonomy',
         'incl_components'     => 1, # let's default this to 1 - will have no real effect if there are no component genomes (e.g. in vertebrates)
         'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),

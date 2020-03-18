@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForRelease
@@ -37,12 +26,6 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForRelease
     database, update master database's metadata, and update collections and mlss.
     Finally, it will run the healthchecks and perform a backup of the updated master
     database.
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
 
 =cut
 
@@ -156,9 +139,14 @@ sub pipeline_analyses_prep_master_db_for_release {
         },
 
         {   -logic_name => 'rename_genome',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::RenameGenome',
             -parameters => {
-                'db_conn' => $self->o('master_db'),
+                'master_db'         => $self->o('master_db'),
+                'prev_dbs'          => $self->o('prev_dbs'),
+                'xml_file'          => $self->o('xml_file'),
+                'species_tree'      => $self->o('binary_species_tree'),
+                'genome_dumps_dir'  => $self->o('genome_dumps_dir'),
+                'sketch_dir'        => $self->o('sketch_dir'),
             },
         },
 
