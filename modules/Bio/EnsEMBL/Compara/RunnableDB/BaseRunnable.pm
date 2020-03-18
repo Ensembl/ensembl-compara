@@ -119,7 +119,8 @@ sub get_all_compara_dbas {
     my @reg_aliases = @{Bio::EnsEMBL::Registry->get_all_species('compara')};
     # If no patterns are given, return all compara dbas
     unless ( @{$patterns} ) {
-        return map { $_ => Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($_) } @reg_aliases;
+        my %compara_dbas = map { $_ => Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($_) } @reg_aliases;
+        return \%compara_dbas;
     }
     $patterns = [$patterns] unless ref($patterns);
     # "Decompress" wildcards
@@ -133,7 +134,7 @@ sub get_all_compara_dbas {
             $compara_dbas{$alias} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($alias);
         }
     }
-    return %compara_dbas;
+    return \%compara_dbas;
 }
 
 

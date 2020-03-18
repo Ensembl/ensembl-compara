@@ -93,8 +93,8 @@ sub fetch_input {
     my $db_list = $self->param_required('prev_dbs');
     $db_list = [$db_list] unless ref($db_list);
     push @{$db_list}, $self->param_required('master_db');
-    my %dba_hash = $self->get_all_compara_dbas($db_list);
-    $self->param('dba_hash', \%dba_hash);
+    my $dba_hash = $self->get_all_compara_dbas($db_list);
+    $self->param('dba_hash', $dba_hash);
 }
 
 
