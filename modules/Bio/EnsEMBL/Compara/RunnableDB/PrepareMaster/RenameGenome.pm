@@ -47,10 +47,6 @@ Mandatory. Alias(es) or alias pattern(s) of previous databases to be renamed as 
 
 Mandatory. Path to the MLSS configuration XML file.
 
-=item species_tree
-
-Mandatory. Path to the species tree file.
-
 =item genome_dumps_dir
 
 Mandatory. Path to the root folder where the genome dumps are stored.
@@ -58,6 +54,10 @@ Mandatory. Path to the root folder where the genome dumps are stored.
 =item sketch_dir
 
 Mandatory. Path to the root folder where the sketch files are stored.
+
+=item species_tree
+
+Optional. Path to the species tree file.
 
 =back
 
@@ -67,9 +67,9 @@ Mandatory. Path to the root folder where the sketch files are stored.
         -compara_db $(mysql-ens-compara-prod-10-ensadmin details url jalvarez_prep_citest_master_for_rel_100) \
         -old_name canis_familiaris -new_name perricus_bonicus -master_db compara_master -prev_dbs '*_prev' \
         -xml_file $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/citest/mlss_conf.xml \
-        -species_tree $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/citest/species_tree.branch_len.nw \
         -genome_dumps_dir /hps/nobackup2/production/ensembl/jalvarez/genome_dumps/ \
-        -sketch_dir /hps/nobackup2/production/ensembl/jalvarez/species_tree/citest_sketches/
+        -sketch_dir /hps/nobackup2/production/ensembl/jalvarez/species_tree/citest_sketches/ \
+        -species_tree $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/citest/species_tree.branch_len.nw
 
 =cut
 
@@ -102,9 +102,9 @@ sub run {
     my $old_name = $self->param_required('old_name');
     my $new_name = $self->param_required('new_name');
     my $xml_file = $self->param_required('xml_file');
-    my $species_tree = $self->param_required('species_tree');
     my $genome_dumps_dir = $self->param_required('genome_dumps_dir');
     my $sketch_dir = $self->param_required('sketch_dir');
+    my $species_tree = $self->param('species_tree');
 
     my $master_db = $self->param('master_db');
     my $dba_hash = $self->param('dba_hash');
@@ -126,10 +126,12 @@ sub run {
     $content =~ s/$old_name/$new_name/;
     $self->_spurt($xml_file, $content);
     print "\nUpdated content of $xml_file\n" if $self->debug;
-    $content = $self->_slurp($species_tree);
-    $content =~ s/$old_name/$new_name/;
-    $self->_spurt($species_tree, $content);
-    print "Updated content of $species_tree\n" if $self->debug;
+    if (defined $species_tree) {
+        $content = $self->_slurp($species_tree);
+        $content =~ s/$old_name/$new_name/;
+        $self->_spurt($species_tree, $content);
+        print "Updated content of $species_tree\n" if $self->debug;
+    }
 
     my $subdir = Bio::EnsEMBL::Hive::Utils::dir_revhash($genome_db->dbID);
     my $dumps_path = "$genome_dumps_dir/$subdir";
