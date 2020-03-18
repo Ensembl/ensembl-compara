@@ -116,7 +116,7 @@ The currently supported methods are:
 +----------------+--------------------------+----------------------------------------+
 |             13 | EPO                      | GenomicAlignTree.ancestral_alignment   |
 +----------------+--------------------------+----------------------------------------+
-|             14 | EPO_LOW_COVERAGE         | GenomicAlignTree.tree_alignment        |
+|             14 | EPO_EXTENDED             | GenomicAlignTree.tree_alignment        |
 +----------------+--------------------------+----------------------------------------+
 |             16 | LASTZ_NET                | GenomicAlignBlock.pairwise_alignment   |
 +----------------+--------------------------+----------------------------------------+

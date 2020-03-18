@@ -111,7 +111,7 @@ sub _create_specific_readme {
 	$self->_create_specific_pecan_readme($compara_dba, $mlss, $species_set, $newick_species_tree);
     } elsif ($mlss->method->type eq "EPO") {
 	$self->_create_specific_epo_readme($compara_dba, $mlss, $species_set, $newick_species_tree);
-    } elsif ($mlss->method->type eq "EPO_LOW_COVERAGE") {
+    } elsif ($mlss->method->type eq "EPO_EXTENDED") {
 	$self->_create_specific_epo_low_coverage_readme($compara_dba, $mlss, $species_set, $newick_species_tree, $mlss_adaptor);
     } elsif ($mlss->method->type eq "LASTZ_NET") {
 	$self->_create_specific_pairaligner_readme($compara_dba, $mlss, $species_set, 'LastZ');
@@ -171,7 +171,7 @@ uses the Pecan alignments to infer the ancestral sequences.");
 }
 
 #
-#Create EPO_LOW_COVERAGE README file
+#Create EPO_EXTENDED README file
 #
 sub _create_specific_epo_low_coverage_readme {
     my ($self, $compara_dba, $mlss, $species_set, $newick_species_tree, $mlss_adaptor) = @_;
@@ -384,7 +384,7 @@ scripts/dumps directory. Alternatively you can download it using the GitHub fron
 https://github.com/Ensembl/ensembl-compara/raw/master/scripts/dumps/emf2maf.pl");
     } elsif ($self->param('format') eq 'maf') {
         my $txt = "The MAF format is described at https://genome.ucsc.edu/FAQ/FAQformat.html#format5";
-        $txt .= "Please note that MAF format does not support conservation scores." if ($mlss->method->type eq 'EPO_LOW_COVERAGE') or ($mlss->method->type eq 'PECAN');
+        $txt .= "Please note that MAF format does not support conservation scores." if ($mlss->method->type eq 'EPO_EXTENDED') or ($mlss->method->type eq 'PECAN');
         $self->_print_paragraph($txt);
     }
 }

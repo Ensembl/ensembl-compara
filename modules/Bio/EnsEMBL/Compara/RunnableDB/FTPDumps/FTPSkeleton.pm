@@ -52,7 +52,7 @@ sub param_defaults {
         ftp_locations => {
         	LASTZ_NET => ['maf/ensembl-compara/pairwise_alignments'],
         	EPO => ['emf/ensembl-compara/multiple_alignments', 'maf/ensembl-compara/multiple_alignments'],
-        	EPO_LOW_COVERAGE => ['emf/ensembl-compara/multiple_alignments', 'maf/ensembl-compara/multiple_alignments'],
+        	EPO_EXTENDED => ['emf/ensembl-compara/multiple_alignments', 'maf/ensembl-compara/multiple_alignments'],
         	PECAN => ['emf/ensembl-compara/multiple_alignments', 'maf/ensembl-compara/multiple_alignments'],
         	GERP_CONSTRAINED_ELEMENT => ['bed/ensembl-compara'],
         	# GERP_CONSERVATION_SCORE => ['compara/conservation_scores'],

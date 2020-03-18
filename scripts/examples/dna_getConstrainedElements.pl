@@ -26,7 +26,7 @@ use Data::Dumper;
 
 #
 # Simple example to retrieve the constrained elements from the eutherian 
-# mammals 33way EPO_LOW_COVERAGE alignment
+# mammals 33way EPO_EXTENDED alignment
 #
 
 my $reg = 'Bio::EnsEMBL::Registry';
@@ -55,7 +55,7 @@ my $method_link_species_set_adaptor = Bio::EnsEMBL::Registry->get_adaptor('Multi
 #Get constrained element method_list_species_set
 my $ce_mlss =  $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name("GERP_CONSTRAINED_ELEMENT", "mammals");
 
-my $orig_mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name("EPO_LOW_COVERAGE", "mammals");
+my $orig_mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name("EPO_EXTENDED", "mammals");
 throw("Unable to find method_link_species_set") if (!defined($orig_mlss));
 
 #Get constrained_element adaptor

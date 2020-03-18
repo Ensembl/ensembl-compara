@@ -98,7 +98,7 @@ sub default_options {
 		# define input options for DumpMultiAlign for each method_link_type
         'alignment_dump_options' => {
         	EPO              => {format => 'emf+maf'},
-        	EPO_LOW_COVERAGE => {format => 'emf+maf'},
+        	EPO_EXTENDED     => {format => 'emf+maf'},
         	PECAN            => {format => 'emf+maf'},
         	LASTZ_NET        => {format => 'maf', make_tar_archive => 1},
         },
@@ -132,7 +132,7 @@ sub default_options {
         ftp_locations => {
         	LASTZ_NET => ['maf/ensembl-compara/pairwise_alignments'],
         	EPO => ['emf/ensembl-compara/multiple_alignments', 'maf/ensembl-compara/multiple_alignments'],
-        	EPO_LOW_COVERAGE => ['emf/ensembl-compara/multiple_alignments', 'maf/ensembl-compara/multiple_alignments'],
+        	EPO_EXTENDED => ['emf/ensembl-compara/multiple_alignments', 'maf/ensembl-compara/multiple_alignments'],
         	PECAN => ['emf/ensembl-compara/multiple_alignments', 'maf/ensembl-compara/multiple_alignments'],
         	GERP_CONSTRAINED_ELEMENT => ['bed/ensembl-compara'],
         	GERP_CONSERVATION_SCORE => ['compara/conservation_scores'],
@@ -141,7 +141,7 @@ sub default_options {
         # DumpMultiAlign options
         'split_size'          => 200,
         'masked_seq'          => 1,
-        'method_link_types'   => 'BLASTZ_NET:TRANSLATED_BLAT:TRANSLATED_BLAT_NET:LASTZ_NET:PECAN:EPO:EPO_LOW_COVERAGE',
+        'method_link_types'   => 'BLASTZ_NET:TRANSLATED_BLAT:TRANSLATED_BLAT_NET:LASTZ_NET:PECAN:EPO:EPO_EXTENDED',
         'split_by_chromosome' => 1,
 
         # tree dump options

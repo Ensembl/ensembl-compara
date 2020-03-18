@@ -370,7 +370,7 @@ while (my $aref1 = shift @refs_by_size) {
 foreach my $xml_msa (@{$division_node->findnodes('multiple_alignments/multiple_alignment')}) {
     my $no_release = $xml_msa->getAttribute('no_release') || 0;
     if ($xml_msa->getAttribute('method') =~ /(.*)\+(.*)/) {
-        # Assume we combine two pipelines (presumably EPO and EPO_LOW_COVERAGE)
+        # Assume we combine two pipelines (presumably EPO and EPO_EXTENDED)
         my $method1 = $compara_dba->get_MethodAdaptor->fetch_by_type($1);
         my $method2 = $compara_dba->get_MethodAdaptor->fetch_by_type($2);
         my $species_set2 = make_named_species_set_from_XML_node($xml_msa, $method2, $division_genome_dbs);

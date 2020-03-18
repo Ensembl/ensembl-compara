@@ -11,7 +11,7 @@
 11	GERP_CONSTRAINED_ELEMENT	ConstrainedElement.constrained_element	GERP Constrained Elements
 12	ORTHEUS	GenomicAlignTree.tree_alignment	Ortheus alignment
 13	EPO	GenomicAlignTree.ancestral_alignment	EPO
-14	EPO_LOW_COVERAGE	GenomicAlignTree.tree_alignment	EPO-Low-Coverage
+14	EPO_EXTENDED	GenomicAlignTree.tree_alignment	EPO-Extended
 15	ENREDO	SyntenyRegion.enredo	Enredo
 16	LASTZ_NET	GenomicAlignBlock.pairwise_alignment	LastZ
 17	pEPO	GenomicAlignTree.ancestral_alignment	

@@ -291,7 +291,7 @@ perl DumpAlignedGenes.pl
      perl DumpAlignedGenes.pl  --alignment_type BLASTZ_NET --set_of_species mouse:rat --seq_region 8 \
                --seq_region_start 21180813 --seq_region_end 21188452 --species rat --genes_from mouse
    Example for multiple alignments:
-     perl DumpAlignedGenes.pl  --alignment_type EPO_LOW_COVERAGE --species_set_name mammals --seq_region 8 \
+     perl DumpAlignedGenes.pl  --alignment_type EPO_EXTENDED --species_set_name mammals --seq_region 8 \
                --seq_region_start 21180813 --seq_region_end 21188452 --species rat --genes_from chimp
                                
 };
