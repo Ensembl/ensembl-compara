@@ -110,7 +110,7 @@ sub run {
 
     my $master_db = $self->param('master_db');
     my $dba_hash = $self->param('dba_hash');
-    my $genome_db = $dba_hash->{$master_db}->get_GenomeDBAdaptor()->fetch_by_registry_name($old_name);
+    my $genome_db = $dba_hash->{$master_db}->get_GenomeDBAdaptor()->fetch_by_name_assembly($old_name);
 
     # We really need a transaction to ensure we are not screwing the databases
     foreach my $dba (values %{$dba_hash}) {
