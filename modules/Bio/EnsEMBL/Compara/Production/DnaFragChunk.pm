@@ -273,8 +273,7 @@ sub dump_chunks_to_fasta_file {
 
 =head2 dump_loc_file
 
-  Arg [1]     : (Optional) string - base directory path. By default, the current
-                working directory.
+  Arg [1]     : string - base directory path
   Example     : $chunk->dump_loc_file('/tmp');
   Description : Returns a unique filepath for this DnaFragChunk.
   Returntype  : String
@@ -283,7 +282,9 @@ sub dump_chunks_to_fasta_file {
 
 sub dump_loc_file {
     my $self = shift;
-    my $basedir = shift // cwd();
+    my $basedir = shift;
+
+    die "Base directory path required" unless $basedir;
 
     my $sub_dir  = dir_revhash($self->dbID);
     my $filename = sprintf('chunk_%s.fa', $self->dbID);
