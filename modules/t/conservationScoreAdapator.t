@@ -41,7 +41,7 @@ my $genomic_align_tree_adaptor = $compara_dba->get_GenomicAlignTreeAdaptor;
 my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
 my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
 
-my $epo_method_type = "EPO_EXTENDED";
+my $epo_method_type = "EPO_LOW_COVERAGE";
 my $pecan_method_type = "PECAN";
 my $cs_method_type = "GERP_CONSERVATION_SCORE";
 my $epo_species_set_name = "mammals";

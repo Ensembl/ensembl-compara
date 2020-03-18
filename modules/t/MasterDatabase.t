@@ -161,7 +161,7 @@ my $mouse_gdb = $gdb_adaptor->fetch_by_name_assembly('mus_musculus');
 my $chimp_gdb = $gdb_adaptor->fetch_by_name_assembly('pan_troglodytes');
 
 my $meth_epo    = $meth_adaptor->fetch_by_type('EPO');
-my $meth_epo2x  = $meth_adaptor->fetch_by_type('EPO_EXTENDED');
+my $meth_epo2x  = $meth_adaptor->fetch_by_type('EPO_LOW_COVERAGE');
 
 # test 1: create, store and release new mlss
 my $test_species_set;

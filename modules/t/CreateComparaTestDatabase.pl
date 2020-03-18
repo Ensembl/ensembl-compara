@@ -42,7 +42,7 @@ my @pairwise_genome_db_names = ("pan_troglodytes", "mus_musculus", "tarsius_syri
 
 my $pairwise_method_link_type = '"BLASTZ_NET", "LASTZ_NET"';
 my $epo_alignment_method_link_type = "EPO";
-my $epo_low_coverage_alignment_method_link_type = "EPO_EXTENDED";
+my $epo_low_coverage_alignment_method_link_type = "EPO_LOW_COVERAGE";
 my $pecan_alignment_method_link_type = "PECAN";
 my $constrained_element_method_link_type = "GERP_CONSTRAINED_ELEMENT";
 my $conservation_score_method_link_type = "GERP_CONSERVATION_SCORE";
