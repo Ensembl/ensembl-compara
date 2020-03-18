@@ -133,6 +133,8 @@ sub run_rfamclassify {
 
     $self->build_hash_models();
 
+    my $classified_members = $self->param('classified_members');
+
     my %allclusters;
     $self->param('allclusters', \%allclusters);
 
@@ -152,7 +154,7 @@ sub run_rfamclassify {
             my $sequence_id = $self->param('member2seq')->{$id};
             $seen_seqid{$sequence_id} = 1;
             foreach my $other_id (@{ $self->param('seq2member')->{$sequence_id} }) {
-                next if $self->param('classified_members')->{$other_id};
+                next if $classified_members->{$other_id};
                 $self->param('rfamclassify')->{$cm_id}->{$other_id}++;
             }
         }
