@@ -23,7 +23,7 @@
 
 
 ALTER TABLE genomic_align_block
-  ADD COLUMN direction int(1) unsigned DEFAULT NULL;
+  ADD COLUMN direction tinyint(1) unsigned DEFAULT NULL;
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
