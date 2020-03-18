@@ -102,6 +102,41 @@ sub _get_active_compara_dba {
 }
 
 
+=head2 get_all_compara_dbas
+
+    Arg[1]      : [Optional] (str/arrayref) return only compara DBAs whose aliases match one of the given
+                  patterns. These patterns can include wildcards ('*').
+    Example     : my %compara_dbas = $self->get_all_compara_dbas();
+                  my %compara_prev_dbas = $self->get_all_compara_dbas('*_prev');
+    Description : Getter of compara DBAs and their corresponding aliases.
+    Returntype  : Hashref
+
+=cut
+
+sub get_all_compara_dbas {
+    my ($self, $patterns) = @_;
+
+    my @reg_aliases = @{Bio::EnsEMBL::Registry->get_all_species('compara')};
+    # If no patterns are given, return all compara dbas
+    unless ( @{$patterns} ) {
+        return map { $_ => Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($_) } @reg_aliases;
+    }
+    $patterns = [$patterns] unless ref($patterns);
+    # "Decompress" wildcards
+    foreach my $alias ( @{$patterns} ) {
+        $alias =~ s/\*/[a-zA-z0-9_]*/g;
+    }
+    # Filter all registry aliases and return only those that match at least one pattern
+    my %compara_dbas;
+    foreach my $alias (@reg_aliases) {
+        if (grep { $alias =~ m/\A$_\Z/ } @{$patterns}) {
+            $compara_dbas{$alias} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($alias);
+        }
+    }
+    return %compara_dbas;
+}
+
+
 =head2 get_cached_compara_dba
 
     Description: Getter/setter for arbitrary DBAs coming from other parameters.
