@@ -78,6 +78,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::RenameGenome;
 use warnings;
 use strict;
 
+use File::Basename;
+
 use Bio::EnsEMBL::Hive::Utils;
 use Bio::EnsEMBL::Registry;
 
@@ -133,8 +135,7 @@ sub run {
         print "Updated content of $species_tree\n" if $self->debug;
     }
 
-    my $subdir = Bio::EnsEMBL::Hive::Utils::dir_revhash($genome_db->dbID);
-    my $dumps_path = "$genome_dumps_dir/$subdir";
+    my $dumps_path = dirname($genome_db->_get_genome_dump_path());
     # Rename *.fa and *.fai files
     my @fasta_files = glob qq(${dumps_path}/${old_name}.*.fa ${dumps_path}/${old_name}.*.fai);
     foreach my $file (@fasta_files) {
