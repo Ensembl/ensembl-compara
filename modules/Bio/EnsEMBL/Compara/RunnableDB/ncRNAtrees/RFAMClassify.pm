@@ -152,7 +152,12 @@ sub run_rfamclassify {
         # Expand with other members that have the same sequence
         foreach my $id (@cluster_list) {
             my $sequence_id = $self->param('member2seq')->{$id};
+            # Skip sequence_ids that have already been in another cluster
+            next if $seen_seqid{$sequence_id};
             $seen_seqid{$sequence_id} = 1;
+            # Skip the expansion of this sequence_id if some of the other members are in a different cluster
+            next if grep {$classified_members->{$_} && ($classified_members->{$_} ne $cm_id)}
+                    @{ $self->param('seq2member')->{$sequence_id} };
             foreach my $other_id (@{ $self->param('seq2member')->{$sequence_id} }) {
                 next if $classified_members->{$other_id};
                 $self->param('rfamclassify')->{$cm_id}->{$other_id}++;
@@ -253,7 +258,7 @@ sub build_hash_models {
       }
 
     $self->param('rfamclassify')->{$transcript_model_id}{$transcript_member_id} = 1;
-    $self->param('classified_members')->{$transcript_member_id} = 1;
+    $self->param('classified_members')->{$transcript_member_id} = $transcript_model_id;
    }
   }
 
