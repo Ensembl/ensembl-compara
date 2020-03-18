@@ -115,7 +115,7 @@ sub default_options {
 
         'low_epo_mlss_id'  => $self->o('low_epo_mlss_id'),  # mlss_id for low coverage epo alignment
         'base_epo_mlss_id' => $self->o('high_epo_mlss_id'), # mlss_id for the base alignment we're topping up
-                                                            # (can be EPO or EPO_LOW_COVERAGE)
+                                                            # (can be EPO or EPO_EXTENDED)
         'max_block_size'   => 1000000,                       #max size of alignment before splitting
 
         #default location for pairwise alignments (can be a string or an array-ref)
@@ -196,7 +196,7 @@ sub core_pipeline_analyses {
                     ],
                     [
                         '#low_epo_mlss_id#',
-                        ['EPO_LOW_COVERAGE', 'GERP_CONSTRAINED_ELEMENT', 'GERP_CONSERVATION_SCORE'],
+                        ['EPO_EXTENDED', 'GERP_CONSTRAINED_ELEMENT', 'GERP_CONSERVATION_SCORE'],
                         ['low_epo_mlss_id', 'ce_mlss_id', 'cs_mlss_id'],
                         undef,
                         0 # do not store reuse species sets for low coverage species

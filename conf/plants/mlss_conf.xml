@@ -62,7 +62,7 @@
         <genome name="oryza_punctata" exclude="1"/>
       </species_set>
     </multiple_alignment>
-    <multiple_alignment method="EPO_LOW_COVERAGE">
+    <multiple_alignment method="EPO_EXTENDED">
       <species_set name="rice">
         <taxonomic_group taxon_name="Oryza"/>
       </species_set>

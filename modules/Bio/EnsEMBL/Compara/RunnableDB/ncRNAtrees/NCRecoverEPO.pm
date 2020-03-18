@@ -317,9 +317,9 @@ sub run_ncrecoverepo {
 # This one is called
 sub iterate_over_lowcov_mlsss {
     my $self = shift @_;
-    my $epolow_mlsss = $self->param('epo_mlss_adaptor')->fetch_all_by_method_link_type('EPO_LOW_COVERAGE');
+    my $epolow_mlsss = $self->param('epo_mlss_adaptor')->fetch_all_by_method_link_type('EPO_EXTENDED');
     unless (scalar(@$epolow_mlsss)) {
-        die "Could not find an 'EPO_LOW_COVERAGE' MLSS in ".$self->param('epo_db')."\n";
+        die "Could not find an 'EPO_EXTENDED' MLSS in ".$self->param('epo_db')."\n";
     }
     my @gab_ids;
     $self->param('low_cov_leaves_to_delete', []);

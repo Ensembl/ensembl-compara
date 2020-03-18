@@ -22,7 +22,7 @@
         </multiple_alignment>
 
         <!-- Mammals + Chicken -->
-        <multiple_alignment method="EPO_LOW_COVERAGE" gerp="1">
+        <multiple_alignment method="EPO_EXTENDED" gerp="1">
             <species_set name="mammals_with_feathers">
                 <taxonomic_group taxon_name="Eutheria"/>
                 <genome name="gallus_gallus"/>

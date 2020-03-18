@@ -46,7 +46,7 @@ sub param_defaults {
         %{$self->SUPER::param_defaults},
         #'alignment_dump_options' => {
                 #EPO              => {format => 'emf+maf'},
-                #EPO_LOW_COVERAGE => {format => 'emf+maf'},
+                #EPO_EXTENDED     => {format => 'emf+maf'},
                 #PECAN            => {format => 'emf+maf'},
                 #LASTZ_NET        => {format => 'maf', make_tar_archive => 1},
         #},
@@ -54,7 +54,7 @@ sub param_defaults {
         # define which method_link_types should be dumpable (only used to
         # trigger the copy from the previous release)
         dumpable_method_types => {
-        	'LASTZ_NET' => 1, 'EPO' => 1, 'EPO_LOW_COVERAGE' => 1, 'PECAN' => 1,
+        	'LASTZ_NET' => 1, 'EPO' => 1, 'EPO_EXTENDED' => 1, 'PECAN' => 1,
         	'GERP_CONSTRAINED_ELEMENT' => 1, 'GERP_CONSERVATION_SCORE' => 1,
         },
     };
@@ -182,7 +182,7 @@ sub _dump_multialign_jobs {
 			my %this_job = %{ $self->param('default_dump_options')->{DumpMultiAlign} };
 			my $this_type = $mlss->method->type;
 			$this_job{mlss_id} = $mlss->dbID;
-			$this_job{add_conservation_scores} = 0 unless ( $this_type eq 'PECAN' || $this_type eq 'EPO_LOW_COVERAGE' );
+			$this_job{add_conservation_scores} = 0 unless ( $this_type eq 'PECAN' || $this_type eq 'EPO_EXTENDED' );
 			foreach my $opt ( keys %{$alignment_dump_options{$this_type}} ) {
 				$this_job{$opt} = $alignment_dump_options{$this_type}->{$opt};
 			}
@@ -201,7 +201,7 @@ sub _dump_multialign_jobs {
 	foreach my $type ( keys %aln_types ) {
 		my %this_job = %{ $self->param('default_dump_options')->{DumpMultiAlign} };
 		$this_job{method_link_types} = $type;
-		$this_job{add_conservation_scores} = 0 unless ( $type eq 'PECAN' || $type eq 'EPO_LOW_COVERAGE' );
+		$this_job{add_conservation_scores} = 0 unless ( $type eq 'PECAN' || $type eq 'EPO_EXTENDED' );
 		foreach my $opt ( keys %{$alignment_dump_options{$type}} ) {
 			$this_job{$opt} = $alignment_dump_options{$type}->{$opt};
 		}

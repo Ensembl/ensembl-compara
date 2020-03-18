@@ -235,7 +235,7 @@ my %type_to_adaptor = (
                        'LASTZ_PATCH'            => $from_ga_adaptor,
                        'SYNTENY'                => $from_sr_adaptor,
                        'EPO'                    => $from_ga_adaptor,
-                       'EPO_LOW_COVERAGE'       => $from_ga_adaptor,
+                       'EPO_EXTENDED'           => $from_ga_adaptor,
                        'PECAN'                  => $from_ga_adaptor,
                        'GERP_CONSERVATION_SCORE'    => $from_cs_adaptor,
                        'GERP_CONSTRAINED_ELEMENT'   => $from_ce_adaptor,
@@ -249,9 +249,9 @@ my %all_mlss_objects = ();
 # By default, $disable_keys depends on $merge
 $disable_keys //= !$merge;
 
-# print reminder to merge GERP with EPO_LOW_COVERAGE and PECAN
+# print reminder to merge GERP with EPO_EXTENDED and PECAN
 my %ml_hash = map { $_ => 1 } @method_link_types;
-my @ml_with_gerp = qw(EPO_LOW_COVERAGE PECAN);
+my @ml_with_gerp = qw(EPO_EXTENDED PECAN);
 foreach my $ml (@ml_with_gerp) {
     if ( $ml_hash{$ml} && !($ml_hash{GERP_CONSTRAINED_ELEMENT} && $ml_hash{GERP_CONSERVATION_SCORE}) ) {
         print "\n** Warning ** GERP_CONSERVATION_SCORE and GERP_CONSTRAINED_ELEMENT should usually be merged with method_link_type $ml\n\n";

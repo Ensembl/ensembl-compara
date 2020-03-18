@@ -150,7 +150,7 @@ while ($mlss = shift @mlss_todo) {
     } elsif ($mlss->method->type eq 'EPO') {
         my @epo2x_mlsss = grep {$_->is_current}
                           grep {$_->species_set->name eq $mlss->species_set->name}
-                          @{$mlss->adaptor->fetch_all_by_method_link_type('EPO_LOW_COVERAGE')};
+                          @{$mlss->adaptor->fetch_all_by_method_link_type('EPO_EXTENDED')};
         push @mlss_todo, @epo2x_mlsss;
 
     # (MSA) -> GERP_CS/GERP_CE

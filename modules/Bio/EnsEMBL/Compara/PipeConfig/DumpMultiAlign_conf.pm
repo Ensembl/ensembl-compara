@@ -87,7 +87,7 @@ sub default_options {
         'split_by_chromosome'   => 1,
 
         # Method link types of mlss_id to retrieve
-        'method_link_types' => 'BLASTZ_NET:TRANSLATED_BLAT:TRANSLATED_BLAT_NET:LASTZ_NET:PECAN:EPO:EPO_LOW_COVERAGE',
+        'method_link_types' => 'BLASTZ_NET:TRANSLATED_BLAT:TRANSLATED_BLAT_NET:LASTZ_NET:PECAN:EPO:EPO_EXTENDED',
 
         # Specific mlss_id to dump. Leave undef as the pipeline can detect
         # it automatically

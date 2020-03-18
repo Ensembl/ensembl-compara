@@ -41,7 +41,7 @@ die &helptext if ( $help || !($reg_conf && $compara_db && $division) );
 my %ftp_file_per_mlss = (
 	LASTZ_NET                => 'maf/ensembl-compara/pairwise_alignments/#mlss_filename#*.tar*',
 	EPO                      => 'maf/ensembl-compara/multiple_alignments/#mlss_filename#/*',
-	EPO_LOW_COVERAGE         => 'maf/ensembl-compara/multiple_alignments/#mlss_filename#/*',
+	EPO_EXTENDED             => 'maf/ensembl-compara/multiple_alignments/#mlss_filename#/*',
 	PECAN                    => 'maf/ensembl-compara/multiple_alignments/#mlss_filename#/*',
 	GERP_CONSTRAINED_ELEMENT => 'bed/ensembl-compara/#mlss_filename#/*',
 	GERP_CONSERVATION_SCORE  => 'compara/conservation_scores/#mlss_filename#/*',
