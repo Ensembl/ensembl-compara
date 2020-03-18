@@ -102,7 +102,7 @@
 596	16	34710	A.car-P.sin lastz-net (on A.car)	ensembl		80	\N
 597	10	34711	19 amniota vertebrates Pecan	ensembl	mysql://ensro@compara1:3306/kb3_pecan_19way_68	80	\N
 598	11	34711	Gerp Constrained Elements (19 amniota vertebrates)	ensembl	mysql://ensro@compara1:3306/kb3_pecan_19way_68	80	\N
-599	14	34879	35 eutherian mammals EPO_LOW_COVERAGE	ensembl		80	\N
+599	14	34879	35 eutherian mammals EPO_EXTENDED	ensembl		80	\N
 600	11	34879	Gerp Constrained Elements (35 eutherian mammals)	ensembl		80	\N
 601	16	34795	H.sap-M.mus lastz-net (on H.sap)	ensembl	mysql://ensro@compara1:3306/kb3_hsap_mmus_lastz_68	80	\N
 602	16	34796	H.sap-C.fam lastz-net (on H.sap)	ensembl		80	\N
