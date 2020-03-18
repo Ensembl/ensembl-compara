@@ -116,10 +116,10 @@ sub _get_active_compara_dba {
 sub get_all_compara_dbas {
     my ($self, $patterns) = @_;
 
-    my @reg_aliases = @{Bio::EnsEMBL::Registry->get_all_species('compara')};
+    # Create hash of compara alias => DBAdaptor
+    my %compara_dbas = map { $_->species => $_ } @{ Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'compara') };
     # If no patterns are given, return all compara dbas
     unless ( @{$patterns} ) {
-        my %compara_dbas = map { $_ => Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($_) } @reg_aliases;
         return \%compara_dbas;
     }
     $patterns = [$patterns] unless ref($patterns);
@@ -128,11 +128,8 @@ sub get_all_compara_dbas {
         $alias =~ s/\*/[a-zA-z0-9_]*/g;
     }
     # Filter all registry aliases and return only those that match at least one pattern
-    my %compara_dbas;
-    foreach my $alias (@reg_aliases) {
-        if (grep { $alias =~ m/\A$_\Z/ } @{$patterns}) {
-            $compara_dbas{$alias} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($alias);
-        }
+    foreach my $alias (keys %compara_dbas) {
+        delete $compara_dbas{$alias} if (! grep { $alias =~ m/\A$_\Z/ } @{$patterns});
     }
     return \%compara_dbas;
 }
