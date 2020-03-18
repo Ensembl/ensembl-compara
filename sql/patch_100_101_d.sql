@@ -25,7 +25,9 @@
 
 ALTER TABLE genomic_align_tree
   MODIFY left_node_id bigint(20) unsigned,
-  MODIFY right_node_id bigint(20) unsigned;
+  MODIFY right_node_id bigint(20) unsigned,
+  ADD FOREIGN KEY (`left_node_id`) REFERENCES genomic_align_tree(node_id),
+  ADD FOREIGN KEY (`right_node_id`) REFERENCES genomic_align_tree(node_id);
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
