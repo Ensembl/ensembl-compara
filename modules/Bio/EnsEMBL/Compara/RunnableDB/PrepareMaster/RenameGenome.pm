@@ -111,15 +111,15 @@ sub run {
     my $genome_db = $dba_hash->{$master_db}->get_GenomeDBAdaptor()->fetch_by_registry_name($old_name);
 
     # We really need a transaction to ensure we are not screwing the databases
-    $self->call_within_transaction(sub {
-        foreach my $dba (values %{$dba_hash}) {
-            # Make sure we are ensadmin for every connection
-            $self->elevate_privileges($dba->dbc);
+    foreach my $dba (values %{$dba_hash}) {
+        # Make sure we are ensadmin for every connection
+        $self->elevate_privileges($dba->dbc);
+        $dba->dbc->sql_helper->transaction(-CALLBACK => sub {
             $dba->dbc->do("UPDATE genome_db SET name = '$new_name' WHERE name = '$old_name' AND first_release IS NOT NULL AND last_release IS NULL");
             $dba->dbc->do("UPDATE method_link_species_set_tag SET value = '$new_name' WHERE tag LIKE '%reference_species' AND value = '$old_name'");
             print "Species '$old_name' renamed to '$new_name' in ", $dba->dbc->dbname, "\n" if $self->debug;
-        }
-    });
+        });
+    }
 
     # Rename the genome in the mlss_conf.xml and species tree files
     my $content = $self->_slurp($xml_file);
