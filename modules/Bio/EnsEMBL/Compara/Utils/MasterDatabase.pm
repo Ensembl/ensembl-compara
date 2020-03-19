@@ -861,7 +861,7 @@ sub _mean {
 =cut
 
 sub dnafrags_match_core_slices {
-    my ( $self, $compara_dba, $genome_db ) = @_;
+    my ($compara_dba, $genome_db ) = @_;
 
     my $species_dba = $genome_db->db_adaptor;
     my $gdb_slices  = $genome_db->genome_component
