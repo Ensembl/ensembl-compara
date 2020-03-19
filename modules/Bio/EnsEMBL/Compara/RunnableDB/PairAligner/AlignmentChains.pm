@@ -39,6 +39,7 @@ use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Utils::Exception qw(throw );
 
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 
 use base ('Bio::EnsEMBL::Compara::Production::Analysis::AlignmentChains');
 
@@ -143,26 +144,19 @@ sub fetch_input {
   print STDERR scalar @{$features}," features at time: ",scalar(localtime),"\n";
 
   $self->compara_dba->dbc->disconnect_if_idle();
-  # Let's keep the number of connections / disconnections to the minimum
-  $qy_gdb->db_adaptor->dbc->prevent_disconnect( sub {
-      print STDERR "fetching the query sequence\n";
-      my $query_slice = $self->param('query_dnafrag')->slice;
-      $self->param('query_slice', $query_slice);
-      $query_slice->{'seq'} = $query_slice->seq;
-      print STDERR length($query_slice->{'seq'}), " bp\n";
-  } );
+  my $query_dnafrag = $self->param('query_dnafrag');
+  my $query_chunk = new Bio::EnsEMBL::Compara::Production::DnaFragChunk(
+      $query_dnafrag, 1, $query_dnafrag->length);
+  $self->param('query_chunk', $query_chunk);
+  print STDERR "Query sequence has ", $query_dnafrag->length, " bp\n";
 
-  $tg_gdb->db_adaptor->dbc->prevent_disconnect( sub {
-      my $target_dnafrag = $self->param('target_dnafrag');
-      $self->param('target_dnafrags', {$target_dnafrag->name => $target_dnafrag});
-      my $target_slice = $target_dnafrag->slice;
-      $self->param('target_slices', {$target_dnafrag->name => $target_slice});
-      print STDERR "fetching the target sequence\n";
-      $target_slice->{'seq'} = $target_slice->seq;
-      print STDERR length($target_slice->{'seq'}), " bp\n";
-  } );
+  my $target_dnafrag = $self->param('target_dnafrag');
+  $self->param('target_dnafrags', {$target_dnafrag->name => $target_dnafrag});
+  my $target_chunk = new Bio::EnsEMBL::Compara::Production::DnaFragChunk(
+      $target_dnafrag, 1, $target_dnafrag->length);
+  $self->param('target_chunks', {$target_dnafrag->name => $target_chunk});
+  print STDERR "Target sequence has ", $target_dnafrag->length, " bp\n";
 }
-
 
 
 sub run{
