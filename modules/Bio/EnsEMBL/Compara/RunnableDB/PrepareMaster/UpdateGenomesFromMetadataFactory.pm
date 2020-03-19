@@ -56,14 +56,6 @@ sub fetch_input {
 	# use metadata script to report genomes that need to be updated
     my ($genomes_to_update, $renamed_genomes, $genomes_with_assembly_patches, $updated_annotations) = $self->fetch_genome_report($release, $division);
 
-    # prepare renaming SQL cmds
-    my @rename_cmds;
-    foreach my $new_name ( keys %$renamed_genomes ) {
-        my $old_name = $renamed_genomes->{$new_name};
-        push(@rename_cmds, "UPDATE genome_db SET name = '$new_name' WHERE name = '$old_name' AND first_release IS NOT NULL AND last_release IS NULL");
-    }
-    $self->param('rename_cmds', \@rename_cmds);
-
 	# check there are no seq_region changes in the existing species
 	my $list_cmd = "perl $list_genomes_script $metadata_script_options";
 	my @release_genomes = $self->get_command_output($list_cmd);
@@ -102,7 +94,7 @@ sub fetch_input {
                 push( @$updated_annotations, $add_species_name ) if grep { $add_species_name eq $_ } @$updated_gen_add_species;
                 if (my $old_name = $renamed_add_species->{$add_species_name}) {
                     # We have the new name in the PipeConfig. Still need to update the database
-                    push @rename_cmds, "UPDATE genome_db SET name = '$add_species_name' WHERE name = '$old_name' AND first_release IS NOT NULL AND last_release IS NULL";
+                    $renamed_genomes->{$add_species_name} = $old_name;
                 } else {
                     # We have the old name in the PipeConfig. Update it there first and rerun the pipeline
                     my @new_name = grep {$renamed_add_species->{$_} eq $add_species_name} (keys %$renamed_add_species);
@@ -163,6 +155,7 @@ sub fetch_input {
     $self->param('genomes_with_assembly_patches', $genomes_with_assembly_patches);
     $self->param('genomes_with_updated_annotation', $updated_annotations);
 	$self->param('genomes_to_retire', \@to_retire);
+    $self->param('renamed_genomes', $renamed_genomes);
 }
 
 sub write_output {
@@ -174,7 +167,8 @@ sub write_output {
 	my @retire_genomes_dataflow = map { {species_name => $_} } @{ $self->param('genomes_to_retire') };
 	$self->dataflow_output_id( \@retire_genomes_dataflow, 3 );
 
-    my @rename_genomes_dataflow = map { {sql => [$_]} } @{ $self->param('rename_cmds') };
+    my $renamed_genomes = $self->param('renamed_genomes');
+    my @rename_genomes_dataflow = map { {new_name => $_, old_name => $renamed_genomes->{$_}} } keys %{ $renamed_genomes };
     $self->dataflow_output_id( \@rename_genomes_dataflow, 4 );
 
     my @patched_genomes_dataflow = map { {species_name => $_} } @{ $self->param('genomes_with_assembly_patches') };
