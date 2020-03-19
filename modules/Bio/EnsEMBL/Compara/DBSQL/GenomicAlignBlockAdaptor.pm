@@ -267,21 +267,17 @@ sub store {
 sub delete_by_dbID {
   my ($self, $genomic_align_block_id) = @_;
 
+    ## First delete corresponding genomic_align entries
+    my $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor;
+    $genomic_align_adaptor->delete_by_genomic_align_block_id($genomic_align_block_id);
+
   my $genomic_align_block_sql =
         qq{DELETE FROM genomic_align_block WHERE genomic_align_block_id = ?};
   
-  ## Deletes genomic_align_block entry 
+  ## Then delete genomic_align_block entry
   my $sth = $self->prepare($genomic_align_block_sql);
   $sth->execute($genomic_align_block_id);
   $sth->finish();
-
-  # The following is not yet possible because this adaptor does not
-  # implement _tables()
-  #$self->SUPER::delete_by_dbID($genomic_align_block_id);
-  
-  ## Deletes corresponding genomic_align entries
-  my $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor;
-  $genomic_align_adaptor->delete_by_genomic_align_block_id($genomic_align_block_id);
 }
 
 
