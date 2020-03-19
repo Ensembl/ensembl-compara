@@ -96,8 +96,12 @@ foreach my $mlss ( @current_lastz_mlsses ) {
     my ($ref_chunk_count, $non_ref_chunk_count, $filter_dups_job_count);
     if (scalar(@mlss_gdbs) == 1) {
         # Self-alignment
-        $ref_chunk_count = get_ref_chunk_count($mlss_gdbs[0]);
+
+        # everything other than human now uses group_set_size, so is
+        # chunked like non-reference
+        $ref_chunk_count = $mlss_gdbs[0]->name eq 'homo_sapiens' ? get_ref_chunk_count($mlss_gdbs[0]) : get_non_ref_chunk_count($mlss_gdbs[0]);
         $non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs[0]);
+
         if ($mlss_gdbs[0]->is_polyploid) {
             my $num_components = scalar(@{$mlss_gdbs[0]->component_genome_dbs});
             $filter_dups_job_count = $ref_chunk_count * ($num_components - 1);
@@ -105,8 +109,11 @@ foreach my $mlss ( @current_lastz_mlsses ) {
             $filter_dups_job_count = $ref_chunk_count * 2;
         }
     } else {
-        $ref_chunk_count = get_ref_chunk_count($mlss_gdbs[0]);
+        # everything other than human now uses group_set_size, so is
+        # chunked like non-reference
+        $ref_chunk_count = $mlss_gdbs[0]->name eq 'homo_sapiens' ? get_ref_chunk_count($mlss_gdbs[0]) : get_non_ref_chunk_count($mlss_gdbs[0]);
         $non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs[1]);
+
         # For polyploid PWAs of the same genus, this makes an overestimate as
         # they will not share all the components
         $filter_dups_job_count = $ref_chunk_count + get_ref_chunk_count($mlss_gdbs[1]);
