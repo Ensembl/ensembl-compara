@@ -110,7 +110,6 @@ sub fetch_masked_sequence {
   
   return undef unless($self->dnafrag);
   return undef unless($self->dnafrag->genome_db);
-  return undef unless(my $dba = $self->dnafrag->genome_db->db_adaptor);
 
   printf("getting %smasked sequence...\n", $self->masking ? $self->masking . ' ' : 'un') if $self->{debug};
 
