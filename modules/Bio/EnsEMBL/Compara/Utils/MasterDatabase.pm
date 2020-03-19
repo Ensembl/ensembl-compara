@@ -313,9 +313,24 @@ sub _update_genome_db {
     if (not $force) {
       my $species_production_name = $genome_db->name;
       my $this_assembly = $genome_db->assembly;
-      throw "\n\n** GenomeDB with this name [$species_production_name] and assembly".
-        " [$this_assembly] is already in the compara DB **\n".
-        "** You can use the --force option IF YOU REALLY KNOW WHAT YOU ARE DOING!! **\n\n";
+      print $genome_db->toString, "\n";
+      my ($match, $output);
+      {
+        # dnafrags_match_core_slices uses print. This is to capture the output
+        local *STDOUT;
+        open (STDOUT, '>', \$output);
+        $match = dnafrags_match_core_slices($compara_dba, $genome_db);
+      }
+      my $msg = "\n\n** GenomeDB with this name [$species_production_name] and assembly".
+        " [$this_assembly] is already in the compara DB **\n";
+      if ($match) {
+        $msg .= "** And it has the right set of DnaFrags **\n";
+        $msg .= "** You can use the --force option to update the other GenomeDB fields IF YOU REALLY NEED TO!! **\n\n";
+      } else {
+        $msg .= "** But the DnaFrags don't match: **\n$output\n";
+        $msg .= "** You can use the --force option to update the DnaFrag, but only IF YOU REALLY KNOW WHAT YOU ARE DOING!! **\n\n";
+      }
+      throw $msg;
     }
   }
 
@@ -377,38 +392,18 @@ sub _update_component_genome_dbs {
     return \@gdbs;
 }
 
-=head2 load_lrgs
+=head2 list_assembly_patches
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
   Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Description : This method loads new LRGs from the core database
+  Description : This method lists the new assembly patches from the core database
   Returns     : -none-
   Exceptions  :
 
 =cut
 
-sub load_lrgs {
-    my ($compara_dba, $genome_db) = @_;
-
-    die "LRGs are only available for human" unless $genome_db->name eq 'homo_sapiens';
-
-    my $species_db = $genome_db->db_adaptor;
-    print "Fetching LRG DnaFrags from " . $species_db->dbc->host . "/" . $species_db->dbc->dbname . "\n";
-    my $new_lrg_dnafrags = update_dnafrags($compara_dba, $genome_db, $species_db, -COORD_SYSTEM => 'lrg');
-}
-
-=head2 load_assembly_patches
-
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Description : This method loads new assembly patches from the core database
-  Returns     : -none-
-  Exceptions  :
-
-=cut
-
-sub load_assembly_patches {
-    my $compara_dba = shift;
+sub list_assembly_patches {
+    my $compara_dba = shift;    # Pointer to the *previous* database, in order to get the deprecated dnafrag_ids
     my $genome_db   = shift;
     my $report_file = shift;
 
@@ -435,8 +430,7 @@ sub load_assembly_patches {
     # 2. changed patches (present in both, but dates differ) = add dnafrag to depr list && add slice to load patch list
     # 3. new patches (not present in prev, present in curr) = add slice to load patch list
     my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor;
-    my $slice_adaptor = $species_db->get_SliceAdaptor;
-    my ( @depr_patch_dnafrags, @load_patch_slices );
+    my @depr_patch_dnafrags;
     my ( @new_patches, @changed_patches, @deleted_patches ); # store names for reports only
     foreach my $patch_name ( keys %prev_patches_by_name ) {
         if ( !defined $curr_patches_by_name{$patch_name} ) {
@@ -447,15 +441,11 @@ sub load_assembly_patches {
             push @changed_patches, $patch_name;
             my $changed_patch_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_name($genome_db, $patch_name);
             push @depr_patch_dnafrags, $changed_patch_dnafrag;
-            my $curr_patch_slice = $slice_adaptor->fetch_by_seq_region_id($curr_patches_by_name{$patch_name}->{seq_region_id});
-            push @load_patch_slices, $curr_patch_slice;
         }
     }
     foreach my $patch_name ( keys %curr_patches_by_name ) {
         if ( !defined $prev_patches_by_name{$patch_name} ) {
             push @new_patches, $patch_name;
-            my $new_patch_slice = $slice_adaptor->fetch_by_seq_region_id($curr_patches_by_name{$patch_name}->{seq_region_id});
-            push @load_patch_slices, $new_patch_slice;
         }
     }
 
@@ -480,9 +470,6 @@ sub load_assembly_patches {
     } else {
         print $report;
     }
-
-    _load_dnafrags_from_slices($compara_dba, $genome_db, \@load_patch_slices, []);
-    _remove_deprecated_dnafrags($compara_dba, \@depr_patch_dnafrags);
 }
 
 =head2 print_method_link_species_sets_to_update_by_genome_db
@@ -866,17 +853,15 @@ sub _mean {
 
     Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
     Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-    Arg[3]      : (optional) String $ignore
     Description : This method compares the given $genome_db DnaFrags with
                   the toplevel Slices from its corresponding core database.
-                  Can optionally ignore any slices or frags matching $ignore.
     Returns     : 1 upon match; 0 upon mismatch
     Exceptions  :
 
 =cut
 
 sub dnafrags_match_core_slices {
-    my ( $self, $compara_dba, $genome_db, $ignore ) = @_;
+    my ($compara_dba, $genome_db ) = @_;
 
     my $species_dba = $genome_db->db_adaptor;
     my $gdb_slices  = $genome_db->genome_component
@@ -890,16 +875,20 @@ sub dnafrags_match_core_slices {
 
     my (@missing_dnafrags, @differing_lens);
     foreach my $s_name ( keys %slice_len_by_name ) {
-        next if $ignore && $s_name =~ /$ignore/;
-        push( @missing_dnafrags, $s_name ) unless defined $dnafrag_len_by_name{$s_name};
-        push( @differing_lens, $s_name ) unless $dnafrag_len_by_name{$s_name} == $slice_len_by_name{$s_name};
+        if (defined $dnafrag_len_by_name{$s_name}) {
+            push( @differing_lens, $s_name ) unless $dnafrag_len_by_name{$s_name} == $slice_len_by_name{$s_name};
+        } else {
+            push( @missing_dnafrags, $s_name );
+        }
     }
 
     my (@missing_slices, @differing_slices);
     foreach my $d_name ( keys %dnafrag_len_by_name ) {
-        next if $ignore && $d_name =~ /$ignore/;
-        push( @missing_slices, $d_name ) unless defined $slice_len_by_name{$d_name};
-        push( @differing_slices, $d_name ) unless $dnafrag_len_by_name{$d_name} == $slice_len_by_name{$d_name};
+        if (defined $slice_len_by_name{$d_name}) {
+            push( @differing_slices, $d_name ) unless $dnafrag_len_by_name{$d_name} == $slice_len_by_name{$d_name};
+        } else {
+            push( @missing_slices, $d_name );
+        }
     }
 
     if ( @missing_dnafrags || @missing_slices || @differing_lens ) {

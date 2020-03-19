@@ -52,7 +52,7 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'division'               => 'vertebrates',
-        'do_load_lrg_dnafrags'   => 1,
+        'assembly_patch_species' => [ 'homo_sapiens', 'mus_musculus', 'danio_rerio' ],
         'do_load_timetree'       => 1,
     };
 }

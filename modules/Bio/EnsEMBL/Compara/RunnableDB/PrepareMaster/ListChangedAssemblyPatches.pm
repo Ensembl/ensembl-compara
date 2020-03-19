@@ -21,15 +21,15 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::LoadLRGDnaFrags
+Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::ListChangedAssemblyPatches
 
 =head1 SYNOPSIS
 
-Runnable wrapper for Bio::EnsEMBL::Compara::Utils::MasterDatabase::load_lrgs
+
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::LoadLRGDnaFrags;
+package Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::ListChangedAssemblyPatches;
 
 use warnings;
 use strict;
@@ -39,19 +39,23 @@ use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::param_defaults},
-        'param'   => undef,
-    }
-}
-
 sub fetch_input {
 	my $self = shift;
 
-  my $human_gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly('homo_sapiens');
-  Bio::EnsEMBL::Compara::Utils::MasterDatabase::load_lrgs($self->compara_dba, $human_gdb);
+  my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
+  my $genome_db  = $genome_db_adaptor->fetch_by_name_assembly($self->param_required('species_name'));
+
+  $self->param('genome_db',  $genome_db);
+}
+
+sub write_output {
+	my $self = shift;
+
+  my $compara_dba = $self->compara_dba;
+  my $genome_db   = $self->param('genome_db');
+  my $report_file = $self->param_required('work_dir') . '/assembly_patches.' . $self->param_required('species_name') . '.txt';
+
+  Bio::EnsEMBL::Compara::Utils::MasterDatabase::list_assembly_patches($compara_dba, $genome_db, $report_file);
 }
 
 1;

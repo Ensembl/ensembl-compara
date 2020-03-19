@@ -45,6 +45,10 @@ sub param_defaults {
         # If set to true, the runnable will try to find the genomes
         # (current and previous) in the Registry
         'needs_core_db' => 1,
+
+        # By default, only check protein coding genes on the primary assembly
+        # Other biotypes and regions have to be explicitly included
+        'store_coding'  => 1,
     }
 }
 
@@ -88,6 +92,29 @@ sub hash_all_exons_from_dba {
           LEFT JOIN translation p ON canonical_translation_id = translation_id
          WHERE cs.species_id =?
     };
+
+    # Filter out unwanted regions
+    unless ($self->param('include_lrg')) {
+        $sql .= ' AND cs.name != "lrg"';
+    }
+    unless ($self->param('include_nonreference')) {
+        $sql .= ' AND sr.seq_region_id NOT IN (SELECT seq_region_id FROM seq_region_attrib JOIN attrib_type USING (attrib_type_id) WHERE code = "non_ref")';
+    }
+    unless ($self->param('include_patches')) {
+        $sql .= ' AND sr.seq_region_id NOT IN (SELECT seq_region_id FROM seq_region_attrib JOIN attrib_type USING (attrib_type_id) WHERE code IN ("patch_fix","patch_novel"))';
+    }
+
+    # Filter out unwanted biotypes
+    unless ($self->param('store_coding')) {
+        $sql .= ' AND b.biotype_group NOT IN ("coding", "lrg")';
+    }
+    unless ($self->param('store_ncrna')) {
+        $sql .= ' AND b.biotype_group NOT LIKE "%noncoding"';
+    }
+    unless ($self->param('store_others')) {
+        # Others = neither coding nor noncoding, so "no others" = only coding or noncoding
+        $sql .= ' AND (b.biotype_group IN ("coding", "lrg") OR b.biotype_group LIKE "%noncoding")';
+    }
 
     return $self->hash_rows_from_dba($dba, $sql, $dba->species_id());
 }
