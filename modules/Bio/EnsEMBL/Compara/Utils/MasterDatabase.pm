@@ -325,7 +325,7 @@ sub _update_genome_db {
         " [$this_assembly] is already in the compara DB **\n";
       if ($match) {
         $msg .= "** And it has the right set of DnaFrags **\n";
-        $msg .= "** You can use the --force option to update the other GenomeDB fields IF YOU REALLY NEED!! **\n\n";
+        $msg .= "** You can use the --force option to update the other GenomeDB fields IF YOU REALLY NEED TO!! **\n\n";
       } else {
         $msg .= "** But the DnaFrags don't match: **\n$output\n";
         $msg .= "** You can use the --force option to update the DnaFrag, but only IF YOU REALLY KNOW WHAT YOU ARE DOING!! **\n\n";
