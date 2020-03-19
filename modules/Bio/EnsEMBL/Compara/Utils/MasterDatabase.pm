@@ -313,9 +313,24 @@ sub _update_genome_db {
     if (not $force) {
       my $species_production_name = $genome_db->name;
       my $this_assembly = $genome_db->assembly;
-      throw "\n\n** GenomeDB with this name [$species_production_name] and assembly".
-        " [$this_assembly] is already in the compara DB **\n".
-        "** You can use the --force option IF YOU REALLY KNOW WHAT YOU ARE DOING!! **\n\n";
+      print $genome_db->toString, "\n";
+      my ($match, $output);
+      {
+        # dnafrags_match_core_slices uses print. This is to capture the output
+        local *STDOUT;
+        open (STDOUT, '>', \$output);
+        $match = dnafrags_match_core_slices($compara_dba, $genome_db);
+      }
+      my $msg = "\n\n** GenomeDB with this name [$species_production_name] and assembly".
+        " [$this_assembly] is already in the compara DB **\n";
+      if ($match) {
+        $msg .= "** And it has the right set of DnaFrags **\n";
+        $msg .= "** You can use the --force option to update the other GenomeDB fields IF YOU REALLY NEED!! **\n\n";
+      } else {
+        $msg .= "** But the DnaFrags don't match: **\n$output\n";
+        $msg .= "** You can use the --force option to update the DnaFrag, but only IF YOU REALLY KNOW WHAT YOU ARE DOING!! **\n\n";
+      }
+      throw $msg;
     }
   }
 
