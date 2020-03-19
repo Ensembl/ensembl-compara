@@ -45,6 +45,10 @@ sub param_defaults {
         # If set to true, the runnable will try to find the genomes
         # (current and previous) in the Registry
         'needs_core_db' => 1,
+
+        # By default, only check protein coding genes on the primary assembly
+        # Other biotypes and regions have to be explicitly included
+        'store_coding'  => 1,
     }
 }
 
