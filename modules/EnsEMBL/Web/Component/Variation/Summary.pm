@@ -738,8 +738,10 @@ sub change_tolerance {
   my $self = shift;
   my $object = $self->object;
   my ($CADD_scores, $CADD_source) = @{$object->CADD_score};
-  my ($GERP_score, $GERP_source) = @{$object->GERP_score};
-
+  my ($GERP_score, $GERP_source);
+  eval {
+    ($GERP_score, $GERP_source) = @{$object->GERP_score};
+  };
   return unless (defined $CADD_scores || defined $GERP_score);
   my $html = '';
   if (defined $CADD_scores) {
