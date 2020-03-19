@@ -875,14 +875,20 @@ sub dnafrags_match_core_slices {
 
     my (@missing_dnafrags, @differing_lens);
     foreach my $s_name ( keys %slice_len_by_name ) {
-        push( @missing_dnafrags, $s_name ) unless defined $dnafrag_len_by_name{$s_name};
-        push( @differing_lens, $s_name ) unless $dnafrag_len_by_name{$s_name} == $slice_len_by_name{$s_name};
+        if (defined $dnafrag_len_by_name{$s_name}) {
+            push( @differing_lens, $s_name ) unless $dnafrag_len_by_name{$s_name} == $slice_len_by_name{$s_name};
+        } else {
+            push( @missing_dnafrags, $s_name );
+        }
     }
 
     my (@missing_slices, @differing_slices);
     foreach my $d_name ( keys %dnafrag_len_by_name ) {
-        push( @missing_slices, $d_name ) unless defined $slice_len_by_name{$d_name};
-        push( @differing_slices, $d_name ) unless $dnafrag_len_by_name{$d_name} == $slice_len_by_name{$d_name};
+        if (defined $slice_len_by_name{$d_name}) {
+            push( @differing_slices, $d_name ) unless $dnafrag_len_by_name{$d_name} == $slice_len_by_name{$d_name};
+        } else {
+            push( @missing_slices, $d_name );
+        }
     }
 
     if ( @missing_dnafrags || @missing_slices || @differing_lens ) {
