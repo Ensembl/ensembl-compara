@@ -160,7 +160,6 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'rename_genome',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::RenameGenome',
             -parameters => {
-                'master_db'         => $self->o('master_db'),
                 'prev_dbs'          => $self->o('prev_dbs'),
                 'xml_file'          => $self->o('xml_file'),
                 'species_tree'      => $self->o('binary_species_tree'),
@@ -174,8 +173,6 @@ sub pipeline_analyses_prep_master_db_for_release {
             -parameters => {
                 'update_metadata_script' => $self->o('update_metadata_script'),
                 'reg_conf'               => $self->o('reg_conf'),
-                'master_db'              => $self->o('master_db'),
-                'division'               => $self->o('division'),
                 'cmd' => 'perl #update_metadata_script# --reg_conf #reg_conf# --compara #master_db# --division #division# --nocheck_species_missing_from_compara'
             },
             -flow_into  => [ 'update_collection' ],
@@ -195,7 +192,6 @@ sub pipeline_analyses_prep_master_db_for_release {
             -parameters => {
                 'create_all_mlss_exe' => $self->o('create_all_mlss_exe'),
                 'reg_conf'            => $self->o('reg_conf'),
-                'master_db'           => $self->o('master_db'),
                 'xml_file'            => $self->o('xml_file'),
                 'report_file'         => $self->o('report_file'),
                 'cmd'                 => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #master_db# -xml #xml_file# --release --output_file #report_file# --verbose',

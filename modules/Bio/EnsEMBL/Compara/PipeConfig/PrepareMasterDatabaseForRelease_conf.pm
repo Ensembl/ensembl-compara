@@ -128,10 +128,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'backup_current_master',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
-            -input_ids  => [{
-                'division'    => $self->o('division'),
-                'release'     => $self->o('ensembl_release'),
-            }],
+            -input_ids  => [{ }],
             -parameters => {
                 'src_db_conn' => $self->o('master_db'),
                 'backups_dir' => $self->o('backups_dir'),
