@@ -15,16 +15,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import filecmp
 import os
 from typing import Dict, List, Union
 
-from ete3 import Tree
 import pytest
 from _pytest.fixtures import FixtureLookupErrorRepr
 from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionInfo
 
-from ..filesys import DirCmp, PathLike
+from ..filesys import DirCmp, PathLike, file_cmp
 from ..utils import to_list
 from ._citest import CITestItem
 
@@ -116,26 +114,9 @@ class CITestFilesItem(CITestItem):
         # Nested function (closure) to compare the reference and target files
         def cmp_file_content(filepath: PathLike) -> bool:
             """Returns True if reference and target `filepath` differ, False otherwise."""
-            ref_filepath = str(self.dir_cmp.ref_path / filepath)
-            target_filepath = str(self.dir_cmp.target_path / filepath)
-            # If files are newick format, the newick trees need to be read and compared
-            if ref_filepath.endswith(('.nw', '.nwk', '.newick', '.nh')):
-                ref_tree = Tree(ref_filepath, format=5)
-                target_tree = Tree(target_filepath, format=5)
-                # Check the sum of the distances between each node
-                ref_sum = 0
-                target_sum = 0
-                for leaf in ref_tree:
-                    ref_sum += leaf.get_distance(ref_tree)
-                for leaf in target_tree:
-                    target_sum += leaf.get_distance(target_tree)
-                if ref_sum != target_sum:
-                    return ref_sum != target_sum
-                # Check the leaves all match
-                ref_leaves = ref_tree.get_leaf_names()
-                target_leaves = target_tree.get_leaf_names()
-                return sorted(ref_leaves) != sorted(target_leaves)
-            return not filecmp.cmp(ref_filepath, target_filepath)
+            ref_filepath = self.dir_cmp.ref_path / filepath
+            target_filepath = self.dir_cmp.target_path / filepath
+            return not file_cmp(ref_filepath, target_filepath)
         # Traverse the common directory tree, comparing every reference and target files
         mismatches = self.dir_cmp.apply_test(cmp_file_content, patterns, paths)
         # Check if there are files either in the reference or the target (but not in both)

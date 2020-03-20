@@ -16,3 +16,4 @@ limitations under the License.
 """
 
 from .dircmp import *
+from .filecmp import *
