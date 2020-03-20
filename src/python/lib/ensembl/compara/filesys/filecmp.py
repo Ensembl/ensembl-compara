@@ -45,7 +45,8 @@ def file_cmp(fpath1: PathLike, fpath2: PathLike) -> bool:
 
 
 def _newick_cmp(fpath1: PathLike, fpath2: PathLike) -> bool:
-    """Returns True if the trees stored in `fpath1` and `fpath2` are equivalent, False otherwise.
+    """Returns True if trees stored in `fpath1` and `fpath2` (in Newick format) are equivalent, False
+    otherwise.
 
     Args:
         fpath1: First file path.
