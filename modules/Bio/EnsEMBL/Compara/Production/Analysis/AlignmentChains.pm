@@ -26,8 +26,6 @@ package Bio::EnsEMBL::Compara::Production::Analysis::AlignmentChains;
 use warnings ;
 use strict;
 
-use Bio::SeqIO;
-
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 
@@ -68,18 +66,7 @@ sub run_chains {
     $query_nib_dir = "$work_dir/query_nib";
     mkdir $query_nib_dir;
 
-    my $seqio = Bio::SeqIO->new(-format => 'fasta',
-                                -file   => ">$query_nib_dir/$query_name.fa");   
-
-    # prevent extensive disconnections when fetching sequence length etc.
-    my $query_slice = $self->param('query_slice');
-    $query_slice->adaptor()->dbc->prevent_disconnect( sub {
-
-    $seqio->write_seq($query_slice); 
-
-    } );
-
-    $seqio->close;
+    $self->param('query_chunk')->dump_chunks_to_fasta_file("$query_nib_dir/$query_name.fa");
     
     $self->run_command([$self->param_required('faToNib_exe'), "$query_nib_dir/$query_name.fa", "$query_nib_dir/$query_name.nib"], { die_on_failure => 1 });
     push @nib_files, "$query_nib_dir/$query_name.nib";
@@ -91,16 +78,12 @@ sub run_chains {
     $target_nib_dir =  "$work_dir/target_nib";
     mkdir $target_nib_dir;
 
-    my $target_slices = $self->param('target_slices');
-    foreach my $nm (keys %{$target_slices}) {
-      my $target = $target_slices->{$nm};
-      my $target_name = $target->seq_region_name;
-      
-      my $seqio =  Bio::SeqIO->new(-format => 'fasta',
-                                -file   => ">$target_nib_dir/$target_name.fa");
-      $seqio->write_seq($target);
-      $seqio->close; 
-      
+    my $target_chunks = $self->param('target_chunks');
+    foreach my $target_name (keys %{$target_chunks}) {
+      my $target = $target_chunks->{$target_name};
+
+      $target->dump_chunks_to_fasta_file("$target_nib_dir/$target_name.fa");
+
       $self->run_command([$self->param_required('faToNib_exe'), "$target_nib_dir/$target_name.fa", "$target_nib_dir/$target_name.nib"], { die_on_failure => 1 });
       push @nib_files, "$target_nib_dir/$target_name.nib";
     }

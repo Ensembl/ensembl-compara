@@ -605,7 +605,7 @@ sub parse_defaults {
                     # of two different components without repetition
                     # Sort components alphabetically so the same order is
                     # followed in every PWA
-                    my @components = sort {$a cmp $b} @{$mlss_gdbs[0]->component_genome_dbs};
+                    my @components = sort @{$mlss_gdbs[0]->component_genome_dbs};
                     while (my $gdb1 = shift @components) {
                         foreach my $gdb2 ( @components ) {
                             push @pair,
@@ -629,7 +629,7 @@ sub parse_defaults {
                     my %non_ref_components = map { $_->genome_component => $_ } @{$mlss_gdbs[1]->component_genome_dbs};
                     # Sort components alphabetically so the same order is
                     # followed in every PWA
-                    my @components = sort {$a cmp $b} keys %ref_components;
+                    my @components = sort keys %ref_components;
                     # Ignore the components that are not present in both genomes
                     foreach my $cpnt ( @components ) {
                         if (exists $non_ref_components{$cpnt}) {
