@@ -50,6 +50,8 @@ sub new {
   $self->dnafrag_start($start)                 if($start);
   $self->dnafrag_end($end)                     if($end);
   $self->dnafrag_chunk_set_id($dnafrag_chunk_set_id) if ($dnafrag_chunk_set_id);
+  # DnaFragChunk does not include the concept of strand, so set it to 1
+  $self->dnafrag_strand(1);
   return $self;
 }
 
