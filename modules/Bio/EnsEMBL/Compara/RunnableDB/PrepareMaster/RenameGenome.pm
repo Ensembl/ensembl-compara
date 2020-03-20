@@ -80,6 +80,7 @@ use strict;
 
 use File::Basename;
 
+use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 use Bio::EnsEMBL::Hive::Utils;
 use Bio::EnsEMBL::Registry;
 
@@ -111,6 +112,19 @@ sub run {
     my $master_db = $self->param('master_db');
     my $dba_hash = $self->param('dba_hash');
     my $genome_db = $dba_hash->{$master_db}->get_GenomeDBAdaptor()->fetch_by_name_assembly($old_name);
+
+    # First of all we check that the underlying assembly is the same
+    my $core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($new_name, 'core');
+    my $output;
+    my $dnafrags_match;
+    {
+        local *STDOUT;
+        open (STDOUT, '>', \$output);
+        $dnafrags_match = Bio::EnsEMBL::Compara::Utils::MasterDatabase::dnafrags_match_core_slices($genome_db, $core_dba);
+    }
+    unless ($dnafrags_match) {
+        $self->die_no_retry("DnaFrags do not match core for $old_name\n$output\n");
+    }
 
     # We really need a transaction to ensure we are not screwing the databases
     foreach my $dba (values %{$dba_hash}) {

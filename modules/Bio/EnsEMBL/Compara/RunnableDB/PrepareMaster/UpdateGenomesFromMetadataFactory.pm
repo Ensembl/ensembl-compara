@@ -51,7 +51,6 @@ sub fetch_input {
 	my $release = $self->param_required('release');
 	my $division = $self->param_required('division');
 	my $metadata_script_options = "\$($meta_host details script) --release $release --division $division";
-	my $genome_db_adaptor = $self->get_cached_compara_dba('master_db')->get_GenomeDBAdaptor;
 
 	# use metadata script to report genomes that need to be updated
     my ($genomes_to_update, $renamed_genomes, $updated_annotations) = $self->fetch_genome_report($release, $division);
@@ -120,22 +119,19 @@ sub fetch_input {
     # check that there have been no changes in dnafrags vs core slices
     my %g2update = map { $_ => 1 } @$genomes_to_update;
     my $master_dba = $self->get_cached_compara_dba('master_db');
+    my @genomes_to_verify;
 	foreach my $species_name ( @release_genomes ) {
 		next if $g2update{$species_name}; # we already know these have changed
-        my $core_dba;
-        if ( $renamed_genomes->{$species_name} ) { # if it's been renamed only, still check if frags are stable
-            $core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($species_name, 'core');
-            $species_name = $renamed_genomes->{$species_name};
-        }
-        print "fetching and checking $species_name\n";
-		my $gdb = $genome_db_adaptor->fetch_by_name_assembly($species_name);
-        $gdb->db_adaptor($core_dba) if defined $core_dba;
-        my $dnafrags_match = Bio::EnsEMBL::Compara::Utils::MasterDatabase::dnafrags_match_core_slices($master_dba, $gdb);
-		die "DnaFrags do not match core for $species_name" unless $dnafrags_match;
+        next if $renamed_genomes->{$species_name}; # renamed genomes are checked in their own analysis
+        push @genomes_to_verify, {
+            'species_name'  => $species_name,
+        };
 	}
+    print "GENOMES_TO_VERIFY!! ";
+    print Dumper \@genomes_to_verify;
 
 	# check for species that have disappeared and need to be retired
-	my %current_gdbs = map { $_->name => 0 } @{$genome_db_adaptor->fetch_all_current};
+	my %current_gdbs = map { $_->name => 0 } @{$master_dba->get_GenomeDBAdaptor->fetch_all_current};
     $current_gdbs{'ancestral_sequences'} = 1; # never retire ancestral_sequences
 	foreach my $species_name ( @release_genomes ) {
 		$current_gdbs{$species_name} = 1;
@@ -151,6 +147,7 @@ sub fetch_input {
     $self->param('genomes_with_updated_annotation', $updated_annotations);
 	$self->param('genomes_to_retire', \@to_retire);
     $self->param('renamed_genomes', $renamed_genomes);
+    $self->param('genomes_to_verify', \@genomes_to_verify);
 }
 
 sub write_output {
@@ -165,6 +162,8 @@ sub write_output {
     my $renamed_genomes = $self->param('renamed_genomes');
     my @rename_genomes_dataflow = map { {new_name => $_, old_name => $renamed_genomes->{$_}} } keys %{ $renamed_genomes };
     $self->dataflow_output_id( \@rename_genomes_dataflow, 4 );
+
+    $self->dataflow_output_id( $self->param('genomes_to_verify'), 5);
 
     $self->_spurt(
         $self->param_required('annotation_file'),

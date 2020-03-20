@@ -319,7 +319,7 @@ sub _update_genome_db {
         # dnafrags_match_core_slices uses print. This is to capture the output
         local *STDOUT;
         open (STDOUT, '>', \$output);
-        $match = dnafrags_match_core_slices($compara_dba, $genome_db);
+        $match = dnafrags_match_core_slices($genome_db, $species_dba);
       }
       my $msg = "\n\n** GenomeDB with this name [$species_production_name] and assembly".
         " [$this_assembly] is already in the compara DB **\n";
@@ -851,8 +851,8 @@ sub _mean {
 
 =head2 compare_dnafrags_to_core
 
-    Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-    Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+    Arg[1]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+    Arg[2]      : Bio::EnsEMBL::DBSQL::DBAdaptor $species_dba (optional)
     Description : This method compares the given $genome_db DnaFrags with
                   the toplevel Slices from its corresponding core database.
     Returns     : 1 upon match; 0 upon mismatch
@@ -861,15 +861,15 @@ sub _mean {
 =cut
 
 sub dnafrags_match_core_slices {
-    my ($compara_dba, $genome_db ) = @_;
+    my ($genome_db, $species_dba) = @_;
 
-    my $species_dba = $genome_db->db_adaptor;
+    $species_dba //= $genome_db->db_adaptor;
     my $gdb_slices  = $genome_db->genome_component
         ? $species_dba->get_SliceAdaptor->fetch_all_by_genome_component($genome_db->genome_component)
         : $species_dba->get_SliceAdaptor->fetch_all('toplevel', undef, 1, 1, 1);
     my %slice_len_by_name = map { $_->seq_region_name => $_->length } @$gdb_slices;
 
-    my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor;
+    my $dnafrag_adaptor = $genome_db->adaptor->db->get_DnaFragAdaptor;
     my $gdb_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB($genome_db);
     my %dnafrag_len_by_name = map { $_->name => $_->length } @$gdb_dnafrags;
 

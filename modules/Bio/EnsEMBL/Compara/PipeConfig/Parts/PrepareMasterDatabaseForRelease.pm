@@ -132,6 +132,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 '2->A' => [ 'add_species_into_master' ],
                 '3->A' => [ 'retire_species_from_master' ],
                 '4->A' => [ 'rename_genome' ],
+                '5->A' => [ 'verify_genome' ],
                 'A->1' => [ 'sync_metadata' ],
             },
             -rc_name    => '16Gb_job',
@@ -166,6 +167,15 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'genome_dumps_dir'  => $self->o('genome_dumps_dir'),
                 'sketch_dir'        => $self->o('sketch_dir'),
             },
+        },
+
+        {   -logic_name    => 'verify_genome',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::VerifyGenome',
+            -parameters => {
+                'compara_db'        => $self->o('master_db'),
+            },
+            -hive_capacity => 10,
+            -rc_name       => '16Gb_job',
         },
 
         {   -logic_name => 'sync_metadata',
