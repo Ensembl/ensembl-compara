@@ -264,6 +264,16 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'shared_hps_dir'  => $self->o('shared_hps_dir'),
                 'cmd'             => 'install -C --mode=664 #annotation_file# #shared_hps_dir#/ensembl-metadata/',
             },
+	    -flow_into  => [ 'copy_json_reports_to_shared_loc' ],
+        },
+
+        {   -logic_name => 'copy_json_reports_to_shared_loc',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'work_dir'        => $self->o('work_dir'),
+                'shared_hps_dir'  => $self->o('shared_hps_dir'),
+                'cmd'             => 'install -C --mode=664 -t #shared_hps_dir#/ensembl-metadata/ #work_dir#/report_updates.*.json',
+            },
         },
     ];
 }
