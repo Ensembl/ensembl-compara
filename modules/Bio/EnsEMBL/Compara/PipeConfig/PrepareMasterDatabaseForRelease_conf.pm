@@ -130,7 +130,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -input_ids  => [{ }],
             -parameters => {
-                'src_db_conn' => $self->o('master_db'),
+                'src_db_conn' => '#master_db#',
                 'backups_dir' => $self->o('backups_dir'),
                 'output_file' => '#backups_dir#/compara_master_#division#.pre#release#.sql'
             },

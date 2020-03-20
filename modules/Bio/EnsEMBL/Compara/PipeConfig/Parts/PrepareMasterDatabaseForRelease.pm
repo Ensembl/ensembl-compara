@@ -55,7 +55,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
                 'src_db_conn'  => $self->o('taxonomy_db'),
-                'dest_db_conn' => $self->o('master_db'),
+                'dest_db_conn' => '#master_db#',
                 'mode'         => 'overwrite',
                 'filter_cmd'   => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/g"',
                 'table'        => 'ncbi_taxa_node',
@@ -67,7 +67,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
                 'src_db_conn'  => $self->o('taxonomy_db'),
-                'dest_db_conn' => $self->o('master_db'),
+                'dest_db_conn' => '#master_db#',
                 'mode'         => 'overwrite',
                 'filter_cmd'   => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/g"',
                 'table'        => 'ncbi_taxa_name',
@@ -78,7 +78,7 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'import_aliases',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PatchDB',
             -parameters => {
-                'db_conn'        => $self->o('master_db'),
+                'db_conn'        => '#master_db#',
                 'patch_file'     => $self->o('alias_file'),
                 'ignore_failure' => 1,
                 'record_output'  => 1,
@@ -90,7 +90,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::SqlHealthChecks',
             -parameters => {
                 'mode'    => 'taxonomy',
-                'db_conn' => $self->o('master_db'),
+                'db_conn' => '#master_db#',
             },
             -flow_into  => ['assembly_patch_factory'],
         },
@@ -113,7 +113,7 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'list_assembly_patches',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::ListChangedAssemblyPatches',
             -parameters => {
-                'compara_db' => $self->o('master_db'),
+                'compara_db' => '#master_db#',
                 'work_dir'   => $self->o('work_dir'),
             },
         },
@@ -181,7 +181,7 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'update_collection',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CreateReleaseCollection',
             -parameters => {
-                'collection_name' => $self->o('division'),
+                'collection_name' => '#division#',
                 'incl_components' => $self->o('incl_components'),
             },
             -flow_into  => [ 'add_mlss_to_master' ],
@@ -215,7 +215,7 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'load_timetree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::LoadTimeTree',
             -parameters => {
-                'compara_db' => $self->o('master_db'),
+                'compara_db' => '#master_db#',
             },
             -flow_into  => [ 'reset_master_urls' ],
         },
@@ -232,7 +232,7 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name      => 'hc_master',
             -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RunJavaHealthCheck',
             -parameters      => {
-                'compara_db'  => $self->o('master_db'),
+                'compara_db'  => '#master_db#',
                 'work_dir'    => $self->o('work_dir'),
                 'testgroup'   => 'ComparaMaster',
                 'output_file' => '#work_dir#/healthcheck.#testgroup#.out',
@@ -248,7 +248,7 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'backup_master',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'src_db_conn' => $self->o('master_db'),
+                'src_db_conn' => '#master_db#',
                 'output_file' => $self->o('master_backup_file'),
             },
             -flow_into  => WHEN(
