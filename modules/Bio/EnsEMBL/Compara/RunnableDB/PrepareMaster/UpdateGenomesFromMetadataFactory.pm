@@ -141,6 +141,8 @@ sub fetch_input {
 		$current_gdbs{$species_name} = 1;
 	}
 	my @to_retire = grep { $current_gdbs{$_} == 0 } keys %current_gdbs;
+    print "GENOMES_TO_RETIRE!! ";
+    print Dumper \@to_retire;
 
     my $perc_to_retire = (scalar @to_retire/scalar @release_genomes)*100;
     die "Percentage of genomes to retire seems too high ($perc_to_retire\%)" if $perc_to_retire >= 20;
