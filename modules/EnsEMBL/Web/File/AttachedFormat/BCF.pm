@@ -17,11 +17,16 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::File::AttachedFormat::VCF;
+package EnsEMBL::Web::File::AttachedFormat::BCF;
 
 use strict;
 use warnings;
 no warnings 'uninitialized';
+
+use LWP::UserAgent;
+use File::Basename qw(fileparse);
+use File::Spec;
+use File::stat qw(stat);
 
 use base qw(EnsEMBL::Web::File::AttachedFormat);
 
@@ -35,41 +40,34 @@ sub check_data {
   my $url_check = chase_redirects($url, {'hub' => $self->{'hub'}});
   
   if (ref($url_check) eq 'HASH') {
-    if ($url_check->{'error'}) {
-      $error = $url_check->{'error'}[0];
-    }
-    else {
-      $url = $url_check->{'url'};
-    }
+    $error = $url_check->{'error'}[0];
   }
   else {
-    $url = $url_check;
+    $self->_check_cached_index;
   }
 
-  # try to open and use the VCF file
-  # this checks that the VCF and index files are present and correct, 
-  # and should also cause the index file to be downloaded and cached in /tmp/ 
-=pod
-  my ($adaptor, $index);
-  eval {
-        $adaptor =  Bio::EnsEMBL::IO::Adaptor::VCFAdaptor->new($url, $self->{'hub'});
-        $adaptor->fetch_variations(1, 1, 10);
-  };
-  warn $@ if $@;
-  warn "Failed to open VCF $url\n $@\n " if $@; 
-  warn "Failed to open VCF $url\n $@\n " unless $adaptor;
-          
-  if ($@ or !$adaptor) {
-    $error = qq{
-        Unable to open/index remote VCF file: $url
-        <br />Ensembl can only display sorted, indexed VCF files
-        <br />Ensure you have sorted and indexed your file and that your web server is accessible to the Ensembl site 
-        <br />For more information on the type of file expected please see the large file format <a href="/info/website/upload/large.html">documentation.</a>
-    };
-  }
-=cut
   return ($url, $error);
 }
+
+# Ensure there is no out-of-date cached BCF index by deleting the local 
+# version if it exists and is older than the remote version. HTSlib will
+# then fetch a fresh copy of the index if needed.
+sub _check_cached_index {
+  my ($self) = @_;
+  my $index_url = $self->{url} . '.csi';
+  my $tmp_file  = File::Spec->tmpdir . '/' . fileparse($index_url);
+
+  if (-f $tmp_file) {
+    my $local_time  = int stat($tmp_file)->[9];
+    my $remote_time = int eval { LWP::UserAgent->new->head($index_url)->last_modified };
+
+    if ($local_time <= $remote_time) {
+      warn "Cached BCF index is older than remote - deleting $tmp_file";
+      unlink $tmp_file;
+    }
+  }
+}
+
 
 1;
 

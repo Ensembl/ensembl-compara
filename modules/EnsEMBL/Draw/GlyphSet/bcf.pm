@@ -17,11 +17,11 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Draw::GlyphSet::bigpsl;
+package EnsEMBL::Draw::GlyphSet::bcf;
 
-### Module for drawing data in BigPsl format (either user-attached, or
+### Module for drawing data in BCF format (either user-attached, or
 ### internally configured via an ini file or database record
-### Extends bigbed glyphset, as it is basically a sub-format of bigBed
+### Extends vcf glyphset, as it is basically a sub-format of vcf
 
 use strict;
 use warnings;
@@ -32,7 +32,7 @@ use parent qw(EnsEMBL::Draw::GlyphSet::vcf);
 
 sub get_iow {
   my ($self, $url, $args) = @_;
-  return EnsEMBL::Web::IOWrapper::BCF::open($url, 'BCF', $args);
+  return EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BCF', $args);
 }
 
 1;
