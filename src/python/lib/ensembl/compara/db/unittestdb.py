@@ -25,7 +25,7 @@ import sqlalchemy
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine.url import make_url
 
-from ..utils import PathLike
+from ..filesys import PathLike
 from .dbconnection import DBConnection, Query, URL
 
 

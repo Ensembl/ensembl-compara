@@ -24,7 +24,8 @@ import pytest
 from _pytest.fixtures import FixtureLookupErrorRepr
 from _pytest._code.code import ExceptionChainRepr, ExceptionInfo, ReprExceptionInfo
 
-from ..utils import DirCmp, PathLike, to_list
+from ..filesys import DirCmp, PathLike
+from ..utils import to_list
 from ._citest import CITestItem
 
 
@@ -100,7 +101,7 @@ class CITestFilesItem(CITestItem):
             raise CITestFilesTreeError(ref_only, target_only)
 
     def test_content(self, patterns: Union[str, List] = None, paths: Union[PathLike, List] = None) -> None:
-        """Compares the content (byte-by-byte) between reference and target files.
+        """Compares the content between reference and target files.
 
         Args:
             patterns: Glob patterns the filenames need to match (at least one).

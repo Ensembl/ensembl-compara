@@ -25,7 +25,7 @@ from _pytest.fixtures import FixtureRequest
 
 from ensembl.compara.citest import CITestDBItem, CITestDBContentError, CITestDBGroupingError, \
     CITestDBNumRowsError, CITestFilesItem, CITestFilesContentError, CITestFilesSizeError, CITestFilesTreeError
-from ensembl.compara.utils import DirCmp
+from ensembl.compara.filesys import DirCmp
 
 
 @pytest.fixture(scope="module")

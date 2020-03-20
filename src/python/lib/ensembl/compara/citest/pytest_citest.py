@@ -26,7 +26,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.runner import TestReport
 
 from ..db import DBConnection
-from ..utils import DirCmp
+from ..filesys import DirCmp
 from .testdb import CITestDBItem
 from .testfiles import CITestFilesItem
 

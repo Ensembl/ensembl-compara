@@ -23,7 +23,7 @@ import os
 from pathlib import Path
 from typing import Callable, Deque, Dict, Iterator, List, Tuple, TypeVar, Union
 
-from .tools import to_list
+from ..utils import to_list
 
 
 # Create the PathLike type as an alias for supported types a path can be stored into
