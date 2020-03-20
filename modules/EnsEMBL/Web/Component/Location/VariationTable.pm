@@ -187,7 +187,7 @@ sub make_table {
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
 
   my @exclude;
-  push @exclude,'gmaf','gmaf_allele','clinsig','clinvar_id' unless $hub->species eq 'Homo_sapiens';
+  push @exclude,'gmaf','gmaf_freq','gmaf_allele','clinsig','clinvar_id' unless $hub->species eq 'Homo_sapiens';
 
 
   my @columns = ({
@@ -222,13 +222,17 @@ sub make_table {
   },{
     _key => 'gmaf_allele', _type => 'string no_filter unshowable',
   },{
-    _key => 'gmaf', _type => 'numeric', label => "Glo\fbal MAF",
-    helptip => $glossary->{'Global MAF'},
-    also_cols => 'gmaf_allele',
+    _key => 'gmaf_freq', _type => 'numeric unshowable',
+    sort_for => 'gmaf',
+    filter_label => 'Global MAF',
     filter_range => [0,0.5],
     filter_fixed => 1,
     filter_logarithmic => 1,
     primary => 1,
+  },{
+    _key => 'gmaf', _type => 'string no_filter', label => "Glo\fbal MAF",
+    helptip => $glossary->{'Global MAF'},
+    also_cols => 'gmaf_allele',
   },{
     _key => 'class', _type => 'iconic', label => 'Class',
     helptip => $glossary->{'Class'},
@@ -341,10 +345,12 @@ sub variation_table {
 
         my ($start, $end) = ($vf->seq_region_start,$vf->seq_region_end);
 
-        my $gmaf   = $vf->minor_allele_frequency; # global maf
+        my $gmaf = $vf->minor_allele_frequency; # global maf
+        my $gmaf_freq;
         my $gmaf_allele;
         if (defined $gmaf) {
-          $gmaf = sprintf("%.3f",$gmaf);
+          $gmaf_freq = $gmaf;
+          $gmaf = ($gmaf < 0.001) ? '< 0.001' : sprintf("%.3f",$gmaf);
           $gmaf_allele = $vf->minor_allele;
         }
 
@@ -373,8 +379,9 @@ sub variation_table {
               class        => $var_class,
               Alleles      => $allele_string,
               Ambiguity    => $vf->ambig_code,
-              gmaf         => $gmaf   || '-',
-              gmaf_allele  => $gmaf_allele || '-',
+              gmaf         => $gmaf || '-',
+              gmaf_freq    => $gmaf_freq || '',
+              gmaf_allele  => $gmaf_allele,
               status       => $status,
               clinsig      => $clin_sig,
               clinvar      => join('; ',@$clinvar_ids),

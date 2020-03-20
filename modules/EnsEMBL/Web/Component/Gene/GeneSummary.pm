@@ -22,6 +22,7 @@ package EnsEMBL::Web::Component::Gene::GeneSummary;
 use strict;
 
 use EnsEMBL::Web::Document::Image::R2R;
+use EnsEMBL::Web::Utils::Bioschemas qw(create_bioschema add_species_bioschema);
 
 use base qw(EnsEMBL::Web::Component::Gene);
 
@@ -38,12 +39,12 @@ sub content {
   my $gene          = $object->gene;
   my $species_defs  = $hub->species_defs;
   my $table         = $self->new_twocol;
-  my $site_type     = $species_defs->ENSEMBL_SITETYPE;
+  my $sub_type      = $species_defs->ENSEMBL_SUBTYPE;
   my @CCDS          = @{$object->Obj->get_all_DBLinks('CCDS')};
   my @Uniprot       = @{$object->Obj->get_all_DBLinks('Uniprot/SWISSPROT')};
   my $db            = $object->get_db;
   my $alt_genes     = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE', 'show_version'); #gets all xrefs, sorts them and stores them on the object. Returns HTML only for ALT_GENES
-  my @RefSeqMatches = @{$gene->get_all_Attributes('refseq_compare')};
+  my $ensembl_select = $gene->get_all_Attributes('Ensembl_select')->[0] ? $gene->get_all_Attributes('Ensembl_select')->[0]->value : '';
   my $display_xref  = $gene->display_xref;
   my ($link_url)    = $display_xref ? $self->get_gene_display_link($gene, $display_xref) : ();
 
@@ -54,6 +55,25 @@ sub content {
     );
   }
 
+  ## Start assembling bioschema information
+  my $bs_gene;
+  if ($species_defs->BIOSCHEMAS_DATACATALOG) {
+    $bs_gene = {'@type' => 'Gene', 'identifier' => $object->gene->stable_id};
+    $bs_gene->{'name'} = $display_xref ? $display_xref->display_id : $gene->stable_id;
+    my $description = $object->gene_description;
+    $description = '' if $description eq 'No description';
+    if ($description) {
+      $bs_gene->{'description'} = $description;
+    }
+    my $chr = scalar(@{$hub->species_defs->ENSEMBL_CHROMOSOMES||[]}) ? 'Chromosome ' : '';
+    $chr .= $object->seq_region_name;
+    $bs_gene->{'isPartOfBioChemEntity'} = {
+                                            '@type' => 'BioChemEntity',
+                                            'name'  => $chr,
+                                          };
+    add_species_bioschema($species_defs, $bs_gene);
+  }
+
   # add CCDS info
   if (scalar @CCDS) {
     my %temp = map { $_->display_id, 1 } @CCDS;
@@ -61,7 +81,7 @@ sub content {
     my $template  = '<p>This gene is a member of the %s CCDS set: %s</p>';
     my $sp_name   = $species_defs->DISPLAY_NAME; 
     ## FIXME Hack for e86 mouse strains
-    if ($species_defs->STRAIN_COLLECTION && $species_defs->SPECIES_STRAIN !~ /reference/) {
+    if ($species_defs->STRAIN_GROUP && $species_defs->SPECIES_STRAIN !~ /reference/) {
       $template = 'This gene is similar to a CCDS gene on %s: %s';
       (my $bio_name = $species_defs->SPECIES_SCIENTIFIC_NAME) =~ s/ /_/;
       $sp_name  = sprintf '%s %s', $species_defs->get_config($bio_name, 'DISPLAY_NAME'), $species_defs->get_config($bio_name, 'ASSEMBLY_VERSION');
@@ -77,17 +97,25 @@ sub content {
   }
 
   ## add RefSeq match info where appropriate
-  if (scalar @RefSeqMatches) {
-    my $string;
-    foreach my $match (@RefSeqMatches) {
-      my $v = $match->value;
-      $v =~ /RefSeq Gene ID ([\d]+)/;
-      my $id = $1;
-      my $url = $hub->get_ExtURL('REFSEQ_GENEIMP', $id);
-      (my $link = $v) =~ s/RefSeq Gene ID ([\d]+)/RefSeq Gene ID <a href="$url" rel="external">$1<\/a>/;
-      $string .= sprintf('<p>%s</p>', $link);
+  if ($hub->species eq 'Homo_sapiens' && $sub_type ne 'GRCh37') {
+    my $url  = $hub->url({
+      type   => 'Gene',
+      action => 'Matches',
+      g      => $gene->stable_id, 
+    });
+    my $msg = 'This Ensembl/Gencode gene does not contain any transcripts for which we have <a href="/info/genome/genebuild/mane.html">selected identical model(s) in RefSeq</a>.'; 
+    my $has_mane_select = 0;
+    if ($ensembl_select) {
+      foreach my $t (@{$gene->get_all_Transcripts}){
+        next if $has_mane_select;
+        next unless $t->stable_id eq $ensembl_select;
+        $has_mane_select = 1 if (@{$t->get_all_Attributes('MANE_select')});
+      }
+    }  
+    if ($has_mane_select) {
+      $msg = 'This Ensembl/Gencode gene contains transcript(s) for which we have <a href="/info/genome/genebuild/mane.html">selected identical RefSeq transcript(s)</a>.';
     }
-    $table->add_row('RefSeq', $string);
+    $table->add_row('RefSeq', sprintf(qq{%s If there are other RefSeq transcripts available they will be in the <a href="%s">External references</a> table}, $msg, $url)); 
   }
 
   ## LRG info
@@ -138,7 +166,9 @@ sub content {
   # add a row to the table
   $table->add_row('LRG', $lrg_html) if $lrg_html;
 
-  $table->add_row('Ensembl version', $object->stable_id.'.'.$object->version);
+  if ($object->version) {
+    $table->add_row('Ensembl version', $object->stable_id_version);
+  }
 
   ## Link to another assembly, e.g. previous archive
   my $current_assembly = $hub->species_defs->ASSEMBLY_VERSION;
@@ -228,7 +258,7 @@ sub content {
   my $cv_terms = $object->get_cv_terms;
   if (@$cv_terms) {
     my $first = shift @$cv_terms;
-    my $text = qq(<p>$first [<a href="//vega.sanger.ac.uk/info/about/annotation_attributes.html" target="external" class="constant">Definitions</a>]</p>);
+    my $text = qq(<p>$first [<a href="/info/website/glossary.html class="constant">Definitions</a>]</p>);
     foreach my $next (@$cv_terms) {
       $text .= "<p>$next</p>";
     }
@@ -249,7 +279,18 @@ sub content {
     }
   }
 
-  return $table->render;
+  my $bioschema = '';
+  if (keys %$bs_gene) {
+    my $sitename = $hub->species_defs->ENSEMBL_SITETYPE;
+    my $bs_record = {
+                      '@type'       => 'DataRecord', 
+                      'identifier'  => $object->stable_id, 
+                      'mainEntity'  => $bs_gene,
+                      'isPartOf'    => sprintf('%s %s Gene Set', $sitename, $hub->species_defs->SPECIES_COMMON_NAME),
+                    };
+    $bioschema = create_bioschema($bs_record);
+  }
+  return $table->render.$bioschema;
 }
 
 sub get_synonyms {

@@ -38,7 +38,7 @@ sub init {
   
   $self->SUPER::init;
   
-  if (!scalar grep /^s\d+$/, keys %{$hub->multi_params}) {
+  if ($hub->session && !scalar grep /^s\d+$/, keys %{$hub->multi_params}) {
     my $multi_species = $hub->session->get_record_data({type => 'multi_species', code => 'multi_species'});
     $self->tree->get_node('Multi')->set('url', $hub->url({ action => 'Multi', function => undef, %{$multi_species->{$hub->species}} })) if $multi_species && $multi_species->{$hub->species};
   }
@@ -137,7 +137,7 @@ sub populate_tree {
       botnav   EnsEMBL::Web::Component::Location::ViewBottomNav
       vartable EnsEMBL::Web::Component::Location::VariationTable
     )],
-    { 'availability' => 'slice' }
+    { 'availability' => 'slice variation' }
   ));
 
   $variation_menu->append($self->create_node('SequenceAlignment', 'Resequencing',
@@ -148,8 +148,9 @@ sub populate_tree {
     )],
     { 'availability' => 'slice has_strains', 'concise' => 'Resequencing Alignments' }
   ));
- 
-  $variation_menu->append($self->create_node('Strain', 'Strain table',
+
+  my $strain_type = ucfirst $hub->species_defs->STRAIN_TYPE;  
+  $variation_menu->append($self->create_node('Strain', "$strain_type table",
     [qw(
       botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
       strain  EnsEMBL::Web::Component::Location::StrainTable
@@ -233,15 +234,16 @@ sub add_external_browsers {
   }
 
   if ($browsers{'ACCESSION'}) {
-    if ($chr) { 
-      $url = $hub->get_ExtURL('EGB_NCBI', { ACCESSION => $browsers{'ACCESSION'}, CHR => $chr, START => $start, END => $end });
-    } else {
-      my $taxid = $species_defs->get_config($hub->species, 'TAXONOMY_ID'); 
-      $url = "http://www.ncbi.nlm.nih.gov/mapview/map_search.cgi?taxid=$taxid";
-    }
-    
-    $self->get_other_browsers_menu->append($self->create_node('NCBI_DB', 'NCBI', [], { url => $url, raw => 1, external => 1 }));
-    
+    if($species_defs->NCBI_GOLDEN_PATH) {
+      if ($chr) { 
+          $url = $hub->get_ExtURL('EGB_NCBI', { ACCESSION => $browsers{'ACCESSION'}, CHR => $chr, START => $start, END => $end });
+        } else {
+          my $taxid = $species_defs->get_config($hub->species, 'TAXONOMY_ID'); 
+          $url = "http://www.ncbi.nlm.nih.gov/mapview/map_search.cgi?taxid=$taxid";
+        }
+        
+        $self->get_other_browsers_menu->append($self->create_node('NCBI_DB', 'NCBI', [], { url => $url, raw => 1, external => 1 }));
+    }    
     delete $browsers{'ACCESSION'};
   }
 

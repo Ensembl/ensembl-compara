@@ -28,28 +28,116 @@ sub _add_nav_entries {
 
   my @zmenu_links = qw(regulation_view);
 
+  my $action = $self->hub->param('act');
   my $config = $self->hub->param('config');
-  if(grep { $config eq $_ } @zmenu_links) {
-    my $cell_type_url = $self->hub->url('MultiSelector', {
-      type => 'Regulation',
-      action   => 'CellTypeSelector',
-      image_config => $config,
+  if(($evidence&1) || grep { $config eq $_ } @zmenu_links) {
+    my $matrix_url = $self->hub->url('Config', {
+                                          action        => $action,
+                                          matrix        => 'RegMatrix',
+                                          menu          => 'regulatory_features',
     });
-    my $evidence_url = $self->hub->url('MultiSelector', {
-      type => 'Regulation',
-      action => 'EvidenceSelector',
-      image_config => $config,
-    });
-    $self->add_entry({ label => "Select other cell types", link => $cell_type_url, link_class => 'modal_link' });
-    $self->add_entry({ label => "Select evidence to show", link => $evidence_url, link_class => 'modal_link' });
+    $self->add_entry({ label => "Configure tracks", link => $matrix_url, 
+                        link_class => 'modal_link', link_rel => 'modal_config_'.lc($action)  });
   }
-  if($evidence&1) {
-    my $signal_url = $self->hub->url({
-      action => $self->hub->param('act'),
-      plus_signal => $config,
-    });
-    $self->add_entry({ label => "Also show raw signal", link => $signal_url });
+}
+
+sub get_motif_features_by_epigenome {
+  my ($self, $reg_feat, $cell_line) = @_;
+  return {} unless ($reg_feat && $cell_line);
+  my @motif_features = @{$reg_feat->fetch_all_MotifFeatures_with_matching_Peak};
+  my $motifs = {};
+
+  foreach my $mf (@motif_features) {
+    my $peak = $mf->fetch_overlapping_Peak_by_Epigenome($cell_line);
+    if ($peak) {
+      my $mf_info = $self->_format_mf_info($mf);
+      $motifs->{$mf->start .':'. $mf->end} = $mf_info if $mf_info;
+    }
   }
+  return $motifs;
+}
+
+sub get_motif_features_by_peak {
+  my ($self, $peak) = @_;
+  my @motif_features = @{$peak->fetch_all_MotifFeatures};
+  my $motifs = {};
+
+  foreach my $mf (@motif_features) {
+      my $mf_info = $self->_format_mf_info($mf);
+      $motifs->{$mf->start .':'. $mf->end} = $mf_info if $mf_info;
+  }
+
+  return $motifs; 
+}
+
+sub _format_mf_info {
+  my ($self, $mf) = @_;
+
+  my $matrix = $mf->binding_matrix;
+  return undef unless $matrix;
+
+  my $matrix_id = '<a href="#" class="_motif">'.$mf->binding_matrix->stable_id.'</a>';
+  my @names = @{$matrix->get_TranscriptionFactorComplex_names||[]};
+  my $name_string = '';
+  if (scalar @names) {
+    ## We don't want the string to be too long, but names can be very variable in length
+    $name_string = $names[0];
+    my $i = 1;
+    my $max_length = 12;
+    for ($i = 1; $i < scalar @names; $i++) {
+      if (length($names[$i]) < ($max_length - length($name_string))) {
+        $name_string .= ', '.$names[$i];
+      }
+      else {
+        last;
+      }
+    }
+    $name_string .= '...' if scalar @names > $i;
+  }
+  return [$mf->stable_id, $name_string, $matrix_id, $mf->score];
+} 
+
+sub _add_motif_feature_table {
+  my ($self, $motif_features) = @_;
+  return unless scalar keys %{$motif_features||{}} > 0;
+  
+  $self->add_subheader('Motif Information');
+
+  # get region clicked on
+  my $click_start = $self->hub->param('click_start');
+  my $click_end   = $self->hub->param('click_end');
+  my ($start, $end, @feat);
+
+  foreach my $motif (keys %$motif_features) {
+    ($start, $end) = split /:/, $motif;
+    push @feat, $motif unless $start > $click_end || $end < $click_start;
+  }
+
+  my $pwm_table = '
+        <table cellpadding="0" cellspacing="0">
+          <tr>
+            <th style="width:20%">Motif feature</th>
+            <th style="width:30%">Transcription factors</th>
+            <th style="width:30%">Binding matrix</th>
+            <th style="width:20%">Score</th>
+          </tr>
+  ';
+
+  foreach my $motif (sort keys %$motif_features) {
+    my ($stable_id, $tfactors, $binding_matrix, $score) = @{$motif_features->{$motif}};
+
+    my $nice_score = sprintf('%.4f', $score);
+    $pwm_table .= qq(<tr>
+                        <td>$stable_id</td>
+                        <td>$tfactors</td>
+                        <td>$binding_matrix</td>
+                        <td>$nice_score</td>
+                      </tr>);
+  }
+
+  $pwm_table .= '</table>';
+
+  $self->add_entry({ label_html => $pwm_table });
 }
 
 1;

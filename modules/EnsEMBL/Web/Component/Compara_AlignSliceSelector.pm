@@ -37,7 +37,7 @@ sub content {
   my $cdb          = shift || $hub->param('cdb') || 'compara';
   my $species_defs = $hub->species_defs;
   my $db_hash      = $species_defs->multi_hash;
-  my ($align, $target_species, $target_slice_name_range) = split '--', $hub->param('align');
+  my ($align, $target_species, $target_slice_name_range) = split '--', $hub->get_alignment_id;
   my $url          = $hub->url({ %{$hub->multi_params}, align => undef }, 1);
   my $extra_inputs = join '', map qq(<input type="hidden" name="$_" value="$url->[1]{$_}" />), sort keys %{$url->[1] || {}};
   my $alignments   = $db_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {}; # Get the compara database hash
@@ -70,7 +70,7 @@ sub content {
 
   my $default_species = $species_defs->valid_species($hub->species) ? $hub->species : $hub->get_favourite_species->[0];
 
-  my $modal_uri       = $hub->url('MultiSelector', {qw(type Location action TaxonSelector), align => $align, referer_action => $hub->action, referer_function => $hub->function});
+  my $modal_uri       = $hub->url('MultiSelector', {type => $hub->type, action => 'TaxonSelector', align => $align, referer_action => $hub->action});
 
   # Tackle action for alignments image and text
   my $action = $hub->function eq 'Image' ? 'Compara_AlignSliceBottom' : $hub->action;

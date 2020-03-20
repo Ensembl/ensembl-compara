@@ -178,7 +178,7 @@ sub cell_line_button {
   my ($shown_cells, $partials) = $self->shown_cells($image_config);
   my $shown_count = scalar @$shown_cells;
   my $object      = $self->object || $self->hub->core_object('regulation');
-  my $total_count = scalar @{$object->regbuild_epigenomes};
+  my $total_count = scalar keys %{$object->regbuild_epigenomes};
 
   my $url = $self->hub->url('MultiSelector', {
     action   => 'CellTypeSelector',
@@ -189,16 +189,22 @@ sub cell_line_button {
   my $count = "showing ".($shown_count - $partial_count)."/$total_count";
   $count   .= " and $partial_count partially" if $partial_count;
 
+  my $components = $self->hub->components;
+
   push @{$self->{'buttons'}||=[]},{
-    url => $url,
-    caption => "Select cells ($count)",
-    class => 'cell-line',
+    url =>  $self->hub->url({'type' => 'Config', 'action' => $self->hub->type, 'function' => $components->[0]->[0]}).'#regulatory_features',
+    caption => "Configure Cell/Tissue",
+    class => 'config',
+    rel => 'modal_config_'.lc($components->[0]->[0]),
     modal => 1
   };
 }
 
 sub evidence_button {
   my ($self) = @_;
+
+  return;
+#we dont need the evidence button anymore
 
   my $ev = $self->all_evidences->{'all'};
 
@@ -221,62 +227,6 @@ sub _current_renderer_setting {
 
   my $mode = $self->all_evidences->{'mode'};
   return (!!($mode&4),$mode&1,!!($mode&2));
-}
-
-sub renderer_button {
-  my ($self) = @_;
-
-  my $peaks_url = $self->hub->url('Ajax', {
-    type => 'reg_renderer',
-    renderer => 'peaks',
-  });
-  my $signals_url = $self->hub->url('Ajax', {
-    type => 'reg_renderer',
-    renderer => 'signals',
-  });
-  my ($disabled,$peaks_on,$signals_on) = $self->_current_renderer_setting;
-
-  push @{$self->{'buttons'}||=[]},{
-    url => $peaks_url,
-    caption => 'Peaks',
-    class => 'peak radiogroup first',
-    toggle => $peaks_on?'on':'off',
-    disabled => $disabled,
-    group => 'renderer',
-  },{
-    url => $signals_url,
-    caption => 'Signal',
-    class => 'signal last',
-    toggle => $signals_on?'on':'off',
-    disabled => $disabled,
-    group => 'renderer',
-  };
-}
-
-sub advanced_button {
-  my ($self,$component) = @_;
-
-  my $hub = $self->hub;
-  my @components = @{$hub->components};
-
-  my $view_config;
-  while (!$view_config && scalar @components) {
-    my ($component, $type) =  @{shift @components};
-    $view_config = $hub->get_viewconfig({component => $component, type => $type});
-  }
-  return unless $view_config;
-
-  my $url     = $self->hub->url('Config', {
-    type      => $view_config->type,
-    action    => $view_config->component,
-    function  => undef,
-  });
-  push @{$self->{'buttons'}||=[]},{
-    url => $url,
-    caption => 'Advanced ...',
-    class => 'unstyled config modal_link',
-    rel => "modal_config_$component-functional",
-  };
 }
 
 1;

@@ -238,6 +238,8 @@ sub get_export_data {
 }
 
 sub buttons {
+  return unless $SiteDefs::FAMILY_ALIGNMENTS_DOWNLOADABLE;
+
   my $self    = shift;
   my $hub     = $self->hub;
   my $members = $hub->param('members');

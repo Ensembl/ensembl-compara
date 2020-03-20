@@ -28,13 +28,15 @@ use EnsEMBL::Draw::Utils::Text;
 
 use parent qw(EnsEMBL::Draw::Style::Extra);
 
+our $x_offset = -118;
+
 sub draw_margin_subhead {
 ### Draws a subheader in the lefthand margin, e.g. regulatory features
   my ($self, $text, $tracks_on) = @_;
 
-  my $height = $self->_draw_name($text, 'black', -118, undef);
+  my $height = $self->_draw_name($text, 'black', $x_offset);
   if ($tracks_on) {
-    $height += $self->_draw_name($tracks_on, 'grey40', -118, 0);
+    $height += $self->_draw_name($tracks_on, 'grey40', $x_offset);
   } else {
     $height += $self->_draw_space_glyph;
   }
@@ -42,10 +44,13 @@ sub draw_margin_subhead {
 }
 
 sub draw_margin_sublabels {
-  my ($self, $track) = @_;
-
+  my ($self, $track, $offset) = @_;
+  $offset ||= 0;
+  my $y_offset = 0;
   foreach my $s (@$track) {
-    $self->_draw_name($s->{'metadata'}{'sublabel'}, $s->{'metadata'}{'colour'}, -118);
+    next if (scalar @{$s->{'features'}} == 0 && $self->image_config->get_option('opt_empty_tracks') == 0);
+    $self->_draw_name($s->{'metadata'}{'sublabel'}, $s->{'metadata'}{'colour'}, $x_offset, $y_offset);
+    $y_offset += $offset;
   }
 }
 
@@ -57,7 +62,7 @@ sub draw_sublegend {
 }
 
 sub _draw_name {
-  ### Draws the name of the predicted features track
+  ### Draws the name of the track
   ### @param arrayref of Feature objects
   ### @param colour of the track
   ### @return 1
@@ -136,7 +141,7 @@ sub _sublegend_zmenu_text {
   my ($self,$args) = @_;
 
   my @out;
-  foreach my $label (keys %{$args->{'colour_legend'}||{}}) {
+  foreach my $label (sort keys %{$args->{'colour_legend'}||{}}) {
     push @out, sprintf '<span style="width:24px;height:12px;background-color:#%s;margin-right:8px;display:inline-block"></span>%s', $args->{'colour_legend'}{$label}, $label;;
   }
   if ($args->{'show_peaks'}) {
@@ -153,7 +158,7 @@ sub _sublegend_zmenu {
   my $title = $args->{'title'} || 'Info';
   $title =~ s/&/and/g; # amps problematic; not just a matter of encoding
   foreach my $link (@{$args->{'sublegend_links'}||[]}) {
-    push @entries, qq(<a href="$link->{'href'}" class="$link->{'class'}">$link->{'text'}</a>);
+    push @entries, qq(<a href="$link->{'href'}" class="$link->{'class'}" rel="$link->{'rel'}">$link->{'text'}</a>);
   }
   return [$title, @entries];
 }
@@ -161,7 +166,7 @@ sub _sublegend_zmenu {
 sub _draw_sublegend_box {
   my ($self,$args,$zmenu) = @_;
 
-  my $offset = $self->_offset + 10;
+  my $offset = $self->_offset;
   $offset   += $args->{'y_offset'} || 0;
  
   my $click_text = $args->{'label'} || 'Details';

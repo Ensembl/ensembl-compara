@@ -8,12 +8,11 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     this.imagePath      = Ensembl.speciesImagePath;
     this.lastSelected   = null;
     this.activeTreeKey  = '';
-    this.selectionLimit = params.selectionLimit || 25;
+    this.selectionLimit = params.selectionLimit;
     this.defaultKeys    = new Array();
     this.multiHash      = {};
 
     if (params.defaultKeys)     this.defaultKeys     = params.defaultKeys;
-    if (params.entryNode)       this.entryNode       = params.entryNode;
     if (params.caller)          this.caller          = params.caller;
     if (params.allOptions)      this.allOptions      = params.allOptions;
     if (params.includedOptions) this.includedOptions = params.includedOptions;
@@ -94,7 +93,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       panel.disableButton(true);
       return false;
     }
-    if (curr_count > panel.selectionLimit) {
+    if (panel.selectionLimit && curr_count > panel.selectionLimit) {
       panel.elLk.msg.html('Selection limit of ' + panel.selectionLimit + ' species exeeded!')
                     .show();
       panel.elLk.count.addClass('warn');
@@ -127,7 +126,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       this.addBreadcrumbs();
       this.createMenu(this.taxonTreeData.children);
       // Populate default selected species on panel open
-      this.populateDefaultSpecies();
+      this.defaultKeys && this.populateDefaultSpecies();
       this.isCompara && this.createMultipleAlignmentsHash();
     }
 
@@ -468,6 +467,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     var multipleAlign = panel.isCompara && panel.alignLabel;
     var node;
     var species; // Species to locate and show by default
+
     if (panel.defaultKeys && panel.defaultKeys.length > 0) {
       // set selected nodes
       $.each(panel.defaultKeys.reverse(), function(index, _key) { 
@@ -575,7 +575,9 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
           getAllLeaves(node.childList[child]);
         }
       } else {
-        results[results.length] = node;
+        if (node.data.unselectable !== 1) {
+          results[results.length] = node;
+        }
       }
       return results;
     }
@@ -758,6 +760,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     }
 
     var currSelArr = new Array();
+
     for (var i = 0; i < items.length; i++) {
       if (this.isCompara) {
         items[i] && currSelArr.push(items[i].data.key);
@@ -798,7 +801,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
   // Check if there was any change in the selection. If not, then do nothing.
   approveSelection: function(currSel) {
-    return currSel.length && currSel.join(',') !== this.defaultKeys.join(',');
+    return currSel.length && this.defaultKeys && currSel.join(',') !== this.defaultKeys.join(',');
   }
   
 });

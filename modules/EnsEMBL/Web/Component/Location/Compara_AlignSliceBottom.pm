@@ -27,9 +27,13 @@ use base qw(EnsEMBL::Web::Component::Location EnsEMBL::Web::Component::Compara_A
 
 sub _init {
   my $self = shift;
+  my $hub = $self->hub;
   $self->cacheable(0);
   $self->ajaxable(1);
   $self->has_image(1);
+  # Getting alignments_selector data from sessions;
+  my $alignments_session_data = $hub->session ? $hub->session->get_record_data({'type' => 'view_config', 'code' => 'alignments_selector'}) : {};
+  %{$self->{'viewconfig'}{'Location'}{_user_settings}} = (%{$self->{'viewconfig'}{'Location'}{_user_settings}||{}}, %{$alignments_session_data||{}});
 }
 
 sub content {
@@ -38,7 +42,7 @@ sub content {
   my $species_defs = $hub->species_defs;
   my $object       = $self->object || $self->hub->core_object('location');
   my $threshold    = 1000100 * ($species_defs->ENSEMBL_GENOME_SIZE || 1);
-  my $align_params = $self->param('align');
+  my $align_params = $hub->get_alignment_id || '';
   my %options      = ( scores => $self->param('opt_conservation_scores'), constrained => $self->param('opt_constrained_elements') );
   my ($align)      = split '--', $align_params;
   
@@ -61,10 +65,13 @@ sub content {
   
   my $image_width     = $self->image_width;
   my $slice           = $object->slice;
+  my %export_params   = $hub->param('data_type') ? ('data_type' => $hub->param('data_type'), 'component' => $hub->param('data_action'))
+                                                 : ();
   my ($slices)        = $object->get_slices({
                                               'slice' => $slice, 
                                               'align' => $align_params, 
-                                              'species' => $primary_species
+                                              'species' => $primary_species,
+                                              %export_params
                         });
   my %aligned_species = map { $_->{'name'} => 1 } @$slices;
   my $i               = 1;
@@ -107,9 +114,6 @@ sub content {
   
   my $image = $self->new_image(\@images);
   $image->{'export_params'} = ['align', $align];
-  foreach ($self->param) {
-    push @{$image->{'export_params'}}, [$_, $self->param($_)] if $_ =~ /^species_$align/;
-  }
 
   return if $self->_export_image($image);
   

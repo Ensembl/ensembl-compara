@@ -54,7 +54,7 @@ sub content_ajax {
   my %all_cells = map { (my $k = $_) =~ s/:\w+$//; 
                         my $v = $k;
                         clean_id($k) => $v;
-                      } @{$object->regbuild_epigenomes};
+                      } keys %{$object->regbuild_epigenomes};
 
   $self->{'all_options'}      = \%all_cells;
   $self->{'included_options'} = \%shown_cells;

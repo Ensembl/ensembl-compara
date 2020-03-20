@@ -181,6 +181,7 @@ sub _pagination {
 
   ## Don't show every page - some species have hundreds of trackhubs!
   my $page_limit  = 10;
+  $page_limit     = $no_of_pages if $no_of_pages < $page_limit;
   my $midpoint    = $page_limit % 2 == 0 ? $page_limit / 2 : $page_limit / 2 + 0.5;
   my $half_range  = $page_limit % 2 == 0 ? $page_limit / 2 : ($page_limit - 1) / 2; 
   my $start_page  = $current_page - $half_range;

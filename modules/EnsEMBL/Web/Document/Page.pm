@@ -468,12 +468,14 @@ sub html_template {
   $self->add_body_attr('id',    'ensembl-webpage');
   $self->add_body_attr('class', 'mac')                               if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
   my $ie = $self->hub->ie_version;
-  if ($ie && $ie < 11) {
+  if ($ie && $ie <= 11) {
     if ($ie < 9) {
       $self->add_body_attr('class', "ie ie$ie" . ($ie < 8 ? ' ie67' : ''));
     }
-    else {
+    elsif ($ie eq '10') {
       $self->add_body_attr('class', "ienew ie$1");
+    } else {
+      $self->add_body_attr('class', "ie11");
     }
   }
   $self->add_body_attr('class', 'no_tabs')                           unless $elements->{'tabs'};

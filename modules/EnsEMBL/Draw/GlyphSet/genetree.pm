@@ -165,15 +165,19 @@ sub _init {
     }
 
     # Node glyph, coloured for for duplication/speciation
-    my ($node_colour, $label_colour, $collapsed_colour, $bold);
+    my ($node_colour, $label_colour, $collapsed_colour);
+    my $bold = 0;
     
-    if ($f->{_node_type} eq 'duplication') {
-      $node_colour = 'red3';
-    } elsif ($f->{_node_type} eq 'dubious') {
-      $node_colour = 'turquoise';
-    } elsif ($f->{_node_type} eq 'gene_split') {
-      $node_colour = 'SandyBrown';
-    } 
+    if (defined $f->{_node_type}) {
+      if ($f->{_node_type} eq 'duplication') {
+        $node_colour = 'red3';
+      } elsif ($f->{_node_type} eq 'dubious') {
+        $node_colour = 'turquoise';
+      } elsif ($f->{_node_type} eq 'gene_split') {
+        $node_colour = 'SandyBrown';
+      }
+    }
+
     #node colour categorisation for cafetree/speciestree/gainloss tree
     if($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode')) {      
       $border_colour = 'black';
@@ -186,11 +190,11 @@ sub _init {
       $node_colour = '#8C2D04' if($f->{_n_members} >= 25);
     }
 
-    if ( $f->{label} && $f->{label} !~ m/homologs/ ) {
-      if( $f->{_genes}->{$other_gene} ){
+    if ( $f->{label} ) {
+      if( $other_gene && $f->{_genes}->{$other_gene} ){
         $bold = 1;
         $label_colour = "ff6666";
-      } elsif( $f->{_genome_dbs}->{$other_genome_db_id} ){
+      } elsif( $other_genome_db_id && $f->{_genome_dbs}->{$other_genome_db_id} ){
         $bold = 1;
       } elsif( $f->{_genes}->{$current_gene} ){
         $label_colour     = 'red';
@@ -199,7 +203,7 @@ sub _init {
         $bold = defined($other_genome_db_id);
       } elsif( $f->{_genome_dbs}->{$current_genome_db_id} ){
         $label_colour     = 'blue';
-        $collapsed_colour = 'navyblue';
+        $collapsed_colour = 'blue';
         $bold = defined($other_genome_db_id);
       }
     }
@@ -314,7 +318,7 @@ sub _init {
             'height'    => 5 + 2 * $bold,
             'colour'    => $node_colour,
             'bordercolour' => $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') ? 'black' : $node_colour,            
-            'zindex'    => ($f->{_node_type} ne 'speciation' ? 40 : -20),
+            'zindex'    => ($f->{_node_type} !~ /speciation/ ? 40 : -20),
             'href'      => $node_href
           });
       push @node_glyphs, $node_glyph;
@@ -325,7 +329,7 @@ sub _init {
               'width'     => 5,
               'height'    => 5,
               'bordercolour' => "white",
-              'zindex'    => ($f->{_node_type} ne 'speciation' ? 40 : -20),
+              'zindex'    => ($f->{_node_type} !~ /speciation/ ? 40 : -20),
               'href'      => $node_href
             });
         push @node_glyphs, $node_glyph;
@@ -715,8 +719,8 @@ sub features {
   
   # Recurse for each child node
   if ($tree->isa('Bio::EnsEMBL::Compara::GenomicAlignTree')) {
-    if (!$f->{'_collapsed'} && @{$tree->sort_children}) {
-      foreach my $child_node (@{$tree->sort_children}) {
+    if (!$f->{'_collapsed'} && @{$tree->sorted_children}) {
+      foreach my $child_node (@{$tree->sorted_children}) {
         $f->{'_child_count'}++;
         push @features, @{$self->features($child_node, $rank, $node_id, $x_offset, $show_exons, $slice_cigar_lines, $low_coverage_species)};
       }

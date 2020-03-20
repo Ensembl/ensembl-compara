@@ -37,7 +37,6 @@ sub json_fetch_species {
   my $sd           = $hub->species_defs;
   my $cdb          = shift || $hub->param('cdb') || 'compara';
   my $db_hash      = $sd->multi_hash;
-  my ($align, $target_species, $target_slice_name_range) = split '--', $hub->param('align');
   my $url          = $hub->url({ %{$hub->multi_params}, align => undef }, 1);
   my $extra_inputs = join '', map qq(<input type="hidden" name="$_" value="$url->[1]{$_}" />), sort keys %{$url->[1] || {}};
   my $alignments   = $db_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {}; # Get the compara database hash
@@ -57,19 +56,32 @@ sub json_fetch_species {
     $t->{expand}     = 0;
     $t->{children}   = [];
     my @children;
-    # foreach (sort {$a->{}})
+
     foreach (sort keys %{$row->{'species'}}) {
       my $url_name  = $hub->species_defs->production_name_mapping($_);
       my $prod_name = $hub->species_defs->get_config($url_name, 'SPECIES_PRODUCTION_NAME');
+      my $ancestral = 0;
+      if ($_ =~/ancestral_sequences/i) {
+        $url_name = ucfirst($_);
+        $prod_name = $_;
+        $ancestral = 1;
+      }
 
       next unless $prod_name;
       $prod_name = encode_entities($prod_name);
       my $t_child = {};
       $t_child->{key}        = join '_', ('species', $row->{id}, lc($prod_name));
-      $t_child->{title}      = encode_entities($species_info->{$url_name}->{common});
+      $t_child->{title}      = encode_entities($ancestral ? '--Ancestral_sequences--' : $species_info->{$url_name}->{common});
       $t_child->{value}      = $row->{id};
-      $t_child->{img_url}       = $sd->ENSEMBL_IMAGE_ROOT . '/species/' . $url_name . '.png';
+      $t_child->{scientific_name} = $prod_name;
+      $t_child->{img_url}    = $sd->ENSEMBL_IMAGE_ROOT . '/species/' . $url_name . '.png';
       $t_child->{searchable} = 0;
+
+      if (lc($prod_name) eq lc($species)) {
+        $t_child->{unselectable} = 1;
+        $t_child->{tooltip} = 'Selection disabled on primary species';
+        $t_child->{hideCheckbox} = 1;
+      }
       push @children, $t_child;
     }
 
@@ -92,7 +104,10 @@ sub json_fetch_species {
     $dynatree_multiple->{title}          = 'Multiple';
     $dynatree_multiple->{isFolder}       = 1;
     $dynatree_multiple->{isInternalNode} = "true";
-    $dynatree_multiple->{unselectable}   = "true";
+    $dynatree_multiple->{unselectable}   = 1;
+    $dynatree_multiple->{hideCheckbox} = 1;
+
+
     push @{$dynatree_multiple->{children}}, @$species_hash_multiple;
     push @{$dynatree_root->{children}}, $dynatree_multiple;
   }
@@ -114,7 +129,6 @@ sub json_fetch_species {
 
     # Select alignments based on available alignments hierarchy
     my $final_alignments = $self->object->filter_alignments_by_method($available_alignments);
-
     foreach my $align_id (keys %$final_alignments) {
       foreach (keys %{$final_alignments->{$align_id}->{'species'}}) {
         if ($alignments->{$align_id}{'species'}->{$species} && $_ ne $species) {

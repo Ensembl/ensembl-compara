@@ -153,8 +153,8 @@ sub evidence_link {
 }
 
 sub motif_links {
-  my ($self, $motifs) = @_;
-  return join ' ', map qq(<a href="http://jaspar.genereg.net/cgi-bin/jaspar_db.pl?ID=$_&amp;rm=present&amp;collection=CORE" title="View motif">$_</a>), @$motifs;
+  my ($self, $pfms) = @_;
+  return join ', ', map sprintf('<a class="_motif" href="#">%s</a>', $_->stable_id), @$pfms;
 }
 
 sub gene_links {

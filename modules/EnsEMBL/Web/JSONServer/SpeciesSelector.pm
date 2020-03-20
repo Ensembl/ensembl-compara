@@ -102,15 +102,19 @@ sub traverse() {
       }
 
       if ($#children >= 0) {
-        push @tree, {
+        my $obj = {
           key => $node->{key},
           title    => $node->{display_name},
           isFolder => 1,
           is_submenu => $node->{is_submenu},
           isInternalNode => $node->{is_internal_node},
+          hideCheckbox => $node->{hideCheckbox},
           children => [@children],
-          unselectable => !!!$self->{species_selector_data}->{internal_node_select}
         };
+        if (!$self->{species_selector_data}->{internal_node_select}) {
+          $obj->{hideCheckbox} = $obj->{unselectable} = 1;
+        }
+        push @tree, $obj;
       }
     }
   }
@@ -123,18 +127,22 @@ sub create_node {
   my $searchable = shift || 0;
   my $isFolder = shift || 0;
 
-  return { 
+  my $obj = { 
     key        => $n->{key} || '',
-    scientific_name => $n->{key} || '',
+    scientific_name => $n->{scientific_name} || '',
     title           => $n->{display_name} || $n->{scientific_name} || '',
     tooltip         => $n->{scientific_name} || '',
-    unselectable    => $n->{unselectable} || 0,
     searchable => $searchable,
     isFolder => $isFolder,
     children => $n->{children} && scalar @{$n->{children}} > 0 ? $n->{children} : [],
     value => $n->{value} || '',
     special_type => $n->{parent_node_species} ? $n->{parent_node_species} : ''  # for human self alignment folder, parent node species will be human
   };
+
+  $obj->{unselectable} = $n->{unselectable} if ($n->{unselectable});
+  $obj->{hideCheckbox} = $n->{hideCheckbox} if ($n->{hideCheckbox});
+  return $obj;
+
 }
 
 # Create child nodes for different types such as
@@ -153,6 +161,7 @@ sub create_children_for_types {
           title => ucfirst($_),
           isFolder => 1,
           unselectable => !!!$internal_node_select,
+          hideCheckbox => !!!$internal_node_select,
           children => $type->{$_}
         };
       }

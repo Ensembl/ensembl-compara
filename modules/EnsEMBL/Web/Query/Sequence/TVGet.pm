@@ -106,7 +106,6 @@ sub _get_variation_data {
   $self->_build_vf_cache($config,$transcript,$vf_cache,$tvs);
   
   foreach my $tv (@{$tvs}) {
-    my $pos = $tv->translation_start;
 
     next unless $tv->cdna_start && $tv->cdna_end;
 
@@ -130,12 +129,13 @@ sub _get_variation_data {
       vf_source     => $vf->source_name,
       vf_length     => $vf->length,
 
-      position      => $pos,
+      position      => $tv->translation_start,
       vdbid         => $vdbid,
       snp_id        => $vf->variation_name,
       ambigcode     => $vf->ambig_code($strand),
       allele        => $vf->allele_string(undef, $strand),
       type          => $tv->display_consequence,
+      evidence      => $vf->get_all_evidence_values,
     };
   }
 

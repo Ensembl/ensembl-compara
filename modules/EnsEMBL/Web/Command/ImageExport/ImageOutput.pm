@@ -81,6 +81,7 @@ sub process {
 
     $component->content;
     my $path = $hub->param('file');
+    $path =~ s/-/_/g;
     $controller = 'Download';
 
     $params->{'filename'}       = $filename;

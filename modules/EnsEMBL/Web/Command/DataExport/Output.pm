@@ -160,9 +160,6 @@ sub process {
     my @core_params = keys %{$hub->core_object('parameters')};
     push @core_params, qw(export_action data_type data_action component align g1);
     push @core_params, $self->config_params; 
-    foreach my $species (grep { /species_/ } $hub->param) {
-      push @core_params, $species;
-    } 
     foreach (@core_params) {
       my @values = $component->param($_);
       $url_params->{$_} = scalar @values > 1 ? \@values : $values[0];
@@ -382,9 +379,11 @@ sub write_alignment {
         $self->object->{'alignments_function'} = 'get_SimpleAlign';
 
         $alignment = $self->object->get_alignments({
-          'slice'   => $data->slice,
-          'align'   => $hub->param('align'),
-          'species' => $hub->species,
+          'slice'     => $data->slice,
+          'align'     => $hub->param('align'),
+          'species'   => $hub->species,
+          'type'      => $hub->param('data_type'),
+          'component' => $hub->param('data_action'), 
         });
       }
 

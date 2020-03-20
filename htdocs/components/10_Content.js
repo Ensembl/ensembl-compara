@@ -46,6 +46,12 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     this.toggleable();  
     $(this).afterimage();
 
+    // To open motif feature widget on regulation views
+    this.el.on("click", 'a._motif', function(e) {
+      e.preventDefault();
+      Ensembl.openMotifWidget($(this).html());
+    });
+
     for (var fn in fnEls) {
       if (fnEls[fn].length) {
         this[fn]();

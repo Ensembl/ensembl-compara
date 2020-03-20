@@ -23,11 +23,12 @@ package EnsEMBL::Web::ViewConfig;
 use strict;
 use warnings;
 
-use JSON qw(from_json);
+use JSON qw(from_json to_json);
 
 use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Form::ViewConfigForm;
 use EnsEMBL::Web::Form::ViewConfigMatrix;
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_use);
 use EnsEMBL::Web::Utils::EqualityComparator qw(is_same);
 use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
@@ -184,7 +185,7 @@ sub config_url_params {
   my $self          = shift;
   my $image_config  = $self->image_config;
 
-  return qw(config share_config plus_signal), $image_config ? $image_config->config_url_params : ();
+  return qw(config share_config), $image_config ? $image_config->config_url_params : ();
 }
 
 sub update_from_url {
@@ -270,8 +271,13 @@ sub update_from_input {
     $self->altered($self->reset_user_settings($reset));
   }
 
-  my $settings = $params->{$self->config_type};
 
+  if ($params->{alignment_selector}) {
+    $self->save_alignments_selector_settings(from_json $params->{alignment_selector});
+    $self->altered(1);
+  }
+
+  my $settings = $params->{$self->config_type};
   foreach my $key (grep exists $self->{'options'}{$_}, keys %$settings) {
 
     my @values = ref $settings->{$key} eq 'ARRAY' ? @{$settings->{$key}} : ($settings->{$key});
@@ -327,7 +333,19 @@ sub form {
   my $self = shift;
 
   if (!$self->{'form'}) {
-    my $view = $self->hub->param('matrix') ? 'EnsEMBL::Web::Form::ViewConfigMatrix' : 'EnsEMBL::Web::Form::ViewConfigForm';
+    my $view = 'EnsEMBL::Web::Form::ViewConfigForm';
+    my $matrix = $self->hub->param('matrix');
+    if ($matrix) {
+      if ($matrix eq '1') { ## old-style matrix
+        $view = 'EnsEMBL::Web::Form::ViewConfigMatrix';
+      }
+      else { ## new matrix interface
+        $view = 'EnsEMBL::Web::Form::ViewConfig'.$matrix;
+        if (!dynamic_use($view, 1)) {
+          $view = 'EnsEMBL::Web::Form::ViewConfigMatrix';
+        }
+      }
+    }
     $self->{'form'} = $view->new($self, sprintf('%s_%s_configuration', lc $self->type, lc $self->component), $self->hub->url('Config', undef, 1)->[0]);
   }
 
@@ -375,6 +393,31 @@ sub add_image_config :Deprecated('Use method image_config_type') {
 
 sub set :Deprecated('Use set_user_setting') {
   return shift->set_user_setting(@_);
+}
+
+sub get_alignments_selector_settings {
+  my $self   = shift;
+  my $code   = 'alignments_selector';
+  my $record = $self->hub->session->record({'type' => $self->config_type, 'code' => $code});
+  my $settings = {};
+
+  if ($record->count) {
+    $settings = $record->data->raw;
+    $settings->{'code'} = $code;
+  }
+
+  return $settings;
+}
+
+sub save_alignments_selector_settings {
+  my $self   = shift;
+  my $params = shift;
+
+  my $session_data = $self->get_alignments_selector_settings;
+  my %merged = (%$session_data, %$params);
+  $merged{code} ||= 'alignments_selector';
+  $merged{type} ||= $self->config_type;
+  $self->hub->session->set_record_data(\%merged);
 }
 
 1;

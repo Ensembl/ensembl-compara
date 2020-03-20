@@ -97,9 +97,13 @@ sub table_content {
       # consequence type
       my $type = $self->new_consequence_type($tva);    
 
-      # SIFT and PolyPhen
+      # SIFT, PolyPhen-2 and other prediction tools
       my $sifts = $self->classify_sift_polyphen($tva->sift_prediction,$tva->sift_score);
       my $polys = $self->classify_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
+      my $cadds = $self->classify_score_prediction($tva->cadd_prediction, $tva->cadd_score);
+      my $revels = $self->classify_score_prediction($tva->dbnsfp_revel_prediction, $tva->dbnsfp_revel_score);
+      my $meta_lrs = $self->classify_score_prediction($tva->dbnsfp_meta_lr_prediction, $tva->dbnsfp_meta_lr_score);
+      my $mutation_assessors = $self->classify_score_prediction($tva->dbnsfp_mutation_assessor_prediction, $tva->dbnsfp_mutation_assessor_score);
 
       my $row = {
         vf      => $var->{'vf'}->dbID,
@@ -119,7 +123,19 @@ sub table_content {
         sift_value => $sifts->[2],
         polyphen_sort  => $polys->[0],
         polyphen_class => $polys->[1],
-        polyphen_value => $polys->[2]
+        polyphen_value => $polys->[2],
+        cadd_sort  => $cadds->[0],
+        cadd_class => $cadds->[1],
+        cadd_value => $cadds->[2],
+        revel_sort  => $revels->[0],
+        revel_class => $revels->[1],
+        revel_value => $revels->[2],
+        meta_lr_sort  => $meta_lrs->[0],
+        meta_lr_class => $meta_lrs->[1],
+        meta_lr_value => $meta_lrs->[2],
+        mutation_assessor_sort  => $mutation_assessors->[0],
+        mutation_assessor_class => $mutation_assessors->[1],
+        mutation_assessor_value => $mutation_assessors->[2],
       };
       $callback->add_row($row);
       last ROWS if $callback->stand_down;
@@ -142,7 +158,7 @@ sub make_table {
   my @exclude;
   push @exclude,'sift_sort','sift_class','sift_value' unless $sd->{'SIFT'};
   unless($hub->species eq 'Homo_sapiens') {
-    push @exclude,'polyphen_sort','polyphen_class','polyphen_value';
+    push @exclude,'polyphen_sort','polyphen_class','polyphen_value', 'cadd_sort', 'cadd_class', 'cadd_value', 'revel_sort', 'revel_class', 'revel_value', 'meta_lr_sort', 'meta_lr_class', 'meta_lr_value', 'mutation_assessor_sort', 'mutation_assessor_class', 'mutation_assessor_value';
   }
 
   my @columns = ({
@@ -243,7 +259,56 @@ sub make_table {
     filter_fixed => 1,
     filter_blank_button => 1,
     primary => 2,
-  });
+  },{
+    _key => 'cadd_sort', _type => 'numeric no_filter unshowable',
+    sort_for => 'cadd_value',
+  },{
+    _key => 'cadd_class', _type => 'iconic no_filter unshowable',
+  },{
+    _key => 'cadd_value', _type => 'numeric',
+    label => "CADD",
+    helptip => $glossary->{'CADD'},
+    filter_range => [0,100],
+    filter_fixed => 1,
+    filter_blank_button => 1,
+  },{
+    _key => 'revel_sort', _type => 'numeric no_filter unshowable',
+    sort_for => 'revel_value',
+  },{
+    _key => 'revel_class', _type => 'iconic no_filter unshowable',
+  },{
+    _key => 'revel_value', _type => 'numeric',
+    label => "REVEL",
+    helptip => $glossary->{'REVEL'},
+    filter_range => [0,1],
+    filter_fixed => 1,
+    filter_blank_button => 1,
+  },{
+    _key => 'meta_lr_sort', _type => 'numeric no_filter unshowable',
+    sort_for => 'meta_lr_value',
+  },{
+    _key => 'meta_lr_class', _type => 'iconic no_filter unshowable',
+  },{
+    _key => 'meta_lr_value', _type => 'numeric',
+    label => "MetaLR",
+    helptip => $glossary->{'MetaLR'},
+    filter_range => [0,1],
+    filter_fixed => 1,
+    filter_blank_button => 1,
+  },{
+    _key => 'mutation_assessor_sort', _type => 'numeric no_filter unshowable',
+    sort_for => 'mutation_assessor_value',
+  },{
+    _key => 'mutation_assessor_class', _type => 'iconic no_filter unshowable',
+  },{
+    _key => 'mutation_assessor_value', _type => 'numeric',
+    label => "Mutation Assessor",
+    helptip => $glossary->{'MutationAssessor'},
+    filter_range => [0,1],
+    filter_fixed => 1,
+    filter_blank_button => 1,
+  }
+);
 
   $table->add_columns(\@columns,\@exclude);
 
@@ -316,20 +381,9 @@ sub snptype_classes {
 sub sift_poly_classes {
   my ($self,$table) = @_;
 
-  my %sp_classes = (
-    '-'                 => '',
-    'probably damaging' => 'bad',
-    'possibly damaging' => 'ok',
-    'benign'            => 'good',
-    'unknown'           => 'neutral',
-    'tolerated'         => 'good',
-    'deleterious'       => 'bad',
-    'tolerated - low confidence'   => 'neutral',
-    'deleterious - low confidence' => 'neutral',
-    'tolerated low confidence'     => 'neutral',
-    'deleterious low confidence'   => 'neutral',
-  );
-  foreach my $column_name (qw(sift polyphen)) {
+  my %sp_classes = %{$self->predictions_classes};
+
+  foreach my $column_name (qw(sift polyphen cadd revel meta_lr mutation_assessor)) {
     my $value_column = $table->column("${column_name}_value");
     my $class_column = $table->column("${column_name}_class");
     next unless $value_column and $class_column;
@@ -342,12 +396,12 @@ sub sift_poly_classes {
     # TODO: make decorators accessible to filters. Complexity is that
     # many decorators (including these) are multi-column.
     my $lozenge = qq(<div class="score score_%s score_example">%s</div>);
-    my $left = { sift => 'bad', polyphen => 'good'}->{$column_name};
-    my $right = { sift => 'good', polyphen => 'bad'}->{$column_name};
+    my $left = { sift => 'bad', polyphen => 'good', cadd => 'good', revel => 'good', meta_lr => 'good', mutation_assessor => 'good'}->{$column_name};
+    my $right = { sift => 'good', polyphen => 'bad', cadd => 'bad', revel => 'bad', meta_lr => 'bad', 'mutation_assessor' => 'bad'}->{$column_name};
     $value_column->filter_endpoint_markup(0,sprintf($lozenge,$left,"0"));
     $value_column->filter_endpoint_markup(1,sprintf($lozenge,$right,"1"));
     my $slider_class =
-      { sift => 'redgreen', polyphen => 'greenred' }->{$column_name};
+      { sift => 'redgreen', polyphen => 'greenred', cadd => 'greenred', revel => 'greenred', meta_lr => 'greenred', mutation_assessor => 'greenred' }->{$column_name};
     $value_column->filter_slider_class("newtable_slider_$slider_class");
   }
 

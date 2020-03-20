@@ -24,7 +24,6 @@ use warnings;
 
 use base qw(EnsEMBL::Web::Component::Help);
 
-use EnsEMBL::Web::Utils::HoneyPot qw(spam_protect_form);
 use URI::Escape qw(uri_unescape);
 
 sub _init {
@@ -53,35 +52,33 @@ sub content {
   }
   
   $fieldset->add_field([{
-    'type'    => 'String',
-    'name'    => 'name',
-    'label'   => 'Your name',
-    'value'   => uri_unescape($hub->param('name')) || '',
-  }, {
-    'type'    => 'Honeypot',
-    'name'    => 'email',
-    'label'   => 'Address',
-  }, {
-    'type'    => 'Email',
-    'name'    => 'address',
-    'label'   => 'Your Email',
-    'value'   => uri_unescape($hub->param('address')) || '',
-  }, {
+    'type'      => 'String',
+    'name'      => 'name',
+    'label'     => 'Your name',
+    'value'     => uri_unescape($hub->param('name')) || '',
+    'required'  => 1,
+  },  
+  {
+    'type'      => 'Email',
+    'name'      => 'address',
+    'label'     => 'Your Email',
+    'value'     => uri_unescape($hub->param('address')) || '',
+    'required'  => 1,
+  }, 
+  {
     'type'    => 'String',
     'name'    => 'subject',
     'label'   => 'Subject',
     'value'   => uri_unescape($hub->param('subject')) || '',
-  }, {
-    'type'    => 'Honeypot',
-    'name'    => 'comments',
-    'label'   => 'Comments',
-  }, {
+  }, 
+  {
     'type'    => 'Text',
     'name'    => 'message',
     'label'   => 'Message',
     'value'   => uri_unescape($hub->param('message')) || '',
     'notes'   => 'Tip: drag the bottom righthand corner to make this box bigger.',
-  }, {
+  }, 
+  {
     'type'    => 'File',
     'name'    => 'attachment',
     'label'   => 'Include a file or screenshot (optional)',
@@ -103,8 +100,6 @@ sub content {
     'name'    => 'submit',
     'value'   => 'Send',
   });
-
-  spam_protect_form($hub,$form);
 
   $_->set_attribute('data-role', 'none') for @{$fieldset->get_elements_by_tag_name([qw(input select textarea)])};
 

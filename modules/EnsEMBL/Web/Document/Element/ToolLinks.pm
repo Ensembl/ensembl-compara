@@ -34,9 +34,9 @@ sub links {
   my @links;
 
   push @links, 'mart',          '<a class="constant" href="/biomart/martview">BioMart</a>' if $sd->ENSEMBL_MART_ENABLED;
-  push @links, 'download',      '<a class="constant" href="/downloads.html">Downloads</a>';
-  push @links, 'documentation', '<a class="constant" href="/info/">Help &amp; Docs</a>';
-  push @links, 'blog',          qq(<a class="constant" href="$blog">Blog</a>) if $blog;
+  push @links, 'download',      '<a class="constant" rel="nofollow" href="/downloads.html">Downloads</a>';
+  push @links, 'documentation', '<a class="constant" rel="nofollow" href="/info/">Help &amp; Docs</a>';
+  push @links, 'blog',          qq(<a class="constant" rel="nofollow" href="$blog">Blog</a>) if $blog;
 
   return \@links;
 }

@@ -49,7 +49,7 @@ sub parse_help_html {
 
   foreach my $line (split '\n', $content) {
 
-    while ($line =~ /\[\[IMAGE::([^\s]+)\s*([^\]]+)?\s*\]\]/ig) {
+    while ($line =~ /\[\[IMAGE::(\w+\.\w{3,4})\s*([^\]]+)?\s*\]\]/ig) {
       substr $line, $-[0], $+[0] - $-[0], qq(<img src="$img_url$1" alt="" $2 \/>); # replace square bracket tag with actual image
     }
 

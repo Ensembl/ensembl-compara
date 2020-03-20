@@ -36,25 +36,35 @@ sub _hide_conseq {
   return scalar keys %$filter && !grep $filter->{$_},@{$snp->{'tv_conseq_type'}};
 }
 
+sub _hide_evidence {
+  my ($self,$snp,$filter) = @_;
+
+  return scalar keys %$filter && !grep $filter->{$_},@{$snp->{'evidence'}};
+}
+
 sub _get_variation_data {
   my ($self,$ph,$config) = @_;
 
-  my %ct_filter = map { $_ ? ($_ => 1) : () } @{$config->{'conseq_filter'}};
-  %ct_filter = () if join('', keys %ct_filter) eq 'off';
+  my %ct_filter = map { $_ ? ($_ => 1) : () } @{$config->{'consequence_filter'}};
+     %ct_filter = () if join('', keys %ct_filter) eq 'off';
+
+  my %ef_filter = map { $_ ? ($_ => 1) : () } @{$config->{'evidence_filter'}};
+     %ef_filter = () if join('', keys %ef_filter) eq 'off';
 
   my $out = $ph->get_query('Sequence::TVGet')->go($self,{
     species => $config->{'species'},
     type => $config->{'type'},
     transcript => $config->{'transcript'},
   });
-  $out = [ grep { !$self->_hide_utr($config,$_) and !$self->_hide_conseq($_,\%ct_filter) } @$out ];
+
+  $out = [ grep { !$self->_hide_utr($config,$_) and !$self->_hide_conseq($_,\%ct_filter) and !$self->_hide_evidence($_,\%ef_filter) } @$out ];
+
   return $out;
 }
 
 sub annotate {
   my ($self, $config, $slice_data, $mk, $seq, $ph,$real_sequence) = @_;
 
-  warn "A\n";
   my $transcript = $config->{'transcript'};
   my @exons = @{$transcript->get_all_Exons};
   my $cd_start     = $transcript->cdna_coding_start;
@@ -66,8 +76,7 @@ sub annotate {
   return unless $config->{'snp_display'} and $has_var;
 
   my @snps = reverse @{$self->_get_variation_data($ph,$config)};
-  my $A = 0;
-  my $B = 0;
+
   foreach my $snp (@snps) {
     next if $config->{'hide_long_snps'} && $snp->{'vf_length'} > $config->{'snp_length_filter'};
     next if $self->too_rare_snp($snp->{'vf_maf'},$config);
@@ -125,7 +134,6 @@ sub annotate {
       $vseq->{'class'} = '';
     }
   }
-  warn "B\n";
 }
 
 1;

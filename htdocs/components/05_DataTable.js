@@ -74,6 +74,7 @@ Ensembl.DataTable = {
   },
   
   getOptions: function (table, noToggle, exportable) {
+    var self = this;
     var length     = $('tbody tr', table).length;
     var noSort     = table.hasClass('no_sort');
     var menu       = [[], []];
@@ -93,7 +94,7 @@ Ensembl.DataTable = {
           sLast:     '&gt;&gt;'
         }
       },
-      fnInitComplete: function () {
+      fnInitComplete: function (oSettings) {
         var hidden = this.is(':hidden');
         var parent = this.closest('.toggleTable_wrapper, .dataTables_wrapper');
         var hide   = this.css('display') === 'none';
@@ -110,16 +111,18 @@ Ensembl.DataTable = {
           parent.hide(); // Hide the wrapper of already hidden table
           this.removeClass('hide');
         }
-        
+
         parent = null;
+        self.makeHeaderSticky(oSettings && oSettings.oInstance && oSettings.oInstance[0]);
       },
       fnDrawCallback: function (tableSettings) {
         this.togglewrap('redo');
         $('.dataTables_info, .dataTables_paginate, .dataTables_bottom', tableSettings.nTableWrapper)[tableSettings._iDisplayLength === -1 ? 'hide' : 'show']();
         
         var data          = this.data();
-        var defaultHidden = data.defaultHiddenColumns || [];
-        var hiddenCols    = $.map(tableSettings.aoColumns, function (c, j) { return c.bVisible ^ defaultHidden[j] ? null : j * (defaultHidden[j] ? -1 : 1); }).join(',');
+        var hiddenCols = tableSettings.aoColumns.reduce(function (accumulator, column, index) {
+          return !column.bVisible ? accumulator.concat(index) : accumulator;
+        }, []).join(','); // gets a string of comma-separated indices of hidden columns
         var sorting       = $.map(tableSettings.aaSorting, function (s) { return '"' + s.join(' ') + '"'; }).join(',');
         
         if (tableSettings._bInitComplete !== true) {
@@ -511,5 +514,185 @@ Ensembl.DataTable = {
     });
 
     filters = null;
+  },
+
+  makeHeaderSticky: function (table) {
+    if (!table || this.headerIsSticky) {
+      return;
+    }
+
+    if (table.offsetHeight > window.innerHeight) {
+      new StickyHeader(table);
+      this.headerIsSticky = true;
+    }
+  }
+};
+
+
+
+function StickyHeader (table) {
+  this.table = table;
+  this.tableHead = table.querySelector('thead');
+  this.tableBody = table.querySelector('tbody');
+
+  this.scrollHandler = this.syncHeadScroll.bind(this);
+
+  this.observeBody();
+  this.handleWindowResize();
+};
+
+StickyHeader.prototype.constructor = StickyHeader;
+
+StickyHeader.prototype.observeBody = function () {
+  window.addEventListener('scroll', function () {
+    window.requestAnimationFrame(function () {
+      if (this.shouldStickHead()) {
+        this.stickHead();
+      } else {
+        this.unstickHead();
+      }
+    }.bind(this));
+  }.bind(this));
+};
+
+StickyHeader.prototype.handleWindowResize = function () {
+  window.addEventListener('resize', function () {
+    window.requestAnimationFrame(function () {
+      if (this.shouldStickHead()) {
+        this.unstickHead();
+        this.stickHead();
+      } else {
+        this.unstickHead();
+      }
+    }.bind(this));
+  }.bind(this));
+};
+
+StickyHeader.prototype.shouldStickHead = function () {
+  var tableBodyBoundingRect = this.tableBody.getBoundingClientRect();
+  var tableBodyTop = tableBodyBoundingRect.top;
+  var tableBodyBottom = tableBodyBoundingRect.bottom;
+  return tableBodyTop < 0 && tableBodyBottom - this.tableHead.offsetHeight > 0;
+};
+
+StickyHeader.prototype.buildStickyHeaderContainer = function () {
+  var container = document.createElement('div');
+  var wrapperDimensions = this.getDimensionsForStickyHeaderContainer();
+  container.style.position = 'fixed';
+  container.style.top = '0';
+  container.style.left = wrapperDimensions.left;
+  container.style.width = wrapperDimensions.width;
+  container.style.overflow = 'hidden';
+  return container;
+};
+
+StickyHeader.prototype.getDimensionsForStickyHeaderContainer = function () {
+  // sometimes a wide table can be placed inside a horizontally scrollable container,
+  // to whose width and scroll position the sticky header will have to adjust
+  var nearestScrollableWrapper = $(this.table)
+    .parents('div')
+    .filter(function (index, element) {
+      var computedStyles = window.getComputedStyle(element);
+      return computedStyles.getPropertyValue('overflow-x') === 'auto';
+    })[0];
+  var wrapperBoundingRect = nearestScrollableWrapper && nearestScrollableWrapper.getBoundingClientRect();
+  var tableBoundingRect = this.table.getBoundingClientRect();
+  var useScrollableWrapper = wrapperBoundingRect && wrapperBoundingRect.width < tableBoundingRect.width;
+
+  if (useScrollableWrapper) {
+    this.scrollableWrapper = nearestScrollableWrapper;
+  }
+
+  var refetenceRect = useScrollableWrapper ? wrapperBoundingRect : tableBoundingRect;
+
+  return {
+    left: refetenceRect.left + 'px',
+    width: refetenceRect.width + 'px'
+  }
+};
+
+StickyHeader.prototype.stickHead = function () {
+  if (this.isHeaderStuck) return;
+
+  // before changing thead styles, create a duplicate of thead that will occupy its place
+  // while the original thead will be removed from normal layout flow into the fixed position
+  this.tweenTableHead = this.tableHead.cloneNode(true);
+  var initialHeaderWidth = this.tableHead.offsetWidth;
+  this.table.insertBefore(this.tweenTableHead, this.tableHead);
+
+  this.container = this.container || this.buildStickyHeaderContainer();
+  this.tableHead.style.width = initialHeaderWidth + 'px';
+  this.tableHead.style.display = 'table';
+  this.tableHead.querySelector('tr').style.whiteSpace = 'nowrap';
+  this.tableHead.querySelector('tr').style.display = 'table';
+  this.tableHead.querySelector('tr').style.width = '100%';
+  this.table.removeChild(this.tableHead);
+  this.table.insertBefore(this.container, this.tableBody);
+  this.container.appendChild(this.tableHead);
+  
+  this.setColumnWidths();
+  
+  this.handleTableScroll();
+  this.isHeaderStuck = true;
+};
+
+StickyHeader.prototype.handleTableScroll = function () {
+  if (!this.scrollableWrapper) {
+    return;
+  }
+  this.syncHeadScroll();
+  this.scrollableWrapper.addEventListener('scroll', this.scrollHandler);
+};
+
+StickyHeader.prototype.syncHeadScroll = function () {
+  var tableParent = this.table.parentElement;
+  var offsetLeft = tableParent.scrollLeft;
+  this.container.scrollLeft = offsetLeft;
+};
+
+StickyHeader.prototype.setColumnWidths = function () {
+  var headColumns = Array.prototype.slice.call(this.tableHead.querySelectorAll('th'));
+  var referenceColumns = Array.prototype.slice.call(this.tweenTableHead.querySelectorAll('th'));
+  var shouldAddWidths = headColumns.every(function (element) { return !element.style.width });
+  if (shouldAddWidths) {
+    headColumns.forEach(function (headColumn, index) {
+      var column = referenceColumns[index];
+      var columnWidth = column.offsetWidth;
+      var computedStyles = window.getComputedStyle(column);
+      headColumn.style.boxSizing = 'border-box';
+      headColumn.style.display = 'inline-block';
+      headColumn.style.width = columnWidth + 'px';
+      headColumn.style.whiteSpace = computedStyles.getPropertyValue('white-space') === 'nowrap' ? 'nowrap' : 'normal';
+    });
+    this.areColumnWidthsSet = true;
+  }
+};
+
+StickyHeader.prototype.unsetColumnWidths = function () {
+  if (!this.areColumnWidthsSet) return;
+  var headColumns = Array.prototype.slice.call(this.tableHead.querySelectorAll('th'));
+  headColumns.forEach(function (headColumn) {
+    headColumn.style.removeProperty('box-sizing');
+    headColumn.style.removeProperty('display');
+    headColumn.style.removeProperty('width');
+  });
+  this.areColumnWidthsSet = false;
+};
+
+
+StickyHeader.prototype.unstickHead = function () {
+  if (this.isHeaderStuck) {
+    this.table.removeChild(this.tweenTableHead);
+    this.table.insertBefore(this.tableHead, this.tableBody);
+    this.tableHead.style.removeProperty('width');
+    this.tableHead.style.removeProperty('display');
+    this.tableHead.querySelector('tr').style.removeProperty('display');
+    this.unsetColumnWidths();
+    this.table.removeChild(this.container);
+    this.container = null;
+    this.isHeaderStuck = false;
+
+    var tableParent = this.table.parentElement;
+    tableParent.removeEventListener('scroll', this.scrollHandler);
   }
 };

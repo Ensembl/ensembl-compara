@@ -32,6 +32,11 @@ use warnings;
 
 use FindBin qw($Bin);
 
+# The following line is a hack to allow MySQL to always autoreconnect. This is the
+# default behaviour in mod_perl and CGI scripts, which is why we never notice in
+# other situations. Here we lie to DBI that we are a CGI script.
+$ENV{"GATEWAY_INTERFACE"} = 1;
+
 BEGIN {
   require "$Bin/helper.pl";
 }
@@ -55,6 +60,14 @@ mkdir $dir;
 mkdir "$dir/conf";
 mkdir "$dir/conf/packed";
 
+if(($ARGV[0]||'') eq 'SOME') {
+  $| = 1;
+  print "\nPlease enter space separated list of packeds to rebuild.\n";
+  print "Each entry should be the binomial name in lowercase separated by _\n";
+  print "eg \"rattus_norvegicus saimiri_boliviensis_boliviensis\"\n\n";
+  @ARGV = split(" ",<STDIN>);
+}
+
 if(!@ARGV or $ARGV[0] ne "ALL") {
   echosys("cp -v $dest/conf/packed/* $dir/conf/packed");
   echosys("rm $dir/conf/packed/$_.*") for @ARGV;
@@ -68,12 +81,12 @@ $sd->{'_start_time'} = time;
 $sd->_parse;
 $sd->store;
 
-if($ARGV[0] eq "ALL") {
+if(($ARGV[0]||'') eq "ALL") {
   echosys("cp -v $dir/conf/packed/* $dest/conf/packed");
 } else {
   echosys("cp -v $dir/conf/packed/$_.* $dest/conf/packed") for @ARGV;
 }
-echosys("cp -v $dir/conf/*.config.packed $dest/conf/packed");
+echosys("cp -v $dir/conf/*.config.packed $dest/conf/");
 #rmtree($dir,{ safe => 1 });
 
 1;

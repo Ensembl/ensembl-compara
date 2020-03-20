@@ -207,7 +207,7 @@ sub draw_graph_base {
     $min_score = $metadata->{'y_min'} if (defined($metadata->{'y_min'}) && $metadata->{'y_min'} ne ''); 
     $max_score = $metadata->{'y_max'} if (defined($metadata->{'y_max'}) && $metadata->{'y_max'} ne ''); 
     ## Sanity check - ignore these values if user settings are nonsense
-    $range = $max_score - $min_score;
+    $range = (defined ($max_score) && defined ($min_score)) ? $max_score - $min_score : 0;
     if ($range == 0) {
       $min_score = $saved_min;
       $max_score = $saved_max;
@@ -231,6 +231,8 @@ sub draw_graph_base {
     $min_score = 0 if $min_score >= 0 && $baseline_zero;
   }
   $range = $max_score - $min_score;
+  ## Avoid divide-by-zero errors
+  $range = 1 if !$range;
 
   my $pix_per_score = $row_height/$range;
   $self->track_config->set('pix_per_score', $pix_per_score);
@@ -241,9 +243,7 @@ sub draw_graph_base {
   ## bottom: bottom of graph in pixel units (usu. approx. pixel height)
   my $top = $track_config->get('initial_offset') || 0;
   ## Reset offset for subsequent tracks
-  unless ($track_config->get('multiwiggle')) {
-    $track_config->set('initial_offset', $top + $row_height + 20);
-  }
+  $track_config->set('initial_offset', $top + $row_height + 20);
   my $line_score = max(0, $min_score);
   my $bottom = $top + $pix_per_score * $range;
   my $line_px = $bottom - ($line_score - $min_score) * $pix_per_score;

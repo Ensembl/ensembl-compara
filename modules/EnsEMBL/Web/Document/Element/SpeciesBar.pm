@@ -83,7 +83,8 @@ sub init_species_list {
 
   #adding species strain (Mouse strains) to the list above
   foreach ($species_defs->valid_species) {
-    $species_defs->get_config($_, 'ALL_STRAINS') ? push( @{$self->{'species_list'}}, [ $hub->url({ species => $_, type => 'Info', action => 'Strains', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME')." Strains"] ) : next;
+    my $strain_type = ucfirst($species_defs->get_config($_, 'STRAIN_TYPE').'s');
+    $species_defs->get_config($_, 'ALL_STRAINS') ? push( @{$self->{'species_list'}}, [ $hub->url({ species => $_, type => 'Info', action => 'Strains', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME')." $strain_type"] ) : next;
   }
   @{$self->{'species_list'}} = sort { $a->[1] cmp $b->[1] } @{$self->{'species_list'}}; #just a precautionary bit - sorting species list again after adding the strain  
   

@@ -24,8 +24,18 @@ use warnings;
 no warnings 'uninitialized';
 
 use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
+use EnsEMBL::Web::Utils::Bioschemas qw(create_bioschema add_species_bioschema);
 
 use parent qw(EnsEMBL::Web::Component::Shared);
+
+sub ftp_url {
+### Set this via a function, so it can easily be updated (or 
+### overridden in a plugin)
+  my $self = shift;
+  my $ftp_site = $self->hub->species_defs->ENSEMBL_FTP_URL;
+  return $ftp_site ? sprintf '%s/release-%s', $ftp_site, $self->hub->species_defs->ENSEMBL_VERSION
+                      : undef;
+}
 
 sub assembly_dropdown {
   my $self              = shift;
@@ -77,5 +87,148 @@ sub assembly_dropdown {
   return $html;
 }
 
+sub include_bioschema_datasets {
+  my $self = shift;
+  my $hub = $self->hub;
+  my $species_defs = $hub->species_defs;
+  my $catalog_id = $species_defs->BIOSCHEMAS_DATACATALOG;
+  return unless $catalog_id;
+
+  my $datasets = [];
+
+  my $sitename = $species_defs->ENSEMBL_SITETYPE;
+  my $server = $species_defs->ENSEMBL_SERVERNAME;
+  $server = 'http://'.$server unless ($server =~ /^http/);
+
+  my $common_name  = $species_defs->SPECIES_COMMON_NAME;
+  my $sci_name     = $species_defs->SPECIES_SCIENTIFIC_NAME;
+  my $display_name = $species_defs->DISPLAY_NAME;
+  ## IMPORTANT: description must be at least 50 characters, so make species name as long as possible 
+  my $long_name = $display_name eq $sci_name ? $display_name : sprintf '%s (%s)', $display_name, $sci_name; 
+
+  ## License must be an object or URL
+  my $license = 'https://www.apache.org/licenses/LICENSE-2.0';
+
+  ## Assembly
+  my $annotation_url = sprintf '%s/%s/Info/Annotation', $server, $hub->species;
+  my $ftp_url = sprintf '%s/fasta/%s/dna/', $self->ftp_url, $species_defs->SPECIES_PRODUCTION_NAME;
+  my $assembly = {
+      '@type'                 => 'Dataset',
+      'name'                  => sprintf('%s Assembly', $common_name),
+      'includedInDataCatalog' => $catalog_id,
+      'version'               => $species_defs->ASSEMBLY_NAME,
+      'identifier'            => $species_defs->ASSEMBLY_ACCESSION,
+      'description'           => "Current Ensembl genome assembly for $long_name",
+      'keywords'              => 'dna, sequence',
+      'url'                   => $annotation_url,
+      'distribution'          => [{
+                                  '@type'       => 'DataDownload',
+                                  'name'        => sprintf('%s %s FASTA files', $sci_name, $species_defs->ASSEMBLY_VERSION),
+                                  'description' => sprintf('Downloads of %s sequence in FASTA format', $long_name),
+                                  'fileFormat'  => 'fasta',
+                                  'encodingFormat' => 'text/plain',
+                                  'contentURL'  => $ftp_url,
+      }],
+      'license'               => $license, 
+  };
+  add_species_bioschema($species_defs, $assembly);
+  push @$datasets, $assembly;
+
+  ## Genebuild
+  my $gtf_url   = sprintf '%s/gtf/%s/', $self->ftp_url, $species_defs->SPECIES_PRODUCTION_NAME;
+  my $gff3_url  = sprintf '%s/gff3/%s/', $self->ftp_url, $species_defs->SPECIES_PRODUCTION_NAME;
+  my $genebuild = {
+      '@type'                 => 'Dataset',
+      'name'                  => sprintf('%s %s Gene Set', $sitename, $common_name),
+      'includedInDataCatalog' => $catalog_id,
+      'version'               => $species_defs->GENEBUILD_LATEST || $species_defs->GENEBUILD_RELEASE || '',
+      'description'           => sprintf('Automated and manual annotation of genes on the %s %s assembly', $species_defs->SPECIES_COMMON_NAME, $species_defs->ASSEMBLY_VERSION),
+      'keywords'              => 'genebuild, transcripts, transcription, alignment, loci',
+      'url'                   => $annotation_url,
+      'distribution'          => [
+                                  {
+                                  '@type'       => 'DataDownload',
+                                  'name'        => sprintf ('%s %s Gene Set - GTF files', $sci_name, $species_defs->ASSEMBLY_VERSION),
+                                  'description' => sprintf('Downloads of %s gene annotation in GTF format', $long_name),
+                                  'fileFormat'  => 'gtf',
+                                  'encodingFormat' => 'text/plain',
+                                  'contentURL'  => $gtf_url,
+                                  },
+                                  {
+                                  '@type'       => 'DataDownload',
+                                  'name'        => sprintf ('%s %s Gene Set - GFF3 files', $sci_name, $species_defs->ASSEMBLY_VERSION),
+                                  'description' => sprintf('Downloads of %s gene annotation in GFF3 format', $long_name),
+                                  'fileFormat'  => 'gff3',
+                                  'encodingFormat' => 'text/plain',
+                                  'contentURL'  => $gff3_url,
+                                  },
+      ],
+      'license'               => $license, 
+  };
+
+  if ($species_defs->PROVIDER_NAME) {
+    $genebuild->{'creator'} = {
+      '@type' => 'Organization',
+      'name'  => $species_defs->PROVIDER_NAME,
+    };
+  }
+  add_species_bioschema($species_defs, $genebuild);
+  push @$datasets, $genebuild;
+
+ ## Variation bioschema
+  if ($hub->database('variation')) {
+    my $gvf_url   = sprintf '%s/variation/gvf/%s/', $self->ftp_url, $species_defs->SPECIES_PRODUCTION_NAME;
+    my $variation = {
+        '@type'                 => 'Dataset',
+        'name'                  => sprintf('%s %s Variation Data', $sitename, $common_name),
+        'includedInDataCatalog' => $catalog_id,
+        'url'                   => sprintf('%s/info/genome/variation/species/species_data_types.html#sources', $server),
+        'description'           => sprintf('Annotation of %s sequence variants from a variety of sources', $common_name),
+        'keywords'              => 'SNP, polymorphism, insertion, deletion, CNV, copy number variant',
+        'distribution'          => [{
+                                    '@type'       => 'DataDownload',
+                                    'name'        => sprintf ('%s %s Variants - GVF files', $sci_name, $species_defs->ASSEMBLY_VERSION),
+                                    'description' => sprintf('Downloads of %s variation annotation in GVF format', $long_name),
+                                    'fileFormat'  => 'gvf',
+                                    'encodingFormat' => 'text/plain',
+                                    'contentURL'  => $gvf_url,
+        }],
+        'license'               => $license, 
+    };
+    add_species_bioschema($species_defs, $variation);
+    push @$datasets, $variation;
+  }
+
+  ## Regulation bioschema
+  my $sample_data  = $species_defs->SAMPLE_DATA;
+  if ($sample_data->{'REGULATION_PARAM'}) {
+    my $reg_url   = sprintf '%s/regulation/%s/', $self->ftp_url, $species_defs->SPECIES_PRODUCTION_NAME;
+    my $regulation = {
+        '@type'                 => 'Dataset',
+        'name'                  => sprintf('%s %s Regulatory Build', $sitename, $common_name),
+        'includedInDataCatalog' => $catalog_id,
+        'url'                   => sprintf('%s/info/genome/funcgen/accessing_regulation.html', $server),
+        'description'           => sprintf('Annotation of regulatory regions on the %s genome', $long_name),
+        'keywords'              => 'expression, epigenomics, enhancer, promoter',
+        'distribution'          => [{
+                                    '@type'       => 'DataDownload',
+                                    'name'        => sprintf ('%s %s Regulatory Features', $sci_name, $species_defs->ASSEMBLY_VERSION),
+                                    'description' => sprintf('Downloads of %s regulation annotation in GFF format', $long_name),
+                                    'fileFormat'  => 'gff',
+                                    'encodingFormat' => 'text/plain',
+                                    'contentURL'  => $reg_url,
+        }],
+        'license'               => $license, 
+        'creator'               => {
+                                    '@type' => 'Organization',
+                                    'name'  => 'Ensembl',
+        },
+    };
+    add_species_bioschema($species_defs, $regulation);
+    push @$datasets, $regulation;
+  }
+
+  return  scalar(@$datasets) ? create_bioschema($datasets) : '';
+}
 
 1;

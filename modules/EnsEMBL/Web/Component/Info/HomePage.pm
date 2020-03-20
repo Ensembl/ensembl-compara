@@ -31,15 +31,6 @@ sub _init {
   $self->ajaxable(0);
 }
 
-sub ftp_url {
-### Set this via a function, so it can easily be updated (or 
-### overridden in a plugin)
-  my $self = shift;
-  my $ftp_site = $self->hub->species_defs->ENSEMBL_FTP_URL;
-  return $ftp_site ? sprintf '%s/release-%s', $ftp_site, $self->hub->species_defs->ENSEMBL_VERSION
-                      : undef;
-}
-
 sub content {
   my $self         = shift;
   my $hub          = $self->hub;
@@ -50,22 +41,33 @@ sub content {
   $self->{'icon'}  = qq(<img src="${img_url}24/%s.png" alt="" class="homepage-link" />);
 
   $self->{'img_link'} = qq(<a class="nodeco _ht _ht_track" href="%s" title="%s"><img src="${img_url}96/%s.png" alt="" class="bordered" />%s</a>);
-  
-  return sprintf('
-    <div class="round-box tinted-box unbordered"><h2>Search %s</h2>%s</div>
+
+  ## Mandatory search box
+  my $html = sprintf '<div class="round-box tinted-box unbordered"><h2>Search %s</h2>%s</div>', 
+              $common_name eq $sci_name ? "<i>$sci_name</i>" : sprintf('%s (<i>%s</i>)', $common_name, $sci_name),
+              EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render;
+
+  ## Assembly and genebuild - also mandatory
+  $html .= sprintf('
     <div class="box-left"><div class="round-box tinted-box unbordered">%s</div></div>
-    <div class="box-right"><div class="round-box tinted-box unbordered">%s</div></div>
-    <div class="box-left"><div class="round-box tinted-box unbordered">%s</div></div>
-    <div class="box-right"><div class="round-box tinted-box unbordered">%s</div></div>
-    %s',
-    $common_name eq $sci_name ? "<i>$sci_name</i>" : sprintf('%s (<i>%s</i>)', $common_name, $sci_name),
-    EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render,
+    <div class="box-right"><div class="round-box tinted-box unbordered">%s</div></div>',
     $self->assembly_text,
-    $self->genebuild_text,
-    $self->compara_text,
-    $self->variation_text,
-    $hub->database('funcgen') ? '<div class="box-left"><div class="round-box tinted-box unbordered">' . $self->funcgen_text . '</div></div>' : ''
-  );
+    $self->genebuild_text);
+
+  ## Other sections - may not be present on some species or  sites
+  my @opt_sections  = ($self->compara_text, $self->variation_text, $self->funcgen_text);
+  my @box_sides     = ('left', 'right');
+  my $i = 0;
+
+  foreach my $section (@opt_sections) {
+    next unless $section; 
+    my $j = $i % 2;
+    my $side = $box_sides[$j];
+    $html .= qq(<div class="box-$side"><div class="round-box tinted-box unbordered">$section</div></div>);
+    $i++;
+  }
+
+  return $html;
 }
 
 sub assembly_text {
@@ -138,9 +140,13 @@ sub assembly_text {
 
   ## Insert link to strains page 
   if ($strains) {
-    $html .= sprintf '<h3 class="light top-margin">Other strains</h3><p>This species has data on %s additional strains. <a href="%s">View list of strains</a></p>', 
+    my $strain_text = $species_defs->STRAIN_TYPE.'s';
+    $html .= sprintf '<h3 class="light top-margin">Other %s</h3><p>This species has data on %s additional %s. <a href="%s">View list of %s</a></p>', 
+                            $strain_text,
                             scalar @$strains,
+                            $strain_text,
                             $hub->url({'action' => 'Strains'}), 
+                            $strain_text,
   }
   
   ## Also look for strains on closely-related species
@@ -149,6 +155,7 @@ sub assembly_text {
 
     ## Loop through all species, looking for others in this taxon
     my @related_species;
+    my %strain_types;
     foreach $_ ($species_defs->valid_species) {
       next if $_ eq $self->hub->species; ## Skip if current species
       next unless $species_defs->get_config($_, 'ALL_STRAINS'); ## Skip if it doesn't have strains
@@ -158,10 +165,24 @@ sub assembly_text {
       next unless ($taxonomy && ref $taxonomy eq 'ARRAY'); 
       next unless grep { $_ eq $related_taxon } @$taxonomy;
       push @related_species, $_;
+      $strain_types{$species_defs->get_config($_, 'STRAIN_TYPE').'s'} = 1;
     }
   
     if (scalar @related_species) {
-      $html .= '<h3 class="light top-margin">Related strains</h3><p>Strain data is now available on the following closely-related species:</p><ul>';
+      my $strain_string;
+      my @keys = scalar keys %strain_types;
+      if (scalar @keys == 1) {
+        $strain_string = $keys[0]; 
+      }
+      elsif (scalar @keys == 2) {
+        $strain_string = join(' and ', @keys);
+      }
+      else {
+        my $last = pop @keys;
+        $strain_string = join(', ', @keys);
+        $strain_string .= " and $last"; 
+      }
+      $html .= sprintf '<h3 class="light top-margin">Related %s</h3><p>Data is available on the following closely-related species:</p><ul>', $strain_string;
       foreach (@related_species) {
         $html .= sprintf '<li><a href="%s">%s (%s)</a></li>', 
                   $hub->url({'species' => $_, 'action' => 'Strains'}), 
@@ -268,6 +289,12 @@ sub variation_text {
 
   if ($hub->database('variation')) {
     my $sample_data  = $species_defs->SAMPLE_DATA;
+
+    ## Split variation param if required (e.g. vervet monkey)
+    my ($v, $vf) = split(';vf=', $sample_data->{'VARIATION_PARAM'});
+    my %v_params = ('v' => $v);
+    $v_params{'vf'} = $vf if $vf;
+
     my $ftp          = $self->ftp_url;
        $html         = sprintf('
       <div class="homepage-icon">
@@ -280,9 +307,9 @@ sub variation_text {
       <p><a href="/info/genome/variation/" class="nodeco">%sMore about variation in %s</a></p>
       %s',
       
-      $sample_data->{'VARIATION_PARAM'} ? sprintf(
+      $v ? sprintf(
         $self->{'img_link'},
-        $hub->url({ type => 'Variation', action => 'Explore', v => $sample_data->{'VARIATION_PARAM'}, __clear => 1 }),
+        $hub->url({ type => 'Variation', action => 'Explore', __clear => 1, %v_params }),
         "Go to variant $sample_data->{'VARIATION_TEXT'}", 'variation', 'Example variant'
       ) : '',
       
@@ -329,6 +356,8 @@ sub variation_text {
 sub funcgen_text {
   my $self         = shift;
   my $hub          = $self->hub;
+  return unless $hub->database('funcgen');
+
   my $species_defs = $hub->species_defs;
   my $sample_data  = $species_defs->SAMPLE_DATA;
   

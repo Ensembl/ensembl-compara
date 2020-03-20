@@ -32,20 +32,33 @@ sub content {
   my $object      = $self->object;
   my $gene        = $object->gene;
   my $gene_id     = $gene->stable_id;
+  my $gene_xref   = $gene->display_xref && $gene->display_xref->primary_id;
+  my $transcript_id      = $object->Obj->stable_id;
+  my $transcript_xref    = $object->Obj->display_xref && $object->Obj->display_xref->primary_id;
+  my $transcript_version = $object->Obj->version;
+  my $transcript_link    = $transcript_version ? $transcript_id.'.'.$transcript_version : $transcript_id;
   my $translation = $object->Obj->translation;
-  
-  $self->caption($gene_id);
+ 
+  $gene_xref ||= $gene_id;
+  $transcript_xref ||= $transcript_id;
+
+  $self->caption($gene_xref);
+
+  #remove standard links to gene pages and replace with one to NCBI
+  $self->delete_entry_by_type('Gene');
+  $self->delete_entry_by_value($gene_id);
+
 
   $self->add_entry({
     type     => 'RefSeq gene',
-    label    => $gene_id,
-    link     => $hub->get_ExtURL_link($gene_id, 'REFSEQ_GENEIMP', $gene_id),
+    label    => $gene_xref,
+    link     => $hub->get_ExtURL_link($gene_xref, 'REFSEQ_GENEIMP', $gene_xref),
     abs_url  => 1,
     position => 1,
   });
 
-  my $biotype = ucfirst lc $gene->biotype;
-     $biotype =~ s/_/ /;
+  my $biotype = lc $gene->biotype;
+     $biotype =~ s/_/ /g;
      $biotype =~ s/rna/RNA/;
 
   $self->modify_entry_by('type', {
@@ -53,27 +66,35 @@ sub content {
     label => $biotype,
   });
 
+  #remove standard links to transcript pages and replace with one to NCBI
+  $self->delete_entry_by_type('Transcript');
+  $self->delete_entry_by_value($transcript_link);
+
+  $self->add_entry({
+    type     => 'RefSeq transcript',
+    label    => $transcript_xref,
+    link     => $hub->get_ExtURL_link($transcript_xref, 'REFSEQ_MRNA_PREDICTED', $transcript_xref),
+    abs_url  => 1,
+    position => 2,
+  });
+
   if ($translation) {
     my $translation_id = $translation->stable_id;
-    
     $self->delete_entry_by_type('Protein');
-    
+    my $translation_xref =  $translation->get_all_DBEntries('GenBank')->[0]->primary_id || $translation_id;
     $self->add_entry({
       type     => 'RefSeq protein',
-      label    => $translation_id,
-      link     => $hub->get_ExtURL_link($translation_id, 'REFSEQ_PROTIMP', $translation_id),
+      label    => $translation_xref,
+      link     => $hub->get_ExtURL_link($translation_xref, 'REFSEQ_PROTIMP', $translation_xref),
       abs_url  => 1,
-      position => 2
+      position => 3,
     });
   }
 
-  $self->delete_entry_by_type('Gene');
-  $self->delete_entry_by_type('Transcript');
   $self->delete_entry_by_type('Exon');
   $self->delete_entry_by_value('Exons');
   $self->delete_entry_by_value('cDNA Sequence');
   $self->delete_entry_by_value('Protein Variations');
-
 }
 
 1;

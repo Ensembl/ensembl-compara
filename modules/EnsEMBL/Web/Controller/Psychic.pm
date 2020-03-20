@@ -63,6 +63,8 @@ sub psychic {
   $query =~ s/\s+$//g;
   $query =~ s/\s+/ /g;
 
+  # Remove leading/trailing double/single quotes (" / ') from query
+  $query =~ s/^["|'](.*)["|']$/$1/;
   my @extra;
   push @extra,"facet_feature_type=Documentation" if $species eq 'help';
   $species = undef if $dest_site =~ /_all/ or $species eq 'help';
@@ -96,12 +98,12 @@ sub psychic {
   #if there is a species at the beginning of the query term then make a note in case we trying to jump to another location
   my ($query_species, $query_without_species);
   foreach my $sp (sort keys %sp_hash) {
-    if ( $query =~ /^$sp /) {
-      ($query_without_species = $query) =~ s/$sp//;
+    if ( $query =~ /^\Q$sp\E\s/) {
+      ($query_without_species = $query) =~ s/\Q$sp\E//;
       $query_without_species =~ s/^ //;
       $query_species = $sp;
     }
-  }
+  }  
 
   my $species_path = $species_defs->species_path($species) || "/$species";
 
@@ -214,17 +216,57 @@ sub psychic {
     }
   }
 
+  # Match HGVS identifier
+  # HGVS transcript
+  if ($query =~ /^NM_\d+\.\d+\:[c]\.(\d+|\*|\-|\+)/) {
+    # if matches then assume its human
+    my $db_adaptor       = $hub->database('variation','Homo_sapiens');
+    my $variation_adaptor = $db_adaptor->get_VariationAdaptor;
+    if (defined $variation_adaptor){
+      my $variant = $variation_adaptor->fetch_by_name($query);
+      if (defined $variant){
+        my $variant_name = $variant->name();
+        $flag  = 1;
+        return $self->redirect($site.$hub->url({
+          'species'   => 'human',
+          'type'      => 'Variation',
+          'action'    => 'Explore',
+          'v'         => $variant_name
+          }));
+        }
+      }
+  }
+
+ # HGVS protein
+ if ($query =~ /^NP_\d+\.\d+\:[p]\.[A-Z][a-z]{0,2}[\W\-]{0,1}[0-9]|^NP_\d+\.\d+\:[p]\.Met/) {
+   # if matches then assume its human
+   my $db_adaptor       = $hub->database('variation','Homo_sapiens');
+   my $variation_adaptor = $db_adaptor->get_VariationAdaptor;
+   if (defined $variation_adaptor){
+     my $variant = $variation_adaptor->fetch_by_name($query);
+     if (defined $variant){
+       my $variant_name = $variant->name();
+       $flag  = 1;
+       return $self->redirect($site.$hub->url({
+         'species'   => 'human',
+         'type'      => 'Variation',
+         'action'    => 'Explore',
+         'v'         => $variant_name
+         }));
+       }
+     }
+  }
+
   if (!$flag) {
     if($query =~ /^\s*([A-Z]{40,})\s*$/i) {
       # BLAST
       $url = $self->escaped_url('/Tools/Blast?query_sequence=%s', $1);
     } else {
-      my $coll = $species_defs->get_config($species,'STRAIN_COLLECTION');
+      my $coll = $species_defs->get_config($species,'STRAIN_GROUP');
       $species_path = "/$coll" if $coll;
 
       $url = $self->escaped_url(($species eq 'ALL' || !$species ? '/Multi' : $species_path) . "/$script?species=%s;idx=%s;q=%s", $species || 'all', $index, $query);
       my $common = $species_defs->get_config($species,'SPECIES_COMMON_NAME');
-      $url .= ";facet_strain=$common" if $coll and lc $coll ne lc $common;
     }
   }
 

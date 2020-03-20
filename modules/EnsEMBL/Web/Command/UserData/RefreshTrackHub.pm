@@ -25,7 +25,7 @@ use strict;
 
 use List::Util qw(first);
 
-use EnsEMBL::Web::File::Utils::TrackHub; 
+use EnsEMBL::Web::Utils::TrackHub; 
 
 use base qw(EnsEMBL::Web::Command::UserData);
 
@@ -36,7 +36,7 @@ sub process {
   my $url_params      = {};
   my $session_record  = $hub->session->get_data('code' => $hub->param('code'), 'type' => 'url');
  
-  my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $hub, 'url' => $session_record->{'url'});
+  my $trackhub  = EnsEMBL::Web::Utils::TrackHub->new('hub' => $hub, 'url' => $session_record->{'url'});
   ## Don't validate assembly - if we're reattaching, it must by definition be OK
   ## (unless it's been changed radically, in which case all bets are off!)
   my $hub_info = $trackhub->get_hub({

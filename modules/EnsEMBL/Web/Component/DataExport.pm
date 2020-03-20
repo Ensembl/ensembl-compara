@@ -185,11 +185,12 @@ sub create_form {
     },
   ]);
   ## Miscellaneous parameters from settings
+  my $user_settings = $self->{'viewconfig'}{$hub->param('data_type')}->{_user_settings};
   foreach (@{$settings->{'Hidden'}||[]}) {
     $fieldset->add_hidden([
       {
         'name'    => $_,
-        'value'   => $hub->param($_),
+        'value'   => $hub->param($_) || $user_settings->{$_},
       },
     ]);
   }

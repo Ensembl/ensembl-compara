@@ -60,20 +60,24 @@ sub content {
 
 sub default_file_name {
   my $self = shift;
-  my $species_defs = $self->hub->species_defs;
+  my $hub = $self->hub;
+  my $species_defs = $hub->species_defs;
   my $name;
 
   my $db_hash      = $species_defs->multi_hash;
-  my $cdb          = shift || $self->hub->param('cdb') || 'compara';
+  my $cdb          = shift || $hub->param('cdb') || 'compara';
   my $alignments   = $db_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {}; # Get the compara database hash
 
-  if ($self->hub->param('align') =~ /--/) {
-    ($name = $self->hub->param('align')) =~ s/^(\d+)--/alignment_/;
+  my $user_settings = $self->{'viewconfig'}{$hub->param('data_type')}->{_user_settings};
+  my $align_param   = $hub->param('align') || $user_settings->{'align'};
+
+  if ($align_param =~ /--/) {
+    ($name = $align_param) =~ s/^(\d+)--/alignment_/;
     $name =~ s/--/_/g;
   }
   else {
 
-    my $align = $alignments->{$self->hub->param('align')};
+    my $align = $alignments->{$align_param};
 
     if ($align) {
       my $align_name;

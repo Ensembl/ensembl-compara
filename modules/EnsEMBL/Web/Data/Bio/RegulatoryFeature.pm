@@ -43,18 +43,30 @@ sub convert_to_drawing_parameters {
   my $results = [];
 
   foreach my $reg (@$data) {
-    my @stable_ids;
-    my $gene_links;
-    my $db_ent = $reg->get_all_DBEntries;
-    foreach ( @{ $db_ent} ) {
-      push @stable_ids, $_->primary_id;
-      my $url = $self->hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => $stable_ids[-1] });
-      $gene_links  .= qq(<a href="$url">$stable_ids[-1]</a>);
+    my ($gene_links, @stable_ids, $mirna_id);
+    if (ref($reg) =~ /Mirna/) {
+      my $stable_id = $reg->gene_stable_id;
+      @stable_ids   = ($stable_id);
+      $mirna_id     = $reg->accession;
+    }
+    else {
+      my $db_ent = $reg->get_all_DBEntries;
+      foreach ( @{ $db_ent} ) {
+        push @stable_ids, $_->primary_id;
+      }
+    }
+
+    foreach my $stable_id (@stable_ids) {
+      my $url = $self->hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => $stable_id });
+      $gene_links .= qq(<a href="$url">$stable_id</a>);
     }
 
     my @extra_results = $reg->analysis->description;
     ## Sort out any links/URLs
-    if ($extra_results[0] =~ /a href/i) {
+    if ($extra_results[0] =~ /tarbase/i) {
+      @extra_results = ($self->hub->get_ExtURL_link($mirna_id, 'TARBASE_V8', $mirna_id));
+    }
+    elsif ($extra_results[0] =~ /a href/i) {
       $extra_results[0] =~ s/a href/a rel="external" href/ig;
     }
     else {
@@ -79,7 +91,7 @@ sub convert_to_drawing_parameters {
   }
    my $extra_columns = [
                     {'key' => 'gene',     'title' => 'Associated gene'},
-                    {'key' => 'analysis', 'title' => 'Feature analysis', 'sort' => 'html'},
+                    {'key' => 'analysis', 'title' => 'Link to Tarbase', 'sort' => 'html'},
   ];
   return [$results, $extra_columns];
 }

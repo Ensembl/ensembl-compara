@@ -42,8 +42,18 @@ sub content {
   my $ontology_accession = $hub->param('oa');
 
   if ($ontology_accession) {
+    my $html_legend = '';
+    my $relation_types = $self->relation_types(" &quot;$ontology_accession&quot;");
+    # Generate a legend for the releation icons
+    foreach my $type ('equal', 'child', 'is_about') {
+      $html_legend .= '<div style="line-height:22px">'.
+                      '<img style="vertical-align:middle" src="'.$relation_types->{$type}{'icon'}.'"/>'.
+                      '<span style="vertical-align:middle"> : '.$relation_types->{$type}{'help'}.'</span>'.
+                      '</div>';
+    }
+
     my $table = $self->make_table($ontology_accession);
-    $html .= $table->render($hub,$self);
+    $html .= $table->render($hub,$self).$html_legend;
   }
   elsif ($hub->param('ph')) {
     if ($self->get_all_ontology_data) {
@@ -73,18 +83,25 @@ sub table_content {
 
   # Get phenotypes associated with the child terms of the ontology accession
   my $child_onto_objs = $adaptor->fetch_all_by_parent_term( $ontologyterm_obj );
-
+  my %is_about;
   foreach my $child_onto (@{$child_onto_objs}){
     $accessions{$child_onto->accession} = $child_onto->name;
+    my $parents = $child_onto->parents('is_about');
+    foreach my $parent (@$parents) {
+      if ($parent->accession eq $ontology_accession) {
+        $is_about{$child_onto->accession} = 1;
+      }
+    }
   }
   
-  return $self->get_phenotype_data($callback,\%accessions);
+  return $self->get_phenotype_data($callback,\%accessions,\%is_about);
 }
 
 sub get_phenotype_data {
   my $self = shift;
   my $callback = shift;
   my $accessions = shift;
+  my $is_about   = shift;
 
   my $hub = $self->hub;
  
@@ -112,16 +129,26 @@ sub get_phenotype_data {
         
         my ($onto_acc_hash) = grep { $_->{'accession'} eq $accession } @{$pheno->{'_ontology_accessions'}};
         my $mapping_type = $onto_acc_hash->{'mapping_type'};
+
+        my $onto_type;
+        if ($accession eq $hub->param('oa')) {
+          $onto_type = 'equal';
+        }
+        else {
+          $onto_type = ($is_about->{$accession}) ? 'is_about' : 'child';
+        }
+
         my $row = {
              ph          => $pheno->dbID,
              oa          => $accession,
-             onto_type   => ($accession eq $hub->param('oa'))?'equal':'child',
-             onto_url    => $self->external_ontology($accession,$accession_term),
+             onto_relation  => $onto_type,
+             onto_url    => $hub->url({ action => "Phenotype", action => "Locations",  oa => $accession, ph => undef }),
              onto_text   => $accession_term // $accession,
              description => $pheno->description,
              raw_desc    => $pheno->description,
              asso_type   => $mapping_type,
            };
+
 
         foreach my $type (keys(%ftypes)) {
           if ($number_of_features->{$type}) {
@@ -148,6 +175,13 @@ sub make_table {
 
   my $hub = $self->hub;
 
+  my $ontology_accession = $hub->param('oa');
+
+  my $adaptor = $self->hub->database('go')->get_OntologyTermAdaptor;
+  my $ontologyterm_obj = $adaptor->fetch_by_accession($ontology_accession);
+
+  my $onto_name = ($ontologyterm_obj) ? ' &quot;'.$ontologyterm_obj->name.'&quot;' : '';
+
   my $table = EnsEMBL::Web::NewTable::NewTable->new($self);
 
   my $sd = $hub->species_defs->get_config($hub->species, 'databases')->{'DATABASE_VARIATION'};
@@ -169,23 +203,20 @@ sub make_table {
   },{
     _key => 'oa', _type => 'numeric unshowable no_filter'
   },{
-    _key => 'onto_type', _type => 'iconic no_filter unshowable',
-    label => 'Ontology Term',
-  },{
     _key => 'onto_url', _type => 'string no_filter unshowable',
-    label => 'Ontology Term',
-    width => 2,
   },{
     _key => 'onto_text', _type => 'iconic',
-    label => 'Ontology Term',
-    icon_source => 'onto_type',
+    label => 'Mapped ontology Term',
     url_column => 'onto_url',
-    url_rel => 'external',
     filter_label => 'Mapped ontology term',
     filter_keymeta_enum => 1,
     filter_sorted => 1,
     primary => 1,
-    width => 2,
+    width => 2
+  },{
+    _key => 'onto_relation', _type => 'iconic',
+    label => "Relationship with $ontology_accession",
+    helptip => "Mapped ontology term relationship with $onto_name ($ontology_accession)"
   },{
     _key => 'var_count', _type => 'numeric no_filter',
     label => 'Variant',
@@ -210,13 +241,27 @@ sub make_table {
 
   $table->add_columns(\@columns,\@exclude);
 
-  my $onto_type = $table->column('onto_type');
-  $onto_type->icon_url('equal',"/i/val/equal.png");
-  $onto_type->icon_helptip('equal','Equivalent to the ontology term');
-  $onto_type->icon_url('child','/i/val/arrow_down.png');
-  $onto_type->icon_helptip('child','Equivalent to the child ontology term');
+  # Set decorator for the ontology term releation
+  my $onto_type = $table->column('onto_relation');
+  my $relation_types = $self->relation_types($onto_name);
+  foreach my $type ('equal', 'child', 'is_about') {
+    $onto_type->icon_url($type, $relation_types->{$type}{'icon'});
+    $onto_type->icon_helptip($type, $relation_types->{$type}{'help'});
+  }
 
   return $table;
+}
+
+# Return the icon and help text regarding the ontology term relation
+sub relation_types {
+  my $self      = shift;
+  my $onto_name = shift;
+
+  my $types = { 'equal'    => { 'icon' => '/i/val/is_equal.png', 'help' => "Equivalent to the ontology term$onto_name" },
+                'child'    => { 'icon' => '/i/val/tree.png',     'help' => "Child term of$onto_name"                   },
+                'is_about' => { 'icon' => '/i/val/is_about.png', 'help' => "Term related to$onto_name"                 }
+              };
+  return $types;
 }
 
 1;

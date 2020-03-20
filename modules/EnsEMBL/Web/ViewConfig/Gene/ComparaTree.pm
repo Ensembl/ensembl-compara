@@ -110,7 +110,7 @@ sub form_fields {
     'label' => 'Show super-tree',
     'name'  => 'super_tree',
     'value' => 'on',
-  } if(!$self->hub->param('strain') && !$self->hub->species_defs->IS_STRAIN_OF); #hide this for strain view or strain species 
+  } unless ($self->species =~/Mus/ && $self->hub->species_defs->IS_STRAIN_OF); ###HACK (TO BE REMOVED) hide option for all mouse strains
 
   my @groups = ($self->hub->param('strain') || $self->hub->species_defs->IS_STRAIN_OF) ? () : $self->_groups; #hide these options for strain view or strain species
 
@@ -150,18 +150,20 @@ sub form_fields {
 sub init_form_non_cacheable {
   ## @override
   my $self  = shift;
+  my $cdb   = shift || $self->{'cdb'} || 'compara';
   my $hub   = $self->hub;
   my $form  = $self->SUPER::init_form_non_cacheable(@_);
+  my %other_clustersets;
 
-  my $function           = $hub->referer->{'ENSEMBL_FUNCTION'};
-  my $cdb                = $function && $function eq 'pan_compara' ? 'compara_pan_ensembl' : 'compara';
-  my $database           = $hub->database($cdb);
-  my $member             = $database->get_GeneMemberAdaptor->fetch_by_stable_id($hub->core_params->{'g'});
-  my $adaptor            = $database->get_GeneTreeAdaptor;
-  my $gene_tree          = $adaptor->fetch_default_for_Member($member);
-  my %other_clustersets  = map { $_->clusterset_id => 1 } @{$adaptor->fetch_all_linked_trees($gene_tree)};
+  if($hub->param('g')) {
+    my $database           = $hub->database($cdb);
+    my $member             = $database->get_GeneMemberAdaptor->fetch_by_stable_id($hub->core_params->{'g'});
+    my $adaptor            = $database->get_GeneTreeAdaptor;
+    my $gene_tree          = $adaptor->fetch_default_for_Member($member);
+    %other_clustersets     = map { $_->clusterset_id => 1 } @{$adaptor->fetch_all_linked_trees($gene_tree)};
 
-  delete $other_clustersets{'default'};
+    delete $other_clustersets{'default'};
+  }
 
   if (my $dropdown = $form->get_elements_by_name('clusterset_id')->[0]) {
     $dropdown->add_option({ 'value' => $_, 'caption' => $_ }) for sort keys %other_clustersets;
@@ -172,8 +174,7 @@ sub init_form_non_cacheable {
 
 sub _groups {
   ## @private
-  ## LOWCOVERAGE is a special group, populated in the ConfigPacker, and whose name is also defined in TAXON_LABEL
-  return ('LOWCOVERAGE', @{ $_[0]->species_defs->TAXON_ORDER });
+  return (@{ $_[0]->species_defs->TAXON_ORDER });
 }
 
 1;

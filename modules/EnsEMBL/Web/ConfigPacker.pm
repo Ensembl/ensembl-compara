@@ -28,6 +28,7 @@ use base qw(EnsEMBL::Web::ConfigPacker_base);
 use EnsEMBL::Web::File::Utils::URL qw(read_file);
 
 use JSON qw(from_json);
+use URI::Escape;
 
 sub munge {
   my ($self, $func) = @_;
@@ -203,22 +204,13 @@ sub _summarise_core_tables {
   );
   my $analysis = {};
   foreach my $a_aref (@$t_aref) { 
-    ## Strip out "crap" at front and end! probably some q(')s...
-    ( my $A = $a_aref->[6] ) =~ s/^[^{]+//;
-    $A =~ s/[^}]+$//;
-    my $T = eval($A);
-    if (ref($T) ne 'HASH') {
-      if ($A) {
-        warn "Deleting web_data for $db_key:".$a_aref->[1].", check for syntax error";
-      }
-      $T = {};
-    }
+    my $web_data = $a_aref->[6] ? from_json($a_aref->[6]) : {};
     $analysis->{ $a_aref->[0] } = {
       'logic_name'  => $a_aref->[1],
       'name'        => $a_aref->[3],
       'description' => $a_aref->[4],
       'displayable' => $a_aref->[5],
-      'web_data'    => $T
+      'web_data'    => $web_data,
     };
   }
   ## Set last repeat mask date whilst we're at it, as needed by BLAST configuration, below
@@ -251,7 +243,7 @@ sub _summarise_core_tables {
     );
     foreach my $T ( @$res_aref ) {
       my $a_ref = $analysis->{$T->[0]}
-        || ( warn("Missing analysis entry $table - $T->[0]\n") && next );
+        || ( warn("$db_name is missing analysis entry $table - $T->[0]\n") && next );
       my $value = {
         'name'  => $a_ref->{'name'},
         'desc'  => $a_ref->{'description'},
@@ -368,12 +360,32 @@ sub _summarise_core_tables {
 #---------------
 #
 # * Assemblies...
+# Factor this out bc collections
+  $self->_add_assembly_versions($db_name);
+  
+#-------------
+#
+# * Transcript biotypes
+# get all possible transcript biotypes
+  @{$self->db_details($db_name)->{'tables'}{'transcript'}{'biotypes'}} = map {$_->[0]} @{$dbh->selectall_arrayref(
+    'SELECT DISTINCT(biotype) FROM transcript;'
+  )};
+
+#----------
+  $dbh->disconnect();
+}
+
+sub _add_assembly_versions {
+  my $self   = shift;
+  my $db_name = shift; 
+  my $dbh    = $self->db_connect( $db_name );
+  
 # This is a bit ugly, because there's no easy way to sort the assemblies via MySQL
-  $t_aref = $dbh->selectall_arrayref(
+  my $aref = $dbh->selectall_arrayref(
     'select version, attrib from coord_system where version is not null order by rank' 
   );
   my (%default, %not_default);
-  foreach my $row (@$t_aref) {
+  foreach my $row (@$aref) {
     my $version = $row->[0];
     my $attrib  = $row->[1];
     if ($attrib =~ /default_version/) {
@@ -387,17 +399,6 @@ sub _summarise_core_tables {
   my @assemblies = keys %default;
   push @assemblies, sort keys %not_default;
   $self->db_tree->{'CURRENT_ASSEMBLIES'} = join(',', @assemblies);
-  
-#-------------
-#
-# * Transcript biotypes
-# get all possible transcript biotypes
-  @{$self->db_details($db_name)->{'tables'}{'transcript'}{'biotypes'}} = map {$_->[0]} @{$dbh->selectall_arrayref(
-    'SELECT DISTINCT(biotype) FROM transcript;'
-  )};
-
-#----------
-  $dbh->disconnect();
 }
 
 sub _summarise_xref_types {
@@ -645,8 +646,8 @@ sub _summarise_variation_db {
   
 	# Mixed source(s)
 	my $mx_aref = $dbh->selectall_arrayref(
-	  'select distinct(s.name) from variation v, source s 
-		 where v.source_id=s.source_id and s.somatic_status = "mixed"'
+	  'select distinct(s.name) from source s straight_join variation v on v.source_id=s.source_id 
+	   and s.somatic_status = "mixed"'
 	);
 	foreach (@$mx_aref){ 
     $somatic_mutations{$_->[0]}->{'none'} = 'none' ;
@@ -699,9 +700,7 @@ sub _summarise_funcgen_db {
   foreach my $a_aref (@$t_aref) {
     my $desc;
     { no warnings; $desc = eval($a_aref->[4]) || $a_aref->[4]; }    
-    (my $web_data = $a_aref->[6]) =~ s/^[^{]+//; ## Strip out "crap" at front and end! probably some q(')s
-    $web_data     =~ s/[^}]+$//;
-    $web_data     = eval($web_data) || {};
+    my $web_data = $a_aref->[6] ? from_json($a_aref->[6]) : {};
     
     $analysis->{$a_aref->[0]} = {
       'logic_name'  => $a_aref->[1],
@@ -746,8 +745,9 @@ sub _summarise_funcgen_db {
 ### the current regulatory build
   my $c_aref =  $dbh->selectall_arrayref(
     'select
-      distinct epigenome.display_label, epigenome.epigenome_id, 
-                epigenome.description
+      distinct  epigenome.short_name, epigenome.epigenome_id,
+                epigenome.description, epigenome.search_terms,
+                epigenome.full_name, epigenome.name
         from regulatory_build 
       join regulatory_build_epigenome using (regulatory_build_id) 
       join epigenome using (epigenome_id)
@@ -761,12 +761,19 @@ sub _summarise_funcgen_db {
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'epi_desc'}{$cell_type_key} = $row->[2];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 1;
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'regbuild_ids'}{$cell_type_key} = 1;
+
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'info'}{$row->[0]} = {
+      description => $row->[2],
+      search_terms => $row->[3],
+      full_name => $row->[4],
+      name => $row->[5]
+    };
   }
 
   ## Now look for cell lines that _aren't_ in the build
   $c_aref = $dbh->selectall_arrayref(
     'select
-        epigenome.display_label, epigenome.epigenome_id, epigenome.description
+        epigenome.short_name, epigenome.epigenome_id, epigenome.description, epigenome.search_terms
      from epigenome 
         left join (regulatory_build_epigenome rbe, regulatory_build rb) 
           on (rbe.epigenome_id = epigenome.epigenome_id 
@@ -781,6 +788,12 @@ sub _summarise_funcgen_db {
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'names'}{$cell_type_key} = $row->[0];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'epi_desc'}{$cell_type_key} = $row->[2];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 0;
+
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'info'}{$row->[0]} = {
+      description => $row->[2],
+      search_terms => $row->[3],
+      full_name => $row->[4]
+    };
   }
   
 #---------- Additional queries - by type...
@@ -822,7 +835,7 @@ sub _summarise_funcgen_db {
 	        select 
 	          logic_name,
 	          epigenome_id,
-	          epigenome.display_label,
+	          epigenome.short_name,
             epigenome.description,
             displayable,
             segmentation_file.name
@@ -905,7 +918,7 @@ sub _summarise_funcgen_db {
   while (my ($set, $classes) = each(%sets)) {
     my $ft_aref = $dbh->selectall_arrayref(qq(
         select
-            epigenome.display_label,
+            epigenome.short_name,
             peak_calling.feature_type_id,
             peak_calling.peak_calling_id
         from
@@ -914,8 +927,9 @@ sub _summarise_funcgen_db {
             join epigenome using (epigenome_id)
         where
             class in ($classes)
+            and peak_calling.run_failed IS NULL
         group by
-            epigenome.display_label,
+            epigenome.short_name,
             peak_calling.feature_type_id,
             peak_calling.peak_calling_id
     ));
@@ -1024,7 +1038,23 @@ sub _summarise_website_db {
                                                               };
       }
     }
-  }
+    else {
+      $self->db_tree->{'ENSEMBL_GLOSSARY'} = {};
+    }
+
+    ## Get biotype definitions
+    my $terms_endpoint = $ols.'/terms';
+    # NOTE: a term url passed as a parameter to the terms endpoint
+    # should use http, lack www, and be twice(!) url-encoded
+    my $biotype_url = 'http://ensembl.org/glossary/ENSGLOSSARY_0000025';
+    my $safe_biotype_url = uri_escape(uri_escape($biotype_url));
+    my $biotype_term_url = $terms_endpoint . '/' . $safe_biotype_url;
+ 
+    my $root_term = $self->_fetch_ols_term($biotype_term_url);
+
+    $self->db_tree->{'ENSEMBL_BIOTYPES'} = $root_term;
+ }
+
 
   ## Get attrib text lookup
   $t_aref = $dbh->selectall_arrayref(
@@ -1037,6 +1067,35 @@ sub _summarise_website_db {
 
 
   $dbh->disconnect();
+}
+ 
+sub _fetch_ols_term {
+  my ($self, $url) = @_;
+  my %result;
+  my $term = $self->_get_rest_data($url);
+  return {} unless $term;
+  my $children_link = $term->{_links}->{children}->{href};
+
+  $result{label} = $term->{label};
+  $result{description} = $term->{description};
+  $result{synonyms} = $term->{synonyms};
+
+  if ($children_link) {
+    $result{'children'} = [ $self->_fetch_children_ols_terms($children_link) ];
+  }
+  return \%result;
+}
+
+sub _fetch_children_ols_terms {
+  my ($self, $url) = @_;
+
+  my $response = $self->_get_rest_data($url);
+  return {} unless $response;
+  my $children = $response->{_embedded}->{terms};
+
+  return map {
+    $self->_fetch_ols_term($_->{_links}->{self}->{href})
+  } @{$children};
 }
 
 sub _get_rest_data {
@@ -1177,8 +1236,6 @@ sub _summarise_compara_db {
   
   my $constrained_elements = {};
   my %valid_species = map { $_ => 1 } keys %{$self->full_tree};
-  # Check if contains a species not in vega - use to determine whether or not to run vega specific queries
-  my $vega = 1;
   
   foreach my $row (@$res_aref) { 
     my ($class, $type, $species, $name, $id, $species_set_id) = ($row->[0], uc $row->[1], ucfirst $row->[2], $row->[3], $row->[4], $row->[5]);
@@ -1193,8 +1250,6 @@ sub _summarise_compara_db {
     } elsif ($type !~ /EPO_LOW_COVERAGE/ && ($class =~ /tree_alignment/ || $type  =~ /EPO/)) {
       $self->db_tree->{$db_name}{$key}{$id}{'species'}{'ancestral_sequences'} = 1 unless exists $self->db_tree->{$db_name}{$key}{$id};
     }
-    
-    $vega = 0 if $species eq 'Ailuropoda_melanoleuca';
     
     if ($intra_species{$species_set_id}) {
       $intra_species_constraints{$species}{$_} = 1 for keys %{$intra_species{$species_set_id}};
@@ -1229,7 +1284,7 @@ sub _summarise_compara_db {
   }
   
   # if there are intraspecies alignments then get full details of genomic alignments, ie start and stop, constrained by a set defined above (or no constraint for all alignments)
-  $self->_summarise_compara_alignments($dbh, $db_name, $vega ? undef : \%intra_species_constraints) if scalar keys %intra_species_constraints;
+  $self->_summarise_compara_alignments($dbh, $db_name, \%intra_species_constraints) if scalar keys %intra_species_constraints;
   
   my %sections = (
     ENSEMBL_ORTHOLOGUES => 'GENE',
@@ -1274,17 +1329,6 @@ sub _summarise_compara_db {
     $self->db_tree->{$db_name}{$key}{$species1}{$species2} = $valid_species{$species2};
   }             
   
-  ###################################################################
-  ## Section for colouring and colapsing/hidding genes per species in the GeneTree View
-  
-  # The config for taxon-groups is in DEFAULTS.ini
-  # Here, we only need to add the "special" set of low-coverage species
-  $res_aref = $dbh->selectall_arrayref(q{SELECT genome_db_id FROM genome_db WHERE is_high_coverage = 0});
-  $self->db_tree->{$db_name}{'SPECIES_SET'}{'LOWCOVERAGE'} = [map {$_->[0]} @$res_aref];
-
-  ## End section about colouring and colapsing/hidding gene in the GeneTree View
-  ###################################################################
-
   ###################################################################
   ## Cache MLSS for quick lookup in ImageConfig
 
@@ -1531,6 +1575,7 @@ sub _summarise_go_db {
       from ontology
         join term using (ontology_id)
       where is_root = 1
+       and is_obsolete = 0
       order by ontology.ontology_id');
   foreach my $row (@$t_aref) {
       my ($oid, $ontology, $root_term, $description) = @$row;
@@ -1581,7 +1626,8 @@ sub _munge_meta {
     provider.url                  PROVIDER_URL
     provider.logo                 PROVIDER_LOGO
     species.strain                SPECIES_STRAIN
-    species.strain_collection     STRAIN_COLLECTION
+    species.strain_group          STRAIN_GROUP
+    strain.type                   STRAIN_TYPE
     genome.assembly_type          GENOME_ASSEMBLY_TYPE
     gencode.version               GENCODE_VERSION
   );
@@ -1659,6 +1705,11 @@ sub _munge_meta {
     
     $self->tree->{'SPECIES_META_ID'} = $species_id;
 
+    ## fall back to 'strain' if no strain type set
+    if (!$self->tree->{'STRAIN_TYPE'}) {
+      $self->tree->{'STRAIN_TYPE'} = 'strain';
+    }
+
     ## Munge genebuild info
     my @A = split '-', $meta_hash->{'genebuild.start_date'}[0];
     
@@ -1680,26 +1731,79 @@ sub _munge_meta {
 
     $self->tree->{'HAVANA_DATAFREEZE_DATE'} = $meta_hash->{'genebuild.havana_datafreeze_date'}[0];
 
-    # check if there are sample search entries defined in meta table ( the case with Ensembl Genomes)
-    # they can be overwritten at a later stage  via INI files
-    my @ks = grep { /^sample\./ } keys %{$meta_hash || {}}; 
-    my $shash;
+    ## check if there are sample search entries from the ini file
+    my $ini_hash = $self->tree->{'SAMPLE_DATA'};
 
-    foreach my $k (@ks) {
+    # check if there are sample search entries defined in meta table
+    my @mks = grep { /^sample\./ } keys %{$meta_hash || {}}; 
+    my $mk_hash = {};
+    foreach my $k (@mks) {
+      ## Convert key to format used in webcode
       (my $k1 = $k) =~ s/^sample\.//;
-      $shash->{uc $k1} = $meta_hash->{$k}->[0];
+      $mk_hash->{uc $k1} = $meta_hash->{$k}->[0];
     }
-    ## add in any missing values where text omitted because same as param
-    my @original_keys = keys %$shash;
-    foreach my $key (@original_keys) {
-      next unless $key =~ /PARAM/;
-      (my $type = $key) =~ s/_PARAM//;
-      unless ($shash->{$type.'_TEXT'}) {
-        $shash->{$type.'_TEXT'} = $shash->{$key};
-      } 
+  
+    ## Merge param keys into single set
+    my (%seen, @param_keys, @other_keys);
+    foreach (keys %$mk_hash, keys %{$ini_hash || {}}) {
+      next if $seen{$_};
+      if ($_ =~ /PARAM/) {
+        push @param_keys, $_;
+      }
+      else {
+        push @other_keys, $_;
+      }
+      $seen{$_} = 1;
     }
 
-    $self->tree->{'SAMPLE_DATA'} = $shash if scalar keys %$shash;
+    ## Merge the two sample sets into one hash, giving priority to ini file
+    my $sample_hash = {};
+    foreach my $key (@param_keys) {
+      (my $text_key = $key) =~ s/PARAM/TEXT/;
+
+      if ($ini_hash->{$key}) {
+        $sample_hash->{$key} = $ini_hash->{$key};
+        ## Now set accompanying text
+        if ($ini_hash->{$text_key}) {
+          $sample_hash->{$text_key} = $ini_hash->{$text_key};
+        }
+        else {
+          $sample_hash->{$text_key} = $ini_hash->{$key};
+        }
+      }
+      elsif ($mk_hash->{$key}) {
+        $sample_hash->{$key} = $mk_hash->{$key};
+        ## Now set accompanying text
+        if ($mk_hash->{$text_key}) {
+          $sample_hash->{$text_key} = $mk_hash->{$text_key};
+        }
+        else {
+          $sample_hash->{$text_key} = $mk_hash->{$key};
+        }
+      }
+    }
+    ## Deal with any atypical entries, e.g. search
+    foreach (@other_keys) {
+      next if $sample_hash->{$_};
+      if ($ini_hash->{$_}) {
+        $sample_hash->{$_} = $ini_hash->{$_};
+      }
+      elsif ($mk_hash->{$_}) {
+        $sample_hash->{$_} = $mk_hash->{$_};
+      }
+    }
+
+    ## Finally deduplicate any values
+    my $dedupe = {};
+    while (my($k,$v) = each(%$sample_hash)) {
+      next unless $k =~ /TEXT/;
+      if ($dedupe->{$v}) {
+        delete $sample_hash->{$k};
+      }
+      $dedupe->{$v}++;
+    }
+
+    $self->tree->{'SAMPLE_DATA'} = $sample_hash if scalar keys %$sample_hash;
 
     # check if the karyotype/list of toplevel regions ( normally chroosomes) is defined in meta table
     @{$self->tree->{'TOPLEVEL_REGIONS'}} = @{$meta_hash->{'regions.toplevel'}} if $meta_hash->{'regions.toplevel'};
@@ -1759,6 +1863,7 @@ sub _munge_file_formats {
     'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph', 'remote' => 1},
     'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph', 'remote' => 1},
     'bigpsl'    => {'ext' => 'bb',  'label' => 'BigPsl',    'display' => 'graph', 'remote' => 1},
+    'bigint'    => {'ext' => 'bb',  'label' => 'BigInteract',    'display' => 'graph', 'remote' => 1},
     'cram'      => {'ext' => 'cram','label' => 'CRAM',      'display' => 'graph', 'remote' => 1},
     'trackhub'  => {'ext' => 'txt', 'label' => 'Track Hub', 'display' => 'graph', 'remote' => 1},
     ## Export only

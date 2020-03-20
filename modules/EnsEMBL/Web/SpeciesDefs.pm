@@ -240,7 +240,7 @@ sub reference_species {
     for (@valid_species) {
       my $strain = $self->get_config($_, 'SPECIES_STRAIN');
 
-      if (!$strain || ($strain =~ /reference/) || !$self->get_config($_, 'STRAIN_COLLECTION')) {
+      if (!$strain || ($strain =~ /reference/) || !$self->get_config($_, 'STRAIN_GROUP')) {
         push @ref_species, $_;
       }
     }
@@ -543,7 +543,7 @@ sub _read_in_ini_file {
           $tree->{$current_section} ||= {}; # create new element if required
           
           # add settings from default
-          if (defined $defaults->{$current_section}) {
+          if (!%{$tree->{$current_section}} && defined $defaults->{$current_section}) {
             my %hash = %{$defaults->{$current_section}};
             
             $tree->{$current_section}{$_} = $defaults->{$current_section}{$_} for keys %hash;
@@ -613,7 +613,13 @@ sub _expand_database_templates {
                       };
     foreach (@db_types) {
       my $species_version = $tree->{'general'}{'SPECIES_RELEASE_VERSION'} || 1;
-      my $db_name = $tree->{'databases'}{'DATABASE_'.$_} || sprintf('%s_%s_%s_%s', $filename, lc($_), $SiteDefs::ENSEMBL_VERSION, $species_version);
+      my $db_name = $tree->{'databases'}{'DATABASE_'.$_};
+      unless ($db_name) {
+        my $non_vert_version = $SiteDefs::SITE_RELEASE_VERSION;
+        $db_name = sprintf('%s_%s', $filename, lc($_));
+        $db_name .= '_'.$non_vert_version if $non_vert_version;                                 
+        $db_name .= sprintf('_%s_%s', $SiteDefs::ENSEMBL_VERSION, $species_version);
+      }
       ## Does this database exist?
       $db_details->{'NAME'} = $db_name;
       my $db_exists = $config_packer->db_connect($_, $db_details, 1);
@@ -780,7 +786,6 @@ sub _parse {
   $self->_info_log('Parser', 'Post processing ini files');
 
   # Prepare to process strain information
-  my $name_lookup = {};
   my $species_to_strains = {};
   my $species_to_assembly = {};
 
@@ -791,27 +796,22 @@ sub _parse {
     $self->_info_line('munging', "$species config");
 
     ## Need to gather strain info for all species
-    my $common_name = $config_packer->tree->{'SPECIES_DB_COMMON_NAME'};
-    $name_lookup->{$common_name} = $species;
-    my $display_name = $config_packer->tree->{'SPECIES_COMMON_NAME'};
-    $name_lookup->{$display_name} = $species;
-  
-    my $collection = $config_packer->tree->{'STRAIN_COLLECTION'};
-    ## Key on actual URL, not production name
-    my $species_key = $config_packer->tree->{'SPECIES_URL'};
+    my $strain_group = $config_packer->tree->{'STRAIN_GROUP'};
     my $strain_name = $config_packer->tree->{'SPECIES_STRAIN'};
-    my $scientific_name = $config_packer->tree->{'SPECIES_SCIENTIFIC_NAME'};
-    if ($collection && $strain_name !~ /reference/) {
-      if ($species_to_strains->{$collection}) {
-        push @{$species_to_strains->{$collection}}, $species_key;
+    my $species_key = $config_packer->tree->{'SPECIES_URL'}; ## Key on actual URL, not production name
+    if ($strain_group && $strain_name !~ /reference/) {
+      if ($species_to_strains->{$strain_group}) {
+        push @{$species_to_strains->{$strain_group}}, $species_key;
       }
       else {
-        $species_to_strains->{$collection} = [$species_key];
+        $species_to_strains->{$strain_group} = [$species_key];
       }
     }
     
     # Populate taxonomy division using e_divisions.json template
     if ($species ne "MULTI" && $species ne "databases") {
+      my $scientific_name = $config_packer->tree->{'SPECIES_SCIENTIFIC_NAME'};
+      my $common_name = $config_packer->tree->{'SPECIES_DB_COMMON_NAME'};
       push @{$species_to_assembly->{$common_name}}, $config_packer->tree->{'ASSEMBLY_VERSION'};
       my $taxonomy = $config_packer->tree->{TAXONOMY};
       my $children = [];
@@ -828,10 +828,10 @@ sub _parse {
           is_leaf         => 'true'
         };
 
-        if ($collection && $strain_name !~ /reference/) {
-          $child->{type} = $collection . ' strains';
+        if ($strain_group && $strain_name !~ /reference/) {
+          $child->{type} = $strain_group . ' ' . $config_packer->tree->{'STRAIN_TYPE'}. 's';
         }
-        elsif($collection && $strain_name =~ /reference/) {
+        elsif($strain_group && $strain_name =~ /reference/) {
           # Create display name for Reference species
           my $ref_name = $config_packer->tree->{'SPECIES_COMMON_NAME'} . ' '. $strain_name;
           $child->{display_name} = $ref_name;
@@ -886,8 +886,7 @@ sub _parse {
 
   ## Compile strain info into a single structure
   while (my($k, $v) = each (%$species_to_strains)) {
-    my $species = $name_lookup->{ucfirst($k)};
-    $tree->{$species}{'ALL_STRAINS'} = $v;
+    $tree->{$k}{'ALL_STRAINS'} = $v;
   } 
 
   #$Data::Dumper::Maxdepth = 2;
@@ -1323,7 +1322,10 @@ sub assembly_lookup {
   my ($self, $old_assemblies) = @_;
   my $lookup = {};
   foreach ($self->valid_species) {
-    my $assembly = $self->get_config($_, 'ASSEMBLY_VERSION');
+    my $assembly        = $self->get_config($_, 'ASSEMBLY_VERSION');
+    my $assembly_name   = $self->get_config($_, 'ASSEMBLY_NAME');
+    my @assemblies      = ($assembly);
+    push @assemblies, $assembly_name if $assembly_name ne $assembly;
 
     ## REMOTE INDEXED FILES
     ## Unique keys, needed for attaching URL data to correct species
@@ -1337,7 +1339,9 @@ sub assembly_lookup {
     }
     else {
       ## Otherwise assembly-only keys for species with no UCSC id configured
-      $lookup->{$assembly} = [$_, $assembly, 0];
+      foreach my $a (@assemblies) {
+        $lookup->{$a} = [$_, $a, 0];
+      }
     }
     if ($old_assemblies) {
       ## Include past UCSC assemblies

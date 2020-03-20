@@ -28,16 +28,18 @@ use warnings;
 no warnings 'uninitialized';
 
 use DBI;
+use JSON qw(from_json);
 
 sub new {
-  my ($class, $hub) = @_;
-
+  my ($class, $hub, $settings) = @_;
+  $settings ||= {};
+  
     my $self = {
-    'NAME' => $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'NAME'},
-    'HOST' => $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'HOST'},
-    'PORT' => $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'PORT'},
-    'USER' => $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'USER'},
-    'PASS' => $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'PASS'},
+    'NAME' => $settings->{'name'} || $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'NAME'},
+    'HOST' => $settings->{'host'} || $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'HOST'},
+    'PORT' => $settings->{'port'} || $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'PORT'},
+    'USER' => $settings->{'user'} || $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'USER'},
+    'PASS' => $settings->{'pass'} || $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'PASS'},
   };
   bless $self, $class;
   return $self;
@@ -116,7 +118,7 @@ sub fetch_help_by_ids {
       'type'  => $data[1],
     };
     if ($data[2]) {
-      my $extra = eval($data[2]);
+      my $extra = from_json($data[2]);
       while (my ($k, $v) = each(%$extra)) {
         $record->{$k} = $v;
       }
@@ -168,7 +170,7 @@ sub fetch_faqs {
       'id'    => $data[0],
     };
     if ($data[1]) {
-      my $extra = eval($data[1]);
+      my $extra = from_json($data[1]);
       while (my ($k, $v) = each(%$extra)) {
         $record->{$k} = $v;
       }
@@ -201,7 +203,7 @@ sub fetch_movies {
       'id'    => $data[0],
     };
     if ($data[1]) {
-      my $extra = eval($data[1]);
+      my $extra = from_json($data[1]);
       while (my ($k, $v) = each(%$extra)) {
         $record->{$k} = $v;
       }
@@ -241,7 +243,7 @@ sub fetch_glossary_by_word {
     $record = {
       'id'    => $data[0],
     };
-    my $extra = eval($data[1]);
+    my $extra = from_json($data[1]);
     while (my ($k, $v) = each(%$extra)) {
       $record->{$k} = $v;
     }
@@ -272,7 +274,7 @@ sub fetch_glossary {
       'id'    => $data[0],
     };
     if ($data[1]) {
-      my $extra = eval($data[1]);
+      my $extra = from_json($data[1]);
       while (my ($k, $v) = each(%$extra)) {
         $record->{$k} = $v;
       }
@@ -314,7 +316,7 @@ sub fetch_lookup {
   $sth->execute();
 
   while (my @row = $sth->fetchrow_array()) {
-    my $data = eval($row[0]);
+    my $data = from_json($row[0]);
     $records->{$data->{'word'}} = $data->{'meaning'};
   }
   return $records;

@@ -115,7 +115,7 @@ sub getFakeMungedVariationFeatures {
   my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation');
   
   # find VCF config
-  my $c = $self->species_defs->multi_val('ENSEMBL_VCF_COLLECTIONS');
+  my $c = $self->species_defs->ENSEMBL_VCF_COLLECTIONS;
 
   if($c) {
     my $variation_db = $self->variation_adaptor;
@@ -356,44 +356,51 @@ sub get_cell_line_data_closure {
 
 sub get_cell_line_data {
   my ($self, $image_config, $filter) = @_;
-  
+
   # First work out which tracks have been turned on in image_config
   my %cell_lines = ();
   if ( $self->species_defs->databases->{'DATABASE_FUNCGEN'} ) {
     %cell_lines = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
   }
-  my @sets       = qw(core non_core);  
-  my $data;
+  my $data  = {};
 
   foreach my $cell_line (keys %cell_lines) {
     $cell_line =~ s/:[^:]*$//;
     my $ic_cell_line = $cell_line;
     clean_id($ic_cell_line);
 
-    foreach my $set (@sets) {
-      if ($image_config) {
-        my $node = $image_config->get_node("reg_feats_${set}_$ic_cell_line");
+    my $node;
+    if ($image_config) {
+      $node = $image_config->get_node("reg_feats_core_$ic_cell_line");
+    }
+    else {
+      my $tmp_ic = $self->hub->get_imageconfig('reg_summary');
+      $node   = $tmp_ic->get_node("reg_feats_core_$ic_cell_line");
+    }
+    next unless $node;
 
-        next unless $node;
-      
-        my $display = $node->get('display');
-      
-        $data->{$cell_line}{$set}{'renderer'} = $display if $display ne 'off';
-      
-        foreach ($node->nodes) {
-          my $feature_name = $_->data->{'name'};
-        
-          $data->{$cell_line}{$set}{'available'}{$feature_name} = 1; 
-          $data->{$cell_line}{$set}{'on'}{$feature_name}        = 1 if $_->get('display') eq 'on'; # add to configured features if turned on
-        }
+    ## Configure each track separately, instead of by column
+    foreach my $track (@{$node->child_nodes||[]}) {
+      my $id = $track->id;
+      my @split = split('_', $id);
+      my $experiment = $split[-1];
+
+      if ($image_config) {
+        my $display = $node->tree->user_data->{$id}{'display'};
+        $data->{$cell_line}{$experiment}{'renderer'} = $display if $display ne 'off';
       }
       else {
-        $data->{$cell_line}{$set} = {};
+        $data->{$cell_line}{$experiment} = {};
       }
     }
   }
- 
-  return $self->get_data($data, $filter);
+
+  if ($image_config) {
+    return $self->get_data($data, $filter);
+  }
+  else {
+    return $self->get_table_data($data);
+  }
 }
 
 sub get_data {
@@ -415,18 +422,17 @@ sub get_data {
     my $ftype_name  = $ftype->name;
 
     my $epigenome   = $peak_calling->fetch_Epigenome;
-    my $cell_line   = $epigenome->display_label;
+    my $cell_line   = $epigenome->short_name;
+
+    next if ($is_image && (!$data->{$cell_line}{$ftype_name} || $data->{$cell_line} eq 'off'));
     next if $filter->{'cell'} and !grep { $_ eq $cell_line } @{$filter->{'cell'}};
     next if $filter->{'cells_only'};
     next unless exists $data->{$cell_line};
 
     $count++;
     my $unique_id = sprintf '%s:%s', $cell_line, $ftype_name;
-      
-    my $set = $ftype->evidence_type_label =~ /DNAse|TFBS/ ? 'core' : 'non_core';
-    next if ($is_image && !$data->{$cell_line}{$set}{'on'}{$ftype_name});
-
-    my $display_style = $is_image ? $data->{$cell_line}{$set}{'renderer'} : '';
+    
+    my $display_style = $is_image ? $data->{$cell_line}{$ftype_name}{'renderer'} : '';
 
     $feature_sets_on{$ftype_name} = 1;
     
@@ -436,7 +442,7 @@ sub get_data {
       my $peak_adaptor = $hub->get_adaptor('get_PeakAdaptor', 'funcgen');
       my $block_features = $peak_adaptor->fetch_all_by_Slice_PeakCalling($self->Obj, $peak_calling);
 
-      $data->{$cell_line}{$set}{'block_features'}{$key} = $block_features if scalar @$block_features;
+      $data->{$cell_line}{$ftype_name}{'block_features'}{$key} = $block_features || [];
     }
 
     ## Get path to bigWig file
@@ -454,11 +460,32 @@ sub get_data {
 
       my $key = $unique_id.':'.$alignment->dbID;
       
-      $data->{$cell_line}{$set}{'wiggle_features'}{$key} = $file_path;
+      $data->{$cell_line}{$ftype_name}{'wiggle_features'}{$key} = $file_path;
     }
   }
 
   $data->{'colours'} = \%feature_sets_on;
+  return $data;
+}
+
+sub get_table_data {
+  my ($self, $data, $filter) = @_;
+  return $data unless scalar keys %$data;
+
+  my $hub                   = $self->hub;
+  my $peak_calling_adaptor  = $hub->get_adaptor('get_PeakCallingAdaptor', 'funcgen');
+  my $all_peak_calling      = $peak_calling_adaptor->fetch_all;
+
+  foreach my $peak_calling (@{$all_peak_calling||[]}) {
+
+    my $ftype       = $peak_calling->fetch_FeatureType;
+    my $ftype_name  = $ftype->name;
+
+    my $epigenome   = $peak_calling->fetch_Epigenome;
+    my $cell_line   = $epigenome->short_name;
+
+    $data->{$cell_line}{$ftype_name} = $peak_calling;
+  }
   return $data;
 }
 

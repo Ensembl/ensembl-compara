@@ -1,0 +1,103 @@
+#!/usr/bin/env perl
+
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use File::Basename qw(dirname);
+use FindBin qw($Bin);
+use Storable qw(retrieve);
+use JSON qw(to_json);
+use Storable qw(store_fd);
+
+BEGIN {
+  require "$Bin/helper.pl";
+};
+
+my %PACKED_WANTED = map { $_ => 1} (
+  "databases",
+  "SPECIES_PRODUCTION_NAME",
+  "AUTHORITY",
+  "SPECIES_COMMON_NAME",
+  "STRAIN_GROUP",
+  "SPECIES_SCIENTIFIC_NAME",
+  "SPECIES_STRAIN",
+  "ENSEMBL_GENOME_SIZE"
+);
+
+my %SITEDEFS_ARRAYS_WANTED = map {$_=>1} (
+  "ENSEMBL_LIB_DIRS"
+);
+
+my %WANTED_SUBSUBKEYS = (
+  "databases" => ["NAME","HOST","PORT","USER","PASS"]
+);
+
+my $data = {
+  SiteDefs => {},
+  packed => {}, 
+};
+
+foreach my $k (keys %SiteDefs::) {
+  if(!ref(${$SiteDefs::{$k}})) {
+    # Include all string-valued sitedefs entries: they're cheap.
+    $data->{'SiteDefs'}{$k} = ${$SiteDefs::{$k}};
+  }
+  if($SITEDEFS_ARRAYS_WANTED{$k}) {
+    $data->{'SiteDefs'}{$k} = [@{$SiteDefs::{$k}}];
+  }
+}
+
+my $packed_fn = "$SiteDefs::ENSEMBL_SYS_DIR/conf/$SiteDefs::ENSEMBL_CONFIG_FILENAME";
+
+warn "Loading packeds from $packed_fn\n";
+my $packed = retrieve($packed_fn);
+foreach my $species (keys %$packed) {
+  $data->{'packed'}{$species} = {};
+  next unless ref($packed->{$species}) eq 'HASH';
+  foreach my $key (keys %{$packed->{$species}}) {
+    next unless $PACKED_WANTED{$key};
+    my $v = $packed->{$species}{$key};
+    if(defined $WANTED_SUBSUBKEYS{$key}) {
+      foreach my $p (keys %$v) {
+        my $q = $v->{$p};
+        my $x = {};
+        foreach my $d (@{$WANTED_SUBSUBKEYS{$key}||[]}) {
+          $x->{$d} = $q->{$d};
+        }
+        $v->{$p} = $x;
+      }
+    }
+    $data->{'packed'}{$species}{$key} = $v;
+  }
+}
+
+my $dir = qx($Bin/../../ebi-plugins/common/find-sconf);
+system("mkdir -p $dir");
+warn "Writing to $dir\n";
+open(FILE,">","$dir/sconf") || die "Cannot write $dir/sconf";
+store_fd($data,\*FILE);
+close FILE;
+open(FILE,">","$dir/jconf") || die "Cannot write $dir/jconf";
+print FILE to_json($data);
+close FILE;
+

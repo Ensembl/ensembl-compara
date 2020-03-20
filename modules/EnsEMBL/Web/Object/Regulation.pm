@@ -88,8 +88,9 @@ sub activity {
   if (ref $epigenome ne 'Bio::EnsEMBL::Funcgen::Epigenome') {
     my $db      = $self->hub->database('funcgen');
     my $adaptor = $db->get_adaptor('Epigenome');
-    $epigenome  = $adaptor->fetch_by_name($epigenome);
+    $epigenome  = $adaptor->fetch_by_short_name($epigenome);
   }
+  return unless $epigenome;
 
   my $regact = $self->Obj->regulatory_activity_for_epigenome($epigenome);
   return $regact->activity if $regact;
@@ -125,65 +126,6 @@ sub fetch_all_objs_by_slice {
   }
 
   return \@all_objects;
-}
-
-sub get_evidence_list {
-  my $self = shift;
-  my $epigenome = shift;
-  my @attrib_feats = @{$self->Obj->get_RegulatoryEvidence('annotated', $epigenome)||[]};
-  return '-' unless @attrib_feats;
-
-  my @temp = map $_->feature_type->name, @attrib_feats;
-  my $c    = 1;
-  my %att_label;
-
-  foreach my $k (@temp) {
-    if (exists  $att_label{$k}) {
-      my $old = $att_label{$k};
-      $old++;
-      $att_label{$k} = $old;
-    } else {
-      $att_label{$k} = $c;
-    }
-  }
-
-  my $attrib_list;
-
-  foreach my $k (keys %att_label) {
-    my $v = $att_label{$k};
-    $attrib_list .= "$k($v), ";
-  }
-
-  $attrib_list =~ s/\,\s$//;
-
-  return $attrib_list;
-}
-
-sub get_motif_features {
-  my $self = shift;
-  my $cell_line = shift;
-  my @motif_features = @{$self->Obj->get_RegulatoryEvidence('motif', $cell_line)||[]};
-  my %motifs;
-  foreach my $mf (@motif_features){
-
-    my %assoc_ftype_names;
-    map {$assoc_ftype_names{$_->feature_type->name} = undef} @{$mf->associated_annotated_features};
-    my $bm_ftname = $mf->binding_matrix->feature_type->name;
-    my @other_ftnames;
-    foreach my $af_ftname(keys(%assoc_ftype_names)){
-      push @other_ftnames, $af_ftname if $af_ftname ne $bm_ftname;
-    }
-
-    my $other_names_txt = '';
-
-    if(@other_ftnames){
-      $other_names_txt = ' ('.join(' ', @other_ftnames).')';
-    }
-
-    $motifs{$mf->start .':'. $mf->end} = [ $bm_ftname.$other_names_txt,  $mf->score, $mf->binding_matrix->name];
-  }
-
-  return \%motifs;
 }
 
 sub get_fg_db {
@@ -365,10 +307,10 @@ sub regbuild_epigenomes {
   my ($self) = @_;
 
   if ( $self->hub->species_defs->databases->{'DATABASE_FUNCGEN'} ) {
-    return [sort keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'regbuild_names'}}];
+    return $self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'regbuild_names'};
   }
 
-  return [];
+  return {};
 }
 
 ################ Calls for Feature in Detail view ###########################

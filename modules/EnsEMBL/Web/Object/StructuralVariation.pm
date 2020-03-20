@@ -98,7 +98,8 @@ sub count_phenotypes {
   my $counts = 0;
   my $pf_objects = $self->hub->database('variation')->get_PhenotypeFeatureAdaptor->fetch_all_by_StructuralVariation($self->Obj);
   if ($pf_objects) {
-    $counts = scalar @$pf_objects;
+    my %phenotypes = map { $_->phenotype_id => 1 } @$pf_objects;
+    $counts = scalar keys %phenotypes;
   }
 
   return $counts;

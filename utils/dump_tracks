@@ -1,0 +1,116 @@
+#!/usr/local/bin/perl
+
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016-2018] EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+use strict;
+use warnings;
+use Carp;
+
+use FindBin qw($Bin);
+use File::Basename qw( dirname );
+
+use Pod::Usage;
+use Getopt::Long;
+
+my ($SERVERROOT, @species, $dir);
+
+BEGIN{
+  &GetOptions(
+    'species=s{1,42}' => \@species,
+    'dir:s{1}'        => \$dir,
+  );
+
+  $SERVERROOT = dirname( $Bin );
+  print $SERVERROOT;
+  $SERVERROOT =~ s#/utils##;
+  unshift @INC, "$SERVERROOT/conf";
+  eval{ require SiteDefs; SiteDefs->import; };
+  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
+  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
+}
+
+die 'Please supply a list of species' unless scalar @species;
+
+$dir ||= '.';
+
+use EnsEMBL::Web::DBHub;
+use EnsEMBL::Web::ImageConfig::locationfake;
+
+my $hub = EnsEMBL::Web::DBHub->new;
+
+foreach my $sp (@species) {
+  ## Create an imageconfig object
+  my $conf = EnsEMBL::Web::ImageConfig::locationfake->new($hub, $sp, 'Location');
+  $conf->load_tracks;
+
+  my $assembly = $hub->species_defs->get_config($sp, 'ASSEMBLY_VERSION'); 
+  my $path = $dir.'/'.$sp.'_'.$assembly.'.tsv'; 
+
+  print "Outputting track data for $sp to $path\n";
+  open(my $fh, '>', $path) or die "Could not open file '$path' $!";
+
+  my $content = dump_tracks($conf, $sp, $assembly);
+  print $fh $content;
+  close $fh;
+}
+
+sub dump_tracks {
+  my ($conf, $species, $assembly) = @_;
+  my $content = '';
+  my @nodes = $conf->tree->nodes;
+
+  $content .= "Species\tAssembly\tName\tType\tSubtype\tDescription\tStrand\tRenderers\n";
+
+  foreach my $node (@nodes) {
+    my $data = $node->{'data'};
+    next unless $data->{'glyphset'};
+    next if $data->{'caption'} =~ /Legend/;
+
+    $content .= "$species\t";
+    $content .= "$assembly\t";
+
+    ## Name
+    $content .= $data->{'caption'}."\t";
+
+    ## Type
+    my $parent = $node->parent_node;
+    my $p_caption = $parent->{'data'}{'caption'};
+    my $grandparent = $parent->parent_node;
+    my $g_caption = $grandparent ? $grandparent->{'data'}{'caption'} : undef;
+
+    if ($g_caption) {
+      $content .= "$g_caption\t$p_caption\t"; 
+    }
+    else {
+      $content .= "$p_caption\t\t";
+    }
+
+    ## Other fields
+    my $desc = $data->{'description'} || '';
+    $content .= "$desc\t";
+    $content .= $data->{'strand'}."\t";
+    my @renderers;
+    while (my($i, $j) = splice(@{$data->{'renderers'}||[]}, 0, 2)) {
+      next if $i eq 'off';
+      push @renderers, $j;
+    }
+    $content .= join(', ', @renderers);
+
+    ## Next record
+    $content .=  "\n";
+  }
+  return $content;
+}

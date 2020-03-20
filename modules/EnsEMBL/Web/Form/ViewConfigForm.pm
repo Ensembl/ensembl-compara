@@ -238,23 +238,29 @@ sub _add_imageconfig_menu {
   my $caption     = $node->get_data('caption');
   my $desc        = $node->get_data('description');
   my $parent_menu = $tree->append_node($section, { 'caption' => $caption, 'class' => $section, 'url' => '#' }); # LHS menu
-  my $div         = $self->append_child('div', { 'class' => ['config', $section] }); # RHS section
+  my $div_classes = ['config', $section];
+  push @$div_classes, 'trackhub' if $node->get_data('trackhub_menu');
+  my $div         = $self->append_child('div', { 'class' => $div_classes }); # RHS section
 
   # Add the main menu
   $div->append_child('h2', {'class' => 'config_header', 'inner_HTML' => $caption});
   $div->append_child('div', {'class' => 'long_label', 'inner_HTML' => $desc }) if $desc;
 
   # Add sub menus and sub sections
+  my $grand_total = 0;
   if ($node->has_child_nodes) {
     my @child_nodes = grep !$_->get_data('cloned'), @{$node->child_nodes};
 
     # If all children are menus
     if (scalar @child_nodes && !grep $_->get_data('node_type') ne 'menu', @child_nodes) {
       my $first = 'first ';
+      my $multi = scalar(@child_nodes) > 1 ? 'multiple ' : '';
 
       foreach my $child (@child_nodes) {
         my $id      = $child->id;
-        my $parent  = $div->append_child('div', { 'class' => "subset $first$id" });
+        ## Matrices by definition have multiple tracks under a subheader
+        $multi = 'multiple ' if $child->get_data('menu') eq 'matrix';
+        my $parent  = $div->append_child('div', { 'class' => "subset $multi$first$id" });
 
         $self->_build_imageconfig_menus($child, $parent, $section, $id);
         $first = '';
@@ -263,8 +269,10 @@ sub _add_imageconfig_menu {
 
         # Count the required tracks for the LHS menu
         my @track_ids = map $_->id, grep { !$_->get_data('cloned') && $_->get_data('node_type') eq 'track' && $_->get_data('menu') ne 'hidden' && $_->get_data('matrix') ne 'column' } @{$child->get_all_nodes};
-        my $total     = scalar @track_ids;
-        my $on        = scalar grep $self->{'enabled_tracks'}{$_}, @track_ids;
+        my $total = scalar @track_ids;
+        my $on    = scalar grep $self->{'enabled_tracks'}{$_}, @track_ids;
+
+        $grand_total += $total;
 
         # Add submenu entries to the LHS menu
         $parent_menu->append_child($tree->create_node($id, {
@@ -288,7 +296,7 @@ sub _add_imageconfig_menu {
   }
 
   my $on    = $self->{'enabled_tracks'}{$section} || 0;
-  my $total = $self->{'total_tracks'}{$section}   || 0;
+  my $total = $grand_total || $self->{'total_tracks'}{$section}   || 0;
 
   $parent_menu->set_data('count', qq{(<span class="on">$on</span>/$total)}) if $total;
   $parent_menu->set_data('availability', $total > 0);
@@ -380,6 +388,7 @@ sub _build_imageconfig_menus {
 
     if ($node->get_data('matrix') ne 'column') {
       if ($display ne 'off') {
+        #warn "@@@ $id DISPLAY $display" if $node->get_data('glyphset') =~ /^fg_/;
         $self->{'enabled_tracks'}{$menu_class}++;
         $self->{'enabled_tracks'}{$id} = 1;
       }
@@ -466,7 +475,17 @@ sub _add_select_all {
   my $matrix            = $node->get_data('menu') eq 'matrix';
 
   # Don't add a select all if there is only one child
+  # - but tracks that appear on both strands will manifest as two nodes, so be careful!
+  my $single_track = 0;
   if (scalar @child_nodes == 1) {
+    $single_track = 1;
+  }
+  elsif (scalar @child_nodes == 2 && $child_nodes[0]{'data'}{'caption'} eq $child_nodes[1]{'data'}{'caption'}
+        && $child_nodes[0]{'data'}{'drawing_strand'} ne $child_nodes[1]{'data'}{'drawing_strand'}) {
+    $single_track = 1;
+  }
+
+  if ($single_track) {
     # Add an h3 caption if there isn't going to be a select all for this menu (submenus will have select all)
     $menu->before('h3', { inner_HTML => $caption }) if $caption && !$single_menu && (($external_children == 1 && $external) || $external_children != 1);
 
@@ -479,32 +498,44 @@ sub _add_select_all {
   if ($child_tracks > 1 || $child_tracks == 1 && scalar(@child_nodes) - $external_children > 1) {
     my $img_url = $self->view_config->species_defs->img_url;
     my %counts  = reverse %{$self->{'track_renderers'}{$id} || {}};
-    my $popup;
 
     $caption = $external ? $parent->get_data('caption') : 'tracks' if $single_menu;
-    $caption = $matrix ? "Configure matrix columns for $caption" : "Enable/disable all $caption";
-
-    if (scalar keys %counts != 1) {
-      $popup .= qq{<li class="$_->[0]">$_->[1]</li>} for [ 'off', 'Off' ], [ 'all_on', 'On' ];
-      $popup .= qq{<li class="setting subset subset_$id"><a href="#">Configure track options</a></li>} if $matrix;
-    } else {
-      $popup = $self->{'select_all_menu'}{$id};
-    }
-
     my $description = $node->get_data('description');
        $description = $description ? sprintf('<br /><i>%s</i>', $description) : '';
+    my $inner_html;
+
+    if ($matrix) {
+      $caption = "Configure $caption";
+      $inner_html = qq(
+          <h3 class="matrix_link subset subset_$id" href="#">$caption</h3>
+          $description
+      );
+    }
+    else {
+      $caption = "Enable/disable all $caption";
+
+      my $popup;
+      if (scalar keys %counts != 1) {
+        $popup .= qq{<li class="$_->[0]">$_->[1]</li>} for [ 'off', 'Off' ], [ 'all_on', 'On' ];
+        #$popup .= qq{<li class="setting subset subset_$id"><a href="#">Configure track options</a></li>} if $matrix;
+      } else {
+        $popup = $self->{'select_all_menu'}{$id};
+      }
+      $inner_html = qq(
+          <ul class="popup_menu">
+            <li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>
+            $popup
+          </ul>
+          <strong>$caption</strong>
+          $description
+      );
+    }
 
     $menu->before('div', {
       class      => 'select_all config_menu',
-      inner_HTML => qq(
-        <ul class="popup_menu">
-          <li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>
-          $popup
-        </ul>
-        <strong>$caption</strong>
-        $description
-      )
-    });
+      inner_HTML => $inner_html,
+      });
+
   } elsif ($caption && !$external) {
     $menu->before('h3', { inner_HTML => $caption });
   }

@@ -36,9 +36,11 @@ sub new {
   my $hub                   = $self->hub;
   my $param                 = $hub->param('ex');
 
-  my $funcgen_db_adaptor    = $hub->database('funcgen');
-  my $peak_calling_adaptor  = $funcgen_db_adaptor->get_PeakCallingAdaptor;
-  my $feature_type_adaptor  = $funcgen_db_adaptor->get_FeatureTypeAdaptor;
+  my $funcgen_db_adaptor            = $hub->database('funcgen');
+  my $peak_calling_adaptor          = $funcgen_db_adaptor->get_PeakCallingAdaptor;
+  my $feature_type_adaptor          = $funcgen_db_adaptor->get_FeatureTypeAdaptor;
+  my $transcription_factor_adaptor  = $funcgen_db_adaptor->get_TranscriptionFactorAdaptor;
+  my $binding_matrix_adaptor        = $funcgen_db_adaptor->get_BindingMatrixAdaptor;
 
   my $param_to_filter_map   = $self->{'_param_to_filter_map'}   = {'all' => 'All', 'cell_type' => 'Cell/Tissue', 'evidence_type' => 'Evidence type', 'project' => 'Project', 'feature_type' => 'Feature type'};
   my $grouped_feature_sets  = $self->{'_grouped_feature_sets'}  = $peak_calling_adaptor->_fetch_feature_set_filter_counts;
@@ -65,7 +67,7 @@ sub new {
     FILTER: while (my ($filter, $value) = each(%$filters)) {
       if ($filter eq 'cell_type') {
         my $cell_type_adaptor = $funcgen_db_adaptor->get_EpigenomeAdaptor;
-        push @{$constraints->{'epigenomes'}}, $_ for map $cell_type_adaptor->fetch_by_name($_) || (), @$value;
+        push @{$constraints->{'epigenomes'}}, $_ for map $cell_type_adaptor->fetch_by_short_name($_) || (), @$value;
         next FILTER;
       }
       if ($filter eq 'feature_type') {
@@ -88,8 +90,6 @@ sub new {
     }
   }
 
-  my $binding_matrix_adaptor = $funcgen_db_adaptor->get_BindingMatrixAdaptor;
-
   # Get info for all feature sets and pack it in an array of hashes
   foreach my $peak_calling (@$peak_callings) {
   
@@ -105,9 +105,17 @@ sub new {
     my $project_name      = $experiment_group ? $experiment_group->name : '';
     my $source_info       = $experiment->_source_info; # returns [[source_label, source_link], [source_label, source_link], ...]
     my $epigenome         = $peak_calling->fetch_Epigenome;
-    my $epigenome_name    = $epigenome->display_label;
+    my $epigenome_name    = $epigenome->short_name;
     my $feature_type      = $peak_calling->fetch_FeatureType;
     my $evidence_label    = $feature_type->evidence_type_label;
+
+    my $binding_matrices  = [];
+    if ($feature_type->class eq 'Transcription Factor') {
+      my $transcription_factor  = $transcription_factor_adaptor->fetch_by_FeatureType($feature_type);    
+      if ($transcription_factor) {
+        $binding_matrices = $binding_matrix_adaptor->fetch_all_by_TranscriptionFactor($transcription_factor);
+      }
+    }
 
     push @$feature_sets_info, {
       'source_info'         => $source_info,
@@ -120,7 +128,7 @@ sub new {
       'cell_type_name'      => $epigenome_name,
       'efo_id'              => $epigenome->efo_accession,
       'xref_genes'          => $feature_type->get_all_coding_gene_stable_ids(),
-      'binding_motifs'      => [ map {$_->name} map { @{$binding_matrix_adaptor->fetch_all_by_FeatureType($_)} } ($feature_type, @{$feature_type->associated_feature_types}) ]
+      'binding_motifs'      => $binding_matrices, 
     };
 
     $epigenome_name and $grouped_feature_sets->{'Cell/Tissue'}{$epigenome_name}{'filtered'}++;

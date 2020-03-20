@@ -27,7 +27,7 @@ use strict;
 use warnings;
 no warnings qw(uninitialized);
 
-use EnsEMBL::Web::File::Utils::TrackHub;
+use EnsEMBL::Web::Utils::TrackHub;
 use EnsEMBL::Web::Utils::FormatText qw(add_links);
 use EnsEMBL::Web::Utils::Sanitize qw(clean_id strip_HTML);
 
@@ -70,7 +70,6 @@ sub check_threshold {
   ## @param display String
   ## @return 1 if still OK, 0 if check fails i.e. threshold exceeded
   my ($self, $display) = @_;
-  #warn ">>> CHECKING TRACK - CURRENTLY $display";
 
   $display ||= 'off';
 
@@ -78,7 +77,6 @@ sub check_threshold {
 
   ## Track is supposed to be on, so compare with threshold
   if ($self->{'user_track_count'} >= $self->{'userdata_threshold'}) {
-    #warn "@@@ THRESHOLD EXCEEDED!";
     $display = 'off';
   } else {
     $self->{'user_track_count'}++;
@@ -209,7 +207,7 @@ sub _load_remote_url_tracks {
     my $track_data = $tracks_data{$code};
 
     if (lc $track_data->{'format'} eq 'trackhub') {
-      my ($trackhub_menu, $hub_info) = $self->get_parameter('can_trackhubs') ? $self->_add_trackhub(strip_HTML($track_data->{'source_name'}), $track_data->{'source_url'}) : ();
+      my ($trackhub_menu, $hub_info) = $self->get_parameter('can_trackhubs') ? $self->_add_trackhub(strip_HTML($track_data->{'source_name'}), $track_data->{'source_url'}, {'code' => $code}) : ();
 
       if ($hub_info->{'error'}) {
         $self->hub->session->set_record_data({
@@ -321,25 +319,73 @@ sub _load_uploaded_tracks {
 }
 
 sub _add_trackhub {
-  my ($self, $menu_name, $url, $existing_menu, $force_hide) = @_;
+  my ($self, $menu_name, $url, $args) = @_;
+  my $existing_menu = $args->{'menu'};
+  my $force_hide    = $args->{'hide'};
+  my $code          = $args->{'code'};
+  my $hub           = $self->hub;
 
   ## Check if this trackhub is already attached - now that we can attach hubs via
   ## URL, they may not be saved in the imageconfig
   my $already_attached = $self->get_node($menu_name);
   return ($menu_name, {}) if ($already_attached || $self->{'_attached_trackhubs'}{$url});
 
+  ## Warning for users who attached trackhubs before the redesign
+  ## Default is to show the message, since it won't do any harm
+  my $is_old = 1;
+  my $record;
+  if ($code) {
+    (my $short_code = $code) =~ s/^url_//;
+    foreach my $m (grep $_, $hub->user, $hub->session) {
+      $record = $m->get_record_data({'type' => 'url', 'code' => $short_code});
+      if ($record && $record->{'timestamp'}) {
+        ## Release timestamp - 12 noon, 11/9/19
+        if ($record->{'timestamp'} > 1568203200) {
+          $is_old = 0;
+        }
+        else {
+          ## Update the record so the user doesn't see this again
+          $record->{'timestamp'} = time();
+          $m->set_record_data($record);
+        }
+        last;
+      }
+    }
+  }
+  elsif ($force_hide) {
+    ## Don't warn for internal trackhubs as they're off by default 
+    $is_old = 0;
+  }
+
+  if ($is_old) {
+    ## Warn user that we are reattaching the trackhub
+    $hub->session->set_record_data({
+      'type'      => 'message',
+      'function'  => '_warning',
+      'code'      => 'th_reattachment',
+      'message'   => "We have changed our trackhub interface to make it easier to configure tracks, so your old configuration may have been lost.",
+    });
+  }
+
   ## Note: no need to validate assembly at this point, as this will have been done
   ## by the attachment interface - otherwise we run into issues with synonyms
-  my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
-  my $hub_info = $trackhub->get_hub({'parse_tracks' => 1}); ## Do we have data for this species?
+  my $trackhub  = EnsEMBL::Web::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
+  my $hub_info = $trackhub->get_hub({'parse_tracks' => 1, 'make_tree' => 1}); ## Do we have data for this species?
+  $self->{'th_default_count'} = 0;
 
   if ($hub_info->{'error'}) {
     ## Probably couldn't contact the hub
     push @{$hub_info->{'error'}||[]}, '<br /><br />Please check the source URL in a web browser.';
   } else {
     my $description = $hub_info->{'details'}{'longLabel'};
-    if ($hub_info->{'details'}{'descriptionUrl'}) {
-      $description .= sprintf ' <a href="%s">More information</a>', $hub_info->{'details'}{'descriptionUrl'};
+    my $desc_url = $hub_info->{'details'}{'descriptionUrl'};
+    if ($desc_url) {
+      ## fix relative URLs
+      if ($desc_url !~ /^http/) {
+        (my $base_url = $url) =~ s/\w+\.txt$//;
+        $desc_url = $base_url.$desc_url;
+      }
+      $description .= sprintf ' <a href="%s">More information</a>', $desc_url;
     }
 
     my $menu     = $existing_menu || $self->tree->root->append_child($self->create_menu_node($menu_name, $menu_name, { external => 1, trackhub_menu => 1, description =>  $description}));
@@ -348,8 +394,8 @@ sub _add_trackhub {
     my $assemblies = $self->hub->species_defs->get_config($self->species,'TRACKHUB_ASSEMBLY_ALIASES');
     $assemblies ||= [];
     $assemblies = [ $assemblies ] unless ref($assemblies) eq 'ARRAY';
-    foreach my $assembly_var (qw(UCSC_GOLDEN_PATH ASSEMBLY_VERSION)) {
-      my $assembly = $self->hub->species_defs->get_config($self->species,$assembly_var);
+    foreach my $assembly_var (qw(UCSC_GOLDEN_PATH ASSEMBLY_VERSION ASSEMBLY_NAME)) {
+      my $assembly = $self->hub->species_defs->get_config($self->species, $assembly_var);
       next unless $assembly;
       push @$assemblies,$assembly;
     }
@@ -359,37 +405,78 @@ sub _add_trackhub {
       last if $node;
     }
     if ($node) {
-      $self->_add_trackhub_node($node, $menu, $menu_name, $force_hide);
+      $self->_add_trackhub_node($node, $menu, {'name' => $menu_name, 'hide' => $force_hide, 'code' => $code});
 
       $self->{'_attached_trackhubs'}{$url} = 1;
     } else {
-      my $assembly = $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_VERSION');
+      my $assembly = $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_VERSION') || $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_NAME');
       $hub_info->{'error'} = ["No sources could be found for assembly $assembly. Please check the hub's genomes.txt file for supported assemblies."];
     }
   }
+
+  ## Set the default threshold to be high, so that we only warn very 'heavy' hubs
+  my $threshold = $self->hub->species_defs->TRACKHUB_DEFAULT_LIMIT || 100;
+  my $visible = $self->{'th_default_count'};
+  if ($visible > $threshold) {
+    ## Check if this warning has already been set
+    my $warned = $self->hub->session->get_record_data({'type' => 'message', 'code' => 'th_threshold_warning'});
+    if (!$warned) {
+      $self->hub->session->set_record_data({
+        'type'      => 'message',
+        'function'  => '_warning',
+        'code'      => 'th_threshold_warning',
+        'message'   => "This trackhub has $visible tracks turned on by default. If the browser fails to load, you should click on 'Configure this page' in the sidebar and turn some of them off.",
+      });
+    }
+  }
+
   return ($menu_name, $hub_info);
 }
 
 sub _add_trackhub_node {
-  my ($self, $node, $menu, $name, $force_hide) = @_;
+  my ($self, $node, $menu, $args) = @_;
+  my $name = $args->{'name'};
+  my $hide = $args->{'hide'};
+  my $code = $args->{'code'};
 
-  my (@next_level, @childless);
+  my (@next_level, @tracks);
   if ($node->has_child_nodes) {
+    my $count = 0;
     foreach my $child (@{$node->child_nodes}) {
       if ($child->has_child_nodes) {
-        push @next_level, $child;
+        ## Probably a Supertrack with either a Composite or MultiWig track
+        if ($node->data->{'superTrack'} && $child->data->{'compositeTrack'}) {
+          ## Composite tracks should be grouped into subsections 
+          push @tracks, {
+                          'submenu_key'   => $child->data->{'track'}, 
+                          'submenu_name'  => $child->data->{'shortLabel'}, 
+                          'tracks'        => $child->child_nodes,
+                        };
+        }
+        elsif ($node->data->{'superTrack'} && $child->data->{'container'} eq 'multiWig') {
+          ## Multiwigs are really single tracks (in the Ensembl sense)
+          push @tracks, {'tracks' => [$child]};
+        }
+        else {
+          push @next_level, $child;
+        }
       }
       else {
-        push @childless, $child;
+        if ($child->data->{'track'} eq $menu->id) {
+          ## Probably a one-file hub, but use count just in case
+          $child->data->{'track'} = $menu->id.'_track_'.$count;
+          $count++;
+        } 
+        push @tracks, {'tracks' => [$child]};
       }
     }
   }
 
   if (scalar(@next_level)) {
-    $self->_add_trackhub_node($_, $menu, $name, $force_hide) for @next_level;
+    $self->_add_trackhub_node($_, $menu, {'name' => $name, 'hide' => $hide, 'code' => $code}) for @next_level;
   }
 
-  if (scalar(@childless)) {
+  if (scalar(@tracks)) {
     ## Get additional/overridden settings from parent nodes. Note that we will
     ## combine visibility and on_off later to produce Ensembl-friendly settings
     my $n       = $node;
@@ -424,187 +511,289 @@ sub _add_trackhub_node {
         }
       }
     }
-    $config->{'on_off'} = 'off' if $force_hide;
+    $config->{'on_off'} = 'off' if $hide;
 
-    $self->_add_trackhub_tracks($node, \@childless, $config, $menu, $name);
+    $self->_add_trackhub_tracks($node, \@tracks, $config, {'menu' => $menu, 'name' => $name, 'code' => $code});
   }
 }
 
 sub _add_trackhub_tracks {
-  my ($self, $parent, $children, $config, $menu, $name) = @_;
-  my $hub    = $self->hub;
-  my $data   = $parent->data;
-  my $matrix = $config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'};
-  my %tracks;
+  my ($self, $parent, $tracksets, $config, $args) = @_;
+  my $hub   = $self->hub;
+  my $menu  = $args->{'menu'};
+  my $name  = $args->{'name'};
+  my $code  = $args->{'code'};
 
-  my %options = (
-    menu_key      => $name,
-    menu_name     => $name,
-    submenu_key   => clean_id("${name}_$data->{'track'}", '\W'),
-    submenu_name  => strip_HTML($data->{'shortLabel'}),
-    submenu_desc  => $data->{'longLabel'},
-    trackhub      => 1,
-  );
+  my $do_matrix = ($config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'}) ? 1 : 0;
+  my $count_visible = 0;
+  my $default_trackhub_tracks = {};
 
-  if ($matrix) {
-    $options{'matrix_url'} = $hub->url('Config', { 'matrix' => 1, 'menu' => $options{'submenu_key'} });
+  foreach my $set (@{$tracksets||[]}) {
+    my %tracks;
+    my $submenu;
 
-    foreach my $subgroup (keys %$config) {
-      next unless $subgroup =~ /subGroup\d/;
+    my %options = (
+      menu_key      => $name,
+      menu_name     => $name,
+      trackhub      => 1,
+    );
 
-      foreach (qw(x y)) {
-        if ($config->{$subgroup}{'name'} eq $config->{'dimensions'}{$_}) {
-          $options{'axis_labels'}{$_} = { %{$config->{$subgroup}} }; # Make a deep copy so that the regex below doesn't affect the subgroup config
-          s/_/ /g for values %{$options{'axis_labels'}{$_}};
+    ## Skip this section for one-file track hubs, as they don't have parents or submenus 
+    if (scalar keys %{$parent->data||{}}) {
+      my $data      = $parent->data;
+
+      $options{'submenu_key'}   = clean_id("${name}_$data->{'track'}", '\W'); 
+      $options{'submenu_name'}  = strip_HTML($data->{'shortLabel'});
+      $options{'submenu_desc'}  = $data->{'longLabel'};
+
+      if ($do_matrix) {
+        $options{'matrix_url'} = $hub->url('Config', { 
+                                                      'matrix'      => 'TrackHubMatrix', 
+                                                      'menu'        => $options{'submenu_key'},
+                                                      'th_species'  => $hub->species,
+                                  });
+      }
+    }
+    ## Check if this submenu already exists (quite possible for trackhubs)
+    $submenu = $options{'submenu_key'} ? $self->get_node($options{'submenu_key'}) : undef;
+    unless ($submenu) { 
+      my %matrix_params = ();
+      if ($do_matrix) {
+        $matrix_params{'menu'}  = 'matrix';
+        $matrix_params{'url'}   = $options{'matrix_url'}; 
+        ## Build metadata for matrix structure
+        ## Do dimensions first as they're fiddly!
+        my $dimensions = $config->{'dimensions'};
+        my $dim_lookup = {};
+        while (my($k, $v) = each (%{$dimensions||{}})) {
+          $matrix_params{'dimensions'}{$k} = {'key' => $v};
+          $dim_lookup->{$v} = $k;
+        }
+        $matrix_params{'dimLookup'} = $dim_lookup;
+        ## Get dimension info from overall config, as parent may be an intermediate track
+        while (my ($k, $v) = each (%$config)) {
+          if ($k =~ /subGroup/) {
+            my $k1 = $v->{'name'};
+            next unless $dim_lookup->{$k1};
+            while (my ($k2, $v2) = each (%{$v||{}})) {
+              if ($k2 eq 'label') {
+                $matrix_params{'dimensions'}{$dim_lookup->{$k1}}{'label'} = $v2;
+              }
+              elsif ($k2 ne 'name') {
+                $matrix_params{'dimensions'}{$dim_lookup->{$k1}}{'values'}{$k2} = $v2;
+              }
+            }
+          }
+        }
+        while (my ($k, $v) = each (%{$parent->data})) {
+          if ($k eq 'shortLabel') {
+            $matrix_params{$k} = $v;
+          }
+        }
+        ## Save this key against the user record, so we can delete the data from localStorage later
+        if ($code) {
+          my ($manager, $record);
+          (my $short_code = $code) =~ s/^url_//;
+          foreach my $m (grep $_, $hub->user, $hub->session) {
+            $record = $m->get_record_data({'type' => 'url', 'code' => $short_code});
+            $manager = $m;
+            if ($record && keys %$record && !$record->{'cache_ids'}{$options{'submenu_key'}}) {
+              $record->{'cache_ids'}{$options{'submenu_key'}} = 1;
+              $manager->set_record_data($record);
+              last;
+            }
+          }
         }
       }
+      $submenu = $self->create_menu_node($options{'submenu_key'}, $options{'submenu_name'}, {
+        external    => 1,
+        description => $options{'submenu_desc'},
+        %matrix_params,
+      });
 
-      last if scalar keys %{$options{'axis_labels'}} == 2;
+      $menu->append_child($submenu, $options{'submenu_key'});
     }
 
-    $options{'axes'} = { map { $_ => $options{'axis_labels'}{$_}{'label'} } qw(x y) };
-  }
-
-  my $submenu = $self->create_menu_node($options{'submenu_key'}, $options{'submenu_name'}, {
-    external    => 1,
-    description => $options{'submenu_desc'},
-    ($matrix ? (
-      menu   => 'matrix',
-      url    => $options{'matrix_url'},
-      matrix => {
-        section     => $menu->data->{'caption'},
-        header      => $options{'submenu_name'},
-        desc_url    => $config->{'description_url'},
-        description => $config->{'longLabel'},
-        axes        => $options{'axes'},
+    ## Set up sections within supertracks (applies mainly to composite tracks)
+    my $subsection;
+    if ($set->{'submenu_key'}) {
+      my $key   = clean_id("${name}_$set->{'submenu_key'}", '\W');
+      my $name  = strip_HTML($set->{'submenu_name'});
+      $subsection = $self->get_node($key);
+      unless ($subsection) {
+        $subsection = $self->create_menu_node($key, $name, {'external' => 1}); 
+        $submenu->append_child($subsection, $key);
       }
-    ) : ())
-  });
-
-  $self->alphabetise_tracks($submenu, $menu);
-
-  my $count_visible = 0;
-
-  my $style_mappings = {
-                        'bam'     => {
-                                      'default' => 'coverage_with_reads',
-                                      },
-                        'cram'    => {
-                                      'default' => 'coverage_with_reads',
-                                      },
-                        'bigbed'  => {
-                                      'full'    => 'as_transcript_nolabel',
-                                      'pack'    => 'as_transcript_label',
-                                      'squish'  => 'half_height',
-                                      'dense'   => 'as_alignment_nolabel',
-                                      'default' => 'as_transcript_label',
-                                      },
-                        'biggenepred' => {
-                                      'full'    => 'as_transcript_nolabel',
-                                      'pack'    => 'as_transcript_label',
-                                      'squish'  => 'half_height',
-                                      'dense'   => 'as_collapsed_label',
-                                      'default' => 'as_collapsed_label',
-                                      },
-                        'bigwig'  => {
-                                      'full'    => 'signal',
-                                      'dense'   => 'compact',
-                                      'default' => 'compact',
-                                      },
-                        'vcf'     =>  {
-                                      'full'    => 'histogram',
-                                      'dense'   => 'compact',
-                                      'default' => 'compact',
-                                      },
-                      };
-
-  foreach (@{$children||[]}) {
-    my $track        = $_->data;
-    my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
-
-    my $on_off = $config->{'on_off'} || $track->{'on_off'};
-    ## Turn track on if there's no higher setting turning it off
-    if ($track->{'visibility'}  eq 'hide') {
-      $on_off = 'off';
-    } elsif (!$config->{'on_off'} && !$track->{'on_off'}) {
-      $on_off = 'on';
-    }
-    #} elsif ($self->check_threshold($on_off) eq 'off') {
-    #  $on_off = 'off';
-    #}
-
-    my $ucsc_display  = $config->{'visibility'} || $track->{'visibility'};
-
-    ## FIXME - According to UCSC's documentation, 'squish' is more like half_height than compact
-    my $squish       = $ucsc_display eq 'squish';
-    (my $source_name = strip_HTML($track->{'shortLabel'})) =~ s/_/ /g;
-
-    ## Translate between UCSC terms and Ensembl ones
-    my $default_display = $style_mappings->{lc($type)}{$ucsc_display}
-                              || $style_mappings->{lc($type)}{'default'}
-                              || 'normal';
-    $options{'default_display'} = $default_display;
-
-    ## Set track style if appropriate
-    if ($on_off && $on_off eq 'on') {
-      $options{'display'} = $default_display;
-    }
-    else {
-      $options{'display'} = 'off';
+      $options{'submenu_key'}   = $key;
+      $options{'submenu_name'}  = $name;
     }
 
-    ## Note that we use a duplicate value in description and longLabel, because non-hub files
-    ## often have much longer descriptions so we need to distinguish the two
-    my $source       = {
-      name            => $track->{'track'},
-      source_name     => $source_name,
-      desc_url        => $track->{'description_url'},
-      description     => $name.': '.$track->{'longLabel'},,
-      longLabel       => $track->{'longLabel'},
-      source_url      => $track->{'bigDataUrl'},
-      colour          => exists $track->{'color'} ? $track->{'color'} : undef,
-      colorByStrand   => exists $track->{'colorByStrand'} ? $track->{'colorByStrand'} : undef,
-      spectrum        => exists $track->{'spectrum'} ? $track->{'spectrum'} : undef,
-      no_titles       => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
-      squish          => $squish,
-      signal_range    => $track->{'signal_range'},
-      viewLimits      => $track->{'viewLimits'} || $config->{'viewLimits'},
-      maxHeightPixels => $track->{'maxHeightPixels'} || $config->{'maxHeightPixels'},
-      %options
-    };
+    my $style_mappings = {
+                          'bam'     => {
+                                        'default' => 'coverage_with_reads',
+                                        },
+                          'cram'    => {
+                                        'default' => 'coverage_with_reads',
+                                        },
+                          'bigbed'  => {
+                                        'full'    => 'as_transcript_nolabel',
+                                        'pack'    => 'as_transcript_label',
+                                        'squish'  => 'half_height',
+                                        'dense'   => 'as_alignment_nolabel',
+                                        'default' => 'as_transcript_label',
+                                        },
+                          'biggenepred' => {
+                                        'full'    => 'as_transcript_nolabel',
+                                        'pack'    => 'as_transcript_label',
+                                        'squish'  => 'half_height',
+                                        'dense'   => 'as_collapsed_label',
+                                        'default' => 'as_collapsed_label',
+                                        },
+                          'bigwig'  => {
+                                        'full'    => 'signal',
+                                        'dense'   => 'compact',
+                                        'default' => 'compact',
+                                        },
+                          'vcf'     =>  {
+                                        'full'    => 'histogram',
+                                        'dense'   => 'compact',
+                                        'default' => 'compact',
+                                        },
+                        };
 
-    # Graph range - Track Hub default is 0-127
+    my $children = $set->{'tracks'};
 
-    if (exists $track->{'viewLimits'}) {
-      $source->{'viewLimits'} = $track->{'viewLimits'};
-    } elsif ($track->{'autoScale'} eq 'off') {
-      $source->{'viewLimits'} = '0:127';
-    }
+    foreach (@{$children||[]}) {
+      my $track = $_->data;
+      (my $source_name = strip_HTML($track->{'shortLabel'})) =~ s/_/ /g;
+      my $name = 'trackhub_' . $options{'submenu_key'} . '_' . $track->{'track'};
 
-    if (exists $track->{'maxHeightPixels'}) {
-      $source->{'maxHeightPixels'} = $track->{'maxHeightPixels'};
-    } elsif ($type eq 'BIGWIG' || $type eq 'BIGBED' || $type eq 'BIGGENEPRED') {
-      $source->{'maxHeightPixels'} = '64:32:16';
-    }
+      ## Note that we use a duplicate value in description and longLabel, because non-hub files
+      ## often have much longer descriptions so we need to distinguish the two
+      my $source = {
+                    name            => $name,
+                    source_name     => $source_name,
+                    longLabel       => $track->{'longLabel'},
+                    description     => $options{'submenu_key'}.': '.$track->{'longLabel'},
+                    desc_url        => $track->{'description_url'},
+                    signal_range    => $track->{'signal_range'},
+                    link_template   => $track->{'url'},
+                    link_label      => $track->{'urlLabel'},
+                    };
 
-    if ($matrix) {
-      my $caption = strip_HTML($track->{'shortLabel'});
-      $source->{'section'} = strip_HTML($parent->data->{'shortLabel'});
-      ($source->{'source_name'} = $track->{'longLabel'}) =~ s/_/ /g;
-      $source->{'labelcaption'} = $caption;
+      if ($do_matrix) {
+        $source->{'subGroups'} = $track->{'subGroups'};       
+      }
 
-      $source->{'matrix'} = {
-        menu   => $options{'submenu_key'},
-        column => $options{'axis_labels'}{'x'}{$track->{'subGroups'}{$config->{'dimensions'}{'x'}}},
-        row    => $options{'axis_labels'}{'y'}{$track->{'subGroups'}{$config->{'dimensions'}{'y'}}},
-      };
-      $source->{'column_data'} = { desc_url => $config->{'description_url'}, description => $config->{'longLabel'}, no_subtrack_description => 1 };
-    }
+      # Graph range - Track Hub default is 0-127
+      if (exists $track->{'viewLimits'}) {
+        $source->{'viewLimits'} = $track->{'viewLimits'};
+      } 
+      elsif ($track->{'autoScale'} eq 'off') {
+        $source->{'viewLimits'} = '0:127';
+      }
+      else {
+        $source->{'viewLimits'} = $config->{'viewLimits'};
+      }
 
-    $tracks{$type}{$source->{'name'}} = $source;
-  }
+      if (exists $track->{'maxHeightPixels'}) {
+        $source->{'maxHeightPixels'} = $track->{'maxHeightPixels'};
+      } 
+      else {
+        $source->{'maxHeightPixels'} = '64:32:16';
+      }
 
-  $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
+      ## Is the track on or off?
+      my $on_off = $config->{'on_off'} || $track->{'on_off'};
+      ## Turn track on if there's no higher setting turning it off
+      if ($track->{'visibility'}  eq 'hide' || !$track->{'visibility'}) {
+        $on_off = 'off';
+      } 
+      elsif (!$config->{'on_off'} && !$track->{'on_off'}) {
+        $on_off = 'on';
+      }
+
+      ## Special settings for multiWig tracks
+      if ($track->{'container'} && $track->{'container'} eq 'multiWig') {
+        $source->{'no_titles'}        = 1;
+        $source->{'subtracks'}        = [];
+
+        ## Add data for each subtrack
+        foreach (@{$_->child_nodes||[]}) {
+          my $subtrack    = $_->data;
+          my $type        = ref $subtrack->{'type'} eq 'HASH' ? uc $subtrack->{'type'}{'format'} : uc $subtrack->{'type'};
+          next unless ($type && $type =~ /^bigWig$/i);
+          push @{$source->{'subtracks'}}, {
+                                            source_name => $subtrack->{'shortLabel'},
+                                            source_url  => $subtrack->{'bigDataUrl'},
+                                            colour      => exists $subtrack->{'color'} ? $subtrack->{'color'} : undef,
+                                          };
+        }
+ 
+        ## Set track style if appropriate
+        my $default_display = 'signal';
+        $options{'default_display'} = $default_display;
+        if ($on_off && $on_off eq 'on') {
+          $options{'display'} = $default_display;
+          $count_visible++;
+          # Update session records with tracks that are turned on by default
+          $self->{'default_trackhub_tracks'}->{$name} = $default_display;
+        }
+        else {
+          $options{'display'} = 'off';
+        }
+
+        $source = {%$source, %options};
+        $tracks{'multiwig'}{$source->{'name'}} = $source;
+      }
+      else {
+        ## Everything except multiWigs
+        my $type = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
+
+        ## FIXME - According to UCSC's documentation, 'squish' is more like half_height than compact
+        my $ucsc_display = $config->{'visibility'} || $track->{'visibility'};
+        my $squish       = $ucsc_display eq 'squish';
+
+        ## Translate between UCSC terms and Ensembl ones
+        my $default_display = $style_mappings->{lc($type)}{$ucsc_display}
+                                || $style_mappings->{lc($type)}{'default'}
+                                || 'normal';
+        $options{'default_display'} = $default_display;
+
+        ## Set track style if appropriate
+        if ($on_off && $on_off eq 'on') {
+          $options{'display'} = $default_display;
+          $count_visible++;
+          # Update session records with tracks that are turned on by default
+          $self->{'default_trackhub_tracks'}->{$name} = $default_display;
+        }
+        else {
+          $options{'display'} = 'off';
+        }
+
+        $source->{'source_url'}     = $track->{'bigDataUrl'};
+        $source->{'colour'}         = exists $track->{'color'} ? $track->{'color'} : undef;
+        $source->{'colorByStrand'}  = exists $track->{'colorByStrand'} ? $track->{'colorByStrand'} : undef;
+        $source->{'spectrum'}       = exists $track->{'spectrum'} ? $track->{'spectrum'} : undef;
+        $source->{'no_titles'}      = $type eq 'BIGWIG'; # To improve browser speed don't display a zmenu for bigwigs
+        $source->{'squish'}         = $squish;
+
+        if ($do_matrix) {
+          my $caption = strip_HTML($track->{'shortLabel'});
+          $source->{'section'} = strip_HTML($parent->data->{'shortLabel'});
+          ($source->{'source_name'} = $track->{'longLabel'}) =~ s/_/ /g;
+          $source->{'labelcaption'} = $caption;
+        }
+
+        $source = {%$source, %options};
+
+        $tracks{$type}{$source->{'name'}} = $source;
+      } ## End non-multiWig block
+    } ## End loop through tracks
+    $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
+  } ## End loop through tracksets
+
+  $self->{'th_default_count'} += $count_visible;
 }
 
 sub _add_trackhub_extras_options {
@@ -631,7 +820,6 @@ sub _add_trackhub_extras_options {
   $args{'options'}{'signal_range'} = $args{'source'}{'signal_range'} if exists $args{'source'}{'signal_range'};
   $args{'options'}{'no_titles'}  = $args{'menu'}{'no_titles'}  || $args{'source'}{'no_titles'}  if exists $args{'menu'}{'no_titles'}  || exists $args{'source'}{'no_titles'};
   $args{'options'}{'set'}        = $args{'source'}{'submenu_key'};
-  $args{'options'}{'subset'}     = clean_id($args{'source'}{'submenu_key'}, '\W') unless $args{'source'}{'matrix'};
   $args{'options'}{$_}           = $args{'source'}{$_} for qw(trackhub matrix column_data colour description desc_url);
 
   return %args;
@@ -658,7 +846,7 @@ sub load_file_format {
   return unless ($format eq 'trackhub' || $self->can($function));
 
   my $internal = !defined $sources;
-  $sources  = $self->species_defs->get_config($self->species, sprintf('ENSEMBL_INTERNAL_%s_SOURCES', uc $format)) || {} unless defined $sources; # get the internal sources from config
+  $sources  = $self->species_defs->get_config($self->species, sprintf('ENSEMBL_INTERNAL_%s_SOURCES', uc $format)) || {} if $internal; # get the internal sources from config
 
   foreach my $source_name (sort keys %$sources) {
     # get the target menu
@@ -677,7 +865,7 @@ sub load_file_format {
       my $submenu_key  = $source->{'submenu_key'};
       my $submenu_name = $source->{'submenu_name'};
       my $main_menu    = $self->get_node($menu_key) || $self->tree->root->append_child($self->create_menu_node($menu_key, $menu_name, { external => 1, trackhub_menu => !!$source->{'trackhub'} }));
-         $menu         = $self->get_node($submenu_key);
+      $menu            = $submenu_key ? $self->get_node($submenu_key) : undef;
 
       if (!$menu) {
         $menu = $self->create_menu_node($submenu_key, $submenu_name, { external => 1, ($source->{'matrix_url'} ? (menu => 'matrix', url => $source->{'matrix_url'}) : ()) });
@@ -690,7 +878,7 @@ sub load_file_format {
         ## Force hiding of internally configured trackhubs, because they should be
         ## off by default regardless of the settings in the hub
         my $force_hide = $internal ? 1 : 0;
-        $self->_add_trackhub(strip_HTML($source->{'source_name'}), $source->{'url'}, $menu, $force_hide);
+        $self->_add_trackhub(strip_HTML($source->{'source_name'}), $source->{'url'}, {'menu' => $menu, 'hide' => $force_hide});
       }
       else {
         my $is_internal = $source->{'source_url'} ? 0 : $internal;
@@ -772,6 +960,35 @@ sub _add_bigpsl_track {
   );
 }
 
+sub _add_bigint_track {
+  my ($self, %args) = @_;
+
+  ## Get default settings for this format
+  my ($strand, $renderers, $default) = $self->_user_track_settings($args{'source'}{'style'}, 'BIGINT');
+
+  my $options = {
+    external        => 'external',
+    sub_type        => 'url',
+    colourset       => 'feature',
+    strand          => $args{'source'}{'strand'} || $strand,
+    style           => $args{'source'}{'style'},
+    longLabel       => $args{'source'}{'longLabel'},
+    addhiddenbgd    => 1,
+    max_label_rows  => 2,
+    default_display => $args{'source'}{'default'} || $default,
+  };
+  ## Override default renderer (mainly used by trackhubs)
+  $options->{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
+
+  $self->_add_file_format_track(
+    format      => 'BigInt',
+    description => 'BigInteract file',
+    renderers   => $args{'source'}{'renderers'} || $renderers,
+    options     => $options,
+    %args,
+  );
+}
+
 sub _add_bigbed_track {
   my ($self, %args) = @_;
 
@@ -787,6 +1004,8 @@ sub _add_bigbed_track {
     strand          => $args{'source'}{'strand'} || $strand,
     style           => $args{'source'}{'style'},
     longLabel       => $args{'source'}{'longLabel'},
+    link_template   => $args{'source'}{'link_template'},
+    link_label      => $args{'source'}{'link_label'},
     addhiddenbgd    => 1,
     max_label_rows  => 2,
     default_display => $args{'source'}{'default'} || $default,
@@ -866,6 +1085,7 @@ sub _add_bigwig_track {
     y_max           => $args{'source'}{'y_max'},
     addhiddenbgd    => 1,
     max_label_rows  => 2,
+    default_display => $args{'source'}{'default'} || 'signal',
   };
 
   ## Override default renderer (mainly used by trackhubs)
@@ -873,6 +1093,37 @@ sub _add_bigwig_track {
 
   $self->_add_file_format_track(
     format    => 'BigWig',
+    renderers =>  $renderers,
+    options   => $options,
+    %args
+  );
+}
+
+sub _add_multiwig_track {
+  my ($self, %args) = @_;
+
+  my $renderers = $args{'source'}{'renderers'} || [
+    'off',     'Off',
+    'signal',  'Wiggle plot',
+  ];
+
+  my $options = {
+    external        => 'external',
+    sub_type        => 'bigwig',
+    style           => 'wiggle',
+    longLabel       => $args{'source'}{'longLabel'},
+    y_min           => $args{'source'}{'y_min'},
+    y_max           => $args{'source'}{'y_max'},
+    addhiddenbgd    => 1,
+    max_label_rows  => 2,
+    default_display => $args{'source'}{'default'} || 'signal',
+  };
+
+  ## Override default renderer (mainly used by trackhubs)
+  $options->{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
+
+  $self->_add_file_format_track(
+    format    => 'multiWig',
     renderers =>  $renderers,
     options   => $options,
     %args
@@ -1005,9 +1256,12 @@ sub _add_file_format_track {
     }
   }
 
-  #$args{'options'}{'display'} = $self->check_threshold($args{'options'}{'display'});
+  if ($args{'source'}{'subtracks'}) {
+    $args{'options'}{'subtracks'} = $args{'source'}{'subtracks'}; 
+  }
 
-  $self->_add_track($menu, undef, $args{'key'}, {}, {
+  #$args{'options'}{'display'} = $self->check_threshold($args{'options'}{'display'});
+  my $params = {
     strand      => 'f',
     format      => $args{'format'},
     glyphset    => $type,
@@ -1020,7 +1274,12 @@ sub _add_file_format_track {
     url         => $url || $args{'source'}{'source_url'},
     description => $desc,
     %{$args{'options'}}
-  });
+  };
+  if ($args{'source'}{'trackhub'}) {
+    $params->{'subGroups'} = $args{'source'}{'subGroups'};
+    $params->{'shortLabel'} = $args{'source'}{'labelcaption'};
+  }
+  $self->_add_track($menu, undef, $args{'key'}, {}, $params);
 }
 
 sub _user_track_settings {
@@ -1028,7 +1287,7 @@ sub _user_track_settings {
   my (@user_renderers, $default);
   my $strand = 'b';
 
-  if (lc($format) eq 'pairwise') {
+  if (lc($format) eq 'pairwise' || lc($format) eq 'bigint') {
     @user_renderers = ('off', 'Off', 'interaction', 'Pairwise interaction');
     $strand = 'f';
   }

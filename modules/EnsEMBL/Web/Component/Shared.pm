@@ -31,7 +31,7 @@ use List::MoreUtils qw(uniq first_index);
 
 use EnsEMBL::Web::Utils::FormatText qw(helptip glossary_helptip get_glossary_entry);
 
-use base qw(EnsEMBL::Web::Component);
+use parent qw(EnsEMBL::Web::Component);
 
 sub coltab {
   my ($self, $text, $colour, $title) = @_;
@@ -58,6 +58,7 @@ sub transcript_table {
   my $hub         = $self->hub;
   my $object      = $self->object;  
   my $species     = $hub->species;
+  my $sub_type    = $hub->species_defs->ENSEMBL_SUBTYPE;
   my $table       = $self->new_twocol;
   my $page_type   = ref($self) =~ /::Gene\b/ ? 'gene' : 'transcript';
   my $description = $object->gene_description;
@@ -172,25 +173,30 @@ sub transcript_table {
     my $action      = $hub->action;
     @proj_attrib    = @{ $gene->get_all_Attributes('proj_parent_g') };
     my %biotype_rows;
+    my $MANE_attrib_code = 'MANE_Select';
 
     my $trans_attribs = {};
     my $trans_gencode = {};
 
     foreach my $trans (@$transcripts) {
-      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic TSL appris)) {
+      foreach my $attrib_type ('CDS_start_NF','CDS_end_NF','gencode_basic','TSL','appris',$MANE_attrib_code) {
         (my $attrib) = @{$trans->get_all_Attributes($attrib_type)};
         next unless $attrib;
         if($attrib_type eq 'gencode_basic' && $attrib->value) {
           $trans_gencode->{$trans->stable_id}{$attrib_type} = $attrib->value;
-        } elsif ($attrib_type eq 'appris'  && $attrib->value) {
-          ## There should only be one APPRIS code per transcript
+        } 
+        elsif ($attrib_type eq 'appris'  && $attrib->value) {
+          ## Assume there is only one APPRIS attribute per transcript
           my $short_code = $attrib->value;
           ## Manually shorten the full attrib values to save space
           $short_code =~ s/ernative//;
           $short_code =~ s/rincipal//;
           $trans_attribs->{$trans->stable_id}{'appris'} = [$short_code, $attrib->value]; 
-          last;
-        } else {
+          }
+        elsif ($attrib_type eq $MANE_attrib_code && $attrib && $attrib->value) {
+          $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib;
+        }
+        else {
           $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value if ($attrib && $attrib->value);
         }
       }
@@ -208,6 +214,7 @@ sub transcript_table {
     
     if ($page_type eq 'transcript') {
       my $gene_id  = $gene->stable_id;
+      my $gene_version = $gene->version ? $gene_id.'.'.$gene->version : $gene_id;
       my $gene_url = $hub->url({
         type   => 'Gene',
         action => 'Summary',
@@ -215,7 +222,7 @@ sub transcript_table {
       });
       $gene_html .= sprintf('<p>This transcript is a product of gene <a href="%s">%s</a> %s',
         $gene_url,
-        $gene_id,
+        $gene_version,
         $button
       );
     }
@@ -229,22 +236,23 @@ sub transcript_table {
     }   
 
     my @columns = (
-       { key => 'name',       sort => 'string',  title => 'Name'          },
-       { key => 'transcript', sort => 'html',    title => 'Transcript ID' },
-       { key => 'bp_length',  sort => 'numeric', label => 'bp', title => 'Length in base pairs'},
-       { key => 'protein',sort => 'html_numeric',label => 'Protein', title => 'Protein length in amino acids' },
-       { key => 'translation',sort => 'html',    title => 'Translation ID', 'hidden' => 1 },
-       { key => 'biotype',    sort => 'html',    title => 'Biotype', align => 'left' },
+       { key => 'name',       sort => 'string',  label => 'Name', title => 'Transcript name', class => '_ht'},
+       { key => 'transcript', sort => 'html',    label => 'Transcript ID', title => 'Stable ID', class => '_ht'},
+       { key => 'bp_length',  sort => 'numeric', label => 'bp', title => 'Transcript length in base pairs', class => '_ht'},
+       { key => 'protein',sort => 'html_numeric',label => 'Protein', title => 'Protein length in amino acids', class => '_ht'},
+       { key => 'translation',sort => 'html',    label => 'Translation ID', title => 'Protein information', 'hidden' => 1, class => '_ht'},
+       { key => 'biotype',    sort => 'html',    label => 'Biotype', title => encode_entities('<a href="/info/genome/genebuild/biotypes.html" target="_blank">Transcript biotype</a>'), align => 'left', class => '_ht'},
     );
 
-    push @columns, { key => 'ccds', sort => 'html', title => 'CCDS' } if $species =~ /^Homo_sapiens|Mus_musculus/;
-    
+    push @columns, { key => 'ccds', sort => 'html', label => 'CCDS', class => '_ht' } if $species =~ /^Homo_sapiens|Mus_musculus/;
     my @rows;
    
     my %extra_links = (
       uniprot => { match => "^UniProt/[SWISSPROT|SPTREMBL]", name => "UniProt", order => 0 },
-      refseq => { match => "^RefSeq", name => "RefSeq", order => 1 },
     );
+    if ($species eq 'Homo_sapiens' && $sub_type eq 'GRCh37' ) {
+      $extra_links{refseq} = { match => "^RefSeq", name => "RefSeq", order => 1, title => "RefSeq transcripts with sequence similarity and genomic overlap"};
+    }
     my %any_extras;
  
     foreach (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @$transcripts) {
@@ -253,6 +261,7 @@ sub transcript_table {
       my $tsi               = $_->stable_id;
       my $protein           = '';
       my $translation_id    = '';
+      my $translation_ver   = '';
       my $protein_url       = '';
       my $protein_length    = '-';
       my $ccds              = '-';
@@ -270,6 +279,7 @@ sub transcript_table {
       if (my $translation = $_->translation) {
         $protein_url    = $hub->url({ type => 'Transcript', action => 'ProteinSummary', t => $tsi });
         $translation_id = $translation->stable_id;
+        $translation_ver = $translation->version ? $translation_id.'.'.$translation->version:$translation_id;
         $protein_length = $translation->length;
       }
 
@@ -301,7 +311,6 @@ sub transcript_table {
           push @flags, helptip("TSL:$tsl", get_glossary_entry($hub, "TSL:$tsl").get_glossary_entry($hub, 'TSL'));
         }
       }
-
       if ($trans_gencode->{$tsi}) {
         if ($trans_gencode->{$tsi}{'gencode_basic'}) {
           push @flags, helptip('GENCODE basic', $gencode_desc);
@@ -311,6 +320,12 @@ sub transcript_table {
         my ($code, $key) = @{$trans_attribs->{$tsi}{'appris'}};
         my $short_code = $code ? ' '.uc($code) : '';
           push @flags, helptip("APPRIS$short_code", get_glossary_entry($hub, "APPRIS: $key").get_glossary_entry($hub, 'APPRIS'));
+      }
+      my $refseq_url;
+      if (my $mane_attrib = $trans_attribs->{$tsi}{$MANE_attrib_code}) {
+        my $refseq_id = $mane_attrib->value;
+        $refseq_url  = $hub->get_ExtURL_link($refseq_id, 'REFSEQ_MRNA', $refseq_id);
+        push @flags, helptip($mane_attrib->name, get_glossary_entry($hub, 'MANE Select'));
       }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;
@@ -327,28 +342,35 @@ sub transcript_table {
         transcript  => sprintf('<a href="%s">%s%s</a>', $url, $tsi, $version),
         bp_length   => $transcript_length,
         protein     => $protein_url ? sprintf '<a href="%s" title="View protein">%saa</a>', $protein_url, $protein_length : 'No protein',
-        translation => $protein_url ? sprintf '<a href="%s" title="View protein">%s</a>', $protein_url, $translation_id : '-',
+        translation => $protein_url ? sprintf '<a href="%s" title="View protein">%s</a>', $protein_url, $translation_ver : '-',
         biotype     => $self->colour_biotype($biotype_text, $_),
         ccds        => $ccds,
         %extras,
         has_ccds    => $ccds eq '-' ? 0 : 1,
         cds_tag     => $cds_tag,
         gencode_set => $gencode_set,
+        refseq_match  => $refseq_url ? $refseq_url : '-',
         options     => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' },
-        flags       => join('',map { $_ =~ /<img/ ? $_ : "<span class='ts_flag'>$_</span>" } @flags),
+        flags       => @flags ? join('',map { $_ =~ /<img/ ? $_ : "<span class='ts_flag'>$_</span>" } @flags) : '-',
         evidence    => join('', @evidence),
       };
-      
+
       $biotype_text = '.' if $biotype_text eq 'Protein coding';
       $biotype_rows{$biotype_text} = [] unless exists $biotype_rows{$biotype_text};
       push @{$biotype_rows{$biotype_text}}, $row;
     }
+
     foreach my $k (sort { $extra_links{$a}->{'order'} cmp
                           $extra_links{$b}->{'order'} } keys %any_extras) {
       my $x = $extra_links{$k};
-      push @columns, { key => $k, sort => 'html', title => $x->{'name'}};
+      push @columns, { key => $k, sort => 'html', title => $x->{'title'}, label => $x->{'name'}, class => '_ht'};
     }
-    push @columns, { key => 'flags', sort => 'html', title => 'Flags' };
+    if ($species eq 'Homo_sapiens' && $sub_type ne 'GRCh37') {
+      push @columns, { key => 'refseq_match', sort => 'html', label => 'RefSeq Match', title => 'RefSeq transcripts that match 100% across the sequence, intron/exon structure and UTRs', class => '_ht' };
+    }
+
+    my $title = encode_entities('<a href="/info/genome/genebuild/transcript_quality_tags.html" target="_blank">Tags</a>');
+    push @columns, { key => 'flags', sort => 'html', label => 'Flags', title => $title, class => '_ht'};
 
     ## Additionally, sort by CCDS status and length
     while (my ($k,$v) = each (%biotype_rows)) {
@@ -383,24 +405,29 @@ sub transcript_table {
 
   if(@proj_attrib && $self->hub->species_defs->IS_STRAIN_OF) {
     (my $ref_gene = $proj_attrib[0]->value) =~ s/\.\d+$//;
+    my $strain_type = $hub->species_defs->STRAIN_TYPE;
     
     if($ref_gene) {
       #copied from apache/handler, just need this one line to get the matching species for the stable_id (use ensembl_stable_id database)
-      my ($species, $object_type, $db_type, $retired) = Bio::EnsEMBL::Registry->get_species_and_object_type($ref_gene, undef, undef, undef, undef, 1); 
-      my $ga = Bio::EnsEMBL::Registry->get_adaptor($species,$db_type,'gene');
-      my $gene = $ga->fetch_by_stable_id($ref_gene);
-      my $ref_gene_name = $gene->display_xref->display_id;
+      my ($species, $object_type, $db_type, $retired) = Bio::EnsEMBL::Registry->get_species_and_object_type($ref_gene, undef, undef, undef, undef, 1);
+      if ($species) { #needed because some attributes are not valid e! stable IDs
+        my $ga = Bio::EnsEMBL::Registry->get_adaptor($species,$db_type,'gene');
+        my $gene = $ga->fetch_by_stable_id($ref_gene);
+        my $ref_gene_name = $gene->display_xref->display_id;
 
-      my $ref_url  = $hub->url({
-        species => $species,
-        type    => 'Gene',
-        action  => 'Summary',
-        g       => $ref_gene
-      });
-    
-      $table->add_row('Reference strain equivalent', qq{<a href="$ref_url">$ref_gene_name</a>});
+        my $ref_url  = $hub->url({
+          species => $species,
+          type    => 'Gene',
+          action  => 'Summary',
+          g       => $ref_gene
+        });
+        $table->add_row("Reference $strain_type equivalent", qq{<a href="$ref_url">$ref_gene_name</a>});
+      }
+      else {
+        $table->add_row("Reference $strain_type equivalent","None");
+      }  
     } else {
-      $table->add_row('Reference strain equivalent',"None");
+      $table->add_row("Reference $strain_type equivalent","None");
     }
 
   }
@@ -472,7 +499,7 @@ sub about_feature {
     
     my $protein_url = $hub->url({
       type   => 'Gene',
-      action => 'Family',
+      action => $SiteDefs::GENE_FAMILY_ACTION,
       g      => $gene->stable_id
     });
 
@@ -546,7 +573,7 @@ sub about_feature {
     
     my $variation_url = $hub->url({
       type   => 'Transcript',
-      action => 'ProtVariations',
+      action => 'Variation_Transcript/Table',
       g      => $gene->stable_id
     });     
    
@@ -560,10 +587,10 @@ sub about_feature {
                         $avail->{has_domains} eq "1" ? "domain and feature" : "domains and features"
                       ) if($avail->{has_domains});
 
-    push @str_array, sprintf('is associated with <a class="dynamic-link"href="%s">%s %s</a>', 
+    push @str_array, sprintf('is associated with <a class="dynamic-link"href="%s">%s variant %s</a>',
                         $variation_url, 
                         $avail->{has_variations}, 
-                        $avail->{has_variations} eq "1" ? "variation" : "variations",
+                        $avail->{has_variations} eq "1" ? "allele" : "alleles",
                       ) if($avail->{has_variations});    
     
     push @str_array, sprintf('maps to <a class="dynamic-link" href="%s">%s oligo %s</a>',    
@@ -726,7 +753,7 @@ sub species_stats {
     my @prov_names = ref $prov_name eq 'ARRAY' ? @$prov_name : ($prov_name);
     my @providers;
     foreach my $pv (@prov_names) {
-      $prov_name =~ s/_/ /;
+      $prov_name =~ s/_/ /g;
       my $prov_url  = $sd->PROVIDER_URL;
       $prov_url = 'http://'.$prov_url unless $prov_url =~ /^http/;
       my $provider = $prov_url && $pv ne 'Ensembl' ? sprintf('<a href="%s">%s</a>', $prov_url, $pv) : $pv;
@@ -855,7 +882,7 @@ sub check_for_align_problems {
 
   my @messages = $object->check_for_align_in_database($args->{align}, $args->{species}, $args->{cdb});
 
-  if (scalar @messages < 0) {
+  if (scalar @messages <= 0) {
     push @messages, $self->check_for_missing_species($args);
   }
 
@@ -886,7 +913,6 @@ sub check_for_missing_species {
 
   foreach (keys %{$align_details->{'species'}}) {
     next if $_ eq $species;
-
     if ($align_details->{'class'} !~ /pairwise/
         && ($self->param(sprintf 'species_%d_%s', $align, lc) || 'off') eq 'off') {
       push @skipped, $species_defs->production_name_mapping($_) unless ($args->{ignore} && $args->{ignore} eq 'ancestral_sequences');
@@ -894,9 +920,9 @@ sub check_for_missing_species {
     elsif (defined $slice and !$aligned_species{$_} and $_ ne 'ancestral_sequences') {
       my $sp_prod = $hub->species_defs->production_name_mapping($_);
 
-      my $key = ($species_info->{$sp_prod}->{strain_collection} && $species_info->{$sp_prod}->{strain} !~ /reference/) ? 
-              'strains' : 'species';
-      push @{$missing_hash->{$key}}, $species_info->{$sp_prod}->{common};
+      my $key = ($species_info->{$sp_prod}{strain_group} && $species_info->{$sp_prod}{strain} !~ /reference/) ? 
+              $species_info->{$sp_prod}{strain_type}.'s' : 'species';
+      push @{$missing_hash->{$key}}, $species_info->{$sp_prod}{common};
       push @missing, $species_defs->production_name_mapping($_);
     }
   }
@@ -904,7 +930,7 @@ sub check_for_missing_species {
   if (scalar @skipped) {
     $title = 'hidden';
     $warnings .= sprintf(
-                             '<p>The following %d species in the alignment are not shown. Use "<strong>Configure this page -&gt; 12-way EPO alignment</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
+                             '<p>The following %d species in the alignment are not shown. Use "<strong>Select alignment</strong>" button above to turn alignments on/off.<ul><li>%s</li></ul></p>',
                              scalar @skipped,
                              join "</li>\n<li>", sort map $species_defs->species_label($_), @skipped
                             );
@@ -918,7 +944,7 @@ sub check_for_missing_species {
   my $ancestral = grep {$_ =~ /ancestral/} keys %{$align_details->{'species'}};
   my $multi_check = $ancestral ? 2 : 1;
   if (scalar @missing) {
-    $title .= ' species';
+    $title .= ' missing species';
     if ($align_details->{'class'} =~ /pairwise/) {
       $warnings .= sprintf '<p>%s has no alignment in this region</p>', $species_defs->species_label($missing[0]);
     } elsif ($not_missing == $multi_check) {
@@ -929,7 +955,8 @@ sub check_for_missing_species {
 
       if ($missing_hash->{strains}) {
         $count = scalar @{$missing_hash->{strains}};
-        $str .= "$count strain";
+        my $strain_type = $hub->species_defs->STRAIN_TYPE || 'strain';
+        $str .= "$count $strain_type";
         $str .= 's' if $count > 1;
       }
 
@@ -1104,10 +1131,6 @@ sub _sort_similarity_links {
       $word .= " ($primary_id)" if $A eq 'MARKERSYMBOL';
 
       if ($link) {
-        ## KEGG Enzyme xrefs are compound, consisting of pathway and enzyme ids.
-        ## Need to modify the xref for linkouts to work.
-        $link =~ s/%2B/&multi_query=/ if $externalDB eq 'KEGG_Enzyme';
-        
         $text = qq{<a href="$link" class="constant">$word</a>};
       } else {
         $text = $word;
@@ -1353,8 +1376,54 @@ sub structural_variation_table {
   
   return $self->toggleable_table($title, $table_id, $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ], data_table_config => {iDisplayLength => 25} }), $open);
 }
-
   
+sub render_score_prediction {
+  ## render a sift or polyphen prediction with colours and a hidden span with a rank for sorting
+  my ($self, $pred, $score) = @_;
+  
+  return '-' unless defined($pred) || defined($score);
+  
+  my %classes = (
+    '-'                 => '',
+    'likely deleterious' => 'bad',
+    'likely benign' => 'good',
+    'likely disease causing' => 'bad',
+    'tolerated' => 'good',
+    'damaging'   => 'bad',
+    'high'    => 'bad',
+    'medium'  => 'ok',
+    'low'     => 'good',
+    'neutral' => 'good',
+  );
+  
+  my %ranks = (
+    '-'                 => 0,
+    'likely deleterious' => 4,
+    'likely benign' => 2,
+    'likely disease causing' => 4,
+    'tolerated' => 2,
+    'damaging'   => 4,
+    'high'    => 4,
+    'medium'  => 3,
+    'low'     => 2,
+    'neutral' => 2,
+  );
+  
+  my ($rank, $rank_str);
+  
+  if(defined($score)) {
+    $rank_str = "$score";
+  }
+  else {
+    $rank = $ranks{$pred};
+    $rank_str = $pred;
+  }
+  
+  return qq(
+    <span class="hidden">$rank</span><span class="hidden export">$pred(</span><div align="center"><div title="$pred" class="_ht score score_$classes{$pred}">$rank_str</div></div><span class="hidden export">)</span>
+  );
+}
+
 sub render_sift_polyphen {
   ## render a sift or polyphen prediction with colours and a hidden span with a rank for sorting
   my ($self, $pred, $score) = @_;
@@ -1411,23 +1480,7 @@ sub classify_sift_polyphen {
 
   return [undef,'-','','-'] unless defined($pred) || defined($score);
 
-  my %classes = (
-    '-'                 => '',
-    'probably damaging' => 'bad',
-    'possibly damaging' => 'ok',
-    'benign'            => 'good',
-    'unknown'           => 'neutral',
-    'tolerated'         => 'good',
-    'deleterious'       => 'bad',
-
-    # slightly different format for SIFT low confidence states
-    # depending on whether they come direct from the API
-    # or via the VEP's no-whitespace processing
-    'tolerated - low confidence'   => 'neutral',
-    'deleterious - low confidence' => 'neutral',
-    'tolerated low confidence'     => 'neutral',
-    'deleterious low confidence'   => 'neutral',
-  );
+  my %classes = %{$self->predictions_classes};
 
   my %ranks = (
     '-'                 => 0,
@@ -1456,6 +1509,75 @@ sub classify_sift_polyphen {
   # 3 -- a value for display
   return [$rank,$pred,$rank_str];
 }
+
+sub classify_score_prediction {
+  ## render a sift or polyphen prediction with colours and a hidden span with a rank for sorting
+  my ($self, $pred, $score) = @_;
+  
+  return [undef,'-','','-'] unless defined($pred) || defined($score);
+  
+  my %classes = %{$self->predictions_classes};
+  
+  my %ranks = (
+    '-'                 => 0,
+    'likely deleterious' => 4,
+    'likely benign' => 2,
+    'likely disease causing' => 4,
+    'tolerated' => 2,
+    'damaging'   => 4,
+    'high'    => 4,
+    'medium'  => 3,
+    'low'     => 2,
+    'neutral' => 2,
+  );
+  
+  my ($rank, $rank_str);
+  
+  if(defined($score)) {
+    $rank = int(1000 * $score) + 1;
+    $rank_str = "$score";
+  }
+  else {
+    $rank = $ranks{$pred};
+    $rank_str = $pred;
+  }
+  return [$rank,$pred,$rank_str];
+}
+
+# Common list of variant protein prediction results with their corresponding CSS classes
+sub predictions_classes {
+  my $self = shift;
+
+  my %classes = (
+    '-'                 => '',
+    'probably damaging' => 'bad',
+    'possibly damaging' => 'ok',
+    'benign'            => 'good',
+    'unknown'           => 'neutral',
+    'tolerated'         => 'good',
+    'deleterious'       => 'bad',
+
+    'likely deleterious'     => 'bad',
+    'likely benign'          => 'good',
+    'likely disease causing' => 'bad',
+    'damaging'               => 'bad',
+    'high'                   => 'bad',
+    'medium'                 => 'ok',
+    'low'                    => 'good',
+    'neutral'                => 'neutral',
+
+    # slightly different format for SIFT low confidence states
+    # depending on whether they come direct from the API
+    # or via the VEP's no-whitespace processing
+    'tolerated - low confidence'   => 'neutral',
+    'deleterious - low confidence' => 'neutral',
+    'tolerated low confidence'     => 'neutral',
+    'deleterious low confidence'   => 'neutral',
+  );
+
+  return \%classes;
+}
+
 
 sub render_consequence_type {
   my $self        = shift;
@@ -1571,11 +1693,14 @@ sub render_var_coverage {
     $left_width = sprintf("%.0f", ($v_s - $f_s) * $scale);
     if ($left_width == $total_width)  {
       $left_width -= $right_width;
-      $left_width = 0 if ($left_width < 0);
+    }
+    elsif (($left_width + $right_width) > $total_width) {
+      $left_width = $total_width - $right_width;
     }
     elsif ($small_var && $left_width > 0) {
       $left_width--;
     }
+    $left_width = 0 if ($left_width < 0);
     $render .= '<div class="var_trans_pos_sub" style="width:'.$left_width.'px"></div>';
   }
   $render .= $var_render if ($var_render);

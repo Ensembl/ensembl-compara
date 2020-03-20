@@ -59,24 +59,4 @@ sub form_fields {
   };
 }
 
-sub extra_tabs {
-  ## @override
-  my $self  = shift;
-  my $hub   = $self->hub;
-
-  return ([
-    'Select cell types',
-    $hub->url('MultiSelector', {
-      'action'       => 'CellTypeSelector',
-      'image_config' => $self->image_config_type,
-      %{$hub->multi_params}
-    })], [
-    'Select evidence',
-    $hub->url('MultiSelector', {
-      'action'   => 'EvidenceSelector',
-      %{$hub->multi_params}
-    })],
-  );
-}
-
 1;

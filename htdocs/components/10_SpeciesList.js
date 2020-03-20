@@ -22,11 +22,13 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
     this.elLk.container   = this.el.find('._species_fav_container');
     this.elLk.list        = this.el.find('._species_sort_container');
     this.elLk.dropdown    = this.el.find('select._all_species');
+    this.elLk.finder      = this.el.find('.finder input');
     this.elLk.buttonEdit  = this.el.find('a._list_edit');
     this.elLk.buttonDone  = this.el.find('a._list_done');
     this.elLk.buttonReset = this.el.find('a._list_reset');
 
     this.allSpecies       = this.params['species_list'] || [];
+    this.allStrains       = this.params['strains_list'] || [];
     this.favTemplate      = this.params['fav_template'];
     this.listTemplate     = this.params['list_template'];
     this.refreshURL       = this.params['ajax_refresh_url'];
@@ -63,6 +65,7 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
     });
 
     this.refreshFav();
+    //this.initAutoComplete();
     this.renderDropdown();
   },
 
@@ -125,6 +128,55 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
     this.elLk.buttonEdit.toggle(!flag);
   },
 
+
+  initAutoComplete: function() {
+    var panel = this;
+    this.elLk.finder.autocomplete({
+      minLength: 3,
+      source: function(request, response) {
+        var speciesList = $();
+        $.each(panel.allSpecies, function(i, species) {
+          var label = species.common === species.name ? species.name : species.common + ' (' + species.name + ')'
+          var spEntry = {'label' : label, 'url' : species.homepage};
+          speciesList.push(spEntry);
+        }); 
+        // Add strain groups
+        $.each(panel.allStrains, function(i, strain) {
+          var spEntry = {'label' : strain.common + ' (' + strain.name + ')', 'url' : strain.homepage};
+          speciesList.push(spEntry);
+        }); 
+        
+        response(panel.filterArray(speciesList, request.term));
+      }
+    }).data("ui-autocomplete")._renderItem = function (ul, item) {
+      ul.addClass('ss-autocomplete');
+      // highlight the term within each match
+      var regex = new RegExp("(?![^&;]+;)(?!<[^<>]*)(" + $.ui.autocomplete.escapeRegex(this.term) + ")(?![^<>]*>)(?![^&;]+;)", "gi");
+      item.label = item.label.replace(regex, "<span class='ss-ac-highlight'>$1</span>");
+      return $("<li/>").data("ui-autocomplete-item", item).addClass('ss-ac-result-li').append("<a href='" + item.url + "' class='ss-ac-result'>" + item.label + "</a>").appendTo(ul);
+    };
+  },
+
+  filterArray: function(array, term) {
+    term = term.replace(/[^a-zA-Z0-9 ]/g, '').toUpperCase();
+    var matcher = new RegExp( $.ui.autocomplete.escapeRegex(term), "i" );
+    var matches = $.grep( array, function(item) {
+      return item && matcher.test( item.label.replace(/[^a-zA-Z0-9 ]/g, '') );
+    });
+    matches.sort(function(a, b) {
+      // give priority to matches that begin with the term
+      var aBegins = a.label.toUpperCase().substr(0, term.length) == term;
+      var bBegins = b.label.toUpperCase().substr(0, term.length) == term;
+
+      if (aBegins == bBegins) {
+        if (a.label == b.label) return 0;
+        return a.label < b.label ? -1 : 1;
+      }
+      return aBegins ? -1 : 1;
+    });
+    return matches;
+  },
+
   renderDropdown: function() {
     var panel         = this;
     var labels        = this.taxonLabels;
@@ -173,7 +225,7 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
       '</option>'
     );
     if (!favSection && species.strainspage) {
-      optgroup.append('<option value="' + species.strainspage + '">' + species.common + ' strains</option>');
+      optgroup.append('<option value="' + species.strainspage + '">' + species.common + ' ' + species.strain_type + '</option>');
     }
   },
 

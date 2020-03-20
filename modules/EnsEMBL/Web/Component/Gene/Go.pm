@@ -99,7 +99,28 @@ sub process_data {
   
   my $hub              = $self->hub;
   # this is a dirty way of having all the go term description until core decide to have a table for them, this is how we will have to do thing
-  my $description_hash = {'EXP' => 'Inferred from Experiment', 'IC' => 'Inferred by Curator', 'IDA' => 'Inferred from Direct Assay', 'IEA' => 'Inferred from Electronic Annotation', 'IEP' => 'Inferred from Expression Pattern', 'IGC' => 'Inferred from Genomic Context', 'IGI' => 'Inferred from Genetic Interaction', 'IMP' => 'Inferred from Mutant Phenotype', 'IPI' => 'Inferred from Physical Interaction', 'ISA' => 'Inferred from Sequence Alignment', 'ISM' => 'Inferred from Sequence Model', 'ISO' => 'Inferred from Sequence Orthology', 'ISS' => 'Inferred from Sequence or Structural Similarity', 'NAS' => 'Non-traceable Author Statement', 'ND' => 'No biological Data available', 'RCA' => 'Inferred from Reviewed Computational Analysis', 'TAS' => 'Traceable Author Statement', 'NR' => 'Not Recorded', 'IBA' => 'Inferred from Biological aspect of Ancestor'};
+  my $description_hash = {
+                          'EXP' => 'Inferred from Experiment', 
+                          'HDA' => 'High-throughput Direct Assay',
+                          'IBA' => 'Inferred from Biological aspect of Ancestor',
+                          'IC'  => 'Inferred by Curator', 
+                          'IDA' => 'Inferred from Direct Assay', 
+                          'IEA' => 'Inferred from Electronic Annotation', 
+                          'IEP' => 'Inferred from Expression Pattern', 
+                          'IGC' => 'Inferred from Genomic Context', 
+                          'IGI' => 'Inferred from Genetic Interaction', 
+                          'IMP' => 'Inferred from Mutant Phenotype', 
+                          'IPI' => 'Inferred from Physical Interaction', 
+                          'ISA' => 'Inferred from Sequence Alignment', 
+                          'ISM' => 'Inferred from Sequence Model', 
+                          'ISO' => 'Inferred from Sequence Orthology', 
+                          'ISS' => 'Inferred from Sequence or Structural Similarity', 
+                          'NAS' => 'Non-traceable Author Statement', 
+                          'ND'  => 'No biological Data available', 
+                          'NR'  => 'Not Recorded', 
+                          'RCA' => 'Inferred from Reviewed Computational Analysis', 
+                          'TAS' => 'Traceable Author Statement', 
+                        };
   
   foreach my $go (sort keys %$data) {
     my $hash        = $data->{$go} || {};

@@ -58,11 +58,16 @@ sub email_footer {
   ## @return Text String
   my $self = shift;
  
-  my $footer = sprintf "\n\nMany thanks,\n\nThe %s web team\n\n", $self->site_name;
+  my $footer = sprintf "\n\n\nMany thanks,\n\nThe %s web team\n\n\n", $self->site_name;
 
   if ($self->hub->species_defs->GDPR_POLICY_URL) {
     $footer .= sprintf "%s Privacy Statement: %s\n\n", $self->site_name, $self->hub->species_defs->GDPR_POLICY_URL;
   }
+
+  $footer .= "http://".$self->hub->species_defs->ENSEMBL_SERVERNAME."\n\n";;
+
+  my $address = $self->hub->species_defs->SITE_OWNER_ADDRESS;
+  $footer .= "$address\n\n" if $address;
 
   return $footer;
 }
@@ -85,7 +90,7 @@ sub send {
   my @week_days   = qw(Sun Mon Tue Wed Thu Fri Sat Sun);
   my ($sec, $min, $hour, $day, $month, $year, $wday) = gmtime;
   $year          += 1900;
-  my $time_string = sprintf '%s %s %s %s, %02d:%02d:%02d +0000', $week_days[$wday], $day, $months[$month], $year, $hour, $min, $sec;
+  my $time_string = sprintf '%s, %s %s %s %02d:%02d:%02d +0000', $week_days[$wday], $day, $months[$month], $year, $hour, $min, $sec;
 
   my $mailer;
   my $return    = 1;
@@ -140,7 +145,7 @@ Content-Disposition: attachment; filename="$file_name"
       $mailer->close;
     } catch {
       $return = 0;
-      warn $_;
+      warn $self->log_message($time_string, $_);
     };
   }
   else {
@@ -161,10 +166,25 @@ Content-Disposition: attachment; filename="$file_name"
       $mailer->close;
     } catch {
       $return = 0;
-      warn $_;
+      warn $self->log_message($time_string, $_);
+      warn 'MAILER ERROR: '.$_;
     };
   }
   return $return;
+}
+
+sub log_message {
+  my ($self, $time_string, $error) = @_;
+
+  my $message = "MAILER ERROR: \n";
+  $message .= 'To: '.$self->{'to'}."\n";
+  $message .= 'From: '.$self->{'from'}."\n";
+  $message .= 'Reply-To: '.$self->{'reply'}."\n";
+  $message .= 'Subject: '.$self->{'subject'}."\n";
+  $message .= 'X-URL: '.$self->{'base_url'}."\n";
+  $message .= 'Date: '.$time_string."\n";
+  $message .= $error."\n\n";
+  return $message;
 }
 
 1;

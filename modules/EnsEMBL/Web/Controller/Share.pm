@@ -93,9 +93,10 @@ sub share_create {
     my $viewconfig = $components->{$component_code}->viewconfig;
 
     if ($viewconfig) {
-      my $imageconfig = $viewconfig->image_config;
-      my $vc_settings = $viewconfig->get_shareable_settings;
-      my $ic_settings = $imageconfig ? $imageconfig->get_shareable_settings : {};
+      my $imageconfig  = $viewconfig->image_config;
+      my $vc_settings  = $viewconfig->get_shareable_settings;
+      my $ic_settings  = $imageconfig ? $imageconfig->get_shareable_settings : {};
+      my $aln_settings = $viewconfig->get_alignments_selector_settings;
 
       if (keys %$ic_settings && exists $ic_settings->{'user_data'}) {
         if ($ok_data) {
@@ -108,6 +109,7 @@ sub share_create {
 
       $data->{$component_code}{'view_config'}   = $vc_settings if keys %$vc_settings;
       $data->{$component_code}{'image_config'}  = $ic_settings if keys %$ic_settings;
+      $data->{$component_code}{'alignments_selector'}  = $aln_settings if keys %{$aln_settings->{$hub->species}};
     }
   }
 
@@ -169,6 +171,11 @@ sub share_accept {
         ) {
           $imageconfig->receive_shared_settings($ic_settings);
         }
+
+        if (my $aln_settings = $data->{$component_code}{'alignments_selector'}) {
+          $viewconfig->save_alignments_selector_settings($aln_settings);
+        }
+
       }
     }
 

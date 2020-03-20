@@ -28,12 +28,10 @@ no warnings 'uninitialized';
 use List::Util qw(max);
 
 use Role::Tiny::With;
-with 'EnsEMBL::Draw::Role::Wiggle';
 with 'EnsEMBL::Draw::Role::Default';
+with 'EnsEMBL::Draw::Role::Wiggle';
 
 use EnsEMBL::Web::IOWrapper::Indexed;
-use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
-use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
@@ -71,40 +69,6 @@ sub render_simple {
       $self->{'my_config'}->set('show_overlay', 1);
       $self->{'my_config'}->set('default_strand', 1);
       $self->{'my_config'}->set('drawing_style', ['Feature::Variant']);
-
-      ## Loop through features and get consequence colour from db
-      unless ($self->{'data'}[0]{'metadata'}{'has_consequences'}) {
-        my $vfa = $self->{'config'}->hub->database('variation')->get_VariationFeatureAdaptor; 
-  
-        if ($vfa) {
-          my %overlap_cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
-          my $colours = $self->species_defs->colour('variation');
-
-          foreach (@{$self->{'data'}[0]{'features'}||[]}) {     
-            my $snp = {
-                        seqname          => '',
-                        start            => $_->{'start'},
-                        end              => $_->{'end'},
-                        strand           => 1,
-                        slice            => $self->{'container'},
-                        allele_string    => $_->{'alleles'},
-                        variation_name   => $_->{'vf_name'},
-                        map_weight       => 1,
-                        adaptor          => $vfa,
-                        consequence_type => $_->{'consequence_type'}
-                      };
-            bless $snp, 'Bio::EnsEMBL::Variation::VariationFeature';
-            $snp->get_all_TranscriptVariations;
-            my $consequence  = $snp->display_consequence;
-
-            ## Set colour by consequence
-            if ($consequence && defined($overlap_cons{$consequence})) {
-              $_->{'colour'} = $colours->{lc $consequence}->{'default'};
-            }
-          }
-        }
-      }
-
       $self->draw_features;
     }
   }
@@ -138,40 +102,76 @@ sub render_density_bar {
 ############# DATA ACCESS & PROCESSING ########################
 
 sub get_data {
-### Fetch and cache raw features - we'll process them later as needed
   my ($self, $url) = @_;
   return $self->{'data'} if scalar @{$self->{'data'}||[]};
-
-  $self->{'my_config'}->set('show_subtitle', 1);
-
-  my $container   = $self->{'container'};
   my $hub         = $self->{'config'}->hub;
   $url          ||= $self->my_config('url');
-  $self->{'data'} ||= [];
+  my $container   = $self->{'container'};
+  my $data        = [];
 
-  unless (scalar @{$self->{'data'}}) {
-    my $args = { 'options' => {
-                                'hub'         => $hub,
-                                'config_type' => $self->{'config'}{'type'},
-                                'track'       => $self->{'my_config'}{'id'},
-                               },
-               };
+  my ($skip, $strand_to_omit) = $self->get_strand_filters;
+  return $data if $skip == $self->strand;
 
-    #my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'VCF4Tabix', $args);
-    my $iow = $self->get_iow($url, $args);
+  my $args            = { 'options' => {
+                                  'hub'         => $hub,
+                                  'config_type' => $self->{'config'}{'type'},
+                                  'track'       => $self->{'my_config'}{'id'},
+                                  },
+                        };
 
-    if ($iow) {
-      my $colours   = $self->species_defs->colour('variation');
-      my $colour    = $colours->{'default'}->{'default'}; 
-      my $metadata  = {
-                      'name'    => $self->{'my_config'}->get('name'),
-                      'colour'  => $colour,
+  my $iow = $self->get_iow($url, $args);
+
+  if ($iow) {
+    ## We need to pass 'faux' metadata to the ensembl-io wrapper, because
+    ## most files won't have explicit colour settings
+    my $colours = $self->species_defs->colour('variation');
+    my $colour  = $colours->{'default'}->{'default'}; 
+    ## Don't try and scale if we're just doing a zmenu!
+    my $pix_per_bp = $self->{'display'} eq 'text' ? '' : $self->scalex;
+    my $metadata = {
+                    'action'          => $self->{'my_config'}->get('zmenu_action'),
+                    'colour'          => $colour,
+                    'display'         => $self->{'display'},
+                    'drawn_strand'    => $self->strand,
+                    'strand_to_omit'  => $strand_to_omit,
+                    'pix_per_bp'      => $pix_per_bp,
+                    'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
                     };
-      
-      $self->{'data'} = $iow->create_tracks($container, $metadata);
+
+    ## No colour defined in ImageConfig, so fall back to defaults
+    unless ($colour) {
+      my $colourset_key           = $self->{'my_config'}->get('colourset') || 'userdata';
+      my $colourset               = $hub->species_defs->colour($colourset_key);
+      my $colours                 = $colourset->{'url'} || $colourset->{'default'};
+      $metadata->{'colour'}       = $colours->{'default'};
+      $metadata->{'label_colour'} = $colours->{'text'} || $colours->{'default'};
     }
+
+    my $style = $self->my_config('style') || $self->my_config('display') || '';
+
+    $data = $iow->create_tracks($container, $metadata);
+
+    ## Final fallback, in case we didn't set this in the individual parser
+    $metadata->{'label_colour'} ||= $colour;
+
+    ## Can we actually render this many features?
+    my $total;
+    foreach (@$data) {
+      $total += scalar @{$_->{'features'}||[]};
+    }
+
+    my $limit = $self->{'my_config'}->get('bigbed_limit') || 500;
+    if ($total > $limit) {
+      $data = [];
+      $self->{'no_empty_track_message'}  = 1;
+      $self->errorTrack('This track has too many features to show at this scale. Please zoom in.');
+    }
+  } else {
+    $data = [];
+    $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
   }
-  return $self->{'data'};
+  #warn Dumper($data->[0]{'features'});
+  return $data;
 }
 
 sub get_iow {

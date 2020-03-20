@@ -238,6 +238,9 @@ sub get_content {
   if (!$content) {
     if($function && $self->can($function)) {
       $content = $self->$function;
+      if ($function eq 'pan_compara') {
+        $content = $self->header.$self->content_buttons.$content;
+      }
     } else {
       $content = $self->content; # Force sequence-point before buttons call.
       $content = $self->header.$self->content_buttons.$content;
@@ -803,7 +806,6 @@ sub trim_large_string {
       <div class="toggle_div">
         <span class="%s">%s</span>
         <span class="cell_detail">%s</span>
-        <span class="toggle_img"></span>
       </div>
     </div>),
       join(" ",@summary_classes),$truncated,$string);  

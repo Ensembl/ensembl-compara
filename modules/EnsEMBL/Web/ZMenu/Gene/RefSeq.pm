@@ -28,21 +28,27 @@ sub content {
   my $object    = $self->object;
   my $stable_id = $object->stable_id;
   my $gene      = $object->Obj;
+  my $gene_xref   = $gene->display_xref->primary_id;
+
+  $gene_xref ||= $stable_id;
   
   $self->SUPER::content;
+
+  $self->delete_entry_by_type('Gene ID');
+  $self->delete_entry_by_type('Gene Symbol');
   
-  $self->caption($stable_id);
+  $self->caption($gene_xref);
   
   $self->add_entry({
     type     => 'RefSeq gene',
-    label    => $stable_id,
-    link     => $self->hub->get_ExtURL_link($stable_id, 'REFSEQ_GENEIMP', $stable_id),
+    label    => $gene_xref,
+    link     => $self->hub->get_ExtURL_link($gene_xref, 'REFSEQ_GENEIMP', $gene_xref),
     abs_url  => 1,
-    position => 2,
+    position => 1,
   });
   
-  my $biotype = ucfirst lc $gene->biotype;
-    $biotype  =~ s/_/ /;
+  my $biotype = lc $gene->biotype;
+    $biotype  =~ s/_/ /g;
     $biotype  =~ s/rna/RNA/;
   
   $self->modify_entry_by('type', {
@@ -50,7 +56,7 @@ sub content {
     label => $biotype,
   });
   
-  $self->delete_entry_by_type('Gene');
+
 }
 
 1;

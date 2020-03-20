@@ -39,7 +39,6 @@ sub content {
   my $graph_id    = 0;
   my $height      = 50;
   my $width       = 118;
-  my $large_width = 135;
   my $max_width   = 150;
   my $max_pie_chart_count = 35;
   my (@graphs, $pop_tree, %sub_pops, @alleles);
@@ -56,6 +55,8 @@ sub content {
   
   # Get alleles list
   my $project_name;
+  my $pop_width = $width;
+  my $has_100 = 0;
   foreach my $pop_name (sort keys %$pop_freq) {
     my $values = '';
 
@@ -66,11 +67,16 @@ sub content {
     foreach my $ssid (keys %{$pop_freq->{$pop_name}{'freq'}}) {
       foreach my $allele (keys %{$pop_freq->{$pop_name}{'freq'}{$ssid}}) {
         my $freq = $pop_freq->{$pop_name}{'freq'}{$ssid}{$allele};
-        $width = $large_width if (length($allele) > 2 and $width!=$large_width);
+        my $allele_length = length($allele);
+        my $new_width = ($allele_length > 1) ? $width + (($allele_length - 1) * 5) : $width;
+        $pop_width = $new_width if ($new_width > $pop_width);
+        $has_100 = 1 if ($freq == 1);
         push (@alleles, $allele) if $freq > 0 && !(grep $allele eq $_, @alleles);
       }
-    }  
+    }
   }
+  $width = ($pop_width > $max_width) ? $max_width : $pop_width;
+  $width += 5 if ($has_100 == 1);
   
   my $nb_alleles = scalar @alleles;
   
@@ -109,7 +115,6 @@ sub content {
         my $a_label = $al;
         if (length($al)>4) {
           $a_label = substr($al,0,4).'...';
-          $width   = ($freq==100) ? $max_width+5 : $max_width;
         }
         $values .= "[$freq,'$a_label']";
         last;

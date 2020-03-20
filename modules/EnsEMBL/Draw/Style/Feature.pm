@@ -75,10 +75,14 @@ sub create_glyphs {
   my $y_start         = $track_config->get('y_start') || 0;
   my $subtrack_start  = $y_start;
   my $font_height     = 0;
+  my $label_height    = 0;
   my $total_height    = 0;
 
   ## Strand settings
   foreach my $subtrack (@$data) {
+    my @features = @{$subtrack->{'features'}||[]}; 
+    next if (scalar @features == 0 && $image_config->get_option('opt_empty_tracks') == 0);
+
     ## Keep track of all the feature heights so we can calculate a correct total height
     my $heights = {};
     my $subtitle_height = 0;
@@ -89,8 +93,6 @@ sub create_glyphs {
       $subtitle_height = $self->draw_subtitle($subtrack->{'metadata'}, $total_height);
       $subtrack_start += $subtitle_height + 2;
     }
-
-    my @features = @{$subtrack->{'features'}||[]}; 
 
     ## FIRST LOOP - process features
     foreach my $feature (@features) {
@@ -110,13 +112,18 @@ sub create_glyphs {
       $feature->{'label_colour'}  ||= $feature->{'colour'} || $feature->{'bordercolour'};
       $feature->{'_bstart'} = $feature->{'start'};
       $feature->{'_bend'} = $feature->{'end'};
+
+      ## Get some general font info
+      my $text_info   = $self->get_text_info($feature->{'label'} || 'Label');
+      $font_height = max($font_height, $text_info->{'height'});
+
+      ## plus some specific stuff for features with labels
       if ($show_label && !$overlay) {
-        my $text_info   = $self->get_text_info($feature->{'label'});
         ## Round up, since we're working in base-pairs - otherwise we may still overlap the next feature
         my $lwidth_bp = ceil(($text_info->{'width'} + $label_padding) / $self->{'pix_per_bp'});
         $feature->{'_bend'} = $alongside ? $feature->{'_bend'} + $lwidth_bp
                                          : max($feature->{'_bend'}, $feature->{'_bstart'} + $lwidth_bp);
-        $font_height = max($font_height, $text_info->{'height'});
+        $label_height = $font_height;
       }
     }
 
@@ -139,145 +146,181 @@ sub create_glyphs {
 
     ## SECOND LOOP - draw features row by row
     my $count = 0;
-    foreach my $feature (sort {$a->{'_bump'} <=> $b->{'_bump'}} @features) {
-      my $new_y;
-      my $feature_row = 0;
-      my $label_row   = 0;
-      ## Work out if we're bumping the whole feature or just the label
-      if ($bumped) {
-        my $bump = $track_config->get('flip_vertical') ? $bump_rows - $feature->{'_bump'} : $feature->{'_bump'};
-        $label_row   = $bump unless $bumped eq 'features_only';
-        $feature_row = $bump unless $bumped eq 'labels_only';       
-      }
-      next if $feature_row < 0; ## Bumping code returns -1 if there's a problem 
+    if (scalar @features) {
+      foreach my $feature (sort {$a->{'_bump'} <=> $b->{'_bump'}} @features) {
+        my $new_y;
+        my $feature_row = 0;
+        my $label_row   = 0;
+        ## Work out if we're bumping the whole feature or just the label
+        if ($bumped) {
+          my $bump = $track_config->get('flip_vertical') ? $bump_rows - $feature->{'_bump'} : $feature->{'_bump'};
+          $label_row   = $bump unless $bumped eq 'features_only';
+          $feature_row = $bump unless $bumped eq 'labels_only';       
+        }
+        next if $feature_row < 0; ## Bumping code returns -1 if there's a problem 
 
-      ## Work out where to place the feature
-      my $feature_height  = $track_config->get('height') || $typical_label->{'height'};
+        ## Work out where to place the feature
+        my $feature_height  = $track_config->get('height') || $typical_label->{'height'};
 
-      ## Truncate to viewport - but don't alter feature hash because we may need it
-      my ($drawn_start, $drawn_end) = $feature->{'end'} - $feature->{'start'} > -1
+        ## Truncate to viewport - but don't alter feature hash because we may need it
+        my ($drawn_start, $drawn_end) = $feature->{'end'} - $feature->{'start'} > -1
                                         ? ($feature->{'start'}, $feature->{'end'})
                                         : ($feature->{'end'}, $feature->{'start'});
-      $drawn_start      = 0 if $drawn_start < 0;
-      $drawn_end        = $slice_width if $drawn_end > $slice_width;
-      my $feature_width = $drawn_end - $drawn_start + 1; 
-      $feature_width    = 1 if $feature_width < 1;
+        $drawn_start      = 0 if $drawn_start < 0;
+        $drawn_end        = $slice_width if $drawn_end > $slice_width;
+        my $feature_width = $drawn_end - $drawn_start + 1; 
+        $feature_width    = 1 if $feature_width < 1;
   
-      my $labels_height   = $label_row * $font_height;
+        my $labels_height   = $label_row * $label_height;
 
-      ## Is it a multi-line label?
-      $label_lines = split("\n", $feature->{'label'});
+        ## Is it a multi-line label?
+        $label_lines = split("\n", $feature->{'label'});
 
-      ## Only "ordinary" bumping requires adding the label to the feature height
-      my $space_for_labels  = ($bumped && $bumped eq '1') ? $font_height * $label_lines : 0;
-      my $y                 = $subtrack_start + ($feature_row * ($feature_height + $vspacing + $space_for_labels));
+        ## Only "ordinary" bumping requires adding the label to the feature height
+        my $space_for_labels  = ($bumped && $bumped eq '1') ? $label_height * $label_lines : 0;
+        my $y                 = $subtrack_start + ($feature_row * ($feature_height + $vspacing + $space_for_labels));
 
-      my $position  = {
-                      'y'           => $y,
-                      'width'       => $feature_width,
-                      'height'      => $feature_height,
-                      'image_width' => $slice_width,
-                      };
+        my $position  = {
+                          'y'           => $y,
+                          'width'       => $feature_width,
+                          'height'      => $feature_height,
+                          'image_width' => $slice_width,
+                        };
       
-      ## Get the real height of the feature e.g. if it includes any tags or extra glyphs
-      my $glyph = $self->draw_feature($feature, $position, $count);
-      my $extra = $self->track_config->get('extra_height') || 0;
-      my $approx_height = $feature_height + $extra;
-      $subtitle_height  = 0 if $feature_row > 0; ## Subtitle only added to 1st row
-      push @{$heights->{$feature_row}}, ($subtitle_height + $approx_height + $vspacing + $space_for_labels);
+        ## Get the real height of the feature e.g. if it includes any tags or extra glyphs
+        my $glyph = $self->draw_feature($feature, $position, $count);
+        my $extra = $self->track_config->get('extra_height') || 0;
+        my $approx_height = $feature_height + $extra;
+        $subtitle_height  = 0 if $feature_row > 0; ## Subtitle only added to 1st row
+        push @{$heights->{$feature_row}}, ($subtitle_height + $approx_height + $vspacing + $space_for_labels);
 
-      ## Optional label(s)
-      my $font_size     = $self->{'font_size'};
+        ## Optional label(s)
+        my $font_size     = $self->{'font_size'};
 
-      ## Regular labels (outside feature)
-      my $text_height;
-      if ($track_config->get('show_labels') && !$track_config->get('overlay_label') && $feature->{'label'}) {
-        my $text_info   = $self->get_text_info($feature->{'label'});
-        my $text_width  = $text_info->{'width'};
-        my $text_height = $text_info->{'height'};
-        my ($new_x, $new_y);
+        ## Regular labels (outside feature)
+        my $text_height;
+        if ($track_config->get('show_labels') && !$track_config->get('overlay_label') && $feature->{'label'}) {
+          my $text_info   = $self->get_text_info($feature->{'label'});
+          my $text_width  = $text_info->{'width'};
+          my $text_height = $text_info->{'height'};
+          my ($new_x, $new_y);
 
-        if ($bumped eq 'labels_alongside') {
-          $new_x      = $feature->{'end'} + (4 / $self->{'pix_per_bp'});
-          $new_y      = $position->{'y'} + $approx_height - $text_height;
-          ## Reduce text size slightly so it doesn't take up too much space
-          $font_size *= 0.9;
-        }
-        else {
-          $new_x = $feature->{'start'} - 1;
-          $new_x = 0 if $new_x < 0;
-          $new_y = $position->{'y'} + $approx_height;
-          $new_y += ($label_row * $font_height * $label_lines) if ($bumped && $bumped eq 'labels_only');
+          if ($bumped eq 'labels_alongside') {
+            $new_x      = $feature->{'end'} + (4 / $self->{'pix_per_bp'});
+            $new_y      = $position->{'y'} + $approx_height - $text_height;
+            ## Reduce text size slightly so it doesn't take up too much space
+            $font_size *= 0.9;
+          }
+          else {
+            $new_x = $feature->{'start'} - 1;
+            $new_x = 0 if $new_x < 0;
+            $new_y = $position->{'y'} + $approx_height;
+            $new_y += ($label_row * $label_height * $label_lines) if ($bumped && $bumped eq 'labels_only');
           
-          ## Pad width to match bumped position
-          $text_width += 10;
-        }
+            ## Pad width to match bumped position
+            $text_width += 10;
+          }
 
-        my $label_position = {
-                              'x'           => $new_x,
-                              'y'           => $new_y,
-                              'height'      => $text_height,
-                              'width'       => $position->{'width'},
-                              'text_width'  => $text_width, 
-                              'image_width' => $slice_width,
-                              'font_size'   => $font_size,
-                            };
-        $self->add_label($feature, $label_position);
-      }
-
-      ## Overlaid labels (on top of feature)
-      ## Note that we can have these as well as regular labels, e.g. on variation tracks
-      my $overlay_standard = ($track_config->get('overlay_label') && $feature->{'label'});
-      my $overlay_separate = ($track_config->get('show_overlay') && $feature->{'text_overlay'});
-      if ($self->{'pix_per_bp'} > 4 && ($overlay_standard || $overlay_separate)) {
-        my $label_text;
-        my $bp_textwidth;
-
-        my $text_info     = $self->get_text_info($feature->{'label'});
-        my $text_width    = $text_info->{'width'};
-        my $text_height   = $text_info->{'height'};
-        ## If overlay text is different from main label, adjust accordingly
-        if ($track_config->get('show_overlay') && $feature->{'text_overlay'}) {
-          $label_text = $feature->{'text_overlay'};
-          my $overlay_info  = $self->get_text_info($label_text);
-          $bp_textwidth     = $overlay_info->{'width'};
-        }
-        else {  
-          $label_text = $feature->{'label'};
-          $bp_textwidth = $feature_width / $self->{'pix_per_bp'};
-        }
-
-        ## Reduce text size slightly for wider single-letter labels (A, M, V, W)
-        my $tmp_textwidth = $bp_textwidth;
-        if ($bp_textwidth >= $feature_width && length $label_text == 1) {
-          $font_size       *= 0.9;
-          my $tmp_text_info = $self->get_text_info($label_text);
-          $text_width       = $tmp_text_info->{'width'};
-          $text_height      = $tmp_text_info->{'height'};
-          $tmp_textwidth    = $text_width / $self->{'pix_per_bp'};
-        }
-
-        if ($feature_width > $tmp_textwidth) { ## OK, so there's space for the overlay
-          my $new_x = $feature->{'start'} - 1;
-          $new_x = 0 if $new_x < 0;
-          my $new_y = $position->{'y'} + $feature_height - $text_height;
           my $label_position = {
-                                'x'           => $new_x + (($feature_width - ($tmp_textwidth)) / 2),
+                                'x'           => $new_x,
                                 'y'           => $new_y,
-                                'height'      => $text_info->{'height'},
-                                'width'       => $feature_width,
+                                'height'      => $text_height,
+                                'width'       => $position->{'width'},
                                 'text_width'  => $text_width, 
                                 'image_width' => $slice_width,
                                 'font_size'   => $font_size,
                               };
-          $self->add_label($feature, $label_position, 'overlay');
+          $self->add_label($feature, $label_position);
         }
-      }
 
-      ## Optionally highlight this feature (including its label) 
-      $position->{'highlight_height'} ||= ($approx_height + $space_for_labels);
-      $self->add_highlight($feature, $position);
-      $count++;
+        ## Overlaid labels (on top of feature)
+        ## Note that we can have these as well as regular labels, e.g. on variation tracks
+        my $overlay_standard = ($track_config->get('overlay_label') && $feature->{'label'});
+        my $overlay_separate = ($track_config->get('show_overlay') && $feature->{'text_overlay'});
+        if ($self->{'pix_per_bp'} > 4 && ($overlay_standard || $overlay_separate)) {
+          my $label_text;
+          my $bp_textwidth;
+
+          my $text_info     = $self->get_text_info($feature->{'label'});
+          my $text_width    = $text_info->{'width'};
+          my $text_height   = $text_info->{'height'};
+          ## If overlay text is different from main label, adjust accordingly
+          if ($track_config->get('show_overlay') && $feature->{'text_overlay'}) {
+            $label_text = $feature->{'text_overlay'};
+            my $overlay_info  = $self->get_text_info($label_text);
+            $bp_textwidth     = $overlay_info->{'width'};
+          }
+          else {  
+            $label_text = $feature->{'label'};
+            $bp_textwidth = $feature_width / $self->{'pix_per_bp'};
+          }
+
+          ## Reduce text size slightly for wider single-letter labels (A, M, V, W)
+          my $tmp_textwidth = $bp_textwidth;
+          if ($bp_textwidth >= $feature_width && length $label_text == 1) {
+            $font_size       *= 0.9;
+            my $tmp_text_info = $self->get_text_info($label_text);
+            $text_width       = $tmp_text_info->{'width'};
+            $text_height      = $tmp_text_info->{'height'};
+            $tmp_textwidth    = $text_width / $self->{'pix_per_bp'};
+          }
+
+          if ($feature_width > $tmp_textwidth) { ## OK, so there's space for the overlay
+            my $new_x = $feature->{'start'} - 1;
+            $new_x = 0 if $new_x < 0;
+            my $new_y = $position->{'y'} + $feature_height - $text_height;
+            my $label_position = {
+                                  'x'           => $new_x + (($feature_width - ($tmp_textwidth)) / 2),
+                                  'y'           => $new_y,
+                                  'height'      => $text_info->{'height'},
+                                  'width'       => $feature_width,
+                                  'text_width'  => $text_width, 
+                                  'image_width' => $slice_width,
+                                  'font_size'   => $font_size,
+                                };
+            $self->add_label($feature, $label_position, 'overlay');
+          }
+        }
+
+        ## Optionally highlight this feature (including its label) 
+        $position->{'highlight_height'} ||= ($approx_height + $space_for_labels);
+        $self->add_highlight($feature, $position);
+        $count++;
+      }
+    }
+    else {
+      ## Show message if no features (we really only need to do this 
+      ## if the track consists of multiple subtracks) 
+      if (scalar @$data > 1) {
+        ## Track needs to be tall enough to hold an error message
+        my $feature_height  = $track_config->get('height');
+
+        my $message     = 'No features in this region';
+        my $text_info   = $self->get_text_info($message);
+        my $text_width  = $text_info->{'width'};
+        my $text_height = $text_info->{'height'};
+
+        my $x           = ($slice_width - $text_width) / 2; 
+        my $height      = max($feature_height, $text_height);
+        my $colour      = $track_config->get('default_colour') || $subtrack->{'metadata'}{'colour'} || 'black';
+
+        my $no_features = {
+                            'x'         => $x,
+                            'y'         => $subtrack_start,
+                            'height'    => $height,
+                            'width'     => $text_width / $self->{'pix_per_bp'},
+                            'text'      => $message, 
+                            'textwidth' => $text_width,
+                            'colour'    => $colour,
+                            'font'      => $self->{'font_name'},
+                            'ptsize'    => $self->{'font_size'},
+                            'absolutey' => 1,
+                          };
+
+        push @{$self->glyphs}, $self->Text($no_features);
+        my $total_height = $subtitle_height + $height + $vspacing;
+        push @{$heights->{0}}, ($total_height);
+      }
     }
 
     ## Set the height of the track, in case we want anything in the lefthand margin
@@ -286,6 +329,11 @@ sub create_glyphs {
       my $max = max(@$values);
       $subtrack_height += $max;
     }
+    ## Set it to the same height as the font if we're showing sublabels
+    if ($track_config->get('has_sublabels')) {
+      $subtrack_height = $font_height if $font_height > $subtrack_height;
+    } 
+
     $subtrack_start += $subtrack_height;
     $total_height   += $subtrack_height;
     $track_config->set('real_feature_height', $subtrack_height);
@@ -425,7 +473,5 @@ sub draw_connection {
                 };
   $self->add_connection($glyph, $connection->{'key'}, $params);
 }
-
-
 
 1;

@@ -28,6 +28,7 @@ no warnings "uninitialized";
 use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities decode_entities);
 use URI::Escape qw(uri_unescape);
+use JSON qw(from_json to_json);
 
 use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Exceptions qw(WebException);
@@ -92,6 +93,7 @@ sub _new {
   $self->{'track_order'}      = []; # state changes for track order as saved in db
   $self->{'user_track_count'} = 0;
   $self->{'userdata_threshold'}   = $hub->species_defs->USERDATA_THRESHOLD || 20;
+  $self->{'default_trackhub_tracks'} = {};
 
   return $self;
 }
@@ -175,13 +177,21 @@ sub apply_user_settings {
 
     my $node = $self->get_node($track_key);
 
+    ## Filthy hack for merging the two regulation matrices
+    my $real_key = $track_key;
+    if ($track_key =~ /reg_feats_non_core/ && !$node) {
+      ## All regulation tracks are now attached to the core node, even if they're non-core
+      $track_key =~ s/non_//;
+      $node = $self->get_node($track_key);
+    }
+
     # track doesn't exist, move the data aside temporarily (it could be a track on another species, or externally attached one)
     if (!$node) {
       $user_settings->{'_missing_nodes'}{$track_key} = delete $user_settings->{'nodes'}{$track_key};
       next;
     }
 
-    my $data = $user_settings->{'nodes'}{$track_key} || {};
+    my $data = $user_settings->{'nodes'}{$real_key} || {};
     next unless keys %$data; # no changes to this track
 
     # add track specific user data to the corresponding track node
@@ -224,11 +234,45 @@ sub reset_user_settings {
   ## Abstract method implementation
   my $self          = shift;
   my $reset_type    = shift || '';
+  my $params        = shift || {};
+  my $menu_ids      = $params->{'menu_ids'} ? from_json($params->{'menu_ids'}) : [];
   my $user_settings = $self->get_user_settings;
-
-  my ($reset_tracks, $reset_order) = $reset_type eq 'all' ? (1, 1) : ($reset_type eq 'track_order' ? (0, 1) : (1, 0));
-
+  my ($reset_tracks, $reset_order);
   my @altered;
+
+  if ($reset_type eq 'matrix') {
+    # Reset all reg matrix tracks
+    my %node_keys;
+    if ($user_settings->{'nodes'}) {
+      %node_keys = %{$user_settings->{'nodes'}};
+    }
+    if ($self->{'default_trackhub_tracks'}) {
+      %node_keys = (%node_keys, %{$self->{'default_trackhub_tracks'}});
+    }
+
+    foreach my $node_key (keys %node_keys) {
+      if ($node_key =~/^reg_feats|^seg_Segmentation|^trackhub_/) {
+        if (my $node = $self->get_node($node_key)) {
+          # For trackhubs we turn off all tracks and then update the selected ones.
+          # If you do a reset it will reset to default renderers which makes it turn on.
+          if ($node_key =~ /^trackhub_/ ) {
+            foreach my $menu_id (@$menu_ids) {
+              if (index($node_key, $menu_id) > -1) {
+                $self->update_track_renderer($node, 'off');
+              }
+            }
+          }
+          else {
+            $node->reset_user_settings;
+          }
+          push @altered, $node->get_data('name') || $node->get_data('caption') || 1;
+        }
+      }
+    }
+  }
+  else {
+    ($reset_tracks, $reset_order) = $reset_type eq 'all' ? (1, 1) : ($reset_type eq 'track_order' ? (0, 1) : (1, 0));
+  }
 
   if ($reset_order && @{$self->{'track_order'}}) {
     $self->{'track_order'} = [];
@@ -237,7 +281,6 @@ sub reset_user_settings {
 
   if ($reset_tracks) {
     foreach my $node_key (keys %{$user_settings->{'nodes'} || {}}) {
-
       if (my $node = $self->get_node($node_key)) {
         $node->reset_user_settings;
         push @altered, $node->get_data('name') || $node->get_data('caption') || 1;
@@ -252,7 +295,7 @@ sub reset_user_settings {
 
 sub config_url_params {
   ## Abstract method implementation
-  return $_[0]->type, qw(plus_signal);
+  return $_[0]->type;
 }
 
 sub update_from_url {
@@ -261,14 +304,6 @@ sub update_from_url {
 
   foreach my $key_val (grep $_, split(/,/, $params->{$self->type} || '')) {
     $self->altered($self->update_track_renderer(split /=/, $key_val));
-  }
-
-  # plus_signal turns on some regulation tracks in a complex algorithm
-  # on both regulation and location views. It can be specified in a URL
-  # and is currently used in some zmenus. Annoyingly there seems to
-  # be no better place for this code. Move it if you know of one. --dan
-  if ($params->{'plus_signal'}) { # TODO - move to update_from_url method in appropriate sub class --harpreet
-    $self->update_reg_renderer('signals', 1);
   }
 
   $self->save_user_settings if $self->is_altered;
@@ -297,7 +332,11 @@ sub update_from_input {
   } else {
     my $diff = delete $params->{$self->config_type};
 
+    # Reset regulation matrix tracks by default
+    $self->altered($self->reset_user_settings('matrix', $params));
+
     if (keys %$diff) {
+
       # update renderers
       foreach my $track_key (grep exists $diff->{$_}{'renderer'}, keys %$diff) {
         $self->altered($self->update_track_renderer($track_key, $diff->{$track_key}{'renderer'}));
@@ -360,19 +399,17 @@ sub update_track_renderer {
   my ($self, $node, $renderer) = @_;
 
   $node = $self->get_node($node) unless ref $node;
+  return unless $node;
 
-  if ($node) {
+  if (my $renderers = $node->get_data('renderers')) {
 
-    if (my $renderers = $node->get_data('renderers')) {
+    my %valid = @$renderers;
 
-      my %valid = @$renderers;
+    # Set renderer to something sensible if user has specified invalid one. 'off' is usually first option, so take next one
+    $renderer = $valid{'normal'} ? 'normal' : $renderers->[2] if $renderer ne 'off' && !$valid{$renderer};
 
-      # Set renderer to something sensible if user has specified invalid one. 'off' is usually first option, so take next one
-      $renderer = $valid{'normal'} ? 'normal' : $renderers->[2] if $renderer ne 'off' && !$valid{$renderer};
-
-      if ($node->set_user_setting('display', $renderer)) {
-        return $node->get_data('name') || $node->get_data('caption') || 1;
-      }
+    if ($node->set_user_setting('display', $renderer)) {
+      return $node->get_data('name') || $node->get_data('caption') || 1;
     }
   }
 }
@@ -650,6 +687,7 @@ sub menus {
     # Transcripts/Genes
     gene_transcript     => 'Genes and transcripts',
     transcript          => [ 'Genes',                  'gene_transcript' ],
+    longreads           => [ 'Long reads',             'gene_transcript' ],
     prediction          => [ 'Prediction transcripts', 'gene_transcript' ],
     lrg                 => [ 'LRG',                    'gene_transcript' ],
     rnaseq              => [ 'RNASeq models',          'gene_transcript' ],

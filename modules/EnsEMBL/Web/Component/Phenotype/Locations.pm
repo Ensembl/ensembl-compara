@@ -404,6 +404,12 @@ sub source_url {
       { ID => $ext_id, PR_ID => $ext_ref_id}
     ));
   }
+  if ($source_uc eq 'MGI') {
+    return ($source,$hub->get_ExtURL(
+      $source_uc.'_MP',
+      { ID => $ext_id }
+    ));
+  }
   if ($source_uc eq 'RGD') {
     $ext_id = $pf->object_id if (!$ext_id);
     return ($source,$hub->get_ExtURL(

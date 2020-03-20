@@ -68,67 +68,6 @@ sub _get_transcript_variations {
   return $tva->fetch_all_by_Transcripts_with_constraint([ $trans ]);
 }
 
-sub _get_variation_data {
-  my ($self,$args, $slice, $include_utr,$strand,$conseq_filter_in) = @_;
-
-  my $transcript = $args->{'transcript'};
-  my $cd_start           = $transcript->cdna_coding_start;
-  my $cd_end             = $transcript->cdna_coding_end;
-  my @coding_sequence;
-  if($cd_start) {
-    @coding_sequence = split '', substr $transcript->seq->seq, $cd_start - 1, $cd_end - $cd_start + 1;
-  }
-  my %consequence_filter = map { $_ ? ($_ => 1) : () } @$conseq_filter_in;
-     %consequence_filter = () if join('', keys %consequence_filter) eq 'off';
-  my @data;
-
-  foreach my $tv (@{$self->_get_transcript_variations($args,1)}) {
-    my $pos = $tv->translation_start;
-
-    next if !$include_utr && !$pos;
-    next unless $tv->cdna_start && $tv->cdna_end;
-    next if scalar keys %consequence_filter && !grep $consequence_filter{$_}, @{$tv->consequence_type};
-
-    my $vf    = $self->_transcript_variation_to_variation_feature($tv) or next;
-    my $vdbid = $vf->dbID;
-
-    my $start = $vf->start;
-    my $end   = $vf->end;
-
-    push @data, lazy_hash({
-      tva           => sub {
-        return $tv->get_all_alternate_TranscriptVariationAlleles->[0];
-      },
-      tv            => $tv,
-      vf            => $vf,
-      position      => $pos,
-      vdbid         => $vdbid,
-      snp_source    => sub { $vf->source },
-      snp_id        => sub { $vf->variation_name },
-      ambigcode     => sub { $vf->ambig_code($strand) },
-      codons        => sub {
-        my $tva = $_[0]->get('tva');
-        return $pos ? join(', ', split '/', $tva->display_codon_allele_string) : '';
-      },
-      allele        => sub { $vf->allele_string(undef, $strand) },
-      pep_snp       => sub {
-        my $tva = $_[0]->get('tva');
-        return join(', ', split '/', $tva->pep_allele_string);
-      },
-      type          => sub { $tv->display_consequence },
-      class         => sub { $vf->var_class },
-      length        => $vf->length,
-      indel         => sub { $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '' },
-      codon_seq     => sub { [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ] },
-      codon_var_pos => sub { ($tv->cds_start + 2) - ($pos * 3) },
-    });
-  }
-
-  @data = map $_->[2], sort { $a->[0] <=> $b->[0] || $a->[1] <=> $b->[1] } map [ $_->{'vf'}->length, $_->{'vf'}->most_severe_OverlapConsequence->rank, $_ ], @data;
-
-  return \@data;
-}
-
 sub get {
   my ($self,$args) = @_;
 
@@ -351,7 +290,7 @@ sub initialize_new {
 
   my $type   = $hub->param('data_type') || $hub->type;
   my $vc = $self->view_config($type);
- 
+
   my $adorn = $hub->param('adorn') || 'none';
  
   my $config = { 
@@ -364,7 +303,7 @@ sub initialize_new {
   $config->{$_} = ($self->param($_) eq 'on') ? 1 : 0 for qw(exons exons_case codons coding_seq translation rna snp_display utr hide_long_snps hide_rare_snps);
   $config->{'codons'}      = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
  
-  if ($self->param('line_numbering') ne 'off') {
+  if ($self->param('line_numbering') && $self->param('line_numbering') ne 'off') {
     $config->{'line_numbering'} = 'on';
     $config->{'number'}         = 1;
   }

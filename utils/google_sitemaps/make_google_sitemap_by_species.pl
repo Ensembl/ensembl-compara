@@ -20,7 +20,7 @@
 # can also specify which species you want to create maps for. e.g.
 #
 #   $ make_google_sitemap_by_species.pl
-#   $ make_google_sitemap_by_species.pl Aspergillus_clavatus Aspergillus_flavus
+#   $ make_google_sitemap_by_species.pl aspergillus_clavatus aspergillus_flavus
 #
 # The sitemap files will be created in the 'sitemaps' folder. For each species, the 
 # maps are split into numbered files, each containing 20,000 urls. e.g.
@@ -100,20 +100,18 @@ $map->write("${sitemap_path}/sitemap-common.xml");
 push @sitemaps, "sitemap-common.xml";
 
 my @skip = split /,/, $skip_list;
-my $name_lookup = $hub->species_defs->production_name_lookup;
 
 # create the sitemaps for each dataset
 foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::PRODUCTION_NAMES) {
   next if grep { $_ eq $dataset } @skip;
-  my $species = $name_lookup->{$dataset};
   
-  print "DATASET $dataset -> SPECIES $species\n";
-  my $adaptor = $hub->get_adaptor('get_GeneAdaptor', 'core', $species);
+  print "$dataset\n";
+  my $adaptor = $hub->get_adaptor('get_GeneAdaptor', 'core', $dataset);
   if (!$adaptor) {
     warn "core db doesn't exist for $dataset\n";
     next;
   }
-  my @urls = get_dataset_urls($sd, $adaptor, $species);
+  my @urls = get_dataset_urls($sd, $adaptor, $dataset);
   push @sitemaps, create_dataset_sitemaps($dataset, \@urls); 
 }
 
@@ -138,7 +136,7 @@ exit;
 #------------------------------------------------------------------------------
 
 sub get_dataset_urls {
-  my ($sd, $adaptor, $species) = @_;
+  my ($sd, $adaptor, $dataset) = @_;
   
   my %url_template = (
     'species'    => "/Info/Index",
@@ -146,13 +144,19 @@ sub get_dataset_urls {
     'transcript' => "/Transcript/Summary?t=",
   );
    
-  my @urls = ($domain . $species . $url_template{'species'});
+  my $sth = $adaptor->prepare('SELECT species_id, meta_value FROM meta WHERE meta_key = "species.production_name"');
+  $sth->execute;
+  
+  my %species_path = map { $_->[0] => $sd->species_path(valid_species_name($sd, $_->[1])) } @{$sth->fetchall_arrayref};
+  
+  my @urls = map { $domain . $species_path{$_} . $url_template{'species'} } keys %species_path;
   my @analysis_ids = get_analysis_ids($adaptor);
   if(! @analysis_ids){
     print "Cannot fetch genes and transcripts - no analysis_ids\n";
     return @urls;
   }
-  foreach my $type (qw/gene transcript/) {  
+  #foreach my $type (qw/gene transcript/) {  
+  foreach my $type (qw/gene/) {  
     my $query = 
       "SELECT g.stable_id, g.${type}_id, cs.species_id 
        FROM ${type} g, seq_region sr, coord_system cs
@@ -185,7 +189,7 @@ sub get_dataset_urls {
       my $chromosome = $region->[3];
       my $gene = $region->[4];
       
-      my $url = $species . $url_template{$type} . $stable_id;
+      my $url = $species_path{$species_id} . $url_template{$type} . $stable_id;
       $url .= ";r=$chromosome:$start-$end";
       $url .= ";t=$transcript" if (@regions == 1 && $type eq 'gene');     #only if there is one transcript add it to the url
       $url .= ";g=$gene" if($type eq 'transcript');

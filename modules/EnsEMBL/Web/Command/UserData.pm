@@ -193,7 +193,10 @@ sub attach {
                           timestamp => time,
                           position  => $position,
                         };
-          $record->{'disconnected'} = 0 if lc($attachable->name) eq 'trackhub';
+          if (lc($attachable->name) eq 'trackhub') {
+            $record->{'disconnected'} = 0;
+            $record->{'cache_ids'}    = {};
+          }
           my $data = $hub->session->set_record_data($record);
 
           $hub->configure_user_data('url', $data);

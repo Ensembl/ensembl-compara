@@ -177,12 +177,16 @@ sub get_slice_display_name {
 }
 
 sub long_caption {
-  my $self = shift;
+  my ($self, $versioned) = @_;
   
   my $dxr   = $self->Obj->can('display_xref') ? $self->Obj->display_xref : undef;
   my $label = $dxr ? ' (' . $dxr->display_id . ')' : '';
-  
-  return $self->stable_id . $label;
+
+  my $name  = $self->stable_id;
+  if ($versioned && $self->Obj->version) {
+    $name .= '.'.$self->Obj->version;
+  }
+  return $name . $label;
 }
 
 sub get_earliest_archive { 
@@ -353,8 +357,9 @@ sub get_slices {
       cigar_line        => $cigar_line,
     };
     if ($name eq 'Ancestral_sequences') {
-        $counter++;
-        my $ga_node = $formatted_slices[-1]->{underlying_slices}->[0]->{_node_in_tree};
+      $counter++;
+      my $ga_node = $formatted_slices[-1]->{underlying_slices}->[0]->{_node_in_tree};
+      if ($ga_node) {
         my $removed_species = $_->{_align_slice}->{_removed_species};
         # The current slice has to be discarded if it is an ancestral node
         # that fully maps to hidden species on one of its sides
@@ -366,6 +371,7 @@ sub get_slices {
         } else {
           pop @formatted_slices;
         }
+      }
     }
 
     $length ||= $_->length; # Set the slice length value for the reference slice only
@@ -377,7 +383,7 @@ sub get_slices {
 sub get_target_slice {
   my $self = shift;
   my $hub = $self->hub;
-  my $align_param = $hub->param('align');
+  my $align_param = $hub->get_alignment_id;
   my $target_slice;
 
   #target_species and target_slice_name_range may not be defined so split separately
@@ -402,7 +408,8 @@ sub get_alignments {
 
   my $cdb = $args->{'cdb'} || 'compara';
 
-  my ($align, $target_species, $target_slice_name_range) = split '--', $hub->param('align');
+  my ($align, $target_species, $target_slice_name_range) = split '--', ($args->{'align'} || $hub->get_alignment_id);
+
   my $target_slice = $self->get_target_slice;
 
   my $func                    = $self->{'alignments_function'} || 'get_all_Slices';
@@ -415,12 +422,30 @@ sub get_alignments {
   my $species = $args->{species};
   my @selected_species;
 
-  foreach (grep { /species_$align/ } $hub->param) {
-    if ($hub->param($_) eq 'yes') {
-      /species_${align}_(.+)/;
-      push @selected_species, $1 unless $1 =~ /^$species$/i;
+  my $viewconfig = $args->{'component'} ? $hub->get_viewconfig({'component' => $args->{'component'}, 'type' => $args->{'type'}})
+                                        : $hub->viewconfig;
+  my $alignments_session_data = $viewconfig->get_alignments_selector_settings;
+
+  if (keys %{$alignments_session_data->{$species}} && $alignments_session_data->{$species}->{'align'} == $align) {
+    while (my($k,$v) = each (%{$alignments_session_data->{$species}})) {
+      next unless ($k =~ /species_${align}_(.+)/ && $v eq 'yes');
+      push @selected_species, $1;
     }
   }
+  else {
+    my $db_key    = $args->{cdb} =~ /pan_ensembl/ ? 'DATABASE_COMPARA_PAN_ENSEMBL' : 'DATABASE_COMPARA';
+    my $alignment = $hub->species_defs->multi_hash->{$db_key}->{'ALIGNMENTS'}->{$align};
+
+    @selected_species = keys %{$alignment->{'species'}};
+
+    $_=lc for @selected_species;
+
+    my $session_data;
+    %{$session_data->{$species}} = map { sprintf('species_%s_%s', $align, lc) => 'yes' } @selected_species;
+    $session_data->{$species}->{'align'} = $align;
+    $viewconfig->save_alignments_selector_settings($session_data);
+  }
+
   unshift @selected_species, lc $species unless $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'class'} =~ /pairwise/;
 
   $align_slice = $align_slice->sub_AlignSlice($args->{start}, $args->{end}) if $args->{start} && $args->{end};

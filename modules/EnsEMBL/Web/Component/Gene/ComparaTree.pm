@@ -136,7 +136,7 @@ sub content {
 
   $html                 .= sprintf '<h3>GeneTree%s</h3>%s', $link, $self->new_twocol(
     ['Number of genes',             scalar(@$leaves)                                                  ],
-    ['Number of speciation nodes',  $self->get_num_nodes_with_tag($tree, 'node_type', 'speciation')   ],
+    ['Number of speciation nodes',  $self->get_num_nodes_with_tag($tree, 'node_type', 'speciation') + $self->get_num_nodes_with_tag($tree, 'node_type', 'sub-speciation')   ],
     ['Number of duplication',       $self->get_num_nodes_with_tag($tree, 'node_type', 'duplication')  ],
     ['Number of ambiguous',         $self->get_num_nodes_with_tag($tree, 'node_type', 'dubious')      ],
     ['Number of gene split events', $self->get_num_nodes_with_tag($tree, 'node_type', 'gene_split')   ]
@@ -232,10 +232,11 @@ sub content {
   my $genome_db_adaptor = $tree->adaptor->db->get_GenomeDBAdaptor;
   foreach my $species_name (keys %{$self->hub->get_species_info}) {  
     foreach my $clade (@{ $self->hub->species_defs->get_config($species_name, 'SPECIES_GROUP_HIERARCHY') }) {
-      push @{$genome_db_ids_by_clade{$clade}}, $genome_db_adaptor->fetch_by_name_assembly($hub->species_defs->get_config($species_name, 'SPECIES_PRODUCTION_NAME'))->dbID;
+      my $production_name = $hub->species_defs->get_config($species_name, 'SPECIES_PRODUCTION_NAME');
+      my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($production_name);
+      push @{$genome_db_ids_by_clade{$clade}}, $genome_db->dbID if $genome_db;
     }
   }
-  $genome_db_ids_by_clade{LOWCOVERAGE} = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'SPECIES_SET'}{'LOWCOVERAGE'};
 
   if (@hidden_clades) {
     %hidden_genome_db_ids = ();

@@ -47,6 +47,7 @@ use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::ViewConfig;
 use EnsEMBL::Web::Tools::Misc qw(style_by_filesize);
 use EnsEMBL::Web::Tools::FailOver::SNPedia;
+use EnsEMBL::Web::Tools::FailOver::AlleleRegistry;
 
 use EnsEMBL::Web::QueryStore;
 use EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl;
@@ -129,7 +130,7 @@ sub new {
 sub init_cookies {
   ## Initialises cookies from request header
   my $self = shift;
-  $self->{'cookies'} = EnsEMBL::Web::Cookie->new_from_header($self->r);
+  $self->{'cookies'} = $self->r ? EnsEMBL::Web::Cookie->new_from_header($self->r) : {};
 }
 
 sub init_cache {
@@ -207,6 +208,7 @@ sub get_cookie {
   ## @param Flag kept on if cookie is encrypted
   ## @return Cookie object (possible newly created)
   my ($self, $name, $is_encrypted) = @_;
+  return unless $self->r;
   my $cookie = $self->cookies->{$name} ||= EnsEMBL::Web::Cookie->new($self->r, {'name' => $name});
 
   $cookie->encrypted($is_encrypted || 0);
@@ -343,9 +345,9 @@ sub get_species_info {
 
     for (@required_species) {
       my $strain            = $species_defs->get_config($_, 'SPECIES_STRAIN') || '';
-      my $strain_collection = $species_defs->get_config($_, 'STRAIN_COLLECTION') || '';
+      my $strain_group = $species_defs->get_config($_, 'STRAIN_GROUP') || '';
       my $is_reference      = !$strain || ($strain && $strain =~ /reference/)
-                                       || !$strain_collection;
+                                       || !$strain_group;
       $self->{'_species_info'}{$_} = {
         'key'               => $_,
         'name'              => $species_defs->get_config($_, 'SPECIES_BIO_NAME'),
@@ -356,7 +358,8 @@ sub get_species_info {
         'group'             => $species_defs->get_config($_, 'SPECIES_GROUP'),
         'strain'            => $strain,
         'is_reference'      => $is_reference,
-        'strain_collection' => $strain_collection,
+        'strain_group'      => $strain_group,
+        'strain_type'       => $species_defs->get_config($_, 'STRAIN_TYPE'),
       } unless exists $self->{'_species_info'}{$_};
     }
 
@@ -432,7 +435,8 @@ sub url {
   delete $pars{'v'}  if $params->{'vf'};
   delete $pars{'time'};
   delete $pars{'_'};
-
+  # db param not required for tools (as it breaks when accessing RID view from blast results with db=otherfeatures param which gets added from search results).
+  delete $pars{'db'} if $params->{'type'} eq 'Tools';
   # add the requested GET params to the query string
   foreach (keys %$params) {
     $_ =~ /^(__)?(species|type|action|function)?(.*)$/;
@@ -566,12 +570,18 @@ sub multi_params {
   my $realign = shift;
 
   my $input = $self->input;
+  return {} unless $input;
 
   my %params = defined $realign ?
     map { $_ => $input->param($_) } grep { $realign ? /^([srg]\d*|pop\d+|align)$/ && !/^[rg]$realign$/ : /^(s\d+|r|pop\d+|align)$/ && $input->param($_) } $input->param :
     map { $_ => $input->param($_) } grep { /^([srg]\d*|pop\d+|align)$/ && $input->param($_) } $input->param;
 
   return \%params;
+}
+
+sub get_alignment_id {
+  my $self = shift;
+  return $self->param('align') || $self->session->get_record_data({type => 'view_config', code => 'alignments_selector'})->{$self->species}->{'align'} || '';
 }
 
 sub filename {
@@ -845,12 +855,33 @@ sub snpedia_status {
   my $failover = EnsEMBL::Web::Tools::FailOver::SNPedia->new($self);
   my $out;
 
+  return $out if $self->species ne 'Homo_sapiens';
+
   try {
     $out = $failover->get_cached
   } catch {
     warn "SNPEDIA failure";
   };
 
+  return $out;
+}
+
+# check to see if ClinGen Allele Registry site is up or down
+# if $out then site is up
+sub alleleregistry_status {
+
+  my $self = shift;
+
+  my $failover = EnsEMBL::Web::Tools::FailOver::AlleleRegistry->new($self);
+  my $out;
+
+  return $out if $self->species ne 'Homo_sapiens';
+
+  try {
+    $out = $failover->get_cached
+  } catch {
+    warn "Allele Registry failure";
+  };
   return $out;
 }
 
@@ -1040,7 +1071,7 @@ sub order_species_by_clade { # TODO - move to EnsEMBL::Web::Document::HTML::Comp
 
   my %stn_by_name = ();
   foreach my $stn (@$species) {
-    $stn_by_name{$stn->genome_db->name} = $stn;
+    push @{$stn_by_name{$stn->genome_db->name}}, $stn;
   };
 
   ## Sort species into desired groups
@@ -1057,7 +1088,7 @@ sub order_species_by_clade { # TODO - move to EnsEMBL::Web::Document::HTML::Comp
   my $favourites    = $self->get_favourite_species;
   if (scalar @$favourites) {
     my @allowed_production_names = grep {$stn_by_name{$_}} map {$species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME')} @$favourites;
-    push @final_sets, ['Favourite species', [map {$stn_by_name{$_}} @allowed_production_names]] if @allowed_production_names;
+    push @final_sets, ['Favourite species', [map {@{$stn_by_name{$_}}} @allowed_production_names]] if @allowed_production_names;
   }
 
   ## Output in taxonomic groups, ordered by common name
@@ -1067,7 +1098,7 @@ sub order_species_by_clade { # TODO - move to EnsEMBL::Web::Document::HTML::Comp
       my $name_to_use = ($group_name eq 'no_group') ? (scalar(@group_order) > 1 ? 'Other species' : 'All species') : encode_entities($group_name);
       my @sorted_by_common = sort { $species_info->{$a}->{'common'} cmp $species_info->{$b}->{'common'} } @$species_list;
       my @allowed_production_names = grep {$stn_by_name{$_}} map {$species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME')} @sorted_by_common;
-      push @final_sets, [$name_to_use, [map {$stn_by_name{$_}} @allowed_production_names]] if @allowed_production_names;
+      push @final_sets, [$name_to_use, [map {@{$stn_by_name{$_}}} @allowed_production_names]] if @allowed_production_names;
   }
 
   return \@final_sets;

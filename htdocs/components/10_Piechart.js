@@ -22,9 +22,9 @@ Ensembl.Panel.Piechart = Ensembl.Panel.Content.extend({
     this.base();
     
     if (typeof Raphael === 'undefined') {
-      $.getScript('/raphael/raphael-min.js', function () {
-        $.getScript('/raphael/g.raphael-min.js', function () {
-          $.getScript('/raphael/g.pie-modified-min.js', function () { panel.getContent(); });
+      $.getScript('/raphael/raphael-min.js').done( function () {
+        $.getScript('/raphael/g.raphael-min.js').done( function () {
+          $.getScript('/raphael/g.pie-modified-min.js').done( function () { panel.getContent(); });
         });
       });
     }

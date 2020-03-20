@@ -98,6 +98,12 @@ sub content_ajax {
           }
 
           my $page_action = $hub->referer->{'ENSEMBL_ACTION'};
+          ## Fix redirection from species home page
+          my $no_current = 0;
+          if ($page_action eq 'Index') {
+            $page_action    = 'View';
+            $no_current     = 1;
+          }
           #my $config      = $page_action eq 'Multi' ? 'multibottom' : 'contigviewbottom';
           #my $param_string = join(',', map $_ ? "$_=on" : (), $data->{'analyses'} ? split ', ', $data->{'analyses'} : join '_', $data->{'type'}, $data->{'code'});
           my $location_view = ($hub->referer->{ENSEMBL_TYPE} eq 'Location' && ($page_action eq 'View' || $page_action eq 'Multi')) ? 1 : 0;
@@ -137,21 +143,25 @@ sub content_ajax {
             }
           }
           my $current_url = $hub->url($link_params);
+          my $current_region = $no_current ? '' 
+                                : sprintf '<li>Current region: <a href="%s">%s</a></li>',
+                                            $current_url, $hub->param('r');
+      
+
 
           $html .= sprintf('
                 <br>
                 <p><strong>Go to%s:</strong></p>
                 <ul>
                   <li>%s region with data: <a href="%s">%s</a></li>
-                  <li>Current region: <a href="%s">%s</a></li>
+                  %s
                 </ul>
                 <p class="space-below">or</p>',
                 !$location_view ? ' Location view' : '',
                 $hub->referer->{'params'}{'r'} ? 'Nearest' : 'First',
                 $nearest_url,
                 $nearest,
-                $current_url,
-                $hub->param('r')
+                $current_region,
               );
         }
         elsif ($count) {

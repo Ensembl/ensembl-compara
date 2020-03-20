@@ -33,21 +33,6 @@ sub init_cacheable {
   $self->set_default_options({ 'title_display' => 'yes' });
 }
 
-sub init_non_cacheable {
-  ## @override
-  my $self = shift;
-
-  # Set a default align parameter (the smallest multiway alignment with available for this species)
-  if (!$self->hub->param('align')) {
-    my @alignments = map { /species_(\d+)/ && $self->{'options'}{join '_', 'species', $1, lc $self->species} ? $1 : () } keys %{$self->{'options'}};
-    my %align;
-
-    $align{$_}++ for @alignments;
-
-    $self->hub->param('align', [ sort { $align{$a} <=> $align{$b} } keys %align ]->[0]);
-  }
-}
-
 sub field_order {
   ## @override
   return qw(hide_long_snps line_numbering title_display);

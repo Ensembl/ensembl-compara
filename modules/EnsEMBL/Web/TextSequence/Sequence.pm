@@ -127,7 +127,8 @@ sub padded_name {
   my ($self) = @_;
 
   my $name = $self->name || '';
-  $name .= ' ' x ($self->{'set'}->field_size('name') - length $name);
+  (my $plain_name = $name) =~ s/<[^>]+>//g;
+  $name .= ' ' x ($self->{'set'}->field_size('name') - length $plain_name);
   return $name;
 }
 

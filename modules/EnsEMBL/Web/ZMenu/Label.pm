@@ -36,7 +36,7 @@ sub regulation_content {
 
   my $dba = $hub->database('funcgen');
   my $ega = $dba->get_EpigenomeAdaptor;
-  my $epi = $ega->fetch_by_name($cell_line);
+  my $epi = $ega->fetch_by_display_label($cell_line);
  
   $self->caption('Cell Type');
   $self->add_entry({ type => "Cell Type", label => $cell_line });

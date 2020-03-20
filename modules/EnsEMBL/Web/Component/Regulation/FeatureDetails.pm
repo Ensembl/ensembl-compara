@@ -80,11 +80,10 @@ sub content {
   my $total = 0; 
   my $colours   = $self->hub->species_defs->colour('fg_regulatory_features');
   my $colourmap = EnsEMBL::Draw::Utils::ColourMap->new;
+  my $epigenomes = $object->regbuild_epigenomes;
 
-  foreach (@{$object->regbuild_epigenomes}) {
-    my @parts = split(':',$_);
-    my $id = pop @parts;
-    my $name = join(':',@parts);
+  foreach my $key (sort {lc $epigenomes->{$a} cmp lc $epigenomes->{$b}} keys %$epigenomes) {
+    my $name = $epigenomes->{$key};
     my $activity = $object->activity($name) || 'UNKNOWN';
     $activity = ucfirst(lc($activity));
     my $colour_key = $activity;

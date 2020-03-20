@@ -101,9 +101,9 @@ sub create_glyphs {
     $features = [ $features ] if ref $features ne 'ARRAY';
 
     ## Work out a default colour
-    my $colour = $subtrack->{'metadata'}{'color'}
+    my $colour = $track_config->get('colour')
                   || $subtrack->{'metadata'}{'colour'}
-                  || $track_config->get('colour');
+                  || $subtrack->{'metadata'}{'color'}; ## default
 
     ## Select a colour to indicate truncated values
     my $truncate_colour = ($colour eq 'black' || $colour eq '0,0,0') ? 'red' : 'black';
@@ -145,7 +145,6 @@ sub create_glyphs {
 
 sub draw_wiggle {
   my ($self, $c, $features) = @_;
-  warn ">>> DRAWING STANDARD WIGGLE";
 
   return unless $features && @$features;
 

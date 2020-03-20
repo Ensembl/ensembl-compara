@@ -58,10 +58,16 @@ sub content {
 </div>
           );
 
+  ## Don't mark up archives, etc - it will only confuse search engine users
+  ## if there are e.g. multiple human gene sets in the results!
+  $html .= $self->include_bioschema_datasets if $species_defs->BIOSCHEMAS_DATACATALOG;
+
   $html .= '
 <div class="column-wrapper">  
   <div class="column-two">
     <div class="column-padding no-left-margin">';
+  ### SPECIES DESCRIPTION
+  $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/${species}_description.html");
 ### ASSEMBLY
   $html .= '<h2 id="assembly">Assembly</h2>';
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/${species}_assembly.html");

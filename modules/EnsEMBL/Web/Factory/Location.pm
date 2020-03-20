@@ -931,6 +931,11 @@ sub _map_assembly {
           $new_slice->end
         );
       }
+      if(length($message) > 60000 or @$segments > 400) {
+        # Very long messages can't fit in the session db. What use are they
+        # to a user anyway.
+        $message = "over ".(int(@$segments/100)*100)." segments!";
+      }
 
       $session->set_record_data({
         type     => 'message',

@@ -70,6 +70,7 @@ sub availability {
       $availability->{'has_domains'}     = $counts->{'prot_domains'};
       $availability->{"has_$_"}          = $counts->{$_} for qw(exons evidence similarity_matches oligos);
       $availability->{ref_slice}       //= $self->Obj->slice->is_reference();
+      $availability->{'has_pdbe'}        = $self->has_pdbe_analysis();
     }
   
     $self->{'_availability'} = $availability;
@@ -272,6 +273,11 @@ sub count_oligos {
   return $total_number_of_mappings;
 }
 
+sub has_pdbe_analysis {
+  my $self = shift;
+  return ($self->table_info($self->get_db, 'protein_feature')->{'analyses'}{'sifts_import'}) ? 1 : 0;
+}
+
 sub default_track_by_gene {
   my $self = shift;
   my $db    = $self->get_db;
@@ -373,6 +379,7 @@ sub type_name {
 sub transcript             { return $_[0]->Obj; }
 sub source                 { return $_[0]->gene ? $_[0]->gene->source : undef; }
 sub stable_id              { return $_[0]->Obj->stable_id;  }
+sub stable_id_version      { return $_[0]->Obj->stable_id_version;  }
 sub feature_type           { return $_[0]->Obj->type;       }
 sub version                { return $_[0]->Obj->version;    }
 sub logic_name             { return $_[0]->gene ? $_[0]->gene->analysis->logic_name : $_[0]->Obj->analysis->logic_name; }
@@ -409,7 +416,8 @@ sub get_families {
   return unless $translation;
 
   my $member = $self->database($cdb)->get_SeqMemberAdaptor->fetch_by_stable_id($translation->stable_id);
-  my $family = $self->database($cdb)->get_FamilyAdaptor->fetch_by_SeqMember($member);
+
+  my $family = $member && $self->database($cdb)->get_FamilyAdaptor->fetch_by_SeqMember($member);
 
   # munge data
   my $family_hash = {};
@@ -920,7 +928,7 @@ sub gene_type {
   my $db = $self->get_db;
   my $type = '';
   $type = $self->Obj->biotype;
-  $type =~ s/_/ /;
+  $type =~ s/_/ /g;
   $type ||= $self->display_label;
   $type ||= $self->db_type;
   $type ||= $db;
@@ -1174,6 +1182,7 @@ sub sort_oligo_data {
         'ftype'  => 'ProbeFeature',
         'fdb'    => 'funcgen',
         'ptype'  => $p_type, 
+        'array'  => $array,
       });
       
       $text .= '<p>';
@@ -1650,6 +1659,8 @@ sub variation_data {
   my @coding_sequence    = split '', substr $transcript->seq->seq, $cd_start - 1, $cd_end - $cd_start + 1;
   my %consequence_filter = map { $_ ? ($_ => 1) : () } $hub->param('consequence_filter');
      %consequence_filter = () if join('', keys %consequence_filter) eq 'off';
+  my %evidence_filter    = map { $_ ? ($_ => 1) : () } $hub->param('evidence_filter');
+     %evidence_filter    = () if join('', keys %evidence_filter) eq 'off';
   my @data;
   
   # Population filtered variations currently fail to return in a reasonable time
@@ -1675,9 +1686,11 @@ sub variation_data {
     next unless $tv->cdna_start && $tv->cdna_end;
     next if scalar keys %consequence_filter && !grep $consequence_filter{$_}, @{$tv->consequence_type};
     
-    my $vf    = $self->transcript_variation_to_variation_feature($tv) or next;
-    my $vdbid = $vf->dbID;
-    
+    my $vf       = $self->transcript_variation_to_variation_feature($tv) or next;
+    my $vdbid    = $vf->dbID;
+    my $evidence = $vf->get_all_evidence_values;
+    next if scalar keys %evidence_filter && !grep $evidence_filter{$_}, @{$evidence};
+ 
     #next if scalar keys %population_filter && !$population_filter{$vdbid};
     
     my $start = $vf->start;
@@ -1703,6 +1716,7 @@ sub variation_data {
         indel         => sub { $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '' },
         codon_seq     => sub { [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ] },
         codon_var_pos => sub { ($tv->cds_start + 2) - ($pos * 3) },
+        evidence      => $evidence,
       });
     }
   }

@@ -24,6 +24,8 @@ package EnsEMBL::Web::Document::HTML::HomeSearch;
 
 use strict;
 
+use List::MoreUtils qw(first_index);
+
 use base qw(EnsEMBL::Web::Document::HTML);
 
 use EnsEMBL::Web::Form;
@@ -84,6 +86,23 @@ sub render {
     @keys = qw(GENE_TEXT LOCATION_TEXT VARIATION_TEXT SEARCH_TEXT);
   }
 
+  ## Remove variation link if species only has VCF variants
+  my $vdb = $hub->species_defs->databases->{'DATABASE_VARIATION'};
+  if ($vdb) {
+    my $no_real_variants = 1;
+    my $counts = $vdb->{'tables'}{'source'}{'counts'};
+    foreach my $key (keys %{$counts||{}}) {
+      if ($counts->{$key} > 0) {
+        $no_real_variants = 0;
+        last;
+      }
+    }
+    if ($no_real_variants) {
+      my $index = first_index {$_ eq 'VARIATION_TEXT'} @keys;
+      splice @keys, $index, 1; 
+    }
+  }
+
   if (keys %sample_data) {
     $examples = join ' or ', map { $sample_data{$_} ? sprintf('<a class="nowrap" href="%s?q=%s%s">%s</a>', $search_url, $sample_data{$_}, $extra_params, $sample_data{$_}) : ()
     } @keys;
@@ -97,6 +116,17 @@ sub render {
     my $species_info = $hub->get_species_info;
     my %species      = map { $species_info->{$_}{'common'} => $_ } grep { $species_info->{$_}{'is_reference'} } sort keys %$species_info;
     my %common_names = reverse %species;
+    my $values = [
+                  {'value' => '', 'caption' => 'All species'},
+                  {'value' => 'help', 'caption' => 'Help and Documentation' },
+                  {'value' => '', 'caption' => '---', 'disabled' => 1},
+                  ];
+    ## If more than one species, show favourites
+    if (scalar keys %species > 1) {
+        push @$values, map({ $common_names{$_} ? {'value' => $_, 'caption' => $common_names{$_}, 'group' => 'Favourite species'} : ()} @$favourites);
+        push @$values, {'value' => '', 'caption' => '---', 'disabled' => 1};
+    }
+    push @$values, map({'value' => $species{$_}, 'caption' => $_}, sort { uc $a cmp uc $b } keys %species);
 
     $field->add_element({
       'type'    => 'dropdown',
@@ -104,14 +134,7 @@ sub render {
       'label'   => 'Search',
       'id'      => 'species',
       'class'   => 'input',
-      'values'  => [
-        {'value' => '', 'caption' => 'All species'},
-        {'value' => 'help', 'caption' => 'Help and Documentation' },
-        {'value' => '', 'caption' => '---', 'disabled' => 1},
-        map({ $common_names{$_} ? {'value' => $_, 'caption' => $common_names{$_}, 'group' => 'Favourite species'} : ()} @$favourites),
-        {'value' => '', 'caption' => '---', 'disabled' => 1},
-        map({'value' => $species{$_}, 'caption' => $_}, sort { uc $a cmp uc $b } keys %species)
-      ]
+      'values'  => $values,
     }, $inline)->first_child->after('label', {'inner_HTML' => '&nbsp;for', 'for' => 'q'});
 
   }

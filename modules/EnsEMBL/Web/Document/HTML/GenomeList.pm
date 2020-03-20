@@ -55,27 +55,45 @@ sub _get_dom_tree {
     $prehtml .= $template =~ s/\{\{species\.(\w+)}\}/my $replacement = $species->[$_]{$1};/gre if $species->[$_] && $species->[$_]->{'favourite'};
   }
 
-  my $sitename  = $self->hub->species_defs->ENSEMBL_SITETYPE;
-  my $list_html = sprintf qq(<h3>All genomes</h3>
-    %s
-    <ul class="space-above">
-      <li><a href="%s">View full list of all %s species</a></li>
-      <li class="customise-species-list"><a class="_list_edit modal_link" href="%s">Edit your favourites</a></li>
-    </ul>
-    ), 
-    $self->add_species_dropdown, $self->species_list_url, $sitename, $hub->url({qw(type Account action Login)});
+  ## Needed for autocomplete
+  my $strains = [];
+  foreach my $sp (@$species) {
+    if ($sp->{'strainspage'}) {
+      push @$strains, {
+                      'homepage'  => $sp->{'strainspage'},
+                      'name'      => $sp->{'name'},,
+                      'common'    => (sprintf '%s %s', $sp->{'common'}, $sp->{'strain_type'}),
+                      };
+    }
+  }
 
-  my $sort_html = qq(<p>For easy access to commonly used genomes, drag from the bottom list to the top one</p>
+  my @ok_species = $sd->valid_species;
+  my $sitename  = $self->hub->species_defs->ENSEMBL_SITETYPE;
+  if (scalar @ok_species > 1) {
+    my $list_html = sprintf qq(<h3>All genomes</h3>
+      %s
+      <h3 class="space-above"></h3>
+      %s
+      <p><a href="%s">View full list of all %s species</a></p>
+      ), 
+      $self->add_species_dropdown,
+      $self->add_genome_groups, 
+      $self->species_list_url, $sitename;
+
+    my $sort_html = qq(<p>For easy access to commonly used genomes, drag from the bottom list to the top one</p>
         <p><strong>Favourites</strong></p>
           <ul class="_favourites"></ul>
+        <p><a href="#Done" class="button _list_done">Done</a>
+          <a href="#Reset" class="button _list_reset">Restore default list</a></p>
         <p><strong>Other available species</strong></p>
           <ul class="_species"></ul>
-        <p><a href="#Done" class="button _list_done">Done</a>
-          <a href="#Reset" class="button _list_reset">Restore default list</a></p>);
+          );
 
-  return $self->dom->create_element('div', {
-    'class'       => 'column_wrapper',
-    'children'    => [{
+    my $edit_icon = sprintf qq(<a href="%s" class="_list_edit modal_link"><img src="/i/16/pencil.png" class="left-half-margin" title="Edit your favourites"></a>), $hub->url({qw(type Account action Login)});
+
+    return $self->dom->create_element('div', {
+      'class'       => 'column_wrapper',
+      'children'    => [{
               'node_name'   => 'div',
               'class'       => 'column-two static_all_species',
               'inner_HTML'  => $list_html,
@@ -84,15 +102,15 @@ sub _get_dom_tree {
               'class'       => 'column-two fave-genomes',
               'children'    => [{
                         'node_name'   => 'h3',
-                        'inner_HTML'  => 'Favourite genomes'
-                      }, {
-                        'node_name'   => 'div',
-                        'class'       => [qw(_species_fav_container species-list)],
-                        'inner_HTML'  => $prehtml
+                        'inner_HTML'  => "Favourite genomes $edit_icon",
                       }, {
                         'node_name'   => 'div',
                         'class'       => [qw(_species_sort_container reorder_species clear hidden)],
                         'inner_HTML'  => $sort_html
+                      }, {
+                        'node_name'   => 'div',
+                        'class'       => [qw(_species_fav_container species-list)],
+                        'inner_HTML'  => $prehtml
                       }, {
                         'node_name'   => 'inputhidden',
                         'class'       => 'js_param',
@@ -108,6 +126,11 @@ sub _get_dom_tree {
                         'class'       => 'js_param json',
                         'name'        => 'species_list',
                         'value'       => encode_entities(to_json($species))
+                      }, {
+                        'node_name'   => 'inputhidden',
+                        'class'       => 'js_param json',
+                        'name'        => 'strains_list',
+                        'value'       => encode_entities(to_json($strains))
                       }, {
                         'node_name'   => 'inputhidden',
                         'class'       => 'js_param',
@@ -136,7 +159,100 @@ sub _get_dom_tree {
                       }]
           }]
     });
+  }
+  else {
+    my $species       = $ok_species[0];
+    my $info          = $hub->get_species_info($species);
+    my $homepage      = $hub->url({'species' => $species, 'type' => 'Info', 'function' => 'Index', '__clear' => 1});
+    my $img_url       = $sd->img_url || '';
+    my $sp_info = {
+      homepage    => $homepage,
+      name        => $info->{'name'},
+      img         => sprintf('%sspecies/%s.png', $img_url, $species),
+      common      => $info->{'common'},
+      assembly    => $info->{'assembly'},
+    };
+    my $species_html = $template =~ s/\{\{species\.(\w+)}\}/my $replacement = $sp_info->{$1};/gre;
+    return $self->dom->create_element('div', {
+      'class'       => 'column_wrapper',
+      'children'    => [{
+                        'node_name'   => 'div',
+                        'class'       => 'column-two fave-genomes',
+                        'children'    => [{
+                                          'node_name'   => 'h3',
+                                          'inner_HTML'  => 'Available genomes'
+                                          }, {
+                                          'node_name'   => 'div',
+                                          'inner_HTML'  => $species_html
+                                        }]
+                        }]
+    });
+  }
 }
+
+sub add_species_selector {
+  my $self = shift;
+  my $finder_prompt = 'Start typing the name of a species...';
+
+  my $html = qq(
+    <div class="taxon_tree_master hidden"></div>
+    <div class="species_select_container">
+      <div class="species_homepage_selector">
+        <div class="content">
+          <div class="finder">
+            <input type="text" autofocus class="ui-autocomplete-input inactive" title="$finder_prompt" placeholder="$finder_prompt" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  return $html;
+}
+
+sub add_genome_groups {
+  my $self = shift;
+  
+  my $html = '';
+  my @featured = $self->get_featured_genomes; 
+
+  foreach my $item (@featured) {
+    $html .= sprintf qq(
+<div class="species-box-outer">
+  <div class="species-box">
+    <a href="%s"><img src="/i/species/%s" alt="%s" title="Browse %s" class="badge-48"/></a>
+    ), $item->{'url'}, $item->{'img'}, $item->{'name'}, $item->{'name'};
+
+    if ($item->{'link_title'}) {
+      $html .= sprintf '<a href="%s" class="species-name">%s</a>', $item->{'url'}, $item->{'name'};
+    }
+    else {
+      $html .= sprintf '<span class="species-name">%s</span>', $item->{'name'};
+    }
+
+    if ($item->{'more'}) {
+      $html .= sprintf '<div class="assembly">%s</div>', $item->{'more'};
+    }
+
+    $html .= qq(
+  </div>
+</div>
+    );
+  } 
+
+  return $html;
+}
+
+sub get_featured_genomes {
+  return (
+           {
+            'url'   => 'Sus_scrofa/Info/Strains/',
+            'img'   => 'Sus_scrofa.png',
+            'name'  => 'Pig breeds',
+            'more'  => qq(<a href="/Sus_scrofa/" class="nodeco">Pig reference genome</a> and <a href="Sus_scrofa/Info/Strains/" class="nodeco">12 additional breeds</a>),
+           },
+          );
+}
+
 
 sub add_species_dropdown { '<p><select class="fselect _all_species"><option value="">-- Select a species --</option></select></p>' }
 
@@ -165,7 +281,12 @@ sub _species_list {
 
     my $homepage      = $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Index', '__clear' => 1});
     my $alt_assembly  = $sd->get_config($_, 'SWITCH_ASSEMBLY');
-    my $strainspage   = $species->{$_}{'has_strains'} ? $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Strains', '__clear' => 1}) : 0;
+    my $strainspage   = '';
+    my $strain_type   = '';
+    if ($species->{$_}{'strain_group'}) {
+      $strainspage = $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Strains', '__clear' => 1});
+      $strain_type = $sd->get_config($_, 'STRAIN_TYPE').'s'; 
+    }
 
     my $extra = $_ eq 'Homo_sapiens' ? '<a href="/info/website/tutorials/grch37.html" class="species-extra">Still using GRCh37?</a>' : '';
 
@@ -180,6 +301,7 @@ sub _species_list {
       assembly_v  => $species->{$_}{'assembly_version'},
       favourite   => $fav{$_} ? 1 : 0,
       strainspage => $strainspage,
+      strain_type => $strain_type,
       has_alt     => $alt_assembly ? 1 : 0,
       extra       => $extra,
     };

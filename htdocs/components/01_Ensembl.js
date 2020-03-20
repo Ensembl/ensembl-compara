@@ -57,7 +57,7 @@ Ensembl.extend({
         }
       } else if (ua.match(/firefox/)) {
         b.firefox = true;
-      } else if (ua.match(/msie/i)) {
+      } else if (ua.match(/msie|trident/i)) {
         b.ie = true;
       }
       return b;
@@ -405,6 +405,9 @@ Ensembl.extend({
     }
     
     return x1 + x2;
+  },
+  openMotifWidget: function(motifID) {
+    var widgetWindow = window.open("/motifWidget.htm?id="+motifID, "Motif Feature Widget", "width=950,height=550");
   },
 
   populateTemplate : function(template, data) {

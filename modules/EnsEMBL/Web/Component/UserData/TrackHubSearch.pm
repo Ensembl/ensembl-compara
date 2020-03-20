@@ -100,7 +100,7 @@ sub content {
 
     if ($message) {
       $html .= $message;
-      $html .= sprintf('<p>You can search the <a href="%s">Track Hub Registry website</a> for the full range of publicly available data.</p>', $sd->TRACKHUB_REGISTRY_UR);
+      $html .= sprintf('<p>You can search the <a href="%s">Track Hub Registry website</a> for the full range of publicly available data.</p>', $sd->TRACKHUB_REGISTRY_URL);
     }
     else {
       ## Add remaining fields and show form
@@ -114,7 +114,7 @@ sub content {
                             'values'        => $values,
                             'value'         => $hub->param('data_type') || '',
       });
-   
+
       $fieldset->add_field({
                             'type'          => 'String',
                             'name'          => 'query',
@@ -122,7 +122,7 @@ sub content {
                             'value'         => $hub->param('query') || '',
                             'notes'         => 'Hint: Leave "text search" empty to show all track hubs for this species',
       });
- 
+
       $fieldset->add_button({
                             'type'          => 'Submit',
                             'name'          => 'submit_button',

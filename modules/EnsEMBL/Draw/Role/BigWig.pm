@@ -26,6 +26,7 @@ use strict;
 
 use Role::Tiny;
 use List::Util qw(min max);
+use Scalar::Util qw(looks_like_number);
 
 use EnsEMBL::Web::File::Utils::IO;
 use EnsEMBL::Web::File::Utils::URL;
@@ -58,39 +59,46 @@ sub get_data {
     foreach (@$data) {
       my ($min_score, $max_score);
 
-      ## Constrain to configured range, if any
-      my $signal_range = $self->my_config('signal_range');
-      if (defined $signal_range) {
-        $min_score = $signal_range->[0];
-        $max_score = $signal_range->[1];
+      ## Prioritise user settings
+      if (defined($self->my_config('y_min')) && looks_like_number($self->my_config('y_min'))) {
+        $min_score = $self->my_config('y_min');
       }
-
-      ## Otherwise constrain to configured view limits 
-      unless(defined $min_score) {
-        if (defined($self->my_config('y_min'))) { ## Give priority to user settings
-          $min_score = $self->my_config('y_min');
-          $_->{'metadata'}{'y_min'} = $min_score;
-        } 
+      if (defined($self->my_config('y_max')) && looks_like_number($self->my_config('y_min'))) {
+        $max_score = $self->my_config('y_max');
+      }
+        
+      ## Alternatively use pre-configured limits
+      my $signal_range = $self->my_config('signal_range');
+      unless (defined $min_score) {
+        if (defined $signal_range) {
+          $min_score = $signal_range->[0];
+        }
         elsif (scalar @viewLimits) {
           $min_score = $viewLimits[0];
-          $_->{'metadata'}{'y_min'} = $min_score;
-        }
-        else {
-          $min_score = $_->{'metadata'}{'min_score'};
         }
       }
-      unless(defined $max_score) {
-        if (defined($self->my_config('y_max'))) { ## Give priority to user settings
-          $max_score = $self->my_config('y_max');
-          $_->{'metadata'}{'y_max'} = $max_score;
-        } 
+
+      unless (defined $max_score) {
+        if (defined $signal_range) {
+          $max_score = $signal_range->[1];
+        }
         elsif (scalar @viewLimits) {
           $max_score = $viewLimits[1];
-          $_->{'metadata'}{'y_max'} = $max_score;
-        } 
-        else {
-          $max_score = $_->{'metadata'}{'max_score'};
         }
+      }
+
+      ## Sort out metadata
+      if (defined $min_score) {
+        $_->{'metadata'}{'y_min'} = $min_score;
+      }
+      else {
+        $min_score = $_->{'metadata'}{'min_score'};
+      }
+      if (defined $max_score) {
+        $_->{'metadata'}{'y_max'} = $max_score;
+      }
+      else {
+        $max_score = $_->{'metadata'}{'max_score'};
       }
 
       ## Finally constrain to gang range if configured 
@@ -134,15 +142,6 @@ sub _fetch_data {
     }
   }
   return [] unless $url;
-
-  my $check;
-
-  if ($check->{'error'}) {
-    my $error = $self->{'my_config'}->get('on_error');
-    $error ||=  $check->{'error'}[0];
-    $self->no_file($error);
-    return [];
-  }
 
   my $args      = { 'options' => {
                                   'hub'         => $hub,
@@ -208,10 +207,13 @@ sub _fetch_data {
 
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($slice, $metadata, $whole_chromosome);
+    # Don't cache here, it's not properly managed. Rely on main cache layer.
+    return $data;
   }
-
-  # Don't cache here, it's not properly managed. Rely on main cache layer.
-  return $data;
+  else {
+    $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
+    return [];
+  }
 }
 
 sub bins {

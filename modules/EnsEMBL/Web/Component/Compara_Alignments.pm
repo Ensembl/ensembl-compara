@@ -30,7 +30,19 @@ use EnsEMBL::Web::TextSequence::View::ComparaAlignments;
 
 use base qw(EnsEMBL::Web::Component::TextSequence);
 
-sub _init { $_[0]->SUPER::_init(100); }
+sub _init {
+  my $self = shift;
+  my $hub = $self->hub;
+
+  ## Don't cache these pages, as it breaks the species selector
+  $self->mcacheable(0);
+
+  my $alignments_session_data = $hub->session ? $hub->session->get_record_data({'type' => 'view_config', 'code' => 'alignments_selector'}) : {};
+  if (scalar keys %{$alignments_session_data} > 0 && $alignments_session_data->{$hub->species}) {
+    %{$self->{'viewconfig'}{$hub->type}->{'_user_settings'}} = (%{$self->{'viewconfig'}{$hub->type}->{'_user_settings'}}, %{$alignments_session_data->{$hub->species}});
+  }
+  $self->SUPER::_init(100);
+}
 
 sub content {
   my $self      = shift;
@@ -50,7 +62,7 @@ sub content {
     );
   }
   
-  my $align_param = $hub->param('align') || '';
+  my $align_param = $hub->get_alignment_id;
 
   my ($align, $target_species, $target_slice_name_range) = split '--', $align_param;
   my $target_slice = $object->get_target_slice;
@@ -503,15 +515,15 @@ sub _get_target_slice_table {
 
   #Find the mapping reference species for EPO_LOW_COVERAGE alignments to distinguish the overlapping blocks
   if ($type =~ /EPO_LOW_COVERAGE/ && $is_low_coverage_species) {
-      #HACK - have a guess based on the mlss name. Better to have this in the mlss_tag table in the database
-    if ($method_link_species_set->name =~ /mammals/) {
-      $other_species = "homo_sapiens";
-    } elsif ($method_link_species_set->name =~ /fish/) {
-      $other_species = "oryzias_latipes";
-    } else {
-      #sauropsids
-      $other_species = "gallus_gallus";
-    }
+    
+    my $gdba = $compara_db->get_adaptor('GenomeDB');
+    my $main_species = $gdba->fetch_by_name_assembly($ref_species);
+
+    my $sptree = $method_link_species_set->species_tree();
+    my $st_hash = $sptree->get_genome_db_id_2_node_hash();
+
+    $other_species = $st_hash->{$main_species->dbID()}->get_value_for_tag('reference_species');
+
   } elsif ($class =~ /pairwise/) {
     #Find the non-reference species for pairwise alignments
     #get the non_ref name from the first block
@@ -671,17 +683,14 @@ sub export_options {
   my $self = shift;
   my $hub = $self->hub;
   my @species_options;
-  my $align = $hub->param('align');
+  my $settings = $self->{'viewconfig'}{$hub->type}->{_user_settings};
+  my $align = $hub->param('align') || $settings->{'align'};
   
   return unless $align;  
 
-  foreach (grep { /species_$align/ } $hub->param) {
-    push @species_options, $_;  
-  }
-  
   return {
           'action'  => 'TextAlignments', 
-          'params'  => ['align', @species_options], 
+          'params'  => ['align'], 
           'caption' => 'Download alignment',
         }; 
 }

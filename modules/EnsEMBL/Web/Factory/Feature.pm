@@ -42,6 +42,7 @@ use EnsEMBL::Web::Data::Bio::Gene;
 use EnsEMBL::Web::Data::Bio::Transcript;
 use EnsEMBL::Web::Data::Bio::Variation;
 use EnsEMBL::Web::Data::Bio::ProbeFeature;
+use EnsEMBL::Web::Data::Bio::ProbeTranscript;
 use EnsEMBL::Web::Data::Bio::AlignFeature;
 use EnsEMBL::Web::Data::Bio::RegulatoryFeature;
 use EnsEMBL::Web::Data::Bio::RegulatoryFactor;
@@ -130,42 +131,17 @@ sub _create_ProbeFeature {
   ### Returns: hashref of API objects
   
   my ($self, $db, $subtype)  = @_;
-  my $probe;
-  
-  if ($subtype && $subtype eq 'pset') {
-    my $probeset = $self->_generic_create('ProbeFeature', 'fetch_all_by_probeset_name', $db);
-    my %seen;
-    for (@$probeset) {
-      push @$probe, $_ unless $seen{$_->probe_id};
-      $seen{$_->probe_id} = 1;
-    }
-  } else {
-    $probe = $self->_create_ProbeFeatures_by_probe_id;
-  }
-  
+  my $db_adaptor  = $self->_get_funcgen_db_adaptor; 
+  my $pf_adaptor  = $db_adaptor->get_ProbeFeatureAdaptor;
+
+  my $method    = $subtype && $subtype eq 'pset' ? 'fetch_all_by_array_name_probeset_name' : 'fetch_all_by_array_name_probe_name';
+  my $probe     = $pf_adaptor->$method($self->param('array'), $self->param('id'));   
+  my $features  = { ProbeFeature => EnsEMBL::Web::Data::Bio::ProbeFeature->new($self->hub, @$probe) };
+
   my $probe_trans = $self->_create_ProbeFeatures_linked_transcripts($subtype);
-  my $features    = { ProbeFeature => EnsEMBL::Web::Data::Bio::ProbeFeature->new($self->hub, @$probe) };
-  
-  $features->{'Transcript'} = EnsEMBL::Web::Data::Bio::Transcript->new($self->hub, @$probe_trans) if $probe_trans;
+  $features->{'ProbeTranscript'} = EnsEMBL::Web::Data::Bio::ProbeTranscript->new($self->hub, @$probe_trans) if $probe_trans;
   
   return $features;
-}
-
-sub _create_ProbeFeatures_by_probe_id {
-  ### Helper method called by _create_ProbeFeature
-  ### Fetches the probe features for a given probe id
-  ### Args: none
-  ### Returns: arrayref of Bio::EnsEMBL::ProbeFeature objects
-  
-  my $self                  = shift;
-  my $db_adaptor            = $self->_get_funcgen_db_adaptor; 
-  my $probe_adaptor         = $db_adaptor->get_ProbeAdaptor;  
-  my @probe_objs            = @{$probe_adaptor->fetch_all_by_name($self->param('id'))};
-  my $probe_obj             = $probe_objs[0];
-  my $probe_feature_adaptor = $db_adaptor->get_ProbeFeatureAdaptor;
-  my @probe_features        = @{$probe_feature_adaptor->fetch_all_by_Probe($probe_obj)};
-  
-  return \@probe_features;
 }
 
 sub _create_ProbeFeatures_linked_transcripts {
@@ -177,7 +153,7 @@ sub _create_ProbeFeatures_linked_transcripts {
   my ($self, $ptype) = @_;
   my $db_adaptor     = $self->_get_funcgen_db_adaptor;
   
-  my (@db_entries, @probe_objs, @transcripts, %seen);
+  my (@probe_objs, @db_entries, @mappings, %seen);
 
   if ($ptype eq 'pset') {
     my $id = $self->param('id');
@@ -200,12 +176,12 @@ sub _create_ProbeFeatures_linked_transcripts {
 
     if (!exists $seen{$entry->stable_id}) {
       my $transcript = $transcript_adaptor->fetch_by_stable_id($entry->stable_id);
-      push @transcripts, $transcript if $transcript;
+      push @mappings, {'Mapping' => $entry, 'Transcript' => $transcript} if $transcript;
       $seen{$entry->stable_id} = 1;
     }
   }
 
-  return \@transcripts;
+  return \@mappings;
 }
 
 sub _get_funcgen_db_adaptor {
@@ -319,14 +295,20 @@ sub _create_RegulatoryFactor {
       $self->problem('fatal', 'No identifier', "No feature set provided.");
       return undef;
     }
-    my $fset  = $fg_db->get_featureSetAdaptor->fetch_by_name($self->param('fset'));
-    my $ftype = $fg_db->get_FeatureTypeAdaptor->fetch_by_name($id);
-    ## Defensive programming against API barfs
-    if (ref($ftype)) {
-      $features = $fset->get_Features_by_FeatureType($ftype);
+    if ($self->param('fset') =~ /TarBase/) {
+      my $mirna_adaptor = $fg_db->get_MirnaTargetFeatureAdaptor;
+      $features = $mirna_adaptor->fetch_all_by_display_label($id);
     }
     else {
-      warn ">>> UNKNOWN FEATURE TYPE";
+      my $fset  = $fg_db->get_featureSetAdaptor->fetch_by_name($self->param('fset'));
+      my $ftype = $fg_db->get_FeatureTypeAdaptor->fetch_by_name($id);
+      ## Defensive programming against API barfs
+      if (ref($ftype)) {
+        $features = $fset->get_Features_by_FeatureType($ftype);
+      }
+      else {
+        warn ">>> UNKNOWN FEATURE TYPE";
+      }
     }
   }
 

@@ -145,7 +145,8 @@ sub populate_tree {
   # Compara menu for strain (strain menu available on main species but collapse, main menu not available/grey out/collapse on strain page)
   # The node key (Strain_) is used by Component.pm to determine if it is a strain link on the main species page, so be CAREFUL when changing this  
   if($strain || $species_defs->IS_STRAIN_OF) {  
-    my $strain_compara_menu = $self->create_node('Strain_Compara', 'Strains',
+    my $strain_type = ucfirst $species_defs->STRAIN_TYPE;
+    my $strain_compara_menu = $self->create_node('Strain_Compara', $strain_type.'s',
       [qw(strain_button_panel EnsEMBL::Web::Component::Gene::Compara_Portal)],
       {'availability' => 'gene database:compara core', 'closed' => $collapse }
     );
@@ -241,10 +242,10 @@ sub populate_tree {
   $self->create_node('Regulation', 'Regulation',
     [qw(
       regulation EnsEMBL::Web::Component::Gene::RegulationImage
+      features   EnsEMBL::Web::Component::Gene::RegulationTable
     )],
     { 'availability' => 'regulation not_patch not_rnaseq' }
   );
-      #features   EnsEMBL::Web::Component::Gene::RegulationTable
 
   $self->create_node('Matches', 'External references',
     [qw( 

@@ -82,6 +82,12 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     this.elLk.container = $('.container', this.el);
     this.elLk.loading   = $('.loading',   this.el);
+
+    // To open motif feature widget on regulation track
+    this.el.on("click", 'a._motif', function(e) {
+      e.preventDefault();
+      Ensembl.openMotifWidget($(this).html());
+    });
     
     this.el.on('mousedown', function () {
       Ensembl.EventManager.trigger('panelToFront', panel.id);
@@ -653,13 +659,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     Ensembl.EventManager.trigger('panelToFront', this.id);
     
     if (!this.el.css({ top: 0, left: 0, display: 'block' }).position({ of: this.event, my: 'left top', collision: 'fit' }).hasClass('ui-draggable')) {
-      this.el.scrollTop(0).draggable($.extend({
+      this.el.scrollTop(0).draggable({
         handle:       '.header:not(.subheader)',
-        containment:  'document'
-      }, Ensembl.browser.webkit ? {} : {
         start:        function() { $(this).css({'margin-top': -1 * $(window).scrollTop() }); },
         stop:         function() { $(this).css({'top': parseInt($(this).css('top')) + parseInt($(this).css('margin-top')), 'margin-top': 0 }); }
-      }));
+      });
     }
     
     if (this.relatedEl) {      

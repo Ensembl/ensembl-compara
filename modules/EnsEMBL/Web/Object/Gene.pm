@@ -501,6 +501,7 @@ sub caption {
 sub gene                        { return $_[0]->Obj;             }
 sub type_name                   { return $_[0]->species_defs->translate('Gene'); }
 sub stable_id                   { return $_[0]->Obj->stable_id;  }
+sub stable_id_version           { return $_[0]->Obj->stable_id_version;  }
 sub feature_type                { return $_[0]->Obj->type;       }
 sub source                      { return $_[0]->Obj->source;     }
 sub version                     { return $_[0]->Obj->version;    }
@@ -649,7 +650,7 @@ sub gene_type {
   my $type = '';
   if( $db eq 'core' ){
     $type = ucfirst($self->Obj->biotype);
-    $type =~ s/_/ /;
+    $type =~ s/_/ /g;
     $type ||= $self->db_type;
   } else {
     $type = $self->logic_name;

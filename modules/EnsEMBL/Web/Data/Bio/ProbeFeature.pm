@@ -41,6 +41,7 @@ sub convert_to_drawing_parameters {
   my $self = shift;
   my $data = $self->data_objects;
   my $results = [];
+  my %seen;
 
   foreach my $probe_feature (@$data) {
     if (ref($probe_feature) =~ /UnmappedObject/) {
@@ -48,27 +49,27 @@ sub convert_to_drawing_parameters {
       push(@$results, $unmapped);
     }
     else {
-      my $names = join ' ', map { /^(.*):(.*):\2/? "$1:$2" : $_ } sort @{$probe_feature->probe->get_all_complete_names()};
-      foreach my $f (@{$probe_feature->probe->get_all_ProbeFeatures()}) {
-        push @$results, {
-          'region'   => $f->seq_region_name,
-          'start'    => $f->start,
-          'end'      => $f->end,
-          'strand'   => $f->strand,
-          'length'   => $f->end-$f->start+1,
-          'label'    => $names,
-          'gene_id'  => [$names],
-          'extra'    => {
-                        'mismatches'  => $f->mismatchcount, 
-                        'cigar'       => $f->cigar_string,
-          },
-        };
-      }
+      my $name = join ' ', map { /^(.*):(.*):\2/? "$1:$2" : $_ } sort @{$probe_feature->probe->get_all_probenames()};
+      my $features = $probe_feature->probe->get_all_ProbeFeatures();
+      my $f = $features->[0];
+      my $loc = $f->seq_region_name.':'.$f->start.'-'.$f->end;
+      next if $seen{$loc};
+      $seen{$loc} = 1;
+      push @$results, {
+          'region'      => $f->seq_region_name,
+          'start'       => $f->start,
+          'end'         => $f->end,
+          'strand'      => $f->strand,
+          'length'      => $f->end-$f->start+1,
+          'label'       => $name,
+          'name'        => $name,
+          'sequence'    => $f->probe->sequence,
+          'mismatches'  => $f->mismatchcount, 
+      };
     }
   }
   my $extra_columns = [
                         {'key' => 'mismatches', 'title' => 'Mismatches'}, 
-                        {'key' => 'cigar',      'title' => 'Cigar string'},
   ];
   return [$results, $extra_columns];
 

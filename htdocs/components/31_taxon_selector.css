@@ -9,14 +9,20 @@
 }
 
 .species_select_container div.taxon_selector_tree, 
-.species_select_container div.taxon_selector_list {
+.species_select_container div.taxon_selector_list,
+.species_select_container div.species_homepage_selector
+ {
   font-weight: normal;
 }
-.species_select_container div.taxon_selector_tree {
+.species_select_container div.taxon_selector_tree,
+.species_select_container div.species_homepage_selector
+ {
   width: 69%;
   margin-right: 1%
 }
-.species_select_container div.taxon_selector_tree.full-width {
+.species_select_container div.taxon_selector_tree.full-width,
+.species_select_container div.species_homepage_selector.full-width
+ {
   width: 100%;
   margin: 0px;
 }
@@ -70,13 +76,17 @@ div.taxon_selector_list h2 .ss-count.warn {
   overflow: auto;
 }
 
-div.taxon_selector_tree .finder { 
+div.taxon_selector_tree .finder,
+div.species_homepage_selector .finder
+ { 
   display: flex;
   background-color: [[V_LIGHT_GREY]];
   box-sizing: border-box;
 }
 
-div.taxon_selector_tree .finder input { 
+div.taxon_selector_tree .finder input,
+div.species_homepage_selector .finder input
+ { 
   width: 100%;
   color: [[MEDIUM_GREY]];
   font-size: 1.2em;
@@ -87,19 +97,27 @@ div.taxon_selector_tree .finder input {
   border: none;
 }
 
-div.taxon_selector_tree .finder input::-webkit-input-placeholder {
+div.taxon_selector_tree .finder input::-webkit-input-placeholder,
+div.species_homepage_selector .finder input::-webkit-input-placeholder
+ {
    color: [[PALE_GREY]];
 }
 
-div.taxon_selector_tree .finder input:-moz-placeholder { /* Firefox 18- */
+div.taxon_selector_tree .finder input:-moz-placeholder,
+div.species_homepage_selector .finder input:-moz-placeholder
+ { /* Firefox 18- */
    color: [[PALE_GREY]];  
 }
 
-div.taxon_selector_tree .finder input::-moz-placeholder {  /* Firefox 19+ */
+div.taxon_selector_tree .finder input::-moz-placeholder,
+div.species_homepage_selector .finder input:-moz-placeholder
+ {  /* Firefox 19+ */
    color: [[PALE_GREY]];  
 }
 
-div.taxon_selector_tree .finder input:-ms-input-placeholder {  
+div.taxon_selector_tree .finder input:-ms-input-placeholder,
+div.species_homepage_selector .finder input:-ms-input-placeholder
+ {  
    color: [[PALE_GREY]];  
 }
 

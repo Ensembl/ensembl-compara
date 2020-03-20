@@ -40,6 +40,7 @@ sub init_cacheable {
   $self->create_menus(qw(
     sequence
     transcript
+    longreads
     rnaseq
     prediction
     variation

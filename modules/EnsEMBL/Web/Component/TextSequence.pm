@@ -85,7 +85,7 @@ sub buttons {
   }
 
   
-  if ($options->{'action'} =~ /Align/ && ($hub->param('need_target_slice_table') || !$hub->param('align'))) {
+  if ($options->{'action'} =~ /Align/ && ($hub->param('need_target_slice_table') || !$hub->get_alignment_id)) {
     return {
       'url'       => undef, 
       'caption'   => $options->{'caption'} || 'Download sequence',
@@ -165,12 +165,17 @@ sub set_variation_filter {
   my $hub = $self->hub;
   
   my @consequence       = $self->param('consequence_filter');
+  my @evidence          = $self->param('evidence_filter');
   my $pop_filter        = $self->param('population_filter');
   my %consequence_types = map { $_ => 1 } @consequence if join('', @consequence) ne 'off';
-  
+
   if (%consequence_types) {
     $config->{'consequence_types'}  = \%consequence_types;
     $config->{'consequence_filter'} = \@consequence;
+  }
+
+  if (@evidence && join('', @evidence) ne 'off') {
+    $config->{'evidence_filter'} = \@evidence;
   }
   
   if ($pop_filter && $pop_filter ne 'off') {
@@ -210,7 +215,18 @@ sub describe_filter {
     push @filters,"Only showing variants with consequence types: ".
       join(', ',sort keys %cf);
   }
-  #
+
+  # Hidden evidence status
+  my $ef = $config->{'evidence_filter'};
+  $ef = [ keys %$ef ] if ref($ef) eq 'HASH';
+  my %ef = map { $_ => 1 } @{$ef||[]};
+  delete $ef{'off'} if exists $ef{'off'};
+  delete $ef{''} if exists $ef{''};
+  if(%ef) {
+    push @filters,"Only showing variants with evidence status: ".
+      join(', ',sort keys %ef);
+  }
+
   return '' unless @filters;
   $blurb .= "<ul>".join('',map { "<li>$_</li>" } @filters)."</ul>";
   return $self->_info('Filters applied',$blurb);
@@ -248,6 +264,20 @@ sub set_variations {
         $snps = \@snps_list;
       }
     };
+
+    # Evidence filter
+    my %ef = map { $_ ? ($_ => 1) : () } @{$config->{'evidence_filter'}};
+    delete $ef{'off'} if exists $ef{'off'};
+    if(%ef) {
+      my @filtered_snps;
+      foreach my $snp (@$snps) {
+        my $evidence = $snp->get_all_evidence_values;
+        if (grep $ef{$_}, @$evidence) {
+          push @filtered_snps, $snp;
+        }
+      }
+      $snps = \@filtered_snps;
+    }
   }
   return unless scalar @$snps;
 
@@ -440,10 +470,11 @@ sub chunked_content {
   my $html;
   my $display_width = $self->param('display_width') || 0;
   my $id = $self->id;
+  my $align = $hub->get_alignment_id;
 
   my $follow = 0;
   if ($teaser) {
-    $html .= qq{<div class="ajax" id="partial_alignment"><input type="hidden" class="ajax_load" value="$url;subslice_start=$i;subslice_end=$display_width;follow=$follow" /></div>};
+    $html .= qq{<div class="ajax" id="partial_alignment"><input type="hidden" class="ajax_load" value="$url;align=$align;subslice_start=$i;subslice_end=$display_width;follow=$follow" /></div>};
   }
   else {
     # The display is split into a managable number of sub slices, which will be processed in parallel by requests

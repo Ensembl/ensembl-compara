@@ -34,9 +34,9 @@ use Sys::Hostname::Long;
 
 ###############################################################################
 ## Ensembl Version and release dates (these get updated every release)
-our $ENSEMBL_VERSION        = 93;            # Ensembl release number
-our $ARCHIVE_VERSION        = 'Jul2018';     # Archive site for this version
-our $ENSEMBL_RELEASE_DATE   = 'July 2018'; # As it would appear in the copyright/footer
+our $ENSEMBL_VERSION        = 100;            # Ensembl release number
+our $ARCHIVE_VERSION        = 'Mar2020';     # Archive site for this version
+our $ENSEMBL_RELEASE_DATE   = 'March 2020'; # As it would appear in the copyright/footer
 ###############################################################################
 
 
@@ -114,6 +114,9 @@ our $SYSLOG_COMMAND                   = sub { warn "$_[0]\n"; };  # command/subr
 our $TIDY_USERDB_CONNECTIONS          = 1;      # Clear user/session db connections after request is finished
 our $SERVER_ERRORS_TO_LOGS            = 1;      # Send all server exception stack traces to logs and send a unique error Id on the browser
 our $ENSEMBL_OOB_LIMITS               = {};     # Child process out-of-bounds limits for live server tweaking
+
+our $GENE_FAMILY_ACTION               = 'Family'; # Used to build the link to gene families page
+our $FAMILY_ALIGNMENTS_DOWNLOADABLE   = 1; # Indicates whether sequence alignments are available
 ###############################################################################
 
 
@@ -263,7 +266,7 @@ our $ENSEMBL_MEMCACHED  = {}; # Keys 'server' [list of server:port], 'debug' [0|
 our $FLANK5_PERC                        = 0.02; # % 5' flanking region for images (used for region comparison and location view)
 our $FLANK3_PERC                        = 0.02; # % 3' flanking region for images (used for region comparison and location view)
 our $ENSEMBL_ALIGNMENTS_HIERARCHY       = ['LASTZ', 'CACTUS_HAL_PW', 'TBLAT', 'LPATCH'];  # Hierarchy of alignment methods
-our $ALIGNMENTS_SPECIES_SELECTION_LIMIT = 70;
+# our $ALIGNMENTS_SPECIES_SELECTION_LIMIT = 70;  Remove limit and see if we get lot of Ajax errors in region comparison page
 ###############################################################################
 
 

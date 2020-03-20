@@ -26,8 +26,6 @@ use warnings;
 
 use EnsEMBL::Web::Mailer::Help;
 
-use EnsEMBL::Web::Utils::HoneyPot qw(is_form_spam);
-
 use base qw(EnsEMBL::Web::Command);
 
 sub process {
@@ -47,12 +45,7 @@ sub process {
 
     $url              = {qw(type Help action EmailSent result 1)};
 
-    # Verify honeypots are empty
-    if(is_form_spam($hub)) {
-      warn "caught spam\n";
-    } else {
-      $url->{'result'}  = EnsEMBL::Web::Mailer::Help->new($hub)->send_help_contact_email;
-    }
+    $url->{'result'}  = EnsEMBL::Web::Mailer::Help->new($hub)->send_help_contact_email;
   }
 
   return $self->ajax_redirect($hub->url($url));

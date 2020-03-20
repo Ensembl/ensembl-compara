@@ -77,10 +77,15 @@ our %archive_mapping = (
                         'Info/Error_401'                          => { 'initial_release' => 51 },
                         'Info/Error_403'                          => { 'initial_release' => 51 },
                         'Info/Error_404'                          => { 'initial_release' => 51 },
+                        'Info/Error_555'                          => { 'initial_release' => 86 },
                         'Info/Annotation'                         => { 'initial_release' => 51 },
                         'Info/WhatsNew'                           => { 'initial_release' => 51 },
                         'Info/Content'                            => { 'initial_release' => 51 },
                         'Info/Expression'                         => { 'initial_release' => 77 },
+                        'Info/LocationGallery'                    => { 'initial_release' => 88 },
+                        'Info/GeneGallery'                        => { 'initial_release' => 88 },
+                        'Info/VariationGallery'                   => { 'initial_release' => 88 },
+                        'Info/CheckGallery'                       => { 'initial_release' => 88 },
 
                         'Location/Genome'                         => { 'initial_release' => 51 },                         
                         'Location/Chromosome'                     => { 'initial_release' => 51 },                         
@@ -96,6 +101,8 @@ our %archive_mapping = (
                         'Location/Multi'                          => { 'initial_release' => 56 },
                         'Location/Compara'                        => { 'initial_release' => 62 },
                         'Location/Ensembl_GRCh37'                 => { 'initial_release' => 76 },
+                        'Location/Strain'                         => { 'initial_release' => 85 },
+                        'Location/Variant_Table'                  => { 'initial_release' => 93 },
 
                         'Gene/Summary'                            => { 'initial_release' => 51 },                         
                         'Gene/Splice'                             => { 'initial_release' => 51 },                         
@@ -129,6 +136,7 @@ our %archive_mapping = (
                         'Gene/SecondaryStructure'                 => { 'initial_release' => 74 },
                         'Gene/Alleles'                            => { 'initial_release' => 78 },
                         'Gene/ExpressionAtlas'                    => { 'initial_release' => 80 },
+                        'Gene/Pathway'                            => { 'initial_release' => 92 },
 
                         'GeneTree/Image'                          => { 'initial_release' => 60 },
 
@@ -157,6 +165,8 @@ our %archive_mapping = (
                         'Transcript/Variation_Transcript/Table'   => { 'initial_release' => 68 },
                         'Transcript/Variation_Transcript/Image'   => { 'initial_release' => 68 },
                         'Transcript/Haplotypes'                   => { 'initial_release' => 84 },
+                        'Transcript/Pathway'                      => { 'initial_release' => 92 },
+                        'Transcript/PDB'                          => { 'initial_release' => 95 },
 
                         'Family/Details'                          => { 'initial_release' => 75 },
 
@@ -176,6 +186,7 @@ our %archive_mapping = (
                         'Variation/Populations'                   => { 'initial_release' => 60 },
                         'Variation/Explore'                       => { 'initial_release' => 65 },
                         'Variation/Citations'                     => { 'initial_release' => 72 },
+                        'Variation/PDB'                           => { 'initial_release' => 95 },
 
                         'StructuralVariation/Explore'             => { 'initial_release' => 62 },
                         'StructuralVariation/Evidence'            => { 'initial_release' => 62 },
@@ -204,6 +215,7 @@ our %archive_mapping = (
 
                         'Phenotype/Locations'                     => { 'initial_release' => 64 },
                         'Phenotype/All'                           => { 'initial_release' => 69 },
+                        'Phenotype/RelatedConditions'             => { 'initial_release' => 88 },
 
                         'Marker/Details'                          => { 'initial_release' => 59 },
 

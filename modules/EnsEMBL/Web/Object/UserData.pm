@@ -218,7 +218,7 @@ sub md_delete_trackhub {
   foreach my $manager (grep $_, $hub->user, $hub->session) {
     $current_record = $manager->get_record_data({'type' => 'url', 'code' => $hub->param('code')});
     $record_manager = $manager;
-    last if $current_record;
+    last if ($current_record && keys %$current_record);
   }
   return unless $current_record;
   my $trackhub_url = $current_record->{'url'};
@@ -473,10 +473,9 @@ sub thr_ok_species {
   my $ok_species;
 
   my $sci_name        = $hub->species_defs->get_config($current_species, 'SPECIES_SCIENTIFIC_NAME');
-  my $assembly_param  = $hub->species_defs->get_config($current_species, 'THR_ASSEMBLY_PARAM')
-                            || 'ASSEMBLY_ACCESSION';
+  my $assembly_param  = 'ASSEMBLY_VERSION';
   my $assembly        = $hub->species_defs->get_config($current_species, $assembly_param);
-  my $key             = $assembly_param eq 'ASSEMBLY_ACCESSION' ? 'accession' : 'name';
+  my $key             = 'name';
 
   if ($thr_species->{$sci_name}) {
     ## Check that we have the right assembly
@@ -488,9 +487,13 @@ sub thr_ok_species {
   }
   else {
     ## No exact match, so try everything else
+    $assembly_param = $hub->species_defs->get_config($current_species, 'THR_ASSEMBLY_PARAM')
+                          || 'ASSEMBLY_ACCESSION';
+    $key = $assembly_param eq 'ASSEMBLY_ACCESSION' ? 'accession' : 'name';
+
     while (my ($sp_name, $info) = each (%$thr_species)) {
       my $found = 0;
-      ($found, $key) = $self->_find_assembly($info, $assembly_param, $key, $assembly);;
+      ($found, $key) = $self->_find_assembly($info, $assembly_param, $key, $assembly);
       if ($found) {
         $ok_species = {'thr_name' => $sp_name, 'assembly_key' => $key, 'assembly_id' => $assembly};
         last;

@@ -33,6 +33,7 @@ sub init {
   ## Abstract method implementation
   my $self  = shift;
   my $hub   = $self->hub;
+  return unless $hub->r;
 
   # retrieve existing session cookie or create a new one
   my $cookie        = $hub->get_cookie($SiteDefs::ENSEMBL_SESSION_COOKIE, 1);

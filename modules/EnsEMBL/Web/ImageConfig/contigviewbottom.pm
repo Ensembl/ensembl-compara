@@ -243,6 +243,7 @@ sub init_cacheable {
     marker
     trans_associated
     transcript
+    longreads
     prediction
     lrg
     dna_align_cdna
@@ -356,8 +357,6 @@ sub init_cacheable {
   ## Switch on multiple alignments defined in MULTI.ini
   my $compara_db      = $self->hub->database('compara');
   if ($compara_db) {
-    my $mlss_adaptor    = $compara_db->get_adaptor('MethodLinkSpeciesSet');
-    my %alignments      = $self->species_defs->multiX('COMPARA_DEFAULT_ALIGNMENTS');
     my $defaults = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}->{'COMPARA_DEFAULT_ALIGNMENT_IDS'};
 
     foreach my $default (@$defaults) {
@@ -377,6 +376,9 @@ sub init_cacheable {
       { depth => 25, height => 6 }
     );
   }
+
+  ## Turn off motif feature track by default
+  $self->modify_configs(['fg_motif_features'], {'display' => 'off'});
 
   ## Regulatory build track now needs to be turned on explicitly
   $self->modify_configs(['regbuild'], {display => 'compact'});

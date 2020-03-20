@@ -37,7 +37,7 @@ sub content {
   my $species   = $hub->species;
   my $avail     = $self->object->availability;
 
-  my ($seq_url, $gt_url, $pop_url, $geno_url, $context_url, $ld_url, $pheno_url, $phylo_url, $cit_url);
+  my ($seq_url, $gt_url, $pop_url, $geno_url, $context_url, $ld_url, $pheno_url, $phylo_url, $cit_url, $prot_url);
   my ($gt_count, $pop_count, $geno_count, $pheno_count, $cit_count);
 
   if ($avail->{'has_locations'}) {
@@ -69,7 +69,7 @@ sub content {
     }
   }
 
-  if ($avail->{'has_ega'}) {
+  if ($avail->{'has_ega'} && $avail->{'has_locations'}) {
     $pheno_url   = $hub->url({'action' => 'Phenotype'});
     $pheno_count = $avail->{'has_ega'}
   }
@@ -81,6 +81,10 @@ sub content {
   if ($avail->{'has_citation'}) {
     $cit_url   = $hub->url({'action' => 'Citations'});
     $cit_count = $avail->{'has_citation'};
+  }
+
+  if ($avail->{'is_coding'} && $avail->{'has_pdbe'}) {
+    $prot_url = $hub->url({'action' => 'PDB'});
   }
 
   my ($p_title, $p_img) = $avail->{'not_somatic'} ? ('Allele and genotype frequencies by population', '96/var_population_genetics.png') : ('Samples with this variant', '96/var_sample_information.png');
@@ -95,6 +99,7 @@ sub content {
     {'title' => 'LD plots and tables',                                'img' => '96/var_linkage_disequilibrium.png', 'url' => $ld_url                                },
     {'title' => 'Sequence conservation via cross-species alignments', 'img' => '96/var_phylogenetic_context.png',   'url' => $phylo_url                             },
     {'title' => 'Citations',                                          'img' => '96/var_citations.png',              'url' => $cit_url,      'count' => $cit_count   },
+    {'title' => '3D Protein model',                                   'img' => '96/var_3d_protein.png',             'url' => $prot_url                              }
   );
 
   my $html = $self->button_portal(\@buttons);

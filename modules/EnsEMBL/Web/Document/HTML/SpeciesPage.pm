@@ -67,7 +67,7 @@ sub render {
     if ($pre_species) {
       while (my ($bioname, $array) = each (%$pre_species)) {
         my ($common, $assembly, $taxon_id) = @$array;
-        $common =~ s/_/ /;
+        $common =~ s/_/ /g;
         my $status = $species{$bioname} ? 'both' : 'pre';
         my $info;
         if ($status eq 'pre') {

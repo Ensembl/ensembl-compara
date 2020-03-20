@@ -147,6 +147,7 @@ tr.row-sub td:first-child { text-indent:24px; }
 
 .new_table { border: 1px [[PALE_GREY]] solid; margin: 0 0 16px; }
 .new_table table    { table-layout: fixed;  width: 100%; border-spacing: 0; }
+.new_table > table { position: sticky; top: 0; }
 .new_table th { cursor: pointer; padding: 2px 20px 2px 4px; background-color: [[PALE_GREY]]; line-height: 16px; }
 .new_table tbody tr { background-color: [[WHITE]]; }
 .new_table tbody tr:nth-child(odd) { background-color: [[LIGHT_GREY]]; }
@@ -218,7 +219,7 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_toggle { padding-right: 16px; position: relative; word-break: break-all; }
 .newtable_toggle_img { background: url(/i/closed2.gif); width: 14px; height: 14px; position: absolute; right: 0; top: 0; }
 .newtable_toggle.open .newtable_toggle_img { background: url(/i/open2.gif); }
-.newtable_toggle.open .newtable_toggle_short { display: none; }
+.newtable_toggle.open .newtable_toggle_short { display: block; }
 .newtable_toggle .newtable_toggle_long { display: none; }
 .newtable_toggle.open .newtable_toggle_long { display: block; }
 .new_table_loading { height: 64px; width: 100%; display: block; font-size: 32px; font-weight: bold; color: #aaa; vertical-align: middle; text-align: center; line-height: 61px; background: [[PALE_GREY]]; }

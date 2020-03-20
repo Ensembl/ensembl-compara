@@ -597,11 +597,15 @@ sub features {
       foreach my $g (@{$slice->get_all_Genes(undef, $db)}) {
         my $source = $self->gene_source($g,$db);
         foreach my $t (@{$g->get_all_Transcripts}) {
+          my $g_stable_id = $g->stable_id;
+          $g_stable_id .= '.'.$g->version if $g->version;
+          my $t_stable_id = $t->stable_id;
+          $t_stable_id .= '.'.$t->version if $t->version;
           foreach my $e (@{$t->get_all_Exons}) {
             $self->feature('gene', $e, { 
                exon_id       => $e->stable_id, 
-               transcript_id => $t->stable_id, 
-               gene_id       => $g->stable_id, 
+               transcript_id => $t_stable_id, 
+               gene_id       => $g_stable_id, 
                gene_type     => $g->biotype
             }, { source => $source });
           }
@@ -765,12 +769,14 @@ sub gff3_features {
 
       if ($params->{'gene'}) {
         $g_id = $g->stable_id;
+        $g_id .= '.'.$g->version if $g->version;
         $self->feature('gene', $g, { ID => $g_id, Name => $g_id, biotype => $g->biotype }, $properties);
       }
 
       foreach my $t (@{$g->get_all_Transcripts}) {
         if ($params->{'transcript'}) {
           $t_id = $t->stable_id;
+          $t_id .= '.'.$t->version if $t->version;
           $self->feature('transcript', $t, { ID => $t_id, Parent => $g_id, Name => $t_id, biotype => $t->biotype }, $properties);
         }
 

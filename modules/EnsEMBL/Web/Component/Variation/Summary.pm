@@ -36,6 +36,9 @@ sub _init {
 
 sub content {
   my $self          = shift;
+
+  return if(!$self->object);
+
   my $hub           = $self->hub;
   my $object        = $self->object;
   my $variation     = $object->Obj;
@@ -54,6 +57,7 @@ sub content {
   my $summary_table = $self->new_twocol(    
     $self->most_severe_consequence(),
     $self->alleles($feature_slice),
+    $self->change_tolerance,
     $self->location,
     $feature_slice ? $self->co_located($feature_slice) : (),
     $self->evidence_status,
@@ -64,7 +68,7 @@ sub content {
     $self->sets,
     $self->variation_source,
     @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : (),
-    ($hub->species eq 'Homo_sapiens' && $hub->snpedia_status) ? $var_id && $self->snpedia($var_id) : ()
+    $hub->snpedia_status ? $var_id && $self->snpedia($var_id) : ()
   );
 
   return sprintf qq{<div class="summary_panel">$info_box%s</div>}, $summary_table->render;
@@ -105,7 +109,7 @@ sub feature_summary {
                       $phenotype_url, 
                       $avail->{has_ega}, 
                       $avail->{has_ega} eq "1" ? "phenotype" : "phenotypes"
-                  ) if($avail->{has_ega});  
+                  ) if($avail->{has_ega} && $avail->{has_locations});
   push @str_array, sprintf('is mentioned in <a class="dynamic-link" href="%s">%s %s</a>', 
                       $citation_url, 
                       $avail->{has_citation}, 
@@ -241,9 +245,14 @@ sub variation_source {
   } elsif ($source =~ /LSDB/) {
     $version = ($version) ? " ($version)" : '';
     $source_link = $hub->get_ExtURL_link("$source_prefix $source", $source, $name);
-  }  elsif ($source =~ /PhenCode/) {
+  } elsif ($source =~ /PhenCode/) {
      $sname       = 'PHENCODE';
      $source_link = $hub->get_ExtURL_link("$source_prefix PhenCode", $sname, $name);
+  } elsif ($source =~ /^PRJEB\d+/) {
+    $sname       = 'EVA_STUDY';
+    my $eva_url  = $hub->get_ExtURL("EVA_STUDY");
+    my $source_label = "$source EVA study";
+    $source_link = $eva_url ? qq{<a href="$eva_url$source" class="constant">$source_label</a>} : $source_label;
   } else {
     $source_link = $url ? qq{<a href="$url" class="constant">$source_prefix $source</a>} : "$source $version";
   }
@@ -354,8 +363,20 @@ sub synonyms {
         next unless @urls;
       }
     }
+    elsif ($db =~ /omim/i) {
+      my %url_ids;
+      foreach my $id (@ids) {
+        my $url_id = $id;
+           $url_id =~ s/\./#/;
+        $url_ids{$id} = $url_id;
+      }
+      @urls = map { s/%23/#/; $_ } map $hub->get_ExtURL_link($_, 'OMIM', $url_ids{$_}), @ids;
+    }
     elsif ($db =~ /clinvar/i) {
-      @urls = map $hub->get_ExtURL_link($_, 'CLINVAR', $_), @ids;
+      foreach (@ids) {
+        next if /^RCV/; # don't display RCVs as synonyms
+        push @urls, $hub->get_ExtURL_link($_, 'CLINVAR', $_);
+      }
     }
     elsif ($db =~ /Uniprot/) {
       push @urls, $hub->get_ExtURL_link($_, 'UNIPROT_VARIATION', $_) for @ids;
@@ -379,7 +400,13 @@ sub synonyms {
     
     push @synonyms_list, "<strong>$db</strong> " . (join ', ', @urls);
   }
-  
+  # Add synonyms for ClinGen Allele Registry
+  if  ($hub->alleleregistry_status) {
+    my $ar_urls = $self->allele_registry_synonyms_urls();
+    push @synonyms_list, "<strong>ClinGen Allele Registry</strong> " . (join ', ', @$ar_urls) if (@$ar_urls);
+    $count += @$ar_urls;
+  }
+
   $count_sources = scalar @synonyms_list;
 
   return () if ($count_sources == 0);  
@@ -439,7 +466,7 @@ sub alleles {
 
       my $ht =
         '<b>Highest population Minor Allele Frequency</b><br />Highest minor allele frequency observed in any population'.
-        ($species eq 'Homo_sapiens' ? ' from 1000 Genomes Phase 3, ESP and ExAC' : '');
+        ($species eq 'Homo_sapiens' ? ' including 1000 Genomes Phase 3, ESP and gnomAD' : '');
 
       my $allele_hover_text;
       if(scalar @$max_alleles > 1) {
@@ -559,7 +586,7 @@ sub to_VCF {
   my $vcf_rep = $vf->to_VCF_record();
   return unless $vcf_rep && @$vcf_rep;
   
-  return '<span style="font-family:Courier,monospace;white-space:nowrap;margin-left:5px;padding:2px 4px;background-color:#F6F6F6">'.join("&nbsp;&nbsp;", map {encode_entities($_)} @{$vcf_rep}[0..4]).'</span>';
+  return '<span style="font-family:Courier,monospace;word-break:break-all;margin-left:5px;padding:2px 4px;background-color:#F6F6F6">'.join("&nbsp;&nbsp;", map {encode_entities($_)} @{$vcf_rep}[0..4]).'</span>';
 }
 
 sub location {
@@ -705,6 +732,38 @@ sub clinical_significance {
   );
 
   return [ "Clinical significance $info_link" , $cs_content ];
+}
+
+sub change_tolerance {
+  my $self = shift;
+  my $object = $self->object;
+  my ($CADD_scores, $CADD_source) = @{$object->CADD_score};
+  my ($GERP_score, $GERP_source);
+  eval {
+    ($GERP_score, $GERP_source) = @{$object->GERP_score};
+  };
+  return unless (defined $CADD_scores || defined $GERP_score);
+  my $html = '';
+  if (defined $CADD_scores) {
+    my $cadd_helptip = helptip(
+      'CADD',
+      'CADD scores for all alternative alleles from ' . $CADD_source
+    );
+    my $display_scores = join(', ', map {$_ . ':' . $CADD_scores->{$_}} sort keys %$CADD_scores);
+    my $cadd_summary = sprintf(qq{<span class="_ht ht">%s</span>: %s}, $cadd_helptip, $display_scores);
+    $html .= qq{<span>$cadd_summary</span>}
+  }
+  if (defined $GERP_score) {
+    my $gerp_helptip = helptip(
+      'GERP',
+      'GERP score from ' . $GERP_source
+    );
+    my $gerp_summary = sprintf(qq{<span class="_ht ht">%s</span>: %s}, $gerp_helptip, $GERP_score);
+    $html .= $self->text_separator if ($html);
+    $html .= qq{<span>$gerp_summary</span>};
+  }
+
+  return [ 'Change tolerance ', qq(<div class="twocol-cell">$html</div>) ];
 }
 
 sub hgvs {
@@ -967,6 +1026,50 @@ sub snpedia {
   $desc = $desc ? encode('utf8', $desc) : 'no_entry';
   $cache && $cache->set($key, $desc, 60*60*24*7);
   return $count ? [ 'Description from SNPedia', $desc ] : (); 
+}
+
+# Get ClinGen Allele Registry ids for alleles and creates urls
+# Lookup to Allele Registry using hgvsg on reference only
+sub allele_registry_synonyms_urls {
+  my $self     = shift;
+  my $hub      = $self->hub;
+  my $object   = $self->object;
+  my @urls;
+
+  my $max_allele_length = 20;
+  return [] if $hub->species ne 'Homo_sapiens';
+
+  # Get the HGVSg
+  my $hgvsg = $object->get_hgvsg();
+
+  return []  if (!$hgvsg);
+
+  my $allele_synonyms = $object->get_allele_synonyms();
+  return [] if (!$allele_synonyms);
+
+  my %ar_lu = map {$_->hgvs_genomic => $_->name } @$allele_synonyms;
+
+  my $hgvs_ar;
+
+  # For each allele, for each HGVSg, lookup caid
+  foreach my $allele (keys %$hgvsg) {
+    next if $hgvsg->{$allele} !~ /^NC_/;
+    next if (! defined $ar_lu{$hgvsg->{$allele}});
+    $hgvs_ar->{$allele} = [$hgvsg->{$allele},
+                           $ar_lu{$hgvsg->{$allele}},
+                          ];
+  }
+  return [] if (!$hgvs_ar);
+
+  foreach my $allele (sort keys %$hgvs_ar) {
+    my $link_info  = $hgvs_ar->{$allele};
+    my $allele_display = (length($allele) > $max_allele_length) ?
+      substr($allele, 0, $max_allele_length).'...' : $allele;
+    push @urls,
+         $hub->get_ExtURL_link($link_info->[1], "ALLELE_REGISTRY_DISPLAY", $link_info->[1]) .
+         ' (' . encode_entities($allele_display) . ')';
+  }
+  return \@urls;
 }
 
 1;

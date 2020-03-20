@@ -47,7 +47,7 @@ sub process {
   if (!$species) {
     $species = $species_defs->ENSEMBL_PRIMARY_SPECIES;
   }
-  elsif (!$hub->species_defs->valid_species($species)) {
+  elsif (!$species_defs->valid_species($species)) {
     $redirect = '/trackhub_error.html';
     $params->{'species'}  = $species;
     $params->{'error'}    = 'unknown_species';
@@ -57,7 +57,7 @@ sub process {
   if ($species) {
     if ($url) {
       my $new_action  = '';
-      ($new_action, $params)  = check_attachment($hub, $url);
+      ($new_action, $params) = $hub->param('assembly_name') ? () : check_attachment($hub, $url);
 
       if ($new_action) {
         ## Hub is already attached, so just go there
@@ -69,6 +69,19 @@ sub process {
         }
       }
       else {
+        my $assembly_lookup = $species_defs->assembly_lookup;
+
+        ## Does the URL include an assembly name (needed where there are multiple assemblies
+        ## per species on a given site, eg. fungi)
+        my $assembly_name = $hub->param('assembly_name');
+        if ($assembly_name) {
+          my $url = $assembly_lookup->{$assembly_name}[0];
+          ## check that this looks like the right species
+          if ($url =~ /^$species/) {
+            $species = $url;
+          }
+        }
+
         ## Check if we have any supported assemblies
         my $trackhub = EnsEMBL::Web::File::AttachedFormat::TRACKHUB->new('hub' => $self->hub, 'url' => $url);
         my $assembly_lookup = $hub->species_defs->assembly_lookup;
@@ -79,7 +92,7 @@ sub process {
           $params->{'error'}  = 'archive_only';
           $params->{'url'}    = $url;
           ## Get lookup that includes old assemblies
-          my $lookup = $hub->species_defs->assembly_lookup(1);
+          my $lookup = $species_defs->assembly_lookup(1);
           foreach (@{$hub_info->{'unsupported_genomes'}||{}}) {
             my $info = $lookup->{$_};
             $params->{'species_'.$info->[0]} = $info->[1];
