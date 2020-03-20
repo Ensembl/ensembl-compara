@@ -93,6 +93,8 @@ my $compara_dbs = {
     #'lastz_batch_2c' => [ 'mysql-ens-compara-prod-3', 'muffato_plants_lastz_batch2c_100' ],
     'lastz_batch_3' => [ 'mysql-ens-compara-prod-7', 'dthybert_plants_lastz_batch3_100' ],
     'lastz_batch_4' => [ 'mysql-ens-compara-prod-7', 'dthybert_plants_lastz_batch4_100' ],
+    'unidir_lastz'  => [ 'mysql-ens-compara-prod-5', 'plants_unidirectional_lastz_100' ],
+
     # synteny
     'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'jalvarez_plants_synteny_100' ],
 

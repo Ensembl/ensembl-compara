@@ -84,7 +84,7 @@ sub default_options {
 
         # Default location for pairwise alignments (can be a string or an array-ref,
         # and the database aliases can include '*' as a wildcard character)
-        'pairwise_location' => [ qw(compara_prev lastz_batch_*) ],
+        'pairwise_location' => [ qw(unidir_lastz compara_prev lastz_batch_*) ],
 
 	'max_block_size'  => 1000000,                       #max size of alignment before splitting 
 
