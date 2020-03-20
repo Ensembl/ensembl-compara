@@ -79,9 +79,8 @@ sub run_chains {
     mkdir $target_nib_dir;
 
     my $target_chunks = $self->param('target_chunks');
-    foreach my $nm (keys %{$target_chunks}) {
-      my $target = $target_chunks->{$nm};
-      my $target_name = $target->dnafrag->name;
+    foreach my $target_name (keys %{$target_chunks}) {
+      my $target = $target_chunks->{$target_name};
 
       $target->dump_chunks_to_fasta_file("$target_nib_dir/$target_name.fa");
 
