@@ -18,7 +18,7 @@ limitations under the License.
 import os
 from pathlib import Path
 import shutil
-from typing import Any, Generator, Optional
+from typing import Any, Dict, Generator, Optional
 
 import pytest
 from _pytest.config import Config
@@ -57,9 +57,9 @@ def pytest_configure(config: Config) -> None:
 @pytest.fixture(name='db_factory', scope='session')
 def db_factory_(request: FixtureRequest) -> Generator:
     """Yields a unit test database (:class:`UnitTestDB`) factory."""
-    created = []
+    created = {}  # type: Dict[str, UnitTestDB]
     server_url = request.config.getoption('server')
-    def db_factory(src: str, name: Optional[str] = None) -> UnitTestDB:
+    def db_factory(src: PathLike, name: Optional[str] = None) -> UnitTestDB:
         """Returns a :class:`UnitTestDB` object for the newly created unit test database `name` from `src`.
 
         Args:
@@ -68,13 +68,11 @@ def db_factory_(request: FixtureRequest) -> Generator:
             name: Name to give to the new database (it will be prefixed by the username).
 
         """
-        test_db = UnitTestDB(server_url, pytest.dbs_dir / src, name)
-        created.append(test_db)
-        return test_db
+        return created.setdefault(str(src), UnitTestDB(server_url, pytest.dbs_dir / src, name))
     yield db_factory
     # Drop the unit test databases unless the user has requested to keep them
     if not request.config.getoption('keep_data'):
-        for test_db in created:
+        for test_db in created.values():
             test_db.drop()
 
 
