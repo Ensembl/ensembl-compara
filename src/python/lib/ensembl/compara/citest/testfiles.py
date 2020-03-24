@@ -83,10 +83,10 @@ class CITestFilesItem(CITestItem):
         """
         paths = to_list(paths)
         # Nested function (closure) to compare the reference and target file sizes
-        def cmp_file_size(filepath: PathLike) -> bool:
-            """Returns True if target `filepath` size is larger than allowed variation, False otherwise."""
-            ref_size = os.path.getsize(self.dir_cmp.ref_path / filepath)
-            target_size = os.path.getsize(self.dir_cmp.target_path / filepath)
+        def cmp_file_size(ref_filepath: PathLike, target_filepath: PathLike) -> bool:
+            """Returns True if `target_filepath` size is larger than allowed variation, False otherwise."""
+            ref_size = os.path.getsize(ref_filepath)
+            target_size = os.path.getsize(target_filepath)
             return abs(ref_size - target_size) > (ref_size * variation)
         # Traverse the common directory tree, comparing every reference and target file sizes
         mismatches = self.dir_cmp.apply_test(cmp_file_size, patterns, paths)
@@ -112,10 +112,8 @@ class CITestFilesItem(CITestItem):
         """
         paths = to_list(paths)
         # Nested function (closure) to compare the reference and target files
-        def cmp_file_content(filepath: PathLike) -> bool:
-            """Returns True if reference and target `filepath` differ, False otherwise."""
-            ref_filepath = self.dir_cmp.ref_path / filepath
-            target_filepath = self.dir_cmp.target_path / filepath
+        def cmp_file_content(ref_filepath: PathLike, target_filepath: PathLike) -> bool:
+            """Returns True if `ref_filepath` and `target_filepath` differ, False otherwise."""
             return not file_cmp(ref_filepath, target_filepath)
         # Traverse the common directory tree, comparing every reference and target files
         mismatches = self.dir_cmp.apply_test(cmp_file_content, patterns, paths)

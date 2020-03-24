@@ -128,15 +128,20 @@ class DirCmp:
         """Returns the files in the shared directory tree for which the test function returns True.
 
         Args:
-            test_func: Test function to apply to each file. It has to match the following interface::
+            test_func: Test function applied to each tuple reference- / target-file. It has to expect two
+                `PathLike` parameters and return a boolean, like::
 
-                def test_func(file: PathLike) -> bool:
+                    def test_func(ref_filepath: PathLike, target_filepath: PathLike) -> bool:
 
             patterns: Filenames returned will match at least one of these glob patterns.
             paths: Relative directory/file paths to evaluate (including their subdirectories).
 
         """
-        return list(filter(test_func, self._traverse('common_files', patterns, paths)))
+        positives = []
+        for filepath in self._traverse('common_files', patterns, paths):
+            if test_func(self.ref_path / filepath, self.target_path / filepath):
+                positives.append(filepath)
+        return positives
 
     def common_list(self, patterns: Union[str, List] = None, paths: Union[PathLike, List] = None
                    ) -> List[str]:
