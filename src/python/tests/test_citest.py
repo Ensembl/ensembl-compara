@@ -55,9 +55,9 @@ def dir_cmp(tmp_dir: Path) -> DirCmp:
             │  └─ a.txt [content: "a"]                  │  ├─ b.txt [content: "ab"]
             ├─ 1                                        │  └─ c.txt [content: "b"]
             │  ├─ b.txt [content: "a"]                  └─ 2
-            │  └─ c.txt [content: "a"]                     └─ a.nw [content: "(a);"]
+            │  └─ c.txt [content: "a"]                     └─ a.nw [content: "(a:1,b:1):1;"]
             └─ 2
-               └─ a.nw [content: "(a);"]
+               └─ a.nw [content: "(a:1,b:1):1;"]
 
     """
     def create_file(path: Path, content: str) -> None:
@@ -79,14 +79,14 @@ def dir_cmp(tmp_dir: Path) -> DirCmp:
     create_file(ref_dir / '0' / '0' / 'b.txt', "a")
     create_file(ref_dir / '1' / 'b.txt', "a")
     create_file(ref_dir / '1' / 'c.txt', "a")
-    create_file(ref_dir / '2' / 'a.nw', "(a);")
+    create_file(ref_dir / '2' / 'a.nw', "(a:1,b:1):1;")
     # Sleep one second to ensure the timestamp differs between reference and target files
     time.sleep(1)
     # Create target subdirectories/files
     create_file(target_dir / '0' / 'a.txt', "a")
     create_file(target_dir / '1' / 'b.txt', "ab")
     create_file(target_dir / '1' / 'c.txt', "b")
-    create_file(target_dir / '2' / 'a.nw', "(a);")
+    create_file(target_dir / '2' / 'a.nw', "(a:1,b:1):1;")
     return DirCmp(ref_dir, target_dir)
 
 
