@@ -14,10 +14,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+# Disable redefined-outer-name rule in pylint to avoid warning due to how pytest fixtures work
+# pylint: disable=redefined-outer-name
 
 import os
 from pathlib import Path
 import shutil
+import time
 from typing import Any, Dict, Generator, Optional
 
 import pytest
@@ -28,6 +31,7 @@ from _pytest.tmpdir import TempPathFactory
 import sqlalchemy
 
 from ensembl.compara.db import UnitTestDB
+from ensembl.compara.filesys import DirCmp, PathLike
 
 
 @pytest.hookimpl()
@@ -51,6 +55,7 @@ def pytest_configure(config: Config) -> None:
         config.option.server = str(server_url)
     # Add global variables
     pytest.dbs_dir = Path(__file__).parent / 'databases'
+    pytest.files_dir = Path(__file__).parent / 'flatfiles'
     pytest.get_param_repr = get_param_repr
 
 
@@ -86,8 +91,37 @@ def tmp_dir(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Gener
         shutil.rmtree(tmpdir)
 
 
+@pytest.fixture(name='dir_cmp_factory', scope='session')
+def dir_cmp_factory_(tmp_dir: Path) -> Generator:
+    """Yields a directory tree comparison (:class:`DirCmp`) factory."""
+    created = {}  # type: Dict[str, DirCmp]
+    def dir_cmp_factory(root: PathLike) -> DirCmp:
+        """Returns a :class:`DirCmp` object comparing reference and target directory trees in `root`.
+
+        Args:
+            root: Path to root folder that contain ``reference`` and ``target`` directories. If a relative
+                path is provided, it will be assummed it is inside ``flatfiles`` folder.
+
+        """
+        if str(root) in created:
+            return created[str(root)]
+        # Get the source and temporary absolute paths for reference and target tree directories
+        root = Path(root)
+        ref_src = root / 'reference' if root.is_absolute() else pytest.files_dir / root / 'reference'
+        ref_tmp = tmp_dir / root.name / 'reference'
+        target_src = root / 'target' if root.is_absolute() else pytest.files_dir / root / 'target'
+        target_tmp = tmp_dir / root.name / 'target'
+        # Copy directory trees ignoring file metadata
+        shutil.copytree(ref_src, ref_tmp, copy_function=shutil.copy)
+        # Sleep one second to ensure the timestamp differs between reference and target files
+        time.sleep(1)
+        shutil.copytree(target_src, target_tmp, copy_function=shutil.copy)
+        return created.setdefault(str(root), DirCmp(ref_tmp, target_tmp))
+    yield dir_cmp_factory
+
+
 def get_param_repr(arg: Any) -> Optional[str]:
-    """Returns a string representation of `arg` if it is a dictionary or a list, `None` otherwise.
+    """Returns a string representation of `arg` if it is a dictionary, list or Path, `None` otherwise.
 
     Note:
         `None` will tell pytest to use its default internal representation of `arg`.
@@ -101,4 +135,6 @@ def get_param_repr(arg: Any) -> Optional[str]:
         return '{' + str_repr[:-2] + '}'
     if isinstance(arg, list):
         return '[' + ', '.join(arg) + ']'
+    if isinstance(arg, Path):
+        return str(arg)
     return None

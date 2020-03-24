@@ -17,7 +17,6 @@ limitations under the License.
 # pylint: disable=redefined-outer-name
 
 from pathlib import Path
-import time
 from typing import Callable, Dict
 
 import pytest
@@ -25,7 +24,6 @@ from _pytest.fixtures import FixtureRequest
 
 from ensembl.compara.citest import CITestDBItem, CITestDBContentError, CITestDBGroupingError, \
     CITestDBNumRowsError, CITestFilesItem, CITestFilesContentError, CITestFilesSizeError, CITestFilesTreeError
-from ensembl.compara.filesys import DirCmp
 
 
 @pytest.fixture(scope="module")
@@ -43,61 +41,15 @@ def db_item(request: FixtureRequest, db_factory: Callable) -> CITestDBItem:
 
 
 @pytest.fixture(scope="module")
-def dir_cmp(tmp_dir: Path) -> DirCmp:
-    """Returns a :class:`DirCmp` object that contains the comparison between reference and target directory
-    trees.
-
-    Reference and target test directory trees are as follows:
-        reference                                   target
-            ├─ 0                                        ├─ 0
-            │  ├─ 0                                     │  └─ a.txt [content: "a"]
-            │  │  └─ b.txt [content: "a"]               ├─ 1
-            │  └─ a.txt [content: "a"]                  │  ├─ b.txt [content: "ab"]
-            ├─ 1                                        │  └─ c.txt [content: "b"]
-            │  ├─ b.txt [content: "a"]                  └─ 2
-            │  └─ c.txt [content: "a"]                     └─ a.nw [content: "(a:1,b:1):1;"]
-            └─ 2
-               └─ a.nw [content: "(a:1,b:1):1;"]
-
-    """
-    def create_file(path: Path, content: str) -> None:
-        """Creates the file given in `path` and writes `content` in it.
-
-        If the parent directory of the file does not exist, it is created.
-
-        """
-        if not path.parent.exists():
-            path.parent.mkdir()
-        path.write_text(content)
-    # Create reference and target root directories
-    ref_dir = tmp_dir / 'reference'
-    ref_dir.mkdir()
-    target_dir = tmp_dir / 'target'
-    target_dir.mkdir()
-    # Create reference subdirectories/files
-    create_file(ref_dir / '0' / 'a.txt', "a")
-    create_file(ref_dir / '0' / '0' / 'b.txt', "a")
-    create_file(ref_dir / '1' / 'b.txt', "a")
-    create_file(ref_dir / '1' / 'c.txt', "a")
-    create_file(ref_dir / '2' / 'a.nw', "(a:1,b:1):1;")
-    # Sleep one second to ensure the timestamp differs between reference and target files
-    time.sleep(1)
-    # Create target subdirectories/files
-    create_file(target_dir / '0' / 'a.txt', "a")
-    create_file(target_dir / '1' / 'b.txt', "ab")
-    create_file(target_dir / '1' / 'c.txt', "b")
-    create_file(target_dir / '2' / 'a.nw', "(a:1,b:1):1;")
-    return DirCmp(ref_dir, target_dir)
-
-
-@pytest.fixture(scope="module")
-def files_item(request: FixtureRequest, dir_cmp: DirCmp) -> CITestFilesItem:
-    """Returns a :class:`CITestFilesItem` object to compare two test directory trees.
+def files_item(request: FixtureRequest, dir_cmp_factory: Callable) -> CITestFilesItem:
+    """Returns a :class:`CITestFilesItem` object to compare ``flatfiles/citest`` reference and target
+    directory trees.
 
     Args:
-        dir_cmp: Directory comparison object for two test directory trees.
+        dir_cmp_factory: Directory tree comparison (:class:`DirCmp`) factory.
 
     """
+    dir_cmp = dir_cmp_factory('citest')
     return CITestFilesItem('', request.session, dir_cmp, {})
 
 
@@ -175,11 +127,11 @@ class TestCITestFilesItem:
         [
             ({}, CITestFilesSizeError),
             ({'variation': 1.0}, CITestFilesTreeError),
-            ({'patterns': 'c*'}, CITestFilesTreeError),
-            ({'patterns': ['a*', 'c*']}, CITestFilesTreeError),
-            ({'paths': '2'}, None),
-            ({'paths': ['0', '1']}, CITestFilesSizeError),
-            ({'patterns': 'b*', 'paths': '1'}, CITestFilesSizeError),
+            ({'patterns': 'c*'}, None),
+            ({'patterns': ['a*', 'c*']}, CITestFilesSizeError),
+            ({'paths': '1'}, CITestFilesSizeError),
+            ({'paths': ['0', '2']}, CITestFilesSizeError),
+            ({'patterns': 'c*', 'paths': '1'}, None),
             ({'variation': 1.0, 'patterns': 'b*', 'paths': '1'}, None),
         ],
         ids=pytest.get_param_repr
@@ -206,9 +158,9 @@ class TestCITestFilesItem:
             ({}, CITestFilesContentError),
             ({'patterns': 'a*'}, CITestFilesTreeError),
             ({'patterns': ['a*', 'c*']}, CITestFilesContentError),
-            ({'paths': '2'}, None),
-            ({'paths': ['0', '2']}, CITestFilesTreeError),
-            ({'patterns': 'b*', 'paths': '2'}, None),
+            ({'paths': '0'}, CITestFilesTreeError),
+            ({'paths': ['0', '2']}, CITestFilesContentError),
+            ({'patterns': 'a*', 'paths': '0'}, None),
         ],
         ids=pytest.get_param_repr
     )
