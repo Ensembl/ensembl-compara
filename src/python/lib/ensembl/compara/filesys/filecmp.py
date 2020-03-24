@@ -52,6 +52,9 @@ def _newick_cmp(fpath1: PathLike, fpath2: PathLike) -> bool:
         fpath1: First file path.
         fpath2: Second file path.
 
+    Raises:
+        ete3.parser.newick.NewickError: If any file is missing any internal or leaf branch or any leaf name.
+
     """
     ref_tree = Tree(str(fpath1), format=5)
     target_tree = Tree(str(fpath2), format=5)
