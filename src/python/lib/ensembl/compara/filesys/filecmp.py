@@ -18,12 +18,12 @@ limitations under the License.
 import filecmp
 from pathlib import Path
 
-from ete3 import Tree
+from Bio import Phylo
 
 from .dircmp import PathLike
 
 
-# Set of file extensions that should be interpreted as a Newick file format
+# File extensions that should be interpreted as the same file format:
 NEWICK_EXT = {'.nw', '.nwk', '.newick', '.nh'}
 
 
@@ -38,32 +38,24 @@ def file_cmp(fpath1: PathLike, fpath2: PathLike) -> bool:
     fext1 = Path(fpath1).suffix
     fext2 = Path(fpath2).suffix
     if (fext1 in NEWICK_EXT) and (fext2 in NEWICK_EXT):
-        return _newick_cmp(fpath1, fpath2)
+        return _tree_cmp(fpath1, fpath2)
     # Resort to a shallow binary file comparison (files with identical os.stat() signatures are taken to be
     # equal)
     return filecmp.cmp(str(fpath1), str(fpath2))
 
 
-def _newick_cmp(fpath1: PathLike, fpath2: PathLike) -> bool:
-    """Returns True if trees stored in `fpath1` and `fpath2` (in Newick format) are equivalent, False
-    otherwise.
+def _tree_cmp(fpath1: PathLike, fpath2: PathLike, tree_format: str = 'newick') -> bool:
+    """Returns True if trees stored in `fpath1` and `fpath2` are equivalent, False otherwise.
 
     Args:
-        fpath1: First file path.
-        fpath2: Second file path.
-
-    Raises:
-        ete3.parser.newick.NewickError: If any file is missing any internal or leaf branch or any leaf name.
+        fpath1: First tree file path.
+        fpath2: Second tree file path.
+        tree_format: Tree format, i.e. ``newick``, ``nexus``, ``phyloxml`` or ``nexml``.
 
     """
-    ref_tree = Tree(str(fpath1), format=5)
-    target_tree = Tree(str(fpath2), format=5)
-    # Check the leaves all match
-    ref_leaves = set(ref_tree.get_leaf_names())
-    target_leaves = set(target_tree.get_leaf_names())
-    if ref_leaves != target_leaves:
-        return False
-    # Check the distance to the root for each leaf
-    ref_dists = {leaf.name: leaf.get_distance(ref_tree) for leaf in ref_tree}
-    target_dists = {leaf.name: leaf.get_distance(target_tree) for leaf in target_tree}
+    ref_tree = Phylo.read(fpath1, tree_format)
+    target_tree = Phylo.read(fpath2, tree_format)
+    # Both trees are considered equal if they have the same leaves and the same distance from each to the root
+    ref_dists = {leaf.name: ref_tree.distance(leaf) for leaf in ref_tree.get_terminals()}
+    target_dists = {leaf.name: target_tree.distance(leaf) for leaf in target_tree.get_terminals()}
     return ref_dists == target_dists
