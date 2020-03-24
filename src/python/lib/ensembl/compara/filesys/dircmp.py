@@ -65,10 +65,16 @@ class DirCmp:
         self.common_files = ref_fnames & target_fnames
         # Get files/subdirectories only present in the reference directory
         self.ref_only = ref_fnames - target_fnames
-        self.ref_only |= set(map(lambda x: os.path.join(x, '*'), ref_dnames - target_dnames))
+        for ref_only_dname in ref_dnames - target_dnames:
+            for path, dummy, files in os.walk(self.ref_path / ref_only_dname):
+                rel_path = os.path.relpath(path, self.ref_path)
+                self.ref_only |= set([os.path.join(rel_path, fname) for fname in files])
         # Get files/subdirectories only present in the target directory
         self.target_only = target_fnames - ref_fnames
-        self.target_only |= set(map(lambda x: os.path.join(x, '*'), target_dnames - ref_dnames))
+        for target_only_dname in target_dnames - ref_dnames:
+            for path, dummy, files in os.walk(self.target_path / target_only_dname):
+                rel_path = os.path.relpath(path, self.target_path)
+                self.target_only |= set([os.path.join(rel_path, fname) for fname in files])
         self.subdirs = {}  # type: Dict[Path, DirCmp]
         for dirname in ref_dnames & target_dnames:
             self.subdirs[Path(dirname)] = DirCmp(self.ref_path / dirname, self.target_path / dirname)
@@ -100,10 +106,9 @@ class DirCmp:
         # If no nodes were added, add the root as the starting point
         if not nodes_left:
             nodes_left.append((Path(), self))
-        patterns = to_list(patterns)
-        if patterns:
-            # Add "*/*" pattern to keep reference- / target-only subdirectories (based on attr)
-            patterns.append(f'*{os.path.sep}*')
+        # Prefix each pattern with "**" to match also files within subdirectories (for reference- /
+        # target-only files)
+        patterns = [f"**{glob}" for glob in to_list(patterns)]
         while nodes_left:
             dirname, node = nodes_left.pop()
             # Append subdirectories to the list of directories left to traverse
