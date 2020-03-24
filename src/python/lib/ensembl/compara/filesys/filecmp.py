@@ -53,15 +53,14 @@ def _newick_cmp(fpath1: PathLike, fpath2: PathLike) -> bool:
         fpath2: Second file path.
 
     """
-    ref_tree = Tree(fpath1, format=5)
-    target_tree = Tree(fpath2, format=5)
+    ref_tree = Tree(str(fpath1), format=5)
+    target_tree = Tree(str(fpath2), format=5)
     # Check the leaves all match
     ref_leaves = set(ref_tree.get_leaf_names())
     target_leaves = set(target_tree.get_leaf_names())
     if ref_leaves != target_leaves:
         return False
     # Check the distance to the root for each leaf
-    for leaf in ref_leaves:
-        if leaf.get_distance(ref_tree) != leaf.get_distance(target_tree):
-            return False
-    return True
+    ref_dists = {leaf.name: leaf.get_distance(ref_tree) for leaf in ref_tree}
+    target_dists = {leaf.name: leaf.get_distance(target_tree) for leaf in target_tree}
+    return ref_dists == target_dists
