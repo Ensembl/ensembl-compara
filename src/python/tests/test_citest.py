@@ -37,8 +37,8 @@ def db_item(request: FixtureRequest, db_factory: Callable) -> CITestDBItem:
         db_factory: Unit test database (:class:`UnitTestDB`) factory.
 
     """
-    ref_db = db_factory(Path('citest/reference'), 'citest_reference')
-    target_db = db_factory(Path('citest/target'), 'citest_target')
+    ref_db = db_factory(Path('citest', 'reference'), 'citest_reference')
+    target_db = db_factory(Path('citest', 'target'), 'citest_target')
     return CITestDBItem('', request.session, ref_db.dbc, target_db.dbc, 'main_table', {})
 
 
