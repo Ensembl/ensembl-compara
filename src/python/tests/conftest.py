@@ -119,28 +119,28 @@ def tmp_dir(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Gener
 def dir_cmp_factory_(tmp_dir: Path) -> Generator:
     """Yields a directory tree comparison (:class:`DirCmp`) factory."""
     created = {}  # type: Dict[str, DirCmp]
-    def dir_cmp_factory(path: PathLike) -> DirCmp:
-        """Returns a :class:`DirCmp` object comparing reference and target directory trees in `path`.
+    def dir_cmp_factory(src: PathLike) -> DirCmp:
+        """Returns a :class:`DirCmp` object comparing reference and target directory trees in `src`.
 
         Args:
-            path: Path to root folder that contain ``reference`` and ``target`` directories. If a relative
-                path is provided, it will be assummed it is inside ``flatfiles`` folder.
+            src: Directory path where ``reference`` and ``target`` directories are located. If a relative
+                path is provided, the starting folder will be ``ensembl-compara/src/python/tests/flatfiles``.
 
         """
-        if str(path) in created:
-            return created[str(path)]
-        # Get the source and temporary absolute paths for reference and target tree directories
-        root = Path(path)
-        ref_src = root / 'reference' if root.is_absolute() else pytest.files_dir / root / 'reference'
-        ref_tmp = tmp_dir / root.name / 'reference'
-        target_src = root / 'target' if root.is_absolute() else pytest.files_dir / root / 'target'
-        target_tmp = tmp_dir / root.name / 'target'
-        # Copy directory trees ignoring file metadata
-        shutil.copytree(ref_src, ref_tmp, copy_function=shutil.copy)
-        # Sleep one second to ensure the timestamp differs between reference and target files
-        time.sleep(1)
-        shutil.copytree(target_src, target_tmp, copy_function=shutil.copy)
-        return created.setdefault(str(path), DirCmp(ref_tmp, target_tmp))
+        if str(src) not in created:
+            # Get the source and temporary absolute paths for reference and target tree directories
+            root = Path(src)
+            ref_src = root / 'reference' if root.is_absolute() else pytest.files_dir / root / 'reference'
+            ref_tmp = tmp_dir / root.name / 'reference'
+            target_src = root / 'target' if root.is_absolute() else pytest.files_dir / root / 'target'
+            target_tmp = tmp_dir / root.name / 'target'
+            # Copy directory trees ignoring file metadata
+            shutil.copytree(ref_src, ref_tmp, copy_function=shutil.copy)
+            # Sleep one second to ensure the timestamp differs between reference and target files
+            time.sleep(1)
+            shutil.copytree(target_src, target_tmp, copy_function=shutil.copy)
+            created[str(src)] = DirCmp(ref_tmp, target_tmp)
+        return created[str(src)]
     yield dir_cmp_factory
 
 
