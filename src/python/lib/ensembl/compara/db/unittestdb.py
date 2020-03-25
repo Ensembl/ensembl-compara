@@ -111,7 +111,7 @@ class UnitTestDB:
         # SQLite databases are created automatically if they do not exist
         if db_url.get_dialect().name != 'sqlite':
             # Add the database name to the URL
-            db_url.database = os.environ['USER'] + '_' + name if name else dump_dir_path.name
+            db_url.database = os.environ['USER'] + '_' + (name if name else dump_dir_path.name)
             # Connect to the server to create the database
             self._server = create_engine(url)
             self._server.execute(text("CREATE DATABASE {};".format(db_url.database)))
