@@ -134,7 +134,7 @@ def get_param_repr(arg: Any) -> Optional[str]:
             str_repr += f"{key}: {value_repr if value_repr else value}; "
         return '{' + str_repr[:-2] + '}'
     if isinstance(arg, list):
-        return '[' + ', '.join(arg) + ']'
+        return '[' + ', '.join(str(x) for x in arg) + ']'
     if isinstance(arg, Path):
         return str(arg)
     return None
