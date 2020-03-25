@@ -95,18 +95,18 @@ def tmp_dir(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Gener
 def dir_cmp_factory_(tmp_dir: Path) -> Generator:
     """Yields a directory tree comparison (:class:`DirCmp`) factory."""
     created = {}  # type: Dict[str, DirCmp]
-    def dir_cmp_factory(root: PathLike) -> DirCmp:
-        """Returns a :class:`DirCmp` object comparing reference and target directory trees in `root`.
+    def dir_cmp_factory(path: PathLike) -> DirCmp:
+        """Returns a :class:`DirCmp` object comparing reference and target directory trees in `path`.
 
         Args:
-            root: Path to root folder that contain ``reference`` and ``target`` directories. If a relative
+            path: Path to root folder that contain ``reference`` and ``target`` directories. If a relative
                 path is provided, it will be assummed it is inside ``flatfiles`` folder.
 
         """
-        if str(root) in created:
-            return created[str(root)]
+        if str(path) in created:
+            return created[str(path)]
         # Get the source and temporary absolute paths for reference and target tree directories
-        root = Path(root)
+        root = Path(path)
         ref_src = root / 'reference' if root.is_absolute() else pytest.files_dir / root / 'reference'
         ref_tmp = tmp_dir / root.name / 'reference'
         target_src = root / 'target' if root.is_absolute() else pytest.files_dir / root / 'target'
@@ -116,7 +116,7 @@ def dir_cmp_factory_(tmp_dir: Path) -> Generator:
         # Sleep one second to ensure the timestamp differs between reference and target files
         time.sleep(1)
         shutil.copytree(target_src, target_tmp, copy_function=shutil.copy)
-        return created.setdefault(str(root), DirCmp(ref_tmp, target_tmp))
+        return created.setdefault(str(path), DirCmp(ref_tmp, target_tmp))
     yield dir_cmp_factory
 
 
