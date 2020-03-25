@@ -68,13 +68,13 @@ class DirCmp:
         for ref_only_dname in ref_dnames - target_dnames:
             for path, dummy, files in os.walk(self.ref_path / ref_only_dname):
                 rel_path = os.path.relpath(path, self.ref_path)
-                self.ref_only |= set([os.path.join(rel_path, fname) for fname in files])
+                self.ref_only |= {os.path.join(rel_path, fname) for fname in files}
         # Get files/subdirectories only present in the target directory
         self.target_only = target_fnames - ref_fnames
         for target_only_dname in target_dnames - ref_dnames:
             for path, dummy, files in os.walk(self.target_path / target_only_dname):
                 rel_path = os.path.relpath(path, self.target_path)
-                self.target_only |= set([os.path.join(rel_path, fname) for fname in files])
+                self.target_only |= {os.path.join(rel_path, fname) for fname in files}
         self.subdirs = {}  # type: Dict[Path, DirCmp]
         for dirname in ref_dnames & target_dnames:
             self.subdirs[Path(dirname)] = DirCmp(self.ref_path / dirname, self.target_path / dirname)
