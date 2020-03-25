@@ -29,62 +29,6 @@ from ..filesys import PathLike
 from .dbconnection import DBConnection, Query, URL
 
 
-def create_databases(url: URL, dump_dir: PathLike) -> Iterator['UnitTestDB']:
-    """Yields a :class:`UnitTestDB` object per database created.
-
-    Args:
-        url: URL of the server hosting the databases, e.g. ``mysql://user:passwd@localhost:3306/``, or SQLite
-            root path URL, e.g. ``sqlite:////path/to/folder``.
-        dump_dir: Directory path with one subdirectory per database to create. Each subdirectory has to
-            contain the database schema in ``table.sql`` and can contain TSV data files (without headers),
-            one per table following the convention ``<table_name>.txt``. Each database will be named after
-            the subdirectory used to create it.
-
-    Raises:
-        ValueError: If `dump_dir` is not an existing directory.
-
-    """
-    if not os.path.isdir(dump_dir):
-        raise ValueError("'dump_dir' must be a valid path to a directory")
-    dialect = make_url(url).get_dialect()
-    for element in os.scandir(dump_dir):
-        if element.is_dir():
-            if dialect == 'sqlite':
-                yield UnitTestDB(url + '/' + element.name, element.path, None)
-            else:
-                yield UnitTestDB(url, element.path, None)
-
-
-def parse_sql_file(filepath: Union[bytes, PathLike]) -> Iterator[sqlalchemy.sql.expression.TextClause]:
-    """Yields each SQL query found parsing the given SQL file.
-
-    Args:
-        filepath: SQL file path.
-
-    """
-    with open(filepath) as sql_file:
-        query = ''
-        multiline_comment = False
-        for line in sql_file:
-            line = line.strip(' \n')
-            # Capture (and discard) multiple-line comments
-            if re.match(r'\/\*\*', line):
-                multiline_comment = True
-                continue
-            if re.search(r'\*\/$', line):
-                multiline_comment = False
-                continue
-            if not multiline_comment:
-                # Remove single- and in-line comments
-                line = re.sub(r'(--|#|\/\/).*', '', line)
-                line = re.sub(r'\/\*[^\*]*\*\/', '', line)
-                if line:
-                    query += line
-                    if query.endswith(';'):
-                        yield text(query)
-                        query = ''
-
-
 class UnitTestDB:
     """Creates and connects to a new database, applying the schema and importing the data.
 
@@ -119,7 +63,7 @@ class UnitTestDB:
             # Establish the connection to the database, load the schema and import the data
             self.dbc = DBConnection(db_url)
             with self.dbc.begin() as conn:
-                for query in parse_sql_file(dump_dir_path / 'table.sql'):
+                for query in self._parse_sql_file(dump_dir_path / 'table.sql'):
                     conn.execute(query)
                     table = self._get_table_name(query)
                     filepath = dump_dir_path / f"{table}.txt"
@@ -167,6 +111,36 @@ class UnitTestDB:
             conn.execute(text(f"BULK INSERT {table} FROM '{filepath}'"))
         else:
             conn.execute(text(f"LOAD DATA LOCAL INFILE '{filepath}' INTO TABLE {table}"))
+
+    @staticmethod
+    def _parse_sql_file(filepath: Union[bytes, PathLike]) -> Iterator[sqlalchemy.sql.expression.TextClause]:
+        """Yields each SQL query found parsing the given SQL file.
+
+        Args:
+            filepath: SQL file path.
+
+        """
+        with open(filepath) as sql_file:
+            query = ''
+            multiline_comment = False
+            for line in sql_file:
+                line = line.strip(' \n')
+                # Capture (and discard) multiple-line comments
+                if re.match(r'\/\*\*', line):
+                    multiline_comment = True
+                    continue
+                if re.search(r'\*\/$', line):
+                    multiline_comment = False
+                    continue
+                if not multiline_comment:
+                    # Remove single- and in-line comments
+                    line = re.sub(r'(--|#|\/\/).*', '', line)
+                    line = re.sub(r'\/\*[^\*]*\*\/', '', line)
+                    if line:
+                        query += line
+                        if query.endswith(';'):
+                            yield text(query)
+                            query = ''
 
     @staticmethod
     def _get_table_name(query: Query) -> str:

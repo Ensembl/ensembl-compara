@@ -21,7 +21,7 @@ import os
 from pathlib import Path
 import shutil
 import time
-from typing import Any, Dict, Generator, Optional
+from typing import Any, Dict, Generator, Iterator, Optional
 
 import pytest
 from _pytest.config import Config
@@ -29,6 +29,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory
 import sqlalchemy
+from sqlalchemy.engine.url import make_url
 
 from ensembl.compara.db import UnitTestDB
 from ensembl.compara.filesys import DirCmp, PathLike
@@ -64,21 +65,44 @@ def db_factory_(request: FixtureRequest) -> Generator:
     """Yields a unit test database (:class:`UnitTestDB`) factory."""
     created = {}  # type: Dict[str, UnitTestDB]
     server_url = request.config.getoption('server')
+    dialect = make_url(server_url).get_dialect()
     def db_factory(src: PathLike, name: Optional[str] = None) -> UnitTestDB:
         """Returns a :class:`UnitTestDB` object for the newly created unit test database `name` from `src`.
 
         Args:
-            src: Relative directory path where the test database schema and content files are located. The
-                starting directory is ``ensembl-compara/src/python/tests/databases``.
+            src: Directory path where the test database schema and content files are located. If a relative
+                path is provided, the starting folder will be ``ensembl-compara/src/python/tests/databases``.
             name: Name to give to the new database (it will be prefixed by the username).
 
         """
-        return created.setdefault(str(src), UnitTestDB(server_url, pytest.dbs_dir / src, name))
+        src_path = Path(src) if os.path.isabs(src) else pytest.dbs_dir / src
+        url = server_url if dialect != 'sqlite' else server_url + '/' + src_path.name
+        return created.setdefault(src_path.name, UnitTestDB(url, src_path, name))
     yield db_factory
     # Drop the unit test databases unless the user has requested to keep them
     if not request.config.getoption('keep_data'):
         for test_db in created.values():
             test_db.drop()
+
+
+@pytest.fixture(name='multidb_factory', scope='session')
+def multidb_factory_(db_factory: UnitTestDB) -> Generator:
+    """Yields a multi-:class:`UnitTestDB` factory (wrapper of :meth:`db_factory_()`)."""
+    def multidb_factory(src: PathLike) -> Iterator[UnitTestDB]:
+        """Yields a :class:`UnitTestDB` object per database created from `src`.
+
+        Args:
+            src: Directory path with one subdirectory per database to create. Each subdirectory has to contain
+                the database schema and the content files. Databases will be named as ``<root_dir>_<subdir>``.
+                If a relative path is provided, the starting folder will be
+                ``ensembl-compara/src/python/tests/databases``.
+
+        """
+        src_path = Path(src) if os.path.isabs(src) else pytest.dbs_dir / src
+        for child in src_path.iterdir():
+            if child.is_dir():
+                yield db_factory(child, src_path.name + '_' + child.name)
+    yield multidb_factory
 
 
 @pytest.fixture(scope='session')

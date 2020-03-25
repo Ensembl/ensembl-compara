@@ -27,16 +27,15 @@ from ensembl.compara.citest import CITestDBItem, CITestDBContentError, CITestDBG
 
 
 @pytest.fixture(scope="module")
-def db_item(request: FixtureRequest, db_factory: Callable) -> CITestDBItem:
+def db_item(request: FixtureRequest, multidb_factory: Callable) -> CITestDBItem:
     """Returns a :class:`CITestDBItem` object to compare table ``main_table`` in reference and target unit
     test databases.
 
     Args:
-        db_factory: Unit test database (:class:`UnitTestDB`) factory.
+        multidb_factory: Multi-:class:`UnitTestDB` factory.
 
     """
-    ref_db = db_factory(Path('citest', 'reference'), 'citest_reference')
-    target_db = db_factory(Path('citest', 'target'), 'citest_target')
+    ref_db, target_db = multidb_factory(Path('citest'))
     return CITestDBItem('', request.session, ref_db.dbc, target_db.dbc, 'main_table', {})
 
 
