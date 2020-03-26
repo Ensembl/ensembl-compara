@@ -150,7 +150,9 @@ def dir_cmp_factory_(tmp_dir: Path) -> Generator:
 
 
 def get_param_repr(arg: Any) -> Optional[str]:
-    """Returns a string representation of `arg` if it is a dictionary, list or Path, `None` otherwise.
+    """Returns a string representation of `arg` for certains types, `None` otherwise.
+
+    Types handled: dict, list, Path, ExitStack, _pytest.python_api.RaisesContext
 
     Note:
         `None` will tell pytest to use its default internal representation of `arg`.
