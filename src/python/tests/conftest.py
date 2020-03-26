@@ -21,7 +21,7 @@ import os
 from pathlib import Path
 import shutil
 import time
-from typing import Any, Dict, Generator, Iterator, Optional
+from typing import Any, Callable, Dict, Generator, Iterator, Optional
 
 import pytest
 from _pytest.config import Config
@@ -86,7 +86,7 @@ def db_factory_(request: FixtureRequest) -> Generator:
 
 
 @pytest.fixture(name='multidb_factory', scope='session')
-def multidb_factory_(db_factory: UnitTestDB) -> Generator:
+def multidb_factory_(db_factory: Callable) -> Generator:
     """Yields a multi-:class:`UnitTestDB` factory (wrapper of :meth:`db_factory_()`)."""
     def multidb_factory(src: PathLike) -> Iterator[UnitTestDB]:
         """Yields a :class:`UnitTestDB` object per database created from `src`.
