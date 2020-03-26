@@ -28,34 +28,24 @@ from ensembl.compara.citest import CITestDBItem, CITestDBContentError, CITestDBG
     CITestDBNumRowsError, CITestFilesItem, CITestFilesContentError, CITestFilesSizeError, CITestFilesTreeError
 
 
-@pytest.fixture(scope="module")
-def db_item(request: FixtureRequest, multidb_factory: Callable) -> CITestDBItem:
-    """Returns a :class:`CITestDBItem` object to compare table ``main_table`` in reference and target unit
-    test databases.
+@pytest.fixture(scope='class')
+def db_item(request: FixtureRequest, multidb_factory: Callable) -> None:
+    """Assigns a :class:`CITestDBItem` object to a pytest class attribute.
 
-    Args:
-        multidb_factory: Multi-:class:`UnitTestDB` factory.
+    The object compares table ``main_table`` in reference and target unit test databases (from
+    ``ensembl-compara/src/python/tests/databases/citest``).
 
     """
     dbs = multidb_factory(Path('citest'))
-    return CITestDBItem('', request.session, dbs['reference'].dbc, dbs['target'].dbc, 'main_table', {})
+    request.cls.db_item = CITestDBItem('', request.session, dbs['reference'].dbc, dbs['target'].dbc,
+                                       'main_table', {})
 
 
-@pytest.fixture(scope="module")
-def files_item(request: FixtureRequest, dir_cmp_factory: Callable) -> CITestFilesItem:
-    """Returns a :class:`CITestFilesItem` object to compare ``flatfiles/citest`` reference and target
-    directory trees.
-
-    Args:
-        dir_cmp_factory: Directory tree comparison (:class:`DirCmp`) factory.
-
-    """
-    dir_cmp = dir_cmp_factory('citest')
-    return CITestFilesItem('', request.session, dir_cmp, {})
-
-
+@pytest.mark.usefixtures('db_item')
 class TestCITestDBItem:
     """Tests CITest's :class:`CITestDBItem` class."""
+
+    db_item = None  # type: CITestDBItem
 
     @pytest.mark.parametrize(
         "kwargs, expectation",
@@ -71,7 +61,7 @@ class TestCITestDBItem:
         ],
         ids=pytest.get_param_repr
     )
-    def test_num_rows_test(self, db_item: CITestDBItem, kwargs: Dict, expectation: ContextManager) -> None:
+    def test_num_rows_test(self, kwargs: Dict, expectation: ContextManager) -> None:
         """Tests CITest's :meth:`CITestDBItem.test_num_rows()` method.
 
         Args:
@@ -81,7 +71,7 @@ class TestCITestDBItem:
 
         """
         with expectation:
-            db_item.test_num_rows(**kwargs)
+            self.db_item.test_num_rows(**kwargs)
 
     @pytest.mark.parametrize(
         "kwargs, expectation",
@@ -99,7 +89,7 @@ class TestCITestDBItem:
         ],
         ids=pytest.get_param_repr
     )
-    def test_content_test(self, db_item: CITestDBItem, kwargs: Dict, expectation: ContextManager) -> None:
+    def test_content_test(self, kwargs: Dict, expectation: ContextManager) -> None:
         """Tests CITest's :meth:`CITestDBItem.test_content()` method.
 
         Args:
@@ -109,11 +99,26 @@ class TestCITestDBItem:
 
         """
         with expectation:
-            db_item.test_content(**kwargs)
+            self.db_item.test_content(**kwargs)
 
 
+@pytest.fixture(scope='class')
+def files_item(request: FixtureRequest, dir_cmp_factory: Callable) -> None:
+    """Assigns a :class:`CITestFilesItem` object to a pytest class attribute.
+
+    The object compares ``ensembl-compara/src/python/tests/flatfiles/citest`` reference and target directory
+    trees.
+
+    """
+    dir_cmp = dir_cmp_factory('citest')
+    request.cls.files_item = CITestFilesItem('', request.session, dir_cmp, {})
+
+
+@pytest.mark.usefixtures('files_item')
 class TestCITestFilesItem:
     """Tests CITest's :class:`CITestFilesItem` class."""
+
+    files_item = None  # type: CITestFilesItem
 
     @pytest.mark.parametrize(
         "kwargs, expectation",
@@ -129,7 +134,7 @@ class TestCITestFilesItem:
         ],
         ids=pytest.get_param_repr
     )
-    def test_size_test(self, files_item: CITestFilesItem, kwargs: Dict, expectation: ContextManager) -> None:
+    def test_size_test(self, kwargs: Dict, expectation: ContextManager) -> None:
         """Tests CITest's :meth:`CITestFilesItem.test_size()` method.
 
         Args:
@@ -139,7 +144,7 @@ class TestCITestFilesItem:
 
         """
         with expectation:
-            files_item.test_size(**kwargs)
+            self.files_item.test_size(**kwargs)
 
     @pytest.mark.parametrize(
         "kwargs, expectation",
@@ -153,8 +158,7 @@ class TestCITestFilesItem:
         ],
         ids=pytest.get_param_repr
     )
-    def test_content_test(self, files_item: CITestFilesItem, kwargs: Dict, expectation: ContextManager
-                         ) -> None:
+    def test_content_test(self, kwargs: Dict, expectation: ContextManager) -> None:
         """Tests CITest's :meth:`CITestFilesItem.test_content()` method.
 
         Args:
@@ -164,4 +168,4 @@ class TestCITestFilesItem:
 
         """
         with expectation:
-            files_item.test_content(**kwargs)
+            self.files_item.test_content(**kwargs)

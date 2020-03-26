@@ -23,30 +23,37 @@ from typing import Callable, ContextManager, Dict, Set
 
 import pytest
 from pytest import raises
+from _pytest.fixtures import FixtureRequest
 
 from ensembl.compara.filesys import DirCmp, file_cmp, PathLike
 
 
-@pytest.fixture(scope="module")
-def dir_cmp(dir_cmp_factory: Callable) -> DirCmp:
-    """Returns a :class:`DirCmp` object that compares ``ensembl-compara/src/python/tests/flatfiles/citest``
-    reference and target directory trees.
+@pytest.fixture(scope='class')
+def dir_cmp(request: FixtureRequest, dir_cmp_factory: Callable) -> None:
+    """Assigns a :class:`DirCmp` object to a pytest class attribute.
+
+    The object compares ``ensembl-compara/src/python/tests/flatfiles/citest`` reference and target directory
+    trees.
+
     """
-    return dir_cmp_factory('citest')
+    request.cls.dir_cmp = dir_cmp_factory('citest')
 
 
+@pytest.mark.usefixtures('dir_cmp')
 class TestDirCmp:
     """Tests :class:`DirCmp` class."""
 
+    dir_cmp = None  # type: DirCmp
+
     @pytest.mark.dependency()
-    def test_init(self, tmp_dir: Path, dir_cmp: DirCmp) -> None:
+    def test_init(self, tmp_dir: Path) -> None:
         """Tests that the object :class:`DirCmp` is initialised correctly."""
-        assert tmp_dir / 'citest' / 'reference' == dir_cmp.ref_path, "Unexpected reference root path"
-        assert tmp_dir / 'citest' / 'target' == dir_cmp.target_path, "Unexpected target root path"
+        assert tmp_dir / 'citest' / 'reference' == self.dir_cmp.ref_path, "Unexpected reference root path"
+        assert tmp_dir / 'citest' / 'target' == self.dir_cmp.target_path, "Unexpected target root path"
         # Check the files at the root
-        assert dir_cmp.common_files == set(), "Found unexpected files at the root of both trees"
-        assert dir_cmp.ref_only == {'3/a.txt'}, "Expected '3/a.txt' at reference tree's root"
-        assert dir_cmp.target_only == set(), "Found unexpected files at target tree's root"
+        assert self.dir_cmp.common_files == set(), "Found unexpected files at the root of both trees"
+        assert self.dir_cmp.ref_only == {'3/a.txt'}, "Expected '3/a.txt' at reference tree's root"
+        assert self.dir_cmp.target_only == set(), "Found unexpected files at target tree's root"
         # Check each subdirectory
         expected = {
             1: {'common_files': {'b.txt', 'c.txt'}},
@@ -56,10 +63,10 @@ class TestDirCmp:
             key = Path(str(i))
             for attr in ['common_files', 'ref_only', 'target_only', 'subdirs']:
                 if attr in expected[i]:
-                    assert getattr(dir_cmp.subdirs[key], attr) == expected[i][attr], \
+                    assert getattr(self.dir_cmp.subdirs[key], attr) == expected[i][attr], \
                         "Expected {} '{}' at '{}/'".format(attr, "', '".join(expected[i][attr]), i)
                 else:
-                    assert not getattr(dir_cmp.subdirs[key], attr), \
+                    assert not getattr(self.dir_cmp.subdirs[key], attr), \
                         f"Found unexpected {attr} elements at '{i}/'"
 
     @pytest.mark.dependency(depends=['test_init'], scope='class')
@@ -75,8 +82,7 @@ class TestDirCmp:
         ],
         ids=pytest.get_param_repr
     )
-    def test_apply_test(self, dir_cmp: DirCmp, kwargs: Dict, output: Set[str], expectation: ContextManager
-                       ) -> None:
+    def test_apply_test(self, kwargs: Dict, output: Set[str], expectation: ContextManager) -> None:
         """Tests DirCmp's :meth:`DirCmp.apply_test()` method.
 
         Args:
@@ -87,7 +93,7 @@ class TestDirCmp:
 
         """
         with expectation:
-            assert set(dir_cmp.apply_test(filecmp.cmp, **kwargs)) == output
+            assert set(self.dir_cmp.apply_test(filecmp.cmp, **kwargs)) == output
 
     @pytest.mark.dependency(depends=['test_init'], scope='class')
     @pytest.mark.parametrize(
@@ -102,8 +108,7 @@ class TestDirCmp:
         ],
         ids=pytest.get_param_repr
     )
-    def test_common_list(self, dir_cmp: DirCmp, kwargs: Dict, output: Set[str], expectation: ContextManager
-                        ) -> None:
+    def test_common_list(self, kwargs: Dict, output: Set[str], expectation: ContextManager) -> None:
         """Tests DirCmp's :meth:`DirCmp.common_list()` method.
 
         Args:
@@ -114,7 +119,7 @@ class TestDirCmp:
 
         """
         with expectation:
-            assert set(dir_cmp.common_list(**kwargs)) == output
+            assert set(self.dir_cmp.common_list(**kwargs)) == output
 
     @pytest.mark.dependency(depends=['test_init'], scope='class')
     @pytest.mark.parametrize(
@@ -129,8 +134,7 @@ class TestDirCmp:
         ],
         ids=pytest.get_param_repr
     )
-    def test_ref_only_list(self, dir_cmp: DirCmp, kwargs: Dict, output: Set[str], expectation: ContextManager
-                          ) -> None:
+    def test_ref_only_list(self, kwargs: Dict, output: Set[str], expectation: ContextManager) -> None:
         """Tests DirCmp's :meth:`DirCmp.ref_only_list()` method.
 
         Args:
@@ -141,7 +145,7 @@ class TestDirCmp:
 
         """
         with expectation:
-            assert set(dir_cmp.ref_only_list(**kwargs)) == output
+            assert set(self.dir_cmp.ref_only_list(**kwargs)) == output
 
     @pytest.mark.dependency(depends=['test_init'], scope='class')
     @pytest.mark.parametrize(
@@ -156,12 +160,10 @@ class TestDirCmp:
         ],
         ids=pytest.get_param_repr
     )
-    def test_target_only_list(self, dir_cmp: DirCmp, kwargs: Dict, output: Set[str],
-                              expectation: ContextManager) -> None:
+    def test_target_only_list(self, kwargs: Dict, output: Set[str], expectation: ContextManager) -> None:
         """Tests DirCmp's :meth:`DirCmp.target_only_list()` method.
 
         Args:
-            dir_cmp: Directory comparison object for two test directory trees.
             kwargs: Named arguments to be passed to the method.
             output: Expected file paths returned by the method.
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
@@ -169,11 +171,14 @@ class TestDirCmp:
 
         """
         with expectation:
-            assert set(dir_cmp.target_only_list(**kwargs)) == output
+            assert set(self.dir_cmp.target_only_list(**kwargs)) == output
 
 
+@pytest.mark.usefixtures('dir_cmp')
 class TestFileCmp:
     """Tests :mod:`filecmp` module."""
+
+    dir_cmp = None  # type: DirCmp
 
     @pytest.mark.parametrize(
         "filepath, output",
@@ -186,14 +191,13 @@ class TestFileCmp:
         ],
         ids=pytest.get_param_repr
     )
-    def test_file_cmp(self, dir_cmp: DirCmp, filepath: PathLike, output: bool) -> None:
+    def test_file_cmp(self, filepath: PathLike, output: bool) -> None:
         """Tests :meth:`filecmp.file_cmp()` method.
 
         Args:
-            dir_cmp: Directory comparison object for two test directory trees.
             filepath: Relative file path to compare between reference and target directory trees.
             output: Expected returned boolean value.
 
         """
-        assert file_cmp(dir_cmp.ref_path / filepath, dir_cmp.target_path / filepath) == output, \
+        assert file_cmp(self.dir_cmp.ref_path / filepath, self.dir_cmp.target_path / filepath) == output, \
             f"Files should be {'equivalent' if output else 'different'}"
