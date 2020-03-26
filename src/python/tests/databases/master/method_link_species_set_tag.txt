@@ -1,0 +1,4 @@
+1	reference_species	triticum_aestivum
+2	reference_species	triticum_aestivum
+3	reference_species	triticum_aestivum
+10	species_set_size	1
