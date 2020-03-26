@@ -14,9 +14,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-# Disable protected-access and unused-variable in pylint to avoid warnings from
-# DBConnection.test_session_scope()
-# pylint: disable=protected-access,unused-variable
 
 import contextlib
 from typing import Dict, List, TypeVar
@@ -175,9 +172,9 @@ class DBConnection:
         session.begin_nested()
         # Define a new transaction event
         @event.listens_for(session, "after_transaction_end")
-        def restart_savepoint(session, transaction):
+        def restart_savepoint(session, transaction):  # pylint: disable=unused-variable
             """Reopen a SAVEPOINT whenever the previous one ends."""
-            if transaction.nested and not transaction._parent.nested:
+            if transaction.nested and not transaction._parent.nested:  # pylint: disable=protected-access
                 # Ensure that state is expired the same way session.commit() at the top level normally does
                 session.expire_all()
                 session.begin_nested()

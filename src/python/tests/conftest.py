@@ -14,7 +14,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-# Disable redefined-outer-name rule in pylint to avoid warning due to how pytest fixtures work
+# Disable all the redefined-outer-name violations due to how pytest fixtures work
 # pylint: disable=redefined-outer-name
 
 from contextlib import ExitStack
