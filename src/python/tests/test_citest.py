@@ -35,8 +35,8 @@ def db_item(request: FixtureRequest, multidb_factory: Callable) -> CITestDBItem:
         multidb_factory: Multi-:class:`UnitTestDB` factory.
 
     """
-    ref_db, target_db = multidb_factory(Path('citest'))
-    return CITestDBItem('', request.session, ref_db.dbc, target_db.dbc, 'main_table', {})
+    dbs = multidb_factory(Path('citest'))
+    return CITestDBItem('', request.session, dbs['reference'].dbc, dbs['target'].dbc, 'main_table', {})
 
 
 @pytest.fixture(scope="module")

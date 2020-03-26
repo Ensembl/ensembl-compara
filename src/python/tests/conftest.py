@@ -21,7 +21,7 @@ import os
 from pathlib import Path
 import shutil
 import time
-from typing import Any, Callable, Dict, Generator, Iterator, Optional
+from typing import Any, Callable, Dict, Generator, Optional
 
 import pytest
 from _pytest.config import Config
@@ -88,8 +88,9 @@ def db_factory_(request: FixtureRequest) -> Generator:
 @pytest.fixture(name='multidb_factory', scope='session')
 def multidb_factory_(db_factory: Callable) -> Generator:
     """Yields a multi-:class:`UnitTestDB` factory (wrapper of :meth:`db_factory_()`)."""
-    def multidb_factory(src: PathLike) -> Iterator[UnitTestDB]:
-        """Yields a :class:`UnitTestDB` object per database created from `src`.
+    def multidb_factory(src: PathLike) -> Dict[str, UnitTestDB]:
+        """Returns a dictionary of <subfolder_name>: :class:`UnitTestDB` object per database created from
+        `src`.
 
         Args:
             src: Directory path with one subdirectory per database to create. Each subdirectory has to contain
@@ -98,10 +99,12 @@ def multidb_factory_(db_factory: Callable) -> Generator:
                 ``ensembl-compara/src/python/tests/databases``.
 
         """
+        databases = {}
         src_path = Path(src) if os.path.isabs(src) else pytest.dbs_dir / src
         for child in src_path.iterdir():
             if child.is_dir():
-                yield db_factory(child, src_path.name + '_' + child.name)
+                databases[child.name] = db_factory(child, src_path.name + '_' + child.name)
+        return databases
     yield multidb_factory
 
 
