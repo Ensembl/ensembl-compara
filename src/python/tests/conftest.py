@@ -17,6 +17,7 @@ limitations under the License.
 # Disable redefined-outer-name rule in pylint to avoid warning due to how pytest fixtures work
 # pylint: disable=redefined-outer-name
 
+from contextlib import ExitStack
 import os
 from pathlib import Path
 import shutil
@@ -27,6 +28,7 @@ import pytest
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
+from _pytest.python_api import RaisesContext
 from _pytest.tmpdir import TempPathFactory
 import sqlalchemy
 from sqlalchemy.engine.url import make_url
@@ -164,4 +166,6 @@ def get_param_repr(arg: Any) -> Optional[str]:
         return '[' + ', '.join(str(x) for x in arg) + ']'
     if isinstance(arg, Path):
         return str(arg)
+    if isinstance(arg, (ExitStack, RaisesContext)):
+        return 'None' if isinstance(arg, ExitStack) else arg.expected_exception
     return None
