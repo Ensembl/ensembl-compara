@@ -115,7 +115,8 @@ jobs:
         - echo
       install:
         - pip install pytest-cov coveralls codecov
-        - pip install -r requirements.txt .
+        - pip install -r requirements.txt
+        - pip install -e .
       before_script:
         - echo
       script: ./travisci/python-unittest_harness.sh
