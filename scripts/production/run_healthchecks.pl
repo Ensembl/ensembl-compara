@@ -120,13 +120,16 @@ GetOptions(
     'repair'                        => \$repair,
 );
 
-unless ($url or ($reg_conf and $reg_alias)) {
-    print "\nNeither --url nor --reg_conf and --reg_alias are defined. Some of those are needed to refer to the database being tested\n\n";
+if ($reg_alias xor $reg_conf) {
+    print "\nERROR: The registry configuration file (--reg_conf) is required to use an alias (--reg_alias) and cannot be used with a URL (--url).\n\n";
     exit 1;
 }
 
 if ($url and $reg_alias) {
     print "\nERROR: Both --url and --reg_alias are defined. Don't know which one to use\n\n";
+    exit 1;
+} elsif (!$url and !$reg_alias) {
+    print "\nERROR: Neither --url nor --reg_alias are defined. Don't know what database to use\n\n";
     exit 1;
 }
 
