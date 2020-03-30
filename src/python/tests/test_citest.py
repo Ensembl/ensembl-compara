@@ -47,6 +47,12 @@ class TestCITestDBItem:
 
     db_item = None  # type: CITestDBItem
 
+    def test_missing(self):
+        """Tests CITestDBItem's error handling if an unknown test is passed."""
+        self.db_item.name = 'dummy'
+        with raises(SyntaxError):
+            self.db_item.runtest()
+
     @pytest.mark.parametrize(
         "kwargs, expectation",
         [
@@ -119,6 +125,12 @@ class TestCITestFilesItem:
     """Tests CITest's :class:`CITestFilesItem` class."""
 
     files_item = None  # type: CITestFilesItem
+
+    def test_missing(self):
+        """Tests CITestFilesItem's error handling if an unknown test is passed."""
+        self.files_item.name = 'dummy'
+        with raises(SyntaxError):
+            self.files_item.runtest()
 
     @pytest.mark.parametrize(
         "kwargs, expectation",

@@ -53,7 +53,7 @@ class TestDirCmp:
         # Check the files at the root
         assert self.dir_cmp.common_files == set(), "Found unexpected files at the root of both trees"
         assert self.dir_cmp.ref_only == {'3/a.txt'}, "Expected '3/a.txt' at reference tree's root"
-        assert self.dir_cmp.target_only == set(), "Found unexpected files at target tree's root"
+        assert self.dir_cmp.target_only == {'4/a.txt'}, "Expected '4/a.txt' at target tree's root"
         # Check each subdirectory
         expected = {
             1: {'common_files': {'b.txt', 'c.txt'}},
@@ -151,8 +151,8 @@ class TestDirCmp:
     @pytest.mark.parametrize(
         "kwargs, output, expectation",
         [
-            ({}, {'0/b.txt'}, does_not_raise()),
-            ({'patterns': 'a*'}, set(), does_not_raise()),
+            ({}, {'0/b.txt', '4/a.txt'}, does_not_raise()),
+            ({'patterns': 'a*'}, {'4/a.txt'}, does_not_raise()),
             ({'patterns': ['b*', 'c*']}, {'0/b.txt'}, does_not_raise()),
             ({'paths': '3'}, None, raises(ValueError)),
             ({'paths': ['1', '2']}, set(), does_not_raise()),
