@@ -142,8 +142,6 @@ class CITestFilesError(Exception):
 
     """
     def __init__(self, message: str, mismatches: List, ref_only: List, target_only: List) -> None:
-        if not message:
-            message = "Reference and target directory trees are not the same"
         super().__init__(message)
         self.mismatches = mismatches
         self.ref_only = ref_only
