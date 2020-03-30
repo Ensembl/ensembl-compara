@@ -32,7 +32,7 @@ fi
 
 PYTEST_OPTIONS=()
 if [ "$COVERAGE" = 'true' ]; then
-  PYTEST_OPTIONS+=('--cov=./')
+  PYTEST_OPTIONS+=('--cov=./' '--cov-report=term-missing')
 fi
 pytest "${PYTEST_OPTIONS[@]}" "${PYTHON_TESTS_LOCATIONS[@]}" --server="mysql://travis@127.0.0.1:3306/"
 rt2=$?
