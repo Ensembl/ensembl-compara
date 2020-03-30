@@ -36,8 +36,16 @@ if [ "$COVERAGE" = 'true' ]; then
 fi
 pytest "${PYTEST_OPTIONS[@]}" "${PYTHON_TESTS_LOCATIONS[@]}" --server="mysql://travis@127.0.0.1:3306/"
 rt2=$?
+# Test SQLite-specific code
+if [ "$COVERAGE" = 'true' ]; then
+  PYTEST_OPTIONS+=('--cov-append' '-k UnitTestDB')
+  pytest "${PYTEST_OPTIONS[@]}" src/python/tests/test_db.py --server="sqlite:////tmp/"
+  rt3=$?
+else
+  rt3=0
+fi
 
-if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then
+if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) ]]; then
   exit 0
 else
   exit 255

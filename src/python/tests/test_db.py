@@ -65,8 +65,12 @@ class TestUnitTestDB:
             # Check that the database has been created correctly
             assert self.dbs_created[db_name], "UnitTestDB should not be empty"
             assert self.dbs_created[db_name].dbc, "UnitTestDB's database connection should not be empty"
-            assert self.dbs_created[db_name].dbc.db_name == os.environ['USER'] + '_' + db_name, \
-                f"Expected database name to be '{db_name}'"
+            database_name = os.environ['USER'] + '_' + db_name
+            if self.dbs_created[db_name].dbc.dialect == 'sqlite':
+                # Need to add the path to the database and ".db" extension
+                database_name = make_url(server_url).database + '/' + database_name + '.db'
+            assert self.dbs_created[db_name].dbc.db_name == database_name, \
+                f"Expected database name to be '{database_name}'"
             # Check that the database has been loaded correctly from the dump files
             result = self.dbs_created[db_name].dbc.execute("SELECT * FROM main_table")
             assert len(result.fetchall()) == 10, "Unexpected number of rows found in 'main_table' table"
@@ -87,8 +91,13 @@ class TestUnitTestDB:
 
         """
         self.dbs_created[db_name].drop()
-        with raises(OperationalError, match=r'Unknown database'):
-            self.dbs_created[db_name].dbc.execute("SELECT * FROM main_table")
+        if self.dbs_created[db_name].dbc.dialect == 'sqlite':
+            # For SQLite databases, just check if the database file still exists
+            assert not Path(self.dbs_created[db_name].dbc.db_name).exists(), \
+                "The database file has not been deleted"
+        else:
+            with raises(OperationalError, match=r'Unknown database'):
+                self.dbs_created[db_name].dbc.execute("SELECT * FROM main_table")
 
 
 @pytest.fixture(scope='class')

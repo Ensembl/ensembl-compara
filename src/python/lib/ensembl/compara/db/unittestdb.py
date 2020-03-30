@@ -34,8 +34,8 @@ class UnitTestDB:
 
     Args:
         url: URL of the server hosting the database, e.g. ``mysql://user:passwd@localhost:3306/``, or SQLite
-            database URL, e.g. ``sqlite:////path/to/database``. The user needs to have write access to the
-            server.
+            path URL, e.g. ``sqlite:////path/to/database/dir/``. The user needs to have write access to the
+            server/directory.
         dump_dir: Directory path with the database schema in ``table.sql`` [mandatory] and the TSV data files
             (without headers), one per table following the convention ``<table_name>.txt`` [optional].
         name: Name to give to the new database. If not provided, the last directory name of `dump_dir` will be
@@ -52,8 +52,10 @@ class UnitTestDB:
     def __init__(self, url: URL, dump_dir: PathLike, name: str = None) -> None:
         db_url = make_url(url)
         dump_dir_path = Path(dump_dir)
-        # SQLite databases are created automatically if they do not exist
-        if db_url.get_dialect().name != 'sqlite':
+        if db_url.get_dialect().name == 'sqlite':
+            # SQLite databases are created automatically if they do not exist
+            db_url.database += '/' + os.environ['USER'] + '_' + (name if name else dump_dir_path.name) + '.db'
+        else:
             # Add the database name to the URL
             db_url.database = os.environ['USER'] + '_' + (name if name else dump_dir_path.name)
             # Connect to the server to create the database
@@ -100,7 +102,7 @@ class UnitTestDB:
             # SQLite does not have an equivalent to "LOAD DATA": use its '.import' command
             try:
                 subprocess.run(
-                    ['sqlite3', '-separator', '\t', self.dbc.db_name, f"'.import {filepath} {table}'"],
+                    ['sqlite3', self.dbc.db_name, ".mode tabs", f".import {filepath} {table}"],
                     check=True
                 )
             except subprocess.CalledProcessError:
