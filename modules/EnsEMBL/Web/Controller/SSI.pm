@@ -125,6 +125,8 @@ sub template_INCLUDE {
           $content = markdown($content);
           ## remove escape character on tilde
           $content =~ s/\\~/~/g;
+          ## replace escape character with line break
+          $content =~ s/\\/<br>/g;
         }
         
         $content =~ s/src="(\/i(mg)?\/)/src="$static_server$1/g if $static_server;
