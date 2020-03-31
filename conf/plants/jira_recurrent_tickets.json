@@ -2,11 +2,11 @@
     {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+setup",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Relco+setup",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+Relco+setup",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Relco+setup#Relcosetup-Patchthereuseddatabasestothelatestschema",
             "summary": "Patch the reused databases"
          }
       ],
