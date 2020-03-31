@@ -84,24 +84,19 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-7', 'dthybert_plants_load_members_100'],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-3', 'dthybert_plants_plants_protein_trees_100' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-', ''],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-', '' ],
 
     # LASTZ dbs
-    'lastz_batch_1' => [ 'mysql-ens-compara-prod-6', 'muffato_plants_lastz_batch1d_100' ],
-    'lastz_batch_2' => [ 'mysql-ens-compara-prod-1', 'muffato_plants_lastz_batch2d_100' ],
-    #'lastz_batch_2c' => [ 'mysql-ens-compara-prod-3', 'muffato_plants_lastz_batch2c_100' ],
-    'lastz_batch_3' => [ 'mysql-ens-compara-prod-7', 'dthybert_plants_lastz_batch3_100' ],
-    'lastz_batch_4' => [ 'mysql-ens-compara-prod-7', 'dthybert_plants_lastz_batch4_100' ],
-    'unidir_lastz'  => [ 'mysql-ens-compara-prod-5', 'plants_unidirectional_lastz_100' ],
+    'lastz_batch_1' => [ 'mysql-ens-compara-prod-', '' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'jalvarez_plants_synteny_100' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-', '' ],
 
     # EPO dbs
     ## rice
-    'rice_epo_high_low' => [ 'mysql-ens-compara-prod-5', 'dthybert_rice_epo_100' ],
-    'rice_epo_prev'    => [ 'mysql-ens-compara-prod-5', 'cristig_rice_epo_test5' ],
+    # 'rice_epo_high_low' => [ 'mysql-ens-compara-prod-5', 'dthybert_rice_epo_100' ],
+    'rice_epo_prev'    => [ 'mysql-ens-compara-prod-5', 'dthybert_rice_epo_100' ],
     'rice_epo_anchors' => [ 'mysql-ens-compara-prod-5', 'cristig_generate_anchors_rice_99' ],
 };
 
@@ -109,17 +104,18 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # ----------------------NON-COMPARA DATABASES------------------------
 my $ancestral_dbs = {
-    #'ancestral_prev' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${prev_eg_release}_$prev_release" ],
+    'ancestral_prev' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${prev_eg_release}_$prev_release" ],
     'ancestral_curr' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${curr_eg_release}_$curr_release" ],
-    'rice_ancestral' => [ 'mysql-ens-compara-prod-5', 'dthybert_rice_ancestral_core_100' ],
+
+    # 'rice_ancestral' => [ 'mysql-ens-compara-prod-5', 'dthybert_rice_ancestral_core_100' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-        'ncbi_taxonomy' => [ 'mysql-ens-sta-1', "ncbi_taxonomy_$curr_release" ],
-    });
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', "ncbi_taxonomy_$curr_release" ],
+});
 
 # -------------------------------------------------------------------
 
