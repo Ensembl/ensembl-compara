@@ -22,7 +22,7 @@ package EnsEMBL::Web::Controller::SSI;
 use strict;
 use warnings;
 
-use Text::Markdown qw(markdown);
+use Text::MultiMarkdown qw(markdown);
 
 use EnsEMBL::Web::Document::HTML::Movie;
 use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
@@ -123,6 +123,8 @@ sub template_INCLUDE {
         ## convert markdown into HTML
         if ($filename =~ /\.md$/) {
           $content = markdown($content);
+          ## remove escape character on tilde
+          $content =~ s/\\~/~/g;
         }
         
         $content =~ s/src="(\/i(mg)?\/)/src="$static_server$1/g if $static_server;
