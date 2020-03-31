@@ -56,7 +56,7 @@ my $compara_dbs = {
     # 'compara_prev'   => [ 'mysql-ens-compara-prod-10', "compara_citest_$prev_release" ],
 
     # Homology dbs
-    # 'compara_members'      => [ 'mysql-ens-compara-prod-10', '' ],
+    'compara_members'      => [ 'mysql-ens-compara-prod-10', 'citest_load_members_100' ],
     # 'compara_ptrees'       => [ 'mysql-ens-compara-prod-10', '' ],
     # 'ptrees_prev'          => [ 'mysql-ens-compara-prod-10', '' ],
     # 'compara_families'     => [ 'mysql-ens-compara-prod-10', '' ],
