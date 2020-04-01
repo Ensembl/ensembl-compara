@@ -105,7 +105,7 @@ sub fetch_input {
 
     print "RETRY COUNT: ".$self->input_job->retry_count()."\n" if ($self->debug);
 
-    my $tmp_dir = $self->param('tmp_dir') || $self->worker_tmp_directory;
+    my $tmp_dir = $self->param('tmp_dir') || $self->worker_temp_directory;
     $self->param('tmp_dir', $tmp_dir);
 
     $self->param('input_fasta', $self->dumpProteinTreeToWorkdir($self->param('protein_tree')) );
