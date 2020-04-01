@@ -99,9 +99,10 @@ class CITestDBItem(CITestItem):
         table = self.ref_dbc.tables[self.table]
         group_by = to_list(group_by)
         columns = [table.columns[col] for col in group_by]
-        # Use primary key in count to improve the query performance
-        primary_key = self.ref_dbc.get_primary_key_columns(self.table)[0]
-        query = select(columns + [func.count(table.columns[primary_key]).label('nrows')])
+        # Use primary key (if any) in count to improve the query performance
+        primary_keys = self.ref_dbc.get_primary_key_columns(self.table)
+        primary_key_col = table.columns[primary_keys[0]] if primary_keys else None
+        query = select(columns + [func.count(primary_key_col).label('nrows')]).select_from(table)
         if columns:
             # ORDER BY to ensure that the results are always in the same order (for the same groups)
             query = query.group_by(*columns).order_by(*columns)
