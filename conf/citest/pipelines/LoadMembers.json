@@ -1,16 +1,6 @@
 {
     "reference_db": "mysql://ensro@mysql-ens-compara-prod-10:4648/citest_load_members_100",
     "database_tests": {
-        "dnafrag": [
-            {
-                "test": "num_rows",
-                "args": {}
-            },
-            {
-                "test": "content",
-                "args": {}
-            }
-        ],
         "gene_member": [
             {
                 "test": "num_rows",
