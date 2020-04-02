@@ -6,7 +6,7 @@
 4	13	6	4 eutherian mammals EPO	ensembl		99	\N
 5	11	6	4 eutherian mammals GERP Constrained Elements	ensembl		99	\N
 50001	501	6	4 eutherian mammals GERP Conservation Scores	ensembl		99	\N
-6	14	7	5 mammals_with_feathers EPO-Low-Coverage	ensembl		99	\N
+6	14	7	5 mammals_with_feathers EPO-Extended	ensembl		99	\N
 7	11	7	5 mammals_with_feathers GERP Constrained Elements	ensembl		99	\N
 50002	501	7	5 mammals_with_feathers GERP Conservation Scores	ensembl		99	\N
 8	10	8	6 amniota vertebrates Mercator-Pecan	ensembl		99	\N
