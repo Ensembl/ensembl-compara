@@ -92,7 +92,7 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
-  $self->filter_duplicates;
+  $self->call_within_transaction( sub { $self->filter_duplicates } );
 }
 
 
@@ -187,8 +187,9 @@ sub filter_duplicates {
       my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ")";
       my $sql_ga_to_exec = $sql_ga . "(" . join(",", @gab_ids) . ")";
  
+      my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $self->compara_dba->dbc);
       foreach my $sql ($sql_ga_to_exec,$sql_gab_to_exec) {
- 	  my $sth = $self->compara_dba->dbc->prepare($sql);
+ 	  my $sth = $dbc->prepare($sql);
  	  $sth->execute;
  	  $sth->finish;
        }
