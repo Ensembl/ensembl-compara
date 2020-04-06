@@ -649,7 +649,7 @@ sub GERP_score {
   return [undef, undef] unless $vf_object;
 
   my $variation_db = $self->Obj->adaptor->db->get_VariationAdaptor->db;
-  $variation_db->gerp_root_dir($self->hub->species_defs->ENSEMBL_FTP_URL . '/release-' . $self->hub->species_defs->ENSEMBL_VERSION . '/compara/conservation_scores/');
+  $variation_db->gerp_root_dir($self->hub->species_defs->ENSEMBL_FTP_OVER_HTTP_URL . '/release-' . $self->hub->species_defs->ENSEMBL_VERSION . '/compara/conservation_scores/');
 
   my $gerp_score = $vf_object->get_gerp_score;
   my $source = (keys %$gerp_score)[0];  
