@@ -51,6 +51,7 @@ sub render {
         'common'      => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'),
         'status'      => 'live',
         'sci_name'    => $species_defs->get_config($sp, 'SPECIES_SCIENTIFIC_NAME'),
+        'image'       => $species_defs->get_config($sp, 'SPECIES_IMAGE'),
         'assembly'    => $species_defs->get_config($sp, 'ASSEMBLY_NAME'),
         'accession'   => $species_defs->get_config($sp, 'ASSEMBLY_ACCESSION'),
         'genebuild'   => $genebuild_helptip,
@@ -141,7 +142,7 @@ sub render {
     }
     $table->add_row({
         'common' => sprintf('<a href="%s%s/"><img src="/i/species/%s.png" alt="%s" class="badge-48" style="float:left;padding-right:4px;%s" /></a>%s',
-                        $img_url, $dir,  $dir, $common, $image_fade, $sp_link),
+                        $img_url, $info->{'image'},  $dir, $common, $image_fade, $sp_link),
       'species'     => '<i>'.$name.'</i>',
       'taxon_id'    => $info->{'taxon_id'},
       'assembly'    => $info->{'assembly'},
