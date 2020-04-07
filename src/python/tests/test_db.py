@@ -114,7 +114,6 @@ def test_dbc(request: FixtureRequest, db_factory: Callable) -> None:
 @pytest.mark.usefixtures('test_dbc')
 class TestDBConnection:
     """Tests :class:`DBConnection` class."""
-    # pylint: disable=no-member
 
     dbc = None  # type: DBConnection
 
