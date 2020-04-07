@@ -27,7 +27,7 @@ use URI::Escape qw(uri_unescape);
 use JSON;
 
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
-use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
+use EnsEMBL::Web::DBSQL::GeneStableIDAdaptor;
 use EnsEMBL::Web::File::Utils::URL;
 
 use parent qw(EnsEMBL::Web::Controller);
@@ -76,7 +76,7 @@ sub ajax_autocomplete {
   }
 
   if ($query && !$results) {
-    my $dbh = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->db;
+    my $dbh = EnsEMBL::Web::DBSQL::GeneStableIDAdaptor->new($hub)->db;
     my $sth = $dbh->prepare(sprintf 'select display_label, stable_id, location, db from gene_autocomplete where species = "%s" and display_label like %s', $species, $dbh->quote("$query%"));
 
     $sth->execute;
