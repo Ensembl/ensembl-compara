@@ -39,6 +39,9 @@ my $CONF = retrieve("$Bin/dumper.sconf");
 my $SD = $CONF->{'SiteDefs'};
 my $PD = $CONF->{'packed'};
 
+# A reference to an array of result from dumpFamily
+my $fm_result = [];
+
 # Make species also available by production name, build datasets
 my $ENSEMBL_DATASETS = [];
 foreach my $url (keys %$PD) {
@@ -1724,9 +1727,17 @@ sub dumpFamily {
        and sm.gene_member_id = gm.gene_member_id
        and sm.source_name not like 'Uniprot%'
      group by f.stable_id ));
-  $sth->execute();
   my $X = $conf->{'authority'} || 'Ensembl';
-  while( my( $fid, $desc, $seq_member_ids,$gene_member_ids ) = $sth->fetchrow_array()) {
+
+  if (scalar @$fm_result == 0) {
+     print LOG "Going to execute an extremely big query. Only do it once for all species \n";
+     $sth->execute();
+     $fm_result = $sth->fetchall_arrayref();
+  }
+
+
+  for my $row (@$fm_result) {
+    my ($fid, $desc, $seq_member_ids,$gene_member_ids) = @$row;
     $desc =~ s/(\S+)\/(\S+)/$1 \/ $2/g;
     my (%genes,%proteins,%transcripts);
     foreach my $gene_id (split ',',$gene_member_ids) {
