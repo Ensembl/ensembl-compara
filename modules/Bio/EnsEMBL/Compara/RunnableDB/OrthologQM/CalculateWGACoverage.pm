@@ -85,43 +85,51 @@ sub fetch_input {
     my %aln_ranges;
     my @orth_info = @{ $self->param_required('orth_info') };
 
-	my $dba = $self->get_cached_compara_dba('alignment_db');
-	my $do_disconnect = $self->dbc && ($dba->dbc ne $self->dbc);
+    my @aln_mlss_ids  = @{ $self->param_required( 'aln_mlss_ids' ) };
 
-	my $mlss_adap       = $dba->get_MethodLinkSpeciesSetAdaptor;
-	my $gblock_adap     = $dba->get_GenomicAlignBlockAdaptor;
-	my $dnafrag_adaptor = $dba->get_DnaFragAdaptor;
+    # collect production alignment dbs from accu
+    my %mlss_mapping = %{ $self->param('mlss_db_mapping') };
 
-	$self->db->dbc->disconnect_if_idle if $do_disconnect;
+    foreach my $aln_mlss_id ( @aln_mlss_ids ) {
 
-	foreach my $orth ( @orth_info ) {
-        my ($orth_dnafrags, $orth_ranges) = $self->_orth_dnafrags($orth);
-		my @aln_mlss_ids  = @{ $self->param_required( 'aln_mlss_ids' ) };
+        my $aln_db = $mlss_mapping{$aln_mlss_id};
+        my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($aln_db);
 
-		my $s1_dnafrag = $dnafrag_adaptor->fetch_by_dbID( $orth_dnafrags->[0]->{id} );
-		my $s2_dnafrag = $dnafrag_adaptor->fetch_by_dbID( $orth_dnafrags->[1]->{id} );
+        my $do_disconnect = $self->dbc && ($dba->dbc ne $self->dbc);
 
-		for my $aln_mlss_id ( @aln_mlss_ids ) {
-                    my $aln_coords = $gblock_adap->_alignment_coordinates_on_regions($aln_mlss_id,
-                        $orth_dnafrags->[0]->{id}, $orth_dnafrags->[0]->{start}, $orth_dnafrags->[0]->{end},
-                        $orth_dnafrags->[1]->{id}, $orth_dnafrags->[1]->{start}, $orth_dnafrags->[1]->{end},
-                    );
+        my $mlss_adap       = $dba->get_MethodLinkSpeciesSetAdaptor;
+        my $gblock_adap     = $dba->get_GenomicAlignBlockAdaptor;
+        my $dnafrag_adaptor = $dba->get_DnaFragAdaptor;
 
-                    if ( scalar( @$aln_coords ) < 1 ) {
-			$self->warning("No alignment found for homology_id " . $orth->{id});
-                        $self->db->dbc->disconnect_if_idle if $do_disconnect;
-			next;
-                    }
+        $self->db->dbc->disconnect_if_idle if $do_disconnect;
 
-                    foreach my $coord_pair (@$aln_coords) {
-                        push @{ $aln_ranges{$orth->{'id'}}->{$aln_mlss_id}->{$s1_dnafrag->genome_db_id} }, [ $coord_pair->[0], $coord_pair->[1] ];
-                        push @{ $aln_ranges{$orth->{'id'}}->{$aln_mlss_id}->{$s2_dnafrag->genome_db_id} }, [ $coord_pair->[2], $coord_pair->[3] ];
-                    }
-                }
-	}
+        foreach my $orth ( @orth_info ) {
 
-	# disconnect from alignment_db
-	$dba->dbc->disconnect_if_idle();
+            my ($orth_dnafrags, $orth_ranges) = $self->_orth_dnafrags($orth);
+            my @aln_mlss_ids  = @{ $self->param_required( 'aln_mlss_ids' ) };
+
+            my $s1_dnafrag = $dnafrag_adaptor->fetch_by_dbID( $orth_dnafrags->[0]->{id} );
+            my $s2_dnafrag = $dnafrag_adaptor->fetch_by_dbID( $orth_dnafrags->[1]->{id} );
+
+            my $aln_coords = $gblock_adap->_alignment_coordinates_on_regions( $aln_mlss_id,
+                $orth_dnafrags->[0]->{id}, $orth_dnafrags->[0]->{start}, $orth_dnafrags->[0]->{end},
+                $orth_dnafrags->[1]->{id}, $orth_dnafrags->[1]->{start}, $orth_dnafrags->[1]->{end},
+            );
+
+            if ( scalar( @$aln_coords ) < 1 ) {
+                $self->warning("No alignment found for homology_id " . $orth->{id});
+                $self->db->dbc->disconnect_if_idle if $do_disconnect;
+                next;
+            }
+
+            foreach my $coord_pair (@$aln_coords) {
+                push @{ $aln_ranges{$orth->{'id'}}->{$aln_mlss_id}->{$s1_dnafrag->genome_db_id} }, [ $coord_pair->[0], $coord_pair->[1] ];
+                push @{ $aln_ranges{$orth->{'id'}}->{$aln_mlss_id}->{$s2_dnafrag->genome_db_id} }, [ $coord_pair->[2], $coord_pair->[3] ];
+            }
+        }
+        # disconnect from alignment_db
+        $dba->dbc->disconnect_if_idle();
+    }
 
 	$self->param( 'aln_ranges', \%aln_ranges );
 }
@@ -134,17 +142,15 @@ sub fetch_input {
 
 sub run {
 	my $self = shift;
-	my $dba  = $self->get_cached_compara_dba('alignment_db');
-	my $gdba = $dba->get_GenomeDBAdaptor;
 
 	my @orth_info  = @{ $self->param('orth_info') };
 	my %aln_ranges = %{ $self->param('aln_ranges') };
+    my %mlss_mapping = %{ $self->param('mlss_db_mapping') };
 
 	my (@qual_summary, @orth_ids);
 
 	foreach my $orth ( @orth_info ) {
         my ($orth_dnafrags, $orth_ranges) = $self->_orth_dnafrags($orth);
-		my @aln_mlss_ids  = @{ $self->param_required( 'aln_mlss_ids' ) };
 		my $homo_id        = $orth->{'id'};
 		my $this_aln_range = $aln_ranges{ $homo_id  };
         my $exon_ranges    = $self->_get_exon_ranges_for_orth($orth);
@@ -154,17 +160,22 @@ sub run {
 		next unless ( defined $this_aln_range ); 
 
 		if ( defined $exon_ranges ){
-			foreach my $aln_mlss ( keys %{ $this_aln_range } ){
+			foreach my $aln_mlss_id ( keys %{ $this_aln_range } ){
+
+                my $aln_db = $mlss_mapping{$aln_mlss_id};
+                my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($aln_db);
+                my $gdba = $dba->get_GenomeDBAdaptor;
+
 				foreach my $gdb_id ( sort {$a <=> $b} keys %{ $orth_ranges } ){
-					# Make sure that if this is a component gdb_id it refers back to the principal. The exon and ortholog data is on the components and not on the principal, but the aln_mlss is only on principal
+					# Make sure that if this is a component gdb_id it refers back to the principal. The exon and ortholog data is on the components and not on the principal, but the aln_mlss_id is only on principal
 					my $gdb = $gdba->fetch_by_dbID($gdb_id);
 					my $principal_gdb = $gdb->principal_genome_db;
 					my $principal_gdb_id = $principal_gdb ? $principal_gdb->dbID : $gdb_id;
-					my $combined_coverage = $self->_combined_coverage( $orth_ranges->{$gdb_id}, $this_aln_range->{$aln_mlss}->{$principal_gdb_id}, $exon_ranges->{$gdb_id} );
+					my $combined_coverage = $self->_combined_coverage( $orth_ranges->{$gdb_id}, $this_aln_range->{$aln_mlss_id}->{$principal_gdb_id}, $exon_ranges->{$gdb_id} );
 					push( @qual_summary, 
 						{ homology_id              => $homo_id, 
 						  genome_db_id             => $gdb_id,
-						  alignment_mlss		   => $aln_mlss,
+						  alignment_mlss		   => $aln_mlss_id,
 						  combined_exon_coverage   => $combined_coverage->{exon},
 						  combined_intron_coverage => $combined_coverage->{intron},
 						  quality_score            => $combined_coverage->{score},
@@ -173,6 +184,8 @@ sub run {
 						}
 					);
 				}
+                # disconnect from alignment_db
+                $dba->dbc->disconnect_if_idle();
 			}
 		}
 
