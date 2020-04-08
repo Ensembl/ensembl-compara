@@ -239,9 +239,6 @@ sub make_species_set_from_XML_node {
             $some_genome_dbs = [grep {$_->is_good_for_alignment} @$some_genome_dbs];
         }
 
-        if ($xml_taxon->hasAttribute('only_high_coverage') and $xml_taxon->getAttribute('only_high_coverage')) {
-            $some_genome_dbs = [grep {$_->is_high_coverage} @$some_genome_dbs];
-        }
         foreach my $xml_ref_taxon (@{$xml_taxon->getChildrenByTagName('ref_for_taxon')}) {
             my $gdb = find_genome_from_xml_node_attribute($xml_ref_taxon, 'name');
             my $taxon_id = $xml_ref_taxon->hasAttribute('taxon_id') ? $xml_ref_taxon->getAttribute('taxon_id') : undef;

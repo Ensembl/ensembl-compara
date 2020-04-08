@@ -107,13 +107,16 @@ GetOptions(
     'dc-runner=s'                   => \$dc_runner,
 );
 
-unless (($url and $prev_url) or ($reg_conf and $reg_alias)) {
-    print "\nERROR: The script requires either URLs (--url, --prev_url) or a registry configuration (--reg_conf, --reg_alias, --prev_alias).\n\n";
+if (($reg_alias or $prev_alias) xor $reg_conf) {
+    print "\nERROR: The registry configuration file (--reg_conf) is required to use aliases (--reg_alias or --prev_alias) and cannot be used with URLs (--url or --prev_url).\n\n";
     exit 1;
 }
 
 if ($url and $reg_alias) {
     print "\nERROR: Both --url and --reg_alias are defined. Don't know which one to use\n\n";
+    exit 1;
+} elsif (!$url and !$reg_alias) {
+    print "\nERROR: Neither --url nor --reg_alias are defined. Don't know what database to use\n\n";
     exit 1;
 }
 

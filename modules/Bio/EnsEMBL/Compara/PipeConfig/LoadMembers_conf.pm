@@ -104,6 +104,7 @@ sub default_options {
         # members
         'include_nonreference' => 0,
         'include_patches'      => 0,
+        'include_lrg'          => 0,
 
         # list of species that got an annotation update
         # ... assuming the same person has run both pipelines
@@ -143,7 +144,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 }
 
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
 
     my %hc_analysis_params = (
@@ -251,6 +252,12 @@ sub pipeline_analyses {
                 # 'registry_dbs'      => $self->o('prev_core_sources_locs'),
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
                 'reuse_db'          => '#reuse_member_db#',
+                'store_coding'      => $self->o('store_coding'),
+                'store_ncrna'       => $self->o('store_ncrna'),
+                'store_others'      => $self->o('store_others'),
+                'include_lrg'       => $self->o('include_lrg'),
+                'include_patches'   => $self->o('include_patches'),
+                'include_nonreference' => $self->o('include_nonreference'),
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '2Gb_job',
@@ -481,6 +488,7 @@ sub pipeline_analyses {
                 'exclude_gene_analysis'         => $self->o('exclude_gene_analysis'),
                 'include_nonreference'          => $self->o('include_nonreference'),
                 'include_patches'               => $self->o('include_patches'),
+                'include_lrg'                   => $self->o('include_lrg'),
                 'store_coding'                  => $self->o('store_coding'),
                 'store_ncrna'                   => $self->o('store_ncrna'),
                 'store_others'                  => $self->o('store_others'),

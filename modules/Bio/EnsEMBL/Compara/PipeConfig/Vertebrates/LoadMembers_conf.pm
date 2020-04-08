@@ -58,6 +58,7 @@ sub default_options {
         # Load non reference sequences and patches for fresh members
         'include_nonreference' => 1,
         'include_patches'      => 1,
+        'include_lrg'          => 1,
     };
 }
 

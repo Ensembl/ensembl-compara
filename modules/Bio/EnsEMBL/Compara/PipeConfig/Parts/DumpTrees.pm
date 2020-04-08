@@ -224,6 +224,7 @@ sub pipeline_analyses_dump_trees {
                 'inputquery'            => 'SELECT root_id AS tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "#clusterset_id#" AND member_type = "#member_type#"',
             },
             -hive_capacity => $self->o('dump_trees_capacity'),
+            -rc_name   => '1Gb_job',
             -flow_into => {
                 'A->1' => 'generate_collations',
                 '2->A' => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hashed_id' => '#expr(dir_revhash(#tree_id#))expr#' } },

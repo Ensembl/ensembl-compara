@@ -161,6 +161,12 @@ sub fetch_input {
         if ($prev_core_dba) {
             my $curr_core_dba = $self->param('curr_core_dba', $genome_db->db_adaptor);
 
+            if ($prev_core_dba and ($prev_core_dba eq $curr_core_dba)) {
+                $self->warning("The current and previous core databases appear to be the same, so reuse will happen");
+                $self->param('reuse_this', 1);
+                return;
+            }
+
             my $curr_assembly = $curr_core_dba->assembly_name;
             my $prev_assembly = $prev_core_dba->assembly_name;
 

@@ -50,6 +50,8 @@ sub new {
   $self->dnafrag_start($start)                 if($start);
   $self->dnafrag_end($end)                     if($end);
   $self->dnafrag_chunk_set_id($dnafrag_chunk_set_id) if ($dnafrag_chunk_set_id);
+  # DnaFragChunk does not include the concept of strand, so set it to 1
+  $self->dnafrag_strand(1);
   return $self;
 }
 
@@ -110,7 +112,6 @@ sub fetch_masked_sequence {
   
   return undef unless($self->dnafrag);
   return undef unless($self->dnafrag->genome_db);
-  return undef unless(my $dba = $self->dnafrag->genome_db->db_adaptor);
 
   printf("getting %smasked sequence...\n", $self->masking ? $self->masking . ' ' : 'un') if $self->{debug};
 
@@ -273,8 +274,7 @@ sub dump_chunks_to_fasta_file {
 
 =head2 dump_loc_file
 
-  Arg [1]     : (Optional) string - base directory path. By default, the current
-                working directory.
+  Arg [1]     : string - base directory path
   Example     : $chunk->dump_loc_file('/tmp');
   Description : Returns a unique filepath for this DnaFragChunk.
   Returntype  : String
@@ -283,7 +283,9 @@ sub dump_chunks_to_fasta_file {
 
 sub dump_loc_file {
     my $self = shift;
-    my $basedir = shift // cwd();
+    my $basedir = shift;
+
+    die "Base directory path required" unless $basedir;
 
     my $sub_dir  = dir_revhash($self->dbID);
     my $filename = sprintf('chunk_%s.fa', $self->dbID);

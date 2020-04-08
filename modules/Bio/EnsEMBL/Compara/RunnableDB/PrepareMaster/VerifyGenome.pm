@@ -1,3 +1,4 @@
+
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -15,43 +16,43 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::LoadLRGDnaFrags
+Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::VerifyGenome
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
-Runnable wrapper for Bio::EnsEMBL::Compara::Utils::MasterDatabase::load_lrgs
+This Analysis/RunnableDB is designed to check that the dnafrags
+of a GenomeDB match the slices of a Core database.
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::LoadLRGDnaFrags;
+package Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::VerifyGenome;
 
-use warnings;
 use strict;
-use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use warnings;
+
 use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::param_defaults},
-        'param'   => undef,
-    }
-}
 
 sub fetch_input {
-	my $self = shift;
+    my ($self) = @_;
 
-  my $human_gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly('homo_sapiens');
-  Bio::EnsEMBL::Compara::Utils::MasterDatabase::load_lrgs($self->compara_dba, $human_gdb);
+    my $species_name = $self->param_required('species_name');
+    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($species_name);
+
+    my $output;
+    my $dnafrags_match;
+    {
+        local *STDOUT;
+        open (STDOUT, '>', \$output);
+        $dnafrags_match = Bio::EnsEMBL::Compara::Utils::MasterDatabase::dnafrags_match_core_slices($genome_db);
+    }
+    unless ($dnafrags_match) {
+        $self->die_no_retry("DnaFrags do not match core for $species_name\n$output\n");
+    }
 }
 
 1;

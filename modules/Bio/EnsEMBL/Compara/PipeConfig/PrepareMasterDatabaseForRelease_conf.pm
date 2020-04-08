@@ -68,6 +68,7 @@ sub default_options {
         'backups_dir' => $self->o('work_dir') . '/master_backups/',
 
         'master_db'           => 'compara_master',
+        'prev_dbs'            => ['*_prev'],
         'taxonomy_db'         => 'ncbi_taxonomy',
         'incl_components'     => 1, # let's default this to 1 - will have no real effect if there are no component genomes (e.g. in vertebrates)
         'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
@@ -83,12 +84,12 @@ sub default_options {
         'list_genomes_script'    => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
         'report_genomes_script'  => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
         'update_metadata_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
+        'assembly_patch_species' => [],
         'additional_species'     => {},
         # Example:
         #'additional_species'     => {'vertebrates' => ['homo_sapiens', 'drosophila_melanogaster'],},
 
         'do_update_from_metadata' => 1,
-        'do_load_lrg_dnafrags'    => 0,
         'do_load_timetree'        => 0,
 
         'meta_host' => 'mysql-ens-meta-prod-1',
@@ -116,7 +117,6 @@ sub pipeline_wide_parameters {
         'hc_version' => 1,
         # Define the flags so they can be seen by Parts::PrepareMasterDatabaseForRelease
         'do_update_from_metadata' => $self->o('do_update_from_metadata'),
-        'do_load_lrg_dnafrags'    => $self->o('do_load_lrg_dnafrags'),
         'do_load_timetree'        => $self->o('do_load_timetree'),
     };
 }
@@ -128,12 +128,9 @@ sub pipeline_analyses {
 
         {   -logic_name => 'backup_current_master',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
-            -input_ids  => [{
-                'division'    => $self->o('division'),
-                'release'     => $self->o('ensembl_release'),
-            }],
+            -input_ids  => [{ }],
             -parameters => {
-                'src_db_conn' => $self->o('master_db'),
+                'src_db_conn' => '#master_db#',
                 'backups_dir' => $self->o('backups_dir'),
                 'output_file' => '#backups_dir#/compara_master_#division#.pre#release#.sql'
             },

@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::LoadAssemblyPatches
+Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::ListChangedAssemblyPatches
 
 =head1 SYNOPSIS
 
@@ -29,7 +29,7 @@ Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::LoadAssemblyPatches
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::LoadAssemblyPatches;
+package Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::ListChangedAssemblyPatches;
 
 use warnings;
 use strict;
@@ -55,7 +55,7 @@ sub write_output {
   my $genome_db   = $self->param('genome_db');
   my $report_file = $self->param_required('work_dir') . '/assembly_patches.' . $self->param_required('species_name') . '.txt';
 
-  Bio::EnsEMBL::Compara::Utils::MasterDatabase::load_assembly_patches($compara_dba, $genome_db, $report_file);
+  Bio::EnsEMBL::Compara::Utils::MasterDatabase::list_assembly_patches($compara_dba, $genome_db, $report_file);
 }
 
 1;

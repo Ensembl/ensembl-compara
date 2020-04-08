@@ -135,7 +135,6 @@ sub create_chunks {
     } else {
         my $dnafrag_list = $dnafrag_dba->fetch_all_by_GenomeDB(
             $genome_db,
-            -COORD_SYSTEM_NAME  => 'toplevel',
             -IS_REFERENCE       => $self->param('include_non_reference') ? undef : 1,
             -CELLULAR_COMPONENT => $self->param('only_cellular_component'),
         );

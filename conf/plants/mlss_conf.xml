@@ -2,24 +2,15 @@
 <compara_db division="plants">
 
   <!-- Collections are species-sets that are needed to define several mlsss -->
-  <!-- <collections>
+  <collections>
 
-    <collection name="plants-default">
-      <taxonomic_group taxon_name="Embryophyta"/>
-      <genome name="drosophila_melanogaster"/>
-      <genome name="caenorhabditis_elegans"/>
-      <genome name="saccharomyces_cerevisiae"/>
-      <genome name="homo_sapiens"/>
-      <genome name="ciona_savignyi"/>
+    <!-- Rice species tree including nearest grass relative -->
+    <collection name="rice-with-outgroup">
+      <taxonomic_group taxon_name="Oryza"/>
+      <genome name="leersia_perrieri"/>
     </collection>
 
-  </collections> -->
-
-  <!-- Rice species tree including nearest grass relative -->
-  <collection name="rice-with-outgroup">
-    <taxonomic_group taxon_name="Oryza"/>
-    <genome name="leersia_perrieri"/>
-  </collection>
+  </collections>
 
   <pairwise_alignments>
 
