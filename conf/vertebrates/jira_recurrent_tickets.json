@@ -36,6 +36,13 @@
          },
          {
             "assignee": "<RelCo>",
+            "component": "Production tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps",
+            "summary": "Run the genome dumping pipeline",
+            "name_on_graph": "Genome dumps"
+         },
+         {
+            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-LastZbatching",
             "summary": "Prepare the LastZ batches"
@@ -46,13 +53,6 @@
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Members",
             "summary": "Run the member loading pipeline",
             "name_on_graph": "Member loading"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps",
-            "summary": "Run the genome dumping pipeline",
-            "name_on_graph": "Genome dumps"
          },
          {
             "assignee": "<RelCo>",
