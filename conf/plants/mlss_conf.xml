@@ -4,12 +4,13 @@
   <!-- Collections are species-sets that are needed to define several mlsss -->
   <collections>
 
-    <!-- All Viridiplantae except the triticum aestivum strains -->
+    <!-- All species except the triticum aestivum strains -->
     <collection name="default">
       <taxonomic_group taxon_name="Viridiplantae">
         <!-- But exclude everything below triticum_aestivum -->
         <ref_for_taxon name="triticum_aestivum"/>
       </taxonomic_group>
+      <taxonomic_group taxon_name="Rhodophyta"/>
       <genome name="caenorhabditis_elegans"/>
       <genome name="ciona_savignyi"/>
       <genome name="drosophila_melanogaster"/>
