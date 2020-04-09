@@ -475,6 +475,15 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                 my $exist_ss = $ss_adaptor->fetch_by_GenomeDBs($mlss->species_set->genome_dbs);
                 $mlss->species_set($exist_ss) if $exist_ss;
             }
+            if ($exist_mlss and !$dry_run) {
+                # Update the names if they differ
+                if ($exist_mlss->name ne $mlss->name) {
+                    $compara_dba->dbc->do('UPDATE method_link_species_set SET name = ? WHERE method_link_species_set_id = ?', undef, $mlss->name, $exist_mlss->dbID);
+                }
+                if ($exist_mlss->species_set->name ne $mlss->species_set->name) {
+                    $compara_dba->dbc->do('UPDATE species_set_header SET name = ? WHERE species_set_id = ?', undef, $mlss->species_set->name, $exist_mlss->species_set->dbID);
+                }
+            }
             if ($exist_mlss and ($exist_mlss->is_current || $mlss->{_no_release})) {
                 push @mlsss_existing, $exist_mlss;
                 delete $mlss_ids_to_find{$exist_mlss->dbID};
