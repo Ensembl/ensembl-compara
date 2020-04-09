@@ -134,7 +134,11 @@ sub fetch_input {
 	my %current_gdbs = map { $_->name => 0 } @{$master_dba->get_GenomeDBAdaptor->fetch_all_current};
     $current_gdbs{'ancestral_sequences'} = 1; # never retire ancestral_sequences
 	foreach my $species_name ( @release_genomes ) {
-		$current_gdbs{$species_name} = 1;
+        if (exists $renamed_genomes->{$species_name}) {
+            $current_gdbs{$renamed_genomes->{$species_name}} = 1;
+        } else {
+            $current_gdbs{$species_name} = 1;
+        }
 	}
 	my @to_retire = grep { $current_gdbs{$_} == 0 } keys %current_gdbs;
     print "GENOMES_TO_RETIRE!! ";
