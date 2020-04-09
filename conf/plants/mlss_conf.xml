@@ -4,6 +4,19 @@
   <!-- Collections are species-sets that are needed to define several mlsss -->
   <collections>
 
+    <!-- All Viridiplantae except the triticum aestivum strains -->
+    <collection name="default">
+      <taxonomic_group taxon_name="Viridiplantae">
+        <!-- But exclude everything below triticum_aestivum -->
+        <ref_for_taxon name="triticum_aestivum"/>
+      </taxonomic_group>
+      <genome name="caenorhabditis_elegans"/>
+      <genome name="ciona_savignyi"/>
+      <genome name="drosophila_melanogaster"/>
+      <genome name="homo_sapiens"/>
+      <genome name="saccharomyces_cerevisiae"/>
+    </collection>
+
     <!-- Rice species tree including nearest grass relative -->
     <collection name="rice-with-outgroup">
       <taxonomic_group taxon_name="Oryza"/>
@@ -15,31 +28,46 @@
   <pairwise_alignments>
 
     <!-- First, our top 3 species, which are references for all land plants -->
-    <one_vs_all method="LASTZ_NET" ref_genome="arabidopsis_thaliana" against="Embryophyta" />
-    <one_vs_all method="LASTZ_NET" ref_genome="vitis_vinifera" against="Embryophyta" />
-    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa" against="Embryophyta" />
+    <one_vs_all method="LASTZ_NET" ref_genome="arabidopsis_thaliana">
+      <species_set in_collection="default">
+        <taxonomic_group taxon_name="Embryophyta"/>
+      </species_set>
+    </one_vs_all>
+    <one_vs_all method="LASTZ_NET" ref_genome="vitis_vinifera">
+      <species_set in_collection="default">
+        <taxonomic_group taxon_name="Embryophyta"/>
+      </species_set>
+    </one_vs_all>
+    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa">
+      <species_set in_collection="default">
+        <taxonomic_group taxon_name="Embryophyta"/>
+      </species_set>
+    </one_vs_all>
 
     <!-- More reference species, but within smaller clades -->
     <one_vs_all method="LASTZ_NET" ref_genome="medicago_truncatula" against="fabids"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="brachypodium_distachyon" against="Triticeae"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="brachypodium_distachyon">
+      <species_set in_collection="default">
+        <taxonomic_group taxon_name="Triticeae"/>
+      </species_set>
+    </one_vs_all>
     <one_vs_all method="LASTZ_NET" ref_genome="solanum_lycopersicum" against="asterids"/>
     <one_vs_all method="LASTZ_NET" ref_genome="theobroma_cacao_criollo" against="malvids"/>
 
     <!-- Vigna all v all -->
     <all_vs_all method="LASTZ_NET">
-        <species_set>
-          <taxonomic_group taxon_name="Vigna"/>
-        </species_set>
+      <species_set in_collection="default">
+        <taxonomic_group taxon_name="Vigna"/>
+      </species_set>
     </all_vs_all>
-
 
     <!-- Triticeae all v all, excl. T.urartu -->
     <all_vs_all method="LASTZ_NET">
-        <species_set>
-          <taxonomic_group taxon_name="Triticeae"/>
-          <!-- Because not k-mer masked -->
-          <genome name="triticum_urartu" exclude="1" />
-        </species_set>
+      <species_set in_collection="default">
+        <taxonomic_group taxon_name="Triticeae"/>
+        <!-- Because not k-mer masked -->
+        <genome name="triticum_urartu" exclude="1" />
+      </species_set>
     </all_vs_all>
 
   </pairwise_alignments>
@@ -67,7 +95,7 @@
   </self_alignments>
 
   <gene_trees>
-    <protein_trees collection="plants"/>
+    <protein_trees collection="default"/>
   </gene_trees>
 
 </compara_db>
