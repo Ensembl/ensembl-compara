@@ -75,26 +75,25 @@ my $compara_dbs = {
     # 'compara_curr_3'   => [ 'mysql-ens-compara-prod-3', "ensembl_compara_$curr_release" ],
 
     # homology dbs
-    # 'compara_members'       => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_members'       => [ 'mysql-ens-compara-prod-3', 'carlac_vertebrates_load_members_101' ],
     # 'compara_ptrees'        => [ 'mysql-ens-compara-prod-X', '' ],
     # 'compara_families'      => [ 'mysql-ens-compara-prod-X', '' ],
     # 'compara_nctrees'       => [ 'mysql-ens-compara-prod-X', '' ],
-    # 'nctrees_prev'          => [ 'mysql-ens-compara-prod-8', 'carlac_default_vertebrates_ncrna_trees_100' ],
+    'nctrees_prev'          => [ 'mysql-ens-compara-prod-8', 'carlac_default_vertebrates_ncrna_trees_100' ],
     # 'murinae_ptrees'        => [ 'mysql-ens-compara-prod-X', '' ],
     # 'murinae_nctrees'       => [ 'mysql-ens-compara-prod-X', '' ],
-    # 'murinae_ptrees_prev'   => [ 'mysql-ens-compara-prod-1', 'jalvarez_vertebrates_murinae_protein_reindexed_trees_100' ],
-    # 'murinae_nctrees_prev'  => [ 'mysql-ens-compara-prod-1', 'jalvarez_vertebrates_murinae_ncrna_reindexed_trees_100' ],
+    'murinae_ptrees_prev'   => [ 'mysql-ens-compara-prod-1', 'jalvarez_vertebrates_murinae_protein_reindexed_trees_100' ],
+    'murinae_nctrees_prev'  => [ 'mysql-ens-compara-prod-1', 'jalvarez_vertebrates_murinae_ncrna_reindexed_trees_100' ],
     # 'sus_ptrees'            => [ 'mysql-ens-compara-prod-X', '' ],
     # 'sus_nctrees'           => [ 'mysql-ens-compara-prod-X', '' ],
-    # 'sus_ptrees_prev'       => [ 'mysql-ens-compara-prod-5', 'cristig_vertebrates_sus_protein_reindexed_trees_100' ],
-    # 'sus_nctrees_prev'      => [ 'mysql-ens-compara-prod-5', 'cristig_vertebrates_sus_ncrna_reindexed_trees_100' ],
+    'sus_ptrees_prev'       => [ 'mysql-ens-compara-prod-5', 'cristig_vertebrates_sus_protein_reindexed_trees_100' ],
+    'sus_nctrees_prev'      => [ 'mysql-ens-compara-prod-5', 'cristig_vertebrates_sus_ncrna_reindexed_trees_100' ],
     # 
     # # LASTZ dbs
-    # 'lastz_batch_1'    => [ 'mysql-ens-compara-prod-X', '_vertebrates_lastz_batch1_100' ],
-    # 'lastz_batch_2'    => [ 'mysql-ens-compara-prod-X', '_vertebrates_lastz_batch2_100' ],
-    # 'lastz_batch_3'    => [ 'mysql-ens-compara-prod-X', '_vertebrates_lastz_batch3_100' ],
-    # 
-    # 'unidir_lastz'     => [ 'mysql-ens-compara-prod-1', 'vertebrates_unidirectional_lastz_100' ],
+    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-1', 'carlac_vertebrates_lastz_batch1_101' ],
+    'lastz_batch_2'    => [ 'mysql-ens-compara-prod-6', 'cristig_vertebrates_lastz_batch2_101' ],
+    'lastz_batch_3'    => [ 'mysql-ens-compara-prod-10', 'cristig_vertebrates_lastz_batch3_101' ],
+    'unidir_lastz'     => [ 'mysql-ens-compara-prod-1', 'vertebrates_unidirectional_lastz_100' ],
 
     # EPO dbs
     ## mammals
