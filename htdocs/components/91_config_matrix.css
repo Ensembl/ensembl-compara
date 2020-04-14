@@ -353,7 +353,7 @@ div.search-box input.configuration_search_text:focus::placeholder               
 /* track configuration/matrix display */
 button.reset-button       { float: right; background-color: [[LIGHT_GREY]]; color: [[MEDIUM_GREY]]; width: 100px; }
 button.reset-button:hover { color: [[OK_DARK]]; border-color: [[OK_DARK]]; }
-div.reset_track           { color: [[LINK]]; text-decoration: underline; cursor: pointer; position: absolute; margin-left: 250px; display: none; }
+div.reset_track           { color: [[LINK]]; text-decoration: underline; cursor: pointer; position: absolute; margin-left: 250px; }
 body.ie11 div.reset_track { margin-top: -30px; }
 div.reset_track_state     { color: [[LINK]]; text-decoration: underline; cursor: pointer; position: absolute; margin-top: -15px; margin-right: 35px; right: 0; }
 div.configuration-legend  { display: inline-block; padding: 8px; float: left; }
@@ -781,3 +781,4 @@ div.track-popup input[type='radio']:checked:after {
             user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome and Opera */
 }
+
