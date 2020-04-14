@@ -216,7 +216,8 @@ sub make_species_set_from_XML_node {
 
     if ($xml_ss->hasAttribute('in_collection')) {
         my $collection = find_collection_from_xml_node_attribute($xml_ss, 'in_collection', 'species-set');
-        $pool = $collection->genome_dbs;
+        # Exclude genome components from the pool
+        @{$pool} = grep { !$_->genome_component } @{$collection->genome_dbs};
     }
 
     my @selected_gdbs;
@@ -296,6 +297,8 @@ foreach my $collection_node (@{$division_node->findnodes('collections/collection
     my $collection_name = $collection_node->getAttribute('name');
     $collections{$collection_name} = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($genome_dbs, "collection-$collection_name");
 }
+# Do not create MLSSs for genome components (polyploids will be handled by each pipeline accordingly)
+@{$division_genome_dbs} = grep {!$_->genome_component} @{$division_genome_dbs};
 
 foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignments/pairwise_alignment')}) {
     my $ref_gdb = find_genome_from_xml_node_attribute($xml_one_vs_all_node, 'ref_genome');
