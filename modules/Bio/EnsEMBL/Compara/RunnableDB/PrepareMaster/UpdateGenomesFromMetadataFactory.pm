@@ -188,7 +188,7 @@ sub fetch_genome_report {
     # add the division name output file
     my $report_file = "$work_dir/report_updates.json";
     my $report_file_with_div = $report_file;
-    $report_file_with_div =~ s/report_updates/report_updates.$division/;
+    $report_file_with_div =~ s/report_updates/report_updates.$division.$release/;
     $self->run_command("mv $report_file $report_file_with_div");
 
     # read and parse report
