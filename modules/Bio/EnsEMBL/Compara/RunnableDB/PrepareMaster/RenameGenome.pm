@@ -55,9 +55,9 @@ Mandatory. Path to the root folder where the genome dumps are stored.
 
 Mandatory. Path to the root folder where the sketch files are stored.
 
-=item species_tree
+=item species_trees
 
-Optional. Path to the species tree file.
+Optional. List of paths to the species tree files.
 
 =back
 
@@ -69,7 +69,7 @@ Optional. Path to the species tree file.
         -xml_file $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/citest/mlss_conf.xml \
         -genome_dumps_dir /hps/nobackup2/production/ensembl/jalvarez/genome_dumps/ \
         -sketch_dir /hps/nobackup2/production/ensembl/jalvarez/species_tree/citest_sketches/ \
-        -species_tree $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/citest/species_tree.branch_len.nw
+        -species_trees "[$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/citest/species_tree.branch_len.nw]"
 
 =cut
 
@@ -81,7 +81,7 @@ use strict;
 use File::Basename;
 
 use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
-use Bio::EnsEMBL::Hive::Utils;
+use Bio::EnsEMBL::Hive::Utils qw(destringify);
 use Bio::EnsEMBL::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -107,7 +107,7 @@ sub run {
     my $xml_file = $self->param_required('xml_file');
     my $genome_dumps_dir = $self->param_required('genome_dumps_dir');
     my $sketch_dir = $self->param_required('sketch_dir');
-    my $species_tree = $self->param('species_tree');
+    my $species_trees = $self->param('species_trees');
 
     my $master_db = $self->param('master_db');
     my $dba_hash = $self->param('dba_hash');
@@ -142,11 +142,13 @@ sub run {
     $content =~ s/"$old_name"/"$new_name"/;
     $self->_spurt($xml_file, $content);
     print "\nUpdated content of $xml_file\n" if $self->debug;
-    if (defined $species_tree) {
-        $content = $self->_slurp($species_tree);
-        $content =~ s/([\(\),:])$old_name([\(\),:])/$1$new_name$2/;
-        $self->_spurt($species_tree, $content);
-        print "Updated content of $species_tree\n" if $self->debug;
+    if (defined $species_trees) {
+        for my $stree_file ( @{ destringify($species_trees) } ) {
+            $content = $self->_slurp($stree_file);
+            $content =~ s/([\(\),:])$old_name([\(\),:])/$1$new_name$2/;
+            $self->_spurt($stree_file, $content);
+            print "Updated content of $stree_file\n" if $self->debug;
+        }
     }
 
     my $dumps_path = dirname($genome_db->_get_genome_dump_path());

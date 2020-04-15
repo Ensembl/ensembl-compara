@@ -55,7 +55,10 @@ sub default_options {
         'additional_species'     => {
             'vertebrates' => ['homo_sapiens', 'caenorhabditis_elegans', 'ciona_savignyi', 'drosophila_melanogaster', 'saccharomyces_cerevisiae'],
         },
-        'binary_species_tree'    => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/species_tree.topology.nw'),
+        'species_trees'          => [
+            $self->o('config_dir') . '/species_tree.topology.nw',
+            $self->o('config_dir') . '/species_tree.rice.branch_len.nw'
+        ],
     };
 }
 
