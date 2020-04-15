@@ -60,7 +60,7 @@ class UnitTestDB:
             db_url.database = os.environ['USER'] + '_' + (name if name else dump_dir_path.name)
             # Connect to the server to create the database
             self._server = create_engine(url)
-            self._server.execute(text("CREATE DATABASE {};".format(db_url.database)))
+            self._server.execute(text(f"CREATE DATABASE {db_url.database};"))
         try:
             # Establish the connection to the database, load the schema and import the data
             self.dbc = DBConnection(db_url)
@@ -83,7 +83,7 @@ class UnitTestDB:
         if self.dbc.dialect == 'sqlite':
             os.remove(self.dbc.db_name)
         else:
-            self._server.execute(text("DROP DATABASE {};".format(self.dbc.db_name)))
+            self._server.execute(text(f"DROP DATABASE {self.dbc.db_name};"))
         self.dbc.dispose()
 
     def _load_data(self, conn: sqlalchemy.engine.Connection, table: str, filepath: PathLike) -> None:
