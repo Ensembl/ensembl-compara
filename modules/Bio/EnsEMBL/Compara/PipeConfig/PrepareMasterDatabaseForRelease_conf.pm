@@ -88,6 +88,7 @@ sub default_options {
         'additional_species'     => {},
         # Example:
         #'additional_species'     => {'vertebrates' => ['homo_sapiens', 'drosophila_melanogaster'],},
+        'species_trees'          => undef,
 
         'do_update_from_metadata' => 1,
         'do_load_timetree'        => 0,

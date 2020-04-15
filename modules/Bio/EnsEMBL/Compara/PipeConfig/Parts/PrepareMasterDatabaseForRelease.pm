@@ -163,7 +163,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -parameters => {
                 'prev_dbs'          => $self->o('prev_dbs'),
                 'xml_file'          => $self->o('xml_file'),
-                'species_tree'      => $self->o('binary_species_tree'),
+                'species_trees'     => $self->o('species_trees'),
                 'genome_dumps_dir'  => $self->o('genome_dumps_dir'),
                 'sketch_dir'        => $self->o('sketch_dir'),
             },
