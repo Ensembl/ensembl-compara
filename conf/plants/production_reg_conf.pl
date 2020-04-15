@@ -85,19 +85,19 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'  => [ 'mysql-ens-compara-prod-9', 'jalvarez_plants_load_members_101'],
-    # 'compara_ptrees'   => [ 'mysql-ens-compara-prod-', '' ],
+    # 'compara_ptrees'   => [ 'mysql-ens-compara-prod-3', 'jalvarez_default_plants_protein_trees_101' ],
 
     # LASTZ dbs
-    # 'lastz_batch_1' => [ 'mysql-ens-compara-prod-', '' ],
+    # 'lastz_batch_1' => [ 'mysql-ens-compara-prod-4', 'jalvarez_plants_lastz_batch1_101' ],
 
     # synteny
     # 'compara_syntenies' => [ 'mysql-ens-compara-prod-', '' ],
 
     # EPO dbs
     ## rice
-    # 'rice_epo_high_low' => [ 'mysql-ens-compara-prod-5', 'dthybert_rice_epo_100' ],
-    'rice_epo_prev'    => [ 'mysql-ens-compara-prod-5', 'dthybert_rice_epo_100' ],
-    'rice_epo_anchors' => [ 'mysql-ens-compara-prod-5', 'cristig_generate_anchors_rice_99' ],
+    'rice_epo_high_low' => [ 'mysql-ens-compara-prod-5', 'dthybert_rice_epo_100' ],
+    'rice_epo_prev'     => [ 'mysql-ens-compara-prod-5', 'dthybert_rice_epo_100' ],
+    'rice_epo_anchors'  => [ 'mysql-ens-compara-prod-5', 'cristig_generate_anchors_rice_99' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
