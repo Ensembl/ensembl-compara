@@ -106,7 +106,6 @@ sub fetch_input {
         foreach my $orth ( @orth_info ) {
 
             my ($orth_dnafrags, $orth_ranges) = $self->_orth_dnafrags($orth);
-            my @aln_mlss_ids  = @{ $self->param_required( 'aln_mlss_ids' ) };
 
             my $s1_dnafrag = $dnafrag_adaptor->fetch_by_dbID( $orth_dnafrags->[0]->{id} );
             my $s2_dnafrag = $dnafrag_adaptor->fetch_by_dbID( $orth_dnafrags->[1]->{id} );
