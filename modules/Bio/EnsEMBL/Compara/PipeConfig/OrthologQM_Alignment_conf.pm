@@ -190,7 +190,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PairCollection',
             -flow_into  => {
                 '2->B' => [ 'select_mlss' ],
-                'B->1' => [ 'copy_compara_tables' ],
+                'B->1' => [ 'ortholog_mlss_factory' ],
                 '3'    => [ 'reset_mlss' ],
             },
             -input_ids => [{
@@ -225,55 +225,6 @@ sub pipeline_analyses {
             -analysis_capacity => 50,
         },
 
-        {   -logic_name => 'copy_compara_tables',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepTableCopy',
-            -parameters => {
-                'copy_chunk_size' => 10,
-                'program'         => $self->o('populate_new_database_exe'),
-                'reg_conf'        => $self->o('reg_conf'),
-                'master_db'       => $self->o('master_db'),
-                'pipeline_db'     => $self->pipeline_url(),
-            },
-            -flow_into  => {
-                '3->C' => [ 'copy_genomic_align_blocks', 'copy_mlss_tags' ],
-                'C->2' => [ 'ortholog_mlss_factory' ]
-            },
-            -analysis_capacity => 1,
-            -rc_name => '1Gb_job'
-
-        },
-
-        {   -logic_name => 'copy_genomic_align_blocks',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters    => {
-                'where'       => 'method_link_species_set_id IN ( #expr( join( ",", @{ #mlss_id_list# } ) )expr# )',
-                'table'       => 'genomic_align_block',
-                'mode'        => 'topup',
-             },
-            -analysis_capacity => 1,
-            -flow_into => { 1 => [ 'copy_genomic_aligns' ] },
-        },
-
-        {   -logic_name => 'copy_genomic_aligns',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters    => {
-                'where'       => 'method_link_species_set_id IN ( #expr( join( ",", @{ #mlss_id_list# } ) )expr# )',
-                'table'       => 'genomic_align',
-                'mode'        => 'topup',
-             },
-            -analysis_capacity => 1,
-        },
-
-        {   -logic_name => 'copy_mlss_tags',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters    => {
-                'where'       => 'method_link_species_set_id IN ( #expr( join( ",", @{ #mlss_id_list# } ) )expr# )',
-                'table'       => 'method_link_species_set_tag',
-                'mode'        => 'topup',
-             },
-            -analysis_capacity => 1,
-        },
-
         {   -logic_name => 'ortholog_mlss_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologMLSSFactory',
             -parameters => {
@@ -305,9 +256,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage',
             -hive_capacity => 30,
             -batch_size => 10,
-            -parameters => {
-                alignment_db => $self->pipeline_url,
-            },
             -flow_into  => {
                 3 => [ '?table_name=ortholog_quality' ],
                 2 => [ 'assign_wga_coverage_score' ],
@@ -321,7 +269,6 @@ sub pipeline_analyses {
                 'hashed_mlss_id' => '#expr(dir_revhash(#orth_mlss_id#))expr#',
                 'output_file'    => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
                 'reuse_file'     => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga_reuse.tsv',
-                'alignment_db'   => $self->pipeline_url,
             },
             -hive_capacity     => 400,
         },

@@ -82,8 +82,7 @@ sub write_output {
     $self->data_dbc->disconnect_if_idle();
 
     my $member_type = $self->param_required('member_type');
-    my $dba  = $self->get_cached_compara_dba('alignment_db');
-    my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor();
+    my %mlss_mapping = %{ $self->param('mlss_db_mapping') };
     my @aln_mlss_ids  = @{ $self->param_required( 'aln_mlss_ids' ) };
 
     my $output_file = $self->param('output_file');
@@ -106,11 +105,14 @@ sub write_output {
 
     $self->warning("Scores written to $output_file!");
 
-    foreach my $mlss_id ( @aln_mlss_ids ) {
-        my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
+    foreach my $aln_mlss_id ( @aln_mlss_ids ) {
+        my $aln_db = $mlss_mapping{$aln_mlss_id};
+        my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($aln_db);
+        my $mlss = $dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($aln_mlss_id);
         print "Writing n_${member_type}_wga_score to the database\n" if $self->debug;
         $self->write_n_tag($mlss, "${member_type}_wga", \%max_quality);
         print "Tag: n_${member_type}_wga_score written!\n\n" if $self->debug;
+        $dba->dbc->disconnect_if_idle();
     }
 }
 
