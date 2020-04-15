@@ -128,7 +128,8 @@ sub content {
   );
   my $reg_table = $self->new_table(\@reg_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside', data_table_config => {iDisplayLength => 10} } );
   my @motif_columns = (
-    { key => 'bm',       width => '20%',  title => 'Binding matrix',            sort => 'html'                             },
+    { key => 'mf',       width => '10%',  title => 'Motif feature',             sort => 'html'                             },
+    { key => 'bm',       width => '10%',  title => 'Binding matrix',            sort => 'html'                             },
     { key => 'allele',   width => '10%',  title => 'Allele',                    sort => 'string'                           },
     { key => 'type',     width => '10%',  title => 'Consequence type',          sort => 'position_html'                    },
     { key => 'names',    width => '40%',  title => 'Transcription factors',     sort => 'string'                           },
@@ -398,10 +399,10 @@ sub content {
         my $m_allele = $self->trim_large_string($mfva->variation_feature_seq,'mfva_'.$mf->stable_id,25);
         
         my $motif_overlap = $self->_overlap_glyph(1, $motif_length, $mfva->motif_start, $mfva->motif_end, $mf, 'Motif feature', 1, $mfv_colour);
-
         my $motif_length_label = $self->_overlap_glyph_label($mfva->motif_start, $mfva->motif_end, $motif_length);
 
         my $row = {
+          mf       => $mf->stable_id,
           bm       => $matrix_link,
           allele   => $m_allele,
           type     => $type,
@@ -541,6 +542,7 @@ sub _sort_start_end {
     } else {
       $end   = $length if ($length && $length < $end);
       $start = $length if ($length && $length < $start);
+      $start = 1 if ($start < 0);
       return join("-", sort {$a <=> $b} ($start, $end));
     }
   } else {
