@@ -104,6 +104,7 @@ sub fetch_input {
             $genome_db_ids{ $gdb->dbID} = 1;
         }
         foreach my $gdb_id (keys %genome_db_ids) {
+            # alignment_id and aln_length are not propagated because they are not needed
             $self->dataflow_output_id({'genome_db_id' => $gdb_id, 'gene_tree_id' => $self->param('gene_tree_id')}, 3);
         }
         $self->complete_early('Too many genes, breaking up the task to 1 job per genome_db_id');
