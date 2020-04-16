@@ -284,13 +284,19 @@ sub run_infernal {
   my $infernal_mxsize = $self->param('infernal_mxsize');
   # infernal -o cluster_6357.stk RF00599_profile.cm cluster_6357.fasta
 
-  $cmd .= " --mxsize $infernal_mxsize " if(defined $self->param('infernal_mxsize') && ($self->input_job->retry_count >= 1)); # large alignments FIXME separate Infernal_huge
+  $cmd .= " --mxsize $infernal_mxsize " if defined $infernal_mxsize;
   $cmd .= " -o " . $stk_output;
   $cmd .= " --cpu " . $self->param_required('cmalign_threads');
   $cmd .= " " . $self->param('profile_file');
   $cmd .= " " . $self->param('input_fasta');
 
-  $self->run_command($cmd, { die_on_failure => 1 });
+  my $run_cmd = $self->run_command($cmd);
+
+  if ($run_cmd->exit_code) {
+      $self->handle_mxsize_error($run_cmd);
+      $run_cmd->die_with_log;
+  }
+
 
   # cmbuild --refine the alignment
   ######################
@@ -317,9 +323,7 @@ sub run_infernal {
   $cmd = $cmbuild_exe;
   #Increasing the maximum allowable DP matrix size to <x> Mb  default(2048.0)
   # This may be necessary if cmbuild crashes.
-  if(defined $self->param('infernal_mxsize') && ($self->input_job->retry_count >= 1)){
-    $cmd .= " --mxsize $infernal_mxsize"; # large alignments FIXME separate Infernal_huge
-  }
+  $cmd .= " --mxsize $infernal_mxsize " if defined $infernal_mxsize;
   $cmd .= " --refine $refined_stk_output";
   $cmd .= " -F $refined_profile";
   $cmd .= " $stk_output";
@@ -327,16 +331,14 @@ sub run_infernal {
   # These two errors should be taken care of by the sequence filtering
   #  - cm_from_guide(), it's illegal to construct a CM with 0 MATL, MATR and BIF nodes.
   #  - Calculating QDBs, Z got insanely large (> 1000*clen)
-  my $run_cmd = $self->run_command($cmd);
+  $run_cmd = $self->run_command($cmd);
 
   if ($run_cmd->exit_code) {
-      if ($run_cmd->err =~ /Error: cm_TrPostCodeHB.. using EL state to emit residue .*, but ELs are turned off/) {
-          if (defined $self->param('infernal_mxsize') && ($self->input_job->retry_count >= 1)) {
-              # We've already tried using --mxsize. Don't know what else to do
-              # Let's use the previous alignment and skip the refined profile
-              $self->param('stk_output', $stk_output);
-              return 0;
-          }
+      if ($self->handle_mxsize_error($run_cmd) < 0) {
+          # No analysis with more memory available
+          # Let's use the previous alignment and skip the refined profile
+          $self->param('stk_output', $stk_output);
+          return 0;
       }
       $run_cmd->die_with_log;
   }
@@ -345,6 +347,28 @@ sub run_infernal {
   $self->param('refined_profile', $refined_profile);
 
   return 0;
+}
+
+sub handle_mxsize_error {
+    my ($self, $run_cmd) = @_;
+    if (($run_cmd->err =~ /Error: cm_TrPostCodeHB.. using EL state to emit residue .*, but ELs are turned off/)
+        || ($run_cmd->err =~ /Error: HMM banded truncated alignment mxes need.*Use --mxsize, --maxtau or --tau/s))
+    {
+        my $mem_branch = -1;
+        # Is a branch connected ?
+        if ($self->input_job->analysis->dataflow_rules_by_branch->{$mem_branch}) {
+            my $new_mxsize = ($self->param('infernal_mxsize') // 0) + $self->param_required('mxsize_increment');
+            my $output_id  = {
+                'gene_tree_id'    => $self->param('gene_tree_id'),
+                'infernal_mxsize' => $new_mxsize,
+            };
+            $self->dataflow_output_id($output_id, $mem_branch);
+            $self->input_job->autoflow(0);
+            $self->complete_early("Need more memory to increase the mxsize parameter to $new_mxsize");
+        }
+        return -1
+    }
+    return 0;
 }
 
 sub dump_model {
