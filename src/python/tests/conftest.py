@@ -37,7 +37,6 @@ from ensembl.compara.db import UnitTestDB
 from ensembl.compara.filesys import DirCmp, PathLike
 
 
-@pytest.hookimpl()
 def pytest_addoption(parser: Parser) -> None:
     """Registers argparse-style options for Compara's unit testing."""
     # Add the Compara unitary test parameters to pytest parser
