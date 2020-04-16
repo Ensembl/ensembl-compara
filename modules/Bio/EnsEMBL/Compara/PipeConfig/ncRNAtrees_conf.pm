@@ -717,7 +717,7 @@ sub core_pipeline_analyses {
             {   -logic_name     => 'subcluster_factory',
                 -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
                 -parameters     => {
-                    'inputquery'    => 'SELECT gtn1.root_id AS gene_tree_id, gene_count AS tree_gene_count FROM (gene_tree_node gtn1 JOIN gene_tree_root_attr USING (root_id)) JOIN gene_tree_node gtn2 ON gtn1.parent_id = gtn2.node_id WHERE gtn1.root_id != gtn2.root_id AND gtn2.root_id = #gene_tree_id#',
+                    'inputquery'    => 'SELECT gtn1.root_id AS gene_tree_id FROM (gene_tree_node gtn1 JOIN gene_tree_root_attr USING (root_id)) JOIN gene_tree_node gtn2 ON gtn1.parent_id = gtn2.node_id WHERE gtn1.root_id != gtn2.root_id AND gtn2.root_id = #gene_tree_id#',
                 },
                 -hive_capacity  => $self->o('other_paralogs_capacity'),
                 -flow_into      => {
