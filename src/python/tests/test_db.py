@@ -45,7 +45,6 @@ class TestUnitTestDB:
             pytest.param(Path('citest', 'reference'), 'renamed', does_not_raise(),
                          marks=pytest.mark.dependency(name="renamed")),
         ],
-        ids=pytest.get_param_repr
     )
     def test_init(self, request: FixtureRequest, src: Path, name: str, expectation: ContextManager) -> None:
         """Tests that the object :class:`UnitTestDB` is initialised correctly.
@@ -81,7 +80,6 @@ class TestUnitTestDB:
             pytest.param('reference', marks=pytest.mark.dependency(depends=['reference'], scope='class')),
             pytest.param('renamed', marks=pytest.mark.dependency(depends=['renamed'], scope='class')),
         ],
-        ids=pytest.get_param_repr
     )
     def test_drop(self, db_name: str) -> None:
         """Tests that the previously created object :class:`UnitTestDB` is dropped correctly.
@@ -206,7 +204,6 @@ class TestDBConnection:
             ("SELECT * FROM method_link_species_set_tag", 4, does_not_raise()),
             ("SELECT * FROM my_table", 0, raises(ProgrammingError, match=r"my_table.* doesn't exist")),
         ],
-        ids=pytest.get_param_repr,
     )
     def test_execute(self, query: str, nrows: int, expectation: ContextManager) -> None:
         """Tests DBConnection's :meth:`DBConnection.execute()` method.
@@ -229,7 +226,6 @@ class TestDBConnection:
             (4, {'tag': 'ref', 'value': 'human'}, {'tag': 'non_ref1', 'value': 'chicken'}, 0, 2),
             (4, {'tag': 'non_ref2', 'value': 'tick'}, {'tag': 'non_ref2', 'value': 'mouse'}, 2, 2),
         ],
-        ids=pytest.get_param_repr
     )
     def test_session_scope(self, mlss_id: int, tag1: Dict[str, str], tag2: Dict[str, str], before: int,
                            after: int) -> None:

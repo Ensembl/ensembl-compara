@@ -58,7 +58,23 @@ def pytest_configure(config: Config) -> None:
     # Add global variables
     pytest.dbs_dir = Path(__file__).parent / 'databases'
     pytest.files_dir = Path(__file__).parent / 'flatfiles'
-    pytest.get_param_repr = get_param_repr
+
+
+def pytest_make_parametrize_id(val: Any) -> str:
+    """Returns a readable string representation of `val` that will be used by @pytest.mark.parametrize calls.
+
+    `Pytest collection hook
+    <https://docs.pytest.org/en/latest/reference.html#_pytest.hookspec.pytest_make_parametrize_id>`_.
+
+    Args:
+        val: The parametrized value.
+
+    """
+    if isinstance(val, ExitStack):
+        return 'No error'
+    if isinstance(val, RaisesContext):
+        return val.expected_exception.__name__
+    return str(val)
 
 
 @pytest.fixture(name='db_factory', scope='session')
@@ -146,27 +162,3 @@ def dir_cmp_factory_(tmp_dir: Path) -> Generator:
             created[str(src)] = DirCmp(ref_tmp, target_tmp)
         return created[str(src)]
     yield dir_cmp_factory
-
-
-def get_param_repr(arg: Any) -> Optional[str]:
-    """Returns a string representation of `arg` for certains types, `None` otherwise.
-
-    Types handled: dict, list, Path, ExitStack, _pytest.python_api.RaisesContext
-
-    Note:
-        `None` will tell pytest to use its default internal representation of `arg`.
-
-    """
-    if isinstance(arg, dict):
-        str_repr = ''
-        for key, value in arg.items():
-            value_repr = get_param_repr(value)
-            str_repr += f"{key}: {value_repr if value_repr else value}; "
-        return '{' + str_repr[:-2] + '}'
-    if isinstance(arg, list):
-        return '[' + ', '.join(str(x) for x in arg) + ']'
-    if isinstance(arg, Path):
-        return str(arg)
-    if isinstance(arg, (ExitStack, RaisesContext)):
-        return 'None' if isinstance(arg, ExitStack) else arg.expected_exception
-    return None

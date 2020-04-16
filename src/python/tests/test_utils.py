@@ -33,7 +33,6 @@ class TestTools:
             ('a', ['a']),
             (['a', 'b'], ['a', 'b'])
         ],
-        ids=pytest.get_param_repr
     )
     def test_file_cmp(self, arg: Any, output: List[Any]) -> None:
         """Tests :meth:`tools.to_list()` method.

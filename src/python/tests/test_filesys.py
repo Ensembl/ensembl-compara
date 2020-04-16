@@ -80,7 +80,6 @@ class TestDirCmp:
             ({'paths': ['1', '2']}, set(), does_not_raise()),
             ({'patterns': 'a*', 'paths': ['1', '2']}, set(), does_not_raise()),
         ],
-        ids=pytest.get_param_repr
     )
     def test_apply_test(self, kwargs: Dict, output: Set[str], expectation: ContextManager) -> None:
         """Tests DirCmp's :meth:`DirCmp.apply_test()` method.
@@ -106,7 +105,6 @@ class TestDirCmp:
             ({'paths': ['1', '2']}, {'1/b.txt', '1/c.txt', '2/a.nw', '2/b.nwk'}, does_not_raise()),
             ({'patterns': 'a*', 'paths': ['1', '2']}, {'2/a.nw'}, does_not_raise()),
         ],
-        ids=pytest.get_param_repr
     )
     def test_common_list(self, kwargs: Dict, output: Set[str], expectation: ContextManager) -> None:
         """Tests DirCmp's :meth:`DirCmp.common_list()` method.
@@ -132,7 +130,6 @@ class TestDirCmp:
             ({'paths': ['1', '2']}, set(), does_not_raise()),
             ({'patterns': 'a*', 'paths': ['1', '2']}, set(), does_not_raise()),
         ],
-        ids=pytest.get_param_repr
     )
     def test_ref_only_list(self, kwargs: Dict, output: Set[str], expectation: ContextManager) -> None:
         """Tests DirCmp's :meth:`DirCmp.ref_only_list()` method.
@@ -158,7 +155,6 @@ class TestDirCmp:
             ({'paths': ['1', '2']}, set(), does_not_raise()),
             ({'patterns': 'a*', 'paths': ['1', '2']}, set(), does_not_raise()),
         ],
-        ids=pytest.get_param_repr
     )
     def test_target_only_list(self, kwargs: Dict, output: Set[str], expectation: ContextManager) -> None:
         """Tests DirCmp's :meth:`DirCmp.target_only_list()` method.
@@ -189,7 +185,6 @@ class TestFileCmp:
             (Path('2', 'a.nw'), True),
             (Path('2', 'b.nwk'), False),
         ],
-        ids=pytest.get_param_repr
     )
     def test_file_cmp(self, filepath: PathLike, output: bool) -> None:
         """Tests :meth:`filecmp.file_cmp()` method.

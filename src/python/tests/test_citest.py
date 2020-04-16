@@ -65,7 +65,6 @@ class TestCITestDBItem:
             ({'variation': 0.25, 'filter_by': ['value < 30', 'grp = "grp2"']}, does_not_raise()),
             ({'group_by': 'grp', 'filter_by': 'value < 24'}, does_not_raise()),
         ],
-        ids=pytest.get_param_repr
     )
     def test_num_rows_test(self, kwargs: Dict, expectation: ContextManager) -> None:
         """Tests CITest's :meth:`CITestDBItem.test_num_rows()` method.
@@ -93,7 +92,6 @@ class TestCITestDBItem:
             ({'columns': 'grp', 'filter_by': 'grp = "grp3"'}, raises(CITestDBNumRowsError)),
             ({'ignore_columns': 'id', 'filter_by': 'value != 24'}, does_not_raise()),
         ],
-        ids=pytest.get_param_repr
     )
     def test_content_test(self, kwargs: Dict, expectation: ContextManager) -> None:
         """Tests CITest's :meth:`CITestDBItem.test_content()` method.
@@ -144,7 +142,6 @@ class TestCITestFilesItem:
             ({'patterns': 'c*', 'paths': '1'}, does_not_raise()),
             ({'variation': 1.0, 'patterns': 'b*', 'paths': '1'}, does_not_raise()),
         ],
-        ids=pytest.get_param_repr
     )
     def test_size_test(self, kwargs: Dict, expectation: ContextManager) -> None:
         """Tests CITest's :meth:`CITestFilesItem.test_size()` method.
@@ -168,7 +165,6 @@ class TestCITestFilesItem:
             ({'paths': ['0', '2']}, raises(CITestFilesContentError)),
             ({'patterns': 'a*', 'paths': '0'}, does_not_raise()),
         ],
-        ids=pytest.get_param_repr
     )
     def test_content_test(self, kwargs: Dict, expectation: ContextManager) -> None:
         """Tests CITest's :meth:`CITestFilesItem.test_content()` method.
