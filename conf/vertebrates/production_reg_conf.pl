@@ -77,7 +77,7 @@ my $compara_dbs = {
     # homology dbs
     'compara_members'       => [ 'mysql-ens-compara-prod-3', 'carlac_vertebrates_load_members_101' ],
     # 'compara_ptrees'        => [ 'mysql-ens-compara-prod-X', '' ],
-    # 'compara_families'      => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_families'      => [ 'mysql-ens-compara-prod-5', 'muffato_vertebrates_families_101' ],
     # 'compara_nctrees'       => [ 'mysql-ens-compara-prod-X', '' ],
     'nctrees_prev'          => [ 'mysql-ens-compara-prod-8', 'carlac_default_vertebrates_ncrna_trees_100' ],
     # 'murinae_ptrees'        => [ 'mysql-ens-compara-prod-X', '' ],
