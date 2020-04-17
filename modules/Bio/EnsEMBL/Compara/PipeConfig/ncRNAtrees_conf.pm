@@ -65,7 +65,7 @@ sub default_options {
 
         'master_db'   => 'compara_master',
         'member_db'   => 'compara_members',
-        'mapping_db'  => 'nctrees_prev',
+        'mapping_db'  => 'compara_prev',
         # The following parameter should ideally contain EPO-2X alignments of
         # all the genomes used in the ncRNA-trees. However, due to release
         # coordination considerations, this may not be possible. If so, use the

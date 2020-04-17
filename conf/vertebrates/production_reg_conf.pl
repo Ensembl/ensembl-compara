@@ -79,7 +79,6 @@ my $compara_dbs = {
     # 'compara_ptrees'        => [ 'mysql-ens-compara-prod-X', '' ],
     'compara_families'      => [ 'mysql-ens-compara-prod-5', 'muffato_vertebrates_families_101' ],
     # 'compara_nctrees'       => [ 'mysql-ens-compara-prod-X', '' ],
-    'nctrees_prev'          => [ 'mysql-ens-compara-prod-8', 'carlac_default_vertebrates_ncrna_trees_100' ],
     # 'murinae_ptrees'        => [ 'mysql-ens-compara-prod-X', '' ],
     # 'murinae_nctrees'       => [ 'mysql-ens-compara-prod-X', '' ],
     'murinae_ptrees_prev'   => [ 'mysql-ens-compara-prod-1', 'jalvarez_vertebrates_murinae_protein_reindexed_trees_100' ],
