@@ -65,7 +65,7 @@ sub default_options {
 
         'master_db'   => 'compara_master',
         'member_db'   => 'compara_members',
-        'prev_rel_db' => 'nctrees_prev',
+        'mapping_db'  => 'nctrees_prev',
         # The following parameter should ideally contain EPO-2X alignments of
         # all the genomes used in the ncRNA-trees. However, due to release
         # coordination considerations, this may not be possible. If so, use the
@@ -100,7 +100,6 @@ sub default_options {
         'genomic_alignment_priority'       => 35,
         'genomic_alignment_himem_priority' => 40,
 
-        # How much the pipeline will try to reuse from "prev_rel_db"
             # tree break
             'treebreak_tags_to_copy'   => ['model_id', 'model_name'],
             'treebreak_gene_count'     => 400,
@@ -169,7 +168,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'mlss_id'       => $self->o('mlss_id'),
         'master_db'     => $self->o('master_db'),
         'member_db'     => $self->o('member_db'),
-        'prev_rel_db'   => $self->o('prev_rel_db'),
+        'mapping_db'    => $self->o('mapping_db'),
         
         'homology_dumps_dir'        => $self->o('homology_dumps_dir'),
         'prev_homology_dumps_dir'   => $self->o('prev_homology_dumps_dir'),
@@ -1170,6 +1169,9 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'mlss_id_mapping',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDMapping',
+            -parameters => {
+                'prev_rel_db'               => '#mapping_db#',
+            },
             -hive_capacity => $self->o('homology_id_mapping_capacity'),
             -flow_into => { 1 => { 'homology_id_mapping' => INPUT_PLUS() } },
         },
