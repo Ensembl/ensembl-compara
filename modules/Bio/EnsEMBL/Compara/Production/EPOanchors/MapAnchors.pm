@@ -140,12 +140,13 @@ sub write_output {
     my ($self) = @_;
 
     # Delete previous mapping
+    my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $self->compara_dba->dbc);
     if ($self->param('anchor_ids')) {
         my $sql = sprintf('DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id IN (%s) AND genome_db_id = ?', join(',', @{$self->param('anchor_ids')}));
-        $self->compara_dba->dbc->do($sql, undef, $self->param('genome_db_id'));
+        $dbc->do($sql, undef, $self->param('genome_db_id'));
     } else {
         my $sql = 'DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id BETWEEN ? AND ? AND genome_db_id = ?';
-        $self->compara_dba->dbc->do($sql, undef, $self->param('min_anchor_id'), $self->param('max_anchor_id'), $self->param('genome_db_id'));
+        $dbc->do($sql, undef, $self->param('min_anchor_id'), $self->param('max_anchor_id'), $self->param('genome_db_id'));
     }
 
     my $anchor_align_adaptor = $self->compara_dba()->get_adaptor("AnchorAlign");
