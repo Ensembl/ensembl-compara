@@ -199,7 +199,7 @@ sub detect_pecan_ortheus_errors {
       #Write to job_message table but without returing an error
       foreach my $err_msg (keys %err_msgs) {
           $self->warning("Ortheus failed with error: $err_msg\n");
-          if ($err_msg =~ /Exception in thread "main" java.lang.IllegalStateException($|:\s+Total is unacceptable (-?Infinity|NaN))/m) {
+          if ($err_msg =~ /Exception in thread "main" java.lang.IllegalStateException($|:\s+Total is unacceptable (-?Infinity|NaN)|:[0-9 ]*)/m) {
               # Not sure why this happens (the input data looked sensible)
               # Let's discard this job.
               $self->input_job->autoflow(0);
