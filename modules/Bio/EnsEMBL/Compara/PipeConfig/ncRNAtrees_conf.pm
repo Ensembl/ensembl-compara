@@ -242,7 +242,6 @@ sub core_pipeline_analyses {
                                 '1->A'  => [ 'copy_tables_factory' ],
                                 'A->1'  => [ 'backbone_fire_classify_genes' ],
                                },
-                -meadow_type=> 'LOCAL',
             },
 
             {   -logic_name => 'backbone_fire_classify_genes',
@@ -281,7 +280,6 @@ sub core_pipeline_analyses {
                     'notify_pipeline_completed',
                     WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ), 
                 ],
-                -meadow_type=> 'LOCAL',
             },
 
             {   -logic_name => 'notify_pipeline_completed',
