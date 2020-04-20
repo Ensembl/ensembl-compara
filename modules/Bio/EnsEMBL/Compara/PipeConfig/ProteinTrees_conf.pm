@@ -313,7 +313,7 @@ sub default_options {
         'calculate_goc_distribution'    => 0,
 
     # HMM specific parameters
-        'hmm_library_name'              => 'compara_hmm_91.hmm3',
+        'hmm_library_name'              => '',      # Name of HMMER-3 library. Currently unused
         'hmmer_search_cutoff'           => '1e-23',
 
     # Extra analyses
