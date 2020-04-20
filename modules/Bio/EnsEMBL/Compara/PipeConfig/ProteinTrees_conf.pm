@@ -1058,7 +1058,7 @@ sub core_pipeline_analyses {
          -parameters => {
                          'hmmer_home'        => $self->o('hmmer3_home'),
                          'library_name'      => $self->o('hmm_library_name'),
-                         'library_basedir'   => $self->o('hmm_library_basedir'),
+                         'library_basedir'   => '#hmm_library_basedir#',
                          'hmmer_cutoff'      => $self->o('hmmer_search_cutoff'),
                         },
          -hive_capacity => $self->o('HMMer_search_capacity'),
@@ -1074,7 +1074,7 @@ sub core_pipeline_analyses {
          -parameters => {
                          'hmmer_home'        => $self->o('hmmer3_home'),
                          'library_name'      => $self->o('hmm_library_name'),
-                         'library_basedir'   => $self->o('hmm_library_basedir'),
+                         'library_basedir'   => '#hmm_library_basedir#',
                          'hmmer_cutoff'      => $self->o('hmmer_search_cutoff'),
                         },
          -hive_capacity => $self->o('HMMer_search_capacity'),
@@ -1091,7 +1091,7 @@ sub core_pipeline_analyses {
          -parameters => {
                          'hmmer_home'        => $self->o('hmmer3_home'),
                          'library_name'      => $self->o('hmm_library_name'),
-                         'library_basedir'   => $self->o('hmm_library_basedir'),
+                         'library_basedir'   => '#hmm_library_basedir#',
                          'hmmer_cutoff'      => $self->o('hmmer_search_cutoff'),
                         },
          -hive_capacity => $self->o('HMMer_search_capacity'),
