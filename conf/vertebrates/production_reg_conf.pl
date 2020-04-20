@@ -78,7 +78,7 @@ my $compara_dbs = {
     'compara_members'       => [ 'mysql-ens-compara-prod-3', 'carlac_vertebrates_load_members_101' ],
     # 'compara_ptrees'        => [ 'mysql-ens-compara-prod-X', '' ],
     'compara_families'      => [ 'mysql-ens-compara-prod-5', 'muffato_vertebrates_families_101' ],
-    # 'compara_nctrees'       => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_nctrees'       => [ 'mysql-ens-compara-prod-5', 'muffato_default_vertebrates_ncrna_trees_101' ],
     # 'murinae_ptrees'        => [ 'mysql-ens-compara-prod-X', '' ],
     # 'murinae_nctrees'       => [ 'mysql-ens-compara-prod-X', '' ],
     'murinae_ptrees_prev'   => [ 'mysql-ens-compara-prod-1', 'jalvarez_vertebrates_murinae_protein_reindexed_trees_100' ],
@@ -96,17 +96,17 @@ my $compara_dbs = {
 
     # EPO dbs
     ## mammals
-    # 'mammals_epo_high_low'=> [ 'mysql-ens-compara-prod-6', 'carlac_mammals_epo_100' ],
+    'mammals_epo_high_low'=> [ 'mysql-ens-compara-prod-8', 'muffato_mammals_epo_with2x_101' ],
     'mammals_epo_prev'    => [ 'mysql-ens-compara-prod-6', 'carlac_mammals_epo_100' ],
     'mammals_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## sauropsids
-    # 'sauropsids_epo_high_low'=> [ 'mysql-ens-compara-prod-9', 'muffato_sauropsids_epo_100' ],
+    'sauropsids_epo_high_low'=> [ 'mysql-ens-compara-prod-8', 'muffato_sauropsids_epo_with2x_101' ],
     'sauropsids_epo_prev'    => [ 'mysql-ens-compara-prod-9', 'muffato_sauropsids_epo_100' ],
     'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
 
     ## fish
-    # 'fish_epo_high_low' => [ 'mysql-ens-compara-prod-10', 'muffato_fish_epo_100' ],
+    'fish_epo_high_low' => [ 'mysql-ens-compara-prod-9', 'muffato_fish_epo_with2x_101' ],
     'fish_epo_prev'     => [ 'mysql-ens-compara-prod-10', 'muffato_fish_epo_100' ],
     'fish_epo_anchors'  => [ 'mysql-ens-compara-prod-8', 'muffato_generate_anchors_fish_100' ],
 
