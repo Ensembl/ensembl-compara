@@ -79,7 +79,7 @@ if ($division eq "vertebrates"){
 
     $gene_symbol              = "BRCA2";
     $species_set_group        = "primates";
-    $homology_type            = 'orthologs';
+    $homology_type            = 'orthologues';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
 
     $cactus_species           = 'rattus_norvegicus';
@@ -101,7 +101,7 @@ elsif($division eq "plants"){
     $taxon_3                  = 65489;#oryza_barthii
 
     $gene_symbol              = "PAD4";
-    $homology_type            = 'orthologs';
+    $homology_type            = 'orthologues';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
     
     $extra_params             = 'compara=plants';
