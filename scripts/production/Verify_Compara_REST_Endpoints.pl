@@ -63,6 +63,12 @@ my ($gene_symbol, $species_set_group, $homology_type, $homology_method_link);
 my ($cactus_species, $cactus_region, $cactus_species_set);
 my $extra_params;
 
+# RULES
+# $taxon_X must be the taxon_id of $species_X
+# $species_1 must be the species of $gene_symbol
+# $gene_symbol must have orthologues in both $species_2 and $species_3
+# LastZ is tested on $species_1 vs $species_2
+
 if ($division eq "vertebrates"){
     $gene_member_id           = "ENSG00000157764";
     $gene_tree_id             = "ENSGT00390000003602";
