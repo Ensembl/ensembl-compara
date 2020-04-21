@@ -56,7 +56,7 @@ if ( !$server or !$division ) {
 my $responseIDGet = $browser->get( ( $server . '/info/ping?content-type=application/json' ), { headers => { 'Content-type' => 'application/json', 'Accept' => 'application/json' } } );
 die "Server unavailable - please check your URL\n" unless $responseIDGet->{status} == 200;
 
-my ($gene_member_id, $gene_tree_id, $gene_tree_member_id, $alignment_region, $lastz_alignment_region);
+my ($gene_member_id, $gene_tree_id, $alignment_region, $lastz_alignment_region);
 my ($species_1, $species_2, $species_3, $taxon_1, $taxon_2, $taxon_3);
 my ($gene_symbol, $species_set_group, $homology_type, $homology_method_link);
 my $extra_params;
@@ -64,7 +64,6 @@ my $extra_params;
 if ($division eq "vertebrates"){
     $gene_member_id           = "ENSG00000157764";
     $gene_tree_id             = "ENSGT00390000003602";
-    $gene_tree_member_id      = "";
     $alignment_region         = "2:106040000-106040050:1";
     $lastz_alignment_region   = "2:106041430-106041480:1";
 
@@ -84,7 +83,6 @@ if ($division eq "vertebrates"){
 elsif($division eq "plants"){
     $gene_member_id           = "AT3G52430";
     $gene_tree_id             = "EPlGT00140000000744";
-    $gene_tree_member_id      = "AT3G52430";
     $alignment_region         = "1:8001-18000:1";
     $lastz_alignment_region   = $alignment_region;
 
