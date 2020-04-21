@@ -35,7 +35,7 @@ use Getopt::Long;
 my $browser = HTTP::Tiny->new('timeout' => 300);
 my $server = 'https://test.rest.ensembl.org';
 my $division;
-my ( $skip_genetrees, $skip_cafe, $skip_alignments, $skip_epo, $skip_lastz, $skip_families, $skip_homology );
+my ( $skip_genetrees, $skip_cafe, $skip_alignments, $skip_epo, $skip_lastz, $skip_families, $skip_homology, $skip_cactus );
 
 GetOptions( 
     "server=s"        => \$server, 
@@ -45,6 +45,7 @@ GetOptions(
     'skip_alignments' => \$skip_alignments,
     'skip_epo'        => \$skip_epo,
     'skip_lastz'      => \$skip_lastz,
+    'skip_cactus'     => \$skip_cactus,
     'skip_families'   => \$skip_families,
     'skip_homology'   => \$skip_homology,
 );
@@ -59,6 +60,7 @@ die "Server unavailable - please check your URL\n" unless $responseIDGet->{statu
 my ($gene_member_id, $gene_tree_id, $alignment_region, $lastz_alignment_region);
 my ($species_1, $species_2, $species_3, $taxon_1, $taxon_2, $taxon_3);
 my ($gene_symbol, $species_set_group, $homology_type, $homology_method_link);
+my ($cactus_species, $cactus_region, $cactus_species_set);
 my $extra_params;
 
 if ($division eq "vertebrates"){
@@ -79,6 +81,10 @@ if ($division eq "vertebrates"){
     $species_set_group        = "primates";
     $homology_type            = 'orthologs';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
+
+    $cactus_species           = 'rattus_norvegicus';
+    $cactus_region            = '2:56040000-56040100:1';
+    $cactus_species_set       = 'murinae';
 }
 elsif($division eq "plants"){
     $gene_member_id           = "AT3G52430";
@@ -101,6 +107,7 @@ elsif($division eq "plants"){
     $extra_params             = 'compara=plants';
     $skip_families            = 1;
     $skip_epo                 = 1;
+    $skip_cactus              = 1;
 }
 elsif ( $division eq 'grch37' ) {
     $lastz_alignment_region = "17:64155265-64255266:1";
@@ -115,6 +122,7 @@ elsif ( $division eq 'grch37' ) {
     $skip_families  = 1;
     $skip_epo       = 1;
     $skip_genetrees = 1;
+    $skip_cactus    = 1;
 }
 else {
     die "Division '$division' is not understood\n";
@@ -469,10 +477,12 @@ try{
     
         $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;display_species_set=$species_1".($extra_params ? ";$extra_params" : ''));
         ok($jsontxt->[0]->{alignments}[0]->{species} eq $species_1, "Check alignment region display_species_set option validity");
+    }
     
+    unless ( $skip_alignments || $skip_cactus ) {
         print "\nTesting GET alignment region\/\:species\/\:region on HAL file\n\n";
     
-        $ext = '/alignment/region/rattus_norvegicus/2:56040000-56040100:1?method=CACTUS_HAL;species_set_group=murinae'.($extra_params ? ";$extra_params" : '');
+        my $ext = "/alignment/region/$cactus_species/$cactus_region?method=CACTUS_HAL;species_set_group=$cactus_species_set".($extra_params ? ";$extra_params" : '');
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
         ok($responseIDGet->{success}, "Check json validity");
     
