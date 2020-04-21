@@ -95,7 +95,6 @@ elsif($division eq "plants"){
     $taxon_3                  = 65489;#oryza_barthii
 
     $gene_symbol              = "PAD4";
-    $species_set_group        = "rosids";
     $homology_type            = 'orthologs';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
     
