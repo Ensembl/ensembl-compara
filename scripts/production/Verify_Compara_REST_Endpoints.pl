@@ -109,6 +109,28 @@ elsif($division eq "plants"){
     $skip_epo                 = 1;
     $skip_cactus              = 1;
 }
+elsif($division eq 'pan' or $division eq 'pan_homology'){
+    $gene_member_id           = 'AT5G06870';
+    $gene_tree_id             = 'EGGT00960000274462';
+
+    $species_1                = 'arabidopsis_thaliana';
+    $species_2                = "vitis_vinifera";
+    $species_3                = 'guillardia_theta';
+
+    $taxon_1                  = 3702;#arabidopsis_thaliana
+    $taxon_2                  = 29760;#vitis_vinifera
+    $taxon_3                  = 55529;#guillardia_theta
+
+    $gene_symbol              = 'PGIP2';
+    $homology_type            = 'orthologues';
+    $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
+
+    $extra_params             = 'compara=pan_homology';
+    $skip_cafe                = 1;
+    $skip_alignments          = 1;
+    $skip_families            = 1;
+    $skip_cactus              = 1;
+}
 elsif ( $division eq 'grch37' ) {
     $lastz_alignment_region = "17:64155265-64255266:1";
     $gene_member_id         = "ENSG00000173786";
