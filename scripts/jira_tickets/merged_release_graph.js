@@ -45,7 +45,7 @@ function process_tickets(json) {
             run_name = label.substr(index+1).trim();
         }
         var matches;
-        if (matches = ticket.fields.summary.match(/ batch \d+/)) {
+        if (matches = ticket.fields.summary.match(/ batch \d+[a-z]?/)) {
             run_name += matches[0];
         }
         if (!(pipeline_name in pipelines)) {
