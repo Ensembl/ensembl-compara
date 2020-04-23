@@ -539,6 +539,10 @@ sub store_fasta_alignment {
         delete $self->param('gene_tree')->{'_member_array'};
         # Adjust the gene_count
         $self->param('gene_tree')->store_tag('gene_count', $self->param('gene_tree')->get_value_for_tag('gene_count')-$n_deleted_members);
+        my $parent_tree = $self->param('gene_tree')->adaptor->fetch_parent_tree($self->param('gene_tree'));
+        if ($parent_tree->tree_type eq 'supertree') {
+            $parent_tree->store_tag('gene_count', $parent_tree->get_value_for_tag('gene_count')-$n_deleted_members);
+        }
     }
 
     $self->compara_dba->get_GeneAlignAdaptor->store($aln);
