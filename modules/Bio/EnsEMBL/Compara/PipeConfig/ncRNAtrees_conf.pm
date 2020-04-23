@@ -606,8 +606,17 @@ sub core_pipeline_analyses {
             {   -logic_name    => 'recover_epo_himem',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
                 -analysis_capacity => $self->o('recover_capacity'),
-                -flow_into => [ 'hc_epo_removed_members' ],
+                -flow_into => {
+                    -1 => 'recover_epo_hugemem',
+                },
                 -rc_name => '16Gb_job',
+            },
+
+            {   -logic_name    => 'recover_epo_hugemem',
+                -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
+                -analysis_capacity => $self->o('recover_capacity'),
+                -flow_into => [ 'hc_epo_removed_members' ],
+                -rc_name => '24Gb_job',
             },
 
             {  -logic_name        => 'hc_epo_removed_members',
@@ -658,7 +667,7 @@ sub core_pipeline_analyses {
                                 'infernal_mxsize' => $self->o('infernal_mxsize'),
                                },
                 -flow_into     => [ 'quick_tree_break' ],
-                -rc_name => '4Gb_job',
+                -rc_name => '8Gb_job',
             },
 
             {   -logic_name => 'quick_tree_break',
