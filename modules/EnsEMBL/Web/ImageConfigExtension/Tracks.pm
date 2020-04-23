@@ -1170,7 +1170,6 @@ sub add_regulation_builds {
         url    => $hub->url('Config', { 'matrix' => 'RegMatrix', 'menu' => "regulatory_features" }),
         matrix => {
           section     => $menu_title,
-          description => $db_tables->{'regulatory_build'}{'analyses'}{'Regulatory_Build'}{'desc'}{'core'},
           axes        => { x => 'Cell/Tissue', y => 'Experiments' },
         }
   }));
