@@ -40,6 +40,7 @@ sub content {
   my $species           = $hub->species;
   my $path              = $hub->species_path;
   my $common_name       = $species_defs->SPECIES_COMMON_NAME;
+  my $image             = $species_defs->SPECIES_IMAGE;
   my $accession         = $species_defs->ASSEMBLY_ACCESSION;
   my $source            = $species_defs->ASSEMBLY_ACCESSION_SOURCE || 'NCBI';
   my $source_type       = $species_defs->ASSEMBLY_ACCESSION_TYPE;
@@ -51,7 +52,7 @@ sub content {
 <div class="column-wrapper">  
   <div class="column-one">
     <div class="column-padding no-left-margin species-box">
-      <a href="$path"><img class="badge-48" src="/i/species/$species.png" class="species-img float-left" alt="" /></a>
+      <a href="$path"><img class="badge-48" src="/i/species/$image.png" class="species-img float-left" alt="" /></a>
       <h1 class="no-bottom-margin">$common_name assembly and gene annotation</h1>
     </div>
   </div>
