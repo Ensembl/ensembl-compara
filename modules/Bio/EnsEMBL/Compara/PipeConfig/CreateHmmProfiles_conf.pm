@@ -71,9 +71,9 @@ sub default_options {
         'dump_dir'              => $self->o('work_dir') . '/dumps',
         'tmp_hmmsearch'         => $self->o('work_dir') . '/tmp_hmmsearch',
         'seed_hmm_library_basedir'                  => $self->o('work_dir') . '/seed_hmms',
-        'panther_hmm_library_basedir'               => $self->o('work_dir') . '/hmm_panther_12',
+        'panther_hmm_library_basedir'               => $self->o('work_dir') . '/hmm_panther_15',
         'worker_compara_hmm_library_basedir'        => $self->o('work_dir') . '/compara_hmm_'.$self->o('ensembl_release'),
-        'worker_treefam_only_hmm_library_basedir'   => $self->o('work_dir') . '/treefam_hmms/2015-12-18_only_TF_hmmer3/',
+        'worker_treefam_only_hmm_library_basedir'   => $self->o('work_dir') . '/treefam_hmms/only_TF_hmmer3/',
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,
@@ -160,7 +160,7 @@ sub default_options {
         'cdhit_identity_threshold' => 0.99,
 
         #name of the profile to be created:
-        'hmm_library_name'          => 'panther_12_0.hmm3',
+        'hmm_library_name'          => 'panther_15_0.hmm3',
         
         #Compara HMM profile name:
         'compara_hmm_library_name'  => 'compara_hmm_'.$self->o('ensembl_release').'.hmm3',
@@ -169,7 +169,7 @@ sub default_options {
         'panther_url'               => 'ftp://ftp.pantherdb.org/panther_library/current_release/',
 
         #File name in the 'panther_url':
-        'panther_file'              => 'PANTHER12.0_ascii.tgz',
+        'panther_file'              => 'PANTHER15.0_ascii.tgz',
 
        # List of directories that contain Panther-like databases (with books/ and globals/)
        # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
