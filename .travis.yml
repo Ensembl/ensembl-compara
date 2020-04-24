@@ -128,11 +128,3 @@ jobs:
         - echo
       script: ./travisci/python-linter_harness.sh
 
-    - stage: "trigger dependent builds"
-      before_install:
-        - echo
-      install:
-        - echo
-      before_script:
-        - echo
-      script: ./travisci/trigger-dependent-build.sh
