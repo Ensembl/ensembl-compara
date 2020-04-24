@@ -47,6 +47,7 @@ sub pipeline_analyses_dump_homologies_posttree {
                 'methods'    => {
                     'ENSEMBL_PARALOGUES'    => 2,
                     'ENSEMBL_ORTHOLOGUES'   => 2,
+                    'ENSEMBL_HOMOEOLOGUES'  => 2,
                 },
                 'line_count' => 1,
             },
