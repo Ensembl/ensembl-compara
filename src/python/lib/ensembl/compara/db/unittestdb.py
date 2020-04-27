@@ -79,6 +79,10 @@ class UnitTestDB:
         # Update the loaded metadata information of the database
         self.dbc.load_metadata()
 
+    def __repr__(self) -> str:
+        """Returns a string representation of the object."""
+        return f"{self.__class__.__name__}({self.dbc.url!r})"
+
     def drop(self) -> None:
         """Drops the database."""
         if self.dbc.dialect == 'sqlite':
