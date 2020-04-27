@@ -49,6 +49,7 @@ class UnitTestDB:
             not found in `dump_dir`.
 
     """
+
     def __init__(self, url: URL, dump_dir: PathLike, name: str = None) -> None:
         db_url = make_url(url)
         dump_dir_path = Path(dump_dir)
@@ -123,7 +124,7 @@ class UnitTestDB:
 
         """
         with open(filepath) as sql_file:
-            query = ''
+            query = []
             multiline_comment = False
             for line in sql_file:
                 line = line.strip(' \n')
@@ -139,10 +140,10 @@ class UnitTestDB:
                     line = re.sub(r'(--|#|\/\/).*', '', line)
                     line = re.sub(r'\/\*[^\*]*\*\/', '', line)
                     if line:
-                        query += line
-                        if query.endswith(';'):
-                            yield text(query)
-                            query = ''
+                        query.append(line)
+                        if line.endswith(';'):
+                            yield text(' '.join(query))
+                            query = []
 
     @staticmethod
     def _get_table_name(query: Query) -> str:
