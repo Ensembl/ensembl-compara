@@ -180,6 +180,10 @@ sub create_form {
       'value'   => $hub->param('component'),
     },
     {
+      'name'    => 'cdb',
+      'value'   => $hub->param('cdb'),
+    },
+    {
       'name'    => 'export_action',
       'value'   => $hub->action,
     },

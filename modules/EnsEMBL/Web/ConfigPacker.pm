@@ -204,22 +204,13 @@ sub _summarise_core_tables {
   );
   my $analysis = {};
   foreach my $a_aref (@$t_aref) { 
-    ## Strip out "crap" at front and end! probably some q(')s...
-    ( my $A = $a_aref->[6] ) =~ s/^[^{]+//;
-    $A =~ s/[^}]+$//;
-    my $T = eval($A);
-    if (ref($T) ne 'HASH') {
-      if ($A) {
-        warn "Deleting web_data for $db_key:".$a_aref->[1].", check for syntax error";
-      }
-      $T = {};
-    }
+    my $web_data = $a_aref->[6] ? from_json($a_aref->[6]) : {};
     $analysis->{ $a_aref->[0] } = {
       'logic_name'  => $a_aref->[1],
       'name'        => $a_aref->[3],
       'description' => $a_aref->[4],
       'displayable' => $a_aref->[5],
-      'web_data'    => $T
+      'web_data'    => $web_data,
     };
   }
   ## Set last repeat mask date whilst we're at it, as needed by BLAST configuration, below
@@ -709,9 +700,7 @@ sub _summarise_funcgen_db {
   foreach my $a_aref (@$t_aref) {
     my $desc;
     { no warnings; $desc = eval($a_aref->[4]) || $a_aref->[4]; }    
-    (my $web_data = $a_aref->[6]) =~ s/^[^{]+//; ## Strip out "crap" at front and end! probably some q(')s
-    $web_data     =~ s/[^}]+$//;
-    $web_data     = eval($web_data) || {};
+    my $web_data = $a_aref->[6] ? from_json($a_aref->[6]) : {};
     
     $analysis->{$a_aref->[0]} = {
       'logic_name'  => $a_aref->[1],
@@ -1247,8 +1236,6 @@ sub _summarise_compara_db {
   
   my $constrained_elements = {};
   my %valid_species = map { $_ => 1 } keys %{$self->full_tree};
-  # Check if contains a species not in vega - use to determine whether or not to run vega specific queries
-  my $vega = 1;
   
   foreach my $row (@$res_aref) { 
     my ($class, $type, $species, $name, $id, $species_set_id) = ($row->[0], uc $row->[1], ucfirst $row->[2], $row->[3], $row->[4], $row->[5]);
@@ -1263,8 +1250,6 @@ sub _summarise_compara_db {
     } elsif ($type !~ /EPO_LOW_COVERAGE/ && ($class =~ /tree_alignment/ || $type  =~ /EPO/)) {
       $self->db_tree->{$db_name}{$key}{$id}{'species'}{'ancestral_sequences'} = 1 unless exists $self->db_tree->{$db_name}{$key}{$id};
     }
-    
-    $vega = 0 if $species eq 'Ailuropoda_melanoleuca';
     
     if ($intra_species{$species_set_id}) {
       $intra_species_constraints{$species}{$_} = 1 for keys %{$intra_species{$species_set_id}};
@@ -1299,7 +1284,7 @@ sub _summarise_compara_db {
   }
   
   # if there are intraspecies alignments then get full details of genomic alignments, ie start and stop, constrained by a set defined above (or no constraint for all alignments)
-  $self->_summarise_compara_alignments($dbh, $db_name, $vega ? undef : \%intra_species_constraints) if scalar keys %intra_species_constraints;
+  $self->_summarise_compara_alignments($dbh, $db_name, \%intra_species_constraints) if scalar keys %intra_species_constraints;
   
   my %sections = (
     ENSEMBL_ORTHOLOGUES => 'GENE',

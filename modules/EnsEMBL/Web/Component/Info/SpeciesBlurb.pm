@@ -41,6 +41,7 @@ sub content {
   my $path              = $hub->species_path;
   my $image             = $species_defs->SPECIES_IMAGE;
   my $common_name       = $species_defs->SPECIES_COMMON_NAME;
+  my $image             = $species_defs->SPECIES_IMAGE;
   my $accession         = $species_defs->ASSEMBLY_ACCESSION;
   my $source            = $species_defs->ASSEMBLY_ACCESSION_SOURCE || 'NCBI';
   my $source_type       = $species_defs->ASSEMBLY_ACCESSION_TYPE;

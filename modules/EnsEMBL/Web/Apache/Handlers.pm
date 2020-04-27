@@ -108,6 +108,11 @@ sub get_redirect_uri {
   if ($uri =~ /\/Multi\/psychic/) {
     return $uri =~ s/\/Multi\/psychic/\/Multi\/Psychic/r;
   }
+  
+  ## Handle id lookups from ensemblgenomes.org to the corresponding page
+  if ($uri =~ /\/common\/psychic/ && $uri =~ /[\&\;\?]{1}q=([^\&\;]+)/ ) {
+    return stable_id_redirect_uri('id', $1)
+  }
 
   ## quick fix for solr autocomplete js bug
   if ($uri =~ /undefined\//) {
@@ -127,6 +132,11 @@ sub get_redirect_uri {
   ## Redirect moved documentation
   if ($uri =~ /\/info\/docs\/(variation|funcgen|compara|genebuild|microarray)/) {
      return $uri =~ s/docs/genome/r;
+ }
+
+  ## Broken links in old genebuild PDFs
+  if ($uri =~ /\/info\/docs\/genebuild\/genome_annotation.html/) {
+     return $uri =~ s/genome_annotation/index/r;
  }
 
   ## For stable id URL (eg. /id/ENSG000000nnnnnn) or malformed Gene URL with g param
@@ -446,7 +456,8 @@ sub howsitgoing {
   $r->print("\n");
 
   my $uptime = time - $start_time;
-  $r->print("uptime: $uptime\n");
+  my $host = hostname;
+  $r->print("uptime: $uptime\n$host\n");
 }
 
 sub handler {

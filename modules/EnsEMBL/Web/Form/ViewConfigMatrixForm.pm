@@ -35,7 +35,8 @@ sub render {
 
 sub js_panel {
   ## Panel used by JS
-  return 'ConfigMatrixForm';
+  my $self = shift;
+  return $self->get_js_panel();
 }
 
 sub build {
@@ -47,27 +48,32 @@ sub build {
   my $tree          = $image_config->tree;
   my $menu          = $hub->param('menu');
 
-  my $menu_node     = $tree->get_node($menu);
-  my $matrix_data   = $menu_node->get_data('matrix');
+  my $menu_node         = $tree->get_node($menu);
+  my $image_config_type = $image_config->{code};
 
-  #use Data::Dumper;
-  #$Data::Dumper::Sortkeys = 1;
-  #$Data::Dumper::Maxdepth = 2;
-  #warn Dumper($matrix_data);
-  my $title = $matrix_data->{'section'};
-  my $dimX  = $matrix_data->{'axes'}{'x'};
-  my $dimY  = $matrix_data->{'axes'}{'y'};
+  my ($title, $dimX, $dimY);
+  my $matrix_data   = $menu_node->get_data('matrix');
+  if ($matrix_data) {
+    $title = $matrix_data->{'section'};
+    $dimX  = $matrix_data->{'axes'}{'x'};
+    $dimY = $matrix_data->{'axes'}{'y'};
+  }
+  else {
+    ## New trackhub structure
+    $title = $menu_node->get_data('shortLabel');
+    my $dims  = $menu_node->get_data('dimensions');
+    #reverting orientation for matrix for trackhub thats why x becomes y and y becomes x, a bit hacky but will do for now
+    ($dimY  = ucfirst($dims->{'x'}{'label'})) =~ s/_/ /g;
+    ($dimX  = ucfirst($dims->{'y'}{'label'})) =~ s/_/ /g;
+  }
+
+  my $breadcrumbHTML = $self->breadcrumb_html();
 
   my $html = qq(
+    <input type="hidden" class="js_param" name="image_config_type" value="$image_config_type" />
     <div class="header_tutorial_wrapper flex-row">
       <h1>$title</h1>
-      <div class="large-breadcrumbs">
-        <ul>
-          <li class="active _track-select" id="track-select"><a href="#"><span class="circle crumb-number">1</span>Select tracks</a><span class="hidden content-id">track-content</span></li>
-          <li class="inactive _configure" id="track-display"><a href="#"><span class="circle crumb-number">2</span>Configure track display</a><span class="hidden content-id">configuration-content</span></li>
-          <li class="inactive view-track"><a href="#"><span class="circle crumb-number">3</span>View tracks</a></li>
-        </ul>
-      </div>
+      $breadcrumbHTML
     </div>
     <div class="flex-row">
       <div class="track-panel active noselect" id="track-content">
@@ -118,7 +124,8 @@ sub build {
     </div>
   );
 
-  $self->append_child('div', { inner_HTML => $html, class => 'js_panel config_matrix_form', id => "matrix_form" });
+  my $js_panel = $self->get_js_panel();
+  $self->append_child('div', { inner_HTML => $html, class => "js_panel $js_panel", id => $menu });
 }
 
 1;

@@ -52,6 +52,7 @@ sub render {
         'image'       => $species_defs->get_config($sp, 'SPECIES_IMAGE'),
         'status'      => 'live',
         'sci_name'    => $species_defs->get_config($sp, 'SPECIES_SCIENTIFIC_NAME'),
+        'image'       => $species_defs->get_config($sp, 'SPECIES_IMAGE'),
         'assembly'    => $species_defs->get_config($sp, 'ASSEMBLY_NAME'),
         'accession'   => $species_defs->get_config($sp, 'ASSEMBLY_ACCESSION'),
         'genebuild'   => $genebuild_helptip,

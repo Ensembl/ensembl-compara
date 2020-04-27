@@ -44,7 +44,7 @@ sub init {
 sub content {
   my $self = shift;
 
-  return $self->{'file'}{'message'} ? $self->dom->create_element('div', {
+  my $popup_message = $self->{'file'}{'message'} ? $self->dom->create_element('div', {
     'id'        => 'tmp_message',
     'children'  => [{
       'node_name'   => 'div',
@@ -71,6 +71,19 @@ sub content {
       'value'       => $self->{'file'}{'position'} || ''
     }]
   })->render : '';
+
+  my $announcement_banner_message = $self->{'file'}{'banner_message'} ? $self->dom->create_element('div', {
+    'id'          => 'announcement-banner',
+    'inner_HTML'  => $self->{'file'}{'banner_message'}
+  })->render : '';
+
+
+  return {
+    'popup_message' => $popup_message,
+    'announcement_banner_message' => $announcement_banner_message 
+  }
+
+
 }
 
 1;

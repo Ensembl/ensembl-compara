@@ -51,6 +51,20 @@ Ensembl.Panel.ManageData = Ensembl.Panel.ModalContent.extend({
           }
         });
     }});
+
+    // LocalCache clearing for new matrix interface
+    this.el.find("._clear_localcache").each(
+      function() {
+        $(this).on({ click: function () {
+          $(this).siblings().each(function(i, sib) {
+            if ($(sib).hasClass('_trackhub_key')) {
+              localStorage.removeItem($(sib).val());
+            }
+          });
+        }});
+      }
+    );
+
   }
 
 });

@@ -155,6 +155,7 @@ sub process {
     $url_params->{'format'}         = $format;
     $url_params->{'file'}           = $file->read_location;
     $url_params->{'compression'}    = $compression;
+    $url_params->{'cdb'}            = $hub->param('cdb') || 'compara';
     $url_params->{'__clear'}        = 1;
     ## Pass parameters needed for Back button to work
     my @core_params = keys %{$hub->core_object('parameters')};
@@ -165,7 +166,6 @@ sub process {
       $url_params->{$_} = scalar @values > 1 ? \@values : $values[0];
     }
   }
-
   $self->ajax_redirect($hub->url($controller || (), $url_params), $controller ? (undef, undef, 'download') : ());
 }
 

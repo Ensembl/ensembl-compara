@@ -515,20 +515,15 @@ sub _get_target_slice_table {
 
   #Find the mapping reference species for EPO_LOW_COVERAGE alignments to distinguish the overlapping blocks
   if ($type =~ /EPO_LOW_COVERAGE/ && $is_low_coverage_species) {
-      #HACK - have a guess based on the mlss name. Better to have this in the mlss_tag table in the database
-    if ($method_link_species_set->name =~ /mammals/) {
-      $other_species = "homo_sapiens";
-    } 
-    elsif ($method_link_species_set->name =~ /fish/) {
-      $other_species = "oryzias_latipes";
-    }
-    elsif ($method_link_species_set->name =~ /pig/) {
-      $other_species = "sus_scrofa";
-    } 
-    else {
-      #sauropsids
-      $other_species = "gallus_gallus";
-    }
+    
+    my $gdba = $compara_db->get_adaptor('GenomeDB');
+    my $main_species = $gdba->fetch_by_name_assembly($ref_species);
+
+    my $sptree = $method_link_species_set->species_tree();
+    my $st_hash = $sptree->get_genome_db_id_2_node_hash();
+
+    $other_species = $st_hash->{$main_species->dbID()}->get_value_for_tag('reference_species');
+
   } elsif ($class =~ /pairwise/) {
     #Find the non-reference species for pairwise alignments
     #get the non_ref name from the first block

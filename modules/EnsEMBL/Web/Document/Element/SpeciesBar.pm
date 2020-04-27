@@ -59,7 +59,8 @@ sub content {
     $dropdown = ''; 
   }
   else {
-    $header = sprintf '<img src="/i/species/%s.png" class="badge-32"><span class="species">%s</span> <span class="more">(%s)</span>', $hub->species_defs->SPECIES_IMAGE, $species, $assembly;
+    my $image = $hub->species_defs->SPECIES_IMAGE || $hub->species;
+    $header = sprintf '<img src="/i/species/%s.png" class="badge-32"><span class="species">%s</span> <span class="more">(%s)</span>', $image, $species, $assembly;
     ## Species selector
     $arrow     = sprintf '<span class="dropdown"><a class="toggle species" href="#" rel="species">&#9660;</a></span>';
     $dropdown  = $self->species_list;

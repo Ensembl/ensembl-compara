@@ -70,13 +70,13 @@ sub _get_dom_tree {
   my @ok_species = $sd->valid_species;
   my $sitename  = $self->hub->species_defs->ENSEMBL_SITETYPE;
   if (scalar @ok_species > 1) {
-    my $list_html = sprintf qq(<h3>Find a genome</h3>
+    my $list_html = sprintf qq(<h3>All genomes</h3>
       %s
       <h3 class="space-above"></h3>
       %s
       <p><a href="%s">View full list of all species</a></p>
       ), 
-      $self->add_species_selector,
+      $self->add_species_dropdown,
       $self->add_genome_groups, 
       $self->species_list_url; 
 
@@ -197,7 +197,7 @@ sub add_species_selector {
   my $html = qq(
     <div class="taxon_tree_master hidden"></div>
     <div class="species_select_container">
-      <div class="taxon_selector_tree">
+      <div class="species_homepage_selector">
         <div class="content">
           <div class="finder">
             <input type="text" autofocus class="ui-autocomplete-input inactive" title="$finder_prompt" placeholder="$finder_prompt" />
