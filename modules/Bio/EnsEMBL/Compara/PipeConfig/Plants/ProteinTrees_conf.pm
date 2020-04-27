@@ -110,6 +110,7 @@ sub tweak_analyses {
     $analyses_by_name->{'HMMer_classifyPantherScore'}->{'-hive_capacity'} = '2000';
     $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_6_hour_job';
     $analyses_by_name->{'get_species_set'}->{'-parameters'}->{'polyploid_genomes'} = 0;
+    $analyses_by_name->{'copy_dumps_to_shared_loc'}->{'-rc_name'}   = '500Mb_job';
 }
 
 
