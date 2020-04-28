@@ -32,6 +32,7 @@ from _pytest.fixtures import FixtureRequest
 
 from ensembl.compara.citest import CITestDBItem, CITestDBContentError, CITestDBGroupingError, \
     CITestDBNumRowsError, CITestFilesItem, CITestFilesContentError, CITestFilesSizeError, CITestFilesTreeError
+from ensembl.compara.filesys import DirCmp
 
 
 @pytest.mark.parametrize("multi_dbs", [[{'src': 'citest/reference'}, {'src': 'citest/target'}]],
@@ -136,7 +137,7 @@ class TestCITestFilesItem:
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization
     @pytest.fixture(scope='class', autouse=True)
-    def setup(self, request: FixtureRequest, dir_cmp: Dict) -> None:
+    def setup(self, request: FixtureRequest, dir_cmp: DirCmp) -> None:
         """Loads the required fixtures and values as class attributes.
 
         Args:
