@@ -51,6 +51,7 @@ class TestUnitTestDB:
     @pytest.mark.parametrize(
         "src, name, expectation",
         [
+            (Path('mock_dir'), None, raises(FileNotFoundError)),
             (Path('citest'), None, raises(FileNotFoundError)),
             param(Path('citest', 'reference'), None, does_not_raise(),
                   marks=pytest.mark.dependency(name='init_ref', scope='class')),
