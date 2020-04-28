@@ -719,7 +719,7 @@ sub _summarise_funcgen_db {
     
     foreach my $T (@$res_aref) {
       my $a_ref = $analysis->{$T->[0]}; #|| ( warn("Missing analysis entry $table - $T->[0]\n") && next );
-      my $web_data = $a_aref->{'web_data'} ? from_json($a_aref->{'web_data'}) : {};
+      my $web_data = $a_ref->{'web_data'} ? from_json($a_ref->{'web_data'}) : {};
       my $value = {
         'name'  => $a_ref->{'name'},
         'desc'  => $a_ref->{'description'},
