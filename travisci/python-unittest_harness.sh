@@ -34,8 +34,13 @@ PYTEST_OPTIONS=()
 if [ "$COVERAGE" = 'true' ]; then
   PYTEST_OPTIONS+=('--cov=./' '--cov-report=term-missing')
 fi
-pytest "${PYTEST_OPTIONS[@]}" "${PYTHON_TESTS_LOCATIONS[@]}" --server="mysql://travis@127.0.0.1:3306/"
+pytest "${PYTEST_OPTIONS[@]}" "${PYTHON_TESTS_LOCATIONS[@]}" --ignore="src/python/tests/test_db.py" --server="mysql://travis@127.0.0.1:3306/"
 rt2=$?
+if [ "$COVERAGE" = 'true' ]; then
+  PYTEST_OPTIONS+=('--cov-append')
+fi
+pytest "${PYTEST_OPTIONS[@]}" src/python/tests/test_db.py --server="mysql://travis@127.0.0.1:3306/"
+rt4=$?
 # Test SQLite-specific code
 if [ "$COVERAGE" = 'true' ]; then
   PYTEST_OPTIONS+=('--cov-append' '-k UnitTestDB')
@@ -45,7 +50,7 @@ else
   rt3=0
 fi
 
-if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) ]]; then
+if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) && ($rt4 -eq 0) ]]; then
   exit 0
 else
   exit 255
