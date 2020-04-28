@@ -58,7 +58,7 @@ class CITestDBItem(CITestItem):
         """Returns the failure representation that will be displayed in the report section.
 
         Note:
-            This method is called when :meth:``CITestDBItem.runtest()`` raises an exception.
+            This method is called when :meth:`CITestDBItem.runtest()` raises an exception.
 
         Args:
             excinfo: Exception information with additional support for navigating and traceback.
@@ -141,7 +141,7 @@ class CITestDBItem(CITestItem):
             filter_by: Filter rows by one or more conditions (joined by the AND operator).
 
         Raise:
-            TypeError: If both ``columns`` and ``ignore_columns`` are provided.
+            TypeError: If both `columns` and `ignore_columns` are provided.
             CITestDBNumRowsError: If the number of rows differ.
             CITestDBContentError: If one or more rows have different content.
 

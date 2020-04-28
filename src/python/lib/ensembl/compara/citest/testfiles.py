@@ -49,7 +49,7 @@ class CITestFilesItem(CITestItem):
         """Returns the failure representation that will be displayed in the report section.
 
         Note:
-            This method is called when :meth:``CITestFilesItem.runtest()`` raises an exception.
+            This method is called when :meth:`CITestFilesItem.runtest()` raises an exception.
 
         Args:
             excinfo: Exception information with additional support for navigating and traceback.

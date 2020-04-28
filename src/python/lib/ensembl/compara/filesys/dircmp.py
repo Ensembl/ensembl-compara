@@ -86,7 +86,7 @@ class DirCmp:
         This method traverses the shared directory tree in breadth-first order.
 
         Args:
-            attr: Attribute to return, i.e. ``common_files``, ``ref_only`` or ```target_only``.
+            attr: Attribute to return, i.e. ``common_files``, ``ref_only`` or ``target_only``.
             patterns: Filenames yielded will match at least one of these glob patterns.
             paths: Relative directory/file paths to traverse.
 
@@ -129,7 +129,7 @@ class DirCmp:
 
         Args:
             test_func: Test function applied to each tuple reference- / target-file. It has to expect two
-                `PathLike` parameters and return a boolean, like::
+                ``PathLike`` parameters and return a boolean, like::
 
                     def test_func(ref_filepath: PathLike, target_filepath: PathLike) -> bool:
 
