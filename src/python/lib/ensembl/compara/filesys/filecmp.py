@@ -1,18 +1,30 @@
-"""
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""File comparison methods for different file formats.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+This module provides a main file comparison method, :meth:`file_cmp()`, that compares two files and returns
+True if they are equivalent, False otherwise. The comparison is made differently depending on the file format.
+For instance, two Newick files are considered equal if one tree is the result of a permutation of the other.
 
-    http://www.apache.org/licenses/LICENSE-2.0
+Typical usage examples::
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+    file_cmp('a/homo_sapiens.fa', 'b/homo_sapiens.fa')
+
+    from pathlib import Path
+    file_cmp(Path('a', 'tree1.nw'), Path('b', 'tree2.nw'))
+
 """
 
 import filecmp
