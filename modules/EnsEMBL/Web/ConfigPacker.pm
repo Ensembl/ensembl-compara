@@ -244,7 +244,7 @@ sub _summarise_core_tables {
     foreach my $T ( @$res_aref ) {
       my $a_ref = $analysis->{$T->[0]}
         || ( warn("$db_name is missing analysis entry $table - $T->[0]\n") && next );
-      my $web_data = $a_aref->{'web_data'} ? from_json($a_aref->{'web_data'}) : {};
+      my $web_data = $a_ref->{'web_data'} ? from_json($a_ref->{'web_data'}) : {};
       my $value = {
         'name'  => $a_ref->{'name'},
         'desc'  => $a_ref->{'description'},
@@ -262,7 +262,7 @@ sub _summarise_core_tables {
   foreach my $T ( @$df_aref ) {
     my $a_ref = $analysis->{$T->[0]}
         || ( warn("Missing analysis entry data_file - $T->[0]\n") && next );
-    my $web_data = $a_aref->{'web_data'} ? from_json($a_aref->{'web_data'}) : {};
+    my $web_data = $a_ref->{'web_data'} ? from_json($a_ref->{'web_data'}) : {};
     my $value = {
         'name'    => $a_ref->{'name'},
         'desc'    => $a_ref->{'description'},
