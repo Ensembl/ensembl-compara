@@ -1,56 +1,74 @@
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Unit testing of :mod:`filesys` module.
+
+The unit testing is divided into one test class per submodule/class found in this module, and one test method
+per public function/class method. A base test class has been added to load the basic attributes required by
+the unit test classes.
+
+Typical usage example::
+
+    $ pytest test_filesys.py
+
 """
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
-# Disable redefined-outer-name rule in pylint to avoid warning due to how pytest fixtures work
-# pylint: disable=redefined-outer-name
 
 from contextlib import ExitStack as does_not_raise
 import filecmp
 from pathlib import Path
-from typing import Callable, ContextManager, Dict, Set
+from typing import ContextManager, Dict, Set
 
 import pytest
 from pytest import raises
-from _pytest.fixtures import FixtureRequest
 
 from ensembl.compara.filesys import DirCmp, file_cmp, PathLike
 
 
-@pytest.fixture(scope='class')
-def dir_cmp(request: FixtureRequest, dir_cmp_factory: Callable) -> None:
-    """Assigns a :class:`DirCmp` object to a pytest class attribute.
+class BaseTestFilesys:
+    """Base class to configure all the attributes required by the test classes of this module.
 
-    The object compares ``ensembl-compara/src/python/tests/flatfiles/citest`` reference and target directory
-    trees.
+    Attributes:
+        dir_cmp (DirCmp): Directory tree comparison.
 
     """
-    request.cls.dir_cmp = dir_cmp_factory('citest')
-
-
-@pytest.mark.usefixtures('dir_cmp')
-class TestDirCmp:
-    """Tests :class:`DirCmp` class."""
 
     dir_cmp = None  # type: DirCmp
 
-    @pytest.mark.dependency()
+    # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
+    # execute it only once per class parametrization
+    @pytest.fixture(scope='class', autouse=True)
+    def setup(self, dir_cmp: DirCmp) -> None:
+        """Loads the required fixtures and values as class attributes.
+
+        Args:
+            dir_cmp: Directory tree comparison (fixture).
+
+        """
+        # Use type(self) instead of self as a workaround to @classmethod decorator (unsupported by pytest and
+        # required when scope is set to "class" <https://github.com/pytest-dev/pytest/issues/3778>)
+        type(self).dir_cmp = dir_cmp
+
+
+@pytest.mark.parametrize("dir_cmp", [{'ref': 'citest/reference', 'target': 'citest/target'}], indirect=True)
+class TestDirCmp(BaseTestFilesys):
+    """Tests :class:`DirCmp` class."""
+
+    @pytest.mark.dependency(name='test_init', scope='class')
     def test_init(self, tmp_dir: Path) -> None:
         """Tests that the object :class:`DirCmp` is initialised correctly."""
-        assert tmp_dir / 'citest' / 'reference' == self.dir_cmp.ref_path, "Unexpected reference root path"
-        assert tmp_dir / 'citest' / 'target' == self.dir_cmp.target_path, "Unexpected target root path"
+        assert tmp_dir / 'citest_reference' == self.dir_cmp.ref_path, "Unexpected reference root path"
+        assert tmp_dir / 'citest_target' == self.dir_cmp.target_path, "Unexpected target root path"
         # Check the files at the root
         assert self.dir_cmp.common_files == set(), "Found unexpected files at the root of both trees"
         assert self.dir_cmp.ref_only == {'3/a.txt'}, "Expected '3/a.txt' at reference tree's root"
@@ -83,13 +101,13 @@ class TestDirCmp:
         ],
     )
     def test_apply_test(self, kwargs: Dict, output: Set[str], expectation: ContextManager) -> None:
-        """Tests DirCmp's :meth:`DirCmp.apply_test()` method.
+        """Tests :meth:`DirCmp.apply_test()` method.
 
         Args:
             kwargs: Named arguments to be passed to the method.
             output: Expected file paths returned by the method.
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
-                exception is raised. Use :class:`contextlib.nullcontext` if no exception is expected.
+                exception is raised. Use :class:`~contextlib.ExitStack` if no exception is expected.
 
         """
         with expectation:
@@ -108,13 +126,13 @@ class TestDirCmp:
         ],
     )
     def test_common_list(self, kwargs: Dict, output: Set[str], expectation: ContextManager) -> None:
-        """Tests DirCmp's :meth:`DirCmp.common_list()` method.
+        """Tests :meth:`DirCmp.common_list()` method.
 
         Args:
             kwargs: Named arguments to be passed to the method.
             output: Expected file paths returned by the method.
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
-                exception is raised. Use :class:`contextlib.nullcontext` if no exception is expected.
+                exception is raised. Use :class:`~contextlib.ExitStack` if no exception is expected.
 
         """
         with expectation:
@@ -133,13 +151,13 @@ class TestDirCmp:
         ],
     )
     def test_ref_only_list(self, kwargs: Dict, output: Set[str], expectation: ContextManager) -> None:
-        """Tests DirCmp's :meth:`DirCmp.ref_only_list()` method.
+        """Tests :meth:`DirCmp.ref_only_list()` method.
 
         Args:
             kwargs: Named arguments to be passed to the method.
             output: Expected file paths returned by the method.
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
-                exception is raised. Use :class:`contextlib.nullcontext` if no exception is expected.
+                exception is raised. Use :class:`~contextlib.ExitStack` if no exception is expected.
 
         """
         with expectation:
@@ -158,24 +176,22 @@ class TestDirCmp:
         ],
     )
     def test_target_only_list(self, kwargs: Dict, output: Set[str], expectation: ContextManager) -> None:
-        """Tests DirCmp's :meth:`DirCmp.target_only_list()` method.
+        """Tests :meth:`DirCmp.target_only_list()` method.
 
         Args:
             kwargs: Named arguments to be passed to the method.
             output: Expected file paths returned by the method.
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
-                exception is raised. Use :class:`contextlib.nullcontext` if no exception is expected.
+                exception is raised. Use :class:`~contextlib.ExitStack` if no exception is expected.
 
         """
         with expectation:
             assert set(self.dir_cmp.target_only_list(**kwargs)) == output
 
 
-@pytest.mark.usefixtures('dir_cmp')
-class TestFileCmp:
+@pytest.mark.parametrize("dir_cmp", [{'ref': 'citest/reference', 'target': 'citest/target'}], indirect=True)
+class TestFileCmp(BaseTestFilesys):
     """Tests :mod:`filecmp` module."""
-
-    dir_cmp = None  # type: DirCmp
 
     @pytest.mark.parametrize(
         "filepath, output",

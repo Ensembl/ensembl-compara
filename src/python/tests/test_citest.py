@@ -1,25 +1,30 @@
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Unit testing of :mod:`citest` module.
+
+The unit testing is divided into one test class per submodule/class found in this module, and one test method
+per public function/class method.
+
+Typical usage example::
+
+    $ pytest test_citest.py
+
 """
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
-# Disable all the redefined-outer-name violations due to how pytest fixtures work
-# pylint: disable=redefined-outer-name
 
 from contextlib import ExitStack as does_not_raise
-from pathlib import Path
-from typing import Callable, ContextManager, Dict
+from typing import ContextManager, Dict
 
 import pytest
 from pytest import raises
@@ -29,26 +34,35 @@ from ensembl.compara.citest import CITestDBItem, CITestDBContentError, CITestDBG
     CITestDBNumRowsError, CITestFilesItem, CITestFilesContentError, CITestFilesSizeError, CITestFilesTreeError
 
 
-@pytest.fixture(scope='class')
-def db_item(request: FixtureRequest, multidb_factory: Callable) -> None:
-    """Assigns a :class:`CITestDBItem` object to a pytest class attribute.
+@pytest.mark.parametrize("multi_dbs", [[{'src': 'citest/reference'}, {'src': 'citest/target'}]],
+                         indirect=True)
+class TestCITestDBItem:
+    """Tests CITest's :class:`CITestDBItem` class.
 
-    The object compares table ``main_table`` in reference and target unit test databases (from
-    ``ensembl-compara/src/python/tests/databases/citest``).
+    Attributes:
+        db_item (CITestDBItem): Set of integration tests to compare a table in two (analogous) databases.
 
     """
-    dbs = multidb_factory(Path('citest'))
-    request.cls.db_item = CITestDBItem('', request.session, dbs['reference'].dbc, dbs['target'].dbc,
-                                       'main_table', {})
-
-
-@pytest.mark.usefixtures('db_item')
-class TestCITestDBItem:
-    """Tests CITest's :class:`CITestDBItem` class."""
 
     db_item = None  # type: CITestDBItem
 
-    def test_missing(self):
+    # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
+    # execute it only once per class parametrization
+    @pytest.fixture(scope='class', autouse=True)
+    def setup(self, request: FixtureRequest, multi_dbs: Dict) -> None:
+        """Loads the required fixtures and values as class attributes.
+
+        Args:
+            request: Access to the requesting test context.
+            multi_dbs: Dictionary of unit test databases (fixture).
+
+        """
+        # Use type(self) instead of self as a workaround to @classmethod decorator (unsupported by pytest and
+        # required when scope is set to "class" <https://github.com/pytest-dev/pytest/issues/3778>)
+        type(self).db_item = CITestDBItem('', request.session, multi_dbs['reference'].dbc,
+                                          multi_dbs['target'].dbc, 'main_table', {})
+
+    def test_missing_test(self):
         """Tests CITestDBItem's error handling if an unknown test is passed."""
         self.db_item.name = 'dummy'
         with raises(SyntaxError):
@@ -68,12 +82,12 @@ class TestCITestDBItem:
         ],
     )
     def test_num_rows_test(self, kwargs: Dict, expectation: ContextManager) -> None:
-        """Tests CITest's :meth:`CITestDBItem.test_num_rows()` method.
+        """Tests :meth:`CITestDBItem.test_num_rows()` method.
 
         Args:
             kwargs: Named arguments to be passed to the method.
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
-                exception is raised. Use :class:`contextlib.nullcontext` if no exception is expected.
+                exception is raised. Use :class:`~contextlib.ExitStack` if no exception is expected.
 
         """
         with expectation:
@@ -95,35 +109,44 @@ class TestCITestDBItem:
         ],
     )
     def test_content_test(self, kwargs: Dict, expectation: ContextManager) -> None:
-        """Tests CITest's :meth:`CITestDBItem.test_content()` method.
+        """Tests :meth:`CITestDBItem.test_content()` method.
 
         Args:
             kwargs: Named arguments to be passed to the method.
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
-                exception is raised. Use :class:`contextlib.nullcontext` if no exception is expected.
+                exception is raised. Use :class:`~contextlib.ExitStack` if no exception is expected.
 
         """
         with expectation:
             self.db_item.test_content(**kwargs)
 
 
-@pytest.fixture(scope='class')
-def files_item(request: FixtureRequest, dir_cmp_factory: Callable) -> None:
-    """Assigns a :class:`CITestFilesItem` object to a pytest class attribute.
+@pytest.mark.parametrize("dir_cmp", [{'ref': 'citest/reference', 'target': 'citest/target'}], indirect=True)
+class TestCITestFilesItem:
+    """Tests CITest's :class:`CITestFilesItem` class.
 
-    The object compares ``ensembl-compara/src/python/tests/flatfiles/citest`` reference and target directory
-    trees.
+    Attributes:
+        files_item (CITestFilesItem): Set of integration tests to compare two (analogous) files (or
+            directories).
 
     """
-    dir_cmp = dir_cmp_factory('citest')
-    request.cls.files_item = CITestFilesItem('', request.session, dir_cmp, {})
-
-
-@pytest.mark.usefixtures('files_item')
-class TestCITestFilesItem:
-    """Tests CITest's :class:`CITestFilesItem` class."""
 
     files_item = None  # type: CITestFilesItem
+
+    # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
+    # execute it only once per class parametrization
+    @pytest.fixture(scope='class', autouse=True)
+    def setup(self, request: FixtureRequest, dir_cmp: Dict) -> None:
+        """Loads the required fixtures and values as class attributes.
+
+        Args:
+            request: Access to the requesting test context.
+            dir_cmp: Directory tree comparison (fixture).
+
+        """
+        # Use type(self) instead of self as a workaround to @classmethod decorator (unsupported by pytest and
+        # required when scope is set to "class" <https://github.com/pytest-dev/pytest/issues/3778>)
+        type(self).files_item = CITestFilesItem('', request.session, dir_cmp, {})
 
     def test_missing(self):
         """Tests CITestFilesItem's error handling if an unknown test is passed."""
@@ -145,12 +168,12 @@ class TestCITestFilesItem:
         ],
     )
     def test_size_test(self, kwargs: Dict, expectation: ContextManager) -> None:
-        """Tests CITest's :meth:`CITestFilesItem.test_size()` method.
+        """Tests :meth:`CITestFilesItem.test_size()` method.
 
         Args:
             kwargs: Named arguments to be passed to the method.
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
-                exception is raised. Use :class:`contextlib.nullcontext` if no exception is expected.
+                exception is raised. Use :class:`~contextlib.ExitStack` if no exception is expected.
 
         """
         with expectation:
@@ -168,12 +191,12 @@ class TestCITestFilesItem:
         ],
     )
     def test_content_test(self, kwargs: Dict, expectation: ContextManager) -> None:
-        """Tests CITest's :meth:`CITestFilesItem.test_content()` method.
+        """Tests :meth:`CITestFilesItem.test_content()` method.
 
         Args:
             kwargs: Named arguments to be passed to the method.
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
-                exception is raised. Use :class:`contextlib.nullcontext` if no exception is expected.
+                exception is raised. Use :class:`~contextlib.ExitStack` if no exception is expected.
 
         """
         with expectation:
