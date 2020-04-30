@@ -40,6 +40,7 @@ if opts.verbose:
 
 # intial unroot
 t.unroot()
+
 # reroot by midpoint to force unrooting later
 midpoint = t.get_midpoint_outgroup()
 t.set_outgroup(midpoint)
@@ -47,8 +48,12 @@ t.set_outgroup(midpoint)
 if opts.verbose:
     sys.stderr.write("MIDPOINT ROOTING:\n" + t.write(format=9) + "\n\n\n")
 
-# final forced unrooting of tree to be absolutely sure
-t.unroot()
+# forced unrooting of tree to be absolutely sure
+while len(t.get_children()) == 2:
+    t.unroot()
+    midpoint = t.get_midpoint_outgroup()
+    t.set_outgroup(midpoint)
+    t.unroot()
 
 if opts.verbose:
     sys.stderr.write("UNROOTED:\n" + t.write(format=9) + "\n\n\n")

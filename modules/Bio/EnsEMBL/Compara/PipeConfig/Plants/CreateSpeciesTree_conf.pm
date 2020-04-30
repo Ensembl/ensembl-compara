@@ -19,20 +19,20 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Covid19::CreateSpeciesTree_conf
+Bio::EnsEMBL::Compara::PipeConfig::Plants::CreateSpeciesTree_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Covid19::CreateSpeciesTree_conf -host mysql-ens-compara-prod-X -port XXXX
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::CreateSpeciesTree_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 DESCRIPTION
 
-Specialized version of the CreateSpeciesTree pipeline for Covid19. Please, refer
+Specialized version of the CreateSpeciesTree pipeline for Plants. Please, refer
 to the parent class for further information.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Covid19::CreateSpeciesTree_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Plants::CreateSpeciesTree_conf;
 
 use strict;
 use warnings;
@@ -46,10 +46,11 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'division' => 'covid19',
-        'outgroup' => 'human_adenovirus_b3_gca_000880515',
-        'taxonomic_ranks' => ['genus', 'family', 'order', 'class', 'phylum', 'kingdom', 'superkingdom'],
-        'root_taxon_id'   => '10239',
+        'division'        => 'plants',
+        #'species_set_id'  => 607537,
+        'outgroup'        => 'leersia_perrieri',
+        'taxonomic_ranks' => ['genus', 'family', 'order', 'class', 'phylum', 'kingdom'],
+        'root_taxon_id'   => '1648021',
         'custom_groups'   => [],
     };
 }

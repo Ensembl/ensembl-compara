@@ -80,8 +80,9 @@ sub fetch_input {
 	);
 	$distance_matrix = $distance_matrix->convert_to_genome_db_ids($gdb_adaptor);
 	$distance_matrix = $distance_matrix->add_taxonomic_distance($gdb_adaptor);
-	
+
 	my @gdb_ids = $distance_matrix->members;
+
 	# print " -- matrix genomes: " . join(", ", @gdb_ids) . "\n";
 	my @gdbs = map { $gdb_adaptor->fetch_by_dbID($_) } @gdb_ids;
 
@@ -96,13 +97,20 @@ sub fetch_input {
 
 		# extract initial submatrix for the group
 		my @group_gdbs = @{$gdb_adaptor->fetch_all_current_by_ancestral_taxon_id($group_taxon_id)};
+
+        @group_gdbs = $self->_remove_unnecessary_gdbs(\@gdb_ids, \@group_gdbs);
+
 		print "\t -- fetching submatrix for " . scalar @group_gdbs . " genomes\n" if $self->debug;
 		my $submatrix = $distance_matrix->prune_gdbs_from_matrix( \@group_gdbs );
 
 		# add an outgroup
 		if ( $group_taxon_id == $self->param('root_id') ) {
 			$this_outgroup = $self->param_required('outgroup_id');
-		} else {
+		}
+        elsif ( scalar(@group_gdbs) eq scalar(@gdbs) ) { # this is otherwise the $full_matrix rather than $submatrix
+            $this_outgroup = $self->param_required('outgroup_id');
+        }
+        else {
 			($submatrix, $this_outgroup) = $self->_add_outgroup( $submatrix, $distance_matrix );
 		}
 		print "\t -- " . $gdb_adaptor->fetch_by_dbID($this_outgroup)->name . " selected as outgroup\n" if $self->debug;
@@ -142,6 +150,7 @@ sub write_output {
 	# ]
 	$self->dataflow_output_id( $self->param('matrices_dataflow'), 2 );
     $self->dataflow_output_id( { root_id => $self->param('root_id') }, 1 );
+
 }
 
 sub _add_outgroup {
@@ -250,4 +259,18 @@ sub _taxonomic_groups {
 	return @sorted_taxon_ids;
 }
 
+# Necessary in the cases when the gdbs with the same ncbi ancestral node are not in the species_set/collection
+sub _remove_unnecessary_gdbs {
+    my ($self, $gdbs, $group_gdbs) = @_;
+
+    my @select_gdbs;
+    foreach my $group_gdb ( @$group_gdbs ) {
+        my $gdb_id = $group_gdb->dbID;
+        if ( grep { $gdb_id eq $_ } @$gdbs ) {
+            push @select_gdbs, $group_gdb;
+        }
+    }
+
+    return @select_gdbs;
+}
 1;

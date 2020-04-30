@@ -62,6 +62,8 @@ sub default_options {
         # 'division'        => 'vertebrates',
         'outgroup'        => 'saccharomyces_cerevisiae',
 
+        'root_taxon_id'   => undef,
+
         'output_dir'        => $self->o('pipeline_dir'),
         'write_access_user' => $self->o('shared_user'),
 
@@ -78,6 +80,15 @@ sub default_options {
         'unroot_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/species_tree/unroot_newick.py'),
         'reroot_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/species_tree/reroot_newick.py'),
     };
+}
+
+sub pipeline_wide_parameters {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},
+
+        'root_taxon_id'   => $self->o('root_taxon_id'),
+    }
 }
 
 sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database

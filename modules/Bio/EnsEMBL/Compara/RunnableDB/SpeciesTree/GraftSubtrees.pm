@@ -54,9 +54,15 @@ sub run {
 	my $self = shift;
 
 	my %trees = %{ $self->param('trees')}; # assuming { group_id => { tree => newick_string, outgroup => outgroup_id } }
+    my $root_tree = $trees{$self->param_required('root_id')}->{tree};
 
-	my $root_tree = $trees{$self->param_required('root_id')}->{tree};
-	my $final_tree = $root_tree;
+    my $final_tree;
+    if ( $self->param('root_taxon_id')) {
+        $final_tree = $trees{$self->param('root_taxon_id')}->{tree};
+    }
+    else {
+        $final_tree = $root_tree;
+    }
 
 	print "original tree: $final_tree\n" if $self->debug;
 
@@ -69,6 +75,8 @@ sub run {
 
 		# reroot the tree and then remove the outgroup
 		my $outgroup_name = $trees{$merged_group_key}->{outgroup};
+        $outgroup_name = 'gdb' . $self->param('outgroup_id') if $outgroup_name !~ /gdb/;
+
 		print "\n---------------------------------------------------------\n\n" if $self->debug;
 		print "parsing group $merged_group_key [[ $tree_to_merge ]]\n" if $self->debug;
 		
