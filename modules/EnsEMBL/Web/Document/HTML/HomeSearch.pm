@@ -39,6 +39,7 @@ sub render {
   my $hub                 = $self->hub;
   my $species_defs        = $hub->species_defs;
   my $page_species        = $hub->species || 'Multi';
+  my $multi               = $hub->species =~ /Multi/i;
   my $species_name        = $page_species eq 'Multi' ? '' : $species_defs->DISPLAY_NAME;
   my $favourites          = $hub->get_favourite_species;
   my $search_url          = $species_defs->ENSEMBL_WEB_ROOT . "$page_species/Psychic";
@@ -50,7 +51,7 @@ sub render {
   if ($is_help || $hub->type eq 'Help') {
     $config = $all_configs->{'help'};
   }
-  elsif ($hub->species) {
+  elsif ($hub->species && !$multi) {
     $config = $all_configs->{'species'};
   }
   else {
@@ -59,6 +60,9 @@ sub render {
 
   # form
   my @class = ('search-form','clear');
+  if ($hub->type && $hub->type eq 'Search' && !$hub->species_defs->ENSEMBL_SOLR_ENDPOINT) {
+    push (@class, 'unisearch');
+  }
   push @class, @{$config->{'form_classes'}||[]};
   my $form = EnsEMBL::Web::Form->new({'action' => $search_url, 'method' => 'get', 'skip_validation' => 1, 'class' => \@class});
   $form->add_hidden({'name' => 'site', 'value' => $default_search_code});
@@ -77,7 +81,7 @@ sub render {
     $extra_params = ';species=help';
   }
   else {
-    if ($hub->species) {
+    if ($hub->species && !$multi) {
       %sample_data = %{$species_defs->SAMPLE_DATA || {}};
       $sample_data{'GENE_TEXT'} = "$sample_data{'GENE_TEXT'}" if $sample_data{'GENE_TEXT'};
     } else {
@@ -116,11 +120,14 @@ sub render {
     my $species_info = $hub->get_species_info;
     my %species      = map { $species_info->{$_}{'common'} => $_ } grep { $species_info->{$_}{'is_reference'} } sort keys %$species_info;
     my %common_names = reverse %species;
-    my $values = [
+    my $values = [];
+    if ($hub->species_defs->ENSEMBL_SOLR_ENDPOINT) {
+      push @$values, (
                   {'value' => '', 'caption' => 'All species'},
                   {'value' => 'help', 'caption' => 'Help and Documentation' },
                   {'value' => '', 'caption' => '---', 'disabled' => 1},
-                  ];
+                  );
+    }
     ## If more than one species, show favourites
     if (scalar keys %species > 1) {
         push @$values, map({ $common_names{$_} ? {'value' => $_, 'caption' => $common_names{$_}, 'group' => 'Favourite species'} : ()} @$favourites);

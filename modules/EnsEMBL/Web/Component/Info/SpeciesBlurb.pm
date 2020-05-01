@@ -39,6 +39,7 @@ sub content {
   my $species_defs      = $hub->species_defs;
   my $species           = $hub->species;
   my $path              = $hub->species_path;
+  my $image             = $species_defs->SPECIES_IMAGE;
   my $common_name       = $species_defs->SPECIES_COMMON_NAME;
   my $image             = $species_defs->SPECIES_IMAGE;
   my $accession         = $species_defs->ASSEMBLY_ACCESSION;
