@@ -602,7 +602,8 @@ sub _expand_database_templates {
   my $DRIVER = $tree->{'general'}{'DATABASE_DRIVER'} || 'mysql'; 
   
   ## Autoconfigure databases
-  unless (exists $tree->{'databases'} && exists $tree->{'databases'}{'DATABASE_CORE'}) {
+  if (!exists $tree->{'databases'} && !exists $tree->{'databases'}{'DATABASE_CORE'}
+      && !($filename eq 'MULTI' && $SiteDefs::NO_COMPARA)) {
     my @db_types = qw(CORE CDNA OTHERFEATURES RNASEQ FUNCGEN VARIATION);
     my $db_details = {
                       'HOST'    => $HOST,
@@ -789,8 +790,11 @@ sub _parse {
   my $species_to_strains = {};
   my $species_to_assembly = {};
 
+  my @spp = @$SiteDefs::PRODUCTION_NAMES;
+  push @spp, 'MULTI' unless $SiteDefs::NO_COMPARA;
+
   # Loop over each tree and make further manipulations
-  foreach my $species (@$SiteDefs::PRODUCTION_NAMES, 'MULTI') {
+  foreach my $species (@spp) {
     $config_packer->species($species);
     $config_packer->munge('config_tree');
     $self->_info_line('munging', "$species config");
