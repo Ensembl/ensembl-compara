@@ -269,7 +269,7 @@ sub _species_list {
   my $user    = $params->{'no_user'} ? undef : $hub->users_plugin_available && $hub->user;
   my $img_url = $sd->img_url || '';
   my @fav     = @{$hub->get_favourite_species(!$user)};
-  my %fav     = map { $_ => 1 } @fav;
+  my %fav     = scalar @fav ? map { $_ => 1 } @fav : {};
 
   my (@list, %done);
 
