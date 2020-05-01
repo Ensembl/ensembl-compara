@@ -1112,21 +1112,25 @@ sub add_regulation_features {
 
   ## Add motif features if required
   if ($self =~ /contigviewbottom/ || $self =~ /reg_summary/) {
-    my $motif_feats = $reg_regions->append_child($self->create_track_node('fg_motif_features', 'Motif features'), {
-      db          => $key,
-      glyphset    => 'fg_motif_features',
-      sources     => 'undef',
-      strand      => 'r',
-      labels      => 'on',
-      depth       => 1,
-      colourset   => 'fg_motif_features',
-      display     => 'off',
-      description => 'Transcription Factor Binding Motif sites', 
-      renderers   => ['off', 'Off', 'compact', 'Compact'],
-    });
-    $self->add_track('information', 'fg_motif_features_legend',      'Motif Feature Legend',              'fg_motif_features_legend',   { strand => 'r', colourset => 'fg_motif_features'   });
+    ## Do we have motif features?
+    my $mfa = $self->hub->get_adaptor('get_MotifFeatureFileAdaptor', 'funcgen');
+    my $file = $mfa->fetch_file;
+    if ($file) {
+      my $motif_feats = $reg_regions->append_child($self->create_track_node('fg_motif_features', 'Motif features'), {
+        db          => $key,
+        glyphset    => 'fg_motif_features',
+        sources     => 'undef',
+        strand      => 'r',
+        labels      => 'on',
+        depth       => 1,
+        colourset   => 'fg_motif_features',
+        display     => 'off',
+        description => 'Transcription Factor Binding Motif sites', 
+        renderers   => ['off', 'Off', 'compact', 'Compact'],
+      });
+      $self->add_track('information', 'fg_motif_features_legend',      'Motif Feature Legend',              'fg_motif_features_legend',   { strand => 'r', colourset => 'fg_motif_features'   });
+    }
   }
-
 }
 
 sub add_regulation_builds {
