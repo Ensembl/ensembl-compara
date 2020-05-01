@@ -244,12 +244,11 @@ sub _summarise_core_tables {
     foreach my $T ( @$res_aref ) {
       my $a_ref = $analysis->{$T->[0]}
         || ( warn("$db_name is missing analysis entry $table - $T->[0]\n") && next );
-      my $web_data = $a_ref->{'web_data'} ? from_json($a_ref->{'web_data'}) : {};
       my $value = {
         'name'  => $a_ref->{'name'},
         'desc'  => $a_ref->{'description'},
         'disp'  => $a_ref->{'displayable'},
-        'web'   => $web_data,
+        'web'   => $a_ref->{'web_data'},
         'count' => $T->[1]
       };
       $self->db_details($db_name)->{'tables'}{$table}{'analyses'}{$a_ref->{'logic_name'}} = $value;
@@ -262,12 +261,11 @@ sub _summarise_core_tables {
   foreach my $T ( @$df_aref ) {
     my $a_ref = $analysis->{$T->[0]}
         || ( warn("Missing analysis entry data_file - $T->[0]\n") && next );
-    my $web_data = $a_ref->{'web_data'} ? from_json($a_ref->{'web_data'}) : {};
     my $value = {
         'name'    => $a_ref->{'name'},
         'desc'    => $a_ref->{'description'},
         'disp'    => $a_ref->{'displayable'},
-        'web'     => $web_data,
+        'web'     => $a_ref->{'web_data'},
         'count'   => 1,
         'format'  => lc($T->[1]),
     };
@@ -719,12 +717,11 @@ sub _summarise_funcgen_db {
     
     foreach my $T (@$res_aref) {
       my $a_ref = $analysis->{$T->[0]}; #|| ( warn("Missing analysis entry $table - $T->[0]\n") && next );
-      my $web_data = $a_ref->{'web_data'} ? from_json($a_ref->{'web_data'}) : {};
       my $value = {
         'name'  => $a_ref->{'name'},
         'desc'  => $a_ref->{'description'},
         'disp'  => $a_ref->{'displayable'},
-        'web'   => $web_data,
+        'web'   => $a_ref->{'web_data'},
         'count' => $T->[1]
       }; 
       
