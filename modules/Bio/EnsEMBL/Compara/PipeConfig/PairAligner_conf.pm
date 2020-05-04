@@ -353,7 +353,7 @@ sub core_pipeline_analyses {
  	    },
  	    {  -logic_name => 'create_filter_duplicates_jobs', #factory
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs',
- 	       -wait_for =>  [ 'update_max_alignment_length_before_FD' ],
+ 	       -wait_for =>  [ 'update_max_alignment_length_before_FD', 'check_no_partial_gabs', 'create_pair_aligner_jobs', $self->o('pair_aligner_logic_name') ],
 	        -flow_into => {
 			       2 => { 'filter_duplicates' => INPUT_PLUS() },
 			     },
@@ -469,7 +469,7 @@ sub core_pipeline_analyses {
 			       1 => [ 'remove_inconsistencies_after_net' ],
 			       2 => [ 'alignment_nets' ],
 			      },
-            -wait_for => [ 'update_max_alignment_length_after_chain' ],
+            -wait_for => [ 'update_max_alignment_length_after_chain', 'create_alignment_chains_jobs', 'remove_inconsistencies_after_chain' ],
 	       -rc_name => '1Gb_job',
  	    },
  	    {  -logic_name => 'alignment_nets',
