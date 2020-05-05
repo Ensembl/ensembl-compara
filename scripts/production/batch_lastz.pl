@@ -27,7 +27,7 @@ use POSIX;
 use List::Util qw(sum);
 use Number::Format 'format_number';
 
-my $max_jobs = 6000000; # max 6 million rows allowed in job table
+my $max_jobs = 2000000; # max 2 million rows allowed in job table
 
 my @intervals_in_mbp = (
 	[0, 5, 0.01],
