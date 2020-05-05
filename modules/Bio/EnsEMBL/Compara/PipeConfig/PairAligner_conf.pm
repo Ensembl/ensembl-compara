@@ -469,7 +469,7 @@ sub core_pipeline_analyses {
 			       1 => [ 'remove_inconsistencies_after_net' ],
 			       2 => [ 'alignment_nets' ],
 			      },
-            -wait_for => [ 'update_max_alignment_length_after_chain', 'create_alignment_chains_jobs', 'remove_inconsistencies_after_chain' ],
+            -wait_for => [ 'update_max_alignment_length_after_chain', 'create_alignment_chains_jobs', 'remove_inconsistencies_after_chain', 'alignment_chains' ],
 	       -rc_name => '1Gb_job',
  	    },
  	    {  -logic_name => 'alignment_nets',
