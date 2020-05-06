@@ -216,7 +216,8 @@ sub make_species_set_from_XML_node {
 
     if ($xml_ss->hasAttribute('in_collection')) {
         my $collection = find_collection_from_xml_node_attribute($xml_ss, 'in_collection', 'species-set');
-        $pool = $collection->genome_dbs;
+        # Exclude genome components from the pool
+        @{$pool} = grep { !$_->genome_component } @{$collection->genome_dbs};
     }
 
     my @selected_gdbs;
@@ -290,12 +291,14 @@ my $division_node = $xml_document->documentElement();
 my $division_name = $division_node->getAttribute('division');
 my $division_species_set = $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($division_name);
 $collections{$division_name} = $division_species_set;
-my $division_genome_dbs = [sort {$a->dbID <=> $b->dbID} grep {!$_->genome_component} @{$division_species_set->genome_dbs}];
+my $division_genome_dbs = [sort {$a->dbID <=> $b->dbID} @{$division_species_set->genome_dbs}];
 foreach my $collection_node (@{$division_node->findnodes('collections/collection')}) {
     my $genome_dbs = make_species_set_from_XML_node($collection_node, $division_genome_dbs);
     my $collection_name = $collection_node->getAttribute('name');
     $collections{$collection_name} = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($genome_dbs, "collection-$collection_name");
 }
+# Do not create MLSSs for genome components (polyploids will be handled by each pipeline accordingly)
+@{$division_genome_dbs} = grep {!$_->genome_component} @{$division_genome_dbs};
 
 foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignments/pairwise_alignment')}) {
     my $ref_gdb = find_genome_from_xml_node_attribute($xml_one_vs_all_node, 'ref_genome');
@@ -474,6 +477,15 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                 $mlss->method($exist_method) if $exist_method;
                 my $exist_ss = $ss_adaptor->fetch_by_GenomeDBs($mlss->species_set->genome_dbs);
                 $mlss->species_set($exist_ss) if $exist_ss;
+            }
+            if ($exist_mlss and !$dry_run) {
+                # Update the names if they differ
+                if ($exist_mlss->name ne $mlss->name) {
+                    $compara_dba->dbc->do('UPDATE method_link_species_set SET name = ? WHERE method_link_species_set_id = ?', undef, $mlss->name, $exist_mlss->dbID);
+                }
+                if ($exist_mlss->species_set->name ne $mlss->species_set->name) {
+                    $compara_dba->dbc->do('UPDATE species_set_header SET name = ? WHERE species_set_id = ?', undef, $mlss->species_set->name, $exist_mlss->species_set->dbID);
+                }
             }
             if ($exist_mlss and ($exist_mlss->is_current || $mlss->{_no_release})) {
                 push @mlsss_existing, $exist_mlss;

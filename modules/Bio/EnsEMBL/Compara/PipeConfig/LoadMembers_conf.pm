@@ -108,7 +108,7 @@ sub default_options {
 
         # list of species that got an annotation update
         # ... assuming the same person has run both pipelines
-        'expected_updates_file' => $self->o('shared_hps_dir') . '/ensembl-metadata/annotation_updates.' . $self->o('division') . '.' . $self->o('ensembl_release') . '.list',
+        'expected_updates_file' => $self->o('shared_hps_dir') . '/genome_reports/annotation_updates.' . $self->o('division') . '.' . $self->o('ensembl_release') . '.list',
     };
 }
 

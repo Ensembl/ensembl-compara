@@ -219,7 +219,7 @@ sub run_msa {
     my $tempdir = $self->param('tmp_dir');
     print "TEMP DIR: $tempdir\n" if ($self->debug);
 
-    my $msa_output = $tempdir . '/output.mfa';
+    my $msa_output = sprintf("$tempdir/output.%08d.mfa", $self->input_job->dbID);
     $msa_output =~ s/\/\//\//g;
     $self->param('msa_output', $msa_output);
 

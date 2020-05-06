@@ -134,7 +134,11 @@ sub fetch_input {
 	my %current_gdbs = map { $_->name => 0 } @{$master_dba->get_GenomeDBAdaptor->fetch_all_current};
     $current_gdbs{'ancestral_sequences'} = 1; # never retire ancestral_sequences
 	foreach my $species_name ( @release_genomes ) {
-		$current_gdbs{$species_name} = 1;
+        if (exists $renamed_genomes->{$species_name}) {
+            $current_gdbs{$renamed_genomes->{$species_name}} = 1;
+        } else {
+            $current_gdbs{$species_name} = 1;
+        }
 	}
 	my @to_retire = grep { $current_gdbs{$_} == 0 } keys %current_gdbs;
     print "GENOMES_TO_RETIRE!! ";
@@ -184,7 +188,7 @@ sub fetch_genome_report {
     # add the division name output file
     my $report_file = "$work_dir/report_updates.json";
     my $report_file_with_div = $report_file;
-    $report_file_with_div =~ s/report_updates/report_updates.$division/;
+    $report_file_with_div =~ s/report_updates/report_updates.$division.$release/;
     $self->run_command("mv $report_file $report_file_with_div");
 
     # read and parse report

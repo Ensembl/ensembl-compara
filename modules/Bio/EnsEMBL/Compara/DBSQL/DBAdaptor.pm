@@ -293,7 +293,7 @@ sub clear_caches {
 sub get_division {
     my ($self) = @_;
     my $div_sql = "SELECT meta_value FROM meta WHERE meta_key = 'division'";
-    my $division = $self->dbc->sql_helper()->execute_single_result(-SQL => $div_sql);
+    my $division = $self->dbc->sql_helper()->execute_single_result(-SQL => $div_sql, -NO_ERROR => 1) // '';
     return $division;
 }
 

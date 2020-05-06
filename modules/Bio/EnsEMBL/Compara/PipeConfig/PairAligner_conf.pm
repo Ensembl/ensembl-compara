@@ -280,7 +280,7 @@ sub core_pipeline_analyses {
 			       5 => [ 'create_alignment_chains_jobs' ],
 			       6 => [ 'create_alignment_nets_jobs' ],
 			       10 => [ 'create_filter_duplicates_net_jobs' ],
-			       9 => [ 'detect_component_mlsss' ],
+			       9 => [ 'remove_partial_blocks' ],
 			      },
 	       -rc_name => '1Gb_job',
   	    },
@@ -353,7 +353,7 @@ sub core_pipeline_analyses {
  	    },
  	    {  -logic_name => 'create_filter_duplicates_jobs', #factory
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs',
- 	       -wait_for =>  [ 'update_max_alignment_length_before_FD' ],
+ 	       -wait_for =>  [ 'update_max_alignment_length_before_FD', 'check_no_partial_gabs', 'create_pair_aligner_jobs', $self->o('pair_aligner_logic_name') ],
 	        -flow_into => {
 			       2 => { 'filter_duplicates' => INPUT_PLUS() },
 			     },
@@ -469,7 +469,7 @@ sub core_pipeline_analyses {
 			       1 => [ 'remove_inconsistencies_after_net' ],
 			       2 => [ 'alignment_nets' ],
 			      },
-            -wait_for => [ 'update_max_alignment_length_after_chain' ],
+            -wait_for => [ 'update_max_alignment_length_after_chain', 'create_alignment_chains_jobs', 'remove_inconsistencies_after_chain', 'alignment_chains' ],
 	       -rc_name => '1Gb_job',
  	    },
  	    {  -logic_name => 'alignment_nets',
@@ -545,6 +545,18 @@ sub core_pipeline_analyses {
               -can_be_empty  => 1,
               -rc_name => $self->o('filter_duplicates_himem_rc_name'),
            },
+
+           {  -logic_name    => 'remove_partial_blocks',
+              -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+              -parameters    => {
+                                'sql' => "DELETE FROM genomic_align_block WHERE genomic_align_block_id NOT IN (SELECT genomic_align_block_id FROM genomic_align)"
+                                },
+              -flow_into     => {
+                   1 => [ 'detect_component_mlsss' ],
+               },
+              -wait_for      => [ 'create_filter_duplicates_net_jobs', 'filter_duplicates_net', 'filter_duplicates_net_himem' ],
+           },
+
  	   {  -logic_name => 'update_max_alignment_length_after_net',
  	      -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
 	      -rc_name => '1Gb_job',
@@ -575,22 +587,13 @@ sub core_pipeline_analyses {
             -wait_for   => [ 'set_internal_ids_collection' ],
             -flow_into  => {
                 '3->A' => [ 'lift_to_principal' ],
-                'A->2' => [ 'remove_partial_blocks' ],
+                'A->2' => [ 'run_healthchecks' ],
             },
         },
 
         {   -logic_name      => 'lift_to_principal',
             -module          => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LiftComponentAlignments',
             -max_retry_count => 1,
-        },
-
-        {  -logic_name    => 'remove_partial_blocks',
-           -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-           -parameters    => {
-                             'sql' => "DELETE FROM genomic_align_block WHERE genomic_align_block_id NOT IN (SELECT genomic_align_block_id FROM genomic_align)"
-                             },
-           -flow_into     => [ 'run_healthchecks' ],
-           -wait_for      => [ 'create_filter_duplicates_net_jobs', 'filter_duplicates_net', 'filter_duplicates_net_himem' ],
         },
 
         {   -logic_name => 'run_healthchecks',

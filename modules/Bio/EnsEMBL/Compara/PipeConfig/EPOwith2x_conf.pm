@@ -23,7 +23,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf.pm -host mysql-ens-compara-prod-X -port XXXX \
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf -host mysql-ens-compara-prod-X -port XXXX \
         -division $COMPARA_DIV -species_set_name <species_set_name> -low_epo_mlss_id <id> -high_epo_mlss_id <id>
 
 =head1 DESCRIPTION

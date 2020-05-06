@@ -77,6 +77,7 @@ sub tweak_analyses {
     my $analyses_by_name = shift;
 
     $analyses_by_name->{'make_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;
+    $analyses_by_name->{'make_full_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;
 }
 
 1;
