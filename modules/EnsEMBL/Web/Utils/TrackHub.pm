@@ -78,13 +78,18 @@ sub url {
   return $self->{'url'};
 }
 
-sub get_hub {
+sub get_hub_internal {
 ### Fetch metadata about the hub and (optionally) its tracks
 ### @param args Hashref (optional) 
 ###                     - parse_tracks Boolean
 ###                     - assembly_lookup Hashref
-### @return Hashref               
-  my ($self, $args) = @_;
+### @return Hashref              
+###
+### This method can be run with or without the ability to check the cache.
+### A wrapper method (called just get_hub) tries it first with and, if there
+### is an error, then without. This means that caches shouldn't get "poisoned"
+### if they fail due to an intermittent failure on first population. 
+  my ($self, $args, $search_cache) = @_;
 
   ## First check the cache
   my $cache     = $self->web_hub ? $self->web_hub->cache : undef;
@@ -92,7 +97,7 @@ sub get_hub {
   my $file_args = {'hub' => $self->{'hub'}, 'nice' => 1, 'headers' => $headers}; 
   my ($trackhub, $content, @errors);
 
-  if ($cache) {
+  if ($cache && $search_cache) {
     $trackhub = $cache->get($cache_key);
   }
 
@@ -202,6 +207,25 @@ sub get_hub {
     }
     return $trackhub;
   }
+}
+
+sub get_hub {
+### Fetch metadata about the hub and (optionally) its tracks
+### @param args Hashref (optional) 
+###                     - parse_tracks Boolean
+###                     - assembly_lookup Hashref
+### @return Hashref              
+###
+### This method calls get_hub_internal first with and, if there
+### is an error, then without. This means that caches shouldn't get "poisoned"
+### if they fail due to an intermittent failure on first population. 
+  my ($self, $args) = @_;
+
+  my $out = $self->get_hub_internal($args,1);
+  if(!$out || $out->{'error'}) {
+    $out = $self->get_hub_internal($args,0);
+  }
+  return $out;
 }
 
 sub get_track_info {
