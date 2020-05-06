@@ -35,7 +35,7 @@ use Getopt::Long;
 my $browser = HTTP::Tiny->new('timeout' => 300);
 my $server = 'https://test.rest.ensembl.org';
 my $division;
-my ( $skip_genetrees, $skip_cafe, $skip_alignments, $skip_epo, $skip_lastz, $skip_families, $skip_homology );
+my ( $skip_genetrees, $skip_cafe, $skip_alignments, $skip_epo, $skip_lastz, $skip_families, $skip_homology, $skip_cactus );
 
 GetOptions( 
     "server=s"        => \$server, 
@@ -45,6 +45,7 @@ GetOptions(
     'skip_alignments' => \$skip_alignments,
     'skip_epo'        => \$skip_epo,
     'skip_lastz'      => \$skip_lastz,
+    'skip_cactus'     => \$skip_cactus,
     'skip_families'   => \$skip_families,
     'skip_homology'   => \$skip_homology,
 );
@@ -56,15 +57,21 @@ if ( !$server or !$division ) {
 my $responseIDGet = $browser->get( ( $server . '/info/ping?content-type=application/json' ), { headers => { 'Content-type' => 'application/json', 'Accept' => 'application/json' } } );
 die "Server unavailable - please check your URL\n" unless $responseIDGet->{status} == 200;
 
-my ($gene_member_id, $gene_tree_id, $gene_tree_member_id, $alignment_region, $lastz_alignment_region);
+my ($gene_member_id, $gene_tree_id, $alignment_region, $lastz_alignment_region);
 my ($species_1, $species_2, $species_3, $taxon_1, $taxon_2, $taxon_3);
 my ($gene_symbol, $species_set_group, $homology_type, $homology_method_link);
+my ($cactus_species, $cactus_region, $cactus_species_set);
 my $extra_params;
+
+# RULES
+# $taxon_X must be the taxon_id of $species_X
+# $species_1 must be the species of $gene_symbol
+# $gene_symbol must have orthologues in both $species_2 and $species_3
+# LastZ is tested on $species_1 vs $species_2
 
 if ($division eq "vertebrates"){
     $gene_member_id           = "ENSG00000157764";
     $gene_tree_id             = "ENSGT00390000003602";
-    $gene_tree_member_id      = "";
     $alignment_region         = "2:106040000-106040050:1";
     $lastz_alignment_region   = "2:106041430-106041480:1";
 
@@ -78,13 +85,16 @@ if ($division eq "vertebrates"){
 
     $gene_symbol              = "BRCA2";
     $species_set_group        = "primates";
-    $homology_type            = 'orthologs';
+    $homology_type            = 'orthologues';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
+
+    $cactus_species           = 'rattus_norvegicus';
+    $cactus_region            = '2:56040000-56040100:1';
+    $cactus_species_set       = 'murinae';
 }
 elsif($division eq "plants"){
     $gene_member_id           = "AT3G52430";
     $gene_tree_id             = "EPlGT00140000000744";
-    $gene_tree_member_id      = "AT3G52430";
     $alignment_region         = "1:8001-18000:1";
     $lastz_alignment_region   = $alignment_region;
 
@@ -97,13 +107,35 @@ elsif($division eq "plants"){
     $taxon_3                  = 65489;#oryza_barthii
 
     $gene_symbol              = "PAD4";
-    $species_set_group        = "rosids";
-    $homology_type            = 'orthologs';
+    $homology_type            = 'orthologues';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
     
     $extra_params             = 'compara=plants';
     $skip_families            = 1;
     $skip_epo                 = 1;
+    $skip_cactus              = 1;
+}
+elsif($division eq 'pan' or $division eq 'pan_homology'){
+    $gene_member_id           = 'AT5G06870';
+    $gene_tree_id             = 'EGGT00960000274462';
+
+    $species_1                = 'arabidopsis_thaliana';
+    $species_2                = "vitis_vinifera";
+    $species_3                = 'guillardia_theta';
+
+    $taxon_1                  = 3702;#arabidopsis_thaliana
+    $taxon_2                  = 29760;#vitis_vinifera
+    $taxon_3                  = 55529;#guillardia_theta
+
+    $gene_symbol              = 'PGIP2';
+    $homology_type            = 'orthologues';
+    $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
+
+    $extra_params             = 'compara=pan_homology';
+    $skip_cafe                = 1;
+    $skip_alignments          = 1;
+    $skip_families            = 1;
+    $skip_cactus              = 1;
 }
 elsif ( $division eq 'grch37' ) {
     $lastz_alignment_region = "17:64155265-64255266:1";
@@ -118,6 +150,7 @@ elsif ( $division eq 'grch37' ) {
     $skip_families  = 1;
     $skip_epo       = 1;
     $skip_genetrees = 1;
+    $skip_cactus    = 1;
 }
 else {
     die "Division '$division' is not understood\n";
@@ -472,10 +505,12 @@ try{
     
         $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;display_species_set=$species_1".($extra_params ? ";$extra_params" : ''));
         ok($jsontxt->[0]->{alignments}[0]->{species} eq $species_1, "Check alignment region display_species_set option validity");
+    }
     
+    unless ( $skip_alignments || $skip_cactus ) {
         print "\nTesting GET alignment region\/\:species\/\:region on HAL file\n\n";
     
-        $ext = '/alignment/region/rattus_norvegicus/2:56040000-56040100:1?method=CACTUS_HAL;species_set_group=murinae'.($extra_params ? ";$extra_params" : '');
+        my $ext = "/alignment/region/$cactus_species/$cactus_region?method=CACTUS_HAL;species_set_group=$cactus_species_set".($extra_params ? ";$extra_params" : '');
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
         ok($responseIDGet->{success}, "Check json validity");
     
