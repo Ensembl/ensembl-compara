@@ -697,13 +697,16 @@ sub print_method_link_species_sets_to_update_by_collection {
 }
 
 sub create_species_set {
-    my ($genome_dbs, $species_set_name) = @_;
+    my ($genome_dbs, $species_set_name, $no_release) = @_;
 
+    $no_release //= 0;
     $species_set_name ||= join('-', sort map {$_->get_short_name} @{$genome_dbs});
-    return Bio::EnsEMBL::Compara::SpeciesSet->new(
+    my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
         -GENOME_DBS => $genome_dbs,
         -NAME => $species_set_name,
     );
+    $species_set->{_no_release} = $no_release;
+    return $species_set;
 }
 
 sub create_mlss {

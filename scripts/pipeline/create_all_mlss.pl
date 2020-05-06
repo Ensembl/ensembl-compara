@@ -293,9 +293,10 @@ my $division_species_set = $compara_dba->get_SpeciesSetAdaptor->fetch_collection
 $collections{$division_name} = $division_species_set;
 my $division_genome_dbs = [sort {$a->dbID <=> $b->dbID} @{$division_species_set->genome_dbs}];
 foreach my $collection_node (@{$division_node->findnodes('collections/collection')}) {
+    my $no_release = $collection_node->getAttribute('no_release') || 0;
     my $genome_dbs = make_species_set_from_XML_node($collection_node, $division_genome_dbs);
     my $collection_name = $collection_node->getAttribute('name');
-    $collections{$collection_name} = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($genome_dbs, "collection-$collection_name");
+    $collections{$collection_name} = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($genome_dbs, "collection-$collection_name", $no_release);
 }
 # Do not create MLSSs for genome components (polyploids will be handled by each pipeline accordingly)
 @{$division_genome_dbs} = grep {!$_->genome_component} @{$division_genome_dbs};
@@ -445,7 +446,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             my $collection = $collections{$collection_name};
             # Check if it is already in the database
             my $exist_set = $compara_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs($collection->genome_dbs);
-            if ($exist_set and $exist_set->is_current) {
+            if ($exist_set and ($exist_set->is_current || $collection->{_no_release})) {
                 next;
             }
             if ($verbose) {
@@ -455,7 +456,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             }
             unless ($dry_run) {
                 $compara_dba->get_SpeciesSetAdaptor->store($collection);
-                $compara_dba->get_SpeciesSetAdaptor->make_object_current($collection) if $release;
+                $compara_dba->get_SpeciesSetAdaptor->make_object_current($collection) if $release && !$collection->{_no_release};
             }
             if ($verbose) {
                 print "AFTER STORING: ", $collection->toString, "\n\n";

@@ -19,7 +19,7 @@
     </collection>
 
     <!-- Rice species tree including nearest grass relative -->
-    <collection name="rice-with-outgroup">
+    <collection name="rice-with-outgroup" no_release="1">
       <taxonomic_group taxon_name="Oryza"/>
       <genome name="leersia_perrieri"/>
     </collection>
