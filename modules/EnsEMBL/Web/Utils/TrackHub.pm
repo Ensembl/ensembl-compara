@@ -222,7 +222,7 @@ sub get_hub {
   my ($self, $args) = @_;
 
   my $out = $self->get_hub_internal($args,1);
-  if($out->{'error'}) {
+  if(!$out || $out->{'error'}) {
     $out = $self->get_hub_internal($args,0);
   }
   return $out;
