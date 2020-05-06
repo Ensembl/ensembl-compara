@@ -126,7 +126,7 @@ sub _find_location_of_all_required_mlss {
     foreach my $genome_db (@{$low_mlss->species_set->genome_dbs}) {
 	    unless ($high_coverage_genome_db_ids{$genome_db->dbID}) {
             my ($compara_db, $mlss_id, $ref_gdb_id) = @{ $self->_find_compara_db_for_genome_db_id($genome_db->dbID) };
-            print "picked mlss_id $mlss_id (ref: $ref_gdb_id) for " . $genome_db->name . "\n\n" if $self->debug;
+            print "picked mlss_id $mlss_id (ref: $ref_gdb_id) on $compara_db for " . $genome_db->name . "\n\n" if $self->debug;
             $mlss_location{$mlss_id} = $compara_db;
             $refs_per_species{$genome_db->dbID} = $ref_gdb_id;
             
@@ -192,7 +192,7 @@ sub _optimal_aln_for_genome_db {
     my ($best_aln_mlss_id, $best_ref_gdb_id);
     my $max_coverage = 0;
     my $msa_coverage_stats = $self->_get_msa_coverage_stats($all_alns_for_gdb);
-    print "mlss_id\tnon-ref_name\tref_name\tmlss_name\tmsa_cov\tpw_cov\tcombined_cov\n" if $self->debug;
+    print "mlss_id\tnon-ref_name\tref_name\tmlss_name\tlocation\tmsa_cov\tpw_cov\tcombined_cov\n" if $self->debug;
     foreach my $ref_gdb_id ( keys %$all_alns_for_gdb ) {
         my $this_mlss_id = $all_alns_for_gdb->{$ref_gdb_id}->{mlss_id};
         
@@ -209,7 +209,7 @@ sub _optimal_aln_for_genome_db {
             my $mlss = $mlssa->fetch_by_dbID($this_mlss_id);
             my $nr_gdb = $gdba->fetch_by_dbID($non_ref_gdb_id);
             my $r_gdb = $gdba->fetch_by_dbID($ref_gdb_id);
-            print $mlss->dbID . "\t" . $nr_gdb->name . "\t" . $r_gdb->name . "\t" . $mlss->name . "\t$msa_cov\t$pw_cov\t$comb_coverage_for_ref\n";
+            print $mlss->dbID . "\t" . $nr_gdb->name . "\t" . $r_gdb->name . "\t" . $mlss->name . "\t" . $all_alns_for_gdb->{$ref_gdb_id}->{compara_db} . "\t$msa_cov\t$pw_cov\t$comb_coverage_for_ref\n";
         }
 
         if ( $comb_coverage_for_ref > $max_coverage ) {
