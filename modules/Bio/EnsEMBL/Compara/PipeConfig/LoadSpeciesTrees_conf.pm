@@ -52,6 +52,8 @@ sub default_options {
 
         'species_tree_method_link' => 'SPECIES_TREE',
 
+        'species_tree'             => $self->o('binary_species_tree'),
+
         'taxon_filters' => [
             # Filters with the default behaviour (strains hidden)
             # [ 'Amniota', 'Amniotes' ],
@@ -114,14 +116,14 @@ sub pipeline_analyses {
                 # Gets #compara_db# from pipeline_wide_parameters
                 'label'     => 'Ensembl',
                 'mlss_id'   => '#method_link_species_set_id#',
-                'species_tree_input_file'   => $self->o('binary_species_tree'),
+                'species_tree_input_file'   => $self->o('species_tree'),
             },
             -flow_into  => {
-                2 => [ 'hc_binary_species_tree' ],
+                2 => [ 'hc_ensembl_species_tree' ],
             }
         },
 
-        {   -logic_name => 'hc_binary_species_tree',
+        {   -logic_name => 'hc_ensembl_species_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters => {
                 # Gets #compara_db# from pipeline_wide_parameters
