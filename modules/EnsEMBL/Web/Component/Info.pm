@@ -231,4 +231,8 @@ sub include_bioschema_datasets {
   return  scalar(@$datasets) ? create_bioschema($datasets) : '';
 }
 
+sub include_more_annotations {
+  return '';
+}
+
 1;

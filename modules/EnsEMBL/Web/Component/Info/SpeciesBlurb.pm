@@ -83,6 +83,8 @@ sub content {
   $html .= '<h2 id="genebuild">Gene annotation</h2>';
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/${species}_annotation.html");
 
+  $html .= $self->include_more_annotations();
+
   ## Link to Wikipedia
   $html .= $self->_wikipedia_link; 
   
