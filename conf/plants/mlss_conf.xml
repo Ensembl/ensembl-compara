@@ -99,4 +99,8 @@
     <protein_trees collection="default"/>
   </gene_trees>
 
+  <species_trees>
+    <species_tree collection="plants"/>
+  </species_trees>
+
 </compara_db>
