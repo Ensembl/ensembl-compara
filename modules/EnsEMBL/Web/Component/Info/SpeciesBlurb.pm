@@ -74,8 +74,6 @@ sub content {
   $html .= '<h2 id="assembly">Assembly</h2>';
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/${species}_assembly.html");
 
-  $html .= sprintf '<p>The genome assembly represented here corresponds to %s %s</p>', $source_type, $hub->get_ExtURL_link($accession, "ASSEMBLY_ACCESSION_SOURCE_$source", $accession) if $accession; ## Add in GCA link
-
   if (my $assembly_dropdown = $self->assembly_dropdown) {
     $html .= "<h2>Other assemblies</h2>$assembly_dropdown";
   }
