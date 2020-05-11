@@ -126,7 +126,8 @@ sub _setInternalIds {
     # Get the list of all the trees ...
     my $sql7 = "SELECT DISTINCT root_id FROM genomic_align JOIN genomic_align_tree USING (node_id) WHERE method_link_species_set_id = ?";
     # ... to be able to remove them later
-    my $sql8 = "DELETE FROM genomic_align_tree WHERE root_id = ?";
+    my $sql8 = "UPDATE genomic_align_tree SET parent_id = NULL, left_node_id = NULL, right_node_id = NULL WHERE root_id = ?";
+    my $sql9 = "DELETE FROM genomic_align_tree WHERE root_id = ?";
 
     $self->call_within_transaction(sub {
         my ($min_gat, $tot_count) = $dbc->db_handle->selectrow_array($sql4, undef, $mlss_id);
@@ -140,11 +141,13 @@ sub _setInternalIds {
         print STDERR scalar(@$all_root_ids)." trees to reindex\n";
         my $nd = 0;
         my $nt = 0;
+        my $nu = 0;
         my $nr = 0;
         foreach my $root_id (@$all_root_ids) {
             $nd += $dbc->do($sql5, undef, $offset_gat, $offset_gat, $offset_gat, $offset_gat, $offset_gat, $root_id);
             $nt += $dbc->do($sql6, undef, $offset_gat, $root_id);
-            $nr += $dbc->do($sql8, undef, $root_id);
+            $nu += $dbc->do($sql8, undef, $root_id);
+            $nr += $dbc->do($sql9, undef, $root_id);
         }
         print STDERR "$nd rows duplicated in genomic_align_tree\n";
         print STDERR "$nt rows of genomic_align redirected to the new entries in genomic_align_tree \n";
