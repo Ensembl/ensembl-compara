@@ -703,6 +703,7 @@ sub glossary_lookup {
   if (!$self->{'_glossary_lookup'}) {
     my %glossary  = $self->species_defs->multiX('ENSEMBL_GLOSSARY');
     my %lookup    = $self->species_defs->multiX('TEXT_LOOKUP');
+    $self->{'_glossary_lookup'} = {};
 
     $self->{'_glossary_lookup'}{$_} = $glossary{$_}{'desc'} for keys %glossary;
     $self->{'_glossary_lookup'}{$_} = $lookup{$_}{'desc'} for keys %lookup;
