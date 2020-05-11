@@ -199,17 +199,18 @@ sub new_from_Slice {
     my ($attrib) = @{ $slice->get_all_Attributes('codon_table') };
     my $codon_table_id;
     $codon_table_id = $attrib->value() if $attrib;
+    my ($seq_loc) = @{ $slice->get_all_Attributes('sequence_location') };
+    my $sequence_location = $seq_loc->value() if $seq_loc;
 
-    my %name_to_cellular_component = ( 'MT' => 'MT', 'CHRM' => 'MT', 'PT' => 'PT' );
+    my %seq_loc_to_cell_component = ( 'nuclear_chromosome' => 'NUC', 'mitochondrial_chromosome' => 'MT', 'chloroplast_chromosome' => 'PT' );
     my $cellular_component = 'NUC';
-    if (exists $name_to_cellular_component{uc $slice->seq_region_name}) {
-        $cellular_component = $name_to_cellular_component{uc $slice->seq_region_name};
-    } else {
-        foreach my $synonym (@{$slice->get_all_synonyms}) {
-            if (exists $name_to_cellular_component{uc $synonym->name}) {
-                $cellular_component = $name_to_cellular_component{uc $synonym->name};
-                last;
-            }
+
+    if ($sequence_location) {
+        if (exists $seq_loc_to_cell_component{$sequence_location}) {
+            $cellular_component = $seq_loc_to_cell_component{$sequence_location};
+        }
+        else {
+            $cellular_component = 'OTHER';
         }
     }
 
@@ -222,6 +223,7 @@ sub new_from_Slice {
         'genome_db_id' => $genome_db->dbID,
         '_codon_table_id' => $codon_table_id || 1,
         '_cellular_component' => $cellular_component,
+        '_sequence_location' => $sequence_location,
     } );
 }
 
@@ -470,6 +472,26 @@ sub codon_table_id {
     return $self->{'_codon_table_id'};
 }
 
+=head2 sequence_location
+
+  Arg [1]    : none
+  Example    : $sequence_location = $dnafrag->sequence_location();
+  Description: Returns the cellular compartment in which this dnafrag
+               is located. For example if this dnafrag is from a
+               chloroplast_chromosome this will be sequence_location
+               attribute.
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub sequence_location {
+  my $self = shift;
+  $self->{'_sequence_location'} = shift if @_;
+  return $self->{'_sequence_location'};
+}
 
 =head2 slice
 
