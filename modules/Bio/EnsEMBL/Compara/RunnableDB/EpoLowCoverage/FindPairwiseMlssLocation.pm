@@ -149,6 +149,9 @@ sub _find_compara_db_for_genome_db_id {
         my $mlss_per_reference = $self->_load_mlss_from_compara_db($compara_db)->{$genome_db_id};
         foreach my $ref_genome_db_id ( keys %$mlss_per_reference ) {
             next unless $self->param('base_gdb_id_2_stn')->{$ref_genome_db_id}; # filter out genomes that are not in this mlss
+            if ($all_alns_for_gdb{$ref_genome_db_id}) {
+                print "for ref genome_db_id=$ref_genome_db_id overriding ", $all_alns_for_gdb{$ref_genome_db_id}->{compara_db}, " with $compara_db\n";
+            }
             $all_alns_for_gdb{$ref_genome_db_id} = { %{$mlss_per_reference->{$ref_genome_db_id}}, compara_db => $compara_db };
         }
     }
