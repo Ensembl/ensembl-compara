@@ -223,7 +223,6 @@ sub new_from_Slice {
         'genome_db_id' => $genome_db->dbID,
         '_codon_table_id' => $codon_table_id || 1,
         '_cellular_component' => $cellular_component,
-        '_sequence_location' => $sequence_location,
     } );
 }
 
@@ -472,26 +471,6 @@ sub codon_table_id {
     return $self->{'_codon_table_id'};
 }
 
-=head2 sequence_location
-
-  Arg [1]    : none
-  Example    : $sequence_location = $dnafrag->sequence_location();
-  Description: Returns the cellular compartment in which this dnafrag
-               is located. For example if this dnafrag is from a
-               chloroplast_chromosome this will be sequence_location
-               attribute.
-  Returntype : string
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub sequence_location {
-  my $self = shift;
-  $self->{'_sequence_location'} = shift if @_;
-  return $self->{'_sequence_location'};
-}
 
 =head2 slice
 
