@@ -165,7 +165,20 @@ class TestDBConnection:
     @pytest.mark.dependency(depends=['test_init'], scope='class')
     def test_tables(self) -> None:
         """Tests :meth:`DBConnection.tables` property."""
-        tables = {file.stem for file in pytest.dbs_dir.glob('master/*.txt')}
+        tables = {
+            'CAFE_gene_family', 'CAFE_species_gene', 'conservation_score', 'constrained_element', 'dnafrag',
+            'dnafrag_region', 'exon_boundaries', 'external_db', 'family', 'family_member', 'gene_align',
+            'gene_align_member', 'gene_member', 'gene_member_hom_stats', 'gene_member_qc', 'gene_tree_node',
+            'gene_tree_node_attr', 'gene_tree_node_tag', 'gene_tree_object_store', 'gene_tree_root',
+            'gene_tree_root_attr', 'gene_tree_root_tag', 'genome_db', 'genomic_align', 'genomic_align_block',
+            'genomic_align_tree', 'hmm_annot', 'hmm_curated_annot', 'hmm_profile', 'homology', 'member_xref',
+            'homology_member', 'mapping_session', 'meta', 'method_link', 'method_link_species_set',
+            'method_link_species_set_attr', 'method_link_species_set_tag', 'ncbi_taxa_name', 'ncbi_taxa_node',
+            'other_member_sequence', 'peptide_align_feature', 'seq_member_projection', 'stable_id_history',
+            'seq_member_projection_stable_id', 'sequence', 'species_set', 'species_set_header', 'seq_member',
+            'species_set_tag', 'species_tree_node', 'species_tree_node_attr', 'species_tree_node_tag',
+            'species_tree_root', 'synteny_region'
+        }
         assert set(self.dbc.tables.keys()) == tables
 
     @pytest.mark.dependency(depends=['test_init'], scope='class')
