@@ -1,0 +1,2 @@
+6	display_name	eutherian mammals
+8	display_name	amniota vertebrates

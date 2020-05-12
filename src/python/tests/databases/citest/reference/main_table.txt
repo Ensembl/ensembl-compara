@@ -1,0 +1,10 @@
+1	grp1	11	First group
+2	grp1	12	First group
+3	grp2	21	Second group
+4	grp2	22	Second group
+5	grp2	23	Second group
+6	grp2	24	Second group
+7	grp3	31	Third group
+8	grp3	32	Third group
+9	grp4	41	Fourth group
+10	grp4	42	Fourth group

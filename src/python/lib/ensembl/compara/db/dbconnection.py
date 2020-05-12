@@ -19,7 +19,7 @@ import contextlib
 from typing import Dict, List, TypeVar
 
 import sqlalchemy
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import select
 
@@ -39,11 +39,11 @@ class DBConnection:
     """
     def __init__(self, url: URL) -> None:
         self._engine = create_engine(url)
-        self._load_metadata()
+        self.load_metadata()
 
-    def _load_metadata(self) -> None:
+    def load_metadata(self) -> None:
         """Loads the metadata information of the database."""
-        # Just reflect() is not enough as it would not delete tables that no longer exist
+        # Note: Just reflect() is not enough as it would not delete tables that no longer exist
         self._metadata = sqlalchemy.MetaData(bind=self._engine)
         self._metadata.reflect()
 
@@ -116,6 +116,10 @@ class DBConnection:
         """
         return self._engine.begin(*args)
 
+    def dispose(self) -> None:
+        """Disposes of the connection pool."""
+        self._engine.dispose()
+
     def execute(self, statement: Query, *multiparams, **params) -> sqlalchemy.engine.ResultProxy:
         """Executes the given SQL query and returns a :class:`~sqlalchemy.engine.ResultProxy`.
 
@@ -130,11 +134,11 @@ class DBConnection:
 
     @contextlib.contextmanager
     def session_scope(self) -> Session:
-        """Provide a transactional scope around a series of operations with rollback in case of failure.
+        """Provides a transactional scope around a series of operations with rollback in case of failure.
 
         Note:
-            The MySQL default storage engine MyISAM does not support rollback transactions, so all the
-            modifications performed to the database will persist.
+            MySQL storage engine MyISAM does not support rollback transactions, so all the modifications
+            performed to the database will persist.
 
         """
         session = Session(bind=self._engine, autoflush=False)
@@ -148,3 +152,37 @@ class DBConnection:
         finally:
             # Whatever happens, make sure the session is closed
             session.close()
+
+    @contextlib.contextmanager
+    def test_session_scope(self) -> Session:
+        """Provides a transactional scope around a series of operations that will be rolled back at the end.
+
+        Note:
+            MySQL storage engine MyISAM does not support rollback transactions, so all the modifications
+            performed to the database will persist.
+
+        """
+        # Connect to the database
+        connection = self.connect()
+        # Begin a non-ORM transaction
+        transaction = connection.begin()
+        # Bind an individual Session to the connection
+        session = Session(bind=connection)
+        # Start the session in a SAVEPOINT
+        session.begin_nested()
+        # Define a new transaction event
+        @event.listens_for(session, "after_transaction_end")
+        def restart_savepoint(session, transaction):  # pylint: disable=unused-variable
+            """Reopen a SAVEPOINT whenever the previous one ends."""
+            if transaction.nested and not transaction._parent.nested:  # pylint: disable=protected-access
+                # Ensure that state is expired the same way session.commit() at the top level normally does
+                session.expire_all()
+                session.begin_nested()
+        try:
+            yield session
+        finally:
+            # Whatever happens, make sure the session and connection are closed, rolling back everything done
+            # with the session (including calls to commit())
+            session.close()
+            transaction.rollback()
+            connection.close()

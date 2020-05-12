@@ -46,8 +46,8 @@ setup(
     url='https://www.ensembl.org',
     download_url='https://github.com/Ensembl/ensembl-compara',
     license=license_ct,
-    package_dir={"": "src/python/lib"},
-    packages=find_namespace_packages(where='lib'),
+    package_dir={'': 'src/python/lib'},
+    packages=find_namespace_packages(where='src/python/lib'),
     install_requires=import_requirements(),
     classifiers=[
         "Development Status :: 3 - Alpha",

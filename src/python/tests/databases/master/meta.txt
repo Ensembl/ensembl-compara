@@ -1,0 +1,4 @@
+8	\N	schema_version	99
+6	\N	schema_type	compara
+4	\N	division	citest
+9	\N	patch	patch_98_99_a.sql|schema_version

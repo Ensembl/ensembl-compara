@@ -23,7 +23,7 @@ import os
 from pathlib import Path
 from typing import Callable, Deque, Dict, Iterator, List, Tuple, TypeVar, Union
 
-from .tools import to_list
+from ..utils import to_list
 
 
 # Create the PathLike type as an alias for supported types a path can be stored into
@@ -65,10 +65,16 @@ class DirCmp:
         self.common_files = ref_fnames & target_fnames
         # Get files/subdirectories only present in the reference directory
         self.ref_only = ref_fnames - target_fnames
-        self.ref_only |= set(map(lambda x: os.path.join(x, '*'), ref_dnames - target_dnames))
+        for ref_only_dname in ref_dnames - target_dnames:
+            for path, dummy, files in os.walk(self.ref_path / ref_only_dname):
+                rel_path = os.path.relpath(path, self.ref_path)
+                self.ref_only |= {os.path.join(rel_path, fname) for fname in files}
         # Get files/subdirectories only present in the target directory
         self.target_only = target_fnames - ref_fnames
-        self.target_only |= set(map(lambda x: os.path.join(x, '*'), target_dnames - ref_dnames))
+        for target_only_dname in target_dnames - ref_dnames:
+            for path, dummy, files in os.walk(self.target_path / target_only_dname):
+                rel_path = os.path.relpath(path, self.target_path)
+                self.target_only |= {os.path.join(rel_path, fname) for fname in files}
         self.subdirs = {}  # type: Dict[Path, DirCmp]
         for dirname in ref_dnames & target_dnames:
             self.subdirs[Path(dirname)] = DirCmp(self.ref_path / dirname, self.target_path / dirname)
@@ -80,7 +86,7 @@ class DirCmp:
         This method traverses the shared directory tree in breadth-first order.
 
         Args:
-            attr: Attribute to return, i.e. ``common_files``, ``ref_only`` or ```target_only``.
+            attr: Attribute to return, i.e. ``common_files``, ``ref_only`` or ``target_only``.
             patterns: Filenames yielded will match at least one of these glob patterns.
             paths: Relative directory/file paths to traverse.
 
@@ -100,35 +106,42 @@ class DirCmp:
         # If no nodes were added, add the root as the starting point
         if not nodes_left:
             nodes_left.append((Path(), self))
-        patterns = to_list(patterns)
+        # Prefix each pattern with "**" to match also files within subdirectories (for reference- /
+        # target-only files)
+        patterns = [f"**{glob}" for glob in to_list(patterns)]
         while nodes_left:
             dirname, node = nodes_left.pop()
             # Append subdirectories to the list of directories left to traverse
             nodes_left.extend([(dirname / subdir, subnode) for subdir, subnode in node.subdirs.items()])
             if patterns:
-                # Get every file of the requested attribute that matches at least one of the patterns
+                # Get every element of the requested attribute that matches at least one of the patterns
                 mapping = map(functools.partial(fnmatch.filter, getattr(node, attr)), patterns)
-                # Remove filename repetitions result of a filename matching more than one pattern
-                files = set(itertools.chain(*mapping))
+                # Remove element repetitions, result of its name matching more than one pattern
+                elements = set(itertools.chain(*mapping))
             else:
-                files = getattr(node, attr)
-            for filename in files:
-                yield str(dirname / str(filename))
+                elements = getattr(node, attr)
+            for ename in elements:
+                yield str(dirname / str(ename))
 
     def apply_test(self, test_func: Callable, patterns: Union[str, List] = None,
                    paths: Union[PathLike, List] = None) -> List[str]:
         """Returns the files in the shared directory tree for which the test function returns True.
 
         Args:
-            test_func: Test function to apply to each file. It has to match the following interface::
+            test_func: Test function applied to each tuple reference- / target-file. It has to expect two
+                ``PathLike`` parameters and return a boolean, like::
 
-                def test_func(file: PathLike) -> bool:
+                    def test_func(ref_filepath: PathLike, target_filepath: PathLike) -> bool:
 
             patterns: Filenames returned will match at least one of these glob patterns.
             paths: Relative directory/file paths to evaluate (including their subdirectories).
 
         """
-        return list(filter(test_func, self._traverse('common_files', patterns, paths)))
+        positives = []
+        for filepath in self._traverse('common_files', patterns, paths):
+            if test_func(self.ref_path / filepath, self.target_path / filepath):
+                positives.append(filepath)
+        return positives
 
     def common_list(self, patterns: Union[str, List] = None, paths: Union[PathLike, List] = None
                    ) -> List[str]:
