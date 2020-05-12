@@ -252,7 +252,7 @@ sub genebuild_text {
 sub compara_text {
   my $self         = shift;
 
-  if($SiteDefs::NO_COMPARA eq 1){
+  if($SiteDefs::NO_COMPARA){
     return '';
   }
   
