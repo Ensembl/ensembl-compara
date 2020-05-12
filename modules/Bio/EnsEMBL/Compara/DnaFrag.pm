@@ -200,7 +200,8 @@ sub new_from_Slice {
     my $codon_table_id;
     $codon_table_id = $attrib->value() if $attrib;
     my ($seq_loc) = @{ $slice->get_all_Attributes('sequence_location') };
-    my $sequence_location = $seq_loc->value() if $seq_loc;
+    my $sequence_location;
+    $sequence_location = $seq_loc->value() if $seq_loc;
 
     my %seq_loc_to_cell_component = ( 'nuclear_chromosome' => 'NUC', 'mitochondrial_chromosome' => 'MT', 'chloroplast_chromosome' => 'PT' );
     my $cellular_component = 'NUC';

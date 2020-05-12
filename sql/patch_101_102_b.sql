@@ -13,9 +13,9 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-# patch_101_102_a.sql
+# patch_101_102_b.sql
 #
-# Title: Update schema version.
+# Title: Add OTHER enum to cellular_component.
 #
 # Description:
 #   Include "OTHER" as possible cellular_component value.
