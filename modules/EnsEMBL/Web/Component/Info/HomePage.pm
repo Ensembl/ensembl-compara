@@ -251,11 +251,17 @@ sub genebuild_text {
 
 sub compara_text {
   my $self         = shift;
+
+  if($SiteDefs::NO_COMPARA eq 1){
+    return '';
+  }
+  
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
   my $sample_data  = $species_defs->SAMPLE_DATA;
   my $ftp          = $self->ftp_url;
   
+
   return sprintf('
     <div class="homepage-icon">
       %s
