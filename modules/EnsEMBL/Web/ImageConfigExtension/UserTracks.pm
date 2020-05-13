@@ -210,12 +210,14 @@ sub _load_remote_url_tracks {
       my ($trackhub_menu, $hub_info) = $self->get_parameter('can_trackhubs') ? $self->_add_trackhub(strip_HTML($track_data->{'source_name'}), $track_data->{'source_url'}, {'code' => $code}) : ();
 
       if ($hub_info->{'error'}) {
+        ## Check if we've had this error already
+        my $msg_params = {'type' => 'message', 'code' => 'trackhub_barf'};
+        my $record = $self->hub->session->get_record_data($msg_params);
         $self->hub->session->set_record_data({
-          'type'      => 'message',
           'function'  => '_warning',
-          'code'      => 'trackhub_barf',
           'message'   => "Problem parsing hub data: ".join('', @{$hub_info->{'error'}}),
-        });
+          %$msg_params
+        }) unless $record;
         next;
       }
 
@@ -525,6 +527,7 @@ sub _add_trackhub_tracks {
   my $code  = $args->{'code'};
 
   my $do_matrix = ($config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'}) ? 1 : 0;
+  $menu->set_data('has_matrix', 1) if $do_matrix;
   my $count_visible = 0;
   my $default_trackhub_tracks = {};
 
