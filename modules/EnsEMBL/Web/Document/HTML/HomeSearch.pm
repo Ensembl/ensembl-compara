@@ -86,6 +86,11 @@ sub render {
       $sample_data{'GENE_TEXT'} = "$sample_data{'GENE_TEXT'}" if $sample_data{'GENE_TEXT'};
     } else {
       %sample_data = %{$species_defs->get_config('MULTI', 'GENERIC_DATA')};
+      if (!keys %sample_data) {
+        my $primary = $species_defs->ENSEMBL_PRIMARY_SPECIES;
+        %sample_data = %{$species_defs->get_config($primary, 'SAMPLE_DATA') || {}};
+        $sample_data{'GENE_TEXT'} = "$sample_data{'GENE_TEXT'}" if $sample_data{'GENE_TEXT'};
+      }
     }
     @keys = qw(GENE_TEXT LOCATION_TEXT VARIATION_TEXT SEARCH_TEXT);
   }
