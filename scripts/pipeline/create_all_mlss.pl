@@ -341,9 +341,9 @@ foreach my $xml_all_vs_one_node (@{$division_node->findnodes('pairwise_alignment
     push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlsss($compara_dba, $method, $_, $target_gdb) } for @$genome_dbs;
 }
 
-foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignments/all_vs_all')}) {
-    my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_one_vs_all_node->getAttribute('method') );
-    my $genome_dbs = make_species_set_from_XML_node($xml_one_vs_all_node->getChildrenByTagName('species_set')->[0], $division_genome_dbs);
+foreach my $xml_all_vs_all_node (@{$division_node->findnodes('pairwise_alignments/all_vs_all')}) {
+    my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_all_vs_all_node->getAttribute('method') );
+    my $genome_dbs = make_species_set_from_XML_node($xml_all_vs_all_node->getChildrenByTagName('species_set')->[0], $division_genome_dbs);
     while (my $ref_gdb = shift @$genome_dbs) {
         push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlsss($compara_dba, $method, $ref_gdb, $_) } for @$genome_dbs;
     }
