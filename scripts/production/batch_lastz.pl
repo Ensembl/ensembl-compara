@@ -122,8 +122,7 @@ foreach my $mlss ( @current_lastz_mlsses ) {
     if ((scalar(@mlss_gdbs) > 1) || $mlss_gdbs[0]->is_polyploid) {
         my $chains_job_count = chains_job_count( $mlss );
         $mlss_job_count{$mlss->dbID}->{analysis}->{aln_chains} = $chains_job_count;
-        ## 3 because we need to include filter_duplicates_net, which has about 2x as many jobs as alignment_nets
-        $mlss_job_count{$mlss->dbID}->{analysis}->{aln_nets} = 3 * (nets_job_count($mlss_gdbs[0]) + nets_job_count($mlss_gdbs[-1]));
+        $mlss_job_count{$mlss->dbID}->{analysis}->{aln_nets} = nets_job_count($mlss_gdbs[0]);
     }
 	my $lastz_job_count = ($ref_chunk_count * $non_ref_chunk_count);
     $mlss_job_count{$mlss->dbID}->{analysis}->{lastz} = $lastz_job_count;

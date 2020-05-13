@@ -150,7 +150,7 @@ sub default_options {
         #Default net 
         'net_ref_species' => $self->o('ref_species'),  #default to ref_species
         'net_parameters' => {'max_gap'=>'50', 'chainNet_exe'=>$self->o('chainNet_exe')},
-  	'bidirectional' => 1,
+  	'bidirectional' => 0,
 
 	#Default healthcheck
     'previous_db' => 'compara_prev',
