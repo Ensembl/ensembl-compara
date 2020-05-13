@@ -240,6 +240,7 @@ sub _add_imageconfig_menu {
   my $parent_menu = $tree->append_node($section, { 'caption' => $caption, 'class' => $section, 'url' => '#' }); # LHS menu
   my $div_classes = ['config', $section];
   push @$div_classes, 'trackhub' if $node->get_data('trackhub_menu');
+  push @$div_classes, 'has_matrix' if $node->get_data('has_matrix');
   my $div         = $self->append_child('div', { 'class' => $div_classes }); # RHS section
 
   # Add the main menu

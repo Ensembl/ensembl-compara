@@ -791,7 +791,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         this.elLk.configDivs.filter('.functional').find('.hidden-caption').show();
   
         // Hide trackhub tracks
-        this.elLk.configDivs.filter('.trackhub').hide();
+        this.elLk.configDivs.filter('.matrix').hide();
 
         break;
       
@@ -808,7 +808,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         
         configDiv = this.elLk.configDivs.filter('.' + active).each(show);
        
-        if (configDiv.hasClass('trackhub') && !subset) {
+        if (configDiv.hasClass('has_matrix') && !subset) {
           // Hide subsections on trackhub parent page
           configDiv.children('.multiple').each(function () { this.style.display = 'none' });
         } 
