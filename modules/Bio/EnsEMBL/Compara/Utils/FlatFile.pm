@@ -33,11 +33,15 @@ use strict;
 use warnings;
 use base qw(Exporter);
 
+use File::Find;
+
 our %EXPORT_TAGS;
 our @EXPORT_OK;
 
 @EXPORT_OK = qw(
     map_row_to_header
+    query_file_tree
+    group_hash_by
 );
 %EXPORT_TAGS = (
   all     => [@EXPORT_OK]
@@ -71,6 +75,118 @@ sub map_row_to_header {
         $row->{$head_cols[$i]} = $cols[$i];
     }
     return $row;
+}
+
+=head2 query_file_tree
+
+  Arg [1]     : String $directory
+  Arg [2]     : String $file_extension
+  Arg [3]     : String or arrayref $selected_fields
+  Arg [4]     : String or arrayref $group_by
+  Description : Fetch data from data files under $directory. By deafult,
+                it will fetch all data from all files and return an arrayref
+                of hashrefs, with column names as keys.
+                If $file_extension is provided, only files matching this
+                extension will be queried.
+                If $select is provided, only the given fields will be returned.
+                If $group_by is provided, the method will return a hashref (
+                nested if more than one group_by term is given), which points to
+                an arrayref of hashes.
+  Returntype  : arrayref or hashref (if $group_by is given)
+
+=cut
+
+sub query_file_tree {
+    my ( $dir, $ext, $select, $group_by ) = @_;
+
+    $select   = [$select]   if defined $select   && ref $select   ne 'ARRAY';
+    $group_by = [$group_by] if defined $group_by && ref $group_by ne 'ARRAY';
+
+    # grab the list of files in the $dir
+    my $filelist= [];
+    my $wanted = sub { _wanted($filelist, ($ext || '.+')) };
+    find($wanted, $dir);
+
+    # loop through the files and group the data
+    my @data;
+    foreach my $file ( @$filelist ) {
+        open( my $fh, '<', $file ) or die "Cannot open $file for reading";
+        my $header_line = <$fh>;
+        my @header_cols = split(/\s+/, $header_line);
+        while ( my $line = <$fh> ) {
+            chomp $line;
+            my $row = map_row_to_header($line, \@header_cols);
+            my $selected_data;
+            if ( defined $select ) {
+                # extract data from each row, where requested
+                # also include fields required for future groupings
+                foreach my $selected_field ( @$select, @$group_by ) {
+                    $selected_data->{$selected_field} = $row->{$selected_field};
+                }
+            } else {
+                $selected_data = \%$row;
+            }
+            push( @data, $selected_data );
+        }
+    }
+
+    # recursively group data if multiple group_by fields exist
+    if ( defined $group_by && @$group_by ) {
+        my $hashed_data = group_hash_by(\@data, $group_by, $select);
+        return $hashed_data;
+    } else {
+        return \@data;
+    }
+}
+
+sub _wanted {
+   return if ! -e;
+   my ($files, $ext) = @_;
+   push( @$files, $File::Find::name ) if $File::Find::name =~ /\.$ext$/;
+}
+
+=head2 group_hash_by
+
+  Arg [1]     : Arrayref $array_of_hashes
+  Arg [2]     : Arrayref $group_by
+  Arg [3]     : Arrayref $selected_fields
+  Description : Given an array of hashrefs, group the data by the value
+                of the fields listed in $group_by and return a hash of
+                arrays of hashes. If $selected_data is provided, prune out
+                only these fields.
+  Returntype  : hashref
+
+=cut
+
+sub group_hash_by {
+    my ( $array_of_hashes, $group_by, $select ) = @_;
+
+    # group by the first given group_by field
+    my $this_group_by = shift @$group_by;
+    my %grouped_data;
+    foreach my $h ( @$array_of_hashes ) {
+        push( @{ $grouped_data{$h->{$this_group_by}} }, $h);
+    }
+
+    if ( scalar @$group_by > 0 ) {
+        # recursively create subgroups on subsequent group_bys
+        foreach my $k ( keys %grouped_data ) {
+            my @group_by_copy = @$group_by;
+            $grouped_data{$k} = group_hash_by( $grouped_data{$k}, \@group_by_copy, $select );
+        }
+    } elsif ( $select ) {
+        # no more recursing to do - keep selected keys only
+        foreach my $k1 ( keys %grouped_data ) {
+            my @selected_data;
+            foreach my $h ( @{ $grouped_data{$k1} } ) {
+                my %h_select = map { $_ => $h->{$_} } @$select;
+                push( @selected_data, \%h_select );
+            }
+            $grouped_data{$k1} = \@selected_data;
+        }
+    }
+
+    return \%grouped_data;
 }
 
 1;
