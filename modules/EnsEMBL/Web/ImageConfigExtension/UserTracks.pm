@@ -527,6 +527,7 @@ sub _add_trackhub_tracks {
   my $code  = $args->{'code'};
 
   my $do_matrix = ($config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'}) ? 1 : 0;
+  $menu->set_data('has_matrix', 1) if $do_matrix;
   my $count_visible = 0;
   my $default_trackhub_tracks = {};
 
