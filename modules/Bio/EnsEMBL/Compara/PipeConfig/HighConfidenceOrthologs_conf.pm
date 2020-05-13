@@ -60,8 +60,10 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
+        'collection' => 'default',
+
         'high_confidence_capacity'    => 500,          # how many mlss_ids can be processed in parallel
-        'update_homologies_capacity'  => 10,           # how many homology mlss_ids can be updated in parallel
+        'update_homologies_capacity'  => 30,           # how many homology mlss_ids can be updated in parallel
 
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [ ],

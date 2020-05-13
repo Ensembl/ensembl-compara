@@ -31,7 +31,7 @@ We add extra information in the form of comments
 a) Description of "composite" sequences
 # epo2x composite sequence: mesocricetus_auratus KB708322.1_11360002442546 is: scaffold:MesAur1.0:KB708322.1:593611:593796:1 + scaffold:MesAur1.0:KB708322.1:594574:595896:1
 
-In EPO_LOW_COVERAGE alignments, we sometimes concatenate the scaffolds of
+In EPO_EXTENDED alignments, we sometimes concatenate the scaffolds of
 some species and consider the result as a single sequence that is aligned
 to the other species. We name these sequences "composite" and we list at
 the top of the section the list of underlying scaffolds they are made of.

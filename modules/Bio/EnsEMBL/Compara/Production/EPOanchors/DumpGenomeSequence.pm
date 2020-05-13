@@ -90,7 +90,7 @@ sub fetch_input {
     my $genome_dump_file = $self->param('genome_dump_file');
     unless ($genome_dump_file) {
         my $seq_dump_loc = $self->param_required('seq_dump_loc');
-        $genome_dump_file = $seq_dump_loc . "/" . $genome_db->name . "_" . $genome_db->assembly . ".fa";
+        $genome_dump_file = $seq_dump_loc . "/" . $genome_db->name . "_" . $genome_db->assembly . ($genome_db->genome_component ? '_comp' . $genome_db->genome_component : '') . ".fa";
         $self->param('genome_dump_file', $genome_dump_file);
     }
     make_path(dirname($genome_dump_file), {verbose => 1,});

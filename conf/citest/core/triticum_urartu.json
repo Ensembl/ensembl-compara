@@ -1,0 +1,18 @@
+{
+   "triticum_urartu" : {
+        "core" : {
+            "regions" : [
+                ["scaffold14",     1, 146600],
+                ["scaffold55",     1, 141875],
+                ["scaffold46062",  1, 143952],
+                ["scaffold105978", 1,  43789],
+                ["scaffold220618", 1,  53126],
+                ["scaffold227092", 1,  71122]
+            ],
+            "adaptors" : [
+                {"name" : "gene"},
+                {"name" : "repeatfeature"}
+            ]
+        }
+    }
+}

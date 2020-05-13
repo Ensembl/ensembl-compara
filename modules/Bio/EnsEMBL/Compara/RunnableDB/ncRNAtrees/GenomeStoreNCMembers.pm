@@ -89,7 +89,7 @@ sub fetch_input {
     my $genome_db_id = $self->param_required('genome_db_id');
 
         # fetch the Compara::GenomeDB object for the genome_db_id
-    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with id=$genome_db_id";
+    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or $self->die_no_retry("Could not fetch genome_db with id=$genome_db_id");
     $self->param('genome_db', $genome_db);
   
         # using genome_db_id connect to external core database

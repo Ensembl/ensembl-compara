@@ -150,13 +150,8 @@ foreach my $ortho_type (@A_ortholog_types) {
       if ($Q_chr_name && $Q_chr_start && $Q_chr_end && $score && $Q_chr_std && $T_chr_name && $T_chr_start && $T_chr_end && $T_chr_std) {
         #Deal with the strands
         if ($Q_chr_std == "-1") {
-          if ($Q_chr_std) {
-            $Q_chr_std = "-";
-            }
-           else {
-              $Q_chr_std = "+";
-            }
-          if ($T_chr_std) {
+          $Q_chr_std = "-";
+          if ($T_chr_std > 0) {
             $T_chr_std = "-" ;
           }
           else{
@@ -164,19 +159,15 @@ foreach my $ortho_type (@A_ortholog_types) {
           }
           
         }else {
-          if ($Q_chr_std) {
-            $Q_chr_std = "+";
-            }
-            else {
-              $Q_chr_std = "-";
-            }
-          if ($T_chr_std) {
+          $Q_chr_std = "+";
+          if ($T_chr_std > 0) {
             $T_chr_std = "+" ;
           }
           else{
             $T_chr_std = "-" ;
           }
         }
+
         #Print all the stuff
         $gff{$Q_chr_name}{$T_chr_name} .= "$Q_chr_name\tsynteny\tsimilarity\t$Q_chr_start\t$Q_chr_end\t$score\t$Q_chr_std\t.\t$T_chr_name\t$T_chr_start\t$T_chr_end\t$T_chr_std\t.\n";
       }

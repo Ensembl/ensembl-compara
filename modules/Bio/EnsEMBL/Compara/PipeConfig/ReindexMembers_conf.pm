@@ -113,6 +113,7 @@ sub pipeline_wide_parameters {
         'master_db'     => $self->o('master_db'),
         'member_db'     => $self->o('member_db'),
         'prev_tree_db'  => $self->o('prev_tree_db'),
+        'member_type'   => $self->o('member_type'),
     }
 }
 

@@ -25,14 +25,27 @@ my $prev_release = $curr_release - 1;
 my $curr_eg_release = $ENV{'CURR_EG_RELEASE'};
 my $prev_eg_release = $curr_eg_release - 1;
 
+
+# Species found on both vertebrates and non-vertebrates servers
+my @overlap_species = qw(saccharomyces_cerevisiae drosophila_melanogaster caenorhabditis_elegans);
+
 # --------------------------- CORE DATABASES -----------------------------------
 
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
+# Use our mirror (which has all the databases)
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
+
+# For previous releases, use the mirror servers
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-mirror-1:4240/$curr_release");
+# But remove the non-vertebrates species
+Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
+Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
+# And add the non-vertebrates server
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-mirror-3:4275/$curr_release");
 
 # ----------------------- COMPARA MASTER DATABASE ------------------------------
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas({
-    'compara_master' => [ 'mysql-ens-compara-prod-8', 'jalvarez_compara_master_citest' ],
+    'compara_master' => [ 'mysql-ens-compara-prod-10', 'ensembl_compara_master_citest' ],
 });
 
 # ------------------------------------------------------------------------------

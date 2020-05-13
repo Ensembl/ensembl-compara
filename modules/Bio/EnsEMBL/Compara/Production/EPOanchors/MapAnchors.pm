@@ -58,8 +58,8 @@ sub fetch_input {
         $self->param_required('mlss_id');
         my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
         my $sth;
-        if ($self->param('_range_list')) {
-            $sth = $anchor_dba->dbc->prepare(sprintf('SELECT anchor_id, sequence FROM anchor_sequence WHERE anchor_id IN (%s)', join(',', @{$self->param('_range_list')})));
+        if ($self->param('anchor_ids')) {
+            $sth = $anchor_dba->dbc->prepare(sprintf('SELECT anchor_id, sequence FROM anchor_sequence WHERE anchor_id IN (%s)', join(',', @{$self->param('anchor_ids')})));
             $sth->execute;
         } else {
         $sth = $anchor_dba->dbc->prepare("SELECT anchor_id, sequence FROM anchor_sequence WHERE anchor_id BETWEEN  ? AND ?");
@@ -68,14 +68,17 @@ sub fetch_input {
 
 	my $query_file = $self->worker_temp_directory  . "anchors.fa";
 	my $n = 0;
+	my @anchor_ids;
 	open(my $fh, '>', $query_file) || die("Couldn't open $query_file");
 	foreach my $anc_seq( @{ $sth->fetchall_arrayref } ){
+		push @anchor_ids, $anc_seq->[0];
 		print $fh ">", $anc_seq->[0], "\n", $anc_seq->[1], "\n";
 		$n++;
 	}
         close($fh);
         $sth->finish;
         $self->die_no_retry("No anchors to align") unless $n;
+        $self->param('anchor_ids', \@anchor_ids);
         $anchor_dba->dbc->disconnect_if_idle;
 	$self->param('query_file', $query_file);
 
@@ -139,13 +142,13 @@ sub run {
 sub write_output {
     my ($self) = @_;
 
-    # Delete previous mapping
-    if ($self->param('_range_list')) {
-        my $sql = sprintf('DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id IN (%s) AND genome_db_id = ?', join(',', @{$self->param('_range_list')}));
-        $self->compara_dba->dbc->do($sql, undef, $self->param('genome_db_id'));
-    } else {
-        my $sql = 'DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id BETWEEN ? AND ? AND genome_db_id = ?';
-        $self->compara_dba->dbc->do($sql, undef, $self->param('min_anchor_id'), $self->param('max_anchor_id'), $self->param('genome_db_id'));
+    # eHive DBConnections are more resilient to deadlocks, etc
+    my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $self->compara_dba->dbc);
+    # Delete the anchors one by one to minimize the amount of row-locking
+    # and the risk of creating deadlocks
+    my $sql = 'DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id = ? AND genome_db_id = ?';
+    foreach my $anchor_id (@{$self->param('anchor_ids')}) {
+        $dbc->do($sql, undef, $anchor_id, $self->param('genome_db_id'));
     }
 
     my $anchor_align_adaptor = $self->compara_dba()->get_adaptor("AnchorAlign");

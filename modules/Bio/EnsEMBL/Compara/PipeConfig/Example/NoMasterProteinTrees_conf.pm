@@ -29,7 +29,7 @@ It uses a all-vs-all blast clustering approach.
 Custom assemblies should be defined in a JSON file like this:
     [
         {
-            "production_name" : "tuatara",
+            "production_name" : "sphenodon_punctatus",
             "taxonomy_id"     : "8508",
             "cds_fasta"       : "/your/source/directory/my_species_1.cds.fa",
             "prot_fasta"      : "/your/source/directory/my_species_1.prot.fa",

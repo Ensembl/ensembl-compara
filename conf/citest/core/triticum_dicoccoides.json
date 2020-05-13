@@ -1,0 +1,14 @@
+{
+   "triticum_dicoccoides" : {
+        "core" : {
+            "regions" : [
+                ["1A",  8779408, 10112321],
+                ["1B", 12023818, 12991466]
+            ],
+            "adaptors" : [
+                {"name" : "gene"},
+                {"name" : "repeatfeature"}
+            ]
+        }
+    }
+}

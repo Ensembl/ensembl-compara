@@ -47,10 +47,10 @@ use Scalar::Util qw(looks_like_number);
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::GenomeDB;
+use Bio::EnsEMBL::Compara::Utils::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-my $suffix_separator = '__cut_here__';
 
 sub param_defaults {
     my $self = shift;
@@ -74,7 +74,7 @@ sub fetch_input {
     $genome_db_adaptor->_id_cache->clear_cache();
 
     my $genome_db_id = $self->param('genome_db_id');
-    my $genome_db    = $genome_db_adaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with genome_db_id='$genome_db_id'";
+    my $genome_db    = $genome_db_adaptor->fetch_by_dbID($genome_db_id) or $self->die_no_retry("Could not fetch genome_db with genome_db_id='$genome_db_id'");
     my $species_name = $genome_db->name();
 
     # For polyploid genomes, the reusability is only assessed on the principal genome
@@ -150,8 +150,7 @@ sub fetch_input {
             
             # now use the registry to find the previous release core database candidate:
             Bio::EnsEMBL::Registry->no_version_check(1);
-            my $prev_release = $self->param_required('current_release') - 1;
-            $prev_core_dba = $self->param('prev_core_dba', Bio::EnsEMBL::Registry->get_DBAdaptor($species_name.$suffix_separator.$prev_release, 'core'));
+            $prev_core_dba = $self->param('prev_core_dba', Bio::EnsEMBL::Compara::Utils::Registry::get_previous_core_DBAdaptor($species_name));
 
         } else {
 
@@ -161,6 +160,12 @@ sub fetch_input {
 
         if ($prev_core_dba) {
             my $curr_core_dba = $self->param('curr_core_dba', $genome_db->db_adaptor);
+
+            if ($prev_core_dba and ($prev_core_dba eq $curr_core_dba)) {
+                $self->warning("The current and previous core databases appear to be the same, so reuse will happen");
+                $self->param('reuse_this', 1);
+                return;
+            }
 
             my $curr_assembly = $curr_core_dba->assembly_name;
             my $prev_assembly = $prev_core_dba->assembly_name;

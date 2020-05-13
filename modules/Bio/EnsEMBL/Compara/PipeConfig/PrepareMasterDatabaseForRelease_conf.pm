@@ -24,7 +24,10 @@ Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -division <division> -additional_species <optional hash>
+        -division <division>
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division <division> -additional_species <optional hash> -meta_host <alternative metadata host>
 
     #1. Update NCBI taxonomy
     #2. Add/update all species to master database
@@ -65,29 +68,32 @@ sub default_options {
         'backups_dir' => $self->o('work_dir') . '/master_backups/',
 
         'master_db'           => 'compara_master',
+        'prev_dbs'            => ['*_prev'],
         'taxonomy_db'         => 'ncbi_taxonomy',
         'incl_components'     => 1, # let's default this to 1 - will have no real effect if there are no component genomes (e.g. in vertebrates)
         'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
         'xml_file'            => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/mlss_conf.xml'),
         'report_file'         => $self->o( 'work_dir' ) . '/mlss_ids_' . $self->o('division') . '.list',
-        'annotation_file'     => $self->o('shared_hps_dir') . '/ensembl-metadata/annotation_updates.' . $self->o('division') . '.' . $self->o('ensembl_release') . '.list',
+        'annotation_file'     => $self->o('work_dir') . '/annotation_updates.' . $self->o('division') . '.' . $self->o('ensembl_release') . '.list',
         'master_backup_file'  => $self->o('backups_dir') . '/compara_master_' . $self->o('division') . '.post' . $self->o('ensembl_release') . '.sql',
 
         'patch_dir'   => $self->check_dir_in_ensembl('ensembl-compara/sql/'),
         'schema_file' => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
         'alias_file'  => $self->check_file_in_ensembl('ensembl-compara/scripts/taxonomy/ensembl_aliases.sql'),
-        'java_hc_dir' => $self->check_dir_in_ensembl('ensj-healthcheck/'),
 
         'list_genomes_script'    => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
         'report_genomes_script'  => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
         'update_metadata_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
+        'assembly_patch_species' => [],
         'additional_species'     => {},
         # Example:
         #'additional_species'     => {'vertebrates' => ['homo_sapiens', 'drosophila_melanogaster'],},
+        'species_trees'          => undef,
 
         'do_update_from_metadata' => 1,
-        'do_load_lrg_dnafrags'    => 0,
         'do_load_timetree'        => 0,
+
+        'meta_host' => 'mysql-ens-meta-prod-1',
     };
 }
 
@@ -112,7 +118,6 @@ sub pipeline_wide_parameters {
         'hc_version' => 1,
         # Define the flags so they can be seen by Parts::PrepareMasterDatabaseForRelease
         'do_update_from_metadata' => $self->o('do_update_from_metadata'),
-        'do_load_lrg_dnafrags'    => $self->o('do_load_lrg_dnafrags'),
         'do_load_timetree'        => $self->o('do_load_timetree'),
     };
 }
@@ -124,12 +129,9 @@ sub pipeline_analyses {
 
         {   -logic_name => 'backup_current_master',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
-            -input_ids  => [{
-                'division'    => $self->o('division'),
-                'release'     => $self->o('ensembl_release'),
-            }],
+            -input_ids  => [{ }],
             -parameters => {
-                'src_db_conn' => $self->o('master_db'),
+                'src_db_conn' => '#master_db#',
                 'backups_dir' => $self->o('backups_dir'),
                 'output_file' => '#backups_dir#/compara_master_#division#.pre#release#.sql'
             },

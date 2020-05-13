@@ -235,7 +235,7 @@ my %type_to_adaptor = (
                        'LASTZ_PATCH'            => $from_ga_adaptor,
                        'SYNTENY'                => $from_sr_adaptor,
                        'EPO'                    => $from_ga_adaptor,
-                       'EPO_LOW_COVERAGE'       => $from_ga_adaptor,
+                       'EPO_EXTENDED'           => $from_ga_adaptor,
                        'PECAN'                  => $from_ga_adaptor,
                        'GERP_CONSERVATION_SCORE'    => $from_cs_adaptor,
                        'GERP_CONSTRAINED_ELEMENT'   => $from_ce_adaptor,
@@ -249,9 +249,9 @@ my %all_mlss_objects = ();
 # By default, $disable_keys depends on $merge
 $disable_keys //= !$merge;
 
-# print reminder to merge GERP with EPO_LOW_COVERAGE and PECAN
+# print reminder to merge GERP with EPO_EXTENDED and PECAN
 my %ml_hash = map { $_ => 1 } @method_link_types;
-my @ml_with_gerp = qw(EPO_LOW_COVERAGE PECAN);
+my @ml_with_gerp = qw(EPO_EXTENDED PECAN);
 foreach my $ml (@ml_with_gerp) {
     if ( $ml_hash{$ml} && !($ml_hash{GERP_CONSTRAINED_ELEMENT} && $ml_hash{GERP_CONSERVATION_SCORE}) ) {
         print "\n** Warning ** GERP_CONSERVATION_SCORE and GERP_CONSTRAINED_ELEMENT should usually be merged with method_link_type $ml\n\n";
@@ -780,6 +780,37 @@ sub copy_genomic_align_blocks {
       copy_table($from_dbc, $to_dbc, 'genomic_align', "method_link_species_set_id = $mlss_id", undef, "skip_disable_keys");
   }
 
+    if ( $merge ) {
+        # sometimes, merging can result in duplicated data
+        # clean up duplicates
+        my $duplicates_sql = "
+            SELECT gab_string, MIN(genomic_align_block_id) AS min_gab_id, MAX(genomic_align_block_id) AS max_gab_id, COUNT(*)
+            FROM (
+                SELECT genomic_align_block_id, GROUP_CONCAT(ga_string) AS gab_string
+                FROM (
+                    SELECT genomic_align_block_id, CONCAT(dnafrag_id, ':', dnafrag_start, '-', dnafrag_end, ':', dnafrag_strand) AS ga_string
+                    FROM genomic_align WHERE method_link_species_set_id = ?
+                    ORDER BY dnafrag_id
+                ) g GROUP BY genomic_align_block_id
+            ) b GROUP BY gab_string HAVING COUNT(*) > 1
+        ";
+        my $duplicates_sth = $to_dbc->prepare($duplicates_sql);
+        $duplicates_sth->execute($mlss_id);
+        my $results = $duplicates_sth->fetchall_hashref('max_gab_id');
+        my @gabs_to_delete = map { $_->{max_gab_id} } values %$results;
+        if ( @gabs_to_delete ) {
+            my $gaba = $to_dba->get_GenomicAlignBlockAdaptor;
+            my $gata = $to_dba->get_GenomicAlignTreeAdaptor;
+            foreach my $gab_id ( @gabs_to_delete ) {
+                # first, delete the genomic_align_tree
+                my $gat = $gata->fetch_by_genomic_align_block_id($gab_id);
+                $gata->delete($gat) if $gat;
+
+                # then delete the genomic_aligns and genomic_align_blocks
+                $gaba->delete_by_dbID($gab_id);
+            }
+        }
+    }
 }
 
 

@@ -1,5 +1,5 @@
 1717	1	xref.timestamp	2012-06-20 23:23:29
-1	\N	schema_version	100
+1	\N	schema_version	101
 2	\N	patch	patch_52_53_a.sql|schema_version
 3	\N	patch	patch_52_53_b.sql|external_db_type_enum
 4	\N	patch	patch_52_53_c.sql|identity_xref_rename
@@ -247,3 +247,5 @@
 1803	\N	patch	patch_98_99_a.sql|schema_version
 1804	\N	patch	patch_99_100_a.sql|schema_version
 1805	\N	patch	patch_99_100_b.sql|alter_externaldb_type_notnull
+1806	\N	patch	patch_99_100_c.sql|alter_mapping_session_assembly_length
+1807	\N	patch	patch_100_101_a.sql|schema_version

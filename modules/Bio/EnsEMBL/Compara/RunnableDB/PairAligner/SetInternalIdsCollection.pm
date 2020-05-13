@@ -84,9 +84,10 @@ sub _setInternalIds {
 
     # Write new blocks in the correct range
     my $sql0 = "SELECT MIN(genomic_align_id % $magic_number), MIN(genomic_align_block_id % $magic_number), COUNT(*), COUNT(DISTINCT genomic_align_id % $magic_number), COUNT(DISTINCT genomic_align_block_id % $magic_number) FROM genomic_align WHERE (FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id OR FLOOR(genomic_align_id / $magic_number) != method_link_species_set_id) AND method_link_species_set_id = ?";
-    my $sql1 = "INSERT INTO genomic_align_block SELECT (genomic_align_block_id % $magic_number) + ?, method_link_species_set_id, score , perc_id, length , group_id , level_id FROM genomic_align_block WHERE FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id AND method_link_species_set_id = ?";
+    my $sql1 = "INSERT INTO genomic_align_block SELECT (genomic_align_block_id % $magic_number) + ?, method_link_species_set_id, score , perc_id, length , group_id , level_id, direction FROM genomic_align_block WHERE FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id AND method_link_species_set_id = ?";
     # Update the dbIDs in genomic_align
-    my $sql2 = "UPDATE genomic_align SET genomic_align_block_id = ? + (genomic_align_block_id % $magic_number), genomic_align_id = ? + (genomic_align_id % $magic_number) WHERE (FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id OR FLOOR(genomic_align_id / $magic_number) != method_link_species_set_id) AND method_link_species_set_id = ?";
+    my $sql2gai = "UPDATE genomic_align SET genomic_align_id = ? + (genomic_align_id % $magic_number) WHERE FLOOR(genomic_align_id / $magic_number) != method_link_species_set_id AND method_link_species_set_id = ?";
+    my $sql2gabi = "UPDATE genomic_align SET genomic_align_block_id = ? + (genomic_align_block_id % $magic_number) WHERE FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id  AND method_link_species_set_id = ?";
     # Update the dbIDs in conservation_score
     my $sql2cs = "UPDATE conservation_score SET genomic_align_block_id = ? + (genomic_align_block_id % $magic_number)";
     # Remove the old blocks
@@ -109,9 +110,10 @@ sub _setInternalIds {
             my $offset_gab = $mlss_id * $magic_number + 1 - $min_gab;
             print STDERR "Offsets: genomic_align_block_id=$offset_gab genomic_align_id=$offset_ga\n";
             print STDERR (my $nd = $dbc->do($sql1, undef, $offset_gab, $mlss_id)), " rows duplicated in genomic_align_block\n";
-            print STDERR $dbc->do($sql2, undef, $offset_gab, $offset_ga, $mlss_id), " rows of genomic_align redirected to the new entries in genomic_align_block \n";
+            print STDERR $dbc->do($sql2gabi, undef, $offset_gab, $mlss_id), " rows of genomic_align redirected to the new entries in genomic_align_block \n";
             print STDERR $dbc->do($sql2cs, undef, $offset_gab), " rows of conservation_score redirected to the new entries in genomic_align_block \n";
             print STDERR (my $nr = $dbc->do($sql3, undef, $mlss_id)), " rows removed from genomic_align_block\n";
+            print STDERR $dbc->do($sql2gai, undef, $offset_ga, $mlss_id), " rows of genomic_align offset \n";
             die "Numbers mismatch: $nd rows duplicated and $nr removed\n" if $nd != $nr;
         }
     );

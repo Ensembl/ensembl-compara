@@ -84,7 +84,7 @@ sub fetch_input {
 
     my $mlss_id = $self->param_required('mlss_id');
 
-    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch MLSS with dbID=$mlss_id";
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or $self->die_no_retry("Could not fetch MLSS with dbID=$mlss_id");
 
     my $sequence_ids_sql = 'SELECT seq_member_id, sequence_id FROM seq_member';
     my $all_members = $self->compara_dba->dbc->db_handle->selectall_arrayref($sequence_ids_sql);
@@ -133,6 +133,8 @@ sub run_rfamclassify {
 
     $self->build_hash_models();
 
+    my $classified_members = $self->param('classified_members');
+
     my %allclusters;
     $self->param('allclusters', \%allclusters);
 
@@ -150,9 +152,14 @@ sub run_rfamclassify {
         # Expand with other members that have the same sequence
         foreach my $id (@cluster_list) {
             my $sequence_id = $self->param('member2seq')->{$id};
+            # Skip sequence_ids that have already been in another cluster
+            next if $seen_seqid{$sequence_id};
             $seen_seqid{$sequence_id} = 1;
+            # Skip the expansion of this sequence_id if some of the other members are in a different cluster
+            next if grep {$classified_members->{$_} && ($classified_members->{$_} ne $cm_id)}
+                    @{ $self->param('seq2member')->{$sequence_id} };
             foreach my $other_id (@{ $self->param('seq2member')->{$sequence_id} }) {
-                next if $self->param('classified_members')->{$other_id};
+                next if $classified_members->{$other_id};
                 $self->param('rfamclassify')->{$cm_id}->{$other_id}++;
             }
         }
@@ -251,7 +258,7 @@ sub build_hash_models {
       }
 
     $self->param('rfamclassify')->{$transcript_model_id}{$transcript_member_id} = 1;
-    $self->param('classified_members')->{$transcript_member_id} = 1;
+    $self->param('classified_members')->{$transcript_member_id} = $transcript_model_id;
    }
   }
 

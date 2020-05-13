@@ -657,7 +657,7 @@ sub restrict_between_alignment_positions {
 
   #Get all the nodes and restrict but only remove leaves if necessary. Call minimize_tree at the end to 
   #remove the internal nodes
-  foreach my $this_node (@{$genomic_align_tree->get_all_nodes}) {
+  foreach my $this_node (reverse @{$genomic_align_tree->get_all_nodes}) {
     my $genomic_align_group = $this_node->genomic_align_group;
     next if (!$genomic_align_group);
     my $new_genomic_aligns = [];
@@ -801,7 +801,7 @@ sub print {
   my $level = shift;
   my $reference_genomic_align = shift;
   if (!$level) {
-    print STDERR $self->newick_format(), "\n";
+    print $self->newick_format('ryo', '%{n}'), "\n";
     $reference_genomic_align = ($self->reference_genomic_align or "");
   }
   $level++;
@@ -809,9 +809,9 @@ sub print {
   if (grep {$_ eq $reference_genomic_align} @{$self->get_all_genomic_aligns_for_node}) {
     $mark = "* ";
   }
-  print STDERR "  " x $level, $mark,
+  print "  " x $level, $mark,
       "[", $self->node_id, "/", ($self->original_strand?"+":"-"), "] ",
-      $self->genomic_align_group ? (
+      $self->genomic_align_group && $self->genomic_align_group->dnafrag ? (
       $self->genomic_align_group->genome_db->name,":",
       $self->genomic_align_group->dnafrag->name,":",
       $self->genomic_align_group->dnafrag_start,":",

@@ -119,6 +119,9 @@ sub _find_location_of_all_required_mlss {
 
     $self->param('base_gdb_id_2_stn', $base_gdb_id_2_stn);
 
+    my %ss_gdb_ids = map {$_->dbID => 1} @{$low_mlss->species_set->genome_dbs};
+    $self->param('genome_db_ids', \%ss_gdb_ids);
+
     my (%mlss_location, %refs_per_species);
     foreach my $genome_db (@{$low_mlss->species_set->genome_dbs}) {
 	    unless ($high_coverage_genome_db_ids{$genome_db->dbID}) {
@@ -169,6 +172,9 @@ sub _load_mlss_from_compara_db {
         foreach my $mlss (@$some_mlsss) {
             next if $mlss->species_set->size != 2;
             my ($ref_gdb, $non_ref_gdb) = $mlss->find_pairwise_reference;
+            # check if this mlss is relevant here
+            next unless ( $self->param('genome_db_ids')->{$ref_gdb->dbID} && $self->param('genome_db_ids')->{$non_ref_gdb->dbID} );
+
             $mlss_found{$non_ref_gdb->dbID}->{$ref_gdb->dbID} = {
                 mlss_id => $mlss->dbID,
                 ref_cov => $mlss->get_value_for_tag('ref_genome_coverage')/$mlss->get_value_for_tag('ref_genome_length'),
@@ -236,15 +242,17 @@ sub _get_msa_coverage_stats {
     }
 
     # next try coverage from prev_epo_db
-    my $prev_dba          = $self->get_cached_compara_dba('prev_epo_db');
-    my $prev_mlss         = $prev_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type('EPO')->[0];
-    my $prev_species_tree = $prev_mlss->species_tree;
-    my $prev_gdb_id_2_stn = $prev_species_tree->get_genome_db_id_2_node_hash();
+    if ( $self->param('prev_epo_db') ) {
+        my $prev_dba          = $self->get_cached_compara_dba('prev_epo_db');
+        my $prev_mlss         = $prev_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type('EPO')->[0];
+        my $prev_species_tree = $prev_mlss->species_tree;
+        my $prev_gdb_id_2_stn = $prev_species_tree->get_genome_db_id_2_node_hash();
 
-    my $prev_epo_db_coverage = $self->_epo_coverage($prev_gdb_id_2_stn, \@ref_gdb_ids);
-    if( scalar( keys %$prev_epo_db_coverage ) == $ref_count ) {
-        print "\n-- using EPO coverage from prev_epo_db\n\n" if $self->debug;
-        return $prev_epo_db_coverage;
+        my $prev_epo_db_coverage = $self->_epo_coverage($prev_gdb_id_2_stn, \@ref_gdb_ids);
+        if( scalar( keys %$prev_epo_db_coverage ) == $ref_count ) {
+            print "\n-- using EPO coverage from prev_epo_db\n\n" if $self->debug;
+            return $prev_epo_db_coverage;
+        }
     }
 
     # finally, try the anchor_align counts if the above have not covered all refs

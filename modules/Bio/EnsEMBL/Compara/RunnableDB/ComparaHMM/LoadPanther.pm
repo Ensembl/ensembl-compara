@@ -193,7 +193,7 @@ sub _hmm_press_profiles {
     my $runtime_msec = $cmd_out->runtime_msec;
 
     #move HMM library into place
-    $cmd = "become -- compara_ensembl mv " . $self->param('local_hmm_library') . "* " . $self->param('panther_hmm_lib') . "/";
+    $cmd = "mv " . $self->param('local_hmm_library') . "* " . $self->param('panther_hmm_lib') . "/";
     $self->run_command($cmd, { die_on_failure => 1, description => 'move the HMM library to "hmm_library_basedir"' } );
 }
 

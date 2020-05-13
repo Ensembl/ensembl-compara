@@ -71,6 +71,7 @@ sub param_defaults {
         escape_branch   => undef,
         cmd_max_runtime => undef,
         check_seq       => 1,
+        tmp_dir         => undef,
     };
 }
 
@@ -103,6 +104,9 @@ sub fetch_input {
     $self->throw("no input protein_tree") unless $self->param('protein_tree');
 
     print "RETRY COUNT: ".$self->input_job->retry_count()."\n" if ($self->debug);
+
+    my $tmp_dir = $self->param('tmp_dir') || $self->worker_temp_directory;
+    $self->param('tmp_dir', $tmp_dir);
 
     $self->param('input_fasta', $self->dumpProteinTreeToWorkdir($self->param('protein_tree')) );
 
@@ -212,10 +216,10 @@ sub run_msa {
     my $input_fasta = $self->param('input_fasta');
 
     # Make a temp dir.
-    my $tempdir = $self->worker_temp_directory;
+    my $tempdir = $self->param('tmp_dir');
     print "TEMP DIR: $tempdir\n" if ($self->debug);
 
-    my $msa_output = $tempdir . '/output.mfa';
+    my $msa_output = sprintf("$tempdir/output.%08d.mfa", $self->input_job->dbID);
     $msa_output =~ s/\/\//\//g;
     $self->param('msa_output', $msa_output);
 
@@ -259,7 +263,7 @@ sub dumpProteinTreeToWorkdir {
   my $self = shift;
   my $tree = shift;
 
-  my $fastafile =$self->worker_temp_directory.'/proteintree_'.($tree->root_id).'.fasta';
+  my $fastafile = $self->param('tmp_dir').'/proteintree_'.($tree->root_id).'.fasta';
 
   $fastafile =~ s/\/\//\//g;  # converts any // in path to /
   return $fastafile if (-e $fastafile);

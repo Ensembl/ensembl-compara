@@ -79,7 +79,7 @@ sub fetch_input {
     if (scalar(@$bad_gab_ids) > $self->param_required('max_blocks_to_delete')) {
         die sprintf("Found %d blocks to delete, more than the maximum allowed %d: %s\n", scalar(@$bad_gab_ids), $self->param_required('max_blocks_to_delete'), join(",", @$bad_gab_ids));
     }
-    $self->say_with_header("blocks to delete: ".join(",", @$bad_gab_ids));
+    $self->warning("blocks to delete: ".join(",", @$bad_gab_ids));
 }
 
 sub write_output {

@@ -77,7 +77,7 @@ sub fetch_input {
     my $self = shift @_;
 
     $self->complete_early('No reuse_db, cannot compare the clusters') unless $self->param('reuse_db');
-    $self->param('groupset_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'default')->[0]) or die "Could not fetch groupset tree";
+    $self->param('groupset_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'default')->[0]) or $self->die_no_retry("Could not fetch groupset tree");
 
 }
 

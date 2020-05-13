@@ -73,8 +73,10 @@ sub shared_default_options {
         'config_dir'            => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/conf/'.$self->o('division'),
         # NOTE: Can't use $self->check_file_in_ensembl as long as we don't produce a file for each division
         'reg_conf'              => $self->o('config_dir').'/production_reg_conf.pl',
+        'ensj_conf'             => $self->o('config_dir').'/ensj-healthcheck.json',
         'binary_species_tree'   => $self->o('config_dir').'/species_tree.branch_len.nw',
         'genome_dumps_dir'      => $self->o('shared_hps_dir') . '/genome_dumps/'.$self->o('division').'/',
+        'sketch_dir'            => $self->o('shared_hps_dir') . '/species_tree/' . $self->o('division') . '_sketches/',
 
         # HMM library
         'hmm_library_version'   => '2',
@@ -181,6 +183,10 @@ sub executable_locations {
         'emf2maf_program'                   => $self->check_exe_in_ensembl('ensembl-compara/scripts/dumps/emf2maf.pl'),
         'epo_stats_report_exe'              => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/epo_stats.pl'),
         'populate_new_database_exe'         => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/populate_new_database.pl'),
+        'run_healthchecks_exe'              => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/run_healthchecks.pl'),
+
+        # Internal dependencies (Ensembl scripts)
+        'ensj_testrunner_exe'               => $self->check_exe_in_ensembl('ensj-healthcheck/run-configurable-testrunner.sh'),
 
         # Other dependencies (non executables)
         'core_schema_sql'                   => $self->check_file_in_ensembl('ensembl/sql/table.sql'),
@@ -210,6 +216,7 @@ sub resource_classes_single_thread {
         '512Gb_job'    => {'LSF' => ['-C0 -M512000 -R"select[mem>512000] rusage[mem=512000]"', $reg_requirement],          'LOCAL' => [ '', $reg_requirement ] },
 
         '250Mb_6_hour_job' => {'LSF' => ['-C0 -W 6:00 -M250   -R"select[mem>250]   rusage[mem=250]"',  $reg_requirement],  'LOCAL' => [ '', $reg_requirement ] },
+        '500Mb_6_hour_job' => {'LSF' => ['-C0 -W 6:00 -M500   -R"select[mem>500]   rusage[mem=500]"',  $reg_requirement],  'LOCAL' => [ '', $reg_requirement ] },
         '2Gb_6_hour_job'   => {'LSF' => ['-C0 -W 6:00 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $reg_requirement],  'LOCAL' => [ '', $reg_requirement ] },
     };
 }

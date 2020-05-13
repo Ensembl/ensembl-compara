@@ -39,6 +39,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
+use Bio::EnsEMBL::Compara::Utils::DistributionTag qw(write_n_tag);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -121,6 +122,7 @@ sub fetch_input {
       
     $self->param('gene_member_strand', \%gene_member_strand);
     $self->param('neighbourhood', \%neighbourhood);
+    $self->param('mlss', $mlss);
 }
 
 sub run {
@@ -172,6 +174,11 @@ sub write_output {
     
     my $goc_scores  = $self->param('goc_scores');
     my $output_file = $self->param('output_file');
+    my $mlss        = $self->param('mlss');
+
+    print "Writing n_goc_score to the database\n" if $self->debug;
+    $self->write_n_tag($mlss, 'goc', $goc_scores);
+    print "Tag: n_goc_score written!\n\n" if $self->debug;
 
     if ( $output_file ) {
         print "Writing GOC scores to output file $output_file\n" if $self->debug;

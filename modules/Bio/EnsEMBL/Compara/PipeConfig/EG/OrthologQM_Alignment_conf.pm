@@ -46,10 +46,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'collection'    => $self->o('division'),
         'member_type'   => 'protein',
 
-        'species_set_name' => 'collection-' . $self->o('collection'),
+        'species_set_name' => 'collection-' . $self->o('division'),
 
         # this should be set to your protein tree `homology_dumps_dir`
         # (can be found in the pipeline_wide_parameters table)

@@ -54,7 +54,6 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'division'      => 'vertebrates',
-        'collection'    => 'default',
         # 'member_type'   => undef, # should be 'protein' or 'ncrna'
 
         'species_set_name' => 'collection-' . $self->o('collection'),

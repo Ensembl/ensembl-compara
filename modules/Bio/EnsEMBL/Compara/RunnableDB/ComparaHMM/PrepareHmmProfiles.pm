@@ -158,7 +158,7 @@ sub _create_readme{
     my $filename = $self->param_required('readme_file');
     open my $fh, '>', $filename || die ("Cannot open $filename");
 
-    my $mlss    = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id')) or die "Could not fetch mlss with dbID=$self->param('mlss_id')";
+    my $mlss    = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id')) or $self->die_no_retry("Could not fetch mlss with dbID=$self->param('mlss_id')");
     my $genome_dbs = $mlss->species_set->genome_dbs;
 
     print $fh "species_name\tgenome_db_id\tassembly_name\tlocator\n";

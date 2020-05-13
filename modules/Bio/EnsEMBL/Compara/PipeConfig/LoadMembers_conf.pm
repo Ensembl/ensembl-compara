@@ -70,9 +70,6 @@ sub default_options {
         'store_ncrna'               => 1,
         # Store other genes
         'store_others'              => 1,
-        # Temporary parameter to fix the ncrna that are out-of-sync with
-        # the core dbs due to a wrong detection of reusability before e99
-        'fix_ncrna_members'         => 0,
 
     #load uniprot members for family pipeline
         'load_uniprot_members'      => 0,
@@ -107,10 +104,11 @@ sub default_options {
         # members
         'include_nonreference' => 0,
         'include_patches'      => 0,
+        'include_lrg'          => 0,
 
         # list of species that got an annotation update
         # ... assuming the same person has run both pipelines
-        'expected_updates_file' => $self->o('shared_hps_dir') . '/ensembl-metadata/annotation_updates.' . $self->o('division') . '.' . $self->o('ensembl_release') . '.list',
+        'expected_updates_file' => $self->o('shared_hps_dir') . '/genome_reports/annotation_updates.' . $self->o('division') . '.' . $self->o('ensembl_release') . '.list',
     };
 }
 
@@ -146,7 +144,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 }
 
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
 
     my %hc_analysis_params = (
@@ -215,7 +213,7 @@ sub pipeline_analyses {
                 'all_current'       => 1,
                 'extra_parameters'  => [ 'locator' ],
             },
-            -rc_name => '4Gb_job',
+            -rc_name => '2Gb_job',
             -flow_into => {
                 '2->A' => {
                     'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' },
@@ -230,7 +228,7 @@ sub pipeline_analyses {
                 'db_version'    => $self->o('ensembl_release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
-            -rc_name => '1Gb_job',
+            -rc_name => '2Gb_job',
             -flow_into  => [ 'check_reusability' ],
             -hive_capacity => $self->o('loadmembers_capacity'),
             -batch_size => $self->o('loadmembers_capacity'),    # Simple heuristic
@@ -254,10 +252,15 @@ sub pipeline_analyses {
                 # 'registry_dbs'      => $self->o('prev_core_sources_locs'),
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
                 'reuse_db'          => '#reuse_member_db#',
-                'current_release'   => $self->o('ensembl_release'),
+                'store_coding'      => $self->o('store_coding'),
+                'store_ncrna'       => $self->o('store_ncrna'),
+                'store_others'      => $self->o('store_others'),
+                'include_lrg'       => $self->o('include_lrg'),
+                'include_patches'   => $self->o('include_patches'),
+                'include_nonreference' => $self->o('include_nonreference'),
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
-            -rc_name => '1Gb_job',
+            -rc_name => '2Gb_job',
             -flow_into => {
                 2 => '?accu_name=reused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
                 3 => '?accu_name=nonreused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
@@ -266,7 +269,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'create_reuse_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CreateReuseSpeciesSets',
-            -rc_name => '2Gb_job',
             -flow_into  => [ 'compare_non_reused_genome_list' ],
         },
 
@@ -297,12 +299,10 @@ sub pipeline_analyses {
                 'species_set_id'    => '#reuse_ss_id#',
                 'store_ncrna'       => $self->o('store_ncrna'),
                 'store_others'      => $self->o('store_others'),
-                'fix_ncrna_members' => $self->o('fix_ncrna_members'),
             },
             -flow_into => {
                 '2->A' => [ 'all_table_reuse' ],
-                'A->1' => WHEN( '#fix_ncrna_members# && (#store_ncrna# || #store_others#)' => [ 'reused_species_fix_ncrna_factory' ],
-                                ELSE 'polyploid_genome_reuse_factory' ),
+                'A->1' => 'polyploid_genome_reuse_factory',
             },
         },
 
@@ -380,41 +380,6 @@ sub pipeline_analyses {
                 only_canonical              => 0,
             },
             %hc_analysis_params,
-        },
-
-# -----------------------------------------[fix the non-coding members]------------------------------------------------------------
-
-        {   -logic_name => 'reused_species_fix_ncrna_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -parameters => {
-                'component_genomes' => 0,
-                'species_set_id'    => '#reuse_ss_id#',
-            },
-            -flow_into => {
-                '2->A' => [ 'fix_ncrna_members' ],
-                'A->1' => [ 'polyploid_genome_reuse_factory' ],
-            },
-        },
-
-        # Same parameters as "load_fresh_members_from_db", but excluding coding genes
-        {   -logic_name => 'fix_ncrna_members',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FixNonCodingMembers',
-            -parameters => {
-                'store_related_pep_sequences' => 1,
-                'allow_ambiguity_codes'         => $self->o('allow_ambiguity_codes'),
-                'find_canonical_translations_for_polymorphic_pseudogene' => 1,
-                'store_missing_dnafrags'        => ((not $self->o('master_db')) or $self->o('master_db_is_missing_dnafrags') ? 1 : 0),
-                'exclude_gene_analysis'         => $self->o('exclude_gene_analysis'),
-                'include_nonreference'          => $self->o('include_nonreference'),
-                'include_patches'               => $self->o('include_patches'),
-                'store_ncrna'                   => $self->o('store_ncrna'),
-                'store_others'                  => $self->o('store_others'),
-            },
-            -hive_capacity => $self->o('loadmembers_capacity'),
-            -rc_name => '4Gb_job',
-            -flow_into => { 1 => {
-                'hc_members_per_genome' => INPUT_PLUS({'after_fix' => 1}),  # there is already a job with the input_id {genome_db_id => XX} so we need to make a different input_id
-            } },
         },
 
 # ---------------------------------------------[load the rest of members]------------------------------------------------------------
@@ -523,6 +488,7 @@ sub pipeline_analyses {
                 'exclude_gene_analysis'         => $self->o('exclude_gene_analysis'),
                 'include_nonreference'          => $self->o('include_nonreference'),
                 'include_patches'               => $self->o('include_patches'),
+                'include_lrg'                   => $self->o('include_lrg'),
                 'store_coding'                  => $self->o('store_coding'),
                 'store_ncrna'                   => $self->o('store_ncrna'),
                 'store_others'                  => $self->o('store_others'),

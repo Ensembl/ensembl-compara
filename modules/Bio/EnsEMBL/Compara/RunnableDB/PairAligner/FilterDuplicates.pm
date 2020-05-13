@@ -92,7 +92,7 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
-  $self->filter_duplicates;
+  $self->call_within_transaction( sub { $self->filter_duplicates } );
 }
 
 
@@ -187,8 +187,9 @@ sub filter_duplicates {
       my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ")";
       my $sql_ga_to_exec = $sql_ga . "(" . join(",", @gab_ids) . ")";
  
+      my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $self->compara_dba->dbc);
       foreach my $sql ($sql_ga_to_exec,$sql_gab_to_exec) {
- 	  my $sth = $self->compara_dba->dbc->prepare($sql);
+ 	  my $sth = $dbc->prepare($sql);
  	  $sth->execute;
  	  $sth->finish;
        }
@@ -307,8 +308,17 @@ sub removed_equals_from_genomic_align_block_list {
       next if($self->param('delete_hash')->{$gab2->dbID}); #already deleted so skip it
 
       if(genomic_align_blocks_identical($gab1, $gab2)) {
-        if($gab1->score != $gab2->score) {
-          # Choose which one to delete based on the score first
+        if(defined $gab1->direction && defined $gab2->direction && $gab1->direction + $gab2->direction == 3) {
+          # Choose which one to delete based on netting direction
+          # first - assuming one block has dir = 1 and the other = 2 (sum = 3)
+          if ( $gab1->direction == 1 ) {
+              $self->param('delete_hash')->{$gab2->dbID} = 1;
+          }
+          else {
+              $self->param('delete_hash')->{$gab1->dbID} = 1;
+          }
+        } elsif($gab1->score != $gab2->score) {
+          # Choose which one to delete based on the score next
           if ($gab1->score > $gab2->score) {
             $self->param('delete_hash')->{$gab2->dbID} = 1;
           }
@@ -329,10 +339,19 @@ sub removed_equals_from_genomic_align_block_list {
       elsif ($filter_duplicates_net) {
 	  # At the net step, check for overlapping blocks as well
 	  if (genomic_align_blocks_overlap ($gab1, $gab2)) {
-	      if($gab1->score >= $gab2->score) {
-		  $self->param('delete_hash')->{$gab2->dbID} = 1;
+        if(defined $gab1->direction && defined $gab2->direction && $gab1->direction + $gab2->direction == 3) {
+          # Choose which one to delete based on netting direction
+          # first - assuming one block has dir = 1 and the other = 2 (sum = 3)
+          if ( $gab1->direction == 1 ) {
+            $self->param('delete_hash')->{$gab2->dbID} = 1;
+          }
+          else {
+            $self->param('delete_hash')->{$gab1->dbID} = 1;
+          }
+        } elsif($gab1->score >= $gab2->score) {
+            $self->param('delete_hash')->{$gab2->dbID} = 1;
 	      } else {
-		  $self->param('delete_hash')->{$gab1->dbID} = 1;
+            $self->param('delete_hash')->{$gab1->dbID} = 1;
 	      }
 	      $self->param('identical_count', $self->param('identical_count')+1);       
 	  }
@@ -482,7 +501,17 @@ sub process_overlap_for_chunk_edge_truncation {
       ) 
     )   
   {
-    if($gab1->score > $gab2->score) {
+
+  if(defined $gab1->direction && defined $gab2->direction && $gab1->direction + $gab2->direction == 3) {
+    # Chose which one to delete based on netting direction
+    # first - assuming one block has dir = 1 and the other = 2 (sum = 3)
+    if ( $gab1->direction == 1 ) {
+      $self->param('delete_hash')->{$gab2->dbID} = 1;
+    }
+    else {
+      $self->param('delete_hash')->{$gab1->dbID} = 1;
+    }
+  } elsif($gab1->score > $gab2->score) {
       $self->param('delete_hash')->{$gab2->dbID} = 1;
     } else {
       $self->param('delete_hash')->{$gab1->dbID} = 1;

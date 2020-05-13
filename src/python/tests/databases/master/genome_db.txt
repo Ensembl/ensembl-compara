@@ -1,0 +1,20 @@
+1	9031	gallus_gallus	GRCg6a	2018-04-Ensembl	1	1	\N	\N	Chicken	\N	99	\N
+2	7955	danio_rerio	GRCz11	2017-08-Ensembl	1	1	\N	\N	Zebrafish	\N	99	\N
+3	28377	anolis_carolinensis	AnoCar2.0	2010-09-Ensembl	1	1	\N	\N	Anole lizard	\N	99	\N
+4	10090	mus_musculus	GRCm38	2012-01-Ensembl	1	1	\N	reference (CL57BL6) strain	Mouse	\N	99	\N
+5	9598	pan_troglodytes	Pan_tro_3.0	2017-08-Ensembl	1	1	\N	\N	Chimpanzee	\N	99	\N
+6	9615	canis_familiaris	CanFam3.1	2011-11-Ensembl	1	1	\N	reference breed	Dog	\N	99	\N
+7	62335	saccharum_spontaneum	Sspon.HiC_chr_asm	2019-08-UIL	1	1	\N	strain AP85-441	Saccharum spontaneum	\N	99	\N
+8	62335	saccharum_spontaneum	Sspon.HiC_chr_asm	2019-08-UIL	1	1	A	strain AP85-441	Saccharum spontaneum (component A)	\N	99	\N
+9	62335	saccharum_spontaneum	Sspon.HiC_chr_asm	2019-08-UIL	1	1	C	strain AP85-441	Saccharum spontaneum (component C)	\N	99	\N
+10	85692	triticum_dicoccoides	WEWSeq_v.1.0	2017-05-WEWSeq	1	1	\N	strain Zavitan (Atlit2015)	Triticum dicoccoides	\N	99	\N
+11	85692	triticum_dicoccoides	WEWSeq_v.1.0	2017-05-WEWSeq	1	1	A	strain Zavitan (Atlit2015)	Triticum dicoccoides (component A)	\N	99	\N
+12	85692	triticum_dicoccoides	WEWSeq_v.1.0	2017-05-WEWSeq	1	1	B	strain Zavitan (Atlit2015)	Triticum dicoccoides (component B)	\N	99	\N
+13	4565	triticum_aestivum	IWGSC	2018-04-IWGSC	1	1	\N	strain Chinese spring	Triticum aestivum	\N	99	\N
+14	4565	triticum_aestivum	IWGSC	2018-04-IWGSC	1	1	A	strain Chinese spring	Triticum aestivum (component A)	\N	99	\N
+15	4565	triticum_aestivum	IWGSC	2018-04-IWGSC	1	1	B	strain Chinese spring	Triticum aestivum (component B)	\N	99	\N
+16	4565	triticum_aestivum	IWGSC	2018-04-IWGSC	1	1	D	strain Chinese spring	Triticum aestivum (component D)	\N	99	\N
+17	9606	homo_sapiens	GRCh38	2014-01-Ensembl	1	1	\N	\N	Human	\N	99	\N
+18	7719	ciona_intestinalis	KH	2011-08-Ensembl	1	1	\N	\N	C.intestinalis	\N	99	\N
+19	7918	lepisosteus_oculatus	LepOcu1	2012-01-Ensembl	1	1	\N	\N	Spotted gar	\N	99	\N
+20	4572	triticum_urartu	ASM34745v1	2014-05-BGI	0	1	\N	strain G1812 (PI428198)	Triticum urartu	\N	99	\N

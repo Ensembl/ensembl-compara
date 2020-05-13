@@ -103,10 +103,9 @@ sub fetch_input {
     }
     my %expected_updated_gdbs   = map {$_ => 1} @{ slurp_to_array($expected_updates_file, 'chomp') };
 
-    my $current_release = $self->param_required('current_release');
     my $nonreuse_ss_id  = $self->param_required('nonreuse_ss_id');
     my $nonreuse_ss     = $self->compara_dba->get_SpeciesSetAdaptor->fetch_by_dbID($nonreuse_ss_id);
-    my %nonreuse_gdbs   = map {$_->name => 1} grep {$_->first_release < $current_release} @{$nonreuse_ss->genome_dbs};
+    my %nonreuse_gdbs   = map {$_->name => 1} @{$nonreuse_ss->genome_dbs};
 
     my $do_not_reuse_list   = $self->param('do_not_reuse_list');
     my %do_not_reuse_hash   = map {$_ => 1} @$do_not_reuse_list;

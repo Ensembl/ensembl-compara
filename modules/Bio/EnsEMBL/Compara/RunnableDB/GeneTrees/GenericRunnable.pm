@@ -134,7 +134,7 @@ sub fetch_input {
     $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
 
     my $gene_tree_id     = $self->param_required('gene_tree_id');
-    my $gene_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $gene_tree_id ) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
+    my $gene_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $gene_tree_id ) or $self->die_no_retry("Could not fetch gene_tree with gene_tree_id='$gene_tree_id'");
     $self->param('default_gene_tree', $gene_tree);
 
     die "Cannot read tags from TreeBest's output: set run_treebest_sdi or read_tags to 0" if $self->param('run_treebest_sdi') and $self->param('read_tags');

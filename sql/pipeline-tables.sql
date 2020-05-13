@@ -98,16 +98,17 @@ CREATE TABLE dna_collection (
 
 
 CREATE TABLE `anchor_sequence` (
-  `anchor_seq_id` bigint(20) unsigned NOT NULL auto_increment,
+  `anchor_seq_id` bigint unsigned NOT NULL auto_increment,
   `method_link_species_set_id` int(10) unsigned default NULL,
-  `anchor_id` bigint(20) unsigned default NULL,
-  `dnafrag_id` int(20) unsigned default NULL,
+  `anchor_id` bigint unsigned default NULL,
+  `dnafrag_id` bigint unsigned default NULL,
   `start` int(20) unsigned default NULL,
   `end` int(20) unsigned default NULL,
   `strand` tinyint(4) default '0',
   `sequence` varchar(250) default '',
   `length` int(20) unsigned default NULL,
   PRIMARY KEY  (`anchor_seq_id`),
+  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
   KEY `anchor_id_mlss_id` (`anchor_id`, `method_link_species_set_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
@@ -120,10 +121,10 @@ CREATE TABLE `anchor_sequence` (
 
 
 CREATE TABLE `anchor_align` (
-  `anchor_align_id` bigint(20) unsigned NOT NULL auto_increment,
+  `anchor_align_id` bigint unsigned NOT NULL auto_increment,
   `method_link_species_set_id` int(10) unsigned default NULL,
-  `anchor_id` bigint(20) unsigned default NULL,
-  `dnafrag_id` int(20) unsigned default NULL,
+  `anchor_id` bigint unsigned default NULL,
+  `dnafrag_id` bigint unsigned default NULL,
   `dnafrag_start` int(20) default NULL,
   `dnafrag_end` int(20) default NULL,
   `dnafrag_strand` tinyint(4) default NULL,
@@ -131,9 +132,10 @@ CREATE TABLE `anchor_align` (
   `num_of_organisms` smallint(5) unsigned default NULL,
   `num_of_sequences` smallint(5) unsigned default NULL,
   `evalue` varchar(10) default NULL,
-  `untrimmed_anchor_align_id` bigint(20) unsigned default NULL,
+  `untrimmed_anchor_align_id` bigint unsigned default NULL,
   `is_overlapping` tinyint(1) not null default 0,
   PRIMARY KEY  (`anchor_align_id`),
+  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
   KEY `untrimmed_anchor_align_id` (`untrimmed_anchor_align_id`),
   KEY `anchor_id_mlss_id` (`anchor_id`,`method_link_species_set_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
@@ -173,6 +175,7 @@ CREATE TABLE ktreedist_score (
   symm_difference int(10) unsigned DEFAULT NULL,
   n_partitions int(10) unsigned DEFAULT NULL,
   PRIMARY KEY tag_node_id (node_id,tag),
+  FOREIGN KEY (node_id) REFERENCES gene_tree_root(root_id),
   KEY tag (tag)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -238,8 +241,8 @@ CREATE TABLE IF NOT EXISTS panther_annot (
 	ensembl_id char(50) NOT NULL,
 	ensembl_div char(15) NOT NULL,
 	panther_family_id char(15) NOT NULL,
-	start int(11) NOT NULL,
-	end int(11) NOT NULL,
+	start int unsigned NOT NULL,
+	end int unsigned NOT NULL,
 	score int(11) NOT NULL,
 	evalue char(25) NOT NULL,
 

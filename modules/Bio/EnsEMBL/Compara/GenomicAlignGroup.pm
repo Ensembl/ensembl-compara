@@ -254,7 +254,7 @@ sub genome_db {
 
   foreach my $genomic_align (@{$self->get_all_GenomicAligns}) {
     return $genomic_align->genome_db if ($genomic_align->genome_db);
-    return $genomic_align->dnafrag->genome_db if ($genomic_align->dnafrag->genome_db);
+    return $genomic_align->dnafrag->genome_db if ($genomic_align->dnafrag && $genomic_align->dnafrag->genome_db);
   }
   return undef;
 }

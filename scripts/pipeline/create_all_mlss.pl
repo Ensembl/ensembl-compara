@@ -72,6 +72,10 @@ See conf/vertebrates/mlss_conf.xml for an example
 
 The RelaxNG definition of the XML files. Defaults to $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/compara_db_config.rng
 
+=item B<[--output_file output_file]>
+
+Optional. Print report in the given file instead of STDOUT.
+
 =back
 
 =head2 BEHAVIOUR CONFIGURATION
@@ -178,6 +182,7 @@ sub find_genome_from_xml_node_attribute {
     my ($xml_node, $attribute_name) = @_;
     my $species_name = $xml_node->getAttribute($attribute_name);
     my $gdb = $genome_dba->fetch_by_name_assembly($species_name) || throw("Cannot find $species_name in the available list of GenomeDBs");
+    die "Cannot find any current genomes with species_name '$species_name'. Please check that this name is still correct" unless $gdb->is_current;
     return $gdb;
 }
 
@@ -211,7 +216,8 @@ sub make_species_set_from_XML_node {
 
     if ($xml_ss->hasAttribute('in_collection')) {
         my $collection = find_collection_from_xml_node_attribute($xml_ss, 'in_collection', 'species-set');
-        $pool = $collection->genome_dbs;
+        # Exclude genome components from the pool
+        @{$pool} = grep { !$_->genome_component } @{$collection->genome_dbs};
     }
 
     my @selected_gdbs;
@@ -234,9 +240,6 @@ sub make_species_set_from_XML_node {
             $some_genome_dbs = [grep {$_->is_good_for_alignment} @$some_genome_dbs];
         }
 
-        if ($xml_taxon->hasAttribute('only_high_coverage') and $xml_taxon->getAttribute('only_high_coverage')) {
-            $some_genome_dbs = [grep {$_->is_high_coverage} @$some_genome_dbs];
-        }
         foreach my $xml_ref_taxon (@{$xml_taxon->getChildrenByTagName('ref_for_taxon')}) {
             my $gdb = find_genome_from_xml_node_attribute($xml_ref_taxon, 'name');
             my $taxon_id = $xml_ref_taxon->hasAttribute('taxon_id') ? $xml_ref_taxon->getAttribute('taxon_id') : undef;
@@ -288,12 +291,15 @@ my $division_node = $xml_document->documentElement();
 my $division_name = $division_node->getAttribute('division');
 my $division_species_set = $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($division_name);
 $collections{$division_name} = $division_species_set;
-my $division_genome_dbs = [sort {$a->dbID <=> $b->dbID} grep {!$_->genome_component} @{$division_species_set->genome_dbs}];
+my $division_genome_dbs = [sort {$a->dbID <=> $b->dbID} @{$division_species_set->genome_dbs}];
 foreach my $collection_node (@{$division_node->findnodes('collections/collection')}) {
+    my $no_release = $collection_node->getAttribute('no_release') || 0;
     my $genome_dbs = make_species_set_from_XML_node($collection_node, $division_genome_dbs);
     my $collection_name = $collection_node->getAttribute('name');
-    $collections{$collection_name} = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($genome_dbs, "collection-$collection_name");
+    $collections{$collection_name} = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($genome_dbs, "collection-$collection_name", $no_release);
 }
+# Do not create MLSSs for genome components (polyploids will be handled by each pipeline accordingly)
+@{$division_genome_dbs} = grep {!$_->genome_component} @{$division_genome_dbs};
 
 foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignments/pairwise_alignment')}) {
     my $ref_gdb = find_genome_from_xml_node_attribute($xml_one_vs_all_node, 'ref_genome');
@@ -365,7 +371,7 @@ while (my $aref1 = shift @refs_by_size) {
 foreach my $xml_msa (@{$division_node->findnodes('multiple_alignments/multiple_alignment')}) {
     my $no_release = $xml_msa->getAttribute('no_release') || 0;
     if ($xml_msa->getAttribute('method') =~ /(.*)\+(.*)/) {
-        # Assume we combine two pipelines (presumably EPO and EPO_LOW_COVERAGE)
+        # Assume we combine two pipelines (presumably EPO and EPO_EXTENDED)
         my $method1 = $compara_dba->get_MethodAdaptor->fetch_by_type($1);
         my $method2 = $compara_dba->get_MethodAdaptor->fetch_by_type($2);
         my $species_set2 = make_named_species_set_from_XML_node($xml_msa, $method2, $division_genome_dbs);
@@ -416,6 +422,8 @@ foreach my $st_node (@{$division_node->findnodes('species_trees/species_tree')})
     push @mlsss, Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_mlss($st_method, $species_set);
 }
 
+my $method_adaptor = $compara_dba->get_MethodAdaptor;
+my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
 my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 my %mlss_ids_to_find = map {$_->dbID => $_} @{$mlss_adaptor->fetch_all_current};
 
@@ -438,7 +446,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             my $collection = $collections{$collection_name};
             # Check if it is already in the database
             my $exist_set = $compara_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs($collection->genome_dbs);
-            if ($exist_set and $exist_set->is_current) {
+            if ($exist_set and ($exist_set->is_current || $collection->{_no_release})) {
                 next;
             }
             if ($verbose) {
@@ -448,7 +456,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             }
             unless ($dry_run) {
                 $compara_dba->get_SpeciesSetAdaptor->store($collection);
-                $compara_dba->get_SpeciesSetAdaptor->make_object_current($collection) if $release;
+                $compara_dba->get_SpeciesSetAdaptor->make_object_current($collection) if $release && !$collection->{_no_release};
             }
             if ($verbose) {
                 print "AFTER STORING: ", $collection->toString, "\n\n";
@@ -463,6 +471,22 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             if (!$exist_mlss and ($mlss->method->type eq 'LASTZ_NET')) {
                 # allow for cases where BLASTZ_NET is not in the method_link table - this is the case for EG
                 $exist_mlss = $mlss_adaptor->fetch_by_method_link_type_GenomeDBs('BLASTZ_NET', $mlss->species_set->genome_dbs) if ($compara_dba->get_MethodAdaptor->fetch_by_type('BLASTZ_NET'));
+            }
+            if (!$exist_mlss) {
+                # Check if either the method or the species_set are already in the database
+                my $exist_method = $method_adaptor->fetch_by_type($mlss->method->type);
+                $mlss->method($exist_method) if $exist_method;
+                my $exist_ss = $ss_adaptor->fetch_by_GenomeDBs($mlss->species_set->genome_dbs);
+                $mlss->species_set($exist_ss) if $exist_ss;
+            }
+            if ($exist_mlss and !$dry_run) {
+                # Update the names if they differ
+                if ($exist_mlss->name ne $mlss->name) {
+                    $compara_dba->dbc->do('UPDATE method_link_species_set SET name = ? WHERE method_link_species_set_id = ?', undef, $mlss->name, $exist_mlss->dbID);
+                }
+                if ($exist_mlss->species_set->name ne $mlss->species_set->name) {
+                    $compara_dba->dbc->do('UPDATE species_set_header SET name = ? WHERE species_set_id = ?', undef, $mlss->species_set->name, $exist_mlss->species_set->dbID);
+                }
             }
             if ($exist_mlss and ($exist_mlss->is_current || $mlss->{_no_release})) {
                 push @mlsss_existing, $exist_mlss;

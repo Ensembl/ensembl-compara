@@ -1,0 +1,14 @@
+{
+   "saccharum_spontaneum" : {
+        "core" : {
+            "regions" : [
+                ["3A", 36000001, 36800000],
+                ["3C", 52600001, 53400000]
+            ],
+            "adaptors" : [
+                {"name" : "gene"},
+                {"name" : "repeatfeature"}
+            ]
+        }
+    }
+}

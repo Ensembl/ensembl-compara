@@ -2,11 +2,11 @@
     {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+setup",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Relco+setup",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+Relco+setup",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Relco+setup#Relcosetup-Patchthereuseddatabasestothelatestschema",
             "summary": "Patch the reused databases"
          }
       ],
@@ -36,6 +36,13 @@
          },
          {
             "assignee": "<RelCo>",
+            "component": "Production tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps",
+            "summary": "Run the genome dumping pipeline",
+            "name_on_graph": "Genome dumps"
+         },
+         {
+            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-LastZbatching",
             "summary": "Prepare the LastZ batches"
@@ -46,13 +53,6 @@
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Members",
             "summary": "Run the member loading pipeline",
             "name_on_graph": "Member loading"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps",
-            "summary": "Run the genome dumping pipeline",
-            "name_on_graph": "Genome dumps"
          },
          {
             "assignee": "<RelCo>",
@@ -78,6 +78,12 @@
             "component": "Production tasks",
             "summary": "All LastZ",
             "name_on_graph": "All LastZ"
+         },
+         {
+            "component": "Production tasks",
+            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Plants::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/EPOwith2x_conf.pm]\n\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "summary": "Run the Rice EPOwith2x pipeline",
+            "name_on_graph": "EPOwith2x:Rice"
          },
          {
             "component": "Production tasks",
@@ -118,6 +124,12 @@
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data",
             "summary": "Merge DNA data",
             "name_on_graph": "All alignments for WGA Orthology QC"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Creation+of+a+new+ancestral+database",
+            "summary": "Build a new ancestral sequence core database"
          },
          {
             "assignee": "<RelCo>",
@@ -167,7 +179,13 @@
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Non-vertebratesdivisions(e.g.Plants,Metazoa)",
             "labels": ["Handover_anchor"],
             "summary": "Handover of release DB"
-         }
+        },
+        {
+           "assignee": "<RelCo>",
+           "component": "Relco tasks",
+           "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Vertebrates",
+           "summary": "Handover of ancestral DB"
+        }
       ],
       "summary": "<Division> Release <version> Database merge and handover"
    },

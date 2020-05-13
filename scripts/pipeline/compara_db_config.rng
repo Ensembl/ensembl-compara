@@ -171,8 +171,8 @@
                 <choice>
                   <value>PECAN</value>
                   <value>EPO</value>
-                  <value>EPO_LOW_COVERAGE</value>
-                  <value>EPO+EPO_LOW_COVERAGE</value>
+                  <value>EPO_EXTENDED</value>
+                  <value>EPO+EPO_EXTENDED</value>
                   <value>CACTUS_HAL</value>
                 </choice>
               </attribute>
@@ -211,21 +211,21 @@
       <!-- /multiple_alignments -->
       <optional>
         <element name="self_alignments" blockly:blockName="Self-alignments">
-          <zeroOrMore>
+          <oneOrMore>
             <element name="genome" blockly:blockName="Genome">
               <attribute name="name" blockly:blockName="Name"/>
             </element>
-          </zeroOrMore>
+          </oneOrMore>
         </element>
       </optional>
       <!-- /self_alignments -->
       <optional>
         <element name="assembly_patches" blockly:blockName="Assembly patches">
-          <zeroOrMore>
+          <oneOrMore>
             <element name="genome" blockly:blockName="Genome">
               <attribute name="name" blockly:blockName="Name"/>
             </element>
-          </zeroOrMore>
+          </oneOrMore>
         </element>
       </optional>
       <!-- /assembly_patches -->

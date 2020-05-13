@@ -51,9 +51,7 @@ use base ('Bio::EnsEMBL::Hive::RunnableDB::JobFactory', 'Bio::EnsEMBL::Compara::
 sub fetch_input {
     my $self = shift @_;
 
-    my $call_list               = $self->param('call_list')
-        or die "The old way of configuring this runnable is no longer supported; please set 'call_list' parameter and get more flexibility";
-
+    my $call_list      = $self->param_required('call_list');
     my $current_result = $self;
 
     foreach my $call (@$call_list) {

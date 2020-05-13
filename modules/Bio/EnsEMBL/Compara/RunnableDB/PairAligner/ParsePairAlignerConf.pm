@@ -53,8 +53,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 my $verbose = 0;
 
-#my $suffix_separator = '__cut_here__';
-
 sub fetch_input {
     my ($self) = @_;
     if (!$self->param('master_db') && !$self->param('core_dbs') && !$self->param('conf_file')) {
@@ -607,7 +605,7 @@ sub parse_defaults {
                     # of two different components without repetition
                     # Sort components alphabetically so the same order is
                     # followed in every PWA
-                    my @components = sort {$a cmp $b} @{$mlss_gdbs[0]->component_genome_dbs};
+                    my @components = sort @{$mlss_gdbs[0]->component_genome_dbs};
                     while (my $gdb1 = shift @components) {
                         foreach my $gdb2 ( @components ) {
                             push @pair,
@@ -631,7 +629,7 @@ sub parse_defaults {
                     my %non_ref_components = map { $_->genome_component => $_ } @{$mlss_gdbs[1]->component_genome_dbs};
                     # Sort components alphabetically so the same order is
                     # followed in every PWA
-                    my @components = sort {$a cmp $b} keys %ref_components;
+                    my @components = sort keys %ref_components;
                     # Ignore the components that are not present in both genomes
                     foreach my $cpnt ( @components ) {
                         if (exists $non_ref_components{$cpnt}) {
@@ -1145,6 +1143,7 @@ sub create_net_dataflows {
 			 'target_collection_name' => $net_config->{'non_reference_collection_name'},
 			 'input_mlss_id' => $chain_config->{'mlss_id'},
 			 'output_mlss_id' => $net_config->{'mlss_id'},
+             'direction' => 1,
 			);
 	$self->dataflow_output_id($output_hash,6);
 
@@ -1157,6 +1156,7 @@ sub create_net_dataflows {
                             'target_collection_name' => $net_config->{'reference_collection_name'},
                             'input_mlss_id' => $chain_config->{'mlss_id'},
                             'output_mlss_id' => $net_config->{'mlss_id'},
+                            'direction' => 2,
                );
            $self->dataflow_output_id($output_hash,6);
 
@@ -1235,12 +1235,8 @@ sub print_conf {
 sub load_registry_dbs {
     my ($registry_dbs) = @_;
     
-    #my $registry_dbs = $these_registry_dbs->[0];
-
-    #my $species_name = $self->param('species_name');
     for(my $r_ind=0; $r_ind<scalar(@$registry_dbs); $r_ind++) {
 	
-	#Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $suffix_separator.$r_ind );
 	Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -verbose=>1);
 
     } # try next registry server

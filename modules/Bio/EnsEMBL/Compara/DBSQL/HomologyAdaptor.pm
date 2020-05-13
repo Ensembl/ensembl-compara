@@ -703,4 +703,11 @@ sub update_wga_coverage {
   return $self;
 }
 
+sub count_by_mlss_id {
+    my ($self, $mlss_id) = @_;
+
+    $self->bind_param_generic_fetch($mlss_id, SQL_INTEGER);
+    return $self->generic_count('method_link_species_set_id=?');
+}
+
 1;

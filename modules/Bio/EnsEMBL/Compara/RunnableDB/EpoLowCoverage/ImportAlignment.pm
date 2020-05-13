@@ -113,19 +113,24 @@ sub importAlignment {
     }
 
     #Copy the species_set_header
-    copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
+    my $ssh_rows = copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
 	      "species_set_header",
-	      "SELECT species_set_header.* FROM species_set_header JOIN method_link_species_set USING (species_set_id) WHERE method_link_species_set_id = $mlss_id");
+	      "SELECT species_set_header.* FROM species_set_header JOIN method_link_species_set USING (species_set_id) WHERE method_link_species_set_id = $mlss_id",
+          0, 0, 0, $self->debug);
+    print "\n\n" if $self->debug;
 
     #Copy the method_link_species_set
-    copy_table($self->param('from_dbc'), $self->compara_dba->dbc,
+    my $mlss_rows = copy_table($self->param('from_dbc'), $self->compara_dba->dbc,
 	      "method_link_species_set",
 	      "method_link_species_set_id = $mlss_id");
+    print "\n\n" if $self->debug;
 
     #Copy the species_set
-    copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
+    my $ss_rows = copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
 	      "species_set",
-	      "SELECT species_set.* FROM species_set JOIN method_link_species_set USING (species_set_id) WHERE method_link_species_set_id = $mlss_id");
+	      "SELECT species_set.* FROM species_set JOIN method_link_species_set USING (species_set_id) WHERE method_link_species_set_id = $mlss_id",
+          0, 0, 0, $self->debug);
+    print "\n\n" if $self->debug;
 
     #copy genomic_align_block table
     my $gab_sql;
@@ -134,9 +139,10 @@ sub importAlignment {
     } else {
         $gab_sql = "SELECT * FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id";
     }
-    copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
+    my $gab_rows = copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
               "genomic_align_block",
-              $gab_sql);
+              $gab_sql, 0, 0, 0, $self->debug);
+    print "\n\n" if $self->debug;
 
     #copy genomic_align_tree table
     my $gat_sql;
@@ -148,11 +154,15 @@ sub importAlignment {
         $gat_sql = "SELECT gat.*".
                     " FROM genomic_align ga".
                     " JOIN dnafrag USING (dnafrag_id)".
-                    " LEFT JOIN genomic_align_tree gat USING (node_id) WHERE ga.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id $ancestral_dbID_constraint";
+                    " LEFT JOIN genomic_align_tree gat USING (node_id) WHERE ga.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id $ancestral_dbID_constraint ".
+                    "ORDER BY node_id DESC";
     }
-    copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
+
+    my $gat_rows = copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
               "genomic_align_tree",
-              $gat_sql);
+              $gat_sql, 1, 0, 'ignore_fks', $self->debug);
+    print "\n\n" if $self->debug;
+
 
     #copy genomic_align table
     my $ga_sql;
@@ -166,9 +176,9 @@ sub importAlignment {
                     " FROM genomic_align JOIN dnafrag USING (dnafrag_id)".
                     " WHERE method_link_species_set_id = $mlss_id $ancestral_dbID_constraint";
     }
-    copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
+    my $ga_rows = copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
               "genomic_align",
-              $ga_sql);
+              $ga_sql, 1, 0, 0, $self->debug);
 }
 
 
@@ -196,7 +206,7 @@ sub importAlignment_quick {
     $sth->finish();
 
     #$sql = "INSERT INTO genomic_align_tree SELECT genomic_align_tree.* FROM ?.genomic_align_tree LEFT JOIN ?.genomic_align_group USING (node_id) LEFT JOIN ?.genomic_align USING (genomic_align_id) LEFT JOIN ?.genomic_align_block WHERE genomic_align_block.method_link_species_set_id = ?\n";
-    $sql = "INSERT INTO genomic_align_tree SELECT * FROM $dbname.genomic_align_tree\n";
+    $sql = "SET FOREIGN_KEY_CHECKS = 0; INSERT INTO genomic_align_tree SELECT * FROM $dbname.genomic_align_tree; SET FOREIGN_KEY_CHECKS = 1\n";
     $sth = $self->compara_dba->dbc->prepare($sql);
 
     #$sth->execute($dbname, $dbname, $dbname, $dbname, $mlss_id);

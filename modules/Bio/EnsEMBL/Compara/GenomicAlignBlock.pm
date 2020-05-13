@@ -794,6 +794,35 @@ sub level_id {
 }
 
 
+=head2 direction
+
+  Arg [1]    : integer $direction
+  Example    : my $direction = $genomic_align_block->direction;
+  Example    : $genomic_align_block->direction(1);
+  Description: get/set for attribute direction. 
+  Returntype : integer
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub direction {
+    my ($self, $direction) = @_;
+
+    if (defined($direction)) {
+        $self->{'direction'} = ($direction);
+    } elsif (!defined($self->{'direction'})) {
+        # Try to get the ID from other sources...
+        if (defined($self->{'adaptor'}) and defined($self->dbID)) {
+            # ...from the database, using the dbID of the Bio::Ensembl::Compara::GenomicAlignBlock object
+            $self->adaptor->retrieve_all_direct_attributes($self);
+        }
+    }
+    return $self->{'direction'};
+}
+
+
 =head2 alignment_strings
 
   Arg [1]    : none

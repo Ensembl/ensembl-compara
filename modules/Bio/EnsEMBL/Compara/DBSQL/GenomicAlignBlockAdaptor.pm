@@ -192,8 +192,9 @@ sub store {
                 perc_id,
                 length,
                 group_id,
-                level_id
-        ) VALUES (?,?,?,?,?,?,?)};
+                level_id,
+                direction
+        ) VALUES (?,?,?,?,?,?,?,?)};
   
   my @values;
   
@@ -226,7 +227,8 @@ sub store {
                 $genomic_align_block->perc_id,
                 $genomic_align_block->length,
                 $genomic_align_block->group_id,
-		($genomic_align_block->level_id or 1)
+		($genomic_align_block->level_id or 1),
+                $genomic_align_block->direction,
         );
   if (!$genomic_align_block->dbID) {
     $genomic_align_block->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'genomic_align_block', 'genomic_align_block_id') );
@@ -238,6 +240,7 @@ sub store {
         ", id=".($genomic_align_block->perc_id or "NA")."\%".
         ", l=".($genomic_align_block->length or "NA").
         ", lvl=".($genomic_align_block->level_id or 1).
+        ", dir=".($genomic_align_block->direction or "NA").
         "");
 
   ## Stores genomic_align entries
@@ -264,21 +267,17 @@ sub store {
 sub delete_by_dbID {
   my ($self, $genomic_align_block_id) = @_;
 
+    ## First delete corresponding genomic_align entries
+    my $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor;
+    $genomic_align_adaptor->delete_by_genomic_align_block_id($genomic_align_block_id);
+
   my $genomic_align_block_sql =
         qq{DELETE FROM genomic_align_block WHERE genomic_align_block_id = ?};
   
-  ## Deletes genomic_align_block entry 
+  ## Then delete genomic_align_block entry
   my $sth = $self->prepare($genomic_align_block_sql);
   $sth->execute($genomic_align_block_id);
   $sth->finish();
-
-  # The following is not yet possible because this adaptor does not
-  # implement _tables()
-  #$self->SUPER::delete_by_dbID($genomic_align_block_id);
-  
-  ## Deletes corresponding genomic_align entries
-  my $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor;
-  $genomic_align_adaptor->delete_by_genomic_align_block_id($genomic_align_block_id);
 }
 
 
@@ -330,7 +329,7 @@ sub fetch_by_dbID {
                           -score => $score,
 			  -perc_id => $perc_id,
 			  -length => $length,
-                          -group_id => $group_id
+                          -group_id => $group_id,
                   );
     if (!$self->lazy_loading) {
       $genomic_align_block = $self->retrieve_all_direct_attributes($genomic_align_block);
@@ -731,7 +730,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
               gab.perc_id,
               gab.length,
               gab.group_id,
-              gab.level_id
+              gab.level_id,
+              gab.direction
           FROM
               genomic_align ga1, genomic_align_block gab, genomic_align ga2
           WHERE 
@@ -758,10 +758,10 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
   my $genomic_align_groups = {};
   my ($genomic_align_id, $genomic_align_block_id, $method_link_species_set_id,
       $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand, $cigar_line, $visible,
-      $query_genomic_align_id, $score, $perc_id, $length, $group_id, $level_id,);
+      $query_genomic_align_id, $score, $perc_id, $length, $group_id, $level_id, $direction);
   $sth->bind_columns(\$genomic_align_id, \$genomic_align_block_id, \$method_link_species_set_id,
       \$dnafrag_id, \$dnafrag_start, \$dnafrag_end, \$dnafrag_strand, \$cigar_line, \$visible,
-      \$query_genomic_align_id, \$score, \$perc_id, \$length, \$group_id, \$level_id);
+      \$query_genomic_align_id, \$score, \$perc_id, \$length, \$group_id, \$level_id, \$direction);
   while ($sth->fetch) {
 
     ## Index GenomicAlign by ga2.genomic_align_id ($query_genomic_align). All the GenomicAlign
@@ -777,7 +777,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
               -length => $length,
               -group_id => $group_id,
               -reference_genomic_align_id => $query_genomic_align_id,
-	      -level_id => $level_id,
+              -level_id => $level_id,
+              -direction => $direction,
           );
       push(@$genomic_align_blocks, $all_genomic_align_blocks->{$query_genomic_align_id});
     }
@@ -1187,7 +1188,8 @@ sub retrieve_all_direct_attributes {
             perc_id,
             length,
             group_id,
-            level_id
+            level_id,
+            direction
           FROM
             genomic_align_block
           WHERE
@@ -1198,7 +1200,7 @@ sub retrieve_all_direct_attributes {
 
   $sth->execute($genomic_align_block->dbID);
 
-  my ($method_link_species_set_id, $score, $perc_id, $length, $group_id, $level_id) = $sth->fetchrow_array();
+  my ($method_link_species_set_id, $score, $perc_id, $length, $group_id, $level_id, $direction) = $sth->fetchrow_array();
   $sth->finish();
   
   ## Populate the object
@@ -1210,6 +1212,7 @@ sub retrieve_all_direct_attributes {
   $genomic_align_block->length($length) if (defined($length));
   $genomic_align_block->group_id($group_id) if (defined($group_id));
   $genomic_align_block->level_id($level_id) if (defined($level_id));
+  $genomic_align_block->direction($direction) if (defined($direction));
 
   return $genomic_align_block;
 }

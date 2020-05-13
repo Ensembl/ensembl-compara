@@ -170,6 +170,7 @@ sub createAlignmentNetsJobs {
             $input_hash->{'DnaFragID'} = $qy_dnafrag_id;
             $input_hash->{'input_mlss_id'} = $self->param('method_link_species_set')->dbID;
             $input_hash->{'output_mlss_id'} = $self->param('output_mlss_id');
+            $input_hash->{'direction'} = $self->param_required('direction');
             
             $self->dataflow_output_id($input_hash, 2);
             $count++;

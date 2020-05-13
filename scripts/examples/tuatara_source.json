@@ -1,7 +1,7 @@
 [
 
 {
-	"production_name" : "tuatara",
+	"production_name" : "sphenodon_punctatus",
 	"taxonomy_id"     : "8508",
 	"cds_fasta"       : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/Tuatara.cds.fa",
 	"prot_fasta"      : "/nfs/production/panda/ensembl/compara/mateus/SANGER/tuatara/tuatara_data/Tuatara.prot.fa",

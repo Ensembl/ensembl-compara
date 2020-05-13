@@ -52,6 +52,7 @@ sub default_options {
         'dump_dir'         => '#dump_root#/release-'.$self->o('eg_release'),
 
         'division'          => 'plants',
+        'epo_reference_species' => ['oryza_sativa'],
     };
 }
 

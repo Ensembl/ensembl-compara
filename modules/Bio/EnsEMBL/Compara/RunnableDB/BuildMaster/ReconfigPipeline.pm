@@ -15,10 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::ReconfigPipeline
@@ -35,7 +31,7 @@ Requires several inputs:
     'reg_conf'        : full path to the registry configuration file
     'reg_conf_tmpl'   : full path to the registry configuration template file
     'master_db'       : new master database
-    'java_hc_db_prop' : full path to 'database.default.properties' file (used by
+    'ensj_conf'       : full path to 'ensj-healthcheck.json' file (used to run
                         Java healthchecks)
     'backups_dir'     : full path to the pipeline's backup directory
     'dst_host'        : host name where the cloned core databases have been created
@@ -48,6 +44,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::ReconfigPipeline;
 
 use warnings;
 use strict;
+
+use JSON;
+
 use Bio::EnsEMBL::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -80,7 +79,7 @@ sub run {
     my $reg_conf_tmpl   = $self->param_required('reg_conf_tmpl');
     my $core_dbs_hash   = $self->param_required('core_dbs_hash');
     my $master_db_info  = $self->param_required('master_db_info');
-    my $java_hc_db_prop = $self->param_required('java_hc_db_prop');
+    my $ensj_conf       = $self->param_required('ensj_conf');
     my $dst_host        = $self->param_required('dst_host');
     my $dst_port        = $self->param_required('dst_port');
     # Find the tag '<core_dbs_hash>' in the registry configuration file template
@@ -92,13 +91,13 @@ sub run {
     $content =~ s/'', '' ], # TAG: <master_db_info>/$master_db_info],/;
     # Modify the registry configuration file
     $self->_spurt($reg_conf, $content);
-    # All cloned core databases are in the same host, so replace that
-    # information in the Java healthchecks database properties file ('host',
-    # 'host1' and 'host2', and 'port', 'port1' and 'port2')
-    $content = $self->_slurp($java_hc_db_prop);
-    $content =~ s/(^)(host[12]?[ ]*=)[ ]*[\w\.-]+/$1$2 $dst_host/gm;
-    $content =~ s/(^)(port[12]?[ ]*=)[ ]*\d+/$1$2 $dst_port/gm;
-    $self->_spurt($java_hc_db_prop, $content);
+    # All cloned core databases are in the same server, so update that information
+    # in the compara ensj-healthcheck configuration file
+    $content = JSON->new->pretty->encode({
+        'host1'          => $dst_host,
+        'secondary.host' => $dst_host
+    });
+    $self->_spurt($ensj_conf, $content);
 }
 
 1;

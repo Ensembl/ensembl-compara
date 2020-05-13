@@ -109,6 +109,10 @@ unless ($url or ($reg_conf and $reg_alias)) {
 if($reg_conf) {
     Bio::EnsEMBL::Registry->load_all($reg_conf);    # if undefined, default reg_conf will be used
 }
+if ($reg_alias && $reg_alias =~ /:\/\//) {
+    $url = $reg_alias;
+    undef $reg_alias;
+}
 my $dba = $reg_alias
     ? Bio::EnsEMBL::Registry->get_DBAdaptor( $reg_alias, 'compara' )
     : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -URL => $url );

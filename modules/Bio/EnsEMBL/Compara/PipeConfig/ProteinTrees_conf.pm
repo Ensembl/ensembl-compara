@@ -58,7 +58,7 @@ sub default_options {
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         #'mlss_id'               => 40077,
-                                         
+
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
 
@@ -85,6 +85,7 @@ sub default_options {
         'dump_dir'              => $self->o('work_dir') . '/dumps',
         'dump_pafs_dir'         => $self->o('dump_dir') . '/pafs',
         'examl_dir'             => $self->o('work_dir') . '/examl',
+        'tmp_dir'               => $self->o('work_dir') . '/tmp',
         'plots_dir'             => $self->o('work_dir') . '/plots', # Directory used to store plots and their input files
 
     # "Member" parameters:
@@ -297,8 +298,6 @@ sub default_options {
         'ref_ortholog_db'           => undef,
 
     # CAFE parameters
-        # Do we want to initialise the CAFE part now ?
-        'do_cafe'                  => 1,
         'cafe_lambdas'             => '',  # For now, we don't supply lambdas
         'cafe_struct_tree_str'     => '',  # Not set by default
         'full_species_tree_label'  => 'default',
@@ -308,16 +307,20 @@ sub default_options {
         'use_timetree_times'       => 1,
 
     # GOC parameters
-        # Points to the previous protein trees production database. Will be used for various GOC operations. 
+        # Points to the previous protein trees production database. Will be used for various GOC operations.
         'goc_taxlevels'                 => [],
         'goc_threshold'                 => undef,
         'calculate_goc_distribution'    => 0,
 
     # HMM specific parameters
-        'hmm_library_name'              => 'compara_hmm_91.hmm3',
+        'hmm_library_name'              => '',      # Name of HMMER-3 library. Currently unused
         'hmmer_search_cutoff'           => '1e-23',
 
     # Extra analyses
+        # gain/loss analysis ?
+        'do_cafe'                => 1,
+        # gene order conservation ?
+        'do_goc'                 => 1,
         # compute dNdS for homologies?
         'do_dnds'                => 0,
         # Export HMMs ?
@@ -329,7 +332,7 @@ sub default_options {
         # Do we need a mapping between homology_ids of this database to another database ?
         # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
         'do_homology_id_mapping' => 1,
-        
+
         # homology dumps options
         'homology_dumps_dir'       => $self->o('dump_dir'). '/homology_dumps/',
         'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
@@ -384,7 +387,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
-        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'cluster_dir', 'dump_dir', 'dump_pafs_dir', 'examl_dir', 'fasta_dir', 'plots_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'cluster_dir', 'dump_dir', 'dump_pafs_dir', 'examl_dir', 'tmp_dir', 'fasta_dir', 'plots_dir']),
         $self->pipeline_create_commands_lfs_setstripe('fasta_dir'),
     ];
 }
@@ -430,6 +433,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'use_notung'   => $self->o('use_notung'),
         'use_treerecs' => $self->o('use_treerecs'),
         'use_raxml'    => $self->o('use_raxml'),
+        'do_goc'       => $self->o('do_goc'),
         'do_cafe'      => $self->o('do_cafe'),
         'do_stable_id_mapping'   => $self->o('do_stable_id_mapping'),
         'do_treefam_xref'   => $self->o('do_treefam_xref'),
@@ -590,7 +594,7 @@ sub core_pipeline_analyses {
                 'A->1'  => [ 'backbone_fire_homology_dumps' ],
             },
         },
-        
+
         {   -logic_name => 'backbone_fire_homology_dumps',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
@@ -615,9 +619,9 @@ sub core_pipeline_analyses {
                 'output_file'   => '#dump_dir#/snapshot_4_pipeline_finished.sql.gz',
             },
             -rc_name    => '500Mb_job',
-            -flow_into  => [ 
+            -flow_into  => [
                 'notify_pipeline_completed',
-                WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ), 
+                WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ),
             ],
         },
 
@@ -1054,7 +1058,7 @@ sub core_pipeline_analyses {
          -parameters => {
                          'hmmer_home'        => $self->o('hmmer3_home'),
                          'library_name'      => $self->o('hmm_library_name'),
-                         'library_basedir'   => $self->o('hmm_library_basedir'),
+                         'library_basedir'   => '#hmm_library_basedir#',
                          'hmmer_cutoff'      => $self->o('hmmer_search_cutoff'),
                         },
          -hive_capacity => $self->o('HMMer_search_capacity'),
@@ -1070,7 +1074,7 @@ sub core_pipeline_analyses {
          -parameters => {
                          'hmmer_home'        => $self->o('hmmer3_home'),
                          'library_name'      => $self->o('hmm_library_name'),
-                         'library_basedir'   => $self->o('hmm_library_basedir'),
+                         'library_basedir'   => '#hmm_library_basedir#',
                          'hmmer_cutoff'      => $self->o('hmmer_search_cutoff'),
                         },
          -hive_capacity => $self->o('HMMer_search_capacity'),
@@ -1087,7 +1091,7 @@ sub core_pipeline_analyses {
          -parameters => {
                          'hmmer_home'        => $self->o('hmmer3_home'),
                          'library_name'      => $self->o('hmm_library_name'),
-                         'library_basedir'   => $self->o('hmm_library_basedir'),
+                         'library_basedir'   => '#hmm_library_basedir#',
                          'hmmer_cutoff'      => $self->o('hmmer_search_cutoff'),
                         },
          -hive_capacity => $self->o('HMMer_search_capacity'),
@@ -1513,7 +1517,7 @@ sub core_pipeline_analyses {
             ),
             -rc_name => '500Mb_job',
         },
-        
+
         {   -logic_name => 'check_strains_cluster_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
@@ -1648,7 +1652,10 @@ sub core_pipeline_analyses {
                     '(#tree_gene_count# >= #mafft_gene_count#         and #tree_gene_count# < #mafft_himem_gene_count#)     or      (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)'  => 'mafft',
                     '(#tree_gene_count# >= #mafft_himem_gene_count#)                                                        or      (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)'  => 'mafft_himem',
                 ),
-                'A->1' => 'exon_boundaries_prep',
+                'A->1' => WHEN(
+                    '#is_already_supertree#' => 'panther_paralogs',
+                    ELSE 'exon_boundaries_prep',
+                ),
             },
             %decision_analysis_params,
         },
@@ -1688,7 +1695,7 @@ sub core_pipeline_analyses {
                 'output_gini_file'   => '#plots_dir#/gini_coefficient.out',
                 'output_gini_pdf'    => '#plots_dir#/gini_coefficient.pdf',
             },
-            -rc_name       => '500Mb_job',
+            -rc_name       => '2Gb_job',
         },
 
         {   -logic_name     => 'write_stn_tags',
@@ -1807,6 +1814,7 @@ sub core_pipeline_analyses {
                 'mafft_exe'                  => $self->o('mafft_exe'),
                 'mafft_threads'              => 8,
                 'mafft_mode'                 => '--retree 1 --memsavetree --memsave',
+                'tmp_dir'                    => $self->o('tmp_dir'),
             },
             -hive_capacity        => $self->o('mafft_himem_capacity'),
             -rc_name    => '16Gb_8c_job',
@@ -1822,6 +1830,7 @@ sub core_pipeline_analyses {
                 'mafft_exe'     => $self->o('mafft_exe'),
                 'mafft_threads' => 16,
                 'mafft_mode'    => '--retree 1 --memsavetree --memsave',
+                'tmp_dir'       => $self->o('tmp_dir'),
             },
             -hive_capacity => $self->o('mafft_himem_capacity'),
             -rc_name       => '128Gb_16c_job',
@@ -1836,9 +1845,8 @@ sub core_pipeline_analyses {
             -flow_into      => {
                 -1 => 'exon_boundaries_prep_himem',
                 1 => WHEN(
-                    '#is_already_supertree#' => 'panther_paralogs',
-                    '!#is_already_supertree# and #use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
-                    ELSE 'aln_filtering_tagging',
+                    '#use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
+                    ELSE 'aln_tagging',
                 ),
             },
             -rc_name    => '500Mb_job',
@@ -1852,13 +1860,20 @@ sub core_pipeline_analyses {
                 'treebreak_gene_count'      => $self->o('treebreak_gene_count'),
             },
             -flow_into      => WHEN(
-                '#is_already_supertree#' => 'panther_paralogs',
-                '!#is_already_supertree# and #use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
-                ELSE 'aln_filtering_tagging',
+                '#use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
+                ELSE 'aln_tagging',
             ),
             -rc_name    => '2Gb_job',
             -hive_capacity  => $self->o('split_genes_capacity'),
             -batch_size     => 20,
+        },
+
+        {   -logic_name     => 'aln_tagging',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::AlignmentTagging',
+            -hive_capacity  => $self->o('alignment_filtering_capacity'),
+            -rc_name        => '2Gb_job',
+            -batch_size     => 50,
+            -flow_into      => [ 'split_genes' ],
         },
 
 # ---------------------------------------------[main tree creation loop]-------------------------------------------------------------
@@ -1924,7 +1939,7 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 1 => WHEN(
-                     '(#tree_gene_count# <= #threshold_n_genes#) || (#tree_aln_length# <= #threshold_aln_len#)' => 'get_num_of_patterns',
+                     '(#tree_gene_count# <= #threshold_n_genes#) || (#tree_aln_length# <= #threshold_aln_len#)' => 'aln_filtering_tagging',
                      '(#tree_gene_count# >= #threshold_n_genes_large# and #tree_aln_length# > #threshold_aln_len#) || (#tree_aln_length# >= #threshold_aln_len_large# and #tree_gene_count# > #threshold_n_genes#)' => 'noisy_large',
                      #'' => 'trimal', # Not actually used
                      ELSE 'noisy',
@@ -1942,7 +1957,7 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name           => '4Gb_job',
             -batch_size     => 5,
-            -flow_into      => [ 'get_num_of_patterns' ],
+            -flow_into      => [ 'aln_filtering_tagging' ],
         },
 
         {   -logic_name     => 'noisy_large',
@@ -1954,7 +1969,7 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name           => '16Gb_job',
             -batch_size     => 5,
-            -flow_into      => [ 'get_num_of_patterns' ],
+            -flow_into      => [ 'aln_filtering_tagging' ],
         },
 
 
@@ -1966,7 +1981,7 @@ sub core_pipeline_analyses {
             #-hive_capacity  => $self->o('alignment_filtering_capacity'),
             #-rc_name        => '500Mb_job',
             #-batch_size     => 5,
-            #-flow_into      => [ 'get_num_of_patterns' ],
+            #-flow_into      => [ 'aln_filtering_tagging' ],
         #},
 
         {   -logic_name     => 'aln_filtering_tagging',
@@ -1974,7 +1989,7 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name        => '2Gb_job',
             -batch_size     => 50,
-            -flow_into      => [ 'split_genes' ],
+            -flow_into      => [ 'get_num_of_patterns' ],
         },
 
 # ---------------------------------------------[small trees decision]-------------------------------------------------------------
@@ -2447,7 +2462,7 @@ sub core_pipeline_analyses {
             -rc_name => '8Gb_8c_mpi',
             -flow_into => {
                -1 => [ 'examl_8_cores_himem' ],  # MEMLIMIT
-               -2 => [ 'examl_16_cores' ],       # RUNTIME 
+               -2 => [ 'examl_16_cores' ],       # RUNTIME
             }
         },
 
@@ -2518,7 +2533,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '8Gb_64c_mpi',
-            -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 64 cores. It will probably not converge. 
+            -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 64 cores. It will probably not converge.
             -flow_into => {
                -1 => [ 'examl_64_cores_himem' ],  # MEMLIMIT
                -2 => [ 'fasttree' ],  # RUNLIMIT
@@ -3120,13 +3135,14 @@ sub core_pipeline_analyses {
         {   -logic_name => 'quick_tree_break',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak',
             -parameters => {
-                'quicktree_exe'     => $self->o('quicktree_exe'),
+                'quicktree_exe'         => $self->o('quicktree_exe'),
+                'treebest_exe'          => $self->o('treebest_exe'),
                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
             -rc_name   => '2Gb_job',
             -flow_into => {
-                1 => 'other_paralogs',
+                1 => [ 'other_paralogs', 'subcluster_factory' ],
                 -1 => 'quick_tree_break_himem',
             },
         },
@@ -3134,37 +3150,41 @@ sub core_pipeline_analyses {
         {   -logic_name => 'quick_tree_break_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak',
             -parameters => {
-                'quicktree_exe'     => $self->o('quicktree_exe'),
+                'quicktree_exe'         => $self->o('quicktree_exe'),
+                'treebest_exe'          => $self->o('treebest_exe'),
                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
             -rc_name   => '4Gb_job',
-            -flow_into => [ 'other_paralogs_himem' ],
+            -flow_into => [ 'other_paralogs_himem', 'subcluster_factory' ],
         },
 
         {   -logic_name     => 'other_paralogs',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
-            -parameters     => {
-                'dataflow_subclusters' => 1,
-            },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
             -flow_into      => {
                 -1 => [ 'other_paralogs_himem', ],
-                2 => [ 'tree_backup' ],
-                3 => { 'other_paralogs' => INPUT_PLUS },
+                3 => [ 'other_paralogs' ],
             }
         },
 
         {   -logic_name     => 'other_paralogs_himem',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
-            -parameters     => {
-                'dataflow_subclusters' => 1,
-            },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
             -rc_name        => '500Mb_job',
             -flow_into      => {
+                3 => [ 'other_paralogs_himem' ],
+            }
+        },
+
+        {   -logic_name     => 'subcluster_factory',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters     => {
+                'inputquery'    => 'SELECT gtn1.root_id AS gene_tree_id, gene_count AS tree_gene_count FROM (gene_tree_node gtn1 JOIN gene_tree_root_attr USING (root_id)) JOIN gene_tree_node gtn2 ON gtn1.parent_id = gtn2.node_id WHERE gtn1.root_id != gtn2.root_id AND gtn2.root_id = #gene_tree_id#',
+            },
+            -hive_capacity  => $self->o('other_paralogs_capacity'),
+            -flow_into      => {
                 2 => [ 'tree_backup' ],
-                3 => { 'other_paralogs_himem' => INPUT_PLUS },
             }
         },
 
@@ -3200,7 +3220,7 @@ sub core_pipeline_analyses {
             -rc_name        => '1Gb_job',
             -flow_into      => {
                 -1 => [ 'panther_paralogs_himem', ],
-                3 => { 'panther_paralogs' => INPUT_PLUS },
+                3 => [ 'panther_paralogs' ],
             }
         },
 
@@ -3209,7 +3229,7 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('other_paralogs_capacity'),
             -rc_name        => '4Gb_job',
             -flow_into      => {
-                3 => { 'panther_paralogs_himem' => INPUT_PLUS },
+                3 => [ 'panther_paralogs_himem' ],
             }
         },
 
@@ -3267,6 +3287,7 @@ sub core_pipeline_analyses {
                 '1->A' => [
                     'rib_fire_gene_qc',
                     'rib_fire_homology_id_mapping',
+                    'rib_fire_cafe',
                 ],
                 'A->1' => 'rib_group_2'
             },
@@ -3277,7 +3298,6 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 '1->A' => [
                     'rib_fire_dnds',
-                    'rib_fire_cafe',
                     'rib_fire_homology_stats',
                     'rib_fire_hmm_build',
                     'rib_fire_goc'
@@ -3362,9 +3382,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'rib_fire_homology_id_mapping',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -parameters => {
-                'goc_taxlevels'         => $self->o('goc_taxlevels'),
-            },
             -flow_into  => WHEN('#do_homology_id_mapping#' => 'id_map_mlss_factory'),
         },
 
@@ -3549,10 +3566,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'rib_fire_goc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -parameters => {
-                'taxlevels'             => $self->o('goc_taxlevels'),
-            },
-            -flow_into  => WHEN('scalar(@{#taxlevels#})' => 'goc_entry_point'),
+            -flow_into  => WHEN('#do_goc#' => 'goc_entry_point'),
         },
 
         {   -logic_name => 'homology_stats_factory',
@@ -3604,12 +3618,11 @@ sub core_pipeline_analyses {
              -logic_name => 'remove_overlapping_homologies',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveOverlappingHomologies',
         },
-        
+
         {   -logic_name => 'copy_dumps_to_shared_loc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'         => 'become #shared_user# /bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rt #homology_dumps_dir#/ #homology_dumps_shared_dir#"',
-                'shared_user' => $self->o('shared_user'),
+                'cmd'         => '/bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtp #homology_dumps_dir#/ #homology_dumps_shared_dir#"',
             },
         },
 

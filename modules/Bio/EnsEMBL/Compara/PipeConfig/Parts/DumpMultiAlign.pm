@@ -43,12 +43,9 @@ sub pipeline_analyses_dump_multi_align {
             -parameters    => {
                 'method_link_types' => $self->o('method_link_types'),
                 'from_first_release' => $self->o('ensembl_release'),
+                'species_priority'   => $self->o('epo_reference_species'),
             },
-            # -input_ids     => [
-            #     {
-            #         'mlss_id'           => $self->o('mlss_id'),
-            #     },
-            # ],
+            -rc_name        => '1Gb_job',
             -flow_into      => {
                 '2->A' => [ 'count_blocks' ],
                 'A->2' => [ 'md5sum_aln_factory' ],
@@ -86,6 +83,7 @@ sub pipeline_analyses_dump_multi_align {
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
+            -rc_name => '1Gb_job',
         },
         # Generates DumpMultiAlign jobs from genomic_align_blocks on supercontigs (1 job per coordinate-system)
         {  -logic_name    => 'createSuperJobs',
@@ -162,6 +160,7 @@ sub pipeline_analyses_dump_multi_align {
             -parameters    => {
                 'readme_file' => '#output_dir#/README.#base_filename#',
             },
+            -rc_name       => '1Gb_job',
             -flow_into     => WHEN( '#make_tar_archive#' => [ 'targz' ] ),
         },
         {   -logic_name     => 'targz',

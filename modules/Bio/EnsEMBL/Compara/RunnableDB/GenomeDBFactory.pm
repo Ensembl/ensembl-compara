@@ -89,12 +89,12 @@ sub fetch_input {
 
     if (my $species_set_id = $self->param('species_set_id')) {
         assert_integer($species_set_id, 'species_set_id');
-        my $species_set    = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id) or die "Could not fetch ss with dbID=$species_set_id";
+        my $species_set    = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id) or $self->die_no_retry("Could not fetch ss with dbID=$species_set_id");
         $genome_dbs        = $species_set->genome_dbs();
 
     } elsif (my $mlss_id = $self->param('mlss_id')) {
         assert_integer($mlss_id, 'mlss_id');
-        my $mlss    = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
+        my $mlss    = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or $self->die_no_retry("Could not fetch mlss with dbID=$mlss_id");
         $genome_dbs = $mlss->species_set->genome_dbs;
 
     } elsif (my $species_set_name = $self->param('species_set_name')) {
@@ -104,7 +104,7 @@ sub fetch_input {
         $genome_dbs        = $species_sets->[0]->genome_dbs();
 
     } elsif (my $collection_name = $self->param('collection_name')) {
-        my $species_set    = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_collection_by_name($collection_name) or die "Could not fetch collection ss with name=$collection_name";
+        my $species_set    = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_collection_by_name($collection_name) or $self->die_no_retry("Could not fetch collection ss with name=$collection_name");
         $genome_dbs        = $species_set->genome_dbs();
 
     } elsif ($self->param('all_current')) {

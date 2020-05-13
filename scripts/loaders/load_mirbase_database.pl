@@ -37,9 +37,9 @@ and loads them in a new database.
 
 =head1 SYNOPSIS
 
-  perl update_genome.pl --help
+  perl load_mirbase_database.pl --help
 
-  perl update_genome.pl
+  perl load_mirbase_database.pl
        [--mirbase_version 123]
        [--mysql_url mysql://...]
        [--drop_existing_db]

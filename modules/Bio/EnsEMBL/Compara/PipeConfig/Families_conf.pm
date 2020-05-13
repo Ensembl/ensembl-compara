@@ -79,9 +79,6 @@ sub default_options {
 
         'blast_params'    => '', # By default C++ binary has composition stats on and -seg masking off
 
-        # data directories:
-        'warehouse_dir' => $self->o('warehouse_dir') . '/production/' . $self->o('ensembl_release') . '/Families_' . $self->o('rel_with_suffix'),
-
         # Thresholds for Mafft resource-classes
         'max_genes_lowmem_mafft'        =>  8000,
         'max_genes_singlethread_mafft'  => 50000,
@@ -103,7 +100,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
         
-        $self->pipeline_create_commands_rm_mkdir(['pipeline_dir', 'blastdb_dir', 'uniprot_dir', 'warehouse_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['pipeline_dir', 'blastdb_dir', 'uniprot_dir']),
         $self->pipeline_create_commands_lfs_setstripe('blastdb_dir'),
     ];
 }
@@ -120,7 +117,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'blast_params'      => $self->o('blast_params'),
 
         'work_dir'          => $self->o('pipeline_dir'),                # data directories and filenames
-        'warehouse_dir'     => $self->o('warehouse_dir'),
         'blastdb_dir'       => $self->o('blastdb_dir'),
         'load_uniprot_members_from_member_db' => $self->o('load_uniprot_members_from_member_db'),
         'uniprot_dir'       => $self->o('uniprot_dir'),
@@ -206,26 +202,7 @@ sub pipeline_analyses {
                 'biotype_filter'        => 'biotype_group IN ("coding","LRG")',
             },
             -analysis_capacity => 10,
-            # -flow_into         => WHEN('#name# eq "homo_sapiens"' => 'copy_freshest_dnafrags_from_master'),
         },
-
-        # !!! LRGs now loaded by LoadMembers pipeline !!!
-
-        # {   -logic_name    => 'copy_freshest_dnafrags_from_master',
-        #     -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-        #     -parameters    => {
-        #         'mode'          => 'insertignore',
-        #         'src_db_conn'   => '#master_db#',
-        #         'table'         => 'dnafrag',
-        #         'where'         => 'genome_db_id = #genome_db_id# AND coord_system_name = "lrg"',
-        #     },
-        #     -flow_into     => 'load_lrg_genes',
-        # },
-
-        # {   -logic_name => 'load_lrg_genes',
-        #     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadLRGs',
-        #     -rc_name    =>  '500Mb_job',
-        # },
 
         {   -logic_name         => 'hc_nonref_members',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::Families::SqlHealthChecks',
@@ -631,7 +608,7 @@ sub pipeline_analyses {
             -hive_capacity => 20, # to enable parallel branches
             -flow_into => {
                 1 => WHEN (
-                    '#hmm_clustering#' => 'warehouse_working_directory',
+                    '#hmm_clustering#' => 'notify_pipeline_completed',
                     ELSE 'insert_redundant_peptides',
                 )
             },
@@ -674,17 +651,9 @@ sub pipeline_analyses {
                 'release'     => $self->o('ensembl_release'),
             },
             -flow_into => {
-                1 => [ 'warehouse_working_directory' ],
+                1 => [ 'notify_pipeline_completed' ],
             },
             -rc_name => '16Gb_job',    # NB: make sure you give it enough memory or it will crash
-        },
-
-        {   -logic_name => 'warehouse_working_directory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters => {
-                'cmd'   => 'become -- ' . $self->o('shared_user') . ' cp -r #work_dir# #warehouse_dir#',
-            },
-            -flow_into => [ 'notify_pipeline_completed' ],
         },
 
         {   -logic_name => 'notify_pipeline_completed',

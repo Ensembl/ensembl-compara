@@ -93,7 +93,7 @@ SEQ Ornithorhynchus_anatinus ENSOANP00000021778 Ultra102 388659 395409 -1 ENSOAN
 # The SEQ section may list ancestral sequences too, following an
 # in-order traversal of the tree (see the TREE section below)
 
-#In EPO_LOW_COVERAGE alignments, the SEQ header may show a chromosome name of the form Composite_123456789.
+#In EPO_EXTENDED alignments, the SEQ header may show a chromosome name of the form Composite_123456789.
 #This indicates that the sequence of the species is actually made of
 #several scaffolds concatenated together
 #In those cases, the SEQ line will be preceded by a comment listing all the

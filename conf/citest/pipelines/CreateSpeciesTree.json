@@ -1,0 +1,11 @@
+{
+    "reference_dir": "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/citest/",
+    "files_tests": [
+        {
+            "test": "content",
+            "args": {
+                "patterns": ["species_tree.branch_len.nw"]
+            }
+        }
+    ]
+}

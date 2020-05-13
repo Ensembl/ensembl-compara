@@ -65,7 +65,7 @@ sub default_options {
 
         'master_db'   => 'compara_master',
         'member_db'   => 'compara_members',
-        'prev_rel_db' => 'nctrees_prev',
+        'mapping_db'  => 'compara_prev',
         # The following parameter should ideally contain EPO-2X alignments of
         # all the genomes used in the ncRNA-trees. However, due to release
         # coordination considerations, this may not be possible. If so, use the
@@ -100,7 +100,6 @@ sub default_options {
         'genomic_alignment_priority'       => 35,
         'genomic_alignment_himem_priority' => 40,
 
-        # How much the pipeline will try to reuse from "prev_rel_db"
             # tree break
             'treebreak_tags_to_copy'   => ['model_id', 'model_name'],
             'treebreak_gene_count'     => 400,
@@ -124,7 +123,6 @@ sub default_options {
             'binary_species_tree_input_file'   => undef, # you can define your own species_tree for 'CAFE'. It *has* to be binary
             'skip_epo'                 => 0,   # Never tried this one. It may fail
             'create_ss_picts'          => 0,
-            'infernal_mxsize'          => 10000,
 
             # ambiguity codes
             'allow_ambiguity_codes'    => 1,
@@ -169,7 +167,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'mlss_id'       => $self->o('mlss_id'),
         'master_db'     => $self->o('master_db'),
         'member_db'     => $self->o('member_db'),
-        'prev_rel_db'   => $self->o('prev_rel_db'),
+        'mapping_db'    => $self->o('mapping_db'),
         
         'homology_dumps_dir'        => $self->o('homology_dumps_dir'),
         'prev_homology_dumps_dir'   => $self->o('prev_homology_dumps_dir'),
@@ -244,7 +242,6 @@ sub core_pipeline_analyses {
                                 '1->A'  => [ 'copy_tables_factory' ],
                                 'A->1'  => [ 'backbone_fire_classify_genes' ],
                                },
-                -meadow_type=> 'LOCAL',
             },
 
             {   -logic_name => 'backbone_fire_classify_genes',
@@ -283,7 +280,6 @@ sub core_pipeline_analyses {
                     'notify_pipeline_completed',
                     WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ), 
                 ],
-                -meadow_type=> 'LOCAL',
             },
 
             {   -logic_name => 'notify_pipeline_completed',
@@ -606,8 +602,17 @@ sub core_pipeline_analyses {
             {   -logic_name    => 'recover_epo_himem',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
                 -analysis_capacity => $self->o('recover_capacity'),
-                -flow_into => [ 'hc_epo_removed_members' ],
+                -flow_into => {
+                    -1 => 'recover_epo_hugemem',
+                },
                 -rc_name => '16Gb_job',
+            },
+
+            {   -logic_name    => 'recover_epo_hugemem',
+                -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
+                -analysis_capacity => $self->o('recover_capacity'),
+                -flow_into => [ 'hc_epo_removed_members' ],
+                -rc_name => '24Gb_job',
             },
 
             {  -logic_name        => 'hc_epo_removed_members',
@@ -640,7 +645,7 @@ sub core_pipeline_analyses {
                 -parameters => {
                                 'cmbuild_exe' => $self->o('cmbuild_exe'),
                                 'cmalign_exe' => $self->o('cmalign_exe'),
-                                'infernal_mxsize' => $self->o('infernal_mxsize'),
+                                'mxsize_increment'  => 3000,    # Must be in line with the memory of the _himem analysis
                                },
                 -flow_into     => {
                     1 => ['quick_tree_break' ],
@@ -655,16 +660,16 @@ sub core_pipeline_analyses {
                 -parameters => {
                                 'cmbuild_exe' => $self->o('cmbuild_exe'),
                                 'cmalign_exe' => $self->o('cmalign_exe'),
-                                'infernal_mxsize' => $self->o('infernal_mxsize'),
                                },
                 -flow_into     => [ 'quick_tree_break' ],
-                -rc_name => '4Gb_job',
+                -rc_name => '8Gb_job',
             },
 
             {   -logic_name => 'quick_tree_break',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak',
                 -parameters => {
                                 'quicktree_exe'     => $self->o('quicktree_exe'),
+                                'treebest_exe'      => $self->o('treebest_exe'),
                                 'tags_to_copy'      => $self->o('treebreak_tags_to_copy'),
                                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
                                },
@@ -672,7 +677,7 @@ sub core_pipeline_analyses {
                 -rc_name        => '2Gb_job',
                 -priority       => 50,
                 -flow_into      => {
-                   1   => ['other_paralogs'],
+                   1   => ['other_paralogs', 'subcluster_factory'],
                    -1  => ['quick_tree_break_himem'], # MEMLIMIT
                 },
             },
@@ -681,42 +686,47 @@ sub core_pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak',
                 -parameters => {
                                 'quicktree_exe'     => $self->o('quicktree_exe'),
+                                'treebest_exe'      => $self->o('treebest_exe'),
                                 'tags_to_copy'      => $self->o('treebreak_tags_to_copy'),
                                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
                                },
                 -analysis_capacity  => $self->o('quick_tree_break_capacity'),
                 -rc_name        => '8Gb_job',
                 -priority       => 50,
-                -flow_into      => [ 'other_paralogs' ],
+                -flow_into      => [ 'other_paralogs', 'subcluster_factory' ],
             },
 
             {   -logic_name     => 'other_paralogs',
                 -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
-                -parameters     => {
-                                    'dataflow_subclusters' => 1,
-                                   },
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
                 -priority           => 40,
                 -rc_name            => '1Gb_job',
                 -flow_into     => {
                                    -1 => [ 'other_paralogs_himem' ],
-                                   2 => [ 'tree_backup' ],
-                                   3 => { 'other_paralogs' => INPUT_PLUS },
+                                   3 => [ 'other_paralogs' ],
                                   },
             },
 
             {   -logic_name     => 'other_paralogs_himem',
                 -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
-                -parameters     => {
-                                    'dataflow_subclusters' => 1,
-                                   },
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
                 -priority           => 40,
                 -rc_name            => '4Gb_job',
                 -flow_into     => {
-                                   2 => [ 'tree_backup' ],
-                                   3 => { 'other_paralogs_himem' => INPUT_PLUS },
+                                   3 => [ 'other_paralogs_himem' ],
                                   },
+            },
+
+
+            {   -logic_name     => 'subcluster_factory',
+                -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+                -parameters     => {
+                    'inputquery'    => 'SELECT gtn1.root_id AS gene_tree_id FROM (gene_tree_node gtn1 JOIN gene_tree_root_attr USING (root_id)) JOIN gene_tree_node gtn2 ON gtn1.parent_id = gtn2.node_id WHERE gtn1.root_id != gtn2.root_id AND gtn2.root_id = #gene_tree_id#',
+                },
+                -hive_capacity  => $self->o('other_paralogs_capacity'),
+                -flow_into      => {
+                    2 => [ 'tree_backup' ],
+                }
             },
 
             {   -logic_name    => 'infernal',
@@ -725,7 +735,7 @@ sub core_pipeline_analyses {
                 -parameters    => {
                                    'cmbuild_exe' => $self->o('cmbuild_exe'),
                                    'cmalign_exe' => $self->o('cmalign_exe'),
-                                   'infernal_mxsize' => $self->o('infernal_mxsize'),
+                                   'mxsize_increment'  => 10000,    # Must be in line with the memory of the _himem analysis
                                   },
                 -flow_into     => {
                                   -1 => [ 'infernal_himem' ],
@@ -740,7 +750,6 @@ sub core_pipeline_analyses {
                 -parameters    => {
                                    'cmbuild_exe' => $self->o('cmbuild_exe'),
                                    'cmalign_exe' => $self->o('cmalign_exe'),
-                                   'infernal_mxsize' => $self->o('infernal_mxsize'),
                                   },
                 -flow_into     => [ 'pre_secondary_structure_decision', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
                 -rc_name       => '16Gb_job',
@@ -1164,6 +1173,9 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'mlss_id_mapping',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDMapping',
+            -parameters => {
+                'prev_rel_db'               => '#mapping_db#',
+            },
             -hive_capacity => $self->o('homology_id_mapping_capacity'),
             -flow_into => { 1 => { 'homology_id_mapping' => INPUT_PLUS() } },
         },
@@ -1214,8 +1226,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'copy_dumps_to_shared_loc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'         => 'become #shared_user# /bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rt #homology_dumps_dir#/ #homology_dumps_shared_dir#"',
-                'shared_user' => $self->o('shared_user'),
+                'cmd'         => '/bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtp #homology_dumps_dir#/ #homology_dumps_shared_dir#"',
             },
         },
 

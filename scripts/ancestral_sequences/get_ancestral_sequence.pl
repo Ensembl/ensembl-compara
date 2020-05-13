@@ -303,7 +303,7 @@ foreach my $slice (@$slices) {
       $end = $length;
     }
     my $sub_slice = $slice->sub_Slice($start, $end);
-    $num_of_blocks += dump_ancestral_sequence($fasta_fh, $sub_slice, $mlss);
+    $num_of_blocks += dump_ancestral_sequence($fasta_fh, $bed_fh, $sub_slice, $mlss);
   }
   close($fasta_fh);
   close($bed_fh);

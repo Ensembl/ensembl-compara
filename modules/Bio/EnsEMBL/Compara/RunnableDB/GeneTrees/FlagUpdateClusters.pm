@@ -102,10 +102,10 @@ sub run {
     $self->param( 'root_ids_2_delete', \%root_ids_2_delete );
 
     #get current tree adaptor
-    $self->param( 'current_tree_adaptor', $self->param('compara_dba')->get_GeneTreeAdaptor ) || die "Could not get current GeneTreeAdaptor";
+    $self->param( 'current_tree_adaptor', $self->param('compara_dba')->get_GeneTreeAdaptor );
 
     #get reused tree adaptor
-    $self->param( 'reused_tree_adaptor', $self->param('reuse_compara_dba')->get_GeneTreeAdaptor ) || die "Could not get reused GeneTreeAdaptor";
+    $self->param( 'reused_tree_adaptor', $self->param('reuse_compara_dba')->get_GeneTreeAdaptor );
 
     print "looping current_stable_ids\n" if ( $self->debug );
     foreach my $current_stable_id ( keys %{$current_stable_ids} ) {
@@ -113,7 +113,7 @@ sub run {
         my $gene_tree_id = $current_stable_ids->{$current_stable_id};
 
         #get current_gene_tree
-        my $current_gene_tree = $self->param('current_tree_adaptor')->fetch_by_dbID($gene_tree_id) or die "Could not fetch current_gene_tree with gene_tree_id='$gene_tree_id'";
+        my $current_gene_tree = $self->param('current_tree_adaptor')->fetch_by_dbID($gene_tree_id) or $self->die_no_retry("Could not fetch current_gene_tree with gene_tree_id='$gene_tree_id'");
         $self->throw("no input current_gene_tree") unless $current_gene_tree;
         my @current_members = @{ $current_gene_tree->get_all_Members };
         my $num_of_members  = scalar(@current_members);

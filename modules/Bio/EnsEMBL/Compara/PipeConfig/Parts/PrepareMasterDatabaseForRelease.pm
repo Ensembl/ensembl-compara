@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForRelease
@@ -37,12 +26,6 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForRelease
     database, update master database's metadata, and update collections and mlss.
     Finally, it will run the healthchecks and perform a backup of the updated master
     database.
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
 
 =cut
 
@@ -72,7 +55,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
                 'src_db_conn'  => $self->o('taxonomy_db'),
-                'dest_db_conn' => $self->o('master_db'),
+                'dest_db_conn' => '#master_db#',
                 'mode'         => 'overwrite',
                 'filter_cmd'   => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/g"',
                 'table'        => 'ncbi_taxa_node',
@@ -84,7 +67,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
                 'src_db_conn'  => $self->o('taxonomy_db'),
-                'dest_db_conn' => $self->o('master_db'),
+                'dest_db_conn' => '#master_db#',
                 'mode'         => 'overwrite',
                 'filter_cmd'   => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/g"',
                 'table'        => 'ncbi_taxa_name',
@@ -95,7 +78,7 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'import_aliases',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PatchDB',
             -parameters => {
-                'db_conn'        => $self->o('master_db'),
+                'db_conn'        => '#master_db#',
                 'patch_file'     => $self->o('alias_file'),
                 'ignore_failure' => 1,
                 'record_output'  => 1,
@@ -107,12 +90,32 @@ sub pipeline_analyses_prep_master_db_for_release {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::SqlHealthChecks',
             -parameters => {
                 'mode'    => 'taxonomy',
-                'db_conn' => $self->o('master_db'),
+                'db_conn' => '#master_db#',
             },
-            -flow_into  => WHEN(
-                '#do_update_from_metadata#' => 'update_genome_from_metadata_factory',
-                ELSE 'update_genome_from_registry_factory',
-            ),
+            -flow_into  => ['assembly_patch_factory'],
+        },
+
+        {   -logic_name => 'assembly_patch_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputlist'    => $self->o('assembly_patch_species'),
+                'column_names' => ['species_name'],
+            },
+            -flow_into  => {
+                '2->A' => [ 'list_assembly_patches' ],
+                'A->1' => WHEN(
+                    '#do_update_from_metadata#' => 'update_genome_from_metadata_factory',
+                    ELSE 'update_genome_from_registry_factory',
+                ),
+            },
+        },
+
+        {   -logic_name => 'list_assembly_patches',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::ListChangedAssemblyPatches',
+            -parameters => {
+                'compara_db' => '#master_db#',
+                'work_dir'   => $self->o('work_dir'),
+            },
         },
 
         {   -logic_name => 'update_genome_from_metadata_factory',
@@ -123,12 +126,13 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'additional_species'    => $self->o('additional_species'),
                 'work_dir'              => $self->o('work_dir'),
                 'annotation_file'       => $self->o('annotation_file'),
+                'meta_host'             => $self->o('meta_host'),
             },
             -flow_into  => {
                 '2->A' => [ 'add_species_into_master' ],
                 '3->A' => [ 'retire_species_from_master' ],
                 '4->A' => [ 'rename_genome' ],
-                '5->A' => [ 'load_assembly_patches' ],
+                '5->A' => [ 'verify_genome' ],
                 'A->1' => [ 'sync_metadata' ],
             },
             -rc_name    => '16Gb_job',
@@ -155,10 +159,23 @@ sub pipeline_analyses_prep_master_db_for_release {
         },
 
         {   -logic_name => 'rename_genome',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::RenameGenome',
             -parameters => {
-                'db_conn' => $self->o('master_db'),
+                'prev_dbs'          => $self->o('prev_dbs'),
+                'xml_file'          => $self->o('xml_file'),
+                'species_trees'     => $self->o('species_trees'),
+                'genome_dumps_dir'  => $self->o('genome_dumps_dir'),
+                'sketch_dir'        => $self->o('sketch_dir'),
             },
+        },
+
+        {   -logic_name    => 'verify_genome',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::VerifyGenome',
+            -parameters => {
+                'compara_db'        => $self->o('master_db'),
+            },
+            -hive_capacity => 10,
+            -rc_name       => '16Gb_job',
         },
 
         {   -logic_name => 'sync_metadata',
@@ -166,36 +183,15 @@ sub pipeline_analyses_prep_master_db_for_release {
             -parameters => {
                 'update_metadata_script' => $self->o('update_metadata_script'),
                 'reg_conf'               => $self->o('reg_conf'),
-                'master_db'              => $self->o('master_db'),
-                'division'               => $self->o('division'),
-                'cmd' => 'perl #update_metadata_script# --reg_conf #reg_conf# --compara #master_db# --division #division#'
-            },
-            -flow_into  => WHEN(
-                '#do_load_lrg_dnafrags#' => 'load_lrg_dnafrags',
-                ELSE 'update_collection',
-            ),
-        },
-
-        {   -logic_name => 'load_lrg_dnafrags',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::LoadLRGDnaFrags',
-            -parameters => {
-                'compara_db' => $self->o('master_db'),
+                'cmd' => 'perl #update_metadata_script# --reg_conf #reg_conf# --compara #master_db# --division #division# --nocheck_species_missing_from_compara'
             },
             -flow_into  => [ 'update_collection' ],
-        },
-
-        {   -logic_name => 'load_assembly_patches',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::LoadAssemblyPatches',
-            -parameters => {
-                'compara_db' => $self->o('master_db'),
-                'work_dir'   => $self->o('work_dir'),
-            },
         },
 
         {   -logic_name => 'update_collection',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CreateReleaseCollection',
             -parameters => {
-                'collection_name' => $self->o('division'),
+                'collection_name' => '#division#',
                 'incl_components' => $self->o('incl_components'),
             },
             -flow_into  => [ 'add_mlss_to_master' ],
@@ -206,7 +202,6 @@ sub pipeline_analyses_prep_master_db_for_release {
             -parameters => {
                 'create_all_mlss_exe' => $self->o('create_all_mlss_exe'),
                 'reg_conf'            => $self->o('reg_conf'),
-                'master_db'           => $self->o('master_db'),
                 'xml_file'            => $self->o('xml_file'),
                 'report_file'         => $self->o('report_file'),
                 'cmd'                 => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #master_db# -xml #xml_file# --release --output_file #report_file# --verbose',
@@ -230,7 +225,7 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'load_timetree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::LoadTimeTree',
             -parameters => {
-                'compara_db' => $self->o('master_db'),
+                'compara_db' => '#master_db#',
             },
             -flow_into  => [ 'reset_master_urls' ],
         },
@@ -247,11 +242,13 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name      => 'hc_master',
             -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RunJavaHealthCheck',
             -parameters      => {
-                'compara_db'  => $self->o('master_db'),
+                'compara_db'  => '#master_db#',
                 'work_dir'    => $self->o('work_dir'),
                 'testgroup'   => 'ComparaMaster',
                 'output_file' => '#work_dir#/healthcheck.#testgroup#.out',
-                'java_hc_dir' => $self->o('java_hc_dir'),
+                'ensj_conf'   => $self->o('ensj_conf'),
+                'run_healthchecks_exe' => $self->o('run_healthchecks_exe'),
+                'ensj_testrunner_exe'  => $self->o('ensj_testrunner_exe'),
             },
             -flow_into       => [ 'backup_master' ],
             -rc_name         => '2Gb_job',
@@ -261,10 +258,54 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'backup_master',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'src_db_conn' => $self->o('master_db'),
+                'src_db_conn' => '#master_db#',
                 'output_file' => $self->o('master_backup_file'),
             },
-            -rc_name => '1Gb_job',
+            -flow_into  => [ 'copy_pre_backup_to_warehouse' ],
+            -rc_name    => '1Gb_job',
+        },
+
+        {   -logic_name => 'copy_pre_backup_to_warehouse',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'shared_user'   => $self->o('shared_user'),
+                'backups_dir'   => $self->o('backups_dir'),
+                'warehouse_dir' => $self->o('warehouse_dir'),
+                'cmd'           => 'become #shared_user# cp #backups_dir#/compara_master_#division#.pre#release#.sql #warehouse_dir#/master_db_dumps/ensembl_compara_master_#division#.$(date "+%Y%m%d").pre#release#.sql',
+            },
+            -flow_into  => [ 'copy_post_backup_to_warehouse' ],
+        },
+
+        {   -logic_name => 'copy_post_backup_to_warehouse',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'shared_user'   => $self->o('shared_user'),
+                'backups_dir'   => $self->o('backups_dir'),
+                'warehouse_dir' => $self->o('warehouse_dir'),
+                'cmd'           => 'become #shared_user# cp #backups_dir#/compara_master_#division#.post#release#.sql #warehouse_dir#/master_db_dumps/ensembl_compara_master_#division#.$(date "+%Y%m%d").during#release#.sql',
+            },
+            -flow_into  => WHEN(
+                '#do_update_from_metadata#' => 'copy_annotations_to_shared_loc'
+            ),
+        },
+
+        {   -logic_name => 'copy_annotations_to_shared_loc',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'annotation_file' => $self->o('annotation_file'),
+                'shared_hps_dir'  => $self->o('shared_hps_dir'),
+                'cmd'             => 'install -C --mode=664 #annotation_file# #shared_hps_dir#/genome_reports/',
+            },
+	    -flow_into  => [ 'copy_json_reports_to_shared_loc' ],
+        },
+
+        {   -logic_name => 'copy_json_reports_to_shared_loc',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'work_dir'        => $self->o('work_dir'),
+                'shared_hps_dir'  => $self->o('shared_hps_dir'),
+                'cmd'             => 'install -C --mode=664 -t #shared_hps_dir#/genome_reports/ #work_dir#/report_updates.*.json',
+            },
         },
     ];
 }

@@ -42,9 +42,12 @@ my $compara_db = $dbc->url;
 use Cwd 'abs_path';
 my $test_flatfile = abs_path($0);
 $test_flatfile    =~ s!PrepareOrthologs\.t!homology_flatfiles/wga.test.tsv!;
+my $test_prev_flatfile = abs_path($0);
+$test_prev_flatfile    =~ s!PrepareOrthologs\.t!homology_flatfiles/wga_prev.test.tsv!;
 my $test_map_file = abs_path($0);
 $test_map_file    =~ s!PrepareOrthologs\.t!homology_flatfiles/prep_orth.hom_map.tsv!;
 print "--- test flatfile: $test_flatfile\n";
+print "--- test prev_flatfile: $test_prev_flatfile\n";
 print "--- test map_file: $test_map_file\n";
 
 # Test on pair of species without reuse #
@@ -52,12 +55,15 @@ $exp_dataflow = { orth_info => [
     { id => 101, gene_members => [ [9263633, 134], [9274269, 150] ]},
     { id => 102, gene_members => [ [9263637, 134], [9274269, 150] ]},
     { id => 103, gene_members => [ [9263633, 134], [9284238, 150] ]},
-]};
+],
+    aln_mlss_ids => [54321],
+};
 
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs', # module
 	{ # input param hash
         'orth_mlss_id'      => '12345',
+        'aln_mlss_ids'      => ['54321'],
 		'species1_id'       => '150',
 		'species2_id'       => '134',
 		'compara_db'        => $compara_db,
@@ -65,6 +71,7 @@ standaloneJob(
         'new_alignment'     => 0,
         'homology_flatfile'         => $test_flatfile,
         'homology_mapping_flatfile' => $test_map_file,
+        'previous_wga_file'         => 'Not/a/real/file.txt',
 	},
 	[ # list of events to test for (just 1 event in this case)
 		[ # start event
@@ -82,12 +89,15 @@ my $prev_compara_db = $dbc_prev->url;
 
 my $exp_dataflow_2 = { orth_info => [
     { id => 101, gene_members => [ [9263633, 134], [9274269, 150] ]}
-]};
+],
+    aln_mlss_ids => [54321],
+};
 
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs', # module
 	{ # input param hash
         'orth_mlss_id'      => '12345',
+        'aln_mlss_ids'      => ['54321'],
 		'species1_id'       => '150',
 		'species2_id'       => '134',
 		'compara_db'        => $compara_db,
@@ -96,7 +106,7 @@ standaloneJob(
         'new_alignment'     => 0,
         'homology_flatfile'         => $test_flatfile,
         'homology_mapping_flatfile' => $test_map_file,
-        'previous_wga_file'         => 'prev_wga_file.tsv',
+        'previous_wga_file'         => $test_prev_flatfile,
     },
     [ # list of events to test for
         [
@@ -121,6 +131,7 @@ standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs', # module
 	{ # input param hash
         'orth_mlss_id'      => '12345',
+        'aln_mlss_ids'      => ['54321'],
 		'species1_id'       => '150',
 		'species2_id'       => '134',
 		'compara_db'        => $compara_db,
@@ -129,7 +140,7 @@ standaloneJob(
         'new_alignment'     => 0,
         'homology_flatfile'         => $test_flatfile,
         'homology_mapping_flatfile' => $test_map_file,
-        'previous_wga_file'         => 'prev_wga_file.tsv',
+        'previous_wga_file'         => $test_prev_flatfile,
     },
     [ # list of events to test for
         [

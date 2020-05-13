@@ -74,17 +74,17 @@ sub default_options {
     'pipeline_name' => $self->o('species_set_name').'_epo_low_coverage_'.$self->o('rel_with_suffix'),
 
         'master_db' => 'compara_master',
-        # Location of compara db containing EPO/EPO_LOW_COVERAGE alignment to use as a base
+        # Location of compara db containing EPO/EPO_EXTENDED alignment to use as a base
         'epo_db'    => $self->o('species_set_name') . '_epo',
 
 	'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment
 	'base_epo_mlss_id' => $self->o('base_epo_mlss_id'), #mlss_id for the base alignment we're topping up
-                                                        # (can be EPO or EPO_LOW_COVERAGE)
+                                                        # (can be EPO or EPO_EXTENDED)
 	'mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment, needed for the alignment stats
 
         # Default location for pairwise alignments (can be a string or an array-ref,
         # and the database aliases can include '*' as a wildcard character)
-        'pairwise_location' => [ qw(compara_prev lastz_batch_*) ],
+        'pairwise_location' => [ qw(unidir_lastz compara_prev lastz_batch_*) ],
 
 	'max_block_size'  => 1000000,                       #max size of alignment before splitting 
 
@@ -120,6 +120,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
             'run_gerp' => $self->o('run_gerp'),
             'genome_dumps_dir' => $self->o('genome_dumps_dir'),
             'reg_conf' => $self->o('reg_conf'),
+            'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),
+            'base_epo_mlss_id' => $self->o('base_epo_mlss_id'),
     };
 }
 

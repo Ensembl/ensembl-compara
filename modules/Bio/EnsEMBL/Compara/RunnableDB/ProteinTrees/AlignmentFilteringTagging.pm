@@ -18,16 +18,6 @@ limitations under the License.
 
 =cut
 
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
-=cut
-
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::AlignmentFilteringTagging;
 
 use strict;
@@ -42,14 +32,10 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self         = shift @_;
     my $gene_tree_id = $self->param_required('gene_tree_id');
-    $self->param( 'tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor );
-    my $gene_tree = $self->param('tree_adaptor')->fetch_by_dbID($gene_tree_id) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
+    my $gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($gene_tree_id) or $self->die_no_retry("Could not fetch gene_tree with gene_tree_id='$gene_tree_id'");
 
     #print Dumper $gene_tree;
     $self->param( 'gene_tree', $gene_tree );
-
-    my $aligned_members = $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_gene_align_id( $gene_tree->gene_align_id );
-    $self->param( 'aligned_members', $aligned_members );
 }
 
 sub run {
@@ -60,17 +46,6 @@ sub run {
 
     my $shrinking_factor = $self->_get_shrinking_factor( $n_removed_columns );
     $self->param( 'shrinking_factor', $shrinking_factor );
-
-    my $gene_count = scalar( @{$self->param('aligned_members')} );
-    $self->param( 'gene_count', $gene_count );
-
-    my $gappiness = $self->_get_gappiness();
-    my $aligned_proportion = 1-$gappiness;
-    $self->param( 'gappiness', $gappiness );
-    $self->param( 'aligned_proportion', $aligned_proportion);
-
-    my $alignment_depth = $self->_get_alignment_depth();
-    $self->param( 'alignment_depth', $alignment_depth);
 }
 
 sub write_output {
@@ -78,10 +53,6 @@ sub write_output {
     $self->param('gene_tree')->store_tag( 'aln_n_removed_columns',   $self->param('n_removed_columns') );
     $self->param('gene_tree')->store_tag( 'aln_shrinking_factor',    $self->param('shrinking_factor') );
     $self->param('gene_tree')->store_tag( 'aln_after_filter_length', $self->param('after_filter_length') );
-    $self->param('gene_tree')->store_tag( 'gene_count',              $self->param('gene_count') );
-    $self->param('gene_tree')->store_tag( 'gappiness',               $self->param('gappiness') );
-    $self->param('gene_tree')->store_tag( 'aligned_proportion',      $self->param('aligned_proportion') );
-    $self->param('gene_tree')->store_tag( 'alignment_depth',         $self->param('alignment_depth') );
 }
 
 ##########################################
@@ -129,51 +100,6 @@ sub _get_shrinking_factor {
     $self->param( 'after_filter_length', $after_filter_length );
     my $ratio = 1 - ( $after_filter_length/$aln_length );
     return $ratio;
-}
-
-
-sub _get_gappiness {
-    my $self = shift;
-
-    #Amount of positions on the alignment
-    my $sum = 0;
-
-    #Quantity of gaps in the alignment
-    my $gaps = 0;
-
-    foreach my $member ( @{ $self->param('aligned_members') } ) {
-
-        #break the cigar line
-        my $member_break = Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($member->cigar_line);
-
-        #get percentages
-        foreach my $k ( sort keys %{$member_break} ) {
-            $sum += $member_break->{$k};
-            if ( $k eq "D" ) {
-                $gaps += $member_break->{$k};
-            }
-        }
-    }
-
-    my $gappiness = $gaps/$sum;
-
-    return $gappiness;
-}
-
-sub _get_alignment_depth {
-    my $self = shift;
-
-    my @cigars = map {$_->cigar_line} @{ $self->param('aligned_members') };
-    my $total_depths = Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(\@cigars);
-
-    #average
-    my $s = 0;
-    my $n = 0;
-    foreach my $val (values %$total_depths) {
-        $s += $val->{'depth_sum'} / $val->{'n_total_pos'};
-        $n++;
-    }
-    return $s/$n;
 }
 
 1;

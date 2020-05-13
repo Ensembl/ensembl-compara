@@ -221,7 +221,6 @@ sub pipeline_analyses_epo_anchor_mapping {
                 -parameters => {
                     'mapping_exe' => $self->o('exonerate_exe'),
                     'mapping_params' => $self->o('mapping_params'),
-                    '_range_list'   => '#anchor_ids#',
                 },
                 -flow_into => {
                     -1 => 'map_anchors_no_server_himem',
@@ -238,7 +237,6 @@ sub pipeline_analyses_epo_anchor_mapping {
                 -parameters => {
                     'mapping_exe' => $self->o('exonerate_exe'),
                     'mapping_params' => $self->o('mapping_params'),
-                    '_range_list'   => '#anchor_ids#',
                 },
                 -batch_size => $self->o('map_anchors_batch_size'),
                 -hive_capacity => $self->o('map_anchors_capacity'),

@@ -103,7 +103,7 @@ sub fetch_input {
     }
 
     my $mlss_id         = $self->param_required('mlss_id');
-    my $mlss            = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
+    my $mlss            = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or $self->die_no_retry("Could not fetch mlss with dbID=$mlss_id");
     my $species_set     = $mlss->species_set->genome_dbs;
 
     $self->param('all_blast_db', {});
@@ -144,14 +144,14 @@ sub fetch_input {
 
         # Otherwise, we get the set of species from mlss_id
         my $mlss_id         = $self->param_required('mlss_id');
-        my $mlss            = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
+        my $mlss            = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or $self->die_no_retry("Could not fetch mlss with dbID=$mlss_id");
         my $species_set     = $mlss->species_set->genome_dbs;
 
         $genome_db_list = [ grep {$_->dbID != $self->param('genome_db_id')} @$species_set ];
 
         # If reusing this genome_db, only need to blast against the 'fresh' genome_dbs
         if ($self->param('reuse_ss_id')) {
-            my $reused_species_set = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id')) or die $self->param('reuse_ss_id')." is not a valid species_set_id\n";
+            my $reused_species_set = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id')) or $self->die_no_retry( $self->param('reuse_ss_id')." is not a valid species_set_id");
             #Check if species_set contains any species
             my $reused_genome_dbs = $reused_species_set->genome_dbs;
 

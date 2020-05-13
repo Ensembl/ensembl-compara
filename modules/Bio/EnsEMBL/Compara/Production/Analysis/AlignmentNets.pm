@@ -287,6 +287,7 @@ sub parse_Net_file {
   my (%new_chains, %new_chain_scores, @last_gap, @last_parent_chain);
 
   my $chains = $self->param('chains');
+    my $direction = $self->param_required('direction');
 
   while(<$fh>) {
 
@@ -312,6 +313,7 @@ sub parse_Net_file {
       foreach my $fp (@$restricted_fps) {
         $fp->score($score);
 	$fp->level_id($level_id);
+        $fp->direction($direction);
       }
       
       if (@$restricted_fps) {
@@ -364,6 +366,7 @@ sub parse_Net_file {
     my $chain_score = $new_chain_scores{$cid};
     foreach my $fp (@{$new_chains{$cid}}) {
       $fp->score($chain_score);
+      $fp->direction($direction);
     }
   }
   return [values %new_chains];

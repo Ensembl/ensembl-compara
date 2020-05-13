@@ -158,7 +158,6 @@ n_goc_labels   = c('GOC score = 0', 'GOC score = 25', 'GOC score = 50', 'GOC sco
 heatmap_col    = rev(heat.colors(10))
 barplot_col    = rainbow(length(n_goc_cols))
 
-goc_100_matrix
 
 #-------------------------------------------------------------------------
 #                               Heatmaps
@@ -205,29 +204,42 @@ file_name = paste(out_dir, 'ordered_goc_100_refernces.pdf', sep='/')
 pdf(file_name,width=6,height=4,paper='special')
 for (ref_species in levels(reference_species$V1)) {
     raw_data = read.delim( paste(paste(out_dir,ref_species,sep='/'), "_ref.dat", sep=''), header = TRUE, sep = ";")
-    raw_data$threshold = as.factor(sapply(raw_data$threshold , function(x){strsplit(as.character(x), split = "X_")[[1]][2]}))
+    names(raw_data) <- c("Species", "Proportion", "GOC", "taxon")
+    raw_data$GOC = as.factor(sapply(raw_data$GOC , function(x){as.numeric(strsplit(as.character(x), split = "X_")[[1]][2])}))
+    # Capitalize and replace the underscore with a space
+    raw_data$Species = as.factor(sapply(raw_data$Species, function(x){paste(toupper(substring(x, 1,1)), chartr(old="_", new=" ", substring(x, 2)), sep="")}))
 
-    x = raw_data[raw_data$threshold == "100",]
+    x = raw_data[raw_data$GOC == "100",]
+    s = x$Proportion
+    #y = raw_data[raw_data$GOC == "75",]
+    #z = raw_data[raw_data$GOC == "50",]
+    #s = x$Proportion + y$Proportion + z$Proportion
 
-    species_list = x[rev(order(x$goc)),]$species
-    taxon_list = x[rev(order(x$goc)),]$taxon
+    species_list = x[rev(order(s)),]$Species
+    taxon_list = x[rev(order(s)),]$taxon
     sorted_species_list = rev(species_list)
     sorted_taxon_list = rev(taxon_list)
 
     list = c("Crocodylia" = "chartreuse4"
-              , "Birds" = "blue"
+              , "Aves" = "blue"
               , "Squamata" = "darkorange2"
-              , "Mammals" = "red"
-              , "Fish" = "darkcyan"
+              , "Mammalia" = "red"
+              , "Neopterygii" = "darkcyan"
               , "Testudines" = "black"
               , "Amphibia" = "deeppink")
 
-    raw_data$species = factor(raw_data$species, levels = sorted_species_list)
-    raw_data$taxonomy = sapply(raw_data$taxon, function(x){attributes(list[list == x])[[1]]})
+    raw_data$Species = factor(raw_data$Species, levels = sorted_species_list)
+    raw_data$Taxonomy = sapply(raw_data$taxon, function(x){attributes(list[list == x])[[1]]})
 
-    graph_title = paste("GOC scores, ordered by GOC=100, reference: ",ref_species,sep='')
+    if (ref_species == "homo_sapiens") {
+        ref_species = "human"
+    } else if (ref_species == "sphenodon_punctatus") {
+        ref_species = "tuatara"
+    }
+    graph_title = paste("GOC score distribution (reference: ", ref_species, "), ordered by GOC=100",sep='')
+    #graph_title = paste("GOC score distribution (reference: ", ref_species, "), ordered by GOC>=50",sep='')
 
-    print (ggplot(data = raw_data, aes(x = species, y = goc, fill = threshold, colour = taxonomy))
+    print (ggplot(data = raw_data, aes(x = Species, y = Proportion, fill = GOC, colour = Taxonomy))
                 + geom_bar(stat="identity", size = 0)
                 + coord_flip()
                 + theme(axis.text.y = element_text(colour = as.character(sorted_taxon_list)) , axis.text=element_text(size=7))
@@ -252,16 +264,21 @@ for (ref_species in levels(reference_species$V1)) {
     sorted_taxon_list <- rev(taxon_list)
 
     list <- c("Crocodylia" = "chartreuse4"
-              , "Birds" = "blue"
+              , "Aves" = "blue"
               , "Squamata" = "darkorange2"
-              , "Mammals" = "red"
-              , "Fish" = "darkcyan"
+              , "Mammalia" = "red"
+              , "Neopterygii" = "darkcyan"
               , "Testudines" = "black"
               , "Amphibia" = "deeppink")
 
     raw_data$species <- factor(raw_data$species, levels = sorted_species_list)
     raw_data$taxonomy <- sapply(raw_data$taxon, function(x){attributes(list[list == x])[[1]]})
 
+    if (ref_species == "homo_sapiens") {
+        ref_species = "human"
+    } else if (ref_species == "sphenodon_punctatus") {
+        ref_species = "tuatara"
+    }
     graph_title = paste("GOC scores above and under 50, reference: ",ref_species,sep='')
 
     print (ggplot(data = raw_data, aes(x = species, y = goc, fill = threshold, colour = taxonomy))

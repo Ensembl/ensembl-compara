@@ -169,7 +169,7 @@ CREATE TABLE genome_db (
   has_karyotype			tinyint(1) NOT NULL DEFAULT 0,
   is_good_for_alignment       TINYINT(1) NOT NULL DEFAULT 0,
   genome_component            varchar(5) DEFAULT NULL,
-  strain_name                 varchar(40) DEFAULT NULL,
+  strain_name                 varchar(100) DEFAULT NULL,
   display_name                varchar(255) DEFAULT NULL,
   locator                     varchar(400),
   first_release               smallint,
@@ -367,7 +367,6 @@ CREATE TABLE method_link_species_set_tag (
 @desc This table contains the distribution of the gene order conservation scores 
 @colour   #3CB371
 @column method_link_species_set_id          internal unique ID for the orthologs
-@column n_goc_null                            the number of orthologs for with no neighbors
 @column n_goc_0                               the number of orthologs with no gene order conservation among their neighbours
 @column n_goc_25                              the number of orthologs with 25% gene order conservation among their neighbours
 @column n_goc_50                              the number of orthologs with 50% gene order conservation among their neighbours
@@ -385,7 +384,6 @@ CREATE TABLE method_link_species_set_tag (
 
 CREATE TABLE method_link_species_set_attr (
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
-  n_goc_null                    int,
   n_goc_0                       int,
   n_goc_25                      int,
   n_goc_50                      int,
@@ -402,7 +400,6 @@ CREATE TABLE method_link_species_set_attr (
   PRIMARY KEY (method_link_species_set_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
 
 /**
 @header Taxonomy and species-tree
@@ -439,7 +436,9 @@ CREATE TABLE `species_tree_node` (
   `node_name` VARCHAR(255),
 
   FOREIGN KEY (`taxon_id`) REFERENCES ncbi_taxa_node(taxon_id),
-  FOREIGN KEY (`genome_db_id`) REFERENCES genome_db(genome_db_id), 
+  FOREIGN KEY (`genome_db_id`) REFERENCES genome_db(genome_db_id),
+  FOREIGN KEY (`parent_id`) REFERENCES species_tree_node(node_id),
+  FOREIGN KEY (`root_id`) REFERENCES species_tree_node(node_id),
   PRIMARY KEY (`node_id`),
   KEY `parent_id` (`parent_id`),
   KEY `root_id` (`root_id`,`left_index`)
@@ -471,7 +470,6 @@ CREATE TABLE `species_tree_root` (
 
   PRIMARY KEY (root_id)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
 
 /**
 @table species_tree_node_tag
@@ -628,7 +626,7 @@ CREATE TABLE synteny_region (
 
 CREATE TABLE dnafrag (
   dnafrag_id                  bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  length                      int(11) DEFAULT 0 NOT NULL,
+  length                      int unsigned DEFAULT 0 NOT NULL,
   name                        varchar(255) DEFAULT '' NOT NULL,
   genome_db_id                int(10) unsigned NOT NULL, # FK genome_db.genome_db_id
   coord_system_name           varchar(40) DEFAULT '' NOT NULL,
@@ -716,6 +714,7 @@ CREATE TABLE genomic_align_block (
   length                      int(10) NOT NULL,
   group_id                    bigint unsigned DEFAULT NULL,
   level_id                    tinyint(2) unsigned DEFAULT 0 NOT NULL,
+  direction                   tinyint(1) unsigned DEFAULT NULL,
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
@@ -748,15 +747,18 @@ CREATE TABLE genomic_align_block (
 */
 
 CREATE TABLE genomic_align_tree (
-  node_id                     bigint(20) unsigned NOT NULL AUTO_INCREMENT, # internal id, FK genomic_align.node_id
-  parent_id                   bigint(20) unsigned DEFAULT NULL,
-  root_id                     bigint(20) unsigned NOT NULL default 0,
+  node_id                     bigint unsigned NOT NULL AUTO_INCREMENT, -- internal id, FK genomic_align.node_id
+  parent_id                   bigint unsigned DEFAULT NULL,
+  root_id                     bigint unsigned NOT NULL default 0,
   left_index                  int(10) NOT NULL default 0,
   right_index                 int(10) NOT NULL default 0,
-  left_node_id                bigint(10),
-  right_node_id               bigint(10),
+  left_node_id                bigint unsigned,
+  right_node_id               bigint unsigned,
   distance_to_parent          double NOT NULL default 1,
 
+  FOREIGN KEY (`parent_id`) REFERENCES genomic_align_tree(node_id),
+  FOREIGN KEY (`left_node_id`) REFERENCES genomic_align_tree(node_id),
+  FOREIGN KEY (`right_node_id`) REFERENCES genomic_align_tree(node_id),
   PRIMARY KEY node_id (node_id),
   KEY parent_id (parent_id),
   KEY left_index (root_id, left_index)
@@ -833,7 +835,7 @@ CREATE TABLE genomic_align (
   dnafrag_strand              tinyint(4) DEFAULT 0 NOT NULL,
   cigar_line                  mediumtext NOT NULL,
   visible                     tinyint(2) unsigned DEFAULT 1 NOT NULL,
-  node_id                     bigint(20) unsigned DEFAULT NULL,
+  node_id                     bigint unsigned DEFAULT NULL,
 
   FOREIGN KEY (genomic_align_block_id) REFERENCES genomic_align_block(genomic_align_block_id),
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
@@ -906,7 +908,7 @@ CREATE TABLE conservation_score (
 */
 
 CREATE TABLE constrained_element (
-  constrained_element_id bigint(20) unsigned NOT NULL,
+  constrained_element_id bigint unsigned NOT NULL,
   dnafrag_id bigint unsigned NOT NULL,
   dnafrag_start int(12) unsigned NOT NULL,
   dnafrag_end int(12) unsigned NOT NULL,
@@ -1342,8 +1344,8 @@ CREATE TABLE peptide_align_feature (
   hgenome_db_id               int(10) unsigned, # FK genome.genome_id
   qstart                      int(10) DEFAULT 0 NOT NULL,
   qend                        int(10) DEFAULT 0 NOT NULL,
-  hstart                      int(11) DEFAULT 0 NOT NULL,
-  hend                        int(11) DEFAULT 0 NOT NULL,
+  hstart                      int unsigned DEFAULT 0 NOT NULL,
+  hend                        int unsigned DEFAULT 0 NOT NULL,
   score                       double(16,4) DEFAULT 0.0000 NOT NULL,
   evalue                      double not null,
   align_length                int(10) not null,
@@ -1726,7 +1728,7 @@ CREATE TABLE `gene_tree_root_attr` (
 
 CREATE TABLE gene_tree_node_attr (
   node_id                         INT(10) UNSIGNED NOT NULL,
-  node_type                       ENUM("duplication", "dubious", "speciation", "sub-speciation", "gene_split"),
+  node_type                       ENUM('duplication', 'dubious', 'speciation', 'sub-speciation', 'gene_split'),
   species_tree_node_id            INT(10) UNSIGNED,
   bootstrap                       TINYINT UNSIGNED,
   duplication_confidence_score    DOUBLE(5,4),
@@ -1923,7 +1925,7 @@ CREATE TABLE hmm_curated_annot (
 */
 
 CREATE TABLE homology (
-  homology_id                 bigint(20) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  homology_id                 bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
   description                 ENUM('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','gene_split','between_species_paralog','alt_allele','homoeolog_one2one','homoeolog_one2many','homoeolog_many2many') NOT NULL,
   is_tree_compliant           tinyint(1) NOT NULL DEFAULT 0,
@@ -2100,7 +2102,7 @@ The alignment will be:<br />
 */
 
 CREATE TABLE homology_member (
-  homology_id                 bigint(20) unsigned NOT NULL, # FK homology.homology_id
+  homology_id                 bigint unsigned NOT NULL, # FK homology.homology_id
   gene_member_id              int(10) unsigned NOT NULL, # FK gene_member.gene_member_id
   seq_member_id               int(10) unsigned, # FK seq_member.seq_member_id
   cigar_line                  mediumtext,
@@ -2245,12 +2247,11 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '101');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '102');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_100_101_a.sql|schema_version');
-
+  VALUES (NULL, 'patch', 'patch_101_102_a.sql|schema_version');

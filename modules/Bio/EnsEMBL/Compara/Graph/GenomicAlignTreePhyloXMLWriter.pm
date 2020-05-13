@@ -182,7 +182,7 @@ sub _genomicaligntree_body {
     $w->endTag();
   }
 
-  #Number of genomic_aligns = 0 for ancestral nodes in EPO_LOW_COVERAGE
+  #Number of genomic_aligns = 0 for ancestral nodes in EPO_EXTENDED
   if ($all_genomic_aligns && @$all_genomic_aligns > 0) {
 
     #Unique name to handle duplications as opposed to scientific name

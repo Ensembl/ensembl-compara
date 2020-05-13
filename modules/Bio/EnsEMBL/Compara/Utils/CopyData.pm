@@ -310,6 +310,7 @@ sub _has_binary_column {
   Arg[4]      : string $query
   Arg[5]      : (opt) boolean $replace (default: false)
   Arg[6]      : (opt) boolean $skip_disable_keys (default: false)
+  Arg[7]      : (opt) boolean $ignore_foreign_keys (default: false)
   Arg[7]      : (opt) boolean $debug (default: false)
 
   Description : Copy the output of the query to this table using chunks of $index_name
@@ -318,7 +319,7 @@ sub _has_binary_column {
 =cut
 
 sub copy_data {
-    my ($from_dbc, $to_dbc, $table_name, $query, $replace, $skip_disable_keys, $debug) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $replace, $skip_disable_keys, $ignore_fks, $debug) = @_;
 
     assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
@@ -336,7 +337,9 @@ sub copy_data {
     }
 
     my $rows;
-    if (_has_binary_column($from_dbc, $table_name)) {
+    if ( $ignore_fks ) {
+        $rows = copy_data_pp($from_dbc, $to_dbc, $table_name, $query, $replace, $ignore_fks, $debug);
+    } elsif (_has_binary_column($from_dbc, $table_name)) {
         $rows = copy_data_in_binary_mode($from_dbc, $to_dbc, $table_name, $query, $replace, $debug);
     } else {
         $rows = copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, $replace, $debug);
@@ -374,7 +377,7 @@ sub _escape {
 =cut
 
 sub copy_data_in_text_mode {
-    my ($from_dbc, $to_dbc, $table_name, $query, $replace, $debug) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $replace, $ignore_fks, $debug) = @_;
 
     assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
@@ -528,6 +531,8 @@ sub copy_table {
   Arg[3]      : string $table_name
   Arg[4]      : string $query
   Arg[5]      : (opt) boolean $replace (default: false)
+  Arg[6]      : (opt) boolean $ignore_foreign_keys (default: false)
+  Arg[7]      : (opt) boolean $debug (default: false)
 
   Description : "Pure-Perl" implementation of copy_data(). It loads the rows from
                 the query and builds multi-inserts statements. As everything remains
@@ -539,7 +544,7 @@ sub copy_table {
 =cut
 
 sub copy_data_pp {
-    my ($from_dbc, $to_dbc, $table_name, $query, $replace) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $replace, $ignore_fks, $debug) = @_;
 
     assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
@@ -550,7 +555,7 @@ sub copy_data_pp {
         return $sth->fetchrow_arrayref;
     };
     my $insertion_mode = $replace ? 'REPLACE' : 'INSERT IGNORE';
-    my $total_rows = bulk_insert_iterator($to_dbc, $table_name, Bio::EnsEMBL::Utils::Iterator->new($fetch_sub), undef, $insertion_mode);
+    my $total_rows = bulk_insert_iterator($to_dbc, $table_name, Bio::EnsEMBL::Utils::Iterator->new($fetch_sub), undef, $insertion_mode, $ignore_fks, $debug);
     $sth->finish;
     return $total_rows;
 }
@@ -632,10 +637,12 @@ sub bulk_insert {
 =cut
 
 sub bulk_insert_iterator {
-    my ($dest_dbc, $table_name, $data_iterator, $col_names, $insertion_mode) = @_;
+    my ($dest_dbc, $table_name, $data_iterator, $col_names, $insertion_mode, $ignore_fks, $debug) = @_;
 
+    printf("bulk insert %s foreign keys into %s\n", ($ignore_fks ? 'without': 'with', $table_name)) if $debug;
     my $insert_n   = 0;
     my $to_dbh = $dest_dbc->db_handle;
+    $dest_dbc->do("SET FOREIGN_KEY_CHECKS = 0") if $ignore_fks;
     while ($data_iterator->has_next) {
         my $insert_sql = ($insertion_mode || 'INSERT') . ' INTO ' . $table_name;
         $insert_sql .= ' (' . join(',', @$col_names) . ')' if $col_names;
@@ -649,6 +656,8 @@ sub bulk_insert_iterator {
         my $this_time = $dest_dbc->do($insert_sql) or die "Could not execute the insert because of ".$dest_dbc->db_handle->errstr;
         $insert_n += $this_time;
     }
+    $dest_dbc->do("SET FOREIGN_KEY_CHECKS = 1") if $ignore_fks;
+    print "inserted $insert_n rows\n" if $debug;
     return $insert_n;
 }
 

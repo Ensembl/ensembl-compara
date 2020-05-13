@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf
@@ -63,7 +61,7 @@ sub default_options {
         # Inherit the generic default options
         %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'build_new_master_for_' . $self->o('division'),
+        'pipeline_name' => 'build_new_' . $self->o('division') . '_master_for_rel_' . $self->o('rel_with_suffix'),
         'work_dir'      => $self->o('pipeline_dir'),
         'backups_dir'   => $self->o('work_dir') . '/backups/',
 
@@ -71,9 +69,6 @@ sub default_options {
         'schema_file'       => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
         'method_link_dump'  => $self->check_file_in_ensembl('ensembl-compara/sql/method_link.txt'),
         'clone_core_db_exe' => $self->check_exe_in_ensembl('ensembl-test/scripts/clone_core_database.pl'),
-
-        'java_hc_dir'     => $self->check_dir_in_ensembl('ensj-healthcheck/'),
-        'java_hc_db_prop' => $self->check_file_in_ensembl('ensj-healthcheck/database.defaults.properties'),
 
         'init_reg_conf' => $self->o('reg_conf'), # needed to create the new master database
         # Parameters required for citest division only
@@ -96,10 +91,11 @@ sub default_options {
         'list_genomes_script'     => undef, # required but not used: do_update_from_metadata = 0
         'report_genomes_script'   => undef, # required but not used: do_update_from_metadata = 0
         'update_metadata_script'  => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
+        'assembly_patch_species'  => [], # by default, skip this step
         'additional_species'      => {}, # by default, skip this step
         'do_update_from_metadata' => 0,
-        'do_load_lrg_dnafrags'    => 0,
         'do_load_timetree'        => 0,
+        'meta_host'               => undef, # required but not used: do_update_from_metadata = 0
     };
 }
 
@@ -130,7 +126,6 @@ sub pipeline_wide_parameters {
         
         # Define the flags so they can be seen by Parts::PrepareMasterDatabaseForRelease
         'do_update_from_metadata' => $self->o('do_update_from_metadata'),
-        'do_load_lrg_dnafrags'    => $self->o('do_load_lrg_dnafrags'),
         'do_load_timetree'        => $self->o('do_load_timetree'),
     };
 }
@@ -208,7 +203,7 @@ sub pipeline_analyses {
             -parameters => {
                 'reg_conf'        => $self->o('reg_conf'),
                 'reg_conf_tmpl'   => $self->o('reg_conf_tmpl'),
-                'java_hc_db_prop' => $self->o('java_hc_db_prop'),
+                'ensj_conf'       => $self->o('ensj_conf'),
                 'dst_host'        => $self->o('dst_host'),
                 'dst_port'        => $self->o('dst_port'),
             },

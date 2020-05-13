@@ -732,6 +732,7 @@ sub _extract_sequence {
     }
     
     my $subseq = substr($seq, $aligned_start, ($aligned_end-$aligned_start));
+    die "Error in subsequence extraction (got: " . length($subseq) . ", exp: " . ($aligned_end-$aligned_start) . "\n" if length($subseq) != ($aligned_end-$aligned_start);
     return ($subseq, $aligned_start, $aligned_end);
 }
 
@@ -1310,6 +1311,9 @@ sub _create_frag_array {
 	#the results if the ref strand is reverse since the fragments will be in the
 	#reverse order ie A-B-C should be C-B-A). 
 	@$pairwise_gabs = sort {$a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start} @$pairwise_gabs;
+
+    # only take unidirectional netted GABs
+    @$pairwise_gabs = grep { $_->direction == 1 } @$pairwise_gabs;
 
 	print "    pairwise gabs " . scalar(@$pairwise_gabs) . "\n" if $self->debug;
 	#if there are no pairwise matches found to 2x genome, then escape

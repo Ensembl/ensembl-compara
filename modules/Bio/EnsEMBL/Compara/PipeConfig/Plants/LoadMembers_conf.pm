@@ -61,5 +61,16 @@ sub default_options {
 }
 
 
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+
+    # The metadata service reports human annotation updates almost every
+    # release because of LRGs and assembly patches, which we don't care
+    # about in this division.
+    $analyses_by_name->{compare_non_reused_genome_list}->{'-parameters'}->{'ok_homo_sapiens'} = 1;
+}
+
+
 1;
 

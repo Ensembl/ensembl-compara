@@ -16,6 +16,7 @@
 
 #example:  perl Verify_Compara_REST_Endpoints.pl <server address>
 
+use Data::Dumper;
 
 use LWP;
 use HTTP::Tiny;
@@ -34,7 +35,7 @@ use Getopt::Long;
 my $browser = HTTP::Tiny->new('timeout' => 300);
 my $server = 'https://test.rest.ensembl.org';
 my $division;
-my ( $skip_genetrees, $skip_cafe, $skip_alignments, $skip_epo, $skip_lastz, $skip_families, $skip_homology );
+my ( $skip_genetrees, $skip_cafe, $skip_alignments, $skip_epo, $skip_lastz, $skip_families, $skip_homology, $skip_cactus );
 
 GetOptions( 
     "server=s"        => \$server, 
@@ -44,26 +45,33 @@ GetOptions(
     'skip_alignments' => \$skip_alignments,
     'skip_epo'        => \$skip_epo,
     'skip_lastz'      => \$skip_lastz,
+    'skip_cactus'     => \$skip_cactus,
     'skip_families'   => \$skip_families,
     'skip_homology'   => \$skip_homology,
 );
 
 if ( !$server or !$division ) {
-    die "Usage: perl $0 --division [vertebrates|plants] --server [https://rest.ensembl.org]";
+    die "Usage: perl $0 --division [vertebrates|plants|grch37] --server [https://rest.ensembl.org]";
 }
 
 my $responseIDGet = $browser->get( ( $server . '/info/ping?content-type=application/json' ), { headers => { 'Content-type' => 'application/json', 'Accept' => 'application/json' } } );
 die "Server unavailable - please check your URL\n" unless $responseIDGet->{status} == 200;
 
-my ($gene_member_id, $gene_tree_id, $gene_tree_member_id, $alignment_region, $lastz_alignment_region);
+my ($gene_member_id, $gene_tree_id, $alignment_region, $lastz_alignment_region);
 my ($species_1, $species_2, $species_3, $taxon_1, $taxon_2, $taxon_3);
-my ($gene_symbol, $species_set_group);
+my ($gene_symbol, $species_set_group, $homology_type, $homology_method_link);
+my ($cactus_species, $cactus_region, $cactus_species_set);
 my $extra_params;
+
+# RULES
+# $taxon_X must be the taxon_id of $species_X
+# $species_1 must be the species of $gene_symbol
+# $gene_symbol must have orthologues in both $species_2 and $species_3
+# LastZ is tested on $species_1 vs $species_2
 
 if ($division eq "vertebrates"){
     $gene_member_id           = "ENSG00000157764";
     $gene_tree_id             = "ENSGT00390000003602";
-    $gene_tree_member_id      = "";
     $alignment_region         = "2:106040000-106040050:1";
     $lastz_alignment_region   = "2:106041430-106041480:1";
 
@@ -77,11 +85,16 @@ if ($division eq "vertebrates"){
 
     $gene_symbol              = "BRCA2";
     $species_set_group        = "primates";
+    $homology_type            = 'orthologues';
+    $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
+
+    $cactus_species           = 'rattus_norvegicus';
+    $cactus_region            = '2:56040000-56040100:1';
+    $cactus_species_set       = 'murinae';
 }
 elsif($division eq "plants"){
     $gene_member_id           = "AT3G52430";
     $gene_tree_id             = "EPlGT00140000000744";
-    $gene_tree_member_id      = "AT3G52430";
     $alignment_region         = "1:8001-18000:1";
     $lastz_alignment_region   = $alignment_region;
 
@@ -94,11 +107,50 @@ elsif($division eq "plants"){
     $taxon_3                  = 65489;#oryza_barthii
 
     $gene_symbol              = "PAD4";
-    $species_set_group        = "rosids";
+    $homology_type            = 'orthologues';
+    $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
     
     $extra_params             = 'compara=plants';
     $skip_families            = 1;
     $skip_epo                 = 1;
+    $skip_cactus              = 1;
+}
+elsif($division eq 'pan' or $division eq 'pan_homology'){
+    $gene_member_id           = 'AT5G06870';
+    $gene_tree_id             = 'EGGT00960000274462';
+
+    $species_1                = 'arabidopsis_thaliana';
+    $species_2                = "vitis_vinifera";
+    $species_3                = 'guillardia_theta';
+
+    $taxon_1                  = 3702;#arabidopsis_thaliana
+    $taxon_2                  = 29760;#vitis_vinifera
+    $taxon_3                  = 55529;#guillardia_theta
+
+    $gene_symbol              = 'PGIP2';
+    $homology_type            = 'orthologues';
+    $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
+
+    $extra_params             = 'compara=pan_homology';
+    $skip_cafe                = 1;
+    $skip_alignments          = 1;
+    $skip_families            = 1;
+    $skip_cactus              = 1;
+}
+elsif ( $division eq 'grch37' ) {
+    $lastz_alignment_region = "17:64155265-64255266:1";
+    $gene_member_id         = "ENSG00000173786";
+    $species_1              = "homo_sapiens";
+    $species_2              = "homo_sapiens"; #only self-aln in GRCh37
+    $gene_symbol            = "CNP";
+    $taxon_2                = 9606; #homo_sapiens
+    $homology_type            = 'projections';
+    $homology_method_link     = 'ENSEMBL_PROJECTIONS';
+
+    $skip_families  = 1;
+    $skip_epo       = 1;
+    $skip_genetrees = 1;
+    $skip_cactus    = 1;
 }
 else {
     die "Division '$division' is not understood\n";
@@ -250,50 +302,50 @@ try{
         $ext .= "?$extra_params" if $extra_params;
 
         my $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check JSON Validity");
+        ok($responseIDGet->{success}, "Check JSON validity");
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
-        ok($responseIDGet->{success}, "Check phyloXml Validity");
+        ok($responseIDGet->{success}, "Check phyloXml validity");
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-orthoxml+xml' } } );
-        ok($responseIDGet->{success}, "Check orthoXml Validity");
+        ok($responseIDGet->{success}, "Check orthoXml validity");
 
         $responseIDGet = $browser->get($server.$ext, { headers => {'Content-type' => 'text/x-nh'} });
-        ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
+        ok($responseIDGet->{success}, "Check New Hampshire NH validity");
 
         $jsontxt = process_json_get($server."/genetree/id/$gene_tree_id?content-type=application/json&aligned=1".($extra_params ? ";$extra_params" : ''));
         $json_leaf = fetch_leaf_hash_from_json($jsontxt->{tree});
-        ok($jsontxt && $json_leaf->{sequence}->{mol_seq}->{is_aligned} == 1, "Check seqs alignment == 1 Validity");
+        ok($jsontxt && $json_leaf->{sequence}->{mol_seq}->{is_aligned} == 1, "Check seqs alignment == 1 validity");
 
         $jsontxt = process_json_get($server."/genetree/id/$gene_tree_id?content-type=application/json&aligned=0".($extra_params ? ";$extra_params" : ''));
         $json_leaf = fetch_leaf_hash_from_json($jsontxt->{tree});
-        ok($jsontxt && $json_leaf->{sequence}->{mol_seq}->{is_aligned} == 0, "Check seqs alignment == 0 Validity");
+        ok($jsontxt && $json_leaf->{sequence}->{mol_seq}->{is_aligned} == 0, "Check seqs alignment == 0 validity");
 
         $jsontxt = process_json_get($server."/genetree/id/$gene_tree_id?content-type=application/json&cigar_line=1".($extra_params ? ";$extra_params" : ''));
         $json_leaf = fetch_leaf_hash_from_json($jsontxt->{tree});
-        ok($jsontxt && $json_leaf->{sequence}->{mol_seq}->{cigar_line}, "Check cigar line == 1 Validity");
+        ok($jsontxt && $json_leaf->{sequence}->{mol_seq}->{cigar_line}, "Check cigar line == 1 validity");
 
         $jsontxt = process_json_get($server."/genetree/id/$gene_tree_id?content-type=application/json&cigar_line=0".($extra_params ? ";$extra_params" : ''));
         $json_leaf = fetch_leaf_hash_from_json($jsontxt->{tree});
-        ok($jsontxt && ! exists $json_leaf->{sequence}->{mol_seq}->{cigar_line}, "Check cigar line == 0 Validity");
+        ok($jsontxt && ! exists $json_leaf->{sequence}->{mol_seq}->{cigar_line}, "Check cigar line == 0 validity");
 
         $ext = "/genetree/id/$gene_tree_id?content-type=text/javascript&callback=thisisatest".($extra_params ? ";$extra_params" : '');
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/javascript' } } );
-        ok((substr($responseIDGet->{'content'}, 0, 11) eq "thisisatest"), "Check Callback Validity");
+        ok((substr($responseIDGet->{'content'}, 0, 11) eq "thisisatest"), "Check Callback validity");
 
         $phyloXml = process_phyloXml_get($server."/genetree/id/$gene_tree_id?content-type=text/x-phyloxml+xml;prune_species=$species_1;prune_species=$species_3".($extra_params ? ";$extra_params" : ''));
-        ok( verify_xml_leaf($phyloXml->{phylogeny}, $species_1) && verify_xml_leaf($phyloXml->{phylogeny}, $species_3) , "check prune species Validity");
+        ok( verify_xml_leaf($phyloXml->{phylogeny}, $species_1) && verify_xml_leaf($phyloXml->{phylogeny}, $species_3) , "check prune species validity");
 
         $orthoXml = process_orthoXml_get($server."/genetree/id/$gene_tree_id?content-type=text/x-orthoxml+xml;prune_taxon=$taxon_1;prune_taxon=$taxon_2;prune_taxon=$taxon_3".($extra_params ? ";$extra_params" : ''));
         @pruned_species = keys %{ $orthoXml->{species} };
         %pruned_species = map {$_ => 1} @pruned_species;
-        ok( (exists($pruned_species{$species_2})) && (exists($pruned_species{$species_3})) && (exists($pruned_species{$species_1} )), "check prune taxon Validity");
+        ok( (exists($pruned_species{$species_2})) && (exists($pruned_species{$species_3})) && (exists($pruned_species{$species_1} )), "check prune taxon validity");
 
 
         $jsontxt = process_json_get($server."/genetree/id/$gene_tree_id?content-type=application/json;sequence=none".($extra_params ? ";$extra_params" : ''));
     #    diag explain $jsontxt;
         $json_leaf = fetch_leaf_hash_from_json($jsontxt->{tree});
-        ok($jsontxt && !(exists $json_leaf->{mol_seq}), "check sequence eq none Validity");
+        ok($jsontxt && !(exists $json_leaf->{mol_seq}), "check sequence eq none validity");
 
 
         print "\nTesting GET genetree by member\/id\/\:id \n\n";
@@ -302,19 +354,19 @@ try{
         $ext .= "?$extra_params" if $extra_params;
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check JSON Validity");
+        ok($responseIDGet->{success}, "Check JSON validity");
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
-        ok($responseIDGet->{success}, "Check phyloXml Validity");
+        ok($responseIDGet->{success}, "Check phyloXml validity");
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-orthoxml+xml' } } );
-        ok($responseIDGet->{success}, "Check orthoXml Validity");
+        ok($responseIDGet->{success}, "Check orthoXml validity");
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-nh' } } );
-        ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
+        ok($responseIDGet->{success}, "Check New Hampshire NH validity");
 
         $jsontxt = process_json_get($server."/genetree/member/id/$gene_member_id?content-type=application/json".($extra_params ? ";$extra_params" : ''));
-        ok($jsontxt->{tree}, "check gene tree member  Validity");
+        ok($jsontxt->{tree}, "check gene tree member  validity");
 
 
         print "\nTesting GET genetree by member symbol\/\:species\/\:symbol \n\n";
@@ -323,18 +375,18 @@ try{
         $ext .= "?$extra_params" if $extra_params;
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check JSON Validity");
+        ok($responseIDGet->{success}, "Check JSON validity");
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
-        ok($responseIDGet->{success}, "Check phyloXml Validity");
+        ok($responseIDGet->{success}, "Check phyloXml validity");
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-nh' } } );
-        ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
+        ok($responseIDGet->{success}, "Check New Hampshire NH validity");
 
         $orthoXml = process_orthoXml_get($server."/genetree/member/symbol/$species_1/$gene_symbol?prune_species=$species_1;prune_species=$species_2;content-type=text/x-orthoxml%2Bxml;prune_taxon=$taxon_3".($extra_params ? ";$extra_params" : ''));
         @pruned_species = keys %{ $orthoXml->{species} };
         %pruned_species = map {$_ => 1} @pruned_species;
-        ok((exists($pruned_species{$species_1})) && (exists($pruned_species{$species_2})) && (exists($pruned_species{$species_3} )), "Check gene tree by symbol Validity");
+        ok((exists($pruned_species{$species_1})) && (exists($pruned_species{$species_2})) && (exists($pruned_species{$species_3} )), "Check gene tree by symbol validity");
     }
     
     unless ( $skip_genetrees || $skip_cafe ) {
@@ -344,13 +396,13 @@ try{
         $ext .= "?$extra_params" if $extra_params;
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check JSON Validity");
+        ok($responseIDGet->{success}, "Check JSON validity");
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-nh' } } );
-        ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
+        ok($responseIDGet->{success}, "Check New Hampshire NH validity");
 
         $nh = process_nh_get($server."/cafe/genetree/id/$gene_tree_id?content-type=text/x-nh;nh_format=simple".($extra_params ? ";$extra_params" : ''));
-        ok(scalar $nh->get_leaf_nodes, "check cafe tree nh simple format Validity");
+        ok(scalar $nh->get_leaf_nodes, "check cafe tree nh simple format validity");
 
         print "\nTesting GET Cafe tree by member\/id\/\:id \n\n";
 
@@ -358,14 +410,14 @@ try{
         $ext .= "?$extra_params" if $extra_params;
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check JSON Validity");
+        ok($responseIDGet->{success}, "Check JSON validity");
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-nh' } } );
-        ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
+        ok($responseIDGet->{success}, "Check New Hampshire NH validity");
 
 
         $jsontxt = process_json_get($server."/cafe/genetree/member/id/$gene_member_id?content-type=application/json".($extra_params ? ";$extra_params" : ''));
-        ok(exists $jsontxt->{pvalue_avg}, "Check get cafe tree by transcript member Validity");
+        ok(exists $jsontxt->{pvalue_avg}, "Check get cafe tree by transcript member validity");
 
 
         print "\nTesting GET Cafe tree by member symbol\/:species\/\:symbol \n\n";
@@ -374,13 +426,13 @@ try{
         $ext .= "?$extra_params" if $extra_params;
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check JSON Validity");
+        ok($responseIDGet->{success}, "Check JSON validity");
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-nh' } } );
-        ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
+        ok($responseIDGet->{success}, "Check New Hampshire NH validity");
 
         $nh = process_nh_get($server."/cafe/genetree/member/symbol/$species_1/$gene_symbol?content-type=text/x-nh;nh_format=simple".($extra_params ? ";$extra_params" : ''));
-        ok($nh->get_leaf_nodes, "Check get cafe tree member by symbol Validity");
+        ok($nh->get_leaf_nodes, "Check get cafe tree member by symbol validity");
     }
 
     unless ( $skip_families ) {
@@ -390,22 +442,22 @@ try{
         $ext .= "?$extra_params" if $extra_params;
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check JSON Validity");
+        ok($responseIDGet->{success}, "Check JSON validity");
 
         $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json'.($extra_params ? ";$extra_params" : ''));
-        ok($jsontxt->{family_stable_id} eq 'TF660629', "Check get family Validity");
+        ok($jsontxt->{family_stable_id} eq 'TF660629', "Check get family validity");
 
         $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=uniprot'.($extra_params ? ";$extra_params" : ''));
-        ok( (index($jsontxt->{members}[0]->{source_name}, 'Uniprot') != -1 ), "Check get family UNIPROT memeber filter Validity");
+        ok( (index($jsontxt->{members}[0]->{source_name}, 'Uniprot') != -1 ), "Check get family UNIPROT memeber filter validity");
 
         $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=ensembl'.($extra_params ? ";$extra_params" : ''));
-        ok( ($jsontxt->{members}[0]->{source_name} eq 'ENSEMBLPEP' ) , "Check get family ensembl member filter Validity");
+        ok( ($jsontxt->{members}[0]->{source_name} eq 'ENSEMBLPEP' ) , "Check get family ensembl member filter validity");
 
         $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=ensembl;aligned=1'.($extra_params ? ";$extra_params" : ''));
-        ok( exists($jsontxt->{members}[0]->{protein_alignment}), "Check get family aligned == 1 Validity");
+        ok( exists($jsontxt->{members}[0]->{protein_alignment}), "Check get family aligned == 1 validity");
 
         $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=ensembl;aligned=0'.($extra_params ? ";$extra_params" : ''));
-        ok( exists ($jsontxt->{members}[0]->{protein_seq}), "Check get family aligned == 0 Validity");
+        ok( exists ($jsontxt->{members}[0]->{protein_seq}), "Check get family aligned == 0 validity");
 
 
         print "\nTesting GET family member\/id\/\:id \n\n";
@@ -414,11 +466,11 @@ try{
         $ext .= "?$extra_params" if $extra_params;
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check JSON Validity");
+        ok($responseIDGet->{success}, "Check JSON validity");
 
 
         $jsontxt = process_json_get($server."/family/member/id/$gene_member_id?content-type=application/json;aligned=0;sequence=none".($extra_params ? ";$extra_params" : ''));
-        ok($jsontxt->{1}->{family_stable_id}, "Check get family by member Validity");
+        ok($jsontxt->{1}->{family_stable_id}, "Check get family by member validity");
 
 
         print "\nTesting GET family member by species symbol\/:species\/\:symbol \n\n";
@@ -427,10 +479,10 @@ try{
         $ext .= "?$extra_params" if $extra_params;
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check JSON Validity");
+        ok($responseIDGet->{success}, "Check JSON validity");
 
         $jsontxt = process_json_get($server."/family/member/symbol/$species_1/$gene_symbol?content-type=application/json;aligned=0;sequence=none;member_source=ensembl".($extra_params ? ";$extra_params" : ''));
-        ok($jsontxt->{1}->{family_stable_id}, "Check family member by species symbol Validity");
+        ok($jsontxt->{1}->{family_stable_id}, "Check family member by species symbol validity");
     }
 
     # EPO not working until web roll out correct ensembl_ancestral!
@@ -441,10 +493,10 @@ try{
         $ext .= "?$extra_params" if $extra_params;
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check json Validity");
+        ok($responseIDGet->{success}, "Check json validity");
     
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
-        ok($responseIDGet->{success}, "Check phyloXml Validity");
+        ok($responseIDGet->{success}, "Check phyloXml validity");
     
         print $server.$ext.';content-type=text/x-phyloxml;aligned=0' . "\n";
         $phyloXml = process_phyloXml_get($server.$ext.';content-type=text/x-phyloxml;aligned=0'.($extra_params ? ";$extra_params" : ''));
@@ -452,19 +504,21 @@ try{
         ok($phyloXml->{phylogeny}->{clade}->{sequence}->{mol_seq}->{is_aligned} == 0, "Check get alignment region and unaligned sequences");
     
         $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;display_species_set=$species_1".($extra_params ? ";$extra_params" : ''));
-        ok($jsontxt->[0]->{alignments}[0]->{species} eq $species_1, "Check alignment region display_species_set option Validity");
+        ok($jsontxt->[0]->{alignments}[0]->{species} eq $species_1, "Check alignment region display_species_set option validity");
+    }
     
+    unless ( $skip_alignments || $skip_cactus ) {
         print "\nTesting GET alignment region\/\:species\/\:region on HAL file\n\n";
     
-        $ext = '/alignment/region/rattus_norvegicus/2:56040000-56040100:1?method=CACTUS_HAL;species_set_group=murinae'.($extra_params ? ";$extra_params" : '');
+        my $ext = "/alignment/region/$cactus_species/$cactus_region?method=CACTUS_HAL;species_set_group=$cactus_species_set".($extra_params ? ";$extra_params" : '');
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check json Validity");
+        ok($responseIDGet->{success}, "Check json validity");
     
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
-        ok($responseIDGet->{success}, "Check phyloXml Validity");
+        ok($responseIDGet->{success}, "Check phyloXml validity");
     
         $responseIDGet = $browser->get($server.$ext.';aligned=0', { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
-        ok($responseIDGet->{success}, "Check phyloXml Validity with unaligned sequences");
+        ok($responseIDGet->{success}, "Check phyloXml validity with unaligned sequences");
     }
 
     unless ( $skip_alignments || $skip_lastz ) {
@@ -479,52 +533,56 @@ try{
         $ext .= "?$extra_params" if $extra_params;
 
         $responseIDGet = $browser->get($server.$ext, { headers => {'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check JSON Validity");
+        ok($responseIDGet->{success}, "Check JSON validity");
 
         $responseIDGet = $browser->get($server.$ext, { headers => {'Content-type' => 'text/x-orthoxml+xml'} } );
-        ok($responseIDGet->{success}, "Check orthoXml Validity");
+        ok($responseIDGet->{success}, "Check orthoXml validity");
 
         $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;target_taxon=$taxon_2".($extra_params ? ";$extra_params" : ''));
-        ok( $jsontxt->{data}[0]->{homologies}[0]->{target}->{taxon_id} == $taxon_2 , "Check homology endpoint target_taxon option Validity");
+        ok( $jsontxt->{data}[0]->{homologies}[0]->{target}->{taxon_id} == $taxon_2 , "Check homology endpoint target_taxon option validity");
 
-        $orthoXml = process_orthoXml_get($server."/homology/id/$gene_member_id?content-type=text/x-orthoxml+xml;target_species=$species_1;target_species=$species_2;target_species=$species_3;".($extra_params ? ";$extra_params" : ''));
-        @pruned_species = keys %{ $orthoXml->{species} };
-        %pruned_species = map {$_ => 1} @pruned_species;
-        ok((exists($pruned_species{$species_1})) && (exists($pruned_species{$species_2})) && (exists($pruned_species{$species_3} )), "Check homology endpoint target species option Validity");
+        if ( defined $species_2 && defined $species_3 ) {
+            $orthoXml = process_orthoXml_get($server."/homology/id/$gene_member_id?content-type=text/x-orthoxml+xml;target_species=$species_1;target_species=$species_2;target_species=$species_3;".($extra_params ? ";$extra_params" : ''));
+            @pruned_species = keys %{ $orthoXml->{species} };
+            %pruned_species = map {$_ => 1} @pruned_species;
+            ok((exists($pruned_species{$species_1})) && (exists($pruned_species{$species_2})) && (exists($pruned_species{$species_3} )), "Check homology endpoint target species option Validity");
+        }
 
         $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;sequence=cdna".($extra_params ? ";$extra_params" : ''));
-        ok( index($jsontxt->{data}[0]->{homologies}[0]->{source}->{align_seq}, 'M') == -1 , "Check homology endpoint sequence CDNA option Validity");
+        ok( index($jsontxt->{data}[0]->{homologies}[0]->{source}->{align_seq}, 'M') == -1 , "Check homology endpoint sequence CDNA option validity");
 
         $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;sequence=protein".($extra_params ? ";$extra_params" : ''));
-        ok( index($jsontxt->{data}[0]->{homologies}[0]->{source}->{align_seq}, 'M') != -1 , "Check homology endpoint sequence protein option Validity");
+        ok( index($jsontxt->{data}[0]->{homologies}[0]->{source}->{align_seq}, 'M') != -1 , "Check homology endpoint sequence protein option validity");
 
         $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;aligned=0;sequence=none".($extra_params ? ";$extra_params" : ''));
-        ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{seq}), "Check homology endpoint sequence none option Validity");
+        ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{seq}), "Check homology endpoint sequence none option validity");
 
-        $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=text/x-orthoxml+xml;type=orthologues".($extra_params ? ";$extra_params" : ''));
-        ok( $jsontxt->{data}[0]->{homologies}[0]->{method_link_type} eq 'ENSEMBL_ORTHOLOGUES', "Check homology endpoint type option Validity");
+        $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=text/x-orthoxml+xml;type=$homology_type".($extra_params ? ";$extra_params" : ''));
+        ok( $jsontxt->{data}[0]->{homologies}[0]->{method_link_type} eq $homology_method_link, "Check homology endpoint type option validity");
 
         $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;aligned=0".($extra_params ? ";$extra_params" : ''));
-        ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{align_seq}), "Check homology endpoint aligned =0 option Validity");
+        ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{align_seq}), "Check homology endpoint aligned =0 option validity");
 
         $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;cigar_line=1".($extra_params ? ";$extra_params" : ''));
-        ok( exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{cigar_line} , "Check homology endpoint cigar line =1 Validity");
+        ok( exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{cigar_line} , "Check homology endpoint cigar line =1 validity");
 
         $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;cigar_line=0".($extra_params ? ";$extra_params" : ''));
-        ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{cigar_line}) , "Check homology endpoint cigar line =1 Validity");
+        ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{cigar_line}) , "Check homology endpoint cigar line =1 validity");
 
         $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;format=condensed".($extra_params ? ";$extra_params" : ''));
-        ok(!(exists $jsontxt->{data}[0]->{homologies}[0]->{source}), "Check homology endpoint format Validity");
+        ok(!(exists $jsontxt->{data}[0]->{homologies}[0]->{source}), "Check homology endpoint format validity");
 
         print "\nTesting GET homology by symbol and species\/\:species\/\:symbol \n\n";
 
         $jsontxt = process_json_get($server."/homology/symbol/$species_1/$gene_symbol?content-type=application/json".($extra_params ? ";$extra_params" : ''));
-        ok((exists $jsontxt->{data}[0]->{homologies}[0]->{source}), "Check homology species symbol endpoint format Validity");
+        ok((exists $jsontxt->{data}[0]->{homologies}[0]->{source}), "Check homology species symbol endpoint format validity");
 
-        $orthoXml = process_orthoXml_get($server."/homology/symbol/$species_1/$gene_symbol?target_taxon=$taxon_2;content-type=text/x-orthoxml+xml;format=condensed;target_species=$species_3;type=orthologues".($extra_params ? ";$extra_params" : ''));
-        @pruned_species = keys %{ $orthoXml->{species} };
-        %pruned_species = map {$_ => 1} @pruned_species;
-        ok((exists($pruned_species{$species_1})) && (exists($pruned_species{$species_2})) && (exists($pruned_species{$species_3} )), "Check homology species symbol endpoint target species option Validity");
+        if ( defined $species_3 ) {
+            $orthoXml = process_orthoXml_get($server."/homology/symbol/$species_1/$gene_symbol?target_taxon=$taxon_2;content-type=text/x-orthoxml+xml;format=condensed;target_species=$species_3;type=$homology_type".($extra_params ? ";$extra_params" : ''));
+            @pruned_species = keys %{ $orthoXml->{species} };
+            %pruned_species = map {$_ => 1} @pruned_species;
+            ok((exists($pruned_species{$species_1})) && (exists($pruned_species{$species_2})) && (exists($pruned_species{$species_3} )), "Check homology species symbol endpoint target species option validity");
+        }
     }
 
 }catch{

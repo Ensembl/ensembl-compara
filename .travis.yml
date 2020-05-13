@@ -3,7 +3,8 @@ language: generic
 
 env:
   global:
-    secure: bGSZASCtRCcE2VZ3u4hdvjh6CDHe+Uo3MR7B4eobSFFhZVjIN3/DKaGrQYprEeSIB/vb75rveyTheO3qe3lHwq71e18cBk2ulQA6/L0eUJYsoR3u2y7d9whu8dS97IoLzize6hItxJFP8TmRaJBtWqOixyWHNW72X/fKF1a192E=
+    - secure: bGSZASCtRCcE2VZ3u4hdvjh6CDHe+Uo3MR7B4eobSFFhZVjIN3/DKaGrQYprEeSIB/vb75rveyTheO3qe3lHwq71e18cBk2ulQA6/L0eUJYsoR3u2y7d9whu8dS97IoLzize6hItxJFP8TmRaJBtWqOixyWHNW72X/fKF1a192E=
+    - COVERALLS_PARALLEL=true
 
 addons:
   apt:
@@ -45,6 +46,7 @@ install:
     - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
     - cpanm --quiet --installdeps --notest .
     - cpanm --quiet --notest Devel::Cover::Report::Coveralls
+    - cpanm --quiet --notest Devel::Cover::Report::Codecov
 
 # Setup the MySQL server
 before_script:
@@ -58,9 +60,8 @@ jobs:
       perl: 5.30
       name: "Housekeeping (all languages)"
       install:
+        - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
-      before_script:
-        - echo
       script: ./travisci/all-housekeeping_harness.sh
 
     - language: perl
@@ -77,6 +78,9 @@ jobs:
       env:
         - COVERAGE=true
       script: ./travisci/perl-unittest_harness.sh
+      after_success:
+        - cover --nosummary -report coveralls
+        - cover --nosummary -report codecov
 
     - language: perl
       perl: 5.30
@@ -88,7 +92,7 @@ jobs:
       script: ./travisci/perl-linter_harness.sh
 
     - language: python
-      python: 3.5
+      python: 3.6
       name: "Python unit tests on the minimum version"
       env:
         - TEST_COMPILATION=true
@@ -96,8 +100,7 @@ jobs:
       before_install:
         - echo
       install:
-        - pip install --upgrade pytest typing     # The default version doesn't return the expected return code when no tests are present
-        - pip install -r requirements.txt
+        - pip install -r requirements.txt .
       before_script:
         - echo
       script: ./travisci/python-unittest_harness.sh
@@ -111,11 +114,15 @@ jobs:
       before_install:
         - echo
       install:
-        - pip install pytest-cov
+        - pip install pytest-cov coveralls codecov
         - pip install -r requirements.txt
+        - pip install -e .
       before_script:
         - echo
       script: ./travisci/python-unittest_harness.sh
+      after_success:
+        - coveralls
+        - codecov
 
     - language: python
       python: 3.8
@@ -124,17 +131,10 @@ jobs:
         - echo
       install:
         - pip install pylint mypy
-        - pip install -r requirements.txt
+        - pip install -r requirements.txt .
       before_script:
         - echo
       script: ./travisci/python-linter_harness.sh
 
-    - stage: "trigger dependent builds"
-      before_install:
-        - echo
-      install:
-        - echo
-      before_script:
-        - echo
-      script: ./travisci/trigger-dependent-build.sh
-
+notifications:
+  webhooks: https://coveralls.io/webhook

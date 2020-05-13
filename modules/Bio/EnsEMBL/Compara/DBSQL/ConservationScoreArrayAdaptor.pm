@@ -140,7 +140,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     my ($self, $mlss, $orig_slice) = @_;
 
     my @diff_scores;
-    $#diff_scores = $orig_slice->length;
+    $#diff_scores = $orig_slice->length - 1;
     my $msa_mlss             = $mlss->get_linked_mlss_by_tag('msa_mlss_id');
 
     my $projection_segments = Bio::EnsEMBL::Compara::Utils::Projection::project_Slice_to_reference_toplevel($orig_slice);

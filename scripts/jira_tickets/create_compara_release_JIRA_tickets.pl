@@ -77,6 +77,7 @@ sub main {
 
     # Create JIRA tickets
     my $subtask_keys = $jira_adaptor->create_tickets(-JSON_FILE => $tickets_json, -DRY_RUN => $dry_run);
+    printf("Created %d top-level tickets.\n", scalar(@$subtask_keys));
 }
 
 
