@@ -712,7 +712,7 @@ sub copy_genomic_align_blocks {
   if ($fix_gab or $fix_gab_gid) {
     copy_data($from_dbc, $to_dbc,
        "genomic_align_block",
-       "SELECT genomic_align_block_id+$fix_gab, method_link_species_set_id, score, perc_id, length, group_id+$fix_gab_gid, level_id".
+       "SELECT genomic_align_block_id+$fix_gab, method_link_species_set_id, score, perc_id, length, group_id+$fix_gab_gid, level_id, direction".
          " FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id",
        @copy_data_args);
   } else {

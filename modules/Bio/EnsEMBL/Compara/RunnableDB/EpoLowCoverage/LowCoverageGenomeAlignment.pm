@@ -1313,7 +1313,7 @@ sub _create_frag_array {
 	@$pairwise_gabs = sort {$a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start} @$pairwise_gabs;
 
     # only take unidirectional netted GABs
-    @$pairwise_gabs = grep { $_->direction == 1 } @$pairwise_gabs;
+    @$pairwise_gabs = grep { ($_->direction // 1) == 1 } @$pairwise_gabs;
 
 	print "    pairwise gabs " . scalar(@$pairwise_gabs) . "\n" if $self->debug;
 	#if there are no pairwise matches found to 2x genome, then escape

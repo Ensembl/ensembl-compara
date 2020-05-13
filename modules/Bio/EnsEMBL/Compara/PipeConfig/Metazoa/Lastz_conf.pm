@@ -66,6 +66,8 @@ my ($self) = @_;
         'division'  => 'metazoa',
         # healthcheck
         'do_compare_to_previous_db' => 0,
+        # Net
+        'bidirectional' => 1,
     };
 }
 

@@ -295,6 +295,7 @@ sub tweak_analyses {
     $analyses_by_name->{'low_coverage_genome_alignment'}->{'-parameters'}->{'mlss_id'} = '#low_epo_mlss_id#';
     $analyses_by_name->{'low_coverage_genome_alignment_again'}->{'-parameters'}->{'mlss_id'} = '#low_epo_mlss_id#';
     $analyses_by_name->{'low_coverage_genome_alignment_himem'}->{'-parameters'}->{'mlss_id'} = '#low_epo_mlss_id#';
+    $analyses_by_name->{'low_coverage_genome_alignment_hugemem'}->{'-parameters'}->{'mlss_id'} = '#low_epo_mlss_id#';
 
     # block analyses until LASTZ are complete
     $analyses_by_name->{'low_coverage_genome_alignment'}->{'-wait_for'} = 'create_default_pairwise_mlss';
