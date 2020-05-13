@@ -91,6 +91,15 @@ sub assembly_text {
     $ac_link = sprintf('<a href="%s" class="modal_link nodeco" rel="modal_user_data">', $hub->url({'type' => 'UserData', 'action' => 'SelectFeatures', __clear => 1}));
   }
 
+  my $karyotype = '';
+  if (scalar @{$species_defs->ENSEMBL_CHROMOSOMES || []} && !$species_defs->NO_KARYOTYPE) {
+    $karyotype = sprintf($self->{'img_link'},
+                  $hub->url({ type => 'Location', action => 'Genome', __clear => 1 }),
+                  'Go to ' . $species_defs->SPECIES_COMMON_NAME . ' karyotype', 
+                  'karyotype', 'View karyotype'
+                  );
+  }
+
   my $html = sprintf('
     <div class="homepage-icon">
       %s
@@ -102,12 +111,8 @@ sub assembly_text {
     %s
     <p><a href="%s" class="modal_link nodeco" rel="modal_user_data">%sDisplay your data in %s</a></p>',
     
-    scalar @{$species_defs->ENSEMBL_CHROMOSOMES || []} ? sprintf(
-      $self->{'img_link'},
-      $hub->url({ type => 'Location', action => 'Genome', __clear => 1 }),
-      'Go to ' . $species_defs->SPECIES_COMMON_NAME . ' karyotype', 'karyotype', 'View karyotype'
-    ) : '',
-    
+    $karyotype,   
+ 
     sprintf(
       $self->{'img_link'},
       $hub->url({ type => 'Location', action => 'View', r => $sample_data->{'LOCATION_PARAM'}, __clear => 1 }),
