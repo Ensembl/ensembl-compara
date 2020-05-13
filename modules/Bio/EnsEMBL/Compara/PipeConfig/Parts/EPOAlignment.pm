@@ -182,7 +182,7 @@ return
         -flow_into => {
                 '2->A' => [ 'find_dnafrag_region_strand' ],
                 '3->A' => [ 'ortheus' ],
-		'A->1' => [ 'remove_dodgy_ancestral_blocks' ],
+		'A->1' => [ 'create_neighbour_nodes_jobs_alignment' ],
 	},
 },
 # find the most likely strand orientation for genomic regions which enredo was unable to determine the
@@ -278,11 +278,6 @@ return
                 1 => WHEN( '#run_gerp#' => [ 'gerp' ] ),
         },
 },
-
-            {  -logic_name => 'remove_dodgy_ancestral_blocks',
-               -module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::DeleteDodgyAncestralBlocks',
-               -flow_into  => [ 'create_neighbour_nodes_jobs_alignment' ],
-            },
 
 # --------------------------------------[Populate the left and right node_id of the genomic_align_tree table]-----------------------------
             {   -logic_name => 'create_neighbour_nodes_jobs_alignment',
