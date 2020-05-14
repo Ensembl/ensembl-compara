@@ -268,21 +268,24 @@ sub make_tree {
   my ($self, $tree, $tracks) = @_;
   my $redo = [];
 
+  my $progress_made = 0; # to detect infinite loops due to borken hubs
   foreach (@$tracks) {
     if ($_->{'parent'}) {
       my $parent = $tree->get_node($_->{'parent'});
       
       if ($parent) {
+        $progress_made = 1;
         $parent->append($tree->create_node($_->{'track'}, $_));
       } else {
         push @$redo, $_;
       }
     } else {
+      $progress_made = 1;
       $tree->root->append($tree->create_node($_->{'track'}, $_));
     }
   }
   
-  $self->make_tree($tree, $redo) if scalar @$redo;
+  $self->make_tree($tree, $redo) if scalar @$redo and $progress_made;
 }
 
 sub fix_tree {
