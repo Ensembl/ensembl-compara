@@ -93,6 +93,7 @@ sub pipeline_wide_parameters {
 	'calculate_goc_distribution'  => $self->o('calculate_goc_distribution'),
         'goc_capacity'   => $self->o('goc_capacity'),
         'homology_dumps_dir' => $self->o('homology_dumps_dir'),
+        'gene_dumps_dir'     => $self->o('gene_dumps_dir'),
     };
 }
 

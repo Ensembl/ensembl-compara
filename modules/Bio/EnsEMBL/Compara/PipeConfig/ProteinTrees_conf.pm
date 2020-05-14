@@ -222,7 +222,7 @@ sub default_options {
         'quick_tree_break_capacity' => 1500,
         'build_hmm_capacity'        => 200,
         'ktreedist_capacity'        => 150,
-        'goc_capacity'              => 30,
+        'goc_capacity'              => 100,
         'goc_stats_capacity'        => 70,
         'genesetQC_capacity'        => 100,
         'other_paralogs_capacity'   => 50,
