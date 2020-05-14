@@ -131,7 +131,7 @@ sub match_range_filter {
   Arg [2]     : String $file_extension
   Arg [3]     : String or arrayref $selected_fields
   Arg [4]     : String or arrayref $group_by
-  Description : Fetch data from data files under $directory. By deafult,
+  Description : Fetch data from data files under $directory. By default,
                 it will fetch all data from all files and return an arrayref
                 of hashrefs, with column names as keys.
                 If $file_extension is provided, only files matching this
