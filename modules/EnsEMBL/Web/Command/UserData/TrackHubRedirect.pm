@@ -40,6 +40,8 @@ sub process {
   my $pattern       = "^$extension\$";
   my ($redirect, $anchor);
   my $params        = {};
+  warn ">>> LOC ".$hub->param('r');
+  warn ">>> GENE ".$hub->param('g');
 
   ## Allow for manually-created URLs with capitalisation, and 
   ## also validate any user-provided species name
@@ -84,7 +86,6 @@ sub process {
 
         ## Check if we have any supported assemblies
         my $trackhub = EnsEMBL::Web::File::AttachedFormat::TRACKHUB->new('hub' => $self->hub, 'url' => $url);
-        my $assembly_lookup = $hub->species_defs->assembly_lookup;
         my $hub_info = $trackhub->{'trackhub'}->get_hub({'assembly_lookup' => $assembly_lookup, 'parse_tracks' => 0});
 
         if ($hub_info->{'unsupported_genomes'}) {
@@ -131,12 +132,19 @@ sub process {
         }
       }
       if ($redirect =~ /Location/) {
-        my $location    = $hub->param('r') || $hub->param('location') || $hub->param('Location');
-        unless ($location) {
-          my $sample_links  = $species_defs->get_config($species, 'SAMPLE_DATA');
-          $location         = $sample_links->{'LOCATION_PARAM'} if $sample_links;
+        ## Allow optional gene parameter to override the location
+        if ($hub->param('gene')) {
+          $params->{'g'} = $hub->param('gene');
+          delete $params->{'r'};
         }
-        $params->{'r'} = $location;
+        else {
+          my $location    = $hub->param('r') || $hub->param('location') || $hub->param('Location');
+          unless ($location) {
+            my $sample_links  = $species_defs->get_config($species, 'SAMPLE_DATA');
+            $location         = $sample_links->{'LOCATION_PARAM'} if $sample_links;
+          }
+          $params->{'r'} = $location;
+        }
       }
     } else {
       $redirect           = '/trackhub_error.html';
