@@ -143,8 +143,8 @@ sub psychic {
     ## match any of the following:
     if ($jump_query =~ /^\s*([-\.\w]+)[:]/i ) {
     #using core api to return location value (see perl documentation for core to see the available combination)
-      my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor');
-      my ($seq_region_name, $start, $end, $strand) = $slice_adaptor->parse_location_to_values($jump_query);
+    # don't get an adaptor as we may not have a core db in our species (eg Multi on grch37).
+      my ($seq_region_name, $start, $end, $strand) = Bio::EnsEMBL::DBSQL::SliceAdaptor::parse_location_to_values(undef,$jump_query);
 
       $seq_region_name =~ s/chr//;
       $seq_region_name =~ s/ //g;
