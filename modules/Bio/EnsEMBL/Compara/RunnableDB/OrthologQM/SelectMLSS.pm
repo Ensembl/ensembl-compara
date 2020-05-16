@@ -53,6 +53,7 @@ sub param_defaults {
     return {
         %{$self->SUPER::param_defaults},
         'epo_method_link_id' => 13,
+        'aln_mlss_ids'       => undef,
     };
 }
 
