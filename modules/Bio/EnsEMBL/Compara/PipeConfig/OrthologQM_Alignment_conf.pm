@@ -204,6 +204,7 @@ sub pipeline_analyses {
                 'master_db'        => $self->o('master_db'),
                 'alt_homology_db'  => $self->o('alt_homology_db'),
             }],
+            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name => 'reset_mlss',
@@ -230,6 +231,7 @@ sub pipeline_analyses {
             -parameters => {
                 'method_link_types' => $self->o('homology_method_link_types'),
             },
+            -rc_name    => '500Mb_job',
             -flow_into  => {
                 '2->A' => [ 'prepare_orthologs' ],
                 'A->1' => [ 'check_file_copy' ],
@@ -270,6 +272,7 @@ sub pipeline_analyses {
                 'output_file'    => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
                 'reuse_file'     => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga_reuse.tsv',
             },
+            -rc_name    => '500Mb_job',
             -hive_capacity     => 400,
         },
 
@@ -281,6 +284,7 @@ sub pipeline_analyses {
                 'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.homology_id_map.tsv',
                 'output_file'               => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga_reuse.tsv',
             },
+            -rc_name    => '500Mb_job',
             -hive_capacity     => 400,
         },
 
