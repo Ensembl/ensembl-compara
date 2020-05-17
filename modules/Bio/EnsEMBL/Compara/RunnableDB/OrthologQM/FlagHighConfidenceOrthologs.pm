@@ -167,7 +167,7 @@ sub write_output {
     }
     if ( defined $external_conditions->{wga_coverage} ) {
         # unlike goc, wga is calculated on both protein and ncrna - add the range_label to ensure mergeability
-        $self->_write_threshold_scores($mlss, "${range_label}wga", $external_conditions->{wga_coverage}, $wga_coverage);
+        $self->_write_threshold_scores($mlss, "${range_label}_wga", $external_conditions->{wga_coverage}, $wga_coverage);
     }
 }
 
