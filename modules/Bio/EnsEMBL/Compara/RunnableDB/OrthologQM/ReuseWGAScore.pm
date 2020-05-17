@@ -64,7 +64,7 @@ sub write_output {
         my $row = map_row_to_header( $line, \@pwga_head_cols );
         my $curr_hom_id = $homology_id_map{$row->{homology_id}};
         my $wga_score   = $row->{wga_coverage};
-        print $out_fh "$curr_hom_id\t$wga_score\n";
+        print $out_fh "$curr_hom_id\t$wga_score\n" if $curr_hom_id;
     }
     close $out_fh;
     close $pwga_fh;
