@@ -73,6 +73,7 @@ sub fetch_input {
         while ( my $line = <$fh> ) {
             my $row = map_row_to_header($line, \@header_cols);
             my $primary_id = $row->{$primary_key};
+            die "$primary_key is empty in file $f" unless $primary_id;
             delete $row->{$primary_key};
             foreach my $attrib_name ( keys %$row ) {
                 $attribs{$primary_id}->{$attrib_name} = $row->{$attrib_name};
