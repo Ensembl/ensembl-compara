@@ -65,6 +65,9 @@ sub default_options {
             # Which genome_dbs are used references for which clades
             # [ '10090', 'mus_musculus' ],
         ],
+
+        'binary'    => 1,
+        'n_missing_species_in_tree' => 0,
     };
 }
 
@@ -128,8 +131,8 @@ sub pipeline_analyses {
             -parameters => {
                 # Gets #compara_db# from pipeline_wide_parameters
                 mode            => 'species_tree',
-                binary          => 1,
-                n_missing_species_in_tree   => 0,
+                binary          => $self->o('binary'),
+                n_missing_species_in_tree   => $self->o('n_missing_species_in_tree'),
             },
             -flow_into  => [ 'load_ncbi_tree' ],
         },
