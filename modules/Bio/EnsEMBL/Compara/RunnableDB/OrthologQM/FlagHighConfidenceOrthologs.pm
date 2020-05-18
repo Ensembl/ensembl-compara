@@ -48,7 +48,6 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
-        'range_label'       => undef,
         'range_filter'      => undef,
     };
 }
@@ -95,7 +94,7 @@ sub write_output {
     $self->disconnect_from_hive_database;
 
     my $mlss                = $self->param('mlss');
-    my $range_label         = $self->param('range_label');
+    my $range_label         = $self->param_required('range_label');
     my $range_filter        = $self->param('range_filter') ? $self->param('range_filter')->{$range_label} : undef;
     my $conditions          = $self->param('conditions');
     my $external_conditions = $self->param('external_conditions');
