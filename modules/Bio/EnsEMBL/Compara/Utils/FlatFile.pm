@@ -128,18 +128,19 @@ sub match_range_filter {
 =head2 query_file_tree
 
   Arg [1]     : String $directory
-  Arg [2]     : String $file_extension
-  Arg [3]     : String or arrayref $selected_fields
-  Arg [4]     : String or arrayref $group_by
+  Arg [2]     : (optional) String $file_extension
+  Arg [3]     : (optional) String or arrayref $selected_fields
+  Arg [4]     : (optional) String or arrayref $group_by
   Description : Fetch data from data files under $directory. By default,
                 it will fetch all data from all files and return an arrayref
                 of hashrefs, with column names as keys.
                 If $file_extension is provided, only files matching this
                 extension will be queried.
-                If $select is provided, only the given fields will be returned.
-                If $group_by is provided, the method will return a hashref (
-                nested if more than one group_by term is given), which points to
-                an arrayref of hashes.
+                If $selected_fields is provided, only the given fields will
+                be returned.
+                If $group_by is provided, the method will return a hashref
+                (nested if more than one group_by term is given), which points
+                to an arrayref of hashes.
   Returntype  : arrayref or hashref (if $group_by is given)
 
 =cut
@@ -151,7 +152,7 @@ sub query_file_tree {
     $group_by = [$group_by] if defined $group_by && ref $group_by ne 'ARRAY';
 
     # grab the list of files in the $dir
-    my $filelist= [];
+    my $filelist = [];
     my $wanted = sub { _wanted($filelist, ($ext || '.+')) };
     find($wanted, $dir);
 
@@ -191,6 +192,7 @@ sub query_file_tree {
     }
 }
 
+# part of File::Find - define which files to select
 sub _wanted {
    return if ! -e;
    my ($files, $ext) = @_;
@@ -201,10 +203,10 @@ sub _wanted {
 
   Arg [1]     : Arrayref $array_of_hashes
   Arg [2]     : Arrayref $group_by
-  Arg [3]     : Arrayref $selected_fields
+  Arg [3]     : (optional) Arrayref $selected_fields
   Description : Given an array of hashrefs, group the data by the value
                 of the fields listed in $group_by and return a hash of
-                arrays of hashes. If $selected_data is provided, prune out
+                arrays of hashes. If $selected_fields is provided, prune out
                 only these fields.
   Returntype  : hashref
 
