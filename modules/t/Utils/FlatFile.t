@@ -92,19 +92,20 @@ subtest 'query_file_tree' => sub {
     my $full_data = [
         { key1 => 0, key2 => 'a', key3 => 'z', key4 => 100 },
         { key1 => 1, key2 => 'b', key3 => 'y', key4 => 100 },
-        { key1 => 0, key2 => 'a', key3 => 'x', key4 => 90  },
-        { key1 => 1, key2 => 'c', key3 => 'w', key4 => 90  },
+        { key1 => 2, key2 => 'd', key3 => 'v', key4 => 10  }, # this line comes from a *.tsv file - will be excluded later
         { key1 => 1, key2 => 'b', key3 => 'y', key4 => 80  },
         { key1 => 1, key2 => 'c', key3 => 'w', key4 => 60  },
+        { key1 => 0, key2 => 'a', key3 => 'x', key4 => 90  },
+        { key1 => 1, key2 => 'c', key3 => 'w', key4 => 90  },
     ];
     is_deeply( Bio::EnsEMBL::Compara::Utils::FlatFile::query_file_tree( $test_path ), $full_data, 'data read into correct structure' );
 
     my $selected_data = [
         { key1 => 0, key3 => 'z' },
         { key1 => 1, key3 => 'y' },
-        { key1 => 0, key3 => 'x' },
-        { key1 => 1, key3 => 'w' },
         { key1 => 1, key3 => 'y' },
+        { key1 => 1, key3 => 'w' },
+        { key1 => 0, key3 => 'x' },
         { key1 => 1, key3 => 'w' },
     ];
     is_deeply( Bio::EnsEMBL::Compara::Utils::FlatFile::query_file_tree( $test_path, 'test', ['key1', 'key3'] ), $selected_data, 'correct data selected' );
@@ -115,7 +116,7 @@ subtest 'query_file_tree' => sub {
         },
         '1' => {
             'b' => { 'y' => [{key4 => 100}, {key4 => 80}] },
-            'c' => { 'w' => [{key4 =>  90}, {key4 => 60}] }
+            'c' => { 'w' => [{key4 => 60},  {key4 => 90}] }
         }
     };
     is_deeply( Bio::EnsEMBL::Compara::Utils::FlatFile::query_file_tree( $test_path, 'test', 'key4', ['key1', 'key2', 'key3'] ), $grouped_data, 'correct data selected and grouped' );

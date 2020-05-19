@@ -155,9 +155,13 @@ sub query_file_tree {
     my $wanted = sub { _wanted($filelist, ($ext || '.+')) };
     find($wanted, $dir);
 
+    # sort files - important for unit testing (esp travis-ci)
+    # as different versions of File::Find traverse in different order
+    my @filelist = sort @$filelist;
+
     # loop through the files and group the data
     my @data;
-    foreach my $file ( @$filelist ) {
+    foreach my $file ( @filelist ) {
         open( my $fh, '<', $file ) or die "Cannot open $file for reading";
         my $header_line = <$fh>;
         my @header_cols = split(/\s+/, $header_line);
