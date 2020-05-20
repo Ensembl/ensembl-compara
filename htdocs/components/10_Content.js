@@ -244,6 +244,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
           if (panel.elLk[this.rel][0].id) {
             window.location.hash = panel.elLk[this.rel][0].id;
           }
+        } else {
+          // remove the hash from the url
+          history.replaceState("", document.title, window.location.pathname + window.location.search);
         }
       }
       

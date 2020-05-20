@@ -29,10 +29,13 @@ Ensembl.Panel.PopulationGraph = Ensembl.Panel.Piechart.extend({
     
     this.base();
   },
-  
+
   toggleContent: function (el) {
     if (el.hasClass('closed') && !el.data('done')) {
       this.base(el);
+      if (!this.canAddContent()) {
+        return;
+      }
       this.makeGraphs(this.el.find('.' + el.attr('rel') + ' .pie_chart > div[id^=graphHolder]').map(function() { return this.id.match(/\d+/).pop() }).toArray());
       el.data('done', true);
     } else {
@@ -40,5 +43,19 @@ Ensembl.Panel.PopulationGraph = Ensembl.Panel.Piechart.extend({
     }
     
     el = null;
+  },
+
+  /*
+    Up the prototype chain (Ensembl.Panel.Piechart -> Ensembl.Panel.Content)
+    there is the `toggleable` method that gets executed during initialization.
+    This method will trigger the toggleContent method in the current class.
+    However:
+    - there is no need for the toggleContent method to run at initialization
+    - moreover, if the getContent method on Ensembl.Panel.Piechart hasn't completed
+      by the time toggleContent is executed, calling this.makeGraphs will result in an error.
+  */
+  canAddContent: function () {
+    // A rather dumb check to test that the getContent in the parent class has completed
+    return Boolean(this.graphEls);
   }
 });
