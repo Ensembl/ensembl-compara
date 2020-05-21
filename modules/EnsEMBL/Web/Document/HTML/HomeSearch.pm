@@ -38,7 +38,7 @@ sub render {
 
   my $hub                 = $self->hub;
   my $species_defs        = $hub->species_defs;
-  my $page_species        = $hub->species || $hub->species_defs->ENSEMBL_PRIMARY_SPECIES;
+  my $page_species        = $hub->species || 'Multi';
   my $multi               = $hub->species =~ /Multi/i;
   my $species_name        = $page_species eq 'Multi' ? '' : $species_defs->DISPLAY_NAME;
   my $favourites          = $hub->get_favourite_species;
