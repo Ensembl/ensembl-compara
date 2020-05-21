@@ -91,6 +91,12 @@ sub _get_dom_tree {
 
     my $edit_icon = sprintf qq(<a href="%s" class="_list_edit modal_link"><img src="/i/16/pencil.png" class="left-half-margin" title="Edit your favourites"></a>), $hub->url({qw(type Account action Login)});
 
+  
+    my %taxon_labels = $sd->multiX('TAXON_LABEL'); 
+    unless (keys %taxon_labels) {
+      %taxon_labels = %{$sd->TAXON_LABEL||{}};
+    }
+
     return $self->dom->create_element('div', {
       'class'       => 'column_wrapper',
       'children'    => [{
@@ -150,7 +156,7 @@ sub _get_dom_tree {
                         'node_name'   => 'inputhidden',
                         'class'       => 'js_param json',
                         'name'        => 'taxon_labels',
-                        'value'       => encode_entities(to_json($sd->TAXON_LABEL||{}))
+                        'value'       => encode_entities(to_json(\%taxon_labels))
                       }, {
                         'node_name'   => 'inputhidden',
                         'class'       => 'js_param json',
