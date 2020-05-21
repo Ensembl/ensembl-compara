@@ -1622,9 +1622,8 @@ sub _munge_meta {
     assembly.name                 ASSEMBLY_NAME
     liftover.mapping              ASSEMBLY_MAPPINGS
     genebuild.method              GENEBUILD_METHOD
-    provider.name                 PROVIDER_NAME
-    provider.url                  PROVIDER_URL
-    provider.logo                 PROVIDER_LOGO
+    annotation.provider_name      ANNOTATION_PROVIDER_NAME
+    annotation.provider_url       ANNOTATION_PROVIDER_URL
     species.strain                SPECIES_STRAIN
     species.strain_group          STRAIN_GROUP
     strain.type                   STRAIN_TYPE
