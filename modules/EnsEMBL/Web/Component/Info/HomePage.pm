@@ -298,6 +298,10 @@ sub variation_text {
   my $species_prod_name = $species_defs->get_config($hub->species, 'SPECIES_PRODUCTION_NAME');
   my $html;
 
+  if($species_defs->NO_VARIATION && !$species_defs->ENSEMBL_VEP_ENABLED){
+    return '';
+  }
+  
   if ($hub->database('variation')) {
     my $sample_data  = $species_defs->SAMPLE_DATA;
 
