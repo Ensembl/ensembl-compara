@@ -39,6 +39,7 @@ sub content {
   my $species_defs      = $hub->species_defs;
   my $species           = $hub->species;
   my $path              = $hub->species_path;
+  my $image             = $species_defs->SPECIES_IMAGE;
   my $common_name       = $species_defs->SPECIES_COMMON_NAME;
   my $image             = $species_defs->SPECIES_IMAGE;
   my $accession         = $species_defs->ASSEMBLY_ACCESSION;
@@ -73,14 +74,14 @@ sub content {
   $html .= '<h2 id="assembly">Assembly</h2>';
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/${species}_assembly.html");
 
-  $html .= sprintf '<p>The genome assembly represented here corresponds to %s %s</p>', $source_type, $hub->get_ExtURL_link($accession, "ASSEMBLY_ACCESSION_SOURCE_$source", $accession) if $accession; ## Add in GCA link
-
   if (my $assembly_dropdown = $self->assembly_dropdown) {
     $html .= "<h2>Other assemblies</h2>$assembly_dropdown";
   }
   
   $html .= '<h2 id="genebuild">Gene annotation</h2>';
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/${species}_annotation.html");
+
+  $html .= $self->include_more_annotations();
 
   ## Link to Wikipedia
   $html .= $self->_wikipedia_link; 

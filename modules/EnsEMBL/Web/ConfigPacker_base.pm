@@ -125,8 +125,10 @@ sub db_connect {
   };
 
   if( $@ ) {
-    print STDERR "\t  [WARN] Can't connect to $db\n", "\t  [WARN] $@" unless $no_warn;
-    $dbh = undef;
+    unless ($no_warn || ($db =~ /COMPARA/ && $self->{'_tree'}{'NO_COMPARA'})) {
+      print STDERR "\t  [WARN] Can't connect to $db\n", "\t  [WARN] $@";
+      $dbh = undef;
+    }
   } elsif( !$dbh ) {
     print STDERR ( "\t  [WARN] $db database handle undefined\n" ) unless $no_warn;
   }

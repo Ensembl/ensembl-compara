@@ -30,9 +30,10 @@ sub search_options {
   my $self          = shift;
   my $species       = $self->species;
   my $species_name  = $species ? $self->species_defs->SPECIES_COMMON_NAME : '';
+  my $image         = $self->species_defs->SPECIES_IMAGE;
 
   return [ $species ? (
-    'ensembl'         => { 'label' => "Search $species_name",   'icon' => "species/${species}.png"   }) : (),
+    'ensembl'         => { 'label' => "Search $species_name",   'icon' => "species/${image}.png"   }) : (),
     'ensembl_all'     => { 'label' => 'Search all species',     'icon' => 'search/ensembl.gif'          },
     'ensembl_genomes' => { 'label' => 'Search Ensembl genomes', 'icon' => 'search/ensembl_genomes.gif'  },
     'vega'            => { 'label' => 'Search Vega',            'icon' => 'search/vega.gif'             },
