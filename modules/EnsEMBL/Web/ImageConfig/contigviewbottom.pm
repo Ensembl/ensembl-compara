@@ -267,6 +267,7 @@ sub init_cacheable {
     pairwise_tblat
     pairwise_other
     dna_align_compara
+    genome_targeting
     oligo
     repeat
     external_data
@@ -361,6 +362,7 @@ sub init_cacheable {
 
     foreach my $default (@$defaults) {
       my ($mlss_id,$species,$method) = @$default;
+      next unless $mlss_id;
       $self->modify_configs(
         [ 'alignment_compara_'.$mlss_id.'_constrained' ],
         { display => 'compact' }
