@@ -112,6 +112,14 @@ sub render {
     }
   }
 
+  ## Remove examples that only have stable IDs
+  foreach my $sample ('GENE', 'TRANSCRIPT') {
+    if ($sample_data{$sample.'_TEXT'} =~ /^ENS/) {
+      my $index = first_index {$_ eq $sample.'_TEXT'} @keys;
+      splice @keys, $index, 1; 
+    }
+  }
+
   if (keys %sample_data) {
     $examples = join ' or ', map { $sample_data{$_} ? sprintf('<a class="nowrap" href="%s?q=%s%s">%s</a>', $search_url, $sample_data{$_}, $extra_params, $sample_data{$_}) : ()
     } @keys;

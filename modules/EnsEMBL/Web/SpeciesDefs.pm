@@ -797,6 +797,15 @@ sub _parse {
     $config_packer->munge('config_tree');
     $self->_info_line('munging', "$species config");
 
+    # Replace any placeholder text in sample data
+    my $sample = $config_packer->tree->{'SAMPLE_DATA'};
+    while (my($k, $v) = each(%$sample)) {
+      if ($k =~ /TEXT/ && $v eq 'ensembl_gene') {
+        (my $link_type = $k) =~ s/_TEXT//;
+        $sample->{$k} = $sample->{$link_type.'_PARAM'};
+      }
+    }
+
     ## Need to gather strain info for all species
     my $strain_group = $config_packer->tree->{'STRAIN_GROUP'};
     my $strain_name = $config_packer->tree->{'SPECIES_STRAIN'};
