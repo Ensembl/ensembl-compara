@@ -798,11 +798,12 @@ sub _parse {
     # Replace any placeholder text in sample data
     my $sample = $config_packer->tree->{'SAMPLE_DATA'};
     while (my($k, $v) = each(%$sample)) {
-      if ($k =~ /TEXT/ && $v eq 'ensembl_gene') {
+      if ($k =~ /TEXT/ && ($v eq 'ensembl_gene' || $v eq 'ensembl_transcript')) {
         (my $link_type = $k) =~ s/_TEXT//;
         $sample->{$k} = $sample->{$link_type.'_PARAM'};
       }
     }
+    $config_packer->tree->{'SAMPLE_DATA'} = $sample;
 
     ## Need to gather strain info for all species
     my $strain_group = $config_packer->tree->{'STRAIN_GROUP'};

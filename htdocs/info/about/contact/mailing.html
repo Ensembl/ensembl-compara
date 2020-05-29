@@ -1,0 +1,122 @@
+<html>
+<head>
+<title>Mailing Lists</title>
+</head>
+
+<body>
+
+<h1>Mailing Lists</h1>
+
+<p>
+The Ensembl mailing lists are ideal for programmers, code and installation discussions.
+</p>
+
+
+<h2>Ensembl Mailing Lists</h2>
+
+<p>
+Ensembl is an open collaborative project.
+We are informal and coordinate much of our work by open e-mail lists.
+There are two mailing lists on Ensembl:
+</p>
+
+<dl>
+
+<dt id="announce">announce</dt>
+<dd>A low volume mailing list used to announce major updates and major releases. [<a href="http://lists.ensembl.org/pipermail/announce_ensembl.org/">Archive</a>]
+</dd>
+
+<dt id="dev">dev</dt>
+<dd>A high volume mailing list for Ensembl development, open to all. [<a href="http://lists.ensembl.org/pipermail/dev_ensembl.org/">Archive</a>]
+<p>
+This mailing list includes the Ensembl developers and others who are following the project.
+We  encourage people users to take questions and suggestions of small collaborations to ensembl-dev which will then be discussed internally amongst all relevant team members.
+</p>
+<p>Please see below for detailed <a href="#guidelines">posting guidelines</a> that we expect all users of the list to adhere to.</p> 
+</dd>
+
+</dl>
+
+<p>To subscribe to either of these lists, you can</p>
+
+<ol>
+<li>Visit <a href="http://lists.ensembl.org/mailman/listinfo">lists.ensembl.org</a> and follow the online instructions</li>
+<li>Or, send a blank email to
+  <ul>
+  <li><a href="mailto:dev-join@ensembl.org">dev-join@ensembl.org</a> or</li>
+  <li><a href="mailto:announce-join@ensembl.org">announce-join@ensembl.org</a></li>
+  </ul>
+  as appropriate (any content in the email will be ignored)</li>
+</ol>
+
+
+<h3 id="guidelines">Ensembl dev posting guidelines</h3>
+
+<p class="space-below">The Ensembl <a href="http://lists.ensembl.org/mailman/listinfo/dev_ensembl.org">dev mailing list</a> is a forum for users of the 
+Ensembl API, website and data including users maintaining Ensembl mirrors
+or developing applications based on the Ensembl code.  All API/web installation 
+questions, issues, possible bugs or other Ensembl code related queries are 
+appropriate for this forum. </p>
+
+<p>Please keep in mind that many of the users posting here are volunteering 
+their expertise. While help is happily provided, there is an expectation that users
+will spend the necessary time learning the system from the <a href="/info/">available documentation</a>.</p>
+
+
+<h4>General information</h4>
+
+<ul>
+<li>Before posting users are encouraged to search the 
+<a href="http://lists.ensembl.org/pipermail/dev_ensembl.org/">dev list archives</a>.  
+Additional information including specific help for the <a href="/info/docs/api">API</a> 
+and a <a href="/Help/Faq">project FAQ</a> are available online.</li>
+
+<li>Choose a meaningful subject for your message.</li>
+
+<li>Ensembl also provides user support via our <a href="/Help/Contact" class="popup">helpdesk</a>.  
+Questions sent to this address are not sent to the general dev list, but may be
+used as the basis of FAQ entries, blog posts or other documentation. 
+Please do not send the same issue to both dev and helpdesk.</li>
+</ul>
+
+<h4>How to format specific question types</h4>
+
+<ul>
+<li>If you are posting a question about the Ensembl API, please provide the
+API version that you are using, which is found via Bio::EnsEMBL::ApiVersion
+<pre class="code">
+  use Bio::EnsEMBL::ApiVersion;
+  printf( "The API version used is %s\n", software_version() );
+</pre></li>
+
+<li>A short code snippet illustrating a problem is normally very useful.</li>
+
+<li>Questions about installation of an Ensembl web site should include
+information about the OS used and any applicable error messages.</li>
+
+<li>Questions about Ensembl data should include the release number.
+Database version can be found in the database name or via the
+schema_version entry in the meta table.</li>
+</ul>
+
+<h4>Administrative guidelines</h4>
+
+<ul>
+<li>Please keep messages on the list so that others can benefit from the
+discussion.  All Ensembl team members will reply with the dev list in copy and
+dev messages should not be sent directly to members of the
+Ensembl team.</li>
+
+<li>By posting to the list you are accepting the terms of our <a href='/info/about/code_of_conduct.html'>code of conduct</a>. Normal standards of professional behaviour are expected in all messages. Those messages that contravene the code of conduct are not acceptable.</li>
+
+<li>Uninvited off-list contact for commercial or other purposes is not acceptable.</li>
+
+<li>Messages sent to dev@ensembl.org will be archived.  These are indexed and
+searchable via sources such as Google.</li>
+
+<li>Job postings for Ensembl project positions at the EMBL-EBI and Sanger may be
+occasionally be sent to the list.  Other jobs postings are not appropriate for the list.</li>
+</ul>
+
+</body>
+</html>
