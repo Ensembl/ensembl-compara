@@ -30,16 +30,13 @@ use base qw(EnsEMBL::Web::Document::Element::Tabs);
 
 sub _tabs {
   return {
-    tab_order => [qw(website data docs about)],
+    tab_order => [qw(website data about)],
     tab_info  => {
       about     => {
                     title => 'About us',
                     },
       data      => {
                     title => 'Data access',
-                    },
-      docs      => {
-                    title => 'API & software',
                     },
       website   => {
                     title => 'Using this website',
