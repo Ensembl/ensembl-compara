@@ -1,0 +1,18 @@
+11  nonsense_mediated_decay stop_codon  118968230 118968232 . - 0  gene_id "ENSG00000172269"; transcript_id "ENST00000442480"; exon_number "6"; gene_name "DPAGT1"; gene_biotype "protein_coding"; transcript_name "DPAGT1-010";
+11  nonsense_mediated_decay exon  118967852 118968007 . - .  gene_id "ENSG00000172269"; transcript_id "ENST00000442480"; exon_number "7"; gene_name "DPAGT1"; gene_biotype "protein_coding"; transcript_name "DPAGT1-010";
+11  nonsense_mediated_decay exon  118967668 118967773 . - .  gene_id "ENSG00000172269"; transcript_id "ENST00000442480"; exon_number "8"; gene_name "DPAGT1"; gene_biotype "protein_coding"; transcript_name "DPAGT1-010";
+11  retained_intron exon  118971340 118971838 . - .  gene_id "ENSG00000172269"; transcript_id "ENST00000525456"; exon_number "1"; gene_name "DPAGT1"; gene_biotype "protein_coding"; transcript_name "DPAGT1-012";
+11  retained_intron exon  118970972 118971118 . - .  gene_id "ENSG00000172269"; transcript_id "ENST00000525456"; exon_number "2"; gene_name "DPAGT1"; gene_biotype "protein_coding"; transcript_name "DPAGT1-012";
+11  retained_intron exon  118969113 118969197 . - .  gene_id "ENSG00000172269"; transcript_id "ENST00000525456"; exon_number "3"; gene_name "DPAGT1"; gene_biotype "protein_coding"; transcript_name "DPAGT1-012";
+11  retained_intron exon  118967973 118968261 . - .  gene_id "ENSG00000172269"; transcript_id "ENST00000525456"; exon_number "4"; gene_name "DPAGT1"; gene_biotype "protein_coding"; transcript_name "DPAGT1-012";
+11  retained_intron exon  118969113 118969145 . - .  gene_id "ENSG00000172269"; transcript_id "ENST00000524658"; exon_number "1"; gene_name "DPAGT1"; gene_biotype "protein_coding"; transcript_name "DPAGT1-014";
+11  retained_intron exon  118968565 118968753 . - .  gene_id "ENSG00000172269"; transcript_id "ENST00000524658"; exon_number "2"; gene_name "DPAGT1"; gene_biotype "protein_coding"; transcript_name "DPAGT1-014";
+11  retained_intron exon  118968047 118968261 . - .  gene_id "ENSG00000172269"; transcript_id "ENST00000524658"; exon_number "3"; gene_name "DPAGT1"; gene_biotype "protein_coding"; transcript_name "DPAGT1-014";
+11  retained_intron exon  118971340 118971733 . - .  gene_id "ENSG00000172269"; transcript_id "ENST00000530052"; exon_number "1"; gene_name "DPAGT1"; gene_biotype "protein_coding"; transcript_name "DPAGT1-015";
+11  retained_intron exon  118970972 118971118 . - .  gene_id "ENSG00000172269"; transcript_id "ENST00000530052"; exon_number "2"; gene_name "DPAGT1"; gene_biotype "protein_coding"; transcript_name "DPAGT1-015";
+11  retained_intron exon  118969113 118969197 . - .  gene_id "ENSG00000172269"; transcript_id "ENST00000530052"; exon_number "3"; gene_name "DPAGT1"; gene_biotype "protein_coding"; transcript_name "DPAGT1-015";
+11  retained_intron exon  118968670 118968753 . - .  gene_id "ENSG00000172269"; transcript_id "ENST00000530052"; exon_number "4"; gene_name "DPAGT1"; gene_biotype "protein_coding"; transcript_name "DPAGT1-015";
+11  retained_intron exon  118970972 118971626 . - .  gene_id "ENSG00000172269"; transcript_id "ENST00000533687"; exon_number "1"; gene_name "DPAGT1"; gene_biotype "protein_coding"; transcript_name "DPAGT1-013";
+11  retained_intron exon  118968784 118969197 . - .  gene_id "ENSG00000172269"; transcript_id "ENST00000533687"; exon_number "2"; gene_name "DPAGT1"; gene_biotype "protein_coding"; transcript_name "DPAGT1-013";
+11  processed_transcript  exon  118972205 118972542 . - .  gene_id "ENSG00000172269"; transcript_id "ENST00000445653"; exon_number "1"; gene_name "DPAGT1"; gene_biotype "protein_coding"; transcript_name "DPAGT1-009";
+
