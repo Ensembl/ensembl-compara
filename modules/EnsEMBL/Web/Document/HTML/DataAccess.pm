@@ -29,32 +29,63 @@ sub render {
   my $self  = shift;
   my $sd    = $self->hub->species_defs;
 
-  my $html = '';
+  my @cells;
+
+  push @cells, qq(<h2>Small quantities of data</h2>
+  <p><a href="/info/data/export.html"><img src="/img/download_sequence.gif" class="float-right"  style="width:200px;height:100px" alt="" title="Find out more" /></a>Many of the pages displaying Ensembl genomic data offer an <a href="export.html">export</a>
+option, suitable for small amounts of data, e.g. a single gene sequence.</p>
+  <p>Click on the 'Export data' button in the lefthand menu of most pages to export:</p>
+  <ul>
+    <li>FASTA sequence</li>
+    <li>GTF or GFF features</li>
+  </ul>
+  <p>...and more!</p>
+);
 
   ## REST
   my $rest = $sd->ENSEMBL_REST_URL;
   if ($rest) {
-    $html .= qq(<h2>Fast programmatic access</h2>
-<p>For fast access in any programming language, we recommend using our <a href="$rest">REST server</a>. Various REST endpoints provide access to vast amounts of Ensembl data.</p>
+    push @cells, qq(
+  <h2>Fast programmatic access</h2>
+  <p><a href="$rest"><img src="/img/download_api.gif" class="float-right" style="width:200px;height:100px" alt="" title="Visit our REST site" /></a>For fast access in any programming language, we recommend using our <a href="$rest">REST server</a>. Various REST endpoints provide access to vast amounts of Ensembl data.</p>
 );
-  }
-
-  ## Show Biomart info
-  if ($sd->ENSEMBL_MART_ENABLED) {
-    $html .= qq(<h2>Complex cross-database queries</h2>
-<p>More complex datasets can be retrieved using the <a href="biomart/">BioMart</a> data-mining tool.</p>);
   }
 
   ## File downloads
   my $ftp = $sd->ENSEMBL_FTP_URL;
   if ($ftp) {
-    $html .= qq(
-<h2>Complete datasets and databases</h2>
+    push @cells, qq(
+  <h2>Complete datasets and databases</h2>
 
-<p>Many datasets, e.g. all genes for a species, are available to download in a variety of formats from our <a href="$ftp">FTP site</a>.</p>
-<p>Entire databases are also available via FTP as MySQL dumps.</p>
+  <p><a href="$rest"><img src="/img/download_code.gif" class="float-right" style="width:200px;height:100px" alt="" title="Find out more" /></a>Many datasets, e.g. all genes for a species, are available to download in a variety of formats from our <a href="$ftp">FTP site</a>.</p>
+  <p>Entire databases are also available via FTP as MySQL dumps.</p>
       );
   }
+
+  ## Show Biomart info
+  if ($sd->ENSEMBL_MART_ENABLED) {
+    push @cells, qq(
+  <h2>Complex cross-database queries</h2>
+  <p><a href="/biomart/martview"><img src="/img/download_mart.gif" class="float-right"  style="width:200px;height:100px" alt="" title="Try BioMart" /></a>More complex datasets can be retrieved using the <a href="biomart/">BioMart</a> data-mining tool.</p>
+);
+  }
+
+  my $html = '<table class="blobs">';
+  my $count = 0;
+
+  foreach my $cell (@cells) {
+    if ($count % 2 == 0) {
+      $html .= '<tr>';
+    }
+    $html .= qq(<td>$cell</td>);
+    if ($count % 2 == 1) {
+      $html .= '</tr>';
+    }
+
+    $count++;
+  }
+
+  $html .= '</table>';
 
 }
 
