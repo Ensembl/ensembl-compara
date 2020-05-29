@@ -1,0 +1,79 @@
+<html>
+<head>
+<meta name="order" content="1" />
+<title>Large File Formats</title>
+</head>
+
+<body>
+
+<h1>Large File Formats</h1>
+
+<p>Ensembl supports a number of large (multi-gigabyte) file formats for datasets that are too large to upload directly to the Ensembl servers. The file remains on the remote server and is accessed via its URL, with only small chunks of data being requested by the Ensembl webcode at any one time.</p>
+
+<p>Supported formats currently include:</p>
+
+<ul>
+<li><a href="#bam-format">BAM and CRAM</a></li>
+<li><a href="#bb-format">bigBED</a></li>
+<li><a href="#interact">bigInteract</a></li>
+<li><a href="#bigpls">bigPsl</a></li>
+<li><a href="#bw-format">bigWig</a></li>
+<li><a href="#vcf-format">VCF</a></li>
+</ul>
+
+<p>All of these formats can be viewed in Ensembl by creating a custom data track using the 'Custom tracks' function, or by using a <a href="adding_trackhubs.html">track hub</a>.</p>
+
+<h2>How to attach an indexed file</h2>
+
+<p><img src="/img/help/large_files.png" alt="" /></p>
+
+<p>When you select one of these formats, the form button will change to read 'Attach'.</p>
+
+[[MOVIE::457]]
+
+<h2>File formats</h2>
+
+<h3 id="bam-format">BAM and CRAM</h3>
+<p>BAM is a compressed version of the SAM (Sequence Alignment/Map) binary format. BAM uses an index file to give fast access to small sections of the file. CRAM is an improvement on BAM, offering significantly better lossless compression whilst maintaining backwards compatibility with BAM.</p>
+<p>Both formats use the new HTSLIB codebase - more information is available from the <a href="https://github.com/samtools">SAMtools project on github</a>.
+
+
+<h3 id="bb-format">bigBed</h3>
+
+<p>bigBed is an indexed format created from standard <a href="/info/website/upload/bed.html">BED</a> files using the <kbd>bedToBigBed</kbd> utility program. It allows large datasets to be processed much faster than a conventional BED file.</p> 
+
+<h3 id="interact">bigInteract</a></h3>
+
+<p>The bigInteract format is a specialised version of bigBed that uses a standard AutoSQL structure to represent long-range interactions. Please see the <a href="https://genome.ucsc.edu/goldenPath/help/interact.html">UCSC</a> specifications for details of the file structure. In Ensembl, this format is displayed in the same style as the WashU pairwise interaction format.</p>
+
+<h3 id="bigpsl">bigPsl</a></h3>
+
+<p>The bigPsl format is a specialised version of bigBed that uses a standard AutoSQL structure to represent alignments between sequences. Please see the <a href="https://genome.ucsc.edu/goldenPath/help/bigPsl.html">UCSC</a> specifications for details of the file structure. In Ensembl, this format is displayed in the same style as a standard PSL file.</p>
+
+<h3 id="bw-format">bigWig</h3>
+
+<p>The bigWig format is designed for dense, continuous data that is intended to be displayed as a graph. Files can be created from WIG or BedGraph files using the appropriate utility program.</p>
+
+<p>Ensembl currently allows the following configuration options to be set when you upload the file:</p>
+
+<ul>
+<li>Track colour (10 choices)</li>
+<li>Y-axis maximum and minimum values</li>
+</ul>
+
+<h3 id="vcf-format">VCF format</h3>
+
+<p>The VCF format is a tab delimited format for storing variant calls and and individual genotypes. It is able to store all variant calls from single nucleotide variants to large scale insertions and deletions.</p>
+
+<p>More information on this format, which is still under development, can be obtained from the <a href="http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40">1000 Genomes Wiki</a>.</p>
+
+<p>Please note that if you are attaching a large VCF file from a URL, you will need to have an index file with the extension .vcf.gz.tbi in the same directory as your data file (and with the same name)</p>
+
+<p>In order to produce the indexed vcf file with the .gz.tbi extension you must follow the following steps:</p>
+<ul>
+<li>Compress your vcf file using <a href="http://sourceforge.net/projects/bgzip/">bgzip</a></li>
+<li>Index the vcf.gz file using <a href="http://samtools.sourceforge.net/tabix.shtml">tabix</a>. Use will need to pass the option -p vcf to tabix, for example "/usr/bin/tabix -p vcf my_file.vcf.gz"</li>
+</ul>
+
+</body>
+</html>
