@@ -1,0 +1,124 @@
+<html>
+<head>
+<meta name="order" content="2" />
+<title>Release Cycle</title>
+</head>
+
+<body>
+
+<h1>The Ensembl Release Cycle</h1>
+
+<p>
+Ensembl data is released on an approximately three-month cycle
+(occasionally longer if a lot of development work is being
+undertaken). Whatever its length, the cycle works as follows:
+</p>
+
+<ol>
+<li><strong>Genebuild</strong>
+<p class="space-below">
+The genebuild stage varies in length depending on the species being annotated. Most species take from three to six months to annotate using the Ensembl automatic annotation system. The time it takes to do a genebuild depends on factors such as assembly quality, number of species-specific protein sequences available in UniProt, and amount of RNAseq data.
+ Individual species are updated on an irregular schedule,
+depending on the availability of new assemblies and evidence. New
+species are added frequently from a number of sequencing projects
+around the world, and all species databases may receive minor
+updates. These can include patches to correct erroneous data and
+updates to data that changes regularly (such as cDNAs for human and
+mouse).<br />
+</p>
+
+<p class="space-below">
+The genebuild team members take evidence for genes and transcripts,
+such as protein and mRNAs, and combine these in the <a href="/info/genome/genebuild/">analysis pipeline</a> to create an Ensembl 
+<a href="/info/docs/api/core/index.html">core database</a> and optionally 
+<a href="/info/docs/api/core/index.html#est">otherfeatures</a>,
+<a href="/info/docs/api/core/index.html#rnaseq">rnaseq</a>, and
+<a href="/info/docs/api/core/index.html#cdna">cdna</a> databases. For human, mouse and zebrafish, the Ensembl predictions are combined with manual annotation data. 
+Once these databases are complete, they are handed over to the other Ensembl
+data teams for further processing (see below).
+</p>
+</li>
+
+<li><strong>Additional core data</strong><br /> The role of the core
+team is two-fold: to provide API support for the core and core-like
+(otherfeatures, cdna and rnaseq) databases, and to run scripts that add
+supplementary data to the database (e.g. gene counts) and check that
+the database contents are as complete and accurate as possible. These
+latter scripts, known as healthchecks, help to pick out any anomalous
+data produced by the automated pipeline, such as unusually long genes.
+</li>
+
+<li><strong>Other databases</strong>
+  <ul>
+  <li><strong>Compara</strong><br /> The comparative genomics team
+runs several pipelines which bring together the separate species
+databases, align sequences to identify syntenous regions and predict
+phylogenetic trees, orthologues, paralogues, and protein family clusters.
+The resultant data is compiled into a single large database.
+  </li>
+  <li><strong>Variation</strong><br /> The variation team brings
+together data from a variety of sources, including dbSNP, and also
+call new variations from resequencing data. These are then used to
+create variation databases for the relevant species. Currently there
+are around a dozen species with variation data, including human,
+chimp, mouse, rat, dog and zebrafish.
+  </li>
+  <li><strong>Regulation</strong><br /> The regulation team collects 
+experimental data from their collaborators and incorporates this into
+the <a href="/info/genome/funcgen/index.html">Regulatory Build</a>. This
+includes regulatory features determined by chromatin
+immuno-precipitation and epigenomic modifications. Currently only human and 
+mouse have a Regulatory Build, whilst fruitfly has other regulation data. Regulation 
+(funcgen) databases exist for other species to support the 
+<a href="/info/genome/microarray_probe_set_mapping.html">microarray mapping</a> 
+data.
+  </li>
+  </ul>
+</li>
+
+<li><strong>Production</strong><br /> 
+The production team run additional scripts on the completed databases
+including:
+  <ul>
+    <li>Creating normalised database tables from the Ensembl data, so that it can be
+accessed through the <a href="/info/data/biomart/">BioMart
+data-mining tool</a>.</li>
+    <li>Dumping genomic data into various file formats (GTF, EMBL, GenBank, etc)
+which are then copied to the FTP site</li>
+  </ul>
+</li>
+
+<li><strong>Web</strong><br />
+<p>Whilst the genomic data is being prepared, the web team works on
+new displays and new website features. They then bring together all
+the finished databases and make the content available online in a
+number of ways:</p>
+  <ul style="margin-top:0.5em">
+  <li>The website configuration is updated to access the new data</li>
+  <li>The databases are copied to
+the <a href="/info/data/mysql.html">public MySQL servers</a></li>
+  <li>The database dumps are also used to create search indexes for
+  the BLAST service</li>
+  </ul>
+
+<p>
+The web team also populates an additional database, ensembl_website,
+which contains help, news, and other web-specific information. If
+there are new displays, or if existing ones have changed
+substantially, the outreach team update the help content.
+</p>
+</li>
+
+<li><strong>Release</strong><br />
+When the new release is ready to go live, a copy of the current version is
+set up as an archive, and the webserver is updated to point to the new site.
+</li>
+</ol>
+
+<p>
+This is necessarily a simplified account of a process that takes
+around 50 people several months to complete!
+</p>
+
+</body>
+</html>

@@ -1,0 +1,59 @@
+<html>
+<head>
+<meta name="order" content="2" />
+<title>System Architecture</title>
+</head>
+
+<body>
+
+<h1>System Architecture</h1>
+
+<p>
+We are sometimes asked about the hardware needed to run a site 
+like www.ensembl.org. Whilst we give minimum requirements in our 
+<a href="/info/docs/webcode/mirror/requirements.html">technical documentation</a>,
+this is obviously insufficient to run a website that gets millions
+of hits per year!
+</p>
+
+<p>The specifications of individual machines varies, depending
+on requirements, but at the time of writing (2013) they typically 
+have 12 CPUs and 48GB of RAM.
+</p>
+
+<p>The diagram below shows a simplified version of the hardware
+architecture, omitting network details such as load-balancers.
+</p>
+
+<img src="/img/system_architecture.png" class="screenshot" />
+
+<h2>Webservers</h2>
+
+<p>We currently run 8 Apache webservers, 6 for the Ensembl webcode 
+itself and 2 for our biomart installation. We keep biomart on separate
+hardware as queries can be very large and overload the servers; the 
+separation ensures that if this occurs, it will not degrade service on
+the rest of the website.
+</p>
+
+<h2>Search engine</h2>
+
+<p>Our Solr search engine runs on a separate set of 4 Tomcat servers.</p>
+
+<h2>Databases</h2>
+
+<p>Our data is served from 8 MySQL database servers:</p>
+
+<ul>
+<li>2 for all the individual species' databases;</li>
+<li>2 for non-species-specific databases: compara, help, etc</li>
+<li>2 for mart databases</li>
+<li>1 for user account and session databases</li>
+<li>1 for the Ensembl Tools tickets (BLAST, etc)</li>
+</ul>
+
+
+</ul>
+
+</body>
+</html>
