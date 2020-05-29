@@ -1,0 +1,126 @@
+<html>
+<head>
+<meta name="order" content="2" />
+<title>Track Hub Support in Ensembl</title>
+</head>
+
+<body>
+
+<h1>Track Hub Support in Ensembl</h1>
+
+<h2>Hosting</h2>
+
+<div class="info-box"><p>
+IMPORTANT: Please note that you cannot host your trackhub on <b>Google Drive</b>, <b>Dropbox</b>, 
+or similar cloud services. This is because these services do not support loading of partial files 
+(such as regions of BigWig data). We recommend using a conventional web server or FTP server, or
+a free hosting service specialising in scientific data such as <a href="http://www.cyverse.org/">Cyverse</a> 
+(full instructions for using Cyverse can be found in the 
+<a href="https://genome.ucsc.edu/goldenPath/help/hgTrackHubHelp.html#Hosting">UCSC track hub documentation</a>,
+though the service is not limited to track hubs). 
+</p></div>
+
+<h2 id="genomes">genomes.txt</h2>
+
+<p>This file should contain a list of the genomes in your hub, identified by their assembly ID (not by species, as we have multiple assemblies for some species). For human and mouse, please use either the standard Ensembl assembly name (GRCh38, GRCh38) or the UCSC synonym - we do not support using the GCA accession for these species because each patch version has a different accession.</p>
+
+<p>Also, if you wish to use your hub with both Ensembl <i>and</i> UCSC you will need to use the UCSC assembly name in your hub, e.g.
+
+<pre class="code">
+genome hg38
+trackDb hg38/trackDb.txt
+</pre>
+
+<p>Unfortunately we cannot support other assembly synonyms at the moment, as we have no mappings between these synonyms and the corresponding Ensembl IDs.</p>
+
+<h2 id="trackdb">TrackDb.txt</h2>
+
+<p>Whilst we aim to support all the base features of track hubs, many of the 
+other parameters are rarely used or apply only to UCSC's browser. Any
+options not mentioned in the lists below have not yet been addressed but may
+be supported in future releases.</p>
+
+<h2 id="supported">Supported</h2>
+
+<p>The following parameters are supported by Ensembl - where there are differences, these are noted below.</p>
+
+<h3 id="general">General attributes</h3>
+
+<h4>Required</h4>
+<ul>
+<li><b>track</b></li>
+<li><b>type</b> - valid settings are: bam, cram, bigBed, bigWig, vcfTabix, multiWig ('cram' is in addition to UCSC's supported formats)</li>
+<li><b>shortLabel</b></li>
+<li><b>longLabel</b></li>
+<li><b>bigDataUrl</b></li>
+</ul>
+
+<h4>Optional</h4>
+<ul>
+<li><b>html</b></li>
+<li><b>visibility</b> - UCSC display settings are mapped as closely as possible to Ensembl styles,
+but there may be differences owing to options not being available</li>
+<li><b>color</b> - in addition to the standard RGB values, Ensembl will honour hexadecimal web colours
+(e.g. ff0099) and Unix named colours (e.g. slateblue).</li>
+<li><b>altColor</b> - experimental; currently only used on negative values</li>
+<li><b>priority</b></li>
+</ul>
+
+<h3 id="grouping">Grouping tracks</h3>
+
+<p>Grouped tracks are drawn adjacent to one another but not as a single block, so you can
+drag'n'drop them individually. Composite tracks can be turned on and off as a group using
+the 'Select/Deselect All' option in the control panel.</p>
+
+<p>We now support 'container multiWig', which superimposes a group of bigWig files into a 
+single track. However owing to the way our code is written, you cannot turn off individual
+tracks within a multiWig, only the whole set at once.</p>
+ 
+<ul>
+<li><b>parent</b></li>
+<li><b>container</b></li>
+<li><b>superTrack</b></li>
+<li><b>compositeTrack</b></li>
+<li><b>subGroup</b></li>
+<li><b>dimensions</b> - the first two dimensions are used to create a configuration matrix, 
+with other dimensions available via a popup menu on each matrix cell</li>
+</ul>
+
+<h3 id="format">Format-specific attributes</h3>
+
+<h4>BigBed</h4>
+<ul>
+<li><b>itemRgb</b></li>
+<li><b>colorByStrand</b> - see 'color' for supported colour types</li>
+<li><b>spectrum</b> - currently experimental, so suboptions may not be supported</li>
+</ul>
+
+<h4>BigWig</h4>
+<ul>
+<li><b>autoScale</b></li>
+<li><b>viewLimits</b></li>
+<li><b>maxHeightPixels</b></li>
+</ul>
+
+<hr />
+
+<h2>Not supported</h2>
+
+<p>The following options are specific to the UCSC browser and will be ignored by Ensembl:</p>
+
+<ul>
+<li>allButtonPair</li>
+<li>boxedCfg</li>
+<li>centerLabelsDense</li>
+<li>configurable</li>
+<li>dragAndDrop - Ensembl supports drag-and-drop track reordering, both within the image and 
+on the 'Track Order' page of the browser's configuration panel</li>
+<li>exonArrows</li>
+<li>exonArrowsDense</li>
+<li>nextExonText
+<li>pennantIcon</li>
+<li>thickDrawItem</li>
+</ul>
+
+</body>
+</html>

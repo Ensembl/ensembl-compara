@@ -1,0 +1,95 @@
+<html>
+<head>
+<meta name="order" content="2" />
+<title>Adding Track Hubs</title>
+</head>
+
+<body>
+
+<h1>Adding Track Hubs to Ensembl</h1>
+
+<h2>Manually attaching a track hub</h2>
+
+<p>You have two ways to add a track hub to Region in Detail. First, if the track
+      hub is public and registerd with Trackhub Registry then you can <a
+        href="/info/website/public_trackhubs.html"> search the
+      Trackhub registry itself</a>. Second, you can manually add a track hub as follows:  
+</p> 
+
+<ol>
+<li>Click on the "Custom tracks" icon <img src="/i/16/page-user.png" /> in the image toolbar or the lefthand button menu
+</li>
+<li>Fill in the data form:
+  <ol>
+    <li>Give your track hub a name (optional - it will be parsed from the hub.txt file)</li>
+    <li>The current species will be preselected - note that we now support multispecies hubs, so relevant data will be available on all appropriate species</li>
+    <li>The assembly is automatically set to the current assembly for the species you are on - if you wish to use a track hub with data on older assemblies, you will need to use an <a href="/info/website/archives/">archive site</a> (not available for all Ensembl-powered websites, or for assemblies that predate our track hub code)</li>
+    <li>In the large text box, type/paste the <strong>full URL of your hub's <kbd>hub.txt</kbd> file</strong>, e.g. http://ftp.ebi.ac.uk/pub/databases/blueprint/releases/current_release/homo_sapiens/hub/hub.txt
+    <li>A dropdown box labeled 'Data format' will appear</li>
+      <ul>
+        <li>If your hub file is called <kbd>hub.txt</kbd>, the form will automatically set the format to 'Track hub'</li>
+        <li>If it has a non-standard name, you will need to select 'Track hub' from the dropdown</li>
+      </ul>
+    </li>
+    <li>Click on the 'Add data' button</li>
+  </ol>
+</li>
+<li>When your hub has finished loading, a "Configure your hub" link will appear - click on it to see the configuration options for your track.
+</li>
+</ol>
+
+<h2>Configuring multidimensional track hubs</h2>
+
+<p>Some track hubs, such as the Blueprint Hub, are multidimensional. There is a specific interface to configure them. For the Blueprint Hub, you have two options: You can configure the ‘Blueprint Region’ or ‘Blueprint Signal’ display.
+</p> 
+
+<ol>
+<li>Select your tracks from a matrix based on the two primary dimensions, as decided by the Track Hub provider. For Blueprint these are the sample description (here a cell type) and experiment (here a data type) you are interested in. You can do this by selecting or deselecting all and by selecting individual sample descriptions or experiments. You can use the search box at the top of each tab to help you find the data you are interested in. Now click on the green ‘Filter tracks’ button at the bottom.
+</li>
+<li> Refine your selection based on other dimensions to the data, for example analysis_group or analysis_type (note this screen is not shown for Track Hubs with two dimensions only). Click on the cells in the matrix to select what you want to see. Now click on the green ‘Configure track display’ button at the bottom.
+</li>
+<li>Configure your track display. Click on the cells in a similar matrix to select what you want to see.
+</li>
+<li>Click on the green ‘View tracks’ button at the top to load and display the data you have selected and you are done.
+<img src="/img/multidim_th_config.png" alt="[screenshot]" class="screenshot" />
+</li>
+</ol>
+
+<h2>Programmatically attaching track hubs</h2>
+
+<p>If you wish to put a URL on your website which automatically attaches a hub to Ensembl, please use the following URL format:</p>
+
+<p>http://www.ensembl.org/Trackhub?url=http://www.coolgenomics.ac.uk/hub.txt</p>
+
+<p>For more precise configuration, you can add the following optional parameters, separated by semicolons:</p>
+
+<ul>
+<li>Species - binomial name with underscores, as used by Ensembl URLs. E.g. Homo_sapiens</li>
+<li>Location - coordinates as region:start-end, using parameter name 'r'</li>
+</ul>
+
+<p>e.g. http://www.ensembl.org/Trackhub?url=http://www.coolgenomics.ac.uk/hub.txt;species=Homo_sapiens;r=X:123456-123789</p>
+
+<h2>Differences between Ensembl and UCSC</h2>
+
+<p>We aim to support as many features as we can from the track hub specifications,
+but in some cases there is no direct correspondence between the way UCSC displays its
+tracks and how Ensembl displays the same data. For example, a bigBed track can be
+configured as either 'full' or 'pack' in your trackhub, but both these UCSC display
+styles correspond most closely to Ensembl's 'structure with labels', so they will look 
+identical in our genome browser.</p>
+
+<ul>
+<li><a href="trackhub_support.html">Full list of supported features</a></li>
+</ul>
+
+<h2>Setting up a track hub</h2>
+<p>For how to set up a hub, see the documentation provided by UCSC, the originators
+of this data service:</p>
+<ul>
+<li><a href="http://genome.ucsc.edu/goldenPath/help/hgTrackHubHelp.html" rel="external">Using UCSC Genome Browser Track Hubs</a></li>
+<li><a href="http://genome.ucsc.edu/goldenPath/help/trackDb/trackDbHub.html" rel="external">Hub Track Database Definition</a></li>
+</ul>
+
+</body>
+</html>
