@@ -133,6 +133,7 @@ sub create_node {
     title           => $n->{display_name} || $n->{scientific_name} || '',
     tooltip         => $n->{scientific_name} || '',
     searchable => $searchable,
+    img_url => ($n->{image} ? '/i/species/' . $n->{image} : '/img/e_bang') . '.png',
     isFolder => $isFolder,
     children => $n->{children} && scalar @{$n->{children}} > 0 ? $n->{children} : [],
     value => $n->{value} || '',

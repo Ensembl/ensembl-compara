@@ -113,6 +113,7 @@ Ensembl.extend({
     this.speciesCommon      = $('#species_common_name').val() || '';
     this.speciesImagePath   = $('#ensembl_image_root').val() + 'species/' || '';
     this.species            = this.speciesPath.split('/').pop();
+    this.speciesImage       = $('#ensembl_species_image').val();
   },
 
   cookie: {

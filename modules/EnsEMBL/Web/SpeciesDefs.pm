@@ -819,83 +819,6 @@ sub _parse {
         $species_to_strains->{$strain_group} = [$species_key];
       }
     }
-    
-    ## Species-specific munging
-    if ($species ne "MULTI" && $species ne "databases") {
-
-      my $scientific_name = $config_packer->tree->{'SPECIES_SCIENTIFIC_NAME'};
-      my $common_name = $config_packer->tree->{'SPECIES_DB_COMMON_NAME'};
-
-
-      # Populate taxonomy division using e_divisions.json template
-      push @{$species_to_assembly->{$common_name}}, $config_packer->tree->{'ASSEMBLY_VERSION'};
-      my $taxonomy = $config_packer->tree->{TAXONOMY};
-      my $children = [];
-      my $other_species_children = [];
-      my @other_species = grep { $_->{key} =~ m/other_species/ } @{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}};
-      $other_species[0]->{child_nodes} = [] if ($other_species[0] && !$other_species[0]->{child_nodes});
-
-      foreach my $node (@{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}}) {
-        my $child = {
-          key             => $species_key,
-          scientific_name => $scientific_name,
-          common_name     => $common_name,
-          display_name    => $config_packer->tree->{'DISPLAY_NAME'},
-          is_leaf         => 'true'
-        };
-
-        if ($strain_group && $strain_name !~ /reference/) {
-          $child->{type} = $strain_group . ' ' . $config_packer->tree->{'STRAIN_TYPE'}. 's';
-        }
-        elsif($strain_group && $strain_name =~ /reference/) {
-          # Create display name for Reference species
-          my $ref_name = $config_packer->tree->{'SPECIES_COMMON_NAME'} . ' '. $strain_name;
-          $child->{display_name} = $ref_name;
-          # $child->{type} = $ref_name;
-        }
-
-        if (!$node->{taxa}) {
-          push @{$other_species[0]->{child_nodes}}, $child;
-        }
-        else {
-          my %taxa = map {$_ => 1} @{ $node->{taxa} };
-          my @matched_groups = grep { $taxa{$_} } @$taxonomy;
-
-          if ($#matched_groups >= 0) {
-            if ($node->{child_nodes}) {
-              my $cnode_match = {};
-              foreach my $cnode ( @{$node->{child_nodes}}) {
-                my @match = grep { /$matched_groups[0]/ }  @{$cnode->{taxa}};
-                if ($#match >=0 ) {
-                  $cnode_match = $cnode;
-                  last;
-                }
-              }
-
-              if (keys %$cnode_match) {
-                if (!$cnode_match->{child_nodes}) {
-                  $cnode_match->{child_nodes} = [];
-                }
-                push @{$cnode_match->{child_nodes}}, $child;
-                last;
-              }
-              else {
-                if (!$node->{child_nodes}) {
-                  $node->{child_nodes} = [];
-                }
-                push @{$node->{child_nodes}}, $child;
-                last;
-              }
-            }
-            else {
-              $node->{child_nodes} = [];
-              push @{$node->{child_nodes}}, $child;
-              last;
-            }
-          }
-        }
-      }
-    }
   }
   # Used for grouping same species with different assemblies in species selector
   $tree->{'SPECIES_ASSEMBLY_MAP'} = $species_to_assembly;
@@ -961,6 +884,87 @@ sub _parse {
       if ($no_image) {
         my $clade = $tree->{$url}{'SPECIES_GROUP'};
         $tree->{$url}{'SPECIES_IMAGE'} = $labels->{$clade};
+      }
+
+      ## Species-specific munging
+      if ($url ne "MULTI" && $url ne "databases") {
+
+        my $scientific_name = $config_packer->tree->{'SPECIES_SCIENTIFIC_NAME'};
+        my $common_name = $config_packer->tree->{'SPECIES_DB_COMMON_NAME'};
+
+
+        # Populate taxonomy division using e_divisions.json template
+        push @{$species_to_assembly->{$common_name}}, $config_packer->tree->{'ASSEMBLY_VERSION'};
+        my $taxonomy = $config_packer->tree->{TAXONOMY};
+        my $children = [];
+        my $other_species_children = [];
+        my @other_species = grep { $_->{key} =~ m/other_species/ } @{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}};
+        $other_species[0]->{child_nodes} = [] if ($other_species[0] && !$other_species[0]->{child_nodes});
+        my $strain_group = $tree->{$url}{'STRAIN_GROUP'};
+        my $strain_name = $tree->{$url}{'SPECIES_STRAIN'};
+        my $species_key = $tree->{$url}{'SPECIES_URL'}; ## Key on actual URL, not production name
+
+        foreach my $node (@{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}}) {
+          my $child = {
+            key             => $species_key,
+            scientific_name => $scientific_name,
+            common_name     => $common_name,
+            image           => $tree->{$url}{'SPECIES_IMAGE'},
+            display_name    => $tree->{$url}{'DISPLAY_NAME'},
+            is_leaf         => 'true'
+          };
+
+          if ($strain_group && $strain_name !~ /reference/) {
+            $child->{type} = $strain_group . ' ' . $tree->{$url}{'STRAIN_TYPE'}. 's';
+          }
+          elsif($strain_group && $strain_name =~ /reference/) {
+            # Create display name for Reference species
+            my $ref_name = $tree->{$url}{'SPECIES_COMMON_NAME'} . ' '. $strain_name;
+            $child->{display_name} = $ref_name;
+            # $child->{type} = $ref_name;
+          }
+
+          if (!$node->{taxa}) {
+            push @{$other_species[0]->{child_nodes}}, $child;
+          }
+          else {
+            my %taxa = map {$_ => 1} @{ $node->{taxa} };
+            my @matched_groups = grep { $taxa{$_} } @$taxonomy;
+
+            if ($#matched_groups >= 0) {
+              if ($node->{child_nodes}) {
+                my $cnode_match = {};
+                foreach my $cnode ( @{$node->{child_nodes}}) {
+                  my @match = grep { /$matched_groups[0]/ }  @{$cnode->{taxa}};
+                  if ($#match >=0 ) {
+                    $cnode_match = $cnode;
+                    last;
+                  }
+                }
+
+                if (keys %$cnode_match) {
+                  if (!$cnode_match->{child_nodes}) {
+                    $cnode_match->{child_nodes} = [];
+                  }
+                  push @{$cnode_match->{child_nodes}}, $child;
+                  last;
+                }
+                else {
+                  if (!$node->{child_nodes}) {
+                    $node->{child_nodes} = [];
+                  }
+                  push @{$node->{child_nodes}}, $child;
+                  last;
+                }
+              }
+              else {
+                $node->{child_nodes} = [];
+                push @{$node->{child_nodes}}, $child;
+                last;
+              }
+            }
+          }
+        }
       }
     }
     else {

@@ -216,6 +216,7 @@ sub render_page_end {
   my $species_common_name = $hub->species_defs->SPECIES_COMMON_NAME;
   my $max_region_length   = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
   my $ensembl_image_root  = $hub->species_defs->ENSEMBL_IMAGE_ROOT;
+  my $ensembl_species_image  = '/i/species/' . $hub->species_defs->SPECIES_IMAGE . '.png';
   my $core_params         = $hub->core_params || {};
   my $core_params_html = join('',map {
       $v = encode_entities($core_params->{$_});
@@ -236,6 +237,7 @@ sub render_page_end {
   <input type="hidden" id="species_common_name" name="species_common_name" value="$species_common_name" />
   <input type="hidden" id="ensembl_image_root" name="ensembl_image_root" value="$ensembl_image_root" />
   <input type="hidden" id="max_region_length" name="max_region_length" value="$max_region_length" />
+  <input type="hidden" id="ensembl_species_image" name="ensembl_species_image" value="$ensembl_species_image" />
     $elements->{'modal'}
     $elements->{'tmp_message'}->{'popup_message'}
     $elements->{'body_javascript'}
