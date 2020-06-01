@@ -59,6 +59,7 @@ sub render {
   }
 
   # form
+  my $inline = $config->{'inline'};
   my @class = ('search-form','clear');
   if ($hub->type && $hub->type eq 'Search' && !$hub->species_defs->ENSEMBL_SOLR_ENDPOINT) {
     push (@class, 'unisearch');
@@ -72,27 +73,44 @@ sub render {
   }
 
   # examples
-  my ($examples, $extra_params, %sample_data, @keys);
-  my $inline = $config->{'inline'};
+  my $sample_data = {};
+  my $keys = [];
+  my ($examples, $extra_params);
 
   if ($config->{'sample_data'}) {
-    @keys = @{$config->{'sample_data'}}; 
-    %sample_data = map { $_ => $_ } @keys;
+    $keys = $config->{'sample_data'}; 
+    my %sample_data = map { $_ => $_ } @$keys;
+    $sample_data = \%sample_data;
     $extra_params = ';species=help';
   }
   else {
+    $keys = [qw(GENE_TEXT LOCATION_TEXT VARIATION_TEXT SEARCH_TEXT)];
+    my %lookup = map {$_ => 1} @$keys;
     if ($hub->species && !$multi) {
-      %sample_data = %{$species_defs->SAMPLE_DATA || {}};
-      $sample_data{'GENE_TEXT'} = "$sample_data{'GENE_TEXT'}" if $sample_data{'GENE_TEXT'};
+      $sample_data = $species_defs->SAMPLE_DATA || {};
+      $sample_data->{'GENE_TEXT'} = "$sample_data->{'GENE_TEXT'}" if $sample_data->{'GENE_TEXT'};
     } else {
-      %sample_data = %{$species_defs->get_config('MULTI', 'GENERIC_DATA')};
-      if (!keys %sample_data) {
+      $sample_data = $species_defs->get_config('MULTI', 'GENERIC_DATA') || {};
+      use Data::Dumper;
+      warn Dumper($sample_data);
+      if (keys %$sample_data) {
+        foreach (keys %$sample_data) {
+          if ($_ =~ /SPECIES/) {
+            (my $type = $_) =~ s/_SPECIES//;
+            $extra_params->{$type.'_TEXT'} = ';species='.$sample_data->{$_};
+          }
+          ## Extra search types - mainly for UniSearch
+          if ($_ =~ /TEXT/ && !$lookup{$_}) {
+            push @$keys, $_; 
+          }
+        }
+      }
+      else {
         my $primary = $species_defs->ENSEMBL_PRIMARY_SPECIES;
-        %sample_data = %{$species_defs->get_config($primary, 'SAMPLE_DATA') || {}};
-        $sample_data{'GENE_TEXT'} = "$sample_data{'GENE_TEXT'}" if $sample_data{'GENE_TEXT'};
+        $sample_data = $species_defs->get_config($primary, 'SAMPLE_DATA') || {};
+        $sample_data->{'GENE_TEXT'} = "$sample_data->{'GENE_TEXT'}" if $sample_data->{'GENE_TEXT'};
       }
     }
-    @keys = qw(GENE_TEXT LOCATION_TEXT VARIATION_TEXT SEARCH_TEXT);
   }
 
   ## Remove variation link if species only has VCF variants
@@ -107,32 +125,46 @@ sub render {
       }
     }
     if ($no_real_variants) {
-      my $index = first_index {$_ eq 'VARIATION_TEXT'} @keys;
-      splice @keys, $index, 1; 
+      my $index = first_index {$_ eq 'VARIATION_TEXT'} @$keys;
+      splice @$keys, $index, 1; 
     }
   }
 
   ## Remove examples that only have stable IDs
   foreach my $sample ('GENE', 'TRANSCRIPT') {
-    if ($sample_data{$sample.'_TEXT'} =~ /^ENS/) {
-      my $index = first_index {$_ eq $sample.'_TEXT'} @keys;
-      splice @keys, $index, 1; 
+    if ($sample_data->{$sample.'_TEXT'} =~ /^ENS/) {
+      my $index = first_index {$_ eq $sample.'_TEXT'} @$keys;
+      splice @$keys, $index, 1; 
     }
   }
 
-  if (keys %sample_data) {
-    $examples = join ' or ', map { $sample_data{$_} ? sprintf('<a class="nowrap" href="%s?q=%s%s">%s</a>', $search_url, $sample_data{$_}, $extra_params, $sample_data{$_}) : ()
-    } @keys;
+
+  if (keys %$sample_data) {
+    my @eg_array;
+    foreach (@$keys) {
+      next unless $sample_data->{$_};
+      (my $type = $_) =~ s/_TEXT//;
+      my $param_name = $type.'_PARAM';
+      my $param = $sample_data->{$param_name} ? $param_name : $_;
+      push @eg_array, sprintf('<a class="nowrap" href="%s?q=%s%s">%s</a>', 
+          $search_url, 
+          $sample_data->{$param}, 
+          ref $extra_params eq 'HASH' ? $extra_params->{$_} : $extra_params, 
+          $sample_data->{$_}
+        );
+    } 
+    $examples = join ' or ', @eg_array;
   }
   $examples = qq(<p class="search-example">e.g. $examples</p>) if $examples;
 
   # species dropdown
   if ($config->{'show_species'}) {
     my $field = $form->add_field({});
+    my $sort_by = $hub->species_defs->USE_COMMON_NAMES ? 'common' : 'scientific';
 
     my $species_info = $hub->get_species_info;
-    my %species      = map { $species_info->{$_}{'common'} => $_ } grep { $species_info->{$_}{'is_reference'} } sort keys %$species_info;
-    my %common_names = reverse %species;
+    my %species      = map { $species_info->{$_}{$sort_by} => $_ } grep { $species_info->{$_}{'is_reference'} } sort keys %$species_info;
+    my %sortable = reverse %species;
     my $values = [];
     if ($hub->species_defs->ENSEMBL_SOLR_ENDPOINT) {
       push @$values, (
@@ -143,7 +175,7 @@ sub render {
     }
     ## If more than one species, show favourites
     if (scalar keys %species > 1) {
-        push @$values, map({ $common_names{$_} ? {'value' => $_, 'caption' => $common_names{$_}, 'group' => 'Favourite species'} : ()} @$favourites);
+        push @$values, map({ $sortable{$_} ? {'value' => $_, 'caption' => $sortable{$_}, 'group' => 'Favourite species'} : ()} @$favourites);
         push @$values, {'value' => '', 'caption' => '---', 'disabled' => 1};
     }
     push @$values, map({'value' => $species{$_}, 'caption' => $_}, sort { uc $a cmp uc $b } keys %species);
