@@ -35,6 +35,52 @@ sub render {
   my $species_defs    = $hub->species_defs;
   my $version         = $species_defs->ORIGINAL_VERSION || $species_defs->ENSEMBL_VERSION;
   my $rel             = "release-$version"; # Always set to use the release number rather than current to get around the delay in FTP site links updating
+
+  my $html;
+
+  if ($species_defs->ENSEMBL_MART_ENABLED) {
+    $html .= qq(
+<div class="info-box embedded-box float-right" style="margin-bottom:1em;">
+<h2 class="first">Custom data sets</h2>
+<p>If you want to filter or customise your download, please try
+<a href="/biomart/martview">Biomart</a>, a web-based querying tool.</p>
+</div>
+);
+  }
+
+  if ($species_defs->HAS_API_DOCS) {
+    $html .= qq(
+<h2>API Code</h2>
+
+<p>If you do not have access to git, you can obtain our latest API code as a gzipped tarball:</p>
+
+<p><a href="ftp://ftp.ensembl.org/pub/ensembl-api.tar.gz">Download complete API for this release</a></p>
+
+<p>Note: the API version needs to be the same as the databases you are accessing, so please
+use git to obtain a previous version if querying older databases.</p>
+    );
+  }
+
+  my $ftp = $species_defs->ENSEMBL_FTP_URL;
+  (my $ftp_domain = $ftp) =~ s/\/pub//;
+  
+  $html .= qq(
+<h2>Database dumps</h2>
+<p>
+Entire databases can be downloaded from our FTP site in a
+variety of formats. Please be aware that some of these files
+can run to many gigabytes of data.
+</p>
+<p><strong>Looking for <a href="$ftp/current_mysql/">MySQL dumps</a> to install databases locally?</strong> See our
+<a href="https://www.ensembl.org/info/docs/webcode/mirror/install/ensembl-data.html">web installation instructions</a>
+for full details.</p>
+
+<p>
+Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
+<a href="$ftp/current_README">README</a> file, explaining the directory structure.
+</p>
+  );
+
   my $required_lookup = $self->required_types_for_species;
   my ($columns, $rows);
   
@@ -80,14 +126,25 @@ sub render {
     { key => 'genes',   title => 'Gene sets',                    align => 'center', width => '10%', sort => 'none' },
     { key => 'xrefs',   title => 'Other annotations',            align => 'center', width => '10%', sort => 'none' },
     { key => 'mysql',   title => 'Whole databases',              align => 'center', width => '10%', sort => 'none' },
+  ];
+
+  unless ($species_defs->NO_VARIATION) {
+    push @$columns, (
     { key => 'var2',    title => 'Variation (GVF)',              align => 'center', width => '10%', sort => 'html' },
     { key => 'var4',    title => 'Variation (VCF)',              align => 'center', width => '10%', sort => 'html' },
-    { key => 'var3',    title => 'Variation (VEP)',              align => 'center', width => '10%', sort => 'html' },
+    { key => 'var3',    title => 'Variation (VEP)',              align => 'center', width => '10%', sort => 'html' }
+    );
+  }
+
+
+  unless ($species_defs->NO_REGULATION) {
+    push @$columns, (
     { key => 'funcgen', title => 'Regulation (GFF)',             align => 'center', width => '10%', sort => 'html' },
     { key => 'files',   title => 'Data files',                   align => 'center', width => '10%', sort => 'html' },
     { key => 'bam',     title => 'BAM/BigWig',                          align => 'center', width => '10%', sort => 'html' },
-  ];
- 
+    );
+  }
+
   ## We want favourite species at the top of the table, 
   ## then everything else alphabetically by common name
   my $all_species = [];
@@ -145,59 +202,64 @@ sub render {
 
   }
 
-  
 
   my $main_table           = EnsEMBL::Web::Document::Table->new($columns, $rows, { data_table => 1, exportable => 0 });
   $main_table->code        = 'FTPtable::'.scalar(@$rows);
   $main_table->{'options'}{'data_table_config'} = {iDisplayLength => 10};
  
-  my $multi_table          = EnsEMBL::Web::Document::Table->new([
-    { key => 'database',  title => 'Database' },
-    { key => 'mysql',     title => '', align => 'center' },
-    { key => 'emf',       title => '', align => 'center' },
-    { key => 'maf',       title => '', align => 'center' },
-    { key => 'bed',       title => '', align => 'center' },
-    { key => 'xml',       title => '', align => 'center' },
-    { key => 'ancestral', title => '', align => 'center' }
-  ], [{
-    database  => 'Comparative genomics',
-    mysql     => qq(<a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/$rel/mysql/">MySQL</a>),
-    emf       => qq(<a rel="external" title="$title{'emf'}" href="ftp://ftp.ensembl.org/pub/$rel/emf/ensembl-compara/">EMF</a>),
-    maf       => qq(<a rel="external" title="$title{'maf'}" href="ftp://ftp.ensembl.org/pub/$rel/maf/ensembl-compara/">MAF</a>),
-    bed       => qq(<a rel="external" title="$title{'bed'}" href="ftp://ftp.ensembl.org/pub/$rel/bed/">BED</a>),
-    xml       => qq(<a rel="external" title="$title{'xml'}" href="ftp://ftp.ensembl.org/pub/$rel/xml/ensembl-compara/homologies/">XML</a>),
-    ancestral => qq(<a rel="external" title="$title{'ancestral'}" href="ftp://ftp.ensembl.org/pub/$rel/fasta/ancestral_alleles">Ancestral Alleles</a>),
-  }, {
-    database  => 'BioMart',
-    mysql     => qq(<a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/$rel/mysql/">MySQL</a>),
-    emf       => '-',
-    maf       => '-',
-    bed       => '-',
-    xml       => '-',
-    ancestral => '-',
-  }, {
-    database  => 'Stable ids',
-    mysql     => qq(<a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/$rel/mysql/ensembl_stable_ids_$version/">MySQL</a>),
-    emf       => '-',
-    maf       => '-',
-    bed       => '-',
-    xml       => '-',
-    ancestral => '-',
-  }], { cellpadding => 4, cellspacing => 2, id => 'ftp-table1' });
+  my $multi_table;
+  unless ($species_defs->NO_COMPARA) {
+    $multi_table = EnsEMBL::Web::Document::Table->new([
+      { key => 'database',  title => 'Database' },
+      { key => 'mysql',     title => '', align => 'center' },
+      { key => 'emf',       title => '', align => 'center' },
+      { key => 'maf',       title => '', align => 'center' },
+      { key => 'bed',       title => '', align => 'center' },
+      { key => 'xml',       title => '', align => 'center' },
+      { key => 'ancestral', title => '', align => 'center' }
+    ], [{
+      database  => 'Comparative genomics',
+      mysql     => qq(<a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/$rel/mysql/">MySQL</a>),
+      emf       => qq(<a rel="external" title="$title{'emf'}" href="ftp://ftp.ensembl.org/pub/$rel/emf/ensembl-compara/">EMF</a>),
+      maf       => qq(<a rel="external" title="$title{'maf'}" href="ftp://ftp.ensembl.org/pub/$rel/maf/ensembl-compara/">MAF</a>),
+      bed       => qq(<a rel="external" title="$title{'bed'}" href="ftp://ftp.ensembl.org/pub/$rel/bed/">BED</a>),
+      xml       => qq(<a rel="external" title="$title{'xml'}" href="ftp://ftp.ensembl.org/pub/$rel/xml/ensembl-compara/homologies/">XML</a>),
+      ancestral => qq(<a rel="external" title="$title{'ancestral'}" href="ftp://ftp.ensembl.org/pub/$rel/fasta/ancestral_alleles">Ancestral Alleles</a>),
+    }, {
+      database  => 'BioMart',
+      mysql     => qq(<a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/$rel/mysql/">MySQL</a>),
+      emf       => '-',
+      maf       => '-',
+      bed       => '-',
+      xml       => '-',
+      ancestral => '-',
+    }, {
+      database  => 'Stable ids',
+      mysql     => qq(<a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/$rel/mysql/ensembl_stable_ids_$version/">MySQL</a>),
+      emf       => '-',
+      maf       => '-',
+      bed       => '-',
+      xml       => '-',
+      ancestral => '-',
+    }], { cellpadding => 4, cellspacing => 2, id => 'ftp-table1' });
+  }
  
   my $fave_text = $hub->user ? 'Your favourite species are listed first.' 
                   : 'Popular species are listed first. You can customise this list via our <a href="/">home page</a>.'; 
 
-  return sprintf(qq{
-    <h3>Multi-species data</h3>
-    %s
+  if ($multi_table) {
+    $html .= sprintf('<h3>Multi-species data</h3>%s<h3>Single species data</h3>', $multi_table->render);
+  }
+
+  $html .= sprintf(qq{
     <div class="js_panel" id="ftp-table">
       <input type="hidden" class="panel_type" value="Content">
-      <h3>Single species data</h3>
       <p>%s</p>
       %s
     </div>
-  }, $multi_table->render, $fave_text, $main_table->render);
+  }, $fave_text, $main_table->render);
+
+  return $html;
 }
 
 # Lookup for the types we need for species
