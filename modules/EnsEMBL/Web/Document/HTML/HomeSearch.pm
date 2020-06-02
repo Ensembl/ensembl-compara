@@ -91,8 +91,6 @@ sub render {
       $sample_data->{'GENE_TEXT'} = "$sample_data->{'GENE_TEXT'}" if $sample_data->{'GENE_TEXT'};
     } else {
       $sample_data = $species_defs->get_config('MULTI', 'GENERIC_DATA') || {};
-      use Data::Dumper;
-      warn Dumper($sample_data);
       if (keys %$sample_data) {
         foreach (keys %$sample_data) {
           if ($_ =~ /SPECIES/) {

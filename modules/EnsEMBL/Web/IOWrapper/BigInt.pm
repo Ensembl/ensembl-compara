@@ -130,8 +130,6 @@ sub create_hash {
     $feature->{'href'}  = $href;
   }
 
-  use Data::Dumper; $Data::Dumper::Sortkeys = 1;
-  warn Dumper($feature);
   return $feature;
 }
 
