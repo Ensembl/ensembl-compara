@@ -808,6 +808,7 @@ sub _parse {
     $config_packer->tree->{'SAMPLE_DATA'} = $sample;
 
     ## Need to gather strain info for all species
+    $config_packer->tree->{'STRAIN_GROUP'} = undef if $SiteDefs::NO_STRAIN_GROUPS;
     my $strain_group = $config_packer->tree->{'STRAIN_GROUP'};
     my $strain_name = $config_packer->tree->{'SPECIES_STRAIN'};
     my $species_key = $config_packer->tree->{'SPECIES_URL'}; ## Key on actual URL, not production name
