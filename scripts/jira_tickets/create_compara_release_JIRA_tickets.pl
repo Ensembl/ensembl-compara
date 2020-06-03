@@ -76,7 +76,7 @@ sub main {
     die 'Aborted by user. Please rerun with correct parameters.' if ( $response ne 'y' );
 
     # Create JIRA tickets
-    my $subtask_keys = $jira_adaptor->create_tickets(-JSON_FILE => $tickets_json, -DRY_RUN => $dry_run);
+    my $subtask_keys = $jira_adaptor->create_tickets(-JSON_FILE => $tickets_json, -DRY_RUN => $dry_run, -DEFAULT_PRIORITY => 'Blocker');
     printf("Created %d top-level tickets.\n", scalar(@$subtask_keys));
 }
 
