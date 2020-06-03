@@ -357,7 +357,7 @@ sub get_species_info {
         'assembly_version'  => $species_defs->get_config($_, 'ASSEMBLY_VERSION'),
         'group'             => $species_defs->get_config($_, 'SPECIES_GROUP'),
         'image'             => $species_defs->get_config($_, 'SPECIES_IMAGE') 
-                                || $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
+                                || $species_defs->get_config($_, 'SPECIES_URL'),
         'strain'            => $strain,
         'is_reference'      => $is_reference,
         'strain_group'      => $strain_group,
