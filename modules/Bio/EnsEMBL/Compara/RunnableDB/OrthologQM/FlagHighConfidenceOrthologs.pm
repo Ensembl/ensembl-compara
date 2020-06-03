@@ -68,6 +68,7 @@ sub fetch_input {
 
     # There could be 0 homologies for this mlss
     unless ($n_hom) {
+        $self->input_job->autoflow(0);
         $self->complete_early("No homologies for mlss_id=$mlss_id. Nothing to do");
     }
 
