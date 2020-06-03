@@ -49,10 +49,10 @@ sub render {
     my $info    = {
         'dir'         => $sp,
         'common'      => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'),
-        'image'       => $species_defs->get_config($sp, 'SPECIES_IMAGE'),
+        'image'       => $species_defs->get_config($sp, 'SPECIES_IMAGE')
+                          || $species_defs->get_config($sp, 'SPECIES_URL'),
         'status'      => 'live',
         'sci_name'    => $species_defs->get_config($sp, 'SPECIES_SCIENTIFIC_NAME'),
-        'image'       => $species_defs->get_config($sp, 'SPECIES_IMAGE'),
         'assembly'    => $species_defs->get_config($sp, 'ASSEMBLY_NAME'),
         'accession'   => $species_defs->get_config($sp, 'ASSEMBLY_ACCESSION'),
         'genebuild'   => $genebuild_helptip,
@@ -79,6 +79,7 @@ sub render {
             'dir'           => $bioname,
             'common'        => $common,
             'sci_name'      => $sci_name,
+            'image'         => $bioname,
             'status'        => $status,
             'assembly'      => '-',
             'accession'     => '-',
