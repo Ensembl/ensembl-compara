@@ -190,8 +190,8 @@ sub pipeline_analyses_epo2x_alignment {
           -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
           -parameters => {
                           'sql' => [
-                              'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#cs_mlss_id#, "msa_mlss_id", ' . $self->o('low_epo_mlss_id') . ')',
-                              'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#ce_mlss_id#, "msa_mlss_id", ' . $self->o('low_epo_mlss_id') . ')',
+                              'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#cs_mlss_id#, "msa_mlss_id", #low_epo_mlss_id#)',
+                              'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#ce_mlss_id#, "msa_mlss_id", #low_epo_mlss_id#)',
                           ],
                          },
           -flow_into => [ 'set_mlss_tag' ],
