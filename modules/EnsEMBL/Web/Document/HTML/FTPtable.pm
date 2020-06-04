@@ -63,8 +63,9 @@ use git to obtain a previous version if querying older databases.</p>
 
   my $ftp = $species_defs->ENSEMBL_FTP_URL;
   (my $ftp_domain = $ftp) =~ s/\/pub//;
-  
-  $html .= qq(
+ 
+  unless ($species_defs->NO_PUBLIC_MYSQL) { 
+    $html .= qq(
 <h2>Database dumps</h2>
 <p>
 Entire databases can be downloaded from our FTP site in a
@@ -74,8 +75,10 @@ can run to many gigabytes of data.
 <p><strong>Looking for <a href="$ftp/current_mysql/">MySQL dumps</a> to install databases locally?</strong> See our
 <a href="https://www.ensembl.org/info/docs/webcode/mirror/install/ensembl-data.html">web installation instructions</a>
 for full details.</p>
+);
+  }
 
-<p>
+  $html .= qq(<p>
 Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
 <a href="$ftp/current_README">README</a> file, explaining the directory structure.
 </p>
@@ -125,8 +128,12 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
     { key => 'genbank', title => 'Annotated sequence (GenBank)', align => 'center', width => '10%', sort => 'none' },
     { key => 'genes',   title => 'Gene sets',                    align => 'center', width => '10%', sort => 'none' },
     { key => 'xrefs',   title => 'Other annotations',            align => 'center', width => '10%', sort => 'none' },
-    { key => 'mysql',   title => 'Whole databases',              align => 'center', width => '10%', sort => 'none' },
   ];
+
+  unless ($species_defs->NO_PUBLIC_MYSQL) { 
+    push @$columns, 
+    { key => 'mysql',   title => 'Whole databases',              align => 'center', width => '10%', sort => 'none' };
+  }
 
   unless ($species_defs->NO_VARIATION) {
     push @$columns, (
@@ -172,6 +179,11 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
   }
   push @$all_species, sort {$a->{'common_name'} cmp $b->{'common_name'}} @other_species;
 
+  my $ftp_base = $ftp;
+  unless ($ftp_base =~ /rapid/) {
+    $ftp_base .= "/$rel";
+  }
+
   foreach my $sp (@$all_species) {
     my $sp_url    = $sp->{'url'};
     my $sp_dir    = $sp->{'dir'};
@@ -182,22 +194,22 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
     push @$rows, {
       fave    => $sp->{'favourite'} ? 'Y' : '',
       species => sprintf('<b><a href="/%s/">%s</a></b><br /><i>%s</i>', $sp_url, $sp->{'common_name'}, $sp->{'sci_name'}),
-      dna     => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a>',   $title{'dna'},     $rel, $sp_dir),
-      cdna    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cdna/">FASTA</a>',  $title{'cdna'},    $rel, $sp_dir),
-      cds	    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cds/">FASTA</a>',   $title{'cds'},     $rel, $sp_dir),
-      ncrna   => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/ncrna/">FASTA</a>', $title{'rna'},     $rel, $sp_dir),
-      protseq => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/pep/">FASTA</a>',   $title{'prot'},    $rel, $sp_dir),
-      embl    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/embl/%s/">EMBL</a>',         $title{'embl'},    $rel, $sp_dir),
-      genbank => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/genbank/%s/">GenBank</a>',   $title{'genbank'}, $rel, $sp_dir),
-      genes   => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/gtf/%s">GTF</a> <a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/gff3/%s">GFF3</a>', $title{'gtf'}, $rel, $sp_dir, $title{'gff3'}, $rel, $sp_dir),
-      xrefs   => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/tsv/%s">TSV</a> <a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/rdf/%s">RDF</a> <a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/json/%s">JSON</a>', $title{'tsv'}, $rel, $sp_dir, $title{'rdf'}, $rel, $sp_dir, $title{'json'}, $rel, $sp_dir),
-      mysql   => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/mysql/">MySQL</a>',          $title{'mysql'},   $rel),
-      var2    => $databases->{'DATABASE_VARIATION'} && $variation_source_vcf != '1' ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/gvf/%s/">GVF</a>', $title{'gvf'},     $rel, $sp_dir) : '-',
-      var4    => $databases->{'DATABASE_VARIATION'} && $variation_source_vcf != '1' ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/vcf/%s/">VCF</a>', $title{'vcf'},     $rel, $sp_dir) : '-',
-      var3    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/vep/">VEP</a>',    $title{'vep'},     $rel),
-      funcgen => $required_lookup->{'funcgen'}{$sp_dir} ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/regulation/%s/">Regulation</a> (GFF)',      $title{'funcgen'}, $rel, $sp_dir) : '-',
-      bam     => $databases->{'DATABASE_RNASEQ'}        ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/bamcov/%s/genebuild/">BAM/BigWig</a>',      $title{'bam'},     $rel, $sp_dir) : '-',
-      files   => $required_lookup->{'files'}{$sp_dir}   ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/data_files/%s/">Regulation data files</a>', $title{'files'},   $rel, $sp_dir) : '-',
+      dna     => sprintf('<a rel="external" title="%s" href="%s/fasta/%s/dna/">FASTA</a>', $title{'dna'},  $ftp_base, $sp_dir),
+      cdna    => sprintf('<a rel="external" title="%s" href="%s/fasta/%s/cdna/">FASTA</a>',  $title{'cdna'}, $ftp_base, $sp_dir),
+      cds	    => sprintf('<a rel="external" title="%s" href="%s/fasta/%s/cds/">FASTA</a>',   $title{'cds'}, $ftp_base, $sp_dir),
+      ncrna   => sprintf('<a rel="external" title="%s" href="%s/fasta/%s/ncrna/">FASTA</a>', $title{'rna'},  $ftp_base, $sp_dir),
+      protseq => sprintf('<a rel="external" title="%s" href="%s/fasta/%s/pep/">FASTA</a>',   $title{'prot'}, $ftp_base, $sp_dir),
+      embl    => sprintf('<a rel="external" title="%s" href="%s/embl/%s/">EMBL</a>',         $title{'embl'},  $ftp_base, $sp_dir),
+      genbank => sprintf('<a rel="external" title="%s" href="%s/genbank/%s/">GenBank</a>',   $title{'genbank'}, $ftp_base, $sp_dir),
+      genes   => sprintf('<a rel="external" title="%s" href="%s/gtf/%s">GTF</a> <a rel="external" title="%s" href="%s/gff3/%s">GFF3</a>', $title{'gtf'}, $ftp_base, $sp_dir, $title{'gff3'}, $ftp_base, $sp_dir),
+      xrefs   => sprintf('<a rel="external" title="%s" href="%s/tsv/%s">TSV</a> <a rel="external" title="%s" href="%s/rdf/%s">RDF</a> <a rel="external" title="%s" href="%s/json/%s">JSON</a>', $title{'tsv'}, $ftp_base, $sp_dir, $title{'rdf'}, $ftp_base, $sp_dir, $title{'json'}, $ftp_base, $sp_dir),
+      mysql   => sprintf('<a rel="external" title="%s" href="%s/mysql/">MySQL</a>',          $title{'mysql'},  $ftp_base),
+      var2    => $databases->{'DATABASE_VARIATION'} && $variation_source_vcf != '1' ? sprintf('<a rel="external" title="%s" href="%s/variation/gvf/%s/">GVF</a>', $title{'gvf'}, $ftp_base, $sp_dir) : '-',
+      var4    => $databases->{'DATABASE_VARIATION'} && $variation_source_vcf != '1' ? sprintf('<a rel="external" title="%s" href="%s/variation/vcf/%s/">VCF</a>', $title{'vcf'}, $ftp_base, $sp_dir) : '-',
+      var3    => sprintf('<a rel="external" title="%s" href="%s/variation/vep/">VEP</a>',    $title{'vep'},  $ftp_base),
+      funcgen => $required_lookup->{'funcgen'}{$sp_dir} ? sprintf('<a rel="external" title="%s" href="%s/regulation/%s/">Regulation</a> (GFF)',      $title{'funcgen'}, $ftp_base, $sp_dir) : '-',
+      bam     => $databases->{'DATABASE_RNASEQ'}        ? sprintf('<a rel="external" title="%s" href="%s/bamcov/%s/genebuild/">BAM/BigWig</a>',      $title{'bam'},    $ftp_base, $sp_dir) : '-',
+      files   => $required_lookup->{'files'}{$sp_dir}   ? sprintf('<a rel="external" title="%s" href="%s/data_files/%s/">Regulation data files</a>', $title{'files'}, $ftp_base, $sp_dir) : '-',
     };
 
   }
@@ -219,15 +231,15 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
       { key => 'ancestral', title => '', align => 'center' }
     ], [{
       database  => 'Comparative genomics',
-      mysql     => qq(<a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/$rel/mysql/">MySQL</a>),
-      emf       => qq(<a rel="external" title="$title{'emf'}" href="ftp://ftp.ensembl.org/pub/$rel/emf/ensembl-compara/">EMF</a>),
-      maf       => qq(<a rel="external" title="$title{'maf'}" href="ftp://ftp.ensembl.org/pub/$rel/maf/ensembl-compara/">MAF</a>),
-      bed       => qq(<a rel="external" title="$title{'bed'}" href="ftp://ftp.ensembl.org/pub/$rel/bed/">BED</a>),
-      xml       => qq(<a rel="external" title="$title{'xml'}" href="ftp://ftp.ensembl.org/pub/$rel/xml/ensembl-compara/homologies/">XML</a>),
-      ancestral => qq(<a rel="external" title="$title{'ancestral'}" href="ftp://ftp.ensembl.org/pub/$rel/fasta/ancestral_alleles">Ancestral Alleles</a>),
+      mysql     => qq(<a rel="external" title="$title{'mysql'}" href="/$rel/mysql/">MySQL</a>),
+      emf       => qq(<a rel="external" title="$title{'emf'}" href="/$rel/emf/ensembl-compara/">EMF</a>),
+      maf       => qq(<a rel="external" title="$title{'maf'}" href="/$rel/maf/ensembl-compara/">MAF</a>),
+      bed       => qq(<a rel="external" title="$title{'bed'}" href="/$rel/bed/">BED</a>),
+      xml       => qq(<a rel="external" title="$title{'xml'}" href="/$rel/xml/ensembl-compara/homologies/">XML</a>),
+      ancestral => qq(<a rel="external" title="$title{'ancestral'}" href="/$rel/fasta/ancestral_alleles">Ancestral Alleles</a>),
     }, {
       database  => 'BioMart',
-      mysql     => qq(<a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/$rel/mysql/">MySQL</a>),
+      mysql     => qq(<a rel="external" title="$title{'mysql'}" href="/$rel/mysql/">MySQL</a>),
       emf       => '-',
       maf       => '-',
       bed       => '-',
@@ -235,7 +247,7 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
       ancestral => '-',
     }, {
       database  => 'Stable ids',
-      mysql     => qq(<a rel="external" title="$title{'mysql'}" href="ftp://ftp.ensembl.org/pub/$rel/mysql/ensembl_stable_ids_$version/">MySQL</a>),
+      mysql     => qq(<a rel="external" title="$title{'mysql'}" href="/$rel/mysql/ensembl_stable_ids_$version/">MySQL</a>),
       emf       => '-',
       maf       => '-',
       bed       => '-',
