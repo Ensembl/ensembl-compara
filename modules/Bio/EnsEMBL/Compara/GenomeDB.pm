@@ -745,12 +745,34 @@ sub sync_with_registry {
 
     my $coreDBA;
     my $registry_name;
+
+    # Rule 1. The Registry doesn't natively support multiple assemblies of
+    # the same species. We bypass this by trying aliases that contain the
+    # assembly names.
     if ($self->assembly) {
       $registry_name = $self->name ." ". $self->assembly;
       if(Bio::EnsEMBL::Registry->alias_exists($registry_name)) {
         $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($registry_name, 'core');
       }
     }
+
+    # Rule 2. For ancestral_sequences, the Registry's database scanner adds
+    # the division name as a prefix (except for Vertebrates).
+    if (($self->name eq 'ancestral_sequences') and ($self->adaptor)) {
+      my $division_name = $self->adaptor->db->get_division;
+      # Vertebrates' "ancestral_sequences" will be matched by the next rule
+      if ($division_name and ($division_name ne 'vertebrates')) {
+        $registry_name = $division_name . '_' . $self->name;
+        if(Bio::EnsEMBL::Registry->alias_exists($registry_name)) {
+          $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($registry_name, 'core');
+        }
+      }
+    }
+
+    # Rule 3. $self->name is expected to be a Registry key, i.e. a species
+    # name or an alias. As far as I'm aware, only "ancestral_sequences" is
+    # ever an alias (of "Ancestral sequences" in the Registry's database
+    # scanner, and "MULTI" in the webcode), all others are actual names.
     if( not defined($coreDBA) and Bio::EnsEMBL::Registry->get_alias($self->name, 'no_warn')) {
       $coreDBA = Bio::EnsEMBL::Registry->get_DBAdaptor($self->name, 'core');
       Bio::EnsEMBL::Registry->add_alias($self->name, $registry_name) if ($registry_name);
