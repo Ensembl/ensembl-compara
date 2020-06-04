@@ -75,7 +75,7 @@ sub content {
 sub init_species_list {
   my ($self, $hub) = @_;
   my $species_defs = $hub->species_defs;
-  my $name_key = $species_defs->PREFER_COMMON_SPECIES ? 'SPECIES_COMMON_NAME' : 'SPECIES_SCIENTIFIC_NAME';
+  my $name_key = $species_defs->PREFER_COMMON_NAMES ? 'SPECIES_COMMON_NAME' : 'SPECIES_SCIENTIFIC_NAME';
   
   $self->{'species_list'} = [ 
     sort { $a->[1] cmp $b->[1] } 
