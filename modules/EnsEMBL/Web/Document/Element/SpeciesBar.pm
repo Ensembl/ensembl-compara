@@ -60,7 +60,7 @@ sub content {
   }
   else {
     my $image = $hub->species_defs->SPECIES_IMAGE || $hub->species;
-    $header = sprintf '<img src="/i/species/%s.png" class="badge-32"><span class="species">%s</span> <span class="more">(%s)</span>', $image, $species, $assembly;
+    $header = sprintf '<img src="/i/species/%s.png" class="badge-32"><span class="species">%s</span> <span class="more">(%s)</span>', $image, $hub->species_defs->PREFERRED_DISPLAY_NAME, $assembly;
     ## Species selector
     $arrow     = sprintf '<span class="dropdown"><a class="toggle species" href="#" rel="species">&#9660;</a></span>';
     $dropdown  = $self->species_list;
@@ -75,23 +75,24 @@ sub content {
 sub init_species_list {
   my ($self, $hub) = @_;
   my $species_defs = $hub->species_defs;
+  my $name_key = $species_defs->PREFER_COMMON_SPECIES ? 'SPECIES_COMMON_NAME' : 'SPECIES_SCIENTIFIC_NAME';
   
   $self->{'species_list'} = [ 
     sort { $a->[1] cmp $b->[1] } 
-    map  [ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME') ],
+    map  [ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, $name_key) ],
     $species_defs->reference_species
   ];
 
   #adding species strain (Mouse strains) to the list above
   foreach ($species_defs->valid_species) {
     my $strain_type = ucfirst($species_defs->get_config($_, 'STRAIN_TYPE').'s');
-    $species_defs->get_config($_, 'ALL_STRAINS') ? push( @{$self->{'species_list'}}, [ $hub->url({ species => $_, type => 'Info', action => 'Strains', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME')." $strain_type"] ) : next;
+    $species_defs->get_config($_, 'ALL_STRAINS') ? push( @{$self->{'species_list'}}, [ $hub->url({ species => $_, type => 'Info', action => 'Strains', __clear => 1 }), $species_defs->get_config($_, $name_key)." $strain_type"] ) : next;
   }
   @{$self->{'species_list'}} = sort { $a->[1] cmp $b->[1] } @{$self->{'species_list'}}; #just a precautionary bit - sorting species list again after adding the strain  
   
   my $favourites = $hub->get_favourite_species;
   
-  $self->{'favourite_species'} = [ map {[ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME') ]} @$favourites ] if scalar @$favourites;
+  $self->{'favourite_species'} = [ map {[ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, $name_key) ]} @$favourites ] if scalar @$favourites;
 }
 
 sub species_list {
