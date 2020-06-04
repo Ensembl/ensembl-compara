@@ -180,6 +180,14 @@ sub pipeline_analyses_cafe {
                 mode            => 'cafe',
                 cafe_tree_label => 'cafe',
             },
+            -flow_into => [ 'write_cafe_mlss_tag' ],
+        },
+
+        {   -logic_name => 'write_cafe_mlss_tag',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql' => "INSERT INTO method_link_species_set_tag VALUES (#mlss_id#, 'has_cafe', 1)",
+            },
         },
 
            ]

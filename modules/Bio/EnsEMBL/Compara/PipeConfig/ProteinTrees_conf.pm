@@ -398,6 +398,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
+        'mlss_id'       => $self->o('mlss_id'),
         'master_db'     => $self->o('master_db'),
         'ncbi_db'       => $self->o('ncbi_db'),
         'member_db'     => $self->o('member_db'),
