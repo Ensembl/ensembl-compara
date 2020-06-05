@@ -28,14 +28,15 @@
 <li><strong>seqname</strong> - name of the chromosome or scaffold; chromosome names can be given with or without the 'chr' prefix. <b>Important note</b>: the seqname must be one used within Ensembl, i.e. a standard chromosome name or an Ensembl identifier such as a scaffold ID, without any additional content such as species or assembly. See the example GFF output below.</li>
 <li><strong>source</strong> - name of the program that generated this feature, or the data source (database or project name)</li>
 <li><strong>feature</strong> - feature type name, e.g. Gene, Variation, Similarity</li>
-<li><strong>start</strong> - Start position of the feature, with sequence numbering starting at 1.</li>
-<li><strong>end</strong> - End position of the feature, with sequence numbering starting at 1.</li>
+  <li><strong>start</strong> - Start position<sup>*</sup> of the feature, with sequence numbering starting at 1.</li>
+<li><strong>end</strong> - End position<sup>*</sup> of the feature, with sequence numbering starting at 1.</li>
 <li><strong>score</strong> - A floating point value.</li>
 <li><strong>strand</strong> - defined as + (forward) or - (reverse).</li>
 <li><strong>frame</strong> - One of '0', '1' or '2'. '0' indicates that the first base of the feature is the first base of a codon, '1' that the second base is the first base of a codon, and so on..</li>
 <li><strong>attribute</strong> - A semicolon-separated list of tag-value pairs, providing additional information about each feature.</li>
 </ol>
 
+<p><sup>*</sup>- Both, the start and end position are included. For example, setting start-end to 1-2 describes two bases, the first and second base in the sequence.</p>  
 <p>Note that where the attributes contain identifiers that link the features together into a larger structure, these will be used by Ensembl to display the features as joined blocks.</p>
 
 <p>Sample GTF output from Ensembl data dump:</p>
