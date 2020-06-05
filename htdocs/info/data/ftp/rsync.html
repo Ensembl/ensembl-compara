@@ -1,0 +1,32 @@
+<html>
+<head>
+<title>Downloading with rsync</title>
+</head>
+
+<body>
+
+<h1>Using rsync to download from the FTP site</h1>
+
+<p>If you require large amounts of data or are having problems with network connectivity,
+you may find it more convenient to use <a href="http://rsync.samba.org/">rsync</a> 
+for your downloads.</p>
+
+<p>You will need to visit the <a href="ftp://ftp.ensembl.org/pub/" rel="external">Ensembl FTP site</a> 
+in your web browser to locate the files you need, then alter the FTP URL as follows:</p>
+<ul>
+<li>Change the protocol from <kbd>ftp:</kbd> to <kbd>rsync:</kbd></li>
+<li>Insert <kbd>ensembl</kbd> into the path after the domain name</li>
+</ul>
+<p>before you paste it into the command line.</p>
+
+<p>For example, the following command will download all the human EMBL files from 
+<kbd>ftp://ftp.ensembl.org/pub/current_embl/homo_sapiens/</kbd> 
+to the current directory:</p>
+
+<pre class="code">
+rsync -av rsync://ftp.ensembl.org/ensembl/pub/current_embl/homo_sapiens .
+</pre>
+
+
+</body>
+</html>
