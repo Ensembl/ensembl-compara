@@ -92,9 +92,6 @@ sub write_output {
     my $mlss_location = $self->param('mlss_location');
     $self->dataflow_output_id({'param_name' => 'pairwise_mlss_location',
 			       'param_value' => stringify($mlss_location)}, 2);
-    my $refs_per_species = $self->param('refs_per_species');
-    $self->dataflow_output_id({'param_name' => 'refs_per_species',
-			       'param_value' => stringify($refs_per_species)}, 2);  # to pipeline_wide_parameters
 }
 
 
@@ -122,13 +119,12 @@ sub _find_location_of_all_required_mlss {
     my %ss_gdb_ids = map {$_->dbID => 1} @{$low_mlss->species_set->genome_dbs};
     $self->param('genome_db_ids', \%ss_gdb_ids);
 
-    my (%mlss_location, %refs_per_species);
+    my %mlss_location;
     foreach my $genome_db (@{$low_mlss->species_set->genome_dbs}) {
 	    unless ($high_coverage_genome_db_ids{$genome_db->dbID}) {
             my ($compara_db, $mlss_id, $ref_gdb_id) = @{ $self->_find_compara_db_for_genome_db_id($genome_db->dbID) };
             print "picked mlss_id $mlss_id (ref: $ref_gdb_id) on $compara_db for " . $genome_db->name . "\n\n" if $self->debug;
             $mlss_location{$mlss_id} = $compara_db;
-            $refs_per_species{$genome_db->dbID} = $ref_gdb_id;
             
             # store species_tree_node_tag with ref_species information
             next if $self->param('dry_run');
@@ -136,7 +132,6 @@ sub _find_location_of_all_required_mlss {
             $low_gdb_id_2_stn->{$genome_db->dbID}->store_tag('reference_species', $ref_gdb->name);
 	    }
     }
-    $self->param('refs_per_species', \%refs_per_species);
     return \%mlss_location;
 }
 
