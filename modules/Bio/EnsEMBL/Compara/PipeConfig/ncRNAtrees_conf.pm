@@ -164,13 +164,13 @@ sub default_options {
             'species_set_id'   => undef,
             'ref_species'      => undef,
             # WGA dump directories for OrthologQMAlignment
-            'wga_dumps_dir'      => $self->o('pipeline_dir'),
+            'wga_dumps_dir'      => $self->o('homology_dumps_dir'),
             'prev_wga_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
             # set how many orthologs should be flowed at a time
             'orth_batch_size'   => 10,
             # set to 1 when all pairwise and multiple WGA complete
             'dna_alns_complete' => 0,
-            # populated by the rib_fire_orth_wga when wga analyses finished
+            # populated by the check_file_copy analysis when wga analyses finished
             'orth_wga_complete' => 0,
 
             #Parameters for HighConfidenceOrthologs
@@ -232,7 +232,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'goc_file'           => '#goc_files_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.goc.tsv',
         'wga_file'           => '#wga_files_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.wga.tsv',
         'previous_wga_file'  => defined $self->o('prev_wga_dumps_dir') ? '#prev_wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv' : undef,
-        'high_conf_file'     => '#pipeline_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.high_conf.tsv',
+        'high_conf_file'     => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.high_conf.tsv',
 
         'skip_epo'      => $self->o('skip_epo'),
         'epo_db'        => $self->o('epo_db'),
@@ -246,7 +246,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'range_label'       => $self->o('range_label'),
 
         'dna_alns_complete' => $self->o('dna_alns_complete'), # manually change to 1 when all wgas have finished
-        'orth_wga_complete' => $self->o('orth_wga_complete'), # populated by the rib_fire_orth_wga when wga analyses finished
+        'orth_wga_complete' => $self->o('orth_wga_complete'), # populated by the check_file_copy analysis when wga analyses finished
 
         'orth_batch_size'             => $self->o('orth_batch_size'),
         'high_confidence_capacity'    => $self->o('high_confidence_capacity'),

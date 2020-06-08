@@ -136,7 +136,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
                 'output_file'    => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
                 'reuse_file'     => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga_reuse.tsv',
             },
-            -hive_capacity     => 400,
+            -hive_capacity => 400,
         },
 
         {   -logic_name => 'reuse_wga_score',
@@ -147,7 +147,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
                 'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.homology_id_map.tsv',
                 'output_file'               => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga_reuse.tsv',
             },
-            -hive_capacity     => 400,
+            -hive_capacity => 400,
         },
 
         {   -logic_name  => 'check_file_copy',
@@ -161,7 +161,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
         {   -logic_name => 'copy_files_to_shared_loc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'         => q(/bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtOp --exclude '*.wga_reuse.tsv' #wga_dumps_dir#/ #homology_dumps_shared_dir#"),
+                'cmd' => q(/bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtOp --exclude '*.wga_reuse.tsv' #wga_dumps_dir#/ #homology_dumps_shared_dir#"),
             },
         },
 
