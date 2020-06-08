@@ -359,8 +359,7 @@ sub _add_trackhub {
     $is_old = 0;
   }
 
-  # Forcing it to stop showing the message.
-  if ($is_old && 0) {
+  if ($is_old) {
     ## Warn user that we are reattaching the trackhub
     $hub->session->set_record_data({
       'type'      => 'message',
@@ -881,7 +880,7 @@ sub load_file_format {
       if ($format eq 'trackhub') {
         ## Force hiding of internally configured trackhubs, because they should be
         ## off by default regardless of the settings in the hub
-        my $force_hide = ($internal && !$source->{'default_on'}) ? 1 : 0;
+        my $force_hide = $internal ? 1 : 0;
         $self->_add_trackhub(strip_HTML($source->{'source_name'}), $source->{'url'}, {'menu' => $menu, 'hide' => $force_hide});
       }
       else {
