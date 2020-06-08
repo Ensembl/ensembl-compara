@@ -88,6 +88,7 @@ option, suitable for small amounts of data, e.g. a single gene sequence.</p>
 
   $html .= '</table>';
 
+  return $html;
 }
 
 1;
