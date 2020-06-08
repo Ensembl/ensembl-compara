@@ -46,7 +46,6 @@ sub init_cacheable {
     functional
     variation
     oligo
-    genome_targeting
     repeat
     other
     information
