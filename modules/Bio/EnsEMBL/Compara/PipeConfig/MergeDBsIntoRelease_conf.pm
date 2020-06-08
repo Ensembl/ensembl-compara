@@ -97,9 +97,6 @@ sub default_options {
         # In these databases, ignore these tables
         'ignored_tables'    => {
             # Mapping 'db_alias' => Arrayref of table names
-            # Example:
-            #   'family_db' => [qw(gene_member seq_member sequence)],
-            # Mapping 'db_alias' => Arrayref of table names
             'ncrna_db'   => [qw(ortholog_quality)],
             'protein_db' => [qw(ortholog_quality)],
         },

@@ -154,8 +154,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
             -module      => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -parameters  => { 'orth_wga_complete' => 1, },
             -flow_into   => {
-                1 => WHEN( '#homology_dumps_shared_dir#' => 'copy_files_to_shared_loc' ),
-                2 => [ '?table_name=pipeline_wide_parameters' ],
+                1 => [ WHEN( '#homology_dumps_shared_dir#' => 'copy_files_to_shared_loc' ), '?table_name=pipeline_wide_parameters' ],
             },
         },
 
