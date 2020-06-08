@@ -336,7 +336,11 @@ sub _add_trackhub {
   ## Default is to show the message, since it won't do any harm
   my $is_old = 1;
   my $record;
-  if ($code) {
+  if ($hub->species_defs->FIRST_RELEASE_VERSION && $hub->species_defs->FIRST_RELEASE_VERSION > 99) {
+    ## This is a site released after spring 2020, e.g. rapid.ensembl.org
+    $is_old = 0;
+  }
+  elsif ($code) {
     (my $short_code = $code) =~ s/^url_//;
     foreach my $m (grep $_, $hub->user, $hub->session) {
       $record = $m->get_record_data({'type' => 'url', 'code' => $short_code});
