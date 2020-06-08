@@ -150,6 +150,7 @@ form.search-form div.ff-right label   { margin-right: 6px; margin-left: 0; line-
 form.search-form div.ff-right .submit { margin-top: 9px; }
 form.search-form div.ff-notes a       { font-weight: bold; text-decoration: none; }
 form.homepage-search-form             { text-align: center; margin: 0 !important; }
+form.homepage-search-form.unisearch   { text-align: left !important; }
 
 /* did you know column on home page */
 div.new-to-ensembl p      { background: url("/i/e-quest.gif") no-repeat scroll left -2px transparent; padding-left: 32px; }

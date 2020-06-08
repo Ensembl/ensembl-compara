@@ -8,44 +8,8 @@
 
 <h1>FTP Download</h1>
 
-<div class="info-box embedded-box float-right" style="margin-bottom:1em;">
-<h2 class="first">Custom data sets</h2>
-<p>If you want to filter or customise your download, please try
-<a href="/biomart/martview">Biomart</a>, a web-based querying tool.</p>
-</div>
-
-
-<p>You can download via a browser from our <a href="ftp://ftp.ensembl.org/pub/" rel="external">FTP site</a>, 
+<p>You can download via a browser from our <a href="[[SPECIESDEFS::ENSEMBL_FTP_URL]]" rel="external">FTP site</a>, 
 use a script, or even use <a href="rsync.html">rsync</a> from the command line.</p>
-
-<h2>API Code</h2>
-
-<p>If you do not have access to git, you can obtain our latest API code as a gzipped tarball:</p>
-
-<p><a href="ftp://ftp.ensembl.org/pub/ensembl-api.tar.gz">Download complete API for this release</a></p>
-
-<p>Note: the API version needs to be the same as the databases you are accessing, so please
-use git to obtain a previous version if querying older databases.</p>
-
-<h2>Database dumps</h2>
-<p>
-Entire databases can be downloaded from our FTP site in a
-variety of formats. Please be aware that some of these files 
-can run to many gigabytes of data.
-</p>
-
-<p><strong>Looking for <a href="ftp://ftp.ensembl.org/pub/current_mysql/">MySQL dumps</a> to install databases locally?</strong> See our
-<a href="/info/docs/webcode/mirror/install/ensembl-data.html">web installation instructions</a> 
-for full details.</p>
-
-<p>
-Each directory on 
-<a href="ftp://ftp.ensembl.org/pub/"
-rel="external">ftp.ensembl.org</a> contains a
-<a href="ftp://ftp.ensembl.org/pub/current_README">README</a> file,
-explaining the directory structure.
-</p>
-
 
 [[SCRIPT::EnsEMBL::Web::Document::HTML::FTPtable]]
 
@@ -85,17 +49,17 @@ conventions.
   
   <dt>CDS</dt>
   <dd>Coding sequences for Ensembl or <i>ab
-  initio</i> <a href="/info/genome/genebuild/">predicted
+  initio</i> <a href="https://www.ensembl.org/info/genome/genebuild/">predicted
   genes</a>.</dd>
   
   <dt>cDNA</dt>
   <dd>cDNA sequences for Ensembl or <i>ab
-  initio</i> <a href="/info/genome/genebuild/">predicted
+  initio</i> <a href="https://www.ensembl.org/info/genome/genebuild/">predicted
   genes</a>.</dd>
   
   <dt>Peptides</dt>
   <dd>Protein sequences for Ensembl or <i>ab
-  initio</i> <a href="/info/genome/genebuild/">predicted
+  initio</i> <a href="https://www.ensembl.org/info/genome/genebuild/">predicted
   genes</a>.</dd>
   
   <dt>RNA</dt>
@@ -109,7 +73,7 @@ conventions.
 <dd class="bg1">Flat files allow more extensive sequence annotation by means of
 feature tables and contain thus the genome sequence as annotated by
 the automated Ensembl
-<a href="/info/genome/genebuild/">genome
+<a href="https://www.ensembl.org/info/genome/genebuild/">genome
 annotation pipeline</a>. Each nucleotide sequence record in a flat
 file represents a 1Mb slice of the genome sequence. Flat files are
 broken into chunks of 1000 sequence records for easier downloading.
@@ -138,16 +102,16 @@ broken into chunks of 1000 sequence records for easier downloading.
 rel="external">MySQL</a> databases are available in text format as are
 the SQL table definition files. These can be imported into any SQL
 database for a local
-<a href="/info/docs/webcode/mirror/install/">installation</a> of a mirror
+<a href="https://www.ensembl.org/info/docs/webcode/mirror/install/">installation</a> of a mirror
 site. Generally, the FTP directory tree contains one directory per
 database. For more information about these databases and their
 Application Programming Interfaces (or APIs) see the
-<a href="/info/docs/api/">API</a> section.</dd>
+<a href="https://www.ensembl.org/info/docs/api/">API</a> section.</dd>
 
 <dt class="bg1">GTF</dt>
 <dd class="bg1">Gene sets for each species. These files include annotations of
 both coding and non-coding genes. This file format is
-described <a href="http://www.gencodegenes.org/gencodeformat.html">here</a>.
+described <a href="http://www.gencodegenes.org/pages/data_format.html">here</a>.
 </dd>
 
 <dt class="bg1">GFF3</dt>
@@ -169,7 +133,7 @@ Also, the same format is used to dump whole-genome multiple alignments
 as well as gene-based multiple alignments and phylogentic trees used
 to infer Ensembl orthologues and paralogues. These files are available
 in the ensembl_compara database which will be found in
-the <a href="ftp://ftp.ensembl.org/pub/current_mysql/">mysql
+the <a href="[[SPECIESDEFS::ENSEMBL_FTP_URL]]/current_mysql/">mysql
 directory</a>.
 </p>
 </dd>
@@ -197,7 +161,7 @@ More details about the format and its specifications are available <a href="http
 
 
 <dt class="bg1">VEP (variation data)</dt>
-<dd class="bg1">Compressed text files (called "cache files") used by the <a href="/VEP">Variant Effect Predictor</a> tool. More information about these files is available <a href="/info/docs/tools/vep/script/vep_cache.html">here</a>.</dd>
+<dd class="bg1">Compressed text files (called "cache files") used by the <a href="/VEP">Variant Effect Predictor</a> tool. More information about these files is available <a href="https://www.ensembl.org/info/docs/tools/vep/script/vep_cache.html">here</a>.</dd>
 
 <dt class="bg2">BED format files (comparative data)</dt>
 <dd class="bg2">

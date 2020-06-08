@@ -356,6 +356,8 @@ sub get_species_info {
         'assembly'          => $species_defs->get_config($_, 'ASSEMBLY_NAME'),
         'assembly_version'  => $species_defs->get_config($_, 'ASSEMBLY_VERSION'),
         'group'             => $species_defs->get_config($_, 'SPECIES_GROUP'),
+        'image'             => $species_defs->get_config($_, 'SPECIES_IMAGE') 
+                                || $species_defs->get_config($_, 'SPECIES_URL'),
         'strain'            => $strain,
         'is_reference'      => $is_reference,
         'strain_group'      => $strain_group,
@@ -703,6 +705,7 @@ sub glossary_lookup {
   if (!$self->{'_glossary_lookup'}) {
     my %glossary  = $self->species_defs->multiX('ENSEMBL_GLOSSARY');
     my %lookup    = $self->species_defs->multiX('TEXT_LOOKUP');
+    $self->{'_glossary_lookup'} = {};
 
     $self->{'_glossary_lookup'}{$_} = $glossary{$_}{'desc'} for keys %glossary;
     $self->{'_glossary_lookup'}{$_} = $lookup{$_}{'desc'} for keys %lookup;

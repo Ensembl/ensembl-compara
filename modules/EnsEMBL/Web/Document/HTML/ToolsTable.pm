@@ -204,53 +204,58 @@ sub render {
 
   ## Table of other tools
 
-  $html .= qq(<h2 class="top-margin">Accessing $sitename data</h2>);
+  if ($sd->HAS_API_DOCS || $sd->ENSEMBL_MART_ENABLED || $sd->ENSEMBL_REST_URL) {
+    $html .= qq(<h2 class="top-margin">Accessing $sitename data</h2>);
 
-  $table = EnsEMBL::Web::Document::Table->new([
+    $table = EnsEMBL::Web::Document::Table->new([
       { key => 'name', title => 'Name', width => '20%', align => 'left' },
       { key => 'desc', title => 'Description', width => '30%', align => 'left' },
       { key => 'from', title => 'Get it from:', width => '30%', align => 'center' },
       { key => 'docs', title => 'Documentation', width => '10%', align => 'center' },
-    ], [], { cellpadding => 4 }
-  );
+      ], [], { cellpadding => 4 }
+    );
+   
+    ## BIOMART
+    if ($sd->ENSEMBL_MART_ENABLED) {
+      $table->add_row({
+        'name' => '<b><a href="/biomart/martview">BioMart</a></b>',
+        'desc' => "Use this data-mining tool to export custom datasets from $sitename.",
+        'from' => qq(<a href="/biomart/martview">$sitename Biomart</a>),
+        'docs' => sprintf('<a href="/info/data/biomart/index.html" class="popup"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
+      });
+    }
+  
+    ## PERL API
+    if ($sd->HAS_API_DOCS) { 
+      $table->add_row({
+        'name' => '<b>Ensembl Perl API</b>',
+        'desc' => 'Programmatic access to all Ensembl data using simple Perl scripts',
+        'from' => qq(<a href="https://github.com/Ensembl">GitHub</a> or <a href="ftp://ftp.ensembl.org/pub/ensembl-api.tar.gz" rel="external">FTP download</a> (current release only)),
+        'docs' => sprintf('<a href="/info/docs/api/"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
+      });
 
-  ## BIOMART
-  if ($sd->ENSEMBL_MART_ENABLED) {
-    $table->add_row({
-      'name' => '<b><a href="/biomart/martview">BioMart</a></b>',
-      'desc' => "Use this data-mining tool to export custom datasets from $sitename.",
-      'from' => qq(<a href="/biomart/martview">$sitename Biomart</a>),
-      'docs' => sprintf('<a href="/info/data/biomart/index.html" class="popup"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
-    });
+      ## VIRTUAL MACHINE
+      $table->add_row({
+        'name' => '<b>Ensembl Virtual Machine</b>',
+        'desc' => 'VirtualBox virtual Machine with Ubuntu desktop and pre-configured with the latest Ensembl API plus Variant Effect Predictor (VEP). <b>NB: download is >1 GB</b>',
+        'from' => qq(<a href="ftp://ftp.ensembl.org/pub/current_virtual_machine" rel="external">FTP download</a>),
+        'docs' => sprintf('<a href="/info/data/virtual_machine.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
+      });
+    }
+
+    ## REST
+    if (my $rest_url = $sd->ENSEMBL_REST_URL) {
+      my $rest_domain = $rest_url =~ s/(https?:)?\/\///r;
+      $table->add_row({
+        "name" => sprintf("<b><a href=%s>$sitename REST server</a></b>", $rest_url),
+        'desc' => 'Access Ensembl data using your favourite programming language',
+        "from" => sprintf('<a href="%s">%s</a>', $rest_url, $rest_domain),
+        'docs' => sprintf('<a href="%s"><img src="%s16/info.png" alt="Documentation" /></a>', $sd->ENSEMBL_REST_DOC_URL || $rest_url, $img_url)
+      });
+    }
+
+    $html .= $table->render;
   }
-
-  ## PERL API 
-  $table->add_row({
-    'name' => '<b>Ensembl Perl API</b>',
-    'desc' => 'Programmatic access to all Ensembl data using simple Perl scripts',
-    'from' => qq(<a href="https://github.com/Ensembl">GitHub</a> or <a href="ftp://ftp.ensembl.org/pub/ensembl-api.tar.gz" rel="external">FTP download</a> (current release only)),
-    'docs' => sprintf('<a href="/info/docs/api/"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
-  });
-
-  ## VIRTUAL MACHINE
-  $table->add_row({
-    'name' => '<b>Ensembl Virtual Machine</b>',
-    'desc' => 'VirtualBox virtual Machine with Ubuntu desktop and pre-configured with the latest Ensembl API plus Variant Effect Predictor (VEP). <b>NB: download is >1 GB</b>',
-    'from' => qq(<a href="ftp://ftp.ensembl.org/pub/current_virtual_machine" rel="external">FTP download</a>),
-    'docs' => sprintf('<a href="/info/data/virtual_machine.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
-  });
-
-  ## REST
-  if (my $rest_url = $sd->ENSEMBL_REST_URL) {
-    my $rest_domain = $rest_url =~ s/(https?:)?\/\///r;
-    $table->add_row({
-      "name" => sprintf("<b><a href=%s>$sitename REST server</a></b>", $rest_url),
-      'desc' => 'Access Ensembl data using your favourite programming language',
-      "from" => sprintf('<a href="%s">%s</a>', $rest_url, $rest_domain),
-      'docs' => sprintf('<a href="%s"><img src="%s16/info.png" alt="Documentation" /></a>', $sd->ENSEMBL_REST_DOC_URL || $rest_url, $img_url)
-    });
-  }
-  $html .= $table->render;
 
   return $html;
 }

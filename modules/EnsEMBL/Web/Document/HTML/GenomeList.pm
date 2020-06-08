@@ -74,11 +74,11 @@ sub _get_dom_tree {
       %s
       <h3 class="space-above"></h3>
       %s
-      <p><a href="%s">View full list of all %s species</a></p>
+      <p><a href="%s">View full list of all species</a></p>
       ), 
       $self->add_species_dropdown,
       $self->add_genome_groups, 
-      $self->species_list_url, $sitename;
+      $self->species_list_url; 
 
     my $sort_html = qq(<p>For easy access to commonly used genomes, drag from the bottom list to the top one</p>
         <p><strong>Favourites</strong></p>
@@ -90,6 +90,12 @@ sub _get_dom_tree {
           );
 
     my $edit_icon = sprintf qq(<a href="%s" class="_list_edit modal_link"><img src="/i/16/pencil.png" class="left-half-margin" title="Edit your favourites"></a>), $hub->url({qw(type Account action Login)});
+
+  
+    my %taxon_labels = $sd->multiX('TAXON_LABEL'); 
+    unless (keys %taxon_labels) {
+      %taxon_labels = %{$sd->TAXON_LABEL||{}};
+    }
 
     return $self->dom->create_element('div', {
       'class'       => 'column_wrapper',
@@ -150,7 +156,7 @@ sub _get_dom_tree {
                         'node_name'   => 'inputhidden',
                         'class'       => 'js_param json',
                         'name'        => 'taxon_labels',
-                        'value'       => encode_entities(to_json($sd->TAXON_LABEL||{}))
+                        'value'       => encode_entities(to_json(\%taxon_labels))
                       }, {
                         'node_name'   => 'inputhidden',
                         'class'       => 'js_param json',
@@ -168,7 +174,7 @@ sub _get_dom_tree {
     my $sp_info = {
       homepage    => $homepage,
       name        => $info->{'name'},
-      img         => sprintf('%sspecies/%s.png', $img_url, $species),
+      img         => sprintf('%sspecies/%s.png', $img_url, $info->{'image'}),
       common      => $info->{'common'},
       assembly    => $info->{'assembly'},
     };
@@ -295,7 +301,7 @@ sub _species_list {
       group       => $species->{$_}{'group'},
       homepage    => $homepage,
       name        => $species->{$_}{'name'},
-      img         => sprintf('%sspecies/%s.png', $img_url, $_),
+      img         => sprintf('%sspecies/%s.png', $img_url, $species->{$_}{'image'}),
       common      => $species->{$_}{'common'},
       assembly    => $species->{$_}{'assembly'},
       assembly_v  => $species->{$_}{'assembly_version'},

@@ -68,6 +68,7 @@ sub init_cacheable {
     pairwise_tblat
     pairwise_other
     dna_align_compara
+    genome_targeting
     oligo
     repeat
     external_data

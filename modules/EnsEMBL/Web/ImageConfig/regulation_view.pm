@@ -60,6 +60,7 @@ sub init_cacheable {
     multiple_align
     conservation
     variation
+    genome_targeting
     oligo
     repeat
     other

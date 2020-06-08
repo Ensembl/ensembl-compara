@@ -554,7 +554,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
         items_hash[node.data.title] = {
           key   : node.data.key,
           title : node.data.title,
-          // icon  : node.data.icon,
+          img_url  : node.data.img_url,
           value : node.data.value
         };
       }

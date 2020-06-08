@@ -49,6 +49,8 @@ sub render {
     my $info    = {
         'dir'         => $sp,
         'common'      => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'),
+        'image'       => $species_defs->get_config($sp, 'SPECIES_IMAGE')
+                          || $species_defs->get_config($sp, 'SPECIES_URL'),
         'status'      => 'live',
         'sci_name'    => $species_defs->get_config($sp, 'SPECIES_SCIENTIFIC_NAME'),
         'assembly'    => $species_defs->get_config($sp, 'ASSEMBLY_NAME'),
@@ -77,6 +79,7 @@ sub render {
             'dir'           => $bioname,
             'common'        => $common,
             'sci_name'      => $sci_name,
+            'image'         => $bioname,
             'status'        => $status,
             'assembly'      => '-',
             'accession'     => '-',
@@ -96,13 +99,9 @@ sub render {
   }
 
   ## Display all the species in data table
-  my $html = '<h3 class="clear-left">Available genomes</h3>';
+  my $html;
 
-  if ($species_defs->ENSEMBL_SERVERNAME eq 'grch37.ensembl.org') {
-    ## Hardcode this because the version is actually updated when the site is upgraded
-    $html .= qq(<div class="info-box"><p>N.B. The table below shows only those species that were included in release 75 - for an up-to-date list, please see our main site at <a href="//www.ensembl.org/">www.ensembl.org</a>.</p></div>);
-  }
-  elsif ($sitename =~ /Archive/) {
+  if ($sitename =~ /Archive/) {
     $html .= qq(<div class="info-box"><p>N.B. The table below shows only those species that were included in release $version - for an up-to-date list, please see our main site at <a href="//www.ensembl.org/">www.ensembl.org</a>.</p></div>);
   }
   elsif ($hub->species_defs->multidb->{'DATABASE_ARCHIVE'}{'NAME'}) {
@@ -141,7 +140,7 @@ sub render {
     }
     $table->add_row({
         'common' => sprintf('<a href="%s%s/"><img src="/i/species/%s.png" alt="%s" class="badge-48" style="float:left;padding-right:4px;%s" /></a>%s',
-                        $img_url, $dir,  $dir, $common, $image_fade, $sp_link),
+                        $img_url, $dir,  $info->{'image'}, $common, $image_fade, $sp_link),
       'species'     => '<i>'.$name.'</i>',
       'taxon_id'    => $info->{'taxon_id'},
       'assembly'    => $info->{'assembly'},
@@ -176,18 +175,23 @@ sub render {
 # Return array of columns
 sub table_columns {
   my $self = shift;
+  my $sd = $self->hub->species_defs; 
 
   my $columns = [
-      { key => 'common',      title => 'Common name',     width => '40%', align => 'left', sort => 'html'   },
+      { key => 'common',      title => 'Common name',     width => '25%', align => 'left', sort => 'html'   },
       { key => 'species',     title => 'Scientific name', width => '25%', align => 'left', sort => 'string' },
       { key => 'taxon_id',    title => 'Taxon ID',        width => '10%', align => 'left', sort => 'numeric' },
       { key => 'assembly',    title => 'Ensembl Assembly',width => '10%', align => 'left' },
       { key => 'accession',   title => 'Accession',       width => '10%', align => 'left' },
       { key => 'genebuild',   title => 'Genebuild Method', width => '10%', align => 'left' },
-      { key => 'variation',   title => 'Variation database',  width => '5%', align => 'center', sort => 'string' },
-      { key => 'regulation',  title => 'Regulation database', width => '5%', align => 'center', sort => 'string' },
   ];
-  if ($self->hub->species_defs->ENSEMBL_SITETYPE !~ /Archive/) {
+  unless ($sd->NO_VARIATION) { 
+    push @$columns, { key => 'variation',   title => 'Variation database',  width => '5%', align => 'center', sort => 'string' };
+  }
+  unless ($sd->NO_REGULATION) { 
+    push @$columns, { key => 'regulation',  title => 'Regulation database', width => '5%', align => 'center', sort => 'string' };
+  }
+  if (scalar keys %{$self->get_pre_species||{}}) {
     push @$columns, { key => 'pre', title => 'Pre assembly', width => '5%', align => 'left' };
   }
 

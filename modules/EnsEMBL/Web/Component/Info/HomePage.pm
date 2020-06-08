@@ -91,6 +91,15 @@ sub assembly_text {
     $ac_link = sprintf('<a href="%s" class="modal_link nodeco" rel="modal_user_data">', $hub->url({'type' => 'UserData', 'action' => 'SelectFeatures', __clear => 1}));
   }
 
+  my $karyotype = '';
+  if (scalar @{$species_defs->ENSEMBL_CHROMOSOMES || []} && !$species_defs->NO_KARYOTYPE) {
+    $karyotype = sprintf($self->{'img_link'},
+                  $hub->url({ type => 'Location', action => 'Genome', __clear => 1 }),
+                  'Go to ' . $species_defs->SPECIES_COMMON_NAME . ' karyotype', 
+                  'karyotype', 'View karyotype'
+                  );
+  }
+
   my $html = sprintf('
     <div class="homepage-icon">
       %s
@@ -102,12 +111,8 @@ sub assembly_text {
     %s
     <p><a href="%s" class="modal_link nodeco" rel="modal_user_data">%sDisplay your data in %s</a></p>',
     
-    scalar @{$species_defs->ENSEMBL_CHROMOSOMES || []} ? sprintf(
-      $self->{'img_link'},
-      $hub->url({ type => 'Location', action => 'Genome', __clear => 1 }),
-      'Go to ' . $species_defs->SPECIES_COMMON_NAME . ' karyotype', 'karyotype', 'View karyotype'
-    ) : '',
-    
+    $karyotype,   
+ 
     sprintf(
       $self->{'img_link'},
       $hub->url({ type => 'Location', action => 'View', r => $sample_data->{'LOCATION_PARAM'}, __clear => 1 }),
@@ -251,11 +256,17 @@ sub genebuild_text {
 
 sub compara_text {
   my $self         = shift;
+
+  if($SiteDefs::NO_COMPARA){
+    return '';
+  }
+  
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
   my $sample_data  = $species_defs->SAMPLE_DATA;
   my $ftp          = $self->ftp_url;
   
+
   return sprintf('
     <div class="homepage-icon">
       %s
@@ -287,6 +298,10 @@ sub variation_text {
   my $species_prod_name = $species_defs->get_config($hub->species, 'SPECIES_PRODUCTION_NAME');
   my $html;
 
+  if($species_defs->NO_VARIATION && !$species_defs->ENSEMBL_VEP_ENABLED){
+    return '';
+  }
+  
   if ($hub->database('variation')) {
     my $sample_data  = $species_defs->SAMPLE_DATA;
 

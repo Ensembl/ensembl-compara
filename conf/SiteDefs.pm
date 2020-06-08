@@ -34,9 +34,9 @@ use Sys::Hostname::Long;
 
 ###############################################################################
 ## Ensembl Version and release dates (these get updated every release)
-our $ENSEMBL_VERSION        = 100;            # Ensembl release number
-our $ARCHIVE_VERSION        = 'Apr2020';     # Archive site for this version
-our $ENSEMBL_RELEASE_DATE   = 'April 2020'; # As it would appear in the copyright/footer
+our $ENSEMBL_VERSION        = 101;            # Ensembl release number
+our $ARCHIVE_VERSION        = 'Jul2020';     # Archive site for this version
+our $ENSEMBL_RELEASE_DATE   = 'July 2020'; # As it would appear in the copyright/footer
 ###############################################################################
 
 
@@ -199,6 +199,7 @@ our $GOOGLE_SITEMAPS_URL          = '/sitemaps';                                
 our @ENSEMBL_CONF_DIRS               = ("$ENSEMBL_WEBROOT/conf");                                      # locates plugin SiteDefs.pm and ini-files
 our @ENSEMBL_HTDOCS_DIRS             = ($ENSEMBL_DOCROOT, "$ENSEMBL_SERVERROOT/biomart-perl/htdocs");  # locates static content
 our $ENSEMBL_TAXONOMY_DIVISION_FILE  = ("$ENSEMBL_DOCROOT/e_divisions.json");
+our $DEFAULT_SPECIES_IMG_DIR         = 'htdocs/i/species';
 ###############################################################################
 
 

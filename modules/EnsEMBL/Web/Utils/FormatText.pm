@@ -93,7 +93,7 @@ sub get_glossary_entry {
   ## @param Entry key to lookup against the glossary
   ## @return Glossary description (possibly HTML)
   my ($hub, $entry) = @_;
-  return '' unless $hub;
+  return '' unless $hub && $hub->glossary_lookup;
   return $hub->glossary_lookup->{$entry} // '';
 }
 

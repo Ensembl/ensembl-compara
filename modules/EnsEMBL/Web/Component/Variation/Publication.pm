@@ -62,7 +62,8 @@ sub content {
   $table->add_columns(
     { key => 'title',  title => 'Title',     align => 'left', sort => 'html'    },  
     { key => 'author', title => 'Author(s)', align => 'left', sort => 'html'    },
-    { key => 'text',   title => 'Full text', align => 'left', sort => 'html'    },  
+    { key => 'text',   title => 'Full text', align => 'left', sort => 'html'    },
+    { key => 'source', title => 'Citation source', align => 'left', sort => 'html'    },
   );
 
   foreach my $row (@{$table_rows}){  $table->add_rows($row);}
@@ -122,6 +123,10 @@ sub table_data {
         $phenotypes_helptip
     };
 
+    # Publication source
+    my $list_sources = $cit->get_all_sources_by_Variation($object->vari);
+    my $sources = join(',', sort @{$list_sources});
+
     my $row = {
 	  year   => $cit->year(),
 	  pmid   => defined $cit->pmid() ? $hub->get_ExtURL_link($cit->pmid(), "EPMC_MED", $cit->pmid()) : undef,
@@ -129,6 +134,7 @@ sub table_data {
 	  title  => $cit->title(),
 	  author => $cit->authors(),
 	  text   => defined $cit->pmcid() ? $hub->get_ExtURL_link($cit->pmcid(), "EPMC", $cit->pmcid()) : undef,
+	  source => $sources,
     };
  
     push @data_rows, $row;
