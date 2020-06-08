@@ -97,7 +97,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
                 'method_link_types' => ['ENSEMBL_ORTHOLOGUES'],
             },
             -flow_into  => {
-                '2->A' => [ 'prepare_orthologs' => INPUT_PLUS() ],
+                '2->A' => { 'prepare_orthologs' => INPUT_PLUS() },
                 'A->1' => [ 'check_file_copy' ],
             }
         },
@@ -155,6 +155,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
             -parameters  => { 'orth_wga_complete' => 1, },
             -flow_into   => {
                 1 => WHEN( '#homology_dumps_shared_dir#' => 'copy_files_to_shared_loc' ),
+                2 => [ '?table_name=pipeline_wide_parameters' ],
             },
         },
 
