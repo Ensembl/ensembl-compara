@@ -244,7 +244,9 @@ sub render {
     }
 
     ## REST
-    if (my $rest_url = $sd->ENSEMBL_REST_URL) {
+    my $rest_url = $sd->ENSEMBL_REST_URL;
+    my $is_internal = $sd->ENSEMBL_REST_INTERNAL_ONLY;
+    if ($rest_url && !$is_internal) {
       my $rest_domain = $rest_url =~ s/(https?:)?\/\///r;
       $table->add_row({
         "name" => sprintf("<b><a href=%s>$sitename REST server</a></b>", $rest_url),

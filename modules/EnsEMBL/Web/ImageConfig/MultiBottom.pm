@@ -63,7 +63,6 @@ sub init_cacheable {
     variation
     somatic
     functional
-    genome_targeting
     oligo
     repeat
     user_data

@@ -256,8 +256,11 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
     }], { cellpadding => 4, cellspacing => 2, id => 'ftp-table1' });
   }
  
-  my $fave_text = $hub->user ? 'Your favourite species are listed first.' 
+  my $fave_text = '';
+  if (scalar @$all_species > 1) {
+    $fave_text = $hub->user ? 'Your favourite species are listed first.' 
                   : 'Popular species are listed first. You can customise this list via our <a href="/">home page</a>.'; 
+  }
 
   if ($multi_table) {
     $html .= sprintf('<h3>Multi-species data</h3>%s<h3>Single species data</h3>', $multi_table->render);
@@ -269,7 +272,8 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
       <p>%s</p>
       %s
     </div>
-  }, $fave_text, $main_table->render);
+    %s
+  }, $fave_text, $main_table->render, $self->add_footnotes);
 
   return $html;
 }
@@ -290,6 +294,209 @@ sub required_types_for_species {
   )};
   
   return \%required_lookup;
+}
+
+sub add_footnotes {
+  my $self = shift;
+  my $hub = $self->hub;
+  my $sd = $hub->species_defs;
+
+  my $html = qq(
+    <p>
+To facilitate storage and download all databases are
+<a href="http://directory.fsf.org/project/gzip/" rel="external">GNU
+Zip</a> (gzip, *.gz) compressed.
+</p>
+
+<h2>About the data</h2>
+
+<p>
+The following types of data dumps are available on the FTP site.
+</p>
+
+<dl class="twocol striped">
+<dt class="bg2">FASTA</dt>
+<dd class="bg2">FASTA sequence databases of Ensembl gene, transcript and protein
+model predictions. Since the
+<a href="http://www.bioperl.org/wiki/FASTA_sequence_format"
+rel="external">FASTA format</a> does not permit sequence annotation,
+these database files are mainly intended for use with local sequence
+similarity search algorithms. Each directory has a README file with a
+detailed description of the header line format and the file naming
+conventions.
+<dl>
+  <dt>DNA</dt>
+  <dd><a href="http://www.repeatmasker.org/" rel="external">Masked</a>
+  and unmasked genome sequences associated with the assembly (contigs,
+  chromosomes etc.).</dd>
+  <dd>The header line in an FASTA dump files containing DNA sequence
+  consists of the following attributes :
+  coord_system:version:name:start:end:strand
+  This coordinate-system string is used in the Ensembl API to retrieve
+  slices with the SliceAdaptor.</dd>
+
+  <dt>CDS</dt>
+  <dd>Coding sequences for Ensembl or <i>ab
+  initio</i> <a href="https://www.ensembl.org/info/genome/genebuild/">predicted
+  genes</a>.</dd>
+
+  <dt>cDNA</dt>
+  <dd>cDNA sequences for Ensembl or <i>ab
+  initio</i> <a href="https://www.ensembl.org/info/genome/genebuild/">predicted
+  genes</a>.</dd>
+
+  <dt>Peptides</dt>
+  <dd>Protein sequences for Ensembl or <i>ab
+  initio</i> <a href="https://www.ensembl.org/info/genome/genebuild/">predicted
+  genes</a>.</dd>
+
+
+  <dt>RNA</dt>
+  <dd>Non-coding RNA gene predictions.</dd>
+
+</dl>
+
+</dd>
+
+<dt class="bg1">Annotated sequence</dt>
+<dd class="bg1">Flat files allow more extensive sequence annotation by means of
+feature tables and contain thus the genome sequence as annotated by
+the automated Ensembl
+<a href="https://www.ensembl.org/info/genome/genebuild/">genome
+annotation pipeline</a>. Each nucleotide sequence record in a flat
+file represents a 1Mb slice of the genome sequence. Flat files are
+broken into chunks of 1000 sequence records for easier downloading.
+  <dl>
+
+  <dt>EMBL</dt>
+  <dd>Ensembl database dumps in <a href="http://www.ebi.ac.uk/ena/about/sequence_format"
+  rel="external">EMBL</a> nucleotide
+  sequence <a href="ftp://ftp.ebi.ac.uk/pub/databases/embl/doc/usrman.txt"
+  rel="external">database format</a></dd>
+
+  <dt>GenBank</dt>
+  <dd>Ensembl database dumps
+  in <a href="http://www.ncbi.nlm.nih.gov/genbank/"
+  rel="external">GenBank</a> nucleotide sequence
+  <a href="http://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html"
+  rel="external">database format</a></dd>
+
+  </dl>
+
+</dd>
+
+<dt class="bg2">MySQL</dt>
+<dd class="bg2">All Ensembl <a href="http://www.mysql.com/"
+rel="external">MySQL</a> databases are available in text format as are
+the SQL table definition files. These can be imported into any SQL
+database for a local
+<a href="https://www.ensembl.org/info/docs/webcode/mirror/install/">installation</a> of a mirror
+site. Generally, the FTP directory tree contains one directory per
+database. For more information about these databases and their
+Application Programming Interfaces (or APIs) see the
+<a href="https://www.ensembl.org/info/docs/api/">API</a> section.</dd>
+
+<dt class="bg1">GTF</dt>
+<dd class="bg1">Gene sets for each species. These files include annotations of
+both coding and non-coding genes. This file format is
+described <a href="http://www.gencodegenes.org/pages/data_format.html">here</a>.
+</dd>
+
+<dt class="bg1">GFF3</dt>
+<dd class="bg1">GFF3 provides access to all annotated transcripts which make
+up an Ensembl gene set. This file format is
+described <a href="http://www.sequenceontology.org/gff3.shtml">here</a>.
+</dd>
+
+  );
+
+  unless ($sd->NO_COMPARA) {
+    $html .= qq(
+<dt class="bg2">EMF flatfile dumps (comparative data)</dt>
+<dd class="bg2">
+<p>
+Alignments of resequencing data are available for several species as
+Ensembl Multi Format (EMF) flatfile dumps. The accompanying README
+file describes the file format.
+</p>
+
+<p>
+Also, the same format is used to dump whole-genome multiple alignments
+as well as gene-based multiple alignments and phylogentic trees used
+to infer Ensembl orthologues and paralogues. These files are available
+in the ensembl_compara database which will be found in
+the <a href="[[SPECIESDEFS::ENSEMBL_FTP_URL]]/current_mysql/">mysql
+directory</a>.
+</p>
+</dd>
+
+<dt class="bg2">MAF (comparative data)</dt>
+<dd class="bg2">
+<p>
+MAF files are provided for all pairwise alignments containing human
+(GRCh38), and all multiple alignments.
+The MAF file format is described <a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format5">here</a>.
+</p>
+</dd>
+      );
+  }
+
+  unless ($sd->NO_VARIATION) {
+    $html .= qq(
+dt class="bg1">GVF (variation data)</dt>
+<dd class="bg1">GVF (Genome Variation Format) is a simple tab-delimited format derived
+from GFF3 for variation positions across the genome.
+There are GVF files for different types of variation data (e.g.
+somatic variants, structural variants etc). For more information see
+the "README" files in the GVF directory.</dd>
+
+<dt class="bg2">VCF (variation data)</dt>
+<dd class="bg2">VCF (Variant Call Format) is a text file format containing meta-information lines, a header
+line, and then data lines each containing information about a position in the genome. This file format can also contain genotype information on samples for each position.
+More details about the format and its specifications are available <a href="http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-41">here</a>.</dd>
+
+
+<dt class="bg1">VEP (variation data)</dt>
+<dd class="bg1">Compressed text files (called "cache files") used by the <a href="/VEP">Variant Effect Predictor</a> tool. More information about these files is available <a href="https://www.ensembl.org/info/docs/tools/vep/script/vep_cache.html">here</a>.</dd>
+
+<dt class="bg2">BED format files (comparative data)</dt>
+<dd class="bg2">
+<p>
+Constrained elements calculated using GERP are available in BED
+format. For more information see the accompanying README file.
+</p>
+
+<p>
+BED format is a simple line-based format. The first 3 mandatory columns
+are:
+</p>
+
+<ul>
+<li>chromosome name (may start with 'chr' for compliance with UCSC)</li>
+<li>start position. This is a 0-based position</li>
+<li>end position.</li>
+</ul>
+
+<p>
+<a href="/info/website/upload/bed.html">More information on the BED file format</a>...
+</p>
+</dd>
+      );
+  }
+
+  if ($sd->HAS_API_DOCS) {
+    $html .= qq(
+<dt class="bg1">Tarball</dt>
+<dd class="bg1">
+<p>
+The entire Ensembl API is gzipped and concatenated into a single TAR file. This is updated daily.</p>
+</dd>
+      );
+  }
+
+  $html .= '</dl>';
+
+  return $html;
 }
 
 1; 

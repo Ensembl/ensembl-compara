@@ -44,7 +44,8 @@ option, suitable for small amounts of data, e.g. a single gene sequence.</p>
 
   ## REST
   my $rest = $sd->ENSEMBL_REST_URL;
-  if ($rest) {
+  my $internal_only = $sd->ENSEMBL_REST_INTERNAL_ONLY;
+  if ($rest && !$internal_only) {
     push @cells, qq(
   <h2>Fast programmatic access</h2>
   <p><a href="$rest"><img src="/img/download_api.gif" class="float-right" style="width:200px;height:100px" alt="" title="Visit our REST site" /></a>For fast access in any programming language, we recommend using our <a href="$rest">REST server</a>. Various REST endpoints provide access to vast amounts of Ensembl data.</p>

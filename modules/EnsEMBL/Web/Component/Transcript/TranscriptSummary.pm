@@ -137,6 +137,14 @@ sub content {
     }
   };
 
+  ## Hack for broken links 
+  my $regex = '/info/genome/genebuild/genome_annotation';
+  if ($text =~ m#$regex#) {
+    (my $new_page = $regex) =~ s#genome_annotation#index#;
+    my $abs_link = 'https://www.ensembl.org'.$new_page;
+    $text =~ s#$regex#$abs_link#g;
+  }
+
   $table->add_row($label, $text);
 
   ## add frameshift introns info
