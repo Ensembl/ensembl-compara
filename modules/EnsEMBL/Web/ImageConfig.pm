@@ -731,7 +731,6 @@ sub menus {
     # Other features
     repeat              => 'Repeat regions',
     oligo               => 'Oligo probes',
-    genome_targeting    => 'Genome targeting',
     trans_associated    => 'Transcript features',
 
     # Info/decorations
