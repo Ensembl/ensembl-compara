@@ -46,7 +46,7 @@ sub render {
   }
   my $ftp = $sd->ENSEMBL_FTP_URL;
   if ($ftp) {
-    push @services, qq(the <a href="$ftp">FTP site</a>);
+    push @services, qq(an <a href="$ftp">FTP site</a>);
   }
 
   my $html = qq(
@@ -55,12 +55,18 @@ sub render {
 
   if (scalar @services) {
     my $last_item   = pop @services;
-    my $other_items = join(',', @services);
-    my $string      = $other_items ? sprintf('%s, and %s', $other_items, $last_item) : $last_item;
+    my $other_items = join(', ', @services);
 
-    $html .= qq(
- We provide various large scale export options, including $string, depending on the volume and type of export you're carrying out.
-    );
+    if ($other_items) {
+      $html .= qq(
+ We provide various large scale export options, including $other_items and $last_item, depending on the volume and type of export you're carrying out.
+      );
+    }
+    else {
+      $html .= qq(
+We provide $last_item for large-scale export in a variety of formats.
+      );
+    }
   }
 
   $html .= qq(</p>
