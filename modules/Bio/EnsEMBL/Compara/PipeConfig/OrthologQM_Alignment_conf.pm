@@ -179,6 +179,9 @@ sub pipeline_wide_parameters {
         'prev_wga_dumps_dir' => $self->o('prev_wga_dumps_dir'),
         'previous_wga_file'  => defined $self->o('prev_wga_dumps_dir') ? '#prev_wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv' : undef,
 
+        'alt_aln_dbs'        => $self->o('alt_aln_dbs'),
+        'alt_homology_db'   => $self->o('alt_homology_db'),
+
         'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_dir'),
     };
 }

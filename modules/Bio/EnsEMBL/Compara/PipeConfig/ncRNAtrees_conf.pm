@@ -163,6 +163,7 @@ sub default_options {
             'species_set_name' => "collection-" . $self->o('collection'),
             'species_set_id'   => undef,
             'ref_species'      => undef,
+            'homology_method_link_types' => ['ENSEMBL_ORTHOLOGUES'],
             # WGA dump directories for OrthologQMAlignment
             'wga_dumps_dir'      => $self->o('homology_dumps_dir'),
             'prev_wga_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),

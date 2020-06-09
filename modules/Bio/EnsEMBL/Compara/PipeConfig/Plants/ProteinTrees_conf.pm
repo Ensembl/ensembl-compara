@@ -89,6 +89,9 @@ sub default_options {
                 'thresholds'    => [ 50, 50, 25 ],
             },
         ],
+
+        # WGA OrthologQM homology method_link_species_set
+        'homology_method_link_types' => ['ENSEMBL_ORTHOLOGUES', 'ENSEMBL_HOMOEOLOGUES'],
     };
 }
 

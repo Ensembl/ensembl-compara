@@ -32,14 +32,6 @@ seperately and summarised using a quality_score calculation.
 The average quality_score between both members of the homology
 will be written to the homology table.
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::Parts::OrthologQMAlignment;
@@ -82,7 +74,10 @@ sub pipeline_analyses_ortholog_qm_alignment {
 
         {   -logic_name => 'select_mlss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::SelectMLSS',
-            -parameters => { 'current_release' => $self->o('ensembl_release') },
+            -parameters => {
+                'current_release' => $self->o('ensembl_release'),
+                'master_db'       => $self->o('master_db'),
+            },
             -flow_into  => {
                 1 => [ '?accu_name=alignment_mlsses&accu_address=[]&accu_input_variable=accu_dataflow' ],
                 2 => [ '?accu_name=mlss_db_mapping&accu_address={mlss_id}&accu_input_variable=mlss_db' ],
@@ -94,7 +89,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
         {   -logic_name => 'ortholog_mlss_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologMLSSFactory',
             -parameters => {
-                'method_link_types' => ['ENSEMBL_ORTHOLOGUES'],
+                'method_link_types' => $self->o('homology_method_link_types'),
             },
             -flow_into  => {
                 '2->A' => { 'prepare_orthologs' => INPUT_PLUS() },
@@ -152,9 +147,11 @@ sub pipeline_analyses_ortholog_qm_alignment {
 
         {   -logic_name  => 'check_file_copy',
             -module      => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -parameters  => { 'orth_wga_complete' => 1, },
             -flow_into   => {
-                1 => [ WHEN( '#homology_dumps_shared_dir#' => 'copy_files_to_shared_loc' ), '?table_name=pipeline_wide_parameters' ],
+                1 => [
+                    WHEN( '#homology_dumps_shared_dir#' => 'copy_files_to_shared_loc' ),
+                    { '?table_name=pipeline_wide_parameters' => { 'param_name' => 'orth_wga_complete', 'param_value' => 1 } },
+                ],
             },
         },
 

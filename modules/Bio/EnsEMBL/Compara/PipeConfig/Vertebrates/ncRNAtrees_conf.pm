@@ -70,7 +70,7 @@ sub default_options {
             # Use production names here
             'cafe_species'          => ['danio_rerio', 'taeniopygia_guttata', 'callithrix_jacchus', 'pan_troglodytes', 'homo_sapiens', 'mus_musculus'],
 
-                # HighConfidenceOrthologs Parameters
+        # HighConfidenceOrthologs Parameters
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
             {
