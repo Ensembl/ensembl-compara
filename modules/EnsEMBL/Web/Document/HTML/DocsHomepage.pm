@@ -119,7 +119,7 @@ eukaryotic species, and makes this information freely available online.</p>
 <li><a href="/info/data/ftp/">FTP download</a> of complete datasets</li>
 );
 
-  if ($rest) {
+  if ($rest && !$sd->ENSEMBL_REST_INTERNAL_ONLY) {
     $data_access .= qq(
 <li>Access data from our <a href="$rest">REST server</a> using any Programming language</li>
     );
