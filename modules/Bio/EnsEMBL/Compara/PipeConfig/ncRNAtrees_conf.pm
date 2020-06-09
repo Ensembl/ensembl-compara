@@ -43,6 +43,8 @@ use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLU
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::OrthologQMAlignment;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -66,11 +68,19 @@ sub default_options {
         'master_db'   => 'compara_master',
         'member_db'   => 'compara_members',
         'mapping_db'  => 'compara_prev',
+        'prev_rel_db' => 'compara_prev',
         # The following parameter should ideally contain EPO-2X alignments of
         # all the genomes used in the ncRNA-trees. However, due to release
         # coordination considerations, this may not be possible. If so, use the
         # one from the previous release.
         'epo_db'      => 'compara_prev',
+
+        # The dbs required for OrthologQMAlignment alt_aln_dbs can be an array list of alignment dbs
+        'compara_db'      => $self->pipeline_url(),
+        'alt_homology_db' => $self->pipeline_url(),
+        'alt_aln_dbs'     => [
+            'compara_curr',
+        ],
 
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => 14,
@@ -146,6 +156,31 @@ sub default_options {
             'homology_dumps_dir'       => $self->o('dump_dir'). '/homology_dumps/',
             'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
             'prev_homology_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
+
+            # Parameters for OrthologQMAlignment
+            'species1'         => undef,
+            'species2'         => undef,
+            'species_set_name' => "collection-" . $self->o('collection'),
+            'species_set_id'   => undef,
+            'ref_species'      => undef,
+            'homology_method_link_types' => ['ENSEMBL_ORTHOLOGUES'],
+            # WGA dump directories for OrthologQMAlignment
+            'wga_dumps_dir'      => $self->o('homology_dumps_dir'),
+            'prev_wga_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
+            # set how many orthologs should be flowed at a time
+            'orth_batch_size'   => 10,
+            # set to 1 when all pairwise and multiple WGA complete
+            'dna_alns_complete' => 0,
+            # populated by the check_file_copy analysis when wga analyses finished
+            'orth_wga_complete' => 0,
+
+            #Parameters for HighConfidenceOrthologs
+            'threshold_levels'            => [ ],          # division specific
+            'high_confidence_capacity'    => 500,          # how many mlss_ids can be processed in parallel
+            'update_homologies_capacity'  => 30,           # how many homology mlss_ids can be updated in parallel
+            'goc_files_dir'               => $self->o('homology_dumps_dir'),
+            'range_label'                 => $self->o('member_type'),
+
     };
 }
 
@@ -155,6 +190,18 @@ sub pipeline_create_commands {
             @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
             $self->pipeline_create_commands_rm_mkdir(['work_dir', 'dump_dir', 'ss_picts_dir']),
+
+            $self->db_cmd( 'CREATE TABLE ortholog_quality (
+                            homology_id              INT NOT NULL,
+                            genome_db_id             INT NOT NULL,
+                            alignment_mlss           INT NOT NULL,
+                            combined_exon_coverage   FLOAT(5,2) NOT NULL,
+                            combined_intron_coverage FLOAT(5,2) NOT NULL,
+                            quality_score            FLOAT(5,2) NOT NULL,
+                            exon_length              INT NOT NULL,
+                            intron_length            INT NOT NULL,
+                            INDEX (homology_id)
+            )'),
     ];
 }
 
@@ -164,14 +211,29 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
+        'ensembl_release' => $self->o('ensembl_release'),
+
         'mlss_id'       => $self->o('mlss_id'),
         'master_db'     => $self->o('master_db'),
         'member_db'     => $self->o('member_db'),
+        'prev_rel_db'   => $self->o('prev_rel_db'),
+        'alt_aln_dbs'   => $self->o('alt_aln_dbs'),
         'mapping_db'    => $self->o('mapping_db'),
-        
+
+        'pipeline_dir'              => $self->o('pipeline_dir'),
         'homology_dumps_dir'        => $self->o('homology_dumps_dir'),
         'prev_homology_dumps_dir'   => $self->o('prev_homology_dumps_dir'),
         'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_dir'),
+        'wga_dumps_dir'             => $self->o('wga_dumps_dir'),
+        'prev_wga_dumps_dir'        => $self->o('prev_wga_dumps_dir'),
+
+        'goc_files_dir'      => $self->o('goc_files_dir'),
+        'wga_files_dir'      => $self->o('wga_dumps_dir'),
+        'hashed_mlss_id'     => '#expr(dir_revhash(#mlss_id#))expr#',
+        'goc_file'           => '#goc_files_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.goc.tsv',
+        'wga_file'           => '#wga_files_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.wga.tsv',
+        'previous_wga_file'  => defined $self->o('prev_wga_dumps_dir') ? '#prev_wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv' : undef,
+        'high_conf_file'     => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.high_conf.tsv',
 
         'skip_epo'      => $self->o('skip_epo'),
         'epo_db'        => $self->o('epo_db'),
@@ -181,6 +243,16 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'do_cafe'           => $self->o('do_cafe'),
         'dbID_range_index'  => $self->o('dbID_range_index'),
         'clustering_mode'   => $self->o('clustering_mode'),
+        'threshold_levels'  => $self->o('threshold_levels'),
+        'range_label'       => $self->o('range_label'),
+
+        'dna_alns_complete' => $self->o('dna_alns_complete'), # manually change to 1 when all wgas have finished
+        'orth_wga_complete' => $self->o('orth_wga_complete'), # populated by the check_file_copy analysis when wga analyses finished
+
+        'orth_batch_size'             => $self->o('orth_batch_size'),
+        'high_confidence_capacity'    => $self->o('high_confidence_capacity'),
+        'update_homologies_capacity'  => $self->o('update_homologies_capacity'),
+
     }
 }
 
@@ -1219,7 +1291,10 @@ sub core_pipeline_analyses {
         {   -logic_name => 'rib_fire_homology_processing',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                1 => WHEN('#ref_ortholog_db#' => 'remove_overlapping_homologies', ELSE [ 'homology_stats_factory', 'id_map_mlss_factory' ]),
+                1       => [ 
+                    WHEN('#ref_ortholog_db#' => 'remove_overlapping_homologies', ELSE [ 'homology_stats_factory', 'id_map_mlss_factory' ]),
+                    'rib_fire_orth_wga_and_high_conf',
+                ],
             },
         },
         
@@ -1230,9 +1305,30 @@ sub core_pipeline_analyses {
             },
         },
 
+        {   -logic_name => 'rib_fire_orth_wga_and_high_conf',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A'  => 'rib_fire_orth_wga',
+                'A->1'  => 'rib_fire_high_confidence_orths'
+            },
+        },
+
+        {   -logic_name => 'rib_fire_orth_wga',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => WHEN( '#dna_alns_complete#'  => [ 'pair_species' ] ),
+        },
+
+        {   -logic_name => 'rib_fire_high_confidence_orths',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => WHEN( '#orth_wga_complete#' => [ 'mlss_id_for_high_confidence_factory'] ),
+        },
+
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe_with_full_species_tree($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_hom_stats($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree::pipeline_analyses_dump_homologies_posttree($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::OrthologQMAlignment::pipeline_analyses_ortholog_qm_alignment($self)  },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs::pipeline_analyses_high_confidence($self) },
+
     ];
 }
 
