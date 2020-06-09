@@ -39,6 +39,7 @@ sub content {
   my $species_defs = $hub->species_defs;
   my $cdb          = shift || $hub->param('cdb') || 'compara';
   
+  my $skip_phenotypes_link = 'non_specified';
   my $html = '';
   
   my @orthologues = (
@@ -87,6 +88,7 @@ sub content {
         
         # phenotype
         my $phen_desc = $pf->phenotype->description;
+        my $phen_class = $pf->phenotype_class;
         my $phen_link = $hub->url({
           species => $species,
           type    => 'Phenotype',
@@ -100,6 +102,7 @@ sub content {
           $phen_desc,
           $pf->source_name
         );
+        $phen = $phen_desc if $phen_class eq $skip_phenotypes_link;
         
         # source
         my $source = $pf->source_name;
