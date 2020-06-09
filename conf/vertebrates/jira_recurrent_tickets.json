@@ -31,13 +31,13 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141\n[Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PrepareMasterDatabaseForRelease_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/PrepareMasterDatabaseForRelease_conf.pm]",
             "summary": "Prepare the master database"
          },
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps\n[Bio::EnsEMBL::Compara::PipeConfig::DumpGenomes_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/DumpGenomes_conf.pm]",
             "summary": "Run the genome dumping pipeline",
             "name_on_graph": "Genome dumps"
          },
@@ -184,7 +184,14 @@
              "assignee": "<RelCo>",
              "component": "Production tasks",
              "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data#MergetheDNAdata-Patchalignments",
-             "summary": "Align the zebrafish patches against the primary mouse assembly",
+             "summary": "Align the chicken patches against the primary chicken assembly",
+             "name_on_graph": "Patches against their primary assembly:Chicken"
+         },
+         {
+             "assignee": "<RelCo>",
+             "component": "Production tasks",
+             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data#MergetheDNAdata-Patchalignments",
+             "summary": "Align the zebrafish patches against the primary zebrafish assembly",
              "name_on_graph": "Patches against their primary assembly:Zebrafish"
          },
          {
