@@ -69,146 +69,125 @@
       "component": "Relco tasks",
       "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Intentions+for+release+<version>",
       "subtasks": [{
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ProteinTrees_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/ProteinTrees_conf.pm]",
             "summary": "Run the Protein-trees pipeline",
             "name_on_graph": "Protein-trees:Default vertebrates"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ncRNAtrees_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/ncRNAtrees_conf.pm]",
             "summary": "Run the ncRNA-trees pipeline",
             "name_on_graph": "ncRNA-trees:Default vertebrates"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeNcRNAtrees_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/MurinaeNcRNAtrees_conf.pm]",
             "summary": "Run the mouse strains ncRNA-trees pipeline",
             "name_on_graph": "ncRNA-trees:Murinae"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeProteinTrees_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/MurinaeProteinTrees_conf.pm]",
             "summary": "Run the mouse strains Protein-trees pipeline",
             "name_on_graph": "Protein-trees:Murinae"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::SusNcRNAtrees_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/SusNcRNAtrees_conf.pm]",
             "summary": "Run the pig breeds ncRNA-trees pipeline",
             "name_on_graph": "ncRNA-trees:Sus"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::SusProteinTrees_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/SusProteinTrees_conf.pm]",
             "summary": "Run the pig breeds Protein-trees pipeline",
             "name_on_graph": "Protein-trees:Sus"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsReindexMembers_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/StrainsReindexMembers_conf.pm]",
             "summary": "Reindex murinae gene trees",
             "name_on_graph": "Gene-tree reindexing:Murinae"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsReindexMembers_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/StrainsReindexMembers_conf.pm]",
             "summary": "Reindex pig gene trees",
             "name_on_graph": "Gene-tree reindexing:Sus"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Mammal EPOwith2x pipeline",
             "name_on_graph": "EPOwith2x:Mammals"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Primates EPOwith2x pipeline",
             "name_on_graph": "EPOwith2x:Primates"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Pigs EPOwith2x pipeline",
             "name_on_graph": "EPOwith2x:Pigs"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Fish EPOwith2x pipeline",
             "name_on_graph": "EPOwith2x:Fish"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Sauropsids EPOwith2x pipeline",
             "name_on_graph": "EPOwith2x:Sauropsids"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::ImportAltAlleGroupsAsHomologies_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/ImportAltAlleGroupsAsHomologies_conf.pm]",
             "summary": "Import the Alt-allele groups",
             "name_on_graph": "Alt-alleles import"
          },
          {
-             "assignee": "<RelCo>",
              "component": "Production tasks",
              "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data#MergetheDNAdata-Patchalignments",
              "summary": "Align the human patches against the primary human assembly",
              "name_on_graph": "Patches against their primary assembly:Human"
          },
          {
-             "assignee": "<RelCo>",
              "component": "Production tasks",
              "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data#MergetheDNAdata-Patchalignments",
              "summary": "Align the mouse patches against the primary mouse assembly",
              "name_on_graph": "Patches against their primary assembly:Mouse"
          },
          {
-             "assignee": "<RelCo>",
              "component": "Production tasks",
              "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data#MergetheDNAdata-Patchalignments",
              "summary": "Align the chicken patches against the primary chicken assembly",
              "name_on_graph": "Patches against their primary assembly:Chicken"
          },
          {
-             "assignee": "<RelCo>",
              "component": "Production tasks",
              "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data#MergetheDNAdata-Patchalignments",
              "summary": "Align the zebrafish patches against the primary zebrafish assembly",
              "name_on_graph": "Patches against their primary assembly:Zebrafish"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "summary": "All LastZ",
             "name_on_graph": "All LastZ"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Age+of+Base",
             "summary": "Age of Base",
             "name_on_graph": "Age of Base:Human"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]",
             "name_on_graph": "Synteny",
@@ -260,25 +239,21 @@
             "summary": "Run the healthchecks"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-DNAside",
             "summary": "test the DNA data"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Homologyside",
             "summary": "test the homologies data"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Downloads",
             "summary": "test the downloads"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Documentation&Statistics",
             "summary": "test the documentation and statistics"

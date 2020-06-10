@@ -69,27 +69,23 @@
       "component": "Relco tasks",
       "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Intentions+for+release+<version>",
       "subtasks": [{
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/ProteinTrees_conf.pm]",
             "summary": "Run the Protein-trees pipeline",
             "name_on_graph": "Protein-trees"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "summary": "All LastZ",
             "name_on_graph": "All LastZ"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::Plants::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/EPOwith2x_conf.pm]\n\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Rice EPOwith2x pipeline",
             "name_on_graph": "EPOwith2x:Rice"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]",
             "name_on_graph": "Synteny",
@@ -146,25 +142,21 @@
             "summary": "Ask the <Division> team to test the staging server"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-DNAside",
             "summary": "test the DNA data"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Homologyside",
             "summary": "test the homologies data"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Downloads",
             "summary": "test the downloads"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Documentation&Statistics",
             "summary": "test the documentation and statistics"

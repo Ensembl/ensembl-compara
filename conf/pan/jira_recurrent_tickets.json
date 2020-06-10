@@ -43,7 +43,6 @@
       "component": "Relco tasks",
       "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Intentions+for+release+<version>",
       "subtasks": [{
-            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::Pan::ProteinTrees_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Pan/ProteinTrees_conf.pm]",
             "summary": "Run the Protein-trees pipeline",
@@ -76,13 +75,11 @@
             "summary": "Run the healthchecks"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Homologyside",
             "summary": "test the homologies data"
          },
          {
-            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Downloads",
             "summary": "test the downloads"
