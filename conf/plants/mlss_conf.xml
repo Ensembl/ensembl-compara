@@ -29,12 +29,12 @@
 	<one_vs_all method="LASTZ_NET" ref_genome="medicago_truncatula" against="Fabids"/>
     <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa" against="Liliopsida"/>
 
-    <!-- Rice all v all, PanOryza work -->
+    <!-- Rice all v all, replaced by EPO below
     <all_vs_all method="LASTZ_NET">
         <species_set>
           <taxonomic_group taxon_name="Oryza"/>
         </species_set>
-    </all_vs_all>
+    </all_vs_all> -->
 
     <!-- Triticeae all v all, DFW work, excl. T.urartu -->
     <all_vs_all method="LASTZ_NET">
