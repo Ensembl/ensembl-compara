@@ -891,7 +891,7 @@ sub _parse {
       if ($url ne "MULTI" && $url ne "databases") {
 
         my $scientific_name = $tree->{$url}{'SPECIES_SCIENTIFIC_NAME'};
-        my $common_name = $tree->{$url}{'SPECIES_DB_COMMON_NAME'};
+        my $common_name = $tree->{$url}{'SPECIES_COMMON_NAME'};
         $tree->{$url}{'PREFERRED_DISPLAY_NAME'} = $SiteDefs::USE_COMMON_NAMES ? 
                                                     $common_name : $scientific_name; 
 
