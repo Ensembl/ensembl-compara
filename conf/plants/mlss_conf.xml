@@ -14,33 +14,29 @@
 
   <pairwise_alignments>
 
-    <!-- First, our top 3 species, which are references for all land plants -->
-    <one_vs_all method="LASTZ_NET" ref_genome="arabidopsis_thaliana" against="Embryophyta" />
-    <one_vs_all method="LASTZ_NET" ref_genome="vitis_vinifera" against="Embryophyta" />
-    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa" against="Embryophyta" />
+    <!-- By default use Arabidopsis thaliana for land plants -->
+	<one_vs_all method="LASTZ_NET" ref_genome="arabidopsis_thaliana">
+		<species_set>
+			<taxonomic_group taxon_name="Embryophyta"/>
+			<taxonomic_group taxon_name="Asterids" exclude="1"/>
+			<taxonomic_group taxon_name="Fabids" exclude="1"/>
+			<taxonomic_group taxon_name="Liliopsida" exclude="1"/>
+		</species_set>
+	</one_vs_all>
+	
+    <!-- Reference species for specific clades -->
+    <one_vs_all method="LASTZ_NET" ref_genome="solanum_lycopersicum" against="Asterids"/>
+	<one_vs_all method="LASTZ_NET" ref_genome="medicago_truncatula" against="Fabids"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa" against="Liliopsida"/>
 
-    <!-- More reference species, but within smaller clades -->
-    <one_vs_all method="LASTZ_NET" ref_genome="medicago_truncatula" against="fabids"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="brachypodium_distachyon" against="Triticeae"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="solanum_lycopersicum" against="asterids"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="theobroma_cacao_criollo" against="malvids"/>
-
-    <!-- Rice all v all -->
+    <!-- Rice all v all, PanOryza work -->
     <all_vs_all method="LASTZ_NET">
         <species_set>
           <taxonomic_group taxon_name="Oryza"/>
         </species_set>
     </all_vs_all>
 
-    <!-- Vigna all v all -->
-    <all_vs_all method="LASTZ_NET">
-        <species_set>
-          <taxonomic_group taxon_name="Vigna"/>
-        </species_set>
-    </all_vs_all>
-
-
-    <!-- Triticeae all v all, excl. T.urartu -->
+    <!-- Triticeae all v all, DFW work, excl. T.urartu -->
     <all_vs_all method="LASTZ_NET">
         <species_set>
           <taxonomic_group taxon_name="Triticeae"/>
@@ -52,7 +48,8 @@
   </pairwise_alignments>
 
   <multiple_alignments>
-    <!-- Rice -->
+
+    <!-- Rice prototype, also PanOryza work -->
     <multiple_alignment method="EPO">
       <species_set name="rice">
         <taxonomic_group taxon_name="Oryza" only_good_for_alignment="1"/>
@@ -68,6 +65,7 @@
 
   </multiple_alignments>
 
+  <!-- wheat, DFW work -->
   <self_alignments>
     <genome name="triticum_aestivum"/>
     <genome name="triticum_dicoccoides"/>
