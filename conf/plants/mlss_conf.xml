@@ -36,14 +36,14 @@
         </species_set>
     </all_vs_all> -->
 
-    <!-- Triticeae all v all, DFW work, excl. T.urartu -->
+    <!-- Triticeae all v all, DFW work, excl. T.urartu, downscaling
     <all_vs_all method="LASTZ_NET">
         <species_set>
-          <taxonomic_group taxon_name="Triticeae"/>
-          <!-- Because not k-mer masked -->
+          <taxonomic_group taxon_name="Triticeae"/> -->
+          <!-- Because not k-mer masked 
           <genome name="triticum_urartu" exclude="1" />
         </species_set>
-    </all_vs_all>
+    </all_vs_all> --> 
 
   </pairwise_alignments>
 
@@ -68,7 +68,7 @@
   <!-- wheat, DFW work -->
   <self_alignments>
     <genome name="triticum_aestivum"/>
-    <genome name="triticum_dicoccoides"/>
+    <!-- <genome name="triticum_dicoccoides"/> downscaling -->
   </self_alignments>
 
   <gene_trees>
