@@ -78,6 +78,8 @@ package Bio::EnsEMBL::Compara::Homology;
 use strict;
 use warnings;
 
+use JSON;
+
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 use base ('Bio::EnsEMBL::Compara::AlignedMemberSet');
@@ -403,6 +405,84 @@ sub toString {
     return $txt;
 }
 
+=head2 full_string
+
+  Example     : print $homology->full_string();
+  Description : This method returns a text-description of the homology,
+                including all information contained in the object
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub full_string {
+    my $self = shift;
+
+    my $homology_string = join("\t", (
+        $self->method_link_species_set_id,
+        $self->dbID,
+        $self->description,
+        $self->is_tree_compliant,
+        $self->_species_tree_node_id,
+        $self->_gene_tree_node_id,
+        $self->_gene_tree_root_id
+    ));
+
+    foreach my $member ( @{ $self->get_all_Members } ) {
+        $member->adaptor($self->{_dba}->get_GenomeDBAdaptor);
+        $homology_string .= "\t" . join("\t", (
+            $member->gene_member_id,
+            $member->seq_member_id,
+            $member->stable_id,
+            $member->genome_db->name,
+            $member->cigar_line,
+            $member->perc_cov,
+            $member->perc_id,
+            $member->perc_pos,
+        ));
+    }
+
+    return $homology_string;
+}
+
+=head2 toJSON
+
+  Example     : print $homology->toJSON();
+  Description : This method returns a string in JSON format containing
+                a minimised amount of data on the given homology.
+                USE ONLY FOR DEBUGGING not for data output since the
+                format of this output may change as need dictates.
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub toJSON {
+    my $self = shift;
+
+    my %hash = {
+        'mlss_id'           => $self->method_link_species_set_id,
+        'description'       => $self->description,
+        'is_tree_compliant' => $self->is_tree_compliant,
+        'stn_id'            => $self->species_tree_node->dbID,
+        'gtn_id'            => $self->gene_tree_node->dbID,
+        'gtr_id'            => $self->gene_tree_root->dbID,
+        'members'           => [],
+    };
+
+    foreach my $member ( @{$self->get_all_Members} ) {
+        push @{$hash{'members'}}, {
+            'gm_id' => $member->gene_member_id,
+            'sm_id' => $member->dbID,
+            'cigar_line' => $member->cigar_line,
+        };
+    }
+
+    return encode_json(\%hash);
+}
+
 
 =head2 homology_key
 
@@ -556,4 +636,3 @@ sub taxonomy_level {
 
 
 1;
-

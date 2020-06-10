@@ -84,4 +84,29 @@ sub pipeline_analyses_dump_homologies_posttree {
     ];
 }
 
+sub pipeline_analyses_split_homologies_posttree {
+    my ($self) = @_;
+    return [
+        {   -logic_name => 'homology_dumps_mlss_id_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
+            -parameters => {
+                'methods'    => {
+                    'ENSEMBL_ORTHOLOGUES'  => 2,
+                    'ENSEMBL_PARALOGUES'   => 2,
+                    'ENSEMBL_HOMOEOLOGUES' => 2,
+                },
+                'batch_size' => 100,
+            },
+            -flow_into => {
+                2 => [ 'split_tree_homologies' ],
+            },
+        },
+
+        { -logic_name => 'split_tree_homologies',
+          -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SplitOrthoTreeOutput',
+          -rc_name => '500Mb_job',
+        },
+    ];
+}
+
 1;

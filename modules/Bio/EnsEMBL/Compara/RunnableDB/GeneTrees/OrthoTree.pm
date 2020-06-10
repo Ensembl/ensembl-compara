@@ -83,6 +83,7 @@ use Bio::EnsEMBL::Compara::Graph::Link;
 use Bio::EnsEMBL::Compara::Graph::Node;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
 
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 
@@ -99,6 +100,15 @@ sub param_defaults {
             '_readonly'             => 0,
             'tag_split_genes'       => 0,
             'input_clusterset_id'   => undef,
+            'file_header'           => [
+                'mlss_id', 'homology_id', 'homology_type', 'is_tree_compliant',
+                'species_tree_node_id', 'gene_tree_node_id', 'gene_tree_root_id',
+                'gene_member_id', 'seq_member_id', 'stable_id', 'species',
+                'cigar_line', 'perc_cov', 'perc_id', 'perc_pos', 'homology_gene_member_id',
+                'homology_seq_member_id', 'homology_stable_id', 'homology_species',
+                'homology_cigar_line', 'homology_perc_cov', 'homology_perc_id',
+                'homology_perc_pos',
+            ],
     };
 }
 
@@ -117,7 +127,9 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
+    unless ( $self->param('output_flatfile') ) {
+        $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
+    }
 
     my $tree_id = $self->param_required('gene_tree_id');
     my $gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($tree_id) or $self->die_no_retry("Could not fetch gene_tree with tree_id='$tree_id'");
@@ -174,12 +186,10 @@ sub write_output {
     my $self = shift @_;
 
     $self->delete_old_homologies unless $self->param('_readonly');
-    # Here is how to use server-side prepared statements. They have not
-    # proven to be faster, so this is not enabled by default
-    #$self->param('homologyDBA')->mysql_server_prepare(1);
     $self->run_analysis;
-    #$self->param('homologyDBA')->mysql_server_prepare(0);
     $self->print_summary;
+    $self->compara_dba->dbc->disconnect_if_idle;
+    $self->_hc_flatfile if $self->param('output_flatfile');
 }
 
 
@@ -191,6 +201,8 @@ sub post_cleanup {
     $self->param('gene_tree')->release_tree;
     $self->param('gene_tree', undef);
   }
+
+    # close $self->param('flatfile_handle') if $self->param('flatfile_handle');
 
   $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
@@ -216,6 +228,11 @@ sub prepare_analysis {
 sub run_analysis {
   my $self = shift;
 
+    my $output_fh;
+    if ( $self->param('output_flatfile') ) {
+        $output_fh = $self->_create_flatfile;
+    }
+
   my $gene_tree = $self->param('gene_tree');
 
   #compare every gene in the tree with every other each gene/gene
@@ -238,11 +255,11 @@ sub run_analysis {
 
       my $node_type = $ancestor->get_value_for_tag('node_type');
       if ($ancestor->is_speciation) {
-          $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 1);
+          $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 1, $output_fh);
       } elsif ($node_type eq 'dubious') {
-          $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 0);
+          $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 0, $output_fh);
       } elsif ($node_type eq 'gene_split') {
-          $self->tag_genepairlink($genepairlink, 'gene_split', 1);
+          $self->tag_genepairlink($genepairlink, 'gene_split', 1, $output_fh);
       } elsif ($node_type eq 'duplication') {
           push @pair_group, $genepairlink;
       } else {
@@ -262,7 +279,7 @@ sub run_analysis {
           }
       }
       foreach my $par (@good_ones) {
-          $self->tag_genepairlink(@$par);
+          $self->tag_genepairlink(@$par, $output_fh);
       }
   }
 
@@ -279,6 +296,12 @@ sub print_summary {
       printf ( "  %13s : %d\n", $type, $self->param('orthotree_homology_counts')->{$type} );
     }
   }
+
+    if ($self->param('output_flatfile')) {
+        printf("written to %s\n", $self->param('output_flatfile'));
+    } else {
+        printf("written to %s\n", $self->compara_dba->url);
+    }
 
   $self->check_homology_consistency;
 
@@ -365,6 +388,12 @@ sub get_ancestor_species_hash
 sub delete_old_homologies {
     my $self = shift;
 
+    my $outfile = $self->param('output_flatfile');
+    if ( defined $outfile && -e $outfile ) {
+        unlink $outfile;
+        return;
+    }
+
     my $tree_node_id = $self->param('gene_tree_id');
 
     # New method all in one go -- requires key on tree_node_id
@@ -398,6 +427,7 @@ sub tag_genepairlink
     my $genepairlink = shift;
     my $orthotree_type = shift;
     my $is_tree_compliant = shift;
+    my $output_fh = shift;
 
     $genepairlink->add_tag('orthotree_type', $orthotree_type);
     $genepairlink->add_tag('is_tree_compliant', $is_tree_compliant);
@@ -414,7 +444,7 @@ sub tag_genepairlink
     $self->param('n_stored_homologies', $n);
     print STDERR "$n homologies\n" unless $n % 1000;
 
-    $self->store_gene_link_as_homology($genepairlink) if $self->param('store_homologies');
+    $self->store_gene_link_as_homology($genepairlink, $output_fh) if $self->param('store_homologies');
 
 }
 
@@ -469,6 +499,7 @@ sub is_closest_homologue
 sub store_gene_link_as_homology {
   my $self = shift;
   my $genepairlink  = shift;
+  my $output_fh = shift;
 
   $self->display_link_analysis($genepairlink) if($self->debug>2);
   my $type = $genepairlink->get_value_for_tag('orthotree_type');
@@ -538,8 +569,15 @@ sub store_gene_link_as_homology {
         $self->param('orthotree_homology_counts')->{'gene_split'}++;
     }
   }
-  
-  $self->param('homologyDBA')->store($homology) unless $self->param('_readonly');
+
+    if ( $self->param('output_flatfile') ) {
+        $homology->{_dba} = $self->compara_dba;
+        # create homology_id from seq_member_ids as this will be unique
+        $homology->dbID( join('', sort map {$_->seq_member_id} @{ $homology->get_all_Members }) );
+        print $output_fh $homology->full_string . "\n";
+    } else {
+        $self->param('homologyDBA')->store($homology) unless $self->param('_readonly');
+    }
 
   return $homology;
 }
@@ -566,5 +604,115 @@ sub check_homology_consistency {
     $self->throw("Inconsistent homologies: $bad_key") if defined $bad_key;
 }
 
+sub _create_flatfile {
+    my $self = shift;
+
+    my $outfile = $self->param('output_flatfile');
+
+    # create directory
+    my $outdir = dirname($outfile);
+    $self->run_command("mkdir -p $outdir");
+
+    # open file handle and print header
+    open( my $outfh, '>', $outfile ) or die "Cannot open $outfile for writing";
+    print $outfh join("\t", @{ $self->param_required('file_header') }) . "\n";
+    return $outfh;
+}
+
+sub _hc_flatfile {
+    my $self = shift;
+
+    my $file = $self->param('output_flatfile');
+
+    # first, check the integrity of the file
+    $self->_check_file_integrity($file);
+
+    # then HC the homologies themselves
+    print "running HCs on homologies:\n" if $self->debug;
+    my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor;
+
+    open( my $fh, '<', $file ) or die "Cannot open $file for reading";
+    my $header_line = <$fh>;
+    my @header_cols = split(/\s+/, $header_line);
+
+    my $c = 1;
+    my %seen_homologies;
+    while ( my $line = <$fh> ) {
+        my $row = map_row_to_header($line, \@header_cols);
+        my ( $st_id, $hom_st_id ) = ($row->{stable_id}, $row->{homology_stable_id});
+
+        # Each homology must be linked to exactly 2 members
+        unless (defined $st_id && defined $hom_st_id) {
+            die sprintf(
+                "Homology should have 2 members: %s & %s (line %d)\n",
+                ( $st_id, $hom_st_id, $c )
+            );
+        }
+
+        # A pair of gene can only appear in 1 homology at most
+        $seen_homologies{"$st_id - $hom_st_id"}++;
+        $seen_homologies{"$hom_st_id - $st_id"}++;
+        if ($seen_homologies{"$st_id - $hom_st_id"} > 1 ||
+            $seen_homologies{"$hom_st_id - $st_id"} > 1 ) {
+            die sprintf(
+                "Pair (%s - %s) seen more than once (line %d)",
+                ( $st_id, $hom_st_id, $c )
+            );
+        }
+
+        # Checks that all the relevant fields are non-NULL or non-zero
+        unless (
+            defined $row->{homology_type} &&
+            defined $row->{seq_member_id} &&
+            defined $row->{homology_seq_member_id} &&
+            defined $row->{cigar_line} &&
+            length($row->{cigar_line}) > 0 &&
+            defined $row->{homology_cigar_line} &&
+            length($row->{homology_cigar_line}) > 0 &&
+            defined $row->{perc_id} &&
+            defined $row->{homology_perc_id} &&
+            defined $row->{perc_pos} &&
+            defined $row->{homology_perc_pos}
+        ) {
+            die sprintf(
+                "Homology is missing key values ($st_id - $hom_st_id) (line %d)",
+                ( $st_id, $hom_st_id, $c )
+            );
+        }
+
+        # Checks that the seq_member_id only links to canonical peptides
+        my $gene_member = $gene_member_adaptor->fetch_by_dbID($row->{gene_member_id});
+        my $hom_gene_member = $gene_member_adaptor->fetch_by_dbID($row->{homology_gene_member_id});
+        if ( $gene_member->canonical_member_id != $row->{seq_member_id} ) {
+            die sprintf(
+                "%s is not a canonical member (line %d)",
+                ($st_id, $c)
+            );
+        } elsif ( $hom_gene_member->canonical_member_id != $row->{homology_seq_member_id} ) {
+            die sprintf(
+                "%s is not a canonical member (line %d)",
+                ($hom_st_id, $c)
+            );
+        }
+
+        $c++;
+    }
+}
+
+sub _check_file_integrity {
+    my ( $self, $file ) = @_;
+
+    # check line counts
+    my $leaf_count = scalar @{ $self->param('gene_tree')->root->get_all_leaves };
+    my $exp_lines = (($leaf_count * ($leaf_count - 1)) / 2) + 1; # add 1 for header line
+    my @wc_output = split(/\s+/, $self->get_command_output("wc -l $file"));
+    my $got_line_count = $wc_output[0];
+    die "Expected $exp_lines lines, but got $got_line_count: $file" if $exp_lines != $got_line_count;
+
+    # check column integrity
+    my $awk_output = $self->get_command_output("awk '{print NF}' $file | sort | uniq -c");
+    my @col_counts = split("\n", $awk_output);
+    die "Expected equal number of columns throughout the file. Got:\n$awk_output" if scalar @col_counts > 1;
+}
 
 1;

@@ -334,9 +334,10 @@ sub default_options {
         'do_homology_id_mapping' => 1,
 
         # homology dumps options
-        'homology_dumps_dir'       => $self->o('dump_dir'). '/homology_dumps/',
+        'orthotree_dir'             => $self->o('dump_dir') . '/orthotree/',
+        'homology_dumps_dir'        => $self->o('dump_dir') . '/homology_dumps/',
         'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
-        'prev_homology_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
+        'prev_homology_dumps_dir'   => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
 
     # non-standard executable locations
         'treerecs_exe' => $self->o('warehouse_dir') . '/alumni/mateus/home/reconcile/Treerecs/bin/Treerecs',
@@ -3007,14 +3008,16 @@ sub core_pipeline_analyses {
         {   -logic_name => 'ortho_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
-                'tag_split_genes'   => 1,
-                'input_clusterset_id'   => $self->o('use_notung') ? 'raxml_bl' : 'default',
+                'tag_split_genes'     => 1,
+                'input_clusterset_id' => $self->o('use_notung') ? 'raxml_bl' : 'default',
+                'hashed_gene_tree_id' => '#expr(dir_revhash(#gene_tree_id#))expr#',
+                'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -priority       => -10,
             -rc_name        => '1Gb_job',
             -flow_into      => {
-                1   => [ 'hc_tree_homologies' ],
+                1   => [ 'final_tree_steps' ],
                 -1  => 'ortho_tree_himem',
             },
         },
@@ -3028,16 +3031,12 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -priority       => 20,
             -rc_name        => '4Gb_job',
-            -flow_into      => [ 'hc_tree_homologies' ],
+            -flow_into      => [ 'final_tree_steps' ],
         },
 
-        {   -logic_name         => 'hc_tree_homologies',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'tree_homologies',
-            },
-            -flow_into      => [ 'ktreedist', 'consensus_cigar_line_prep' ],
-            %hc_analysis_params,
+        {   -logic_name => 'final_tree_steps',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => [ 'ktreedist', 'consensus_cigar_line_prep' ],
         },
 
         {   -logic_name    => 'ktreedist',
@@ -3630,7 +3629,7 @@ sub core_pipeline_analyses {
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC::pipeline_analyses_goc($self)  },
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneSetQC::pipeline_analyses_GeneSetQC($self)  },
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_hom_stats($self) },
-            @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree::pipeline_analyses_dump_homologies_posttree($self) },
+            @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree::pipeline_analyses_split_homologies_posttree($self) },
     ];
 }
 
