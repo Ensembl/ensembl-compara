@@ -52,8 +52,14 @@ sub fetch_input {
 	my $division = $self->param_required('division');
 	my $metadata_script_options = "\$($meta_host details script) --release $release --division $division";
 
+    # If provided, get the list of allowed species
+    my $allowed_species_file = $self->param('allowed_species_file');
+    my $allowed_species;
+    if (defined $allowed_species_file && -e $allowed_species_file) {
+        $allowed_species = { map { $_ => 1 } @{ decode_json($self->_slurp($allowed_species_file)) } };
+    }
 	# use metadata script to report genomes that need to be updated
-    my ($genomes_to_update, $renamed_genomes, $updated_annotations) = $self->fetch_genome_report($release, $division);
+    my ($genomes_to_update, $renamed_genomes, $updated_annotations) = $self->fetch_genome_report($release, $division, $allowed_species);
 
 	# check there are no seq_region changes in the existing species
 	my $list_cmd = "perl $list_genomes_script $metadata_script_options";
@@ -176,7 +182,7 @@ sub write_output {
 }
 
 sub fetch_genome_report {
-    my ( $self, $release, $division ) = @_;
+    my ( $self, $release, $division, $allowed_species ) = @_;
 
     my $meta_host = $self->param_required('meta_host');
     my $work_dir = $self->param_required('work_dir');
@@ -200,6 +206,13 @@ sub fetch_genome_report {
     my @updated_assemblies = keys %{$decoded_meta_report->{updated_assemblies}};
     my %renamed_genomes = map { $_->{name} => $_->{old_name} } values %{$decoded_meta_report->{renamed_genomes}};
     my @updated_annotations = map {$_->{name}} values %{$decoded_meta_report->{updated_annotations}};
+
+    if ($allowed_species) {
+        # Remove genomes reported from metadata not included in the allowed species list
+        @new_genomes = grep { exists $allowed_species->{$_} } @new_genomes;
+        @updated_assemblies = grep { exists $allowed_species->{$_} } @updated_assemblies;
+        @updated_annotations = grep { exists $allowed_species->{$_} } @updated_annotations;
+    }
 
     return ([@new_genomes, @updated_assemblies], \%renamed_genomes, \@updated_annotations);
 }
