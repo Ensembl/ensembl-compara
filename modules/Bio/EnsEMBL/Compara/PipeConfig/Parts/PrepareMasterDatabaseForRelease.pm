@@ -24,7 +24,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForRelease
     This is a partial PipeConfig for most part of the PrepareMasterDatabaseForRelease
     pipeline. This will update the NCBI taxonomy, add/update all species to master
     database, update master database's metadata, and update collections and mlss.
-    Finally, it will run the healthchecks and perform a backup of the updated master
+    Finally, it will run the datachecks and perform a backup of the updated master
     database.
 
 =cut
@@ -236,23 +236,30 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'db_conn'     => '#master_db#',
                 'input_query' => 'UPDATE method_link_species_set SET url = "" WHERE source = "ensembl"',
             },
-            -flow_into  => [ 'hc_master' ],
+            -flow_into  => [ 'master_db_name' ],
         },
 
-        {   -logic_name      => 'hc_master',
-            -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RunJavaHealthCheck',
-            -parameters      => {
+        {   -logic_name => 'master_db_name',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GetComparaDBAlias',
+            -parameters => {
                 'compara_db'  => '#master_db#',
-                'work_dir'    => $self->o('work_dir'),
-                'testgroup'   => 'ComparaMaster',
-                'output_file' => '#work_dir#/healthcheck.#testgroup#.out',
-                'ensj_conf'   => $self->o('ensj_conf'),
-                'run_healthchecks_exe' => $self->o('run_healthchecks_exe'),
-                'ensj_testrunner_exe'  => $self->o('ensj_testrunner_exe'),
             },
-            -flow_into       => [ 'backup_master' ],
-            -rc_name         => '2Gb_job',
-            -max_retry_count => 0,
+            -flow_into  => { 1 => { 'dc_master' => { 'dbname' => '#dbname#' } } },
+        },
+
+        {   -logic_name        => 'dc_master',
+            -module            => 'Bio::EnsEMBL::DataCheck::Pipeline::RunDataChecks',
+            -parameters        => {
+                'datacheck_groups' => ['compara_master'],
+                'work_dir'         => $self->o('work_dir'),
+                'history_file'     => '#work_dir#/datacheck.compara_master.log',
+                'failures_fatal'   => 1,
+                'datacheck_types'  => ['critical'],
+                'registry_file'    => $self->o('reg_conf'),
+            },
+            -flow_into         => [ 'backup_master' ],
+            -rc_name           => '500Mb_job',
+            -max_retry_count   => 0,
         },
 
         {   -logic_name => 'backup_master',
