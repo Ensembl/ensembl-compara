@@ -425,9 +425,9 @@ CREATE TABLE method_link_species_set_attr (
 */
 
 CREATE TABLE `species_tree_node` (
-  `node_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `parent_id` int(10) unsigned,
-  `root_id` int(10) unsigned,
+  `node_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `parent_id` bigint unsigned,
+  `root_id` bigint unsigned,
   `left_index` int(10) NOT NULL DEFAULT 0,
   `right_index` int(10) NOT NULL DEFAULT 0,
   `distance_to_parent` double DEFAULT '1',
@@ -460,7 +460,7 @@ CREATE TABLE `species_tree_node` (
 */
 
 CREATE TABLE `species_tree_root` (
-  `root_id` int(10) unsigned NOT NULL,
+  `root_id` bigint unsigned NOT NULL,
   `method_link_species_set_id` int(10) unsigned NOT NULL,
   `label` VARCHAR(256) NOT NULL DEFAULT 'default',
 
@@ -485,7 +485,7 @@ CREATE TABLE `species_tree_root` (
 */
 
 CREATE TABLE `species_tree_node_tag` (
-  `node_id` int(10) unsigned NOT NULL,
+  `node_id` bigint unsigned NOT NULL,
   `tag` varchar(50) NOT NULL,
   `value` mediumtext NOT NULL,
 
@@ -537,7 +537,7 @@ CREATE TABLE `species_tree_node_tag` (
 
 
 CREATE TABLE `species_tree_node_attr` (
-  `node_id` int(10)                         unsigned NOT NULL,
+  `node_id`                                 bigint unsigned NOT NULL,
   `nb_long_genes`                           int,
   `nb_short_genes`                          int,
   `avg_dupscore`                            float,
@@ -1697,7 +1697,7 @@ CREATE TABLE `gene_tree_root_attr` (
   tree_num_dup_nodes                INT(10) UNSIGNED,
   tree_num_leaves                   INT(10) UNSIGNED,
   tree_num_spec_nodes               INT(10) UNSIGNED,
-  lca_node_id                       INT(10) UNSIGNED,
+  lca_node_id                       BIGINT UNSIGNED,
   taxonomic_coverage                FLOAT(5),
   ratio_species_genes               FLOAT(5),
   model_name                        VARCHAR(40),
@@ -1729,7 +1729,7 @@ CREATE TABLE `gene_tree_root_attr` (
 CREATE TABLE gene_tree_node_attr (
   node_id                         INT(10) UNSIGNED NOT NULL,
   node_type                       ENUM('duplication', 'dubious', 'speciation', 'sub-speciation', 'gene_split'),
-  species_tree_node_id            INT(10) UNSIGNED,
+  species_tree_node_id            BIGINT UNSIGNED,
   bootstrap                       TINYINT UNSIGNED,
   duplication_confidence_score    DOUBLE(5,4),
 
@@ -1934,7 +1934,7 @@ CREATE TABLE homology (
   n                           float(10,1),
   s                           float(10,1),
   lnl                         float(10,3),
-  species_tree_node_id        int(10) unsigned,
+  species_tree_node_id        bigint unsigned,
   gene_tree_node_id           int(10) unsigned,
   gene_tree_root_id           int(10) unsigned,
   goc_score                   tinyint unsigned,
@@ -2204,7 +2204,7 @@ CREATE TABLE stable_id_history (
 CREATE TABLE `CAFE_gene_family` (
   `cafe_gene_family_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `root_id` int(10) unsigned NOT NULL,
-  `lca_id` int(10) unsigned NOT NULL,
+  `lca_id` bigint unsigned NOT NULL,
   `gene_tree_root_id` int(10) unsigned NOT NULL,
   `pvalue_avg` double(5,4) DEFAULT NULL,
   `lambdas` varchar(100) DEFAULT NULL,
@@ -2231,7 +2231,7 @@ CREATE TABLE `CAFE_gene_family` (
 
 CREATE TABLE `CAFE_species_gene` (
   `cafe_gene_family_id` int(10) unsigned NOT NULL,
-  `node_id` int(10) unsigned NOT NULL,
+  `node_id` bigint unsigned NOT NULL,
   `n_members` int(4) unsigned NOT NULL,
   `pvalue` double(5,4) DEFAULT NULL,
 

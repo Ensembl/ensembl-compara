@@ -93,7 +93,7 @@ sub store_node {
 
         } else {
             ## if table is empty then $node_id should be mlss_id * 1000
-            $node_id = $mlss_id * 1000;
+            $node_id = $mlss_id * 100000;
             $self->generic_insert('species_tree_node', {'node_id' => $node_id});
         }
 
