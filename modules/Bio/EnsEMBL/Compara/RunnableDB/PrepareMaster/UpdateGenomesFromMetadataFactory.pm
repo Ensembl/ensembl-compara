@@ -15,10 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromMetadataFactory
@@ -65,6 +61,8 @@ sub fetch_input {
 	my $list_cmd = "perl $list_genomes_script $metadata_script_options";
 	my @release_genomes = $self->get_command_output($list_cmd);
 	chomp @release_genomes;
+    # Keep only the species included in the allowed list
+    @release_genomes = grep { exists $allowed_species->{$_} } @release_genomes;
 
     #if pan do not die becasue the list of species used in pan is
     #exclusively described in param('additional_species')
