@@ -114,6 +114,14 @@
         <element name="collections" blockly:blockName="Collections">
           <oneOrMore>
             <element name="collection" blockly:blockName="Collection definition">
+              <optional>
+                <attribute name="no_release" blockly:blockName="No release">
+                  <choice>
+                    <value blockly:blockName="Yes">1</value>
+                    <value blockly:blockName="No">0</value>
+                  </choice>
+                </attribute>
+              </optional>
               <ref name="new_named_species_set"/>
             </element>
           </oneOrMore>
