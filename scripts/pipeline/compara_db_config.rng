@@ -52,6 +52,9 @@
         <element name="genome" blockly:blockName="Genome">
           <attribute name="name" blockly:blockName="Name"/>
           <optional>
+            <attribute name="assembly" blockly:blockName="Assembly"/>
+          </optional>
+          <optional>
             <attribute name="exclude" blockly:blockName="Exclude those genomes">
               <choice>
                 <value blockly:blockName="Yes">1</value>
@@ -222,6 +225,9 @@
           <oneOrMore>
             <element name="genome" blockly:blockName="Genome">
               <attribute name="name" blockly:blockName="Name"/>
+              <optional>
+                <attribute name="assembly" blockly:blockName="Assembly"/>
+              </optional>
             </element>
           </oneOrMore>
         </element>
@@ -232,6 +238,9 @@
           <oneOrMore>
             <element name="genome" blockly:blockName="Genome">
               <attribute name="name" blockly:blockName="Name"/>
+              <optional>
+                <attribute name="assembly" blockly:blockName="Assembly"/>
+              </optional>
             </element>
           </oneOrMore>
         </element>
