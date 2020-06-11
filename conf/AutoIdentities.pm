@@ -51,6 +51,7 @@ sub add_symlinks {
   foreach my $here (@$out) {
     if (opendir(my $dir, $here)) {
       foreach my $link (grep { !$done->{$_} } grep -l, map "$here/$_", readdir($dir)) {
+        next if $link =~ /latest\/latest/; #stop expanding latest symlinks
         my $dest = readlink($link);
            $dest &&= abs_path($dest =~ m!^/! ? $dest : "$here/$dest");
         next if !$dest; # ignore broken links
