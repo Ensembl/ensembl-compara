@@ -28,11 +28,13 @@ ALTER table species_tree_root MODIFY COLUMN root_id BIGINT UNSIGNED;
 ALTER table species_tree_node_tag MODIFY COLUMN node_id BIGINT UNSIGNED NOT NULL;
 ALTER table species_tree_node_attr MODIFY COLUMN node_id BIGINT UNSIGNED NOT NULL;
 
+ALTER table gene_tree_root MODIFY COLUMN species_tree_root_id BIGINT UNSIGNED;
 ALTER table gene_tree_root_attr MODIFY COLUMN lca_node_id BIGINT UNSIGNED;
 ALTER table gene_tree_node_attr MODIFY COLUMN species_tree_node_id BIGINT UNSIGNED;
 ALTER table homology MODIFY COLUMN species_tree_node_id BIGINT UNSIGNED;
 
 ALTER table CAFE_gene_family MODIFY COLUMN lca_id BIGINT UNSIGNED NOT NULL;
+ALTER table CAFE_gene_family MODIFY COLUMN root_id BIGINT UNSIGNED NOT NULL;
 ALTER table CAFE_species_gene MODIFY COLUMN node_id BIGINT UNSIGNED NOT NULL;
 
 

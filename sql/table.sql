@@ -1569,7 +1569,7 @@ CREATE TABLE gene_tree_root (
     tree_type                       ENUM('clusterset', 'supertree', 'tree') NOT NULL,
     clusterset_id                   VARCHAR(20) NOT NULL DEFAULT 'default',
     method_link_species_set_id      INT(10) UNSIGNED NOT NULL,
-    species_tree_root_id            INT(10) UNSIGNED,
+    species_tree_root_id            BIGINT UNSIGNED,
     gene_align_id                   INT(10) UNSIGNED,
     ref_root_id                     INT(10) UNSIGNED,
     stable_id                       VARCHAR(40),            # unique stable id, e.g. 'ENSGT'.'0053'.'1234567890'
@@ -2203,7 +2203,7 @@ CREATE TABLE stable_id_history (
 
 CREATE TABLE `CAFE_gene_family` (
   `cafe_gene_family_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `root_id` int(10) unsigned NOT NULL,
+  `root_id` bigint unsigned NOT NULL,
   `lca_id` bigint unsigned NOT NULL,
   `gene_tree_root_id` int(10) unsigned NOT NULL,
   `pvalue_avg` double(5,4) DEFAULT NULL,
