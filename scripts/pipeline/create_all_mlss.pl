@@ -181,8 +181,13 @@ my @mlsss;
 sub find_genome_from_xml_node_attribute {
     my ($xml_node, $attribute_name, $assembly_name) = @_;
     my $species_name = $xml_node->getAttribute($attribute_name);
-    my $species_assembly = $xml_node->getAttribute($assembly_name) if (defined $assembly_name && $xml_node->hasAttribute($assembly_name));
-    my $gdb = $genome_dba->fetch_by_name_assembly($species_name, $species_assembly) || throw("Cannot find $species_name in the available list of GenomeDBs");
+    my $gdb;
+    if (defined $assembly_name && $xml_node->hasAttribute($assembly_name)) {
+        my $species_assembly = $xml_node->getAttribute($assembly_name);
+        $gdb = $genome_dba->fetch_by_name_assembly($species_name, $species_assembly) || throw("Cannot find $species_name (assembly $species_assembly) in the available list of GenomeDBs");
+    } else {
+        $gdb = $genome_dba->fetch_by_name_assembly($species_name) || throw("Cannot find $species_name in the available list of GenomeDBs");
+    }
     die "Cannot find any current genomes matching '$species_name'. Please check that this name is still correct" unless (defined $assembly_name || $gdb->is_current);
     return $gdb;
 }
