@@ -351,7 +351,7 @@ sub transcript_table {
         gencode_set => $gencode_set,
         refseq_match  => $refseq_url ? $refseq_url : '-',
         options     => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' },
-        flags       => @flags ? join('',map { $_ =~ /<img/ ? $_ : "<span class='ts_flag'>$_</span>" } @flags) : '-',
+        flags       => @flags ? join('',map { $_ =~ /<img/ ? $_ : "<span class='ts_flag'>$_<span class='hidden export'>, </span></span>" } @flags) : '-',
         evidence    => join('', @evidence),
       };
 
