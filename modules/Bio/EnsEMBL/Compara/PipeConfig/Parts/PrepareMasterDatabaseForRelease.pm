@@ -240,11 +240,11 @@ sub pipeline_analyses_prep_master_db_for_release {
         },
 
         {   -logic_name => 'master_db_name',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GetComparaDBAlias',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GetComparaDBName',
             -parameters => {
                 'compara_db'  => '#master_db#',
             },
-            -flow_into  => { 1 => { 'dc_master' => { 'dbname' => '#dbname#' } } },
+            -flow_into  => [ 'dc_master' ],
         },
 
         {   -logic_name        => 'dc_master',

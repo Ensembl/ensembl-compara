@@ -23,11 +23,14 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::GetComparaDBAlias
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
+
+Takes a compara registry alias to output the corresponding database name.
+Also accepts a specified branch number as branch_num or defaults to 1.
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::GetComparaDBAlias;
+package Bio::EnsEMBL::Compara::RunnableDB::GetComparaDBName;
 
 use warnings;
 use strict;
@@ -36,13 +39,6 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
-sub param_defaults {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::param_defaults},
-    }
-}
 
 sub fetch_input {
     my $self = shift;
@@ -58,7 +54,7 @@ sub fetch_input {
 sub write_output {
     my $self = shift;
 
-    $self->dataflow_output_id( {$self->param('dbname')}, $self->param('branch_num') );
+    $self->dataflow_output_id( {dbname => $self->param('dbname')}, $self->param('branch_num') );
 }
 
 1;
