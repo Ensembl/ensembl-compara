@@ -86,12 +86,12 @@
 
     <one_vs_all method="LASTZ_NET" ref_genome="anolis_carolinensis" against="Iguania"/>
 
-    <!-- Fishes -->
+    <!-- Fish -->
     <one_vs_all method="LASTZ_NET" ref_genome="danio_rerio">
       <species_set>
         <taxonomic_group taxon_name="Chordata"/>
         <taxonomic_group taxon_name="Euteleostomi" exclude="1"/>
-        <taxonomic_group taxon_name="Cyclostoma" exclude="1"/>
+        <taxonomic_group taxon_name="Cyclostomata" exclude="1"/>
         <taxonomic_group taxon_name="Ciona" exclude="1"/>
       </species_set>
     </one_vs_all>
@@ -250,7 +250,7 @@
       </species_set>
     </multiple_alignment>
 
-    <!-- Fishes -->
+    <!-- Fish -->
     <multiple_alignment method="EPO">
       <species_set name="fish">
         <genome name="danio_rerio"/>
