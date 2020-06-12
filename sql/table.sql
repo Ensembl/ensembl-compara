@@ -2258,3 +2258,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
 
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_101_102_b.sql|enum_other');
+
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_101_102_c.sql|stn_node_id_bigint');
