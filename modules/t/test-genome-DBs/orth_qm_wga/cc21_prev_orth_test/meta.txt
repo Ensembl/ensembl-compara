@@ -68,3 +68,5 @@
 138	\N	patch	patch_100_101_e.sql|positive_int
 139	\N	patch	patch_100_101_f.sql|gab.direction
 141	\N	patch	patch_101_102_a.sql|schema_version
+142	\N	patch	patch_101_102_b.sql|enum_other
+143	\N	patch	patch_101_102_c.sql|stn_node_id_bigint

@@ -9,3 +9,5 @@
 10	\N	patch	patch_100_101_e.sql|positive_int
 11	\N	patch	patch_100_101_f.sql|gab.direction
 13	\N	patch	patch_101_102_a.sql|schema_version
+14	\N	patch	patch_101_102_b.sql|enum_other
+15	\N	patch	patch_101_102_c.sql|stn_node_id_bigint
