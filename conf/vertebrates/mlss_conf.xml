@@ -77,7 +77,8 @@
     <!-- Sauropsids -->
     <one_vs_all method="LASTZ_NET" ref_genome="gallus_gallus">
       <species_set>
-        <taxonomic_group taxon_name="Sauropsida"/>
+        <taxonomic_group taxon_name="Sarcopterygii"/>
+        <taxonomic_group taxon_name="Amniota" exclude="1"/>
         <!-- Remove all the taxa that have a better reference than chicken -->
         <taxonomic_group taxon_name="Iguania" exclude="1"/>
       </species_set>
@@ -86,6 +87,15 @@
     <one_vs_all method="LASTZ_NET" ref_genome="anolis_carolinensis" against="Iguania"/>
 
     <!-- Fishes -->
+    <one_vs_all method="LASTZ_NET" ref_genome="danio_rerio">
+      <species_set>
+        <taxonomic_group taxon_name="Chordata"/>
+        <taxonomic_group taxon_name="Euteleostomi" exclude="1"/>
+        <taxonomic_group taxon_name="Cyclostoma" exclude="1"/>
+        <taxonomic_group taxon_name="Ciona" exclude="1"/>
+      </species_set>
+    </one_vs_all>
+
     <one_vs_all method="LASTZ_NET" ref_genome="oryzias_latipes">
       <species_set>
         <taxonomic_group taxon_name="Actinopterygii"/>
