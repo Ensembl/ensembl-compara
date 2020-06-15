@@ -236,29 +236,22 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'db_conn'     => '#master_db#',
                 'input_query' => 'UPDATE method_link_species_set SET url = "" WHERE source = "ensembl"',
             },
-            -flow_into  => [ 'master_db_name' ],
-        },
-
-        {   -logic_name => 'master_db_name',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GetComparaDBName',
-            -parameters => {
-                'compara_db'  => '#master_db#',
-            },
             -flow_into  => [ 'dc_master' ],
         },
 
         {   -logic_name        => 'dc_master',
-            -module            => 'Bio::EnsEMBL::DataCheck::Pipeline::RunDataChecks',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::RunDataChecks',
             -parameters        => {
                 'datacheck_groups' => ['compara_master'],
                 'work_dir'         => $self->o('work_dir'),
-                'history_file'     => '#work_dir#/datacheck.compara_master.log',
+                'history_file'     => '#work_dir#/datacheck.compara_master.history.json',
+                'output_file'      => '#work_dir#/datacheck.compara_master.tap.txt',
                 'failures_fatal'   => 1,
                 'datacheck_types'  => ['critical'],
                 'registry_file'    => $self->o('reg_conf'),
+                'compara_db'       => '#master_db#',
             },
             -flow_into         => [ 'backup_master' ],
-            -rc_name           => '500Mb_job',
             -max_retry_count   => 0,
         },
 
