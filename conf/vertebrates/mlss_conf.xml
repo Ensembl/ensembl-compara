@@ -39,15 +39,12 @@
     <!-- NB: we have a CACTUS alignment for mouse strains and an EPO Extended MSA for pig breeds -->
     <one_vs_all method="LASTZ_NET" ref_genome="homo_sapiens">
       <species_set in_collection="default">
-        <taxonomic_group taxon_name="Mammalia"/>
+        <taxonomic_group taxon_name="Eutheria"/>
         <!-- Remove all the taxa that have a better reference than human -->
         <taxonomic_group taxon_name="Rodentia" exclude="1"/>
-        <taxonomic_group taxon_name="Feliformia" exclude="1"/>
-        <taxonomic_group taxon_name="Caniformia" exclude="1"/>
+        <taxonomic_group taxon_name="Carnivora" exclude="1"/>
         <taxonomic_group taxon_name="Perissodactyla" exclude="1"/>
         <taxonomic_group taxon_name="Artiodactyla" exclude="1"/>
-        <taxonomic_group taxon_name="Metatheria" exclude="1"/>
-        <taxonomic_group taxon_name="Prototheria" exclude="1"/>
       </species_set>
     </one_vs_all>
 
@@ -57,11 +54,7 @@
       </species_set>
     </one_vs_all>
 
-    <one_vs_all method="LASTZ_NET" ref_genome="felis_catus" against="Feliformia"/>
-
-    <one_vs_all method="LASTZ_NET" ref_genome="canis_lupus_familiaris" against="Caniformia"/>
-
-    <one_vs_all method="LASTZ_NET" ref_genome="equus_caballus" against="Perissodactyla"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="canis_lupus_familiaris" against="Carnivora"/>
 
     <one_vs_all method="LASTZ_NET" ref_genome="bos_taurus">
       <species_set in_collection="default">
@@ -69,10 +62,15 @@
       </species_set>
     </one_vs_all>
 
+    <one_vs_all method="LASTZ_NET" ref_genome="equus_caballus" against="Perissodactyla"/>
     <one_vs_all method="LASTZ_NET" ref_genome="sus_scrofa" against="Sus"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="monodelphis_domestica" against="Metatheria"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="ornithorhynchus_anatinus" against="Prototheria"/>
-    <pairwise_alignment method="LASTZ_NET" ref_genome="monodelphis_domestica" target_genome="ornithorhynchus_anatinus"/>
+
+    <one_vs_all method="LASTZ_NET" ref_genome="monodelphis_domestica">
+      <species_set in_collection="default">
+        <taxonomic_group taxon_name="Metatheria"/>
+        <taxonomic_group taxon_name="Prototheria"/>
+      </species_set>
+    </one_vs_all>
 
     <!-- Sauropsids -->
     <one_vs_all method="LASTZ_NET" ref_genome="gallus_gallus">
@@ -80,11 +78,11 @@
         <taxonomic_group taxon_name="Sarcopterygii"/>
         <taxonomic_group taxon_name="Mammalia" exclude="1"/>
         <!-- Remove all the taxa that have a better reference than chicken -->
-        <taxonomic_group taxon_name="Iguania" exclude="1"/>
+        <taxonomic_group taxon_name="Amphibia" exclude="1"/>
       </species_set>
     </one_vs_all>
 
-    <one_vs_all method="LASTZ_NET" ref_genome="anolis_carolinensis" against="Iguania"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="xenopus_tropicalis" against="Amphibia"/>
 
     <!-- Fish -->
     <one_vs_all method="LASTZ_NET" ref_genome="danio_rerio">
@@ -103,7 +101,6 @@
     </one_vs_all>
 
     <!-- Early vertebrates and other chordates -->
-    <one_vs_all method="LASTZ_NET" ref_genome="xenopus_tropicalis" against="Amphibia"/>
     <one_vs_all method="LASTZ_NET" ref_genome="ciona_intestinalis" against="Ciona" ref_amongst="Cyclostomata"/>
     <one_vs_all method="LASTZ_NET" ref_genome="petromyzon_marinus" against="Cyclostomata" ref_amongst="Ciona"/>
 
@@ -146,7 +143,7 @@
         <genome name="canis_lupus_familiaris" assembly="CanFam3.1"/>
         <genome name="ovis_aries" assembly="Oar_v3.1"/>
         <genome name="chlorocebus_sabaeus" assembly="ChlSab1.1"/>
-        <genome name="rattus_norvegicus" assembly="Rnor_6.0"/>
+        <genome name="rattus_norvegicus"/>
         <genome name="mus_spretus" assembly="SPRET_EiJ_v1"/>
         <genome name="cavia_aperea" assembly="CavAp1.0"/>
         <genome name="cavia_porcellus" assembly="Cavpor3.0"/>
@@ -167,7 +164,7 @@
         <genome name="panthera_pardus" assembly="PanPar1.0"/>
         <genome name="felis_catus" assembly="Felis_catus_9.0"/>
         <genome name="canis_lupus_dingo" assembly="ASM325472v1"/>
-        <genome name="bos_taurus" assembly="ARS-UCD1.2"/>
+        <genome name="bos_taurus"/>
         <genome name="equus_caballus" assembly="EquCab3.0"/>
         <genome name="theropithecus_gelada" assembly="Tgel_1.0"/>
         <genome name="marmota_marmota_marmota" assembly="marMar2.1"/>
@@ -275,7 +272,7 @@
         <genome name="seriola_dumerili" assembly="Sdu_1.0"/>
         <genome name="xiphophorus_couchianus" assembly="Xiphophorus_couchianus-4.0.1"/>
         <genome name="xiphophorus_maculatus" assembly="X_maculatus-5.0-male"/>
-        <genome name="oryzias_latipes" assembly="ASM223467v1"/>
+        <genome name="oryzias_latipes"/>
         <genome name="parambassis_ranga" assembly="fParRan2.1"/>
         <genome name="cottoperca_gobio" assembly="fCotGob3.1"/>
         <genome name="denticeps_clupeoides" assembly="fDenClu1.1"/>
