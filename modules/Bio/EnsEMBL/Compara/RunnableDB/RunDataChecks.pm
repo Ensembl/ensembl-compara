@@ -23,6 +23,18 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::RunDataChecks
 
+=head1 DESCRIPTION
+
+Runs an EnsEMBL Perl Datacheck (see https://github.com/Ensembl/ensembl-datacheck)
+Requires several inputs:
+    'output_file'      : output file in tap format (optional)
+    'history_file'     : history file in json format (optional)
+    'compara_db'       : db to run the HC on
+    'datacheck_groups' : datacheck group type; e.g. 'compara_master' (optional)
+    'failures_fatal'   : [1|0] whether datacheck is admissable or not (optional)
+    'registry_file'    : compara reg_conf file with db registries
+    'datacheck_types'  : [advisable|critical] (optional)
+
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::RunDataChecks;
@@ -31,7 +43,6 @@ use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Data::Dumper;
 
 use base ('Bio::EnsEMBL::DataCheck::Pipeline::RunDataChecks', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

@@ -239,9 +239,9 @@ sub pipeline_analyses_prep_master_db_for_release {
             -flow_into  => [ 'dc_master' ],
         },
 
-        {   -logic_name        => 'dc_master',
-            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::RunDataChecks',
-            -parameters        => {
+        {   -logic_name      => 'dc_master',
+            -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RunDataChecks',
+            -parameters      => {
                 'datacheck_groups' => ['compara_master'],
                 'work_dir'         => $self->o('work_dir'),
                 'history_file'     => '#work_dir#/datacheck.compara_master.history.json',
@@ -251,15 +251,16 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'registry_file'    => $self->o('reg_conf'),
                 'compara_db'       => '#master_db#',
             },
-            -flow_into         => [ 'backup_master' ],
-            -max_retry_count   => 0,
+            -flow_into      => {
+                1 => { 'backup_master' => { 'output_file' => $self->o('master_backup_file') } },
+            },
+            -max_retry_count => 0,
         },
 
         {   -logic_name => 'backup_master',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
                 'src_db_conn' => '#master_db#',
-                'output_file' => $self->o('master_backup_file'),
             },
             -flow_into  => [ 'copy_pre_backup_to_warehouse' ],
             -rc_name    => '1Gb_job',
