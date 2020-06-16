@@ -69,9 +69,9 @@ sub map_row_to_header {
     } else {
         @head_cols = split(/\s+/, $header);
     }
-    
+
     die "Number of columns in header do not match row" unless scalar @cols == scalar @head_cols;
-    
+
     my $row;
     for ( my $i = 0; $i < scalar @cols; $i++ ) {
         $row->{$head_cols[$i]} = $cols[$i];
@@ -215,18 +215,20 @@ sub _wanted {
 sub group_hash_by {
     my ( $array_of_hashes, $group_by, $select ) = @_;
 
+    # create copy to correctly handle loops over this recursive method
+    my @these_group_by = @$group_by;
+
     # group by the first given group_by field
-    my $this_group_by = shift @$group_by;
+    my $this_group_by = shift @these_group_by;
     my %grouped_data;
     foreach my $h ( @$array_of_hashes ) {
         push( @{ $grouped_data{$h->{$this_group_by}} }, $h);
     }
 
-    if ( scalar @$group_by > 0 ) {
+    if ( scalar @these_group_by > 0 ) {
         # recursively create subgroups on subsequent group_bys
         foreach my $k ( keys %grouped_data ) {
-            my @group_by_copy = @$group_by;
-            $grouped_data{$k} = group_hash_by( $grouped_data{$k}, \@group_by_copy, $select );
+            $grouped_data{$k} = group_hash_by( $grouped_data{$k}, \@these_group_by, $select );
         }
     } elsif ( $select ) {
         # no more recursing to do - keep selected keys only
