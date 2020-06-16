@@ -89,7 +89,7 @@ sub _get_dom_tree {
           <ul class="_species"></ul>
           );
 
-    my $edit_icon = sprintf qq(<a href="%s" class="_list_edit modal_link"><img src="/i/16/pencil.png" class="left-half-margin" title="Edit your favourites"></a>), $hub->url({qw(type Account action Login)});
+    my $edit_icon = $self->get_edit_icon_markup();
 
   
     my %taxon_labels = $sd->multiX('TAXON_LABEL'); 
@@ -195,6 +195,17 @@ sub _get_dom_tree {
     });
   }
 }
+
+
+sub get_edit_icon_markup {
+
+  my ($self) = @_;
+  my $hub     = $self->hub;
+
+  return sprintf qq(<a href="%s" class="_list_edit modal_link"><img src="/i/16/pencil.png" class="left-half-margin" title="Edit your favourites"></a>), $hub->url({qw(type Account action Login)});
+
+}
+
 
 sub add_species_selector {
   my $self = shift;
