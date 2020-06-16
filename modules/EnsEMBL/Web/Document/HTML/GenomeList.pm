@@ -70,15 +70,7 @@ sub _get_dom_tree {
   my @ok_species = $sd->valid_species;
   my $sitename  = $self->hub->species_defs->ENSEMBL_SITETYPE;
   if (scalar @ok_species > 1) {
-    my $list_html = sprintf qq(<h3>All genomes</h3>
-      %s
-      <h3 class="space-above"></h3>
-      %s
-      <p><a href="%s">View full list of all species</a></p>
-      ), 
-      $self->add_species_dropdown,
-      $self->add_genome_groups, 
-      $self->species_list_url; 
+    my $list_html = $self->get_list_html();
 
     my $sort_html = qq(<p>For easy access to commonly used genomes, drag from the bottom list to the top one</p>
         <p><strong>Favourites</strong></p>
@@ -206,6 +198,22 @@ sub get_edit_icon_markup {
 
 }
 
+
+sub get_list_html {
+
+  my ($self) = @_;
+  
+  sprintf qq(<h3>All genomes</h3>
+      %s
+      <h3 class="space-above"></h3>
+      %s
+      <p><a href="%s">View full list of all species</a></p>
+      ), 
+      $self->add_species_dropdown,
+      $self->add_genome_groups, 
+      $self->species_list_url; 
+
+}
 
 sub add_species_selector {
   my $self = shift;
