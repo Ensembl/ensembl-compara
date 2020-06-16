@@ -153,9 +153,10 @@ sub default_options {
             'hive_default_max_retry_count'  => 1,
             
             # homology dumps options
-            'homology_dumps_dir'       => $self->o('dump_dir'). '/homology_dumps/',
+            'orthotree_dir'             => $self->o('dump_dir') . '/orthotree/',
+            'homology_dumps_dir'        => $self->o('dump_dir'). '/homology_dumps/',
             'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
-            'prev_homology_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
+            'prev_homology_dumps_dir'   => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
 
             # Parameters for OrthologQMAlignment
             'species1'         => undef,
@@ -177,7 +178,7 @@ sub default_options {
             #Parameters for HighConfidenceOrthologs
             'threshold_levels'            => [ ],          # division specific
             'high_confidence_capacity'    => 500,          # how many mlss_ids can be processed in parallel
-            'update_homologies_capacity'  => 30,           # how many homology mlss_ids can be updated in parallel
+            'import_homologies_capacity'  => 50,           # how many homology mlss_ids can be mysqlimported in parallel
             'goc_files_dir'               => $self->o('homology_dumps_dir'),
             'range_label'                 => $self->o('member_type'),
 
@@ -1153,11 +1154,13 @@ sub core_pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -analysis_capacity => $self->o('orthotree_capacity'),
             -parameters => {
-                            'tag_split_genes'   => 0,
+                'tag_split_genes'     => 0,
+                'hashed_gene_tree_id' => '#expr(dir_revhash(#gene_tree_id#))expr#',
+                'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
             },
             -rc_name    => '1Gb_job',
             -flow_into  => {
-                1 => [ 'hc_tree_homologies' ],
+                1 => [ 'final_tree_steps' ],
                 -1 => [ 'orthotree_himem' ],
             },
         },
@@ -1166,10 +1169,17 @@ sub core_pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -analysis_capacity => $self->o('orthotree_capacity'),
             -parameters => {
-                            'tag_split_genes'   => 0,
+                'tag_split_genes'     => 0,
+                'hashed_gene_tree_id' => '#expr(dir_revhash(#gene_tree_id#))expr#',
+                'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
             },
-            -flow_into  => [ 'hc_tree_homologies' ],
+            -flow_into  => [ 'final_tree_steps' ],
             -rc_name    => '4Gb_job',
+        },
+
+        {   -logic_name => 'final_tree_steps',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => [ 'ktreedist', 'consensus_cigar_line_prep' ],
         },
 
         {   -logic_name    => 'ktreedist',
@@ -1325,7 +1335,7 @@ sub core_pipeline_analyses {
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe_with_full_species_tree($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_hom_stats($self) },
-        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree::pipeline_analyses_dump_homologies_posttree($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree::pipeline_analyses_split_homologies_posttree($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::OrthologQMAlignment::pipeline_analyses_ortholog_qm_alignment($self)  },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs::pipeline_analyses_high_confidence($self) },
 
