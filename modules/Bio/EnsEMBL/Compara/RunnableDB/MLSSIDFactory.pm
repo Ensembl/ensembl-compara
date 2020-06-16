@@ -87,7 +87,7 @@ sub write_output {
                 } else {
                     if ( scalar @batch == $self->param('batch_size') ) {
                         $self->dataflow_output_id( {'mlss_ids' => \@batch}, $branch_number );
-                        @batch = ();
+                        @batch = ($mlss->dbID);
                     } else {
                         push @batch, $mlss->dbID;
                     }
