@@ -273,7 +273,7 @@ sub default_options {
         # parameters for HighConfidenceOrthologs
         'threshold_levels'            => [ ],          # division specific
         'high_confidence_capacity'    => 500,          # how many mlss_ids can be processed in parallel
-        'update_homologies_capacity'  => 30,           # how many homology mlss_ids can be updated in parallel
+        'import_homologies_capacity'  => 50,           # how many homology mlss_ids can be mysqlimported in parallel
         'goc_files_dir'               => $self->o('homology_dumps_dir'),
         'range_label'                 => $self->o('member_type'),
 
@@ -1734,22 +1734,13 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'global_tree_set',
             },
-            -flow_into      => [ 'compute_statistics' ],
-            %hc_analysis_params,
-        },
-
-        {   -logic_name    => 'compute_statistics',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeStatistics',
-            -parameters         => {
-                homology_id_threshold   => '100000000',
-            },
-            -rc_name       => '500Mb_job',
             -flow_into  => [
-                    'write_stn_tags',
+                    'email_tree_stats_report',
                     WHEN('#do_stable_id_mapping#' => 'stable_id_mapping'),
                     WHEN('#do_treefam_xref#' => 'treefam_xref_idmap'),
                     WHEN('#clustering_mode# eq "ortholog"' => 'remove_overlapping_homologies'),
                 ],
+            %hc_analysis_params,
         },
 
         {   -logic_name    => 'compute_jaccard_index',
@@ -1765,14 +1756,6 @@ sub core_pipeline_analyses {
                 'output_gini_pdf'    => '#plots_dir#/gini_coefficient.pdf',
             },
             -rc_name       => '2Gb_job',
-        },
-
-        {   -logic_name     => 'write_stn_tags',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
-            -parameters     => {
-                'input_file'    => $self->o('tree_stats_sql'),
-            },
-            -flow_into      => [ 'email_tree_stats_report' ],
         },
 
         {   -logic_name     => 'email_tree_stats_report',
@@ -3382,7 +3365,7 @@ sub core_pipeline_analyses {
                     'rib_fire_move_polyploid',
                     'rib_fire_high_confidence_orths',
                 ],
-                'A->1' => 'floating_rib',
+                'A->1' => 'compute_statistics',
             },
         },
 
@@ -3467,8 +3450,17 @@ sub core_pipeline_analyses {
             -flow_into  => WHEN('#label_prefix#' => 'rename_labels'), # FIXME this assumes that label_prefix is set if the collection is not "default"
         },
 
-        {   -logic_name => 'floating_rib',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        {   -logic_name    => 'compute_statistics',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeStatistics',
+            -rc_name       => '500Mb_job',
+            -flow_into  => 'write_stn_tags',
+        },
+
+        {   -logic_name     => 'write_stn_tags',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
+            -parameters     => {
+                'input_file'    => $self->o('tree_stats_sql'),
+            },
         },
 
         {   -logic_name => 'group_genomes_under_taxa',
