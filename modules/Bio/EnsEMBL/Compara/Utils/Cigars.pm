@@ -98,7 +98,7 @@ sub assert_valid_cigar {
 
     # complex regular subexpression recursion limit can be exceeded on very long strings
     # split on letters for long strings, use regex on shorter ones
-    if ( length($cigar_line) > 70000 ) {
+    if ( length($cigar_line) > 50000 ) {
         my @cigar_numbers = split(/[A-Z]/, $cigar_line);
         foreach my $cigar_num ( @cigar_numbers ) {
             next if ( $cigar_num eq '' || ($cigar_num =~ /^[0-9]+$/ && $cigar_num > 0) );

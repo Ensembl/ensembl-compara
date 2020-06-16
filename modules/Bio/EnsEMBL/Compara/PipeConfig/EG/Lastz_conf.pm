@@ -65,6 +65,8 @@ sub default_options {
 
             # healthcheck
             'do_compare_to_previous_db' => 0,
+            # Net
+            'bidirectional' => 1,
 
             #directory to dump nib files
             'dump_dir' => '/nfs/panda/ensemblgenomes/production/compara/' . $ENV{USER} . '/pair_aligner/' . $self->o('pipeline_name') . '/' . $self->o('host') . '/',

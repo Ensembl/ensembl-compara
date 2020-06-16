@@ -69,6 +69,23 @@ sub default_options {
             'do_cafe'  => 1,
             # Use production names here
             'cafe_species'          => ['danio_rerio', 'taeniopygia_guttata', 'callithrix_jacchus', 'pan_troglodytes', 'homo_sapiens', 'mus_musculus'],
+
+        # HighConfidenceOrthologs Parameters
+        # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
+        'threshold_levels' => [
+            {
+                'taxa'          => [ 'Apes', 'Murinae' ],
+                'thresholds'    => [ 75, 75, 80 ],
+            },
+            {
+                'taxa'          => [ 'Mammalia', 'Aves', 'Percomorpha' ],
+                'thresholds'    => [ 75, 75, 50 ],
+            },
+            {
+                'taxa'          => [ 'all' ],
+                'thresholds'    => [ 50, 50, 25 ],
+            },
+        ],
     };
 } 
 

@@ -31,6 +31,7 @@ before_install:
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-hive.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-taxonomy.git
+    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-datacheck.git
     - ln -s . ensembl-compara
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
     - git clone --branch release-1-6-9 --depth 1 https://github.com/bioperl/bioperl-run
@@ -42,6 +43,8 @@ install:
     - cp -f ensembl-rest/travisci/MultiTestDB.conf.travisci ensembl-rest/t/MultiTestDB.conf
     - cp -f ensembl/travisci/MultiTestDB.conf.travisci.mysql  ensembl/modules/t/MultiTestDB.conf
     - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
+    # 8.43 is the last version compatible with Perl 5.14
+    - cpanm --quiet --notest Mojolicious@8.43
     - cpanm --quiet --installdeps --notest --cpanfile ensembl-rest/cpanfile .
     - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
     - cpanm --quiet --installdeps --notest .

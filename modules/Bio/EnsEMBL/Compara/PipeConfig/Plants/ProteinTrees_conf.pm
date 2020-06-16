@@ -80,6 +80,18 @@ sub default_options {
 
     # GOC parameters
         'goc_taxlevels' => ['Panicoideae', 'Oryzinae', 'Pooideae', 'Solanaceae', 'Brassicaceae', 'Malvaceae', 'fabids'],
+
+    # HighConfidenceOrthologs Parameters
+        # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
+        'threshold_levels' => [
+            {
+                'taxa'          => [ 'all' ],
+                'thresholds'    => [ 50, 50, 25 ],
+            },
+        ],
+
+        # WGA OrthologQM homology method_link_species_set
+        'homology_method_link_types' => ['ENSEMBL_ORTHOLOGUES', 'ENSEMBL_HOMOEOLOGUES'],
     };
 }
 

@@ -77,6 +77,23 @@ sub default_options {
 
     # GOC parameters
         'goc_taxlevels'                 => ["Euteleostomi","Ciona"],
+
+    # HighConfidenceOrthologs Parameters
+        # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
+        'threshold_levels' => [
+            {
+                'taxa'          => [ 'Apes', 'Murinae' ],
+                'thresholds'    => [ 75, 75, 80 ],
+            },
+            {
+                'taxa'          => [ 'Mammalia', 'Aves', 'Percomorpha' ],
+                'thresholds'    => [ 75, 75, 50 ],
+            },
+            {
+                'taxa'          => [ 'all' ],
+                'thresholds'    => [ 50, 50, 25 ],
+            },
+        ],
     };
 }
 

@@ -92,6 +92,7 @@ sub pipeline_wide_parameters {
         'goc_threshold'  => $self->o('goc_threshold'),
 	'calculate_goc_distribution'  => $self->o('calculate_goc_distribution'),
         'goc_capacity'   => $self->o('goc_capacity'),
+        'homology_dumps_dir' => $self->o('homology_dumps_dir'),
     };
 }
 

@@ -48,7 +48,6 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
-        'range_label'       => undef,
         'range_filter'      => undef,
     };
 }
@@ -69,6 +68,7 @@ sub fetch_input {
 
     # There could be 0 homologies for this mlss
     unless ($n_hom) {
+        $self->input_job->autoflow(0);
         $self->complete_early("No homologies for mlss_id=$mlss_id. Nothing to do");
     }
 
@@ -95,7 +95,7 @@ sub write_output {
     $self->disconnect_from_hive_database;
 
     my $mlss                = $self->param('mlss');
-    my $range_label         = $self->param('range_label');
+    my $range_label         = $self->param_required('range_label');
     my $range_filter        = $self->param('range_filter') ? $self->param('range_filter')->{$range_label} : undef;
     my $conditions          = $self->param('conditions');
     my $external_conditions = $self->param('external_conditions');
@@ -167,7 +167,7 @@ sub write_output {
     }
     if ( defined $external_conditions->{wga_coverage} ) {
         # unlike goc, wga is calculated on both protein and ncrna - add the range_label to ensure mergeability
-        $self->_write_threshold_scores($mlss, "${range_label}wga", $external_conditions->{wga_coverage}, $wga_coverage);
+        $self->_write_threshold_scores($mlss, "${range_label}_wga", $external_conditions->{wga_coverage}, $wga_coverage);
     }
 }
 

@@ -31,13 +31,13 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141\n[Bio::EnsEMBL::Compara::PipeConfig::Plants::PrepareMasterDatabaseForRelease_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/PrepareMasterDatabaseForRelease_conf.pm]",
             "summary": "Prepare the master database"
          },
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps\n[Bio::EnsEMBL::Compara::PipeConfig::DumpGenomes_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/DumpGenomes_conf.pm]",
             "summary": "Run the genome dumping pipeline",
             "name_on_graph": "Genome dumps"
          },
@@ -90,19 +90,6 @@
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]",
             "name_on_graph": "Synteny",
             "summary": "Run the Synteny pipeline"
-         },
-         {
-            "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Plants::OrthologQM_Alignment_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/OrthologQM_Alignment_conf.pm]",
-            "summary": "Protein-trees WGA Orthology QC",
-            "name_on_graph": "Protein-trees WGA Orthology QC"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Plants::HighConfidenceOrthologs_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/HighConfidenceOrthologs_conf.pm]",
-            "summary": "Run the HighConfidenceOrthologs pipeline",
-            "name_on_graph": "Protein-trees High Confidence Orthologues"
          }
       ],
       "labels": ["Production_anchor"],
@@ -150,6 +137,7 @@
             "summary": "Run the healthchecks"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "summary": "Ask the <Division> team to test the staging server"
          },

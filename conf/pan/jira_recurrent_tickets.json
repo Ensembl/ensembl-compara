@@ -47,13 +47,6 @@
             "description": "[Bio::EnsEMBL::Compara::PipeConfig::Pan::ProteinTrees_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Pan/ProteinTrees_conf.pm]",
             "summary": "Run the Protein-trees pipeline",
             "name_on_graph": "Protein-trees"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Pan::HighConfidenceOrthologs_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Pan/HighConfidenceOrthologs_conf.pm]",
-            "summary": "Run the HighConfidenceOrthologs pipeline",
-            "name_on_graph": "Protein-trees High Confidence Orthologues"
          }
       ],
       "labels": ["Production_anchor"],

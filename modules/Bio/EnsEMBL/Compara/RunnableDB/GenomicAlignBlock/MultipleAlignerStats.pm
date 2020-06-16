@@ -15,22 +15,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerStats
-
-=cut
 
 =head1 SYNOPSIS
 
@@ -40,16 +27,9 @@ $module->run
 
 $module->write_output
 
-=cut
-
 =head1 DESCRIPTION
 
 This module updates the method_link_species_set_tag table with multiple alignment statistics by firstly adding any new bed files to the correct directory and running compare_beds to generate the statistics
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with a _
 
 =cut
 
@@ -144,12 +124,13 @@ sub dump_bed_file {
     my $name = $genome_db->name; #get production_name
     
     my $redump_age = 30; #redump if the bed files are older than this (days)
+    my $feature = "mlss_" . $self->param('mlss_id');
 
     ##############################
     #Dump toplevel bed file
 
     #Check if file already exists
-    my $genome_bed_file = $self->param('bed_dir') ."/" . $name . "." . $assembly . "." . "genome.bed";
+    my $genome_bed_file = $self->param('bed_dir') . "/" . $feature . "." . $name . "." . $assembly . ".genome.bed";
 
     if (-e $genome_bed_file && !(-z $genome_bed_file) && (-M $genome_bed_file < $redump_age)) {
 	print "$genome_bed_file already exists and not empty and is less than $redump_age days old. Not overwriting.\n";
@@ -162,7 +143,7 @@ sub dump_bed_file {
     ##############################
     #Dump coding_exon bed file
     #Check if file already exists
-    my $coding_exon_bed_file = $self->param('bed_dir') ."/" . $name . "." . $assembly . "." . "coding_exon.bed";
+    my $coding_exon_bed_file = $self->param('bed_dir') . "/" . $feature . "." . $name . "." . $assembly . ".coding_exon.bed";
 
     if (-e $coding_exon_bed_file && !(-z $coding_exon_bed_file) && (-M $coding_exon_bed_file < $redump_age)) {
 	print "$coding_exon_bed_file already exists and not empty and is less than $redump_age days old. Not overwriting.\n";
