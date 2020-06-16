@@ -23,9 +23,11 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologies
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
-
+This runnable takes a homology dump file (and optionally, attribute files)
+and formats them to mysqlimport the data directly to the homology and
+homology_member tables.
 
 =cut
 
