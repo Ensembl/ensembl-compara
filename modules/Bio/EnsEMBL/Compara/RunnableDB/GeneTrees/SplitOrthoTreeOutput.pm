@@ -124,6 +124,13 @@ sub _get_mlss_filehandle {
     # native file handles kept going out of scope and
     # being closed - use IO::File handles instead
     my $mlss_file = "$mlss_dir/$mlss_id.$member_type.homologies.tsv";
+    if (-e $mlss_file) {
+        if ( $self->param('overwrite') ) {
+            unlink $mlss_file;
+        } else {
+            die "$mlss_file already exists. Pass the 'overwrite' param to allow overwriting";
+        }
+    }
     my $mlss_fh = IO::File->new();
     $mlss_fh->open(">$mlss_file") or die "Cannot open $mlss_file for writing";
 
