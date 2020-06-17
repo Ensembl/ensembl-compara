@@ -117,8 +117,8 @@ sub read_tree {
     }
     else {
       if ($index =~ /DELETE/) {
-	delete $parent->{$branch->{'_name'}}->{$filename};
-	next;
+	      delete $parent->{$branch->{'_name'}}->{$filename};
+	      next;
       }
 
       unless ($index =~ /NO INDEX/ || $branch->{'_no_follow'}) {
@@ -133,8 +133,8 @@ sub read_tree {
   ## Descend into directories recursively
   return if $branch->{'_no_follow'};
   foreach my $dirname (@$sub_dirs) {
-    ## omit CVS directories and directories beginning with . or _
-    next if $dirname eq 'CVS' || $dirname =~ /^\./ || $dirname =~ /^_/ 
+    ## omit directories beginning with . or _
+    next if $dirname =~ /^\./ || $dirname =~ /^_/ 
         || $dirname eq 'private' || $dirname eq 'ssi';
     $branch->{$dirname}->{_path} = "$path$dirname/";
     $branch->{$dirname}->{_name} = $dirname;
