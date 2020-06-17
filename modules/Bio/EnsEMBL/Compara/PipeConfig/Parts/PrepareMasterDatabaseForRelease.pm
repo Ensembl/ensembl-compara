@@ -252,7 +252,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'compara_db'       => '#master_db#',
             },
             -flow_into      => {
-                1 => { 'backup_master' => { 'output_file' => $self->o('master_backup_file') } },
+                1 => { 'backup_master' => {} },
             },
             -max_retry_count => 0,
         },
@@ -261,6 +261,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
                 'src_db_conn' => '#master_db#',
+                'output_file' => $self->o('master_backup_file'),
             },
             -flow_into  => [ 'copy_pre_backup_to_warehouse' ],
             -rc_name    => '1Gb_job',
