@@ -55,7 +55,7 @@ sub default_options {
         'work_dir'   => $self->o('pipeline_dir') . '/hash',
 
         # How many species can be dumped in parallel
-        'dump_ce_capacity'    => 50,
+        'dump_ce_capacity'    => 10,
 
         # Paths to compara files
         'ce_readme'             => $self->check_file_in_ensembl('ensembl-compara/docs/ftp/constrained_elements.txt'),
