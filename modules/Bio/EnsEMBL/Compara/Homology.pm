@@ -436,6 +436,7 @@ sub full_string {
             $member->seq_member_id,
             $member->stable_id,
             $member->genome_db->name,
+            $member->genome_db->dbID,
             $member->cigar_line,
             $member->perc_cov,
             $member->perc_id,
