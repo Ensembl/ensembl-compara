@@ -329,14 +329,14 @@
     <!-- NB: this MSA can only stay the same or decrease in number of species -->
     <multiple_alignment method="PECAN" gerp="1">
       <species_set name="amniotes" display_name="amniota vertebrates">
-        <genome name="homo_sapiens" assembly="GRCh38"/>
+        <genome name="homo_sapiens"/>
         <genome name="gallus_gallus" assembly="GRCg6a"/>
         <genome name="pongo_abelii" assembly="PPYG2"/>
         <genome name="loxodonta_africana" assembly="loxAfr3"/>
         <genome name="oryctolagus_cuniculus" assembly="OryCun2.0"/>
         <genome name="anolis_carolinensis" assembly="AnoCar2.0"/>
         <genome name="meleagris_gallopavo" assembly="Turkey_2.01"/>
-        <genome name="mus_musculus" assembly="GRCm38"/>
+        <genome name="mus_musculus"/>
         <genome name="canis_lupus_familiaris" assembly="CanFam3.1"/>
         <genome name="ovis_aries" assembly="Oar_v3.1"/>
         <genome name="chlorocebus_sabaeus" assembly="ChlSab1.1"/>
