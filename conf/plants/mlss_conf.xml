@@ -45,14 +45,29 @@
     <!-- Rice -->
     <multiple_alignment method="EPO">
       <species_set name="rice">
-        <taxonomic_group taxon_name="Oryza" only_good_for_alignment="1"/>
-        <genome name="oryza_brachyantha" exclude="1"/>
-        <genome name="oryza_punctata" exclude="1"/>
+        <genome name="oryza_barthii"/>
+        <genome name="oryza_glaberrima"/>
+        <genome name="oryza_glumipatula"/>
+        <genome name="oryza_indica"/>
+        <genome name="oryza_meridionalis"/>
+        <genome name="oryza_nivara"/>
+        <genome name="oryza_rufipogon"/>
+        <genome name="oryza_sativa"/>
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="EPO_EXTENDED">
       <species_set name="rice">
-        <taxonomic_group taxon_name="Oryza"/>
+        <genome name="oryza_barthii"/>
+        <genome name="oryza_brachyantha"/>
+        <genome name="oryza_glaberrima"/>
+        <genome name="oryza_glumipatula"/>
+        <genome name="oryza_indica"/>
+        <genome name="oryza_longistaminata"/>
+        <genome name="oryza_meridionalis"/>
+        <genome name="oryza_nivara"/>
+        <genome name="oryza_punctata"/>
+        <genome name="oryza_rufipogon"/>
+        <genome name="oryza_sativa"/>
       </species_set>
     </multiple_alignment>
 
