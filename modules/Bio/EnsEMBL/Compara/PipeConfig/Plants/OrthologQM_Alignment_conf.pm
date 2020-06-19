@@ -59,7 +59,7 @@ sub default_options {
 
         'division'      => 'plants',
         'member_type'   => 'protein',
-        'species_set_name' => 'collection-default',
+        'species_set_name' => 'collection-plants',
 
         'homology_method_link_types' => ['ENSEMBL_ORTHOLOGUES', 'ENSEMBL_HOMOEOLOGUES'],
     };
