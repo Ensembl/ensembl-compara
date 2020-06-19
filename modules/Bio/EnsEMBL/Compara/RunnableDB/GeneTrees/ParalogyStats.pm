@@ -79,11 +79,11 @@ sub fetch_input {
         my $row = map_row_to_header($line, \@head_cols);
         my ( $homology_type, $gene_tree_root_id, $species_tree_node_id, $seq_member_id, $hom_seq_member_id, $identity,
         $hom_identity ) = ($row->{homology_type}, $row->{gene_tree_root_id}, $row->{species_tree_node_id}, $row->{seq_member_id},
-        $row->{hom_seq_member_id}, $row->{identity}, $row->{hom_identity});
+        $row->{homology_seq_member_id}, $row->{perc_id}, $row->{homology_perc_id});
         
         
         # homology counts
-        $stats_raw{$homology_type}->{$gene_tree_root_id}->{"num_homologies"} += 1;        
+        $stats_raw{$homology_type}->{$gene_tree_root_id}->{"num_homologies"} += 1;
         # unique seq_members
         $stats_raw{$homology_type}->{$gene_tree_root_id}->{"seq_members"}->{$seq_member_id} = 1;
         $stats_raw{$homology_type}->{$gene_tree_root_id}->{"seq_members"}->{$hom_seq_member_id} = 1;

@@ -68,19 +68,9 @@ sub fetch_input {
     my $genome_dbs   = $mlss->species_set->genome_dbs;
     my $gdb_id_1     = $genome_dbs->[0]->dbID;
     my $gdb_id_2     = $genome_dbs->[1]->dbID;
-    
-    # create map between (potential) component genome_db_ids and their principal genome_db_id
-    my $gdb_map;
-    foreach my $gdb ( @$genome_dbs ) {
-        my $comp_gdbs = $gdb->component_genome_dbs;
-        if ( defined $comp_gdbs->[0] ) {
-            foreach my $comp_gdb ( @$comp_gdbs ) {
-              $gdb_map->{$comp_gdb->dbID} = $gdb->dbID;
-            }
-        } else {
-            $gdb_map->{$gdb->dbID} = $gdb->dbID;
-        }
-    }
+
+    # create map between genome names and ids - excluding ids for component genomes
+    my %gdb_map = map { $_->name => $_->dbID } (grep {not $_->genome_component} @$genome_dbs);
 
     my $member_type  = lc $self->param('member_type');
     my $homology_flatfile = $self->param_required('homology_flatfile');
@@ -92,18 +82,18 @@ sub fetch_input {
     my @head_cols = split(/\s+/, $header_line);
     while ( my $line = <$hom_handle> ) {
         my $row = map_row_to_header($line, \@head_cols);
-        my ($homology_type, $gene_tree_node_id, $gene_member_id, $hom_gene_member_id, $genome_db_id, $hom_genome_db_id, 
-        $identity, $hom_identity) = ($row->{homology_type}, $row->{gene_tree_node_id}, $row->{gene_member_id}, $row->{hom_gene_member_id}, 
-        $row->{genome_db_id}, $row->{hom_genome_db_id}, $row->{identity}, $row->{hom_identity});
+        my ($homology_type, $gene_tree_node_id, $gene_member_id, $hom_gene_member_id, $genome_name, $hom_genome_name,
+        $identity, $hom_identity) = ($row->{homology_type}, $row->{gene_tree_node_id}, $row->{gene_member_id}, $row->{homology_gene_member_id},
+        $row->{species}, $row->{homology_species}, $row->{perc_id}, $row->{homology_perc_id});
         
-        ( $genome_db_id, $hom_genome_db_id ) = ( $gdb_map->{$genome_db_id}, $gdb_map->{$hom_genome_db_id} );
+        my ( $genome_db_id, $hom_genome_db_id ) = ( $gdb_map{$genome_name}, $gdb_map{$hom_genome_name} );
         
         $stats1{$homology_type}->{$gene_tree_node_id}->{$gene_member_id}->{$genome_db_id}->{"num_homologies"} += 1; # n1
         $stats1{$homology_type}->{$gene_tree_node_id}->{$hom_gene_member_id}->{$hom_genome_db_id}->{"num_homologies"} += 1; # n2
         $stats1{$homology_type}->{$gene_tree_node_id}->{$gene_member_id}->{$genome_db_id}->{"sum_perc_id"} += $identity; # p1
         $stats1{$homology_type}->{$gene_tree_node_id}->{$hom_gene_member_id}->{$hom_genome_db_id}->{"sum_perc_id"} += $hom_identity; # p2
     }
-    close $hom_handle;   
+    close $hom_handle;
     
     my %stats2; # middle SQL subquery
     foreach my $hom_type ( keys %stats1 ) {
