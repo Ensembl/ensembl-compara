@@ -252,7 +252,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'orth_batch_size'             => $self->o('orth_batch_size'),
         'high_confidence_capacity'    => $self->o('high_confidence_capacity'),
-        'update_homologies_capacity'  => $self->o('update_homologies_capacity'),
+        'import_homologies_capacity'  => $self->o('import_homologies_capacity'),
 
     }
 }
