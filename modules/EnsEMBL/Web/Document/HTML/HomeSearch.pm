@@ -158,10 +158,7 @@ sub render {
   # species dropdown
   if ($config->{'show_species'}) {
     my $field = $form->add_field({});
-    my $sort_by = $hub->species_defs->USE_COMMON_NAMES ? 'common' : 'scientific';
-
-    my $species_info = $hub->get_species_info;
-    my %species      = map { $species_info->{$_}{$sort_by} => $_ } grep { $species_info->{$_}{'is_reference'} } sort keys %$species_info;
+    my %species = $self->munge_species;
     my %sortable = reverse %species;
     my $values = [];
     if ($hub->species_defs->ENSEMBL_SOLR_ENDPOINT) {
@@ -205,6 +202,18 @@ sub render {
   $q_field->add_element({'type' => 'submit', 'value' => 'Go'}, 1);
 
   return sprintf '<div id="SpeciesSearch" class="js_panel"><input type="hidden" class="panel_type" value="SearchBox" />%s</div>', $form->render;
+}
+
+sub munge_species {
+  my $self = shift;
+  my $hub = $self->hub;
+
+  my $sort_by = $hub->species_defs->USE_COMMON_NAMES ? 'common' : 'scientific';
+
+  my $species_info = $hub->get_species_info;
+  my %species      = map { $species_info->{$_}{$sort_by} => $_ } grep { $species_info->{$_}{'is_reference'} } sort keys %$species_info;
+
+  return %species;
 }
 
 sub render_help {
