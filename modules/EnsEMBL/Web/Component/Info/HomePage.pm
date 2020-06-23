@@ -41,11 +41,17 @@ sub content {
   $self->{'icon'}  = qq(<img src="${img_url}24/%s.png" alt="" class="homepage-link" />);
 
   $self->{'img_link'} = qq(<a class="nodeco _ht _ht_track" href="%s" title="%s"><img src="${img_url}96/%s.png" alt="" class="bordered" />%s</a>);
-
+  
   ## Mandatory search box
+  my $display_name;
+  if ($species_defs->USE_COMMON_NAMES) {
+    $display_name = $common_name eq $sci_name ? "<i>$sci_name</i>" : sprintf('%s (<i>%s</i>)', $common_name, $sci_name);
+  }
+  else {
+    $display_name = $species_defs->PREFERRED_DISPLAY_NAME;
+  }
   my $html = sprintf '<div class="round-box tinted-box unbordered"><h2>Search %s</h2>%s</div>', 
-              $common_name eq $sci_name ? "<i>$sci_name</i>" : sprintf('%s (<i>%s</i>)', $common_name, $sci_name),
-              EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render;
+              $display_name, EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render;
 
   ## Assembly and genebuild - also mandatory
   $html .= sprintf('

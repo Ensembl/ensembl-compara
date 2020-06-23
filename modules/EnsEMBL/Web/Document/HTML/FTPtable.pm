@@ -162,6 +162,7 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
                           'dir'         => $species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME'), 
                           'common_name' => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
                           'sci_name'    => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
+                          'strain'      => $species_defs->get_config($_, 'SPECIES_STRAIN'),
                           'favourite'   => 1,
                         };
   }
@@ -173,11 +174,13 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
                           'dir'         => $species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME'), 
                           'common_name' => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
                           'sci_name'    => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
+                          'strain'      => $species_defs->get_config($_, 'SPECIES_STRAIN'),
                           'favourite'   => 0,
                         }
             unless $fave_check{$_};
   }
-  push @$all_species, sort {$a->{'common_name'} cmp $b->{'common_name'}} @other_species;
+  my $sort_by = $hub->species_defs->USE_COMMON_NAMES ? 'common_name' : 'sci_name';
+  push @$all_species, sort {$a->{$sort_by} cmp $b->{$sort_by}} @other_species;
 
   my $ftp_base = $ftp;
   unless ($ftp_base =~ /rapid/) {
@@ -187,13 +190,19 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
   foreach my $sp (@$all_species) {
     my $sp_url    = $sp->{'url'};
     my $sp_dir    = $sp->{'dir'};
+    my $sp_name   = $sp->{'common_name'};
+    my $strain    = $sp->{'strain'};
+    if ($strain && $strain !~ /reference/ && $sp_name !~ /$strain/) {
+      $sp_name .= sprintf ' (%s)', $strain;
+    }
+
     my $sp_var    = $sp_dir. '_variation';
     my $databases = $hub->species_defs->get_config(ucfirst($sp_dir), 'databases');
     my $variation_source_vcf  = $databases->{'DATABASE_VARIATION'}->{'meta_info'}->{0}->{'variation_source.vcf'}->[0];
     
     push @$rows, {
       fave    => $sp->{'favourite'} ? 'Y' : '',
-      species => sprintf('<b><a href="/%s/">%s</a></b><br /><i>%s</i>', $sp_url, $sp->{'common_name'}, $sp->{'sci_name'}),
+      species => sprintf('<b><a href="/%s/">%s</a></b><br /><i>%s</i>', $sp_url, $sp_name, $sp->{'sci_name'}),
       dna     => sprintf('<a rel="external" title="%s" href="%s/fasta/%s/dna/">FASTA</a>', $title{'dna'},  $ftp_base, $sp_dir),
       cdna    => sprintf('<a rel="external" title="%s" href="%s/fasta/%s/cdna/">FASTA</a>',  $title{'cdna'}, $ftp_base, $sp_dir),
       cds	    => sprintf('<a rel="external" title="%s" href="%s/fasta/%s/cds/">FASTA</a>',   $title{'cds'}, $ftp_base, $sp_dir),
