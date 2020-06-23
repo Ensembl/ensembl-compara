@@ -892,8 +892,18 @@ sub _parse {
 
         my $scientific_name = $tree->{$url}{'SPECIES_SCIENTIFIC_NAME'};
         my $common_name = $tree->{$url}{'SPECIES_COMMON_NAME'};
-        $tree->{$url}{'PREFERRED_DISPLAY_NAME'} = $SiteDefs::USE_COMMON_NAMES ? 
-                                                    $common_name : $scientific_name; 
+        my $strain_name = $tree->{$url}{'SPECIES_STRAIN'};
+                                                    
+        if ($SiteDefs::USE_COMMON_NAMES) {
+          $tree->{$url}{'PREFERRED_DISPLAY_NAME'} = $common_name; 
+        }
+        else {
+          my $name = $scientific_name; 
+          if ($strain_name && $strain_name !~ /reference/) {
+            $name .= sprintf ' (%s)', $strain_name;
+          }
+          $tree->{$url}{'PREFERRED_DISPLAY_NAME'} = $name; 
+        }
 
         # Populate taxonomy division using e_divisions.json template
         push @{$species_to_assembly->{$common_name}}, $config_packer->tree->{'ASSEMBLY_VERSION'};
@@ -903,7 +913,6 @@ sub _parse {
         my @other_species = grep { $_->{key} =~ m/other_species/ } @{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}};
         $other_species[0]->{child_nodes} = [] if ($other_species[0] && !$other_species[0]->{child_nodes});
         my $strain_group = $tree->{$url}{'STRAIN_GROUP'};
-        my $strain_name = $tree->{$url}{'SPECIES_STRAIN'};
         my $species_key = $tree->{$url}{'SPECIES_URL'}; ## Key on actual URL, not production name
 
         foreach my $node (@{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}}) {
