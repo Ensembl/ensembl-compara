@@ -57,9 +57,9 @@ sub default_options {
             [ 'Mammalia', 'Mammals' ],
             [ 'Neopterygii', 'Fish' ],
             [ 'Sauria', 'Sauropsids' ],
-            # Filters with the strains shown, prefix with "str:"
-            [ 'str:Murinae', 'Rat and all mice (incl. strains)' ],
-            [ 'str:Sus scrofa', 'All pig breeds' ],
+            # Filters with the strains shown
+            [ 'Murinae', 'Rat and all mice (incl. strains)' ],
+            [ 'Sus scrofa', 'All pig breeds' ],
         ],
         'reference_genomes' => [
             # Which genome_dbs are used references for which clades
