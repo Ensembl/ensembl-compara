@@ -66,8 +66,9 @@ sub render {
   ## BLAST
   if ($sd->ENSEMBL_BLAST_ENABLED) {
     my $link = $hub->url({'species' => $sp, qw(type Tools action Blast)});
+    my %tools = @{$sd->ENSEMBL_TOOLS_LIST};
     $table->add_row({
-      'name'  => sprintf('<b><a class="nodeco" href="%s">BLAST/BLAT</a></b>', $link),
+      'name'  => sprintf('<b><a class="nodeco" href="%s">%s</a></b>', $link, $tools{'Blast'}),
       'desc'  => 'Search our genomes for your DNA or protein sequence.',
       'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
       'limit' => $tools_limit,
