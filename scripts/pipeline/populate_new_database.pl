@@ -636,17 +636,18 @@ sub copy_all_dnafrags {
   assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'to_dba');
 
   # Keys are disabled / enabled only once for the whole loop
-  $new_dba->dbc->do("ALTER TABLE `dnafrag` DISABLE KEYS");
+  my $df_engine = $new_dba->dbc->db_handle->selectrow_hashref("SHOW TABLE STATUS WHERE Name = 'dnafrag'")->{Engine};
+  $new_dba->dbc->do("ALTER TABLE `dnafrag` DISABLE KEYS") if $df_engine eq 'MyISAM';
 
   my $n = 0;
   foreach my $this_genome_db (@$genome_dbs) {
     $n++;
     print "Copying ", $this_genome_db->name, "'s DnaFrags ($n/", scalar(@$genome_dbs), ") ...\n";
     my $constraint = "genome_db_id = ".($this_genome_db->dbID);
-    copy_table($from_dba->dbc, $to_dba->dbc, 'dnafrag', $constraint.($cellular_component ? " AND cellular_component = '$cellular_component'" : ''), undef, 'skip_disable_keys');
+    copy_table($from_dba->dbc, $to_dba->dbc, 'dnafrag', $constraint.($cellular_component ? " AND cellular_component = '$cellular_component'" : ''), undef, ($df_engine eq 'MyISAM'));
   }
 
-  $new_dba->dbc->do("ALTER TABLE `dnafrag` ENABLE KEYS");
+  $new_dba->dbc->do("ALTER TABLE `dnafrag` ENABLE KEYS") if $df_engine eq 'MyISAM';
 }
 
 =head2 copy_all_mlss_tags
@@ -719,9 +720,12 @@ sub copy_dna_to_dna_alignments {
   my ($old_dba, $new_dba, $method_link_species_sets) = @_;
 
   # Keys are disabled / enabled only once for the whole loop
-  $new_dba->dbc->do("ALTER TABLE `genomic_align_block` DISABLE KEYS");
-  $new_dba->dbc->do("ALTER TABLE `genomic_align` DISABLE KEYS");
-  $new_dba->dbc->do("ALTER TABLE `genomic_align_tree` DISABLE KEYS");
+  my $gab_engine = $new_dba->dbc->db_handle->selectrow_hashref("SHOW TABLE STATUS WHERE Name = 'genomic_align_block'")->{Engine};
+  my $ga_engine = $new_dba->dbc->db_handle->selectrow_hashref("SHOW TABLE STATUS WHERE Name = 'genomic_align'")->{Engine};
+  my $gat_engine = $new_dba->dbc->db_handle->selectrow_hashref("SHOW TABLE STATUS WHERE Name = 'genomic_align_tree'")->{Engine};
+  $new_dba->dbc->do("ALTER TABLE `genomic_align_block` DISABLE KEYS") if $gab_engine eq 'MyISAM';
+  $new_dba->dbc->do("ALTER TABLE `genomic_align` DISABLE KEYS") if $ga_engine eq 'MyISAM';
+  $new_dba->dbc->do("ALTER TABLE `genomic_align_tree` DISABLE KEYS") if $gat_engine eq 'MyISAM';
 
   foreach my $this_method_link_species_set (@$method_link_species_sets) {
     ## For DNA-DNA alignments, the method_link_id is < 100.
@@ -737,24 +741,24 @@ sub copy_dna_to_dna_alignments {
         ($this_method_link_species_set->dbID * 10**10)." AND genomic_align_block_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
     $where = "method_link_species_set_id = ".($this_method_link_species_set->dbID) if $filter_by_mlss;
-    copy_table($old_dba->dbc, $new_dba->dbc, 'genomic_align_block', $where, undef, 'skip_disable_keys');
+    copy_table($old_dba->dbc, $new_dba->dbc, 'genomic_align_block', $where, undef, ($gab_engine eq 'MyISAM'));
     print ".";
     $where = "genomic_align_id >= ".
         ($this_method_link_species_set->dbID * 10**10)." AND genomic_align_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
     $where = "method_link_species_set_id = ".($this_method_link_species_set->dbID) if $filter_by_mlss;
-    copy_table($old_dba->dbc, $new_dba->dbc, 'genomic_align', $where, undef, 'skip_disable_keys');
+    copy_table($old_dba->dbc, $new_dba->dbc, 'genomic_align', $where, undef, ($ga_engine eq 'MyISAM'));
     print ".";
     $where = "node_id >= ".
         ($this_method_link_species_set->dbID * 10**10)." AND node_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
-    copy_table($old_dba->dbc, $new_dba->dbc, 'genomic_align_tree', $where, undef, 'skip_disable_keys');
+    copy_table($old_dba->dbc, $new_dba->dbc, 'genomic_align_tree', $where, undef, ($gat_engine eq 'MyISAM'));
     print "ok!\n";
   }
   print "re-enabling keys\n";
-  $new_dba->dbc->do("ALTER TABLE `genomic_align_block` ENABLE KEYS");
-  $new_dba->dbc->do("ALTER TABLE `genomic_align` ENABLE KEYS");
-  $new_dba->dbc->do("ALTER TABLE `genomic_align_tree` ENABLE KEYS");
+  $new_dba->dbc->do("ALTER TABLE `genomic_align_block` ENABLE KEYS") if $gab_engine eq 'MyISAM';
+  $new_dba->dbc->do("ALTER TABLE `genomic_align` ENABLE KEYS") if $ga_engine eq 'MyISAM';
+  $new_dba->dbc->do("ALTER TABLE `genomic_align_tree` ENABLE KEYS") if $gat_engine eq 'MyISAM';
   print "keys enabled!\n";
 }
 
@@ -807,18 +811,20 @@ sub copy_synteny_data {
   my ($old_dba, $new_dba, $method_link_species_sets) = @_;
 
   # Keys are disabled / enabled only once for the whole loop
-  $new_dba->dbc->do("ALTER TABLE `synteny_region` DISABLE KEYS");
-  $new_dba->dbc->do("ALTER TABLE `dnafrag_region` DISABLE KEYS");
+  my $sr_engine = $new_dba->dbc->db_handle->selectrow_hashref("SHOW TABLE STATUS WHERE Name = 'synteny_region'")->{Engine};
+  my $dfr_engine = $new_dba->dbc->db_handle->selectrow_hashref("SHOW TABLE STATUS WHERE Name = 'dnafrag_region'")->{Engine};
+  $new_dba->dbc->do("ALTER TABLE `synteny_region` DISABLE KEYS") if $sr_engine eq 'MyISAM';
+  $new_dba->dbc->do("ALTER TABLE `dnafrag_region` DISABLE KEYS") if $dfr_engine eq 'MyISAM';
 
   foreach my $this_mlss (@$method_link_species_sets) {
     next unless $this_mlss->method->class eq 'SyntenyRegion.synteny';
     my $mlss_filter = "method_link_species_set_id = ".($this_mlss->dbID);
-    copy_table($old_dba->dbc, $new_dba->dbc, 'synteny_region', $mlss_filter);
-    copy_data($old_dba->dbc, $new_dba->dbc, 'dnafrag_region', "SELECT dnafrag_region.* FROM dnafrag_region JOIN synteny_region USING (synteny_region_id) WHERE $mlss_filter");
+    copy_table($old_dba->dbc, $new_dba->dbc, 'synteny_region', $mlss_filter, undef, ($sr_engine eq 'MyISAM'));
+    copy_data($old_dba->dbc, $new_dba->dbc, 'dnafrag_region', "SELECT dnafrag_region.* FROM dnafrag_region JOIN synteny_region USING (synteny_region_id) WHERE $mlss_filter", undef, ($dfr_engine eq 'MyISAM'));
   }
 
-  $new_dba->dbc->do("ALTER TABLE `synteny_region` ENABLE KEYS");
-  $new_dba->dbc->do("ALTER TABLE `dnafrag_region` ENABLE KEYS");
+  $new_dba->dbc->do("ALTER TABLE `synteny_region` ENABLE KEYS") if $sr_engine eq 'MyISAM';
+  $new_dba->dbc->do("ALTER TABLE `dnafrag_region` ENABLE KEYS") if $dfr_engine eq 'MyISAM';
 }
 
 
@@ -839,7 +845,8 @@ sub copy_constrained_elements {
   my ($old_dba, $new_dba, $method_link_species_sets) = @_;
 
   # Keys are disabled / enabled only once for the whole loop
-  $new_dba->dbc->do("ALTER TABLE `constrained_element` DISABLE KEYS");
+  my $ce_engine = $new_dba->dbc->db_handle->selectrow_hashref("SHOW TABLE STATUS WHERE Name = 'constrained_element'")->{Engine};
+  $new_dba->dbc->do("ALTER TABLE `constrained_element` DISABLE KEYS") if $ce_engine eq 'MyISAM';
 
   foreach my $this_method_link_species_set (@$method_link_species_sets) {
     my $constrained_element_fetch_sth = $old_dba->dbc->prepare("SELECT * FROM constrained_element".
@@ -856,10 +863,10 @@ sub copy_constrained_elements {
     my $where = "constrained_element_id >= ".
     ($this_method_link_species_set->dbID * 10**10)." AND constrained_element_id < ".
     (($this_method_link_species_set->dbID + 1) * 10**10);
-    copy_table($old_dba->dbc, $new_dba->dbc, 'constrained_element', $where, undef, 'skip_disable_keys');
+    copy_table($old_dba->dbc, $new_dba->dbc, 'constrained_element', $where, undef, ($ce_engine eq 'MyISAM'));
     print "ok!\n";
   }
-  $new_dba->dbc->do("ALTER TABLE `constrained_element` ENABLE KEYS");
+  $new_dba->dbc->do("ALTER TABLE `constrained_element` ENABLE KEYS") if $ce_engine eq 'MyISAM';
 }
 
 =head2 copy_conservation_scores
@@ -879,7 +886,8 @@ sub copy_conservation_scores {
   my ($old_dba, $new_dba, $method_link_species_sets) = @_;
 
   # Keys are disabled / enabled only once for the whole loop
-  $new_dba->dbc->do("ALTER TABLE `conservation_score` DISABLE KEYS");
+  my $cs_engine = $new_dba->dbc->db_handle->selectrow_hashref("SHOW TABLE STATUS WHERE Name = 'conservation_score'")->{Engine};
+  $new_dba->dbc->do("ALTER TABLE `conservation_score` DISABLE KEYS") if $cs_engine eq 'MyISAM';
   my $conservation_score_fetch_sth = $old_dba->dbc->prepare("SELECT * FROM conservation_score".
       " WHERE genomic_align_block_id >= ? AND genomic_align_block_id < ? LIMIT 1");
 
@@ -895,10 +903,10 @@ sub copy_conservation_scores {
     my $where = "genomic_align_block_id >= $lower_gab_id AND genomic_align_block_id < $upper_gab_id";
     print "Copying conservation scores for ", $this_method_link_species_set->name,
 	" (", $this_method_link_species_set->dbID, "): ";
-    copy_table($old_dba->dbc, $new_dba->dbc, 'conservation_score', $where, undef, "skip_disable_keys");
+    copy_table($old_dba->dbc, $new_dba->dbc, 'conservation_score', $where, undef, ($cs_engine eq 'MyISAM'));
     print "ok!\n";
   }
 
-  $new_dba->dbc->do("ALTER TABLE `conservation_score` ENABLE KEYS");
+  $new_dba->dbc->do("ALTER TABLE `conservation_score` ENABLE KEYS") if $cs_engine eq 'MyISAM';
 }
 
