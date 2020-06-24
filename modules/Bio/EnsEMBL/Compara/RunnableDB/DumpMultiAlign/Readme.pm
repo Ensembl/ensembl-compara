@@ -199,7 +199,7 @@ sub _create_specific_epo_low_coverage_readme {
     $self->_print_species_tree($newick_species_tree);
 
     my $gdb_grouping = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'));
-    my $species = lc $self->_get_species_common_name($gdb_grouping);
+    my $species = lc $gdb_grouping->display_name;
     $self->_print_paragraph("To build the " . @$high_coverage_species_set . "-way alignment, first, Enredo is used to build a set of
 co-linear regions between the genomes and then Pecan aligns these regions. 
 Next, Ortheus uses the Pecan alignments to infer the ancestral sequences. Then
@@ -245,7 +245,7 @@ sub _create_specific_pairaligner_readme {
 
     my $ref_species = $mlss->get_value_for_tag('reference_species');
     my $ref_genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($ref_species);
-    my $common_species_name = lc $self->_get_species_common_name($ref_genome_db);
+    my $common_species_name = lc $ref_genome_db->display_name;
     $self->_print_paragraph("$common_species_name was used as the reference species. After running $aligner_name, the raw alignment blocks are chained according to their location in both genomes. During the final netting process, the best sub-chain is chosen in each region on the reference species.");
 
     $self->_print_file_grouping_help();
@@ -257,14 +257,9 @@ sub _create_specific_pairaligner_readme {
 #### Utils
 ##############
 
-sub _get_species_common_name {
-    my ($self, $genome_db) = @_;
-    return $genome_db->db_adaptor->get_MetaContainer->get_common_name;
-}
-
 sub _get_species_description {
     my ($self, $genome_db) = @_;
-    return sprintf('%s (%s)', $self->_get_species_common_name($genome_db), $genome_db->assembly);
+    return sprintf('%s (%s)', $genome_db->display_name, $genome_db->assembly);
 }
 
 sub _print_paragraph {
@@ -354,7 +349,7 @@ Read more about Gerp: http://mendel.stanford.edu/SidowLab/downloads/gerp/index.h
 sub _print_file_grouping_help {
     my ($self) = @_;
     my $gdb_grouping = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'));
-    my $common_species_name = lc $self->_get_species_common_name($gdb_grouping);
+    my $common_species_name = lc $gdb_grouping->display_name;
 
     my @par = ();
     if ($self->param('split_by_chromosome')) {
