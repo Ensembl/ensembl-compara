@@ -48,7 +48,6 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'enredo_params'     => ' --min-score 0 --max-gap-length 200000 --max-path-dissimilarity 4 --min-length 2000 --min-regions 2 --min-anchors 3 --max-ratio 3 --simplify-graph 7 --bridges -o ',
-        'run_gerp'          => 0,
         'division'          => 'plants',
     };
 }
