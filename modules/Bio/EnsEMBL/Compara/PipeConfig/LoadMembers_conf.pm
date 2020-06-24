@@ -516,11 +516,11 @@ sub core_pipeline_analyses {
             %hc_analysis_params,
             -flow_into          => {
                 '2->A' => WHEN( '#load_uniprot_members#' => 'save_uniprot_release_date' ),
-                'A->1' => [ 'dc_sequences_and_enums' ],
+                'A->1' => [ 'datachecks' ],
             },
         },
 
-        {   -logic_name      => 'dc_sequences_and_enums',
+        {   -logic_name      => 'datachecks',
             -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RunDataChecks',
             -parameters      => {
                 'datacheck_names'  => ['BlankEnums', 'CheckSequenceTable'],
