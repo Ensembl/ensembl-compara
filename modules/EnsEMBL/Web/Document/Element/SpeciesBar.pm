@@ -76,13 +76,25 @@ sub init_species_list {
   my ($self, $hub) = @_;
   my $species_defs = $hub->species_defs;
   my $name_key = $species_defs->USE_COMMON_NAMES ? 'SPECIES_COMMON_NAME' : 'SPECIES_SCIENTIFIC_NAME';
-  
-  $self->{'species_list'} = [ 
-    sort { $a->[1] cmp $b->[1] } 
-    map  [ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, $name_key) ],
-    $species_defs->reference_species
-  ];
 
+  my $species_hash = {};
+  my $species_list = [];
+
+  foreach ($species_defs->reference_species) {
+    my $name = $species_defs->get_config($_, $name_key);
+    my $strain = $species_defs->get_config($_, 'SPECIES_STRAIN');
+    if ($name_key eq 'SPECIES_SCIENTIFIC_NAME' && $strain && $strain !~ /reference/) {
+      $name .= sprintf ' (%s)', $strain;
+    }
+    $species_hash->{$name} = $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }); 
+  }
+
+  foreach (sort keys %$species_hash) {
+    push @$species_list, [$species_hash->{$_}, $_];
+  }
+
+  $self->{'species_list'} = $species_list;
+   
   #adding species strain (Mouse strains) to the list above
   foreach ($species_defs->valid_species) {
     my $strain_type = ucfirst($species_defs->get_config($_, 'STRAIN_TYPE').'s');
