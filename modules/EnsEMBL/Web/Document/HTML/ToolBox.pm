@@ -51,8 +51,8 @@ sub render {
         </div>);
     }
     if ($sd->ENSEMBL_BLAST_ENABLED) {
-      my %tools = @{$sd->ENSEMBL_TOOLS_LIST};
-      my $label = $tools{'Blast'};
+      my %tools = @{$sd->ENSEMBL_TOOLS_LIST||[]};
+      my $label = $tools{'Blast'} || 'BLAST';;
       $html .= qq(
         <div style="float:left;width:28%">
           <div class="plain-box unbordered">
