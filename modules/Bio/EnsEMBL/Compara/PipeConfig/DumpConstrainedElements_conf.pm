@@ -51,8 +51,11 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+        # Where to keep temporary files
+        'work_dir'   => $self->o('pipeline_dir') . '/hash',
+
         # How many species can be dumped in parallel
-        'dump_ce_capacity'    => 50,
+        'dump_ce_capacity'    => 10,
 
         # Paths to compara files
         'ce_readme'             => $self->check_file_in_ensembl('ensembl-compara/docs/ftp/constrained_elements.txt'),
@@ -84,8 +87,9 @@ sub pipeline_wide_parameters {
         'compara_db'   => $self->o('compara_db'),
 
         'export_dir'    => $self->o('pipeline_dir'),
+        'work_dir'      => $self->o('work_dir'),
         'ce_output_dir'    => '#export_dir#/bed/ensembl-compara/#dirname#',
-        'bed_file'   => '#ce_output_dir#/gerp_constrained_elements.#name#.bed',
+        'bed_file'   => '#work_dir#/#dirname#/gerp_constrained_elements.#name#.bed',
         'bigbed_file'   => '#ce_output_dir#/gerp_constrained_elements.#name#.bb',
     };
 }

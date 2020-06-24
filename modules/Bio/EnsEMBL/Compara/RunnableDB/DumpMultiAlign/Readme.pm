@@ -348,11 +348,11 @@ Read more about Gerp: http://mendel.stanford.edu/SidowLab/downloads/gerp/index.h
 
 sub _print_file_grouping_help {
     my ($self) = @_;
-    my $gdb_grouping = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'));
-    my $common_species_name = lc $gdb_grouping->display_name;
 
     my @par = ();
     if ($self->param('split_by_chromosome')) {
+        my $gdb_grouping = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'));
+        my $common_species_name = lc $gdb_grouping->display_name;
         push @par, "Alignments are grouped by $common_species_name chromosome, and then by coordinate system.";
         push @par, "Alignments containing duplications in $common_species_name are dumped once per duplicated segment.";
         push @par, "The files named *.other*." . $self->param('format') . " contain alignments that do not include any $common_species_name region.";

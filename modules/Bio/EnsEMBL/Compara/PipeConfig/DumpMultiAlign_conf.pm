@@ -63,6 +63,9 @@ sub default_options {
 
         'export_dir'    => $self->o('pipeline_dir'),
 
+        # List of species used to split EPO alignments. Required if split_by_chromosome is set
+        'epo_reference_species' => [],
+
         # Maximum number of blocks per file
         'split_size' => 200,
 

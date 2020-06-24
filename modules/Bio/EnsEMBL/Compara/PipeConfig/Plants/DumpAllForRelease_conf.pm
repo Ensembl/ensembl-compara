@@ -50,6 +50,7 @@ sub default_options {
         #                        9766, 9778, 9779, 9780, 9781, 9797, 9798, 9799, 9800, 9801, 9808, 9787, 9813, 9814, 9812 ],
 
         'dump_dir'         => '#dump_root#/release-'.$self->o('eg_release'),
+        'ancestral_db'     => 'ancestral_curr',
 
         'division'          => 'plants',
         'epo_reference_species' => ['oryza_sativa'],
