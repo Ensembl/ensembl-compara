@@ -201,6 +201,9 @@
            populus_trichocarpa,
           )Malpighiales,
           (
+           quercus_lobata,
+          )Fagales,
+          (
            cucumis_sativus,
            cucumis_melo,
            citrullus_lanatus,
@@ -226,7 +229,10 @@
             camelina_sativa_G1,
             camelina_sativa_G2,
             camelina_sativa_G3,
-           )Camelina,
+           )Camelina, 
+           (
+            eutrema_salsugineum,
+           )Eutrema,
           )Brassicaceae,
           (
            corchorus_capsularis,
@@ -244,7 +250,16 @@
           )Anacardiaceae,
          )malvids,
         )rosids,
-        beta_vulgaris,
+        ( 
+         (
+          beta_vulgaris,
+         )Chenopodiaceae,
+        )Caryophyllales,
+        (
+         (
+          kalanchoe_fedtschenkoi,
+         )Crassulaceae,
+        )Saxifragales,
        )Pentapetalae,
       )Mesangiospermae,
      )Magnoliophyta,

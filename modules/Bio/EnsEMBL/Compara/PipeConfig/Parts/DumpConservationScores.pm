@@ -61,6 +61,7 @@ sub pipeline_analyses_dump_conservation_scores {
             -parameters     => {
                 'chunk_size'    => 10_000_000,
             },
+            -rc_name           => '2Gb_job',
             -flow_into      => {
                 '2->A' => { 'dump_conservation_scores' => INPUT_PLUS() },
                 'A->1' => [ 'concatenate_bedgraph_files' ],

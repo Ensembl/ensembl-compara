@@ -84,23 +84,19 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-9', 'jalvarez_plants_load_members_101'],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-3', 'jalvarez_default_plants_protein_trees_101' ],
+    # 'compara_members'  => [ 'mysql-ens-compara-prod-9', 'jalvarez_plants_load_members_101'],
+    # 'compara_ptrees'   => [ 'mysql-ens-compara-prod-3', 'jalvarez_default_plants_protein_trees_101' ],
 
     # LASTZ dbs
-    'lastz_batch_1a' => [ 'mysql-ens-compara-prod-4', 'jalvarez_plants_lastz_batch1_101a' ],
-    'lastz_batch_1b' => [ 'mysql-ens-compara-prod-5', 'jalvarez_plants_lastz_batch1b_101' ],
-    'lastz_batch_1c' => [ 'mysql-ens-compara-prod-7', 'jalvarez_plants_lastz_batch1_101c' ],
-    'lastz_batch_1d' => [ 'mysql-ens-compara-prod-10', 'cristig_plants_lastz_batch1_101d' ],
-    'unidir_lastz'   => [ 'mysql-ens-compara-prod-5', 'ensembl_plants_unidirectional_lastz' ],
+    # 'lastz_batch_1' => [ 'mysql-ens-compara-prod-4', 'jalvarez_plants_lastz_batch1_101' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'jalvarez_plants_synteny_101' ],
+    # 'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'jalvarez_plants_synteny_101' ],
 
     # EPO dbs
     ## rice
-    'rice_epo_high_low' => [ 'mysql-ens-compara-prod-5', 'dthybert_rice_epo_100' ],
-    'rice_epo_prev'     => [ 'mysql-ens-compara-prod-5', 'dthybert_rice_epo_100' ],
+    # 'rice_epo_high_low' => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
+    # 'rice_epo_prev'     => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
     'rice_epo_anchors'  => [ 'mysql-ens-compara-prod-5', 'cristig_generate_anchors_rice_99' ],
 };
 
@@ -111,7 +107,7 @@ my $ancestral_dbs = {
     'ancestral_prev' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${prev_eg_release}_$prev_release" ],
     'ancestral_curr' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${curr_eg_release}_$curr_release" ],
 
-    'rice_ancestral' => [ 'mysql-ens-compara-prod-5', 'dthybert_rice_ancestral_core_100' ],
+    # 'rice_ancestral' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${prev_eg_release}_$prev_release" ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
