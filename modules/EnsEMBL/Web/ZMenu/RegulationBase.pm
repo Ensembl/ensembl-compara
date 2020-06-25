@@ -44,11 +44,11 @@ sub _add_nav_entries {
 sub get_motif_features_by_epigenome {
   my ($self, $reg_feat, $cell_line) = @_;
   return {} unless ($reg_feat && $cell_line);
-  my @motif_features = @{$reg_feat->fetch_all_MotifFeatures_with_matching_Peak};
+  my @motif_features = @{$reg_feat->get_all_experimentally_verified_MotifFeatures};
   my $motifs = {};
 
   foreach my $mf (@motif_features) {
-    my $peak = $mf->fetch_overlapping_Peak_by_Epigenome($cell_line);
+    my $peak = $mf->get_all_overlapping_Peaks_by_Epigenome($cell_line);
     if ($peak) {
       my $mf_info = $self->_format_mf_info($mf);
       $motifs->{$mf->start .':'. $mf->end} = $mf_info if $mf_info;
@@ -59,7 +59,7 @@ sub get_motif_features_by_epigenome {
 
 sub get_motif_features_by_peak {
   my ($self, $peak) = @_;
-  my @motif_features = @{$peak->fetch_all_MotifFeatures};
+  my @motif_features = @{$peak->get_all_MotifFeatures};
   my $motifs = {};
 
   foreach my $mf (@motif_features) {
