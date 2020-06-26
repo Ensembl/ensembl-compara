@@ -33,8 +33,6 @@ sub render {
   my $self            = shift;
   my $hub             = $self->hub;
   my $species_defs    = $hub->species_defs;
-  my $version         = $species_defs->ORIGINAL_VERSION || $species_defs->ENSEMBL_VERSION;
-  my $rel             = "release-$version"; # Always set to use the release number rather than current to get around the delay in FTP site links updating
 
   my $html;
 
@@ -143,8 +141,8 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
     );
   }
 
-
-  unless ($species_defs->NO_REGULATION) {
+  ## No regulation dumps for non-vertebrates
+  unless ($species_defs->NO_REGULATION || $species_defs->EG_DIVISION) {
     push @$columns, (
     { key => 'funcgen', title => 'Regulation (GFF)',             align => 'center', width => '10%', sort => 'html' },
     { key => 'files',   title => 'Data files',                   align => 'center', width => '10%', sort => 'html' },
@@ -181,6 +179,16 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
   }
   my $sort_by = $hub->species_defs->USE_COMMON_NAMES ? 'common_name' : 'sci_name';
   push @$all_species, sort {$a->{$sort_by} cmp $b->{$sort_by}} @other_species;
+
+  my $version;
+
+  if ($species_defs->EG_DIVISION) {
+    $version = $species_defs->SITE_RELEASE_VERSION - 1;
+  }
+  else {
+    $version = $species_defs->ORIGINAL_VERSION || $species_defs->ENSEMBL_VERSION;
+  }
+  my $rel = "release-$version"; # Always set to use the release number rather than current to get around the delay in FTP site links updating
 
   my $ftp_base = $ftp;
   unless ($ftp_base =~ /rapid/) {
@@ -223,13 +231,61 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
 
   }
 
-
   my $main_table           = EnsEMBL::Web::Document::Table->new($columns, $rows, { data_table => 1, exportable => 0 });
   $main_table->code        = 'FTPtable::'.scalar(@$rows);
   $main_table->{'options'}{'data_table_config'} = {iDisplayLength => 10};
  
+  my $multi_table = $self->multi_table($rel, $version, %title);
+ 
+  my $fave_text = '';
+  if (scalar @$all_species > 1) {
+    $fave_text = $hub->user ? 'Your favourite species are listed first.' 
+                  : 'Popular species are listed first. You can customise this list via our <a href="/">home page</a>.'; 
+  }
+
+  if ($multi_table) {
+    $html .= sprintf('<h3>Multi-species data</h3>%s<h3>Single species data</h3>', $multi_table->render);
+  }
+
+  $html .= sprintf(qq{
+    <div class="js_panel" id="ftp-table">
+      <input type="hidden" class="panel_type" value="Content">
+      <p>%s</p>
+      %s
+    </div>
+    %s
+    %s
+  }, $fave_text, $main_table->render, $self->metadata, $self->add_footnotes);
+
+  return $html;
+}
+
+# Lookup for the types we need for species
+sub required_types_for_species {
+  my $self = shift;
+  my %required_lookup;
+  
+  # Regulatory build
+  $required_lookup{'funcgen'} = { map { $_ => 1 } qw(
+    homo_sapiens mus_musculus
+  )};
+  
+  # Funcgen files
+  $required_lookup{'files'} = { map { $_ => 1 } qw(
+    homo_sapiens mus_musculus
+  )};
+  
+  return \%required_lookup;
+}
+
+sub multi_table {
+  my ($self, $rel, $version, %title) = @_;
+  my $hub = $self->hub;
+  my $sd = $hub->species_defs;
+
   my $multi_table;
-  unless ($species_defs->NO_COMPARA) {
+
+  unless ($sd->NO_COMPARA) {
     $multi_table = EnsEMBL::Web::Document::Table->new([
       { key => 'database',  title => 'Database' },
       { key => 'mysql',     title => '', align => 'center' },
@@ -264,46 +320,11 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
       ancestral => '-',
     }], { cellpadding => 4, cellspacing => 2, id => 'ftp-table1' });
   }
- 
-  my $fave_text = '';
-  if (scalar @$all_species > 1) {
-    $fave_text = $hub->user ? 'Your favourite species are listed first.' 
-                  : 'Popular species are listed first. You can customise this list via our <a href="/">home page</a>.'; 
-  }
 
-  if ($multi_table) {
-    $html .= sprintf('<h3>Multi-species data</h3>%s<h3>Single species data</h3>', $multi_table->render);
-  }
-
-  $html .= sprintf(qq{
-    <div class="js_panel" id="ftp-table">
-      <input type="hidden" class="panel_type" value="Content">
-      <p>%s</p>
-      %s
-    </div>
-    %s
-  }, $fave_text, $main_table->render, $self->add_footnotes);
-
-  return $html;
+  return $multi_table;
 }
 
-# Lookup for the types we need for species
-sub required_types_for_species {
-  my $self = shift;
-  my %required_lookup;
-  
-  # Regulatory build
-  $required_lookup{'funcgen'} = { map { $_ => 1 } qw(
-    homo_sapiens mus_musculus
-  )};
-  
-  # Funcgen files
-  $required_lookup{'files'} = { map { $_ => 1 } qw(
-    homo_sapiens mus_musculus
-  )};
-  
-  return \%required_lookup;
-}
+sub metadata {}
 
 sub add_footnotes {
   my $self = shift;

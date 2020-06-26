@@ -60,37 +60,7 @@ data - find out more!</p>
   ## INFO ON GENEBUILD, COMPARA, ETC
 
   if ($sd->HAS_ANNOTATION) {
-    my $annotation = qq(
-<h2 class="first"><a href="/info/genome/">Annotation &amp; Prediction</a></h2>
-<p><img src="/img/4_species.png" alt="various species" class="float-right" style="width:72px;height:72px;padding-right:4px" />The Ensembl project produces genome databases for vertebrates and other
-eukaryotic species, and makes this information freely available online.</p>
-<ul>
-<li><a href="/info/genome/genebuild/">Ensembl annotation</a></li>
-    );
-
-    unless ($sd->NO_VARIATION) {
-      $annotation .= qq(
-<li><a href="/info/genome/variation/">Variation data</a></li>
-      );
-    }
-
-    unless ($sd->NO_COMPARA) {
-      $annotation .= qq(
-<li><a href="/info/genome/compara/">Comparative genomics</a></li>
-      );
-    }
-
-    unless ($sd->NO_REGULATION) {
-      $annotation .= qq(
-<li><a href="/info/genome/funcgen/">Regulatory build</a></li>
-      );
-    }
-
-    $annotation .= qq(
-</ul>
-<p style="text-align:right;padding-right:2em;"><a href="/info/genome/">More...</a></p>
-);
-    push @cells, $annotation;
+    push @cells, $self->get_annotation_html;
   }
 
   ## DATA DOWNLOADS, FTP, ETC
@@ -104,7 +74,7 @@ eukaryotic species, and makes this information freely available online.</p>
 );
 
   if ($sd->ENSEMBL_PUBLIC_DB) {
-    my $data_access = qq(
+    $data_access .= qq(
 <li>Extract data from our <a href="/info/data/mysql.html">public database</a> using Perl scripts</li>
     );
   }
@@ -176,6 +146,7 @@ other command-line scripts</li>
   my $count = 0;
 
   foreach my $cell (@cells) {
+    warn ">>> CELL $count";
     if ($count % 2 == 0) {
       $html .= '<tr>';
     }
@@ -190,5 +161,43 @@ other command-line scripts</li>
   $html .= '</table>';
 
 }
+
+sub get_annotation_html {
+  my $self = shift;
+  my $sd = $self->hub->species_defs;
+
+  my $annotation = qq(
+<h2 class="first"><a href="/info/genome/">Annotation &amp; Prediction</a></h2>
+<p><img src="/img/4_species.png" alt="various species" class="float-right" style="width:72px;height:72px;padding-right:4px" />The Ensembl project produces genome databases for vertebrates and other
+eukaryotic species, and makes this information freely available online.</p>
+<ul>
+<li><a href="/info/genome/genebuild/">Ensembl annotation</a></li>
+    );
+
+  unless ($sd->NO_VARIATION) {
+    $annotation .= qq(
+<li><a href="/info/genome/variation/">Variation data</a></li>
+    );
+  }
+
+  unless ($sd->NO_COMPARA) {
+    $annotation .= qq(
+<li><a href="/info/genome/compara/">Comparative genomics</a></li>
+      );
+  }
+
+  unless ($sd->NO_REGULATION) {
+    $annotation .= qq(
+<li><a href="/info/genome/funcgen/">Regulatory build</a></li>
+    );
+  }
+
+  $annotation .= qq(
+</ul>
+<p style="text-align:right;padding-right:2em;"><a href="/info/genome/">More...</a></p>
+);
+  return $annotation;
+}
+
 
 1;
