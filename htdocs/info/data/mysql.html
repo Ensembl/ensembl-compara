@@ -1,0 +1,170 @@
+<html>
+<head>
+<meta name="order" content="3" />
+<title>Public MySQL Server</title>
+</head>
+
+<body>
+
+<h1>The Ensembl public MySQL Servers</h1>
+
+<p>
+For large amounts of data and more detailed analysis, we recommend you
+use one of our publicly-accessible MySQL
+servers <strong>ensembldb.ensembl.org</strong>,
+      <strong>useastdb.ensembl.org</strong> or
+      <strong>asiadb.ensembl.org</strong> which you can access as user
+      'anonymous'. A third 
+server, <strong>martdb.ensembl.org</strong> provides public access to
+the BioMart databases. If you are interested in data on the human <strong>GRCh37</strong> assembly this is available
+      at ensembldb.ensembl.org only (see below for connection details).</p>
+
+<p>
+There are two options for retrieving data from the Ensembl databases:
+</p>
+
+<h3>Perl API</h3>
+
+<p>
+The easiest option is to use the
+Ensembl <a href="/info/data/api.html">Perl API</a>. The API uses an
+object-oriented approach to model real biological objects such as
+genes, transcripts and 'slices' of DNA sequence, making it
+straightforward for you to write scripts that retrieve and analyze
+data.
+</p>
+
+<pre class="code">
+# find gene stable ids corresponding to the MGI symbol 'Tyr' my
+$gene_adaptor = $dbCore-&gt;get_GeneAdaptor(); my @genes = @{
+$gene_adaptor-&gt;fetch_all_by_external_name('Tyr') };
+</pre>
+
+<p>
+Additional code examples and suggestions can be found in the
+various <a href="/info/website/tutorials/">API tutorials</a> and the 
+<a href="http://listserver.ebi.ac.uk/mailing-lists-archives/ensembl-dev/threads.html"
+rel="external">ensembl-dev mailing list archives</a>.
+</p>
+
+<h3>MySQL client</h3>
+
+<p>
+Alternatively, you can use a MySQL client program to query the database directly such as:
+</p>
+
+<ul>
+  <li><a href="http://dev.mysql.com/downloads/mysql/">MySQL command line client</a> (available from the MySQL server distribution)</li>
+  <li><a href="http://dev.mysql.com/downloads/workbench/">MySQL workbench</a></li>
+  <li><a href="http://dev.mysql.com/downloads/shell/">MySQL shell</a></li>
+  <li><a href="https://www.sequelpro.com/">SequelPro</a> (macOS only)</li>
+</ul>
+
+<p>
+However this does require knowledge of the complex <a href="/info/docs/api/">database
+schemas</a> used by Ensembl, so we only recommend it if you are unable
+to install our API (e.g. if you have no access to Perl). Also note
+that direct MySQL queries on the database are not suited to retrieve
+sequences; to retrieve sequences please use the Perl API.
+</p>
+
+<h2>Biomart</h2>
+
+<p>
+For <strong>BioMart</strong> access, we strongly recommend that you
+use the <a href="/Multi/martview">martview web interface</a>, as the
+mart databases contain very many tables of denormalised data. Data can
+also be retrieved from BioMart programmatically, using
+the <a href="http://www.biomart.org/martservice.html">Mart XML-based
+webservice</a>.
+</p> 
+
+<h2>Summary of servers and ports</h2>
+
+<p>
+<strong>Important note:</strong> Because we are serving databases on
+both MySQL4 and MySQL5, not all MySQL instances use the default port;
+please ensure that you specify the correct port when trying to
+connect. In addition, if your computer is behind a
+<strong>firewall</strong>, outgoing TCP/IP connections to the
+corresponding ports will also need to be allowed.
+</p>
+<p>The useastdb and asiadb mirrors use MariaDB rather than MySQL. For all practical purposes <a href"https://mariadb.com/kb/en/mariadb/mariadb-vs-mysql-compatibility/">these are identical</a>.<p>
+<table class="ss">
+
+<tr>
+<th style="width:10%">Server</th>
+<th style="width:10%">User</th>
+<th style="width:5%">Password</th>
+<th style="width:20%" class="center">Port(s)</th>
+<th style="width:10%" class="center">Version</th>
+<th style="width:45%" class="left">Notes</th>
+</tr>
+
+<tr class="bg2">
+<td>ensembldb.ensembl.org</td>
+<td>anonymous</td>
+<td class="center">-</td>
+<td class="center">3306 &amp; 5306</td>
+<td class="center">MySQL 5.6.33</td>
+<td class="left">From Ensembl <strong>48</strong> onwards only</td>
+</tr>
+
+<tr class="bg2">
+<td>useastdb.ensembl.org</td>
+<td>anonymous</td>
+<td class="center">-</td>
+<td class="center">3306 &amp; 5306</td>
+<td class="center">MariaDB 10.0.30</td>
+<td class="left"><strong>Current</strong> and <strong>previous</strong> Ensembl version only</td>
+</tr>
+
+<tr class="bg2">
+<td>asiadb.ensembl.org</td>
+<td>anonymous</td>
+<td class="center">-</td>
+<td class="center">3306 &amp; 5306</td>
+<td class="center">MariaDB 10.0.30</td>
+<td class="left"><strong>Current</strong> and <strong>previous</strong> Ensembl version only</td>
+</tr>
+
+<tr class="bg2">
+<td>martdb.ensembl.org</td>
+<td>anonymous</td>
+<td class="center">-</td>
+<td class="center">5316</td>
+<td class="center">MariaDB 10.0.30</td>
+<td class="left">From Ensembl <strong>48</strong> onwards only</td>
+</tr>
+
+<tr class="bg1">
+<td>ensembldb.ensembl.org</td>
+<td>anonymous</td>
+<td class="center">-</td>
+<td class="center">3337</td>
+<td class="center">MySQl 5.6.33</td>
+<td class="left">Databases for <b>archive GRCh37</b> - <strong>release 79 onwards</strong></td>
+</tr>
+
+<tr class="bg1">
+<td>ensembldb.ensembl.org</td>
+<td>anonymous</td>
+<td class="center">-</td>
+<td class="center">4306</td>
+<td class="center">MySQL 4.1.20</td>
+<td class="left">Up to Ensembl <strong>47</strong> only</td>
+</tr>
+
+<tr class="bg1">
+<td>martdb.ensembl.org</td>
+<td>anonymous</td>
+<td class="center">-</td>
+<td class="center">3316</td>
+<td class="center">MySQL 4.1.20</td>
+<td class="left">Up to Ensembl <strong>47</strong> only</td>
+</tr>
+
+</table>
+
+</body>
+</html>
