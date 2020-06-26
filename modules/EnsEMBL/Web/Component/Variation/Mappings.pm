@@ -382,7 +382,7 @@ sub content {
       next unless $mf;       
       # check that the motif has a binding matrix, if not there's not 
       # much we can do so don't return anything
-      my $matrix = $mf-get_BindingMatrix;
+      my $matrix = $mf->get_BindingMatrix;
       next unless $matrix;
       
       my $matrix_names = join(', ',  @{$matrix->get_TranscriptionFactorComplex_names||[]});
