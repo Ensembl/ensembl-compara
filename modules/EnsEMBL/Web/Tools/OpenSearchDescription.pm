@@ -63,8 +63,8 @@ sub create {
   close O;
   foreach( $sd->valid_species ) {
     my $sn = substr( $sd->get_config($_,'SPECIES_BIO_SHORT'),0,5);
-    my $cn = $sd->get_config($_,'SPECIES_COMMON_NAME');
-    my $bn = $sd->get_config($_,'SPECIES_BIO_NAME');
+    my $cn = $sd->get_config($_,'SPECIES_DISPLAY_NAME');
+    my $bn = $sd->get_config($_,'SPECIES_SCIENTIFIC_NAME');
     open O,">$path/$_.xml";
     printf O $template, $sn, "$cn - $bn", "$cn $bn", $sd->ENSEMBL_STYLE->{'SITE_ICON'}, $_, 'ensembl';
     close O;

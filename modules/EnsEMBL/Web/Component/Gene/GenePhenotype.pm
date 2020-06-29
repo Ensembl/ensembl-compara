@@ -49,7 +49,7 @@ sub gene_phenotypes {
   my $object           = $self->object;
   my $obj              = $object->Obj;
   my $hub              = $self->hub;
-  my $species          = $hub->species_defs->SPECIES_COMMON_NAME;
+  my $species          = $hub->species_defs->SPECIES_DISPLAY_NAME;
   my $g_name           = $obj->stable_id;
   my $html;
   my (@rows, %list, $list_html);
@@ -65,7 +65,7 @@ sub gene_phenotypes {
     
     # OMIA needs tax ID
     my $tax = $hub->species_defs->TAXONOMY_ID;
-    if ($species eq 'Mouse') {
+    if ($species =~ /^Mouse/) {
       my $features;
       foreach my $pf (@{$pfa->fetch_all_by_Gene($obj)}) {
         my $phe    = $pf->phenotype->description;

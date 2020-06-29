@@ -29,7 +29,7 @@ sub search_options {
   ## Returns the options for the search dropdown based upon the current species
   my $self          = shift;
   my $species       = $self->species;
-  my $species_name  = $species ? $self->species_defs->SPECIES_COMMON_NAME : '';
+  my $species_name  = $species ? $self->species_defs->SPECIES_DISPLAY_NAME : '';
   my $image         = $self->species_defs->SPECIES_IMAGE;
 
   return [ $species ? (

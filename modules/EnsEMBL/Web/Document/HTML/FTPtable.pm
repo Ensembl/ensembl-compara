@@ -151,14 +151,14 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
   }
 
   ## We want favourite species at the top of the table, 
-  ## then everything else alphabetically by common name
+  ## then everything else alphabetically by display name
   my $all_species = [];
   my %fave_check = map {$_ => 1} @{$hub->get_favourite_species};
   foreach (@{$hub->get_favourite_species}) {
     push @$all_species, {
                           'url'         => $species_defs->get_config($_, 'SPECIES_URL'), 
                           'dir'         => $species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME'), 
-                          'common_name' => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
+                          'display_name' => $species_defs->get_config($_, 'SPECIES_DISPLAY_NAME'),
                           'sci_name'    => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
                           'strain'      => $species_defs->get_config($_, 'SPECIES_STRAIN'),
                           'favourite'   => 1,
@@ -170,15 +170,14 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
     push @other_species, {
                           'url'         => $species_defs->get_config($_, 'SPECIES_URL'), 
                           'dir'         => $species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME'), 
-                          'common_name' => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
+                          'display_name' => $species_defs->get_config($_, 'SPECIES_DISPLAY_NAME'),
                           'sci_name'    => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
                           'strain'      => $species_defs->get_config($_, 'SPECIES_STRAIN'),
                           'favourite'   => 0,
                         }
             unless $fave_check{$_};
   }
-  my $sort_by = $hub->species_defs->USE_COMMON_NAMES ? 'common_name' : 'sci_name';
-  push @$all_species, sort {$a->{$sort_by} cmp $b->{$sort_by}} @other_species;
+  push @$all_species, sort {$a->{'display_name'} cmp $b->{'display_name'}} @other_species;
 
   my $version;
 
@@ -198,10 +197,13 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
   foreach my $sp (@$all_species) {
     my $sp_url    = $sp->{'url'};
     my $sp_dir    = $sp->{'dir'};
-    my $sp_name   = $sp->{'common_name'};
-    my $strain    = $sp->{'strain'};
-    if ($strain && $strain !~ /reference/ && $sp_name !~ /$strain/) {
-      $sp_name .= sprintf ' (%s)', $strain;
+
+    ## Vertebrate-specific - append scientific name if display name is common name 
+    my $display_name  = $sp->{'display_name'};
+    my $sp_link       = sprintf('<b><a href="/%s/">%s</a></b>', $sp_url, $display_name);
+    my $sci_name      = $sp->{'sci_name'};
+    if ($hub->species_defs->USE_COMMON_NAMES && $display_name !~ /$sci_name/) {
+      $sp_link .= "<br /> <i>$sci_name</i>";
     }
 
     my $sp_var    = $sp_dir. '_variation';
@@ -210,7 +212,7 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
     
     push @$rows, {
       fave    => $sp->{'favourite'} ? 'Y' : '',
-      species => sprintf('<b><a href="/%s/">%s</a></b><br /><i>%s</i>', $sp_url, $sp_name, $sp->{'sci_name'}),
+      species => $sp_link, 
       dna     => sprintf('<a rel="external" title="%s" href="%s/fasta/%s/dna/">FASTA</a>', $title{'dna'},  $ftp_base, $sp_dir),
       cdna    => sprintf('<a rel="external" title="%s" href="%s/fasta/%s/cdna/">FASTA</a>',  $title{'cdna'}, $ftp_base, $sp_dir),
       cds	    => sprintf('<a rel="external" title="%s" href="%s/fasta/%s/cds/">FASTA</a>',   $title{'cds'}, $ftp_base, $sp_dir),

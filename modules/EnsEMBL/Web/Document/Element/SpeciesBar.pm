@@ -40,7 +40,7 @@ sub content {
   return if ($hub->type eq 'GeneTree' || $hub->type eq 'Tools');
 
   ## User-friendly species name and assembly
-  my $species  = $hub->species_defs->SPECIES_COMMON_NAME; 
+  my $species  = $hub->species_defs->SPECIES_DISPLAY_NAME; 
   return '' if $species =~ /^(multi|common)$/i;
   my $assembly = $hub->species_defs->ASSEMBLY_NAME;
 
@@ -60,7 +60,7 @@ sub content {
   }
   else {
     my $image = $hub->species_defs->SPECIES_IMAGE || $hub->species;
-    $header = sprintf '<img src="/i/species/%s.png" class="badge-32"><span class="species">%s</span> <span class="more">(%s)</span>', $image, $hub->species_defs->PREFERRED_DISPLAY_NAME, $assembly;
+    $header = sprintf '<img src="/i/species/%s.png" class="badge-32"><span class="species">%s</span> <span class="more">(%s)</span>', $image, $hub->species_defs->SPECIES_DISPLAY_NAME, $assembly;
     ## Species selector
     $arrow     = sprintf '<span class="dropdown"><a class="toggle species" href="#" rel="species">&#9660;</a></span>';
     $dropdown  = $self->species_list;
@@ -75,17 +75,13 @@ sub content {
 sub init_species_list {
   my ($self, $hub) = @_;
   my $species_defs = $hub->species_defs;
-  my $name_key = $species_defs->USE_COMMON_NAMES ? 'SPECIES_COMMON_NAME' : 'SPECIES_SCIENTIFIC_NAME';
+  my $name_key     = 'SPECIES_DISPLAY_NAME';
 
   my $species_hash = {};
   my $species_list = [];
 
   foreach ($species_defs->reference_species) {
     my $name = $species_defs->get_config($_, $name_key);
-    my $strain = $species_defs->get_config($_, 'SPECIES_STRAIN');
-    if ($name_key eq 'SPECIES_SCIENTIFIC_NAME' && $strain && $strain !~ /reference/) {
-      $name .= sprintf ' (%s)', $strain;
-    }
     $species_hash->{$name} = $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }); 
   }
 
@@ -95,7 +91,7 @@ sub init_species_list {
 
   $self->{'species_list'} = $species_list;
    
-  #adding species strain (Mouse strains) to the list above
+  #adding species strain (Mouse strains, Pig breeds, etc) to the list above
   foreach ($species_defs->valid_species) {
     my $strain_type = ucfirst($species_defs->get_config($_, 'STRAIN_TYPE').'s');
     $species_defs->get_config($_, 'ALL_STRAINS') ? push( @{$self->{'species_list'}}, [ $hub->url({ species => $_, type => 'Info', action => 'Strains', __clear => 1 }), $species_defs->get_config($_, $name_key)." $strain_type"] ) : next;

@@ -203,10 +203,10 @@ sub content {
         $html .= $self->_info('Highlighted genes',
           sprintf(
             '<p>The <i>%s</i> %s gene, its paralogues, its orthologue in <i>%s</i>, and paralogues of the <i>%s</i> gene, have all been highlighted. <a href="#" class="switch_highlighting on">Click here to disable highlighting</a>.</p>',
-            $hub->species_defs->get_config($hub->species_defs->production_name_mapping($member->genome_db->name), 'SPECIES_COMMON_NAME'),
+            $hub->species_defs->get_config($hub->species_defs->production_name_mapping($member->genome_db->name), 'SPECIES_DISPLAY_NAME'),
             $highlight_gene_display_label,
-            $hub->species_defs->get_config($highlight_species, 'SPECIES_COMMON_NAME') || $highlight_species_name,
-            $hub->species_defs->get_config($highlight_species, 'SPECIES_COMMON_NAME') || $highlight_species_name
+            $hub->species_defs->get_config($highlight_species, 'SPECIES_DISPLAY_NAME') || $highlight_species_name,
+            $hub->species_defs->get_config($highlight_species, 'SPECIES_DISPLAY_NAME') || $highlight_species_name
           )
         );
       } else {
@@ -217,9 +217,9 @@ sub content {
       $html .= $self->_info('Highlighted genes', 
         sprintf(
           '<p>The <i>%s</i> %s gene and its paralogues are highlighted. <a href="#" class="switch_highlighting off">Click here to enable highlighting of %s homologues</a>.</p>',
-          $hub->species_defs->get_config($hub->species_defs->production_name_mapping($member->genome_db->name), 'SPECIES_COMMON_NAME'),
+          $hub->species_defs->get_config($hub->species_defs->production_name_mapping($member->genome_db->name), 'SPECIES_DISPLAY_NAME'),
           $highlight_gene_display_label,
-          $hub->species_defs->get_config($highlight_species, 'SPECIES_COMMON_NAME') || $highlight_species_name
+          $hub->species_defs->get_config($highlight_species, 'SPECIES_DISPLAY_NAME') || $highlight_species_name
         )
       );
     }

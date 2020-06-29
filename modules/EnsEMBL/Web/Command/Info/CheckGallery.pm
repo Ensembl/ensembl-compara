@@ -61,7 +61,7 @@ sub process {
   $url_params->{$core_params->{$data_type}} =  $id; 
 
   my $error;
-  my $common_name = $hub->species_defs->get_config($species, 'SPECIES_COMMON_NAME');
+  my $display_name = $hub->species_defs->get_config($species, 'SPECIES_DISPLAY_NAME');
 
   my $builder   = $hub->{'_builder'};
   ## Don't use the create_factory method, as its error-handling 
@@ -84,7 +84,7 @@ sub process {
   else {
     my $object = $factory->object;
     unless ($object) {
-      $error = sprintf('%s "%s" could not be found in species %s. Please try again.', $data_type, $id, $common_name);
+      $error = sprintf('%s "%s" could not be found in species %s. Please try again.', $data_type, $id, $display_name);
     }
   }
 

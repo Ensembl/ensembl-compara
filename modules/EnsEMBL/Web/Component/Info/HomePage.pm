@@ -35,21 +35,13 @@ sub content {
   my $self         = shift;
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
-  my $common_name  = $species_defs->SPECIES_COMMON_NAME;
-  my $sci_name     = $species_defs->SPECIES_SCIENTIFIC_NAME;
+  my $display_name = $species_defs->SPECIES_DISPLAY_NAME;
   my $img_url      = $self->img_url;
   $self->{'icon'}  = qq(<img src="${img_url}24/%s.png" alt="" class="homepage-link" />);
 
   $self->{'img_link'} = qq(<a class="nodeco _ht _ht_track" href="%s" title="%s"><img src="${img_url}96/%s.png" alt="" class="bordered" />%s</a>);
   
   ## Mandatory search box
-  my $display_name;
-  if ($species_defs->USE_COMMON_NAMES) {
-    $display_name = $common_name eq $sci_name ? "<i>$sci_name</i>" : sprintf('%s (<i>%s</i>)', $common_name, $sci_name);
-  }
-  else {
-    $display_name = $species_defs->PREFERRED_DISPLAY_NAME;
-  }
   my $html = sprintf '<div class="round-box tinted-box unbordered"><h2>Search %s</h2>%s</div>', 
               $display_name, EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render;
 
@@ -101,7 +93,7 @@ sub assembly_text {
   if (scalar @{$species_defs->ENSEMBL_CHROMOSOMES || []} && !$species_defs->NO_KARYOTYPE) {
     $karyotype = sprintf($self->{'img_link'},
                   $hub->url({ type => 'Location', action => 'Genome', __clear => 1 }),
-                  'Go to ' . $species_defs->SPECIES_COMMON_NAME . ' karyotype', 
+                  'Go to ' . $species_defs->SPECIES_DISPLAY_NAME . ' karyotype', 
                   'karyotype', 'View karyotype'
                   );
   }
@@ -195,10 +187,9 @@ sub assembly_text {
       }
       $html .= sprintf '<h3 class="light top-margin">Related %s</h3><p>Data is available on the following closely-related species:</p><ul>', $strain_string;
       foreach (@related_species) {
-        $html .= sprintf '<li><a href="%s">%s (%s)</a></li>', 
+        $html .= sprintf '<li><a href="%s">%s</a></li>', 
                   $hub->url({'species' => $_, 'action' => 'Strains'}), 
-                  $species_defs->get_config($_, 'SPECIES_BIO_NAME'),
-                  $species_defs->get_config($_, 'SPECIES_COMMON_NAME');
+                  $species_defs->get_config($_, 'SPECIES_DISPLAY_NAME');
       }
       $html .= '</ul>';
     }

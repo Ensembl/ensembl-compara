@@ -92,7 +92,7 @@ sub content {
     
     my ($species_name, $slice_name) = split ':', $species_defs->production_name_mapping($_->{'name'});
     
-    my $panel_caption = $species_defs->get_config($species_name, 'SPECIES_COMMON_NAME') || 'Ancestral sequences';
+    my $panel_caption = $species_defs->get_config($species_name, 'SPECIES_DISPLAY_NAME') || 'Ancestral sequences';
     $panel_caption   .= " $slice_name" if $slice_name;
 
     my $asb = $image_config->get_node('alignscalebar');

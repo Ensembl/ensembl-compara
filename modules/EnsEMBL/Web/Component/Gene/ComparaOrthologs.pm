@@ -63,7 +63,7 @@ sub content {
   my $cdb          = shift || $self->param('cdb') || 'compara';
   my $availability = $object->availability;
   my $is_ncrna     = ($object->Obj->biotype =~ /RNA/);
-  my $species_name = $species_defs->DISPLAY_NAME;
+  my $species_name = $species_defs->GROUP_DISPLAY_NAME;
   my $strain_url   = $species_defs->IS_STRAIN_OF ? "Strain_" : "";
   my $strain_param = $self->is_strain ? ";strain=1" : ""; # initialize variable even if is_strain is falsy to avoid warnings
 

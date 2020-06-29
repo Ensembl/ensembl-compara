@@ -39,7 +39,7 @@ sub sci_name {
 sub common_name {
   my ($self, $name) = @_;
   $name = $self->hub->species_defs->production_name_mapping($name);
-  return $self->hub->species_defs->get_config($name, 'SPECIES_COMMON_NAME');
+  return $self->hub->species_defs->get_config($name, 'SPECIES_DISPLAY_NAME');
 }
 
 sub combine_names {
@@ -338,14 +338,14 @@ sub get_species_info {
 
   ## Now munge information for selected species
   foreach my $sp (@$species_order) {
-    my $display_name = $hub->species_defs->get_config($sp, 'SPECIES_SCIENTIFIC_NAME');
+    my $sci_name = $hub->species_defs->get_config($sp, 'SPECIES_SCIENTIFIC_NAME');
     (my $short_name = $sp) =~ s/([A-Z])[a-z]+_([a-z0-9]{2,3})[a-z]+/$1.$2/; ## e.g. H.sap
-    (my $formatted_name = $display_name) =~ s/ /<br>/; ## Only replace first space
+    (my $formatted_name = $sci_name) =~ s/ /<br>/; ## Only replace first space
 
-    $info->{$sp}{'long_name'}      = $display_name;
+    $info->{$sp}{'long_name'}      = $sci_name;
     $info->{$sp}{'short_name'}     = $short_name;
     $info->{$sp}{'formatted_name'} = $formatted_name; 
-    $info->{$sp}{'common_name'}    = $hub->species_defs->get_config($sp, 'SPECIES_COMMON_NAME');
+    $info->{$sp}{'common_name'}    = $hub->species_defs->get_config($sp, 'SPECIES_DISPLAY_NAME');
     $info->{$sp}{'sample_loc'}     = ($hub->species_defs->get_config($sp, 'SAMPLE_DATA') || {})->{'LOCATION_PARAM'};
 
     if ($mlss) {

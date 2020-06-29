@@ -110,7 +110,7 @@ sub content {
 sub getLabelHtml {
   my $self = shift;
   my $species = shift;
-  my $species_label = $self->hub->species_defs->get_config($species, 'SPECIES_COMMON_NAME');
+  my $species_label = $self->hub->species_defs->get_config($species, 'SPECIES_DISPLAY_NAME');
   my $img_url = $self->hub->species_defs->ENSEMBL_IMAGE_ROOT . '/species/' . $self->hub->species_defs->IMAGE_PATH;
   my $species_img = sprintf '<img class="nosprite" src="%s.png">', $img_url;
   my $common_name = '';

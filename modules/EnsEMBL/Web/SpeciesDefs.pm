@@ -47,14 +47,14 @@ package EnsEMBL::Web::SpeciesDefs;
 ###  if( scalar( $species_defs->valid_species('Homo_sapiens') ){ }
 
 ###  # Getting a setting (parameter value/section data) from the config
-###  my $sp_name = $speciesdefs->get_config('Homo_sapiens','SPECIES_COMMON_NAME');
+###  my $sp_name = $speciesdefs->get_config('Homo_sapiens','SPECIES_DISPLAY_NAME');
 
 ###  # Alternative setting getter - uses autoloader
-###  my $sp_bio_name = $speciesdefs->SPECIE_%S_COMMON_NAME('Homo_sapiens');
+###  my $sp_bio_name = $speciesdefs->SPECIE_%S_SCIENTIFIC_NAME('Homo_sapiens');
 
 ###  # Can also use the ENSEMBL_SPECIES environment variable
 ###  ENV{'ENSEMBL_SPECIES'} = 'Homo_sapiens';
-###  my $sp_bio_name = $speciesdefs->SPECIES_COMMON_NAME;
+###  my $sp_bio_name = $speciesdefs->SPECIES_SCIENTIFIC_NAME;
 
 ###  # Getting a parameter with multiple values
 ###  my( @chromosomes ) = @{$speciesdefs->ENSEMBL_CHROMOSOMES};
@@ -889,39 +889,27 @@ sub _parse {
 
       ## Species-specific munging
       if ($url ne "MULTI" && $url ne "databases") {
-
-        my $scientific_name = $tree->{$url}{'SPECIES_SCIENTIFIC_NAME'};
-        my $common_name = $tree->{$url}{'SPECIES_COMMON_NAME'};
-        my $strain_name = $tree->{$url}{'SPECIES_STRAIN'};
-                                                    
-        if ($SiteDefs::USE_COMMON_NAMES) {
-          $tree->{$url}{'PREFERRED_DISPLAY_NAME'} = $common_name; 
-        }
-        else {
-          my $name = $scientific_name; 
-          if ($strain_name && $strain_name !~ /reference/) {
-            $name .= sprintf ' (%s)', $strain_name;
-          }
-          $tree->{$url}{'PREFERRED_DISPLAY_NAME'} = $name; 
-        }
-
+                                       
+        my $display_name = $tree->{$url}{'SPECIES_DISPLAY_NAME'};
+             
         # Populate taxonomy division using e_divisions.json template
-        push @{$species_to_assembly->{$common_name}}, $config_packer->tree->{'ASSEMBLY_VERSION'};
+        push @{$species_to_assembly->{$display_name}}, $config_packer->tree->{'ASSEMBLY_VERSION'};
         my $taxonomy = $config_packer->tree->{TAXONOMY};
         my $children = [];
         my $other_species_children = [];
         my @other_species = grep { $_->{key} =~ m/other_species/ } @{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}};
         $other_species[0]->{child_nodes} = [] if ($other_species[0] && !$other_species[0]->{child_nodes});
+        my $strain_name = $tree->{$url}{'SPECIES_STRAIN'};
         my $strain_group = $tree->{$url}{'STRAIN_GROUP'};
         my $species_key = $tree->{$url}{'SPECIES_URL'}; ## Key on actual URL, not production name
 
         foreach my $node (@{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}}) {
           my $child = {
             key             => $species_key,
-            scientific_name => $scientific_name,
-            common_name     => $common_name,
+            display_name    => $tree->{$url}{'SPECIES_DISPLAY_NAME'},
+            scientific_name => $tree->{$url}{'SPECIES_SCIENTIFIC_NAME'},
+            common_name     => $tree->{$url}{'SPECIES_COMMON_NAME'},
             image           => $tree->{$url}{'SPECIES_IMAGE'},
-            display_name    => $tree->{$url}{'DISPLAY_NAME'},
             is_leaf         => 'true'
           };
 
@@ -932,7 +920,6 @@ sub _parse {
             # Create display name for Reference species
             my $ref_name = $tree->{$url}{'SPECIES_COMMON_NAME'} . ' '. $strain_name;
             $child->{display_name} = $ref_name;
-            # $child->{type} = $ref_name;
           }
 
           if (!$node->{taxa}) {
@@ -1342,18 +1329,17 @@ sub species_label {
 
   $key = ucfirst $key;
 
-  return 'Ancestral sequence' unless $self->get_config($key, 'SPECIES_BIO_NAME');
+  return 'Ancestral sequence' unless $self->get_config($key, 'SPECIES_URL');
   
-  my $common = $self->get_config($key, 'SPECIES_COMMON_NAME');
-  my $rtn    = $self->get_config($key, 'SPECIES_BIO_NAME');
-  $rtn       =~ s/_/ /g;
+  my $display = $self->get_config($key, 'SPECIES_COMMON_NAME');
+  my $sci    = $self->get_config($key, 'SPECIES_SCIENTIFIC_NAME');
   
-  $rtn = sprintf '<i>%s</i>', $rtn unless $no_formatting;
+  $sci = sprintf '<i>%s</i>', $sci unless $no_formatting;
   
-  if ($common =~ /\./) {
-    return $rtn;
+  if ($display =~ /\./) {
+    return $sci;
   } else {
-    return "$common ($rtn)";
+    return "$display ($sci)";
   }  
 }
 
@@ -1428,15 +1414,14 @@ sub species_dropdown {
   
   ## TODO - implement grouping by taxon
   my @options;
-  my @sorted_by_common = 
-    sort { $a->{'common'} cmp $b->{'common'} }
-    map  {{ name => $_, common => $self->get_config($_, 'SPECIES_COMMON_NAME') }}
+  my @sorted = 
+    sort { $a->{'display'} cmp $b->{'display'} }
+    map  {{ name => $_, display => $self->get_config($_, 'SPECIES_DISPLAY_NAME') }}
     $self->valid_species;
   
-  foreach my $sp (@sorted_by_common) {
-    # Get the settings from ini files 
+  foreach my $sp (@sorted) {
     my $name = $sp->{'name'};
-    push @options, { value => $sp->{'name'}, name => $sp->{'common'} };
+    push @options, { value => $sp->{'name'}, name => $sp->{'display'} };
   }
 
   return @options;

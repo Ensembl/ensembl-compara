@@ -173,7 +173,7 @@ sub slice {
 sub get_slice_display_name {
   ## get full name of seq-region from which the alignment comes
   my ($self, $name) = @_;
-  return $self->hub->species_defs->get_config($name, 'SPECIES_COMMON_NAME') || 'Ancestral sequences';
+  return $self->hub->species_defs->get_config($name, 'SPECIES_DISPLAY_NAME') || 'Ancestral sequences';
 }
 
 sub long_caption {

@@ -247,7 +247,7 @@ sub _get_sequence {
     display_width   => $self->param('display_width'),
     site_type       => ucfirst lc $species_defs->ENSEMBL_SITETYPE || 'Ensembl',
     species         => $hub->species,
-    display_species => $species_defs->SPECIES_COMMON_NAME,
+    display_species => $species_defs->SPECIES_DISPLAY_NAME,
     comparison      => 1,
     ambiguity       => 1,
     db              => $object->can('get_db') ? $object->get_db : 'core',

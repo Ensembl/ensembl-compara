@@ -78,7 +78,7 @@ sub content {
     $html .= $self->sidebar_panel("Can't see the track hub you're interested in?", qq(<p>We only search for hubs compatible with assemblies used on this website - please <a href="$registry" rel="external">search the registry directly</a> for data on other assemblies.</p><p>Alternatively, you can <a href="$link" class="modal_link">manually attach any hub</a> for which you know the URL.</p>));
 
     ## Reminder of search terms
-    $html .= sprintf '<p><b>Searched %s %s', $hub->param('common_name'), $hub->param('assembly_display');
+    $html .= sprintf '<p><b>Searched %s %s', $hub->param('display_name'), $hub->param('assembly_display');
     my @search_extras;
     if ($hub->param('type')) {
       push @search_extras, '"'.ucfirst($hub->param('type')).'"';
@@ -191,7 +191,7 @@ sub _pagination {
   my $html = '<div class="list_paginate">Page: <span class="page_button_frame">';
   
   ## Set parameters that don't change 
-  foreach (qw(assembly_key assembly_id assembly_display data_type thr_species common_name)) {
+  foreach (qw(assembly_key assembly_id assembly_display data_type thr_species display_name)) {
     $args->{'url_params'}{$_} = $self->hub->param($_);
   }
 

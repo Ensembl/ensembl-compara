@@ -112,11 +112,11 @@ sub species_list {
     my ($align)      = split '--', $referer->{'params'}{'align'}[0];
     my $alignment    = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'species'} || {};
     my $primary      = $referer->{'ENSEMBL_SPECIES'};
-    my @species      = scalar keys %$alignment ? () : ([ $primary, $species_defs->SPECIES_COMMON_NAME($primary) ]);
+    my @species      = scalar keys %$alignment ? () : ([ $primary, $species_defs->SPECIES_DISPLAY_NAME($primary) ]);
 
     my @species_list = map { $_ = $species_defs->production_name_mapping($_) || $_ } keys %$alignment;
 
-    foreach (sort { $a->[1] cmp $b->[1] } map [ $_, $species_defs->SPECIES_COMMON_NAME($_) ], @species_list) {
+    foreach (sort { $a->[1] cmp $b->[1] } map [ $_, $species_defs->SPECIES_DISPLAY_NAME($_) ], @species_list) {
       if ($_->[0] eq $primary) {
         unshift @species, $_;
       } elsif ($_->[0] eq 'ancestral_sequences') {

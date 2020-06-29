@@ -40,7 +40,7 @@ sub render {
   my $species_defs        = $hub->species_defs;
   my $page_species        = $hub->species || 'Multi';
   my $multi               = $hub->species =~ /Multi/i;
-  my $species_name        = $page_species eq 'Multi' ? '' : $species_defs->PREFERRED_DISPLAY_NAME;
+  my $species_name        = $page_species eq 'Multi' ? '' : $species_defs->SPECIES_DISPLAY_NAME;
   my $favourites          = $hub->get_favourite_species;
   my $search_url          = $species_defs->ENSEMBL_WEB_ROOT . "$page_species/Psychic";
   my $default_search_code = $species_defs->ENSEMBL_DEFAULT_SEARCHCODE;

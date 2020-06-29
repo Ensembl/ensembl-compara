@@ -130,7 +130,7 @@ sub populate_tree {
     { 'availability' => 'family not_strain', 'concise' => 'Ensembl protein families' }
   );
   
-  $fam_node->append($self->create_subnode('Family/Genes', uc($species_defs->get_config($hub->species, 'SPECIES_COMMON_NAME')) . ' genes in this family',
+  $fam_node->append($self->create_subnode('Family/Genes', uc($species_defs->get_config($hub->species, 'SPECIES_DISPLAY_NAME')) . ' genes in this family',
     [qw( genes EnsEMBL::Web::Component::Gene::FamilyGenes )],
     { 'availability'  => 'family not_strain', 'no_menu_entry' => 1 }
   ));

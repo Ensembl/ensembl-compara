@@ -350,7 +350,8 @@ sub get_species_info {
                                        || !$strain_group;
       $self->{'_species_info'}{$_} = {
         'key'               => $_,
-        'name'              => $species_defs->get_config($_, 'SPECIES_BIO_NAME'),
+        'name'              => $species_defs->get_config($_, 'SPECIES_URL'),
+        'display_name'      => $species_defs->get_config($_, 'SPECIES_DISPLAY_NAME'),
         'common'            => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
         'scientific'        => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
         'assembly'          => $species_defs->get_config($_, 'ASSEMBLY_NAME'),

@@ -1003,7 +1003,7 @@ sub _update_missing {
   my $info = sprintf(
     '%s %s version %s.%s (%s) %s: %s - %s',
     $species_defs->ENSEMBL_SITETYPE,
-    $species_defs->SPECIES_BIO_NAME,
+    $species_defs->SPECIES_SCIENTIFIC_NAME,
     $species_defs->ENSEMBL_VERSION,
     $species_defs->SPECIES_RELEASE_VERSION,
     $species_defs->ASSEMBLY_NAME,

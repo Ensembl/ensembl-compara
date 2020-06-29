@@ -67,12 +67,12 @@ sub page_header {
   my $hub               = $self->hub;
   my $path              = $hub->species_path;
   my $image             = $hub->species_defs->SPECIES_IMAGE;
-  my $common_name       = $hub->species_defs->SPECIES_COMMON_NAME;
+  my $display_name       = $hub->species_defs->SPECIES_DISPLAY_NAME;
 
   my $html = qq(
     <div class="column-padding no-left-margin species-box">
       <a href="$path"><img class="badge-48" src="/i/species/$image.png" class="species-img float-left" alt="" /></a>
-      <h1 class="no-bottom-margin">$common_name assembly and gene annotation</h1>
+      <h1 class="no-bottom-margin">$display_name assembly and gene annotation</h1>
     </div>
   );
 

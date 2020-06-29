@@ -38,7 +38,7 @@ sub content {
   my $hub          = $self->hub;
   my $table        = $self->new_twocol;
   my $species_defs = $hub->species_defs;
-  my $sp           = $species_defs->DISPLAY_NAME;
+  my $sp           = $species_defs->SPECIES_DISPLAY_NAME;
   my $transcript   = $object->Obj;
   my $translation  = $transcript->translation;
   my $db           = $object->get_db;

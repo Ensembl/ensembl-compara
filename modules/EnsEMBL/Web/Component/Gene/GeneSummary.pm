@@ -79,7 +79,7 @@ sub content {
     my %temp = map { $_->display_id, 1 } @CCDS;
     @CCDS = sort keys %temp;
     my $template  = '<p>This gene is a member of the %s CCDS set: %s</p>';
-    my $sp_name   = $species_defs->DISPLAY_NAME; 
+    my $sp_name   = $species_defs->SPECIES_DISPLAY_NAME; 
     ## FIXME Hack for e86 mouse strains
     if ($species_defs->STRAIN_GROUP && $species_defs->SPECIES_STRAIN !~ /reference/) {
       $template = 'This gene is similar to a CCDS gene on %s: %s';
@@ -286,7 +286,7 @@ sub content {
                       '@type'       => 'DataRecord', 
                       'identifier'  => $object->stable_id, 
                       'mainEntity'  => $bs_gene,
-                      'isPartOf'    => sprintf('%s %s Gene Set', $sitename, $hub->species_defs->SPECIES_COMMON_NAME),
+                      'isPartOf'    => sprintf('%s %s Gene Set', $sitename, $hub->species_defs->SPECIES_DISPLAY_NAME),
                     };
     $bioschema = create_bioschema($bs_record);
   }

@@ -35,7 +35,7 @@ sub init_cacheable {
     foreach (keys %{$alignments->{$key}{'species'}}) {
       my @name = split '_', $alignments->{$key}{'name'};
       my $n    = shift @name;
-      $defaults{lc "species_${key}_$_"} = [ join(' ', $n, map(lc, @name), '-', $species_defs->get_config($_, 'SPECIES_COMMON_NAME') || 'Ancestral sequences'), /ancestral/ ? 'off' : 'yes' ];
+      $defaults{lc "species_${key}_$_"} = [ join(' ', $n, map(lc, @name), '-', $species_defs->get_config($_, 'SPECIES_DISPLAY_NAME') || 'Ancestral sequences'), /ancestral/ ? 'off' : 'yes' ];
     }
   }
 

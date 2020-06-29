@@ -88,7 +88,7 @@ sub template_SPECIESDEFS {
 sub template_SPECIES {
   my ($self, $code) = @_;
   return $self->hub->species if $code eq 'code';
-  return $self->species_defs->DISPLAY_NAME if $code eq 'name';
+  return $self->species_defs->SPECIES_DISPLAY_NAME if $code eq 'name';
   return $self->species_defs->SPECIES_RELEASE_VERSION if $code eq 'version';
   return "**$code**";
 }

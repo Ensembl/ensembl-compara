@@ -266,7 +266,6 @@ sub psychic {
       $species_path = "/$coll" if $coll;
 
       $url = $self->escaped_url(($species eq 'ALL' || !$species ? '/Multi' : $species_path) . "/$script?species=%s;idx=%s;q=%s", $species || 'all', $index, $query);
-      my $common = $species_defs->get_config($species,'SPECIES_COMMON_NAME');
     }
   }
 
