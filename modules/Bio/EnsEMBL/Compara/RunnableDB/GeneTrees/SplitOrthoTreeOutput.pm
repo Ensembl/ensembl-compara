@@ -51,7 +51,7 @@ sub param_defaults {
         'file_header' => [
             'mlss_id', 'homology_id', 'homology_type', 'is_tree_compliant',
             'species_tree_node_id', 'gene_tree_node_id', 'gene_tree_root_id',
-            'gene_member_id', 'seq_member_id', 'stable_id', 'species', 'genome_db_id'
+            'gene_member_id', 'seq_member_id', 'stable_id', 'species', 'genome_db_id',
             'cigar_line', 'perc_cov', 'perc_id', 'perc_pos', 'homology_gene_member_id',
             'homology_seq_member_id', 'homology_stable_id', 'homology_species',
             'homology_genome_db_id', 'homology_cigar_line', 'homology_perc_cov',
