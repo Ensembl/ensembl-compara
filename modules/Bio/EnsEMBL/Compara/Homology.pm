@@ -408,8 +408,8 @@ sub toString {
 =head2 full_string
 
   Example     : print $homology->full_string();
-  Description : This method returns a text-description of the homology,
-                including all information contained in the object
+  Description : This method returns a text-description of the homology in
+                TSV format, including all information contained in the object
   Returntype  : String
   Exceptions  : none
   Caller      : general

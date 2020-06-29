@@ -382,7 +382,7 @@ sub parsed_homologies {
         my $row = map_row_to_header( $line, $self->homology_header );
         my ( $homology_id, $gm_id_1, $gm_id_2 ) = ( $row->{homology_id}, $row->{gene_member_id}, $row->{homology_gene_member_id} );
         $homologies{$gm_id_1}->{$gm_id_2} = $homology_id;
-        $homologies{$gm_id_2}->{$gm_id_1} = $homology_id;
+        $homologies{$gm_id_2}->{$gm_id_1} = $homology_id;      
     }
     
     $self->param('parsed_homologies', \%homologies);
@@ -411,7 +411,7 @@ sub _identify_paralogs {
             $row->{homology_genome_db_id}
         );
         push( @{$gtn_ids{$gene_tree_node_id}->{$gdb_id_1}}, $gm_id_1 );
-        push( @{$gtn_ids{$gene_tree_node_id}->{$gdb_id_2}}, $gm_id_2 );
+        push( @{$gtn_ids{$gene_tree_node_id}->{$gdb_id_2}}, $gm_id_2 );      
     }
     
     # find gene_members from the same genome_db that share a gene_tree_node_id

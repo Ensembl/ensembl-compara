@@ -17,7 +17,6 @@
 use strict;
 use warnings;
 
-use Data::Dumper;
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Test::MultiTestDB;

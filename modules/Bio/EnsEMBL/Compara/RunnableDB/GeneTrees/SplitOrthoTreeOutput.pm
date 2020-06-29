@@ -23,7 +23,7 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SplitOrthoTreeOutput
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
 Filter the matching mlss lines from all files under the orthotree_dir
 and write them to mlss-specific files
@@ -61,10 +61,6 @@ sub param_defaults {
     };
 }
 
-# sub fetch_input {
-#     my $self = shift;
-# }
-
 sub run {
     my $self = shift;
 
@@ -99,16 +95,6 @@ sub run {
         "\n\t- ", 
         values %{$self->param('mlss_filenames')}
     ) . "\n\n";
-}
-
-sub write_output {
-    my $self = shift;
-
-    # close all file handles
-    # my %mlss_fhs = %{ $self->param('mlss_filehandles') };
-    # foreach my $fh ( values %mlss_fhs ) {
-    #     close $fh;
-    # }
 }
 
 sub _get_mlss_filehandle {
@@ -149,7 +135,7 @@ sub orthotree_files {
     my @files;
     my $orthotree_dir = $self->param('orthotree_dir');
     find(sub {
-        push @files,$File::Find::name if /\.orthotree.tsv$/;
+        push @files, $File::Find::name if /\.orthotree.tsv$/;
     }, $orthotree_dir);
 
     $self->param('orthotree_files', \@files);

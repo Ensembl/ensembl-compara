@@ -39,7 +39,6 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
-use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -85,9 +84,9 @@ sub write_output {
     my @header_cols = split(/\s+/, $header_line);
 
     # open output files - one per table in tmp space
-    my $homology_csv = $self->worker_temp_directory . 'homology.txt';
+    my $homology_csv = $self->worker_temp_directory . '/homology.txt';
     open(my $h_csv, '>', $homology_csv) or die "Cannot open $homology_csv for writing";
-    my $homology_member_csv = $self->worker_temp_directory . 'homology_member.txt';
+    my $homology_member_csv = $self->worker_temp_directory . '/homology_member.txt';
     open(my $hm_csv, '>', $homology_member_csv) or die "Cannot open $homology_member_csv for writing";
 
     # iterate over homology input and format it for later mysqlimport
@@ -102,8 +101,8 @@ sub write_output {
         }
 
         my ( $homology_row, $homology_member_rows ) = $self->split_row_for_homology_tables($row);
-        print $h_csv $homology_row;
-        print $hm_csv $homology_member_rows;
+        print $h_csv $homology_row if $self->debug;
+        print $hm_csv $homology_member_rows if $self->debug;
         $h_count++;
     }
     close $h_csv;
@@ -118,7 +117,7 @@ sub write_output {
     my $port = $this_dbc->port;
     my $dbname = $this_dbc->dbname;
     my $import_cmd = join(' ', 
-        "mysqlimport -h$host -P$port -u$user -p$pass",
+        "mysqlimport --host=$host --port=$port --user=$user --password=$pass",
         "--local --lock-tables=0 --ignore --fields-terminated-by=','",
         $dbname
     );

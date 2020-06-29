@@ -178,7 +178,7 @@ sub default_options {
             #Parameters for HighConfidenceOrthologs
             'threshold_levels'            => [ ],          # division specific
             'high_confidence_capacity'    => 500,          # how many mlss_ids can be processed in parallel
-            'import_homologies_capacity'  => 50,           # how many homology mlss_ids can be mysqlimported in parallel
+            'import_homologies_capacity'  => 50,           # how many homology mlss_ids can be imported in parallel (via mysqlimport)
             'goc_files_dir'               => $self->o('homology_dumps_dir'),
             'range_label'                 => $self->o('member_type'),
 

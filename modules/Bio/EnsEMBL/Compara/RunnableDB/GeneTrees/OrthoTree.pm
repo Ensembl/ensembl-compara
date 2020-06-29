@@ -202,8 +202,6 @@ sub post_cleanup {
     $self->param('gene_tree', undef);
   }
 
-    # close $self->param('flatfile_handle') if $self->param('flatfile_handle');
-
   $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
 

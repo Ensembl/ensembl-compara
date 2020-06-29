@@ -104,7 +104,7 @@ sub pipeline_analyses_split_homologies_posttree {
 
         { -logic_name => 'split_tree_homologies',
           -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SplitOrthoTreeOutput',
-          -rc_name => '500Mb_job',
+          -rc_name    => '500Mb_job',
         },
     ];
 }
