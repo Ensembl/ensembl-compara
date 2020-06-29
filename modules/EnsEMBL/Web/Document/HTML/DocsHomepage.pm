@@ -103,7 +103,6 @@ data - find out more!</p>
   push @cells, $data_access;
 
   ## PROGRAMMATIC ACCESS
-
   if ($sd->HAS_API_DOCS) {
     
     my $api_docs = qq(
@@ -146,7 +145,6 @@ other command-line scripts</li>
   my $count = 0;
 
   foreach my $cell (@cells) {
-    warn ">>> CELL $count";
     if ($count % 2 == 0) {
       $html .= '<tr>';
     }
