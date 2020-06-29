@@ -101,8 +101,8 @@ sub write_output {
         }
 
         my ( $homology_row, $homology_member_rows ) = $self->split_row_for_homology_tables($row);
-        print $h_csv $homology_row if $self->debug;
-        print $hm_csv $homology_member_rows if $self->debug;
+        print $h_csv $homology_row;
+        print $hm_csv $homology_member_rows;
         $h_count++;
     }
     close $h_csv;
