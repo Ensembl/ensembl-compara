@@ -1160,7 +1160,6 @@ sub core_pipeline_analyses {
             },
             -rc_name    => '1Gb_job',
             -flow_into  => {
-                1 => [ 'final_tree_steps' ],
                 -1 => [ 'orthotree_himem' ],
             },
         },
@@ -1173,13 +1172,7 @@ sub core_pipeline_analyses {
                 'hashed_gene_tree_id' => '#expr(dir_revhash(#gene_tree_id#))expr#',
                 'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
             },
-            -flow_into  => [ 'final_tree_steps' ],
             -rc_name    => '4Gb_job',
-        },
-
-        {   -logic_name => 'final_tree_steps',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => [ 'ktreedist', 'consensus_cigar_line_prep' ],
         },
 
         {   -logic_name    => 'ktreedist',
@@ -1195,15 +1188,6 @@ sub core_pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnConsensusCigarLine',
             -rc_name        => '4Gb_job',
             -batch_size     => 20,
-        },
-
-        {   -logic_name         => 'hc_tree_homologies',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'tree_homologies',
-            },
-            -rc_name            => '500Mb_job',
-            %hc_params,
         },
 
         {   -logic_name => 'homology_stats_factory',

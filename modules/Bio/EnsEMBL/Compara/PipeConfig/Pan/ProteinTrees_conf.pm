@@ -94,7 +94,6 @@ sub tweak_analyses {
         'treebest_decision'             => '500Mb_job',
         'hc_post_tree'                  => '500Mb_job',
         'ortho_tree_decision'           => '500Mb_job',
-        'hc_tree_homologies'            => '500Mb_job',
         'copy_dumps_to_shared_loc'      => '500Mb_job',
         'homology_dumps_mlss_id_factory'    => '500Mb_job',
     );
