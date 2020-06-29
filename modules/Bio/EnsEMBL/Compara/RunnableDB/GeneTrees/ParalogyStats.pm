@@ -83,7 +83,7 @@ sub fetch_input {
         
         
         # homology counts
-        $stats_raw{$homology_type}->{$gene_tree_root_id}->{"num_homologies"} += 1;
+        $stats_raw{$homology_type}->{$gene_tree_root_id}->{"num_homologies"} += 1;        
         # unique seq_members
         $stats_raw{$homology_type}->{$gene_tree_root_id}->{"seq_members"}->{$seq_member_id} = 1;
         $stats_raw{$homology_type}->{$gene_tree_root_id}->{"seq_members"}->{$hom_seq_member_id} = 1;

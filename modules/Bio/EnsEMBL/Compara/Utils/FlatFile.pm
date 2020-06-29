@@ -69,9 +69,9 @@ sub map_row_to_header {
     } else {
         @head_cols = split(/\s+/, $header);
     }
-
+    
     die "Number of columns in header do not match row" unless scalar @cols == scalar @head_cols;
-
+    
     my $row;
     for ( my $i = 0; $i < scalar @cols; $i++ ) {
         $row->{$head_cols[$i]} = $cols[$i];

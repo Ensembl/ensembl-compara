@@ -93,7 +93,7 @@ sub fetch_input {
         $stats1{$homology_type}->{$gene_tree_node_id}->{$gene_member_id}->{$genome_db_id}->{"sum_perc_id"} += $identity; # p1
         $stats1{$homology_type}->{$gene_tree_node_id}->{$hom_gene_member_id}->{$hom_genome_db_id}->{"sum_perc_id"} += $hom_identity; # p2
     }
-    close $hom_handle;
+    close $hom_handle;   
     
     my %stats2; # middle SQL subquery
     foreach my $hom_type ( keys %stats1 ) {
