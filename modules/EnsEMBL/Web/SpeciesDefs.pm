@@ -901,24 +901,25 @@ sub _parse {
         $other_species[0]->{child_nodes} = [] if ($other_species[0] && !$other_species[0]->{child_nodes});
         my $strain_name = $tree->{$url}{'SPECIES_STRAIN'};
         my $strain_group = $tree->{$url}{'STRAIN_GROUP'};
+        my $group_name   = $tree->{$url}{'SPECIES_COMMON_NAME'};
         my $species_key = $tree->{$url}{'SPECIES_URL'}; ## Key on actual URL, not production name
 
         foreach my $node (@{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}}) {
           my $child = {
             key             => $species_key,
-            display_name    => $tree->{$url}{'SPECIES_DISPLAY_NAME'},
             scientific_name => $tree->{$url}{'SPECIES_SCIENTIFIC_NAME'},
-            common_name     => $tree->{$url}{'SPECIES_COMMON_NAME'},
+            common_name     => $tree->{$url}{'SPECIES_DISPLAY_NAME'},
+            display_name    => $tree->{$url}{'GROUP_DISPLAY_NAME'},
             image           => $tree->{$url}{'SPECIES_IMAGE'},
             is_leaf         => 'true'
           };
 
           if ($strain_group && $strain_name !~ /reference/) {
-            $child->{type} = $strain_group . ' ' . $tree->{$url}{'STRAIN_TYPE'}. 's';
+            $child->{type} = $group_name . ' ' . $tree->{$url}{'STRAIN_TYPE'}. 's';
           }
           elsif($strain_group && $strain_name =~ /reference/) {
             # Create display name for Reference species
-            my $ref_name = $tree->{$url}{'SPECIES_COMMON_NAME'} . ' '. $strain_name;
+            my $ref_name = $tree->{$url}{'SPECIES_DISPLAY_NAME'} . ' '. $strain_name;
             $child->{display_name} = $ref_name;
           }
 
@@ -1322,7 +1323,7 @@ sub table_info_other {
 sub species_label {
   my ($self, $key, $no_formatting) = @_;
 
-  if( my $sdhash          = $self->SPECIES_DISPLAY_NAME) {
+  if( my $sdhash          = $self->SPECIES_DISPLAY_NAMES) {
       (my $lcspecies = lc $key) =~ s/ /_/g;
       return $sdhash->{$lcspecies} if $sdhash->{$lcspecies};
   }

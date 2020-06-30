@@ -298,7 +298,7 @@ sub _species_list {
 
   my (@list, %done);
 
-  for (@fav, sort {$species->{$a}{'common'} cmp $species->{$b}{'common'}} keys %$species) {
+  for (@fav, sort {$species->{$a}{'display_name'} cmp $species->{$b}{'display_name'}} keys %$species) {
 
     next if ($done{$_} || !$species->{$_} || !$species->{$_}{'is_reference'});
 
@@ -321,7 +321,7 @@ sub _species_list {
       homepage    => $homepage,
       name        => $species->{$_}{'name'},
       img         => sprintf('%sspecies/%s.png', $img_url, $species->{$_}{'image'}),
-      common      => $species->{$_}{'common'},
+      common      => $species->{$_}{'display_name'},
       assembly    => $species->{$_}{'assembly'},
       assembly_v  => $species->{$_}{'assembly_version'},
       favourite   => $fav{$_} ? 1 : 0,

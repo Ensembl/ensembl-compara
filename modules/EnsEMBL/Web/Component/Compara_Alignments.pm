@@ -326,7 +326,6 @@ sub draw_tree {
   my $image_width     = $self->image_width || 800;
   my $colouring       = $self->param('colouring') || 'background';
   my $species         = $hub->species;
-  my $species_name    = $hub->species_defs->get_config(ucfirst($species), 'SPECIES_SCIENTIFIC_NAME');
   my $mlss_adaptor            = $compara_db->get_adaptor('MethodLinkSpeciesSet');
   my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($align);
 
