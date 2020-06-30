@@ -22,6 +22,9 @@ use Getopt::Long;
 
 use Bio::EnsEMBL::Compara::Utils::JIRA;
 
+# Epic JIRA Ticket ID for Production taks
+use constant EPIC_TICKET_ID => 'ENSCOMPARASW-3572';
+
 main();
 
 sub main {
@@ -76,7 +79,12 @@ sub main {
     die 'Aborted by user. Please rerun with correct parameters.' if ( $response ne 'y' );
 
     # Create JIRA tickets
-    my $subtask_keys = $jira_adaptor->create_tickets(-JSON_FILE => $tickets_json, -DRY_RUN => $dry_run, -DEFAULT_PRIORITY => 'Blocker');
+    my $subtask_keys = $jira_adaptor->create_tickets(
+        -JSON_FILE        => $tickets_json,
+        -DEFAULT_PRIORITY => 'Blocker',
+        -EPIC_LINK        => EPIC_TICKET_ID(),
+        -DRY_RUN          => $dry_run,
+    );
     printf("Created %d top-level tickets.\n", scalar(@$subtask_keys));
 }
 

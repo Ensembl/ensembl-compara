@@ -35,6 +35,7 @@ use Bio::EnsEMBL::Utils::Logger;
 # JIRA identifiers of the custom field used in Compara (ENSCOMPARASW)
 use constant DIVISION_CUSTOM_FIELD_ID => 'customfield_11130';
 use constant CATEGORY_CUSTOM_FIELD_ID => 'customfield_11333';
+use constant EPIC_LINK_CUSTOM_FIELD_ID => 'customfield_10236';
 
 # Used to automatically populate the category when none is given
 my %component_to_category = (
@@ -117,6 +118,8 @@ sub new {
   Arg[-EXTRA_LABELS] : (optional) arrayref of strings - a list of JIRA labels to
                        include in the JIRA tickets. By default, no more labels
                        are added.
+  Arg[-EPIC_LINK]    : (optional) string - a JIRA Epic ticket key to link the
+                       JIRA tickets to
   Arg[-UPDATE]       : (optional) boolean - update the JIRA tickets if they
                        already exist, i.e. reopen the tickets, update their
                        description and remove the previous assignee. By default,
@@ -139,8 +142,8 @@ sub new {
 
 sub create_tickets {
     my $self = shift;
-    my ( $json_str, $json_file, $json_obj, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels, $update, $dry_run ) =
-        rearrange([qw(JSON_STR JSON_FILE JSON_OBJ DEFAULT_ISSUE_TYPE DEFAULT_PRIORITY EXTRA_COMPONENTS EXTRA_CATEGORIES EXTRA_LABELS UPDATE DRY_RUN)], @_);
+    my ( $json_str, $json_file, $json_obj, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels, $epic_link, $update, $dry_run ) =
+        rearrange([qw(JSON_STR JSON_FILE JSON_OBJ DEFAULT_ISSUE_TYPE DEFAULT_PRIORITY EXTRA_COMPONENTS EXTRA_CATEGORIES EXTRA_LABELS EPIC_LINK UPDATE DRY_RUN)], @_);
     # Read tickets from either a JSON formated string or a JSON file path
     my $json_ticket_list;
     if ($json_str) {
@@ -162,9 +165,10 @@ sub create_tickets {
     my $jira_tickets = ();
     foreach my $json_ticket ( @$json_ticket_list ) {
         push @$jira_tickets,
-             $self->_json_to_jira($json_ticket, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels);
+             $self->_json_to_jira($json_ticket, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels, $epic_link);
         if ($json_ticket->{subtasks}) {
             foreach my $json_subtask ( @{$json_ticket->{subtasks}} ) {
+                # NOTE: Sub-task tickets inherit the epic link from their parent task
                 push @{$jira_tickets->[-1]->{subtasks}},
                      $self->_json_to_jira($json_subtask, 'Sub-task', $default_priority, $extra_components, $extra_categories, $extra_labels);
             }
@@ -355,6 +359,8 @@ sub _validate_division {
                 JIRA categories to include in the JIRA ticket
   Arg[6]      : (optional) arrayref of strings $extra_labels - a list of JIRA
                 labels to include in the JIRA ticket
+  Arg[7]      : (optional) string $epic_link - a JIRA Epic ticket key to link
+                the JIRA tickets to
   Example     : my $json_hash = {
                     "summary" => "Example task",
                     "description" => "Example for Bio::EnsEMBL::Compara::Utils::JIRA"
@@ -371,7 +377,7 @@ sub _validate_division {
 =cut
 
 sub _json_to_jira {
-    my ( $self, $json_hash, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels ) = @_;
+    my ( $self, $json_hash, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels, $epic_link ) = @_;
     my %jira_hash;
     $jira_hash{'project'}     = { 'key' => $self->{_project} };
     $jira_hash{'summary'}     = $self->_replace_placeholders($json_hash->{'summary'});
@@ -436,6 +442,11 @@ sub _json_to_jira {
     # $jira_hash{'parent'}
     if ($json_hash->{'parent'}) {
         $jira_hash{'parent'} = { 'key' => $json_hash->{'parent'} };
+    }
+    # $jira_hash{'epic_link'}
+    # NOTE: Sub-task tickets inherit the epic link from their parent task
+    if ($epic_link && ($jira_hash{issuetype}->{name} ne 'Sub-task')) {
+        $jira_hash{EPIC_LINK_CUSTOM_FIELD_ID()} = $epic_link;
     }
     # Create JIRA ticket and return it
     my $ticket = { 'fields' => \%jira_hash };
