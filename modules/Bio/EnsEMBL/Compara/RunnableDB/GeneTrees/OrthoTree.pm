@@ -218,10 +218,7 @@ sub prepare_analysis {
 sub run_analysis {
   my $self = shift;
 
-    my $output_fh;
-    if ( $self->param('output_flatfile') ) {
-        $output_fh = $self->_create_flatfile;
-    }
+    $self->_create_flatfile if $self->param('output_flatfile');
 
   my $gene_tree = $self->param('gene_tree');
 
@@ -245,11 +242,11 @@ sub run_analysis {
 
       my $node_type = $ancestor->get_value_for_tag('node_type');
       if ($ancestor->is_speciation) {
-          $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 1, $output_fh);
+          $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 1);
       } elsif ($node_type eq 'dubious') {
-          $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 0, $output_fh);
+          $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 0);
       } elsif ($node_type eq 'gene_split') {
-          $self->tag_genepairlink($genepairlink, 'gene_split', 1, $output_fh);
+          $self->tag_genepairlink($genepairlink, 'gene_split', 1);
       } elsif ($node_type eq 'duplication') {
           push @pair_group, $genepairlink;
       } else {
@@ -269,11 +266,11 @@ sub run_analysis {
           }
       }
       foreach my $par (@good_ones) {
-          $self->tag_genepairlink(@$par, $output_fh);
+          $self->tag_genepairlink(@$par);
       }
   }
 
-
+    close $self->param('output_filehandle') if $self->param('output_filehandle');
 }
 
 sub print_summary {
@@ -417,7 +414,6 @@ sub tag_genepairlink
     my $genepairlink = shift;
     my $orthotree_type = shift;
     my $is_tree_compliant = shift;
-    my $output_fh = shift;
 
     $genepairlink->add_tag('orthotree_type', $orthotree_type);
     $genepairlink->add_tag('is_tree_compliant', $is_tree_compliant);
@@ -434,7 +430,7 @@ sub tag_genepairlink
     $self->param('n_stored_homologies', $n);
     print STDERR "$n homologies\n" unless $n % 1000;
 
-    $self->store_gene_link_as_homology($genepairlink, $output_fh) if $self->param('store_homologies');
+    $self->store_gene_link_as_homology($genepairlink) if $self->param('store_homologies');
 
 }
 
@@ -489,7 +485,6 @@ sub is_closest_homologue
 sub store_gene_link_as_homology {
   my $self = shift;
   my $genepairlink  = shift;
-  my $output_fh = shift;
 
   $self->display_link_analysis($genepairlink) if($self->debug>2);
   my $type = $genepairlink->get_value_for_tag('orthotree_type');
@@ -560,8 +555,9 @@ sub store_gene_link_as_homology {
     }
   }
 
-    if ( $self->param('output_flatfile') ) {
-        $homology->{_dba} = $self->compara_dba;
+    my $output_fh = $self->param('output_filehandle');
+    if ( $output_fh ) {
+        $homology->adaptor($self->compara_dba->get_HomologyAdaptor);
         # create homology_id from seq_member_ids as this will be unique
         $homology->dbID( join('', sort map {$_->seq_member_id} @{ $homology->get_all_Members }) );
         print $output_fh join("\t", @{$homology->full_string}) . "\n";
@@ -605,6 +601,7 @@ sub _create_flatfile {
     # open file handle and print header
     open( my $outfh, '>', $outfile ) or die "Cannot open $outfile for writing";
     print $outfh join("\t", @{ $Bio::EnsEMBL::Compara::Homology::full_string_headers }) . "\n";
+    $self->param('output_filehandle', $outfh);
     return $outfh;
 }
 
@@ -612,12 +609,13 @@ sub _hc_flatfile {
     my $self = shift;
 
     my $file = $self->param('output_flatfile');
+    print "running HCs on homologies:\n" if $self->debug;
 
     # first, check the integrity of the file
     $self->_check_file_integrity($file);
+    print "\t- file integrity ok\n" if $self->debug;
 
     # then HC the homologies themselves
-    print "running HCs on homologies:\n" if $self->debug;
     my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor;
 
     open( my $fh, '<', $file ) or die "Cannot open $file for reading";
@@ -629,14 +627,6 @@ sub _hc_flatfile {
     while ( my $line = <$fh> ) {
         my $row = map_row_to_header($line, \@header_cols);
         my ( $st_id, $hom_st_id ) = ($row->{stable_id}, $row->{homology_stable_id});
-
-        # Each homology must be linked to exactly 2 members
-        unless (defined $st_id && defined $hom_st_id) {
-            die sprintf(
-                "Homology should have 2 members: %s & %s (line %d)\n",
-                ( $st_id, $hom_st_id, $c )
-            );
-        }
 
         # A pair of gene can only appear in 1 homology at most
         if (my $prev_line = ($seen_homologies{"$st_id - $hom_st_id"} || $seen_homologies{"$hom_st_id - $st_id"}) ) {
@@ -654,9 +644,7 @@ sub _hc_flatfile {
             defined $row->{seq_member_id} &&
             defined $row->{homology_seq_member_id} &&
             defined $row->{cigar_line} &&
-            length($row->{cigar_line}) > 0 &&
             defined $row->{homology_cigar_line} &&
-            length($row->{homology_cigar_line}) > 0 &&
             defined $row->{perc_id} &&
             defined $row->{homology_perc_id} &&
             defined $row->{perc_pos} &&
@@ -685,6 +673,7 @@ sub _hc_flatfile {
 
         $c++;
     }
+    print "\t- homologies ok\n\n" if $self->debug;
 }
 
 sub _check_file_integrity {
