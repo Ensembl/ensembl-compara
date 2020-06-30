@@ -84,7 +84,7 @@ use Bio::EnsEMBL::Compara::Graph::Link;
 use Bio::EnsEMBL::Compara::Graph::Node;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
-use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header check_column_integrity check_line_counts);
 
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 
@@ -691,16 +691,11 @@ sub _check_file_integrity {
     my ( $self, $file ) = @_;
 
     # check line counts
-    my $leaf_count = scalar @{ $self->param('gene_tree')->root->get_all_leaves };
-    my $exp_lines = (($leaf_count * ($leaf_count - 1)) / 2) + 1; # add 1 for header line
-    my @wc_output = split(/\s+/, $self->get_command_output("wc -l $file"));
-    my $got_line_count = $wc_output[0];
-    die "Expected $exp_lines lines, but got $got_line_count: $file" if $exp_lines != $got_line_count;
+    my $exp_lines = $self->param('n_stored_homologies') + 1; # incl header line
+    check_line_counts($file, $exp_lines);
 
     # check column integrity
-    my $awk_output = $self->get_command_output("awk '{print NF}' $file | sort | uniq -c");
-    my @col_counts = split("\n", $awk_output);
-    die "Expected equal number of columns throughout the file. Got:\n$awk_output" if scalar @col_counts > 1;
+    check_column_integrity($file);
 }
 
 1;

@@ -132,12 +132,7 @@ sub _healthcheck {
     my $hc_type = $self->param('healthcheck');
     if ( $hc_type eq 'line_count' ) {
         my $exp_line_count = $self->param('exp_line_count') + 1; # incl header line
-
-        my $output_file = $self->param('output_file');
-        my @wc_output = split(/\s+/, $self->get_command_output("wc -l $output_file"));
-        my $got_line_count = $wc_output[0];
-
-        die "Expected $exp_line_count lines in $output_file, but got $got_line_count\n" if $exp_line_count != $got_line_count;
+        check_line_counts($self->param('output_file'), $exp_line_count);
     } else {
         die "Healthcheck type '$hc_type' not recognised";
     }

@@ -35,6 +35,8 @@ use base qw(Exporter);
 
 use File::Find;
 
+use Bio::EnsEMBL::Compara::Utils::RunCommand;
+
 our %EXPORT_TAGS;
 our @EXPORT_OK;
 
@@ -44,6 +46,8 @@ our @EXPORT_OK;
     match_range_filter
     query_file_tree
     group_hash_by
+    check_column_integrity
+    check_line_counts
 );
 %EXPORT_TAGS = (
   all     => [@EXPORT_OK]
@@ -243,6 +247,55 @@ sub group_hash_by {
     }
 
     return \%grouped_data;
+}
+
+=head2 check_column_integrity
+
+    Arg [1]     : $filename
+    Arg [2]     : (optional) $delimiter
+    Description : Checks that every line of file $filename has an equal number
+                  of columns. Splits on whitespace by default, but $delimiter can
+                  be defined.
+    Returntype  : 1 if file passes check
+
+=cut
+
+sub check_column_integrity {
+    my ($file, $delimiter) = @_;
+
+    my $awk_opts = $delimiter ? "-F$delimiter" : "";
+
+    my $run_awk = Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec(
+        "awk $awk_opts '{print NF}' $file | sort | uniq -c",
+        { die_on_failure => 1 }
+    );
+    my $awk_output = $run_awk->out;
+    my @col_counts = split("\n", $awk_output);
+    die "Expected equal number of columns throughout the file. Got:\n$awk_output" if scalar @col_counts > 1;
+    return 1;
+}
+
+=head2 check_line_counts
+
+    Arg [1]     : $filename
+    Arg [2]     : $exp_lines
+    Description : Checks that the number of lines in $filename match the expected
+                  count ($exp_lines)
+    Returntype  : 1 if file passes check
+
+=cut
+
+sub check_line_counts {
+    my ($file, $exp_lines) = @_;
+
+    my $run_wc = Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec(
+        "wc -l $file",
+        { die_on_failure => 1 }
+    );
+    my @wc_output = split(/\s+/, $run_wc->out);
+    my $got_line_count = $wc_output[0];
+    die "Expected $exp_lines lines, but got $got_line_count: $file" if $exp_lines != $got_line_count;
+    return 1;
 }
 
 1;
