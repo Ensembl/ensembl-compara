@@ -76,6 +76,7 @@ use IO::File;
 use File::Basename;
 use List::Util qw(max);
 use Scalar::Util qw(looks_like_number);
+use File::Path qw(make_path);
 
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
@@ -599,8 +600,7 @@ sub _create_flatfile {
     my $outfile = $self->param('output_flatfile');
 
     # create directory
-    my $outdir = dirname($outfile);
-    $self->run_command("mkdir -p $outdir");
+    make_path(dirname($outfile));
 
     # open file handle and print header
     open( my $outfh, '>', $outfile ) or die "Cannot open $outfile for writing";
