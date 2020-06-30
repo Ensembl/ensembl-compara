@@ -100,15 +100,6 @@ sub param_defaults {
             '_readonly'             => 0,
             'tag_split_genes'       => 0,
             'input_clusterset_id'   => undef,
-            'file_header'           => [
-                'mlss_id', 'homology_id', 'homology_type', 'is_tree_compliant',
-                'species_tree_node_id', 'gene_tree_node_id', 'gene_tree_root_id',
-                'gene_member_id', 'seq_member_id', 'stable_id', 'species', 'genome_db_id',
-                'cigar_line', 'perc_cov', 'perc_id', 'perc_pos', 'homology_gene_member_id',
-                'homology_seq_member_id', 'homology_stable_id', 'homology_species',
-                'homology_genome_db_id', 'homology_cigar_line', 'homology_perc_cov',
-                'homology_perc_id', 'homology_perc_pos',
-            ],
     };
 }
 
@@ -572,7 +563,7 @@ sub store_gene_link_as_homology {
         $homology->{_dba} = $self->compara_dba;
         # create homology_id from seq_member_ids as this will be unique
         $homology->dbID( join('', sort map {$_->seq_member_id} @{ $homology->get_all_Members }) );
-        print $output_fh $homology->full_string . "\n";
+        print $output_fh join("\t", @{$homology->full_string}) . "\n";
     } else {
         $self->param('homologyDBA')->store($homology) unless $self->param('_readonly');
     }
@@ -613,7 +604,7 @@ sub _create_flatfile {
 
     # open file handle and print header
     open( my $outfh, '>', $outfile ) or die "Cannot open $outfile for writing";
-    print $outfh join("\t", @{ $self->param_required('file_header') }) . "\n";
+    print $outfh join("\t", @{ $Bio::EnsEMBL::Compara::Homology::full_string_headers }) . "\n";
     return $outfh;
 }
 

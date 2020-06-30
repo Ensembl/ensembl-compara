@@ -47,16 +47,6 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
-
-        'file_header' => [
-            'mlss_id', 'homology_id', 'homology_type', 'is_tree_compliant',
-            'species_tree_node_id', 'gene_tree_node_id', 'gene_tree_root_id',
-            'gene_member_id', 'seq_member_id', 'stable_id', 'species', 'genome_db_id',
-            'cigar_line', 'perc_cov', 'perc_id', 'perc_pos', 'homology_gene_member_id',
-            'homology_seq_member_id', 'homology_stable_id', 'homology_species',
-            'homology_genome_db_id', 'homology_cigar_line', 'homology_perc_cov',
-            'homology_perc_id', 'homology_perc_pos',
-        ],
         'mlss_filenames' => {},
     };
 }
@@ -121,7 +111,7 @@ sub _get_mlss_filehandle {
     $mlss_fh->open(">$mlss_file") or die "Cannot open $mlss_file for writing";
 
     # write header line
-    $mlss_fh->print(join("\t", @{ $self->param('file_header') }) . "\n");
+    $mlss_fh->print(join("\t", @{ $Bio::EnsEMBL::Compara::Homology::full_string_headers }) . "\n");
 
     $self->param('mlss_filenames')->{$mlss_id} = $mlss_file;
     return $mlss_fh;

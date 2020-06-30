@@ -407,19 +407,27 @@ sub toString {
 
 =head2 full_string
 
-  Example     : print $homology->full_string();
-  Description : This method returns a text-description of the homology in
-                TSV format, including all information contained in the object
-  Returntype  : String
+  Example     : print join("\t", @{$homology->full_string});
+  Description : This method returns an arrayref containing a summary of
+                information contained in the object. The headers are defined
+                by the global $full_string_headers variable.
+  Returntype  : arrayref
   Exceptions  : none
   Caller      : general
 
 =cut
 
+our $full_string_headers = [
+    'mlss_id', 'homology_id', 'homology_type', 'is_tree_compliant',
+    'species_tree_node_id', 'gene_tree_node_id', 'gene_tree_root_id',
+    @{ $Bio::EnsEMBL::Compara::SeqMember::full_string_headers },
+    map {'homology_' . $_} @{ $Bio::EnsEMBL::Compara::SeqMember::full_string_headers },
+];
+
 sub full_string {
     my $self = shift;
 
-    my $homology_string = join("\t", (
+    my @homology_string_parts = (
         $self->method_link_species_set_id,
         $self->dbID,
         $self->description,
@@ -427,24 +435,14 @@ sub full_string {
         $self->_species_tree_node_id,
         $self->_gene_tree_node_id,
         $self->_gene_tree_root_id
-    ));
+    );
 
     foreach my $member ( @{ $self->get_all_Members } ) {
-        $member->adaptor($self->{_dba}->get_GenomeDBAdaptor);
-        $homology_string .= "\t" . join("\t", (
-            $member->gene_member_id,
-            $member->seq_member_id,
-            $member->stable_id,
-            $member->genome_db->name,
-            $member->genome_db->dbID,
-            $member->cigar_line,
-            $member->perc_cov,
-            $member->perc_id,
-            $member->perc_pos,
-        ));
+        $member->adaptor($self->adaptor->db->get_SeqMemberAdaptor) unless $member->adaptor;
+        push @homology_string_parts, @{$member->full_string};
     }
 
-    return $homology_string;
+    return \@homology_string_parts;
 }
 
 =head2 toJSON
@@ -467,9 +465,9 @@ sub toJSON {
         'mlss_id'           => $self->method_link_species_set_id,
         'description'       => $self->description,
         'is_tree_compliant' => $self->is_tree_compliant,
-        'stn_id'            => $self->species_tree_node->dbID,
-        'gtn_id'            => $self->gene_tree_node->dbID,
-        'gtr_id'            => $self->gene_tree_root->dbID,
+        'stn_id'            => $self->_species_tree_node_id,
+        'gtn_id'            => $self->_gene_tree_node_id,
+        'gtr_id'            => $self->_gene_tree_root_id,
         'members'           => [],
     };
 
