@@ -117,6 +117,10 @@ sub new {
   Arg[-EXTRA_LABELS] : (optional) arrayref of strings - a list of JIRA labels to
                        include in the JIRA tickets. By default, no more labels
                        are added.
+  Arg[-UPDATE]       : (optional) boolean - update the JIRA tickets if they
+                       already exist, i.e. reopen the tickets, update their
+                       description and remove the previous assignee. By default,
+                       the tickets are not updated.
   Arg[-DRY_RUN]      : (optional) boolean - in dry-run mode, the JIRA tickets
                        will not be submitted to the JIRA server. By default,
                        dry-run mode is off.
@@ -135,8 +139,8 @@ sub new {
 
 sub create_tickets {
     my $self = shift;
-    my ( $json_str, $json_file, $json_obj, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels, $dry_run ) =
-        rearrange([qw(JSON_STR JSON_FILE JSON_OBJ DEFAULT_ISSUE_TYPE DEFAULT_PRIORITY EXTRA_COMPONENTS EXTRA_CATEGORIES EXTRA_LABELS DRY_RUN)], @_);
+    my ( $json_str, $json_file, $json_obj, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels, $update, $dry_run ) =
+        rearrange([qw(JSON_STR JSON_FILE JSON_OBJ DEFAULT_ISSUE_TYPE DEFAULT_PRIORITY EXTRA_COMPONENTS EXTRA_CATEGORIES EXTRA_LABELS UPDATE DRY_RUN)], @_);
     # Read tickets from either a JSON formated string or a JSON file path
     my $json_ticket_list;
     if ($json_str) {
@@ -183,11 +187,15 @@ sub create_tickets {
         my $summary = $ticket->{fields}->{summary};
         if (exists $existing_tickets{$summary}) {
             my $ticket_key = $existing_tickets{$summary};
-            my $issue_type = lc $ticket->{fields}->{issuetype}->{name};
-            $self->{_logger}->info(
-                sprintf("Skipped %s \"%s\". Likely a duplicate of %s%s\n",
-                        $issue_type, $summary, $base_url, $ticket_key)
-            );
+            if ($update) {
+                $self->_update_ticket($ticket_key, $ticket->{fields}->{description}, $dry_run);
+            } else {
+                my $issue_type = lc $ticket->{fields}->{issuetype}->{name};
+                $self->{_logger}->info(
+                    sprintf("Skipped %s \"%s\". Likely a duplicate of %s%s\n",
+                            $issue_type, $summary, $base_url, $ticket_key)
+                );
+            }
             push @$ticket_key_list, $ticket_key;
         } else {
             # In dry-run mode, the message will be logged but the ticket will
@@ -201,11 +209,15 @@ sub create_tickets {
                 my $summary = $subtask->{fields}->{summary};
                 if (exists $existing_tickets{$summary}) {
                     my $ticket_key = $existing_tickets{$summary};
-                    my $issue_type = lc $subtask->{fields}->{issuetype}->{name};
-                    $self->{_logger}->info(
-                        sprintf("Skipped %s \"%s\". Likely a duplicate of %s%s\n",
-                                $issue_type, $summary, $base_url, $ticket_key)
-                    );
+                    if ($update) {
+                        $self->_update_ticket($ticket_key, $subtask->{fields}->{description}, $dry_run);
+                    } else {
+                        my $issue_type = lc $subtask->{fields}->{issuetype}->{name};
+                        $self->{_logger}->info(
+                            sprintf("Skipped %s \"%s\". Likely a duplicate of %s%s\n",
+                                    $issue_type, $summary, $base_url, $ticket_key)
+                        );
+                    }
                     push @$ticket_key_list, $ticket_key;
                 } else {
                     # Link the subtask with its parent ticket
@@ -495,8 +507,7 @@ sub _request_password {
                     'summary'     => 'Example task'
                 };
                 my $ticket_key = $jira_adaptor->_create_new_ticket($ticket, 0);
-  Description : Creates the JIRA ticket unless its summary is in
-                $existing_tickets, and returns its JIRA key
+  Description : Creates the JIRA ticket and returns its JIRA key
   Return type : string
   Exceptions  : none
 
@@ -518,15 +529,58 @@ sub _create_new_ticket {
     return $ticket_key;
 }
 
+=head2 _update_ticket
+
+  Arg[1]      : string $ticket_key - key of the JIRA ticket to be updated
+  Arg[2]      : string $description - new description to assign to the ticket
+  Arg[3]      : int $dry_run - in dry-run mode, the JIRA ticket will not be
+                updated
+  Example     : $jira_adaptor->_update_ticket('ENSCOMPARASW-352', 'New ticket description', 0);
+  Description : Reopens the JIRA ticket, updates its content and removes its
+                previous assingee (unless in dry-mode)
+  Return type : none
+  Exceptions  : none
+
+=cut
+
+sub _update_ticket {
+    my ( $self, $ticket_key, $description, $dry_run ) = @_;
+    $self->{_logger}->info(sprintf('Updating %s ... ', $ticket_key));
+    # Get the "Reopen Issue" transition information for this JIRA ticket
+    my $url = "https://www.ebi.ac.uk/panda/jira/rest/api/latest/issue/$ticket_key/transitions";
+    my $response = $self->_http_request('GET', $url);
+    my @reopen_transition = grep { $_->{name} =~ /Reopen Issue/i } @{ $response->{transitions} };
+    if (!@reopen_transition) {
+        $self->{_logger}->info("Skipped. The ticket is not Resolved or Closed.\n");
+    } else {
+        if ($dry_run) {
+            $self->{_logger}->info("Done. [dry-run ON]\n");
+        } else {
+            # Reopen the ticket
+            my $transition_id = $reopen_transition[0]->{id};
+            $self->_http_request('POST', $url, { 'transition' => {'id' => $transition_id} });
+            # And update its description and remove the previous assignee
+            my $info_to_update = { fields => {
+                description => $description,
+                assignee    => { name => '' },
+            } };
+            $self->_put_request('issue', $ticket_key, $info_to_update);
+            $self->{_logger}->info("Done.\n");
+        }
+    }
+}
+
 =head2 _post_request
 
   Arg[1]      : string $action - a POST request's action to perform, i.e.
-                'issue' (to create new JIRA tickets) or 'search'
+                'issue' (to create new JIRA tickets), 'search' or 'issueLink'
+                (to link JIRA tickets)
   Arg[2]      : hashref $content_data - a POST request's content data
   Example     : my $tickets = $jira_adaptor->_post_request(
                     'search', {'jql' => 'project=ENSCOMPARASW', 'maxResults' => 10});
-  Description : Sends a POST request to the JIRA server and returns the response
-  Return type : arrayref of JIRA tickets
+  Description : Sends an HTTP POST request to the JIRA server and returns the
+                response
+  Return type : arrayref or hashref
   Exceptions  : none
 
 =cut
@@ -537,16 +591,60 @@ sub _post_request {
     my %available_actions = map { $_ => 1 } qw(issue search issueLink);
     if (! exists $available_actions{$action}) {
         my $action_list = join("\n", sort keys %available_actions);
-        $self->{_logger}->error(
-            "Unexpected POST request '$action'! Allowed options:\n$action_list",
-            0, 0
-        );
+        $self->{_logger}->error("Unexpected POST request '$action'! Allowed options:\n$action_list", 0, 0);
     }
-    # Create the HTTP POST request and LWP objects to get the response for the
-    # given $action and $content_data
+    # Do the HTTP POST request and get the response for the given $action and $content_data
     my $url = 'https://www.ebi.ac.uk/panda/jira/rest/api/latest/' . $action;
-    $self->{_logger}->debug("POST Request on $url\n");
-    my $request = HTTP::Request->new('POST', $url);
+    return $self->_http_request('POST', $url, $content_data);
+}
+
+=head2 _put_request
+
+  Arg[1]      : string $action - a PUT request's action to perform, i.e.
+                'issue' (to update an existing JIRA ticket)
+  Arg[2]      : hashref $content_data - a PUT request's content data
+  Example     : my $tickets = $jira_adaptor->_put_request(
+                    'issue', 'ENSCOMPARASW-302',
+                    {'fields' => {'description' => 'New description'}});
+  Description : Sends an HTTP PUT request to the JIRA server
+  Return type : none
+  Exceptions  : none
+
+=cut
+
+sub _put_request {
+    my ( $self, $action, $ticket_key, $content_data ) = @_;
+    # Check if the action requested is available
+    my %available_actions = map { $_ => 1 } qw(issue);
+    if (! exists $available_actions{$action}) {
+        my $action_list = join("\n", sort keys %available_actions);
+        $self->{_logger}->error("Unexpected PUT request '$action'! Allowed options:\n$action_list", 0, 0);
+    }
+    # Do the HTTP PUT request
+    my $url = 'https://www.ebi.ac.uk/panda/jira/rest/api/latest/' . $action . '/' . $ticket_key;
+    $self->_http_request('PUT', $url, $content_data);
+}
+
+=head2 _http_request
+
+  Arg[1]      : string $method - request method, e.g. POST
+  Arg[2]      : string $url - URL to do the request to
+  Arg[3]      : (optional) hashref $content_data - a request's content data
+  Example     : my $response = $jira_adaptor->_http_request(
+                    'POST', 'https://www.ebi.ac.uk/panda/jira/rest/api/latest/issue',
+                    {'jql' => 'project=ENSCOMPARASW', 'maxResults' => 10});
+  Description : Sends a request to the JIRA server and returns the decoded response
+  Return type : arrayref or hashref
+  Exceptions  : none
+
+=cut
+
+sub _http_request {
+    my ( $self, $method, $url, $content_data ) = @_;
+    $content_data //= {};
+    # Create the HTTP request and LWP objects to get the response for the given arguments
+    $self->{_logger}->debug("$method Request on $url\n");
+    my $request = HTTP::Request->new($method, $url);
     $request->authorization_basic($self->{_user}, $self->{_password});
     # The content data will be sent in JSON format
     $request->header('Content-Type' => 'application/json');
@@ -556,20 +654,17 @@ sub _post_request {
     my $response = $agent->request($request);
     # Check and report possible errors
     if ($response->code() == 401) {
-        $self->{_logger}->error(
-            'Incorrect JIRA password. Please, try again.', 0, 0);
+        $self->{_logger}->error('Incorrect JIRA password. Please, try again.', 0, 0);
     } elsif ($response->code() == 403) {
         my $user = $self->{_user};
-        $self->{_logger}->error(
-            "User '$user' unauthorised to handle JIRA tickets programmatically",
-            0, 0
-        );
+        $self->{_logger}->error("User '$user' unauthorised to handle JIRA tickets programmatically", 0, 0);
+    } elsif ($response->code() == 405) {
+        $self->{_logger}->error("HTTP method '$method' not allowed", 0, 0);
     } elsif (! $response->is_success()) {
-        my $error_message = $response->as_string();
-        $self->{_logger}->error($error_message, 0, 0);
+        $self->{_logger}->error($response->as_string(), 0, 0);
     }
     # Return the response content
-    return "" unless $response->content();
+    return [] unless $response->content();
     return decode_json($response->content());
 }
 
