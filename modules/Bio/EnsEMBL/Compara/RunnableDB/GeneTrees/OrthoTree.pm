@@ -648,15 +648,14 @@ sub _hc_flatfile {
         }
 
         # A pair of gene can only appear in 1 homology at most
-        $seen_homologies{"$st_id - $hom_st_id"}++;
-        $seen_homologies{"$hom_st_id - $st_id"}++;
-        if ($seen_homologies{"$st_id - $hom_st_id"} > 1 ||
-            $seen_homologies{"$hom_st_id - $st_id"} > 1 ) {
+        if (my $prev_line = ($seen_homologies{"$st_id - $hom_st_id"} || $seen_homologies{"$hom_st_id - $st_id"}) ) {
             die sprintf(
-                "Pair (%s - %s) seen more than once (line %d)",
-                ( $st_id, $hom_st_id, $c )
+                "Pair (%s - %s) seen more than once (lines %d and %d)",
+                ( $st_id, $hom_st_id, $prev_line, $c )
             );
         }
+        $seen_homologies{"$st_id - $hom_st_id"} = $c;
+        $seen_homologies{"$hom_st_id - $st_id"} = $c;
 
         # Checks that all the relevant fields are non-NULL or non-zero
         unless (
