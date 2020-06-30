@@ -1504,11 +1504,11 @@ sub production_name {
 
 
 # species name is either has not been registered as an alias, or it comes from a different website, e.g in pan compara
-# then it has to appear in SPECIES_DISPLAY_NAME section of DEFAULTS ini
+# then it has to appear in SPECIES_DISPLAY_NAMES section of DEFAULTS ini
 # check if it matches any key or any value in that section
     (my $nospaces  = $species) =~ s/ /_/g;
 
-    if (my $sdhash = $self->SPECIES_DISPLAY_NAME) {
+    if (my $sdhash = $self->SPECIES_DISPLAY_NAMES || {}) {
       return $species if exists $sdhash->{lc($species)};
 
       return $nospaces if exists $sdhash->{lc($nospaces)};

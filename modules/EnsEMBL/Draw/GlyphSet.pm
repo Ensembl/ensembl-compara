@@ -657,7 +657,7 @@ sub init_label {
   }
  
   my $ch = $self->my_config('caption_height') || 0;
-  my $tooltip = $config->species_defs->get_config($config->species, 'SPECIES_DISPLAY_NAME'),
+  my $tooltip = $config->species_defs->get_config($config->species, 'SPECIES_DISPLAY_NAME');
 
   $self->label($self->Text({
     text      => $text,
