@@ -328,7 +328,7 @@ sub copy_data {
     }
 
     # Get table's engine to optimise the copy process
-    my $table_engine;
+    my ($table_engine, $init_command);
     unless ($skip_disable_vars) {
         $table_engine = $to_dbc->db_handle->selectrow_hashref("SHOW TABLE STATUS WHERE Name = '$table_name'")->{Engine};
         # Speed up writing of data by disabling certain variables, write the data, then enable them back
@@ -336,9 +336,7 @@ sub copy_data {
         if ($table_engine eq 'MyISAM') {
             $to_dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
         } else {
-            $to_dbc->do("SET AUTOCOMMIT = 0");
-            $to_dbc->do("SET FOREIGN_KEY_CHECKS = 0");
-            $to_dbc->do("SET UNIQUE_CHECKS = 0");
+            $init_command = "SET AUTOCOMMIT = 0; SET FOREIGN_KEY_CHECKS = 0; SET UNIQUE_CHECKS = 0;";
         }
     }
 
@@ -347,21 +345,17 @@ sub copy_data {
     $to_dbc->disconnect_if_idle();
 
     my $start_time  = time();
-    my $cmd = "mysql --host=$from_host --port=$from_port --user=$from_user " . ($from_pass ? "--password=$from_pass" : '') .
-        " --max_allowed_packet=1024M $from_dbname -e \"$query\" --quick --silent --skip-column-names " .
-        "| mysql --host=$to_host --port=$to_port --user=$to_user " . ($to_pass ? "--password=$to_pass" : '') . " $to_dbname -e \"$load_query\"";
+    my $cmd = "mysql --host=$from_host --port=$from_port --user=$from_user " . ($from_pass ? "--password=$from_pass " : '') .
+        "--max_allowed_packet=1024M $from_dbname -e \"$query\" --quick --silent --skip-column-names " .
+        "| mysql --host=$to_host --port=$to_port --user=$to_user " . ($to_pass ? "--password=$to_pass " : '') .
+        ($init_command ? "--init-command=\"$init_command\" " : '') . "$to_dbname -e \"$load_query\"";
     Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd, { die_on_failure => 1, debug => $debug });
     print "total time: " . (time - $start_time) . " s\n" if $debug;
 
     unless ($skip_disable_vars) {
         print "ENABLE VARIABLES\n" if $debug;
-        if ($table_engine eq 'MyISAM') {
-            $to_dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
-        } else {
-            $to_dbc->do("SET AUTOCOMMIT = 1");
-            $to_dbc->do("SET FOREIGN_KEY_CHECKS = 1");
-            $to_dbc->do("SET UNIQUE_CHECKS = 1");
-        }
+        $to_dbc->do("ALTER TABLE `$table_name` ENABLE KEYS") if ($table_engine eq 'MyISAM');
+        # For InnoDB the variable changes last only until the session is closed, i.e. new_and_exec() finishes
     }
 }
 
