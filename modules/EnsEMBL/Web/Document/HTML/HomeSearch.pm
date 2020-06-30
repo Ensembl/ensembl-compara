@@ -208,10 +208,8 @@ sub munge_species {
   my $self = shift;
   my $hub = $self->hub;
 
-  my $sort_by = $hub->species_defs->USE_COMMON_NAMES ? 'common' : 'scientific';
-
   my $species_info = $hub->get_species_info;
-  my %species      = map { $species_info->{$_}{$sort_by} => $_ } grep { $species_info->{$_}{'is_reference'} } sort keys %$species_info;
+  my %species      = map { $species_info->{$_}{'display_name'} => $_ } grep { $species_info->{$_}{'is_reference'} } sort keys %$species_info;
 
   return %species;
 }
