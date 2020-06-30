@@ -559,7 +559,7 @@ sub store_gene_link_as_homology {
     if ( $output_fh ) {
         $homology->adaptor($self->compara_dba->get_HomologyAdaptor);
         # create homology_id from seq_member_ids as this will be unique
-        $homology->dbID( join('', sort map {$_->seq_member_id} @{ $homology->get_all_Members }) );
+        $homology->dbID( join('_', sort map {$_->seq_member_id} @{ $homology->get_all_Members }) );
         print $output_fh join("\t", @{$homology->full_string}) . "\n";
     } else {
         $self->param('homologyDBA')->store($homology) unless $self->param('_readonly');

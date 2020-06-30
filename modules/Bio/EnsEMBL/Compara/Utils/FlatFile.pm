@@ -47,6 +47,7 @@ our @EXPORT_OK;
     query_file_tree
     group_hash_by
     check_column_integrity
+    get_line_count
     check_line_counts
 );
 %EXPORT_TAGS = (
@@ -275,6 +276,25 @@ sub check_column_integrity {
     return 1;
 }
 
+=head2 get_line_count
+
+    Arg [1]     : $filename
+    Description : Return number of lines in $filename
+    Returntype  : int
+
+=cut
+
+sub get_line_count {
+    my ($file) = @_;
+
+    my $run_wc = Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec(
+        "wc -l $file",
+        { die_on_failure => 1 }
+    );
+    my @wc_output = split(/\s+/, $run_wc->out);
+    return $wc_output[0];
+}
+
 =head2 check_line_counts
 
     Arg [1]     : $filename
@@ -288,12 +308,7 @@ sub check_column_integrity {
 sub check_line_counts {
     my ($file, $exp_lines) = @_;
 
-    my $run_wc = Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec(
-        "wc -l $file",
-        { die_on_failure => 1 }
-    );
-    my @wc_output = split(/\s+/, $run_wc->out);
-    my $got_line_count = $wc_output[0];
+    my $got_line_count = get_line_count($file);
     die "Expected $exp_lines lines, but got $got_line_count: $file" if $exp_lines != $got_line_count;
     return 1;
 }

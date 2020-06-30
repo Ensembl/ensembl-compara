@@ -56,6 +56,7 @@ subtest "Test Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologie
                 "$test_flatfile_dir/goc.tsv",
                 "$test_flatfile_dir/high_conf.tsv",
             ],
+            'homology_id_start' => 11,
         },
     );
 
@@ -69,9 +70,9 @@ subtest "Test Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologie
     my $homology_data = $hom_sth->fetchall_arrayref;
 
     my $exp_hom_data = [
-        ['1', '1234', 'ortholog_one2one',  1, '40133018', '14624903', '1377777'],
-        ['2', '1234', 'ortholog_one2many', 0, '40133016', '20937479', '2304777'],
-        ['3', '1234', 'ortholog_one2one',  1, '40133018', '15053143', '1631777'],
+        ['11', '1234', 'ortholog_one2one',  1, '40133018', '14624903', '1377777'],
+        ['12', '1234', 'ortholog_one2many', 0, '40133016', '20937479', '2304777'],
+        ['13', '1234', 'ortholog_one2one',  1, '40133018', '15053143', '1631777'],
     ];
     is_deeply($homology_data, $exp_hom_data, 'homology data loaded correctly');
 
@@ -96,12 +97,12 @@ subtest "Test Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologie
     my $hom_mem_data = $hom_mem_sth->fetchall_arrayref;
 
     my $exp_hom_mem_data = [
-        ['1', '607122', '759483',  '20M',     97, 83, 86],
-        ['1', '806596', '1021296', '10M5D5M', 99, 85, 87],
-        ['2', '694925', '875992',  '20M',     99, 84, 89],
-        ['2', '681661', '858054',  '10M5D5M', 99, 84, 89],
-        ['3', '213046', '256120',  '20M',     99, 82, 88],
-        ['3', '735836', '929326',  '10M5D5M', 76, 63, 67],
+        ['11', '607122', '759483',  '20M',     97, 83, 86],
+        ['11', '806596', '1021296', '10M5D5M', 99, 85, 87],
+        ['12', '694925', '875992',  '20M',     99, 84, 89],
+        ['12', '681661', '858054',  '10M5D5M', 99, 84, 89],
+        ['13', '213046', '256120',  '20M',     99, 82, 88],
+        ['13', '735836', '929326',  '10M5D5M', 76, 63, 67],
     ];
     is_deeply($hom_mem_data, $exp_hom_mem_data, 'homology members loaded correctly');
 };

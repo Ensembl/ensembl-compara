@@ -91,6 +91,7 @@ sub write_output {
 
     # iterate over homology input and format it for later mysqlimport
     my $h_count;
+    my $homology_id_start = $self->param_required('homology_id_start');
     while ( my $line = <$hom_fh> ) {
         my $row = map_row_to_header($line, \@header_cols);
 
@@ -100,7 +101,8 @@ sub write_output {
             $row->{$attrib_name} = defined $this_attrib ? $this_attrib : '\N';
         }
 
-        my ( $homology_row, $homology_member_rows ) = $self->split_row_for_homology_tables($row);
+        my $this_homology_id = $homology_id_start + $h_count;
+        my ( $homology_row, $homology_member_rows ) = $self->split_row_for_homology_tables($row, $this_homology_id);
         print $h_csv $homology_row;
         print $hm_csv $homology_member_rows;
         $h_count++;
@@ -126,10 +128,10 @@ sub write_output {
 }
 
 sub split_row_for_homology_tables {
-    my ( $self, $row ) = @_;
+    my ( $self, $row, $homology_id ) = @_;
 
     my $homology_row = join(",",
-        $row->{homology_id},
+        $homology_id,
         $row->{mlss_id},
         $row->{homology_type},
         $row->{is_tree_compliant},
@@ -145,7 +147,7 @@ sub split_row_for_homology_tables {
     my $homology_member_rows;
     foreach my $prefix ( '', 'homology_' ) {
         my $this_hm_row = join(",",
-            $row->{homology_id},
+            $homology_id,
             $row->{"${prefix}gene_member_id"},
             $row->{"${prefix}seq_member_id"},
             $row->{"${prefix}cigar_line"},
