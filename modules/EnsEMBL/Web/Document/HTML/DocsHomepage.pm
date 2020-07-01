@@ -120,9 +120,11 @@ Ensembl releases all its software under an Apache-style open source
       );
     }
 
-    $api_docs .= qq(
+    if ($sd->HAS_VIRTUAL_MACHINE) { 
+      $api_docs .= qq(
 <li><a href="/info/data/virtual_machine.html">Virtual machine</a> preloaded with API</li>
-    );
+      );
+    }
 
     if ($sd->ENSEMBL_VEP_ENABLED) {
       $api_docs .= qq( 
