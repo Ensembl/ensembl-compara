@@ -578,7 +578,7 @@ sub _update_ticket {
   Arg[2]      : hashref $content_data - a POST request's content data
   Example     : my $tickets = $jira_adaptor->_post_request(
                     'search', {'jql' => 'project=ENSCOMPARASW', 'maxResults' => 10});
-  Description : Sends an HTTP POST request to the JIRA server and returns the
+  Description : Sends a HTTP POST request to the JIRA server and returns the
                 response
   Return type : arrayref or hashref
   Exceptions  : none
