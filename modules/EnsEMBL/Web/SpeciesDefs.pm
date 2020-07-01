@@ -1323,16 +1323,16 @@ sub table_info_other {
 sub species_label {
   my ($self, $key, $no_formatting) = @_;
 
-  if( my $sdhash          = $self->SPECIES_DISPLAY_NAMES) {
-      (my $lcspecies = lc $key) =~ s/ /_/g;
-      return $sdhash->{$lcspecies} if $sdhash->{$lcspecies};
+  if( my $sdhash = $self->SPECIES_DISPLAY_NAMES) {
+    (my $lcspecies = lc $key) =~ s/ /_/g;
+    return $sdhash->{$lcspecies} if $sdhash->{$lcspecies};
   }
 
   $key = ucfirst $key;
 
   return 'Ancestral sequence' unless $self->get_config($key, 'SPECIES_URL');
   
-  my $display = $self->get_config($key, 'SPECIES_COMMON_NAME');
+  my $display = $self->get_config($key, 'SPECIES_DISPLAY_NAME');
   my $sci    = $self->get_config($key, 'SPECIES_SCIENTIFIC_NAME');
   
   $sci = sprintf '<i>%s</i>', $sci unless $no_formatting;
