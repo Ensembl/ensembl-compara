@@ -537,7 +537,7 @@ sub _create_new_ticket {
                 updated
   Example     : $jira_adaptor->_update_ticket('ENSCOMPARASW-352', 'New ticket description', 0);
   Description : Reopens the JIRA ticket, updates its content and removes its
-                previous assingee (unless in dry-mode)
+                previous assignee (unless in dry-mode)
   Return type : none
   Exceptions  : none
 
