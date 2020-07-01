@@ -1482,7 +1482,7 @@ sub species_display_label {
 
   my ($self, $species, $no_formatting) = @_;
   
-  if( my $sdhash          = $self->SPECIES_DISPLAY_NAME) {
+  if( my $sdhash          = $self->SPECIES_DISPLAY_NAMES) {
       (my $ss = lc $species) =~ s/ /_/g;
       return $sdhash->{$ss} if $sdhash->{$ss};
   }
