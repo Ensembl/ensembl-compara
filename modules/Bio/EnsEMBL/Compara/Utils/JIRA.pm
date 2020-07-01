@@ -606,7 +606,7 @@ sub _post_request {
   Example     : my $tickets = $jira_adaptor->_put_request(
                     'issue', 'ENSCOMPARASW-302',
                     {'fields' => {'description' => 'New description'}});
-  Description : Sends an HTTP PUT request to the JIRA server
+  Description : Sends a HTTP PUT request to the JIRA server
   Return type : none
   Exceptions  : none
 
