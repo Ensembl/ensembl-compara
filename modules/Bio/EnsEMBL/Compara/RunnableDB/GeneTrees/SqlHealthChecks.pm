@@ -246,12 +246,12 @@ our $config = {
     ###############
 
     peptide_align_features => {
-        params => [ 'genome_db_id', 'species_count' ],
+        params => [ 'genome_db_id', 'exp_species_count' ],
         tests => [
             {
-                description => 'Each species should have hits against all the other species',
+                description => 'Each species should have hits against all the other non-empty species',
                 query => 'SELECT DISTINCT hgenome_db_id FROM peptide_align_feature_#genome_db_id#',
-                expected_size => '= #species_count#',
+                expected_size => '>= #exp_species_count#',
             },
             {
                 description => 'Each target member must be associated to a single target species',
@@ -593,4 +593,3 @@ sub _embedded_call {
 
 
 1;
-

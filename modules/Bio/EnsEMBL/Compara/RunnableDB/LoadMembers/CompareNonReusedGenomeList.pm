@@ -87,12 +87,17 @@ sub param_defaults {
 
         'expected_updates_file' => undef,
         'do_not_reuse_list'     => [],
+        'manual_ok' => 0,
     };
 }
 
 
 sub fetch_input {
     my $self = shift @_;
+
+    if ( $self->param_required('manual_ok') ) {
+        $self->complete_early("Manual ok set - autoflowing");
+    }
 
     my $expected_updates_file = $self->param('expected_updates_file');
     unless ($expected_updates_file) {

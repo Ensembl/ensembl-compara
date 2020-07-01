@@ -35,6 +35,13 @@ my $prev_release = $curr_release - 1;
 
 # ---------------------- CURRENT CORE DATABASES---------------------------------
 
+# main sars-cov-2 core - with canonical data
+my $core_dbs = {
+    'sarsc2_gca009858895_3' => [ 'mysql-ens-genebuild-prod-1', 'sarsc2_gca009858895_3_core_101_3_canon' ],
+    'sars_cov_2' => [ 'mysql-ens-genebuild-prod-2', 'sars_cov_2_core_100' ],
+};
+Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $core_dbs );
+
 # Add collection cores
 Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
     -host   => 'mysql-ens-microbes-prod-3',

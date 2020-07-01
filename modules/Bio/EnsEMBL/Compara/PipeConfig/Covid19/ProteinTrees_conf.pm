@@ -47,8 +47,10 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'division'        => 'covid19',
-        'clustering_mode' => 'blastp',
         'prev_rel_db'     =>  undef,
+
+        'clustering_mode' => 'blastp',
+        'paf_exp_proportion' => 0.9,
 
         # threshold used by per_genome_qc in order to check if the amount of orphan genes are acceptable
         # values were infered by checking previous releases, values that are out of these ranges may be caused by assembly and/or gene annotation problems.
@@ -59,14 +61,15 @@ sub default_options {
         # define blast parameters and evalues for ranges of sequence-length
         # Important note: -max_hsps parameter is only available on ncbi-blast-2.3.0 or higher.
         'all_blast_params'          => [
-            [ 0,   35,       '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM30 -word_size 2',    '1'    ],
-            [ 35,  50,       '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM70 -word_size 2',    '1e-2' ],
-            [ 50,  100,      '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM80 -word_size 2', '1e-4' ],
-            [ 100, 10000000, '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM62 -word_size 3', '1e-4' ],
+            [ 0,   35,       '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM30 -word_size 2',    '10' ],
+            [ 35,  50,       '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM70 -word_size 2',    '10' ],
+            [ 50,  100,      '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM80 -word_size 2', '10' ],
+            [ 100, 10000000, '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM62 -word_size 3', '10' ],
         ],
 
         # 'goc_taxlevels' => ['', '', ''],
 
+        'use_raxml'              => 1,
         'do_jaccard_index'       => 0,
         'do_cafe'                => 0,
         'do_gene_qc'             => 0,
@@ -99,6 +102,12 @@ sub tweak_analyses {
 
     # allow_subtaxa
     $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;
+
+    # due to v high sequence similarity, cdhit removes all members for some species
+    # so we need to skip empty files in a few analyses
+    # $analyses_by_name->{'make_blastdb'}->{'-parameters'}->{'allow_empty_files'} = 1;
+    # $analyses_by_name->{'members_against_allspecies_factory'}->{'-parameters'}->{'allow_empty_files'} = 1;
+    # $analyses_by_name->{'members_against_nonreusedspecies_factory'}->{'-parameters'}->{'allow_empty_files'} = 1;
 }
 
 

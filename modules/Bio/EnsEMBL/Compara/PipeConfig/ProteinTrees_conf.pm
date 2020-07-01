@@ -114,6 +114,9 @@ sub default_options {
         'outgroups'                     => {},
         # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
         'clustering_max_gene_halfcount' => 750,
+        # when checking peptide_align_features, what proportion of other genomes
+        # should have hits
+        'paf_exp_proportion' => 1,
         # File with gene / peptide names that must be excluded from the clusters (e.g. know to disturb the trees)
         'gene_blacklist_file'           => '/dev/null',
 
@@ -1389,7 +1392,9 @@ sub core_pipeline_analyses {
         {   -logic_name         => 'hc_pafs',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
-                mode            => 'peptide_align_features',
+                mode               => 'peptide_align_features',
+                paf_exp_proportion => $self->o('paf_exp_proportion'),
+                exp_species_count  => "#expr(int(#species_count#*#paf_exp_proportion#))expr#",
             },
             -flow_into => 'backup_paf',
             %hc_analysis_params,
@@ -2448,8 +2453,12 @@ sub core_pipeline_analyses {
                     '(#raxml_cores# >  64) && (#raxml_cores# <= 128)'   => 'examl_32_cores',
                     '(#raxml_cores# >  128)'                            => 'examl_64_cores',
                 ),
-                'A->1' => 'raxml_decision',
+                'A->1' => 'raxml_funnel',
             },
+        },
+
+        {   -logic_name => 'raxml_funnel',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         },
 
         {   -logic_name => 'examl_8_cores',
