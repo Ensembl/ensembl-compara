@@ -279,7 +279,6 @@ sub pipeline_analyses {
               1 => ['copy_files_to_sketch_dir'],
           },
         },
-            
         { -logic_name => 'copy_files_to_sketch_dir',
           -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
           -parameters => {
