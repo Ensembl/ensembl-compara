@@ -33,7 +33,7 @@ BEGIN {
 ##################################################################################
 subtest "Test Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologies", sub {
     # Load test DB #
-    my $multi_db = Bio::EnsEMBL::Test::MultiTestDB->new('update_homologies_test');
+    my $multi_db = Bio::EnsEMBL::Test::MultiTestDB->new('mysqlimport_test');
     my $dba = $multi_db->get_DBAdaptor('compara');
     my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $dba->dbc);
     my $compara_db = $dbc->url;
