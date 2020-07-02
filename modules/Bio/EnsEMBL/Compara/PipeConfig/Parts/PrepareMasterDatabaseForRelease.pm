@@ -256,6 +256,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 1 => { 'backup_master' => {} },
             },
             -max_retry_count => 0,
+            -rc_name         => '500Mb_job',
         },
 
         {   -logic_name => 'backup_master',
