@@ -1330,31 +1330,33 @@ sub get_pan_compara_info {
 
   if ($adaptor) {
     my $pan_genome = $adaptor->fetch_by_name_assembly($species);
-    $pan_info->{'prod_name'}  = $pan_genome->name;
-    $pan_info->{'label'}      = $pan_genome->display_name;
+    if ($pan_genome) {
+      $pan_info->{'prod_name'}  = $pan_genome->name;
+      $pan_info->{'label'}      = $pan_genome->display_name;
 
-    if ($get_site) {
-      my $ncbi_taxon  = $pan_genome->taxon;
-      my $all_taxa    = $ncbi_taxon->classification;
-      my $site;
+      if ($get_site) {
+        my $ncbi_taxon  = $pan_genome->taxon;
+        my $all_taxa    = $ncbi_taxon->classification;
+        my $site;
   
-      if ($all_taxa =~ /Chordata/) {
-        $site = 'www';
-      }
-      elsif ($all_taxa =~ /Fungi/) {
-        $site = 'fungi';
-      }
-      elsif ($all_taxa =~ /Viridiplantae/) {
-        $site = 'plants';
-      }
-      elsif ($all_taxa =~ /Eukaryota/) {
-        $site = 'protists';
-      }
-      else {
-        $site = 'bacteria';
-      }
+        if ($all_taxa =~ /Chordata/) {
+          $site = 'www';
+        }
+        elsif ($all_taxa =~ /Fungi/) {
+          $site = 'fungi';
+        }
+        elsif ($all_taxa =~ /Viridiplantae/) {
+          $site = 'plants';
+        }
+        elsif ($all_taxa =~ /Eukaryota/) {
+          $site = 'protists';
+        }
+        else {
+          $site = 'bacteria';
+        }
 
-      $pan_info->{'site'} = $site; 
+        $pan_info->{'site'} = $site; 
+      }
     }
   }
   #use Data::Dumper;
