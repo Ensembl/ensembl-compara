@@ -1320,28 +1320,88 @@ sub table_info_other {
   return $db_hash->{$db}{'tables'}{$table} || {};
 }
 
+sub get_pan_compara_info {
+  my ($self, $species, $get_site) = @_;
+
+  my $database = Bio::EnsEMBL::Registry->get_DBAdaptor('multi', 'compara_pan_ensembl', 1);
+  my $adaptor  = $database->get_GenomeDBAdaptor;
+
+  my $pan_info  = {};
+
+  if ($adaptor) {
+    my $pan_genome = $adaptor->fetch_by_name_assembly($species);
+    $pan_info->{'prod_name'}  = $pan_genome->name;
+    $pan_info->{'label'}      = $pan_genome->display_name;
+
+    if ($get_site) {
+      my $ncbi_taxon  = $pan_genome->taxon;
+      my $all_taxa    = $ncbi_taxon->classification;
+      my $site;
+  
+      if ($all_taxa =~ /Chordata/) {
+        $site = 'www';
+      }
+      elsif ($all_taxa =~ /Fungi/) {
+        $site = 'fungi';
+      }
+      elsif ($all_taxa =~ /Viridiplantae/) {
+        $site = 'plants';
+      }
+      elsif ($all_taxa =~ /Eukaryota/) {
+        $site = 'protists';
+      }
+      else {
+        $site = 'bacteria';
+      }
+
+      $pan_info->{'site'} = $site; 
+    }
+  }
+  #use Data::Dumper;
+  #warn Dumper($pan_info);
+
+  return $pan_info;
+}
+
 sub species_label {
+  ### This function will return the display name of all known (by Compara) species.
+  ### Some species in genetree can be from other EG units, and some can be from external sources
   my ($self, $key, $no_formatting) = @_;
 
-  if( my $sdhash = $self->SPECIES_DISPLAY_NAMES) {
-    (my $lcspecies = lc $key) =~ s/ /_/g;
-    return $sdhash->{$lcspecies} if $sdhash->{$lcspecies};
-  }
-
   $key = ucfirst $key;
-
-  return 'Ancestral sequence' unless $self->get_config($key, 'SPECIES_URL');
-  
   my $display = $self->get_config($key, 'SPECIES_DISPLAY_NAME');
-  my $sci    = $self->get_config($key, 'SPECIES_SCIENTIFIC_NAME');
+  my $label = '';
+
+  if ($self->USE_COMMON_NAMES) {
+    ## Basically vertebrates only - no pan_compara to check
+    if ($self->get_config($key, 'SPECIES_URL')) {
+      ## Known species, so create label accordingly
+      my $sci    = $self->get_config($key, 'SPECIES_SCIENTIFIC_NAME');
+      $sci = sprintf '<i>%s</i>', $sci unless $no_formatting;
+      if ($display =~ /\./) {
+        $label = $sci;
+      }
+      else {
+        $label = "$display ($sci)";
+      }
+    }
+    else {
+      $label = 'Ancestral sequence';
+    }
+  }
+  else {
+    if ($display) {
+      $label = $display;
+    }
+    else {
+      ## Pan-compara species - get label from compara db
+      my $info = $self->get_pan_compara_info($key);
+      $label = $info->{'label'};
+    }
+    $label = 'Ancestral sequence' unless $label;
+  }
   
-  $sci = sprintf '<i>%s</i>', $sci unless $no_formatting;
-  
-  if ($display =~ /\./) {
-    return $sci;
-  } else {
-    return "$display ($sci)";
-  }  
+  return $label;
 }
 
 sub production_name_lookup {
@@ -1474,20 +1534,8 @@ sub species_path {
 }
 
 sub species_display_label {
-  ### This function will return the display name of all known (by Compara) species.
-  ### Some species in genetree can be from other EG units, and some can be from external sources
-  ### species_label function above will only work with species of the current site
-  ### At the moment the mapping in DEFAULTs.ini
-  ### But it really should come from compara db
-
-  my ($self, $species, $no_formatting) = @_;
-  
-  if( my $sdhash          = $self->SPECIES_DISPLAY_NAMES) {
-      (my $ss = lc $species) =~ s/ /_/g;
-      return $sdhash->{$ss} if $sdhash->{$ss};
-  }
-
-  return $self->species_label($species);
+  my $self = shift;
+  return $self->species_label(@_);
 }
 
 sub production_name {
@@ -1503,24 +1551,9 @@ sub production_name {
       return $sp_name;
     }
 
-
 # species name is either has not been registered as an alias, or it comes from a different website, e.g in pan compara
-# then it has to appear in SPECIES_DISPLAY_NAMES section of DEFAULTS ini
-# check if it matches any key or any value in that section
-    (my $nospaces  = $species) =~ s/ /_/g;
-
-    if (my $sdhash = $self->SPECIES_DISPLAY_NAMES || {}) {
-      return $species if exists $sdhash->{lc($species)};
-
-      return $nospaces if exists $sdhash->{lc($nospaces)};
-      my %sdrhash = map { $sdhash->{$_} => $_ } keys %{$sdhash || {}};
-
-      (my $with_spaces  = $species) =~ s/_/ /g;
-      my $sname = $sdrhash{$species} || $sdrhash{$with_spaces};
-      return $sname if $sname;
-    }
-
-    return $nospaces;
+    my $pan_info = $self->get_pan_compara_info($species);
+    return $pan_info->{'prod_name'};
 }
 
 sub verbose_params {
