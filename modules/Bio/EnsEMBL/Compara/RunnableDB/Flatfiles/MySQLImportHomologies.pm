@@ -123,8 +123,8 @@ sub write_output {
         "--local --lock-tables=0 --ignore --fields-terminated-by=','",
         $dbname
     );
-    $self->run_command("$import_cmd $homology_csv", { die_on_failure => 1, debug => $self->debug });
-    $self->run_command("$import_cmd $homology_member_csv", { die_on_failure => 1, debug => $self->debug });
+    $self->run_command("$import_cmd $homology_csv", { die_on_failure => 1 });
+    $self->run_command("$import_cmd $homology_member_csv", { die_on_failure => 1 });
 }
 
 sub split_row_for_homology_tables {
