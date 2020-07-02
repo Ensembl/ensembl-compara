@@ -374,7 +374,7 @@ sub get_no_ortho_species_html {
   my $hub = $self->hub;
   my $no_ortho_species_html = '';
 
-  foreach (keys %$not_seen) {
+  foreach (sort {lc $a cmp lc $b} keys %$not_seen) {
     if ($sets_by_species->{$_}) {
       $no_ortho_species_html .= '<li class="'. join(' ', @{$sets_by_species->{$_}}) .'">'. $hub->species_defs->species_label($_) .'</li>';
     }
