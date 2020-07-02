@@ -560,7 +560,7 @@ sub store_gene_link_as_homology {
         $homology->adaptor($self->compara_dba->get_HomologyAdaptor);
         # create homology_id from seq_member_ids as this will be unique
         $homology->dbID( join('_', sort map {$_->seq_member_id} @{ $homology->get_all_Members }) );
-        print $output_fh join("\t", @{$homology->full_string}) . "\n";
+        print $output_fh join("\t", @{$homology->object_summary}) . "\n";
     } else {
         $self->param('homologyDBA')->store($homology) unless $self->param('_readonly');
     }
@@ -600,7 +600,7 @@ sub _create_flatfile {
 
     # open file handle and print header
     open( my $outfh, '>', $outfile ) or die "Cannot open $outfile for writing";
-    print $outfh join("\t", @{ $Bio::EnsEMBL::Compara::Homology::full_string_headers }) . "\n";
+    print $outfh join("\t", @{ $Bio::EnsEMBL::Compara::Homology::object_summary_headers }) . "\n";
     $self->param('output_filehandle', $outfh);
     return $outfh;
 }

@@ -659,27 +659,27 @@ sub has_translation_edits {
     return $self->{'_has_translation_edits'};
 }
 
-=head2 full_string
+=head2 object_summary
 
-  Example     : print join("\t", @{$member->full_string});
+  Example     : print join("\t", @{$member->object_summary});
   Description : This method returns an arrayref containing a summary of
                 information contained in the object. The headers are defined
-                by the global $full_string_headers variable.
+                by the global $object_summary_headers variable.
   Returntype  : arrayref
   Exceptions  : none
   Caller      : general
 
 =cut
 
-our $full_string_headers = [
+our $object_summary_headers = [
     'gene_member_id', 'seq_member_id', 'stable_id', 'species', 'genome_db_id',
     'cigar_line', 'perc_cov', 'perc_id', 'perc_pos',
 ];
 
-sub full_string {
+sub object_summary {
     my $self = shift;
 
-    my @member_string_parts = (
+    my @summary_parts = (
         $self->gene_member_id,
         $self->seq_member_id,
         $self->stable_id,
@@ -691,7 +691,7 @@ sub full_string {
         $self->perc_pos,
     );
 
-    return \@member_string_parts;
+    return \@summary_parts;
 }
 
 1;

@@ -405,29 +405,29 @@ sub toString {
     return $txt;
 }
 
-=head2 full_string
+=head2 object_summary
 
-  Example     : print join("\t", @{$homology->full_string});
+  Example     : print join("\t", @{$homology->object_summary});
   Description : This method returns an arrayref containing a summary of
                 information contained in the object. The headers are defined
-                by the global $full_string_headers variable.
+                by the global $object_summary_headers variable.
   Returntype  : arrayref
   Exceptions  : none
   Caller      : general
 
 =cut
 
-our $full_string_headers = [
+our $object_summary_headers = [
     'mlss_id', 'homology_id', 'homology_type', 'is_tree_compliant',
     'species_tree_node_id', 'gene_tree_node_id', 'gene_tree_root_id',
-    @{ $Bio::EnsEMBL::Compara::SeqMember::full_string_headers },
-    map {'homology_' . $_} @{ $Bio::EnsEMBL::Compara::SeqMember::full_string_headers },
+    @{ $Bio::EnsEMBL::Compara::SeqMember::object_summary_headers },
+    map {'homology_' . $_} @{ $Bio::EnsEMBL::Compara::SeqMember::object_summary_headers },
 ];
 
-sub full_string {
+sub object_summary {
     my $self = shift;
 
-    my @homology_string_parts = (
+    my @summary_parts = (
         $self->method_link_species_set_id,
         $self->dbID,
         $self->description,
@@ -439,10 +439,10 @@ sub full_string {
 
     foreach my $member ( @{ $self->get_all_Members } ) {
         $member->adaptor($self->adaptor->db->get_SeqMemberAdaptor) unless $member->adaptor;
-        push @homology_string_parts, @{$member->full_string};
+        push @summary_parts, @{$member->object_summary};
     }
 
-    return \@homology_string_parts;
+    return \@summary_parts;
 }
 
 =head2 toJSON

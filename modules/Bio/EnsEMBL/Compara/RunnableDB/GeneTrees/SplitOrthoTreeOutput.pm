@@ -111,7 +111,7 @@ sub _get_mlss_filehandle {
     $mlss_fh->open(">$mlss_file") or die "Cannot open $mlss_file for writing";
 
     # write header line
-    $mlss_fh->print(join("\t", @{ $Bio::EnsEMBL::Compara::Homology::full_string_headers }) . "\n");
+    $mlss_fh->print(join("\t", @{ $Bio::EnsEMBL::Compara::Homology::object_summary_headers }) . "\n");
 
     $self->param('mlss_filenames')->{$mlss_id} = $mlss_file;
     return $mlss_fh;
