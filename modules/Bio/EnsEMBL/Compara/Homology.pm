@@ -389,11 +389,11 @@ sub dnds_ratio {
 
   Example     : print $homology->toString();
   Description : This method returns a short text-description of the homology
-                USE ONLY FOR DEBUGGING not for data output since the
-                format of this output may change as need dictates.
   Returntype  : String
   Exceptions  : none
   Caller      : general
+  Status     : At risk (the format of the string would change if we add more fields to Homology)
+
 
 =cut
 
@@ -450,11 +450,10 @@ sub object_summary {
   Example     : print $homology->toJSON();
   Description : This method returns a string in JSON format containing
                 a minimised amount of data on the given homology.
-                USE ONLY FOR DEBUGGING not for data output since the
-                format of this output may change as need dictates.
   Returntype  : String
   Exceptions  : none
   Caller      : general
+  Status      : At risk (the format of the string would change if we add more fields to Homology)
 
 =cut
 
