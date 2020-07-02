@@ -43,21 +43,15 @@ use Bio::EnsEMBL::Hive::Utils ('dir_revhash');
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-    my $self = shift;
-    return {
-        %{$self->SUPER::param_defaults},
-        'mlss_filenames' => {},
-    };
-}
 
 sub run {
     my $self = shift;
 
     # create hash of file handles and print file headers
     my %mlss_fhs;
+    my %mlss_filenames;
     foreach my $mlss_id ( @{ $self->param_required('mlss_ids') } ) {
-        $mlss_fhs{$mlss_id} = $self->_get_mlss_filehandle($mlss_id);
+        $self->_get_mlss_filehandle($mlss_id, \%mlss_filenames, \%mlss_fhs);
     }
 
     my $orthotree_files = $self->orthotree_files;
@@ -82,12 +76,12 @@ sub run {
 
     print "wrote to :\n\t- " . join(
         "\n\t- ", 
-        values %{$self->param('mlss_filenames')}
+        values %mlss_filenames
     ) . "\n\n";
 }
 
 sub _get_mlss_filehandle {
-    my ( $self, $mlss_id ) = @_;
+    my ( $self, $mlss_id, $mlss_filenames, $mlss_fhs ) = @_;
 
     # set up directory
     my $homology_dumps_dir = $self->param_required('homology_dumps_dir');
@@ -112,8 +106,8 @@ sub _get_mlss_filehandle {
     # write header line
     $mlss_fh->print(join("\t", @{ $Bio::EnsEMBL::Compara::Homology::object_summary_headers }) . "\n");
 
-    $self->param('mlss_filenames')->{$mlss_id} = $mlss_file;
-    return $mlss_fh;
+    $mlss_filenames->{$mlss_id} = $mlss_file;
+    $mlss_fhs->{$mlss_id}       = $mlss_fh;
 }
 
 sub orthotree_files {
