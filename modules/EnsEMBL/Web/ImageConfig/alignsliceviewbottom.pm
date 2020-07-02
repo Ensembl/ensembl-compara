@@ -35,7 +35,7 @@ sub init_cacheable {
     sortable_tracks => 1, # allow the user to reorder tracks
   });
 
-  my $sp_img = $self->species_defs->ENSEMBL_WEBROOT . '/../public-plugins/ensembl/htdocs/i/species'; # XXX make configurable
+  my $sp_img = $self->species_defs->SPECIES_IMAGE_DIR;
   if(-e $sp_img) {
     $self->set_parameters({ spritelib => {
       %{$self->get_parameter('spritelib')||{}},
