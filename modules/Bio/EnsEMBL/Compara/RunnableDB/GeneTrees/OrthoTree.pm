@@ -638,24 +638,6 @@ sub _hc_flatfile {
         $seen_homologies{"$st_id - $hom_st_id"} = $c;
         $seen_homologies{"$hom_st_id - $st_id"} = $c;
 
-        # Checks that all the relevant fields are non-NULL or non-zero
-        unless (
-            defined $row->{homology_type} &&
-            defined $row->{seq_member_id} &&
-            defined $row->{homology_seq_member_id} &&
-            defined $row->{cigar_line} &&
-            defined $row->{homology_cigar_line} &&
-            defined $row->{perc_id} &&
-            defined $row->{homology_perc_id} &&
-            defined $row->{perc_pos} &&
-            defined $row->{homology_perc_pos}
-        ) {
-            die sprintf(
-                "Homology is missing key values ($st_id - $hom_st_id) (line %d)",
-                ( $st_id, $hom_st_id, $c )
-            );
-        }
-
         # Checks that the seq_member_id only links to canonical peptides
         my $gene_member = $gene_member_adaptor->fetch_by_dbID($row->{gene_member_id});
         my $hom_gene_member = $gene_member_adaptor->fetch_by_dbID($row->{homology_gene_member_id});
