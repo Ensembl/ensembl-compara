@@ -60,7 +60,6 @@ sub run {
         $mlss_fhs{$mlss_id} = $self->_get_mlss_filehandle($mlss_id);
     }
 
-    my $orthotree_dir = $self->param('orthotree_dir');
     my $orthotree_files = $self->orthotree_files;
     foreach my $file ( @$orthotree_files ) {
         print "checking $file...\n";
@@ -108,7 +107,7 @@ sub _get_mlss_filehandle {
         }
     }
     my $mlss_fh = IO::File->new();
-    $mlss_fh->open(">$mlss_file") or die "Cannot open $mlss_file for writing";
+    $mlss_fh->open($mlss_file, '>') or die "Cannot open $mlss_file for writing";
 
     # write header line
     $mlss_fh->print(join("\t", @{ $Bio::EnsEMBL::Compara::Homology::object_summary_headers }) . "\n");
@@ -120,10 +119,8 @@ sub _get_mlss_filehandle {
 sub orthotree_files {
     my $self = shift;
 
-    return $self->param('orthotree_files') if $self->param('orthotree_files');
-
     my @files;
-    my $orthotree_dir = $self->param('orthotree_dir');
+    my $orthotree_dir = $self->param_required('orthotree_dir');
     find(sub {
         push @files, $File::Find::name if /\.orthotree.tsv$/;
     }, $orthotree_dir);
