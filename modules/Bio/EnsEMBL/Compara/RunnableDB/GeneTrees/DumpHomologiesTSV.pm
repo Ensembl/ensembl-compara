@@ -43,6 +43,8 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(check_line_counts);
+
 use File::Basename qw/dirname/;
 use File::Path qw/make_path/;
 
