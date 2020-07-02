@@ -61,10 +61,12 @@ sub fetch_input {
 	my $list_cmd = "perl $list_genomes_script $metadata_script_options";
 	my @release_genomes = $self->get_command_output($list_cmd);
 	chomp @release_genomes;
-    # Keep only the species included in the allowed list
-    @release_genomes = grep { exists $allowed_species->{$_} } @release_genomes;
+    if ($allowed_species) {
+        # Keep only the species included in the allowed list
+        @release_genomes = grep { exists $allowed_species->{$_} } @release_genomes;
+    }
 
-    #if pan do not die becasue the list of species used in pan is
+    #if pan do not die because the list of species used in pan is
     #exclusively described in param('additional_species')
     if ($division ne "pan"){
         die "No genomes reported for release" unless @release_genomes;
@@ -78,7 +80,7 @@ sub fetch_input {
             # first, add them to the release_genomes
             my @add_species_for_div = @{$additional_species->{$additional_div}};
             push( @release_genomes, @add_species_for_div );
-            # check for each additonal species in each division that the productioin name is correct
+            # check for each additonal species in each division that the production name is correct
             $metadata_script_options = "\$($meta_host details script) --release $release --division $additional_div";
             $list_cmd = "perl $list_genomes_script $metadata_script_options";
             my @additional_release_genomes = $self->get_command_output($list_cmd);
