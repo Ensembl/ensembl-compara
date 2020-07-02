@@ -258,6 +258,7 @@ sub group_hash_by {
                   of columns. Splits on whitespace by default, but $delimiter can
                   be defined.
     Returntype  : 1 if file passes check
+    Exceptions  : throws if file fails check
 
 =cut
 
@@ -302,6 +303,7 @@ sub get_line_count {
     Description : Checks that the number of lines in $filename match the expected
                   count ($exp_lines)
     Returntype  : 1 if file passes check
+    Exceptions  : throws if file fails check
 
 =cut
 
