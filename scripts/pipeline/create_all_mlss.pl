@@ -223,7 +223,7 @@ sub make_species_set_from_XML_node {
     if ($xml_ss->hasAttribute('in_collection')) {
         my $collection = find_collection_from_xml_node_attribute($xml_ss, 'in_collection', 'species-set');
         # Exclude genome components from the pool
-        @{$pool} = grep { !$_->genome_component } @{$collection->genome_dbs};
+        $pool = [grep { !$_->genome_component } @{$collection->genome_dbs}];
     }
 
     my @selected_gdbs;
