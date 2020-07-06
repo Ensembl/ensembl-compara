@@ -75,8 +75,7 @@ sub _sql_copy{
   my $from_dbc        = $self->param('reuse_dba')->dbc;
   my $to_dbc          = $self->compara_dba->dbc;
 
-  my $rows = copy_data($from_dbc, $to_dbc, $table, $input_query, undef, 'skip_disable_keys', 0, $self->debug);
-  $self->warning("Copied over $rows rows of uniprot members from the $table table ");
+  copy_data($from_dbc, $to_dbc, $table, $input_query, undef, 'skip_disable_vars', $self->debug);
 }
 
 
