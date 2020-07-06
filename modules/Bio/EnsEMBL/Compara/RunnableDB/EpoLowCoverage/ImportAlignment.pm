@@ -160,7 +160,7 @@ sub importAlignment {
 
     copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
               "genomic_align_tree",
-              $gat_sql, 1, 'skip_disable_vars', $self->debug);
+              $gat_sql, 1, 0, $self->debug);
     print "\n\n" if $self->debug;
 
 
