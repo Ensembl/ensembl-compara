@@ -202,12 +202,6 @@ foreach (@indexes) {
   }
 }
 
-my %strain_parent_common_names = (
-  mus_musculus => 'Mouse',
-  sus_scrofa   => 'Pig',
-  canis_lupus_familiaris => 'Dog',
-);
-
 # if the SPECIES is set to ALL grab them all from the config...
 my $input_c = @species;
 if( $species_list eq 'ALL' ) {
@@ -298,10 +292,9 @@ foreach my $index (@indexes) {
       $conf->{'species'}             = $species;
       $conf->{'species_sci_name'}    = $species;
       $conf->{'authority'}           = $PD->{$species}{'AUTHORITY'};
-      $conf->{'species_common_name'} = $PD->{$species}{'SPECIES_COMMON_NAME'};
-      my $parent_common_name = $strain_parent_common_names{$PD->{$species}{'STRAIN_GROUP'}};
-      $conf->{'strain_details'}{'parent_common_name'} = $parent_common_name || '';
-      $conf->{'strain_details'}{'parent_latin_name'}  = ucfirst($PD->{$species}{'SPECIES_SCIENTIFIC_NAME'});
+      $conf->{'species_common_name'} = $PD->{$species}{'SPECIES_DISPLAY_NAME'};
+      $conf->{'strain_details'}{'parent_common_name'} = $PD->{$species}{'SPECIES_COMMON_NAME'} || '';
+      $conf->{'strain_details'}{'parent_latin_name'}  = $PD->{$species}{'SPECIES_SCIENTIFIC_NAME'};
       $conf->{'strain_details'}{'strain_name'}        = $conf->{'strain_details'}{'parent_common_name'} . ' ' . $PD->{$species}{'SPECIES_STRAIN'};
       $conf->{'strain_details'}{'reference_strain'} = 1;
       if ( $PD->{$species}{'STRAIN_GROUP'} && ($PD->{$species}{'STRAIN_GROUP'} ne $PD->{$species}{'SPECIES_PRODUCTION_NAME'})) {
