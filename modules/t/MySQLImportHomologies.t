@@ -64,7 +64,8 @@ subtest "Test Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologie
     my $hom_sth = $dba->dbc->prepare("SELECT 
         homology_id, method_link_species_set_id, description, is_tree_compliant,
         species_tree_node_id, gene_tree_node_id, gene_tree_root_id
-        FROM homology"
+        FROM homology
+        ORDER BY homology_id"
     );
     $hom_sth->execute();
     my $homology_data = $hom_sth->fetchall_arrayref;
@@ -79,7 +80,8 @@ subtest "Test Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologie
     # check homology attribute data loading
     my $attr_sth = $dba->dbc->prepare("SELECT 
         goc_score, wga_coverage, is_high_confidence
-        FROM homology"
+        FROM homology
+        ORDER BY homology_id"
     );
     $attr_sth->execute();
     my $attrib_data = $attr_sth->fetchall_arrayref;
@@ -92,15 +94,15 @@ subtest "Test Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologie
     is_deeply($attrib_data, $exp_attr_data, 'homology attributes loaded correctly');
 
     # check homology_member data
-    my $hom_mem_sth = $dba->dbc->prepare("SELECT * FROM homology_member");
+    my $hom_mem_sth = $dba->dbc->prepare("SELECT * FROM homology_member ORDER BY homology_id, gene_member_id");
     $hom_mem_sth->execute();
     my $hom_mem_data = $hom_mem_sth->fetchall_arrayref;
 
     my $exp_hom_mem_data = [
         ['11', '607122', '759483',  '20M',     97, 83, 86],
         ['11', '806596', '1021296', '10M5D5M', 99, 85, 87],
-        ['12', '694925', '875992',  '20M',     99, 84, 89],
         ['12', '681661', '858054',  '10M5D5M', 99, 84, 89],
+        ['12', '694925', '875992',  '20M',     99, 84, 89],
         ['13', '213046', '256120',  '20M',     99, 82, 88],
         ['13', '735836', '929326',  '10M5D5M', 76, 63, 67],
     ];
