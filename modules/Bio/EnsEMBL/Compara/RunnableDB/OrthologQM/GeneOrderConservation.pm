@@ -177,7 +177,9 @@ sub write_output {
     my $mlss        = $self->param('mlss');
 
     print "Writing n_goc_score to the database\n" if $self->debug;
-    $self->write_n_tag($mlss, 'goc', $goc_scores);
+    foreach my $score ( keys %$goc_scores ) {
+        $mlss->store_tag("n_goc_$score", scalar @{$goc_scores->{$score}});
+    }
     print "Tag: n_goc_score written!\n\n" if $self->debug;
 
     if ( $output_file ) {
