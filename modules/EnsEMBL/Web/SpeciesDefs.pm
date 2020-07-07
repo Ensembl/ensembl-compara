@@ -1323,11 +1323,10 @@ sub table_info_other {
 sub get_pan_compara_info {
   my ($self, $species, $get_site) = @_;
 
+  my $pan_info  = {};
   my $database = Bio::EnsEMBL::Registry->get_DBAdaptor('multi', 'compara_pan_ensembl', 1);
   if ($database) {
     my $adaptor  = $database->get_GenomeDBAdaptor;
-
-    my $pan_info  = {};
 
     if ($adaptor) {
       my $pan_genome = $adaptor->fetch_by_name_assembly($species);
