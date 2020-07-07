@@ -1324,43 +1324,19 @@ sub get_pan_compara_info {
   my ($self, $species, $get_site) = @_;
 
   my $database = Bio::EnsEMBL::Registry->get_DBAdaptor('multi', 'compara_pan_ensembl', 1);
-  my $adaptor  = $database->get_GenomeDBAdaptor;
+  if ($database) {
+    my $adaptor  = $database->get_GenomeDBAdaptor;
 
-  my $pan_info  = {};
+    my $pan_info  = {};
 
-  if ($adaptor) {
-    my $pan_genome = $adaptor->fetch_by_name_assembly($species);
-    if ($pan_genome) {
-      $pan_info->{'prod_name'}  = $pan_genome->name;
-      $pan_info->{'label'}      = $pan_genome->display_name;
-
-      if ($get_site) {
-        my $ncbi_taxon  = $pan_genome->taxon;
-        my $all_taxa    = $ncbi_taxon->classification;
-        my $site;
-  
-        if ($all_taxa =~ /Chordata/) {
-          $site = 'www';
-        }
-        elsif ($all_taxa =~ /Fungi/) {
-          $site = 'fungi';
-        }
-        elsif ($all_taxa =~ /Viridiplantae/) {
-          $site = 'plants';
-        }
-        elsif ($all_taxa =~ /Eukaryota/) {
-          $site = 'protists';
-        }
-        else {
-          $site = 'bacteria';
-        }
-
-        $pan_info->{'site'} = $site; 
+    if ($adaptor) {
+      my $pan_genome = $adaptor->fetch_by_name_assembly($species);
+      if ($pan_genome) {
+        $pan_info->{'prod_name'}  = $pan_genome->name;
+        $pan_info->{'label'}      = $pan_genome->display_name;
       }
     }
   }
-  #use Data::Dumper;
-  #warn Dumper($pan_info);
 
   return $pan_info;
 }
