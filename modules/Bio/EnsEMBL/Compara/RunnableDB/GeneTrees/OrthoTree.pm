@@ -123,6 +123,9 @@ sub fetch_input {
         $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
     }
 
+    $self->param('seen_seq_member_ids', {});
+    $self->param('seen_gene_member_ids', {});
+
     my $tree_id = $self->param_required('gene_tree_id');
     my $gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($tree_id) or $self->die_no_retry("Could not fetch gene_tree with tree_id='$tree_id'");
     if ($self->param('input_clusterset_id') and $self->param('input_clusterset_id') ne 'default') {
@@ -560,6 +563,10 @@ sub store_gene_link_as_homology {
         $homology->adaptor($self->compara_dba->get_HomologyAdaptor);
         # create homology_id from seq_member_ids as this will be unique
         $homology->dbID( join('_', sort map {$_->seq_member_id} @{ $homology->get_all_Members }) );
+        foreach my $member (@{ $homology->get_all_Members }) {
+            $self->param('seen_seq_member_ids')->{$member->seq_member_id} = 1;
+            $self->param('seen_gene_member_ids')->{$member->gene_member_id} = 1;
+        }
         print $output_fh join("\t", @{$homology->object_summary}) . "\n";
     } else {
         $self->param('homologyDBA')->store($homology) unless $self->param('_readonly');
@@ -616,7 +623,8 @@ sub _hc_flatfile {
     print "\t- file integrity ok\n" if $self->debug;
 
     # then HC the homologies themselves
-    my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor;
+    my $seen_seq_member_ids  = $self->param('seen_seq_member_ids');
+    my $seen_gene_member_ids = $self->param('seen_gene_member_ids');
 
     open( my $fh, '<', $file ) or die "Cannot open $file for reading";
     my $header_line = <$fh>;
@@ -638,19 +646,18 @@ sub _hc_flatfile {
         $seen_homologies{"$st_id - $hom_st_id"} = $c;
         $seen_homologies{"$hom_st_id - $st_id"} = $c;
 
-        # Checks that the seq_member_id only links to canonical peptides
-        my $gene_member = $gene_member_adaptor->fetch_by_dbID($row->{gene_member_id});
-        my $hom_gene_member = $gene_member_adaptor->fetch_by_dbID($row->{homology_gene_member_id});
-        if ( $gene_member->canonical_member_id != $row->{seq_member_id} ) {
-            die sprintf(
-                "%s is not a canonical member (line %d)",
-                ($st_id, $c)
-            );
-        } elsif ( $hom_gene_member->canonical_member_id != $row->{homology_seq_member_id} ) {
-            die sprintf(
-                "%s is not a canonical member (line %d)",
-                ($hom_st_id, $c)
-            );
+        # Checks that the member_ids are valid
+        unless ($seen_seq_member_ids->{$row->{'seq_member_id'}}) {
+            die sprintf("seq_member_id=%d does not exist in the tree (line %d)", $row->{'seq_member_id'}, $c);
+        }
+        unless ($seen_gene_member_ids->{$row->{'gene_member_id'}}) {
+            die sprintf("gene_member_id=%d does not exist in the tree (line %d)", $row->{'gene_member_id'}, $c);
+        }
+        unless ($seen_seq_member_ids->{$row->{'homology_seq_member_id'}}) {
+            die sprintf("seq_member_id=%d does not exist in the tree (line %d)", $row->{'homology_seq_member_id'}, $c);
+        }
+        unless ($seen_gene_member_ids->{$row->{'homology_gene_member_id'}}) {
+            die sprintf("gene_member_id=%d does not exist in the tree (line %d)", $row->{'homology_gene_member_id'}, $c);
         }
 
         $c++;
