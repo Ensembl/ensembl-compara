@@ -1320,25 +1320,6 @@ sub table_info_other {
   return $db_hash->{$db}{'tables'}{$table} || {};
 }
 
-sub get_pan_compara_info {
-  my ($self, $species, $get_site) = @_;
-
-  my $pan_info  = {};
-  my $database = Bio::EnsEMBL::Registry->get_DBAdaptor('multi', 'compara_pan_ensembl', 1);
-  if ($database) {
-    my $adaptor  = $database->get_GenomeDBAdaptor;
-
-    if ($adaptor) {
-      my $pan_genome = $adaptor->fetch_by_name_assembly($species);
-      if ($pan_genome) {
-        $pan_info->{'prod_name'}  = $pan_genome->name;
-        $pan_info->{'label'}      = $pan_genome->display_name;
-      }
-    }
-  }
-
-  return $pan_info;
-}
 
 sub species_label {
   ### This function will return the display name of all known (by Compara) species.
@@ -1371,9 +1352,9 @@ sub species_label {
       $label = $display;
     }
     else {
-      ## Pan-compara species - get label from compara db
-      my $info = $self->get_pan_compara_info($key);
-      $label = $info->{'label'};
+      ## Pan-compara species - get label from metadata db
+      my $info = $self->multiX('PAN_COMPARA_LOOKUP');
+      $label   = $info->{$key}{'display_name'} if ($info && $info->{$key});
     }
     $label = 'Ancestral sequence' unless $label;
   }
@@ -1529,8 +1510,10 @@ sub production_name {
     }
 
 # species name is either has not been registered as an alias, or it comes from a different website, e.g in pan compara
-    my $pan_info = $self->get_pan_compara_info($species);
-    return $pan_info->{'prod_name'};
+    my $pan_lookup = $self->multiX('PAN_COMPARA_LOOKUP') || {};
+    my $prod_name  = ($pan_lookup && $pan_lookup->{$species}) 
+                        ? $pan_lookup->{$species}{'production_name'}
+                        : '';
 }
 
 sub verbose_params {
