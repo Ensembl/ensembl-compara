@@ -25,7 +25,12 @@ Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::FindHomologyIDRange
 
 =head1 DESCRIPTION
 
+Detects and assigns a range of homology_ids for the given file. Range starts at
+pipeline_wide_parameter `homology_id_range_start`, or param `offset` if it is not
+yet defined. Stores updated `homology_id_range_start` into pipeline_wide_parameters
+for the next job to use.
 
+IMPORTANT!! This runnable should ONLY use a capacity of 1.
 
 =cut
 
@@ -45,17 +50,6 @@ sub param_defaults {
         'range_index'   => 1,
         'offset'        => '#range_index#00000001',
     }
-}
-
-sub fetch_input {
-    my $self = shift;
-
-    # grab range start from pipeline_wide_parameters
-    my $range_start = $self->param('homology_id_range_start');
-    return if defined $range_start;
-
-    # initialise the range if it doesn't exist yet (i.e. first job)
-    $range_start = $self->param_required('offset');
 }
 
 sub run {
