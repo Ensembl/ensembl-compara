@@ -148,6 +148,7 @@ CREATE TABLE `gene_member` (
   UNIQUE KEY `stable_id` (`stable_id`),
   KEY `taxon_id` (`taxon_id`),
   KEY `source_name` (`source_name`),
+  KEY `genome_db_id` (`genome_db_id`),
   KEY `canonical_member_id` (`canonical_member_id`),
   KEY `dnafrag_id_start` (`dnafrag_id`,`dnafrag_start`),
   KEY `dnafrag_id_end` (`dnafrag_id`,`dnafrag_end`),
@@ -689,4 +690,3 @@ CREATE TABLE `synteny_region` (
   PRIMARY KEY (`synteny_region_id`),
   KEY `method_link_species_set_id` (`method_link_species_set_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-

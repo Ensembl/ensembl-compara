@@ -408,7 +408,7 @@ sub toString {
 =head2 object_summary
 
   Example     : print join("\t", @{$homology->object_summary});
-  Description : This method returns an arrayref containing a summary of
+  Description : This method returns an arrayref containing a summary of the
                 information contained in the object. The headers are defined
                 by the global $object_summary_headers variable.
   Returntype  : arrayref

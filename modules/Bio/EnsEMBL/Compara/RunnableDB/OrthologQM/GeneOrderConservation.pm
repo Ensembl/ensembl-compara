@@ -411,7 +411,7 @@ sub _identify_paralogs {
             $row->{homology_genome_db_id}
         );
         push( @{$gtn_ids{$gene_tree_node_id}->{$gdb_id_1}}, $gm_id_1 );
-        push( @{$gtn_ids{$gene_tree_node_id}->{$gdb_id_2}}, $gm_id_2 );      
+        push( @{$gtn_ids{$gene_tree_node_id}->{$gdb_id_2}}, $gm_id_2 );        
     }
     
     # find gene_members from the same genome_db that share a gene_tree_node_id
