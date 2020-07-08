@@ -3403,11 +3403,11 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -rc_name    => '4Gb_job',
             -flow_into => {
-                2 => [ 'gene_dumps' ],
+                2 => [ 'dump_genes' ],
             },
         },
 
-        {   -logic_name     => 'gene_dumps',
+        {   -logic_name     => 'dump_genes',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters     => {
                 'output_file'   => '#gene_dumps_dir#/gene_member.#genome_db_id#.tsv',
