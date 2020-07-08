@@ -3411,7 +3411,7 @@ sub core_pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters     => {
                 'output_file'   => '#gene_dumps_dir#/gene_member.#genome_db_id#.tsv',
-                'append'        => ['-B', '-q'],
+                'append'        => ['--batch', '--quick'],
                 'input_query'   => 'SELECT stable_id, gene_member_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand FROM gene_member WHERE genome_db_id = #genome_db_id# ORDER BY dnafrag_id, dnafrag_start',
             },
         },
