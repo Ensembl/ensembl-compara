@@ -37,7 +37,7 @@ my $prev_release = $curr_release - 1;
 
 # All the core databases live on the Vertebrates staging server or our mirror
 #Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1.ebi.ac.uk:4519/$curr_release");
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-general-prod-1:4525/$curr_release");
 
 # Add in extra cores from genebuild server
 # my $extra_core_dbs = {
@@ -68,6 +68,7 @@ my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-1', 'ensembl_compara_master' ],
     'compara_curr'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$curr_release" ],
+    'compara_curr_b' => [ 'mysql-ens-compara-prod-1', "ensembl_compara_${curr_release}b" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],
 
     # # release replicates - to speed up dumping
@@ -77,9 +78,9 @@ my $compara_dbs = {
     # homology dbs
     'compara_members'       => [ 'mysql-ens-compara-prod-3',  'carlac_vertebrates_load_members_101' ],
     'compara_ptrees'        => [ 'mysql-ens-compara-prod-2',  'carlac_default_vertebrates_protein_trees_101' ],
-    'compara_ptrees_copy'   => [ 'mysql-ens-compara-prod-6',  'carlac_vert_ptrees_101_copy' ],
     'compara_families'      => [ 'mysql-ens-compara-prod-5',  'muffato_vertebrates_families_101' ],
-    'compara_nctrees'       => [ 'mysql-ens-compara-prod-5',  'muffato_default_vertebrates_ncrna_trees_101' ],
+    'compara_nctrees'       => [ 'mysql-ens-compara-prod-4',  'carlac_vertebrates_default_ncrna_reindexed_trees_101' ],
+    'nctrees_prev'          => [ 'mysql-ens-compara-prod-8',  'carlac_default_vertebrates_ncrna_trees_100' ],
     'murinae_ptrees'        => [ 'mysql-ens-compara-prod-10', 'carlac_vertebrates_murinae_protein_reindexed_trees_101' ],
     'murinae_nctrees'       => [ 'mysql-ens-compara-prod-10', 'carlac_vertebrates_murinae_ncrna_reindexed_trees_101' ],
     'murinae_ptrees_prev'   => [ 'mysql-ens-compara-prod-1',  'jalvarez_vertebrates_murinae_protein_reindexed_trees_100' ],
@@ -105,14 +106,14 @@ my $compara_dbs = {
     'mammals_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## sauropsids
-    'sauropsids_epo_high_low'=> [ 'mysql-ens-compara-prod-8', 'muffato_sauropsids_epo_with2x_101' ],
+    'sauropsids_epo_high_low'=> [ 'mysql-ens-compara-prod-7', 'muffato_sauropsids_epo_with2x_101_unidir' ],
     'sauropsids_epo_prev'    => [ 'mysql-ens-compara-prod-9', 'muffato_sauropsids_epo_100' ],
     'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
 
     ## fish
-    'fish_epo_high_low' => [ 'mysql-ens-compara-prod-9', 'muffato_fish_epo_with2x_101' ],
+    'fish_epo_high_low' => [ 'mysql-ens-compara-prod-9',  'muffato_fish_epo_with2x_101_unidir' ],
     'fish_epo_prev'     => [ 'mysql-ens-compara-prod-10', 'muffato_fish_epo_100' ],
-    'fish_epo_anchors'  => [ 'mysql-ens-compara-prod-8', 'muffato_generate_anchors_fish_100' ],
+    'fish_epo_anchors'  => [ 'mysql-ens-compara-prod-8',  'muffato_generate_anchors_fish_100' ],
 
     ## primates
     'primates_epo'         => [ 'mysql-ens-compara-prod-3', 'mateus_primates_epo_98' ],
@@ -125,16 +126,15 @@ my $compara_dbs = {
     'pig_strains_epo_prev'    => [ 'mysql-ens-compara-prod-8', 'carlac_pig_strains_epo_98' ],
     'pig_strains_epo_low'     => [ 'mysql-ens-compara-prod-8', 'carlac_pig_strains_epo_low_coverage_98' ],
     'pig_strains_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
-    
 
     # other alignments
-    # 'amniotes_pecan'      => [ 'mysql-ens-compara-prod-2', 'cristig_amniotes_mercator_pecan_100' ],
+    'amniotes_pecan'      => [ 'mysql-ens-compara-prod-3', 'dthybert_amniotes_mercator_pecan_101' ],
     'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-2', 'cristig_amniotes_mercator_pecan_100' ],
 
-    # 'compara_syntenies'   => [ 'mysql-ens-compara-prod-7', 'jalvarez_vertebrates_synteny_100' ],
+    'compara_syntenies'   => [ 'mysql-ens-compara-prod-4', 'cristig_vertebrates_synteny_101' ],
 
     # miscellaneous
-    # 'alt_allele_projection' => [ 'mysql-ens-compara-prod-8', 'jalvarez_vertebrates_alt_allele_import_100' ],
+    'alt_allele_projection' => [ 'mysql-ens-compara-prod-9', 'carlac_vertebrates_alt_allele_import_101' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -145,10 +145,10 @@ my $ancestral_dbs = {
     'ancestral_prev' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
     'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
 
-    # 'mammals_ancestral'    => [ 'mysql-ens-compara-prod-6', 'carlac_mammals_ancestral_core_100' ],
-    # 'primates_ancestral'   => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
-    # 'sauropsids_ancestral' => [ 'mysql-ens-compara-prod-9', 'muffato_sauropsids_ancestral_core_100' ],
-    # 'fish_ancestral'       => [ 'mysql-ens-compara-prod-10', 'muffato_fish_ancestral_core_100' ],
+    'mammals_ancestral'    => [ 'mysql-ens-compara-prod-8', 'muffato_mammals_ancestral_core_101' ],
+    'primates_ancestral'   => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
+    'sauropsids_ancestral' => [ 'mysql-ens-compara-prod-8', 'muffato_sauropsids_ancestral_core_101' ],
+    'fish_ancestral'       => [ 'mysql-ens-compara-prod-9', 'muffato_fish_ancestral_core_101' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
