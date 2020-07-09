@@ -96,6 +96,7 @@ sub default_options {
         'do_update_from_metadata' => 0,
         'do_load_timetree'        => 0,
         'meta_host'               => undef, # required but not used: do_update_from_metadata = 0
+        'perc_threshold'          => undef, # required but not used: do_update_from_metadata = 0
     };
 }
 

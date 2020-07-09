@@ -159,7 +159,7 @@ sub fetch_input {
     print Dumper \@genomes_to_verify;
 
     my $perc_to_retire = (scalar @to_retire/scalar @release_genomes)*100;
-    die "Percentage of genomes to retire seems too high ($perc_to_retire\%)" if $perc_to_retire >= 20;
+    die "Percentage of genomes to retire seems too high ($perc_to_retire\%)" if $perc_to_retire >= $self->param_required('perc_threshold');
 
     $self->param('genomes_to_update', $genomes_to_update);
     $self->param('genomes_with_updated_annotation', $updated_annotations);

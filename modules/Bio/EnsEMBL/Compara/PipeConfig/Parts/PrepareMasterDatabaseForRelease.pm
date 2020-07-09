@@ -128,6 +128,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'annotation_file'       => $self->o('annotation_file'),
                 'meta_host'             => $self->o('meta_host'),
                 'allowed_species_file'  => $self->o('config_dir') . '/allowed_species.json',
+                'perc_threshold'        => $self->o('perc_threshold'),
             },
             -flow_into  => {
                 '2->A' => [ 'add_species_into_master' ],
