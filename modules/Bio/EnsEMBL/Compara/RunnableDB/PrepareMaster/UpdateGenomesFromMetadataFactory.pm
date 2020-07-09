@@ -114,11 +114,37 @@ sub fetch_input {
         }
     }
 
-    print "GENOMES_TO_UPDATE!! ";
-    print Dumper $genomes_to_update;
+    # check for species that have disappeared and need to be retired or those that have been introduced manually
+    my $master_dba = $self->get_cached_compara_dba('master_db');
+    my %current_gdbs = map { $_->name => 0 } @{$master_dba->get_GenomeDBAdaptor->fetch_all_current};
+    $current_gdbs{'ancestral_sequences'} = 1; # never retire ancestral_sequences
+    foreach my $species_name ( @release_genomes ) {
+        if (exists $renamed_genomes->{$species_name}) {
+            $current_gdbs{$renamed_genomes->{$species_name}} = 1;
+        } else {
+            # If the species has been added in this release, include it in the list of genomes to add
+            push @$genomes_to_update, $species_name unless (exists $current_gdbs{$species_name});
+            $current_gdbs{$species_name} = 1;
+        }
+    }
+    my @to_retire = grep { $current_gdbs{$_} == 0 } keys %current_gdbs;
+
+    # check that there have been no changes in dnafrags vs core slices
+    my %g2update = map { $_ => 1 } @$genomes_to_update;
+    my @genomes_to_verify;
+    foreach my $species_name ( @release_genomes ) {
+        next if $g2update{$species_name}; # we already know these have changed
+        next if $renamed_genomes->{$species_name}; # renamed genomes are checked in their own analysis
+        push @genomes_to_verify, {
+            'species_name'  => $species_name,
+        };
+    }
 
     print "GENOME_LIST!! ";
     print Dumper \@release_genomes;
+
+    print "GENOMES_TO_UPDATE!! ";
+    print Dumper $genomes_to_update;
 
     print "GENOMES_WITH_UPDATED_ANNOTATION!! ";
     print Dumper $updated_annotations;
@@ -126,33 +152,11 @@ sub fetch_input {
     print "GENOMES_TO_RENAME!! ";
     print Dumper $renamed_genomes;
 
-    # check that there have been no changes in dnafrags vs core slices
-    my %g2update = map { $_ => 1 } @$genomes_to_update;
-    my $master_dba = $self->get_cached_compara_dba('master_db');
-    my @genomes_to_verify;
-	foreach my $species_name ( @release_genomes ) {
-		next if $g2update{$species_name}; # we already know these have changed
-        next if $renamed_genomes->{$species_name}; # renamed genomes are checked in their own analysis
-        push @genomes_to_verify, {
-            'species_name'  => $species_name,
-        };
-	}
-    print "GENOMES_TO_VERIFY!! ";
-    print Dumper \@genomes_to_verify;
-
-	# check for species that have disappeared and need to be retired
-	my %current_gdbs = map { $_->name => 0 } @{$master_dba->get_GenomeDBAdaptor->fetch_all_current};
-    $current_gdbs{'ancestral_sequences'} = 1; # never retire ancestral_sequences
-	foreach my $species_name ( @release_genomes ) {
-        if (exists $renamed_genomes->{$species_name}) {
-            $current_gdbs{$renamed_genomes->{$species_name}} = 1;
-        } else {
-            $current_gdbs{$species_name} = 1;
-        }
-	}
-	my @to_retire = grep { $current_gdbs{$_} == 0 } keys %current_gdbs;
     print "GENOMES_TO_RETIRE!! ";
     print Dumper \@to_retire;
+
+    print "GENOMES_TO_VERIFY!! ";
+    print Dumper \@genomes_to_verify;
 
     my $perc_to_retire = (scalar @to_retire/scalar @release_genomes)*100;
     die "Percentage of genomes to retire seems too high ($perc_to_retire\%)" if $perc_to_retire >= 20;
