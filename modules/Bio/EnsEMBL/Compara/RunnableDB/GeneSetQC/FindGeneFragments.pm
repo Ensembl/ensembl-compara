@@ -160,11 +160,11 @@ sub run {
             my @head_cols = split(/\s+/, $header);
             
             # grab the first line of the file to check whether the genome_db of interest
-            # is genome_db_id or hom_genome_db_id - we don't know which it will be.
-            # we'll either use genome_db_id, seq_member_id, etc *OR* hom_genome_db_id, hom_seq_member_id, etc
+            # is genome_db_id or homology_genome_db_id - we don't know which it will be.
+            # we'll either use genome_db_id, seq_member_id, etc *OR* homology_genome_db_id, homology_seq_member_id, etc
             my $line = <$hdh>;
             my $row = map_row_to_header( $line, \@head_cols );
-            my ( $this, $that ) = $row->{genome_db_id} == $genome_db_id ? ('', 'hom_') : ('hom_', '');
+            my ( $this, $that ) = $row->{genome_db_id} == $genome_db_id ? ('', 'homology_') : ('homology_', '');
             
             while ( $line ) {
                 $row = map_row_to_header( $line, \@head_cols );
@@ -173,8 +173,8 @@ sub run {
                 $coverage_stats->{$row->{$this . 'gene_member_id'}}->{seq_member_id} = $row->{$this . 'seq_member_id'};
                 $coverage_stats->{$row->{$this . 'gene_member_id'}}->{n_orth}++;
                 $coverage_stats->{$row->{$this . 'gene_member_id'}}->{genome_dbs}->{$row->{$that . 'genome_db_id'}} = 1;
-                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{total_cov} += $row->{$this . 'coverage'};
-                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{total_hom_cov} += $row->{$that . 'coverage'};
+                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{total_cov} += $row->{$this . 'perc_cov'};
+                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{total_hom_cov} += $row->{$that . 'perc_cov'};
                 
                 $line = <$hdh>;
             }

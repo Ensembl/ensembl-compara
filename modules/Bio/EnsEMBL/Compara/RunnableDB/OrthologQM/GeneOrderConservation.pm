@@ -138,7 +138,7 @@ sub run {
     my $c = 0;
     while ( my $line = <$hom_handle> ) {
         my $row = map_row_to_header( $line, $self->homology_header );
-        my ( $homology_id, $gm_id_1, $gm_id_2 ) = ($row->{homology_id}, $row->{gene_member_id}, $row->{hom_gene_member_id});
+        my ( $homology_id, $gm_id_1, $gm_id_2 ) = ($row->{homology_id}, $row->{gene_member_id}, $row->{homology_gene_member_id});
 
         # if param('genome_db_ids') is set, we only want to score genes from those genomes
         # only relevant genomes will be included in the strand map
@@ -234,7 +234,7 @@ sub _get_all_gene_member_ids_in_homology_file {
     my $header = <$hom_handle>;
     while( my $line = <$hom_handle> ) {
         my $row = map_row_to_header( $line, $self->homology_header );
-        my ( $gm_id_1, $gm_id_2, $gdb_id_1, $gdb_id_2 ) = ($row->{gene_member_id}, $row->{hom_gene_member_id}, $row->{genome_db_id}, $row->{hom_genome_db_id});
+        my ( $gm_id_1, $gm_id_2, $gdb_id_1, $gdb_id_2 ) = ($row->{gene_member_id}, $row->{homology_gene_member_id}, $row->{genome_db_id}, $row->{homology_genome_db_id});
         if ( $self->param('genome_db_ids') ) {
             my ( $gdb_a, $gdb_b ) = @{ $self->param('genome_db_ids') };
             next unless ( 
@@ -380,7 +380,7 @@ sub parsed_homologies {
     my %homologies;
     while( my $line = <$hom_handle> ) {
         my $row = map_row_to_header( $line, $self->homology_header );
-        my ( $homology_id, $gm_id_1, $gm_id_2 ) = ( $row->{homology_id}, $row->{gene_member_id}, $row->{hom_gene_member_id} );
+        my ( $homology_id, $gm_id_1, $gm_id_2 ) = ( $row->{homology_id}, $row->{gene_member_id}, $row->{homology_gene_member_id} );
         $homologies{$gm_id_1}->{$gm_id_2} = $homology_id;
         $homologies{$gm_id_2}->{$gm_id_1} = $homology_id;      
     }
@@ -407,8 +407,8 @@ sub _identify_paralogs {
             $row->{gene_tree_node_id}, 
             $row->{gene_member_id}, 
             $row->{genome_db_id}, 
-            $row->{hom_gene_member_id}, 
-            $row->{hom_genome_db_id}
+            $row->{homology_gene_member_id},
+            $row->{homology_genome_db_id}
         );
         push( @{$gtn_ids{$gene_tree_node_id}->{$gdb_id_1}}, $gm_id_1 );
         push( @{$gtn_ids{$gene_tree_node_id}->{$gdb_id_2}}, $gm_id_2 );        

@@ -76,6 +76,7 @@ use IO::File;
 use File::Basename;
 use List::Util qw(max);
 use Scalar::Util qw(looks_like_number);
+use File::Path qw(make_path);
 
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
@@ -83,6 +84,7 @@ use Bio::EnsEMBL::Compara::Graph::Link;
 use Bio::EnsEMBL::Compara::Graph::Node;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header check_column_integrity check_line_counts);
 
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 
@@ -117,7 +119,12 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
+    unless ( $self->param('output_flatfile') ) {
+        $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
+    }
+
+    $self->param('seen_seq_member_ids', {});
+    $self->param('seen_gene_member_ids', {});
 
     my $tree_id = $self->param_required('gene_tree_id');
     my $gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($tree_id) or $self->die_no_retry("Could not fetch gene_tree with tree_id='$tree_id'");
@@ -174,12 +181,10 @@ sub write_output {
     my $self = shift @_;
 
     $self->delete_old_homologies unless $self->param('_readonly');
-    # Here is how to use server-side prepared statements. They have not
-    # proven to be faster, so this is not enabled by default
-    #$self->param('homologyDBA')->mysql_server_prepare(1);
     $self->run_analysis;
-    #$self->param('homologyDBA')->mysql_server_prepare(0);
     $self->print_summary;
+    $self->compara_dba->dbc->disconnect_if_idle;
+    $self->_hc_flatfile if $self->param('output_flatfile');
 }
 
 
@@ -215,6 +220,8 @@ sub prepare_analysis {
 
 sub run_analysis {
   my $self = shift;
+
+    $self->_create_flatfile if $self->param('output_flatfile');
 
   my $gene_tree = $self->param('gene_tree');
 
@@ -266,7 +273,7 @@ sub run_analysis {
       }
   }
 
-
+    close $self->param('output_filehandle') if $self->param('output_filehandle');
 }
 
 sub print_summary {
@@ -279,6 +286,12 @@ sub print_summary {
       printf ( "  %13s : %d\n", $type, $self->param('orthotree_homology_counts')->{$type} );
     }
   }
+
+    if ($self->param('output_flatfile')) {
+        printf("written to %s\n", $self->param('output_flatfile'));
+    } else {
+        printf("written to %s\n", $self->compara_dba->url);
+    }
 
   $self->check_homology_consistency;
 
@@ -364,6 +377,12 @@ sub get_ancestor_species_hash
 
 sub delete_old_homologies {
     my $self = shift;
+
+    my $outfile = $self->param('output_flatfile');
+    if ( defined $outfile && -e $outfile ) {
+        unlink $outfile;
+        return;
+    }
 
     my $tree_node_id = $self->param('gene_tree_id');
 
@@ -538,8 +557,20 @@ sub store_gene_link_as_homology {
         $self->param('orthotree_homology_counts')->{'gene_split'}++;
     }
   }
-  
-  $self->param('homologyDBA')->store($homology) unless $self->param('_readonly');
+
+    my $output_fh = $self->param('output_filehandle');
+    if ( $output_fh ) {
+        $homology->adaptor($self->compara_dba->get_HomologyAdaptor);
+        # create homology_id from seq_member_ids as this will be unique
+        $homology->dbID( join('_', sort map {$_->seq_member_id} @{ $homology->get_all_Members }) );
+        foreach my $member (@{ $homology->get_all_Members }) {
+            $self->param('seen_seq_member_ids')->{$member->seq_member_id} = 1;
+            $self->param('seen_gene_member_ids')->{$member->gene_member_id} = 1;
+        }
+        print $output_fh join("\t", @{$homology->object_summary}) . "\n";
+    } else {
+        $self->param('homologyDBA')->store($homology) unless $self->param('_readonly');
+    }
 
   return $homology;
 }
@@ -566,5 +597,83 @@ sub check_homology_consistency {
     $self->throw("Inconsistent homologies: $bad_key") if defined $bad_key;
 }
 
+sub _create_flatfile {
+    my $self = shift;
+
+    my $outfile = $self->param('output_flatfile');
+
+    # create directory
+    make_path(dirname($outfile));
+
+    # open file handle and print header
+    open( my $outfh, '>', $outfile ) or die "Cannot open $outfile for writing";
+    print $outfh join("\t", @{ $Bio::EnsEMBL::Compara::Homology::object_summary_headers }) . "\n";
+    $self->param('output_filehandle', $outfh);
+    return $outfh;
+}
+
+sub _hc_flatfile {
+    my $self = shift;
+
+    my $file = $self->param('output_flatfile');
+    print "running HCs on homologies:\n" if $self->debug;
+
+    # first, check the integrity of the file
+    $self->_check_file_integrity($file);
+    print "\t- file integrity ok\n" if $self->debug;
+
+    # then HC the homologies themselves
+    my $seen_seq_member_ids  = $self->param('seen_seq_member_ids');
+    my $seen_gene_member_ids = $self->param('seen_gene_member_ids');
+
+    open( my $fh, '<', $file ) or die "Cannot open $file for reading";
+    my $header_line = <$fh>;
+    my @header_cols = split(/\s+/, $header_line);
+
+    my $c = 1;
+    my %seen_homologies;
+    while ( my $line = <$fh> ) {
+        my $row = map_row_to_header($line, \@header_cols);
+        my ( $st_id, $hom_st_id ) = ($row->{stable_id}, $row->{homology_stable_id});
+
+        # A pair of gene can only appear in 1 homology at most
+        if (my $prev_line = ($seen_homologies{"$st_id - $hom_st_id"} || $seen_homologies{"$hom_st_id - $st_id"}) ) {
+            die sprintf(
+                "Pair (%s - %s) seen more than once (lines %d and %d)",
+                ( $st_id, $hom_st_id, $prev_line, $c )
+            );
+        }
+        $seen_homologies{"$st_id - $hom_st_id"} = $c;
+        $seen_homologies{"$hom_st_id - $st_id"} = $c;
+
+        # Checks that the member_ids are valid
+        unless ($seen_seq_member_ids->{$row->{'seq_member_id'}}) {
+            die sprintf("seq_member_id=%d does not exist in the tree (line %d)", $row->{'seq_member_id'}, $c);
+        }
+        unless ($seen_gene_member_ids->{$row->{'gene_member_id'}}) {
+            die sprintf("gene_member_id=%d does not exist in the tree (line %d)", $row->{'gene_member_id'}, $c);
+        }
+        unless ($seen_seq_member_ids->{$row->{'homology_seq_member_id'}}) {
+            die sprintf("seq_member_id=%d does not exist in the tree (line %d)", $row->{'homology_seq_member_id'}, $c);
+        }
+        unless ($seen_gene_member_ids->{$row->{'homology_gene_member_id'}}) {
+            die sprintf("gene_member_id=%d does not exist in the tree (line %d)", $row->{'homology_gene_member_id'}, $c);
+        }
+
+        $c++;
+    }
+    print "\t- homologies ok\n\n" if $self->debug;
+}
+
+sub _check_file_integrity {
+    my ( $self, $file ) = @_;
+
+    # check line counts
+    my $exp_lines = $self->param('n_stored_homologies') + 1; # incl header line
+    check_line_counts($file, $exp_lines);
+
+    # check column integrity
+    check_column_integrity($file);
+}
 
 1;
