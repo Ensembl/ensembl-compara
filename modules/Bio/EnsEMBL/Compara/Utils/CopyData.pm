@@ -288,6 +288,9 @@ sub copy_data {
     };
     my $load_query = "LOAD DATA LOCAL INFILE '/dev/stdin' " . ($replace ? 'REPLACE' : 'IGNORE' ) . " INTO TABLE $table_name";
 
+    # escape quotes to avoid nesting
+    $query =~ s/"/\\"/g;
+
     print "Copying data in table $table_name\n" if $debug;
 
     my $from_user = $from_dbc->username;
@@ -351,7 +354,8 @@ sub copy_data {
         "| sed -r -e 's/\\r//g' -e 's/(^|\\t)NULL(\$|\\t)/\\1\\\\N\\2/g' -e 's/(^|\\t)NULL(\$|\\t)/\\1\\\\N\\2/g' " .
         "| mysql --host=$to_host --port=$to_port --user=$to_user " . ($to_pass ? "--password=$to_pass " : '') .
         "$to_dbname -e \"$load_query\"";
-    Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd, { die_on_failure => 1, debug => $debug });
+    my $run_cmd = Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd, { die_on_failure => 1, debug => $debug });
+    die $run_cmd->err if $run_cmd->err =~ /ERROR/;
     print "total time: " . (time - $start_time) . " s\n" if $debug;
 
     unless ($skip_disable_vars) {
