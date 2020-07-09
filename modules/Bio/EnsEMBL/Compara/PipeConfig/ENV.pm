@@ -71,7 +71,7 @@ sub shared_default_options {
         'warehouse_dir'         => '/nfs/production/panda/ensembl/warehouse/compara/',
 
         # Where to find the linuxbrew installation
-        'linuxbrew_home'        => $ENV{'LINUXBREW_HOME'},
+        'linuxbrew_home'        => $ENV{'LINUXBREW_HOME'} || $self->o('linuxbrew_home'),
         'compara_software_home' => $self->o('warehouse_dir') . '/software/',
 
         # All the fixed parameters that depend on a "division" parameter
