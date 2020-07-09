@@ -354,8 +354,7 @@ sub copy_data {
         "| sed -r -e 's/\\r//g' -e 's/(^|\\t)NULL(\$|\\t)/\\1\\\\N\\2/g' -e 's/(^|\\t)NULL(\$|\\t)/\\1\\\\N\\2/g' " .
         "| mysql --host=$to_host --port=$to_port --user=$to_user " . ($to_pass ? "--password=$to_pass " : '') .
         "$to_dbname -e \"$load_query\"";
-    my $run_cmd = Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd, { die_on_failure => 1, debug => $debug });
-    die $run_cmd->err if $run_cmd->err =~ /ERROR/;
+    Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd, { die_on_failure => 1, use_bash_pipefail => 1, debug => $debug });
     print "total time: " . (time - $start_time) . " s\n" if $debug;
 
     unless ($skip_disable_vars) {
