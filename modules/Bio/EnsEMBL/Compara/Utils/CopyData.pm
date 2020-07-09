@@ -289,7 +289,7 @@ sub copy_data {
     my $load_query = "LOAD DATA LOCAL INFILE '/dev/stdin' " . ($replace ? 'REPLACE' : 'IGNORE' ) . " INTO TABLE $table_name";
 
     # escape quotes to avoid nesting
-    $query =~ s/"/\\"/g;
+    $query =~ s/[^\\]"/\\"/g;
 
     print "Copying data in table $table_name\n" if $debug;
 
