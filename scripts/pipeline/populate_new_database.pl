@@ -849,10 +849,10 @@ sub copy_constrained_elements {
   $new_dba->dbc->do("ALTER TABLE `constrained_element` DISABLE KEYS") if $ce_engine eq 'MyISAM';
 
   foreach my $this_method_link_species_set (@$method_link_species_sets) {
-    my $constrained_element_fetch_sth = $old_dba->dbc->prepare("SELECT * FROM constrained_element".
-	" WHERE method_link_species_set_id = ? LIMIT 1");
-    $constrained_element_fetch_sth->execute($this_method_link_species_set->dbID);
-    my $all_rows = $constrained_element_fetch_sth->fetchall_arrayref;
+    my $all_rows = $old_dba->dbc->sql_helper->execute_simple(
+        -SQL =>    "SELECT * FROM constrained_element WHERE method_link_species_set_id = ? LIMIT 1",
+        -PARAMS => [ $this_method_link_species_set->dbID ],
+    );
     if (!@$all_rows) {
       next;
     }
@@ -888,14 +888,14 @@ sub copy_conservation_scores {
   # Keys are disabled / enabled only once for the whole loop
   my $cs_engine = $new_dba->get_table_engine('conservation_score');
   $new_dba->dbc->do("ALTER TABLE `conservation_score` DISABLE KEYS") if $cs_engine eq 'MyISAM';
-  my $conservation_score_fetch_sth = $old_dba->dbc->prepare("SELECT * FROM conservation_score".
-      " WHERE genomic_align_block_id >= ? AND genomic_align_block_id < ? LIMIT 1");
 
   foreach my $this_method_link_species_set (@$method_link_species_sets) {
     my $lower_gab_id = $this_method_link_species_set->dbID * 10**10;
     my $upper_gab_id = ($this_method_link_species_set->dbID + 1) * 10**10;
-    $conservation_score_fetch_sth->execute($lower_gab_id, $upper_gab_id);
-    my $all_rows = $conservation_score_fetch_sth->fetchall_arrayref;
+    my $all_rows = $old_dba->dbc->sql_helper->execute_simple(
+        -SQL =>    "SELECT * FROM conservation_score WHERE genomic_align_block_id >= ? AND genomic_align_block_id < ? LIMIT 1",
+        -PARAMS => [ $lower_gab_id, $upper_gab_id ],
+    );
     if (!@$all_rows) {
       next;
     }
