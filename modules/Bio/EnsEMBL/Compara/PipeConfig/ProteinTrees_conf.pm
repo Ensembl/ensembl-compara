@@ -927,7 +927,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'extra_parameters'  => [ 'is_polyploid' ],
-                'compara_db'        => '#member_db#',
+                'compara_db'        => '#master_db#',
             },
             -rc_name => '4Gb_job',
             -flow_into => {
