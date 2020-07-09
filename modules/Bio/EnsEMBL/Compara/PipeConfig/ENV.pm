@@ -33,6 +33,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::ApiVersion ();
+use Bio::EnsEMBL::Hive::Utils ('whoami');
 
 =head2 shared_options
 
@@ -45,11 +46,15 @@ sub shared_default_options {
     my ($self) = @_;
     return {
 
+        # Same as in HiveGeneric_conf, but also considering $SUDO_USER as
+        # we sometimes initialise pipelines with a shared user
+        'dbowner'               => $ENV{'EHIVE_USER'} || $ENV{'SUDO_USER'} || whoami() || $self->o('dbowner'),
+
         # Since we run the same pipeline for multiple divisions, include the division name in the pipeline name
         'pipeline_name'         => $self->o('division').'_'.$self->default_pipeline_name().'_'.$self->o('rel_with_suffix'),
 
         # User details
-        'email'                 => $ENV{'USER'}.'@ebi.ac.uk',
+        'email'                 => $self->o('dbowner').'@ebi.ac.uk',
 
         # Shared user used for shared files across all of Compara
         'shared_user'           => 'compara_ensembl',
@@ -61,7 +66,7 @@ sub shared_default_options {
         'eg_release'            => Bio::EnsEMBL::ApiVersion::software_version()-53,
 
         # TODO: make a $self method that checks whether this already exists, to prevent clashes like in the LastZ pipeline
-        'pipeline_dir'          => '/hps/nobackup2/production/ensembl/' . $ENV{'USER'} . '/' . $self->o('pipeline_name'),
+        'pipeline_dir'          => '/hps/nobackup2/production/ensembl/' . $self->o('dbowner') . '/' . $self->o('pipeline_name'),
         'shared_hps_dir'        => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user'),
         'warehouse_dir'         => '/nfs/production/panda/ensembl/warehouse/compara/',
 
