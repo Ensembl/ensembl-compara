@@ -79,7 +79,7 @@ my $compara_dbs = {
     # 'compara_ptrees'          => [ 'mysql-ens-compara-prod-2',  'carlac_default_vertebrates_protein_trees_102' ],
     # 'compara_nctrees'         => [ 'mysql-ens-compara-prod-3',  'carlac_default_vertebrates_ncrna_trees_102' ],
     'murinae_ptrees'          => [ 'mysql-ens-compara-prod-7',  'jalvarez_vertebrates_murinae_protein_reindexed_trees_102' ],
-    'murinae_nctrees'         => [ 'mysql-ens-compara-prod-8',  'enscompara-prod1_vertebrates_murinae_ncrna_reindexed_trees_102' ],
+    'murinae_nctrees'         => [ 'mysql-ens-compara-prod-8',  'jalvarez_vertebrates_murinae_ncrna_reindexed_trees_102' ],
     'murinae_ptrees_prev'     => [ 'mysql-ens-compara-prod-10', 'carlac_vertebrates_murinae_protein_reindexed_trees_101' ],
     'murinae_nctrees_prev'    => [ 'mysql-ens-compara-prod-10', 'carlac_vertebrates_murinae_ncrna_reindexed_trees_101' ],
     'pig_breeds_ptrees'       => [ 'mysql-ens-compara-prod-7',  'jalvarez_vertebrates_pig_breeds_protein_reindexed_trees_102' ],
@@ -88,7 +88,7 @@ my $compara_dbs = {
     'pig_breeds_nctrees_prev' => [ 'mysql-ens-compara-prod-10', 'carlac_vertebrates_sus_ncrna_reindexed_trees_101' ],
 
     # LASTZ dbs
-    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-7', 'enscompara-prod1_vertebrates_lastz_batch1_102' ],
+    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-7', 'jalvarez_vertebrates_lastz_batch1_102' ],
 
     # EPO dbs
     ## mammals

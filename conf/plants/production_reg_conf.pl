@@ -88,7 +88,7 @@ my $compara_dbs = {
     # 'compara_ptrees'   => [ 'mysql-ens-compara-prod-3', 'jalvarez_default_plants_protein_trees_101' ],
 
     # LASTZ dbs
-    'lastz_batch_1' => [ 'mysql-ens-compara-prod-2', 'enscompara-prod1_plants_lastz_batch1_102' ],
+    'lastz_batch_1' => [ 'mysql-ens-compara-prod-2', 'jalvarez_plants_lastz_batch1_102' ],
 
     # synteny
     'compara_syntenies' => [ 'mysql-ens-compara-prod-7', 'jalvarez_plants_synteny_102' ],
