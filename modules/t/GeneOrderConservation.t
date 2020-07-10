@@ -116,21 +116,17 @@ standaloneJob(
         'homology_flatfile' => "$test_flatfile_dir/goc.test.#goc_mlss_id#.tsv",
         'compara_db'        => $compara_dba->url,
         'split_polyploids'  => 1,
-	},
-    [ # list of events to test for (just 1 event in this case)
-		[
-			'DATAFLOW',
-			{'genome_db_ids' => [4, 5]},
-			3
-		],
-        [
-            'WARNING',
-            "Got ENSEMBL_HOMOEOLOGUES, so dataflowed 1 job per pair of component genome_dbs\n",
-            'INFO'
-        ]
-	]
+	}
 );
 
+$mlss       = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($goc_mlss_id);
+$homologies = $homology_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
+
+my $hom_26 = $homology_adaptor->fetch_by_dbID(26);
+is( $hom_26->goc_score, 25, 'correct score (25) for homology_id 26' );
+
+my $hom_27 = $homology_adaptor->fetch_by_dbID(27);
+is( $hom_27->goc_score, 0, 'correct score (0) for homology_id 27' );
 
 # ORTHOLOGUES
 $goc_mlss_id = 1003;
@@ -141,43 +137,6 @@ standaloneJob(
         'homology_flatfile' => "$test_flatfile_dir/goc.test.#goc_mlss_id#.tsv",
         'compara_db'        => $compara_dba->url,
         'split_polyploids'  => 1,
-	},
-    [ # list of events to test for (just 1 event in this case)
-		[
-			'DATAFLOW',
-			{'genome_db_ids' => [1, 4]},
-			3
-		],
-        [
-			'DATAFLOW',
-			{'genome_db_ids' => [1, 5]},
-			3
-		],
-        [
-            'WARNING',
-            "Got ENSEMBL_ORTHOLOGUES on polyploids, so dataflowed 1 job per component genome_db\n",
-            'INFO'
-        ]
-	]
-);
-
-standaloneJob(
-	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::GeneOrderConservation', # module
-	{ # input param hash
-	    'goc_mlss_id'       => $goc_mlss_id,
-        'homology_flatfile' => "$test_flatfile_dir/goc.test.#goc_mlss_id#.tsv",
-        'compara_db'        => $compara_dba->url,
-        'genome_db_ids'     => [1,4],
-	}
-);
-
-standaloneJob(
-	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::GeneOrderConservation', # module
-	{ # input param hash
-	    'goc_mlss_id'       => $goc_mlss_id,
-        'homology_flatfile' => "$test_flatfile_dir/goc.test.#goc_mlss_id#.tsv",
-        'compara_db'        => $compara_dba->url,
-        'genome_db_ids'     => [1,5],
 	}
 );
 

@@ -23,3 +23,6 @@
 23	1003	ortholog_one2one	0	\N	\N	\N	\N	\N	1	23	23	\N	\N	\N
 24	1003	ortholog_one2one	0	\N	\N	\N	\N	\N	1	24	24	\N	\N	\N
 25	1003	ortholog_one2one	0	\N	\N	\N	\N	\N	1	25	25	\N	\N	\N
+26	1002	ortholog_one2one	0	\N	\N	\N	\N	\N	1	26	26	\N	\N	\N
+27	1002	ortholog_one2one	0	\N	\N	\N	\N	\N	1	27	27	\N	\N	\N
+28	1002	ortholog_one2one	0	\N	\N	\N	\N	\N	1	28	28	\N	\N	\N
