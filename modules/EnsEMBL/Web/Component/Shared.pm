@@ -366,7 +366,7 @@ sub transcript_table {
       push @columns, { key => $k, sort => 'html', title => $x->{'title'}, label => $x->{'name'}, class => '_ht'};
     }
     if ($species eq 'Homo_sapiens' && $sub_type ne 'GRCh37') {
-      push @columns, { key => 'refseq_match', sort => 'html', label => 'RefSeq Match', title => 'RefSeq transcripts that match 100% across the sequence, intron/exon structure and UTRs', class => '_ht' };
+      push @columns, { key => 'refseq_match', sort => 'html', label => 'RefSeq Match', title => get_glossary_entry($self->hub, 'RefSeq Match'), class => '_ht' };
     }
 
     my $title = encode_entities('<a href="/info/genome/genebuild/transcript_quality_tags.html" target="_blank">Tags</a>');
