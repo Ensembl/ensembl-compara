@@ -75,9 +75,9 @@ my $compara_dbs = {
     # 'compara_curr_3'   => [ 'mysql-ens-compara-prod-3', "ensembl_compara_$curr_release" ],
 
     # homology dbs
-    'compara_members'         => [ 'mysql-ens-compara-prod-2', 'jalvarez_vertebrates_load_members_102' ],
-    # 'compara_ptrees'          => [ 'mysql-ens-compara-prod-2', 'carlac_default_vertebrates_protein_trees_101' ],
-    # 'compara_nctrees'         => [ 'mysql-ens-compara-prod-5', 'muffato_default_vertebrates_ncrna_trees_101' ],
+    'compara_members'         => [ 'mysql-ens-compara-prod-10', 'jalvarez_vertebrates_load_members_102' ],
+    # 'compara_ptrees'          => [ 'mysql-ens-compara-prod-2',  'carlac_default_vertebrates_protein_trees_102' ],
+    # 'compara_nctrees'         => [ 'mysql-ens-compara-prod-3',  'carlac_default_vertebrates_ncrna_trees_102' ],
     'murinae_ptrees'          => [ 'mysql-ens-compara-prod-7',  'jalvarez_vertebrates_murinae_protein_reindexed_trees_102' ],
     'murinae_nctrees'         => [ 'mysql-ens-compara-prod-8',  'enscompara-prod1_vertebrates_murinae_ncrna_reindexed_trees_102' ],
     'murinae_ptrees_prev'     => [ 'mysql-ens-compara-prod-10', 'carlac_vertebrates_murinae_protein_reindexed_trees_101' ],
@@ -122,7 +122,7 @@ my $compara_dbs = {
     'amniotes_pecan'      => [ 'mysql-ens-compara-prod-3', 'dthybert_amniotes_mercator_pecan_101' ],
     'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-3', 'dthybert_amniotes_mercator_pecan_101' ],
 
-    # 'compara_syntenies'   => [ 'mysql-ens-compara-prod-7', 'jalvarez_vertebrates_synteny_100' ],
+    'compara_syntenies'   => [ 'mysql-ens-compara-prod-9', 'jalvarez_vertebrates_synteny_102' ],
 
     # miscellaneous
     'alt_allele_projection' => [ 'mysql-ens-compara-prod-8', 'jalvarez_vertebrates_alt_allele_import_102' ],
