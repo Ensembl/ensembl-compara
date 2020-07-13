@@ -580,7 +580,7 @@ sub _update_ticket {
                     'search', {'jql' => 'project=ENSCOMPARASW', 'maxResults' => 10});
   Description : Sends a HTTP POST request to the JIRA server and returns the
                 response
-  Return type : arrayref or hashref
+  Return type : hashref for 'issue'; arrayref for 'search' and 'issueLink'
   Exceptions  : none
 
 =cut
@@ -634,7 +634,7 @@ sub _put_request {
                     'POST', 'https://www.ebi.ac.uk/panda/jira/rest/api/latest/issue',
                     {'jql' => 'project=ENSCOMPARASW', 'maxResults' => 10});
   Description : Sends a request to the JIRA server and returns the decoded response
-  Return type : arrayref or hashref
+  Return type : arrayref or hashref (depending on $method and $url)
   Exceptions  : none
 
 =cut
