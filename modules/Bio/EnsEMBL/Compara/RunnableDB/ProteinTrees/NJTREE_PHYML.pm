@@ -61,7 +61,6 @@ use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Data::Dumper;
-use File::Glob;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
