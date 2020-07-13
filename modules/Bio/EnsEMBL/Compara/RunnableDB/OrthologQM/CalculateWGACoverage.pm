@@ -61,6 +61,8 @@ use strict;
 use warnings;
 use Data::Dumper;
 
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -380,18 +382,17 @@ Store it in a param 'member_info'
 sub _load_member_info {
     my ($self, $dba) = @_;
 
-    my $gm_sql = 'SELECT dnafrag_id, dnafrag_start, dnafrag_end FROM gene_member WHERE gene_member_id = ?';
-    my $gm_sth = $dba->dbc->prepare($gm_sql);
-
-    my $homologies = $self->param('orth_info');
     my $member_info;
-    foreach my $hom ( @$homologies ) {
-        my ( $gm_id_1, $gm_id_2 ) = ( $hom->{gene_members}->[0]->[0], $hom->{gene_members}->[1]->[0] );
-
-        $gm_sth->execute($gm_id_1);
-        $member_info->{"gene_member_$gm_id_1"} = $gm_sth->fetchrow_hashref;
-        $gm_sth->execute($gm_id_2);
-        $member_info->{"gene_member_$gm_id_2"} = $gm_sth->fetchrow_hashref;
+    foreach my $gdb_id ($self->param_required('species1_id'), $self->param_required('species2_id')) {
+        my $gene_file = $self->param_required('gene_dumps_dir') . "/gene_member.${gdb_id}.tsv";
+        open( my $gene_fh, '<', $gene_file) or die "Cannot open $gene_file";
+        my $header = <$gene_fh>;
+        my @head_cols = split(/\s+/, $header);
+        while ( my $line = <$gene_fh> ) {
+            my $row = map_row_to_header( $line, \@head_cols );
+            $member_info->{'gene_member_'.$row->{'gene_member_id'}} = $row;
+        }
+        close($gene_fh);
     }
 
     $self->param('member_info', $member_info);
