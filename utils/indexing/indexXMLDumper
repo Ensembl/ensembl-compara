@@ -289,14 +289,17 @@ SP:  foreach my $species ( @species ) {
       $conf->{'species_sci_name'}    = $species;
       $conf->{'authority'}           = $PD->{$species}{'AUTHORITY'};
       $conf->{'species_display_name'} = $PD->{$species}{'SPECIES_COMMON_NAME'};
+      $conf->{'strain_details'} = undef;
       $conf->{'strain_details'}{'reference_strain'} = 1;
-      if ( $PD->{$species}{'STRAIN_GROUP'} && ($PD->{$species}{'STRAIN_GROUP'} ne $PD->{$species}{'SPECIES_PRODUCTION_NAME'})) {
-
-        $conf->{'strain_details'}{'parent_common_name'} = ucfirst($PD->{$species}{'SPECIES_COMMON_NAME'}) || '';
-        $conf->{'strain_details'}{'parent_latin_name'}  = $PD->{$species}{'SPECIES_SCIENTIFIC_NAME'};
-        $conf->{'strain_details'}{'strain_name'}        = $conf->{'strain_details'}{'parent_common_name'} . ' ' . $PD->{$species}{'SPECIES_STRAIN'};
-        $conf->{'strain_details'}{'reference_strain'} = 0;
+      if ( $PD->{$species}{'STRAIN_GROUP'} ){
+        $conf->{'strain_details'}{'strain_name'} = ucfirst($PD->{$species}{'SPECIES_COMMON_NAME'}) . ' ' . $PD->{$species}{'SPECIES_STRAIN'};
+        if ($PD->{$species}{'STRAIN_GROUP'} ne $PD->{$species}{'SPECIES_PRODUCTION_NAME'}) {
+          $conf->{'strain_details'}{'parent_common_name'} = ucfirst($PD->{$species}{'SPECIES_COMMON_NAME'}) || '';
+          $conf->{'strain_details'}{'parent_latin_name'}  = $PD->{$species}{'SPECIES_SCIENTIFIC_NAME'};
+          $conf->{'strain_details'}{'reference_strain'} = 0;
+        }
       }
+#      warn Dumper($conf->{'strain_details'}); exit;
       if ($check_strains) {
         if ($PD->{$species}{'STRAIN_GROUP'} && ($PD->{$species}{'STRAIN_GROUP'} ne $PD->{$species}{'SPECIES_PRODUCTION_NAME'})) {
           print LOG "Species $species has strains, with parent of ".$conf->{'strain_details'}{'parent_common_name'} . "\n" ;
@@ -3356,9 +3359,7 @@ sub common_fields {
   else {
     #for the front end we need the species details to be that of the parent, and the strain to be that of the species.
     if ($parent_common_name) {
-      $parent_latin = $conf->{'strain_details'}{'parent_latin_name'};
-      $strain_name = $conf->{'strain_details'}{'strain_name'};
-      $species_latin_name = $parent_latin;
+      $species_latin_name = $conf->{'strain_details'}{'parent_latin_name'};
       $species_display_name = $parent_common_name;
     }
 
@@ -3372,6 +3373,7 @@ sub common_fields {
       $xml .= qq(
   <field name="reference_strain">$ref_strain</field>);
     }
+    $strain_name = $conf->{'strain_details'}{'strain_name'};
     if ($strain_name) {
         $xml .= qq(
   <field name="strain">$strain_name</field>);
