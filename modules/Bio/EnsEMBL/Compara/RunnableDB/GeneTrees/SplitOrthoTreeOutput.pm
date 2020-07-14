@@ -38,6 +38,7 @@ use strict;
 use File::Find;
 use IO::File;
 
+use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
 use Bio::EnsEMBL::Hive::Utils ('dir_revhash');
 
