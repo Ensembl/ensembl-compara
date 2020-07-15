@@ -103,6 +103,8 @@ sub stats_table {
   my $pf_adaptor   = $self->hub->database('variation')->get_PhenotypeFeatureAdaptor;
   my ($total_counts, %phenotypes, @va_ids);
 
+  my $skip_phenotypes_link = "non_specified";
+
   my $columns = [
     { key => 'phen',    title => 'Phenotype, disease and trait', sort => 'string', width => '35%'  },
     { key => 'source',  title => 'Source(s)', sort => 'string', width => '11%'  },
@@ -117,10 +119,12 @@ sub stats_table {
 
     my $var_name = $pf->object_id;
     my $phe      = $pf->phenotype->description;
+    my $phe_class= $pf->phenotype_class;
    
     $phenotypes{$phe} ||= { id => $pf->{'_phenotype_id'} , name => $pf->{'_phenotype_name'}};
     $phenotypes{$phe}{'count'}{$var_name} = 1;
     $phenotypes{$phe}{'source'}{$phe_source} = 1;
+    $phenotypes{$phe}{skip_link} = $phe_class eq $skip_phenotypes_link ? 1 : 0;
 
     $total_counts->{$var_name} = 1;
   }  
@@ -164,7 +168,7 @@ sub stats_table {
                    }),
                    'View associate loci',
                    $_
-                 ) unless /(HGMD|COSMIC)/;
+                 ) unless /(HGMD|COSMIC)/ || $phenotypes{$_}{skip_link};
     }
        
     push @rows, {

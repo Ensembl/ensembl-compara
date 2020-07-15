@@ -55,6 +55,7 @@ sub gene_phenotypes {
   my (@rows, %list, $list_html);
   my $has_allelic = 0;  
   my $has_study   = 0;
+  my $skip_phenotypes_link = "non_specified";
   my %phenotypes;
 
   return if($obj->isa('Bio::EnsEMBL::Compara::Family'));
@@ -69,6 +70,7 @@ sub gene_phenotypes {
       my $features;
       foreach my $pf (@{$pfa->fetch_all_by_Gene($obj)}) {
         my $phe    = $pf->phenotype->description;
+        my $phe_class = $pf->phenotype_class;
         my $ext_id = $pf->external_id;
         my $source = $pf->source_name;
         my $strain = $pf->strain;
@@ -111,7 +113,7 @@ sub gene_phenotypes {
         my $key = join("\t", ($phe, $strain_name, $allele_symbol));
         $features->{$key}->{source} = $source;
         push @{$features->{$key}->{gender}}, $strain_gender;
-        $features->{$key}->{url} = $phe_url;
+        $features->{$key}->{url} = $phe_class eq $skip_phenotypes_link ? $phe : $phe_url;
         $features->{$key}->{pmid} = $pmids;
       }
       foreach my $key (sort keys %$features) {
@@ -127,6 +129,7 @@ sub gene_phenotypes {
     } else {    
       foreach my $pf(@{$pfa->fetch_all_by_Gene($obj)}) {
         my $phe     = $pf->phenotype->description;
+        my $phe_class = $pf->phenotype_class;
         my $source  = $pf->source_name;
         my $ext_id  = $pf->external_id;
 
@@ -163,7 +166,7 @@ sub gene_phenotypes {
           'View associate loci',
           $phe
         );
-        $phenotypes{$phe}{'url'} = $phe_url;
+        $phenotypes{$phe}{'url'} = $phe_class eq $skip_phenotypes_link? $phe : $phe_url;
 
         my $allelic_requirement = '-';
         if ($self->_inheritance($attribs)) {

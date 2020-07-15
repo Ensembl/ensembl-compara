@@ -148,6 +148,7 @@ sub table_data {
   my $variation_names = 'variation_names';
   my @stats_col = ('p_value','odds_ratio','beta_coef');
   my $submitter_max_length = 20;
+  my $skip_phenotypes_link = 'non_specified';
 
   foreach my $pf (@$external_data) {
 
@@ -167,6 +168,7 @@ sub table_data {
     }
 
     my $id                   = $pf->{'_phenotype_id'};
+    my $phenotype_class      = $pf->phenotype_class;
     my $pf_id                = $pf->dbID;
     my $source_name          = $pf->source_name;
     my $study_name           = $pf->study ? $pf->study->name : '';
@@ -282,7 +284,7 @@ sub table_data {
     }
     # Associate loci link
     if ($bm_flag == 0) {
-      $disease = qq{<a href="$disease_url" title="View associate loci">$disease</a>} unless ($disease =~ /HGMD/);
+      $disease = qq{<a href="$disease_url" title="View associate loci">$disease</a>} unless ($disease =~ /HGMD/ || $phenotype_class eq $skip_phenotypes_link);
     }
 
     # Stats column

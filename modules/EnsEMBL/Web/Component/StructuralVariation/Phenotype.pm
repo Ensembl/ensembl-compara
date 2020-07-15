@@ -73,6 +73,8 @@ sub table_data {
   my $hub        = $self->hub;
   my $object     = $self->object;
   
+  my $skip_phenotypes_link = 'non_specified';
+
   my %phenotypes;
   my %clin_sign;
   my %column_flags;
@@ -83,7 +85,9 @@ sub table_data {
   my $sv_pf = $self->object->Obj->get_all_PhenotypeFeatures();
   foreach my $pf (@$sv_pf) {
     my $phe = $pf->phenotype->description;
-    if (!exists $phenotypes{$phe}) {
+    my $phe_class = $pf->phenotype_class;
+
+    if (!exists $phenotypes{$phe} && $phe_class ne $skip_phenotypes_link) {
       my $phe_url = $hub->url({ type => 'Phenotype', action => 'Locations', ph => $pf->phenotype->dbID, name => $phe });
       $phenotypes{$phe} = { disease => qq{<a href="$phe_url" title="View associate loci"><b>$phe</b></a>} };
     }
@@ -108,6 +112,7 @@ sub table_data {
       next if ($sva->seq_region_start==0 || $sva->seq_region_end==0);
       
       my $phe = ($sva->phenotype) ? $sva->phenotype->description : undef;
+      my $phe_class = $sva->phenotype_class;
 
        # Ontology data
       ($terms, $accessions) = $self->get_ontology_data($sva,$phe,$terms,$accessions);
@@ -133,6 +138,8 @@ sub table_data {
             disease    => qq{<a href="$phe_url" title="View associate loci"><b>$phe</b></a>},
             s_evidence => $sva->object_id
           };
+          $phenotypes{$phe}{disease}=$phe if ($phe_class eq $skip_phenotypes_link);
+
         }
       }
     }
