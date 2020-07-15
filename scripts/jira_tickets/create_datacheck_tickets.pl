@@ -110,12 +110,13 @@ my $components = ['Datachecks', 'Production tasks'];
 my $categories = ['Bug::Internal', 'Production::Tasks'];
 # Create all JIRA tickets
 my $dc_task_keys = $jira_adaptor->create_tickets(
-    -JSON_OBJ         => \@json_subtasks,
-    -DEFAULT_PRIORITY => 'Blocker',
-    -EXTRA_COMPONENTS => $components,
-    -EXTRA_CATEGORIES => $categories,
-    -UPDATE           => $update,
-    -DRY_RUN          => $dry_run
+    -JSON_OBJ           => \@json_subtasks,
+    -DEFAULT_ISSUE_TYPE => 'Sub-task',
+    -DEFAULT_PRIORITY   => 'Blocker',
+    -EXTRA_COMPONENTS   => $components,
+    -EXTRA_CATEGORIES   => $categories,
+    -UPDATE             => $update,
+    -DRY_RUN            => $dry_run
 );
 # Create a blocker issue link between the newly created datacheck ticket and the
 # handover ticket
