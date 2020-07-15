@@ -49,7 +49,7 @@ sub param_defaults {
         %{$self->SUPER::param_defaults},
         'range_index'   => 1,
         'offset'        => '#range_index#00000001',
-    }
+    };
 }
 
 sub run {
@@ -69,6 +69,7 @@ sub write_output {
         'param_name' => 'homology_id_range_start',
         'param_value' => $self->param('next_range_start'),
     );
+    $self->db->hive_pipeline->save_collections();
 
     $self->dataflow_output_id( {
         homology_id_start => $self->param('this_range_start'),
