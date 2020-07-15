@@ -96,19 +96,21 @@ my $jira_adaptor = Bio::EnsEMBL::Compara::Utils::JIRA->new(-DIVISION => $divisio
 # Parse Datacheck information from input TAP file
 my $testcase_failures = parse_datachecks($dc_file);
 # Create a task ticket for each datacheck subtest failure
-my @json_tasks;
+my $merge_ticket_key = find_labeled_ticket($jira_adaptor, 'Merge_anchor');
+my @json_subtasks;
 foreach my $testcase ( keys %$testcase_failures ) {
-    my $failure_task_json = {
+    my $failure_subtask_json = {
         summary     => "Datacheck $testcase failed",
         description => $testcase_failures->{$testcase},
+        parent      => $merge_ticket_key,
     };
-    push(@json_tasks, $failure_task_json);
+    push(@json_subtasks, $failure_subtask_json);
 }
 my $components = ['Datachecks', 'Production tasks'];
 my $categories = ['Bug::Internal', 'Production::Tasks'];
 # Create all JIRA tickets
 my $dc_task_keys = $jira_adaptor->create_tickets(
-    -JSON_OBJ         => \@json_tasks,
+    -JSON_OBJ         => \@json_subtasks,
     -DEFAULT_PRIORITY => 'Blocker',
     -EXTRA_COMPONENTS => $components,
     -EXTRA_CATEGORIES => $categories,
@@ -117,7 +119,7 @@ my $dc_task_keys = $jira_adaptor->create_tickets(
 );
 # Create a blocker issue link between the newly created datacheck ticket and the
 # handover ticket
-my $blocked_ticket_key = find_handover_ticket($jira_adaptor);
+my $blocked_ticket_key = find_labeled_ticket($jira_adaptor, 'Handover_anchor');
 $jira_adaptor->link_tickets('Blocks', $dc_task_keys->[0], $blocked_ticket_key, $dry_run);
 
 sub parse_datachecks {
@@ -157,16 +159,16 @@ sub parse_datachecks {
     return $dc_failures;
 }
 
-sub find_handover_ticket {
-    my ($jira_adaptor) = @_;
+sub find_labeled_ticket {
+    my ($jira_adaptor, $label) = @_;
 
-    my $jql = 'labels=Handover_anchor';
-    my $handover_ticket = $jira_adaptor->fetch_tickets($jql);
+    my $jql = "labels=$label";
+    my $labeled_ticket = $jira_adaptor->fetch_tickets($jql);
 
     # Check that we have actually found the ticket (and only one)
-    die 'Cannot find any ticket with the label "Handover_anchor"' if (! $handover_ticket->{total});
-    die 'Found more than one ticket with the label "Handover_anchor"' if ($handover_ticket->{total} > 1);
-    print "Found ticket key '" . $handover_ticket->{issues}->[0]->{key} . "'\n";
+    die 'Cannot find any ticket with the label "$label"' if (! $labeled_ticket->{total});
+    die 'Found more than one ticket with the label "$label"' if ($labeled_ticket->{total} > 1);
+    print "Found ticket key '" . $labeled_ticket->{issues}->[0]->{key} . "'\n";
 
-    return $handover_ticket->{issues}->[0]->{key};
+    return $labeled_ticket->{issues}->[0]->{key};
 }
