@@ -78,6 +78,22 @@ sub default_options {
         # Do we need a mapping between homology_ids of this database to another database ?
         # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
         'do_homology_id_mapping' => 0,
+
+        # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
+        'threshold_levels' => [
+            {
+                'taxa'          => [ 'Apes', 'Murinae' ],
+                'thresholds'    => [ undef, undef, 80 ],
+            },
+            {
+                'taxa'          => [ 'Mammalia', 'Aves', 'Percomorpha' ],
+                'thresholds'    => [ undef, undef, 50 ],
+            },
+            {
+                'taxa'          => [ 'all' ],
+                'thresholds'    => [ undef, undef, 25 ],
+            },
+        ],
     };
 }
 
