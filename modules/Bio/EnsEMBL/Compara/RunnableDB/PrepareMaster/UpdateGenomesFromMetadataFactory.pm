@@ -61,10 +61,14 @@ sub fetch_input {
 	my $list_cmd = "perl $list_genomes_script $metadata_script_options";
 	my @release_genomes = $self->get_command_output($list_cmd);
 	chomp @release_genomes;
-    # Keep only the species included in the allowed list
-    @release_genomes = grep { exists $allowed_species->{$_} } @release_genomes;
+    # Remove the first element reported by the script: Division: <division>
+    shift @release_genomes if $release_genomes[0] =~ /Division/;
+    if ($allowed_species) {
+        # Keep only the species included in the allowed list
+        @release_genomes = grep { exists $allowed_species->{$_} } @release_genomes;
+    }
 
-    #if pan do not die becasue the list of species used in pan is
+    #if pan do not die because the list of species used in pan is
     #exclusively described in param('additional_species')
     if ($division ne "pan"){
         die "No genomes reported for release" unless @release_genomes;
@@ -78,11 +82,13 @@ sub fetch_input {
             # first, add them to the release_genomes
             my @add_species_for_div = @{$additional_species->{$additional_div}};
             push( @release_genomes, @add_species_for_div );
-            # check for each additonal species in each division that the productioin name is correct
+            # check for each additonal species in each division that the production name is correct
             $metadata_script_options = "\$($meta_host details script) --release $release --division $additional_div";
             $list_cmd = "perl $list_genomes_script $metadata_script_options";
             my @additional_release_genomes = $self->get_command_output($list_cmd);
             chomp @additional_release_genomes;
+            # Remove the first element reported by the script: Division: <division>
+            shift @additional_release_genomes if $additional_release_genomes[0] =~ /Division/;
             my %additional_genome = map {$_ => 1} @additional_release_genomes;
             foreach my $genome (@add_species_for_div) {
                 if (not exists($additional_genome{$genome})){
@@ -108,11 +114,37 @@ sub fetch_input {
         }
     }
 
-    print "GENOMES_TO_UPDATE!! ";
-    print Dumper $genomes_to_update;
+    # check for species that have disappeared and need to be retired or those that have been introduced manually
+    my $master_dba = $self->get_cached_compara_dba('master_db');
+    my %current_gdbs = map { $_->name => 0 } @{$master_dba->get_GenomeDBAdaptor->fetch_all_current};
+    $current_gdbs{'ancestral_sequences'} = 1; # never retire ancestral_sequences
+    foreach my $species_name ( @release_genomes ) {
+        if (exists $renamed_genomes->{$species_name}) {
+            $current_gdbs{$renamed_genomes->{$species_name}} = 1;
+        } else {
+            # If the species has been added in this release, include it in the list of genomes to add
+            push @$genomes_to_update, $species_name unless (exists $current_gdbs{$species_name});
+            $current_gdbs{$species_name} = 1;
+        }
+    }
+    my @to_retire = grep { $current_gdbs{$_} == 0 } keys %current_gdbs;
+
+    # check that there have been no changes in dnafrags vs core slices
+    my %g2update = map { $_ => 1 } @$genomes_to_update;
+    my @genomes_to_verify;
+    foreach my $species_name ( @release_genomes ) {
+        next if $g2update{$species_name}; # we already know these have changed
+        next if $renamed_genomes->{$species_name}; # renamed genomes are checked in their own analysis
+        push @genomes_to_verify, {
+            'species_name'  => $species_name,
+        };
+    }
 
     print "GENOME_LIST!! ";
     print Dumper \@release_genomes;
+
+    print "GENOMES_TO_UPDATE!! ";
+    print Dumper $genomes_to_update;
 
     print "GENOMES_WITH_UPDATED_ANNOTATION!! ";
     print Dumper $updated_annotations;
@@ -120,36 +152,14 @@ sub fetch_input {
     print "GENOMES_TO_RENAME!! ";
     print Dumper $renamed_genomes;
 
-    # check that there have been no changes in dnafrags vs core slices
-    my %g2update = map { $_ => 1 } @$genomes_to_update;
-    my $master_dba = $self->get_cached_compara_dba('master_db');
-    my @genomes_to_verify;
-	foreach my $species_name ( @release_genomes ) {
-		next if $g2update{$species_name}; # we already know these have changed
-        next if $renamed_genomes->{$species_name}; # renamed genomes are checked in their own analysis
-        push @genomes_to_verify, {
-            'species_name'  => $species_name,
-        };
-	}
-    print "GENOMES_TO_VERIFY!! ";
-    print Dumper \@genomes_to_verify;
-
-	# check for species that have disappeared and need to be retired
-	my %current_gdbs = map { $_->name => 0 } @{$master_dba->get_GenomeDBAdaptor->fetch_all_current};
-    $current_gdbs{'ancestral_sequences'} = 1; # never retire ancestral_sequences
-	foreach my $species_name ( @release_genomes ) {
-        if (exists $renamed_genomes->{$species_name}) {
-            $current_gdbs{$renamed_genomes->{$species_name}} = 1;
-        } else {
-            $current_gdbs{$species_name} = 1;
-        }
-	}
-	my @to_retire = grep { $current_gdbs{$_} == 0 } keys %current_gdbs;
     print "GENOMES_TO_RETIRE!! ";
     print Dumper \@to_retire;
 
+    print "GENOMES_TO_VERIFY!! ";
+    print Dumper \@genomes_to_verify;
+
     my $perc_to_retire = (scalar @to_retire/scalar @release_genomes)*100;
-    die "Percentage of genomes to retire seems too high ($perc_to_retire\%)" if $perc_to_retire >= 20;
+    die "Percentage of genomes to retire seems too high ($perc_to_retire\%)" if $perc_to_retire >= $self->param_required('perc_threshold');
 
     $self->param('genomes_to_update', $genomes_to_update);
     $self->param('genomes_with_updated_annotation', $updated_annotations);

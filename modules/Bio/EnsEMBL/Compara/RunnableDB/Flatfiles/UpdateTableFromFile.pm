@@ -17,7 +17,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::UpdateTableFromFile
+Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::UpdateTableFromFile
 
 =head1 DESCRIPTION
 
@@ -27,7 +27,7 @@ column names (`primary_key` is required and should be present in all files).
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::UpdateTableFromFile;
+package Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::UpdateTableFromFile;
 
 use warnings;
 use strict;
@@ -54,18 +54,7 @@ sub fetch_input {
     # fetch all attributes from file list
     my %attribs;
     my @attrib_files = @{$self->param('attrib_files')};
-    # Check there are readable attrib_files available
-    my $count = 0;
     foreach my $f ( @attrib_files ) {
-        if ( -r $f ) {
-            $count++;
-        }
-    }
-    # Kill job as filesystem may be down or there are no attrib_files
-    die "Cannot access any attrib_files" if $count == 0;
-    foreach my $f ( @attrib_files ) {
-        die "Empty element found in the 'attrib_files' list" unless $f;
-        next unless -e $f;
         open( my $fh, '<', $f ) or die "Cannot open $f for reading";
         my $header = <$fh>;
         my @header_cols = split( /\s+/, $header );

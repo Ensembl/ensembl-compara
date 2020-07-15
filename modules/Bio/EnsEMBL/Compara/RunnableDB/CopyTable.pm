@@ -43,7 +43,7 @@ sub param_defaults {
         %{ $self->SUPER::param_defaults() },
 
         'mode' => 'ignore',
-        'skip_disable_keys' => 0,
+        'skip_disable_vars' => 0,
     };
 }
 
@@ -59,7 +59,7 @@ sub run {
 	my $to_str   = $to_dbc->host . '/' . $to_dbc->dbname;
 	$self->warning("Copying $table_name from $from_str to $to_str");
 
-	copy_table( $from_dbc, $to_dbc, $table_name, undef, $replace, $self->param('skip_disable_keys'), $self->debug );
+	copy_table( $from_dbc, $to_dbc, $table_name, undef, $replace, $self->param('skip_disable_vars'), $self->debug );
 }
 
 1;

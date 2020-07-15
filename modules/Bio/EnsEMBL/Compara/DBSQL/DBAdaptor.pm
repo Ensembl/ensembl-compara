@@ -298,5 +298,21 @@ sub get_division {
 }
 
 
+=head2 get_table_engine
+
+  Arg[1]      : string $table - table name
+  Example     : $dba->get_table_engine('meta');
+  Description : Returns the table's engine for the given DBAdaptor.
+  Returns     : string
+  Exceptions  : none
+
+=cut
+
+sub get_table_engine {
+    my ($self, $table) = @_;
+    return $self->dbc->db_handle->selectrow_hashref("SHOW TABLE STATUS WHERE Name = '$table'")->{Engine};
+}
+
+
 1;
 

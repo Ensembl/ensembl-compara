@@ -193,7 +193,7 @@ sub pipeline_analyses {
             -parameters    => {
                 'dest_db_conn'  => '#curr_rel_db#',
                 'mode'          => 'ignore',
-                'skip_disable_keys' => 1,
+                'skip_disable_vars' => 1,
             },
             -hive_capacity => $self->o('copying_capacity'),
         },

@@ -980,10 +980,6 @@ sub copy_conservation_scores {
 
   if ($count) {
     ## Other scores are in the from database.
-    print " ** WARNING **\n";
-    print " ** WARNING ** Copying only part of the data in the conservation_score table\n";
-    print " ** WARNING ** This process might be very slow.\n";
-    print " ** WARNING **\n";
     copy_data($from_dbc, $to_dbc,
         "conservation_score",
         "SELECT cs.genomic_align_block_id+$fix, window_size, position, expected_score, diff_score".
@@ -994,10 +990,6 @@ sub copy_conservation_scores {
       );
   } elsif ($fix) {
     ## These are the only scores but need to fix them.
-    print " ** WARNING **\n";
-    print " ** WARNING ** Copying in 'fix' mode\n";
-    print " ** WARNING ** This process might be very slow.\n";
-    print " ** WARNING **\n";
     copy_data($from_dbc, $to_dbc,
         "conservation_score",
         "SELECT cs.genomic_align_block_id+$fix, window_size, position, expected_score, diff_score".
