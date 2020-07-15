@@ -1737,7 +1737,6 @@ sub core_pipeline_analyses {
                 mode            => 'global_tree_set',
             },
             -flow_into  => [
-                    'email_tree_stats_report',
                     WHEN('#do_stable_id_mapping#' => 'stable_id_mapping'),
                     WHEN('#do_treefam_xref#' => 'treefam_xref_idmap'),
                     WHEN('#clustering_mode# eq "ortholog"' => 'remove_overlapping_homologies'),
@@ -1759,14 +1758,6 @@ sub core_pipeline_analyses {
             },
             -rc_name       => '2Gb_job',
         },
-
-        {   -logic_name     => 'email_tree_stats_report',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport',
-            -parameters     => {
-                'email' => $self->o('email'),
-            },
-        },
-
 
 # ---------------------------------------------[Pluggable MSA steps]----------------------------------------------------------
 
@@ -3462,6 +3453,14 @@ sub core_pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters     => {
                 'input_file'    => $self->o('tree_stats_sql'),
+            },
+            -flow_into      => [ 'email_tree_stats_report' ],
+        },
+
+        {   -logic_name     => 'email_tree_stats_report',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport',
+            -parameters     => {
+                'email' => $self->o('email'),
             },
         },
 
