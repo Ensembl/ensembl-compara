@@ -59,6 +59,9 @@ sub default_options {
             '2611341' => 0.4,     #Metamonada
         },
 
+    # Pan division doesn't run any type of alignment
+    'orth_wga_complete' => 1,
+
     # plots
         #compute Jaccard Index and Gini coefficient (Lorenz curve)
         'do_jaccard_index'          => 0,
