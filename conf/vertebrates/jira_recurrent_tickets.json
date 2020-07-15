@@ -272,6 +272,7 @@
            "summary": "Handover of ancestral DB"
         }
       ],
+      "labels": ["Merge_anchor"],
       "summary": "<Division> Release <version> Database merge and handover"
    },
    {
