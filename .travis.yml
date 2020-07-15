@@ -30,7 +30,7 @@ before_install:
     - git clone --branch release/102 --depth 1 https://github.com/Ensembl/ensembl-io.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-io.git
     - git clone --branch release/102 --depth 1 https://github.com/Ensembl/ensembl.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-hive.git
-    - git clone --branch release/102 --depth 1 https://github.com/Ensembl/ensembl-taxonomy.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-taxonomy.git
+    - git clone --branch stable --depth 1 https://github.com/Ensembl/ensembl-taxonomy.git
     - git clone --branch release/102 --depth 1 https://github.com/Ensembl/ensembl-datacheck.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-datacheck.git
     - ln -s . ensembl-compara
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
