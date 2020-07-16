@@ -146,6 +146,7 @@ sub pipeline_analyses_high_confidence {
                 attrib_files => [
                     '#goc_file#', '#wga_file#', '#high_conf_file#'
                 ],
+                replace      => 0,
             },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('import_homologies_capacity'),

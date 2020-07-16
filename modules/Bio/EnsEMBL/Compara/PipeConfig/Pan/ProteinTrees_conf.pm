@@ -59,6 +59,9 @@ sub default_options {
             '2611341' => 0.4,     #Metamonada
         },
 
+    # Pan division doesn't run any type of alignment
+    'orth_wga_complete' => 1,
+
     # plots
         #compute Jaccard Index and Gini coefficient (Lorenz curve)
         'do_jaccard_index'          => 0,
@@ -75,6 +78,22 @@ sub default_options {
         # Do we need a mapping between homology_ids of this database to another database ?
         # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
         'do_homology_id_mapping' => 0,
+
+        # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
+        'threshold_levels' => [
+            {
+                'taxa'          => [ 'Apes', 'Murinae' ],
+                'thresholds'    => [ undef, undef, 80 ],
+            },
+            {
+                'taxa'          => [ 'Mammalia', 'Aves', 'Percomorpha' ],
+                'thresholds'    => [ undef, undef, 50 ],
+            },
+            {
+                'taxa'          => [ 'all' ],
+                'thresholds'    => [ undef, undef, 25 ],
+            },
+        ],
     };
 }
 
@@ -82,6 +101,11 @@ sub default_options {
 sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
+
+    # Pan division doesn't run any type of alignment
+    my $attrib_files = [ '#high_conf_file#' ];
+    push @{ $attrib_files }, '#goc_file#' if $self->o('do_goc');
+    $analyses_by_name->{import_homology_table}->{'-parameters'}->{'attrib_files'} = $attrib_files;
 
     ## Here we adjust the resource class of some analyses to the Pan division
     ## Extend this section to redefine the resource names of some analysis

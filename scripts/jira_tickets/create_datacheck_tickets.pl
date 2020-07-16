@@ -41,6 +41,13 @@ $COMPARA_DIV as default.
 Optional. Ensembl release version. If not given, uses environment variable 
 $CURR_ENSEMBL_RELEASE as default.
 
+=item B<-update>
+
+Optional. Update the description of the JIRA tickets that already exist (same
+summary, division and release) and reopen them (removing the previous assignee).
+By default, don't update them.
+
+
 =item B<-dry_run>, B<-dry-run>
 
 In dry-run mode, the JIRA tickets will not be submitted to the JIRA 
@@ -66,12 +73,14 @@ use POSIX;
 
 use Bio::EnsEMBL::Compara::Utils::JIRA;
 
-my ( $release, $division, $dry_run, $help );
+my ( $release, $division, $update, $dry_run, $help );
+$update  = 0;
 $dry_run = 0;
 $help    = 0;
 GetOptions(
     "d|division=s"    => \$division,
     "r|release=s"     => \$release,
+    "update"          => \$update,
     'dry_run|dry-run' => \$dry_run,
     "h|help"          => \$help,
 );
@@ -81,47 +90,41 @@ die "Cannot find $dc_file - file does not exist" unless -e $dc_file;
 # Get file absolute path and basename
 my $dc_abs_path = abs_path($dc_file);
 my $dc_basename = fileparse($dc_abs_path, qr{\.[a-zA-Z0-9_]+$});
-# Get timestamp that will be included in the summary of each JIRA ticket
-my $timestamp = strftime("%d-%m-%Y %H:%M:%S", localtime time);
 # Get a new Utils::JIRA object to create the tickets for the given division and
 # release
 my $jira_adaptor = Bio::EnsEMBL::Compara::Utils::JIRA->new(-DIVISION => $division, -RELEASE => $release);
 # Parse Datacheck information from input TAP file
-my $testcase_failures = parse_datachecks($dc_file, $timestamp);
-# Create initial ticket for datacheck run - failures will become subtasks of this
-my $blocked_ticket_key = find_handover_ticket($jira_adaptor);
-my $dc_task_json_ticket = [{
-    assignee    => $jira_adaptor->{_user},
-    summary     => "$dc_basename ($timestamp)",
-    description => "Datacheck failures raised on $timestamp\nFrom file: {{$dc_abs_path}}",
-}];
-# Create subtask tickets for each datacheck subtest failure
+my $testcase_failures = parse_datachecks($dc_file);
+# Create a task ticket for each datacheck subtest failure
+my $merge_ticket_key = find_labeled_ticket($jira_adaptor, 'Merge_anchor');
 my @json_subtasks;
 foreach my $testcase ( keys %$testcase_failures ) {
     my $failure_subtask_json = {
-        summary     => $testcase,
+        summary     => "Datacheck $testcase failed",
         description => $testcase_failures->{$testcase},
+        parent      => $merge_ticket_key,
     };
     push(@json_subtasks, $failure_subtask_json);
 }
-# Add subtasks to the initial ticket
-$dc_task_json_ticket->[0]->{subtasks} = \@json_subtasks;
 my $components = ['Datachecks', 'Production tasks'];
 my $categories = ['Bug::Internal', 'Production::Tasks'];
 # Create all JIRA tickets
 my $dc_task_keys = $jira_adaptor->create_tickets(
-    -JSON_OBJ         => $dc_task_json_ticket,
-    -DEFAULT_PRIORITY => 'Blocker',
-    -EXTRA_COMPONENTS => $components,
-    -EXTRA_CATEGORIES => $categories,
-    -DRY_RUN          => $dry_run
+    -JSON_OBJ           => \@json_subtasks,
+    -DEFAULT_ISSUE_TYPE => 'Sub-task',
+    -DEFAULT_PRIORITY   => 'Blocker',
+    -EXTRA_COMPONENTS   => $components,
+    -EXTRA_CATEGORIES   => $categories,
+    -UPDATE             => $update,
+    -DRY_RUN            => $dry_run
 );
 # Create a blocker issue link between the newly created datacheck ticket and the
 # handover ticket
+my $blocked_ticket_key = find_labeled_ticket($jira_adaptor, 'Handover_anchor');
 $jira_adaptor->link_tickets('Blocks', $dc_task_keys->[0], $blocked_ticket_key, $dry_run);
 
 sub parse_datachecks {
-    my ($dc_file, $timestamp) = @_;
+    my $dc_file = shift;
     open(my $dc_fh, '<', $dc_file) or die "Cannot open $dc_file for reading";
     my ($test, $testcase, $dc_failures);
     my $capture_failure = 0;
@@ -137,9 +140,9 @@ sub parse_datachecks {
         # Save all the information provided about the failure
         if ( $line =~ /^[ ]{8}(not ok .+)$/ ) {
             $capture_failure = 1;
-            $dc_failures->{$test} .= "$1\n";
+            push @{ $dc_failures->{$test} }, $1;
         } elsif ( $line =~ /^[ ]{8}(#.+)$/) {
-            $dc_failures->{$test} .= "$1\n" if $capture_failure;
+            push @{ $dc_failures->{$test} }, $1 if $capture_failure;
         } else {
             $capture_failure = 0;
         }
@@ -150,23 +153,23 @@ sub parse_datachecks {
     foreach my $subtest ( keys %$dc_failures ) {
         $dc_failures->{$subtest} = sprintf("%s\n%s\n%s\n", (
             "{code:title=Subtest $subtest}",
-            $dc_failures->{$subtest},
+            join("\n", @{ $dc_failures->{$subtest} }),
             "{code}"
         ));
     }
     return $dc_failures;
 }
 
-sub find_handover_ticket {
-    my ($jira_adaptor) = @_;
+sub find_labeled_ticket {
+    my ($jira_adaptor, $label) = @_;
 
-    my $jql = 'labels=Handover_anchor';
-    my $handover_ticket = $jira_adaptor->fetch_tickets($jql);
+    my $jql = "labels=$label";
+    my $labeled_ticket = $jira_adaptor->fetch_tickets($jql);
 
     # Check that we have actually found the ticket (and only one)
-    die 'Cannot find any ticket with the label "Handover_anchor"' if (! $handover_ticket->{total});
-    die 'Found more than one ticket with the label "Handover_anchor"' if ($handover_ticket->{total} > 1);
-    print "Found ticket key '" . $handover_ticket->{issues}->[0]->{key} . "'\n";
+    die 'Cannot find any ticket with the label "$label"' if (! $labeled_ticket->{total});
+    die 'Found more than one ticket with the label "$label"' if ($labeled_ticket->{total} > 1);
+    print "Found ticket key '" . $labeled_ticket->{issues}->[0]->{key} . "'\n";
 
-    return $handover_ticket->{issues}->[0]->{key};
+    return $labeled_ticket->{issues}->[0]->{key};
 }
