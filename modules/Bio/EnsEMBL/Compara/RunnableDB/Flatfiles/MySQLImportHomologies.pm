@@ -120,7 +120,8 @@ sub write_output {
     my $dbname = $this_dbc->dbname;
     my $import_cmd = join(' ', 
         "mysqlimport --host=$host --port=$port --user=$user --password=$pass",
-        "--local --lock-tables=0 --ignore --fields-terminated-by=','",
+        "--local --lock-tables=0 --fields-terminated-by=','",
+        $self->param('replace') ? '--replace' : '--ignore',
         $dbname
     );
     $self->run_command("$import_cmd $homology_csv", { die_on_failure => 1 });
