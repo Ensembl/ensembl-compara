@@ -102,6 +102,11 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
+    # Pan division doesn't run any type of alignment
+    my $attrib_files = [ '#high_conf_file#' ];
+    push @{ $attrib_files }, '#goc_file#' if $self->o('do_goc');
+    $analyses_by_name->{import_homology_table}->{'-parameters'}->{'attrib_files'} = $attrib_files;
+
     ## Here we adjust the resource class of some analyses to the Pan division
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
