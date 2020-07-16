@@ -74,6 +74,7 @@ sub write_output {
     $self->dataflow_output_id( {
         homology_id_start => $self->param('this_range_start'),
         homology_flatfile => $self->param('homology_flatfile'),
+        mlss_id           => $self->param_required('mlss_id'),
     }, 1 );
 }
 
