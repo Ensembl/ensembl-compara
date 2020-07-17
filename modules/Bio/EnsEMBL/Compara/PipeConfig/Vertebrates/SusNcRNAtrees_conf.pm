@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::SusNcRNAtrees_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::SusNcRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -mlss_id <curr_sus_ncrna_mlss_id>
+        -mlss_id <curr_pig_breeds_ncrna_mlss_id>
 
 =head1 DESCRIPTION
 
@@ -64,9 +64,9 @@ sub default_options {
             # Must be given on the command line
             #'mlss_id'          => 40100,
 
-            'collection'        => 'sus',       # The name of the species-set within that division
+            'collection'        => 'pig_breeds',       # The name of the species-set within that division
             'dbID_range_index'  => 21,
-            'label_prefix'      => 'sus_',
+            'label_prefix'      => 'pig_breeds_',
 
             'projection_source_species_names' => ['sus_scrofa'],
             'multifurcation_deletes_all_subnodes' => [ 9822 ], # All the species under the "Sus" genus are flattened, i.e. it's cow vs a rake of pigs
