@@ -3071,6 +3071,8 @@ sub core_pipeline_analyses {
             -parameters => {
                 'tag_split_genes'   => 1,
                 'input_clusterset_id'   => $self->o('use_notung') ? 'raxml_bl' : 'default',
+                'hashed_gene_tree_id' => '#expr(dir_revhash(#gene_tree_id#))expr#',
+                'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -priority       => 20,
