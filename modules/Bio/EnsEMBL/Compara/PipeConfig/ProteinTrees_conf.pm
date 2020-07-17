@@ -342,8 +342,6 @@ sub default_options {
     # GOC parameters
         # Points to the previous protein trees production database. Will be used for various GOC operations.
         'goc_taxlevels'                 => [],
-        'goc_threshold'                 => undef,
-        'calculate_goc_distribution'    => 0,
 
     # HMM specific parameters
         'hmm_library_name'              => '',      # Name of HMMER-3 library. Currently unused
@@ -485,9 +483,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'clustering_mode'   => $self->o('clustering_mode'),
         'reuse_level'       => $self->o('reuse_level'),
-        'goc_threshold'                 => $self->o('goc_threshold'),
         'threshold_levels'              => $self->o('threshold_levels'),
-        'calculate_goc_distribution'    => $self->o('calculate_goc_distribution'),
         'do_homology_id_mapping'        => $self->o('do_homology_id_mapping'),
         'do_jaccard_index'              => $self->o('do_jaccard_index'),
         'binary_species_tree_input_file'   => $self->o('binary_species_tree_input_file'),

@@ -24,7 +24,7 @@ Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf;
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -compara_db <db_alias_or_url> -goc_mlss_id <mlss_id> [-goc_threshold <>]
+        -compara_db <db_alias_or_url> -goc_mlss_id <mlss_id>
 
 =head1 DESCRIPTION
 
@@ -73,8 +73,6 @@ sub default_options {
         'goc_taxlevels' => ["Euteleostomi","Ciona"],
         # Plants
         #'goc_taxlevels' => ['solanum', 'fabids', 'Brassicaceae', 'Pooideae', 'Oryzoideae', 'Panicoideae'],
-        'calculate_goc_distribution'    => 1,
-        'goc_threshold' => 50,
 
         # Capacities and batch-sizes
         'goc_capacity'          => 30,
@@ -89,8 +87,6 @@ sub pipeline_wide_parameters {
         'mlss_id' => $self->o('mlss_id'),
         'goc_mlss_id' => $self->o('goc_mlss_id'),
         'compara_db' => $self->o('compara_db'),
-        'goc_threshold'  => $self->o('goc_threshold'),
-	'calculate_goc_distribution'  => $self->o('calculate_goc_distribution'),
         'goc_capacity'   => $self->o('goc_capacity'),
         'homology_dumps_dir' => $self->o('homology_dumps_dir'),
     };

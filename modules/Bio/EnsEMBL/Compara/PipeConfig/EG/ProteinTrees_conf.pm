@@ -145,7 +145,6 @@ sub default_options {
         'goc_taxlevels_metazoa'     => ['Diptera', 'Hymenoptera', 'Nematoda'],
         'goc_taxlevels_protists'    => [],
         'goc_taxlevels_vb'          => ['Chelicerata', 'Diptera', 'Hemiptera'],
-        'calculate_goc_distribution' => 1,
 
     # Extra analyses
         # compute dNdS for homologies?

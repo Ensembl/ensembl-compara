@@ -92,10 +92,6 @@ sub pipeline_analyses_goc {
                 'output_file'       => '#flatfile_basename#.goc.tsv',
             },
             -flow_into => {
-               1 => WHEN(
-                   '#goc_threshold# and #calculate_goc_distribution#' => { 'get_perc_above_threshold' => INPUT_PLUS } ,
-                   '!(#goc_threshold#) and #calculate_goc_distribution#' => [ 'get_genetic_distance' ],
-               ),
                -1 => 'compute_goc_himem',
            },
            -rc_name => '1Gb_job',
@@ -110,49 +106,9 @@ sub pipeline_analyses_goc {
                 'homology_flatfile' => '#flatfile_basename#.homologies.tsv',
                 'output_file'       => '#flatfile_basename#.goc.tsv',
             },
-            -flow_into => {
-               1 => WHEN(
-                   '#goc_threshold# and #calculate_goc_distribution#' => { 'get_perc_above_threshold' => INPUT_PLUS } ,
-                   '!(#goc_threshold#) and #calculate_goc_distribution#' => [ 'get_genetic_distance' ],
-               ),
-           },
            -rc_name => '4Gb_job',
            -hive_capacity  =>  $self->o('goc_capacity'),
         },
-
-        {
-            -logic_name => 'get_genetic_distance',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Fetch_genetic_distance',
-            -flow_into => {
-                1 =>    { 'threshold_calculator' => INPUT_PLUS },
-                },
-            -hive_capacity  =>  $self->o('goc_stats_capacity'),
-        },
-
-        {
-            -logic_name => 'threshold_calculator',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Calculate_goc_threshold',
-            -flow_into => {
-                1 =>    ['get_perc_above_threshold'],
-                },
-            -hive_capacity  =>  $self->o('goc_stats_capacity'),
-        },
-
-        {
-            -logic_name => 'get_perc_above_threshold',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Calculate_goc_perc_above_threshold',
-            -flow_into => {
-                1 =>    ['store_goc_dist_asTags'],
-                },
-            -hive_capacity  =>  $self->o('goc_stats_capacity'),
-        },
-
-        {
-            -logic_name => 'store_goc_dist_asTags',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocStatsAsMlssTags',
-            -hive_capacity  =>  $self->o('goc_stats_capacity'),
-        },
-
     ];
 }
 
