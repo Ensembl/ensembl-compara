@@ -119,9 +119,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    if ( $self->param('output_flatfile') ) {
-        $self->_create_flatfile if $self->param('output_flatfile');
-    } else {
+    unless ( $self->param('output_flatfile') ) {
         $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
     }
 
@@ -183,6 +181,7 @@ sub write_output {
     my $self = shift @_;
 
     $self->delete_old_homologies unless $self->param('_readonly');
+    $self->_create_flatfile if $self->param('output_flatfile');
     $self->run_analysis;
     $self->print_summary;
     $self->compara_dba->dbc->disconnect_if_idle;

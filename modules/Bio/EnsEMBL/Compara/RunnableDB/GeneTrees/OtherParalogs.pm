@@ -69,6 +69,7 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
 use Bio::EnsEMBL::Compara::Graph::Link;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(check_column_integrity);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree');
 
@@ -85,8 +86,6 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift;
     $self->SUPER::fetch_input;
-
-    $self->_create_flatfile if $self->param('output_flatfile');
 
     my $alignment_id = $self->param('gene_tree')->tree->gene_align_id;
     my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
@@ -133,8 +132,13 @@ sub fetch_input {
 
 sub write_output {
     my $self = shift @_;
+
+    $self->_create_flatfile if $self->param('output_flatfile');
+
     $self->run_analysis;
     $self->print_summary;
+
+    check_column_integrity($self->param('output_flatfile')) if $self->param('output_flatfile');
 }
 
 
