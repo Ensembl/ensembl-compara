@@ -90,8 +90,7 @@ sub write_output {
     my $self = shift;
 
     my $mlss_location = $self->param('mlss_location');
-    $self->dataflow_output_id({'param_name' => 'pairwise_mlss_location',
-			       'param_value' => stringify($mlss_location)}, 2);
+    $self->add_or_update_pipeline_wide_parameter('pairwise_mlss_location', stringify($mlss_location));
 }
 
 

@@ -284,7 +284,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetGerpNeutralRate',
             -flow_into => {
                 1 => [ 'genome_reuse_factory' ],
-                2 => [ '?table_name=pipeline_wide_parameters' ],
             },
         },
 

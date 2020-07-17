@@ -321,7 +321,6 @@ sub pipeline_analyses_gerp {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetGerpNeutralRate',
             -flow_into => {
                 1 => [ 'dump_mappings_to_file' ],
-                2 => [ '?table_name=pipeline_wide_parameters' ],
             },
         },
 

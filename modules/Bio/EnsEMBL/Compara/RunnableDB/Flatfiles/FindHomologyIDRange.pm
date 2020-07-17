@@ -65,11 +65,7 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
-        'param_name' => 'homology_id_range_start',
-        'param_value' => $self->param('next_range_start'),
-    );
-    $self->db->hive_pipeline->save_collections();
+    $self->add_or_update_pipeline_wide_parameter('homology_id_range_start', $self->param('next_range_start'));
 
     $self->dataflow_output_id( {
         homology_id_start => $self->param('this_range_start'),

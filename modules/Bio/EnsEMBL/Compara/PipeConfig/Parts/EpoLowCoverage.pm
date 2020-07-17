@@ -221,7 +221,6 @@ sub pipeline_analyses_epo2x_alignment {
             -flow_into => {
                 1 => WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ],
                      ELSE [ 'import_alignment' ] ),
-                2 => [ '?table_name=pipeline_wide_parameters' ],
             },
             -rc_name => '1Gb_job',
         },
@@ -230,7 +229,6 @@ sub pipeline_analyses_epo2x_alignment {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetGerpNeutralRate',
             -flow_into => {
                 1 => [ 'import_alignment' ],
-                2 => [ '?table_name=pipeline_wide_parameters' ],
             },
         },
 

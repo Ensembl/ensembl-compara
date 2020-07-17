@@ -117,7 +117,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::GroupSpecies',
             -flow_into  => {
                 1 => [ 'check_sketches' ],
-                2 => [ '?table_name=pipeline_wide_parameters' ],
             },
             -input_ids => [{
               'sketch_dir'        => $self->o('sketch_dir'),
