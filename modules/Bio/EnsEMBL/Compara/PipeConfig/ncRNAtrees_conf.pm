@@ -1298,6 +1298,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'cmd'         => '/bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtOp #homology_dumps_dir#/ #homology_dumps_shared_dir#"',
             },
+            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name => 'rib_fire_orth_wga_and_high_conf',
