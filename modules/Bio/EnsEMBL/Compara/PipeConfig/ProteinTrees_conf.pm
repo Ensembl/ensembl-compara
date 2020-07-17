@@ -3206,6 +3206,10 @@ sub core_pipeline_analyses {
 
         {   -logic_name     => 'other_paralogs',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
+            -parameters     => {
+                'hashed_gene_tree_id' => '#expr(dir_revhash(#gene_tree_id#))expr#',
+                'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
+            },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
             -flow_into      => {
                 -1 => [ 'other_paralogs_himem', ],
@@ -3215,6 +3219,10 @@ sub core_pipeline_analyses {
 
         {   -logic_name     => 'other_paralogs_himem',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
+            -parameters     => {
+                'hashed_gene_tree_id' => '#expr(dir_revhash(#gene_tree_id#))expr#',
+                'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
+            },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
             -rc_name        => '500Mb_job',
             -flow_into      => {
@@ -3261,6 +3269,10 @@ sub core_pipeline_analyses {
 
         {   -logic_name     => 'panther_paralogs',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PantherParalogs',
+            -parameters     => {
+                'hashed_gene_tree_id' => '#expr(dir_revhash(#gene_tree_id#))expr#',
+                'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
+            },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
             -rc_name        => '1Gb_job',
             -flow_into      => {
@@ -3271,6 +3283,10 @@ sub core_pipeline_analyses {
 
         {   -logic_name     => 'panther_paralogs_himem',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PantherParalogs',
+            -parameters     => {
+                'hashed_gene_tree_id' => '#expr(dir_revhash(#gene_tree_id#))expr#',
+                'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
+            },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
             -rc_name        => '4Gb_job',
             -flow_into      => {

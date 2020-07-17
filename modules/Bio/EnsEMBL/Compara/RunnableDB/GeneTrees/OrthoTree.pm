@@ -119,7 +119,9 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    unless ( $self->param('output_flatfile') ) {
+    if ( $self->param('output_flatfile') ) {
+        $self->_create_flatfile if $self->param('output_flatfile');
+    } else {
         $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
     }
 
@@ -220,8 +222,6 @@ sub prepare_analysis {
 
 sub run_analysis {
   my $self = shift;
-
-    $self->_create_flatfile if $self->param('output_flatfile');
 
   my $gene_tree = $self->param('gene_tree');
 

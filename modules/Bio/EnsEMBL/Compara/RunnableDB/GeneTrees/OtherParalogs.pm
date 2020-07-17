@@ -86,6 +86,8 @@ sub fetch_input {
     my $self = shift;
     $self->SUPER::fetch_input;
 
+    $self->_create_flatfile if $self->param('output_flatfile');
+
     my $alignment_id = $self->param('gene_tree')->tree->gene_align_id;
     my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $aln);
@@ -138,6 +140,12 @@ sub write_output {
 
 sub delete_old_paralogies {
     my $self = shift;
+
+    my $outfile = $self->param('output_flatfile');
+    if ( defined $outfile && -e $outfile ) {
+        unlink $outfile;
+        return;
+    }
 
     my $tree_node_id = $self->param('gene_tree_id');
     my $genome_db_id = $self->param('genome_db_id');
