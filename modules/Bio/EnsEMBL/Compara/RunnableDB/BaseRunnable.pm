@@ -528,7 +528,8 @@ sub add_or_update_pipeline_wide_parameter {
         'param_name'    => $param_name,
         'param_value'   => $param_value,
     );
-    $self->db->hive_pipeline->save_collections();
+    my $adaptor = $self->db->get_PipelineWideParametersAdaptor;
+    $adaptor->store_or_update_one($pwp, ['param_name']);
 }
 
 
