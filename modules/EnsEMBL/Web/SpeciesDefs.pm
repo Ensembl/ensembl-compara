@@ -29,7 +29,7 @@ package EnsEMBL::Web::SpeciesDefs;
 ### caching (memory, filesystem) have been implemented. To update changes
 ### made to an INI file, the running process (e.g. httpd) must be halted,
 ### and the $ENSEMBL_WEBROOT/conf/config.packed file removed. In the
-### absence of a cache, the INI files are automatically parsed parsed at
+### absence of a cache, the INI files are automatically parsed at
 ### object instantiation. In the case of the Ensembl web site, this occurs
 ### at server startup via the $ENSEMBL_WEBROOT/conf/perl.startup
 ### script. The filesystem cache is not enabled by default; the
@@ -116,8 +116,6 @@ sub new {
   $self->{'_conf_dir'} = $write_dir;
   $self->{'_filename'}  = $conffile;
 
-
-  # TODO - these need to be pulled in dynamically from appropriate modules
   my @params = qw/ph g h r t v sv m db pt rf ex vf svf fdb lrg vdb gt mr/;
   $self->{'_core_params'} = \@params;
   
@@ -511,6 +509,35 @@ sub _load_in_taxonomy_division {
   return $data;
 }
 
+sub _read_species_list_file {
+  my ($self, $filename) = @_;
+  my $spp_file;
+  my $spp_list = [];
+
+  foreach my $confdir (@SiteDefs::ENSEMBL_CONF_DIRS) {
+    if (-e "$confdir/$filename.txt") {
+      if (-r "$confdir/$filename.txt") {
+        $spp_file = "$confdir/$filename.txt";
+      } else {
+        warn "$confdir/$filename.txt is not readable\n" ;
+        next;
+      }
+      
+      open FH, $spp_file or die "Problem with $spp_file: $!";
+      
+      while (<FH>) {
+        chomp;
+        push @$spp_list, $_;
+      }
+
+      ## We only need one file - ignore the rest
+      last;
+    }
+  }
+
+  return $spp_list;
+}
+
 sub _read_in_ini_file {
   my ($self, $filename, $defaults) = @_;
   my $inifile = undef;
@@ -767,6 +794,12 @@ sub _parse {
   $self->_info_log('Loading', 'Loading taxonomy division json file');
   $tree->{'ENSEMBL_TAXONOMY_DIVISION'} = $self->_load_in_taxonomy_division;
   
+  # Load species lists, if not present in SiteDefs
+  unless (scalar @{$SiteDefs::PRODUCTION_NAMES||[]}) {
+    $self->_info_log('Loading', 'Loading species list');
+    $SiteDefs::PRODUCTION_NAMES = $self->_read_species_list_file('ALL_SPECIES');
+  }
+
   $self->_info_log('Parser', 'Parsing ini files and munging dbs');
   
   # Grab default settings first and store in defaults
@@ -972,6 +1005,9 @@ sub _parse {
   } 
   $tree->{'MULTI'}{'ENSEMBL_DATASETS'} = $datasets;
   #warn ">>> NEW KEYS: ".Dumper($tree);
+
+  ## New species list - currently only used by rapid release
+  $tree->{'MULTI'}{'NEW_SPECIES'} = $self->_read_species_list_file('NEW_SPECIES');
 
   ## Parse species directories for static content
   $tree->{'SPECIES_INFO'} = $self->_load_in_species_pages;
