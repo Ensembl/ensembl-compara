@@ -1,0 +1,77 @@
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
+
+=head1 CONTACT
+
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
+
+=head1 METHODS
+
+=cut
+
+package Bio::EnsEMBL::Compara::Utils::IDGenerator;
+
+use strict;
+use warnings;
+
+use base qw(Exporter);
+
+our %EXPORT_TAGS;
+our @EXPORT_OK;
+
+@EXPORT_OK = qw(
+    get_id_range
+);
+%EXPORT_TAGS = (
+  all     => [@EXPORT_OK]
+);
+
+
+sub get_id_range {
+    my ($dbc, $label, $n_ids) = @_;
+
+    $n_ids //= 1;
+    die "Cannot request 0 IDs" unless $n_ids;
+
+    # First insert the initial value if needed
+    $dbc->do(
+        'INSERT IGNORE INTO id_generator (label, next_id) VALUES (?, 1)',
+        undef,
+        $label,
+    );
+
+    # Increment the ID whilst recording the previous value
+    $dbc->do(
+        'UPDATE id_generator SET next_id = LAST_INSERT_ID(next_id) + ? WHERE label = ?',
+        undef,
+        $n_ids, $label,
+    );
+
+    # Recall the value before it got incremented
+    my $next_id = $dbc->db_handle->last_insert_id();
+
+    return $next_id;
+}
+
+1;

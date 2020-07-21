@@ -301,3 +301,22 @@ CREATE TABLE `seq_member_id_current_reused_map` (
   PRIMARY KEY (stable_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+
+
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for table 'id_generator'
+--
+-- overview: table to mimic AUTO_INCREMENT without having to insert rows in
+--           the actual data table.
+-- semantics:
+--   label      - A string identifying the request type, e.g. "homology", "gene_tree", etc
+--   next_id    - The next value a dbID column of that type will use
+
+CREATE TABLE id_generator (
+    label       VARCHAR(40) NOT NULL,
+    next_id     BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (label)
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+
