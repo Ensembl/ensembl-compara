@@ -76,8 +76,8 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'         => [ 'mysql-ens-compara-prod-10', 'jalvarez_vertebrates_load_members_102' ],
-    # 'compara_ptrees'          => [ 'mysql-ens-compara-prod-2',  'carlac_default_vertebrates_protein_trees_102' ],
-    # 'compara_nctrees'         => [ 'mysql-ens-compara-prod-3',  'carlac_default_vertebrates_ncrna_trees_102' ],
+    'compara_ptrees'          => [ 'mysql-ens-compara-prod-2',  'carlac_default_vertebrates_protein_trees_102' ],
+    'compara_nctrees'         => [ 'mysql-ens-compara-prod-3',  'carlac_default_vertebrates_ncrna_trees_102' ],
     'murinae_ptrees'          => [ 'mysql-ens-compara-prod-7',  'jalvarez_vertebrates_murinae_protein_reindexed_trees_102' ],
     'murinae_nctrees'         => [ 'mysql-ens-compara-prod-8',  'jalvarez_vertebrates_murinae_ncrna_reindexed_trees_102' ],
     'murinae_ptrees_prev'     => [ 'mysql-ens-compara-prod-10', 'carlac_vertebrates_murinae_protein_reindexed_trees_101' ],
@@ -113,8 +113,8 @@ my $compara_dbs = {
     'primates_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## pig strains
-    'pig_strains_epo'         => [ 'mysql-ens-compara-prod-8', 'carlac_pig_strains_epo_98' ],
-    'pig_strains_epo_prev'    => [ 'mysql-ens-compara-prod-8', 'carlac_pig_strains_epo_98' ],
+    'pig_strains_epo'         => [ 'mysql-ens-compara-prod-8', "ensembl_compara_$prev_release" ],
+    'pig_strains_epo_prev'    => [ 'mysql-ens-compara-prod-8', "ensembl_compara_$prev_release" ],
     'pig_strains_epo_low'     => [ 'mysql-ens-compara-prod-8', 'carlac_pig_strains_epo_low_coverage_98' ],
     'pig_strains_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
