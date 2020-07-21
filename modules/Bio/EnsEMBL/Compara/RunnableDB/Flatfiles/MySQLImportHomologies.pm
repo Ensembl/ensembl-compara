@@ -38,12 +38,18 @@ use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header get_line_count);
+use Bio::EnsEMBL::Compara::Utils::IDGenerator qw(:all);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+
 sub fetch_input {
     my $self = shift;
+
+    my $homology_count = get_line_count($self->param('homology_flatfile')) - 1; # remove header line
+    my $homology_id_start = get_id_range($self->compara_dba->dbc, 'homology', $homology_count, $self->param_required('mlss_id'));
+    $self->param('homology_id_start', $homology_id_start);
 
     # handle any attrib files that may have been passed
     $self->param('attribs', {});

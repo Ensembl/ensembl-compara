@@ -127,17 +127,7 @@ sub pipeline_analyses_high_confidence {
             },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('high_confidence_capacity'),
-            -flow_into     => { 'find_homology_id_range' => { 'mlss_id' => '#mlss_id#', 'high_conf_expected' => '1' } },
-        },
-
-        {   -logic_name => 'find_homology_id_range',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::FindHomologyIDRange',
-            -parameters => {
-                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
-                'range_index'       => '#dbID_range_index#',
-            },
-            -analysis_capacity => 1,
-            -flow_into     => [ 'import_homology_table' ],
+            -flow_into     => { 'import_homology_table' => { 'mlss_id' => '#mlss_id#', 'high_conf_expected' => '1' } },
         },
 
         {   -logic_name => 'import_homology_table',
@@ -148,6 +138,7 @@ sub pipeline_analyses_high_confidence {
                     'wga'       => '#wga_file#',
                     'high_conf' => '#high_conf_file#',
                 },
+                homology_flatfile => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
                 replace      => 0,
             },
             -rc_name       => '500Mb_job',
