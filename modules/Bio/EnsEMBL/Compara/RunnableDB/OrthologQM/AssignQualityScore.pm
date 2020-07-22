@@ -100,7 +100,7 @@ sub write_output {
     # write header if we're starting from an empty file
     print $out_fh "homology_id\twga_coverage\n" if ( ! -e $reuse_file );
 
-    print $out_fh join("\n", map(sprintf("%d\t%f", $_, $max_quality{$_}), keys %max_quality));
+    print $out_fh join("\n", map(sprintf("%s\t%f", $_, $max_quality{$_}), keys %max_quality));
     close $out_fh;
 
     $self->warning("Scores written to $output_file!");

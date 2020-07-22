@@ -121,7 +121,7 @@ sub run {
     my @orth_info;
     my $member_info = $self->param('member_info');
 
-    my @orth_objects = sort {$a->{homology_id} <=> $b->{homology_id}} @{ $self->param('orth_objects') };
+    my @orth_objects = sort {$a->{homology_id} cmp $b->{homology_id}} @{ $self->param('orth_objects') };
     while ( my $orth = shift( @orth_objects ) ) {
         my @seq_member_ids = ($orth->{seq_member_id}, $orth->{homology_seq_member_id});
         my $has_transcript_edits = 0;
