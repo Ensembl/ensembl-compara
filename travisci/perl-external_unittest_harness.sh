@@ -36,31 +36,20 @@ export PERL5LIB=$PERL5LIB:$PWD/ensembl-taxonomy/modules
 export PERL5LIB=$PERL5LIB:$PWD/ensembl-io/modules
 export PERL5LIB=$PERL5LIB:$PWD/ensembl-datacheck/lib
 
-ENSEMBL_PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-funcgen'
 ENSEMBL_TESTER="$PWD/ensembl-test/scripts/runtests.pl"
 ENSEMBL_TESTER_OPTIONS=()
-COMPARA_SCRIPTS=("$PWD/modules/t")
+CORE_SCRIPTS=("$PWD/ensembl/modules/t/compara.t")
+REST_SCRIPTS=("$PWD/ensembl-rest/t/genomic_alignment.t" "$PWD/ensembl-rest/t/info.t" "$PWD/ensembl-rest/t/taxonomy.t" "$PWD/ensembl-rest/t/homology.t" "$PWD/ensembl-rest/t/gene_tree.t" "$PWD/ensembl-rest/t/cafe_tree.t" "$PWD/ensembl-rest/t/family.t")
 
-if [ "$COVERAGE" = 'true' ]; then
-  EFFECTIVE_PERL5OPT="$ENSEMBL_PERL5OPT"
-  ENSEMBL_TESTER_OPTIONS+=('-verbose')
-else
-  EFFECTIVE_PERL5OPT=""
-fi
-
-echo "Running ensembl-compara test suite using $PERL5LIB"
-PERL5OPT="$EFFECTIVE_PERL5OPT" perl "$ENSEMBL_TESTER" "${ENSEMBL_TESTER_OPTIONS[@]}" "${COMPARA_SCRIPTS[@]}"
+echo "Running ensembl test suite using $PERL5LIB"
+perl "$ENSEMBL_TESTER" "${ENSEMBL_TESTER_OPTIONS[@]}" "${CORE_SCRIPTS[@]}"
 rt1=$?
 
-# Check that all the Perl files can be compiled
-find docs modules scripts sql travisci -iname '*.t' -print0 | xargs -0 -n 1 perl -c
+echo "Running ensembl-rest test suite using $PERL5LIB"
+perl "$ENSEMBL_TESTER" "${ENSEMBL_TESTER_OPTIONS[@]}" "${REST_SCRIPTS[@]}"
 rt2=$?
-find docs modules scripts sql travisci -iname '*.pl' -print0 | xargs -0 -n 1 perl -c
-rt3=$?
-find docs modules scripts sql travisci -iname '*.pm' \! -name 'LoadSynonyms.pm' \! -name 'HALAdaptor.pm' \! -name 'HALXS.pm' -print0 | xargs -0 -n 1 perl -c
-rt4=$?
 
-if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) && ($rt4 -eq 0)]]; then
+if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then
   exit 0
 else
   exit 255

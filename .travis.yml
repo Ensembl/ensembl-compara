@@ -87,6 +87,11 @@ jobs:
 
     - language: perl
       perl: 5.30
+      name: "Perl external unit tests on the latest version"
+      script: ./travisci/perl-external_unittest_harness.sh
+
+    - language: perl
+      perl: 5.30
       name: "Perl linter"
       install:
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
