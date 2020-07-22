@@ -181,6 +181,7 @@ sub pipeline_wide_parameters {
 
         'gene_dumps_dir'     => $self->o('gene_dumps_dir'),
 
+        'compara_db'         => $self->o('compara_db'),
         'alt_aln_dbs'        => $self->o('alt_aln_dbs'),
         'alt_homology_db'   => $self->o('alt_homology_db'),
 
