@@ -40,7 +40,8 @@ use Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage;
 use Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::ReuseWGAScore;
 use Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::AssignQualityScore;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+# Need to use these as parent classes to allow their functions to be called with $self->
+use base ('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs', 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage');
 
 sub fetch_input {
     my $self = shift;
