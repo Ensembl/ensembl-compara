@@ -53,7 +53,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
             },
             -parameters => {
                 'species_set_name' => $self->o('species_set_name'),
-                'species_set_id'   => '#nonreuse_ss_id#',
+                'species_set_id'   => $self->o('species_set_id'),
                 'ref_species'      => $self->o('ref_species'),
                 'species1'         => $self->o('species1'),
                 'species2'         => $self->o('species2'),
