@@ -24,7 +24,7 @@ Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -division $COMPARA_DIV -mlss_id <curr_ptree_mlss_id>
+        -division $COMPARA_DIV
 
 =head1 DESCRIPTION
 
@@ -68,6 +68,7 @@ sub default_options {
         'method_link_dump_file' => $self->check_file_in_ensembl('ensembl-compara/sql/method_link.txt'),
 
         'pipeline_name' => $self->o('collection') . '_' . $self->o('division').'_protein_trees_'.$self->o('rel_with_suffix'),
+        'method_type'   => 'PROTEIN_TREES',
 
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => undef,
@@ -388,8 +389,6 @@ sub pipeline_checks_pre_init {
     my ($self) = @_;
 
     # The master db must be defined to allow mapping stable_ids and checking species for reuse
-    die "The master dabase must be defined with a mlss_id" if $self->o('master_db') and not $self->o('mlss_id');
-    die "mlss_id can not be defined in the absence of a master dabase" if $self->o('mlss_id') and not $self->o('master_db');
     die "Mapping of stable_id is only possible with a master database" if $self->o('do_stable_id_mapping') and not $self->o('master_db');
     die "Species reuse is only possible with a master database" if $self->o('prev_rel_db') and not $self->o('master_db');
 
@@ -442,7 +441,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        'mlss_id'       => $self->o('mlss_id'),
         'master_db'     => $self->o('master_db'),
         'ncbi_db'       => $self->o('ncbi_db'),
         'member_db'     => $self->o('member_db'),
@@ -743,10 +741,20 @@ sub core_pipeline_analyses {
                     'ALTER TABLE method_link_species_set AUTO_INCREMENT=10000001',
                 ],
             },
-            -flow_into      => [ 'load_genomedb_factory' ],
+            -flow_into      => [ 'load_mlss_id' ],
         },
 
 # ---------------------------------------------[load GenomeDB entries from member_db]---------------------------------------------
+
+        {   -logic_name => 'load_mlss_id',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMLSSids',
+            -parameters => {
+                'method_type'      => $self->o('method_type'),
+                'species_set_name' => $self->o('species_set_name'),
+                'release'          => '#ensembl_release#'
+            },
+            -flow_into  => [ 'load_genomedb_factory' ],
+        },
 
         {   -logic_name => 'load_genomedb_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
@@ -782,7 +790,7 @@ sub core_pipeline_analyses {
             },
             -flow_into      => {
                 1 => {
-                    'load_genomedb_factory' => INPUT_PLUS( { 'master_db' => '#member_db#', } ),
+                    'load_mlss_id' => INPUT_PLUS( { 'master_db' => '#member_db#', } ),
                 }
             },
         },
