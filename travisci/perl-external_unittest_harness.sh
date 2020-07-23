@@ -16,7 +16,7 @@
 # limitations under the License.
 
 
-echo "We are running Perl '$TRAVIS_PERL_VERSION'"
+echo "We are running Perl '$TRAVIS_PERL_VERSION', Coverage reporting is set to '$COVERAGE'"
 
 # Setup the environment variables
 export ENSEMBL_CVS_ROOT_DIR=$PWD
@@ -36,17 +36,25 @@ export PERL5LIB=$PERL5LIB:$PWD/ensembl-taxonomy/modules
 export PERL5LIB=$PERL5LIB:$PWD/ensembl-io/modules
 export PERL5LIB=$PERL5LIB:$PWD/ensembl-datacheck/lib
 
+ENSEMBL_PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-funcgen'
 ENSEMBL_TESTER="$PWD/ensembl-test/scripts/runtests.pl"
 ENSEMBL_TESTER_OPTIONS=()
 CORE_SCRIPTS=("$PWD/ensembl/modules/t/compara.t")
 REST_SCRIPTS=("$PWD/ensembl-rest/t/genomic_alignment.t" "$PWD/ensembl-rest/t/info.t" "$PWD/ensembl-rest/t/taxonomy.t" "$PWD/ensembl-rest/t/homology.t" "$PWD/ensembl-rest/t/gene_tree.t" "$PWD/ensembl-rest/t/cafe_tree.t" "$PWD/ensembl-rest/t/family.t")
 
+if [ "$COVERAGE" = 'true' ]; then
+  EFFECTIVE_PERL5OPT="$ENSEMBL_PERL5OPT"
+  ENSEMBL_TESTER_OPTIONS+=('-verbose')
+else
+  EFFECTIVE_PERL5OPT=""
+fi
+
 echo "Running ensembl test suite using $PERL5LIB"
-perl "$ENSEMBL_TESTER" "${ENSEMBL_TESTER_OPTIONS[@]}" "${CORE_SCRIPTS[@]}"
+PERL5OPT="$EFFECTIVE_PERL5OPT" perl "$ENSEMBL_TESTER" "${ENSEMBL_TESTER_OPTIONS[@]}" "${CORE_SCRIPTS[@]}"
 rt1=$?
 
 echo "Running ensembl-rest test suite using $PERL5LIB"
-perl "$ENSEMBL_TESTER" "${ENSEMBL_TESTER_OPTIONS[@]}" "${REST_SCRIPTS[@]}"
+PERL5OPT="$EFFECTIVE_PERL5OPT" perl "$ENSEMBL_TESTER" "${ENSEMBL_TESTER_OPTIONS[@]}" "${REST_SCRIPTS[@]}"
 rt2=$?
 
 if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then
