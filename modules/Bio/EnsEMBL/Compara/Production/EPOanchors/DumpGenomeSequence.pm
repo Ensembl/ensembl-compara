@@ -116,7 +116,7 @@ sub fetch_input {
     }
     if (@{$self->param('cellular_components_exclude')}) {
         my %excl = map {$_ => 1} @{$self->param('cellular_components_exclude')};
-        $dnafrags = [grep {!excl{$_->cellular_component}} @$dnafrags];
+        $dnafrags = [grep {!$excl{$_->cellular_component}} @$dnafrags];
     }
 
     my $mask = $self->param('repeat_masked');
