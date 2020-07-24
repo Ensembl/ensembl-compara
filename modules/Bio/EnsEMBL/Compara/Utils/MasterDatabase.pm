@@ -148,9 +148,9 @@ sub _remove_deprecated_dnafrags {
     return if scalar(@$dnafrags) == 0;
 
     print 'Now deleting ', scalar(@$dnafrags), ' former DnaFrags...';
-    my $sth = $compara_dba->dbc->prepare('DELETE FROM dnafrag WHERE dnafrag_id = ?');
+    my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor;
     foreach my $deprecated_dnafrag (@$dnafrags) {
-        $sth->execute($deprecated_dnafrag->dbID);
+        $dnafrag_adaptor->delete($deprecated_dnafrag);
     }
     print "  ok!\n\n";
 
