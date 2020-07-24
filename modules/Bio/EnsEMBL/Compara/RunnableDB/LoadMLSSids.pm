@@ -25,7 +25,8 @@ Fetches for the MLSS id that matches the given method type, species set name and
 release number, as well as its previous MLSS id (--add_prev_mlss) and its sister
 MLSS ids (--add_sister_mlss). If a branch code is provided, the MLSS id(s) are
 flown into that branch. If not, they are added as pipeline-wide parameters
-(default behaviour). The main MLSS id is saved under "mlss_id" key. See
+(default behaviour). The main MLSS id is saved under "mlss_id" key, except for
+EPO Extended, where the main MLSS id is saved under "ext_mlss_id" instead. See
 '--add_prev_mlss' and '--add_sister_mlsss' flags for more information.
 
 =over
@@ -58,8 +59,11 @@ Optional. Also fetch the sister MLSS ids of the main MLSS:
  - If method_type is EPO, fetch the EPO Extended MLSS id and its related GERP
    MLSS ids and return them under "ext_mlss_id", "ce_mlss_id" and "cs_mlss_id"
    keys, respectively
- - If method_type is EPO_EXTENDED or PECAN, fetch the GERP MLSS ids and return
-   them under "ce_mlss_id" and "cs_mlss_id" keys
+ - If method_type is EPO_EXTENDED, fetch its related GERP MLSS ids and the EPO
+   MLSS id and return them under "ce_mlss_id", "cs_mlss_id" and "mlss_id" keys,
+   respectively
+ - If method_type is PECAN, fetch the GERP MLSS ids and return them under
+   "ce_mlss_id" and "cs_mlss_id" keys
 By default, do not fetch them.
 
 =item branch_code
@@ -136,14 +140,18 @@ sub fetch_input {
     }
 
     if ( $self->param('add_sister_mlsss') ) {
-        if ( $method_type =~ /^EPO$/ ) {
-            # Fetch the EPO Extended MLSS id
-            my @ext_mlss = grep { ($_->species_set->name eq $species_set_name) && $_->is_in_release($release) }
-                @{ $mlss_adaptor->fetch_all_by_method_link_type('EPO_EXTENDED') };
-            $self->throw(sprintf("No EPO Extended MLSS found for MLSS '%s' (%s)", $mlss->name, $mlss->dbID)) unless @ext_mlss;
-            $mlss_ids{ext_mlss_id} = $ext_mlss[0]->dbID;
+        if ( $method_type =~ /^EPO/ ) {
+            my $is_epo = $method_type =~ /^EPO$/;
+            # Fetch the linked MLSS id
+            my $linked_method_type = $is_epo ? 'EPO_EXTENDED' : 'EPO';
+            my @linked_mlss = grep { ($_->species_set->name eq $species_set_name) && $_->is_in_release($release) }
+                @{ $mlss_adaptor->fetch_all_by_method_link_type($linked_method_type) };
+            $self->throw(sprintf("No %s MLSS found for MLSS '%s' (%s)", $linked_method_type, $mlss->name, $mlss->dbID)) unless @linked_mlss;
+            # Assign the EPO MLSS id to mlss_id and EPO Extended MLSS id to ext_mlss_id
+            $mlss_ids{ext_mlss_id} = $is_epo ? $linked_mlss[0]->dbID : $mlss_ids{mlss_id};
+            $mlss_ids{mlss_id} = $linked_mlss[0]->dbID unless $is_epo;
             # The GERP MLSSs are linked to the EPO Extended MLSS, not the EPO MLSS
-            $mlss = $ext_mlss[0];
+            $mlss = $linked_mlss[0] if $is_epo;
         }
 
         if ( $method_type =~ /^(EPO|EPO_EXTENDED|PECAN)$/ ) {
