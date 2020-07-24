@@ -81,10 +81,10 @@ package Bio::EnsEMBL::Compara::Locus;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Storable;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
-
 use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 
 
@@ -129,6 +129,23 @@ sub new {
   }
 
   return $self;
+}
+
+
+=head2 new_fast
+
+  Arg [1]    : hashref to be blessed
+  Description: Construct a new Bio::EnsEMBL::Storable object using the hashref.
+               This is a very quick constructor that requires internal knowledge
+               of the class.
+  Exceptions : none
+  Returntype : Bio::EnsEMBL::Compara::Locus
+  Status     : Stable
+
+=cut
+
+sub new_fast {
+    return Bio::EnsEMBL::Storable::new_fast(@_);
 }
 
 
