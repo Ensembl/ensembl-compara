@@ -68,7 +68,6 @@ sub default_options {
         # Executable parameters
         'mapping_params'    => { bestn=>11, gappedextension=>"no", softmasktarget=>"no", percent=>75, showalignment=>"no", model=>"affine:local", },
         'enredo_params'     => ' --min-score 0 --max-gap-length 200000 --max-path-dissimilarity 4 --min-length 10000 --min-regions 2 --min-anchors 3 --max-ratio 3 --simplify-graph 7 --bridges -o ',
-        'gerp_window_sizes' => [1,10,100,500], #gerp window sizes
 
         # Dump directory
         'work_dir'            => $self->o('pipeline_dir'),
