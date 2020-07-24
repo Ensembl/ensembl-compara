@@ -151,7 +151,7 @@ sub run {
         }
     }
 
-    my $dumps_path = dirname($genome_db->_get_genome_dump_path());
+    my $dumps_path = dirname($genome_db->_get_genome_dump_path($genome_dumps_dir));
     # Rename *.fa and *.fai files
     my @fasta_files = glob qq(${dumps_path}/${old_name}.*.fa ${dumps_path}/${old_name}.*.fai);
     foreach my $file (@fasta_files) {
