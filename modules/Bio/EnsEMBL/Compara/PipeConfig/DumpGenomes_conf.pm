@@ -125,7 +125,7 @@ sub pipeline_analyses {
                     'all_current'       => $self->o('all_current'),
                 }],
             -flow_into  => {
-                2 => { 'genome_dump_unmasked' => INPUT_PLUS(), 'genome_dump_masked' => INPUT_PLUS(), }, # To allow propagating "reg_conf" if the latter is defined at the job level
+                2 => [ 'genome_dump_unmasked', 'genome_dump_masked', ],
             },
         },
 
