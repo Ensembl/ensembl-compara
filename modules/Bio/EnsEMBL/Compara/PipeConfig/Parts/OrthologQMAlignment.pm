@@ -57,9 +57,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
                 'ref_species'      => $self->o('ref_species'),
                 'species1'         => $self->o('species1'),
                 'species2'         => $self->o('species2'),
-                'alt_aln_dbs'      => $self->o('alt_aln_dbs'),
                 'master_db'        => $self->o('master_db'),
-                'alt_homology_db'  => $self->o('alt_homology_db'),
             },
         },
 
