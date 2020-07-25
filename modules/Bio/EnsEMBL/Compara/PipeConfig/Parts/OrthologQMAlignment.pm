@@ -57,7 +57,6 @@ sub pipeline_analyses_ortholog_qm_alignment {
                 'ref_species'      => $self->o('ref_species'),
                 'species1'         => $self->o('species1'),
                 'species2'         => $self->o('species2'),
-                'master_db'        => $self->o('master_db'),
             },
         },
 
@@ -73,7 +72,6 @@ sub pipeline_analyses_ortholog_qm_alignment {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::SelectMLSS',
             -parameters => {
                 'current_release' => $self->o('ensembl_release'),
-                'master_db'       => $self->o('master_db'),
             },
             -flow_into  => {
                 1 => [ '?accu_name=alignment_mlsses&accu_address=[]&accu_input_variable=accu_dataflow' ],
