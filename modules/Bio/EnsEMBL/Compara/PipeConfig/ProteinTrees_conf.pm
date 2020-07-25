@@ -284,8 +284,6 @@ sub default_options {
         # Uncomment and update the database locations
 
         # the dbs required for OrthologQMAlignment alt_aln_dbs can be an array list of alignment dbs
-        'compara_db'      => $self->pipeline_url(),
-        'alt_homology_db' => $self->pipeline_url(),
         'alt_aln_dbs'     => [
             'compara_curr',
         ],
