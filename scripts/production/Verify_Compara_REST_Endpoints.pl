@@ -96,15 +96,17 @@ elsif($division eq "plants"){
     $gene_member_id           = "AT3G52430";
     $gene_tree_id             = "EPlGT00140000000744";
     $alignment_region         = "1:8001-18000:1";
-    $lastz_alignment_region   = $alignment_region;
+    $lastz_alignment_region   = "1:12928-15180";
 
-    $species_1                = "arabidopsis_thaliana";
+    $species_1                = "oryza_sativa";
     $species_2                = "vitis_vinifera";
-    $species_3                = "oryza_barthii";
+    $species_3                = "arabidopsis_thaliana";
 
-    $taxon_1                  = 3702;#arabidopsis_thaliana
+    $taxon_1                  = 39947;#oryza_sativa
     $taxon_2                  = 29760;#vitis_vinifera
-    $taxon_3                  = 65489;#oryza_barthii
+    $taxon_3                  = 3702;#arabidopsis_thaliana
+
+    $species_set_group        = "rice";
 
     $gene_symbol              = "PAD4";
     $homology_type            = 'orthologues';
@@ -112,7 +114,6 @@ elsif($division eq "plants"){
     
     $extra_params             = 'compara=plants';
     $skip_families            = 1;
-    $skip_epo                 = 1;
     $skip_cactus              = 1;
 }
 elsif($division eq 'pan' or $division eq 'pan_homology'){
@@ -490,7 +491,7 @@ try{
         print "\nTesting GET EPO alignment region\/\:species\/\:region \n\n";
     
         my $ext = "/alignment/region/$species_1/$alignment_region?species_set_group=$species_set_group";
-        $ext .= "?$extra_params" if $extra_params;
+        $ext .= ";$extra_params" if $extra_params;
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
         ok($responseIDGet->{success}, "Check json validity");
@@ -502,8 +503,8 @@ try{
         $phyloXml = process_phyloXml_get($server.$ext.';content-type=text/x-phyloxml;aligned=0'.($extra_params ? ";$extra_params" : ''));
         #print Dumper $phyloXml;
         ok($phyloXml->{phylogeny}->{clade}->{sequence}->{mol_seq}->{is_aligned} == 0, "Check get alignment region and unaligned sequences");
-    
-        $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;display_species_set=$species_1".($extra_params ? ";$extra_params" : ''));
+
+        $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;display_species_set=$species_1;species_set_group=$species_set_group".($extra_params ? ";$extra_params" : ''));
         ok($jsontxt->[0]->{alignments}[0]->{species} eq $species_1, "Check alignment region display_species_set option validity");
     }
     
