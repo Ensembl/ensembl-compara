@@ -264,25 +264,34 @@ sub fetch_leaf_hash_from_json {
     return $input_json;
 }
 
-sub verify_xml_leaf {
+
+# Fetch a species node using the production name node from a phyloxml input
+# if the searched species is not present it returns undef
+# so the presence of species can be tested by defined.
+sub fetch_species_node {
     my ($this_node, $species_name) = @_;
     my $nodes = ref($this_node) eq 'ARRAY' ? $this_node : [$this_node];
-
     foreach my $node ( @$nodes ) {
         if ( exists $node->{property} ) {
-            return 1 if ($node->{property}->{content} // '') eq $species_name;
+            return $node if (($node->{property}->{content} // '') eq $species_name);
         }
-
         if ( exists $node->{clade} ) {
-            my $verify_recursive = verify_xml_leaf($node->{clade}, $species_name);
-            return 1 if $verify_recursive;
+            my $species_node = fetch_species_node($node->{clade}, $species_name);
+            return $species_node if defined $species_node;
         } else {
-            foreach my $value ( values %$node ) {
-                return 1 if ($value->{property}->{content} // '') eq $species_name;
+            # in case we are on an ancestral or species node
+            foreach my $chd_node ( values %$node ){
+                if (exists $chd_node->{property}){
+                    return $chd_node if (($chd_node->{property}->{content} // '') eq $species_name);
+                }
+                if (exists $chd_node->{clade}){
+                    my $species_node = fetch_species_node($chd_node->{clade}, $species_name);
+                    return $species_node if defined $species_node;
+                }
             }
         }
     }
-    return 0;
+    return undef;
 }
 
 #Compara currently have no POST requests. For future purposes.
@@ -335,7 +344,7 @@ try{
         ok((substr($responseIDGet->{'content'}, 0, 11) eq "thisisatest"), "Check Callback validity");
 
         $phyloXml = process_phyloXml_get($server."/genetree/id/$gene_tree_id?content-type=text/x-phyloxml+xml;prune_species=$species_1;prune_species=$species_3".($extra_params ? ";$extra_params" : ''));
-        ok( verify_xml_leaf($phyloXml->{phylogeny}, $species_1) && verify_xml_leaf($phyloXml->{phylogeny}, $species_3) , "check prune species validity");
+        ok( defined fetch_species_node($phyloXml->{phylogeny}, $species_1) && defined fetch_species_node($phyloXml->{phylogeny}, $species_3) , "check prune species validity");
 
         $orthoXml = process_orthoXml_get($server."/genetree/id/$gene_tree_id?content-type=text/x-orthoxml+xml;prune_taxon=$taxon_1;prune_taxon=$taxon_2;prune_taxon=$taxon_3".($extra_params ? ";$extra_params" : ''));
         @pruned_species = keys %{ $orthoXml->{species} };
@@ -502,7 +511,8 @@ try{
         print $server.$ext.';content-type=text/x-phyloxml;aligned=0' . "\n";
         $phyloXml = process_phyloXml_get($server.$ext.';content-type=text/x-phyloxml;aligned=0'.($extra_params ? ";$extra_params" : ''));
         #print Dumper $phyloXml;
-        ok($phyloXml->{phylogeny}->{clade}->{sequence}->{mol_seq}->{is_aligned} == 0, "Check get alignment region and unaligned sequences");
+        my $species_node = fetch_species_node($phyloXml->{phylogeny}, $species_1);
+        ok($species_node->{sequence}->{mol_seq}->{is_aligned} == 0, "Check get alignment region and unaligned sequences");
 
         $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;display_species_set=$species_1;species_set_group=$species_set_group".($extra_params ? ";$extra_params" : ''));
         ok($jsontxt->[0]->{alignments}[0]->{species} eq $species_1, "Check alignment region display_species_set option validity");

@@ -192,6 +192,12 @@ sub _genomicaligntree_body {
     if ($all_genomic_aligns->[0]->genome_db->name ne "ancestral_sequences") {
       my $gdb = $all_genomic_aligns->[0]->genome_db;
       $self->_write_genome_db($gdb);
+      #add property element to provide the production name
+      $w->dataElement('property', $gdb->name,
+        'datatype' => 'xsd:string',
+        'ref' => 'Compara:genome_db_name',
+        'applies_to' => 'clade'
+      );
     }
 
     if ($compact_alignments) {
