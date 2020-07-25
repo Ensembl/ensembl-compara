@@ -142,7 +142,7 @@ sub pipeline_analyses {
         # have been made by replacing a-z with A-Z.
 
         {   -logic_name => 'genome_dump_unmasked',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpUnmaskedGenomeSequence',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpGenomes::DumpUnmaskedGenomeSequence',
             -parameters => {
                 'force_redump'  => $self->o('force_redump'),
             },
@@ -153,7 +153,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'genome_dump_masked',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMaskedGenomeSequence',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpGenomes::DumpMaskedGenomeSequence',
             -parameters => {
                 'force_redump'  => $self->o('force_redump'),
             },

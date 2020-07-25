@@ -19,11 +19,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::DumpMaskedGenomeSequence
+Bio::EnsEMBL::Compara::RunnableDB::DumpGenomes::DumpUnmaskedGenomeSequence
 
 =head1 DESCRIPTION
 
-Module to dump the soft- and hard-masked genome sequences.
+Module to dump the unmasked genome sequences.
 The files are moved to a shared directory.
 
 Input parameters
@@ -42,7 +42,7 @@ Base directory in which to dump the genomes
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::DumpMaskedGenomeSequence;
+package Bio::EnsEMBL::Compara::RunnableDB::DumpGenomes::DumpUnmaskedGenomeSequence;
 
 use strict;
 use warnings;
@@ -75,8 +75,7 @@ sub fetch_input {
 
     # Where the files should be
     $self->param_required('genome_dumps_dir');
-    $self->param('soft_masked_file', $genome_db->_get_genome_dump_path($self->param('genome_dumps_dir'), 'soft'));
-    $self->param('hard_masked_file', $genome_db->_get_genome_dump_path($self->param('genome_dumps_dir'), 'hard'));
+    $self->param('unmasked_file',    $genome_db->_get_genome_dump_path($self->param('genome_dumps_dir')));
 
     # The expected file size: DNA + line-returns + dnafrag name + ">" + line-return
     my $sql = 'SELECT SUM(length + CEIL(length/?) + FLOOR(LOG10(dnafrag_id)) + 3) FROM dnafrag WHERE genome_db_id = ? AND is_reference = 1';
@@ -84,7 +83,7 @@ sub fetch_input {
 
     # If all the files are there, we're good to go
     my $err = 0;
-    foreach my $file_param (qw(soft_masked_file hard_masked_file)) {
+    foreach my $file_param (qw(unmasked_file)) {
         unless (-e $self->param($file_param)) {
             $self->warning($self->param($file_param) . " doesn't exist");
             $err = 1;
@@ -98,11 +97,11 @@ sub fetch_input {
     }
     if (!$err) {
         if (grep {$_ eq $genome_db->name} @{$self->param_required('force_redump')}) {
-            $self->warning('Dumps of ' . $genome_db->name . ' look fine, but redump requested');
+            $self->warning('Dump of ' . $genome_db->name . ' look fine, but redump requested');
         } else {
             $self->write_output();
             $self->input_job->autoflow(0);
-            $self->complete_early('All dumps already there');
+            $self->complete_early('Dump already there');
         }
     }
 
@@ -111,7 +110,7 @@ sub fetch_input {
     $self->param('cellular_components_exclude', []);                # Dump everything
     $self->param('cellular_components_only',    []);                # I said everything
     $self->param('genome_dump_file',            $tmp_dump_file);    # Somewhere under /tmp
-    $self->param('repeat_masked',               'soft');            # and soft-masked.
+    $self->param('repeat_masked',               undef);             # and not masked.
 
     $self->SUPER::fetch_input();
 }
@@ -122,25 +121,19 @@ sub run {
 
     # Get the filenames
     my $tmp_dump_file    = $self->param('genome_dump_file');
-    my $soft_masked_file = $self->param('soft_masked_file');
-    my $hard_masked_file = $self->param('hard_masked_file');
+    my $unmasked_file    = $self->param('unmasked_file');
 
     my $ref_size = -s $tmp_dump_file;
     die "$tmp_dump_file is empty" unless $ref_size;
 
-    # Assuming all three files are in the same directory
-    my $cmd = ['mkdir', '-p', dirname($soft_masked_file)];
+    # Make the directory
+    my $cmd = ['mkdir', '-p', dirname($unmasked_file)];
     $self->run_command($cmd, { die_on_failure => 1 });
 
     # Copy the file (making sure the file permissions are correct regarless of the user's umask)
-    $cmd = ['install', '--preserve-timestamps', '--mode=664', $tmp_dump_file, $soft_masked_file];
+    $cmd = ['install', '--preserve-timestamps', '--mode=664', $tmp_dump_file, $unmasked_file];
     $self->run_command($cmd, { die_on_failure => 1 });
-    die "$soft_masked_file size mismatch" if $ref_size != -s $soft_masked_file;
-
-    # Convert to hard-masked
-    $cmd = qq{bash -c "tr a-z N < '$tmp_dump_file' > '$hard_masked_file'"};
-    $self->run_command($cmd, { die_on_failure => 1 });
-    die "$hard_masked_file size mismatch" if $ref_size != -s $hard_masked_file;
+    die "$unmasked_file size mismatch" if $ref_size != -s $unmasked_file;
 
     unlink $tmp_dump_file;
 }
@@ -148,8 +141,7 @@ sub run {
 
 sub write_output {
     my ($self) = @_;
-    $self->dataflow_output_id( {'mask' => 'soft', 'genome_dump_file' => $self->param('soft_masked_file')}, 2 );
-    $self->dataflow_output_id( {'mask' => 'hard', 'genome_dump_file' => $self->param('hard_masked_file')}, 2 );
+    $self->dataflow_output_id( {'genome_dump_file' => $self->param('unmasked_file')} );
 }
 
 1;
