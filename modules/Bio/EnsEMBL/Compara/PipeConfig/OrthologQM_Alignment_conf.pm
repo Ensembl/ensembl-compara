@@ -152,7 +152,7 @@ sub pipeline_create_commands {
 	return [
 		@{ $self->SUPER::pipeline_create_commands },
 		$self->db_cmd( 'CREATE TABLE ortholog_quality (
-			homology_id              INT NOT NULL,
+            homology_id              VARCHAR(40) NOT NULL,
             genome_db_id             INT NOT NULL,
             alignment_mlss           INT NOT NULL,
             combined_exon_coverage   FLOAT(5,2) NOT NULL,

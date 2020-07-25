@@ -99,7 +99,7 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'  => [ 'mysql-ens-compara-prod-4', 'jalvarez_pan_load_members_102' ],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-4', 'carlac_default_pan_protein_trees_102' ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-4', 'jalvarez_default_pan_protein_trees_102' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );

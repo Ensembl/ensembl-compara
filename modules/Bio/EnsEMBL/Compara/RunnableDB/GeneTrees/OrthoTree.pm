@@ -181,6 +181,7 @@ sub write_output {
     my $self = shift @_;
 
     $self->delete_old_homologies unless $self->param('_readonly');
+    $self->_create_flatfile if $self->param('output_flatfile');
     $self->run_analysis;
     $self->print_summary;
     $self->compara_dba->dbc->disconnect_if_idle;
@@ -220,8 +221,6 @@ sub prepare_analysis {
 
 sub run_analysis {
   my $self = shift;
-
-    $self->_create_flatfile if $self->param('output_flatfile');
 
   my $gene_tree = $self->param('gene_tree');
 

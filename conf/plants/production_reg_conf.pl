@@ -85,7 +85,7 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'  => [ 'mysql-ens-compara-prod-8', 'jalvarez_plants_load_members_102'],
-    # 'compara_ptrees'   => [ 'mysql-ens-compara-prod-3', 'jalvarez_default_plants_protein_trees_101' ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-8', 'jalvarez_default_plants_protein_trees_102' ],
 
     # LASTZ dbs
     'lastz_batch_1' => [ 'mysql-ens-compara-prod-2', 'jalvarez_plants_lastz_batch1_102' ],

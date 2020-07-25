@@ -38,7 +38,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::SusProteinTrees_conf
 
     #4. Run init_pipeline.pl script:
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::SusProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
-            -mlss_id <curr_sus_ptree_mlss_id>
+            -mlss_id <curr_pig_breeds_ptree_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -74,9 +74,9 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     # Parameters to allow merging different runs of the pipeline
-        'collection'            => 'sus',       # The name of the species-set within that division
+        'collection'            => 'pig_breeds',       # The name of the species-set within that division
         'dbID_range_index'      => 20,
-        'label_prefix'          => 'sus_',
+        'label_prefix'          => 'pig_breeds_',
 
         'multifurcation_deletes_all_subnodes' => [ 9822 ], # All the species under the "Sus" genus are flattened, i.e. it's cow vs a rake of pigs
 
