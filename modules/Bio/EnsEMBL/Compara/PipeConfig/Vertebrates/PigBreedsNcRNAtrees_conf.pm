@@ -27,11 +27,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::SusNcRNAtrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsNcRNAtrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::SusNcRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX \
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsNcRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX \
         -mlss_id <curr_pig_breeds_ncrna_mlss_id>
 
 =head1 DESCRIPTION
@@ -49,7 +49,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::SusNcRNAtrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsNcRNAtrees_conf;
 
 use strict;
 use warnings;
