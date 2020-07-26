@@ -256,11 +256,7 @@ sub default_options {
         'hive_default_max_retry_count' => 1,
 
         # parameters for OrthologQMAlignment
-        'species1'         => undef,
-        'species2'         => undef,
-        'species_set_name' => "collection-" . $self->o('collection'),
-        'species_set_id'   => undef,
-        'ref_species'      => undef,
+        'wga_species_set_name'       => "collection-" . $self->o('collection'),
         'homology_method_link_types' => ['ENSEMBL_ORTHOLOGUES'],
         # WGA dump directories for OrthologQMAlignment
         'wga_dumps_dir'      => $self->o('homology_dumps_dir'),
@@ -3618,7 +3614,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'rib_fire_orth_wga',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => WHEN( '#dna_alns_complete#'  => [ 'pair_species' ] ),
+            -flow_into  => WHEN( '#dna_alns_complete#'  => { 'pair_species' => {'species_set_name' => $self->o('wga_species_set_name')}, } ),
         },
 
         {   -logic_name => 'homology_dNdS',

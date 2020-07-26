@@ -196,7 +196,13 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
         {   -logic_name => 'fire_orth_wga',
-            -input_ids  => [ { } ],
+            -input_ids  => [ {
+                'species_set_name' => $self->o('species_set_name'),
+                'species_set_id'   => $self->o('species_set_id'),
+                'ref_species'      => $self->o('ref_species'),
+                'species1'         => $self->o('species1'),
+                'species2'         => $self->o('species2'),
+            } ],
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => 'pair_species',
         },
