@@ -130,9 +130,11 @@ sub _member_full_node {
     $result->{cigar_line} = $member->cigar_line() if $self->cigar_line;
     $result->{taxon_id}   = ($taxon_id+0) if defined $taxon_id;
 
+    return $result if $self->no_seq;
+
     if ($self->aligned && $member->cigar_line()) {
         $result->{align_seq} = $member->alignment_string($self->seq_type);
-    } elsif (!$self->no_seq) {
+    } else {
         $result->{seq} = $member->other_sequence($self->seq_type);
     }
 
