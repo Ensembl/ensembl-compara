@@ -1353,7 +1353,7 @@ sub species_label {
     }
     else {
       ## Pan-compara species - get label from metadata db
-      my $info = $self->multiX('PAN_COMPARA_LOOKUP');
+      my $info = $self->get_config('MULTI', 'PAN_COMPARA_LOOKUP');
       $label   = $info->{$key}{'display_name'} if ($info && $info->{$key});
     }
     $label = 'Ancestral sequence' unless $label;
@@ -1510,10 +1510,8 @@ sub production_name {
     }
 
 # species name is either has not been registered as an alias, or it comes from a different website, e.g in pan compara
-    my $pan_lookup = $self->multiX('PAN_COMPARA_LOOKUP') || {};
-    my $prod_name  = ($pan_lookup && $pan_lookup->{$species}) 
-                        ? $pan_lookup->{$species}{'production_name'}
-                        : '';
+    my %pan_lookup = $self->multiX('PAN_COMPARA_LOOKUP');
+    my $prod_name  = $pan_lookup{$species} ? $pan_lookup{$species}{'production_name'} : '';
 }
 
 sub verbose_params {
