@@ -131,6 +131,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
                 'output_file'    => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
                 'reuse_file'     => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga_reuse.tsv',
             },
+            -rc_name    => '500Mb_job',
             -hive_capacity => 400,
         },
 
@@ -162,6 +163,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
             -parameters => {
                 'cmd' => q(/bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtOp --exclude '*.wga_reuse.tsv' #wga_dumps_dir#/ #homology_dumps_shared_dir#"),
             },
+            -rc_name    => '500Mb_job',
         },
 
     ];
