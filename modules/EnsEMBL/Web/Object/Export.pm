@@ -458,14 +458,14 @@ sub flat {
   my $species_defs  = $hub->species_defs;
   my $slice         = $self->slice;
   my $params        = $self->params;
-  my $plist         = $species_defs->PROVIDER_NAME;
+  my $plist         = $species_defs->ANNOTATION_PROVIDER_NAME;
   my $vega_db       = $hub->database('vega');
   my $estgene_db    = $hub->database('otherfeatures');
   my $dumper_params = {};
   
   # Check where the data came from.
   if ($plist) {
-    my $purls         = $species_defs->PROVIDER_URL;
+    my $purls         = $species_defs->ANNOTATION_PROVIDER_URL;
     my @providers     = ref $plist eq 'ARRAY' ? @$plist : ($plist);
     my @providers_url = ref $purls eq 'ARRAY' ? @$purls : ($purls);
     my @list;
