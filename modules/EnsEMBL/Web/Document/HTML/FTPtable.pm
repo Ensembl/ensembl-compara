@@ -285,6 +285,11 @@ sub multi_table {
   my $hub = $self->hub;
   my $sd = $hub->species_defs;
 
+  my $ftp_base = $sd->ENSEMBL_FTP_URL;
+  unless ($ftp_base =~ /rapid/) {
+    $ftp_base .= "/$rel";
+  }
+
   my $multi_table;
 
   unless ($sd->NO_COMPARA) {
