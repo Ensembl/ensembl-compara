@@ -288,7 +288,7 @@ SP:  foreach my $species ( @species ) {
       $conf->{'species'}             = $species;
       $conf->{'species_sci_name'}    = $species;
       $conf->{'authority'}           = $PD->{$species}{'AUTHORITY'};
-      $conf->{'species_display_name'} = $PD->{$species}{'SPECIES_COMMON_NAME'};
+      $conf->{'species_display_name'} = ucfirst($PD->{$species}{'SPECIES_COMMON_NAME'});
       $conf->{'strain_details'} = undef;
       $conf->{'strain_details'}{'reference_strain'} = 1;
       if ( $PD->{$species}{'STRAIN_GROUP'} ){
