@@ -273,7 +273,7 @@ sub default_options {
         # parameters for HighConfidenceOrthologs
         'threshold_levels'            => [ ],          # division specific
         'high_confidence_capacity'    => 500,          # how many mlss_ids can be processed in parallel
-        'import_homologies_capacity'  => 50,           # how many homology mlss_ids can be imported in parallel (via mysqlimport)
+        'import_homologies_capacity'  => 20,           # how many homology mlss_ids can be imported in parallel (via mysqlimport)
         'goc_files_dir'               => $self->o('homology_dumps_dir'),
         'range_label'                 => $self->o('member_type'),
 
@@ -3378,7 +3378,15 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'rib_fire_high_confidence_orths',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => WHEN( '#orth_wga_complete#' => [ 'mlss_id_for_high_confidence_factory'] ),
+            -flow_into  => WHEN( '#orth_wga_complete#' => [ 'mlss_id_for_high_confidence_factory', 'paralogue_for_import_factory' ] ),
+        },
+
+        {   -logic_name => 'paralogue_for_import_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
+            -parameters => {
+                'methods'   => { 'ENSEMBL_PARALOGUES' => 1 },
+            },
+            -flow_into  => [ 'find_homology_id_range' ],
         },
 
         {   -logic_name => 'rib_fire_move_polyploid',
