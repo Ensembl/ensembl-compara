@@ -62,9 +62,9 @@ sub fetch_input {
 	my @release_genomes = $self->get_command_output($list_cmd);
 	chomp @release_genomes;
     if ($release_genomes[0] =~ /Division/) {
-        # Remove the first element reported by the script: Division: <division>
+        # Remove the first element reported by the script: Division: <division> and any empty elements
         shift @release_genomes;
-        chomp @release_genomes;
+        @release_genomes = grep { $_ ne '' } @release_genomes;
     }
     if ($allowed_species) {
         # Keep only the species included in the allowed list
@@ -91,9 +91,9 @@ sub fetch_input {
             my @additional_release_genomes = $self->get_command_output($list_cmd);
             chomp @additional_release_genomes;
             if ($additional_release_genomes[0] =~ /Division/) {
-                # Remove the first element reported by the script: Division: <division>
+                # Remove the first element reported by the script: Division: <division> and any empty elements
                 shift @additional_release_genomes;
-                chomp @additional_release_genomes;
+                @additional_release_genomes = grep { $_ ne '' } @additional_release_genomes;
             }
             my %additional_genome = map {$_ => 1} @additional_release_genomes;
             foreach my $genome (@add_species_for_div) {
