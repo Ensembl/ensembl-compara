@@ -61,8 +61,11 @@ sub fetch_input {
 	my $list_cmd = "perl $list_genomes_script $metadata_script_options";
 	my @release_genomes = $self->get_command_output($list_cmd);
 	chomp @release_genomes;
-    # Remove the first element reported by the script: Division: <division>
-    shift @release_genomes if $release_genomes[0] =~ /Division/;
+    if ($release_genomes[0] =~ /Division/) {
+        # Remove the first element reported by the script: Division: <division>
+        shift @release_genomes;
+        chomp @release_genomes;
+    }
     if ($allowed_species) {
         # Keep only the species included in the allowed list
         @release_genomes = grep { exists $allowed_species->{$_} } @release_genomes;
@@ -87,8 +90,11 @@ sub fetch_input {
             $list_cmd = "perl $list_genomes_script $metadata_script_options";
             my @additional_release_genomes = $self->get_command_output($list_cmd);
             chomp @additional_release_genomes;
-            # Remove the first element reported by the script: Division: <division>
-            shift @additional_release_genomes if $additional_release_genomes[0] =~ /Division/;
+            if ($additional_release_genomes[0] =~ /Division/) {
+                # Remove the first element reported by the script: Division: <division>
+                shift @additional_release_genomes;
+                chomp @additional_release_genomes;
+            }
             my %additional_genome = map {$_ => 1} @additional_release_genomes;
             foreach my $genome (@add_species_for_div) {
                 if (not exists($additional_genome{$genome})){
