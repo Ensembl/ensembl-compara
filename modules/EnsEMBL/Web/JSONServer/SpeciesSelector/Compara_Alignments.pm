@@ -71,7 +71,7 @@ sub json_fetch_species {
       $prod_name = encode_entities($prod_name);
       my $t_child = {};
       $t_child->{key}        = join '_', ('species', $row->{id}, lc($prod_name));
-      $t_child->{title}      = encode_entities($ancestral ? '--Ancestral_sequences--' : $species_info->{$url_name}->{common});
+      $t_child->{title}      = encode_entities($ancestral ? '--Ancestral_sequences--' : $species_info->{$url_name}->{display_name});
       $t_child->{value}      = $row->{id};
       $t_child->{scientific_name} = $prod_name;
       $t_child->{img_url}    = $sd->ENSEMBL_IMAGE_ROOT . '/species/' . $url_name . '.png';
