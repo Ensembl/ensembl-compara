@@ -127,7 +127,7 @@ sub pipeline_analyses_high_confidence {
             },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('high_confidence_capacity'),
-            -flow_into     => [ 'find_homology_id_range' ],
+            -flow_into     => { 'find_homology_id_range' => { 'mlss_id' => '#mlss_id#', 'high_conf_expected' => '1' } },
         },
 
         {   -logic_name => 'find_homology_id_range',
@@ -143,9 +143,11 @@ sub pipeline_analyses_high_confidence {
         {   -logic_name => 'import_homology_table',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologies',
             -parameters => {
-                attrib_files => [
-                    '#goc_file#', '#wga_file#', '#high_conf_file#'
-                ],
+                attrib_files => {
+                    'goc'       => '#goc_file#',
+                    'wga'       => '#wga_file#',
+                    'high_conf' => '#high_conf_file#',
+                },
                 replace      => 0,
             },
             -rc_name       => '500Mb_job',

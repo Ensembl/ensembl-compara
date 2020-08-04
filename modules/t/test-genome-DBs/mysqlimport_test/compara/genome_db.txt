@@ -1,0 +1,2 @@
+1	9669	mustela_putorius_furo	MusPutFur1.0	2012-04-Ensembl	0	0	\N	\N	Ferret	\N	69	\N
+2	9739	tursiops_truncatus	turTru1	2008-11-Ensembl	0	0	\N	\N	Dolphin	\N	53	\N

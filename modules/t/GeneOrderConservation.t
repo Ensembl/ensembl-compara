@@ -79,6 +79,9 @@ is( $hom_7->goc_score, 75, 'correct score (75) for homology_id 7' );
 my $hom_12 = $homology_adaptor->fetch_by_dbID(12);
 is( $hom_12->goc_score, 100, 'correct score (100) for homology_id 12' );
 
+# Check that the tag to inform that GOC is expected for this MLSS has been set correctly
+is( $mlss->get_tagvalue('goc_expected'), 1, 'correct tag and value' );
+
 ##############################
 #    Test flatfile output    #
 ##############################

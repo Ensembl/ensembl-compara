@@ -50,10 +50,21 @@ sub fetch_input {
     my $attrib_files = $self->param('attrib_files');
     return unless ( $attrib_files );
 
+    # Check the list of attributes expected for this MLSS
+    my $mlss_id = $self->param_required('mlss_id');
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+    my %expected = (
+        'goc'       => $mlss->get_tagvalue('goc_expected', 0),
+        'wga'       => $mlss->get_tagvalue('wga_expected', 0),
+        'high_conf' => $self->param('high_conf_expected') // 0,
+    );
+
     # fetch all attributes from file list
     my %attribs;
     my $primary_key = 'homology_id';
-    foreach my $f ( @$attrib_files ) {
+    foreach my $attrib ( keys %$attrib_files ) {
+        next unless $expected{$attrib};
+        my $f = $attrib_files->{$attrib};
         open( my $fh, '<', $f ) or die "Cannot open $f for reading";
         my $header = <$fh>;
         my @header_cols = split( /\s+/, $header );
