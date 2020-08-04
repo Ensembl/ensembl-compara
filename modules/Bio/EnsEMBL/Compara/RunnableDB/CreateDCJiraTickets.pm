@@ -47,7 +47,7 @@ sub run {
     my $command = $jira_exe . ' ' . $self->param_required('output_results') . " --update";
 
     $self->warning( "Command: " . $command );
-    #$self->run_command($command, { die_on_failure => 1, });
+    $self->run_command($command, { die_on_failure => 1, });
 
 }
 
