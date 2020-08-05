@@ -45,9 +45,11 @@ sub run {
     my $jira_exe = '$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl';
 
     my $command = $jira_exe . ' ' . $self->param_required('output_results') . " --update";
-
     $self->warning( "Command: " . $command );
-    $self->run_command($command, { die_on_failure => 1, });
+
+    unless ($self->param('dry_run')) {
+        $self->run_command($command, { die_on_failure => 1, });
+    }
 
 }
 

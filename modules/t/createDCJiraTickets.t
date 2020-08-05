@@ -33,6 +33,7 @@ standaloneJob(
     'Bio::EnsEMBL::Compara::RunnableDB::CreateDCJiraTickets',
     {
         'output_results' => $test_infile,
+        'dry_run'        => 1,
     },
     [
         [

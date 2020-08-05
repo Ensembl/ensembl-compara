@@ -1,5 +1,7 @@
 =head1 LICENSE
-Copyright [2018-2020] EMBL-European Bioinformatics Institute
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016-2020] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,6 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 =head1 NAME
+
 Bio::EnsEMBL::Compara::PipeConfig::DatachecksForRelease_conf
 
 =head1 SYNOPSIS
@@ -22,6 +25,7 @@ Bio::EnsEMBL::Compara::PipeConfig::DatachecksForRelease_conf
         -division $COMPARA_DIV
 
 =head1 DESCRIPTION
+
 The pipeline configuration that runs compara datachecks for the current release database
 
 =cut
