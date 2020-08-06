@@ -11,6 +11,7 @@ requires 'Parse::RecDescent';
 requires 'Capture::Tiny';
 requires 'Set::IntervalTree';
 requires 'namespace::autoclean';
+requires 'XML::LibXML';
 
 test_requires 'Test::Exception';
 test_requires 'Test::Most';
