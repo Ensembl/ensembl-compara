@@ -690,17 +690,9 @@ sub core_pipeline_analyses {
             },
             -rc_name    => '500Mb_job',
             -flow_into  => [
-                'notify_pipeline_completed',
+                'email_tree_stats_report',
                 WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ),
             ],
-        },
-
-        {   -logic_name => 'notify_pipeline_completed',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::NotifyByEmail',
-            -parameters => {
-                'text'  => 'The pipeline has completed.',
-                'email' => $self->o('email'),
-            },
         },
 
 # ---------------------------------------------[copy tables from master]-----------------------------------------------------------------
@@ -3373,7 +3365,6 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 '1->A' => [
                     'rib_fire_rename_labels',
-                    'rib_fire_move_polyploid',
                     'rib_fire_high_confidence_orths',
                 ],
                 'A->1' => 'compute_statistics',
@@ -3391,11 +3382,6 @@ sub core_pipeline_analyses {
                 'methods'   => { 'ENSEMBL_PARALOGUES' => 1 },
             },
             -flow_into  => [ 'find_homology_id_range' ],
-        },
-
-        {   -logic_name => 'rib_fire_move_polyploid',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => 'polyploid_move_back_factory',
         },
 
         {   -logic_name => 'polyploid_move_back_factory',
@@ -3480,7 +3466,7 @@ sub core_pipeline_analyses {
             -parameters     => {
                 'input_file'    => $self->o('tree_stats_sql'),
             },
-            -flow_into      => [ 'email_tree_stats_report' ],
+            -flow_into      => [ 'polyploid_move_back_factory' ],
         },
 
         {   -logic_name     => 'email_tree_stats_report',
