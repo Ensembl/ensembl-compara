@@ -51,13 +51,15 @@ subtest "Test Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologie
         {
             'compara_db'   => $compara_db,
             'homology_flatfile' => "$test_flatfile_dir/homologies.tsv",
-            'attrib_files' => [
-                "$test_flatfile_dir/wga.tsv",
-                "$test_flatfile_dir/goc.tsv",
-                "$test_flatfile_dir/high_conf.tsv",
-            ],
-            'homology_id_start' => 11,
-        },
+            'attrib_files' => {
+                'wga'       => "$test_flatfile_dir/wga.tsv",
+                'goc'       => "$test_flatfile_dir/goc.tsv",
+                'high_conf' => "$test_flatfile_dir/high_conf.tsv",
+            },
+            'homology_id_start'  => 11,
+            'mlss_id'            => 1234,
+            'high_conf_expected' => 1,
+        }
     );
 
     # check main homology data loading

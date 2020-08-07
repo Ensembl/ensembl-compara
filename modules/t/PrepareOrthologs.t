@@ -50,6 +50,8 @@ print "--- test flatfile: $test_flatfile\n";
 print "--- test prev_flatfile: $test_prev_flatfile\n";
 print "--- test map_file: $test_map_file\n";
 
+my $orth_mlss_id = 50976;
+
 # Test on pair of species without reuse #
 $exp_dataflow = { orth_info => [
     { id => 101, gene_members => [ [9263633, 134], [9274269, 150] ]},
@@ -62,7 +64,7 @@ $exp_dataflow = { orth_info => [
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs', # module
 	{ # input param hash
-        'orth_mlss_id'      => '12345',
+        'orth_mlss_id'      => $orth_mlss_id,
         'aln_mlss_ids'      => ['54321'],
 		'species1_id'       => '150',
 		'species2_id'       => '134',
@@ -82,6 +84,10 @@ standaloneJob(
 	]
 );
 
+# Check that the tag to inform that WGA is expected for this MLSS has been set correctly
+my $mlss = $dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($orth_mlss_id);
+is( $mlss->get_tagvalue('wga_expected'), 1, 'correct tag and value' );
+
 # Test on pair of species with reuse #
 my $dba_prev = $multi_db->get_DBAdaptor('cc21_prev_orth_test');
 my $dbc_prev = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $dba_prev->dbc);
@@ -96,7 +102,7 @@ my $exp_dataflow_2 = { orth_info => [
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs', # module
 	{ # input param hash
-        'orth_mlss_id'      => '12345',
+        'orth_mlss_id'      => $orth_mlss_id,
         'aln_mlss_ids'      => ['54321'],
 		'species1_id'       => '150',
 		'species2_id'       => '134',
@@ -111,11 +117,11 @@ standaloneJob(
     [ # list of events to test for
         [
             'WARNING',
-            '2/3 reusable homologies for mlss_id 12345'
+            "2/3 reusable homologies for mlss_id $orth_mlss_id"
         ],
         [
             'DATAFLOW',
-            { orth_mlss_id => '12345' },
+            { orth_mlss_id => $orth_mlss_id },
             3
         ],
         [
@@ -130,7 +136,7 @@ standaloneJob(
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs', # module
 	{ # input param hash
-        'orth_mlss_id'      => '12345',
+        'orth_mlss_id'      => $orth_mlss_id,
         'aln_mlss_ids'      => ['54321'],
 		'species1_id'       => '150',
 		'species2_id'       => '134',
@@ -145,11 +151,11 @@ standaloneJob(
     [ # list of events to test for
         [
             'WARNING',
-            '2/3 reusable homologies for mlss_id 12345'
+            "2/3 reusable homologies for mlss_id $orth_mlss_id"
         ],
         [
             'DATAFLOW',
-            { orth_mlss_id => '12345' },
+            { orth_mlss_id => $orth_mlss_id },
             3
         ],
         [

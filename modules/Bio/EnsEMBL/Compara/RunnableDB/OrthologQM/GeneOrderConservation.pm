@@ -209,6 +209,8 @@ sub write_output {
             $sth->finish();
         }
     );
+    # Add MLSS tag to indicate that the GOC flatfile should be found and loaded when importing the homology
+    $mlss->store_tag('goc_expected', 1);
     print "Scores written! Done!\n\n" if $self->debug;
 }
 
