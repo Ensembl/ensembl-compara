@@ -140,8 +140,8 @@ sub fetch_input {
     }
 
     if ( $self->param('add_sister_mlsss') ) {
-        if ( $method_type =~ /^EPO/ ) {
-            my $is_epo = $method_type =~ /^EPO$/;
+        if ( $method_type =~ /^EPO/i ) {
+            my $is_epo = $method_type =~ /^EPO$/i;
             # Fetch the linked MLSS id
             my $linked_method_type = $is_epo ? 'EPO_EXTENDED' : 'EPO';
             my @linked_mlss = grep { ($_->species_set->name eq $species_set_name) && $_->is_in_release($release) }
@@ -154,7 +154,7 @@ sub fetch_input {
             $mlss = $linked_mlss[0] if $is_epo;
         }
 
-        if ( $method_type =~ /^(EPO|EPO_EXTENDED|PECAN)$/ ) {
+        if ( $method_type =~ /^(EPO|EPO_EXTENDED|PECAN)$/i ) {
             # Fetch the GERP MLSS ids (constrained element and conservation score)
             my $ce_mlss = $mlss->get_all_sister_mlss_by_class('ConstrainedElement.constrained_element');
             $self->warning(sprintf("No Constrained Element MLSS found for MLSS '%s' (%s)\n", $mlss->name, $mlss->dbID)) unless @$ce_mlss;
