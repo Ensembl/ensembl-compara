@@ -35,21 +35,17 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub fetch_input {
-    my $self = shift;
-
-    my $compara_dba = $self->compara_dba;
-    my @dbname      = $compara_dba->dbc->dbname;
-    my $branch_num  = $self->param('branch_num') // 1;
-
-    $self->param( 'dbname', \@dbname );
-    $self->param( 'branch_num', $branch_num );
+sub param_defaults {
+    return {
+        'branch_num'    => 1,
+    };
 }
 
 sub write_output {
     my $self = shift;
 
-    $self->dataflow_output_id( {dbname => $self->param('dbname')}, $self->param('branch_num') );
+    my @dbname = $self->compara_dba->dbc->dbname;
+    $self->dataflow_output_id( {dbname => \@dbname}, $self->param('branch_num') );
 }
 
 1;

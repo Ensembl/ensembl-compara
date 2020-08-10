@@ -26,7 +26,8 @@ Bio::EnsEMBL::Compara::PipeConfig::DatachecksForRelease_conf
 
 =head1 DESCRIPTION
 
-The pipeline configuration that runs compara datachecks for the current release database
+The pipeline configuration that runs compara datachecks for the current release
+database
 
 =cut
 
@@ -45,22 +46,17 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        division      => undef,
-        pipeline_name => $self->o('division').'_datachecks_'.$self->o('rel_with_suffix'),
+        pipeline_name => $self->o('division') . '_datachecks_' . $self->o('rel_with_suffix'),
         registry_file => $self->o('reg_conf'),
         db_type       => 'compara',
         compara_db    => 'compara_curr',
 
         history_file       => '/nfs/panda/ensembl/production/datachecks/history/compara.json',
-        output_dir_path    => $self->o('pipeline_dir').'/tapfile',
+        output_dir_path    => $self->o('pipeline_dir') . '/tapfile',
         datacheck_groups   => ['compara'],
-        datacheck_types    => ['critical'],
+        datacheck_types    => [],
         datacheck_names    => [],
         datacheck_patterns => [],
-        species            => [],
-        taxons             => [],
-        antispecies        => [],
-        antitaxons         => [],
 
         overwrite_files        => 1,
         failures_fatal         => 0,
@@ -69,7 +65,7 @@ sub default_options {
         meta_filters  => {},
         tag           => undef,
         timestamp     => undef,
-        email         => undef,
+        email         => $self->o('email'),
         report_per_db => 0,
         report_all    => 0,
         run_all       => 0,
@@ -78,16 +74,6 @@ sub default_options {
         json_passed     => 0,
         json_by_species => 1,
 
-        # Datacheck Jira ticket creation executable_location
-        cvs_root_dir         => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
-        create_datacheck_tickets_exe => $self->o('cvs_root_dir').'/ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl',
-    };
-}
-
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::resource_classes()},
     };
 }
 
@@ -147,7 +133,7 @@ sub pipeline_create_commands {
         $self->db_cmd($result_table_sql),
         $self->db_cmd($drop_input_id_index),
         $self->db_cmd($extend_input_id),
-        $self->pipeline_create_commands_rm_mkdir(['pipeline_dir','output_dir_path']),
+        $self->pipeline_create_commands_rm_mkdir(['pipeline_dir', 'output_dir_path']),
     ];
 }
 
@@ -176,9 +162,7 @@ sub pipeline_wide_parameters {
         tap_to_json            => $self->o('tap_to_json'),
         json_by_species        => $self->o('json_by_species'),
         json_passed            => $self->o('json_passed'),
-        taxons                 => $self->o('taxons'),
-        antispecies            => $self->o('antispecies'),
-        antitaxons             => $self->o('antitaxons'),
+
     };
 }
 
@@ -187,117 +171,109 @@ sub pipeline_analyses {
 
     return [
         {
-            -logic_name        => 'DataCheckSubmission',
+            -logic_name        => 'datacheck_submission',
             -module            => 'Bio::EnsEMBL::DataCheck::Pipeline::DataCheckSubmission',
             -input_ids         => [ { } ],
             -analysis_capacity => 1,
             -max_retry_count   => 1,
             -flow_into         => {
-                '1' => [ 'GetComparaDBName' ],
+                '1' => [ 'get_compara_db_name' ],
                 '3' => [ '?table_name=datacheck_submission' ],
             },
         },
 
         {
-            -logic_name        => 'GetComparaDBName',
+            -logic_name        => 'get_compara_db_name',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::GetComparaDBName',
             -analysis_capacity => 1,
             -max_retry_count   => 0,
-            -flow_into         => {
-                '1' => { 'DbFactory' },
-            },
+            -flow_into         => [ 'db_factory' ],
         },
 
         {
-            -logic_name        => 'DbFactory',
+            -logic_name        => 'db_factory',
             -module            => 'Bio::EnsEMBL::Production::Pipeline::Common::DbFactory',
             -analysis_capacity => 10,
             -max_retry_count   => 0,
             -parameters        => {
-                division         => [
-                    $self->o('division'),
-                ],
-                datacheck_groups => [
-                    'compara',
-                ],
-                datacheck_types  => [
-                    'critical',
-                ],
+                division         => [$self->o('division')],
+                datacheck_groups => ['compara'],
+                registry_file    => undef,
             },
             -flow_into         => {
                 '2->A' => 
                     WHEN(
-                        '#parallelize_datachecks#' => [ 'DataCheckFactory' ],
-                        ELSE [ 'RunDataChecks' ]
+                        '#parallelize_datachecks#' => [ 'datacheck_factory' ],
+                        ELSE [ 'run_datachecks' ]
                     ),
-                'A->1' => [ 'DataCheckResults' ],
+                'A->1' => [ 'datacheck_results' ],
             },
         },
 
         {
-            -logic_name        => 'RunDataChecks',
+            -logic_name        => 'run_datachecks',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::RunDataChecks',
             -analysis_capacity => 10,
             -max_retry_count   => 0,
             -rc_name           => '2Gb_job',
             -flow_into         => {
-                '1'  => [ 'StoreResults' ],
-                '-1' => [ 'RunDataChecks_High_mem' ]
+                '1'  => [ 'store_results' ],
+                '-1' => [ 'run_datachecks_high_mem' ]
             },
         },
 
         {
-            -logic_name        => 'RunDataChecks_High_mem',  
+            -logic_name        => 'run_datachecks_high_mem',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::RunDataChecks',
             -analysis_capacity => 10,
             -max_retry_count   => 0,
             -rc_name           => '2Gb_job',
             -flow_into         => {
-                '1' => [ 'StoreResults' ],
+                '1' => [ 'store_results' ],
             },
         },
 
         {
-            -logic_name        => 'DataCheckFactory',
-            -module            => 'Bio::EnsEMBL::DataCheck::Pipeline::DataCheckFactory',
+            -logic_name        => 'datacheck_factory',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFactory',
             -analysis_capacity => 10,
             -max_retry_count   => 0,
             -flow_into         => {
-                '2->A' => [ 'DataCheckFan' ],
-                'A->1' => [ 'DataCheckFunnel' ],
+                '2->A' => [ 'datacheck_fan' ],
+                'A->1' => [ 'datacheck_funnel' ],
             },
         },
 
         {
-            -logic_name        => 'DataCheckFan',
+            -logic_name        => 'datacheck_fan',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
             -analysis_capacity => 100,
             -max_retry_count   => 0,
             -rc_name           => '500Mb_job',
             -flow_into         => {
                 '1'  => [ '?accu_name=results&accu_address=[]' ],
-                '-1' => [ 'DataCheckFan_High_mem' ],
-                '2'  => [ 'JiraTicketCreation' ],
+                '-1' => [ 'datacheck_fan_high_mem' ],
+                '2'  => [ 'jira_ticket_creation' ],
             },
         },
 
         {
-            -logic_name        => 'DataCheckFan_High_mem',
+            -logic_name        => 'datacheck_fan_high_mem',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
             -analysis_capacity => 100,
             -max_retry_count   => 0,
             -rc_name           => '2Gb_job',
             -flow_into         => {
                 '1' => [ '?accu_name=results&accu_address=[]' ],
-                '2' => [ 'JiraTicketCreation' ],
+                '2' => [ 'jira_ticket_creation' ],
             },
         },
 
         {
-            -logic_name        => 'JiraTicketCreation',
+            -logic_name        => 'jira_ticket_creation',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::CreateDCJiraTickets',
             -parameters        => {
-                division                     => '#division#',
+                division                     => $self->o('division'),
                 release                      => '#ensembl_release#',
                 update                       => 1,
                 create_datacheck_tickets_exe => $self->o('create_datacheck_tickets_exe'),
@@ -307,30 +283,30 @@ sub pipeline_analyses {
         },
 
         {
-            -logic_name        => 'DataCheckFunnel',
+            -logic_name        => 'datacheck_funnel',
             -module            => 'Bio::EnsEMBL::DataCheck::Pipeline::DataCheckFunnel',
             -analysis_capacity => 1,
             -batch_size        => 100,
             -max_retry_count   => 0,
             -rc_name           => '2Gb_job',
             -flow_into         => {
-                '1' => [ 'StoreResults' ],
+                '1' => [ 'store_results' ],
             },
         },
 
         {
-            -logic_name        => 'StoreResults',
+            -logic_name        => 'store_results',
             -module            => 'Bio::EnsEMBL::DataCheck::Pipeline::StoreResults',
             -analysis_capacity => 10,
             -max_retry_count   => 1,
             -flow_into         => {
                 '3' => [ '?table_name=datacheck_results' ],
-                '4' => [ 'EmailReport' ],
+                '4' => [ 'email_report' ],
             },
         },
 
         {
-            -logic_name        => 'EmailReport',
+            -logic_name        => 'email_report',
             -module            => 'Bio::EnsEMBL::DataCheck::Pipeline::EmailReport',
             -analysis_capacity => 10,
             -batch_size        => 100,
@@ -338,31 +314,31 @@ sub pipeline_analyses {
         },
 
         {
-            -logic_name        => 'DataCheckResults',
+            -logic_name        => 'datacheck_results',
             -module            => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -max_retry_count   => 0,
             -flow_into         => {
                 '1' =>  
                     WHEN( 
-                        '#output_dir# && #tap_to_json#' => [ 'ConvertTapToJson' ],
-                        ELSE [ 'DataCheckSummary' ]
+                        '#output_dir# && #tap_to_json#' => [ 'convert_tap_to_json' ],
+                        ELSE [ 'datacheck_summary' ]
                     ),
             },
         },
 
         {
-            -logic_name        => 'ConvertTapToJson',
+            -logic_name        => 'convert_tap_to_json',
             -module            => 'Bio::EnsEMBL::DataCheck::Pipeline::ConvertTapToJson',
             -analysis_capacity => 10,
             -max_retry_count   => 0,
             -parameters        => {
                 tap => '#output_dir#',
             },
-            -flow_into         => [ 'DataCheckSummary' ],
+            -flow_into         => [ 'datacheck_summary' ],
         },
 
         {
-            -logic_name        => 'DataCheckSummary',
+            -logic_name        => 'datacheck_summary',
             -module            => 'Bio::EnsEMBL::DataCheck::Pipeline::DataCheckSummary',
             -analysis_capacity => 10,
             -max_retry_count   => 0,

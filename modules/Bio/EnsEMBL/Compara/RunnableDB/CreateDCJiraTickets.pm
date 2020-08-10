@@ -19,7 +19,7 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::CreateDCJiraTickets
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
 A compara runnable to run the create_datacheck_tickets.pl in a pipeline
 
@@ -32,23 +32,21 @@ use strict;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::param_defaults},
-    }
-}
-
 sub run {
     my $self = shift;
 
-    my $jira_exe = '$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl';
+    my $jira_exe = $self->param_required('create_datacheck_tickets_exe');
 
     my $command = $jira_exe . ' ' . $self->param_required('output_results') . " --update";
     $self->warning( "Command: " . $command );
 
-    unless ($self->param('dry_run')) {
-        $self->run_command($command, { die_on_failure => 1, });
+    unless ( $self->param('dry_run') ) {
+        if (defined $ENV{'USERPW'}) {
+            $self->run_command($command, { die_on_failure => 1, });
+        }
+        else {
+            $self->warning( "ENV variable not defined: \$USERPW" );
+        }
     }
 
 }

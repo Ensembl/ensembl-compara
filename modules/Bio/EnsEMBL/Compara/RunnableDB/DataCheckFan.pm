@@ -23,7 +23,7 @@ Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan
 
 =head1 SYNOPSIS
 
-A compara runnable version of Production's DataCheckFan
+A compara runnable wrapper of Production's DataCheckFan
 
 =cut
 
@@ -33,6 +33,13 @@ use warnings;
 use strict;
 
 use base ('Bio::EnsEMBL::DataCheck::Pipeline::DataCheckFan', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+sub fetch_input {
+    my $self = shift;
+    $self->param('dba', $self->compara_dba);
+
+    $self->SUPER::fetch_input;
+}
 
 sub write_output {
     my $self = shift;
