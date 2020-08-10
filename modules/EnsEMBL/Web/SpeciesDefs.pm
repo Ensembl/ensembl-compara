@@ -237,7 +237,6 @@ sub reference_species {
 
     for (@valid_species) {
       my $strain = $self->get_config($_, 'SPECIES_STRAIN');
-
       if (!$strain || ($strain =~ /reference/) || !$self->get_config($_, 'STRAIN_GROUP')) {
         push @ref_species, $_;
       }
@@ -927,11 +926,12 @@ sub _parse {
              
         # Populate taxonomy division using e_divisions.json template
         push @{$species_to_assembly->{$display_name}}, $config_packer->tree->{'ASSEMBLY_VERSION'};
-        my $taxonomy = $config_packer->tree->{TAXONOMY};
+        my $taxonomy = $tree->{$url}{'TAXONOMY'};
         my $children = [];
         my $other_species_children = [];
         my @other_species = grep { $_->{key} =~ m/other_species/ } @{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}};
         $other_species[0]->{child_nodes} = [] if ($other_species[0] && !$other_species[0]->{child_nodes});
+
         my $strain_name = $tree->{$url}{'SPECIES_STRAIN'};
         my $strain_group = $tree->{$url}{'STRAIN_GROUP'};
         my $group_name   = $tree->{$url}{'SPECIES_COMMON_NAME'};
@@ -941,7 +941,7 @@ sub _parse {
           my $child = {
             key             => $species_key,
             scientific_name => $tree->{$url}{'SPECIES_SCIENTIFIC_NAME'},
-            common_name     => $tree->{$url}{'SPECIES_DISPLAY_NAME'},
+            common_name     => $tree->{$url}{'SPECIES_COMMON_NAME'},
             display_name    => $tree->{$url}{'GROUP_DISPLAY_NAME'},
             image           => $tree->{$url}{'SPECIES_IMAGE'},
             is_leaf         => 'true'
@@ -962,7 +962,6 @@ sub _parse {
           else {
             my %taxa = map {$_ => 1} @{ $node->{taxa} };
             my @matched_groups = grep { $taxa{$_} } @$taxonomy;
-
             if ($#matched_groups >= 0) {
               if ($node->{child_nodes}) {
                 my $cnode_match = {};
