@@ -42,6 +42,11 @@ sub content {
   $self->{'img_link'} = qq(<a class="nodeco _ht _ht_track" href="%s" title="%s"><img src="${img_url}96/%s.png" alt="" class="bordered" />%s</a>);
   
   ## Mandatory search box
+  my $sci_name = $species_defs->SPECIES_SCIENTIFIC_NAME;
+  ## Allow for species like C.elegans that don't have a common name
+  if ($species_defs->USE_COMMON_NAMES && $sci_name ne $display_name) {
+    $display_name .= " ($sci_name)"; 
+  }
   my $html = sprintf '<div class="round-box tinted-box unbordered"><h2>Search %s</h2>%s</div>', 
               $display_name, EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render;
 
