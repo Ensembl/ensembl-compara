@@ -65,7 +65,6 @@ sub default_options {
         meta_filters  => {},
         tag           => undef,
         timestamp     => undef,
-        email         => $self->o('email'),
         report_per_db => 0,
         report_all    => 0,
         run_all       => 0,
@@ -147,6 +146,7 @@ sub pipeline_wide_parameters {
         output_dir_path  => $self->o('output_dir_path'),
         meta_filters     => $self->o('meta_filters'),
         history_file     => $self->o('history_file'),
+        email            => $self->o('email'),
 
         datacheck_names    => $self->o('datacheck_names'),
         datacheck_patterns => $self->o('datacheck_patterns'),
@@ -197,7 +197,7 @@ sub pipeline_analyses {
             -max_retry_count   => 0,
             -parameters        => {
                 division         => [$self->o('division')],
-                datacheck_groups => ['compara'],
+                datacheck_groups => $self->o('datacheck_groups'),
                 registry_file    => undef,
             },
             -flow_into         => {

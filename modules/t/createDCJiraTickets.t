@@ -32,8 +32,9 @@ $test_infile    =~ s!CreateDCJiraTickets\.t!dc_tap_files/datacheck.tap!;
 standaloneJob(
     'Bio::EnsEMBL::Compara::RunnableDB::CreateDCJiraTickets',
     {
-        'output_results' => $test_infile,
-        'dry_run'        => 1,
+        'output_results'               => $test_infile,
+        'dry_run'                      => 1,
+        'create_datacheck_tickets_exe' => '$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl',
     },
     [
         [

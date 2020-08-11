@@ -21,7 +21,7 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
 A compara runnable wrapper of Production's DataCheckFan
 
