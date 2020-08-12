@@ -13,13 +13,14 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     this.multiHash      = {};
 
     if (params.defaultKeys)     this.defaultKeys     = params.defaultKeys;
-    if (params.caller)          this.caller          = params.caller;
+    if (params.referer_action)  this.referer_action  = params.referer_action;
+    if (params.referer_type)    this.referer_type    = params.referer_type;
     if (params.allOptions)      this.allOptions      = params.allOptions;
     if (params.includedOptions) this.includedOptions = params.includedOptions;
-    if (params.multiselect)     this.multiSelect     = params.multiselect;
+    if (params.multiselect)     this.multiSelect     = parseInt(params.multiselect);
     if (params.align)           this.alignId         = params.align;
     if (params.alignLabel)      this.alignLabel      = params.alignLabel.replace(/\s/g, '_');
-    this.isCompara = (this.caller === 'Compara_Alignments');
+    this.isCompara = (this.referer_action === 'Compara_Alignments');
     Ensembl.EventManager.register('modalPanelResize', this, this.resize);
   },
   
@@ -406,12 +407,13 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       return;
     }
 
+    var mode = ((panel.isCompara && taxon_key !== 'Multiple') || (!panel.isCompara && !this.multiSelect)) ? 1 : 3;
     panel.elLk.tree.dynatree({
       // initAjax: {url: panel.dataUrl},
       children: [taxon_tree.toDict(true)],
       imagePath: panel.imagePath,
       checkbox: true,
-      selectMode: (panel.isCompara && taxon_key !== 'Multiple') ? 1 : 3,
+      selectMode: mode,
       activeVisible: true,
       onSelect: function(flag, node) {
 
@@ -437,7 +439,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
           panel.lastSelected = alignment_selected;
           return;
         }
-        else if (panel.isCompara && !panel.multiSelect) {
+        else if (!panel.multiSelect) {
           // Update last selected item for single select
           panel.lastSelected = flag ? node : null;
           panel.setSelection(node, flag, true, true);
@@ -665,7 +667,8 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     if (!mastertree_node) return;
 
     if (!mastertree_node.data.isFolder) {
-      panel.setSelection(mastertree_node, true, panel.isCompara, panel.isCompara);
+      var reset_tree = (panel.isCompara || !this.multiSelect);
+      panel.setSelection(mastertree_node, true, reset_tree, reset_tree);
     }
 
     var subtree;
@@ -746,13 +749,18 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     var items = new Array();
     var multipleAlignment = (this.activeTreeKey === 'Multiple');
 
-    if (this.multiSelect) {
-      var tree = this.elLk.mastertree;
-      items = this.getSelectedItems(tree);
-    }
-    else {
+    if (this.isCompara) {
       // For multiple alignment, it needs the node object to see which species are turned on and off
       items = this.lastSelected ? [ this.lastSelected ] : [];
+    }
+    else {
+      if (this.multiSelect) {
+        var tree = this.elLk.mastertree;
+        items = this.getSelectedItems(tree);
+      }
+      else {
+        items = this.lastSelected ? [ this.lastSelected.data ] : [];
+      }
     }
 
     if (!items.length) {
@@ -774,7 +782,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       return false;
     }
 
-    if (this.caller === 'Blast') {
+    if (this.referer_type === 'Tools') {
       Ensembl.EventManager.trigger('updateTaxonSelection', items);
     }
     else if (this.isCompara) {
