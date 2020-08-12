@@ -389,11 +389,15 @@ sub get_export_data {
   my $hub          = $self->hub;
   my $object       = $self->object || $hub->core_object('gene');
 
+
   if ($flag eq 'sequence') {
     return $object->get_homologue_alignments;
   }
   else {
-    my $cdb = $flag || $self->param('cdb') || 'compara';
+    my $cdb = $flag || $self->param('cdb');
+    unless ($cdb) {
+      $cdb = $hub->function =~ /pan_compara/ ? 'pan_compara' : 'compara';
+    }
     my ($homologies) = $object->get_homologies('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb);
 
     my %ok_species;
@@ -431,6 +435,7 @@ sub buttons {
                   'component'   => 'ComparaOrthologs',
                   'data_action' => $hub->action,
                   'gene_name'   => $name,
+                  'cdb'         => $hub->function =~ /pan_compara/ ? 'pan_compara' : 'compara',
                 };
 
     ## Add any species settings

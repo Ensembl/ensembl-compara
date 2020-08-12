@@ -36,6 +36,7 @@ sub _init {
 sub content {
   my $self  = shift;
   my $hub   = $self->hub;
+  my $cdb   = $hub->param('cdb') || 'compara';
 
   ## Note - these options aren't available on the page, so they
   ## don't belong in the view_config
@@ -64,10 +65,12 @@ sub content {
   ## Options per format
   my $fields_by_format = {'OrthoXML' => [], 'PhyloXML' => []};
 
-  ## Add formats output by BioPerl
-  foreach ($self->alignment_formats) {
-    my $field = $_ eq 'FASTA' ? 'seq_type' : 'align_type';
-    $fields_by_format->{$_} = [$field];
+  ## Add formats output by BioPerl, unless this is a pan-compara page
+  unless ($cdb eq 'pan_compara') {
+    foreach ($self->alignment_formats) {
+      my $field = $_ eq 'FASTA' ? 'seq_type' : 'align_type';
+      $fields_by_format->{$_} = [$field];
+    }
   }
 
   ## Create settings form (comes with some default fields - see parent)
