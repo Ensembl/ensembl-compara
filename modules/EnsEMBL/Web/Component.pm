@@ -238,7 +238,7 @@ sub get_content {
   if (!$content) {
     if($function && $self->can($function)) {
       $content = $self->$function;
-      if ($function eq 'pan_compara') {
+      if ($function =~ /pan_compara/) {
         $content = $self->header.$self->content_buttons.$content;
       }
     } else {
