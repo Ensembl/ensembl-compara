@@ -1353,7 +1353,14 @@ sub species_label {
     else {
       ## Pan-compara species - get label from metadata db
       my $info = $self->get_config('MULTI', 'PAN_COMPARA_LOOKUP');
-      $label   = $info->{$key}{'display_name'} if ($info && $info->{$key});
+      if ($info) {
+        if ($info->{$key}) {
+          $label = $info->{$key}{'display_name'}
+        }
+        else {
+          $label = $info->{lc $key}{'display_name'}
+        }
+      }
     }
     $label = 'Ancestral sequence' unless $label;
   }
