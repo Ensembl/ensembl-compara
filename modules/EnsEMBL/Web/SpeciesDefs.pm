@@ -1361,15 +1361,15 @@ sub species_label {
   ### Some species in genetree can be from other EG units, and some can be from external sources
   my ($self, $key, $no_formatting) = @_;
 
-  $key = ucfirst $key;
-  my $display = $self->get_config($key, 'SPECIES_DISPLAY_NAME');
+  my $url = ucfirst $key;
+  my $display = $self->get_config($url, 'SPECIES_DISPLAY_NAME');
   my $label = '';
 
   if ($self->USE_COMMON_NAMES) {
     ## Basically vertebrates only - no pan_compara to check
-    if ($self->get_config($key, 'SPECIES_URL')) {
+    if ($self->get_config($url, 'SPECIES_URL')) {
       ## Known species, so create label accordingly
-      my $sci    = $self->get_config($key, 'SPECIES_SCIENTIFIC_NAME');
+      my $sci    = $self->get_config($url, 'SPECIES_SCIENTIFIC_NAME');
       $sci = sprintf '<i>%s</i>', $sci unless $no_formatting;
       if ($display =~ /\./) {
         $label = $sci;
