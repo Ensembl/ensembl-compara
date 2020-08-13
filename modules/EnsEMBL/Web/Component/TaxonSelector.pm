@@ -41,10 +41,11 @@ sub _init {
                               %{$hub->multi_params},
                               type => $hub->type eq 'Tools' ? 'Tools' : 'SpeciesSelector',
                               function => 'fetch_species',
-                              action => $hub->param('referer_action') || '',
+                              action => $hub->param('referer_action') || $hub->action,
                               align => $hub->param('align') || $hub->get_alignment_id
                             });
-  $self->{caller}          = $hub->param('referer_action');
+  $self->{referer_type}    = $hub->param('referer_type') || $hub->type;
+  $self->{referer_action}  = $hub->param('referer_action');
   $self->{multiselect}     ||= $self->param('multiselect');
   $self->{selection_limit} ||= $SiteDefs::ALIGNMENTS_SPECIES_SELECTION_LIMIT;
   $self->{title}           ||= 'Species Selector';
@@ -61,7 +62,6 @@ sub content_ajax {
 
   my %params = (
     dataUrl => $self->{data_url},
-    isBlast => $self->{is_blast} || 0,
     caller  => $self->{caller},
     defaultKeys => $self->{default_species},
     selectionLimit => $self->{selection_limit},
