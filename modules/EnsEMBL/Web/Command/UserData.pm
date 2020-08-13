@@ -67,9 +67,10 @@ sub upload {
       function => '_error'
     });
   } else {
-    ## Get description from file and save to session
+    ## Get name and description from file and save to session
+    my $name        = $iow->get_metadata_value('name');
     my $description = $iow->get_metadata_value('description');
-    if ($description) {
+    if ($name || $description) {
 
       my ($record_owner, $data);
       for (grep $_, $hub->user, $hub->session) {
@@ -78,7 +79,8 @@ sub upload {
       }
 
       $data = {'type' => 'upload', 'code' => $file->code} unless keys %{$data || {}};
-      $data->{'description'} = $description;
+      $data->{'name'}         = $name if $name;
+      $data->{'description'}  = $description if $description;
 
       ($record_owner || $hub->user || $hub->session)->set_record_data($data);
     }

@@ -159,7 +159,7 @@ sub upload {
     ## Always check compression for file-based data, because users make mistakes!
     $args{'check_compression'} = 1;
 
-    ## This block is unlikely to be called, as the interface _should_ pass a format
+    ## This block is called only if a file is attached via URL and no format is specified 
     if (!$format) {
       my $format_info = $hub->species_defs->multi_val('DATA_FORMAT_INFO');
 
@@ -226,14 +226,17 @@ sub upload {
 
         my $species = $hub->param('species') || $hub->species;
 
-        ## Extra renderers for fancy formats
-        my $custom = $args{'renderer'}; 
-        if ($custom) {
+        my $renderer = $args{'renderer'}; 
+        if ($renderer) {
           my $lookup = EnsEMBL::Web::Constants::RENDERERS;
-          my $renderers = $lookup->{$custom}{'renderers'} || [];
+          my $renderers = $lookup->{$renderer}{'renderers'} || [];
+          ## Extra non-standard renderers, e.g. p-values
           if (scalar @$renderers) {
             $inputs{'renderers'}  = ['off', 'Off', @$renderers];
-            $inputs{'display'}    = $lookup->{$custom}{'default'};
+            $inputs{'display'}    = $lookup->{$renderer}{'default'};
+          }
+          else {
+            $inputs{'display'} = $renderer;
           }
         }
 
