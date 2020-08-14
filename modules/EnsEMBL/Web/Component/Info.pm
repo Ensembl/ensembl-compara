@@ -167,10 +167,10 @@ sub include_bioschema_datasets {
       'license'               => $license, 
   };
 
-  if ($species_defs->PROVIDER_NAME) {
+  if ($species_defs->ANNOTATION_PROVIDER_NAME) {
     $genebuild->{'creator'} = {
       '@type' => 'Organization',
-      'name'  => $species_defs->PROVIDER_NAME,
+      'name'  => $species_defs->ANNOTATION_PROVIDER_NAME,
     };
   }
   add_species_bioschema($species_defs, $genebuild);

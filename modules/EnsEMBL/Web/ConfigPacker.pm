@@ -1620,11 +1620,10 @@ sub _munge_meta {
     assembly.name                 ASSEMBLY_NAME
     liftover.mapping              ASSEMBLY_MAPPINGS
     genebuild.method              GENEBUILD_METHOD
-    provider.name                 PROVIDER_NAME
-    provider.url                  PROVIDER_URL
     annotation.provider_name      ANNOTATION_PROVIDER_NAME
     annotation.provider_url       ANNOTATION_PROVIDER_URL
-    provider.logo                 PROVIDER_LOGO
+    assembly.provider_name        ASSEMBLY_PROVIDER_NAME
+    assembly.provider_url         ASSEMBLY_PROVIDER_URL
     species.strain                SPECIES_STRAIN
     species.strain_group          STRAIN_GROUP
     strain.type                   STRAIN_TYPE
@@ -1714,7 +1713,6 @@ sub _munge_meta {
     my @A = split '-', $meta_hash->{'genebuild.start_date'}[0];
     
     $self->tree->{'GENEBUILD_START'} = $A[1] ? "$months[$A[1]] $A[0]" : undef;
-    $self->tree->{'GENEBUILD_BY'}    = $A[2];
 
     @A = split '-', $meta_hash->{'genebuild.initial_release_date'}[0];
     
