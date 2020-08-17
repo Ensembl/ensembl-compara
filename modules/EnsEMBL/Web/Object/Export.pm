@@ -86,7 +86,11 @@ sub slice {
      my $slice = $location->slice;     
      $slice = $slice->invert if ($hub->param('strand') eq '-1');
 
-     return $flank5 || $flank3 ? $slice->expand($flank5, $flank3) : $slice; 
+     if ($flank5 || $flank3) {
+        $slice = $slice->expand($flank5, $flank3);
+     }
+
+     return $slice; 
    }
    
   if ($lrg) {
