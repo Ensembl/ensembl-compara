@@ -1,7 +1,6 @@
 # Ensembl Compara API
 
 [![Build Status](https://travis-ci.org/Ensembl/ensembl-compara.svg?branch=master)](https://travis-ci.org/Ensembl/ensembl-compara)
-[![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-compara/badge.svg?branch=master&service=github)](https://coveralls.io/github/Ensembl/ensembl-compara?branch=master)
 [![Codecov Status](https://codecov.io/gh/ensembl/ensembl-compara/branch/master/graph/badge.svg)](https://codecov.io/github/Ensembl/ensembl-compara?branch=master)
 [![Code Climate](https://api.codeclimate.com/v1/badges/2dd3c490030a5af7ff21/maintainability.svg)](https://codeclimate.com/github/Ensembl/ensembl-compara)
 

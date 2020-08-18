@@ -4,7 +4,6 @@ language: generic
 env:
   global:
     - secure: bGSZASCtRCcE2VZ3u4hdvjh6CDHe+Uo3MR7B4eobSFFhZVjIN3/DKaGrQYprEeSIB/vb75rveyTheO3qe3lHwq71e18cBk2ulQA6/L0eUJYsoR3u2y7d9whu8dS97IoLzize6hItxJFP8TmRaJBtWqOixyWHNW72X/fKF1a192E=
-    - COVERALLS_PARALLEL=true
 
 addons:
   apt:
@@ -48,7 +47,6 @@ install:
     - cpanm --quiet --installdeps --notest --cpanfile ensembl-rest/cpanfile .
     - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
     - cpanm --quiet --installdeps --notest .
-    - cpanm --quiet --notest Devel::Cover::Report::Coveralls
     - cpanm --quiet --notest Devel::Cover::Report::Codecov
 
 # Setup the MySQL server
@@ -82,7 +80,6 @@ jobs:
         - COVERAGE=true
       script: ./travisci/perl-unittest_harness.sh
       after_success:
-        - cover --nosummary -report coveralls
         - cover --nosummary -report codecov
 
     - language: perl
@@ -92,7 +89,6 @@ jobs:
         - COVERAGE=true
       script: ./travisci/perl-external_unittest_harness.sh
       after_success:
-        - cover --nosummary -report coveralls
         - cover --nosummary -report codecov
 
     - language: perl
@@ -127,14 +123,13 @@ jobs:
       before_install:
         - echo
       install:
-        - pip install pytest-cov coveralls codecov
+        - pip install pytest-cov codecov
         - pip install -r requirements.txt
         - pip install -e .
       before_script:
         - echo
       script: ./travisci/python-unittest_harness.sh
       after_success:
-        - coveralls
         - codecov
 
     - language: python
@@ -149,5 +144,3 @@ jobs:
         - echo
       script: ./travisci/python-linter_harness.sh
 
-notifications:
-  webhooks: https://coveralls.io/webhook
