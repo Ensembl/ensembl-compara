@@ -80,7 +80,7 @@ sub search_help {
     $sql .= ' AND type = ?';
   }
 
-  $sql .= ' ORDER BY type, helpful DESC, not_helpful ASC ';
+  $sql .= ' ORDER BY type';
 
   my $sth = $self->db->prepare($sql);
   $sth->execute(@args);
@@ -106,7 +106,7 @@ sub fetch_help_by_ids {
     WHERE
       status = 'live'
       AND help_record_id IN ($id_string)
-    ORDER BY type, helpful DESC, not_helpful ASC
+    ORDER BY type
   );
 
   my $sth = $self->db->prepare($sql);
@@ -154,8 +154,6 @@ sub fetch_faqs {
     $sql .= ' AND keyword = ? ';
     push @args, $criteria->{'kw'};
   }
-
-  $sql .= ' ORDER BY helpful DESC, not_helpful ASC ';
 
   if ($criteria->{'limit'}) {
     $sql .= ' LIMIT ?';
