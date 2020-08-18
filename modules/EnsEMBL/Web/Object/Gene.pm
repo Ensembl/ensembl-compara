@@ -909,12 +909,13 @@ sub get_homologue_alignments {
 sub get_compara_Member {
   my $self       = shift;
   my $compara_db = shift || 'compara';
-  my $cache_key  = "_compara_member_$compara_db";
+  my $stable_id  = shift || $self->stable_id;
+  my $cache_key  = "_compara_member_$compara_db\_$stable_id";
   
   if (!$self->{$cache_key}) {
     my $compara_dba = $self->database($compara_db)              || return;
     my $adaptor     = $compara_dba->get_adaptor('GeneMember')   || return;
-    my $member      = $adaptor->fetch_by_stable_id($self->stable_id);
+    my $member      = $adaptor->fetch_by_stable_id($stable_id);
     
     $self->{$cache_key} = $member if $member;
   }
