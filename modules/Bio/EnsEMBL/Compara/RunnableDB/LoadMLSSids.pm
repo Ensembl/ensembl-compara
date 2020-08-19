@@ -24,7 +24,7 @@ Bio::EnsEMBL::Compara::RunnableDB::LoadMLSSids
 Fetches for the MLSS id that matches the given method type, species set name and
 release number, as well as its previous MLSS id (--add_prev_mlss) and its sister
 MLSS ids (--add_sister_mlss). If a branch code is provided, the MLSS id(s) are
-flown into that branch. If not, they are added as pipeline-wide parameters
+flowed into that branch. If not, they are added as pipeline-wide parameters
 (default behaviour). The main MLSS id is saved under "mlss_id" key, except for
 EPO Extended, where the main MLSS id is saved under "ext_mlss_id" instead. See
 '--add_prev_mlss' and '--add_sister_mlsss' flags for more information.
@@ -148,20 +148,30 @@ sub fetch_input {
                 @{ $mlss_adaptor->fetch_all_by_method_link_type($linked_method_type) };
             $self->throw(sprintf("No %s MLSS found for MLSS '%s' (%s)", $linked_method_type, $mlss->name, $mlss->dbID)) unless @linked_mlss;
             # Assign the EPO MLSS id to mlss_id and EPO Extended MLSS id to ext_mlss_id
-            $mlss_ids{ext_mlss_id} = $is_epo ? $linked_mlss[0]->dbID : $mlss_ids{mlss_id};
-            $mlss_ids{mlss_id} = $linked_mlss[0]->dbID unless $is_epo;
-            # The GERP MLSSs are linked to the EPO Extended MLSS, not the EPO MLSS
-            $mlss = $linked_mlss[0] if $is_epo;
+            if ($is_epo) {
+                $mlss_ids{ext_mlss_id} = $linked_mlss[0]->dbID;
+                # The GERP MLSSs are linked to the EPO Extended MLSS, not the EPO MLSS
+                $mlss = $linked_mlss[0];
+            } else {
+                $mlss_ids{ext_mlss_id} = $mlss_ids{mlss_id};
+                $mlss_ids{mlss_id}     = $linked_mlss[0]->dbID;
+            }
         }
 
         if ( $method_type =~ /^(EPO|EPO_EXTENDED|PECAN)$/i ) {
             # Fetch the GERP MLSS ids (constrained element and conservation score)
             my $ce_mlss = $mlss->get_all_sister_mlss_by_class('ConstrainedElement.constrained_element');
-            $self->warning(sprintf("No Constrained Element MLSS found for MLSS '%s' (%s)\n", $mlss->name, $mlss->dbID)) unless @$ce_mlss;
-            $mlss_ids{ce_mlss_id} = $ce_mlss->[0]->dbID if @$ce_mlss;
+            if (@$ce_mlss) {
+                $mlss_ids{ce_mlss_id} = $ce_mlss->[0]->dbID;
+            } else {
+                $self->warning(sprintf("No Constrained Element MLSS found for MLSS '%s' (%s)\n", $mlss->name, $mlss->dbID));
+            }
             my $cs_mlss = $mlss->get_all_sister_mlss_by_class('ConservationScore.conservation_score');
-            $self->warning(sprintf("No Conservation Score MLSS found for MLSS '%s' (%s)\n", $mlss->name, $mlss->dbID)) unless @$cs_mlss;
-            $mlss_ids{cs_mlss_id} = $cs_mlss->[0]->dbID if @$cs_mlss;
+            if (@$cs_mlss) {
+                $mlss_ids{cs_mlss_id} = $cs_mlss->[0]->dbID;
+            } else {
+                $self->warning(sprintf("No Conservation Score MLSS found for MLSS '%s' (%s)\n", $mlss->name, $mlss->dbID));
+            }
         }
     }
 
