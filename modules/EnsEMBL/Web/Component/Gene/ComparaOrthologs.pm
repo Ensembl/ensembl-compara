@@ -98,9 +98,7 @@ sub content {
   }
 
   foreach my $homology_type (@orthologues) {
-    foreach (keys %$homology_type) {
-      (my $species = $_) =~ tr/ /_/;
-      next unless $species;
+    foreach my $species (keys %$homology_type) {
 
       #do not show strain species on main species view
       if ((!$self->is_strain && $species_defs->get_config($species, 'IS_STRAIN_OF')) || ($self->is_strain && !$species_defs->get_config($species, 'RELATED_TAXON'))) {
@@ -116,9 +114,9 @@ sub content {
         next;
       } 
 
-      $orthologue_list{$species} = {%{$orthologue_list{$species}||{}}, %{$homology_type->{$_}}};
+      $orthologue_list{$species} = {%{$orthologue_list{$species}||{}}, %{$homology_type->{$species}}};
       if($self->param('species_' . lc $species) eq 'off') {
-        $skipped{$species}        += keys %{$homology_type->{$_}};
+        $skipped{$species}        += keys %{$homology_type->{$species}};
       }
 
       delete $not_seen{$species};
@@ -217,7 +215,7 @@ sub content {
       my $goc_class  = ($goc_score ne "n/a" && $goc_score >= $orthologue->{goc_threshold}) ? "box-highlight" : "";
       my $wga_class  = ($wgac ne "n/a" && $wgac >= $orthologue->{wga_threshold}) ? "box-highlight" : "";
 
-      (my $spp = $orthologue->{'spp'}) =~ tr/ /_/;     
+      my $spp = $orthologue->{'spp'};    
       my $link_url = $hub->url({
         species => $spp,
         action  => 'Summary',

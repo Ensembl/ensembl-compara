@@ -62,9 +62,7 @@ sub content {
     next unless $hub->species_defs->get_config($species, 'databases') && $hub->species_defs->get_config($species, 'databases')->{'DATABASE_VARIATION'};
 
     my $pfa = $hub->get_adaptor('get_PhenotypeFeatureAdaptor', 'variation', $species);
-    my $sp = $species;
-       $sp =~ tr/ /_/;
-    my $species_label = join('<br />(', split /\s*\(/, $species_defs->species_label($sp));
+    my $species_label = join('<br />(', split /\s*\(/, $species_defs->species_label($species));
 
     foreach my $stable_id (sort keys %{$orthologue_list{$species}}) {
       my $orthologue = $orthologue_list{$species}{$stable_id};

@@ -67,9 +67,7 @@ sub content {
     my $pfa = $hub->get_adaptor('get_PhenotypeFeatureAdaptor', 'variation', $species);
     next if (!$pfa);
 
-    my $sp = $species;
-       $sp =~ tr/ /_/;
-    my $species_label = join('<br />(', split /\s*\(/, $species_defs->species_label($sp));
+    my $species_label = join('<br />(', split /\s*\(/, $species_defs->species_label($species));
 
     foreach my $stable_id (sort keys %{$orthologue_list{$species}}) {
       my $orthologue = $orthologue_list{$species}{$stable_id};

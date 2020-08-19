@@ -79,7 +79,7 @@ sub content {
       my $paralogue_desc              = $paralogue_map{$paralogue->{'homology_desc'}} || $paralogue->{'homology_desc'};
       my $paralogue_dnds_ratio        = $paralogue->{'homology_dnds_ratio'}           || '&nbsp;';
       my $species_tree_node           = $paralogue->{'species_tree_node'};
-      (my $spp = $paralogue->{'spp'}) =~ tr/ /_/;
+      my $spp = $paralogue->{'spp'};
       
       my $link_url = $hub->url({
         action => 'Summary',
