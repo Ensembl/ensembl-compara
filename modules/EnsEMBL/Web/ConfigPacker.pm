@@ -1255,8 +1255,6 @@ sub _summarise_compara_db {
       $intra_species_constraints{$species}{$_} = 1 for keys %{$intra_species{$species_set_id}};
     }
     
-    $species =~ tr/ /_/;
-   
     $self->db_tree->{$db_name}{$key}{$id}{'id'}                = $id;
     $self->db_tree->{$db_name}{$key}{$id}{'name'}              = $name;
     $self->db_tree->{$db_name}{$key}{$id}{'type'}              = $type;
