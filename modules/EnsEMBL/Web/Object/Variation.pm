@@ -575,10 +575,7 @@ sub vari_class{
   ### Description: returns the variation class (indel, snp, het) for a varation
   ### Returns String
   
-  # /!\ The following block  needs to be changed for the e!62 by "return $_[0]->vari->var_class;" /!\
-  my $var = $_[0]->vari->var_class; # only for e!61
-  $var =~ tr/_/ /;
-  return $var;
+  return $_[0]->vari->var_class;
 }
 
 
