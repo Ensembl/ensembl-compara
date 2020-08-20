@@ -653,7 +653,6 @@ sub _http_request {
     $content_data //= {};
     # Create the HTTP request and LWP objects to get the response for the given arguments
     $self->{_logger}->debug("$method Request on $url\n");
-    my $auth_token = $ENV{'JIRA_AUTH_TOKEN'};
     my $request;
     if ( $self->{_auth_token} ) {
         print STDERR "Authenticating with token '" . $self->{_auth_token} . "'\n";
