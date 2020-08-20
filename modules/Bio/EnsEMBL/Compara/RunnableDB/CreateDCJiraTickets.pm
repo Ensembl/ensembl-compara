@@ -41,11 +41,11 @@ sub run {
     $self->warning( "Command: " . $command );
 
     unless ( $self->param('dry_run') ) {
-        if (defined $ENV{'USERPW'}) {
+        if (defined $ENV{'JIRA_AUTH_TOKEN'}) {
             $self->run_command($command, { die_on_failure => 1, });
         }
         else {
-            $self->warning( "ENV variable not defined: \$USERPW" );
+            $self->warning( "ERROR: ENV variable not defined: \$JIRA_AUTH_TOKEN. Define with:\nexport JIRA_AUTH_TOKEN=$(echo -n 'user:pass' | openssl base64)" );
         }
     }
 
