@@ -44,8 +44,8 @@ sub param_defaults {
 sub write_output {
     my $self = shift;
 
-    my @dbname = $self->compara_dba->dbc->dbname;
-    $self->dataflow_output_id( {dbname => \@dbname}, $self->param('branch_num') );
+    my $dbname = $self->compara_dba->dbc->dbname;
+    $self->dataflow_output_id( {dbname => [$dbname]}, $self->param('branch_num') );
 }
 
 1;
