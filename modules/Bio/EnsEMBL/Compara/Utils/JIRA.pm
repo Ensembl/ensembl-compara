@@ -78,7 +78,7 @@ sub new {
     $self->{_relco} = $relco || $self->{_user};
     $self->{_project} = $project || 'ENSCOMPARASW';
     # Initialise user's password
-    $self->{_password} = $self->_request_password();
+    $self->{_password} = defined $ENV{'USERPW'} ? $ENV{'USERPW'} : $self->_request_password();
     # If any of the following parameters are missing, get them from Compara
     # production environment
     # (https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+Environment)
