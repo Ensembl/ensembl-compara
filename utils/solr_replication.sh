@@ -22,8 +22,20 @@
   # -t: test | before | after (stage of the release: setup test, one day before release, after release)
   # user input: for 37 only - is there new data (yes or no)
 
+while getopts s:t: option
+do
+  case "${option}" in
+    s) site=${OPTARG};;
+    t) stage=${OPTARG};;
+  esac
+done
+
 currentrelease="$(curl 'http://rest.ensembl.org/info/software' -H 'Content-type:application/json' -s | sed -e's/{"release":\(.*\)}/\1/')"
-release=$(($currentrelease+1))
+if [[ $stage == "after" ]] ; then
+  release=$currentrelease
+else
+  release=$(($currentrelease+1))
+fi
 
 if ! [[ $release =~ ^[0-9]+$ ]] ; then
   echo "Couldn't retrieve release version, something might be wrong with rest call: http://rest.ensembl.org/info/software !!!"
@@ -39,14 +51,6 @@ else
   replicate_release_type="odd"
   release_port="9000"
 fi
-
-while getopts s:t: option
-do 
-  case "${option}" in
-    s) site=${OPTARG};;
-    t) stage=${OPTARG};;
-  esac
-done
 
 #read -p 'Is it for www or grch37 [www/grch37]: ' site
 if [[ $site != "www" && $site != "grch37" ]] ; then
@@ -111,13 +115,15 @@ do
     echo -e "\n$((step+=1)). Mute oh for $server."
     echo -e "\t ssh ens_adm02@ves-hx2-70"
     echo -e "\t oh mute-for check@$server 3w"
+    echo -e "\t check that it is showing muted on http://useast.ensembl.org:8000/oh.html"
     
-    # before release we do stop both kicker and solr-java; after release we dont stop solr-java
+    # before release we do stop both kicker and solr-java at the start
     echo -e "\n$((step+=1)). Configure $server, this involves changing the port the server is running on 8000 and 9000 for each even and odd release."
     echo -e "\t ssh -i ~/.ssh/users/tc_ens02 tc_ens02@$server"
     echo -e "\t #Make sure kicker is disabled and stop solr"
     echo -e "\t op stop kicker"
-    echo -e "\t op stop solr-java #(make sure it is still not running by doing a ps aux | gep java, if it is kill the process)"
+    echo -e "\t op stop solr-java"
+    echo -e "\t make sure solr-java is still not running by doing a ps aux | gep java, if it is kill the process"
     echo -e "\t op summary #to confirm kicker and solr-java are stopped"
   else
     # for post release we only disable kicker
@@ -161,10 +167,15 @@ do
     echo -e "\t ssh  -i ~/.ssh/users/tc_ens02 tc_ens02@$server"
     echo -e "\t op start solr-java"
     echo -e "\t Check a query works: http://${server}:$release_port/solr-sanger/ensembl_core/ensemblshards?indent=on&version=2.2&q=brca2"
+    echo -e "\t exit;"
   fi
 
   if [[ $new_data == "n" ]] ; then
     echo -e "\t ssh -i ~/.ssh/users/tc_ens02 tc_ens02@$server"
+    echo -e "\t op stop solr-java"
+    echo -e "\t make sure solr-java is still not running by doing a ps aux | gep java, if it is kill the process"
+    echo -e "\t op summary #to confirm kicker and solr-java are stopped"
+    echo -e "\t op start solr-java"
     echo -e "\t op start kicker"
     echo -e "\t wait for 2 mins and check a query works: http://${server}:$release_port/solr-sanger/ensembl_core/ensemblshards?indent=on&version=2.2&q=brca2"
     echo -e "\t exit;"
@@ -179,18 +190,19 @@ if [[ $new_data == "y" ]] ; then
 
   echo -e "\n $((step+=1)). Replicate data using a script."
   echo -e "\t ssh ens_adm02@ves-hx2-70"
+  echo -e "\n\t NOTE: Run below in a screen session (screen -s solr-replication)"
   echo -e "\t cd /nfs/public/release/ensweb-software/ensembl-solr/sync"
-  echo -e "\t #dry run - should only recognise the servers [${machines_array[@]}]"
-  echo -e "\t ./sync_indexes.pl -reltype $replicate_release_type --maxshards 3 --dry"
+  echo -e "\t #dry run - should only recognise the servers [${machines_array[@]}] showing message 'NEEDSYNCH'"
+  echo -e "\t ./sync_indexes.pl -reltype ebi-$replicate_release_type --maxshards 3 --dry"
   echo -e "\t #for real"
-  echo -e "\t  ./sync_indexes.pl -reltype $replicate_release_type --maxshards 3 \n"
+  echo -e "\t  ./sync_indexes.pl -reltype ebi-$replicate_release_type --maxshards 3 \n"
 #TODO: ask whether they want to sync all or by shard or by host and generate appropriate command
   echo -e "\t #IF NEEDED: You can also sync to individual server by prepending the host name, eg"
-  echo -e "\t ./sync_indexes.pl -reltype $replicate_release_type --maxshards 3 -host ${machines_array[0]}"
+  echo -e "\t ./sync_indexes.pl -reltype ebi-$replicate_release_type --maxshards 3 -host ${machines_array[0]}"
   echo -e "\t #IF NEEDED: You can also sync to individual server by prepending the host name and to individual shared by prepending the shards"
-  echo -e "\t ./sync_indexes.pl -reltype $replicate_release_type --maxshards 3 -host ${machiness_array[0]} --shards ensembl_core"
+  echo -e "\t ./sync_indexes.pl -reltype ebi-$replicate_release_type --maxshards 3 -host ${machines_array[0]} --shards ensembl_core"
   echo -e "\n $((step+=1)). Generate the dictionary indexes. As mentioned above running the queries needed for this can identify problems with replication so if any of them fail you will need to take action. Speak to Steve."
-  echo -e "\t /nfs/public/release/ensweb-software/ensembl-solr/build/make_dictionaries.pl -reltype $replicate_release_type [-dry]"
+  echo -e "\t /nfs/public/release/ensweb-software/ensembl-solr/build/make_dictionaries.pl -reltype ebi-$replicate_release_type [-dry]"
 
   # for post release, we need to replicate data first and then switch port at the end
   if [[ $stage == "after" && $new_data != 'n' ]] ; then
@@ -220,6 +232,13 @@ if [[ $new_data == "y" ]] ; then
   for server in "${machines_array[@]}"
   do
     echo -e "\t ssh -i ~/.ssh/users/tc_ens02 tc_ens02@$server"
+
+    if [[ $stage == "after" && $new_data != 'n' ]] ; then
+      echo -e "\t op stop solr-java"
+      echo -e "\t VIP NOTE: make sure solr-java is still not running by doing a ps aux | grep java, if it is kill the process"
+      echo -e "\t op summary #to confirm kicker and solr-java are stopped"
+      echo -e "\t op start solr-java"
+    fi
     echo -e "\t op start kicker"
     echo -e "\t exit;"
     echo -e "\t #wait for 2mins before doing below check"
