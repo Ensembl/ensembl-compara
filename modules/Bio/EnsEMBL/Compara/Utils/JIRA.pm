@@ -78,8 +78,17 @@ sub new {
     $self->{_user} = $user || $ENV{'USER'};
     $self->{_relco} = $relco || $self->{_user};
     $self->{_project} = $project || 'ENSCOMPARASW';
-    # Initialise user's password
-    $self->{_password} = $self->_request_password();
+
+    if ( $ENV{'JIRA_AUTH_TOKEN'} ) {
+        # this token should be your 'user:pass' string encoded to base64
+        # export JIRA_AUTH_TOKEN=$(echo -n 'user:pass' | openssl base64)
+        # https://developer.atlassian.com/server/jira/platform/basic-authentication/
+        $self->{_auth_token} = $ENV{'JIRA_AUTH_TOKEN'};
+    } else {
+        # initialise user's password interactively
+        $self->{_password} = $self->_request_password();
+    }
+
     # If any of the following parameters are missing, get them from Compara
     # production environment
     # (https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+Environment)
@@ -655,10 +664,17 @@ sub _http_request {
     $content_data //= {};
     # Create the HTTP request and LWP objects to get the response for the given arguments
     $self->{_logger}->debug("$method Request on $url\n");
-    my $request = HTTP::Request->new($method, $url);
-    $request->authorization_basic($self->{_user}, $self->{_password});
-    # The content data will be sent in JSON format
-    $request->header('Content-Type' => 'application/json');
+    my $request;
+    if ( $self->{_auth_token} ) {
+        print STDERR "Authenticating with token '" . $self->{_auth_token} . "'\n";
+        my $header = ['Authorization' => "Basic " . $self->{_auth_token}, 'Content-Type' => 'application/json'];
+        $request = HTTP::Request->new($method, $url, $header);
+    } else {
+        print STDERR "Authenticating with username and password\n";
+        my $header = ['Content-Type' => 'application/json'];
+        $request = HTTP::Request->new($method, $url, $header);
+        $request->authorization_basic($self->{_user}, $self->{_password});
+    }
     my $json_content = encode_json($content_data);
     $request->content($json_content);
     my $agent    = LWP::UserAgent->new();

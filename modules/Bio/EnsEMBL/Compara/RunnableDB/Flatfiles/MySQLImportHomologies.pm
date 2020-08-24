@@ -129,6 +129,10 @@ sub write_output {
     my $host = $this_dbc->host;
     my $port = $this_dbc->port;
     my $dbname = $this_dbc->dbname;
+
+    # Disconnect from the database before starting the import
+    $this_dbc->disconnect_if_idle();
+
     my $import_cmd = join(' ', 
         "mysqlimport --host=$host --port=$port --user=$user --password=$pass",
         "--local --lock-tables=0 --fields-terminated-by=','",
@@ -137,6 +141,13 @@ sub write_output {
     );
     $self->run_command("$import_cmd $homology_csv", { die_on_failure => 1 });
     $self->run_command("$import_cmd $homology_member_csv", { die_on_failure => 1 });
+
+    # Make sure all the homologies have been copied correctly
+    my $mlss_id = $self->param_required('mlss_id');
+    my $h_rows = $self->compara_dba->dbc->sql_helper->execute_single_result(
+        -SQL => "SELECT COUNT(*) FROM homology WHERE method_link_species_set_id = $mlss_id"
+    );
+    die "The number of lines in the homology flat file doesn't match the number of rows written in the homology table" if $h_count != $h_rows;
 }
 
 sub split_row_for_homology_tables {
