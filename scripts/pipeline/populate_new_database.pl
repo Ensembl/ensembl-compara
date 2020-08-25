@@ -161,6 +161,10 @@ Mainly used by Ensembl Genomes.
 This option triggers a copy of genomic_align(_block) based on the method_link_species_set_id
 instead of the range of genomic_align_id
 
+=item B<--skip_gerp>
+
+Do not store Conservation Score or Constrained Element data.
+
 =back
 
 =head2 OLD DATA
@@ -194,6 +198,7 @@ my $cellular_component = 0;
 my $collection = undef;
 my $filter_by_mlss = 0;
 my $alignments_only = 0;
+my $skip_gerp = 0;
 my $skip_mlsses = [];
 
 GetOptions(
@@ -212,6 +217,7 @@ GetOptions(
     'collection=s' => \$collection,
     'filter_by_mlss' => \$filter_by_mlss,
     'alignments_only' => \$alignments_only,
+    'skip_gerp' => \$skip_gerp,
     'skip_mlss=s@' => \$skip_mlsses,
   );
 
@@ -337,15 +343,20 @@ if ($old_dba and !$skip_data) {
 
 ## Copy DNA-DNA alignments
   copy_dna_to_dna_alignments($old_dba, $new_dba, $all_default_method_link_species_sets);
-  exit(0) if ( $alignments_only );
-## Copy Ancestor dnafrags
-  copy_ancestor_dnafrag($old_dba, $new_dba, $all_default_method_link_species_sets);
-## Copy Synteny data
-  copy_synteny_data($old_dba, $new_dba, $all_default_method_link_species_sets);
-## Copy Constrained elements
-   copy_constrained_elements($old_dba, $new_dba, $all_default_method_link_species_sets);
-## Copy Conservation scores
-   copy_conservation_scores($old_dba, $new_dba, $all_default_method_link_species_sets);
+
+  if ( ! $alignments_only ) {
+      ## Copy Ancestor dnafrags
+      copy_ancestor_dnafrag($old_dba, $new_dba, $all_default_method_link_species_sets);
+      ## Copy Synteny data
+      copy_synteny_data($old_dba, $new_dba, $all_default_method_link_species_sets);
+
+      if ( ! $skip_gerp ) {
+          ## Copy Constrained elements
+          copy_constrained_elements($old_dba, $new_dba, $all_default_method_link_species_sets);
+          ## Copy Conservation scores
+          copy_conservation_scores($old_dba, $new_dba, $all_default_method_link_species_sets);
+      }
+  }
 }
 
 ##END

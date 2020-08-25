@@ -40,6 +40,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
 
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOAncestral;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats;
 
 
@@ -58,47 +59,6 @@ sub core_pipeline_analyses_epo_alignment {
 
 return 
 [
-
-# ------------------------------------- create the ancestral db	
-{
- -logic_name => 'drop_ancestral_db',
- -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
- -parameters => {
-  'db_conn' => '#ancestral_db#',
-  'input_query' => 'DROP DATABASE IF EXISTS',
-  },
-  -flow_into => { 1 => 'create_ancestral_db' },
-},
-{
- -logic_name => 'create_ancestral_db',
- -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
- -parameters => {
-  'db_conn' => '#ancestral_db#',
-  'input_query' => 'CREATE DATABASE',
-  },
-  -flow_into => { 1 => 'create_tables_in_ancestral_db' },
-},
-{
- -logic_name => 'create_tables_in_ancestral_db',
- -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
- -parameters => {
-  'db_conn' => '#ancestral_db#',
-  'input_file' => $self->o('core_schema_sql'),
-  },
-  -flow_into => { 1 => 'store_ancestral_species_name' },
-},
-{
-        -logic_name => 'store_ancestral_species_name',
-        -module => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-        -parameters => {
-            'db_conn' => '#ancestral_db#',
-            'sql'   => [
-                'INSERT INTO meta (meta_key, meta_value) VALUES ("species.production_name", "'.$self->o('ancestral_sequences_name').'")',
-                'INSERT INTO meta (meta_key, meta_value) VALUES ("species.display_name", "'.$self->o('ancestral_sequences_display_name').'")',
-            ],
-        },
-        -flow_into => 'find_ancestral_seq_gdb',
-},
 # ------------------------------------- dump mapping info from mapping db to file
 {
  -logic_name => 'dump_mappings_to_file',
@@ -136,29 +96,6 @@ return
         -flow_into     => WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ],
                                 ELSE [ 'dump_mappings_to_file' ] ),
         -rc_name       => '500Mb_job',
-},
-
-
-        {
-            -logic_name => 'find_ancestral_seq_gdb',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
-            -parameters => {
-                'compara_db'    => '#master_db#',
-                'call_list'     => [ 'compara_dba', 'get_GenomeDBAdaptor', ['fetch_by_name_assembly', $self->o('ancestral_sequences_name')] ],
-                'column_names2getters'  => { 'master_dbID' => 'dbID' },
-            },
-            -rc_name   => '500Mb_job',
-            -flow_into => {
-                2 => 'store_ancestral_seq_gdb',
-            },
-        },
-{
-    -logic_name    => 'store_ancestral_seq_gdb',
-    -module        => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
-    -parameters    => {
-        'locator'   => '#ancestral_db#',
-    },
-    -rc_name       => '500Mb_job',
 },
 # ------------------------------------- run enredo
 {
@@ -309,6 +246,8 @@ return
                     1 => [ 'healthcheck_factory' ],
                 },
             },
+
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOAncestral::pipeline_analyses_epo_ancestral($self) },
     ];
 }
 
