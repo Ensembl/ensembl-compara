@@ -196,12 +196,22 @@ sub new {
 sub new_from_Slice {
     my ($class, $slice, $genome_db) = @_;
 
-    my ($attrib) = @{ $slice->get_all_Attributes('codon_table') };
     my $codon_table_id;
-    $codon_table_id = $attrib->value() if $attrib;
-    my ($seq_loc) = @{ $slice->get_all_Attributes('sequence_location') };
     my $sequence_location;
-    $sequence_location = $seq_loc->value() if $seq_loc;
+    my $is_reference;
+
+    if ($slice->{'attributes'}) {
+        $codon_table_id    = $slice->{'attributes'}->{'codon_table'};
+        $sequence_location = $slice->{'attributes'}->{'sequence_location'};
+        $is_reference      = exists $slice->{'attributes'}->{'non_ref'} ? 0 : 1;
+
+    } else {
+        my ($codon_table_attrib) = @{ $slice->get_all_Attributes('codon_table') };
+        $codon_table_id          = $codon_table_attrib->value() if $codon_table_attrib;
+        my ($seq_loc_attrib)     = @{ $slice->get_all_Attributes('sequence_location') };
+        $sequence_location       = $seq_loc_attrib->value() if $seq_loc_attrib;
+        $is_reference            = $slice->is_reference(),
+    }
 
     my %seq_loc_to_cell_component = ( 'nuclear_chromosome' => 'NUC', 'mitochondrial_chromosome' => 'MT', 'chloroplast_chromosome' => 'PT' );
     my $cellular_component = 'NUC';
@@ -219,7 +229,7 @@ sub new_from_Slice {
         'name' => $slice->seq_region_name(),
         'length' => $slice->seq_region_length(),
         'coord_system_name' => $slice->coord_system_name(),
-        'is_reference' => $slice->is_reference(),
+        'is_reference' => $is_reference,
         'genome_db' => $genome_db,
         'genome_db_id' => $genome_db->dbID,
         '_codon_table_id' => $codon_table_id || 1,
