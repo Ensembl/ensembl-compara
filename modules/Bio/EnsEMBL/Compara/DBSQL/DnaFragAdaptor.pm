@@ -142,8 +142,6 @@ sub _build_id_cache {
                be a valid $genome_db_id instead.
   Returntype : Bio::EnsEMBL::Compara::DnaFrag
   Exceptions : throw when genome_db_id cannot be retrieved
-  Exceptions : warns and returns undef when no DnaFrag matches the query
-  Caller     : $dnafrag_adaptor->fetch_by_GenomeDB_and_name
   Status     : Stable
 
 =cut
@@ -192,7 +190,6 @@ sub fetch_by_GenomeDB_and_name {
                Bio::EnsEMBL::Compara::GenomeDB and region given.
   Returntype : listref of Bio::EnsEMBL::Compara::DnaFrag objects
   Exceptions : throw unless $genome_db is a Bio::EnsEMBL::Compara::GenomeDB
-  Caller     : 
   Status     : Stable
 
 =cut
