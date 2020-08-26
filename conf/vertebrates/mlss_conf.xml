@@ -36,7 +36,7 @@
 
     <!-- Mammals -->
     <!-- Use of "default" collection excludes the mouse strains and the pig breeds -->
-    <!-- NB: we have a CACTUS alignment for mouse strains and an EPO Extended MSA for pig breeds -->
+    <!-- NB: we have an EPO alignment for mouse strains and an EPO Extended MSA for pig breeds -->
     <one_vs_all method="LASTZ_NET" ref_genome="homo_sapiens">
       <species_set in_collection="default">
         <taxonomic_group taxon_name="Eutheria"/>
@@ -428,7 +428,7 @@
     </multiple_alignment>
 
     <!-- Mouse strains -->
-    <multiple_alignment method="CACTUS_HAL">
+    <multiple_alignment method="EPO">
       <species_set name="murinae">
         <!-- As long as we are not able to update this alignment, the species-set must remain the same.
              We cannot use taxonomy-based rules since they would automatically add new species to the set -->
