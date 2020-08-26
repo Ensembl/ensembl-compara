@@ -142,8 +142,13 @@ sub pipeline_analyses_prep_master_db_for_release {
 
         {   -logic_name => 'update_genome_from_registry_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromRegFactory',
+            -parameters => {
+                'master_db' => $self->o('master_db'),
+            },
             -flow_into  => {
                 '2->A' => [ 'add_species_into_master' ],
+                '3->A' => [ 'retire_species_from_master' ],
+                '5->A' => [ 'verify_genome' ],
                 'A->1' => [ 'sync_metadata' ],
             },
             -rc_name    => '16Gb_job',
