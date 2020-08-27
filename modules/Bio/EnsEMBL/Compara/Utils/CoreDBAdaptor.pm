@@ -113,28 +113,6 @@ sub pool_one_DBConnection {
 package Bio::EnsEMBL::DBSQL::DBAdaptor;
 
 
-=head2 production_name
-
-  Arg [1]    : Bio::EnsEMBL::DBSQL::DBAdaptor
-  Example    : my $production_name = $genome_db->db_adaptor->production_name;
-  Description: Gets the production name of this species
-  Returntype : string
-
-=cut
-
-sub production_name {
-    my $core_dba = shift;
-
-    return undef unless $core_dba;
-
-    unless ($core_dba->{'_production_name'}) {
-        $core_dba->{'_production_name'} = $core_dba->get_MetaContainer->get_production_name();
-    }
-
-    return $core_dba->{'_production_name'};
-}
-
-
 =head2 assembly_name
 
   Arg [1]    : Bio::EnsEMBL::DBSQL::DBAdaptor
