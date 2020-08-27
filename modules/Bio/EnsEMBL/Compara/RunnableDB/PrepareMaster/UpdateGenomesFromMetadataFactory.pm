@@ -52,6 +52,7 @@ sub fetch_input {
     my $allowed_species_file = $self->param('allowed_species_file');
     my $allowed_species;
     if (defined $allowed_species_file && -e $allowed_species_file) {
+        die "The allowed species JSON file ('$allowed_species_file') should not be empty" if -z $allowed_species_file;
         $allowed_species = { map { $_ => 1 } @{ decode_json($self->_slurp($allowed_species_file)) } };
     }
 	# use metadata script to report genomes that need to be updated
