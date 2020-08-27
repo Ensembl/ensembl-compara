@@ -44,8 +44,17 @@ package Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 use strict;
 use warnings;
 
+use DBI qw(:sql_types);
+
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Slice;
 use Bio::EnsEMBL::DBSQL::ProxyDBConnection;
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
+use Bio::EnsEMBL::Utils::Iterator;
+
+use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
+use Bio::EnsEMBL::Compara::Utils::Scalar qw(:iterator);
 
 my %share_dbcs;
 
@@ -106,6 +115,136 @@ sub pool_one_DBConnection {
         #warn "Replacing ", $dbc->locator, " with a Proxy to $signature\n";
         my $new_dbc = Bio::EnsEMBL::DBSQL::ProxyDBConnection->new(-DBC => $share_dbcs{$signature}, -DBNAME => $dbc->dbname);
         $dba->dbc($new_dbc);
+}
+
+
+=head2 iterate_toplevel_slices
+
+  Arg[1]      : Bio::EnsEMBL::DBSQL::DBAdaptor $species_dba
+  Arg[2]      : (optional) String $genome_component
+  Arg[-ATTRIBUTES] (opt)
+              : Arrayref of strings. List of the attribute codes to load.
+                If not defined, will load a preselection of attributes known
+                to be necessary to build DnaFrags. Set it to an empty list to
+                disable loading of any attributes.
+  Arg[-RETURN_BATCHES] (opt)
+              : Boolean. Make the iterator return batches of slices instead
+                of the slices one by one
+  Example     : my $it = iterate_toplevel_slices($human_dba);
+  Description : Returns an iterator that yields all the top-level slices of
+                the species considered (and the genome component if requested).
+                Slices still include the duplicated bits, i.e. the human Y
+                chromosome is complete and includes the PAR regions, and the
+                non-reference slices (patches, haplotypes and LRGs) are present.
+                Using an iterator means that the memory
+                consumption remains low regardless of the size of the
+                assembly. By default, the function will load some
+                (seq_region) attributes, but the list of attributes to load
+                can be configured, or this can be disabled altogether. The
+                attributes are recorded under the "attributes" hash-key of
+                each Slice object. Note that this is a non-standard location,
+                and that calls to get_all_Attributes will not use it.
+                Loading the slices is done in a separate database
+                connection, so if you disable the loading of attributes and
+                are not planning to use the database during the iteration,
+                you may want to consider closing the connection before
+                calling this function.
+  Returntype  : Bio::EnsEMBL::Utils::Iterator
+  Exceptions  : none
+
+=cut
+
+sub iterate_toplevel_slices {
+    my $species_dba      = shift;
+    my $genome_component = shift;
+
+    my ($attributes, $return_batches) = rearrange([qw(ATTRIBUTES RETURN_BATCHES)], @_);
+    $attributes //= ['codon_table', 'sequence_location', 'non_ref'];
+
+    my $sa  = $species_dba->get_SliceAdaptor;
+    my $csa = $species_dba->get_CoordSystemAdaptor;
+
+    # "mysql_use_result" prevents us from running other queries in the same
+    # connection, so making a copy of it.
+    my $dbc = $species_dba->dbc;
+    my $dbc_copy = Bio::EnsEMBL::DBSQL::DBConnection->new( -DBCONN => $dbc );
+
+    # Taken from SliceAdaptor
+    my $polyploid_extra_joins = 'JOIN (
+                                   seq_region_attrib sra2
+                                   JOIN attrib_type at2 USING (attrib_type_id)
+                                 ) USING (seq_region_id)';
+    my $polyploid_extra_where = 'AND at2.code = "genome_component" AND sra2.value = ?';
+
+    my $slice_sql = 'SELECT sr.seq_region_id, sr.name, sr.length, sr.coord_system_id
+                     FROM seq_region sr
+                          JOIN coord_system cs USING (coord_system_id)
+                          JOIN seq_region_attrib sra USING (seq_region_id)
+                          JOIN attrib_type at USING (attrib_type_id)
+                          ' . ($genome_component ? $polyploid_extra_joins : '') . '
+                     WHERE at.code = "toplevel" AND cs.species_id = ?
+                          ' . ($genome_component ? $polyploid_extra_where: '');
+
+    my $sth = $dbc_copy->prepare($slice_sql, {'mysql_use_result' => 1});
+    $sth->bind_param(1, $species_dba->species_id(), SQL_INTEGER );
+    $sth->bind_param(2, $genome_component, SQL_VARCHAR) if $genome_component;
+    $sth->execute();
+    my ( $seq_region_id, $name, $length, $cs_id );
+    $sth->bind_columns( \( $seq_region_id, $name, $length, $cs_id ) );
+
+    my $slice_builder = sub {
+        if ($sth->fetch) {
+            my $cs = $csa->fetch_by_dbID($cs_id);
+            if(!$cs) {
+                throw("seq_region $name references non-existent coord_system $cs_id.");
+            }
+            return Bio::EnsEMBL::Slice->new_fast({
+                    'start'             => 1,
+                    'end'               => $length,
+                    'strand'            => 1,
+                    'seq_region_name'   => $name,
+                    'seq_region_length' => $length,
+                    'coord_system'      => $cs,
+                    'adaptor'           => $sa,
+                    # Not standard - Used by our own code below to record attributes
+                    'attributes'        => {
+                        'seq_region_id'     => $seq_region_id,
+                    },
+                });
+        }
+        $sth->finish;
+        $dbc_copy->disconnect_if_idle;
+        return;
+    };
+
+    my $slices_it = Bio::EnsEMBL::Utils::Iterator->new($slice_builder);
+    return $slices_it unless @$attributes;
+
+    my $batch_it = batch_iterator($slices_it, Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor::ID_CHUNK_SIZE);
+
+    # Returns the same arrayref, but the slices will have the attributes loaded
+    my $attributes_fetcher = sub {
+        my $slices = shift;
+        my %slice_hash = map {$_->{'attributes'}->{'seq_region_id'} => $_} @$slices;
+        my $attrib_sql = 'SELECT seq_region_id, code, value
+                          FROM seq_region_attrib JOIN attrib_type USING (attrib_type_id)
+                          WHERE code IN (' . join(', ', map {"'$_'"} @$attributes) . ')
+                                AND seq_region_id IN (' . join(', ', keys %slice_hash) . ')';
+
+        $dbc->sql_helper->execute_no_return(
+            -SQL          => $attrib_sql,
+            -USE_HASHREFS => 1,
+            -CALLBACK     => sub {
+                my $row = shift;
+                my $slice = $slice_hash{$row->{'seq_region_id'}};
+                $slice->{'attributes'}->{$row->{'code'}} = $row->{'value'};
+            },
+        );
+        return $slices;
+    };
+    my $batch_with_attrib_it = $batch_it->map($attributes_fetcher);
+
+    return $return_batches ? $batch_with_attrib_it : flatten_iterator($batch_with_attrib_it);
 }
 
 
