@@ -93,7 +93,8 @@ sub update_dnafrags {
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
   Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Arg[3]      : Bio::EnsEMBL::DBSQL::DBAdaptor $species_dba
+  Arg[3]      : Arrayref of Bio::EnsEMBL::Slice $slices
+  Arg[4]      : Arrayref of Bio::EnsEMBL::Compara::DnaFrag $old_dnafrags
   Description : This method fetches all the dnafrag in the compara DB
                 corresponding to the $genome_db. It also gets the list
                 of top_level seq_regions from the species core DB and
