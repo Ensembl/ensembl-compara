@@ -67,9 +67,6 @@ sub database {
   }
   croak "No species specified getting '$db'" unless $species;
   my $dbc = EnsEMBL::Web::DBSQL::DBConnection->new($species,$self->sd);
-  if($db eq 'go') {
-    return $dbc->get_databases_species($species,'go')->{'go'};
-  }
   return $dbc->get_DBAdaptor($db,$species);
 }
 
