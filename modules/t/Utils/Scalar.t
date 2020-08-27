@@ -42,4 +42,31 @@ subtest 'batch_iterator' => sub {
 
 };
 
+sub _test_flatten_iterator {
+    my ($in, $expected_out, $test_name) = @_;
+    my $it = Bio::EnsEMBL::Compara::Utils::Scalar::flatten_iterator(Bio::EnsEMBL::Utils::Iterator->new($in));
+    return is_deeply($it->to_arrayref, $expected_out, $test_name);
+}
+
+subtest 'flatten_iterator' => sub {
+    _test_flatten_iterator([], [], 'Empty list');
+    _test_flatten_iterator([[]], [], '2 nested empty lists');
+    _test_flatten_iterator([[[]]], [], '3 nested empty lists');
+    _test_flatten_iterator([[],[[]]], [], 'Multiple nested empty lists');
+
+    _test_flatten_iterator([[1]], [1], 'Singleton');
+    _test_flatten_iterator([[],[1]], [1], 'Empty list and singleton');
+    _test_flatten_iterator([[1],[]], [1], 'Singleton and empty list');
+
+    _test_flatten_iterator([[1],[2]], [1,2], 'Pair of singletons');
+    _test_flatten_iterator([[1],[],[2]], [1,2], 'Pair of singletons with an empty list');
+    _test_flatten_iterator([[1],[[2]]], [1,2], 'Singleton and nested singleton');
+    _test_flatten_iterator([[],[1],[2]], [1,2], 'Empty list with a pair a singletons');
+
+    _test_flatten_iterator([[1,2]], [1,2], 'Pair');
+    _test_flatten_iterator([[[1,2]]], [1,2], 'Nested pair');
+    _test_flatten_iterator([[],[1,2]], [1,2], 'Empty list with a pair');
+    _test_flatten_iterator([[],[[1,2]]], [1,2], 'Empty list with a nested pair');
+};
+
 done_testing();
