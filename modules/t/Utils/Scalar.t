@@ -19,11 +19,11 @@ use strict;
 use warnings;
 
 use Test::Exception;
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 use Bio::EnsEMBL::Utils::Iterator;
 
-use Bio::EnsEMBL::Compara::Utils::Scalar;
+use_ok('Bio::EnsEMBL::Compara::Utils::Scalar', qw(:iterator));
 
 sub _test_batch_iterator {
     my ($in, $batch_size, $expected_out, $test_name) = @_;
