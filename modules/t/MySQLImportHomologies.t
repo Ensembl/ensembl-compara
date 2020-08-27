@@ -56,6 +56,7 @@ subtest "Test Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologie
                 "$test_flatfile_dir/goc.tsv",
                 "$test_flatfile_dir/high_conf.tsv",
             ],
+            'mlss_id' => 1234,
             'homology_id_start' => 11,
         },
     );
