@@ -852,12 +852,13 @@ sub _mean {
     return _sum(@items)/( scalar @items );
 }
 
-=head2 compare_dnafrags_to_core
+=head2 dnafrags_match_core_slices
 
     Arg[1]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
     Arg[2]      : Bio::EnsEMBL::DBSQL::DBAdaptor $species_dba (optional)
-    Description : This method compares the given $genome_db DnaFrags with
-                  the toplevel Slices from its corresponding core database.
+    Description : This method compares the given $genome_db DnaFrags (names
+                  and lengths) with the toplevel Slices from its
+                  corresponding core database.
     Returns     : 1 upon match; 0 upon mismatch
     Exceptions  :
 
