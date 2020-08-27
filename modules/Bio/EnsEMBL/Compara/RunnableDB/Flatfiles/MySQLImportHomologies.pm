@@ -90,7 +90,7 @@ sub write_output {
     open(my $hm_csv, '>', $homology_member_csv) or die "Cannot open $homology_member_csv for writing";
 
     # iterate over homology input and format it for later mysqlimport
-    my $h_count;
+    my $h_count = 0;
     my $homology_id_start = $self->param_required('homology_id_start');
     while ( my $line = <$hom_fh> ) {
         my $row = map_row_to_header($line, \@header_cols);
