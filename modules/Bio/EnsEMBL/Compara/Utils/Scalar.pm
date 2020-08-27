@@ -45,6 +45,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
+use Bio::EnsEMBL::Utils::Iterator;
 use Bio::EnsEMBL::Utils::Scalar;
 
 use Scalar::Util qw(blessed looks_like_number);
@@ -57,10 +58,12 @@ our @EXPORT_OK;
 @EXPORT_OK = qw(
     assert_ref_or_dbID
     split_list
+    batch_iterator
 );
 %EXPORT_TAGS = (
   assert  => [qw(assert_ref_or_dbID)],
   argument => [qw(split_list)],
+  iterator => [qw(batch_iterator)],
   all     => [@EXPORT_OK]
 );
 
@@ -147,6 +150,36 @@ sub split_list {
         push @list_of_lists, \@ids;
     }
     return \@list_of_lists;
+}
+
+
+=head2 batch_iterator
+
+  Arg[1]      : Bio::EnsEMBL::Utils::Iterator $source_iterator
+  Arg[2]      : Integer $batch_size
+  Example     : my $batch_it = batch_iterator($sql_it, 500);
+  Description : Returns an iterator that yields array-refs of $batch_size
+                consecutive values coming from $source_iterator.
+  Returntype  : Bio::EnsEMBL::Utils::Iterator
+  Exceptions  : Die if the batch_size is undefined or lower than 1
+
+=cut
+
+sub batch_iterator {
+    my ($source_iterator, $batch_size) = @_;
+
+    die "batch_size must be 1 or greater" if (not defined $batch_size) or $batch_size < 1;
+
+    return Bio::EnsEMBL::Utils::Iterator->new(sub {
+        my @chunk;
+        while (scalar(@chunk) < $batch_size and $source_iterator->has_next()) {
+            push @chunk, $source_iterator->next();
+        }
+        if (@chunk) {
+            return \@chunk;
+        }
+        return;
+    });
 }
 
 
