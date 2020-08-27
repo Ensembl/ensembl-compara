@@ -56,6 +56,7 @@ sub fetch_input {
     # If provided, get the list of allowed species
     my $allowed_species_file = $self->param('allowed_species_file');
     if (defined $allowed_species_file && -e $allowed_species_file) {
+        die "The allowed species JSON file ('$allowed_species_file') should not be empty" if -z $allowed_species_file;
         # Keep only the species included in the allowed list
         my $allowed_species = { map { $_ => 1 } @{ decode_json($self->_slurp($allowed_species_file)) } };
         my @excluded_species = grep { ! exists $allowed_species->{$_} } @{ keys %core_dbas };
