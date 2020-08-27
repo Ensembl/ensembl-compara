@@ -476,7 +476,7 @@ sub fetch_all_by_mixed_ref_lists {
   Example    : $gdba->store($gdb);
   Description: Stores the GenomeDB object in the database unless it has been stored already; updates the dbID of the object.
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara:GenomeDB
+  Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara::GenomeDB
   Caller     : general
   Status     : Stable
 
@@ -525,7 +525,7 @@ sub store {
   Example    : $gdba->update($gdb);
   Description: Updates the GenomeDB object in the database
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara:GenomeDB
+  Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara::GenomeDB
   Caller     : general
   Status     : Stable
 

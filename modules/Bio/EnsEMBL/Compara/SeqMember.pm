@@ -154,7 +154,7 @@ sub copy {
   Example    : $member = Bio::EnsEMBL::Compara::SeqMember->new_from_Transcript(
                   $transcript, $genome_db, 'translate');
   Description: contructor method which takes an Ensembl::Gene object
-               and Compara:GenomeDB object and creates a new SeqMember object
+               and Compara::GenomeDB object and creates a new SeqMember object
                translating from the Gene object
   Returntype : Bio::Ensembl::Compara::SeqMember
   Exceptions :
