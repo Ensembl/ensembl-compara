@@ -870,7 +870,7 @@ sub dnafrags_match_core_slices {
     my $gdb_slices  = $genome_db->genome_component
         ? $species_dba->get_SliceAdaptor->fetch_all_by_genome_component($genome_db->genome_component)
         : $species_dba->get_SliceAdaptor->fetch_all('toplevel', undef, 1, 1, 1);
-    my %slice_len_by_name = map { $_->seq_region_name => $_->length } @$gdb_slices;
+    my %slice_len_by_name = map { $_->seq_region_name => $_->seq_region_length } @$gdb_slices;
 
     my $dnafrag_adaptor = $genome_db->adaptor->db->get_DnaFragAdaptor;
     my $gdb_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB($genome_db);
