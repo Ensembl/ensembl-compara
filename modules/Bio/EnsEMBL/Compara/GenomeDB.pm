@@ -818,7 +818,14 @@ sub _get_genome_dump_path {
     require Bio::EnsEMBL::Hive::Utils;
     my $subdir = $self->dbID ? Bio::EnsEMBL::Hive::Utils::dir_revhash($self->dbID) : '';
 
-    my $filename = $self->name . '.' . $self->assembly . ($self->genome_component ? '.comp' . $self->genome_component : '') . ($mask ? '.' . $mask : '') . '.fa';
+    my @name_components = (
+        $self->name,
+        $self->assembly,
+    );
+    push @name_components, 'comp'.$self->genome_component if $self->genome_component;
+    push @name_components, $mask if $mask;
+
+    my $filename = join('.', @name_components) . '.fa';
     return "$dir/$subdir/$filename";
 }
 
