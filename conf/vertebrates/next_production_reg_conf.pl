@@ -49,8 +49,7 @@ my $prev_core_dbs = {
 # ---------------------- CURRENT CORE DATABASES --------------------------------
 
 # All the core databases live on the Vertebrates staging server or our mirror
-# Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1:4519/$curr_release");
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-mirror-1:4240/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1:4519/$curr_release");
 # Remove species that will be updated $next_release
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species( [ keys %$updated_core_dbs ] );
 # Add the correct core database for those species
@@ -78,8 +77,32 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $updated_core_dbs );
 # FORMAT: species/alias name => [ host, db_name ]
 my $compara_dbs = {
     # general compara dbs
-    'compara_master' => [ 'mysql-ens-compara-prod-5', 'jalvarez_compara_master_101' ],
-    'compara_prev'   => [ 'mysql-ens-compara-prod-7', "jalvarez_compara_$curr_release" ],
+    'compara_master' => [ 'mysql-ens-compara-prod-1', 'ensembl_compara_master_dup' ],
+    'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$curr_release" ],
+
+    # homology dbs
+    'compara_members'         => [ 'mysql-ens-compara-prod-4', 'jalvarez_vertebrates_load_members_103' ],
+    'compara_members_prev'    => [ 'mysql-ens-compara-prod-10', 'jalvarez_vertebrates_load_members_102' ],
+    # 'murinae_ptrees'          => [ 'mysql-ens-compara-prod-',  '' ],
+    # 'murinae_nctrees'         => [ 'mysql-ens-compara-prod-',  '' ],
+    'murinae_ptrees_prev'     => [ 'mysql-ens-compara-prod-7',  'jalvarez_vertebrates_murinae_protein_reindexed_trees_102' ],
+    'murinae_nctrees_prev'    => [ 'mysql-ens-compara-prod-8',  'jalvarez_vertebrates_murinae_ncrna_reindexed_trees_102' ],
+
+    # LASTZ dbs
+    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-8', 'jalvarez_vertebrates_lastz_batch1_103' ],
+    # 'lastz_batch_2'    => [ 'mysql-ens-compara-prod-', '_vertebrates_lastz_batch2_103' ],
+    # 'lastz_batch_3'    => [ 'mysql-ens-compara-prod-', '_vertebrates_lastz_batch3_103' ],
+    # 'lastz_batch_4'    => [ 'mysql-ens-compara-prod-', '_vertebrates_lastz_batch4_103' ],
+
+    # EPO dbs
+    ## mammals
+    # 'mammals_epo_high_low'=> [ 'mysql-ens-compara-prod-', '' ],
+    'mammals_epo_prev'    => [ 'mysql-ens-compara-prod-8', 'muffato_mammals_epo_with2x_101' ],
+    'mammals_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
+
+    # other alignments
+    # 'amniotes_pecan'      => [ 'mysql-ens-compara-prod-', '' ],
+    'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-3', 'dthybert_amniotes_mercator_pecan_101' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -95,7 +118,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-mirror-1', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', "ncbi_taxonomy_$curr_release" ],
 });
 
 # ------------------------------------------------------------------------------
