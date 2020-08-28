@@ -53,6 +53,7 @@ use Data::Dumper;
 use File::Basename;
 use File::Path qw(make_path);
 
+use Bio::EnsEMBL::PaddedSlice;
 use Bio::EnsEMBL::Utils::IO::FASTASerializer;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -68,6 +69,7 @@ sub param_defaults {
         'seq_dump_loc'      => undef,   # Requested output directory
 
         # DnaFrag filtering
+        'is_reference'                  => 1,   # Set this to 0 to only dump the non-reference dnafrags, and undef to dump all
         'cellular_components_exclude'   => [],
         'cellular_components_only'      => [],
 
@@ -106,7 +108,7 @@ sub fetch_input {
     $serializer->chunk_factor($self->param('chunk_factor'));
     $serializer->line_width($self->param('seq_width'));
 
-    my $dnafrags = $self->compara_dba->get_DnaFragAdaptor->fetch_all_by_GenomeDB($genome_db, -IS_REFERENCE => 1);
+    my $dnafrags = $self->compara_dba->get_DnaFragAdaptor->fetch_all_by_GenomeDB($genome_db, -IS_REFERENCE => $self->param('is_reference'));
     $self->compara_dba->dbc->disconnect_if_idle();
 
     # Cellular-component filtering
@@ -122,9 +124,14 @@ sub fetch_input {
     my $mask = $self->param('repeat_masked');
 
     $genome_db->db_adaptor->dbc->prevent_disconnect( sub {
-            foreach my $ref_dnafrag( @$dnafrags ) {
-                $dnafrag_names_2_dbID->{$ref_dnafrag->name} = $ref_dnafrag->dbID;
-                my $slice = $ref_dnafrag->slice;
+            foreach my $dnafrag (@$dnafrags) {
+                $dnafrag_names_2_dbID->{$dnafrag->name} = $dnafrag->dbID;
+                my $slice;
+                if ($dnafrag->is_reference) {
+                    $slice = $dnafrag->slice;
+                } else {
+                    $slice = $dnafrag->get_alt_region->get_Slice;
+                }
                 if ($mask) {
                     if ($mask =~ /soft/i) {
                         $slice = $slice->get_repeatmasked_seq(undef, 1);
@@ -132,7 +139,11 @@ sub fetch_input {
                         $slice = $slice->get_repeatmasked_seq();
                     }
                 }
-                $serializer->print_Seq($slice);
+                # Build a slice that represents the whole DnaFrag, but with
+                # Ns outside of the region of interest.
+                # This only affects non-reference dnafrags.
+                my $padded_slice = Bio::EnsEMBL::PaddedSlice->new(-SLICE => $slice);
+                $serializer->print_Seq($padded_slice);
             }
         });
 	close($filehandle);
