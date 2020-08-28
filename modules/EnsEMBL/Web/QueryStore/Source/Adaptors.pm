@@ -41,6 +41,9 @@ sub _database {
     $species = 'multi';
   }
   my $dbc = EnsEMBL::Web::DBSQL::DBConnection->new($species,$self->{'_sd'});
+  if($db eq 'go') {
+    return $dbc->get_databases_species($species,'go')->{'go'};
+  }
   return $dbc->get_DBAdaptor($db,$species);
 }
 

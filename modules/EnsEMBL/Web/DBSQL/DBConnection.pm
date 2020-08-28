@@ -239,7 +239,10 @@ sub _get_databases_common {
   my $default_species_db = $self->{'_dbs'}->{$species} ;
   my %databases = map {($_,1)} @_;
 
-  ## Get core DB first
+  # find out if core is an annotation DB (like in Vega)
+  my $t = $self->{'species_defs'}->table_info( 'core', 'gene_remark' );
+  my $is_annot_db = $t && $t->{'rows'};
+    ## Get core DB first
   if( $databases{'core'} ) {
     eval{ $default_species_db->{'core'} =  $self->_get_core_database($species); };
     if( $@ ){
@@ -249,9 +252,37 @@ sub _get_databases_common {
     delete $databases{'core'};
   }
     
+    ## Simple DBs; no dependence on core  
+  my @simple_dbs = grep { $databases{$_} } qw(go fasta help);
+  foreach (@simple_dbs) {
+    my $getter = "_get_" . lc($_) . "_database";
+    my $dbadaptor;
+    eval{ $dbadaptor = $self->$getter($species) };
+    if ($@) { 
+      $self->{'error'} .= "\n$_ database: $@";
+      print STDERR $self->{'error'} ."\n\n";
+    }
+    $default_species_db->{$_} = $dbadaptor;
+    delete $databases{$_};
+  }
+  
+  ## More complex databases
+  # Attach to core (if available)
+  my @attached_to_core = grep { $databases{$_} } qw(SNP blast);
+  foreach (@attached_to_core) {
+    my $getter = "_get_" . lc($_) . "_database";
+    eval{ $default_species_db->{$_} = $self->$getter($species); };
+    if( $@ ) { 
+      $default_species_db->{$_}->{'error'} .= "\n$_ database: $@";
+    } elsif (my $core_db = $default_species_db->{'core'}) {
+      $core_db->add_db_adaptor($_, $default_species_db->{$_});
+    }
+    delete $databases{$_};
+  }
+
   ## Other DBs
   # cdna
-  foreach (qw(cdna otherfeatures rnaseq)) {
+  foreach (qw(cdna vega vega_update otherfeatures rnaseq)) {
     if($databases{$_}) {
       $self->_get_db_with_dnadb( $_, $species);
       delete $databases{ $_ };
@@ -287,8 +318,8 @@ sub _get_databases_common {
 =cut
 
 sub _get_core_database{
-  my ($self, $species) = @_;
-  my $db_info =  $self->_get_database_info($species, 'DATABASE_CORE' ) ||
+  my $self = shift;
+  my $db_info =  $self->_get_database_info( shift, 'DATABASE_CORE' ) ||
     confess( "No core database for this species" );
   return  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' );
 }
