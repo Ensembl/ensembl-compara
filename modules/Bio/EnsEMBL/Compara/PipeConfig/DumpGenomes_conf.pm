@@ -125,7 +125,10 @@ sub pipeline_analyses {
                     'all_current'       => $self->o('all_current'),
                 }],
             -flow_into  => {
-                2 => [ 'genome_dump_unmasked', 'genome_dump_masked', ],
+                2 => [
+                    'genome_dump_unmasked', 'genome_dump_masked',
+                    'genome_dump_unmasked_non_ref', 'genome_dump_masked_non_ref',
+                ],
             },
         },
 
@@ -155,6 +158,30 @@ sub pipeline_analyses {
         {   -logic_name => 'genome_dump_masked',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpGenomes::DumpMaskedGenomeSequence',
             -parameters => {
+                'force_redump'  => $self->o('force_redump'),
+            },
+            -flow_into  => {
+                2 => [ 'build_faidx_index' ],
+            },
+            -rc_name    => '4Gb_job',
+            -hive_capacity  => $self->o('dump_capacity'),
+        },
+
+        {   -logic_name => 'genome_dump_unmasked_non_ref',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpGenomes::DumpUnmaskedGenomeSequence',
+            -parameters => {
+                'is_reference'  => 0,
+                'force_redump'  => $self->o('force_redump'),
+            },
+            -flow_into  => [ 'build_faidx_index' ],
+            -rc_name    => '4Gb_job',
+            -hive_capacity  => $self->o('dump_capacity'),
+        },
+
+        {   -logic_name => 'genome_dump_masked_non_ref',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpGenomes::DumpMaskedGenomeSequence',
+            -parameters => {
+                'is_reference'  => 0,
                 'force_redump'  => $self->o('force_redump'),
             },
             -flow_into  => {

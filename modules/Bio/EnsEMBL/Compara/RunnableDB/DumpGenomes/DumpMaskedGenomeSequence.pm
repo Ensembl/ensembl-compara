@@ -59,8 +59,8 @@ sub set_dump_paths {
     my $genome_db = $self->param('genome_db');
 
     # Where the files should be
-    $self->param('soft_masked_file', $genome_db->_get_genome_dump_path($self->param('genome_dumps_dir'), 'soft'));
-    $self->param('hard_masked_file', $genome_db->_get_genome_dump_path($self->param('genome_dumps_dir'), 'hard'));
+    $self->param('soft_masked_file', $genome_db->_get_genome_dump_path($self->param('genome_dumps_dir'), 'soft', not $self->param('is_reference')));
+    $self->param('hard_masked_file', $genome_db->_get_genome_dump_path($self->param('genome_dumps_dir'), 'hard', not $self->param('is_reference')));
 
     return [$self->param('soft_masked_file'), $self->param('hard_masked_file')];
 }

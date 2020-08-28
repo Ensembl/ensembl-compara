@@ -56,7 +56,7 @@ sub set_dump_paths {
     my $genome_db = $self->param('genome_db');
 
     # Where the files should be
-    $self->param('unmasked_file',    $genome_db->_get_genome_dump_path($self->param('genome_dumps_dir')));
+    $self->param('unmasked_file', $genome_db->_get_genome_dump_path($self->param('genome_dumps_dir'), undef,  not $self->param('is_reference')));
 
     return [$self->param('unmasked_file')];
 }

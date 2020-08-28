@@ -43,6 +43,8 @@ sub param_defaults {
     return {
         %{ $self->SUPER::param_defaults },
 
+        'is_reference'  => 1,       # Set this to 0 to only dump the non-reference dnafrags. This Runnable does not support dumping all dnafrags at once
+
         # Parameters of Bio::EnsEMBL::Utils::IO::FASTASerializer
         # They have a default value in the serializer itself, but can be redefined here
         'seq_width'     => 60,      # Characters per line in the FASTA file. Defaults to 60
@@ -63,8 +65,8 @@ sub fetch_input {
     $self->param_required('genome_dumps_dir');
 
     # The expected file size: DNA + line-returns + dnafrag name + ">" + line-return
-    my $sql = 'SELECT SUM(length + CEIL(length/?) + FLOOR(LOG10(dnafrag_id)) + 3) FROM dnafrag WHERE genome_db_id = ? AND is_reference = 1';
-    my ($ref_size) = $self->compara_dba->dbc->db_handle->selectrow_array($sql, undef, $self->param('seq_width'), $genome_db->dbID);
+    my $sql = 'SELECT SUM(length + CEIL(length/?) + FLOOR(LOG10(dnafrag_id)) + 3) FROM dnafrag WHERE genome_db_id = ? AND is_reference = ?';
+    my ($ref_size) = $self->compara_dba->dbc->db_handle->selectrow_array($sql, undef, $self->param('seq_width'), $genome_db->dbID, $self->param_required('is_reference'));
     $self->param('ref_size', $ref_size);
 
     my $paths = $self->set_dump_paths();
