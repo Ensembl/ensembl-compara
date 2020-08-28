@@ -37,6 +37,7 @@ use Time::HiRes qw(time);
 
 use Bio::EnsEMBL::Utils::Exception qw( throw );
 
+use Bio::EnsEMBL::Compara::Locus;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
@@ -128,9 +129,13 @@ sub create_chunks {
             my ($coord_system_name, $region_name, $region_start, $region_end) = split(/:/, $region);
             my $region_dnafrag = $dnafrag_dba->fetch_by_GenomeDB_and_name($genome_db, $region_name);
             die "Unknown dnafrag region '$region_name'\n" unless $region_dnafrag;
-            $region_dnafrag->{_start} = $region_start if $region_start;
-            $region_dnafrag->{_end} = $region_end if $region_end;
-            push @regions_to_align, $region_dnafrag;
+            my $locus = bless {
+                'dnafrag'         => $region_dnafrag,
+                'dnafrag_start'   => $region_start || 1,
+                'dnafrag_end'     => $region_end || $region_dnafrag->length,
+                'dnafrag_strand'  => 1,
+            }, 'Bio::EnsEMBL::Compara::Locus';
+            push @regions_to_align, $locus;
         }
     } else {
         my $dnafrag_list = $dnafrag_dba->fetch_all_by_GenomeDB(
@@ -140,7 +145,7 @@ sub create_chunks {
         );
         foreach my $dnafrag (@$dnafrag_list) {
             next if $dnafrag->coord_system_name eq 'lrg';
-            push @regions_to_align, $dnafrag;
+            push @regions_to_align, $dnafrag->as_locus;
         }
     }
 
@@ -153,11 +158,11 @@ sub create_chunks {
 
 sub create_dnafrag_chunks {
   my $self = shift;
-  my $dnafrag = shift;
+  my $locus = shift;
   my $masking = shift;
 
-  my $region_start = (exists $dnafrag->{_start}) ? $dnafrag->{_start} : 1;
-  my $region_end = (exists $dnafrag->{_end}) ? $dnafrag->{_end} : $dnafrag->length;
+  my $region_start = $locus->dnafrag_start;
+  my $region_end = $locus->dnafrag_end;
 
   #If chunk_size is not set then set it to be the fragment length 
   #overlap must be 0 in this case.
@@ -168,8 +173,8 @@ sub create_dnafrag_chunks {
       $overlap = 0;
   }
 
-  print "dnafrag : ", $dnafrag->display_id, "n" if ($self->debug);
-  print "  sequence length : ",$dnafrag->length,"\n" if ($self->debug);
+  print "dnafrag : ", $locus->dnafrag->display_id, "\n" if ($self->debug);
+  print "  sequence length : ",$locus->length,"\n" if ($self->debug);
   print "chunk_size $chunk_size\n" if ($self->debug);
 
   #initialise chunk_start and chunk_end to be the dnafrag start and end
@@ -179,7 +184,7 @@ sub create_dnafrag_chunks {
   while ($chunk_end < $region_end) {
 
     my $chunk = new Bio::EnsEMBL::Compara::Production::DnaFragChunk();
-    $chunk->dnafrag($dnafrag);
+    $chunk->dnafrag($locus->dnafrag);
     $chunk->dnafrag_start($chunk_start);
 
     $chunk_end = $chunk_start + $chunk_size - 1;
