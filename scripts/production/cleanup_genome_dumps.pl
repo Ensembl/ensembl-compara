@@ -44,11 +44,12 @@ $registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing") if $reg_conf;
 my $master_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $master_db );
 my @all_genome_dbs = @{ $master_dba->get_GenomeDBAdaptor->fetch_all() };
 
-my ($total_deleted_files, $total_deleted_size_gb) = (0, 0);
+my ($total_deleted_species, $total_deleted_files, $total_deleted_size_gb) = (0, 0, 0);
 foreach my $genome_db ( @all_genome_dbs ) {
     if ( defined $genome_db->last_release && $genome_db->last_release < $before_release ) {
         my $this_genome_dump_path = $genome_db->_get_genome_dump_path($genome_dumps_dir);
         if ( -e $this_genome_dump_path ) {
+            $total_deleted_species++;
             my ($this_filename, $this_dir, $this_suffix) = fileparse($this_genome_dump_path, ".fa");
             my ($gdb_name, $gdb_ass, $gdb_lr) = ($genome_db->name, $genome_db->assembly, $genome_db->last_release);
             print "Removing $gdb_name ($gdb_ass) - retired in $gdb_lr\t$this_dir/$this_filename.*\n";
@@ -65,7 +66,7 @@ foreach my $genome_db ( @all_genome_dbs ) {
 }
 my $del_status = $dry_run ? "marked for deletion" : "deleted";
 my $rounded_size = sprintf("%.2f", $total_deleted_size_gb);
-print "\n$total_deleted_files files $del_status, totalling ${rounded_size}G\n\n";
+print "\n$total_deleted_files files $del_status from $total_deleted_species species, totalling ${rounded_size}G\n\n";
 
 
 sub helptext {
