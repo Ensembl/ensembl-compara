@@ -43,9 +43,6 @@ sub configure {
     OTHERFEATURES       => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     RNASEQ              => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     CDNA                => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    VEGA                => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    VEGA_ENSEMBL        => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
-    VEGA_UPDATE         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     CORE                => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
     COMPARA             => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
     COMPARA_PAN_ENSEMBL => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
@@ -56,11 +53,8 @@ sub configure {
     WEB_HIVE            => undef,
     WEB_TOOLS           => undef,
     ARCHIVE             => undef,
-    HEALTHCHECK         => undef,
     MART                => undef,
     GO                  => [ 'Bio::EnsEMBL::DBSQL::OntologyDBAdaptor', 'ontology' ],
-    FASTA               => undef,
-    PRODUCTION          => undef,
     STABLE_IDS          => undef,
   );
 
