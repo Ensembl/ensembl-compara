@@ -145,7 +145,7 @@ sub create_chunks {
         );
         foreach my $dnafrag (@$dnafrag_list) {
             next if $dnafrag->coord_system_name eq 'lrg';
-            push @regions_to_align, $dnafrag->as_locus;
+            push @regions_to_align, $dnafrag->get_alt_region || $dnafrag->as_locus;
         }
     }
 
