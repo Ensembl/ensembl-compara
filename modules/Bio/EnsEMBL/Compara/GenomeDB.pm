@@ -796,13 +796,20 @@ sub _get_unique_key {
 
   Arg[1]      : String $dir. Base directory in which to find / place the Fasta files
   Arg[2]      : (optional) String $mask
+  Arg[3]      : (optional) Boolean $non_ref
   Example     : $genome_db->_get_genome_dump_path($base_dir);
-  Description : Returns the expected path for the Fasta dump of this genome, masked or
-                not, according to $mask. This method guarantees that all pipelines agree
-                on where to find the file.
+                $genome_db->_get_genome_dump_path($base_dir, 'hard');
+                $genome_db->_get_genome_dump_path($base_dir, 'soft', 'non_ref');
+  Description : Returns the expected path for the Fasta dump of this genome, given the
+                requested dump options. This method allows pipelines to refer to and us
+                files that are centrally created.
                 To behave nicely at scale, the files are expected to be spread according
                 to the dbID of the GenomeDB, using eHive's dir_revhash, e.g.
-                "123456789" => "9/8/7/6/5/4/3/2", and to be named "$name.$assembly.$mask.fa".
+                "123456789" => "9/8/7/6/5/4/3/2", and to be named "$name.$assembly.*.fa".
+                We currently use two optional markers (in this order):
+                  - 'soft' / 'mask' / undef - to use the masked sequence
+                  - 'non_ref' (or anything "true") / undef - to refer to the non-reference
+                    sequences, also known as alt-regions (e.g. patches and haplotypes)
   Returntype  : String
   Exceptions  : none
   Caller      : general
@@ -814,6 +821,7 @@ sub _get_genome_dump_path {
     my $self = shift;
     my $dir  = shift;
     my $mask = shift;
+    my $non_reference = shift;
 
     require Bio::EnsEMBL::Hive::Utils;
     my $subdir = $self->dbID ? Bio::EnsEMBL::Hive::Utils::dir_revhash($self->dbID) : '';
@@ -823,6 +831,7 @@ sub _get_genome_dump_path {
         $self->assembly,
     );
     push @name_components, 'comp'.$self->genome_component if $self->genome_component;
+    push @name_components, 'non_ref' if $non_reference;
     push @name_components, $mask if $mask;
 
     my $filename = join('.', @name_components) . '.fa';
@@ -833,10 +842,12 @@ sub _get_genome_dump_path {
 =head2 get_faidx_helper
 
   Arg[1]      : (optional) String $mask
+  Arg[2]      : (optional) Boolean $non_reference
   Example     : $genome_db->get_faidx_helper('hard');
+                $genome_db->get_faidx_helper('soft', 'non_ref');
   Description : Return the instance of Bio::DB::HTS::Faidx for this type of Fasta file, if
                 a directory has been registered (see L<GenomeDBADaptor::dump_dir_location>).
-                Masking can be requested with the $mask parameter: undef, 'soft' or 'hard'
+                A description of the options ($mask etc) can be found in L<_get_genome_dump_path>
   Returntype  : Bio::DB::HTS::Faidx instance
   Exceptions  : Will die if dump_dir_location is set but the file is not found
   Caller      : general
@@ -846,15 +857,16 @@ sub _get_genome_dump_path {
 sub get_faidx_helper {
     my $self = shift;
     my $mask = shift;
+    my $non_reference = shift;
 
     # Ancestral sequences are not dumped
     return undef if $self->name eq 'ancestral_sequences';
 
-    my $faidx_key = '_faidx_helper_' . ($mask // '');
+    my $faidx_key = '_faidx_helper_' . ($mask // '') . ($non_reference ? ' _non_ref' : '');
     unless (exists $self->{$faidx_key}) {
         $self->{$faidx_key} = undef;
         if ($self->adaptor and (my $dump_dir_location = $self->adaptor->dump_dir_location)) {
-            my $path = $self->_get_genome_dump_path($dump_dir_location, $mask);
+            my $path = $self->_get_genome_dump_path($dump_dir_location, $mask, $non_reference);
             if (-e $path) {
                 require Bio::DB::HTS::Faidx;
                 $self->{$faidx_key} = Bio::DB::HTS::Faidx->new($path);
