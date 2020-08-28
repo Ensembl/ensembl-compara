@@ -90,8 +90,6 @@ sub pipeline_create_commands {
         $self->pipeline_create_commands_rm_mkdir('output_dir'),
         # In case it doesn't exist yet
         'mkdir -p ' . $self->o('sketch_dir'),
-        # The files are going to be accessed by many processes in parallel
-        $self->pipeline_create_commands_lfs_setstripe('sketch_dir'),
     ];
 }
 
