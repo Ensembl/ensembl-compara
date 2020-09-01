@@ -196,12 +196,6 @@
          {
              "component": "Production tasks",
              "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data#MergetheDNAdata-Patchalignments",
-             "summary": "Align the chicken patches against the primary chicken assembly",
-             "name_on_graph": "Patches against their primary assembly:Chicken"
-         },
-         {
-             "component": "Production tasks",
-             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data#MergetheDNAdata-Patchalignments",
              "summary": "Align the zebrafish patches against the primary zebrafish assembly",
              "name_on_graph": "Patches against their primary assembly:Zebrafish"
          },
