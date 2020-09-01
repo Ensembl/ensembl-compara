@@ -38,6 +38,9 @@ sub fetch_input {
     my $self = shift;
     $self->param('dba', $self->compara_dba);
 
+    my $prev_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( 'compara_prev' );
+    $self->param('old_server_uri', $prev_dba->url);
+
     $self->SUPER::fetch_input;
 }
 
