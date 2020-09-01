@@ -134,7 +134,7 @@ sub fetch_input {
     if ( $self->param('add_prev_mlss') ) {
         # Fetch the previous MLSS id
         my $prev_release = $mlss->first_release - 1;
-        my @prev_mlss = grep { $_->last_release == $prev_release } @mlsss;
+        my @prev_mlss = grep { (defined $_->last_release) && ($_->last_release == $prev_release) } @mlsss;
         $self->throw(sprintf("No previous MLSS found for MLSS '%s' (%s)", $mlss->name, $mlss->dbID)) unless @prev_mlss;
         $mlss_ids{prev_mlss_id} = $prev_mlss[0]->dbID;
     }
