@@ -262,7 +262,7 @@ sub pipeline_analyses {
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
             -analysis_capacity => 100,
             -max_retry_count   => 0,
-            -rc_name           => '2Gb_job',
+            -rc_name           => '8Gb_job',
             -flow_into         => {
                 '1' => [ '?accu_name=results&accu_address=[]' ],
                 '2' => [ 'jira_ticket_creation' ],
