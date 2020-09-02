@@ -200,6 +200,7 @@ sub table_data {
         my $clin_sign_icon = $clin_sign_term;
         $clin_sign_icon =~ s/ /-/g;
         $clin_sign_icon = 'other' if ($clin_sign_icon =~ /conflict/);
+        $clin_sign_icon = 'other' if ($clin_sign_icon eq 'association-not-found');
         if ($attributes->{$review_status}) {;
           $clin_sign .= qq{<img class="clin_sign" src="/i/val/clinsig_$clin_sign_icon.png" />};
         }

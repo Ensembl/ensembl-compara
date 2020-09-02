@@ -126,7 +126,10 @@ sub expand_slice {
 
   if ($slice) {
     my ($flank5, $flank3);
-    if ($self->param('flank_size')) {
+    if ($self->param('flanking')) {
+      $flank5 = $flank3 = $self->param('flanking');
+    }
+    elsif ($self->param('flank_size')) {
       $flank5 = $flank3 = $self->param('flank_size');
     } 
     else {
