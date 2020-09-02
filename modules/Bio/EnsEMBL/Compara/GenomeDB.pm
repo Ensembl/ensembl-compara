@@ -856,26 +856,23 @@ sub _get_genome_dump_path {
 
 sub get_faidx_helper {
     my $self = shift;
-    my $mask = shift;
-    my $non_reference = shift;
 
     # Ancestral sequences are not dumped
     return undef if $self->name eq 'ancestral_sequences';
 
-    my $faidx_key = '_faidx_helper_' . ($mask // '') . ($non_reference ? ' _non_ref' : '');
-    unless (exists $self->{$faidx_key}) {
-        $self->{$faidx_key} = undef;
-        if ($self->adaptor and (my $dump_dir_location = $self->adaptor->dump_dir_location)) {
-            my $path = $self->_get_genome_dump_path($dump_dir_location, $mask, $non_reference);
+    if ($self->adaptor and (my $dump_dir_location = $self->adaptor->dump_dir_location)) {
+        my $path = $self->_get_genome_dump_path($dump_dir_location, @_);
+        $self->{'_faidx_helper'} //= {};
+        unless (exists $self->{'_faidx_helper'}->{$path}) {
             if (-e $path) {
                 require Bio::DB::HTS::Faidx;
-                $self->{$faidx_key} = Bio::DB::HTS::Faidx->new($path);
+                $self->{'_faidx_helper'}->{$path} = Bio::DB::HTS::Faidx->new($path);
             } else {
                 die "Could not find $path";
             }
         }
+        return $self->{'_faidx_helper'}->{$path};
     }
-    return $self->{$faidx_key};
 }
 
 
