@@ -390,7 +390,7 @@ sub _load_member_info {
         my @head_cols = split(/\s+/, $header);
         while ( my $line = <$gene_fh> ) {
             my $row = map_row_to_header( $line, \@head_cols );
-            $member_info->{'gene_member_'.$row->{'gene_member_id'}} = $row;
+            $member_info->{'gene_member_'.$row->{'gene_member_id'}} = { dnafrag_id => $row->{dnafrag_id}, dnafrag_start => $row->{dnafrag_start}, dnafrag_end => $row->{dnafrag_end} };
         }
         close($gene_fh);
     }
