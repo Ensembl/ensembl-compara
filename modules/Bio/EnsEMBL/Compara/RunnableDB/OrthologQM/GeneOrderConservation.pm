@@ -83,16 +83,21 @@ sub fetch_input {
         print "done!\n" if $self->debug;
 
         print "\tfetching and sorting gene_members... " if $self->debug;
-        my $all_gene_member_ids = $self->_get_all_gene_member_ids_in_homology_file($gdb_id_pair);
-        my $sql = 'SELECT gene_member_id, dnafrag_id, dnafrag_start, dnafrag_strand FROM gene_member WHERE gene_member_id = ?';
-        my $sth = $self->compara_dba->dbc->prepare($sql);
-        my @gene_members_unordered;
-        foreach my $this_gm_id ( @$all_gene_member_ids ) {
-            $sth->execute($this_gm_id);
-            my $results = $sth->fetchall_arrayref;
-            push( @gene_members_unordered, $results->[0] );
+        my $all_gene_member_ids = $self->_get_gene_member_ids_hash_for_homology_file($gdb_id_pair);
+        my @gene_members_ordered;
+        foreach my $this_gdb_id ( @$gdb_id_pair) {
+            my $gene_file = $self->param_required('gene_dumps_dir') . "/gene_member.$this_gdb_id.tsv";
+            open( my $gene_fh, '<', $gene_file) or die "Cannot open $gene_file";
+            my $header = <$gene_fh>;
+            my @head_cols = split(/\s+/, $header);
+            while ( my $line = <$gene_fh> ) {
+                my $row = map_row_to_header( $line, \@head_cols );
+                if ($all_gene_member_ids->{$row->{'gene_member_id'}}) {
+                    push @gene_members_ordered, [$row->{'gene_member_id'}, $row->{'dnafrag_id'}, $row->{'dnafrag_start'}, $row->{'dnafrag_strand'}];
+                }
+            }
+            close($gene_fh);
         }
-        my @gene_members_ordered = sort { $a->[1] <=> $b->[1] || $a->[2] <=> $b->[2] } @gene_members_unordered;
         print "done!\n" if $self->debug;
 
         print "\tcreating index of dnafrag positions\n" if $self->debug;
@@ -229,7 +234,7 @@ sub homology_header {
     return $header;
 }
 
-sub _get_all_gene_member_ids_in_homology_file {
+sub _get_gene_member_ids_hash_for_homology_file {
     my ( $self, $gdb_id_pair ) = @_;
     
     my %gm_ids;
@@ -247,8 +252,7 @@ sub _get_all_gene_member_ids_in_homology_file {
         $gm_ids{$gm_id_1} = 1;
         $gm_ids{$gm_id_2} = 1;
     }
-    my @uniq_ids = keys %gm_ids;
-    return \@uniq_ids;
+    return \%gm_ids;
 }
 
 sub _calculate_goc {

@@ -56,6 +56,7 @@ standaloneJob(
 	{ # input param hash
         'goc_mlss_id'       => $goc_mlss_id,
         'homology_flatfile' => "$test_flatfile_dir/goc.test.#goc_mlss_id#.tsv",
+        'gene_dumps_dir'    => $test_flatfile_dir,
         'compara_db'        => $compara_dba->url,
 	}
 );
@@ -92,6 +93,7 @@ standaloneJob(
 	{ # input param hash
         'goc_mlss_id'       => $goc_mlss_id,
         'homology_flatfile' => "$test_flatfile_dir/goc.test.#goc_mlss_id#.tsv",
+        'gene_dumps_dir'    => $test_flatfile_dir,
         'compara_db'        => $compara_dba->url,
         'output_file'       => $output_file,
 	}
@@ -117,6 +119,7 @@ standaloneJob(
 	{ # input param hash
 	    'goc_mlss_id'       => $goc_mlss_id,
         'homology_flatfile' => "$test_flatfile_dir/goc.test.#goc_mlss_id#.tsv",
+        'gene_dumps_dir'    => $test_flatfile_dir,
         'compara_db'        => $compara_dba->url,
         'split_polyploids'  => 1,
 	}
@@ -138,6 +141,7 @@ standaloneJob(
 	{ # input param hash
 	    'goc_mlss_id'       => $goc_mlss_id,
         'homology_flatfile' => "$test_flatfile_dir/goc.test.#goc_mlss_id#.tsv",
+        'gene_dumps_dir'    => $test_flatfile_dir,
         'compara_db'        => $compara_dba->url,
         'split_polyploids'  => 1,
 	}

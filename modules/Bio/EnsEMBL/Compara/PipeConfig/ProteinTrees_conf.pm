@@ -86,6 +86,7 @@ sub default_options {
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
+        'gene_dumps_dir'        => $self->o('dump_dir') . '/genes',
         'dump_pafs_dir'         => $self->o('dump_dir') . '/pafs',
         'examl_dir'             => $self->o('work_dir') . '/examl',
         'tmp_dir'               => $self->o('work_dir') . '/tmp',
@@ -222,7 +223,7 @@ sub default_options {
         'quick_tree_break_capacity' => 1500,
         'build_hmm_capacity'        => 200,
         'ktreedist_capacity'        => 150,
-        'goc_capacity'              => 30,
+        'goc_capacity'              => 100,
         'goc_stats_capacity'        => 70,
         'genesetQC_capacity'        => 100,
         'other_paralogs_capacity'   => 50,
@@ -418,8 +419,8 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
-        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'cluster_dir', 'dump_dir', 'dump_pafs_dir', 'examl_dir', 'tmp_dir', 'fasta_dir', 'plots_dir']),
-        $self->pipeline_create_commands_lfs_setstripe('fasta_dir'),
+        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'cluster_dir', 'dump_dir', 'gene_dumps_dir', 'dump_pafs_dir', 'examl_dir', 'tmp_dir', 'fasta_dir', 'plots_dir']),
+        $self->pipeline_create_commands_lfs_setstripe(['fasta_dir', 'gene_dumps_dir']),
 
         $self->db_cmd( 'CREATE TABLE ortholog_quality (
             homology_id              INT NOT NULL,
@@ -461,6 +462,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'dump_dir'      => $self->o('dump_dir'),
         'plots_dir'     => $self->o('plots_dir'),
         'dump_pafs_dir' => $self->o('dump_pafs_dir'),
+        'gene_dumps_dir'        => $self->o('gene_dumps_dir'),
         'hmm_library_basedir'   => $self->o('hmm_library_basedir'),
         'hmm_library_version'   => $self->o('hmm_library_version'),
 
@@ -662,7 +664,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_fire_homology_dumps',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A' => [ 'snapshot_posttree', 'homology_dumps_mlss_id_factory' ],
+                '1->A' => [ 'snapshot_posttree', 'homology_dumps_mlss_id_factory', 'gene_dumps_genome_db_factory' ],
                 'A->1' => [ 'backbone_fire_posttree' ],
             },
         },
@@ -3411,6 +3413,23 @@ sub core_pipeline_analyses {
         {   -logic_name => 'move_back_component_genes',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MoveComponentGenes',
             -hive_capacity => $self->o('reuse_capacity'),
+        },
+
+        {   -logic_name => 'gene_dumps_genome_db_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -rc_name    => '4Gb_job',
+            -flow_into => {
+                2 => [ 'dump_genes' ],
+            },
+        },
+
+        {   -logic_name     => 'dump_genes',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
+            -parameters     => {
+                'output_file'   => '#gene_dumps_dir#/gene_member.#genome_db_id#.tsv',
+                'append'        => ['--batch', '--quick'],
+                'input_query'   => 'SELECT stable_id, gene_member_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand FROM gene_member WHERE genome_db_id = #genome_db_id# ORDER BY dnafrag_id, dnafrag_start',
+            },
         },
 
         {   -logic_name => 'snapshot_posttree',

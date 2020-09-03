@@ -128,10 +128,16 @@ sub run {
     
         # first, fetch gene_member stable_ids
         print "Fetching gene_member stable_id info\n" if $self->debug;
-        my $gm_sql = "SELECT gene_member_id, stable_id FROM gene_member WHERE genome_db_id = ?";
-        my $gm_sth = $self->compara_dba->dbc->prepare($gm_sql);
-        $gm_sth->execute($genome_db_id);
-        my $gm_stable_id_map = $gm_sth->fetchall_hashref('gene_member_id');
+        my $gene_file = $self->param_required('gene_dumps_dir') . "/gene_member.${genome_db_id}.tsv";
+        open( my $gene_fh, '<', $gene_file) or die "Cannot open $gene_file";
+        my $header = <$gene_fh>;
+        my @head_cols = split(/\s+/, $header);
+        my %gm_stable_id_map;
+        while ( my $line = <$gene_fh> ) {
+            my $row = map_row_to_header( $line, \@head_cols );
+            $gm_stable_id_map{$row->{'gene_member_id'}} = $row->{'stable_id'};
+        }
+        close($gene_fh);
 
         my $coverage_stats;
         print "Finding homology dump files\n" if $self->debug;
@@ -186,7 +192,7 @@ sub run {
             
             my $dataflow = {
                 'genome_db_id'          => $these_stats->{genome_db_id},
-                'gene_member_stable_id' => $gm_stable_id_map->{$gm_id}->{stable_id},
+                'gene_member_stable_id' => $gm_stable_id_map{$gm_id},
                 'seq_member_id'         => $these_stats->{seq_member_id},
                 'n_species'             => $n_species,
                 'n_orth'                => $these_stats->{n_orth},

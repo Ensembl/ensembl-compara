@@ -58,6 +58,7 @@ sub default_options {
             # dependent parameters ('work_dir' should be defined)
             'dump_dir'              => $self->o('work_dir') . '/dumps',
             'ss_picts_dir'          => $self->o('work_dir') . '/ss_picts/',
+            'gene_dumps_dir'        => $self->o('dump_dir') . '/genes',
 
             # How will the pipeline create clusters (families) ?
             # Possible values: 'rfam' (default) or 'ortholog'
@@ -190,7 +191,8 @@ sub pipeline_create_commands {
     return [
             @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
-            $self->pipeline_create_commands_rm_mkdir(['work_dir', 'dump_dir', 'ss_picts_dir']),
+            $self->pipeline_create_commands_rm_mkdir(['work_dir', 'dump_dir', 'ss_picts_dir', 'gene_dumps_dir']),
+            $self->pipeline_create_commands_lfs_setstripe(['gene_dumps_dir']),
 
             $self->db_cmd( 'CREATE TABLE ortholog_quality (
                             homology_id              INT NOT NULL,
@@ -228,6 +230,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'orthotree_dir'             => $self->o('orthotree_dir'),
         'wga_dumps_dir'             => $self->o('wga_dumps_dir'),
         'prev_wga_dumps_dir'        => $self->o('prev_wga_dumps_dir'),
+        'gene_dumps_dir'            => $self->o('gene_dumps_dir'),
 
         'goc_files_dir'      => $self->o('goc_files_dir'),
         'wga_files_dir'      => $self->o('wga_dumps_dir'),
@@ -1278,7 +1281,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'rib_fire_homology_dumps',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A' => 'homology_dumps_mlss_id_factory',
+                '1->A' => [ 'homology_dumps_mlss_id_factory', 'gene_dumps_genome_db_factory' ],
                 'A->1' => 'rib_fire_homology_processing',
             },
         },
@@ -1317,6 +1320,23 @@ sub core_pipeline_analyses {
         {   -logic_name => 'rib_fire_high_confidence_orths',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => WHEN( '#orth_wga_complete#' => [ 'mlss_id_for_high_confidence_factory'] ),
+        },
+
+        {   -logic_name => 'gene_dumps_genome_db_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -rc_name    => '4Gb_job',
+            -flow_into => {
+                2 => [ 'dump_genes' ],
+            },
+        },
+
+        {   -logic_name     => 'dump_genes',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
+            -parameters     => {
+                'output_file'   => '#gene_dumps_dir#/gene_member.#genome_db_id#.tsv',
+                'append'        => ['--batch', '--quick'],
+                'input_query'   => 'SELECT stable_id, gene_member_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand FROM gene_member WHERE genome_db_id = #genome_db_id# ORDER BY dnafrag_id, dnafrag_start',
+            },
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe_with_full_species_tree($self) },

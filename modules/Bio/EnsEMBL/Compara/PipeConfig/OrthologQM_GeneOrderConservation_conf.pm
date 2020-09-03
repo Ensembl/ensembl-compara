@@ -89,6 +89,7 @@ sub pipeline_wide_parameters {
         'compara_db' => $self->o('compara_db'),
         'goc_capacity'   => $self->o('goc_capacity'),
         'homology_dumps_dir' => $self->o('homology_dumps_dir'),
+        'gene_dumps_dir'     => $self->o('gene_dumps_dir'),
     };
 }
 
