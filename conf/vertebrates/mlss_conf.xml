@@ -462,7 +462,6 @@
   <assembly_patches>
     <genome name="homo_sapiens"/>
     <genome name="mus_musculus"/>
-    <genome name="gallus_gallus"/>
     <genome name="danio_rerio"/>
   </assembly_patches>
 
