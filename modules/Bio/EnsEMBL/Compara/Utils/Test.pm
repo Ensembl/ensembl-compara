@@ -33,6 +33,9 @@ use warnings;
 use Cwd qw(abs_path);
 use File::Spec;
 use File::Basename qw/dirname/;
+use Test::More;
+
+use Bio::EnsEMBL::Utils::IO qw/work_with_file/;
 
 =head2 GLOBAL VARIABLES
 
@@ -104,6 +107,102 @@ sub find_all_files {
     }
 
     return @files;
+}
+
+
+=head2 drop_database_if_exists
+
+  Arg[1]      : Bio::EnsEMBL::Test::MultiTestDB $multitestdb. Object refering to the database server
+  Arg[2]      : String $db_name. The database name
+  Description : Drop the database if it exists and close the existing
+                connection objects.
+  Returntype  : None
+
+=cut
+
+sub drop_database_if_exists {
+    my ($multitestdb, $db_name) = @_;
+    if ($multitestdb->_db_exists($multitestdb->dbi_connection, $db_name)) {
+        $multitestdb->_drop_database($multitestdb->dbi_connection, $db_name);
+        $multitestdb->disconnect_dbi_connection;
+    }
+}
+
+
+=head2 read_sqls
+
+  Argument[1] : string $file_name. The path of the SQL file to read
+  Description : Read the content of the schema definition file and return
+                it as a list of SQL statements with titles
+  Returntype  : List of string pairs
+
+=cut
+
+sub read_sqls {
+    my $sql_file = shift;
+
+    # Same code as in MultiTestDB::load_sql but without the few lines we don't need
+    my $all_sql = '';
+    work_with_file($sql_file, 'r', sub {
+        my ($fh) = @_;
+        my $is_comment = 0;
+        while(my $line = <$fh>) {
+            if ($is_comment) {
+                $is_comment = 0 if $line =~ m/\*\//;
+            } elsif ($line =~ m/\/\*/) {
+                $is_comment = 1 unless $line =~ m/\*\//;
+            } elsif ($line !~ /^#/ && $line !~ /^--( |$)/ && $line =~ /\S/) {
+                #ignore comments and white-space lines
+                $all_sql .= $line;
+            }
+        }
+        return;
+    });
+
+    my @statements;
+    foreach my $sql (split( /;/, $all_sql )) {
+        $sql =~ s/^\n*//s;
+        next unless $sql;
+        # $title will usually be something like "CREATE TABLE dnafrag"
+        my $title = $sql;
+        $title =~ s/\s+\(.*//s;
+        push @statements, [$title, $sql];
+    }
+
+    return \@statements;
+}
+
+
+=head2 test_schema_compliance
+
+  Arg[1]      : Bio::EnsEMBL::Test::MultiTestDB $multitestdb. Object refering to the database server
+  Arg[2]      : String $db_name. The database name
+  Arg[3]      : Arrayref of String pairs (arrayrefs), each being a statement title, and an actual SQL statement
+  Arg[4]      : String $server_mode. Typically TRADITIONAL or ANSI
+  Description : Execute all the statements and check that they pass
+  Returntype  : none
+
+=cut
+
+sub test_schema_compliance {
+    my ($multitestdb, $db_name, $statements, $server_mode) = @_;
+
+    # Create the database and set the SQL mode
+    drop_database_if_exists($multitestdb, $db_name);
+    my $db = $multitestdb->create_and_use_db($multitestdb->dbi_connection(), $db_name);
+    $db->do("SET SESSION sql_mode = '$server_mode'");
+
+    # Test every statement
+    foreach my $s (@$statements) {
+        eval {
+            $db->do($s->[1]);
+            pass($s->[0]);
+        };
+        if (my $err_msg = $@) {
+            fail($s->[0]);
+            diag($err_msg);
+        }
+    }
 }
 
 1;
