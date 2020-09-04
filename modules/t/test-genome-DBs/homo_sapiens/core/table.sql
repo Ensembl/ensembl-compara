@@ -545,16 +545,6 @@ CREATE TABLE `misc_set` (
   UNIQUE KEY `code_idx` (`code`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
-CREATE TABLE `misc_set_bak` (
-  `misc_set_id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
-  `code` varchar(25) NOT NULL DEFAULT '',
-  `name` varchar(255) NOT NULL DEFAULT '',
-  `description` text NOT NULL,
-  `max_length` int(10) unsigned NOT NULL,
-  PRIMARY KEY (`misc_set_id`),
-  UNIQUE KEY `code_idx` (`code`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
 CREATE TABLE `object_xref` (
   `object_xref_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `ensembl_id` int(10) unsigned NOT NULL,
