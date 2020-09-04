@@ -965,13 +965,6 @@ CREATE TABLE `unmapped_reason` (
   PRIMARY KEY (`unmapped_reason_id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=139 DEFAULT CHARSET=latin1;
 
-CREATE TABLE `unmapped_reason_bak` (
-  `unmapped_reason_id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
-  `summary_description` varchar(255) DEFAULT NULL,
-  `full_description` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`unmapped_reason_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=139 DEFAULT CHARSET=latin1;
-
 CREATE TABLE `xref` (
   `xref_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `external_db_id` int(10) unsigned NOT NULL,
