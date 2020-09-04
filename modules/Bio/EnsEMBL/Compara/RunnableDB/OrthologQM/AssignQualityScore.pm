@@ -44,7 +44,6 @@ use strict;
 use warnings;
 use Data::Dumper;
 use File::Basename;
-use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
 use Bio::EnsEMBL::Compara::Utils::DistributionTag qw(write_n_tag);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
