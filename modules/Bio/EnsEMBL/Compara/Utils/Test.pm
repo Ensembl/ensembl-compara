@@ -280,4 +280,29 @@ sub get_schema_from_database {
     return \%schema;
 }
 
+
+=head2 test_command
+
+  Arg[1]      : String or Array-ref $command
+  Arg[2]      : String $test_name
+  Description : Execute the command and check that the return code is 0.
+                The command can be given as a string (which will be parsed
+                by Perl's system() or the shell) or as an array-ref of
+                strings.
+  Returntype  : none
+
+=cut
+
+sub test_command {
+    my ($command, $test_name) = @_;
+    my $rc = system(ref($command) eq 'ARRAY' ? @$command : $command);
+    if ($rc) {
+        fail($test_name);
+        diag("?:$? !:$! at:$@");
+    } else {
+        pass($test_name);
+    }
+}
+
+
 1;
