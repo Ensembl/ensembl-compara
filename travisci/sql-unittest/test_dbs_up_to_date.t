@@ -38,14 +38,6 @@ $multitestdb->species('compara');
 # Load the Compara schema for reference
 my $compara_db_name = $multitestdb->create_db_name('compara_schema');
 my $compara_statements = Bio::EnsEMBL::Compara::Utils::Test::read_sqls("${compara_dir}/sql/table.sql");
-# Ignore the foreign keys
-foreach my $s (@$compara_statements) {
-    if ($s->[1] =~ /FOREIGN/) {
-        $s->[1] =~ s/^\s+FOREIGN\s+KEY[^,]+,//mg;
-        $s->[1] =~ s/,[\n\s]+FOREIGN\s+KEY.+$//m;
-        die $s->[1] if $s->[1] =~ /FOREIGN/; # In case the regexp are still missing some cases
-    }
-}
 my $compara_db = Bio::EnsEMBL::Compara::Utils::Test::load_statements($multitestdb, $compara_db_name, $compara_statements, 'Can load the reference Compara schema');
 my $compara_schema = Bio::EnsEMBL::Compara::Utils::Test::get_schema_from_database($compara_db);
 

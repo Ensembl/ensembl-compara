@@ -37,14 +37,9 @@ $multitestdb->species('compara');
 
 my $db_name = $multitestdb->create_db_name('schema');
 
-my $statements1 = Bio::EnsEMBL::Compara::Utils::Test::read_sqls("${compara_dir}/sql/table.sql");
-my $statements2 = Bio::EnsEMBL::Compara::Utils::Test::read_sqls("${compara_dir}/sql/pipeline-tables.sql");
-
+my $statements1 = Bio::EnsEMBL::Compara::Utils::Test::read_sqls("${compara_dir}/sql/table.sql", 'with_fk');
+my $statements2 = Bio::EnsEMBL::Compara::Utils::Test::read_sqls("${compara_dir}/sql/pipeline-tables.sql", 'with_fk');
 my @statements = (@$statements1, @$statements2);
-# We *want* to test foreign keys
-foreach my $s (@statements) {
-    $s->[1] =~ s/ENGINE=MyISAM/ENGINE=InnoDB/g;
-}
 
 foreach my $server_mode (qw(TRADITIONAL ANSI)) {
     subtest "$server_mode mode", sub {

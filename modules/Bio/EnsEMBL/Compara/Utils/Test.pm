@@ -132,6 +132,8 @@ sub drop_database_if_exists {
 =head2 read_sqls
 
   Argument[1] : string $file_name. The path of the SQL file to read
+  Argument[2] : (optional) boolean $with_fk (default false). Turn on to
+                keep the foreign key constraints, otherwise they are removed
   Description : Read the content of the schema definition file and return
                 it as a list of SQL statements with titles
   Returntype  : List of string pairs
@@ -140,6 +142,7 @@ sub drop_database_if_exists {
 
 sub read_sqls {
     my $sql_file = shift;
+    my $with_fk  = shift;
 
     # Same code as in MultiTestDB::load_sql but without the few lines we don't need
     my $all_sql = '';
@@ -159,10 +162,24 @@ sub read_sqls {
         return;
     });
 
+    if ($with_fk) {
+        $all_sql =~ s/ENGINE=MyISAM/ENGINE=InnoDB/g;
+    }
+
     my @statements;
     foreach my $sql (split( /;/, $all_sql )) {
         $sql =~ s/^\n*//s;
         next unless $sql;
+        if (!$with_fk) {
+            # FOREIGN KEY constraints followed by something else (note the
+            # trailing comma)
+            $sql =~ s/^\s+FOREIGN\s+KEY[^,]+,//mg;
+            # FOREIGN KEY constraints as the last line of the CREATE TABLE: no
+            # trailing comma, so need to remove the one from the previous line
+            $sql =~ s/,[\n\s]+FOREIGN\s+KEY.+$//m;
+            # In case the regexp are still missing some cases
+            die $sql if $sql =~ /FOREIGN/;
+        }
         # $title will usually be something like "CREATE TABLE dnafrag"
         my $title = $sql;
         $title =~ s/\s+\(.*//s;
