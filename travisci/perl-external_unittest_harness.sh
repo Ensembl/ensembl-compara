@@ -19,7 +19,6 @@
 echo "We are running Perl '$TRAVIS_PERL_VERSION', Coverage reporting is set to '$COVERAGE'"
 
 # Setup the environment variables
-export ENSEMBL_CVS_ROOT_DIR=$PWD
 export EHIVE_ROOT_DIR=$PWD/ensembl-hive
 export TEST_AUTHOR=$USER
 export PERL5LIB=$PERL5LIB:$PWD/bioperl-live
