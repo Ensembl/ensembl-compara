@@ -179,7 +179,7 @@ sub read_sqls {
   Arg[2]      : String $db_name. The database name
   Arg[3]      : Arrayref of String pairs (arrayrefs), each being a statement title, and an actual SQL statement
   Arg[4]      : String $server_mode. Typically TRADITIONAL or ANSI
-  Description : Execute all the statements and check that they pass
+  Description : Execute all the statements and check that they pass individually
   Returntype  : none
 
 =cut
@@ -203,6 +203,64 @@ sub test_schema_compliance {
             diag($err_msg);
         }
     }
+    return $db;
+}
+
+
+=head2 load_statements
+
+  Arg[1]      : Bio::EnsEMBL::Test::MultiTestDB $multitestdb. Object refering to the database server
+  Arg[2]      : String $db_name. The database name
+  Arg[3]      : Arrayref of String pairs (arrayrefs), each being a statement title, and an actual SQL statement
+  Arg[4]      : (optional) String $test_name. A custom name to give to the test
+  Description : Execute all the statements and check that they pass as a whole
+  Returntype  : none
+
+=cut
+
+sub load_statements {
+    my ($multitestdb, $db_name, $statements, $test_name) = @_;
+
+    # Create the database and set the SQL mode
+    drop_database_if_exists($multitestdb, $db_name);
+    my $db = $multitestdb->create_and_use_db($multitestdb->dbi_connection(), $db_name);
+
+    eval {
+        foreach my $s (@$statements) {
+            $db->do($s->[1]);
+        };
+    };
+    if (my $err_msg = $@) {
+        fail($test_name);
+        diag($err_msg);
+    } else {
+        pass($test_name);
+    }
+    return $db;
+}
+
+
+=head2 get_schema_from_database
+
+  Arg[1]      : DBI database handle $dbh
+  Description : Queries the schema of the database
+  Returntype  : Hashref {table name => Hashref {column number => column info}}
+  Exceptions  : none
+
+=cut
+
+sub get_schema_from_database {
+    my $dbh = shift;
+    # For some reasons, column_info(undef, undef, '%', '%') doesn't
+    # work on MySQL ... We need to call it on each table explicitly
+    my $sth = $dbh->table_info(undef, undef, '%');
+    my @table_names = keys %{ $sth->fetchall_hashref('TABLE_NAME') };
+    my %schema;
+    foreach my $t (@table_names) {
+        $sth = $dbh->column_info(undef, undef, $t, '%');
+        $schema{$t} = $sth->fetchall_hashref('ORDINAL_POSITION');
+    }
+    return \%schema;
 }
 
 1;
