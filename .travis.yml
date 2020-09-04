@@ -79,7 +79,7 @@ jobs:
       install:
         - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
-      script: ./travisci/all-housekeeping_harness.sh
+      script: prove -r ./travisci/all-housekeeping/
 
     - language: perl
       perl: 5.30
@@ -87,7 +87,7 @@ jobs:
       install:
         - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
-      script: ./travisci/sql-unittest_harness.sh
+      script: prove -r ./travisci/sql-unittest/
 
     - language: perl
       dist: trusty   # 5.22 is the minimum on xenial
