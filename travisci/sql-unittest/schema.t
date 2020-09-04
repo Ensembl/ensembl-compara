@@ -29,9 +29,11 @@ use Test::More;
 use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Utils::IO qw/work_with_file/;
 
+
+## Check that the main schema is fully compliant with the SQL standard
+
 my $compara_dir = File::Basename::dirname(File::Basename::dirname(File::Basename::dirname(Cwd::realpath($0))));
 my $t_dir = "${compara_dir}/modules/t";
-my $db_dir = "${t_dir}/test-genome-DBs";
 
 # Initialize a MultiTestDB object
 my $multitestdb = bless {}, 'Bio::EnsEMBL::Test::MultiTestDB';
@@ -40,14 +42,11 @@ $multitestdb->_rebless;
 $multitestdb->species('compara');
 
 my $db_name = $multitestdb->create_db_name('schema');
+my $statements = read_sqls();
 
 
-foreach my $test_file_name (glob "${db_dir}/*/*/table.sql") {
-  my $short_name = $test_file_name;
-  $short_name =~ s{${db_dir}/}{};
-  my $statements = read_sqls($test_file_name);
-  foreach my $server_mode (qw(TRADITIONAL ANSI)) {
-    subtest "$short_name in $server_mode mode", sub {
+foreach my $server_mode (qw(TRADITIONAL ANSI)) {
+    subtest "$server_mode mode", sub {
 
         # Create the database and set the SQL mode
         drop_database_if_exists($multitestdb, $db_name);
@@ -66,7 +65,6 @@ foreach my $test_file_name (glob "${db_dir}/*/*/table.sql") {
             }
         }
     };
-  }
 }
 # No need to drop the database because it will be destroyed when
 # $multitestdb goes out of scope
@@ -97,19 +95,19 @@ sub drop_database_if_exists {
 
 =head2 read_sqls
 
-  Argument[1] : string $file_name. The path of the SQL file to read
-  Description : Read the content of the schema definition file and return
-                it as a list of SQL statements with titles
+  Description : Read the content of the schema definition files and return
+                them as a list of SQL statements with titles
   Returntype  : List of string pairs
 
 =cut
 
 sub read_sqls {
-    my $sql_file = shift;
 
     # Same code as in MultiTestDB::load_sql but without the few lines we
     # don't need
     my $all_sql = '';
+    foreach my $file_name (qw(table.sql pipeline-tables.sql)) {
+        my $sql_file = "${compara_dir}/sql/${file_name}";
         note("Reading SQL from '$sql_file'");
         work_with_file($sql_file, 'r', sub {
                 my ($fh) = @_;
@@ -126,7 +124,11 @@ sub read_sqls {
                 }
                 return;
             });
+    }
 
+    # We *want* to test foreign keys
+    $all_sql =~ s/ENGINE=MyISAM/ENGINE=InnoDB/g;
+    $all_sql =~ s/;$//;
     my @statements;
     foreach my $sql (split( /;/, $all_sql )) {
         $sql =~ s/^\n*//s;

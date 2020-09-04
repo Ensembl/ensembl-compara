@@ -66,6 +66,14 @@ jobs:
       script: ./travisci/all-housekeeping_harness.sh
 
     - language: perl
+      perl: 5.30
+      name: "SQL unit tests"
+      install:
+        - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
+        - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
+      script: ./travisci/sql-unittest_harness.sh
+
+    - language: perl
       dist: trusty   # 5.22 is the minimum on xenial
       perl: 5.14
       name: "Perl unit tests on the minimum version"
