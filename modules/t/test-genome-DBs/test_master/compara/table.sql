@@ -561,8 +561,8 @@ CREATE TABLE `seq_member` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 MAX_ROWS=100000000;
 
 CREATE TABLE `seq_member_projection` (
-  `target_seq_member_id` int(10) unsigned NOT NULL,
   `source_seq_member_id` int(10) unsigned NOT NULL,
+  `target_seq_member_id` int(10) unsigned NOT NULL,
   `identity` float(5,2) DEFAULT NULL,
   PRIMARY KEY (`target_seq_member_id`),
   KEY `source_seq_member_id` (`source_seq_member_id`)
