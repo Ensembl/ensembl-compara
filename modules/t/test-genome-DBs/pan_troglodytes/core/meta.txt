@@ -203,3 +203,4 @@
 744	\N	patch	patch_100_101_a.sql|schema_version
 745	\N	patch	patch_101_102_a.sql|schema_version
 746	\N	patch	patch_102_103_a.sql|schema_version
+747	\N	patch	patch_78_79_b.sql|bamcov support

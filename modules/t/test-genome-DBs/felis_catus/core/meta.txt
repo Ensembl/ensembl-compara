@@ -301,3 +301,4 @@
 1485	\N	patch	patch_100_101_a.sql|schema_version
 1486	\N	patch	patch_101_102_a.sql|schema_version
 1487	\N	patch	patch_102_103_a.sql|schema_version
+1488	\N	patch	patch_78_79_b.sql|bamcov support
