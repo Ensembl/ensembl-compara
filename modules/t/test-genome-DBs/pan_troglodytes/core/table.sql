@@ -105,15 +105,6 @@ CREATE TABLE `attrib_type` (
   UNIQUE KEY `code_idx` (`code`)
 ) ENGINE=MyISAM AUTO_INCREMENT=368 DEFAULT CHARSET=latin1;
 
-CREATE TABLE `attrib_type_bak` (
-  `attrib_type_id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
-  `code` varchar(15) NOT NULL DEFAULT '',
-  `name` varchar(255) NOT NULL DEFAULT '',
-  `description` text,
-  PRIMARY KEY (`attrib_type_id`),
-  UNIQUE KEY `code_idx` (`code`)
-) ENGINE=MyISAM AUTO_INCREMENT=366 DEFAULT CHARSET=latin1;
-
 CREATE TABLE `biotype` (
   `biotype_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(64) NOT NULL,
