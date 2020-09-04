@@ -269,7 +269,7 @@ CREATE TABLE `gene_tree_root_attr` (
 
 CREATE TABLE `gene_tree_root_tag` (
   `root_id` int(10) unsigned NOT NULL,
-  `tag` varchar(255) DEFAULT NULL,
+  `tag` varchar(255) NOT NULL,
   `value` mediumtext NOT NULL,
   KEY `root_id_tag` (`root_id`,`tag`),
   KEY `tag` (`tag`)
