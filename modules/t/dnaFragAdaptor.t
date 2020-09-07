@@ -178,7 +178,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_all_by_GenomeD
         is($fail, "", "Fetching all by GenomeDB and region");
     };
 
-    #Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::fetch_all
+    #Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_all
     my $dnafrags = $dnafrag_adaptor->fetch_all();
     is(@$dnafrags, $num_of_dnafrags, "Fetching all");
 
@@ -213,7 +213,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_by_Slice", sub
 };
 
 
-subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::_synchronise", sub {
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::_synchronise", sub {
 
     throws_ok { $dnafrag_adaptor->_synchronise() } qr/MSG: The given reference for attribute argument to _synchronise was undef. Expected 'Bio::EnsEMBL::Compara::DnaFrag'/, 'no argument passed';
     throws_ok { $dnafrag_adaptor->_synchronise($dnafrag_id) } qr/MSG: Asking for the type of the attribute argument to _synchronise produced no type; check it is a reference. Expected 'Bio::EnsEMBL::Compara::DnaFrag'/, 'invalid dnafrag object';
@@ -238,7 +238,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::_synchronise", 
 
 
 
-subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::store", sub {
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::store", sub {
 
     my $dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag_id);
     $multi->hide("compara", "dnafrag");
