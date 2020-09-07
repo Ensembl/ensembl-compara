@@ -58,7 +58,15 @@ sub content {
 sub content_ajax {
   my $self = shift;
   my $hub = $self->hub;
-  my $urlParams = { map { ($_ => $hub->param($_)) } $hub->param };
+  my $urlParams;
+  foreach ($hub->param) {
+    if ($_ eq 's') {
+      @{$urlParams->{$_}} = $hub->param($_);
+    }
+    else {
+      $urlParams->{$_} = $hub->param($_);
+    }
+  }
 
   my %params = (
     dataUrl => $self->{data_url},
