@@ -319,7 +319,7 @@ sub test_command {
     my $rc = system(ref($command) eq 'ARRAY' ? @$command : $command);
     if ($rc) {
         fail($test_name);
-        diag("?:$? !:$! at:$@");
+        diag("Return code:$? $!");
     } else {
         pass($test_name);
     }
