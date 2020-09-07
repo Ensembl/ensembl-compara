@@ -9,10 +9,10 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     this.lastSelected   = null;
     this.activeTreeKey  = '';
     this.selectionLimit = params.selectionLimit;
-    this.defaultKeys    = new Array();
+    this.defaultSpecies    = new Array();
     this.multiHash      = {};
 
-    if (params.defaultKeys)     this.defaultKeys     = params.defaultKeys;
+    if (params.defaultSpecies)  this.defaultSpecies     = params.defaultSpecies;
     if (params.referer_action)  this.referer_action  = params.referer_action;
     if (params.referer_type)    this.referer_type    = params.referer_type;
     if (params.allOptions)      this.allOptions      = params.allOptions;
@@ -127,7 +127,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       this.addBreadcrumbs();
       this.createMenu(this.taxonTreeData.children);
       // Populate default selected species on panel open
-      this.defaultKeys && this.populateDefaultSpecies();
+      this.defaultSpecies && this.populateDefaultSpecies();
       this.isCompara && this.createMultipleAlignmentsHash();
     }
 
@@ -470,9 +470,9 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     var node;
     var species; // Species to locate and show by default
 
-    if (panel.defaultKeys && panel.defaultKeys.length > 0) {
+    if (panel.defaultSpecies && panel.defaultSpecies.length > 0) {
       // set selected nodes
-      $.each(panel.defaultKeys.reverse(), function(index, _key) { 
+      $.each(panel.defaultSpecies.reverse(), function(index, _key) { 
         node = treeObj.getNodeByKey(_key);
         species = _key;
         if (!node) {
@@ -794,7 +794,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
         Ensembl.EventManager.trigger('updateAlignmentSpeciesSelection', sel_alignment);
       }
     }
-    else if (panel.caller === 'Multi') { //Region Comparison
+    else if (panel.referer_action === 'Multi') { //Region Comparison
       var params = [];
       for (var i = 0; i < items.length; i++) {
         items[i] && params.push('s' + (i + 1) + '=' + items[i].key);
@@ -809,7 +809,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
   // Check if there was any change in the selection. If not, then do nothing.
   approveSelection: function(currSel) {
-    return currSel.length && this.defaultKeys && currSel.join(',') !== this.defaultKeys.join(',');
+    return currSel.length && this.defaultSpecies && currSel.join(',') !== this.defaultSpecies.join(',');
   }
   
 });
