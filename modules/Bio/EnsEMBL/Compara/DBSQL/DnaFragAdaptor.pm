@@ -677,7 +677,7 @@ sub update {
 
   Arg[1]      : Bio::EnsEMBL::Compara::DnaFrag
   Example     : $adaptor->delete($dnafrag);
-  Description : Delete this dnafrag from the database
+  Description : Delete this dnafrag from the database (and the cache !)
   Returntype  : none
   Exceptions  : none
   Status      : Stable
@@ -689,6 +689,7 @@ sub delete {
 
     assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag');
     $self->dbc->do('DELETE FROM dnafrag WHERE dnafrag_id = ?', undef, $dnafrag->dbID);
+    $self->_id_cache->remove($dnafrag->dbID);
 }
 
 
