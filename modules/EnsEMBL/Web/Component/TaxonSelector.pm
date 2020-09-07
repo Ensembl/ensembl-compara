@@ -63,7 +63,7 @@ sub content_ajax {
   my %params = (
     dataUrl => $self->{data_url},
     caller  => $self->{caller},
-    defaultKeys => $self->{default_species},
+    defaultSpecies => $self->{default_species},
     selectionLimit => $self->{selection_limit},
     multiselect => $self->{multiselect},
     alignLabel => $self->{align_label},

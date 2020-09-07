@@ -34,6 +34,10 @@ sub _init {
   my $params           = { function => undef };
   $params->{'action'}  = $hub->param('referer_action') if $hub->param('referer_action');
   $self->{'action'}    = $hub->url($params);
+  my %seen;
+  my $params = $hub->referer->{'params'};
+  my @species_list = grep !$seen{$_}++, sort { $a <=> $b } map { /^s(\d+)$/ ? $params->{"s$1"} : () } keys %$params;
+  $self->{'default_species'} = \@species_list;
 }
 
 sub buttons {

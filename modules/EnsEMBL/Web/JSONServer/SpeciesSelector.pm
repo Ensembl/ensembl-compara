@@ -38,6 +38,7 @@ sub init {
 sub create_tree {
   my $self = shift;
   my $division_json = $self->{species_selector_data}->{division_json};
+
   my @nodes = map { $self->traverse($_) } @{$division_json->{child_nodes}};
   my $final = create_node($division_json, 1, 1);
   $final->{children} = [@nodes];
@@ -192,7 +193,7 @@ sub create_folder_for_special_types {
       @extras_data_array = sort {$a->{assembly_target} <=> $b->{assembly_target}} @{$special_type_data->{$k}->{data}};
     }
     else {
-      @extras_data_array = sort {$a->{common} cmp $b->{common}} @{$special_type_data->{$k}->{data}};
+      @extras_data_array = sort {$a->{display_name} cmp $b->{display_name}} @{$special_type_data->{$k}->{data}};
     }
 
     foreach my $n_data (@extras_data_array) {
