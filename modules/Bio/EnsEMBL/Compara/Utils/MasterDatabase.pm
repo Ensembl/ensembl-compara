@@ -33,6 +33,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::IO qw/:spurt/;
 
+use Bio::EnsEMBL::Compara::Locus;
 use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
@@ -107,6 +108,7 @@ sub _load_dnafrags_from_slices {
     my ( $compara_dba, $genome_db, $slices_it, $old_dnafrags ) = @_;
 
     my $dnafrag_adaptor = $compara_dba->get_adaptor('DnaFrag');
+    my $dnafrag_alt_adaptor = $compara_dba->get_adaptor('DnaFragAltRegion');
     my %old_dnafrags_by_name = map { $_->name => $_ } @$old_dnafrags;
 
     my ( $new_dnafrags_ids, $existing_dnafrags_ids, $species_overall_len );
@@ -118,11 +120,17 @@ sub _load_dnafrags_from_slices {
         if (my $old_df = delete $old_dnafrags_by_name{$slice->seq_region_name}) {
             $new_dnafrag->dbID($old_df->dbID);
             $dnafrag_adaptor->update($new_dnafrag);
+            $dnafrag_alt_adaptor->delete_by_dbID($new_dnafrag->dbID);
             $existing_dnafrags_ids++;
 
         } else {
             $dnafrag_adaptor->store($new_dnafrag);
             $new_dnafrags_ids++;
+        }
+
+        if (!$new_dnafrag->is_reference and ($new_dnafrag->coord_system_name ne 'lrg')) {
+            my $alt_region = new_alt_region_for_Slice($slice, $new_dnafrag);
+            $dnafrag_alt_adaptor->store_or_update($alt_region);
         }
     }
     # my @old_dnafrag_ids = map { $_->dbID } values %$old_dnafrags_by_name;
@@ -130,6 +138,43 @@ sub _load_dnafrags_from_slices {
 
     return ( $new_dnafrags_ids, $existing_dnafrags_ids, \@old_dnafrags, $species_overall_len );
 }
+
+=head2 new_alt_region_for_Slice
+
+  Arg[1]      : Bio::EnsEMBL::Slice $slice
+  Arg[2]      : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
+  Description : Projects the slice onto the primary assembly, extracts the first
+                and last positions where they differ, and returns the corresponding
+                region as a Locus of the given dnafrag.
+  Returntype  : Bio::EnsEMBL::Compara::Locus
+  Exceptions  : Die if the dnafrag is a reference one
+
+=cut
+
+sub new_alt_region_for_Slice {
+    my ($slice, $dnafrag) = @_;
+
+    my $start = $dnafrag->length;
+    my $end   = 1;
+    my $projections = $slice->adaptor->fetch_normalized_slice_projection($slice);
+    foreach my $segment (@$projections) {
+        my $slice_part = $segment->[2];
+        if ($slice_part->seq_region_name() eq $slice->seq_region_name() && $slice_part->coord_system->equals($slice->coord_system)) {
+            $start = $slice_part->start if $slice_part->start < $start;
+            $end   = $slice_part->end   if $slice_part->end   > $end;
+        }
+    }
+    if ($start >= $end) {
+        die "Non-reference slices are expected to differ from their original slices by more than 1 bp. Inspect ".$dnafrag->name;
+    }
+    return bless {
+        'dnafrag'         => $dnafrag,
+        'dnafrag_start'   => $start,
+        'dnafrag_end'     => $end,
+        'dnafrag_strand'  => 1,
+    }, 'Bio::EnsEMBL::Compara::Locus';
+}
+
 
 =head2 _remove_deprecated_dnafrags
 
