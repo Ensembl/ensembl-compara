@@ -19,22 +19,13 @@ use warnings;
 
 use Test::More;
 
-use Bio::EnsEMBL::Test::MultiTestDB;
-
 use Bio::EnsEMBL::Compara::Utils::Test;
 
 
 ## Check that the main schema is fully compliant with the SQL standard
 
 my $compara_dir = Bio::EnsEMBL::Compara::Utils::Test::get_repository_root();
-my $t_dir = "${compara_dir}/modules/t";
-
-# Initialize a MultiTestDB object
-my $multitestdb = bless {}, 'Bio::EnsEMBL::Test::MultiTestDB';
-$multitestdb->curr_dir($t_dir);
-$multitestdb->_rebless;
-$multitestdb->species('compara');
-
+my $multitestdb = Bio::EnsEMBL::Compara::Utils::Test::create_multitestdb();
 my $db_name = $multitestdb->create_db_name('schema');
 
 my $statements1 = Bio::EnsEMBL::Compara::Utils::Test::read_sqls("${compara_dir}/sql/table.sql", 'with_fk');

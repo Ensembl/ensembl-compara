@@ -36,6 +36,7 @@ use File::Basename qw/dirname/;
 use Test::More;
 
 use Bio::EnsEMBL::Utils::IO qw/work_with_file/;
+use Bio::EnsEMBL::Test::MultiTestDB;
 
 =head2 GLOBAL VARIABLES
 
@@ -107,6 +108,26 @@ sub find_all_files {
     }
 
     return @files;
+}
+
+=head2 create_multitestdb
+
+  Description : Create a new MultiTestDB instance that can be used to
+                create custom test databases on the fly.
+  Returntype  : Bio::EnsEMBL::Test::MultiTestDB
+
+=cut
+
+sub create_multitestdb {
+    my $compara_dir = get_repository_root();
+    my $t_dir = "${compara_dir}/modules/t";
+
+    # Initialize a MultiTestDB object
+    my $multitestdb = bless {}, 'Bio::EnsEMBL::Test::MultiTestDB';
+    $multitestdb->curr_dir($t_dir);
+    $multitestdb->_rebless;
+    $multitestdb->species('compara');
+    return $multitestdb;
 }
 
 

@@ -21,7 +21,6 @@ use File::Temp qw/tempfile/;
 use Test::More;
 
 use Bio::EnsEMBL::ApiVersion;
-use Bio::EnsEMBL::Test::MultiTestDB;
 
 use Bio::EnsEMBL::Compara::Utils::Test;
 
@@ -29,13 +28,7 @@ use Bio::EnsEMBL::Compara::Utils::Test;
 ## Check that the schemas test databases are fully compliant with the SQL standard
 
 my $compara_dir = Bio::EnsEMBL::Compara::Utils::Test::get_repository_root();
-my $t_dir = "${compara_dir}/modules/t";
-
-# Initialize a MultiTestDB object
-my $multitestdb = bless {}, 'Bio::EnsEMBL::Test::MultiTestDB';
-$multitestdb->curr_dir($t_dir);
-$multitestdb->_rebless;
-$multitestdb->species('compara');
+my $multitestdb = Bio::EnsEMBL::Compara::Utils::Test::create_multitestdb();
 
 # Load the Compara schema for reference
 my $current_db_name = $multitestdb->create_db_name('current_schema');
