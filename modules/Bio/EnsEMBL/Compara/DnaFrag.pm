@@ -114,6 +114,8 @@ package Bio::EnsEMBL::Compara::DnaFrag;
 use strict;
 use warnings;
 
+use Scalar::Util qw(weaken);
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
@@ -527,6 +529,30 @@ sub slice {
   }
 
   return $self->{'_slice'};
+}
+
+
+=head2 get_alt_region
+
+  Example     : $dnafrag->get_alignable_region();
+  Description : Returns a Locus representing the portion of this DnaFrag that can be aligned.
+  Returntype  : Bio::EnsEMBL::Compara::Locus
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub get_alt_region {
+    my $self = shift;
+
+    if ((not exists $self->{'_alt_region'}) and $self->adaptor) {
+        $self->{'_alt_region'} = $self->adaptor->db->get_DnaFragAltRegionAdaptor->fetch_by_dbID($self->dbID);
+        if ($self->{'_alt_region'}) {
+            $self->{'_alt_region'}->{'dnafrag'} = $self;
+            weaken($self->{'_alt_region'}->{'dnafrag'});
+        }
+    }
+    return $self->{'_alt_region'};
 }
 
 
