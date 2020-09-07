@@ -109,7 +109,7 @@ sub userdata_form {
   my $message         = qq(<p>
 Please note that track hubs and indexed files (BAM, BigBed, etc) do not work with certain
 cloud services, including <b>Google Drive</b> and <b>Dropbox</b>. Please see our 
-<a href="/info/website/trackhub_support.html">support page</a> for more information.
+<a href="/info/website/trackhubs/trackhub_support.html">support page</a> for more information.
 </p>);
 
 
