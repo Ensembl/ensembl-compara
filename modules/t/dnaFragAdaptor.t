@@ -280,4 +280,19 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::store", sub {
     done_testing();
 };
 
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::delete", sub {
+
+    my $dnafrag = $dnafrag_adaptor->generic_fetch_one();
+    $multi->save("compara", "dnafrag");
+
+    $dnafrag_adaptor->delete($dnafrag);
+    my $no_dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag->dbID);
+    is($no_dnafrag, undef, "dnafrag dbID=".($dnafrag->dbID)." cannot be found any more after deletion");
+
+    $multi->restore("compara", "dnafrag");
+
+    done_testing();
+};
+
+
 done_testing();
