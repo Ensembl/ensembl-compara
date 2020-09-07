@@ -18,7 +18,7 @@ cache:
   directories:
     - $HOME/deps
 
-# Clone all repositories and setup the directory structure
+# Clone all repositories, setup the directory structure and the environment
 before_install:
     - cpanm -nq local::lib
     - eval "$(perl -Mlocal::lib=${HOME}/deps)"
@@ -51,22 +51,9 @@ before_install:
     - export PERL5LIB=$PERL5LIB:$PWD/ensembl-taxonomy/modules
     - export PERL5LIB=$PERL5LIB:$PWD/ensembl-io/modules
     - export PERL5LIB=$PERL5LIB:$PWD/ensembl-datacheck/lib
-
-# Setup the Perl dependencies and configuration
-install:
     - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
     - cp -f ensembl-rest/travisci/MultiTestDB.conf.travisci ensembl-rest/t/MultiTestDB.conf
     - cp -f ensembl/travisci/MultiTestDB.conf.travisci.mysql  ensembl/modules/t/MultiTestDB.conf
-    - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
-    # 8.43 is the last version compatible with Perl 5.14
-    - cpanm --quiet --notest Mojolicious@8.43
-    - cpanm --quiet --installdeps --notest --cpanfile ensembl-rest/cpanfile .
-    - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
-    - cpanm --quiet --installdeps --notest .
-    - cpanm --quiet --notest Devel::Cover::Report::Codecov
-
-# Setup the MySQL server
-before_script:
     - mysql -u root -h localhost -e 'GRANT ALL PRIVILEGES ON *.* TO "travis"@"%"'
 
 
@@ -77,7 +64,6 @@ jobs:
       perl: 5.30
       name: "Housekeeping (all languages)"
       install:
-        - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
       script: prove -r ./travisci/all-housekeeping/
 
@@ -85,7 +71,6 @@ jobs:
       perl: 5.30
       name: "SQL unit tests"
       install:
-        - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
       script: prove -r ./travisci/sql-unittest/
 
@@ -95,6 +80,10 @@ jobs:
       name: "Perl unit tests on the minimum version"
       env:
         - COVERAGE=false
+      install:
+        - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
+        - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
+        - cpanm --quiet --installdeps --notest .
       script: ./travisci/perl-unittest_harness.sh
 
     - language: perl
@@ -102,6 +91,11 @@ jobs:
       name: "Perl unit tests on the latest version, with code coverage"
       env:
         - COVERAGE=true
+      install:
+        - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
+        - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
+        - cpanm --quiet --installdeps --notest .
+        - cpanm --quiet --notest Devel::Cover::Report::Codecov
       script: ./travisci/perl-unittest_harness.sh
       after_success:
         - cover --nosummary -report codecov
@@ -111,6 +105,14 @@ jobs:
       name: "Perl external unit tests on the latest version, with code coverage"
       env:
         - COVERAGE=true
+      install:
+        - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
+          # 8.43 is the last version compatible with Perl 5.14
+        - cpanm --quiet --notest Mojolicious@8.43
+        - cpanm --quiet --installdeps --notest --cpanfile ensembl-rest/cpanfile .
+        - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
+        - cpanm --quiet --installdeps --notest .
+        - cpanm --quiet --notest Devel::Cover::Report::Codecov
       script: ./travisci/perl-external_unittest_harness.sh
       after_success:
         - cover --nosummary -report codecov
@@ -120,8 +122,6 @@ jobs:
       name: "Perl linter"
       install:
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
-      before_script:
-        - echo
       script: ./travisci/perl-linter_harness.sh
 
     - language: python
@@ -134,8 +134,6 @@ jobs:
         - echo
       install:
         - pip install -r requirements.txt .
-      before_script:
-        - echo
       script: ./travisci/python-unittest_harness.sh
 
     - language: python
@@ -150,8 +148,6 @@ jobs:
         - pip install pytest-cov codecov
         - pip install -r requirements.txt
         - pip install -e .
-      before_script:
-        - echo
       script: ./travisci/python-unittest_harness.sh
       after_success:
         - codecov
@@ -164,7 +160,5 @@ jobs:
       install:
         - pip install pylint mypy
         - pip install -r requirements.txt .
-      before_script:
-        - echo
       script: ./travisci/python-linter_harness.sh
 
