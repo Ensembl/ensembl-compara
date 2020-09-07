@@ -134,7 +134,7 @@ sub _load_dnafrags_from_slices {
 =head2 _remove_deprecated_dnafrags
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : ArrayRef of DnaFrag IDs
+  Arg[2]      : ArrayRef of DnaFrags
   Description : This method deletes DnaFrags with the given IDs from
                 the compara database
   Returns     : -none-
