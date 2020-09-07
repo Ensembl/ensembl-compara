@@ -106,7 +106,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
                 'reuse_file'                => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga_reuse.tsv',
                 'output_file'               => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
             },
-            -analysis_capacity  =>  50,  # use per-analysis limiter
+            -analysis_capacity  =>  140,  # use per-analysis limiter
             -flow_into  => {
                 3 => [ '?table_name=ortholog_quality' ],
             },
