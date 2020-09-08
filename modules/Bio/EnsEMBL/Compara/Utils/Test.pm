@@ -298,6 +298,30 @@ sub apply_statements {
 }
 
 
+=head2 get_pipeline_tables_create_statements
+
+  Arg[1]      : (optional) Arrayref of Strings $table_names
+  Description : Read the content of the "pipeline" schema definition file, filter it
+                down to the requested table if necessary, and return it.
+  Returntype  : List of string pairs
+
+=cut
+
+sub get_pipeline_tables_create_statements {
+    my ($table_names) = @_;
+
+    my $compara_dir = get_repository_root();
+    my $statements  = read_sqls("${compara_dir}/sql/pipeline-tables.sql");
+
+    if ($table_names) {
+        my %h = map { 'CREATE TABLE '.$_ => 1 } @$table_names;
+        $statements = [grep {$h{$_->[0]}} @$statements];
+    }
+
+    return $statements;
+}
+
+
 =head2 get_schema_from_database
 
   Arg[1]      : DBI database handle $dbh
