@@ -54,7 +54,7 @@ sub get_id_range {
     my ($dbc, $label, $n_ids, $requestor) = @_;
 
     $n_ids //= 1;
-    die "Cannot request 0 IDs" unless $n_ids;
+    die "Can only request a positive number of IDs" if $n_ids <= 0;
 
     # Check whether we have already seen this requestor
     if ($requestor) {
