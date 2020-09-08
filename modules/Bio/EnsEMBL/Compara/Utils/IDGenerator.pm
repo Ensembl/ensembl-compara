@@ -50,6 +50,28 @@ our @EXPORT_OK;
 );
 
 
+=head2 get_id_range
+
+  Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $dbc
+  Arg[2]      : String $label
+  Arg[3]      : (optional) Integer $n_ids. Defaults to 1
+  Arg[4]      : (optional) Integer $requestor
+  Example     : $object_name->get_id_ran
+  Description : Request a new range of $n_ids IDs. The method returns the
+                first integer of the range, and the caller can assume that
+                all integers between this value and the value plus $n_ids
+                minus 1 (both boundaries included) are now allocated to it.
+                When $requestor is given, the assignment will be recorded
+                in the database, so that further calls with the same
+                requestor identifier (and a compatible $n_ids) will return
+                the same start ID. This is useful when rerunning jobs.
+                The IDs are recorded in a table and the method can be
+                called by concurrent jobs.
+  Returntype  : Integer
+  Exceptions  : none
+
+=cut
+
 sub get_id_range {
     my ($dbc, $label, $n_ids, $requestor) = @_;
 
