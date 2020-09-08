@@ -17,6 +17,7 @@
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Compara::Utils::Test;
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Test::MultiTestDB;
@@ -39,6 +40,11 @@ subtest "Test Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologie
     my $compara_db = $dbc->url;
     $dbc->do("TRUNCATE TABLE homology");
 
+    my $statements = Bio::EnsEMBL::Compara::Utils::Test::get_pipeline_tables_create_statements(['id_generator', 'id_assignments']);
+    Bio::EnsEMBL::Compara::Utils::Test::apply_statements($dbc, $statements, 'Can load the ID generation tables');
+    # Generate homology_ids starting from 11
+    $dbc->do("INSERT INTO id_generator (label, next_id) VALUES ('homology', 11)");
+
     # find absolute path to the test input
     # important for travis-ci
     use Cwd 'abs_path';
@@ -56,7 +62,6 @@ subtest "Test Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologie
                 'goc'       => "$test_flatfile_dir/goc.tsv",
                 'high_conf' => "$test_flatfile_dir/high_conf.tsv",
             },
-            'homology_id_start'  => 11,
             'mlss_id'            => 1234,
             'high_conf_expected' => 1,
         }
