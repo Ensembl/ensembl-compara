@@ -33,14 +33,14 @@ sub features {
   my $species   = $self->species_defs->get_config(ucfirst $self->my_config('species'), 'SPECIES_PRODUCTION_NAME');
 
   # ENSWEB-5972
-  my $species = $self->species_defs->production_name_mapping($species);
+  my $prod_species = $self->species_defs->production_name_mapping($species);
 
   ## How do we retrieve the features from the database. in this case
   ## we do a get_all_compara_Syntenies
   ## NOTE THAT THIS IS NOT MULTI COMPARA SAFE... NEEDS TO REALLY
   ## KNOW ABOUT THE COMPARA DATABASE... WHICH THE WEBCODE WILL PASS IN!!
 
-  my $syntenies = $self->{'container'}->get_all_compara_Syntenies($species, 'SYNTENY', $self->dbadaptor('multi', $self->my_config('db')));
+  my $syntenies = $self->{'container'}->get_all_compara_Syntenies($prod_species, 'SYNTENY', $self->dbadaptor('multi', $self->my_config('db')));
   my $offset    = $self->{'container'}->start - 1;
   my @features;
   
