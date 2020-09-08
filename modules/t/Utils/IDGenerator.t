@@ -28,13 +28,12 @@ use Bio::EnsEMBL::Compara::Utils::Test;
 
 my $compara_dir = Bio::EnsEMBL::Compara::Utils::Test::get_repository_root();
 my $multitestdb = Bio::EnsEMBL::Compara::Utils::Test::create_multitestdb();
-my $statements  = Bio::EnsEMBL::Compara::Utils::Test::read_sqls("${compara_dir}/sql/pipeline-tables.sql");
 
 my $db_name = $multitestdb->create_db_name('schema');
-$multitestdb->create_and_use_db($multitestdb->dbi_connection(), $db_name);
+my $db = $multitestdb->create_and_use_db($multitestdb->dbi_connection(), $db_name);
 
-my @create_sql  = grep {($_->[0] eq 'CREATE TABLE id_generator') || ($_->[0] eq 'CREATE TABLE id_assignments')} @$statements;
-Bio::EnsEMBL::Compara::Utils::Test::load_statements($multitestdb, $db_name, \@create_sql, 'Create the ID generation table');
+my $statements = Bio::EnsEMBL::Compara::Utils::Test::get_pipeline_tables_create_statements(['id_generator', 'id_assignments']);
+Bio::EnsEMBL::Compara::Utils::Test::apply_statements($db, $statements, 'Can load the ID generation tables');
 
 my $dbc = Bio::EnsEMBL::DBSQL::DBConnection->new(
     '-host'        => $multitestdb->db_conf->{'host'},
