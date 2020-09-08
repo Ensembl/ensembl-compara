@@ -30,7 +30,10 @@ use base qw(EnsEMBL::Draw::GlyphSet_simple);
 
 sub features {
   my $self      = shift;
-  my $species   = $self->species_defs->get_config($self->my_config('species'), 'SPECIES_PRODUCTION_NAME');
+  my $species   = $self->species_defs->get_config(ucfirst $self->my_config('species'), 'SPECIES_PRODUCTION_NAME');
+
+  # ENSWEB-5972
+  my $species = $self->species_defs->production_name_mapping($species);
 
   ## How do we retrieve the features from the database. in this case
   ## we do a get_all_compara_Syntenies
