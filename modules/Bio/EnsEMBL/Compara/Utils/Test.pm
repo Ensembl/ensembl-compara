@@ -217,8 +217,8 @@ sub read_sqls {
   Arg[2]      : String $db_name. The database name
   Arg[3]      : Arrayref of String pairs (arrayrefs), each being a statement title, and an actual SQL statement
   Arg[4]      : String $server_mode. Typically TRADITIONAL or ANSI
-  Description : Execute all the statements and check that they pass individually
-  Returntype  : none
+  Description : Execute all the statements in a new database and check that they pass individually
+  Returntype  : A DBI database handle to the newly created database
 
 =cut
 
@@ -251,8 +251,8 @@ sub test_schema_compliance {
   Arg[2]      : String $db_name. The database name
   Arg[3]      : Arrayref of String pairs (arrayrefs), each being a statement title, and an actual SQL statement
   Arg[4]      : (optional) String $test_name. A custom name to give to the test
-  Description : Execute all the statements and check that they pass as a whole
-  Returntype  : none
+  Description : Execute all the statements in a new database and check that they pass as a whole
+  Returntype  : A DBI database handle to the newly created database
 
 =cut
 
