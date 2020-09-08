@@ -86,7 +86,7 @@ CREATE TABLE dna_collection (
  PRIMARY KEY (dna_collection_id),
  UNIQUE (description)
 
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
 -- ----------------------------------------------------------------------------------
