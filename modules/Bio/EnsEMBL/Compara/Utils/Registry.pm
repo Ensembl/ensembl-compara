@@ -62,6 +62,7 @@ use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
 use constant PREVIOUS_DATABASE_SUFFIX => '__previous_database__';
 
+my %hosts;
 my %ports;
 my %rw_users;
 my %rw_passwords;
@@ -191,7 +192,7 @@ sub remove_multi {
 =cut
 
 sub add_core_dbas {
-    add_dbas('Bio::EnsEMBL::DBSQL::DBAdaptor', $_[0]);
+    add_dbas('Bio::EnsEMBL::DBSQL::DBAdaptor', $_[0], 0);
 }
 
 
@@ -205,7 +206,7 @@ sub add_core_dbas {
 =cut
 
 sub add_compara_dbas {
-    add_dbas('Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', $_[0]);
+    add_dbas('Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', $_[0], 1);
 }
 
 
@@ -219,7 +220,7 @@ sub add_compara_dbas {
 =cut
 
 sub add_taxonomy_dbas {
-    add_dbas('Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor', $_[0], -group => 'taxonomy',);
+    add_dbas('Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor', $_[0], 0, -group => 'taxonomy');
 }
 
 
@@ -238,14 +239,16 @@ sub add_taxonomy_dbas {
 sub add_dbas {
     my $dba_class = shift;
     my $compara_dbs = shift;
+	my $rw = shift;
 
     foreach my $alias_name ( keys %$compara_dbs ) {
-        my ( $host, $db_name ) = @{ $compara_dbs->{$alias_name} };
+        my ( $host_cmd, $db_name ) = @{ $compara_dbs->{$alias_name} };
 
+		my $host = get_host($host_cmd);
         my ( $user, $pass );
-        if ( ($host =~ /-prod-/) && !($alias_name =~ /_prev/) ) {
-            $user = get_rw_user($host);
-            $pass = get_rw_pass($host);
+        if ( $rw && $alias_name !~ /prev/ ) {
+            $user = get_rw_user($host_cmd);
+            $pass = get_rw_pass($host_cmd);
         } else {
             $user = 'ensro';
             $pass = '';
@@ -255,7 +258,7 @@ sub add_dbas {
             -host => $host,
             -user => $user,
             -pass => $pass,
-            -port => get_port($host),
+            -port => get_port($host_cmd),
             -species => $alias_name,
             -dbname  => $db_name,
             @_,
@@ -294,6 +297,25 @@ sub get_previous_core_DBAdaptor {
 
 =cut
 
+=head2 get_host
+
+  Arg[1]      : String $host_cmd
+  Example     : Bio::EnsEMBL::Compara::Utils::Registry::get_host('cp1');
+  Description : Run the associated mysql-cmd to get the host
+  Returntype  : Integer
+  Exceptions  : none
+
+=cut
+
+sub get_host {
+	my $host_cmd = shift;
+	unless (exists $hosts{$host_cmd}) {
+		my $host = `$host_cmd host`;
+		chomp $host;
+		$hosts{$host_cmd} = $host;
+	}
+	return $hosts{$host_cmd};
+}
 
 =head2 get_port
 
