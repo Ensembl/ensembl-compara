@@ -148,7 +148,7 @@ sub run {
 	my %aln_ranges = %{ $self->param('aln_ranges') };
     my %mlss_mapping = %{ $self->param('mlss_db_mapping') };
 
-	my (@qual_summary, @orth_ids);
+	my (@qual_summary, @orth_ids, %max_quality);
 
 	foreach my $orth ( @orth_info ) {
         my ($orth_dnafrags, $orth_ranges) = $self->_orth_dnafrags($orth);
@@ -157,6 +157,9 @@ sub run {
         my $exon_ranges    = $self->_get_exon_ranges_for_orth($orth);
 
 		push( @orth_ids, $homo_id );
+
+		# The WGA score defaults to 0
+		$max_quality{$homo_id} = 0;
 
 		next unless ( defined $this_aln_range ); 
 
@@ -167,6 +170,8 @@ sub run {
                 my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($aln_db);
                 my $gdba = $dba->get_GenomeDBAdaptor;
 
+				my $sum_scores = 0;
+				my $n_scores   = 0;
 				foreach my $gdb_id ( sort {$a <=> $b} keys %{ $orth_ranges } ){
 					# Make sure that if this is a component gdb_id it refers back to the principal. The exon and ortholog data is on the components and not on the principal, but the aln_mlss_id is only on principal
 					my $gdb = $gdba->fetch_by_dbID($gdb_id);
@@ -184,9 +189,16 @@ sub run {
 						  intron_length            => $combined_coverage->{intron_len},
 						}
 					);
+					$sum_scores += $combined_coverage->{score};
+					$n_scores ++;
 				}
                 # disconnect from alignment_db
                 $dba->dbc->disconnect_if_idle();
+
+				my $avg_score = $sum_scores / $n_scores; # $n_scores should be 2
+				if ($avg_score > $max_quality{$homo_id}) {
+					$max_quality{$homo_id} = $avg_score;
+				}
 			}
 		}
 
@@ -194,6 +206,7 @@ sub run {
 
 	$self->param( 'orth_ids', \@orth_ids );
 	$self->param('qual_summary', \@qual_summary);
+	$self->param('max_quality', \%max_quality);
 
 }
 

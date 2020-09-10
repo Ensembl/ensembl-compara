@@ -44,7 +44,6 @@ use strict;
 use warnings;
 use Data::Dumper;
 use File::Basename;
-use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
 use Bio::EnsEMBL::Compara::Utils::DistributionTag qw(write_n_tag);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -110,7 +109,7 @@ sub write_output {
         my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($aln_db);
         my $mlss = $dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($aln_mlss_id);
         print "Writing n_${member_type}_wga_score to the database\n" if $self->debug;
-        $self->write_n_tag($mlss, "${member_type}_wga", \%max_quality);
+        write_n_tag($mlss, "${member_type}_wga", \%max_quality);
         print "Tag: n_${member_type}_wga_score written!\n\n" if $self->debug;
         $dba->dbc->disconnect_if_idle();
     }

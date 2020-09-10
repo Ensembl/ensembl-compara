@@ -80,58 +80,26 @@ sub pipeline_analyses_ortholog_qm_alignment {
                 'method_link_types' => $self->o('homology_method_link_types'),
             },
             -flow_into  => {
-                '2->A' => { 'prepare_orthologs' => INPUT_PLUS() },
+                '2->A' => { 'calculate_wga_coverage' => INPUT_PLUS() },
                 'A->1' => [ 'check_file_copy' ],
             }
         },
 
-        {   -logic_name => 'prepare_orthologs',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs',
+        {   -logic_name => 'calculate_wga_coverage',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::WGACoverage',
             -parameters => {
                 'hashed_mlss_id'            => '#expr(dir_revhash(#orth_mlss_id#))expr#',
                 'homology_flatfile'         => '#homology_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.homologies.tsv',
                 'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.homology_id_map.tsv',
+                'previous_wga_file'         => '#prev_wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
+                'reuse_file'                => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga_reuse.tsv',
+                'output_file'               => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
             },
-            -analysis_capacity  =>  50,  # use per-analysis limiter
-            -flow_into => {
-                # these analyses will write to the same file, so a semaphore is required to prevent clashes
-                '3->A' => [ 'reuse_wga_score' ],
-                'A->2' => { 'calculate_wga_coverage' => INPUT_PLUS() },
-            },
-            -rc_name  => '2Gb_job',
-        },
-
-        {   -logic_name => 'calculate_wga_coverage',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage',
-            -hive_capacity => 30,
-            -batch_size => 10,
+            -analysis_capacity  =>  140,  # use per-analysis limiter
             -flow_into  => {
                 3 => [ '?table_name=ortholog_quality' ],
-                2 => [ 'assign_wga_coverage_score' ],
             },
             -rc_name => '2Gb_job',
-        },
-
-        {   -logic_name => 'assign_wga_coverage_score',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::AssignQualityScore',
-            -parameters => {
-                'hashed_mlss_id' => '#expr(dir_revhash(#orth_mlss_id#))expr#',
-                'output_file'    => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
-                'reuse_file'     => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga_reuse.tsv',
-            },
-            -rc_name    => '500Mb_job',
-            -hive_capacity => 400,
-        },
-
-        {   -logic_name => 'reuse_wga_score',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::ReuseWGAScore',
-            -parameters => {
-                'hashed_mlss_id'            => '#expr(dir_revhash(#orth_mlss_id#))expr#',
-                'previous_wga_file'         => '#prev_wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv',
-                'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.homology_id_map.tsv',
-                'output_file'               => '#wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga_reuse.tsv',
-            },
-            -hive_capacity => 400,
         },
 
         {   -logic_name  => 'check_file_copy',
