@@ -77,8 +77,6 @@ sub default_options {
         'epo_db'      => 'compara_prev',
 
         # The dbs required for OrthologQMAlignment alt_aln_dbs can be an array list of alignment dbs
-        'compara_db'      => $self->pipeline_url(),
-        'alt_homology_db' => $self->pipeline_url(),
         'alt_aln_dbs'     => [
             'compara_curr',
         ],
@@ -160,11 +158,7 @@ sub default_options {
             'prev_homology_dumps_dir'   => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
 
             # Parameters for OrthologQMAlignment
-            'species1'         => undef,
-            'species2'         => undef,
-            'species_set_name' => "collection-" . $self->o('collection'),
-            'species_set_id'   => undef,
-            'ref_species'      => undef,
+            'wga_species_set_name'       => "collection-" . $self->o('collection'),
             'homology_method_link_types' => ['ENSEMBL_ORTHOLOGUES'],
             # WGA dump directories for OrthologQMAlignment
             'wga_dumps_dir'      => $self->o('homology_dumps_dir'),
@@ -1314,7 +1308,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'rib_fire_orth_wga',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => WHEN( '#dna_alns_complete#'  => [ 'pair_species' ] ),
+            -flow_into  => WHEN( '#dna_alns_complete#'  => { 'pair_species' => {'species_set_name' => $self->o('wga_species_set_name')}, } ),
         },
 
         {   -logic_name => 'rib_fire_high_confidence_orths',

@@ -51,16 +51,6 @@ sub pipeline_analyses_ortholog_qm_alignment {
                 'B->1' => [ 'ortholog_mlss_factory' ],
                 '3'    => [ 'reset_mlss' ],
             },
-            -parameters => {
-                'species_set_name' => $self->o('species_set_name'),
-                'species_set_id'   => $self->o('species_set_id'),
-                'ref_species'      => $self->o('ref_species'),
-                'species1'         => $self->o('species1'),
-                'species2'         => $self->o('species2'),
-                'alt_aln_dbs'      => $self->o('alt_aln_dbs'),
-                'master_db'        => $self->o('master_db'),
-                'alt_homology_db'  => $self->o('alt_homology_db'),
-            },
         },
 
         {   -logic_name => 'reset_mlss',
@@ -75,7 +65,6 @@ sub pipeline_analyses_ortholog_qm_alignment {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::SelectMLSS',
             -parameters => {
                 'current_release' => $self->o('ensembl_release'),
-                'master_db'       => $self->o('master_db'),
             },
             -flow_into  => {
                 1 => [ '?accu_name=alignment_mlsses&accu_address=[]&accu_input_variable=accu_dataflow' ],
