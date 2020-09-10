@@ -196,7 +196,7 @@ sub pipeline_create_commands {
             $self->db_cmd(sprintf(q{INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'division', '%s')}, $self->o('division'))),
 
             # MySQL specific procedures
-            $driver eq 'mysql' ? ($self->db_cmd().' < '.$self->check_file_in_ensembl('ensembl-compara/sql/procedures.'.$driver)) : (),
+            # $driver eq 'mysql' ? ($self->db_cmd().' < '.$self->check_file_in_ensembl('ensembl-compara/sql/procedures.'.$driver)) : (),
     ];
 }
 
