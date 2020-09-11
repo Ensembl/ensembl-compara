@@ -195,7 +195,8 @@ sub run {
                 # disconnect from alignment_db
                 $dba->dbc->disconnect_if_idle();
 
-				my $avg_score = $sum_scores / $n_scores; # $n_scores should be 2
+				die "Why is this happening ?? Got $n_scores for homology $homo_id" if $n_scores != 2;
+				my $avg_score = $sum_scores / $n_scores;
 				if ($avg_score > $max_quality{$homo_id}) {
 					$max_quality{$homo_id} = $avg_score;
 				}
