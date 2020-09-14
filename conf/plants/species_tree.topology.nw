@@ -123,10 +123,13 @@
            )Oryzinae,
           )BOP_clade,
          )Poaceae,
-           (
-            ananas_comosus,
-           )Bromeliaceae,
+         (
+          ananas_comosus,
+         )Bromeliaceae,
         )commelinids,
+        (
+         asparagus_officinalis,
+        ) Asparagales,
        )Petrosaviidae,
        (
         (
@@ -168,7 +171,9 @@
             trifolium_pratense,
             medicago_truncatula,
            )Trifolieae,
-           lupinus_angustifolius,
+           (
+            lupinus_angustifolius,
+           )Genisteae,
            (
             (
              vigna_angularis,
@@ -177,6 +182,10 @@
             phaseolus_vulgaris,
             glycine_max,
            )Phaseoleae,
+           (
+            arachis_hypogaea_A,
+            arachis_hypogaea_B,
+           )Dalbergieae,
           )Papilionoideae,
           (
            (
@@ -248,11 +257,15 @@
           (
            pistacia_vera,
           )Anacardiaceae,
+          (
+           eucalyptus_grandis,
+          )Myrtaceae,
          )malvids,
         )rosids,
         ( 
          (
           beta_vulgaris,
+          chenopodium_quinoa,
          )Chenopodiaceae,
         )Caryophyllales,
         (
@@ -261,6 +274,9 @@
          )Crassulaceae,
         )Saxifragales,
        )Pentapetalae,
+       (
+        papaver_somniferum,
+       )Ranunculales,
       )Mesangiospermae,
      )Magnoliophyta,
     )Tracheophyta,
