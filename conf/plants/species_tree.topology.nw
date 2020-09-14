@@ -47,7 +47,7 @@
            setaria_italica,
            setaria_viridis,
            panicum_hallii_fil2,
-           panicum_hallii_hal2,
+           panicum_hallii,
           )Panicoideae,
           (
            eragrostis_tef,
@@ -238,7 +238,7 @@
            corchorus_capsularis,
            gossypium_raimondii,
            (
-            theobroma_cacao_matina,
+            theobroma_cacao,
             theobroma_cacao_criollo,
            )Theobroma,
           )Malvaceae,
