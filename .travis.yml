@@ -11,6 +11,7 @@ addons:
     packages:
       - graphviz
       - yamllint
+      - shellcheck
 
 services:
   - mysql
