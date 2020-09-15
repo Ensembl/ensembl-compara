@@ -21,7 +21,7 @@ rt1=$?
 
 # Check that all the PODs are valid (we don't mind missing PODs at the moment)
 # Note the initial "!" to negate grep's return code
-! find docs modules scripts sql travisci -iname '*.t' -o -iname '*.pl' -o -iname '*.pm' -print0 | xargs -0 podchecker 2>&1 | grep -v ' pod syntax OK' | grep -v 'does not contain any pod commands'
+! find docs modules scripts sql travisci \( -iname '*.t' -o -iname '*.pl' -o -iname '*.pm' \) -print0 | xargs -0 podchecker 2>&1 | grep -v ' pod syntax OK' | grep -v 'does not contain any pod commands'
 rt2=$?
 
 if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then
