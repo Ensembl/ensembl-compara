@@ -173,13 +173,17 @@ sub transcript_table {
     my $action      = $hub->action;
     @proj_attrib    = @{ $gene->get_all_Attributes('proj_parent_g') };
     my %biotype_rows;
-    my $MANE_attrib_code = 'MANE_Select';
+
+    #keys are attrib_type codes, values are glossary entries 
+    my %MANE_attrib_codes = (
+      MANE_Select => 'MANE Select',
+      MANE_Plus   => 'MANE Plus');
 
     my $trans_attribs = {};
     my $trans_gencode = {};
 
     foreach my $trans (@$transcripts) {
-      foreach my $attrib_type ('CDS_start_NF','CDS_end_NF','gencode_basic','TSL','appris',$MANE_attrib_code) {
+      foreach my $attrib_type ('CDS_start_NF','CDS_end_NF','gencode_basic','TSL','appris',keys %MANE_attrib_codes) {
         (my $attrib) = @{$trans->get_all_Attributes($attrib_type)};
         next unless $attrib;
         if($attrib_type eq 'gencode_basic' && $attrib->value) {
@@ -193,7 +197,7 @@ sub transcript_table {
           $short_code =~ s/rincipal//;
           $trans_attribs->{$trans->stable_id}{'appris'} = [$short_code, $attrib->value]; 
           }
-        elsif ($attrib_type eq $MANE_attrib_code && $attrib && $attrib->value) {
+        elsif ((grep {$attrib_type eq $_} keys %MANE_attrib_codes) && $attrib && $attrib->value) {
           $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib;
         }
         else {
@@ -322,10 +326,12 @@ sub transcript_table {
           push @flags, helptip("APPRIS$short_code", get_glossary_entry($hub, "APPRIS: $key").get_glossary_entry($hub, 'APPRIS'));
       }
       my $refseq_url;
-      if (my $mane_attrib = $trans_attribs->{$tsi}{$MANE_attrib_code}) {
-        my $refseq_id = $mane_attrib->value;
-        $refseq_url  = $hub->get_ExtURL_link($refseq_id, 'REFSEQ_MRNA', $refseq_id);
-        push @flags, helptip($mane_attrib->name, get_glossary_entry($hub, 'MANE Select'));
+      foreach my $MANE_attrib_code (keys %MANE_attrib_codes) {
+        if (my $mane_attrib = $trans_attribs->{$tsi}{$MANE_attrib_code}) {
+          my $refseq_id = $mane_attrib->value;
+          $refseq_url  = $hub->get_ExtURL_link($refseq_id, 'REFSEQ_MRNA', $refseq_id);
+          push @flags, helptip($mane_attrib->name, get_glossary_entry($hub, $MANE_attrib_codes{$MANE_attrib_code}));
+        }
       }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;
