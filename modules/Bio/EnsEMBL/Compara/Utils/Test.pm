@@ -30,7 +30,7 @@ package Bio::EnsEMBL::Compara::Utils::Test;
 use strict;
 use warnings;
 
-use Cwd qw(abs_path);
+use Cwd qw(abs_path getcwd);
 use File::Spec;
 use File::Basename qw/dirname/;
 use Test::More;
@@ -62,8 +62,9 @@ my $repository_root;
 
 sub get_repository_root {
     return $repository_root if $repository_root;
-    my $file_dir = dirname(abs_path(__FILE__));
+    my $file_dir = dirname(__FILE__);
     $repository_root = File::Spec->catdir($file_dir, File::Spec->updir(), File::Spec->updir(), File::Spec->updir(), File::Spec->updir(), File::Spec->updir());
+    $repository_root = File::Spec->abs2rel(abs_path($repository_root), getcwd());
     return $repository_root;
 }
 
