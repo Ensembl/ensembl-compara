@@ -25,9 +25,10 @@ use Bio::EnsEMBL::Compara::Utils::FlatFile;
 
 sub is_valid_tsv {
     my $filename = shift;
+    my $delim    = shift;
 
     lives_ok(
-        sub { Bio::EnsEMBL::Compara::Utils::FlatFile::check_column_integrity($filename); },
+        sub { Bio::EnsEMBL::Compara::Utils::FlatFile::check_column_integrity($filename, $delim); },
         "All lines of $filename have the same number of columns"
     );
 }
@@ -37,6 +38,8 @@ my @all_files = Bio::EnsEMBL::Compara::Utils::Test::find_all_files();
 foreach my $f (@all_files) {
     if ($f =~ /\.tsv$/) {
         is_valid_tsv($f);
+    } elsif ($f =~ /\.matrix$/) {
+        is_valid_tsv($f, ' ');
     }
 }
 
