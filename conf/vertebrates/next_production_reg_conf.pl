@@ -50,8 +50,9 @@ my $prev_core_dbs = {
 
 # All the core databases live on the Vertebrates staging server or our mirror
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1:4519/$curr_release");
-# Remove species that will be updated $next_release
+# Remove species that will be updated $next_release and the ancestral sequences core database
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species( [ keys %$updated_core_dbs ] );
+Bio::EnsEMBL::Compara::Utils::Registry::remove_species( [ 'ancestral_sequences' ] );
 # Add the correct core database for those species
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $updated_core_dbs );
 
@@ -77,7 +78,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $updated_core_dbs );
 # FORMAT: species/alias name => [ host, db_name ]
 my $compara_dbs = {
     # general compara dbs
-    'compara_master' => [ 'mysql-ens-compara-prod-1', 'ensembl_compara_master_dup' ],
+    'compara_master' => [ 'mysql-ens-compara-prod-1', 'ensembl_compara_master' ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$curr_release" ],
 
     # homology dbs
