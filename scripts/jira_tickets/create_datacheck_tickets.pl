@@ -85,6 +85,7 @@ GetOptions(
     "h|help"          => \$help,
 );
 pod2usage(1) if $help;
+pod2usage(1) unless @ARGV;
 my $dc_file = $ARGV[0];
 die "Cannot find $dc_file - file does not exist" unless -e $dc_file;
 # Get file absolute path and basename
