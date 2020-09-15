@@ -3,6 +3,7 @@ language: generic
 
 env:
   global:
+    # yamllint disable-line rule:line-length
     - secure: bGSZASCtRCcE2VZ3u4hdvjh6CDHe+Uo3MR7B4eobSFFhZVjIN3/DKaGrQYprEeSIB/vb75rveyTheO3qe3lHwq71e18cBk2ulQA6/L0eUJYsoR3u2y7d9whu8dS97IoLzize6hItxJFP8TmRaJBtWqOixyWHNW72X/fKF1a192E=
 
 addons:
@@ -21,6 +22,7 @@ cache:
 
 # Clone all repositories, setup the directory structure and the environment
 before_install:
+    # yamllint disable-line rule:indentation
     - cpanm -nq local::lib
     - eval "$(perl -Mlocal::lib=${HOME}/deps)"
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
@@ -108,7 +110,7 @@ jobs:
         - COVERAGE=true
       install:
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
-          # 8.43 is the last version compatible with Perl 5.14
+        # 8.43 is the last version compatible with Perl 5.14
         - cpanm --quiet --notest Mojolicious@8.43
         - cpanm --quiet --installdeps --notest --cpanfile ensembl-rest/cpanfile .
         - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .

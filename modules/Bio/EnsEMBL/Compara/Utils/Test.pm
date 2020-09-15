@@ -84,13 +84,14 @@ sub find_all_files {
     # First populate the top-level sub-directories
     {
         my $starting_dir = get_repository_root();
-        my %subdir_ok = map {$_ => 1} qw(conf modules scripts sql src docs travisci xs);
         opendir(my $dirh, $starting_dir);
         my @dir_content = File::Spec->no_upwards(readdir $dirh);
         foreach my $f (@dir_content) {
             my $af = File::Spec->catfile($starting_dir, $f);
-            if ((-d $af) and $subdir_ok{$f}) {
+            if ((-d $af) and ($f ne '.git')) {
                 push @queue, $af;
+            } elsif (-f $af) {
+                push @files, $af;
             }
         }
         closedir $dirh;

@@ -37,6 +37,7 @@ foreach my $f (@all_files) {
     $should_be_executable = '' if $f =~ /production.*reg_conf.*\.pl$/;
     $should_be_executable = '' if $f =~ /\bsrc\/python\/.*\.py$/;
     $should_be_executable = '' if $f =~ /\/conftest\.py$/;
+    $should_be_executable = '' if $f =~ /\bsetup\.py$/;
     # Test
     is(-x $f, $should_be_executable, "$f is executable");
 }
