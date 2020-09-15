@@ -222,6 +222,8 @@ sub parse_newick_into_tree
         throw("parse error: nothing expected after ;");
       }
   }
+  throw("no tree at all") unless defined $root;
+  throw("parse error: unbalanced ()\n") if($bracket_level ne 0);
   # Tags of the root node are lost otherwise
   $root->{_tags} = $node->{_tags} unless $root eq $node;
   return $root;
