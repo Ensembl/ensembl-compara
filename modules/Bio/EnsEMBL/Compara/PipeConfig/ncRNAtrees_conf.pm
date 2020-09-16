@@ -674,6 +674,7 @@ sub core_pipeline_analyses {
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
                 -analysis_capacity => $self->o('recover_capacity'),
                 -flow_into => {
+                    1 => 'hc_epo_removed_members',
                     -1 => 'recover_epo_hugemem',
                 },
                 -rc_name => '16Gb_job',
