@@ -45,7 +45,7 @@ sub is_valid_xml {
         sub { $xml_document = $xml_parser->parse_file($filename); },    ## XML::LibXML::Document
         "$filename is a valid XML file"
     );
-    if ($xml_document) {
+    if ($xml_document && $filename =~ /\bconf\/.*\/mlss_conf\.xml$/) {
         lives_ok(
             sub { $schema->validate( $xml_document) },
             "$filename follows the RNG specification"
