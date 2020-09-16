@@ -582,7 +582,7 @@ sub _update_ticket {
             # And update its description and remove the previous assignee
             my $info_to_update = { fields => {
                 description => $description,
-                assignee    => { name => '' },
+                assignee    => undef,
             } };
             $self->_put_request('issue', $ticket_key, $info_to_update);
             $self->{_logger}->info("Done.\n");
