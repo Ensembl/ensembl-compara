@@ -88,13 +88,16 @@ my $compara_dbs = {
     'pig_breeds_nctrees_prev' => [ 'mysql-ens-compara-prod-10', 'carlac_vertebrates_sus_ncrna_reindexed_trees_101' ],
 
     # LASTZ dbs
-    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-7', 'jalvarez_vertebrates_lastz_batch1_102' ],
+    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-8', 'jalvarez_vertebrates_lastz_batch1_103' ],
+    'lastz_batch_2'    => [ 'mysql-ens-compara-prod-2', 'cristig_vertebrates_lastz_batch2_103' ],
+    'lastz_batch_3'    => [ 'mysql-ens-compara-prod-4', 'cristig_vertebrates_lastz_batch3_103' ],
+    'lastz_batch_4'    => [ 'mysql-ens-compara-prod-6', 'jalvarez_vertebrates_lastz_batch4_103' ],
 
     # EPO dbs
     ## mammals
-    'mammals_epo_high_low'=> [ 'mysql-ens-compara-prod-8', 'muffato_mammals_epo_with2x_101' ],
-    'mammals_epo_prev'    => [ 'mysql-ens-compara-prod-8', 'muffato_mammals_epo_with2x_101' ],
-    'mammals_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
+    'mammals_epo_high_low' => [ 'mysql-ens-compara-prod-3', 'dthybert_mammals_epo_with2x_103' ],
+    'mammals_epo_prev'     => [ 'mysql-ens-compara-prod-8', 'muffato_mammals_epo_with2x_101' ],
+    'mammals_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## sauropsids
     'sauropsids_epo_high_low'=> [ 'mysql-ens-compara-prod-8', 'muffato_sauropsids_epo_with2x_101' ],
@@ -118,6 +121,11 @@ my $compara_dbs = {
     'pig_strains_epo_low'     => [ 'mysql-ens-compara-prod-8', 'carlac_pig_strains_epo_low_coverage_98' ],
     'pig_strains_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
+    ## murinae
+    'murinae_epo'          => [ 'mysql-ens-compara-prod-4', 'jalvarez_murinae_epo_103' ],
+    'murinae_epo_prev'     => [ 'mysql-ens-compara-prod-5', 'muffato_murinae_epo_97' ],
+    'murinae_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
+
     # other alignments
     'amniotes_pecan'      => [ 'mysql-ens-compara-prod-3', 'dthybert_amniotes_mercator_pecan_101' ],
     'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-3', 'dthybert_amniotes_mercator_pecan_101' ],
@@ -136,7 +144,7 @@ my $ancestral_dbs = {
     'ancestral_prev' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
     'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
 
-    # 'mammals_ancestral'    => [ 'mysql-ens-compara-prod-8', 'muffato_mammals_ancestral_core_101' ],
+    'mammals_ancestral'    => [ 'mysql-ens-compara-prod-3', 'dthybert_mammals_ancestral_core_103' ],
     # 'primates_ancestral'   => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
     # 'sauropsids_ancestral' => [ 'mysql-ens-compara-prod-8', 'muffato_sauropsids_ancestral_core_101' ],
     # 'fish_ancestral'       => [ 'mysql-ens-compara-prod-9', 'uffato_fish_ancestral_core_101' ],
