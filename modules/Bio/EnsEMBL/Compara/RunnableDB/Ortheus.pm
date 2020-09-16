@@ -857,7 +857,7 @@ sub remove_empty_cols {
 
     ## $seqs is a hash for storing segments of sequence in the alignment
     my $seqs = {}; ## key => start, value => end; both in e! coord.
-    foreach my $this_leaf (@{$tree->get_all_leaves}) {
+    foreach my $this_leaf (@{$tree->get_all_nodes}) {
         foreach my $this_genomic_align (@{$this_leaf->genomic_align_group->get_all_GenomicAligns}) {
             my $cigar_line = $this_genomic_align->cigar_line;
             my $pos = 1; ## $pos in e! coordinates

@@ -295,7 +295,7 @@ sub locator {
     return undef unless $core_dba;
     return undef unless $core_dba->group eq 'core';
 
-    my $species_safe = $core_dba->production_name;
+    my $species_safe = $core_dba->get_MetaContainer->get_production_name();
 
     my $dbc = $core_dba->dbc();
 
@@ -321,7 +321,7 @@ sub url {
     return undef unless $core_dba;
     return undef unless $core_dba->group eq 'core';
 
-    my $species_safe = $core_dba->production_name;
+    my $species_safe = $core_dba->get_MetaContainer->get_production_name();
 
     my $dbc = $core_dba->dbc();
 

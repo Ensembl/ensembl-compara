@@ -84,8 +84,10 @@ sub new {
         # export JIRA_AUTH_TOKEN=$(echo -n 'user:pass' | openssl base64)
         # https://developer.atlassian.com/server/jira/platform/basic-authentication/
         $self->{_auth_token} = $ENV{'JIRA_AUTH_TOKEN'};
+        print STDERR "Authenticating with token '" . $self->{_auth_token} . "'\n";
     } else {
         # initialise user's password interactively
+        print STDERR "Authenticating with username and password\n";
         $self->{_password} = $self->_request_password();
     }
 
@@ -666,11 +668,9 @@ sub _http_request {
     $self->{_logger}->debug("$method Request on $url\n");
     my $request;
     if ( $self->{_auth_token} ) {
-        print STDERR "Authenticating with token '" . $self->{_auth_token} . "'\n";
         my $header = ['Authorization' => "Basic " . $self->{_auth_token}, 'Content-Type' => 'application/json'];
         $request = HTTP::Request->new($method, $url, $header);
     } else {
-        print STDERR "Authenticating with username and password\n";
         my $header = ['Content-Type' => 'application/json'];
         $request = HTTP::Request->new($method, $url, $header);
         $request->authorization_basic($self->{_user}, $self->{_password});
@@ -683,8 +683,10 @@ sub _http_request {
     if ($response->code() == 401) {
         $self->{_logger}->error('Incorrect JIRA password. Please, try again.', 0, 0);
     } elsif ($response->code() == 403) {
-        my $user = $self->{_user};
-        $self->{_logger}->error("User '$user' unauthorised to handle JIRA tickets programmatically", 0, 0);
+        my $identity = $self->{_auth_token}
+                        ? sprintf("Token '%s'", $self->{_auth_token})
+                        : sprintf("User '%s'", $self->{_user});
+        $self->{_logger}->error("$identity unauthorised to handle JIRA tickets programmatically", 0, 0);
     } elsif ($response->code() == 405) {
         $self->{_logger}->error("HTTP method '$method' not allowed", 0, 0);
     } elsif (! $response->is_success()) {

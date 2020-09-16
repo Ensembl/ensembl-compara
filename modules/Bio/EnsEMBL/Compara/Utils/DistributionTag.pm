@@ -48,7 +48,7 @@ our @EXPORT_OK;
 =cut
 
 sub write_n_tag {
-    my ($self, $mlss, $label, $scores) = @_;
+    my ($mlss, $label, $scores) = @_;
 
     my %distrib_hash;
     foreach my $score ( values %$scores ) {

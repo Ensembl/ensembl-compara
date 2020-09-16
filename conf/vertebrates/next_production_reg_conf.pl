@@ -50,8 +50,9 @@ my $prev_core_dbs = {
 
 # All the core databases live on the Vertebrates staging server or our mirror
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1:4519/$curr_release");
-# Remove species that will be updated $next_release
+# Remove species that will be updated $next_release and the ancestral sequences core database
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species( [ keys %$updated_core_dbs ] );
+Bio::EnsEMBL::Compara::Utils::Registry::remove_species( [ 'ancestral_sequences' ] );
 # Add the correct core database for those species
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $updated_core_dbs );
 
@@ -77,7 +78,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $updated_core_dbs );
 # FORMAT: species/alias name => [ host, db_name ]
 my $compara_dbs = {
     # general compara dbs
-    'compara_master' => [ 'mysql-ens-compara-prod-1', 'ensembl_compara_master_dup' ],
+    'compara_master' => [ 'mysql-ens-compara-prod-1', 'ensembl_compara_master' ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$curr_release" ],
 
     # homology dbs
@@ -96,9 +97,14 @@ my $compara_dbs = {
 
     # EPO dbs
     ## mammals
-    # 'mammals_epo_high_low'=> [ 'mysql-ens-compara-prod-', '' ],
-    'mammals_epo_prev'    => [ 'mysql-ens-compara-prod-8', 'muffato_mammals_epo_with2x_101' ],
-    'mammals_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
+    'mammals_epo_high_low' => [ 'mysql-ens-compara-prod-3', 'dthybert_mammals_epo_with2x_103' ],
+    'mammals_epo_prev'     => [ 'mysql-ens-compara-prod-8', 'muffato_mammals_epo_with2x_101' ],
+    'mammals_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
+
+    ## murinae
+    'murinae_epo'          => [ 'mysql-ens-compara-prod-4', 'jalvarez_murinae_epo_103' ],
+    'murinae_epo_prev'     => [ 'mysql-ens-compara-prod-5', 'muffato_murinae_epo_97' ],
+    'murinae_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     # other alignments
     # 'amniotes_pecan'      => [ 'mysql-ens-compara-prod-', '' ],
@@ -112,6 +118,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 my $ancestral_dbs = {
     'ancestral_prev' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
     'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$next_release" ],
+
+    'mammals_ancestral'    => [ 'mysql-ens-compara-prod-3', 'dthybert_mammals_ancestral_core_103' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );

@@ -35,6 +35,7 @@ use Bio::EnsEMBL::Utils::IO qw/:spurt/;
 
 use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::Registry;
 
 use Data::Dumper;
@@ -66,16 +67,14 @@ sub update_dnafrags {
 
     # fetch relevent slices from the core
     $species_dba = $genome_db->db_adaptor unless $species_dba;
-    my $gdb_slices = $genome_db->genome_component
-        ? $species_dba->get_SliceAdaptor->fetch_all_by_genome_component($genome_db->genome_component)
-        : $species_dba->get_SliceAdaptor->fetch_all($coord_system_name, undef, 1, 1, 1);   # no coord_system version, include_non_reference=1, include_duplicates=1, include_lrg=1)
-    die "Could not fetch any $coord_system_name slices from ".$genome_db->name() unless(scalar(@$gdb_slices));
+    my $slices_it = Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor::iterate_toplevel_slices($species_dba, $genome_db->genome_component);
+    die "Could not fetch any $coord_system_name slices from ".$genome_db->name() unless $slices_it->has_next();
 
     # fetch current dnafrags, to detect deprecations
     my $dnafrag_adaptor = $compara_dba->get_adaptor('DnaFrag');
     my $old_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB($genome_db, -COORD_SYSTEM_NAME => $coord_system_name);
 
-    my ( $new_dnafrags_ids, $existing_dnafrags_ids, $deprecated_dnafrags, $species_overall_len ) = _load_dnafrags_from_slices($compara_dba, $genome_db, $gdb_slices, $old_dnafrags);
+    my ( $new_dnafrags_ids, $existing_dnafrags_ids, $deprecated_dnafrags, $species_overall_len ) = _load_dnafrags_from_slices($compara_dba, $genome_db, $slices_it, $old_dnafrags);
 
     # we only want to update this if we've imported toplevel frags
     _check_is_good_for_alignment($compara_dba, $genome_db, $species_overall_len) if $coord_system_name eq 'toplevel';
@@ -93,7 +92,7 @@ sub update_dnafrags {
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
   Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Arg[3]      : Arrayref of Bio::EnsEMBL::Slice $slices
+  Arg[3]      : Bio::EnsEMBL::Utils::Iterator of Bio::EnsEMBL::Slice $slices_it
   Arg[4]      : Arrayref of Bio::EnsEMBL::Compara::DnaFrag $old_dnafrags
   Description : This method fetches all the dnafrag in the compara DB
                 corresponding to the $genome_db. It also gets the list
@@ -105,13 +104,13 @@ sub update_dnafrags {
 =cut
 
 sub _load_dnafrags_from_slices {
-    my ( $compara_dba, $genome_db, $gdb_slices, $old_dnafrags ) = @_;
+    my ( $compara_dba, $genome_db, $slices_it, $old_dnafrags ) = @_;
 
     my $dnafrag_adaptor = $compara_dba->get_adaptor('DnaFrag');
     my %old_dnafrags_by_name = map { $_->name => $_ } @$old_dnafrags;
 
     my ( $new_dnafrags_ids, $existing_dnafrags_ids, $species_overall_len );
-    foreach my $slice (@$gdb_slices) {
+    while (my $slice = $slices_it->next()) {
         my $new_dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($slice, $genome_db);
 
         push( @$species_overall_len, $new_dnafrag->length()) if $new_dnafrag->is_reference; # rule_2

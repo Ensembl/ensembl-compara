@@ -1121,6 +1121,12 @@ sub copy_synteny_regions {
         $synteny_region->dbID(undef);
         $to_sra->store($synteny_region);
     }
+
+    # Also need to copy tags that are added to other mlsss
+    my $mlss_id = $mlss->dbID;
+    copy_table($from_dba->dbc, $to_dba->dbc,
+        "method_link_species_set_tag",
+        "tag = 'synteny_mlss_id' AND value = '$mlss_id'");
 }
 
 
