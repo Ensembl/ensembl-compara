@@ -683,8 +683,10 @@ sub _http_request {
     if ($response->code() == 401) {
         $self->{_logger}->error('Incorrect JIRA password. Please, try again.', 0, 0);
     } elsif ($response->code() == 403) {
-        my $user = $self->{_user};
-        $self->{_logger}->error("User '$user' unauthorised to handle JIRA tickets programmatically", 0, 0);
+        my $identity = $self->{_auth_token}
+                        ? sprintf("Token '%s'", $self->{_auth_token})
+                        : sprintf("User '%s'", $self->{_user});
+        $self->{_logger}->error("$identity unauthorised to handle JIRA tickets programmatically", 0, 0);
     } elsif ($response->code() == 405) {
         $self->{_logger}->error("HTTP method '$method' not allowed", 0, 0);
     } elsif (! $response->is_success()) {
