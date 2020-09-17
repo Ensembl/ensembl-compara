@@ -331,12 +331,13 @@ sub get_rw_user {
     unless (exists $rw_users{$host}) {
         # There are several possible user names
         foreach my $rw_user (qw(ensadmin ensrw w)) {
-            my $rc = system("which $host-$rw_user > /dev/null");
+            my $rc = system("which $host-$rw_user > /dev/null 2> /dev/null");
             unless ($rc) {
                 $rw_users{$host} = $rw_user;
                 last;
             }
         }
+        die "Could not find a rw user for $host";
     }
     return $rw_users{$host};
 }
