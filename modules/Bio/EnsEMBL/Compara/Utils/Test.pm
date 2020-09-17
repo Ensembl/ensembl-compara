@@ -271,7 +271,7 @@ sub load_statements {
 =head2 apply_statements
 
   Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection *or* DBI::db $db
-  Arg[2]      : (optional) Arrayref of String pairs $statements, as returned by read_sqls()
+  Arg[2]      : Arrayref of String pairs $statements, as returned by read_sqls()
   Arg[3]      : (optional) String $test_name. A custom name to give to the test
   Description : Apply the statements to the given database connection, and check that they
                 pass as a whole.
