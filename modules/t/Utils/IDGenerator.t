@@ -74,7 +74,7 @@ subtest "With a requestor" => sub {
     _test_helper('A', 5, 44, 11);
     # Same call -> same ID
     _test_helper('A', 5, 44, 11);
-    # New requestor -> new IS
+    # New requestor -> new ID
     _test_helper('A', 5, 55, 16);
     # Same call -> same ID
     _test_helper('A', 5, 44, 11);
@@ -85,4 +85,3 @@ subtest "With a requestor" => sub {
 };
 
 done_testing();
-
