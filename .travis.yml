@@ -68,6 +68,7 @@ jobs:
       install:
         - sudo apt-get -y install yamllint shellcheck
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
+        - cpanm --quiet --installdeps --notest .
       script: prove -r ./travisci/all-housekeeping/
 
     - language: perl
