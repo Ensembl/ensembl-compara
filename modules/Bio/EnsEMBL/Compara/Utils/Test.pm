@@ -88,7 +88,9 @@ sub find_all_files {
         my @dir_content = File::Spec->no_upwards(readdir $dirh);
         foreach my $f (@dir_content) {
             my $af = File::Spec->catfile($starting_dir, $f);
-            if ((-d $af) and ($f ne '.git')) {
+            # Exclude our .git directory, but also all directories that
+            # have a .git (i.e. other Ensembl repositories installed on Travis)
+            if ((-d $af) and ($f ne '.git') and !(-e File::Spec->catfile($af, '.git'))) {
                 push @queue, $af;
             } elsif (-f $af) {
                 push @files, $af;
