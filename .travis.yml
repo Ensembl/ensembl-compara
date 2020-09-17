@@ -67,7 +67,8 @@ jobs:
       name: "Housekeeping (all languages)"
       install:
         - sudo apt-get -y install shellcheck
-        - pip install yamllint
+        # --user is required on Perl VMs because it's the system pip/python
+        - pip install --user yamllint
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
         - cpanm --quiet --installdeps --notest .
       script: prove -r ./travisci/all-housekeeping/
