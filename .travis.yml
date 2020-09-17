@@ -66,7 +66,8 @@ jobs:
       perl: 5.30
       name: "Housekeeping (all languages)"
       install:
-        - sudo apt-get -y install yamllint shellcheck
+        - sudo apt-get -y install shellcheck
+        - pip install yamllint
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
         - cpanm --quiet --installdeps --notest .
       script: prove -r ./travisci/all-housekeeping/
