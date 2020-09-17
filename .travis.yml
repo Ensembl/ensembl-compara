@@ -10,8 +10,6 @@ addons:
   apt:
     packages:
       - graphviz
-      - yamllint
-      - shellcheck
 
 services:
   - mysql
@@ -68,6 +66,7 @@ jobs:
       perl: 5.30
       name: "Housekeeping (all languages)"
       install:
+        - sudo apt-get -y install yamllint shellcheck
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
       script: prove -r ./travisci/all-housekeeping/
 
