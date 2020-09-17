@@ -183,8 +183,11 @@
             glycine_max,
            )Phaseoleae,
            (
-            arachis_hypogaea_A,
-            arachis_hypogaea_B,
+            arachis_hypogaea,
+            (
+             arachis_hypogaea_A,
+             arachis_hypogaea_B,
+            ),
            )Dalbergieae,
           )Papilionoideae,
           (
