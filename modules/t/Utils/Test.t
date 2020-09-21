@@ -19,7 +19,7 @@ use strict;
 use warnings;
 
 use File::Spec;
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 use_ok('Bio::EnsEMBL::Compara::Utils::Test');
 
@@ -30,6 +30,20 @@ subtest 'get_repository_root' => sub {
         my $subpath = File::Spec->catdir($path, $subdir);
         ok(-d $subpath, "$path has a sub-directory named '$subdir'");
     }
+};
+
+subtest 'get_pipeline_tables_create_statements' => sub {
+    my $one_table = Bio::EnsEMBL::Compara::Utils::Test::get_pipeline_tables_create_statements(['dnafrag_chunk']);
+    is(scalar(@$one_table), 1, 'Only one table');
+    is(ref($one_table->[0]), 'ARRAY', 'The table is represented as an array-ref');
+    is($one_table->[0]->[0], 'CREATE TABLE dnafrag_chunk', 'Title properly formated');
+    like($one_table->[0]->[1], qr/^CREATE TABLE dnafrag_chunk/, 'The SQL is a CREATE statement');
+    like($one_table->[0]->[1], qr/dnafrag_chunk_id.*PRIMARY\s+KEY/s, 'The CREATE statement has the definition of the primary key');
+
+    my $all_tables = Bio::EnsEMBL::Compara::Utils::Test::get_pipeline_tables_create_statements();
+    cmp_ok(scalar(@$all_tables), '>', 1, 'More than one table');
+    my @filtered_tables = grep {$_->[0] eq 'CREATE TABLE dnafrag_chunk'} @$all_tables;
+    is(scalar(@filtered_tables), 1, 'The dnafrag_chunk table is there');
 };
 
 done_testing();
