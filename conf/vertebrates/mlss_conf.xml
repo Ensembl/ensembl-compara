@@ -327,7 +327,7 @@
       </species_set>
     </multiple_alignment>
 
-    <!-- Amniotes, excl. mouse strains -->
+    <!-- Amniotes, excl. strains and breeds -->
     <!-- NB: this MSA can only stay the same or decrease in number of species -->
     <multiple_alignment method="PECAN" gerp="1">
       <species_set name="amniotes" display_name="amniota vertebrates">
