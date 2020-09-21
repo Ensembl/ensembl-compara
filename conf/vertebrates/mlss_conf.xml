@@ -54,6 +54,7 @@
       </species_set>
     </one_vs_all>
 
+    <!-- Switch to bos_taurus if canis_lupus_familiaris gets an assembly update -->
     <one_vs_all method="LASTZ_NET" ref_genome="canis_lupus_familiaris" against="Carnivora"/>
 
     <one_vs_all method="LASTZ_NET" ref_genome="bos_taurus">
@@ -62,6 +63,7 @@
       </species_set>
     </one_vs_all>
 
+    <!-- Switch to bos_taurus if equus_caballus gets an assembly update -->
     <one_vs_all method="LASTZ_NET" ref_genome="equus_caballus" against="Perissodactyla"/>
     <one_vs_all method="LASTZ_NET" ref_genome="sus_scrofa" against="Sus"/>
 
