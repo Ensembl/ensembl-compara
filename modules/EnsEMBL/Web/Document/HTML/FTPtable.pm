@@ -182,7 +182,7 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
   my $version;
 
   if ($species_defs->EG_DIVISION) {
-    $version = $species_defs->SITE_RELEASE_VERSION - 1;
+    $version = $species_defs->SITE_RELEASE_VERSION;
   }
   else {
     $version = $species_defs->ORIGINAL_VERSION || $species_defs->ENSEMBL_VERSION;
