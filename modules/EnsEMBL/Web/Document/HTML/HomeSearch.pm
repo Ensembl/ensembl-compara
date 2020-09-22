@@ -188,7 +188,7 @@ sub render {
 
   # search input box & submit button
   my $search_prompt = defined($config->{'search_prompt'}) ? $config->{'search_prompt'}
-                                                          : "Search $species_name&hellip;";
+                                                          : "Search&hellip;";
   my $q_params = {'type'        => 'string', 
                   'name'        => 'q', 
                   'id'          => 'q',
