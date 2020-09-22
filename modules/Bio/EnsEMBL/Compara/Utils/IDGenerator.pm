@@ -15,19 +15,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
+=head1 DESCRIPTION
 
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
+Helper function to assign unique numeric identifiers even when the data are
+not stored in the database. This is primarily intended for pipelines that
+first store their data in flat files and load them later into the database.
 
 =head1 METHODS
-
 =cut
 
 package Bio::EnsEMBL::Compara::Utils::IDGenerator;
