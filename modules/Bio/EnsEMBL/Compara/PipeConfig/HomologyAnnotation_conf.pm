@@ -81,8 +81,8 @@ sub default_options {
         'decision_capacity'        => 150,
         'hc_priority'              => -10,
 
-        'num_sequences_per_blast_job'   => 50,
-        'all_blast_params'              => [ 35, 50, '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM70 -word_size 2', '1e-6' ],
+        'num_sequences_per_blast_job'   => 200,
+        'all_blast_params'              => [ 35, 50, '--max-hsps 1 --matrix PAM70 --threads 4 -b1 -c1 --sensitive', '1e-6' ],
     };
 }
 
@@ -144,12 +144,12 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_fire_blast',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into     => {
-                '1->A' => [ 'blast_factory' ],
+                '1->A' => [ 'diamond_factory' ],
                 'A->1' => [ 'do_something_with_paf_table' ],
             },
         },
 
-        {   -logic_name => 'blast_factory',
+        {   -logic_name => 'diamond_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BlastFactory',
             -parameters => {
                 'species_set_id'    => $self->o('species_set_id'),
@@ -158,7 +158,7 @@ sub core_pipeline_analyses {
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into     => {
-                '2' => { 'blastp_unannotated' => INPUT_PLUS() }
+                '2' => { 'diamond_blastp' => INPUT_PLUS() }
             },
         },
 
