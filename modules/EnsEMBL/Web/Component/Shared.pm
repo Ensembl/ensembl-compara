@@ -708,9 +708,8 @@ sub species_stats {
   my $db_adaptor = $self->hub->database('core');
   my $meta_container = $db_adaptor->get_MetaContainer();
   my $genome_container = $db_adaptor->get_GenomeContainer();
+  my $no_stats = $genome_container->is_empty;
 
-  #deal with databases that don't have species_stats
-  return $html if $genome_container->is_empty;
 
   $html = '<h3>Summary</h3>';
 
@@ -742,12 +741,12 @@ sub species_stats {
   $summary->add_row({
       'name' => '<b>Base Pairs</b>',
       'stat' => $self->thousandify($genome_container->get_total_length()),
-  });
+  }) unless $no_stats;
   my $header = glossary_helptip($self->hub, 'Golden Path Length', 'Golden path length');
   $summary->add_row({
       'name' => "<b>$header</b>",
       'stat' => $self->thousandify($genome_container->get_ref_length())
-  });
+  }) unless $no_stats;
   my $prov_name = $sd->ANNOTATION_PROVIDER_NAME;
   if ($prov_name) {
     my @prov_names = ref $prov_name eq 'ARRAY' ? @$prov_name : ($prov_name);
@@ -798,45 +797,47 @@ sub species_stats {
   $html .= $summary->render;
 
   ## GENE COUNTS
-  my $has_alt = $genome_container->get_alt_coding_count();
-  if($has_alt) {
-    $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,' (Primary assembly)','');
-    $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,' (Alternative sequence)','a');
-  } else {
-    $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,'','');
-  }
+  unless ($no_stats) {
+    my $has_alt = $genome_container->get_alt_coding_count();
+    if($has_alt) {
+      $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,' (Primary assembly)','');
+      $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,' (Alternative sequence)','a');
+    } else {
+      $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,'','');
+    }
 
-  ## OTHER STATS
-  my $rows = [];
-  ## Prediction transcripts
-  my $analysis_adaptor = $db_adaptor->get_AnalysisAdaptor();
-  my $attribute_adaptor = $db_adaptor->get_AttributeAdaptor();
-  my @analyses = @{ $analysis_adaptor->
-                      fetch_all_by_feature_class('PredictionTranscript') };
-  foreach my $analysis (@analyses) {
-    my $logic_name = $analysis->logic_name;
-    my $stat = $genome_container->fetch_by_statistic(
+    ## OTHER STATS
+    my $rows = [];
+    ## Prediction transcripts
+    my $analysis_adaptor = $db_adaptor->get_AnalysisAdaptor();
+    my $attribute_adaptor = $db_adaptor->get_AttributeAdaptor();
+    my @analyses = @{ $analysis_adaptor->fetch_all_by_feature_class('PredictionTranscript') };
+    foreach my $analysis (@analyses) {
+      my $logic_name = $analysis->logic_name;
+      my $stat = $genome_container->fetch_by_statistic(
                                       'PredictionTranscript',$logic_name); 
-    push @$rows, {
-      'name' => "<b>".$stat->name."</b>",
-      'stat' => $self->thousandify($stat->value),
-    } if $stat and $stat->name;
-  }
-  ## Variants
-  if ($self->hub->database('variation')) {
-    my @other_stats = qw(SNPCount StructuralVariation);
-    foreach my $name (@other_stats) {
-      my $stat = $genome_container->fetch_by_statistic($name);
       push @$rows, {
-        'name' => '<b>'.$stat->name.'</b>',
-        'stat' => $self->thousandify($stat->value)
+        'name' => "<b>".$stat->name."</b>",
+        'stat' => $self->thousandify($stat->value),
       } if $stat and $stat->name;
     }
-  }
-  if (scalar(@$rows)) {
-    $html .= '<h3>Other</h3>';
-    my $other = $self->new_table($cols, $rows, $options);
-    $html .= $other->render;
+    ## Variants
+    if ($self->hub->database('variation')) {
+      my @other_stats = qw(SNPCount StructuralVariation);
+      foreach my $name (@other_stats) {
+        my $stat = $genome_container->fetch_by_statistic($name);
+        push @$rows, {
+          'name' => '<b>'.$stat->name.'</b>',
+          'stat' => $self->thousandify($stat->value)
+        } if $stat and $stat->name;
+      }
+    }
+
+    if (scalar(@$rows)) {
+      $html .= '<h3>Other</h3>';
+      my $other = $self->new_table($cols, $rows, $options);
+      $html .= $other->render;
+    }
   }
 
   return $html;
