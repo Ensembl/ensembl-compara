@@ -56,7 +56,8 @@ our @EXPORT_OK;
   Arg[2]      : String $label
   Arg[3]      : (optional) Integer $n_ids. Defaults to 1
   Arg[4]      : (optional) Integer $requestor
-  Example     : $object_name->get_id_ran
+  Example     : my $homology_id_start = get_id_range($dbc, 'homology', 1623);
+                my $gene_tree_id = get_id_range($dbc, 'gene_tree');
   Description : Request a new range of $n_ids IDs. The method returns the
                 first integer of the range, and the caller can assume that
                 all integers between this value and the value plus $n_ids
