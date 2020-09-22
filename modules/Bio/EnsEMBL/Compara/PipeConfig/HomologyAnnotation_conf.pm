@@ -35,7 +35,7 @@ use Bio::EnsEMBL::Hive::Version 2.5;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::CopyNCBIandGenomeDB;
-use Bio::EnsEMBL::Compara::PipeConfig::Parts::BLASTpAgainstRef;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstRef;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -167,7 +167,7 @@ sub core_pipeline_analyses {
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CopyNCBIandGenomeDB::pipeline_analyses_copy_ncbi_and_genome_db($self) },
-        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::BLASTpAgainstRef::pipeline_analyses_blastp_against_refdb($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstRef::pipeline_analyses_diamond_against_refdb($self) },
     ];
 }
 

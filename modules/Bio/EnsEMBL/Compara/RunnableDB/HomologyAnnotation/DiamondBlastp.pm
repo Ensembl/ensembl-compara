@@ -21,8 +21,9 @@ Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DiamondBlastp
 
 =head1 DESCRIPTION
 
-Create fasta file containing batch_size number of sequences. Run DIAMOND and parse the output into
-PeptideAlignFeature objects. Store PeptideAlignFeature objects in the compara database
+Create fasta file containing batch_size number of sequences. Run DIAMOND blastp and parse
+the output into PeptideAlignFeature objects. Store PeptideAlignFeature objects in the compara
+database
 
 =cut
 
@@ -47,14 +48,12 @@ sub get_queries {
 sub run {
     my $self = shift @_;
 
-    #my $diamond_exe             = $self->param('diamond_exe'); 
+    #my $diamond_exe           = $self->param('diamond_exe'); 
     # This will be in ENV.pm once installed properly in farm, currently diamond is installed locally in my $USER .bin/
-    my $diamond_exe             = 'diamond';
-    my $blast_params            = $self->param('blast_params')  || '';  # no parameters to C++ binary means having composition stats on and -seg masking off
-    my $evalue_limit            = $self->param('evalue_limit');
-    my $tophits                 = $self->param('tophits');
-
-    my $worker_temp_directory   = $self->worker_temp_directory;
+    my $diamond_exe           = 'diamond';
+    my $blast_params          = $self->param('blast_params')  || '';  # no parameters to C++ binary means having composition stats on and -seg masking off
+    my $evalue_limit          = $self->param('evalue_limit');
+    my $worker_temp_directory = $self->worker_temp_directory;
 
     my $blast_infile  = $worker_temp_directory . '/blast.in.'.$$;     # only for debugging
     my $blast_outfile = $worker_temp_directory . '/blast.out.'.$$;    # looks like inevitable evil (tried many hairy alternatives and failed)
@@ -79,8 +78,8 @@ sub run {
         my $cmd = "$diamond_exe blastp -d $blast_db --evalue $evalue_limit --out $blast_outfile --outfmt 6 qseqid sseqid evalue score nident pident qstart qend sstart send length positive ppos qseq_gapped sseq_gapped $blast_params";
 
         my $run_cmd = $self->write_to_command($cmd, sub {
-                my $blast_fh = shift;
-                $self->param('query_set')->print_sequences_to_file($blast_fh, -format => 'fasta');
+            my $blast_fh = shift;
+            $self->param('query_set')->print_sequences_to_file($blast_fh, -format => 'fasta');
         } );
         print "Time for diamond search " . $run_cmd->runtime_msec . " msec\n";
 
