@@ -36,7 +36,7 @@ subtest 'get_pipeline_tables_create_statements' => sub {
     my $one_table = Bio::EnsEMBL::Compara::Utils::Test::get_pipeline_tables_create_statements(['dnafrag_chunk']);
     is(scalar(@$one_table), 1, 'Only one table');
     is(ref($one_table->[0]), 'ARRAY', 'The table is represented as an array-ref');
-    is($one_table->[0]->[0], 'CREATE TABLE dnafrag_chunk', 'Title properly formated');
+    is($one_table->[0]->[0], 'CREATE TABLE dnafrag_chunk', 'Title properly formatted');
     like($one_table->[0]->[1], qr/^CREATE TABLE dnafrag_chunk/, 'The SQL is a CREATE statement');
     like($one_table->[0]->[1], qr/dnafrag_chunk_id.*PRIMARY\s+KEY/s, 'The CREATE statement has the definition of the primary key');
 
