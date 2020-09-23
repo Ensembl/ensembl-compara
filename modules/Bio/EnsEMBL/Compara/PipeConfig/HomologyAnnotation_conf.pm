@@ -110,6 +110,13 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
     };
 }
 
+sub resource_classes {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::resource_classes('include_multi_threaded')},  # inherit the standard resource classes, incl. multi-threaded
+    };
+}
+
 sub core_pipeline_analyses {
     my ($self) = @_;
 
