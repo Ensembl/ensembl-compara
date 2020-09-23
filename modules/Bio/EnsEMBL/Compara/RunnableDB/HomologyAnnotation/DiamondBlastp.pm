@@ -48,9 +48,7 @@ sub get_queries {
 sub run {
     my $self = shift @_;
 
-    #my $diamond_exe           = $self->param('diamond_exe'); 
-    # This will be in ENV.pm once installed properly in farm, currently diamond is installed locally in my $USER .bin/
-    my $diamond_exe           = 'diamond';
+    my $diamond_exe           = $self->param('diamond_exe');
     my $blast_params          = $self->param('blast_params')  || '';  # no parameters to C++ binary means having composition stats on and -seg masking off
     my $evalue_limit          = $self->param('evalue_limit');
     my $worker_temp_directory = $self->worker_temp_directory;
