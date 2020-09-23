@@ -133,7 +133,7 @@ sub create_multitestdb {
 
 =head2 drop_database_if_exists
 
-  Arg[1]      : Bio::EnsEMBL::Test::MultiTestDB $multitestdb. Object refering to the database server
+  Arg[1]      : Bio::EnsEMBL::Test::MultiTestDB $multitestdb. Object referring to the database server
   Arg[2]      : String $db_name. The database name
   Description : Drop the database if it exists and close the existing
                 connection objects.
@@ -213,7 +213,7 @@ sub read_sqls {
 
 =head2 test_schema_compliance
 
-  Arg[1]      : Bio::EnsEMBL::Test::MultiTestDB $multitestdb. Object refering to the database server
+  Arg[1]      : Bio::EnsEMBL::Test::MultiTestDB $multitestdb. Object referring to the database server
   Arg[2]      : String $db_name. The database name
   Arg[3]      : Arrayref of String pairs (arrayrefs), each being a statement title, and an actual SQL statement
   Arg[4]      : String $server_mode. Typically TRADITIONAL or ANSI
@@ -247,7 +247,7 @@ sub test_schema_compliance {
 
 =head2 load_statements
 
-  Arg[1]      : Bio::EnsEMBL::Test::MultiTestDB $multitestdb. Object refering to the database server
+  Arg[1]      : Bio::EnsEMBL::Test::MultiTestDB $multitestdb. Object referring to the database server
   Arg[2]      : String $db_name. The database name
   Arg[3]      : Arrayref of String pairs (arrayrefs), each being a statement title, and an actual SQL statement
   Arg[4]      : (optional) String $test_name. A custom name to give to the test
