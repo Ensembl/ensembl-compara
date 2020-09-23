@@ -95,6 +95,10 @@ my $dc_basename = fileparse($dc_abs_path, qr{\.[a-zA-Z0-9_]+$});
 my $jira_adaptor = Bio::EnsEMBL::Compara::Utils::JIRA->new(-DIVISION => $division, -RELEASE => $release);
 # Parse Datacheck information from input TAP file
 my $testcase_failures = parse_datachecks($dc_file);
+unless ( %$testcase_failures ) {
+    print "No failed DCs found in $dc_file\n";
+    exit;
+}
 # Create a task ticket for each datacheck subtest failure
 my $merge_ticket_key = find_labeled_ticket($jira_adaptor, 'Merge_anchor');
 my @json_subtasks;
