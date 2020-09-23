@@ -195,7 +195,7 @@ sub iterate_toplevel_slices {
     my $slice_builder = sub {
         if ($sth->fetch) {
             my $cs = $csa->fetch_by_dbID($cs_id);
-            if(!$cs) {
+            if (!$cs) {
                 throw("seq_region $name references non-existent coord_system $cs_id.");
             }
             return Bio::EnsEMBL::Slice->new_fast({
