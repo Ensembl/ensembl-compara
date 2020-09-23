@@ -33,13 +33,6 @@ use warnings;
 use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf; # For WHEN and INPUT_PLUS
 
-sub default_options {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::default_options},
-    }
-}
-
 sub pipeline_analyses_diamond_against_refdb {
     my ($self) = @_;
 
@@ -56,12 +49,12 @@ sub pipeline_analyses_diamond_against_refdb {
             -parameters         => {
                 %blastp_parameters,
             },
-            -rc_name       => '500Mb_6_hour_job',
-            -flow_into => {
+            -rc_name            => '500Mb_6_hour_job',
+            -flow_into          => {
                -1 => [ 'diamond_blastp_himem' ],  # MEMLIMIT
                -2 => 'break_batch',
             },
-            -hive_capacity => $self->o('blastpu_capacity'),
+            -hive_capacity      => $self->o('blastpu_capacity'),
         },
 
         {   -logic_name         => 'diamond_blastp_himem',
@@ -69,17 +62,17 @@ sub pipeline_analyses_diamond_against_refdb {
             -parameters         => {
                 %blastp_parameters,
             },
-            -rc_name       => '2Gb_6_hour_job',
-            -flow_into => {
+            -rc_name            => '2Gb_6_hour_job',
+            -flow_into          => {
                -2 => 'break_batch',
             },
-            -priority      => 20,
-            -hive_capacity => $self->o('blastpu_capacity'),
+            -priority           => 20,
+            -hive_capacity      => $self->o('blastpu_capacity'),
         },
 
         {   -logic_name         => 'break_batch',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BreakBlastBatch',
-            -flow_into  => {
+            -flow_into          => {
                 2 => 'diamond_blastp_no_runlimit',
             }
         },
@@ -89,10 +82,10 @@ sub pipeline_analyses_diamond_against_refdb {
             -parameters         => {
                 %blastp_parameters,
             },
-            -flow_into => {
+            -flow_into          => {
                -1 => [ 'diamond_blastp_himem_no_runlimit' ],  # MEMLIMIT
             },
-            -hive_capacity => $self->o('blastpu_capacity'),
+            -hive_capacity      => $self->o('blastpu_capacity'),
         },
 
         {   -logic_name         => 'diamond_blastp_himem_no_runlimit',
@@ -100,9 +93,9 @@ sub pipeline_analyses_diamond_against_refdb {
             -parameters         => {
                 %blastp_parameters,
             },
-            -rc_name       => '2Gb_job',
-            -priority      => 20,
-            -hive_capacity => $self->o('blastpu_capacity'),
+            -rc_name            => '2Gb_job',
+            -priority           => 20,
+            -hive_capacity      => $self->o('blastpu_capacity'),
         },
 
     ];

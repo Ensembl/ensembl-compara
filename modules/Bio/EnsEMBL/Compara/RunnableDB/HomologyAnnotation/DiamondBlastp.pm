@@ -54,18 +54,14 @@ sub run {
     my $blast_params          = $self->param('blast_params')  || '';  # no parameters to C++ binary means having composition stats on and -seg masking off
     my $evalue_limit          = $self->param('evalue_limit');
     my $worker_temp_directory = $self->worker_temp_directory;
-
-    my $blast_infile  = $worker_temp_directory . '/blast.in.'.$$;     # only for debugging
-    my $blast_outfile = $worker_temp_directory . '/blast.out.'.$$;    # looks like inevitable evil (tried many hairy alternatives and failed)
+    my $blast_outfile         = $worker_temp_directory . '/blast.out.' . $$; # looks like inevitable evil
 
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $self->param('query_set'));
 
     if ($self->debug) {
+        my $blast_infile  = $worker_temp_directory . '/blast.in.' . $$;  # only for debugging
         print "diamond_infile $blast_infile\n";
         my $members = $self->param('query_set')->get_all_Members;
-        foreach my $member ( @$members ) {
-            print Dumper $member unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
-        }
         $self->param('query_set')->print_sequences_to_file($blast_infile, -format => 'fasta');
     }
 
@@ -85,7 +81,7 @@ sub run {
 
         my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param('genome_db_id'), $target_genome_db_id);
 
-        unless($self->param('expected_members') == scalar(keys(%{$self->param('num_query_member')}))) {
+        unless ($self->param('expected_members') == scalar(keys(%{$self->param('num_query_member')}))) {
             # Most likely, this is happening due to MEMLIMIT, so make the job sleep if it parsed 0 sequences, to wait for MEMLIMIT to happen properly.
             sleep(5);
         }
@@ -96,4 +92,5 @@ sub run {
 
     $self->param('cross_pafs', $cross_pafs);
 }
+
 1;
