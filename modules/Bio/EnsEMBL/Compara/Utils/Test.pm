@@ -194,12 +194,12 @@ sub read_sqls {
         if (!$with_fk) {
             # FOREIGN KEY constraints followed by something else (note the
             # trailing comma)
-            $sql =~ s/^\s+FOREIGN\s+KEY[^,]+,//mg;
+            $sql =~ s/^\s+FOREIGN\s+KEY[^,]+,//img;
             # FOREIGN KEY constraints as the last line of the CREATE TABLE: no
             # trailing comma, so need to remove the one from the previous line
-            $sql =~ s/,[\n\s]+FOREIGN\s+KEY.+$//m;
+            $sql =~ s/,[\n\s]+FOREIGN\s+KEY.+$//im;
             # In case the regexp are still missing some cases
-            die $sql if $sql =~ /FOREIGN/;
+            die $sql if $sql =~ /[\n\s]+FOREIGN\s+/i;
         }
         # $title will usually be something like "CREATE TABLE dnafrag"
         my $title = $sql;
