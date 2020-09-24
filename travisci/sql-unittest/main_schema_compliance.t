@@ -38,7 +38,6 @@ foreach my $server_mode (qw(TRADITIONAL ANSI)) {
     };
 }
 
-# No need to drop the database because it will be destroyed when
-# $multitestdb goes out of scope
+Bio::EnsEMBL::Compara::Utils::Test::drop_database($multitestdb, $db_name);
 
 done_testing();

@@ -40,7 +40,6 @@ foreach my $test_file_name (glob "${db_dir}/*/*/table.sql") {
   }
 }
 
-# No need to drop the database because it will be destroyed when
-# $multitestdb goes out of scope
+Bio::EnsEMBL::Compara::Utils::Test::drop_database($multitestdb, $db_name);
 
 done_testing();

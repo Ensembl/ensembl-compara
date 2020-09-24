@@ -32,12 +32,14 @@ my $compara_db_name = $multitestdb->create_db_name('compara_schema');
 my $compara_statements = Bio::EnsEMBL::Compara::Utils::Test::read_sqls("${compara_dir}/sql/table.sql");
 my $compara_db = Bio::EnsEMBL::Compara::Utils::Test::load_statements($multitestdb, $compara_db_name, $compara_statements, 'Can load the reference Compara schema');
 my $compara_schema = Bio::EnsEMBL::Compara::Utils::Test::get_schema_from_database($compara_db);
+Bio::EnsEMBL::Compara::Utils::Test::drop_database($multitestdb, $compara_db_name);
 
 # Load the Core schema for reference
 my $core_db_name = $multitestdb->create_db_name('core_schema');
 my $core_statements = Bio::EnsEMBL::Compara::Utils::Test::read_sqls("$ENV{ENSEMBL_CVS_ROOT_DIR}/ensembl/sql/table.sql");
 my $core_db = Bio::EnsEMBL::Compara::Utils::Test::load_statements($multitestdb, $core_db_name, $core_statements, 'Can load the reference Core schema');
 my $core_schema = Bio::EnsEMBL::Compara::Utils::Test::get_schema_from_database($core_db);
+Bio::EnsEMBL::Compara::Utils::Test::drop_database($multitestdb, $core_db_name);
 
 my $test_db_name = $multitestdb->create_db_name('test_schema');
 my $db_dir = "${compara_dir}/modules/t/test-genome-DBs";
@@ -56,7 +58,6 @@ foreach my $test_file_name (glob "${db_dir}/*/*/table.sql") {
     };
 }
 
-# No need to drop the database because it will be destroyed when
-# $multitestdb goes out of scope
+Bio::EnsEMBL::Compara::Utils::Test::drop_database($multitestdb, $test_db_name);
 
 done_testing();

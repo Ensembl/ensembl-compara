@@ -35,6 +35,7 @@ my $current_db_name = $multitestdb->create_db_name('current_schema');
 my $current_statements = Bio::EnsEMBL::Compara::Utils::Test::read_sqls("${compara_dir}/sql/table.sql");
 my $current_db = Bio::EnsEMBL::Compara::Utils::Test::load_statements($multitestdb, $current_db_name, $current_statements, 'Can load the current Compara schema');
 my $current_schema = Bio::EnsEMBL::Compara::Utils::Test::get_schema_from_database($current_db);
+Bio::EnsEMBL::Compara::Utils::Test::drop_database($multitestdb, $current_db_name);
 
 my $curr_release = software_version();
 my $prev_release = $curr_release -1;
@@ -67,10 +68,8 @@ my @schema_patcher_command = (
 );
 Bio::EnsEMBL::Compara::Utils::Test::test_command(\@schema_patcher_command, 'Can patch the database');
 my $previous_schema = Bio::EnsEMBL::Compara::Utils::Test::get_schema_from_database($previous_db);
+Bio::EnsEMBL::Compara::Utils::Test::drop_database($multitestdb, $previous_db_name);
 
 is_deeply($current_schema, $previous_schema, 'The patched schema is identical to the current one');
-
-# No need to drop the database because it will be destroyed when
-# $multitestdb goes out of scope
 
 done_testing();

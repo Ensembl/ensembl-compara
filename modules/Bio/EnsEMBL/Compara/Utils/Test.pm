@@ -131,6 +131,23 @@ sub create_multitestdb {
 }
 
 
+=head2 drop_database
+
+  Arg[1]      : Bio::EnsEMBL::Test::MultiTestDB $multitestdb. Object referring to the database server
+  Arg[2]      : String $db_name. The database name
+  Description : Drop the database, assuming it exists (it will throw an error otherwise),
+                and close the existing connection objects.
+  Returntype  : None
+
+=cut
+
+sub drop_database {
+    my ($multitestdb, $db_name) = @_;
+    $multitestdb->_drop_database($multitestdb->dbi_connection, $db_name);
+    $multitestdb->disconnect_dbi_connection;
+}
+
+
 =head2 drop_database_if_exists
 
   Arg[1]      : Bio::EnsEMBL::Test::MultiTestDB $multitestdb. Object referring to the database server
