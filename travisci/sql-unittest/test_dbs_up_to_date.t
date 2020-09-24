@@ -31,14 +31,29 @@ my $multitestdb = Bio::EnsEMBL::Compara::Utils::Test::create_multitestdb();
 my $compara_db_name = $multitestdb->create_db_name('compara_schema');
 my $compara_statements = Bio::EnsEMBL::Compara::Utils::Test::read_sqls("${compara_dir}/sql/table.sql");
 my $compara_db = Bio::EnsEMBL::Compara::Utils::Test::load_statements($multitestdb, $compara_db_name, $compara_statements, 'Can load the reference Compara schema');
-my $compara_schema = Bio::EnsEMBL::Compara::Utils::Test::get_schema_from_database($compara_db);
+my $compara_schema = Bio::EnsEMBL::Compara::Utils::Test::get_schema_from_database($compara_db, $compara_db_name);
+
+$compara_statements = Bio::EnsEMBL::Compara::Utils::Test::read_sqls("${compara_dir}/sql/table.sql", 'with_fk');
+$compara_db = Bio::EnsEMBL::Compara::Utils::Test::load_statements($multitestdb, $compara_db_name, $compara_statements, 'Can load the reference Compara schema with foreign keys');
+my $compara_schema_with_fk = Bio::EnsEMBL::Compara::Utils::Test::get_schema_from_database($compara_db, $compara_db_name);
 Bio::EnsEMBL::Compara::Utils::Test::drop_database($multitestdb, $compara_db_name);
+
+# Some indexes are added by MySQL to quickly check the foreign key
+# constraints. Those indexes are optional in the test databases.
+my @optional_indexes;
+foreach my $table_name (keys %$compara_schema) {
+    foreach my $index_name (keys %{$compara_schema_with_fk->{$table_name}->{'INDEXES'}}) {
+        if (not exists $compara_schema->{$table_name}->{'INDEXES'}->{$index_name}) {
+            push @optional_indexes, [$table_name, $index_name];
+        }
+    }
+}
 
 # Load the Core schema for reference
 my $core_db_name = $multitestdb->create_db_name('core_schema');
 my $core_statements = Bio::EnsEMBL::Compara::Utils::Test::read_sqls("$ENV{ENSEMBL_CVS_ROOT_DIR}/ensembl/sql/table.sql");
 my $core_db = Bio::EnsEMBL::Compara::Utils::Test::load_statements($multitestdb, $core_db_name, $core_statements, 'Can load the reference Core schema');
-my $core_schema = Bio::EnsEMBL::Compara::Utils::Test::get_schema_from_database($core_db);
+my $core_schema = Bio::EnsEMBL::Compara::Utils::Test::get_schema_from_database($core_db, $core_db_name);
 Bio::EnsEMBL::Compara::Utils::Test::drop_database($multitestdb, $core_db_name);
 
 my $test_db_name = $multitestdb->create_db_name('test_schema');
@@ -49,11 +64,18 @@ foreach my $test_file_name (glob "${db_dir}/*/*/table.sql") {
     subtest $short_name, sub {
         my $test_statements = Bio::EnsEMBL::Compara::Utils::Test::read_sqls($test_file_name);
         my $test_db = Bio::EnsEMBL::Compara::Utils::Test::load_statements($multitestdb, $test_db_name, $test_statements, 'Can load the test schema');
-        my $test_schema = Bio::EnsEMBL::Compara::Utils::Test::get_schema_from_database($test_db);
+        my $test_schema = Bio::EnsEMBL::Compara::Utils::Test::get_schema_from_database($test_db, $test_db_name);
         if ($short_name =~ /\/core\/table.sql$/) {
             is_deeply($test_schema, $core_schema, 'Test schema identical to the Core schema');
         } else {
-            is_deeply($test_schema, $compara_schema, 'Test schema identical to the Compara schema');
+            # Pretend the missing optional indexes are there
+            foreach my $a (@optional_indexes) {
+                my ($table_name, $index_name) = @$a;
+                if (not exists $test_schema->{$table_name}->{'INDEXES'}->{$index_name}) {
+                    $test_schema->{$table_name}->{'INDEXES'}->{$index_name} = $compara_schema_with_fk->{$table_name}->{'INDEXES'}->{$index_name};
+                }
+            }
+            is_deeply($test_schema, $compara_schema_with_fk, 'Test schema identical to the Compara schema');
         }
     };
 }

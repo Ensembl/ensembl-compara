@@ -175,9 +175,9 @@ CREATE TABLE `gene_member_qc` (
   `n_orth` int(11) DEFAULT NULL,
   `avg_cov` float DEFAULT NULL,
   `status` varchar(50) NOT NULL,
-  KEY `seq_member_id` (`seq_member_id`),
   KEY `genome_db_id` (`genome_db_id`),
-  KEY `gene_member_stable_id` (`gene_member_stable_id`)
+  KEY `gene_member_stable_id` (`gene_member_stable_id`),
+  KEY `seq_member_id` (`seq_member_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE `gene_tree_node` (
@@ -234,7 +234,6 @@ CREATE TABLE `gene_tree_root` (
   UNIQUE KEY `stable_id` (`stable_id`),
   KEY `method_link_species_set_id` (`method_link_species_set_id`),
   KEY `gene_align_id` (`gene_align_id`),
-  KEY `species_tree_root_id` (`species_tree_root_id`),
   KEY `ref_root_id` (`ref_root_id`),
   KEY `tree_type` (`tree_type`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;

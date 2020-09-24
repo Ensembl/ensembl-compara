@@ -147,7 +147,6 @@ CREATE TABLE `gene_member` (
   PRIMARY KEY (`gene_member_id`),
   UNIQUE KEY `stable_id` (`stable_id`),
   KEY `taxon_id` (`taxon_id`),
-  KEY `genome_db_id` (`genome_db_id`),
   KEY `source_name` (`source_name`),
   KEY `canonical_member_id` (`canonical_member_id`),
   KEY `dnafrag_id_start` (`dnafrag_id`,`dnafrag_start`),
@@ -264,7 +263,9 @@ CREATE TABLE `gene_tree_root_attr` (
   `taxonomic_coverage` float DEFAULT NULL,
   `ratio_species_genes` float DEFAULT NULL,
   `model_name` varchar(40) DEFAULT NULL,
-  PRIMARY KEY (`root_id`)
+  PRIMARY KEY (`root_id`),
+  KEY `mcoffee_scores_gene_align_id` (`mcoffee_scores_gene_align_id`),
+  KEY `lca_node_id` (`lca_node_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE `gene_tree_root_tag` (

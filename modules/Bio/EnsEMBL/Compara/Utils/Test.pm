@@ -350,7 +350,7 @@ sub get_pipeline_tables_create_statements {
 =cut
 
 sub get_schema_from_database {
-    my $dbh = shift;
+    my ($dbh, $db_name) = @_;
     # I can't get column_info() to return all the columns of all the tables
     # of a given / the current database, so need to get the list of the
     # tables first, and then call column_info() on each of them.
@@ -362,6 +362,12 @@ sub get_schema_from_database {
         $schema{$t}->{'COLUMNS'} = $sth->fetchall_hashref('COLUMN_NAME');
         my @pk_columns = $dbh->primary_key_info(undef, undef, $t);
         $schema{$t}->{'PRIMARY_KEY'} = \@pk_columns;
+        $sth = $dbh->statistics_info(undef, $db_name, $t, undef, 'quick');
+        $schema{$t}->{'INDEXES'} = $sth->fetchall_hashref(['INDEX_NAME', 'ORDINAL_POSITION']);
+        foreach my $h (values %{$schema{$t}->{'INDEXES'}}) {
+            delete $_->{TABLE_SCHEM} for values %$h;
+            delete $_->{CARDINALITY} for values %$h;
+        }
     }
     return \%schema;
 }
