@@ -199,7 +199,7 @@ sub read_sqls {
             # trailing comma, so need to remove the one from the previous line
             $sql =~ s/,[\n\s]+FOREIGN\s+KEY.+$//im;
             # In case the regexp are still missing some cases
-            die $sql if $sql =~ /[\n\s]+FOREIGN\s+/i;
+            die $sql if $sql =~ /\bFOREIGN\b/i;
         }
         # $title will usually be something like "CREATE TABLE dnafrag"
         my $title = $sql;
