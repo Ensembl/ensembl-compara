@@ -68,7 +68,7 @@ my @schema_patcher_command = (
 Bio::EnsEMBL::Compara::Utils::Test::test_command(\@schema_patcher_command, 'Can patch the database');
 my $previous_schema = Bio::EnsEMBL::Compara::Utils::Test::get_schema_from_database($previous_db);
 
-is_deeply($current_schema, $previous_schema);
+is_deeply($current_schema, $previous_schema, 'The patched schema is identical to the current one');
 
 # No need to drop the database because it will be destroyed when
 # $multitestdb goes out of scope
