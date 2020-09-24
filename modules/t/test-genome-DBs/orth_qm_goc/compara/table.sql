@@ -27,7 +27,7 @@ CREATE TABLE `conservation_score` (
   `expected_score` blob,
   `diff_score` blob,
   KEY `genomic_align_block_id` (`genomic_align_block_id`,`window_size`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 MAX_ROWS=15000000 AVG_ROW_LENGTH=841;
 
 CREATE TABLE `constrained_element` (
   `constrained_element_id` bigint(20) unsigned NOT NULL,
@@ -154,7 +154,7 @@ CREATE TABLE `gene_member` (
   KEY `dnafrag_id_end` (`dnafrag_id`,`dnafrag_end`),
   KEY `biotype_dnafrag_id_start_end` (`biotype_group`,`dnafrag_id`,`dnafrag_start`,`dnafrag_end`),
   KEY `genome_db_id_biotype` (`genome_db_id`,`biotype_group`)
-) ENGINE=MyISAM AUTO_INCREMENT=74 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=74 DEFAULT CHARSET=latin1 MAX_ROWS=100000000;
 
 CREATE TABLE `gene_member_hom_stats` (
   `gene_member_id` int(10) unsigned NOT NULL,
@@ -310,7 +310,7 @@ CREATE TABLE `genomic_align` (
   KEY `method_link_species_set_id` (`method_link_species_set_id`),
   KEY `dnafrag` (`dnafrag_id`,`method_link_species_set_id`,`dnafrag_start`,`dnafrag_end`),
   KEY `node_id` (`node_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 MAX_ROWS=1000000000 AVG_ROW_LENGTH=60;
 
 CREATE TABLE `genomic_align_block` (
   `genomic_align_block_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -400,7 +400,7 @@ CREATE TABLE `homology_member` (
   PRIMARY KEY (`homology_id`,`gene_member_id`),
   KEY `gene_member_id` (`gene_member_id`),
   KEY `seq_member_id` (`seq_member_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 MAX_ROWS=300000000;
 
 CREATE TABLE `mapping_session` (
   `mapping_session_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -507,7 +507,7 @@ CREATE TABLE `other_member_sequence` (
   `length` int(10) NOT NULL,
   `sequence` mediumtext NOT NULL,
   PRIMARY KEY (`seq_member_id`,`seq_type`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 MAX_ROWS=10000000 AVG_ROW_LENGTH=60000;
 
 CREATE TABLE `peptide_align_feature` (
   `peptide_align_feature_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -529,7 +529,7 @@ CREATE TABLE `peptide_align_feature` (
   `hit_rank` int(10) NOT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`peptide_align_feature_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 MAX_ROWS=100000000 AVG_ROW_LENGTH=133;
 
 CREATE TABLE `seq_member` (
   `seq_member_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -558,7 +558,7 @@ CREATE TABLE `seq_member` (
   KEY `dnafrag_id_start` (`dnafrag_id`,`dnafrag_start`),
   KEY `dnafrag_id_end` (`dnafrag_id`,`dnafrag_end`),
   KEY `seq_member_gene_member_id_end` (`seq_member_id`,`gene_member_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=74 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=74 DEFAULT CHARSET=latin1 MAX_ROWS=100000000;
 
 CREATE TABLE `seq_member_projection` (
   `source_seq_member_id` int(10) unsigned NOT NULL,
@@ -582,7 +582,7 @@ CREATE TABLE `sequence` (
   `sequence` longtext NOT NULL,
   PRIMARY KEY (`sequence_id`),
   KEY `md5sum` (`md5sum`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1 MAX_ROWS=10000000 AVG_ROW_LENGTH=19000;
 
 CREATE TABLE `species_set` (
   `species_set_id` int(10) unsigned NOT NULL,

@@ -333,10 +333,10 @@ CREATE TABLE `gene_archive` (
   `translation_version` smallint(6) NOT NULL DEFAULT '1',
   `peptide_archive_id` int(10) unsigned DEFAULT NULL,
   `mapping_session_id` int(10) unsigned NOT NULL,
-  KEY `peptide_archive_id_idx` (`peptide_archive_id`),
   KEY `gene_idx` (`gene_stable_id`,`gene_version`),
   KEY `transcript_idx` (`transcript_stable_id`,`transcript_version`),
-  KEY `translation_idx` (`translation_stable_id`,`translation_version`)
+  KEY `translation_idx` (`translation_stable_id`,`translation_version`),
+  KEY `peptide_archive_id_idx` (`peptide_archive_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE `gene_attrib` (
@@ -919,8 +919,8 @@ CREATE TABLE `unmapped_object` (
   `parent` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`unmapped_object_id`),
   UNIQUE KEY `unique_unmapped_obj_idx` (`ensembl_id`,`ensembl_object_type`,`identifier`,`unmapped_reason_id`,`parent`,`external_db_id`),
-  KEY `anal_exdb_idx` (`analysis_id`,`external_db_id`),
   KEY `id_idx` (`identifier`(50)),
+  KEY `anal_exdb_idx` (`analysis_id`,`external_db_id`),
   KEY `ext_db_identifier_idx` (`external_db_id`,`identifier`)
 ) ENGINE=MyISAM AUTO_INCREMENT=88253 DEFAULT CHARSET=latin1;
 
