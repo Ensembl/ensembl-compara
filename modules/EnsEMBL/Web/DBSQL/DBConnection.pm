@@ -130,12 +130,11 @@ sub get_DBAdaptor {
   # try to retrieve the DBAdaptor from the Registry
   my $dba = $reg->get_DBAdaptor($species, $database);
   $self->clean($dba);
-  # warn "$species - $database - $dba";
 
   ## Collection databases
   if (! $dba ) {
     my $sg = $self->{species_defs}->get_config($species, "SPECIES_DATASET");
-    $dba = $reg->get_DBAdaptor($sg, $database) if $sg;
+    $dba = eval {$reg->get_DBAdaptor($sg, $database)} if $sg;
     if ($dba) {
       $dba->{_is_multispecies} = 1;
       $dba->{_species_id} = $self->{species_defs}->get_config($species, "SPECIES_META_ID");
