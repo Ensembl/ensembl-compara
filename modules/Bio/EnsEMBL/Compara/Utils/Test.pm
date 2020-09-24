@@ -298,7 +298,9 @@ sub get_schema_from_database {
     my %schema;
     foreach my $t (@table_names) {
         $sth = $dbh->column_info(undef, undef, $t, '%');
-        $schema{$t} = $sth->fetchall_hashref('COLUMN_NAME');
+        $schema{$t}->{'COLUMNS'} = $sth->fetchall_hashref('COLUMN_NAME');
+        my @pk_columns = $dbh->primary_key_info(undef, undef, $t);
+        $schema{$t}->{'PRIMARY_KEY'} = \@pk_columns;
     }
     return \%schema;
 }
