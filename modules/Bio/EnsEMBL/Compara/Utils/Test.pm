@@ -289,8 +289,9 @@ sub load_statements {
 
 sub get_schema_from_database {
     my $dbh = shift;
-    # For some reasons, column_info(undef, undef, '%', '%') doesn't
-    # work on MySQL ... We need to call it on each table explicitly
+    # I can't get column_info() to return all the columns of all the tables
+    # of a given / the current database, so need to get the list of the
+    # tables first, and then call column_info() on each of them.
     my $sth = $dbh->table_info(undef, undef, '%');
     my @table_names = keys %{ $sth->fetchall_hashref('TABLE_NAME') };
     my %schema;
