@@ -52,16 +52,12 @@ sub run {
     my $blast_params          = $self->param('blast_params')  || '';  # no parameters to C++ binary means having composition stats on and -seg masking off
     my $evalue_limit          = $self->param('evalue_limit');
     my $worker_temp_directory = $self->worker_temp_directory;
-    my $blast_outfile         = $worker_temp_directory . '/blast.out.' . $$; # looks like inevitable evil
+    my $blast_infile          = $worker_temp_directory . '/blast.in.' . $$;
+    my $blast_outfile         = $worker_temp_directory . '/blast.out.' . $$;
 
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $self->param('query_set'));
 
-    if ($self->debug) {
-        my $blast_infile  = $worker_temp_directory . '/blast.in.' . $$;  # only for debugging
-        print "diamond_infile $blast_infile\n";
-        my $members = $self->param('query_set')->get_all_Members;
-        $self->param('query_set')->print_sequences_to_file($blast_infile, -format => 'fasta');
-    }
+    $self->param('query_set')->print_sequences_to_file($blast_infile, -format => 'fasta');
 
     $self->compara_dba->dbc->disconnect_if_idle();
 
@@ -69,12 +65,9 @@ sub run {
     foreach my $blast_db (keys %{$self->param('all_blast_db')}) {
         my $target_genome_db_id = $self->param('all_blast_db')->{$blast_db};
 
-        my $cmd = "$diamond_exe blastp -d $blast_db --evalue $evalue_limit --out $blast_outfile --outfmt 6 qseqid sseqid evalue score nident pident qstart qend sstart send length positive ppos qseq_gapped sseq_gapped $blast_params";
+        my $cmd = "$diamond_exe blastp -d $blast_db --query $blast_infile --evalue $evalue_limit --out $blast_outfile --outfmt 6 qseqid sseqid evalue score nident pident qstart qend sstart send length positive ppos qseq_gapped sseq_gapped $blast_params";
 
-        my $run_cmd = $self->write_to_command($cmd, sub {
-            my $blast_fh = shift;
-            $self->param('query_set')->print_sequences_to_file($blast_fh, -format => 'fasta');
-        } );
+        my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1});
         print "Time for diamond search " . $run_cmd->runtime_msec . " msec\n";
 
         my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param('genome_db_id'), $target_genome_db_id);

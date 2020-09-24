@@ -82,7 +82,8 @@ sub default_options {
         'hc_priority'              => -10,
 
         'num_sequences_per_blast_job'   => 200,
-        'all_blast_params'              => [ 35, 50, '--max-hsps 1 --matrix PAM70 --threads 4 -b1 -c1 --sensitive', '1e-6' ],
+        'blast_params'              => '--max-hsps 1 --threads 4 -b1 -c1 --sensitive',
+        'evalue_limit'              => '1e-6',
     };
 }
 
@@ -105,7 +106,8 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
         'master_db'        => $self->o('master_db'),
         'output_db'        => $self->o('output_db'),
         'species_set_id'   => $self->o('species_set_id'),
-        'all_blast_params' => $self->o('all_blast_params'),
+        'blast_params'     => $self->o('all_blast_params'),
+        'evalue_limit'     => $self->o('evalue_limit'),
         'fasta_dir'        => $self->o('fasta_dir'),
     };
 }
@@ -130,12 +132,6 @@ sub core_pipeline_analyses {
             -analysis_capacity  => $self->o('decision_capacity'),
             -priority           => $self->o('hc_priority'),
             -batch_size         => 20,
-    );
-
-    my %blastp_parameters = (
-        'blast_bin_dir'         => $self->o('blast_bin_dir'),
-        'blast_params'          => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
-        'evalue_limit'          => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
     );
 
     return [

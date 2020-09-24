@@ -37,9 +37,9 @@ sub pipeline_analyses_diamond_against_refdb {
     my ($self) = @_;
 
     my %blastp_parameters = (
-        'blast_bin_dir' => $self->o('blast_bin_dir'),
-        'blast_params'  => "#expr(#all_blast_params#->[2])expr#",
-        'evalue_limit'  => "#expr(#all_blast_params#->[3])expr#",
+        'diamond_exe'   => $self->o('diamond_exe'),
+        'blast_params'  => $self->o('blast_params'),
+        'evalue_limit'  => $self->o('evalue_limit'),
         'blast_db'      => $self->o('blast_db'),
     );
 
