@@ -183,6 +183,7 @@ sub read_sqls {
         return;
     });
 
+    # If testing the foreign keys, make sure the engine is InnoDB
     if ($with_fk) {
         $all_sql =~ s/ENGINE=MyISAM/ENGINE=InnoDB/g;
     }
