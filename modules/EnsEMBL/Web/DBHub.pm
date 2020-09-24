@@ -69,13 +69,13 @@ sub database {
   ## @param (String) Species (if not the default one)
   my $self = shift;
   my $db_key = 'DATABASE_'.uc($_[0]);
-  return undef unless $self->species_defs->databases->{$db_key};
 
   if ($_[0] && $_[0] =~ /compara/) {
     return Bio::EnsEMBL::Registry->get_DBAdaptor('multi', $_[0], 1);
   } elsif ($_[0] && $_[0] =~ /go/) {
     return $self->databases->get_databases('go')->{'go'};
   } else {
+    return undef unless $self->species_defs->databases->{$db_key};
     return $self->databases->get_DBAdaptor(@_);
   }
 }
