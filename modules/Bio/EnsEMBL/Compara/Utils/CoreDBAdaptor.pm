@@ -124,8 +124,8 @@ sub pool_one_DBConnection {
   Arg[2]      : (optional) String $genome_component
   Arg[-ATTRIBUTES] (opt)
               : Arrayref of strings. List of the attribute codes to load.
-                If not defined, will load a preselection of attributes known
-                to be necessary to build DnaFrags. Set it to an empty list to
+                to be necessary to build DnaFrags ('codon_table', 'non_ref',
+                and 'sequence_location'). Set it to an empty list to
                 disable loading of any attributes.
   Arg[-RETURN_BATCHES] (opt)
               : Boolean. Make the iterator return batches of slices instead
@@ -195,7 +195,7 @@ sub iterate_toplevel_slices {
     my $slice_builder = sub {
         if ($sth->fetch) {
             my $cs = $csa->fetch_by_dbID($cs_id);
-            if(!$cs) {
+            if (!$cs) {
                 throw("seq_region $name references non-existent coord_system $cs_id.");
             }
             return Bio::EnsEMBL::Slice->new_fast({

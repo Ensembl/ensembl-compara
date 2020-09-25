@@ -339,7 +339,7 @@ sub fetch_all_by_GenomeDB_and_names {
         assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
         $genome_db_id = $genome_db->dbID;
         if (!$genome_db_id) {
-            throw("[$genome_db] does not have a dbID");
+            throw($genome_db->toString . " does not have a dbID");
         }
     }
 
