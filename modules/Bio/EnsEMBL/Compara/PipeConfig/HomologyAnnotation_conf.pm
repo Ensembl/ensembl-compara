@@ -35,7 +35,7 @@ use Bio::EnsEMBL::Hive::Version 2.5;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::CopyNCBIandGenomeDB;
-use Bio::EnsEMBL::Compara::PipeConfig::Parts::BLASTpAgainstRef;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstRef;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -81,8 +81,9 @@ sub default_options {
         'decision_capacity'        => 150,
         'hc_priority'              => -10,
 
-        'num_sequences_per_blast_job'   => 50,
-        'all_blast_params'              => [ 35, 50, '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM70 -word_size 2', '1e-6' ],
+        'num_sequences_per_blast_job'   => 200,
+        'blast_params'              => '--max-hsps 1 --threads 4 -b1 -c1 --sensitive',
+        'evalue_limit'              => '1e-6',
     };
 }
 
@@ -105,8 +106,16 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
         'master_db'        => $self->o('master_db'),
         'output_db'        => $self->o('output_db'),
         'species_set_id'   => $self->o('species_set_id'),
-        'all_blast_params' => $self->o('all_blast_params'),
+        'blast_params'     => $self->o('all_blast_params'),
+        'evalue_limit'     => $self->o('evalue_limit'),
         'fasta_dir'        => $self->o('fasta_dir'),
+    };
+}
+
+sub resource_classes {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::resource_classes('include_multi_threaded')},  # inherit the standard resource classes, incl. multi-threaded
     };
 }
 
@@ -125,12 +134,6 @@ sub core_pipeline_analyses {
             -batch_size         => 20,
     );
 
-    my %blastp_parameters = (
-        'blast_bin_dir'         => $self->o('blast_bin_dir'),
-        'blast_params'          => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
-        'evalue_limit'          => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
-    );
-
     return [
         {   -logic_name => 'backbone_fire_db_prepare',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::AssertMatchingVersions',
@@ -144,12 +147,12 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_fire_blast',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into     => {
-                '1->A' => [ 'blast_factory' ],
+                '1->A' => [ 'diamond_factory' ],
                 'A->1' => [ 'do_something_with_paf_table' ],
             },
         },
 
-        {   -logic_name => 'blast_factory',
+        {   -logic_name => 'diamond_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BlastFactory',
             -parameters => {
                 'species_set_id'    => $self->o('species_set_id'),
@@ -158,7 +161,7 @@ sub core_pipeline_analyses {
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into     => {
-                '2' => { 'blastp_unannotated' => INPUT_PLUS() }
+                '2' => { 'diamond_blastp' => INPUT_PLUS() }
             },
         },
 
@@ -167,7 +170,7 @@ sub core_pipeline_analyses {
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CopyNCBIandGenomeDB::pipeline_analyses_copy_ncbi_and_genome_db($self) },
-        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::BLASTpAgainstRef::pipeline_analyses_blastp_against_refdb($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstRef::pipeline_analyses_diamond_against_refdb($self) },
     ];
 }
 
