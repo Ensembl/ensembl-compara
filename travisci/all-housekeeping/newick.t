@@ -30,12 +30,11 @@ use Bio::EnsEMBL::Compara::Utils::Test;
 
 my $xml_parser = XML::LibXML->new(line_numbers => 1);
 my %mlss_xml_genome_paths = (
-    'genome'             => 'name',
-    'ref_for_taxon'      => 'name',
-    'pairwise_alignment' => 'ref_genome',
-    'pairwise_alignment' => 'target_genome',
-    'one_vs_all'         => 'ref_genome',
-    'all_vs_one'         => 'target_genome',
+    'genome'             => ['name'],
+    'ref_for_taxon'      => ['name'],
+    'pairwise_alignment' => ['ref_genome', 'target_genome'],
+    'one_vs_all'         => ['ref_genome'],
+    'all_vs_one'         => ['target_genome'],
 );
 
 sub is_valid_newick {
@@ -77,10 +76,12 @@ sub do_species_match {
         subtest $xml_file => sub {
             my $xml_document = $xml_parser->parse_file($xml_file);
             my $root_node    = $xml_document->documentElement();
-            while (my ($node_name, $attr_name) = each %mlss_xml_genome_paths) {
+            while (my ($node_name, $attr_names) = each %mlss_xml_genome_paths) {
                 foreach my $genome_node (@{$root_node->findnodes("//$node_name")}) {
-                    my $name = $genome_node->getAttribute($attr_name);
-                    ok(exists $names_in_tree->{$name}, "<$node_name $attr_name='$name'> is in the species tree");
+                    foreach my $attr_name (@$attr_names) {
+                        my $name = $genome_node->getAttribute($attr_name);
+                        ok(exists $names_in_tree->{$name}, "<$node_name $attr_name='$name'> is in the species tree");
+                    }
                 }
             }
         };
