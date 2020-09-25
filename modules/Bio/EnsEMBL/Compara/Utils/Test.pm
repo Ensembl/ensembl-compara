@@ -33,6 +33,10 @@ use warnings;
 use Cwd qw(abs_path);
 use File::Spec;
 use File::Basename qw/dirname/;
+use Test::More;
+
+use Bio::EnsEMBL::Utils::IO qw/work_with_file/;
+use Bio::EnsEMBL::Test::MultiTestDB;
 
 =head2 GLOBAL VARIABLES
 
@@ -105,5 +109,225 @@ sub find_all_files {
 
     return @files;
 }
+
+=head2 create_multitestdb
+
+  Description : Create a new MultiTestDB instance that can be used to
+                create custom test databases on the fly.
+  Returntype  : Bio::EnsEMBL::Test::MultiTestDB
+
+=cut
+
+sub create_multitestdb {
+    my $compara_dir = get_repository_root();
+    my $t_dir = "${compara_dir}/modules/t";
+
+    # Initialize a MultiTestDB object
+    my $multitestdb = bless {}, 'Bio::EnsEMBL::Test::MultiTestDB';
+    $multitestdb->curr_dir($t_dir);
+    $multitestdb->_rebless;
+    $multitestdb->species('compara');
+    return $multitestdb;
+}
+
+
+=head2 drop_database_if_exists
+
+  Arg[1]      : Bio::EnsEMBL::Test::MultiTestDB $multitestdb. Object referring to the database server
+  Arg[2]      : String $db_name. The database name
+  Description : Drop the database if it exists and close the existing
+                connection objects.
+  Returntype  : None
+
+=cut
+
+sub drop_database_if_exists {
+    my ($multitestdb, $db_name) = @_;
+    if ($multitestdb->_db_exists($multitestdb->dbi_connection, $db_name)) {
+        $multitestdb->_drop_database($multitestdb->dbi_connection, $db_name);
+        $multitestdb->disconnect_dbi_connection;
+    }
+}
+
+
+=head2 read_sqls
+
+  Argument[1] : string $file_name. The path of the SQL file to read
+  Argument[2] : (optional) boolean $with_fk (default false). Turn on to
+                keep the foreign key constraints, otherwise they are removed
+  Description : Read the content of the schema definition file and return
+                it as a list of SQL statements with titles
+  Returntype  : List of string pairs
+
+=cut
+
+sub read_sqls {
+    my $sql_file = shift;
+    my $with_fk  = shift;
+
+    # Same code as in MultiTestDB::load_sql but without the few lines we don't need
+    my $all_sql = '';
+    work_with_file($sql_file, 'r', sub {
+        my ($fh) = @_;
+        my $is_comment = 0;
+        while(my $line = <$fh>) {
+            if ($is_comment) {
+                $is_comment = 0 if $line =~ m/\*\//;
+            } elsif ($line =~ m/\/\*/) {
+                $is_comment = 1 unless $line =~ m/\*\//;
+            } elsif ($line !~ /^#/ && $line !~ /^--( |$)/ && $line =~ /\S/) {
+                #ignore comments and white-space lines
+                $all_sql .= $line;
+            }
+        }
+        return;
+    });
+
+    # If testing the foreign keys, make sure the engine is InnoDB
+    if ($with_fk) {
+        $all_sql =~ s/ENGINE=MyISAM/ENGINE=InnoDB/g;
+    }
+
+    my @statements;
+    foreach my $sql (split( /;/, $all_sql )) {
+        $sql =~ s/^\n*//s;
+        next unless $sql;
+        if (!$with_fk) {
+            # FOREIGN KEY constraints followed by something else (note the
+            # trailing comma)
+            $sql =~ s/^\s+FOREIGN\s+KEY[^,]+,//img;
+            # FOREIGN KEY constraints as the last line of the CREATE TABLE: no
+            # trailing comma, so need to remove the one from the previous line
+            $sql =~ s/,[\n\s]+FOREIGN\s+KEY.+$//im;
+            # In case the regexp are still missing some cases
+            die $sql if $sql =~ /\bFOREIGN\b/i;
+        }
+        # $title will usually be something like "CREATE TABLE dnafrag"
+        my $title = $sql;
+        $title =~ s/\s+\(.*//s;
+        push @statements, [$title, $sql];
+    }
+
+    return \@statements;
+}
+
+
+=head2 test_schema_compliance
+
+  Arg[1]      : Bio::EnsEMBL::Test::MultiTestDB $multitestdb. Object referring to the database server
+  Arg[2]      : String $db_name. The database name
+  Arg[3]      : Arrayref of String pairs (arrayrefs), each being a statement title, and an actual SQL statement
+  Arg[4]      : String $server_mode. Typically TRADITIONAL or ANSI
+  Description : Execute all the statements in a new database and check that they pass individually
+  Returntype  : A DBI database handle to the newly created database
+
+=cut
+
+sub test_schema_compliance {
+    my ($multitestdb, $db_name, $statements, $server_mode) = @_;
+
+    # Create the database and set the SQL mode
+    drop_database_if_exists($multitestdb, $db_name);
+    my $db = $multitestdb->create_and_use_db($multitestdb->dbi_connection(), $db_name);
+    $db->do("SET SESSION sql_mode = '$server_mode'");
+
+    # Test every statement
+    foreach my $s (@$statements) {
+        eval {
+            $db->do($s->[1]);
+            pass($s->[0]);
+        };
+        if (my $err_msg = $@) {
+            fail($s->[0]);
+            diag($err_msg);
+        }
+    }
+    return $db;
+}
+
+
+=head2 load_statements
+
+  Arg[1]      : Bio::EnsEMBL::Test::MultiTestDB $multitestdb. Object referring to the database server
+  Arg[2]      : String $db_name. The database name
+  Arg[3]      : Arrayref of String pairs (arrayrefs), each being a statement title, and an actual SQL statement
+  Arg[4]      : (optional) String $test_name. A custom name to give to the test
+  Description : Execute all the statements in a new database and check that they pass as a whole
+  Returntype  : A DBI database handle to the newly created database
+
+=cut
+
+sub load_statements {
+    my ($multitestdb, $db_name, $statements, $test_name) = @_;
+
+    # Create the database and set the SQL mode
+    drop_database_if_exists($multitestdb, $db_name);
+    my $db = $multitestdb->create_and_use_db($multitestdb->dbi_connection(), $db_name);
+
+    eval {
+        foreach my $s (@$statements) {
+            $db->do($s->[1]);
+        };
+    };
+    if (my $err_msg = $@) {
+        fail($test_name);
+        diag($err_msg);
+    } else {
+        pass($test_name);
+    }
+    return $db;
+}
+
+
+=head2 get_schema_from_database
+
+  Arg[1]      : DBI database handle $dbh
+  Description : Queries the schema of the database
+  Returntype  : Hashref {table name => Hashref {column number => column info}}
+  Exceptions  : none
+
+=cut
+
+sub get_schema_from_database {
+    my $dbh = shift;
+    # I can't get column_info() to return all the columns of all the tables
+    # of a given / the current database, so need to get the list of the
+    # tables first, and then call column_info() on each of them.
+    my $sth = $dbh->table_info(undef, undef, '%');
+    my @table_names = keys %{ $sth->fetchall_hashref('TABLE_NAME') };
+    my %schema;
+    foreach my $t (@table_names) {
+        $sth = $dbh->column_info(undef, undef, $t, '%');
+        $schema{$t}->{'COLUMNS'} = $sth->fetchall_hashref('COLUMN_NAME');
+        my @pk_columns = $dbh->primary_key_info(undef, undef, $t);
+        $schema{$t}->{'PRIMARY_KEY'} = \@pk_columns;
+    }
+    return \%schema;
+}
+
+
+=head2 test_command
+
+  Arg[1]      : String or Array-ref $command
+  Arg[2]      : String $test_name
+  Description : Execute the command and check that the return code is 0.
+                The command can be given as a string (which will be parsed
+                by Perl's system() or the shell) or as an array-ref of
+                strings.
+  Returntype  : none
+
+=cut
+
+sub test_command {
+    my ($command, $test_name) = @_;
+    my $rc = system(ref($command) eq 'ARRAY' ? @$command : $command);
+    if ($rc) {
+        fail($test_name);
+        diag("Return code:$? $!");
+    } else {
+        pass($test_name);
+    }
+}
+
 
 1;

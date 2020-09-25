@@ -19,22 +19,7 @@
 echo "We are running Perl '$TRAVIS_PERL_VERSION', Coverage reporting is set to '$COVERAGE'"
 
 # Setup the environment variables
-export ENSEMBL_CVS_ROOT_DIR=$PWD
-export EHIVE_ROOT_DIR=$PWD/ensembl-hive
 export TEST_AUTHOR=$USER
-export PERL5LIB=$PERL5LIB:$PWD/bioperl-live
-export PERL5LIB=$PERL5LIB:$PWD/bioperl-run/lib
-export PERL5LIB=$PERL5LIB:$PWD/modules
-export PERL5LIB=$PERL5LIB:$PWD/travisci/fake_libs/
-export PERL5LIB=$PERL5LIB:$PWD/ensembl/modules
-export PERL5LIB=$PERL5LIB:$PWD/ensembl-rest/lib
-export PERL5LIB=$PERL5LIB:$PWD/ensembl-hive/modules
-export PERL5LIB=$PERL5LIB:$PWD/ensembl-test/modules
-export PERL5LIB=$PERL5LIB:$PWD/ensembl-funcgen/modules
-export PERL5LIB=$PERL5LIB:$PWD/ensembl-variation/modules
-export PERL5LIB=$PERL5LIB:$PWD/ensembl-taxonomy/modules
-export PERL5LIB=$PERL5LIB:$PWD/ensembl-io/modules
-export PERL5LIB=$PERL5LIB:$PWD/ensembl-datacheck/lib
 
 ENSEMBL_PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-funcgen'
 ENSEMBL_TESTER="$PWD/ensembl-test/scripts/runtests.pl"

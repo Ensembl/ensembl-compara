@@ -192,3 +192,4 @@
 649	\N	patch	patch_100_101_a.sql|schema_version
 650	\N	patch	patch_101_102_a.sql|schema_version
 651	\N	patch	patch_102_103_a.sql|schema_version
+652	\N	patch	patch_78_79_b.sql|bamcov support

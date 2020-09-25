@@ -269,7 +269,7 @@ CREATE TABLE `gene_tree_root_attr` (
 
 CREATE TABLE `gene_tree_root_tag` (
   `root_id` int(10) unsigned NOT NULL,
-  `tag` varchar(255) DEFAULT NULL,
+  `tag` varchar(255) NOT NULL,
   `value` mediumtext NOT NULL,
   KEY `root_id_tag` (`root_id`,`tag`),
   KEY `tag` (`tag`)
@@ -561,8 +561,8 @@ CREATE TABLE `seq_member` (
 ) ENGINE=MyISAM AUTO_INCREMENT=100289438 DEFAULT CHARSET=latin1 MAX_ROWS=100000000;
 
 CREATE TABLE `seq_member_projection` (
-  `target_seq_member_id` int(10) unsigned NOT NULL,
   `source_seq_member_id` int(10) unsigned NOT NULL,
+  `target_seq_member_id` int(10) unsigned NOT NULL,
   `identity` float(5,2) DEFAULT NULL,
   PRIMARY KEY (`target_seq_member_id`),
   KEY `source_seq_member_id` (`source_seq_member_id`)
@@ -664,7 +664,7 @@ CREATE TABLE `species_tree_node_tag` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE `species_tree_root` (
-  `root_id` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `root_id` bigint(20) unsigned NOT NULL,
   `method_link_species_set_id` int(10) unsigned NOT NULL,
   `label` varchar(256) NOT NULL DEFAULT 'default',
   PRIMARY KEY (`root_id`),

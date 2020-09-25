@@ -667,7 +667,7 @@ CREATE TABLE `species_tree_node_tag` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE `species_tree_root` (
-  `root_id` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `root_id` bigint(20) unsigned NOT NULL,
   `method_link_species_set_id` int(10) unsigned NOT NULL,
   `label` varchar(256) NOT NULL DEFAULT 'default',
   PRIMARY KEY (`root_id`),
