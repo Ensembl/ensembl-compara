@@ -264,6 +264,26 @@ sub load_statements {
     drop_database_if_exists($multitestdb, $db_name);
     my $db = $multitestdb->create_and_use_db($multitestdb->dbi_connection(), $db_name);
 
+    apply_statements($db, $statements, $test_name);
+    return  $db;
+}
+
+
+=head2 apply_statements
+
+  Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection *or* DBI::db $db
+  Arg[2]      : Arrayref of String pairs $statements, as returned by read_sqls()
+  Arg[3]      : (optional) String $test_name. A custom name to give to the test
+  Description : Apply the statements to the given database connection, and check that they
+                pass as a whole.
+                Note that $db can have very different types. What matters is that it has a
+                do() method to execute a SQL statement.
+  Returntype  : none
+
+=cut
+
+sub apply_statements {
+    my ($db, $statements, $test_name) = @_;
     eval {
         foreach my $s (@$statements) {
             $db->do($s->[1]);
@@ -276,6 +296,30 @@ sub load_statements {
         pass($test_name);
     }
     return $db;
+}
+
+
+=head2 get_pipeline_tables_create_statements
+
+  Arg[1]      : (optional) Arrayref of Strings $table_names
+  Description : Read the content of the "pipeline" schema definition file, filter it
+                down to the requested table if necessary, and return it.
+  Returntype  : List of string pairs
+
+=cut
+
+sub get_pipeline_tables_create_statements {
+    my ($table_names) = @_;
+
+    my $compara_dir = get_repository_root();
+    my $statements  = read_sqls("${compara_dir}/sql/pipeline-tables.sql");
+
+    if ($table_names) {
+        my %h = map { 'CREATE TABLE '.$_ => 1 } @$table_names;
+        $statements = [grep {$h{$_->[0]}} @$statements];
+    }
+
+    return $statements;
 }
 
 

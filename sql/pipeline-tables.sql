@@ -301,3 +301,44 @@ CREATE TABLE `seq_member_id_current_reused_map` (
   PRIMARY KEY (stable_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+
+
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for table 'id_generator'
+--
+-- overview: table to mimic AUTO_INCREMENT without having to insert rows in
+--           the actual data table.
+-- semantics:
+--   label      - A string identifying the request type, e.g. "homology", "gene_tree", etc
+--   next_id    - The next value a dbID column of that type will use
+
+CREATE TABLE id_generator (
+    label       VARCHAR(40) NOT NULL,
+    next_id     BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (label)
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for table 'id_assignments'
+--
+-- overview: table to record the ids that have been assigned through the
+--           id_generator table. Each request yields an interval
+--           [assigned_id, assigned_id+size-1]
+-- semantics:
+--   label          - A string identifying the request type, e.g. "homology", "gene_tree", etc
+--   requestor      - A numeric identifier of the what/who made the request
+--   assigned_id    - The lowest ID assigned to it
+--   size           - The number of IDs assigned to this requestor
+
+CREATE TABLE id_assignments (
+    label       VARCHAR(40) NOT NULL,
+    requestor   BIGINT UNSIGNED NOT NULL,
+    assigned_id BIGINT UNSIGNED NOT NULL,
+    size        INT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (label, requestor)
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+
