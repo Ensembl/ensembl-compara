@@ -201,7 +201,6 @@ sub _get_genes {
       !$slice->isa('Bio::EnsEMBL::LRGSlice')) {
     my $lrg_slices = $slice->project('lrg');
     if ($lrg_slices->[0]) {
-      $self->{'is_lrg'} = 1;
       my $lrg_slice = $lrg_slices->[0]->to_Slice;
       return [map @{$lrg_slice->get_all_Genes($_,$db_alias) || []}, @$analyses];
     }
@@ -392,36 +391,16 @@ sub get {
   } else {
     $genes = $self->_get_genes($args);
   }
-  return [] unless $genes;
   foreach my $g (@$genes) {
     my $title = sprintf("Gene: %s; Location: %s:%s-%s",
                         $g->stable_id,$g->seq_region_name,
                         $g->seq_region_start,$g->seq_region_end);
     $title = $g->external_name.'; ' if $g->external_name;
 
-    my $gene_slice = $g->feature_Slice;
-
-    my ($g_start, $g_end);
-    if ($self->{'is_lrg'}) {
-      warn sprintf '### SEQ REGION %s : %s - %s', $g->seq_region_name,$g->seq_region_start,$g->seq_region_end;
-      my $projection = $g->project_to_slice($args->{'slice'});
-      foreach (@$projection) {
-        #warn "@@@ PROJECTION @$_";
-        $g_start  = $_->[0] unless $g_start;
-        $g_end    = $_->[1];
-      }
-    }
-    else {
-      $g_start  = $g->start;
-      $g_end    = $g->end;
-    }
-    #warn ">>> GENE ".$g->stable_id." AT $g_start - $g_end";
-    #warn sprintf '... ORIGINAL: %s - %s', $g->start, $g->end; 
-
     my $gf = {
       _unique => $self->_unique($args,$g),
-      start => $g_start,
-      end => $g_end,
+      start => $g->start,
+      end => $g->end,
       href => $self->_href($args,$g),
       title => $title,
       label => $self->_feature_label($args,$g),
