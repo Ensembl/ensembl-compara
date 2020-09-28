@@ -340,7 +340,7 @@ sub init_cacheable {
   ## LRG track
   if ($self->species_defs->HAS_LRG) {
     $self->add_tracks('lrg',
-      [ 'lrg_transcript', 'LRG', '_transcript', {
+      [ 'lrg_transcript', 'LRG', 'lrg', {
         display     => 'off', # Switched off by default
         strand      => 'b',
         name        => 'LRG',
