@@ -24,7 +24,7 @@ use Test::Exception;
 use Test::More;
 use XML::LibXML;
 
-use Bio::EnsEMBL::Utils::IO qw (slurp);
+use Bio::EnsEMBL::Utils::IO qw(slurp);
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::Utils::Test;
 
@@ -97,4 +97,3 @@ foreach my $f (@all_files) {
 }
 
 done_testing();
-
