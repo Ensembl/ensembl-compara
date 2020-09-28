@@ -54,6 +54,7 @@
       </species_set>
     </one_vs_all>
 
+    <!-- Switch to bos_taurus if canis_lupus_familiaris gets an assembly update -->
     <one_vs_all method="LASTZ_NET" ref_genome="canis_lupus_familiaris" against="Carnivora"/>
 
     <one_vs_all method="LASTZ_NET" ref_genome="bos_taurus">
@@ -62,6 +63,7 @@
       </species_set>
     </one_vs_all>
 
+    <!-- Switch to bos_taurus if equus_caballus gets an assembly update -->
     <one_vs_all method="LASTZ_NET" ref_genome="equus_caballus" against="Perissodactyla"/>
     <one_vs_all method="LASTZ_NET" ref_genome="sus_scrofa" against="Sus"/>
 
@@ -325,7 +327,7 @@
       </species_set>
     </multiple_alignment>
 
-    <!-- Amniotes, excl. mouse strains -->
+    <!-- Amniotes, excl. strains and breeds -->
     <!-- NB: this MSA can only stay the same or decrease in number of species -->
     <multiple_alignment method="PECAN" gerp="1">
       <species_set name="amniotes" display_name="amniota vertebrates">
@@ -430,8 +432,6 @@
     <!-- Mouse strains -->
     <multiple_alignment method="EPO">
       <species_set name="murinae">
-        <!-- As long as we are not able to update this alignment, the species-set must remain the same.
-             We cannot use taxonomy-based rules since they would automatically add new species to the set -->
         <genome name="mus_musculus"/>
         <genome name="mus_musculus_129s1svimj"/>
         <genome name="mus_musculus_aj"/>
@@ -449,6 +449,9 @@
         <genome name="mus_musculus_wsbeij"/>
         <genome name="mus_musculus_akrj"/>
         <genome name="mus_spretus"/>
+        <genome name="mus_caroli"/>
+        <genome name="mus_pahari"/>
+        <genome name="mus_spicilegus"/>
         <genome name="rattus_norvegicus"/>
       </species_set>
     </multiple_alignment>

@@ -674,6 +674,7 @@ sub core_pipeline_analyses {
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
                 -analysis_capacity => $self->o('recover_capacity'),
                 -flow_into => {
+                    1 => 'hc_epo_removed_members',
                     -1 => 'recover_epo_hugemem',
                 },
                 -rc_name => '16Gb_job',
@@ -769,9 +770,14 @@ sub core_pipeline_analyses {
 
             {   -logic_name     => 'other_paralogs',
                 -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
+                -parameters     => {
+                    'hashed_gene_tree_id' => '#expr(dir_revhash(#gene_tree_id#))expr#',
+                    'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
+                },
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
                 -priority           => 40,
                 -rc_name            => '1Gb_job',
+                -max_retry_count    => 3,
                 -flow_into     => {
                                    -1 => [ 'other_paralogs_himem' ],
                                    3 => [ 'other_paralogs' ],
@@ -780,9 +786,14 @@ sub core_pipeline_analyses {
 
             {   -logic_name     => 'other_paralogs_himem',
                 -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
+                -parameters     => {
+                    'hashed_gene_tree_id' => '#expr(dir_revhash(#gene_tree_id#))expr#',
+                    'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
+                },
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
                 -priority           => 40,
                 -rc_name            => '4Gb_job',
+                -max_retry_count    => 3,
                 -flow_into     => {
                                    3 => [ 'other_paralogs_himem' ],
                                   },

@@ -84,14 +84,14 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-8', 'jalvarez_plants_load_members_102'],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-8', 'jalvarez_default_plants_protein_trees_102' ],
+    #'compara_members'  => [ 'mysql-ens-compara-prod-', ''],
+    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-', '' ],
 
     # LASTZ dbs
-    'lastz_batch_1' => [ 'mysql-ens-compara-prod-2', 'jalvarez_plants_lastz_batch1_102' ],
+    #'lastz_batch_1' => [ 'mysql-ens-compara-prod-', '' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-7', 'jalvarez_plants_synteny_102' ],
+    #'compara_syntenies' => [ 'mysql-ens-compara-prod-', '' ],
 
     # EPO dbs
     ## rice
