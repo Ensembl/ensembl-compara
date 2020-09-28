@@ -504,9 +504,18 @@ sub generic_group_link {
   $title =~ /^(.+)\s*\(\d+\)/;
   my $project_name = ($1) ? $1 : $title;
 
-  $project_name = ($project_name =~ /(project|consortium)/i) ? "<b>$project_name</b> " : '';
-  
-  return sprintf('<div style="clear:both"></div><p><a href="%s" rel="external">More information about the %spopulations</a></p>', $pop_url, $project_name);
+  my $terms = '';
+  my $pop_use_url;
+  if ($project_name =~ /ncbi alfa/i) {
+    $pop_use_url = $self->hub->get_ExtURL('ALFA_POP_USE');
+    if ($pop_use_url) {
+      $terms = sprintf(' (<a href="%s" rel="external">Terms of Use</a>)', $pop_use_url);
+    }
+  }
+
+  $project_name = ($project_name =~ /(project|consortium|ncbi alfa)/i) ? "<b>$project_name</b> " : '';
+
+  return sprintf('<div style="clear:both"></div><p><a href="%s" rel="external">More information about the %spopulations</a>%s</p>', $pop_url, $project_name, $terms);
 }
 
 sub format_allele_genotype_content {
