@@ -197,8 +197,8 @@ sub _get_genes {
   my $analyses       = $args->{'logic_names'};
   my $db_alias       = $args->{'db'};
 
-  if ($analyses->[0] eq 'LRG_import' &&
-      !$slice->isa('Bio::EnsEMBL::LRGSlice')) {
+  if ($analyses->[0] eq 'LRG_import' && !$slice->isa('Bio::EnsEMBL::LRGSlice')) {
+    warn "!!! DEPRECATED CODE - please change this track to use GlyphSet::lrg";
     my $lrg_slices = $slice->project('lrg');
     if ($lrg_slices->[0]) {
       my $lrg_slice = $lrg_slices->[0]->to_Slice;
