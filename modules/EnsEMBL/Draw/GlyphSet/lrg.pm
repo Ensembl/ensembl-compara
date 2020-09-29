@@ -65,10 +65,10 @@ sub get_data {
       my $transcripts = $g->get_all_Transcripts;
       foreach my $t (@$transcripts) {
 
-        ## Project the gene back onto the slice, so we can get the real coordinates
+        ## Project the transcript back onto the slice, so we can get the real coordinates
         my $projection  = $t->project_to_slice($slice);
-        my $t_start     = $projection->[0][2]->start - $slice_start + 1;
-        my $t_end       = $projection->[0][2]->end - $slice_start + 1;
+        my $real_start  = $projection->[0][2]->start - $slice_start + 1;
+        my $real_end    = $projection->[0][2]->end - $slice_start + 1;
 
         my $label;
         $label = '< ' if ($g->strand == -1);
@@ -77,7 +77,7 @@ sub get_data {
 
         my $t_coding_start  = $t->coding_region_start // -1e6;
         my $t_coding_end    = $t->coding_region_end // -1e6;
-        my $offset          = $t_start - $t->start;
+        my $offset          = $real_start - $t->start;
         my $structure       = [];
 
         foreach my $e (sort { $a->start <=> $b->start } @{$t->get_all_Exons}) {
@@ -106,8 +106,8 @@ sub get_data {
         }
 
         my $tf = {
-                  start     => $t_start,
-                  end       => $t_end,
+                  start     => $real_start,
+                  end       => $real_end,
                   colour    => $colour,
                   label     => $label,
                   href      => $self->href($g, $t),
@@ -117,10 +117,6 @@ sub get_data {
       }
     }
   }
-
-  #use Data::Dumper;
-  #$Data::Dumper::Sortkeys = 1;
-  #warn Dumper($data->[0]{'features'});
 
   return $data;
 }
