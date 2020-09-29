@@ -48,35 +48,44 @@ sub render_normal {
 sub get_data {
   my ($self)  = @_;
   my $slice   = $self->{'container'};
+  my $slice_start = $slice->start;
   my $data    = [{'features' => []}];
 
   my $lrg_slices = $slice->project('lrg');
   if ($lrg_slices->[0]) {
     my $lrg_slice = $lrg_slices->[0]->to_Slice;
     my $genes     = $lrg_slice->get_all_Genes('LRG_import');
-    my $colour  = $self->my_colour('lrg_import');
+    my $colour    = $self->my_colour('lrg_import');
 
     foreach my $g (@$genes) {
       next if $g->strand != $self->strand;
+
       ## We don't really need the gene, as it's not rendered, so base
       ## the data returned around the set of transcripts
       my $transcripts = $g->get_all_Transcripts;
       foreach my $t (@$transcripts) {
+
+        ## Project the gene back onto the slice, so we can get the real coordinates
+        my $projection  = $t->project_to_slice($slice);
+        my $t_start     = $projection->[0][2]->start - $slice_start + 1;
+        my $t_end       = $projection->[0][2]->end - $slice_start + 1;
 
         my $label;
         $label = '< ' if ($g->strand == -1);
         $label .= $t->stable_id;
         $label .= ' >' if ($g->strand == 1);
 
-        my $structure = [];
-        my $t_coding_start = $t->coding_region_start // -1e6;
-        my $t_coding_end = $t->coding_region_end // -1e6;
+        my $t_coding_start  = $t->coding_region_start // -1e6;
+        my $t_coding_end    = $t->coding_region_end // -1e6;
+        my $offset          = $t_start - $t->start;
+        my $structure       = [];
+
         foreach my $e (sort { $a->start <=> $b->start } @{$t->get_all_Exons}) {
           next unless defined $e;
           my ($start, $end) = ($e->start, $e->end); 
           my $ef = {
-                    start => $start,
-                    end   => $end,
+                    start => $start + $offset,
+                    end   => $end + $offset,
                     };
           ## Drawing code always defines UTRs wrt the forward strand
           ## as that is how the glyphs are created
@@ -87,18 +96,18 @@ sub get_data {
           }
           else {
             if ($coding_start > $start) {
-              $ef->{'utr_5'} = $coding_start;
+              $ef->{'utr_5'} = $coding_start + $offset;
             }
             if ($coding_end < $end) {
-              $ef->{'utr_3'} = $coding_end;
+              $ef->{'utr_3'} = $coding_end + $offset;
             }
           }
           push @$structure, $ef;
         }
 
         my $tf = {
-                  start     => $t->start,
-                  end       => $t->end,
+                  start     => $t_start,
+                  end       => $t_end,
                   colour    => $colour,
                   label     => $label,
                   href      => $self->href($g, $t),
@@ -109,9 +118,9 @@ sub get_data {
     }
   }
 
-  use Data::Dumper;
-  $Data::Dumper::Sortkeys = 1;
-  warn Dumper($data->[0]{'features'});
+  #use Data::Dumper;
+  #$Data::Dumper::Sortkeys = 1;
+  #warn Dumper($data->[0]{'features'});
 
   return $data;
 }
