@@ -47,8 +47,8 @@ sub write_output {
         $tree->preload;
         $gene_tree_adaptor->delete_tree($tree);
         $tree->release_tree;
-    }, 1, 2 );
-    $self->_check_clean_eradication(); # Make sure that the tree has been removed after waiting 2 seconds and retrying once - a messy reindex is a pointlss reindex
+    }, 1, 2 );  # Retry once and wait 2 seconds between retries
+    $self->_check_clean_eradication();  # Make sure that the tree has been removed - a messy reindex is a pointless reindex
 }
 
 sub _check_clean_eradication {
@@ -61,4 +61,3 @@ sub _check_clean_eradication {
 }
 
 1;
-
