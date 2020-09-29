@@ -24,21 +24,24 @@ package EnsEMBL::Draw::GlyphSet::lrg;
 
 use strict;
 
+use List::Util qw(min max);
+
 use parent qw(EnsEMBL::Draw::GlyphSet);
 
-use EnsEMBL::Draw::Style::Feature::Structured;
+use EnsEMBL::Draw::Style::Feature::Transcript;
 
 sub render_normal {
   my $self = shift;
   $self->{'my_config'}->set('show_labels', 1);
-  $self->{'my_config'}->set('bumped', 1);
+  $self->{'my_config'}->set('height', 8);
   $self->{'my_config'}->set('depth', 20);
+  $self->{'my_config'}->set('bumped', 1);
 
   my $data = $self->get_data;
   return unless scalar @{$data->[0]{'features'}||[]};
 
   my $config = $self->track_style_config;
-  my $style  = EnsEMBL::Draw::Style::Feature::Structured->new($config, $data);
+  my $style  = EnsEMBL::Draw::Style::Feature::Transcript->new($config, $data);
   $self->push($style->create_glyphs);
 }
 
@@ -55,17 +58,59 @@ sub get_data {
 
     foreach my $g (@$genes) {
       next if $g->strand != $self->strand;
-      ## We don't really need the gene, as it's not rendered
+      ## We don't really need the gene, as it's not rendered, so base
+      ## the data returned around the set of transcripts
       my $transcripts = $g->get_all_Transcripts;
       foreach my $t (@$transcripts) {
-        my ($start, $end);
-        warn sprintf '>>> TRANSCRIPT IS AT %s - %s', $t->start, $t->end; 
+
+        my $label;
+        $label = '< ' if ($g->strand == -1);
+        $label .= $t->stable_id;
+        $label .= ' >' if ($g->strand == 1);
+
+        my $structure = [];
+        my $t_coding_start = $t->coding_region_start // -1e6;
+        my $t_coding_end = $t->coding_region_end // -1e6;
+        foreach my $e (sort { $a->start <=> $b->start } @{$t->get_all_Exons}) {
+          next unless defined $e;
+          my ($start, $end) = ($e->start, $e->end); 
+          my $ef = {
+                    start => $start,
+                    end   => $end,
+                    };
+          my $coding_start = max($t_coding_start,$start);
+          my $coding_end = min($t_coding_end,$end);
+          if ($coding_start > $end || $coding_end < $start) {
+            $ef->{'non_coding'} = 1;
+          }
+          else {
+            if ($g->strand == 1) {
+              if ($coding_start < $end) {
+                $ef->{'utr_5'} = $coding_start;
+              }
+              if ($coding_end > $start) {
+                $ef->{'utr_3'} = $coding_end;
+              }
+            }
+            else {
+              if ($coding_start < $end) {
+                $ef->{'utr_3'} = $coding_start;
+              }
+              if ($coding_end > $start) {
+                $ef->{'utr_5'} = $coding_end;
+              }
+            }
+          }
+          push @$structure, $ef;
+        }
+
         my $tf = {
-                  start   => $t->start,
-                  end     => $t->end,
-                  colour  => $colour,
-                  label   => $t->stable_id,
-                  href    => $self->href($g, $t),
+                  start     => $t->start,
+                  end       => $t->end,
+                  colour    => $colour,
+                  label     => $label,
+                  href      => $self->href($g, $t),
+                  structure => $structure,
                   };
         push @{$data->[0]{'features'}}, $tf;
       }
