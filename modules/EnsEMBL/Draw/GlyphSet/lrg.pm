@@ -78,27 +78,19 @@ sub get_data {
                     start => $start,
                     end   => $end,
                     };
+          ## Drawing code always defines UTRs wrt the forward strand
+          ## as that is how the glyphs are created
           my $coding_start = max($t_coding_start,$start);
           my $coding_end = min($t_coding_end,$end);
           if ($coding_start > $end || $coding_end < $start) {
             $ef->{'non_coding'} = 1;
           }
           else {
-            if ($g->strand == 1) {
-              if ($coding_start < $end) {
-                $ef->{'utr_5'} = $coding_start;
-              }
-              if ($coding_end > $start) {
-                $ef->{'utr_3'} = $coding_end;
-              }
+            if ($coding_start > $start) {
+              $ef->{'utr_5'} = $coding_start;
             }
-            else {
-              if ($coding_start < $end) {
-                $ef->{'utr_3'} = $coding_start;
-              }
-              if ($coding_end > $start) {
-                $ef->{'utr_5'} = $coding_end;
-              }
+            if ($coding_end < $end) {
+              $ef->{'utr_3'} = $coding_end;
             }
           }
           push @$structure, $ef;
