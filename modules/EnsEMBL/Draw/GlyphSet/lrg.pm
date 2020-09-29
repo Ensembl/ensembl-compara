@@ -60,17 +60,12 @@ sub get_data {
       foreach my $t (@$transcripts) {
         my ($start, $end);
         warn sprintf '>>> TRANSCRIPT IS AT %s - %s', $t->start, $t->end; 
-      #my $pg = $g->project_to_slice($slice);
-      #foreach (@$pg) {
-      #  warn "... PROJECTION @$_";
-      #  $g_start  = $_->[0] unless $g_start;
-      #  $g_end    = $_->[1];
-      #}
         my $tf = {
                   start   => $t->start,
                   end     => $t->end,
                   colour  => $colour,
                   label   => $t->stable_id,
+                  href    => $self->href($g, $t),
                   };
         push @{$data->[0]{'features'}}, $tf;
       }
@@ -84,6 +79,15 @@ sub get_data {
   return $data;
 }
 
-
+sub href {
+  my ($self, $g, $t) = @_;
+  my $href = {
+              'type'    => 'Transcript',
+              'action'  => 'LRG',
+              'g'       => $g->stable_id,
+              't'       => $t->stable_id,
+  };
+  return $self->_url($href);
+}
 
 1;
