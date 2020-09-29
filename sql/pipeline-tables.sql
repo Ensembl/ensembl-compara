@@ -277,7 +277,7 @@ CREATE TABLE hmm_thresholding (
       PRIMARY KEY (root_id,seq_member_id),
       KEY (seq_member_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 -- ----------------------------------------------------------------------------------
