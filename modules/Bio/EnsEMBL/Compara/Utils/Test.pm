@@ -30,7 +30,7 @@ package Bio::EnsEMBL::Compara::Utils::Test;
 use strict;
 use warnings;
 
-use Cwd qw(abs_path);
+use Cwd qw(abs_path getcwd);
 use File::Spec;
 use File::Basename qw/dirname/;
 use Test::More;
@@ -62,8 +62,9 @@ my $repository_root;
 
 sub get_repository_root {
     return $repository_root if $repository_root;
-    my $file_dir = dirname(abs_path(__FILE__));
+    my $file_dir = dirname(__FILE__);
     $repository_root = File::Spec->catdir($file_dir, File::Spec->updir(), File::Spec->updir(), File::Spec->updir(), File::Spec->updir(), File::Spec->updir());
+    $repository_root = File::Spec->abs2rel(abs_path($repository_root), getcwd());
     return $repository_root;
 }
 
@@ -83,13 +84,16 @@ sub find_all_files {
     # First populate the top-level sub-directories
     {
         my $starting_dir = get_repository_root();
-        my %subdir_ok = map {$_ => 1} qw(modules scripts sql docs travisci xs);
         opendir(my $dirh, $starting_dir);
         my @dir_content = File::Spec->no_upwards(readdir $dirh);
         foreach my $f (@dir_content) {
             my $af = File::Spec->catfile($starting_dir, $f);
-            if ((-d $af) and $subdir_ok{$f}) {
+            # Exclude our .git directory, but also all directories that
+            # have a .git (i.e. other Ensembl repositories installed on Travis)
+            if ((-d $af) and ($f ne '.git') and !(-e File::Spec->catfile($af, '.git'))) {
                 push @queue, $af;
+            } elsif (-f $af) {
+                push @files, $af;
             }
         }
         closedir $dirh;

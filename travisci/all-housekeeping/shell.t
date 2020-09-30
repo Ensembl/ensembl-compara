@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # Copyright [2016-2020] EMBL-European Bioinformatics Institute
 # 
@@ -15,17 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+use strict;
+use warnings;
 
-prove -r ./travisci/perl-linter/
-rt1=$?
+use File::Spec;
+use Test::More;
 
-# Check that all the PODs are valid (we don't mind missing PODs at the moment)
-# Note the initial "!" to negate grep's return code
-! find docs modules scripts sql travisci \( -iname '*.t' -o -iname '*.pl' -o -iname '*.pm' \) -print0 | xargs -0 podchecker 2>&1 | grep -v ' pod syntax OK' | grep -v 'does not contain any pod commands'
-rt2=$?
+use Bio::EnsEMBL::Compara::Utils::Test;
 
-if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then
-  exit 0
-else
-  exit 255
-fi
+sub is_valid_shell_script {
+    my $filename = shift;
+
+    my @command = ('shellcheck', $filename);
+    Bio::EnsEMBL::Compara::Utils::Test::test_command(\@command, "$filename is a valid shell script");
+}
+
+my @all_files = Bio::EnsEMBL::Compara::Utils::Test::find_all_files();
+
+foreach my $f (@all_files) {
+    if ($f =~ /\.sh$/) {
+        # We didn't write this script and are not using / maintaining it
+        next if $f =~ /travisci\/trigger-dependent-build\.sh$/;
+        is_valid_shell_script($f);
+    }
+}
+
+done_testing();
+
