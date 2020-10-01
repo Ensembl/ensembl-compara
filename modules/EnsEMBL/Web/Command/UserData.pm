@@ -60,6 +60,7 @@ sub upload {
 
   if ($error) {
     $params->{'restart'} = 1;
+    $params->{'tool'}    = $hub->param('tool');
     $hub->session->set_record_data({
       type     => 'message',
       code     => 'userdata_error',

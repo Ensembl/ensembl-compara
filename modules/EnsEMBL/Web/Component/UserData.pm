@@ -66,6 +66,7 @@ sub add_auto_format_dropdown {
   my ($self, $form) = @_;
 
   my $format_info     = EnsEMBL::Web::Constants::USERDATA_FORMATS; 
+  $format_info        = $self->add_extra_formats($format_info); 
   my $sorted_values   = [{'caption' => '-- Choose --', 'value' => ''}];
   my @format_values;
 
@@ -89,6 +90,12 @@ sub add_auto_format_dropdown {
       'class'   => 'hide',
       'notes'   => '<a href="/info/website/upload/index.html" class="popup">Help on supported formats, display types, etc</a>',
     });
+}
+
+sub add_extra_formats {
+  ## Stub - used by tools
+  my ($self, $format_info) = @_;
+  return $format_info;
 }
 
 sub trackhub_search {
@@ -141,6 +148,10 @@ cloud services, including <b>Google Drive</b> and <b>Dropbox</b>. Please see our
   });
 
   $fieldset->add_hidden({'name' => 'species', 'value' => $current_species});
+
+  if ($hub->param('tool')) {
+    $fieldset->add_hidden({'name' => 'tool', 'value' => $hub->param('tool')});
+  }
 
   $fieldset->add_field({
     'label'         => 'Data',
