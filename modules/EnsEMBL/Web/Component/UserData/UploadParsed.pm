@@ -164,6 +164,9 @@ sub content_ajax {
                 $current_region,
               );
         }
+        elsif ($format eq 'gene_list') {
+          ## Do nothing - this file will be used elsewhere
+        }
         elsif ($count) {
           ## Maybe the user uploaded the data on a non-location page?
           $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $count;
