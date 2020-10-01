@@ -1668,11 +1668,11 @@ sub _munge_meta {
                   ? $self->db_tree->{'ASSEMBLY_VERSION'} : $value;
       }
 
-      ## Uppercase first part of common name, for consistency
-      $self->tree->{'SPECIES_COMMON_NAME'} = ucfirst($self->tree->{'SPECIES_COMMON_NAME'});
-
       $self->tree->{$key} = $value;
     }
+
+    ## Uppercase first part of common name, for consistency
+    $self->tree->{'SPECIES_COMMON_NAME'} = ucfirst($self->tree->{'SPECIES_COMMON_NAME'});
 
     ## Do species group
     my $taxonomy = $meta_hash->{'species.classification'};
