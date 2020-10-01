@@ -199,6 +199,7 @@ sub pipeline_analyses {
                 division         => [$self->o('division')],
                 datacheck_groups => $self->o('datacheck_groups'),
                 registry_file    => undef,
+                datacheck_types  => $self->o('datacheck_types'),
             },
             -flow_into         => {
                 '2->A' => 
