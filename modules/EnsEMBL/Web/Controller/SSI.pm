@@ -24,9 +24,9 @@ use warnings;
 
 use Text::MultiMarkdown qw(markdown);
 
-use EnsEMBL::Web::REST;
 use EnsEMBL::Web::Document::HTML::Movie;
 use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
+use EnsEMBL::Web::Utils::Publications qw(parse_file_contents);
 
 use parent qw(EnsEMBL::Web::Controller);
 
@@ -130,43 +130,8 @@ sub template_INCLUDE {
           ## replace escape character with line break
           $content =~ s/\\/<br>/g;
           ## Convert PMC IDs to full references
-          my $rest_url = $hub->species_defs->EUROPE_PMC_REST;
-          if ($filename =~ /references/ && $rest_url) {
-            my $converted;
-            my $rest = EnsEMBL::Web::REST->new($hub, $rest_url);
-            my @lines = split(/\n/, $content);
-            foreach my $line (@lines) {
-              if ($line =~ /<li>PMC(\d+)/) {
-                my $id = $1;
-                if ($id && $rest) {
-                  my $endpoint = "search?format=json&query=$id"; 
-                  my $response = $rest->fetch($endpoint);
-                  next unless $response && $response->{'resultList'};;
-                  foreach my $publication (@{$response->{'resultList'}{'result'}}) {
-                    my $full_id = "PMC$id";
-                    next unless ($publication->{'pmcid'} && $publication->{'pmcid'} eq $full_id);
-
-                    ## Format publication info
-                    my $title   = $publication->{'title'};
-                    my $link    = $hub->get_ExtURL('EUROPE_PMC', $publication->{'id'});
-                    my $authors = $publication->{'authorString'};
-                    my $journal = sprintf '<i>%s %s</i>', 
-                                    $publication->{'journalTitle'},
-                                    $publication->{'journalVolume'};
-                    if ($publication->{'issue'}) {
-                      $journal .= sprintf ' (%s)', $publication->{'issue'};
-                    }
-
-                    my $pub_content = sprintf '<a href="%s">%s</a><br/>%s. %s', 
-                                                $link, $title, $authors, $journal;
-
-                    $line =~ s/$full_id/$pub_content/; 
-                  }
-                }
-              }
-              $converted .= $line."\n";
-            }
-            $content = $converted;
+          if ($filename =~ /references/l) {
+            $content = parse_file_contents($content, $hub);
           }
         }
         
