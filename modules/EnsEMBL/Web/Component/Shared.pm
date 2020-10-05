@@ -312,8 +312,8 @@ sub transcript_table {
         }
         if ($trans_attribs->{$tsi}{'TSL'}) {
           my $tsl = uc($trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr);
-          push @flags, helptip("TSL:$tsl", get_glossary_entry($hub, "TSL:$tsl").get_glossary_entry($hub, 'TSL'));
-        }
+          push @flags, helptip("TSL:$tsl", get_glossary_entry($hub, "TSL $tsl").get_glossary_entry($hub, 'Transcript support level'));
+	}
       }
       if ($trans_gencode->{$tsi}) {
         if ($trans_gencode->{$tsi}{'gencode_basic'}) {
