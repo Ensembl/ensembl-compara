@@ -53,7 +53,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
         -host   => 'mysql-ens-sta-1',
-        -port   => 4573,
+        -port   => 4519,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -154,7 +154,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-1-b', "ncbi_taxonomy_$curr_release" ],
 });
 
 # -------------------------------------------------------------------
