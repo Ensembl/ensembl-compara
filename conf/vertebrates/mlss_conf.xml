@@ -25,7 +25,7 @@
     <!-- Pig-breeds analyses, incl. closely related outgroups -->
     <collection name="pig_breeds">
       <taxonomic_group taxon_name="Sus"/>
-      <genome name="ovis_aries"/>
+      <genome name="ovis_aries_rambouillet"/>
       <genome name="bos_taurus"/>
       <genome name="equus_caballus"/>
     </collection>
@@ -116,7 +116,7 @@
         <genome name="homo_sapiens"/>
         <genome name="pongo_abelii" assembly="PPYG2"/>
         <genome name="chlorocebus_sabaeus" assembly="ChlSab1.1"/>
-        <genome name="macaca_fascicularis" assembly="Macaca_fascicularis_5.0"/>
+        <genome name="macaca_fascicularis" assembly="Macaca_fascicularis_6.0"/>
         <genome name="nomascus_leucogenys" assembly="Nleu_3.0"/>
         <genome name="microcebus_murinus" assembly="Mmur_3.0"/>
         <genome name="gorilla_gorilla" assembly="gorGor4"/>
@@ -150,7 +150,7 @@
         <genome name="cavia_aperea" assembly="CavAp1.0"/>
         <genome name="cavia_porcellus" assembly="Cavpor3.0"/>
         <genome name="microtus_ochrogaster" assembly="MicOch1.0"/>
-        <genome name="macaca_fascicularis" assembly="Macaca_fascicularis_5.0"/>
+        <genome name="macaca_fascicularis" assembly="Macaca_fascicularis_6.0"/>
         <genome name="nomascus_leucogenys" assembly="Nleu_3.0"/>
         <genome name="microcebus_murinus" assembly="Mmur_3.0"/>
         <genome name="gorilla_gorilla" assembly="gorGor4"/>
@@ -317,7 +317,7 @@
         <genome name="sus_scrofa"/>
         <genome name="sus_scrofa_usmarc"/>
         <genome name="bos_taurus"/>
-        <genome name="ovis_aries"/>
+        <genome name="ovis_aries_rambouillet"/>
         <genome name="equus_caballus"/>
       </species_set>
     </multiple_alignment>
@@ -347,7 +347,7 @@
         <genome name="cavia_aperea" assembly="CavAp1.0"/>
         <genome name="cavia_porcellus" assembly="Cavpor3.0"/>
         <genome name="microtus_ochrogaster" assembly="MicOch1.0"/>
-        <genome name="macaca_fascicularis" assembly="Macaca_fascicularis_5.0"/>
+        <genome name="macaca_fascicularis" assembly="Macaca_fascicularis_6.0"/>
         <genome name="nomascus_leucogenys" assembly="Nleu_3.0"/>
         <genome name="microcebus_murinus" assembly="Mmur_3.0"/>
         <genome name="gorilla_gorilla" assembly="gorGor4"/>
