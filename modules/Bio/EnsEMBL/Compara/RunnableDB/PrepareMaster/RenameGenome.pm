@@ -85,7 +85,7 @@ use Bio::EnsEMBL::Hive::Utils qw(destringify);
 use Bio::EnsEMBL::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
+use Data::Dumper;
 
 sub fetch_input {
     my $self = shift;
@@ -111,9 +111,11 @@ sub run {
 
     my $master_db = $self->param('master_db');
     my $dba_hash = $self->param('dba_hash');
-    my $genome_db = $dba_hash->{$master_db}->get_GenomeDBAdaptor()->fetch_by_name_assembly($old_name);
-
-    # First of all we check that the underlying assembly is the same
+    # Has the master_db already registered the rename?
+    my $genome_db = $dba_hash->{$master_db}->get_GenomeDBAdaptor()->fetch_by_name_assembly($new_name)
+        ? $dba_hash->{$master_db}->get_GenomeDBAdaptor()->fetch_by_name_assembly($new_name)
+        : $dba_hash->{$master_db}->get_GenomeDBAdaptor()->fetch_by_name_assembly($old_name);
+    # First we check that the underlying assembly is the same
     my $core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($new_name, 'core');
     my $output;
     my $dnafrags_match;
