@@ -354,7 +354,7 @@ sub get_pipeline_tables_create_statements {
 =cut
 
 sub get_schema_from_database {
-    my $dbh = shift;
+    my ($dbh, $db_name) = @_;
     # I can't get column_info() to return all the columns of all the tables
     # of a given / the current database, so need to get the list of the
     # tables first, and then call column_info() on each of them.
@@ -362,10 +362,26 @@ sub get_schema_from_database {
     my @table_names = keys %{ $sth->fetchall_hashref('TABLE_NAME') };
     my %schema;
     foreach my $t (@table_names) {
+
+        # Fetch the list of columns
         $sth = $dbh->column_info(undef, undef, $t, '%');
         $schema{$t}->{'COLUMNS'} = $sth->fetchall_hashref('COLUMN_NAME');
+
+        # Fetch the primary key
         my @pk_columns = $dbh->primary_key_info(undef, undef, $t);
         $schema{$t}->{'PRIMARY_KEY'} = \@pk_columns;
+
+        # Fetch the indexes
+        # Note that unlike the two others, this call requires the database name
+        $sth = $dbh->statistics_info(undef, $db_name, $t, undef, 'quick');
+        $schema{$t}->{'INDEXES'} = $sth->fetchall_hashref(['INDEX_NAME', 'ORDINAL_POSITION']);
+        foreach my $h (values %{$schema{$t}->{'INDEXES'}}) {
+            # To make this identical across databases:
+            # 1. Remove the database name
+            delete $_->{TABLE_SCHEM} for values %$h;
+            # 2. Remove stats about the number of entries
+            delete $_->{CARDINALITY} for values %$h;
+        }
     }
     return \%schema;
 }
