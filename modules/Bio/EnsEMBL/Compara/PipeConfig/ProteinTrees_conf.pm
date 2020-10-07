@@ -58,9 +58,6 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     # parameters that are likely to change from execution to another:
-        # It is very important to check that this value is current (commented out to make it obligatory to specify)
-        #'mlss_id'               => 40077,
-
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
 
@@ -73,6 +70,7 @@ sub default_options {
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => undef,
         'collection'            => 'default',
+        'species_set_name'      => $self->o('collection'),
         'label_prefix'          => undef,
         'member_type'           => 'protein',
 
@@ -748,7 +746,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'compara_db'        => '#master_db#',   # that's where genome_db_ids come from
-                'mlss_id'           => $self->o('mlss_id'),
                 # Add the locators coming from member_db
                 'extra_parameters'  => [ 'locator' ],
                 'genome_db_data_source' => '#member_db#',

@@ -37,8 +37,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeProteinTrees_conf
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
-            -mlss_id <curr_murinae_ptree_mlss_id>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
