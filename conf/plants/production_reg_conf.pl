@@ -84,11 +84,11 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'  => [ 'mysql-ens-compara-prod-', ''],
+    'compara_members'  => [ 'mysql-ens-compara-prod-7', 'cristig_plants_load_members_103'],
     #'compara_ptrees'   => [ 'mysql-ens-compara-prod-', '' ],
 
     # LASTZ dbs
-    #'lastz_batch_1' => [ 'mysql-ens-compara-prod-', '' ],
+    'lastz_batch_1' => [ 'mysql-ens-compara-prod-3', 'cristig_plants_lastz_batch1_103' ],
 
     # synteny
     #'compara_syntenies' => [ 'mysql-ens-compara-prod-', '' ],
