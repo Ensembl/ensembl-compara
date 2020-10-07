@@ -137,19 +137,7 @@ sub fetch_by_name_assembly {
         return $these_gdbs[0];
 
     } elsif ($assembly) {
-        my $gdbs = $self->_id_cache->get_all_by_additional_lookup('name_assembly', sprintf('%s_____%s', lc $name, lc $assembly));
-        if (scalar(@$gdbs) > 1) {
-            my @these_gdbs = grep {$_->display_name eq $name} @$gdbs;
-            if (@these_gdbs) {
-                return $these_gdbs[0];
-            }
-            else {
-                return @$gdbs[0];
-            }
-        }
-        else {
-            return @$gdbs[0];
-        }
+        return $self->_id_cache->get_by_additional_lookup('name_assembly', sprintf('%s_____%s', lc $name, lc $assembly));
     }
 
     my $found_gdb = $self->_id_cache->get_by_additional_lookup('name_default_assembly', lc $name);
