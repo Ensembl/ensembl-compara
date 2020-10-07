@@ -127,7 +127,9 @@ sub pipeline_analyses_high_confidence {
             },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('high_confidence_capacity'),
-            -flow_into     => { 'find_homology_id_range' => { 'mlss_id' => '#mlss_id#', 'high_conf_expected' => '1' } },
+            -flow_into     => {
+                1 => { 'find_homology_id_range' => { 'mlss_id' => '#mlss_id#', 'high_conf_expected' => '1' } },
+            },
         },
 
         {   -logic_name => 'find_homology_id_range',

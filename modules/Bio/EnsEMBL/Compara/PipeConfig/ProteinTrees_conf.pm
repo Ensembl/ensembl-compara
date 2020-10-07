@@ -3378,7 +3378,9 @@ sub core_pipeline_analyses {
             -parameters => {
                 'methods'   => { 'ENSEMBL_PARALOGUES' => 1 },
             },
-            -flow_into  => { 'find_homology_id_range' => { 'mlss_id' => '#mlss_id#', 'high_conf_expected' => '0' } },
+            -flow_into  => {
+                1 => { 'find_homology_id_range' => { 'mlss_id' => '#mlss_id#', 'high_conf_expected' => '0' } },
+            },
         },
 
         {   -logic_name => 'polyploid_move_back_factory',
