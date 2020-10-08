@@ -124,7 +124,6 @@
         <genome name="pan_troglodytes" assembly="Pan_tro_3.0"/>
         <genome name="papio_anubis" assembly="Panu_3.0"/>
         <genome name="callithrix_jacchus" assembly="ASM275486v1"/>
-        <genome name="theropithecus_gelada" assembly="Tgel_1.0"/>
         <genome name="macaca_mulatta" assembly="Mmul_10"/>
       </species_set>
     </multiple_alignment>
@@ -143,11 +142,9 @@
         <genome name="loxodonta_africana" assembly="loxAfr3"/>
         <genome name="oryctolagus_cuniculus" assembly="OryCun2.0"/>
         <genome name="canis_lupus_familiaris" assembly="CanFam3.1"/>
-        <genome name="ovis_aries" assembly="Oar_v3.1"/>
         <genome name="chlorocebus_sabaeus" assembly="ChlSab1.1"/>
         <genome name="rattus_norvegicus"/>
         <genome name="mus_spretus" assembly="SPRET_EiJ_v1"/>
-        <genome name="cavia_aperea" assembly="CavAp1.0"/>
         <genome name="cavia_porcellus" assembly="Cavpor3.0"/>
         <genome name="microtus_ochrogaster" assembly="MicOch1.0"/>
         <genome name="macaca_fascicularis" assembly="Macaca_fascicularis_6.0"/>
@@ -168,31 +165,22 @@
         <genome name="canis_lupus_dingo" assembly="ASM325472v1"/>
         <genome name="bos_taurus"/>
         <genome name="equus_caballus" assembly="EquCab3.0"/>
-        <genome name="theropithecus_gelada" assembly="Tgel_1.0"/>
         <genome name="marmota_marmota_marmota" assembly="marMar2.1"/>
         <genome name="peromyscus_maniculatus_bairdii" assembly="HU_Pman_2.1"/>
-        <genome name="bos_taurus_hybrid" assembly="UOA_Angus_1"/>
         <genome name="bos_indicus_hybrid" assembly="UOA_Brahman_1"/>
         <genome name="macaca_mulatta" assembly="Mmul_10"/>
-        <genome name="canis_lupus_familiarisbasenji" assembly="Basenji_breed-1.1"/>
-        <genome name="canis_lupus_familiarisgreatdane" assembly="UMICH_Zoey_3.1"/>
         <genome name="rhinolophus_ferrumequinum" assembly="mRhiFer1_v1.p"/>
-        <genome name="lynx_canadensis" assembly="mLynCan4_v1.p"/>
         <genome name="bos_grunniens" assembly="LU_Bosgru_v3.0"/>
         <genome name="catagonus_wagneri" assembly="CatWag_v2_BIUU_UCD"/>
-        <genome name="suricata_suricatta" assembly="meerkat_22Aug2017_6uvM2_HiC"/>
         <genome name="physeter_catodon" assembly="ASM283717v2"/>
         <genome name="camelus_dromedarius" assembly="CamDro2"/>
         <genome name="panthera_leo" assembly="PanLeo1.0"/>
         <genome name="delphinapterus_leucas" assembly="ASM228892v3"/>
-        <genome name="ursus_thibetanus_thibetanus" assembly="ASM966005v1"/>
-        <genome name="zalophus_californianus" assembly="mZalCal1.pri"/>
         <genome name="cervus_hanglu_yarkandensis" assembly="CEY_v1"/>
         <genome name="ovis_aries_rambouillet" assembly="Oar_rambouillet_v1.0"/>
         <genome name="monodon_monoceros" assembly="NGI_Narwhal_1"/>
         <genome name="balaenoptera_musculus" assembly="mBalMus1.v2"/>
         <genome name="phocoena_sinus" assembly="mPhoSin1.pri"/>
-        <genome name="capra_hircus_blackbengal" assembly="CVASU_BBG_1.0"/>
         <genome name="sciurus_vulgaris" assembly="mSciVul1.1"/>
       </species_set>
     </multiple_alignment>
@@ -211,36 +199,17 @@
         <genome name="serinus_canaria" assembly="SCA1"/>
         <genome name="crocodylus_porosus" assembly="CroPor_comp1"/>
         <genome name="parus_major" assembly="Parus_major1.1"/>
-        <genome name="cyanistes_caeruleus" assembly="cyaCae2"/>
-        <genome name="manacus_vitellinus" assembly="ASM171598v2"/>
-        <genome name="melopsittacus_undulatus" assembly="Melopsittacus_undulatus_6.3"/>
         <genome name="anas_platyrhynchos_platyrhynchos" assembly="CAU_duck1.0"/>
-        <genome name="junco_hyemalis" assembly="ASM382977v1"/>
         <genome name="coturnix_japonica" assembly="Coturnix_japonica_2.0"/>
         <genome name="salvator_merianae" assembly="HLtupMer3"/>
-        <genome name="numida_meleagris" assembly="NumMel1.0"/>
-        <genome name="amazona_collaria" assembly="ASM394721v1"/>
         <genome name="pseudonaja_textilis" assembly="EBS10Xv2-PRI"/>
-        <genome name="erythrura_gouldiae" assembly="GouldianFinch"/>
-        <genome name="phasianus_colchicus" assembly="ASM414374v1"/>
         <genome name="aquila_chrysaetos_chrysaetos" assembly="bAquChr1.2"/>
         <genome name="strigops_habroptila" assembly="bStrHab1_v1.p"/>
-        <genome name="athene_cunicularia" assembly="athCun1"/>
         <genome name="taeniopygia_guttata" assembly="bTaeGut1_v1.p"/>
         <genome name="terrapene_carolina_triunguis" assembly="T_m_triunguis-2.0"/>
-        <genome name="varanus_komodoensis" assembly="ASM479886v1"/>
         <genome name="podarcis_muralis" assembly="PodMur_1.0"/>
-        <genome name="stachyris_ruficeps" assembly="ASM869450v1"/>
         <genome name="gopherus_evgoodei" assembly="rGopEvg1_v1.p"/>
-        <genome name="camarhynchus_parvulus" assembly="STF_HiC"/>
-        <genome name="anas_platyrhynchos" assembly="ASM874695v1"/>
-        <genome name="chelydra_serpentina" assembly="Chelydra_serpentina-1.0"/>
-        <genome name="cairina_moschata_domestica" assembly="CaiMos1.0"/>
-        <genome name="catharus_ustulatus" assembly="bCatUst1.pri"/>
         <genome name="naja_naja" assembly="Nana_v5"/>
-        <genome name="malurus_cyaneus_samueli" assembly="mCya_1.0"/>
-        <genome name="otus_sunia" assembly="OtuSun1.0"/>
-        <genome name="falco_tinnunculus" assembly="FalTin1.0"/>
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="EPO_EXTENDED" gerp="1">
@@ -261,33 +230,22 @@
         <genome name="astatotilapia_calliptera" assembly="fAstCal1.2"/>
         <genome name="astyanax_mexicanus" assembly="Astyanax_mexicanus-2.0"/>
         <genome name="cynoglossus_semilaevis" assembly="Cse_v1.0"/>
-        <genome name="gambusia_affinis" assembly="ASM309773v1"/>
         <genome name="ictalurus_punctatus" assembly="IpCoco_1.2"/>
         <genome name="mastacembelus_armatus" assembly="fMasArm1.1"/>
         <genome name="maylandia_zebra" assembly="M_zebra_UMD2a"/>
-        <genome name="mola_mola" assembly="ASM169857v1"/>
-        <genome name="oryzias_latipes_hni" assembly="ASM223471v1"/>
-        <genome name="oryzias_latipes_hsok" assembly="ASM223469v1"/>
         <genome name="oryzias_melastigma" assembly="Om_v0.7.RACA"/>
         <genome name="poecilia_reticulata" assembly="Guppy_female_1.0_MT"/>
         <genome name="scophthalmus_maximus" assembly="ASM318616v1"/>
         <genome name="seriola_dumerili" assembly="Sdu_1.0"/>
-        <genome name="xiphophorus_couchianus" assembly="Xiphophorus_couchianus-4.0.1"/>
         <genome name="xiphophorus_maculatus" assembly="X_maculatus-5.0-male"/>
         <genome name="oryzias_latipes"/>
-        <genome name="parambassis_ranga" assembly="fParRan2.1"/>
         <genome name="cottoperca_gobio" assembly="fCotGob3.1"/>
         <genome name="denticeps_clupeoides" assembly="fDenClu1.1"/>
-        <genome name="gouania_willdenowi" assembly="fGouWil2.1"/>
-        <genome name="larimichthys_crocea" assembly="L_crocea_2.0"/>
         <genome name="erpetoichthys_calabaricus" assembly="fErpCal1.1"/>
         <genome name="clupea_harengus" assembly="Ch_v2.0.2"/>
         <genome name="betta_splendens" assembly="fBetSpl5.2"/>
         <genome name="sparus_aurata" assembly="fSpaAur1.1"/>
         <genome name="salmo_salar" assembly="ICSASG_v2"/>
-        <genome name="sphaeramia_orbicularis" assembly="fSphaOr1.1"/>
-        <genome name="salarias_fasciatus" assembly="fSalaFa1.1"/>
-        <genome name="echeneis_naucrates" assembly="fEcheNa1.1"/>
         <genome name="takifugu_rubripes" assembly="fTakRub1.2"/>
         <genome name="scleropages_formosus" assembly="fSclFor1.1"/>
         <genome name="oreochromis_niloticus" assembly="O_niloticus_UMD_NMBU"/>
@@ -340,11 +298,9 @@
         <genome name="meleagris_gallopavo" assembly="Turkey_2.01"/>
         <genome name="mus_musculus"/>
         <genome name="canis_lupus_familiaris" assembly="CanFam3.1"/>
-        <genome name="ovis_aries" assembly="Oar_v3.1"/>
         <genome name="chlorocebus_sabaeus" assembly="ChlSab1.1"/>
         <genome name="rattus_norvegicus" assembly="Rnor_6.0"/>
         <genome name="mus_spretus" assembly="SPRET_EiJ_v1"/>
-        <genome name="cavia_aperea" assembly="CavAp1.0"/>
         <genome name="cavia_porcellus" assembly="Cavpor3.0"/>
         <genome name="microtus_ochrogaster" assembly="MicOch1.0"/>
         <genome name="macaca_fascicularis" assembly="Macaca_fascicularis_6.0"/>
@@ -368,63 +324,35 @@
         <genome name="serinus_canaria" assembly="SCA1"/>
         <genome name="crocodylus_porosus" assembly="CroPor_comp1"/>
         <genome name="parus_major" assembly="Parus_major1.1"/>
-        <genome name="cyanistes_caeruleus" assembly="cyaCae2"/>
-        <genome name="manacus_vitellinus" assembly="ASM171598v2"/>
-        <genome name="melopsittacus_undulatus" assembly="Melopsittacus_undulatus_6.3"/>
         <genome name="anas_platyrhynchos_platyrhynchos" assembly="CAU_duck1.0"/>
-        <genome name="junco_hyemalis" assembly="ASM382977v1"/>
-        <genome name="theropithecus_gelada" assembly="Tgel_1.0"/>
         <genome name="coturnix_japonica" assembly="Coturnix_japonica_2.0"/>
         <genome name="marmota_marmota_marmota" assembly="marMar2.1"/>
         <genome name="salvator_merianae" assembly="HLtupMer3"/>
-        <genome name="numida_meleagris" assembly="NumMel1.0"/>
         <genome name="peromyscus_maniculatus_bairdii" assembly="HU_Pman_2.1"/>
-        <genome name="bos_taurus_hybrid" assembly="UOA_Angus_1"/>
         <genome name="bos_indicus_hybrid" assembly="UOA_Brahman_1"/>
         <genome name="monodelphis_domestica" assembly="ASM229v1"/>
         <genome name="macaca_mulatta" assembly="Mmul_10"/>
-        <genome name="amazona_collaria" assembly="ASM394721v1"/>
-        <genome name="canis_lupus_familiarisbasenji" assembly="Basenji_breed-1.1"/>
         <genome name="pseudonaja_textilis" assembly="EBS10Xv2-PRI"/>
-        <genome name="erythrura_gouldiae" assembly="GouldianFinch"/>
-        <genome name="canis_lupus_familiarisgreatdane" assembly="UMICH_Zoey_3.1"/>
         <genome name="rhinolophus_ferrumequinum" assembly="mRhiFer1_v1.p"/>
-        <genome name="phasianus_colchicus" assembly="ASM414374v1"/>
-        <genome name="lynx_canadensis" assembly="mLynCan4_v1.p"/>
         <genome name="aquila_chrysaetos_chrysaetos" assembly="bAquChr1.2"/>
         <genome name="strigops_habroptila" assembly="bStrHab1_v1.p"/>
         <genome name="bos_grunniens" assembly="LU_Bosgru_v3.0"/>
-        <genome name="athene_cunicularia" assembly="athCun1"/>
         <genome name="catagonus_wagneri" assembly="CatWag_v2_BIUU_UCD"/>
-        <genome name="suricata_suricatta" assembly="meerkat_22Aug2017_6uvM2_HiC"/>
         <genome name="physeter_catodon" assembly="ASM283717v2"/>
         <genome name="taeniopygia_guttata" assembly="bTaeGut1_v1.p"/>
         <genome name="terrapene_carolina_triunguis" assembly="T_m_triunguis-2.0"/>
         <genome name="camelus_dromedarius" assembly="CamDro2"/>
-        <genome name="varanus_komodoensis" assembly="ASM479886v1"/>
         <genome name="podarcis_muralis" assembly="PodMur_1.0"/>
-        <genome name="stachyris_ruficeps" assembly="ASM869450v1"/>
         <genome name="panthera_leo" assembly="PanLeo1.0"/>
         <genome name="gopherus_evgoodei" assembly="rGopEvg1_v1.p"/>
         <genome name="ornithorhynchus_anatinus" assembly="mOrnAna1.p.v1"/>
         <genome name="delphinapterus_leucas" assembly="ASM228892v3"/>
-        <genome name="camarhynchus_parvulus" assembly="STF_HiC"/>
-        <genome name="anas_platyrhynchos" assembly="ASM874695v1"/>
-        <genome name="ursus_thibetanus_thibetanus" assembly="ASM966005v1"/>
-        <genome name="chelydra_serpentina" assembly="Chelydra_serpentina-1.0"/>
-        <genome name="zalophus_californianus" assembly="mZalCal1.pri"/>
         <genome name="cervus_hanglu_yarkandensis" assembly="CEY_v1"/>
-        <genome name="cairina_moschata_domestica" assembly="CaiMos1.0"/>
-        <genome name="catharus_ustulatus" assembly="bCatUst1.pri"/>
         <genome name="naja_naja" assembly="Nana_v5"/>
         <genome name="ovis_aries_rambouillet" assembly="Oar_rambouillet_v1.0"/>
-        <genome name="malurus_cyaneus_samueli" assembly="mCya_1.0"/>
         <genome name="monodon_monoceros" assembly="NGI_Narwhal_1"/>
-        <genome name="otus_sunia" assembly="OtuSun1.0"/>
         <genome name="balaenoptera_musculus" assembly="mBalMus1.v2"/>
         <genome name="phocoena_sinus" assembly="mPhoSin1.pri"/>
-        <genome name="falco_tinnunculus" assembly="FalTin1.0"/>
-        <genome name="capra_hircus_blackbengal" assembly="CVASU_BBG_1.0"/>
         <genome name="sciurus_vulgaris" assembly="mSciVul1.1"/>
       </species_set>
     </multiple_alignment>
