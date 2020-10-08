@@ -23,16 +23,28 @@ function process_server(server) { return function(json) {
     var n_tickets = json.issues.length;
     var table = $('<table class="server_dashboard"></table>').appendTo('#cp' + server);
     table.append('<tbody><tr id="usage_cp' + server + '"><th>mysql-ens-compara-prod-' + server + '</th></tr>');
-    if (n_tickets) {
+    var is_busy = false;
+    for(var i=0; i<n_tickets; i++) {
+        if (json.issues[i].fields.status.name == "In Progress") {
+            is_busy = true;
+        } else if (json.issues[i].fields.status.name == "Implementation") {
+            is_busy = true;
+        }
+    }
+    if (is_busy) {
         $('#usage_cp' + server).append('<td><div class="status_bar"><div class="yellow_light" style="width:100%"><i>busy</i></div></div></td>');
+    } else if (n_tickets) {
+        $('#usage_cp' + server).append('<td><div class="status_bar"><div class="green_light" style="width:100%"><i>booked</i></div></div></td>');
+    } else {
+        $('#usage_cp' + server).append('<td><div class="status_bar"><div class="green_light" style="width:100%"><i>free</i></div></div></td>');
+    }
+    if (n_tickets) {
         var ticket_info = process_ticket(json.issues[0]);
         $('#usage_cp' + server).append('<td class="ticket_summary">' + ticket_info + '</td>');
         for (var i = 1; i < n_tickets; i++) {
             var ticket_info = process_ticket(json.issues[i]);
             table.append('<tr><th></th><td></td><td class="ticket_summary">' + ticket_info + '</td></tr>');
         }
-    } else {
-        $('#usage_cp' + server).append('<td><div class="status_bar"><div class="green_light" style="width:100%"><i>free</i></div></div></td><td class="ticket_summary"></td>');
     }
     table.append('</tbody>');
 } }
