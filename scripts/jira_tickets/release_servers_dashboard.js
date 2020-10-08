@@ -51,7 +51,7 @@ function process_server(server) { return function(json) {
 
 for(var j = 1; j < 11; j++){
     var endpoint = endpoint_ticket_list.replace(/__SERVER__/g, j);
-    console.log(endpoint);
+    //console.log(endpoint);
     $('body').append('<div id="cp' + j + '"></div>');
     $.ajax(endpoint, {
         success: process_server(j),
