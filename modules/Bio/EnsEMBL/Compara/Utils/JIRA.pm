@@ -52,8 +52,9 @@ my %component_to_category = (
   Arg[-DIVISION] : (optional) string - a Compara division (can be empty for
                    RelCo tickets). If not given, uses environment variable
                    $COMPARA_DIV as default.
-  Arg[-RELEASE]  : (optional) int - Ensembl release version. If not given, uses
-                   environment variable $CURR_ENSEMBL_RELEASE as default.
+  Arg[-RELEASE]  : (optional) int/string - Ensembl release version. If not
+                   given, uses environment variable $CURR_ENSEMBL_RELEASE as
+                   default.
   Arg[-PROJECT]  : (optional) string - JIRA project name. By default,
                    'ENSCOMPARASW'.
   Arg[-LOGLEVEL] : (optional) string - log verbosity (accepted values defined at
@@ -193,7 +194,7 @@ sub create_tickets {
     # Create a hash with the summary of each ticket and its corresponding
     # JIRA key
     my %existing_tickets = map {$_->{fields}->{summary} => $_->{key}} @{$division_tickets->{issues}};
-    # Create the tickets, dicarding all for which there exists another ticket on
+    # Create the tickets, discarding all for which there exists another ticket on
     # the JIRA server with an identical summary (for the same project, release
     # and division)
     my $ticket_key_list;

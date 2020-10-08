@@ -120,8 +120,9 @@ sub fetch_input {
 
     my %mlss_ids;
     my $mlss_adaptor = $master_dba->get_MethodLinkSpeciesSetAdaptor;
-    # First, fetch all the MLSSs that match the given method type and species set name
-    my @mlsss = grep { $_->species_set->name eq $species_set_name }
+    # First, fetch all the MLSSs that match the given method type and species set name (allowing the
+    # "collection-" prefix for the species set name)
+    my @mlsss = grep { $_->species_set->name =~ /^(collection-)?$species_set_name$/ }
         @{ $mlss_adaptor->fetch_all_by_method_link_type($method_type) };
     $self->throw("No MLSSs found for method '$method_type' and species set '$species_set_name'") unless @mlsss;
 

@@ -23,8 +23,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -mlss_id <curr_ptree_mlss_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 DESCRIPTION
 

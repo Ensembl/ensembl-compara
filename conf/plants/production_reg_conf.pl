@@ -56,8 +56,8 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 # *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
 #     Bio::EnsEMBL::Registry->load_registry_from_db(
-#         -host   => 'mysql-ens-mirror-3',
-#         -port   => 4275,
+#         -host   => 'mysql-ens-sta-3',
+#         -port   => 4160,
 #         -user   => 'ensro',
 #         -pass   => '',
 #         -db_version     => $prev_release,
@@ -66,8 +66,8 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 #     Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
 #     Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
 #     Bio::EnsEMBL::Registry->load_registry_from_db(
-#         -host   => 'mysql-ens-mirror-1',
-#         -port   => 4240,
+#         -host   => 'mysql-ens-sta-1',
+#         -port   => 4519,
 #         -user   => 'ensro',
 #         -pass   => '',
 #         -db_version     => $prev_release,
@@ -84,14 +84,14 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'  => [ 'mysql-ens-compara-prod-', ''],
-    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-', '' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-7', 'cristig_plants_load_members_103'],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-5', 'cristig_plants_plants_protein_trees_103' ],
 
     # LASTZ dbs
-    #'lastz_batch_1' => [ 'mysql-ens-compara-prod-', '' ],
+    'lastz_batch_1' => [ 'mysql-ens-compara-prod-3', 'cristig_plants_lastz_batch1_103' ],
 
     # synteny
-    #'compara_syntenies' => [ 'mysql-ens-compara-prod-', '' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-10', 'cristig_plants_synteny_103' ],
 
     # EPO dbs
     ## rice
@@ -114,7 +114,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-3-b', "ncbi_taxonomy_$curr_release" ],
 });
 
 # -------------------------------------------------------------------

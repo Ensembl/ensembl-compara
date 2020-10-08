@@ -51,7 +51,8 @@ Prints help message and exits.
 
 =item B<[-s|--source_server_url]>
 
-Where to get the databases from. Defaults to mysql-ens-sta-1
+Where to get the databases from. Defaults to mysql-ens-sta-1 for vertebrates
+and mysql-ens-sta-3 for non-vertebrate divisions.
 
 =item B<[-s|--target_server_url]>
 
@@ -74,14 +75,6 @@ Password for the ensadmin MySQL user. Defaults to $ENV{ENSADMIN_PSW}
 
 =back
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =cut
 
 use strict;
@@ -98,20 +91,18 @@ use Bio::EnsEMBL::Registry;
 my ($db_copy_client, $endpoint_uri, $source_server_url, $target_server_url, $ensadmin_psw, $force, $update, $division, $release, $dry_mode, $help);
 
 GetOptions(
-        's|source_server_url'   => \$source_server_url,
-        't|target_server_url'   => \$target_server_url,
-        'u|endpoint_uri'        => \$endpoint_uri,
-        'c|db_copy_client'      => \$db_copy_client,
+        's|source_server_url=s' => \$source_server_url,
+        't|target_server_url=s' => \$target_server_url,
+        'u|endpoint_uri=s'      => \$endpoint_uri,
+        'c|db_copy_client=s'    => \$db_copy_client,
         'p|ensadmin_psw=s'      => \$ensadmin_psw,
         'f|force!'              => \$force,
         'k|update!'             => \$update,
         'd|division=s'          => \$division,
         'r|release=i'           => \$release,
-        'y|dry_mode'            => \$dry_mode,
+        'y|dry_mode!'           => \$dry_mode,
         'h|help'                => \$help,
 );
-
-#$dry_mode = 1;
 
 if ($help) {
     pod2usage({-exitvalue => 0, -verbose => 2});
@@ -138,8 +129,8 @@ die "--division <division> must be provided\n" unless $division;
 
 $release            ||= software_version();
 $endpoint_uri       ||= "http://production-services.ensembl.org/api/$division/db/";
-$source_server_url  ||= $division eq 'vertebrates' ? 'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/' : 'mysql://ensro@mysql-ens-sta-3.ebi.ac.uk:4160/';
-$target_server_url  ||= "mysql://ensadmin:$ensadmin_psw\@mysql-ens-vertannot-staging.ebi.ac.uk:4573/";
+$source_server_url  ||= $division eq 'vertebrates' ? 'mysql://ensro@mysql-ens-sta-1:4519/' : 'mysql://ensro@mysql-ens-sta-3:4160/';
+$target_server_url  ||= "mysql://ensadmin:$ensadmin_psw\@mysql-ens-vertannot-staging:4573/";
 
 
 $source_server_url .= '/' unless $source_server_url =~ /\/$/;

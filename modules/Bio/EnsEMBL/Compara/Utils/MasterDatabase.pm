@@ -419,6 +419,7 @@ sub list_assembly_patches {
     my %curr_patches_by_name = map { $_->[0] => {seq_region_id => $_->[1], date => $_->[2]} } @$curr_patches;
 
     my $prev_species_db = Bio::EnsEMBL::Compara::Utils::Registry::get_previous_core_DBAdaptor($genome_db->name);
+    my $prev_genome_db = $compara_dba->get_GenomeDBAdaptor->fetch_by_core_DBAdaptor($prev_species_db);
     my $prev_patches_sth = $prev_species_db->dbc->prepare($find_patches_sql);
     $prev_patches_sth->execute;
     my $prev_patches = $prev_patches_sth->fetchall_arrayref;
@@ -435,11 +436,11 @@ sub list_assembly_patches {
     foreach my $patch_name ( keys %prev_patches_by_name ) {
         if ( !defined $curr_patches_by_name{$patch_name} ) {
             push @deleted_patches, $patch_name;
-            my $deleted_patch_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_name($genome_db, $patch_name);
+            my $deleted_patch_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($prev_genome_db, $patch_name);
             push @depr_patch_dnafrags, $deleted_patch_dnafrag;
         } elsif ( $curr_patches_by_name{$patch_name}->{date} ne $prev_patches_by_name{$patch_name}->{date} ) {
             push @changed_patches, $patch_name;
-            my $changed_patch_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_name($genome_db, $patch_name);
+            my $changed_patch_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($prev_genome_db, $patch_name);
             push @depr_patch_dnafrags, $changed_patch_dnafrag;
         }
     }
@@ -456,7 +457,7 @@ sub list_assembly_patches {
         $report .= "Deleted patches: \n" . join("\n", @deleted_patches) . "\n\n";
         $report .= "----------------------------------------------------\n";
         $report .= "Patch dnafrag_ids that have been removed:\n";
-        $report .= join( "\n", map { $_->dbID } @depr_patch_dnafrags );
+        $report .= join( "\n", map { $_->dbID } @depr_patch_dnafrags ) . "\n";
         $report .= "----------------------------------------------------\n";
         if ( @new_patches || @changed_patches ) {
             $report .= "Input for create_patch_pairaligner_conf.pl:\n--patches chromosome:";
