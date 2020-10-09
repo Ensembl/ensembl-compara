@@ -1,13 +1,13 @@
 #!/usr/bin/env perl
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # Copyright [2016-2020] EMBL-European Bioinformatics Institute
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,28 +20,20 @@ use warnings;
 
 =head1 NAME
 
-update_genome.pl
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
+update_reference_genome.pl
 
 =head1 DESCRIPTION
 
-This script's main purpose is to take the new core DB and a compara DB
-in production phase and update it in several steps:
- - It updates the genome_db table
- - It updates all the dnafrags for the given genome_db
+This script's purpose is to add a new reference genome to a compara database
+given a core database for the genome. It will update:
+a. the genome_db table
+b. the dnafrags
 
 =head1 SYNOPSIS
 
-  perl update_genome.pl --help
+  perl update_reference_genome.pl --help
 
-  perl update_genome.pl
+  perl update_reference_genome.pl
     [--reg_conf registry_configuration_file]
     --compara compara_db_name_or_alias
     --species new_species_db_name_or_alias
