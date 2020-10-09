@@ -12,6 +12,7 @@ requires 'Capture::Tiny';
 requires 'Set::IntervalTree';
 requires 'namespace::autoclean';
 requires 'XML::LibXML';
+requires 'Array::Utils';
 
 test_requires 'Test::Exception';
 test_requires 'Test::Most';
