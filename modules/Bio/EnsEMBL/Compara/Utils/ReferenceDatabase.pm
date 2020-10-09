@@ -109,8 +109,11 @@ sub _update_reference_genome_db {
     my $last_geneset_update = $species_dba->get_MetaContainer->single_value_by_key('genebuild.last_geneset_update');
     $new_genome_db->genebuild($last_geneset_update);
 
+    # grab GenomeDBAdaptor and update the unique attributes to ensure
+    # `genebuild` is treated as a unique key by the API
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
     $genome_db_adaptor->{'_unique_attributes'} = ['name', 'assembly', 'genebuild', 'genome_component'];
+
     my $stored_genome_db = eval {$genome_db_adaptor->fetch_by_core_DBAdaptor($species_dba)};
 
     my $genome_db;
