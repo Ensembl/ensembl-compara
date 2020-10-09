@@ -179,6 +179,22 @@ sub _update_reference_genome_db {
     return $genome_db;
 }
 
+
+############################################################
+#          remove_reference_genome.pl methods              #
+############################################################
+
+=head2 remove_reference_genome
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Description : Remove all trace of $genome_db from the $compara_dba database. This includes
+                dnafrags and members
+  Returns     : none
+  Exceptions  : throws if $genome_db is not a Bio::EnsEMBL::Compara::GenomeDB
+
+=cut
+
 sub remove_reference_genome {
     my ($compara_dba, $genome_db) = @_;
 
