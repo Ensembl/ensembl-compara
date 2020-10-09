@@ -18,10 +18,10 @@ limitations under the License.
 =head1 DESCRIPTION
 
 This modules contains common methods used when dealing with the
-Compara master database. They can in fact be called on other
-databases too.
+Compara references database.
 
-- update_dnafrags: updates the DnaFrags of a species
+    - update_reference_genome : add a reference genome to the given database
+    - remove_reference_genome : remove reference from the db, incl dnafrags and members
 
 =cut
 
@@ -33,15 +33,12 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
-
 use Bio::EnsEMBL::Compara::Utils::Registry;
 use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 
-# use base ('Bio::EnsEMBL::Compara::Utils::MasterDatabase');
-
 
 ############################################################
-#                 update_genome.pl methods                 #
+#          update_reference_genome.pl methods              #
 ############################################################
 
 =head2 update_reference_genome
@@ -52,9 +49,9 @@ use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
   Arg[4]      : (optional) int $taxon_id
   Arg[5]      : (optional) int $offset
   Description : Does everything for this species: create / update the GenomeDB entry, and load the DnaFrags.
-  				To set the new species as current, set $release = 1. If the GenomeDB already exists, set $force = 1
-  				to force the update of DnaFrags. Use $taxon_id to manually set the taxon id for this species (default
-  				is to find it in the core db). $offset can be used to override autoincrement of dbID
+                If the GenomeDB already exists, set $force = 1 to force the update of DnaFrags. Use $taxon_id
+                to manually set the taxon id for this species (default is to find it in the core db).
+                $offset can be used to override autoincrement of dbID
   Returns     : arrayref containing (1) new Bio::EnsEMBL::Compara::GenomeDB object, (2) arrayref of updated
                 component GenomeDBs, (3) number of dnafrags updated
   Exceptions  : none
@@ -145,8 +142,10 @@ sub _update_reference_genome_db {
             print "Reference GenomeDB before update: ", $stored_genome_db->toString, "\n";
 
             # Get fresher information from the core database
+            # NOTE: setting db_adaptor will replace the genebuild field
+            # so we need to take note of the current value and reset it
             my $gb_last_update = $stored_genome_db->genebuild;
-            $stored_genome_db->db_adaptor($species_dba, 1); # this will replace the genebuild field
+            $stored_genome_db->db_adaptor($species_dba, 1);
             $stored_genome_db->last_release(undef);
             $stored_genome_db->genebuild($gb_last_update);
 
