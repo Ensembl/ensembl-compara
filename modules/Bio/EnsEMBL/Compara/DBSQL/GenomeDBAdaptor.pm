@@ -689,6 +689,7 @@ sub _columns {
     )
 }
 
+
 sub _unique_attributes {
     my $self = shift;
 
