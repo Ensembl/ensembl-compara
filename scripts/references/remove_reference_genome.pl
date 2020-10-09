@@ -1,13 +1,13 @@
 #!/usr/bin/env perl
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # Copyright [2016-2020] EMBL-European Bioinformatics Institute
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,35 +20,22 @@ use warnings;
 
 =head1 NAME
 
-update_genome.pl
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
+remove_reference_genome.pl
 
 =head1 DESCRIPTION
 
-This script's main purpose is to take the new core DB and a compara DB
-in production phase and update it in several steps:
- - It updates the genome_db table
- - It updates all the dnafrags for the given genome_db
+This script's purpose is to remove reference genomes from a database.
+This includes removal of all associated data (dnafrags, members, etc)
 
 =head1 SYNOPSIS
 
-  perl update_genome.pl --help
+  perl remove_reference_genome.pl --help
 
-  perl update_genome.pl
-    [--reg_conf registry_configuration_file]
-    --compara compara_db_name_or_alias
-    --species new_species_db_name_or_alias
-    [--taxon_id 1234]
-    [--[no]force]
-    [--offset 1000]
-    [--file_of_production_names path/to/file]
+  perl remove_reference_genome.pl
+    [--reg_conf <registry_configuration_file>]
+    --compara <compara_url_or_alias>
+    --genome_db_id <id1>
+    [--genome_db_id <id2> ... --genome_db_id <idN>]
 
 =head1 OPTIONS
 
@@ -68,7 +55,7 @@ Prints help message and exits.
 
 =item B<[--reg_conf registry_configuration_file]>
 
-The Bio::EnsEMBL::Registry configuration file. If none given,
+The optional Bio::EnsEMBL::Registry configuration file. If none given,
 the one set in ENSEMBL_REGISTRY will be used if defined, if not
 ~/.ensembl_init will be used.
 
@@ -80,13 +67,8 @@ the one set in ENSEMBL_REGISTRY will be used if defined, if not
 
 =item B<--compara compara_db_name_or_alias>
 
-The compara database to update. You can use either the original name or any of the
+The compara database to update. You can use either a URL or any of the
 aliases given in the registry_configuration_file
-
-=item B<--species new_species_db_name_or_alias>
-
-The core database of the species to update. You can use either the original name or
-any of the aliases given in the registry_configuration_file
 
 =item B<--genome_db_id ID>
 
@@ -131,7 +113,7 @@ if ($help or !$genome_db_ids[0] or !$compara) {
 ## Uses $reg_conf if supplied. Uses ENV{ENSMEBL_REGISTRY} instead if defined. Uses
 ## ~/.ensembl_init if all the previous fail.
 ##
-Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
+Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing") if $reg_conf;
 
 my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($compara);
 throw ("Cannot connect to database [$compara]") if (!$compara_dba);
