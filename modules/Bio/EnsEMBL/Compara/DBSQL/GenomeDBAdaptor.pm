@@ -689,13 +689,16 @@ sub _columns {
     )
 }
 
-
 sub _unique_attributes {
-    return qw(
-        name
-        assembly
-        genome_component
-    )
+    my $self = shift;
+
+    if ( ! $self->{'_unique_attributes'} ) {
+        $self->{'_unique_attributes'} = [
+            'name', 'assembly',
+            'genome_component',
+        ];
+    }
+    return @{ $self->{'_unique_attributes'} };
 }
 
 
@@ -763,4 +766,3 @@ sub compute_keys {
 
 
 1;
-
