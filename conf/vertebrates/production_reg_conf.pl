@@ -70,12 +70,12 @@ my $compara_dbs = {
     'compara_curr'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$curr_release" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],
 
-    # # release replicates - to speed up dumping
+    # release replicates - to speed up dumping
     # 'compara_curr_2'   => [ 'mysql-ens-compara-prod-2', "ensembl_compara_$curr_release" ],
     # 'compara_curr_3'   => [ 'mysql-ens-compara-prod-3', "ensembl_compara_$curr_release" ],
 
     # homology dbs
-    # 'compara_members'         => [ 'mysql-ens-compara-prod-', '' ],
+    'compara_members'         => [ 'mysql-ens-compara-prod-4', 'jalvarez_vertebrates_load_members_103' ],
     # 'compara_ptrees'          => [ 'mysql-ens-compara-prod-',  '' ],
     # 'compara_nctrees'         => [ 'mysql-ens-compara-prod-',  '' ],
     # 'murinae_ptrees'          => [ 'mysql-ens-compara-prod-',  '' ],
@@ -89,13 +89,14 @@ my $compara_dbs = {
 
     # LASTZ dbs
     'lastz_batch_1'    => [ 'mysql-ens-compara-prod-8', 'jalvarez_vertebrates_lastz_batch1_103' ],
-    'lastz_batch_2'    => [ 'mysql-ens-compara-prod-2', 'cristig_vertebrates_lastz_batch2_103' ],
+    'lastz_batch_2'    => [ 'mysql-ens-compara-prod-5', 'cristig_vertebrates_lastz_batch2_103' ],
     'lastz_batch_3'    => [ 'mysql-ens-compara-prod-4', 'cristig_vertebrates_lastz_batch3_103' ],
     'lastz_batch_4'    => [ 'mysql-ens-compara-prod-6', 'jalvarez_vertebrates_lastz_batch4_103' ],
+    'lastz_batch_5'    => [ 'mysql-ens-compara-prod-2', 'jalvarez_vertebrates_lastz_batch5_103' ],
 
     # EPO dbs
     ## mammals
-    # 'mammals_epo_high_low' => [ 'mysql-ens-compara-prod-', '' ],
+    # 'mammals_epo_high_low' => [ 'mysql-ens-compara-prod-8', 'jalvarez_mammals_epo_with2x_103' ],
     'mammals_epo_prev'     => [ 'mysql-ens-compara-prod-8', 'muffato_mammals_epo_with2x_101' ],
     'mammals_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
@@ -110,16 +111,14 @@ my $compara_dbs = {
     'fish_epo_anchors'  => [ 'mysql-ens-compara-prod-8', 'muffato_generate_anchors_fish_100' ],
 
     ## primates
-    # 'primates_epo'         => [ 'mysql-ens-compara-prod-', '' ],
-    'primates_epo_prev'    => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],  # Primates are reused from mammals of the *same release* (same anchors and subset of species)
-    # 'primates_epo_low'     => [ 'mysql-ens-compara-prod-', '' ],
-    'primates_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
+    # 'primates_epo_high_low' => [ 'mysql-ens-compara-prod-', '' ],
+    'primates_epo_prev'     => [ 'mysql-ens-compara-prod-8', 'jalvarez_mammals_epo_with2x_103' ],  # Primates are reused from mammals of the *same release* (same anchors and subset of species)
+    'primates_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## pig strains
-    # 'pig_strains_epo'         => [ 'mysql-ens-compara-prod-', '' ],
-    'pig_strains_epo_prev'    => [ 'mysql-ens-compara-prod-8', "ensembl_compara_$prev_release" ],
-    # 'pig_strains_epo_low'     => [ 'mysql-ens-compara-prod-', '' ],
-    'pig_strains_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
+    # 'pig_breeds_epo_high_low'  => [ 'mysql-ens-compara-prod-', '' ],
+    'pig_breeds_epo_prev'      => [ 'mysql-ens-compara-prod-8', 'jalvarez_mammals_epo_with2x_103' ],  # Pig breeds are reused from mammals of the *same release* (same anchors and subset of species)
+    'pig_breeds_epo_anchors'   => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## murinae
     'murinae_epo'          => [ 'mysql-ens-compara-prod-4', 'jalvarez_murinae_epo_103' ],
@@ -133,7 +132,7 @@ my $compara_dbs = {
     # 'compara_syntenies'   => [ 'mysql-ens-compara-prod-', '' ],
 
     # miscellaneous
-    # 'alt_allele_projection' => [ 'mysql-ens-compara-prod-', '' ],
+    'alt_allele_projection' => [ 'mysql-ens-compara-prod-5', 'jalvarez_vertebrates_alt_allele_import_103' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
