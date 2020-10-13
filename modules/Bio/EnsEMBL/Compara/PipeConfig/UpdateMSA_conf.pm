@@ -161,8 +161,11 @@ sub core_pipeline_analyses {
             -rc_name    => '500Mb_job',
             -flow_into  => {
                 '2->A'  => WHEN(
-                    '#method_type# eq "epo"' => { 'populate_new_database' => {
+                    '#method_type# eq "epo" && #run_gerp#' => { 'populate_new_database' => {
                         'mlss_id_list' => [ '#mlss_id#', '#prev_mlss_id#', '#ext_mlss_id#', '#ce_mlss_id#', '#cs_mlss_id#' ],
+                    }},
+                    '#method_type# eq "epo" && !#run_gerp#' => { 'populate_new_database' => {
+                        'mlss_id_list' => [ '#mlss_id#', '#prev_mlss_id#', '#ext_mlss_id#' ],
                     }},
                     ELSE                        { 'populate_new_database' => {
                         'mlss_id_list' => [ '#mlss_id#', '#prev_mlss_id#', '#ce_mlss_id#', '#cs_mlss_id#' ],
@@ -188,7 +191,7 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 '1->A'  => WHEN(
                     '#method_type# eq "epo"'    => {
-                        'set_gerp_mlss_tag' => INPUT_PLUS(),
+                        'set_mlss_tag'      => INPUT_PLUS(),
                         'set_internal_ids'  => INPUT_PLUS(),
                         'mlss_factory'      => { 'inputlist' => [['#mlss_id#'], ['#ext_mlss_id#']] },
                         'drop_ancestral_db' => { 'mlss_id' => '#mlss_id#', 'prev_mlss_id' => '#prev_mlss_id#' },
@@ -383,17 +386,17 @@ sub core_pipeline_analyses {
 sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
-    # Set MLSS tag only for EPO MSAs and disconnect set_mlss_tag
+    # Set MLSS tag only for EPO MSAs and swap order for set_gerp_mlss_tag and set_mlss_tag
     # Change the parameters to work with "local" parameters instead of pipeline-wide ones
     $analyses_by_name->{'set_gerp_mlss_tag'}->{'-parameters'} = { 'sql' => [
         'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#cs_mlss_id#, "msa_mlss_id", #ext_mlss_id#)',
         'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#ce_mlss_id#, "msa_mlss_id", #ext_mlss_id#)',
     ]};
-    $analyses_by_name->{'set_gerp_mlss_tag'}->{'-flow_into'} = WHEN( '#method_type# eq "epo"' => [ 'set_mlss_tag' ] );
+    delete $analyses_by_name->{'set_gerp_mlss_tag'}->{'-flow_into'};
     $analyses_by_name->{'set_mlss_tag'}->{'-parameters'} = { 'sql'   => [
         'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#ext_mlss_id#, "base_mlss_id", #mlss_id#)',
     ]};
-    delete $analyses_by_name->{'set_mlss_tag'}->{'-flow_into'};
+    $analyses_by_name->{'set_mlss_tag'}->{'-flow_into'} = WHEN( '#run_gerp#' => { 'set_gerp_mlss_tag' => INPUT_PLUS() } );
     # Flow to table_factory to copy the previous ancestral core database
     $analyses_by_name->{'find_ancestral_seq_gdb'}->{'-flow_into'}->{1} = [ 'table_factory' ];
     # Link GERP analysis capacities with parameter
