@@ -688,6 +688,8 @@ sub delete {
     my ($self, $dnafrag) = @_;
 
     assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag');
+
+    $self->db->get_DnaFragAltRegionAdaptor->delete_by_dbID($dnafrag->dbID);
     $self->dbc->do('DELETE FROM dnafrag WHERE dnafrag_id = ?', undef, $dnafrag->dbID);
     $self->_id_cache->remove($dnafrag->dbID);
 }

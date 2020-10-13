@@ -284,6 +284,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::delete", sub {
 
     my $dnafrag = $dnafrag_adaptor->generic_fetch_one();
     $multi->save("compara", "dnafrag");
+    $multi->save("compara", "dnafrag_alt_region");
 
     $dnafrag_adaptor->delete($dnafrag);
     my $no_dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag->dbID);
@@ -292,6 +293,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::delete", sub {
     is($no_dnafrag, undef, "dnafrag dbID=".($dnafrag->dbID)." is not in the database any more after deletion");
 
     $multi->restore("compara", "dnafrag");
+    $multi->restore("compara", "dnafrag_alt_region");
 
     done_testing();
 };
