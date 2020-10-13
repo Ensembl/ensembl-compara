@@ -139,7 +139,9 @@ sub pipeline_analyses_high_confidence {
                 'range_index'       => '#dbID_range_index#',
             },
             -analysis_capacity => 1,
-            -flow_into     => [ 'import_homology_table' ],
+            -flow_into     => {
+                1 => { 'import_homology_table' => INPUT_PLUS() },
+            },
         },
 
         {   -logic_name => 'import_homology_table',
