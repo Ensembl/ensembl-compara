@@ -273,6 +273,28 @@ sub alignment_length_from_cigar {
 }
 
 
+=head2 sequence_length_from_cigar
+
+  Arg [1]    : String $cigar_line
+  Example    : my $sequence_length = sequence_length_from_cigar($cigar_line)
+  Description: Returns how long the sequence string would be (without expanding it in memory)
+  Returntype : int
+
+=cut
+
+sub sequence_length_from_cigar {
+    my $cigar = shift;
+
+    assert_valid_cigar($cigar);
+
+    my $length = 0;
+     while ($cigar =~ /(\d*)([A-Z])/g) {
+        $length += ($1 || 1) if ($2 eq 'M') || ($2 eq 'I');
+    }
+    return $length;
+}
+
+
 =head2 consensus_cigar_line
 
   Arg [1..n] : String $cigar_line
