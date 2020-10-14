@@ -154,7 +154,7 @@ sub write_output {
             $nrows = $dba->dbc->do("DELETE FROM dnafrag WHERE dnafrag_id IN ($dnafrag_ids)");
             print "Removed $nrows ancestral row(s) from dnafrag\n" if $self->debug;
         }
-        # The work is done, enable foreign key constraints again
+        # The work is done, re-enable foreign key constraints
         $dba->dbc->do("SET FOREIGN_KEY_CHECKS = 1");
     });
 
@@ -211,7 +211,7 @@ sub _update_gab {
     my (%node_ids_to_rm, %node_ids_to_update, $gat_root, @dnafrag_ids_to_rm);
     if ( my $gat = $gat_adaptor->fetch_by_GenomicAlignBlock($gab) ) {
         $gat_root = $gat->root;
-        # Get all the GAT inner nodes that are going to loose at least one child
+        # Get all the GAT inner nodes that are going to lose at least one child
         my %children_to_rm;
         foreach my $ga_id ( keys %ga_ids_to_rm ) {
             my $leaf_id = $ga_adaptor->fetch_by_dbID($ga_id)->node_id;

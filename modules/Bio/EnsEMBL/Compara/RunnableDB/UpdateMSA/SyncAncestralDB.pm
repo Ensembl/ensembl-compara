@@ -69,7 +69,7 @@ sub run {
     my $nrows = $dbc->do("DELETE seq_region, dna FROM seq_region JOIN dna USING (seq_region_id)
         WHERE name IN ('" . join("','", @$ancestor_names) . "')");
     print "Removed $nrows row(s) from seq_region and dna tables\n" if $self->debug;
-    # Enable the tables keys back
+    # Re-enable the tables keys
     $dbc->do("ALTER TABLE `seq_region` ENABLE KEYS");
     $dbc->do("ALTER TABLE `dna` ENABLE KEYS");
 }
