@@ -64,7 +64,6 @@ sub default_options {
         'prev_db'           => 'compara_prev',
         'reuse_db'          => $self->o('species_set_name') . '_' . $self->o('method_type') . '_prev',
         'prev_ancestral_db' => $self->o('species_set_name') . '_ancestral',
-        
         # EPOAncestral parameters
         'ancestral_sequences_name'          => 'ancestral_sequences',
         'ancestral_sequences_display_name'  => 'Ancestral sequences',
@@ -78,7 +77,6 @@ sub default_options {
             -species => $self->o('ancestral_sequences_name'),
             -dbname  => $self->o('dbowner') . '_' . $self->o('species_set_name') . '_ancestral_core_' . $self->o('rel_with_suffix'),
         },
-        
         # EpoLowCoverage parameters
         'epo_db'            => $self->pipeline_url(),
         'low_epo_mlss_id'   => undef,  # required but unused
@@ -102,7 +100,6 @@ sub default_options {
 
 sub pipeline_checks_pre_init {
     my ($self) = @_;
-    
     die "The method type has to be in lowercase" if $self->o('method_type') =~ /^(EPO|PECAN)$/;
     die "The method type '" . $self->o('method_type') . "' is not an updatable MSA" if $self->o('method_type') !~ /^(epo|pecan)$/;
 }
@@ -351,12 +348,12 @@ sub core_pipeline_analyses {
                 '2->A' => [ 'set_neighbour_nodes' ],
                 'A->1' => { 'update_max_alignment_length' => { 'method_link_species_set_id' => '#mlss_id#', 'method_type' => '#method_type#' } },
             },
-        },  
+        },
         {   -logic_name    => 'set_neighbour_nodes',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
             -rc_name       => '2Gb_job',
-            -batch_size    => 10, 
-            -hive_capacity => 20, 
+            -batch_size    => 10,
+            -hive_capacity => 20,
         },
         # Flow Mercator-Pecan GABs to compute their GERPs
         {   -logic_name => 'flow_gabs',

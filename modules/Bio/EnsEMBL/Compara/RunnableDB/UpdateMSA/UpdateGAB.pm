@@ -165,7 +165,7 @@ sub write_output {
         $root->build_leftright_indexing();
         $gat_adaptor->update_subtree($root);
     }
-    
+
     # Flow the ancestor dnafrag names to syncronise the ancestral database with the dnafrag table
     $self->dataflow_output_id({ name => $_ }, 2) for @ancestor_names;
 }
