@@ -159,6 +159,10 @@ sub store {
     if(!defined($ga->method_link_species_set) or !defined($ga->method_link_species_set->dbID)) {
       throw( "method_link_species_set in GenomicAlign is not in DB" );
     }
+    my $cigar_line = $ga->cigar_line;
+    if(!$cigar_line) {
+      throw( "cigar_line is not set" );
+    }
 
     $genomic_align_sth->execute(
             ($ga->dbID or undef),
@@ -168,7 +172,7 @@ sub store {
             $ga->dnafrag_start,
             $ga->dnafrag_end,
             $ga->dnafrag_strand,
-            ($ga->cigar_line or "NULL"),    # FIXME: please check that this "NULL" string in a mediumtext field is what you really want
+            $cigar_line,
             $ga->visible,
 	    ($ga->node_id or undef)
         );
