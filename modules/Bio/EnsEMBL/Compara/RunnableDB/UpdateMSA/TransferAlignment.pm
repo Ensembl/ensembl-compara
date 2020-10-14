@@ -99,7 +99,7 @@ sub run {
                 df.name = REPLACE(df.name, '_${prev_mlss_id}_', '_${curr_mlss_id}_')
                 WHERE df.name LIKE 'Ancestor_${prev_mlss_id}_%'");
         }
-        # The work is done, enable foreign key constraints again
+        # The work is done, re-enable foreign key constraints
         $dba->dbc->do("SET FOREIGN_KEY_CHECKS=1");
     });
 }
