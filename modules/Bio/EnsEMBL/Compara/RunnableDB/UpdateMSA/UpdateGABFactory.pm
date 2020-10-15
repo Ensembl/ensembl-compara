@@ -17,7 +17,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::UpdateMSA::UpdateMSA::UpdateGABFactory
+Bio::EnsEMBL::Compara::RunnableDB::UpdateMSA::UpdateGABFactory
 
 =head1 DESCRIPTION
 
