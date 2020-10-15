@@ -56,7 +56,6 @@ use warnings;
 use strict;
 
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Hive::Utils;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
