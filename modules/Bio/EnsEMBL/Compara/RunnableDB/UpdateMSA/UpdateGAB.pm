@@ -77,13 +77,13 @@ sub run {
     if ( (scalar keys(%genomic_aligns) - scalar @$ga_ids_to_rm) < 2 ) {
         # A GAB must have at least 2 GAs: remove this GAB and all its related information
         print "GAB $gab_id needs to be removed\n" if $self->debug;
-        $self->_remove_gab($gab, [ keys %genomic_aligns ]);
+        $self->_register_gab_for_rm($gab, [ keys %genomic_aligns ]);
     } else {
         # Update the remaining GAs, deleting every gap-only column that may be left, and the genomic align
         # tree (GAT)
         delete @genomic_aligns{@$ga_ids_to_rm};
         print "GAB $gab_id needs to be updated\n" if $self->debug;
-        $self->_update_gab($gab, $ga_ids_to_rm, [ values %genomic_aligns ]);
+        $self->_register_gab_for_update($gab, $ga_ids_to_rm, [ values %genomic_aligns ]);
     }
 }
 
@@ -170,7 +170,7 @@ sub write_output {
 }
 
 
-sub _remove_gab {
+sub _register_gab_for_rm {
     my ($self, $gab, $ga_ids_to_rm) = @_;
 
     my $dba = $self->compara_dba;
@@ -200,7 +200,7 @@ sub _remove_gab {
 }
 
 
-sub _update_gab {
+sub _register_gab_for_update {
     my ($self, $gab, $ga_ids_to_rm, $genomic_aligns) = @_;
     my %ga_ids_to_rm = map { $_ => 1 } @$ga_ids_to_rm;
     my @gabs_to_update = ( $gab );
