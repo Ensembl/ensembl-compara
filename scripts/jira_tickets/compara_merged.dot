@@ -17,10 +17,6 @@ digraph {
     "EPOwith2x" -> "EPOwith2x" [style="dashed", fontsize="8", label="Anchor\nmapping\nonly", headport="Pigs:e", tailport="Mammals:e"];
     "EPOwith2x" -> "Age of Base" [style="dashed", headport="Human:w", tailport="Mammals:e"];
     "Update MSA" -> "EPOwith2x" [style="dashed", dir=none, fontsize="8", label="XOR"];
-    "Protein-trees" -> "Protein-trees" [style="dashed", fontsize="8", label="Orthologues\nonly", headport="Murinae:e", tailport="Default vertebrates:e"];
-    "Protein-trees" -> "Protein-trees" [style="dashed", fontsize="8", label="Orthologues\nonly", headport="Pig breeds:e", tailport="Default vertebrates:e"];
-    "ncRNA-trees" -> "ncRNA-trees" [style="dashed", fontsize="8", label="Orthologues\nonly", headport="Murinae:e", tailport="Default vertebrates:e"];
-    "ncRNA-trees" -> "ncRNA-trees" [style="dashed", fontsize="8", label="Orthologues\nonly", headport="Pig breeds:e", tailport="Default vertebrates:e"];
 
     // Helps laying out the graph
     {rank = same; "Genome dumps"; "Member loading"; }
