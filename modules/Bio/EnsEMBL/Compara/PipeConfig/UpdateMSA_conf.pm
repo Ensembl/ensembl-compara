@@ -156,13 +156,13 @@ sub core_pipeline_analyses {
             -rc_name    => '500Mb_job',
             -flow_into  => {
                 '2->A'  => WHEN(
-                    '#method_type# eq "epo" && #run_gerp#' => { 'populate_new_database' => {
+                    '#method_type# eq "epo" && #run_gerp#'  => { 'populate_new_database' => {
                         'mlss_id_list' => [ '#mlss_id#', '#prev_mlss_id#', '#ext_mlss_id#', '#ce_mlss_id#', '#cs_mlss_id#' ],
                     }},
                     '#method_type# eq "epo" && !#run_gerp#' => { 'populate_new_database' => {
                         'mlss_id_list' => [ '#mlss_id#', '#prev_mlss_id#', '#ext_mlss_id#' ],
                     }},
-                    ELSE                        { 'populate_new_database' => {
+                    ELSE                                       { 'populate_new_database' => {
                         'mlss_id_list' => [ '#mlss_id#', '#prev_mlss_id#', '#ce_mlss_id#', '#cs_mlss_id#' ],
                     }},
                 ),
