@@ -52,7 +52,6 @@ use strict;
 use Array::Utils qw(array_minus);
 
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Hive::Utils;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
