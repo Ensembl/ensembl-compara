@@ -183,10 +183,12 @@ sub _remove_gab {
         foreach my $node ( @{ $gat->root->get_all_nodes() } ) {
             push @node_ids_to_rm, $node->dbID;
             if (! $node->is_leaf ) {
-                my $ga = $node->get_all_genomic_aligns_for_node->[0];
-                $gab_ids_to_rm{$ga->genomic_align_block_id} = 1;
-                push @$ga_ids_to_rm, $ga->dbID;
-                push @dnafrag_ids_to_rm, $ga->dnafrag_id;
+                my $node_gas = $node->get_all_genomic_aligns_for_node();
+                foreach my $ga ( @$node_gas ) {
+                    $gab_ids_to_rm{$ga->genomic_align_block_id} = 1;
+                    push @$ga_ids_to_rm, $ga->dbID;
+                    push @dnafrag_ids_to_rm, $ga->dnafrag_id;
+                }
             }
         }
     }
@@ -227,10 +229,12 @@ sub _update_gab {
         $node_ids_to_rm{$_} = 1 for keys %children_to_rm;
         # Get the list of ancestral GAs, dnafrags and nodes to remove, plus the nodes to relocate in the GAT
         foreach my $node ( @{ $gat_root->get_all_nodes() } ) {
-            my $node_ga = $node->get_all_genomic_aligns_for_node->[0];
+            my $node_gas = $node->get_all_genomic_aligns_for_node();
             if ( exists $node_ids_to_rm{$node->dbID} ) {
-                $ga_ids_to_rm{$node_ga->dbID} = 1;
-                push @dnafrag_ids_to_rm, $node_ga->dnafrag_id unless $node->is_leaf();
+                foreach my $ga ( @$node_gas ) {
+                    $ga_ids_to_rm{$ga->dbID} = 1;
+                    push @dnafrag_ids_to_rm, $ga->dnafrag_id unless $node->is_leaf();
+                }
             } else {
                 if ( $node->has_parent() && exists $node_ids_to_rm{$node->parent->dbID} ) {
                     # Find the final parent node, as it can be a (great-)*grandparent
@@ -247,7 +251,7 @@ sub _update_gab {
                     };
                 }
                 # Also include the ancestral GAs that will remain to update their CIGAR lines
-                push @$genomic_aligns, $node_ga unless $node->is_leaf();
+                push @$genomic_aligns, @$node_gas unless $node->is_leaf();
             }
         }
         # The ancestral GAB will need to be updated as well
