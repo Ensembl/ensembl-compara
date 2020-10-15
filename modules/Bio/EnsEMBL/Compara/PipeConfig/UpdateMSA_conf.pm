@@ -294,12 +294,10 @@ sub core_pipeline_analyses {
             -parameters => {
                 'wrap_in_transaction' => 1,
                 'sql'                 => [
-                    'SET FOREIGN_KEY_CHECKS=0',
-                    'DELETE stn, stnt FROM species_tree_node stn LEFT JOIN species_tree_node_tag stnt USING (node_id) JOIN species_tree_root str USING (root_id) WHERE method_link_species_set_id = #prev_mlss_id#',
+                    'DELETE stn, stnt FROM species_tree_node stn LEFT JOIN species_tree_node_tag stnt USING (node_id) JOIN species_tree_root str USING (root_id) WHERE method_link_species_set_id = #prev_mlss_id# ORDER BY stn.node_id DESC',
                     'DELETE FROM species_tree_root WHERE method_link_species_set_id = #prev_mlss_id#',
                     'DELETE FROM method_link_species_set_tag WHERE method_link_species_set_id = #prev_mlss_id#',
                     'DELETE FROM method_link_species_set WHERE method_link_species_set_id = #prev_mlss_id#',
-                    'SET FOREIGN_KEY_CHECKS=1',
                 ],
             },
             -flow_into  => {
