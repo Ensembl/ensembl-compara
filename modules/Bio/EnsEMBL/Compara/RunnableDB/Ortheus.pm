@@ -81,6 +81,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
+use Bio::EnsEMBL::IO::Parser::Fasta;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
@@ -412,15 +413,6 @@ sub parse_results {
 
     my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
     
-    open(my $fh, '<', $alignment_file) || throw("Could not open $alignment_file");
-    my $seq = "";
-    my $this_genomic_align;
-
-    #Create genomic_align_group object to store genomic_aligns for
-    #each node. AS this Runnable doesn't deal with 2x genomes, there will
-    #only be one genomic_align in the genomic_align_group
-    my $genomic_align_group;
-
     my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $self->param('tree_string') );
   $tree->print_tree(100);
     
@@ -438,103 +430,73 @@ sub parse_results {
     pop(@$ids); ## ...except for the last leaf which is the end of the tree
     #print join(" :: ", @$ids), "\n\n";
 
-    while (<$fh>) {
-	next if (/^\s*$/);
-	chomp;
-	## FASTA headers correspond to the tree and the order of the leaves in the tree corresponds
-	## to the order of the files
+    my $parser = Bio::EnsEMBL::IO::Parser::Fasta->open($alignment_file);
+    while ($parser->next()) {
+        my $name = $parser->getHeader;
+        my $seq  = $parser->getSequence;
 
-	if (/^>/) {
-	    print "PARSING $_\n" if ($self->debug);
-	    my ($name) = $_ =~ /^>(.+)/;
-	    if (defined($this_genomic_align) and  $seq) {
-		    print "add aligned_sequence " . $this_genomic_align->dnafrag_id . " " . $this_genomic_align->dnafrag_start . " " . $this_genomic_align->dnafrag_end . "\n" if $self->debug;
+        my $this_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign;
+        $this_genomic_align->aligned_sequence($seq);
+        $this_genomic_align_block->add_GenomicAlign($this_genomic_align);
+        my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup;
+        $genomic_align_group->add_GenomicAlign($this_genomic_align);
 
-		    $this_genomic_align->aligned_sequence($seq);
-		    $this_genomic_align_block->add_GenomicAlign($this_genomic_align);
-	    }
-	    my $header = shift(@$ids);
-	    $this_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign;
+        my $this_node;
+        foreach my $this_leaf_name (split("_", $name)) {
+            my $this_leaf = $tree->find_node_by_name($this_leaf_name);
+            if (!$this_leaf) {
+                die "Unable to find_node_by_name $this_leaf_name";
+            }
+            if ($this_node) {
+                $this_node = $this_node->find_first_shared_ancestor($this_leaf);
+            } else {
+                $this_node = $this_leaf;
+            }
+        }
+        print "Found node: ", join("_", map {$_->name} @{$this_node->get_all_leaves}), "\n" if ($self->debug);
 
-	    if (!defined($header)) {
-		print "INTERNAL NODE $name\n" if ($self->debug);
-		my $this_node;
-		foreach my $this_leaf_name (split("_", $name)) {
-		    if ($this_node) {
-			my $other_node = $tree->find_node_by_name($this_leaf_name);
-			if (!$other_node) {
-			    throw("Cannot find node <$this_leaf_name>\n");
-			}
-			$this_node = $this_node->find_first_shared_ancestor($other_node);
-		    } else {
-			print "LEAF: $this_leaf_name\n" if ($self->debug);
-			$this_node = $tree->find_node_by_name($this_leaf_name);
-		    }
-		}
-		print join("_", map {$_->name} @{$this_node->get_all_leaves}), "\n" if ($self->debug);
-		## INTERNAL NODE: dnafrag_id and dnafrag_end must be edited somewhere else
+        $this_node->cast('Bio::EnsEMBL::Compara::GenomicAlignTree');
+        $this_node->genomic_align_group($genomic_align_group);
 
-		$this_genomic_align->dnafrag_id(-1);
-		$this_genomic_align->dnafrag_start(1);
-		$this_genomic_align->dnafrag_end(0);
-		$this_genomic_align->dnafrag_strand(1);
-		$this_node->cast('Bio::EnsEMBL::Compara::GenomicAlignTree');
-		#$this_node->genomic_align($this_genomic_align);
-		$genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup();
-		$genomic_align_group->add_GenomicAlign($this_genomic_align);
+        ## FASTA headers correspond to the tree and the order of the leaves in the tree corresponds
+        ## to the order of the files
+        my $header = shift(@$ids);
+        if (not defined $header) {
 
-		
-		$this_node->genomic_align_group($genomic_align_group);
-		$this_node->name($name);
-	    #} elsif ($header =~ /^>DnaFrag(\d+)\|(.+)\.(\d+)\-(\d+)\:(\-?1)$/) {
-	    } elsif ($header =~ /^>SeqID(\d+)/) {
-		#print "old $name\n";
+            print "INTERNAL NODE $name\n" if ($self->debug);
+            ## INTERNAL NODE: dnafrag_id and dnafrag_end must be edited somewhere else
 
-		print "leaf_name?? $name\n" if ($self->debug);
-		my $this_leaf = $tree->find_node_by_name($name);
-		if (!$this_leaf) {
-		    die "Unable to find_node_by_name $name";
-		}
+            $this_genomic_align->dnafrag_id(-1);
+            $this_genomic_align->dnafrag_start(1);
+            $this_genomic_align->dnafrag_end(0);
+            $this_genomic_align->dnafrag_strand(1);
+            $this_node->name($name);
 
-		#information extracted from fasta header
-		my $seq_id = ($1);
+        } else {
 
-		my $all_dnafrag_regions = $self->param('dnafrag_regions');
+            if ($header =~ /^>SeqID(\d+)/) {
 
-		my $dfr = $all_dnafrag_regions->[$seq_id-1];
+                print "leaf_name?? $name\n" if ($self->debug);
 
-		    print "normal dnafrag_id " . $dfr->dnafrag_id . "\n" if $self->debug;
+                #information extracted from fasta header
+                my $seq_id = ($1);
+                my $all_dnafrag_regions = $self->param('dnafrag_regions');
+                my $dfr = $all_dnafrag_regions->[$seq_id-1];
+                print "normal dnafrag_id " . $dfr->dnafrag_id . "\n" if $self->debug;
 
-		    $this_genomic_align->dnafrag_id($dfr->dnafrag_id);
-		    $this_genomic_align->dnafrag_start($dfr->dnafrag_start);
-		    $this_genomic_align->dnafrag_end($dfr->dnafrag_end);
-		    $this_genomic_align->dnafrag_strand($dfr->dnafrag_strand);
+                $this_genomic_align->dnafrag_id($dfr->dnafrag_id);
+                $this_genomic_align->dnafrag_start($dfr->dnafrag_start);
+                $this_genomic_align->dnafrag_end($dfr->dnafrag_end);
+                $this_genomic_align->dnafrag_strand($dfr->dnafrag_strand);
 
-		    $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup(
-											#-genomic_align_array => [$this_genomic_align],
-										        -type => "epo");
-		    $genomic_align_group->add_GenomicAlign($this_genomic_align);
+                print "store gag2 $this_node\n" if $self->debug;
 
-		    $this_leaf->cast('Bio::EnsEMBL::Compara::GenomicAlignTree');
-		    $this_leaf->genomic_align_group($genomic_align_group);
-		    print "store gag2 $this_leaf\n" if $self->debug;
-	    } else {
-		throw("Error while parsing the FASTA header. It must start by \">DnaFrag#####\" where ##### is the dnafrag_id\n$_");
-	    }
-	    $seq = "";
-	} else {
-	    $seq .= $_;
-	}
+            } else {
+                throw("Error while parsing '$header' header in '$alignment_file'. It must start by \">SeqID#####\" where ##### is the internal integer id\n");
+            }
+        }
     }
-    close $fh;
-
-    #last genomic_align
-    print "Last genomic align\n" if ($self->debug);
-	if ($this_genomic_align->dnafrag_id == -1) {
-	} else {
-	    $this_genomic_align->aligned_sequence($seq);
-	    $this_genomic_align_block->add_GenomicAlign($this_genomic_align);
-	}
+    $parser->close();
 
     print join(" -- ", map {$_."+".$_->node_id."+".$_->name} (@{$tree->get_all_nodes()})), "\n";
     my $trees = $self->split_if_empty_ancestral_seq($tree);
