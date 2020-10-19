@@ -495,13 +495,6 @@ sub parse_results {
 		if (!$this_leaf) {
 		    die "Unable to find_node_by_name $name";
 		}
-		#print "$this_leaf\n";
-		#         print "****** $name -- $header -- ";
-		#         if ($this_leaf) {
-		#           $this_leaf->print_node();
-		#         } else {
-		#           print "[none]\n";
-		#         }
 
 		#information extracted from fasta header
 		my $seq_id = ($1);
@@ -547,24 +540,6 @@ sub parse_results {
     my $trees = $self->split_if_empty_ancestral_seq($tree);
     $self->remove_empty_cols($_) for @$trees;
     $self->param('output', $trees);
-
-#     foreach my $ga_node (@{$tree->get_all_nodes}) {
-# 	if ($ga_node) {
-# 	    my $ga = $ga_node->genomic_align;
-# 	    print "name " . $ga_node->name . " $ga \n";
-# 	    my $gab = $ga->genomic_align_block;
-# 	    if (defined $gab) {
-# 		print "Parse number of genomic_aligns " . $gab . " " . @{$gab->genomic_align_array} . "\n";
-# 	    } else {
-# 		print "Parse no genomic_aligns\n";
-# 	    }
-# 	} else {
-# 	    print "no ga_node\n";
-# 	}
-	
-#     }
-
-
 }
 
 
