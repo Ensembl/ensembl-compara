@@ -57,6 +57,7 @@ sub convert_to_drawing_parameters {
     # get the LRG's HGNC name
     my $lrg_sr_name = $lrg->seq_region_name;
     my $gene = (grep $_->stable_id eq $lrg_sr_name, @{$lrg->get_all_Genes_by_type('LRG_gene')})[0];
+    next unless $gene;
     my $hgnc_name = $gene->display_xref->display_id();
 
     if (ref($lrg) =~ /UnmappedObject/) {
