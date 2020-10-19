@@ -530,11 +530,6 @@ sub parse_results {
         print STDOUT "**NEWICK: $newick\nFILES: ", join(" -- ", @$ordered_fasta_files), "\n";
     }
     
-    
-    #   $self->param('tree_string', "((0:0.06969,1:0.015698):1e-05,2:0.008148):1e-05;");
-    #   $self->param('fasta_files', ["/home/jherrero/ensembl/worker.8139/seq1.fa", "/home/jherrero/ensembl/worker.8139/seq2.fa", "/home/jherrero/ensembl/worker.8139/seq3.fa"]);
-    
-    
     my (@ordered_leaves) = $self->param('tree_string') =~ /[(,]([^(:)]+)/g;
     print "++NEWICK: ", $self->param('tree_string'), "\nLEAVES: ", join(" -- ", @ordered_leaves), "\nFILES: ", join(" -- ", @{$self->param('fasta_files')}), "\n";
 
