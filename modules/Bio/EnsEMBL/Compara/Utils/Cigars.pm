@@ -101,7 +101,7 @@ sub assert_valid_cigar {
     if ( length($cigar_line) > 50000 ) {
         my @cigar_numbers = split(/[A-Z]/, $cigar_line);
         foreach my $cigar_num ( @cigar_numbers ) {
-            next if ( $cigar_num eq '' || ($cigar_num =~ /^[0-9]+$/ && $cigar_num > 0) );
+            next if ( $cigar_num eq '' || ($cigar_num =~ /^[1-9][0-9]*$/) );
             throw("Invalid cigar_line '$cigar_line'\n");
         }
     } else {
