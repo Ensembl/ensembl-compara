@@ -528,10 +528,12 @@ sub parse_results {
         $ordered_fasta_files = [split(" ", $files)];
         $self->param('fasta_files', $ordered_fasta_files);
         print STDOUT "**NEWICK: $newick\nFILES: ", join(" -- ", @$ordered_fasta_files), "\n";
+    } else {
+        print "++NEWICK: ", $self->param('tree_string'), "\nFILES: ", join(" -- ", @{$self->param('fasta_files')}), "\n";
     }
     
     my (@ordered_leaves) = $self->param('tree_string') =~ /[(,]([^(:)]+)/g;
-    print "++NEWICK: ", $self->param('tree_string'), "\nLEAVES: ", join(" -- ", @ordered_leaves), "\nFILES: ", join(" -- ", @{$self->param('fasta_files')}), "\n";
+    print "LEAVES: ", join(" -- ", @ordered_leaves), "\n";
 
     my $alignment_file = $self->worker_temp_directory . "/output.$$.mfa";
 
