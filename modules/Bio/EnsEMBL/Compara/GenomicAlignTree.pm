@@ -643,7 +643,7 @@ sub get_all_sorted_genomic_align_nodes {
 =cut
 
 sub restrict_between_alignment_positions {
-  my ($self, $start, $end, $skip_empty_GenomicAligns, $reference_genomic_align) = @_;
+  my ($self, $start, $end, $skip_empty_GenomicAligns) = @_;
   my $genomic_align_tree;
   $genomic_align_tree = $self->copy();
   $genomic_align_tree->adaptor($self->adaptor);
