@@ -1116,7 +1116,7 @@ sub display_id {
   my $dnafrag = $self->dnafrag;
   return "" unless($dnafrag);
   my $id = join(':',
-                $dnafrag->genome_db->taxon_id,
+                $dnafrag->genome_db->taxon_id // 'NA',
                 $dnafrag->genome_db->dbID,
                 $dnafrag->coord_system_name,
                 $dnafrag->name,
