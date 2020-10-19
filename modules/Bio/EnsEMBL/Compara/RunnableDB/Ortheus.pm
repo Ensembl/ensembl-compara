@@ -577,7 +577,6 @@ sub parse_results {
 
 	if (/^>/) {
 	    print "PARSING $_\n" if ($self->debug);
-	    print $tree->_simple_newick(), "\n" if ($self->debug);
 	    my ($name) = $_ =~ /^>(.+)/;
 	    if (defined($this_genomic_align) and  $seq) {
 		if (@$genomic_aligns_2x_array) {
@@ -648,7 +647,6 @@ sub parse_results {
 			}
 			$this_node = $this_node->find_first_shared_ancestor($other_node);
 		    } else {
-			print $tree->_simple_newick() if ($self->debug);
 			print "LEAF: $this_leaf_name\n" if ($self->debug);
 			$this_node = $tree->find_node_by_name($this_leaf_name);
 		    }
@@ -675,7 +673,6 @@ sub parse_results {
 		print "leaf_name?? $name\n" if ($self->debug);
 		my $this_leaf = $tree->find_node_by_name($name);
 		if (!$this_leaf) {
-		    print $tree->_simple_newick(), " ****\n" if ($self->debug);
 		    die "Unable to find_node_by_name $name";
 		}
 		#print "$this_leaf\n";
@@ -800,7 +797,6 @@ sub parse_results {
 	}
     }
 
-    print $tree->_simple_newick, "\n";
     print join(" -- ", map {$_."+".$_->node_id."+".$_->name} (@{$tree->get_all_nodes()})), "\n";
     my $trees = $self->split_if_empty_ancestral_seq($tree);
     $self->remove_empty_cols($_) for @$trees;
