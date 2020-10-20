@@ -317,10 +317,10 @@ sub _write_output {
 	  }
        }
 
-       my $split_trees;
        #restrict genomic_align_tree if it is too long and store as groups
        if ($self->param('max_block_size') && 
   	   $genomic_align_tree->length >  $self->param('max_block_size')) {
+  	   my $split_trees;
   	   for (my $start = 1; $start <= $genomic_align_tree->length; 
   		$start += $self->param('max_block_size')) {
   	       my $end = $start+$self->param('max_block_size')-1;
@@ -328,7 +328,10 @@ sub _write_output {
   		   $end = $genomic_align_tree->length;
   	       }
   	       my $new_gat = $genomic_align_tree->restrict_between_alignment_positions($start, $end, "skip_empty_GenomicAligns");
-	       push @$split_trees, $new_gat if scalar(@{$new_gat->get_all_leaves}) >= 2;
+	       # Some ancestral genomic_aligns may have become full-gaps,
+	       # break the trees around those
+	       my $subtrees = $self->split_if_empty_ancestral_seq($new_gat);
+	       push @$split_trees, @$subtrees;
   	   }
 	   $gata->store_group($split_trees);
 	   foreach my $tree (@$split_trees) {

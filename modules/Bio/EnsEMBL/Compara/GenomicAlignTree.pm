@@ -672,6 +672,7 @@ sub restrict_between_alignment_positions {
         $genomic_align_tree->reference_genomic_align_node($this_node);
       }
       if (!$skip_empty_GenomicAligns or
+          !$this_node->is_leaf or
           $restricted_genomic_align->dnafrag_start <= $restricted_genomic_align->dnafrag_end
           ) {
         ## Always skip composite segments outside of the range of restriction
@@ -691,12 +692,14 @@ sub restrict_between_alignment_positions {
         $genomic_align_group->add_GenomicAlign($this_genomic_align);
       }
     } else {
-	#Only remove leaves. Use minimise_tree to tidy up the internal nodes
-	if ($this_node->is_leaf) {
+	    # Only leaves can reach this point.
+	    # The parent loses a child, and will eventually be removed from the tree
+	    # (by a later passage through this disavow_parent, or by minimize_tree below)
 	    $this_node->disavow_parent();
 	    my $reference_genomic_align = $genomic_align_tree->reference_genomic_align;
 	    if ($reference_genomic_align) {
 		my $reference_genomic_align_node = $genomic_align_tree->reference_genomic_align_node;
+		# Use minimise_tree to tidy up the internal nodes
 		$genomic_align_tree = $genomic_align_tree->minimize_tree();
 		## Make sure links are not broken after tree minimization
 		$genomic_align_tree->reference_genomic_align($reference_genomic_align);
@@ -707,7 +710,6 @@ sub restrict_between_alignment_positions {
 		#$genomic_align_tree->reference_genomic_align->genomic_align_block($genomic_align_tree);
 		$genomic_align_tree->reference_genomic_align_node($reference_genomic_align_node);
 	    }
-	}
     }
   }
   $genomic_align_tree = $genomic_align_tree->minimize_tree();
