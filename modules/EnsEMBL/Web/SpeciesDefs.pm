@@ -526,6 +526,7 @@ sub _read_species_list_file {
       
       while (<FH>) {
         chomp;
+        next if $_ =~ /^#/; 
         push @$spp_list, $_;
       }
 
@@ -832,7 +833,11 @@ sub _parse {
 
     ## Configure favourites if not in DEFAULTS.ini (rapid release)
     unless ($config_packer->tree->{'DEFAULT_FAVOURITES'}) {
-      $config_packer->tree->{'DEFAULT_FAVOURITES'} = $self->_read_species_list_file('FAVOURITES'); 
+      my $favourites = $self->_read_species_list_file('FAVOURITES'); 
+      warn "!!! NO FAVOURITES CONFIGURED" unless scalar @{$favourites||[]};
+      $config_packer->tree->{'DEFAULT_FAVOURITES'} = $favourites;
+      $config_packer->tree->{'ENSEMBL_PRIMARY_SPECIES'} = $favourites->[0];
+      $config_packer->tree->{'ENSEMBL_SECONDARY_SPECIES'} = $favourites->[1];
     }
 
     # Replace any placeholder text in sample data
