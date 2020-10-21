@@ -18,6 +18,10 @@
 Ensembl.Panel.EQTLTable = Ensembl.Panel.Content.extend({
   init: function () {
     this.base();
+    this.tableData = [];
+    this.dataStart = 0;
+    this.dataSize  = 1000;
+    this.fetchingMore = false;
 
     this.eQTLRestURL        = this.params['eqtl_rest_endpoint'];
     this.geneURLTemplate    = decodeURIComponent(this.params['eqtl_gene_url_template']);
@@ -28,13 +32,33 @@ Ensembl.Panel.EQTLTable = Ensembl.Panel.Content.extend({
 
   fetchEQTLTable: function() {
 
-    this.elLk.eQTLTable.children().hide().end().removeClass('hidden').append('<p>Loading ' + this.elLk.eQTLTable.find('h2').text() + ' ...</p>');
+    if(!this.fetchingMore){
+      this.elLk.eQTLTable.children().hide().end().removeClass('hidden').append('<p>Loading ' + this.elLk.eQTLTable.find('h2').text() + ' ...</p>');
+    }
 
     $.ajax({
+      // url       : this.eQTLRestURL + '?start=' + this.dataStart + "&size="+this.dataSize,
       url       : this.eQTLRestURL,
       dataType  : 'json',
       context   : this,
-      success   : function(json) { this.showEQTLTable(json); this.elLk.eQTLTable.children('p').remove(); },
+      success   : function(json) { 
+        
+        var columns = Object.values(json['_embedded']['associations']);
+        this.tableData = this.tableData.concat(columns);
+
+        console.log(columns.length, columns );
+        // eQTL API can only return a maximum of 1000 rows at a time
+        // so if we have more than 999 records returned, we make another query to grab the remaining data
+        if(columns.length > 999){
+          this.dataStart = this.dataStart + this.dataSize;
+          this.fetchingMore = true;
+          this.fetchEQTLTable();
+        } else{
+          this.showEQTLTable(this.tableData); 
+          this.elLk.eQTLTable.children('p').remove(); 
+        }
+
+      },
       error     : function(jqXHR) { this.showError((jqXHR.responseJSON || {}).error) }
     });
   },
@@ -51,18 +75,18 @@ Ensembl.Panel.EQTLTable = Ensembl.Panel.Content.extend({
     // combine data
     var dataCombined = {};
     $.each(data, function(i,obj) {
-      var key = obj.gene + '-' + obj.tissue;
+      var key = obj.gene_id + '-' + obj.tissue_label;
       if (!(key in dataCombined)) {
         dataCombined[key] = obj;
       }
-      dataCombined[key][obj.statistic] = obj.statistic === 'beta' ? obj.value : obj.minus_log10_p_value;
+      dataCombined[key][obj.statistic] = obj.statistic === 'beta' ? obj.value : obj.pvalue;
     });
     data = null;
 
     // add rows from given data
     table.fnAddData($.makeArray($.map(dataCombined, function(obj) {
-      return [[ '<a href="' + Ensembl.populateTemplate(template, {geneId: obj.gene}) + '">' + obj.gene + '</a>',
-        obj['p-value'], obj.beta, obj.tissue
+      return [[ '<a href="' + Ensembl.populateTemplate(template, {geneId: obj.gene_id}) + '">' + obj.gene_id + '</a>',
+        obj.pvalue, obj.beta, obj.tissue_label
       ]];
     })), false);
 

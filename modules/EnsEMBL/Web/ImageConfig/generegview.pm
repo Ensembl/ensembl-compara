@@ -56,6 +56,8 @@ sub init_cacheable {
     $gtex_tissue_example = $gtex_tissues[0];
   }
 
+  warn "gtex_tissue_example: ". $gtex_tissue_example;
+
   my $menu = $self->get_node('functional');
   my $other_node = $self->get_node('functional_other_regulatory_regions');
   $menu->insert_before($self->create_menu_node('functional_gene_expression','Gene Expression correlations'),$other_node);

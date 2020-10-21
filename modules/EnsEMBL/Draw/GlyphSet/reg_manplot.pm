@@ -43,9 +43,11 @@ sub class { return 'group' if $_[0]{'display'} eq 'compact'; }
 sub depth { return $_[0]{'display'} eq 'compact' ? 1 : $_[0]->SUPER::depth; }
 sub supports_subtitles { return 1; }
 
+
 sub _init {
   my $self = shift;
   my $key  = $self->_key;
+  my $hub   = $self->{'config'}->hub;
 
   # LD track type display option
   return if ($self->{'display'} eq 'off');
@@ -57,27 +59,33 @@ sub _init {
   my $display = $self->{'display'};
   my ($statistic,$key);
   if($display eq 'beta') {
-    $key = 'value';
+    $key = 'beta';
     $statistic = 'beta';
   } else {
     $statistic = 'p-value';
-    $key = 'minus_log10_p_value';
+    $key = 'pvalue';
   }
 
   # Get data
+  my $eqtl_rest_url = $hub->species_defs->EQTL_REST_URL;
+
   my $rest = EnsEMBL::Web::REST->new($self->{'config'}->hub);
-  my ($data,$error) = $rest->fetch_via_ini($self->species,'gtex',{
-    stableid => $self->{'config'}->hub->param('g'),
-    tissue => $self->{'my_config'}->get('tissue'),
-  });
+
+  my $fetch_url = sprintf( "%sassociations?gene_id=%s&qtl_group=%s&size=1000", $eqtl_rest_url, $self->{'config'}->hub->param('g'), $self->{'my_config'}->get('tissue'));
+  
+  my ($response,$error) = $rest->fetch_url($fetch_url, {});
+
+
   if($error) {
-    my $msg = $data->[0];
+    my $msg = $response->[0];
     warn "REST failed: $msg\n";
     return $self->errorTrack(sprintf("Data source failed: %s",$msg));
   }
 
+  my @data = values %{$response->{'_embedded'}->{'associations'}};
+
   # Legends
-  foreach my $f (@$data) {
+  foreach my $f (@data) {
     my $conseq = $f->{'display_consequence'};
     my $colour = $self->my_colour($conseq);
     $self->{'legend'}{'variation_legend'}{lc $conseq} ||= $colour if $conseq;
@@ -92,7 +100,7 @@ sub _init {
     $y_scale = 2;
     $y_off = 0.5;
   } else {
-    $y_scale = int(max(0,map { $_->{$key} } @$data))+1;
+    $y_scale = int(max(0,map { $_->{$key} } @data))+1;
     $y_off = 0;
     $self->{'my_config'}->set('min_score_label','1');
     $self->{'my_config'}->set('max_score_label',"<10^-$y_scale");
@@ -118,16 +126,20 @@ sub _init {
   my $features = [];
 
   my $slice = $self->{'container'};
-  foreach my $f (@$data) {
-    next unless $statistic eq $f->{'statistic'};
-    my $start = $f->{'seq_region_start'} - $slice->start+1;
-    my $end = $f->{'seq_region_end'} - $slice->start+1;
-    next if $start < 1 or $end > $slice->length;
+  
+
+  warn "----------------3-----------------";
+
+  foreach my $f (@data) {
+    next unless $f->{$key};
+    my $position = $f->{'position'} - $slice->start+1;
+
+    next if $position < 1 or $position > $slice->end;
     my $value = max($f->{$key}/$y_scale+$y_off,0);
     push @$features,{
-      start => $start,
-      end => $end,
-      label => $f->{'snp'},
+      start => $position,
+      end => $position,
+      label => $f->{'rsid'},
       colour => $self->my_colour($f->{'display_consequence'}),
       score => $value,
     };

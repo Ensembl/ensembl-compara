@@ -132,6 +132,7 @@ sub fetch_via_ini {
   return (['No REST URL'], 1) unless $url;
   { no strict; $url =~ s/<<<(.*?)>>>/${"SiteDefs::$1"}/eg; }
   $url =~ s/<<(.*?)>>/$params->{$1}/eg;
+  warn "url" . $url;
   return $self->fetch_url($url,$args);
 }
 
