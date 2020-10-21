@@ -830,6 +830,11 @@ sub _parse {
     $config_packer->munge('config_tree');
     $self->_info_line('munging', "$species config");
 
+    ## Configure favourites if not in DEFAULTS.ini (rapid release)
+    unless ($config_packer->tree->{'DEFAULT_FAVOURITES'}) {
+      $config_packer->tree->{'DEFAULT_FAVOURITES'} = $self->_read_species_list_file('FAVOURITES'); 
+    }
+
     # Replace any placeholder text in sample data
     my $sample = $config_packer->tree->{'SAMPLE_DATA'};
     while (my($k, $v) = each(%$sample)) {
