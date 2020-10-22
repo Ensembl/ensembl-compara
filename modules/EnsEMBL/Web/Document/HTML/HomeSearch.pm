@@ -170,8 +170,10 @@ sub render {
     }
     ## If more than one species, show favourites
     if (scalar keys %species > 1) {
-        push @$values, map({ $sortable{$_} ? {'value' => $_, 'caption' => $sortable{$_}, 'group' => 'Favourite species'} : ()} @$favourites);
-        push @$values, {'value' => '', 'caption' => '---', 'disabled' => 1};
+      my $group_label = $self->hub->species_defs->FAVOURITES_SYNONYM || 'Favourite';
+      $group_label   .= ' species';
+      push @$values, map({ $sortable{$_} ? {'value' => $_, 'caption' => $sortable{$_}, 'group' => $group_label} : ()} @$favourites);
+      push @$values, {'value' => '', 'caption' => '---', 'disabled' => 1};
     }
     push @$values, map({'value' => $species{$_}, 'caption' => $_}, sort { uc $a cmp uc $b } keys %species);
 
