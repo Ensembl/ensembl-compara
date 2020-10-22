@@ -24,6 +24,8 @@ use strict;
 use EnsEMBL::Web::Document::Image::R2R;
 use EnsEMBL::Web::Utils::Bioschemas qw(create_bioschema add_species_bioschema);
 
+use EnsEMBL::Web::Utils::FormatText qw(get_glossary_entry);
+
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -33,20 +35,21 @@ sub _init {
 }
 
 sub content {
-  my $self          = shift;
-  my $hub           = $self->hub;
-  my $object        = $self->object;
-  my $gene          = $object->gene;
-  my $species_defs  = $hub->species_defs;
-  my $table         = $self->new_twocol;
-  my $sub_type      = $species_defs->ENSEMBL_SUBTYPE;
-  my @CCDS          = @{$object->Obj->get_all_DBLinks('CCDS')};
-  my @Uniprot       = @{$object->Obj->get_all_DBLinks('Uniprot/SWISSPROT')};
-  my $db            = $object->get_db;
-  my $alt_genes     = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE', 'show_version'); #gets all xrefs, sorts them and stores them on the object. Returns HTML only for ALT_GENES
-  my $ensembl_select = $gene->get_all_Attributes('Ensembl_select')->[0] ? $gene->get_all_Attributes('Ensembl_select')->[0]->value : '';
-  my $display_xref  = $gene->display_xref;
-  my ($link_url)    = $display_xref ? $self->get_gene_display_link($gene, $display_xref) : ();
+  my $self            = shift;
+  my $hub             = $self->hub;
+  my $object          = $self->object;
+  my $gene            = $object->gene;
+  my $species_defs    = $hub->species_defs;
+  my $table           = $self->new_twocol;
+  my $sub_type        = $species_defs->ENSEMBL_SUBTYPE;
+  my @CCDS            = @{$object->Obj->get_all_DBLinks('CCDS')};
+  my @Uniprot         = @{$object->Obj->get_all_DBLinks('Uniprot/SWISSPROT')};
+  my @Uniprot_isoform = @{$object->Obj->get_all_DBLinks('Uniprot_isoform')};
+  my $db              = $object->get_db;
+  my $alt_genes       = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE', 'show_version'); #gets all xrefs, sorts them and stores them on the object. Returns HTML only for ALT_GENES
+  my $ensembl_select  = $gene->get_all_Attributes('Ensembl_select')->[0] ? $gene->get_all_Attributes('Ensembl_select')->[0]->value : '';
+  my $display_xref    = $gene->display_xref;
+  my ($link_url)      = $display_xref ? $self->get_gene_display_link($gene, $display_xref) : ();
 
   if ($display_xref) {
     $table->add_row('Name', $link_url
@@ -89,11 +92,18 @@ sub content {
     $table->add_row('CCDS', sprintf($template, $sp_name, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS));
   }
 
+  my $uniprot_match_title = 'UniProt match';
+  my $uniprot_match_description = get_glossary_entry($self->hub, 'Uniprot_match');
+  
   # add Uniprot info
-  if (scalar @Uniprot) {
+  if (scalar @Uniprot_isoform) {
+    my %temp = map { $_->primary_id, 1 } @Uniprot_isoform;
+    @Uniprot_isoform = sort keys %temp;
+    $table->add_row($uniprot_match_title, sprintf('<p>%s: %s</p>', $uniprot_match_description, join ', ', map $hub->get_ExtURL_link($_, 'Uniprot_isoform', $_), @Uniprot_isoform));
+  } elsif( scalar @Uniprot){
     my %temp = map { $_->primary_id, 1 } @Uniprot;
     @Uniprot = sort keys %temp;
-    $table->add_row('UniProtKB', sprintf('<p>This gene has proteins that correspond to the following UniProtKB identifiers: %s</p>', join ', ', map $hub->get_ExtURL_link($_, 'Uniprot/SWISSPROT', $_), @Uniprot));
+    $table->add_row($uniprot_match_title, sprintf('<p>%s: %s</p>', $uniprot_match_description, join ', ', map $hub->get_ExtURL_link($_, 'Uniprot/SWISSPROT', $_), @Uniprot));
   }
 
   ## add RefSeq match info where appropriate
