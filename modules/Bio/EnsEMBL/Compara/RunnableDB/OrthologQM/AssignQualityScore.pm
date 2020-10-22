@@ -103,16 +103,6 @@ sub write_output {
     close $out_fh;
 
     $self->warning("Scores written to $output_file!");
-
-    foreach my $aln_mlss_id ( @aln_mlss_ids ) {
-        my $aln_db = $mlss_mapping{$aln_mlss_id};
-        my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($aln_db);
-        my $mlss = $dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($aln_mlss_id);
-        print "Writing n_${member_type}_wga_score to the database\n" if $self->debug;
-        write_n_tag($mlss, "${member_type}_wga", \%max_quality);
-        print "Tag: n_${member_type}_wga_score written!\n\n" if $self->debug;
-        $dba->dbc->disconnect_if_idle();
-    }
 }
 
 1;
