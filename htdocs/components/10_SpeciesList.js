@@ -34,6 +34,7 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
     this.refreshURL       = this.params['ajax_refresh_url'];
     this.saveURL          = this.params['ajax_save_url'];
     this.displayLimit     = this.params['display_limit'];
+    this.favText          = this.params['fave_text'];
     this.taxonOrder       = this.params['taxon_order'];
     this.taxonLabels      = this.params['taxon_labels'];
 
@@ -184,12 +185,13 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
     var optgroups     = $();
     var favSpecies    = $.map(this.allSpecies, function(sp) { return sp.favourite ? sp: null } );
     var sortedSpecies = this.allSpecies.slice(0).sort(function (a, b) { return a.common > b.common ? 1 : -1 });
+    var favText       = this.favText;
 
     // favourites group
     $.each(favSpecies, function(i, species) {
       var optgroup = optgroups.filter('.favourites');
       if (!optgroup.length) {
-        optgroup = $('<optgroup class="favourites" label="Favourites"></optgroup>');
+        optgroup = $('<optgroup class="favourites" label="' + favText + '"></optgroup>');
         optgroups = optgroups.add(optgroup);
       }
       panel.addOption(optgroup, species, true);
