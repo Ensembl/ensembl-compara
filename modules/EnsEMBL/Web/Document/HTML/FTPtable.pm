@@ -112,9 +112,10 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
   );
 
   $title{$_} = encode_entities($title{$_}) for keys %title;
+  my $fave_title = $self->hub->species_defs->FAVOURITES_SYNONYM || 'Favourite';
   
   $columns = [
-    { key => 'fave',    title => 'Favourite',                    align => 'left',   width => '5%',  sort => 'html',
+    { key => 'fave',    title => $fave_title,                    align => 'left',   width => '5%',  sort => 'html',
                         label => '<img src="/i/16/star.png" />'},
     { key => 'species', title => 'Species',                      align => 'left',   width => '10%', sort => 'html' },
     { key => 'dna',     title => 'DNA (FASTA)',                  align => 'center', width => '10%', sort => 'none' },
