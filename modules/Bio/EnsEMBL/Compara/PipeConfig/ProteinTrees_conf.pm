@@ -3370,7 +3370,9 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'rib_fire_high_confidence_orths',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CheckSwitch',
-            -parameters => { 'switch_name' => 'orth_wga_complete' },
+            -parameters => {
+                'switch_name' => 'orth_wga_complete',
+            },
             -flow_into  => [ 'mlss_id_for_high_confidence_factory', 'paralogue_for_import_factory' ],
             -max_retry_count => 0,
         },
@@ -3615,8 +3617,12 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'rib_fire_orth_wga',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CheckSwitch',
-            -parameters => { 'switch_name' => 'dna_alns_complete' },
-            -flow_into  => { 1 => { 'pair_species' => {'species_set_name' => $self->o('wga_species_set_name') }}},
+            -parameters => {
+                'switch_name' => 'dna_alns_complete',
+            },
+            -flow_into  => {
+                1 => { 'pair_species' => { 'species_set_name' => $self->o('wga_species_set_name') } },
+            },
             -max_retry_count => 0,
         },
 
