@@ -1324,7 +1324,15 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'rib_fire_high_confidence_orths',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => WHEN( '#orth_wga_complete#' => [ 'mlss_id_for_high_confidence_factory'] ),
+            -flow_into  => WHEN( '#orth_wga_complete#' => [ 'mlss_id_for_high_confidence_factory', 'paralogue_for_import_factory' ] ),
+        },
+
+        {   -logic_name => 'paralogue_for_import_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
+            -parameters => {
+                'methods'   => { 'ENSEMBL_PARALOGUES' => 1 },
+            },
+            -flow_into  => [ 'import_homology_table' ],
         },
 
         {   -logic_name => 'gene_dumps_genome_db_factory',
