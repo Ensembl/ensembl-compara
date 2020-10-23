@@ -36,7 +36,6 @@ use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Bio::EnsEMBL::Compara::Utils::Registry;
 use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 
-
 ############################################################
 #          update_reference_genome.pl methods              #
 ############################################################
@@ -104,16 +103,10 @@ sub update_reference_genome {
 sub _update_reference_genome_db {
     my ($species_dba, $compara_dba, $force, $taxon_id, $offset) = @_;
 
-    # create new genome_db and set genebuild to last_geneset_update
+    # create new genome_db from the core in order to compare genebuilds
     my $new_genome_db = Bio::EnsEMBL::Compara::GenomeDB->new_from_DBAdaptor($species_dba);
-    my $last_geneset_update = $species_dba->get_MetaContainer->single_value_by_key('genebuild.last_geneset_update');
-    $new_genome_db->genebuild($last_geneset_update);
 
-    # grab GenomeDBAdaptor and update the unique attributes to ensure
-    # `genebuild` is treated as a unique key by the API
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
-    $genome_db_adaptor->{'_unique_attributes'} = ['name', 'assembly', 'genebuild', 'genome_component'];
-
     my $stored_genome_db = eval {$genome_db_adaptor->fetch_by_core_DBAdaptor($species_dba)};
 
     my $genome_db;
@@ -145,12 +138,8 @@ sub _update_reference_genome_db {
             print "Reference GenomeDB before update: ", $stored_genome_db->toString, "\n";
 
             # Get fresher information from the core database
-            # NOTE: setting db_adaptor will replace the genebuild field
-            # so we need to take note of the current value and reset it
-            my $gb_last_update = $stored_genome_db->genebuild;
             $stored_genome_db->db_adaptor($species_dba, 1);
             $stored_genome_db->last_release(undef);
-            $stored_genome_db->genebuild($gb_last_update);
 
             # And store it back in Compara
             $genome_db_adaptor->update($stored_genome_db);
