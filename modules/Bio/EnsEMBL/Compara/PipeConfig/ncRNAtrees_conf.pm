@@ -1333,8 +1333,16 @@ sub core_pipeline_analyses {
             -parameters => {
                 'switch_name' => 'orth_wga_complete',
             },
-            -flow_into  => [ 'mlss_id_for_high_confidence_factory'],
+            -flow_into  => [ 'mlss_id_for_high_confidence_factory', 'paralogue_for_import_factory' ],
             -max_retry_count => 0,
+        },
+
+        {   -logic_name => 'paralogue_for_import_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
+            -parameters => {
+                'methods'   => { 'ENSEMBL_PARALOGUES' => 1 },
+            },
+            -flow_into  => [ 'import_homology_table' ],
         },
 
         {   -logic_name => 'gene_dumps_genome_db_factory',
