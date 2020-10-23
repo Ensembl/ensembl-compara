@@ -41,7 +41,6 @@ sub run {
     my $self = shift;
     my $switch_name = $self->param_required('switch_name');
     if( ! $self->param_required($switch_name) ) {
-        $self->input_job->autoflow(0);
         die "Switch param '$switch_name' is off (0). Turn it on (1) or forgive the job to continue\n";
     }
 }
