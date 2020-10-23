@@ -407,7 +407,6 @@ sub fetch_by_core_DBAdaptor {
     my $species_genebuild = $core_dba->get_MetaContainer->single_value_by_key('genebuild.last_geneset_update');
     $core_dba->dbc->disconnect_if_idle() unless $was_connected;
     return undef unless $species_name;
-    # return $self->fetch_by_name_genebuild($species_name, $species_genebuild);
     return $self->fetch_by_name_assembly_genebuild($species_name, $species_assembly, $species_genebuild);
 }
 
