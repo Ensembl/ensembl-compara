@@ -152,6 +152,28 @@ sub fetch_by_name_assembly {
     return $best;
 }
 
+=head2 fetch_by_name_assembly_genebuild
+
+  Arg [1]    : string $name
+  Arg [2]    : string $assembly
+  Arg [3]    : string $genebuild
+  Example    : $gdb = $gdba->fetch_by_name_assembly_genebuild("Homo sapiens", 'NCBI36', '2012-06');
+  Description: Retrieves a genome db using the name of the species,
+               assembly and genebuild fields
+  Returntype : Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions : thrown if $name is not defined
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub fetch_by_name_assembly_genebuild {
+    my ($self, $name, $assembly, $genebuild) = @_;
+
+    throw("name, assembly and genebuild arguments are required") unless($name && $assembly && $genebuild);
+    return $self->_id_cache->get_by_additional_lookup('name_assembly_gb', join('_____', lc $name, lc $assembly, $genebuild));
+}
+
 
 =head2 fetch_all_by_name
 
@@ -382,9 +404,11 @@ sub fetch_by_core_DBAdaptor {
     my $was_connected = $core_dba->dbc->connected;
     my $species_name = $core_dba->production_name();
     my $species_assembly = $core_dba->assembly_name();
+    my $species_genebuild = $core_dba->get_MetaContainer->single_value_by_key('genebuild.last_geneset_update');
     $core_dba->dbc->disconnect_if_idle() unless $was_connected;
     return undef unless $species_name;
-    return $self->fetch_by_name_assembly($species_name, $species_assembly, $component);
+    # return $self->fetch_by_name_genebuild($species_name, $species_genebuild);
+    return $self->fetch_by_name_assembly_genebuild($species_name, $species_assembly, $species_genebuild);
 }
 
 
@@ -691,15 +715,12 @@ sub _columns {
 
 
 sub _unique_attributes {
-    my $self = shift;
-
-    if ( ! $self->{'_unique_attributes'} ) {
-        $self->{'_unique_attributes'} = [
-            'name', 'assembly',
-            'genome_component',
-        ];
-    }
-    return @{ $self->{'_unique_attributes'} };
+    return qw(
+        name
+        assembly
+        genebuild
+        genome_component
+    );
 }
 
 
@@ -755,6 +776,7 @@ sub compute_keys {
     my ($self, $genome_db) = @_;
     return {
             ($genome_db->genome_component ? 'genome_component' : 'name_assembly') => $genome_db->_get_unique_key,
+            ('name_assembly_gb' => join('_____', lc $genome_db->name, lc $genome_db->assembly, $genome_db->genebuild)),
 
             # taxon_id -> GenoneDB
             $genome_db->taxon_id ? (taxon_id => $genome_db->taxon_id) : (),
