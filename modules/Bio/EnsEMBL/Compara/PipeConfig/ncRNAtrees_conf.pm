@@ -1318,13 +1318,17 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'rib_fire_orth_wga',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => WHEN( '#dna_alns_complete#'  => { 'pair_species' => {'species_set_name' => $self->o('wga_species_set_name')}, } ),
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CheckSwitch',
+            -parameters => { 'switch_name' => 'dna_alns_complete' },
+            -flow_into  => { 1 => { 'pair_species' => {'species_set_name' => $self->o('wga_species_set_name')}}},
+            -max_retry_count => 0,
         },
 
         {   -logic_name => 'rib_fire_high_confidence_orths',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => WHEN( '#orth_wga_complete#' => [ 'mlss_id_for_high_confidence_factory'] ),
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CheckSwitch',
+            -parameters => { 'switch_name' => 'orth_wga_complete' },
+            -flow_into  => [ 'mlss_id_for_high_confidence_factory'],
+            -max_retry_count => 0,
         },
 
         {   -logic_name => 'gene_dumps_genome_db_factory',
