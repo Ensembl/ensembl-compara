@@ -59,7 +59,7 @@ sub default_options {
          # The production database itself (will be created). That's where the ancestral sequences will be
         'pipeline_name' => 'ensembl_ancestral_'.$self->o('rel_with_suffix'),
 
-        'merge_script'  => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/copy_ancestral_core.pl'),
+        'merge_script'  => $self->o('copy_ancestral_core_exe'),
 
         'compara_db'        => 'compara_curr',
         'prev_ancestral_db' => 'ancestral_prev',

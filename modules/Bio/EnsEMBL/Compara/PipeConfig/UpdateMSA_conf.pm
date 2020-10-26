@@ -61,7 +61,7 @@ sub default_options {
         'master_db'         => 'compara_master',
         'prev_db'           => 'compara_prev',
         'reuse_db'          => $self->o('species_set_name') . '_' . $self->o('method_type') . '_prev',
-        'prev_ancestral_db' => $self->o('species_set_name') . '_ancestral',
+        'prev_ancestral_db' => 'ancestral_prev',
         # EPOAncestral parameters
         'ancestral_sequences_name'          => 'ancestral_sequences',
         'ancestral_sequences_display_name'  => 'Ancestral sequences',
@@ -225,25 +225,17 @@ sub core_pipeline_analyses {
             },
             -rc_name    => '500Mb_job',
         },
-        # Copy the 4 tables with data in the ancestral core database and update the ancestor names with the
-        # new MLSS id
-        {   -logic_name => 'table_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+        # Copy data from the previous ancestral core database and update the ancestor names with new MLSS id
+        {   -logic_name => 'copy_ancestral_data',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::UpdateMSA::CopyAncestralData',
             -parameters => {
-                'inputlist'     => [ 'coord_system', 'dna', 'meta', 'seq_region' ],
-                'column_names'  => [ 'table' ],
+                'program'       => $self->o('copy_ancestral_core_exe'),
+                'reg_conf'      => $self->o('reg_conf'),
+                'from_name'     => $self->o('prev_ancestral_db'),
+                'to_dbc'        => $self->o('ancestral_db'),
+                'msa_mlss_id'   => '#prev_mlss_id#',
             },
-            -flow_into  => {
-                '2->A' => [ 'copy_ancestral_table' ],
-                'A->1' => [ 'update_ancestor_names' ],
-            },
-        },
-        {   -logic_name => 'copy_ancestral_table',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters => {
-                'src_db_conn'   => $self->o('prev_ancestral_db'),
-                'dest_db_conn'  => $self->o('ancestral_db'),
-            },
+            -flow_into  => [ 'update_ancestor_names' ],
         },
         {   -logic_name => 'update_ancestor_names',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
@@ -390,8 +382,8 @@ sub tweak_analyses {
         'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#ext_mlss_id#, "base_mlss_id", #mlss_id#)',
     ]};
     $analyses_by_name->{'set_mlss_tag'}->{'-flow_into'} = WHEN( '#run_gerp#' => { 'set_gerp_mlss_tag' => INPUT_PLUS() } );
-    # Flow to table_factory to copy the previous ancestral core database
-    $analyses_by_name->{'find_ancestral_seq_gdb'}->{'-flow_into'}->{1} = [ 'table_factory' ];
+    # Flow to copy_ancestral_data to copy the previous ancestral core database
+    $analyses_by_name->{'find_ancestral_seq_gdb'}->{'-flow_into'}->{1} = [ 'copy_ancestral_data' ];
     # Link GERP analysis capacities with parameter
     $analyses_by_name->{'gerp'}->{'-analysis_capacity'} = $self->o('gerp_capacity');
     $analyses_by_name->{'gerp_himem'}->{'-analysis_capacity'} = $self->o('gerp_capacity');
