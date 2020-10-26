@@ -15,11 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=pod 
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf
@@ -37,17 +32,9 @@ Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
 
-=head1 DESCRIPTION  
+=head1 DESCRIPTION
 
     The PipeConfig file for MercatorPecan pipeline that should automate most of the pre-execution tasks.
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -104,7 +91,7 @@ sub default_options {
     'java_options_mem1' => '-server -Xmx6500M -Xms6000m',
     'java_options_mem2' => '-server -Xmx12500M -Xms12000m',
     'java_options_mem3' => '-server -Xmx26500M -Xms26000m',
-    'java_options_mem4' => '-server -Xmx56500M -Xms56000m',
+    'java_options_mem4' => '-server -Xmx76500M -Xms76000m',
 
     #Gerp default parameters
     'window_sizes'      => [1,10,100,500],
