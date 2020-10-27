@@ -54,6 +54,7 @@ use DBI qw(:sql_types);
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Hive::Utils;
+use Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -68,11 +69,11 @@ sub run {
     $dbc->do("ALTER TABLE `dna` DISABLE KEYS");
     $dbc->do("ALTER TABLE `seq_region` DISABLE KEYS");
     # Delete the sequence regions that have been removed from the MSA as well
-    my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( -DBCONN => $dbc );
+    my $ancestral_adaptor = Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor->new( $dbc );
     my $nrows;
-    $dba->split_and_callback($ancestor_names, 'seq_region.name', SQL_VARCHAR, sub {
+    $ancestral_adaptor->split_and_callback($ancestor_names, 'seq_region.name', SQL_VARCHAR, sub {
         my $sql = "DELETE seq_region, dna FROM seq_region JOIN dna USING (seq_region_id) WHERE " . (shift);
-        my $nrows += $self->dbc->do($sql);
+        my $nrows += $dbc->do($sql);
     });
     print "Removed $nrows row(s) from seq_region and dna tables\n" if $self->debug;
     # Re-enable the tables keys
