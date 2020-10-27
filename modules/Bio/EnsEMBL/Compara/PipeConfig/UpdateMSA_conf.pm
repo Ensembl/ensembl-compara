@@ -279,6 +279,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'ancestral_db' => $self->o('ancestral_db'),
             },
+            -rc_name => '500Mb_job',
             -flow_into  => [ 'remove_prev_mlss' ],
         },
         {   -logic_name => 'remove_prev_mlss',
@@ -286,7 +287,9 @@ sub core_pipeline_analyses {
             -parameters => {
                 'wrap_in_transaction' => 1,
                 'sql'                 => [
-                    'DELETE stn, stnt FROM species_tree_node stn LEFT JOIN species_tree_node_tag stnt USING (node_id) JOIN species_tree_root str USING (root_id) WHERE method_link_species_set_id = #prev_mlss_id# ORDER BY stn.node_id DESC',
+                    'SET FOREIGN_KEY_CHECKS = 0',
+                    'DELETE stn, stnt FROM species_tree_node stn LEFT JOIN species_tree_node_tag stnt USING (node_id) JOIN species_tree_root str USING (root_id) WHERE method_link_species_set_id = #prev_mlss_id#',
+                    'SET FOREIGN_KEY_CHECKS = 1',
                     'DELETE FROM species_tree_root WHERE method_link_species_set_id = #prev_mlss_id#',
                     'DELETE FROM method_link_species_set_tag WHERE method_link_species_set_id = #prev_mlss_id#',
                     'DELETE FROM method_link_species_set WHERE method_link_species_set_id = #prev_mlss_id#',
