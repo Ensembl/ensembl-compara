@@ -14,7 +14,15 @@ requires 'namespace::autoclean';
 requires 'XML::LibXML';
 requires 'Array::Utils';
 
+requires 'HTTP::Tiny';
+requires 'XML::Simple';
+requires 'Bio::TreeIO';
+requires 'IO::String';
+requires 'Try::Tiny';
+requires 'Getopt::Long';
+
 test_requires 'Test::Exception';
 test_requires 'Test::Most';
+test_requires 'Test::Differences';
 test_requires 'Test::Perl::Critic';
 test_requires 'Perl::Critic::Utils';
