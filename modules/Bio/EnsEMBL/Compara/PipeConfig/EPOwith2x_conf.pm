@@ -118,7 +118,7 @@ sub default_options {
         'max_block_size'   => 1000000,                       #max size of alignment before splitting
 
         #default location for pairwise alignments (can be a string or an array-ref)
-        'pairwise_location' => [ qw(unidir_lastz compara_prev lastz_batch_*) ],
+        'pairwise_location' => [ qw(compara_prev lastz_batch_*) ],
         'lastz_complete'    => 0, # set to 1 when all relevant LASTZs have complete
         'epo_db'            => $self->pipeline_url(),
     };
@@ -195,8 +195,8 @@ sub core_pipeline_analyses {
                     ],
                     [
                         '#low_epo_mlss_id#',
-                        ['EPO_EXTENDED', 'GERP_CONSTRAINED_ELEMENT', 'GERP_CONSERVATION_SCORE'],
-                        ['low_epo_mlss_id', 'ce_mlss_id', 'cs_mlss_id'],
+                        '#expr(#run_gerp# ? ["EPO_EXTENDED", "GERP_CONSTRAINED_ELEMENT", "GERP_CONSERVATION_SCORE"] : ["EPO_EXTENDED"])expr#',
+                        '#expr(#run_gerp# ? ["low_epo_mlss_id", "ce_mlss_id", "cs_mlss_id"] : ["low_epo_mlss_id"])expr#',
                         undef,
                         0 # do not store reuse species sets for low coverage species
                     ],
@@ -205,7 +205,10 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '2->A' => { 'create_mlss_ss' => INPUT_PLUS() },
-                'A->1' => 'set_gerp_mlss_tag',
+                'A->1' => WHEN(
+                    '#run_gerp#' => [ 'set_gerp_mlss_tag' ],
+                    ELSE            [ 'set_mlss_tag' ],
+                ),
             }
         },
 
@@ -300,8 +303,8 @@ sub tweak_analyses {
     $analyses_by_name->{'low_coverage_genome_alignment'}->{'-wait_for'} = 'create_default_pairwise_mlss';
     $analyses_by_name->{'gerp'}->{'-wait_for'} = 'set_gerp_neutral_rate';
 
-    # add "set_internal_ids_low_epo" to "remove_dodgy_ancestral_blocks"
-    $analyses_by_name->{'remove_dodgy_ancestral_blocks'}->{'-flow_into'} = { 1 => { 'set_internal_ids_low_epo' => {} } };
+    # add "set_internal_ids_low_epo" to "load_dnafrag_region"
+    $analyses_by_name->{'load_dnafrag_region'}->{'-flow_into'}->{'A->1'} = { 'set_internal_ids_low_epo' => {} };
 
     # ensure mlss_ids are flowed with their root_ids
     $analyses_by_name->{'create_neighbour_nodes_jobs_alignment'}->{'-parameters'}->{'inputquery'} = 'SELECT gat2.root_id, #mlss_id# as mlss_id FROM genomic_align_tree gat1 LEFT JOIN genomic_align ga USING(node_id) JOIN genomic_align_tree gat2 USING(root_id) WHERE gat2.parent_id IS NULL AND ga.method_link_species_set_id = #mlss_id# GROUP BY gat2.root_id';

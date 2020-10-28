@@ -36,14 +36,6 @@ my $description = q{
 
 copy_data.pl
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =head1 DESCRIPTION
 
 This script copies data over compara DBs. It has been
@@ -74,8 +66,6 @@ example:
 bsub  -q yesterday -ooutput_file -Jcopy_data -R "select[mem>5000] rusage[mem=5000]" -M5000000
 copy_data.pl --from_url mysql://username@server_name/sf5_production
 --to_url mysql://username:password@server_name/sf5_release --mlss 340
-
-
 
 =head1 REQUIREMENTS
 
@@ -119,12 +109,12 @@ The Bio::EnsEMBL::Registry configuration file. If none given,
 the one set in ENSEMBL_REGISTRY will be used if defined, if not
 ~/.ensembl_init will be used.
 
-=item B<--from from_compara_db_name>
+=item B<--from_reg_name from_compara_db_name>
 
 The production compara database name as defined in the Registry or any valid alias.
 Data will be copied from this instance.
 
-=item B<--to to_compara_db_name>
+=item B<--to_reg_name to_compara_db_name>
 
 The release compara database name as defined in the Registry or any valid alias.
 Data will be copied to this instance.
@@ -135,7 +125,7 @@ Data will be copied to this instance.
 
 =over
 
-=item B<--mlss method_link_species_set_id>
+=item B<--mlss_id method_link_species_set_id>
 
 Copy data for this mlss only. This option can be used several times in order to restrict
 the copy to several mlss.

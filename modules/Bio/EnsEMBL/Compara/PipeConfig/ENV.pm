@@ -190,6 +190,7 @@ sub executable_locations {
         'populate_new_database_exe'         => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/populate_new_database.pl'),
         'run_healthchecks_exe'              => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/run_healthchecks.pl'),
         'create_datacheck_tickets_exe'      => $self->check_exe_in_ensembl('ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl'),
+        'copy_ancestral_core_exe'           => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/copy_ancestral_core.pl'),
 
         # Internal dependencies (Ensembl scripts)
         'ensj_testrunner_exe'               => $self->check_exe_in_ensembl('ensj-healthcheck/run-configurable-testrunner.sh'),

@@ -110,4 +110,5 @@
 144	\N	patch	patch_101_102_b.sql|enum_other
 145	\N	patch	patch_101_102_c.sql|stn_node_id_bigint
 147	\N	patch	patch_102_103_a.sql|schema_version
+148	\N	patch	patch_102_103_b.sql|clusterset_id_varchar30
 149	\N	patch	patch_103_104_a.sql|schema_version

@@ -142,7 +142,7 @@ Data will be copied to this instance.
 
 =over
 
-=item B<--mlss method_link_species_set_id>
+=item B<--mlss_id method_link_species_set_id>
 
 Copy data for this species only. This option can be used several times in order to restrict
 the copy to several species.

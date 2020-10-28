@@ -1567,7 +1567,7 @@ CREATE TABLE gene_tree_root (
     root_id                         INT(10) UNSIGNED NOT NULL,
     member_type                     ENUM('protein', 'ncrna') NOT NULL,
     tree_type                       ENUM('clusterset', 'supertree', 'tree') NOT NULL,
-    clusterset_id                   VARCHAR(20) NOT NULL DEFAULT 'default',
+    clusterset_id                   VARCHAR(30) NOT NULL DEFAULT 'default',
     method_link_species_set_id      INT(10) UNSIGNED NOT NULL,
     species_tree_root_id            BIGINT UNSIGNED,
     gene_align_id                   INT(10) UNSIGNED,
