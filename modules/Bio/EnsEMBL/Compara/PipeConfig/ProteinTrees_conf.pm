@@ -3369,8 +3369,12 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'rib_fire_high_confidence_orths',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => WHEN( '#orth_wga_complete#' => [ 'mlss_id_for_high_confidence_factory', 'paralogue_for_import_factory' ] ),
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CheckSwitch',
+            -parameters => {
+                'switch_name' => 'orth_wga_complete',
+            },
+            -flow_into  => [ 'mlss_id_for_high_confidence_factory', 'paralogue_for_import_factory' ],
+            -max_retry_count => 0,
         },
 
         {   -logic_name => 'paralogue_for_import_factory',
@@ -3379,7 +3383,7 @@ sub core_pipeline_analyses {
                 'methods'   => { 'ENSEMBL_PARALOGUES' => 1 },
             },
             -flow_into  => {
-                1 => { 'find_homology_id_range' => { 'mlss_id' => '#mlss_id#', 'high_conf_expected' => '0' } },
+                1 => { 'import_homology_table' => { 'mlss_id' => '#mlss_id#', 'high_conf_expected' => '0' } },
             },
         },
 
@@ -3612,8 +3616,14 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'rib_fire_orth_wga',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => WHEN( '#dna_alns_complete#'  => { 'pair_species' => {'species_set_name' => $self->o('wga_species_set_name')}, } ),
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CheckSwitch',
+            -parameters => {
+                'switch_name' => 'dna_alns_complete',
+            },
+            -flow_into  => {
+                1 => { 'pair_species' => { 'species_set_name' => $self->o('wga_species_set_name') } },
+            },
+            -max_retry_count => 0,
         },
 
         {   -logic_name => 'homology_dNdS',

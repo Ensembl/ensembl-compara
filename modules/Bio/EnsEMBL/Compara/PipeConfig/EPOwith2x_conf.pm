@@ -218,8 +218,14 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'check_for_lastz',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => WHEN( '#lastz_complete#' => { 'create_default_pairwise_mlss' => { 'mlss_id' => '#low_epo_mlss_id#' }}),
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CheckSwitch',
+            -parameters => {
+                'switch_name' => 'lastz_complete',
+            },
+            -flow_into  => {
+                1 => { 'create_default_pairwise_mlss' => { 'mlss_id' => '#low_epo_mlss_id#' } },
+            },
+            -max_retry_count => 0,
         },
 
         {   -logic_name => 'set_internal_ids_low_epo',
