@@ -223,7 +223,7 @@ CREATE TABLE `gene_tree_root` (
   `root_id` int(10) unsigned NOT NULL,
   `member_type` enum('protein','ncrna') NOT NULL,
   `tree_type` enum('clusterset','supertree','tree') NOT NULL,
-  `clusterset_id` varchar(20) NOT NULL DEFAULT 'default',
+  `clusterset_id` varchar(30) NOT NULL DEFAULT 'default',
   `method_link_species_set_id` int(10) unsigned NOT NULL,
   `species_tree_root_id` bigint(20) unsigned DEFAULT NULL,
   `gene_align_id` int(10) unsigned DEFAULT NULL,
@@ -688,4 +688,3 @@ CREATE TABLE `synteny_region` (
   PRIMARY KEY (`synteny_region_id`),
   KEY `method_link_species_set_id` (`method_link_species_set_id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=44726 DEFAULT CHARSET=latin1;
-
