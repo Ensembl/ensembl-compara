@@ -93,6 +93,7 @@ my $compara_dbs = {
     'lastz_batch_3'    => [ 'mysql-ens-compara-prod-4', 'cristig_vertebrates_lastz_batch3_103' ],
     'lastz_batch_4'    => [ 'mysql-ens-compara-prod-6', 'jalvarez_vertebrates_lastz_batch4_103' ],
     'lastz_batch_5'    => [ 'mysql-ens-compara-prod-2', 'jalvarez_vertebrates_lastz_batch5_103' ],
+    'unidir_lastz'     => [ 'mysql-ens-compara-prod-1', 'ensembl_vertebrates_unidirectional_lastz' ],
 
     # EPO dbs
     ## mammals
@@ -101,7 +102,7 @@ my $compara_dbs = {
     'mammals_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## sauropsids
-    # 'sauropsids_epo_high_low'=> [ 'mysql-ens-compara-prod-', '' ],
+    'sauropsids_epo_high_low'=> [ 'mysql-ens-compara-prod-7', 'jalvarez_sauropsids_epo_update_103' ],
     'sauropsids_epo_prev'    => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],
     'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
 
@@ -144,10 +145,10 @@ my $ancestral_dbs = {
     'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
 
     # 'mammals_ancestral'    => [ 'mysql-ens-compara-prod-8', 'jalvarez_mammals_ancestral_core_103' ],
-    # 'primates_ancestral'   => [ 'mysql-ens-compara-prod-7', 'jalvarez_primates_ancestral_core_103' ],
-    # 'sauropsids_ancestral' => [ 'mysql-ens-compara-prod-7', 'jalvarez_sauropsids_ancestral_core_103' ],
+    'primates_ancestral'   => [ 'mysql-ens-compara-prod-7', 'jalvarez_primates_ancestral_core_103' ],
+    'sauropsids_ancestral' => [ 'mysql-ens-compara-prod-7', 'jalvarez_sauropsids_ancestral_core_103' ],
     # 'fish_ancestral'       => [ 'mysql-ens-compara-prod-4', 'jalvarez_fish_ancestral_core_103' ],
-    # 'murinae_ancestral'    => [ 'mysql-ens-compara-prod-4', 'jalvarez_murinae_ancestral_core_103' ],
+    'murinae_ancestral'    => [ 'mysql-ens-compara-prod-4', 'jalvarez_murinae_ancestral_core_103' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
