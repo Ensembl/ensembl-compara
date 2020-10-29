@@ -508,20 +508,25 @@ sub parse_results {
 sub split_if_empty_ancestral_seq {
     my ($self, $genomic_align_tree) = @_;
 
-    my $root_genomic_align = $genomic_align_tree->genomic_align_group->get_all_GenomicAligns->[0];
-
-    # If there is an actual sequence, we're good
-    return [$genomic_align_tree] if length($root_genomic_align->original_sequence);
-
-    # Otherwise, need to replace the tree by its two sub-trees
-    my @subtrees;
-    foreach my $genomic_align_node (@{$genomic_align_tree->children}) {
-        $genomic_align_node->disavow_parent;
-        # Provided they have more than 1 sequence
-        unless ($genomic_align_node->is_leaf) {
-            push @subtrees, @{ $self->split_if_empty_ancestral_seq($genomic_align_node) };
+    my @non_empty_nodes;
+    # Check all the nodes
+    foreach my $node (@{$genomic_align_tree->get_all_nodes}) {
+        if ($node->aligned_sequence =~ /^-+$/) {
+            # Disconnect the ones that have an empty sequence
+            $node->disavow_parent if $node->has_parent;
+            $_->disavow_parent for @{$node->children};
+        } else {
+            # And record the others
+            push @non_empty_nodes, $node;
         }
     }
+
+    # The roots are all the nodes that we kept and have no parent.
+    # Valid trees must have at least two sequences and be minimized.
+    my @subtrees = map {$_->minimize_tree()}
+                   grep {scalar(@{$_->get_all_leaves}) >= 2}
+                   grep {!$_->has_parent}
+                   @non_empty_nodes;
     return \@subtrees;
 }
 
