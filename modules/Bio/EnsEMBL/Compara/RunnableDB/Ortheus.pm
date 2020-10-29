@@ -132,7 +132,7 @@ sub fetch_input {
     ## in order to match the name of the sequences in the tree string (seq1, seq2...)
     if ($self->get_species_tree) {
       $self->param('tree_string', $self->get_tree_string);
-      print "seq_string ", $self->param('tree_string'), "\n";
+      print "tree_string ", $self->param('tree_string'), "\n";
     }
     ## Dumps fasta files for the DnaFragRegions. Fasta files order must match the entries in the
     ## newick tree. The order of the files will match the order of sequences in the tree_string.
