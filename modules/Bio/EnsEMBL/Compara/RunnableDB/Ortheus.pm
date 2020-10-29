@@ -500,7 +500,6 @@ sub parse_results {
 
     print join(" -- ", map {$_."+".$_->node_id."+".$_->name} (@{$tree->get_all_nodes()})), "\n";
     my $trees = $self->split_if_empty_ancestral_seq($tree);
-    $self->remove_empty_cols($_) for @$trees;
     $self->param('output', $trees);
 }
 
@@ -527,6 +526,10 @@ sub split_if_empty_ancestral_seq {
                    grep {scalar(@{$_->get_all_leaves}) >= 2}
                    grep {!$_->has_parent}
                    @non_empty_nodes;
+
+    # Remove the columns that have become gap-only
+    $self->remove_empty_cols($_) for @subtrees;
+
     return \@subtrees;
 }
 
