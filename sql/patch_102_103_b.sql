@@ -15,13 +15,13 @@
 
 # patch_102_103_b.sql
 #
-# Title: Make gene_tree_root.clusterset_id a VARCHAR(25)
+# Title: Make gene_tree_root.clusterset_id a VARCHAR(30)
 #
 # Description:
-#   gene_tree_root.clusterset_id to VARCHAR(25) to allow for new longer values (e.g. 'pig_breeds_pg_it_phyml')
+#   gene_tree_root.clusterset_id to VARCHAR(30) to allow for new longer values (e.g. 'pig_breeds_pg_it_phyml')
 
-ALTER table gene_tree_root MODIFY COLUMN clusterset_id VARCHAR(25) NOT NULL DEFAULT 'default';
+ALTER table gene_tree_root MODIFY COLUMN clusterset_id VARCHAR(30) NOT NULL DEFAULT 'default';
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_102_103_b.sql|clusterset_id_varchar25');
+  VALUES (NULL, 'patch', 'patch_102_103_b.sql|clusterset_id_varchar30');
