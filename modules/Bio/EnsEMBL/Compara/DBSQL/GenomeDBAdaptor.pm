@@ -157,9 +157,10 @@ sub fetch_by_name_assembly {
   Arg [1]    : string $name
   Arg [2]    : string $assembly
   Arg [3]    : string $genebuild
+  Arg [4]    : string $component
   Example    : $gdb = $gdba->fetch_by_name_assembly_genebuild("Homo sapiens", 'NCBI36', '2012-06');
   Description: Retrieves a genome db using the name of the species,
-               assembly and genebuild fields
+               assembly and genebuild fields. Optionally filter on component name too.
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
   Exceptions : thrown if $name, $assembly or $genebuild are not defined
   Caller     : general
@@ -414,7 +415,7 @@ sub fetch_by_core_DBAdaptor {
     my $species_genebuild = $core_dba->get_MetaContainer->single_value_by_key('genebuild.last_geneset_update');
     $core_dba->dbc->disconnect_if_idle() unless $was_connected;
     return undef unless $species_name;
-    return $self->fetch_by_name_assembly_genebuild($species_name, $species_assembly, $species_genebuild);
+    return $self->fetch_by_name_assembly_genebuild($species_name, $species_assembly, $species_genebuild, $component);
 }
 
 
