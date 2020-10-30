@@ -197,7 +197,12 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
 
   foreach my $sp (@$all_species) {
     my $sp_url    = $sp->{'url'};
-    my $sp_dir    = $sp->{'dir'};
+    my $sp_name   = $sp->{'dir'};
+
+    ## Add collection directory for relevant NV divisions
+    my $dataset   = $hub->species_defs->get_config($sp_name, 'SPECIES_DATASET');
+    my $sp_dir    = ($dataset && $dataset eq $sp_name) ? '' : lc($dataset).'_collection/';
+    $sp_dir      .= $sp_name;
 
     ## Vertebrate-specific - append scientific name if display name is common name 
     my $display_name  = $sp->{'display_name'};
