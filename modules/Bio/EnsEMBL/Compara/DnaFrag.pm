@@ -120,6 +120,8 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
+use Bio::EnsEMBL::Compara::Locus;
+
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
 
@@ -553,6 +555,26 @@ sub get_alt_region {
         }
     }
     return $self->{'_alt_region'};
+}
+
+
+=head2 as_locus
+
+  Example     : $dnafrag->as_locus();
+  Description : Return a new Locus object that represents the whole DnaFrag
+  Returntype  : Bio::EnsEMBL::Compara::Locus
+  Exceptions  : none
+
+=cut
+
+sub as_locus {
+    my $self = shift;
+    return bless {
+        'dnafrag'         => $self,
+        'dnafrag_start'   => 1,
+        'dnafrag_end'     => $self->length,
+        'dnafrag_strand'  => 1,
+    }, 'Bio::EnsEMBL::Compara::Locus';
 }
 
 
