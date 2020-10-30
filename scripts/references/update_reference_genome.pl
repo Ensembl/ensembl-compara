@@ -182,9 +182,8 @@ if ($species) {
 
 
 # run the update
-my $new_genome_dbs = [];
 foreach my $this_species ( @species_list ) {
-    push @$new_genome_dbs, @{ Bio::EnsEMBL::Compara::Utils::ReferenceDatabase::update_reference_genome($compara_dba, $this_species, -FORCE => $force, -TAXON_ID => $taxon_id, -OFFSET => $offset) };
+    Bio::EnsEMBL::Compara::Utils::ReferenceDatabase::update_reference_genome($compara_dba, $this_species, -FORCE => $force, -TAXON_ID => $taxon_id, -OFFSET => $offset);
 }
 
 exit(0);
