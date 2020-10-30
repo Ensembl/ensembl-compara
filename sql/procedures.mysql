@@ -57,7 +57,7 @@ ORDER BY node.left_index;
 # Same for a species tree
 
 DROP PROCEDURE IF EXISTS print_species_tree;
-CREATE PROCEDURE print_species_tree(IN user_root_id INT)
+CREATE PROCEDURE print_species_tree(IN user_root_id BIGINT)
 READS SQL DATA
 SELECT CONCAT(
 	GROUP_CONCAT( IF(pip.left_index IS NULL,'',CONCAT(IF(pip.right_index-parent.right_index=1, ' ', '|'),'     ')) ORDER BY parent.left_index SEPARATOR ''),
