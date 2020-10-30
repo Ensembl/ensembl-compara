@@ -22,7 +22,7 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Utils::Registry;
 use Bio::EnsEMBL::Test::MultiTestDB;
 
-use Test::More tests => 2;
+use Test::More tests => 3;
 use Test::Exception;
 
 # check module can be seen and compiled
@@ -64,7 +64,7 @@ subtest "update_reference_genome", sub {
     ok( $ref_update = Bio::EnsEMBL::Compara::Utils::ReferenceDatabase::update_reference_genome($compara_dba, 'mus_musculus') );
     ( $mouse_gdb, $new_dnafrags ) = @$ref_update;
     is( $mouse_gdb->name, 'mus_musculus', 'mouse added successfully' );
-    is( $mouse_gdb->genebuild, '2012-08', 'mouse genebuild correct' );
+    is( $mouse_gdb->genebuild, '2012-07', 'mouse genebuild correct' );
     is( $new_dnafrags, 6, 'mouse dnafrags added' );
 
     # replace human in registry and test adding new annotation version
