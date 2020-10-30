@@ -34,7 +34,7 @@
  },
 
 #uncomment to use preloaded databases (useful when doing lots of testing)
-,'preloaded' => { 
+'preloaded' => { 
 #    'multi' => { 'compara'    => 'kb3_ensembl_compara_test_dup' },
 #    'homo_sapiens' => { 'core' => 'kb3_homo_sapiens_core_test' },
 #    'mus_musculus' => { 'core' => 'kb3_mus_musculus_core_test' },

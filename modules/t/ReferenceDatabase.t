@@ -41,7 +41,7 @@ my $test_ref_mouse = Bio::EnsEMBL::Test::MultiTestDB->new( "test_ref_mouse" );
 my $mouse_dba = $test_ref_mouse->get_DBAdaptor('core');
 Bio::EnsEMBL::Registry->add_DBAdaptor('mus_musculus', 'core', $mouse_dba);
 
-# create DBA, but don't add to registry yet - add later
+# create DBA, but don't add it to registry yet - will add it later
 my $test_ref_human_2 = Bio::EnsEMBL::Test::MultiTestDB->new( "test_ref_human_2" );
 my $human2_dba = $test_ref_human_2->get_DBAdaptor('core');
 

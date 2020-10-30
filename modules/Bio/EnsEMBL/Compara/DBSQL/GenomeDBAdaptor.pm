@@ -161,7 +161,7 @@ sub fetch_by_name_assembly {
   Description: Retrieves a genome db using the name of the species,
                assembly and genebuild fields
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : thrown if $name is not defined
+  Exceptions : thrown if $name, $assembly or $genebuild are not defined
   Caller     : general
   Status     : Stable
 
@@ -170,7 +170,7 @@ sub fetch_by_name_assembly {
 sub fetch_by_name_assembly_genebuild {
     my ($self, $name, $assembly, $genebuild) = @_;
 
-    throw("name, assembly and genebuild arguments are required") unless($name && $assembly && $genebuild);
+    throw("name, assembly and genebuild arguments are required") unless ($name && $assembly && $genebuild);
     return $self->_id_cache->get_by_additional_lookup('name_assembly_gb', join('_____', lc $name, lc $assembly, $genebuild));
 }
 

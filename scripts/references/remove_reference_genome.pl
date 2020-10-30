@@ -103,7 +103,7 @@ GetOptions(
 $| = 0;
 
 # Print Help and exit if help is requested
-if ($help or !$genome_db_ids[0] or !$compara) {
+if ($help or !scalar(@genome_db_ids) or !$compara) {
     use Pod::Usage;
     pod2usage({-exitvalue => 0, -verbose => 2});
 }

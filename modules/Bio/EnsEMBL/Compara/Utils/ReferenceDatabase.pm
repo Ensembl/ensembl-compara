@@ -18,10 +18,10 @@ limitations under the License.
 =head1 DESCRIPTION
 
 This modules contains common methods used when dealing with the
-Compara references database.
+Compara reference database.
 
     - update_reference_genome : add a reference genome to the given database
-    - remove_reference_genome : remove reference from the db, incl dnafrags and members
+    - remove_reference_genome : remove reference from the db, incl. dnafrags and members
 
 =cut
 
@@ -61,13 +61,13 @@ sub update_reference_genome {
     my $compara_dba = shift;
     my $species = shift;
 
-    my($force, $taxon_id, $offset) = rearrange([qw(FORCE TAXON_ID OFFSET)], @_);
+    my ($force, $taxon_id, $offset) = rearrange([qw(FORCE TAXON_ID OFFSET)], @_);
 
     my $species_no_underscores = $species;
     $species_no_underscores =~ s/\_/\ /;
 
     my $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species, "core");
-    if(! $species_db) {
+    if (!$species_db) {
         $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species_no_underscores, "core");
     }
     throw ("Cannot connect to database [${species_no_underscores} or ${species}]") if (!$species_db);
@@ -123,8 +123,8 @@ sub _update_reference_genome_db {
                 open (STDOUT, '>', \$output);
                 $match = Bio::EnsEMBL::Compara::Utils::MasterDatabase::dnafrags_match_core_slices($stored_genome_db, $species_dba);
             }
-            my $msg = "\n\n** Reference GenomeDB with this name [$species_production_name], assembly".
-            " [$this_assembly] and genebuild.last_geneset_update [$this_genebuild] is already in the compara DB **\n";
+            my $msg = "\n\n** Reference GenomeDB with this name [$species_production_name], assembly" .
+                " [$this_assembly] and genebuild.last_geneset_update [$this_genebuild] is already in the compara DB **\n";
             if ($match) {
                 $msg .= "** And it has the right set of DnaFrags **\n";
                 $msg .= "** You can use the --force option to update the other GenomeDB fields IF YOU REALLY NEED TO!! **\n\n";
@@ -133,8 +133,7 @@ sub _update_reference_genome_db {
                 $msg .= "** You can use the --force option to update the DnaFrag, but only IF YOU REALLY KNOW WHAT YOU ARE DOING!! **\n\n";
             }
             throw $msg;
-        }
-        else {
+        } else {
             print "Reference GenomeDB before update: ", $stored_genome_db->toString, "\n";
 
             # Get fresher information from the core database
@@ -149,16 +148,16 @@ sub _update_reference_genome_db {
         $new_genome_db->taxon_id( $taxon_id ) if $taxon_id;
 
         if (!defined($new_genome_db->name)) {
-            throw "Cannot find species.production_name in meta table for ".($species_dba->locator).".\n";
+            throw "Cannot find species.production_name in meta table for " . ($species_dba->locator) . ".\n";
         }
         if (!defined($new_genome_db->taxon_id)) {
-            throw "Cannot find species.taxonomy_id in meta table for ".($species_dba->locator).".\n".
+            throw "Cannot find species.taxonomy_id in meta table for " . ($species_dba->locator) . ".\n" .
                   "   You can use the --taxon_id option";
         }
         print "New reference GenomeDB for Compara: ", $new_genome_db->toString, "\n";
 
         # new ID search if $offset is true
-        if($offset) {
+        if ($offset) {
             my ($max_id) = $compara_dba->dbc->db_handle->selectrow_array('select max(genome_db_id) from genome_db where genome_db_id > ?', undef, $offset);
             $max_id = $offset unless $max_id;
             $new_genome_db->dbID($max_id + 1);
