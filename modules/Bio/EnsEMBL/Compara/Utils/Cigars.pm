@@ -267,7 +267,7 @@ sub alignment_length_from_cigar {
 
     my $length = 0;
      while ($cigar =~ /(\d*)([A-Z])/g) {
-        $length += ($1 || 1);
+        $length += ($1 || 1) if $2 ne 'I';
     }
     return $length;
 }
