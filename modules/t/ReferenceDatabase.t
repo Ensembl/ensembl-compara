@@ -51,18 +51,18 @@ my $human2_dba = $test_ref_human_2->get_DBAdaptor('core');
 note("------------------------ update_reference_genome testing ---------------------------------");
 
 subtest "update_reference_genome", sub {
-    my ($ref_update, $component_gdbs, $new_dnafrags);
+    my ($ref_update, $components, $new_dnafrags);
     my ($human_1_gdb, $human_2_gdb, $mouse_gdb);
 
     # add initial references
     ok( $ref_update = Bio::EnsEMBL::Compara::Utils::ReferenceDatabase::update_reference_genome($compara_dba, 'homo_sapiens') );
-    ( $human_1_gdb, $new_dnafrags ) = @$ref_update;
+    ( $human_1_gdb, $components, $new_dnafrags ) = @$ref_update;
     is( $human_1_gdb->name, 'homo_sapiens', 'human added successfully' );
     is( $human_1_gdb->genebuild, '2019-07', 'human genebuild correct' );
     is( $new_dnafrags, 6, 'human dnafrags added' );
 
     ok( $ref_update = Bio::EnsEMBL::Compara::Utils::ReferenceDatabase::update_reference_genome($compara_dba, 'mus_musculus') );
-    ( $mouse_gdb, $new_dnafrags ) = @$ref_update;
+    ( $mouse_gdb, $components, $new_dnafrags ) = @$ref_update;
     is( $mouse_gdb->name, 'mus_musculus', 'mouse added successfully' );
     is( $mouse_gdb->genebuild, '2012-07', 'mouse genebuild correct' );
     is( $new_dnafrags, 6, 'mouse dnafrags added' );
@@ -72,7 +72,7 @@ subtest "update_reference_genome", sub {
     Bio::EnsEMBL::Registry->add_DBAdaptor('homo_sapiens', 'core', $human2_dba);
 
     ok( $ref_update = Bio::EnsEMBL::Compara::Utils::ReferenceDatabase::update_reference_genome($compara_dba, 'homo_sapiens') );
-    ( $human_2_gdb, $new_dnafrags ) = @$ref_update;
+    ( $human_2_gdb, $components, $new_dnafrags ) = @$ref_update;
     is( $human_2_gdb->name, 'homo_sapiens', 'second human added successfully' );
     is( $human_2_gdb->genebuild, '2020-10', 'second human genebuild correct' );
     is( $new_dnafrags, 6, 'second human dnafrags added' );
@@ -88,7 +88,7 @@ subtest "update_reference_genome", sub {
 
     my $human_3_gdb;
     ok( $ref_update = Bio::EnsEMBL::Compara::Utils::ReferenceDatabase::update_reference_genome($compara_dba, 'homo_sapiens', -FORCE=>1) );
-    ( $human_3_gdb, $new_dnafrags ) = @$ref_update;
+    ( $human_3_gdb, $components, $new_dnafrags ) = @$ref_update;
     is( $new_dnafrags, 1, '1 human dnafrag force added' );
     is($human_2_gdb->dbID, $human_3_gdb->dbID, 'no new id - updated existing genome');
 };

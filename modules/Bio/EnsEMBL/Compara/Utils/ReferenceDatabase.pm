@@ -78,9 +78,13 @@ sub update_reference_genome {
         print "Reference GenomeDB after update: ", $new_genome_db->toString, "\n\n";
         print "Fetching DnaFrags from " . $species_db->dbc->host . "/" . $species_db->dbc->dbname . "\n";
         $new_dnafrags = Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_dnafrags($compara_dba, $new_genome_db, $species_db);
+        $component_genome_dbs = Bio::EnsEMBL::Compara::Utils::MasterDatabase::_update_component_genome_dbs($new_genome_db, $species_db, $compara_dba);
+        foreach my $component_gdb (@$component_genome_dbs) {
+            $new_dnafrags += Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_dnafrags($compara_dba, $component_gdb, $species_db);
+        }
     } );
     $species_db->dbc()->disconnect_if_idle();
-    return [$new_genome_db, $new_dnafrags];
+    return [$new_genome_db, $component_genome_dbs, $new_dnafrags];
 }
 
 

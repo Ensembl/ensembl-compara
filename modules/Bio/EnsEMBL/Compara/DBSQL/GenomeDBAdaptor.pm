@@ -168,10 +168,17 @@ sub fetch_by_name_assembly {
 =cut
 
 sub fetch_by_name_assembly_genebuild {
-    my ($self, $name, $assembly, $genebuild) = @_;
+    my ($self, $name, $assembly, $genebuild, $component) = @_;
 
     throw("name, assembly and genebuild arguments are required") unless ($name && $assembly && $genebuild);
-    return $self->_id_cache->get_by_additional_lookup('name_assembly_gb', join('_____', lc $name, lc $assembly, $genebuild));
+
+    my $genomes = $self->_id_cache->get_all_by_additional_lookup('name_assembly_gb', join('_____', lc $name, lc $assembly, $genebuild));
+
+    if ( $component ) {
+        return grep {$_->component eq $component} @$genomes;
+    } else {
+        return ($genomes->[0] || undef);
+    }
 }
 
 
