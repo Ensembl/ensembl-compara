@@ -59,8 +59,8 @@ sub default_options {
         'bed_dir'       => $self->o('work_dir') . '/bed_dir/',
 
         'master_db'         => 'compara_master',
-        'prev_db'           => 'compara_prev',
-        'reuse_db'          => $self->o('species_set_name') . '_' . $self->o('method_type') . '_prev',
+        'prev_db'           => $self->o('species_set_name') . '_' . $self->o('method_type') . '_prev',
+        'reuse_db'          => $self->o('prev_db'),
         'prev_ancestral_db' => 'ancestral_prev',
         # EPOAncestral parameters
         'ancestral_sequences_name'          => 'ancestral_sequences',
