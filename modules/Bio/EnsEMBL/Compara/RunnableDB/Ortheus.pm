@@ -681,7 +681,7 @@ sub get_DnaFragRegions {
 
   my $regions = $sr->get_all_DnaFragRegions();
   Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $regions);
-  return [@$regions];
+  return [sort {$a->dnafrag_id <=> $b->dnafrag_id || $a->dnafrag_start <=> $b->dnafrag_start} @$regions];
 }
 
 
