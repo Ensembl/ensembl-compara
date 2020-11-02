@@ -420,6 +420,8 @@ sub minimize_cigars {
         }
     };
     column_iterator(\@_, $cb, 'group');
+
+    # Add the elements that were current at the end of the iteration
     for (my $i = 0; $i < $n_cigars; $i++ ) {
         $new_cigars[$i] .= _cigar_element($cig_codes[$i], $cig_lengths[$i]);
     }
