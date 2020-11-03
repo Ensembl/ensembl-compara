@@ -121,4 +121,25 @@ subtest 'Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAltRegionAdaptor store_or_upd
     done_testing();
 };
 
+subtest 'Test Bio::EnsEMBL::Compara::DnaFrag get_alt_region', sub {
+
+    my $dnafrag_adaptor = $dnafrag_altregion_adaptor->db->get_DnaFragAdaptor;
+
+    # The default value of $dnafrag_id is a dnafrag that has no alt-region
+    my $dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag_id);
+    my $alt_region = $dnafrag->get_alt_region;
+    is($alt_region, undef, "No more alt-region for dnafrag_id=$dnafrag_id");
+
+    # This is the dbID of a dnafrag that has an alt-region defined
+    my $dnafrag_id = 13708879;
+    $dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag_id);
+    $alt_region = $dnafrag->get_alt_region;
+    ok($alt_region, 'Got something');
+    isa_ok($alt_region, 'Bio::EnsEMBL::Compara::Locus', 'alt_region');
+    is($alt_region->dnafrag_id, $dnafrag_id, 'Checking dbID');
+    is($alt_region->dnafrag_start, 1000000, 'Checking dnafrag_start');
+    is($alt_region->dnafrag_end, 1500000, 'Checking dnafrag_end');
+
+};
+
 done_testing();
