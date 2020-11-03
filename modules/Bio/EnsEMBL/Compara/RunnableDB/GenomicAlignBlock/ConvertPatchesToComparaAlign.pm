@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::ConvertPatchesToComparaAlign
@@ -248,7 +237,7 @@ foreach my $ref_name(keys %aligned_patch){
 			# the last two fields (group_id and level_id) in the genomic_align_block table are filled using this hack to set the 
 			# group_id = (patch_dnafrag_id + mlss_prefix) and set level_id = 1
 			single_insert($self->compara_dba->dbc, 'genomic_align_block',
-                            [($gab->{genomic_align_block_id} + $mlss_pref), $mlss_id, 0, $gab_perc_id, $align_len, ($hum_dfs{ $patch_name } + $mlss_pref), 1]);
+                            [($gab->{genomic_align_block_id} + $mlss_pref), $mlss_id, 0, $gab_perc_id, $align_len, ($hum_dfs{ $patch_name } + $mlss_pref), 1, undef]);
 			single_insert($self->compara_dba->dbc, 'genomic_align',
                             [($gab->{ref_genomic_align_id} + $mlss_pref),
 				($gab->{genomic_align_block_id} + $mlss_pref), $mlss_id, $hum_dfs{ $ref_name }, 
