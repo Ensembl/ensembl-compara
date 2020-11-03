@@ -63,7 +63,7 @@ $sth->finish();
 $sth = $multi->get_DBAdaptor( "compara" )->dbc->prepare("SELECT
       dnafrag_id, length, df.name, df.genome_db_id, coord_system_name
     FROM dnafrag df left join genome_db gdb USING (genome_db_id)
-    WHERE gdb.name = \"$ref_species\" LIMIT 2");
+    WHERE gdb.name = \"$ref_species\" ORDER BY dnafrag_id DESC LIMIT 2");
 $sth->execute();
 my ($dnafrag_id, $dnafrag_length, $dnafrag_name, $genome_db_id, $coord_system_name) =
   $sth->fetchrow_array();
