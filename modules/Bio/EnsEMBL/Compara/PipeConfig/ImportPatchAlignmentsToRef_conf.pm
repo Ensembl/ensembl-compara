@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::ImportPatchAlignmentsToRef_conf
@@ -33,23 +31,6 @@ regions. The original data are in the core database and only need to be
 transformed into genomic_align(_block) entries.
 
 The resulting database can be merged into the release database with copy_data.pl.
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
 
 =cut
 
@@ -109,9 +90,10 @@ sub pipeline_analyses {
         {   -logic_name => 'populate_new_database',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'           => '#program# --master "#master_db#" --new "#pipeline_db#" --skip-data #mlss_ids#',
+                'cmd'           => '#program# --reg_conf #reg_conf# --master "#master_db#" --new "#pipeline_db#" --skip-data #mlss_ids#',
                 'program'       => $self->o('populate_new_database_exe'),
                 'pipeline_db'   => $self->pipeline_url(),      # I would like this to be generated at runtime
+                'reg_conf'      => $self->o('reg_conf'),
             },
             -rc_name   => '2Gb_job',
             -flow_into => [ 'genomedb_factory' ],
