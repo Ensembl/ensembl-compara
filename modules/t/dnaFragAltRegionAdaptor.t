@@ -105,13 +105,14 @@ subtest 'Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAltRegionAdaptor store_or_upd
     is($alt_region->dnafrag_end, 45, 'Checking dnafrag_end');
 
     $alt_region->dnafrag_start(35);
+    $alt_region->dnafrag_end(46);
     $dnafrag_altregion_adaptor->store_or_update($alt_region);
     $alt_region = $dnafrag_altregion_adaptor->fetch_by_dbID($dnafrag_id);
     ok($alt_region, 'Got something after updating');
     isa_ok($alt_region, 'Bio::EnsEMBL::Compara::Locus', 'alt_region');
     is($alt_region->dnafrag_id, $dnafrag_id, 'Checking dbID');
     is($alt_region->dnafrag_start, 35, 'Checking dnafrag_start');
-    is($alt_region->dnafrag_end, 45, 'Checking dnafrag_end');
+    is($alt_region->dnafrag_end, 46, 'Checking dnafrag_end');
 
     $dnafrag_altregion_adaptor->delete_by_dbID($dnafrag_id);
     $alt_region = $dnafrag_altregion_adaptor->fetch_by_dbID($dnafrag_id);
