@@ -622,6 +622,7 @@ CREATE TABLE synteny_region (
 
 @see genomic_align_block
 @see dnafrag_region
+@see dnafrag_alt_region
 */
 
 CREATE TABLE dnafrag (
@@ -640,6 +641,31 @@ CREATE TABLE dnafrag (
   UNIQUE name (genome_db_id, name)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+/**
+@table  dnafrag_alt_region
+@desc   This table lists the position of the alternative sequences on non-reference dnafrags (haplotypes and assembly patches). On these dnafrags, only the region between these two coordinates differ from the base (reference) dnafrag.
+@colour #808000
+
+@example    This query lists some haplotypes of the human chromosome 20, incl. the length of the complete patched chromosome and the coordinates of the region that differs.
+    @sql    SELECT dnafrag_id, name, length, dnafrag_start, dnafrag_end FROM dnafrag_alt_region JOIN dnafrag USING (dnafrag_id) WHERE name LIKE "CHR\_HSCHR20\_%";
+
+@column dnafrag_id      External reference to dnafrag_id in the @link dnafrag table
+@column dnafrag_start   Position of the first nucleotide from this dnafrag that differs from the reference dnafrag
+@column dnafrag_end     Position of the last nucleotide from this dnafrag that differs from the reference dnafrag
+*/
+
+CREATE TABLE dnafrag_alt_region (
+  dnafrag_id                 BIGINT UNSIGNED NOT NULL,
+  dnafrag_start              INT UNSIGNED NOT NULL,
+  dnafrag_end                INT UNSIGNED NOT NULL,
+
+  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
+
+  PRIMARY KEY (dnafrag_id)
+) ENGINE=MyISAM;
+
 
 /**
 @header Synteny
@@ -2255,3 +2281,5 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_103_104_a.sql|schema_version');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_103_104_b.sql|dnafrag_alt_region');
