@@ -118,7 +118,7 @@ sub create_chunks {
   throw("couldn't get a DnaCollection for ChunkAndGroup analysis\n") unless($self->param('dna_collection'));
 
     my $dnafrag_dba = $self->compara_dba->get_DnaFragAdaptor;
-    my $dnafrags = {};
+    my @regions_to_align;
     if (defined $self->param('region')) {
         # Support list of regions as a string in CSV format as follows:
         #     chromosome:1,scaffold:KN149822.1:25:1560,chromosome:2::154200
@@ -130,7 +130,7 @@ sub create_chunks {
             die "Unknown dnafrag region '$region_name'\n" unless $region_dnafrag;
             $region_dnafrag->{_start} = $region_start if $region_start;
             $region_dnafrag->{_end} = $region_end if $region_end;
-            $dnafrags->{"$coord_system_name:$region_name"} = $region_dnafrag;
+            push @regions_to_align, $region_dnafrag;
         }
     } else {
         my $dnafrag_list = $dnafrag_dba->fetch_all_by_GenomeDB(
@@ -138,13 +138,13 @@ sub create_chunks {
             -IS_REFERENCE       => $self->param('include_non_reference') ? undef : 1,
             -CELLULAR_COMPONENT => $self->param('only_cellular_component'),
         );
-        $dnafrags = { map {$_->coord_system_name . ':' . $_->name => $_} @$dnafrag_list };
+        push @regions_to_align, @$dnafrag_list;
     }
 
     my $starttime = time();
     $self->param('chunkset_counter', 1);
     $self->define_new_chunkset;
-    $self->create_dnafrag_chunks($dnafrags->{$_}, $masking) for keys %$dnafrags;
+    $self->create_dnafrag_chunks($_, $masking) for @regions_to_align;
     printf "genome_db_id %s : total time %d secs\n", $genome_db->dbID, time() - $starttime;
 }
 
