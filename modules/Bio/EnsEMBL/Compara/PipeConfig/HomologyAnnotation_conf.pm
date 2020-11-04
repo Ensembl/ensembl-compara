@@ -34,7 +34,7 @@ use warnings;
 use Bio::EnsEMBL::Hive::Version 2.5;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 
-use Bio::EnsEMBL::Compara::PipeConfig::Parts::CopyNCBIandGenomeDB;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::LoadCoreMembers;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstRef;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
@@ -60,9 +60,17 @@ sub default_options {
 
         'master_db' => 'compara_master',
         'ncbi_db'   => $self->o('master_db'),
-        'member_db' => 'compara_members',
+        'member_db' => $self->pipeline_url(),
+
+        'store_coding'                => 1,
+        'store_ncrna'                 => 1,
+        'store_others'                => 1,
+        'allow_ambiguity_codes'       => 1,
+        'store_related_pep_sequences' => 1,
+        'store_missing_dnafrags'      => 1,
 
         'projection_source_species_names' => [ ],
+        'curr_file_sources_locs'          => [ ],
 
         'species_tree_input_file'         => undef,
         'update_threshold_trees'          => 0.2,
@@ -106,7 +114,7 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
         'master_db'        => $self->o('master_db'),
         'output_db'        => $self->o('output_db'),
         'species_set_id'   => $self->o('species_set_id'),
-        'blast_params'     => $self->o('all_blast_params'),
+        'blast_params'     => $self->o('blast_params'),
         'evalue_limit'     => $self->o('evalue_limit'),
         'fasta_dir'        => $self->o('fasta_dir'),
     };
@@ -169,7 +177,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         },
 
-        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CopyNCBIandGenomeDB::pipeline_analyses_copy_ncbi_and_genome_db($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::LoadCoreMembers::pipeline_analyses_copy_ncbi_and_core_genome_db($self)},
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstRef::pipeline_analyses_diamond_against_refdb($self) },
     ];
 }
