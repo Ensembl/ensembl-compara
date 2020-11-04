@@ -138,7 +138,10 @@ sub create_chunks {
             -IS_REFERENCE       => $self->param('include_non_reference') ? undef : 1,
             -CELLULAR_COMPONENT => $self->param('only_cellular_component'),
         );
-        push @regions_to_align, @$dnafrag_list;
+        foreach my $dnafrag (@$dnafrag_list) {
+            next if $dnafrag->coord_system_name eq 'lrg';
+            push @regions_to_align, $dnafrag;
+        }
     }
 
     my $starttime = time();
