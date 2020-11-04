@@ -157,7 +157,7 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     });
 
     this.el.find('.view-track, button.showMatrix').on('click', function() {
-      if($(this).hasClass('_edit') || !$(this).hasClass('view-track inactive')) {
+      if($(this).hasClass('_edit')) {
         panel.addExtraDimensions();
         Ensembl.EventManager.trigger('modalClose');
       }
