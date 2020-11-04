@@ -107,7 +107,7 @@ my $compara_dbs = {
     'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
 
     ## fish
-    # 'fish_epo_high_low' => [ 'mysql-ens-compara-prod-7', 'jalvarez_fish_epo_update_103' ],
+    'fish_epo_high_low' => [ 'mysql-ens-compara-prod-7', 'jalvarez_fish_epo_update_103' ],
     'fish_epo_prev'     => [ 'mysql-ens-compara-prod-9', 'muffato_test_fish_epo_with2x_101d' ],
     'fish_epo_anchors'  => [ 'mysql-ens-compara-prod-8', 'muffato_generate_anchors_fish_100' ],
 
@@ -147,7 +147,7 @@ my $ancestral_dbs = {
     'mammals_ancestral'    => [ 'mysql-ens-compara-prod-4', 'jalvarez_mammals_ancestral_core_103' ],
     'primates_ancestral'   => [ 'mysql-ens-compara-prod-7', 'jalvarez_primates_ancestral_core_103' ],
     'sauropsids_ancestral' => [ 'mysql-ens-compara-prod-7', 'jalvarez_sauropsids_ancestral_core_103' ],
-    # 'fish_ancestral'       => [ 'mysql-ens-compara-prod-4', 'jalvarez_fish_ancestral_core_103' ],
+    'fish_ancestral'       => [ 'mysql-ens-compara-prod-4', 'jalvarez_fish_ancestral_core_103' ],
     'murinae_ancestral'    => [ 'mysql-ens-compara-prod-4', 'jalvarez_murinae_ancestral_core_103' ],
 };
 
