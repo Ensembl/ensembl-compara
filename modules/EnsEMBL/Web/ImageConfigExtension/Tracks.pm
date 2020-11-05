@@ -1081,7 +1081,7 @@ sub add_regulation_features {
     $db_tables          = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
   }
 
-  my $methylation = $db_tables->{$key};
+  my $methylation = $db_tables->{'methylation'};
   foreach my $k (sort { lc $methylation->{$a}{'name'} cmp lc $methylation->{$b}{'name'} } keys %$methylation) {
     (my $name = $methylation->{$k}{'name'}) =~ s/_/ /g;
     $methylation_menu->append_child($self->create_track_node('methylation_'.$k, $name, {
@@ -1093,7 +1093,7 @@ sub add_regulation_features {
         display      => 'off',
         default_display => 'compact',
         renderers       => [ qw(off Off compact On) ],
-        glyphset        => 'fg_'.$key,
+        glyphset        => 'fg_methylation',
         colourset    => 'seq',
     }));
   }
