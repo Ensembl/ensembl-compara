@@ -230,7 +230,7 @@ sub dnafrag {
     if (defined($self->dnafrag_id) and defined($self->{'adaptor'})) {
       # ...from the dnafrag_id. Use dnafrag_id function and not the attribute in the <if>
       # clause because the attribute can be retrieved from other sources if it has not been already defined.
-      my $dnafrag_adaptor = $self->adaptor->db->get_DnaFragAdaptor;
+      my $dnafrag_adaptor = $self->{'adaptor'}->db->get_DnaFragAdaptor;
       $self->{'dnafrag'} = $dnafrag_adaptor->fetch_by_dbID($self->{'dnafrag_id'});
     }
   }
@@ -304,7 +304,7 @@ sub _lazy_getter_setter {
    } elsif (not defined($self->{$field})) {
     if (defined($self->{'dbID'}) and defined($self->{'adaptor'}) and $self->{'adaptor'}->can('retrieve_all_direct_attributes')) {
       # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::Locus object
-      $self->adaptor->retrieve_all_direct_attributes($self);
+      $self->{'adaptor'}->retrieve_all_direct_attributes($self);
     }
   }
 
