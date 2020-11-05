@@ -124,7 +124,6 @@ sub pipeline_analyses {
                 'cmd'    => [ 'perl', $self->o('merge_script'), '--reg_conf', $self->o('reg_conf'), qw(--from #from_alias# --to_url #to_url# --mlss_id #mlss_id#) ],
             },
             -hive_capacity  => 1,   # do them one-by-one
-            -rc_name => '8Gb_job',
         },
     ];
 }
