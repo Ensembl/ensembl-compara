@@ -72,6 +72,14 @@ is( $new_dnafrags, 8, 'correct number of dnafrags added' );
 is( $new_gdb->assembly, 'GRCh37', 'correct assembly version loaded' );
 is( $new_gdb->first_release, $v, 'new genome released' );
 is_deeply( $component_gdbs, [], 'no components added for human' );
+# check that the alt-regions have been populated
+my $alt_regions = $compara_dba->get_DnaFragAltRegionAdaptor->fetch_all;
+is( scalar(@$alt_regions), 2, 'correct number of alt-regions added');
+my ($alt1, $alt2) = sort {$a->dnafrag_start <=> $b->dnafrag_start} @$alt_regions;
+is( $alt1->dnafrag_start, 28696604, 'correct dnafrag_start for alt-region 1');
+is( $alt1->dnafrag_end, 33318893, 'correct dnafrag_end for alt-region 1');
+is( $alt2->dnafrag_start, 80059725, 'correct dnafrag_start for alt-region 2');
+is( $alt2->dnafrag_end, 80184460, 'correct dnafrag_end for alt-region 2');
 
 
 ## Test 2: adding new genome and NOT releasing it
