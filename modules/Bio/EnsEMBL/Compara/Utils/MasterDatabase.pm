@@ -156,6 +156,7 @@ sub new_alt_region_for_Slice {
 
     my $start = $dnafrag->length;
     my $end   = 1;
+    # Copied from Bio::EnsEMBL::DBSQL::SliceAdaptor
     my $projections = $slice->adaptor->fetch_normalized_slice_projection($slice);
     foreach my $segment (@$projections) {
         my $slice_part = $segment->[2];
