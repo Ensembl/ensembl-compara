@@ -59,8 +59,8 @@ sub default_options {
         'bed_dir'       => $self->o('work_dir') . '/bed_dir/',
 
         'master_db'         => 'compara_master',
-        'prev_db'           => 'compara_prev',
-        'reuse_db'          => $self->o('species_set_name') . '_' . $self->o('method_type') . '_prev',
+        'prev_db'           => $self->o('species_set_name') . '_' . $self->o('method_type') . '_prev',
+        'reuse_db'          => $self->o('prev_db'),
         'prev_ancestral_db' => 'ancestral_prev',
         # EPOAncestral parameters
         'ancestral_sequences_name'          => 'ancestral_sequences',
@@ -80,7 +80,7 @@ sub default_options {
         'low_epo_mlss_id'   => undef,  # required but unused
         'base_epo_mlss_id'  => undef,  # required but unused
         'max_block_size'    => 1000000,  # max size of alignment before splitting
-        'pairwise_location' => [ qw(compara_prev lastz_batch_*) ],  # default location for pairwise alignments (can be a string or an array-ref)
+        'pairwise_location' => [ qw(unidir_lastz compara_prev lastz_batch_*) ],  # default location for pairwise alignments (can be a string or an array-ref)
         'lastz_complete'    => 0,  # set to 1 when all relevant LastZs have complete
 
         # GERP default parameters
