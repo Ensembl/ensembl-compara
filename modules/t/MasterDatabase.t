@@ -68,7 +68,7 @@ my ($update, $new_gdb, $component_gdbs, $new_dnafrags);
 ok( $update = Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_genome($compara_dba, 'homo_sapiens', -RELEASE => 1) );
 ( $new_gdb, $component_gdbs, $new_dnafrags ) = @$update;
 is( $new_gdb->name, 'homo_sapiens', 'homo_sapiens added successfully' );
-is( $new_dnafrags, 6, 'correct number of dnafrags added' );
+is( $new_dnafrags, 8, 'correct number of dnafrags added' );
 is( $new_gdb->assembly, 'GRCh37', 'correct assembly version loaded' );
 is( $new_gdb->first_release, $v, 'new genome released' );
 is_deeply( $component_gdbs, [], 'no components added for human' );
