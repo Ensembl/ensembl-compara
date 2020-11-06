@@ -59,6 +59,8 @@
 
 <p>e.g. http://www.ensembl.org/Trackhub?url=http://www.coolgenomics.ac.uk/hub.txt;species=Homo_sapiens;r=X:123456-123789</p>
 
+<p><b>Important note</b>: You must use semicolons, not ampersands, between parameters, otherwise your track hub will not attach. This is because some track hubs use dynamic URLs containing question marks and ampersands, which need to be encoded separately from the other parameters passed to the Ensembl URL.</p>
+
 <h2>Differences between Ensembl and UCSC</h2>
 
 <p>We aim to support as many features as we can from the track hub specifications,
