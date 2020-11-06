@@ -74,24 +74,37 @@ sub fetch_input {
     # If all the files are there, we're good to go
     my $dump_needed = 0;
     foreach my $path (@$paths) {
-        unless (-e $path) {
-            $self->warning("$path doesn't exist");
-            $dump_needed = 1;
-            last;
-        }
-        if ($ref_size != -s $path) {
-            $self->warning("$path is " . (-s $path) . " bytes instead of $ref_size" );
-            $dump_needed = 1;
-            last;
+        if (-e $path) {
+            if ($ref_size == 0) {
+                $self->warning("$path exists but it shoulnd't (no sequences to dump). Deleting it");
+                unlink $path or die "Could not delete $path";
+
+            } elsif ($ref_size != -s $path) {
+                $self->warning("$path is " . (-s $path) . " bytes instead of $ref_size" );
+                $dump_needed = 1;
+                last;
+            }
+        } else {
+            if ($ref_size == 0) {
+                # File not there and no file expected. We're good
+            } else {
+                $self->warning("$path doesn't exist");
+                $dump_needed = 1;
+                last;
+            }
         }
     }
     if (!$dump_needed) {
-        if (grep {$_ eq $genome_db->name} @{$self->param_required('force_redump')}) {
+        if ($ref_size == 0) {
+            $self->input_job->autoflow(0);
+            $self->complete_early('No dumps expected, no faidx either');
+        }
+        if (scalar(grep {$_ eq $genome_db->name} @{$self->param_required('force_redump')})) {
             $self->warning('Dumps of ' . $genome_db->name . ' look fine, but redump requested');
         } else {
             $self->write_output();
             $self->input_job->autoflow(0);
-            $self->complete_early('All dumps already there');
+            $self->complete_early('All dumps already there - kicking off faidx');
         }
     }
 
