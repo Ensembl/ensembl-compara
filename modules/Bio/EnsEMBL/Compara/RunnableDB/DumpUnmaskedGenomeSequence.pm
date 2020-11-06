@@ -40,13 +40,6 @@ Base directory in which to dump the genomes
 
 =back
 
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-http://lists.ensembl.org/mailman/listinfo/dev
-
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::DumpUnmaskedGenomeSequence;
