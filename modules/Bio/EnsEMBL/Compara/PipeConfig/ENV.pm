@@ -115,6 +115,7 @@ sub executable_locations {
         'cmbuild_exe'               => $self->check_exe_in_cellar('infernal/1.1.2/bin/cmbuild'),
         'cmsearch_exe'              => $self->check_exe_in_cellar('infernal/1.1.2/bin/cmsearch'),
         'codeml_exe'                => $self->check_exe_in_cellar('paml43/4.3.0/bin/codeml'),
+        'diamond_exe'               => $self->check_exe_in_cellar('diamond'),
         'enredo_exe'                => $self->check_exe_in_cellar('enredo/0.5.0/bin/enredo'),
         'erable_exe'                => $self->check_exe_in_cellar('erable/1.0/bin/erable'),
         'esd2esi_exe'               => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/esd2esi'),
@@ -233,6 +234,7 @@ sub resource_classes_multi_thread {
         '4Gb_2c_job'   => { 'LSF' => ['-C0 -n 2 -M4000 -R"span[hosts=1] select[mem>4000] rusage[mem=4000]"', $reg_requirement] },
         '8Gb_2c_job'   => { 'LSF' => ['-C0 -n 2 -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', $reg_requirement] },
 
+        '500Mb_4c_job' => {'LSF' => ['-n 4 -C0 -M500   -R"select[mem>500]   rusage[mem=500]   span[hosts=1]"', $reg_requirement] },
         '1Gb_4c_job'   => {'LSF' => ['-n 4 -C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]  span[hosts=1]"', $reg_requirement] },
         '2Gb_4c_job'   => {'LSF' => ['-n 4 -C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]  span[hosts=1]"', $reg_requirement] },
         '4Gb_4c_job'   => {'LSF' => ['-n 4 -C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]  span[hosts=1]"', $reg_requirement] },
@@ -264,6 +266,9 @@ sub resource_classes_multi_thread {
         '64Gb_64c_job' => {'LSF' => ['-n 64 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"', $reg_requirement] },
         '128Gb_64c_job' => {'LSF' => ['-n 64 -C0 -M128000 -R"select[mem>128000] rusage[mem=128000] span[hosts=1]"', $reg_requirement] },
         '256Gb_64c_job' => {'LSF' => ['-n 64 -C0 -M256000 -R"select[mem>256000] rusage[mem=256000] span[hosts=1]"', $reg_requirement] },
+
+        '500Mb_4c_20min_job' => {'LSF' => ['-n 4 -C0 -M500  -W 0:20 -R"select[mem>500]   rusage[mem=500]   span[hosts=1]"', $reg_requirement] },
+        '2Gb_4c_20min_job'   => {'LSF' => ['-n 4 -C0 -M2000 -W 0:20 -R"select[mem>2000]  rusage[mem=2000]  span[hosts=1]"', $reg_requirement] },
 
         '8Gb_4c_mpi'   => {'LSF' => ['-q mpi-rh74 -n 4  -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=4]"', $reg_requirement] },
         '8Gb_8c_mpi'   => {'LSF' => ['-q mpi-rh74 -n 8  -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=8]"', $reg_requirement] },
