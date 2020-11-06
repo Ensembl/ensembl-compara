@@ -47,8 +47,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::DumpGenomes::DumpUnmaskedGenomeSequen
 use strict;
 use warnings;
 
-use File::Basename;
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::DumpGenomes::BaseDumpGenomeSequence');
 
 
@@ -84,17 +82,7 @@ sub run {
     my $tmp_dump_file    = $self->param('genome_dump_file');
     my $unmasked_file    = $self->param('unmasked_file');
 
-    my $ref_size = -s $tmp_dump_file;
-    die "$tmp_dump_file is empty" unless $ref_size;
-
-    # Make the directory
-    my $cmd = ['mkdir', '-p', dirname($unmasked_file)];
-    $self->run_command($cmd, { die_on_failure => 1 });
-
-    # Copy the file (making sure the file permissions are correct regarless of the user's umask)
-    $cmd = ['install', '--preserve-timestamps', '--mode=664', $tmp_dump_file, $unmasked_file];
-    $self->run_command($cmd, { die_on_failure => 1 });
-    die "$unmasked_file size mismatch" if $ref_size != -s $unmasked_file;
+    $self->_install_dump($tmp_dump_file, $unmasked_file);
 
     unlink $tmp_dump_file;
 }

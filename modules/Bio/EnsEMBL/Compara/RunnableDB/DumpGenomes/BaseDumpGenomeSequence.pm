@@ -33,6 +33,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::DumpGenomes::BaseDumpGenomeSequence;
 use strict;
 use warnings;
 
+use File::Basename;
+
 use base ('Bio::EnsEMBL::Compara::Production::EPOanchors::DumpGenomeSequence');
 
 
@@ -84,6 +86,23 @@ sub fetch_input {
     $self->param('genome_dump_file',            $tmp_dump_file);    # Somewhere under /tmp
 
     $self->SUPER::fetch_input();
+}
+
+
+sub _install_dump {
+    my ($self, $tmp_dump_file, $target_file) = @_;
+
+    my $ref_size = -s $tmp_dump_file;
+    die "$tmp_dump_file is empty" unless $ref_size;
+
+    # Assuming all three files are in the same directory
+    my $cmd = ['mkdir', '-p', dirname($target_file)];
+    $self->run_command($cmd, { die_on_failure => 1 });
+
+    # Copy the file (making sure the file permissions are correct regarless of the user's umask)
+    $cmd = ['install', '--preserve-timestamps', '--mode=664', $tmp_dump_file, $target_file];
+    $self->run_command($cmd, { die_on_failure => 1 });
+    die "$target_file size mismatch" if $ref_size != -s $target_file;
 }
 
 
