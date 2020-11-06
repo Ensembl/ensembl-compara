@@ -128,7 +128,6 @@ sub run {
     my $self = shift;
 
     # Get the filenames
-    my $genome_db        = $self->param('genome_db');
     my $tmp_dump_file    = $self->param('genome_dump_file');
     my $soft_masked_file = $self->param('soft_masked_file');
     my $hard_masked_file = $self->param('hard_masked_file');
