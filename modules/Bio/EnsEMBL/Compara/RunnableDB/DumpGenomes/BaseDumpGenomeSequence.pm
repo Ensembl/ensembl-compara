@@ -38,6 +38,19 @@ use File::Basename;
 use base ('Bio::EnsEMBL::Compara::Production::EPOanchors::DumpGenomeSequence');
 
 
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{ $self->SUPER::param_defaults },
+
+        # Parameters of Bio::EnsEMBL::Utils::IO::FASTASerializer
+        # They have a default value in the serializer itself, but can be redefined here
+        'seq_width'     => 60,      # Characters per line in the FASTA file. Defaults to 60
+        'chunk_factor'  => undef,   # Number of lines to be buffered by the serializer. Defaults to 1,000
+    }
+}
+
+
 sub fetch_input {
     my $self = shift;
 
