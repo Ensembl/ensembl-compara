@@ -49,7 +49,7 @@ use warnings;
 
 use File::Basename;
 
-use base ('Bio::EnsEMBL::Compara::Production::EPOanchors::DumpGenomeSequence');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::DumpGenomes::BaseDumpGenomeSequence');
 
 
 sub param_defaults {
@@ -65,54 +65,15 @@ sub param_defaults {
 }
 
 
-sub fetch_input {
+sub set_dump_paths {
     my $self = shift;
 
-    # Fetch the GenomeDB
-    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID( $self->param_required('genome_db_id') )
-                     || die "Cannot find a GenomeDB with dbID=".$self->param('genome_db_id');
-    $self->param('genome_db', $genome_db);
+    my $genome_db = $self->param('genome_db');
 
     # Where the files should be
-    $self->param_required('genome_dumps_dir');
     $self->param('unmasked_file',    $genome_db->_get_genome_dump_path($self->param('genome_dumps_dir')));
 
-    # The expected file size: DNA + line-returns + dnafrag name + ">" + line-return
-    my $sql = 'SELECT SUM(length + CEIL(length/?) + FLOOR(LOG10(dnafrag_id)) + 3) FROM dnafrag WHERE genome_db_id = ? AND is_reference = 1';
-    my ($ref_size) = $self->compara_dba->dbc->db_handle->selectrow_array($sql, undef, $self->param('seq_width'), $genome_db->dbID);
-
-    # If all the files are there, we're good to go
-    my $err = 0;
-    foreach my $file_param (qw(unmasked_file)) {
-        unless (-e $self->param($file_param)) {
-            $self->warning($self->param($file_param) . " doesn't exist");
-            $err = 1;
-            last;
-        }
-        if ($ref_size != -s $self->param($file_param)) {
-            $self->warning($self->param($file_param) . " is " . (-s $self->param($file_param)) . " bytes instead of $ref_size" );
-            $err = 1;
-            last;
-        }
-    }
-    if (!$err) {
-        if (grep {$_ eq $genome_db->name} @{$self->param_required('force_redump')}) {
-            $self->warning('Dump of ' . $genome_db->name . ' look fine, but redump requested');
-        } else {
-            $self->write_output();
-            $self->input_job->autoflow(0);
-            $self->complete_early('Dump already there');
-        }
-    }
-
-    my $tmp_dump_file = $self->worker_temp_directory . '/' . $self->param_required('genome_db_id') . '.fa';
-
-    $self->param('cellular_components_exclude', []);                # Dump everything
-    $self->param('cellular_components_only',    []);                # I said everything
-    $self->param('genome_dump_file',            $tmp_dump_file);    # Somewhere under /tmp
-    $self->param('repeat_masked',               undef);             # and not masked.
-
-    $self->SUPER::fetch_input();
+    return [$self->param('unmasked_file')];
 }
 
 
