@@ -129,6 +129,10 @@ sub pipeline_analyses {
             },
         },
 
+        # NOTE: DumpUnmaskedGenomeSequence creates two files (soft- and hard-masked),
+        # so dataflows on branch #2, whereas DumpUnmaskedGenomeSequence creates a single
+        # file and is allowed to amend the dataflow on branch #1
+
         {   -logic_name => 'genome_dump_unmasked',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpUnmaskedGenomeSequence',
             -parameters => {
