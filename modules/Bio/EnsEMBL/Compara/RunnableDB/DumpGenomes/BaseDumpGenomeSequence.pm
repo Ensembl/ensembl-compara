@@ -65,6 +65,7 @@ sub fetch_input {
     # The expected file size: DNA + line-returns + dnafrag name + ">" + line-return
     my $sql = 'SELECT SUM(length + CEIL(length/?) + FLOOR(LOG10(dnafrag_id)) + 3) FROM dnafrag WHERE genome_db_id = ? AND is_reference = 1';
     my ($ref_size) = $self->compara_dba->dbc->db_handle->selectrow_array($sql, undef, $self->param('seq_width'), $genome_db->dbID);
+    $self->param('ref_size', $ref_size);
 
     my $paths = $self->set_dump_paths();
 
@@ -105,8 +106,10 @@ sub fetch_input {
 sub _install_dump {
     my ($self, $tmp_dump_file, $target_file) = @_;
 
-    my $ref_size = -s $tmp_dump_file;
-    die "$tmp_dump_file is empty" unless $ref_size;
+    my $ref_size = $self->param('ref_size');
+    if ($ref_size != -s $tmp_dump_file) {
+        die "$tmp_dump_file is " . (-s $tmp_dump_file) . " bytes instead of $ref_size";
+    }
 
     # Assuming all three files are in the same directory
     my $cmd = ['mkdir', '-p', dirname($target_file)];
