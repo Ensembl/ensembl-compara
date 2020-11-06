@@ -55,7 +55,6 @@ use strict;
 use warnings;
 
 use File::Basename;
-use File::Path qw(make_path);
 
 use base ('Bio::EnsEMBL::Compara::Production::EPOanchors::DumpGenomeSequence');
 
