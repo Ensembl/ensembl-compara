@@ -19,29 +19,12 @@
 echo "We are running Perl '$TRAVIS_PERL_VERSION', Coverage reporting is set to '$COVERAGE'"
 
 # Setup the environment variables
-export ENSEMBL_CVS_ROOT_DIR=$PWD
-export EHIVE_ROOT_DIR=$PWD/ensembl-hive
 export TEST_AUTHOR=$USER
-export PERL5LIB=$PERL5LIB:$PWD/bioperl-live
-export PERL5LIB=$PERL5LIB:$PWD/bioperl-run/lib
-export PERL5LIB=$PERL5LIB:$PWD/modules
-export PERL5LIB=$PERL5LIB:$PWD/travisci/fake_libs/
-export PERL5LIB=$PERL5LIB:$PWD/ensembl/modules
-export PERL5LIB=$PERL5LIB:$PWD/ensembl-rest/lib
-export PERL5LIB=$PERL5LIB:$PWD/ensembl-hive/modules
-export PERL5LIB=$PERL5LIB:$PWD/ensembl-test/modules
-export PERL5LIB=$PERL5LIB:$PWD/ensembl-funcgen/modules
-export PERL5LIB=$PERL5LIB:$PWD/ensembl-variation/modules
-export PERL5LIB=$PERL5LIB:$PWD/ensembl-taxonomy/modules
-export PERL5LIB=$PERL5LIB:$PWD/ensembl-io/modules
-
 
 ENSEMBL_PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-funcgen'
 ENSEMBL_TESTER="$PWD/ensembl-test/scripts/runtests.pl"
 ENSEMBL_TESTER_OPTIONS=()
 COMPARA_SCRIPTS=("$PWD/modules/t")
-CORE_SCRIPTS=("$PWD/ensembl/modules/t/compara.t")
-REST_SCRIPTS=("$PWD/ensembl-rest/t/genomic_alignment.t" "$PWD/ensembl-rest/t/info.t" "$PWD/ensembl-rest/t/taxonomy.t" "$PWD/ensembl-rest/t/homology.t" "$PWD/ensembl-rest/t/gene_tree.t" "$PWD/ensembl-rest/t/cafe_tree.t" "$PWD/ensembl-rest/t/family.t")
 
 if [ "$COVERAGE" = 'true' ]; then
   EFFECTIVE_PERL5OPT="$ENSEMBL_PERL5OPT"
@@ -53,28 +36,16 @@ fi
 echo "Running ensembl-compara test suite using $PERL5LIB"
 PERL5OPT="$EFFECTIVE_PERL5OPT" perl "$ENSEMBL_TESTER" "${ENSEMBL_TESTER_OPTIONS[@]}" "${COMPARA_SCRIPTS[@]}"
 rt1=$?
-echo "Running ensembl test suite using $PERL5LIB"
-PERL5OPT="$EFFECTIVE_PERL5OPT" perl "$ENSEMBL_TESTER" "${ENSEMBL_TESTER_OPTIONS[@]}" "${CORE_SCRIPTS[@]}"
-rt2=$?
-
-#if [[ "$TRAVIS_PERL_VERSION" != "5.14" ]]; then
-  #echo "Skipping ensembl-rest test suite"
-  #rt3=0
-#else
-  echo "Running ensembl-rest test suite using $PERL5LIB"
-  PERL5OPT="$EFFECTIVE_PERL5OPT" perl "$ENSEMBL_TESTER" "${ENSEMBL_TESTER_OPTIONS[@]}" "${REST_SCRIPTS[@]}"
-  rt3=$?
-#fi
 
 # Check that all the Perl files can be compiled
 find docs modules scripts sql travisci -iname '*.t' -print0 | xargs -0 -n 1 perl -c
-rt4=$?
+rt2=$?
 find docs modules scripts sql travisci -iname '*.pl' -print0 | xargs -0 -n 1 perl -c
-rt5=$?
+rt3=$?
 find docs modules scripts sql travisci -iname '*.pm' \! -name 'LoadSynonyms.pm' \! -name 'HALAdaptor.pm' \! -name 'HALXS.pm' -print0 | xargs -0 -n 1 perl -c
-rt6=$?
+rt4=$?
 
-if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) && ($rt4 -eq 0) && ($rt5 -eq 0) && ($rt6 -eq 0)]]; then
+if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) && ($rt4 -eq 0)]]; then
   exit 0
 else
   exit 255
