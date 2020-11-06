@@ -121,6 +121,9 @@ sub fetch_input {
         $dnafrags = [grep {!$excl{$_->cellular_component}} @$dnafrags];
     }
 
+    # LRGs are systematically excluded
+    $dnafrags = [grep {$_->coord_system_name ne 'lrg'} @$dnafrags];
+
     my $mask = $self->param('repeat_masked');
 
     $genome_db->db_adaptor->dbc->prevent_disconnect( sub {
