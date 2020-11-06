@@ -123,7 +123,7 @@ do
     echo -e "\t #Make sure kicker is disabled and stop solr"
     echo -e "\t op stop kicker"
     echo -e "\t op stop solr-java"
-    echo -e "\t make sure solr-java is still not running by doing a ps aux | gep java, if it is kill the process"
+    echo -e "\t make sure solr-java is still not running by doing a ps aux | grep java, if it is kill the process"
     echo -e "\t op summary #to confirm kicker and solr-java are stopped"
   else
     # for post release we only disable kicker
@@ -166,14 +166,15 @@ do
     echo -e "\n\t #Start solr, take about 2mins"
     echo -e "\t ssh  -i ~/.ssh/users/tc_ens02 tc_ens02@$server"
     echo -e "\t op start solr-java"
+    echo -e "\t op start kicker"
     echo -e "\t Check a query works: http://${server}:$release_port/solr-sanger/ensembl_core/ensemblshards?indent=on&version=2.2&q=brca2"
     echo -e "\t exit;"
   fi
 
-  if [[ $new_data == "n" ]] ; then
+  if [[ $new_data == "n" && $stage == "after" ]] ; then
     echo -e "\t ssh -i ~/.ssh/users/tc_ens02 tc_ens02@$server"
     echo -e "\t op stop solr-java"
-    echo -e "\t make sure solr-java is still not running by doing a ps aux | gep java, if it is kill the process"
+    echo -e "\t make sure solr-java is still not running by doing a ps aux | grep java, if it is kill the process"
     echo -e "\t op summary #to confirm kicker and solr-java are stopped"
     echo -e "\t op start solr-java"
     echo -e "\t op start kicker"
