@@ -536,7 +536,7 @@ sub slice {
 
 =head2 get_alt_region
 
-  Example     : $dnafrag->get_alignable_region();
+  Example     : $dnafrag->get_alt_region();
   Description : Returns a Locus representing the portion of this DnaFrag that can be aligned.
   Returntype  : Bio::EnsEMBL::Compara::Locus
   Exceptions  : none
