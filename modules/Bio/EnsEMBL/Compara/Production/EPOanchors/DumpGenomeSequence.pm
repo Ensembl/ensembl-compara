@@ -124,15 +124,15 @@ sub fetch_input {
     $genome_db->db_adaptor->dbc->prevent_disconnect( sub {
             foreach my $ref_dnafrag( @$dnafrags ) {
                 $dnafrag_names_2_dbID->{$ref_dnafrag->name} = $ref_dnafrag->dbID;
+                my $slice = $ref_dnafrag->slice;
                 if ($mask) {
                     if ($mask =~ /soft/i) {
-                        $serializer->print_Seq($ref_dnafrag->slice->get_repeatmasked_seq(undef, 1));
+                        $slice = $slice->get_repeatmasked_seq(undef, 1);
                     } elsif ($mask =~ /hard/i) {
-                        $serializer->print_Seq($ref_dnafrag->slice->get_repeatmasked_seq());
+                        $slice = $slice->get_repeatmasked_seq();
                     }
-                } else {
-                    $serializer->print_Seq($ref_dnafrag->slice);
                 }
+                $serializer->print_Seq($slice);
             }
         });
 	close($filehandle);
