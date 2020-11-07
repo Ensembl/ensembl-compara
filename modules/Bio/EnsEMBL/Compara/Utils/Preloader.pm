@@ -44,6 +44,8 @@ package Bio::EnsEMBL::Compara::Utils::Preloader;
 use strict;
 use warnings;
 
+use Scalar::Util qw(weaken);
+
 use Bio::EnsEMBL::Utils::Scalar qw(wrap_array assert_ref check_ref);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
@@ -260,6 +262,45 @@ sub expand_Homologies {
     my $members = $aligned_member_adaptor->fetch_all_by_Homology(values %homologies);
     $homologies{$_->{'_member_of_homology_id'}}->add_Member($_) for @$members;
     return $members;
+}
+
+
+=head2 load_all_AltRegions
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DnaFragAltRegionAdaptor $dnafrag_alt_region_adaptor. The adaptor that is used to retrieve the objects.
+  Arg[2..n]   : Objects or arrays
+  Example     : load_all_AltRegions($dnafrag_alt_region_adaptor, $dnafrags);
+  Description : Method to load the alt-regions of many DnaFrags in a minimum number of queries
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::Locus: the objects (alt-regions) loaded from the database
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub load_all_AltRegions {
+    my $dnafrag_alt_region_adaptor = shift;
+
+    assert_ref($dnafrag_alt_region_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::DnaFragAltRegionAdaptor', 'dnafrag_alt_region_adaptor');
+
+    my %dnafrags;
+    foreach my $a (@_) {
+        foreach my $d (@{wrap_array($a)}) {
+            next if !check_ref($d, 'Bio::EnsEMBL::Compara::DnaFrag') ;      # It has to be a DnaFrag
+            next if exists $d->{'_alt_region'};                             # ... that doesn't have its alt-region yet
+            $dnafrags{$d->dbID} = $d;
+            $d->{'_alt_region'} = undef;
+        }
+    }
+    return [] unless %dnafrags;
+    my $alt_regions = $dnafrag_alt_region_adaptor->fetch_all_by_dbID_list([keys %dnafrags]);
+    foreach my $ar (@$alt_regions) {
+        my $dnafrag = $dnafrags{$ar->dnafrag_id};
+        $dnafrag->{'_alt_region'} = $ar;
+        $ar->{'dnafrag'} = $dnafrag;
+        weaken($ar->{'dnafrag'});
+    }
+    return $alt_regions;
 }
 
 

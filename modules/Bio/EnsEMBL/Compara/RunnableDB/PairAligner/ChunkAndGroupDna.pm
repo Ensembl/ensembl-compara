@@ -41,6 +41,7 @@ use Bio::EnsEMBL::Compara::Locus;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -144,16 +145,11 @@ sub create_chunks {
             -CELLULAR_COMPONENT => $self->param('only_cellular_component'),
         );
 
-        # Preload all the alt-regions at once. Not using Utils::Preloader
-        # because the latter assumes that alt-regions (Locus objects) would
-        # have a dbID() method, and also does not create fields linked to undef
-        my @dnafrag_ids = map {$_->dbID} @$dnafrag_list;
-        my $alt_regions = $self->compara_dba->get_DnaFragAltRegionAdaptor->fetch_all_by_dbID_list(\@dnafrag_ids);
-        my %alt_regions_by_dnafrag_id = map {$_->dnafrag_id => $_} @$alt_regions;
+        Bio::EnsEMBL::Compara::Utils::Preloader::load_all_AltRegions($self->compara_dba->get_DnaFragAltRegionAdaptor, $dnafrag_list);
 
         foreach my $dnafrag (@$dnafrag_list) {
             next if $dnafrag->coord_system_name eq 'lrg';
-            push @regions_to_align, $alt_regions_by_dnafrag_id{$dnafrag->dbID} || $dnafrag->as_locus;
+            push @regions_to_align, $dnafrag->get_alt_region || $dnafrag->as_locus;
         }
     }
 
