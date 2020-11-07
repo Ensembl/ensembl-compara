@@ -68,7 +68,7 @@ sub fetch_input {
     # with:
     # - the number of line returns needed to wrap a sequence is: CEIL(length/line_width)
     # - the size of the base 10 representation of an integer is: FLOOR(LOG10(number))+1
-    my $sql = 'SELECT SUM(length + CEIL(length/?) + FLOOR(LOG10(dnafrag_id)) + 3) FROM dnafrag WHERE genome_db_id = ? AND is_reference = ?';
+    my $sql = 'SELECT SUM(length + CEIL(length/?) + FLOOR(LOG10(dnafrag_id)) + 3) FROM dnafrag WHERE genome_db_id = ? AND is_reference = ? AND coord_system_name != "lrg"';
     my ($ref_size) = $self->compara_dba->dbc->db_handle->selectrow_array($sql, undef, $self->param('seq_width'), $genome_db->dbID, $self->param_required('is_reference'));
     $self->param('ref_size', $ref_size);
 
