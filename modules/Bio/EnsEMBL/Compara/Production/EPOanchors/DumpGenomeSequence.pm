@@ -111,7 +111,7 @@ sub fetch_input {
 
     my $dnafrags = $self->compara_dba->get_DnaFragAdaptor->fetch_all_by_GenomeDB($genome_db, -IS_REFERENCE => $self->param('is_reference'));
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_AltRegions($self->compara_dba->get_DnaFragAltRegionAdaptor, $dnafrags) unless $self->param('is_reference');
-    $self->compara_dba->dbc->disconnect_if_idle();
+    $self->disconnect_from_databases();
 
     # Cellular-component filtering
     if (@{$self->param('cellular_components_only')}) {
