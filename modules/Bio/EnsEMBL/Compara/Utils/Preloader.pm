@@ -207,6 +207,8 @@ sub _load_and_attach_all {
 sub load_all_sequences {
     my ($sequence_adaptor, $seq_type, @args) = @_;
 
+    assert_ref($sequence_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor', 'sequence_adaptor');
+
     my $internal_sequence_key = $seq_type ? "_sequence_$seq_type" : '_sequence';
     my $internal_key_for_adaptor = $seq_type ? 'dbID' : '_sequence_id';
 
@@ -249,6 +251,8 @@ sub load_all_sequences {
 
 sub expand_Homologies {
     my $aligned_member_adaptor = shift;
+
+    assert_ref($aligned_member_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::AlignedMemberAdaptor', 'aligned_member_adaptor');
 
     my %homologies;
     foreach my $a (@_) {
