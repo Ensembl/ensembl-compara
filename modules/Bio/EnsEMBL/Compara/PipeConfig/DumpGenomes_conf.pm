@@ -133,6 +133,14 @@ sub pipeline_analyses {
         # so dataflows on branch #2, whereas DumpUnmaskedGenomeSequence creates a single
         # file and is allowed to amend the dataflow on branch #1
 
+        # NOTE: The unmasked genome is dumped separately in order to get it
+        # done quicker (and start the exonerate indexing quicker). This is
+        # because fetching the masked DNA sequences is significantly slower
+        # than the unmasked DNA sequences.
+        # Otherwise, just like the hard-masked file is made from the
+        # soft-masked file by replacing a-z with N, the unmasked file could
+        # have been made by replacing a-z with A-Z.
+
         {   -logic_name => 'genome_dump_unmasked',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpUnmaskedGenomeSequence',
             -parameters => {
