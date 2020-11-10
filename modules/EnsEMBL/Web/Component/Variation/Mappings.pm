@@ -498,9 +498,9 @@ sub _render_eqtl_table {
     # empty table for eQTLs - get populated by JS via REST
     my @eqtl_columns  = (
       { key => 'gene_id',    title => 'Gene',                        sort => 'html'    },
-      { key => 'pvalue',   title => 'P-value (-log<sub>10</sub>)', sort => 'numeric',  help => "Nominal p-values of the individual variant-gene pair." },
-      { key => 'beta',    title => 'Effect size',                 sort => 'numeric',  help => "Effect of the alternative allele (ALT) relative to the reference allele (REF) (i.e., the eQTL effect allele is the ALT allele)."},
-      { key => 'tissue_label',  title => 'Tissue',                      sort => 'html'    },
+      { key => 'pvalue',     title => 'P-value (-log<sub>10</sub>)', sort => 'numeric',  help => "Nominal p-values of the individual variant-gene pair." },
+      { key => 'beta',       title => 'Effect size',                 sort => 'numeric',  help => "Effect of the alternative allele (ALT) relative to the reference allele (REF) (i.e., the eQTL effect allele is the ALT allele)."},
+      { key => 'qtl_group',  title => 'Tissue',                      sort => 'string'  },
     );
 
     # add dummy rows to get pagination working
