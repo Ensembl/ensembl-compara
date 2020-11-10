@@ -494,6 +494,13 @@ sub parse_results {
 
                 print "store gag2 $this_node\n" if $self->debug;
 
+		    my $region_length = $dfr->dnafrag_end - $dfr->dnafrag_start + 1;
+		    my $original_sequence = $seq;
+		    $original_sequence =~ s/-//g;
+		    if (length($original_sequence) != $region_length) {
+			throw("Length mismatch: $region_length from the coordinates, ".length($original_sequence)." from the aligned string");
+		    }
+
             } else {
                 throw("Error while parsing '$header' header in '$alignment_file'. It must start by \">SeqID#####\" where ##### is the internal integer id\n");
             }
