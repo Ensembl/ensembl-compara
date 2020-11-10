@@ -363,9 +363,6 @@ sub default_options {
         'homology_dumps_dir'        => $self->o('dump_dir') . '/homology_dumps/',
         'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
         'prev_homology_dumps_dir'   => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
-
-    # non-standard executable locations
-        'treerecs_exe' => $self->o('warehouse_dir') . '/alumni/mateus/home/reconcile/Treerecs/bin/Treerecs',
     };
 }
 
