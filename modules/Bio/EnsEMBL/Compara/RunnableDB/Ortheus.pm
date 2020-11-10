@@ -79,7 +79,10 @@ package Bio::EnsEMBL::Compara::RunnableDB::Ortheus;
 
 use strict;
 use warnings;
+
 use Data::Dumper;
+use File::Basename;
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::IO::Parser::Fasta;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
@@ -90,6 +93,7 @@ use Bio::EnsEMBL::Compara::GenomicAlignTree;
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
 use Bio::EnsEMBL::Compara::Production::Analysis::Ortheus;
+use Bio::EnsEMBL::Hive::Utils ('stringify');
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -335,18 +339,68 @@ sub _write_output {
   	   }
 	   $gata->store_group($split_trees);
 	   foreach my $tree (@$split_trees) {
+	       $self->_assert_cigar_lines_in_block($tree->modern_genomic_align_block_id);
 	       $self->_write_gerp_dataflow($tree->modern_genomic_align_block_id);
 	       
 	   }
        } else {
 	   $gata->store($genomic_align_tree, $skip_left_right_index);
-	   $self->_write_gerp_dataflow($genomic_align_tree->modern_genomic_align_block_id)
+	   $self->_assert_cigar_lines_in_block($genomic_align_tree->modern_genomic_align_block_id);
+	   $self->_write_gerp_dataflow($genomic_align_tree->modern_genomic_align_block_id);
        }
    }
 	#DO NOT COMMENT THIS OUT!!! (at least not permenantly). Needed
 	#to clean up after each job otherwise you get files left over from
 	#the previous job.
     $self->cleanup_worker_temp_directory;
+}
+
+sub _assert_cigar_lines_in_block {
+    my ($self, $gab_id) = @_;
+    my $gat = $self->compara_dba->get_GenomicAlignTreeAdaptor->fetch_by_genomic_align_block_id($gab_id);
+
+    my %lengths;
+    foreach my $genomic_align_node (@{$gat->get_all_nodes}) {
+        foreach my $genomic_align (@{$genomic_align_node->genomic_align_group->get_all_GenomicAligns}) {
+            my $cigar_length = Bio::EnsEMBL::Compara::Utils::Cigars::sequence_length_from_cigar($genomic_align->cigar_line);
+            my $region_length = $genomic_align->dnafrag_end - $genomic_align->dnafrag_start + 1;
+            if ($cigar_length != $region_length) {
+                $self->_backup_data_and_throw($gat, "cigar_line's sequence length ($cigar_length) doesn't match the region length ($region_length)" );
+            }
+            my $aln_length = Bio::EnsEMBL::Compara::Utils::Cigars::alignment_length_from_cigar($genomic_align->cigar_line);
+            $lengths{$aln_length}++;
+        }
+    }
+    if (scalar(keys %lengths) > 1) {
+        $self->_backup_data_and_throw($gat, "Multiple alignment lengths: ". stringify(\%lengths));
+    }
+}
+
+sub _backup_data_and_throw {
+    my ($self, $gat, $err) = @_;
+    my $target_dir = $self->param_required('work_dir') . '/' . $self->param('synteny_region_id') . '.' . basename($self->worker_temp_directory);
+    system('cp', '-a', $self->worker_temp_directory, $target_dir);
+    $self->_print_report($gat, "$target_dir/report.txt");
+    throw("Error: $err\nData copied to $target_dir");
+}
+
+sub _print_report {
+    my ($self, $gat, $filename) = @_;
+    open(my $fh, '>', $filename);
+    foreach my $node (@{$gat->get_all_nodes}) {
+        my $ga = $node->genomic_align_group->get_all_GenomicAligns->[0];
+        print $fh join("\t",
+            $node->name,
+            $ga->dnafrag_id,
+            $ga->dnafrag_start,
+            $ga->dnafrag_end,
+            $ga->dnafrag_end - $ga->dnafrag_start + 1,
+            length($ga->original_sequence),
+            length($ga->aligned_sequence),
+            stringify(Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($ga->cigar_line)),
+        ), "\n";
+    }
+    close($fh);
 }
 
 sub _write_gerp_dataflow {
