@@ -185,6 +185,9 @@ sub new_from_Transcript {
 
         $seq_string = $transcript->translation->seq;
 
+        # Stop codons cause problems with many tools, so hide them
+        $seq_string =~ tr/*/X/;
+
         if ($seq_string =~ /^X+$/) {
             warn("X+ in sequence from translation " . $transcript->translation->stable_id."\n");
         } elsif (length($seq_string) == 0) {
@@ -486,8 +489,8 @@ sub gene_member_id {
 sub bioseq {
 
     my $self = shift;
-    my ($seq_type, $id_type, $with_description, $append_sp_name, $hide_stop_codons) =
-        rearrange([qw(SEQ_TYPE ID_TYPE WITH_DESCRIPTION APPEND_SP_NAME HIDE_STOP_CODONS)], @_);
+    my ($seq_type, $id_type, $with_description, $append_sp_name) =
+        rearrange([qw(SEQ_TYPE ID_TYPE WITH_DESCRIPTION APPEND_SP_NAME)], @_);
 
     throw("Member stable_id undefined") unless defined($self->stable_id());
 
@@ -511,10 +514,6 @@ sub bioseq {
         my $species = $self->genome_db->name;
         $species =~ s/\s/_/g;
         $seqname .= "|" . $species;
-    }
-
-    if ($hide_stop_codons) {
-        $sequence =~ tr/*/X/;
     }
 
     return Bio::Seq->new(
