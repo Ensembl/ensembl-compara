@@ -36,6 +36,7 @@ sub summary_zmenu {
   my ($self, $args) = @_;
 
   my ($fudge, $slice) = $self->_menu_setup($args); 
+  my $hub   = $self->hub;
 
   my $id  = $args->{'dbid'};
   my $r   = $args->{'r'};
@@ -53,12 +54,28 @@ sub summary_zmenu {
   $e = int($mid + $fudge/2);
  
   # See what we can find
-  my $rest = EnsEMBL::Web::REST->new($self->hub);
-  my ($data,$error) = $rest->fetch_via_ini($args->{'species'},'gtex',{
-    stableid => $args->{'g'},
-    tissue => $args->{'tissue'}
-  });
-  if($error || !defined $data) {
+  my $rest = EnsEMBL::Web::REST->new($hub);
+  my $eqtl_rest_url = $hub->species_defs->EQTL_REST_URL;
+  my $fetch_url = sprintf( "%sassociations?gene_id=%s&qtl_group=%s&size=1000", $eqtl_rest_url, $args->{'g'}, $args->{'tissue'});
+
+  my @data;
+  do {
+    my ($response,$error) = $rest->fetch_url($fetch_url, {});
+
+    if($error) {
+      my $msg = $response->[0];
+      warn "REST failed: $msg\n";
+      return $self->errorTrack(sprintf("Data source failed: %s",$msg));
+    }
+
+    @data = ( @data, values %{$response->{'_embedded'}->{'associations'}});
+
+    $fetch_url = $response->{'_links'}->{'next'}->{'href'};
+
+  } while ($fetch_url);
+
+
+  if(!scalar @data) {
     $self->caption("REST service failed");
     $self->add_entry({  type => "Overview",
                        label => "Could not retrieve data from server"});
@@ -69,10 +86,18 @@ sub summary_zmenu {
   my @hits;
   my $statistic = "p-value";
   $statistic= "beta" if $renderer eq 'beta';
-  foreach my $f (@$data) {
-    next unless $f->{'statistic'} eq $statistic;
-    next if $f->{'seq_region_end'} < $s;
-    next if $f->{'seq_region_start'} > $e;
+
+  my $key;
+  if($renderer eq 'beta') {
+    $key = 'beta';
+  } else {
+    $key = 'neg_log10_pvalue';
+  }
+
+  foreach my $f (@data) {
+    next unless $f->{$key};
+    next if $f->{'position'} < $s;
+    next if $f->{'position'} > $e;
     push @hits,$f;
   }
 
@@ -89,7 +114,7 @@ sub summary_zmenu {
   my $last_val;
   my $colourmap = $self->hub->colourmap;
   my $var_styles = $self->hub->species_defs->colour('variation');
-  @hits = sort { abs($a->{'value'}) <=> abs($b->{'value'}) } @hits;
+  @hits = sort { abs($a->{$key}) <=> abs($b->{$key}) } @hits;
   @hits = reverse @hits if $renderer eq 'beta';
   my $fmt = "p < %s";
   $fmt = "%s";
@@ -98,10 +123,10 @@ sub summary_zmenu {
   foreach my $f (@hits) {
     my $value;
     if($renderer eq 'beta') {
-      $value = sprintf("%3.3f",$f->{'value'});
+      $value = sprintf("%3.3f",$f->{$key});
     } else {
-      my $exp = int(log($f->{'value'})/log(10))-1;
-      my $mant = $f->{'value'}/10**$exp;
+      my $exp = int(log($f->{$key})/log(10))-1;
+      my $mant = $f->{$key}/10**$exp;
       $value = sprintf("%2.2f",$mant);
       $value .= " x 10^$exp" if $exp;
     }
@@ -109,7 +134,7 @@ sub summary_zmenu {
     my $url = $self->hub->url({
       type => 'Variation',
       action => 'Mappings',
-      v => $f->{'snp'},
+      v => $f->{'rsid'},
     });
 
     my $conseq = $f->{'display_consequence'};
@@ -119,7 +144,7 @@ sub summary_zmenu {
     my $html = qq(
       <span class="colour ht _ht" title="$conseq"
             style="background-color:$conseq_colour; min-width: 0.5em; display: inline-block;">&nbsp;</span>
-      <a href="$url">$f->{'snp'}</a>
+      <a href="$url">$f->{'rsid'}</a>
     );
     $self->add_entry({
       label_html => $html,

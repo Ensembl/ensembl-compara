@@ -29,6 +29,7 @@ use List::MoreUtils qw(any);
 sub init_cacheable {
   ## @override
   my $self = shift;
+  my $hub  = $self->hub;
 
   $self->SUPER::init_cacheable(@_);
 
@@ -48,21 +49,29 @@ sub init_cacheable {
 
   $self->load_tracks;
 
-  my @gtex_tissues = sort keys %{$self->hub->species_defs->REST_gtex_tissues||{}};
+  my $eqtl_rest_url = $hub->species_defs->EQTL_REST_URL;
+  my $rest = EnsEMBL::Web::REST->new($hub);
+  my $fetch_url = sprintf( "%sqtl_groups?size=1000", $eqtl_rest_url);
 
-  # 
+  my ($response,$error) = $rest->fetch_url($fetch_url, {});
+
+  my @qtl_groups = @{$response->{'_embedded'}->{'qtl_groups'}};
+
+  
+  my @gtex_tissues = [];
+  foreach my $group (@qtl_groups){
+    push @gtex_tissues, $group->{'qtl_group'};
+  }
+
   my $gtex_tissue_example = "Whole_Blood";
   unless(any { $_ eq $gtex_tissue_example } @gtex_tissues) {
     $gtex_tissue_example = $gtex_tissues[0];
   }
 
-  warn "gtex_tissue_example: ". $gtex_tissue_example;
-
   my $menu = $self->get_node('functional');
   my $other_node = $self->get_node('functional_other_regulatory_regions');
   $menu->insert_before($self->create_menu_node('functional_gene_expression','Gene Expression correlations'),$other_node);
 
-  # Should really come from REST server.
   foreach my $tissue (sort @gtex_tissues) {
     my $tissue_readable = $tissue;
     $tissue_readable =~ s/_/ /g;

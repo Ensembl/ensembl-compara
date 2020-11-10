@@ -515,12 +515,7 @@ sub _render_eqtl_table {
       }
     });
 
-    # my $assosiation_url = sprintf('%sassociations/%s?size=1000', $rest_url, $hub->param('v'));
-    my $assosiation_url = sprintf('%sassociations/%s', $rest_url, $hub->param('v'));
-
-    use Data::Dumper;
-    warn "___________________";
-    warn $assosiation_url;
+    my $assosiation_url = sprintf('%sassociations/%s?size=1000', $rest_url, $hub->param('v'));
 
     $eqtl_table_html = sprintf('<div class="hidden _variant_eqtl_table">
       <input type="hidden" class="panel_type" value="EQTLTable">

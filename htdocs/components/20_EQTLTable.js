@@ -19,41 +19,36 @@ Ensembl.Panel.EQTLTable = Ensembl.Panel.Content.extend({
   init: function () {
     this.base();
     this.tableData = [];
-    this.dataStart = 0;
-    this.dataSize  = 1000;
-    this.fetchingMore = false;
 
     this.eQTLRestURL        = this.params['eqtl_rest_endpoint'];
     this.geneURLTemplate    = decodeURIComponent(this.params['eqtl_gene_url_template']);
     this.elLk.eQTLTable     = this.el.find('._variant_eqtl_table');
 
+    this.elLk.eQTLTable.children().hide().end().removeClass('hidden').append('<p>Loading ' + this.elLk.eQTLTable.find('h2').text() + ' ...</p>');
     this.fetchEQTLTable();
+    
   },
 
   fetchEQTLTable: function() {
 
-    if(!this.fetchingMore){
-      this.elLk.eQTLTable.children().hide().end().removeClass('hidden').append('<p>Loading ' + this.elLk.eQTLTable.find('h2').text() + ' ...</p>');
-    }
-
     $.ajax({
-      // url       : this.eQTLRestURL + '?start=' + this.dataStart + "&size="+this.dataSize,
       url       : this.eQTLRestURL,
       dataType  : 'json',
       context   : this,
       success   : function(json) { 
         
         var columns = Object.values(json['_embedded']['associations']);
+        var nextUrl = json['_links']['next'] ? json['_links']['next']['href'] : '';
+
         this.tableData = this.tableData.concat(columns);
 
-        console.log(columns.length, columns );
         // eQTL API can only return a maximum of 1000 rows at a time
-        // so if we have more than 999 records returned, we make another query to grab the remaining data
-        if(columns.length > 999){
-          this.dataStart = this.dataStart + this.dataSize;
-          this.fetchingMore = true;
+        // so if we have nextUrl set, we make another query to grab the remaining data
+        if(nextUrl){
+          this.eQTLRestURL = nextUrl;
           this.fetchEQTLTable();
         } else{
+          this.elLk.eQTLTable.children().show();
           this.showEQTLTable(this.tableData); 
           this.elLk.eQTLTable.children('p').remove(); 
         }
@@ -75,18 +70,17 @@ Ensembl.Panel.EQTLTable = Ensembl.Panel.Content.extend({
     // combine data
     var dataCombined = {};
     $.each(data, function(i,obj) {
-      var key = obj.gene_id + '-' + obj.tissue_label;
+      var key = obj.gene_id + '-' + obj.qtl_group;
       if (!(key in dataCombined)) {
         dataCombined[key] = obj;
       }
-      dataCombined[key][obj.statistic] = obj.statistic === 'beta' ? obj.value : obj.pvalue;
     });
     data = null;
 
     // add rows from given data
     table.fnAddData($.makeArray($.map(dataCombined, function(obj) {
       return [[ '<a href="' + Ensembl.populateTemplate(template, {geneId: obj.gene_id}) + '">' + obj.gene_id + '</a>',
-        obj.pvalue, obj.beta, obj.tissue_label
+        obj.neg_log10_pvalue, obj.beta, obj.qtl_group
       ]];
     })), false);
 

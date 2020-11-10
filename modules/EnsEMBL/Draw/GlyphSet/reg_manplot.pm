@@ -57,32 +57,37 @@ sub _init {
 
   # p-value or beta
   my $display = $self->{'display'};
-  my ($statistic,$key);
+  my $key;
   if($display eq 'beta') {
     $key = 'beta';
-    $statistic = 'beta';
   } else {
-    $statistic = 'p-value';
-    $key = 'pvalue';
+    $key = 'neg_log10_pvalue';
   }
 
   # Get data
   my $eqtl_rest_url = $hub->species_defs->EQTL_REST_URL;
 
-  my $rest = EnsEMBL::Web::REST->new($self->{'config'}->hub);
+  my $rest = EnsEMBL::Web::REST->new($hub);
 
-  my $fetch_url = sprintf( "%sassociations?gene_id=%s&qtl_group=%s&size=1000", $eqtl_rest_url, $self->{'config'}->hub->param('g'), $self->{'my_config'}->get('tissue'));
+  my @data;
+
+  my $fetch_url = sprintf( "%sassociations?gene_id=%s&qtl_group=%s&size=1000", $eqtl_rest_url, $hub->param('g'), $self->{'my_config'}->get('tissue'));
   
-  my ($response,$error) = $rest->fetch_url($fetch_url, {});
+  do {
+    my ($response,$error) = $rest->fetch_url($fetch_url, {});
 
+    if($error) {
+      my $msg = $response->[0];
+      warn "REST failed: $msg\n";
+      return $self->errorTrack(sprintf("Data source failed: %s",$msg));
+    }
 
-  if($error) {
-    my $msg = $response->[0];
-    warn "REST failed: $msg\n";
-    return $self->errorTrack(sprintf("Data source failed: %s",$msg));
-  }
+    @data = ( @data, values %{$response->{'_embedded'}->{'associations'}});
 
-  my @data = values %{$response->{'_embedded'}->{'associations'}};
+    $fetch_url = $response->{'_links'}->{'next'}->{'href'};
+
+  } while ($fetch_url);
+  
 
   # Legends
   foreach my $f (@data) {
@@ -126,9 +131,6 @@ sub _init {
   my $features = [];
 
   my $slice = $self->{'container'};
-  
-
-  warn "----------------3-----------------";
 
   foreach my $f (@data) {
     next unless $f->{$key};
