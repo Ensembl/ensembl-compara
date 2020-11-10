@@ -66,8 +66,9 @@ sub shared_default_options {
         'eg_release'            => Bio::EnsEMBL::ApiVersion::software_version()-53,
 
         # TODO: make a $self method that checks whether this already exists, to prevent clashes like in the LastZ pipeline
-        'pipeline_dir'          => '/hps/nobackup2/production/ensembl/' . $self->o('dbowner') . '/' . $self->o('pipeline_name'),
-        'shared_hps_dir'        => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user'),
+        'hps_dir'               => '/hps/nobackup2/production/ensembl/',
+        'pipeline_dir'          => $self->o('hps_dir') . '/' . $self->o('dbowner') . '/' . $self->o('pipeline_name'),
+        'shared_hps_dir'        => $self->o('hps_dir') . '/' . $self->o('shared_user'),
         'warehouse_dir'         => '/nfs/production/panda/ensembl/warehouse/compara/',
 
         # Where to find the linuxbrew installation
