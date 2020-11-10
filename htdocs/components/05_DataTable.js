@@ -194,6 +194,7 @@ Ensembl.DataTable = {
         
         return;
       }
+      
       var val = JSON.parse(this.value.replace(/'/g, '"'));
       
       if (this.name === 'hiddenColumns') {
