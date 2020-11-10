@@ -449,8 +449,10 @@ sub get_sequence {
     my $faidx_helper;
     if ($self->dnafrag->is_reference) {
         $faidx_helper = $self->genome_db->get_faidx_helper($mask);
-    } else {
+    } elsif ($self->dnafrag->coord_system_name ne 'lrg') {
         $faidx_helper = $self->genome_db->get_faidx_helper($mask, 'non_ref');
+    } else {
+        # LRGs are not dumped in a Fasta file
     }
 
     if ($faidx_helper) {
