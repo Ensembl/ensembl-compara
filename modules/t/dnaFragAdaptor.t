@@ -286,18 +286,18 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::delete", sub {
     # This is the dbID of a dnafrag that has an alt-region defined
     my $dnafrag = $dnafrag_adaptor->fetch_by_dbID(13708879);
     my $alt_region = $dnafrag_adaptor->db->get_DnaFragAltRegionAdaptor->fetch_by_dbID($dnafrag->dbID);
-    ok($alt_region, "dnafrag dbID=".($dnafrag->dbID)." has an alt-region defined");
+    ok($alt_region, "dnafrag dbID=" . ($dnafrag->dbID) . " has an alt-region defined");
 
     $multi->save("compara", "dnafrag");
     $multi->save("compara", "dnafrag_alt_region");
 
     $dnafrag_adaptor->delete($dnafrag);
     my $no_dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag->dbID);
-    is($no_dnafrag, undef, "dnafrag dbID=".($dnafrag->dbID)." cannot be found by the adaptor any more after deletion");
+    is($no_dnafrag, undef, "dnafrag dbID=" . ($dnafrag->dbID) . " cannot be found by the adaptor any more after deletion");
     $no_dnafrag = $dnafrag_adaptor->_uncached_fetch_by_dbID($dnafrag->dbID);
-    is($no_dnafrag, undef, "dnafrag dbID=".($dnafrag->dbID)." is not in the database any more after deletion");
+    is($no_dnafrag, undef, "dnafrag dbID=" . ($dnafrag->dbID) . " is not in the database any more after deletion");
     $alt_region = $dnafrag_adaptor->db->get_DnaFragAltRegionAdaptor->fetch_by_dbID($dnafrag->dbID);
-    is($alt_region, undef, "The alt-region of dnafrag dbID=".($dnafrag->dbID)." has been deleted too");
+    is($alt_region, undef, "The alt-region of dnafrag dbID=" . ($dnafrag->dbID) . " has been deleted too");
 
     $multi->restore("compara", "dnafrag");
     $multi->restore("compara", "dnafrag_alt_region");

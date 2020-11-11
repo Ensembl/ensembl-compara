@@ -166,7 +166,7 @@ sub new_alt_region_for_Slice {
         }
     }
     if ($start >= $end) {
-        die "Non-reference slices are expected to differ from their original slices by more than 1 bp. Inspect ".$dnafrag->name;
+        die "Non-reference slices are expected to differ from their original slices by more than 1 bp. Inspect " . $dnafrag->name;
     }
     return bless {
         'dnafrag'         => $dnafrag,

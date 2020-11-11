@@ -108,9 +108,9 @@ sub store_or_update {
 sub delete_by_dbID {
     my ($self, $dnafrag_id) = @_;
 
-    throw("id argument is required") if(!defined $dnafrag_id);
+    throw("id argument is required") if (!defined $dnafrag_id);
 
-    my ($name, $syn) = @{($self->_tables)[0]};
+    my ($name, $syn) = @{ ($self->_tables)[0] };
     my $delete_sql = qq{DELETE FROM $name WHERE dnafrag_id = ?};
 
     $self->dbc->do($delete_sql, undef, $dnafrag_id);
