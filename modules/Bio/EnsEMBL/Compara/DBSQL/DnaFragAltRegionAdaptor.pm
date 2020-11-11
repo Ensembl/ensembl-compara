@@ -67,7 +67,8 @@ sub _objs_from_sth {
             'dnafrag_id',
             'dnafrag_start',
             'dnafrag_end',
-        ], sub {
+        ],
+        sub {
             return {
                 'dnafrag_strand' => 1,
             }
@@ -91,7 +92,8 @@ sub store_or_update {
             {
                 'dnafrag_start' => $locus->dnafrag_start,
                 'dnafrag_end'   => $locus->dnafrag_end,
-            }, {
+            },
+            {
                 'dnafrag_id'    => $locus->dnafrag_id,
             } );
 

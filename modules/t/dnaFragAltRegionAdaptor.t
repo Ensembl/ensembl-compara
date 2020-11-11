@@ -44,8 +44,7 @@ my $sth = $multi->get_DBAdaptor( 'compara' )->dbc->prepare('SELECT
     FROM dnafrag df LEFT JOIN genome_db gdb USING (genome_db_id)
     WHERE gdb.name = "homo_sapiens" AND is_reference = 1 ORDER BY dnafrag_id DESC LIMIT 1');
 $sth->execute();
-my ($dnafrag_id, $dnafrag_length, $dnafrag_name, $genome_db_id, $coord_system_name) =
-  $sth->fetchrow_array();
+my ($dnafrag_id, $dnafrag_length, $dnafrag_name, $genome_db_id, $coord_system_name) = $sth->fetchrow_array();
 $sth->finish();
 
 subtest 'Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAltRegionAdaptor fetch_by_dbID() method', sub {
