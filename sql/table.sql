@@ -178,7 +178,7 @@ CREATE TABLE genome_db (
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
 
   PRIMARY KEY (genome_db_id),
-  UNIQUE name (name,assembly,genome_component)
+  UNIQUE KEY name (name,assembly,genome_component)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -637,7 +637,7 @@ CREATE TABLE dnafrag (
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
 
   PRIMARY KEY (dnafrag_id),
-  UNIQUE name (genome_db_id, name)
+  UNIQUE KEY name (genome_db_id, name)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -1006,7 +1006,7 @@ CREATE TABLE gene_member (
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (gene_member_id),
-  UNIQUE (stable_id),
+  UNIQUE KEY (stable_id),
   KEY (source_name),
   KEY (canonical_member_id),
   KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
@@ -1110,7 +1110,7 @@ CREATE TABLE seq_member (
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (seq_member_id),
-  UNIQUE (stable_id),
+  UNIQUE KEY (stable_id),
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id),
@@ -1405,7 +1405,7 @@ CREATE TABLE family (
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
   PRIMARY KEY (family_id),
-  UNIQUE (stable_id),
+  UNIQUE KEY (stable_id),
   KEY (method_link_species_set_id),
   KEY (description(255))
 
@@ -1520,7 +1520,7 @@ CREATE TABLE gene_tree_node (
   root_id                         int(10) unsigned,
   left_index                      int(10) NOT NULL DEFAULT 0,
   right_index                     int(10) NOT NULL DEFAULT 0,
-  distance_to_parent              double default 1.0 NOT NULL,
+  distance_to_parent              double default 1 NOT NULL,
   seq_member_id                   int(10) unsigned,
 
   FOREIGN KEY (root_id) REFERENCES gene_tree_node(node_id),
@@ -1938,7 +1938,7 @@ CREATE TABLE homology (
   gene_tree_node_id           int(10) unsigned,
   gene_tree_root_id           int(10) unsigned,
   goc_score                   tinyint unsigned,
-  wga_coverage                DEC(5,2),
+  wga_coverage                DECIMAL(5,2),
   is_high_confidence          tinyint(1),
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
