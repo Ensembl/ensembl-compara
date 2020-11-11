@@ -82,6 +82,7 @@ sub default_options {
         # These tables have a unique source. Content from other databases is ignored
         'exclusive_tables'  => {
             'mapping_session'       => 'master_db',
+            'hmm_annot'             => 'protein_db',
             'gene_member'           => 'members_db',
             'seq_member'            => 'members_db',
             'other_member_sequence' => 'members_db',

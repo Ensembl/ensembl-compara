@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <compara_db division="metazoa">
 
+  <!-- can't use division collection, as we need to exclude B. tabaci strains for 103, building a new one -->
+  <collections>
+    <collection name="metazoa_no_btabaci">
+      <taxonomic_group taxon_name="Metazoa"/>
+      <!-- exclude for 103 ! -->
+      <genome name="bemisia_tabaci_asiaii5" exclude="1" />
+      <genome name="bemisia_tabaci_ssa1nig" exclude="1" />
+      <genome name="bemisia_tabaci_ssa1ug" exclude="1" />
+      <genome name="bemisia_tabaci_ssa2nig" exclude="1" />
+      <genome name="bemisia_tabaci_ssa3nig" exclude="1" />
+      <genome name="bemisia_tabaci_sweetpotug" exclude="1" />
+     </collection>
+  </collections>
+
   <pairwise_alignments>
 
     <!-- bees and stuff (A.mel, A.cep, B.imp, B.ter, N.vit) -->
@@ -53,8 +67,16 @@
 
   </pairwise_alignments>
 
+  <!-- can't use division collection, as we need to exclude B. tabaci strains for 103
   <gene_trees>
     <protein_trees collection="metazoa"/>
   </gene_trees>
+
+  using a new collection instead:
+  -->
+
+ <gene_trees>
+   <protein_trees collection="metazoa_no_btabaci"/>
+ </gene_trees>
 
 </compara_db>
