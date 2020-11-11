@@ -128,13 +128,12 @@ sub delete_by_dbID {
 
 =head2 fetch_by_dbID
 
-  Arg[1]     : int $tree_root_id
-  Example    : $tree = $genetree_adaptor->fetch_by_dbID(3);
-  Description: Fetches from the database the gene tree for that root ID
-               This is equivalent to fetch_by_root_id
-  Returntype : Bio::EnsEMBL::Compara::GeneTree
-  Exceptions : returns undef if $root_id is not found.
-  Caller     : general
+  Arg[1]     : int $dnafrag_id
+  Example    : $dnafrag_alt_region = $dar_adaptor->fetch_by_dbID(3);
+  Description: Fetches from the database the DnaFrag alternative region for that
+               DnaFrag ID
+  Returntype : Bio::EnsEMBL::Compara::Locus
+  Exceptions : returns undef if $dnafrag_id is not found
 
 =cut
 
@@ -148,11 +147,11 @@ sub fetch_by_dbID {
 
 =head2 fetch_all_by_dbID_list
 
-  Arg [1]    : Arrayref of node_ids
-  Example    : $taxa = $nbcitaxonDBA->fetch_all_by_dbID_list([$taxon_id1, $taxon_id2]);
-  Description: Returns all the NestedSet objects for the given node ids.
-  Returntype : Arrayref of Bio::EnsEMBL::Compara::NestedSet
-  Caller     : general
+  Arg [1]    : Arrayref of $dnafrag_ids
+  Example    : $dnafrag_alt_regions = $dar_adaptor->fetch_all_by_dbID_list([$dnafrag_id1, $dnafrag_id2]);
+  Description: Returns all the DnaFrag alternative region objects for the
+               given DnaFrag IDs
+  Returntype : Arrayref of Bio::EnsEMBL::Compara::Locus
 
 =cut
 
