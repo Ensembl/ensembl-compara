@@ -41,7 +41,7 @@ isa_ok($dnafrag_altregion_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::DnaFragAltRegi
 #####################################################################
 my $sth = $multi->get_DBAdaptor( 'compara' )->dbc->prepare('SELECT
       dnafrag_id, length, df.name, df.genome_db_id, coord_system_name
-    FROM dnafrag df left join genome_db gdb USING (genome_db_id)
+    FROM dnafrag df LEFT JOIN genome_db gdb USING (genome_db_id)
     WHERE gdb.name = "homo_sapiens" AND is_reference = 1 ORDER BY dnafrag_id DESC LIMIT 1');
 $sth->execute();
 my ($dnafrag_id, $dnafrag_length, $dnafrag_name, $genome_db_id, $coord_system_name) =
