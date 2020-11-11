@@ -19,6 +19,7 @@ set -euxo pipefail
 
 cd "$ENSEMBL_CVS_ROOT_DIR"
 prove -r ensembl-compara/travisci/all-housekeeping/
+prove -r ensembl-compara/travisci/sql-unittest/
 ensembl-test/scripts/runtests.pl ensembl-compara/modules/t
 ensembl-test/scripts/runtests.pl ensembl/modules/t/compara.t
 ensembl-test/scripts/runtests.pl ensembl-rest/t/genomic_alignment.t ensembl-rest/t/info.t ensembl-rest/t/taxonomy.t ensembl-rest/t/homology.t ensembl-rest/t/gene_tree.t ensembl-rest/t/cafe_tree.t ensembl-rest/t/family.t
