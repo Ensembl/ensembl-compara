@@ -537,10 +537,10 @@ sub slice {
 =head2 get_alt_region
 
   Example     : my $dnafrag_alt_region = $dnafrag->get_alt_region();
-  Description : Returns a Locus representing the portion of this DnaFrag that can be aligned.
+  Description : Returns a Locus representing the portion of this DnaFrag that
+                can be aligned
   Returntype  : Bio::EnsEMBL::Compara::Locus
   Exceptions  : none
-  Caller      : general
 
 =cut
 
