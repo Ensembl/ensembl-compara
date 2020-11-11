@@ -77,6 +77,7 @@ sub init_cacheable {
     $tissue_readable =~ s/_/ /g;
     my $manplot_desc = qq(
       Complete set of eQTL correlation statistics as computed by the GTEx consortium on $tissue_readable samples.
+      Provided to Ensembl by the EBI eQTL catalog.
       The GTEx Consortium. Science. 8 May 2015: Vol 348 no. 6235 pp 648-660.
       DOI: <a href="https://doi.org/10.1126/science.1262110">10.1126/science.1262110</a>.
       PMID: <a href="http://www.ncbi.nlm.nih.gov/pubmed/25954001">25954001</a>
