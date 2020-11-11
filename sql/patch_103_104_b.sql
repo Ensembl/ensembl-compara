@@ -19,7 +19,7 @@
 #
 # Description:
 #   Add new table to record which part of the non-reference dnafrags
-#   actually differ from the prinary assembly.
+#   actually differ from the primary assembly.
 
 CREATE TABLE dnafrag_alt_region (
   dnafrag_id                 BIGINT UNSIGNED NOT NULL,

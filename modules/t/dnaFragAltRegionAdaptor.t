@@ -70,7 +70,7 @@ subtest 'Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAltRegionAdaptor fetch_all_by
     my $dnafrag_id = 13708879;
     my $alt_regions = $dnafrag_altregion_adaptor->fetch_all_by_dbID_list([$dnafrag_id]);
     is(ref($alt_regions), 'ARRAY', 'Got an array');
-    is(scalar(@$alt_regions), 1, 'Of 1 elmeent');
+    is(scalar(@$alt_regions), 1, 'Of 1 element');
 
     my $alt_region = $alt_regions->[0];
     isa_ok($alt_region, 'Bio::EnsEMBL::Compara::Locus', 'alt_region');
@@ -80,7 +80,7 @@ subtest 'Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAltRegionAdaptor fetch_all_by
 
     $alt_regions = $dnafrag_altregion_adaptor->fetch_all_by_dbID_list([-$dnafrag_id]);
     is(ref($alt_regions), 'ARRAY', 'Got an array');
-    is(scalar(@$alt_regions), 0, 'Of 0 elmeents');
+    is(scalar(@$alt_regions), 0, 'Of 0 elements');
 
     done_testing();
 };
