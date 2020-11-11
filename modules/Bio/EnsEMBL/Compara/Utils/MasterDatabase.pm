@@ -147,7 +147,7 @@ sub _load_dnafrags_from_slices {
                 and last positions where they differ, and returns the corresponding
                 region as a Locus of the given dnafrag.
   Returntype  : Bio::EnsEMBL::Compara::Locus
-  Exceptions  : Die if the dnafrag is a reference one
+  Exceptions  : Die if the DnaFrag is a reference one
 
 =cut
 

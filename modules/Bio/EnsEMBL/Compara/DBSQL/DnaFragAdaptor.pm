@@ -677,7 +677,7 @@ sub update {
 
   Arg[1]      : Bio::EnsEMBL::Compara::DnaFrag
   Example     : $adaptor->delete($dnafrag);
-  Description : Delete this dnafrag from the database (and the cache !)
+  Description : Delete this DnaFrag from the database (and the cache!)
   Returntype  : none
   Exceptions  : none
   Status      : Stable
