@@ -42,6 +42,8 @@ foreach my $f (@all_files) {
   next unless $f =~ /\.(t|p[lm])$/i;
   # Except the fake libraries
   next if $f =~ /\/fake_libs\//;
+  # And the HALXS build directory
+  next if $f =~ /\/HALXS\/blib\//;
   critic_ok($f);
 }
 
