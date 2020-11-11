@@ -93,6 +93,7 @@ if ($division eq "vertebrates"){
     $cactus_species_set       = 'murinae';
 
     $skip_families            = 1;
+    $skip_cactus              = 1;
 }
 elsif($division eq "plants"){
     $gene_member_id           = "AT3G52430";
