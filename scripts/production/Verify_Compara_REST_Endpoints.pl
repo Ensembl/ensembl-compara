@@ -91,6 +91,8 @@ if ($division eq "vertebrates"){
     $cactus_species           = 'rattus_norvegicus';
     $cactus_region            = '2:56040000-56040100:1';
     $cactus_species_set       = 'murinae';
+
+    $skip_families            = 1;
 }
 elsif($division eq "plants"){
     $gene_member_id           = "AT3G52430";
