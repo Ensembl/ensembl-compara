@@ -15,10 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::Parts::LoadCoreMembers
@@ -42,119 +38,127 @@ use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 sub pipeline_analyses_copy_ncbi_and_core_genome_db {
     my ($self) = @_;
 
-    
-        my %hc_analysis_params = (
-                -analysis_capacity  => 150,
-                -priority           => -10,
-                -batch_size         => 20,
-        );
+    my %hc_analysis_params = (
+            -analysis_capacity  => 150,
+            -priority           => -10,
+            -batch_size         => 20,
+    );
 
-        return [
-            {   -logic_name => 'copy_ncbi_tables_factory',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-                -parameters => {
-                    'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name' ],
-                    'column_names' => [ 'table' ],
-                },
-                -flow_into => {
-                    '2->A' => [ 'copy_ncbi_table'  ],
-                    #'A->1' => [ 'load_query_genomedb_factory', 'load_reference_genomedb_factory' ],
-                    'A->1' => [ 'load_query_genomedb_factory' ],
-                },
+    return [
+        {   -logic_name => 'copy_ncbi_tables_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name' ],
+                'column_names' => [ 'table' ],
             },
-
-            {   -logic_name    => 'copy_ncbi_table',
-                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-                -parameters    => {
-                    'src_db_conn'   => '#ncbi_db#',
-                    'mode'          => 'overwrite',
-                    'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
-                },
+            -flow_into => {
+                '2->A' => [ 'copy_ncbi_table'  ],
+                'A->1' => [ 'locate_and_add_genomes' ],
             },
+        },
 
-            {   -logic_name => 'load_query_genomedb_factory',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-                -parameters => {
-                    'compara_db'        => $self->o('master_db'),   # that's where genome_db_ids come from
-                    'species_set_id'    => $self->o('species_set_id'),
-                    # Add the locators coming from member_db
-                    'extra_parameters'  => [ 'locator' ],
-                },
-                -rc_name   => '4Gb_job',
-                -flow_into => {
-                    '2->A' => {
-                        'load_genomedb' => { 'genome_db_id' => '#genome_db_id#', 'locator' => '#locator#', 'master_dbID' => '#genome_db_id#' },
-                    },
-                    'A->1' => [ 'hc_members_globally' ],
-                },
+        {   -logic_name    => 'copy_ncbi_table',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters    => {
+                'src_db_conn'   => '#ncbi_db#',
+                'mode'          => 'overwrite',
+                'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
+        },
 
-            {   -logic_name => 'load_genomedb',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
-                -parameters => {
-                    'db_version'      => $self->o('ensembl_release'),
-                    'registry_files'  => $self->o('curr_file_sources_locs'),
-                },
-                -flow_into     => {
-                    1 => { 'load_fresh_members_from_db' => INPUT_PLUS(), 'populate_method_links_from_db' },
-                },
-                -hive_capacity => 30,
-                -rc_name       => '2Gb_job',
+        {   -logic_name    => 'locate_and_add_genomes',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::AddRapidSpecies',
+            -parameters    => {
+                'release'           => 1,
+                'do_not_add'        => $self->o('reference_list'),
+                'species_list_file' => $self->o('species_list_file'),
             },
-
-            {   -logic_name    => 'populate_method_links_from_db',
-                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-                -parameters    => {
-                    'src_db_conn'   => '#master_db#',
-                    'mode'          => 'overwrite',
-                    'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
-                    'table'         => 'method_link',
-                },
-                -flow_into      => [ 'copy_mlss_ss' ],
+            -hive_capacity => 10,
+            -rc_name       => '16Gb_job',
+            -flow_into     => {
+                1 => [ 'load_query_genomedb_factory', 'insert_method_link' ],
+                2 => { 'create_homology_mlss' => { 'species_set_name' => '#species_name#', 'genome_db_id' => '#genome_db_id#' } },
             },
+        },
 
-            {   -logic_name => 'copy_mlss_ss',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareSpeciesSetsMLSS',
-                -rc_name    => '2Gb_job',
-                -parameters => {
-                    'master_db'          => $self->o('master_db'),
-                    'whole_method_links' => ['ENSEMBL_HOMOLOGUES'],
-                },
+        {   -logic_name    => 'insert_method_link',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters    => {
+                'sql' => "INSERT INTO method_link VALUES ('204', 'ENSEMBL_HOMOLOGUES', 'Homology.homology', 'homologues')"
             },
+        },
 
-            {   -logic_name => 'load_fresh_members_from_db',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
-                -parameters => {
-                    'store_related_pep_sequences' => $self->o('store_related_pep_sequences'),
-                    'allow_ambiguity_codes'       => $self->o('allow_ambiguity_codes'),
-                    'store_coding'                => $self->o('store_coding'),
-                    'store_ncrna'                 => $self->o('store_ncrna'),
-                    'store_others'                => $self->o('store_others'),
-                    'store_missing_dnafrags'      => $self->o('store_missing_dnafrags'),
-                    'compara_db'                  => $self->pipeline_url(),
-                    'master_db'                   => undef,
-                },
-                -hive_capacity => 10,
-                -rc_name       => '4Gb_job',
+        {   -logic_name    => 'create_homology_mlss',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters    => {
+                'create_mlss_exe' => $self->o('create_mlss_exe'),
+                'cmd'                 => 'printf "\ny\n" | perl #create_mlss_exe# --compara #master_db# --url #master_db# --method_link_type ENSEMBL_HOMOLOGUES --species_set_name #species_set_name# --name "#species_set_name# homologues" --genome_db_id #genome_db_id# --source ensembl',
             },
+            -wait_for      => [ 'insert_method_link' ],
+        },
 
-            {   -logic_name         => 'hc_members_globally',
-                -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-                -parameters         => {
-                    mode            => 'members_globally',
-                },
-                -flow_into          => [ 'insert_member_projections' ],
-                %hc_analysis_params,
+        {   -logic_name => 'load_query_genomedb_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'compara_db'        => $self->o('master_db'),   # that's where genome_db_ids come from
+                'all_current'       => 1,
+                'extra_parameters'  => [ 'locator' ],
             },
-
-            {   -logic_name => 'insert_member_projections',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::InsertMemberProjections',
-                -parameters => {
-                    'source_species_names'  => $self->o('projection_source_species_names'),
+            -rc_name   => '4Gb_job',
+            -flow_into => {
+                '2->A' => {
+                    'load_genomedb' => { 'genome_db_id' => '#genome_db_id#', 'locator' => '#locator#', 'master_dbID' => '#genome_db_id#' },
                 },
+                'A->1' => [ 'hc_members_globally' ],
             },
+        },
 
-        ];
-    }
+        {   -logic_name => 'load_genomedb',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
+            -parameters => {
+                'db_version'      => $self->o('ensembl_release'),
+                'registry_files'  => $self->o('curr_file_sources_locs'),
+            },
+            -flow_into     => {
+                1 => { 'load_fresh_members_from_db' => INPUT_PLUS(), },
+            },
+            -hive_capacity => 30,
+            -rc_name       => '2Gb_job',
+        },
 
-    1;
+        {   -logic_name => 'load_fresh_members_from_db',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
+            -parameters => {
+                'store_related_pep_sequences' => $self->o('store_related_pep_sequences'),
+                'allow_ambiguity_codes'       => $self->o('allow_ambiguity_codes'),
+                'store_coding'                => $self->o('store_coding'),
+                'store_ncrna'                 => $self->o('store_ncrna'),
+                'store_others'                => $self->o('store_others'),
+                'store_missing_dnafrags'      => $self->o('store_missing_dnafrags'),
+                'compara_db'                  => $self->o('compara_db'),
+                'master_db'                   => $self->o('master_db'),
+            },
+            -hive_capacity => 10,
+            -rc_name       => '4Gb_job',
+        },
+
+        {   -logic_name         => 'hc_members_globally',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters         => {
+                mode            => 'members_globally',
+            },
+            -flow_into          => [ 'insert_member_projections' ],
+            %hc_analysis_params,
+        },
+
+        {   -logic_name => 'insert_member_projections',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::InsertMemberProjections',
+            -parameters => {
+                'source_species_names'  => $self->o('projection_source_species_names'),
+            },
+        },
+
+    ];
+}
+
+1;
