@@ -381,7 +381,26 @@ sub _backup_data_and_throw {
     my $target_dir = $self->param_required('work_dir') . '/' . $self->param('synteny_region_id') . '.' . basename($self->worker_temp_directory);
     system('cp', '-a', $self->worker_temp_directory, $target_dir);
     $self->_print_report($gat, "$target_dir/report.txt");
+    $self->_print_regions("$target_dir/regions.txt");
     throw("Error: $err\nData copied to $target_dir");
+}
+
+sub _print_regions {
+    my ($self, $filename) = @_;
+    open(my $fh, '>', $filename);
+    foreach my $region (@{$self->param('dnafrag_regions')}) {
+        print $fh join("\t",
+            $region->genome_db->name,
+            $region->genome_db->dbID,
+            $region->dnafrag->name,
+            $region->dnafrag_id,
+            $region->dnafrag->length,
+            $region->dnafrag_start,
+            $region->dnafrag_end,
+            $region->dnafrag_strand,
+        ), "\n";
+    }
+    close($fh);
 }
 
 sub _print_report {
