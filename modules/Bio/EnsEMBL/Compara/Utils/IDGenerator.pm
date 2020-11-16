@@ -107,7 +107,7 @@ sub get_id_range {
     );
 
     # Recall the value before it got incremented
-    my $next_id = $dbc->db_handle->last_insert_id();
+    my $next_id = $dbc->db_handle->last_insert_id(undef, undef, undef, undef);
 
     # Register the attempt
     if ($requestor) {
