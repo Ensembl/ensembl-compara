@@ -220,7 +220,7 @@ sub _register_gab_for_update {
             my $inner_node = $gat_adaptor->fetch_by_dbID($leaf_id)->parent;
             push @{ $children_to_rm{$inner_node->dbID} }, $leaf_id;
             # If only one child is removed, the other child will replace this node in the GAT
-            if ( (scalar $children_to_rm{$inner_node->dbID} == 2) && defined $inner_node->parent ) {
+            if ( (scalar @{ $children_to_rm{$inner_node->dbID} } == 2) && defined $inner_node->parent ) {
                 push @{ $children_to_rm{$inner_node->parent->dbID} }, $inner_node->dbID;
             }
         }
