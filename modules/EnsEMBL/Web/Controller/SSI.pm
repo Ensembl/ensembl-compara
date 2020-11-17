@@ -26,7 +26,7 @@ use Text::MultiMarkdown qw(markdown);
 
 use EnsEMBL::Web::Document::HTML::Movie;
 use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
-use EnsEMBL::Web::Utils::Publications qw(parse_file_contents);
+use EnsEMBL::Web::Utils::Publications qw(parse_publication_list);
 
 use parent qw(EnsEMBL::Web::Controller);
 
@@ -131,7 +131,7 @@ sub template_INCLUDE {
           $content =~ s/\\/<br>/g;
           ## Convert PMC IDs to full references
           if ($filename =~ /references/l) {
-            $content = parse_file_contents($content, $hub);
+            $content = parse_publication_list($content, $hub);
           }
         }
         
