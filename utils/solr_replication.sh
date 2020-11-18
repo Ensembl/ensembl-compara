@@ -191,7 +191,7 @@ if [[ $new_data == "y" ]] ; then
 
   echo -e "\n $((step+=1)). Replicate data using a script."
   echo -e "\t ssh ens_adm02@ves-hx2-70"
-  echo -e "\n\t NOTE: Run below in a screen session (screen -s solr-replication)"
+  echo -e "\n\t NOTE: Run below in a screen session (screen -S solr-replication)"
   echo -e "\t cd /nfs/public/release/ensweb-software/ensembl-solr/sync"
   echo -e "\t #dry run - should only recognise the servers [${machines_array[@]}] showing message 'NEEDSYNCH'"
   echo -e "\t ./sync_indexes.pl -reltype ebi-$replicate_release_type --maxshards 3 --dry"
