@@ -312,7 +312,7 @@ sub transcript_table {
         }
         if ($trans_attribs->{$tsi}{'TSL'}) {
           my $tsl = uc($trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr);
-          push @flags, helptip("TSL:$tsl", get_glossary_entry($hub, "TSL $tsl").get_glossary_entry($hub, 'Transcript support level'));
+          push @flags, helptip("TSL:$tsl", "<p>TSL $tsl: ".get_glossary_entry($hub, "TSL $tsl")."</p><p>".get_glossary_entry($hub, 'Transcript support level')."</p>");
 	}
       }
       if ($trans_gencode->{$tsi}) {
@@ -323,7 +323,8 @@ sub transcript_table {
       if ($trans_attribs->{$tsi}{'appris'}) {
         my ($code, $key) = @{$trans_attribs->{$tsi}{'appris'}};
         my $short_code = $code ? ' '.uc($code) : '';
-          push @flags, helptip("APPRIS$short_code", get_glossary_entry($hub, "APPRIS: $key").get_glossary_entry($hub, 'APPRIS'));
+         push @flags, helptip("APPRIS $short_code","<p>APPRIS $short_code: ".get_glossary_entry($hub, "APPRIS$short_code")."</p><p>".get_glossary_entry($hub, 'APPRIS')."</p>");
+ 
       }
       my $refseq_url;
       foreach my $MANE_attrib_code (keys %MANE_attrib_codes) {
