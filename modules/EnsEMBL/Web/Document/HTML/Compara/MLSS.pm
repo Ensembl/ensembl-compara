@@ -39,6 +39,7 @@ our $blastz_options = {
   M => 'Masking count',
   T => 'Seed and Transition value',
   Q => 'Scoring matrix',
+  other => 'Other parameters',
 };
 
 our @blastz_order = qw(O E K L H M T Q); 
