@@ -93,7 +93,7 @@ sub content {
   }
 
   my $uniprot_match_title = 'UniProt match';
-  my $uniprot_match_description = get_glossary_entry($self->hub, 'Uniprot_match');
+  my $uniprot_match_description = get_glossary_entry($self->hub, 'UniProt Match');
   
   # add Uniprot info
   if (scalar @Uniprot_isoform) {
