@@ -135,20 +135,22 @@ sub print_wga_stats {
   my ($self, $mlss) = @_;
   my $hub     = $self->hub;
   my $site    = $hub->species_defs->ENSEMBL_SITETYPE;
+  my $division = $hub->species_defs->DIVISION;
   my $html;
-      my ($species_order, $info) = $self->mlss_species_info($mlss);
+  my ($species_order, $info) = $self->mlss_species_info($mlss);
 
-      if ($species_order && scalar(@{$species_order||[]})) {
-        my $rel = $mlss->first_release;
-        my $nblocks = $self->thousandify($mlss->get_value_for_tag('num_blocks'));
-        my $max_align = $self->thousandify($mlss->max_alignment_length - 1);
-        my $count = scalar(@$species_order);
-        $html .= sprintf('<h1>%s</h1>', $mlss->name);
-        $html .= qq{<p>This alignment has been generated in $site release $rel and is composed of $nblocks blocks (up to $max_align&nbsp;bp long).</p>};
-        $html .= $self->error_message('API access', sprintf(
+  if ($species_order && scalar(@{$species_order||[]})) {
+    my $rel = $mlss->first_release;
+    $rel   -= 53 if $division; ## Filthy hack bc compara doesn't understand EG releases
+    my $nblocks = $self->thousandify($mlss->get_value_for_tag('num_blocks'));
+    my $max_align = $self->thousandify($mlss->max_alignment_length - 1);
+    my $count = scalar(@$species_order);
+    $html .= sprintf('<h1>%s</h1>', $mlss->name);
+    $html .= qq{<p>This alignment has been generated in $site release $rel and is composed of $nblocks blocks (up to $max_align&nbsp;bp long).</p>};
+    $html .= $self->error_message('API access', sprintf(
               '<p>This alignment set can be accessed using the Compara API via the Bio::EnsEMBL::DBSQL::MethodLinkSpeciesSetAdaptor using the <em>method_link_type</em> "<b>%s</b>" and the <em>species_set_name</em> "<b>%s</b>".</p>', $mlss->method->type, $mlss->species_set->name), 'info');
 
-        my $table = EnsEMBL::Web::Document::Table->new([
+    my $table = EnsEMBL::Web::Document::Table->new([
           { key => 'species', title => 'Species',         width => '22%', align => 'left', sort => 'string' },
           { key => 'asm',     title => 'Assembly',        width => '10%', align => 'left', sort => 'string' },
           { key => 'gl',      title => 'Genome length (bp)', width => '12%', align => 'center', sort => 'string' },
@@ -158,12 +160,12 @@ sub print_wga_stats {
           { key => 'ec',      title => 'Coding exon coverage (bp)', width => '12%', align => 'center', sort => 'string' },
           { key => 'ecp',     title => 'Coding exon coverage (%)', width => '10%', align => 'center', sort => 'numeric' },
         ], [], {data_table => 1, exportable => 1, id => sprintf('%s_%s', $mlss->method->type, $mlss->species_set->name), sorting => ['species asc']});
-        my @colors = qw(#402 #a22 #fc0 #8a2);
-        foreach my $sp (@$species_order) {
-          my $gc = sprintf('%.2f', $info->{$sp}{'genome_coverage'} / $info->{$sp}{'genome_length'} * 100);
-          my $ec = sprintf('%.2f', $info->{$sp}{'coding_exon_coverage'} / $info->{$sp}{'coding_exon_length'} * 100);
-          my $cgc = $colors[int($gc/25)];
-          my $cec = $colors[int($ec/25)];
+    my @colors = qw(#402 #a22 #fc0 #8a2);
+    foreach my $sp (@$species_order) {
+      my $gc = sprintf('%.2f', $info->{$sp}{'genome_coverage'} / $info->{$sp}{'genome_length'} * 100);
+      my $ec = sprintf('%.2f', $info->{$sp}{'coding_exon_coverage'} / $info->{$sp}{'coding_exon_length'} * 100);
+      my $cgc = $colors[int($gc/25)];
+      my $cec = $colors[int($ec/25)];
           $table->add_row({
             'species' => $self->combine_names($info->{$sp}{'common_name'}, $info->{$sp}{'long_name'}),
             'asm'     => $info->{$sp}{'assembly'},
@@ -174,9 +176,9 @@ sub print_wga_stats {
             'ec'      => $self->thousandify($info->{$sp}{'coding_exon_coverage'}),
             'ecp'     => sprintf(q{<span style="color: %s">%s</span}, $cec, $ec),
           });
-        }
-        $html .= $table->render;
-      }
+    }
+    $html .= $table->render;
+  }
 
   return $html;
 }
