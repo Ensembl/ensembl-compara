@@ -37,10 +37,6 @@ use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Utils::Registry;
 
-use Data::Dumper;
-$Data::Dumper::Maxdepth=3;
-
-
 =head2 update_dnafrags
 
   Arg[1]            : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
@@ -624,7 +620,6 @@ sub update_collection {
         next if $name_match_gdb == 1;
 
         if ( $name_match_gdb ) {
-        	print Dumper $name_match_gdb;
             warn "Replaced " . $coll_gdb->name . " assembly " . $coll_gdb->assembly . " with " . $name_match_gdb->assembly . "\n";
         } else {
             push( @new_collection_gdbs, $coll_gdb );

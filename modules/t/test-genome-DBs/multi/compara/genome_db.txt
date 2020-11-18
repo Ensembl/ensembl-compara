@@ -16,7 +16,7 @@
 61	9796	equus_caballus	EquCab2	2007-09-Ensembl	0	0	\N	\N	Horse	\N	80	\N
 63	\N	ancestral_sequences			0	0	\N	\N	\N	\N	80	\N
 65	99883	tetraodon_nigroviridis	TETRAODON8	2007-11-Ensembl	0	0	\N	\N	Tetraodon	\N	80	\N
-66	9685	felis_catus	CAT	2008-02-Ensembl	0	0	\N	\N	Cat	\N	80	\N
+66	9685	felis_catus	CAT	2010-05	0	0	\N	\N	Cat	\N	80	\N
 67	9978	ochotona_princeps	pika	2008-01-Ensembl	0	0	\N	\N	Pika	\N	80	\N
 69	10141	cavia_porcellus	cavPor3	2008-03-Ensembl	0	0	\N	\N	Guinea Pig	\N	80	\N
 78	9358	choloepus_hoffmanni	choHof1	2008-11-Ensembl	0	0	\N	\N	Sloth	\N	80	\N
@@ -28,7 +28,7 @@
 85	132908	pteropus_vampyrus	pteVam1	2008-11-Ensembl	0	0	\N	\N	Megabat	\N	80	\N
 86	9361	dasypus_novemcinctus	dasNov2	2008-11-Ensembl	0	0	\N	\N	Armadillo	\N	80	\N
 87	59729	taeniopygia_guttata	taeGut3.2.4	2008-08-Ensembl	0	0	\N	\N	Zebra Finch	\N	80	\N
-90	9606	homo_sapiens	GRCh37	2010-07-Ensembl	0	0	\N	\N	Human	\N	80	\N
+90	9606	homo_sapiens	GRCh37	2012-07	0	0	\N	\N	Human	\N	80	\N
 91	9315	macropus_eugenii	Meug_1.0	2009-02-Ensembl	0	0	\N	\N	Wallaby	\N	80	\N
 98	9785	loxodonta_africana	loxAfr3	2009-07-Ensembl	0	0	\N	\N	Elephant	\N	80	\N
 105	7227	drosophila_melanogaster	BDGP5	2011-07-FlyBase	0	0	\N	\N	Fruitfly	\N	80	\N
@@ -46,7 +46,7 @@
 122	9913	bos_taurus	UMD3.1	2011-04-Ensembl	0	0	\N	\N	Cow	\N	80	\N
 123	9593	gorilla_gorilla	gorGor3.1	2009-08-Ensembl	0	0	\N	\N	\N	\N	80	\N
 124	30611	otolemur_garnettii	OtoGar3	2011-06-Ensembl	0	0	\N	\N	Bushbaby	\N	80	\N
-125	9598	pan_troglodytes	CHIMP2.1.4	2011-05-Ensembl	0	0	\N	\N	Chimpanzee	\N	80	\N
+125	9598	pan_troglodytes	CHIMP2.1.4	2011-12	0	0	\N	\N	Chimpanzee	\N	80	\N
 126	8049	gadus_morhua	gadMor1	2010-01-Ensembl	0	0	\N	\N	Cod	\N	80	\N
 127	4932	saccharomyces_cerevisiae	EF4	2011-09-SGD	0	0	\N	\N	S.cerevisiae	\N	80	\N
 128	7719	ciona_intestinalis	KH	2011-08-Ensembl	0	0	\N	\N	C.intestinalis	\N	80	\N
@@ -55,6 +55,6 @@
 131	43179	ictidomys_tridecemlineatus	spetri2	2011-12-Ensembl	0	0	\N	\N	Squirrel	\N	80	\N
 132	9823	sus_scrofa	Sscrofa10.2	2011-09-Ensembl	0	0	\N	\N	Pig	\N	80	\N
 133	6239	caenorhabditis_elegans	WBcel215	2012-03-WormBase	0	0	\N	\N	C.elegans	\N	80	\N
-134	10090	mus_musculus	GRCm38	2012-01-Ensembl	0	0	\N	\N	Mouse	\N	80	\N
+134	10090	mus_musculus	GRCm38	2012-07	0	0	\N	\N	Mouse	\N	80	\N
 135	9615	canis_familiaris	CanFam3.1	2011-11-Ensembl	0	0	\N	\N	Dog	\N	80	\N
 136	13735	pelodiscus_sinensis	PelSin_1.0	2011-11-Ensembl	0	0	\N	\N	Chinese softshell turtle	\N	80	\N

@@ -1,0 +1,1 @@
+3	10116	rattus_norvegicus	RGSC3.4	2009-03-Ensembl	0	0	\N	\N	Rat	\N	80	\N
