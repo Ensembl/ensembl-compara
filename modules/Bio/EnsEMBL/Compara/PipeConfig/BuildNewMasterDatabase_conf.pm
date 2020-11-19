@@ -204,7 +204,6 @@ sub pipeline_analyses {
             -parameters => {
                 'reg_conf'        => $self->o('reg_conf'),
                 'reg_conf_tmpl'   => $self->o('reg_conf_tmpl'),
-                'ensj_conf'       => $self->o('ensj_conf'),
                 'dst_host'        => $self->o('dst_host'),
                 'dst_port'        => $self->o('dst_port'),
             },
