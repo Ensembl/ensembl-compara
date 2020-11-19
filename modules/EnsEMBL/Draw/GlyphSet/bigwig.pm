@@ -46,11 +46,6 @@ sub render_normal {
   $self->_render_aggregate;
 }
 
-sub render_signal {
-  my $self = shift;
-  $self->render_normal;
-}
-
 sub render_text {
   my ($self, $wiggle) = @_;
   warn 'No text render implemented for bigwig';
