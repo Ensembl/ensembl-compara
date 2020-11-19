@@ -155,11 +155,6 @@ sub write_output {
     }
 
     $self->dataflow_output_id( { orth_info => $self->param('orth_info'), aln_mlss_ids => $self->param('aln_mlss_ids') }, 2 ); # to calculate_coverage
-
-    # Add MLSS tag to indicate that the WGA flatfile should be found and loaded when importing the homology
-    my $mlss_id = $self->param('orth_mlss_id');
-    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-    $mlss->store_tag('wga_expected', 1);
 }
 
 =head2 _nonreusable_homologies

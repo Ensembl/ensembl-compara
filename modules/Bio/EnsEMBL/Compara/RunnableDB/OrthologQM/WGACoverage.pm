@@ -103,6 +103,11 @@ sub write_output {
 
     # If we want to record the scores in the ortholog_quality table
     #$self->dataflow_output_id( $self->param('qual_summary'), 3 );
+
+    # Add MLSS tag to indicate that the WGA flatfile should be found and loaded when importing the homology
+    my $mlss_id = $self->param_required('orth_mlss_id');
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+    $mlss->store_tag('wga_expected', 1);
 }
 
 1;
