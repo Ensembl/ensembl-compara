@@ -1,0 +1,1 @@
+135	9615	canis_lupus_familiaris	CanFam3.1	2011-11-Ensembl	0	0	\N	reference breed	Dog	\N	80	\N
