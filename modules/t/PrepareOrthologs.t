@@ -84,10 +84,6 @@ standaloneJob(
 	]
 );
 
-# Check that the tag to inform that WGA is expected for this MLSS has been set correctly
-my $mlss = $dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($orth_mlss_id);
-is( $mlss->get_tagvalue('wga_expected'), 1, 'correct tag and value' );
-
 # Test on pair of species with reuse #
 my $dba_prev = $multi_db->get_DBAdaptor('cc21_prev_orth_test');
 my $dbc_prev = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $dba_prev->dbc);
