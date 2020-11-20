@@ -40,10 +40,18 @@ my $gene_stable_id = 'ENSG00000120685';
 my $gene_member_adaptor = $reg->get_adaptor ("Multi", "compara", "GeneMember");
 my $gene_tree_adaptor   = $reg->get_adaptor ("Multi", "compara", "GeneTree");
 my $cafe_tree_adaptor   = $reg->get_adaptor ("Multi", "compara", "CAFEGeneFamily");
+my $genome_db_adaptor   = $reg->get_adaptor ("Multi", "compara", "GenomeDB");
 
 my $member = $gene_member_adaptor->fetch_by_stable_id($gene_stable_id);
 my $gene_tree = $gene_tree_adaptor->fetch_default_for_Member($member);
 my $cafe_tree = $cafe_tree_adaptor->fetch_by_GeneTree($gene_tree);
+
+# We will prune the tree down to these species
+my $genome_dbs = $genome_db_adaptor->fetch_all_by_mixed_ref_lists(
+    -SPECIES_LIST   => ['Zebrafish', 'oryzias_latipes'],
+    -TAXON_LIST     => ['Primates', 'Galliformes'],
+);
+my %good_genome_db_ids = map {$_->dbID} @$genome_dbs;
 
 print $member->stable_id, "\t";
 print $gene_tree->stable_id, "\t";
@@ -55,7 +63,11 @@ my $tree_fmt = '%{-s}%{x-}_%{N}:%{d}';
 print $cafe_tree->root->newick_format('ryo', $tree_fmt), "\t";
 print $cafe_tree->pvalue_avg, "\n";
 
-for my $node (@{$cafe_tree->root->get_all_nodes}) {
+# Tree pruning
+my @nodes_to_remove = grep {!$good_genome_db_ids{$_->genome_db_id}} @{$cafe_tree->root->get_all_leaves};
+my $pruned_tree = $cafe_tree->root->remove_nodes(\@nodes_to_remove);
+
+for my $node (@{$pruned_tree->get_all_nodes}) {
   my $node_name = $node->taxon->name;
   my $node_n_members = $node->n_members;
   my $node_pvalue = $node->has_parent ? ($node->pvalue || 'NA') : 'birth';
