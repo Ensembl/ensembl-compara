@@ -28,7 +28,7 @@ use warnings;
 no warnings qw(uninitialized);
 
 use EnsEMBL::Web::Utils::TrackHub;
-use EnsEMBL::Web::Utils::FormatText qw(add_links);
+use EnsEMBL::Web::Utils::FormatText qw(thousandify add_links);
 use EnsEMBL::Web::Utils::Sanitize qw(clean_id strip_HTML);
 
 sub load_user_tracks {
@@ -397,7 +397,7 @@ sub _add_trackhub {
 
     my $menu     = $existing_menu || $self->tree->root->append_child($self->create_menu_node($menu_name, $menu_name, { external => 1, trackhub_menu => 1, description =>  $description}));
 
-    my $node;
+    my ($node, $matched_assembly);
     my $assemblies = $self->hub->species_defs->get_config($self->species,'TRACKHUB_ASSEMBLY_ALIASES');
     $assemblies ||= [];
     $assemblies = [ $assemblies ] unless ref($assemblies) eq 'ARRAY';
@@ -409,12 +409,27 @@ sub _add_trackhub {
     foreach my $assembly (@$assemblies) {
       $node = $hub_info->{'genomes'}{$assembly}{'tree'};
       $node = $node->root if $node;
-      last if $node;
+      if ($node) {
+        $matched_assembly = $assembly;
+        last;
+      }
     }
     if ($node) {
-      $self->_add_trackhub_node($node, $menu, {'name' => $menu_name, 'hide' => $force_hide, 'code' => $code});
-
-      $self->{'_attached_trackhubs'}{$url} = 1;
+      ## Don't try to attach enormous hubs as they cause horrible crashes!
+      my $track_count = $hub_info->{'genomes'}{$matched_assembly}{'track_count'};
+      if ($track_count > $hub->species_defs->TRACKHUB_MAX_TRACKS) {
+        $self->hub->session->set_record_data({
+          'type'      => 'message',
+          'function'  => '_error',
+          'code'      => 'th_unfeasibly_large',
+          'message'   => sprintf('This trackhub has more than %s tracks and therefore cannot be attached without overloading the server.', $self->thousandify($hub->species_defs->TRACKHUB_MAX_TRACKS)),
+        });
+        return;
+      }
+      else {
+        $self->_add_trackhub_node($node, $menu, {'name' => $menu_name, 'hide' => $force_hide, 'code' => $code});
+        $self->{'_attached_trackhubs'}{$url} = 1;
+      }
     } else {
       my $assembly = $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_VERSION') || $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_NAME');
       $hub_info->{'error'} = ["No sources could be found for assembly $assembly. Please check the hub's genomes.txt file for supported assemblies."];
