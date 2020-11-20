@@ -51,7 +51,7 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
                 'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name' ],
                 'column_names' => [ 'table' ],
             },
-            -flow_into => {
+            -flow_into  => {
                 '2->A' => [ 'copy_ncbi_table'  ],
                 'A->1' => [ 'locate_and_add_genomes' ],
             },
@@ -72,6 +72,7 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
                 'release'           => 1,
                 'do_not_add'        => $self->o('reference_list'),
                 'species_list_file' => $self->o('species_list_file'),
+                'division'          => $self->o('division'),
             },
             -hive_capacity => 10,
             -rc_name       => '16Gb_job',
@@ -92,7 +93,7 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
                 'create_mlss_exe' => $self->o('create_mlss_exe'),
-                'cmd'                 => 'printf "\ny\n" | perl #create_mlss_exe# --compara #master_db# --url #master_db# --method_link_type ENSEMBL_HOMOLOGUES --species_set_name #species_set_name# --name "#species_set_name# homologues" --genome_db_id #genome_db_id# --source ensembl',
+                'cmd'             => 'printf "\ny\n" | perl #create_mlss_exe# --compara #master_db# --url #master_db# --method_link_type ENSEMBL_HOMOLOGUES --species_set_name #species_set_name# --name "#species_set_name# homologues" --genome_db_id #genome_db_id# --source ensembl',
             },
             -wait_for      => [ 'insert_method_link' ],
         },
@@ -104,8 +105,8 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
                 'all_current'       => 1,
                 'extra_parameters'  => [ 'locator' ],
             },
-            -rc_name   => '4Gb_job',
-            -flow_into => {
+            -rc_name    => '4Gb_job',
+            -flow_into  => {
                 '2->A' => {
                     'load_genomedb' => { 'genome_db_id' => '#genome_db_id#', 'locator' => '#locator#', 'master_dbID' => '#genome_db_id#' },
                 },
@@ -113,9 +114,9 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
             },
         },
 
-        {   -logic_name => 'load_genomedb',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
-            -parameters => {
+        {   -logic_name    => 'load_genomedb',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
+            -parameters    => {
                 'db_version'      => $self->o('ensembl_release'),
                 'registry_files'  => $self->o('curr_file_sources_locs'),
             },
@@ -126,9 +127,9 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
             -rc_name       => '2Gb_job',
         },
 
-        {   -logic_name => 'load_fresh_members_from_db',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
-            -parameters => {
+        {   -logic_name    => 'load_fresh_members_from_db',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
+            -parameters    => {
                 'include_reference'           => $self->o('include_reference'),
                 'include_nonreference'        => $self->o('include_nonreference'),
                 'include_patches'             => $self->o('include_patches'),
@@ -147,7 +148,7 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
         {   -logic_name         => 'hc_members_globally',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
-                mode            => 'members_globally',
+                mode   => 'members_globally',
             },
             -flow_into          => [ 'insert_member_projections' ],
             %hc_analysis_params,

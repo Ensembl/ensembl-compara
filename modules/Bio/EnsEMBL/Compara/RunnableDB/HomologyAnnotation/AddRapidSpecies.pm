@@ -89,7 +89,7 @@ sub write_output {
 
     my $genome_dbs = $self->get_cached_compara_dba('master_db')->get_GenomeDBAdaptor->fetch_all();
 
-    foreach my $genome_db ( sort @$genome_dbs ) {
+    foreach my $genome_db ( sort { $a->dbID() <=> $b->dbID() } @$genome_dbs ) {
         $self->dataflow_output_id( { 'genome_db_id' => $genome_db->dbID(), 'species_name' => $genome_db->name() }, 2 );
     }
 }

@@ -57,6 +57,7 @@ standaloneJob(
         'query_db_dir' => $test_fasta_dir,
         'genome_db_id' => $genome_db_id,
         'dry_run'      => 1,
+        'diamond_exe'  => 'diamond',
     },
     # Output
     [

@@ -46,7 +46,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # Inherit the generic ones
 
-        'division'     => undef,
 
         'work_dir'     => $self->o('pipeline_dir'),
         'fasta_dir'    => $self->o('work_dir') . '/fasta/',
@@ -57,7 +56,7 @@ sub default_options {
 
         'ref_blast_db' => undef,
         'blast_db'     => $self->o('ref_blast_db'),
-        'compara_db'  => $self->pipeline_url(),
+        'compara_db'   => $self->pipeline_url(),
         'output_db'    => $self->pipeline_url(),
         'master_db'    => $self->pipeline_url(),
         'ncbi_db'      => 'ncbi_taxonomy',
@@ -89,7 +88,6 @@ sub default_options {
         'decision_capacity'        => 150,
         'hc_priority'              => -10,
 
-        'diamond_exe'                 => $self->check_exe_in_cellar('diamond/2.0.4/bin/diamond'),
         'num_sequences_per_blast_job' => 200,
         'blast_params'                => '--max-hsps 1 --threads 4 -b1 -c1 --sensitive',
         'evalue_limit'                => '1e-6',
@@ -104,10 +102,6 @@ sub default_options {
             'all'         => ['homo_sapiens', 'danio_rerio', 'gallus_gallus', 'mus_musculus'],
         },
     };
-}
-
-sub default_pipeline_name {
-    my ($self) = @_;
 }
 
 sub pipeline_create_commands {
@@ -139,7 +133,6 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
 
         'reference_list'    => $self->o('reference_list'),
         'species_list_file' => $self->o('species_list_file'),
-        'division'          => $self->o('division'),
     };
 }
 
@@ -207,4 +200,3 @@ sub core_pipeline_analyses {
 }
 
 1;
-
