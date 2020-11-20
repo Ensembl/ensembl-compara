@@ -156,6 +156,11 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       }
     });
 
+    this.elLk.matrixContainer.on('scroll', function() {
+      panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').removeClass("mClick");
+      panel.trackPopup.hide();
+    });
+
     this.el.find('.view-track, button.showMatrix').on('click', function() {
       if($(this).hasClass('_edit')) {
         panel.addExtraDimensions();
