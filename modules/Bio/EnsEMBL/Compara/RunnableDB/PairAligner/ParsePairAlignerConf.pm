@@ -468,13 +468,15 @@ sub set_pair_aligner_options {
 		 # ensure that the smallest taxonomic group settings are applied
 		 # when dealing with nested sets
 		next if ( defined $these_settings && scalar(@clade_gdbs) >= $this_clade_size );
-		$this_clade_size = scalar @clade_gdbs;
 
 		# if both ref and non-ref are present, use these settings
 		my $found_ref     = grep { $_->dbID == $ref_genome_db->dbID } @clade_gdbs;
 		my $found_non_ref = grep { $_->dbID == $non_ref_genome_db->dbID } @clade_gdbs;
 		
-		$these_settings = $taxon_settings{$tax_id} if ( $found_ref && $found_non_ref );
+		if ( $found_ref && $found_non_ref ) {
+			$these_settings = $taxon_settings{$tax_id};
+			$this_clade_size = scalar @clade_gdbs;
+		}
 	}
 
 	$these_settings = $default_settings unless ( defined $these_settings );
