@@ -71,10 +71,12 @@ sub open {
   my $wrapper = {
                   'file'   => $file, 
                   'format' => $format,
-                   %args,
+                  %args,
                 };
+  my $class;
+
   if ($subclass) {
-    my $class = 'EnsEMBL::Web::IOWrapper::'.$subclass;
+    $class = 'EnsEMBL::Web::IOWrapper::'.$subclass;
 
     if (dynamic_use($class, 1)) {
       my $parser;
@@ -90,21 +92,17 @@ sub open {
       }
 
       if ($parser) {
-      $wrapper = $class->new({
-                              'parser' => $parser, 
-                              });
+        $wrapper->{'parser'} = $parser;
       } 
     } 
   }
   else {
-    ## Other upload types, e.g. VEP stuff
-    my $class = 'EnsEMBL::Web::IOWrapper::'.$format;
-    if (dynamic_use($class, 1)) {
-      bless $wrapper, $class;
-    }
+    ## Unparsed uploads, e.g. VEP results filter
+    $class = 'EnsEMBL::Web::IOWrapper::'.$format;
+    $class = undef unless (dynamic_use($class, 1));
   }
 
-  return $wrapper;
+  return $wrapper ? $class->new($wrapper) : {};
 }
 
 sub parser {

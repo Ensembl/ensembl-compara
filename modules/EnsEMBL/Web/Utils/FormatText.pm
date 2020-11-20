@@ -25,7 +25,15 @@ use HTML::Entities  qw(encode_entities);
 
 use base qw(Exporter);
 
-our @EXPORT = our @EXPORT_OK = qw(date_format pretty_date add_links helptip glossary_helptip get_glossary_entry);
+our @EXPORT = our @EXPORT_OK = qw(thousandify date_format pretty_date add_links helptip glossary_helptip get_glossary_entry);
+
+sub thousandify {
+# Returns comma separated version of number
+  my ($self, $value) = @_;
+  local $_ = reverse $value;
+  s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g;
+  return scalar reverse $_;
+}
 
 sub date_format {
 ### Generic method for formatting a unix timestamp, according to a simple format

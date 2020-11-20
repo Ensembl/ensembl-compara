@@ -171,6 +171,7 @@ sub get_tracks {
         $self->save_track($track, $tracks, $url);
       }
       ## Start a new track
+      last if $count > 10000;
       $id = $value || 'Unnamed';
       $track = {'track' => $value};
     }
