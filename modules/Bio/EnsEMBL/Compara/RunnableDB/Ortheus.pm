@@ -340,12 +340,14 @@ sub _write_output {
 	   $gata->store_group($split_trees);
 	   foreach my $tree (@$split_trees) {
 	       $self->_assert_cigar_lines_in_block($tree->modern_genomic_align_block_id);
+	       $self->_assert_binary_tree($tree);
 	       $self->_write_gerp_dataflow($tree->modern_genomic_align_block_id);
 	       
 	   }
        } else {
 	   $gata->store($genomic_align_tree, $skip_left_right_index);
 	   $self->_assert_cigar_lines_in_block($genomic_align_tree->modern_genomic_align_block_id);
+	   $self->_assert_binary_tree($genomic_align_tree);
 	   $self->_write_gerp_dataflow($genomic_align_tree->modern_genomic_align_block_id);
        }
    }
@@ -353,6 +355,15 @@ sub _write_output {
 	#to clean up after each job otherwise you get files left over from
 	#the previous job.
     $self->cleanup_worker_temp_directory;
+}
+
+sub _assert_binary_tree {
+    my ($self, $gat) = @_;
+    foreach my $node (@{$gat->get_all_nodes}) {
+        if (!$node->is_leaf && ($node->get_child_count != 2)) {
+            $self->_backup_data_and_throw($gat, sprintf("Node %s is not binary", $node->name));
+        }
+    }
 }
 
 sub _assert_cigar_lines_in_block {
@@ -382,6 +393,7 @@ sub _backup_data_and_throw {
     system('cp', '-a', $self->worker_temp_directory, $target_dir);
     $self->_print_report($gat, "$target_dir/report.txt");
     $self->_print_regions("$target_dir/regions.txt");
+    $self->_spurt("$target_dir/tree.nh", $gat->newick_format);
     throw("Error: $err\nData copied to $target_dir");
 }
 
