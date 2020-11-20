@@ -43,10 +43,10 @@ sub run {
     my $self = shift;
     $self->SUPER::run;
 
-    my $fasta_file    = $self->param('fasta_file');
-    my $diamond_exe   = $self->param('diamond_exe');
-    my $query_db_dir  = $self->param('query_db_dir');
-    my $genome_db_id  = $self->param('genome_db_id');
+    my $fasta_file    = $self->param_required('fasta_file');
+    my $diamond_exe   = $self->param_required('diamond_exe');
+    my $query_db_dir  = $self->param_required('query_db_dir');
+    my $genome_db_id  = $self->param_required('genome_db_id');
     my $gdb_adaptor   = $self->compara_dba->get_GenomeDBAdaptor;
     my $genome_db     = $gdb_adaptor->fetch_by_dbID($genome_db_id) or $self->die_no_retry("cannot fetch GenomeDB with id '$genome_db_id'");
     my $query_db_name = $self->param('query_db_dir') . '/' . $genome_db->name() . '_' . $genome_db->assembly();
@@ -57,7 +57,7 @@ sub run {
         my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1});
     }
     else {
-        $self->warning("diamond makedb --in $fasta_file -d $query_db_name has not been executed");
+        $self->warning("$cmd has not been executed");
     }
 
     $self->param('query_db_name', $query_db_name);

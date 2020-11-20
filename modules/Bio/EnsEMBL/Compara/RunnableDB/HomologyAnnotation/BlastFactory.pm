@@ -22,11 +22,12 @@ Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BlastFactory
 =head1 DESCRIPTION
 
 Fetch list of member_ids per genome_db_id in db and create jobs for BlastAndParsePAF.
-Supported parameters:
+=over
 
-    'step' => <number>
-        How many sequences to write into the blast query file.
+=item step
+Optional. How many sequences to write into the blast query file. Default: 200.
 
+=back
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BlastFactory;
@@ -56,8 +57,8 @@ sub fetch_input {
     foreach my $genome_db (@$genome_dbs) {
         my $genome_db_id = $genome_db->dbID;
         my $some_members = $self->compara_dba->get_SeqMemberAdaptor->_fetch_all_representative_for_blast_by_genome_db_id($genome_db_id);
-
         my @mlsss        = @{$self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type_GenomeDB('ENSEMBL_HOMOLOGUES', $genome_db)};
+        $self->warning("There are multiple mlsss for $genome_db ENSEMBL_HOMOLOGUES when we only expect 1") if (scalar(@mlsss) > 1);
         my @genome_members;
 
         foreach my $member (@$some_members) {

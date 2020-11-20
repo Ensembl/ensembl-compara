@@ -42,13 +42,16 @@ sub param_defaults {
     return {
         'force'      => 1,
         'do_not_add' => undef,
+        'division'   => 'all',
     };
 }
 
 sub fetch_input {
     my ($self) = @_;
 
-    my $species_list_file = $self->param('species_list_file');
+    my $species_list_file = $self->param_required('species_list_file');
+    my $do_not_add        = $self->param('do_not_add');
+    my $division          = $self->param('division');
     my @species_list;
 
     open ( my $f, "<", $species_list_file ) or die "Cannot open production list of species $!";
@@ -56,7 +59,7 @@ sub fetch_input {
     close($f);
 
     foreach my $species_name ( @species_names ) {
-        if ( any { $_ eq $species_name } @{ $self->param_required('do_not_add')->{'all'} } ) {
+        if ( defined $do_not_add && any { $_ eq $species_name } @{ $do_not_add->{$division} } ) {
             $self->warning( $species_name . " is a reference genome" );
         }
         else {
@@ -73,11 +76,11 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    my $species_list = $self->param_required('species_list');
+    my $species_list = $self->param('species_list');
     my $new_genome_dbs = [];
 
     foreach my $species_name ( @$species_list ) {
-        push @$new_genome_dbs, @{ _add_new_genomedb($self->param('master_dba'), $species_name, -RELEASE => $self->param('release'), -FORCE => $self->param('force') ) };
+        push @$new_genome_dbs, _add_new_genomedb($self->param('master_dba'), $species_name, -RELEASE => $self->param('release'), -FORCE => $self->param('force') );
     }
 }
 
@@ -87,9 +90,7 @@ sub write_output {
     my $genome_dbs = $self->get_cached_compara_dba('master_db')->get_GenomeDBAdaptor->fetch_all();
 
     foreach my $genome_db ( sort @$genome_dbs ) {
-        if ($genome_db->name() && $genome_db->dbID()) {
-            $self->dataflow_output_id( { 'genome_db_id' => $genome_db->dbID(), 'species_name' => $genome_db->name() }, 2 );
-        }
+        $self->dataflow_output_id( { 'genome_db_id' => $genome_db->dbID(), 'species_name' => $genome_db->name() }, 2 );
     }
 }
 
@@ -113,7 +114,7 @@ sub _add_new_genomedb {
         print "GenomeDB after update: ", $new_genome_db->toString, "\n\n";
     } );
     $species_db->dbc()->disconnect_if_idle();
-    return [$new_genome_db];
+    return $new_genome_db;
 }
 
 1;

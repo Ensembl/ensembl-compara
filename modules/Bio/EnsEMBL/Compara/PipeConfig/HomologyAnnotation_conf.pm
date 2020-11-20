@@ -64,12 +64,14 @@ sub default_options {
         'member_db'    => $self->pipeline_url(),
         'meta_host'    => 'mysql-ens-meta-prod-1',
 
+        'include_reference'           => 1,
+        'include_nonreference'        => 0,
+        'include_patches'             => 0,
         'store_coding'                => 1,
-        'store_ncrna'                 => 1,
-        'store_others'                => 1,
-        'allow_ambiguity_codes'       => 1,
-        'store_related_pep_sequences' => 1,
-        'store_missing_dnafrags'      => 1,
+        'store_ncrna'                 => 0,
+        'store_others'                => 0,
+        'store_exon_coordinates'      => 0,
+        'store_related_pep_sequences' => 0, # do we want CDS sequence as well as protein seqs?
 
         'projection_source_species_names' => [ ],
         'curr_file_sources_locs'          => [ ],
