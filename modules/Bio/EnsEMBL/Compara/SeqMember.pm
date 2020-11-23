@@ -660,7 +660,7 @@ sub has_translation_edits {
 
 =head2 object_summary
 
-  Example     : print join("\t", @{$member->object_summary});
+  Example     : print join("\t", @{$member->object_summary}), "\n";
   Description : This method returns an arrayref containing a summary of the
                 information contained in the object. The headers are defined
                 by the global $object_summary_headers variable.
