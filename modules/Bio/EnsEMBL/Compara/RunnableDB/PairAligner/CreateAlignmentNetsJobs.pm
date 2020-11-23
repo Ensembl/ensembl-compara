@@ -52,6 +52,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentNetsJobs;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Compara::Utils::IDGenerator qw(:all);
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -88,12 +90,7 @@ sub write_output {
 
   # Initialise the next dbID for this (LASTZ_NET) mlss_id
   my $mlss_id = $self->param('output_mlss_id');
-  $self->compara_dba->dbc->do(
-    'INSERT IGNORE INTO id_generator (label, next_id) VALUES (?, ?)',
-    undef,
-    "genomic_align_${mlss_id}",
-    "${mlss_id}0000000001",
-  );
+  initialise_id($self->compara_dba->dbc, "genomic_align_${mlss_id}", "${mlss_id}0000000001");
 
   $self->createAlignmentNetsJobs();
 

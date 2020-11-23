@@ -37,11 +37,37 @@ our %EXPORT_TAGS;
 our @EXPORT_OK;
 
 @EXPORT_OK = qw(
+    initialise_id
     get_id_range
 );
 %EXPORT_TAGS = (
   all     => [@EXPORT_OK]
 );
+
+
+=head2 initialise_id
+
+  Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $dbc
+  Arg[2]      : String $label
+  Arg[3]      : Integer $first_id. Defaults to 1
+  Example     : initialise_id($dbc, 'homology', "${offset}00000001");
+  Description : Set the first dbID of this label, if it hasn't been set
+                before
+  Returntype  : - undef if there has been an error
+                - "0E0" if the label was already initialised
+                - 1 if the label could be initialised
+
+=cut
+
+sub initialise_id {
+    my ($dbc, $label, $first_id) = @_;
+    return $dbc->do(
+        'INSERT IGNORE INTO id_generator (label, next_id) VALUES (?, ?)',
+        undef,
+        $label,
+        $first_id || 1,
+    );
+}
 
 
 =head2 get_id_range
@@ -93,11 +119,7 @@ sub get_id_range {
     }
 
     # First insert the initial value if needed
-    $dbc->do(
-        'INSERT IGNORE INTO id_generator (label, next_id) VALUES (?, 1)',
-        undef,
-        $label,
-    );
+    initialise_id($dbc, $label);
 
     # Increment the ID whilst recording the previous value
     $dbc->do(
