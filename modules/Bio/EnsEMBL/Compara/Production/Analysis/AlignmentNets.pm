@@ -48,6 +48,16 @@ use strict;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing');
 
 
+## Overrides the one from RunnableDB::PairAligner::AlignmentProcessing
+## (which is used for both alignment_chains and alignment_nets). For nets
+## we want to pre-assign their dbIDs according to the output mlss_id
+sub write_output {
+    my ($self) = @_;
+    $self->assign_ids;
+    $self->SUPER::write_output();
+}
+
+
 sub run_nets {
   my ($self) = @_;
 

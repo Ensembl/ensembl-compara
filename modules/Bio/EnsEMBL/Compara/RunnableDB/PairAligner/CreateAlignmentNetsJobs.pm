@@ -85,6 +85,16 @@ sub fetch_input {
 
 sub write_output {
   my $self = shift;
+
+  # Initialise the next dbID for this (LASTZ_NET) mlss_id
+  my $mlss_id = $self->param('output_mlss_id');
+  $self->compara_dba->dbc->do(
+    'INSERT IGNORE INTO id_generator (label, next_id) VALUES (?, ?)',
+    undef,
+    "genomic_align_${mlss_id}",
+    "${mlss_id}0000000001",
+  );
+
   $self->createAlignmentNetsJobs();
 
   return 1;
@@ -186,7 +196,7 @@ sub createAlignmentNetsJobs {
   }
   
   #
-  #Flow to 'set_internal_ids' and 'update_max_alignment_length_after_net' on branch 1
+  #Flow to 'update_max_alignment_length_after_net' on branch 1
   #
   my $output_hash = {};
   %$output_hash = ('method_link_species_set_id' => $self->param('output_mlss_id'));

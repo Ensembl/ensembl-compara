@@ -557,24 +557,7 @@ sub core_pipeline_analyses {
  	   {  -logic_name => 'update_max_alignment_length_after_net',
  	      -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
 	      -rc_name => '1Gb_job',
-              -flow_into => [ 'set_internal_ids_collection' ],
  	    },
-          {  -logic_name => 'set_internal_ids_collection',
-              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsCollection',
-              -parameters => {
-                  'skip' => $self->o('patch_alignments'),
-              },
-              -flow_into => {
-                  2 => [ 'set_internal_ids_slow' ],
-              },
-              -analysis_capacity => 1,
-          },
-          {  -logic_name => 'set_internal_ids_slow',
-              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsSlow',
-              -analysis_capacity => 1,
-              -rc_name => '8Gb_job',
-              -can_be_empty  => 1,
-          },
 
         {   -logic_name => 'detect_component_mlsss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DetectComponentMLSSs',
@@ -582,7 +565,7 @@ sub core_pipeline_analyses {
                 'do_pairwise_gabs'          => $self->o('do_pairwise_gabs'),
                 'do_compare_to_previous_db' => $self->o('do_compare_to_previous_db'),
             },
-            -wait_for   => [ 'set_internal_ids_collection', 'set_internal_ids_slow' ],
+            -wait_for   => [ 'update_max_alignment_length_after_net' ],
             -flow_into  => {
                 '3->A' => [ 'lift_to_principal' ],
                 'A->2' => [ 'run_healthchecks' ],

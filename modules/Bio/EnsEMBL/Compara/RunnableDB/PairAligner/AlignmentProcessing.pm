@@ -30,9 +30,12 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
 use strict;
 use warnings;
 
+use List::Util qw(sum);
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
+use Bio::EnsEMBL::Compara::Utils::IDGenerator qw(:all);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -509,5 +512,33 @@ sub delete_alignments {
   }
 }
 
+
+sub assign_ids {
+    my ($self) = @_;
+
+    my $chains      = $self->param('chains');
+    my $mlss_id     = $self->param('output_mlss_id');
+    my $n_blocks    = sum(map {scalar(@$_)} @$chains);
+
+    # For simplicity, genomic_align_block_id is the genomic_align_id of its
+    # first genomic_align. Since all blocks are pairwise, we need two
+    # request two values per block only.
+    # group_id (for nets) should not be touched, cf the comment in _write_output
+    my $ga_id = get_id_range(
+        $self->compara_dba->dbc,
+        "genomic_align_${mlss_id}",
+        2*$n_blocks,
+    );
+
+    foreach my $chain (@$chains) {
+        foreach my $gab (@$chain) {
+            my ($ga1, $ga2) = @{$gab->genomic_align_array};
+            $gab->dbID($ga_id);
+            $ga1->dbID($ga_id);
+            $ga2->dbID($ga_id+1);
+            $ga_id += 2;
+        }
+    }
+}
 
 1;
