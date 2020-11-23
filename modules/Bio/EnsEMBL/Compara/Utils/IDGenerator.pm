@@ -39,6 +39,7 @@ our @EXPORT_OK;
 @EXPORT_OK = qw(
     initialise_id
     get_id_range
+    get_previously_assigned_range
 );
 %EXPORT_TAGS = (
   all     => [@EXPORT_OK]
@@ -101,11 +102,7 @@ sub get_id_range {
 
     # Check whether we have already seen this requestor
     if ($requestor) {
-        my $existing_row = $dbc->db_handle->selectrow_arrayref(
-            'SELECT assigned_id, size FROM id_assignments WHERE label = ? AND requestor = ?',
-            undef,
-            $label, $requestor,
-        );
+        my $existing_row = get_previously_assigned_range($dbc, $label, $requestor);
         if ($existing_row) {
             # This requestor has already placed its request, let's check if the interval was big enough
             return $existing_row->[0] if $existing_row->[1] >= $n_ids;
@@ -138,5 +135,32 @@ sub get_id_range {
 
     return $next_id;
 }
+
+
+=head2 get_previously_assigned_range
+
+  Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $dbc
+  Arg[2]      : String $label
+  Arg[3]      : Integer $requestor
+  Example     : my $gene_tree_id = get_id_range($dbc, 'gene_tree', $self->get_requestor_id);
+  Description : Request a previously assigned range of IDs for a given
+                requestor (and label) as a pair of integers: the first
+                id of the range, and the size of the range.
+                Returns undef if none exists.
+  Returntype  : Arrayref or undef
+  Exceptions  : none
+
+=cut
+
+sub get_previously_assigned_range {
+    my ($dbc, $label, $requestor) = @_;
+
+    return $dbc->db_handle->selectrow_arrayref(
+        'SELECT assigned_id, size FROM id_assignments WHERE label = ? AND requestor = ?',
+        undef,
+        $label, $requestor,
+    );
+}
+
 
 1;
