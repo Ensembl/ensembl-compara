@@ -48,6 +48,7 @@ use strict;
 use warnings;
 
 use Carp;
+use Digest::MD5 qw(md5_hex);
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;    # to use go_figure_compara_dba() and other things
@@ -550,5 +551,31 @@ sub die_no_retry {
     die @_;
 }
 
+
+=head2 get_requestor_id
+
+  Example     : my $requestor_id = $self->get_requestor_id();
+  Description : Return an identifier for this job that can be used as
+                a requestor ID in Utils::IDGenerator
+  Returntype  : Integer (unsigned 64-bits)
+
+=cut
+
+sub get_requestor_id {
+    my $self = shift;
+
+    # Use the eHive job_id if possible
+    if ($self->input_job && $self->input_job->dbID) {
+        return $self->input_job->dbID;
+    }
+
+    # Resort to computing a (likely unique) 64-bits key
+    # based on the job's parameters
+    my $params = stringify($self->input_job->{'_unsubstituted_param_hash'});
+    # md5 returns a 128 bits / 16 bytes string, of which we take
+    # the 64 left-most bits
+    my $id = unpack 'Q', md5($params);
+    return $id
+}
 
 1;

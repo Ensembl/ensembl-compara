@@ -528,6 +528,7 @@ sub assign_ids {
         $self->compara_dba->dbc,
         "genomic_align_${mlss_id}",
         2*$n_blocks,
+        $self->get_requestor_id,
     );
 
     foreach my $chain (@$chains) {

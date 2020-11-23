@@ -79,6 +79,7 @@ sub initialise_id {
   Arg[4]      : (optional) Integer $requestor
   Example     : my $homology_id_start = get_id_range($dbc, 'homology', 1623);
                 my $gene_tree_id = get_id_range($dbc, 'gene_tree');
+                my $gene_tree_id = get_id_range($dbc, 'gene_tree', 5, $self->get_requestor_id);
   Description : Request a new range of $n_ids IDs. The method returns the
                 first integer of the range, and the caller can assume that
                 all integers between this value and the value plus $n_ids
