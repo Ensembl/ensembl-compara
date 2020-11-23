@@ -499,6 +499,13 @@ sub parse_results {
 
     my $alignment_file = $self->worker_temp_directory . "/output.$$.mfa";
 
+    unless ($self->param('tree_string') && -s $alignment_file) {
+        # MEMLIMIT in progress ?
+        sleep(30);
+        throw("Empty tree string") unless $self->param('tree_string');
+        throw("Empty alignment file $alignment_file");
+    }
+
     my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
     
     my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $self->param('tree_string') );
