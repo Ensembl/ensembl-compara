@@ -52,82 +52,11 @@ use strict;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub param_defaults {
-    my $self = shift;
-
-    return {
-        %{$self->SUPER::param_defaults},
-
-        'mlss_padding_n_zeros' => 10,
-    }
-}
-
-
 sub run {
     my $self = shift;
 
-    $self->_lift_gas_and_gabs();
     $self->_update_dnafrags();
     $self->_lift_mlss_tags();
-}
-
-
-=head2 _lift_gas_and_gabs
-
-Description : Lifts the genomic_aligns and genomic_align_blocks calculated for
-              the component genomes to their principal genome. To avoid
-              conflicts with foreign keys, it creates the new range of
-              genomic_align_blocks based on the principal MLSS id
-              (method_link_species_set_id * 10**10) and the previously lifted
-              genomic_align_blocks (to avoid collisions), updates the
-              genomic_align_block_ids and method_link_species_set_ids (from
-              the component MLSS id to the principal MLSS id) in the
-              genomic_align table and removes the old genomic_align_blocks.
-              Note that the lifting is performed in a transaction manner. This
-              function is an adaptation of
-              Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsCollection::_setInternalIds()
-              (first transaction), so these two methods should be kept in sync.
-
-=cut
-
-sub _lift_gas_and_gabs {
-    my $self = shift;
-    
-    my $principal_mlss_id  = $self->param_required('principal_mlss_id');
-    my $component_mlss_ids = $self->param_required('component_mlss_ids');
-    my $magic_number       = '1' . ('0' x $self->param('mlss_padding_n_zeros'));
-
-    # Create the principal MLSS genomic_align_blocks in the correct range
-    my $sql0 = "SELECT MIN(genomic_align_id % $magic_number), MAX(genomic_align_id % $magic_number), MIN(genomic_align_block_id % $magic_number), MAX(genomic_align_block_id % $magic_number), COUNT(*), COUNT(DISTINCT genomic_align_id % $magic_number), COUNT(DISTINCT genomic_align_block_id % $magic_number) FROM genomic_align WHERE method_link_species_set_id = ?";
-    my $sql1 = "INSERT INTO genomic_align_block SELECT (genomic_align_block_id % $magic_number) + ?, ?, score, perc_id, length, group_id, level_id, direction FROM genomic_align_block WHERE method_link_species_set_id = ?";
-    # Update the genomic_align_ids and genomic_align_block_ids in genomic_align
-    my $sql2 = "UPDATE genomic_align SET genomic_align_block_id = (genomic_align_block_id % $magic_number) + ?, genomic_align_id = (genomic_align_id % $magic_number) + ?, method_link_species_set_id = ? WHERE method_link_species_set_id = ?";
-    # Remove the component MLSS genomic_align_blocks
-    my $sql3 = "DELETE FROM genomic_align_block WHERE method_link_species_set_id = ?";
-
-    # We really need a transaction to ensure we are not screwing the database
-    my $dbc = $self->compara_dba->dbc;
-    $self->call_within_transaction(sub {
-        my $offset_ga  = $principal_mlss_id * $magic_number;
-        my $offset_gab = $principal_mlss_id * $magic_number;
-        foreach my $mlss_id ( @{$component_mlss_ids} ) {
-            # Get the required information about this component MLSS'
-            # genomic_aligns and genomic_align_blocks
-            my ($min_ga, $max_ga, $min_gab, $max_gab, $tot_count, $safe_ga_count, $safe_gab_count) = $dbc->db_handle->selectrow_array($sql0, undef, $mlss_id);
-            die "No entries found for component mlss_id=$mlss_id\n" unless (defined $min_ga && defined $min_gab);
-            die "genomic_align_id or genomic_align_block_id remainders are not unique\n" if (($tot_count != $safe_ga_count) || ($tot_count != 2*$safe_gab_count));
-            # Lift the genomic_aligns and genomic_align_blocks from the
-            # component MLSS to the principal MLSS
-            print STDERR "Offsets for mlss_id=$mlss_id:\n\tgenomic_align_block_id=$offset_gab\n\tgenomic_align_id=$offset_ga\n";
-            print STDERR (my $nd = $dbc->do($sql1, undef, $offset_gab, $principal_mlss_id, $mlss_id)), " rows duplicated in genomic_align_block\n";
-            print STDERR $dbc->do($sql2, undef, $offset_gab, $offset_ga, $principal_mlss_id, $mlss_id), " rows of genomic_align redirected to the new entries in genomic_align_block\n";
-            print STDERR (my $nr = $dbc->do($sql3, undef, $mlss_id)), " rows removed from genomic_align_block\n";
-            die "Numbers mismatch: $nd rows duplicated and $nr removed\n" if ($nd != $nr);
-            # Update the offsets
-            $offset_ga  += $max_ga;
-            $offset_gab += $max_gab;
-        }
-    });
 }
 
 
@@ -182,15 +111,6 @@ sub _lift_mlss_tags {
     my $principal_mlss = $mlss_adaptor->fetch_by_dbID($principal_mlss_id);
     my @component_mlsss;
     push @component_mlsss, $mlss_adaptor->fetch_by_dbID($_) for @$component_mlss_ids;
-
-    # The principal 'max_align' tag will contain the maximum value of all its
-    # component 'max_align' tags
-    my $max_align;
-    foreach my $mlss ( @component_mlsss ) {
-        my $component_max_align = $mlss->get_value_for_tag('max_align');
-        $max_align = $component_max_align if ( $component_max_align > $max_align );
-    }
-    $principal_mlss->store_tag('max_align', $max_align);
 
     # Get the missing tags from the first component (should be the same value
     # for all of them) and add them to the principal
