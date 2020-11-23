@@ -136,8 +136,9 @@ sub get_tracks {
 ### Parse a trackDb.txt file and return metadata about all its tracks
 ### @param content String - file contents
 ### @param file String - path to file contents
+### @param limit Integer - maximum number of tracks to return
 ### @return tracks Arrayref
-  my ($self, $content, $file) = @_;
+  my ($self, $content, $file, $limit) = @_;
   my $tracks = [];
   my $url      = $file =~ s|^(.+)/.+|$1|r; # URL relative to the file (up until the last slash before the file name)
   my @all_lines = split(/\n/, $content);
@@ -171,7 +172,7 @@ sub get_tracks {
         $self->save_track($track, $tracks, $url);
       }
       ## Start a new track
-      last if $count > 10000;
+      last if $count > $limit;
       $id = $value || 'Unnamed';
       $track = {'track' => $value};
     }

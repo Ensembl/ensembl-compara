@@ -28,6 +28,7 @@ use Digest::MD5 qw(md5_hex);
 
 use EnsEMBL::Web::Utils::HubParser;
 use EnsEMBL::Web::File::Utils::URL qw(read_file);
+use EnsEMBL::Web::Utils::FormatText qw(thousandify);
 use EnsEMBL::Web::Tree;
 
 ### Because the Sanger web proxy caches hub files aggressively,
@@ -181,12 +182,19 @@ sub get_hub_internal {
 
         if ($options->{'genome'} || $options->{'content'}) {
           my ($track_info, $total) = $self->get_track_info($options);
-          $genome_info->{$genome}{'track_count'} = $total;
-          if ($args->{'make_tree'}) {
-            $genome_info->{$genome}{'tree'} = $track_info;
+
+          my $limit = $self->web_hub->species_defs->TRACKHUB_MAX_TRACKS;
+          if ($total >= $limit) {
+            return { error => [sprintf('Sorry, we cannot attach this trackhub as it has more than %s tracks and will therefore overload our server', $self->thousandify($limit))] }
           }
           else {
-            $genome_info->{$genome}{'data'} = $track_info;
+            $genome_info->{$genome}{'track_count'} = $total;
+            if ($args->{'make_tree'}) {
+              $genome_info->{$genome}{'tree'} = $track_info;
+            }
+            else {
+              $genome_info->{$genome}{'data'} = $track_info;
+            }
           }
         }
       }
@@ -254,7 +262,8 @@ sub get_track_info {
 
   ## OK, parse the file content
   my $parser  = $self->parser;
-  my ($tracks, $total) = $parser->get_tracks($args->{'content'}, $args->{'file'});
+  my $limit   = $self->web_hub->species_defs->TRACKHUB_MAX_TRACKS;
+  my ($tracks, $total) = $parser->get_tracks($args->{'content'}, $args->{'file'}, $limit);
   
   # Make sure the track hierarchy is ok before trying to make the tree
   my $tree = $args->{'tree'}; 
