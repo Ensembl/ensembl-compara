@@ -127,6 +127,10 @@ sub fetch_input {
       $self->param('tree_string', $self->get_tree_string);
       print "tree_string ", $self->param('tree_string'), "\n";
     }
+
+    # Make sure we start in a clean space, free of any files from a previous job attempt
+    $self->cleanup_worker_temp_directory;
+
     ## Dumps fasta files for the DnaFragRegions. Fasta files order must match the entries in the
     ## newick tree. The order of the files will match the order of sequences in the tree_string.
 
@@ -351,10 +355,6 @@ sub _write_output {
 	   $self->_write_gerp_dataflow($genomic_align_tree->modern_genomic_align_block_id);
        }
    }
-	#DO NOT COMMENT THIS OUT!!! (at least not permenantly). Needed
-	#to clean up after each job otherwise you get files left over from
-	#the previous job.
-    $self->cleanup_worker_temp_directory;
 }
 
 sub _assert_binary_tree {
