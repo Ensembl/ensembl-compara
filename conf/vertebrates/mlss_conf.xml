@@ -54,7 +54,6 @@
       </species_set>
     </one_vs_all>
 
-    <!-- Switch to bos_taurus if canis_lupus_familiaris gets an assembly update -->
     <one_vs_all method="LASTZ_NET" ref_genome="canis_lupus_familiaris" against="Carnivora"/>
 
     <one_vs_all method="LASTZ_NET" ref_genome="bos_taurus">
@@ -65,6 +64,7 @@
 
     <!-- Switch to bos_taurus if equus_caballus gets an assembly update -->
     <one_vs_all method="LASTZ_NET" ref_genome="equus_caballus" against="Perissodactyla"/>
+
     <one_vs_all method="LASTZ_NET" ref_genome="sus_scrofa" against="Sus"/>
 
     <one_vs_all method="LASTZ_NET" ref_genome="monodelphis_domestica">
@@ -141,7 +141,7 @@
         <genome name="pongo_abelii" assembly="PPYG2"/>
         <genome name="loxodonta_africana" assembly="loxAfr3"/>
         <genome name="oryctolagus_cuniculus" assembly="OryCun2.0"/>
-        <genome name="canis_lupus_familiaris" assembly="CanFam3.1"/>
+        <genome name="canis_lupus_familiaris"/>
         <genome name="chlorocebus_sabaeus" assembly="ChlSab1.1"/>
         <genome name="rattus_norvegicus"/>
         <genome name="mus_spretus" assembly="SPRET_EiJ_v1"/>
@@ -152,7 +152,7 @@
         <genome name="microcebus_murinus" assembly="Mmur_3.0"/>
         <genome name="gorilla_gorilla" assembly="gorGor4"/>
         <genome name="pan_paniscus" assembly="panpan1.1"/>
-        <genome name="sus_scrofa" assembly="Sscrofa11.1"/>
+        <genome name="sus_scrofa"/>
         <genome name="mus_caroli" assembly="CAROLI_EIJ_v1.1"/>
         <genome name="mus_pahari" assembly="PAHARI_EIJ_v1.1"/>
         <genome name="cricetulus_griseus_chok1gshd" assembly="CHOK1GS_HDv1"/>
@@ -177,7 +177,7 @@
         <genome name="panthera_leo" assembly="PanLeo1.0"/>
         <genome name="delphinapterus_leucas" assembly="ASM228892v3"/>
         <genome name="cervus_hanglu_yarkandensis" assembly="CEY_v1"/>
-        <genome name="ovis_aries_rambouillet" assembly="Oar_rambouillet_v1.0"/>
+        <genome name="ovis_aries_rambouillet"/>
         <genome name="monodon_monoceros" assembly="NGI_Narwhal_1"/>
         <genome name="balaenoptera_musculus" assembly="mBalMus1.v2"/>
         <genome name="phocoena_sinus" assembly="mPhoSin1.pri"/>
@@ -290,7 +290,7 @@
     <multiple_alignment method="PECAN" gerp="1">
       <species_set name="amniotes" display_name="amniota vertebrates">
         <genome name="homo_sapiens"/>
-        <genome name="gallus_gallus" assembly="GRCg6a"/>
+        <genome name="gallus_gallus"/>
         <genome name="pongo_abelii" assembly="PPYG2"/>
         <genome name="loxodonta_africana" assembly="loxAfr3"/>
         <genome name="oryctolagus_cuniculus" assembly="OryCun2.0"/>
