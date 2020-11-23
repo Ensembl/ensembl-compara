@@ -188,6 +188,16 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       }
     });
 
+    this.elLk.filterMatrix.on('scroll', function() {
+      panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').removeClass("mClick");
+      panel.trackPopup.hide();
+    });
+
+    this.elLk.matrixContainer.on('scroll', function() {
+      panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').removeClass("mClick");
+      panel.trackPopup.hide();
+    });
+
     this.el.find('.view-track, .view-track-button, button.showMatrix').on('click', function() {
       if($(this).hasClass('_edit') || ($(this).hasClass('view-track') && !$(this).hasClass('inactive')) || ($(this).hasClass('view-track-button') && $(this).hasClass('active'))) {
         panel.addExtraDimensions();
