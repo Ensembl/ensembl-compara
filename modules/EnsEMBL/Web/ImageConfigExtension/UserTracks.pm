@@ -415,21 +415,8 @@ sub _add_trackhub {
       }
     }
     if ($node) {
-      ## Don't try to attach enormous hubs as they cause horrible crashes!
-      my $track_count = $hub_info->{'genomes'}{$matched_assembly}{'track_count'};
-      if ($track_count > $hub->species_defs->TRACKHUB_MAX_TRACKS) {
-        $self->hub->session->set_record_data({
-          'type'      => 'message',
-          'function'  => '_error',
-          'code'      => 'th_unfeasibly_large',
-          'message'   => sprintf('This trackhub has more than %s tracks and therefore cannot be attached without overloading the server.', $self->thousandify($hub->species_defs->TRACKHUB_MAX_TRACKS)),
-        });
-        return;
-      }
-      else {
-        $self->_add_trackhub_node($node, $menu, {'name' => $menu_name, 'hide' => $force_hide, 'code' => $code});
-        $self->{'_attached_trackhubs'}{$url} = 1;
-      }
+      $self->_add_trackhub_node($node, $menu, {'name' => $menu_name, 'hide' => $force_hide, 'code' => $code});
+      $self->{'_attached_trackhubs'}{$url} = 1;
     } else {
       my $assembly = $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_VERSION') || $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_NAME');
       $hub_info->{'error'} = ["No sources could be found for assembly $assembly. Please check the hub's genomes.txt file for supported assemblies."];

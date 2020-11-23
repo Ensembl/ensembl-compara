@@ -124,6 +124,9 @@ sub attach {
 
   if ($error) {
     $redirect = 'SelectFile';
+    if ($options->{'abort'}) {
+      $params->{'abort'} = 1;
+    }
 
     $hub->session->set_record_data({
                         type     => 'message',
