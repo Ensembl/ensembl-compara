@@ -109,7 +109,6 @@ return [
         -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::PopulateNewDatabase',
         -parameters => {
             'program'        => $self->o('populate_new_database_exe'),
-            'pipeline_db'    => $self->pipeline_url(),
             'reg_conf'       => $self->o('reg_conf'),
             'master_db'      => $self->o('master_db'),
         },
