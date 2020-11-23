@@ -81,10 +81,10 @@ package Bio::EnsEMBL::Compara::Locus;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Storable;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
-
 use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 
 
@@ -129,6 +129,23 @@ sub new {
   }
 
   return $self;
+}
+
+
+=head2 new_fast
+
+  Arg [1]    : hashref to be blessed
+  Description: Construct a new Bio::EnsEMBL::Storable object using the hashref.
+               This is a very quick constructor that requires internal knowledge
+               of the class.
+  Exceptions : none
+  Returntype : Bio::EnsEMBL::Compara::Locus
+  Status     : Stable
+
+=cut
+
+sub new_fast {
+    return Bio::EnsEMBL::Storable::new_fast(@_);
 }
 
 
@@ -213,7 +230,7 @@ sub dnafrag {
     if (defined($self->dnafrag_id) and defined($self->{'adaptor'})) {
       # ...from the dnafrag_id. Use dnafrag_id function and not the attribute in the <if>
       # clause because the attribute can be retrieved from other sources if it has not been already defined.
-      my $dnafrag_adaptor = $self->adaptor->db->get_DnaFragAdaptor;
+      my $dnafrag_adaptor = $self->{'adaptor'}->db->get_DnaFragAdaptor;
       $self->{'dnafrag'} = $dnafrag_adaptor->fetch_by_dbID($self->{'dnafrag_id'});
     }
   }
@@ -287,7 +304,7 @@ sub _lazy_getter_setter {
    } elsif (not defined($self->{$field})) {
     if (defined($self->{'dbID'}) and defined($self->{'adaptor'}) and $self->{'adaptor'}->can('retrieve_all_direct_attributes')) {
       # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::Locus object
-      $self->adaptor->retrieve_all_direct_attributes($self);
+      $self->{'adaptor'}->retrieve_all_direct_attributes($self);
     }
   }
 

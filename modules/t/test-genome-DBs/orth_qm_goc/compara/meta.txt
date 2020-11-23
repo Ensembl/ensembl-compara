@@ -73,3 +73,4 @@
 93	\N	patch	patch_102_103_a.sql|schema_version
 94	\N	patch	patch_102_103_b.sql|clusterset_id_varchar30
 95	\N	patch	patch_103_104_a.sql|schema_version
+96	\N	patch	patch_103_104_b.sql|dnafrag_alt_region

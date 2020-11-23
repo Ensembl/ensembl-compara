@@ -37,6 +37,7 @@ use Time::HiRes qw(time);
 
 use Bio::EnsEMBL::Utils::Exception qw( throw );
 
+use Bio::EnsEMBL::Compara::Locus;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
@@ -118,7 +119,7 @@ sub create_chunks {
   throw("couldn't get a DnaCollection for ChunkAndGroup analysis\n") unless($self->param('dna_collection'));
 
     my $dnafrag_dba = $self->compara_dba->get_DnaFragAdaptor;
-    my $dnafrags = {};
+    my @regions_to_align;
     if (defined $self->param('region')) {
         # Support list of regions as a string in CSV format as follows:
         #     chromosome:1,scaffold:KN149822.1:25:1560,chromosome:2::154200
@@ -128,9 +129,13 @@ sub create_chunks {
             my ($coord_system_name, $region_name, $region_start, $region_end) = split(/:/, $region);
             my $region_dnafrag = $dnafrag_dba->fetch_by_GenomeDB_and_name($genome_db, $region_name);
             die "Unknown dnafrag region '$region_name'\n" unless $region_dnafrag;
-            $region_dnafrag->{_start} = $region_start if $region_start;
-            $region_dnafrag->{_end} = $region_end if $region_end;
-            $dnafrags->{"$coord_system_name:$region_name"} = $region_dnafrag;
+            my $locus = bless {
+                'dnafrag'         => $region_dnafrag,
+                'dnafrag_start'   => $region_start || 1,
+                'dnafrag_end'     => $region_end || $region_dnafrag->length,
+                'dnafrag_strand'  => 1,
+            }, 'Bio::EnsEMBL::Compara::Locus';
+            push @regions_to_align, $locus;
         }
     } else {
         my $dnafrag_list = $dnafrag_dba->fetch_all_by_GenomeDB(
@@ -138,23 +143,34 @@ sub create_chunks {
             -IS_REFERENCE       => $self->param('include_non_reference') ? undef : 1,
             -CELLULAR_COMPONENT => $self->param('only_cellular_component'),
         );
-        $dnafrags = { map {$_->coord_system_name . ':' . $_->name => $_} @$dnafrag_list };
+
+        # Preload all the alt-regions at once. Not using Utils::Preloader
+        # because the latter assumes that alt-regions (Locus objects) would
+        # have a dbID() method, and also does not create fields linked to undef
+        my @dnafrag_ids = map {$_->dbID} @$dnafrag_list;
+        my $alt_regions = $self->compara_dba->get_DnaFragAltRegionAdaptor->fetch_all_by_dbID_list(\@dnafrag_ids);
+        my %alt_regions_by_dnafrag_id = map {$_->dnafrag_id => $_} @$alt_regions;
+
+        foreach my $dnafrag (@$dnafrag_list) {
+            next if $dnafrag->coord_system_name eq 'lrg';
+            push @regions_to_align, $alt_regions_by_dnafrag_id{$dnafrag->dbID} || $dnafrag->as_locus;
+        }
     }
 
     my $starttime = time();
     $self->param('chunkset_counter', 1);
     $self->define_new_chunkset;
-    $self->create_dnafrag_chunks($dnafrags->{$_}, $masking) for keys %$dnafrags;
+    $self->create_dnafrag_chunks($_, $masking) for @regions_to_align;
     printf "genome_db_id %s : total time %d secs\n", $genome_db->dbID, time() - $starttime;
 }
 
 sub create_dnafrag_chunks {
   my $self = shift;
-  my $dnafrag = shift;
+  my $locus = shift;
   my $masking = shift;
 
-  my $region_start = (exists $dnafrag->{_start}) ? $dnafrag->{_start} : 1;
-  my $region_end = (exists $dnafrag->{_end}) ? $dnafrag->{_end} : $dnafrag->length;
+  my $region_start = $locus->dnafrag_start;
+  my $region_end = $locus->dnafrag_end;
 
   #If chunk_size is not set then set it to be the fragment length 
   #overlap must be 0 in this case.
@@ -165,8 +181,8 @@ sub create_dnafrag_chunks {
       $overlap = 0;
   }
 
-  print "dnafrag : ", $dnafrag->display_id, "n" if ($self->debug);
-  print "  sequence length : ",$dnafrag->length,"\n" if ($self->debug);
+  print "dnafrag : ", $locus->dnafrag->display_id, "\n" if ($self->debug);
+  print "  sequence length : ",$locus->length,"\n" if ($self->debug);
   print "chunk_size $chunk_size\n" if ($self->debug);
 
   #initialise chunk_start and chunk_end to be the dnafrag start and end
@@ -176,7 +192,7 @@ sub create_dnafrag_chunks {
   while ($chunk_end < $region_end) {
 
     my $chunk = new Bio::EnsEMBL::Compara::Production::DnaFragChunk();
-    $chunk->dnafrag($dnafrag);
+    $chunk->dnafrag($locus->dnafrag);
     $chunk->dnafrag_start($chunk_start);
 
     $chunk_end = $chunk_start + $chunk_size - 1;

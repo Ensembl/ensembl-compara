@@ -656,6 +656,7 @@ sub copy_all_dnafrags {
     print "Copying ", $this_genome_db->name, "'s DnaFrags ($n/", scalar(@$genome_dbs), ") ...\n";
     my $constraint = "genome_db_id = ".($this_genome_db->dbID);
     copy_table($from_dba->dbc, $to_dba->dbc, 'dnafrag', $constraint.($cellular_component ? " AND cellular_component = '$cellular_component'" : ''), undef, ($df_engine eq 'MyISAM'));
+    copy_data($from_dba->dbc, $to_dba->dbc, 'dnafrag_alt_region', "SELECT dnafrag_alt_region.* FROM dnafrag_alt_region JOIN dnafrag USING (dnafrag_id) WHERE $constraint", undef, ($df_engine eq 'MyISAM'));
   }
 
   $new_dba->dbc->do("ALTER TABLE `dnafrag` ENABLE KEYS") if $df_engine eq 'MyISAM';

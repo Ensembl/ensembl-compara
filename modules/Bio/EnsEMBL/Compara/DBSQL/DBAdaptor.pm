@@ -152,6 +152,7 @@ sub get_available_adaptors {
 
             # genomic:
         'DnaFrag'               => 'Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor',
+        'DnaFragAltRegion'      => 'Bio::EnsEMBL::Compara::DBSQL::DnaFragAltRegionAdaptor',
         'SyntenyRegion'         => 'Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor',
         'DnaFragRegion'         => 'Bio::EnsEMBL::Compara::DBSQL::DnaFragRegionAdaptor',
         'DnaAlignFeature'       => 'Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor',

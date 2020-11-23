@@ -114,9 +114,13 @@ package Bio::EnsEMBL::Compara::DnaFrag;
 use strict;
 use warnings;
 
+use Scalar::Util qw(weaken);
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
+
+use Bio::EnsEMBL::Compara::Locus;
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
@@ -530,6 +534,50 @@ sub slice {
 }
 
 
+=head2 get_alt_region
+
+  Example     : my $dnafrag_alt_region = $dnafrag->get_alt_region();
+  Description : Returns a Locus representing the portion of this DnaFrag that
+                can be aligned
+  Returntype  : Bio::EnsEMBL::Compara::Locus
+  Exceptions  : none
+
+=cut
+
+sub get_alt_region {
+    my $self = shift;
+
+    if ((not exists $self->{'_alt_region'}) and $self->adaptor) {
+        $self->{'_alt_region'} = $self->adaptor->db->get_DnaFragAltRegionAdaptor->fetch_by_dbID($self->dbID);
+        if ($self->{'_alt_region'}) {
+            $self->{'_alt_region'}->{'dnafrag'} = $self;
+            weaken($self->{'_alt_region'}->{'dnafrag'});
+        }
+    }
+    return $self->{'_alt_region'};
+}
+
+
+=head2 as_locus
+
+  Example     : my $locus = $dnafrag->as_locus();
+  Description : Return a new Locus object that represents the whole DnaFrag
+  Returntype  : Bio::EnsEMBL::Compara::Locus
+  Exceptions  : none
+
+=cut
+
+sub as_locus {
+    my $self = shift;
+    return bless {
+        'dnafrag'         => $self,
+        'dnafrag_start'   => 1,
+        'dnafrag_end'     => $self->length,
+        'dnafrag_strand'  => 1,
+    }, 'Bio::EnsEMBL::Compara::Locus';
+}
+
+
 =head2 display_id
 
   Example    : my $id = $dnafrag->display_id;
@@ -576,4 +624,3 @@ sub toString {
 
 
 1;
-

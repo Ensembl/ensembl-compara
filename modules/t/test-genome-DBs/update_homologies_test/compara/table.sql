@@ -56,6 +56,13 @@ CREATE TABLE `dnafrag` (
   UNIQUE KEY `name` (`genome_db_id`,`name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
+CREATE TABLE `dnafrag_alt_region` (
+  `dnafrag_id` bigint(20) unsigned NOT NULL,
+  `dnafrag_start` int(10) unsigned NOT NULL,
+  `dnafrag_end` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`dnafrag_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
 CREATE TABLE `dnafrag_region` (
   `synteny_region_id` int(10) unsigned NOT NULL DEFAULT '0',
   `dnafrag_id` bigint(20) unsigned NOT NULL DEFAULT '0',
@@ -430,7 +437,7 @@ CREATE TABLE `meta` (
   PRIMARY KEY (`meta_id`),
   UNIQUE KEY `species_key_value_idx` (`species_id`,`meta_key`,`meta_value`(255)),
   KEY `species_value_idx` (`species_id`,`meta_value`(255))
-) ENGINE=MyISAM AUTO_INCREMENT=20 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=21 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `method_link` (
   `method_link_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -688,3 +695,4 @@ CREATE TABLE `synteny_region` (
   PRIMARY KEY (`synteny_region_id`),
   KEY `method_link_species_set_id` (`method_link_species_set_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+

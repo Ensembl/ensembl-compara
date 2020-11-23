@@ -672,4 +672,27 @@ sub update {
         } );
 }
 
+
+=head2 delete
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DnaFrag
+  Example     : $adaptor->delete($dnafrag);
+  Description : Delete this DnaFrag from the database (and the cache!)
+  Returntype  : none
+  Exceptions  : none
+  Status      : Stable
+
+=cut
+
+sub delete {
+    my ($self, $dnafrag) = @_;
+
+    assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag');
+
+    $self->db->get_DnaFragAltRegionAdaptor->delete_by_dbID($dnafrag->dbID);
+    $self->dbc->do('DELETE FROM dnafrag WHERE dnafrag_id = ?', undef, $dnafrag->dbID);
+    $self->_id_cache->remove($dnafrag->dbID);
+}
+
+
 1;
