@@ -104,7 +104,7 @@ sub _find_location_of_all_required_mlss {
     my $low_species_tree    = $low_mlss->species_tree;
     my $low_gdb_id_2_stn    = $low_species_tree->get_genome_db_id_2_node_hash();
 
-    my $base_dba            = $self->get_cached_compara_dba('base_location');
+    my $base_dba            = $self->param('base_location') ? $self->get_cached_compara_dba('base_location') : $self->compara_dba;
     my $base_mlss_adaptor   = $base_dba->get_MethodLinkSpeciesSetAdaptor;
     my $base_mlss           = $base_mlss_adaptor->fetch_by_dbID($self->param('base_method_link_species_set_id'));
     my $base_species_tree   = $base_mlss->species_tree;

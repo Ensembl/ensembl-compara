@@ -76,7 +76,6 @@ sub default_options {
             -dbname  => $self->o('dbowner') . '_' . $self->o('species_set_name') . '_ancestral_core_' . $self->o('rel_with_suffix'),
         },
         # EpoLowCoverage parameters
-        'epo_db'            => $self->pipeline_url(),
         'low_epo_mlss_id'   => undef,  # required but unused
         'base_epo_mlss_id'  => undef,  # required but unused
         'max_block_size'    => 1000000,  # max size of alignment before splitting
@@ -396,7 +395,6 @@ sub tweak_analyses {
         'new_method_link_species_set_id'  => '#ext_mlss_id#',
         'base_method_link_species_set_id' => '#mlss_id#',
         'pairwise_location'               => $self->o('pairwise_location'),
-        'base_location'                   => $self->o('epo_db'),
         'prev_epo_db'                     => '#reuse_db#',
     };
     $analyses_by_name->{'create_default_pairwise_mlss'}->{'-flow_into'}->{1} = WHEN(

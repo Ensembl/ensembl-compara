@@ -120,7 +120,6 @@ sub default_options {
         #default location for pairwise alignments (can be a string or an array-ref)
         'pairwise_location' => [ qw(compara_prev lastz_batch_*) ],
         'lastz_complete'    => 0, # set to 1 when all relevant LASTZs have complete
-        'epo_db'            => $self->pipeline_url(),
     };
 }
 
@@ -157,7 +156,6 @@ sub pipeline_wide_parameters {
         'master_db'         => $self->o('master_db'),
         'reuse_db'          => $self->o('reuse_db'),
         'ancestral_db'      => $self->o('ancestral_db'),
-        'epo_db'            => $self->o('epo_db'),
 
         # options
         'run_gerp'       => $self->o('run_gerp'),

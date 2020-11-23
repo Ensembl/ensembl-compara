@@ -133,4 +133,10 @@ sub pipeline_analyses {
     ];
 }
 
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+    $analyses_by_name->{'create_default_pairwise_mlss'}->{'-parameters'}->{'base_location'} = $self->o('epo_db');
+}
+
 1;
