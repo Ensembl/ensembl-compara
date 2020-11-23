@@ -257,7 +257,7 @@ sub transcript_table {
         second_match => "^UniProt/[SWISSPROT|SPTREMBL]", 
         name => "UniProt Match", 
         order => 0,
-        title => get_glossary_entry($hub, 'Uniprot_match')
+        title => get_glossary_entry($hub, 'UniProt Match')
       },
     );
 

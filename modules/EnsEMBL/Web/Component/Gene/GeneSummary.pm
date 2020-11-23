@@ -44,7 +44,6 @@ sub content {
   my $sub_type        = $species_defs->ENSEMBL_SUBTYPE;
   my @CCDS            = @{$object->Obj->get_all_DBLinks('CCDS')};
   my @Uniprot         = @{$object->Obj->get_all_DBLinks('Uniprot/SWISSPROT')};
-  my @Uniprot_isoform = @{$object->Obj->get_all_DBLinks('Uniprot_isoform')};
   my $db              = $object->get_db;
   my $alt_genes       = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE', 'show_version'); #gets all xrefs, sorts them and stores them on the object. Returns HTML only for ALT_GENES
   my $ensembl_select  = $gene->get_all_Attributes('Ensembl_select')->[0] ? $gene->get_all_Attributes('Ensembl_select')->[0]->value : '';
@@ -92,19 +91,9 @@ sub content {
     $table->add_row('CCDS', sprintf($template, $sp_name, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS));
   }
 
-  my $uniprot_match_title = 'UniProt match';
-  my $uniprot_match_description = get_glossary_entry($self->hub, 'UniProt Match');
-  
-  # add Uniprot info
-  if (scalar @Uniprot_isoform) {
-    my %temp = map { $_->primary_id, 1 } @Uniprot_isoform;
-    @Uniprot_isoform = sort keys %temp;
-    $table->add_row($uniprot_match_title, sprintf('<p>%s: %s</p>', $uniprot_match_description, join ', ', map $hub->get_ExtURL_link($_, 'Uniprot_isoform', $_), @Uniprot_isoform));
-  } elsif( scalar @Uniprot){
-    my %temp = map { $_->primary_id, 1 } @Uniprot;
-    @Uniprot = sort keys %temp;
-    $table->add_row($uniprot_match_title, sprintf('<p>%s: %s</p>', $uniprot_match_description, join ', ', map $hub->get_ExtURL_link($_, 'Uniprot/SWISSPROT', $_), @Uniprot));
-  }
+  my %temp = map { $_->primary_id, 1 } @Uniprot;	    my %temp = map { $_->primary_id, 1 } @Uniprot;
+    @Uniprot = sort keys %temp;	    @Uniprot = sort keys %temp;
+    $table->add_row('UniProtKB', sprintf('<p>This gene has proteins that correspond to the following UniProtKB identifiers: %s</p>', join ', ', map $hub->get_ExtURL_link($_, 'Uniprot/SWISSPROT', $_), @Uniprot));
 
   ## add RefSeq match info where appropriate
   if ($hub->species eq 'Homo_sapiens' && $sub_type ne 'GRCh37') {
