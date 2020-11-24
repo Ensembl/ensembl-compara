@@ -302,7 +302,7 @@ sub number_of_families {
 sub has_GeneTree {
     my ($self, $collection) = @_;
     # Hotfix for e103 because webcode has not been updated to use pig_breeds as the collection name yet
-    if ($collection =~ /sus/) {
+    if ($collection =~ /^sus/i) {
         $collection = "pig_breeds";
     }
     return $self->_get_stat($collection, 'gene_trees');
