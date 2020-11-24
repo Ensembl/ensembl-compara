@@ -56,11 +56,10 @@ sub init_cacheable {
   my ($response,$error) = $rest->fetch_url($fetch_url, {});
 
   my @qtl_groups = @{$response->{'_embedded'}->{'qtl_groups'}};
-
   
-  my @gtex_tissues = [];
+  my @gtex_tissues;
   foreach my $group (@qtl_groups){
-    push @gtex_tissues, $group->{'qtl_group'};
+     push @gtex_tissues, $group->{'qtl_group'};
   }
 
   my $gtex_tissue_example = "Whole_Blood";
