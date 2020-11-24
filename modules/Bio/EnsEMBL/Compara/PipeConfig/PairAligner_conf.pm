@@ -164,6 +164,7 @@ sub default_options {
         #'dump_dir' => ...,
         'bed_dir' => $self->o('dump_dir').'/bed_dir',
         'output_dir' => $self->o('dump_dir').'/feature_dumps',
+        'chains_dir' => $self->o('dump_dir').'/chains',
 
 	#Default pairaligner config
 	'skip_pairaligner_stats' => 0, #skip this module if set to 1
@@ -178,6 +179,7 @@ sub pipeline_wide_parameters {
         'skip_pairaligner_stats'    => $self->o('skip_pairaligner_stats'),
         'patch_alignments'          => $self->o('patch_alignments'),
         'genome_dumps_dir'          => $self->o('genome_dumps_dir'),
+        'chains_dir'                => $self->o('chains_dir'),
     };
 }
 
@@ -201,7 +203,7 @@ sub pipeline_create_commands {
         coding_exon_length          INT(10) DEFAULT 0
         ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;'),
 
-       $self->pipeline_create_commands_rm_mkdir(['dump_dir', 'output_dir', 'bed_dir']),
+       $self->pipeline_create_commands_rm_mkdir(['dump_dir', 'output_dir', 'bed_dir', 'chains_dir']),
     ];
 }
 

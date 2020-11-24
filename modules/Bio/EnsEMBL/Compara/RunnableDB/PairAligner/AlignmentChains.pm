@@ -35,11 +35,17 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains;
 use strict;
 use warnings;
 
+use File::Basename;
+use File::Path qw(make_path);
+use List::Util qw(sum);
+
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Utils::Exception qw(throw );
 
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
+use Bio::EnsEMBL::Compara::Utils::IDGenerator qw(:all);
+use Bio::EnsEMBL::Hive::Utils qw(dir_revhash);
 
 use base ('Bio::EnsEMBL::Compara::Production::Analysis::AlignmentChains');
 
@@ -168,5 +174,32 @@ sub run{
     $self->param('chains', $converted_chains);
 }
 
+
+sub write_output {
+    my ($self) = @_;
+
+    $self->assign_ids;
+    $self->compara_dba->dbc->disconnect_if_idle;
+
+    my $chains_dir     = $self->param_required('chains_dir');
+    my $output_mlss_id = $self->param_required('output_mlss_id');
+    my $qyDnaFragID    = $self->param('qyDnaFragID');
+    my $qydnafrag_hash = dir_revhash($self->param('qyDnaFragID'));
+    my $tgdnafrag_hash = dir_revhash($self->param('tgDnaFragID'));
+    my $filename       = join('.', 'chains', $qyDnaFragID, $self->param('tgDnaFragID'), 'tsv');
+    my $path           = "$chains_dir/$output_mlss_id/$qydnafrag_hash/chains_$qyDnaFragID/$tgdnafrag_hash/$filename";
+
+    # create directory
+    make_path(dirname($filename));
+
+    open( my $fh, '>', $filename ) or die "Cannot open $filename for writing";
+    print $fh join("\t", @{ $Bio::EnsEMBL::Compara::GenomicAlignBlock::object_summary_headers }) . "\n";
+    foreach my $chain (@{ $self->param('chains') }) {
+        foreach my $gab (@$chain) {
+            print $fh join("\t", @{$gab->object_summary}), "\n";
+        }
+    }
+    close($fh);
+}
 
 1;

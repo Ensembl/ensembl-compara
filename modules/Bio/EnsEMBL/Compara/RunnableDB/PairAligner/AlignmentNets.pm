@@ -100,6 +100,8 @@ sub fetch_input {
     $self->delete_alignments($out_mlss);
   }
 
+  # TODO read from file instead
+  #my $path     = "$chains_dir/$output_mlss_id/$qydnafrag_hash/chains_$qyDnaFragID/$tgdnafrag_hash/$filename";
   my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss,
 							      $query_dnafrag,
 							      $self->param('start'),

@@ -503,6 +503,12 @@ sub assign_ids {
         my $group_id = $ga_id;
         foreach my $gab (@$chain) {
             my ($ga1, $ga2) = @{$gab->genomic_align_array};
+            if ($ga1->dnafrag_id != $self->param('qyDnaFragID')) {
+                # Swap the genomic aligns so that the first one is the one
+                # of the query species
+                $gab->genomic_align_array([$ga2, $ga1]);
+                ($ga1, $ga2) = @{$gab->genomic_align_array};
+            }
             $gab->dbID($ga_id);
             $ga1->dbID($ga_id);
             $ga2->dbID($ga_id+1);
