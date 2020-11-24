@@ -344,24 +344,30 @@ sub _write_output {
 	   $gata->store_group($split_trees);
 	   foreach my $tree (@$split_trees) {
 	       $self->_assert_cigar_lines_in_block($tree->modern_genomic_align_block_id);
-	       $self->_assert_binary_tree($tree);
+	       $self->_assert_tree($tree);
 	       $self->_write_gerp_dataflow($tree->modern_genomic_align_block_id);
 	       
 	   }
        } else {
 	   $gata->store($genomic_align_tree, $skip_left_right_index);
 	   $self->_assert_cigar_lines_in_block($genomic_align_tree->modern_genomic_align_block_id);
-	   $self->_assert_binary_tree($genomic_align_tree);
+	   $self->_assert_tree($genomic_align_tree);
 	   $self->_write_gerp_dataflow($genomic_align_tree->modern_genomic_align_block_id);
        }
    }
 }
 
-sub _assert_binary_tree {
+sub _assert_tree {
     my ($self, $gat) = @_;
     foreach my $node (@{$gat->get_all_nodes}) {
-        if (!$node->is_leaf && ($node->get_child_count != 2)) {
-            $self->_backup_data_and_throw($gat, sprintf("Node %s is not binary", $node->name));
+        if ($node->is_leaf) {
+            if ($node->genomic_align_group->genome_db->name eq 'ancestral_sequences') {
+                $self->_backup_data_and_throw($gat, sprintf("Node %s is a leaf, but attached to ancestral_sequences", $node->name));
+            }
+        } else {
+            if ($node->get_child_count != 2) {
+                $self->_backup_data_and_throw($gat, sprintf("Node %s is not binary", $node->name));
+            }
         }
     }
 }
