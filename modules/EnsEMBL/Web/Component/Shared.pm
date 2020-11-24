@@ -250,12 +250,19 @@ sub transcript_table {
 
     push @columns, { key => 'ccds', sort => 'html', label => 'CCDS', class => '_ht' } if $species =~ /^Homo_sapiens|Mus_musculus/;
     my @rows;
-   
+
     my %extra_links = (
-      uniprot => { match => "^UniProt/[SWISSPROT|SPTREMBL]", name => "UniProt", order => 0 },
+      uniprot => { 
+        first_match => "Uniprot_isoform", 
+        second_match => "^UniProt/[SWISSPROT|SPTREMBL]", 
+        name => "UniProt Match", 
+        order => 0,
+        title => get_glossary_entry($hub, 'UniProt Match')
+      },
     );
+
     if ($species eq 'Homo_sapiens' && $sub_type eq 'GRCh37' ) {
-      $extra_links{refseq} = { match => "^RefSeq", name => "RefSeq", order => 1, title => "RefSeq transcripts with sequence similarity and genomic overlap"};
+      $extra_links{refseq} = { first_match => "^RefSeq", name => "RefSeq", order => 1, title => "RefSeq transcripts with sequence similarity and genomic overlap"};
     }
     my %any_extras;
  
@@ -294,7 +301,14 @@ sub transcript_table {
         $ccds = join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS;
       }
       foreach my $k (keys %extra_links) {
-        if(my @links = grep {$_->status ne 'PRED' } grep { $_->dbname =~ /$extra_links{$k}->{'match'}/i } @$dblinks) {
+        
+        my @links = grep {$_->status ne 'PRED' } grep { $_->dbname =~ /$extra_links{$k}->{'first_match'}/i } @$dblinks;
+
+        if(!@links && $extra_links{$k}->{'second_match'}){
+          @links = grep {$_->status ne 'PRED' } grep { $_->dbname =~ /$extra_links{$k}->{'second_match'}/i } @$dblinks;
+        }
+
+        if(@links) {
           my %T = map { $_->primary_id => $_->dbname } @links;
           my $cell = '';
           my $i = 0;
