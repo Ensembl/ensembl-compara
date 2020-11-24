@@ -573,6 +573,7 @@ sub core_pipeline_analyses {
               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsSlow',
               -analysis_capacity => 1,
               -rc_name => '8Gb_job',
+              -can_be_empty  => 1,
           },
 
         {   -logic_name => 'detect_component_mlsss',
@@ -581,7 +582,7 @@ sub core_pipeline_analyses {
                 'do_pairwise_gabs'          => $self->o('do_pairwise_gabs'),
                 'do_compare_to_previous_db' => $self->o('do_compare_to_previous_db'),
             },
-            -wait_for   => [ 'set_internal_ids_collection' ],
+            -wait_for   => [ 'set_internal_ids_collection', 'set_internal_ids_slow' ],
             -flow_into  => {
                 '3->A' => [ 'lift_to_principal' ],
                 'A->2' => [ 'run_healthchecks' ],
