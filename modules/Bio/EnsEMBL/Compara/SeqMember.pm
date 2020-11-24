@@ -664,6 +664,9 @@ sub has_translation_edits {
   Description : This method returns an arrayref containing a summary of the
                 information contained in the object. The headers are defined
                 by the global $object_summary_headers variable.
+                Warning: several object attributes are only available on
+                AlignedMember objects (a subclass of SeqMember). Make sure
+                your objects are AlignedMembers, not pure SeqMembers.
   Returntype  : arrayref
   Exceptions  : none
   Caller      : general
