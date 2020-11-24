@@ -1092,6 +1092,38 @@ sub toString {
 }
 
 
+=head2 object_summary
+
+  Example     : print join("\t", @{$genomic_align->object_summary}), "\n";
+  Description : This method returns an arrayref containing a summary of the
+                information contained in the object. The headers are defined
+                by the global $object_summary_headers variable.
+  Returntype  : arrayref
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+our $object_summary_headers = [qw(genomic_align_id dnafrag_id dnafrag_start dnafrag_end dnafrag_strand cigar_line visible node_id)];
+
+sub object_summary {
+    my $self = shift;
+
+    my @summary_parts = (
+        $self->dbID,
+        $self->dnafrag_id,
+        $self->dnafrag_start,
+        $self->dnafrag_end,
+        $self->dnafrag_strand,
+        $self->cigar_line,
+        $self->visible,
+        $self->node_id,
+    );
+
+    return \@summary_parts;
+}
+
+
 =head2 display_id
 
   Args       : none

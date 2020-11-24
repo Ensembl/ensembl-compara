@@ -1672,4 +1672,44 @@ sub toString {
 }
 
 
+=head2 object_summary
+
+  Example     : print join("\t", @{$genomic_align_block->object_summary}), "\n";
+  Description : This method returns an arrayref containing a summary of the
+                information contained in the object. The headers are defined
+                by the global $object_summary_headers variable.
+  Returntype  : arrayref
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+our $object_summary_headers = [
+    qw(genomic_align_block_id method_link_species_set_id score perc_id length group_id level_id direction),
+    (map {'query_' . $_} @{ $Bio::EnsEMBL::Compara::GenomicAlign::object_summary_headers }),
+    (map {'target_' . $_} @{ $Bio::EnsEMBL::Compara::GenomicAlign::object_summary_headers }),
+];
+
+sub object_summary {
+    my $self = shift;
+
+    my @summary_parts = (
+        $self->dbID,
+        $self->method_link_species_set->dbID,
+        $self->score,
+        $self->perc_id,
+        $self->length,
+        $self->group_id,
+        $self->level_id,
+        $self->direction,
+    );
+
+    my ($ga1, $ga2) = @{$self->genomic_align_array};
+    push @summary_parts, @{$ga1->object_summary};
+    push @summary_parts, @{$ga2->object_summary};
+
+    return \@summary_parts;
+}
+
+
 1;
