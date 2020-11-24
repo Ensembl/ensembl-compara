@@ -85,7 +85,6 @@ sub tweak_analyses {
         'create_pair_aligner_jobs'  => '2Gb_job',
         'populate_new_database' => '8Gb_job',
         'parse_pair_aligner_conf' => '4Gb_job',
-        'set_internal_ids_collection' => '1Gb_job',
         $self->o('pair_aligner_logic_name') => '4Gb_job',
         $self->o('pair_aligner_logic_name')."_himem1" => '8Gb_job',
     );
