@@ -365,6 +365,9 @@ sub _assert_tree {
                 $self->_backup_data_and_throw($gat, sprintf("Node %s is a leaf, but attached to ancestral_sequences", $node->name));
             }
         } else {
+            if ($node->genomic_align_group->genome_db->name ne 'ancestral_sequences') {
+                $self->_backup_data_and_throw($gat, sprintf("Node %s is internal, but not attached to ancestral_sequences", $node->name));
+            }
             if ($node->get_child_count != 2) {
                 $self->_backup_data_and_throw($gat, sprintf("Node %s is not binary", $node->name));
             }
