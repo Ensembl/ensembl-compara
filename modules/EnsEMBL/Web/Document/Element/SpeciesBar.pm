@@ -106,41 +106,19 @@ sub init_species_list {
 sub species_list {
   my $self      = shift;
   my $total     = scalar @{$self->{'species_list'}};
-  my $remainder = $total % 3;
-  my $third     = int($total / 3) - 1;
   my ($all_species, $fav_species);
-  
+
   if ($self->{'favourite_species'}) {
     my $fave_text = $self->hub->species_defs->FAVOURITES_SYNONYM || 'Favourite';
     $fav_species .= qq{<li><a class="constant" href="$_->[0]">$_->[1]</a></li>} for @{$self->{'favourite_species'}};
     $fav_species  = qq{<h4>$fave_text species</h4><ul>$fav_species</ul><div style="clear: both;padding:1px 0;background:none"></div>};
   }
-  
-  # Ok, this is slightly mental. Basically, we're building a 3 column structure with floated <li>'s.
-  # Because they are floated, if they were printed alphabetically, this would result in a menu with was alphabetised left to right, i.e.
-  # A B C
-  # D E F
-  # G H I
-  # Because the list is longer than it is wide, it is much easier to find what you want if alphabetised top to bottom, i.e.
-  # A D G
-  # B E H
-  # C F I
-  # The code below achieves that goal
-  my @ends = ( $third + !!($remainder && $remainder--) );
-  push @ends, $ends[0] + 1 + $third + !!($remainder && $remainder--);
-  
-  my @output_order;
-  push @{$output_order[0]}, $self->{'species_list'}->[$_] for 0..$ends[0];
-  push @{$output_order[1]}, $self->{'species_list'}->[$_] for $ends[0]+1..$ends[1];
-  push @{$output_order[2]}, $self->{'species_list'}->[$_] for $ends[1]+1..$total-1;
-  
-  for my $i (0..$#{$output_order[0]}) {
-    for my $j (0..2) {
-      $all_species .= sprintf '<li>%s</li>', $output_order[$j][$i] ? qq{<a class="constant" href="$output_order[$j][$i][0]">$output_order[$j][$i][1]</a>} : '&nbsp;';
-    }
+
+  for my $i (0..$total-1) {
+    $all_species .= sprintf '<li>%s</li>', $self->{'species_list'}[$i] ? qq{<a class="constant" href="$self->{'species_list'}[$i][0]">$self->{'species_list'}[$i][1]</a>} : '&nbsp;';
   }
 
-  return sprintf '<div class="dropdown species">%s<h4>%s</h4><ul>%s</ul></div>', $fav_species, $fav_species ? 'All species' : 'Select a species', $all_species;  
+  return sprintf '<div class="dropdown species">%s<h4>%s</h4><ul>%s</ul></div>', $fav_species, $fav_species ? 'All species' : 'Select a species', $all_species;
 }
 
 1;
