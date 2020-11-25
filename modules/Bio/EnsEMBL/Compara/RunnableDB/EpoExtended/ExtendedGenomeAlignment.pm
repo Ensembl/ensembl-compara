@@ -87,6 +87,9 @@ sub fetch_input {
   #load from genomic_align_block ie using in 2X mode
   $self->_load_GenomicAligns($self->param('genomic_align_block_id'));
 
+    # Make sure we start in a clean space, free of any files from a previous job attempt
+    $self->cleanup_worker_temp_directory;
+
   if ($self->param('genomic_aligns')) {
       #load 2X genomes
       $self->_load_2XGenomes($self->param('genomic_align_block_id'));
@@ -218,11 +221,6 @@ sub _write_output {
 	  $gata->store($genomic_align_tree, $skip_left_right_index);
 	  $self->_write_gerp_dataflow($genomic_align_tree->modern_genomic_align_block_id);
       }
-
-      #DO NOT COMMENT THIS OUT!!! (at least not permenantly). Needed
-      #to clean up after each job otherwise you get files left over from
-      #the previous job.
-      $self->cleanup_worker_temp_directory;
   
   return 1;
 }
