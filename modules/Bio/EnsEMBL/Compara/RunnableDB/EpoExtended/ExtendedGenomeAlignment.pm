@@ -48,7 +48,6 @@ use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::Production::Analysis::ExtendedGenomeAlignment;
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
-use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
