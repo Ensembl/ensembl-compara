@@ -29,6 +29,7 @@ use List::MoreUtils qw(any);
 sub init_cacheable {
   ## @override
   my $self = shift;
+  my $hub  = $self->hub;
 
   $self->SUPER::init_cacheable(@_);
 
@@ -48,9 +49,19 @@ sub init_cacheable {
 
   $self->load_tracks;
 
-  my @gtex_tissues = sort keys %{$self->hub->species_defs->REST_gtex_tissues||{}};
+  my $eqtl_rest_url = $hub->species_defs->EQTL_REST_URL;
+  my $rest = EnsEMBL::Web::REST->new($hub);
+  my $fetch_url = sprintf( "%sqtl_groups?size=1000", $eqtl_rest_url);
 
-  # 
+  my ($response,$error) = $rest->fetch_url($fetch_url, {});
+
+  my @qtl_groups = @{$response->{'_embedded'}->{'qtl_groups'}};
+  
+  my @gtex_tissues;
+  foreach my $group (@qtl_groups){
+     push @gtex_tissues, $group->{'qtl_group'};
+  }
+
   my $gtex_tissue_example = "Whole_Blood";
   unless(any { $_ eq $gtex_tissue_example } @gtex_tissues) {
     $gtex_tissue_example = $gtex_tissues[0];
@@ -60,12 +71,12 @@ sub init_cacheable {
   my $other_node = $self->get_node('functional_other_regulatory_regions');
   $menu->insert_before($self->create_menu_node('functional_gene_expression','Gene Expression correlations'),$other_node);
 
-  # Should really come from REST server.
   foreach my $tissue (sort @gtex_tissues) {
     my $tissue_readable = $tissue;
     $tissue_readable =~ s/_/ /g;
     my $manplot_desc = qq(
       Complete set of eQTL correlation statistics as computed by the GTEx consortium on $tissue_readable samples.
+      Provided to Ensembl by the EBI eQTL catalog.
       The GTEx Consortium. Science. 8 May 2015: Vol 348 no. 6235 pp 648-660.
       DOI: <a href="https://doi.org/10.1126/science.1262110">10.1126/science.1262110</a>.
       PMID: <a href="http://www.ncbi.nlm.nih.gov/pubmed/25954001">25954001</a>
