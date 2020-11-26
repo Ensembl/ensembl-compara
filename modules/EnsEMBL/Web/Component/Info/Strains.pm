@@ -42,7 +42,8 @@ sub content {
   my $html;
 
   my $strain_type = $sd->STRAIN_TYPE;
-  $html .= sprintf '<h1>%s %ss</h1>', $sd->SPECIES_DISPLAY_NAME, $strain_type;
+  my $name = $sd->USE_COMMON_NAMES ? $sd->SPECIES_DISPLAY_NAME : $sd->SPECIES_SCIENTIFIC_NAME;
+  $html .= sprintf '<h1>%s %ss</h1>', $name, $strain_type;
 
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, sprintf('/%s_strains.inc', $hub->species), 1);
 
