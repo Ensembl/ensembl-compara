@@ -1204,7 +1204,15 @@ sub _summarise_compara_db {
   push @{$self->db_tree->{'compara_like_databases'}}, $db_name;
 
   $self->_summarise_generic($db_name, $dbh);
+ 
+  # Get list of species in the compara db (no longer everything!)
+  my $spp_aref = $dbh->selectall_arrayref('select name from genome_db');
   
+  foreach my $row (@$spp_aref) {
+    my $name = $row->[0]; 
+    $self->db_tree->{$db_name}{'COMPARA_SPECIES'}{$name} = 1;
+  }
+ 
   # See if there are any intraspecies alignments (ie a self compara)
   my $intra_species_aref = $dbh->selectall_arrayref('
     select mls.species_set_id, mls.method_link_species_set_id, count(*) as count

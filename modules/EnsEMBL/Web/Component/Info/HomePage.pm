@@ -234,9 +234,13 @@ sub compara_text {
   
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
+ 
+  ## Is this species in the compara db?
+  my $compara_spp  = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'COMPARA_SPECIES'};
+  return '' unless $compara_spp && $compara_spp->{$species_defs->SPECIES_PRODUCTION_NAME};
+
   my $sample_data  = $species_defs->SAMPLE_DATA;
   my $ftp          = $self->ftp_url;
-  
 
   return sprintf('
     <div class="homepage-icon">
