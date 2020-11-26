@@ -330,8 +330,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'create_neighbour_nodes_jobs_alignment',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'    => 'SELECT gat2.root_id, #mlss_id# FROM genomic_align_tree gat1 LEFT JOIN genomic_align ga USING (node_id) JOIN genomic_align_tree gat2 USING (root_id) WHERE gat2.parent_id IS NULL AND ga.method_link_species_set_id = #mlss_id# GROUP BY gat2.root_id',
-                'column_names'  => [ 'root_id', 'mlss_id' ],
+                'inputquery'    => 'SELECT gat2.root_id FROM genomic_align_tree gat1 LEFT JOIN genomic_align ga USING (node_id) JOIN genomic_align_tree gat2 USING (root_id) WHERE gat2.parent_id IS NULL AND ga.method_link_species_set_id = #mlss_id# GROUP BY gat2.root_id',
+                'column_names'  => [ 'root_id' ],
             },
             -rc_name    => '2Gb_job',
             -flow_into  => {
