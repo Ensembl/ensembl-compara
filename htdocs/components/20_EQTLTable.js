@@ -20,7 +20,7 @@ Ensembl.Panel.EQTLTable = Ensembl.Panel.Content.extend({
     this.base();
     this.tableData = [];
 
-    this.eQTLRestURL        = this.params['eqtl_rest_endpoint'];
+    this.eQTLRestURL        = this.params['eqtl_rest_endpoint'].replace('http:', window.location.protocol);
     this.geneURLTemplate    = decodeURIComponent(this.params['eqtl_gene_url_template']);
     this.elLk.eQTLTable     = this.el.find('._variant_eqtl_table');
 
