@@ -118,7 +118,7 @@ sub default_options {
         'max_block_size'   => 1000000,                       #max size of alignment before splitting
 
         #default location for pairwise alignments (can be a string or an array-ref)
-        'pairwise_location' => [ qw(compara_prev lastz_batch_*) ],
+        'pairwise_location' => [ qw(compara_prev lastz_batch_* unidir_lastz) ],
         'lastz_complete'    => 0, # set to 1 when all relevant LASTZs have complete
         'epo_db'            => $self->pipeline_url(),
     };
