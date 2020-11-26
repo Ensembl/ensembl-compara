@@ -1358,28 +1358,30 @@ sub annotate_node_type {
     my ($self) = @_;
 
     my $duplications;
-    my $leaf_names;
 
-    #find the 2 children of a node
     my $children = $self->children;
-    my $child1 = $children->[0];
-    my $child2 = $children->[1];
 
-    #Find all the leaves of child1
-    my $all_leaves = $child1->get_all_leaves;
-    foreach my $this_leaf (@$all_leaves) {
-        my $name = $this_leaf->get_all_genomic_aligns_for_node->[0]->genome_db->name;
-        $duplications->{$name} = 1;
-    }
+    OUTER: foreach my $child (@$children) {
+        my $all_leaves = $child->get_all_leaves;
 
-    #Find all the leaves of child2 and if there are any shared species with child1, we have found a 
-    #duplication node.
-    $all_leaves = $child2->get_all_leaves;
-    foreach my $this_leaf (@$all_leaves) {
-        my $name = $this_leaf->get_all_genomic_aligns_for_node->[0]->genome_db->name;
-        if ($duplications->{$name}) {
-            $self->node_type("duplication");
-            last;
+        if (!$duplications) {
+            # Build the list of species seen in this child
+            $duplications = {};
+            foreach my $this_leaf (@$all_leaves) {
+                my $name = $this_leaf->get_all_genomic_aligns_for_node->[0]->genome_db->name;
+                $duplications->{$name} = 1;
+            }
+
+        } else {
+            # Compare the list of species against the ones already seen
+            foreach my $this_leaf (@$all_leaves) {
+                my $name = $this_leaf->get_all_genomic_aligns_for_node->[0]->genome_db->name;
+                if ($duplications->{$name}) {
+                    # Found a duplication. Stop all for loops of this node
+                    $self->node_type("duplication");
+                    last OUTER;
+                }
+            }
         }
     }
 
