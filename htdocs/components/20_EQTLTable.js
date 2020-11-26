@@ -45,7 +45,7 @@ Ensembl.Panel.EQTLTable = Ensembl.Panel.Content.extend({
         // eQTL API can only return a maximum of 1000 rows at a time
         // so if we have nextUrl set, we make another query to grab the remaining data
         if(nextUrl){
-          this.eQTLRestURL = nextUrl;
+          this.eQTLRestURL = nextUrl.replace('http:', window.location.protocol);;
           this.fetchEQTLTable();
         } else{
           this.elLk.eQTLTable.children().show();
