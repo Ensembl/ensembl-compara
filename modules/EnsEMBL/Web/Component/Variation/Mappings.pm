@@ -494,13 +494,13 @@ sub _render_eqtl_table {
 
   my $eqtl_table_html = '';
 
-  if ($hub->species eq 'Homo_sapiens' && (my $rest_url = $hub->species_defs->ENSEMBL_REST_URL)) {
+  if ($hub->species eq 'Homo_sapiens' && (my $rest_url = $hub->species_defs->EQTL_REST_URL)) {
     # empty table for eQTLs - get populated by JS via REST
     my @eqtl_columns  = (
-      { key => 'gene',    title => 'Gene',                        sort => 'html'    },
-      { key => 'p_val',   title => 'P-value (-log<sub>10</sub>)', sort => 'numeric',  help => "Nominal p-values of the individual variant-gene pair." },
-      { key => 'beta',    title => 'Effect size',                 sort => 'numeric',  help => "Effect of the alternative allele (ALT) relative to the reference allele (REF) (i.e., the eQTL effect allele is the ALT allele)."},
-      { key => 'tissue',  title => 'Tissue',                      sort => 'html'    },
+      { key => 'gene_id',    title => 'Gene',                        sort => 'html'    },
+      { key => 'pvalue',     title => 'P-value (-log<sub>10</sub>)', sort => 'numeric',  help => "Nominal p-values of the individual variant-gene pair." },
+      { key => 'beta',       title => 'Effect size',                 sort => 'numeric',  help => "Effect of the alternative allele (ALT) relative to the reference allele (REF) (i.e., the eQTL effect allele is the ALT allele)."},
+      { key => 'qtl_group',  title => 'Tissue',                      sort => 'string'  },
     );
 
     # add dummy rows to get pagination working
@@ -509,10 +509,13 @@ sub _render_eqtl_table {
 
     # create table
     my $eqtl_table = $self->new_table(\@eqtl_columns, \@dummy_rows, {
-      data_table => 1, sorting => [ 'p_val desc' ], data_table_config => {
-        iDisplayLength => 10, aLengthMenu => [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]]
+      data_table => 1, sorting => [ 'pvalue desc' ], data_table_config => {
+        iDisplayLength => 10, 
+        aLengthMenu => [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]]
       }
     });
+
+    my $assosiation_url = sprintf('%sassociations/%s?size=1000', $rest_url, $hub->param('v'));
 
     $eqtl_table_html = sprintf('<div class="hidden _variant_eqtl_table">
       <input type="hidden" class="panel_type" value="EQTLTable">
@@ -520,7 +523,7 @@ sub _render_eqtl_table {
       <input type="hidden" name="eqtl_gene_url_template" class="js_param" value="%s">
       <h2>Gene expression correlations</h2>%s<h3 class="_no_data">No Gene expression correlations</h3>
       </div>',
-      sprintf('%s/eqtl/variant_name/%s/%s?content-type=application/json', $rest_url, lc $hub->species, $hub->param('v')),
+      $assosiation_url,
       $hub->url({'type' => 'Gene', 'action' => 'Regulation', 'g' => '{{geneId}}', 'r' => undef}),
       $eqtl_table->render
     );

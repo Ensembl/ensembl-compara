@@ -18,23 +18,42 @@
 Ensembl.Panel.EQTLTable = Ensembl.Panel.Content.extend({
   init: function () {
     this.base();
+    this.tableData = [];
 
     this.eQTLRestURL        = this.params['eqtl_rest_endpoint'];
     this.geneURLTemplate    = decodeURIComponent(this.params['eqtl_gene_url_template']);
     this.elLk.eQTLTable     = this.el.find('._variant_eqtl_table');
 
+    this.elLk.eQTLTable.children().hide().end().removeClass('hidden').append('<p>Loading ' + this.elLk.eQTLTable.find('h2').text() + ' ...</p>');
     this.fetchEQTLTable();
+    
   },
 
   fetchEQTLTable: function() {
-
-    this.elLk.eQTLTable.children().hide().end().removeClass('hidden').append('<p>Loading ' + this.elLk.eQTLTable.find('h2').text() + ' ...</p>');
 
     $.ajax({
       url       : this.eQTLRestURL,
       dataType  : 'json',
       context   : this,
-      success   : function(json) { this.showEQTLTable(json); this.elLk.eQTLTable.children('p').remove(); },
+      success   : function(json) { 
+        
+        var columns = Object.values(json['_embedded']['associations']);
+        var nextUrl = json['_links']['next'] ? json['_links']['next']['href'] : '';
+
+        this.tableData = this.tableData.concat(columns);
+
+        // eQTL API can only return a maximum of 1000 rows at a time
+        // so if we have nextUrl set, we make another query to grab the remaining data
+        if(nextUrl){
+          this.eQTLRestURL = nextUrl;
+          this.fetchEQTLTable();
+        } else{
+          this.elLk.eQTLTable.children().show();
+          this.showEQTLTable(this.tableData); 
+          this.elLk.eQTLTable.children('p').remove(); 
+        }
+
+      },
       error     : function(jqXHR) { this.showError((jqXHR.responseJSON || {}).error) }
     });
   },
@@ -51,18 +70,17 @@ Ensembl.Panel.EQTLTable = Ensembl.Panel.Content.extend({
     // combine data
     var dataCombined = {};
     $.each(data, function(i,obj) {
-      var key = obj.gene + '-' + obj.tissue;
+      var key = obj.gene_id + '-' + obj.qtl_group;
       if (!(key in dataCombined)) {
         dataCombined[key] = obj;
       }
-      dataCombined[key][obj.statistic] = obj.statistic === 'beta' ? obj.value : obj.minus_log10_p_value;
     });
     data = null;
 
     // add rows from given data
     table.fnAddData($.makeArray($.map(dataCombined, function(obj) {
-      return [[ '<a href="' + Ensembl.populateTemplate(template, {geneId: obj.gene}) + '">' + obj.gene + '</a>',
-        obj['p-value'], obj.beta, obj.tissue
+      return [[ '<a href="' + Ensembl.populateTemplate(template, {geneId: obj.gene_id}) + '">' + obj.gene_id + '</a>',
+        obj.neg_log10_pvalue, obj.beta, obj.qtl_group
       ]];
     })), false);
 
