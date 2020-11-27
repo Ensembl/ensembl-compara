@@ -830,7 +830,7 @@ sub _get_genome_dump_path {
         $self->name,
         $self->assembly,
     );
-    push @name_components, 'comp'.$self->genome_component if $self->genome_component;
+    push @name_components, 'comp' . $self->genome_component if $self->genome_component;
     push @name_components, 'non_ref' if $non_reference;
     push @name_components, $mask if $mask;
 

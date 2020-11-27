@@ -271,7 +271,8 @@ sub expand_Homologies {
 
 =head2 load_all_AltRegions
 
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DnaFragAltRegionAdaptor $dnafrag_alt_region_adaptor. The adaptor that is used to retrieve the objects.
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DnaFragAltRegionAdaptor $dnafrag_alt_region_adaptor.
+                The adaptor that is used to retrieve the objects.
   Arg[2..n]   : Objects or arrays
   Example     : load_all_AltRegions($dnafrag_alt_region_adaptor, $dnafrags);
   Description : Method to load the alt-regions of many DnaFrags in a minimum number of queries
@@ -289,7 +290,7 @@ sub load_all_AltRegions {
 
     my %dnafrags;
     foreach my $a (@_) {
-        foreach my $d (@{wrap_array($a)}) {
+        foreach my $d ( @{ wrap_array($a) } ) {
             next if !check_ref($d, 'Bio::EnsEMBL::Compara::DnaFrag') ;      # It has to be a DnaFrag
             next if exists $d->{'_alt_region'};                             # ... that doesn't have its alt-region yet
             $dnafrags{$d->dbID} = $d;
