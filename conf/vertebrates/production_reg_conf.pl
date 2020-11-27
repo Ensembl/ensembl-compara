@@ -103,7 +103,7 @@ my $compara_dbs = {
 
     ## sauropsids
     'sauropsids_epo_high_low'=> [ 'mysql-ens-compara-prod-7', 'jalvarez_sauropsids_epo_update_103' ],
-    'sauropsids_epo_prev'    => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],
+    'sauropsids_epo_prev'    => [ 'mysql-ens-compara-prod-10', "muffato_sauropsids_epo_with2x_101" ],
     'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
 
     ## fish
