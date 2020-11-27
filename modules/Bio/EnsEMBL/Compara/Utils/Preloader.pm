@@ -278,8 +278,6 @@ sub expand_Homologies {
   Description : Method to load the alt-regions of many DnaFrags in a minimum number of queries
   Returntype  : Arrayref of Bio::EnsEMBL::Compara::Locus: the objects (alt-regions) loaded from the database
   Exceptions  : none
-  Caller      : general
-  Status      : Stable
 
 =cut
 
