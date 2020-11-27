@@ -73,10 +73,6 @@ sub write_output {
 
 sub _write_output {
     my ($self, $chain) = @_;
-  #
-  #Start transaction
-  #
-  $self->call_within_transaction( sub {
     
         my $group_id;
         
@@ -99,7 +95,6 @@ sub _write_output {
             }
             $self->compara_dba->get_GenomicAlignBlockAdaptor->store($block);
         }
-  } );
 }
 
 ###########################################
