@@ -189,6 +189,7 @@ sub core_pipeline_analyses {
                         'set_internal_ids'  => INPUT_PLUS(),
                         'mlss_factory'      => { 'inputlist' => [['#mlss_id#'], ['#ext_mlss_id#']] },
                         'drop_ancestral_db' => { 'mlss_id' => '#mlss_id#', 'prev_mlss_id' => '#prev_mlss_id#' },
+                        'copy_anchor_align_factory' => { 'mlss_id' => '#mlss_id#' },
                     },
                     ELSE                           {
                         'set_gerp_mlss_tag' => { 'ext_mlss_id' => '#mlss_id#', 'ce_mlss_id' => '#ce_mlss_id#', 'cs_mlss_id' => '#cs_mlss_id#' },
@@ -244,6 +245,25 @@ sub core_pipeline_analyses {
                     'UPDATE seq_region SET name = REPLACE(name, "_#prev_mlss_id#_", "_#mlss_id#_")',
                 ],
             },
+        },
+        # Copy all the anchor_aligns for the genomes included in the new EPO MSA (subset of the previous one)
+        {   -logic_name => 'copy_anchor_align_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'mlss_id'           => $self->o('mlss_id'),
+                'fan_branch_code'   => 1,
+            },
+            -rc_name    => '500Mb_job',
+            -flow_into  => [ 'copy_anchor_align' ],
+        },
+        {   -logic_name    => 'copy_anchor_align',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithJoin',
+            -parameters    => {
+                'db_conn'    => '#prev_db#',
+                'table'      => 'anchor_align',
+                'inputquery' => 'SELECT anchor_align_id, #mlss_id#, anchor_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, score, num_of_organisms, num_of_sequences, evalue, untrimmed_anchor_align_id, is_overlapping FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE genome_db_id = #genome_db_id#',
+            },
+            -hive_capacity => 10,
         },
         # Transfer MLSS, GA* and dnafrag ids from the previous MLSS id to the current one, update the MSA and
         # ancestral core database, and finally remove the previous MSA information
