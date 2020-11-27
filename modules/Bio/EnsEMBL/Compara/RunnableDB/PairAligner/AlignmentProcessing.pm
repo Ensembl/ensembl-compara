@@ -61,6 +61,8 @@ sub fetch_input {
 sub write_output {
   my($self) = @_;
 
+  $self->assign_ids;
+
   foreach my $chain (@{ $self->param('chains') }) {
       $self->_write_output($chain);
     }
@@ -523,7 +525,10 @@ sub assign_ids {
     # For simplicity, genomic_align_block_id is the genomic_align_id of its
     # first genomic_align. Since all blocks are pairwise, we need two
     # request two values per block only.
-    # group_id (for nets) should not be touched, cf the comment in _write_output
+    # group_id (for chains) is set to the genomic_align_block_id of the
+    # first block of the chain.
+    # group_id (for nets) should not be touched, cf the comment in
+    # _write_output, because it is already set (coming from chains)
     my $ga_id = get_id_range(
         $self->compara_dba->dbc,
         "genomic_align_${mlss_id}",
@@ -532,11 +537,13 @@ sub assign_ids {
     );
 
     foreach my $chain (@$chains) {
+        my $group_id = $ga_id;
         foreach my $gab (@$chain) {
             my ($ga1, $ga2) = @{$gab->genomic_align_array};
             $gab->dbID($ga_id);
             $ga1->dbID($ga_id);
             $ga2->dbID($ga_id+1);
+            $gab->group_id($group_id) unless $gab->group_id;
             $ga_id += 2;
         }
     }
