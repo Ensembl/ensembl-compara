@@ -36,7 +36,7 @@ dbID of the GenomeDB to dump
 
 =item genome_dumps_dir
 
-Base directory in which to dump the genomes
+Base directory in which to dump the genome
 
 =back
 
@@ -81,4 +81,3 @@ sub write_output {
 }
 
 1;
-

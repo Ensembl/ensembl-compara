@@ -801,7 +801,7 @@ sub _get_unique_key {
                 $genome_db->_get_genome_dump_path($base_dir, 'hard');
                 $genome_db->_get_genome_dump_path($base_dir, 'soft', 'non_ref');
   Description : Returns the expected path for the Fasta dump of this genome, given the
-                requested dump options. This method allows pipelines to refer to and us
+                requested dump options. This method allows pipelines to refer to and use
                 files that are centrally created.
                 To behave nicely at scale, the files are expected to be spread according
                 to the dbID of the GenomeDB, using eHive's dir_revhash, e.g.
