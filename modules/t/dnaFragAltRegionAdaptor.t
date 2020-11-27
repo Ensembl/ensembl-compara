@@ -22,6 +22,7 @@ use Test::More;
 use Test::Exception;
 
 use Bio::EnsEMBL::Compara::Locus;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Test::TestUtils;
 
@@ -140,5 +141,30 @@ subtest 'Test Bio::EnsEMBL::Compara::DnaFrag get_alt_region', sub {
     is($alt_region->dnafrag_end, 1500000, 'Checking dnafrag_end');
 
 };
+
+subtest 'Test Bio::EnsEMBL::Compara::Utils::Preloader load_all_AltRegions', sub {
+
+    my $dnafrag_adaptor = $dnafrag_altregion_adaptor->db->get_DnaFragAdaptor;
+    my $dnafrags = $dnafrag_adaptor->fetch_all_by_dbID_list([$dnafrag_id, 13708879]);
+    is(scalar(@$dnafrags), 2, "Fetched two dnafrags");
+
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_AltRegions($dnafrag_altregion_adaptor, $dnafrags);
+    my ($df1, $df2) = @$dnafrags;
+    if ($df1->dbID != $dnafrag_id) {
+        ($df2, $df1) = @$dnafrags;
+    }
+
+    ok(exists $df1->{_alt_region}, "1st dnafrag has an entry for _alt_region");
+    is($df1->{_alt_region}, undef, "And the value is undef");
+    ok(exists $df2->{_alt_region}, "2nd dnafrag has an entry for _alt_region");
+    ok($df2->{_alt_region}, "And the value defined");
+    my $alt_region = $df2->{_alt_region};
+    isa_ok($alt_region, 'Bio::EnsEMBL::Compara::Locus', 'alt_region');
+    is($alt_region->dnafrag_id, 13708879, 'Checking dbID');
+    is($alt_region->dnafrag_start, 1000000, 'Checking dnafrag_start');
+    is($alt_region->dnafrag_end, 1500000, 'Checking dnafrag_end');
+
+};
+
 
 done_testing();

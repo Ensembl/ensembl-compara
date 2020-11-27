@@ -444,14 +444,26 @@ sub get_sequence {
     my $mask = shift;
 
     my $seq;
-    # Only reference dnafrags are dumped
-    if ($self->dnafrag->is_reference && (my $faidx_helper = $self->genome_db->get_faidx_helper($mask))) {
+
+    # Find a Fasta file
+    my $faidx_helper;
+    if ($self->dnafrag->is_reference) {
+        $faidx_helper = $self->genome_db->get_faidx_helper($mask);
+    } elsif ($self->dnafrag->coord_system_name ne 'lrg') {
+        $faidx_helper = $self->genome_db->get_faidx_helper($mask, 'non_ref');
+    } else {
+        # LRGs are not dumped in a Fasta file
+    }
+
+    if ($faidx_helper) {
         # Sequence names in the Fasta file are expected to be dnafrag_ids;
         # Coordinates are 0-based
         $seq = $faidx_helper->get_sequence2_no_length($self->dnafrag_id, $self->dnafrag_start-1, $self->dnafrag_end-1);
         die "sequence length doesn't match !" if CORE::length($seq) != ($self->dnafrag_end-$self->dnafrag_start+1);
         reverse_comp(\$seq) if $self->dnafrag_strand < 0;
+
     } else {
+        # If there is no file, query the database via the Core API
         $self->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
             if ($mask) {
                 if ($mask =~ /^soft/i) {
