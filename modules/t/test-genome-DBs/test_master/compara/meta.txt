@@ -113,3 +113,4 @@
 148	\N	patch	patch_102_103_b.sql|clusterset_id_varchar30
 149	\N	patch	patch_103_104_a.sql|schema_version
 150	\N	patch	patch_103_104_b.sql|dnafrag_alt_region
+151	\N	patch	patch_103_104_c.sql|fix_int_types
