@@ -124,10 +124,7 @@ sub fetch_input {
   #Check if need to delete alignments. This shouldn't be needed if using transactions
   if ($self->input_job->retry_count > 0) {
     $self->warning("Deleting alignments as it is a rerun");
-    $self->delete_alignments($out_mlss,
-                             $ref_dnafrag,
-                             $self->param('start'),
-                             $self->param('end'));
+    $self->delete_alignments($out_mlss);
   }
 
   #Get Chain GenomicAlignBlocks associated with reference dnafrag and start and end

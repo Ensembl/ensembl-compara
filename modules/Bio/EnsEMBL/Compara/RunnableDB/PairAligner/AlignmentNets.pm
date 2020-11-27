@@ -159,24 +159,6 @@ sub fetch_input {
   $self->param('chains_sorted',         1);
 }
 
-sub delete_alignments {
-  my ($self, $mlss) = @_;
-
-  my ($min_id, $n_ids) = @{get_previously_assigned_range(
-      $self->compara_dba->dbc,
-      'genomic_align_' . $mlss->dbID,
-      $self->get_requestor_id,
-  )};
-
-  my $dbc = $self->compara_dba->dbc;
-
-  my $sql_gab = 'DELETE FROM genomic_align_block WHERE genomic_align_block_id BETWEEN ? AND ?';
-  my $sql_ga  = 'DELETE FROM genomic_align       WHERE genomic_align_id       BETWEEN ? AND ?';
-
-  $dbc->do($sql_ga,  undef, $min_id, $min_id+$n_ids-1);
-  $dbc->do($sql_gab, undef, $min_id, $min_id+$n_ids-1);
-}
-
 sub run {
   my ($self) = @_;
 
