@@ -276,7 +276,7 @@ sub expand_Homologies {
   Arg[2..n]   : Objects or arrays
   Example     : load_all_AltRegions($dnafrag_alt_region_adaptor, $dnafrags);
   Description : Method to load the alt-regions of many DnaFrags in a minimum number of queries
-  Returntype  : Arrayref of Bio::EnsEMBL::Compara::Locus: the objects (alt-regions) loaded from the database
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::Locus objects (alt-regions) loaded from the database
   Exceptions  : none
 
 =cut

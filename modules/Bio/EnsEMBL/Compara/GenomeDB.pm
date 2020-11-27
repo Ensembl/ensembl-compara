@@ -847,7 +847,7 @@ sub _get_genome_dump_path {
                 $genome_db->get_faidx_helper('soft', 'non_ref');
   Description : Return the instance of Bio::DB::HTS::Faidx for this type of Fasta file, if
                 a directory has been registered (see L<GenomeDBADaptor::dump_dir_location>).
-                A description of the options ($mask etc) can be found in L<_get_genome_dump_path>
+                A description of the options ($mask, etc) can be found in L<_get_genome_dump_path>
   Returntype  : Bio::DB::HTS::Faidx instance
   Exceptions  : Will die if dump_dir_location is set but the file is not found
   Caller      : general
