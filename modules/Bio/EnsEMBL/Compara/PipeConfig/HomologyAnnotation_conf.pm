@@ -50,6 +50,7 @@ sub default_options {
         'work_dir'     => $self->o('pipeline_dir'),
         'fasta_dir'    => $self->o('work_dir') . '/fasta/',
         'query_db_dir' => $self->o('work_dir') . '/query_diamond_db/',
+        'ref_dump_dir' => $self->o('genome_dumps_dir'),
 
         'species_list_file' => $self->o('species_list_file'),
         'create_mlss_exe'   => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_mlss.pl'),
@@ -61,6 +62,7 @@ sub default_options {
         'master_db'    => $self->pipeline_url(),
         'ncbi_db'      => 'ncbi_taxonomy',
         'member_db'    => $self->pipeline_url(),
+        'reference_db' => 'rr_ref_master',
         'meta_host'    => 'mysql-ens-meta-prod-1',
 
         'include_reference'           => 1,
@@ -100,6 +102,7 @@ sub default_options {
             'bacteria'    => [ ],
             'protists'    => [ ],
             'all'         => ['homo_sapiens', 'danio_rerio', 'gallus_gallus', 'mus_musculus'],
+            'default'     => ['homo_sapiens', 'danio_rerio', 'gallus_gallus', 'mus_musculus'],
         },
     };
 }
@@ -123,6 +126,7 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
         'member_db'        => $self->o('member_db'),
         'master_db'        => $self->o('master_db'),
         'output_db'        => $self->o('output_db'),
+        'reference_db'     => $self->o('reference_db'),
 
         'blast_params'     => $self->o('blast_params'),
         'evalue_limit'     => $self->o('evalue_limit'),
@@ -130,6 +134,7 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
 
         'fasta_dir'        => $self->o('fasta_dir'),
         'query_db_dir'     => $self->o('query_db_dir'),
+        'ref_dump_dir'     => $self->o('ref_dump_dir'),
 
         'reference_list'    => $self->o('reference_list'),
         'species_list_file' => $self->o('species_list_file'),

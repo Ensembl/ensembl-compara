@@ -43,6 +43,7 @@ sub param_defaults {
         'force'      => 1,
         'do_not_add' => undef,
         'division'   => 'all',
+        'hard_limit' => undef,
     };
 }
 
@@ -52,6 +53,7 @@ sub fetch_input {
     my $species_list_file = $self->param_required('species_list_file');
     my $do_not_add        = $self->param('do_not_add');
     my $division          = $self->param('division');
+    my $spec_hard_limit   = $self->param('hard_limit');
     my @species_list;
 
     open ( my $f, "<", $species_list_file ) or die "Cannot open production list of species $!";
@@ -63,7 +65,12 @@ sub fetch_input {
             $self->warning( $species_name . " is a reference genome" );
         }
         else {
-            push @species_list, $species_name;
+            if scalar(@species_list) < $spec_hard_limit {
+                push @species_list, $species_name if scalar(@species_list) < $spec_hard_limit;
+            }
+            else {
+                $self->warning( "The hard limit of genomes in this pipeline has been exceeded: " . $species_name . " has been discarded." );
+            }
         }
     }
 

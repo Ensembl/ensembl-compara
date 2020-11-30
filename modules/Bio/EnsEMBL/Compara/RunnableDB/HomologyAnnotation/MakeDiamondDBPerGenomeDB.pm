@@ -50,7 +50,7 @@ sub run {
     my $gdb_adaptor   = $self->compara_dba->get_GenomeDBAdaptor;
     my $genome_db     = $gdb_adaptor->fetch_by_dbID($genome_db_id) or $self->die_no_retry("cannot fetch GenomeDB with id '$genome_db_id'");
     my $query_db_name = $self->param('query_db_dir') . '/' . $genome_db->name() . '_' . $genome_db->assembly();
-
+    my $query_db_name = $self->param('query_db_dir') . '/' . $genome_db->name() . '_' . $genome_db->assembly() . '_' .  $genome_db->genebuild());
     my $cmd = "$diamond_exe makedb --in $fasta_file -d $query_db_name";
 
     if ( !$self->param('dry_run') ) {

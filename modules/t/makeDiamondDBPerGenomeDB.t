@@ -39,7 +39,7 @@ my $genome_db    = $dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
 # Species fasta inputfile
 my $test_fasta_dir = abs_path($0);
 $test_fasta_dir    =~ s!makeDiamondDBPerGenomeDB\.t!homology_annotation_input!;
-my $query_db_name  = $test_fasta_dir . '/' . $genome_db->name() . '_' . $genome_db->assembly();
+my $query_db_name  = $test_fasta_dir . '/' . $genome_db->name() . '_' . $genome_db->assembly() . '_' .  $genome_db->genebuild());
 my $exp_fasta      = $query_db_name  . '.fasta';
 # Expected dataflow output
 my $exp_dataflow = {

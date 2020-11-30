@@ -35,14 +35,17 @@ my $compara_db = $dbc->url;
 # Expected dataflow output
 my $exp_dataflow_1 = {
     'member_id_list' => [ 1, 2, 3, 4, 5 ],
-    'mlss_id' => 20001
+    'mlss_id' => 20001,
+    'ref_taxa' => 'vertebrates',
 };
 my $exp_dataflow_2 = {
     'member_id_list' => [ 6, 7, 8, 9 ],
-    'mlss_id' => 20001
+    'mlss_id' => 20001,
+    'ref_taxa' => 'vertebrates',
 };
 my $exp_dataflow_3 = {
-    'genome_db_id' => 135
+    'genome_db_id' => 135,
+    'ref_taxa' => 'vertebrates',
 };
 # Run standalone
 standaloneJob(
@@ -51,6 +54,7 @@ standaloneJob(
     {
         'compara_db'      => $compara_db,
         'step'            => 5,
+        'taxon_list'      => ['vertebrates'];
     },
     # Output
     [

@@ -44,6 +44,7 @@ sub param_defaults {
     return {
         %{$self->SUPER::param_defaults},
         'step' => 200,
+        'taxon_list' => qw(Eukaryota, Metazoa, Chordata, Vertebrata, Plants, Fungi, Bacteria, Protists),
     };
 }
 
@@ -66,7 +67,7 @@ sub fetch_input {
             push @genome_members, $member_id;
         }
 
-        push @query_members, { 'genome_db_id' => $genome_db_id, 'mlss_id' => $mlsss[0]->dbID, 'member_ids' => \@genome_members };
+        push @query_members, { 'genome_db_id' => $genome_db_id, 'mlss_id' => $mlsss[0]->dbID, 'member_ids' => \@genome_members, 'ref_taxa' => $self->_collect_classification_match($genome_db) };
     }
 
     $self->param('query_members', \@query_members);
@@ -83,15 +84,33 @@ sub write_output {
         my $genome_db_id  = $genome->{'genome_db_id'};
         my $mlss_id       = $genome->{'mlss_id'};
         my $query_members = $genome->{'member_ids'};
+        my $ref_taxa      = $genome->{'ref_taxa'};
 
         while (@$query_members) {
             my @job_array = splice(@$query_members, 0, $step);
-            #my $output_id = { 'member_id_list' => \@job_array, 'genome_db_id' => $genome_db_id, 'mlss_id' => $mlss_id }; # With genome_db_id to send to per-genome peptide_align_feature tables
-            my $output_id = { 'member_id_list' => \@job_array, 'mlss_id' => $mlss_id };
+            #my $output_id = { 'member_id_list' => \@job_array, 'genome_db_id' => $genome_db_id, 'mlss_id' => $mlss_id, 'ref_taxa' => $ref_taxa}; # With genome_db_id to send to per-genome peptide_align_feature tables
+            my $output_id = { 'member_id_list' => \@job_array, 'mlss_id' => $mlss_id, 'ref_taxa' => $ref_taxa };
             $self->dataflow_output_id($output_id, 2);
         }
-        $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id }, 1 );
+        $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'ref_taxa' => $ref_taxa }, 1 );
     }
+}
+
+sub _collect_classification_match {
+    my ($self, $genome_db) = shift @_;
+
+    my @taxon_list = @{$self->param('taxon_list')};
+    my $taxon_dba  = $self->compara_dba->get_NCBITaxonAdaptor;
+    my $parent     = $taxon_dba->fetch_by_dbID($genome_db->taxon_id);
+
+    foreach my $taxa_name ( @taxon_list ) {
+        my @taxon_ids = @{ $taxon_dba->fetch_all_nodes_by_name($taxa_name.'%') }
+        if ( any { $_ eq $parent->dbID } @taxon_ids ) {
+            return $taxa_name;
+        }
+    }
+    return undef;
+
 }
 
 1;
