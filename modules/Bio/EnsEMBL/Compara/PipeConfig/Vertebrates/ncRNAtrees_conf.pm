@@ -15,16 +15,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ncRNAtrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ncRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -mlss_id <curr_ncrna_mlss_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ncRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 DESCRIPTION
 
@@ -32,6 +29,9 @@ This is the Vertebrates PipeConfig for the ncRNAtrees pipeline. Please, refer
 to the parent class for further information.
 
 =head1 EXAMPLES
+
+e104
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ncRNAtrees_conf $(mysql-ens-compara-prod-3-ensadmin details hive)
 
 e99
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ncRNAtrees_conf -mlss_id 40139 $(mysql-ens-compara-prod-7-ensadmin details hive)
@@ -55,12 +55,7 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
-            # Must be given on the command line
-            #'mlss_id'          => 40100,
-
             'division'      => 'vertebrates',
-            'collection'    => 'default',       # The name of the species-set within that division
-            'pipeline_name' => $self->o('collection') . '_' . $self->o('division').'_ncrna_trees_'.$self->o('rel_with_suffix'),
 
             # misc parameters
             'binary_species_tree_input_file' => $self->o('binary_species_tree'), # you can define your own species_tree for 'CAFE'. It *has* to be binary

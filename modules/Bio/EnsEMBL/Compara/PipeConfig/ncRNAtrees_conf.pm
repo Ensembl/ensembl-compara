@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf
@@ -24,9 +22,9 @@ Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -division $COMPARA_DIV -collection <collection> -mlss_id <curr_ncrna_mlss_id>
+        -division $COMPARA_DIV
 
-=head1 DESCRIPTION  
+=head1 DESCRIPTION
 
 This is the ncRNAtrees pipeline.
 
@@ -52,6 +50,9 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
+
+        'pipeline_name' => $self->o('collection') . '_' . $self->o('division') . '_ncrna_trees_' . $self->o('rel_with_suffix'),
+        'method_type'   => 'NC_TREES',
 
         'work_dir' => $self->o('pipeline_dir'),
 
@@ -83,6 +84,8 @@ sub default_options {
 
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => 14,
+        'collection'            => 'default',
+        'species_set_name'      => $self->o('collection'),
         'label_prefix'          => undef,
         'member_type'           => 'ncrna',
 
@@ -210,7 +213,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'ensembl_release' => $self->o('ensembl_release'),
 
-        'mlss_id'       => $self->o('mlss_id'),
         'master_db'     => $self->o('master_db'),
         'member_db'     => $self->o('member_db'),
         'prev_rel_db'   => $self->o('prev_rel_db'),
@@ -402,10 +404,20 @@ sub core_pipeline_analyses {
                     'ALTER TABLE method_link_species_set AUTO_INCREMENT=10000001',
                 ],
             },
-            -flow_into  => [ 'load_genomedb_factory' ],
+            -flow_into  => [ 'load_mlss_id' ],
         },
 
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
+
+        {   -logic_name => 'load_mlss_id',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMLSSids',
+            -parameters => {
+                'method_type'      => $self->o('method_type'),
+                'species_set_name' => $self->o('species_set_name'),
+                'release'          => '#ensembl_release#'
+            },
+            -flow_into  => [ 'load_genomedb_factory' ],
+        },
 
             {   -logic_name => 'load_genomedb_factory',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
@@ -428,7 +440,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'create_mlss_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareSpeciesSetsMLSS',
             -parameters => {
-                'whole_method_links'        => [ 'NC_TREES' ],
+                'whole_method_links'        => [ $self->o('method_type') ],
                 'singleton_method_links'    => [ 'ENSEMBL_PARALOGUES', 'ENSEMBL_HOMOEOLOGUES' ],
                 'pairwise_method_links'     => [ 'ENSEMBL_ORTHOLOGUES' ],
             },
