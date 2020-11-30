@@ -115,6 +115,7 @@ sub executable_locations {
         'cmbuild_exe'               => $self->check_exe_in_cellar('infernal/1.1.2/bin/cmbuild'),
         'cmsearch_exe'              => $self->check_exe_in_cellar('infernal/1.1.2/bin/cmsearch'),
         'codeml_exe'                => $self->check_exe_in_cellar('paml43/4.3.0/bin/codeml'),
+        'create_mlss_exe'           => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_mlss.pl'),
         'diamond_exe'               => $self->check_exe_in_cellar('diamond/2.0.4/bin/diamond'),
         'enredo_exe'                => $self->check_exe_in_cellar('enredo/0.5.0/bin/enredo'),
         'erable_exe'                => $self->check_exe_in_cellar('erable/1.0/bin/erable'),

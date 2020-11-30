@@ -46,14 +46,10 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # Inherit the generic ones
 
-
         'work_dir'     => $self->o('pipeline_dir'),
         'fasta_dir'    => $self->o('work_dir') . '/fasta/',
         'query_db_dir' => $self->o('work_dir') . '/query_diamond_db/',
         'ref_dump_dir' => $self->o('genome_dumps_dir'),
-
-        'species_list_file' => $self->o('species_list_file'),
-        'create_mlss_exe'   => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_mlss.pl'),
 
         'ref_blast_db' => undef,
         'blast_db'     => $self->o('ref_blast_db'),
@@ -65,6 +61,7 @@ sub default_options {
         'reference_db' => 'rr_ref_master',
         'meta_host'    => 'mysql-ens-meta-prod-1',
 
+        # Member loading parameters
         'include_reference'           => 1,
         'include_nonreference'        => 0,
         'include_patches'             => 0,
@@ -74,13 +71,17 @@ sub default_options {
         'store_exon_coordinates'      => 0,
         'store_related_pep_sequences' => 0, # do we want CDS sequence as well as protein seqs?
 
+        # Member HC parameters
+        'allow_ambiguity_codes'         => 1,
+        'only_canonical'                => 0,
+        'allow_missing_cds_seqs'        => 1, # set to 0 if we store CDS (see above)
+        'allow_missing_coordinates'     => 0,
+        'allow_missing_exon_boundaries' => 1, # set to 0 if exon boundaries are loaded (see above)
+
         'projection_source_species_names' => [ ],
         'curr_file_sources_locs'          => [ ],
 
-        'allow_ambiguity_codes'     => 1,
-        'allow_missing_coordinates' => 0,
-        'allow_missing_cds_seqs'    => 0,
-
+        # DIAMOND e-hive parameters
         'blast_factory_capacity'   => 50,
         'blastpu_capacity'         => 150,
         'copy_alignments_capacity' => 50,
@@ -89,21 +90,10 @@ sub default_options {
         'hc_capacity'              => 150,
         'decision_capacity'        => 150,
         'hc_priority'              => -10,
-
         'num_sequences_per_blast_job' => 200,
         'blast_params'                => '--max-hsps 1 --threads 4 -b1 -c1 --sensitive',
         'evalue_limit'                => '1e-6',
 
-        'reference_list' => {
-            'vertebrates' => ['homo_sapiens', 'danio_rerio', 'gallus_gallus', 'mus_musculus'],
-            'metazoa'     => [ ],
-            'plants'      => [ ],
-            'fungi'       => [ ],
-            'bacteria'    => [ ],
-            'protists'    => [ ],
-            'all'         => ['homo_sapiens', 'danio_rerio', 'gallus_gallus', 'mus_musculus'],
-            'default'     => ['homo_sapiens', 'danio_rerio', 'gallus_gallus', 'mus_musculus'],
-        },
     };
 }
 

@@ -143,6 +143,20 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
             },
             -hive_capacity => 10,
             -rc_name       => '4Gb_job',
+            -flow_into     => ['hc_members_per_genome'],
+        },
+
+        {   -logic_name         => 'hc_members_per_genome',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters         => {
+                'mode'                          => 'members_per_genome',
+                'allow_ambiguity_codes'         => $self->o('allow_ambiguity_codes'),
+                'only_canonical'                => $self->o('only_canonical'),
+                'allow_missing_cds_seqs'        => $self->o('allow_missing_cds_seqs'),
+                'allow_missing_coordinates'     => $self->o('allow_missing_coordinates'),
+                'allow_missing_exon_boundaries' => $self->o('allow_missing_exon_boundaries'),
+            },
+            %hc_analysis_params,
         },
 
         {   -logic_name         => 'hc_members_globally',
