@@ -76,8 +76,6 @@ sub default_options {
             -dbname  => $self->o('dbowner') . '_' . $self->o('species_set_name') . '_ancestral_core_' . $self->o('rel_with_suffix'),
         },
         # EpoLowCoverage parameters
-        'low_epo_mlss_id'   => undef,  # required but unused
-        'base_epo_mlss_id'  => undef,  # required but unused
         'max_block_size'    => 1000000,  # max size of alignment before splitting
         'pairwise_location' => [ qw(compara_prev lastz_batch_* unidir_lastz) ],  # default location for pairwise alignments (can be a string or an array-ref)
         'lastz_complete'    => 0,  # set to 1 when all relevant LastZs have complete

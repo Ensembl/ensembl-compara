@@ -22,18 +22,17 @@ Bio::EnsEMBL::Compara::PipeConfig::EpoExtended_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EpoExtended_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -division $COMPARA_DIV -species_set_name <species_set_name> -low_epo_mlss_id <curr_epo_2x_mlss_id> \
-        -base_epo_mlss_id <curr_epo_mlss_id>
+        -division $COMPARA_DIV -species_set_name <species_set_name>
 
 =head1 EXAMPLES
 
     # With GERP (mammals, sauropsids, fish):
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EpoExtended_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -division vertebrates -species_set_name fish -low_epo_mlss_id 1333 -base_epo_mlss_id 1332
+        -division vertebrates -species_set_name fish
 
     # Without GERP (primates):
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EpoExtended_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -division vertebrates -species_set_name primates -low_epo_mlss_id 1141 -base_epo_mlss_id 1134 -run_gerp 0
+        -division vertebrates -species_set_name primates -run_gerp 0
 
 =head1 DESCRIPTION
 
@@ -61,15 +60,11 @@ sub default_options {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
     'pipeline_name' => $self->o('species_set_name').'_epo_extended_'.$self->o('rel_with_suffix'),
+    'method_type'   => 'EPO_EXTENDED',
 
         'master_db' => 'compara_master',
         # Location of compara db containing EPO/EPO_EXTENDED alignment to use as a base
         'epo_db'    => $self->o('species_set_name') . '_epo',
-
-	'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment
-	'base_epo_mlss_id' => $self->o('base_epo_mlss_id'), #mlss_id for the base alignment we're topping up
-                                                        # (can be EPO or EPO_EXTENDED)
-	'mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment, needed for the alignment stats
 
         # Default location for pairwise alignments (can be a string or an array-ref,
         # and the database aliases can include '*' as a wildcard character)
@@ -105,12 +100,10 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
     return {
             %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-			'mlss_id' => $self->o('low_epo_mlss_id'),
+
             'run_gerp' => $self->o('run_gerp'),
             'genome_dumps_dir' => $self->o('genome_dumps_dir'),
             'reg_conf' => $self->o('reg_conf'),
-            'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),
-            'base_epo_mlss_id' => $self->o('base_epo_mlss_id'),
     };
 }
 

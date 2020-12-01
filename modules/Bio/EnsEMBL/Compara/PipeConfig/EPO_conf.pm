@@ -21,8 +21,8 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_conf.pm -host mysql-ens-compara-prod-X -port XXXX \
-        -division $COMPARA_DIV -species_set_name <species_set_name> -mlss_id <curr_epo_mlss_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -species_set_name <species_set_name>
 
 =head1 DESCRIPTION
 
@@ -51,6 +51,7 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'pipeline_name' => $self->o('species_set_name').'_epo_'.$self->o('rel_with_suffix'),
+        'method_type'   => 'EPO',
 
         # Databases
         'compara_master'    => 'compara_master',
@@ -123,8 +124,6 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},
 
-        'mlss_id'                   => $self->o('mlss_id'),
-
         # directories
         'work_dir'              => $self->o('work_dir'),
         'feature_dir'           => $self->o('feature_dir'),
@@ -152,8 +151,13 @@ sub core_pipeline_analyses {
 
     return [
 
-        {   -logic_name => 'start_prepare_databases',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        {   -logic_name => 'load_mlss_id',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMLSSids',
+            -parameters => {
+                'method_type'      => $self->o('method_type'),
+                'species_set_name' => $self->o('species_set_name'),
+                'release'          => $self->o('ensembl_release'),
+            },
             -input_ids  => [{}],
             -flow_into  => {
                 '1->A' => [ 'copy_table_factory', 'set_internal_ids', 'drop_ancestral_db' ],
