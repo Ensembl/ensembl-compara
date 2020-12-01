@@ -75,9 +75,9 @@
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [Plants/EPOwith2x_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/EPOwith2x_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::EPOwith2x_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name rice{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
-            "summary": "Run the Rice EPOwith2x pipeline",
-            "name_on_graph": "EPOwith2x:Rice"
+            "description": "*GitHub*: [Plants/EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/EPOwithExt_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name rice{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "summary": "Run the Rice EPOwithExt pipeline",
+            "name_on_graph": "EPOwithExt:Rice"
          },
          {
             "component": "Production tasks",

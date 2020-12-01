@@ -564,7 +564,7 @@ sub _parse_results {
             if ( $ga->genome_db->is_good_for_alignment ) {
                 $these_genomic_aligns = [$this_genomic_align];
             } else {
-                $these_genomic_aligns = $self->_expand_trimmed_low_coverage_alignments($ga->genome_db->dbID);
+                $these_genomic_aligns = $self->_expand_trimmed_extended_alignments($ga->genome_db->dbID);
                 $these_genomic_aligns = [$this_genomic_align] unless defined $these_genomic_aligns->[0];
             }
 		    
@@ -1204,7 +1204,7 @@ sub _update_tree_2x {
       }
     }
 
-    $these_genomic_aligns = $self->_trim_low_coverage_alignments($these_genomic_aligns, $this_leaf_genome_db);
+    $these_genomic_aligns = $self->_trim_extended_alignments($these_genomic_aligns, $this_leaf_genome_db);
 
     my $index = 0;
     if ($self->param('ga_frag')) {
@@ -1705,7 +1705,7 @@ sub get_seq_length_from_cigar {
     return $seq_pos;
 }
 
-sub _trim_low_coverage_alignments {
+sub _trim_extended_alignments {
     my ($self, $these_genomic_aligns, $this_leaf_genome_db) = @_;
         
     if ( @$these_genomic_aligns > 1 && !$this_leaf_genome_db->is_good_for_alignment ) {
@@ -1728,7 +1728,7 @@ sub _trim_low_coverage_alignments {
     return $these_genomic_aligns;
 }
 
-sub _expand_trimmed_low_coverage_alignments {
+sub _expand_trimmed_extended_alignments {
     my ($self, $genome_db_id) = @_;
     
     print " -- expanding genomic_aligns for genome_db_id $genome_db_id\n";

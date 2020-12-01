@@ -37,7 +37,7 @@ sub fetch_input {
     my $gaba  = $self->compara_dba->get_GenomicAlignBlockAdaptor;
     my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
-    my $mlss = $mlssa->fetch_by_dbID($self->param_required('base_epo_mlss_id'));
+    my $mlss = $mlssa->fetch_by_dbID($self->param_required('mlss_id'));
     my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet($mlss);
     $self->param('genomic_align_blocks', $gabs);
 }

@@ -15,16 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Hive::RunnableDB::DumpMultiAlign::Readme
@@ -112,7 +102,7 @@ sub _create_specific_readme {
     } elsif ($mlss->method->type eq "EPO") {
 	$self->_create_specific_epo_readme($compara_dba, $mlss, $species_set, $newick_species_tree);
     } elsif ($mlss->method->type eq "EPO_EXTENDED") {
-	$self->_create_specific_epo_low_coverage_readme($compara_dba, $mlss, $species_set, $newick_species_tree, $mlss_adaptor);
+	$self->_create_specific_epo_extended_readme($compara_dba, $mlss, $species_set, $newick_species_tree, $mlss_adaptor);
     } elsif ($mlss->method->type eq "LASTZ_NET") {
 	$self->_create_specific_pairaligner_readme($compara_dba, $mlss, $species_set, 'LastZ');
     } elsif ($mlss->method->type eq "BLASTZ_NET") {
@@ -173,7 +163,7 @@ uses the Pecan alignments to infer the ancestral sequences.");
 #
 #Create EPO_EXTENDED README file
 #
-sub _create_specific_epo_low_coverage_readme {
+sub _create_specific_epo_extended_readme {
     my ($self, $compara_dba, $mlss, $species_set, $newick_species_tree, $mlss_adaptor) = @_;
 
     my $high_coverage_mlss = $mlss->get_linked_mlss_by_tag('base_mlss_id');

@@ -43,7 +43,7 @@ use warnings;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;  # for WHEN and INPUT_PLUS
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOAncestral;
-use Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoLowCoverage;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoExtended;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -75,7 +75,7 @@ sub default_options {
             -species => $self->o('ancestral_sequences_name'),
             -dbname  => $self->o('dbowner') . '_' . $self->o('species_set_name') . '_ancestral_core_' . $self->o('rel_with_suffix'),
         },
-        # EpoLowCoverage parameters
+        # EpoExtended parameters
         'max_block_size'    => 1000000,  # max size of alignment before splitting
         'pairwise_location' => [ qw(compara_prev lastz_batch_* unidir_lastz) ],  # default location for pairwise alignments (can be a string or an array-ref)
         'lastz_complete'    => 0,  # set to 1 when all relevant LastZs have complete
@@ -359,7 +359,7 @@ sub core_pipeline_analyses {
             },
         },
         {   -logic_name    => 'set_neighbour_nodes',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::SetNeighbourNodes',
             -rc_name       => '2Gb_job',
             -batch_size    => 10,
             -hive_capacity => 20,
@@ -383,8 +383,8 @@ sub core_pipeline_analyses {
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOAncestral::pipeline_analyses_epo_ancestral($self) },
-        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoLowCoverage::pipeline_analyses_epo2x_alignment($self) },
-        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoLowCoverage::pipeline_analyses_healthcheck($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoExtended::pipeline_analyses_epo_ext_alignment($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoExtended::pipeline_analyses_healthcheck($self) },
     ];
 }
 
