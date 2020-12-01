@@ -250,11 +250,12 @@ sub core_pipeline_analyses {
         {   -logic_name => 'copy_anchor_align_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'mlss_id'           => $self->o('mlss_id'),
                 'fan_branch_code'   => 1,
             },
             -rc_name    => '500Mb_job',
-            -flow_into  => [ 'copy_anchor_align' ],
+            -flow_into  => {
+                1 => { 'copy_anchor_align' => INPUT_PLUS() },
+            },
         },
         {   -logic_name    => 'copy_anchor_align',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithJoin',
