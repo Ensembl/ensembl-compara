@@ -655,9 +655,13 @@ sub restrict_between_alignment_positions {
   #Only need to do this once per tree since the length is the same for all the nodes.
   my $length = $genomic_align_tree->get_all_leaves->[0]->length;
 
+  my $all_nodes = $genomic_align_tree->get_all_nodes;
+  my %was_leaf = map {$_ => $_->is_leaf} @$all_nodes;
+
+  # Depth-first, children-first, traversal of the tree
   #Get all the nodes and restrict but only remove leaves if necessary. Call minimize_tree at the end to 
   #remove the internal nodes
-  foreach my $this_node (reverse @{$genomic_align_tree->get_all_nodes}) {
+  foreach my $this_node (reverse @$all_nodes) {
     my $genomic_align_group = $this_node->genomic_align_group;
     next if (!$genomic_align_group);
     my $new_genomic_aligns = [];
@@ -671,10 +675,29 @@ sub restrict_between_alignment_positions {
         $genomic_align_tree->reference_genomic_align($restricted_genomic_align);
         $genomic_align_tree->reference_genomic_align_node($this_node);
       }
-      if (!$skip_empty_GenomicAligns or
-          !$this_node->is_leaf or
-          $restricted_genomic_align->dnafrag_start <= $restricted_genomic_align->dnafrag_end
-          ) {
+      my $record_restricted_ga = 1;
+      if ($skip_empty_GenomicAligns) {
+          if ($restricted_genomic_align->dnafrag_start < $restricted_genomic_align->dnafrag_end) {
+              # The restricted genomic_align is a true region
+              # -> We actually still need to remove the node if it belongs
+              #    to ancestral_sequences but is now a leaf, because leaves
+              #    must belong to extant species
+              # (this is possible because the "reverse" in the foreach loop
+              # above means that children are processed before their parent
+              # and they can be removed below)
+              if ($this_node->is_leaf and !$was_leaf{$this_node}) {
+                  $record_restricted_ga = 0;
+              }
+          } else {
+              # The restricted genomic_align is only gaps
+              # -> Remove the node if it is a leaf
+              # (internal nodes must be kept because they hold the tree)
+              if ($this_node->is_leaf) {
+                  $record_restricted_ga = 0;
+              }
+          }
+      }
+      if ($record_restricted_ga) {
         ## Always skip composite segments outside of the range of restriction
         ## The cigar_line will contain only X's
         next if ($restricted_genomic_align->cigar_line =~ /^\d*X$/);
