@@ -47,7 +47,7 @@ sub fetch_input {
         # Set the genome dump directory
         $self->compara_dba->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
         Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $anchor_aligns);
-	my @anchor;
+	my %anchor_sequences;
 	foreach my $anchor_align (@$anchor_aligns) {
             next unless $anchor_align->untrimmed_anchor_align_id;
 		my($df_id,$anc_start,$anc_end,$df_strand)=($anchor_align->dnafrag_id,
@@ -75,7 +75,7 @@ sub fetch_input {
 			$ratio = length($ns)/length($anc_seq);
 		}
 		if($ratio < $self->param('max_n_proportion')) {
-			push(@anchor, [$anchor_id, $df_id, $anc_start, $anc_end, $df_strand, $trimmed_anchor_mlssid, $anc_seq, length($anc_seq)]);
+			$anchor_sequences{$anc_seq} = [$anchor_id, $df_id, $anc_start, $anc_end, $df_strand, $trimmed_anchor_mlssid, $anc_seq, length($anc_seq)];
 		} else {
 			$self->complete_early("Anchor didn't pass the threshold: ratio=$ratio threshold=".$self->param('max_n_proportion'));
 		}
@@ -83,6 +83,7 @@ sub fetch_input {
 
         my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($trimmed_anchor_mlssid);
         my $n_genomes = $mlss->species_set->size;
+        my @anchor = values %anchor_sequences;
         if (scalar(@anchor) > $self->param_required('max_number_of_seqs_per_anchor')*$n_genomes) {
             $self->complete_early(sprintf('Not storing this anchor set because there are too many sequences (%d)', scalar(@anchor)));
         }
