@@ -264,6 +264,7 @@ sub _write_output {
 	  #group_id. 
 	  my $first_block = shift @$gab_array;
 	  $gaba->store($first_block);
+	  $self->_assert_cigar_lines_in_block($first_block->dbID);
 	  my $group_id = $first_block->dbID;
 	  $gaba->store_group_id($first_block, $group_id);
 	  $self->_write_gerp_dataflow($first_block, $mlss);
@@ -272,15 +273,83 @@ sub _write_output {
 	  foreach my $this_gab (@$gab_array) {
 	      $this_gab->group_id($group_id);
 	      $gaba->store($this_gab);
+	      $self->_assert_cigar_lines_in_block($this_gab->dbID);
 	      $self->_write_gerp_dataflow($this_gab, $mlss);
 	  }
       } else {
 	  $gaba->store($gab);
+	  $self->_assert_cigar_lines_in_block($gab->dbID);
 	  $self->_write_gerp_dataflow($gab, $mlss);
       }
   }
   return 1;
 }
+
+
+sub _assert_cigar_lines_in_block {
+    my ($self, $gab_id) = @_;
+    my $gab = $self->compara_dba->get_GenomicAlignBlockAdaptor->fetch_by_dbID($gab_id);
+
+    my %lengths;
+    foreach my $genomic_align (@{$gab->genomic_align_array}) {
+        my $cigar_length = Bio::EnsEMBL::Compara::Utils::Cigars::sequence_length_from_cigar($genomic_align->cigar_line);
+        my $region_length = $genomic_align->dnafrag_end - $genomic_align->dnafrag_start + 1;
+        if ($cigar_length != $region_length) {
+            $self->_backup_data_and_throw($gab, "cigar_line's sequence length ($cigar_length) doesn't match the region length ($region_length)" );
+        }
+        my $aln_length = Bio::EnsEMBL::Compara::Utils::Cigars::alignment_length_from_cigar($genomic_align->cigar_line);
+        $lengths{$aln_length}++;
+    }
+    if (scalar(keys %lengths) > 1) {
+        $self->_backup_data_and_throw($gab, "Multiple alignment lengths: ". stringify(\%lengths));
+    }
+}
+
+sub _backup_data_and_throw {
+    my ($self, $gab, $err) = @_;
+    my $target_dir = $self->param_required('work_dir') . '/' . $self->param('synteny_region_id') . '.' . basename($self->worker_temp_directory);
+    system('cp', '-a', $self->worker_temp_directory, $target_dir);
+    $self->_print_report($gab, "$target_dir/report.txt");
+    $self->_print_regions("$target_dir/regions.txt");
+    throw("Error: $err\nData copied to $target_dir");
+}
+
+sub _print_regions {
+    my ($self, $filename) = @_;
+    open(my $fh, '>', $filename);
+    foreach my $region (@{$self->param('dnafrag_regions')}) {
+        print $fh join("\t",
+            $region->genome_db->name,
+            $region->genome_db->dbID,
+            $region->dnafrag->name,
+            $region->dnafrag_id,
+            $region->dnafrag->length,
+            $region->dnafrag_start,
+            $region->dnafrag_end,
+            $region->dnafrag_strand,
+        ), "\n";
+    }
+    close($fh);
+}
+
+sub _print_report {
+    my ($self, $gab, $filename) = @_;
+    open(my $fh, '>', $filename);
+    foreach my $ga (@{$gab->genomic_align_array}) {
+        print $fh join("\t",
+            $ga->dbID,
+            $ga->dnafrag_id,
+            $ga->dnafrag_start,
+            $ga->dnafrag_end,
+            $ga->dnafrag_end - $ga->dnafrag_start + 1,
+            length($ga->original_sequence),
+            length($ga->aligned_sequence),
+            stringify(Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($ga->cigar_line)),
+        ), "\n";
+    }
+    close($fh);
+}
+
 
 #trim genomic align block from the left hand edge to first position having at
 #least 2 genomic aligns which overlap
