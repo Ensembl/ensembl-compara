@@ -120,6 +120,7 @@ sub default_options {
         #default location for pairwise alignments (can be a string or an array-ref)
         'pairwise_location' => [ qw(compara_prev lastz_batch_* unidir_lastz) ],
         'lastz_complete'    => 0, # set to 1 when all relevant LASTZs have complete
+        'epo_db'            => undef,
     };
 }
 
