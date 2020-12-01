@@ -19,27 +19,28 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Plants::EPOwith2x_conf
+Bio::EnsEMBL::Compara::PipeConfig::Plants::EPOwithExt_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::EPOwith2x_conf.pm -host mysql-ens-compara-prod-X -port XXXX \
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::EPOwithExt_conf.pm -host mysql-ens-compara-prod-X -port XXXX \
         -division $COMPARA_DIV -species_set_name <species_set_name> -low_epo_mlss_id <id> -high_epo_mlss_id <id>
 
 =head1 DESCRIPTION
 
-    This pipeline runs EPO and EPO2x together. For more information on each pipeline, see their respective PipeConfig files:
+    This pipeline runs EPO and EPO Extended together. For more information on
+    each pipeline, see their respective PipeConfig files:
     - Bio::EnsEMBL::Compara::PipeConfig::EPO_conf
-    - Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf
+    - Bio::EnsEMBL::Compara::PipeConfig::EpoExtended_conf
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Plants::EPOwith2x_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Plants::EPOwithExt_conf;
 
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf');
 
 sub default_options {
     my ($self) = @_;

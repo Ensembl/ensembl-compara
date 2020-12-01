@@ -15,19 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
-=cut
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment
+Bio::EnsEMBL::Compara::Production::Analysis::ExtendedGenomeAlignment
 
 =head1 DESCRIPTION
 
@@ -39,7 +29,7 @@ This module creates a new tree for those alignments which contain a segmental du
 =cut
 
 
-package Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment;
+package Bio::EnsEMBL::Compara::Production::Analysis::ExtendedGenomeAlignment;
 
 use strict;
 use warnings;

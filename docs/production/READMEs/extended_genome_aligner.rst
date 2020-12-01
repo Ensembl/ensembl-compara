@@ -1,12 +1,12 @@
-EPO alignment with low-coverage genomes
+EPO alignment with additional genomes
 =======================================
 
-This README describes how to set up the low coverage EPO aligner system using the init_pipeline configuration system.
+This README describes how to set up the EPO Extended aligner system using the init_pipeline configuration system.
 
 General description of the pipeline
 -----------------------------------
 
-The pipeline involves taking the high coverage EPO alignment and mapping onto the human sequence the low coverage mammalian (b)lastz alignments. 
+The pipeline involves taking the EPO alignment and mapping onto the reference sequences the additional mammalian (b)lastz alignments.
 
 Necessary code API and executables
 ----------------------------------
@@ -45,7 +45,7 @@ in bash
 Update the master database
 --------------------------
 
-The pipeline requires a "master" database. This is a compara database containing information that is required to maintain consistency across several production and release databases. See README-master_database for details on how to create an initial master database. 
+The pipeline requires a "master" database. This is a compara database containing information that is required to maintain consistency across several production and release databases. See README-master_database for details on how to create an initial master database.
 
 #. Update genome_db and dnafrag tables with any new species assembly using the update_genome.pl script.
    The reg.conf should contain the compara_master and the location of the core database
@@ -68,21 +68,21 @@ The pipeline requires a "master" database. This is a compara database containing
 Configure the pipeline
 ----------------------
 
-Modifiy ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/EpoLowCoverage_conf.pm`` file if necessary.
+Modifiy ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/EpoExtended_conf.pm`` file if necessary.
 Check that the default_options are set correctly.
 Options most likely to need changing are:
 
 It is recommended that the mlss_id entries are set on the command line rather than in the conf file
 
-:low_epo_mlss_id:              mlss_id of the low coverage epo alignments
-:high_epo_mlss_id:             mlss_id of the high coverage epo alignments
+:ext_mlss_id:                  mlss_id of the EPO Extended alignments
+:mlss_id:                      mlss_id of the EPO alignments
 :ce_mlss_id:                   mlss_id of the constrained elements
 :cs_mlss_id:                   mlss_id of the conservation scores
 
 :release:                      Ensembl release
-:prev_release:                 Previous ensembl release 
+:prev_release:                 Previous ensembl release
 :ensembl_cvs_root_dir:         Root directory of the ensembl checkouts
-:work_dir:                     Directory for writing files 
+:work_dir:                     Directory for writing files
 
 :pairwise_exception_location:  Location of new pairwise alignments which are not in the release compara database ie new for this release
 :pipeline_db:                  Production database
@@ -99,7 +99,6 @@ Initialize and run the pipeline
 
 ::
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf --password <your_password> --low_epo_mlss_id <low-coverage mlss_id> --high_epo_mlss_id <high-coverage mlss_id> --cs_mlss_id <conservation_score_mlss_id> --ce_mlss_id <constrained_element_mlss_id> --work_dir <working_directory> --epo_db mysql://user@host:port/high_coverage_epo_db
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EpoExtended_conf --password <your_password> --work_dir <working_directory> --epo_db mysql://user@host:port/high_coverage_epo_db
 
 Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
-

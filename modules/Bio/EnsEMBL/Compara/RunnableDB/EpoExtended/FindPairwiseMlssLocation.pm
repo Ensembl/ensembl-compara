@@ -17,7 +17,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::FindPairwiseMlssLocation
+Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::FindPairwiseMlssLocation
 
 =head1 DESCRIPTION
 
@@ -30,14 +30,9 @@ Will only be looking for the pairwise alignment needed to expand the
 Stores the resulting hash in the pipeline_wide_parameters table (via a
 dataflow).
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with a _
-
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::FindPairwiseMlssLocation;
+package Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::FindPairwiseMlssLocation;
 
 use strict;
 use warnings;

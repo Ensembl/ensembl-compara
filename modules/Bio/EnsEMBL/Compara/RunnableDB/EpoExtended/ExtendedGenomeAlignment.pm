@@ -15,35 +15,26 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::Runnable::EpoLowCoverage::LowCoverageGenomeAlignment
+Bio::EnsEMBL::Compara::Runnable::EpoExtended::ExtendedGenomeAlignment
 
 =head1 DESCRIPTION
 
-This module acts as a layer between the Hive system and the Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment module
+This module acts as a layer between the Hive system and the
+Bio::EnsEMBL::Compara::Production::Analysis::ExtendedGenomeAlignment module
 
-This module is the alternative module to Ortheus.pm for aligning low coverage (2X) genomes. This takes an existing high coverage alignment and maps the pairwise BlastZ-Net alignments of the low coverage genomes to the human sequence in the high coverage alignment. Any insertions in the low coverage alignments are removed, that is, no gaps are added to the human sequence. In regions where there are duplications, a phylogenetic tree is generated using either treeBest where there are more than 3 sequences in the alignment or semphy where there are 3 or less sequences. This module is still under development.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
+This module is the alternative module to Ortheus.pm to extend an existing EPO
+alignment, mapping the pairwise LastZ-Net alignments of the additional genomes
+to the reference genomes in the EPO alignment. Any insertions in the extended
+alignment are removed, that is, no gaps are added to the reference species. In
+regions where there are duplications, a phylogenetic tree is generated using
+either TreeBest where there are more than 3 sequences in the alignment or semphy
+where there are 3 or less sequences.
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment;
+package Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::ExtendedGenomeAlignment;
 
 use strict;
 use warnings;
@@ -54,7 +45,7 @@ use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
-use Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment;
+use Bio::EnsEMBL::Compara::Production::Analysis::ExtendedGenomeAlignment;
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
 use Bio::EnsEMBL::Compara::Utils::Cigars;
@@ -87,7 +78,7 @@ sub fetch_input {
   my( $self) = @_;
 
   if (!$self->param('mlss_id')) {
-    throw("MethodLinkSpeciesSet->dbID is not defined for this LowCoverageAlignment job");
+    throw("MethodLinkSpeciesSet->dbID is not defined for this ExtendedGenomeAlignment job");
   }
 
   # Set the genome dump directory
@@ -125,7 +116,7 @@ sub fetch_input {
 
     Arg        : -none-
     Example    : $self->run
-    Description: runs the  LowCoverageGenomeAlignment analysis module and 
+    Description: runs the  ExtendedGenomeAlignment analysis module and 
                   parses the results
     Returntype : none
     Exceptions : none
@@ -143,7 +134,7 @@ sub run
   #disconnect compara database
   $self->compara_dba->dbc->disconnect_if_idle;
 
-  my $tree_file = Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment::run_analysis($self);
+  my $tree_file = Bio::EnsEMBL::Compara::Production::Analysis::ExtendedGenomeAlignment::run_analysis($self);
   $self->_parse_results($tree_file);
 }
 
@@ -263,7 +254,7 @@ sub _write_gerp_dataflow {
 sub _parse_results {
     my ($self, $tree_file) = @_;
 
-    #Taken from Analysis/Runnable/LowCoverageGenomeAlignment.pm module
+    #Taken from Production/Analysis/ExtendedGenomeAlignment.pm module
     print "PARSE RESULTS\n" if $self->debug;
 
     ## The output file contains one fasta aligned sequence per original sequence + ancestral sequences.

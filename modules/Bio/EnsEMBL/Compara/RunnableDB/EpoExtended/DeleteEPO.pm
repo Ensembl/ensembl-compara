@@ -15,21 +15,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::DeleteEPO
-
-=head1 SYNOPSIS
-
-
+Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::DeleteEPO
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::DeleteEPO;
+package Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::DeleteEPO;
 
 use warnings;
 use strict;

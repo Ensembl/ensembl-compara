@@ -17,7 +17,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes
+Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::SetNeighbourNodes
 
 =head1 DESCRIPTION
 
@@ -33,13 +33,13 @@ Mandatory. Root ID of the genomic align tree to set/update.
 
 =head1 EXAMPLES
 
-    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes \
+    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::SetNeighbourNodes \
         -compara_db $(mysql-ens-compara-prod-7-ensadmin details url jalvarez_sauropsids_epo_update_103) \
         -root_id 19490000000007
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes;
+package Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::SetNeighbourNodes;
 
 use strict;
 use warnings;
