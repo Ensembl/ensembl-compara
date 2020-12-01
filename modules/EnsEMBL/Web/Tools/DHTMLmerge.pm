@@ -266,10 +266,13 @@ sub _merge_files {
   $filename .= '.'.$ext;
   my $url_path = sprintf '%s/%s', $species_defs->ENSEMBL_MINIFIED_URL, $filename;
   my $abs_path = sprintf '%s/%s', $species_defs->ENSEMBL_MINIFIED_FILES_PATH, $filename;
+  my $regenerate_path = sprintf '%s/regenerate', $species_defs->ENSEMBL_MINIFIED_FILES_PATH;
+  my $regenerate = -e $regenerate_path;
 
   # create and save the minified file if it doesn't already exist there
   warn "   using filename $filename\n" if $DEBUG;
-  unless(-e $abs_path) {
+  warn "Regenerate due to presence of regenerate file\n" if $regenerate;
+  if(!-e $abs_path or $regenerate) {
     warn "   doesn't exist, creating\n" if $DEBUG;
     if($type ne 'image') {
       my @out;
