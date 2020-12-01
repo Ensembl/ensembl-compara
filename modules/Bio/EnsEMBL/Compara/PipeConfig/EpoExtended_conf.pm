@@ -101,6 +101,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     return {
             %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
+            'master_db' => $self->o('master_db'),
+
             'run_gerp' => $self->o('run_gerp'),
             'genome_dumps_dir' => $self->o('genome_dumps_dir'),
             'reg_conf' => $self->o('reg_conf'),
