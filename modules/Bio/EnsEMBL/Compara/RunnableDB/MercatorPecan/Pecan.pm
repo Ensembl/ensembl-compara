@@ -123,6 +123,9 @@ sub fetch_input {
   # Initialize the array
   $self->param('fasta_files', []);
   
+  # Really all this does is cleaning up a previous attempt of the same synteny_region_id
+  # It is not necessary to set up tmp_work_dir any more
+  $self->cleanup_worker_temp_directory;
   # grab synteny_region_id and create tmp_work_dir
   my $synteny_region_id = $self->param_required('synteny_region_id');
   my $tmp_work_dir = $self->worker_temp_directory . "/synteny_region_$synteny_region_id";
@@ -572,7 +575,6 @@ sub _write_gerp_dataflow {
     my $output_id = { genomic_align_block_id => $gab->dbID };
 
     $self->dataflow_output_id($output_id,1);
-    $self->cleanup_worker_temp_directory; # this is important to avoid clashes between jobs run by the same worker
 }
 
 ##########################################
