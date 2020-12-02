@@ -123,8 +123,10 @@ sub fetch_input {
   # Initialize the array
   $self->param('fasta_files', []);
   
-  # Really all this does is cleaning up a previous attempt of the same synteny_region_id
-  # It is not necessary to set up tmp_work_dir any more
+  # This is only useful if the worker has previously attempted the same
+  # synteny_region_id because each synteny_region_id gets its own directory to
+  # work in. But it guarantees that the worker_temp_directory is anyway clean
+  # enough to directly host the data of the synteny_region_id if needed.
   $self->cleanup_worker_temp_directory;
   # grab synteny_region_id and create tmp_work_dir
   my $synteny_region_id = $self->param_required('synteny_region_id');
