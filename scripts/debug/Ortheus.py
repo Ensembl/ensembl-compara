@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Script to mimic Ortheus and return the output of a previous run"""
+
 import os
 import subprocess
 import sys
@@ -28,6 +30,7 @@ pid = 85677
 ref_fasta_dir = '/path/to/worker_muffato_mammals_epo_with4x_101.95260'
 
 def read_file(filename):
+    """Helper method to read a whole file"""
     with open(filename, 'r') as fh:
         return fh.read()
 
