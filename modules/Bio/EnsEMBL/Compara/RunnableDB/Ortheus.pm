@@ -192,6 +192,7 @@ sub detect_pecan_ortheus_errors {
               $err_msgs{$line} = 1;
           }
       }
+      $err_msgs{$traceback} = 1 if $trace_open;
 
       #Write to job_message table but without returing an error
       foreach my $err_msg (keys %err_msgs) {
