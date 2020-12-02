@@ -635,6 +635,11 @@ sub get_all_sorted_genomic_align_nodes {
                object if any. If you want to restrict an object with no coordinates
                a simple substr() will do!
 
+               NB: skip_empty_GenomicAligns only removes terminal sub-trees that
+               become gap-only after restriction. Purely internal nodes that become
+               gap-only are kept to hold the tree together, as this method can only
+               return 1 GenomicAlignTree.
+
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object
   Exceptions : none
   Caller     : general
