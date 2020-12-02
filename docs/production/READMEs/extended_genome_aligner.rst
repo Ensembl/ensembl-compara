@@ -6,7 +6,7 @@ This README describes how to set up the EPO Extended aligner system using the in
 General description of the pipeline
 -----------------------------------
 
-The pipeline involves taking the EPO alignment and mapping onto the reference sequences the additional mammalian (b)lastz alignments.
+This pipeline involves mapping additional mammal genomes via lastz pairwise alignments (with shared reference genomes) to an existing mammal EPO multiple alignment.
 
 Necessary code API and executables
 ----------------------------------
@@ -45,7 +45,7 @@ in bash
 Update the master database
 --------------------------
 
-The pipeline requires a "master" database. This is a compara database containing information that is required to maintain consistency across several production and release databases. See README-master_database for details on how to create an initial master database.
+This pipeline requires a compara "master" database containing information that maintains consistency across several production and release databases. See README-master_database for details on how to create an initial master database.
 
 #. Update genome_db and dnafrag tables with any new species assembly using the update_genome.pl script.
    The reg.conf should contain the compara_master and the location of the core database

@@ -143,13 +143,13 @@ sub pipeline_analyses_db_prepare{
                 'from_db'                    => $self->o('epo_db'),
             },
             -flow_into => {
-                1 => [ 'create_extended_genome_jobs' ],
+                1 => [ 'create_epo_extended_jobs' ],
             },
             -rc_name =>'1Gb_job',
         },
 
         # ------------------------------------------------------[Extended alignment]----------------------------------------------------------
-        {   -logic_name => 'create_extended_genome_jobs',
+        {   -logic_name => 'create_epo_extended_jobs',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery' => 'SELECT genomic_align_block_id FROM genomic_align ga LEFT JOIN dnafrag USING (dnafrag_id) WHERE method_link_species_set_id = #mlss_id# AND coord_system_name != "ancestralsegment" GROUP BY genomic_align_block_id',

@@ -254,7 +254,7 @@ sub _write_gerp_dataflow {
 sub _parse_results {
     my ($self, $tree_file) = @_;
 
-    #Taken from Production/Analysis/ExtendedGenomeAlignment.pm module
+    #Taken from Compara/Production/Analysis/ExtendedGenomeAlignment.pm module
     print "PARSE RESULTS\n" if $self->debug;
 
     ## The output file contains one fasta aligned sequence per original sequence + ancestral sequences.
