@@ -574,8 +574,8 @@ sub toString {
     if (scalar(@$gas) == 1) {
         my $ga = $gas->[0];
         my $str = sprintf('%s %s:%d-%d%s', $ga->dnafrag->genome_db->name, $ga->dnafrag->name, $ga->dnafrag_start, $ga->dnafrag_end, ($ga->dnafrag_strand < 0 ? '(-1)' : ''));
-        my %cigar_breakout = Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($ga->cigar_line);
-        $str .= ' cigar_line:' . join(',', map {$cigar_breakout{$_}.'*'.$_} sort keys %cigar_breakout);
+        my $cigar_breakout = Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($ga->cigar_line);
+        $str .= ' cigar_line:' . join(',', map {$cigar_breakout->{$_}.'*'.$_} sort keys %$cigar_breakout);
         return $str;
     } else {
         return sprintf('%d %s GenomicAligns', scalar(@$gas), $self->genome_db->name);
