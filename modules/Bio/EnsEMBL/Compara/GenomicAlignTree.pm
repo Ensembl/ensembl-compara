@@ -687,9 +687,9 @@ sub restrict_between_alignment_positions {
               # -> We actually still need to remove the node if it belongs
               #    to ancestral_sequences but is now a leaf, because leaves
               #    must belong to extant species
-              # (this is possible because the "reverse" in the foreach loop
-              # above means that children are processed before their parent
-              # and they can be removed below)
+              # (internal nodes can become leaves if all their children are
+              # removed, which can happen if they are gap-only, cf the
+              # disavow_parent all down below)
               if ($this_node->is_leaf and !$was_leaf{$this_node}) {
                   $record_restricted_ga = 0;
               }
