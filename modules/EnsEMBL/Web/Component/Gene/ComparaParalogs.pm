@@ -217,7 +217,10 @@ sub buttons {
                 };
 
     ## Add any species settings
+    my $compara_spp = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'COMPARA_SPECIES'};
     foreach (grep { /^species_/ } $hub->param) {
+      (my $key = $_) =~ s/species_//;
+      next unless $compara_spp->{$key};
       $params->{$_} = $hub->param($_);
     }
 

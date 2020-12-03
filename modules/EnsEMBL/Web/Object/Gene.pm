@@ -895,9 +895,10 @@ sub get_homologue_alignments {
     my $tree    = $database->get_GeneTreeAdaptor->fetch_default_for_Member($member);
     my @params  = ($member, $type);
     my $species = [];
+    my $compara_spp = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'COMPARA_SPECIES'};
     foreach (grep { /species_/ } $hub->param) {
       (my $sp = $_) =~ s/species_//;
-      push @$species, $sp if $hub->param($_) eq 'yes';
+      push @$species, $sp if ($compara_spp->{$sp} && $hub->param($_) eq 'yes');
     }
     push @params, $species if scalar @$species;
     $msa        = $tree->get_alignment_of_homologues(@params);

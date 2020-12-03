@@ -403,7 +403,7 @@ sub get_export_data {
       (my $sp = $_) =~ s/species_//;
       $ok_species{$sp} = 1 if $self->param($_) eq 'yes';      
     }
-   
+
     if (keys %ok_species) {
       # It's the lower case species url name which is passed through the data export URL
       return [grep {$ok_species{lc($hub->species_defs->production_name_mapping($_->get_all_Members->[1]->genome_db->name))}} @$homologies];
@@ -427,17 +427,20 @@ sub buttons {
     my $name = $dxr ? $dxr->display_id : $gene->stable_id;
 
     my $params  = {
-                  'type'        => 'DataExport',
-                  'action'      => 'Orthologs',
-                  'data_type'   => 'Gene',
-                  'component'   => 'ComparaOrthologs',
-                  'data_action' => $hub->action,
-                  'gene_name'   => $name,
-                  'cdb'         => $hub->function =~ /pan_compara/ ? 'pan_compara' : 'compara',
-                };
+      'type'        => 'DataExport',
+      'action'      => 'Orthologs',
+      'data_type'   => 'Gene',
+      'component'   => 'ComparaOrthologs',
+      'data_action' => $hub->action,
+      'gene_name'   => $name,
+      'cdb'         => $hub->function =~ /pan_compara/ ? 'pan_compara' : 'compara',
+    };
 
     ## Add any species settings
+    my $compara_spp = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'COMPARA_SPECIES'};
     foreach (grep { /^species_/ } $self->param) {
+      (my $key = $_) =~ s/species_//;
+      next unless $compara_spp->{$key};
       $params->{$_} = $self->param($_);
     }
 
