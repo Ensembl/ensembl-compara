@@ -70,13 +70,13 @@
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [<Division>/ncRNAtrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/ncRNAtrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::ncRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX -mlss_id <curr_ncrna_mlss_id>{code}",
+            "description": "*GitHub*: [<Division>/ncRNAtrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/ncRNAtrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::ncRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the ncRNA-trees pipeline",
             "name_on_graph": "ncRNA-trees:Default vertebrates"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [MurinaeNcRNAtrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/MurinaeNcRNAtrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeNcRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX -mlss_id <curr_murinae_ncrna_mlss_id>{code}",
+            "description": "*GitHub*: [MurinaeNcRNAtrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/MurinaeNcRNAtrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeNcRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the mouse strains ncRNA-trees pipeline",
             "name_on_graph": "ncRNA-trees:Murinae"
          },
@@ -88,7 +88,7 @@
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [PigBreedsNcRNAtrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/PigBreedsNcRNAtrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsNcRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX -mlss_id <curr_pig_breeds_ncrna_mlss_id>{code}",
+            "description": "*GitHub*: [PigBreedsNcRNAtrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/PigBreedsNcRNAtrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsNcRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the pig breeds ncRNA-trees pipeline",
             "name_on_graph": "ncRNA-trees:Pig breeds"
          },

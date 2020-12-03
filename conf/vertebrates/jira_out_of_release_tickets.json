@@ -45,13 +45,13 @@
       "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Intentions+for+release+<version>",
       "subtasks": [{
             "component": "Production tasks",
-            "description": "*GitHub*: [MurinaeNcRNAtrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/master/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/MurinaeNcRNAtrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeNcRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX -mlss_id <curr_murinae_ncrna_mlss_id>{code}",
+            "description": "*GitHub*: [MurinaeNcRNAtrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/master/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/MurinaeNcRNAtrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeNcRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the mouse strains ncRNA-trees pipeline",
             "name_on_graph": "ncRNA-trees:Murinae"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [MurinaeProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/master/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/MurinaeProteinTrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX -mlss_id <curr_murinae_ptree_mlss_id>{code}",
+            "description": "*GitHub*: [MurinaeProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/master/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/MurinaeProteinTrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the mouse strains Protein-trees pipeline",
             "name_on_graph": "Protein-trees:Murinae"
          },
@@ -63,7 +63,7 @@
          },
          {
              "component": "Production tasks",
-             "description": "*GitHub*: [Vertebrates/MercatorPecan_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/master/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/MercatorPecan_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MercatorPecan_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -mlss_id <pecan_mlss_id>{code}",
+             "description": "*GitHub*: [Vertebrates/MercatorPecan_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/master/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/MercatorPecan_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MercatorPecan_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
              "summary": "Run the Amniotes pecan pipeline",
              "name_on_graph": "Mercator Pecan:Amniotes"
          },
