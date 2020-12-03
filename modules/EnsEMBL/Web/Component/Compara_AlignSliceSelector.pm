@@ -39,7 +39,12 @@ sub content {
   my $db_hash      = $species_defs->multi_hash;
   my ($align, $target_species, $target_slice_name_range) = split '--', $hub->get_alignment_id;
   my $url          = $hub->url({ %{$hub->multi_params}, align => undef }, 1);
-  my $extra_inputs = join '', map qq(<input type="hidden" name="$_" value="$url->[1]{$_}" />), sort keys %{$url->[1] || {}};
+  my $extra_inputs; 
+  foreach (sort keys %{$url->[1] || {}}) {
+    my $val = $url->[1]{$_};
+    next if $val =~ /</; ## Reject parameters that might contain XSS
+    $extra_inputs .= qq(<input type="hidden" name="$_" value="$val" />);
+  }
   my $alignments   = $db_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {}; # Get the compara database hash
 
   my $species = $hub->species;
