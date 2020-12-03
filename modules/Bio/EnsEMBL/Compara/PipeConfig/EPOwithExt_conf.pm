@@ -19,22 +19,23 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf
+Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -division $COMPARA_DIV -species_set_name <species_set_name> -low_epo_mlss_id <id> -high_epo_mlss_id <id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -species_set_name <species_set_name>
 
 =head1 DESCRIPTION
 
-    This pipeline runs EPO and EPO2x together. For more information on each pipeline, see their respective PipeConfig files:
+    This pipeline runs EPO and EPO Extended together. For more information on
+    each pipeline, see their respective PipeConfig files:
     - Bio::EnsEMBL::Compara::PipeConfig::EPO_conf
-    - Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf
+    - Bio::EnsEMBL::Compara::PipeConfig::EpoExtended_conf
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf;
 
 use strict;
 use warnings;
@@ -44,7 +45,7 @@ use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For INPUT_PLUS
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOMapAnchors;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOAlignment;
-use Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoLowCoverage;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoExtended;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -54,7 +55,8 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name' => $self->o('species_set_name').'_epo_with2x_'.$self->o('rel_with_suffix'),
+        'pipeline_name' => $self->o('species_set_name').'_epo_with_ext_'.$self->o('rel_with_suffix'),
+        'method_type'   => 'EPO',
         'master_db'     => 'compara_master',
 
         # database containing the anchors for mapping
@@ -107,14 +109,11 @@ sub default_options {
             -dbname   => $self->o('dbowner').'_'.$self->o('species_set_name').'_ancestral_core_'.$self->o('rel_with_suffix'),
         },
 
-        # ----- EpoLowCoverage settings ----- #
+        # ----- EpoExtended settings ----- #
 
         'run_gerp'          => 1,
         'gerp_window_sizes' => [1,10,100,500], #gerp window sizes
 
-        'low_epo_mlss_id'  => $self->o('low_epo_mlss_id'),  # mlss_id for low coverage epo alignment
-        'base_epo_mlss_id' => $self->o('high_epo_mlss_id'), # mlss_id for the base alignment we're topping up
-                                                            # (can be EPO or EPO_EXTENDED)
         'max_block_size'   => 1000000,                       #max size of alignment before splitting
 
         #default location for pairwise alignments (can be a string or an array-ref)
@@ -137,9 +136,6 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},
 
-        'low_epo_mlss_id'  => $self->o('low_epo_mlss_id'),
-        'high_epo_mlss_id' => $self->o('high_epo_mlss_id'),
-        'base_epo_mlss_id' => $self->o('base_epo_mlss_id'),
         'species_set_name' => $self->o('species_set_name'),
 
         # directories
@@ -169,12 +165,15 @@ sub core_pipeline_analyses {
     my ($self) = @_;
 
     return [
-
-        {   -logic_name => 'start_prepare_databases',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -input_ids  => [{
-                mlss_id => '#high_epo_mlss_id#',
-            }],
+        {   -logic_name => 'load_mlss_ids',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMLSSids',
+            -parameters => {
+                'method_type'      => $self->o('method_type'),
+                'species_set_name' => $self->o('species_set_name'),
+                'release'          => $self->o('ensembl_release'),
+                'add_sister_mlsss' => 1,
+            },
+            -input_ids  => [{}],
             -flow_into  => {
                 '1->A' => [ 'copy_table_factory', 'set_internal_ids', 'drop_ancestral_db' ],
                 'A->1' => 'reuse_anchor_align_factory',
@@ -186,18 +185,18 @@ sub core_pipeline_analyses {
             -parameters => {
                 'inputlist'    => [
                     [
-                        '#high_epo_mlss_id#',
+                        '#mlss_id#',
                         ['EPO'],
-                        ['high_epo_mlss_id'],
-                        '#high_epo_mlss_id#',
-                        1, # store reuse species sets for high coverage species
+                        ['mlss_id'],
+                        '#mlss_id#',
+                        1, # store reuse species sets for main species
                     ],
                     [
-                        '#low_epo_mlss_id#',
+                        '#ext_mlss_id#',
                         '#expr(#run_gerp# ? ["EPO_EXTENDED", "GERP_CONSTRAINED_ELEMENT", "GERP_CONSERVATION_SCORE"] : ["EPO_EXTENDED"])expr#',
-                        '#expr(#run_gerp# ? ["low_epo_mlss_id", "ce_mlss_id", "cs_mlss_id"] : ["low_epo_mlss_id"])expr#',
+                        '#expr(#run_gerp# ? ["ext_mlss_id", "ce_mlss_id", "cs_mlss_id"] : ["ext_mlss_id"])expr#',
                         undef,
-                        0 # do not store reuse species sets for low coverage species
+                        0 # do not store reuse species sets for additional species
                     ],
                 ],
                 'column_names' => [ 'mlss_id', 'whole_method_links', 'param_names', 'filter_by_mlss_id', 'store_reuse_ss' ],
@@ -211,7 +210,7 @@ sub core_pipeline_analyses {
             }
         },
 
-        {   -logic_name => 'setup_low_coverage_alignment',
+        {   -logic_name => 'setup_extended_alignment',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => ['dump_mappings_to_file', 'check_for_lastz'],
         },
@@ -222,15 +221,15 @@ sub core_pipeline_analyses {
                 'switch_name' => 'lastz_complete',
             },
             -flow_into  => {
-                1 => { 'create_default_pairwise_mlss' => { 'mlss_id' => '#low_epo_mlss_id#' } },
+                1 => { 'create_default_pairwise_mlss' => { 'mlss_id' => '#ext_mlss_id#' } },
             },
             -max_retry_count => 0,
         },
 
-        {   -logic_name => 'set_internal_ids_low_epo',
+        {   -logic_name => 'set_internal_ids_epo_ext',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsCollection',
             -parameters => {
-                method_link_species_set_id => '#low_epo_mlss_id#',
+                method_link_species_set_id => '#ext_mlss_id#',
             },
             -flow_into => [ 'alignment_mlss_factory' ],
         },
@@ -238,7 +237,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'alignment_mlss_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist'    => ['#high_epo_mlss_id#', '#low_epo_mlss_id#'],
+                'inputlist'    => ['#mlss_id#', '#ext_mlss_id#'],
                 'column_names' => ['mlss_id'],
             },
             -flow_into => {
@@ -248,8 +247,8 @@ sub core_pipeline_analyses {
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOMapAnchors::pipeline_analyses_epo_anchor_mapping($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOAlignment::core_pipeline_analyses_epo_alignment($self) },
-        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoLowCoverage::pipeline_analyses_epo2x_alignment($self) },
-        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoLowCoverage::pipeline_analyses_healthcheck($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoExtended::pipeline_analyses_epo_ext_alignment($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoExtended::pipeline_analyses_healthcheck($self) },
     ];
 }
 
@@ -257,8 +256,8 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
-    # load genomes from low_epo_mlss_id by hijacking the dataflow
-    $analyses_by_name->{'offset_tables'}->{'-flow_into'} = { 1 => { 'load_genomedb_factory' => { 'mlss_id' => '#low_epo_mlss_id#' } } };
+    # load genomes from ext_mlss_id by hijacking the dataflow
+    $analyses_by_name->{'offset_tables'}->{'-flow_into'} = { 1 => { 'load_genomedb_factory' => { 'mlss_id' => '#ext_mlss_id#' } } };
 
     # load_genomedb_factory should connect to the mlss_factory
     $analyses_by_name->{'load_genomedb_factory'}->{'-flow_into'}->{'A->1'} = [ 'mlss_factory' ];
@@ -272,44 +271,44 @@ sub tweak_analyses {
     delete $analyses_by_name->{'make_species_tree'}->{'-flow_into'};
 
     # set mlss_id for anchor mapping
-    $analyses_by_name->{'reuse_anchor_align'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
-    $analyses_by_name->{'map_anchors'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
-    $analyses_by_name->{'map_anchors_himem'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
-    $analyses_by_name->{'map_anchors_no_server'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
-    $analyses_by_name->{'map_anchors_no_server_himem'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
+    $analyses_by_name->{'reuse_anchor_align'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
+    $analyses_by_name->{'map_anchors'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
+    $analyses_by_name->{'map_anchors_himem'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
+    $analyses_by_name->{'map_anchors_no_server'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
+    $analyses_by_name->{'map_anchors_no_server_himem'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
 
     # Rewire "create_default_pairwise_mlss" and "dump_mappings_to_file" after having trimmed the anchors
     $analyses_by_name->{'trim_anchor_align_factory'}->{'-flow_into'} = {
         '2->A' => $analyses_by_name->{'trim_anchor_align_factory'}->{'-flow_into'}->{2},
-        'A->1' => [ 'setup_low_coverage_alignment' ],
+        'A->1' => [ 'setup_extended_alignment' ],
     };
     $analyses_by_name->{'create_default_pairwise_mlss'}->{'-flow_into'}->{1} = WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ]);
     $analyses_by_name->{'create_default_pairwise_mlss'}->{'-parameters'}->{'prev_epo_db'} = '#reuse_db#';
     delete $analyses_by_name->{'set_gerp_neutral_rate'}->{'-flow_into'}->{1};
 
-    # Make Enredo work only on the high-coverage genomes
-    $analyses_by_name->{'load_dnafrag_region'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
+    # Make Enredo work only on the currently EPO aligned genomes
+    $analyses_by_name->{'load_dnafrag_region'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
 
-    # link "ortheus*" analyses directly to "low_coverage_genome_alignment"
-    $analyses_by_name->{'ortheus'}->{'-flow_into'}->{1} = 'low_coverage_genome_alignment';
-    $analyses_by_name->{'ortheus'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
-    $analyses_by_name->{'ortheus_high_mem'}->{'-flow_into'}->{1} = 'low_coverage_genome_alignment';
-    $analyses_by_name->{'ortheus_high_mem'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
-    $analyses_by_name->{'ortheus_huge_mem'}->{'-flow_into'}->{1} = 'low_coverage_genome_alignment';
-    $analyses_by_name->{'ortheus_huge_mem'}->{'-parameters'}->{'mlss_id'} = '#high_epo_mlss_id#';
+    # link "ortheus*" analyses directly to "extended_genome_alignment"
+    $analyses_by_name->{'ortheus'}->{'-flow_into'}->{1} = 'extended_genome_alignment';
+    $analyses_by_name->{'ortheus'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
+    $analyses_by_name->{'ortheus_high_mem'}->{'-flow_into'}->{1} = 'extended_genome_alignment';
+    $analyses_by_name->{'ortheus_high_mem'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
+    $analyses_by_name->{'ortheus_huge_mem'}->{'-flow_into'}->{1} = 'extended_genome_alignment';
+    $analyses_by_name->{'ortheus_huge_mem'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
 
-    # set mlss_id for "low_coverage_genome_alignment*"
-    $analyses_by_name->{'low_coverage_genome_alignment'}->{'-parameters'}->{'mlss_id'} = '#low_epo_mlss_id#';
-    $analyses_by_name->{'low_coverage_genome_alignment_again'}->{'-parameters'}->{'mlss_id'} = '#low_epo_mlss_id#';
-    $analyses_by_name->{'low_coverage_genome_alignment_himem'}->{'-parameters'}->{'mlss_id'} = '#low_epo_mlss_id#';
-    $analyses_by_name->{'low_coverage_genome_alignment_hugemem'}->{'-parameters'}->{'mlss_id'} = '#low_epo_mlss_id#';
+    # set mlss_id for "extended_genome_alignment*"
+    $analyses_by_name->{'extended_genome_alignment'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'extended_genome_alignment_again'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'extended_genome_alignment_himem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'extended_genome_alignment_hugemem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
 
     # block analyses until LASTZ are complete
-    $analyses_by_name->{'low_coverage_genome_alignment'}->{'-wait_for'} = 'create_default_pairwise_mlss';
+    $analyses_by_name->{'extended_genome_alignment'}->{'-wait_for'} = 'create_default_pairwise_mlss';
     $analyses_by_name->{'gerp'}->{'-wait_for'} = 'set_gerp_neutral_rate';
 
-    # add "set_internal_ids_low_epo" to "load_dnafrag_region"
-    $analyses_by_name->{'load_dnafrag_region'}->{'-flow_into'}->{'A->1'} = { 'set_internal_ids_low_epo' => {} };
+    # add "set_internal_ids_epo_ext" to "load_dnafrag_region"
+    $analyses_by_name->{'load_dnafrag_region'}->{'-flow_into'}->{'A->1'} = { 'set_internal_ids_epo_ext' => {} };
 
     # ensure mlss_ids are flowed with their root_ids
     $analyses_by_name->{'create_neighbour_nodes_jobs_alignment'}->{'-parameters'}->{'inputquery'} = 'SELECT gat2.root_id, #mlss_id# as mlss_id FROM genomic_align_tree gat1 LEFT JOIN genomic_align ga USING(node_id) JOIN genomic_align_tree gat2 USING(root_id) WHERE gat2.parent_id IS NULL AND ga.method_link_species_set_id = #mlss_id# GROUP BY gat2.root_id';

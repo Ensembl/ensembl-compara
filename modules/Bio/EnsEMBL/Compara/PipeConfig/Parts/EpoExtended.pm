@@ -19,7 +19,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoLowCoverage
+Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoExtended
 
 =head1 DESCRIPTION
 
@@ -33,7 +33,7 @@ conservation scores from the MSA
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoLowCoverage;
+package Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoExtended;
 
 use strict;
 use warnings;
@@ -47,7 +47,7 @@ sub pipeline_analyses_all {
 
     return [
         @{ pipeline_analyses_db_prepare($self)      },
-        @{ pipeline_analyses_epo2x_alignment($self) },
+        @{ pipeline_analyses_epo_ext_alignment($self) },
         @{ pipeline_analyses_db_complete($self)     },
         @{ pipeline_analyses_healthcheck($self)     },
     ];
@@ -57,26 +57,20 @@ sub pipeline_analyses_db_prepare{
     my ($self) = @_;
 
     return [
-        {   -logic_name => 'with_or_without_gerp',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -input_ids  => [{}],
-            -flow_into  => WHEN( '#run_gerp#' => [ 'find_gerp_mlss_ids' ],
-                                ELSE [ 'populate_new_database' ],
-                            ),
-        },
-
-        # ---------------------------------------------[find out the other mlss_ids involved ]---------------------------------------------------
-        {   -logic_name => 'find_gerp_mlss_ids',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+        # ---------------------------------------------[load the mlss_ids involved ]---------------------------------------------------
+        {   -logic_name => 'load_mlss_ids',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMLSSids',
             -parameters => {
-                'db_conn'       => $self->o('master_db'),
-                'ce_ml_type'    => 'GERP_CONSTRAINED_ELEMENT',
-                'cs_ml_type'    => 'GERP_CONSERVATION_SCORE',
-                'inputquery'    => 'SELECT mlss_ce.method_link_species_set_id AS ce_mlss_id, mlss_cs.method_link_species_set_id AS cs_mlss_id FROM method_link_species_set mlss JOIN (method_link_species_set mlss_ce JOIN method_link ml_ce USING (method_link_id)) USING (species_set_id) JOIN (method_link_species_set mlss_cs JOIN method_link ml_cs USING (method_link_id)) USING (species_set_id) WHERE mlss.method_link_species_set_id = #mlss_id# AND ml_ce.type = "#ce_ml_type#" AND ml_cs.type = "#cs_ml_type#"',
+                'method_type'      => $self->o('method_type'),
+                'species_set_name' => $self->o('species_set_name'),
+                'release'          => $self->o('ensembl_release'),
+                'add_sister_mlsss' => '#run_gerp#',
             },
-            -flow_into => {
-                2 => 'populate_new_database_with_gerp',
-            },
+            -input_ids  => [{}],
+            -flow_into  => WHEN(
+                '#run_gerp#' => [ 'populate_new_database_with_gerp' ],
+                ELSE            [ 'populate_new_database' ],
+            ),
         },
 
         # ---------------------------------------------[Run poplulate_new_database.pl script ]---------------------------------------------------
@@ -84,7 +78,7 @@ sub pipeline_analyses_db_prepare{
            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
            -parameters    => {
                   'program' => $self->o('populate_new_database_exe'),
-                  'cmd'     => ['#program#', '--master', $self->o('master_db'), '--new', $self->pipeline_url(), '--mlss', '#mlss_id#', '--reg-conf', '#reg_conf#'],
+                  'cmd'     => ['#program#', '--master', $self->o('master_db'), '--new', $self->pipeline_url(), '--mlss', '#ext_mlss_id#', '--reg-conf', '#reg_conf#'],
                  },
             -flow_into => {
                   1 => [ 'set_mlss_tag' ],
@@ -95,7 +89,7 @@ sub pipeline_analyses_db_prepare{
            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
            -parameters    => {
                 'program' => $self->o('populate_new_database_exe'),
-                'cmd'     => ['#program#', '--master', $self->o('master_db'), '--new', $self->pipeline_url(), '--mlss', '#mlss_id#', '--mlss', '#ce_mlss_id#', '--mlss', '#cs_mlss_id#', '--reg-conf', '#reg_conf#'],
+                'cmd'     => ['#program#', '--master', $self->o('master_db'), '--new', $self->pipeline_url(), '--mlss', '#ext_mlss_id#', '--mlss', '#ce_mlss_id#', '--mlss', '#cs_mlss_id#', '--reg-conf', '#reg_conf#'],
             },
             -flow_into => {
                 1 => [ 'set_gerp_mlss_tag' ],
@@ -107,11 +101,10 @@ sub pipeline_analyses_db_prepare{
         {   -logic_name => 'set_internal_ids',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
-                'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),
                 'sql'   => [
-                    'ALTER TABLE genomic_align_block AUTO_INCREMENT=#expr((#low_epo_mlss_id# * 10**10) + 1)expr#',
-                    'ALTER TABLE genomic_align AUTO_INCREMENT=#expr((#low_epo_mlss_id# * 10**10) + 1)expr#',
-                    'ALTER TABLE genomic_align_tree AUTO_INCREMENT=#expr((#low_epo_mlss_id# * 10**10) + 1)expr#',
+                    'ALTER TABLE genomic_align_block AUTO_INCREMENT=#expr((#ext_mlss_id# * 10**10) + 1)expr#',
+                    'ALTER TABLE genomic_align AUTO_INCREMENT=#expr((#ext_mlss_id# * 10**10) + 1)expr#',
+                    'ALTER TABLE genomic_align_tree AUTO_INCREMENT=#expr((#ext_mlss_id# * 10**10) + 1)expr#',
                 ],
             },
             -flow_into => {
@@ -144,25 +137,25 @@ sub pipeline_analyses_db_prepare{
 
         # ------------------------------------------------[Import the base alignments]---------------------------------------------------
         {   -logic_name => 'import_alignment',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::ImportAlignment',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::ImportAlignment',
             -parameters => {
-                'method_link_species_set_id' => $self->o('base_epo_mlss_id'),
+                'method_link_species_set_id' => '#mlss_id#',
                 'from_db'                    => $self->o('epo_db'),
             },
             -flow_into => {
-                1 => [ 'create_low_coverage_genome_jobs' ],
+                1 => [ 'create_epo_extended_jobs' ],
             },
             -rc_name =>'1Gb_job',
         },
 
-        # ------------------------------------------------------[Low coverage alignment]----------------------------------------------------------
-        {   -logic_name => 'create_low_coverage_genome_jobs',
+        # ------------------------------------------------------[Extended alignment]----------------------------------------------------------
+        {   -logic_name => 'create_epo_extended_jobs',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery' => 'SELECT genomic_align_block_id FROM genomic_align ga LEFT JOIN dnafrag USING (dnafrag_id) WHERE method_link_species_set_id=' . $self->o('base_epo_mlss_id') . ' AND coord_system_name != "ancestralsegment" GROUP BY genomic_align_block_id',
+                'inputquery' => 'SELECT genomic_align_block_id FROM genomic_align ga LEFT JOIN dnafrag USING (dnafrag_id) WHERE method_link_species_set_id = #mlss_id# AND coord_system_name != "ancestralsegment" GROUP BY genomic_align_block_id',
             },
             -flow_into => {
-                '2->A' => [ 'low_coverage_genome_alignment' ],
+                '2->A' => [ 'extended_genome_alignment' ],
                 'A->1' => [ 'delete_alignment' ],
             },
             -rc_name => '4Gb_job',
@@ -180,7 +173,7 @@ sub pipeline_analyses_db_prepare{
     ];
 }
 
-sub pipeline_analyses_epo2x_alignment {
+sub pipeline_analyses_epo_ext_alignment {
     my ($self) = @_;
 
     return [
@@ -190,8 +183,8 @@ sub pipeline_analyses_epo2x_alignment {
           -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
           -parameters => {
                           'sql' => [
-                              'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#cs_mlss_id#, "msa_mlss_id", #low_epo_mlss_id#)',
-                              'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#ce_mlss_id#, "msa_mlss_id", #low_epo_mlss_id#)',
+                              'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#cs_mlss_id#, "msa_mlss_id", #ext_mlss_id#)',
+                              'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#ce_mlss_id#, "msa_mlss_id", #ext_mlss_id#)',
                           ],
                          },
           -flow_into => [ 'set_mlss_tag' ],
@@ -201,7 +194,7 @@ sub pipeline_analyses_epo2x_alignment {
           -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
           -parameters => {
                           'sql' => [
-                              'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#low_epo_mlss_id#, "base_mlss_id", #base_epo_mlss_id#)',
+                              'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#ext_mlss_id#, "base_mlss_id", #mlss_id#)',
                           ],
                          },
           -flow_into => {
@@ -211,10 +204,10 @@ sub pipeline_analyses_epo2x_alignment {
 
         # -----------------------------------[Create a list of pairwise mlss found in the default compara database]-------------------------------
         {   -logic_name => 'create_default_pairwise_mlss',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::FindPairwiseMlssLocation',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::FindPairwiseMlssLocation',
             -parameters => {
-                'new_method_link_species_set_id' => $self->o('low_epo_mlss_id'),
-                'base_method_link_species_set_id' => $self->o('base_epo_mlss_id'),
+                'new_method_link_species_set_id'  => '#ext_mlss_id#',
+                'base_method_link_species_set_id' => '#mlss_id#',
                 'pairwise_location' => $self->o('pairwise_location'),
                 'base_location' => $self->o('epo_db'),
             },
@@ -232,10 +225,10 @@ sub pipeline_analyses_epo2x_alignment {
             },
         },
 
-        # -----------------------------------[Run the low coverage alignment]-------------------------------
+        # -----------------------------------[Run the extended alignment]-------------------------------
 
-        {   -logic_name => 'low_coverage_genome_alignment',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment',
+        {   -logic_name => 'extended_genome_alignment',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::ExtendedGenomeAlignment',
             -parameters => {
                 'max_block_size' => $self->o('max_block_size'),
                 'semphy_exe' => $self->o('semphy_exe'),
@@ -246,13 +239,13 @@ sub pipeline_analyses_epo2x_alignment {
             #Need a mode to say, do not die immediately if fail due to memory because of memory leaks, rerunning is the solution. Flow to module _again.
             -flow_into => {
                 2  => WHEN( '#run_gerp#' => [ 'gerp' ] ),
-                -1 => [ 'low_coverage_genome_alignment_himem' ],
+                -1 => [ 'extended_genome_alignment_himem' ],
             },
             -rc_name => '2Gb_job',
         },
         #If fail due to MEMLIMIT, probably due to memory leak, and rerunning with extra memory.
-        {   -logic_name => 'low_coverage_genome_alignment_himem',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment',
+        {   -logic_name => 'extended_genome_alignment_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::ExtendedGenomeAlignment',
             -parameters => {
                 'max_block_size' => $self->o('max_block_size'),
                 'semphy_exe'     => $self->o('semphy_exe'),
@@ -263,14 +256,14 @@ sub pipeline_analyses_epo2x_alignment {
             -priority       => 15,
             -flow_into => {
                 2  => WHEN( '#run_gerp#' => [ 'gerp' ] ),
-                -1 => [ 'low_coverage_genome_alignment_hugemem' ],
+                -1 => [ 'extended_genome_alignment_hugemem' ],
             },
             -rc_name => '4Gb_job',
         },
 
         #Super MEM analysis, there is a small amount of jobs still failing with current RAM limits
-        {   -logic_name => 'low_coverage_genome_alignment_hugemem',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment',
+        {   -logic_name => 'extended_genome_alignment_hugemem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::ExtendedGenomeAlignment',
             -parameters => {
                 'max_block_size' => $self->o('max_block_size'),
                 'semphy_exe'     => $self->o('semphy_exe'),
@@ -316,7 +309,7 @@ sub pipeline_analyses_db_complete {
     return [
         # ---------------------------------------------------[Delete base alignment]-----------------------------------------------------
         {   -logic_name => 'delete_alignment',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::DeleteEPO',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::DeleteEPO',
             -flow_into => {
                 1 => [ 'set_internal_ids_again' ],
             },
@@ -327,7 +320,7 @@ sub pipeline_analyses_db_complete {
         {   -logic_name => 'set_internal_ids_again',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsCollection',
             -parameters => {
-                'method_link_species_set_id'    => $self->o('low_epo_mlss_id'),
+                'method_link_species_set_id'    => '#ext_mlss_id#',
             },
             -flow_into => {
                 1 => [ 'create_neighbour_nodes_jobs_alignment' ],
@@ -348,7 +341,7 @@ sub pipeline_analyses_db_complete {
             -rc_name => '2Gb_job',
         },
         {   -logic_name => 'set_neighbour_nodes',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::SetNeighbourNodes',
             -batch_size    => 10,
             -hive_capacity => 20,
             -rc_name => '2Gb_job',
@@ -358,7 +351,7 @@ sub pipeline_analyses_db_complete {
         },
 
         {   -logic_name => 'set_neighbour_nodes_himem',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::SetNeighbourNodes',
             -batch_size    => 5,
             -hive_capacity => 20,
             -rc_name => '4Gb_job',
@@ -368,7 +361,7 @@ sub pipeline_analyses_db_complete {
         {   -logic_name => 'update_max_alignment_length',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
             -parameters => {
-                'method_link_species_set_id' => $self->o('low_epo_mlss_id'),
+                'method_link_species_set_id' => '#ext_mlss_id#',
             },
             -flow_into => {
                 1 => [ 'healthcheck_factory' ],
@@ -393,7 +386,7 @@ sub pipeline_analyses_healthcheck {
                         {'test' => 'conservation_scores','method_link_species_set_id'=>'#cs_mlss_id#'},
                     ],
                 } ),
-                'A->1' => WHEN( 'not #skip_multiplealigner_stats#' => [ 'multiplealigner_stats_factory' ],
+                'A->1' => WHEN( 'not #skip_multiplealigner_stats#' => { 'multiplealigner_stats_factory' => { 'mlss_id' => '#ext_mlss_id#' } },
                           ELSE [ 'end_pipeline' ]),
             },
         },

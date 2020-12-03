@@ -15,33 +15,19 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::ImportAlignment
+Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::ImportAlignment
 
 =head1 DESCRIPTION
 
-This module imports a specified alignment. This is used in the low coverage genome alignment pipeline for importing the high coverage alignment which is used to build the low coverage genomes on.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
+This module imports a specified alignment. This is used in the extended genome
+alignment pipeline for importing the high coverage alignment which is used to
+build the extended genomes on.
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::ImportAlignment;
+package Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::ImportAlignment;
 
 use strict;
 use warnings;

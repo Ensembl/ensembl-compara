@@ -229,7 +229,7 @@ return
                               },  
             },  
             {   -logic_name => 'set_neighbour_nodes',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::SetNeighbourNodes',
                 -rc_name    => '2Gb_job',
                 -batch_size    => 10, 
                 -hive_capacity => 20, 

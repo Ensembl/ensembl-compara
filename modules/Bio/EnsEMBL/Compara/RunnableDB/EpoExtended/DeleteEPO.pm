@@ -15,21 +15,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::DeleteEPO
-
-=head1 SYNOPSIS
-
-
+Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::DeleteEPO
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::DeleteEPO;
+package Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::DeleteEPO;
 
 use warnings;
 use strict;
@@ -45,7 +37,7 @@ sub fetch_input {
     my $gaba  = $self->compara_dba->get_GenomicAlignBlockAdaptor;
     my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
-    my $mlss = $mlssa->fetch_by_dbID($self->param_required('base_epo_mlss_id'));
+    my $mlss = $mlssa->fetch_by_dbID($self->param_required('mlss_id'));
     my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet($mlss);
     $self->param('genomic_align_blocks', $gabs);
 }

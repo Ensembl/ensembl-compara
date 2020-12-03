@@ -17,43 +17,31 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf
+Bio::EnsEMBL::Compara::PipeConfig::EpoExtended_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -division $COMPARA_DIV -species_set_name <species_set_name> -low_epo_mlss_id <curr_epo_2x_mlss_id> \
-        -base_epo_mlss_id <curr_epo_mlss_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EpoExtended_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -species_set_name <species_set_name>
 
 =head1 EXAMPLES
 
     # With GERP (mammals, sauropsids, fish):
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -division vertebrates -species_set_name fish -low_epo_mlss_id 1333 -base_epo_mlss_id 1332
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EpoExtended_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division vertebrates -species_set_name fish
 
     # Without GERP (primates):
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -division vertebrates -species_set_name primates -low_epo_mlss_id 1141 -base_epo_mlss_id 1134 -run_gerp 0
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EpoExtended_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division vertebrates -species_set_name primates -run_gerp 0
 
 =head1 DESCRIPTION
 
-PipeConfig file for the EPO Low Coverage (aka EPO-2X) pipeline.
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
+PipeConfig file for the EPO Extended (previously known as EPO-2X or EPO Low
+Coverage) pipeline.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EpoExtended_conf;
 
 use strict;
 use warnings;
@@ -62,7 +50,7 @@ use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats;
-use Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoLowCoverage;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoExtended;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
@@ -71,16 +59,12 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-    'pipeline_name' => $self->o('species_set_name').'_epo_low_coverage_'.$self->o('rel_with_suffix'),
+    'pipeline_name' => $self->o('species_set_name').'_epo_extended_'.$self->o('rel_with_suffix'),
+    'method_type'   => 'EPO_EXTENDED',
 
         'master_db' => 'compara_master',
         # Location of compara db containing EPO/EPO_EXTENDED alignment to use as a base
         'epo_db'    => $self->o('species_set_name') . '_epo',
-
-	'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment
-	'base_epo_mlss_id' => $self->o('base_epo_mlss_id'), #mlss_id for the base alignment we're topping up
-                                                        # (can be EPO or EPO_EXTENDED)
-	'mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment, needed for the alignment stats
 
         # Default location for pairwise alignments (can be a string or an array-ref,
         # and the database aliases can include '*' as a wildcard character)
@@ -116,12 +100,12 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
     return {
             %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-			'mlss_id' => $self->o('low_epo_mlss_id'),
+
+            'master_db' => $self->o('master_db'),
+
             'run_gerp' => $self->o('run_gerp'),
             'genome_dumps_dir' => $self->o('genome_dumps_dir'),
             'reg_conf' => $self->o('reg_conf'),
-            'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),
-            'base_epo_mlss_id' => $self->o('base_epo_mlss_id'),
     };
 }
 
@@ -129,7 +113,7 @@ sub pipeline_analyses {
     my ($self) = @_;
 
     return [
-        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoLowCoverage::pipeline_analyses_all($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoExtended::pipeline_analyses_all($self) },
     ];
 }
 

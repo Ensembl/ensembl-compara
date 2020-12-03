@@ -24,7 +24,7 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpConservationScores_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpConservationScores_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -compara_db $(mysql-ens-compara-prod-X details url ${USER}_mammals_epo_low_coverage_${CURR_ENSEMBL_RELEASE}) \
+        -compara_db $(mysql-ens-compara-prod-X details url ${USER}_mammals_epo_extended_${CURR_ENSEMBL_RELEASE}) \
         -mlss_id XXXX
 
 =head1 DESCRIPTION

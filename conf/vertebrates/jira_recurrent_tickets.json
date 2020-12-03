@@ -112,9 +112,9 @@
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [EPOwith2x_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name mammals -low_epo_mlss_id <epo-ext_mlss_id> -high_epo_mlss_id <epo_mlss_id>{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
-            "summary": "Run the Mammal EPOwith2x pipeline",
-            "name_on_graph": "EPOwith2x:Mammals"
+            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name mammals{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "summary": "Run the Mammal EPOwithExt pipeline",
+            "name_on_graph": "EPOwithExt:Mammals"
          },
          {
             "component": "Production tasks",
@@ -124,9 +124,9 @@
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [EPOwith2x_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name primates -low_epo_mlss_id <epo-ext_mlss_id> -high_epo_mlss_id <epo_mlss_id>{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
-            "summary": "Run the Primates EPOwith2x pipeline",
-            "name_on_graph": "EPOwith2x:Primates"
+            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name primates{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "summary": "Run the Primates EPOwithExt pipeline",
+            "name_on_graph": "EPOwithExt:Primates"
          },
          {
             "component": "Production tasks",
@@ -136,21 +136,21 @@
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [EPOwith2x_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name murinae -low_epo_mlss_id <epo-ext_mlss_id> -high_epo_mlss_id <epo_mlss_id>{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
-            "summary": "Run the Murinae EPOwith2x pipeline",
-            "name_on_graph": "EPOwith2x:Murinae"
+            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name murinae{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "summary": "Run the Murinae EPOwithExt pipeline",
+            "name_on_graph": "EPOwithExt:Murinae"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [EPOwith2x_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name pig_breeds -low_epo_mlss_id <epo-ext_mlss_id> -high_epo_mlss_id <epo_mlss_id>{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
-            "summary": "Run the Pigs EPOwith2x pipeline",
-            "name_on_graph": "EPOwith2x:Pigs"
+            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name pig_breeds{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "summary": "Run the Pigs EPOwithExt pipeline",
+            "name_on_graph": "EPOwithExt:Pigs"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [EPOwith2x_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name fish -low_epo_mlss_id <epo-ext_mlss_id> -high_epo_mlss_id <epo_mlss_id>{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
-            "summary": "Run the Fish EPOwith2x pipeline",
-            "name_on_graph": "EPOwith2x:Fish"
+            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name fish{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "summary": "Run the Fish EPOwithExt pipeline",
+            "name_on_graph": "EPOwithExt:Fish"
          },
          {
             "component": "Production tasks",
@@ -160,9 +160,9 @@
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [EPOwith2x_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwith2x_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwith2x_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name sauropsids -low_epo_mlss_id <epo-ext_mlss_id> -high_epo_mlss_id <epo_mlss_id>{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
-            "summary": "Run the Sauropsids EPOwith2x pipeline",
-            "name_on_graph": "EPOwith2x:Sauropsids"
+            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name sauropsids{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "summary": "Run the Sauropsids EPOwithExt pipeline",
+            "name_on_graph": "EPOwithExt:Sauropsids"
          },
          {
             "component": "Production tasks",

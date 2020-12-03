@@ -43,7 +43,7 @@ use warnings;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;  # for WHEN and INPUT_PLUS
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOAncestral;
-use Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoLowCoverage;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoExtended;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -75,9 +75,7 @@ sub default_options {
             -species => $self->o('ancestral_sequences_name'),
             -dbname  => $self->o('dbowner') . '_' . $self->o('species_set_name') . '_ancestral_core_' . $self->o('rel_with_suffix'),
         },
-        # EpoLowCoverage parameters
-        'low_epo_mlss_id'   => undef,  # required but unused
-        'base_epo_mlss_id'  => undef,  # required but unused
+        # EpoExtended parameters
         'max_block_size'    => 1000000,  # max size of alignment before splitting
         'pairwise_location' => [ qw(compara_prev lastz_batch_* unidir_lastz) ],  # default location for pairwise alignments (can be a string or an array-ref)
         'lastz_complete'    => 0,  # set to 1 when all relevant LastZs have complete
@@ -326,7 +324,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => WHEN( '#lastz_complete#' => [ 'create_default_pairwise_mlss' ] ),
         },
-        {   -logic_name => 'create_low_coverage_genome_jobs',
+        {   -logic_name => 'create_extended_genome_jobs',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'    => 'SELECT genomic_align_block_id, #ext_mlss_id# FROM genomic_align ga LEFT JOIN dnafrag USING (dnafrag_id) WHERE method_link_species_set_id = #mlss_id# AND coord_system_name != "ancestralsegment" GROUP BY genomic_align_block_id',
@@ -334,7 +332,7 @@ sub core_pipeline_analyses {
             },
             -rc_name => '4Gb_job',
             -flow_into => {
-                '2->A' => [ 'low_coverage_genome_alignment' ],
+                '2->A' => [ 'extended_genome_alignment' ],
                 'A->1' => [ 'set_internal_ids_epo_extended' ],
             },
         },
@@ -361,7 +359,7 @@ sub core_pipeline_analyses {
             },
         },
         {   -logic_name    => 'set_neighbour_nodes',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::SetNeighbourNodes',
             -rc_name       => '2Gb_job',
             -batch_size    => 10,
             -hive_capacity => 20,
@@ -385,8 +383,8 @@ sub core_pipeline_analyses {
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOAncestral::pipeline_analyses_epo_ancestral($self) },
-        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoLowCoverage::pipeline_analyses_epo2x_alignment($self) },
-        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoLowCoverage::pipeline_analyses_healthcheck($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoExtended::pipeline_analyses_epo_ext_alignment($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoExtended::pipeline_analyses_healthcheck($self) },
     ];
 }
 
@@ -420,16 +418,16 @@ sub tweak_analyses {
     };
     $analyses_by_name->{'create_default_pairwise_mlss'}->{'-flow_into'}->{1} = WHEN(
         '#run_gerp#' => [ 'set_gerp_neutral_rate' ],
-        ELSE            [ 'create_low_coverage_genome_jobs' ]
+        ELSE            [ 'create_extended_genome_jobs' ]
     );
     $analyses_by_name->{'set_gerp_neutral_rate'}->{'-flow_into'}->{1} = WHEN(
-        '#method_type# eq "epo"' => [ 'create_low_coverage_genome_jobs' ],
+        '#method_type# eq "epo"' => [ 'create_extended_genome_jobs' ],
         ELSE                        [ 'flow_gabs' ]
     );
     # Set MLSS id to EPO Extended to ensure correct link is flown to GERP analyses
-    $analyses_by_name->{'low_coverage_genome_alignment'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
-    $analyses_by_name->{'low_coverage_genome_alignment_himem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
-    $analyses_by_name->{'low_coverage_genome_alignment_hugemem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'extended_genome_alignment'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'extended_genome_alignment_himem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'extended_genome_alignment_hugemem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
     # Run HCs on GERPs only for Mercator-Pecan and EPO Extended MLSS ids
     $analyses_by_name->{'healthcheck_factory'}->{'-flow_into'} = {
         '1->A' => WHEN (
