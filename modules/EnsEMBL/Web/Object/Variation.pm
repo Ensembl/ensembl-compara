@@ -62,6 +62,7 @@ sub availability {
       $availability->{'not_somatic'} = !$obj->has_somatic_source;
       $availability->{'is_coding'}   = $self->is_coding_variant;
       $availability->{'has_pdbe'}    = $self->has_pdbe_analysis();
+      $availability->{'has_variation_source_db'} = $self->has_variation_source_db();
     }
     
     $self->{'_availability'} = $availability;
@@ -94,6 +95,13 @@ sub is_coding_variant {
 sub has_pdbe_analysis {
   my $self = shift;
   return ($self->table_info($self->get_db, 'protein_feature')->{'analyses'}{'sifts_import'}) ? 1 : 0;
+}
+
+sub has_variation_source_db {
+  my $self = shift;
+  my $hub   = $self->hub;
+  my $variation_db  = $hub->species_defs->databases->{'DATABASE_VARIATION'};
+  return $variation_db->{meta_info}->{1}->{'variation_source.database'}->[0];
 }
 
 sub counts {
