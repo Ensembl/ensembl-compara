@@ -65,7 +65,7 @@ sub test_division {
         }
     }
 
-    if (%allowed_species) {
+    if (%allowed_species && %species_in_tree) {
         # 1. All species in allowed_species.json must be in the species-trees
         $has_files_to_test = 1;
         subtest "$allowed_species_file vs $species_tree_file" => sub {
