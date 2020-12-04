@@ -108,9 +108,7 @@ sub run {
 		$Scores{$anchor} = sum(map {$_**2} values %{$Overlappping_anchors{$anchor}});
 	}
 	print STDERR "scores: ", scalar(keys %Scores), "\n";
-	my$flag = 1;
-	while($flag) {
-		$flag = 0;
+	while(%Scores) {
 		foreach my $anchor(sort {$Scores{$b} <=> $Scores{$a}} keys %Scores) { #get highest scoring anchor
 			next unless(exists($Scores{$anchor})); #don't add it to "remove list" if it's already gone from the score hash 
 			foreach my $anc_with_overlap_2_anchor(keys %{$Overlappping_anchors{$anchor}}) { #find all the anchors which overlap this anchor
@@ -123,7 +121,6 @@ sub run {
 			delete($Scores{$anchor}); #also remove it from scoring hash
 			$Anchors_2_remove{$anchor}++; #add it to list of ancs to remove
 		}
-		$flag = 1  if (scalar(keys %Scores));
 	}
 	print STDERR "anchors to remove: ", scalar(keys %Anchors_2_remove), "\n";
 	$self->param('overlapping_ancs_to_remove', [keys %Anchors_2_remove]);
