@@ -77,6 +77,11 @@ sub run {
 		my %genome_db_dnafrags;
 		foreach my $genome_db_anchors(@{ $anchor_align_adaptor->fetch_all_anchors_by_genome_db_id_and_mlssid(
 						$genome_db->dbID, $anc_mapping_mlssid) }) {
+			# Each $genome_db_anchors is an array-ref [dnafrag_id, anchor_align_id, anchor_id, dnafrag_start, dnafrag_end]
+			# - dnafrag_is is used to group anchors that may overlap
+			# - dnafrag_start/end are used to detect overlap on a given dnafrag_id,
+			# - anchor_id is the dbID of the anchor (an anchor is a group of sequences, all independently aligned)
+			# - anchor_align_id is the dbID of the alignment, but is not used
 			push(@{ $genome_db_dnafrags{ $genome_db_anchors->[0] } }, [ @{ $genome_db_anchors }[1..4] ]);	
 		}
 		foreach my $dnafrag_id(sort keys %genome_db_dnafrags) {
@@ -96,6 +101,8 @@ sub run {
 			}
 		}
 	}
+	# %Overlappping_anchors counts the number of times each pair of anchor_id is seen overlapping
+	# %Scores has for each anchor_id the sum of the square of those counts
 	foreach my$anchor(sort keys %Overlappping_anchors) {
 		foreach my $overlapping_anchor(sort keys %{$Overlappping_anchors{$anchor}}) {
 			$Scores{$anchor} += ($Overlappping_anchors{$anchor}{$overlapping_anchor})**2; #score the anchors according to the number of overlaps
