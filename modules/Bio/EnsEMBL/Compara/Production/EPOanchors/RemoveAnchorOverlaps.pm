@@ -62,6 +62,7 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::RemoveAnchorOverlaps;
 use strict;
 use warnings;
 use Data::Dumper;
+use List::Util qw(sum);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 
@@ -104,9 +105,7 @@ sub run {
 	# %Overlappping_anchors counts the number of times each pair of anchor_id is seen overlapping
 	# %Scores has for each anchor_id the sum of the square of those counts
 	foreach my$anchor(keys %Overlappping_anchors) {
-		foreach my $overlapping_anchor(keys %{$Overlappping_anchors{$anchor}}) {
-			$Scores{$anchor} += ($Overlappping_anchors{$anchor}{$overlapping_anchor})**2; #score the anchors according to the number of overlaps
-		}
+		$Scores{$anchor} = sum(map {$_**2} values %{$Overlappping_anchors{$anchor}});
 	}
 	print STDERR "scores: ", scalar(keys %Scores), "\n";
 	my$flag = 1;
