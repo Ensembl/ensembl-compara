@@ -1611,6 +1611,7 @@ sub _munge_meta {
     species.display_name          SPECIES_DISPLAY_NAME
     species.common_name           SPECIES_COMMON_NAME
     species.production_name       SPECIES_PRODUCTION_NAME
+    species.db_name               SPECIES_DB_NAME
     species.scientific_name       SPECIES_SCIENTIFIC_NAME
     assembly.accession            ASSEMBLY_ACCESSION
     assembly.web_accession_source ASSEMBLY_ACCESSION_SOURCE
@@ -1618,6 +1619,7 @@ sub _munge_meta {
     assembly.name                 ASSEMBLY_NAME
     liftover.mapping              ASSEMBLY_MAPPINGS
     genebuild.method              GENEBUILD_METHOD
+    genebuild.last_geneset_update LAST_GENESET_UPDATE
     annotation.provider_name      ANNOTATION_PROVIDER_NAME
     annotation.provider_url       ANNOTATION_PROVIDER_URL
     assembly.provider_name        ASSEMBLY_PROVIDER_NAME
