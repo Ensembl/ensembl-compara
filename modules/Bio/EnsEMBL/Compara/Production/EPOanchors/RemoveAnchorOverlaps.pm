@@ -84,7 +84,7 @@ sub run {
 			# - anchor_align_id is the dbID of the alignment, but is not used
 			push(@{ $genome_db_dnafrags{ $genome_db_anchors->[0] } }, [ @{ $genome_db_anchors }[1..4] ]);	
 		}
-		foreach my $dnafrag_id(sort keys %genome_db_dnafrags) {
+		foreach my $dnafrag_id(keys %genome_db_dnafrags) {
 			my @Dnafrag_anchors = @{ $genome_db_dnafrags{$dnafrag_id} };
 			for(my$i=0;$i<@Dnafrag_anchors-1;$i++) { #count number of overlaps an anchor has at every position to which it maps
 				for(my$j=$i+1;$j<@Dnafrag_anchors;$j++) {
@@ -103,8 +103,8 @@ sub run {
 	}
 	# %Overlappping_anchors counts the number of times each pair of anchor_id is seen overlapping
 	# %Scores has for each anchor_id the sum of the square of those counts
-	foreach my$anchor(sort keys %Overlappping_anchors) {
-		foreach my $overlapping_anchor(sort keys %{$Overlappping_anchors{$anchor}}) {
+	foreach my$anchor(keys %Overlappping_anchors) {
+		foreach my $overlapping_anchor(keys %{$Overlappping_anchors{$anchor}}) {
 			$Scores{$anchor} += ($Overlappping_anchors{$anchor}{$overlapping_anchor})**2; #score the anchors according to the number of overlaps
 		}
 	}
@@ -114,7 +114,7 @@ sub run {
 		$flag = 0;
 		foreach my $anchor(sort {$Scores{$b} <=> $Scores{$a}} keys %Scores) { #get highest scoring anchor
 			next unless(exists($Scores{$anchor})); #don't add it to "remove list" if it's already gone from the score hash 
-			foreach my $anc_with_overlap_2_anchor(sort keys %{$Overlappping_anchors{$anchor}}) { #find all the anchors which overlap this anchor 
+			foreach my $anc_with_overlap_2_anchor(keys %{$Overlappping_anchors{$anchor}}) { #find all the anchors which overlap this anchor
 				$Scores{$anc_with_overlap_2_anchor} -= ($Overlappping_anchors{$anc_with_overlap_2_anchor}{$anchor})**2; #decrement the score
 				delete $Scores{$anc_with_overlap_2_anchor} unless($Scores{$anc_with_overlap_2_anchor});
 				#if score is zero remove this anchor from the overlapping list, 
