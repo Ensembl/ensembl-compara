@@ -458,11 +458,16 @@ sub cleanse_output {
 sub delete_alignments {
   my ($self, $mlss) = @_;
 
-  my ($min_id, $n_ids) = @{get_previously_assigned_range(
+  my $range_info = get_previously_assigned_range(
       $self->compara_dba->dbc,
       'genomic_align_' . $mlss->dbID,
       $self->get_requestor_id,
-  )};
+  );
+
+  # No range already assigned
+  return unless $range_info;
+
+  my ($min_id, $n_ids) = @$range_info;
 
   my $sql_gab = 'DELETE FROM genomic_align_block WHERE genomic_align_block_id BETWEEN ? AND ?';
   my $sql_ga  = 'DELETE FROM genomic_align       WHERE genomic_align_id       BETWEEN ? AND ?';
