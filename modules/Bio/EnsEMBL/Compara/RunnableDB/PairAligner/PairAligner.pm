@@ -46,6 +46,8 @@ use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::Utils::IDGenerator qw(:all);
 
+use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -100,6 +102,10 @@ sub fetch_input {
 
   my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
   $self->param('method_link_species_set', $mlss);
+  if ($self->input_job->retry_count > 0) {
+    $self->warning("Deleting alignments as it is a rerun");
+    Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing::delete_alignments($self, $mlss);
+  }
 
   if (defined $self->param('max_alignments')) {
       my $sth = $self->compara_dba->dbc->prepare("SELECT count(*) FROM genomic_align_block".
@@ -123,25 +129,11 @@ sub write_output {
 
   my $gabs = $self->get_gabs;
 
-  #
-  #Start transaction
-  #
-  $self->call_within_transaction( sub {
-      $self->_write_output($gabs);
-  } );
-
-  return 1;
-}
-
-sub _write_output {
-    my ($self, $gabs) = @_;
   my $starttime = time();
-
   my $gab_adaptor = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   foreach my $gab (@$gabs) {
       $gab_adaptor->store($gab);
   }
-
   print STDERR (time()-$starttime), " secs to write_output\n" if ($self->debug);
 }
 
@@ -365,12 +357,11 @@ sub get_gabs {
     # For simplicity, genomic_align_block_id is the genomic_align_id of its
     # first genomic_align. Since all blocks are pairwise, we need two
     # request two values per block only.  group_id is not set.
-    # The request is not recorded because there is a transaction to
-    # ensure that everything is written, or nothing.
     my $ga_id = get_id_range(
         $self->compara_dba->dbc,
         "genomic_align_".$self->param('mlss_id'),
         2*scalar(@gabs),
+        $self->get_requestor_id,
     );
 
     foreach my $gab (@gabs) {
