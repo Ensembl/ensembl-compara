@@ -145,6 +145,7 @@ sub pipeline_analyses_high_confidence {
             },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('import_homologies_capacity'),
+            -max_retry_count    => 0,
         },
 
     ];

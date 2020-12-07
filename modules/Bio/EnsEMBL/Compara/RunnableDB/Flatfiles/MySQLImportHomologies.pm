@@ -15,10 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologies
@@ -26,8 +22,8 @@ Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologies
 =head1 DESCRIPTION
 
 This runnable takes a homology dump file (and optionally, attribute files)
-and formats them to mysqlimport the data directly to the homology and
-homology_member tables.
+and formats them to import the data directly to the homology and homology_member
+tables via LOAD DATA.
 
 =cut
 
@@ -139,21 +135,43 @@ sub write_output {
     # Disconnect from the database before starting the import
     $this_dbc->disconnect_if_idle();
 
-    my $import_cmd = join(' ', 
-        "mysqlimport --host=$host --port=$port --user=$user --password=$pass",
-        "--local --lock-tables=0 --fields-terminated-by=','",
-        $self->param('replace') ? '--replace' : '--ignore',
-        $dbname
-    );
-    $self->run_command("$import_cmd $homology_csv", { die_on_failure => 1 });
-    $self->run_command("$import_cmd $homology_member_csv", { die_on_failure => 1 });
+    my $replace = $self->param('replace');
+    # Speed up data loading by disabling certain variables, writing the data, and then enabling them back
+    my $import_query = "SET AUTOCOMMIT = 0; SET FOREIGN_KEY_CHECKS = 0; " .
+        "LOAD DATA LOCAL INFILE '$homology_csv' " . ($replace ? 'REPLACE' : '' ) . " INTO TABLE homology FIELDS TERMINATED BY ','; " .
+        "LOAD DATA LOCAL INFILE '$homology_member_csv' " . ($replace ? 'REPLACE' : '' ) . " INTO TABLE homology_member FIELDS TERMINATED BY ','; " .
+        "SET AUTOCOMMIT = 1; SET FOREIGN_KEY_CHECKS = 1;";
+
+    my $import_done = 0;
+    my $num_tries = 0;
+    until ($import_done) {
+        $num_tries++;
+        my $import_cmd = "mysql --host=$host --port=$port --user=$user --password=$pass $dbname -e \"$import_query\" --max_allowed_packet=1024M";
+        my $command = $self->run_command($import_cmd);
+
+        # Check what has happened
+        if ($command->err =~ /Lock wait timeout exceeded/) {
+            # Try importing the data again but in replace mode, just in case some rows were half-copied
+            print "Received 'Lock wait timeout exceeded'. Retrying...\n" if $self->{debug};
+            if (! $replace) {
+                $import_query =~ s/  INTO / REPLACE INTO /g;
+                $replace = 1;
+            }
+        } elsif ($command->exit_code) {
+            # Something unexpected has gone wrong: die and report the error
+            $command->die_with_log;
+        } else {
+            $import_done = 1;
+        }
+    }
+    $self->warning("'homology' and 'homology_member' data imported successfully after $num_tries attempts\n");
 
     # Make sure all the homologies have been copied correctly
     my $mlss_id = $self->param_required('mlss_id');
     my $h_rows = $self->compara_dba->dbc->sql_helper->execute_single_result(
         -SQL => "SELECT COUNT(*) FROM homology WHERE method_link_species_set_id = $mlss_id"
     );
-    die "The number of lines in the homology flat file doesn't match the number of rows written in the homology table" if $h_count != $h_rows;
+    die "The number of lines in the homology flat file ($h_count) doesn't match the number of rows written in the homology table ($h_rows)" if $h_count != $h_rows;
 }
 
 sub split_row_for_homology_tables {
