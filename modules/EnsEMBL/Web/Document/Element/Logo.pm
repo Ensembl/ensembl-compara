@@ -52,7 +52,7 @@ sub content {
   $species = '' if ($species eq 'Multi');
 
   $html .= sprintf '<span class="mobile-only species-header">%s</span>',
-              $species ? $self->species_defs->SPECIES_COMMON_NAME 
+              $species ? $self->species_defs->SPECIES_DISPLAY_NAME 
                        : $self->species_defs->ENSEMBL_SITETYPE; 
 
   $html .= $self->logo_print;

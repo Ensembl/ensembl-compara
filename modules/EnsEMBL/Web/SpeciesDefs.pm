@@ -29,7 +29,7 @@ package EnsEMBL::Web::SpeciesDefs;
 ### caching (memory, filesystem) have been implemented. To update changes
 ### made to an INI file, the running process (e.g. httpd) must be halted,
 ### and the $ENSEMBL_WEBROOT/conf/config.packed file removed. In the
-### absence of a cache, the INI files are automatically parsed parsed at
+### absence of a cache, the INI files are automatically parsed at
 ### object instantiation. In the case of the Ensembl web site, this occurs
 ### at server startup via the $ENSEMBL_WEBROOT/conf/perl.startup
 ### script. The filesystem cache is not enabled by default; the
@@ -47,14 +47,14 @@ package EnsEMBL::Web::SpeciesDefs;
 ###  if( scalar( $species_defs->valid_species('Homo_sapiens') ){ }
 
 ###  # Getting a setting (parameter value/section data) from the config
-###  my $sp_name = $speciesdefs->get_config('Homo_sapiens','SPECIES_COMMON_NAME');
+###  my $sp_name = $speciesdefs->get_config('Homo_sapiens','SPECIES_DISPLAY_NAME');
 
 ###  # Alternative setting getter - uses autoloader
-###  my $sp_bio_name = $speciesdefs->SPECIE_%S_COMMON_NAME('Homo_sapiens');
+###  my $sp_bio_name = $speciesdefs->SPECIE_%S_SCIENTIFIC_NAME('Homo_sapiens');
 
 ###  # Can also use the ENSEMBL_SPECIES environment variable
 ###  ENV{'ENSEMBL_SPECIES'} = 'Homo_sapiens';
-###  my $sp_bio_name = $speciesdefs->SPECIES_COMMON_NAME;
+###  my $sp_bio_name = $speciesdefs->SPECIES_SCIENTIFIC_NAME;
 
 ###  # Getting a parameter with multiple values
 ###  my( @chromosomes ) = @{$speciesdefs->ENSEMBL_CHROMOSOMES};
@@ -116,8 +116,6 @@ sub new {
   $self->{'_conf_dir'} = $write_dir;
   $self->{'_filename'}  = $conffile;
 
-
-  # TODO - these need to be pulled in dynamically from appropriate modules
   my @params = qw/ph g h r t v sv m db pt rf ex vf svf fdb lrg vdb gt mr/;
   $self->{'_core_params'} = \@params;
   
@@ -239,7 +237,6 @@ sub reference_species {
 
     for (@valid_species) {
       my $strain = $self->get_config($_, 'SPECIES_STRAIN');
-
       if (!$strain || ($strain =~ /reference/) || !$self->get_config($_, 'STRAIN_GROUP')) {
         push @ref_species, $_;
       }
@@ -511,6 +508,35 @@ sub _load_in_taxonomy_division {
   return $data;
 }
 
+sub _read_species_list_file {
+  my ($self, $filename) = @_;
+  my $spp_file;
+  my $spp_list = [];
+
+  foreach my $confdir (@SiteDefs::ENSEMBL_CONF_DIRS) {
+    if (-e "$confdir/$filename.txt") {
+      if (-r "$confdir/$filename.txt") {
+        $spp_file = "$confdir/$filename.txt";
+      } else {
+        warn "$confdir/$filename.txt is not readable\n" ;
+        next;
+      }
+      
+      open FH, $spp_file or die "Problem with $spp_file: $!";
+      
+      while (<FH>) {
+        chomp;
+        push @$spp_list, $_;
+      }
+
+      ## We only need one file - ignore the rest
+      last;
+    }
+  }
+
+  return $spp_list;
+}
+
 sub _read_in_ini_file {
   my ($self, $filename, $defaults) = @_;
   my $inifile = undef;
@@ -628,8 +654,10 @@ sub _expand_database_templates {
         $tree->{'databases'}{'DATABASE_'.$_} = $db_name;
       }
       else {
-        print STDERR "\t  [WARN] CORE DATABASE NOT FOUND - looking for '$db_name'\n" if $_ eq 'CORE';
-        $self->_info_line('Databases', "-- database $db_name not available") if $SiteDefs::ENSEMBL_WARN_DATABASES;
+        unless ($filename eq 'MULTI' && $SiteDefs::NO_COMPARA) {
+          print STDERR "\t  [WARN] CORE DATABASE NOT FOUND - looking for '$db_name'\n" if $_ eq 'CORE';
+          $self->_info_line('Databases', "-- database $db_name not available") if $SiteDefs::ENSEMBL_WARN_DATABASES;
+        }
       }
     }
   }
@@ -765,6 +793,12 @@ sub _parse {
   $self->_info_log('Loading', 'Loading taxonomy division json file');
   $tree->{'ENSEMBL_TAXONOMY_DIVISION'} = $self->_load_in_taxonomy_division;
   
+  # Load species lists, if not present in SiteDefs
+  unless (scalar @{$SiteDefs::PRODUCTION_NAMES||[]}) {
+    $self->_info_log('Loading', 'Loading species list');
+    $SiteDefs::PRODUCTION_NAMES = $self->_read_species_list_file('ALL_SPECIES');
+  }
+
   $self->_info_log('Parser', 'Parsing ini files and munging dbs');
   
   # Grab default settings first and store in defaults
@@ -795,7 +829,18 @@ sub _parse {
     $config_packer->munge('config_tree');
     $self->_info_line('munging', "$species config");
 
+    # Replace any placeholder text in sample data
+    my $sample = $config_packer->tree->{'SAMPLE_DATA'};
+    while (my($k, $v) = each(%$sample)) {
+      if ($k =~ /TEXT/ && ($v eq 'ensembl_gene' || $v eq 'ensembl_transcript')) {
+        (my $link_type = $k) =~ s/_TEXT//;
+        $sample->{$k} = $sample->{$link_type.'_PARAM'};
+      }
+    }
+    $config_packer->tree->{'SAMPLE_DATA'} = $sample;
+
     ## Need to gather strain info for all species
+    $config_packer->tree->{'STRAIN_GROUP'} = undef if $SiteDefs::NO_STRAIN_GROUPS;
     my $strain_group = $config_packer->tree->{'STRAIN_GROUP'};
     my $strain_name = $config_packer->tree->{'SPECIES_STRAIN'};
     my $species_key = $config_packer->tree->{'SPECIES_URL'}; ## Key on actual URL, not production name
@@ -807,82 +852,7 @@ sub _parse {
         $species_to_strains->{$strain_group} = [$species_key];
       }
     }
-    
-    # Populate taxonomy division using e_divisions.json template
-    if ($species ne "MULTI" && $species ne "databases") {
-      my $scientific_name = $config_packer->tree->{'SPECIES_SCIENTIFIC_NAME'};
-      my $common_name = $config_packer->tree->{'SPECIES_DB_COMMON_NAME'};
-      push @{$species_to_assembly->{$common_name}}, $config_packer->tree->{'ASSEMBLY_VERSION'};
-      my $taxonomy = $config_packer->tree->{TAXONOMY};
-      my $children = [];
-      my $other_species_children = [];
-      my @other_species = grep { $_->{key} =~ m/other_species/ } @{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}};
-      $other_species[0]->{child_nodes} = [] if ($other_species[0] && !$other_species[0]->{child_nodes});
-
-      foreach my $node (@{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}}) {
-        my $child = {
-          key             => $species_key,
-          scientific_name => $scientific_name,
-          common_name     => $common_name,
-          display_name    => $config_packer->tree->{'DISPLAY_NAME'},
-          is_leaf         => 'true'
-        };
-
-        if ($strain_group && $strain_name !~ /reference/) {
-          $child->{type} = $strain_group . ' ' . $config_packer->tree->{'STRAIN_TYPE'}. 's';
-        }
-        elsif($strain_group && $strain_name =~ /reference/) {
-          # Create display name for Reference species
-          my $ref_name = $config_packer->tree->{'SPECIES_COMMON_NAME'} . ' '. $strain_name;
-          $child->{display_name} = $ref_name;
-          # $child->{type} = $ref_name;
-        }
-
-        if (!$node->{taxa}) {
-          push @{$other_species[0]->{child_nodes}}, $child;
-        }
-        else {
-          my %taxa = map {$_ => 1} @{ $node->{taxa} };
-          my @matched_groups = grep { $taxa{$_} } @$taxonomy;
-
-          if ($#matched_groups >= 0) {
-            if ($node->{child_nodes}) {
-              my $cnode_match = {};
-              foreach my $cnode ( @{$node->{child_nodes}}) {
-                my @match = grep { /$matched_groups[0]/ }  @{$cnode->{taxa}};
-                if ($#match >=0 ) {
-                  $cnode_match = $cnode;
-                  last;
-                }
-              }
-
-              if (keys %$cnode_match) {
-                if (!$cnode_match->{child_nodes}) {
-                  $cnode_match->{child_nodes} = [];
-                }
-                push @{$cnode_match->{child_nodes}}, $child;
-                last;
-              }
-              else {
-                if (!$node->{child_nodes}) {
-                  $node->{child_nodes} = [];
-                }
-                push @{$node->{child_nodes}}, $child;
-                last;
-              }
-            }
-            else {
-              $node->{child_nodes} = [];
-              push @{$node->{child_nodes}}, $child;
-              last;
-            }
-          }
-        }
-      }
-    }
   }
-  # Used for grouping same species with different assemblies in species selector
-  $tree->{'SPECIES_ASSEMBLY_MAP'} = $species_to_assembly;
 
   ## Compile strain info into a single structure
   while (my($k, $v) = each (%$species_to_strains)) {
@@ -896,6 +866,7 @@ sub _parse {
   ## Final munging
   my $datasets = [];
   my $aliases  = $tree->{'MULTI'}{'ENSEMBL_SPECIES_URL_MAP'};
+  my $labels    = $tree->{'MULTI'}{'TAXON_LABEL'};  
   foreach my $prodname (@$SiteDefs::PRODUCTION_NAMES) {
     my $url = $tree->{$prodname}{'SPECIES_URL'};
     if ($url) {
@@ -910,13 +881,134 @@ sub _parse {
         delete $tree->{$prodname};
       }
       push @$datasets, $url;
+    
+      ## Assign an image to this species
+      my $image_dir = $SiteDefs::SPECIES_IMAGE_DIR;
+      my $no_image  = 1;
+      if ($image_dir) {
+        ## This site has individual species images for all/most species
+        ## So check if it exists
+        my $image_path = $image_dir.'/'.$url.'.png';
+        if (-e $image_path) {
+          $tree->{$url}{'SPECIES_IMAGE'} = $url;
+          $no_image = 0;
+        }
+        elsif ($tree->{$url}{'SPECIES_STRAIN'}) {
+          ## Look for a strain image (needed for pig)
+          my $parent_image = ucfirst($tree->{$url}{'STRAIN_GROUP'});
+          my $strain_image = $parent_image.'_'.$tree->{$url}{'STRAIN_TYPE'};
+          $image_path =  $image_dir.'/'.$strain_image.'.png';
+          if (-e $image_path) {
+            $tree->{$url}{'SPECIES_IMAGE'} = $strain_image;
+            $no_image = 0;
+          }
+          else {
+            ## Use the parent image for this strain
+            $image_path = $image_dir.'/'.$parent_image.'.png';
+            if (-e $image_path) {
+              $tree->{$url}{'SPECIES_IMAGE'} = $parent_image;
+              $no_image = 0;
+            }
+          }
+        }
+      }
+      if ($no_image) {
+        my $clade = $tree->{$url}{'SPECIES_GROUP'};
+        $tree->{$url}{'SPECIES_IMAGE'} = $labels->{$clade};
+      }
+
+      ## Species-specific munging
+      if ($url ne "MULTI" && $url ne "databases") {
+                                       
+        my $display_name = $tree->{$url}{'SPECIES_DISPLAY_NAME'};
+             
+        # Populate taxonomy division using e_divisions.json template
+        push @{$species_to_assembly->{$display_name}}, $tree->{$url}->{'ASSEMBLY_VERSION'};
+        my $taxonomy = $tree->{$url}{'TAXONOMY'};
+        my $children = [];
+        my $other_species_children = [];
+        my @other_species = grep { $_->{key} =~ m/other_species/ } @{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}};
+        $other_species[0]->{child_nodes} = [] if ($other_species[0] && !$other_species[0]->{child_nodes});
+
+        my $strain_name = $tree->{$url}{'SPECIES_STRAIN'};
+        my $strain_group = $tree->{$url}{'STRAIN_GROUP'};
+        my $group_name   = $tree->{$url}{'SPECIES_COMMON_NAME'};
+        my $species_key = $tree->{$url}{'SPECIES_URL'}; ## Key on actual URL, not production name
+
+        foreach my $node (@{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}}) {
+          my $child = {
+            key             => $species_key,
+            scientific_name => $tree->{$url}{'SPECIES_SCIENTIFIC_NAME'},
+            common_name     => $tree->{$url}{'SPECIES_COMMON_NAME'},
+            display_name    => $tree->{$url}{'GROUP_DISPLAY_NAME'},
+            image           => $tree->{$url}{'SPECIES_IMAGE'},
+            is_leaf         => 'true'
+          };
+
+          if ($strain_group && $strain_name !~ /reference/) {
+            $child->{type} = $group_name . ' ' . $tree->{$url}{'STRAIN_TYPE'}. 's';
+          }
+          elsif($strain_group && $strain_name =~ /reference/) {
+            # Create display name for Reference species
+            my $ref_name = $tree->{$url}{'SPECIES_DISPLAY_NAME'} . ' '. $strain_name;
+            $child->{display_name} = $ref_name;
+          }
+
+          if (!$node->{taxa}) {
+            push @{$other_species[0]->{child_nodes}}, $child;
+          }
+          else {
+            my %taxa = map {$_ => 1} @{ $node->{taxa} };
+            my @matched_groups = grep { $taxa{$_} } @$taxonomy;
+            if ($#matched_groups >= 0) {
+              if ($node->{child_nodes}) {
+                my $cnode_match = {};
+                foreach my $cnode ( @{$node->{child_nodes}}) {
+                  my @match = grep { /$matched_groups[0]/ }  @{$cnode->{taxa}};
+                  if ($#match >=0 ) {
+                    $cnode_match = $cnode;
+                    last;
+                  }
+                }
+
+                if (keys %$cnode_match) {
+                  if (!$cnode_match->{child_nodes}) {
+                    $cnode_match->{child_nodes} = [];
+                  }
+                  push @{$cnode_match->{child_nodes}}, $child;
+                  last;
+                }
+                else {
+                  if (!$node->{child_nodes}) {
+                    $node->{child_nodes} = [];
+                  }
+                  push @{$node->{child_nodes}}, $child;
+                  last;
+                }
+              }
+              else {
+                $node->{child_nodes} = [];
+                push @{$node->{child_nodes}}, $child;
+                last;
+              }
+            }
+          }
+        }
+      }
     }
     else {
-      warn ">>> SPECIES $prodname has no URL defined";
+      warn "!!! SPECIES $prodname has no URL defined";
     }
-  } 
+  }
+
+  # Used for grouping same species with different assemblies in species selector
+  $tree->{'SPECIES_ASSEMBLY_MAP'} = $species_to_assembly;
+
   $tree->{'MULTI'}{'ENSEMBL_DATASETS'} = $datasets;
   #warn ">>> NEW KEYS: ".Dumper($tree);
+
+  ## New species list - currently only used by rapid release
+  $tree->{'MULTI'}{'NEW_SPECIES'} = $self->_read_species_list_file('NEW_SPECIES');
 
   ## Parse species directories for static content
   $tree->{'SPECIES_INFO'} = $self->_load_in_species_pages;
@@ -1265,29 +1357,56 @@ sub table_info_other {
   return $db_hash->{$db}{'tables'}{$table} || {};
 }
 
+
 sub species_label {
+  ### This function will return the display name of all known (by Compara) species.
+  ### Some species in genetree can be from other EG units, and some can be from external sources
+  ### Arguments:
+  ###     key             String: species production name or URL
+  ###     no_formating    Boolean: omit italics from scientific name  
   my ($self, $key, $no_formatting) = @_;
 
-  if( my $sdhash          = $self->SPECIES_DISPLAY_NAME) {
-      (my $lcspecies = lc $key) =~ s/ /_/g;
-      return $sdhash->{$lcspecies} if $sdhash->{$lcspecies};
+  my $url = ucfirst $key;
+  my $display = $self->get_config($url, 'SPECIES_DISPLAY_NAME');
+  my $label = '';
+
+  if ($self->USE_COMMON_NAMES) {
+    ## Basically vertebrates only - no pan_compara to check
+    if ($self->get_config($url, 'SPECIES_URL')) {
+      ## Known species, so create label accordingly
+      my $sci    = $self->get_config($url, 'SPECIES_SCIENTIFIC_NAME');
+      $sci = sprintf '<i>%s</i>', $sci unless $no_formatting;
+      if ($display =~ /\./) {
+        $label = $sci;
+      }
+      else {
+        $label = "$display ($sci)";
+      }
+    }
+    else {
+      $label = 'Ancestral sequence';
+    }
   }
-
-  $key = ucfirst $key;
-
-  return 'Ancestral sequence' unless $self->get_config($key, 'SPECIES_BIO_NAME');
+  else {
+    if ($display) {
+      $label = $display;
+    }
+    else {
+      ## Pan-compara species - get label from metadata db
+      my $info = $self->get_config('MULTI', 'PAN_COMPARA_LOOKUP');
+      if ($info) {
+        if ($info->{$key}) {
+          $label = $info->{$key}{'display_name'}
+        }
+        else {
+          $label = $info->{lc $key}{'display_name'}
+        }
+      }
+    }
+    $label = 'Ancestral sequence' unless $label;
+  }
   
-  my $common = $self->get_config($key, 'SPECIES_COMMON_NAME');
-  my $rtn    = $self->get_config($key, 'SPECIES_BIO_NAME');
-  $rtn       =~ s/_/ /g;
-  
-  $rtn = sprintf '<i>%s</i>', $rtn unless $no_formatting;
-  
-  if ($common =~ /\./) {
-    return $rtn;
-  } else {
-    return "$common ($rtn)";
-  }  
+  return $label;
 }
 
 sub production_name_lookup {
@@ -1361,15 +1480,14 @@ sub species_dropdown {
   
   ## TODO - implement grouping by taxon
   my @options;
-  my @sorted_by_common = 
-    sort { $a->{'common'} cmp $b->{'common'} }
-    map  {{ name => $_, common => $self->get_config($_, 'SPECIES_COMMON_NAME') }}
+  my @sorted = 
+    sort { $a->{'display'} cmp $b->{'display'} }
+    map  {{ name => $_, display => $self->get_config($_, 'SPECIES_DISPLAY_NAME') }}
     $self->valid_species;
   
-  foreach my $sp (@sorted_by_common) {
-    # Get the settings from ini files 
+  foreach my $sp (@sorted) {
     my $name = $sp->{'name'};
-    push @options, { value => $sp->{'name'}, name => $sp->{'common'} };
+    push @options, { value => $sp->{'name'}, name => $sp->{'display'} };
   }
 
   return @options;
@@ -1421,20 +1539,8 @@ sub species_path {
 }
 
 sub species_display_label {
-  ### This function will return the display name of all known (by Compara) species.
-  ### Some species in genetree can be from other EG units, and some can be from external sources
-  ### species_label function above will only work with species of the current site
-  ### At the moment the mapping in DEFAULTs.ini
-  ### But it really should come from compara db
-
-  my ($self, $species, $no_formatting) = @_;
-  
-  if( my $sdhash          = $self->SPECIES_DISPLAY_NAME) {
-      (my $ss = lc $species) =~ s/ /_/g;
-      return $sdhash->{$ss} if $sdhash->{$ss};
-  }
-
-  return $self->species_label($species);
+  my $self = shift;
+  return $self->species_label(@_);
 }
 
 sub production_name {
@@ -1450,24 +1556,9 @@ sub production_name {
       return $sp_name;
     }
 
-
 # species name is either has not been registered as an alias, or it comes from a different website, e.g in pan compara
-# then it has to appear in SPECIES_DISPLAY_NAME section of DEFAULTS ini
-# check if it matches any key or any value in that section
-    (my $nospaces  = $species) =~ s/ /_/g;
-
-    if (my $sdhash = $self->SPECIES_DISPLAY_NAME) {
-      return $species if exists $sdhash->{lc($species)};
-
-      return $nospaces if exists $sdhash->{lc($nospaces)};
-      my %sdrhash = map { $sdhash->{$_} => $_ } keys %{$sdhash || {}};
-
-      (my $with_spaces  = $species) =~ s/_/ /g;
-      my $sname = $sdrhash{$species} || $sdrhash{$with_spaces};
-      return $sname if $sname;
-    }
-
-    return $nospaces;
+    my %pan_lookup = $self->multiX('PAN_COMPARA_LOOKUP');
+    my $prod_name  = $pan_lookup{$species} ? $pan_lookup{$species}{'production_name'} : '';
 }
 
 sub verbose_params {

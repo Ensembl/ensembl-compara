@@ -66,6 +66,7 @@ sub add_auto_format_dropdown {
   my ($self, $form) = @_;
 
   my $format_info     = EnsEMBL::Web::Constants::USERDATA_FORMATS; 
+  $format_info        = $self->add_extra_formats($format_info); 
   my $sorted_values   = [{'caption' => '-- Choose --', 'value' => ''}];
   my @format_values;
 
@@ -91,6 +92,12 @@ sub add_auto_format_dropdown {
     });
 }
 
+sub add_extra_formats {
+  ## Stub - used by tools
+  my ($self, $format_info) = @_;
+  return $format_info;
+}
+
 sub trackhub_search {
   my $self            = shift;
   my $hub             = $self->hub;
@@ -109,7 +116,7 @@ sub userdata_form {
   my $message         = qq(<p>
 Please note that track hubs and indexed files (BAM, BigBed, etc) do not work with certain
 cloud services, including <b>Google Drive</b> and <b>Dropbox</b>. Please see our 
-<a href="/info/website/trackhub_support.html">support page</a> for more information.
+<a href="/info/website/trackhubs/trackhub_support.html">support page</a> for more information.
 </p>);
 
 
@@ -141,6 +148,10 @@ cloud services, including <b>Google Drive</b> and <b>Dropbox</b>. Please see our
   });
 
   $fieldset->add_hidden({'name' => 'species', 'value' => $current_species});
+
+  if ($hub->param('tool')) {
+    $fieldset->add_hidden({'name' => 'tool', 'value' => $hub->param('tool')});
+  }
 
   $fieldset->add_field({
     'label'         => 'Data',

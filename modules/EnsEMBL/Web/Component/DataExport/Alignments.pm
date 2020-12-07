@@ -82,9 +82,9 @@ sub default_file_name {
     if ($align) {
       my $align_name;
       if ($align->{'class'} =~ /pairwise/) {
-        $name = $species_defs->SPECIES_COMMON_NAME;
+        $name = $species_defs->SPECIES_DISPLAY_NAME;
         my ($other_species) = grep { $_ ne $self->hub->species } keys %{$align->{'species'}};
-        $name .= '_'.$species_defs->get_config($other_species, 'SPECIES_COMMON_NAME');
+        $name .= '_'.$species_defs->get_config($other_species, 'SPECIES_DISPLAY_NAME');
         my $type = lc($align->{'type'});
         $type =~ s/_net//;
         $name .= '_'.$type;

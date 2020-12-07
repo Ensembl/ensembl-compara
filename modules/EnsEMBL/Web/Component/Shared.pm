@@ -173,13 +173,17 @@ sub transcript_table {
     my $action      = $hub->action;
     @proj_attrib    = @{ $gene->get_all_Attributes('proj_parent_g') };
     my %biotype_rows;
-    my $MANE_attrib_code = 'MANE_Select';
+
+    #keys are attrib_type codes, values are glossary entries 
+    my %MANE_attrib_codes = (
+      MANE_Select => 'MANE Select',
+      MANE_Plus   => 'MANE Plus');
 
     my $trans_attribs = {};
     my $trans_gencode = {};
 
     foreach my $trans (@$transcripts) {
-      foreach my $attrib_type ('CDS_start_NF','CDS_end_NF','gencode_basic','TSL','appris',$MANE_attrib_code) {
+      foreach my $attrib_type ('CDS_start_NF','CDS_end_NF','gencode_basic','TSL','appris',keys %MANE_attrib_codes) {
         (my $attrib) = @{$trans->get_all_Attributes($attrib_type)};
         next unless $attrib;
         if($attrib_type eq 'gencode_basic' && $attrib->value) {
@@ -193,7 +197,7 @@ sub transcript_table {
           $short_code =~ s/rincipal//;
           $trans_attribs->{$trans->stable_id}{'appris'} = [$short_code, $attrib->value]; 
           }
-        elsif ($attrib_type eq $MANE_attrib_code && $attrib && $attrib->value) {
+        elsif ((grep {$attrib_type eq $_} keys %MANE_attrib_codes) && $attrib && $attrib->value) {
           $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib;
         }
         else {
@@ -246,12 +250,19 @@ sub transcript_table {
 
     push @columns, { key => 'ccds', sort => 'html', label => 'CCDS', class => '_ht' } if $species =~ /^Homo_sapiens|Mus_musculus/;
     my @rows;
-   
+
     my %extra_links = (
-      uniprot => { match => "^UniProt/[SWISSPROT|SPTREMBL]", name => "UniProt", order => 0 },
+      uniprot => { 
+        first_match => "Uniprot_isoform", 
+        second_match => "^UniProt/[SWISSPROT|SPTREMBL]", 
+        name => "UniProt Match", 
+        order => 0,
+        title => get_glossary_entry($hub, 'UniProt Match')
+      },
     );
+
     if ($species eq 'Homo_sapiens' && $sub_type eq 'GRCh37' ) {
-      $extra_links{refseq} = { match => "^RefSeq", name => "RefSeq", order => 1, title => "RefSeq transcripts with sequence similarity and genomic overlap"};
+      $extra_links{refseq} = { first_match => "^RefSeq", name => "RefSeq", order => 1, title => "RefSeq transcripts with sequence similarity and genomic overlap"};
     }
     my %any_extras;
  
@@ -290,7 +301,14 @@ sub transcript_table {
         $ccds = join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS;
       }
       foreach my $k (keys %extra_links) {
-        if(my @links = grep {$_->status ne 'PRED' } grep { $_->dbname =~ /$extra_links{$k}->{'match'}/i } @$dblinks) {
+        
+        my @links = grep {$_->status ne 'PRED' } grep { $_->dbname =~ /$extra_links{$k}->{'first_match'}/i } @$dblinks;
+
+        if(!@links && $extra_links{$k}->{'second_match'}){
+          @links = grep {$_->status ne 'PRED' } grep { $_->dbname =~ /$extra_links{$k}->{'second_match'}/i } @$dblinks;
+        }
+
+        if(@links) {
           my %T = map { $_->primary_id => $_->dbname } @links;
           my $cell = '';
           my $i = 0;
@@ -308,8 +326,8 @@ sub transcript_table {
         }
         if ($trans_attribs->{$tsi}{'TSL'}) {
           my $tsl = uc($trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr);
-          push @flags, helptip("TSL:$tsl", get_glossary_entry($hub, "TSL:$tsl").get_glossary_entry($hub, 'TSL'));
-        }
+          push @flags, helptip("TSL:$tsl", "<p>TSL $tsl: ".get_glossary_entry($hub, "TSL $tsl")."</p><p>".get_glossary_entry($hub, 'Transcript support level')."</p>");
+	}
       }
       if ($trans_gencode->{$tsi}) {
         if ($trans_gencode->{$tsi}{'gencode_basic'}) {
@@ -319,13 +337,16 @@ sub transcript_table {
       if ($trans_attribs->{$tsi}{'appris'}) {
         my ($code, $key) = @{$trans_attribs->{$tsi}{'appris'}};
         my $short_code = $code ? ' '.uc($code) : '';
-          push @flags, helptip("APPRIS$short_code", get_glossary_entry($hub, "APPRIS: $key").get_glossary_entry($hub, 'APPRIS'));
+         push @flags, helptip("APPRIS $short_code","<p>APPRIS $short_code: ".get_glossary_entry($hub, "APPRIS$short_code")."</p><p>".get_glossary_entry($hub, 'APPRIS')."</p>");
+ 
       }
       my $refseq_url;
-      if (my $mane_attrib = $trans_attribs->{$tsi}{$MANE_attrib_code}) {
-        my $refseq_id = $mane_attrib->value;
-        $refseq_url  = $hub->get_ExtURL_link($refseq_id, 'REFSEQ_MRNA', $refseq_id);
-        push @flags, helptip($mane_attrib->name, get_glossary_entry($hub, 'MANE Select'));
+      foreach my $MANE_attrib_code (keys %MANE_attrib_codes) {
+        if (my $mane_attrib = $trans_attribs->{$tsi}{$MANE_attrib_code}) {
+          my $refseq_id = $mane_attrib->value;
+          $refseq_url  = $hub->get_ExtURL_link($refseq_id, 'REFSEQ_MRNA', $refseq_id);
+          push @flags, helptip($mane_attrib->name, get_glossary_entry($hub, $MANE_attrib_codes{$MANE_attrib_code}));
+        }
       }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;
@@ -351,7 +372,7 @@ sub transcript_table {
         gencode_set => $gencode_set,
         refseq_match  => $refseq_url ? $refseq_url : '-',
         options     => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' },
-        flags       => @flags ? join('',map { $_ =~ /<img/ ? $_ : "<span class='ts_flag'>$_</span>" } @flags) : '-',
+        flags       => @flags ? join('',map { $_ =~ /<img/ ? $_ : "<span class='ts_flag'>$_<span class='hidden export'>, </span></span>" } @flags) : '-',
         evidence    => join('', @evidence),
       };
 
@@ -366,7 +387,7 @@ sub transcript_table {
       push @columns, { key => $k, sort => 'html', title => $x->{'title'}, label => $x->{'name'}, class => '_ht'};
     }
     if ($species eq 'Homo_sapiens' && $sub_type ne 'GRCh37') {
-      push @columns, { key => 'refseq_match', sort => 'html', label => 'RefSeq Match', title => 'RefSeq transcripts that match 100% across the sequence, intron/exon structure and UTRs', class => '_ht' };
+      push @columns, { key => 'refseq_match', sort => 'html', label => 'RefSeq Match', title => get_glossary_entry($self->hub, 'RefSeq Match'), class => '_ht' };
     }
 
     my $title = encode_entities('<a href="/info/genome/genebuild/transcript_quality_tags.html" target="_blank">Tags</a>');
@@ -708,9 +729,8 @@ sub species_stats {
   my $db_adaptor = $self->hub->database('core');
   my $meta_container = $db_adaptor->get_MetaContainer();
   my $genome_container = $db_adaptor->get_GenomeContainer();
+  my $no_stats = $genome_container->is_empty;
 
-  #deal with databases that don't have species_stats
-  return $html if $genome_container->is_empty;
 
   $html = '<h3>Summary</h3>';
 
@@ -731,7 +751,7 @@ sub species_stats {
       $a_id .= " ($long)";
     }
     if (my ($acc) = @{$meta_container->list_value_by_key('assembly.accession')}) {
-      $acc = sprintf('INSDC Assembly <a href="//www.ebi.ac.uk/ena/data/view/%s">%s</a>', $acc, $acc);
+      $acc = sprintf('INSDC Assembly <a href="//www.ebi.ac.uk/ena/data/view/%s" rel="external">%s</a>', $acc, $acc);
       $a_id .= ", $acc";
     }
   }
@@ -742,19 +762,19 @@ sub species_stats {
   $summary->add_row({
       'name' => '<b>Base Pairs</b>',
       'stat' => $self->thousandify($genome_container->get_total_length()),
-  });
+  }) unless $no_stats;
   my $header = glossary_helptip($self->hub, 'Golden Path Length', 'Golden path length');
   $summary->add_row({
       'name' => "<b>$header</b>",
       'stat' => $self->thousandify($genome_container->get_ref_length())
-  });
-  my $prov_name = $sd->PROVIDER_NAME;
+  }) unless $no_stats;
+  my $prov_name = $sd->ANNOTATION_PROVIDER_NAME;
   if ($prov_name) {
     my @prov_names = ref $prov_name eq 'ARRAY' ? @$prov_name : ($prov_name);
     my @providers;
     foreach my $pv (@prov_names) {
       $prov_name =~ s/_/ /g;
-      my $prov_url  = $sd->PROVIDER_URL;
+      my $prov_url  = $sd->ANNOTATION_PROVIDER_URL;
       $prov_url = 'http://'.$prov_url unless $prov_url =~ /^http/;
       my $provider = $prov_url && $pv ne 'Ensembl' ? sprintf('<a href="%s">%s</a>', $prov_url, $pv) : $pv;
       push @providers, $provider;
@@ -798,45 +818,47 @@ sub species_stats {
   $html .= $summary->render;
 
   ## GENE COUNTS
-  my $has_alt = $genome_container->get_alt_coding_count();
-  if($has_alt) {
-    $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,' (Primary assembly)','');
-    $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,' (Alternative sequence)','a');
-  } else {
-    $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,'','');
-  }
+  unless ($no_stats) {
+    my $has_alt = $genome_container->get_alt_coding_count();
+    if($has_alt) {
+      $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,' (Primary assembly)','');
+      $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,' (Alternative sequence)','a');
+    } else {
+      $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,'','');
+    }
 
-  ## OTHER STATS
-  my $rows = [];
-  ## Prediction transcripts
-  my $analysis_adaptor = $db_adaptor->get_AnalysisAdaptor();
-  my $attribute_adaptor = $db_adaptor->get_AttributeAdaptor();
-  my @analyses = @{ $analysis_adaptor->
-                      fetch_all_by_feature_class('PredictionTranscript') };
-  foreach my $analysis (@analyses) {
-    my $logic_name = $analysis->logic_name;
-    my $stat = $genome_container->fetch_by_statistic(
+    ## OTHER STATS
+    my $rows = [];
+    ## Prediction transcripts
+    my $analysis_adaptor = $db_adaptor->get_AnalysisAdaptor();
+    my $attribute_adaptor = $db_adaptor->get_AttributeAdaptor();
+    my @analyses = @{ $analysis_adaptor->fetch_all_by_feature_class('PredictionTranscript') };
+    foreach my $analysis (@analyses) {
+      my $logic_name = $analysis->logic_name;
+      my $stat = $genome_container->fetch_by_statistic(
                                       'PredictionTranscript',$logic_name); 
-    push @$rows, {
-      'name' => "<b>".$stat->name."</b>",
-      'stat' => $self->thousandify($stat->value),
-    } if $stat and $stat->name;
-  }
-  ## Variants
-  if ($self->hub->database('variation')) {
-    my @other_stats = qw(SNPCount StructuralVariation);
-    foreach my $name (@other_stats) {
-      my $stat = $genome_container->fetch_by_statistic($name);
       push @$rows, {
-        'name' => '<b>'.$stat->name.'</b>',
-        'stat' => $self->thousandify($stat->value)
+        'name' => "<b>".$stat->name."</b>",
+        'stat' => $self->thousandify($stat->value),
       } if $stat and $stat->name;
     }
-  }
-  if (scalar(@$rows)) {
-    $html .= '<h3>Other</h3>';
-    my $other = $self->new_table($cols, $rows, $options);
-    $html .= $other->render;
+    ## Variants
+    if ($self->hub->database('variation')) {
+      my @other_stats = qw(SNPCount StructuralVariation);
+      foreach my $name (@other_stats) {
+        my $stat = $genome_container->fetch_by_statistic($name);
+        push @$rows, {
+          'name' => '<b>'.$stat->name.'</b>',
+          'stat' => $self->thousandify($stat->value)
+        } if $stat and $stat->name;
+      }
+    }
+
+    if (scalar(@$rows)) {
+      $html .= '<h3>Other</h3>';
+      my $other = $self->new_table($cols, $rows, $options);
+      $html .= $other->render;
+    }
   }
 
   return $html;

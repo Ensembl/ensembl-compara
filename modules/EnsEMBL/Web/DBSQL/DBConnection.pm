@@ -120,8 +120,6 @@ sub clean {
 sub get_DBAdaptor {
   my $self     = shift;
   my $database = shift || $self->error('FATAL', 'Need a DBAdaptor name');
-     $database = 'SNP'           if $database eq 'snp';
-     $database = 'otherfeatures' if $database eq 'est';
   my $species  = shift || $self->default_species;
   
   $self->{'_dbs'}{$species} ||= {}; 
@@ -132,12 +130,28 @@ sub get_DBAdaptor {
   # try to retrieve the DBAdaptor from the Registry
   my $dba = $reg->get_DBAdaptor($species, $database);
   $self->clean($dba);
-  # warn "$species - $database - $dba";
+
+  ## Collection databases
+  if (! $dba ) {
+    my $sg = $self->{species_defs}->get_config($species, "SPECIES_DATASET");
+    $dba = eval {$reg->get_DBAdaptor($sg, $database)} if $sg;
+    if ($dba) {
+      $dba->{_is_multispecies} = 1;
+      $dba->{_species_id} = $self->{species_defs}->get_config($species, "SPECIES_META_ID");
+    }
+  }
 
   $self->{'_dbs'}{$species}{$database} = $dba;
   
   return $self->{'_dbs'}{$species}{$database};
 }
+
+##########################################################################################
+
+####  THESE OTHER METHODS SEEM ONLY TO BE USED BY SOME OLD DUMPING SCRIPTS
+
+##########################################################################################
+
 
 =head2 get_databases
 
@@ -224,9 +238,6 @@ sub _get_databases_common {
   my $default_species_db = $self->{'_dbs'}->{$species} ;
   my %databases = map {($_,1)} @_;
 
-  # find out if core is an annotation DB (like in Vega)
-  my $t = $self->{'species_defs'}->table_info( 'core', 'gene_remark' );
-  my $is_annot_db = $t && $t->{'rows'};
     ## Get core DB first
   if( $databases{'core'} ) {
     eval{ $default_species_db->{'core'} =  $self->_get_core_database($species); };
@@ -267,7 +278,7 @@ sub _get_databases_common {
 
   ## Other DBs
   # cdna
-  foreach (qw(cdna vega vega_update otherfeatures rnaseq)) {
+  foreach (qw(cdna otherfeatures rnaseq)) {
     if($databases{$_}) {
       $self->_get_db_with_dnadb( $_, $species);
       delete $databases{ $_ };

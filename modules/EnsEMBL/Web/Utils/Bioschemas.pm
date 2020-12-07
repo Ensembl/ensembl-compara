@@ -60,7 +60,7 @@ sub add_species_bioschema {
   $data->{'isPartOf'} = {
                           '@type'         => 'BioChemEntity',
                           'name'          => $species_defs->SPECIES_SCIENTIFIC_NAME,
-                          'alternateName' => $species_defs->SPECIES_COMMON_NAME,
+                          'alternateName' => $species_defs->SPECIES_DISPLAY_NAME,
                           };
   my $taxon_id = $species_defs->TAXONOMY_ID;
   if ($taxon_id) {

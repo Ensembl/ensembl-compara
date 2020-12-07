@@ -1,0 +1,153 @@
+<html>
+<head>
+<meta name="order" content="2" />
+<title>Adding Custom Tracks</title>
+</head>
+
+<body>
+
+<h1>Adding Custom Tracks to Ensembl</h1>
+
+<ul>
+<li><a href="#addtrack">How to add custom tracks</a></li>
+<li><a href="/info/website/trackhubs/adding_trackhubs.html">How to add track hubs</a></li>
+<li><a href="#formats">Supported file formats</a></li>
+<li><a href="#samples">Sample data files</a></li>
+<li><a href="#access">Data access and security</a></li>
+</ul>
+
+<h2 id="addtrack">How to add custom tracks</h2>
+
+[[MOVIE::457]]
+
+<p>You can add a track from any species-specific page, such as <a href="/Homo_sapiens/Location/View?r=6:133017695-133161157"><strong>Region in Detail</strong></a>.  The track will automatically display in the view in which you have added it. You can also display an uploaded track in other views like <a href="/Homo_sapiens/Location/Overview?r=6:133017695-133161157"><strong>Region Overview</strong></a> and the whole <a href="/Homo_sapiens/Location/Chromosome?r=6:133017695-133161157"><strong>Chromosome</strong></a>.  To do so, click the <strong>Configure this page</strong> button at the left, and select the track within the <strong>Your data</strong> menu.  
+</p> 
+<p> 
+To attach or upload a custom track, click the <strong>Custom tracks</strong> button at the left of most Ensembl views and upload or attach a file (see more about file types further in this document) in the resulting window.  Alternatively, if you have clicked on <strong>Configure this page</strong>, add data by navigating to the <strong>Custom data</strong> tab in the configuration window and click on <strong>Add a custom track</strong>.
+</p>
+
+
+<p>
+To display Ensembl features such as genes on a <a href="/Homo_sapiens/Location/Genome?r=6:133017695-133161157"><strong>Karyotype</strong></a> view, click the <strong>Add features</strong> button above the image. Add IDs (such as Gene IDs like ENSG00000012048, ENSG00000139618, ENSG00000198668) or names (such as Gene names like BRCA1, BRCA2, CALM) into the box.  Click the Show features button to view them along the karyotype.
+</p>
+
+<p>
+<strong>Note</strong>: for large data sets, your display options will automatically be limited to density plots rather than individual feature points.</p>
+
+<h3>Ways to add tracks to Ensembl</h3>
+<ol>
+<li>Upload a file to our servers (max 20MB unzipped), from either your own computer or a location on the web (URL-based data). If uploaded from a URL, you can use the 'Reload' function in the 'Custom tracks' table to refresh the file from the same location.</li>
+<li>Attach an indexed file such as BigWig, BigBed or BAM via a URL, from which the file will be read each time you visit a page that has the track on. Note that the tabix file must also be present in the directory and should have a matching extension, e.g. '.bam.bai' for a bam index.
+  <ul>
+  <li>either by using the 'Custom tracks' form</li>
+  <li>or by <a href="/info/docs/webcode/linking.html#attachurl">creating a specific URL</a> for an Ensembl page that includes the location of your data file</li>
+  </ul>
+  </li>
+</ol>
+
+<h3>Coordinate Systems</h3>
+
+<p>
+Use either <a href="coords.html">chromosome</a> or (finished) 
+<a href="coords.html#bacclone">BAC clone coordinates</a> in custom data sets.
+</p> 
+
+<h2 id="formats">Supported file formats</h2>
+
+<p>Click on a link for documentation on a format and its supported options.</p>
+
+<ul>
+<li><a href="large.html#bam-format">BAM/CRAM</a></li>
+<li><a href="bed.html">BED</a>
+  <ul>
+  <li><a href="bed.html#bedGraph">bedGraph</a></li>
+  <li><a href="large.html#bb-format">bigBed</a></li>
+  </ul>
+</li>
+<li><a href="gff.html">GFF2/GTF</a></li>
+<li><a href="gff3.html">GFF3</a></li>
+<li>Long-range interactions:
+  <ul>
+  <li><a href="pairwise.html">Pairwise interactions</a> (WashU)</li>
+  <li><a href="large.html#interact">bigInteract</a></li>
+  </ul>
+</li>
+<li><a href="psl.html">PSL</a>
+  <ul>
+  <li><a href="large.html#bigpsl">bigPsl</a></li>
+  </ul>
+</li>
+<li><a href="large.html#vcf-format">VCF</a></li>
+<li><a href="wig.html">WIG</a>
+  <ul>
+  <li><a href="large.html#bw-format">bigWig</a></li>
+  <li><a href="/info/website/trackhubs/trackhub_support.html#grouping">TrackHubs with multiWigs</a></li>
+  </ul>
+</li>
+</ul>
+
+<h2 id="samples">Sample data files</h2>
+
+<ul>
+<li><strong>BED</strong> - <a href="sample_files/example.bed">BAC end sequences</a>
+  <ul>
+  <li><a href="sample_files/wiggle_ta.bed">BED tiling array</a></li>
+  <li><a href="sample_files/wiggle_cg.bed">BED colour gradient</a></li>
+  <li><a href="sample_files/wiggle_hg.bed">BED histogram</a></li>
+  <li><a href="sample_files/wiggle_plot.bed">BED wiggle plot</a></li>
+  </ul>
+</li>
+<li><strong>GFF</strong> - <a href="sample_files/example.gff">BAC end sequences</a></li>
+<li><strong>PSL</strong> - <a href="sample_files/example.psl">Human INSR gene</a></li>
+</ul>
+
+<h2 id="access">Data access and security</h2>
+
+<h3>Saving and sharing tracks</h3>
+
+<p>Uploaded data is saved temporarily to our filesystem and accessed
+via cookie, so you can only view it from the browser in which you 
+uploaded it (unless you click the share icon as below). For longer-term access to your data, you can save the 
+track to our database server, but this requires an Ensembl user account.
+Once logged in, you will see a 'Save' link next to your track - click
+on this and the track will be transferred to the database and can be
+accessed on any computer where you are logged into Ensembl.</p>
+
+<p>Remote data is not saved to the database. Only the URL or source
+name is saved to your user account, to allow you to access the file
+easily from any location, without having to reattach it.</p>
+
+<p>If you display your data on a Location view such as Region in Detail, click the sharing icon, or the <strong>Share this page</strong> button at the left, to send the same view, including your own track, to a labmate or collaborator.</p>
+
+<h3 id="DeletingTracks">Deleting tracks</h3>
+
+<p> 
+The track will remain on your display while you navigate around the
+genome. To hide the track, choose the "no display" option (empty box)
+for that track in the <strong>Configure this page</strong> menu.</p>
+
+<p>To remove the data set, click the <strong>Custom tracks</strong> 
+link at the left of Location. The tracks you have currently uploaded and/or attached will
+be listed. Click delete next to any you wish to remove.
+</p>
+
+<h3 id="Disclaimer">Data Upload Disclaimer</h3>
+
+<p>
+Although your data source is allocated a unique ID and any management
+operations on saved data (<i>e. g.</i> deleting) require a
+password, <strong>this is only trivial security</strong>. Data
+uploads are made on an <strong>open, non-secure</strong> network
+connection. If your data is sensitive you should not upload it but
+contact Ensembl for more information.
+</p>
+
+<p>
+While we undertake everything to not make uploaded data available to
+any person other than the originator we <strong>DO NOT</strong>
+provide any assurance whatsoever concerning data security and/or
+privacy.
+</p>
+
+</body>
+</html>

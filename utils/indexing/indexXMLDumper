@@ -39,6 +39,9 @@ my $CONF = retrieve("$Bin/dumper.sconf");
 my $SD = $CONF->{'SiteDefs'};
 my $PD = $CONF->{'packed'};
 
+# A reference to an array of result from dumpFamily
+my $fm_result = [];
+
 # Make species also available by production name, build datasets
 my $ENSEMBL_DATASETS = [];
 foreach my $url (keys %$PD) {
@@ -50,18 +53,18 @@ foreach my $url (keys %$PD) {
 }
 print "There are ".scalar(@$ENSEMBL_DATASETS)." species\n";
 
-$| = 1;
+$| = 1; 
 
 my $tmpdir = '.';
 
-my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$create_elevate,$do_private,$debug,$log,$dir,$check_xml,$help,$array,$hgvs_file,$synonym_file);
+my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$create_elevate,$debug,$check_strains,$log,$dir,$check_xml,$help,$array,$hgvs_file,$synonym_file);
 GetOptions('species=s'        => \$species_list,
            'ignore_species=s' => \$ignore_species_list,
            'index|indices=s'  => \$indexes_list,
            'ignore_index=s'   => \$ignore_indexes_list,
            'create_elevate'   => \$create_elevate,
-           'do_private'       => \$do_private,
            'debug'            => \$debug,
+           'check_strains'    => \$check_strains,
            'log=s'            => \$log,
            'dir=s'            => \$dir,
            'check_xml'        => \$check_xml,
@@ -143,11 +146,7 @@ foreach my $method (sort keys %indexXMLDumper::) {
   }
 }
 
-if ($do_private) {
-   print LOG "Dumping just private data\n";
-  @indexes = qw(StructuralVariation Variation );
-}
-elsif ($indexes_list eq 'ALL'){
+if ($indexes_list eq 'ALL'){
   @indexes = ();
   my %ignored;
   @ignored{@ignore_indexes} = ();
@@ -199,12 +198,6 @@ foreach (@indexes) {
   }
 }
 
-my %strain_parent_common_names = (
-  mus_musculus => 'Mouse',
-  sus_scrofa   => 'Pig',
-  canis_lupus_familiaris => 'Dog',
-);
-
 # if the SPECIES is set to ALL grab them all from the config...
 my $input_c = @species;
 if( $species_list eq 'ALL' ) {
@@ -248,16 +241,16 @@ my $start_time = time;
 my $total_c;
 my $elevate;
 foreach my $index (@indexes) {
-  my $loc = $do_private ? "$dir/ensembl_private/" : "$dir/".$shards{$index}."/";
+  my $loc = "$dir/".$shards{$index}."/";
   my $start = time;
   $conf->{'directory'} = $loc . lc($sitetype)."_$index";
   system( "mkdir -p $conf->{'directory'}") unless -e $conf->{'directory'};
 
-  if ($index eq 'Variation' && ! $do_private) {
+  if ($index eq 'Variation') {
     $conf->{'directory_somatic_mutations'} = "$dir/".$shards{'SomaticMutation'}."/".lc($sitetype).'_SomaticMutation';
     system("mkdir -p $conf->{'directory_somatic_mutations'}") unless -e  $conf->{'directory_somatic_mutations'};
   }
-  foreach my $species ( @species ) {
+SP:  foreach my $species ( @species ) {
  #    next unless ($species =~ /^mus/);
     my $single_species = 0;
     my %dbs = %{$PD->{$species}{'databases'}||{}};
@@ -268,7 +261,7 @@ foreach my $index (@indexes) {
     my $core = $dbs{'DATABASE_CORE'};
     $conf->{'core_details'}            = $core;
 
-    my $variation = $do_private ? $dbs{'DATABASE_VARIATION_PRIVATE'} : $dbs{'DATABASE_VARIATION'};
+    my $variation = $dbs{'DATABASE_VARIATION'};
     if ($variation) {
       $conf->{'variation_dbh'} = DBI->connect( "dbi:mysql:$variation->{'NAME'};host=$variation->{'HOST'};port=$variation->{'PORT'}",
                                                $variation->{'USER'},
@@ -295,21 +288,30 @@ foreach my $index (@indexes) {
       $conf->{'species'}             = $species;
       $conf->{'species_sci_name'}    = $species;
       $conf->{'authority'}           = $PD->{$species}{'AUTHORITY'};
-      $conf->{'species_common_name'} = $PD->{$species}{'SPECIES_COMMON_NAME'};
-      my $parent_common_name = $strain_parent_common_names{$PD->{$species}{'STRAIN_GROUP'}};
-      $conf->{'strain_details'}{'parent_common_name'} = $parent_common_name || '';
-      $conf->{'strain_details'}{'parent_latin_name'}  = ucfirst($PD->{$species}{'SPECIES_SCIENTIFIC_NAME'});
-      $conf->{'strain_details'}{'strain_name'}        = $conf->{'strain_details'}{'parent_common_name'} . ' ' . $PD->{$species}{'SPECIES_STRAIN'};
+      $conf->{'species_display_name'} = ucfirst($PD->{$species}{'SPECIES_COMMON_NAME'});
+      $conf->{'strain_details'} = undef;
       $conf->{'strain_details'}{'reference_strain'} = 1;
-      if ( $PD->{$species}{'STRAIN_GROUP'} && ($PD->{$species}{'STRAIN_GROUP'} ne $PD->{$species}{'SPECIES_PRODUCTION_NAME'})) {
-        $conf->{'strain_details'}{'reference_strain'} = 0;
+      if ( $PD->{$species}{'STRAIN_GROUP'} ){
+        $conf->{'strain_details'}{'strain_name'} = ucfirst($PD->{$species}{'SPECIES_COMMON_NAME'}) . ' ' . $PD->{$species}{'SPECIES_STRAIN'};
+        if ($PD->{$species}{'STRAIN_GROUP'} ne $PD->{$species}{'SPECIES_PRODUCTION_NAME'}) {
+          $conf->{'strain_details'}{'parent_common_name'} = ucfirst($PD->{$species}{'SPECIES_COMMON_NAME'}) || '';
+          $conf->{'strain_details'}{'parent_latin_name'}  = $PD->{$species}{'SPECIES_SCIENTIFIC_NAME'};
+          $conf->{'strain_details'}{'reference_strain'} = 0;
+        }
+      }
+#      warn Dumper($conf->{'strain_details'}); exit;
+      if ($check_strains) {
+        if ($PD->{$species}{'STRAIN_GROUP'} && ($PD->{$species}{'STRAIN_GROUP'} ne $PD->{$species}{'SPECIES_PRODUCTION_NAME'})) {
+          print LOG "Species $species has strains, with parent of ".$conf->{'strain_details'}{'parent_common_name'} . "\n" ;
+        }
+        next SP;
       }
     }
 
     if ($create_elevate) {
       &create_elevate($conf);
     }
-    else {
+    else { 
       my $no_success = 1;
       my $c;
       print LOG "Starting: $index $species\n";
@@ -396,10 +398,10 @@ sub create_elevate {
   my ($conf) = @_;
   my $species     = $conf->{'species'};
   my $url = $website_url . "/$species/Info/Index";
-  my $common_name = $conf->{'species_common_name'};
-  my $variant1 = lc($common_name);
+  my $display_name = $conf->{'species_display_name'};
+  my $variant1 = lc($display_name);
   my %names;
-  foreach my $name ($common_name, $variant1, $species) {
+  foreach my $name ($display_name, $variant1, $species) {
     foreach (split ' ', $name) {
       $names{$_}++;
     }
@@ -622,7 +624,7 @@ sub dumpVariation {
   my ($counter2,$file2,$fh2);
 
   my $somatic = { map { @$_ } @{$conf->{'variation_dbh'}->selectall_arrayref( "select source_id, somatic_status from source" )} };
-  my $somatic_present =  $do_private ? 0 : ( grep { $somatic->{$_} } keys %$somatic ) ? 1 : 0;
+  my $somatic_present =  grep { $somatic->{$_} } keys %$somatic ? 1 : 0;
   if ($somatic_present) {
     $counter2 = make_counter(0);
     $file2 = $conf->{'directory_somatic_mutations'}."/${VariationDB}_SomaticMutation.xml";
@@ -733,24 +735,7 @@ sub dumpVariation {
 
   my $quick_links;
   my $locations = {};
-  if ($do_private) {
-    # only needed for private data
-    print LOG "    Preparing to get SNP location info ", &date_and_mem, "\n";
-    my $query = qq(
-     SELECT vf.variation_id, concat(sr.name, ':', vf.seq_region_start-50, '-',  vf.seq_region_end+50, ':', vf.seq_region_strand ) as location
-     FROM variation_feature vf, seq_region sr
-     WHERE vf.seq_region_id = sr.seq_region_id);
-    $sth = $conf->{'variation_dbh'}->prepare($query);
-    $sth->execute;
-    while ( my $rows = $sth->fetchrow_arrayref() ) {
-      push @{$locations->{$rows->[0]}},$rows->[1];
-    }
-    print LOG "     Retrieved SNP location info ".&date_and_mem()."\n";
-
-    #disable all links from these hits
-    $quick_links = 'all:0';
-  }
-
+  
   ## get synonym info
   print LOG "    Preparing to get all synonyms ".&date_and_mem()."\n";
   my $synonyms;
@@ -1075,25 +1060,6 @@ sub dumpStructuralVariation {
 
   my $quick_links;
   my $locations = {};
-  if ($do_private) {
-    # only needed for private data
-    print LOG "    Preparing to get StructuralVariation location info ", &date_and_mem, "\n";
-    my $query = qq(
-    SELECT svf.structural_variation_id, concat(sr.name, ':', svf.seq_region_start, '-', svf.seq_region_end, ':', svf.seq_region_strand ) as location
-      FROM structural_variation sv, structural_variation_feature svf, seq_region sr
-     WHERE sv.structural_variation_id = svf.structural_variation_id
-       AND svf.seq_region_id = sr.seq_region_id);
-    my $sth = $conf->{'variation_dbh'}->prepare($query);
-    $sth->execute;
-    while ( my $rows = $sth->fetchrow_arrayref() ) {
-      push @{$locations->{$rows->[0]}},$rows->[1];
-    }
-    print LOG "     Retrieved StructuralVariation location info ".&date_and_mem()."\n";
-
-    #disable all links from these hits
-    $quick_links = 'all:0';
-  }
-
   my $scale           = $PD->{'species'}{'ENSEMBL_GENOME_SIZE'} || 1;
   my $max_length      = $scale *= 1e6;
   my $T = $conf->{'variation_dbh'}->selectall_arrayref(qq(
@@ -1148,15 +1114,6 @@ sub StrucVarLine {
   my $url = sprintf(qq(%s/StructuralVariation/Explore?sv=%s),
                     $species,
                     $id);
-  if ($do_private) {
-    my ($chr,$coords) = split ':', $location;
-    my ($start,$stop) = split '-', $coords;
-#    my $view = ($stop-$start+1 > 1e6) ? 'Overview' : 'View'; #use this when we have Structural Variations on Genoverse
-    my $view = 'View';
-    $url = sprintf(qq(%s/Location/View?r=%s),
-                    $species,
-                    $location);
-  }
   $species =~ s/_/ /;
   my $xml = qq(
 <doc>
@@ -1429,7 +1386,7 @@ sub dumpDomain {
   my $dbname    = $conf->{'dbs'}{'DATABASE_CORE'};
   my $counter   = make_counter(0);
   my $dbspecies = $conf->{'species'};
-  my $common_name = $conf->{'species_common_name'};
+  my $display_name = $conf->{'species_display_name'};
   my $file = $conf->{'directory'}."/${dbname}_Domain.xml";
   my $start_time = time;
   my $db = 'core';
@@ -1475,7 +1432,7 @@ sub dumpDomain {
       if ($old_acc) {
         my $gene_c = $gene_counts->{$old_acc}{'c'};
         my $gene_text = $gene_c > 1 ? 'genes' : 'gene';
-        $description = "Interpro domain $old_acc [$old_desc] is found in $gene_c $gene_text in $common_name and has";
+        $description = "Interpro domain $old_acc [$old_desc] is found in $gene_c $gene_text in $display_name and has";
         &p( DomainLine($dbspecies,$old_acc,$description,$IDS,$count,$counter ), $fh);
       }
 
@@ -1724,9 +1681,17 @@ sub dumpFamily {
        and sm.gene_member_id = gm.gene_member_id
        and sm.source_name not like 'Uniprot%'
      group by f.stable_id ));
-  $sth->execute();
   my $X = $conf->{'authority'} || 'Ensembl';
-  while( my( $fid, $desc, $seq_member_ids,$gene_member_ids ) = $sth->fetchrow_array()) {
+
+  if (scalar @$fm_result == 0) {
+     print LOG "Going to execute an extremely big query. Only do it once for all species \n";
+     $sth->execute();
+     $fm_result = $sth->fetchall_arrayref();
+  }
+
+
+  for my $row (@$fm_result) {
+    my ($fid, $desc, $seq_member_ids,$gene_member_ids) = @$row;
     $desc =~ s/(\S+)\/(\S+)/$1 \/ $2/g;
     my (%genes,%proteins,%transcripts);
     foreach my $gene_id (split ',',$gene_member_ids) {
@@ -3376,32 +3341,31 @@ sub footer {
 
 sub common_fields {
   my ($species_latin_name,$feature_type,$db) = @_;
-  my $species_common_name = $species_latin_name eq 'Multi' ? 'CrossSpecies' : $conf->{'species_common_name'};
-  my $parent_common = $conf->{'strain_details'}{'parent_common_name'};
-  my ($parent_latin, $strain);
+  $species_latin_name = ucfirst($species_latin_name);
+  my $species_display_name = $species_latin_name eq 'Multi' ? 'CrossSpecies' : $conf->{'species_display_name'};
+  my $parent_common_name = $conf->{'strain_details'}{'parent_common_name'};
+  my ($parent_latin, $strain_name);
 
   my $xml = qq(
   <field name="website">$website_url</field>
   <field name="feature_type">$feature_type</field>);
 
-  if ($species_common_name eq 'CrossSpecies') {
+  if ($species_display_name eq 'CrossSpecies') {
     $xml.= qq(
-  <field name="species">$species_common_name</field>
+  <field name="species">$species_display_name</field>
   <field name="species_name">$species_latin_name</field>
   <field name="reference_strain">1</field>);
   }
   else {
     #for the front end we need the species details to be that of the parent, and the strain to be that of the species.
-    if ($parent_common) {
-      $parent_latin = $conf->{'strain_details'}{'parent_latin_name'};
-      $strain = $conf->{'strain_details'}{'strain_name'};
-      $species_latin_name = $parent_latin;
-      $species_common_name = $parent_common;
+    if ($parent_common_name) {
+      $species_latin_name = $conf->{'strain_details'}{'parent_latin_name'};
+      $species_display_name = $parent_common_name;
     }
 
     if ($species_latin_name) {
       $xml .= qq(
-  <field name="species">$species_common_name</field>
+  <field name="species">$species_display_name</field>
   <field name="species_name">$species_latin_name</field>);
     }
     my $ref_strain = $conf->{'strain_details'}{'reference_strain'};
@@ -3409,9 +3373,10 @@ sub common_fields {
       $xml .= qq(
   <field name="reference_strain">$ref_strain</field>);
     }
-    if ($strain) {
-      $xml .= qq(
-  <field name="strain">$strain</field>);
+    $strain_name = $conf->{'strain_details'}{'strain_name'};
+    if ($strain_name) {
+        $xml .= qq(
+  <field name="strain">$strain_name</field>);
     }
   }
 

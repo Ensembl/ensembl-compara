@@ -1,0 +1,64 @@
+<html>
+<head>
+<meta name="order" content="1" />
+<title>Pairwise Interactions File Formats</title>
+</head>
+
+<body>
+
+<h1>Pairwise Interactions File Formats - Definition and supported options</h1>
+
+<p>Ensembl supports the two formats established by WashU for long-range 
+pairwise interactions, as follows:</p>
+
+<h2>Simple text format</h2>
+
+<p>This consists of one interaction per line, with three fields separated by spaces or tabs.</p>
+
+<ol>
+<li><b>First feature</b> - coordinates for the first feature and optional direction of interaction, separated by colons, commas or hyphens</li>
+<li><b>Second feature</b> - coordinates for the second feature and optional direction of interaction, separated by colons, commas or hyphens</li>
+<li><b>Score</b> - score for the interaction, or an RGB value (expressed as a comma-separated string e.g. 0,255,0)</li>
+</ol>
+
+<pre class="code">
+chr1,713605,715737,-     chr1,720589,722848,-      2
+chr1,717172,720090,+     chr1:761197-762811,+      2
+chr1,755977,758438,-     chr1:758539-760203,-      2
+</pre>
+
+<p>Data in this format can be uploaded to our website either by pasting into the
+Add Track form, or uploading a file (default extension is .txt) - select
+'Pairwise interaction' as the format.</p>
+
+<h2>Tabix-indexed format</h2>
+
+<p>This is a tab-separated format with more detail, and has one feature per line. Note that 
+there must be two lines per interaction, one for each feature.</p>
+
+<ol>
+<li><b>Chromosome</b> - chromosome of one feature in the interaction</li>
+<li><b>Start</b> - start of one feature in the interaction</li>
+<li><b>End</b> - end of one feature in the interaction</li>
+<li><b>Interaction</b> - coordinates of the interacting feature and an optional score*</li>
+<li><b>ID</b> - a unique ID for this feature</li>
+<li><b>Direction</b> - relative direction of the interaction</li>
+</ol>
+
+<p>* As with the simple format, the score can be an RGB value expressed as a comma-separated string (e.g. 0,255,0).</p>
+
+<pre class="code">
+chr1    111   222   chr1:333-444,255,0,0   1   +
+chr1    222   333   chr1:444-555,0,0,255   2   -
+chr1    333   444   chr1:111-222,255,0,0   3   +
+chr1    444   555   chr1:222-333,0,0,255   4   -
+</pre>
+
+<p>Data in this format must be attached to Ensembl via a URL - select 'Pairwise
+interactions (indexed) on the 'Add track' form.</p>
+
+<p>More information about both these formats can be found on the 
+<a href="http://wiki.wubrowse.org/Long-range">wubrowse wiki</a>.</p>
+
+</body>
+</html>

@@ -54,7 +54,7 @@ sub gene_phenotypes {
   my $self             = shift;
   my $obj              = shift;
   my $hub              = $self->hub;
-  my $species          = $hub->species_defs->SPECIES_COMMON_NAME;
+  my $species          = $hub->species_defs->SPECIES_DISPLAY_NAME;
   my $g_name           = $obj->stable_id;
   my $g_display        = $obj->display_xref->display_id;
   my $html             = qq{<a id="gene_phenotype"></a><h2>List of phenotype(s), disease(s) and trait(s) associated with the Ensembl gene $g_name ($g_display)</h2>};

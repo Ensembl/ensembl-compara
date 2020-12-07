@@ -176,10 +176,10 @@ sub draw_wiggle {
       $colour   = 'black';
       $ok_score = $current_score eq '-INF' ? $c->{'min_score'} : $c->{'max_score'};
     }
-    elsif (defined($c->{'cutoff_min'}) && $current_score < $c->{'cutoff_min'}) {
+    elsif (defined($c->{'cutoff_min'}) && $c->{'cutoff_min'} ne '' && $current_score < $c->{'cutoff_min'}) {
       $ok_score = $c->{'cutoff_min'};
     }
-    elsif (defined($c->{'cutoff_max'}) && $current_score > $c->{'cutoff_max'}) {
+    elsif (defined($c->{'cutoff_max'})  && $c->{'cutoff_max'} ne '' && $current_score > $c->{'cutoff_max'}) {
       $ok_score = $c->{'cutoff_max'};
     }
     else {

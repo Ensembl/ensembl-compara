@@ -201,8 +201,8 @@ sub render_align_bar {
     my $ref_species   = $map->{$species};
     my $other_species = $map->{$s2sp}; 
 
-    my $ref_species_common_name = lc $species_defs->get_config($ref_species, 'SPECIES_COMMON_NAME');
-    my $other_species_common_name = lc $species_defs->get_config($other_species, 'SPECIES_COMMON_NAME') || '';
+    my $ref_species_common_name = lc $species_defs->get_config($ref_species, 'SPECIES_DISPLAY_NAME');
+    my $other_species_common_name = lc $species_defs->get_config($other_species, 'SPECIES_DISPLAY_NAME') || '';
     
     # This happens when we have two slices following each other
     if (defined $last_end and ($last_end <= $ss - 1)) {

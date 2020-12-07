@@ -148,6 +148,7 @@ sub table_data {
   my $variation_names = 'variation_names';
   my @stats_col = ('p_value','odds_ratio','beta_coef');
   my $submitter_max_length = 20;
+  my $skip_phenotypes_link = 'non_specified';
 
   foreach my $pf (@$external_data) {
 
@@ -167,6 +168,7 @@ sub table_data {
     }
 
     my $id                   = $pf->{'_phenotype_id'};
+    my $phenotype_class      = $pf->phenotype_class;
     my $pf_id                = $pf->dbID;
     my $source_name          = $pf->source_name;
     my $study_name           = $pf->study ? $pf->study->name : '';
@@ -198,6 +200,7 @@ sub table_data {
         my $clin_sign_icon = $clin_sign_term;
         $clin_sign_icon =~ s/ /-/g;
         $clin_sign_icon = 'other' if ($clin_sign_icon =~ /conflict/);
+        $clin_sign_icon = 'other' if ($clin_sign_icon eq 'association-not-found');
         if ($attributes->{$review_status}) {;
           $clin_sign .= qq{<img class="clin_sign" src="/i/val/clinsig_$clin_sign_icon.png" />};
         }
@@ -282,7 +285,7 @@ sub table_data {
     }
     # Associate loci link
     if ($bm_flag == 0) {
-      $disease = qq{<a href="$disease_url" title="View associate loci">$disease</a>} unless ($disease =~ /HGMD/);
+      $disease = qq{<a href="$disease_url" title="View associate loci">$disease</a>} unless ($disease =~ /HGMD/ || $phenotype_class eq $skip_phenotypes_link);
     }
 
     # Stats column

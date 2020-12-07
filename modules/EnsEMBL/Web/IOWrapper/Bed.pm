@@ -166,6 +166,7 @@ sub create_hash {
         'chrom'       => 1,
         'chromStart'  => 1,
         'chromEnd'    => 1,
+        'score'       => 1,
       );
       my %lookup = reverse %$column_map;
       for (sort {$a <=> $b} keys %lookup) {

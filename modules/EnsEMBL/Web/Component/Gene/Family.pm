@@ -37,7 +37,7 @@ sub content {
   my $hub            = $self->hub;
   my $cdb            = shift || $hub->param('cdb') || 'compara';
   my $object         = $self->object;
-  my $sp             = $hub->species_defs->DISPLAY_NAME || $hub->species_defs->species_label($object->species);
+  my $sp             = $hub->species_defs->GROUP_DISPLAY_NAME || $hub->species_defs->species_label($object->species);
   my $families       = $object->get_all_families($cdb);
   my $gene_stable_id = $object->stable_id;
   my ($gene_name)    = $object->display_xref;

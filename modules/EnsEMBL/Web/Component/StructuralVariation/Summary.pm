@@ -32,6 +32,7 @@ sub _init {
 sub content {
   my $self         = shift;
   my $object       = $self->object;
+  return '' unless $object;
   my $source_name  = $object->source_name;
   my $mappings     = $object->variation_feature_mapping;
   my $validation   = $object->validation_status;

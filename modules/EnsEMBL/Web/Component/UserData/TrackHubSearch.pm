@@ -87,7 +87,7 @@ sub content {
                               'name'    => 'assembly_display',
                               'value'   => $sd->ASSEMBLY_VERSION,
         });
-        $form->add_hidden({'name' => 'common_name',   'value' => $sd->SPECIES_COMMON_NAME});
+        $form->add_hidden({'name' => 'display_name',   'value' => $sd->SPECIES_DISPLAY_NAME});
         ## But these are the 'real' values we want to use for the THR search
         $form->add_hidden({'name' => 'thr_species',   'value' => $thr_species->{'thr_name'}});
         $form->add_hidden({'name' => 'assembly_id',   'value' => $thr_species->{'assembly_id'}});

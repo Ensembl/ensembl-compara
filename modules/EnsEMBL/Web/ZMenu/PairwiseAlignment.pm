@@ -68,7 +68,7 @@ sub content {
   if ($disp_method eq 'CACTUS_HAL_PW') {
     ## Keep things simple for CACTUS
     $self->add_subheader("This region maps to:");
-    my $common = $hub->species_defs->get_config($sp1, 'SPECIES_COMMON_NAME');
+    my $display = $hub->species_defs->get_config($sp1, 'SPECIES_DISPLAY_NAME');
 
     $url = $hub->url({
       type    => 'Location',
@@ -79,7 +79,7 @@ sub content {
     });
 
     $self->add_entry({
-      label => "$common $r1 $orient",
+      label => "$display $r1 $orient",
       link  => $url,
     });
 

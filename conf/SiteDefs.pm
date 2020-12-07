@@ -34,9 +34,9 @@ use Sys::Hostname::Long;
 
 ###############################################################################
 ## Ensembl Version and release dates (these get updated every release)
-our $ENSEMBL_VERSION        = 100;            # Ensembl release number
-our $ARCHIVE_VERSION        = 'Mar2020';     # Archive site for this version
-our $ENSEMBL_RELEASE_DATE   = 'March 2020'; # As it would appear in the copyright/footer
+our $ENSEMBL_VERSION        = 103;            # Ensembl release number
+our $ARCHIVE_VERSION        = 'Jan2021';     # Archive site for this version
+our $ENSEMBL_RELEASE_DATE   = 'January 2021'; # As it would appear in the copyright/footer
 ###############################################################################
 
 
@@ -95,8 +95,9 @@ our $ENSEMBL_CONFIG_BUILD             = 0; # Build config on server startup? Set
 our $ENSEMBL_SERVER_SIGNATURE         = "$ENSEMBL_SERVER-$ENSEMBL_SERVERROOT" =~ s/\W+/-/gr; # Unique string representing this machine/server
 our $ENSEMBL_SITETYPE                 = 'Ensembl';
 our $ENSEMBL_HELPDESK_EMAIL           = defer { $ENSEMBL_SERVERADMIN };   # Email address for contact form and help pages
-our $PERL_RLIMIT_AS                   = '2048:4096';                      # linux does not honor RLIMIT_DATA, RLIMIT_AS (address space) will work to limit the size of a process
+our $PERL_RLIMIT_AS                   = '2560:4096';                      # linux does not honor RLIMIT_DATA, RLIMIT_AS (address space) will work to limit the size of a process
 our $ENSEMBL_REST_URL                 = 'http://rest.mydomain.org';       # url to your REST service
+our $EQTL_REST_URL                    = 'http://www.ebi.ac.uk/eqtl/api/';       # url to EQTL REST service
 our $CGI_POST_MAX                     = 20 * 1024 * 1024; # 20MB file upload max limit
 our $UPLOAD_SIZELIMIT_WITHOUT_INDEX   = 10 * 1024 * 1024; # 10MB max allowed for url uploads that don't have index files in the same path
 our $TRACKHUB_TIMEOUT                 = 60 * 60 * 24;     # Timeout for outgoing trackhub requests
@@ -199,6 +200,8 @@ our $GOOGLE_SITEMAPS_URL          = '/sitemaps';                                
 our @ENSEMBL_CONF_DIRS               = ("$ENSEMBL_WEBROOT/conf");                                      # locates plugin SiteDefs.pm and ini-files
 our @ENSEMBL_HTDOCS_DIRS             = ($ENSEMBL_DOCROOT, "$ENSEMBL_SERVERROOT/biomart-perl/htdocs");  # locates static content
 our $ENSEMBL_TAXONOMY_DIVISION_FILE  = ("$ENSEMBL_DOCROOT/e_divisions.json");
+our $DEFAULT_SPECIES_IMG_DIR         = 'htdocs/i/species';
+our $DEFAULT_SPECIES_URL             = '/i/species/';
 ###############################################################################
 
 

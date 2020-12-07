@@ -39,6 +39,7 @@ sub content {
   my $species_defs = $hub->species_defs;
   my $cdb          = shift || $hub->param('cdb') || 'compara';
   
+  my $skip_phenotypes_link = 'non_specified';
   my $html = '';
   
   my @orthologues = (
@@ -61,9 +62,7 @@ sub content {
     next unless $hub->species_defs->get_config($species, 'databases') && $hub->species_defs->get_config($species, 'databases')->{'DATABASE_VARIATION'};
 
     my $pfa = $hub->get_adaptor('get_PhenotypeFeatureAdaptor', 'variation', $species);
-    my $sp = $species;
-       $sp =~ tr/ /_/;
-    my $species_label = join('<br />(', split /\s*\(/, $species_defs->species_label($sp));
+    my $species_label = join('<br />(', split /\s*\(/, $species_defs->species_label($species));
 
     foreach my $stable_id (sort keys %{$orthologue_list{$species}}) {
       my $orthologue = $orthologue_list{$species}{$stable_id};
@@ -87,6 +86,7 @@ sub content {
         
         # phenotype
         my $phen_desc = $pf->phenotype->description;
+        my $phen_class = $pf->phenotype_class;
         my $phen_link = $hub->url({
           species => $species,
           type    => 'Phenotype',
@@ -100,6 +100,7 @@ sub content {
           $phen_desc,
           $pf->source_name
         );
+        $phen = $phen_desc if $phen_class eq $skip_phenotypes_link;
         
         # source
         my $source = $pf->source_name;

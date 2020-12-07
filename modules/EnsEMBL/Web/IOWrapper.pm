@@ -66,34 +66,43 @@ sub open {
 
   my %format_to_class = Bio::EnsEMBL::IO::Utils::format_to_class;
   my $format          = $file->get_format;
-  my $subclass = $format_to_class{$format};
-  return undef unless $subclass;
-  my $class = 'EnsEMBL::Web::IOWrapper::'.$subclass;
+  my $subclass        = $format_to_class{$format};
 
-  my $wrapper;
-  if (dynamic_use($class, 1)) {
-    my $parser;
-    if ($file->source eq 'url') {
-      my $result = $file->read;
-      if ($result->{'content'}) {
-        $parser = Bio::EnsEMBL::IO::Parser::open_content_as($format, $result->{'content'});
+  my $wrapper = {
+                  'file'   => $file, 
+                  'format' => $format,
+                  %args,
+                };
+  my $class;
+
+  if ($subclass) {
+    $class = 'EnsEMBL::Web::IOWrapper::'.$subclass;
+
+    if (dynamic_use($class, 1)) {
+      my $parser;
+      if ($file->source eq 'url') {
+        my $result = $file->read;
+          if ($result->{'content'}) {
+          $parser = Bio::EnsEMBL::IO::Parser::open_content_as($format, $result->{'content'});
+        }
       }
-    }
-    else {
-      ## Open file from where we wrote to, otherwise it can cause issues
-      $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $file->absolute_write_path);
-    }
+      else {
+        ## Open file from where we wrote to, otherwise it can cause issues
+        $parser = Bio::EnsEMBL::IO::Parser::open_as($format, $file->absolute_write_path);
+      }
 
-    if ($parser) {
-      $wrapper = $class->new({
-                              'parser' => $parser, 
-                              'file'   => $file, 
-                              'format' => $format,
-                              %args,
-                              });
-    }  
+      if ($parser) {
+        $wrapper->{'parser'} = $parser;
+      } 
+    } 
   }
-  return $wrapper;
+  else {
+    ## Unparsed uploads, e.g. VEP results filter
+    $class = 'EnsEMBL::Web::IOWrapper::'.$format;
+    $class = undef unless (dynamic_use($class, 1));
+  }
+
+  return $wrapper ? $class->new($wrapper) : {};
 }
 
 sub parser {

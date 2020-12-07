@@ -48,6 +48,7 @@ sub render {
                             'name'  =>  sprintf('%s Comparative Genomics Data', $sitename),
                             'includedInDataCatalog' => $catalog,
                             'url'   => 'http://www.ensembl.org/info/genome/compara/accessing_compara.html',
+                            'license' => 'https://www.apache.org/licenses/LICENSE-2.0',
                             'description' => 'Gene trees, protein families and alignments across the vertebrate taxonomic space',
                             'keywords' => 'phylogenetics, evolution, homology, synteny',
                             'distribution'  => [{

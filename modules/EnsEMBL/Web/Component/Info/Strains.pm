@@ -42,7 +42,8 @@ sub content {
   my $html;
 
   my $strain_type = $sd->STRAIN_TYPE;
-  $html .= sprintf '<h1>%s %ss</h1>', $sd->SPECIES_COMMON_NAME, $strain_type;
+  my $name = $sd->USE_COMMON_NAMES ? $sd->SPECIES_DISPLAY_NAME : $sd->SPECIES_SCIENTIFIC_NAME;
+  $html .= sprintf '<h1>%s %ss</h1>', $name, $strain_type;
 
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, sprintf('/%s_strains.inc', $hub->species), 1);
 
@@ -77,7 +78,8 @@ sub content {
                                   });
 
       my $link    = sprintf('<a href="%s">View example location</a> | <a href="%s">Karyotype and statistics</a>', $loc_url, $kar_url);
-      my $species_badge = sprintf '<img src="/i/species/%s.png" alt="icon" class="badge-48" style="float:left;padding-right:4px;" /><span class="bigtext">%s</span><br />%s', $strain, $sd->get_config($strain, 'SPECIES_COMMON_NAME'), $link; 
+      my $image       = $sd->get_config($strain, 'SPECIES_IMAGE');
+      my $species_badge = sprintf '<img src="/i/species/%s.png" alt="icon" class="badge-48" style="float:left;padding-right:4px;" /><span class="bigtext">%s</span><br />%s', $image, $sd->get_config($strain, 'SPECIES_DISPLAY_NAME'), $link; 
 
       ## Link to Jackson Labs for mouse strains
       my $info_link;

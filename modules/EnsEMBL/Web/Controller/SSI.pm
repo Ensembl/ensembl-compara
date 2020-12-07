@@ -22,8 +22,11 @@ package EnsEMBL::Web::Controller::SSI;
 use strict;
 use warnings;
 
+use Text::MultiMarkdown qw(markdown);
+
 use EnsEMBL::Web::Document::HTML::Movie;
 use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
+use EnsEMBL::Web::Utils::Publications qw(parse_publication_list);
 
 use parent qw(EnsEMBL::Web::Controller);
 
@@ -86,7 +89,7 @@ sub template_SPECIESDEFS {
 sub template_SPECIES {
   my ($self, $code) = @_;
   return $self->hub->species if $code eq 'code';
-  return $self->species_defs->DISPLAY_NAME if $code eq 'name';
+  return $self->species_defs->SPECIES_DISPLAY_NAME if $code eq 'name';
   return $self->species_defs->SPECIES_RELEASE_VERSION if $code eq 'version';
   return "**$code**";
 }
@@ -117,6 +120,21 @@ sub template_INCLUDE {
         local($/) = undef;
         $content = <FH>;
         close FH;
+
+        ## convert markdown into HTML
+        if ($filename =~ /\.md$/) {
+          $content = markdown($content);
+          ## remove escape character on tilde and apostrophe
+          $content =~ s/\\~/~/g;
+          $content =~ s/\\'/'/g;
+          ## replace escape character with line break
+          $content =~ s/\\/<br>/g;
+          ## Convert PMC IDs to full references
+          if ($filename =~ /references/l) {
+            $content = parse_publication_list($content, $hub);
+          }
+        }
+        
         $content =~ s/src="(\/i(mg)?\/)/src="$static_server$1/g if $static_server;
         return $content;
       }

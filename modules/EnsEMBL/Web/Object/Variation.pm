@@ -575,10 +575,7 @@ sub vari_class{
   ### Description: returns the variation class (indel, snp, het) for a varation
   ### Returns String
   
-  # /!\ The following block  needs to be changed for the e!62 by "return $_[0]->vari->var_class;" /!\
-  my $var = $_[0]->vari->var_class; # only for e!61
-  $var =~ tr/_/ /;
-  return $var;
+  return $_[0]->vari->var_class;
 }
 
 
@@ -654,7 +651,7 @@ sub GERP_score {
   return [undef, undef] unless $vf_object;
 
   my $variation_db = $self->Obj->adaptor->db->get_VariationAdaptor->db;
-  $variation_db->gerp_root_dir($self->hub->species_defs->ENSEMBL_FTP_URL . '/release-' . $self->hub->species_defs->ENSEMBL_VERSION . '/compara/conservation_scores/');
+  $variation_db->gerp_root_dir($self->hub->species_defs->ENSEMBL_FTP_OVER_HTTP_URL . '/release-' . $self->hub->species_defs->ENSEMBL_VERSION . '/compara/conservation_scores/');
 
   my $gerp_score = $vf_object->get_gerp_score;
   my $source = (keys %$gerp_score)[0];  

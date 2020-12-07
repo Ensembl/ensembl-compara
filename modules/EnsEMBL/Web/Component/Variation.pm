@@ -65,13 +65,16 @@ sub pop_url {
   if($pop_name =~ /^1000GENOMES/) {
     $pop_url = $hub->get_ExtURL('1KG_POP', $pop_label);
   }
+  elsif ($pop_name =~ /ALFA/i) {
+    $pop_url = $hub->get_ExtURL('ALFA_POP');
+  }
   elsif ($pop_name =~ /^NextGen/i) {
     $pop_url = $hub->get_ExtURL('NEXTGEN_POP');
   }
   elsif ($pop_name =~ /^ExAC/i) {
     $pop_url = $hub->get_ExtURL('EXAC_POP');
   }
-  elsif ($pop_name =~ /PRJEB/i) {
+  elsif ($pop_name =~ /^PRJ([A-Z]{2})\d+/i) {
     $pop_url = $hub->get_ExtURL('EVA_STUDY').$pop_name;
   }
   else {

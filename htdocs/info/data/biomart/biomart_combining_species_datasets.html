@@ -1,0 +1,36 @@
+<html>
+<head>
+<meta name="order" content="6" />
+<title>Combining species datasets</title>
+</head>
+
+<body>
+
+<h1>Combining multiple species datasets</h1>
+<p>The BioMart interface allow you to link two different species datasets together but also to query two different marts at the same time.</p>
+<h3>Summary</h3>
+<ol>
+        <li><a href="#linkdatasets">How to combine two Ensembl gene mart species datasets</a></li>
+        <li><a href="#linkmarts">How to combine two mart species datasets located in two different Ensembl marts</a></li>
+</ol>
+
+<a name="linkdatasets"></a>
+<h2>How to combine two Ensembl gene mart species datasets</h2>
+<p>The BioMart interface allow you to link two different species datasets together to get combined results back from BioMart. First, go to the <a href="/biomart/martview">Ensembl BioMart page</a>. As shown in the image below, <a href="/biomart/martview?VIRTUALSCHEMANAME=default&ATTRIBUTES=hsapiens_gene_ensembl.default.feature_page.ensembl_gene_id|hsapiens_gene_ensembl.default.feature_page.ensembl_transcript_id|hsapiens_gene_ensembl.default.feature_page.hgnc_id|hsapiens_gene_ensembl.default.feature_page.hgnc_symbol&FILTERS=hsapiens_gene_ensembl.default.filters.chromosome_name.1&VISIBLEPANEL=resultspanel">filter on human chromosome 1 and select the Ensembl Gene and Transcript IDs, HGNC IDs and symbols attributes.</a></p>
+<a href="/biomart/martview?VIRTUALSCHEMANAME=default&ATTRIBUTES=hsapiens_gene_ensembl.default.feature_page.ensembl_gene_id|hsapiens_gene_ensembl.default.feature_page.ensembl_transcript_id|hsapiens_gene_ensembl.default.feature_page.hgnc_id|hsapiens_gene_ensembl.default.feature_page.hgnc_symbol&FILTERS=hsapiens_gene_ensembl.default.filters.chromosome_name.1&VISIBLEPANEL=resultspanel"><p><div class="image-wrap" style=""><img src="/img/link_biomart_ds1.png" style="border: 1px solid black" /></div></p></a>
+<p>Click on the second "Dataset" button indicated by the Arrow 1 in the image below.</p>
+<p><div class="image-wrap" style=""><img src="/img/link_biomart_ds2.png" style="border: 1px solid black" /></div></p>
+<p>You will noticed a new dropdown (indicated by the Arrow 2 in the image above), click on it to select the second species dataset that you are interested in.</p>
+<p>In this example, select "Mus musculus genes" in the dropdown as indicated by the red arrow in the image below.</p>
+<p><div class="image-wrap" style=""><img src="/img/link_biomart_ds3.png" style="border: 1px solid black" /></div></p>
+<p>Finally, you will be fetching all the Ensembl Gene and Transcript IDs, MGI IDs and symbols located on mouse chromosome 1. Click on the result page. You can see on the image below that the red box represent the human attributes selected in the first dataset and the green box the mouse attributes selected in the second dataset.</p>
+<p><div class="image-wrap" style=""><img src="/img/link_biomart_ds4.png" style="border: 1px solid black" /></div></p>
+<a name="linkmarts"></a>
+<h2>How to combine two mart species datasets located in two different Ensembl marts</h2>
+<p>The BioMart interface allows you to go further and query species datasets from two different marts.</p>
+First, go to the <a href="/biomart/martview">Ensembl BioMart page</a>. As shown in the image below, filter on human chromosome 1 and select the Ensembl Gene and Transcript IDs, HGNC IDs and symbols attributes.</p>
+<a href="/biomart/martview?VIRTUALSCHEMANAME=default&ATTRIBUTES=hsapiens_gene_ensembl.default.feature_page.ensembl_gene_id|hsapiens_gene_ensembl.default.feature_page.ensembl_transcript_id|hsapiens_gene_ensembl.default.feature_page.hgnc_id|hsapiens_gene_ensembl.default.feature_page.hgnc_symbol&FILTERS=hsapiens_gene_ensembl.default.filters.chromosome_name.1&VISIBLEPANEL=resultspanel"><p><div class="image-wrap" style=""><img src="/img/link_biomart_ds1.png" style="border: 1px solid black" /></div></p></a>
+<p>As in the previous example, you  will click on the second "Dataset" button and select "Homo sapiens Short Variation (SNPs and indels)" the dropdown as indicated by the red arrow in the image below.</p>
+<p><div class="image-wrap" style=""><img src="/img/link_marts1.png" style="border: 1px solid black" /></div></p>
+<p>Finally, filter on human chromosome 1 and select the Variation Names, sources and descriptions, Variant Alleles and Minor alleles (ALL) attributes. Click on the result page. You can see on the image below that the red box represent the human attributes selected in the Ensembl gene mart and the green box the human short variation attributes selected in the Ensembl Variation mart.</p>
+<p><div class="image-wrap" style=""><img src="/img/link_marts2.png" style="border: 1px solid black" /></div></p>

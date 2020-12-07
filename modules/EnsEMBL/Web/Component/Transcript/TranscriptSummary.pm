@@ -38,7 +38,7 @@ sub content {
   my $hub          = $self->hub;
   my $table        = $self->new_twocol;
   my $species_defs = $hub->species_defs;
-  my $sp           = $species_defs->DISPLAY_NAME;
+  my $sp           = $species_defs->SPECIES_DISPLAY_NAME;
   my $transcript   = $object->Obj;
   my $translation  = $transcript->translation;
   my $db           = $object->get_db;
@@ -136,6 +136,14 @@ sub content {
       }
     }
   };
+
+  ## Hack for broken links 
+  my $regex = '/info/genome/genebuild/genome_annotation';
+  if ($text =~ m#$regex#) {
+    (my $new_page = $regex) =~ s#genome_annotation#index#;
+    my $abs_link = 'https://www.ensembl.org'.$new_page;
+    $text =~ s#$regex#$abs_link#g;
+  }
 
   $table->add_row($label, $text);
 

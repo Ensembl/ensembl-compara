@@ -37,7 +37,7 @@ sub init_cacheable {
     opt_lines         => 1,  # register lines
     spritelib         => { default => $self->species_defs->ENSEMBL_WEBROOT . '/htdocs/img/sprites' },
   });
-  my $sp_img = $self->species_defs->ENSEMBL_WEBROOT . '/../public-plugins/ensembl/htdocs/i/species'; # XXX make configurable
+  my $sp_img = $self->species_defs->SPECIES_IMAGE_DIR;
   if(-e $sp_img) {
     $self->set_parameters({ spritelib => {
       %{$self->get_parameter('spritelib')||{}},

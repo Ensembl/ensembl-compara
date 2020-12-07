@@ -187,7 +187,7 @@ sub content {
   if (keys %{$other_species_data}) {
     my @species_list;
     foreach (keys %{$other_species_data}) {
-      push @species_list, $hub->species_defs->get_config($_, 'SPECIES_COMMON_NAME');
+      push @species_list, $hub->species_defs->get_config($_, 'SPECIES_DISPLAY_NAME');
     }
     my $also = $data_on_this_species > 0 ? 'also' : '';
     my $message = sprintf('You %s have data for the following other species: %s', $also, join(', ', @species_list)); 
@@ -357,7 +357,7 @@ sub table_row {
   if ($multi_trackhub) { 
     my @species_list;
     foreach (keys %$multi_trackhub) {
-      push @species_list, $hub->species_defs->get_config($_, 'SPECIES_COMMON_NAME');
+      push @species_list, $hub->species_defs->get_config($_, 'SPECIES_DISPLAY_NAME');
     }
     $title = sprintf('Delete this trackhub? This will also delete associated data on these species: %s', join(', ', @species_list));
   }

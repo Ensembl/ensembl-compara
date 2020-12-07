@@ -484,12 +484,12 @@ sub draw_tree {
   my @children = grep {$_->get_value_for_tag('nb_nodes') || $_->get_value_for_tag('nb_genes')} @{$node->sorted_children};
   my $nchildren = scalar(@children);
 
-  my $horiz_branch  = q{<img style="width: 28px; height: 28px;" alt="---" src="ct_hor.png" />};
-  my $vert_branch   = q{<img style="width: 28px; height: 28px;" alt="---" src="ct_ver.png" />};
-  my $top_branch    = q{<img style="width: 28px; height: 28px;" alt="---" src="ct_top.png" />};
-  my $bottom_branch = q{<img style="width: 28px; height: 28px;" alt="---" src="ct_bot.png" />};
-  my $middle_branch = q{<img style="width: 28px; height: 28px;" alt="---" src="ct_mid.png" />};
-  my $half_horiz_branch  = q{<img style="width: 14px; height: 28px;" alt="-" src="ct_half_hor.png" />};
+  my $horiz_branch  = q{<img style="width: 28px; height: 28px;" alt="---" src="/img/compara/ct_hor.png" />};
+  my $vert_branch   = q{<img style="width: 28px; height: 28px;" alt="---" src="/img/compara/ct_ver.png" />};
+  my $top_branch    = q{<img style="width: 28px; height: 28px;" alt="---" src="/img/compara/ct_top.png" />};
+  my $bottom_branch = q{<img style="width: 28px; height: 28px;" alt="---" src="/img/compara/ct_bot.png" />};
+  my $middle_branch = q{<img style="width: 28px; height: 28px;" alt="---" src="/img/compara/ct_mid.png" />};
+  my $half_horiz_branch  = q{<img style="width: 14px; height: 28px;" alt="-" src="/img/compara/ct_half_hor.png" />};
 
   if ($nchildren) {
     my @subtrees = map {$self->draw_tree($matrix, $_, $next_y, $counter_raphael_holders, $method)} @children;

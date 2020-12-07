@@ -109,7 +109,7 @@ sub _species_data {
 
     foreach my $species ($sd->valid_species) {
 
-      push @species, { 'value' => $species, 'caption' => $sd->get_config($species, 'SPECIES_COMMON_NAME') };
+      push @species, { 'value' => $species, 'caption' => $sd->get_config($species, 'SPECIES_DISPLAY_NAME') };
 
       my $data = $sd->get_config($species, 'SAMPLE_DATA');
 

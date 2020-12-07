@@ -63,7 +63,8 @@ sub load_tracks {
     'funcgen' => [
       'add_regulation_builds',            # Add to regulation_feature tree
       'add_regulation_features',          # Add to regulation_feature tree
-      'add_oligo_probes'                  # Add to oligo tree
+      'add_oligo_probes',                 # Add to oligo tree
+      'add_genome_targeting',             # Add crispr tracks
     ],
     'variation' => [
       'add_sequence_variations',          # Add to variation_feature tree
@@ -1079,54 +1080,47 @@ sub add_regulation_features {
   if ( $self->databases->{'DATABASE_FUNCGEN'} ) {
     $db_tables          = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
   }
-  my %file_tracks = ( 'methylation' => {'menu'      => $methylation_menu,
-                                        'renderers' => [ qw(off Off compact On) ],
-                                        'default'   => 'compact',
-                                        'strand'    => 'r'},
-                      'crispr'      => {'menu'      => $reg_regions,
-                                        'renderers' => $self->_transcript_renderers,
-                                        'default'   => 'as_transcript_label',
-                                        'strand'    => 'b'},
-                    );
 
-  while (my ($key, $settings) = each (%file_tracks)) {
-    my $dataset = $db_tables->{$key};
-    foreach my $k (sort { lc $dataset->{$a}{'name'} cmp lc $dataset->{$b}{'name'} } keys %$dataset) {
-      (my $name = $dataset->{$k}{'name'}) =~ s/_/ /g;
-      $settings->{'menu'}->append_child($self->create_track_node($key.'_'.$k, $name, {
+  my $methylation = $db_tables->{'methylation'};
+  foreach my $k (sort { lc $methylation->{$a}{'name'} cmp lc $methylation->{$b}{'name'} } keys %$methylation) {
+    (my $name = $methylation->{$k}{'name'}) =~ s/_/ /g;
+    $methylation_menu->append_child($self->create_track_node('methylation_'.$k, $name, {
         data_id      => $k,
-        description  => $dataset->{$k}{'description'},
-        strand       => $settings->{'strand'},
+        description  => $methylation->{$k}{'description'},
+        strand       => 'r',
         nobump       => 1,
         addhiddenbgd => 1,
         display      => 'off',
-        default_display => $settings->{'default'},
-        renderers       => $settings->{'renderers'},
-        glyphset        => 'fg_'.$key,
+        default_display => 'compact',
+        renderers       => [ qw(off Off compact On) ],
+        glyphset        => 'fg_methylation',
         colourset    => 'seq',
-      }));
-    }
+    }));
   }
 
   $self->add_track('information', 'fg_methylation_legend', 'Methylation Legend', 'fg_methylation_legend', { strand => 'r' });
 
   ## Add motif features if required
   if ($self =~ /contigviewbottom/ || $self =~ /reg_summary/) {
-    my $motif_feats = $reg_regions->append_child($self->create_track_node('fg_motif_features', 'Motif features'), {
-      db          => $key,
-      glyphset    => 'fg_motif_features',
-      sources     => 'undef',
-      strand      => 'r',
-      labels      => 'on',
-      depth       => 1,
-      colourset   => 'fg_motif_features',
-      display     => 'off',
-      description => 'Transcription Factor Binding Motif sites', 
-      renderers   => ['off', 'Off', 'compact', 'Compact'],
-    });
-    $self->add_track('information', 'fg_motif_features_legend',      'Motif Feature Legend',              'fg_motif_features_legend',   { strand => 'r', colourset => 'fg_motif_features'   });
+    ## Do we have motif features?
+    my $mfa = $self->hub->get_adaptor('get_MotifFeatureFileAdaptor', 'funcgen');
+    my $file = $mfa->fetch_file;
+    if ($file) {
+      my $motif_feats = $reg_regions->append_child($self->create_track_node('fg_motif_features', 'Motif features'), {
+        db          => $key,
+        glyphset    => 'fg_motif_features',
+        sources     => 'undef',
+        strand      => 'r',
+        labels      => 'on',
+        depth       => 1,
+        colourset   => 'fg_motif_features',
+        display     => 'off',
+        description => 'Transcription Factor Binding Motif sites', 
+        renderers   => ['off', 'Off', 'compact', 'Compact'],
+      });
+      $self->add_track('information', 'fg_motif_features_legend',      'Motif Feature Legend',              'fg_motif_features_legend',   { strand => 'r', colourset => 'fg_motif_features'   });
+    }
   }
-
 }
 
 sub add_regulation_builds {
@@ -1170,7 +1164,6 @@ sub add_regulation_builds {
         url    => $hub->url('Config', { 'matrix' => 'RegMatrix', 'menu' => "regulatory_features" }),
         matrix => {
           section     => $menu_title,
-          description => $db_tables->{'regulatory_build'}{'analyses'}{'Regulatory_Build'}{'desc'}{'core'},
           axes        => { x => 'Cell/Tissue', y => 'Experiments' },
         }
   }));
@@ -1345,6 +1338,38 @@ sub add_regulation_builds {
     $self->add_track('information', 'fg_regulatory_features_legend',      'Regulation Legend',              'fg_regulatory_features_legend',   { strand => 'r', colourset => 'fg_regulatory_features'   });
     $self->add_track('information', 'fg_segmentation_features_legend',    'Segmentation Legend',            'fg_segmentation_features_legend', { strand => 'r', colourset => 'fg_segmentation_features' });
     $self->add_track('information', 'fg_multi_wiggle_legend',             'Cell/Tissue Regulation Legend',  'fg_multi_wiggle_legend',          { strand => 'r', display => 'off' });
+  }
+}
+
+sub add_genome_targeting {
+  my ($self, $key, $hashref) = @_;
+  my $menu = $self->get_node('genome_targeting');
+
+  return unless $menu;
+ 
+  my $db_tables         = {};
+  if ( $self->databases->{'DATABASE_FUNCGEN'} ) {
+    $db_tables          = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
+  }
+  return unless keys %$db_tables;
+ 
+  my $dataset = $db_tables->{'crispr'};
+  return unless keys %$dataset;
+
+  foreach my $k (sort { lc $dataset->{$a}{'name'} cmp lc $dataset->{$b}{'name'} } keys %$dataset) {
+      (my $name = $dataset->{$k}{'name'}) =~ s/_/ /g;
+      $menu->append_child($self->create_track_node($k, $name, {
+        data_id         => $name.' site',
+        description     => $dataset->{$k}{'description'},
+        strand          => 'b',
+        nobump          => 1,
+        addhiddenbgd    => 1,
+        display         => 'off',
+        default_display => 'as_transcript_label',
+        renderers       => $self->_transcript_renderers,
+        glyphset        => 'fg_crispr',
+        colourset       => 'seq',
+    }));
   }
 }
 

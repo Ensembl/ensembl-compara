@@ -38,13 +38,21 @@ sub render {
 
   if ($species) {
     my $url = $hub->url({'species' => $species, 'type' => 'UserData', 'action' => 'TrackHubSearch'});
-    my $common_name = $species_defs->get_config($species, 'SPECIES_COMMON_NAME');
+    my $display_name = $species_defs->get_config($species, 'SPECIES_DISPLAY_NAME');
 
-    $html = qq(<p>Alternatively to search for track hubs from within Ensembl, go to
-Region in Detail, click on 'Custom tracks' and select
-'<b>Track Hub Registry Search</b>' from the lefthand menu.
-</p>
-<p>&rarr; See the <a href="$url" class="modal_link">Track Hub Registry Search</a> for $common_name.</p>
+    $html = qq(<p>Alternatively to search for track hubs from within Ensembl:</p>
+<ol>
+  <li>Click on 'Track Hub Registry Search' in the lefthand menu of the popup window.</li>
+  <li>Submit your search and find the hub you are interested in</li>
+  <li>Click on 'Add this trackhub' to load the hub</li>
+  <li>Once you see the message 'Your hub attached successfully', either 
+    <ul>
+      <li>close the window to see the hub with its default configuration</li>
+      <li>or click on the 'Configure region image' tab in the popup window to change the configuration</li>
+    </ul>
+  </li>
+</ol>
+<p>&rarr; See the <a href="$url" class="modal_link">Track Hub Registry Search</a> for $display_name.</p>
 );
   }
 

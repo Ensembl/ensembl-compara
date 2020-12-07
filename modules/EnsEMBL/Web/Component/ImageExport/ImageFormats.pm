@@ -137,7 +137,7 @@ sub default_file_name {
   my $self  = shift;
   my $ext = shift || '';
   my $hub   = $self->hub;
-  my $name  = $hub->species_defs->SPECIES_COMMON_NAME;
+  (my $name  = $hub->species_defs->SPECIES_DISPLAY_NAME) =~ s/ /_/g;
 
   my $type = $hub->param('data_type');
   my $action = $hub->param('data_action');

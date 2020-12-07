@@ -63,7 +63,7 @@ sub init {
       }
     }
 
-    $self->set(sprintf '%s %s', join(' - ', grep $_, $caption, $title, $species_defs->SPECIES_BIO_NAME, $species_defs->ENSEMBL_SITE_NAME), $species_defs->SITE_RELEASE_VERSION || $species_defs->ENSEMBL_VERSION);
+    $self->set(sprintf '%s %s', join(' - ', grep $_, $caption, $title, $species_defs->SPECIES_URL, $species_defs->ENSEMBL_SITE_NAME), $species_defs->SITE_RELEASE_VERSION || $species_defs->ENSEMBL_VERSION);
 
     ## Short title to be used in the bookmark link
     if ($hub->user) {
@@ -79,7 +79,7 @@ sub init {
       $caption =~ s/$type: //;
       $caption =~ s/\(.+\)$//;
       
-      $self->set_short(join ' - ', grep $_, $caption, $title, $species_defs->SPECIES_COMMON_NAME);
+      $self->set_short(join ' - ', grep $_, $caption, $title, $species_defs->SPECIES_DISPLAY_NAME);
     }
   }
 }

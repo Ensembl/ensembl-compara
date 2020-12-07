@@ -188,6 +188,16 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       }
     });
 
+    this.elLk.filterMatrix.on('scroll', function() {
+      panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').removeClass("mClick");
+      panel.trackPopup.hide();
+    });
+
+    this.elLk.matrixContainer.on('scroll', function() {
+      panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').removeClass("mClick");
+      panel.trackPopup.hide();
+    });
+
     this.el.find('.view-track, .view-track-button, button.showMatrix').on('click', function() {
       if($(this).hasClass('_edit') || ($(this).hasClass('view-track') && !$(this).hasClass('inactive')) || ($(this).hasClass('view-track-button') && $(this).hasClass('active'))) {
         panel.addExtraDimensions();
@@ -419,6 +429,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       //state management object for user location
       panel.localStoreObj.userLocation = panel.getLocalStorage().userLocation || {};
       panel.localStoreObj["reset_other_dimensions"] = panel.localStoreObj["other_dimensions"] || {};
+      panel.localStoreObj["reset_dx"] = panel.localStoreObj["dx"]  || {};
+      panel.localStoreObj["reset_dy"] =  panel.localStoreObj["dy"] || {};
       panel.setLocalStorage();
     }
 
@@ -985,18 +997,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     }
   },
 
-  //function to show/hide reset all link in RH panel when something is selected
-  //Argument: containers where to look for empty elements
-  showResetLink: function(containers) {
-    var panel = this;
-
-    if (panel.el.find(containers).find('li').length && panel.el.find(containers).find('span.fancy-checkbox.selected').length) {
-      panel.el.find("div.reset_track").show();
-    } else {
-      panel.el.find("div.reset_track").hide();
-    }
-  },
-
   // Function to update the current count in the right hand panel (can be adding/removing 1 or select all)
   // Argument: element/container object where current count is to be updated
   //           how much to add to the current value
@@ -1135,7 +1135,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.updateSelectedTracksPanel(item);
     // panel.activateTabs();
     panel.updateShowHideLinks(panel.elLk.filterList);
-    panel.showResetLink('div#dx, div#dy');
     panel.setLocalStorage();
     panel.trackError('div#dx, div#dy');
     panel.enableConfigureButton('div#dx, div#dy');
@@ -1303,38 +1302,21 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     return JSON.parse(localStorage.getItem(this.localStorageKey)) || {};
   },
 
+  // Function to add dx and dy items to store when the checkbox are clicked
   addToStore: function(items) {
-    //Potential fix
-    //if(!this.localStoreObj) { this.localStoreObj.matrix = {}; }
-    this.localStoreObj = {};
     if (!items.length) return;
     var panel = this;
     var parentTab;
+
+    //easier to reinitialise dx and dy to empty and then add item to it
+    panel.localStoreObj.dx = {};
+    panel.localStoreObj.dy = {};
 
     $.each(items, function(i, item) {
       parentTab = panel.elLk.lookup[item].parentTabId;
       panel.localStoreObj[parentTab] = panel.localStoreObj[parentTab] || {}
       panel.localStoreObj[parentTab][item] = 1;
     });
-
-    //main object for final matrix state
-    panel.localStoreObj.matrix = panel.getLocalStorage().matrix  || {};
-
-    //main obj for filter matrix state
-    panel.localStoreObj.filterMatrix = panel.getLocalStorage().filterMatrix  || {};
-
-    //other dimension filters for multi dimension 
-    panel.localStoreObj.other_dimensions = panel.getLocalStorage().other_dimensions  || {};
-
-    //state management for the extra dimension
-    if(!$.isEmptyObject(panel.json.extra_dimensions)){
-      $.each(panel.json.extra_dimensions, function(i, data){
-        panel.localStoreObj[data] = panel.getLocalStorage()[data]  || {};
-      });
-    }
-
-    //state management object for user location
-    panel.localStoreObj.userLocation = panel.getLocalStorage().userLocation || {};
   },
 
   removeFromStore: function(item, lhs_section_id) {
@@ -2843,19 +2825,39 @@ return;
 
     this.elLk.resetTrack = panel.elLk.resultBox.find('div.reset_track');
 
-    this.elLk.resetTrack.click("on", function() {
-      panel.localStoreObj.dx     = {};
-      panel.localStoreObj.dy     = {};
-      panel.localStoreObj.matrix = {};
-      panel.setLocalStorage();
-      panel.emptyMatrix();
-      panel.resetFilter("",true);
+    this.elLk.resetTrack.click("on", function(e) {
+      
       $.each(panel.elLk.resultBox.find('li').not(".noremove"), function(i, ele){
         panel.selectBox(ele);
         panel.filterData($(ele).data('item'));
-      });
+      }); 
+      panel.updateRHS();     
+
+      // Apply cell first so that filter happens and then select all experiment types
+      if (panel.localStoreObj.dx) {
+        panel.localStoreObj.dx  = panel.localStoreObj.reset_dx;
+        var el;
+        $.each(panel.localStoreObj.dx, function(k) {
+          el = panel.elLk.dx.tabContents.not(':not(.'+ k +')');
+          panel.selectBox(el);
+        });
+        panel.filterData($(el).data('item'));
+      }
+      if (panel.localStoreObj.dy) {
+        panel.localStoreObj.dy  = panel.localStoreObj.reset_dy;
+        var el;
+        $.each(panel.localStoreObj.dy, function(k) {
+          el = panel.elLk.dy.tabContents.filter(function() {return $(this).hasClass(k)});
+          panel.selectBox(el);
+        });
+
+        // If there were no celltypes selected then filter based on exp type
+        !panel.localStoreObj.dx && panel.localStoreObj.dy && panel.filterData($(el).data('item'));
+      }
+      panel.setLocalStorage();
       panel.updateRHS();
-      panel.toggleBreadcrumb("#track-select");
+      e.stopPropagation();
+      panel.resetFilter("",true);
     });
   },
 

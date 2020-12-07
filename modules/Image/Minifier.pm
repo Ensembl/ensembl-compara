@@ -262,7 +262,7 @@ sub minify {
       my $tmp2 = "$root/x-$page.tmp2.$type";
       my $bgd = "xc:none";
       $bgd = "xc:white" if $type eq 'jpg';
-      print LOG qx(convert -size ${w}x$h $bgd $tmp 2>&1);
+      print LOG qx(convert -size ${w}x$h $bgd PNG32:$tmp 2>&1);
       my @batches = ([]);
       foreach my $f (@files) {
         push @{$batches[-1]},$f;

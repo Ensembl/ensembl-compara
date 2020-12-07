@@ -28,7 +28,7 @@ use warnings;
 no warnings qw(uninitialized);
 
 use EnsEMBL::Web::Utils::TrackHub;
-use EnsEMBL::Web::Utils::FormatText qw(add_links);
+use EnsEMBL::Web::Utils::FormatText qw(thousandify add_links);
 use EnsEMBL::Web::Utils::Sanitize qw(clean_id strip_HTML);
 
 sub load_user_tracks {
@@ -210,12 +210,14 @@ sub _load_remote_url_tracks {
       my ($trackhub_menu, $hub_info) = $self->get_parameter('can_trackhubs') ? $self->_add_trackhub(strip_HTML($track_data->{'source_name'}), $track_data->{'source_url'}, {'code' => $code}) : ();
 
       if ($hub_info->{'error'}) {
+        ## Check if we've had this error already
+        my $msg_params = {'type' => 'message', 'code' => 'trackhub_barf'};
+        my $record = $self->hub->session->get_record_data($msg_params);
         $self->hub->session->set_record_data({
-          'type'      => 'message',
           'function'  => '_warning',
-          'code'      => 'trackhub_barf',
           'message'   => "Problem parsing hub data: ".join('', @{$hub_info->{'error'}}),
-        });
+          %$msg_params
+        }) unless $record;
         next;
       }
 
@@ -334,7 +336,11 @@ sub _add_trackhub {
   ## Default is to show the message, since it won't do any harm
   my $is_old = 1;
   my $record;
-  if ($code) {
+  if ($hub->species_defs->FIRST_RELEASE_VERSION && $hub->species_defs->FIRST_RELEASE_VERSION > 99) {
+    ## This is a site released after spring 2020, e.g. rapid.ensembl.org
+    $is_old = 0;
+  }
+  elsif ($code) {
     (my $short_code = $code) =~ s/^url_//;
     foreach my $m (grep $_, $hub->user, $hub->session) {
       $record = $m->get_record_data({'type' => 'url', 'code' => $short_code});
@@ -357,7 +363,8 @@ sub _add_trackhub {
     $is_old = 0;
   }
 
-  if ($is_old) {
+  # Forcing it to stop showing the message.
+  if ($is_old && 0) {
     ## Warn user that we are reattaching the trackhub
     $hub->session->set_record_data({
       'type'      => 'message',
@@ -390,7 +397,7 @@ sub _add_trackhub {
 
     my $menu     = $existing_menu || $self->tree->root->append_child($self->create_menu_node($menu_name, $menu_name, { external => 1, trackhub_menu => 1, description =>  $description}));
 
-    my $node;
+    my ($node, $matched_assembly);
     my $assemblies = $self->hub->species_defs->get_config($self->species,'TRACKHUB_ASSEMBLY_ALIASES');
     $assemblies ||= [];
     $assemblies = [ $assemblies ] unless ref($assemblies) eq 'ARRAY';
@@ -402,11 +409,13 @@ sub _add_trackhub {
     foreach my $assembly (@$assemblies) {
       $node = $hub_info->{'genomes'}{$assembly}{'tree'};
       $node = $node->root if $node;
-      last if $node;
+      if ($node) {
+        $matched_assembly = $assembly;
+        last;
+      }
     }
     if ($node) {
       $self->_add_trackhub_node($node, $menu, {'name' => $menu_name, 'hide' => $force_hide, 'code' => $code});
-
       $self->{'_attached_trackhubs'}{$url} = 1;
     } else {
       my $assembly = $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_VERSION') || $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_NAME');
@@ -525,6 +534,7 @@ sub _add_trackhub_tracks {
   my $code  = $args->{'code'};
 
   my $do_matrix = ($config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'}) ? 1 : 0;
+  $menu->set_data('has_matrix', 1) if $do_matrix;
   my $count_visible = 0;
   my $default_trackhub_tracks = {};
 
@@ -877,7 +887,7 @@ sub load_file_format {
       if ($format eq 'trackhub') {
         ## Force hiding of internally configured trackhubs, because they should be
         ## off by default regardless of the settings in the hub
-        my $force_hide = $internal ? 1 : 0;
+        my $force_hide = ($internal && !$source->{'default_on'}) ? 1 : 0;
         $self->_add_trackhub(strip_HTML($source->{'source_name'}), $source->{'url'}, {'menu' => $menu, 'hide' => $force_hide});
       }
       else {

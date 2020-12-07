@@ -39,7 +39,12 @@ sub content {
   my $db_hash      = $species_defs->multi_hash;
   my ($align, $target_species, $target_slice_name_range) = split '--', $hub->get_alignment_id;
   my $url          = $hub->url({ %{$hub->multi_params}, align => undef }, 1);
-  my $extra_inputs = join '', map qq(<input type="hidden" name="$_" value="$url->[1]{$_}" />), sort keys %{$url->[1] || {}};
+  my $extra_inputs; 
+  foreach (sort keys %{$url->[1] || {}}) {
+    my $val = $url->[1]{$_};
+    next if $val =~ /</; ## Reject parameters that might contain XSS
+    $extra_inputs .= qq(<input type="hidden" name="$_" value="$val" />);
+  }
   my $alignments   = $db_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {}; # Get the compara database hash
 
   my $species = $hub->species;
@@ -70,7 +75,7 @@ sub content {
 
   my $default_species = $species_defs->valid_species($hub->species) ? $hub->species : $hub->get_favourite_species->[0];
 
-  my $modal_uri       = $hub->url('MultiSelector', {type => $hub->type, action => 'TaxonSelector', align => $align, referer_action => $hub->action});
+  my $modal_uri       = $hub->url('MultiSelector', {type => $hub->type, action => 'TaxonSelector', align => $align, referer_type => $hub->type, referer_action => $hub->action});
 
   # Tackle action for alignments image and text
   my $action = $hub->function eq 'Image' ? 'Compara_AlignSliceBottom' : $hub->action;
@@ -110,8 +115,9 @@ sub content {
 sub getLabelHtml {
   my $self = shift;
   my $species = shift;
-  my $species_label = $self->hub->species_defs->get_config($species, 'SPECIES_COMMON_NAME');
-  my $img_url = $self->hub->species_defs->ENSEMBL_IMAGE_ROOT . '/species/' . $species;
+  my $species_label = $self->hub->species_defs->get_config($species, 'SPECIES_DISPLAY_NAME');
+  my $species_image = $self->hub->species_defs->get_config($species, 'SPECIES_IMAGE');
+  my $img_url = $self->hub->species_defs->ENSEMBL_IMAGE_ROOT . '/species/' . $species_image;
   my $species_img = sprintf '<img class="nosprite" src="%s.png">', $img_url;
   my $common_name = '';
 

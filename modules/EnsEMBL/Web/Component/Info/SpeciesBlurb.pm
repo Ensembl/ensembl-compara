@@ -34,45 +34,62 @@ sub _init {
 }
 
 sub content {
+  ## Simple template that we can populate differently in plugins
   my $self              = shift;
-  my $hub               = $self->hub;
-  my $species_defs      = $hub->species_defs;
-  my $species           = $hub->species;
-  my $path              = $hub->species_path;
-  my $common_name       = $species_defs->SPECIES_COMMON_NAME;
-  my $accession         = $species_defs->ASSEMBLY_ACCESSION;
-  my $source            = $species_defs->ASSEMBLY_ACCESSION_SOURCE || 'NCBI';
-  my $source_type       = $species_defs->ASSEMBLY_ACCESSION_TYPE;
 
-  my $side_menu         = $self->side_nav(); #implemented in mobile plugins
-
-  my $html = qq(
-  $side_menu
+  my $html = sprintf('
 <div class="column-wrapper">  
   <div class="column-one">
-    <div class="column-padding no-left-margin species-box">
-      <a href="$path"><img class="badge-48" src="/i/species/$species.png" class="species-img float-left" alt="" /></a>
-      <h1 class="no-bottom-margin">$common_name assembly and gene annotation</h1>
-    </div>
+    %s
   </div>
-</div>
-          );
+</div>', $self->page_header);
 
   ## Don't mark up archives, etc - it will only confuse search engine users
   ## if there are e.g. multiple human gene sets in the results!
-  $html .= $self->include_bioschema_datasets if $species_defs->BIOSCHEMAS_DATACATALOG;
+  $html .= $self->include_bioschema_datasets if $self->hub->species_defs->BIOSCHEMAS_DATACATALOG;
 
-  $html .= '
+  $html .= sprintf('%s
 <div class="column-wrapper">  
   <div class="column-two">
-    <div class="column-padding no-left-margin">';
+    %s
+  </div>
+  <div class="column-two">
+    %s
+  </div>
+</div>', 
+    $self->side_nav, $self->column_left, $self->column_right);
+
+  return $html;
+}
+
+sub page_header {
+  my $self      = shift;
+  my $hub               = $self->hub;
+  my $path              = $hub->species_path;
+  my $image             = $hub->species_defs->SPECIES_IMAGE;
+  my $display_name       = $hub->species_defs->SPECIES_DISPLAY_NAME;
+
+  my $html = qq(
+    <div class="column-padding no-left-margin species-box">
+      <a href="$path"><img class="badge-48" src="/i/species/$image.png" class="species-img float-left" alt="" /></a>
+      <h1 class="no-bottom-margin">$display_name assembly and gene annotation</h1>
+    </div>
+  );
+
+  return $html;
+}
+
+sub column_left {
+  my $self      = shift;
+  my $species   = $self->hub->species;
+  
+  my $html = '<div class="column-padding no-left-margin">';
+
   ### SPECIES DESCRIPTION
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/${species}_description.html");
 ### ASSEMBLY
   $html .= '<h2 id="assembly">Assembly</h2>';
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/${species}_assembly.html");
-
-  $html .= sprintf '<p>The genome assembly represented here corresponds to %s %s</p>', $source_type, $hub->get_ExtURL_link($accession, "ASSEMBLY_ACCESSION_SOURCE_$source", $accession) if $accession; ## Add in GCA link
 
   if (my $assembly_dropdown = $self->assembly_dropdown) {
     $html .= "<h2>Other assemblies</h2>$assembly_dropdown";
@@ -81,24 +98,27 @@ sub content {
   $html .= '<h2 id="genebuild">Gene annotation</h2>';
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/${species}_annotation.html");
 
+  $html .= $self->include_more_annotations();
+
   ## Link to Wikipedia
   $html .= $self->_wikipedia_link; 
-  
-  $html .= '
-    </div>
-  </div>
-  <div class="column-two">
-    <div class="column-padding" class="annotation-stats">';
+
+  $html .= '</div>';
+
+  return $html;
+}
+
+sub column_right { 
+  my $self              = shift;
+
+  my $html .= '<div class="column-padding annotation-stats">';
     
   ## ASSEMBLY STATS 
   my $file = '/ssi/species/stats_' . $self->hub->species . '.html';
   $html .= '<h2>Statistics</h2>';
   $html .= $self->species_stats;
 
-  $html .= '
-    </div>
-  </div>
-</div>';
+  $html .= '</div>';
 
   return $html;  
 }

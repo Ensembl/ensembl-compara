@@ -79,12 +79,12 @@ sub content {
     my %temp = map { $_->display_id, 1 } @CCDS;
     @CCDS = sort keys %temp;
     my $template  = '<p>This gene is a member of the %s CCDS set: %s</p>';
-    my $sp_name   = $species_defs->DISPLAY_NAME; 
-    ## FIXME Hack for e86 mouse strains
-    if ($species_defs->STRAIN_GROUP && $species_defs->SPECIES_STRAIN !~ /reference/) {
+    my $sp_name   = $species_defs->SPECIES_DISPLAY_NAME; 
+    ## Mouse strains hack
+    if ($species_defs->STRAIN_GROUP && $species_defs->STRAIN_GROUP eq 'mus_musculus') {
+      my $ref_sp = 'Mus_musculus';
       $template = 'This gene is similar to a CCDS gene on %s: %s';
-      (my $bio_name = $species_defs->SPECIES_SCIENTIFIC_NAME) =~ s/ /_/;
-      $sp_name  = sprintf '%s %s', $species_defs->get_config($bio_name, 'DISPLAY_NAME'), $species_defs->get_config($bio_name, 'ASSEMBLY_VERSION');
+      $sp_name  = sprintf '%s %s', $species_defs->get_config($ref_sp, 'SPECIES_DISPLAY_NAME'), $species_defs->get_config($ref_sp, 'ASSEMBLY_VERSION');
     }
     $table->add_row('CCDS', sprintf($template, $sp_name, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS));
   }
@@ -286,7 +286,7 @@ sub content {
                       '@type'       => 'DataRecord', 
                       'identifier'  => $object->stable_id, 
                       'mainEntity'  => $bs_gene,
-                      'isPartOf'    => sprintf('%s %s Gene Set', $sitename, $hub->species_defs->SPECIES_COMMON_NAME),
+                      'isPartOf'    => sprintf('%s %s Gene Set', $sitename, $hub->species_defs->SPECIES_DISPLAY_NAME),
                     };
     $bioschema = create_bioschema($bs_record);
   }

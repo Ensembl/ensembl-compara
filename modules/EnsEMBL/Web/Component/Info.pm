@@ -100,11 +100,12 @@ sub include_bioschema_datasets {
   my $server = $species_defs->ENSEMBL_SERVERNAME;
   $server = 'http://'.$server unless ($server =~ /^http/);
 
-  my $common_name  = $species_defs->SPECIES_COMMON_NAME;
+  my $display_name = $species_defs->SPECIES_DISPLAY_NAME;
   my $sci_name     = $species_defs->SPECIES_SCIENTIFIC_NAME;
-  my $display_name = $species_defs->DISPLAY_NAME;
+  my $accession    = $species_defs->ASSEMBLY_ACCESSION;
+
   ## IMPORTANT: description must be at least 50 characters, so make species name as long as possible 
-  my $long_name = $display_name eq $sci_name ? $display_name : sprintf '%s (%s)', $display_name, $sci_name; 
+  my $long_name = sprintf '%s (%s)', $sci_name, $accession; 
 
   ## License must be an object or URL
   my $license = 'https://www.apache.org/licenses/LICENSE-2.0';
@@ -114,7 +115,7 @@ sub include_bioschema_datasets {
   my $ftp_url = sprintf '%s/fasta/%s/dna/', $self->ftp_url, $species_defs->SPECIES_PRODUCTION_NAME;
   my $assembly = {
       '@type'                 => 'Dataset',
-      'name'                  => sprintf('%s Assembly', $common_name),
+      'name'                  => sprintf('%s Assembly', $display_name),
       'includedInDataCatalog' => $catalog_id,
       'version'               => $species_defs->ASSEMBLY_NAME,
       'identifier'            => $species_defs->ASSEMBLY_ACCESSION,
@@ -139,10 +140,10 @@ sub include_bioschema_datasets {
   my $gff3_url  = sprintf '%s/gff3/%s/', $self->ftp_url, $species_defs->SPECIES_PRODUCTION_NAME;
   my $genebuild = {
       '@type'                 => 'Dataset',
-      'name'                  => sprintf('%s %s Gene Set', $sitename, $common_name),
+      'name'                  => sprintf('%s %s Gene Set', $sitename, $display_name),
       'includedInDataCatalog' => $catalog_id,
       'version'               => $species_defs->GENEBUILD_LATEST || $species_defs->GENEBUILD_RELEASE || '',
-      'description'           => sprintf('Automated and manual annotation of genes on the %s %s assembly', $species_defs->SPECIES_COMMON_NAME, $species_defs->ASSEMBLY_VERSION),
+      'description'           => sprintf('Automated and manual annotation of genes on the %s %s assembly', $species_defs->SPECIES_DISPLAY_NAME, $species_defs->ASSEMBLY_VERSION),
       'keywords'              => 'genebuild, transcripts, transcription, alignment, loci',
       'url'                   => $annotation_url,
       'distribution'          => [
@@ -166,10 +167,10 @@ sub include_bioschema_datasets {
       'license'               => $license, 
   };
 
-  if ($species_defs->PROVIDER_NAME) {
+  if ($species_defs->ANNOTATION_PROVIDER_NAME) {
     $genebuild->{'creator'} = {
       '@type' => 'Organization',
-      'name'  => $species_defs->PROVIDER_NAME,
+      'name'  => $species_defs->ANNOTATION_PROVIDER_NAME,
     };
   }
   add_species_bioschema($species_defs, $genebuild);
@@ -180,10 +181,10 @@ sub include_bioschema_datasets {
     my $gvf_url   = sprintf '%s/variation/gvf/%s/', $self->ftp_url, $species_defs->SPECIES_PRODUCTION_NAME;
     my $variation = {
         '@type'                 => 'Dataset',
-        'name'                  => sprintf('%s %s Variation Data', $sitename, $common_name),
+        'name'                  => sprintf('%s %s Variation Data', $sitename, $display_name),
         'includedInDataCatalog' => $catalog_id,
         'url'                   => sprintf('%s/info/genome/variation/species/species_data_types.html#sources', $server),
-        'description'           => sprintf('Annotation of %s sequence variants from a variety of sources', $common_name),
+        'description'           => sprintf('Annotation of %s sequence variants from a variety of sources', $display_name),
         'keywords'              => 'SNP, polymorphism, insertion, deletion, CNV, copy number variant',
         'distribution'          => [{
                                     '@type'       => 'DataDownload',
@@ -205,7 +206,7 @@ sub include_bioschema_datasets {
     my $reg_url   = sprintf '%s/regulation/%s/', $self->ftp_url, $species_defs->SPECIES_PRODUCTION_NAME;
     my $regulation = {
         '@type'                 => 'Dataset',
-        'name'                  => sprintf('%s %s Regulatory Build', $sitename, $common_name),
+        'name'                  => sprintf('%s %s Regulatory Build', $sitename, $display_name),
         'includedInDataCatalog' => $catalog_id,
         'url'                   => sprintf('%s/info/genome/funcgen/accessing_regulation.html', $server),
         'description'           => sprintf('Annotation of regulatory regions on the %s genome', $long_name),
@@ -229,6 +230,10 @@ sub include_bioschema_datasets {
   }
 
   return  scalar(@$datasets) ? create_bioschema($datasets) : '';
+}
+
+sub include_more_annotations {
+  return '';
 }
 
 1;

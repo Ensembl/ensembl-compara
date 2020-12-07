@@ -47,16 +47,18 @@ sub render {
     (my $genebuild = $hub->species_defs->get_config($sp, 'GENEBUILD_METHOD')) =~ s/_/ /g;
     my $genebuild_helptip = glossary_helptip($hub, ucfirst $genebuild);
     my $info    = {
-        'dir'         => $sp,
-        'common'      => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'),
-        'status'      => 'live',
-        'sci_name'    => $species_defs->get_config($sp, 'SPECIES_SCIENTIFIC_NAME'),
-        'assembly'    => $species_defs->get_config($sp, 'ASSEMBLY_NAME'),
-        'accession'   => $species_defs->get_config($sp, 'ASSEMBLY_ACCESSION'),
-        'genebuild'   => $genebuild_helptip,
-        'taxon_id'    => $species_defs->get_config($sp, 'TAXONOMY_ID'),
-        'variation'   => $species_defs->get_config($sp,'databases')->{'DATABASE_VARIATION'},
-        'regulation'  => $species_defs->get_config($sp,'databases')->{'DATABASE_FUNCGEN'},
+        'dir'           => $sp,
+        'display_name'  => $species_defs->get_config($sp, 'SPECIES_DISPLAY_NAME'),
+        'image'         => $species_defs->get_config($sp, 'SPECIES_IMAGE')
+                            || $species_defs->get_config($sp, 'SPECIES_URL'),
+        'status'        => 'live',
+        'sci_name'      => $species_defs->get_config($sp, 'SPECIES_SCIENTIFIC_NAME'),
+        'assembly'      => $species_defs->get_config($sp, 'ASSEMBLY_NAME'),
+        'accession'     => $species_defs->get_config($sp, 'ASSEMBLY_ACCESSION'),
+        'genebuild'     => $genebuild_helptip,
+        'taxon_id'      => $species_defs->get_config($sp, 'TAXONOMY_ID'),
+        'variation'     => $species_defs->get_config($sp,'databases')->{'DATABASE_VARIATION'},
+        'regulation'    => $species_defs->get_config($sp,'databases')->{'DATABASE_FUNCGEN'},
     };
     $species{$sp} = $info;
   }
@@ -75,8 +77,9 @@ sub render {
           (my $sci_name = $bioname) =~ s/_/ /g;
           $info = {
             'dir'           => $bioname,
-            'common'        => $common,
+            'display_name'  => $common,
             'sci_name'      => $sci_name,
+            'image'         => $bioname,
             'status'        => $status,
             'assembly'      => '-',
             'accession'     => '-',
@@ -96,13 +99,9 @@ sub render {
   }
 
   ## Display all the species in data table
-  my $html = '<h3 class="clear-left">Available genomes</h3>';
+  my $html;
 
-  if ($species_defs->ENSEMBL_SERVERNAME eq 'grch37.ensembl.org') {
-    ## Hardcode this because the version is actually updated when the site is upgraded
-    $html .= qq(<div class="info-box"><p>N.B. The table below shows only those species that were included in release 75 - for an up-to-date list, please see our main site at <a href="//www.ensembl.org/">www.ensembl.org</a>.</p></div>);
-  }
-  elsif ($sitename =~ /Archive/) {
+  if ($sitename =~ /Archive/) {
     $html .= qq(<div class="info-box"><p>N.B. The table below shows only those species that were included in release $version - for an up-to-date list, please see our main site at <a href="//www.ensembl.org/">www.ensembl.org</a>.</p></div>);
   }
   elsif ($hub->species_defs->multidb->{'DATABASE_ARCHIVE'}{'NAME'}) {
@@ -117,31 +116,31 @@ sub render {
   
   $table->filename = 'Species';
   
-  foreach my $info (sort {$a->{'common'} cmp $b->{'common'}} values %species) {
+  foreach my $info (sort {$a->{'display_name'} cmp $b->{'display_name'}} values %species) {
     next unless $info;
     my $dir       = $info->{'dir'};
     next unless $dir;
-    my $common    = $info->{'common'};
+    my $display_name    = $info->{'display_name'};
     my $name      = $info->{'sci_name'};
-    if ($common eq $name) {
-      $common =~ s/([A-Z])([a-z]+)\s+([a-z]+)/$1. $3/;
+    if ($display_name eq $name) {
+      $display_name =~ s/([A-Z])([a-z]+)\s+([a-z]+)/$1. $3/;
     }
 
     my ($sp_link, $pre_link, $image_fade);
     my $img_url = '/';
     if ($info->{'status'} eq 'pre') {
       $image_fade = 'opacity:0.7';
-      $sp_link    = sprintf('<a href="//pre.ensembl.org/%s" rel="external" class="bigtext pre_species">%s</a><br />(Pre)', $dir, $common);
+      $sp_link    = sprintf('<a href="//pre.ensembl.org/%s" rel="external" class="bigtext pre_species">%s</a><br />(Pre)', $dir, $display_name);
       $img_url    = '//pre.ensembl.org/';
       $pre_link   = sprintf('<a href="//pre.ensembl.org/%s" rel="external">%s</a>', $dir, $info->{'pre_assembly'});
     }
     else {
-      $sp_link    = sprintf('<a href="/%s" class="bigtext">%s</a>', $dir, $common);
+      $sp_link    = sprintf('<a href="/%s" class="bigtext">%s</a>', $dir, $display_name);
       $pre_link   = '-';
     }
     $table->add_row({
         'common' => sprintf('<a href="%s%s/"><img src="/i/species/%s.png" alt="%s" class="badge-48" style="float:left;padding-right:4px;%s" /></a>%s',
-                        $img_url, $dir,  $dir, $common, $image_fade, $sp_link),
+                        $img_url, $dir,  $info->{'image'}, $display_name, $image_fade, $sp_link),
       'species'     => '<i>'.$name.'</i>',
       'taxon_id'    => $info->{'taxon_id'},
       'assembly'    => $info->{'assembly'},
@@ -155,7 +154,7 @@ sub render {
 # if a species is both pre and ensembl we are adding a new row for the pre assembly    
     if ($info->{'status'} eq 'both') {
       $table->add_row({
-          'common' => sprintf('<a href="//pre.ensembl.org/%s"><img src="/i/species/%1$s.png" alt="%s" class="badge-48" style="float:left;padding-right:4px;opacity:0.7" /></a><a href="//pre.ensembl.org/%1$s" rel="external" class="bigtext pre_species">%2$s</a><br />(Pre)', $dir, $common),
+          'common' => sprintf('<a href="//pre.ensembl.org/%s"><img src="/i/species/%1$s.png" alt="%s" class="badge-48" style="float:left;padding-right:4px;opacity:0.7" /></a><a href="//pre.ensembl.org/%1$s" rel="external" class="bigtext pre_species">%2$s</a><br />(Pre)', $dir, $display_name),
           'species'     => '<i>'.$name.'</i>',
           'taxon_id'    => $info->{'taxon_id'},
           'assembly'    => '-',
@@ -176,18 +175,23 @@ sub render {
 # Return array of columns
 sub table_columns {
   my $self = shift;
+  my $sd = $self->hub->species_defs; 
 
   my $columns = [
-      { key => 'common',      title => 'Common name',     width => '40%', align => 'left', sort => 'html'   },
+      { key => 'common',      title => 'Common name',     width => '25%', align => 'left', sort => 'html'   },
       { key => 'species',     title => 'Scientific name', width => '25%', align => 'left', sort => 'string' },
       { key => 'taxon_id',    title => 'Taxon ID',        width => '10%', align => 'left', sort => 'numeric' },
       { key => 'assembly',    title => 'Ensembl Assembly',width => '10%', align => 'left' },
       { key => 'accession',   title => 'Accession',       width => '10%', align => 'left' },
       { key => 'genebuild',   title => 'Genebuild Method', width => '10%', align => 'left' },
-      { key => 'variation',   title => 'Variation database',  width => '5%', align => 'center', sort => 'string' },
-      { key => 'regulation',  title => 'Regulation database', width => '5%', align => 'center', sort => 'string' },
   ];
-  if ($self->hub->species_defs->ENSEMBL_SITETYPE !~ /Archive/) {
+  unless ($sd->NO_VARIATION) { 
+    push @$columns, { key => 'variation',   title => 'Variation database',  width => '5%', align => 'center', sort => 'string' };
+  }
+  unless ($sd->NO_REGULATION) { 
+    push @$columns, { key => 'regulation',  title => 'Regulation database', width => '5%', align => 'center', sort => 'string' };
+  }
+  if (scalar keys %{$self->get_pre_species||{}}) {
     push @$columns, { key => 'pre', title => 'Pre assembly', width => '5%', align => 'left' };
   }
 

@@ -767,7 +767,7 @@ sub features {
       $f->{'_species'} = $self->species_defs->production_name_mapping($tree->genome_db->name); # This will be used in URLs
 
       # This will be used for display
-      $f->{'_species_label'} = $self->species_defs->get_config($f->{'_species'}, 'DISPLAY_NAME') || $self->species_defs->species_label($f->{'_species'}) || $f->{'_species'}; 
+      $f->{'_species_label'} = $self->species_defs->get_config($f->{'_species'}, 'GROUP_DISPLAY_NAME') || $self->species_defs->species_label($f->{'_species'}) || $f->{'_species'}; 
       $f->{'_genome_dbs'} ||= {};
       $f->{'_genome_dbs'}->{$tree->genome_db->dbID}++;
     }
@@ -845,7 +845,7 @@ sub features {
     if ($cigar_line =~ /M/) {
       $f->{'_cigar_line'} = $cigar_line;
     }
-    $f->{'label'} = $self->species_defs->get_config($self->species_defs->production_name_mapping($name), 'SPECIES_COMMON_NAME');
+    $f->{'label'} = $self->species_defs->get_config($self->species_defs->production_name_mapping($name), 'SPECIES_DISPLAY_NAME');
     if ($low_coverage_species && $low_coverage_species->{$genomic_align->genome_db->dbID}) {
      $f->{'_gat'}{'colour'} = 'brown';
     }

@@ -81,7 +81,14 @@ sub content {
       
       foreach my $child (@child_order) {
         next unless ref $page_tree->{$child} eq 'HASH' && $page_tree->{$child}{'_title'};
-        $submenu .= sprintf '<li%s><img src="%s"><a href="%s%s" title="%s">%s</a></li>', $child eq $last ? ' class="last"' : '', $image, $url, $child, $page_tree->{$child}{'_title'}, $page_tree->{$child}{'_title'};
+        my $child_url = $url.$child; #$page_tree->{$child}{'_path'};
+        $child_url .= '/' unless $child =~ /html$/;
+        $submenu .= sprintf '<li%s><img src="%s"><a href="%s" title="%s">%s</a></li>', 
+                        $child eq $last ? ' class="last"' : '', 
+                        $image, 
+                        $child_url, 
+                        $page_tree->{$child}{'_title'}, 
+                        $page_tree->{$child}{'_title'};
       }
       
       $submenu .= '</ul>';
@@ -133,7 +140,7 @@ sub content {
   
   ## SEARCH -------------------------------------------
   
-  if ($ENV{'HTTP_USER_AGENT'} !~ /Sanger Search Bot/) {
+  if ($self->species_defs->ENSEMBL_SOLR_ENDPOINT && $ENV{'HTTP_USER_AGENT'} !~ /Sanger Search Bot/) {
     my $search_url          = $self->species_defs->ENSEMBL_WEB_ROOT . 'Multi/Psychic';
     my $default_search_code = $self->species_defs->ENSEMBL_DEFAULT_SEARCHCODE;
     my $form                = EnsEMBL::Web::Form->new({ action => $search_url, method => 'get', skip_validation => 1, class => [ 'search-form', 'clear' ] });

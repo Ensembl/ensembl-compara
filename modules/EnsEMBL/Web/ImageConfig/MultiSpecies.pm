@@ -52,7 +52,7 @@ sub species_list {
     my %seen;
     my @species = grep !$seen{$_}++, $referer->{'ENSEMBL_SPECIES'}, map [ split '--', $params->{"s$_"}[0] ]->[0], sort { $a <=> $b } map { /^s(\d+)$/ ? $1 : () } keys %$params;
 
-    $self->{'species_list'} = [ map [ $_, $species_defs->SPECIES_COMMON_NAME($_) ], @species ];
+    $self->{'species_list'} = [ map [ $_, $species_defs->SPECIES_DISPLAY_NAME($_) ], @species ];
   }
 
   return $self->{'species_list'};

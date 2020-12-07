@@ -155,6 +155,7 @@ sub process {
     $url_params->{'format'}         = $format;
     $url_params->{'file'}           = $file->read_location;
     $url_params->{'compression'}    = $compression;
+    $url_params->{'cdb'}            = $hub->param('cdb') || 'compara';
     $url_params->{'__clear'}        = 1;
     ## Pass parameters needed for Back button to work
     my @core_params = keys %{$hub->core_object('parameters')};
@@ -165,7 +166,6 @@ sub process {
       $url_params->{$_} = scalar @values > 1 ? \@values : $values[0];
     }
   }
-
   $self->ajax_redirect($hub->url($controller || (), $url_params), $controller ? (undef, undef, 'download') : ());
 }
 
@@ -241,8 +241,13 @@ sub write_fasta {
   my $data_object = $hub->core_object($data_type);
   my @data        = $component->get_export_data;
 
-  ## Only expand flank for variant export - gene flanks already added elsewhere
-  my $slice       = $hub->param('flank_size') ? $self->object->expand_slice($data_object->slice) : $data_object->slice;
+  my $slice;
+  if ($hub->param('flank_size') || ($data_type eq 'Transcript' && $hub->param('flanking'))) {
+    $slice = $self->object->expand_slice($data_object->slice);
+  }
+  else {
+    $slice = $data_object->slice;
+  }
 
   my $masking         = $hub->param('masking');
   my $seq_region_name = $data_object->seq_region_name;

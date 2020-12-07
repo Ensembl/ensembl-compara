@@ -1,0 +1,104 @@
+<html>
+<head>
+<meta name="order" content="6" />
+<title>BioMart Perl API</title>
+</head>
+
+<body>
+
+<h1>BioMart Perl API</h1>
+<p>The BioMart Perl API allow you to go a step further with BioMart and allow you to integrate BioMart Perl Code into custom Perl scripts.</p>
+<h3>Summary</h3>
+<ol>
+        <li><a href="#biomartperl">Obtaining the BioMart Perl script from the BioMart website</a></li>
+        <li><a href="#downloadbiomartperlapi">Download the BioMart PERL API</a></li>
+        <li><a href="#biomartperlapi">BioMart PERL API set up</a></li>
+</ol>
+
+<a name="biomartperl"></a>
+<h2>Obtaining the BioMart Perl script from the BioMart website</h2>
+
+<p>You can easily obtain a BioMart Perl script from the BioMart interface. For example, <a href="/biomart">navigate to the Ensembl gene mart on the Ensembl website</a>, apply your required filters and select the attribute you are interested in. <a href="/biomart/martview?VIRTUALSCHEMANAME=default&ATTRIBUTES=hsapiens_gene_ensembl.default.feature_page.ensembl_gene_id|hsapiens_gene_ensembl.default.feature_page.ensembl_transcript_id|hsapiens_gene_ensembl.default.feature_page.hgnc_symbol|hsapiens_gene_ensembl.default.feature_page.uniprotswissprot&FILTERS=hsapiens_gene_ensembl.default.filters.ensembl_gene_id.ENSG00000139618&VISIBLEPANEL=resultspanel">As shown in the example below, filter on the human Ensembl Gene ID "ENSG00000139618" and select the Ensembl Gene, Transcript IDs, HGNC IDs and symbols and Uniprot Swissprot accessions attribute</a>. 
+The BioMart Perl script can be downloaded from the BioMart result page accessible via the "Results" button. To get your BioMart query in Perl, just click on the "Perl" button as indicated by the red box in the image below:</p>
+<a href=/biomart/martview?VIRTUALSCHEMANAME=default&ATTRIBUTES=hsapiens_gene_ensembl.default.feature_page.ensembl_gene_id|hsapiens_gene_ensembl.default.feature_page.ensembl_transcript_id|hsapiens_gene_ensembl.default.feature_page.hgnc_symbol|hsapiens_gene_ensembl.default.feature_page.uniprotswissprot&FILTERS=hsapiens_gene_ensembl.default.filters.ensembl_gene_id.ENSG00000139618&VISIBLEPANEL=resultspanel><p><div class="image-wrap" style=""><img src="/img/biomart_perl_api.png" style="border: 1px solid black" /></div></p></a>
+<p>The Perl button will open a new browser window and display the BioMart query in Perl, the text will be similar to the following image:</p>
+<p><div class="image-wrap" style=""><img src="/img/biomart_perl_api2.png" style="border: 1px solid black" /></div></p>
+<p>Just save the content of this page in a new file on your computer, e.g 'hgnc_swissprot.pl' in our example.
+
+<a name="downloadbiomartperlapi"></a>
+<h2>Download the BioMart PERL API</h2>
+<p>To run the BioMart Perl script, you will need to download the BioMart API
+      from our GitHub Repository (<a
+        href="http://www.biomart.org/other/install-overview.html">Complete
+        documentation can be found on the biomart.org website</a>). To to do this you can follow the command below:</p>
+<pre class="code">
+git clone --branch cvs/release-0_7 https://github.com/biomart/biomart-perl
+</pre>
+
+<a name="biomartperlapi"></a>
+<h2>BioMart PERL API set up</h2>
+<p>By default the biomart-perl API will be looking at the biomart.org website, this can be changed in the "biomart-perl/conf/martURLLocation.xml" file. The <a href="/biomart/martservice?type=registry">following URL</a> will give you the Ensembl.org Mart registry information. For example in release 79:
+<pre class="code">
+&lt;MartRegistry&gt;
+  &lt;MartURLLocation database="ensembl_mart_94" default="1" displayName="Ensembl Genes 94" host="www.ensembl.org" includeDatasets="" martUser="" name="ENSEMBL_MART_ENSEMBL" path="/biomart/martservice" port="80" serverVirtualSchema="default" visible="1" /&gt;
+  &lt;MartURLLocation database="mouse_mart_94" default="" displayName="Mouse strains 94" host="www.ensembl.org" includeDatasets="" martUser="" name="ENSEMBL_MART_MOUSE" path="/biomart/martservice" port="80" serverVirtualSchema="default" visible="1" /&gt;
+  &lt;MartURLLocation database="sequence_mart_94" default="" displayName="Sequence" host="www.ensembl.org" includeDatasets="" martUser="" name="ENSEMBL_MART_SEQUENCE" path="/biomart/martservice" port="80" serverVirtualSchema="default" visible="" /&gt;
+  &lt;MartURLLocation database="ontology_mart_94" default="" displayName="Ontology" host="www.ensembl.org" includeDatasets="" martUser="" name="ENSEMBL_MART_ONTOLOGY" path="/biomart/martservice" port="80" serverVirtualSchema="default" visible="" /&gt;
+  &lt;MartURLLocation database="genomic_features_mart_94" default="" displayName="Genomic features 94" host="www.ensembl.org" includeDatasets="" martUser="" name="ENSEMBL_MART_GENOMIC" path="/biomart/martservice" port="80" serverVirtualSchema="default" visible="" /&gt;
+  &lt;MartURLLocation database="snp_mart_94" default="" displayName="Ensembl Variation 94" host="www.ensembl.org" includeDatasets="" martUser="" name="ENSEMBL_MART_SNP" path="/biomart/martservice" port="80" serverVirtualSchema="default" visible="1" /&gt;
+  &lt;MartURLLocation database="regulation_mart_94" default="" displayName="Ensembl Regulation 94" host="www.ensembl.org" includeDatasets="" martUser="" name="ENSEMBL_MART_FUNCGEN" path="/biomart/martservice" port="80" serverVirtualSchema="default" visible="1" /&gt;
+&lt;/MartRegistry&gt;
+</pre> 
+<p>Paste the text obtained on the <a href="/biomart/martservice?type=registry">following page</a> into the biomart-perl/conf/martURLLocation.xml file.</p>
+<p>Add biomart perl to your $PERL5LIB variable:</p>
+<pre class="code">
+E.g in bash:
+PERL5LIB=${PERL5LIB}:${HOME}/biomart-perl/lib
+export PERL5LIB
+</pre>
+<p>Copy the Perl file <a href=#biomartperl>previously obtained on the Ensembl website</a> to "biomart-perl/scripts" and make the following modifications:</p>
+<ol>
+        <li><p>Edit the "$confFile" variable with the path to your registry file (e.g: biomart-perl/conf/martURLLocation.xml) as indicated by the number 1 in the image below.</p></li>
+        <li><p>Edit the "$action" variable to "clean" as indicated by the 2 in the image below. The variable need to be set up to "clean" everytime the "biomart-perl/conf/martURLLocation.xml" get updated as some data will be cached on your computer.</p></li>
+</ol>
+<p><div class="image-wrap" style=""><img src="/img/biomart_perl_api3.png" style="border: 1px solid black" /></div></p>
+<p>Run the Perl script to get the data from BioMart:</p>
+<pre class="code">
+perl hgnc_swissprot.pl
+
+
+Connection parameters of [Ensembl Genes 94][ OK ]
+Connection parameters of [Mouse strains 94][ OK ]
+Connection parameters of [Sequence][ OK ]
+Connection parameters of [Ontology][ OK ]
+Connection parameters of [Genomic features 94][ OK ]
+Connection parameters of [Ensembl Variation 94][ OK ]
+Connection parameters of [Ensembl Regulation 94][ OK ]
+
+
+...
+The script will print some output before you get the result
+...
+
+
+Ensembl Gene ID  Ensembl Transcript ID  HGNC symbol  UniProt/SwissProt Accession
+ENSG00000139618  ENST00000380152        BRCA2        P51587
+ENSG00000139618  ENST00000528762        BRCA2
+ENSG00000139618  ENST00000470094        BRCA2
+ENSG00000139618  ENST00000544455        BRCA2        P51587
+</pre>
+<p>IMPORTANT: the first will run of the script will take some time since BioMart will cache some data on your computer.</p>
+<p>Once you have run your script once, you can update the "$action" variable from "clean" to "cached". The run will be faster and you should get the following output:<p>
+<pre class="code">
+perl hgnc_swissprot.pl
+
+Processing Cached Registry: ../conf/cachedRegistries/martURLLocation.xml.cached
+
+Ensembl Gene ID  Ensembl Transcript ID  HGNC symbol  UniProt/SwissProt Accession
+ENSG00000139618  ENST00000380152        BRCA2        P51587
+ENSG00000139618  ENST00000528762        BRCA2
+ENSG00000139618  ENST00000470094        BRCA2
+ENSG00000139618  ENST00000544455        BRCA2        P51587
+</pre>
+</body>
+</html>

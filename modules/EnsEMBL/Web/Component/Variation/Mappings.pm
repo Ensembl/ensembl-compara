@@ -128,7 +128,8 @@ sub content {
   );
   my $reg_table = $self->new_table(\@reg_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside', data_table_config => {iDisplayLength => 10} } );
   my @motif_columns = (
-    { key => 'bm',       width => '20%',  title => 'Binding matrix',            sort => 'html'                             },
+    { key => 'mf',       width => '10%',  title => 'Motif feature',             sort => 'html'                             },
+    { key => 'bm',       width => '10%',  title => 'Binding matrix',            sort => 'html'                             },
     { key => 'allele',   width => '10%',  title => 'Allele',                    sort => 'string'                           },
     { key => 'type',     width => '10%',  title => 'Consequence type',          sort => 'position_html'                    },
     { key => 'names',    width => '40%',  title => 'Transcription factors',     sort => 'string'                           },
@@ -381,7 +382,7 @@ sub content {
       next unless $mf;       
       # check that the motif has a binding matrix, if not there's not 
       # much we can do so don't return anything
-      my $matrix = $mf->binding_matrix;
+      my $matrix = $mf->get_BindingMatrix;
       next unless $matrix;
       
       my $matrix_names = join(', ',  @{$matrix->get_TranscriptionFactorComplex_names||[]});
@@ -398,10 +399,10 @@ sub content {
         my $m_allele = $self->trim_large_string($mfva->variation_feature_seq,'mfva_'.$mf->stable_id,25);
         
         my $motif_overlap = $self->_overlap_glyph(1, $motif_length, $mfva->motif_start, $mfva->motif_end, $mf, 'Motif feature', 1, $mfv_colour);
-
         my $motif_length_label = $self->_overlap_glyph_label($mfva->motif_start, $mfva->motif_end, $motif_length);
 
         my $row = {
+          mf       => $mf->stable_id,
           bm       => $matrix_link,
           allele   => $m_allele,
           type     => $type,
@@ -493,13 +494,13 @@ sub _render_eqtl_table {
 
   my $eqtl_table_html = '';
 
-  if ($hub->species eq 'Homo_sapiens' && (my $rest_url = $hub->species_defs->ENSEMBL_REST_URL)) {
+  if ($hub->species eq 'Homo_sapiens' && (my $rest_url = $hub->species_defs->EQTL_REST_URL)) {
     # empty table for eQTLs - get populated by JS via REST
     my @eqtl_columns  = (
-      { key => 'gene',    title => 'Gene',                        sort => 'html'    },
-      { key => 'p_val',   title => 'P-value (-log<sub>10</sub>)', sort => 'numeric',  help => "Nominal p-values of the individual variant-gene pair." },
-      { key => 'beta',    title => 'Effect size',                 sort => 'numeric',  help => "Effect of the alternative allele (ALT) relative to the reference allele (REF) (i.e., the eQTL effect allele is the ALT allele)."},
-      { key => 'tissue',  title => 'Tissue',                      sort => 'html'    },
+      { key => 'gene_id',    title => 'Gene',                        sort => 'html'    },
+      { key => 'pvalue',     title => 'P-value (-log<sub>10</sub>)', sort => 'numeric',  help => "Nominal p-values of the individual variant-gene pair." },
+      { key => 'beta',       title => 'Effect size',                 sort => 'numeric',  help => "Effect of the alternative allele (ALT) relative to the reference allele (REF) (i.e., the eQTL effect allele is the ALT allele)."},
+      { key => 'qtl_group',  title => 'Tissue',                      sort => 'string'  },
     );
 
     # add dummy rows to get pagination working
@@ -508,10 +509,13 @@ sub _render_eqtl_table {
 
     # create table
     my $eqtl_table = $self->new_table(\@eqtl_columns, \@dummy_rows, {
-      data_table => 1, sorting => [ 'p_val desc' ], data_table_config => {
-        iDisplayLength => 10, aLengthMenu => [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]]
+      data_table => 1, sorting => [ 'pvalue desc' ], data_table_config => {
+        iDisplayLength => 10, 
+        aLengthMenu => [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]]
       }
     });
+
+    my $assosiation_url = sprintf('%sassociations/%s?size=1000', $rest_url, $hub->param('v'));
 
     $eqtl_table_html = sprintf('<div class="hidden _variant_eqtl_table">
       <input type="hidden" class="panel_type" value="EQTLTable">
@@ -519,7 +523,7 @@ sub _render_eqtl_table {
       <input type="hidden" name="eqtl_gene_url_template" class="js_param" value="%s">
       <h2>Gene expression correlations</h2>%s<h3 class="_no_data">No Gene expression correlations</h3>
       </div>',
-      sprintf('%s/eqtl/variant_name/%s/%s?content-type=application/json', $rest_url, lc $hub->species, $hub->param('v')),
+      $assosiation_url,
       $hub->url({'type' => 'Gene', 'action' => 'Regulation', 'g' => '{{geneId}}', 'r' => undef}),
       $eqtl_table->render
     );
@@ -541,6 +545,7 @@ sub _sort_start_end {
     } else {
       $end   = $length if ($length && $length < $end);
       $start = $length if ($length && $length < $start);
+      $start = 1 if ($start < 0);
       return join("-", sort {$a <=> $b} ($start, $end));
     }
   } else {

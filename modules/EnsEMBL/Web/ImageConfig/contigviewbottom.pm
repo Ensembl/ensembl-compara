@@ -267,6 +267,7 @@ sub init_cacheable {
     pairwise_tblat
     pairwise_other
     dna_align_compara
+    genome_targeting
     oligo
     repeat
     external_data
@@ -339,7 +340,7 @@ sub init_cacheable {
   ## LRG track
   if ($self->species_defs->HAS_LRG) {
     $self->add_tracks('lrg',
-      [ 'lrg_transcript', 'LRG', '_transcript', {
+      [ 'lrg_transcript', 'LRG', 'lrg', {
         display     => 'off', # Switched off by default
         strand      => 'b',
         name        => 'LRG',
@@ -361,6 +362,7 @@ sub init_cacheable {
 
     foreach my $default (@$defaults) {
       my ($mlss_id,$species,$method) = @$default;
+      next unless $mlss_id;
       $self->modify_configs(
         [ 'alignment_compara_'.$mlss_id.'_constrained' ],
         { display => 'compact' }

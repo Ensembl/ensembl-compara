@@ -51,10 +51,12 @@ sub render {
         </div>);
     }
     if ($sd->ENSEMBL_BLAST_ENABLED) {
+      my %tools = @{$sd->ENSEMBL_TOOLS_LIST||[]};
+      my $label = $tools{'Blast'} || 'BLAST';;
       $html .= qq(
         <div style="float:left;width:28%">
           <div class="plain-box unbordered">
-            <h2><a href="/Multi/Tools/Blast?db=core" class="nodeco">BLAST/BLAT&nbsp&nbsp;&gt;</a></h2>
+            <h2><a href="/Multi/Tools/Blast?db=core" class="nodeco">$label&nbsp&nbsp;&gt;</a></h2>
             <p>Search our genomes for your DNA or protein sequence</p>
           </div>
         </div>);

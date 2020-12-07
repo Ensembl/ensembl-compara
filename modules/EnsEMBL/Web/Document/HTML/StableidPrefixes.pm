@@ -42,7 +42,7 @@ sub render {
     my $prefix = $species_defs->get_config($species, 'SPECIES_PREFIX');
     next unless $prefix;
     my $name = $species_defs->get_config($species, 'SPECIES_SCIENTIFIC_NAME');
-    my $common = $species_defs->get_config($species, 'SPECIES_COMMON_NAME');
+    my $common = $species_defs->get_config($species, 'SPECIES_DISPLAY_NAME');
     if ($common && $common !~ /\./) {
       $name .= " ($common)";
     }

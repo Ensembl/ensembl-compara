@@ -35,17 +35,20 @@ sub content {
   my $self         = shift;
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
-  my $common_name  = $species_defs->SPECIES_COMMON_NAME;
-  my $sci_name     = $species_defs->SPECIES_SCIENTIFIC_NAME;
+  my $display_name = $species_defs->SPECIES_DISPLAY_NAME;
   my $img_url      = $self->img_url;
   $self->{'icon'}  = qq(<img src="${img_url}24/%s.png" alt="" class="homepage-link" />);
 
   $self->{'img_link'} = qq(<a class="nodeco _ht _ht_track" href="%s" title="%s"><img src="${img_url}96/%s.png" alt="" class="bordered" />%s</a>);
-
+  
   ## Mandatory search box
+  my $sci_name = $species_defs->SPECIES_SCIENTIFIC_NAME;
+  ## Allow for species like C.elegans that don't have a common name
+  if ($species_defs->USE_COMMON_NAMES && $sci_name ne $display_name) {
+    $display_name .= " ($sci_name)"; 
+  }
   my $html = sprintf '<div class="round-box tinted-box unbordered"><h2>Search %s</h2>%s</div>', 
-              $common_name eq $sci_name ? "<i>$sci_name</i>" : sprintf('%s (<i>%s</i>)', $common_name, $sci_name),
-              EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render;
+              $display_name, EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render;
 
   ## Assembly and genebuild - also mandatory
   $html .= sprintf('
@@ -91,6 +94,15 @@ sub assembly_text {
     $ac_link = sprintf('<a href="%s" class="modal_link nodeco" rel="modal_user_data">', $hub->url({'type' => 'UserData', 'action' => 'SelectFeatures', __clear => 1}));
   }
 
+  my $karyotype = '';
+  if (scalar @{$species_defs->ENSEMBL_CHROMOSOMES || []} && !$species_defs->NO_KARYOTYPE) {
+    $karyotype = sprintf($self->{'img_link'},
+                  $hub->url({ type => 'Location', action => 'Genome', __clear => 1 }),
+                  'Go to ' . $species_defs->SPECIES_DISPLAY_NAME . ' karyotype', 
+                  'karyotype', 'View karyotype'
+                  );
+  }
+
   my $html = sprintf('
     <div class="homepage-icon">
       %s
@@ -102,12 +114,8 @@ sub assembly_text {
     %s
     <p><a href="%s" class="modal_link nodeco" rel="modal_user_data">%sDisplay your data in %s</a></p>',
     
-    scalar @{$species_defs->ENSEMBL_CHROMOSOMES || []} ? sprintf(
-      $self->{'img_link'},
-      $hub->url({ type => 'Location', action => 'Genome', __clear => 1 }),
-      'Go to ' . $species_defs->SPECIES_COMMON_NAME . ' karyotype', 'karyotype', 'View karyotype'
-    ) : '',
-    
+    $karyotype,   
+ 
     sprintf(
       $self->{'img_link'},
       $hub->url({ type => 'Location', action => 'View', r => $sample_data->{'LOCATION_PARAM'}, __clear => 1 }),
@@ -149,48 +157,16 @@ sub assembly_text {
                             $strain_text,
   }
   
-  ## Also look for strains on closely-related species
-  my $related_taxon = $species_defs->RELATED_TAXON;
-  if ($related_taxon) {
-
-    ## Loop through all species, looking for others in this taxon
-    my @related_species;
-    my %strain_types;
-    foreach $_ ($species_defs->valid_species) {
-      next if $_ eq $self->hub->species; ## Skip if current species
-      next unless $species_defs->get_config($_, 'ALL_STRAINS'); ## Skip if it doesn't have strains
-      next if $species_defs->get_config($_, 'SPECIES_STRAIN'); ## Skip if it _is_ a strain
-      ## Finally, check taxonomy
-      my $taxonomy = $species_defs->get_config($_, 'TAXONOMY');
-      next unless ($taxonomy && ref $taxonomy eq 'ARRAY'); 
-      next unless grep { $_ eq $related_taxon } @$taxonomy;
-      push @related_species, $_;
-      $strain_types{$species_defs->get_config($_, 'STRAIN_TYPE').'s'} = 1;
-    }
-  
-    if (scalar @related_species) {
-      my $strain_string;
-      my @keys = scalar keys %strain_types;
-      if (scalar @keys == 1) {
-        $strain_string = $keys[0]; 
-      }
-      elsif (scalar @keys == 2) {
-        $strain_string = join(' and ', @keys);
-      }
-      else {
-        my $last = pop @keys;
-        $strain_string = join(', ', @keys);
-        $strain_string .= " and $last"; 
-      }
-      $html .= sprintf '<h3 class="light top-margin">Related %s</h3><p>Data is available on the following closely-related species:</p><ul>', $strain_string;
-      foreach (@related_species) {
-        $html .= sprintf '<li><a href="%s">%s (%s)</a></li>', 
-                  $hub->url({'species' => $_, 'action' => 'Strains'}), 
-                  $species_defs->get_config($_, 'SPECIES_BIO_NAME'),
-                  $species_defs->get_config($_, 'SPECIES_COMMON_NAME');
-      }
-      $html .= '</ul>';
-    }
+  ## Hack to link from rat to mouse strains
+  if ($self->hub->species eq 'Rattus_norvegicus') {
+    $html .= qq(
+<h3 class="light top-margin">Related species</h3>
+<p>Data is available on the following closely-related species:</p>
+<ul>
+  <li><a href="/Mus_musculus/Info/Index">Mouse reference</a></li>
+  <li><a href="/Mus_musculus/Info/Strains">Other mouse strains</a></li>
+</ul>
+);
   }
 
   return $html;
@@ -251,11 +227,21 @@ sub genebuild_text {
 
 sub compara_text {
   my $self         = shift;
+
+  if($SiteDefs::NO_COMPARA){
+    return '';
+  }
+  
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
+ 
+  ## Is this species in the compara db?
+  my $compara_spp  = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'COMPARA_SPECIES'};
+  return '' unless $compara_spp && $compara_spp->{$species_defs->SPECIES_PRODUCTION_NAME};
+
   my $sample_data  = $species_defs->SAMPLE_DATA;
   my $ftp          = $self->ftp_url;
-  
+
   return sprintf('
     <div class="homepage-icon">
       %s
@@ -287,6 +273,10 @@ sub variation_text {
   my $species_prod_name = $species_defs->get_config($hub->species, 'SPECIES_PRODUCTION_NAME');
   my $html;
 
+  if($species_defs->NO_VARIATION && !$species_defs->ENSEMBL_VEP_ENABLED){
+    return '';
+  }
+  
   if ($hub->database('variation')) {
     my $sample_data  = $species_defs->SAMPLE_DATA;
 

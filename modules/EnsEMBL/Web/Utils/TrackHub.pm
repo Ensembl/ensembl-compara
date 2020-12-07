@@ -28,6 +28,7 @@ use Digest::MD5 qw(md5_hex);
 
 use EnsEMBL::Web::Utils::HubParser;
 use EnsEMBL::Web::File::Utils::URL qw(read_file);
+use EnsEMBL::Web::Utils::FormatText qw(thousandify);
 use EnsEMBL::Web::Tree;
 
 ### Because the Sanger web proxy caches hub files aggressively,
@@ -78,13 +79,18 @@ sub url {
   return $self->{'url'};
 }
 
-sub get_hub {
+sub get_hub_internal {
 ### Fetch metadata about the hub and (optionally) its tracks
 ### @param args Hashref (optional) 
 ###                     - parse_tracks Boolean
 ###                     - assembly_lookup Hashref
-### @return Hashref               
-  my ($self, $args) = @_;
+### @return Hashref              
+###
+### This method can be run with or without the ability to check the cache.
+### A wrapper method (called just get_hub) tries it first with and, if there
+### is an error, then without. This means that caches shouldn't get "poisoned"
+### if they fail due to an intermittent failure on first population. 
+  my ($self, $args, $search_cache) = @_;
 
   ## First check the cache
   my $cache     = $self->web_hub ? $self->web_hub->cache : undef;
@@ -92,7 +98,7 @@ sub get_hub {
   my $file_args = {'hub' => $self->{'hub'}, 'nice' => 1, 'headers' => $headers}; 
   my ($trackhub, $content, @errors);
 
-  if ($cache) {
+  if ($cache && $search_cache) {
     $trackhub = $cache->get($cache_key);
   }
 
@@ -176,12 +182,19 @@ sub get_hub {
 
         if ($options->{'genome'} || $options->{'content'}) {
           my ($track_info, $total) = $self->get_track_info($options);
-          $genome_info->{$genome}{'track_count'} = $total;
-          if ($args->{'make_tree'}) {
-            $genome_info->{$genome}{'tree'} = $track_info;
+
+          my $limit = $self->web_hub->species_defs->TRACKHUB_MAX_TRACKS;
+          if ($total >= $limit) {
+            return { error => [sprintf('Sorry, we cannot attach this trackhub as it has more than %s tracks and will therefore overload our server', $self->thousandify($limit))] }
           }
           else {
-            $genome_info->{$genome}{'data'} = $track_info;
+            $genome_info->{$genome}{'track_count'} = $total;
+            if ($args->{'make_tree'}) {
+              $genome_info->{$genome}{'tree'} = $track_info;
+            }
+            else {
+              $genome_info->{$genome}{'data'} = $track_info;
+            }
           }
         }
       }
@@ -202,6 +215,25 @@ sub get_hub {
     }
     return $trackhub;
   }
+}
+
+sub get_hub {
+### Fetch metadata about the hub and (optionally) its tracks
+### @param args Hashref (optional) 
+###                     - parse_tracks Boolean
+###                     - assembly_lookup Hashref
+### @return Hashref              
+###
+### This method calls get_hub_internal first with and, if there
+### is an error, then without. This means that caches shouldn't get "poisoned"
+### if they fail due to an intermittent failure on first population. 
+  my ($self, $args) = @_;
+
+  my $out = $self->get_hub_internal($args,1);
+  if(!$out || $out->{'error'}) {
+    $out = $self->get_hub_internal($args,0);
+  }
+  return $out;
 }
 
 sub get_track_info {
@@ -230,7 +262,8 @@ sub get_track_info {
 
   ## OK, parse the file content
   my $parser  = $self->parser;
-  my ($tracks, $total) = $parser->get_tracks($args->{'content'}, $args->{'file'});
+  my $limit   = $self->web_hub->species_defs->TRACKHUB_MAX_TRACKS;
+  my ($tracks, $total) = $parser->get_tracks($args->{'content'}, $args->{'file'}, $limit);
   
   # Make sure the track hierarchy is ok before trying to make the tree
   my $tree = $args->{'tree'}; 
@@ -268,21 +301,24 @@ sub make_tree {
   my ($self, $tree, $tracks) = @_;
   my $redo = [];
 
+  my $progress_made = 0; # to detect infinite loops due to borken hubs
   foreach (@$tracks) {
     if ($_->{'parent'}) {
       my $parent = $tree->get_node($_->{'parent'});
       
       if ($parent) {
+        $progress_made = 1;
         $parent->append($tree->create_node($_->{'track'}, $_));
       } else {
         push @$redo, $_;
       }
     } else {
+      $progress_made = 1;
       $tree->root->append($tree->create_node($_->{'track'}, $_));
     }
   }
   
-  $self->make_tree($tree, $redo) if scalar @$redo;
+  $self->make_tree($tree, $redo) if scalar @$redo and $progress_made;
 }
 
 sub fix_tree {

@@ -40,6 +40,8 @@ sub process {
   my $pattern       = "^$extension\$";
   my ($redirect, $anchor);
   my $params        = {};
+  warn ">>> LOC ".$hub->param('r');
+  warn ">>> GENE ".$hub->param('g');
 
   ## Allow for manually-created URLs with capitalisation, and 
   ## also validate any user-provided species name
@@ -84,7 +86,6 @@ sub process {
 
         ## Check if we have any supported assemblies
         my $trackhub = EnsEMBL::Web::File::AttachedFormat::TRACKHUB->new('hub' => $self->hub, 'url' => $url);
-        my $assembly_lookup = $hub->species_defs->assembly_lookup;
         my $hub_info = $trackhub->{'trackhub'}->get_hub({'assembly_lookup' => $assembly_lookup, 'parse_tracks' => 0});
 
         if ($hub_info->{'unsupported_genomes'}) {
@@ -103,44 +104,57 @@ sub process {
 
           ## Override standard redirect with sample location
           $redirect     = sprintf('/%s/Location/View', $species);
-          $anchor       = 'modal_config_viewbottom';
-          my $menu      = $params->{'menu'} || $params->{'name'};
-          $anchor      .= '-'.$menu if $menu;
-          delete($params->{'menu'});
-          delete($params->{'name'});
+          if ($params->{'abort'}) {
+            $params = {};
+          }
+          else {
+            $redirect     = sprintf('/%s/Location/View', $species);
+            $anchor       = 'modal_config_viewbottom';
+            my $menu      = $params->{'menu'} || $params->{'name'};
+            $anchor      .= '-'.$menu if $menu;
+            delete($params->{'menu'});
+            delete($params->{'name'});
 
-          my %messages  = EnsEMBL::Web::Constants::USERDATA_MESSAGES;
-          my $p         = $params->{'reattach'} || $params->{'species_flag'} 
+            my %messages  = EnsEMBL::Web::Constants::USERDATA_MESSAGES;
+            my $p         = $params->{'reattach'} || $params->{'species_flag'} 
                             || $params->{'assembly_flag'} || 'ok';
-          my $key       = sprintf('hub_%s', $p);
+            my $key       = sprintf('hub_%s', $p);
 
-          if ($messages{$key}) {
-            ## Open control panel at Custom tracks if chosen species not supported
-            if ($params->{'species_flag'} && $params->{'species_flag'} eq 'other_only') {
-              $anchor = 'modal_user_data';
-            }
-            else {
-              $hub->session->set_record_data({
-                type     => 'message',
-                code     => 'AttachURL',
-                message  => $messages{$key}{'message'},
-                function => '_'.$messages{$key}{'type'},
-              });
+            if ($messages{$key}) {
+              ## Open control panel at Custom tracks if chosen species not supported
+              if ($params->{'species_flag'} && $params->{'species_flag'} eq 'other_only') {
+                $anchor = 'modal_user_data';
+              }
+              else {
+                $hub->session->set_record_data({
+                  type     => 'message',
+                  code     => 'AttachURL',
+                  message  => $messages{$key}{'message'},
+                  function => '_'.$messages{$key}{'type'},
+                });
+              }
             }
           }
         }
-      }
-      if ($redirect =~ /Location/) {
-        my $location    = $hub->param('r') || $hub->param('location') || $hub->param('Location');
-        unless ($location) {
-          my $sample_links  = $species_defs->get_config($species, 'SAMPLE_DATA');
-          $location         = $sample_links->{'LOCATION_PARAM'} if $sample_links;
+        if ($redirect =~ /Location/) {
+          ## Allow optional gene parameter to override the location
+          if ($hub->param('gene')) {
+            $params->{'g'} = $hub->param('gene');
+            delete $params->{'r'};
+          }
+          else {
+            my $location    = $hub->param('r') || $hub->param('location') || $hub->param('Location');
+            unless ($location) {
+              my $sample_links  = $species_defs->get_config($species, 'SAMPLE_DATA');
+              $location         = $sample_links->{'LOCATION_PARAM'} if $sample_links;
+            }
+            $params->{'r'} = $location;
+          }
+        } else {
+          $redirect           = '/trackhub_error.html';
+          $params->{'error'}  = 'no_url';
         }
-        $params->{'r'} = $location;
       }
-    } else {
-      $redirect           = '/trackhub_error.html';
-      $params->{'error'}  = 'no_url';
     }
   }
   

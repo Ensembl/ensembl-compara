@@ -247,7 +247,7 @@ sub _get_sequence {
     display_width   => $self->param('display_width'),
     site_type       => ucfirst lc $species_defs->ENSEMBL_SITETYPE || 'Ensembl',
     species         => $hub->species,
-    display_species => $species_defs->SPECIES_COMMON_NAME,
+    display_species => $species_defs->SPECIES_DISPLAY_NAME,
     comparison      => 1,
     ambiguity       => 1,
     db              => $object->can('get_db') ? $object->get_db : 'core',
@@ -326,7 +326,6 @@ sub draw_tree {
   my $image_width     = $self->image_width || 800;
   my $colouring       = $self->param('colouring') || 'background';
   my $species         = $hub->species;
-  my $species_name    = $hub->species_defs->get_config(ucfirst($species), 'SPECIES_SCIENTIFIC_NAME');
   my $mlss_adaptor            = $compara_db->get_adaptor('MethodLinkSpeciesSet');
   my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($align);
 

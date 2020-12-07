@@ -74,8 +74,7 @@ sub upload_or_attach {
     }
     elsif (uc($format_name) eq 'VCF' || uc($format_name) eq 'PAIRWISE') {
       ## Is this an indexed file? Check formats that could be either
-      my $tabix_url   = $url.'.tbi';
-      $index_err = !$self->check_for_index($tabix_url);
+      $index_err = !$self->check_for_index($url);
       $attach = !$index_err;
     }
   }
@@ -126,23 +125,31 @@ sub upload_or_attach {
 }
 
 sub check_for_index {
-  my ($self, $url) = @_;
+  my ($self, $input_url) = @_;
 
   my $args = {'hub' => $self->hub, 'nice' => 1};
-  my $ok_url = chase_redirects($url, $args);
   my ($index_exists, $error);
+  my @exts = qw(tbi csi);
 
-  if (ref($ok_url) eq 'HASH') {
-    $error = $ok_url->{'error'}[0];
-  }
-  else {
-    my $check = file_exists($ok_url, $args);
-    if ($check->{'error'}) {
-      $error = $check->{'error'}[0];
+  foreach my $ext (@exts) {
+    my $url = $input_url.'.'.$ext;
+    my $ok_url = chase_redirects($url, $args);
+    if (ref($ok_url) eq 'HASH') {
+      $error = $ok_url->{'error'}[0];
     }
     else {
-      $index_exists = $check->{'success'};
+      my $check = file_exists($ok_url, $args);
+      if ($check->{'error'}) {
+        $error = $check->{'error'}[0];
+      }
+      else {
+        $index_exists = $check->{'success'};
+      }
     }
+    if ($index_exists) {
+      $error = 0;
+      last;
+    } 
   }
 
   if ($error) {

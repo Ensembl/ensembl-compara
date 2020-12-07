@@ -375,7 +375,7 @@ sub synonyms {
     elsif ($db =~ /clinvar/i) {
       foreach (@ids) {
         next if /^RCV/; # don't display RCVs as synonyms
-        push @urls, $hub->get_ExtURL_link($_, 'CLINVAR', $_);
+        push @urls, $hub->get_ExtURL_link($_, 'CLINVAR_VAR', $_);
       }
     }
     elsif ($db =~ /Uniprot/) {

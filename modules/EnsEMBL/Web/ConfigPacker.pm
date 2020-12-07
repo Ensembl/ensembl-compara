@@ -1204,7 +1204,15 @@ sub _summarise_compara_db {
   push @{$self->db_tree->{'compara_like_databases'}}, $db_name;
 
   $self->_summarise_generic($db_name, $dbh);
+ 
+  # Get list of species in the compara db (no longer everything!)
+  my $spp_aref = $dbh->selectall_arrayref('select name from genome_db');
   
+  foreach my $row (@$spp_aref) {
+    my $name = $row->[0]; 
+    $self->db_tree->{$db_name}{'COMPARA_SPECIES'}{$name} = 1;
+  }
+ 
   # See if there are any intraspecies alignments (ie a self compara)
   my $intra_species_aref = $dbh->selectall_arrayref('
     select mls.species_set_id, mls.method_link_species_set_id, count(*) as count
@@ -1255,8 +1263,6 @@ sub _summarise_compara_db {
       $intra_species_constraints{$species}{$_} = 1 for keys %{$intra_species{$species_set_id}};
     }
     
-    $species =~ tr/ /_/;
-   
     $self->db_tree->{$db_name}{$key}{$id}{'id'}                = $id;
     $self->db_tree->{$db_name}{$key}{$id}{'name'}              = $name;
     $self->db_tree->{$db_name}{$key}{$id}{'type'}              = $type;
@@ -1595,11 +1601,9 @@ sub _munge_meta {
   ##################################################
   # All species info is keyed on the standard URL: #
   # SPECIES_URL             = Homo_sapiens         #
-  # (for backwards compatibility, we also set this #
-  # value as SPECIES_BIO_NAME, but deprecated)     #
   #                                                #
   # Name used in headers and dropdowns             #
-  # SPECIES_COMMON_NAME     = Human                #
+  # SPECIES_DISPLAY_NAME     = Human               #
   #                                                #
   # Database root name (also used with compara?)   #                        
   # SPECIES_PRODUCTION_NAME = homo_sapiens         #
@@ -1612,9 +1616,10 @@ sub _munge_meta {
     species.taxonomy_id           TAXONOMY_ID
     species.url                   SPECIES_URL
     species.stable_id_prefix      SPECIES_PREFIX
-    species.display_name          SPECIES_COMMON_NAME
-    species.common_name           SPECIES_DB_COMMON_NAME
+    species.display_name          SPECIES_DISPLAY_NAME
+    species.common_name           SPECIES_COMMON_NAME
     species.production_name       SPECIES_PRODUCTION_NAME
+    species.db_name               SPECIES_DB_NAME
     species.scientific_name       SPECIES_SCIENTIFIC_NAME
     assembly.accession            ASSEMBLY_ACCESSION
     assembly.web_accession_source ASSEMBLY_ACCESSION_SOURCE
@@ -1622,9 +1627,11 @@ sub _munge_meta {
     assembly.name                 ASSEMBLY_NAME
     liftover.mapping              ASSEMBLY_MAPPINGS
     genebuild.method              GENEBUILD_METHOD
-    provider.name                 PROVIDER_NAME
-    provider.url                  PROVIDER_URL
-    provider.logo                 PROVIDER_LOGO
+    genebuild.last_geneset_update LAST_GENESET_UPDATE
+    annotation.provider_name      ANNOTATION_PROVIDER_NAME
+    annotation.provider_url       ANNOTATION_PROVIDER_URL
+    assembly.provider_name        ASSEMBLY_PROVIDER_NAME
+    assembly.provider_url         ASSEMBLY_PROVIDER_URL
     species.strain                SPECIES_STRAIN
     species.strain_group          STRAIN_GROUP
     strain.type                   STRAIN_TYPE
@@ -1641,16 +1648,15 @@ sub _munge_meta {
     
   if (scalar @sp_count > 1) {
     if ($meta_info->{0}{'species.group'}) {
-      $self->tree->{'DISPLAY_NAME'} = $meta_info->{0}{'species.group'};
+      $self->tree->{'GROUP_DISPLAY_NAME'} = $meta_info->{0}{'species.group'};
     } else {
       (my $group_name = $self->{'_species'}) =~ s/_collection//;
-      $self->tree->{'DISPLAY_NAME'} = $group_name;
+      $self->tree->{'GROUP_DISPLAY_NAME'} = $group_name;
     }
   } else {
-    $self->tree->{'DISPLAY_NAME'} = $meta_info->{1}{'species.display_name'}[0];
+    $self->tree->{'GROUP_DISPLAY_NAME'} = $meta_info->{1}{'species.display_name'}[0];
   }
 
-  # my $div = from_json('{"key":"All Divisions","display_name":"All Divisions","is_internal_node":"true","child_nodes":[{"key":"primates","taxa": ["Primates"],"display_name":"Primates","is_internal_node":"true"},{"key":"rodents","taxa": ["Rodentia", "Lagomorpha"],"display_name":"Rodents & Lagomorphs","is_internal_node":"true","is_submenu":"true","child_nodes":[{"key":"Mice","taxa": ["Mus"],"display_name":"Mice","extras_key":"mouse","is_internal_node":"true"},{"key":"lagomorpha","taxa": ["Lagomorpha"],"display_name":"Lagomorphs","is_internal_node":"true"},{"key":"other_rodents","taxa": ["Rodentia"],"display_name":"Other Rodents","is_internal_node":"true"}]},{"key":"other_mammals","display_name":"Other Mammals","taxa": ["Carnivora", "Cetartiodactyla", "Xenarthra", "Metatheria", "Monotremata"],"is_internal_node":"true","is_submenu":"true","child_nodes":[{"key":"carnivores","taxa": ["Carnivora"],"display_name":"Carnivores","is_internal_node":"true"},{"key":"ungulates","taxa": ["Cetartiodactyla"],"display_name":"Ungulates","is_internal_node":"true"},{"key":"other_placental","taxa": ["Xenarthra", "Afrotheria"],"display_name":"Other Placental","is_internal_node":"true"},{"key":"marsupials_monotremes","taxa": ["Metatheria", "Monotremata"],"display_name":"Marsupials and Monotremes","is_internal_node":"true"}]},{"key":"non_vertebrates","taxa": ["Aves", "Lepidosauria", "Testudines", "Crocodylia", "Chondrichthyes", "Dipnoi", "Actinopterygii", "Hyperotreti", "Hyperoartia", "Coelacanthimorpha", "Xenopus"],"display_name":"Other Vertebrates","is_internal_node":"true","is_submenu":"true","child_nodes":[{"key":"bird_and_reptiles","taxa": ["Aves", "Lepidosauria", "Testudines", "Crocodylia"],"display_name":"Birds and Reptiles","is_internal_node":"true"},{"key":"fish","taxa": ["Chondrichthyes", "Dipnoi", "Actinopterygii", "Hyperotreti", "Hyperoartia", "Coelacanthimorpha"],"display_name":"Fish","is_internal_node":"true"},{"key":"others","display_name":"Others","is_internal_node":"true"}]},{"key":"other_species","display_name":"Other Species","is_internal_node":"true"}]}');
 
   while (my ($species_id, $meta_hash) = each (%$meta_info)) {
     next unless $species_id && $meta_hash && ref($meta_hash) eq 'HASH';
@@ -1673,6 +1679,9 @@ sub _munge_meta {
       $self->tree->{$key} = $value;
     }
 
+    ## Uppercase first part of common name, for consistency
+    $self->tree->{'SPECIES_COMMON_NAME'} = ucfirst($self->tree->{'SPECIES_COMMON_NAME'});
+
     ## Do species group
     my $taxonomy = $meta_hash->{'species.classification'};
     
@@ -1692,10 +1701,8 @@ sub _munge_meta {
     ## otherwise the mapping in Apache handlers will fail
     $self->full_tree->{'MULTI'}{'SPECIES_ALIASES'}{$species} = $species;
 
-    ## Backwards compatibility
-    $self->tree->{'SPECIES_BIO_NAME'}  = $bio_name;
     ## Used mainly in <head> links
-    ($self->tree->{'SPECIES_BIO_SHORT'} = $bio_name) =~ s/^([A-Z])[a-z]+_([a-z]+)$/$1.$2/;
+    ($self->tree->{'SPECIES_BIO_SHORT'} = $self->tree->{'SPECIES_URL'}) =~ s/^([A-Z])[a-z]+_([a-z]+)$/$1.$2/;
     
     if ($self->tree->{'ENSEMBL_SPECIES'}) {
       push @{$self->tree->{'DB_SPECIES'}}, $species;
@@ -1714,7 +1721,6 @@ sub _munge_meta {
     my @A = split '-', $meta_hash->{'genebuild.start_date'}[0];
     
     $self->tree->{'GENEBUILD_START'} = $A[1] ? "$months[$A[1]] $A[0]" : undef;
-    $self->tree->{'GENEBUILD_BY'}    = $A[2];
 
     @A = split '-', $meta_hash->{'genebuild.initial_release_date'}[0];
     

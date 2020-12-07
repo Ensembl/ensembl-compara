@@ -69,19 +69,14 @@ sub _get_dom_tree {
 
   my @ok_species = $sd->valid_species;
   my $sitename  = $self->hub->species_defs->ENSEMBL_SITETYPE;
+  my $fave_text = $self->hub->species_defs->FAVOURITES_SYNONYM || 'Favourite';
+
   if (scalar @ok_species > 1) {
-    my $list_html = sprintf qq(<h3>All genomes</h3>
-      %s
-      <h3 class="space-above"></h3>
-      %s
-      <p><a href="%s">View full list of all %s species</a></p>
-      ), 
-      $self->add_species_dropdown,
-      $self->add_genome_groups, 
-      $self->species_list_url, $sitename;
+    my $list_html = $self->get_list_html();
+    my $fave_plural = $self->hub->species_defs->FAVOURITES_SYNONYM || 'Favourites';
 
     my $sort_html = qq(<p>For easy access to commonly used genomes, drag from the bottom list to the top one</p>
-        <p><strong>Favourites</strong></p>
+        <p><strong>$fave_plural</strong></p>
           <ul class="_favourites"></ul>
         <p><a href="#Done" class="button _list_done">Done</a>
           <a href="#Reset" class="button _list_reset">Restore default list</a></p>
@@ -89,7 +84,13 @@ sub _get_dom_tree {
           <ul class="_species"></ul>
           );
 
-    my $edit_icon = sprintf qq(<a href="%s" class="_list_edit modal_link"><img src="/i/16/pencil.png" class="left-half-margin" title="Edit your favourites"></a>), $hub->url({qw(type Account action Login)});
+    my $edit_icon = $self->get_edit_icon_markup();
+
+  
+    my %taxon_labels = $sd->multiX('TAXON_LABEL'); 
+    unless (keys %taxon_labels) {
+      %taxon_labels = %{$sd->TAXON_LABEL||{}};
+    }
 
     return $self->dom->create_element('div', {
       'class'       => 'column_wrapper',
@@ -102,7 +103,7 @@ sub _get_dom_tree {
               'class'       => 'column-two fave-genomes',
               'children'    => [{
                         'node_name'   => 'h3',
-                        'inner_HTML'  => "Favourite genomes $edit_icon",
+                        'inner_HTML'  => "$fave_text genomes $edit_icon",
                       }, {
                         'node_name'   => 'div',
                         'class'       => [qw(_species_sort_container reorder_species clear hidden)],
@@ -148,9 +149,14 @@ sub _get_dom_tree {
                         'value'       => SPECIES_DISPLAY_LIMIT
                       }, {
                         'node_name'   => 'inputhidden',
+                        'class'       => 'js_param',
+                        'name'        => 'fave_text',
+                        'value'       => $fave_text
+                      }, {
+                        'node_name'   => 'inputhidden',
                         'class'       => 'js_param json',
                         'name'        => 'taxon_labels',
-                        'value'       => encode_entities(to_json($sd->TAXON_LABEL||{}))
+                        'value'       => encode_entities(to_json(\%taxon_labels))
                       }, {
                         'node_name'   => 'inputhidden',
                         'class'       => 'js_param json',
@@ -168,7 +174,7 @@ sub _get_dom_tree {
     my $sp_info = {
       homepage    => $homepage,
       name        => $info->{'name'},
-      img         => sprintf('%sspecies/%s.png', $img_url, $species),
+      img         => sprintf('%sspecies/%s.png', $img_url, $info->{'image'}),
       common      => $info->{'common'},
       assembly    => $info->{'assembly'},
     };
@@ -188,6 +194,33 @@ sub _get_dom_tree {
                         }]
     });
   }
+}
+
+
+sub get_edit_icon_markup {
+
+  my ($self) = @_;
+  my $hub     = $self->hub;
+
+  return sprintf qq(<a href="%s" class="_list_edit modal_link"><img src="/i/16/pencil.png" class="left-half-margin" title="Edit your favourites"></a>), $hub->url({qw(type Account action Login)});
+
+}
+
+
+sub get_list_html {
+
+  my ($self) = @_;
+  
+  sprintf qq(<h3>All genomes</h3>
+      %s
+      <h3 class="space-above"></h3>
+      %s
+      <p><a href="%s">View full list of all species</a></p>
+      ), 
+      $self->add_species_dropdown,
+      $self->add_genome_groups, 
+      $self->species_list_url; 
+
 }
 
 sub add_species_selector {
@@ -273,7 +306,7 @@ sub _species_list {
 
   my (@list, %done);
 
-  for (@fav, sort {$species->{$a}{'common'} cmp $species->{$b}{'common'}} keys %$species) {
+  for (@fav, sort {$species->{$a}{'display_name'} cmp $species->{$b}{'display_name'}} keys %$species) {
 
     next if ($done{$_} || !$species->{$_} || !$species->{$_}{'is_reference'});
 
@@ -295,8 +328,8 @@ sub _species_list {
       group       => $species->{$_}{'group'},
       homepage    => $homepage,
       name        => $species->{$_}{'name'},
-      img         => sprintf('%sspecies/%s.png', $img_url, $_),
-      common      => $species->{$_}{'common'},
+      img         => sprintf('%sspecies/%s.png', $img_url, $species->{$_}{'image'}),
+      common      => $species->{$_}{'display_name'},
       assembly    => $species->{$_}{'assembly'},
       assembly_v  => $species->{$_}{'assembly_version'},
       favourite   => $fav{$_} ? 1 : 0,

@@ -63,7 +63,7 @@ sub content {
   my $cdb          = shift || $self->param('cdb') || 'compara';
   my $availability = $object->availability;
   my $is_ncrna     = ($object->Obj->biotype =~ /RNA/);
-  my $species_name = $species_defs->DISPLAY_NAME;
+  my $species_name = $species_defs->GROUP_DISPLAY_NAME;
   my $strain_url   = $species_defs->IS_STRAIN_OF ? "Strain_" : "";
   my $strain_param = $self->is_strain ? ";strain=1" : ""; # initialize variable even if is_strain is falsy to avoid warnings
 
@@ -98,9 +98,7 @@ sub content {
   }
 
   foreach my $homology_type (@orthologues) {
-    foreach (keys %$homology_type) {
-      (my $species = $_) =~ tr/ /_/;
-      next unless $species;
+    foreach my $species (keys %$homology_type) {
 
       #do not show strain species on main species view
       if ((!$self->is_strain && $species_defs->get_config($species, 'IS_STRAIN_OF')) || ($self->is_strain && !$species_defs->get_config($species, 'RELATED_TAXON'))) {
@@ -116,9 +114,9 @@ sub content {
         next;
       } 
 
-      $orthologue_list{$species} = {%{$orthologue_list{$species}||{}}, %{$homology_type->{$_}}};
+      $orthologue_list{$species} = {%{$orthologue_list{$species}||{}}, %{$homology_type->{$species}}};
       if($self->param('species_' . lc $species) eq 'off') {
-        $skipped{$species}        += keys %{$homology_type->{$_}};
+        $skipped{$species}        += keys %{$homology_type->{$species}};
       }
 
       delete $not_seen{$species};
@@ -188,7 +186,6 @@ sub content {
     { key => 'Species',    align => 'left', width => '10%', sort => 'html'                                                },
     { key => 'Type',       align => 'left', width => '10%', sort => 'html'                                            },   
     { key => 'identifier', align => 'left', width => '15%', sort => 'none', title => 'Orthologue'},      
-    { key => 'dN/dS',      align => 'left', width => '5%',  sort => 'html'                                             },
     { key => 'Target %id', align => 'left', width => '5%',  sort => 'position_html', label => 'Target %id', help => "Percentage of the orthologous sequence matching the $species_name sequence" },
     { key => 'Query %id',  align => 'left', width => '5%',  sort => 'position_html', label => 'Query %id',  help => "Percentage of the $species_name sequence matching the sequence of the orthologue" },
     { key => 'goc_score',  align => 'left', width => '5%',  sort => 'position_html', label => 'GOC Score',  help => "<a href='/info/genome/compara/Ortholog_qc_manual.html/#goc'>Gene Order Conservation Score (values are 0-100)</a>" },
@@ -210,10 +207,6 @@ sub content {
       
       # Add in Orthologue description
       my $orthologue_desc = $orthologue_map{$orthologue->{'homology_desc'}} || $orthologue->{'homology_desc'};
-      
-      # Add in the dN/dS ratio
-      my $orthologue_dnds_ratio = $orthologue->{'homology_dnds_ratio'} || 'n/a';
-      my $dnds_class  = ($orthologue_dnds_ratio ne "n/a" && $orthologue_dnds_ratio >= 1) ? "box-highlight" : "";
 
       # GOC Score, wgac and high confidence
       my $goc_score  = (defined $orthologue->{'goc_score'} && $orthologue->{'goc_score'} >= 0) ? $orthologue->{'goc_score'} : 'n/a';
@@ -222,7 +215,7 @@ sub content {
       my $goc_class  = ($goc_score ne "n/a" && $goc_score >= $orthologue->{goc_threshold}) ? "box-highlight" : "";
       my $wga_class  = ($wgac ne "n/a" && $wgac >= $orthologue->{wga_threshold}) ? "box-highlight" : "";
 
-      (my $spp = $orthologue->{'spp'}) =~ tr/ /_/;     
+      my $spp = $orthologue->{'spp'};    
       my $link_url = $hub->url({
         species => $spp,
         action  => 'Summary',
@@ -319,7 +312,6 @@ sub content {
       my $table_details = {
         'Species'    => join('<br />(', split(/\s*\(/, $species_defs->species_label($species))),
         'Type'       => $self->html_format ? glossary_helptip($hub, ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues").qq{<p class="top-margin"><a href="$tree_url">View Gene Tree</a></p>} : glossary_helptip($hub, ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues") ,
-        'dN/dS'      => qq{<span class="$dnds_class">$orthologue_dnds_ratio</span>},
         'identifier' => $self->html_format ? $id_info : $stable_id,
         'Target %id' => qq{<span class="$target_class">}.sprintf('%.2f&nbsp;%%', $target).qq{</span>},
         'Query %id'  => qq{<span class="$query_class">}.sprintf('%.2f&nbsp;%%', $query).qq{</span>},
@@ -380,7 +372,7 @@ sub get_no_ortho_species_html {
   my $hub = $self->hub;
   my $no_ortho_species_html = '';
 
-  foreach (keys %$not_seen) {
+  foreach (sort {lc $a cmp lc $b} keys %$not_seen) {
     if ($sets_by_species->{$_}) {
       $no_ortho_species_html .= '<li class="'. join(' ', @{$sets_by_species->{$_}}) .'">'. $hub->species_defs->species_label($_) .'</li>';
     }
@@ -395,11 +387,15 @@ sub get_export_data {
   my $hub          = $self->hub;
   my $object       = $self->object || $hub->core_object('gene');
 
+
   if ($flag eq 'sequence') {
     return $object->get_homologue_alignments;
   }
   else {
-    my $cdb = $flag || $self->param('cdb') || 'compara';
+    my $cdb = $flag || $self->param('cdb');
+    unless ($cdb) {
+      $cdb = $hub->function =~ /pan_compara/ ? 'pan_compara' : 'compara';
+    }
     my ($homologies) = $object->get_homologies('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb);
 
     my %ok_species;
@@ -407,7 +403,7 @@ sub get_export_data {
       (my $sp = $_) =~ s/species_//;
       $ok_species{$sp} = 1 if $self->param($_) eq 'yes';      
     }
-   
+
     if (keys %ok_species) {
       # It's the lower case species url name which is passed through the data export URL
       return [grep {$ok_species{lc($hub->species_defs->production_name_mapping($_->get_all_Members->[1]->genome_db->name))}} @$homologies];
@@ -431,16 +427,20 @@ sub buttons {
     my $name = $dxr ? $dxr->display_id : $gene->stable_id;
 
     my $params  = {
-                  'type'        => 'DataExport',
-                  'action'      => 'Orthologs',
-                  'data_type'   => 'Gene',
-                  'component'   => 'ComparaOrthologs',
-                  'data_action' => $hub->action,
-                  'gene_name'   => $name,
-                };
+      'type'        => 'DataExport',
+      'action'      => 'Orthologs',
+      'data_type'   => 'Gene',
+      'component'   => 'ComparaOrthologs',
+      'data_action' => $hub->action,
+      'gene_name'   => $name,
+      'cdb'         => $hub->function =~ /pan_compara/ ? 'pan_compara' : 'compara',
+    };
 
     ## Add any species settings
+    my $compara_spp = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'COMPARA_SPECIES'};
     foreach (grep { /^species_/ } $self->param) {
+      (my $key = $_) =~ s/species_//;
+      next unless $compara_spp->{$key};
       $params->{$_} = $self->param($_);
     }
 

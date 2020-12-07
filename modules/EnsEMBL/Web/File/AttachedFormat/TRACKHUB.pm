@@ -50,8 +50,8 @@ sub check_data {
   ## However only warn the errors, as most hubs have minor errors and hubCheck
   ## is not yet flexible enough to deal with them
   my $hubCheck = $self->{'hub'}->species_defs->HUBCHECK_BIN;
+  my $url = $self->{'url'};
   if ($hubCheck && !$self->{'registry'}) {
-    my $url = $self->{'url'};
     my $hc_error = `$hubCheck '$url' -checkSettings -noTracks`;	
     if ($hc_error) {
       ## Parse and ignore issues we don't care about
@@ -76,7 +76,9 @@ sub check_data {
   }
  
   ## Check that we can use it with this website's species
-  my $hub_params = {'parse_tracks' => 0};
+  ## Hack to catch IHEC Epigenomes Portal issues
+  my $parse_tracks = ($url =~ /epigenomesportal/) ? 1 : 0;
+  my $hub_params = {'parse_tracks' => $parse_tracks};
   ## Don't check assembly if the hub came from the registry
   my $assembly_check = $self->{'registry'} ? 0 : 1;
   $hub_params->{'assembly_lookup'} = $assembly_lookup if $assembly_check;
@@ -84,16 +86,22 @@ sub check_data {
   
   if ($hub_info->{'error'}) {
     $error  = sprintf('<p>Unable to attach remote TrackHub: %s</p>', $self->url);
-    $error .= "<p>$_.</p>" for ref $hub_info->{'error'} eq 'ARRAY' 
-                ? @{$hub_info->{'error'}} : $hub_info->{'error'};
+    if (ref $hub_info->{'error'} eq 'ARRAY') {
+      $error .= "<p>$_.</p>" for @{$hub_info->{'error'}};
+    }
+    else {
+      $error .= '<p>'.$hub_info->{'error'}.'</p>';
+    }
+    return ($self->url, $error, {'abort' => 1});
   }
-
-  return ($self->url, $error, { 
+  else {
+    return ($self->url, undef, { 
                                 name        => $hub_info->{'details'}{'shortLabel'}, 
                                 description => $hub_info->{'details'}{'longLabel'}, 
                                 assemblies  => $hub_info->{'genomes'} || {},
                               }
           );  
+  }
 }
 
 sub style {

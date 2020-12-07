@@ -99,9 +99,9 @@ sub content {
 
   my @coords = split(/[:-]/, $hub->param('r'));
   my $caption = sprintf('Synteny between %s chromosome %s and %s', 
-                    $hub->species_defs->SPECIES_COMMON_NAME,
+                    $hub->species_defs->SPECIES_DISPLAY_NAME,
                     $coords[0],
-                    $hub->species_defs->get_config($hub->otherspecies, 'SPECIES_COMMON_NAME'),
+                    $hub->species_defs->get_config($hub->otherspecies, 'SPECIES_DISPLAY_NAME'),
                 );
  
   return if $self->_export_image($image,'no_text no_pdf');
@@ -132,12 +132,12 @@ sub species_form {
   my $prod_name         = $species_defs->get_config($hub->species, 'SPECIES_PRODUCTION_NAME');
   my %synteny           = %{$synteny_hash{$prod_name} || {}};
   my $url_map           = $species_defs->multi_val('ENSEMBL_SPECIES_URL_MAP');
-  my @sorted_by_common  = sort { $a->{'common'} cmp $b->{'common'} } map {{ name => $url_map->{$_}, common => $species_defs->get_config($url_map->{$_}, 'SPECIES_COMMON_NAME') }} keys %synteny;
+  my @sorted            = sort { $a->{'display'} cmp $b->{'display'} } map {{ name => $url_map->{$_}, display => $species_defs->get_config($url_map->{$_}, 'SPECIES_DISPLAY_NAME') }} keys %synteny;
   my @values;
 
-  foreach my $next (@sorted_by_common) {
+  foreach my $next (@sorted) {
     next if $next->{'name'} eq $hub->species;
-    push @values, { caption => $next->{'common'}, value => $next->{'name'} };
+    push @values, { caption => $next->{'display'}, value => $next->{'name'} };
   }
 
   $form->add_hidden({ name => $_, value => $url->[1]->{$_} }) for keys %{$url->[1]};
