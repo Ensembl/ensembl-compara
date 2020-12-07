@@ -351,7 +351,7 @@ sub copy_data {
     my $start_time  = time();
     my $cmd = "mysql --host=$from_host --port=$from_port --user=$from_user " . ($from_pass ? "--password=$from_pass " : '') .
         "--max_allowed_packet=1024M $from_dbname -e \"$query\" --quick --silent --skip-column-names " .
-        "| sed -r -e 's/\\r//g' -e 's/(^|\\t)NULL(\$|\\t)/\\1\\\\N\\2/g' -e 's/(^|\\t)NULL(\$|\\t)/\\1\\\\N\\2/g' " .
+        "| LC_ALL=C sed -r -e 's/\\r//g' -e 's/(^|\\t)NULL(\$|\\t)/\\1\\\\N\\2/g' -e 's/(^|\\t)NULL(\$|\\t)/\\1\\\\N\\2/g' " .
         "| mysql --host=$to_host --port=$to_port --user=$to_user " . ($to_pass ? "--password=$to_pass " : '') .
         "$to_dbname -e \"$load_query\"";
     Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd, { die_on_failure => 1, use_bash_pipefail => 1, debug => $debug });
