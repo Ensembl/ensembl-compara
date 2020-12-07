@@ -56,7 +56,6 @@ sub run {
     my $self = shift;
 
     $self->_update_dnafrags();
-    $self->_lift_mlss_tags();
 }
 
 
@@ -93,38 +92,5 @@ sub _update_dnafrags {
         print STDERR "$nr rows of genomic_align redirected to the principal dnafrags\n";
     });
 }
-
-
-=head2 _lift_mlss_tags
-
-Description : Lifts the component MLSS tags to the principal MLSS.
-
-=cut
-
-sub _lift_mlss_tags {
-    my $self = shift;
-
-    my $principal_mlss_id  = $self->param_required('principal_mlss_id');
-    my $component_mlss_ids = $self->param_required('component_mlss_ids');
-
-    my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor();
-    my $principal_mlss = $mlss_adaptor->fetch_by_dbID($principal_mlss_id);
-    my @component_mlsss;
-    push @component_mlsss, $mlss_adaptor->fetch_by_dbID($_) for @$component_mlss_ids;
-
-    # Get the missing tags from the first component (should be the same value
-    # for all of them) and add them to the principal
-    my $ref_species = $component_mlsss[0]->get_value_for_tag('reference_species');
-    $principal_mlss->store_tag('reference_species', $ref_species);
-    my $non_ref_species = $component_mlsss[0]->get_value_for_tag('non_reference_species');
-    $principal_mlss->store_tag('non_reference_species', $non_ref_species);
-    my $ref_dna_collection = $component_mlsss[0]->get_value_for_tag('ref_dna_collection');
-    $principal_mlss->store_tag('ref_dna_collection', $ref_dna_collection);
-    my $non_ref_dna_collection = $component_mlsss[0]->get_value_for_tag('non_ref_dna_collection');
-    $principal_mlss->store_tag('non_ref_dna_collection', $non_ref_dna_collection);
-    my $param = $component_mlsss[0]->get_value_for_tag('param');
-    $principal_mlss->store_tag('param', $param);
-}
-
 
 1;
