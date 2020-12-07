@@ -339,8 +339,8 @@ sub copy_data {
         if ($table_engine eq 'MyISAM') {
             $to_dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
         } else {
-            $load_query = "SET AUTOCOMMIT = 0; SET FOREIGN_KEY_CHECKS = 0; SET UNIQUE_CHECKS = 0; " .
-                $load_query ."; SET AUTOCOMMIT = 1; SET FOREIGN_KEY_CHECKS = 1; SET UNIQUE_CHECKS = 1;";
+            $load_query = "SET AUTOCOMMIT = 0; SET FOREIGN_KEY_CHECKS = 0; " .
+                $load_query ."; SET AUTOCOMMIT = 1; SET FOREIGN_KEY_CHECKS = 1;";
         }
     }
 
