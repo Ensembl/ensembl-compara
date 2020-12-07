@@ -44,6 +44,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
+use Bio::EnsEMBL::Compara::Utils::IDGenerator qw(:all);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -120,26 +121,26 @@ sub fetch_input {
 sub write_output {
   my( $self) = @_;
 
+  my $gabs = $self->get_gabs;
+
   #
   #Start transaction
   #
   $self->call_within_transaction( sub {
-      $self->_write_output;
+      $self->_write_output($gabs);
   } );
 
   return 1;
 }
 
 sub _write_output {
-    my ($self) = @_;
+    my ($self, $gabs) = @_;
   my $starttime = time();
 
-  foreach my $fp (@{$self->param('output')}) {
-          if($fp->isa('Bio::EnsEMBL::FeaturePair')) {
-              $self->store_featurePair_as_genomicAlignBlock($fp);
-          }
-      }
-      if($self->debug){printf("%d FeaturePairs found\n", scalar(@{$self->param('output')}));}
+  my $gab_adaptor = $self->compara_dba->get_GenomicAlignBlockAdaptor;
+  foreach my $gab (@$gabs) {
+      $gab_adaptor->store($gab);
+  }
 
   print STDERR (time()-$starttime), " secs to write_output\n" if ($self->debug);
 }
@@ -170,7 +171,7 @@ sub dumpChunkToTmp {
 }
 
 
-sub store_featurePair_as_genomicAlignBlock
+sub convert_featurePair_to_genomicAlignBlock
 {
   my $self = shift;
   my $fp   = shift;
@@ -273,8 +274,6 @@ sub store_featurePair_as_genomicAlignBlock
   $GAB->length($fp->alignment_length);
   $GAB->level_id(1);
 
-  $self->compara_dba->get_GenomicAlignBlockAdaptor->store($GAB);
-  
   if($self->debug > 2) { print_simple_align($GAB->get_SimpleAlign, 80);}
 
   return $GAB;
@@ -345,6 +344,44 @@ sub print_simple_align
     $offset+=$aaPerLine;
     $numLines--;
   }
+}
+
+sub get_gabs {
+    my ($self) = @_;
+
+    # Convert the FeaturePairs to GenomicAlignBlocks
+    my @gabs;
+    foreach my $fp (@{$self->param('output')}) {
+        if ($fp->isa('Bio::EnsEMBL::FeaturePair')) {
+            my $gab = $self->convert_featurePair_to_genomicAlignBlock($fp);
+            push @gabs, $gab;
+        }
+    }
+    if($self->debug){printf("%d FeaturePairs found\n", scalar(@{$self->param('output')}));}
+
+    return [] unless @gabs;
+
+    # Assign the dbIDs using the ID generator
+    # For simplicity, genomic_align_block_id is the genomic_align_id of its
+    # first genomic_align. Since all blocks are pairwise, we need two
+    # request two values per block only.  group_id is not set.
+    # The request is not recorded because there is a transaction to
+    # ensure that everything is written, or nothing.
+    my $ga_id = get_id_range(
+        $self->compara_dba->dbc,
+        "genomic_align_".$self->param('mlss_id'),
+        2*scalar(@gabs),
+    );
+
+    foreach my $gab (@gabs) {
+        my ($ga1, $ga2) = @{$gab->genomic_align_array};
+        $gab->dbID($ga_id);
+        $ga1->dbID($ga_id);
+        $ga2->dbID($ga_id+1);
+        $ga_id += 2;
+    }
+
+    return \@gabs;
 }
 
 1;
