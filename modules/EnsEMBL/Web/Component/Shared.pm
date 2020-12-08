@@ -761,7 +761,7 @@ sub species_stats {
   });
   $summary->add_row({
       'name' => '<b>Base Pairs</b>',
-      'stat' => $self->thousandify($genome_container->get_total_length()),
+      'stat' => $self->thousandify($genome_container->get_ref_length()),
   }) unless $no_stats;
   my $header = glossary_helptip($self->hub, 'Golden Path Length', 'Golden path length');
   $summary->add_row({
