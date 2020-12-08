@@ -87,12 +87,13 @@ jobs:
       perl: 5.14
       name: "Perl unit tests on the minimum version"
       env:
-        - COVERAGE=false
+        - COVERAGE=true
       install:
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
         - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
         - cpanm --quiet --installdeps --notest --cpanfile ensembl-rest/cpanfile .
         - cpanm --quiet --installdeps --notest .
+        - cpanm --quiet --notest Devel::Cover::Report::Codecov
       script: ./travisci/perl-unittest_harness.sh
 
     - language: perl
