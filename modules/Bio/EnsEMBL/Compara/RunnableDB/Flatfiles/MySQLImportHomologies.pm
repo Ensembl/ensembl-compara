@@ -146,7 +146,7 @@ sub write_output {
     my $num_tries = 0;
     until ($import_done) {
         $num_tries++;
-        my $import_cmd = "mysql --host=$host --port=$port --user=$user --password=$pass $dbname -e \"$import_query\" --max_allowed_packet=1024M";
+        my $import_cmd = "mysql --host=$host --port=$port --user=$user --password=$pass --local-infile=1 $dbname -e \"$import_query\" --max_allowed_packet=1024M";
         my $command = $self->run_command($import_cmd);
 
         # Check what has happened
