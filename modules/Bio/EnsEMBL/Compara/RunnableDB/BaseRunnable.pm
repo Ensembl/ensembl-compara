@@ -570,11 +570,14 @@ sub get_requestor_id {
     }
 
     # Resort to computing a (likely unique) 64-bits key
-    # based on the job's parameters
-    my $params = stringify($self->input_job->{'_unsubstituted_param_hash'});
+    # based on the job's configuration
+    my $params   = stringify($self->input_job->{'_unsubstituted_param_hash'});
+    my $analysis = $self->input_job->analysis->module;
+    my $job_conf = join('/', $analysis, $params);
+
     # md5 returns a 128 bits / 16 bytes string, of which we take
     # the 64 left-most bits
-    my $id = unpack 'Q', md5($params);
+    my $id = unpack 'Q', md5($job_conf);
     return $id
 }
 
