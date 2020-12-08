@@ -73,7 +73,7 @@ jobs:
         - cpanm --quiet --installdeps --notest .
         - yamllint --version
         - shellcheck --version
-      script: prove -r ./travisci/all-housekeeping/
+      script: prove -rv ./travisci/all-housekeeping/
 
     - language: perl
       perl: 5.30
