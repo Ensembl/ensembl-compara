@@ -565,7 +565,7 @@ sub get_requestor_id {
     my $self = shift;
 
     # Use the eHive job_id if possible
-    if ($self->input_job && $self->input_job->dbID) {
+    if ($self->input_job->dbID) {
         return $self->input_job->dbID;
     }
 
