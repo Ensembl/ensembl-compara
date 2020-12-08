@@ -71,6 +71,8 @@ jobs:
         - pip install --user yamllint
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
         - cpanm --quiet --installdeps --notest .
+        - yamllint --version
+        - shellcheck --version
       script: prove -r ./travisci/all-housekeeping/
 
     - language: perl
