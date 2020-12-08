@@ -50,6 +50,16 @@ sub _test_helper {
     is($got_dbID, $expected_dbID, "Got $expected_dbID for ${n_ids} ID of label ${label}".($requestor ? " (requestor=$requestor)" : ''));
 }
 
+sub _test_get_previously_assigned_range {
+    my ($label, $requestor, $expected) = @_;
+    my $got = get_previously_assigned_range($dbc, $label, $requestor);
+    if ($expected) {
+        is_deeply($got, $expected, "Got $expected->[0]/$expected->[1] for $requestor ($label)");
+    } else {
+        is($got, undef, "No data for $requestor ($label)");
+    }
+}
+
 subtest "Without a requestor" => sub {
 
     throws_ok {get_id_range($dbc, 'A', 0)}  qr/Can only request a positive number of IDs/, 'Throws when requesting 0 IDs';
@@ -82,6 +92,13 @@ subtest "With a requestor" => sub {
     _test_helper('A', 2, 55, 16);
     # Same call -> same ID
     _test_helper('A', 5, 55, 16);
+
+    # Test that we can retrieve the IDs
+    _test_get_previously_assigned_range('A', 33, undef);
+    _test_get_previously_assigned_range('A', 44, [11, 5]);
+    _test_get_previously_assigned_range('A', 55, [16, 5]);
+    _test_get_previously_assigned_range('B', 55, [5, 1]);
+    _test_get_previously_assigned_range('C', 22, undef);
 };
 
 done_testing();
