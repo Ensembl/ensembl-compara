@@ -136,8 +136,8 @@ div.config_wrapper .config_menu .interaction_label       { background-image: url
 div.config_wrapper .config_menu .line                    { background-image: url(/i/render/line.gif); }
 div.config_wrapper .config_menu .misalign                { background-image: url(/i/render/misalign.gif); }
 div.config_wrapper .config_menu .off                     { background-image: url(/i/render/off.gif); }
-div.config_wrapper .config_menu .pvalue                  { background-image: url(/i/render/pvalue.png); }
-div.config_wrapper .config_menu .beta                    { background-image: url(/i/render/beta.png); }
+div.config_wrapper .config_menu .pvalue                  { background-image: url(/i/render/pvalue.gif); }
+div.config_wrapper .config_menu .beta                    { background-image: url(/i/render/beta.gif); }
 div.config_wrapper .config_menu .stack                   { background-image: url(/i/render/stack.gif); }
 div.config_wrapper .config_menu .transcript_label_coding { background-image: url(/i/render/transcript_label_coding.gif); }
 div.config_wrapper .config_menu .transcript_gencode_basic{  background-image: url(/i/render/transcript_gencode_basic.gif); }
