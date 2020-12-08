@@ -81,7 +81,7 @@ sub init_cacheable {
       DOI: <a href="https://doi.org/10.1126/science.1262110">10.1126/science.1262110</a>.
       PMID: <a href="http://www.ncbi.nlm.nih.gov/pubmed/25954001">25954001</a>
     );
-    $self->add_track('functional_gene_expression',"reg_manplot_$tissue","$tissue_readable GTEX eQTLs",'reg_manplot',{
+    $self->add_track('functional_gene_expression',"reg_manplot_$tissue","$tissue_readable eQTLs",'reg_manplot',{
       tissue => $tissue,
       display => ($tissue eq $gtex_tissue_example)?'normal':'off',
       strand => 'r',
