@@ -60,6 +60,13 @@ sub _test_get_previously_assigned_range {
     }
 }
 
+sub _test_initialise_id {
+    my ($label, $first_id, $expected_return) = @_;
+    my $got = initialise_id($dbc, $label, $first_id);
+    is($got, $expected_return, "initialise_id($label, $first_id) returned $expected_return");
+}
+
+
 subtest "Without a requestor" => sub {
 
     throws_ok {get_id_range($dbc, 'A', 0)}  qr/Can only request a positive number of IDs/, 'Throws when requesting 0 IDs';
@@ -99,6 +106,22 @@ subtest "With a requestor" => sub {
     _test_get_previously_assigned_range('A', 55, [16, 5]);
     _test_get_previously_assigned_range('B', 55, [5, 1]);
     _test_get_previously_assigned_range('C', 22, undef);
+};
+
+subtest "initialise_id" => sub {
+    my ($dbc, $label, $first_id) = @_;
+
+    # Initialising a new ID label returns 1
+    _test_initialise_id('C', 2, 1);
+    # get_id_range should return 2 at the next request
+    _test_helper('C', 5, undef, 2);
+
+    # get_id_range should return 21 for the next A request
+    _test_helper('A', 5, undef, 21);
+    # Initialising A returns 0E0 because it already exists
+    _test_initialise_id('A', 2, "0E0");
+    # get_id_range for A should now return 26, not 2
+    _test_helper('A', 5, undef, 26);
 };
 
 done_testing();
