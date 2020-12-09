@@ -235,7 +235,7 @@
         <genome name="maylandia_zebra" assembly="M_zebra_UMD2a"/>
         <genome name="oryzias_melastigma" assembly="Om_v0.7.RACA"/>
         <genome name="poecilia_reticulata" assembly="Guppy_female_1.0_MT"/>
-        <genome name="scophthalmus_maximus" assembly="ASM318616v1"/>
+        <genome name="scophthalmus_maximus"/>
         <genome name="seriola_dumerili" assembly="Sdu_1.0"/>
         <genome name="xiphophorus_maculatus" assembly="X_maculatus-5.0-male"/>
         <genome name="oryzias_latipes"/>
@@ -254,7 +254,7 @@
         <genome name="oryzias_javanicus" assembly="OJAV_1.1"/>
         <genome name="oncorhynchus_tshawytscha" assembly="Otsh_v1.0"/>
         <genome name="carassius_auratus" assembly="ASM336829v1"/>
-        <genome name="oncorhynchus_mykiss" assembly="Omyk_1.0"/>
+        <genome name="oncorhynchus_mykiss"/>
         <genome name="esox_lucius" assembly="Eluc_v4"/>
         <genome name="dicentrarchus_labrax" assembly="seabass_V1.0"/>
         <genome name="cyclopterus_lumpus" assembly="fCycLum1.pri"/>
