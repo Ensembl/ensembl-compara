@@ -637,6 +637,7 @@ sub _expand_database_templates {
                       'PASS'    => $PASS,
                       'DRIVER'  => $DRIVER,
                       };
+    $self->_info_line('DBserver', sprintf 'DBs at %s:%s', $db_details->{'HOST'}, $db_details->{'PORT'} ) if $SiteDefs::ENSEMBL_WARN_DATABASES;
     foreach (@db_types) {
       my $species_version = $tree->{'general'}{'SPECIES_RELEASE_VERSION'} || 1;
       my $db_name = $tree->{'databases'}{'DATABASE_'.$_};
