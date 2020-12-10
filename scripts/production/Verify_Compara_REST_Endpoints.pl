@@ -274,8 +274,14 @@ sub fetch_species_node {
     my ($this_node, $species_name) = @_;
     my $nodes = ref($this_node) eq 'ARRAY' ? $this_node : [$this_node];
     foreach my $node ( @$nodes ) {
-        if ( exists $node->{property} ) {
-            return $node if (($node->{property}->{content} // '') eq $species_name);
+
+        # Found a gene
+        if (exists $node->{property} && ($node->{property}->{ref} eq 'Compara:genome_db_name')) {
+            if ($node->{property}->{content} eq $species_name) {
+                return $node;
+            } else {
+                next;
+            }
         }
         if ( exists $node->{clade} ) {
             my $species_node = fetch_species_node($node->{clade}, $species_name);
