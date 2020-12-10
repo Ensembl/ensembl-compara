@@ -511,6 +511,11 @@ sub generic_group_link {
     if ($pop_use_url) {
       $terms = sprintf(' (<a href="%s" rel="external">Terms of Use</a>)', $pop_use_url);
     }
+  } elsif ($project_name =~ /gem-j/i) {
+    $pop_use_url = $self->hub->get_ExtURL('GEM_J_POP_USE');
+    if ($pop_use_url) {
+      $terms = sprintf(' (<a href="%s" rel="external">Terms of Use</a>)', $pop_use_url);
+    }
   }
 
   $project_name = ($project_name =~ /(project|consortium|ncbi alfa)/i) ? "<b>$project_name</b> " : '';
