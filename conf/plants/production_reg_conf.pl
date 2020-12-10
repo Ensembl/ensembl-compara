@@ -89,9 +89,10 @@ my $compara_dbs = {
 
     # LASTZ dbs
     'lastz_batch_1' => [ 'mysql-ens-compara-prod-3', 'cristig_plants_lastz_batch1_103' ],
-    # New version of the self-alignment with better coverage. Merge it if you want !
-    # But check whether the POLYPLOID alignment needs to be updated as well
-    'lastz_tdic'    => [ 'mysql-ens-compara-prod-7', 'muffato_plants_self_lastz_tdic_103d' ],
+    # New version of the T.dic self-alignment with better coverage.
+    # Should probably only be merged if the related POLYPLOID alignment is
+    # updated too, which we can't do at the moment, cf ENSCOMPARASW-1878
+    'lastz_tdic'    => [ 'mysql-ens-compara-prod-8', 'muffato_plants_self_lastz_tdic_103' ],
 
     # synteny
     'compara_syntenies' => [ 'mysql-ens-compara-prod-10', 'cristig_plants_synteny_103' ],
