@@ -510,9 +510,7 @@ try{
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
         ok($responseIDGet->{success}, "Check phyloXml validity");
     
-        print $server.$ext.';content-type=text/x-phyloxml;aligned=0' . "\n";
         $phyloXml = process_phyloXml_get($server.$ext.';content-type=text/x-phyloxml;aligned=0'.($extra_params ? ";$extra_params" : ''));
-        #print Dumper $phyloXml;
         my $species_node = fetch_species_node($phyloXml->{phylogeny}, $species_1);
         ok($species_node->{sequence}->{mol_seq}->{is_aligned} == 0, "Check get alignment region and unaligned sequences");
 
