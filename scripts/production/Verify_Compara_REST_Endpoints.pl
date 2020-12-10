@@ -283,20 +283,18 @@ sub fetch_species_node {
                 next;
             }
         }
+
+        # Internal node
+        # NOTE: When one child or more is itself an internal node,
+        # XML::Simple::XMLin groups (all) the children as an array-ref
+        # under the "clade" key. When they all are genes, it puts them in
+        # the hash under their (gene) name, and there is no "clade" key.
         if ( exists $node->{clade} ) {
             my $species_node = fetch_species_node($node->{clade}, $species_name);
             return $species_node if defined $species_node;
         } else {
-            # in case we are on an ancestral or species node
-            foreach my $chd_node ( values %$node ){
-                if (exists $chd_node->{property}){
-                    return $chd_node if (($chd_node->{property}->{content} // '') eq $species_name);
-                }
-                if (exists $chd_node->{clade}){
-                    my $species_node = fetch_species_node($chd_node->{clade}, $species_name);
-                    return $species_node if defined $species_node;
-                }
-            }
+            my $species_node = fetch_species_node([values %$node], $species_name);
+            return $species_node if defined $species_node;
         }
     }
     return undef;
