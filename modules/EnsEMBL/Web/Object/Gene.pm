@@ -891,8 +891,8 @@ sub get_homologue_alignments {
   my $msa;
 
   if ($database) {  
-    my $member  = $database->get_GeneMemberAdaptor->fetch_by_stable_id($self->Obj->stable_id);
-    my $tree    = $database->get_GeneTreeAdaptor->fetch_default_for_Member($member);
+    my $member  = $self->get_compara_Member($compara_db);
+    my $tree    = $self->get_GeneTree($compara_db, 1);
     my @params  = ($member, $type);
     my $species = [];
     foreach (grep { /species_/ } $hub->param) {
