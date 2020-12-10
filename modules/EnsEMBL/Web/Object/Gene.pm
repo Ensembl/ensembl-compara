@@ -888,11 +888,12 @@ sub get_homologue_alignments {
   my $type        = shift || 'ENSEMBL_ORTHOLOGUES';
   my $database    = $self->database($compara_db);
   my $hub         = $self->hub;
+  my $strain_tree = $hub->species_defs->get_config($hub->species,'RELATED_TAXON') if($hub->param('data_action') =~ /strain_/i);
   my $msa;
 
   if ($database) {  
     my $member  = $self->get_compara_Member($compara_db);
-    my $tree    = $self->get_GeneTree($compara_db, 1);
+    my $tree    = $self->get_GeneTree($compara_db, 1, $strain_tree);
     my @params  = ($member, $type);
     my $species = [];
     foreach (grep { /species_/ } $hub->param) {
