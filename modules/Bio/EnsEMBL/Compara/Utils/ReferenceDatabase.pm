@@ -92,9 +92,9 @@ sub update_reference_genome {
 
   Arg[1]      : Bio::EnsEMBL::DBSQL::DBAdaptor $species_dba
   Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[4]      : (optional) boolean $force
-  Arg[5]      : (optional) int $taxon_id
-  Arg[6]      : (optional) int $offset
+  Arg[3]      : (optional) boolean $force
+  Arg[4]      : (optional) int $taxon_id
+  Arg[5]      : (optional) int $offset
   Description : This method takes all the information needed from the
                 species database in order to update the genome_db table
                 of the compara database
