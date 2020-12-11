@@ -54,7 +54,7 @@ sub _test_get_previously_assigned_range {
     my ($label, $requestor, $expected) = @_;
     my $got = get_previously_assigned_range($dbc, $label, $requestor);
     if ($expected) {
-        is_deeply($got, $expected, "Got $expected->[0]/$expected->[1] for $requestor ($label)");
+        is_deeply($got, $expected, "Got " . $expected->[0] . "/" . $expected->[1] . " for $requestor ($label)");
     } else {
         is($got, undef, "No data for $requestor ($label)");
     }

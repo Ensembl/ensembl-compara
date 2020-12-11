@@ -1171,14 +1171,14 @@ sub create_net_dataflows {
            #dataflow to create_filter_duplicates_net_jobs
            #
            my $ref_output_hash = {};
-           %$ref_output_hash = ('method_link_species_set_id'=> $net_config->{'mlss_id'},
+           %$ref_output_hash = ('method_link_species_set_id' => $net_config->{'mlss_id'},
                                 'is_reference' => 1,
                                 'collection_name'=> $net_config->{'reference_collection_name'},
                                 'chunk_size' => $dna_collections->{$net_config->{'reference_collection_name'}}->{'chunk_size'},
                                 'overlap' => $dna_collections->{$net_config->{'reference_collection_name'}}->{'overlap'});
 
            my $non_ref_output_hash = {};
-           %$non_ref_output_hash = ('method_link_species_set_id'=> $net_config->{'mlss_id'},
+           %$non_ref_output_hash = ('method_link_species_set_id' => $net_config->{'mlss_id'},
                                     'is_reference' => 0,
                                     'collection_name'=>$net_config->{'non_reference_collection_name'},
                                     'chunk_size' => $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'chunk_size'},

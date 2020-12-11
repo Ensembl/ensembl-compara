@@ -356,10 +356,10 @@ sub get_gabs {
     # Assign the dbIDs using the ID generator
     # For simplicity, genomic_align_block_id is the genomic_align_id of its
     # first genomic_align. Since all blocks are pairwise, we need to
-    # request two values per block only.  group_id is not set.
+    # request two values per block only. group_id is not set.
     my $ga_id = get_id_range(
         $self->compara_dba->dbc,
-        "genomic_align_".$self->param('mlss_id'),
+        "genomic_align_" . $self->param('mlss_id'),
         2*scalar(@gabs),
         $self->get_requestor_id,
     );

@@ -495,7 +495,7 @@ sub assign_ids {
     my $ga_id = get_id_range(
         $self->compara_dba->dbc,
         "genomic_align_${mlss_id}",
-        2*$n_blocks,
+        2 * $n_blocks,
         $self->get_requestor_id,
     );
 
