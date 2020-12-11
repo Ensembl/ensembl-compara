@@ -160,7 +160,7 @@ sub store {
       throw( "method_link_species_set in GenomicAlign is not in DB" );
     }
     my $cigar_line = $ga->cigar_line;
-    if(!$cigar_line) {
+    if (!$cigar_line) {
       throw( "cigar_line is not set" );
     }
 

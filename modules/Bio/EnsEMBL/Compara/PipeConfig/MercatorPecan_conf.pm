@@ -107,7 +107,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
         'genome_dumps_dir' => $self->o('genome_dumps_dir'),
-        'work_dir' => $self->o('work_dir'),
+        'work_dir'         => $self->o('work_dir'),
     };
 }
 
@@ -651,4 +651,3 @@ sub pipeline_analyses {
 }
 
 1;
-

@@ -300,13 +300,13 @@ sub _assert_cigar_lines_in_block {
         my $cigar_length = Bio::EnsEMBL::Compara::Utils::Cigars::sequence_length_from_cigar($genomic_align->cigar_line);
         my $region_length = $genomic_align->dnafrag_end - $genomic_align->dnafrag_start + 1;
         if ($cigar_length != $region_length) {
-            $self->_backup_data_and_throw($gab, "cigar_line's sequence length ($cigar_length) doesn't match the region length ($region_length)" );
+            $self->_backup_data_and_throw($gab, "cigar_line's sequence length ($cigar_length) doesn't match the region length ($region_length)");
         }
         my $aln_length = Bio::EnsEMBL::Compara::Utils::Cigars::alignment_length_from_cigar($genomic_align->cigar_line);
         $lengths{$aln_length}++;
     }
     if (scalar(keys %lengths) > 1) {
-        $self->_backup_data_and_throw($gab, "Multiple alignment lengths: ". stringify(\%lengths));
+        $self->_backup_data_and_throw($gab, "Multiple alignment lengths: " . stringify(\%lengths));
     }
 }
 
