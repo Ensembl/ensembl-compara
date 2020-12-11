@@ -40,41 +40,30 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-        'force'      => 1,
-        'do_not_add' => undef,
-        'division'   => 'all',
-        'hard_limit' => undef,
+        'force'        => 1,
+        'hard_limit'   => 50,
     };
 }
 
 sub fetch_input {
     my ($self) = @_;
 
-    my $species_list_file = $self->param_required('species_list_file');
-    my $do_not_add        = $self->param('do_not_add');
-    my $division          = $self->param('division');
-    my $spec_hard_limit   = $self->param('hard_limit');
+    my $species_names    = $self->param('species_list');
+    print Dumper $species_names;
+    my $spec_hard_limit  = $self->param('hard_limit');
     my @species_list;
 
-    open ( my $f, "<", $species_list_file ) or die "Cannot open production list of species $!";
-    chomp( my @species_names  = <$f> );
-    close($f);
-
-    foreach my $species_name ( @species_names ) {
-        if ( defined $do_not_add && any { $_ eq $species_name } @{ $do_not_add->{$division} } ) {
-            $self->warning( $species_name . " is a reference genome" );
+    foreach my $species_name ( @$species_names ) {
+        if ( scalar(@species_list) < $spec_hard_limit ) {
+            push @species_list, $species_name if scalar(@species_list) < $spec_hard_limit;
+            print Dumper $species_name if $self->debug;
         }
         else {
-            if scalar(@species_list) < $spec_hard_limit {
-                push @species_list, $species_name if scalar(@species_list) < $spec_hard_limit;
-            }
-            else {
-                $self->warning( "The hard limit of genomes in this pipeline has been exceeded: " . $species_name . " has been discarded." );
-            }
+            $self->warning( "The hard limit of" . $spec_hard_limit . "genomes in this pipeline has been exceeded: " . $species_name . " has been discarded." );
         }
     }
 
-    $self->param( 'species_list', \@species_list );
+    $self->param( 'max_species_list', \@species_list );
 
     my $master_dba = $self->get_cached_compara_dba('master_db');
     $self->param( 'master_dba', $master_dba );
@@ -83,10 +72,11 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    my $species_list = $self->param('species_list');
+    my $species_list = $self->param('max_species_list');
     my $new_genome_dbs = [];
 
     foreach my $species_name ( @$species_list ) {
+        print Dumper $species_name;
         push @$new_genome_dbs, _add_new_genomedb($self->param('master_dba'), $species_name, -RELEASE => $self->param('release'), -FORCE => $self->param('force') );
     }
 }
@@ -109,10 +99,8 @@ sub _add_new_genomedb {
     my $species_no_underscores = $species;
     $species_no_underscores =~ s/\_/\ /;
 
-    my $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species, "core");
-    if(! $species_db) {
-        $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species_no_underscores, "core");
-    }
+    my $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species, "core") ? Bio::EnsEMBL::Registry->get_DBAdaptor($species, "core") : Bio::EnsEMBL::Registry->get_DBAdaptor($species_no_underscores, "core");
+
     throw ("Cannot connect to database [${species_no_underscores} or ${species}]") if (!$species_db);
 
     my ( $new_genome_db );

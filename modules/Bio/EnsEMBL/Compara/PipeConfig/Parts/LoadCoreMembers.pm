@@ -70,9 +70,6 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::AddRapidSpecies',
             -parameters    => {
                 'release'           => 1,
-                'do_not_add'        => $self->o('reference_list'),
-                'species_list_file' => $self->o('species_list_file'),
-                'division'          => $self->o('division'),
             },
             -hive_capacity => 10,
             -rc_name       => '16Gb_job',
@@ -121,7 +118,7 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
                 'registry_files'  => $self->o('curr_file_sources_locs'),
             },
             -flow_into     => {
-                1 => { 'load_fresh_members_from_db' => INPUT_PLUS(), },
+                1 => [ 'load_fresh_members_from_db' ],
             },
             -hive_capacity => 30,
             -rc_name       => '2Gb_job',
@@ -140,6 +137,7 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
                 'store_related_pep_sequences' => $self->o('store_related_pep_sequences'),
                 'compara_db'                  => $self->o('compara_db'),
                 'master_db'                   => $self->o('master_db'),
+                'skip_dna'                    => $self->o('skip_dna'),
             },
             -hive_capacity => 10,
             -rc_name       => '4Gb_job',

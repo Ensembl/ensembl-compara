@@ -46,36 +46,40 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # Inherit the generic ones
 
+        # Directories to write to
         'work_dir'     => $self->o('pipeline_dir'),
         'fasta_dir'    => $self->o('work_dir') . '/fasta/',
         'query_db_dir' => $self->o('work_dir') . '/query_diamond_db/',
+        'dump_path'    => $self->o('work_dir'),
+        # Directories the reference genome pipeline dumps to
         'ref_dump_dir' => $self->o('genome_dumps_dir'),
 
-        'ref_blast_db' => undef,
-        'blast_db'     => $self->o('ref_blast_db'),
+        # Set mandatory databases
         'compara_db'   => $self->pipeline_url(),
-        'output_db'    => $self->pipeline_url(),
-        'master_db'    => $self->pipeline_url(),
+        'output_db'    => $self->o('compara_db'),
+        'master_db'    => $self->o('compara_db'),
+        'member_db'    => $self->o('compara_db'),
         'ncbi_db'      => 'ncbi_taxonomy',
-        'member_db'    => $self->pipeline_url(),
-        'reference_db' => 'rr_ref_master',
+        'rr_ref_db'    => 'rr_ref_master',
         'meta_host'    => 'mysql-ens-meta-prod-1',
+        'rr_meta_db'   => 'rr_metadata',
 
-        # Member loading parameters
+        # Member loading parameters - matches reference genome members
         'include_reference'           => 1,
         'include_nonreference'        => 0,
         'include_patches'             => 0,
-        'store_coding'                => 1,
+        'store_coding'                => 1, # at the moment we are only loading the proteins
         'store_ncrna'                 => 0,
         'store_others'                => 0,
         'store_exon_coordinates'      => 0,
         'store_related_pep_sequences' => 0, # do we want CDS sequence as well as protein seqs?
+        'skip_dna'                    => 1, # we skip the dna in the case
 
         # Member HC parameters
         'allow_ambiguity_codes'         => 1,
         'only_canonical'                => 0,
         'allow_missing_cds_seqs'        => 1, # set to 0 if we store CDS (see above)
-        'allow_missing_coordinates'     => 0,
+        'allow_missing_coordinates'     => 1,
         'allow_missing_exon_boundaries' => 1, # set to 0 if exon boundaries are loaded (see above)
 
         'projection_source_species_names' => [ ],
@@ -90,9 +94,18 @@ sub default_options {
         'hc_capacity'              => 150,
         'decision_capacity'        => 150,
         'hc_priority'              => -10,
+        # DIAMOND runnable parameters
         'num_sequences_per_blast_job' => 200,
         'blast_params'                => '--max-hsps 1 --threads 4 -b1 -c1 --sensitive',
         'evalue_limit'                => '1e-6',
+
+        # Set hybrid registry file that both metadata production and compara understand
+        'reg_conf'      => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/conf/homology_annotation/production_reg_conf.pl',
+        'registry_file' => $self->o('reg_conf'),
+
+        # Mandatory species input, one or the other only
+        'species_list_file' => undef,
+        'species_list'      => [ ],
 
     };
 }
@@ -107,6 +120,14 @@ sub pipeline_create_commands {
     ];
 }
 
+sub hive_meta_table {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
+        'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
+    };
+}
+
 sub pipeline_wide_parameters {  # These parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
     my ($self) = @_;
     return {
@@ -116,7 +137,8 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
         'member_db'        => $self->o('member_db'),
         'master_db'        => $self->o('master_db'),
         'output_db'        => $self->o('output_db'),
-        'reference_db'     => $self->o('reference_db'),
+        'rr_ref_db'        => $self->o('rr_ref_db'),
+        'rr_meta_db'       => $self->o('rr_meta_db'),
 
         'blast_params'     => $self->o('blast_params'),
         'evalue_limit'     => $self->o('evalue_limit'),
@@ -125,9 +147,9 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
         'fasta_dir'        => $self->o('fasta_dir'),
         'query_db_dir'     => $self->o('query_db_dir'),
         'ref_dump_dir'     => $self->o('ref_dump_dir'),
+        'dump_path'        => $self->o('dump_path'),
 
-        'reference_list'    => $self->o('reference_list'),
-        'species_list_file' => $self->o('species_list_file'),
+        'reg_conf'         => $self->o('reg_conf'),
     };
 }
 
@@ -154,13 +176,36 @@ sub core_pipeline_analyses {
     );
 
     return [
-        {   -logic_name => 'backbone_fire_db_prepare',
+
+        {   -logic_name => 'backbone_fire_prepare_species',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -input_ids  => [ { } ],
+            -flow_into  => {
+                '1->A' => [ 'core_species_factory' ],
+                'A->1' => [ 'backbone_fire_db_prepare' ],
+            },
+        },
+
+        {   -logic_name => 'backbone_fire_db_prepare',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A'  => [ 'copy_ncbi_tables_factory' ],
                 'A->1'  => [ 'backbone_fire_blast' ],
             },
+        },
+
+        {   -logic_name      => 'core_species_factory',
+            -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SpeciesFactory',
+            -max_retry_count => 1,
+            -parameters      => {
+                'registry_file'      => $self->o('registry_file'),
+                'species_list'       => $self->o('species_list'),
+                'species_list_file'  => $self->o('species_list_file'),
+            },
+            -flow_into       => {
+                2 => [ '?accu_name=species_list&accu_address=[]&accu_input_variable=species' ],
+            },
+            -hive_capacity   => 1,
         },
 
         {   -logic_name => 'backbone_fire_blast',
