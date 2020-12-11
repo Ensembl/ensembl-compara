@@ -206,7 +206,9 @@ sub loadMembersFromCoreSlices {
             $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($slice, $self->param('genome_db'));
             $dnafrag_adaptor->store($dnafrag);
         } else {
-            $self->throw(sprintf('Cannot find / create a DnaFrag with name "%s" for "%s"', $slice->seq_region_name, $self->param('genome_db')->name));
+            unless ($self->param('skip_dna')) {
+                $self->throw(sprintf('Cannot find / create a DnaFrag with name "%s" for "%s"', $slice->seq_region_name, $self->param('genome_db')->name));
+            }
         }
     }
 
