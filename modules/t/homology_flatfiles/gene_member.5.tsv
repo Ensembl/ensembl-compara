@@ -1,0 +1,4 @@
+stable_id	gene_member_id	dnafrag_id	dnafrag_start	dnafrag_end	dnafrag_strand
+ENSG0071	71	7	1	100	1
+ENSG0072	72	7	101	200	1
+ENSG0073	73	7	201	300	1

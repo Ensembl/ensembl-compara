@@ -1,5 +1,5 @@
 1	\N	schema_type	core
-2	\N	schema_version	102
+2	\N	schema_version	104
 3	\N	patch	patch_68_69_a.sql|schema_version
 4	1	species.taxonomy_id	4565
 6	1	species.alias	bread wheat
@@ -68,8 +68,6 @@
 94	1	genebuild.initial_release_date	2013-12-MIPS
 95	1	genebuild.last_geneset_update	2013-12-MIPS
 96	1	genebuild.version	2.2
-97	1	provider.name	IWGSC
-98	1	provider.url	http://www.wheatgenome.org/
 188	1	transcriptbuild.level	toplevel
 100	1	genebuild.method	Imported from IWGSC
 101	1	sample.transcript_param	Traes_1BS_1172A6B03.1
@@ -169,3 +167,5 @@
 249	\N	patch	patch_99_100_c.sql|alter_mapping_session_assembly_length
 250	\N	patch	patch_100_101_a.sql|schema_version
 251	\N	patch	patch_101_102_a.sql|schema_version
+252	\N	patch	patch_102_103_a.sql|schema_version
+253	\N	patch	patch_103_104_a.sql|schema_version

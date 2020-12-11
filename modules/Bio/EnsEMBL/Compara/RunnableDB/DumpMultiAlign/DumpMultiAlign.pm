@@ -50,7 +50,7 @@ sub param_defaults {
     my $self = shift;
     return {
         %{ $self->SUPER::param_defaults() },
-        'cmd' => [ 'perl', '#dump_aln_program#', '--species', '#species#', '--mlss_id', '#dump_mlss_id#', '--masked_seq', '#masked_seq#', '--split_size', '#split_size#', '--output_format', '#format#', '--output_file', '#output_file_gen#' ],
+        'cmd' => [ 'perl', '#dump_aln_program#', '--mlss_id', '#dump_mlss_id#', '--masked_seq', '#masked_seq#', '--split_size', '#split_size#', '--output_format', '#format#', '--output_file', '#output_file_gen#' ],
 
         'dump_mlss_id'  => '#mlss_id#',     # By default we still dump "mlss_id"
 
@@ -67,6 +67,10 @@ sub fetch_input {
 
     if ($self->param('genome_dumps_dir')) {
         push @$cmd, '--genome_dumps_dir', $self->param('genome_dumps_dir');
+    }
+
+    if ($self->param('species')) {
+        push @$cmd, '--species', $self->param('species');
     }
 
     #Write a temporary file to store gabs to dump

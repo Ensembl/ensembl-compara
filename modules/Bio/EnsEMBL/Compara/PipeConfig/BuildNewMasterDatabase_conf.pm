@@ -96,6 +96,7 @@ sub default_options {
         'do_update_from_metadata' => 0,
         'do_load_timetree'        => 0,
         'meta_host'               => undef, # required but not used: do_update_from_metadata = 0
+        'perc_threshold'          => undef, # required but not used: do_update_from_metadata = 0
     };
 }
 
@@ -203,7 +204,6 @@ sub pipeline_analyses {
             -parameters => {
                 'reg_conf'        => $self->o('reg_conf'),
                 'reg_conf_tmpl'   => $self->o('reg_conf_tmpl'),
-                'ensj_conf'       => $self->o('ensj_conf'),
                 'dst_host'        => $self->o('dst_host'),
                 'dst_port'        => $self->o('dst_port'),
             },

@@ -61,6 +61,7 @@ sub pipeline_analyses_dump_constrained_elems {
             -parameters     => {
                 'cmd'   => '#dump_features_exe# --feature ce_#mlss_id# --compara_db #compara_db# --species #name# --lex_sort --reg_conf "#registry#" | tail -n+2 > #bed_file#',
             },
+            -rc_name        => '1Gb_job',
             -hive_capacity => $self->o('dump_ce_capacity'),
             -flow_into      => [ 'check_not_empty' ],
         },

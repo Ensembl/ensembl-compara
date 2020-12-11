@@ -48,7 +48,7 @@ sub default_options {
         'species_tree'          => $self->o('config_dir') . '/species_tree.topology.nw',
 
         'binary'    => 0,  # The tree shared by Plants is not binary
-        'n_missing_species_in_tree' => 5,  # The tree does not include the 5 triticum aestivum cultivars
+        'n_missing_species_in_tree' => 0,
     };
 }
 

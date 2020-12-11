@@ -142,8 +142,6 @@ sub _build_id_cache {
                be a valid $genome_db_id instead.
   Returntype : Bio::EnsEMBL::Compara::DnaFrag
   Exceptions : throw when genome_db_id cannot be retrieved
-  Exceptions : warns and returns undef when no DnaFrag matches the query
-  Caller     : $dnafrag_adaptor->fetch_by_GenomeDB_and_name
   Status     : Stable
 
 =cut
@@ -192,7 +190,6 @@ sub fetch_by_GenomeDB_and_name {
                Bio::EnsEMBL::Compara::GenomeDB and region given.
   Returntype : listref of Bio::EnsEMBL::Compara::DnaFrag objects
   Exceptions : throw unless $genome_db is a Bio::EnsEMBL::Compara::GenomeDB
-  Caller     : 
   Status     : Stable
 
 =cut
@@ -309,6 +306,61 @@ sub fetch_all_karyotype_DnaFrags_by_GenomeDB {
     } else {
         return \@dnafrags;
     }
+}
+
+
+=head2 fetch_all_by_GenomeDB_and_names
+
+  Arg [1]    : integer $genome_db_id
+                  - or -
+               Bio::EnsEMBL::Compara::GenomeDB
+  Arg [2]    : Arrayref of strings $names
+  Example    : my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_and_names($human_genome_db, ['X', 'Y']);
+  Description: Returns the Bio::EnsEMBL::Compara::DnaFrag objects corresponding to the
+               Bio::EnsEMBL::Compara::GenomeDB and names given. $genome_db can
+               be a valid $genome_db_id instead. Note that:
+               1) The dnafrags may be returned in a different order than
+                  the names.
+               2) There could be fewer dnafrags than names, if some names
+                  are not found.
+  Returntype : Arrayref of Bio::EnsEMBL::Compara::DnaFrag
+  Exceptions : throw when genome_db_id cannot be retrieved
+  Caller     : general
+
+=cut
+
+sub fetch_all_by_GenomeDB_and_names {
+    my ($self, $genome_db, $names) = @_;
+
+    my $genome_db_id;
+    if ($genome_db and ($genome_db =~ /^\d+$/)) {
+        $genome_db_id = $genome_db;
+    } else {
+        assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
+        $genome_db_id = $genome_db->dbID;
+        if (!$genome_db_id) {
+            throw($genome_db->toString . " does not have a dbID");
+        }
+    }
+
+    my @dnafrags;
+    my @names_to_fetch;
+    foreach my $name (@$names) {
+        my $cache_key = $genome_db_id . '//' . $name;
+        if (my $cached_df = $self->{'_lru_cache_gdb_id_name'}->{$cache_key}) {
+            push @dnafrags, $cached_df;
+        } else {
+            push @names_to_fetch, $name;
+        }
+    }
+    return \@dnafrags unless @names_to_fetch;
+
+    my $sql_in = $self->generate_in_constraint(\@names_to_fetch, 'name', SQL_VARCHAR, 1);
+    $self->bind_param_generic_fetch($genome_db_id, SQL_INTEGER);
+    my $other_dnafrags = $self->generic_fetch('df.genome_db_id = ? AND ' . $sql_in);
+
+    push @dnafrags, @$other_dnafrags;
+    return \@dnafrags;
 }
 
 
@@ -619,5 +671,28 @@ sub update {
             'dnafrag_id'            => $dnafrag->dbID()
         } );
 }
+
+
+=head2 delete
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DnaFrag
+  Example     : $adaptor->delete($dnafrag);
+  Description : Delete this DnaFrag from the database (and the cache!)
+  Returntype  : none
+  Exceptions  : none
+  Status      : Stable
+
+=cut
+
+sub delete {
+    my ($self, $dnafrag) = @_;
+
+    assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag');
+
+    $self->db->get_DnaFragAltRegionAdaptor->delete_by_dbID($dnafrag->dbID);
+    $self->dbc->do('DELETE FROM dnafrag WHERE dnafrag_id = ?', undef, $dnafrag->dbID);
+    $self->_id_cache->remove($dnafrag->dbID);
+}
+
 
 1;

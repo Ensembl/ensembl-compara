@@ -91,20 +91,25 @@ if ($division eq "vertebrates"){
     $cactus_species           = 'rattus_norvegicus';
     $cactus_region            = '2:56040000-56040100:1';
     $cactus_species_set       = 'murinae';
+
+    $skip_families            = 1;
+    $skip_cactus              = 1;
 }
 elsif($division eq "plants"){
     $gene_member_id           = "AT3G52430";
     $gene_tree_id             = "EPlGT00140000000744";
     $alignment_region         = "1:8001-18000:1";
-    $lastz_alignment_region   = $alignment_region;
+    $lastz_alignment_region   = "1:12928-15180";
 
-    $species_1                = "arabidopsis_thaliana";
+    $species_1                = "oryza_sativa";
     $species_2                = "vitis_vinifera";
-    $species_3                = "oryza_barthii";
+    $species_3                = "arabidopsis_thaliana";
 
-    $taxon_1                  = 3702;#arabidopsis_thaliana
+    $taxon_1                  = 39947;#oryza_sativa
     $taxon_2                  = 29760;#vitis_vinifera
-    $taxon_3                  = 65489;#oryza_barthii
+    $taxon_3                  = 3702;#arabidopsis_thaliana
+
+    $species_set_group        = "rice";
 
     $gene_symbol              = "PAD4";
     $homology_type            = 'orthologues';
@@ -112,7 +117,6 @@ elsif($division eq "plants"){
     
     $extra_params             = 'compara=plants';
     $skip_families            = 1;
-    $skip_epo                 = 1;
     $skip_cactus              = 1;
 }
 elsif($division eq 'pan' or $division eq 'pan_homology'){
@@ -263,25 +267,34 @@ sub fetch_leaf_hash_from_json {
     return $input_json;
 }
 
-sub verify_xml_leaf {
+
+# Fetch a species node using the production name node from a phyloxml input
+# if the searched species is not present it returns undef
+# so the presence of species can be tested by defined.
+sub fetch_species_node {
     my ($this_node, $species_name) = @_;
     my $nodes = ref($this_node) eq 'ARRAY' ? $this_node : [$this_node];
-
     foreach my $node ( @$nodes ) {
         if ( exists $node->{property} ) {
-            return 1 if ($node->{property}->{content} // '') eq $species_name;
+            return $node if (($node->{property}->{content} // '') eq $species_name);
         }
-
         if ( exists $node->{clade} ) {
-            my $verify_recursive = verify_xml_leaf($node->{clade}, $species_name);
-            return 1 if $verify_recursive;
+            my $species_node = fetch_species_node($node->{clade}, $species_name);
+            return $species_node if defined $species_node;
         } else {
-            foreach my $value ( values %$node ) {
-                return 1 if ($value->{property}->{content} // '') eq $species_name;
+            # in case we are on an ancestral or species node
+            foreach my $chd_node ( values %$node ){
+                if (exists $chd_node->{property}){
+                    return $chd_node if (($chd_node->{property}->{content} // '') eq $species_name);
+                }
+                if (exists $chd_node->{clade}){
+                    my $species_node = fetch_species_node($chd_node->{clade}, $species_name);
+                    return $species_node if defined $species_node;
+                }
             }
         }
     }
-    return 0;
+    return undef;
 }
 
 #Compara currently have no POST requests. For future purposes.
@@ -334,7 +347,7 @@ try{
         ok((substr($responseIDGet->{'content'}, 0, 11) eq "thisisatest"), "Check Callback validity");
 
         $phyloXml = process_phyloXml_get($server."/genetree/id/$gene_tree_id?content-type=text/x-phyloxml+xml;prune_species=$species_1;prune_species=$species_3".($extra_params ? ";$extra_params" : ''));
-        ok( verify_xml_leaf($phyloXml->{phylogeny}, $species_1) && verify_xml_leaf($phyloXml->{phylogeny}, $species_3) , "check prune species validity");
+        ok( defined fetch_species_node($phyloXml->{phylogeny}, $species_1) && defined fetch_species_node($phyloXml->{phylogeny}, $species_3) , "check prune species validity");
 
         $orthoXml = process_orthoXml_get($server."/genetree/id/$gene_tree_id?content-type=text/x-orthoxml+xml;prune_taxon=$taxon_1;prune_taxon=$taxon_2;prune_taxon=$taxon_3".($extra_params ? ";$extra_params" : ''));
         @pruned_species = keys %{ $orthoXml->{species} };
@@ -490,7 +503,7 @@ try{
         print "\nTesting GET EPO alignment region\/\:species\/\:region \n\n";
     
         my $ext = "/alignment/region/$species_1/$alignment_region?species_set_group=$species_set_group";
-        $ext .= "?$extra_params" if $extra_params;
+        $ext .= ";$extra_params" if $extra_params;
 
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
         ok($responseIDGet->{success}, "Check json validity");
@@ -501,9 +514,10 @@ try{
         print $server.$ext.';content-type=text/x-phyloxml;aligned=0' . "\n";
         $phyloXml = process_phyloXml_get($server.$ext.';content-type=text/x-phyloxml;aligned=0'.($extra_params ? ";$extra_params" : ''));
         #print Dumper $phyloXml;
-        ok($phyloXml->{phylogeny}->{clade}->{sequence}->{mol_seq}->{is_aligned} == 0, "Check get alignment region and unaligned sequences");
-    
-        $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;display_species_set=$species_1".($extra_params ? ";$extra_params" : ''));
+        my $species_node = fetch_species_node($phyloXml->{phylogeny}, $species_1);
+        ok($species_node->{sequence}->{mol_seq}->{is_aligned} == 0, "Check get alignment region and unaligned sequences");
+
+        $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;display_species_set=$species_1;species_set_group=$species_set_group".($extra_params ? ";$extra_params" : ''));
         ok($jsontxt->[0]->{alignments}[0]->{species} eq $species_1, "Check alignment region display_species_set option validity");
     }
     

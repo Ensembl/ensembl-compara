@@ -15,16 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Hive::RunnableDB::DumpMultiAlign::Readme
@@ -112,7 +102,7 @@ sub _create_specific_readme {
     } elsif ($mlss->method->type eq "EPO") {
 	$self->_create_specific_epo_readme($compara_dba, $mlss, $species_set, $newick_species_tree);
     } elsif ($mlss->method->type eq "EPO_EXTENDED") {
-	$self->_create_specific_epo_low_coverage_readme($compara_dba, $mlss, $species_set, $newick_species_tree, $mlss_adaptor);
+	$self->_create_specific_epo_extended_readme($compara_dba, $mlss, $species_set, $newick_species_tree, $mlss_adaptor);
     } elsif ($mlss->method->type eq "LASTZ_NET") {
 	$self->_create_specific_pairaligner_readme($compara_dba, $mlss, $species_set, 'LastZ');
     } elsif ($mlss->method->type eq "BLASTZ_NET") {
@@ -173,7 +163,7 @@ uses the Pecan alignments to infer the ancestral sequences.");
 #
 #Create EPO_EXTENDED README file
 #
-sub _create_specific_epo_low_coverage_readme {
+sub _create_specific_epo_extended_readme {
     my ($self, $compara_dba, $mlss, $species_set, $newick_species_tree, $mlss_adaptor) = @_;
 
     my $high_coverage_mlss = $mlss->get_linked_mlss_by_tag('base_mlss_id');
@@ -199,7 +189,7 @@ sub _create_specific_epo_low_coverage_readme {
     $self->_print_species_tree($newick_species_tree);
 
     my $gdb_grouping = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'));
-    my $species = lc $self->_get_species_common_name($gdb_grouping);
+    my $species = lc $gdb_grouping->display_name;
     $self->_print_paragraph("To build the " . @$high_coverage_species_set . "-way alignment, first, Enredo is used to build a set of
 co-linear regions between the genomes and then Pecan aligns these regions. 
 Next, Ortheus uses the Pecan alignments to infer the ancestral sequences. Then
@@ -245,7 +235,7 @@ sub _create_specific_pairaligner_readme {
 
     my $ref_species = $mlss->get_value_for_tag('reference_species');
     my $ref_genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($ref_species);
-    my $common_species_name = lc $self->_get_species_common_name($ref_genome_db);
+    my $common_species_name = lc $ref_genome_db->display_name;
     $self->_print_paragraph("$common_species_name was used as the reference species. After running $aligner_name, the raw alignment blocks are chained according to their location in both genomes. During the final netting process, the best sub-chain is chosen in each region on the reference species.");
 
     $self->_print_file_grouping_help();
@@ -257,14 +247,9 @@ sub _create_specific_pairaligner_readme {
 #### Utils
 ##############
 
-sub _get_species_common_name {
-    my ($self, $genome_db) = @_;
-    return $genome_db->db_adaptor->get_MetaContainer->get_common_name;
-}
-
 sub _get_species_description {
     my ($self, $genome_db) = @_;
-    return sprintf('%s (%s)', $self->_get_species_common_name($genome_db), $genome_db->assembly);
+    return sprintf('%s (%s)', $genome_db->display_name, $genome_db->assembly);
 }
 
 sub _print_paragraph {
@@ -353,11 +338,11 @@ Read more about Gerp: http://mendel.stanford.edu/SidowLab/downloads/gerp/index.h
 
 sub _print_file_grouping_help {
     my ($self) = @_;
-    my $gdb_grouping = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'));
-    my $common_species_name = lc $self->_get_species_common_name($gdb_grouping);
 
     my @par = ();
     if ($self->param('split_by_chromosome')) {
+        my $gdb_grouping = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'));
+        my $common_species_name = lc $gdb_grouping->display_name;
         push @par, "Alignments are grouped by $common_species_name chromosome, and then by coordinate system.";
         push @par, "Alignments containing duplications in $common_species_name are dumped once per duplicated segment.";
         push @par, "The files named *.other*." . $self->param('format') . " contain alignments that do not include any $common_species_name region.";

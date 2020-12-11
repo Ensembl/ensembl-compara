@@ -510,6 +510,29 @@ sub complete_early_if_branch_connected {
 }
 
 
+=head2 add_or_update_pipeline_wide_parameter
+
+  Arg[1]      : (string) $param_name: the parameter name
+  Arg[2]      : (string) $param_value: the parameter value
+  Example     : $self->add_or_update_pipeline_wide_parameter('are_all_species_reused', 1);
+  Description : Add a new pipeline-wide parameter, or update its value
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub add_or_update_pipeline_wide_parameter {
+    my ($self, $param_name, $param_value) = @_;
+    my ($pwp) = $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
+        'param_name'    => $param_name,
+        'param_value'   => $param_value,
+    );
+    my $adaptor = $self->db->get_PipelineWideParametersAdaptor;
+    $adaptor->store_or_update_one($pwp, ['param_name']);
+}
+
+
 =head2 die_no_retry
 
   Example     : $self->die_no_retry("GenomeDB dbID=45 is missing");

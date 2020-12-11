@@ -305,9 +305,9 @@ my $n_members_cb = sub {
 # C(p_value)
 my $pvalue_cb = sub {
     my ($self) = @_;
-    my $pval;
     if ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode')) {
-        return $self->{tree}->pvalue()+0;
+        my $pval = $self->{tree}->pvalue();
+        return $pval+0 if defined $pval;
     }
     return undef;
 };

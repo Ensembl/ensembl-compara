@@ -26,12 +26,13 @@
     'triticum_aestivum' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
     'test_master' => {'compara' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor'},
     'update_homologies_test' => {'compara' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor'},
-
     'test_ref_compara' => {'compara' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor'},
     'test_ref_human_1' => {'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor'},
     'test_ref_human_2' => {'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor'},
     'test_ref_mouse'   => {'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor'},
+    'mysqlimport_test' => {'compara' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor'},
  },
+
 
 #uncomment to use preloaded databases (useful when doing lots of testing)
 'preloaded' => { 

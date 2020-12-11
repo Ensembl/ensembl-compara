@@ -63,6 +63,7 @@ sub run {
     # And the mlss entry in the release database because they would have been copied by copy data from master db earlier in the release
     $self->param('curr_release_dba')->dbc->do('DELETE FROM method_link_species_set_tag WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
     $self->param('curr_release_dba')->dbc->do('DELETE FROM method_link_species_set WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
+    $self->param('curr_release_dba')->dbc->do('REPLACE INTO method_link_species_set_tag SELECT method_link_species_set_id, "low_synteny_coverage", ? FROM method_link_species_set WHERE method_link_species_set_id = ?', undef, $mlss_tag_value, $self->param('mlss_id'));
 
 }
 

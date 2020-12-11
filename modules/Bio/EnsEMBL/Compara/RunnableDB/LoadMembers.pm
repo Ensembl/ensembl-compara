@@ -250,6 +250,9 @@ sub loadMembersFromCoreSlices {
     } else {
        foreach my $gene (@relevant_genes) {
           my $biotype_group = lc $gene->get_Biotype->biotype_group;
+          unless ($biotype_group) {
+              die sprintf("The '%s' biotype (gene '%s') has no group !", $gene->biotype, $gene->stable_id);
+          }
 
           my $gene_member;
 

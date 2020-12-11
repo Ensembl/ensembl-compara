@@ -1086,8 +1086,8 @@ sub toString {
     }
     $str .= sprintf(' (%s)', $self->method_link_species_set->name) if $self->method_link_species_set;
     $str .= sprintf(' %s %s:%d-%d%s', $self->dnafrag->genome_db->name, $self->dnafrag->name, $self->dnafrag_start, $self->dnafrag_end, ($self->dnafrag_strand < 0 ? '(-1)' : '')) if $self->dnafrag_id;
-    my %cigar_breakout = Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($self->cigar_line);
-    $str .= ' cigar_line:' . $self->cigar_line . ' (breakdown: ' . join(',', map {$cigar_breakout{$_}.'*'.$_} sort keys %cigar_breakout) . ')';
+    my $cigar_breakout = Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($self->cigar_line);
+    $str .= ' cigar_line:' . $self->cigar_line . ' (breakdown: ' . join(',', map {$cigar_breakout->{$_}.'*'.$_} sort keys %$cigar_breakout) . ')';
     return $str;
 }
 
@@ -1116,7 +1116,7 @@ sub display_id {
   my $dnafrag = $self->dnafrag;
   return "" unless($dnafrag);
   my $id = join(':',
-                $dnafrag->genome_db->taxon_id,
+                $dnafrag->genome_db->taxon_id // 'NA',
                 $dnafrag->genome_db->dbID,
                 $dnafrag->coord_system_name,
                 $dnafrag->name,

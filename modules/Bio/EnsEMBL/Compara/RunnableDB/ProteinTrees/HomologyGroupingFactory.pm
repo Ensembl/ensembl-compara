@@ -106,7 +106,7 @@ sub fetch_input {
     my @hhead_cols = split(/\s+/, $hheader);
     while( my $line = <$hffh> ) {
         my $row = map_row_to_header( $line, \@hhead_cols );
-        my ( $homology_id, $homology_type, $sm_id_1, $sm_id_2 ) = ($row->{homology_id}, $row->{homology_type}, $row->{seq_member_id}, $row->{hom_seq_member_id});
+        my ( $homology_id, $homology_type, $sm_id_1, $sm_id_2 ) = ($row->{homology_id}, $row->{homology_type}, $row->{seq_member_id}, $row->{homology_seq_member_id});
         next if (!$do_gene_qc) && $homology_type eq 'gene_split';
         next if $do_gene_qc && (defined $qc_status->{$sm_id_1} || defined $qc_status->{$sm_id_2});
         push @homology_ids, $homology_id;

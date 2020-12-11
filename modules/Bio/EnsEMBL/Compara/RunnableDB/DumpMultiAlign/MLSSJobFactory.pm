@@ -50,7 +50,7 @@ sub run {
     if ($self->param('mlss_id')) {
         my $mlss = $mlssa->fetch_by_dbID($self->param('mlss_id')) ||
             die $self->param('mlss_id')." does not exist in the database !\n";
-        $self->_test_mlss($mlss);
+        $self->_process_mlss($mlss);
         return;
     }
 
@@ -60,15 +60,27 @@ sub run {
         foreach my $mlss (@$mlss_listref) {
             my $from_first_release = $self->param('from_first_release');
             next if ( defined $from_first_release && !($mlss->first_release == $from_first_release || $mlss->has_tag("rerun_in_${from_first_release}")) );
-            $self->_test_mlss($mlss);
+            $self->_process_mlss($mlss);
         }
     }
 }
 
-sub _test_mlss {
+sub _process_mlss {
     my ($self, $mlss) = @_;
 
-    my $mlss_id     = $mlss->dbID();
+    $self->_check_valid_type($mlss);
+
+    my $extra_params = {};
+    if ($self->param('split_by_chromosome')) {
+        # We only need a reference species if we want to split the files by chromosome name
+        $extra_params = $self->_check_reference_species($mlss);
+    }
+
+    $self->_dataflow_mlss($mlss, $extra_params);
+}
+
+sub _check_valid_type {
+    my ($self, $mlss) = @_;
 
     unless ($mlss->method->class =~ /^GenomicAlign/) {
         die sprintf("%s (%s) MLSSs cannot be dumped with this pipeline !\n", $mlss->method->type, $mlss->method->class);
@@ -76,6 +88,12 @@ sub _test_mlss {
     if ($mlss->method->type =~ /^CACTUS_HAL/) {
         die "Cactus alignments cannot be dumped because they already exist as files\n";
     }
+}
+
+sub _check_reference_species {
+    my ($self, $mlss) = @_;
+
+    my $mlss_id     = $mlss->dbID();
 
     if ($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment') {
         my $ref_species = $mlss->get_value_for_tag('reference_species');
@@ -101,6 +119,16 @@ sub _test_mlss {
 
     $genome_db->db_adaptor || die "I don't know where the '$species_name' core database is. Have you defined the Registry ?\n";
     
+    return {
+        species         => $species_name,
+        genome_db_id    => $genome_db->dbID,
+    };
+}
+
+sub _dataflow_mlss {
+    my ($self, $mlss, $extra_params) = @_;
+
+    my $mlss_id     = $mlss->dbID();
     my $filename = $mlss->filename;
 
     if ($self->param('add_conservation_scores')) {
@@ -111,10 +139,9 @@ sub _test_mlss {
     my $output_id = {
         mlss_id         => $mlss->dbID,
         dump_mlss_id    => $mlss_id,            # Could be the mlss_id of conservation scores
-        species         => $species_name,
-        genome_db_id    => $genome_db->dbID,
         base_filename   => $filename,
         is_pairwise_aln => ($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment' ? 1 : 0),
+        %$extra_params,
     };
 
     # mimic directory structure of FTP server

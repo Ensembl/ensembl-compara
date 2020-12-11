@@ -50,6 +50,8 @@ sub fetch_input {
     push @cmd, '--collection', $self->param('collection') if ( $self->param('collection') && !$self->param('ignore_collection') );
     push @cmd, '--old', $self->param('old_compara_db') if $self->param('old_compara_db');
     push @cmd, '--alignments_only' if $self->param('alignments_only');
+    push @cmd, '--filter_by_mlss' if $self->param('filter_by_mlss');
+    push @cmd, '--skip_gerp' if $self->param('skip_gerp');
 
     # allow for a single mlss_id or multiples as populate_new_database.pl can accept multiple mlsses in the same cmd
     push @cmd, '--mlss', $self->param('mlss_id') if $self->param('mlss_id');

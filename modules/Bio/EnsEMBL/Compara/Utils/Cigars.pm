@@ -197,7 +197,6 @@ sub compose_sequence_with_cigar {
 
 sub cigar_from_alignment_string {
     my $alignment_string = shift;
-    $alignment_string =~ s/\*/X/g;
 
     my $cigar_line = '';
     while($alignment_string=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
@@ -350,9 +349,6 @@ sub cigar_from_two_alignment_strings {
     my @chunks1;
     my @chunks2;
 
-    $seq1 =~ s/\*/X/g;
-    $seq2 =~ s/\*/X/g;
-
     while($seq1=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
         push @chunks1, [($1 eq '-'), ($2 ? length($2)+1 : 1)];
     }
@@ -424,6 +420,8 @@ sub minimize_cigars {
         }
     };
     column_iterator(\@_, $cb, 'group');
+
+    # Add the elements that were current at the end of the iteration
     for (my $i = 0; $i < $n_cigars; $i++ ) {
         $new_cigars[$i] .= _cigar_element($cig_codes[$i], $cig_lengths[$i]);
     }

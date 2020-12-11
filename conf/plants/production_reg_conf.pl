@@ -54,26 +54,26 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
-*Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
-    Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-mirror-3',
-        -port   => 4275,
-        -user   => 'ensro',
-        -pass   => '',
-        -db_version     => $prev_release,
-        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
-    );
-    Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
-    Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
-    Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-mirror-1',
-        -port   => 4240,
-        -user   => 'ensro',
-        -pass   => '',
-        -db_version     => $prev_release,
-        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
-    );
-};
+# *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
+#     Bio::EnsEMBL::Registry->load_registry_from_db(
+#         -host   => 'mysql-ens-sta-3',
+#         -port   => 4160,
+#         -user   => 'ensro',
+#         -pass   => '',
+#         -db_version     => $prev_release,
+#         -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
+#     );
+#     Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
+#     Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
+#     Bio::EnsEMBL::Registry->load_registry_from_db(
+#         -host   => 'mysql-ens-sta-1',
+#         -port   => 4519,
+#         -user   => 'ensro',
+#         -pass   => '',
+#         -db_version     => $prev_release,
+#         -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
+#     );
+# };
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
 
@@ -84,23 +84,22 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-9', 'jalvarez_plants_load_members_101'],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-3', 'jalvarez_default_plants_protein_trees_101' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-7', 'cristig_plants_load_members_103'],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-5', 'cristig_plants_plants_protein_trees_103' ],
 
     # LASTZ dbs
-    'lastz_batch_1a' => [ 'mysql-ens-compara-prod-4', 'jalvarez_plants_lastz_batch1_101a' ],
-    'lastz_batch_1b' => [ 'mysql-ens-compara-prod-5', 'jalvarez_plants_lastz_batch1b_101' ],
-    'lastz_batch_1c' => [ 'mysql-ens-compara-prod-7', 'jalvarez_plants_lastz_batch1_101c' ],
-    'lastz_batch_1d' => [ 'mysql-ens-compara-prod-10', 'cristig_plants_lastz_batch1_101d' ],
-    'unidir_lastz'   => [ 'mysql-ens-compara-prod-5', 'ensembl_plants_unidirectional_lastz' ],
+    'lastz_batch_1' => [ 'mysql-ens-compara-prod-3', 'cristig_plants_lastz_batch1_103' ],
+    # New version of the self-alignment with better coverage. Merge it if you want !
+    # But check whether the POLYPLOID alignment needs to be updated as well
+    'lastz_tdic'    => [ 'mysql-ens-compara-prod-7', 'muffato_plants_self_lastz_tdic_103d' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'jalvarez_plants_synteny_101' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-10', 'cristig_plants_synteny_103' ],
 
     # EPO dbs
     ## rice
-    'rice_epo_high_low' => [ 'mysql-ens-compara-prod-5', 'dthybert_rice_epo_100' ],
-    'rice_epo_prev'     => [ 'mysql-ens-compara-prod-5', 'dthybert_rice_epo_100' ],
+    'rice_epo_high_low' => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
+    'rice_epo_prev'     => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
     'rice_epo_anchors'  => [ 'mysql-ens-compara-prod-5', 'cristig_generate_anchors_rice_99' ],
 };
 
@@ -111,14 +110,14 @@ my $ancestral_dbs = {
     'ancestral_prev' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${prev_eg_release}_$prev_release" ],
     'ancestral_curr' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${curr_eg_release}_$curr_release" ],
 
-    'rice_ancestral' => [ 'mysql-ens-compara-prod-5', 'dthybert_rice_ancestral_core_100' ],
+    # 'rice_ancestral' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${prev_eg_release}_$prev_release" ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-3-b', "ncbi_taxonomy_$curr_release" ],
 });
 
 # -------------------------------------------------------------------

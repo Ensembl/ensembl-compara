@@ -24,7 +24,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsProteinTrees_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -mlss_id <curr_strain_ptree_mlss_id> -collection <strain_collection>
+        -collection <strain_collection>
 
 =head1 DESCRIPTION
 

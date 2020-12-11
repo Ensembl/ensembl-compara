@@ -59,6 +59,7 @@ sub param_defaults {
             #'ENSEMBL_PARALOGUES'    => 2,
             #'ENSEMBL_ORTHOLOGUES'   => 3,
         },
+        'batch_size' => 1,
     }
 }
 
@@ -79,9 +80,21 @@ sub write_output {
             }
         }
         else {
-            foreach my $mlss ( @$mlsss ) {
-                $self->dataflow_output_id( { 'mlss_id' => $mlss->dbID }, $branch_number);
+            my @batch = ();
+            foreach my $mlss (@$mlsss) {
+                if ( $self->param('batch_size') == 1 ) {
+                    $self->dataflow_output_id( { 'mlss_id' => $mlss->dbID }, $branch_number);
+                } else {
+                    if ( scalar @batch == $self->param('batch_size') ) {
+                        $self->dataflow_output_id( {'mlss_ids' => \@batch}, $branch_number );
+                        @batch = ($mlss->dbID);
+                    } else {
+                        push @batch, $mlss->dbID;
+                    }
+                }
             }
+            # flow the last batch
+            $self->dataflow_output_id( {'mlss_ids' => \@batch}, $branch_number ) if scalar @batch;
         }
     }
 }

@@ -158,7 +158,7 @@ sub pipeline_analyses {
                 'src_db_aliases'    => [ref($self->o('src_db_aliases')) ? keys %{$self->o('src_db_aliases')} : ()],
                 'die_if_unknown_table'  => $self->o('die_if_unknown_table'),
             },
-            -rc_name    => '16Gb_job',
+            -rc_name    => '2Gb_job',
             -input_ids  => [ {} ],
             -flow_into  => {
                 2      => [ 'copy_table'  ],
@@ -193,7 +193,7 @@ sub pipeline_analyses {
             -parameters    => {
                 'dest_db_conn'  => '#curr_rel_db#',
                 'mode'          => 'ignore',
-                'skip_disable_keys' => 1,
+                'skip_disable_vars' => 1,
             },
             -hive_capacity => $self->o('copying_capacity'),
         },

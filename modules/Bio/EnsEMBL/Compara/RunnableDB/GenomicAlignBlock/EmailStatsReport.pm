@@ -29,7 +29,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::NotifyByEmail');
 
 my $txt = <<EOF;
 <html>
-<h1>Statistics of EPO pipeline</h1>
+<h1>Statistics of #method_name# pipeline</h1>
 
 #stats_table#
 
@@ -57,14 +57,18 @@ sub fetch_input {
 	my $epo_url   = $self->compara_dba->dbc->url;
 	my $stats_cmd = [$stats_exe, '-url', $epo_url, '-html'];
 
-        if ($self->param('mlss_id')) {
-            push @$stats_cmd, '-mlss_id', $self->param('mlss_id');
-        }
+    my $method_name = 'the';
+    if (my $mlss_id = $self->param('mlss_id')) {
+        push @$stats_cmd, '-mlss_id', $mlss_id;
+        my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+        $method_name = $mlss->method->display_name;
+    }
 
 	# run command, capture output
 	my $stats_string = $self->get_command_output($stats_cmd);
 
-	# save to param to be added into email body
+	# save to params to be added into email body
+    $self->param('method_name', $method_name);
 	$self->param('stats_table', $stats_string);
 }
 

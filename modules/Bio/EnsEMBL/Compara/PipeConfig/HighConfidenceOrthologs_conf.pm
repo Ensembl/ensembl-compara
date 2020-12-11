@@ -63,7 +63,7 @@ sub default_options {
         'collection' => 'default',
 
         'high_confidence_capacity'    => 500,          # how many mlss_ids can be processed in parallel
-        'update_homologies_capacity'  => 30,           # how many homology mlss_ids can be updated in parallel
+        'import_homologies_capacity'  => 50,           # how many homology mlss_ids can be imported in parallel
 
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [ ],

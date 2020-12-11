@@ -179,10 +179,16 @@ my %collections;
 my @mlsss;
 
 sub find_genome_from_xml_node_attribute {
-    my ($xml_node, $attribute_name) = @_;
+    my ($xml_node, $attribute_name, $assembly_name) = @_;
     my $species_name = $xml_node->getAttribute($attribute_name);
-    my $gdb = $genome_dba->fetch_by_name_assembly($species_name) || throw("Cannot find $species_name in the available list of GenomeDBs");
-    die "Cannot find any current genomes with species_name '$species_name'. Please check that this name is still correct" unless $gdb->is_current;
+    my $gdb;
+    if (defined $assembly_name && $xml_node->hasAttribute($assembly_name)) {
+        my $species_assembly = $xml_node->getAttribute($assembly_name);
+        $gdb = $genome_dba->fetch_by_name_assembly($species_name, $species_assembly) || throw("Cannot find $species_name (assembly $species_assembly) in the available list of GenomeDBs");
+    } else {
+        $gdb = $genome_dba->fetch_by_name_assembly($species_name) || throw("Cannot find $species_name in the available list of GenomeDBs");
+    }
+    die "Cannot find any current genomes matching '$species_name'. Please check that this name is still correct" unless (defined $assembly_name || $gdb->is_current);
     return $gdb;
 }
 
@@ -217,7 +223,7 @@ sub make_species_set_from_XML_node {
     if ($xml_ss->hasAttribute('in_collection')) {
         my $collection = find_collection_from_xml_node_attribute($xml_ss, 'in_collection', 'species-set');
         # Exclude genome components from the pool
-        @{$pool} = grep { !$_->genome_component } @{$collection->genome_dbs};
+        $pool = [grep { !$_->genome_component } @{$collection->genome_dbs}];
     }
 
     my @selected_gdbs;
@@ -247,8 +253,10 @@ sub make_species_set_from_XML_node {
             $some_genome_dbs = [grep {(($_->taxon_id != $ref_taxon->dbID) && !$_->taxon->has_ancestor($ref_taxon)) || ($_->name eq $gdb->name)} @$some_genome_dbs];
         }
       } elsif ($child->nodeName eq 'genome') {
-        my $gdb = find_genome_from_xml_node_attribute($child, 'name');
-        $some_genome_dbs = [$gdb];
+        my $gdb = find_genome_from_xml_node_attribute($child, 'name', 'assembly');
+        # If the genome is not current, warn the user and do not add it to the species set
+        warn "The genome matching '" . $gdb->name . "' (assembly " . $gdb->assembly . ") is not current. Skipped" unless $gdb->is_current;
+        $some_genome_dbs = ($gdb->is_current) ? [$gdb] : [];
       } elsif ($child->nodeName =~ /^#(comment|text)$/) {
         next;
       } else {

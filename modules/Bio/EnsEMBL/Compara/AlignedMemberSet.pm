@@ -323,10 +323,6 @@ sub load_cigars_from_file {
             $member->sequence($seqseq);
         } elsif ($check_seq) {
             my $member_sequence = $member->sequence;
-            # Stop-codons are often misrepresented so we just ignore them
-            # (this is in line with SeqMember::bioseq)
-            $seqseq =~ tr/*/X/;
-            $member_sequence =~ tr/*/X/;
             if ($member_sequence ne $seqseq) {
                 throw($member->stable_id." ($seqID) has a different sequence in the alignment file '$file'");
             }
@@ -501,7 +497,6 @@ sub get_SimpleAlign {
         }
 
         if ($stop2x) {
-            $seqstr =~ s/\*/X/g;
             if ($alphabet eq 'protein') {
                 $seqstr =~ s/U/C/g;
                 $seqstr =~ s/O/K/g;

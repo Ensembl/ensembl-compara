@@ -93,7 +93,8 @@ sub default_options {
         'do_update_from_metadata' => 1,
         'do_load_timetree'        => 0,
 
-        'meta_host' => 'mysql-ens-meta-prod-1',
+        'meta_host'      => 'mysql-ens-meta-prod-1',
+        'perc_threshold' => 20,
     };
 }
 

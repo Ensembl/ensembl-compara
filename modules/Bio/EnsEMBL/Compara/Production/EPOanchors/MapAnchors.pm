@@ -87,9 +87,9 @@ sub fetch_input {
 
         return unless $self->param('with_server');
 
-        die "Indexes for $genome_db_file doen't exist" unless -e "$genome_db_file.esd";
+        die ".esd index for $genome_db_file doesn't exist" unless -e "$genome_db_file.esd";
         $self->preload_file_in_memory("$genome_db_file.esd");
-        die "Indexes for $genome_db_file doen't exist" unless -e "$genome_db_file.esi";
+        die ".esi index for $genome_db_file doesn't exist" unless -e "$genome_db_file.esi";
         $self->preload_file_in_memory("$genome_db_file.esi");
 
         $self->param('index_file', "$genome_db_file.esi");

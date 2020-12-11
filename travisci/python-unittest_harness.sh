@@ -20,6 +20,7 @@ PYTHON_TESTS_LOCATIONS=('src/python/tests/')
 
 # Setup the environment variables
 export ENSADMIN_PSW='dummy_pwd'
+# shellcheck disable=SC2155
 export PYTHONPATH=$PYTHONPATH:$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')
 
 # Check that all the Python files can be compiled
