@@ -115,23 +115,6 @@ jobs:
 
     - language: perl
       perl: 5.30
-      name: "Perl external unit tests on the latest version, with code coverage"
-      env:
-        - COVERAGE=true
-      install:
-        - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
-        # 8.43 is the last version compatible with Perl 5.14
-        - cpanm --quiet --notest Mojolicious@8.43
-        - cpanm --quiet --installdeps --notest --cpanfile ensembl-rest/cpanfile .
-        - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
-        - cpanm --quiet --installdeps --notest .
-        - cpanm --quiet --notest Devel::Cover::Report::Codecov
-      script: ./travisci/perl-external_unittest_harness.sh
-      after_success:
-        - cover --nosummary -report codecov
-
-    - language: perl
-      perl: 5.30
       name: "Perl linter"
       install:
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
