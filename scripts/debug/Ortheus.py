@@ -34,26 +34,37 @@ def read_file(filename):
     with open(filename, 'r') as fh:
         return fh.read()
 
-# Check that we are being called with the correct arguments
+# A typical command-line ends with:
+# -f <output_alignment_path> -g <output_tree_path>
+output_tree_path = sys.argv[-1]
+output_alignment_path = sys.argv[-3]
+
+# Before that there should be:
+# -s <semphy_path> -z <species_tree_newick> -A <species_1> <species_2> ... <species_N>
+# And the values should match
 assert sys.argv[-4-len(species_list):-4] == species_list
 assert sys.argv[-4-len(species_list)-2] == species_tree
 
-for i in range(4, 4+len(species_list)):
-    fn = sys.argv[i]
-    new_file_content = read_file(fn)
-    ref_file_content = read_file(os.path.join(ref_fasta_dir, os.path.basename(fn)))
+# A typical command-line starts with:
+# python2 /path/to/Ortheus.py -l '#-j 0' -e <fasta_1> <fasta_2> .. <fasta_n>
+# Check that the Fasta files are identical
+for fasta_path in sys.argv[4:4+len(species_list)]:
+    new_file_content = read_file(fasta_path)
+    ref_file_content = read_file(os.path.join(ref_fasta_dir, os.path.basename(fasta_path)))
     assert new_file_content == ref_file_content
 
 # Copy some of the reference output files
-subprocess.check_call(['cp', os.path.join(ref_fasta_dir, 'output.%d.mfa' % pid), sys.argv[-3]])
+subprocess.check_call(['cp', os.path.join(ref_fasta_dir, 'output.%d.mfa' % pid), output_alignment_path])
 subprocess.check_call(['cp', os.path.join(ref_fasta_dir, 'output.score'), os.path.curdir])
 
-# And edit the reference tree file
+# Extract the temp directory in which the data are expected
 expected_tmpdir = os.path.dirname(sys.argv[4])
+
+# And edit the reference tree file
 with open(os.path.join(ref_fasta_dir, 'output.%d.tree' % pid), 'r') as fh:
     tl = fh.readlines()
 ref_tmpdir = os.path.dirname(tl[1].split()[0])
-with open(sys.argv[-1], 'w') as fh:
+with open(output_tree_path, 'w') as fh:
     # The first line is the tree and should remain the same
     print >> fh, tl[0],
     # The second line has paths, which have to be edited
