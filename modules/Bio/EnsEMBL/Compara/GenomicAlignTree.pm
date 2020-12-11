@@ -663,7 +663,7 @@ sub restrict_between_alignment_positions {
   my $all_nodes = $genomic_align_tree->get_all_nodes;
   my %was_leaf = map {$_ => $_->is_leaf} @$all_nodes;
 
-  # Depth-first, children-first, traversal of the tree
+  # Postorder traversal of the tree
   #Get all the nodes and restrict but only remove leaves if necessary. Call minimize_tree at the end to 
   #remove the internal nodes
   foreach my $this_node (reverse @$all_nodes) {

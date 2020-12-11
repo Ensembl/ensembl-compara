@@ -342,7 +342,7 @@ sub _write_output {
   		   $end = $genomic_align_tree->length;
   	       }
   	       my $new_gat = $genomic_align_tree->restrict_between_alignment_positions($start, $end, "skip_empty_GenomicAligns");
-	       # Some ancestral genomic_aligns may have become full-gaps,
+	       # Some ancestral genomic_aligns may have become all gaps,
 	       # break the trees around those
 	       my $subtrees = $self->split_if_empty_ancestral_seq($new_gat);
 	       push @$split_trees, @$subtrees;

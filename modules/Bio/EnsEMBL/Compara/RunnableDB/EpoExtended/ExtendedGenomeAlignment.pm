@@ -235,11 +235,11 @@ sub _assert_tree {
     my ($self, $gat) = @_;
 
     if ($gat->get_child_count == 3) {
-        # The only ternary nodes allowed are "root" nodes of unroot trees
+        # The only ternary nodes allowed are "root" nodes of unrooted trees
         # of 3 sequences
         foreach my $child (@{$gat->children}) {
             unless ($child->is_leaf) {
-                $self->_backup_data_and_throw($gat, sprintf("Node %s is the child of a ternay node, but node a leaf of the tree", $child->name));
+                $self->_backup_data_and_throw($gat, sprintf("Node %s is the child of a ternay node, but not a leaf of the tree", $child->name));
             }
         }
     } else {

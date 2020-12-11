@@ -44,7 +44,7 @@ for i in range(4, 4+len(species_list)):
     ref_file_content = read_file(os.path.join(ref_fasta_dir, os.path.basename(fn)))
     assert new_file_content == ref_file_content
 
-# Copy some the reference output files
+# Copy some of the reference output files
 subprocess.check_call(['cp', os.path.join(ref_fasta_dir, 'output.%d.mfa' % pid), sys.argv[-3]])
 subprocess.check_call(['cp', os.path.join(ref_fasta_dir, 'output.score'), os.path.curdir])
 
@@ -58,4 +58,3 @@ with open(sys.argv[-1], 'w') as fh:
     print >> fh, tl[0],
     # The second line has paths, which have to be edited
     print >> fh, tl[1].replace(ref_tmpdir, expected_tmpdir),
-
