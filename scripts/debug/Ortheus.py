@@ -27,7 +27,7 @@ species_list = "60 98 98 108 108 108 134 134 135 135 135 147 153 174 179 180 190
 pid = 85677
 
 # This is where you have saved Ortheus' output from a previous run
-ref_fasta_dir = '/path/to/worker_muffato_mammals_epo_with4x_101.95260'
+ref_fasta_dir = '/path/to/worker_muffato_mammals_epo_with_ext_104.95260'
 
 def read_file(filename):
     """Helper method to read a whole file"""
