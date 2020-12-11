@@ -486,7 +486,7 @@ sub assign_ids {
     my $n_blocks    = sum(map {scalar(@$_)} @$chains);
 
     # For simplicity, genomic_align_block_id is the genomic_align_id of its
-    # first genomic_align. Since all blocks are pairwise, we need two
+    # first genomic_align. Since all blocks are pairwise, we need to
     # request two values per block only.
     # group_id (for chains) is set to the genomic_align_block_id of the
     # first block of the chain.

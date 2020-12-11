@@ -147,7 +147,7 @@ sub get_id_range {
   Description : Request a previously assigned range of IDs for a given
                 requestor (and label) as a pair of integers: the first
                 id of the range, and the size of the range.
-                Returns undef if none exists.
+                Returns undef if no range was assigned previously.
   Returntype  : Arrayref or undef
   Exceptions  : none
 
