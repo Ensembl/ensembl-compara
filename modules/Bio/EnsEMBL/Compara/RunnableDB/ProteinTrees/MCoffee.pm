@@ -114,6 +114,7 @@ sub parse_and_store_alignment_into_proteintree {
     #
     # Align cigar_lines to members and store
     #
+    # NOTE: this copies everything, incl. things we don't need like the sequences
     my $aln_score = $self->param('protein_tree')->deep_copy;
     $aln_score->aln_method('mcoffee_score');
     foreach my $member (@{$aln_score->get_all_Members}) {
