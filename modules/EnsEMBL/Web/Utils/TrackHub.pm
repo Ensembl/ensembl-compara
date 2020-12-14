@@ -60,6 +60,31 @@ sub new {
   return $self;
 }
 
+sub format_to_class {
+  return (
+          'bam'             => 'Bam',
+          'bcf'             => 'BCF',
+          'bed'             => 'Bed',
+          'bedgraph'        => 'Bed',
+          'bigbed'          => 'BigBed',
+          'bigwig'          => 'BigWig',
+          'emf'             => 'EMF',
+          'fasta'           => 'Fasta',
+          'gff'             => 'GTF',
+          'gff3'            => 'GFF3',
+          'gtf'             => 'GTF',
+          'gvf'             => 'GVF',
+          'pairwise'        => 'PairwiseSimple',
+          'pairwisetabix'   => 'PairwiseTabix',
+          'psl'             => 'Psl',
+          'vcf'             => 'VCF4',
+          'vcf4tabix'       => 'VCF4Tabix',
+          'vep_input'       => 'VEP_input',
+          'vep_output'      => 'VEP_output',
+          'wig'             => 'Wig',
+          );
+}
+
 sub parser {
 ### a
   my $self = shift;

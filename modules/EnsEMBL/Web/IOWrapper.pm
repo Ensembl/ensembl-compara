@@ -29,10 +29,9 @@ no warnings 'uninitialized';
 use List::Util qw(max first);
 
 use Bio::EnsEMBL::IO::Parser;
-use Bio::EnsEMBL::IO::Utils;
 
 use EnsEMBL::Draw::Utils::ColourMap;
-
+use EnsEMBL::Web::Utils::TrackHub;
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_use);
 
 sub new {
@@ -64,7 +63,7 @@ sub open {
   ## based on the format of the file given
   my ($file, %args) = @_;
 
-  my %format_to_class = Bio::EnsEMBL::IO::Utils::format_to_class;
+  my %format_to_class = EnsEMBL::Web::Utils::TrackHub::format_to_class;
   my $format          = $file->get_format;
   my $subclass        = $format_to_class{$format};
 
