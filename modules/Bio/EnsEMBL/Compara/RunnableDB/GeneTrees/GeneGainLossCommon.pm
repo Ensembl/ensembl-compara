@@ -117,10 +117,26 @@ sub get_all_trees {
     my $all_trees = $adaptor->fetch_all(-tree_type => 'tree', -clusterset_id => 'default');
     my %stn_id_lookup = map {$_->genome_db_id => $_->node_id} @{ $self->param('cafe_tree')->get_all_leaves };
     print STDERR scalar @$all_trees, " trees to process\n" if ($self->debug());
+    my %seen_supertrees = ();
     return sub {
         # $self is the outer var 
-        my $tree = shift @$all_trees;
-        return undef unless ($tree);
+        my $tree;
+        while (@$all_trees) {
+            $tree = shift @$all_trees;
+            last;
+            my $parent = $adaptor->fetch_parent_tree($tree);
+            if ($parent->tree_type eq 'supertree') {
+                if ($seen_supertrees{$parent->root_id}) {
+                    $tree = undef;
+                } else {
+                    $seen_supertrees{$parent->root_id} = 1;
+                    $parent->expand_subtrees();
+                    $tree = $parent;
+                }
+            }
+            last if $tree;
+        }
+        return undef unless $tree;
         my $root_id = $tree->root_id;
         my $name = $root_id;
         my $full_tree_members = $tree->get_all_leaves();
