@@ -330,14 +330,15 @@ sub get_rw_user {
     my $host = shift;
     unless (exists $rw_users{$host}) {
         # There are several possible user names
-        foreach my $rw_user (qw(ensadmin ensrw w)) {
+        my @rw_users = qw(ensadmin ensrw w);
+        foreach my $rw_user (@rw_users) {
             my $rc = system("which $host-$rw_user > /dev/null 2> /dev/null");
             unless ($rc) {
                 $rw_users{$host} = $rw_user;
                 last;
             }
         }
-        die "Could not find a rw user for $host";
+        die "Could not find a rw user for $host (tried: ".join(", ", @rw_users).")";
     }
     return $rw_users{$host};
 }
