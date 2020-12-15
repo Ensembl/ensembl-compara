@@ -69,7 +69,7 @@ sub render {
     $table->add_row({
       'name'  => sprintf('<b><a class="nodeco" href="%s">Variant Recoder</a></b>', $vr_link),
       'desc'  => 'Translate a variant identifier, HGVS notation or genomic SPDI notation to all possible variant IDs, HGVS, VCF format and genomic SPDI.',
-      'limit' => $tools_limit,
+      'limit' => 'Maximun 1000 variants recommended',
       'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $vr_link, $img_url),
       'code'  => sprintf('<a href="https://github.com/Ensembl/ensembl-vep/tree/release/%s/variant_recoder" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $sd->ENSEMBL_VERSION, $img_url),
       'docs'  => sprintf('<a href="/info/docs/tools/vep/recoder/index.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
