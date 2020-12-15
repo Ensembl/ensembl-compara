@@ -84,7 +84,6 @@ sub content {
     else {
       $html .= qq(<h2>FAQs</h2>);
       my $division = $hub->species_defs->EG_DIVISION || 'vertebrates';
-      #warn "@@@ DIVISION $division";
 
       foreach my $faq (@faqs) {
         next unless $faq && $faq->{'question'};
@@ -92,10 +91,7 @@ sub content {
 
         ## Filter out anything that doesn't apply to this site
         my %divisions = map {$_ => 1} @{$faq->{'division'}||[]};
-        #use Data::Dumper;
-        #warn ">>> THIS FAQ IS FOR DIVISIONS: ".Dumper(\%divisions);
         next if (keys %divisions && !$divisions{$division});
-        #warn "... OK\n";
 
         unless ($single_cat) {
           if ($faq->{'category'} && $category ne $faq->{'category'}) {
