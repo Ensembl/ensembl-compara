@@ -23,6 +23,8 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::BadiRate
 
 This RunnableDB calculates the dynamics of a GeneTree family (based on the tree obtained and the CAFE software) in terms of gains losses per branch tree. It needs a CAFE-compliant species tree.
 
+NOTE: This code is missing parse_badiRate_output, so it won't do much !
+
 =head1 INHERITANCE TREE
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneGainLossCommon
