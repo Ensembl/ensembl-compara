@@ -23,6 +23,8 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::AncestralReconstruction;
 
 This Analysis/RunnableDB is designed to calculate ancestral sequences for a given gene tree
 
+NOTE: This code was working back in 2012 but may well be broken now. Use it for inspiration only !
+
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. 
