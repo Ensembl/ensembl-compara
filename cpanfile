@@ -13,7 +13,7 @@ requires 'Set::IntervalTree';
 requires 'namespace::autoclean';
 requires 'XML::LibXML';
 requires 'Array::Utils';
-
+requires 'YAML::Tiny';
 requires 'HTTP::Tiny';
 requires 'XML::Simple';
 requires 'Bio::TreeIO';
