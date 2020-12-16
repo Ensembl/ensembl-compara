@@ -252,9 +252,6 @@ sub pipeline_checks_pre_init {
 
     # Without a master database, we must provide other parameters
     die if not $self->o('master_db') and not $self->o('ncbi_db');
-
-    my %reuse_modes = (clusters => 1, blastp => 1, members => 1);
-    my %clustering_modes = (blastp => 1, ortholog => 1, hmm => 1, hybrid => 1, topup => 1);
 }
 
 
