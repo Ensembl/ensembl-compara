@@ -68,6 +68,9 @@ sub pop_url {
   elsif ($pop_name =~ /ALFA/i) {
     $pop_url = $hub->get_ExtURL('ALFA_POP');
   }
+  elsif ($pop_name =~ /GEM-J/i) {
+    $pop_url = $hub->get_ExtURL('GEM_J_POP');
+  }
   elsif ($pop_name =~ /^NextGen/i) {
     $pop_url = $hub->get_ExtURL('NEXTGEN_POP');
   }
