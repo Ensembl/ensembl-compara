@@ -46,20 +46,20 @@ sub render {
 );
   }
 
+  my $ftp = $species_defs->ENSEMBL_FTP_URL;
   if ($species_defs->HAS_API_DOCS) {
     $html .= qq(
 <h2>API Code</h2>
 
 <p>If you do not have access to git, you can obtain our latest API code as a gzipped tarball:</p>
 
-<p><a href="ftp://ftp.ensembl.org/pub/ensembl-api.tar.gz">Download complete API for this release</a></p>
+<p><a href="$ftp/ensembl-api.tar.gz">Download complete API for this release</a></p>
 
 <p>Note: the API version needs to be the same as the databases you are accessing, so please
 use git to obtain a previous version if querying older databases.</p>
     );
   }
 
-  my $ftp = $species_defs->ENSEMBL_FTP_URL;
   (my $ftp_domain = $ftp) =~ s/\/pub//;
  
   unless ($species_defs->NO_PUBLIC_MYSQL) { 
@@ -414,7 +414,7 @@ broken into chunks of 1000 sequence records for easier downloading.
   <dt>EMBL</dt>
   <dd>Ensembl database dumps in <a href="http://www.ebi.ac.uk/ena/about/sequence_format"
   rel="external">EMBL</a> nucleotide
-  sequence <a href="ftp://ftp.ebi.ac.uk/pub/databases/embl/doc/usrman.txt"
+  sequence <a href="http://ftp.ebi.ac.uk/pub/databases/embl/doc/usrman.txt"
   rel="external">database format</a></dd>
 
   <dt>GenBank</dt>

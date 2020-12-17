@@ -150,7 +150,7 @@ sub render {
       'desc'  => "Parse a vcf file to create a linkage pedigree file (ped) and a marker information file, which together may be loaded into ld visualization tools like Haploview.",
       'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
       'limit' => '',
-      'code'  => sprintf('<a href="ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/browser/vcf_to_ped_converter/version_1.1/vcf_to_ped_convert.pl" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $img_url),
+      'code'  => sprintf('<a href="http://http.1000genomes.ebi.ac.uk/vol1/ftp/technical/browser/vcf_to_ped_converter/version_1.1/vcf_to_ped_convert.pl" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $img_url),
       'docs'  => sprintf('<a href="/info/docs/tools/vcftoped/index.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url),
     });
   }
@@ -175,7 +175,7 @@ sub render {
       'desc'  => "Identify variation patterns in a chromosomal region of interest for different individuals. Only variations with functional significance such non-synonymous coding, splice site will be reported by the tool.",
       'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
       'limit' => '',
-      'code'  => sprintf('<a href="ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/browser/variation_pattern_finder/version_1.0" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $img_url),
+      'code'  => sprintf('<a href="http://http.1000genomes.ebi.ac.uk/vol1/ftp/technical/browser/variation_pattern_finder/version_1.0" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $img_url),
       'docs'  => sprintf('<a href="/info/docs/tools/variationpattern/index.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url),
     });
   }
@@ -204,6 +204,7 @@ sub render {
   }
 
   ## Table of other tools
+  my $ftp = $species_defs->ENSEMBL_FTP_URL;
 
   if ($sd->HAS_API_DOCS || $sd->ENSEMBL_MART_ENABLED || $sd->ENSEMBL_REST_URL) {
     $html .= qq(<h2 class="top-margin">Accessing $sitename data</h2>);
@@ -231,7 +232,7 @@ sub render {
       $table->add_row({
         'name' => '<b>Ensembl Perl API</b>',
         'desc' => 'Programmatic access to all Ensembl data using simple Perl scripts',
-        'from' => qq(<a href="https://github.com/Ensembl">GitHub</a> or <a href="ftp://ftp.ensembl.org/pub/ensembl-api.tar.gz" rel="external">FTP download</a> (current release only)),
+        'from' => qq(<a href="https://github.com/Ensembl">GitHub</a> or <a href="$ftp/ensembl-api.tar.gz" rel="external">FTP download</a> (current release only)),
         'docs' => sprintf('<a href="/info/docs/api/"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
       });
 
@@ -239,7 +240,7 @@ sub render {
       $table->add_row({
         'name' => '<b>Ensembl Virtual Machine</b>',
         'desc' => 'VirtualBox virtual Machine with Ubuntu desktop and pre-configured with the latest Ensembl API plus Variant Effect Predictor (VEP). <b>NB: download is >1 GB</b>',
-        'from' => qq(<a href="ftp://ftp.ensembl.org/pub/current_virtual_machine" rel="external">FTP download</a>),
+        'from' => qq(<a href="$ftp/current_virtual_machine" rel="external">FTP download</a>),
         'docs' => sprintf('<a href="/info/data/virtual_machine.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
       });
     }
