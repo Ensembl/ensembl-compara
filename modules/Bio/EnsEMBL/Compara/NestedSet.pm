@@ -261,6 +261,9 @@ sub disconnect_node_and_minimize_tree {
     }
 
     $node->disavow_parent;
+    # The node still has two children or more
+    return $self if $parent->get_child_count >= 2;
+
     my $sibling = $parent->children->[0];    # Must exist because the tree is expected to be minimized at the beginning
     if ($parent == $self) {
         # FROM
