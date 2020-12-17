@@ -852,6 +852,7 @@ sub _name_matches {
 sub write_mlss_entry {
     my ($self, $compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db) = @_;
 
+    # TODO: use create_mlss & co from Utils::MasterDatabase
     my $ref_name;
     my $name;
 
@@ -1263,6 +1264,8 @@ sub populate_database_from_core_db {
 							     -port => $port,
 							     -species => $species->{species},
 							     -dbname => $species->{dbname});
+
+	# TODO: Use Bio::EnsEMBL::Compara::Utils::MasterDatabase::add_genome_db instead
 	$genome_db = update_genome_db($species_dba, $self->compara_dba, $species->{genome_db_id});
 
     } elsif ($species->{-dbname}) {
