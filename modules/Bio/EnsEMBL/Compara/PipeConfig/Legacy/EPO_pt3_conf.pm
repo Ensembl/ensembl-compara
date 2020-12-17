@@ -128,6 +128,7 @@ sub pipeline_wide_parameters {
 		'enredo_mapping_file' => $self->o('enredo_mapping_file'),
 		'master_db' => $self->o('master_db'),
 		'compara_mapped_anchor_db' => $self->o('compara_mapped_anchor_db'),
+		'work_dir' => $self->o('work_dir'),
 		'mlss_id' => $self->o('mlss_id'),
 		'enredo_output_file' => $self->o('enredo_output_file'),
                 'run_gerp' => $self->o('run_gerp'),
