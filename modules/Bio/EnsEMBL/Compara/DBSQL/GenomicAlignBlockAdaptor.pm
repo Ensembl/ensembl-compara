@@ -579,7 +579,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
             $restrict
         );
     # Exclude blocks that have already been fetched via a previous projection-segment
-    $these_genomic_align_blocks = [grep {!$seen_gab_ids{$_->dbID}} @$these_genomic_align_blocks];
+    $these_genomic_align_blocks = [grep {!$seen_gab_ids{$_->dbID || $_->original_dbID}} @$these_genomic_align_blocks];
 
     #If the GenomicAlignBlock has been restricted, set up the correct values 
     #for restricted_aln_start and restricted_aln_end
@@ -624,7 +624,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
         $this_genomic_align_block->reverse_complement()
             if ($reference_slice->strand != $this_genomic_align_block->reference_genomic_align->dnafrag_strand);
         push (@$all_genomic_align_blocks, $this_genomic_align_block);
-        $seen_gab_ids{$this_genomic_align_block->dbID} = 1;
+        $seen_gab_ids{$this_genomic_align_block->dbID || $this_genomic_align_block->original_dbID} = 1;
       }
     } else {
       foreach my $this_genomic_align_block (@$these_genomic_align_blocks) {
@@ -637,7 +637,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
         $this_genomic_align_block->reverse_complement()
             if ($reference_slice->strand != $this_genomic_align_block->reference_genomic_align->dnafrag_strand);
         push (@$all_genomic_align_blocks, $this_genomic_align_block);
-        $seen_gab_ids{$this_genomic_align_block->dbID} = 1;
+        $seen_gab_ids{$this_genomic_align_block->dbID || $this_genomic_align_block->original_dbID} = 1;
       }
     }
   }    

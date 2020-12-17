@@ -101,8 +101,8 @@ sub assert_valid_cigar {
     if ( length($cigar_line) > 50000 ) {
         my @cigar_numbers = split(/[A-Z]/, $cigar_line);
         foreach my $cigar_num ( @cigar_numbers ) {
-            next if ( $cigar_num eq '' || ($cigar_num =~ /^[0-9]+$/ && $cigar_num > 0) );
-            throw("Invalid cigar_line '$cigar_line'\n");
+            next if ( $cigar_num eq '' || ($cigar_num =~ /^[1-9][0-9]*$/) );
+            throw("Invalid cigar_num '$cigar_num'\n");
         }
     } else {
         if ($cigar_line !~ /^(([1-9][0-9]*)?[A-Z])*$/) {
@@ -267,7 +267,29 @@ sub alignment_length_from_cigar {
 
     my $length = 0;
      while ($cigar =~ /(\d*)([A-Z])/g) {
-        $length += ($1 || 1);
+        $length += ($1 || 1) if $2 ne 'I';
+    }
+    return $length;
+}
+
+
+=head2 sequence_length_from_cigar
+
+  Arg [1]    : String $cigar_line
+  Example    : my $sequence_length = sequence_length_from_cigar($cigar_line)
+  Description: Returns how long the sequence string would be (without expanding it in memory)
+  Returntype : int
+
+=cut
+
+sub sequence_length_from_cigar {
+    my $cigar = shift;
+
+    assert_valid_cigar($cigar);
+
+    my $length = 0;
+     while ($cigar =~ /(\d*)([A-Z])/g) {
+        $length += ($1 || 1) if ($2 eq 'M') || ($2 eq 'I');
     }
     return $length;
 }
