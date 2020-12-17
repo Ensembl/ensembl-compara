@@ -239,7 +239,7 @@ sub _assert_tree {
         # of 3 sequences
         foreach my $child (@{$gat->children}) {
             unless ($child->is_leaf) {
-                $self->_backup_data_and_throw($gat, sprintf("Node %s is the child of a ternay node, but not a leaf of the tree", $child->name));
+                $self->_backup_data_and_throw($gat, sprintf("Node %s is the child of a ternary node, but not a leaf of the tree", $child->name));
             }
         }
     } else {
