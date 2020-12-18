@@ -81,6 +81,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan;
 
 use strict;
 use warnings;
+
+use List::Util qw(sum);
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::Production::Analysis::Pecan;
 use Bio::EnsEMBL::Compara::Production::Analysis::Ortheus;
@@ -88,6 +91,7 @@ use Bio::EnsEMBL::Compara::RunnableDB::Ortheus;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::NestedSet;
+use Bio::EnsEMBL::Compara::Utils::IDGenerator qw(:all);
 use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -184,13 +188,17 @@ sub run
 sub write_output {
     my ($self) = @_;
 
-	#Job succeeded, write output
-        $self->call_within_transaction( sub {
-            $self->_write_output;
-        } );
+    # Get the GABs ready for storing
+    my $gabs = $self->_prepare_gabs;
+    $self->_assign_ids($gabs);
+
+    $self->call_within_transaction( sub {
+        $self->_write_tree_if_needed;
+        $self->_store_gabs($gabs);
+    } );
 }
 
-sub _write_output {
+sub _write_tree_if_needed {
   my ($self) = @_;
 
   if ($self->param('tree_to_save')) {
@@ -198,6 +206,10 @@ sub _write_output {
     $meta_container->store_key_value("synteny_region_tree_".$self->param('synteny_region_id'),
         $self->param('tree_to_save'));
   }
+}
+
+sub _prepare_gabs {
+  my ($self) = @_;
 
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my $mlss = $mlssa->fetch_by_dbID($self->param('mlss_id'));
@@ -226,7 +238,7 @@ sub _write_output {
       # Remove any blocks which contain only 1 genomic align and trim the 2
       # neighbouring blocks 
       if ($self->param('max_block_size') and $gab->length > $self->param('max_block_size')) {
-	  my $gab_array = undef;
+	  my $gab_array = [];
 	  my $find_next = 0;
 	  for (my $start = 1; $start <= $gab->length; $start += $self->param('max_block_size')) {
 	      my $split_gab = $gab->restrict_between_alignment_positions(
@@ -265,31 +277,49 @@ sub _write_output {
 		  }
 	      }
 	  }
-	  #store the first block to get the dbID which is used to create the
-	  #group_id. 
-	  my $first_block = shift @$gab_array;
-	  $gaba->store($first_block);
-	  $self->_assert_cigar_lines_in_block($first_block->dbID);
-	  my $group_id = $first_block->dbID;
-	  $gaba->store_group_id($first_block, $group_id);
-	  $self->_write_gerp_dataflow($first_block, $mlss);
-
-	  #store the rest of the genomic_align_blocks
-	  foreach my $this_gab (@$gab_array) {
-	      $this_gab->group_id($group_id);
-	      $gaba->store($this_gab);
-	      $self->_assert_cigar_lines_in_block($this_gab->dbID);
-	      $self->_write_gerp_dataflow($this_gab, $mlss);
-	  }
+	  return $gab_array;
       } else {
-	  $gaba->store($gab);
-	  $self->_assert_cigar_lines_in_block($gab->dbID);
-	  $self->_write_gerp_dataflow($gab, $mlss);
+	  return [$gab];
       }
   }
   return 1;
 }
 
+sub _store_gabs {
+    my ($self, $gabs) = @_;
+
+    foreach my $gab (@$gabs) {
+        $gab->adaptor->store($gab);
+        $self->_assert_cigar_lines_in_block($gab->dbID);
+        $self->_write_gerp_dataflow($gab, $gab->method_link_species_set);
+    }
+}
+
+sub _assign_ids {
+    my ($self, $gabs) = @_;
+
+    my $mlss_id = $gabs->[0]->method_link_species_set_id;
+    my $n_gas   = sum(map {scalar(@{$_->genomic_align_array})} @$gabs);
+
+    # For simplicity, genomic_align_block_id is the genomic_align_id of its
+    # first genomic_align, and group_id (if needed) id the
+    # genomic_align_block_id of the first block in the group
+    my $id = get_id_range(
+        $self->compara_dba->dbc,
+        "genomic_align_${mlss_id}",
+        $n_gas,
+        $self->get_requestor_id,
+    );
+
+    my $group_id = scalar(@$gabs) > 1 ? $id : undef;
+    foreach my $gab (@$gabs) {
+        $gab->dbID($id);
+        $gab->group_id($group_id) if $group_id;
+        foreach my $ga (@{$gab->genomic_align_array}) {
+            $ga->dbID($id++);
+        }
+    }
+}
 
 sub _assert_cigar_lines_in_block {
     my ($self, $gab_id) = @_;
