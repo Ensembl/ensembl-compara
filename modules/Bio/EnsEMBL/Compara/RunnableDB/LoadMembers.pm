@@ -215,7 +215,7 @@ sub loadMembersFromCoreSlices {
     $gene_adaptor ||= $slice->adaptor->db->get_GeneAdaptor;
     $self->compara_dba->dbc->disconnect_if_idle() if $gene_adaptor->count_all_by_Slice($slice) > 500;
 
-    my @relevant_genes = grep {!$excluded_logic_names{$_->analysis->logic_name}} sort {$a->start <=> $b->start} @{$slice->get_all_Genes(undef, undef, 1)};
+    my @relevant_genes = grep {!$excluded_logic_names{$_->analysis->logic_name}} sort {$a->seq_region_start <=> $b->seq_region_start} @{$slice->get_all_Genes(undef, undef, 1)};
     # Discard genes that span the end of circular chromosomes
     my $n1 = scalar(@relevant_genes);
     @relevant_genes = grep {$_->seq_region_start < $_->seq_region_end} @relevant_genes;
@@ -231,16 +231,16 @@ sub loadMembersFromCoreSlices {
        my $current_end;
        foreach my $gene (@relevant_genes) {
 
-          $current_end = $gene->end unless (defined $current_end);
+          $current_end = $gene->seq_region_end unless (defined $current_end);
           if((lc($gene->biotype) eq 'protein_coding')) {
               $self->param('realGeneCount', $self->param('realGeneCount')+1 );
-              if ($gene->start <= $current_end) {
+              if ($gene->seq_region_start <= $current_end) {
                   push @genes, $gene;
-                  $current_end = $gene->end if ($gene->end > $current_end);
+                  $current_end = $gene->seq_region_end if ($gene->seq_region_end > $current_end);
               } else {
                   $self->store_all_coding_exons(\@genes, $dnafrag);
                   @genes = ();
-                  $current_end = $gene->end;
+                  $current_end = $gene->seq_region_end;
                   push @genes, $gene;
               }
           }
@@ -505,7 +505,7 @@ sub store_exon_coordinates {
     foreach my $exon (@$exon_list) {
         my $exon_pep_len = POSIX::ceil(($exon->length - $left_over) / $scale_factor);
         $left_over += $scale_factor*$exon_pep_len - $exon->length;
-        push @exons, [$exon->start, $exon->end, $exon_pep_len, $left_over];
+        push @exons, [$exon->seq_region_start, $exon->seq_region_end, $exon_pep_len, $left_over];
         die sprintf('Invalid phase: %s', $left_over) if (($left_over < 0) || ($left_over > 2));
     }
 
