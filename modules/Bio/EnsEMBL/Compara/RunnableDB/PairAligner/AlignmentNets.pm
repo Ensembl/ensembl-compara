@@ -97,10 +97,7 @@ sub fetch_input {
   
   if ($self->input_job->retry_count > 0) {
     $self->warning("Deleting alignments as it is a rerun");
-    $self->delete_alignments($out_mlss,
-                             $query_dnafrag,
-                             $self->param('start'),
-                             $self->param('end'));
+    $self->delete_alignments($out_mlss);
   }
 
   my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss,
@@ -160,59 +157,6 @@ sub fetch_input {
   $self->param('target_length_hash',    \%target_lengths);
   $self->param('chains',                [ map {$features_by_group{$_}} sort {$group_score{$b} <=> $group_score{$a}} keys %group_score ]);
   $self->param('chains_sorted',         1);
-}
-
-sub delete_alignments {
-  my ($self, $mlss, $qy_dnafrag, $start, $end) = @_;
-
-  my $dbc = $self->data_dbc;
-  my $sql = "select ga1.genomic_align_block_id, ga1.genomic_align_id, ga2.genomic_align_id from genomic_align ga1, genomic_align ga2 where ga1.genomic_align_block_id=ga2.genomic_align_block_id and ga1.dnafrag_id = ? and ga1.dnafrag_id!=ga2.dnafrag_id and ga1.method_link_species_set_id = ?";
-
-  my $sth;
-  if (defined $start and defined $end) {
-    $sql .= " and ga1.dnafrag_start <= ? and ga1.dnafrag_end >= ?";
-    $sth = $dbc->prepare($sql);
-    $sth->execute($qy_dnafrag->dbID, $mlss->dbID, $end, $start);
-  } elsif (defined $start) {
-    $sql .= " and ga1.dnafrag_end >= ?";
-    $sth->execute($qy_dnafrag->dbID, $mlss->dbID, $start);
-  } elsif (defined $end) {
-    $sql .= " and ga1.dnafrag_start <= ? ";
-    $sth->execute($qy_dnafrag->dbID, $mlss->dbID, $end);
-  } else {
-    $sth = $dbc->prepare($sql);
-    $sth->execute($qy_dnafrag->dbID, $mlss->dbID);
-  }
-
-  my $nb_gabs = 0;
-  my @gabs;
-  while (my $aref = $sth->fetchrow_arrayref) {
-    my ($gab_id, $ga_id1, $ga_id2) = @$aref;
-    push @gabs, [$gab_id, $ga_id1, $ga_id2];
-    $nb_gabs++;
-  }
-
-  my $sql_gab = "delete from genomic_align_block where genomic_align_block_id in ";
-  my $sql_ga = "delete from genomic_align where genomic_align_id in ";
-
-  for (my $i=0; $i < scalar @gabs; $i=$i+20000) {
-    my (@gab_ids, @ga1_ids, @ga2_ids);
-    for (my $j = $i; ($j < scalar @gabs && $j < $i+20000); $j++) {
-      push @gab_ids, $gabs[$j][0];
-      push @ga1_ids, $gabs[$j][1];
-      push @ga2_ids, $gabs[$j][2];
-#      print $j," ",$gabs[$j][0]," ",$gabs[$j][1]," ",$gabs[$j][2],"\n";
-    }
-    my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ")";
-    my $sql_ga_to_exec1 = $sql_ga . "(" . join(",", @ga1_ids) . ")";
-    my $sql_ga_to_exec2 = $sql_ga . "(" . join(",", @ga2_ids) . ")";
-
-    foreach my $sql ($sql_ga_to_exec1,$sql_ga_to_exec2,$sql_gab_to_exec) {
-      my $sth = $dbc->prepare($sql);
-      $sth->execute;
-      $sth->finish;
-    }
-  }
 }
 
 sub run {

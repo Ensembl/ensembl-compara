@@ -101,7 +101,7 @@ sub fetch_input {
 
   if ($self->input_job->retry_count > 0) {
     $self->warning("Deleting alignments as it is a rerun");
-    $self->delete_alignments($out_mlss,$self->param('query_dnafrag'),$self->param('target_dnafrag'));
+    $self->delete_alignments($out_mlss);
   }
 
   my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag($mlss,$self->param('query_dnafrag'),undef,undef,$self->param('target_dnafrag'));
