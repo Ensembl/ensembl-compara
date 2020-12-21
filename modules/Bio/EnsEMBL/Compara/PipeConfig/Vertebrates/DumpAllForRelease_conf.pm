@@ -53,7 +53,7 @@ sub default_options {
         'ancestral_db'     => 'ancestral_curr',
 
         'division'          => 'vertebrates',
-        'epo_reference_species' => [ 'homo_sapiens', 'gallus_gallus', 'oryzias_latipes', 'sus_scrofa' ],
+        'epo_reference_species' => [ 'homo_sapiens', 'gallus_gallus', 'oryzias_latipes', 'sus_scrofa', 'mus_musculus' ],
     };
 }
 

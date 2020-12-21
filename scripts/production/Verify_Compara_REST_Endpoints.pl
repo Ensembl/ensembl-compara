@@ -275,23 +275,27 @@ sub fetch_species_node {
     my ($this_node, $species_name) = @_;
     my $nodes = ref($this_node) eq 'ARRAY' ? $this_node : [$this_node];
     foreach my $node ( @$nodes ) {
-        if ( exists $node->{property} ) {
-            return $node if (($node->{property}->{content} // '') eq $species_name);
+
+        # Found a gene
+        if (exists $node->{property} && ($node->{property}->{ref} eq 'Compara:genome_db_name')) {
+            if ($node->{property}->{content} eq $species_name) {
+                return $node;
+            } else {
+                next;
+            }
         }
+
+        # Internal node
+        # NOTE: When one child or more is itself an internal node,
+        # XML::Simple::XMLin groups (all) the children as an array-ref
+        # under the "clade" key. When they all are genes, it puts them in
+        # the hash under their (gene) name, and there is no "clade" key.
         if ( exists $node->{clade} ) {
             my $species_node = fetch_species_node($node->{clade}, $species_name);
             return $species_node if defined $species_node;
         } else {
-            # in case we are on an ancestral or species node
-            foreach my $chd_node ( values %$node ){
-                if (exists $chd_node->{property}){
-                    return $chd_node if (($chd_node->{property}->{content} // '') eq $species_name);
-                }
-                if (exists $chd_node->{clade}){
-                    my $species_node = fetch_species_node($chd_node->{clade}, $species_name);
-                    return $species_node if defined $species_node;
-                }
-            }
+            my $species_node = fetch_species_node([values %$node], $species_name);
+            return $species_node if defined $species_node;
         }
     }
     return undef;
@@ -511,9 +515,7 @@ try{
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
         ok($responseIDGet->{success}, "Check phyloXml validity");
     
-        print $server.$ext.';content-type=text/x-phyloxml;aligned=0' . "\n";
         $phyloXml = process_phyloXml_get($server.$ext.';content-type=text/x-phyloxml;aligned=0'.($extra_params ? ";$extra_params" : ''));
-        #print Dumper $phyloXml;
         my $species_node = fetch_species_node($phyloXml->{phylogeny}, $species_1);
         ok($species_node->{sequence}->{mol_seq}->{is_aligned} == 0, "Check get alignment region and unaligned sequences");
 
