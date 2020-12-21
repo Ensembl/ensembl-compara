@@ -233,7 +233,7 @@ sub pipeline_analyses {
 			       },
 		-flow_into => {
 			       '2->A' => [ 'import_chains' ],
-			       'A->1' => [ 'set_internal_ids' ],
+			       'A->1' => [ 'net_factory' ],
 			      },
 	    },
 	    
@@ -259,14 +259,6 @@ sub pipeline_analyses {
 			       'A->1' => [ 'update_max_alignment_length_after_net' ],
 			      },
 	    },
-	    {  -logic_name => 'set_internal_ids',
- 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIds',
- 	       -parameters => {
-			       'tables' => [ 'genomic_align_block', 'genomic_align' ],
-			       'method_link_species_set_id' => $self->o('mlss_id'),
-			      },
-               -flow_into  => [ 'net_factory' ],
- 	    },
  	    {  -logic_name => 'import_nets',
  	       -hive_capacity => 20,
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ImportNets',

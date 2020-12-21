@@ -205,6 +205,10 @@ sub write_output {
 	my $ref_genome_db = $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'};
 	my $non_ref_genome_db = $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'};
 	
+	if ($net_config->{'is_for_polyploids'}) {
+	    $ref_genome_db = $ref_genome_db->principal_genome_db;
+	    $non_ref_genome_db = $non_ref_genome_db->principal_genome_db;
+	}
 	my $mlss = $self->write_mlss_entry($self->compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db);
 	$net_config->{'mlss_id'} = $mlss->dbID;
     }
@@ -613,7 +617,7 @@ sub parse_defaults {
                             push @pair,
                                  {'ref_genome_db'     => $gdb1,
                                   'non_ref_genome_db' => $gdb2,
-                                  'principal_mlss_id' => $mlss_id};
+                                  'is_for_polyploids' => 1};
                         }
                     }
                 } else {
@@ -638,7 +642,7 @@ sub parse_defaults {
                             push @pair,
                                  {'ref_genome_db'     => $ref_components{$cpnt},
                                   'non_ref_genome_db' => $non_ref_components{$cpnt},
-                                  'principal_mlss_id' => $mlss_id};
+                                  'is_for_polyploids' => 1};
                         }
                     }
                 } else {
@@ -722,8 +726,8 @@ sub parse_defaults {
     # Assign the corresponding method link: LASTZ_NET or COMPONENT_LASTZ_NET
     my $net_config = {
         'input_method_link'  => $self->param('default_net_input'),
-        'output_method_link' => ($pair->{principal_mlss_id}) ? $self->param('component_net_output') : $self->param('default_net_output'),
-        'principal_mlss_id'  => $pair->{principal_mlss_id},
+        'output_method_link' => $self->param('default_net_output'),
+        'is_for_polyploids'  => $pair->{is_for_polyploids} // 0,
     };
 
 	#If used input mlss, check if the method_link_type is the same as the value defined in the conf file used in init_pipeline
@@ -736,7 +740,7 @@ sub parse_defaults {
         # Get and store locator
         $genome_db->locator($genome_db->db_adaptor->locator);
         $self->compara_dba->get_GenomeDBAdaptor->store($genome_db);
-        if (defined $pair->{principal_mlss_id}) {
+        if (defined $pair->{is_for_polyploids}) {
             # Get and store locator of the principal genome db
             my $principal_gdb = $genome_db->principal_genome_db();
             $principal_gdb->locator($principal_gdb->db_adaptor->locator);
@@ -1030,7 +1034,6 @@ sub create_chain_dataflows {
     my $dna_collections = $self->param('dna_collections');
     my $pair_aligners = $self->param('pair_aligners');
     my $chain_configs = $self->param('chain_configs');
-    my $net_configs = $self->param('net_configs');
     my $all_configs = $self->param('all_configs');
     foreach my $chain_config (@$chain_configs) {
 
@@ -1114,14 +1117,16 @@ sub create_net_dataflows {
 
 	$mlss->store_tag("reference_species", $ref_species_name);
 	$mlss->store_tag("non_reference_species", $non_ref_species_name);
-    $mlss->store_tag("principal_mlss_id", $net_config->{'principal_mlss_id'}) if $net_config->{'principal_mlss_id'};
+	$mlss->store_tag("is_for_polyploids", 1) if $net_config->{'is_for_polyploids'};
 
+    unless ($net_config->{'is_for_polyploids'}) {
         if ($dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->genome_component) {
             $mlss->store_tag('reference_component', $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->genome_component);
         }
         if ($dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->genome_component) {
             $mlss->store_tag('non_reference_component', $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->genome_component);
         }
+    }
 
 	my $ref_species = $dna_collections->{$net_config->{'reference_collection_name'}}->{'genome_db'}->dbID;
 	my $non_ref_species = $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'genome_db'}->dbID;
@@ -1167,14 +1172,14 @@ sub create_net_dataflows {
            #dataflow to create_filter_duplicates_net_jobs
            #
            my $ref_output_hash = {};
-           %$ref_output_hash = ('method_link_species_set_id'=>$net_config->{'mlss_id'},
+           %$ref_output_hash = ('method_link_species_set_id' => $net_config->{'mlss_id'},
                                 'is_reference' => 1,
                                 'collection_name'=> $net_config->{'reference_collection_name'},
                                 'chunk_size' => $dna_collections->{$net_config->{'reference_collection_name'}}->{'chunk_size'},
                                 'overlap' => $dna_collections->{$net_config->{'reference_collection_name'}}->{'overlap'});
 
            my $non_ref_output_hash = {};
-           %$non_ref_output_hash = ('method_link_species_set_id'=>$net_config->{'mlss_id'},
+           %$non_ref_output_hash = ('method_link_species_set_id' => $net_config->{'mlss_id'},
                                     'is_reference' => 0,
                                     'collection_name'=>$net_config->{'non_reference_collection_name'},
                                     'chunk_size' => $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'chunk_size'},
@@ -1185,8 +1190,8 @@ sub create_net_dataflows {
        }
     }
 
-    my @net_mlss_ids = map { $_->{'mlss_id'} } @{$net_configs};
-    $self->dataflow_output_id({'net_mlss_ids' => \@net_mlss_ids}, 9);
+    my %net_mlss_ids = map { $_->{'mlss_id'} => 1 } @{$net_configs};
+    $self->dataflow_output_id({'net_mlss_ids' => [keys %net_mlss_ids]}, 9);
 }
 
 #

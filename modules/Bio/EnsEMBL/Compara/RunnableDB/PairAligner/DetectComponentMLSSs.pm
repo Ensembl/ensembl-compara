@@ -61,45 +61,24 @@ use strict;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub fetch_input {
+sub write_output {
     my $self = shift;
 
     my $net_mlss_ids = $self->param_required('net_mlss_ids');
     my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor();
 
-    my %component_mlss_ids;
-    foreach my $mlss_id ( @{$net_mlss_ids} ) {
-        my $this_mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
-        my $principal_mlss_id = $this_mlss->get_value_for_tag('principal_mlss_id');
-        if (defined $principal_mlss_id) {
-            push @{$component_mlss_ids{$principal_mlss_id}}, $mlss_id;
-        } else {
-            $component_mlss_ids{$mlss_id} = [];
-        }
-    }
-    $self->param('component_mlss_ids', \%component_mlss_ids);
-
     my @hc_tests;
     push @hc_tests, 'pairwise_gabs' if $self->param('do_pairwise_gabs');
     push @hc_tests, 'compare_to_previous_db' if $self->param('do_compare_to_previous_db');
-    $self->param('hc_tests', \@hc_tests);
-}
-
-
-sub write_output {
-    my $self = shift;
-    
-    my $component_mlss_ids = $self->param('component_mlss_ids');
-    my $hc_tests = $self->param('hc_tests');
 
     my $column_names = ['mlss_id', 'test'];
-    my @input_list = map { ['#mlss_id#', $_] } @{$hc_tests};
+    my @input_list = map { ['#mlss_id#', $_] } @hc_tests;
 
-    foreach my $main_mlss_id ( keys %{$component_mlss_ids} ) {
-        if (@{$component_mlss_ids->{$main_mlss_id}}) {
+    foreach my $main_mlss_id ( @{$net_mlss_ids} ) {
+        my $mlss = $mlss_adaptor->fetch_by_dbID($main_mlss_id);
+        if ($mlss->get_value_for_tag('is_for_polyploids')) {
             $self->dataflow_output_id({
                 'principal_mlss_id'  => $main_mlss_id,
-                'component_mlss_ids' => $component_mlss_ids->{$main_mlss_id}
             }, 3);
         }
         $self->dataflow_output_id(
