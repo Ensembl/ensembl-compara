@@ -177,7 +177,7 @@ sub transcript_table {
     #keys are attrib_type codes, values are glossary entries 
     my %MANE_attrib_codes = (
       MANE_Select => 'MANE Select',
-      MANE_Plus   => 'MANE Plus');
+      MANE_Plus_Clinical   => 'MANE Plus Clinical');
 
     my $trans_attribs = {};
     my $trans_gencode = {};
