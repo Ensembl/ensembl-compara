@@ -1,9 +1,22 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 ####################################################################
-# pairwise alignments using public Ensembl EPO alignments
-# if used, please cite bioRxiv: https://doi.org/10.1101/2020.05.31.126169
-# or final publication
+# pairwise projections using an EPO alignment
+# Used for https://doi.org/10.1101/2020.05.31.126169
 ####################################################################
 
 use strict;
@@ -90,20 +103,20 @@ $methodlink_adaptor = $registry->get_adaptor("Multi", "Compara", "MethodLinkSpec
 print "Projecting query species: ", $quer_name, "\tto reference: ",
     $ref_name, "\n\tquery file: ", $quer_bed, "\n";
 
-open (OUT, ">$out") or die "Cannot make outfile: $out\n";
+open (my $out_fh, '>', $out) or die "Cannot make outfile: $out\n";
 print "\tmaking output: $out\n\n";
 
 # make header for output file, including reference (projected) and query  positions
-print OUT "#", $ref_name,"_projected_chr\t", $ref_name, "_projected_start\t",
+print $out_fh "#", $ref_name,"_projected_chr\t", $ref_name, "_projected_start\t",
 $ref_name, "_projected_end\t", $quer_name, "_position\n";
 
 # open in bed file
-open (IN, $quer_bed) or die "cannot open $quer_bed\n";
+open (my $in_fh, '<', $quer_bed) or die "cannot open $quer_bed\n";
 
  # get slice adaptor using query species
 $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($quer_name, "Core", "Slice");
 
-while (<IN>) {
+while (<$in_fh>) {
     chomp;
     # split bed file
     my @col = split(/\t/,$_);
@@ -136,7 +149,7 @@ while (<IN>) {
                 if ($align->genome_db()->name() eq $ref_name) {
 
                     # print out reference (projected) and query coordinates
-                    print OUT $align->dnafrag->name(), "\t", $align->dnafrag_start(),
+                    print $out_fh $align->dnafrag->name(), "\t", $align->dnafrag_start(),
                     "\t", $align->dnafrag_end(), "\t",
                     $query_slice->seq_region_name(), ":",
                     $query_slice->start(), "-", $query_slice->end(), "\n";
@@ -146,6 +159,6 @@ while (<IN>) {
     }
 }
 
-close(OUT);
-close(IN);
+close($out_fh);
+close($in_fh);
 
