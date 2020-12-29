@@ -30,6 +30,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 my $query_name;
 my $query_bed;
 my $target_name;
+my $aln_name = 'mammals';
 my $out;
 
 # global variables
@@ -52,8 +53,13 @@ my $USAGE=("Given input bed files for a query species, will project the query sp
     Run with following options:
     scripts/examples/dna_projectCoordinates.pl -query_name query_species -query_bed query.bed -target_name target_species -out out_file\n\n");
 
-GetOptions('query_name=s' => \$query_name, 'query_bed=s' => \$query_bed,
-    'target_name=s' => \$target_name, 'out=s' => \$out);
+GetOptions(
+    'query_name=s'  => \$query_name,
+    'query_bed=s'   => \$query_bed,
+    'target_name=s' => \$target_name,
+    'aln_name=s'    => \$aln_name,
+    'out=s'         => \$out,
+);
 
 die $USAGE unless ($query_name and $query_bed and $target_name and $out);
 
@@ -73,7 +79,7 @@ sub blocks {
 
     my $querydb = $genomedb_adaptor->fetch_by_name_assembly($query);
     my $targetdb = $genomedb_adaptor->fetch_by_name_assembly($target);
-    my $alignment = $methodlink_adaptor->fetch_by_method_link_type_species_set_name("EPO", "mammals");
+    my $alignment = $methodlink_adaptor->fetch_by_method_link_type_species_set_name("EPO", $aln_name);
 
     my $genomicalign_block = $genomicalign_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice( $alignment, $slice);
     return $genomicalign_block;
