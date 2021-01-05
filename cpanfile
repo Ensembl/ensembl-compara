@@ -11,7 +11,7 @@ requires 'Parse::RecDescent';
 requires 'Capture::Tiny';
 requires 'Set::IntervalTree';
 requires 'namespace::autoclean';
-requires 'Time::Piece;'
+requires 'Time::Piece';
 
 test_requires 'Test::Exception';
 test_requires 'Test::Most';
