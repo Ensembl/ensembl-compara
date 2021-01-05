@@ -56,7 +56,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
  *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
      Bio::EnsEMBL::Registry->load_registry_from_db(
-         -host   => 'mysql-ens-sta-3',
+         -host   => 'mysql-ens-sta-3-b',
          -port   => 4160,
          -user   => 'ensro',
          -pass   => '',
@@ -66,7 +66,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
      Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
      Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
      Bio::EnsEMBL::Registry->load_registry_from_db(
-         -host   => 'mysql-ens-sta-1',
+         -host   => 'mysql-ens-sta-1-b',
          -port   => 4519,
          -user   => 'ensro',
          -pass   => '',
