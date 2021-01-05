@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,26 +54,26 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
-# *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
-#     Bio::EnsEMBL::Registry->load_registry_from_db(
-#         -host   => 'mysql-ens-sta-3',
-#         -port   => 4160,
-#         -user   => 'ensro',
-#         -pass   => '',
-#         -db_version     => $prev_release,
-#         -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
-#     );
-#     Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
-#     Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
-#     Bio::EnsEMBL::Registry->load_registry_from_db(
-#         -host   => 'mysql-ens-sta-1',
-#         -port   => 4519,
-#         -user   => 'ensro',
-#         -pass   => '',
-#         -db_version     => $prev_release,
-#         -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
-#     );
-# };
+ *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
+     Bio::EnsEMBL::Registry->load_registry_from_db(
+         -host   => 'mysql-ens-sta-3-b',
+         -port   => 4160,
+         -user   => 'ensro',
+         -pass   => '',
+         -db_version     => $prev_release,
+         -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
+     );
+     Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
+     Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
+     Bio::EnsEMBL::Registry->load_registry_from_db(
+         -host   => 'mysql-ens-sta-1-b',
+         -port   => 4519,
+         -user   => 'ensro',
+         -pass   => '',
+         -db_version     => $prev_release,
+         -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
+     );
+ };
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
 
@@ -84,21 +84,27 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-7', 'cristig_plants_load_members_103'],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-5', 'cristig_plants_plants_protein_trees_103' ],
+    #'compara_members'  => [ 'mysql-ens-compara-prod-7', 'cristig_plants_load_members_103'],
+    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-5', 'cristig_plants_plants_protein_trees_103' ],
 
     # LASTZ dbs
-    'lastz_batch_1' => [ 'mysql-ens-compara-prod-3', 'cristig_plants_lastz_batch1_103' ],
-    # New version of the self-alignment with better coverage. Merge it if you want !
-    # But check whether the POLYPLOID alignment needs to be updated as well
-    'lastz_tdic'    => [ 'mysql-ens-compara-prod-7', 'muffato_plants_self_lastz_tdic_103d' ],
+    #'lastz_batch_1' => [ 'mysql-ens-compara-prod-3', 'cristig_plants_lastz_batch1_103' ],
+
+    # LASTZ dbs to merge in e105 or later
+    # Wheat "strains" alignments
+    #'lastz_stanley' => [ 'mysql-ens-compara-prod-8', 'muffato_plants_lastz_stanley_wheat_103' ],
+    #'lastz_spelt'   => [ 'mysql-ens-compara-prod-9', 'muffato_plants_lastz_spelt_wheat_103' ],
+    # New version of the T.dic self-alignment with better coverage.
+    # Should probably only be merged if the related POLYPLOID alignment is
+    # updated too, which we can't do at the moment, cf ENSCOMPARASW-1878
+    #'lastz_tdic'    => [ 'mysql-ens-compara-prod-8', 'muffato_plants_self_lastz_tdic_103' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-10', 'cristig_plants_synteny_103' ],
+    #'compara_syntenies' => [ 'mysql-ens-compara-prod-10', 'cristig_plants_synteny_103' ],
 
     # EPO dbs
     ## rice
-    'rice_epo_high_low' => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
+    #'rice_epo_high_low' => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
     'rice_epo_prev'     => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
     'rice_epo_anchors'  => [ 'mysql-ens-compara-prod-5', 'cristig_generate_anchors_rice_99' ],
 };
@@ -117,7 +123,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-3-b', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-3', "ncbi_taxonomy_$curr_release" ],
 });
 
 # -------------------------------------------------------------------

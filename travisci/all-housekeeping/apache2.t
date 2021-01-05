@@ -1,5 +1,5 @@
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,10 +20,18 @@ use Test::More;
 
 use Bio::EnsEMBL::Test::TestUtils;
 use Bio::EnsEMBL::Compara::Utils::Test;
+use Bio::EnsEMBL::Utils::IO qw/:slurp/;
+
+use Time::Piece;
 
 my @all_files = Bio::EnsEMBL::Compara::Utils::Test::find_all_files();
 
+my ($licence, $notice);
 foreach my $f (@all_files) {
+    # this is the only file where the year should be
+    $notice  = $f if $f =~ /NOTICE/;
+    $licence = $f if $f =~ /LICENSE/;
+
     next unless $f =~ /\.([chtr]|p[lmy]|sh|java|(my|pg|)sql|sqlite)$/i;
     # Except the .sql of the test-database dumps
     next if $f =~ /modules\/t\/test-genome-DBs\/.*\.sql$/;
@@ -34,7 +42,35 @@ foreach my $f (@all_files) {
     next if $f =~ /\/CLEAN.t$/;
     # And Apollo's code
     next if $f =~ /scripts\/synteny\/(apollo|BuildSynteny|SyntenyManifest.txt)/;
-    has_apache2_licence($f);
+    has_apache2_licence($f, 'no_affiliation');
 }
+
+# check LICENCE file
+ok( -e $licence, 'LICENCE file exists');
+open(my $licence_fh, '<', $licence);
+my $found_licence_name = 0;
+my $found_licence_version = 0;
+while ( not ($found_licence_name && $found_licence_version) ) {
+    my $line = <$licence_fh>;
+    $found_licence_name = 1 if $line =~ /Apache License/;
+    $found_licence_version = 1 if $line =~ /Version 2\.0/;
+}
+close $licence_fh;
+ok( $found_licence_name && $found_licence_version, 'LICENSE name and version correct' );
+
+
+# check NOTICE file
+my $current_year = Time::Piece->new()->year();
+my $expected_notice = <<"END_NOTICE";
+Ensembl
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016-$current_year] EMBL-European Bioinformatics Institute
+
+This product includes software developed at:
+- EMBL-European Bioinformatics Institute
+- Wellcome Trust Sanger Institute
+END_NOTICE
+my $notice_contents = slurp($notice);
+is( $notice_contents, $expected_notice, 'NOTICE file contents correct' );
 
 done_testing();

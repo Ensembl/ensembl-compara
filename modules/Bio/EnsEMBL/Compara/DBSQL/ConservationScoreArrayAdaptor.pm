@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -266,29 +266,23 @@ sub _fetch_and_add_scores_for_MethodLinkSpeciesSet_Locus {
     }
 }
 
-sub _fetch_all_by_GenomicAlignBlock {
-    my ($self, $genomic_align_block, $start, $end, $slice_length,
-	$display_size, $display_type, $window_size) = @_;
+sub _find_appropriate_window_size {
+    my ($self, $slice_length, $display_size) = @_;
 
-   
-    #default window size is the largest bucket that gives at least 
-    #display_size values ie get speed but reasonable resolution
-    my @window_sizes = (1, 10, 100, 500);
+    my $default_window_size = 1;
 
-    #check if valid window_size
-    my $found = 0;
-    if (defined $window_size) {
-	foreach my $win_size (@window_sizes) {
-	    if ($win_size == $window_size) {
-		$found = 1;
-		last;
-	    }
-	}
-	if (!$found) {
-	    warning("Invalid window_size $window_size");
-	}
+    # No display_size, assume 1px per position
+    return $default_window_size unless $display_size;
+
+    my $requested_density = $slice_length / $display_size;  # How many positions per pixel
+    my @window_sizes = (500, 100, 10);                      # Must be in decreasing order
+    foreach my $window_size (@window_sizes) {
+        if ($window_size < $requested_density) {
+            return $window_size;
+        }
     }
- 
+    # Default and minimum window_size
+    return $default_window_size;
 }
 
 

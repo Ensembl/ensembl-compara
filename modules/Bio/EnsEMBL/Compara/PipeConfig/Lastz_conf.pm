@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -96,8 +96,6 @@ sub default_options {
 	    #Default net 
 	    'net_input_method_link' => [1002, 'LASTZ_CHAIN'],
 	    'net_output_method_link' => [16, 'LASTZ_NET'],
-
-        'component_method_link' => [1003, 'COMPONENT_LASTZ_NET'],
 	};
 }
 

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -2467,7 +2467,7 @@ sub core_pipeline_analyses {
             %decision_analysis_params,
 
             -flow_into  => {
-                '1->A' => WHEN (
+                1 => WHEN (
                     '(#raxml_cores# <= 1)'                              => 'raxml',
                     '(#raxml_cores# >  1)  && (#raxml_cores# <= 2)'     => 'raxml_2_cores',
                     '(#raxml_cores# >  2)  && (#raxml_cores# <= 4)'     => 'raxml_4_cores',
@@ -2479,7 +2479,6 @@ sub core_pipeline_analyses {
                     '(#raxml_cores# >  64) && (#raxml_cores# <= 128)'   => 'examl_32_cores',
                     '(#raxml_cores# >  128)'                            => 'examl_64_cores',
                 ),
-                'A->1' => 'raxml_decision',
             },
         },
 
