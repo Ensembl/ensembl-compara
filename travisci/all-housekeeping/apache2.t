@@ -26,12 +26,7 @@ use Time::Piece;
 
 my @all_files = Bio::EnsEMBL::Compara::Utils::Test::find_all_files();
 
-my ($licence, $notice);
 foreach my $f (@all_files) {
-    # this is the only file where the year should be
-    $notice  = $f if $f =~ /NOTICE/;
-    $licence = $f if $f =~ /LICENSE/;
-
     next unless $f =~ /\.([chtr]|p[lmy]|sh|java|(my|pg|)sql|sqlite)$/i;
     # Except the .sql of the test-database dumps
     next if $f =~ /modules\/t\/test-genome-DBs\/.*\.sql$/;
@@ -45,9 +40,12 @@ foreach my $f (@all_files) {
     has_apache2_licence($f, 'no_affiliation');
 }
 
-# check LICENCE file
+my $repo_root = Bio::EnsEMBL::Compara::Utils::Test::get_repository_root();
+
+# check LICENSE file
+my $licence = "$repo_root/LICENSE";
 ok( -e $licence, 'LICENCE file exists');
-open(my $licence_fh, '<', $licence);
+open(my $licence_fh, '<', $licence) or die "Cannot open file $licence for reading";
 my $found_licence_name = 0;
 my $found_licence_version = 0;
 while ( not ($found_licence_name && $found_licence_version) ) {
@@ -60,6 +58,7 @@ ok( $found_licence_name && $found_licence_version, 'LICENSE name and version cor
 
 
 # check NOTICE file
+my $notice = "$repo_root/NOTICE";
 my $current_year = Time::Piece->new()->year();
 my $expected_notice = <<"END_NOTICE";
 Ensembl
