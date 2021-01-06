@@ -47,7 +47,7 @@
            setaria_italica,
            setaria_viridis,
            panicum_hallii_fil2,
-           panicum_hallii_hal2,
+           panicum_hallii,
           )Panicoideae,
           (
            eragrostis_tef,
@@ -60,6 +60,7 @@
              (
               hordeum_vulgare,
               hordeum_vulgare_goldenpromise,
+              hordeum_vulgare_tritex,
              )Hordeum,
              (
               (
@@ -123,10 +124,13 @@
            )Oryzinae,
           )BOP_clade,
          )Poaceae,
-           (
-            ananas_comosus,
-           )Bromeliaceae,
+         (
+          ananas_comosus,
+         )Bromeliaceae,
         )commelinids,
+        (
+         asparagus_officinalis,
+        ) Asparagales,
        )Petrosaviidae,
        (
         (
@@ -144,6 +148,7 @@
           )Capsicum,
           (
            solanum_tuberosum,
+           solanum_tuberosum_rh8903916,
            solanum_lycopersicum,
           )Solanum,
          )Solanaceae,
@@ -159,6 +164,9 @@
          (
           olea_europaea_sylvestris,
          )Oleaceae,
+         (
+          sesamum_indicum,
+         )Pedaliaceae,
         )asterids,
         (
          vitis_vinifera,
@@ -168,7 +176,9 @@
             trifolium_pratense,
             medicago_truncatula,
            )Trifolieae,
-           lupinus_angustifolius,
+           (
+            lupinus_angustifolius,
+           )Genisteae,
            (
             (
              vigna_angularis,
@@ -201,6 +211,10 @@
            populus_trichocarpa,
           )Malpighiales,
           (
+           quercus_lobata,
+           juglans_regia,
+          )Fagales,
+          (
            cucumis_sativus,
            cucumis_melo,
            citrullus_lanatus,
@@ -226,13 +240,16 @@
             camelina_sativa_G1,
             camelina_sativa_G2,
             camelina_sativa_G3,
-           )Camelina,
+           )Camelina, 
+           (
+            eutrema_salsugineum,
+           )Eutrema,
           )Brassicaceae,
           (
            corchorus_capsularis,
            gossypium_raimondii,
            (
-            theobroma_cacao_matina,
+            theobroma_cacao,
             theobroma_cacao_criollo,
            )Theobroma,
           )Malvaceae,
@@ -242,14 +259,30 @@
           (
            pistacia_vera,
           )Anacardiaceae,
+          (
+           eucalyptus_grandis,
+          )Myrtaceae,
          )malvids,
         )rosids,
-        beta_vulgaris,
+        ( 
+         (
+          beta_vulgaris,
+          chenopodium_quinoa,
+         )Chenopodiaceae,
+        )Caryophyllales,
+        (
+         (
+          kalanchoe_fedtschenkoi,
+         )Crassulaceae,
+        )Saxifragales,
        )Pentapetalae,
+       (
+        papaver_somniferum,
+       )Ranunculales,
       )Mesangiospermae,
      )Magnoliophyta,
     )Tracheophyta,
-    physcomitrella_patens,
+    physcomitrium_patens,
     marchantia_polymorpha,
    )Embryophyta,
    (

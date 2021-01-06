@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -81,10 +81,10 @@ package Bio::EnsEMBL::Compara::Locus;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Storable;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
-
 use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 
 
@@ -129,6 +129,23 @@ sub new {
   }
 
   return $self;
+}
+
+
+=head2 new_fast
+
+  Arg [1]    : hashref to be blessed
+  Description: Construct a new Bio::EnsEMBL::Storable object using the hashref.
+               This is a very quick constructor that requires internal knowledge
+               of the class.
+  Exceptions : none
+  Returntype : Bio::EnsEMBL::Compara::Locus
+  Status     : Stable
+
+=cut
+
+sub new_fast {
+    return Bio::EnsEMBL::Storable::new_fast(@_);
 }
 
 
@@ -213,7 +230,7 @@ sub dnafrag {
     if (defined($self->dnafrag_id) and defined($self->{'adaptor'})) {
       # ...from the dnafrag_id. Use dnafrag_id function and not the attribute in the <if>
       # clause because the attribute can be retrieved from other sources if it has not been already defined.
-      my $dnafrag_adaptor = $self->adaptor->db->get_DnaFragAdaptor;
+      my $dnafrag_adaptor = $self->{'adaptor'}->db->get_DnaFragAdaptor;
       $self->{'dnafrag'} = $dnafrag_adaptor->fetch_by_dbID($self->{'dnafrag_id'});
     }
   }
@@ -287,7 +304,7 @@ sub _lazy_getter_setter {
    } elsif (not defined($self->{$field})) {
     if (defined($self->{'dbID'}) and defined($self->{'adaptor'}) and $self->{'adaptor'}->can('retrieve_all_direct_attributes')) {
       # Try to get the values from the database using the dbID of the Bio::EnsEMBL::Compara::Locus object
-      $self->adaptor->retrieve_all_direct_attributes($self);
+      $self->{'adaptor'}->retrieve_all_direct_attributes($self);
     }
   }
 
@@ -427,14 +444,26 @@ sub get_sequence {
     my $mask = shift;
 
     my $seq;
-    # Only reference dnafrags are dumped
-    if ($self->dnafrag->is_reference && (my $faidx_helper = $self->genome_db->get_faidx_helper($mask))) {
+
+    # Find a Fasta file
+    my $faidx_helper;
+    if ($self->dnafrag->is_reference) {
+        $faidx_helper = $self->genome_db->get_faidx_helper($mask);
+    } elsif ($self->dnafrag->coord_system_name ne 'lrg') {
+        $faidx_helper = $self->genome_db->get_faidx_helper($mask, 'non_ref');
+    } else {
+        # LRGs are not dumped in a Fasta file
+    }
+
+    if ($faidx_helper) {
         # Sequence names in the Fasta file are expected to be dnafrag_ids;
         # Coordinates are 0-based
         $seq = $faidx_helper->get_sequence2_no_length($self->dnafrag_id, $self->dnafrag_start-1, $self->dnafrag_end-1);
         die "sequence length doesn't match !" if CORE::length($seq) != ($self->dnafrag_end-$self->dnafrag_start+1);
         reverse_comp(\$seq) if $self->dnafrag_strand < 0;
+
     } else {
+        # If there is no file, query the database via the Core API
         $self->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
             if ($mask) {
                 if ($mask =~ /^soft/i) {

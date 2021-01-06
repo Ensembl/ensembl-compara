@@ -2,8 +2,8 @@
 
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -63,7 +63,6 @@ sub default_options {
         'outgroup'        => 'saccharomyces_cerevisiae',
 
         'output_dir'        => $self->o('pipeline_dir'),
-        'write_access_user' => $self->o('shared_user'),
 
         'mash_kmer_size'    => 24,
         'mash_sketch_size'  => 1000000,
@@ -90,9 +89,7 @@ sub pipeline_create_commands {
 
         $self->pipeline_create_commands_rm_mkdir('output_dir'),
         # In case it doesn't exist yet
-        ($self->o('shared_user') ? 'become ' . $self->o('shared_user') : '') . ' mkdir -p ' . $self->o('sketch_dir'),
-        # The files are going to be accessed by many processes in parallel
-        $self->pipeline_create_commands_lfs_setstripe('sketch_dir', $self->o('shared_user')),
+        'mkdir -p ' . $self->o('sketch_dir'),
     ];
 }
 
@@ -118,7 +115,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::GroupSpecies',
             -flow_into  => {
                 1 => [ 'check_sketches' ],
-                2 => [ '?table_name=pipeline_wide_parameters' ],
             },
             -input_ids => [{
               'sketch_dir'        => $self->o('sketch_dir'),
@@ -280,17 +276,12 @@ sub pipeline_analyses {
               1 => ['copy_files_to_sketch_dir'],
           },
         },
-
         { -logic_name => 'copy_files_to_sketch_dir',
-          -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::CopyFilesAsUser',
+          -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
           -parameters => {
               'destination_dir' => $self->o('sketch_dir'),
-              'become_user'     => $self->o('write_access_user'),
               'source_dir'      => $self->o('output_dir'),
-              'file_list' => [
-                '#source_dir#/*.msh',
-                '#source_dir#/#collection#',
-              ],
+              'cmd'             => 'cp #source_dir#/*.msh #destination_dir# && cp #source_dir#/#collection# #destination_dir#',
           },
         },
     ];

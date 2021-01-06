@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeProteinTrees_conf
@@ -37,23 +26,13 @@ Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeProteinTrees_conf
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
-            -mlss_id <curr_murinae_ptree_mlss_id>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
 =head1 DESCRIPTION
 
 The Murinae PipeConfig file for StrainsProteinTrees pipeline that should automate most of the pre-execution tasks.
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
 
 =cut
 
@@ -81,10 +60,6 @@ sub default_options {
         'multifurcation_deletes_all_subnodes' => [ 10088 ], # All the species under the "Mus" genus are flattened, i.e. it's rat vs a rake of mice
 
     # clustering parameters:
-        # How will the pipeline create clusters (families) ?
-        #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
-        'clustering_mode' => 'ortholog',
-
         # List of species some genes have been projected from
         'projection_source_species_names' => ['mus_musculus'],
 
@@ -102,5 +77,24 @@ sub default_options {
         'goc_taxlevels' => ['Murinae'],
     };
 }
+
+
+sub tweak_analyses {
+    my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
+    my $analyses_by_name = shift;
+
+    ## Extend this section to redefine the resource names of some analysis
+    my %overriden_rc_names = (
+        'expand_clusters_with_projections'  => '1Gb_job',
+        'overall_qc'    => '8Gb_job',
+    );
+    foreach my $logic_name (keys %overriden_rc_names) {
+        $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
+    }
+}
+
 
 1;

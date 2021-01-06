@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,11 +24,8 @@ unless ($ENV{LINUXBREW_HOME}) {
     plan skip_all => 'No linuxbrew installation available ($LINUXBREW_HOME missing)';
 }
 
-unless ($ENV{ENSEMBL_CVS_ROOT_DIR}) {
-    plan skip_all => '$ENSEMBL_CVS_ROOT_DIR is not set. Cannot find the PipeConfigs';
-}
-
-my $pipeconfig_path = "$ENV{ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig";
+my $software_config_path = $ARGV[0] || $ENV{ENSEMBL_CVS_ROOT_DIR} . '/ensembl-compara/conf/software/LSF.EBI.json';
+die "Cannot find file: $software_config_path\n" unless -e $software_config_path;
 
 find_and_check('check_file_in_cellar', sub {
         my $file = "$ENV{LINUXBREW_HOME}/Cellar/$_[0]";
@@ -68,14 +65,10 @@ find_and_check('check_dir_in_compara', sub {
 
 sub find_and_check {
     my ($method, $callback) = @_;
-    my $out = qx(grep -rFH '\$self->$method\(' '$pipeconfig_path');
-    my $lastfile = '';
-    while ($out =~ /^([^:]*):.*>$method\(["'](.*)["']\)/gm) {
-        if ($1 ne $lastfile) {
-            note($1);
-            $lastfile = $1;
-        }
-        $callback->($2);
+    my $out = qx(grep -FH $method $software_config_path);
+    foreach my $line ( split(",\n", $out) ) {
+        $line =~ /([^"']+)["']\s*\]$/;
+        $callback->($1);
     }
 }
 

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -635,7 +635,11 @@ sub fetch_by_method_link_type_species_set_name {
     my ($self, $method_link_type, $species_set_name) = @_;
 
     my $species_set_adaptor = $self->db->get_SpeciesSetAdaptor;
+    my $alt_ss_name = $species_set_name =~ /^collection-/ ? substr($species_set_name, 11) : "collection-" . $species_set_name;
+
     my $all_species_sets = $species_set_adaptor->fetch_all_by_name($species_set_name);
+    my $alt_species_sets = $species_set_adaptor->fetch_all_by_name($alt_ss_name);
+    push @$all_species_sets, @$alt_species_sets;
 
     my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type);
 

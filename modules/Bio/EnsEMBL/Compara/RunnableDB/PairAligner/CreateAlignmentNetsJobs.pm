@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -52,6 +52,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentNetsJobs;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Compara::Utils::IDGenerator qw(:all);
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -85,6 +87,11 @@ sub fetch_input {
 
 sub write_output {
   my $self = shift;
+
+  # Initialise the next dbID for this (LASTZ_NET) mlss_id
+  my $mlss_id = $self->param('output_mlss_id');
+  initialise_id($self->compara_dba->dbc, "genomic_align_${mlss_id}", "${mlss_id}0000000001");
+
   $self->createAlignmentNetsJobs();
 
   return 1;
@@ -186,7 +193,7 @@ sub createAlignmentNetsJobs {
   }
   
   #
-  #Flow to 'set_internal_ids' and 'update_max_alignment_length_after_net' on branch 1
+  #Flow to 'update_max_alignment_length_after_net' on branch 1
   #
   my $output_hash = {};
   %$output_hash = ('method_link_species_set_id' => $self->param('output_mlss_id'));

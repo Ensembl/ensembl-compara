@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -270,7 +270,6 @@ sub core_pipeline_analyses {
                                   'collection' => $self->o('collection'),
 				  'master_db' => $self->o('master_db'),
 				  'bidirectional' => $self->o('bidirectional'),
-                  'component_net_output' => $self->o('component_method_link'),
   				  }, 
 		-flow_into => {
 			       1 => [ 'create_pair_aligner_jobs'],
@@ -280,7 +279,7 @@ sub core_pipeline_analyses {
 			       5 => [ 'create_alignment_chains_jobs' ],
 			       6 => [ 'create_alignment_nets_jobs' ],
 			       10 => [ 'create_filter_duplicates_net_jobs' ],
-			       9 => [ 'remove_partial_blocks' ],
+			       9 => [ 'detect_component_mlsss' ],
 			      },
 	       -rc_name => '1Gb_job',
   	    },
@@ -505,7 +504,7 @@ sub core_pipeline_analyses {
 	       -logic_name => 'remove_inconsistencies_after_net',
 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
 	       -flow_into => {
-			       1 => [ 'update_max_alignment_length_after_net' ],
+			       1 => [ 'remove_inconsistencies_after_net_fd' ],
 			   },
  	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem', 'alignment_nets_hugemem', 'create_alignment_nets_jobs' ],    # Needed because of bi-directional netting: 2 jobs in create_alignment_nets_jobs can result in 1 job here
 	       -rc_name => '1Gb_job',
@@ -546,13 +545,10 @@ sub core_pipeline_analyses {
               -rc_name => $self->o('filter_duplicates_himem_rc_name'),
            },
 
-           {  -logic_name    => 'remove_partial_blocks',
-              -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-              -parameters    => {
-                                'sql' => "DELETE FROM genomic_align_block WHERE genomic_align_block_id NOT IN (SELECT genomic_align_block_id FROM genomic_align)"
-                                },
+           {  -logic_name    => 'remove_inconsistencies_after_net_fd',
+              -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
               -flow_into     => {
-                   1 => [ 'detect_component_mlsss' ],
+                   1 => [ 'update_max_alignment_length_after_net' ],
                },
               -wait_for      => [ 'create_filter_duplicates_net_jobs', 'filter_duplicates_net', 'filter_duplicates_net_himem' ],
            },
@@ -560,23 +556,7 @@ sub core_pipeline_analyses {
  	   {  -logic_name => 'update_max_alignment_length_after_net',
  	      -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
 	      -rc_name => '1Gb_job',
-              -flow_into => [ 'set_internal_ids_collection' ],
  	    },
-          {  -logic_name => 'set_internal_ids_collection',
-              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsCollection',
-              -parameters => {
-                  'skip' => $self->o('patch_alignments'),
-              },
-              -flow_into => {
-                  2 => [ 'set_internal_ids_slow' ],
-              },
-              -analysis_capacity => 1,
-          },
-          {  -logic_name => 'set_internal_ids_slow',
-              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsSlow',
-              -analysis_capacity => 1,
-              -rc_name => '8Gb_job',
-          },
 
         {   -logic_name => 'detect_component_mlsss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DetectComponentMLSSs',
@@ -584,7 +564,7 @@ sub core_pipeline_analyses {
                 'do_pairwise_gabs'          => $self->o('do_pairwise_gabs'),
                 'do_compare_to_previous_db' => $self->o('do_compare_to_previous_db'),
             },
-            -wait_for   => [ 'set_internal_ids_collection' ],
+            -wait_for   => [ 'update_max_alignment_length_after_net' ],
             -flow_into  => {
                 '3->A' => [ 'lift_to_principal' ],
                 'A->2' => [ 'run_healthchecks' ],

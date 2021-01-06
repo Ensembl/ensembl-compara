@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -125,19 +125,12 @@ sub write_output {
     $self->_write_shared_ss('reuse', [grep {$_->{is_reused}} @$all_gdbs] );
     $self->_write_shared_ss('nonreuse', [grep {not $_->{is_reused}} @$all_gdbs] );
 
-    $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
-        'param_name' => 'species_count',
-        'param_value' => scalar(grep {not $_->is_polyploid} @$all_gdbs),
-    );
-
+    # How many species in the set
+    $self->add_or_update_pipeline_wide_parameter('species_count', scalar(grep {not $_->is_polyploid} @$all_gdbs));
     # Whether all the species are reused
-    $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
-        'param_name' => 'are_all_species_reused',
-        'param_value' => ((grep {not $_->{is_reused}} @$all_gdbs) ? 0 : 1),
-    );
+    $self->add_or_update_pipeline_wide_parameter('are_all_species_reused', ((grep {not $_->{is_reused}} @$all_gdbs) ? 0 : 1));
 
     $self->dataflow_output_id(undef, 2) if grep {$_->{is_reused}} @$all_gdbs;
-    $self->db->hive_pipeline->save_collections();
 }
 
 
@@ -145,14 +138,8 @@ sub write_output {
 sub _write_shared_ss {
     my ($self, $name, $gdbs) = @_;
     my $ss = $self->_write_ss($gdbs, 1, $name);
-    $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
-        'param_name' => $name.'_ss_id',
-        'param_value' => $ss->dbID,
-    );
-    $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
-        'param_name' => $name.'_ss_csv',
-        'param_value' => join(',', -1, map {$_->dbID} @$gdbs),
-    );
+    $self->add_or_update_pipeline_wide_parameter($name.'_ss_id', $ss->dbID);
+    $self->add_or_update_pipeline_wide_parameter($name.'_ss_csv', join(',', -1, map {$_->dbID} @$gdbs));
     return $ss;
 }
 

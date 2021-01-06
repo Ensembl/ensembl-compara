@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -126,6 +126,7 @@ sub pipeline_analyses_multiple_aligner_stats {
             -flow_into  => {
                 2 => [ '?accu_name=genome_length&accu_address={genome_db_id}' ],
             },
+            -hive_capacity  => 1000,
         },
 
         {   -logic_name =>  'per_block_stats',
@@ -144,6 +145,7 @@ sub pipeline_analyses_multiple_aligner_stats {
                     '?accu_name=pairwise_coverage&accu_address={from_genome_db_id}{to_genome_db_id}[]&accu_input_variable=num_of_aligned_positions',
                 ],
             },
+            -hive_capacity  => 1000,
         },
 
         {   -logic_name => 'block_stats_aggregator',

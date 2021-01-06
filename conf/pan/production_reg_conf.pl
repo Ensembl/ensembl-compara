@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -60,8 +60,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-mirror-1',
-        -port   => 4240,
+        -host   => 'mysql-ens-sta-1-b',
+        -port   => 4519,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -70,8 +70,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
     Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
     Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-mirror-3',
-        -port   => 4275,
+        -host   => 'mysql-ens-sta-3-b',
+        -port   => 4631,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -79,8 +79,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
     );
     # Bacteria server: all species used in Pan happen to be in this database
     Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-        -host   => 'mysql-ens-mirror-4',
-        -port   => 4495,
+        -host   => 'mysql-ens-sta-4-n',
+        -port   => 4632,
         -user   => 'ensro',
         -pass   => '',
         -dbname => "bacteria_0_collection_core_${prev_eg_release}_${prev_release}_1",
@@ -98,8 +98,8 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-6', 'jalvarez_pan_load_members_101' ],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-7', 'jalvarez_default_pan_protein_trees_101' ],
+    # 'compara_members'  => [ 'mysql-ens-compara-prod-10', 'cristig_pan_load_members_103' ],
+    # 'compara_ptrees'   => [ 'mysql-ens-compara-prod-7', 'cristig_default_pan_protein_trees_103' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -108,7 +108,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', "ncbi_taxonomy_${curr_release}" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-4', "ncbi_taxonomy_${curr_release}" ],
 });
 
 # -------------------------------------------------------------------

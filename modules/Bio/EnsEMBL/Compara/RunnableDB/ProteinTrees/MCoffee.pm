@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -114,6 +114,7 @@ sub parse_and_store_alignment_into_proteintree {
     #
     # Align cigar_lines to members and store
     #
+    # NOTE: this copies everything, incl. things we don't need like the sequences
     my $aln_score = $self->param('protein_tree')->deep_copy;
     $aln_score->aln_method('mcoffee_score');
     foreach my $member (@{$aln_score->get_all_Members}) {

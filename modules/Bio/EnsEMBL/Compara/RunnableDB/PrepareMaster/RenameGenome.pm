@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ use Bio::EnsEMBL::Hive::Utils qw(destringify);
 use Bio::EnsEMBL::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
+use Data::Dumper;
 
 sub fetch_input {
     my $self = shift;
@@ -111,9 +111,11 @@ sub run {
 
     my $master_db = $self->param('master_db');
     my $dba_hash = $self->param('dba_hash');
-    my $genome_db = $dba_hash->{$master_db}->get_GenomeDBAdaptor()->fetch_by_name_assembly($old_name);
-
-    # First of all we check that the underlying assembly is the same
+    # Has the master_db already registered the rename?
+    my $genome_db = $dba_hash->{$master_db}->get_GenomeDBAdaptor()->fetch_by_name_assembly($new_name)
+        ? $dba_hash->{$master_db}->get_GenomeDBAdaptor()->fetch_by_name_assembly($new_name)
+        : $dba_hash->{$master_db}->get_GenomeDBAdaptor()->fetch_by_name_assembly($old_name);
+    # First we check that the underlying assembly is the same
     my $core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($new_name, 'core');
     my $output;
     my $dnafrags_match;
@@ -151,7 +153,7 @@ sub run {
         }
     }
 
-    my $dumps_path = dirname($genome_db->_get_genome_dump_path());
+    my $dumps_path = dirname($genome_db->_get_genome_dump_path($genome_dumps_dir));
     # Rename *.fa and *.fai files
     my @fasta_files = glob qq(${dumps_path}/${old_name}.*.fa ${dumps_path}/${old_name}.*.fai);
     foreach my $file (@fasta_files) {

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,29 +48,65 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::SqlCmd');
 
-my $sql_num_blocks = q{
-REPLACE INTO method_link_species_set_tag
-	SELECT method_link_species_set_id, CONCAT("num_blocks_",POW(10,FLOOR(LOG10(length)))) AS tag, COUNT(*) AS value
-	FROM genomic_align_block
-        WHERE method_link_species_set_id = #mlss_id#
+my $sql_drop_temp_table = q{
+DROP TABLE IF EXISTS temp_block_list;
+};
+
+my $sql_create_temp_table_all = q{
+CREATE TEMPORARY TABLE temp_block_list
+       SELECT length
+       FROM genomic_align_block
+       WHERE method_link_species_set_id = #mlss_id#
+};
+
+my $sql_create_temp_table_no_anc = $sql_create_temp_table_all . q{
+ AND genomic_align_block_id NOT IN (
+       SELECT DISTINCT genomic_align_block_id
+       FROM genomic_align JOIN dnafrag USING (dnafrag_id)
+       WHERE coord_system_name = "ancestralsegment"
+     )
+};
+
+my $sql_del_dist_num_blocks = q{
+DELETE FROM method_link_species_set_tag
+WHERE method_link_species_set_id = #mlss_id#
+      AND tag LIKE "num\_blocks\_%"
+};
+
+my $sql_dist_num_blocks = q{
+INSERT INTO method_link_species_set_tag
+	SELECT #mlss_id#, CONCAT("num_blocks_",POW(10,FLOOR(LOG10(length)))) AS tag, COUNT(*) AS value
+	FROM temp_block_list
 	GROUP BY tag;
 };
 
-my $sql_totlength = q{
-REPLACE INTO method_link_species_set_tag
-	SELECT method_link_species_set_id, CONCAT("totlength_blocks_",POW(10,FLOOR(LOG10(length)))) AS tag, SUM(length) AS value
-	FROM genomic_align_block
-        WHERE method_link_species_set_id = #mlss_id#
+my $sql_del_dist_block_length = q{
+DELETE FROM method_link_species_set_tag
+WHERE method_link_species_set_id = #mlss_id#
+      AND tag LIKE "totlength\_blocks\_%"
+};
+
+my $sql_dist_block_length = q{
+INSERT INTO method_link_species_set_tag
+	SELECT #mlss_id#, CONCAT("totlength_blocks_",POW(10,FLOOR(LOG10(length)))) AS tag, SUM(length) AS value
+	FROM temp_block_list
 	GROUP BY tag;
 };
 
-my $sql_numblocks = q{REPLACE INTO method_link_species_set_tag VALUES (#mlss_id#, 'num_blocks', #num_blocks#)};
+my $sql_tot_num_blocks = q{
+REPLACE INTO method_link_species_set_tag
+        SELECT #mlss_id#, 'num_blocks', COUNT(*)
+        FROM temp_block_list;
+};
+
+my @base_sqls = ($sql_del_dist_num_blocks, $sql_dist_num_blocks, $sql_del_dist_block_length, $sql_dist_block_length, $sql_tot_num_blocks);
 
 sub param_defaults {
     my $self = shift;
     return {
         %{ $self->SUPER::param_defaults() },
-        'sql'   => [ $sql_num_blocks, $sql_totlength, $sql_numblocks ],
+        'sql_standard'  => [ $sql_drop_temp_table, $sql_create_temp_table_all,    @base_sqls, $sql_drop_temp_table],
+        'sql_epo'       => [ $sql_drop_temp_table, $sql_create_temp_table_no_anc, @base_sqls, $sql_drop_temp_table ],
     }
 }
 
@@ -80,14 +116,12 @@ sub fetch_input {
     my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
     my $mlss = $mlss_adaptor->fetch_by_dbID($self->param_required('mlss_id'));
 
-    #Fetch the number of genomic_align_blocks
-    my $sql = 'SELECT COUNT(*) FROM genomic_align_block WHERE method_link_species_set_id = ?';
-    my $num_blocks = $self->compara_dba->dbc->sql_helper->execute_single_result(-SQL => $sql, -PARAMS => [$mlss->dbID]);
     # EPO alignments have blocks for the ancestral sequences
     if ($mlss->method->class eq 'GenomicAlignTree.ancestral_alignment') {
-        $num_blocks = int($num_blocks / 2);
+        $self->param('sql', $self->param_required('sql_epo'));
+    } else {
+        $self->param('sql', $self->param_required('sql_standard'));
     }
-    $self->param('num_blocks', $num_blocks);
 
     $self->SUPER::fetch_input();
 }

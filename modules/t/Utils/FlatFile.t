@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 use strict;
 use warnings;
  
-use Test::More tests => 3;
+use Test::More tests => 5;
 use Test::Exception;
 
 use Bio::EnsEMBL::Compara::Utils::FlatFile;
@@ -120,6 +120,29 @@ subtest 'query_file_tree' => sub {
         }
     };
     is_deeply( Bio::EnsEMBL::Compara::Utils::FlatFile::query_file_tree( $test_path, 'test', 'key4', ['key1', 'key2', 'key3'] ), $grouped_data, 'correct data selected and grouped' );
+};
+
+subtest 'check_line_counts' => sub {
+    # find absolute path to the test input
+    # important for travis-ci
+    use Cwd 'abs_path';
+    my $test_path = abs_path($0);
+    $test_path =~ s!FlatFile\.t!integrity_checks/!;
+
+    ok( Bio::EnsEMBL::Compara::Utils::FlatFile::check_line_counts("$test_path/file1.txt", 3), 'Line count check passes ok' );
+    throws_ok {Bio::EnsEMBL::Compara::Utils::FlatFile::check_line_counts("$test_path/file1.txt", 5)} qr/Expected 5 lines/, 'Line count check fails ok';
+};
+
+subtest 'check_column_integrity' => sub {
+    # find absolute path to the test input
+    # important for travis-ci
+    use Cwd 'abs_path';
+    my $test_path = abs_path($0);
+    $test_path =~ s!FlatFile\.t!integrity_checks/!;
+
+    ok( Bio::EnsEMBL::Compara::Utils::FlatFile::check_column_integrity("$test_path/file1.txt"), 'Column integrity check passes ok' );
+    throws_ok {Bio::EnsEMBL::Compara::Utils::FlatFile::check_column_integrity("$test_path/file2.txt")} qr/Expected equal number of columns/, 'Column integrity check fails ok';
+    ok( Bio::EnsEMBL::Compara::Utils::FlatFile::check_column_integrity("$test_path/file3.txt", ','), 'Column integrity check passes ok with custom delimiter' );
 };
 
 done_testing();

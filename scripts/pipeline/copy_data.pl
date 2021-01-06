@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,14 +36,6 @@ my $description = q{
 
 copy_data.pl
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =head1 DESCRIPTION
 
 This script copies data over compara DBs. It has been
@@ -74,8 +66,6 @@ example:
 bsub  -q yesterday -ooutput_file -Jcopy_data -R "select[mem>5000] rusage[mem=5000]" -M5000000
 copy_data.pl --from_url mysql://username@server_name/sf5_production
 --to_url mysql://username:password@server_name/sf5_release --mlss 340
-
-
 
 =head1 REQUIREMENTS
 
@@ -119,12 +109,12 @@ The Bio::EnsEMBL::Registry configuration file. If none given,
 the one set in ENSEMBL_REGISTRY will be used if defined, if not
 ~/.ensembl_init will be used.
 
-=item B<--from from_compara_db_name>
+=item B<--from_reg_name from_compara_db_name>
 
 The production compara database name as defined in the Registry or any valid alias.
 Data will be copied from this instance.
 
-=item B<--to to_compara_db_name>
+=item B<--to_reg_name to_compara_db_name>
 
 The release compara database name as defined in the Registry or any valid alias.
 Data will be copied to this instance.
@@ -135,7 +125,7 @@ Data will be copied to this instance.
 
 =over
 
-=item B<--mlss method_link_species_set_id>
+=item B<--mlss_id method_link_species_set_id>
 
 Copy data for this mlss only. This option can be used several times in order to restrict
 the copy to several mlss.
@@ -980,10 +970,6 @@ sub copy_conservation_scores {
 
   if ($count) {
     ## Other scores are in the from database.
-    print " ** WARNING **\n";
-    print " ** WARNING ** Copying only part of the data in the conservation_score table\n";
-    print " ** WARNING ** This process might be very slow.\n";
-    print " ** WARNING **\n";
     copy_data($from_dbc, $to_dbc,
         "conservation_score",
         "SELECT cs.genomic_align_block_id+$fix, window_size, position, expected_score, diff_score".
@@ -994,10 +980,6 @@ sub copy_conservation_scores {
       );
   } elsif ($fix) {
     ## These are the only scores but need to fix them.
-    print " ** WARNING **\n";
-    print " ** WARNING ** Copying in 'fix' mode\n";
-    print " ** WARNING ** This process might be very slow.\n";
-    print " ** WARNING **\n";
     copy_data($from_dbc, $to_dbc,
         "conservation_score",
         "SELECT cs.genomic_align_block_id+$fix, window_size, position, expected_score, diff_score".
@@ -1129,6 +1111,12 @@ sub copy_synteny_regions {
         $synteny_region->dbID(undef);
         $to_sra->store($synteny_region);
     }
+
+    # Also need to copy tags that are added to other mlsss
+    my $mlss_id = $mlss->dbID;
+    copy_table($from_dba->dbc, $to_dba->dbc,
+        "method_link_species_set_tag",
+        "tag = 'synteny_mlss_id' AND value = '$mlss_id'");
 }
 
 

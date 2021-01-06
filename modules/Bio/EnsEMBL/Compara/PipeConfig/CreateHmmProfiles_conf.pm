@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -252,9 +252,6 @@ sub pipeline_checks_pre_init {
 
     # Without a master database, we must provide other parameters
     die if not $self->o('master_db') and not $self->o('ncbi_db');
-
-    my %reuse_modes = (clusters => 1, blastp => 1, members => 1);
-    my %clustering_modes = (blastp => 1, ortholog => 1, hmm => 1, hybrid => 1, topup => 1);
 }
 
 
@@ -265,9 +262,9 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
         $self->pipeline_create_commands_rm_mkdir(['cluster_dir', 'dump_dir', 'fasta_dir', 'tmp_hmmsearch']),
-        $self->pipeline_create_commands_rm_mkdir(['compara_hmm_library_basedir', 'panther_hmm_library_basedir', 'seed_hmm_library_basedir'], $self->o('shared_user')),
+        $self->pipeline_create_commands_rm_mkdir(['compara_hmm_library_basedir', 'panther_hmm_library_basedir', 'seed_hmm_library_basedir']),
         $self->pipeline_create_commands_lfs_setstripe('fasta_dir'),
-        $self->pipeline_create_commands_lfs_setstripe(['compara_hmm_library_basedir', 'panther_hmm_library_basedir', 'seed_hmm_library_basedir'], $self->o('shared_user')),
+        $self->pipeline_create_commands_lfs_setstripe(['compara_hmm_library_basedir', 'panther_hmm_library_basedir', 'seed_hmm_library_basedir']),
     ];
 }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -101,6 +101,18 @@ subtest "Test Bio::EnsEMBL::Compara::GenomeDB new_fast method", sub {
     
     is($genome_db->taxon->name, $taxon_name);
     done_testing();
+};
+
+subtest "Test Bio::EnsEMBL::Compara::GenomeDB _get_genome_dump_path method", sub {
+    my $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new(-name => $name, -assembly => $assembly);
+    is($genome_db->_get_genome_dump_path('XX'), 'XX//homo_sapiens.GRCh37.fa');
+    $genome_db->dbID(123);
+    is($genome_db->_get_genome_dump_path('XX'), 'XX/3/2/homo_sapiens.GRCh37.fa');
+    is($genome_db->_get_genome_dump_path('XX', 'soft'), 'XX/3/2/homo_sapiens.GRCh37.soft.fa');
+    is($genome_db->_get_genome_dump_path('XX', undef, 'non_ref'), 'XX/3/2/homo_sapiens.GRCh37.non_ref.fa');
+    is($genome_db->_get_genome_dump_path('XX', 'hard', 'non_ref'), 'XX/3/2/homo_sapiens.GRCh37.non_ref.hard.fa');
+    $genome_db->genome_component('C');
+    is($genome_db->_get_genome_dump_path('XX', 'hard', 'non_ref'), 'XX/3/2/homo_sapiens.GRCh37.compC.non_ref.hard.fa');
 };
 
 done_testing();

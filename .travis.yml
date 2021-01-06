@@ -24,6 +24,7 @@ before_install:
     # yamllint disable-line rule:indentation
     - cpanm -nq local::lib
     - eval "$(perl -Mlocal::lib=${HOME}/deps)"
+    # yamllint disable rule:line-length
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-rest.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-funcgen.git
@@ -31,6 +32,7 @@ before_install:
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-io.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-datacheck.git
+    # yamllint enable rule:line-length
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-hive.git
     - git clone --branch stable --depth 1 https://github.com/Ensembl/ensembl-taxonomy.git
     - ln -s . ensembl-compara
@@ -71,26 +73,29 @@ jobs:
         - pip install --user yamllint
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
         - cpanm --quiet --installdeps --notest .
-      script: prove -r ./travisci/all-housekeeping/
+        - yamllint --version
+        - shellcheck --version
+      script: prove -rv ./travisci/all-housekeeping/
 
-    - language: perl
-      perl: 5.30
-      name: "SQL unit tests"
-      install:
-        - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
-      script: prove -r ./travisci/sql-unittest/
+    # - language: perl
+    #   perl: 5.30
+    #   name: "SQL unit tests"
+    #   install:
+    #     - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
+    #   script: prove -r ./travisci/sql-unittest/
 
     - language: perl
       dist: trusty   # 5.22 is the minimum on xenial
       perl: 5.14
       name: "Perl unit tests on the minimum version"
       env:
-        - COVERAGE=false
+        - COVERAGE=true
       install:
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
         - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
         - cpanm --quiet --installdeps --notest --cpanfile ensembl-rest/cpanfile .
         - cpanm --quiet --installdeps --notest .
+        - cpanm --quiet --notest Devel::Cover::Report::Codecov
       script: ./travisci/perl-unittest_harness.sh
 
     - language: perl

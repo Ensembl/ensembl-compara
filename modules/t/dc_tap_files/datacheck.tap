@@ -1,0 +1,4 @@
+# Subtest: BlankEnums
+    1..0 # SKIP Database tables not updated since last run
+ok 1 # skip Database tables not updated since last run
+1..1

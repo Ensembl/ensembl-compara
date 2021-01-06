@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -574,8 +574,8 @@ sub toString {
     if (scalar(@$gas) == 1) {
         my $ga = $gas->[0];
         my $str = sprintf('%s %s:%d-%d%s', $ga->dnafrag->genome_db->name, $ga->dnafrag->name, $ga->dnafrag_start, $ga->dnafrag_end, ($ga->dnafrag_strand < 0 ? '(-1)' : ''));
-        my %cigar_breakout = Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($ga->cigar_line);
-        $str .= ' cigar_line:' . join(',', map {$cigar_breakout{$_}.'*'.$_} sort keys %cigar_breakout);
+        my $cigar_breakout = Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($ga->cigar_line);
+        $str .= ' cigar_line:' . join(',', map {$cigar_breakout->{$_}.'*'.$_} sort keys %$cigar_breakout);
         return $str;
     } else {
         return sprintf('%d %s GenomicAligns', scalar(@$gas), $self->genome_db->name);

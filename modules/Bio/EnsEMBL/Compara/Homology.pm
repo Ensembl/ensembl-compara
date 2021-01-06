@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -77,6 +77,8 @@ package Bio::EnsEMBL::Compara::Homology;
 
 use strict;
 use warnings;
+
+use JSON;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
@@ -387,11 +389,11 @@ sub dnds_ratio {
 
   Example     : print $homology->toString();
   Description : This method returns a short text-description of the homology
-                USE ONLY FOR DEBUGGING not for data output since the
-                format of this output may change as need dictates.
   Returntype  : String
   Exceptions  : none
   Caller      : general
+  Status     : At risk (the format of the string would change if we add more fields to Homology)
+
 
 =cut
 
@@ -401,6 +403,82 @@ sub toString {
     $txt .= ' between '.join(' and ', map {$_->stable_id} @{$self->gene_list});
     $txt .= sprintf(' [dN=%.2f dS=%.2f dN/dS=%s]', $self->dn, $self->ds, $self->dnds_ratio ? sprintf('%.2f', $self->dnds_ratio) : 'NA' ) if $self->ds;
     return $txt;
+}
+
+=head2 object_summary
+
+  Example     : print join("\t", @{$homology->object_summary}), "\n";
+  Description : This method returns an arrayref containing a summary of the
+                information contained in the object. The headers are defined
+                by the global $object_summary_headers variable.
+  Returntype  : arrayref
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+our $object_summary_headers = [
+    'mlss_id', 'homology_id', 'homology_type', 'is_tree_compliant',
+    'species_tree_node_id', 'gene_tree_node_id', 'gene_tree_root_id',
+    @{ $Bio::EnsEMBL::Compara::SeqMember::object_summary_headers },
+    map {'homology_' . $_} @{ $Bio::EnsEMBL::Compara::SeqMember::object_summary_headers },
+];
+
+sub object_summary {
+    my $self = shift;
+
+    my @summary_parts = (
+        $self->method_link_species_set_id,
+        $self->dbID,
+        $self->description,
+        $self->is_tree_compliant,
+        $self->_species_tree_node_id,
+        $self->_gene_tree_node_id,
+        $self->_gene_tree_root_id
+    );
+
+    foreach my $member ( @{ $self->get_all_Members } ) {
+        $member->adaptor($self->adaptor->db->get_SeqMemberAdaptor) unless $member->adaptor;
+        push @summary_parts, @{$member->object_summary};
+    }
+
+    return \@summary_parts;
+}
+
+=head2 toJSON
+
+  Example     : print $homology->toJSON();
+  Description : This method returns a string in JSON format containing
+                a minimised amount of data on the given homology.
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+  Status      : At risk (the format of the string would change if we add more fields to Homology)
+
+=cut
+
+sub toJSON {
+    my $self = shift;
+
+    my %hash = {
+        'mlss_id'           => $self->method_link_species_set_id,
+        'description'       => $self->description,
+        'is_tree_compliant' => $self->is_tree_compliant,
+        'stn_id'            => $self->_species_tree_node_id,
+        'gtn_id'            => $self->_gene_tree_node_id,
+        'gtr_id'            => $self->_gene_tree_root_id,
+        'members'           => [],
+    };
+
+    foreach my $member ( @{$self->get_all_Members} ) {
+        push @{$hash{'members'}}, {
+            'gm_id' => $member->gene_member_id,
+            'sm_id' => $member->dbID,
+            'cigar_line' => $member->cigar_line,
+        };
+    }
+
+    return encode_json(\%hash);
 }
 
 
@@ -556,4 +634,3 @@ sub taxonomy_level {
 
 
 1;
-

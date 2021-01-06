@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ sub default_options {
         'species_tree'          => $self->o('config_dir') . '/species_tree.topology.nw',
 
         'binary'    => 0,  # The tree shared by Plants is not binary
-        'n_missing_species_in_tree' => 5,  # The tree does not include the 5 triticum aestivum cultivars
+        'n_missing_species_in_tree' => 0,
     };
 }
 

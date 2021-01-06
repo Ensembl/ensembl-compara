@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,7 +24,13 @@ package Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf;
 use strict;
 use warnings;
 
+use File::Spec;
+use JSON qw(decode_json);
+
+use Bio::EnsEMBL::Utils::IO qw/:slurp/;
 use Bio::EnsEMBL::Compara::PipeConfig::ENV;
+use Bio::EnsEMBL::Hive::Valley;
+
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
@@ -37,11 +43,66 @@ sub default_options {
 
         %{ Bio::EnsEMBL::Compara::PipeConfig::ENV::shared_default_options($self) },
         %{ Bio::EnsEMBL::Compara::PipeConfig::ENV::executable_locations($self) },
+        %{ $self->meadow_options },
 
         # Nowadays we exclusively use InnoDB
         'compara_innodb_schema' => 1,
     };
 }
+
+
+=head2 meadow_options
+
+  Description : Options defined at the meadow level, via JSON configuration files
+                found in ensembl-compara/conf/software. The mechanism allows having
+                per-Meadow (type and name) options that are loaded accordingly when
+                initialising the pipeline.
+                The current syntax for the values are:
+                 - null (mapped to undef)
+                 - strings: Any variable between pairs of ##, e.g. ##linuxbrew_home##
+                            will be replaced with the corresponding $self->o() call
+                 - arrays: The first element is expected to be a method of
+                           ComparaGeneric that shall be called with the remaining
+                           elements of the array as arguments, and the return value
+                           assigned to the option.
+
+=cut
+
+sub meadow_options {
+    my ($self) = @_;
+    my $valley = Bio::EnsEMBL::Hive::Valley->new();
+    my $meadow = $valley->get_available_meadow_list->[0];
+    my $json_file = File::Spec->catfile($ENV{'ENSEMBL_CVS_ROOT_DIR'}, 'ensembl-compara', 'conf', 'software', sprintf('%s.%s.json', $meadow->type, $meadow->name));
+    my $json = decode_json(slurp($json_file));
+    my %hash;
+    while (my ($key, $value) = each %$json) {
+        if (ref($value) eq 'ARRAY') {
+            my $func_name = shift @$value;
+            $hash{$key} = $self->$func_name(@$value);
+        } elsif (defined $value) {
+            my @elts;
+            while ($value =~ /##.*##/) {
+                # The coordinates of the hash-pair-pair
+                my $i1 = index($value, '##');
+                my $i2 = index($value, '##', $i1+2);
+                # The substrings they delimit
+                my $prefix      = substr($value, 0, $i1);
+                my $option_name = substr($value, $i1+2, $i2-$i1-2);
+                my $suffix      = substr($value, $i2+2);
+                # Record
+                push @elts, $prefix, $self->o($option_name);
+                # Loop on the remainder
+                $value = $suffix;
+            }
+            push @elts, $value if length($value);
+            $hash{$key} = join('', @elts);
+        } else {
+            $hash{$key} = undef;
+        }
+    }
+    return \%hash;
+}
+
 
 sub check_exe_in_cellar {
     my ($self, $exe_path) = @_;

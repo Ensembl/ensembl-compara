@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,18 +16,12 @@
 # limitations under the License.
 
 
-# Setup the environment variables
-export PERL5LIB=$PERL5LIB:$PWD/modules
-export PERL5LIB=$PERL5LIB:$PWD/ensembl/modules
-export PERL5LIB=$PERL5LIB:$PWD/ensembl-test/modules
-export PERL5LIB=$PERL5LIB:$PWD/ensembl-io/modules
-
 prove -r ./travisci/perl-linter/
 rt1=$?
 
 # Check that all the PODs are valid (we don't mind missing PODs at the moment)
 # Note the initial "!" to negate grep's return code
-! find docs modules scripts sql travisci -iname '*.t' -o -iname '*.pl' -o -iname '*.pm' -print0 | xargs -0 podchecker 2>&1 | grep -v ' pod syntax OK' | grep -v 'does not contain any pod commands'
+! find docs modules scripts sql travisci \( -iname '*.t' -o -iname '*.pl' -o -iname '*.pm' \) -print0 | xargs -0 podchecker 2>&1 | grep -v /HALXS/blib/ | grep -v ' pod syntax OK' | grep -v 'does not contain any pod commands'
 rt2=$?
 
 if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then

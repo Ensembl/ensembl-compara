@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -71,7 +71,6 @@ sub default_options {
         'config_dir'    => $self->check_dir_in_ensembl('ensembl-compara/conf/' . $self->o('division')),
         'init_reg_conf' => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/production_init_reg_conf.pl'),
         'reg_conf_tmpl' => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/production_reg_conf_tmpl.pl'),
-        'ensj_conf'     => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/ensj-healthcheck.json'),
         
         'do_clone_species' => 1,
 
@@ -89,10 +88,9 @@ sub pipeline_create_commands {
         # Make a backup of the current registry configuration file and the Java
         # healthchecks database properties file
         'cp ' . $self->o('reg_conf') . ' ' . $self->o('backups_dir') . '/' . $self->o('division') . '_production_reg_conf.pl',
-        'cp ' . $self->o('ensj_conf') . ' ' . $self->o('backups_dir') . '/' . $self->o('division') . '_ensj-healthcheck.json',
         # Replace the backed-up files by their default content to ensure a safe
         # setup to start of the pipeline
-        'pushd ' . $self->o('compara_dir') . ' > /dev/null; git checkout -- ' . $self->o('reg_conf') . ' ' . $self->o('ensj_conf') . '; popd > /dev/null',
+        'pushd ' . $self->o('compara_dir') . ' > /dev/null; git checkout -- ' . $self->o('reg_conf') . '; popd > /dev/null',
     ];
 }
 

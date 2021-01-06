@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -66,8 +66,8 @@ sub pipeline_analyses_dump_homologies_posttree {
               'input_query' => q|
                 SELECT
                     h.homology_id, h.description AS homology_type, h.gene_tree_node_id, h.gene_tree_root_id, h.species_tree_node_id, h.is_tree_compliant,
-                    sm1.gene_member_id, sm1.seq_member_id, sm1.stable_id as seq_member_stable_id, sm1.genome_db_id, hm1.perc_id AS identity, hm1.perc_cov AS coverage,
-                    sm2.gene_member_id AS hom_gene_member_id, sm2.seq_member_id AS hom_seq_member_id, sm2.stable_id as hom_seq_member_stable_id, sm2.genome_db_id AS hom_genome_db_id, hm2.perc_id AS hom_identity, hm2.perc_cov AS hom_coverage
+                    sm1.gene_member_id, sm1.seq_member_id, sm1.stable_id, sm1.genome_db_id, hm1.perc_id, hm1.perc_cov,
+                    sm2.gene_member_id AS homology_gene_member_id, sm2.seq_member_id AS homology_seq_member_id, sm2.stable_id as homology_stable_id, sm2.genome_db_id AS homology_genome_db_id, hm2.perc_id AS homology_perc_id, hm2.perc_cov AS homology_perc_cov
                 FROM
                     homology h
                     JOIN (homology_member hm1 JOIN seq_member sm1 USING (seq_member_id)) USING (homology_id)
@@ -81,6 +81,31 @@ sub pipeline_analyses_dump_homologies_posttree {
           -hive_capacity => 10,
           -rc_name => '500Mb_job',
         },  
+    ];
+}
+
+sub pipeline_analyses_split_homologies_posttree {
+    my ($self) = @_;
+    return [
+        {   -logic_name => 'homology_dumps_mlss_id_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
+            -parameters => {
+                'methods'    => {
+                    'ENSEMBL_ORTHOLOGUES'  => 2,
+                    'ENSEMBL_PARALOGUES'   => 2,
+                    'ENSEMBL_HOMOEOLOGUES' => 2,
+                },
+                'batch_size' => 100,
+            },
+            -flow_into => {
+                2 => [ 'split_tree_homologies' ],
+            },
+        },
+
+        { -logic_name => 'split_tree_homologies',
+          -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SplitOrthoTreeOutput',
+          -rc_name    => '500Mb_job',
+        },
     ];
 }
 

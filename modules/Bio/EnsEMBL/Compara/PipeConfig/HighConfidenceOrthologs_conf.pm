@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ sub default_options {
         'collection' => 'default',
 
         'high_confidence_capacity'    => 500,          # how many mlss_ids can be processed in parallel
-        'update_homologies_capacity'  => 30,           # how many homology mlss_ids can be updated in parallel
+        'import_homologies_capacity'  => 50,           # how many homology mlss_ids can be imported in parallel
 
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [ ],

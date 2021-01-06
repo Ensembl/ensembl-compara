@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -154,7 +154,7 @@ sub copy {
   Example    : $member = Bio::EnsEMBL::Compara::SeqMember->new_from_Transcript(
                   $transcript, $genome_db, 'translate');
   Description: contructor method which takes an Ensembl::Gene object
-               and Compara:GenomeDB object and creates a new SeqMember object
+               and Compara::GenomeDB object and creates a new SeqMember object
                translating from the Gene object
   Returntype : Bio::Ensembl::Compara::SeqMember
   Exceptions :
@@ -184,6 +184,9 @@ sub new_from_Transcript {
             throw("COREDB error: does not contain translation stable id for translation_id ".$transcript->translation->dbID."\n");
 
         $seq_string = $transcript->translation->seq;
+
+        # Stop codons cause problems with many tools, so hide them
+        $seq_string =~ tr/*/X/;
 
         if ($seq_string =~ /^X+$/) {
             warn("X+ in sequence from translation " . $transcript->translation->stable_id."\n");
@@ -486,8 +489,8 @@ sub gene_member_id {
 sub bioseq {
 
     my $self = shift;
-    my ($seq_type, $id_type, $with_description, $append_sp_name, $hide_stop_codons) =
-        rearrange([qw(SEQ_TYPE ID_TYPE WITH_DESCRIPTION APPEND_SP_NAME HIDE_STOP_CODONS)], @_);
+    my ($seq_type, $id_type, $with_description, $append_sp_name) =
+        rearrange([qw(SEQ_TYPE ID_TYPE WITH_DESCRIPTION APPEND_SP_NAME)], @_);
 
     throw("Member stable_id undefined") unless defined($self->stable_id());
 
@@ -511,10 +514,6 @@ sub bioseq {
         my $species = $self->genome_db->name;
         $species =~ s/\s/_/g;
         $seqname .= "|" . $species;
-    }
-
-    if ($hide_stop_codons) {
-        $sequence =~ tr/*/X/;
     }
 
     return Bio::Seq->new(
@@ -659,5 +658,42 @@ sub has_translation_edits {
     return $self->{'_has_translation_edits'};
 }
 
+=head2 object_summary
+
+  Example     : print join("\t", @{$member->object_summary}), "\n";
+  Description : This method returns an arrayref containing a summary of the
+                information contained in the object. The headers are defined
+                by the global $object_summary_headers variable.
+                Warning: several object attributes are only available on
+                AlignedMember objects (a subclass of SeqMember). Make sure
+                your objects are AlignedMembers, not pure SeqMembers.
+  Returntype  : arrayref
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+our $object_summary_headers = [
+    'gene_member_id', 'seq_member_id', 'stable_id', 'species', 'genome_db_id',
+    'cigar_line', 'perc_cov', 'perc_id', 'perc_pos',
+];
+
+sub object_summary {
+    my $self = shift;
+
+    my @summary_parts = (
+        $self->gene_member_id,
+        $self->seq_member_id,
+        $self->stable_id,
+        $self->genome_db->name,
+        $self->genome_db->dbID,
+        $self->cigar_line ,
+        $self->perc_cov,
+        $self->perc_id,
+        $self->perc_pos,
+    );
+
+    return \@summary_parts;
+}
 
 1;

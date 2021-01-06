@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ sub pipeline_analyses {
                 'src_db_aliases'    => [ref($self->o('src_db_aliases')) ? keys %{$self->o('src_db_aliases')} : ()],
                 'die_if_unknown_table'  => $self->o('die_if_unknown_table'),
             },
-            -rc_name    => '16Gb_job',
+            -rc_name    => '2Gb_job',
             -input_ids  => [ {} ],
             -flow_into  => {
                 2      => [ 'copy_table'  ],
@@ -193,7 +193,7 @@ sub pipeline_analyses {
             -parameters    => {
                 'dest_db_conn'  => '#curr_rel_db#',
                 'mode'          => 'ignore',
-                'skip_disable_keys' => 1,
+                'skip_disable_vars' => 1,
             },
             -hive_capacity => $self->o('copying_capacity'),
         },

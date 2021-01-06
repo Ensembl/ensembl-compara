@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -114,9 +114,13 @@ package Bio::EnsEMBL::Compara::DnaFrag;
 use strict;
 use warnings;
 
+use Scalar::Util qw(weaken);
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
+
+use Bio::EnsEMBL::Compara::Locus;
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
@@ -196,12 +200,22 @@ sub new {
 sub new_from_Slice {
     my ($class, $slice, $genome_db) = @_;
 
-    my ($attrib) = @{ $slice->get_all_Attributes('codon_table') };
     my $codon_table_id;
-    $codon_table_id = $attrib->value() if $attrib;
-    my ($seq_loc) = @{ $slice->get_all_Attributes('sequence_location') };
     my $sequence_location;
-    $sequence_location = $seq_loc->value() if $seq_loc;
+    my $is_reference;
+
+    if ($slice->{'attributes'}) {
+        $codon_table_id    = $slice->{'attributes'}->{'codon_table'};
+        $sequence_location = $slice->{'attributes'}->{'sequence_location'};
+        $is_reference      = exists $slice->{'attributes'}->{'non_ref'} ? 0 : 1;
+
+    } else {
+        my ($codon_table_attrib) = @{ $slice->get_all_Attributes('codon_table') };
+        $codon_table_id          = $codon_table_attrib->value() if $codon_table_attrib;
+        my ($seq_loc_attrib)     = @{ $slice->get_all_Attributes('sequence_location') };
+        $sequence_location       = $seq_loc_attrib->value() if $seq_loc_attrib;
+        $is_reference            = $slice->is_reference(),
+    }
 
     my %seq_loc_to_cell_component = ( 'nuclear_chromosome' => 'NUC', 'mitochondrial_chromosome' => 'MT', 'chloroplast_chromosome' => 'PT' );
     my $cellular_component = 'NUC';
@@ -219,7 +233,7 @@ sub new_from_Slice {
         'name' => $slice->seq_region_name(),
         'length' => $slice->seq_region_length(),
         'coord_system_name' => $slice->coord_system_name(),
-        'is_reference' => $slice->is_reference(),
+        'is_reference' => $is_reference,
         'genome_db' => $genome_db,
         'genome_db_id' => $genome_db->dbID,
         '_codon_table_id' => $codon_table_id || 1,
@@ -520,6 +534,50 @@ sub slice {
 }
 
 
+=head2 get_alt_region
+
+  Example     : my $dnafrag_alt_region = $dnafrag->get_alt_region();
+  Description : Returns a Locus representing the portion of this DnaFrag that
+                can be aligned
+  Returntype  : Bio::EnsEMBL::Compara::Locus
+  Exceptions  : none
+
+=cut
+
+sub get_alt_region {
+    my $self = shift;
+
+    if ((not exists $self->{'_alt_region'}) and $self->adaptor) {
+        $self->{'_alt_region'} = $self->adaptor->db->get_DnaFragAltRegionAdaptor->fetch_by_dbID($self->dbID);
+        if ($self->{'_alt_region'}) {
+            $self->{'_alt_region'}->{'dnafrag'} = $self;
+            weaken($self->{'_alt_region'}->{'dnafrag'});
+        }
+    }
+    return $self->{'_alt_region'};
+}
+
+
+=head2 as_locus
+
+  Example     : my $locus = $dnafrag->as_locus();
+  Description : Return a new Locus object that represents the whole DnaFrag
+  Returntype  : Bio::EnsEMBL::Compara::Locus
+  Exceptions  : none
+
+=cut
+
+sub as_locus {
+    my $self = shift;
+    return bless {
+        'dnafrag'         => $self,
+        'dnafrag_start'   => 1,
+        'dnafrag_end'     => $self->length,
+        'dnafrag_strand'  => 1,
+    }, 'Bio::EnsEMBL::Compara::Locus';
+}
+
+
 =head2 display_id
 
   Example    : my $id = $dnafrag->display_id;
@@ -566,4 +624,3 @@ sub toString {
 
 
 1;
-

@@ -1,8 +1,8 @@
 
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -161,7 +161,7 @@ sub _get_homology_counts {
     my %homology_counts;
 
     #Compute Homology counts
-    my $sql = "SELECT description, is_tree_compliant, node_type, COUNT(*) FROM homology JOIN gene_tree_node_attr ON gene_tree_node_id = node_id WHERE homology_id < " . $self->param( 'homology_id_threshold' ) . " GROUP BY description, is_tree_compliant, node_type";
+    my $sql = "SELECT description, is_tree_compliant, node_type, COUNT(*) FROM homology JOIN gene_tree_node_attr ON gene_tree_node_id = node_id GROUP BY description, is_tree_compliant, node_type";
     my $sth = $self->compara_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
     while ( my @row = $sth->fetchrow_array() ) {
@@ -184,7 +184,7 @@ sub _get_avg_perc_identity {
     my %avg_perc_identity;
 
     #Compute Average percentage identity
-    my $sql = "SELECT description, is_tree_compliant, ROUND(AVG(perc_id),2) FROM homology JOIN homology_member USING (homology_id) WHERE homology_id < " . $self->param( 'homology_id_threshold' ) . " GROUP BY description, is_tree_compliant";
+    my $sql = "SELECT description, is_tree_compliant, ROUND(AVG(perc_id),2) FROM homology JOIN homology_member USING (homology_id) GROUP BY description, is_tree_compliant";
     my $sth = $self->compara_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
     while ( my @row = $sth->fetchrow_array() ) {
@@ -209,7 +209,7 @@ sub _get_avg_duplication_confidence_score {
     my %avg_duplication_confidence_score;
 
     #Compute Average duplication confidence score
-    my $sql = "SELECT description, AVG(duplication_confidence_score) FROM homology JOIN gene_tree_node_attr ON gene_tree_node_id = node_id WHERE homology_id < " . $self->param( 'homology_id_threshold' ) . " AND node_type = 'duplication' GROUP BY description;";
+    my $sql = "SELECT description, AVG(duplication_confidence_score) FROM homology JOIN gene_tree_node_attr ON gene_tree_node_id = node_id WHERE node_type = 'duplication' GROUP BY description;";
     my $sth = $self->compara_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
     while ( my @row = $sth->fetchrow_array() ) {

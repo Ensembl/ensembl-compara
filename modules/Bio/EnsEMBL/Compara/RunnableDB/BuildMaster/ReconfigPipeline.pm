@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,8 +31,6 @@ Requires several inputs:
     'reg_conf'        : full path to the registry configuration file
     'reg_conf_tmpl'   : full path to the registry configuration template file
     'master_db'       : new master database
-    'ensj_conf'       : full path to 'ensj-healthcheck.json' file (used to run
-                        Java healthchecks)
     'backups_dir'     : full path to the pipeline's backup directory
     'dst_host'        : host name where the cloned core databases have been created
     'dst_port'        : host port
@@ -79,7 +77,6 @@ sub run {
     my $reg_conf_tmpl   = $self->param_required('reg_conf_tmpl');
     my $core_dbs_hash   = $self->param_required('core_dbs_hash');
     my $master_db_info  = $self->param_required('master_db_info');
-    my $ensj_conf       = $self->param_required('ensj_conf');
     my $dst_host        = $self->param_required('dst_host');
     my $dst_port        = $self->param_required('dst_port');
     # Find the tag '<core_dbs_hash>' in the registry configuration file template
@@ -91,13 +88,6 @@ sub run {
     $content =~ s/'', '' ], # TAG: <master_db_info>/$master_db_info],/;
     # Modify the registry configuration file
     $self->_spurt($reg_conf, $content);
-    # All cloned core databases are in the same server, so update that information
-    # in the compara ensj-healthcheck configuration file
-    $content = JSON->new->pretty->encode({
-        'host1'          => $dst_host,
-        'secondary.host' => $dst_host
-    });
-    $self->_spurt($ensj_conf, $content);
 }
 
 1;

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@
 echo "We are running Perl '$TRAVIS_PERL_VERSION', Coverage reporting is set to '$COVERAGE'"
 
 # Setup the environment variables
-export TEST_AUTHOR=$USER
-
 ENSEMBL_PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-funcgen'
 ENSEMBL_TESTER="$PWD/ensembl-test/scripts/runtests.pl"
 ENSEMBL_TESTER_OPTIONS=()

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ use strict;
 use warnings;
 
 use Carp;
+use Digest::MD5 qw(md5_hex);
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;    # to use go_figure_compara_dba() and other things
@@ -510,6 +511,29 @@ sub complete_early_if_branch_connected {
 }
 
 
+=head2 add_or_update_pipeline_wide_parameter
+
+  Arg[1]      : (string) $param_name: the parameter name
+  Arg[2]      : (string) $param_value: the parameter value
+  Example     : $self->add_or_update_pipeline_wide_parameter('are_all_species_reused', 1);
+  Description : Add a new pipeline-wide parameter, or update its value
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub add_or_update_pipeline_wide_parameter {
+    my ($self, $param_name, $param_value) = @_;
+    my ($pwp) = $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
+        'param_name'    => $param_name,
+        'param_value'   => $param_value,
+    );
+    my $adaptor = $self->db->get_PipelineWideParametersAdaptor;
+    $adaptor->store_or_update_one($pwp, ['param_name']);
+}
+
+
 =head2 die_no_retry
 
   Example     : $self->die_no_retry("GenomeDB dbID=45 is missing");
@@ -527,5 +551,34 @@ sub die_no_retry {
     die @_;
 }
 
+
+=head2 get_requestor_id
+
+  Example     : my $requestor_id = $self->get_requestor_id();
+  Description : Return an identifier for this job that can be used as
+                a requestor ID in Utils::IDGenerator
+  Returntype  : Integer (unsigned 64-bits)
+
+=cut
+
+sub get_requestor_id {
+    my $self = shift;
+
+    # Use the eHive job_id if possible
+    if ($self->input_job->dbID) {
+        return $self->input_job->dbID;
+    }
+
+    # Resort to computing a (likely unique) 64-bits key
+    # based on the job's configuration
+    my $params   = stringify($self->input_job->{'_unsubstituted_param_hash'});
+    my $analysis = $self->input_job->analysis->module;
+    my $job_conf = join('/', $analysis, $params);
+
+    # md5 returns a 128 bits / 16 bytes string, of which we take
+    # the 64 left-most bits
+    my $id = unpack 'Q', md5($job_conf);
+    return $id
+}
 
 1;

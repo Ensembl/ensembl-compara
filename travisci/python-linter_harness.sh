@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,18 +18,19 @@
 PYTHON_SOURCE_LOCATIONS=('scripts' 'src/python')
 
 # Setup the environment variables
+# shellcheck disable=SC2155
 export PYTHONPATH=$PYTHONPATH:$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')
 export MYPYPATH=$MYPYPATH:$PWD/src/python/lib
 
 PYLINT_OUTPUT_FILE=$(mktemp)
 PYLINT_ERRORS=$(mktemp)
-find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" -print0 | xargs -0 pylint --rcfile pylintrc --verbose | tee "$PYLINT_OUTPUT_FILE"
+find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \! -name "Ortheus.py" -print0 | xargs -0 pylint --rcfile pylintrc --verbose | tee "$PYLINT_OUTPUT_FILE"
 grep -v "\-\-\-\-\-\-\-\-\-" "$PYLINT_OUTPUT_FILE" | grep -v "Your code has been rated" | grep -v "\n\n" | sed '/^$/d' > "$PYLINT_ERRORS"
 ! [ -s "$PYLINT_ERRORS" ]
 rt1=$?
 rm "$PYLINT_OUTPUT_FILE" "$PYLINT_ERRORS"
 
-find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" -print0 | xargs -0 mypy --config-file mypy.ini --namespace-packages
+find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \! -name "Ortheus.py" -print0 | xargs -0 mypy --config-file mypy.ini --namespace-packages
 rt2=$?
 
 if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then

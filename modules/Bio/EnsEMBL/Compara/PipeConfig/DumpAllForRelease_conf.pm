@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -61,7 +61,6 @@ sub default_options {
         'dump_root'    => $self->o('pipeline_dir'),
         # Location of the previous dumps
         'ftp_root'     => '/nfs/production/panda/ensembl/production/ensemblftp/',
-        #'ftp_root'     => '/gpfs/nobackup/ensembl/carlac/fake_ftp', # Fake e92 FTP used for testing in e93
 
         'compara_db'   => 'compara_curr', # can be URL or reg alias
         'ancestral_db' => undef,

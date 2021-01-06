@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -152,6 +152,7 @@ sub get_available_adaptors {
 
             # genomic:
         'DnaFrag'               => 'Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor',
+        'DnaFragAltRegion'      => 'Bio::EnsEMBL::Compara::DBSQL::DnaFragAltRegionAdaptor',
         'SyntenyRegion'         => 'Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor',
         'DnaFragRegion'         => 'Bio::EnsEMBL::Compara::DBSQL::DnaFragRegionAdaptor',
         'DnaAlignFeature'       => 'Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor',
@@ -295,6 +296,22 @@ sub get_division {
     my $div_sql = "SELECT meta_value FROM meta WHERE meta_key = 'division'";
     my $division = $self->dbc->sql_helper()->execute_single_result(-SQL => $div_sql, -NO_ERROR => 1) // '';
     return $division;
+}
+
+
+=head2 get_table_engine
+
+  Arg[1]      : string $table - table name
+  Example     : $dba->get_table_engine('meta');
+  Description : Returns the table's engine for the given DBAdaptor.
+  Returns     : string
+  Exceptions  : none
+
+=cut
+
+sub get_table_engine {
+    my ($self, $table) = @_;
+    return $self->dbc->db_handle->selectrow_hashref("SHOW TABLE STATUS WHERE Name = '$table'")->{Engine};
 }
 
 

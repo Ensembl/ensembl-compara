@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -863,9 +863,9 @@ sub update_neighbourhood_data {
 
   Arg  1     : reference to Bio::EnsEMBL::Compara::GenomicAlignTree
   Arg  2     : int $flanking
-  Example    : $self->update_neighbourhood_data($node);
-  Description: Update the left and right node_ids of a genomic_align_tree
-               table in a database
+  Example    : $self->set_neighbour_nodes_for_leaf($leaf);
+  Description: Update the left and right node id attributes of the given
+               leaf node from a genomic align tree
   Returntype : none
   Exceptions : none
   Caller     : none
@@ -912,7 +912,7 @@ sub set_neighbour_nodes_for_leaf {
   my $dnafrag_strand = $genomic_align->dnafrag_strand;
 
   #forward strand
-  my $table;
+  my ($table, $left_node_id, $right_node_id);
   if ($dnafrag_strand == 1) {
 
       #find genomic_align to left of current genomic_align
@@ -936,7 +936,7 @@ sub set_neighbour_nodes_for_leaf {
 	  my ($this_node_id, $this_dnafrag_start, $this_dnafrag_end, $this_dnafrag_strand) = @{$table->[$i]};
 	  if ($this_dnafrag_start == $dnafrag_start and $this_dnafrag_end == $dnafrag_end) {
 	      ## $table->[$i] correspond to the query node
-	      $node->left_node_id($table->[$i-1]->[0]) if ($i > 0);
+	      $left_node_id = $table->[$i-1]->[0] if ($i > 0);
 	      last;
 	  }
       }
@@ -962,12 +962,13 @@ sub set_neighbour_nodes_for_leaf {
 	  my ($this_node_id, $this_dnafrag_start, $this_dnafrag_end, $this_dnafrag_strand) = @{$table->[$i]};
 	  if ($this_dnafrag_start == $dnafrag_start and $this_dnafrag_end == $dnafrag_end) {
 	      ## $table->[$i] correspond to the query node
-	      $node->left_node_id($table->[$i+1]->[0]) if ($i+1 < @$table);
+	      $left_node_id = $table->[$i+1]->[0] if ($i+1 < @$table);
 	      last;
 	  }
       }
   }
   $sth->finish;
+  $node->left_node_id($left_node_id);
 
   #Region to the right of the genomic_align
   #reset $flanking
@@ -1002,7 +1003,7 @@ sub set_neighbour_nodes_for_leaf {
 	  my ($this_node_id, $this_dnafrag_start, $this_dnafrag_end, $this_dnafrag_strand) = @{$table->[$i]};
 	  if ($this_dnafrag_start == $dnafrag_start and $this_dnafrag_end == $dnafrag_end) {
 	      ## $table->[$i] correspond to the query node
-	      $node->right_node_id($table->[$i+1]->[0]) if ($i + 1 < @$table);
+	      $right_node_id = $table->[$i+1]->[0] if ($i + 1 < @$table);
 	      last;
 	  }
       }
@@ -1024,17 +1025,16 @@ sub set_neighbour_nodes_for_leaf {
       for (my $i = 0; $i < @$table; $i++) {
 	  my ($this_node_id, $this_dnafrag_start, $this_dnafrag_end, $this_dnafrag_strand) = @{$table->[$i]};
 	  if ($this_dnafrag_start == $dnafrag_start and $this_dnafrag_end == $dnafrag_end) {
-	      $node->right_node_id($table->[$i-1]->[0]) if ($i > 0);
+	      $right_node_id = $table->[$i-1]->[0] if ($i > 0);
 	      last;
 	  }
       }
   }
   $sth->finish;
+  $node->right_node_id($right_node_id);
 
   # Store this in the DB
-  if ($node->left_node_id or $node->right_node_id) {
-    $self->update_neighbourhood_data($node);
-  }
+  $self->update_neighbourhood_data($node);
 
   return $node;
 

@@ -1,6 +1,6 @@
 
 // fetch ticket status from REST API
-var endpoint_ticket_list = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/search/?jql=project=ENSCOMPARASW+AND+(description~"cp__SERVER__"+OR+description~"cp__SERVER__-w"+OR+description~"prod-__SERVER__"+OR+description~"prod-__SERVER__-ensadmin")+AND+status="In+progress"+ORDER+BY+created+ASC,id+ASC&maxResults=500';
+var endpoint_ticket_list = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/search/?jql=project=ENSCOMPARASW+AND+Server+=+mysql-ens-compara-prod-__SERVER__+AND+resolution+IS+NULL+ORDER+BY+created+ASC,id+ASC&maxResults=500';
 var endpoint_ticket_query = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/issue';
 var url_jira_issue = 'https://www.ebi.ac.uk/panda/jira/browse/';
 
@@ -23,23 +23,35 @@ function process_server(server) { return function(json) {
     var n_tickets = json.issues.length;
     var table = $('<table class="server_dashboard"></table>').appendTo('#cp' + server);
     table.append('<tbody><tr id="usage_cp' + server + '"><th>mysql-ens-compara-prod-' + server + '</th></tr>');
-    if (n_tickets) {
+    var is_busy = false;
+    for(var i=0; i<n_tickets; i++) {
+        if (json.issues[i].fields.status.name == "In Progress") {
+            is_busy = true;
+        } else if (json.issues[i].fields.status.name == "Implementation") {
+            is_busy = true;
+        }
+    }
+    if (is_busy) {
         $('#usage_cp' + server).append('<td><div class="status_bar"><div class="yellow_light" style="width:100%"><i>busy</i></div></div></td>');
+    } else if (n_tickets) {
+        $('#usage_cp' + server).append('<td><div class="status_bar"><div class="green_light" style="width:100%"><i>booked</i></div></div></td>');
+    } else {
+        $('#usage_cp' + server).append('<td><div class="status_bar"><div class="green_light" style="width:100%"><i>free</i></div></div></td>');
+    }
+    if (n_tickets) {
         var ticket_info = process_ticket(json.issues[0]);
         $('#usage_cp' + server).append('<td class="ticket_summary">' + ticket_info + '</td>');
         for (var i = 1; i < n_tickets; i++) {
             var ticket_info = process_ticket(json.issues[i]);
             table.append('<tr><th></th><td></td><td class="ticket_summary">' + ticket_info + '</td></tr>');
         }
-    } else {
-        $('#usage_cp' + server).append('<td><div class="status_bar"><div class="green_light" style="width:100%"><i>free</i></div></div></td><td class="ticket_summary"></td>');
     }
     table.append('</tbody>');
 } }
 
 for(var j = 1; j < 11; j++){
     var endpoint = endpoint_ticket_list.replace(/__SERVER__/g, j);
-    console.log(endpoint);
+    //console.log(endpoint);
     $('body').append('<div id="cp' + j + '"></div>');
     $.ajax(endpoint, {
         success: process_server(j),

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,17 +14,6 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -43,11 +32,6 @@ Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp
     the program GERP.pl. It then parses the output and writes the constrained
     elements in the constrained_element table and the conserved scores in the 
     conservation_score table
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
 
 =cut
 
@@ -693,12 +677,13 @@ sub _parse_rates_file {
 sub _build_tree_string {
     my ($self, $genomic_aligns) = @_;
 
-    my $db_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('mlss_id'), 'default')->root;
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
+    my $db_tree = $mlss->species_tree->root;
     my $tree = $db_tree->copy();
 
     #if the tree leaves are species names, need to convert these into genome_db_ids
-    my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
-    
+    my $genome_dbs = $mlss->species_set->genome_dbs;
+
     my %leaf_check;
     foreach my $genome_db (@$genome_dbs) {
         if ($genome_db->name ne "ancestral_sequences") {

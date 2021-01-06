@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -166,7 +166,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputlist'    => $self->o('taxon_filters'),
-                'column_names' => [ 'scientific_name', 'common_name' ],
+                'column_names' => [ 'scientific_name', 'common_name', 'prefix' ],
             },
             -flow_into => {
                 2 => [ 'check_taxon_filters' ],
@@ -187,7 +187,7 @@ sub pipeline_analyses {
             -parameters => {
                 # Cannot flow directly into the table because table-dataflows can only reach the eHive database, not #db_conn#
                 # Gets #db_conn# from pipeline_wide_parameters
-                'sql'       => 'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#method_link_species_set_id#, "filter:#scientific_name#", "#common_name#")',
+                'sql'       => 'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#method_link_species_set_id#, "filter:#prefix##scientific_name#", "#common_name#")',
             },
         },
 

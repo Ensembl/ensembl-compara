@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ my @pairwise_genome_db_names = ("pan_troglodytes", "mus_musculus", "tarsius_syri
 
 my $pairwise_method_link_type = '"BLASTZ_NET", "LASTZ_NET"';
 my $epo_alignment_method_link_type = "EPO";
-my $epo_low_coverage_alignment_method_link_type = "EPO_EXTENDED";
+my $epo_extended_alignment_method_link_type = "EPO_EXTENDED";
 my $pecan_alignment_method_link_type = "PECAN";
 my $constrained_element_method_link_type = "GERP_CONSTRAINED_ELEMENT";
 my $conservation_score_method_link_type = "GERP_CONSERVATION_SCORE";
@@ -54,7 +54,7 @@ my $ancestral_coord_system_name = "ancestralsegment";
 my $do_pairwise = 1;
 my $do_pecan = 1;
 my $do_epo = 1;
-my $do_epo_low_coverage = 1;
+my $do_epo_extended = 1;
 
 GetOptions('help' => \$help,
            's=s' => \$srcDB,
@@ -585,10 +585,10 @@ if ($do_epo) {
     }
 }
 
-if ($do_epo_low_coverage) {
+if ($do_epo_extended) {
     print "do EPO multiple alignment\n";
         
-    my $multi_alignment_mlss_id = _run_query_from_method_link_type_species_set_name($epo_low_coverage_alignment_method_link_type, $epo_species_set_name);
+    my $multi_alignment_mlss_id = _run_query_from_method_link_type_species_set_name($epo_extended_alignment_method_link_type, $epo_species_set_name);
 
     my $constrained_element_mlss_id = _run_query_from_method_link_type_species_set_name($constrained_element_method_link_type, $epo_species_set_name);
 

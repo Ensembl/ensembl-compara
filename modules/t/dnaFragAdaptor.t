@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,9 +63,11 @@ $sth->finish();
 $sth = $multi->get_DBAdaptor( "compara" )->dbc->prepare("SELECT
       dnafrag_id, length, df.name, df.genome_db_id, coord_system_name
     FROM dnafrag df left join genome_db gdb USING (genome_db_id)
-    WHERE gdb.name = \"$ref_species\" LIMIT 1");
+    WHERE gdb.name = \"$ref_species\" AND is_reference = 1 ORDER BY dnafrag_id DESC LIMIT 2");
 $sth->execute();
 my ($dnafrag_id, $dnafrag_length, $dnafrag_name, $genome_db_id, $coord_system_name) =
+  $sth->fetchrow_array();
+my ($dnafrag2_id, $dnafrag2_length, $dnafrag2_name, $genome_db_id2, $coord_system_name2) =
   $sth->fetchrow_array();
 $sth->finish();
 
@@ -104,11 +106,37 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_by_GenomeDB_an
     done_testing();
 };
 
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_all_by_GenomeDB_and_names method", sub {
+
+    my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_and_names($genome_db_id, [$dnafrag_name, $dnafrag2_name]);
+
+    # Note: the order is generally not guaranteed, but here, $dnafrag_name
+    # should be the first because it will be in the cache
+    isa_ok($dnafrags->[0], 'Bio::EnsEMBL::Compara::DnaFrag', "Fetching by GenomeDB and names");
+    is($dnafrags->[0]->dbID, $dnafrag_id, "Fetching by GenomeDB and names. Checking dbID");
+    is($dnafrags->[0]->length, $dnafrag_length, "Fetching by GenomeDB and names. Checking length");
+    is($dnafrags->[0]->name, $dnafrag_name, "Fetching by GenomeDB and names. Checking name");
+    is($dnafrags->[0]->genome_db_id, $genome_db_id, "Fetching by GenomeDB and names. Checking genome_db_id");
+    is($dnafrags->[0]->coord_system_name, $coord_system_name, "Fetching by GenomeDB and names. Checking coord_system_name");
+    isa_ok($dnafrags->[1], 'Bio::EnsEMBL::Compara::DnaFrag', "Fetching by GenomeDB and names");
+    is($dnafrags->[1]->dbID, $dnafrag2_id, "Fetching by GenomeDB and names. Checking dbID");
+    is($dnafrags->[1]->length, $dnafrag2_length, "Fetching by GenomeDB and names. Checking length");
+    is($dnafrags->[1]->name, $dnafrag2_name, "Fetching by GenomeDB and names. Checking name");
+    is($dnafrags->[1]->genome_db_id, $genome_db_id2, "Fetching by GenomeDB and names. Checking genome_db_id");
+    is($dnafrags->[1]->coord_system_name, $coord_system_name2, "Fetching by GenomeDB and names. Checking coord_system_name");
+
+    $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_and_names($genome_db_id, []);
+    is_deeply($dnafrags, [], "No names means no dnafrags");
+
+    done_testing();
+};
+
 subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_all_by_GenomeDB method for a specific coordinate system", sub {
 
   my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB(
                                                          $genome_db_adaptor->fetch_by_dbID($genome_db_id),
                                                          -COORD_SYSTEM_NAME => $coord_system_name,
+                                                         -IS_REFERENCE => 1,
                                                         );
   is(@$dnafrags, 2);
   foreach my $dnafrag (@$dnafrags) {
@@ -151,7 +179,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_all_by_GenomeD
         is($fail, "", "Fetching all by GenomeDB and region");
     };
 
-    #Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::fetch_all
+    #Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_all
     my $dnafrags = $dnafrag_adaptor->fetch_all();
     is(@$dnafrags, $num_of_dnafrags, "Fetching all");
 
@@ -186,7 +214,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_by_Slice", sub
 };
 
 
-subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::_synchronise", sub {
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::_synchronise", sub {
 
     throws_ok { $dnafrag_adaptor->_synchronise() } qr/MSG: The given reference for attribute argument to _synchronise was undef. Expected 'Bio::EnsEMBL::Compara::DnaFrag'/, 'no argument passed';
     throws_ok { $dnafrag_adaptor->_synchronise($dnafrag_id) } qr/MSG: Asking for the type of the attribute argument to _synchronise produced no type; check it is a reference. Expected 'Bio::EnsEMBL::Compara::DnaFrag'/, 'invalid dnafrag object';
@@ -211,7 +239,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::_synchronise", 
 
 
 
-subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::store", sub {
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::store", sub {
 
     my $dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag_id);
     $multi->hide("compara", "dnafrag");
@@ -252,5 +280,30 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::store", sub {
 
     done_testing();
 };
+
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::delete", sub {
+
+    # This is the dbID of a dnafrag that has an alt-region defined
+    my $dnafrag = $dnafrag_adaptor->fetch_by_dbID(13708879);
+    my $alt_region = $dnafrag_adaptor->db->get_DnaFragAltRegionAdaptor->fetch_by_dbID($dnafrag->dbID);
+    ok($alt_region, "dnafrag dbID=" . ($dnafrag->dbID) . " has an alt-region defined");
+
+    $multi->save("compara", "dnafrag");
+    $multi->save("compara", "dnafrag_alt_region");
+
+    $dnafrag_adaptor->delete($dnafrag);
+    my $no_dnafrag = $dnafrag_adaptor->fetch_by_dbID($dnafrag->dbID);
+    is($no_dnafrag, undef, "dnafrag dbID=" . ($dnafrag->dbID) . " cannot be found by the adaptor any more after deletion");
+    $no_dnafrag = $dnafrag_adaptor->_uncached_fetch_by_dbID($dnafrag->dbID);
+    is($no_dnafrag, undef, "dnafrag dbID=" . ($dnafrag->dbID) . " is not in the database any more after deletion");
+    $alt_region = $dnafrag_adaptor->db->get_DnaFragAltRegionAdaptor->fetch_by_dbID($dnafrag->dbID);
+    is($alt_region, undef, "The alt-region of dnafrag dbID=" . ($dnafrag->dbID) . " has been deleted too");
+
+    $multi->restore("compara", "dnafrag");
+    $multi->restore("compara", "dnafrag_alt_region");
+
+    done_testing();
+};
+
 
 done_testing();

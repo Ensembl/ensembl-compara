@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,8 +39,6 @@ duplications). The build_tree_string methods numbers the sequences in order and 
 order of the dnafrag_regions array accordingly. Last, the dumpFasta() method dumps the sequences
 according to the tree_string order.
 
-This module can be used to include low coverage 2X genomes in the alignment. To do this, the pairwise LASTZ_NET alignments between each 2X genome and a reference species (eg human) are retrieved from specified databases. 
-
 Ortheus also generates a set of aligned ancestral sequences. This module stores them in a core-like database.
 
 
@@ -59,14 +57,6 @@ Ortheus will store alignments with this method_link_species_set_id
 =item * java_options
 
 Options used to run java eg: '-server -Xmx1000M'
-
-=item * tree_file
-
-Optional. A list of database locations and method_link_species_set_id pairs for the 2X geonome LASTZ_NET alignments. The database locations should be identified using the url format.ie mysql://user:pass\@host:port/db_name.
-
-=item * reference_species 
-
-Optional. The reference species for the 2X genome LASTZ_NET alignments
 
 =item * options
 
@@ -89,9 +79,12 @@ package Bio::EnsEMBL::Compara::RunnableDB::Ortheus;
 
 use strict;
 use warnings;
+
 use Data::Dumper;
+use File::Basename;
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Compara::DnaFragRegion;
+use Bio::EnsEMBL::IO::Parser::Fasta;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
@@ -100,6 +93,7 @@ use Bio::EnsEMBL::Compara::GenomicAlignTree;
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
 use Bio::EnsEMBL::Compara::Production::Analysis::Ortheus;
+use Bio::EnsEMBL::Hive::Utils ('stringify');
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -118,7 +112,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
   my( $self) = @_;
-  $self->param('ga_frag', []);
   my $mlss_id = $self->param_required('mlss_id');
 
   ## Store DnaFragRegions corresponding to the SyntenyRegion in $self->param('dnafrag_regions'). At this point the
@@ -132,8 +125,12 @@ sub fetch_input {
     ## in order to match the name of the sequences in the tree string (seq1, seq2...)
     if ($self->get_species_tree) {
       $self->param('tree_string', $self->get_tree_string);
-      print "seq_string ", $self->param('tree_string'), "\n";
+      print "tree_string ", $self->param('tree_string'), "\n";
     }
+
+    # Make sure we start in a clean space, free of any files from a previous job attempt
+    $self->cleanup_worker_temp_directory;
+
     ## Dumps fasta files for the DnaFragRegions. Fasta files order must match the entries in the
     ## newick tree. The order of the files will match the order of sequences in the tree_string.
 
@@ -195,6 +192,7 @@ sub detect_pecan_ortheus_errors {
               $err_msgs{$line} = 1;
           }
       }
+      $err_msgs{$traceback} = 1 if $trace_open;
 
       #Write to job_message table but without returing an error
       foreach my $err_msg (keys %err_msgs) {
@@ -205,6 +203,11 @@ sub detect_pecan_ortheus_errors {
               $self->input_job->autoflow(0);
               $self->complete_early( "Pecan failed to align the sequences. Skipping." );
           } elsif ($err_msg =~ /Exception in thread "main" java.lang.IllegalArgumentException($|:\s+fromIndex\([-\d]+\) > toIndex\([-\d]+\)|:\sNegative capacity)/) {
+              # Not sure why this happens
+              # Let's discard this job.
+              $self->input_job->autoflow(0);
+              $self->complete_early( "Pecan failed to align the sequences. Skipping." );
+          } elsif ($err_msg =~ /Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: \d+/) {
               # Not sure why this happens
               # Let's discard this job.
               $self->input_job->autoflow(0);
@@ -328,10 +331,10 @@ sub _write_output {
 	  }
        }
 
-       my $split_trees;
        #restrict genomic_align_tree if it is too long and store as groups
        if ($self->param('max_block_size') && 
   	   $genomic_align_tree->length >  $self->param('max_block_size')) {
+  	   my $split_trees;
   	   for (my $start = 1; $start <= $genomic_align_tree->length; 
   		$start += $self->param('max_block_size')) {
   	       my $end = $start+$self->param('max_block_size')-1;
@@ -339,137 +342,111 @@ sub _write_output {
   		   $end = $genomic_align_tree->length;
   	       }
   	       my $new_gat = $genomic_align_tree->restrict_between_alignment_positions($start, $end, "skip_empty_GenomicAligns");
-	       push @$split_trees, $new_gat if scalar(@{$new_gat->get_all_leaves}) >= 2;
+	       # Some ancestral genomic_aligns may have become all gaps,
+	       # break the trees around those
+	       my $subtrees = $self->split_if_empty_ancestral_seq($new_gat);
+	       push @$split_trees, @$subtrees;
   	   }
 	   $gata->store_group($split_trees);
 	   foreach my $tree (@$split_trees) {
+	       $self->_assert_cigar_lines_in_block($tree->modern_genomic_align_block_id);
+	       $self->_assert_tree($tree);
 	       $self->_write_gerp_dataflow($tree->modern_genomic_align_block_id);
 	       
 	   }
        } else {
 	   $gata->store($genomic_align_tree, $skip_left_right_index);
-	   $self->_write_gerp_dataflow($genomic_align_tree->modern_genomic_align_block_id)
+	   $self->_assert_cigar_lines_in_block($genomic_align_tree->modern_genomic_align_block_id);
+	   $self->_assert_tree($genomic_align_tree);
+	   $self->_write_gerp_dataflow($genomic_align_tree->modern_genomic_align_block_id);
        }
    }
-	#DO NOT COMMENT THIS OUT!!! (at least not permenantly). Needed
-	#to clean up after each job otherwise you get files left over from
-	#the previous job.
-    $self->cleanup_worker_temp_directory;
 }
 
-
-#trim genomic align block from the left hand edge to first position having at
-#least 2 genomic aligns which overlap
-sub _trim_gab_left {
-    my ($gab) = @_;
-    
-    if (!defined($gab)) {
-	return undef;
+sub _assert_tree {
+    my ($self, $gat) = @_;
+    foreach my $node (@{$gat->get_all_nodes}) {
+        if ($node->is_leaf) {
+            if ($node->genomic_align_group->genome_db->name eq 'ancestral_sequences') {
+                $self->_backup_data_and_throw($gat, sprintf("Node %s is a leaf, but attached to ancestral_sequences", $node->name));
+            }
+        } else {
+            if ($node->genomic_align_group->genome_db->name ne 'ancestral_sequences') {
+                $self->_backup_data_and_throw($gat, sprintf("Node %s is internal, but not attached to ancestral_sequences", $node->name));
+            }
+            if ($node->get_child_count != 2) {
+                $self->_backup_data_and_throw($gat, sprintf("Node %s is not binary", $node->name));
+            }
+        }
     }
-    my $align_length = $gab->length;
-    
-    my $gas = $gab->get_all_GenomicAligns();
-    my $d_length;
-    my $m_length;
-    my $min_d_length = $align_length;
-    
-    my $found_min = 0;
-
-    #take first element in cigar string for each genomic_align and if it is a
-    #match, it must extend to the start of the block. Find the shortest delete.
-    #If the shortest delete and the match are the same length, there is no
-    #overlap between them so restrict to the end of the delete and try again.
-    #If the delete is shorter than the match, there must be an overlap.
-    foreach my $ga (@$gas) {
-	my ($cigLength, $cigType) = ( $ga->cigar_line =~ /^(\d*)([GMD])/ );
-	$cigLength = 1 unless ($cigLength =~ /^\d+$/);
-
-	if ($cigType eq "D" or $cigType eq "G") {
-	    $d_length = $cigLength; 
-	    if ($d_length < $min_d_length) {
-		$min_d_length = $d_length;
-	    }
-	} else {
-	    $m_length = $cigLength;
-	    $found_min++;
-	}
-    }
-    #if more than one alignment filled to the left edge, no need to restrict
-    if ($found_min > 1) {
-	return $gab;
-    }
-
-    my $new_gab = ($gab->restrict_between_alignment_positions(
-							      $min_d_length+1, $align_length, 1));
-
-    #no overlapping genomic_aligns
-    if ($new_gab->length == 0) {
-	return $new_gab;
-    }
-
-    #if delete length is less than match length then must have sequence overlap
-    if ($min_d_length < $m_length) {
-	return $new_gab;
-    }
-    #otherwise try again with restricted gab
-    return _trim_gab_left($new_gab);
 }
 
-#trim genomic align block from the right hand edge to first position having at
-#least 2 genomic aligns which overlap
-sub _trim_gab_right {
-    my ($gab) = @_;
-    
-    if (!defined($gab)) {
-	return undef;
+sub _assert_cigar_lines_in_block {
+    my ($self, $gab_id) = @_;
+    my $gat = $self->compara_dba->get_GenomicAlignTreeAdaptor->fetch_by_genomic_align_block_id($gab_id);
+
+    my %lengths;
+    foreach my $genomic_align_node (@{$gat->get_all_nodes}) {
+        foreach my $genomic_align (@{$genomic_align_node->genomic_align_group->get_all_GenomicAligns}) {
+            my $cigar_length = Bio::EnsEMBL::Compara::Utils::Cigars::sequence_length_from_cigar($genomic_align->cigar_line);
+            my $region_length = $genomic_align->dnafrag_end - $genomic_align->dnafrag_start + 1;
+            if ($cigar_length != $region_length) {
+                $self->_backup_data_and_throw($gat, "cigar_line's sequence length ($cigar_length) doesn't match the region length ($region_length)");
+            }
+            my $aln_length = Bio::EnsEMBL::Compara::Utils::Cigars::alignment_length_from_cigar($genomic_align->cigar_line);
+            $lengths{$aln_length}++;
+        }
     }
-    my $align_length = $gab->length;
-
-    my $max_pos = 0;
-    my $gas = $gab->get_all_GenomicAligns();
-    
-    my $found_max = 0;
-    my $d_length;
-    my $m_length;
-    my $min_d_length = $align_length;
-
-    #take last element in cigar string for each genomic_align and if it is a
-    #match, it must extend to the end of the block. Find the shortest delete.
-    #If the shortest delete and the match are the same length, there is no
-    #overlap between them so restrict to the end of the delete and try again.
-    #If the delete is shorter than the match, there must be an overlap.
-    foreach my $ga (@$gas) {
-	my ($cigLength, $cigType) = ( $ga->cigar_line =~ /(\d*)([GMD])$/ );
-	$cigLength = 1 unless ($cigLength =~ /^\d+$/);
-
-	if ($cigType eq "D" or $cigType eq "G") {
-	    $d_length =$cigLength;
-	    if ($d_length < $min_d_length) {
-		$min_d_length = $d_length;
-	    }
-	} else {
-	    $m_length = $cigLength;
-	    $found_max++;
-	}
+    if (scalar(keys %lengths) > 1) {
+        $self->_backup_data_and_throw($gat, "Multiple alignment lengths: " . stringify(\%lengths));
     }
-    #if more than one alignment filled the right edge, no need to restrict
-    if ($found_max > 1) {
-	return $gab;
-    }
+}
 
-    my $new_gab = $gab->restrict_between_alignment_positions(1, $align_length - $min_d_length, 1);
+sub _backup_data_and_throw {
+    my ($self, $gat, $err) = @_;
+    my $target_dir = $self->param_required('work_dir') . '/' . $self->param('synteny_region_id') . '.' . basename($self->worker_temp_directory);
+    system('cp', '-a', $self->worker_temp_directory, $target_dir);
+    $self->_print_report($gat, "$target_dir/report.txt");
+    $self->_print_regions("$target_dir/regions.txt");
+    $self->_spurt("$target_dir/tree.nh", $gat->newick_format);
+    throw("Error: $err\nData copied to $target_dir");
+}
 
-    #no overlapping genomic_aligns
-    if ($new_gab->length == 0) {
-	return $new_gab;
+sub _print_regions {
+    my ($self, $filename) = @_;
+    open(my $fh, '>', $filename);
+    foreach my $region (@{$self->param('dnafrag_regions')}) {
+        print $fh join("\t",
+            $region->genome_db->name,
+            $region->genome_db->dbID,
+            $region->dnafrag->name,
+            $region->dnafrag_id,
+            $region->dnafrag->length,
+            $region->dnafrag_start,
+            $region->dnafrag_end,
+            $region->dnafrag_strand,
+        ), "\n";
     }
+    close($fh);
+}
 
-    #if delete length is less than match length then must have sequence overlap
-    if ($min_d_length < $m_length) {
-	return $new_gab;
+sub _print_report {
+    my ($self, $gat, $filename) = @_;
+    open(my $fh, '>', $filename);
+    foreach my $node (@{$gat->get_all_nodes}) {
+        my $ga = $node->genomic_align_group->get_all_GenomicAligns->[0];
+        print $fh join("\t",
+            $node->name,
+            $ga->dnafrag_id,
+            $ga->dnafrag_start,
+            $ga->dnafrag_end,
+            $ga->dnafrag_end - $ga->dnafrag_start + 1,
+            length($ga->original_sequence),
+            length($ga->aligned_sequence),
+            stringify(Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($ga->cigar_line)),
+        ), "\n";
     }
-    #otherwise try again with restricted gab
-    return _trim_gab_right($new_gab);
+    close($fh);
 }
 
 sub _write_gerp_dataflow {
@@ -528,30 +505,24 @@ sub parse_results {
         $ordered_fasta_files = [split(" ", $files)];
         $self->param('fasta_files', $ordered_fasta_files);
         print STDOUT "**NEWICK: $newick\nFILES: ", join(" -- ", @$ordered_fasta_files), "\n";
+    } else {
+        print "++NEWICK: ", $self->param('tree_string'), "\nFILES: ", join(" -- ", @{$self->param('fasta_files')}), "\n";
     }
     
-    
-    #   $self->param('tree_string', "((0:0.06969,1:0.015698):1e-05,2:0.008148):1e-05;");
-    #   $self->param('fasta_files', ["/home/jherrero/ensembl/worker.8139/seq1.fa", "/home/jherrero/ensembl/worker.8139/seq2.fa", "/home/jherrero/ensembl/worker.8139/seq3.fa"]);
-    
-    
     my (@ordered_leaves) = $self->param('tree_string') =~ /[(,]([^(:)]+)/g;
-    print "++NEWICK: ", $self->param('tree_string'), "\nLEAVES: ", join(" -- ", @ordered_leaves), "\nFILES: ", join(" -- ", @{$self->param('fasta_files')}), "\n";
+    print "LEAVES: ", join(" -- ", @ordered_leaves), "\n";
 
     my $alignment_file = $self->worker_temp_directory . "/output.$$.mfa";
 
+    unless ($self->param('tree_string') && -s $alignment_file) {
+        # MEMLIMIT in progress ?
+        sleep(30);
+        throw("Empty tree string") unless $self->param('tree_string');
+        throw("Empty alignment file $alignment_file");
+    }
+
     my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
     
-    open(my $fh, '<', $alignment_file) || throw("Could not open $alignment_file");
-    my $seq = "";
-    my $this_genomic_align;
-
-    #Create genomic_align_group object to store genomic_aligns for
-    #each node. For 2x genomes, there may be several genomic_aligns
-    #for a node but for other genomes there will only be one
-    #genomic_align in the genomic_align_group
-    my $genomic_align_group;
-
     my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $self->param('tree_string') );
   $tree->print_tree(100);
     
@@ -569,283 +540,113 @@ sub parse_results {
     pop(@$ids); ## ...except for the last leaf which is the end of the tree
     #print join(" :: ", @$ids), "\n\n";
 
-    my $genomic_aligns_2x_array = [];
-    my @num_frag_pads;
+    my $parser = Bio::EnsEMBL::IO::Parser::Fasta->open($alignment_file);
+    while ($parser->next()) {
+        my $name = $parser->getHeader;
+        my $seq  = $parser->getSequence;
 
-    while (<$fh>) {
-	next if (/^\s*$/);
-	chomp;
-	## FASTA headers correspond to the tree and the order of the leaves in the tree corresponds
-	## to the order of the files
+        my $this_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign;
+        $this_genomic_align->aligned_sequence($seq);
+        $this_genomic_align_block->add_GenomicAlign($this_genomic_align);
+        my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup;
+        $genomic_align_group->add_GenomicAlign($this_genomic_align);
 
-	if (/^>/) {
-	    print "PARSING $_\n" if ($self->debug);
-	    print $tree->_simple_newick(), "\n" if ($self->debug);
-	    my ($name) = $_ =~ /^>(.+)/;
-	    if (defined($this_genomic_align) and  $seq) {
-		if (@$genomic_aligns_2x_array) {
-		    print "*****FOUND 2x seq " . length($seq) . "\n" if ($self->debug);
-		    #starting offset
-		    my $offset = $num_frag_pads[0];
-		    #how many X's to add at the start of the cigar_line
-		    my $start_X;
+        my $this_node;
+        foreach my $this_leaf_name (split("_", $name)) {
+            my $this_leaf = $tree->find_node_by_name($this_leaf_name);
+            if (!$this_leaf) {
+                die "Unable to find_node_by_name $this_leaf_name";
+            }
+            if ($this_node) {
+                $this_node = $this_node->find_first_shared_ancestor($this_leaf);
+            } else {
+                $this_node = $this_leaf;
+            }
+        }
+        print "Found node: ", join("_", map {$_->name} @{$this_node->get_all_leaves}), "\n" if ($self->debug);
 
-		    #how many X's to add to the end of the cigar_line
-		    my $end_X;
+        $this_node->cast('Bio::EnsEMBL::Compara::GenomicAlignTree');
+        $this_node->genomic_align_group($genomic_align_group);
 
-		    my $align_offset = 0;
-		    for (my $i = 0; $i < @$genomic_aligns_2x_array; $i++) {
-			my $genomic_align = $genomic_aligns_2x_array->[$i];
-			my $num_pads = $num_frag_pads[$i+1];
-			my $ga_length = $genomic_align->dnafrag_end-$genomic_align->dnafrag_start+1;
+        ## FASTA headers correspond to the tree and the order of the leaves in the tree corresponds
+        ## to the order of the files
+        my $header = shift(@$ids);
+        if (not defined $header) {
 
-			print "extract_sequence $offset " .($offset+$ga_length) . " num pads $num_pads\n" if ($self->debug); 
+            print "INTERNAL NODE $name\n" if ($self->debug);
+            ## INTERNAL NODE: dnafrag_id and dnafrag_end must be edited somewhere else
 
-			my ($subseq, $aligned_start, $aligned_end) = _extract_sequence($seq, $offset+1, ($offset+$ga_length));
+            $this_genomic_align->dnafrag_id(-1);
+            $this_genomic_align->dnafrag_start(1);
+            $this_genomic_align->dnafrag_end(0);
+            $this_genomic_align->dnafrag_strand(1);
+            $this_node->name($name);
 
-			#Add aligned sequence
-			$genomic_align->aligned_sequence($subseq);
+        } else {
 
-			#Add X padding characters to ends of seq
-			$start_X = $aligned_start;
-			$end_X = length($seq) - ($start_X+length($subseq));
+            if ($header =~ /^>SeqID(\d+)/) {
 
-			print "start_X $start_X end_X $end_X subseq_length " . length($subseq) . "\n" if ($self->debug);
+                print "leaf_name?? $name\n" if ($self->debug);
 
-			$genomic_align->cigar_line( Bio::EnsEMBL::Compara::Utils::Cigars::pad_with_x($genomic_align->cigar_line, $start_X, $end_X) );
+                #information extracted from fasta header
+                my $seq_id = ($1);
+                my $all_dnafrag_regions = $self->param('dnafrag_regions');
+                my $dfr = $all_dnafrag_regions->[$seq_id-1];
+                print "normal dnafrag_id " . $dfr->dnafrag_id . "\n" if $self->debug;
 
-			#my $aln_seq = "." x $start_X;
-			#$aln_seq .= $genomic_align->aligned_sequence();
-			#$aln_seq .= "." x $end_X;
-			#$genomic_align->aligned_sequence($aln_seq);
+                $this_genomic_align->dnafrag_id($dfr->dnafrag_id);
+                $this_genomic_align->dnafrag_start($dfr->dnafrag_start);
+                $this_genomic_align->dnafrag_end($dfr->dnafrag_end);
+                $this_genomic_align->dnafrag_strand($dfr->dnafrag_strand);
 
-			#free aligned_sequence now that I've used it to 
-			#create the cigar_line
-			undef($genomic_align->{'aligned_sequence'});
+                print "store gag2 $this_node\n" if $self->debug;
 
-			#Add genomic align to genomic align block
-			$this_genomic_align_block->add_GenomicAlign($genomic_align);
-			$offset += $num_pads + $ga_length;
-		    }
-		    $genomic_aligns_2x_array = [];
-		    undef @num_frag_pads;
-		} else {
-
-		    print "add aligned_sequence " . $this_genomic_align->dnafrag_id . " " . $this_genomic_align->dnafrag_start . " " . $this_genomic_align->dnafrag_end . "\n" if $self->debug;
-
-		    $this_genomic_align->aligned_sequence($seq);
-		    $this_genomic_align_block->add_GenomicAlign($this_genomic_align);
-		}
-	    }
-	    my $header = shift(@$ids);
-	    $this_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign;
-
-	    if (!defined($header)) {
-		print "INTERNAL NODE $name\n" if ($self->debug);
-		my $this_node;
-		foreach my $this_leaf_name (split("_", $name)) {
-		    if ($this_node) {
-			my $other_node = $tree->find_node_by_name($this_leaf_name);
-			if (!$other_node) {
-			    throw("Cannot find node <$this_leaf_name>\n");
-			}
-			$this_node = $this_node->find_first_shared_ancestor($other_node);
-		    } else {
-			print $tree->_simple_newick() if ($self->debug);
-			print "LEAF: $this_leaf_name\n" if ($self->debug);
-			$this_node = $tree->find_node_by_name($this_leaf_name);
-		    }
-		}
-		print join("_", map {$_->name} @{$this_node->get_all_leaves}), "\n" if ($self->debug);
-		## INTERNAL NODE: dnafrag_id and dnafrag_end must be edited somewhere else
-
-		$this_genomic_align->dnafrag_id(-1);
-		$this_genomic_align->dnafrag_start(1);
-		$this_genomic_align->dnafrag_end(0);
-		$this_genomic_align->dnafrag_strand(1);
-		$this_node->cast('Bio::EnsEMBL::Compara::GenomicAlignTree');
-		#$this_node->genomic_align($this_genomic_align);
-		$genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup();
-		$genomic_align_group->add_GenomicAlign($this_genomic_align);
-
-		
-		$this_node->genomic_align_group($genomic_align_group);
-		$this_node->name($name);
-	    #} elsif ($header =~ /^>DnaFrag(\d+)\|(.+)\.(\d+)\-(\d+)\:(\-?1)$/) {
-	    } elsif ($header =~ /^>SeqID(\d+)/) {
-		#print "old $name\n";
-
-		print "leaf_name?? $name\n" if ($self->debug);
-		my $this_leaf = $tree->find_node_by_name($name);
-		if (!$this_leaf) {
-		    print $tree->_simple_newick(), " ****\n" if ($self->debug);
-		    die "Unable to find_node_by_name $name";
-		}
-		#print "$this_leaf\n";
-		#         print "****** $name -- $header -- ";
-		#         if ($this_leaf) {
-		#           $this_leaf->print_node();
-		#         } else {
-		#           print "[none]\n";
-		#         }
-
-		#information extracted from fasta header
-		my $seq_id = ($1);
-
-		my $all_dnafrag_regions = $self->param('dnafrag_regions');
-
-		my $dfr = $all_dnafrag_regions->[$seq_id-1];
-
-		if (!UNIVERSAL::isa($dfr, 'Bio::EnsEMBL::Compara::DnaFragRegion')) {
-		    print "FOUND 2X GENOME\n" if $self->debug;
-		    print "num of frags " . @$dfr . "\n" if $self->debug;
-
-		    #first pads
-		    push @num_frag_pads, $dfr->[0]->{first_pads};
-
-		    #create new genomic_align for each pairwise fragment
-		    foreach my $ga_frag (@$dfr) {
-			my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign;
-		    
-			print "2x dnafrag_id " . $ga_frag->{dnafrag_region}->dnafrag_id . "\n" if $self->debug;
-
-			$genomic_align->dnafrag_id($ga_frag->{dnafrag_region}->dnafrag_id);
-			$genomic_align->dnafrag_start($ga_frag->{dnafrag_region}->dnafrag_start);
-			$genomic_align->dnafrag_end($ga_frag->{dnafrag_region}->dnafrag_end);
-			$genomic_align->dnafrag_strand($ga_frag->{dnafrag_region}->dnafrag_strand);
-
-			push @num_frag_pads, $ga_frag->{num_pads};
-			push @$genomic_aligns_2x_array, $genomic_align;
-		    }
-		    #Add genomic align to genomic align group 
-		    $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup(
-											#-genomic_align_array => $genomic_aligns_2x_array,
-										        -type => "epo");
-		    foreach my $this_genomic_align (@$genomic_aligns_2x_array) {
-			$genomic_align_group->add_GenomicAlign($this_genomic_align);
+		    my $region_length = $dfr->dnafrag_end - $dfr->dnafrag_start + 1;
+		    my $original_sequence = $seq;
+		    $original_sequence =~ s/-//g;
+		    if (length($original_sequence) != $region_length) {
+			throw("Length mismatch: $region_length from the coordinates, " . length($original_sequence) . " from the aligned string\n");
 		    }
 
-		    $this_leaf->cast('Bio::EnsEMBL::Compara::GenomicAlignTree');
-		    $this_leaf->genomic_align_group($genomic_align_group);
-		    print "size of array " . @$genomic_aligns_2x_array . "\n" if $self->debug;
-		    print "store gag1 $this_leaf\n" if $self->debug;
-
-		    #$self->{$this_leaf} = $genomic_align_group;
-		} else  {
-		    print "normal dnafrag_id " . $dfr->dnafrag_id . "\n" if $self->debug;
-
-		    $this_genomic_align->dnafrag_id($dfr->dnafrag_id);
-		    $this_genomic_align->dnafrag_start($dfr->dnafrag_start);
-		    $this_genomic_align->dnafrag_end($dfr->dnafrag_end);
-		    $this_genomic_align->dnafrag_strand($dfr->dnafrag_strand);
-
-		    $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup(
-											#-genomic_align_array => [$this_genomic_align],
-										        -type => "epo");
-		    $genomic_align_group->add_GenomicAlign($this_genomic_align);
-
-		    $this_leaf->cast('Bio::EnsEMBL::Compara::GenomicAlignTree');
-		    $this_leaf->genomic_align_group($genomic_align_group);
-		    print "store gag2 $this_leaf\n" if $self->debug;
-		}
-	    } else {
-		throw("Error while parsing the FASTA header. It must start by \">DnaFrag#####\" where ##### is the dnafrag_id\n$_");
-	    }
-	    $seq = "";
-	} else {
-	    $seq .= $_;
-	}
+            } else {
+                throw("Error while parsing '$header' header in '$alignment_file'. It must start by \">SeqID#####\" where ##### is the internal integer id\n");
+            }
+        }
     }
-    close $fh;
+    $parser->close();
 
-    #last genomic_align
-    print "Last genomic align\n" if ($self->debug);
-    if (@$genomic_aligns_2x_array) {
-	print "*****FOUND 2x seq " . length($seq) . "\n" if ($self->debug);
-
-	#starting offset
-	my $offset = $num_frag_pads[0];
-
-	#how many X's to add at the start and end of the cigar_line
-	my ($start_X , $end_X);
-	
-	my $align_offset = 0;
-	for (my $i = 0; $i < @$genomic_aligns_2x_array; $i++) {
-	    my $genomic_align = $genomic_aligns_2x_array->[$i];
-	    my $num_pads = $num_frag_pads[$i+1];
-	    my $ga_length = $genomic_align->dnafrag_end-$genomic_align->dnafrag_start+1;
-	    print "extract_sequence $offset " .($offset+$ga_length) . " num pads $num_pads\n" if ($self->debug); 
-	    my ($subseq, $aligned_start, $aligned_end) = _extract_sequence($seq, $offset+1, ($offset+$ga_length));
-	    
-	    #Add aligned sequence
-	    $genomic_align->aligned_sequence($subseq);
-	    
-	    #Add X padding characters to ends of seq
-	    $start_X = $aligned_start;
-	    $end_X = length($seq) - ($start_X+length($subseq));
-	    print "start_X $start_X end_X $end_X subseq_length " . length($subseq) . "\n" if ($self->debug);
-	    
-	    $genomic_align->cigar_line( Bio::EnsEMBL::Compara::Utils::Cigars::pad_with_x($genomic_align->cigar_line, $start_X, $end_X) );
-	    my $aln_seq = "." x $start_X;
-	    $aln_seq .= $genomic_align->aligned_sequence();
-	    $aln_seq .= "." x $end_X;
-	    $genomic_align->aligned_sequence($aln_seq);
-	    
-	    #Add genomic align to genomic align block
-	    $this_genomic_align_block->add_GenomicAlign($genomic_align);
-	    $offset += $num_pads + $ga_length;
-	}
-    } else {
-	if ($this_genomic_align->dnafrag_id == -1) {
-	} else {
-	    $this_genomic_align->aligned_sequence($seq);
-	    $this_genomic_align_block->add_GenomicAlign($this_genomic_align);
-	}
-    }
-
-    print $tree->_simple_newick, "\n";
     print join(" -- ", map {$_."+".$_->node_id."+".$_->name} (@{$tree->get_all_nodes()})), "\n";
     my $trees = $self->split_if_empty_ancestral_seq($tree);
-    $self->remove_empty_cols($_) for @$trees;
     $self->param('output', $trees);
-
-#     foreach my $ga_node (@{$tree->get_all_nodes}) {
-# 	if ($ga_node) {
-# 	    my $ga = $ga_node->genomic_align;
-# 	    print "name " . $ga_node->name . " $ga \n";
-# 	    my $gab = $ga->genomic_align_block;
-# 	    if (defined $gab) {
-# 		print "Parse number of genomic_aligns " . $gab . " " . @{$gab->genomic_align_array} . "\n";
-# 	    } else {
-# 		print "Parse no genomic_aligns\n";
-# 	    }
-# 	} else {
-# 	    print "no ga_node\n";
-# 	}
-	
-#     }
-
-
 }
 
 
 sub split_if_empty_ancestral_seq {
     my ($self, $genomic_align_tree) = @_;
 
-    my $root_genomic_align = $genomic_align_tree->genomic_align_group->get_all_GenomicAligns->[0];
-
-    # If there is an actual sequence, we're good
-    return [$genomic_align_tree] if length($root_genomic_align->original_sequence);
-
-    # Otherwise, need to replace the tree by its two sub-trees
-    my @subtrees;
-    foreach my $genomic_align_node (@{$genomic_align_tree->children}) {
-        $genomic_align_node->disavow_parent;
-        # Provided they have more than 1 sequence
-        unless ($genomic_align_node->is_leaf) {
-            push @subtrees, @{ $self->split_if_empty_ancestral_seq($genomic_align_node) };
+    my @non_empty_nodes;
+    # Check all the nodes
+    foreach my $node (@{$genomic_align_tree->get_all_nodes}) {
+        if ($node->aligned_sequence =~ /^-+$/) {
+            # Disconnect the ones that have an empty sequence
+            $node->disavow_parent if $node->has_parent;
+            $_->disavow_parent for @{$node->children};
+        } else {
+            # And record the others
+            push @non_empty_nodes, $node;
         }
     }
+
+    # The roots are all the nodes that we kept and have no parent.
+    # Valid trees must have at least two sequences and be minimized.
+    my @subtrees = map {$_->minimize_tree()}
+                   grep {scalar(@{$_->get_all_leaves}) >= 2}
+                   grep {!$_->has_parent}
+                   @non_empty_nodes;
+
+    # Remove the columns that have become gap-only
+    $self->remove_empty_cols($_) for @subtrees;
+
     return \@subtrees;
 }
 
@@ -857,7 +658,7 @@ sub remove_empty_cols {
 
     ## $seqs is a hash for storing segments of sequence in the alignment
     my $seqs = {}; ## key => start, value => end; both in e! coord.
-    foreach my $this_leaf (@{$tree->get_all_leaves}) {
+    foreach my $this_leaf (@{$tree->get_all_nodes}) {
         foreach my $this_genomic_align (@{$this_leaf->genomic_align_group->get_all_GenomicAligns}) {
             my $cigar_line = $this_genomic_align->cigar_line;
             my $pos = 1; ## $pos in e! coordinates
@@ -922,36 +723,6 @@ sub remove_empty_cols {
     }
 }
 
-
-#
-# Extract the sequence corresponding to the 2X genome fragment
-#
-sub _extract_sequence {
-    my ($seq, $original_start, $original_end) = @_;
-    my $original_count = 0;
-    my $aligned_count = 0;
-    my $aligned_start;
-    my $aligned_end;
-
-    #print "original_start $original_start original_end $original_end\n";
-    foreach my $subseq (grep {$_} split /(\-+)/, $seq) {
-	my $length = length($subseq);
-	if ($subseq !~ /\-/) {
-	    if (!defined($aligned_start) && ($original_count + $length >= $original_start)) {
-		$aligned_start = $aligned_count + ($original_start - $original_count) - 1;
-	    }
-	    if (!defined($aligned_end) && ($original_count + $length >= $original_end)) {
-		$aligned_end = $aligned_count + $original_end - $original_count - 1;
-		last;
-	    }
-	    $original_count += $length;
-	}
-	$aligned_count += $length;
-    }
-
-    my $subseq = substr($seq, $aligned_start, ($aligned_end-$aligned_start+1));
-    return ($subseq, $aligned_start, $aligned_end);
-}
 
 ##########################################
 #
@@ -1024,7 +795,7 @@ sub get_DnaFragRegions {
 
   my $regions = $sr->get_all_DnaFragRegions();
   Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $regions);
-  return [@$regions];
+  return [sort {$a->dnafrag_id <=> $b->dnafrag_id || $a->dnafrag_start <=> $b->dnafrag_start} @$regions];
 }
 
 
@@ -1064,14 +835,6 @@ sub _dump_fasta {
     my $file = $self->worker_temp_directory . "/seq" . $seq_id . ".fa";
 
     print "file $file name " . $dfr->dnafrag->genome_db->name . "\n" if $self->debug;
-
-    #Check if I have a DnaFragRegion object or my 2x genome object
-    if (!UNIVERSAL::isa($dfr, 'Bio::EnsEMBL::Compara::DnaFragRegion')) {
-        print "FOUND 2X GENOME\n" if $self->debug;
-        print "num of frags " . @$dfr . "\n" if $self->debug;
-        $self->_dump_2x_fasta($dfr, $file, $seq_id);
-        next;
-    }
 
     print ">DnaFrag", $dfr->dnafrag_id, "|", $dfr->dnafrag->name, "|", $dfr->dnafrag->genome_db->name, "|", $dfr->dnafrag->genome_db_id, "|",
         $dfr->dnafrag_start, "-", $dfr->dnafrag_end, ":", $dfr->dnafrag_strand," $seq_id***\n" if $self->debug;
@@ -1163,7 +926,6 @@ sub _update_tree {
   my $all_leaves = $tree->get_all_sorted_leaves;
   foreach my $this_leaf (@$all_leaves) {
     my $these_dnafrag_regions = [];
-    my $these_2x_genomes = [];
     ## Look for DnaFragRegions belonging to this genome_db_id
     foreach my $this_dnafrag_region (@$all_dnafrag_regions) {
       if ($this_dnafrag_region->dnafrag->genome_db_id == $this_leaf->genome_db_id) {
@@ -1172,14 +934,7 @@ sub _update_tree {
     }
 
     my $index = 0;
-    foreach my $ga_frags (@{$self->param('ga_frag')}) {
-	my $first_frag = $ga_frags->[0];
-	if ($first_frag->{genome_db_id} == $this_leaf->genome_db_id) {
-	    push(@$these_2x_genomes, $index);
-	}
-	$index++;
-    }
-    print $this_leaf->name, ": num " . @$these_dnafrag_regions . " " . @$these_2x_genomes . "\n" if $self->debug;
+    print $this_leaf->name, ": num " . @$these_dnafrag_regions . "\n" if $self->debug;
 
     if (@$these_dnafrag_regions == 1) {
       ## If only 1 has been found...
@@ -1191,23 +946,8 @@ sub _update_tree {
 
     } elsif (@$these_dnafrag_regions > 1) {
       ## If more than 1 has been found, let Ortheus estimate the Tree
-	#need to add on 2x genomes to dnafrag_regions array
-	my $dfa = $self->param('dnafrag_regions');
-	foreach my $ga_frags (@{$self->param('ga_frag')}) {
-	    push @$dfa, $ga_frags;
-	}
-	$self->param('dnafrag_regions', $dfa);
 	return undef;
 
-   } elsif (@$these_2x_genomes == 1) {
-	#See what happens...
-	#Find 2x genomes
-       my $ga_frags = $self->param('ga_frag')->[$these_2x_genomes->[0]];
-       print "number of frags " . @$ga_frags . "\n" if $self->debug;
-
-	print "2x seq$idx " . $ga_frags->[0]->{genome_db_id} . "\n" if $self->debug;
-	$this_leaf->name("seq".$idx++);
-	push(@$ordered_dnafrag_regions, $ga_frags);
   } else {
       ## If none has been found...
       $this_leaf->disavow_parent;
@@ -1227,21 +967,6 @@ sub _update_tree {
     $child->disavow_parent;
   }
   return $tree;
-}
-
-
-sub _dump_2x_fasta {
-    my ($self, $ga_frags, $file, $seq_id) = @_;
-
-    #stored concatenated mfa sequence on first frag
-    $self->_spurt($file, join("\n",
-            ">SeqID" . $seq_id,
-            $ga_frags->[0]->{seq},
-        ));
-
-    push @{$self->param('fasta_files')}, $file;
-    push @{$self->param('species_order')}, $ga_frags->[0]->{genome_db_id};
-
 }
 
 1;

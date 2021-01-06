@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -121,9 +121,9 @@ sub run {
     my @orth_info;
     my $member_info = $self->param('member_info');
 
-    my @orth_objects = sort {$a->{homology_id} <=> $b->{homology_id}} @{ $self->param('orth_objects') };
+    my @orth_objects = sort {$a->{homology_id} cmp $b->{homology_id}} @{ $self->param('orth_objects') };
     while ( my $orth = shift( @orth_objects ) ) {
-        my @seq_member_ids = ($orth->{seq_member_id}, $orth->{hom_seq_member_id});
+        my @seq_member_ids = ($orth->{seq_member_id}, $orth->{homology_seq_member_id});
         my $has_transcript_edits = 0;
         foreach my $sm_id ( @seq_member_ids ){
             $has_transcript_edits ||= $member_info->{"seq_member_$sm_id"};
@@ -132,7 +132,7 @@ sub run {
         # trusted, so it's better to skip the pair
         next if $has_transcript_edits;
         
-        my @gene_member_ids = ([$orth->{gene_member_id}, $orth->{genome_db_id}], [$orth->{hom_gene_member_id}, $orth->{hom_genome_db_id}]);
+        my @gene_member_ids = ([$orth->{gene_member_id}, $orth->{genome_db_id}], [$orth->{homology_gene_member_id}, $orth->{homology_genome_db_id}]);
         push( @orth_info, { 
             id            => $orth->{homology_id},
             gene_members  => \@gene_member_ids,
@@ -230,7 +230,7 @@ sub _load_seq_member_info {
     my $homologies = $self->param('orth_objects');
     my $member_info;
     foreach my $hom ( @$homologies ) {
-        my ( $sm_id_1, $gm_id_1, $sm_id_2, $gm_id_2 ) = ( $hom->{seq_member_id}, $hom->{gene_member_id}, $hom->{hom_seq_member_id}, $hom->{hom_gene_member_id} );
+        my ( $sm_id_1, $gm_id_1, $sm_id_2, $gm_id_2 ) = ( $hom->{seq_member_id}, $hom->{gene_member_id}, $hom->{homology_seq_member_id}, $hom->{homology_gene_member_id} );
 
         $sm_sth->execute($sm_id_1);
         $member_info->{"seq_member_$sm_id_1"} = $sm_sth->fetchrow_arrayref->[0];

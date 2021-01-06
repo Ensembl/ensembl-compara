@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ use base qw(Exporter);
 
 use File::Find;
 
+use Bio::EnsEMBL::Compara::Utils::RunCommand;
+
 our %EXPORT_TAGS;
 our @EXPORT_OK;
 
@@ -44,6 +46,9 @@ our @EXPORT_OK;
     match_range_filter
     query_file_tree
     group_hash_by
+    check_column_integrity
+    get_line_count
+    check_line_counts
 );
 %EXPORT_TAGS = (
   all     => [@EXPORT_OK]
@@ -215,18 +220,20 @@ sub _wanted {
 sub group_hash_by {
     my ( $array_of_hashes, $group_by, $select ) = @_;
 
+    # create copy to correctly handle loops over this recursive method
+    my @these_group_by = @$group_by;
+
     # group by the first given group_by field
-    my $this_group_by = shift @$group_by;
+    my $this_group_by = shift @these_group_by;
     my %grouped_data;
     foreach my $h ( @$array_of_hashes ) {
         push( @{ $grouped_data{$h->{$this_group_by}} }, $h);
     }
 
-    if ( scalar @$group_by > 0 ) {
+    if ( scalar @these_group_by > 0 ) {
         # recursively create subgroups on subsequent group_bys
         foreach my $k ( keys %grouped_data ) {
-            my @group_by_copy = @$group_by;
-            $grouped_data{$k} = group_hash_by( $grouped_data{$k}, \@group_by_copy, $select );
+            $grouped_data{$k} = group_hash_by( $grouped_data{$k}, \@these_group_by, $select );
         }
     } elsif ( $select ) {
         # no more recursing to do - keep selected keys only
@@ -241,6 +248,71 @@ sub group_hash_by {
     }
 
     return \%grouped_data;
+}
+
+=head2 check_column_integrity
+
+    Arg [1]     : $filename
+    Arg [2]     : (optional) $delimiter
+    Description : Checks that every line of file $filename has an equal number
+                  of columns. Splits on whitespace by default, but $delimiter can
+                  be defined.
+    Returntype  : 1 if file passes check
+    Exceptions  : throws if file fails check
+
+=cut
+
+sub check_column_integrity {
+    my ($file, $delimiter) = @_;
+
+    my $awk_opts = $delimiter ? "-F$delimiter" : "";
+
+    my $run_awk = Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec(
+        "awk $awk_opts '{print NF}' $file | sort | uniq -c",
+        { die_on_failure => 1 }
+    );
+    my $awk_output = $run_awk->out;
+    my @col_counts = split("\n", $awk_output);
+    die "Expected equal number of columns throughout the file. Got:\n$awk_output" if scalar @col_counts > 1;
+    return 1;
+}
+
+=head2 get_line_count
+
+    Arg [1]     : $filename
+    Description : Return number of lines in $filename
+    Returntype  : int
+
+=cut
+
+sub get_line_count {
+    my ($file) = @_;
+
+    my $run_wc = Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec(
+        "wc -l $file",
+        { die_on_failure => 1 }
+    );
+    my @wc_output = split(/\s+/, $run_wc->out);
+    return $wc_output[0];
+}
+
+=head2 check_line_counts
+
+    Arg [1]     : $filename
+    Arg [2]     : $exp_lines
+    Description : Checks that the number of lines in $filename match the expected
+                  count ($exp_lines)
+    Returntype  : 1 if file passes check
+    Exceptions  : throws if file fails check
+
+=cut
+
+sub check_line_counts {
+    my ($file, $exp_lines) = @_;
+
+    my $got_line_count = get_line_count($file);
+    die "Expected $exp_lines lines, but got $got_line_count: $file" if $exp_lines != $got_line_count;
+    return 1;
 }
 
 1;

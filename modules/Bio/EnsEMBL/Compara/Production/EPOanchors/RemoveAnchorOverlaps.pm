@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::RemoveAnchorOverlaps;
 use strict;
 use warnings;
 use Data::Dumper;
+use List::Util qw(sum);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 
@@ -77,9 +78,14 @@ sub run {
 		my %genome_db_dnafrags;
 		foreach my $genome_db_anchors(@{ $anchor_align_adaptor->fetch_all_anchors_by_genome_db_id_and_mlssid(
 						$genome_db->dbID, $anc_mapping_mlssid) }) {
+			# Each $genome_db_anchors is an array-ref [dnafrag_id, anchor_align_id, anchor_id, dnafrag_start, dnafrag_end]
+			# - dnafrag_is is used to group anchors that may overlap
+			# - dnafrag_start/end are used to detect overlap on a given dnafrag_id,
+			# - anchor_id is the dbID of the anchor (an anchor is a group of sequences, all independently aligned)
+			# - anchor_align_id is the dbID of the alignment, but is not used
 			push(@{ $genome_db_dnafrags{ $genome_db_anchors->[0] } }, [ @{ $genome_db_anchors }[1..4] ]);	
 		}
-		foreach my $dnafrag_id(sort keys %genome_db_dnafrags) {
+		foreach my $dnafrag_id(keys %genome_db_dnafrags) {
 			my @Dnafrag_anchors = @{ $genome_db_dnafrags{$dnafrag_id} };
 			for(my$i=0;$i<@Dnafrag_anchors-1;$i++) { #count number of overlaps an anchor has at every position to which it maps
 				for(my$j=$i+1;$j<@Dnafrag_anchors;$j++) {
@@ -96,18 +102,16 @@ sub run {
 			}
 		}
 	}
-	foreach my$anchor(sort keys %Overlappping_anchors) {
-		foreach my $overlapping_anchor(sort keys %{$Overlappping_anchors{$anchor}}) {
-			$Scores{$anchor} += ($Overlappping_anchors{$anchor}{$overlapping_anchor})**2; #score the anchors according to the number of overlaps
-		}
+	# %Overlappping_anchors counts the number of times each pair of anchor_id is seen overlapping
+	# %Scores has for each anchor_id the sum of the square of those counts
+	foreach my$anchor(keys %Overlappping_anchors) {
+		$Scores{$anchor} = sum(map {$_**2} values %{$Overlappping_anchors{$anchor}});
 	}
 	print STDERR "scores: ", scalar(keys %Scores), "\n";
-	my$flag = 1;
-	while($flag) {
-		$flag = 0;
+	while(%Scores) {
 		foreach my $anchor(sort {$Scores{$b} <=> $Scores{$a}} keys %Scores) { #get highest scoring anchor
 			next unless(exists($Scores{$anchor})); #don't add it to "remove list" if it's already gone from the score hash 
-			foreach my $anc_with_overlap_2_anchor(sort keys %{$Overlappping_anchors{$anchor}}) { #find all the anchors which overlap this anchor 
+			foreach my $anc_with_overlap_2_anchor(keys %{$Overlappping_anchors{$anchor}}) { #find all the anchors which overlap this anchor
 				$Scores{$anc_with_overlap_2_anchor} -= ($Overlappping_anchors{$anc_with_overlap_2_anchor}{$anchor})**2; #decrement the score
 				delete $Scores{$anc_with_overlap_2_anchor} unless($Scores{$anc_with_overlap_2_anchor});
 				#if score is zero remove this anchor from the overlapping list, 
@@ -117,7 +121,6 @@ sub run {
 			delete($Scores{$anchor}); #also remove it from scoring hash
 			$Anchors_2_remove{$anchor}++; #add it to list of ancs to remove
 		}
-		$flag = 1  if (scalar(keys %Scores));
 	}
 	print STDERR "anchors to remove: ", scalar(keys %Anchors_2_remove), "\n";
 	$self->param('overlapping_ancs_to_remove', [keys %Anchors_2_remove]);

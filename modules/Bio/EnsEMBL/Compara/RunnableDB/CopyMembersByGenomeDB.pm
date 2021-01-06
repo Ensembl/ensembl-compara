@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -92,8 +92,7 @@ sub _copy_data_wrapper {
 
     # The extra arguments tell copy_data *not* to disable and enable keys
     # since there is too little data to copy to make it worth
-    my $rows = copy_data($from_dbc, $to_dbc, $table, $input_query, undef, 'skip_disable_keys', 0, $self->debug);
-    $self->warning("Copied over $rows rows of the $table table for genome_db_id=$genome_db_id");
+    copy_data($from_dbc, $to_dbc, $table, $input_query, undef, 'skip_disable_vars', $self->debug);
 }
 
 1;

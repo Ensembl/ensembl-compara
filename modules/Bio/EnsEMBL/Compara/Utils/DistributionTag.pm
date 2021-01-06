@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ our @EXPORT_OK;
 =cut
 
 sub write_n_tag {
-    my ($self, $mlss, $label, $scores) = @_;
+    my ($mlss, $label, $scores) = @_;
 
     my %distrib_hash;
     foreach my $score ( values %$scores ) {
@@ -56,8 +56,6 @@ sub write_n_tag {
         $distrib_hash{$floor_score} += 1;
     }
 
-    my $n_tot = 0;
-    my $n_over_threshold = 0;
     foreach my $distrib_score ( keys %distrib_hash ) {
         my $tag = sprintf('n_%s_%s', $label, $distrib_score // 'null');
         $mlss->store_tag($tag, $distrib_hash{$distrib_score});

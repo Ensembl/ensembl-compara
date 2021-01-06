@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -270,7 +270,7 @@ sub dumpProteinTreeToWorkdir {
   print("fastafile = '$fastafile'\n") if ($self->debug);
 
   $tree->expand_subtrees;   # In case we are given a supertree
-  my $num_pep = $tree->print_sequences_to_file($fastafile, -uniq_seq => 1, -id_type => 'SEQUENCE', -HIDE_STOP_CODONS => 1);
+  my $num_pep = $tree->print_sequences_to_file($fastafile, -uniq_seq => 1, -id_type => 'SEQUENCE');
 
   if ($num_pep <= 1) {
     $self->update_single_peptide_tree($tree);

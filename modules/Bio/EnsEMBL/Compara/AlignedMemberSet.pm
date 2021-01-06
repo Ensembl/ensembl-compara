@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -323,10 +323,6 @@ sub load_cigars_from_file {
             $member->sequence($seqseq);
         } elsif ($check_seq) {
             my $member_sequence = $member->sequence;
-            # Stop-codons are often misrepresented so we just ignore them
-            # (this is in line with SeqMember::bioseq)
-            $seqseq =~ tr/*/X/;
-            $member_sequence =~ tr/*/X/;
             if ($member_sequence ne $seqseq) {
                 throw($member->stable_id." ($seqID) has a different sequence in the alignment file '$file'");
             }
@@ -501,7 +497,6 @@ sub get_SimpleAlign {
         }
 
         if ($stop2x) {
-            $seqstr =~ s/\*/X/g;
             if ($alphabet eq 'protein') {
                 $seqstr =~ s/U/C/g;
                 $seqstr =~ s/O/K/g;

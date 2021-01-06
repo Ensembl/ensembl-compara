@@ -5,4 +5,5 @@ coverage:
       default:
         # Don't report failures on pull-requests
         informational: true
+    patch: off
 

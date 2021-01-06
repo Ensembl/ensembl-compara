@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -106,7 +106,7 @@ sub fetch_input {
     my @hhead_cols = split(/\s+/, $hheader);
     while( my $line = <$hffh> ) {
         my $row = map_row_to_header( $line, \@hhead_cols );
-        my ( $homology_id, $homology_type, $sm_id_1, $sm_id_2 ) = ($row->{homology_id}, $row->{homology_type}, $row->{seq_member_id}, $row->{hom_seq_member_id});
+        my ( $homology_id, $homology_type, $sm_id_1, $sm_id_2 ) = ($row->{homology_id}, $row->{homology_type}, $row->{seq_member_id}, $row->{homology_seq_member_id});
         next if (!$do_gene_qc) && $homology_type eq 'gene_split';
         next if $do_gene_qc && (defined $qc_status->{$sm_id_1} || defined $qc_status->{$sm_id_2});
         push @homology_ids, $homology_id;

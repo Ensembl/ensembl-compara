@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -101,8 +101,8 @@ sub assert_valid_cigar {
     if ( length($cigar_line) > 50000 ) {
         my @cigar_numbers = split(/[A-Z]/, $cigar_line);
         foreach my $cigar_num ( @cigar_numbers ) {
-            next if ( $cigar_num eq '' || ($cigar_num =~ /^[0-9]+$/ && $cigar_num > 0) );
-            throw("Invalid cigar_line '$cigar_line'\n");
+            next if ( $cigar_num eq '' || ($cigar_num =~ /^[1-9][0-9]*$/) );
+            throw("Invalid cigar_num '$cigar_num'\n");
         }
     } else {
         if ($cigar_line !~ /^(([1-9][0-9]*)?[A-Z])*$/) {
@@ -197,7 +197,6 @@ sub compose_sequence_with_cigar {
 
 sub cigar_from_alignment_string {
     my $alignment_string = shift;
-    $alignment_string =~ s/\*/X/g;
 
     my $cigar_line = '';
     while($alignment_string=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
@@ -268,7 +267,29 @@ sub alignment_length_from_cigar {
 
     my $length = 0;
      while ($cigar =~ /(\d*)([A-Z])/g) {
-        $length += ($1 || 1);
+        $length += ($1 || 1) if $2 ne 'I';
+    }
+    return $length;
+}
+
+
+=head2 sequence_length_from_cigar
+
+  Arg [1]    : String $cigar_line
+  Example    : my $sequence_length = sequence_length_from_cigar($cigar_line)
+  Description: Returns how long the sequence string would be (without expanding it in memory)
+  Returntype : int
+
+=cut
+
+sub sequence_length_from_cigar {
+    my $cigar = shift;
+
+    assert_valid_cigar($cigar);
+
+    my $length = 0;
+     while ($cigar =~ /(\d*)([A-Z])/g) {
+        $length += ($1 || 1) if ($2 eq 'M') || ($2 eq 'I');
     }
     return $length;
 }
@@ -350,9 +371,6 @@ sub cigar_from_two_alignment_strings {
     my @chunks1;
     my @chunks2;
 
-    $seq1 =~ s/\*/X/g;
-    $seq2 =~ s/\*/X/g;
-
     while($seq1=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
         push @chunks1, [($1 eq '-'), ($2 ? length($2)+1 : 1)];
     }
@@ -424,6 +442,8 @@ sub minimize_cigars {
         }
     };
     column_iterator(\@_, $cb, 'group');
+
+    # Add the elements that were current at the end of the iteration
     for (my $i = 0; $i < $n_cigars; $i++ ) {
         $new_cigars[$i] .= _cigar_element($cig_codes[$i], $cig_lengths[$i]);
     }

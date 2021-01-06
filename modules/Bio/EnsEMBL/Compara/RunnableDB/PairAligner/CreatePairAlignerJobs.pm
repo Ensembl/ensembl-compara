@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,6 +53,8 @@ use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
+use Bio::EnsEMBL::Compara::Utils::IDGenerator qw(:all);
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
@@ -77,6 +79,11 @@ sub fetch_input {
 sub write_output
 {
   my $self = shift;
+
+  # Initialise the next dbID for this (LASTZ_RAW) mlss_id
+  my $mlss_id = $self->param('method_link_species_set_id');
+  initialise_id($self->compara_dba->dbc, "genomic_align_${mlss_id}", "${mlss_id}0000000001");
+
   $self->createPairAlignerJobs();
 
   return 1;
@@ -109,15 +116,12 @@ sub createPairAlignerJobs
   my $query_dnafrag_chunk_set_list  = $self->param('query_collection')->get_all_DnaFragChunkSets;
   my $target_dnafrag_chunk_set_list = $self->param('target_collection')->get_all_DnaFragChunkSets;
 
-  #get dnafrag adaptors
-  my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
-  my $dnafrag_chunk_adaptor = $self->compara_dba->get_DnaFragChunkAdaptor;
-
-  #Currently I don't pass this, but I may do in future if I need to have the options for each pairaligner job
-  #instead of reading from the mlss_tag table
   my $pairaligner_hash = {
       'mlss_id' => $self->param('method_link_species_set_id'),
   };
+
+  #Currently I don't pass this, but I may do in future if I need to have the options for each pairaligner job
+  #instead of reading from the mlss_tag table
   if ($self->param('options')) {
       $pairaligner_hash->{'options'} = $self->param('options');
   }

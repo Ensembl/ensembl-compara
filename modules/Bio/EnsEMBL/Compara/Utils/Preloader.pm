@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,6 +43,8 @@ package Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use strict;
 use warnings;
+
+use Scalar::Util qw(weaken);
 
 use Bio::EnsEMBL::Utils::Scalar qw(wrap_array assert_ref check_ref);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
@@ -205,6 +207,8 @@ sub _load_and_attach_all {
 sub load_all_sequences {
     my ($sequence_adaptor, $seq_type, @args) = @_;
 
+    assert_ref($sequence_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor', 'sequence_adaptor');
+
     my $internal_sequence_key = $seq_type ? "_sequence_$seq_type" : '_sequence';
     my $internal_key_for_adaptor = $seq_type ? 'dbID' : '_sequence_id';
 
@@ -248,6 +252,8 @@ sub load_all_sequences {
 sub expand_Homologies {
     my $aligned_member_adaptor = shift;
 
+    assert_ref($aligned_member_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::AlignedMemberAdaptor', 'aligned_member_adaptor');
+
     my %homologies;
     foreach my $a (@_) {
         foreach my $o (@{wrap_array($a)}) {
@@ -260,6 +266,44 @@ sub expand_Homologies {
     my $members = $aligned_member_adaptor->fetch_all_by_Homology(values %homologies);
     $homologies{$_->{'_member_of_homology_id'}}->add_Member($_) for @$members;
     return $members;
+}
+
+
+=head2 load_all_AltRegions
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DnaFragAltRegionAdaptor $dnafrag_alt_region_adaptor.
+                The adaptor that is used to retrieve the objects.
+  Arg[2..n]   : Objects or arrays
+  Example     : my $alt_regions = load_all_AltRegions($dnafrag_alt_region_adaptor, $dnafrags);
+  Description : Method to load the alt-regions of many DnaFrags in a minimum number of queries
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::Locus objects (alt-regions) loaded from the database
+  Exceptions  : none
+
+=cut
+
+sub load_all_AltRegions {
+    my $dnafrag_alt_region_adaptor = shift;
+
+    assert_ref($dnafrag_alt_region_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::DnaFragAltRegionAdaptor', 'dnafrag_alt_region_adaptor');
+
+    my %dnafrags;
+    foreach my $a (@_) {
+        foreach my $d ( @{ wrap_array($a) } ) {
+            next if !check_ref($d, 'Bio::EnsEMBL::Compara::DnaFrag') ;      # It has to be a DnaFrag
+            next if exists $d->{'_alt_region'};                             # ... that doesn't have its alt-region yet
+            $dnafrags{$d->dbID} = $d;
+            $d->{'_alt_region'} = undef;
+        }
+    }
+    return [] unless %dnafrags;
+    my $alt_regions = $dnafrag_alt_region_adaptor->fetch_all_by_dbID_list([keys %dnafrags]);
+    foreach my $ar (@$alt_regions) {
+        my $dnafrag = $dnafrags{$ar->dnafrag_id};
+        $dnafrag->{'_alt_region'} = $ar;
+        $ar->{'dnafrag'} = $dnafrag;
+        weaken($ar->{'dnafrag'});
+    }
+    return $alt_regions;
 }
 
 

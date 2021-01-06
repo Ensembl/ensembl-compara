@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,39 +15,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=pod 
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf
 
 =head1 SYNOPSIS
 
-    #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf -host mysql-ens-compara-prod-X -port XXXX \
+        -division $COMPARA_DIV -species_set_name <species_set_name> -reuse_db <db_alias_or_url>
 
-    #3. make sure that all default_options are set correctly
-
-    #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf -host mysql-ens-compara-prod-X -port XXXX \
-            -division $COMPARA_DIV -mlss_id <curr_pecan_mlss_id> -species_set_name <species_set_name> -reuse_db <db_alias_or_url>
-
-    #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
-
-
-=head1 DESCRIPTION  
+=head1 DESCRIPTION
 
     The PipeConfig file for MercatorPecan pipeline that should automate most of the pre-execution tasks.
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -69,13 +48,12 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     # parameters that are likely to change from execution to another:
-	#pecan mlss_id
-#       'mlss_id'               => 522,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
 	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 	#'species_set_name'      => 'amniotes',
 
     # Automatically set using the above
         'pipeline_name'         => $self->o('species_set_name').'_mercator_pecan_'.$self->o('rel_with_suffix'),
+        'method_type'           => 'PECAN',
 
     # dependent parameters:
         'work_dir'              => $self->o('pipeline_dir'),
@@ -104,7 +82,7 @@ sub default_options {
     'java_options_mem1' => '-server -Xmx6500M -Xms6000m',
     'java_options_mem2' => '-server -Xmx12500M -Xms12000m',
     'java_options_mem3' => '-server -Xmx26500M -Xms26000m',
-    'java_options_mem4' => '-server -Xmx56500M -Xms56000m',
+    'java_options_mem4' => '-server -Xmx76500M -Xms76000m',
 
     #Gerp default parameters
     'window_sizes'      => [1,10,100,500],
@@ -127,8 +105,9 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     my ($self) = @_;
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-        'mlss_id'        => $self->o('mlss_id'),
+
         'genome_dumps_dir' => $self->o('genome_dumps_dir'),
+        'work_dir'         => $self->o('work_dir'),
     };
 }
 
@@ -148,22 +127,19 @@ sub pipeline_analyses {
     my ($self) = @_;
 
     return [
-# ---------------------------------------------[find out the other mlss_ids involved ]---------------------------------------------------
+# ---------------------------------------------[find out the mlss_ids involved ]---------------------------------------------------
 #
-            {   -logic_name => 'find_gerp_mlss_ids',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-                -parameters => {
-                    'db_conn'       => $self->o('master_db'),
-                    'mlss_id'       => $self->o('mlss_id'),
-                    'ce_ml_type'    => 'GERP_CONSTRAINED_ELEMENT',
-                    'cs_ml_type'    => 'GERP_CONSERVATION_SCORE',
-                    'inputquery'    => 'SELECT mlss_ce.method_link_species_set_id AS ce_mlss_id, mlss_cs.method_link_species_set_id AS cs_mlss_id FROM method_link_species_set mlss JOIN (method_link_species_set mlss_ce JOIN method_link ml_ce USING (method_link_id)) USING (species_set_id) JOIN (method_link_species_set mlss_cs JOIN method_link ml_cs USING (method_link_id)) USING (species_set_id) WHERE mlss.method_link_species_set_id = #mlss_id# AND ml_ce.type = "#ce_ml_type#" AND ml_cs.type = "#cs_ml_type#"',
-                },
-                -input_ids => [{}],
-                -flow_into => {
-                    2 => 'populate_new_database',
-                },
-	    },
+        {   -logic_name => 'load_mlss_ids',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMLSSids',
+            -parameters => {
+                'method_type'      => $self->o('method_type'),
+                'species_set_name' => $self->o('species_set_name'),
+                'release'          => $self->o('ensembl_release'),
+                'add_sister_mlsss' => 1,  # Load GERP MLSS ids as well
+            },
+            -input_ids  => [{}],
+            -flow_into  => [ 'populate_new_database' ],
+        },
 
 # ---------------------------------------------[Run poplulate_new_database.pl script ]---------------------------------------------------
 	    {  -logic_name => 'populate_new_database',
@@ -265,7 +241,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareSpeciesSetsMLSS',
             -parameters => {
                 'master_db' => $self->o('master_db'),
-                'whole_method_links'    => [ 'PECAN' ],
+                'whole_method_links'    => [ $self->o('method_type') ],
             },
             -flow_into => [ 'make_species_tree' ],
         },
@@ -284,7 +260,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetGerpNeutralRate',
             -flow_into => {
                 1 => [ 'genome_reuse_factory' ],
-                2 => [ '?table_name=pipeline_wide_parameters' ],
             },
         },
 
@@ -665,7 +640,7 @@ sub pipeline_analyses {
              -parameters    => {
                                 'test' => 'conservation_jobs',
                                 'logic_name' => 'Gerp',
-                                'method_link_type' => 'PECAN',
+                                'method_link_type' => $self->o('method_type'),
              },
  	},
 
@@ -676,4 +651,3 @@ sub pipeline_analyses {
 }
 
 1;
-

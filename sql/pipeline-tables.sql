@@ -1,5 +1,5 @@
--- Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
--- Copyright [2016-2020] EMBL-European Bioinformatics Institute
+-- See the NOTICE file distributed with this work for additional information
+-- regarding copyright ownership.
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ CREATE TABLE dna_collection (
  PRIMARY KEY (dna_collection_id),
  UNIQUE (description)
 
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
 -- ----------------------------------------------------------------------------------
@@ -102,11 +102,11 @@ CREATE TABLE `anchor_sequence` (
   `method_link_species_set_id` int(10) unsigned default NULL,
   `anchor_id` bigint unsigned default NULL,
   `dnafrag_id` bigint unsigned default NULL,
-  `start` int(20) unsigned default NULL,
-  `end` int(20) unsigned default NULL,
-  `strand` tinyint(4) default '0',
+  `dnafrag_start` INT unsigned default NULL,
+  `dnafrag_end` INT unsigned default NULL,
+  `dnafrag_strand` tinyint(4) default '0',
   `sequence` varchar(250) default '',
-  `length` int(20) unsigned default NULL,
+  `length` INT unsigned default NULL,
   PRIMARY KEY  (`anchor_seq_id`),
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
   KEY `anchor_id_mlss_id` (`anchor_id`, `method_link_species_set_id`)
@@ -125,8 +125,8 @@ CREATE TABLE `anchor_align` (
   `method_link_species_set_id` int(10) unsigned default NULL,
   `anchor_id` bigint unsigned default NULL,
   `dnafrag_id` bigint unsigned default NULL,
-  `dnafrag_start` int(20) default NULL,
-  `dnafrag_end` int(20) default NULL,
+  `dnafrag_start` INT default NULL,
+  `dnafrag_end` INT default NULL,
   `dnafrag_strand` tinyint(4) default NULL,
   `score` float default NULL,
   `num_of_organisms` smallint(5) unsigned default NULL,
@@ -277,7 +277,7 @@ CREATE TABLE hmm_thresholding (
       PRIMARY KEY (root_id,seq_member_id),
       KEY (seq_member_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 -- ----------------------------------------------------------------------------------
@@ -301,3 +301,44 @@ CREATE TABLE `seq_member_id_current_reused_map` (
   PRIMARY KEY (stable_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+
+
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for table 'id_generator'
+--
+-- overview: table to mimic AUTO_INCREMENT without having to insert rows in
+--           the actual data table.
+-- semantics:
+--   label      - A string identifying the request type, e.g. "homology", "gene_tree", etc
+--   next_id    - The next value a dbID column of that type will use
+
+CREATE TABLE id_generator (
+    label       VARCHAR(40) NOT NULL,
+    next_id     BIGINT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (label)
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for table 'id_assignments'
+--
+-- overview: table to record the ids that have been assigned through the
+--           id_generator table. Each request yields an interval
+--           [assigned_id, assigned_id+size-1]
+-- semantics:
+--   label          - A string identifying the request type, e.g. "homology", "gene_tree", etc
+--   requestor      - A numeric identifier of the what/who made the request
+--   assigned_id    - The lowest ID assigned to it
+--   size           - The number of IDs assigned to this requestor
+
+CREATE TABLE id_assignments (
+    label       VARCHAR(40) NOT NULL,
+    requestor   BIGINT UNSIGNED NOT NULL,
+    assigned_id BIGINT UNSIGNED NOT NULL,
+    size        INT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (label, requestor)
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+

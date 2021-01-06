@@ -13,7 +13,7 @@ String.prototype.capitalize = function() {
 }
 
 // fetch ticket status from REST API
-var endpoint_ticket_list = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/search/?jql=project=ENSCOMPARASW+AND+issuetype=Task+AND+fixVersion+IN+("Ensembl+__RELEASE__",+"Release+__RELEASE__")+AND+component+IN+("Relco+tasks",+"Production tasks")++AND+cf[11130]=__DIVISION__+ORDER+BY+created+ASC,id+ASC&maxResults=500';
+var endpoint_ticket_list = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/search/?jql=project=ENSCOMPARASW+AND+issuetype=Task+AND+fixVersion+=+"__RELEASE_VERSION__"+AND+component+IN+("Relco+tasks",+"Production tasks")++AND+cf[11130]=__DIVISION__+ORDER+BY+created+ASC,id+ASC&maxResults=500';
 var endpoint_ticket_subtasks = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/search/?jql=project=ENSCOMPARASW+AND+parent="__PARENT__"+ORDER+BY+created+ASC,id+ASC&maxResults=500';
 
 var endpoint_ticket_query = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/issue';
@@ -103,7 +103,8 @@ function process_task(task) { return function(json) {
 
 for(var j = 0; j < all_divisions.length; j++){
     var division = all_divisions[j];
-    var endpoint = endpoint_ticket_list.replace(/__RELEASE__/g, release).replace('__DIVISION__', division);
+    var release_version = release >= 99 ? `Ensembl ${release}` : `Release ${release}`;
+    var endpoint = endpoint_ticket_list.replace(/__RELEASE_VERSION__/g, release_version).replace('__DIVISION__', division);
     console.log(endpoint);
     $('body').append('<div id="' + division + '"></div>');
     $.ajax(endpoint, {

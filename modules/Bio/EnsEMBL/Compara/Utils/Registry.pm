@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -330,13 +330,15 @@ sub get_rw_user {
     my $host = shift;
     unless (exists $rw_users{$host}) {
         # There are several possible user names
-        foreach my $rw_user (qw(ensadmin ensrw w)) {
-            my $rc = system("which $host-$rw_user > /dev/null");
+        my @rw_users = qw(ensadmin ensrw w);
+        foreach my $rw_user (@rw_users) {
+            my $rc = system("which $host-$rw_user > /dev/null 2> /dev/null");
             unless ($rc) {
                 $rw_users{$host} = $rw_user;
-                last;
+                return $rw_user;
             }
         }
+        die "Could not find a rw user for $host (tried: ".join(", ", @rw_users).")";
     }
     return $rw_users{$host};
 }

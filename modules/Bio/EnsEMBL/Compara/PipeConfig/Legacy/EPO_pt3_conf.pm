@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -128,6 +128,7 @@ sub pipeline_wide_parameters {
 		'enredo_mapping_file' => $self->o('enredo_mapping_file'),
 		'master_db' => $self->o('master_db'),
 		'compara_mapped_anchor_db' => $self->o('compara_mapped_anchor_db'),
+		'work_dir' => $self->o('work_dir'),
 		'mlss_id' => $self->o('mlss_id'),
 		'enredo_output_file' => $self->o('enredo_output_file'),
                 'run_gerp' => $self->o('run_gerp'),

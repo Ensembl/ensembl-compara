@@ -1,4 +1,4 @@
-homology_id	homology_type	gene_tree_node_id	gene_tree_root_id	species_tree_node_id	gene_member_id	seq_member_id	seq_member_stable_id	genome_db_id	identity	hom_gene_member_id	hom_seq_member_id	hom_seq_member_stable_id	hom_genome_db_id	hom_identity
+homology_id	homology_type	gene_tree_node_id	gene_tree_root_id	species_tree_node_id	gene_member_id	seq_member_id	stable_id	genome_db_id	perc_id	homology_gene_member_id	homology_seq_member_id	homology_stable_id	homology_genome_db_id	homology_perc_id
 331	other_paralog	4084164	4084164	40133001	401644323	418968445	ENSRNOP00000069823	155	8.75161	401644388	418968537	ENSRNOP00000013987	155	16.8734
 7804	other_paralog	4084322	4084322	40133000	401999845	419492582	ENSRNOP00000010406	155	18.7678	402002793	419497082	ENSRNOP00000042114	155	18.6969
 8534	other_paralog	4084156	4084156	40133000	401684468	419027403	ENSRNOP00000003437	155	69.3923	401850842	419272103	ENSRNOP00000063199	155	63.7931

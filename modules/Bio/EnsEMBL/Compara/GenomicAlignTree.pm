@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -635,6 +635,11 @@ sub get_all_sorted_genomic_align_nodes {
                object if any. If you want to restrict an object with no coordinates
                a simple substr() will do!
 
+               NB: skip_empty_GenomicAligns only removes terminal sub-trees that
+               become gap-only after restriction. Purely internal nodes that become
+               gap-only are kept to hold the tree together, as this method can only
+               return 1 GenomicAlignTree.
+
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object
   Exceptions : none
   Caller     : general
@@ -643,7 +648,7 @@ sub get_all_sorted_genomic_align_nodes {
 =cut
 
 sub restrict_between_alignment_positions {
-  my ($self, $start, $end, $skip_empty_GenomicAligns, $reference_genomic_align) = @_;
+  my ($self, $start, $end, $skip_empty_GenomicAligns) = @_;
   my $genomic_align_tree;
   $genomic_align_tree = $self->copy();
   $genomic_align_tree->adaptor($self->adaptor);
@@ -655,27 +660,49 @@ sub restrict_between_alignment_positions {
   #Only need to do this once per tree since the length is the same for all the nodes.
   my $length = $genomic_align_tree->get_all_leaves->[0]->length;
 
+  my $all_nodes = $genomic_align_tree->get_all_nodes;
+  my %was_leaf = map {$_ => $_->is_leaf} @$all_nodes;
+
+  # Postorder traversal of the tree
   #Get all the nodes and restrict but only remove leaves if necessary. Call minimize_tree at the end to 
   #remove the internal nodes
-  foreach my $this_node (reverse @{$genomic_align_tree->get_all_nodes}) {
+  foreach my $this_node (reverse @$all_nodes) {
     my $genomic_align_group = $this_node->genomic_align_group;
     next if (!$genomic_align_group);
     my $new_genomic_aligns = [];
 
-   # my $length = $this_node->length;
-
     foreach my $this_genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
       my $restricted_genomic_align = $this_genomic_align->restrict($start, $end, $length);
 
-      if ($genomic_align_tree->reference_genomic_align eq $this_genomic_align) {
+      if ($genomic_align_tree->reference_genomic_align && $genomic_align_tree->reference_genomic_align eq $this_genomic_align) {
         ## Update the reference_genomic_align
 
         $genomic_align_tree->reference_genomic_align($restricted_genomic_align);
         $genomic_align_tree->reference_genomic_align_node($this_node);
       }
-      if (!$skip_empty_GenomicAligns or
-          $restricted_genomic_align->dnafrag_start <= $restricted_genomic_align->dnafrag_end
-          ) {
+      my $record_restricted_ga = 1;
+      if ($skip_empty_GenomicAligns) {
+          if ($restricted_genomic_align->dnafrag_start < $restricted_genomic_align->dnafrag_end) {
+              # The restricted genomic_align is a true region
+              # -> We actually still need to remove the node if it belongs
+              #    to ancestral_sequences but is now a leaf, because leaves
+              #    must belong to extant species
+              # (internal nodes can become leaves if all their children are
+              # removed, which can happen if they are gap-only, cf the
+              # disavow_parent all down below)
+              if ($this_node->is_leaf and !$was_leaf{$this_node}) {
+                  $record_restricted_ga = 0;
+              }
+          } else {
+              # The restricted genomic_align is only gaps
+              # -> Remove the node if it is a leaf
+              # (internal nodes must be kept because they hold the tree)
+              if ($this_node->is_leaf) {
+                  $record_restricted_ga = 0;
+              }
+          }
+      }
+      if ($record_restricted_ga) {
         ## Always skip composite segments outside of the range of restriction
         ## The cigar_line will contain only X's
         next if ($restricted_genomic_align->cigar_line =~ /^\d*X$/);
@@ -693,12 +720,14 @@ sub restrict_between_alignment_positions {
         $genomic_align_group->add_GenomicAlign($this_genomic_align);
       }
     } else {
-	#Only remove leaves. Use minimise_tree to tidy up the internal nodes
-	if ($this_node->is_leaf) {
+	    # Only leaves can reach this point.
+	    # The parent loses a child, and will eventually be removed from the tree
+	    # (by a later passage through this disavow_parent, or by minimize_tree below)
 	    $this_node->disavow_parent();
 	    my $reference_genomic_align = $genomic_align_tree->reference_genomic_align;
 	    if ($reference_genomic_align) {
 		my $reference_genomic_align_node = $genomic_align_tree->reference_genomic_align_node;
+		# Use minimise_tree to tidy up the internal nodes
 		$genomic_align_tree = $genomic_align_tree->minimize_tree();
 		## Make sure links are not broken after tree minimization
 		$genomic_align_tree->reference_genomic_align($reference_genomic_align);
@@ -709,7 +738,6 @@ sub restrict_between_alignment_positions {
 		#$genomic_align_tree->reference_genomic_align->genomic_align_block($genomic_align_tree);
 		$genomic_align_tree->reference_genomic_align_node($reference_genomic_align_node);
 	    }
-	}
     }
   }
   $genomic_align_tree = $genomic_align_tree->minimize_tree();
@@ -1335,28 +1363,30 @@ sub annotate_node_type {
     my ($self) = @_;
 
     my $duplications;
-    my $leaf_names;
 
-    #find the 2 children of a node
     my $children = $self->children;
-    my $child1 = $children->[0];
-    my $child2 = $children->[1];
 
-    #Find all the leaves of child1
-    my $all_leaves = $child1->get_all_leaves;
-    foreach my $this_leaf (@$all_leaves) {
-        my $name = $this_leaf->get_all_genomic_aligns_for_node->[0]->genome_db->name;
-        $duplications->{$name} = 1;
-    }
+    OUTER: foreach my $child (@$children) {
+        my $all_leaves = $child->get_all_leaves;
 
-    #Find all the leaves of child2 and if there are any shared species with child1, we have found a 
-    #duplication node.
-    $all_leaves = $child2->get_all_leaves;
-    foreach my $this_leaf (@$all_leaves) {
-        my $name = $this_leaf->get_all_genomic_aligns_for_node->[0]->genome_db->name;
-        if ($duplications->{$name}) {
-            $self->node_type("duplication");
-            last;
+        if (!$duplications) {
+            # Build the list of species seen in this child
+            $duplications = {};
+            foreach my $this_leaf (@$all_leaves) {
+                my $name = $this_leaf->get_all_genomic_aligns_for_node->[0]->genome_db->name;
+                $duplications->{$name} = 1;
+            }
+
+        } else {
+            # Compare the list of species against the ones already seen
+            foreach my $this_leaf (@$all_leaves) {
+                my $name = $this_leaf->get_all_genomic_aligns_for_node->[0]->genome_db->name;
+                if ($duplications->{$name}) {
+                    # Found a duplication. Stop all for loops of this node
+                    $self->node_type("duplication");
+                    last OUTER;
+                }
+            }
         }
     }
 
