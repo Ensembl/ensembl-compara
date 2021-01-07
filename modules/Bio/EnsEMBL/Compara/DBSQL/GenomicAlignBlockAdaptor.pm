@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -579,7 +579,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
             $restrict
         );
     # Exclude blocks that have already been fetched via a previous projection-segment
-    $these_genomic_align_blocks = [grep {!$seen_gab_ids{$_->dbID}} @$these_genomic_align_blocks];
+    $these_genomic_align_blocks = [grep {!$seen_gab_ids{$_->dbID || $_->original_dbID}} @$these_genomic_align_blocks];
 
     #If the GenomicAlignBlock has been restricted, set up the correct values 
     #for restricted_aln_start and restricted_aln_end
@@ -624,7 +624,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
         $this_genomic_align_block->reverse_complement()
             if ($reference_slice->strand != $this_genomic_align_block->reference_genomic_align->dnafrag_strand);
         push (@$all_genomic_align_blocks, $this_genomic_align_block);
-        $seen_gab_ids{$this_genomic_align_block->dbID} = 1;
+        $seen_gab_ids{$this_genomic_align_block->dbID || $this_genomic_align_block->original_dbID} = 1;
       }
     } else {
       foreach my $this_genomic_align_block (@$these_genomic_align_blocks) {
@@ -637,7 +637,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
         $this_genomic_align_block->reverse_complement()
             if ($reference_slice->strand != $this_genomic_align_block->reference_genomic_align->dnafrag_strand);
         push (@$all_genomic_align_blocks, $this_genomic_align_block);
-        $seen_gab_ids{$this_genomic_align_block->dbID} = 1;
+        $seen_gab_ids{$this_genomic_align_block->dbID || $this_genomic_align_block->original_dbID} = 1;
       }
     }
   }    

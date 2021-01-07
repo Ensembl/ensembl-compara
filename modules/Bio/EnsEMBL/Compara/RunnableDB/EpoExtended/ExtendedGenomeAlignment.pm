@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,6 +39,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::ExtendedGenomeAlignment;
 use strict;
 use warnings;
 
+use File::Basename;
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use Bio::EnsEMBL::Compara::DnaFragRegion;
@@ -48,7 +50,7 @@ use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::Production::Analysis::ExtendedGenomeAlignment;
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
-use Bio::EnsEMBL::Compara::Utils::Cigars;
+use Bio::EnsEMBL::Hive::Utils ('stringify');
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -86,6 +88,9 @@ sub fetch_input {
 
   #load from genomic_align_block ie using in 2X mode
   $self->_load_GenomicAligns($self->param('genomic_align_block_id'));
+
+    # Make sure we start in a clean space, free of any files from a previous job attempt
+    $self->cleanup_worker_temp_directory;
 
   if ($self->param('genomic_aligns')) {
       #load 2X genomes
@@ -208,6 +213,8 @@ sub _write_output {
 	  }
 	  $gata->store_group($split_trees);
 	  foreach my $tree (@$split_trees) {
+	      $self->_assert_cigar_lines_in_block($tree->modern_genomic_align_block_id);
+	      $self->_assert_tree($tree);
 	      $self->_write_gerp_dataflow($tree->modern_genomic_align_block_id);
 	  }
       } else {
@@ -216,16 +223,118 @@ sub _write_output {
 	  #the left and right indexes.
 	  #	      $gata->store($genomic_align_tree, "skip_left_right_indexes");
 	  $gata->store($genomic_align_tree, $skip_left_right_index);
+	  $self->_assert_cigar_lines_in_block($genomic_align_tree->modern_genomic_align_block_id);
+	  $self->_assert_tree($genomic_align_tree);
 	  $self->_write_gerp_dataflow($genomic_align_tree->modern_genomic_align_block_id);
       }
-
-      #DO NOT COMMENT THIS OUT!!! (at least not permenantly). Needed
-      #to clean up after each job otherwise you get files left over from
-      #the previous job.
-      $self->cleanup_worker_temp_directory;
   
   return 1;
 }
+
+sub _assert_tree {
+    my ($self, $gat) = @_;
+
+    if ($gat->get_child_count == 3) {
+        # The only ternary nodes allowed are "root" nodes of unrooted trees
+        # of 3 sequences
+        foreach my $child (@{$gat->children}) {
+            unless ($child->is_leaf) {
+                $self->_backup_data_and_throw($gat, sprintf("Node %s is the child of a ternary node, but not a leaf of the tree", $child->name));
+            }
+        }
+    } else {
+        # The tree must be binary
+        foreach my $node (@{$gat->get_all_nodes}) {
+            if ($node->get_child_count == 1) {
+                $self->_backup_data_and_throw($gat, sprintf("Node %s is unary. The tree has not been minimised", $node->name));
+            } elsif ($node->get_child_count >= 3) {
+                $self->_backup_data_and_throw($gat, sprintf("Node %s is not binary (%d children)", $node->name, $node->get_child_count));
+            }
+        }
+    }
+
+    # Only the leaves have aligned sequences, all from extant species
+    foreach my $node (@{$gat->get_all_nodes}) {
+        if ($node->is_leaf) {
+            if ($node->genomic_align_group->genome_db->name eq 'ancestral_sequences') {
+                $self->_backup_data_and_throw($gat, sprintf("Node %s is a leaf, but attached to ancestral_sequences", $node->name));
+            }
+        } else {
+            if ($node->genomic_align_group) {
+                $self->_backup_data_and_throw($gat, sprintf("Node %s is internal, but has some genomic_aligns", $node->name));
+            }
+        }
+    }
+}
+
+sub _assert_cigar_lines_in_block {
+    my ($self, $gab_id) = @_;
+    my $gat = $self->compara_dba->get_GenomicAlignTreeAdaptor->fetch_by_genomic_align_block_id($gab_id);
+
+    my %lengths;
+    foreach my $genomic_align_node (@{$gat->get_all_leaves}) {
+        foreach my $genomic_align (@{$genomic_align_node->genomic_align_group->get_all_GenomicAligns}) {
+            my $cigar_length = Bio::EnsEMBL::Compara::Utils::Cigars::sequence_length_from_cigar($genomic_align->cigar_line);
+            my $region_length = $genomic_align->dnafrag_end - $genomic_align->dnafrag_start + 1;
+            if ($cigar_length != $region_length) {
+                $self->_backup_data_and_throw($gat, "cigar_line's sequence length ($cigar_length) doesn't match the region length ($region_length)");
+            }
+            my $aln_length = Bio::EnsEMBL::Compara::Utils::Cigars::alignment_length_from_cigar($genomic_align->cigar_line);
+            $lengths{$aln_length}++;
+        }
+    }
+    if (scalar(keys %lengths) > 1) {
+        $self->_backup_data_and_throw($gat, "Multiple alignment lengths: " . stringify(\%lengths));
+    }
+}
+
+sub _backup_data_and_throw {
+    my ($self, $gat, $err) = @_;
+    my $target_dir = $self->param_required('work_dir') . '/' . $self->param('genomic_align_block_id') . '.' . basename($self->worker_temp_directory);
+    system('cp', '-a', $self->worker_temp_directory, $target_dir);
+    $self->_print_report($gat, "$target_dir/report.txt");
+    $self->_print_regions("$target_dir/regions.txt");
+    $self->_spurt("$target_dir/tree.nh", $gat->newick_format);
+    throw("Error: $err\nData copied to $target_dir");
+}
+
+sub _print_regions {
+    my ($self, $filename) = @_;
+    open(my $fh, '>', $filename);
+    foreach my $region (@{$self->param('genomic_aligns')}) {
+        print $fh join("\t",
+            $region->genome_db->name,
+            $region->genome_db->dbID,
+            $region->dnafrag->name,
+            $region->dnafrag_id,
+            $region->dnafrag->length,
+            $region->dnafrag_start,
+            $region->dnafrag_end,
+            $region->dnafrag_strand,
+        ), "\n";
+    }
+    close($fh);
+}
+
+sub _print_report {
+    my ($self, $gat, $filename) = @_;
+    open(my $fh, '>', $filename);
+    foreach my $node (@{$gat->get_all_leaves}) {
+        my $ga = $node->genomic_align_group->get_all_GenomicAligns->[0];
+        print $fh join("\t",
+            $node->name,
+            $ga->dnafrag_id,
+            $ga->dnafrag_start,
+            $ga->dnafrag_end,
+            $ga->dnafrag_end - $ga->dnafrag_start + 1,
+            length($ga->original_sequence),
+            length($ga->aligned_sequence),
+            stringify(Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($ga->cigar_line)),
+        ), "\n";
+    }
+    close($fh);
+}
+
 
 sub _write_gerp_dataflow {
     my ($self, $gab_id) = @_;

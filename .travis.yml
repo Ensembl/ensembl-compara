@@ -77,12 +77,12 @@ jobs:
         - shellcheck --version
       script: prove -rv ./travisci/all-housekeeping/
 
-    - language: perl
-      perl: 5.30
-      name: "SQL unit tests"
-      install:
-        - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
-      script: prove -r ./travisci/sql-unittest/
+    # - language: perl
+    #   perl: 5.30
+    #   name: "SQL unit tests"
+    #   install:
+    #     - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
+    #   script: prove -r ./travisci/sql-unittest/
 
     - language: perl
       dist: trusty   # 5.22 is the minimum on xenial

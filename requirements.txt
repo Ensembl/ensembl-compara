@@ -7,5 +7,5 @@ mysqlclient
 requests
 pandas
 biopython
-pytest
+pytest == 5.2.1
 pytest-dependency

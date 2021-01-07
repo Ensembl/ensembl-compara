@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,9 +30,12 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
 use strict;
 use warnings;
 
+use List::Util qw(sum);
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
+use Bio::EnsEMBL::Compara::Utils::IDGenerator qw(:all);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -58,6 +61,8 @@ sub fetch_input {
 sub write_output {
   my($self) = @_;
 
+  $self->assign_ids;
+
   foreach my $chain (@{ $self->param('chains') }) {
       $self->_write_output($chain);
     }
@@ -68,10 +73,6 @@ sub write_output {
 
 sub _write_output {
     my ($self, $chain) = @_;
-  #
-  #Start transaction
-  #
-  $self->call_within_transaction( sub {
     
         my $group_id;
         
@@ -94,7 +95,6 @@ sub _write_output {
             }
             $self->compara_dba->get_GenomicAlignBlockAdaptor->store($block);
         }
-  } );
 }
 
 ###########################################
@@ -456,58 +456,60 @@ sub cleanse_output {
 # redundant alignment deletion
 
 sub delete_alignments {
-  my ($self, $mlss, $qy_dnafrag, $tg_dnafrag) = @_;
+  my ($self, $mlss) = @_;
+
+  my $range_info = get_previously_assigned_range(
+      $self->compara_dba->dbc,
+      'genomic_align_' . $mlss->dbID,
+      $self->get_requestor_id,
+  );
+
+  # No range already assigned
+  return unless $range_info;
+
+  my ($min_id, $n_ids) = @$range_info;
+
+  my $sql_gab = 'DELETE FROM genomic_align_block WHERE genomic_align_block_id BETWEEN ? AND ?';
+  my $sql_ga  = 'DELETE FROM genomic_align       WHERE genomic_align_id       BETWEEN ? AND ?';
 
   my $dbc = $self->compara_dba->dbc;
-  my $sql = "SELECT ga1.genomic_align_block_id, ga1.genomic_align_id, ga2.genomic_align_id
-      FROM genomic_align ga1, genomic_align ga2
-      WHERE ga1.genomic_align_block_id=ga2.genomic_align_block_id
-      AND ga1.genomic_align_id != ga2.genomic_align_id
-      AND ga1.dnafrag_id = ?
-      AND ga1.method_link_species_set_id = ?";
-  if (defined $tg_dnafrag) {
-    $sql .= " AND ga2.dnafrag_id = ?";
-  }
-
-
-  my $sth = $dbc->prepare($sql);
-  if (defined $tg_dnafrag) {
-    $sth->execute( $qy_dnafrag->dbID, $mlss->dbID, $tg_dnafrag->dbID);
-  } else {
-    $sth->execute( $qy_dnafrag->dbID, $mlss->dbID);
-  }
-
-  my $nb_gabs = 0;
-  my @gabs;
-  while (my $aref = $sth->fetchrow_arrayref) {
-    my ($gab_id, $ga_id1, $ga_id2) = @$aref;
-    push @gabs, [$gab_id, $ga_id1, $ga_id2];
-    $nb_gabs++;
-  }
-
-  my $sql_gab = "delete from genomic_align_block where genomic_align_block_id in ";
-  my $sql_ga = "delete from genomic_align where genomic_align_id in ";
-
-  $self->warning("Deleting $nb_gabs genomic_align_blocks");
-
-  for (my $i=0; $i < scalar @gabs; $i=$i+20000) {
-    my (@gab_ids, @ga1_ids, @ga2_ids);
-    for (my $j = $i; ($j < scalar @gabs && $j < $i+20000); $j++) {
-      push @gab_ids, $gabs[$j][0];
-      push @ga1_ids, $gabs[$j][1];
-      push @ga2_ids, $gabs[$j][2];
-    }
-    my $sql_gab_to_exec = $sql_gab . "(" . join(",", @gab_ids) . ")";
-    my $sql_ga_to_exec1 = $sql_ga . "(" . join(",", @ga1_ids) . ")";
-    my $sql_ga_to_exec2 = $sql_ga . "(" . join(",", @ga2_ids) . ")";
-
-    foreach my $sql ($sql_ga_to_exec1,$sql_ga_to_exec2,$sql_gab_to_exec) {
-      my $sth = $dbc->prepare($sql);
-      $sth->execute;
-      $sth->finish;
-    }
-  }
+  $dbc->do($sql_ga,  undef, $min_id, $min_id+$n_ids-1);
+  $dbc->do($sql_gab, undef, $min_id, $min_id+$n_ids-1);
 }
 
+
+sub assign_ids {
+    my ($self) = @_;
+
+    my $chains      = $self->param('chains');
+    my $mlss_id     = $self->param('output_mlss_id');
+    my $n_blocks    = sum(map {scalar(@$_)} @$chains);
+
+    # For simplicity, genomic_align_block_id is the genomic_align_id of its
+    # first genomic_align. Since all blocks are pairwise, we need to
+    # request two values per block only.
+    # group_id (for chains) is set to the genomic_align_block_id of the
+    # first block of the chain.
+    # group_id (for nets) should not be touched, cf the comment in
+    # _write_output, because it is already set (coming from chains)
+    my $ga_id = get_id_range(
+        $self->compara_dba->dbc,
+        "genomic_align_${mlss_id}",
+        2 * $n_blocks,
+        $self->get_requestor_id,
+    );
+
+    foreach my $chain (@$chains) {
+        my $group_id = $ga_id;
+        foreach my $gab (@$chain) {
+            my ($ga1, $ga2) = @{$gab->genomic_align_array};
+            $gab->dbID($ga_id);
+            $ga1->dbID($ga_id);
+            $ga2->dbID($ga_id+1);
+            $gab->group_id($group_id) unless $gab->group_id;
+            $ga_id += 2;
+        }
+    }
+}
 
 1;

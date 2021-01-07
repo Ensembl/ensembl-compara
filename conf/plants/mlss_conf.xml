@@ -39,6 +39,11 @@
       </species_set>
     </all_vs_all> -->
 
+    <!-- Reference wheat vs all wheat cultivars (and spelt, which is a different species so needs its own rule)
+    <one_vs_all method="LASTZ_NET" ref_genome="triticum_aestivum" against="Triticum aestivum"/>
+    <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="triticum_spelta"/>
+    -->
+
   </pairwise_alignments>
 
   <multiple_alignments>

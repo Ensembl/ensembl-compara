@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,11 +37,38 @@ our %EXPORT_TAGS;
 our @EXPORT_OK;
 
 @EXPORT_OK = qw(
+    initialise_id
     get_id_range
+    get_previously_assigned_range
 );
 %EXPORT_TAGS = (
   all     => [@EXPORT_OK]
 );
+
+
+=head2 initialise_id
+
+  Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $dbc
+  Arg[2]      : String $label
+  Arg[3]      : Integer $first_id. Defaults to 1
+  Example     : initialise_id($dbc, 'homology', "${offset}00000001");
+  Description : Set the first dbID of this label, if it hasn't been set
+                before
+  Returntype  : - undef if there has been an error
+                - "0E0" if the label was already initialised
+                - 1 if the label could be initialised
+
+=cut
+
+sub initialise_id {
+    my ($dbc, $label, $first_id) = @_;
+    return $dbc->do(
+        'INSERT IGNORE INTO id_generator (label, next_id) VALUES (?, ?)',
+        undef,
+        $label,
+        $first_id || 1,
+    );
+}
 
 
 =head2 get_id_range
@@ -52,6 +79,7 @@ our @EXPORT_OK;
   Arg[4]      : (optional) Integer $requestor
   Example     : my $homology_id_start = get_id_range($dbc, 'homology', 1623);
                 my $gene_tree_id = get_id_range($dbc, 'gene_tree');
+                my $gene_tree_id = get_id_range($dbc, 'gene_tree', 5, $self->get_requestor_id);
   Description : Request a new range of $n_ids IDs. The method returns the
                 first integer of the range, and the caller can assume that
                 all integers between this value and the value plus $n_ids
@@ -75,11 +103,7 @@ sub get_id_range {
 
     # Check whether we have already seen this requestor
     if ($requestor) {
-        my $existing_row = $dbc->db_handle->selectrow_arrayref(
-            'SELECT assigned_id, size FROM id_assignments WHERE label = ? AND requestor = ?',
-            undef,
-            $label, $requestor,
-        );
+        my $existing_row = get_previously_assigned_range($dbc, $label, $requestor);
         if ($existing_row) {
             # This requestor has already placed its request, let's check if the interval was big enough
             return $existing_row->[0] if $existing_row->[1] >= $n_ids;
@@ -93,11 +117,7 @@ sub get_id_range {
     }
 
     # First insert the initial value if needed
-    $dbc->do(
-        'INSERT IGNORE INTO id_generator (label, next_id) VALUES (?, 1)',
-        undef,
-        $label,
-    );
+    initialise_id($dbc, $label);
 
     # Increment the ID whilst recording the previous value
     $dbc->do(
@@ -116,5 +136,32 @@ sub get_id_range {
 
     return $next_id;
 }
+
+
+=head2 get_previously_assigned_range
+
+  Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $dbc
+  Arg[2]      : String $label
+  Arg[3]      : Integer $requestor
+  Example     : my $gene_tree_id = get_id_range($dbc, 'gene_tree', $self->get_requestor_id);
+  Description : Request a previously assigned range of IDs for a given
+                requestor (and label) as a pair of integers: the first
+                id of the range, and the size of the range.
+                Returns undef if no range was assigned previously.
+  Returntype  : Arrayref or undef
+  Exceptions  : none
+
+=cut
+
+sub get_previously_assigned_range {
+    my ($dbc, $label, $requestor) = @_;
+
+    return $dbc->db_handle->selectrow_arrayref(
+        'SELECT assigned_id, size FROM id_assignments WHERE label = ? AND requestor = ?',
+        undef,
+        $label, $requestor,
+    );
+}
+
 
 1;
