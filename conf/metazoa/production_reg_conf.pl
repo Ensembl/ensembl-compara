@@ -44,6 +44,15 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 # Or use the official staging servers
 #Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
 
+# Ensure we are using the correct cores for species that overlap with vertebrates
+my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster);
+Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
+my $overlap_cores = {
+    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_${curr_eg_release}_${curr_release}_269" ],
+    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_${curr_eg_release}_${curr_release}_9" ],
+};
+Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
+
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
