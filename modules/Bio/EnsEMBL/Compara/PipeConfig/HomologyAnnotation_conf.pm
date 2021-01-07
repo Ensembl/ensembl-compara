@@ -73,7 +73,7 @@ sub default_options {
         'store_others'                => 0,
         'store_exon_coordinates'      => 0,
         'store_related_pep_sequences' => 0, # do we want CDS sequence as well as protein seqs?
-        'skip_dna'                    => 1, # we skip the dna in the case
+        'skip_dna'                    => 1, # we skip the dna in this case
 
         # Member HC parameters
         'allow_ambiguity_codes'         => 1,

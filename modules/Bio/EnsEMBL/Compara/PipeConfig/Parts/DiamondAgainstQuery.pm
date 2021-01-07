@@ -42,13 +42,12 @@ sub pipeline_analyses_diamond_against_query {
         'diamond_exe'   => $self->o('diamond_exe'),
         'blast_params'  => $self->o('blast_params'),
         'evalue_limit'  => $self->o('evalue_limit'),
-        'blast_db'      => $self->o('blast_db'),
     );
 
     return [
         {   -logic_name    => 'make_query_blast_db',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::MakeDiamondDBPerGenomeDB',
-            -rc_name       => '500Mb_job',
+            -rc_name       => '1Gb_job',
             -priority      => 1,
             -flow_into     => {
                 1 => { 'ref_from_fasta_factory' => INPUT_PLUS() },
@@ -58,7 +57,6 @@ sub pipeline_analyses_diamond_against_query {
         {   -logic_name    => 'ref_from_fasta_factory',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -parameters    => {
-                'reference_list' => $self->o('reference_list'),
             },
             -flow_into     => {
                 '2' => { 'diamond_blastp_ref_to_query' => INPUT_PLUS() },

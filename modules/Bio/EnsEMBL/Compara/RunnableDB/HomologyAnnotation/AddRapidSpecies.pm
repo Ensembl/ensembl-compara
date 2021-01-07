@@ -42,6 +42,7 @@ sub param_defaults {
     return {
         'force'        => 1,
         'hard_limit'   => 50,
+        'release'      => 1,
     };
 }
 

@@ -68,9 +68,6 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
 
         {   -logic_name    => 'locate_and_add_genomes',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::AddRapidSpecies',
-            -parameters    => {
-                'release'           => 1,
-            },
             -hive_capacity => 10,
             -rc_name       => '16Gb_job',
             -flow_into     => {

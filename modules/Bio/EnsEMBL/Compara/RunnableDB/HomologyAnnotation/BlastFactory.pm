@@ -35,6 +35,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BlastFactory;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector qw/ collect_reference_classification match_query_to_reference_taxonomy /;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 use Data::Dumper;
@@ -44,7 +46,6 @@ sub param_defaults {
     return {
         %{$self->SUPER::param_defaults},
         'step' => 200,
-        'taxon_list' => qw(Eukaryota, Metazoa, Chordata, Vertebrata, Plants, Fungi, Bacteria, Protists),
     };
 }
 
@@ -52,6 +53,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
+    my $ref_master = $self->param_required('rr_ref_db');
     my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
     my ( @genome_db_ids, @query_members );
 
@@ -59,15 +61,11 @@ sub fetch_input {
         my $genome_db_id = $genome_db->dbID;
         my $some_members = $self->compara_dba->get_SeqMemberAdaptor->_fetch_all_representative_for_blast_by_genome_db_id($genome_db_id);
         my @mlsss        = @{$self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type_GenomeDB('ENSEMBL_HOMOLOGUES', $genome_db)};
-        $self->warning("There are multiple mlsss for $genome_db ENSEMBL_HOMOLOGUES when we only expect 1") if (scalar(@mlsss) > 1);
-        my @genome_members;
+        $self->warning("There are multiple mlsss for $genome_db ENSEMBL_HOMOLOGUES when we only expect 1") if ( scalar(@mlsss) > 1 );
 
-        foreach my $member (@$some_members) {
-            my $member_id = $member->dbID;
-            push @genome_members, $member_id;
-        }
+        my @genome_members = map {$_->dbID} @$some_members;
 
-        push @query_members, { 'genome_db_id' => $genome_db_id, 'mlss_id' => $mlsss[0]->dbID, 'member_ids' => \@genome_members, 'ref_taxa' => $self->_collect_classification_match($genome_db) };
+        push @query_members, { 'genome_db_id' => $genome_db_id, 'mlss_id' => $mlsss[0]->dbID, 'member_ids' => \@genome_members, 'ref_taxa' => $self->match_query_to_reference_taxonomy($genome_db, $ref_master) };
     }
 
     $self->param('query_members', \@query_members);
@@ -84,33 +82,20 @@ sub write_output {
         my $genome_db_id  = $genome->{'genome_db_id'};
         my $mlss_id       = $genome->{'mlss_id'};
         my $query_members = $genome->{'member_ids'};
-        my $ref_taxa      = $genome->{'ref_taxa'};
+        my $ref_taxa      = $genome->{'ref_taxa'} ? $genome->{'ref_taxa'} : "default";
+        my $ref_dump_dir  = $self->param_required('ref_dumps_dir');
+        my $ref_dirs      = collect_species_set_dirs($self->param_required('rr_ref_db'), $ref_taxa);
 
-        while (@$query_members) {
-            my @job_array = splice(@$query_members, 0, $step);
-            #my $output_id = { 'member_id_list' => \@job_array, 'genome_db_id' => $genome_db_id, 'mlss_id' => $mlss_id, 'ref_taxa' => $ref_taxa}; # With genome_db_id to send to per-genome peptide_align_feature tables
-            my $output_id = { 'member_id_list' => \@job_array, 'mlss_id' => $mlss_id, 'ref_taxa' => $ref_taxa };
-            $self->dataflow_output_id($output_id, 2);
-        }
-        $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'ref_taxa' => $ref_taxa }, 1 );
-    }
-}
-
-sub _collect_classification_match {
-    my ($self, $genome_db) = shift @_;
-
-    my @taxon_list = @{$self->param('taxon_list')};
-    my $taxon_dba  = $self->compara_dba->get_NCBITaxonAdaptor;
-    my $parent     = $taxon_dba->fetch_by_dbID($genome_db->taxon_id);
-
-    foreach my $taxa_name ( @taxon_list ) {
-        my @taxon_ids = @{ $taxon_dba->fetch_all_nodes_by_name($taxa_name.'%') }
-        if ( any { $_ eq $parent->dbID } @taxon_ids ) {
-            return $taxa_name;
+        foreach my $ref ( @$ref_dirs ) {
+            my $ref_dmnd_path = $ref_dump_dir . '/' . $ref->{'ref_dmnd'};
+            while (@$query_members) {
+                my @job_array = splice(@$query_members, 0, $step);
+                my $output_id = { 'member_id_list' => \@job_array, 'mlss_id' => $mlss_id, 'all_blast_db' => $ref_dmnd_path };
+                $self->dataflow_output_id($output_id, 2);
+            }
+            $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'ref_taxa' => $ref_taxa }, 1 );
         }
     }
-    return undef;
-
 }
 
 1;

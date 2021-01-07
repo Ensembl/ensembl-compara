@@ -21,7 +21,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstRef
 
 =head1 DESCRIPTION
 
-    This is a partial PipeConfig to Diamond search a member_id list against given blast_db
+    This is a partial PipeConfig to Diamond search a member_id list against blast_db
 
 =cut
 
@@ -40,7 +40,6 @@ sub pipeline_analyses_diamond_against_refdb {
         'diamond_exe'   => $self->o('diamond_exe'),
         'blast_params'  => $self->o('blast_params'),
         'evalue_limit'  => $self->o('evalue_limit'),
-        'blast_db'      => $self->o('blast_db'),
     );
 
     return [

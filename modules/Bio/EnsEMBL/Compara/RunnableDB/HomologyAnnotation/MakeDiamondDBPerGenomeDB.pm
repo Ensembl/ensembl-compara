@@ -48,13 +48,12 @@ sub run {
     my $query_db_dir  = $self->param_required('query_db_dir');
     my $genome_db_id  = $self->param_required('genome_db_id');
     my $gdb_adaptor   = $self->compara_dba->get_GenomeDBAdaptor;
-    my $genome_db     = $gdb_adaptor->fetch_by_dbID($genome_db_id) or $self->die_no_retry("cannot fetch GenomeDB with id '$genome_db_id'");
-    my $query_db_name = $self->param('query_db_dir') . '/' . $genome_db->name() . '_' . $genome_db->assembly();
-    my $query_db_name = $self->param('query_db_dir') . '/' . $genome_db->name() . '_' . $genome_db->assembly() . '_' .  $genome_db->genebuild());
+    my $genome_db     = $gdb_adaptor->fetch_by_dbID($genome_db_id) or $self->die_no_retry("cannot fetch GenomeDB with id" . $genome_db_id);
+    my $query_db_name = $query_db_dir . '/' . $genome_db->name . '_' . $genome_db->assembly . '_' .  $genome_db->genebuild;
     my $cmd = "$diamond_exe makedb --in $fasta_file -d $query_db_name";
 
     if ( !$self->param('dry_run') ) {
-        my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1});
+        my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1 });
     }
     else {
         $self->warning("$cmd has not been executed");
