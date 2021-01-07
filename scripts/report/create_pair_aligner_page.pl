@@ -450,14 +450,6 @@ sub fetch_input {
             }
         }
     }
-    my $ref_common_name;
-    if ($urls) {
-	$ref_common_name = $reg->get_adaptor($ref_species, "core", "MetaContainer")->list_value_by_key('species.display_name')->[0];
-#	$ref_common_name = $reg->get_adaptor($ref_species, "core", "MetaContainer")->get_common_name;
-    } else {
-	$ref_common_name = $ref_genome_db->db_adaptor->get_MetaContainer->list_value_by_key('species.display_name')->[0];
-#	$ref_common_name = $ref_genome_db->db_adaptor->get_MetaContainer->get_common_name;
-    }
 
     my $ref_dna_collection_config;
     my $non_ref_dna_collection_config;
@@ -469,18 +461,10 @@ sub fetch_input {
     }
 
     $ref_dna_collection_config->{name} = $ref_species;
-    $ref_dna_collection_config->{common_name} = $ref_common_name;
+    $ref_dna_collection_config->{common_name} = $ref_genome_db->display_name;
 
-    my $non_ref_common_name;
-    if ($urls) {
-#	$non_ref_common_name = $reg->get_adaptor($non_ref_species, "core", "MetaContainer")->get_common_name;
-	$non_ref_common_name = $reg->get_adaptor($non_ref_species, "core", "MetaContainer")->list_value_by_key('species.display_name')->[0];
-    } else {
-	$non_ref_common_name = $non_ref_genome_db->db_adaptor->get_MetaContainer->list_value_by_key('species.display_name')->[0];
-	#$non_ref_common_name = $non_ref_genome_db->db_adaptor->get_MetaContainer->get_common_name;
-    }
     $non_ref_dna_collection_config->{name} = $non_ref_species;
-    $non_ref_dna_collection_config->{common_name} = $non_ref_common_name;
+    $non_ref_dna_collection_config->{common_name} = $non_ref_genome_db->display_name;
 
     return ($results, $ref_results, $non_ref_results, $pair_aligner_config, $blastz_parameters, $tblat_parameters, $ref_dna_collection_config, $non_ref_dna_collection_config);
 

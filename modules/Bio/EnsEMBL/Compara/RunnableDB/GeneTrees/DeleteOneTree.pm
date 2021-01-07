@@ -47,8 +47,17 @@ sub write_output {
         $tree->preload;
         $gene_tree_adaptor->delete_tree($tree);
         $tree->release_tree;
-    } );
+    }, 1, 2 );  # Retry once and wait 2 seconds between retries
+    $self->_check_clean_eradication();  # Make sure that the tree has been removed - a messy reindex is a pointless reindex
+}
+
+sub _check_clean_eradication {
+    my $self = shift @_;
+
+    my $gene_tree_adaptor = $self->compara_dba->get_GeneTreeAdaptor;
+    if (my $tree = $gene_tree_adaptor->fetch_by_dbID($self->param_required('gene_tree_id'))) {
+        die 'Tree with root_id=' . $self->param('gene_tree_id') . ' removal has failed.';
+    }
 }
 
 1;
-

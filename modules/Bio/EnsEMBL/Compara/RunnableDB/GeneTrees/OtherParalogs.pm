@@ -69,6 +69,7 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
 use Bio::EnsEMBL::Compara::Graph::Link;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(check_column_integrity);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree');
 
@@ -105,7 +106,14 @@ sub fetch_input {
         }
         foreach my $gdb_id (keys %genome_db_ids) {
             # alignment_id and aln_length are not propagated because they are not needed
-            $self->dataflow_output_id({'genome_db_id' => $gdb_id, 'gene_tree_id' => $self->param('gene_tree_id')}, 3);
+            my $params = {'genome_db_id' => $gdb_id, 'gene_tree_id' => $self->param('gene_tree_id')};
+            if ($self->param('output_flatfile')) {
+                # Prefix the output flatfile name with the genome_db_id to ensure uniqueness
+                my $gdb_outfile = $self->param('output_flatfile');
+                $gdb_outfile =~ s/\/([^\/]+)$/\/$gdb_id.$1/;
+                $params->{output_flatfile} = $gdb_outfile;
+            }
+            $self->dataflow_output_id($params, 3);
         }
         $self->complete_early('Too many genes, breaking up the task to 1 job per genome_db_id');
     }
@@ -131,13 +139,24 @@ sub fetch_input {
 
 sub write_output {
     my $self = shift @_;
+
+    $self->_create_flatfile if $self->param('output_flatfile');
+
     $self->run_analysis;
     $self->print_summary;
+
+    check_column_integrity($self->param('output_flatfile')) if $self->param('output_flatfile');
 }
 
 
 sub delete_old_paralogies {
     my $self = shift;
+
+    my $outfile = $self->param('output_flatfile');
+    if ( defined $outfile && -e $outfile ) {
+        unlink $outfile;
+        return;
+    }
 
     my $tree_node_id = $self->param('gene_tree_id');
     my $genome_db_id = $self->param('genome_db_id');

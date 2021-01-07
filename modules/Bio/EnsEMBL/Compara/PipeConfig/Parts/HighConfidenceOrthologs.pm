@@ -127,21 +127,25 @@ sub pipeline_analyses_high_confidence {
             },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('high_confidence_capacity'),
-            -flow_into     => [ 'update_homology_table' ],
+            -flow_into     => {
+                1 => { 'import_homology_table' => { 'mlss_id' => '#mlss_id#', 'high_conf_expected' => '1' } },
+            },
         },
 
-        {   -logic_name => 'update_homology_table',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::UpdateTableFromFile',
+        {   -logic_name => 'import_homology_table',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologies',
             -parameters => {
-                table        => 'homology',
-                primary_key  => 'homology_id',
-                attrib_files => [
-                    '#goc_file#', '#wga_file#', '#high_conf_file#'
-                ],
+                attrib_files => {
+                    'goc'       => '#goc_file#',
+                    'wga'       => '#wga_file#',
+                    'high_conf' => '#high_conf_file#',
+                },
+                homology_flatfile => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
+                replace      => 0,
             },
             -rc_name       => '500Mb_job',
-            -hive_capacity => $self->o('update_homologies_capacity'),
-            -priority      => 10, # these are slow - let's get them started ASAP
+            -hive_capacity => $self->o('import_homologies_capacity'),
+            -max_retry_count    => 0,
         },
 
     ];

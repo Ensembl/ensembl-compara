@@ -59,7 +59,7 @@ Data-production documentation
    production/READMEs/pair_aligner_patches.rst
    production/READMEs/whole_genome_synteny.rst
    production/READMEs/epo.rst
-   production/READMEs/low_coverage_genome_aligner.rst
+   production/READMEs/extended_genome_aligner.rst
    production/READMEs/multi_align.dumps.rst
    production/READMEs/multiple_aligner.rst
    production/READMEs/base_age.rst

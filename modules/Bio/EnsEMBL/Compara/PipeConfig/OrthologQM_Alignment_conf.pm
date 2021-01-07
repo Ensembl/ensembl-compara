@@ -140,6 +140,8 @@ sub default_options {
     };
 }
 
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
+
 =head2 pipeline_create_commands
 
 	Description: create tables for writing data to
@@ -152,7 +154,7 @@ sub pipeline_create_commands {
 	return [
 		@{ $self->SUPER::pipeline_create_commands },
 		$self->db_cmd( 'CREATE TABLE ortholog_quality (
-			homology_id              INT NOT NULL,
+            homology_id              VARCHAR(40) NOT NULL,
             genome_db_id             INT NOT NULL,
             alignment_mlss           INT NOT NULL,
             combined_exon_coverage   FLOAT(5,2) NOT NULL,
@@ -179,6 +181,10 @@ sub pipeline_wide_parameters {
         'prev_wga_dumps_dir' => $self->o('prev_wga_dumps_dir'),
         'previous_wga_file'  => defined $self->o('prev_wga_dumps_dir') ? '#prev_wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv' : undef,
 
+        'gene_dumps_dir'     => $self->o('gene_dumps_dir'),
+
+        'compara_db'         => $self->o('compara_db'),
+        'master_db'          => $self->o('master_db'),
         'alt_aln_dbs'        => $self->o('alt_aln_dbs'),
         'alt_homology_db'   => $self->o('alt_homology_db'),
 
@@ -190,7 +196,13 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
         {   -logic_name => 'fire_orth_wga',
-            -input_ids  => [ { } ],
+            -input_ids  => [ {
+                'species_set_name' => $self->o('species_set_name'),
+                'species_set_id'   => $self->o('species_set_id'),
+                'ref_species'      => $self->o('ref_species'),
+                'species1'         => $self->o('species1'),
+                'species2'         => $self->o('species2'),
+            } ],
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => 'pair_species',
         },

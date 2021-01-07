@@ -39,18 +39,6 @@ my $description = q{
 
 copy_ancestral_core.pl
 
-=head1 AUTHORS
-
- Kathryn Beal
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =head1 DESCRIPTION
 
 This script copies data over compara DBs. It has been
@@ -142,14 +130,12 @@ Data will be copied to this instance.
 
 =over
 
-=item B<--mlss method_link_species_set_id>
+=item B<--mlss_id method_link_species_set_id>
 
 Copy data for this species only. This option can be used several times in order to restrict
 the copy to several species.
 
 =back
-
-=head1 INTERNAL METHODS
 
 =cut
 
@@ -295,32 +281,21 @@ sub copy_ancestral_data {
 	throw("Already have names of $name in the production database. This needs to be fixed");
     }
 
-    #
-    #Find min seq_region_id
-    #
+    # Find min and max seq_region_id in from_dbc and max seq_region_id in to_dbc
     my $range_sql = "SELECT MIN(seq_region_id), MAX(seq_region_id) FROM seq_region WHERE name LIKE '${name}_%'";
     my ($min_sr, $max_sr) = $from_dbc->db_handle->selectrow_array($range_sql);
+    my $offset_sql = "SELECT IFNULL(MAX(seq_region_id), 0) FROM seq_region";
+    my ($offset) = $to_dbc->db_handle->selectrow_array($offset_sql);
 
-    #
-    #Copy the seq_region rows with new, auto-incremented, seq_region_ids
-    #We expect copy_data to reserve *consecutive* rows, this is done with "mysqlimport --lock-tables"
-    #The ORDER BY clause is important because otherwise the database engine could return the rows in any order
-    #
-    print "reserving seq_region_ids\n";
-    my $query = "SELECT 0, name, coord_system_id, length FROM seq_region WHERE name like '${name}_%' ORDER BY seq_region_id";
+    # Copy over the seq_region
+    # Use as seq_region_id the ID in name, shifted by the max seq_region_id in to_dbc to avoid overlaps
+    my $name_len = length($name) + 2;
+    my $query = "SELECT SUBSTRING(name, $name_len) + $offset, name, coord_system_id, length FROM seq_region WHERE name LIKE '${name}_%'";
+    print "copying seq_region\n";
     copy_data($from_dbc, $to_dbc, 'seq_region', $query);
 
-    #
-    #Find min of new seq_region_ids
-    #
-    my ($new_min_sr) = $to_dbc->db_handle->selectrow_array($range_sql);
-
-    #
-    #Copy over the dna with new seq_region_ids
-    #Assuming all of the above, the seq_region_ids can be simply shifted
-    #
-    $query = "SELECT seq_region_id+$new_min_sr-$min_sr, sequence FROM dna WHERE seq_region_id BETWEEN $min_sr AND $max_sr";
-
+    # Copy over the dna, using the same seq_region_id construction as with seq_region
+    $query = "SELECT SUBSTRING(name, $name_len) + $offset, sequence FROM dna JOIN seq_region USING (seq_region_id) WHERE seq_region_id BETWEEN $min_sr AND $max_sr";
     print "copying dna\n";
     copy_data($from_dbc, $to_dbc, 'dna', $query);
 }

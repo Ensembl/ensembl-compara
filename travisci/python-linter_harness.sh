@@ -18,6 +18,7 @@
 PYTHON_SOURCE_LOCATIONS=('scripts' 'src/python')
 
 # Setup the environment variables
+# shellcheck disable=SC2155
 export PYTHONPATH=$PYTHONPATH:$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')
 export MYPYPATH=$MYPYPATH:$PWD/src/python/lib
 

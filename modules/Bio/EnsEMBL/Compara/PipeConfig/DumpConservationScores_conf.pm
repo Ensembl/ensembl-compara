@@ -24,7 +24,7 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpConservationScores_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpConservationScores_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -compara_db $(mysql-ens-compara-prod-X details url ${USER}_mammals_epo_low_coverage_${CURR_ENSEMBL_RELEASE}) \
+        -compara_db $(mysql-ens-compara-prod-X details url ${USER}_mammals_epo_extended_${CURR_ENSEMBL_RELEASE}) \
         -mlss_id XXXX
 
 =head1 DESCRIPTION
@@ -57,7 +57,7 @@ sub default_options {
         'work_dir'   => $self->o('pipeline_dir') . '/#mlss_id#/hash',
 
         # How many species can be dumped in parallel
-        'capacity'   => 50,
+        'dump_cs_capacity'   => 20,
 
         # Paths to compara files
         'cs_readme'             => $self->check_file_in_ensembl('ensembl-compara/docs/ftp/conservation_scores.txt'),
@@ -76,7 +76,6 @@ sub pipeline_wide_parameters {
 
         'dump_features_exe'     => $self->o('dump_features_exe'),
         'cs_readme'             => $self->o('cs_readme'),
-        'dump_cs_capacity'      => 100,
 
         'registry'      => $self->o('reg_conf'),
         'compara_db'    => $self->o('compara_db'),

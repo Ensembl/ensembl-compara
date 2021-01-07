@@ -125,10 +125,7 @@ sub write_output {
 		$c++;
 	}
     
-    $self->dataflow_output_id( {
-        'param_name' =>'outgroup_id',
-        'param_value' => $self->param('outgroup_genome_db_id')
-    }, 2 );
+    $self->add_or_update_pipeline_wide_parameter('outgroup_id', $self->param('outgroup_genome_db_id'));
 }
 
 1;

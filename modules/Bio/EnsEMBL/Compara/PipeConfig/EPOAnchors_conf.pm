@@ -109,7 +109,6 @@ return [
         -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::PopulateNewDatabase',
         -parameters => {
             'program'        => $self->o('populate_new_database_exe'),
-            'pipeline_db'    => $self->pipeline_url(),
             'reg_conf'       => $self->o('reg_conf'),
             'master_db'      => $self->o('master_db'),
         },
@@ -145,9 +144,6 @@ return [
 
         {   -logic_name => 'set_gerp_neutral_rate',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetGerpNeutralRate',
-            -flow_into => {
-                2 => [ '?table_name=pipeline_wide_parameters' ],
-            },
         },
 
 # ------------------------------------- now for the modules which create the anchors

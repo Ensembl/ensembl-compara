@@ -280,7 +280,7 @@ sub core_pipeline_analyses {
 			       5 => [ 'create_alignment_chains_jobs' ],
 			       6 => [ 'create_alignment_nets_jobs' ],
 			       10 => [ 'create_filter_duplicates_net_jobs' ],
-			       9 => [ 'remove_partial_blocks' ],
+			       9 => [ 'detect_component_mlsss' ],
 			      },
 	       -rc_name => '1Gb_job',
   	    },
@@ -505,7 +505,7 @@ sub core_pipeline_analyses {
 	       -logic_name => 'remove_inconsistencies_after_net',
 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
 	       -flow_into => {
-			       1 => [ 'update_max_alignment_length_after_net' ],
+			       1 => [ 'remove_inconsistencies_after_net_fd' ],
 			   },
  	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem', 'alignment_nets_hugemem', 'create_alignment_nets_jobs' ],    # Needed because of bi-directional netting: 2 jobs in create_alignment_nets_jobs can result in 1 job here
 	       -rc_name => '1Gb_job',
@@ -546,13 +546,10 @@ sub core_pipeline_analyses {
               -rc_name => $self->o('filter_duplicates_himem_rc_name'),
            },
 
-           {  -logic_name    => 'remove_partial_blocks',
-              -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-              -parameters    => {
-                                'sql' => "DELETE FROM genomic_align_block WHERE genomic_align_block_id NOT IN (SELECT genomic_align_block_id FROM genomic_align)"
-                                },
+           {  -logic_name    => 'remove_inconsistencies_after_net_fd',
+              -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
               -flow_into     => {
-                   1 => [ 'detect_component_mlsss' ],
+                   1 => [ 'update_max_alignment_length_after_net' ],
                },
               -wait_for      => [ 'create_filter_duplicates_net_jobs', 'filter_duplicates_net', 'filter_duplicates_net_himem' ],
            },
@@ -576,6 +573,7 @@ sub core_pipeline_analyses {
               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsSlow',
               -analysis_capacity => 1,
               -rc_name => '8Gb_job',
+              -can_be_empty  => 1,
           },
 
         {   -logic_name => 'detect_component_mlsss',
@@ -584,7 +582,7 @@ sub core_pipeline_analyses {
                 'do_pairwise_gabs'          => $self->o('do_pairwise_gabs'),
                 'do_compare_to_previous_db' => $self->o('do_compare_to_previous_db'),
             },
-            -wait_for   => [ 'set_internal_ids_collection' ],
+            -wait_for   => [ 'set_internal_ids_collection', 'set_internal_ids_slow' ],
             -flow_into  => {
                 '3->A' => [ 'lift_to_principal' ],
                 'A->2' => [ 'run_healthchecks' ],

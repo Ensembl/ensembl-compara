@@ -103,10 +103,7 @@ sub write_output {
     my ($self) = @_;
 
     if (defined $self->param('computed_depth_threshold')) {
-        $self->dataflow_output_id({
-                'param_name'    => 'depth_threshold',
-                'param_value'   => $self->param('computed_depth_threshold'),
-            }, 2);
+        $self->add_or_update_pipeline_wide_parameter('depth_threshold', $self->param('computed_depth_threshold'));
     }
 }
 

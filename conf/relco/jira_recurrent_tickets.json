@@ -2,7 +2,7 @@
     {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/New+Release+Coordination+Document#NewReleaseCoordinationDocument-Division-agnosticwork",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division-agnostic+work",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
@@ -45,7 +45,7 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "relco_doc#Releasecoordinationdocumentation-Post-handover",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division-agnostic+work",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",

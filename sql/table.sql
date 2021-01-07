@@ -62,6 +62,10 @@ CREATE TABLE IF NOT EXISTS meta (
 @desc   Species-tree used in the Compara analyses (incl. new annotations generated in-house), and the NCBI taxonomy (which often used as a template for species-trees)
 */
 
+-- NOTE: these two tables are actually defined in another repository
+--       (ensembl-taxonomy/sql/table.sql) and the definitions have
+--       to be kept in sync
+
 /**
 @table ncbi_taxa_node
 @desc This table contains all taxa used in this database, which mirror the data and tree structure from NCBI Taxonomy database (for more details see ensembl-compara/script/taxonomy/README-taxonomy which explain our import process)
@@ -161,8 +165,8 @@ CREATE TABLE ncbi_taxa_name (
 */
 
 CREATE TABLE genome_db (
-  genome_db_id                int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  taxon_id                    int(10) unsigned DEFAULT NULL, # KF taxon.taxon_id
+  genome_db_id                INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  taxon_id                    INT unsigned DEFAULT NULL, # KF taxon.taxon_id
   name                        varchar(128) DEFAULT '' NOT NULL,
   assembly                    varchar(100) DEFAULT '' NOT NULL,
   genebuild                   varchar(100) DEFAULT '' NOT NULL,
@@ -204,9 +208,9 @@ CREATE TABLE genome_db (
 */
 
 CREATE TABLE species_set_header (
-  species_set_id              int(10) unsigned NOT NULL AUTO_INCREMENT,
+  species_set_id              INT unsigned NOT NULL AUTO_INCREMENT,
   name                        varchar(255) NOT NULL default '',
-  size                        int(10) unsigned NOT NULL,
+  size                        INT unsigned NOT NULL,
   first_release               smallint,
   last_release                smallint,
 
@@ -232,8 +236,8 @@ CREATE TABLE species_set_header (
 */
 
 CREATE TABLE species_set (
-  species_set_id              int(10) unsigned NOT NULL,
-  genome_db_id                int(10) unsigned NOT NULL,
+  species_set_id              INT unsigned NOT NULL,
+  genome_db_id                INT unsigned NOT NULL,
 
   FOREIGN KEY (species_set_id) REFERENCES species_set_header(species_set_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
@@ -256,7 +260,7 @@ CREATE TABLE species_set (
 */
 
 CREATE TABLE species_set_tag (
-  species_set_id              int(10) unsigned NOT NULL, # FK species_set.species_set_id
+  species_set_id              INT unsigned NOT NULL, # FK species_set.species_set_id
   tag                         varchar(50) NOT NULL,
   value                       mediumtext NOT NULL,
 
@@ -286,7 +290,7 @@ CREATE TABLE species_set_tag (
 */
 
 CREATE TABLE method_link (
-  method_link_id              int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  method_link_id              INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   type                        varchar(50) DEFAULT '' NOT NULL,
   class                       varchar(50) DEFAULT '' NOT NULL,
   display_name                varchar(255) DEFAULT '' NOT NULL,
@@ -319,9 +323,9 @@ CREATE TABLE method_link (
 */
 
 CREATE TABLE method_link_species_set (
-  method_link_species_set_id  int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  method_link_id              int(10) unsigned NOT NULL, # FK method_link.method_link_id
-  species_set_id              int(10) unsigned NOT NULL,
+  method_link_species_set_id  INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  method_link_id              INT unsigned NOT NULL, # FK method_link.method_link_id
+  species_set_id              INT unsigned NOT NULL,
   name                        varchar(255) NOT NULL default '',
   source                      varchar(255) NOT NULL default 'ensembl',
   url                         varchar(255) NOT NULL default '',
@@ -350,7 +354,7 @@ CREATE TABLE method_link_species_set (
 
 
 CREATE TABLE method_link_species_set_tag (
-  method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
+  method_link_species_set_id  INT unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
   tag                         varchar(50) NOT NULL,
   value                       mediumtext NOT NULL,
 
@@ -383,7 +387,7 @@ CREATE TABLE method_link_species_set_tag (
 */
 
 CREATE TABLE method_link_species_set_attr (
-  method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
+  method_link_species_set_id  INT unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
   n_goc_0                       int,
   n_goc_25                      int,
   n_goc_50                      int,
@@ -428,11 +432,11 @@ CREATE TABLE `species_tree_node` (
   `node_id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `parent_id` bigint unsigned,
   `root_id` bigint unsigned,
-  `left_index` int(10) NOT NULL DEFAULT 0,
-  `right_index` int(10) NOT NULL DEFAULT 0,
+  `left_index` INT UNSIGNED NOT NULL DEFAULT 0,
+  `right_index` INT UNSIGNED NOT NULL DEFAULT 0,
   `distance_to_parent` double DEFAULT '1',
-  `taxon_id` int(10) UNSIGNED,
-  `genome_db_id` int(10) UNSIGNED,
+  `taxon_id` INT UNSIGNED,
+  `genome_db_id` INT UNSIGNED,
   `node_name` VARCHAR(255),
 
   FOREIGN KEY (`taxon_id`) REFERENCES ncbi_taxa_node(taxon_id),
@@ -461,7 +465,7 @@ CREATE TABLE `species_tree_node` (
 
 CREATE TABLE `species_tree_root` (
   `root_id` bigint unsigned NOT NULL,
-  `method_link_species_set_id` int(10) unsigned NOT NULL,
+  `method_link_species_set_id` INT unsigned NOT NULL,
   `label` VARCHAR(256) NOT NULL DEFAULT 'default',
 
   FOREIGN KEY (root_id) REFERENCES species_tree_node(node_id),
@@ -591,8 +595,8 @@ CREATE TABLE `species_tree_node_attr` (
 */
 
 CREATE TABLE synteny_region (
-  synteny_region_id           int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
+  synteny_region_id           INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  method_link_species_set_id  INT unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
@@ -622,24 +626,50 @@ CREATE TABLE synteny_region (
 
 @see genomic_align_block
 @see dnafrag_region
+@see dnafrag_alt_region
 */
 
 CREATE TABLE dnafrag (
   dnafrag_id                  bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   length                      int unsigned DEFAULT 0 NOT NULL,
   name                        varchar(255) DEFAULT '' NOT NULL,
-  genome_db_id                int(10) unsigned NOT NULL, # FK genome_db.genome_db_id
+  genome_db_id                INT unsigned NOT NULL, # FK genome_db.genome_db_id
   coord_system_name           varchar(40) DEFAULT '' NOT NULL,
   cellular_component          ENUM('NUC', 'MT', 'PT', 'OTHER') DEFAULT 'NUC' NOT NULL,
   is_reference                tinyint(1) DEFAULT 1 NOT NULL,
-  codon_table_id              tinyint(2) unsigned DEFAULT 1 NOT NULL,
+  codon_table_id              TINYINT unsigned DEFAULT 1 NOT NULL,
 
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
 
   PRIMARY KEY (dnafrag_id),
-  UNIQUE name (genome_db_id, name)
+  UNIQUE KEY name (genome_db_id, name)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+/**
+@table  dnafrag_alt_region
+@desc   This table lists the position of the alternative sequences on non-reference dnafrags (haplotypes and assembly patches). On these dnafrags, only the region between these two coordinates differ from the base (reference) dnafrag.
+@colour #808000
+
+@example    This query lists some haplotypes of the human chromosome 20, incl. the length of the complete patched chromosome and the coordinates of the region that differs.
+    @sql    SELECT dnafrag_id, name, length, dnafrag_start, dnafrag_end FROM dnafrag_alt_region JOIN dnafrag USING (dnafrag_id) WHERE name LIKE "CHR\_HSCHR20\_%";
+
+@column dnafrag_id      External reference to dnafrag_id in the @link dnafrag table
+@column dnafrag_start   Position of the first nucleotide from this dnafrag that differs from the reference dnafrag
+@column dnafrag_end     Position of the last nucleotide from this dnafrag that differs from the reference dnafrag
+*/
+
+CREATE TABLE dnafrag_alt_region (
+  dnafrag_id                 BIGINT UNSIGNED NOT NULL,
+  dnafrag_start              INT UNSIGNED NOT NULL,
+  dnafrag_end                INT UNSIGNED NOT NULL,
+
+  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
+
+  PRIMARY KEY (dnafrag_id)
+) ENGINE=MyISAM;
+
 
 /**
 @header Synteny
@@ -664,11 +694,11 @@ CREATE TABLE dnafrag (
 */
 
 CREATE TABLE dnafrag_region (
-  synteny_region_id           int(10) unsigned DEFAULT 0 NOT NULL, # unique internal id
+  synteny_region_id           INT unsigned DEFAULT 0 NOT NULL, # unique internal id
   dnafrag_id                  bigint unsigned DEFAULT 0 NOT NULL, # FK dnafrag.dnafrag_id
-  dnafrag_start               int(10) unsigned DEFAULT 0 NOT NULL,
-  dnafrag_end                 int(10) unsigned DEFAULT 0 NOT NULL,
-  dnafrag_strand              tinyint(4) DEFAULT 0 NOT NULL,
+  dnafrag_start               INT unsigned DEFAULT 0 NOT NULL,
+  dnafrag_end                 INT unsigned DEFAULT 0 NOT NULL,
+  dnafrag_strand              TINYINT DEFAULT 0 NOT NULL,
 
   FOREIGN KEY (synteny_region_id) REFERENCES synteny_region(synteny_region_id),
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
@@ -708,13 +738,13 @@ CREATE TABLE dnafrag_region (
 
 CREATE TABLE genomic_align_block (
   genomic_align_block_id      bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  method_link_species_set_id  int(10) unsigned DEFAULT 0 NOT NULL, # FK method_link_species_set_id.method_link_species_set_id
+  method_link_species_set_id  INT unsigned DEFAULT 0 NOT NULL, # FK method_link_species_set_id.method_link_species_set_id
   score                       double,
-  perc_id                     tinyint(3) unsigned DEFAULT NULL,
-  length                      int(10) NOT NULL,
+  perc_id                     TINYINT unsigned DEFAULT NULL,
+  length                      INT UNSIGNED NOT NULL,
   group_id                    bigint unsigned DEFAULT NULL,
-  level_id                    tinyint(2) unsigned DEFAULT 0 NOT NULL,
-  direction                   tinyint(1) unsigned DEFAULT NULL,
+  level_id                    TINYINT unsigned DEFAULT 0 NOT NULL,
+  direction                   TINYINT unsigned DEFAULT NULL,
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
@@ -750,8 +780,8 @@ CREATE TABLE genomic_align_tree (
   node_id                     bigint unsigned NOT NULL AUTO_INCREMENT, -- internal id, FK genomic_align.node_id
   parent_id                   bigint unsigned DEFAULT NULL,
   root_id                     bigint unsigned NOT NULL default 0,
-  left_index                  int(10) NOT NULL default 0,
-  right_index                 int(10) NOT NULL default 0,
+  left_index                  INT UNSIGNED NOT NULL default 0,
+  right_index                 INT UNSIGNED NOT NULL default 0,
   left_node_id                bigint unsigned,
   right_node_id               bigint unsigned,
   distance_to_parent          double NOT NULL default 1,
@@ -828,13 +858,13 @@ If the original sequence is <code>AACGCTT</code>, the aligned sequence will be:<
 CREATE TABLE genomic_align (
   genomic_align_id            bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   genomic_align_block_id      bigint unsigned NOT NULL, # FK genomic_align_block.genomic_align_block_id
-  method_link_species_set_id  int(10) unsigned DEFAULT 0 NOT NULL, # FK method_link_species_set_id.method_link_species_set_id
+  method_link_species_set_id  INT unsigned DEFAULT 0 NOT NULL, # FK method_link_species_set_id.method_link_species_set_id
   dnafrag_id                  bigint unsigned DEFAULT 0 NOT NULL, # FK dnafrag.dnafrag_id
-  dnafrag_start               int(10) DEFAULT 0 NOT NULL,
-  dnafrag_end                 int(10) DEFAULT 0 NOT NULL,
-  dnafrag_strand              tinyint(4) DEFAULT 0 NOT NULL,
+  dnafrag_start               INT UNSIGNED DEFAULT 0 NOT NULL,
+  dnafrag_end                 INT UNSIGNED DEFAULT 0 NOT NULL,
+  dnafrag_strand              TINYINT DEFAULT 0 NOT NULL,
   cigar_line                  mediumtext NOT NULL,
-  visible                     tinyint(2) unsigned DEFAULT 1 NOT NULL,
+  visible                     TINYINT unsigned DEFAULT 1 NOT NULL,
   node_id                     bigint unsigned DEFAULT NULL,
 
   FOREIGN KEY (genomic_align_block_id) REFERENCES genomic_align_block(genomic_align_block_id),
@@ -910,10 +940,10 @@ CREATE TABLE conservation_score (
 CREATE TABLE constrained_element (
   constrained_element_id bigint unsigned NOT NULL,
   dnafrag_id bigint unsigned NOT NULL,
-  dnafrag_start int(12) unsigned NOT NULL,
-  dnafrag_end int(12) unsigned NOT NULL,
-  dnafrag_strand int(2) not null,
-  method_link_species_set_id int(10) unsigned NOT NULL,
+  dnafrag_start INT unsigned NOT NULL,
+  dnafrag_end INT unsigned NOT NULL,
+  dnafrag_strand TINYINT not null,
+  method_link_species_set_id INT unsigned NOT NULL,
   p_value double NOT NULL DEFAULT 0,
   score double NOT NULL default 0,
 
@@ -949,8 +979,8 @@ CREATE TABLE constrained_element (
 */
 
 CREATE TABLE sequence (
-  sequence_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  length                      int(10) NOT NULL,
+  sequence_id                 INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  length                      INT UNSIGNED NOT NULL,
   md5sum                      CHAR(32) NOT NULL,
   sequence                    longtext NOT NULL,
 
@@ -986,19 +1016,19 @@ CREATE TABLE sequence (
 */
 
 CREATE TABLE gene_member (
-  gene_member_id              int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  gene_member_id              INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
-  version                     int(10) DEFAULT 0,
+  version                     INT UNSIGNED DEFAULT 0,
   source_name                 ENUM('ENSEMBLGENE', 'EXTERNALGENE') NOT NULL,
-  taxon_id                    int(10) unsigned NOT NULL, # FK taxon.taxon_id
-  genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
+  taxon_id                    INT unsigned NOT NULL, # FK taxon.taxon_id
+  genome_db_id                INT unsigned, # FK genome_db.genome_db_id
   biotype_group               ENUM('coding','pseudogene','snoncoding','lnoncoding','mnoncoding','LRG','undefined','no_group','current_notdumped','notcurrent') NOT NULL DEFAULT 'coding',
-  canonical_member_id         int(10) unsigned, # FK seq_member.seq_member_id
+  canonical_member_id         INT unsigned, # FK seq_member.seq_member_id
   description                 text DEFAULT NULL,
   dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
-  dnafrag_start               int(10),
-  dnafrag_end                 int(10),
-  dnafrag_strand              tinyint(4),
+  dnafrag_start               INT UNSIGNED,
+  dnafrag_end                 INT UNSIGNED,
+  dnafrag_strand              TINYINT,
   display_label               varchar(128) default NULL,
 
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
@@ -1006,7 +1036,7 @@ CREATE TABLE gene_member (
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (gene_member_id),
-  UNIQUE (stable_id),
+  UNIQUE KEY (stable_id),
   KEY (source_name),
   KEY (canonical_member_id),
   KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
@@ -1040,14 +1070,14 @@ CREATE TABLE gene_member (
 */
 
 CREATE TABLE gene_member_hom_stats (
-  gene_member_id              int(10) unsigned NOT NULL, # FK gene_member.gene_member_id
+  gene_member_id              INT unsigned NOT NULL, # FK gene_member.gene_member_id
   collection                  varchar(40) NOT NULL,
-  `families`                 int(10) unsigned NOT NULL default 0,
+  `families`                 INT unsigned NOT NULL default 0,
   `gene_trees`               tinyint(1) unsigned NOT NULL default 0,
   `gene_gain_loss_trees`     tinyint(1) unsigned NOT NULL default 0,
-  `orthologues`              int(10) unsigned NOT NULL default 0,
-  `paralogues`               int(10) unsigned NOT NULL default 0,
-  `homoeologues`             int(10) unsigned NOT NULL default 0,
+  `orthologues`              INT unsigned NOT NULL default 0,
+  `paralogues`               INT unsigned NOT NULL default 0,
+  `homoeologues`             INT unsigned NOT NULL default 0,
 
   FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id),
 
@@ -1086,21 +1116,21 @@ CREATE TABLE gene_member_hom_stats (
 */
 
 CREATE TABLE seq_member (
-  seq_member_id               int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  seq_member_id               INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
-  version                     int(10) DEFAULT 0,
+  version                     INT UNSIGNED DEFAULT 0,
   source_name                 ENUM('ENSEMBLPEP','ENSEMBLTRANS','Uniprot/SPTREMBL','Uniprot/SWISSPROT','EXTERNALPEP','EXTERNALTRANS','EXTERNALCDS') NOT NULL,
-  taxon_id                    int(10) unsigned NOT NULL, # FK taxon.taxon_id
-  genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
-  sequence_id                 int(10) unsigned, # FK sequence.sequence_id
-  gene_member_id              int(10) unsigned, # FK gene_member.gene_member_id
+  taxon_id                    INT unsigned NOT NULL, # FK taxon.taxon_id
+  genome_db_id                INT unsigned, # FK genome_db.genome_db_id
+  sequence_id                 INT unsigned, # FK sequence.sequence_id
+  gene_member_id              INT unsigned, # FK gene_member.gene_member_id
   has_transcript_edits        tinyint(1) DEFAULT 0 NOT NULL,
   has_translation_edits       tinyint(1) DEFAULT 0 NOT NULL,
   description                 text DEFAULT NULL,
   dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
-  dnafrag_start               int(10),
-  dnafrag_end                 int(10),
-  dnafrag_strand              tinyint(4),
+  dnafrag_start               INT UNSIGNED,
+  dnafrag_end                 INT UNSIGNED,
+  dnafrag_strand              TINYINT,
   display_label               varchar(128) default NULL,
 
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
@@ -1110,7 +1140,7 @@ CREATE TABLE seq_member (
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (seq_member_id),
-  UNIQUE (stable_id),
+  UNIQUE KEY (stable_id),
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id),
@@ -1138,12 +1168,12 @@ CREATE TABLE seq_member (
 */
 
 CREATE TABLE exon_boundaries (
-	gene_member_id   INT(10) UNSIGNED NOT NULL,
-	seq_member_id    INT(10) UNSIGNED NOT NULL,
-	dnafrag_start    INT NOT NULL,
-	dnafrag_end      INT NOT NULL,
-	sequence_length  INT(10) UNSIGNED NOT NULL,
-	left_over        TINYINT(1) DEFAULT 0 NOT NULL,
+	gene_member_id   INT UNSIGNED NOT NULL,
+	seq_member_id    INT UNSIGNED NOT NULL,
+	dnafrag_start    INT UNSIGNED NOT NULL,
+	dnafrag_end      INT UNSIGNED NOT NULL,
+	sequence_length  INT UNSIGNED NOT NULL,
+	left_over        TINYINT UNSIGNED DEFAULT 0 NOT NULL,
 
 	FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id),
 	FOREIGN KEY (seq_member_id) REFERENCES seq_member(seq_member_id),
@@ -1170,7 +1200,7 @@ CREATE TABLE exon_boundaries (
 */
 
 CREATE TABLE seq_member_projection_stable_id (
-  target_seq_member_id      int(10) unsigned NOT NULL,
+  target_seq_member_id      INT unsigned NOT NULL,
   source_stable_id          VARCHAR(128) NOT NULL,
 
   FOREIGN KEY (target_seq_member_id) REFERENCES seq_member(seq_member_id),
@@ -1199,8 +1229,8 @@ sql       SELECT ss.stable_id, gs.name, st.stable_id, gt.name, identity FROM seq
 */
 
 CREATE TABLE seq_member_projection (
-  source_seq_member_id      int(10) unsigned NOT NULL,
-  target_seq_member_id      int(10) unsigned NOT NULL,
+  source_seq_member_id      INT unsigned NOT NULL,
+  target_seq_member_id      INT unsigned NOT NULL,
   identity                  float(5,2) DEFAULT NULL,
 
   FOREIGN KEY (source_seq_member_id) REFERENCES seq_member(seq_member_id),
@@ -1211,6 +1241,11 @@ CREATE TABLE seq_member_projection (
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
+-- NOTE: this table is actually defined in another repository
+--       (ensembl/sql/table.sql) and the definition should
+--       be kept in sync
+
+/**
 /**
 @table external_db
 @desc  This table stores data about the external databases in which the objects described in the @link member_xref table are stored.
@@ -1264,7 +1299,7 @@ CREATE TABLE `external_db` (
 */
 
 CREATE TABLE `member_xref` (
-  `gene_member_id` int(10) unsigned NOT NULL,
+  `gene_member_id` INT unsigned NOT NULL,
   `dbprimary_acc` varchar(10) NOT NULL,
   `external_db_id` int(10) unsigned NOT NULL,
   PRIMARY KEY (`gene_member_id`,`dbprimary_acc`,`external_db_id`),
@@ -1289,9 +1324,9 @@ CREATE TABLE `member_xref` (
 */
 
 CREATE TABLE other_member_sequence (
-  seq_member_id                   int(10) unsigned NOT NULL, # unique internal id
+  seq_member_id                   INT unsigned NOT NULL, # unique internal id
   seq_type                    VARCHAR(40) NOT NULL,
-  length                      int(10) NOT NULL,
+  length                      INT UNSIGNED NOT NULL,
   sequence                    mediumtext NOT NULL,
 
   FOREIGN KEY (seq_member_id) REFERENCES seq_member(seq_member_id),
@@ -1338,22 +1373,22 @@ CREATE TABLE other_member_sequence (
 CREATE TABLE peptide_align_feature (
 
   peptide_align_feature_id    bigint  unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  qmember_id                  int(10) unsigned NOT NULL, # FK seq_member.seq_member_id
-  hmember_id                  int(10) unsigned NOT NULL, # FK seq_member.seq_member_id
-  qgenome_db_id               int(10) unsigned, # FK genome.genome_id
-  hgenome_db_id               int(10) unsigned, # FK genome.genome_id
-  qstart                      int(10) DEFAULT 0 NOT NULL,
-  qend                        int(10) DEFAULT 0 NOT NULL,
+  qmember_id                  INT unsigned NOT NULL, # FK seq_member.seq_member_id
+  hmember_id                  INT unsigned NOT NULL, # FK seq_member.seq_member_id
+  qgenome_db_id               INT unsigned, # FK genome.genome_id
+  hgenome_db_id               INT unsigned, # FK genome.genome_id
+  qstart                      INT UNSIGNED DEFAULT 0 NOT NULL,
+  qend                        INT UNSIGNED DEFAULT 0 NOT NULL,
   hstart                      int unsigned DEFAULT 0 NOT NULL,
   hend                        int unsigned DEFAULT 0 NOT NULL,
   score                       double(16,4) DEFAULT 0.0000 NOT NULL,
   evalue                      double not null,
-  align_length                int(10) not null,
-  identical_matches           int(10) not null,
-  perc_ident                  int(10) not null,
-  positive_matches            int(10) not null,
-  perc_pos                    int(10) not null,
-  hit_rank                    int(10) not null,
+  align_length                INT UNSIGNED not null,
+  identical_matches           INT UNSIGNED not null,
+  perc_ident                  TINYINT UNSIGNED not null,
+  positive_matches            INT UNSIGNED not null,
+  perc_pos                    TINYINT UNSIGNED not null,
+  hit_rank                    SMALLINT UNSIGNED not null,
   cigar_line                  mediumtext,
 
 #  FOREIGN KEY (qmember_id) REFERENCES seq_member(seq_member_id),
@@ -1381,9 +1416,6 @@ CREATE TABLE peptide_align_feature (
 @desc  This table contains all the group homologies found. There are several family_member entries for each family entry.
 @colour   #BC5CEC
 
-@example   The following query retrieves families with "DEGRADATION" in the description and a description_score of 100
-    @sql                                SELECT * FROM family WHERE description like '%DEGRADATION%' AND description_score = 100;
-
 @column family_id                    Internal unique ID
 @column stable_id                    Stable family ID. NOTE: stable_id are currently not stable. We are working in getting IDs stable between releases.
 @column version                      Version of the stable_id (may only change when members migrate between this family and another one; stays the same otherwise)
@@ -1395,17 +1427,17 @@ CREATE TABLE peptide_align_feature (
 */
 
 CREATE TABLE family (
-  family_id                   int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  family_id                   INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   stable_id                   varchar(40) NOT NULL, # unique stable id, e.g. 'ENSFM'.'0053'.'1234567890'
   version                     INT UNSIGNED NOT NULL,# version of the stable_id (changes only when members move to/from existing families)
-  method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
+  method_link_species_set_id  INT unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
   description                 TEXT,
   description_score           double,
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
 
   PRIMARY KEY (family_id),
-  UNIQUE (stable_id),
+  UNIQUE KEY (stable_id),
   KEY (method_link_species_set_id),
   KEY (description(255))
 
@@ -1416,9 +1448,6 @@ CREATE TABLE family (
 @desc  This table contains the proteins corresponding to protein family relationship found. There are several family_member entries for each family entry
 @colour   #BC5CEC
 
-@example    The following query refers to the members of the protein family PTHR12675. The proteins can be retieved using the member_ids. The multiple alignment can be restored using the cigar_lines.
-    @sql    SELECT family_member.* FROM family_member JOIN family USING (family_id) WHERE stable_id = "PTHR12675";
-
 @column family_id      External reference to family_id in the @link family table
 @column seq_member_id  External reference to the seq_member_id in the @link seq_member table
 @column cigar_line     Internal description of the multiple alignment (see the description in the @link homology_member table)
@@ -1428,8 +1457,8 @@ CREATE TABLE family (
 */
 
 CREATE TABLE family_member (
-  family_id                   int(10) unsigned NOT NULL, # FK family.family_id
-  seq_member_id               int(10) unsigned NOT NULL, # FK seq_member.seq_member_id
+  family_id                   INT unsigned NOT NULL, # FK family.family_id
+  seq_member_id               INT unsigned NOT NULL, # FK seq_member.seq_member_id
   cigar_line                  mediumtext,
 
   FOREIGN KEY (family_id) REFERENCES family(family_id),
@@ -1457,10 +1486,10 @@ CREATE TABLE family_member (
 @see gene_align_member
 */
 CREATE TABLE gene_align (
-         gene_align_id         int(10) unsigned NOT NULL AUTO_INCREMENT,
+         gene_align_id         INT unsigned NOT NULL AUTO_INCREMENT,
 	 seq_type              varchar(40),
 	 aln_method            varchar(40) NOT NULL DEFAULT '',
-	 aln_length            int(10) NOT NULL DEFAULT 0,
+	 aln_length            INT UNSIGNED NOT NULL DEFAULT 0,
 
   PRIMARY KEY (gene_align_id)
 
@@ -1480,8 +1509,8 @@ CREATE TABLE gene_align (
 @see gene_align
 */
 CREATE TABLE gene_align_member (
-       gene_align_id         int(10) unsigned NOT NULL,
-       seq_member_id         int(10) unsigned NOT NULL,
+       gene_align_id         INT unsigned NOT NULL,
+       seq_member_id         INT unsigned NOT NULL,
        cigar_line            mediumtext,
 
   FOREIGN KEY (gene_align_id) REFERENCES gene_align(gene_align_id),
@@ -1515,13 +1544,13 @@ CREATE TABLE gene_align_member (
 */
 
 CREATE TABLE gene_tree_node (
-  node_id                         int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  parent_id                       int(10) unsigned,
-  root_id                         int(10) unsigned,
-  left_index                      int(10) NOT NULL DEFAULT 0,
-  right_index                     int(10) NOT NULL DEFAULT 0,
-  distance_to_parent              double default 1.0 NOT NULL,
-  seq_member_id                   int(10) unsigned,
+  node_id                         INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  parent_id                       INT unsigned,
+  root_id                         INT unsigned,
+  left_index                      INT UNSIGNED NOT NULL DEFAULT 0,
+  right_index                     INT UNSIGNED NOT NULL DEFAULT 0,
+  distance_to_parent              double default 1 NOT NULL,
+  seq_member_id                   INT unsigned,
 
   FOREIGN KEY (root_id) REFERENCES gene_tree_node(node_id),
   FOREIGN KEY (parent_id) REFERENCES gene_tree_node(node_id),
@@ -1564,14 +1593,14 @@ CREATE TABLE gene_tree_node (
 */
 
 CREATE TABLE gene_tree_root (
-    root_id                         INT(10) UNSIGNED NOT NULL,
+    root_id                         INT UNSIGNED NOT NULL,
     member_type                     ENUM('protein', 'ncrna') NOT NULL,
     tree_type                       ENUM('clusterset', 'supertree', 'tree') NOT NULL,
-    clusterset_id                   VARCHAR(20) NOT NULL DEFAULT 'default',
-    method_link_species_set_id      INT(10) UNSIGNED NOT NULL,
+    clusterset_id                   VARCHAR(30) NOT NULL DEFAULT 'default',
+    method_link_species_set_id      INT UNSIGNED NOT NULL,
     species_tree_root_id            BIGINT UNSIGNED,
-    gene_align_id                   INT(10) UNSIGNED,
-    ref_root_id                     INT(10) UNSIGNED,
+    gene_align_id                   INT UNSIGNED,
+    ref_root_id                     INT UNSIGNED,
     stable_id                       VARCHAR(40),            # unique stable id, e.g. 'ENSGT'.'0053'.'1234567890'
     version                         INT UNSIGNED,           # version of the stable_id (changes only when members move to/from existing trees)
 
@@ -1602,7 +1631,7 @@ CREATE TABLE gene_tree_root (
 */
 
 CREATE TABLE gene_tree_node_tag (
-  node_id                int(10) unsigned NOT NULL,
+  node_id                INT unsigned NOT NULL,
   tag                    varchar(50) NOT NULL,
   value                  mediumtext NOT NULL,
 
@@ -1629,7 +1658,7 @@ CREATE TABLE gene_tree_node_tag (
 */
 
 CREATE TABLE gene_tree_root_tag (
-  root_id                int(10) unsigned NOT NULL,
+  root_id                INT unsigned NOT NULL,
   tag                    VARCHAR(255) NOT NULL,
   value                  mediumtext NOT NULL,
 
@@ -1677,26 +1706,26 @@ CREATE TABLE gene_tree_root_tag (
 */
 
 CREATE TABLE `gene_tree_root_attr` (
-  root_id                           INT(10) UNSIGNED NOT NULL,
-  aln_after_filter_length           INT(10) UNSIGNED,
-  aln_length                        INT(10) UNSIGNED,
-  aln_num_residues                  INT(10) UNSIGNED,
+  root_id                           INT UNSIGNED NOT NULL,
+  aln_after_filter_length           INT UNSIGNED,
+  aln_length                        INT UNSIGNED,
+  aln_num_residues                  INT UNSIGNED,
   aln_percent_identity              FLOAT(5),
   best_fit_model_family             VARCHAR(10),
   best_fit_model_parameter          VARCHAR(5),
-  gene_count                        INT(10) UNSIGNED,
+  gene_count                        INT UNSIGNED,
   k_score                           FLOAT(5),
-  k_score_rank                      INT(10) UNSIGNED, 
-  mcoffee_scores_gene_align_id      INT(10) UNSIGNED,      
-  aln_n_removed_columns             INT(10) UNSIGNED,
-  aln_num_of_patterns               INT(10) UNSIGNED, 
+  k_score_rank                      INT UNSIGNED,
+  mcoffee_scores_gene_align_id      INT UNSIGNED,
+  aln_n_removed_columns             INT UNSIGNED,
+  aln_num_of_patterns               INT UNSIGNED,
   aln_shrinking_factor              FLOAT(2),
-  spec_count                        INT(10) UNSIGNED,
+  spec_count                        INT UNSIGNED,
   tree_max_branch                   FLOAT,
   tree_max_length                   FLOAT(5),
-  tree_num_dup_nodes                INT(10) UNSIGNED,
-  tree_num_leaves                   INT(10) UNSIGNED,
-  tree_num_spec_nodes               INT(10) UNSIGNED,
+  tree_num_dup_nodes                INT UNSIGNED,
+  tree_num_leaves                   INT UNSIGNED,
+  tree_num_spec_nodes               INT UNSIGNED,
   lca_node_id                       BIGINT UNSIGNED,
   taxonomic_coverage                FLOAT(5),
   ratio_species_genes               FLOAT(5),
@@ -1727,7 +1756,7 @@ CREATE TABLE `gene_tree_root_attr` (
 */
 
 CREATE TABLE gene_tree_node_attr (
-  node_id                         INT(10) UNSIGNED NOT NULL,
+  node_id                         INT UNSIGNED NOT NULL,
   node_type                       ENUM('duplication', 'dubious', 'speciation', 'sub-speciation', 'gene_split'),
   species_tree_node_id            BIGINT UNSIGNED,
   bootstrap                       TINYINT UNSIGNED,
@@ -1757,8 +1786,8 @@ CREATE TABLE gene_tree_node_attr (
 
 CREATE TABLE gene_member_qc (
   gene_member_stable_id       varchar(128) NOT NULL,
-  genome_db_id                int(10) unsigned NOT NULL,
-  seq_member_id               int(10) unsigned,
+  genome_db_id                INT unsigned NOT NULL,
+  seq_member_id               INT unsigned,
   n_species                   INT,
   n_orth                      INT,
   avg_cov                     FLOAT,
@@ -1786,7 +1815,7 @@ CREATE TABLE gene_member_qc (
 */
 
 CREATE TABLE `gene_tree_object_store` (
-  root_id             INT(10) UNSIGNED NOT NULL,
+  root_id             INT UNSIGNED NOT NULL,
   data_label          VARCHAR(255) NOT NULL,
   compressed_data     MEDIUMBLOB NOT NULL,
 
@@ -1818,7 +1847,7 @@ CREATE TABLE `gene_tree_object_store` (
 
 -- Later
 -- @column hmm_id                The internal numeric ID that uniquely identifies the model in the database
---  hmm_id                      int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+--  hmm_id                      INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
 --  PRIMARY KEY (hmm_id),
 --  UNIQUE KEY (model_id,type)
 
@@ -1848,12 +1877,12 @@ CREATE TABLE hmm_profile (
 
 -- Later
 --  @column hmm_id                External reference to the internal numeric ID of a HMM profile in @link hmm_profile
---   hmm_id                     int(10) unsigned NOT NULL, # FK hmm_profile.hmm_id
+--   hmm_id                     INT unsigned NOT NULL, # FK hmm_profile.hmm_id
 --  FOREIGN KEY (hmm_id)        REFERENCES hmm_profile (hmm_id),
 --   KEY (hmm_id)
 
 CREATE TABLE hmm_annot (
-  seq_member_id              int(10) unsigned NOT NULL,
+  seq_member_id              INT unsigned NOT NULL,
   model_id                   varchar(40) DEFAULT NULL,
   evalue                     float,
 
@@ -1918,7 +1947,7 @@ CREATE TABLE hmm_curated_annot (
 @column is_high_confidence             Whether the homology is considered "high-confidence"
 
 @example    See species_names that participate in this particular homology entry
-    @sql    SELECT homology_id, description, GROUP_CONCAT(genome_db.name) AS species FROM homology JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set USING (species_set_id) JOIN genome_db USING(genome_db_id) WHERE method_link_id=201 AND homology_id<5000000  GROUP BY homology_id LIMIT 4;
+    @sql    SELECT homology_id, description, GROUP_CONCAT(genome_db.name) AS species FROM homology JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set USING (species_set_id) JOIN genome_db USING(genome_db_id) WHERE method_link_id=201 AND homology_id<200000000  GROUP BY homology_id LIMIT 4;
 
 @see homology_member
 @see method_link_species_set
@@ -1926,7 +1955,7 @@ CREATE TABLE hmm_curated_annot (
 
 CREATE TABLE homology (
   homology_id                 bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
+  method_link_species_set_id  INT unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
   description                 ENUM('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','gene_split','between_species_paralog','alt_allele','homoeolog_one2one','homoeolog_one2many','homoeolog_many2many') NOT NULL,
   is_tree_compliant           tinyint(1) NOT NULL DEFAULT 0,
   dn                          float(10,5),
@@ -1935,10 +1964,10 @@ CREATE TABLE homology (
   s                           float(10,1),
   lnl                         float(10,3),
   species_tree_node_id        bigint unsigned,
-  gene_tree_node_id           int(10) unsigned,
-  gene_tree_root_id           int(10) unsigned,
+  gene_tree_node_id           INT unsigned,
+  gene_tree_root_id           INT unsigned,
   goc_score                   tinyint unsigned,
-  wga_coverage                DEC(5,2),
+  wga_coverage                DECIMAL(5,2),
   is_high_confidence          tinyint(1),
 
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
@@ -2103,8 +2132,8 @@ The alignment will be:<br />
 
 CREATE TABLE homology_member (
   homology_id                 bigint unsigned NOT NULL, # FK homology.homology_id
-  gene_member_id              int(10) unsigned NOT NULL, # FK gene_member.gene_member_id
-  seq_member_id               int(10) unsigned, # FK seq_member.seq_member_id
+  gene_member_id              INT unsigned NOT NULL, # FK gene_member.gene_member_id
+  seq_member_id               INT unsigned, # FK seq_member.seq_member_id
   cigar_line                  mediumtext,
   perc_cov                    float unsigned default 0,
   perc_id                     float unsigned default 0,
@@ -2202,10 +2231,10 @@ CREATE TABLE stable_id_history (
 */
 
 CREATE TABLE `CAFE_gene_family` (
-  `cafe_gene_family_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `cafe_gene_family_id` INT unsigned NOT NULL AUTO_INCREMENT,
   `root_id` bigint unsigned NOT NULL,
   `lca_id` bigint unsigned NOT NULL,
-  `gene_tree_root_id` int(10) unsigned NOT NULL,
+  `gene_tree_root_id` INT unsigned NOT NULL,
   `pvalue_avg` double(5,4) DEFAULT NULL,
   `lambdas` varchar(100) DEFAULT NULL,
 
@@ -2230,9 +2259,9 @@ CREATE TABLE `CAFE_gene_family` (
 */
 
 CREATE TABLE `CAFE_species_gene` (
-  `cafe_gene_family_id` int(10) unsigned NOT NULL,
+  `cafe_gene_family_id` INT unsigned NOT NULL,
   `node_id` bigint unsigned NOT NULL,
-  `n_members` int(4) unsigned NOT NULL,
+  `n_members` INT unsigned NOT NULL,
   `pvalue` double(5,4) DEFAULT NULL,
 
   FOREIGN KEY (cafe_gene_family_id) REFERENCES CAFE_gene_family(cafe_gene_family_id),
@@ -2247,11 +2276,11 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '103');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '105');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_102_103_a.sql|schema_version');
+  VALUES (NULL, 'patch', 'patch_104_105_a.sql|schema_version');

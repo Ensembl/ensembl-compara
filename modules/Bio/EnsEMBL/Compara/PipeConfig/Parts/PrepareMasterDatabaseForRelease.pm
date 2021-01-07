@@ -24,7 +24,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForRelease
     This is a partial PipeConfig for most part of the PrepareMasterDatabaseForRelease
     pipeline. This will update the NCBI taxonomy, add/update all species to master
     database, update master database's metadata, and update collections and mlss.
-    Finally, it will run the healthchecks and perform a backup of the updated master
+    Finally, it will run the datachecks and perform a backup of the updated master
     database.
 
 =cut
@@ -127,6 +127,8 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'work_dir'              => $self->o('work_dir'),
                 'annotation_file'       => $self->o('annotation_file'),
                 'meta_host'             => $self->o('meta_host'),
+                'allowed_species_file'  => $self->o('config_dir') . '/allowed_species.json',
+                'perc_threshold'        => $self->o('perc_threshold'),
             },
             -flow_into  => {
                 '2->A' => [ 'add_species_into_master' ],
@@ -140,8 +142,13 @@ sub pipeline_analyses_prep_master_db_for_release {
 
         {   -logic_name => 'update_genome_from_registry_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromRegFactory',
+            -parameters => {
+                'master_db' => $self->o('master_db'),
+            },
             -flow_into  => {
                 '2->A' => [ 'add_species_into_master' ],
+                '3->A' => [ 'retire_species_from_master' ],
+                '5->A' => [ 'verify_genome' ],
                 'A->1' => [ 'sync_metadata' ],
             },
             -rc_name    => '16Gb_job',
@@ -236,23 +243,26 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'db_conn'     => '#master_db#',
                 'input_query' => 'UPDATE method_link_species_set SET url = "" WHERE source = "ensembl"',
             },
-            -flow_into  => [ 'hc_master' ],
+            -flow_into  => [ 'dc_master' ],
         },
 
-        {   -logic_name      => 'hc_master',
-            -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RunJavaHealthCheck',
+        {   -logic_name      => 'dc_master',
+            -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RunDataChecks',
             -parameters      => {
-                'compara_db'  => '#master_db#',
-                'work_dir'    => $self->o('work_dir'),
-                'testgroup'   => 'ComparaMaster',
-                'output_file' => '#work_dir#/healthcheck.#testgroup#.out',
-                'ensj_conf'   => $self->o('ensj_conf'),
-                'run_healthchecks_exe' => $self->o('run_healthchecks_exe'),
-                'ensj_testrunner_exe'  => $self->o('ensj_testrunner_exe'),
+                'datacheck_groups' => ['compara_master'],
+                'work_dir'         => $self->o('work_dir'),
+                'history_file'     => '#work_dir#/datacheck.compara_master.history.json',
+                'output_file'      => '#work_dir#/datacheck.compara_master.tap.txt',
+                'failures_fatal'   => 1,
+                'datacheck_types'  => ['critical'],
+                'registry_file'    => $self->o('reg_conf'),
+                'compara_db'       => '#master_db#',
             },
-            -flow_into       => [ 'backup_master' ],
-            -rc_name         => '2Gb_job',
+            -flow_into      => {
+                1 => { 'backup_master' => {} },
+            },
             -max_retry_count => 0,
+            -rc_name         => '500Mb_job',
         },
 
         {   -logic_name => 'backup_master',

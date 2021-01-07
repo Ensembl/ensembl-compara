@@ -68,8 +68,5 @@ table_list=(
 )
 
 echo "Copying tables"
-for table in ${table_list[*]}; do
-    $prod_cmd mysqldump $prod_db $table \
-        | $mast_cmd $mast_db &
-done
+$prod_cmd mysqldump $prod_db "${table_list[@]}" | $mast_cmd $mast_db
 echo "Done! $mast_cmd $mast_db"

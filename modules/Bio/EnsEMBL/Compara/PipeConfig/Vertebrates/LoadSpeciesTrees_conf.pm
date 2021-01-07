@@ -53,13 +53,13 @@ sub default_options {
 
         'taxon_filters' => [
             # Filters with the default behaviour (strains hidden)
-            [ 'Amniota', 'Amniotes' ],
-            [ 'Mammalia', 'Mammals' ],
-            [ 'Neopterygii', 'Fish' ],
-            [ 'Sauria', 'Sauropsids' ],
+            [ 'Amniota', 'Amniotes', '' ],
+            [ 'Mammalia', 'Mammals', '' ],
+            [ 'Neopterygii', 'Fish', '' ],
+            [ 'Sauria', 'Sauropsids', '' ],
             # Filters with the strains shown, prefix with "str:"
-            [ 'str:Murinae', 'Rat and all mice (incl. strains)' ],
-            [ 'str:Sus scrofa', 'All pig breeds' ],
+            [ 'Murinae', 'Rat and all mice (incl. strains)', 'str:' ],
+            [ 'Sus scrofa', 'All pig breeds', 'str:' ],
         ],
         'reference_genomes' => [
             # Which genome_dbs are used references for which clades

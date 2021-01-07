@@ -153,7 +153,7 @@ sub _fetch_and_map_previous_homologies_from_file {
     my @pff_head_cols = split(/\s+/, $pff_header);
     while ( my $line = <$p_hom_handle> ) {
         my $row = map_row_to_header($line, \@pff_head_cols);
-        my ( $homology_id, $sm1_stable_id, $sm2_stable_id ) = ( $row->{homology_id}, $row->{seq_member_stable_id}, $row->{hom_seq_member_stable_id} );
+        my ( $homology_id, $sm1_stable_id, $sm2_stable_id ) = ( $row->{homology_id}, $row->{stable_id}, $row->{homology_stable_id} );
         $hash_previous_homologies{sprintf('%s_%s', $sm1_stable_id, $sm2_stable_id)} = $homology_id;
         $hash_previous_homologies{sprintf('%s_%s', $sm2_stable_id, $sm1_stable_id)} = $homology_id;
     }
@@ -165,7 +165,7 @@ sub _fetch_and_map_previous_homologies_from_file {
     my @hff_head_cols = split(/\s+/, $hff_header);
     while ( my $line = <$hom_handle> ) {
         my $row = map_row_to_header($line, \@hff_head_cols);
-        my ( $curr_homology_id, $sm1_stable_id, $sm2_stable_id ) = ( $row->{homology_id}, $row->{seq_member_stable_id}, $row->{hom_seq_member_stable_id} );        
+        my ( $curr_homology_id, $sm1_stable_id, $sm2_stable_id ) = ( $row->{homology_id}, $row->{stable_id}, $row->{homology_stable_id} );
         my $stable_id_key = sprintf('%s_%s', $sm1_stable_id, $sm2_stable_id);
         my $prev_homology_id = $hash_previous_homologies{$stable_id_key};
         

@@ -1,5 +1,8 @@
+1	9606	homo_sapiens	GRCh36	2009-07-Ensembl	0	0	\N	\N	Human	\N	79	\N
 3	10116	rattus_norvegicus	RGSC3.4	2009-03-Ensembl	0	0	\N	\N	Rat	\N	80	\N
 4	31033	takifugu_rubripes	FUGU4	2007-11-Ensembl	0	0	\N	\N	Fugu	\N	80	\N
+5	9685	felis_catus	CAT0	2007-02-Ensembl	0	0	\N	\N	Cat	\N	79	\N
+6	9598	macaca_sylvanus	MAC	2010-05-Ensembl	0	0	\N	\N	Barbary macaque	\N	79	\N
 27	51511	ciona_savignyi	CSAV2.0	2006-04-Ensembl	0	0	\N	\N	C.savignyi	\N	80	\N
 31	9544	macaca_mulatta	MMUL_1	2006-01-Ensembl	0	0	\N	\N	Macaque	\N	80	\N
 33	9371	echinops_telfairi	TENREC	2006-01-Ensembl	0	0	\N	\N	Tenrec	\N	80	\N

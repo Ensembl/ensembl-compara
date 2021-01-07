@@ -90,10 +90,7 @@ sub write_output {
             # The last method_link listed in whole_method_links will make
             # the pipeline-wide mlss_id, unless param_names have been specified
             my $this_param_name = shift @param_names || 'mlss_id';
-            $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
-                'param_name' => $this_param_name,
-                'param_value' => $mlss->dbID
-            );
+            $self->add_or_update_pipeline_wide_parameter($this_param_name, $mlss->dbID);
         }
     }
 

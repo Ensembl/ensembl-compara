@@ -59,7 +59,7 @@ subtest "update_reference_genome", sub {
     ( $human_1_gdb, $components, $new_dnafrags ) = @$ref_update;
     is( $human_1_gdb->name, 'homo_sapiens', 'human added successfully' );
     is( $human_1_gdb->genebuild, '2019-07', 'human genebuild correct' );
-    is( $new_dnafrags, 6, 'human dnafrags added' );
+    is( $new_dnafrags, 8, 'human dnafrags added' );
 
     ok( $ref_update = Bio::EnsEMBL::Compara::Utils::ReferenceDatabase::update_reference_genome($compara_dba, 'mus_musculus') );
     ( $mouse_gdb, $components, $new_dnafrags ) = @$ref_update;
@@ -75,7 +75,7 @@ subtest "update_reference_genome", sub {
     ( $human_2_gdb, $components, $new_dnafrags ) = @$ref_update;
     is( $human_2_gdb->name, 'homo_sapiens', 'second human added successfully' );
     is( $human_2_gdb->genebuild, '2020-10', 'second human genebuild correct' );
-    is( $new_dnafrags, 6, 'second human dnafrags added' );
+    is( $new_dnafrags, 8, 'second human dnafrags added' );
     isnt($human_1_gdb->dbID, $human_2_gdb->dbID, 'both humans have different ids');
 
     # delete a dnafrag to test force update

@@ -1,4 +1,4 @@
-homology_id	homology_type	gene_tree_node_id	gene_tree_root_id	species_tree_node_id	gene_member_id	seq_member_id	seq_member_stable_id	genome_db_id	identity	hom_gene_member_id	hom_seq_member_id	hom_seq_member_stable_id	hom_genome_db_id	hom_identity
+homology_id	homology_type	gene_tree_node_id	gene_tree_root_id	species_tree_node_id	gene_member_id	seq_member_id	stable_id	genome_db_id	perc_id	homology_gene_member_id	homology_seq_member_id	homology_stable_id	homology_genome_db_id	homology_perc_id
 2089890	ortholog_one2one	4084544	4084544	40133000	1317571	1776012	ENSMEUP00000010101	111	25.2	902949217	904807664	C43H8.2.2	142	25.7143
 13036	ortholog_many2many	4083400	4083400	40133001	1329374	1787862	ENSMEUP00000010265	111	21.1921	903068071	905049332	C09E7.7a.2	142	3.21608
 13044	ortholog_many2many	4083400	4083400	40133001	1329374	1787862	ENSMEUP00000010265	111	21.8543	903211941	905284665	T22B2.1.1	142	3.4555

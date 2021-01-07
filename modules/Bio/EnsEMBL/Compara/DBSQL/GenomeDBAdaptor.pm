@@ -410,7 +410,7 @@ sub fetch_all_current_by_ancestral_taxon_id {
 sub fetch_by_core_DBAdaptor {
     my ($self, $core_dba, $component) = @_;
     my $was_connected = $core_dba->dbc->connected;
-    my $species_name = $core_dba->production_name();
+    my $species_name = $core_dba->get_MetaContainer->get_production_name();
     my $species_assembly = $core_dba->assembly_name();
     my $species_genebuild = $core_dba->get_MetaContainer->single_value_by_key('genebuild.last_geneset_update');
     $core_dba->dbc->disconnect_if_idle() unless $was_connected;
@@ -507,7 +507,7 @@ sub fetch_all_by_mixed_ref_lists {
   Example    : $gdba->store($gdb);
   Description: Stores the GenomeDB object in the database unless it has been stored already; updates the dbID of the object.
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara:GenomeDB
+  Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara::GenomeDB
   Caller     : general
   Status     : Stable
 
@@ -556,7 +556,7 @@ sub store {
   Example    : $gdba->update($gdb);
   Description: Updates the GenomeDB object in the database
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara:GenomeDB
+  Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara::GenomeDB
   Caller     : general
   Status     : Stable
 

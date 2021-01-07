@@ -40,7 +40,7 @@ sub write_output {
 
     my $previous_wga_file = $self->param('previous_wga_file');
     my $homology_map_file = $self->param('homology_mapping_flatfile');
-    my $output_file       = $self->param('output_file');
+    my $output_file       = $self->param('reuse_file');
     $self->run_command( "mkdir -p " . dirname($output_file)) unless -d dirname($output_file);
 
     # parse homology id map

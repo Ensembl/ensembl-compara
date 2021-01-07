@@ -643,7 +643,7 @@ sub get_all_sorted_genomic_align_nodes {
 =cut
 
 sub restrict_between_alignment_positions {
-  my ($self, $start, $end, $skip_empty_GenomicAligns, $reference_genomic_align) = @_;
+  my ($self, $start, $end, $skip_empty_GenomicAligns) = @_;
   my $genomic_align_tree;
   $genomic_align_tree = $self->copy();
   $genomic_align_tree->adaptor($self->adaptor);
@@ -662,12 +662,10 @@ sub restrict_between_alignment_positions {
     next if (!$genomic_align_group);
     my $new_genomic_aligns = [];
 
-   # my $length = $this_node->length;
-
     foreach my $this_genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
       my $restricted_genomic_align = $this_genomic_align->restrict($start, $end, $length);
 
-      if ($genomic_align_tree->reference_genomic_align eq $this_genomic_align) {
+      if ($genomic_align_tree->reference_genomic_align && $genomic_align_tree->reference_genomic_align eq $this_genomic_align) {
         ## Update the reference_genomic_align
 
         $genomic_align_tree->reference_genomic_align($restricted_genomic_align);

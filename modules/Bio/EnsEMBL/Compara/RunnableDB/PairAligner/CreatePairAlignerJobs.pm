@@ -109,15 +109,12 @@ sub createPairAlignerJobs
   my $query_dnafrag_chunk_set_list  = $self->param('query_collection')->get_all_DnaFragChunkSets;
   my $target_dnafrag_chunk_set_list = $self->param('target_collection')->get_all_DnaFragChunkSets;
 
-  #get dnafrag adaptors
-  my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
-  my $dnafrag_chunk_adaptor = $self->compara_dba->get_DnaFragChunkAdaptor;
-
-  #Currently I don't pass this, but I may do in future if I need to have the options for each pairaligner job
-  #instead of reading from the mlss_tag table
   my $pairaligner_hash = {
       'mlss_id' => $self->param('method_link_species_set_id'),
   };
+
+  #Currently I don't pass this, but I may do in future if I need to have the options for each pairaligner job
+  #instead of reading from the mlss_tag table
   if ($self->param('options')) {
       $pairaligner_hash->{'options'} = $self->param('options');
   }

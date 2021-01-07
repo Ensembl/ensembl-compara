@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindGeneFragments
@@ -42,10 +31,6 @@ when the average has been computed against enough species) are reported.
 =head1 SYNOPSIS
 
 standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::get_gene_fragment_stat -longer <1/0>  -genome_db_id <genome_db_id> -coverage_threshold <> -species_threshold <>
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
@@ -76,9 +61,7 @@ sub param_defaults {
     my $self = shift;
     return {
     %{ $self->SUPER::param_defaults() },
-#  'genome_db_id' => 126,
   'coverage_threshold'    => 50,  # Genes with a coverage below this are reported
-#  'compara_db' => 'mysql://ensro@compara1/mm14_protein_trees_82',
   
     };
 }
@@ -145,10 +128,16 @@ sub run {
     
         # first, fetch gene_member stable_ids
         print "Fetching gene_member stable_id info\n" if $self->debug;
-        my $gm_sql = "SELECT gene_member_id, stable_id FROM gene_member WHERE genome_db_id = ?";
-        my $gm_sth = $self->compara_dba->dbc->prepare($gm_sql);
-        $gm_sth->execute($genome_db_id);
-        my $gm_stable_id_map = $gm_sth->fetchall_hashref('gene_member_id');
+        my $gene_file = $self->param_required('gene_dumps_dir') . "/gene_member.${genome_db_id}.tsv";
+        open( my $gene_fh, '<', $gene_file) or die "Cannot open $gene_file";
+        my $header = <$gene_fh>;
+        my @head_cols = split(/\s+/, $header);
+        my %gm_stable_id_map;
+        while ( my $line = <$gene_fh> ) {
+            my $row = map_row_to_header( $line, \@head_cols );
+            $gm_stable_id_map{$row->{'gene_member_id'}} = $row->{'stable_id'};
+        }
+        close($gene_fh);
 
         my $coverage_stats;
         print "Finding homology dump files\n" if $self->debug;
@@ -158,23 +147,21 @@ sub run {
             open( my $hdh, '<', $hom_dump ) or die "Cannot open $hom_dump for reading\n";
             my $header = <$hdh>;
             my @head_cols = split(/\s+/, $header);
-            
-            # grab the first line of the file to check whether the genome_db of interest
-            # is genome_db_id or hom_genome_db_id - we don't know which it will be.
-            # we'll either use genome_db_id, seq_member_id, etc *OR* hom_genome_db_id, hom_seq_member_id, etc
+
             my $line = <$hdh>;
-            my $row = map_row_to_header( $line, \@head_cols );
-            my ( $this, $that ) = $row->{genome_db_id} == $genome_db_id ? ('', 'hom_') : ('hom_', '');
-            
             while ( $line ) {
-                $row = map_row_to_header( $line, \@head_cols );
-                
+                my $row = map_row_to_header( $line, \@head_cols );
+                # Check whether the genome_db of interest is genome_db_id or homology_genome_db_id - we don't
+                # know which it will be. We'll either use genome_db_id, seq_member_id, etc *OR*
+                # homology_genome_db_id, homology_seq_member_id, etc
+                my ( $this, $that ) = $row->{genome_db_id} == $genome_db_id ? ('', 'homology_') : ('homology_', '');
+
                 $coverage_stats->{$row->{$this . 'gene_member_id'}}->{genome_db_id}  = $row->{$this . 'genome_db_id'};
                 $coverage_stats->{$row->{$this . 'gene_member_id'}}->{seq_member_id} = $row->{$this . 'seq_member_id'};
                 $coverage_stats->{$row->{$this . 'gene_member_id'}}->{n_orth}++;
                 $coverage_stats->{$row->{$this . 'gene_member_id'}}->{genome_dbs}->{$row->{$that . 'genome_db_id'}} = 1;
-                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{total_cov} += $row->{$this . 'coverage'};
-                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{total_hom_cov} += $row->{$that . 'coverage'};
+                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{total_cov} += $row->{$this . 'perc_cov'};
+                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{total_hom_cov} += $row->{$that . 'perc_cov'};
                 
                 $line = <$hdh>;
             }
@@ -205,7 +192,7 @@ sub run {
             
             my $dataflow = {
                 'genome_db_id'          => $these_stats->{genome_db_id},
-                'gene_member_stable_id' => $gm_stable_id_map->{$gm_id}->{stable_id},
+                'gene_member_stable_id' => $gm_stable_id_map{$gm_id},
                 'seq_member_id'         => $these_stats->{seq_member_id},
                 'n_species'             => $n_species,
                 'n_orth'                => $these_stats->{n_orth},

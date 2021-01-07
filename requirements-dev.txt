@@ -1,3 +1,4 @@
 pylint
 mypy
 pytest-cov
+yamllint

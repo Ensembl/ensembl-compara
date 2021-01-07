@@ -403,8 +403,12 @@ sub test_command {
     my ($command, $test_name) = @_;
     my $rc = system(ref($command) eq 'ARRAY' ? @$command : $command);
     if ($rc) {
+        if ($rc == -1) {
+            diag("System error: $!");
+        } else {
+            diag("Return code: ".($?>>8));
+        }
         fail($test_name);
-        diag("Return code:$? $!");
     } else {
         pass($test_name);
     }
