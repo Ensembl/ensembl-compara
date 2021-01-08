@@ -1,4 +1,6 @@
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+#!/usr/bin/env perl
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -75,11 +77,11 @@ standaloneJob(
             $exp_dataflow_1,
             2
         ],
-        [
-            'DATAFLOW',
-            $exp_dataflow_2,
-            2
-        ],
+        # [
+        #     'DATAFLOW',
+        #     $exp_dataflow_2,
+        #     2
+        # ],
     ]
 );
 $multi_db->restore('compara', 'genome_db');
