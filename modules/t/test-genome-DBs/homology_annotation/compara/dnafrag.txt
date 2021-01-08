@@ -1,0 +1,1 @@
+1	64190966	15	135	chromosome	NUC	1	1

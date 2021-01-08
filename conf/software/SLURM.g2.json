@@ -11,6 +11,7 @@
     "cmbuild_exe"               : ["check_exe_in_cellar", "infernal/1.1.2/bin/cmbuild"],
     "cmsearch_exe"              : ["check_exe_in_cellar", "infernal/1.1.2/bin/cmsearch"],
     "codeml_exe"                : ["check_exe_in_cellar", "paml43/4.3.0/bin/codeml"],
+    "diamond_exe"               : ["check_exe_in_cellar", "diamond/2.0.4/bin/diamond"],
     "estimate_tree_exe"         : ["check_file_in_cellar", "pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py"],
     "examl_exe_avx"             : ["check_exe_in_cellar", "examl/3.0.17/bin/examl-AVX"],
     "examl_exe_sse3"            : ["check_exe_in_cellar", "examl/3.0.17/bin/examl"],
