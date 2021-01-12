@@ -108,7 +108,7 @@ sub populate_tree {
       selector EnsEMBL::Web::Component::Compara_AlignSliceSelector
       alignment EnsEMBL::Web::Component::Variation::Compara_Alignments
     )],
-    { 'availability' => 'variation database:compara has_alignments', 'concise' => 'Phylogenetic Context' }
+    { 'availability' => 'variation has_variation_source_db database:compara has_alignments', 'concise' => 'Phylogenetic Context' }
   );
   $self->create_node('Citations', 'Citations',
     [qw( alignment EnsEMBL::Web::Component::Variation::Publication  )],

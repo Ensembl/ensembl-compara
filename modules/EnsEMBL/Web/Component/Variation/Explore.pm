@@ -74,7 +74,7 @@ sub content {
     $pheno_count = $avail->{'has_ega'}
   }
 
-  if ($avail->{'has_alignments'}) {
+  if ($avail->{'has_alignments'} && $avail->{'has_variation_source_db'}) {
     $phylo_url = $hub->url({'action' => 'Compara_Alignments'});
   }
 
