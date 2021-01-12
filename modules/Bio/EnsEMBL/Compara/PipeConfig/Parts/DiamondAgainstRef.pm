@@ -69,22 +69,6 @@ sub pipeline_analyses_diamond_against_refdb {
             -hive_capacity      => $self->o('blastpu_capacity'),
         },
 
-        {   -logic_name         => 'break_batch',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BreakBlastBatch',
-            -flow_into          => {
-                2 => 'diamond_blastp_no_runlimit',
-            }
-        },
-
-        {   -logic_name         => 'diamond_blastp_no_runlimit',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DiamondBlastp',
-            -parameters         => {
-                %blastp_parameters,
-            },
-            -rc_name            => '500Mb_4c_job',
-            -hive_capacity      => $self->o('blastpu_capacity'),
-        },
-
     ];
 }
 
