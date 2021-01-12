@@ -55,7 +55,7 @@ sub pipeline_analyses_diamond_against_query {
         },
 
         {   -logic_name    => 'ref_from_fasta_factory',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::HomologyAnnotation::RefFromFastaFactory',
             -parameters    => {
             },
             -flow_into     => {
@@ -64,7 +64,7 @@ sub pipeline_analyses_diamond_against_query {
         },
 
         {   -logic_name    => 'diamond_blastp_ref_to_query',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::HomologyAnnotation::DiamondFromFilePAF',
             -parameters    => {
                 %blastp_parameters,
             },
@@ -76,7 +76,7 @@ sub pipeline_analyses_diamond_against_query {
         },
 
         {   -logic_name    => 'diamond_blastp_ref_to_query_himem',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::DiamondFromFilePAF',
             -parameters    => {
                 %blastp_parameters,
             },
