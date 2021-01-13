@@ -271,13 +271,6 @@ sub tweak_analyses {
     delete $analyses_by_name->{'create_mlss_ss'}->{'-parameters'};
     delete $analyses_by_name->{'make_species_tree'}->{'-flow_into'};
 
-    # set mlss_id for anchor mapping
-    $analyses_by_name->{'reuse_anchor_align'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
-    $analyses_by_name->{'map_anchors'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
-    $analyses_by_name->{'map_anchors_himem'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
-    $analyses_by_name->{'map_anchors_no_server'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
-    $analyses_by_name->{'map_anchors_no_server_himem'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
-
     # Rewire "create_default_pairwise_mlss" and "dump_mappings_to_file" after having trimmed the anchors
     $analyses_by_name->{'trim_anchor_align_factory'}->{'-flow_into'} = {
         '2->A' => $analyses_by_name->{'trim_anchor_align_factory'}->{'-flow_into'}->{2},
@@ -287,16 +280,10 @@ sub tweak_analyses {
     $analyses_by_name->{'create_default_pairwise_mlss'}->{'-parameters'}->{'prev_epo_db'} = '#reuse_db#';
     delete $analyses_by_name->{'set_gerp_neutral_rate'}->{'-flow_into'}->{1};
 
-    # Make Enredo work only on the currently EPO aligned genomes
-    $analyses_by_name->{'load_dnafrag_region'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
-
     # link "ortheus*" analyses directly to "extended_genome_alignment"
     $analyses_by_name->{'ortheus'}->{'-flow_into'}->{1} = 'extended_genome_alignment';
-    $analyses_by_name->{'ortheus'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
     $analyses_by_name->{'ortheus_high_mem'}->{'-flow_into'}->{1} = 'extended_genome_alignment';
-    $analyses_by_name->{'ortheus_high_mem'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
     $analyses_by_name->{'ortheus_huge_mem'}->{'-flow_into'}->{1} = 'extended_genome_alignment';
-    $analyses_by_name->{'ortheus_huge_mem'}->{'-parameters'}->{'mlss_id'} = '#mlss_id#';
 
     # set mlss_id for "extended_genome_alignment*"
     $analyses_by_name->{'extended_genome_alignment'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
