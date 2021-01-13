@@ -259,8 +259,9 @@ sub tweak_analyses {
     # load genomes from ext_mlss_id by hijacking the dataflow
     $analyses_by_name->{'offset_tables'}->{'-flow_into'} = { 1 => { 'load_genomedb_factory' => { 'mlss_id' => '#ext_mlss_id#' } } };
 
-    # load_genomedb_factory should connect to the mlss_factory
-    $analyses_by_name->{'load_genomedb_factory'}->{'-flow_into'}->{'A->1'} = [ 'mlss_factory' ];
+    # load_genomedb_factory should connect to the mlss_factory, but removing the autoflow of the mlss
+    # to force it to read it from pipeline_wide_parameters - otherwise #ext_mlss_id# is flowed (which is wrong)
+    $analyses_by_name->{'load_genomedb_factory'}->{'-flow_into'}->{'A->1'} = { 'mlss_factory' => {} };
 
     # disconnect set_mlss_tag
     delete $analyses_by_name->{'set_mlss_tag'}->{'-flow_into'};
