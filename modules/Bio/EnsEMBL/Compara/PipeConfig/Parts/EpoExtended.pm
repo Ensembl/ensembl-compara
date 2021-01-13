@@ -209,7 +209,6 @@ sub pipeline_analyses_epo_ext_alignment {
                 'new_method_link_species_set_id'  => '#ext_mlss_id#',
                 'base_method_link_species_set_id' => '#mlss_id#',
                 'pairwise_location' => $self->o('pairwise_location'),
-                'base_location' => $self->o('epo_db'),
             },
             -flow_into => {
                 1 => WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ],
