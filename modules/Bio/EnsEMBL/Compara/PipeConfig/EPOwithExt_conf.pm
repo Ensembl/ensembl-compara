@@ -221,7 +221,7 @@ sub core_pipeline_analyses {
                 'switch_name' => 'lastz_complete',
             },
             -flow_into  => {
-                1 => { 'create_default_pairwise_mlss' => { 'mlss_id' => '#ext_mlss_id#' } },
+                1 => { 'create_default_pairwise_mlss' => {} },
             },
             -max_retry_count => 0,
         },
