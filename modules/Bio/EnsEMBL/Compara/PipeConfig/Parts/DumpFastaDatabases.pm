@@ -66,11 +66,12 @@ sub pipeline_analyses_dump_fasta_dbs {
         },
 
         {   -logic_name => 'make_diamond_db',
-            -module => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'diamond_exe' => $self->o('diamond_exe'),
-                'db_name' => '#expr( ($_ = #fasta_name#) and $_ =~ s/\.fasta$//)expr#',
-                'cmd' => '#diamond_exe# makedb --in #fasta_name# -d #db_name#',
+                'cmd'         => '#diamond_exe# makedb --in #fasta_name# -d #db_name#',
+                # db_name should be #fasta_name# with .fasta removed from the end - hive can do that
+                'db_name'     => '#expr( ($_ = #fasta_name#) and $_ =~ s/\.fasta$// and $_)expr#',
             },
         },
     ];
