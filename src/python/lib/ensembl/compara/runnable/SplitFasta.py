@@ -54,6 +54,11 @@ class SplitFasta(eHive.BaseRunnable):
             fasta_records.append((record.id, record.seq))
 
         if num_parts:
+            if num_parts > len(fasta_records):
+                warn = f"'num_parts' ({num_parts}) is larger than the number of records in the file"
+                warn += f"({len(fasta_records)}) - printing a single record in each file"
+                self.warning(warn)
+                num_parts = len(fasta_records)
             num_seqs = int(len(fasta_records) / num_parts)
 
         self.param('fasta_records', fasta_records)

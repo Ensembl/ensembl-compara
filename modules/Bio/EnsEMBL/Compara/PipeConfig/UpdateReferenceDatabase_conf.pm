@@ -46,16 +46,22 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'division'     => 'references',
-        'species_list' => $self->o('config_dir') . '/species_list.txt',
         'ref_db'       => 'compara_references',
         'taxonomy_db'  => 'ncbi_taxonomy',
 
         # how many parts should per-genome files be split into?
         'num_fasta_parts' => 100,
 
-        'pipeline_name' => 'update_references_e' . $self->o('rel_with_suffix'),
+        'pipeline_name' => 'update_references_' . $self->o('rel_with_suffix'),
         'backups_dir'   => $self->o('pipeline_dir') . '/reference_db_backups/',
         'ref_dumps_dir' => $self->o('shared_hps_dir') . '/reference_dumps/',
+
+        # update from metadata options
+        'list_genomes_script'    => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
+        'report_genomes_script'  => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
+        'update_metadata_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
+        'meta_host' => 'mysql-ens-meta-prod-1',
+        'perc_threshold' => 20,
 
         # member loading options
         'include_reference'           => 1,
@@ -73,6 +79,10 @@ sub default_options {
         'allow_missing_cds_seqs'        => 1, # set to 0 if we store CDS (see above)
         'allow_missing_coordinates'     => 0,
         'allow_missing_exon_boundaries' => 1, # set to 0 if exon boundaries are loaded (see above)
+
+        # create species sets options
+        'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
+        'xml_file'            => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/mlss_conf.xml'),
     };
 }
 
@@ -96,15 +106,17 @@ sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-        'ref_db'  => $self->o('ref_db'),
-        'release' => $self->o('ensembl_release'),
+        'division' => $self->o('division'),
+        'ref_db'   => $self->o('ref_db'),
+        'release'  => $self->o('ensembl_release'),
 
         'backups_dir'   => $self->o('backups_dir'),
-        'ref_dumps_dir' => $self->o('ref_dumps_dir'),
+        # 'ref_dumps_dir' => $self->o('ref_dumps_dir'),
+        'members_dumps_dir' => $self->o('ref_dumps_dir'),
     };
 }
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
 
     return [
@@ -150,18 +162,26 @@ sub pipeline_analyses {
                 'mode'    => 'taxonomy',
                 'db_conn' => '#ref_db#',
             },
-            -flow_into  => ['reference_factory'],
+            -flow_into  => ['update_genome_from_metadata_factory'],
         },
 
-        {   -logic_name => 'reference_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+        {   -logic_name => 'update_genome_from_metadata_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromMetadataFactory',
             -parameters => {
-                'inputfile'    => $self->o('species_list'),
-                'column_names' => ['species_name'],
+                'list_genomes_script'   => $self->o('list_genomes_script'),
+                'report_genomes_script' => $self->o('report_genomes_script'),
+                'work_dir'              => $self->o('pipeline_dir'),
+                'meta_host'             => $self->o('meta_host'),
+                'allowed_species_file'  => $self->o('config_dir') . '/allowed_species.json',
+                'perc_threshold'        => $self->o('perc_threshold'),
+                'division'              => 'vertebrates',
+                'master_db'             => '#ref_db#',
             },
-            -flow_into => {
+            -flow_into  => {
                 '2->A' => [ 'update_reference_genome' ],
-                'A->1' => [ 'backup_ref_db_again' ],
+                '3->A' => [ 'retire_reference' ],
+                '5->A' => [ 'verify_genome' ],
+                'A->1' => [ 'update_collection' ],
             },
         },
 
@@ -195,15 +215,54 @@ sub pipeline_analyses {
         {   -logic_name         => 'hc_members_per_genome',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
-                'db_conn'                   => '#ref_db#',
-                'mode'                      => 'members_per_genome',
-                'allow_ambiguity_codes'     => $self->o('allow_ambiguity_codes'),
-                'only_canonical'            => $self->o('only_canonical'),
-                'allow_missing_cds_seqs'    => $self->o('allow_missing_cds_seqs'),
-                'allow_missing_coordinates' => $self->o('allow_missing_coordinates'),
+                'db_conn'                       => '#ref_db#',
+                'mode'                          => 'members_per_genome',
+                'allow_ambiguity_codes'         => $self->o('allow_ambiguity_codes'),
+                'only_canonical'                => $self->o('only_canonical'),
+                'allow_missing_cds_seqs'        => $self->o('allow_missing_cds_seqs'),
+                'allow_missing_coordinates'     => $self->o('allow_missing_coordinates'),
+                'allow_missing_exon_boundaries' => $self->o('allow_missing_exon_boundaries')
             },
             -rc_name   => '4Gb_job',
             -flow_into => ['dump_full_fasta'],
+        },
+
+        {   -logic_name => 'retire_reference',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::RetireSpecies',
+            -parameters => {
+                'compara_db' => '#ref_db#',
+            }
+        },
+
+        {   -logic_name    => 'verify_genome',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::VerifyGenome',
+            -parameters => {
+                'compara_db' => '#ref_db#',
+            },
+            -hive_capacity => 10,
+            -rc_name       => '16Gb_job',
+        },
+
+        {   -logic_name => 'update_collection',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CreateReleaseCollection',
+            -parameters => {
+                'collection_name' => '#division#',
+                'master_db'       => '#ref_db#',
+                'incl_components' => 0,
+            },
+            -flow_into  => [ 'create_reference_sets' ],
+        },
+
+        {   -logic_name => 'create_reference_sets',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'create_all_mlss_exe' => $self->o('create_all_mlss_exe'),
+                'reg_conf'            => $self->o('reg_conf'),
+                'xml_file'            => $self->o('xml_file'),
+                'cmd'                 => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #ref_db# -xml #xml_file# --release --verbose',
+            },
+            -flow_into  => [ 'backup_ref_db_again' ],
+            -rc_name    => '2Gb_job',
         },
 
         {   -logic_name => 'backup_ref_db_again',

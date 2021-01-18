@@ -50,12 +50,11 @@ sub pipeline_analyses_dump_fasta_dbs {
         {   -logic_name => 'dump_full_fasta',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',
             -parameters => {
-                'hashed_id' => '#expr(dir_revhash(#genome_db_id#))expr#',
-                'fasta_dir' => '#ref_dumps_dir#/#hashed_id#',
+                # 'fasta_dir' => $self->o('fasta_dir'),
             },
             -hive_capacity => 10,
             -rc_name => '500Mb_job',
-            -flow_into => ['split_fasta_into_parts'],
+            -flow_into => ['split_fasta_into_parts', 'make_diamond_db'],
         },
 
         {   -logic_name => 'split_fasta_into_parts',
@@ -63,8 +62,18 @@ sub pipeline_analyses_dump_fasta_dbs {
             -language   => 'python3',
             -parameters => {
                 'num_parts' => $self->o('num_fasta_parts'),
-            }
-        }
+            },
+        },
+
+        {   -logic_name => 'make_diamond_db',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'diamond_exe' => $self->o('diamond_exe'),
+                'cmd'         => '#diamond_exe# makedb --in #fasta_name# -d #db_name#',
+                # db_name should be #fasta_name# with .fasta removed from the end - hive can do that
+                'db_name'     => '#expr( ($_ = #fasta_name#) and $_ =~ s/\.fasta$// and $_)expr#',
+            },
+        },
     ];
 }
 

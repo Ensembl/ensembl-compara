@@ -111,7 +111,7 @@ sub _update_reference_genome_db {
     my $new_genome_db = Bio::EnsEMBL::Compara::GenomeDB->new_from_DBAdaptor($species_dba);
 
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
-    my $stored_genome_db = eval {$genome_db_adaptor->fetch_by_core_DBAdaptor($species_dba)};
+    my $stored_genome_db = $genome_db_adaptor->fetch_by_core_DBAdaptor($species_dba);
 
     my $genome_db;
     if ($stored_genome_db and $stored_genome_db->dbID and $stored_genome_db->genebuild eq $new_genome_db->genebuild) {
@@ -148,7 +148,7 @@ sub _update_reference_genome_db {
             $genome_db_adaptor->update($stored_genome_db);
             $genome_db = $stored_genome_db;
         }
-    } else { # new genome or new assembly!!
+    } else { # new genome/assembly/annotation!!
         $new_genome_db->taxon_id( $taxon_id ) if $taxon_id;
 
         if (!defined($new_genome_db->name)) {
