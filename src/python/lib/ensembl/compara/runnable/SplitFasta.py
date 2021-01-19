@@ -67,7 +67,7 @@ class SplitFasta(eHive.BaseRunnable):
     def run(self):
         """create output directory and set file prefix"""
         if not self.param_exists('out_dir'):
-            out_dir = re.sub('\..+$', '.split', self.param('fasta_name'))
+            out_dir = ".".join(self.param('fasta_name').split('.')[:-1]) + ".split"
             self.param('out_dir', out_dir)
 
         out_dir = self.param_required('out_dir')
