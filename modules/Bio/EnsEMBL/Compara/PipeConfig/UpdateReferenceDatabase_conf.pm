@@ -50,7 +50,9 @@ sub default_options {
         'taxonomy_db'  => 'ncbi_taxonomy',
 
         # how many parts should per-genome files be split into?
-        'num_fasta_parts' => 100,
+        'num_fasta_parts'  => 100,
+        # at which id should genome_db start?
+        'genome_db_offset' => 101,
 
         'pipeline_name' => 'update_references_' . $self->o('rel_with_suffix'),
         'backups_dir'   => $self->o('pipeline_dir') . '/reference_db_backups/',
@@ -111,7 +113,6 @@ sub pipeline_wide_parameters {
         'release'  => $self->o('ensembl_release'),
 
         'backups_dir'   => $self->o('backups_dir'),
-        # 'ref_dumps_dir' => $self->o('ref_dumps_dir'),
         'members_dumps_dir' => $self->o('ref_dumps_dir'),
     };
 }
@@ -162,7 +163,17 @@ sub core_pipeline_analyses {
                 'mode'    => 'taxonomy',
                 'db_conn' => '#ref_db#',
             },
-            -flow_into  => ['update_genome_from_metadata_factory'],
+            -flow_into  => ['offset_table'],
+        },
+
+        {   -logic_name => 'offset_table',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'genome_db_offset' => $self->o('genome_db_offset'),
+                'db_conn'          => '#ref_db#',
+                'sql'              => [ 'ALTER TABLE genome_db AUTO_INCREMENT=#genome_db_offset#' ],
+            },
+            -flow_into      => [ 'update_genome_from_metadata_factory' ],
         },
 
         {   -logic_name => 'update_genome_from_metadata_factory',
