@@ -1,0 +1,4 @@
+1	collection-default	4	\N	\N
+2	collection-sauropsida	1	\N	\N
+3	collection-actinopterygii	1	\N	\N
+4	collection-mammalia	2	\N	\N

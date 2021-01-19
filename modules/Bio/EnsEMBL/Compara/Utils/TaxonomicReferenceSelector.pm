@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector
@@ -33,9 +31,11 @@ use strict;
 use warnings;
 use base qw(Exporter);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use List::MoreUtils 'all';
+use Bio::EnsEMBL::Compara::GenomeDB;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;;
 use List::Util;
 use Data::Dumper;
+$Data::Dumper::Maxdepth=1;
 
 our %EXPORT_TAGS;
 our @EXPORT_OK;
@@ -51,9 +51,12 @@ our @EXPORT_OK;
 
 =head2 collect_reference_classification
 
-    Collect reference ncbi taxonomic classifications by species_set.
-    Returns array of species_set names.
-    E.g. my \@taxon_clade = collect_reference_classification($compara_dba);
+    Arg[1]     :  (string) $master_db or Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $master_db
+    Description:  Collect reference ncbi taxonomic classifications by species_set. This expects a reference
+                  specific compara master database with taxonomically named species_sets.
+                  E.g. \@taxon_clade = collect_reference_classification('master_db');
+    Return     :  (arrayref) list of species_set names.
+    Exceptions :  None.
 
 =cut
 
@@ -61,18 +64,24 @@ sub collect_reference_classification {
     my $master_db = shift;
 
     my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($master_db);
-    my $ss_adaptor = $dba->get_SpeciesSetAdaptor;
-    my $ss_names   = $ss_adaptor->fetch_all;
-    my @ss_names   = map {$_->name} @$ss_names;
-
-    return \@ss_names;
+    my $ss_adaptor = $dba->get_SpeciesSetAdaptor->fetch_all();
+    my @ss_names   = map {$_->name()} @{$ss_adaptor};
+    my @clean_ss   = grep ( s/^collection\-//g, @ss_names );
+    @clean_ss      = sort @clean_ss;
+    return \@clean_ss;
 }
 
 =head2 match_query_to_reference_taxonomy
 
-    Match starting from lowest taxonomic rank climbing, returning string variable at first match.
-    Returns undef if no match found.
-    E.g. my $ref_clade = match_query_to_reference_taxonomy($compara_dba, $genome_db);
+    Arg[1]     :  Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
+    Arg[2]     :  Bio::EnsEMBL::Compara::GenomeDB
+    Arg[3]     :  (optional) Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $master_dba
+                  Either/or
+    Arg[4]     :  (optional) (arrayref) $taxon_list
+    Description:  Match starting from lowest taxonomic rank climbing, returning string variable at first match.
+                  E.g. my $ref_clade = match_query_to_reference_taxonomy($compara_dba, $genome_db);
+    Return     :  (string) $taxon_name or undef
+    Exceptions :  Throws if both $taxon_list and $master_dba provided
 
 =cut
 
@@ -80,15 +89,16 @@ sub match_query_to_reference_taxonomy {
     my ($self, $genome_db, $master_dba, $taxon_list) = (@_);
 
     throw ("taxon_list and master_dba are mutually exclusive, pick one") if $taxon_list && $master_dba;
-    throw ("Either taxon_list or master_dba need to be provided") if (all { undef } $taxon_list, $master_dba);
+    throw ("Either taxon_list or master_dba need to be provided") unless $taxon_list || $master_dba;
 
     my @taxon_list = $taxon_list ? @$taxon_list : @{collect_reference_classification($master_dba)};
-    my $taxon_dba  = $self->compara_dba->get_NCBITaxonAdaptor;
+    #my $taxon_dba  = $self->compara_dba->get_NCBITaxonAdaptor;
+    my $taxon_dba  = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self)->get_NCBITaxonAdaptor;
     my $parent     = $taxon_dba->fetch_by_dbID($genome_db->taxon_id)->parent;
 
     while ( $parent->name ne "root" ) {
         if ( grep { lc($parent->name) eq $_ } @taxon_list ) {
-            return lc($parent->name);
+            return 'collection-' . lc($parent->name);
         }
         else {
             $parent = $parent->parent;
@@ -100,26 +110,34 @@ sub match_query_to_reference_taxonomy {
 
 =head2 collect_species_set_dirs
 
-    Collect list of dir_revhash paths for all genomes in taxonomic clade by species_set.
-    Does not return absolute paths, only the paths starting at the reverse hash of gdb, so
-    will require appending to dump path dir or working dir etc.
-    E.g. my $dir_paths = collect_species_set_dirs($compara_dba, $ncbi_taxa_name);
+    Arg[1]     :  (string) $master_db or Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
+    Arg[2]     :  (string) $taxa_name
+    Arg[3]     :  (string) $ref_dump_dir
+    Description:  Collect list of dir_revhash paths for all genomes in taxonomic clade by species_set.
+                  Does not return absolute paths, only the paths starting at the reverse hash of gdb, so
+                  will require appending to dump path dir or working dir etc.
+                  E.g. my $dir_paths = collect_species_set_dirs($compara_dba, $ncbi_taxa_name);
+    Return     :  (arrayref of hashes) list of directories
+    Exceptions :  None.
 
 =cut
 
 sub collect_species_set_dirs {
-    my ($master_db, $taxa_name) = (@_);
+    my ($master_db, $taxa_name, $ref_dump_dir) = (@_);
 
     my $dba          = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($master_db);
     my $ss_adaptor   = $dba->get_SpeciesSetAdaptor;
-    my $species_set  = $ss_adaptor->fetch_all_by_name($taxa_name);
+    my $gdb_adaptor  = $dba->get_GenomeDBAdaptor;
+    $gdb_adaptor->dump_dir_location($ref_dump_dir);
+    my $species_set  = $ss_adaptor->fetch_collection_by_name($taxa_name);
     my $genome_dbs   = $species_set->genome_dbs;
     my @genome_files;
 
     foreach my $gdb ( @$genome_dbs ) {
-        my $ref_dmnd    = $gdb->get_dmnd_helper();
-        my $ref_fasta   = $gdb->dir_revhash();
-        my $ref_splitfa = $gdb->get_splitfa_helper();
+        my $ref_fasta   = $gdb->_get_members_dump_path($ref_dump_dir); # standard fasta file
+        my $ref_splitfa = $ref_fasta;
+        $ref_splitfa    =~ s/fasta$/split/;      # split fasta directory
+        my $ref_dmnd    = $gdb->get_dmnd_helper(); # diamond db indexed file
         push @genome_files => { 'ref_gdb' => $gdb, 'ref_fa' => $ref_fasta, 'ref_dmnd' => $ref_dmnd, 'ref_splitfa' => $ref_splitfa };
     }
     my @sorted_genome_files = sort { $a->{ref_gdb} <=> $b->{ref_gdb} } @genome_files;
