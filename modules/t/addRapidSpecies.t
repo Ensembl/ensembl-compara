@@ -49,9 +49,6 @@ my $exp_dataflow_2 = {
     'genome_db_id' => '137',
     'species_name' => 'pan_troglodytes',
 };
-# Species list inputfile
-my $test_species_input = abs_path($0);
-$test_species_input    =~ s!addRapidSpecies\.t!homology_annotation_input/species_list_file.txt!;
 # Run standalone
 standaloneJob(
     # Input parameters
@@ -60,28 +57,21 @@ standaloneJob(
         'compara_db'        => $compara_db,
         'master_db'         => $compara_db,
         'member_db'         => $compara_db,
-        'species_list_file' => $test_species_input,
+        'species_list'      => [ 'pan_troglodytes' ],
         'release'           => 1,
-        'do_not_add'        => {
-            'all'         => ['homo_sapiens'],
-        },
     },
     # Output
     [
-        [
-            'WARNING',
-            "homo_sapiens is a reference genome"
-        ],
         [
             'DATAFLOW',
             $exp_dataflow_1,
             2
         ],
-        # [
-        #     'DATAFLOW',
-        #     $exp_dataflow_2,
-        #     2
-        # ],
+        [
+            'DATAFLOW',
+            $exp_dataflow_2,
+            2
+        ],
     ]
 );
 $multi_db->restore('compara', 'genome_db');

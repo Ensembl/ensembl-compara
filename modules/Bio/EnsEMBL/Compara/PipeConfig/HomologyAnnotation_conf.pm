@@ -52,7 +52,7 @@ sub default_options {
         'query_db_dir' => $self->o('work_dir') . '/query_diamond_db/',
         'dump_path'    => $self->o('work_dir'),
         # Directories the reference genome pipeline dumps to
-        'ref_dump_dir' => $self->o('genome_dumps_dir'),
+        'ref_dump_dir' => $self->o('ref_members_dumps_dir'),
 
         # Set mandatory databases
         'compara_db'   => $self->pipeline_url(),
@@ -90,14 +90,17 @@ sub default_options {
         'blastpu_capacity'         => 150,
         'copy_alignments_capacity' => 50,
         'copy_trees_capacity'      => 50,
+
+        # Other e-hive parameters
         'reuse_capacity'           => 3,
         'hc_capacity'              => 150,
         'decision_capacity'        => 150,
         'hc_priority'              => -10,
+
         # DIAMOND runnable parameters
         'num_sequences_per_blast_job' => 200,
-        'blast_params'                => '--max-hsps 1 --threads 4 -b1 -c1 --sensitive',
-        'evalue_limit'                => '1e-6',
+        'blast_params'                => '--max-hsps 1 --threads 4 -b1 -c1 --top 20 --dbsize 1000000 --sensitive',
+        'evalue_limit'                => '1e-10',
 
         # Set hybrid registry file that both metadata production and compara understand
         'reg_conf'      => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/conf/homology_annotation/production_reg_conf.pl',

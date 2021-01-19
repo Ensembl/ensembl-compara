@@ -61,7 +61,7 @@ sub write_output {
     my $self = shift;
 
     $self->SUPER::write_output();
-    
+
 }
 
 1;

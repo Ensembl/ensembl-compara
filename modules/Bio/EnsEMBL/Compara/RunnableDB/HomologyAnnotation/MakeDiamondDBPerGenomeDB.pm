@@ -15,17 +15,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::MakeDiamondDBPerGenomeDB
 
 =head1 DESCRIPTION
 
-Runnable wrapper for DumpMembersIntoFasta per genome_db and generate DIAMOND database
+Runnable wrapper for DumpMembersIntoFasta per genome_db to additionally generate DIAMOND
+indexed database file for each genome_db
 
 =cut
 
@@ -49,10 +46,12 @@ sub run {
     my $genome_db_id  = $self->param_required('genome_db_id');
     my $gdb_adaptor   = $self->compara_dba->get_GenomeDBAdaptor;
     my $genome_db     = $gdb_adaptor->fetch_by_dbID($genome_db_id) or $self->die_no_retry("cannot fetch GenomeDB with id" . $genome_db_id);
-    my $query_db_name = $query_db_dir . '/' . $genome_db->name . '_' . $genome_db->assembly . '_' .  $genome_db->genebuild;
+    my $query_db_name = $query_db_dir . '/' . $genome_db->name . '.' . $genome_db->assembly . '.' .  $genome_db->genebuild;
+
+    # Make the diamond db indexed file
     my $cmd = "$diamond_exe makedb --in $fasta_file -d $query_db_name";
 
-    if ( !$self->param('dry_run') ) {
+    if ( !$self->param('dry_run') ) { # For testing/debugging purposes
         my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1 });
     }
     else {

@@ -45,6 +45,7 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
     );
 
     return [
+    #--------------------NCBI table copying------------------#
         {   -logic_name => 'copy_ncbi_tables_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
@@ -65,7 +66,7 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
         },
-
+    #--------------------Update pipeline_db as if master_db------------------#
         {   -logic_name    => 'locate_and_add_genomes',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::AddRapidSpecies',
             -hive_capacity => 10,
@@ -91,7 +92,7 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
             },
             -wait_for      => [ 'insert_method_link' ],
         },
-
+    #--------------------Genome member loading------------------#
         {   -logic_name => 'load_query_genomedb_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
@@ -140,7 +141,7 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
             -rc_name       => '4Gb_job',
             -flow_into     => ['hc_members_per_genome'],
         },
-
+    #--------------------Healthcheck members------------------#
         {   -logic_name         => 'hc_members_per_genome',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {

@@ -55,7 +55,7 @@ sub fetch_input {
     foreach my $ref_gdb_dir ( @$ref_dir_paths ) {
 
         my $ref_gdb_id   = $ref_gdb_dir->{'ref_gdb'}->dbID;
-        my $ref_splitfa  = $ref_dump_dir . '/' . $ref_gdb_dir->{'ref_splitfa'};
+        my $ref_splitfa  = $ref_gdb_dir->{'ref_splitfa'};
         my @ref_splitfas = glob($ref_splitfa . "/*.fasta");
 
         push @all_paths, { 'ref_gdb_id' => $ref_gdb_id, 'ref_splitfa' => \@ref_splitfas, '' };
