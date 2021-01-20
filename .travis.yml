@@ -60,6 +60,7 @@ before_install:
     - cp -f ensembl/travisci/MultiTestDB.conf.travisci.mysql  ensembl/modules/t/MultiTestDB.conf
     - mysql -u root -h localhost -e 'GRANT ALL PRIVILEGES ON *.* TO "travis"@"%"'
     - export MYPYPATH=$PWD/ensembl-hive/wrappers/python3
+    - export PYTHONPATH=$PWD/ensembl-compara/src/python/lib
 
 
 # What jobs to run and in which order
