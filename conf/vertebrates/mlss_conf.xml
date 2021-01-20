@@ -241,6 +241,7 @@
         <genome name="oryzias_latipes"/>
         <genome name="cottoperca_gobio" assembly="fCotGob3.1"/>
         <genome name="denticeps_clupeoides" assembly="fDenClu1.1"/>
+        <genome name="larimichthys_crocea" assembly="L_crocea_2.0"/>
         <genome name="erpetoichthys_calabaricus" assembly="fErpCal1.1"/>
         <genome name="clupea_harengus" assembly="Ch_v2.0.2"/>
         <genome name="betta_splendens" assembly="fBetSpl5.2"/>

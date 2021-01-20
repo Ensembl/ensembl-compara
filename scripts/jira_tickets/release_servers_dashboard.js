@@ -14,7 +14,7 @@ function process_ticket(ticket) {
     if (ticket.fields.customfield_11130) {
         ticket_info += ' for ' + ticket.fields.customfield_11130.value;
     }
-    ticket_info += ' (<i>' + ticket.fields.assignee.name + '</i>)';
+    ticket_info += ' (<i>' + (ticket.fields.assignee ? ticket.fields.assignee.name : '???') + '</i>)';
     ticket_url = '<a href="https://www.ebi.ac.uk/panda/jira/browse/' + ticket.key + '">' + ticket_info + '</a>';
     return ticket_url;
 }
@@ -27,7 +27,7 @@ function process_server(server) { return function(json) {
     for(var i=0; i<n_tickets; i++) {
         if (json.issues[i].fields.status.name == "In Progress") {
             is_busy = true;
-        } else if (json.issues[i].fields.status.name == "Implementation") {
+        } else if (json.issues[i].fields.status.name == "In Review") {
             is_busy = true;
         }
     }

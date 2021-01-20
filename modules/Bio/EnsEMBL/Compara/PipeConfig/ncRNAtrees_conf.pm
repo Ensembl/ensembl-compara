@@ -423,7 +423,6 @@ sub core_pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
                 -parameters => {
                                 'compara_db'            => '#master_db#',   # that's where genome_db_ids come from
-                                'mlss_id'               => $self->o('mlss_id'),
                                 'extra_parameters'      => [ 'locator' ],
                                },
                 -flow_into => {

@@ -617,10 +617,17 @@ sub copy_genomic_align_blocks {
 
   if (!defined $fix_gab_gid) {
       if (defined($max_gab_gid)) {
+          # Group ids are only allowed to be either below 10**10 or in the LastZ or LastZ chain MLSS id range
+          my $chain_mlss = $from_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs("LASTZ_CHAIN", $mlss->species_set->genome_dbs());
+          my $chain_mlss_id = $chain_mlss->dbID;
+          my $lower_gid_limit = $chain_mlss_id * 10**10;
+          my $upper_gid_limit = ($chain_mlss_id + 1) * 10**10;
           if ($max_gab_gid < 10**10) {
               $fix_gab_gid = $lower_limit;
           } elsif ($min_gab_gid >= $lower_limit and $max_gab_gid < $upper_limit) {
               $fix_gab_gid = 0;
+          } elsif ($min_gab_gid >= $lower_gid_limit and $max_gab_gid < $upper_gid_limit) {
+              $fix_gab_gid = ($mlss_id - $chain_mlss_id) * 10**10;
           } else {
               die " ** ERROR **  Internal IDs are funny: genomic_align_block.group_ids between $min_gab_gid and $max_gab_gid\n";
           }

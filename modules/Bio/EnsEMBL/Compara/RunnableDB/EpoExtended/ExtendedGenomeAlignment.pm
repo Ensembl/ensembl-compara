@@ -990,6 +990,7 @@ sub _load_2XGenomes {
   my ($self, $genomic_align_block_id) = @_;
 
   my $pairwise_locations = $self->param_required('pairwise_mlss_location');
+  die "No pairwise locations have been provided" unless %$pairwise_locations;
 
   #Find the slice on the reference genome
   my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
