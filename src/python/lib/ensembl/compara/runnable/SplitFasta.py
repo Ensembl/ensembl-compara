@@ -7,7 +7,6 @@ By default, the output directory will be derived from the input file name (repla
 
 """
 import os
-import re
 import sys
 from Bio import SeqIO
 import eHive
