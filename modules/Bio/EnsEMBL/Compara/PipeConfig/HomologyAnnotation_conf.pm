@@ -133,23 +133,24 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # Here we inherit anything from the base class
 
-        'ncbi_db'          => $self->o('ncbi_db'),
-        'member_db'        => $self->o('member_db'),
-        'master_db'        => $self->o('master_db'),
-        'output_db'        => $self->o('output_db'),
-        'rr_ref_db'        => $self->o('rr_ref_db'),
-        'rr_meta_db'       => $self->o('rr_meta_db'),
+        'ncbi_db'           => $self->o('ncbi_db'),
+        'member_db'         => $self->o('member_db'),
+        'master_db'         => $self->o('master_db'),
+        'output_db'         => $self->o('output_db'),
+        'rr_ref_db'         => $self->o('rr_ref_db'),
+        'rr_meta_db'        => $self->o('rr_meta_db'),
 
-        'blast_params'     => $self->o('blast_params'),
-        'evalue_limit'     => $self->o('evalue_limit'),
-        'diamond_exe'      => $self->o('diamond_exe'),
+        'blast_params'      => $self->o('blast_params'),
+        'evalue_limit'      => $self->o('evalue_limit'),
+        'diamond_exe'       => $self->o('diamond_exe'),
 
-        'fasta_dir'        => $self->o('fasta_dir'),
-        'query_db_dir'     => $self->o('query_db_dir'),
-        'ref_dump_dir'     => $self->o('ref_dump_dir'),
-        'dump_path'        => $self->o('dump_path'),
+        'fasta_dir'         => $self->o('fasta_dir'),
+        'members_dumps_dir' => $self->o('fasta_dir'),
+        'query_db_dir'      => $self->o('query_db_dir'),
+        'ref_dump_dir'      => $self->o('ref_dump_dir'),
+        'dump_path'         => $self->o('dump_path'),
 
-        'reg_conf'         => $self->o('reg_conf'),
+        'reg_conf'          => $self->o('reg_conf'),
     };
 }
 

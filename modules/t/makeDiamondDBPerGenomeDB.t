@@ -39,8 +39,10 @@ my $genome_db    = $dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
 # Species fasta inputfile
 my $test_fasta_dir = abs_path($0);
 $test_fasta_dir    =~ s!makeDiamondDBPerGenomeDB\.t!homology_annotation_input!;
-my $query_db_name  = $test_fasta_dir . '/' . $genome_db->name() . '_' . $genome_db->assembly() . '_' .  $genome_db->genebuild());
-my $exp_fasta      = $query_db_name  . '.fasta';
+my $exp_fasta = $genome_db->_get_members_dump_path($test_fasta_dir);
+my $query_db_name = $exp_fasta;
+$query_db_name =~ s/\.fasta$//;
+
 # Expected dataflow output
 my $exp_dataflow = {
     'genome_db_id'  => '135',
@@ -51,13 +53,12 @@ standaloneJob(
     'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::MakeDiamondDBPerGenomeDB',
     # Input parameters
     {
-        'compara_db'   => $compara_db,
-        'fasta_dir'    => $test_fasta_dir,
-        'fasta_file'   => $exp_fasta,
-        'query_db_dir' => $test_fasta_dir,
-        'genome_db_id' => $genome_db_id,
-        'dry_run'      => 1,
-        'diamond_exe'  => 'diamond',
+        'compara_db'        => $compara_db,
+        'members_dumps_dir' => $test_fasta_dir,
+        'fasta_file'        => $exp_fasta,
+        'genome_db_id'      => $genome_db_id,
+        'dry_run'           => 1,
+        'diamond_exe'       => 'diamond',
     },
     # Output
     [
@@ -72,8 +73,9 @@ standaloneJob(
         ],
     ]
 );
+
 # Check fasta file is written
-ok(-e $exp_fasta, "$exp_fasta file exists");
+ok(-e $exp_fasta, "fasta file exists");
 unlink $exp_fasta;
 
 done_testing();
