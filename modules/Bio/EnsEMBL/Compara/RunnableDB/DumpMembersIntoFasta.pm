@@ -50,6 +50,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta;
 use strict;
 use warnings;
 
+use File::Basename qw/dirname/;
+
 use Bio::EnsEMBL::Compara::MemberSet;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -88,6 +90,10 @@ sub fetch_input {
         $fasta_file = $genome_db->_get_members_dump_path($self->param('members_dumps_dir'));
     } else {
         $fasta_file = $self->param('members_dumps_dir') . '/multispecies_dump.fasta';
+    }
+
+    unless ( -d dirname($fasta_file) ) {
+        $self->run_command('mkdir -p ' . dirname($fasta_file));
     }
 
     $fasta_file =~ s/\s+/_/g;    # replace whitespace with '_' characters
