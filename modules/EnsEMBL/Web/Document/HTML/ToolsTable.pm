@@ -217,7 +217,7 @@ sub render {
   }
 
   ## Table of other tools
-  my $ftp = $species_defs->ENSEMBL_FTP_URL;
+  my $ftp = $sd->ENSEMBL_FTP_URL;
 
   if ($sd->HAS_API_DOCS || $sd->ENSEMBL_MART_ENABLED || $sd->ENSEMBL_REST_URL) {
     $html .= qq(<h2 class="top-margin">Accessing $sitename data</h2>);
