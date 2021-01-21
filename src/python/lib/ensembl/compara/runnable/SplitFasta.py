@@ -54,7 +54,7 @@ class SplitFasta(eHive.BaseRunnable):
 
         if num_parts:
             if num_parts > len(fasta_records):
-                warn = f"'num_parts' ({num_parts}) is larger than the number of records in the file"
+                warn = f"'num_parts' ({num_parts}) is larger than the number of records in the file "
                 warn += f"({len(fasta_records)}) - printing a single record in each file"
                 self.warning(warn)
                 num_parts = len(fasta_records)
