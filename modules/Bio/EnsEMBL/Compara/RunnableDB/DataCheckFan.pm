@@ -52,7 +52,10 @@ sub write_output {
 
     $self->_spurt($outfile, $datacheck->output);
 
-    $self->dataflow_output_id({'output_results' => $outfile}, 2);
+    $self->dataflow_output_id({
+        'output_results' => $outfile,
+        'datacheck_type' => $datacheck->datacheck_type,
+    }, 2);
 
     $self->SUPER::write_output;
 }

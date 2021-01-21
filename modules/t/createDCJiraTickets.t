@@ -44,4 +44,20 @@ standaloneJob(
     ]
 );
 
+standaloneJob(
+    'Bio::EnsEMBL::Compara::RunnableDB::CreateDCJiraTickets',
+    {
+        'output_results'               => $test_infile,
+        'datacheck_type'               => 'critical',
+        'dry_run'                      => 1,
+        'create_datacheck_tickets_exe' => '$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl',
+    },
+    [
+        [
+            'WARNING',
+            "Command: \$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl $test_infile --update --label critical",
+        ],
+    ]
+);
+
 done_testing();
