@@ -76,11 +76,11 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    # 'compara_members'  => [ 'mysql-ens-compara-prod-', ''],
-    # 'compara_ptrees'   => [ 'mysql-ens-compara-prod-', '' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-8', 'jalvarez_metazoa_load_members_104'],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-9', 'jalvarez_metazoa_metazoa_protein_trees_104' ],
 
     # LastZ dbs
-    # 'lastz_batch_1' => [ 'mysql-ens-compara-prod-', '' ],
+    'lastz_batch_1' => [ 'mysql-ens-compara-prod-8', 'jalvarez_metazoa_lastz_batch1_104' ],
 
     # synteny
     # 'compara_syntenies' => [ 'mysql-ens-compara-prod-', '' ],
