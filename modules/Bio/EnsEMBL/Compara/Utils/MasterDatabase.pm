@@ -283,12 +283,14 @@ sub _check_is_good_for_alignment {
   Arg[4]      : (optional) boolean $force
   Arg[5]      : (optional) int $taxon_id
   Arg[6]      : (optional) int $offset
+  Arg[7]      : (optional) boolean $skip_dna
   Description : Does everything for this species: create / update the GenomeDB entry, and load the DnaFrags.
   				To set the new species as current, set $release = 1. If the GenomeDB already exists, set $force = 1
   				to force the update of DnaFrags. Use $taxon_id to manually set the taxon id for this species (default
   				is to find it in the core db). $offset can be used to override autoincrement of dbID
   Returns     : arrayref containing (1) new Bio::EnsEMBL::Compara::GenomeDB object, (2) arrayref of updated
                 component GenomeDBs, (3) number of dnafrags updated
+                or if $skip_dna - only new Bio::EnsEMBL::Compara::GenomeDB object
   Exceptions  : none
 
 =cut
@@ -299,7 +301,7 @@ sub update_genome {
     my $compara_dba = shift;
     my $species = shift;
 
-    my($release, $force, $taxon_id, $offset) = rearrange([qw(RELEASE FORCE TAXON_ID OFFSET)], @_);
+    my($release, $force, $taxon_id, $offset, $skip_dna) = rearrange([qw(RELEASE FORCE TAXON_ID OFFSET SKIP_DNA)], @_);
 
     my $species_no_underscores = $species;
     $species_no_underscores =~ s/\_/\ /;
@@ -313,6 +315,7 @@ sub update_genome {
     my ( $new_genome_db, $component_genome_dbs, $new_dnafrags );
     my $gdbs = $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
         $new_genome_db = _update_genome_db($species_db, $compara_dba, $release, $force, $taxon_id, $offset);
+        next if $skip_dna;
         print "GenomeDB after update: ", $new_genome_db->toString, "\n\n";
         print "Fetching DnaFrags from " . $species_db->dbc->host . "/" . $species_db->dbc->dbname . "\n";
         $new_dnafrags = update_dnafrags($compara_dba, $new_genome_db, $species_db);
@@ -324,6 +327,9 @@ sub update_genome {
         # return [$new_genome_db, $component_genome_dbs, $new_dnafrags];
     } );
     $species_db->dbc()->disconnect_if_idle();
+    if ($skip_dna) {
+        return $new_genome_db;
+    }
     return [$new_genome_db, $component_genome_dbs, $new_dnafrags];
 }
 

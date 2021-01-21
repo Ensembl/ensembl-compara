@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -66,22 +66,6 @@ sub pipeline_analyses_diamond_against_refdb {
                -2 => 'break_batch',
             },
             -priority           => 20,
-            -hive_capacity      => $self->o('blastpu_capacity'),
-        },
-
-        {   -logic_name         => 'break_batch',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BreakBlastBatch',
-            -flow_into          => {
-                2 => 'diamond_blastp_no_runlimit',
-            }
-        },
-
-        {   -logic_name         => 'diamond_blastp_no_runlimit',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DiamondBlastp',
-            -parameters         => {
-                %blastp_parameters,
-            },
-            -rc_name            => '500Mb_4c_job',
             -hive_capacity      => $self->o('blastpu_capacity'),
         },
 

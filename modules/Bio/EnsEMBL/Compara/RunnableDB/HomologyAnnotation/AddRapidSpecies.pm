@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,14 +43,15 @@ sub param_defaults {
         'force'        => 1,
         'hard_limit'   => 50,
         'release'      => 1,
+        'skip_dna'     => 1,
     };
 }
 
 sub fetch_input {
     my ($self) = @_;
 
-    my $species_names    = $self->param('species_list');
-    print Dumper $species_names;
+    my $species_names    = $self->param('species_list'); # From accu
+    print Dumper $species_names if $self->debug;
     my $spec_hard_limit  = $self->param('hard_limit');
     my @species_list;
 
@@ -60,6 +61,7 @@ sub fetch_input {
             print Dumper $species_name if $self->debug;
         }
         else {
+            # We have a hard limit to prevent overlapping ids between reference database and pipeline database
             $self->warning( "The hard limit of" . $spec_hard_limit . "genomes in this pipeline has been exceeded: " . $species_name . " has been discarded." );
         }
     }
@@ -78,7 +80,7 @@ sub run {
 
     foreach my $species_name ( @$species_list ) {
         print Dumper $species_name;
-        push @$new_genome_dbs, _add_new_genomedb($self->param('master_dba'), $species_name, -RELEASE => $self->param('release'), -FORCE => $self->param('force') );
+        push @$new_genome_dbs, Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_genome($self->param('master_dba'), $species_name, -RELEASE => $self->param('release'), -FORCE => $self->param('force'), -SKIP_DNA => $self->param('skip_dna') ); # skip dna loading to save table space
     }
 }
 
@@ -90,27 +92,6 @@ sub write_output {
     foreach my $genome_db ( sort { $a->dbID() <=> $b->dbID() } @$genome_dbs ) {
         $self->dataflow_output_id( { 'genome_db_id' => $genome_db->dbID(), 'species_name' => $genome_db->name() }, 2 );
     }
-}
-
-sub _add_new_genomedb {
-    my $compara_dba = shift;
-    my $species = shift;
-
-    my ($release, $force, $taxon_id, $offset) = rearrange([qw(RELEASE FORCE TAXON_ID OFFSET)], @_);
-    my $species_no_underscores = $species;
-    $species_no_underscores =~ s/\_/\ /;
-
-    my $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species, "core") ? Bio::EnsEMBL::Registry->get_DBAdaptor($species, "core") : Bio::EnsEMBL::Registry->get_DBAdaptor($species_no_underscores, "core");
-
-    throw ("Cannot connect to database [${species_no_underscores} or ${species}]") if (!$species_db);
-
-    my ( $new_genome_db );
-    my $gdbs = $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
-        $new_genome_db = Bio::EnsEMBL::Compara::Utils::MasterDatabase::_update_genome_db($species_db, $compara_dba, $release, $force, $taxon_id, $offset);
-        print "GenomeDB after update: ", $new_genome_db->toString, "\n\n";
-    } );
-    $species_db->dbc()->disconnect_if_idle();
-    return $new_genome_db;
 }
 
 1;

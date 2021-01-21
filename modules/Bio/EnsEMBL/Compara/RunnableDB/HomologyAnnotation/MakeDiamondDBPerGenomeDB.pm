@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,17 +15,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::MakeDiamondDBPerGenomeDB
 
 =head1 DESCRIPTION
 
-Runnable wrapper for DumpMembersIntoFasta per genome_db and generate DIAMOND database
+Runnable wrapper for DumpMembersIntoFasta per genome_db to additionally generate DIAMOND
+indexed database file for each genome_db
 
 =cut
 
@@ -51,9 +48,11 @@ sub run {
 
     my $query_db_name = $fasta_file;
     $query_db_name =~ s/\.fasta$//;
+
+    # Make the diamond db indexed file
     my $cmd = "$diamond_exe makedb --in $fasta_file -d $query_db_name";
 
-    if ( !$self->param('dry_run') ) {
+    if ( !$self->param('dry_run') ) { # For testing/debugging purposes
         my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1 });
     }
     else {
