@@ -175,6 +175,7 @@ sub fixup_alignslice {
         ref => $as->reference_Slice()->name,
         refsp => $self->context->{'config'}->hub->species,
         mlss => $as->get_MethodLinkSpeciesSet->dbID(),
+	ass_species => $ass->genome_db->name,
         ass_coord => $ass->coord_system->version,
         ass_start => $ass->start,
         ass_end => $ass->end
@@ -196,7 +197,8 @@ sub fixup_alignslice {
       # try an exact match first then match except for start/end (which we fix)
       foreach my $approx ((0,1)) {
         foreach my $sl (@{$as->get_all_Slices}) {
-          if($sl->coord_system->version eq $data->{$key}{'ass_coord'}) {
+          if($sl->coord_system->version eq $data->{$key}{'ass_coord'} and
+	     $sl->genome_db->name eq $data->{$key}{'ass_species'}) {
             if($sl->start == $data->{$key}{'ass_start'} and
                $sl->end   == $data->{$key}{'ass_end'}) {
               $data->{$key} = $sl;
