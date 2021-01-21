@@ -2,16 +2,23 @@
 <compara_db division="references">
   <collections>
 
-    <collection name="mammalia">
+    <collection name="default">
       <genome name="homo_sapiens"/>
       <genome name="mus_musculus"/>
       <genome name="gallus_gallus"/>
       <genome name="danio_rerio"/>
     </collection>
 
-    <collection name="mammalia">
-        <genome name="homo_sapiens"/>
-        <genome name="mus_musculus"/>
+    <collection name="eutheria">
+        <taxonomic_group taxon_name="Eutheria"/>
+    </collection>
+
+    <collection name="actinopterygii">
+        <taxonomic_group taxon_name="Actinopterygii"/>
+    </collection>
+
+    <collection name="sauropsida">
+        <taxonomic_group taxon_name="Sauropsida"/>
     </collection>
 
   </collections>

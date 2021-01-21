@@ -50,11 +50,12 @@ sub default_options {
         'taxonomy_db'  => 'ncbi_taxonomy',
 
         # how many parts should per-genome files be split into?
-        'num_fasta_parts' => 100,
+        'num_fasta_parts'  => 100,
+        # at which id should genome_db start?
+        'genome_db_offset' => 101,
 
         'pipeline_name' => 'update_references_' . $self->o('rel_with_suffix'),
         'backups_dir'   => $self->o('pipeline_dir') . '/reference_db_backups/',
-        'ref_dumps_dir' => $self->o('shared_hps_dir') . '/reference_dumps/',
 
         # update from metadata options
         'list_genomes_script'    => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
@@ -94,9 +95,9 @@ sub pipeline_create_commands {
         $self->pipeline_create_commands_rm_mkdir(['pipeline_dir', 'backups_dir']),
 
         # In case it doesn't exist yet
-        ($self->o('shared_user') ? 'become ' . $self->o('shared_user') : '') . ' mkdir -p ' . $self->o('ref_dumps_dir'),
+        ($self->o('shared_user') ? 'become ' . $self->o('shared_user') : '') . ' mkdir -p ' . $self->o('ref_member_dumps_dir'),
         # The files are going to be accessed by many processes in parallel
-        $self->pipeline_create_commands_lfs_setstripe('ref_dumps_dir', $self->o('shared_user')),
+        $self->pipeline_create_commands_lfs_setstripe('ref_member_dumps_dir', $self->o('shared_user')),
     ];
 }
 
@@ -110,9 +111,8 @@ sub pipeline_wide_parameters {
         'ref_db'   => $self->o('ref_db'),
         'release'  => $self->o('ensembl_release'),
 
-        'backups_dir'   => $self->o('backups_dir'),
-        # 'ref_dumps_dir' => $self->o('ref_dumps_dir'),
-        'members_dumps_dir' => $self->o('ref_dumps_dir'),
+        'backups_dir'       => $self->o('backups_dir'),
+        'members_dumps_dir' => $self->o('ref_member_dumps_dir'),
     };
 }
 
@@ -162,7 +162,17 @@ sub core_pipeline_analyses {
                 'mode'    => 'taxonomy',
                 'db_conn' => '#ref_db#',
             },
-            -flow_into  => ['update_genome_from_metadata_factory'],
+            -flow_into  => ['offset_table'],
+        },
+
+        {   -logic_name => 'offset_table',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'genome_db_offset' => $self->o('genome_db_offset'),
+                'db_conn'          => '#ref_db#',
+                'sql'              => [ 'ALTER TABLE genome_db AUTO_INCREMENT=#genome_db_offset#' ],
+            },
+            -flow_into      => [ 'update_genome_from_metadata_factory' ],
         },
 
         {   -logic_name => 'update_genome_from_metadata_factory',

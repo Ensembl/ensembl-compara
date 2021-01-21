@@ -2,5 +2,12 @@
     "homo_sapiens",
     "mus_musculus",
     "gallus_gallus",
-    "danio_rerio"
+    "danio_rerio",
+    "canis_lupus_familiaris",
+    "bos_taurus",
+    "equus_caballus",
+    "sus_scrofa",
+    "monodelphis_domestica",
+    "xenopus_tropicalis",
+    "oryzias_latipes"
 ]
