@@ -52,9 +52,9 @@ my @genome_files;
 
 foreach my $gdb ($human_gdb, $rat_gdb) {
     my $file_prefix = $gdb->name . '.' . $gdb->assembly . '.' .  $gdb->genebuild;
-    my $fasta_file  = $ref_dump_dir . '//' . $file_prefix . '.fasta';
-    my $ref_dmnd    = $ref_dump_dir . '//' . $file_prefix . '.dmnd';
-    my $ref_splitfa = $ref_dump_dir . '//' . $file_prefix . '.split';
+    my $fasta_file  = $ref_dump_dir . '/' . $file_prefix . '.fasta';
+    my $ref_dmnd    = $ref_dump_dir . '/' . $file_prefix . '.dmnd';
+    my $ref_splitfa = $ref_dump_dir . '/' . $file_prefix . '.split';
     push @genome_files => { 'ref_gdb' => $gdb, 'ref_fa' => $fasta_file, 'ref_dmnd' => $ref_dmnd, 'ref_splitfa' => $ref_splitfa };
 }
 
@@ -80,20 +80,22 @@ subtest 'match_query_to_reference_taxonomy' => sub {
     my $genome_db = $query_compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($query_genome_db_id);
     my $taxon_match;
     # test without @taxon_list
-    ok($taxon_match = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::match_query_to_reference_taxonomy($query_compara_dba, $genome_db, $ref_master_dba));
+    ok($taxon_match = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::match_query_to_reference_taxonomy($genome_db, $ref_master_dba));
     is($taxon_match, $taxon_name, 'master_db taxon matched successfully');
 
     # test with @taxon_list
-    ok($taxon_match = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::match_query_to_reference_taxonomy($query_compara_dba, $genome_db, undef, \@taxon_list));
+    ok($taxon_match = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::match_query_to_reference_taxonomy($genome_db, undef, \@taxon_list));
     is($taxon_match, $taxon_name, 'taxon_list taxon matched successfully');
 
     # test with both @taxon_list and $master_dba
     throws_ok {
-        $taxon_match = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::match_query_to_reference_taxonomy($query_compara_dba, $genome_db, $ref_master_dba, \@taxon_list) } qr/taxon_list and master_dba are mutually exclusive, pick one/, 'no matching when there are multiple taxon sources';
+        $taxon_match = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::match_query_to_reference_taxonomy($genome_db, $ref_master_dba, \@taxon_list)
+    } qr/taxon_list and master_dba are mutually exclusive, pick one/, 'no matching when there are multiple taxon sources';
 
     # test with neither @taxon_list or $master_dba
     throws_ok {
-        $taxon_match = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::match_query_to_reference_taxonomy($query_compara_dba, $genome_db) } qr/Either taxon_list or master_dba need to be provided/, 'no matching if no taxon sources to match to';
+        $taxon_match = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::match_query_to_reference_taxonomy($genome_db)
+    } qr/Either taxon_list or master_dba need to be provided/, 'no matching if no taxon sources to match to';
 };
 
 note("--------------------------- collect_species_set_dirs testing ------------------------------------");
