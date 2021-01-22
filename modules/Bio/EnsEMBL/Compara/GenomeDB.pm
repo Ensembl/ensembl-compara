@@ -859,11 +859,13 @@ sub _get_members_dump_path {
     my $dir  = shift;
 
     require Bio::EnsEMBL::Hive::Utils;
-    my $subdir = $self->dbID ? Bio::EnsEMBL::Hive::Utils::dir_revhash($self->dbID) . '/' : '';
+    my $subdir = $self->dbID ? Bio::EnsEMBL::Hive::Utils::dir_revhash($self->dbID) : '';
 
     my $filename = join ('.', $self->name(), $self->assembly(), $self->genebuild()) .
         ($self->genome_component ? '_comp_' . $self->genome_component : '') . '.fasta';
-    return "$dir/$subdir$filename";
+    my $path = "$dir/$subdir/$filename";
+    $path =~ s/\/+/\//g;
+    return $path;
 }
 
 =head2 get_faidx_helper
@@ -912,8 +914,6 @@ sub get_dmnd_helper {
     if ($self->adaptor and (my $dump_dir_location = $self->adaptor->dump_dir_location)) {
         my $path = $self->_get_members_dump_path($dump_dir_location, @_);
         $path =~ s/fasta$/dmnd/;
-        $path =~ s/\/\//\//g;
-        print "diamond path: $path\n";
         die "Could not find diamond db for this genome" unless (-e $path);
         return $path;
     }
