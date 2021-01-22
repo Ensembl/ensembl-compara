@@ -79,7 +79,7 @@ subtest "update_reference_genome", sub {
     isnt($human_1_gdb->dbID, $human_2_gdb->dbID, 'both humans have different ids');
 
     # delete a dnafrag to test force update
-    $compara_dba->dbc->do("DELETE FROM dnafrag WHERE name = '2' and genome_db_id = 143");
+    $compara_dba->dbc->do("DELETE FROM dnafrag WHERE name = '2' and genome_db_id = " . $human_2_gdb->dbID);
 
     # check -FORCE flag functionality
     throws_ok {
