@@ -54,8 +54,9 @@ class SplitFasta(eHive.BaseRunnable):
 
         if num_parts:
             if num_parts > len(fasta_records):
-                warn = f"'num_parts' ({num_parts}) is larger than the number of records in the file "
-                warn += f"({len(fasta_records)}) - printing a single record in each file"
+                # travis doesn't like f"" formatting here (invalid syntax error) - use older .format()
+                warn = "'num_parts' ({0}) is larger than the number of records in the file ".format(num_parts)
+                warn += "({0}) - printing a single record in each file".format(len(fasta_records))
                 self.warning(warn)
                 num_parts = len(fasta_records)
             num_seqs = int(len(fasta_records) / num_parts)
