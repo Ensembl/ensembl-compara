@@ -34,6 +34,7 @@ my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $dba->dbc);
 my $compara_db = $dbc->url;
 
 my $ref_multi_db = Bio::EnsEMBL::Test::MultiTestDB->new('test_ref_compara');
+$ref_multi_db->restore(); # incase other tests have changed this db
 my $ref_dba = $ref_multi_db->get_DBAdaptor('compara');
 my $ref_dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $ref_dba->dbc);
 my $ref_db = $ref_dbc->url;
