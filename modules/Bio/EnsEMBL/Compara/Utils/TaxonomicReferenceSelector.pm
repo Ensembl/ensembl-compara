@@ -86,15 +86,13 @@ sub collect_reference_classification {
 =cut
 
 sub match_query_to_reference_taxonomy {
-    my ($self, $genome_db, $master_dba, $taxon_list) = (@_);
+    my ($genome_db, $master_dba, $taxon_list) = (@_);
 
     throw ("taxon_list and master_dba are mutually exclusive, pick one") if $taxon_list && $master_dba;
     throw ("Either taxon_list or master_dba need to be provided") unless $taxon_list || $master_dba;
 
     my @taxon_list = $taxon_list ? @$taxon_list : @{collect_reference_classification($master_dba)};
-    #my $taxon_dba  = $self->compara_dba->get_NCBITaxonAdaptor;
-    my $taxon_dba  = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self)->get_NCBITaxonAdaptor;
-    my $parent     = $taxon_dba->fetch_by_dbID($genome_db->taxon_id)->parent;
+    my $parent     = $genome_db->taxon->parent;
 
     while ( $parent->name ne "root" ) {
         if ( grep { lc($parent->name) eq $_ } @taxon_list ) {
