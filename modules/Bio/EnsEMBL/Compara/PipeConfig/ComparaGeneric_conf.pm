@@ -29,6 +29,7 @@ use JSON qw(decode_json);
 
 use Bio::EnsEMBL::Utils::IO qw/:slurp/;
 use Bio::EnsEMBL::Compara::PipeConfig::ENV;
+use Bio::EnsEMBL::Compara::Utils::RunCommand;
 use Bio::EnsEMBL::Hive::Valley;
 
 
@@ -321,10 +322,6 @@ sub pipeline_create_commands_rm_mkdir {
 sub pipeline_create_commands_lfs_setstripe {
     my $self = shift;
     my $dirs = shift;
-    my $user = shift;
-
-    # Do we need to "become" someone else ?
-    $user = $user ? "become -- $user" : '';
 
     # Prepare the list of directories
     $dirs = [$dirs] unless ref($dirs);
@@ -334,7 +331,14 @@ sub pipeline_create_commands_lfs_setstripe {
     }
 
     # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
-    my @cmds = map {qq{which lfs > /dev/null && $user lfs getstripe $_ >/dev/null 2>/dev/null && $user lfs setstripe $_ -c -1 || echo "Striping is not available on this system"}} @dirs;
+    my @cmds;
+    foreach my $dir (@dirs) {
+        # Do we need to "become" someone else ?
+        my $owner = Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec("stat -c \"\%U\" $dir")->out;
+        chomp $owner;
+        my $as_user = $ENV{USER} ne $owner ? "become -- $owner" : '';
+        push @cmds, qq{which lfs > /dev/null && lfs getstripe $dir >/dev/null 2>/dev/null && $as_user lfs setstripe $dir -c -1 || echo "Striping is not available on this system"};
+    }
     return @cmds;
 }
 
