@@ -70,7 +70,7 @@ sub fetch_input {
 
         my @genome_members = map {$_->dbID} @$some_members;
         # Necessary to collect the reference taxonomy because this decides which reference species_set is used
-        push @query_members, { 'genome_db_id' => $genome_db_id, 'mlss_id' => $mlsss[0]->dbID, 'member_ids' => \@genome_members, 'ref_taxa' => $self->match_query_to_reference_taxonomy($genome_db, $ref_master) };
+        push @query_members, { 'genome_db_id' => $genome_db_id, 'mlss_id' => $mlsss[0]->dbID, 'member_ids' => \@genome_members, 'ref_taxa' => match_query_to_reference_taxonomy($genome_db, $ref_master) };
     }
 
     $self->param('query_members', \@query_members);
@@ -91,12 +91,12 @@ sub write_output {
         my $ref_taxa      = $genome->{'ref_taxa'} ? $genome->{'ref_taxa'} : "default";
         my $ref_dump_dir  = $self->param_required('ref_dumps_dir');
         # Returns all the directories (fasta, split_fasta & diamond pre-indexed db) under all the references
-        my $ref_dirs      = collect_species_set_dirs($self->param_required('rr_ref_db'), $ref_taxa);
+        my $ref_dirs      = collect_species_set_dirs($self->param_required('rr_ref_db'), $ref_taxa, $ref_dump_dir);
 
         foreach my $ref ( @$ref_dirs ) {
             # Obtain the diamond indexed file for the reference, this is the only file we need from
             # each reference at this point
-            my $ref_dmnd_path = $ref_dump_dir . '/' . $ref->{'ref_dmnd'};
+            my $ref_dmnd_path = $ref->{'ref_dmnd'};
             while (@$query_members) {
                 my @job_array = splice(@$query_members, 0, $step);
                 # A job is output for every $step query members against each reference diamond db
