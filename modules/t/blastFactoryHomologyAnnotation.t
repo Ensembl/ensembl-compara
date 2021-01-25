@@ -20,41 +20,53 @@ use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Test::MultiTestDB;
 
 use Test::Most;
+use Cwd 'abs_path';
 
 BEGIN {
     # Check module can be seen and compiled
     use_ok('Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BlastFactory');
 }
 
-# Load test DB #
+# Load test DBs #
 my $multi_db = Bio::EnsEMBL::Test::MultiTestDB->new('homology_annotation');
 my $dba = $multi_db->get_DBAdaptor('compara');
 my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $dba->dbc);
 my $compara_db = $dbc->url;
 
+my $ref_multi_db = Bio::EnsEMBL::Test::MultiTestDB->new('test_ref_compara');
+$ref_multi_db->restore(); # incase other tests have changed this db
+my $ref_dba = $ref_multi_db->get_DBAdaptor('compara');
+my $ref_dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $ref_dba->dbc);
+my $ref_db = $ref_dbc->url;
+
+# Species fasta inputfile
+my $ref_dump_dir = abs_path($0);
+$ref_dump_dir    =~ s!blastFactoryHomologyAnnotation\.t!homology_annotation_dirs!;
+
 # Expected dataflow output
 my $exp_dataflow_1 = {
     'member_id_list' => [ 1, 2, 3, 4, 5 ],
     'mlss_id' => 20001,
-    'ref_taxa' => 'vertebrates',
+    'all_blast_db' => "$ref_dump_dir/homo_sapiens.GRCh38.2019-06.dmnd",
 };
 my $exp_dataflow_2 = {
     'member_id_list' => [ 6, 7, 8, 9 ],
     'mlss_id' => 20001,
-    'ref_taxa' => 'vertebrates',
+    'all_blast_db' => "$ref_dump_dir/homo_sapiens.GRCh38.2019-06.dmnd",
 };
 my $exp_dataflow_3 = {
     'genome_db_id' => 135,
-    'ref_taxa' => 'vertebrates',
+    'ref_taxa' => 'collection-mammalia',
 };
 # Run standalone
 standaloneJob(
     'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BlastFactory',
     # Input parameters
     {
-        'compara_db'      => $compara_db,
-        'step'            => 5,
-        'taxon_list'      => ['vertebrates'];
+        'compara_db'    => $compara_db,
+        'step'          => 5,
+        'rr_ref_db'     => $ref_db,
+        'ref_dumps_dir' => $ref_dump_dir,
     },
     # Output
     [
@@ -67,6 +79,11 @@ standaloneJob(
             'DATAFLOW',
             $exp_dataflow_2,
             2
+        ],
+        [
+            'DATAFLOW',
+            $exp_dataflow_3,
+            1
         ],
         [
             'DATAFLOW',

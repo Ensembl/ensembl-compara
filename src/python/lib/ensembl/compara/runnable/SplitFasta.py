@@ -54,8 +54,9 @@ class SplitFasta(eHive.BaseRunnable):
 
         if num_parts:
             if num_parts > len(fasta_records):
-                warn = f"'num_parts' ({num_parts}) is larger than the number of records in the file"
-                warn += f"({len(fasta_records)}) - printing a single record in each file"
+                # travis doesn't like f"" formatting here (invalid syntax error) - use older .format()
+                warn = "'num_parts' ({0}) is larger than the number of records in the file ".format(num_parts)
+                warn += "({0}) - printing a single record in each file".format(len(fasta_records))
                 self.warning(warn)
                 num_parts = len(fasta_records)
             num_seqs = int(len(fasta_records) / num_parts)
@@ -86,12 +87,12 @@ class SplitFasta(eHive.BaseRunnable):
         out_dir = self.param('out_dir')
 
         records_written, files_written = 0, 1
-        out_file = open(f"{out_dir}/{file_prefix}.{files_written}.fasta", 'w')
+        out_file = open("{0}/{1}.{2}.fasta".format(out_dir, file_prefix, files_written), 'w')
         for fasta_record in fasta_records:
             if records_written > 0 and records_written % num_seqs == 0:
                 out_file.close()
                 files_written += 1
-                out_file = open(f"{out_dir}/{file_prefix}.{files_written}.fasta", 'w')
+                out_file = open("{0}/{1}.{2}.fasta".format(out_dir, file_prefix, files_written), 'w')
 
-            out_file.write(f">{fasta_record[0]}\n{fasta_record[1]}\n")
+            out_file.write(">{0}\n{1}\n".format(fasta_record[0], fasta_record[1]))
             records_written += 1

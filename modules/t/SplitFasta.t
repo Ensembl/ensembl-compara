@@ -40,6 +40,8 @@ SKIP: {
     mkdir $test_outdir1;
     my $test_outdir2 = "$test_file_dir/test2.split";
     mkdir $test_outdir2;
+    my $test_outdir3 = "$test_file_dir/test3.split";
+    mkdir $test_outdir3;
 
     # save expected output in array to 'mix-and-match'
     # combinations of the seqs in the test output
@@ -94,9 +96,38 @@ SKIP: {
     is(slurp($test2_files[1]), join('', @possible_output[2,3]), 'second file contents correct');
     is(slurp($test2_files[2]), join('', @possible_output[4,5]), 'third file contents correct');
 
+    # test run with num_parts larger than the number of sequences
+    standaloneJob(
+        'ensembl.compara.runnable.SplitFasta',
+        {
+            'fasta_name' => "$test_file_dir/test.fa",
+            'num_parts'  => '10',
+            'out_dir'    => "$test_outdir3"
+        },
+        [
+            [
+                'WARNING',
+                "'num_parts' (10) is larger than the number of records in the file (6) - printing a single record in each file",
+                "INFO",
+            ],
+        ],
+        {
+            'language'  => 'python3',
+        },
+    );
+    my @test3_files = glob("$test_outdir3/*");
+    is(scalar @test3_files, 6, 'correct number of files generated');
+    my @pos_names = qw(first second third fouth fifth sixth);
+    for( my $i = 0; $i < 6; $i++ ) {
+        my $i_plus_1 = $i + 1;
+        ok($test3_files[$i] =~ /test3\.split\/test\.$i_plus_1\.fasta$/, $pos_names[$i] . ' file named correctly');
+        is(slurp($test3_files[$i]), $possible_output[$i], $pos_names[$i] . ' file contents correct');
+    }
+
     # clean up test output
     remove_tree($test_outdir1);
     remove_tree($test_outdir2);
+    remove_tree($test_outdir3);
 
 } # /SKIP
 
