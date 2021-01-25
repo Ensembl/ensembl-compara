@@ -39,6 +39,7 @@ use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector qw/ collect_species_set_dirs /;
 use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -47,7 +48,7 @@ sub fetch_input {
     my $self = shift;
 
     my $ref_dba       = $self->param_required('rr_ref_db');
-    my $ref_dump_dir  = $self->param_required('ref_dumps_dir');
+    my $ref_dump_dir  = $self->param_required('ref_dump_dir');
     my $ref_taxa      = $self->param('ref_taxa') ? $self->param('ref_taxa') : 'default';
     my $ref_dir_paths = collect_species_set_dirs($ref_dba, $ref_taxa);
     my @all_paths;
