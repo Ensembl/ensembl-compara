@@ -28,8 +28,6 @@ use EnsEMBL::Web::Utils::FormatText qw(glossary_helptip);
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
-sub get_pre_species { return $_[0]->hub->species_defs->get_config('MULTI', 'PRE_SPECIES'); } # MOBILE: overwritten in the mobile site so that pre species are not shown
-
 sub render {
   my ($self, $request) = @_;
 
@@ -61,41 +59,6 @@ sub render {
         'regulation'    => $species_defs->get_config($sp,'databases')->{'DATABASE_FUNCGEN'},
     };
     $species{$sp} = $info;
-  }
-
-  if ($sitename !~ /Archive/) {
-    ## Add in pre species
-    my $pre_species = $self->get_pre_species();
-    if ($pre_species) {
-      while (my ($bioname, $array) = each (%$pre_species)) {
-        my ($common, $assembly, $taxon_id) = @$array;
-        $common =~ s/_/ /g;
-        my $status = $species{$bioname} ? 'both' : 'pre';
-        my $info;
-        if ($status eq 'pre') {
-          ## This is a bit of a fudge, but we have only basic config atm
-          (my $sci_name = $bioname) =~ s/_/ /g;
-          $info = {
-            'dir'           => $bioname,
-            'display_name'  => $common,
-            'sci_name'      => $sci_name,
-            'image'         => $bioname,
-            'status'        => $status,
-            'assembly'      => '-',
-            'accession'     => '-',
-            'pre_assembly'  => $assembly,
-            'taxon_id'      => $taxon_id,
-          };
-        }
-        else {
-          ## Don't overwrite existing meta info!
-          $info = $species{$bioname};
-          $info->{'pre_assembly'} = $assembly;
-        }
-        $info->{'status'} = $status;
-        $species{$bioname} = $info;
-      }
-    }
   }
 
   ## Display all the species in data table
@@ -190,9 +153,6 @@ sub table_columns {
   }
   unless ($sd->NO_REGULATION) { 
     push @$columns, { key => 'regulation',  title => 'Regulation database', width => '5%', align => 'center', sort => 'string' };
-  }
-  if (scalar keys %{$self->get_pre_species||{}}) {
-    push @$columns, { key => 'pre', title => 'Pre assembly', width => '5%', align => 'left' };
   }
 
   return $columns;
