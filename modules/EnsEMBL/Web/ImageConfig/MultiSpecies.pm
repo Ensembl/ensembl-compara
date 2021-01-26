@@ -77,7 +77,7 @@ sub reset_user_settings {
   my @keys        = $reset_type eq 'all' ? qw(nodes track_order) : ($reset_type eq 'track_order' ? ('track_order') : ('nodes'));
   my @altered;
 
-  @keys = () if ($reset_type eq 'reg_matrix');
+  @keys = () if ($reset_type eq 'matrix');
 
   # remove other species keys
   foreach my $species (@species) {
