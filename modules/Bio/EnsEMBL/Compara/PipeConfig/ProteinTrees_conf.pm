@@ -3410,9 +3410,15 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'gene_dumps_genome_db_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'extra_parameters'  => [ 'is_polyploid' ],
+            },
             -rc_name    => '4Gb_job',
             -flow_into => {
-                2 => [ 'dump_genes' ],
+                2 => WHEN(
+                    '#is_polyploid#' => [ 'dump_polyploid_genes' ],
+                    ELSE                [ 'dump_genes' ],
+                ),
             },
         },
 
@@ -3422,6 +3428,29 @@ sub core_pipeline_analyses {
                 'output_file'   => '#gene_dumps_dir#/gene_member.#genome_db_id#.tsv',
                 'append'        => ['--batch', '--quick'],
                 'input_query'   => 'SELECT stable_id, gene_member_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand FROM gene_member WHERE genome_db_id = #genome_db_id# ORDER BY dnafrag_id, dnafrag_start',
+            },
+        },
+
+        {   -logic_name     => 'dump_polyploid_genes',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
+            -parameters     => {
+                'output_file'   => '#gene_dumps_dir#/gene_member.#genome_db_id#.tsv',
+                'append'        => ['--batch', '--quick'],
+                'input_query'   => q|
+                    SELECT gm.stable_id, gm.gene_member_id, df2.dnafrag_id, gm.dnafrag_start, gm.dnafrag_end, gm.dnafrag_strand
+                    FROM dnafrag df1
+                    JOIN gene_member gm USING (dnafrag_id)
+                    JOIN dnafrag df2 USING (name)
+                    WHERE df2.genome_db_id = #genome_db_id#
+                        AND gm.genome_db_id IN (
+                            SELECT gdb2.genome_db_id
+                            FROM genome_db gdb1
+                            JOIN genome_db gdb2 USING (name)
+                            WHERE gdb1.genome_db_id = #genome_db_id#
+                                AND gdb2.genome_component IS NOT NULL
+                        )
+                    ORDER BY df2.dnafrag_id, gm.dnafrag_start
+                |,
             },
         },
 
