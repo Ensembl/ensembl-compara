@@ -3,7 +3,7 @@
 
   <collections>
 
-    <collection name="Shared">
+    <collection name="shared">
       <!--Vertebrates -->
       <genome name="homo_sapiens"/>
       <genome name="gallus_gallus"/>
@@ -21,7 +21,7 @@
       <genome name="plasmodium_falciparum"/>
     </collection>
 
-    <collection name="Default">
+    <collection name="default">
       <!--Vertebrates -->
       <genome name="mus_musculus"/>
       <genome name="anolis_carolinensis"/>
@@ -40,7 +40,7 @@
       <genome name="physcomitrium_patens"/>
       <genome name="oryza_sativa"/>
       <genome name="vitis_vinifera"/>
-      <genome naem="ostreococcus_lucimarinus"/>
+      <genome name="ostreococcus_lucimarinus"/>
       <genome name="galdieria_sulphuraria"/>
       <genome name="chondrus_crispus"/>
       <!--protists -->
@@ -58,7 +58,7 @@
       <genome name="erysiphe_necator_gca_000798715"/>
     </collection>
 
-    <collection name="Vertebrata">
+    <collection name="vertebrata">
       <!--Myxini ok -->
       <genome name="eptatretus_burgeri"/>
       <!-- Hyperoartia -->
@@ -99,7 +99,7 @@
       <genome name="callithrix_jacchus"/>
     </collection>
 
-    <collection name="Mammalia">
+    <collection name="mammalia">
       <!--outgroups -->
       <genome name="ciona_intestinalis"/>
       <genome name="dasypus_novemcinctus"/>
