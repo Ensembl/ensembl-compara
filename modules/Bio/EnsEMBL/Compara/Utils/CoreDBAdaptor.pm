@@ -106,7 +106,7 @@ sub pool_one_DBConnection {
         return unless $dbc->dbname;
         # Disconnect as the DBC is going to be superseded
         $dbc->disconnect_if_idle;
-        my $signature = sprintf('%s://%s@%s:%s/', $dbc->driver, $dbc->username, $dbc->host, $dbc->port);
+        my $signature = sprintf('%s://%s@%s:%s/', $dbc->driver // '', $dbc->username // '', $dbc->host // '', $dbc->port // '');
         unless (exists $share_dbcs{$signature}) {
             #warn "Creating new shared DBC for $signature from ", $dbc->locator, "\n";
             # EnsEMBL::REST::Model::Registry uses $dbc directly, but I feel it safer to make a new instance
