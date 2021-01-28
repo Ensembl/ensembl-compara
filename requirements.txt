@@ -1,11 +1,11 @@
-numpy
-six
-lxml
-ete3
-sqlalchemy
-mysqlclient
-requests
-pandas
-biopython
-pytest == 5.2.1
-pytest-dependency
+biopython>=1.76,<=1.78
+ete3>=3.1.1,<=3.1.2
+lxml>=4.0.3,<=4.6.2
+mysqlclient>=1.4.6,<=2.0.3
+numpy>=1.16.0,<=1.19.5
+pandas>=0.24.2,<=1.2.1
+pytest>=5.2.1,<=5.3.1
+pytest-dependency==0.5.1
+requests>=2.22.0,<=2.25.1
+six>=1.11.0,<=1.15.0
+sqlalchemy>=1.3.12,<=1.3.22
