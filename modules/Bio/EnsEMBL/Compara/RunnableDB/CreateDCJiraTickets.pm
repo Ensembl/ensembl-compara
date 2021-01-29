@@ -32,6 +32,14 @@ use strict;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{$self->SUPER::param_defaults},
+        'test_mode' => 0,
+    }
+}
+
 sub run {
     my $self = shift;
 
@@ -44,6 +52,8 @@ sub run {
         ( $self->param('dry_run') ? '--dry_run' : '')
     ));
     $self->warning( "Command: " . $command );
+
+    return if $self->param('test_mode');
 
     if (defined $ENV{'JIRA_AUTH_TOKEN'}) {
         $self->run_command($command, { die_on_failure => 1, });
