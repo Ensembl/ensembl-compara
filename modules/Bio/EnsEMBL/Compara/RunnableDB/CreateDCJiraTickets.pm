@@ -40,7 +40,7 @@ sub run {
     my $command = join(" ", (
         $jira_exe, $self->param_required('output_results'), "--update",
         "--division", $self->param_required('division'),
-		( $self->param('datacheck_type') ? '--label ' . $self->param('datacheck_type') : '' ),
+        ( $self->param('datacheck_type') ? '--label ' . $self->param('datacheck_type') : '' ),
         ( $self->param('dry_run') ? '--dry_run' : '')
     ));
     $self->warning( "Command: " . $command );
