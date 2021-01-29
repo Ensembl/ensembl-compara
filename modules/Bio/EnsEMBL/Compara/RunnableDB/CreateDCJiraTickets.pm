@@ -38,6 +38,7 @@ sub run {
     my $jira_exe = $self->param_required('create_datacheck_tickets_exe');
 
     my $command = $jira_exe . ' ' . $self->param_required('output_results') . " --update";
+    $command .= ' --label ' . $self->param('datacheck_type') if $self->param('datacheck_type');
     $self->warning( "Command: " . $command );
 
     unless ( $self->param('dry_run') ) {
