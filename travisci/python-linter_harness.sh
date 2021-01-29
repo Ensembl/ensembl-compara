@@ -29,7 +29,7 @@ grep -v "\-\-\-\-\-\-\-\-\-" "$PYLINT_OUTPUT_FILE" | grep -v "Your code has been
 rt1=$?
 rm "$PYLINT_OUTPUT_FILE" "$PYLINT_ERRORS"
 
-find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" -print0 | xargs -0 mypy --config-file mypy.ini --namespace-packages
+find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" -print0 | xargs -0 mypy --config-file mypy.ini --namespace-packages --explicit-package-bases
 rt2=$?
 
 if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then
