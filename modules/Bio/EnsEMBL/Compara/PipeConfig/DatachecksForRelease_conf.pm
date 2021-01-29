@@ -140,6 +140,7 @@ sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
         %{$self->SUPER::pipeline_wide_parameters},
+        division         => $self->o('division'),
         registry_file    => $self->o('reg_conf'),
         db_type          => $self->o('db_type'),
         compara_db       => $self->o('compara_db'),
@@ -274,7 +275,6 @@ sub pipeline_analyses {
             -logic_name        => 'jira_ticket_creation',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::CreateDCJiraTickets',
             -parameters        => {
-                division                     => $self->o('division'),
                 release                      => '#ensembl_release#',
                 update                       => 1,
                 create_datacheck_tickets_exe => $self->o('create_datacheck_tickets_exe'),

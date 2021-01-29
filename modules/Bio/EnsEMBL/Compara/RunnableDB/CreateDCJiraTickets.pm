@@ -37,17 +37,19 @@ sub run {
 
     my $jira_exe = $self->param_required('create_datacheck_tickets_exe');
 
-    my $command = $jira_exe . ' ' . $self->param_required('output_results') . " --update";
-    $command .= ' --label ' . $self->param('datacheck_type') if $self->param('datacheck_type');
+    my $command = join(" ", (
+        $jira_exe, $self->param_required('output_results'), "--update",
+        "--division", $self->param_required('division'),
+		( $self->param('datacheck_type') ? '--label ' . $self->param('datacheck_type') : '' ),
+        ( $self->param('dry_run') ? '--dry_run' : '')
+    ));
     $self->warning( "Command: " . $command );
 
-    unless ( $self->param('dry_run') ) {
-        if (defined $ENV{'JIRA_AUTH_TOKEN'}) {
-            $self->run_command($command, { die_on_failure => 1, });
-        }
-        else {
-            $self->warning( "ERROR: ENV variable not defined: \$JIRA_AUTH_TOKEN. Define with:\nexport JIRA_AUTH_TOKEN=$(echo -n 'user:pass' | openssl base64)" );
-        }
+    if (defined $ENV{'JIRA_AUTH_TOKEN'}) {
+        $self->run_command($command, { die_on_failure => 1, });
+    }
+    else {
+        $self->warning( "ERROR: ENV variable not defined: \$JIRA_AUTH_TOKEN. Define with:\nexport JIRA_AUTH_TOKEN=$(echo -n 'user:pass' | openssl base64)" );
     }
 
 }
