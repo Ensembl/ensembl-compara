@@ -24,16 +24,13 @@ You will need both the [Core API
 dependencies](https://github.com/Ensembl/ensembl/blob/master/cpanfile) and
 [ours](cpanfile).
 
-### API to access HAL alignments (progressive-Cactus)
+### API to access HAL alignments from Cactus
 
-If working with HAL files, additional setup is required. There are several ways
-of installing the dependencies.
+If working with HAL files, additional setup is required. There are several ways. of installing the dependencies, depending on which version of Cactus you are using: progressive-Cactus (old name) or Cactus (new name)
 
-#### Complete installation of progressive-Cactus
+#### Complete installation of progressive-Cactus (old version)
 
-Follow this procedure if you intend to run the cactus aligner. If Cactus is
-already installed on your system, you can directly jump to the section
-about setting up the API. Otherwise, do this:
+Follow this procedure if you intend to run the old version of Cactus aligner (aka progressive-cactus). If this version of Cactus is already installed on your system, you can directly jump to the section about [setting up the API](#setting-up-the-api). Otherwise, follow the steps below:
 
 	git clone https://github.com/glennhickey/progressiveCactus.git
 	cd progressiveCactus
@@ -46,6 +43,8 @@ about setting up the API. Otherwise, do this:
 	cd submodules/hal/
 	git checkout master
 	git pull
+	# edit include.mk by adding " -fPIC" at the end of the CFLAGS line (line 55)
+	# edit include.mk by adding " -fPIC" at the end of the CXXFLAGS line (line 56)
 	cd ../..
 	
 	cd submodules/sonLib
@@ -63,23 +62,26 @@ Note that on some Ubuntu installations, you may have to do this as well:
         sudo apt-get install python-dev
         sudo ln -s /usr/lib/python2.7/plat-*/_sysconfigdata_nd.py /usr/lib/python2.7/
 
+
+#### Complete installation of Cactus (New Version)
+
+Follow this procedure if you intend to run the newest version of Cactus aligner. If this version of Cactus is already installed on your system, you can directly jump to the section about [setting up the API](#setting-up-the-api). Otherwise, follow the steps stated [here](https://github.com/ComparativeGenomicsToolkit/cactus#installation-overview) to install, run, and test Cactus first.
+
+#### Setting up the API
+
 Now, we need to set up the Compara API:
 
 	cd ensembl-compara/src/perl/xs/HALXS
-	perl Makefile-progressiveCactus.PL path/to/cactus
+	perl Makefile-Cactus.PL path/to/cactus
 	make
 
-If you have the `PROGRESSIVE_CACTUS_DIR` environment variable defined, you
-can skip `path/to/cactus` on the Makefile command-line, e.g.:
+If you have the `PROGRESSIVE_CACTUS_DIR` environment variable defined, you can skip `path/to/cactus` on the Makefile command-line, e.g.:
 
 	cd ensembl-compara/src/perl/xs/HALXS
-	perl Makefile-progressiveCactus.PL
+	perl Makefile-Cactus.PL
 	make
 
-On the EBI main cluster, *do not* load
-`/nfs/software/ensembl/latest/envs/basic.sh` in your `.bashrc`, and replace
-`perl` with `/nfs/software/ensembl/latest/linuxbrew/bin/perl` when invoking
-`Makefile-progressiveCactus.PL`.
+On the EBI main cluster, *do not* load `/nfs/software/ensembl/latest/envs/basic.sh` in your `.bashrc`, and replace `perl` with `/nfs/software/ensembl/latest/linuxbrew/bin/perl` when invoking `Makefile-Cactus.PL`.
 
 #### Installation via Linuxbrew
 
