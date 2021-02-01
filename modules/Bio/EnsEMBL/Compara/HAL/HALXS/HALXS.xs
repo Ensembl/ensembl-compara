@@ -316,7 +316,7 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
 
     // print MAF to buffer
     char *errStr = NULL;
-    halGetMAF( stream, halfileHandle, query_species, targetSpecies, targetChrom, targetStart, targetEnd, maxRefGap, maxBlockLength, 0, &errStr );
+    halGetMaf( stream, halfileHandle, query_species, targetSpecies, targetChrom, targetStart, targetEnd, maxRefGap, maxBlockLength, 0, &errStr );
     fclose (stream);
     
     //SV *maf = newSVpv(bp, strlen(bp));
