@@ -48,11 +48,11 @@ sub default_options {
 
         # Directories to write to
         'work_dir'     => $self->o('pipeline_dir'),
-        'fasta_dir'    => $self->o('work_dir') . '/fasta/',
-        'query_db_dir' => $self->o('work_dir') . '/query_diamond_db/',
         'dump_path'    => $self->o('work_dir'),
         # Directories the reference genome pipeline dumps to
-        'ref_dump_dir' => $self->o('ref_members_dumps_dir'),
+        'ref_dump_dir' => $self->o('ref_member_dumps_dir'),
+        # Directory for diamond and fasta files for query genome
+        'members_dumps_dir' => $self->o('dump_path'),
 
         # Set mandatory databases
         'compara_db'   => $self->pipeline_url(),
@@ -62,7 +62,6 @@ sub default_options {
         'ncbi_db'      => 'ncbi_taxonomy',
         'rr_ref_db'    => 'rr_ref_master',
         'meta_host'    => 'mysql-ens-meta-prod-1',
-        'rr_meta_db'   => 'rr_metadata',
 
         # Member loading parameters - matches reference genome members
         'include_reference'           => 1,
@@ -109,6 +108,7 @@ sub default_options {
         # Mandatory species input, one or the other only
         'species_list_file' => undef,
         'species_list'      => [ ],
+        'division'          => 'homology_annotation',
 
     };
 }
@@ -118,7 +118,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # Here we inherit creation of database, hive tables and compara tables
 
-        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'fasta_dir', 'query_db_dir']), # Here we create directories
+        $self->pipeline_create_commands_rm_mkdir(['work_dir']), # Here we create directories
 
     ];
 }
@@ -141,15 +141,12 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
         'master_db'         => $self->o('master_db'),
         'output_db'         => $self->o('output_db'),
         'rr_ref_db'         => $self->o('rr_ref_db'),
-        'rr_meta_db'        => $self->o('rr_meta_db'),
 
         'blast_params'      => $self->o('blast_params'),
         'evalue_limit'      => $self->o('evalue_limit'),
         'diamond_exe'       => $self->o('diamond_exe'),
 
-        'fasta_dir'         => $self->o('fasta_dir'),
-        'members_dumps_dir' => $self->o('fasta_dir'),
-        'query_db_dir'      => $self->o('query_db_dir'),
+        'members_dumps_dir' => $self->o('members_dumps_dir'),
         'ref_dump_dir'      => $self->o('ref_dump_dir'),
         'dump_path'         => $self->o('dump_path'),
 

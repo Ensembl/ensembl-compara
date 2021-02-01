@@ -51,7 +51,6 @@ sub pipeline_analyses_diamond_against_refdb {
             -rc_name            => '500Mb_4c_20min_job',
             -flow_into          => {
                -1 => [ 'diamond_blastp_himem' ],  # MEMLIMIT
-               -2 => 'break_batch',
             },
             -hive_capacity      => $self->o('blastpu_capacity'),
         },
@@ -62,9 +61,6 @@ sub pipeline_analyses_diamond_against_refdb {
                 %blastp_parameters,
             },
             -rc_name            => '2Gb_4c_20min_job',
-            -flow_into          => {
-               -2 => 'break_batch',
-            },
             -priority           => 20,
             -hive_capacity      => $self->o('blastpu_capacity'),
         },

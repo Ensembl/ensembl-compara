@@ -89,7 +89,7 @@ sub write_output {
         my $query_members = $genome->{'member_ids'};
         # There is a default species set if a clade specific species set does not exist for a species
         my $ref_taxa      = $genome->{'ref_taxa'} ? $genome->{'ref_taxa'} : "default";
-        my $ref_dump_dir  = $self->param_required('ref_dumps_dir');
+        my $ref_dump_dir  = $self->param_required('ref_dump_dir');
         # Returns all the directories (fasta, split_fasta & diamond pre-indexed db) under all the references
         my $ref_dirs      = collect_species_set_dirs($self->param_required('rr_ref_db'), $ref_taxa, $ref_dump_dir);
 
@@ -97,14 +97,15 @@ sub write_output {
             # Obtain the diamond indexed file for the reference, this is the only file we need from
             # each reference at this point
             my $ref_dmnd_path = $ref->{'ref_dmnd'};
-            while (@$query_members) {
-                my @job_array = splice(@$query_members, 0, $step);
+            for ( my $i = 0; $i < @$query_members; $i+=$step ) {
+                my @job_list = @$query_members[$i..$i+$step];
+                my @job_array  = grep { defined && m/[^\s]/ } @job_list; # because the array is very rarely going to be exactly divisible by $step
                 # A job is output for every $step query members against each reference diamond db
-                my $output_id = { 'member_id_list' => \@job_array, 'mlss_id' => $mlss_id, 'all_blast_db' => $ref_dmnd_path };
+                my $output_id = { 'member_id_list' => \@job_array, 'mlss_id' => $mlss_id, 'blast_db' => $ref_dmnd_path, 'genome_db_id' => $genome_db_id, 'target_genome_db_id' => $ref->{'ref_gdb'}->dbID };
                 $self->dataflow_output_id($output_id, 2);
             }
-            $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'ref_taxa' => $ref_taxa }, 1 );
         }
+        $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'ref_taxa' => $ref_taxa }, 1 );
     }
 }
 

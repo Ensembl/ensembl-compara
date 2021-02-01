@@ -341,6 +341,34 @@ sub rank_and_store_PAFS {
   }
 }
 
+# query_genome_db_id should remain consistent, hit_genome_db_id can differ but top hits
+# are evaluated per target_genome_db_id. The very top hit(s) per query_member_id is returned
+# for each target_genome_db_id. This can be multiple hits if stats are identical.
+sub filter_top_PAFs {
+    my ($self, @features) = @_;
+
+    my %by_query = ();
+
+    foreach my $f (@features) {
+        push @{$by_query{$f->hit_genome_db_id}{$f->query_member_id}}, $f;
+    };
+
+    foreach my $hit_genome_db_id (keys %by_query) {
+        foreach my $sub_features (values %{$by_query{$hit_genome_db_id}}) {
+            my @pafList = sort sort_by_score_evalue_and_pid @$sub_features;
+            my $rank = 1;
+            my $prevPaf = undef;
+            foreach my $paf (@pafList) {
+                $rank++ if($prevPaf and !pafs_equal($prevPaf, $paf));
+                $paf->hit_rank($rank);
+                $prevPaf = $paf;
+            }
+            my @topPAFs = grep {$_->hit_rank == 1} @pafList;
+            unshift @topPAFs, 0;
+            $self->store_PAFS(@topPAFs);
+        }
+    }
+}
 
 ## WARNING: all the features are supposed to come from the same query_genome_db_id !
 sub store_PAFS {
@@ -348,8 +376,16 @@ sub store_PAFS {
 
   return unless(@features);
 
-  # Query genome db id should always be the same
-  my $first_qgenome_db_id = $features[0]->query_genome_db_id;
+  # Tweaking the system to prevent PAF table per query genome db
+  # following a sneaky unshift from filter_top_PAFS
+  my $first_qgenome_db_id = "";
+  if ($features[0] == 0) {
+    shift @features;
+  }
+  else {
+    # Query genome db id should always be the same
+    $first_qgenome_db_id = $features[0]->query_genome_db_id;
+  }
 
   my $tbl_name = 'peptide_align_feature';
   if ($first_qgenome_db_id){
