@@ -47,7 +47,6 @@ sub fetch_input {
     throw "Cannot have both species_list and a species_list_file specified" if $species_list && $species_file;
     if ( $species_list ) {
         $self->param( 'species' => \@$species_list );
-        print Dumper $species_list;
     }
     elsif ( $species_file ) {
         open ( my $f, "<", $species_file ) or die "Cannot open production list of species $!";
@@ -61,6 +60,12 @@ sub write_output {
     my $self = shift;
 
     $self->SUPER::write_output();
+    my @species = @{$self->param('species')};
+    $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
+        'param_name' => 'species_list',
+        'param_value' => \@species,
+    );
+    $self->dataflow_output_id( {}, 8);
 
 }
 

@@ -178,42 +178,25 @@ sub core_pipeline_analyses {
 
     return [
 
-        {   -logic_name => 'backbone_fire_prepare_species',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -input_ids  => [ { } ],
-            -flow_into  => {
-                '1->A' => [ 'core_species_factory' ],
-                'A->1' => [ 'backbone_fire_db_prepare' ],
+        {   -logic_name      => 'core_species_factory',
+            -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SpeciesFactory',
+            -max_retry_count => 1,
+            -input_ids       => [{
+                'registry_file'      => $self->o('registry_file'),
+                'species_list'       => $self->o('species_list'),
+                'species_list_file'  => $self->o('species_list_file'),
+            },],
+            -flow_into       => {
+                8 => [ 'backbone_fire_db_prepare' ],
             },
+            -hive_capacity   => 1,
         },
 
         {   -logic_name => 'backbone_fire_db_prepare',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A'  => [ 'copy_ncbi_tables_factory' ],
-                'A->1'  => [ 'backbone_fire_blast' ],
-            },
-        },
-
-        {   -logic_name      => 'core_species_factory',
-            -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SpeciesFactory',
-            -max_retry_count => 1,
-            -parameters      => {
-                'registry_file'      => $self->o('registry_file'),
-                'species_list'       => $self->o('species_list'),
-                'species_list_file'  => $self->o('species_list_file'),
-            },
-            -flow_into       => {
-                2 => [ '?accu_name=species_list&accu_address=[]&accu_input_variable=species' ],
-            },
-            -hive_capacity   => 1,
-        },
-
-        {   -logic_name => 'backbone_fire_blast',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into     => {
-                '1->A' => [ 'diamond_factory' ],
-                'A->1' => [ 'do_something_with_paf_table' ],
+                'A->1'  => [ 'diamond_factory' ],
             },
         },
 
@@ -225,13 +208,19 @@ sub core_pipeline_analyses {
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into     => {
-                '2' => [ 'diamond_blastp' ],
+                '2' => [ 'diamond_blastp', 'parse_paf_for_rbbh' ],
                 '1' => [ 'make_query_blast_db' ],
             },
         },
 
-        {   -logic_name => 'do_something_with_paf_table',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        {   -logic_name => 'parse_paf_for_rbbh',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::ParsePAFforBHs',
+            -wait_for   => [
+                'diamond_blastp',
+                'diamond_blastp_ref_to_query',
+                'diamond_blastp_himem',
+                'diamond_blastp_ref_to_query_himem',
+            ]
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::LoadCoreMembers::pipeline_analyses_copy_ncbi_and_core_genome_db($self) },
