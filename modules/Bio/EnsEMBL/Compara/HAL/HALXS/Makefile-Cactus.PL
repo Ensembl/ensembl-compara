@@ -27,7 +27,7 @@ my $sonLib = "$cactus/submodules/sonLib";
 my $hdf5 = "";
 
 if (-d "$cactus/submodules/hdf5" ){
-  $hdf5 = "-L$cactus/submodules/hdf5/lib";
+    $hdf5 = "-L$cactus/submodules/hdf5/lib";
 }
 
 print "! Using progressiveCactus installation at $cactus\n";
