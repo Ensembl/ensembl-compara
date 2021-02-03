@@ -18,8 +18,8 @@ use 5.014002;
 use ExtUtils::MakeMaker;
 
 # Version of Makefile.pl that assumes that all the dependencies can be found via an installation of progressiveCactus
-my $cactus = $ARGV[0] || $ENV{PROGRESSIVE_CACTUS_DIR};
-die "The path to the progressiveCactus installation must be provided, either on the command-line or via the environment PROGRESSIVE_CACTUS_DIR" unless $cactus;
+my $cactus = $ARGV[0] || $ENV{CACTUS_DIR};
+die "The path to the progressiveCactus installation must be provided, either on the command-line or via the environment CACTUS_DIR" unless $cactus;
 
 
 my $hal = "$cactus/submodules/hal";
@@ -30,7 +30,7 @@ if (-d "$cactus/submodules/hdf5" ){
     $hdf5 = "-L$cactus/submodules/hdf5/lib";
 }
 
-print "! Using progressiveCactus installation at $cactus\n";
+print "! Using Cactus installation at $cactus\n";
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 WriteMakefile(

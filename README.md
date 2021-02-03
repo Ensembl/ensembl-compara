@@ -76,7 +76,7 @@ Now, we need to set up the Compara API:
 	perl Makefile-Cactus.PL path/to/cactus
 	make
 
-If you have the `PROGRESSIVE_CACTUS_DIR` environment variable defined, you can skip `path/to/cactus` on the Makefile command-line, e.g.:
+If you have the `CACTUS_DIR` environment variable defined, you can skip `path/to/cactus` on the Makefile command-line, e.g.:
 
 	cd ensembl-compara/src/perl/xs/HALXS
 	perl Makefile-Cactus.PL
