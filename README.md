@@ -27,7 +27,7 @@ dependencies](https://github.com/Ensembl/ensembl/blob/release/102/cpanfile) and
 
 ### API to access HAL alignments from Cactus
 
-If working with HAL files, additional setup is required. There are several ways. of installing the dependencies, depending on which version of Cactus you are using: progressive-Cactus (old name) or Cactus (new name)
+If working with HAL files, additional setup is required. There are several ways of installing the dependencies, depending on which version of Cactus you are using: progressive-Cactus (old name) or Cactus (new name).
 
 #### Complete installation of progressive-Cactus (old version)
 
