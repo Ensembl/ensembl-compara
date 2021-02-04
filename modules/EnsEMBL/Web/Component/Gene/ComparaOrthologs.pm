@@ -159,8 +159,9 @@ sub content {
       my $species_selected = $set eq 'all' ? 'checked="checked"' : ''; # select all species by default
 
       my $none_title = $set_info->{'none'} ? sprintf('<a href="#list_no_ortho">%d</a>', $set_info->{'none'}) : 0;
+      my $total = $set_info->{'all'} || 0;
       push @rows, {
-        'set'       => "<strong>$set_info->{'title'}</strong> (<i>$set_info->{'all'} species</i>)<br />$set_info->{'desc'}",
+        'set'       => "<strong>$set_info->{'title'}</strong> (<i>$total species</i>)<br />$set_info->{'desc'}",
         'show'      => qq{<input type="checkbox" class="table_filter" title="Check to show these species in table below" name="orthologues" value="$set" $species_selected />},
         '1:1'       => $set_info->{'1-to-1'}       || 0,
         '1:many'    => $set_info->{'1-to-many'}    || 0,
