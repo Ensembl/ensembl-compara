@@ -92,7 +92,7 @@ sub write_output {
             # Obtain the diamond indexed file for the reference, this is the only file we need from
             # each reference at this point
             my $ref_dmnd_path = $ref->{'ref_dmnd'};
-            for ( my $i = 0; $i < @$query_members; $i+=$step ) {
+            for ( my $i = 0; $i < @$query_members; $i+=($step+1) ) {
                 my @job_list = @$query_members[$i..$i+$step];
                 my @job_array  = grep { defined && m/[^\s]/ } @job_list; # because the array is very rarely going to be exactly divisible by $step
                 # A job is output for every $step query members against each reference diamond db
