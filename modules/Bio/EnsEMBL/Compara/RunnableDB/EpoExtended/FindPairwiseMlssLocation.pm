@@ -86,6 +86,8 @@ sub write_output {
 
     my $mlss_location = $self->param('mlss_location');
     $self->add_or_update_pipeline_wide_parameter('pairwise_mlss_location', stringify($mlss_location));
+    # give hive some time to store the param (downstram analysis was claiming it wasn't there)
+    sleep(30);
 }
 
 
