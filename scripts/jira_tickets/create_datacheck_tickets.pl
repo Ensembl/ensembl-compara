@@ -93,9 +93,8 @@ pod2usage(1) if $help;
 pod2usage(1) unless @ARGV;
 my $dc_file = $ARGV[0];
 die "Cannot find $dc_file - file does not exist" unless -e $dc_file;
-# Get file absolute path and basename
+# Get file absolute path
 my $dc_abs_path = abs_path($dc_file);
-my $dc_basename = fileparse($dc_abs_path, qr{\.[a-zA-Z0-9_]+$});
 # Get a new Utils::JIRA object to create the tickets for the given division and
 # release
 my $jira_adaptor = Bio::EnsEMBL::Compara::Utils::JIRA->new(-DIVISION => $division, -RELEASE => $release);
@@ -111,7 +110,7 @@ my @json_subtasks;
 foreach my $testcase ( keys %$testcase_failures ) {
     my $failure_subtask_json = {
         summary     => "Datacheck $testcase failed",
-        description => $testcase_failures->{$testcase},
+        description => "*TAP file*: $dc_abs_path\n" . $testcase_failures->{$testcase},
         parent      => $merge_ticket_key,
     };
     push(@json_subtasks, $failure_subtask_json);
@@ -142,6 +141,8 @@ sub parse_datachecks {
     while (my $line = <$dc_fh>) {
         # Remove any spaces/tabs at the end of the line
         $line =~ s/\s+$//;
+        next unless $line;
+
         # Get the main test name
         if ($line =~ /^# Subtest: (\w+)$/) {
             $test = $1;
