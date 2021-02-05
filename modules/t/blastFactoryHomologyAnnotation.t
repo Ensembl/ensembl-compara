@@ -40,7 +40,7 @@ my $ref_dba = $ref_multi_db->get_DBAdaptor('compara');
 my $ref_dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $ref_dba->dbc);
 my $ref_db = $ref_dbc->url;
 
-$multi_db->restore('compara', 'genome_db');
+#$multi_db->restore('compara', 'genome_db');
 
 # Species fasta inputfile
 my $ref_dump_dir = abs_path($0);
@@ -49,13 +49,11 @@ $ref_dump_dir    =~ s!blastFactoryHomologyAnnotation\.t!homology_annotation_dirs
 # Expected dataflow output
 my $exp_dataflow_1 = {
     'member_id_list' => [ 1, 2, 3, 4, 5 ],
-    'mlss_id' => 20001,
-    'all_blast_db' => "$ref_dump_dir/homo_sapiens.GRCh38.2019-06.dmnd",
+    'blast_db' => "$ref_dump_dir/homo_sapiens.GRCh38.2019-06.dmnd",
 };
 my $exp_dataflow_2 = {
     'member_id_list' => [ 6, 7, 8, 9 ],
-    'mlss_id' => 20001,
-    'all_blast_db' => "$ref_dump_dir/homo_sapiens.GRCh38.2019-06.dmnd",
+    'blast_db' => "$ref_dump_dir/homo_sapiens.GRCh38.2019-06.dmnd",
 };
 my $exp_dataflow_3 = {
     'genome_db_id' => 135,

@@ -1,1 +1,0 @@
-20001	204	1	canis_lupus_familiaris homologues	ensembl	\N	80	\N

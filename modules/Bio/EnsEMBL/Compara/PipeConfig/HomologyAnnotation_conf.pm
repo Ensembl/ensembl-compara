@@ -98,7 +98,7 @@ sub default_options {
 
         # DIAMOND runnable parameters
         'num_sequences_per_blast_job' => 200,
-        'blast_params'                => '--threads 4 -b1 -c1 --top 20 --dbsize 1000000 --sensitive',
+        'blast_params'                => '--threads 4 -b1 -c1 --top 10 --dbsize 1000000 --sensitive',
         'evalue_limit'                => '1e-5',
 
         # Set hybrid registry file that both metadata production and compara understand
