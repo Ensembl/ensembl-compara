@@ -49,6 +49,7 @@ package Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 use DBI qw(:sql_types);
 
 use Bio::EnsEMBL::Compara::PeptideAlignFeature;
+use Bio::EnsEMBL::Compara::Utils::Database qw/ table_exists /;
 use Bio::EnsEMBL::Utils::Exception;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
@@ -364,7 +365,6 @@ sub filter_top_PAFs {
                 $prevPaf = $paf;
             }
             my @topPAFs = grep {$_->hit_rank == 1} @pafList;
-            unshift @topPAFs, 0;
             $self->store_PAFS(@topPAFs);
         }
     }
@@ -376,22 +376,14 @@ sub store_PAFS {
 
   return unless(@features);
 
-  # Tweaking the system to prevent PAF table per query genome db
-  # following a sneaky unshift from filter_top_PAFS
-  my $first_qgenome_db_id = "";
-  if ($features[0] == 0) {
-    shift @features;
-  }
-  else {
-    # Query genome db id should always be the same
-    $first_qgenome_db_id = $features[0]->query_genome_db_id;
-  }
+    # Tweaking the system to prevent PAF table per query genome db
+    my $tbl_name = 'peptide_align_feature';
 
-  my $tbl_name = 'peptide_align_feature';
-  if ($first_qgenome_db_id){
-  	my $gdb = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($first_qgenome_db_id);
-  	$tbl_name .= "_$first_qgenome_db_id";
-  }
+    my $first_qgenome_db_id = $features[0]->query_genome_db_id;
+    if ( table_exists($self->dbc, 'peptide_align_feature_' . $first_qgenome_db_id ) ) {
+        # Query genome db id should always be the same
+        $tbl_name .= "_$first_qgenome_db_id";
+    }
 
   my @stored_columns = qw(qmember_id hmember_id qgenome_db_id hgenome_db_id qstart qend hstart hend score evalue align_length identical_matches perc_ident positive_matches perc_pos hit_rank cigar_line);
   my $query = sprintf('INSERT INTO %s (%s) VALUES (%s)', $tbl_name, join(',', @stored_columns), join(',', map {'?'} @stored_columns) );
@@ -486,7 +478,13 @@ sub displayHSP_short {
 sub _tables {
   my $self = shift;
 
-  return (['peptide_align_feature_'.$self->{_curr_gdb_id}, 'paf'] );
+  # sometimes paf is not genome specific
+  if ( table_exists( $self->dbc, 'peptide_align_feature_' . $self->{_curr_gdb_id} ) ) {
+    return (['peptide_align_feature_' .$self->{_curr_gdb_id}, 'paf'] );
+  }
+  else {
+      return (['peptide_align_feature', 'paf'] );
+  }
 }
 
 sub _columns {
@@ -613,7 +611,7 @@ sub fetch_all_by_dbID_list {
   Arg [2]    : genome_db_id of hit species
   Example    : $paf = $adaptor->fetch_BRH_by_member_genomedb(31957, 3);
   Description: Returns the PeptideAlignFeature created from the database
-               This is the old algorithm for pulling BRHs (compara release 20-23)
+               This is a renovated (rapid release) algorithm for pulling BRHs
   Returntype : array reference of Bio::EnsEMBL::Compara::PeptideAlignFeature objects
   Exceptions : none
   Caller     : general
@@ -621,31 +619,71 @@ sub fetch_all_by_dbID_list {
 =cut
 
 
-sub fetch_BRH_by_member_genomedb
-{
-  # using trick of specifying table twice so can join to self
-  my $self             = shift;
-  my $qmember_id       = shift;
-  my $hit_genome_db_id = shift;
+sub fetch_BRH_by_member_genomedb {
+    my $self             = shift;
+    my $qmember_id       = shift;
+    my $hit_genome_db_id = shift;
 
-  #print(STDERR "fetch_all_RH_by_member_genomedb qmember_id=$qmember_id, genome_db_id=$hit_genome_db_id\n");
-  return unless($qmember_id and $hit_genome_db_id);
+    return unless($qmember_id and $hit_genome_db_id);
+    my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
-  my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
+    # using trick of specifying table twice so can join to self
+    my $extrajoin;
+    my $constraint = "paf.hit_rank=1 AND paf2.hit_rank=1 AND paf.qmember_id=? AND paf.hgenome_db_id=?";
+    $self->{_curr_gdb_id} = $member->genome_db_id;
+    # dependent on whether peptide_align_feature is a table specific to query/hit genome
+    if ( table_exists( $self->dbc, 'peptide_align_feature_' . $hit_genome_db_id ) ) {
+        $extrajoin = [
+            [ ['peptide_align_feature_' . $hit_genome_db_id, 'paf2'],
+            'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
+            {'paf2.peptide_align_feature_id AS pafid2' => '_rhit_dbID'} ]
+        ];
+    }
+    # peptide_align_feature is a single table shared amongst one or more genomes
+    else {
+        $extrajoin = [
+            [ ['peptide_align_feature', 'paf2'],
+            'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
+            {'paf2.peptide_align_feature_id AS pafid2' => '_rhit_dbID'} ]
+        ];
+    }
+    $self->bind_param_generic_fetch($qmember_id, SQL_INTEGER);
+    $self->bind_param_generic_fetch($hit_genome_db_id, SQL_INTEGER);
+    # exact match duplicates acceptable, we want all the BRHs
+    return $self->generic_fetch($constraint, $extrajoin);
 
-  $self->{_curr_gdb_id} = $member->genome_db_id;
+}
 
-   my $extrajoin = [
-                     [ ['peptide_align_feature_'.$hit_genome_db_id, 'paf2'],
-                       'paf.qmember_id=paf2.hmember_id AND paf.hmember_id=paf2.qmember_id',
-                       {'paf2.peptide_align_feature_id AS pafid2' => '_rhit_dbID'}]
-                   ];
 
-   my $constraint = "paf.hit_rank=1 AND paf2.hit_rank=1 AND paf.qmember_id=? AND paf.hgenome_db_id=?";
-  $self->bind_param_generic_fetch($qmember_id, SQL_INTEGER);
-  $self->bind_param_generic_fetch($hit_genome_db_id, SQL_INTEGER);
+=head2 fetch_BBH_by_member_genomedb
 
-  return $self->generic_fetch_one($constraint, $extrajoin);
+  Arg [1]    : seq_member_id of query peptide member
+  Arg [2]    : genome_db_id of hit species
+  Example    : $paf = $adaptor->fetch_BBH_by_member_genomedb(31957, 3);
+  Description: Returns the top ranked PeptideAlignFeature from the database
+  Returntype : array reference of Bio::EnsEMBL::Compara::PeptideAlignFeature objects
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+
+sub fetch_BBH_by_member_genomedb {
+    my $self             = shift;
+    my $qmember_id       = shift;
+    my $hit_genome_db_id = shift;
+
+    return unless($qmember_id and $hit_genome_db_id);
+
+    my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
+    my $qgenome_db_id = $member->genome_db_id;
+    $self->{_curr_gdb_id} = $member->genome_db_id;
+
+    my $constraint = "paf.hit_rank=1 AND paf.qmember_id=? AND paf.hgenome_db_id=?";
+    $self->bind_param_generic_fetch($qmember_id, SQL_INTEGER);
+    $self->bind_param_generic_fetch($hit_genome_db_id, SQL_INTEGER);
+
+    return $self->generic_fetch($constraint);
 }
 
 

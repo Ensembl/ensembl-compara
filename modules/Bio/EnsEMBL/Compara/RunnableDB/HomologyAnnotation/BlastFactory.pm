@@ -101,7 +101,7 @@ sub write_output {
                 my @job_list = @$query_members[$i..$i+$step];
                 my @job_array  = grep { defined && m/[^\s]/ } @job_list; # because the array is very rarely going to be exactly divisible by $step
                 # A job is output for every $step query members against each reference diamond db
-                my $output_id = { 'member_id_list' => \@job_array, 'mlss_id' => $mlss_id, 'blast_db' => $ref_dmnd_path, 'genome_db_id' => $genome_db_id, 'target_genome_db_id' => $ref->{'ref_gdb'}->dbID };
+                my $output_id = { 'member_id_list' => \@job_array, 'mlss_id' => $mlss_id, 'blast_db' => $ref_dmnd_path, 'genome_db_id' => $genome_db_id, 'target_genome_db_id' => $ref->{'ref_gdb'}->dbID, 'ref_taxa' => $ref_taxa };
                 $self->dataflow_output_id($output_id, 2);
             }
         }

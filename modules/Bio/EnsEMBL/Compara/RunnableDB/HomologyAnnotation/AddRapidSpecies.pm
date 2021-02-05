@@ -41,7 +41,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
         'force'        => 1,
-        'hard_limit'   => 50,
+        'hard_limit'   => 100,
         'release'      => 1,
         'skip_dna'     => 1,
     };

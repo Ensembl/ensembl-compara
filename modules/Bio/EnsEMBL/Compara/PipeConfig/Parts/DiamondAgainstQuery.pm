@@ -56,6 +56,7 @@ sub pipeline_analyses_diamond_against_query {
 
         {   -logic_name    => 'ref_from_fasta_factory',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::RefFromFastaFactory',
+            -priority      => 1,
             -flow_into     => {
                 '2' => [ 'diamond_blastp_ref_to_query' ],
             },

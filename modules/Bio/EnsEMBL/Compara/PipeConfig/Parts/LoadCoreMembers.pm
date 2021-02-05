@@ -39,9 +39,9 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
     my ($self) = @_;
 
     my %hc_analysis_params = (
-            -analysis_capacity  => 150,
-            -priority           => -10,
-            -batch_size         => 20,
+        -analysis_capacity  => 150,
+        -priority           => -10,
+        -batch_size         => 20,
     );
 
     return [
@@ -53,7 +53,7 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
                 'column_names' => [ 'table' ],
             },
             -flow_into  => {
-                '2->A' => [ 'copy_ncbi_table'  ],
+                '2->A' => [ 'copy_ncbi_table' ],
                 'A->1' => [ 'locate_and_add_genomes' ],
             },
         },
@@ -72,7 +72,7 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
             -hive_capacity => 10,
             -rc_name       => '16Gb_job',
             -flow_into     => {
-                1 => [ 'load_query_genomedb_factory', 'insert_method_link' ],
+                1 => [ WHEN ( '#initialised#' => 'insert_method_link', ), 'load_query_genomedb_factory' ],
                 2 => { 'create_homology_mlss' => { 'species_set_name' => '#species_name#', 'genome_db_id' => '#genome_db_id#' } },
             },
         },
@@ -80,7 +80,7 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
         {   -logic_name    => 'insert_method_link',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters    => {
-                'sql' => "INSERT INTO method_link VALUES ('204', 'ENSEMBL_HOMOLOGUES', 'Homology.homology', 'homologues')"
+                'sql' => "INSERT IGNORE INTO method_link VALUES ('204', 'ENSEMBL_HOMOLOGUES', 'Homology.homology', 'homologues')"
             },
         },
 

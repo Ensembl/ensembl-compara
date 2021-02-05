@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 # regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +40,8 @@ my $ref_dba = $ref_multi_db->get_DBAdaptor('compara');
 my $ref_dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $ref_dba->dbc);
 my $ref_db = $ref_dbc->url;
 
+$multi_db->restore('compara', 'genome_db');
+
 # Species fasta inputfile
 my $ref_dump_dir = abs_path($0);
 $ref_dump_dir    =~ s!blastFactoryHomologyAnnotation\.t!homology_annotation_dirs!;
@@ -66,7 +69,7 @@ standaloneJob(
         'compara_db'    => $compara_db,
         'step'          => 5,
         'rr_ref_db'     => $ref_db,
-        'ref_dumps_dir' => $ref_dump_dir,
+        'ref_dump_dir'  => $ref_dump_dir,
     },
     # Output
     [
