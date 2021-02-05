@@ -305,12 +305,11 @@ sub pipeline_create_commands_rm_mkdir {
 =head2 pipeline_create_commands_lfs_setstripe
 
   Arg[1]      : Arrayef of variable names
-  Arg[2]      : (optional) username to become
   Example     : $self->pipeline_create_commands_lfs_setstripe('fasta_dir');
   Description : Helper method to build the commands necessary to stripe a Lustre
                 filesystem (if on Lustre). The directories come from calling
                 $self->o() on the variable names.
-                Optionally, the commands will be prefixed with "become" if the
+                The commands will be prefixed with "become <owner>" if the
                 directory belongs to another user.
   Returntype  : List of strings (commands)
   Exceptions  : none
