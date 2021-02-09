@@ -658,7 +658,8 @@ sub _expand_database_templates {
       else {
         ## Ignore this step for MULTI, as it may not have a core db
         unless ($filename eq 'MULTI') {
-          print STDERR "\t  [WARN] CORE DATABASE NOT FOUND - looking for '$db_name'\n" if $_ eq 'CORE';
+          my $db_string = $db_name.'@'.$db_details->{'HOST'};
+          print STDERR "\t  [WARN] CORE DATABASE NOT FOUND - looking for '$db_string'\n" if $_ eq 'CORE';
           $self->_info_line('Databases', "-- database $db_name not available") if $SiteDefs::ENSEMBL_WARN_DATABASES;
         }
       }
@@ -868,14 +869,11 @@ sub _parse {
     ## Need to gather strain info for all species
     $config_packer->tree->{'STRAIN_GROUP'} = undef if $SiteDefs::NO_STRAIN_GROUPS;
     my $strain_group = $config_packer->tree->{'STRAIN_GROUP'};
-    my $strain_name = $config_packer->tree->{'SPECIES_STRAIN'};
-    my $species_key = $config_packer->tree->{'SPECIES_URL'}; ## Key on actual URL, not production name
-    if ($strain_group && $strain_name !~ /reference/) {
-      if ($species_to_strains->{$strain_group}) {
+    if ($strain_group) {
+      my $species_key = $config_packer->tree->{'SPECIES_URL'}; ## Key on actual URL, not production name
+      my $not_reference = $strain_group eq $species ? 0 : 1; 
+      if ($not_reference) {
         push @{$species_to_strains->{$strain_group}}, $species_key;
-      }
-      else {
-        $species_to_strains->{$strain_group} = [$species_key];
       }
     }
   }
