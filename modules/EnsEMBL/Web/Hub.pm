@@ -346,8 +346,6 @@ sub get_species_info {
     for (@required_species) {
       my $strain        = $species_defs->get_config($_, 'SPECIES_STRAIN') || '';
       my $strain_group  = $species_defs->get_config($_, 'STRAIN_GROUP') || '';
-      my $is_reference  = !$strain || !$strain_group
-                            || ($strain && $strain_group eq $species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME'));
                                
       $self->{'_species_info'}{$_} = {
         'key'               => $_,
@@ -363,7 +361,7 @@ sub get_species_info {
         'image'             => $species_defs->get_config($_, 'SPECIES_IMAGE') 
                                 || $species_defs->get_config($_, 'SPECIES_URL'),
         'strain'            => $strain,
-        'is_reference'      => $is_reference,
+        'is_reference'      => $species_defs->get_config($_, 'IS_REFERENCE'),
         'strain_group'      => $strain_group,
         'strain_type'       => $species_defs->get_config($_, 'STRAIN_TYPE'),
       } unless exists $self->{'_species_info'}{$_};
