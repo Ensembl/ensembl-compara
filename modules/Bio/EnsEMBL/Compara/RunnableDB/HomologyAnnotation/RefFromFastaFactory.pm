@@ -39,6 +39,7 @@ use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector qw/ collect_species_set_dirs /;
 use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -47,9 +48,9 @@ sub fetch_input {
     my $self = shift;
 
     my $ref_dba       = $self->param_required('rr_ref_db');
-    my $ref_dump_dir  = $self->param_required('ref_dumps_dir');
+    my $ref_dump_dir  = $self->param_required('ref_dump_dir');
     my $ref_taxa      = $self->param('ref_taxa') ? $self->param('ref_taxa') : 'default';
-    my $ref_dir_paths = collect_species_set_dirs($ref_dba, $ref_taxa);
+    my $ref_dir_paths = collect_species_set_dirs($ref_dba, $ref_taxa, $ref_dump_dir);
     my @all_paths;
 
     foreach my $ref_gdb_dir ( @$ref_dir_paths ) {
@@ -58,7 +59,7 @@ sub fetch_input {
         my $ref_splitfa  = $ref_gdb_dir->{'ref_splitfa'};
         my @ref_splitfas = glob($ref_splitfa . "/*.fasta");
 
-        push @all_paths, { 'ref_gdb_id' => $ref_gdb_id, 'ref_splitfa' => \@ref_splitfas, '' };
+        push @all_paths, { 'ref_gdb_id' => $ref_gdb_id, 'ref_splitfa' => \@ref_splitfas, 'target_genome_db_id' => $self->param('genome_db_id') };
     }
 
     $self->param('ref_fasta_files', \@all_paths);
@@ -73,8 +74,9 @@ sub write_output {
     foreach my $ref ( @$ref_members ) {
         my $ref_gdb_id     = $ref->{'ref_gdb_id'};
         my $ref_fasta_file = $ref->{'ref_splitfa'};
+
         foreach my $ref_fasta ( @$ref_fasta_file ) {
-            $self->dataflow_output_id( { 'ref_fasta' => $ref_fasta, 'genome_db_id' => $ref_gdb_id, 'blast_db' => $query_db_name }, 2 );
+            $self->dataflow_output_id( { 'ref_fasta' => $ref_fasta, 'genome_db_id' => $ref_gdb_id, 'blast_db' => $query_db_name, 'target_genome_db_id' => $ref->{'target_genome_db_id'} }, 2 );
         }
     }
 }

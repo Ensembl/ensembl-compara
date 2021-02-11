@@ -34,8 +34,6 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;;
 use List::Util;
-use Data::Dumper;
-$Data::Dumper::Maxdepth=1;
 
 our %EXPORT_TAGS;
 our @EXPORT_OK;

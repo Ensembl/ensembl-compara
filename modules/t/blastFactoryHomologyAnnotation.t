@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 # regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +35,7 @@ my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $dba->dbc);
 my $compara_db = $dbc->url;
 
 my $ref_multi_db = Bio::EnsEMBL::Test::MultiTestDB->new('test_ref_compara');
-$ref_multi_db->restore(); # incase other tests have changed this db
+
 my $ref_dba = $ref_multi_db->get_DBAdaptor('compara');
 my $ref_dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $ref_dba->dbc);
 my $ref_db = $ref_dbc->url;
@@ -43,20 +44,43 @@ my $ref_db = $ref_dbc->url;
 my $ref_dump_dir = abs_path($0);
 $ref_dump_dir    =~ s!blastFactoryHomologyAnnotation\.t!homology_annotation_dirs!;
 
+# Shared parameters
+my $ref_taxa   = 'collection-mammalia';
+my $blast_db_1 = "$ref_dump_dir/homo_sapiens.GRCh38.2019-06.dmnd";
+my $blast_db_2 = "$ref_dump_dir/rattus_norvegicus.RGSC3.4.2009-03-Ensembl.dmnd";
+
 # Expected dataflow output
 my $exp_dataflow_1 = {
-    'member_id_list' => [ 1, 2, 3, 4, 5 ],
-    'mlss_id' => 20001,
-    'all_blast_db' => "$ref_dump_dir/homo_sapiens.GRCh38.2019-06.dmnd",
+    'member_id_list'      => [ 1, 2, 3, 4, 5 ],
+    'genome_db_id'        => 135,
+    'target_genome_db_id' => 1,
+    'ref_taxa'            => $ref_taxa,
+    'blast_db'            => $blast_db_1,
 };
 my $exp_dataflow_2 = {
-    'member_id_list' => [ 6, 7, 8, 9 ],
-    'mlss_id' => 20001,
-    'all_blast_db' => "$ref_dump_dir/homo_sapiens.GRCh38.2019-06.dmnd",
+    'member_id_list'      => [ 6, 7, 8, 9 ],
+    'genome_db_id'        => 135,
+    'target_genome_db_id' => 1,
+    'ref_taxa'            => $ref_taxa,
+    'blast_db'            => $blast_db_1,
 };
 my $exp_dataflow_3 = {
+    'member_id_list'      => [ 1, 2, 3, 4, 5 ],
+    'genome_db_id'        => 135,
+    'target_genome_db_id' => 3,
+    'ref_taxa'            => $ref_taxa,
+    'blast_db'            => $blast_db_2,
+};
+my $exp_dataflow_4 = {
+    'member_id_list'      => [ 6, 7, 8, 9 ],
+    'genome_db_id'        => 135,
+    'target_genome_db_id' => 3,
+    'ref_taxa'            => $ref_taxa,
+    'blast_db'            => $blast_db_2,
+};
+my $exp_dataflow_5 = {
     'genome_db_id' => 135,
-    'ref_taxa' => 'collection-mammalia',
+    'ref_taxa'     => $ref_taxa,
 };
 # Run standalone
 standaloneJob(
@@ -64,9 +88,9 @@ standaloneJob(
     # Input parameters
     {
         'compara_db'    => $compara_db,
-        'step'          => 5,
+        'step'          => 4,
         'rr_ref_db'     => $ref_db,
-        'ref_dumps_dir' => $ref_dump_dir,
+        'ref_dump_dir'  => $ref_dump_dir,
     },
     # Output
     [
@@ -83,11 +107,16 @@ standaloneJob(
         [
             'DATAFLOW',
             $exp_dataflow_3,
-            1
+            2
         ],
         [
             'DATAFLOW',
-            $exp_dataflow_3,
+            $exp_dataflow_4,
+            2
+        ],
+        [
+            'DATAFLOW',
+            $exp_dataflow_5,
             1
         ],
     ]

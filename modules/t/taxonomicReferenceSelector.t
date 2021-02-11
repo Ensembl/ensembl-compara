@@ -22,7 +22,6 @@ use Test::Exception;
 use Cwd 'abs_path';
 use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector;
-use Data::Dumper;
 
 use_ok('Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector');
 

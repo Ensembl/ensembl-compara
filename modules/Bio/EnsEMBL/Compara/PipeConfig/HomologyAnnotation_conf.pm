@@ -48,11 +48,11 @@ sub default_options {
 
         # Directories to write to
         'work_dir'     => $self->o('pipeline_dir'),
-        'fasta_dir'    => $self->o('work_dir') . '/fasta/',
-        'query_db_dir' => $self->o('work_dir') . '/query_diamond_db/',
         'dump_path'    => $self->o('work_dir'),
         # Directories the reference genome pipeline dumps to
-        'ref_dump_dir' => $self->o('ref_members_dumps_dir'),
+        'ref_dump_dir' => $self->o('ref_member_dumps_dir'),
+        # Directory for diamond and fasta files for query genome
+        'members_dumps_dir' => $self->o('dump_path'),
 
         # Set mandatory databases
         'compara_db'   => $self->pipeline_url(),
@@ -62,7 +62,6 @@ sub default_options {
         'ncbi_db'      => 'ncbi_taxonomy',
         'rr_ref_db'    => 'rr_ref_master',
         'meta_host'    => 'mysql-ens-meta-prod-1',
-        'rr_meta_db'   => 'rr_metadata',
 
         # Member loading parameters - matches reference genome members
         'include_reference'           => 1,
@@ -99,8 +98,8 @@ sub default_options {
 
         # DIAMOND runnable parameters
         'num_sequences_per_blast_job' => 200,
-        'blast_params'                => '--max-hsps 1 --threads 4 -b1 -c1 --top 20 --dbsize 1000000 --sensitive',
-        'evalue_limit'                => '1e-10',
+        'blast_params'                => '--threads 4 -b1 -c1 --top 10 --dbsize 1000000 --sensitive',
+        'evalue_limit'                => '1e-5',
 
         # Set hybrid registry file that both metadata production and compara understand
         'reg_conf'      => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/conf/homology_annotation/production_reg_conf.pl',
@@ -109,6 +108,7 @@ sub default_options {
         # Mandatory species input, one or the other only
         'species_list_file' => undef,
         'species_list'      => [ ],
+        'division'          => 'homology_annotation',
 
     };
 }
@@ -118,7 +118,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # Here we inherit creation of database, hive tables and compara tables
 
-        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'fasta_dir', 'query_db_dir']), # Here we create directories
+        $self->pipeline_create_commands_rm_mkdir(['work_dir']), # Here we create directories
 
     ];
 }
@@ -141,19 +141,17 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
         'master_db'         => $self->o('master_db'),
         'output_db'         => $self->o('output_db'),
         'rr_ref_db'         => $self->o('rr_ref_db'),
-        'rr_meta_db'        => $self->o('rr_meta_db'),
 
         'blast_params'      => $self->o('blast_params'),
         'evalue_limit'      => $self->o('evalue_limit'),
         'diamond_exe'       => $self->o('diamond_exe'),
 
-        'fasta_dir'         => $self->o('fasta_dir'),
-        'members_dumps_dir' => $self->o('fasta_dir'),
-        'query_db_dir'      => $self->o('query_db_dir'),
+        'members_dumps_dir' => $self->o('members_dumps_dir'),
         'ref_dump_dir'      => $self->o('ref_dump_dir'),
         'dump_path'         => $self->o('dump_path'),
 
         'reg_conf'          => $self->o('reg_conf'),
+
     };
 }
 
@@ -181,42 +179,31 @@ sub core_pipeline_analyses {
 
     return [
 
-        {   -logic_name => 'backbone_fire_prepare_species',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -input_ids  => [ { } ],
-            -flow_into  => {
-                '1->A' => [ 'core_species_factory' ],
-                'A->1' => [ 'backbone_fire_db_prepare' ],
+        {   -logic_name      => 'core_species_factory',
+            -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SpeciesFactory',
+            -max_retry_count => 1,
+            -input_ids       => [{
+                'registry_file'      => $self->o('registry_file'),
+                'species_list'       => $self->o('species_list'),
+                'species_list_file'  => $self->o('species_list_file'),
+            },],
+            -flow_into       => {
+                8 => [
+                    'backbone_fire_db_prepare',
+                    { '?table_name=pipeline_wide_parameters' => { 'param_name' => 'initialised', 'param_value' => 1, 'insertion_method' => 'INSERT_IGNORE' } },
+                     ],
             },
+            -hive_capacity   => 1,
         },
 
         {   -logic_name => 'backbone_fire_db_prepare',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A'  => [ 'copy_ncbi_tables_factory' ],
-                'A->1'  => [ 'backbone_fire_blast' ],
-            },
-        },
-
-        {   -logic_name      => 'core_species_factory',
-            -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SpeciesFactory',
-            -max_retry_count => 1,
-            -parameters      => {
-                'registry_file'      => $self->o('registry_file'),
-                'species_list'       => $self->o('species_list'),
-                'species_list_file'  => $self->o('species_list_file'),
-            },
-            -flow_into       => {
-                2 => [ '?accu_name=species_list&accu_address=[]&accu_input_variable=species' ],
-            },
-            -hive_capacity   => 1,
-        },
-
-        {   -logic_name => 'backbone_fire_blast',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into     => {
-                '1->A' => [ 'diamond_factory' ],
-                'A->1' => [ 'do_something_with_paf_table' ],
+                '1->A'  => WHEN (
+                            '#initialised#' => [ 'locate_and_add_genomes' ],
+                            ELSE                         [ 'copy_ncbi_tables_factory' ],
+                ),
+                'A->1'  => [ 'diamond_factory' ],
             },
         },
 
@@ -228,13 +215,14 @@ sub core_pipeline_analyses {
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into     => {
-                '2' => [ 'diamond_blastp' ],
-                '1' => [ 'make_query_blast_db' ],
+                '2->A' => [ 'diamond_blastp', { 'make_query_blast_db' => { 'genome_db_id' => '#genome_db_id#', 'ref_taxa' => '#ref_taxa#' } } ],
+                'A->2' => { 'parse_paf_for_rbbh' => { 'genome_db_id' => '#genome_db_id#', 'target_genome_db_id' => '#target_genome_db_id#', }  },
             },
         },
 
-        {   -logic_name => 'do_something_with_paf_table',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        {   -logic_name => 'parse_paf_for_rbbh',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::ParsePAFforBHs',
+            -rc_name    => '1Gb_job',
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::LoadCoreMembers::pipeline_analyses_copy_ncbi_and_core_genome_db($self) },

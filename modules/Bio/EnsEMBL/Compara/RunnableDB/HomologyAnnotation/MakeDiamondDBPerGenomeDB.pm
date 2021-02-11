@@ -45,7 +45,6 @@ sub run {
     my $genome_db_id  = $self->param_required('genome_db_id');
     my $gdb_adaptor   = $self->compara_dba->get_GenomeDBAdaptor;
     my $genome_db     = $gdb_adaptor->fetch_by_dbID($genome_db_id) or $self->die_no_retry("cannot fetch GenomeDB with id" . $genome_db_id);
-
     my $query_db_name = $fasta_file;
     $query_db_name =~ s/\.fasta$//;
 

@@ -63,14 +63,10 @@ sub fetch_input {
         my $genome_db_id = $genome_db->dbID;
         # Fetch canonical proteins into array
         my $some_members = $self->compara_dba->get_SeqMemberAdaptor->_fetch_all_representative_for_blast_by_genome_db_id($genome_db_id);
-        my @mlsss        = @{$self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type_GenomeDB('ENSEMBL_HOMOLOGUES', $genome_db)};
-        # There should only be one mlss in the pipeline_db for each genome_db - these are generated on the fly
-        # but just in case:
-        $self->warning("There are multiple mlsss for $genome_db ENSEMBL_HOMOLOGUES when we only expect 1") if ( scalar(@mlsss) > 1 );
 
         my @genome_members = map {$_->dbID} @$some_members;
         # Necessary to collect the reference taxonomy because this decides which reference species_set is used
-        push @query_members, { 'genome_db_id' => $genome_db_id, 'mlss_id' => $mlsss[0]->dbID, 'member_ids' => \@genome_members, 'ref_taxa' => match_query_to_reference_taxonomy($genome_db, $ref_master) };
+        push @query_members, { 'genome_db_id' => $genome_db_id, 'member_ids' => \@genome_members, 'ref_taxa' => match_query_to_reference_taxonomy($genome_db, $ref_master) };
     }
 
     $self->param('query_members', \@query_members);
@@ -85,11 +81,10 @@ sub write_output {
     foreach my $genome ( @query_member_list ) {
 
         my $genome_db_id  = $genome->{'genome_db_id'};
-        my $mlss_id       = $genome->{'mlss_id'};
         my $query_members = $genome->{'member_ids'};
         # There is a default species set if a clade specific species set does not exist for a species
         my $ref_taxa      = $genome->{'ref_taxa'} ? $genome->{'ref_taxa'} : "default";
-        my $ref_dump_dir  = $self->param_required('ref_dumps_dir');
+        my $ref_dump_dir  = $self->param_required('ref_dump_dir');
         # Returns all the directories (fasta, split_fasta & diamond pre-indexed db) under all the references
         my $ref_dirs      = collect_species_set_dirs($self->param_required('rr_ref_db'), $ref_taxa, $ref_dump_dir);
 
@@ -97,14 +92,15 @@ sub write_output {
             # Obtain the diamond indexed file for the reference, this is the only file we need from
             # each reference at this point
             my $ref_dmnd_path = $ref->{'ref_dmnd'};
-            while (@$query_members) {
-                my @job_array = splice(@$query_members, 0, $step);
+            for ( my $i = 0; $i < @$query_members; $i+=($step+1) ) {
+                my @job_list = @$query_members[$i..$i+$step];
+                my @job_array  = grep { defined && m/[^\s]/ } @job_list; # because the array is very rarely going to be exactly divisible by $step
                 # A job is output for every $step query members against each reference diamond db
-                my $output_id = { 'member_id_list' => \@job_array, 'mlss_id' => $mlss_id, 'all_blast_db' => $ref_dmnd_path };
+                my $output_id = { 'member_id_list' => \@job_array, 'blast_db' => $ref_dmnd_path, 'genome_db_id' => $genome_db_id, 'target_genome_db_id' => $ref->{'ref_gdb'}->dbID, 'ref_taxa' => $ref_taxa };
                 $self->dataflow_output_id($output_id, 2);
             }
-            $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'ref_taxa' => $ref_taxa }, 1 );
         }
+        $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'ref_taxa' => $ref_taxa }, 1 );
     }
 }
 

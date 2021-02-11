@@ -40,17 +40,23 @@ use strict;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::RunnableDB::BlastAndParsePAF;
 
 use Data::Dumper;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BlastAndParsePAF');
 
 sub param_defaults {
     my ($self) = @_;
     return {
         %{$self->SUPER::param_defaults},
     }
+}
+
+sub fetch_input {
+    my $self = shift;
+
+    my $output_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('output_db') );
+    $self->param('output_dba', $output_dba);
 }
 
 sub run {
@@ -65,13 +71,14 @@ sub run {
     my $cross_pafs = [];
     my $worker_temp_directory = $self->worker_temp_directory;
     my $blast_outfile         = $worker_temp_directory . '/blast.out.' . $$;
+    my $target_genome_db_id   = $self->param('target_genome_db_id');
 
     my $cmd = "$diamond_exe blastp -d $diamond_db --query $ref_fasta --evalue $evalue_limit --out $blast_outfile --outfmt 6 qseqid sseqid evalue score nident pident qstart qend sstart send length positive ppos qseq_gapped sseq_gapped $blast_params";
 
     my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1});
     print "Time for diamond search " . $run_cmd->runtime_msec . " msec\n";
 
-    my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param('genome_db_id'));
+    my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param('genome_db_id'), $target_genome_db_id);
 
     push @$cross_pafs, @$features;
     unlink $blast_outfile unless $self->debug;
@@ -82,10 +89,9 @@ sub run {
 sub write_output {
     my ($self) = @_;
     my $cross_pafs = $self->param('cross_pafs');
-    my $output_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('output_db')) || $self->compara_dba;
 
     $self->call_within_transaction(sub {
-        $self->$output_dba->get_PeptideAlignFeatureAdaptor->rank_and_store_PAFS(@$cross_pafs);
+        $self->param('output_dba')->get_PeptideAlignFeatureAdaptor->filter_top_PAFs(@$cross_pafs);
     });
 }
 
