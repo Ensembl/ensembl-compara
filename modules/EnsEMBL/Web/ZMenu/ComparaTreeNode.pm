@@ -171,7 +171,7 @@ sub content {
         link  => $hub->url({
           species  => $hub->species_defs->production_name_mapping($link_gene->genome_db->name),
           type     => 'Gene',
-          action   => 'Compara_Tree',
+          action   => $hub->referer->{ENSEMBL_ACTION},
           __clear  => 1,
           g        => $link_gene->stable_id,
         })
