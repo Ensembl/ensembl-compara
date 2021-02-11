@@ -35,17 +35,8 @@ my $prev_release = $curr_release - 1;
 
 # ---------------------- CURRENT CORE DATABASES---------------------------------
 
-my $vert_annot = 'mysql://ensro@mysql-ens-vertannot-staging:4573';
-my $staging1   = 'mysql://ensro@mysql-ens-sta-1:4519';
-my $staging1b  = 'mysql://ensro@mysql-ens-sta-1-b:4519';
-my $mirror     = 'mysql://ensro@mysql-ens-mirror-1:4240';
-
 # All the core databases live on the Vertebrates staging server or our mirror
-# Bio::EnsEMBL::Registry->load_registry_from_url("$mirror/100");
-# Bio::EnsEMBL::Registry->load_registry_from_url("$mirror/101");
-# Bio::EnsEMBL::Registry->load_registry_from_url("$staging1/102");
-# Bio::EnsEMBL::Registry->load_registry_from_url("$staging1b/103");
-Bio::EnsEMBL::Registry->load_registry_from_url("$vert_annot/104");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro@mysql-ens-vertannot-staging:4573/$curr_release");
 
 # Add in extra cores from genebuild server
 # my $extra_core_dbs = {
