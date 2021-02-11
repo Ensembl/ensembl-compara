@@ -1,3 +1,18 @@
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Runnable to split a fasta file into parts.
 
 This runnable splits a fasta file into parts defined either by the number of sequences in each part
@@ -15,21 +30,6 @@ from typing import Dict
 from Bio import SeqIO
 
 import eHive
-
-# See the NOTICE file distributed with this work for additional information
-# regarding copyright ownership.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 class SplitFasta(eHive.BaseRunnable):
     """Splits a fasta file into pieces"""
@@ -60,8 +60,8 @@ class SplitFasta(eHive.BaseRunnable):
         if num_parts:
             if num_parts > len(fasta_records):
                 # travis doesn't like f"" formatting here (invalid syntax error) - use older .format()
-                warn = ("'num_parts' ({}) is larger than the number of records in the file ({}) - printing a single record "
-                        "in each file").format(num_parts, len(fasta_records))
+                warn = ("'num_parts' ({}) is larger than the number of records in the file ({}) - "
+                        "printing a single record in each file").format(num_parts, len(fasta_records))
                 self.warning(warn)
                 num_parts = len(fasta_records)
             num_seqs = int(len(fasta_records) / num_parts)
@@ -80,7 +80,7 @@ class SplitFasta(eHive.BaseRunnable):
             os.mkdir(out_dir)
 
         if not self.param_exists('file_prefix'):
-            file_prefix = os.path.basename(self.param('fasta_name')).split('.')[0]
+            file_prefix = os.path.splitext(os.path.basename(self.param('fasta_name')))[0]
             self.param('file_prefix', file_prefix)
 
 
