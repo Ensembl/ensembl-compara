@@ -846,7 +846,7 @@ sub _get_genome_dump_path {
                 This method guarantees that all pipelines agree on where to find the file.
                 To behave nicely at scale, the files are expected to be spread according
                 to the dbID of the GenomeDB, using eHive's dir_revhash, e.g.
-                "123456789" => "9/8/7/6/5/4/3/2", and to be named "$name.$assembly.fa".
+                "123456789" => "9/8/7/6/5/4/3/2", and to be named "$name.$assembly.$genebuild(_comp_X).fasta".
   Returntype  : String
   Exceptions  : none
   Caller      : general
