@@ -906,6 +906,15 @@ sub get_faidx_helper {
 
 =head2 get_dmnd_helper
 
+  Example     : my $path = $genome_db->get_dmnd_helper();
+  Description : Returns the expected path for the diamond database of this genome
+                if a dump_dir_location has been specified for its adaptor.
+  Returntype  : String
+  Exceptions  : Raises error if the path where the diamond database should be
+                located does not exist.
+  Caller      : general
+  Status      : Stable
+
 =cut
 
 sub get_dmnd_helper {
