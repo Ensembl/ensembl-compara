@@ -1,14 +1,19 @@
-"""
-Runnable to split a fasta file into parts. This is defined either by the number of
-sequences in each part (num_seqs) or by the desired number of parts (num_parts).
+"""Runnable to split a fasta file into parts.
+
+This runnable splits a fasta file into parts defined either by the number of sequences in each part
+(num_seqs) or by the desired number of parts (num_parts).
 
 By default, the output directory will be derived from the input file name (replacing
 `.fa` or `.fasta` with `.split`)
 
 """
+
 import os
 import sys
+from typing import Dict
+
 from Bio import SeqIO
+
 import eHive
 
 # See the NOTICE file distributed with this work for additional information
@@ -27,9 +32,9 @@ import eHive
 # limitations under the License.
 
 class SplitFasta(eHive.BaseRunnable):
-    """Split a FastA file into pieces"""
+    """Splits a fasta file into pieces"""
 
-    def param_defaults(self):
+    def param_defaults(self) -> Dict[str, bool]:
         """set default parameters"""
         return {
             'num_seqs'  : False,
@@ -37,7 +42,7 @@ class SplitFasta(eHive.BaseRunnable):
         }
 
 
-    def fetch_input(self):
+    def fetch_input(self) -> None:
         """grab fasta and parse"""
         fasta_file = self.param_required('fasta_name')
 
@@ -55,8 +60,8 @@ class SplitFasta(eHive.BaseRunnable):
         if num_parts:
             if num_parts > len(fasta_records):
                 # travis doesn't like f"" formatting here (invalid syntax error) - use older .format()
-                warn = "'num_parts' ({0}) is larger than the number of records in the file ".format(num_parts)
-                warn += "({0}) - printing a single record in each file".format(len(fasta_records))
+                warn = ("'num_parts' ({}) is larger than the number of records in the file ({}) - printing a single record "
+                        "in each file").format(num_parts, len(fasta_records))
                 self.warning(warn)
                 num_parts = len(fasta_records)
             num_seqs = int(len(fasta_records) / num_parts)
@@ -64,10 +69,10 @@ class SplitFasta(eHive.BaseRunnable):
         self.param('fasta_records', fasta_records)
         self.param('num_seqs', num_seqs)
 
-    def run(self):
+    def run(self) -> None:
         """create output directory and set file prefix"""
         if not self.param_exists('out_dir'):
-            out_dir = ".".join(self.param('fasta_name').split('.')[:-1]) + ".split"
+            out_dir = os.path.splitext(self.param('fasta_name'))[0] + ".split"
             self.param('out_dir', out_dir)
 
         out_dir = self.param_required('out_dir')
@@ -86,13 +91,17 @@ class SplitFasta(eHive.BaseRunnable):
         num_seqs = self.param('num_seqs')
         out_dir = self.param('out_dir')
 
-        records_written, files_written = 0, 1
-        out_file = open("{0}/{1}.{2}.fasta".format(out_dir, file_prefix, files_written), 'w')
+        records_written = 0
+        files_written = 1
+        dst_file = os.path.join(out_dir, "{}.{}.fasta".format(file_prefix, files_written))
+        out_file = open(dst_file, 'w')
         for fasta_record in fasta_records:
-            if records_written > 0 and records_written % num_seqs == 0:
+            if (records_written > 0) and (records_written % num_seqs == 0):
                 out_file.close()
                 files_written += 1
-                out_file = open("{0}/{1}.{2}.fasta".format(out_dir, file_prefix, files_written), 'w')
+                dst_file = os.path.join(out_dir, "{}.{}.fasta".format(file_prefix, files_written))
+                out_file = open(dst_file, 'w')
 
             out_file.write(">{0}\n{1}\n".format(fasta_record[0], fasta_record[1]))
             records_written += 1
+        out_file.close()
