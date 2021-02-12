@@ -90,7 +90,7 @@ sub _write_output {
     my $homology      = $paf->create_homology($type, $mlss);
     my $dbid          = $paf->query_member->gene_member_id . $paf->hit_member->gene_member_id;
 
-    $homology_adap->store($homology,);
+    $homology_adap->store($homology,$dbid);
 
 }
 
