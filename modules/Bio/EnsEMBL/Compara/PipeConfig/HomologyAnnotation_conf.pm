@@ -98,12 +98,11 @@ sub default_options {
 
         # DIAMOND runnable parameters
         'num_sequences_per_blast_job' => 200,
-        'blast_params'                => '--threads 4 -b1 -c1 --top 10 --dbsize 1000000 --sensitive',
+        'blast_params'                => '--threads 4 -b1 -c1 --top 50 --dbsize 1000000 --sensitive',
         'evalue_limit'                => '1e-5',
 
         # Set hybrid registry file that both metadata production and compara understand
         'reg_conf'      => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/conf/homology_annotation/production_reg_conf.pl',
-        'registry_file' => $self->o('reg_conf'),
 
         # Mandatory species input, one or the other only
         'species_list_file' => undef,
@@ -183,7 +182,7 @@ sub core_pipeline_analyses {
             -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SpeciesFactory',
             -max_retry_count => 1,
             -input_ids       => [{
-                'registry_file'      => $self->o('registry_file'),
+                'registry_file'      => $self->o('reg_conf'),
                 'species_list'       => $self->o('species_list'),
                 'species_list_file'  => $self->o('species_list_file'),
             },],
@@ -216,13 +215,20 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into     => {
                 '2->A' => [ 'diamond_blastp', { 'make_query_blast_db' => { 'genome_db_id' => '#genome_db_id#', 'ref_taxa' => '#ref_taxa#' } } ],
-                'A->2' => { 'parse_paf_for_rbbh' => { 'genome_db_id' => '#genome_db_id#', 'target_genome_db_id' => '#target_genome_db_id#', }  },
+                'A->2' => { 'break_seq_members_into_batches' => { 'genome_db_id' => '#genome_db_id#', 'target_genome_db_id' => '#target_genome_db_id#', }  },
             },
+        },
+
+        {   -logic_name => 'break_seq_members_into_batches',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SplitMembers',
+            -flow_into  => {
+                2 => [ 'parse_paf_for_rbbh' ],
+            }
         },
 
         {   -logic_name => 'parse_paf_for_rbbh',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::ParsePAFforBHs',
-            -rc_name    => '1Gb_job',
+            -rc_name    => '2Gb_job',
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::LoadCoreMembers::pipeline_analyses_copy_ncbi_and_core_genome_db($self) },

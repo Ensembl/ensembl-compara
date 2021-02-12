@@ -62,39 +62,65 @@ package Bio::EnsEMBL::Compara::PeptideAlignFeature;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Utils::Exception;
-
-use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 #se overload '<=>' => "sort_by_score_evalue_and_pid";   # named method
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
+sub create_aligned_member {
+    my $self = shift;
 
-sub create_homology
-{
-  my $self = shift;
+    # Create new superficial AlignedMembers to attach the the homologies
+    my $aligned_member_1 = Bio::EnsEMBL::Compara::AlignedMember->new(
+        -stable_id => $self->query_member->gene_member->stable_id,
+        -source_name => $self->query_member->gene_member->source_name,
+        -genome_db_id => $self->query_genome_db_id,
+    );
+    my $aligned_member_2 = Bio::EnsEMBL::Compara::AlignedMember->new(
+        -stable_id => $self->hit_member->gene_member->stable_id,
+        -source_name => 'EXTERNALGENE',
+        -genome_db_id => $self->hit_genome_db_id,
+    );
 
-  # create an Homology object
-  my $homology = new Bio::EnsEMBL::Compara::Homology;
+    $aligned_member_1->gene_member($self->query_member->gene_member);
+    $aligned_member_1->gene_member_id($self->query_member->gene_member->dbID);
+    $aligned_member_2->gene_member($self->hit_member->gene_member);
+    $aligned_member_2->gene_member_id($self->hit_member->gene_member->dbID);
 
-  my $cigar_line = $self->cigar_line;
-  $cigar_line =~ s/I/M/g;
-  $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::collapse_cigar(Bio::EnsEMBL::Compara::Utils::Cigars::expand_cigar($cigar_line));
-  $self->query_member->cigar_line($cigar_line);
+    # Assign cigar_line to each member
+    my $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::collapse_cigar(Bio::EnsEMBL::Compara::Utils::Cigars::expand_cigar($self->cigar_line));
+    $aligned_member_1->cigar_line($cigar_line);
+    $aligned_member_2->cigar_line($cigar_line);
 
-  $cigar_line = $self->cigar_line;
-  $cigar_line =~ s/D/M/g;
-  $cigar_line =~ s/I/D/g;
-  $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::collapse_cigar(Bio::EnsEMBL::Compara::Utils::Cigars::expand_cigar($cigar_line));
-  $self->hit_member->cigar_line($cigar_line);
+    # Reassign query_member and hit_member with AlignedMembers
+    $self->query_member($aligned_member_1);
+    $self->hit_member($aligned_member_2);
 
-  $homology->add_Member($self->query_member);
-  $homology->add_Member($self->hit_member);
-  $homology->update_alignment_stats;
+}
 
-  return $homology;
+sub create_homology {
+    my ($self, $type, $homology_mlss) = @_;
+
+    # Create the homology object
+    my $homology = new Bio::EnsEMBL::Compara::Homology;
+    $homology->method_link_species_set($homology_mlss);
+
+    # Ensure the members are Bio::EnsEMBL::Compara::AlignedMember objects
+    unless (UNIVERSAL::isa($self->hit_member, 'Bio::EnsEMBL::Compara::AlignedMember')) {
+        $self->create_aligned_member;
+    }
+
+    $homology->add_Member($self->query_member, );
+    $homology->add_Member($self->hit_member);
+    $homology->description($type) if $type;
+    $homology->is_tree_compliant(0);
+
+    $homology->update_alignment_stats;
+
+    return $homology;
 }
 
 

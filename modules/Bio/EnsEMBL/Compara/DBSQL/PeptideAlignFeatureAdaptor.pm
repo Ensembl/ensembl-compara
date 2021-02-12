@@ -530,11 +530,12 @@ sub _objs_from_sth {
             '_perc_pos',
             '_hit_rank',
             '_cigar_line',
-        ], sub {
+         ], sub {
+            no warnings 'misc'; # because the _hit_member may not be returned if reference in another db
             my $a = shift;
             return {
-                ($a->[1] ? ('_query_member' => $memberDBA->fetch_by_dbID($a->[1])) : ()),       # The object is not able to fetch this, so it's done here instead
-                ($a->[2] ? ('_hit_member'   => $memberDBA->fetch_by_dbID($a->[2])) : ()),       # The object is not able to fetch this, so it's done here instead
+                ($memberDBA->fetch_by_dbID($a->[1]) ? ('_query_member' => $memberDBA->fetch_by_dbID($a->[1])) : '_query_member' => $a->[1]),       # The object is not able to fetch this, so it's done here instead
+                ($memberDBA->fetch_by_dbID($a->[2]) ? ('_hit_member'   => $memberDBA->fetch_by_dbID($a->[2])) : '_hit_member'   => $a->[2]),       # The object is not able to fetch this, so it's done here instead
             };
         });
 }
@@ -620,9 +621,7 @@ sub fetch_all_by_dbID_list {
 
 
 sub fetch_BRH_by_member_genomedb {
-    my $self             = shift;
-    my $qmember_id       = shift;
-    my $hit_genome_db_id = shift;
+    my ($self, $qmember_id, $hit_genome_db_id) = @_;
 
     return unless($qmember_id and $hit_genome_db_id);
     my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
@@ -669,9 +668,7 @@ sub fetch_BRH_by_member_genomedb {
 
 
 sub fetch_BBH_by_member_genomedb {
-    my $self             = shift;
-    my $qmember_id       = shift;
-    my $hit_genome_db_id = shift;
+    my ($self, $qmember_id, $hit_genome_db_id) = @_;
 
     return unless($qmember_id and $hit_genome_db_id);
 
