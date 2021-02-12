@@ -21,7 +21,7 @@ Bio::EnsEMBL::Compara::PipeConfig::UpdateReferenceDatabase_conf
 
 =head1 DESCRIPTION
 
-    This is a PipeConfig for TODO
+    PipeConfig to update the reference database.
 
 =cut
 
@@ -72,7 +72,7 @@ sub default_options {
         'store_ncrna'                 => 0,
         'store_others'                => 0,
         'store_exon_coordinates'      => 0,
-        'store_related_pep_sequences' => 0, # do we want CDS sequence as well as protein seqs?
+        'store_related_pep_sequences' => 0, # do we want CDS sequences as well as protein sequences?
 
         # member HC options
         'allow_ambiguity_codes'         => 1,
@@ -83,7 +83,7 @@ sub default_options {
 
         # create species sets options
         'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
-        'xml_file'            => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/mlss_conf.xml'),
+        'xml_file'            => $self->check_file_in_ensembl($self->o('config_dir') . '/mlss_conf.xml'),
     };
 }
 
@@ -95,9 +95,9 @@ sub pipeline_create_commands {
         $self->pipeline_create_commands_rm_mkdir(['pipeline_dir', 'backups_dir']),
 
         # In case it doesn't exist yet
-        ($self->o('shared_user') ? 'become ' . $self->o('shared_user') : '') . ' mkdir -p ' . $self->o('ref_member_dumps_dir'),
+        'mkdir -p ' . $self->o('ref_member_dumps_dir'),
         # The files are going to be accessed by many processes in parallel
-        $self->pipeline_create_commands_lfs_setstripe('ref_member_dumps_dir', $self->o('shared_user')),
+        $self->pipeline_create_commands_lfs_setstripe('ref_member_dumps_dir'),
     ];
 }
 

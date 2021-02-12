@@ -16,18 +16,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ReferenceGenomes::UpdateReferenceGenome
@@ -35,13 +23,6 @@ Bio::EnsEMBL::Compara::RunnableDB::ReferenceGenomes::UpdateReferenceGenome
 =head1 DESCRIPTION
 
 This RunnableDB is a wrapper around update_reference_genome.pl
-
-=cut
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with a "_"
 
 =cut
 

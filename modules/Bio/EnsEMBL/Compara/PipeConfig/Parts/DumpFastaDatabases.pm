@@ -36,25 +36,17 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpFastaDatabases;
 use strict;
 use warnings;
 
-# use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
-sub core_pipeline_analyses {
-    my ($self) = @_;
-
-}
 
 sub pipeline_analyses_dump_fasta_dbs {
     my ($self) = @_;
     return [
         {   -logic_name => 'dump_full_fasta',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',
-            -parameters => {
-                # 'fasta_dir' => $self->o('fasta_dir'),
-            },
-            -hive_capacity => 10,
-            -rc_name => '500Mb_job',
-            -flow_into => ['split_fasta_into_parts', 'make_diamond_db'],
+            -hive_capacity  => 10,
+            -rc_name    => '500Mb_job',
+            -flow_into  => ['split_fasta_into_parts', 'make_diamond_db'],
         },
 
         {   -logic_name => 'split_fasta_into_parts',

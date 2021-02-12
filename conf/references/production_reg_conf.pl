@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,17 +35,8 @@ my $prev_release = $curr_release - 1;
 
 # ---------------------- CURRENT CORE DATABASES---------------------------------
 
-my $vert_annot = 'mysql://ensro@mysql-ens-vertannot-staging:4573';
-my $staging1   = 'mysql://ensro@mysql-ens-sta-1:4519';
-my $staging1b  = 'mysql://ensro@mysql-ens-sta-1-b:4519';
-my $mirror     = 'mysql://ensro@mysql-ens-mirror-1:4240';
-
 # All the core databases live on the Vertebrates staging server or our mirror
-# Bio::EnsEMBL::Registry->load_registry_from_url("$mirror/100");
-# Bio::EnsEMBL::Registry->load_registry_from_url("$mirror/101");
-# Bio::EnsEMBL::Registry->load_registry_from_url("$staging1/102");
-# Bio::EnsEMBL::Registry->load_registry_from_url("$staging1b/103");
-Bio::EnsEMBL::Registry->load_registry_from_url("$vert_annot/104");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro@mysql-ens-vertannot-staging:4573/$curr_release");
 
 # Add in extra cores from genebuild server
 # my $extra_core_dbs = {
@@ -58,16 +49,16 @@ Bio::EnsEMBL::Registry->load_registry_from_url("$vert_annot/104");
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
 # previous release core databases will be required by PrepareMasterDatabaseForRelease, LoadMembers and MercatorPecan
-# *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
-#     Bio::EnsEMBL::Registry->load_registry_from_db(
-#         -host   => 'mysql-ens-mirror-1',
-#         -port   => 4240,
-#         -user   => 'ensro',
-#         -pass   => '',
-#         -db_version     => $prev_release,
-#         -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
-#     );
-# };
+*Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
+    Bio::EnsEMBL::Registry->load_registry_from_db(
+        -host   => 'mysql-ens-mirror-1',
+        -port   => 4240,
+        -user   => 'ensro',
+        -pass   => '',
+        -db_version     => $prev_release,
+        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
+    );
+};
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
