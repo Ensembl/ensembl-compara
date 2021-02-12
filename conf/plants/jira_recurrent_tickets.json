@@ -138,22 +138,22 @@
          {
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-DNAside",
-            "summary": "test the DNA data"
+            "summary": "Test the DNA data"
          },
          {
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Homologyside",
-            "summary": "test the homologies data"
+            "summary": "Test the homologies data"
          },
          {
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Downloads",
-            "summary": "test the downloads"
+            "summary": "Test the downloads"
          },
          {
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Documentation&Statistics",
-            "summary": "test the documentation and statistics"
+            "summary": "Test the documentation and statistics"
          },
          {
             "assignee": "<RelCo>",
@@ -186,13 +186,13 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites#Testthetestsites-Website",
-            "summary": "test the web site"
+            "summary": "Test the web site"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites#Testthetestsites-RESTserver",
-            "summary": "test the REST server"
+            "summary": "Test the REST server"
          }
       ],
       "summary": "<Division> Release <version> Final checks before public release"
