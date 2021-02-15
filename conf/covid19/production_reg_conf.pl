@@ -37,8 +37,9 @@ my $prev_release = $curr_release - 1;
 
 # main sars-cov-2 core - with canonical data
 my $core_dbs = {
-    'sarsc2_gca009858895_3' => [ 'mysql-ens-genebuild-prod-1', 'sarsc2_gca009858895_3_core_101_3_canon' ],
-    'sars_cov_2' => [ 'mysql-ens-genebuild-prod-2', 'sars_cov_2_core_100' ],
+    # 'sarsc2_gca009858895_3' => [ 'mysql-ens-genebuild-prod-1', 'sarsc2_gca009858895_3_core_101_3_canon' ],
+    # 'sars_cov_2' => [ 'mysql-ens-genebuild-prod-2', 'sars_cov_2_core_100' ],
+    'sars_cov_2' => [ 'mysql-ens-sta-5', 'sars_cov_2_core_102_1' ],
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $core_dbs );
 
@@ -64,13 +65,13 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-9', 'carlac_ensembl_compara_covid19_master' ],
-    'compara_curr'   => [ 'mysql-ens-compara-prod-9', 'ensembl_compara_covid19' ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-9', 'ensembl_compara_covid19_103' ],
 
     'compara_members_test16' => [ 'mysql-ens-compara-prod-6', 'carlac_test16_covid19_load_members_101' ],
     'compara_ptrees_test16'  => [ 'mysql-ens-compara-prod-6', 'carlac_test16_covid19_protein_trees_101' ],
 
     'compara_members' => [ 'mysql-ens-compara-prod-6', 'carlac_covid19_load_members_101' ],
-    'compara_ptrees'  => [ 'mysql-ens-compara-prod-6', 'carlac_default_covid19_protein_trees_101' ],
+    'compara_ptrees'  => [ 'mysql-ens-compara-prod-6', 'carlac_default_covid19_protein_trees_103' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
