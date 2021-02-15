@@ -114,6 +114,7 @@ sub default_options {
         'outgroups'                     => {},
         # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
         'clustering_max_gene_halfcount' => 750,
+        'other_clustering_options'      => '-w 0 -s 0.34 -O -C',
         # when checking peptide_align_features, what proportion of other genomes
         # should have hits
         'paf_exp_proportion' => 1,
@@ -1476,7 +1477,8 @@ sub core_pipeline_analyses {
             -parameters    => {
                 'clustering_max_gene_halfcount' => $self->o('clustering_max_gene_halfcount'),
                 'hcluster_exe'                  => $self->o('hcluster_exe'),
-                'cmd'                           => '#hcluster_exe# -m #clustering_max_gene_halfcount# -w 0 -s 0.34 -O -C #cluster_dir#/hcluster.cat -o #cluster_dir#/hcluster.out #cluster_dir#/hcluster.txt; sleep 30',
+                'other_clustering_options'      => $self->o('other_clustering_options'),
+                'cmd'                           => '#hcluster_exe# -m #clustering_max_gene_halfcount# #other_clustering_options# #cluster_dir#/hcluster.cat -o #cluster_dir#/hcluster.out #cluster_dir#/hcluster.txt; sleep 30',
             },
             -flow_into => {
                 1 => [ 'hcluster_parse_output' ],

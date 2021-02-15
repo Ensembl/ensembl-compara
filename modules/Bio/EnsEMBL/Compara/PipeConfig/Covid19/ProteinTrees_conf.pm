@@ -67,6 +67,9 @@ sub default_options {
             [ 100, 10000000, '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM62 -word_size 3', '10' ],
         ],
 
+        # more stringent clustering params than defaults
+        'other_clustering_options' => '-w 0 -s 0.75 -b 0.1 -O -C',
+
         # 'goc_taxlevels' => ['', '', ''],
 
         'use_raxml'              => 1,
