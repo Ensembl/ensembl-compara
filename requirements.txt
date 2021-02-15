@@ -6,3 +6,6 @@ sqlalchemy
 mysqlclient
 requests
 pandas
+biopython
+pytest == 5.2.1
+pytest-dependency

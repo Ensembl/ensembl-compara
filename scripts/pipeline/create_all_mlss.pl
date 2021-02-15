@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -179,10 +179,16 @@ my %collections;
 my @mlsss;
 
 sub find_genome_from_xml_node_attribute {
-    my ($xml_node, $attribute_name) = @_;
+    my ($xml_node, $attribute_name, $assembly_name) = @_;
     my $species_name = $xml_node->getAttribute($attribute_name);
-    my $gdb = $genome_dba->fetch_by_name_assembly($species_name) || throw("Cannot find $species_name in the available list of GenomeDBs");
-    die "Cannot find any current genomes with species_name '$species_name'. Please check that this name is still correct" unless $gdb->is_current;
+    my $gdb;
+    if (defined $assembly_name && $xml_node->hasAttribute($assembly_name)) {
+        my $species_assembly = $xml_node->getAttribute($assembly_name);
+        $gdb = $genome_dba->fetch_by_name_assembly($species_name, $species_assembly) || throw("Cannot find $species_name (assembly $species_assembly) in the available list of GenomeDBs");
+    } else {
+        $gdb = $genome_dba->fetch_by_name_assembly($species_name) || throw("Cannot find $species_name in the available list of GenomeDBs");
+    }
+    die "Cannot find any current genomes matching '$species_name'. Please check that this name is still correct" unless (defined $assembly_name || $gdb->is_current);
     return $gdb;
 }
 
@@ -217,7 +223,7 @@ sub make_species_set_from_XML_node {
     if ($xml_ss->hasAttribute('in_collection')) {
         my $collection = find_collection_from_xml_node_attribute($xml_ss, 'in_collection', 'species-set');
         # Exclude genome components from the pool
-        @{$pool} = grep { !$_->genome_component } @{$collection->genome_dbs};
+        $pool = [grep { !$_->genome_component } @{$collection->genome_dbs}];
     }
 
     my @selected_gdbs;
@@ -247,8 +253,10 @@ sub make_species_set_from_XML_node {
             $some_genome_dbs = [grep {(($_->taxon_id != $ref_taxon->dbID) && !$_->taxon->has_ancestor($ref_taxon)) || ($_->name eq $gdb->name)} @$some_genome_dbs];
         }
       } elsif ($child->nodeName eq 'genome') {
-        my $gdb = find_genome_from_xml_node_attribute($child, 'name');
-        $some_genome_dbs = [$gdb];
+        my $gdb = find_genome_from_xml_node_attribute($child, 'name', 'assembly');
+        # If the genome is not current, warn the user and do not add it to the species set
+        warn "The genome matching '" . $gdb->name . "' (assembly " . $gdb->assembly . ") is not current. Skipped" unless $gdb->is_current;
+        $some_genome_dbs = ($gdb->is_current) ? [$gdb] : [];
       } elsif ($child->nodeName =~ /^#(comment|text)$/) {
         next;
       } else {
@@ -293,9 +301,10 @@ my $division_species_set = $compara_dba->get_SpeciesSetAdaptor->fetch_collection
 $collections{$division_name} = $division_species_set;
 my $division_genome_dbs = [sort {$a->dbID <=> $b->dbID} @{$division_species_set->genome_dbs}];
 foreach my $collection_node (@{$division_node->findnodes('collections/collection')}) {
+    my $no_release = $collection_node->getAttribute('no_release') || 0;
     my $genome_dbs = make_species_set_from_XML_node($collection_node, $division_genome_dbs);
     my $collection_name = $collection_node->getAttribute('name');
-    $collections{$collection_name} = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($genome_dbs, "collection-$collection_name");
+    $collections{$collection_name} = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($genome_dbs, "collection-$collection_name", $no_release);
 }
 # Do not create MLSSs for genome components (polyploids will be handled by each pipeline accordingly)
 @{$division_genome_dbs} = grep {!$_->genome_component} @{$division_genome_dbs};
@@ -341,24 +350,18 @@ foreach my $xml_all_vs_one_node (@{$division_node->findnodes('pairwise_alignment
     push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlsss($compara_dba, $method, $_, $target_gdb) } for @$genome_dbs;
 }
 
-foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignments/all_vs_all')}) {
-    my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_one_vs_all_node->getAttribute('method') );
-    my $genome_dbs = make_species_set_from_XML_node($xml_one_vs_all_node->getChildrenByTagName('species_set')->[0], $division_genome_dbs);
-    my %dnafrag_counts = map {$_->dbID => $compara_dba->get_DnaFragAdaptor->count_all_reference_by_GenomeDB($_)} @$genome_dbs;
-    # Sort by increasing number of dnafrags to get the most compact assemblies first
-    my @genome_dbs_by_size = sort {$dnafrag_counts{$a->dbID} <=> $dnafrag_counts{$b->dbID}} @$genome_dbs;
-    while (my $ref_gdb = shift @genome_dbs_by_size) {
-        push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlsss($compara_dba, $method, $ref_gdb, $_) } for @genome_dbs_by_size;
+foreach my $xml_all_vs_all_node (@{$division_node->findnodes('pairwise_alignments/all_vs_all')}) {
+    my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_all_vs_all_node->getAttribute('method') );
+    my $genome_dbs = make_species_set_from_XML_node($xml_all_vs_all_node->getChildrenByTagName('species_set')->[0], $division_genome_dbs);
+    while (my $ref_gdb = shift @$genome_dbs) {
+        push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlsss($compara_dba, $method, $ref_gdb, $_) } for @$genome_dbs;
     }
 }
 
 # References between themselves
-my %dnafrag_counts = map {$_->[0]->dbID => $compara_dba->get_DnaFragAdaptor->count_all_reference_by_GenomeDB($_->[0])} @refs;
-# Sort by increasing number of dnafrags to get the most compact assemblies first
-my @refs_by_size = sort {$dnafrag_counts{$a->[0]->dbID} <=> $dnafrag_counts{$b->[0]->dbID}} @refs;
-while (my $aref1 = shift @refs_by_size) {
+while (my $aref1 = shift @refs) {
     my ($gdb1, $method1, $pool1) = @$aref1;
-    foreach my $aref2 (@refs_by_size) {
+    foreach my $aref2 (@refs) {
         my ($gdb2, $method2, $pool2) = @$aref2;
         # As long as each genome is in the target scope of the other
         if ($pool1->{$gdb2->dbID} and $pool2->{$gdb1->dbID}) {
@@ -445,7 +448,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             my $collection = $collections{$collection_name};
             # Check if it is already in the database
             my $exist_set = $compara_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs($collection->genome_dbs);
-            if ($exist_set and $exist_set->is_current) {
+            if ($exist_set and ($exist_set->is_current || $collection->{_no_release})) {
                 next;
             }
             if ($verbose) {
@@ -455,7 +458,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             }
             unless ($dry_run) {
                 $compara_dba->get_SpeciesSetAdaptor->store($collection);
-                $compara_dba->get_SpeciesSetAdaptor->make_object_current($collection) if $release;
+                $compara_dba->get_SpeciesSetAdaptor->make_object_current($collection) if $release && !$collection->{_no_release};
             }
             if ($verbose) {
                 print "AFTER STORING: ", $collection->toString, "\n\n";

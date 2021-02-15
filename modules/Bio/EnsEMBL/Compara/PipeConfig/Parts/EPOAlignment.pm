@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
 
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOAncestral;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats;
 
 
@@ -58,47 +59,6 @@ sub core_pipeline_analyses_epo_alignment {
 
 return 
 [
-
-# ------------------------------------- create the ancestral db	
-{
- -logic_name => 'drop_ancestral_db',
- -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
- -parameters => {
-  'db_conn' => '#ancestral_db#',
-  'input_query' => 'DROP DATABASE IF EXISTS',
-  },
-  -flow_into => { 1 => 'create_ancestral_db' },
-},
-{
- -logic_name => 'create_ancestral_db',
- -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
- -parameters => {
-  'db_conn' => '#ancestral_db#',
-  'input_query' => 'CREATE DATABASE',
-  },
-  -flow_into => { 1 => 'create_tables_in_ancestral_db' },
-},
-{
- -logic_name => 'create_tables_in_ancestral_db',
- -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
- -parameters => {
-  'db_conn' => '#ancestral_db#',
-  'input_file' => $self->o('core_schema_sql'),
-  },
-  -flow_into => { 1 => 'store_ancestral_species_name' },
-},
-{
-        -logic_name => 'store_ancestral_species_name',
-        -module => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-        -parameters => {
-            'db_conn' => '#ancestral_db#',
-            'sql'   => [
-                'INSERT INTO meta (meta_key, meta_value) VALUES ("species.production_name", "'.$self->o('ancestral_sequences_name').'")',
-                'INSERT INTO meta (meta_key, meta_value) VALUES ("species.display_name", "'.$self->o('ancestral_sequences_display_name').'")',
-            ],
-        },
-        -flow_into => 'find_ancestral_seq_gdb',
-},
 # ------------------------------------- dump mapping info from mapping db to file
 {
  -logic_name => 'dump_mappings_to_file',
@@ -137,29 +97,6 @@ return
                                 ELSE [ 'dump_mappings_to_file' ] ),
         -rc_name       => '500Mb_job',
 },
-
-
-        {
-            -logic_name => 'find_ancestral_seq_gdb',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
-            -parameters => {
-                'compara_db'    => '#master_db#',
-                'call_list'     => [ 'compara_dba', 'get_GenomeDBAdaptor', ['fetch_by_name_assembly', $self->o('ancestral_sequences_name')] ],
-                'column_names2getters'  => { 'master_dbID' => 'dbID' },
-            },
-            -rc_name   => '500Mb_job',
-            -flow_into => {
-                2 => 'store_ancestral_seq_gdb',
-            },
-        },
-{
-    -logic_name    => 'store_ancestral_seq_gdb',
-    -module        => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
-    -parameters    => {
-        'locator'   => '#ancestral_db#',
-    },
-    -rc_name       => '500Mb_job',
-},
 # ------------------------------------- run enredo
 {
 	-logic_name => 'run_enredo',
@@ -182,7 +119,7 @@ return
         -flow_into => {
                 '2->A' => [ 'find_dnafrag_region_strand' ],
                 '3->A' => [ 'ortheus' ],
-		'A->1' => [ 'remove_dodgy_ancestral_blocks' ],
+		'A->1' => [ 'create_neighbour_nodes_jobs_alignment' ],
 	},
 },
 # find the most likely strand orientation for genomic regions which enredo was unable to determine the
@@ -279,11 +216,6 @@ return
         },
 },
 
-            {  -logic_name => 'remove_dodgy_ancestral_blocks',
-               -module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::DeleteDodgyAncestralBlocks',
-               -flow_into  => [ 'create_neighbour_nodes_jobs_alignment' ],
-            },
-
 # --------------------------------------[Populate the left and right node_id of the genomic_align_tree table]-----------------------------
             {   -logic_name => 'create_neighbour_nodes_jobs_alignment',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -314,6 +246,8 @@ return
                     1 => [ 'healthcheck_factory' ],
                 },
             },
+
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOAncestral::pipeline_analyses_epo_ancestral($self) },
     ];
 }
 
@@ -326,7 +260,6 @@ sub pipeline_analyses_gerp {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetGerpNeutralRate',
             -flow_into => {
                 1 => [ 'dump_mappings_to_file' ],
-                2 => [ '?table_name=pipeline_wide_parameters' ],
             },
         },
 

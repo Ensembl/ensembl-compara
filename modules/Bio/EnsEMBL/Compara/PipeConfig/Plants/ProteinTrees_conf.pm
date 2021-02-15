@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,8 +23,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -mlss_id <curr_ptree_mlss_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 DESCRIPTION
 
@@ -47,6 +46,7 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     'division'   => 'plants',
+    'collection' => $self->o('division'),
 
     # clustering parameters:
         # affects 'hcluster_dump_input_per_genome'
@@ -80,6 +80,18 @@ sub default_options {
 
     # GOC parameters
         'goc_taxlevels' => ['Panicoideae', 'Oryzinae', 'Pooideae', 'Solanaceae', 'Brassicaceae', 'Malvaceae', 'fabids'],
+
+    # HighConfidenceOrthologs Parameters
+        # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
+        'threshold_levels' => [
+            {
+                'taxa'          => [ 'all' ],
+                'thresholds'    => [ 50, 50, 25 ],
+            },
+        ],
+
+        # WGA OrthologQM homology method_link_species_set
+        'homology_method_link_types' => ['ENSEMBL_ORTHOLOGUES', 'ENSEMBL_HOMOEOLOGUES'],
     };
 }
 
@@ -110,6 +122,7 @@ sub tweak_analyses {
     $analyses_by_name->{'HMMer_classifyPantherScore'}->{'-hive_capacity'} = '2000';
     $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_6_hour_job';
     $analyses_by_name->{'get_species_set'}->{'-parameters'}->{'polyploid_genomes'} = 0;
+    $analyses_by_name->{'copy_dumps_to_shared_loc'}->{'-rc_name'}   = '500Mb_job';
 }
 
 

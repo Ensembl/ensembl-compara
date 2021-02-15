@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -199,7 +199,7 @@ sub detect_pecan_ortheus_errors {
       #Write to job_message table but without returing an error
       foreach my $err_msg (keys %err_msgs) {
           $self->warning("Ortheus failed with error: $err_msg\n");
-          if ($err_msg =~ /Exception in thread "main" java.lang.IllegalStateException($|:\s+Total is unacceptable (-?Infinity|NaN))/m) {
+          if ($err_msg =~ /Exception in thread "main" java.lang.IllegalStateException($|:\s+Total is unacceptable (-?Infinity|NaN)|:[0-9 ]*)/m) {
               # Not sure why this happens (the input data looked sensible)
               # Let's discard this job.
               $self->input_job->autoflow(0);
@@ -857,7 +857,7 @@ sub remove_empty_cols {
 
     ## $seqs is a hash for storing segments of sequence in the alignment
     my $seqs = {}; ## key => start, value => end; both in e! coord.
-    foreach my $this_leaf (@{$tree->get_all_leaves}) {
+    foreach my $this_leaf (@{$tree->get_all_nodes}) {
         foreach my $this_genomic_align (@{$this_leaf->genomic_align_group->get_all_GenomicAligns}) {
             my $cigar_line = $this_genomic_align->cigar_line;
             my $pos = 1; ## $pos in e! coordinates

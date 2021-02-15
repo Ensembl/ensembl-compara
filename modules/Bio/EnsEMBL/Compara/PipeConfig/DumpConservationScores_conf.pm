@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ sub default_options {
         'work_dir'   => $self->o('pipeline_dir') . '/#mlss_id#/hash',
 
         # How many species can be dumped in parallel
-        'capacity'   => 50,
+        'dump_cs_capacity'   => 20,
 
         # Paths to compara files
         'cs_readme'             => $self->check_file_in_ensembl('ensembl-compara/docs/ftp/conservation_scores.txt'),
@@ -76,7 +76,6 @@ sub pipeline_wide_parameters {
 
         'dump_features_exe'     => $self->o('dump_features_exe'),
         'cs_readme'             => $self->o('cs_readme'),
-        'dump_cs_capacity'      => 100,
 
         'registry'      => $self->o('reg_conf'),
         'compara_db'    => $self->o('compara_db'),

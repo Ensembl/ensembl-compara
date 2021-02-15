@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ use POSIX;
 use List::Util qw(sum);
 use Number::Format 'format_number';
 
-my $max_jobs = 6000000; # max 6 million rows allowed in job table
+my $max_jobs = 2000000; # max 2 million rows allowed in job table
 
 my @intervals_in_mbp = (
 	[0, 5, 0.01],
@@ -122,8 +122,7 @@ foreach my $mlss ( @current_lastz_mlsses ) {
     if ((scalar(@mlss_gdbs) > 1) || $mlss_gdbs[0]->is_polyploid) {
         my $chains_job_count = chains_job_count( $mlss );
         $mlss_job_count{$mlss->dbID}->{analysis}->{aln_chains} = $chains_job_count;
-        ## 3 because we need to include filter_duplicates_net, which has about 2x as many jobs as alignment_nets
-        $mlss_job_count{$mlss->dbID}->{analysis}->{aln_nets} = 3 * (nets_job_count($mlss_gdbs[0]) + nets_job_count($mlss_gdbs[-1]));
+        $mlss_job_count{$mlss->dbID}->{analysis}->{aln_nets} = nets_job_count($mlss_gdbs[0]);
     }
 	my $lastz_job_count = ($ref_chunk_count * $non_ref_chunk_count);
     $mlss_job_count{$mlss->dbID}->{analysis}->{lastz} = $lastz_job_count;

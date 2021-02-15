@@ -112,12 +112,8 @@ sub write_output {
     my $self = shift;
 
     # increment number for versioning the output file
-    if ( $self->param('hc_version') ) {
-        $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
-            'param_name' => 'hc_version',
-            'param_value' => $self->param_required('hc_version') + 1,
-        );
-        $self->db->hive_pipeline->save_collections();
+    if (my $hc_version = $self->param('hc_version') ) {
+        $self->add_or_update_pipeline_wide_parameter('hc_version', $hc_version+1);
     }
 
     my $hc_output_file = $self->param_required('output_file');

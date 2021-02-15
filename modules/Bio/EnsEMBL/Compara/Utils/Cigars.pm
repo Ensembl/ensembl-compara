@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ sub assert_valid_cigar {
 
     # complex regular subexpression recursion limit can be exceeded on very long strings
     # split on letters for long strings, use regex on shorter ones
-    if ( length($cigar_line) > 70000 ) {
+    if ( length($cigar_line) > 50000 ) {
         my @cigar_numbers = split(/[A-Z]/, $cigar_line);
         foreach my $cigar_num ( @cigar_numbers ) {
             next if ( $cigar_num eq '' || ($cigar_num =~ /^[0-9]+$/ && $cigar_num > 0) );

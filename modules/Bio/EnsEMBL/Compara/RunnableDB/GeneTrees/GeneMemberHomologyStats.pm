@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ sub run {
         my @head_cols = split(/\s+/, $this_header);
         while ( my $line = <$hom_handle> ) {
             my $row = map_row_to_header($line, \@head_cols);
-            my ( $homology_type, $gm_id_1, $gm_id_2 ) = ($row->{homology_type}, $row->{gene_member_id}, $row->{hom_gene_member_id});
+            my ( $homology_type, $gm_id_1, $gm_id_2 ) = ($row->{homology_type}, $row->{gene_member_id}, $row->{homology_gene_member_id});
             
             $gm_hom_stats->{$gm_id_1}->{orthologues} += 1 if ( $homology_type =~ /^ortholog/ );
             $gm_hom_stats->{$gm_id_2}->{orthologues} += 1 if ( $homology_type =~ /^ortholog/ );

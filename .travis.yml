@@ -3,7 +3,7 @@ language: generic
 
 env:
   global:
-    secure: bGSZASCtRCcE2VZ3u4hdvjh6CDHe+Uo3MR7B4eobSFFhZVjIN3/DKaGrQYprEeSIB/vb75rveyTheO3qe3lHwq71e18cBk2ulQA6/L0eUJYsoR3u2y7d9whu8dS97IoLzize6hItxJFP8TmRaJBtWqOixyWHNW72X/fKF1a192E=
+    - secure: bGSZASCtRCcE2VZ3u4hdvjh6CDHe+Uo3MR7B4eobSFFhZVjIN3/DKaGrQYprEeSIB/vb75rveyTheO3qe3lHwq71e18cBk2ulQA6/L0eUJYsoR3u2y7d9whu8dS97IoLzize6hItxJFP8TmRaJBtWqOixyWHNW72X/fKF1a192E=
 
 addons:
   apt:
@@ -22,14 +22,15 @@ cache:
 before_install:
     - cpanm -nq local::lib
     - eval "$(perl -Mlocal::lib=${HOME}/deps)"
-    - git clone --branch release/101 --depth 1 https://github.com/Ensembl/ensembl-test.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
-    - git clone --branch release/101 --depth 1 https://github.com/Ensembl/ensembl-rest.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-rest.git
-    - git clone --branch release/101 --depth 1 https://github.com/Ensembl/ensembl-funcgen.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-funcgen.git
-    - git clone --branch release/101 --depth 1 https://github.com/Ensembl/ensembl-variation.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-variation.git
-    - git clone --branch release/101 --depth 1 https://github.com/Ensembl/ensembl-io.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-io.git
-    - git clone --branch release/101 --depth 1 https://github.com/Ensembl/ensembl.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
+    - git clone --branch release/103 --depth 1 https://github.com/Ensembl/ensembl-test.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
+    - git clone --branch release/103 --depth 1 https://github.com/Ensembl/ensembl-rest.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-rest.git
+    - git clone --branch release/103 --depth 1 https://github.com/Ensembl/ensembl-funcgen.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-funcgen.git
+    - git clone --branch release/103 --depth 1 https://github.com/Ensembl/ensembl-variation.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-variation.git
+    - git clone --branch release/103 --depth 1 https://github.com/Ensembl/ensembl-io.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-io.git
+    - git clone --branch release/103 --depth 1 https://github.com/Ensembl/ensembl.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
+    - git clone --branch release/103 --depth 1 https://github.com/Ensembl/ensembl-datacheck.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-datacheck.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-hive.git
-    - git clone --branch release/101 --depth 1 https://github.com/Ensembl/ensembl-taxonomy.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-taxonomy.git
+    - git clone --branch stable --depth 1 https://github.com/Ensembl/ensembl-taxonomy.git
     - ln -s . ensembl-compara
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
     - git clone --branch release-1-6-9 --depth 1 https://github.com/bioperl/bioperl-run
@@ -41,10 +42,12 @@ install:
     - cp -f ensembl-rest/travisci/MultiTestDB.conf.travisci ensembl-rest/t/MultiTestDB.conf
     - cp -f ensembl/travisci/MultiTestDB.conf.travisci.mysql  ensembl/modules/t/MultiTestDB.conf
     - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
+    # 8.43 is the last version compatible with Perl 5.14
+    - cpanm --quiet --notest Mojolicious@8.43
     - cpanm --quiet --installdeps --notest --cpanfile ensembl-rest/cpanfile .
     - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
     - cpanm --quiet --installdeps --notest .
-    - cpanm --quiet --notest Devel::Cover::Report::Coveralls
+    - cpanm --quiet --notest Devel::Cover::Report::Codecov
 
 # Setup the MySQL server
 before_script:
@@ -76,6 +79,17 @@ jobs:
       env:
         - COVERAGE=true
       script: ./travisci/perl-unittest_harness.sh
+      after_success:
+        - cover --nosummary -report codecov
+
+    - language: perl
+      perl: 5.30
+      name: "Perl external unit tests on the latest version, with code coverage"
+      env:
+        - COVERAGE=true
+      script: ./travisci/perl-external_unittest_harness.sh
+      after_success:
+        - cover --nosummary -report codecov
 
     - language: perl
       perl: 5.30
@@ -95,8 +109,7 @@ jobs:
       before_install:
         - echo
       install:
-        - pip install --upgrade pytest typing     # The default version doesn't return the expected return code when no tests are present
-        - pip install -r requirements.txt
+        - pip install -r requirements.txt .
       before_script:
         - echo
       script: ./travisci/python-unittest_harness.sh
@@ -110,11 +123,14 @@ jobs:
       before_install:
         - echo
       install:
-        - pip install pytest-cov
+        - pip install pytest-cov codecov
         - pip install -r requirements.txt
+        - pip install -e .
       before_script:
         - echo
       script: ./travisci/python-unittest_harness.sh
+      after_success:
+        - codecov
 
     - language: python
       python: 3.8
@@ -123,16 +139,8 @@ jobs:
         - echo
       install:
         - pip install pylint mypy
-        - pip install -r requirements.txt
+        - pip install -r requirements.txt .
       before_script:
         - echo
       script: ./travisci/python-linter_harness.sh
 
-    - stage: "trigger dependent builds"
-      before_install:
-        - echo
-      install:
-        - echo
-      before_script:
-        - echo
-      script: ./travisci/trigger-dependent-build.sh

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,14 +42,26 @@ sub fetch_input {
 
     my $gdb_adaptor         = $self->compara_dba->get_GenomeDBAdaptor;
     my $ncbi_adaptor        = $self->compara_dba->get_NCBITaxonAdaptor;
-    my $all_orthology_mlsss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type('ENSEMBL_ORTHOLOGUES');
+    my @method_link_types   = qw( ENSEMBL_ORTHOLOGUES ENSEMBL_HOMOEOLOGUES );
+
+    my @all_orthology_mlsss;
+
+    foreach my $method_link_type (@method_link_types) {
+        push @all_orthology_mlsss, @{ $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($method_link_type) };
+    }
 
     # Lookup table for the mlsss that haven't matched any taxa (yet)
     my %mlss_per_gdbs;
-    foreach my $mlss (@$all_orthology_mlsss) {
+    foreach my $mlss (@all_orthology_mlsss) {
         my ($gdb1, $gdb2) = @{ $mlss->species_set->genome_dbs };
-        $mlss_per_gdbs{$gdb1->dbID."_".$gdb2->dbID} = $mlss;
-        $mlss_per_gdbs{$gdb2->dbID."_".$gdb1->dbID} = $mlss;
+        # There is only one genome_db in each homoeolog mlss species_set
+        if ( scalar @{ $mlss->species_set->genome_dbs } == 1 ) {
+            $mlss_per_gdbs{$gdb1->dbID} = $mlss;
+        }
+        else {
+            $mlss_per_gdbs{$gdb1->dbID."_".$gdb2->dbID} = $mlss;
+            $mlss_per_gdbs{$gdb2->dbID."_".$gdb1->dbID} = $mlss;
+        }
     }
 
     # Process each level and each taxon sequentially
@@ -62,6 +74,11 @@ sub fetch_input {
 
             # Iterate over all the pairs of genome_db_id
             while (my $gdb_id1 = shift @{$genome_db_ids}) {
+                # First check for homoeolog mlss which only has one genome_db_id
+                if ( $mlss_per_gdbs{$gdb_id1} ) {
+                    my $mlss = $mlss_per_gdbs{$gdb_id1};
+                    push @output_ids, { 'mlss_id' => $mlss->dbID, 'threshold_index' => $i };
+                }
                 foreach my $gdb_id2 (@{$genome_db_ids}) {
                     my $key12 = ($gdb_id1).'_'.($gdb_id2);
                     my $key21 = ($gdb_id2).'_'.($gdb_id1);

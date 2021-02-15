@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -68,7 +68,6 @@ sub default_options {
         # Executable parameters
         'mapping_params'    => { bestn=>11, gappedextension=>"no", softmasktarget=>"no", percent=>75, showalignment=>"no", model=>"affine:local", },
         'enredo_params'     => ' --min-score 0 --max-gap-length 200000 --max-path-dissimilarity 4 --min-length 10000 --min-regions 2 --min-anchors 3 --max-ratio 3 --simplify-graph 7 --bridges -o ',
-        'gerp_window_sizes' => [1,10,100,500], #gerp window sizes
 
         # Dump directory
         'work_dir'            => $self->o('pipeline_dir'),
@@ -119,7 +118,7 @@ sub default_options {
         'max_block_size'   => 1000000,                       #max size of alignment before splitting
 
         #default location for pairwise alignments (can be a string or an array-ref)
-        'pairwise_location' => [ qw(unidir_lastz compara_prev lastz_batch_*) ],
+        'pairwise_location' => [ qw(compara_prev lastz_batch_* unidir_lastz) ],
         'lastz_complete'    => 0, # set to 1 when all relevant LASTZs have complete
         'epo_db'            => $self->pipeline_url(),
     };
@@ -196,8 +195,8 @@ sub core_pipeline_analyses {
                     ],
                     [
                         '#low_epo_mlss_id#',
-                        ['EPO_EXTENDED', 'GERP_CONSTRAINED_ELEMENT', 'GERP_CONSERVATION_SCORE'],
-                        ['low_epo_mlss_id', 'ce_mlss_id', 'cs_mlss_id'],
+                        '#expr(#run_gerp# ? ["EPO_EXTENDED", "GERP_CONSTRAINED_ELEMENT", "GERP_CONSERVATION_SCORE"] : ["EPO_EXTENDED"])expr#',
+                        '#expr(#run_gerp# ? ["low_epo_mlss_id", "ce_mlss_id", "cs_mlss_id"] : ["low_epo_mlss_id"])expr#',
                         undef,
                         0 # do not store reuse species sets for low coverage species
                     ],
@@ -206,7 +205,10 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '2->A' => { 'create_mlss_ss' => INPUT_PLUS() },
-                'A->1' => 'set_gerp_mlss_tag',
+                'A->1' => WHEN(
+                    '#run_gerp#' => [ 'set_gerp_mlss_tag' ],
+                    ELSE            [ 'set_mlss_tag' ],
+                ),
             }
         },
 
@@ -217,7 +219,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'check_for_lastz',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => WHEN( '#lastz_complete#' => [ 'create_default_pairwise_mlss' ]),
+            -flow_into  => WHEN( '#lastz_complete#' => { 'create_default_pairwise_mlss' => { 'mlss_id' => '#low_epo_mlss_id#' }}),
         },
 
         {   -logic_name => 'set_internal_ids_low_epo',
@@ -295,13 +297,14 @@ sub tweak_analyses {
     $analyses_by_name->{'low_coverage_genome_alignment'}->{'-parameters'}->{'mlss_id'} = '#low_epo_mlss_id#';
     $analyses_by_name->{'low_coverage_genome_alignment_again'}->{'-parameters'}->{'mlss_id'} = '#low_epo_mlss_id#';
     $analyses_by_name->{'low_coverage_genome_alignment_himem'}->{'-parameters'}->{'mlss_id'} = '#low_epo_mlss_id#';
+    $analyses_by_name->{'low_coverage_genome_alignment_hugemem'}->{'-parameters'}->{'mlss_id'} = '#low_epo_mlss_id#';
 
     # block analyses until LASTZ are complete
     $analyses_by_name->{'low_coverage_genome_alignment'}->{'-wait_for'} = 'create_default_pairwise_mlss';
     $analyses_by_name->{'gerp'}->{'-wait_for'} = 'set_gerp_neutral_rate';
 
-    # add "set_internal_ids_low_epo" to "remove_dodgy_ancestral_blocks"
-    $analyses_by_name->{'remove_dodgy_ancestral_blocks'}->{'-flow_into'} = { 1 => { 'set_internal_ids_low_epo' => {} } };
+    # add "set_internal_ids_low_epo" to "load_dnafrag_region"
+    $analyses_by_name->{'load_dnafrag_region'}->{'-flow_into'}->{'A->1'} = { 'set_internal_ids_low_epo' => {} };
 
     # ensure mlss_ids are flowed with their root_ids
     $analyses_by_name->{'create_neighbour_nodes_jobs_alignment'}->{'-parameters'}->{'inputquery'} = 'SELECT gat2.root_id, #mlss_id# as mlss_id FROM genomic_align_tree gat1 LEFT JOIN genomic_align ga USING(node_id) JOIN genomic_align_tree gat2 USING(root_id) WHERE gat2.parent_id IS NULL AND ga.method_link_species_set_id = #mlss_id# GROUP BY gat2.root_id';

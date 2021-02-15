@@ -127,6 +127,7 @@ sub read_sqls {
     my @statements;
     foreach my $sql (split( /;/, $all_sql )) {
         $sql =~ s/^\n*//s;
+        next unless $sql;
         # $title will usually be something like "CREATE TABLE dnafrag"
         my $title = $sql;
         $title =~ s/\s+\(.*//s;

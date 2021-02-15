@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -90,11 +90,7 @@ sub write_output {
     my $self = shift;
 
     my $mlss_location = $self->param('mlss_location');
-    $self->dataflow_output_id({'param_name' => 'pairwise_mlss_location',
-			       'param_value' => stringify($mlss_location)}, 2);
-    my $refs_per_species = $self->param('refs_per_species');
-    $self->dataflow_output_id({'param_name' => 'refs_per_species',
-			       'param_value' => stringify($refs_per_species)}, 2);  # to pipeline_wide_parameters
+    $self->add_or_update_pipeline_wide_parameter('pairwise_mlss_location', stringify($mlss_location));
 }
 
 
@@ -122,13 +118,12 @@ sub _find_location_of_all_required_mlss {
     my %ss_gdb_ids = map {$_->dbID => 1} @{$low_mlss->species_set->genome_dbs};
     $self->param('genome_db_ids', \%ss_gdb_ids);
 
-    my (%mlss_location, %refs_per_species);
+    my %mlss_location;
     foreach my $genome_db (@{$low_mlss->species_set->genome_dbs}) {
 	    unless ($high_coverage_genome_db_ids{$genome_db->dbID}) {
             my ($compara_db, $mlss_id, $ref_gdb_id) = @{ $self->_find_compara_db_for_genome_db_id($genome_db->dbID) };
-            print "picked mlss_id $mlss_id (ref: $ref_gdb_id) for " . $genome_db->name . "\n\n" if $self->debug;
+            print "picked mlss_id $mlss_id (ref: $ref_gdb_id) on $compara_db for " . $genome_db->name . "\n\n" if $self->debug;
             $mlss_location{$mlss_id} = $compara_db;
-            $refs_per_species{$genome_db->dbID} = $ref_gdb_id;
             
             # store species_tree_node_tag with ref_species information
             next if $self->param('dry_run');
@@ -136,7 +131,6 @@ sub _find_location_of_all_required_mlss {
             $low_gdb_id_2_stn->{$genome_db->dbID}->store_tag('reference_species', $ref_gdb->name);
 	    }
     }
-    $self->param('refs_per_species', \%refs_per_species);
     return \%mlss_location;
 }
 
@@ -149,6 +143,9 @@ sub _find_compara_db_for_genome_db_id {
         my $mlss_per_reference = $self->_load_mlss_from_compara_db($compara_db)->{$genome_db_id};
         foreach my $ref_genome_db_id ( keys %$mlss_per_reference ) {
             next unless $self->param('base_gdb_id_2_stn')->{$ref_genome_db_id}; # filter out genomes that are not in this mlss
+            if ($all_alns_for_gdb{$ref_genome_db_id}) {
+                print "for ref genome_db_id=$ref_genome_db_id overriding ", $all_alns_for_gdb{$ref_genome_db_id}->{compara_db}, " with $compara_db\n";
+            }
             $all_alns_for_gdb{$ref_genome_db_id} = { %{$mlss_per_reference->{$ref_genome_db_id}}, compara_db => $compara_db };
         }
     }
@@ -192,7 +189,7 @@ sub _optimal_aln_for_genome_db {
     my ($best_aln_mlss_id, $best_ref_gdb_id);
     my $max_coverage = 0;
     my $msa_coverage_stats = $self->_get_msa_coverage_stats($all_alns_for_gdb);
-    print "mlss_id\tnon-ref_name\tref_name\tmlss_name\tmsa_cov\tpw_cov\tcombined_cov\n" if $self->debug;
+    print "mlss_id\tnon-ref_name\tref_name\tmlss_name\tlocation\tmsa_cov\tpw_cov\tcombined_cov\n" if $self->debug;
     foreach my $ref_gdb_id ( keys %$all_alns_for_gdb ) {
         my $this_mlss_id = $all_alns_for_gdb->{$ref_gdb_id}->{mlss_id};
         
@@ -209,7 +206,7 @@ sub _optimal_aln_for_genome_db {
             my $mlss = $mlssa->fetch_by_dbID($this_mlss_id);
             my $nr_gdb = $gdba->fetch_by_dbID($non_ref_gdb_id);
             my $r_gdb = $gdba->fetch_by_dbID($ref_gdb_id);
-            print $mlss->dbID . "\t" . $nr_gdb->name . "\t" . $r_gdb->name . "\t" . $mlss->name . "\t$msa_cov\t$pw_cov\t$comb_coverage_for_ref\n";
+            print $mlss->dbID . "\t" . $nr_gdb->name . "\t" . $r_gdb->name . "\t" . $mlss->name . "\t" . $all_alns_for_gdb->{$ref_gdb_id}->{compara_db} . "\t$msa_cov\t$pw_cov\t$comb_coverage_for_ref\n";
         }
 
         if ( $comb_coverage_for_ref > $max_coverage ) {

@@ -1,2 +1,7 @@
 12345	test_species_set	2	80	\N
 10001	collection-update_test	2	80	\N
+34709	mammals	12	80	\N
+34711	amniotes	19	80	\N
+34873	default	59	79	79
+34874	default	59	80	\N
+34879	mammals	35	80	\N

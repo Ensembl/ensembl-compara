@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ sub _lift_gas_and_gabs {
 
     # Create the principal MLSS genomic_align_blocks in the correct range
     my $sql0 = "SELECT MIN(genomic_align_id % $magic_number), MAX(genomic_align_id % $magic_number), MIN(genomic_align_block_id % $magic_number), MAX(genomic_align_block_id % $magic_number), COUNT(*), COUNT(DISTINCT genomic_align_id % $magic_number), COUNT(DISTINCT genomic_align_block_id % $magic_number) FROM genomic_align WHERE method_link_species_set_id = ?";
-    my $sql1 = "INSERT INTO genomic_align_block SELECT (genomic_align_block_id % $magic_number) + ?, ?, score, perc_id, length, group_id, level_id FROM genomic_align_block WHERE method_link_species_set_id = ?";
+    my $sql1 = "INSERT INTO genomic_align_block SELECT (genomic_align_block_id % $magic_number) + ?, ?, score, perc_id, length, group_id, level_id, direction FROM genomic_align_block WHERE method_link_species_set_id = ?";
     # Update the genomic_align_ids and genomic_align_block_ids in genomic_align
     my $sql2 = "UPDATE genomic_align SET genomic_align_block_id = (genomic_align_block_id % $magic_number) + ?, genomic_align_id = (genomic_align_id % $magic_number) + ?, method_link_species_set_id = ? WHERE method_link_species_set_id = ?";
     # Remove the component MLSS genomic_align_blocks

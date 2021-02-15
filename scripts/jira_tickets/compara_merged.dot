@@ -1,26 +1,22 @@
 digraph {
+    rankdir=LR;  # Left-to-right graph instead of top-to-bottom
     "Patches against their primary assembly";
-    "Patches against other species";
 
     "Genome dumps" -> { "Species-tree", "LastZ" };
-    "Species-tree" -> { "EPOwith2x", "Mercator Pecan", "Protein-trees" };
+    "Species-tree" -> { "EPOwith2x", "Protein-trees", "Update MSA" };
     "All LastZ" -> "EPOwith2x";
-    "Member loading" -> { "Protein-trees", "ncRNA-trees", "Families", "Gene-tree reindexing", "Alt-alleles import" };
-    "Protein-trees" -> "Protein-trees WGA Orthology QC" [fontsize="8", label="Orthologues and\nhomology_id mapping\nonly"];
-    "ncRNA-trees" -> "ncRNA-trees WGA Orthology QC" [fontsize="8", label="Orthologues and\nhomology_id mapping\nonly"];
-    {"All LastZ", "EPOwith2x"} -> "All alignments for WGA Orthology QC" -> {"Protein-trees WGA Orthology QC", "ncRNA-trees WGA Orthology QC"};
-    {"Protein-trees", "Protein-trees WGA Orthology QC"} -> "Protein-trees High Confidence Orthologues";
-    {"ncRNA-trees", "ncRNA-trees WGA Orthology QC"} -> "ncRNA-trees High Confidence Orthologues";
+    "Member loading" -> { "Protein-trees", "ncRNA-trees", "Gene-tree reindexing", "Alt-alleles import" };
+    {"All LastZ", "EPOwith2x", "Update MSA"} -> "All alignments for WGA Orthology QC";
+    "All alignments for WGA Orthology QC" -> "Protein-trees" [fontsize="8", label="Orthologues\nonly"];
+    "All alignments for WGA Orthology QC" -> "ncRNA-trees" [fontsize="8", label="Orthologues\nonly"];
     "LastZ" -> "All LastZ" -> "Synteny";
 
     "Gene-tree reindexing" -> "ncRNA-trees" [style="dashed", dir=none, fontsize="8", label="XOR"];
     "Gene-tree reindexing" -> "Protein-trees" [style="dashed", dir=none, fontsize="8", label="XOR"];
     "EPOwith2x" -> "EPOwith2x" [style="dashed", fontsize="8", label="Anchor\nmapping\nonly", headport="Primates:e", tailport="Mammals:e"];
     "EPOwith2x" -> "EPOwith2x" [style="dashed", fontsize="8", label="Anchor\nmapping\nonly", headport="Pigs:e", tailport="Mammals:e"];
-    "EPOwith2x" -> "Age of Base" [style="dashed", headport="Human:e", tailport="Mammals:w"];
-    "EPOwith2x" -> "Ancestral Alleles" [style="dashed", headport="Vertebrates:w", tailport="Primates:w"];
-    "Protein-trees" -> "Protein-trees" [style="dashed", fontsize="8", xlabel="Orthologues\nonly", headport="Murinae:w", tailport="Default vertebrates:w"];
-    "ncRNA-trees" -> "ncRNA-trees" [style="dashed", fontsize="8", label="Orthologues\nonly", headport="Murinae:e", tailport="Default vertebrates:e"];
+    "EPOwith2x" -> "Age of Base" [style="dashed", headport="Human:w", tailport="Mammals:e"];
+    "Update MSA" -> "EPOwith2x" [style="dashed", dir=none, fontsize="8", label="XOR"];
 
     // Helps laying out the graph
     {rank = same; "Genome dumps"; "Member loading"; }

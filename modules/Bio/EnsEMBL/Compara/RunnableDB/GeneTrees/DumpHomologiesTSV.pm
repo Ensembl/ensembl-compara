@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,6 +43,8 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(check_line_counts);
+
 use File::Basename qw/dirname/;
 use File::Path qw/make_path/;
 
@@ -132,12 +134,7 @@ sub _healthcheck {
     my $hc_type = $self->param('healthcheck');
     if ( $hc_type eq 'line_count' ) {
         my $exp_line_count = $self->param('exp_line_count') + 1; # incl header line
-
-        my $output_file = $self->param('output_file');
-        my @wc_output = split(/\s+/, $self->get_command_output("wc -l $output_file"));
-        my $got_line_count = $wc_output[0];
-
-        die "Expected $exp_line_count lines in $output_file, but got $got_line_count\n" if $exp_line_count != $got_line_count;
+        check_line_counts($self->param('output_file'), $exp_line_count);
     } else {
         die "Healthcheck type '$hc_type' not recognised";
     }

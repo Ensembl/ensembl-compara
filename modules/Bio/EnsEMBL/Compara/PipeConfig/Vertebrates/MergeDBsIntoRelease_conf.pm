@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -65,11 +65,10 @@ sub default_options {
             'master_db'      => 'compara_master',
             'protein_db'     => 'compara_ptrees',
             'ncrna_db'       => 'compara_nctrees',
-            'family_db'      => 'compara_families',
             'mouse_prot_db'  => 'murinae_ptrees',
             'mouse_ncrna_db' => 'murinae_nctrees',
-            'pig_prot_db'    => 'sus_ptrees',
-            'pig_ncrna_db'   => 'sus_nctrees',
+            'pig_prot_db'    => 'pig_breeds_ptrees',
+            'pig_ncrna_db'   => 'pig_breeds_nctrees',
             'projection_db'  => 'alt_allele_projection',
             'members_db'     => 'compara_members',
         },
@@ -83,13 +82,14 @@ sub default_options {
         # These tables have a unique source. Content from other databases is ignored
         'exclusive_tables'  => {
             'mapping_session'       => 'master_db',
-            'hmm_annot'             => 'family_db',
+            'hmm_annot'             => 'protein_db',
             'gene_member'           => 'members_db',
             'seq_member'            => 'members_db',
             'other_member_sequence' => 'members_db',
             'sequence'              => 'members_db',
             'exon_boundaries'       => 'members_db',
             'seq_member_projection_stable_id' => 'members_db',
+            'method_link_species_set_attr'    => 'protein_db',
             'seq_member_projection' => 'protein_db',
             'peptide_align_feature%' => 'protein_db',
         },

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,13 +53,13 @@ sub default_options {
 
         'taxon_filters' => [
             # Filters with the default behaviour (strains hidden)
-            [ 'Amniota', 'Amniotes' ],
-            [ 'Mammalia', 'Mammals' ],
-            [ 'Neopterygii', 'Fish' ],
-            [ 'Sauria', 'Sauropsids' ],
+            [ 'Amniota', 'Amniotes', '' ],
+            [ 'Mammalia', 'Mammals', '' ],
+            [ 'Neopterygii', 'Fish', '' ],
+            [ 'Sauria', 'Sauropsids', '' ],
             # Filters with the strains shown, prefix with "str:"
-            [ 'str:Murinae', 'Rat and all mice (incl. strains)' ],
-            [ 'str:Sus scrofa', 'All pig breeds' ],
+            [ 'Murinae', 'Rat and all mice (incl. strains)', 'str:' ],
+            [ 'Sus scrofa', 'All pig breeds', 'str:' ],
         ],
         'reference_genomes' => [
             # Which genome_dbs are used references for which clades

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -196,20 +196,32 @@ sub new {
 sub new_from_Slice {
     my ($class, $slice, $genome_db) = @_;
 
-    my ($attrib) = @{ $slice->get_all_Attributes('codon_table') };
     my $codon_table_id;
-    $codon_table_id = $attrib->value() if $attrib;
+    my $sequence_location;
+    my $is_reference;
 
-    my %name_to_cellular_component = ( 'MT' => 'MT', 'CHRM' => 'MT', 'PT' => 'PT' );
-    my $cellular_component = 'NUC';
-    if (exists $name_to_cellular_component{uc $slice->seq_region_name}) {
-        $cellular_component = $name_to_cellular_component{uc $slice->seq_region_name};
+    if ($slice->{'attributes'}) {
+        $codon_table_id    = $slice->{'attributes'}->{'codon_table'};
+        $sequence_location = $slice->{'attributes'}->{'sequence_location'};
+        $is_reference      = exists $slice->{'attributes'}->{'non_ref'} ? 0 : 1;
+
     } else {
-        foreach my $synonym (@{$slice->get_all_synonyms}) {
-            if (exists $name_to_cellular_component{uc $synonym->name}) {
-                $cellular_component = $name_to_cellular_component{uc $synonym->name};
-                last;
-            }
+        my ($codon_table_attrib) = @{ $slice->get_all_Attributes('codon_table') };
+        $codon_table_id          = $codon_table_attrib->value() if $codon_table_attrib;
+        my ($seq_loc_attrib)     = @{ $slice->get_all_Attributes('sequence_location') };
+        $sequence_location       = $seq_loc_attrib->value() if $seq_loc_attrib;
+        $is_reference            = $slice->is_reference(),
+    }
+
+    my %seq_loc_to_cell_component = ( 'nuclear_chromosome' => 'NUC', 'mitochondrial_chromosome' => 'MT', 'chloroplast_chromosome' => 'PT' );
+    my $cellular_component = 'NUC';
+
+    if ($sequence_location) {
+        if (exists $seq_loc_to_cell_component{$sequence_location}) {
+            $cellular_component = $seq_loc_to_cell_component{$sequence_location};
+        }
+        else {
+            $cellular_component = 'OTHER';
         }
     }
 
@@ -217,7 +229,7 @@ sub new_from_Slice {
         'name' => $slice->seq_region_name(),
         'length' => $slice->seq_region_length(),
         'coord_system_name' => $slice->coord_system_name(),
-        'is_reference' => $slice->is_reference(),
+        'is_reference' => $is_reference,
         'genome_db' => $genome_db,
         'genome_db_id' => $genome_db->dbID,
         '_codon_table_id' => $codon_table_id || 1,

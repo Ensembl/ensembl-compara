@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ sub write_output {
 
     my $previous_wga_file = $self->param('previous_wga_file');
     my $homology_map_file = $self->param('homology_mapping_flatfile');
-    my $output_file       = $self->param('output_file');
+    my $output_file       = $self->param('reuse_file');
     $self->run_command( "mkdir -p " . dirname($output_file)) unless -d dirname($output_file);
 
     # parse homology id map
@@ -64,7 +64,7 @@ sub write_output {
         my $row = map_row_to_header( $line, \@pwga_head_cols );
         my $curr_hom_id = $homology_id_map{$row->{homology_id}};
         my $wga_score   = $row->{wga_coverage};
-        print $out_fh "$curr_hom_id\t$wga_score\n";
+        print $out_fh "$curr_hom_id\t$wga_score\n" if $curr_hom_id;
     }
     close $out_fh;
     close $pwga_fh;

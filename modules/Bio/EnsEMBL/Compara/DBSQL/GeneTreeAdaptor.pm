@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -437,6 +437,11 @@ sub delete_tree {
             $self->dbc->do($gene_member_hom_stats_sql, undef, $leaf->gene_member_id);
         }
     }
+
+    # Delete any associated CAFE data
+    my $cafe_adaptor = $self->db->get_CAFEGeneFamilyAdaptor;
+    my $cafe_gene_family = $cafe_adaptor->fetch_by_GeneTree($tree);
+    $cafe_adaptor->delete($cafe_gene_family) if ( $cafe_gene_family );
 
     # Remove all the nodes but the root
     my $gene_tree_node_Adaptor = $self->db->get_GeneTreeNodeAdaptor;

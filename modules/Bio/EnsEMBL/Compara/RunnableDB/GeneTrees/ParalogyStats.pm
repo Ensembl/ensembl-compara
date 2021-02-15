@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ sub fetch_input {
         my $row = map_row_to_header($line, \@head_cols);
         my ( $homology_type, $gene_tree_root_id, $species_tree_node_id, $seq_member_id, $hom_seq_member_id, $identity,
         $hom_identity ) = ($row->{homology_type}, $row->{gene_tree_root_id}, $row->{species_tree_node_id}, $row->{seq_member_id},
-        $row->{hom_seq_member_id}, $row->{identity}, $row->{hom_identity});
+        $row->{homology_seq_member_id}, $row->{perc_id}, $row->{homology_perc_id});
         
         
         # homology counts

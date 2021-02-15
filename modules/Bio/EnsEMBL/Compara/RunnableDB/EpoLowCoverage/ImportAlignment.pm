@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -113,23 +113,23 @@ sub importAlignment {
     }
 
     #Copy the species_set_header
-    my $ssh_rows = copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
+    copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
 	      "species_set_header",
 	      "SELECT species_set_header.* FROM species_set_header JOIN method_link_species_set USING (species_set_id) WHERE method_link_species_set_id = $mlss_id",
-          0, 0, 0, $self->debug);
+          0, 0, $self->debug);
     print "\n\n" if $self->debug;
 
     #Copy the method_link_species_set
-    my $mlss_rows = copy_table($self->param('from_dbc'), $self->compara_dba->dbc,
+    copy_table($self->param('from_dbc'), $self->compara_dba->dbc,
 	      "method_link_species_set",
 	      "method_link_species_set_id = $mlss_id");
     print "\n\n" if $self->debug;
 
     #Copy the species_set
-    my $ss_rows = copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
+    copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
 	      "species_set",
 	      "SELECT species_set.* FROM species_set JOIN method_link_species_set USING (species_set_id) WHERE method_link_species_set_id = $mlss_id",
-          0, 0, 0, $self->debug);
+          0, 0, $self->debug);
     print "\n\n" if $self->debug;
 
     #copy genomic_align_block table
@@ -139,9 +139,9 @@ sub importAlignment {
     } else {
         $gab_sql = "SELECT * FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id";
     }
-    my $gab_rows = copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
+    copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
               "genomic_align_block",
-              $gab_sql, 0, 0, 0, $self->debug);
+              $gab_sql, 0, 0, $self->debug);
     print "\n\n" if $self->debug;
 
     #copy genomic_align_tree table
@@ -158,9 +158,9 @@ sub importAlignment {
                     "ORDER BY node_id DESC";
     }
 
-    my $gat_rows = copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
+    copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
               "genomic_align_tree",
-              $gat_sql, 1, 0, 'ignore_fks', $self->debug);
+              $gat_sql, 1, 0, $self->debug);
     print "\n\n" if $self->debug;
 
 
@@ -176,9 +176,9 @@ sub importAlignment {
                     " FROM genomic_align JOIN dnafrag USING (dnafrag_id)".
                     " WHERE method_link_species_set_id = $mlss_id $ancestral_dbID_constraint";
     }
-    my $ga_rows = copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
+    copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
               "genomic_align",
-              $ga_sql, 1, 0, 0, $self->debug);
+              $ga_sql, 1, 0, $self->debug);
 }
 
 

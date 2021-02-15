@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -507,6 +507,29 @@ sub complete_early_if_branch_connected {
         $self->input_job->autoflow(0);
     }
     $self->complete_early($message);
+}
+
+
+=head2 add_or_update_pipeline_wide_parameter
+
+  Arg[1]      : (string) $param_name: the parameter name
+  Arg[2]      : (string) $param_value: the parameter value
+  Example     : $self->add_or_update_pipeline_wide_parameter('are_all_species_reused', 1);
+  Description : Add a new pipeline-wide parameter, or update its value
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub add_or_update_pipeline_wide_parameter {
+    my ($self, $param_name, $param_value) = @_;
+    my ($pwp) = $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
+        'param_name'    => $param_name,
+        'param_value'   => $param_value,
+    );
+    my $adaptor = $self->db->get_PipelineWideParametersAdaptor;
+    $adaptor->store_or_update_one($pwp, ['param_name']);
 }
 
 

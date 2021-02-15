@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ sub param_defaults {
             #'ENSEMBL_PARALOGUES'    => 2,
             #'ENSEMBL_ORTHOLOGUES'   => 3,
         },
+        'batch_size' => 1,
     }
 }
 
@@ -79,9 +80,21 @@ sub write_output {
             }
         }
         else {
-            foreach my $mlss ( @$mlsss ) {
-                $self->dataflow_output_id( { 'mlss_id' => $mlss->dbID }, $branch_number);
+            my @batch = ();
+            foreach my $mlss (@$mlsss) {
+                if ( $self->param('batch_size') == 1 ) {
+                    $self->dataflow_output_id( { 'mlss_id' => $mlss->dbID }, $branch_number);
+                } else {
+                    if ( scalar @batch == $self->param('batch_size') ) {
+                        $self->dataflow_output_id( {'mlss_ids' => \@batch}, $branch_number );
+                        @batch = ($mlss->dbID);
+                    } else {
+                        push @batch, $mlss->dbID;
+                    }
+                }
             }
+            # flow the last batch
+            $self->dataflow_output_id( {'mlss_ids' => \@batch}, $branch_number ) if scalar @batch;
         }
     }
 }

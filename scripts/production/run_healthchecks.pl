@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -140,7 +140,8 @@ my $dba = $reg_alias
     ? Bio::EnsEMBL::Registry->get_DBAdaptor( $reg_alias, $reg_type || 'compara' )
     : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -URL => $url );
 
-my $division = $dba->get_division;
+# Use get_division() method for compara DBAdaptors, COMPARA_DIV environment variable in any other case
+my $division = ($dba->group eq 'compara') ? $dba->get_division : $ENV{COMPARA_DIV};
 
 unless ($ensj_testrunner) {
     die "Need to give the --ensj-testrunner option or set the ENSEMBL_CVS_ROOT_DIR environment variable to use the default" unless $ENV{ENSEMBL_CVS_ROOT_DIR};

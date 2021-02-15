@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ standaloneJob(
 	{ # input param hash
         'goc_mlss_id'       => $goc_mlss_id,
         'homology_flatfile' => "$test_flatfile_dir/goc.test.#goc_mlss_id#.tsv",
+        'gene_dumps_dir'    => $test_flatfile_dir,
         'compara_db'        => $compara_dba->url,
 	}
 );
@@ -79,6 +80,9 @@ is( $hom_7->goc_score, 75, 'correct score (75) for homology_id 7' );
 my $hom_12 = $homology_adaptor->fetch_by_dbID(12);
 is( $hom_12->goc_score, 100, 'correct score (100) for homology_id 12' );
 
+# Check that the tag to inform that GOC is expected for this MLSS has been set correctly
+is( $mlss->get_tagvalue('goc_expected'), 1, 'correct tag and value' );
+
 ##############################
 #    Test flatfile output    #
 ##############################
@@ -89,6 +93,7 @@ standaloneJob(
 	{ # input param hash
         'goc_mlss_id'       => $goc_mlss_id,
         'homology_flatfile' => "$test_flatfile_dir/goc.test.#goc_mlss_id#.tsv",
+        'gene_dumps_dir'    => $test_flatfile_dir,
         'compara_db'        => $compara_dba->url,
         'output_file'       => $output_file,
 	}
@@ -114,23 +119,20 @@ standaloneJob(
 	{ # input param hash
 	    'goc_mlss_id'       => $goc_mlss_id,
         'homology_flatfile' => "$test_flatfile_dir/goc.test.#goc_mlss_id#.tsv",
+        'gene_dumps_dir'    => $test_flatfile_dir,
         'compara_db'        => $compara_dba->url,
         'split_polyploids'  => 1,
-	},
-    [ # list of events to test for (just 1 event in this case)
-		[
-			'DATAFLOW',
-			{'genome_db_ids' => [4, 5]},
-			3
-		],
-        [
-            'WARNING',
-            "Got ENSEMBL_HOMOEOLOGUES, so dataflowed 1 job per pair of component genome_dbs\n",
-            'INFO'
-        ]
-	]
+	}
 );
 
+$mlss       = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($goc_mlss_id);
+$homologies = $homology_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
+
+my $hom_26 = $homology_adaptor->fetch_by_dbID(26);
+is( $hom_26->goc_score, 25, 'correct score (25) for homology_id 26' );
+
+my $hom_27 = $homology_adaptor->fetch_by_dbID(27);
+is( $hom_27->goc_score, 0, 'correct score (0) for homology_id 27' );
 
 # ORTHOLOGUES
 $goc_mlss_id = 1003;
@@ -139,45 +141,9 @@ standaloneJob(
 	{ # input param hash
 	    'goc_mlss_id'       => $goc_mlss_id,
         'homology_flatfile' => "$test_flatfile_dir/goc.test.#goc_mlss_id#.tsv",
+        'gene_dumps_dir'    => $test_flatfile_dir,
         'compara_db'        => $compara_dba->url,
         'split_polyploids'  => 1,
-	},
-    [ # list of events to test for (just 1 event in this case)
-		[
-			'DATAFLOW',
-			{'genome_db_ids' => [1, 4]},
-			3
-		],
-        [
-			'DATAFLOW',
-			{'genome_db_ids' => [1, 5]},
-			3
-		],
-        [
-            'WARNING',
-            "Got ENSEMBL_ORTHOLOGUES on polyploids, so dataflowed 1 job per component genome_db\n",
-            'INFO'
-        ]
-	]
-);
-
-standaloneJob(
-	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::GeneOrderConservation', # module
-	{ # input param hash
-	    'goc_mlss_id'       => $goc_mlss_id,
-        'homology_flatfile' => "$test_flatfile_dir/goc.test.#goc_mlss_id#.tsv",
-        'compara_db'        => $compara_dba->url,
-        'genome_db_ids'     => [1,4],
-	}
-);
-
-standaloneJob(
-	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::GeneOrderConservation', # module
-	{ # input param hash
-	    'goc_mlss_id'       => $goc_mlss_id,
-        'homology_flatfile' => "$test_flatfile_dir/goc.test.#goc_mlss_id#.tsv",
-        'compara_db'        => $compara_dba->url,
-        'genome_db_ids'     => [1,5],
 	}
 );
 

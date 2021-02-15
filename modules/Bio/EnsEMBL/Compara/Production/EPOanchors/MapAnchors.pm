@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -68,14 +68,17 @@ sub fetch_input {
 
 	my $query_file = $self->worker_temp_directory  . "anchors.fa";
 	my $n = 0;
+	my @anchor_ids;
 	open(my $fh, '>', $query_file) || die("Couldn't open $query_file");
 	foreach my $anc_seq( @{ $sth->fetchall_arrayref } ){
+		push @anchor_ids, $anc_seq->[0];
 		print $fh ">", $anc_seq->[0], "\n", $anc_seq->[1], "\n";
 		$n++;
 	}
         close($fh);
         $sth->finish;
         $self->die_no_retry("No anchors to align") unless $n;
+        $self->param('anchor_ids', \@anchor_ids);
         $anchor_dba->dbc->disconnect_if_idle;
 	$self->param('query_file', $query_file);
 
@@ -84,9 +87,9 @@ sub fetch_input {
 
         return unless $self->param('with_server');
 
-        die "Indexes for $genome_db_file doen't exist" unless -e "$genome_db_file.esd";
+        die ".esd index for $genome_db_file doesn't exist" unless -e "$genome_db_file.esd";
         $self->preload_file_in_memory("$genome_db_file.esd");
-        die "Indexes for $genome_db_file doen't exist" unless -e "$genome_db_file.esi";
+        die ".esi index for $genome_db_file doesn't exist" unless -e "$genome_db_file.esi";
         $self->preload_file_in_memory("$genome_db_file.esi");
 
         $self->param('index_file', "$genome_db_file.esi");
@@ -139,13 +142,13 @@ sub run {
 sub write_output {
     my ($self) = @_;
 
-    # Delete previous mapping
-    if ($self->param('anchor_ids')) {
-        my $sql = sprintf('DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id IN (%s) AND genome_db_id = ?', join(',', @{$self->param('anchor_ids')}));
-        $self->compara_dba->dbc->do($sql, undef, $self->param('genome_db_id'));
-    } else {
-        my $sql = 'DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id BETWEEN ? AND ? AND genome_db_id = ?';
-        $self->compara_dba->dbc->do($sql, undef, $self->param('min_anchor_id'), $self->param('max_anchor_id'), $self->param('genome_db_id'));
+    # eHive DBConnections are more resilient to deadlocks, etc
+    my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $self->compara_dba->dbc);
+    # Delete the anchors one by one to minimize the amount of row-locking
+    # and the risk of creating deadlocks
+    my $sql = 'DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id = ? AND genome_db_id = ?';
+    foreach my $anchor_id (@{$self->param('anchor_ids')}) {
+        $dbc->do($sql, undef, $anchor_id, $self->param('genome_db_id'));
     }
 
     my $anchor_align_adaptor = $self->compara_dba()->get_adaptor("AnchorAlign");

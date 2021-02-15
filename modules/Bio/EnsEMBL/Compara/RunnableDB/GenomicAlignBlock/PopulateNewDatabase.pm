@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,6 +50,8 @@ sub fetch_input {
     push @cmd, '--collection', $self->param('collection') if ( $self->param('collection') && !$self->param('ignore_collection') );
     push @cmd, '--old', $self->param('old_compara_db') if $self->param('old_compara_db');
     push @cmd, '--alignments_only' if $self->param('alignments_only');
+    push @cmd, '--filter_by_mlss' if $self->param('filter_by_mlss');
+    push @cmd, '--skip_gerp' if $self->param('skip_gerp');
 
     # allow for a single mlss_id or multiples as populate_new_database.pl can accept multiple mlsses in the same cmd
     push @cmd, '--mlss', $self->param('mlss_id') if $self->param('mlss_id');

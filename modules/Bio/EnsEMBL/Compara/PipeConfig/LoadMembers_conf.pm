@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -514,9 +514,24 @@ sub core_pipeline_analyses {
                 mode            => 'members_globally',
             },
             %hc_analysis_params,
-            -flow_into          => WHEN(
-                            '#load_uniprot_members#' => 'save_uniprot_release_date',
-                            ),
+            -flow_into          => {
+                '2->A' => WHEN( '#load_uniprot_members#' => 'save_uniprot_release_date' ),
+                'A->1' => [ 'datachecks' ],
+            },
+        },
+
+        {   -logic_name      => 'datachecks',
+            -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RunDataChecks',
+            -parameters      => {
+                'datacheck_names'  => ['BlankEnums', 'CheckSequenceTable'],
+                'work_dir'         => $self->o('work_dir'),
+                'history_file'     => '#work_dir#/datacheck.compara_load_members.history.json',
+                'output_file'      => '#work_dir#/datacheck.compara_load_members.tap.txt',
+                'failures_fatal'   => 1,
+                'pdbname'          => $self->o('pipeline_name'),
+                'dbtype'           => 'compara',
+            },
+            -max_retry_count => 0,
         },
 
 # ---------------------------------------------[load UNIPROT members for Family pipeline]------------------------------------------------------------

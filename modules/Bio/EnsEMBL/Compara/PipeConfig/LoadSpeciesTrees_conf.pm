@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -52,6 +52,8 @@ sub default_options {
 
         'species_tree_method_link' => 'SPECIES_TREE',
 
+        'species_tree'             => $self->o('binary_species_tree'),
+
         'taxon_filters' => [
             # Filters with the default behaviour (strains hidden)
             # [ 'Amniota', 'Amniotes' ],
@@ -63,6 +65,9 @@ sub default_options {
             # Which genome_dbs are used references for which clades
             # [ '10090', 'mus_musculus' ],
         ],
+
+        'binary'    => 1,
+        'n_missing_species_in_tree' => 0,
     };
 }
 
@@ -114,20 +119,20 @@ sub pipeline_analyses {
                 # Gets #compara_db# from pipeline_wide_parameters
                 'label'     => 'Ensembl',
                 'mlss_id'   => '#method_link_species_set_id#',
-                'species_tree_input_file'   => $self->o('binary_species_tree'),
+                'species_tree_input_file'   => $self->o('species_tree'),
             },
             -flow_into  => {
-                2 => [ 'hc_binary_species_tree' ],
+                2 => [ 'hc_ensembl_species_tree' ],
             }
         },
 
-        {   -logic_name => 'hc_binary_species_tree',
+        {   -logic_name => 'hc_ensembl_species_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters => {
                 # Gets #compara_db# from pipeline_wide_parameters
                 mode            => 'species_tree',
-                binary          => 1,
-                n_missing_species_in_tree   => 0,
+                binary          => $self->o('binary'),
+                n_missing_species_in_tree   => $self->o('n_missing_species_in_tree'),
             },
             -flow_into  => [ 'load_ncbi_tree' ],
         },
@@ -161,7 +166,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputlist'    => $self->o('taxon_filters'),
-                'column_names' => [ 'scientific_name', 'common_name' ],
+                'column_names' => [ 'scientific_name', 'common_name', 'prefix' ],
             },
             -flow_into => {
                 2 => [ 'check_taxon_filters' ],
@@ -182,7 +187,7 @@ sub pipeline_analyses {
             -parameters => {
                 # Cannot flow directly into the table because table-dataflows can only reach the eHive database, not #db_conn#
                 # Gets #db_conn# from pipeline_wide_parameters
-                'sql'       => 'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#method_link_species_set_id#, "filter:#scientific_name#", "#common_name#")',
+                'sql'       => 'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#method_link_species_set_id#, "filter:#prefix##scientific_name#", "#common_name#")',
             },
         },
 

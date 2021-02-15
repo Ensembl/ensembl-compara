@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -145,7 +145,6 @@ sub default_options {
         'goc_taxlevels_metazoa'     => ['Diptera', 'Hymenoptera', 'Nematoda'],
         'goc_taxlevels_protists'    => [],
         'goc_taxlevels_vb'          => ['Chelicerata', 'Diptera', 'Hemiptera'],
-        'calculate_goc_distribution' => 1,
 
     # Extra analyses
         # compute dNdS for homologies?
@@ -161,6 +160,42 @@ sub default_options {
         'prev_homology_dumps_dir'   => undef,
         'homology_dumps_shared_dir' => undef,
 
+    # HighConfidenceOrthologs Parameters
+        # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
+        'threshold_levels' => [
+            {
+                'taxa'          => [ 'Apes', 'Murinae' ],
+                'thresholds'    => [ 75, 75, 80 ],
+            },
+            {
+                'taxa'          => [ 'Mammalia', 'Aves', 'Percomorpha' ],
+                'thresholds'    => [ 75, 75, 50 ],
+            },
+            {
+                'taxa'          => [ 'Euteleostomi', 'Ciona' ],
+                'thresholds'    => [ 50, 50, 25 ],
+            },
+            {
+                'taxa'          => [ 'Panicoideae', 'Oryzinae', 'Pooideae', 'Solanaceae', 'Brassicaceae', 'Malvaceae', 'fabids' ],
+                'thresholds'    => [ 50, 50, 25 ],
+            },
+            {
+                'taxa'          => [ 'Aculeata', 'Anophelinae', 'Caenorhabditis', 'Drosophila', 'Glossinidae', 'Onchocercidae' ],
+                'thresholds'    => [ 50, 50, 25 ],
+            },
+            {
+                'taxa'          => [ 'Brachycera', 'Culicinae', 'Hemiptera', 'Phlebotominae' ],
+                'thresholds'    => [ 25, 25, 25 ],
+            },
+            {
+                'taxa'          => [ 'Chelicerata', 'Diptera', 'Hymenoptera', 'Nematoda' ],
+                'thresholds'    => [ undef, undef, 25 ],
+            },
+            {
+                'taxa'          => [ 'all' ],
+                'thresholds'    => [ undef, undef, 25 ],
+            },
+        ],
     };
 }
 

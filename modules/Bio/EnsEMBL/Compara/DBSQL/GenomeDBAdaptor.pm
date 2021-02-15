@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -380,7 +380,7 @@ sub fetch_all_current_by_ancestral_taxon_id {
 sub fetch_by_core_DBAdaptor {
     my ($self, $core_dba, $component) = @_;
     my $was_connected = $core_dba->dbc->connected;
-    my $species_name = $core_dba->production_name();
+    my $species_name = $core_dba->get_MetaContainer->get_production_name();
     my $species_assembly = $core_dba->assembly_name();
     $core_dba->dbc->disconnect_if_idle() unless $was_connected;
     return undef unless $species_name;
@@ -476,7 +476,7 @@ sub fetch_all_by_mixed_ref_lists {
   Example    : $gdba->store($gdb);
   Description: Stores the GenomeDB object in the database unless it has been stored already; updates the dbID of the object.
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara:GenomeDB
+  Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara::GenomeDB
   Caller     : general
   Status     : Stable
 
@@ -525,7 +525,7 @@ sub store {
   Example    : $gdba->update($gdb);
   Description: Updates the GenomeDB object in the database
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara:GenomeDB
+  Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara::GenomeDB
   Caller     : general
   Status     : Stable
 

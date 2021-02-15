@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -91,8 +91,6 @@ our @EXPORT_OK;
     copy_data_with_foreign_keys_by_constraint
     clear_copy_data_cache
     copy_data
-    copy_data_in_binary_mode
-    copy_data_in_text_mode
     copy_data_pp
     copy_table
     bulk_insert
@@ -106,12 +104,7 @@ our @EXPORT_OK;
   'all'         => [@EXPORT_OK]
 );
 
-use constant MAX_FILE_SIZE_FOR_MYSQLIMPORT => 10_000_000;   # How much space can we safely assume is available on /tmp
 use constant MAX_STATEMENT_LENGTH => 1_000_000;             # Related to MySQL's "max_allowed_packet" parameter
-use constant MAX_ROWS_WHILE_CONNECTED => 100_000;           # Heuristics: reading/writing that amount of rows is going to take some time, so disconnect from the other database if possible
-
-use Data::Dumper;
-use File::Temp qw/tempfile/;
 
 use Bio::EnsEMBL::Utils::Iterator;
 use Bio::EnsEMBL::Utils::Scalar qw(check_ref assert_ref);
@@ -270,38 +263,6 @@ sub clear_copy_data_cache {
 }
 
 
-=head2 _has_binary_column
-
-  Example     : _has_binary_column($dbc, 'genomic_align_block');
-  Description : Tells whether the table has a binary column
-  Returntype  : Boolean
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub _has_binary_column {
-    my ($dbc, $table_name) = @_;
-
-    assert_ref($dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'dbc');
-    return $dbc->{"_has_binary_column__${table_name}"} if exists $dbc->{"_has_binary_column__${table_name}"};
-
-    my $sth = $dbc->db_handle->column_info($dbc->dbname, undef, $table_name, '%');
-    $sth->execute;
-    my $all_rows = $sth->fetchall_arrayref;
-    my $binary_mode = 0;
-    foreach my $this_col (@$all_rows) {
-        if (($this_col->[5] =~ /BINARY$/) or ($this_col->[5] =~ /BLOB$/) or ($this_col->[5] eq "BIT")) {
-            $binary_mode = 1;
-            last;
-        }
-    }
-    $dbc->{"_has_binary_column__${table_name}"} = $binary_mode;
-    return $binary_mode;
-}
-
-
 =head2 copy_data
 
   Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $from_dbc
@@ -309,17 +270,15 @@ sub _has_binary_column {
   Arg[3]      : string $table_name
   Arg[4]      : string $query
   Arg[5]      : (opt) boolean $replace (default: false)
-  Arg[6]      : (opt) boolean $skip_disable_keys (default: false)
-  Arg[7]      : (opt) boolean $ignore_foreign_keys (default: false)
+  Arg[6]      : (opt) boolean $skip_disable_vars (default: false)
   Arg[7]      : (opt) boolean $debug (default: false)
 
-  Description : Copy the output of the query to this table using chunks of $index_name
-  Return      : Integer - The number of rows copied over
+  Description : Copy the output of the query to this table
 
 =cut
 
 sub copy_data {
-    my ($from_dbc, $to_dbc, $table_name, $query, $replace, $skip_disable_keys, $ignore_fks, $debug) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $replace, $skip_disable_vars, $debug) = @_;
 
     assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
@@ -327,175 +286,10 @@ sub copy_data {
     unless (defined $table_name && defined $query) {
         die "table_name and query are mandatory parameters";
     };
+    my $load_query = "LOAD DATA LOCAL INFILE '/dev/stdin' " . ($replace ? 'REPLACE' : 'IGNORE' ) . " INTO TABLE $table_name";
 
-    print "Copying data in table $table_name\n" if $debug;
-
-    unless ($skip_disable_keys) {
-        #speed up writing of data by disabling keys, write the data, then enable
-        print "DISABLE KEYS\n" if $debug;
-        $to_dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
-    }
-
-    my $rows;
-    if ( $ignore_fks ) {
-        $rows = copy_data_pp($from_dbc, $to_dbc, $table_name, $query, $replace, $ignore_fks, $debug);
-    } elsif (_has_binary_column($from_dbc, $table_name)) {
-        $rows = copy_data_in_binary_mode($from_dbc, $to_dbc, $table_name, $query, $replace, $debug);
-    } else {
-        $rows = copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, $replace, $debug);
-    }
-
-    unless ($skip_disable_keys) {
-        # this can take a lot of time
-        print "ENABLE KEYS\n" if $debug;
-        $to_dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
-    }
-    return $rows;
-}
-
-
-=head2 _escape
-
-  Description : Helper function that escapes some special characters.
-
-=cut
-
-sub _escape {
-    my $s = shift;
-    return '\N' unless defined $s;
-    $s =~ s/\n/\\\n/g;
-    $s =~ s/\t/\\\t/g;
-    return $s;
-}
-
-
-=head2 copy_data_in_text_mode
-
-  Description : A specialized version of copy_data() for tables that don't have
-                any binary data and can be loaded with mysqlimport.
-
-=cut
-
-sub copy_data_in_text_mode {
-    my ($from_dbc, $to_dbc, $table_name, $query, $replace, $ignore_fks, $debug) = @_;
-
-    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
-    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
-
-    $from_dbc->reconnect() unless $from_dbc->db_handle->ping;
-    $to_dbc->reconnect() unless $to_dbc->db_handle->ping;
-
-    my $user = $to_dbc->username;
-    my $pass = $to_dbc->password;
-    my $host = $to_dbc->host;
-    my $port = $to_dbc->port;
-    my $dbname = $to_dbc->dbname;
-
-    print "Query: $query\n" if $debug;
-    my $sth = $from_dbc->prepare($query, { 'mysql_use_result' => 1 });
-    $sth->execute();
-    my $curr_row;
-
-    my $total_rows = 0;
-    do {
-        my ($fh, $filename) = tempfile("${table_name}.XXXXXX", TMPDIR => 1, UNLINK => 0);
-        my $nrows = 0;
-        my $file_size = 0;
-        # The order of the condition is important: we don't want to discard a row
-        while (($file_size < MAX_FILE_SIZE_FOR_MYSQLIMPORT) and ($curr_row = $sth->fetchrow_arrayref)) {
-            my $row = join("\t", map {_escape($_)} @$curr_row) . "\n";
-            print $fh $row;
-            $file_size += length($row);
-            $nrows++;
-            $to_dbc->disconnect_if_idle if $nrows >= MAX_ROWS_WHILE_CONNECTED;
-        }
-        close($fh);
-        unless ($curr_row) {
-            $sth->finish;
-            $from_dbc->disconnect_if_idle if $nrows >= MAX_ROWS_WHILE_CONNECTED;
-        }
-        if ($nrows) {
-            my @cmd = ('mysqlimport', "-h$host", "-P$port", "-u$user", $pass ? ("-p$pass") : (), '--local', '--lock-tables', $replace ? '--replace' : '--ignore', $dbname, $filename);
-            Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec(\@cmd, { die_on_failure => 1, debug => $debug });
-            print "Inserted $nrows rows in $table_name\n" if $debug;
-            $total_rows += $nrows;
-        }
-        unlink($filename);
-    } while ($curr_row);
-    return $total_rows;
-}
-
-
-=head2 copy_data_in_binary_mode
-
-  Description : A specialized version of copy_data() for tables that have binary
-                data, using mysqldump.
-
-=cut
-
-sub copy_data_in_binary_mode {
-    my ($from_dbc, $to_dbc, $table_name, $query, $replace, $debug) = @_;
-
-    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
-    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
-
-    print " ** WARNING ** Copying table $table_name in binary mode, this requires write access.\n";
-    print " ** WARNING ** The original table will be temporarily renamed as original_$table_name.\n";
-    print " ** WARNING ** An auxiliary table named temp_$table_name will also be created.\n";
-    print " ** WARNING ** You may have to undo this manually if the process crashes.\n\n";
-
-    my $start_time  = time();
-
-    $from_dbc->reconnect() unless $from_dbc->db_handle->ping;
-
-    my $count = $from_dbc->sql_helper->execute_single_result(
-        -SQL => "SELECT COUNT(*) FROM $table_name",
-    );
-
-    ## EXIT CONDITION
-    return unless !$count;
-
-    ## Copy data into a aux. table
-    $from_dbc->do("CREATE TABLE temp_$table_name $query");
-
-    ## Change table names (mysqldump will keep the table name, hence we need to do this)
-    $from_dbc->do("ALTER TABLE $table_name RENAME original_$table_name");
-    $from_dbc->do("ALTER TABLE temp_$table_name RENAME $table_name");
-
-    ## mysqldump data
-    ## disable/enable keys is managed in copy_data, so here we can just skip this
-    copy_table($from_dbc, $to_dbc, $table_name, undef, $replace, 'skip_disable_keys', $debug);
-
-    ## Undo table names change
-    $from_dbc->do("DROP TABLE $table_name");
-    $from_dbc->do("ALTER TABLE original_$table_name RENAME $table_name");
-
-    return $count;
-}
-
-
-=head2 copy_table
-
-  Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $from_dbc
-  Arg[2]      : Bio::EnsEMBL::DBSQL::DBConnection $to_dbc
-  Arg[3]      : string $table_name
-  Arg[4]      : (opt) string $where_filter
-  Arg[5]      : (opt) boolean $replace (default: false)
-  Arg[6]      : (opt) boolean $skip_disable_keys (default: false)
-  Arg[7]      : (opt) boolean $debug (default: false)
-
-  Description : Copy the table (either all of it or a subset).
-                The main optional argument is $where_filter, which allows to select a portion of
-                the table. Note: the filter must be valid on the table alone, and does not support
-                JOINs. If you need the latter, use copy_data()
-
-=cut
-
-sub copy_table {
-    my ($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_keys, $debug) = @_;
-
-    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
-    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
+    # escape quotes to avoid nesting
+    $query =~ s/\\?"/\\"/g;
 
     print "Copying data in table $table_name\n" if $debug;
 
@@ -511,16 +305,87 @@ sub copy_table {
     my $to_port = $to_dbc->port;
     my $to_dbname = $to_dbc->dbname;
 
+    # Check the column information: if there is at least one binary column, alter the given query and the
+    # LOAD DATA query to handle the binary columns accordingly
+    my $sth = $from_dbc->db_handle->column_info($from_dbname, undef, $table_name, '%');
+    my $columns_info = $sth->fetchall_arrayref;
+    my $binary_mode = 0;
+    my (@select_cols, @load_cols, @set_exprs);
+    foreach my $col ( @$columns_info ) {
+        if ($col->[5] =~ /(^BIT|BLOB|BINARY)$/) {
+            $binary_mode = 1;
+            push @select_cols, "HEX($table_name." . $col->[3] . ")";
+            push @load_cols, "@" . $col->[3];
+            push @set_exprs, $col->[3] . " = UNHEX(@" . $col->[3] . ")";
+        } else {
+            push @select_cols, "$table_name." . $col->[3];
+            push @load_cols, $col->[3];
+        }
+    }
+    if ($binary_mode) {
+        # Replace the wildcard by the list of columns (including the HEX-ing of the binary ones)
+        my $select_cols = join(', ', @select_cols);
+        $query =~ s/($table_name\.|)\*/$select_cols/;
+        # Make LOAD DATA aware of which columns to UNHEX
+        $load_query .= sprintf(" (%s) SET %s", join(', ', @load_cols), join(', ', @set_exprs));
+    }
+
+    # Get table's engine to optimise the copy process
+    my $table_engine;
+    unless ($skip_disable_vars) {
+        $table_engine = $to_dbc->db_handle->selectrow_hashref("SHOW TABLE STATUS WHERE Name = '$table_name'")->{Engine};
+        # Speed up writing of data by disabling certain variables, write the data, then enable them back
+        print "DISABLE VARIABLES\n" if $debug;
+        if ($table_engine eq 'MyISAM') {
+            $to_dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
+        } else {
+            $load_query = "SET AUTOCOMMIT = 0; SET FOREIGN_KEY_CHECKS = 0; SET UNIQUE_CHECKS = 0; " .
+                $load_query ."; SET AUTOCOMMIT = 1; SET FOREIGN_KEY_CHECKS = 1; SET UNIQUE_CHECKS = 1;";
+        }
+    }
+
+    # Disconnect from the databases before copying the table
+    $from_dbc->disconnect_if_idle();
+    $to_dbc->disconnect_if_idle();
+
     my $start_time  = time();
-    my $insert_mode = $replace ? '--replace' : '--insert-ignore';
-
-    my $cmd = "mysqldump -h$from_host -P$from_port -u$from_user ".($from_pass ? "-p$from_pass" : '')." $insert_mode -t $from_dbname $table_name ".
-        ($where_filter ? "-w '$where_filter'" : "")." ".
-        ($skip_disable_keys ? "--skip-disable-keys" : "")." ".
-        "| mysql   -h$to_host   -P$to_port   -u$to_user   ".($to_pass ? "-p$to_pass" : '')." $to_dbname";
+    my $cmd = "mysql --host=$from_host --port=$from_port --user=$from_user " . ($from_pass ? "--password=$from_pass " : '') .
+        "--max_allowed_packet=1024M $from_dbname -e \"$query\" --quick --silent --skip-column-names " .
+        "| sed -r -e 's/\\r//g' -e 's/(^|\\t)NULL(\$|\\t)/\\1\\\\N\\2/g' -e 's/(^|\\t)NULL(\$|\\t)/\\1\\\\N\\2/g' " .
+        "| mysql --host=$to_host --port=$to_port --user=$to_user " . ($to_pass ? "--password=$to_pass " : '') .
+        "$to_dbname -e \"$load_query\"";
     Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd, { die_on_failure => 1, use_bash_pipefail => 1, debug => $debug });
+    print "total time: " . (time - $start_time) . " s\n" if $debug;
 
-    print "time " . (time - $start_time) . "\n" if $debug;
+    unless ($skip_disable_vars) {
+        print "ENABLE VARIABLES\n" if $debug;
+        $to_dbc->do("ALTER TABLE `$table_name` ENABLE KEYS") if ($table_engine eq 'MyISAM');
+    }
+}
+
+
+=head2 copy_table
+
+  Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $from_dbc
+  Arg[2]      : Bio::EnsEMBL::DBSQL::DBConnection $to_dbc
+  Arg[3]      : string $table_name
+  Arg[4]      : (opt) string $where_filter
+  Arg[5]      : (opt) boolean $replace (default: false)
+  Arg[6]      : (opt) boolean $skip_disable_vars (default: false)
+  Arg[7]      : (opt) boolean $debug (default: false)
+
+  Description : Copy the table (either all of it or a subset).
+                The main optional argument is $where_filter, which allows to select a portion of
+                the table. Note: the filter must be valid on the table alone, and does not support
+                JOINs. If you need the latter, use copy_data()
+
+=cut
+
+sub copy_table {
+    my ($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_vars, $debug) = @_;
+
+    my $query = "SELECT * FROM $table_name" . ($where_filter ? " WHERE $where_filter" : '');
+    copy_data($from_dbc, $to_dbc, $table_name, $query, $replace, $skip_disable_vars, $debug);
 }
 
 
@@ -548,6 +413,12 @@ sub copy_data_pp {
 
     assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
+
+    unless (defined $table_name && defined $query) {
+        die "table_name and query are mandatory parameters";
+    };
+
+    print "Copying data in table $table_name\n" if $debug;
 
     my $sth = $from_dbc->prepare($query, { 'mysql_use_result' => 1 });
     $sth->execute();
@@ -663,4 +534,3 @@ sub bulk_insert_iterator {
 
 
 1;
- 

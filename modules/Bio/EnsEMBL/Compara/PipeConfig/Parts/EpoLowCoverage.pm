@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -190,8 +190,8 @@ sub pipeline_analyses_epo2x_alignment {
           -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
           -parameters => {
                           'sql' => [
-                              'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#cs_mlss_id#, "msa_mlss_id", ' . $self->o('low_epo_mlss_id') . ')',
-                              'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#ce_mlss_id#, "msa_mlss_id", ' . $self->o('low_epo_mlss_id') . ')',
+                              'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#cs_mlss_id#, "msa_mlss_id", #low_epo_mlss_id#)',
+                              'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#ce_mlss_id#, "msa_mlss_id", #low_epo_mlss_id#)',
                           ],
                          },
           -flow_into => [ 'set_mlss_tag' ],
@@ -221,7 +221,6 @@ sub pipeline_analyses_epo2x_alignment {
             -flow_into => {
                 1 => WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ],
                      ELSE [ 'import_alignment' ] ),
-                2 => [ '?table_name=pipeline_wide_parameters' ],
             },
             -rc_name => '1Gb_job',
         },
@@ -230,7 +229,6 @@ sub pipeline_analyses_epo2x_alignment {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetGerpNeutralRate',
             -flow_into => {
                 1 => [ 'import_alignment' ],
-                2 => [ '?table_name=pipeline_wide_parameters' ],
             },
         },
 

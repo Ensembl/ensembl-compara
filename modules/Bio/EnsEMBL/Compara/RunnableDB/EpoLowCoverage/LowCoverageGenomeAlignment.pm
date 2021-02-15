@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -783,7 +783,7 @@ sub get_species_tree {
       $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('mlss_id'), 'default')->root;
 
   #if the tree leaves are species names, need to convert these into genome_db_ids
-  my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
+  my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all_current();
 
   my %leaf_check;
   foreach my $genome_db (@$genome_dbs) {
@@ -1313,7 +1313,7 @@ sub _create_frag_array {
 	@$pairwise_gabs = sort {$a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start} @$pairwise_gabs;
 
     # only take unidirectional netted GABs
-    @$pairwise_gabs = grep { $_->direction == 1 } @$pairwise_gabs;
+    @$pairwise_gabs = grep { ($_->direction // 1) == 1 } @$pairwise_gabs;
 
 	print "    pairwise gabs " . scalar(@$pairwise_gabs) . "\n" if $self->debug;
 	#if there are no pairwise matches found to 2x genome, then escape

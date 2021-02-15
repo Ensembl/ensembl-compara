@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ sub param_defaults {
     my $self = shift;
     return {
         %{ $self->SUPER::param_defaults() },
-        'cmd' => [ 'perl', '#dump_aln_program#', '--species', '#species#', '--mlss_id', '#dump_mlss_id#', '--masked_seq', '#masked_seq#', '--split_size', '#split_size#', '--output_format', '#format#', '--output_file', '#output_file_gen#' ],
+        'cmd' => [ 'perl', '#dump_aln_program#', '--mlss_id', '#dump_mlss_id#', '--masked_seq', '#masked_seq#', '--split_size', '#split_size#', '--output_format', '#format#', '--output_file', '#output_file_gen#' ],
 
         'dump_mlss_id'  => '#mlss_id#',     # By default we still dump "mlss_id"
 
@@ -67,6 +67,10 @@ sub fetch_input {
 
     if ($self->param('genome_dumps_dir')) {
         push @$cmd, '--genome_dumps_dir', $self->param('genome_dumps_dir');
+    }
+
+    if ($self->param('species')) {
+        push @$cmd, '--species', $self->param('species');
     }
 
     #Write a temporary file to store gabs to dump

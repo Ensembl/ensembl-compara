@@ -1,7 +1,0 @@
-{
-    "drivername": "mysql",
-    "host": "mysql-ens-compara-prod-1",
-    "port": 4485,
-    "username": "ensadmin",
-    "password": "$ENSADMIN_PSW"
-}

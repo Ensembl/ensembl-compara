@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -51,8 +51,11 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+        # Where to keep temporary files
+        'work_dir'   => $self->o('pipeline_dir') . '/hash',
+
         # How many species can be dumped in parallel
-        'dump_ce_capacity'    => 50,
+        'dump_ce_capacity'    => 10,
 
         # Paths to compara files
         'ce_readme'             => $self->check_file_in_ensembl('ensembl-compara/docs/ftp/constrained_elements.txt'),
@@ -84,8 +87,9 @@ sub pipeline_wide_parameters {
         'compara_db'   => $self->o('compara_db'),
 
         'export_dir'    => $self->o('pipeline_dir'),
+        'work_dir'      => $self->o('work_dir'),
         'ce_output_dir'    => '#export_dir#/bed/ensembl-compara/#dirname#',
-        'bed_file'   => '#ce_output_dir#/gerp_constrained_elements.#name#.bed',
+        'bed_file'   => '#work_dir#/#dirname#/gerp_constrained_elements.#name#.bed',
         'bigbed_file'   => '#ce_output_dir#/gerp_constrained_elements.#name#.bb',
     };
 }

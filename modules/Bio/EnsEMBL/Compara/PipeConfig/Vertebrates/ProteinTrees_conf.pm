@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,8 +23,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ProteinTrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -mlss_id <curr_ptree_mlss_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 DESCRIPTION
 
@@ -77,6 +76,23 @@ sub default_options {
 
     # GOC parameters
         'goc_taxlevels'                 => ["Euteleostomi","Ciona"],
+
+    # HighConfidenceOrthologs Parameters
+        # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
+        'threshold_levels' => [
+            {
+                'taxa'          => [ 'Apes', 'Murinae' ],
+                'thresholds'    => [ 75, 75, 80 ],
+            },
+            {
+                'taxa'          => [ 'Mammalia', 'Aves', 'Percomorpha' ],
+                'thresholds'    => [ 75, 75, 50 ],
+            },
+            {
+                'taxa'          => [ 'all' ],
+                'thresholds'    => [ 50, 50, 25 ],
+            },
+        ],
     };
 }
 
@@ -93,7 +109,12 @@ sub tweak_analyses {
         'hcluster_parse_output'     => '1Gb_job',
         'split_genes'               => 'default',   # This is 250Mb
         'CAFE_species_tree'         => '24Gb_job',
+        'stable_id_mapping'         => '4Gb_job',
+        'pair_species'              => '500Mb_job',
+        'ortholog_mlss_factory'     => '500Mb_job',
         'expand_clusters_with_projections' => '500Mb_job',
+        'homology_dumps_mlss_id_factory'   => '500Mb_job',
+        'get_long_short_orth_genes_himem'  => '4Gb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};

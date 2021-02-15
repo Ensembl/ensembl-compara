@@ -1,6 +1,6 @@
 """
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from collections import OrderedDict
 from typing import Dict, Optional, Tuple, Union
 
@@ -23,7 +23,11 @@ import py
 import pytest
 
 
-class CITestItem(ABC, pytest.Item):
+class CITestMeta(ABCMeta, type(pytest.Item)):  # type: ignore
+    """Metaclass required to solve the metaclass conflict in CITestItem."""
+
+
+class CITestItem(ABC, pytest.Item, metaclass=CITestMeta):
     """Abstract class of the test set to compare two (analogous) Ensembl Compara elements.
 
     Args:
@@ -42,7 +46,7 @@ class CITestItem(ABC, pytest.Item):
         self.error_info = OrderedDict()  # type: OrderedDict
 
     def runtest(self) -> None:
-        """Execute the selected test function with the given arguments.
+        """Executes the selected test function with the given arguments.
 
         Raises:
             SyntaxError: If the test function to call does not exist.

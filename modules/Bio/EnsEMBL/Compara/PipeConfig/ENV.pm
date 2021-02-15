@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::ApiVersion ();
+use Bio::EnsEMBL::Hive::Utils ('whoami');
 
 =head2 shared_options
 
@@ -45,11 +46,15 @@ sub shared_default_options {
     my ($self) = @_;
     return {
 
+        # Same as in HiveGeneric_conf, but also considering $SUDO_USER as
+        # we sometimes initialise pipelines with a shared user
+        'dbowner'               => $ENV{'EHIVE_USER'} || $ENV{'SUDO_USER'} || whoami() || $self->o('dbowner'),
+
         # Since we run the same pipeline for multiple divisions, include the division name in the pipeline name
         'pipeline_name'         => $self->o('division').'_'.$self->default_pipeline_name().'_'.$self->o('rel_with_suffix'),
 
         # User details
-        'email'                 => $ENV{'USER'}.'@ebi.ac.uk',
+        'email'                 => $self->o('dbowner').'@ebi.ac.uk',
 
         # Shared user used for shared files across all of Compara
         'shared_user'           => 'compara_ensembl',
@@ -61,12 +66,12 @@ sub shared_default_options {
         'eg_release'            => Bio::EnsEMBL::ApiVersion::software_version()-53,
 
         # TODO: make a $self method that checks whether this already exists, to prevent clashes like in the LastZ pipeline
-        'pipeline_dir'          => '/hps/nobackup2/production/ensembl/' . $ENV{'USER'} . '/' . $self->o('pipeline_name'),
+        'pipeline_dir'          => '/hps/nobackup2/production/ensembl/' . $self->o('dbowner') . '/' . $self->o('pipeline_name'),
         'shared_hps_dir'        => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user'),
         'warehouse_dir'         => '/nfs/production/panda/ensembl/warehouse/compara/',
 
         # Where to find the linuxbrew installation
-        'linuxbrew_home'        => $ENV{'LINUXBREW_HOME'},
+        'linuxbrew_home'        => $ENV{'LINUXBREW_HOME'} || $self->o('linuxbrew_home'),
         'compara_software_home' => $self->o('warehouse_dir') . '/software/',
 
         # All the fixed parameters that depend on a "division" parameter
@@ -184,6 +189,8 @@ sub executable_locations {
         'epo_stats_report_exe'              => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/epo_stats.pl'),
         'populate_new_database_exe'         => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/populate_new_database.pl'),
         'run_healthchecks_exe'              => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/run_healthchecks.pl'),
+        'create_datacheck_tickets_exe'      => $self->check_exe_in_ensembl('ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl'),
+        'copy_ancestral_core_exe'           => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/copy_ancestral_core.pl'),
 
         # Internal dependencies (Ensembl scripts)
         'ensj_testrunner_exe'               => $self->check_exe_in_ensembl('ensj-healthcheck/run-configurable-testrunner.sh'),

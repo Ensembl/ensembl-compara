@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -191,6 +191,9 @@ sub pipeline_create_commands {
             # Compara 'pipeline' tables are already InnoDB, but can be turned to MyISAM if needed:
         ($self->o('compara_innodb_schema') ? 'cat ' : "sed 's/ENGINE=InnoDB/ENGINE=MyISAM/g' ")
             . $self->check_file_in_ensembl('ensembl-compara/sql/pipeline-tables.sql').' | '.$self->db_cmd(),
+
+            # Add the division name - useful to identify the database
+            $self->db_cmd(sprintf(q{INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'division', '%s')}, $self->o('division'))),
 
             # MySQL specific procedures
             $driver eq 'mysql' ? ($self->db_cmd().' < '.$self->check_file_in_ensembl('ensembl-compara/sql/procedures.'.$driver)) : (),

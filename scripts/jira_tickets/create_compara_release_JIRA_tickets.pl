@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@ use FindBin;
 use Getopt::Long;
 
 use Bio::EnsEMBL::Compara::Utils::JIRA;
+
+# Epic JIRA Ticket ID for Production taks
+use constant EPIC_TICKET_ID => 'ENSCOMPARASW-3572';
 
 main();
 
@@ -76,7 +79,12 @@ sub main {
     die 'Aborted by user. Please rerun with correct parameters.' if ( $response ne 'y' );
 
     # Create JIRA tickets
-    my $subtask_keys = $jira_adaptor->create_tickets(-JSON_FILE => $tickets_json, -DRY_RUN => $dry_run);
+    my $subtask_keys = $jira_adaptor->create_tickets(
+        -JSON_FILE        => $tickets_json,
+        -DEFAULT_PRIORITY => 'Blocker',
+        -EPIC_LINK        => EPIC_TICKET_ID(),
+        -DRY_RUN          => $dry_run,
+    );
     printf("Created %d top-level tickets.\n", scalar(@$subtask_keys));
 }
 

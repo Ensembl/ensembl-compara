@@ -31,13 +31,13 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141\n*GitHub*: [<Division>/PrepareMasterDatabaseForRelease_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/PrepareMasterDatabaseForRelease_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-5 -port 4615{code}",
             "summary": "Prepare the master database"
          },
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps\n*GitHub*: [DumpGenomes_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/DumpGenomes_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpGenomes_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
             "summary": "Run the genome dumping pipeline",
             "name_on_graph": "Genome dumps"
          },
@@ -50,14 +50,14 @@
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Members",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Members\n*GitHub*: [<Division>/LoadMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/LoadMembers_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the member loading pipeline",
             "name_on_graph": "Member loading"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Species-tree",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Species-tree\n*GitHub*: [CreateSpeciesTree_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/CreateSpeciesTree_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CreateSpeciesTree_conf -host mysql-ens-compara-prod-X -port XXXX -division plants -output_file $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/plants/species_tree.rice.branch_len.nw -species_set_id XXXXXX{code}",
             "summary": "Import the species-tree",
             "name_on_graph": "Species-tree"
          }
@@ -70,7 +70,7 @@
       "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Intentions+for+release+<version>",
       "subtasks": [{
             "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/ProteinTrees_conf.pm]",
+            "description": "*GitHub*: [<Division>/ProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/ProteinTrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the Protein-trees pipeline",
             "name_on_graph": "Protein-trees"
          },
@@ -81,28 +81,15 @@
          },
          {
             "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Plants::EPOwith2x_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/EPOwith2x_conf.pm]\n\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "description": "*GitHub*: [Plants/EPOwith2x_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/EPOwith2x_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::EPOwith2x_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name rice -low_epo_mlss_id <epo-ext_mlss_id> -high_epo_mlss_id <epo_mlss_id>{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Rice EPOwith2x pipeline",
             "name_on_graph": "EPOwith2x:Rice"
          },
          {
             "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]",
+            "description": "*GitHub*: [Synteny_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
             "name_on_graph": "Synteny",
             "summary": "Run the Synteny pipeline"
-         },
-         {
-            "component": "Production tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Plants::OrthologQM_Alignment_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/OrthologQM_Alignment_conf.pm]",
-            "summary": "Protein-trees WGA Orthology QC",
-            "name_on_graph": "Protein-trees WGA Orthology QC"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "[Bio::EnsEMBL::Compara::PipeConfig::Plants::HighConfidenceOrthologs_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/HighConfidenceOrthologs_conf.pm]",
-            "summary": "Run the HighConfidenceOrthologs pipeline",
-            "name_on_graph": "Protein-trees High Confidence Orthologues"
          }
       ],
       "labels": ["Production_anchor"],
@@ -150,6 +137,7 @@
             "summary": "Run the healthchecks"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "summary": "Ask the <Division> team to test the staging server"
          },
@@ -176,17 +164,18 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Non-vertebratesdivisions(e.g.Plants,Metazoa)",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Non-vertebratesdivisionswithanancestraldatabase(e.g.Plants)",
             "labels": ["Handover_anchor"],
             "summary": "Handover of release DB"
         },
         {
            "assignee": "<RelCo>",
            "component": "Relco tasks",
-           "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Vertebrates",
+           "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Non-vertebratesdivisionswithanancestraldatabase(e.g.Plants)",
            "summary": "Handover of ancestral DB"
         }
       ],
+      "labels": ["Merge_anchor"],
       "summary": "<Division> Release <version> Database merge and handover"
    },
    {

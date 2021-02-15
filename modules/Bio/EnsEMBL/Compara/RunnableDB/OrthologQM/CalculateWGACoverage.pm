@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -60,6 +60,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage;
 use strict;
 use warnings;
 use Data::Dumper;
+
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -146,7 +148,7 @@ sub run {
 	my %aln_ranges = %{ $self->param('aln_ranges') };
     my %mlss_mapping = %{ $self->param('mlss_db_mapping') };
 
-	my (@qual_summary, @orth_ids);
+	my (@qual_summary, @orth_ids, %max_quality);
 
 	foreach my $orth ( @orth_info ) {
         my ($orth_dnafrags, $orth_ranges) = $self->_orth_dnafrags($orth);
@@ -155,6 +157,9 @@ sub run {
         my $exon_ranges    = $self->_get_exon_ranges_for_orth($orth);
 
 		push( @orth_ids, $homo_id );
+
+		# The WGA score defaults to 0
+		$max_quality{$homo_id} = 0;
 
 		next unless ( defined $this_aln_range ); 
 
@@ -165,6 +170,8 @@ sub run {
                 my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($aln_db);
                 my $gdba = $dba->get_GenomeDBAdaptor;
 
+				my $sum_scores = 0;
+				my $n_scores   = 0;
 				foreach my $gdb_id ( sort {$a <=> $b} keys %{ $orth_ranges } ){
 					# Make sure that if this is a component gdb_id it refers back to the principal. The exon and ortholog data is on the components and not on the principal, but the aln_mlss_id is only on principal
 					my $gdb = $gdba->fetch_by_dbID($gdb_id);
@@ -182,6 +189,16 @@ sub run {
 						  intron_length            => $combined_coverage->{intron_len},
 						}
 					);
+					$sum_scores += $combined_coverage->{score};
+					$n_scores ++;
+				}
+                # disconnect from alignment_db
+                $dba->dbc->disconnect_if_idle();
+
+				die "Why is this happening ?? Got $n_scores for homology $homo_id" if $n_scores != 2;
+				my $avg_score = $sum_scores / $n_scores;
+				if ($avg_score > $max_quality{$homo_id}) {
+					$max_quality{$homo_id} = $avg_score;
 				}
                 # disconnect from alignment_db
                 $dba->dbc->disconnect_if_idle();
@@ -192,6 +209,7 @@ sub run {
 
 	$self->param( 'orth_ids', \@orth_ids );
 	$self->param('qual_summary', \@qual_summary);
+	$self->param('max_quality', \%max_quality);
 
 }
 
@@ -380,18 +398,17 @@ Store it in a param 'member_info'
 sub _load_member_info {
     my ($self, $dba) = @_;
 
-    my $gm_sql = 'SELECT dnafrag_id, dnafrag_start, dnafrag_end FROM gene_member WHERE gene_member_id = ?';
-    my $gm_sth = $dba->dbc->prepare($gm_sql);
-
-    my $homologies = $self->param('orth_info');
     my $member_info;
-    foreach my $hom ( @$homologies ) {
-        my ( $gm_id_1, $gm_id_2 ) = ( $hom->{gene_members}->[0]->[0], $hom->{gene_members}->[1]->[0] );
-
-        $gm_sth->execute($gm_id_1);
-        $member_info->{"gene_member_$gm_id_1"} = $gm_sth->fetchrow_hashref;
-        $gm_sth->execute($gm_id_2);
-        $member_info->{"gene_member_$gm_id_2"} = $gm_sth->fetchrow_hashref;
+    foreach my $gdb_id ($self->param_required('species1_id'), $self->param_required('species2_id')) {
+        my $gene_file = $self->param_required('gene_dumps_dir') . "/gene_member.${gdb_id}.tsv";
+        open( my $gene_fh, '<', $gene_file) or die "Cannot open $gene_file";
+        my $header = <$gene_fh>;
+        my @head_cols = split(/\s+/, $header);
+        while ( my $line = <$gene_fh> ) {
+            my $row = map_row_to_header( $line, \@head_cols );
+            $member_info->{'gene_member_'.$row->{'gene_member_id'}} = { dnafrag_id => $row->{dnafrag_id}, dnafrag_start => $row->{dnafrag_start}, dnafrag_end => $row->{dnafrag_end} };
+        }
+        close($gene_fh);
     }
 
     $self->param('member_info', $member_info);

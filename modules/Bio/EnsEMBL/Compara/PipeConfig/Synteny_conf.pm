@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -142,6 +142,7 @@ sub pipeline_analyses {
             -flow_into  => WHEN( 'defined (#ptree_db#)' => ['compute_synteny_start_using_orthologs'] ,
                                  ELSE ['compute_synteny_start_using_alignments']
                              ),
+            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name => 'compute_synteny_start_using_alignments',
@@ -191,6 +192,7 @@ sub pipeline_analyses {
               -flow_into => WHEN('defined (#ptree_db#)' => ['dump_gff_homologs'] ,
                     ELSE ['chr_name_factory']),
               -analysis_capacity => 50,
+              -rc_name    => '500Mb_job',
             },
             #dump chr names
             {   -logic_name => 'chr_name_factory',

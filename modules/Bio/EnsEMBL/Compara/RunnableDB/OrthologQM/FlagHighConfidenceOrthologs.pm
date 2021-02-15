@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
-        'range_label'       => undef,
         'range_filter'      => undef,
     };
 }
@@ -69,6 +68,7 @@ sub fetch_input {
 
     # There could be 0 homologies for this mlss
     unless ($n_hom) {
+        $self->input_job->autoflow(0);
         $self->complete_early("No homologies for mlss_id=$mlss_id. Nothing to do");
     }
 
@@ -95,7 +95,7 @@ sub write_output {
     $self->disconnect_from_hive_database;
 
     my $mlss                = $self->param('mlss');
-    my $range_label         = $self->param('range_label');
+    my $range_label         = $self->param_required('range_label');
     my $range_filter        = $self->param('range_filter') ? $self->param('range_filter')->{$range_label} : undef;
     my $conditions          = $self->param('conditions');
     my $external_conditions = $self->param('external_conditions');
@@ -120,8 +120,8 @@ sub write_output {
     while ( my $line = <$hfh> ) {
         my $row = map_row_to_header($line, \@header_cols);
         my ($homology_id, $is_tree_compliant, $gdb_id_1, $gm_id_1, $perc_id_1, $gdb_id_2, $gm_id_2, $perc_id_2) = (
-            $row->{homology_id}, $row->{is_tree_compliant}, $row->{genome_db_id}, $row->{gene_member_id}, $row->{identity},
-            $row->{hom_genome_db_id}, $row->{hom_gene_member_id}, $row->{hom_identity},
+            $row->{homology_id}, $row->{is_tree_compliant}, $row->{genome_db_id}, $row->{gene_member_id}, $row->{perc_id},
+            $row->{homology_genome_db_id}, $row->{homology_gene_member_id}, $row->{homology_perc_id},
         );
 
         if ( $range_filter ) {
@@ -167,7 +167,7 @@ sub write_output {
     }
     if ( defined $external_conditions->{wga_coverage} ) {
         # unlike goc, wga is calculated on both protein and ncrna - add the range_label to ensure mergeability
-        $self->_write_threshold_scores($mlss, "${range_label}wga", $external_conditions->{wga_coverage}, $wga_coverage);
+        $self->_write_threshold_scores($mlss, "${range_label}_wga", $external_conditions->{wga_coverage}, $wga_coverage);
     }
 }
 

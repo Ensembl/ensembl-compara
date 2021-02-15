@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ if($db_name=~/^\d+$/){
    user => $db_connection->user(),
    pass => $pass,
    dbname => $db_connection->dbname(), 
-   species => $db_adaptor->production_name(),
+   species => $db_adaptor->get_MetaContainer->get_production_name(),
    group => $db_adaptor->group() } );
  }
  print_con(\@connection_params) if @connection_params;

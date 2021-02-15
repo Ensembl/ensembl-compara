@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -87,9 +87,9 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
         # In case it doesn't exist yet
-        ($self->o('shared_user') ? 'become ' . $self->o('shared_user') : '') . ' mkdir -p ' . $self->o('genome_dumps_dir'),
+        'mkdir -p ' . $self->o('genome_dumps_dir'),
         # The files are going to be accessed by many processes in parallel
-        $self->pipeline_create_commands_lfs_setstripe('genome_dumps_dir', $self->o('shared_user')),
+        $self->pipeline_create_commands_lfs_setstripe('genome_dumps_dir'),
     ];
 }
 
@@ -125,7 +125,7 @@ sub pipeline_analyses {
                     'all_current'       => $self->o('all_current'),
                 }],
             -flow_into  => {
-                2 => { 'genome_dump_unmasked' => INPUT_PLUS(), 'genome_dump_masked' => INPUT_PLUS(), }, # To allow propagating "reg_conf" if the latter is defined at the job level
+                2 => [ 'genome_dump_unmasked', 'genome_dump_masked', ],
             },
         },
 
