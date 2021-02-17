@@ -259,6 +259,10 @@ sub make_species_set_from_XML_node {
         $some_genome_dbs = ($gdb->is_current) ? [$gdb] : [];
       } elsif ($child->nodeName =~ /^#(comment|text)$/) {
         next;
+      } elsif ($child->nodeName eq 'base_collection') {
+        # include all genomes in this base collection
+        my $base_collection = find_collection_from_xml_node_attribute($child, 'name', 'base collection');
+        $some_genome_dbs = $base_collection->genome_dbs;
       } else {
         throw(sprintf('Unknown child: %s (line %d)', $child->nodeName, $child->line_number));
       }
