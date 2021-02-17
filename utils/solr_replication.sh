@@ -94,9 +94,9 @@ fi
 # setting up a hash for www and grch37 solr machines (obtained from https://www.ebi.ac.uk/seqdb/confluence/display/ENSWEB/Solr)
 # key = combination of -s and -t ($site_$stage)
 declare -A machines
-machines[grch37_test]="ves-oy-a9"
-machines[grch37_before]="wp-p2m-83"
-machines[grch37_after]="ves-pg-a9:wp-p1m-83"
+machines[grch37_test]="wp-p2m-2f"
+machines[grch37_before]="wp-p2m-26"
+machines[grch37_after]="wp-p1m-74:wp-p1m-95"
 machines[www_test]="ves-oy-aa"
 machines[www_before]="ves-oy-ab:ves-oy-ac"
 machines[www_after]="ves-pg-aa:ves-pg-ab:ves-pg-ac:ves-pg-ad"
