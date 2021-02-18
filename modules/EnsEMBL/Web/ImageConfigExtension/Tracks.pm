@@ -1492,7 +1492,7 @@ sub add_sequence_variations_meta {
                               } @menus) {
     my $node;
     my $track_options = $options;
-    $track_options->{'db'} = 'variation_private' if ($menu_item->{'long_name'} =~ /(DECIPHER|LOVD)/i);
+    $track_options->{'db'} = 'variation_private' if ($menu_item->{'long_name'} =~ /(DECIPHER|LOVD|Mastermind)/i);
 
     if ($menu_item->{'type'} eq 'menu' || $menu_item->{'type'} eq 'menu_sub') { # just a named submenu
       $node = $self->create_menu_node($menu_item->{'key'}, $menu_item->{'long_name'});
