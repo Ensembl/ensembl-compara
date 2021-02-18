@@ -15,24 +15,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor - An AlignSlice can be used to map genes from one species onto another one. This adaptor is used to fetch all the data needed for an AlignSlice from the database.
+Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor
 
-=head1 INHERITANCE
+=head1 DESCRIPTION
 
-This module inherits attributes and methods from Bio::EnsEMBL::DBSQL::BaseAdaptor
+An AlignSlice can be used to map genes from one species onto another one. This
+adaptor is used to fetch all the data needed for an AlignSlice from the database.
 
 =head1 SYNOPSIS
 
@@ -65,22 +55,8 @@ This module inherits attributes and methods from Bio::EnsEMBL::DBSQL::BaseAdapto
           "expanded"
       );
 
-=head1 OBJECT ATTRIBUTES
-
-=over
-
-=item db (from SUPER class)
-
-=back
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
-
 =cut
 
-
-# Let the code begin...
 
 package Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor;
 
@@ -95,8 +71,6 @@ use Bio::EnsEMBL::Compara::AlignSlice;
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-use Data::Dumper;
-#$Data::Dumper::Pad = '<br>';
 
 =head2 fetch_by_Slice_MethodLinkSpeciesSet
 
@@ -187,9 +161,7 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
 
   #Get the species tree for PECAN or HAL alignments
   if ($method_link_species_set->method->class =~ /GenomicAlignBlock.multiple_alignment/ and  @$genomic_align_blocks) {
-#      print Dumper $genomic_align_blocks->[0];
     my $first_genomic_align_block = $genomic_align_blocks->[0];
-#    print Dumper $first_genomic_align_block;
     my $genomic_align_tree = $first_genomic_align_block->get_GenomicAlignTree;
     
     #want to create species_order
@@ -197,14 +169,9 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
   } elsif ($method_link_species_set->method->class =~ /GenomicAlignTree/ and @$genomic_align_blocks) {
     my $genomic_align_tree_adaptor = $self->db->get_GenomicAlignTreeAdaptor;
     foreach my $this_genomic_align_block (@$genomic_align_blocks) {
-#       print $this_genomic_align_block->reference_genomic_align, "\n";
       my $this_genomic_align_tree = $genomic_align_tree_adaptor->
           fetch_by_GenomicAlignBlock($this_genomic_align_block);
       push(@$genomic_align_trees, $this_genomic_align_tree);
-#       $this_genomic_align_tree->print();
-#       foreach my $this_ga (@{$this_genomic_align_tree->get_all_sorted_genomic_align_nodes}) {
-#         print $this_ga->genomic_align->genome_db->name(), "\n";
-#       }
 
     }
     my $last_node_id = undef;
@@ -225,23 +192,10 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
     foreach my $this_genomic_align_tree (@$genomic_align_trees) {
       my $next_genomic_align_tree = $tree_order->{$this_genomic_align_tree->node_id}->{next};
       next if (!$next_genomic_align_tree);
-# # #       print STDERR "\nBEFORE:\n - ", join("\n - ", map {
-# # #               $_->{genome_db}->name." (".($_->{right_node_id} or "***").")  [".
-# # #               join(" : ", @{$_->{genomic_align_ids}})."]"
-# # #           } @$species_order), "\n";
       _combine_genomic_align_trees($species_order, $this_genomic_align_tree, $next_genomic_align_tree);
-#       $next_genomic_align_tree->print();
-# # #       print STDERR "\nAFTER:\n - ", join("\n - ", map {
-# # #               $_->{genome_db}->name." (".($_->{right_node_id} or "***").")  [".
-# # #               join(" : ", @{$_->{genomic_align_ids}})."]"
-# # #           } @$species_order), "\n";
-# # #       <STDIN>;
-
     }
   }
 
-
-  #print Dumper { "gabs::AlignSliceAdaptor::254" => $genomic_align_blocks };
   my $align_slice = new Bio::EnsEMBL::Compara::AlignSlice(
           -adaptor => $self,
           -reference_Slice => $reference_slice,
@@ -398,16 +352,12 @@ sub _combine_genomic_align_trees {
   my $species_counter = 0;
   my $existing_node_ids; # Lists all node_ids in the next tree
   my $existing_right_node_ids;
-  my $next_species_names; # Lists all species names in the next tree
   my $existing_species_names; # Lists all species names in the $species_order tracks
 
   ## Initialise values
   foreach my $this_genomic_align_node (@{$next_tree->get_all_sorted_genomic_align_nodes}) {
     my $this_node_id = $this_genomic_align_node->node_id;
     $existing_node_ids->{$this_node_id} = 1;
-    push(@$next_species_names, $this_genomic_align_node->genomic_align_group->genome_db->name)
-        if ($this_genomic_align_node->genomic_align_group and 
-            $this_genomic_align_node->genomic_align_group->genome_db->name ne "ancestral_sequences");
   }
   foreach my $species_def (@$species_order) {
     my $right_node_id = $species_def->{right_node_id};
@@ -442,8 +392,7 @@ sub _combine_genomic_align_trees {
 
       ## 1. Use info from species_right_node_id if available
       if (defined($species_right_node_id) and $species_right_node_id == $this_node_id) {
-          $species_order->[$species_counter]->{right_node_id} = $this_right_node_id;
-          # #         $species_order->[$species_counter]->{last_node} = $this_genomic_align_node;
+        $species_order->[$species_counter]->{right_node_id} = $this_right_node_id;
         push (@{$species_order->[$species_counter]->{genomic_align_ids}}, @$these_genomic_align_ids);
         ## DEBUG info
         # print "NODE LINK!\n";
@@ -461,7 +410,7 @@ sub _combine_genomic_align_trees {
             genome_db => $this_genome_db,
             right_node_id => $this_right_node_id,
             genomic_align_ids => [@$these_genomic_align_ids],
-          });
+        });
         ## DEBUG info
         # print "FORCE INSERT!\n";
         # for (my $i = 0; $i<@$species_order; $i++) {
@@ -497,7 +446,7 @@ sub _combine_genomic_align_trees {
             genome_db => $this_genome_db,
             right_node_id => $this_right_node_id,
             genomic_align_ids => [@$these_genomic_align_ids],
-          });
+        });
         ## DEBUG info
         # print "INSERT!\n";
         # for (my $i = 0; $i<@$species_order; $i++) {
@@ -522,7 +471,7 @@ sub _combine_genomic_align_trees {
             genome_db => $this_genome_db,
             right_node_id => $this_right_node_id,
             genomic_align_ids => [@$these_genomic_align_ids],
-        });
+      });
       $species_counter++;
       ## DEBUG info
       # print "APPEND!\n";
@@ -537,7 +486,6 @@ sub _combine_genomic_align_trees {
     ## DEBUG info
     # print "[ENTER]";
     # <STDIN>;
-    shift(@$next_species_names);
   }
 
   return;
