@@ -50,6 +50,7 @@ sub write_output {
     my $datacheck = $self->param('datacheck');
     my $outfile   = $self->param('output_dir_path') . "/" . $datacheck->name . ".tap";
 
+    die "Lost connection to MySQL server" if $datacheck->output =~ /Lost connection to MySQL server/;
     $self->_spurt($outfile, $datacheck->output);
 
     $self->dataflow_output_id({
