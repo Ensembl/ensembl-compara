@@ -14,15 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 DumpAlignSlice.pl
@@ -103,15 +94,19 @@ Query coordinate system. Default is "chromosome"
 
 =item B<--seq_region region_name>
 
-Query region name, i.e. the chromosome name
+Query region name, i.e. the chromosome name. Default 13.
 
 =item B<--seq_region_start start>
 
+Default 32906420
+
 =item B<--seq_region_end end>
+
+Default 32906519
 
 =item B<[--seq_region_strand strand]>
 
-The strand of the query. It can be either +1 or -1. Default is -1.
+The strand of the query. It can be either +1 or -1. Default is +1.
 
 =back
 
@@ -121,7 +116,7 @@ The strand of the query. It can be either +1 or -1. Default is -1.
 
 =item B<[--alignment_type method_link_name]>
 
-The type of alignment. Default is "BLASTZ_NET"
+The type of alignment. Default is "EPO".
 
 =item B<[--set_of_species species1:species2:species3:...]>
 
@@ -130,12 +125,18 @@ and build fake multiple one. Default is "mouse:rat". The names
 should correspond to the name of the core database in the
 registry_configuration_file or any of its aliases
 
+=item B<[--species_set_name name]>
+
+Pre-defined name for the set of species used. For multiple alignment sets only.
+eg "mammals" or "primates" for EPO alignments; "amniotes" for PECAN alignments.
+Default is "mammals".
+
 =item B<[--[no]condensed]>
 
 By default, the AlignSlice is created in "expanded" mode. Use
 this option for getting the AlignSlice in "condensed" mode
 
-=item B<[--[no]solve_overlpping]>
+=item B<[--[no]solve_overlapping]>
 
 By default, the AlignSlice ignores overlapping alignments. 
 This option will reconciliate them by means of a fake
@@ -202,9 +203,11 @@ perl DumpAlignSlice.pl
     [--coord_system coordinates_name]
         Query coordinate system. Default is "chromosome"
     --seq_region region_name
-        Query region name, i.e. the chromosome name
+        Query region name, i.e. the chromosome name. Default 13.
     --seq_region_start start
+        Default 32906420
     --seq_region_end end
+        Default 32906519
     [--seq_region_strand strand]
         Can be 1 or -1. Default is "+1"
 
@@ -254,7 +257,7 @@ use Bio::AlignIO;
 use Bio::LocatableSeq;
 use Getopt::Long;
 use Pod::Usage;
-#chr7:73549956-73613012
+
 my $reg_conf;
 my $dbname = "compara";
 my $query_species = "human";
