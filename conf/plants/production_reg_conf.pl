@@ -93,11 +93,11 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'  => [ 'mysql-ens-compara-prod-7', 'cristig_plants_load_members_103'],
-    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-5', 'cristig_plants_plants_protein_trees_103' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-3', 'ivana_plants_load_members_104'],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-5', 'ivana_plants_plants_protein_trees_104' ],
 
     # LASTZ dbs
-    #'lastz_batch_1' => [ 'mysql-ens-compara-prod-3', 'cristig_plants_lastz_batch1_103' ],
+    'lastz_batch_1' => [ 'mysql-ens-compara-prod-5', 'ivana_plants_lastz_batch1_104' ],
 
     # LASTZ dbs to merge in e105 or later
     # Wheat "strains" alignments
@@ -109,7 +109,7 @@ my $compara_dbs = {
     #'lastz_tdic'    => [ 'mysql-ens-compara-prod-8', 'muffato_plants_self_lastz_tdic_103' ],
 
     # synteny
-    #'compara_syntenies' => [ 'mysql-ens-compara-prod-10', 'cristig_plants_synteny_103' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-2', 'ivana_ivana_plants_synteny_104_3' ],
 
     # EPO dbs
     ## rice

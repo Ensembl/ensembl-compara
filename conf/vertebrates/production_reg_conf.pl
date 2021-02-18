@@ -102,40 +102,40 @@ my $compara_dbs = {
 
     # EPO dbs
     ## mammals
-    'mammals_epo_w_ext' => [ 'mysql-ens-compara-prod-4', 'jalvarez_mammals_epo_with2x_103' ],
+    'mammals_epo_w_ext'    => [ 'mysql-ens-compara-prod-4', 'jalvarez_mammals_epo_with2x_103' ],
     'mammals_epo_prev'     => [ 'mysql-ens-compara-prod-4', 'jalvarez_mammals_epo_with2x_103' ],
     'mammals_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## sauropsids
-    'sauropsids_epo_w_ext'=> [ 'mysql-ens-compara-prod-4', 'carlac_sauropsids_epo_with_ext_104' ],
+    'sauropsids_epo_w_ext'   => [ 'mysql-ens-compara-prod-4', 'carlac_sauropsids_epo_with_ext_104' ],
     'sauropsids_epo_prev'    => [ 'mysql-ens-compara-prod-7', 'jalvarez_sauropsids_epo_update_103' ],
     'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
 
     ## fish
-    'fish_epo_w_ext' => [ 'mysql-ens-compara-prod-3', 'carlac_fish_epo_update_104' ],
+    'fish_epo_w_ext'    => [ 'mysql-ens-compara-prod-3', 'carlac_fish_epo_update_104' ],
     'fish_epo_prev'     => [ 'mysql-ens-compara-prod-7', 'jalvarez_fish_epo_update_103' ],
     'fish_epo_anchors'  => [ 'mysql-ens-compara-prod-8', 'muffato_generate_anchors_fish_100' ],
 
     ## primates
-    'primates_epo_w_ext' => [ 'mysql-ens-compara-prod-7', 'jalvarez_primates_epo_with2x_103' ],
+    'primates_epo_w_ext'    => [ 'mysql-ens-compara-prod-7', 'jalvarez_primates_epo_with2x_103' ],
     'primates_epo_prev'     => [ 'mysql-ens-compara-prod-4', 'jalvarez_mammals_epo_with2x_103' ],  # Primates are reused from mammals of the *same release* (same anchors and subset of species)
     'primates_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## pig strains
-    'pig_breeds_epo_w_ext'  => [ 'mysql-ens-compara-prod-1', 'jalvarez_pig_breeds_epo_with2x_103' ],
+    'pig_breeds_epo_w_ext'     => [ 'mysql-ens-compara-prod-1', 'jalvarez_pig_breeds_epo_with2x_103' ],
     'pig_breeds_epo_prev'      => [ 'mysql-ens-compara-prod-4', 'jalvarez_mammals_epo_with2x_103' ],  # Pig breeds are reused from mammals of the *same release* (same anchors and subset of species)
     'pig_breeds_epo_anchors'   => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## murinae
     'murinae_epo'          => [ 'mysql-ens-compara-prod-4', 'jalvarez_murinae_epo_103' ],
-    # 'murinae_epo_prev'     => [ 'mysql-ens-compara-prod-4', 'jalvarez_murinae_epo_103' ],
+    'murinae_epo_prev'     => [ 'mysql-ens-compara-prod-4', 'jalvarez_murinae_epo_103' ],
     'murinae_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     # other alignments
     'amniotes_pecan'      => [ 'mysql-ens-compara-prod-3', 'carlac_amniotes_pecan_update_104' ],
     'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-6', 'jalvarez_amniotes_mercator_pecan_103' ],
 
-    # 'compara_syntenies'   => [ 'mysql-ens-compara-prod-4', 'jalvarez_vertebrates_synteny_103' ],
+    'compara_syntenies'   => [ 'mysql-ens-compara-prod-2', 'jalvarez_vertebrates_synteny_104' ],
 
     # miscellaneous
     'alt_allele_projection' => [ 'mysql-ens-compara-prod-3', 'carlac_vertebrates_alt_allele_import_104' ],
