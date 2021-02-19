@@ -76,7 +76,7 @@ the one set in ENSEMBL_REGISTRY will be used if defined, if not
 =item B<[--dbname compara_db_name]>
 
 the name of compara DB in the registry_configuration_file or any
-of its aliases. Uses "compara" by default.
+of its aliases. Default is "compara_curr".
 
 =back
 
@@ -195,7 +195,7 @@ perl DumpAlignSlice.pl
         ~/.ensembl_init will be used.
     [--dbname compara_db_name]
         the name of compara DB in the registry_configuration_file or any
-        of its aliases. Uses "compara" by default.
+        of its aliases. Default is "compara_curr".
 
   For the query slice:
     [--species query_species]
@@ -259,7 +259,7 @@ use Getopt::Long;
 use Pod::Usage;
 
 my $reg_conf;
-my $dbname = "compara";
+my $dbname = "compara_curr";
 my $query_species = "human";
 my $coord_system = "chromosome";
 my $seq_region = "13";
