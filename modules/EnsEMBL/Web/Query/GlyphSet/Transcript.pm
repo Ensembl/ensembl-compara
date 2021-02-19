@@ -28,7 +28,6 @@ our $VERSION = 13;
 
 use JSON;
 use List::Util qw(min max);
-
 use Bio::EnsEMBL::Gene;
 
 sub precache {
@@ -182,8 +181,12 @@ sub _get_prediction_transcripts {
   my $slice = $args->{'slice'};
   my $db_alias = $args->{'db'};
   my @out;
-  foreach my $an (@{$args->{'logic_names'}}) {
-    my @t = @{$slice->get_all_PredictionTranscripts($an,$db_alias)};
+  my $is_gencode_basic = $args->{'only_attrib'} eq 'gencode_basic' ? 1 : 0;
+
+  foreach my $logic_name (@{$args->{'logic_names'}}) {
+    my $logic_name_with_species = $is_gencode_basic ?  $logic_name.'_'.$args->{'species'} : $logic_name;
+
+    my @t = @{$slice->get_all_PredictionTranscripts($logic_name_with_species,$db_alias)};
     my @g = map { $self->_fake_gene($_) } @t;
     push @out,@g;
   }
@@ -196,18 +199,21 @@ sub _get_genes {
   my $slice          = $args->{'slice'};
   my $analyses       = $args->{'logic_names'};
   my $db_alias       = $args->{'db'};
+  my $species        = $args->{'species'};
+  my $only_attrib    = $args->{'only_attrib'} || '' ;
+  my $is_gencode_basic = $only_attrib eq 'gencode_basic' ? 1 : 0;
 
   if ($analyses->[0] eq 'LRG_import' && !$slice->isa('Bio::EnsEMBL::LRGSlice')) {
     warn "!!! DEPRECATED CODE - please change this track to use GlyphSet::lrg";
     my $lrg_slices = $slice->project('lrg');
     if ($lrg_slices->[0]) {
       my $lrg_slice = $lrg_slices->[0]->to_Slice;
-      return [map @{$lrg_slice->get_all_Genes($_,$db_alias) || []}, @$analyses];
+      return [map @{$lrg_slice->get_all_Genes($is_gencode_basic ? $_.'_'. $species : $_,$db_alias) || []}, @$analyses];
     }
   } elsif ($slice->isa('Bio::EnsEMBL::LRGSlice') && $analyses->[0] ne 'LRG_import') {
-    return [map @{$slice->feature_Slice->get_all_Genes($_, $db_alias) || []}, @$analyses];
+    return [map @{$slice->feature_Slice->get_all_Genes($is_gencode_basic ? $_.'_'.$species : $_, $db_alias) || []}, @$analyses];
   } else {
-    return [map @{$slice->get_all_Genes($_,$db_alias) || []}, @$analyses];
+    return [map @{$slice->get_all_Genes($is_gencode_basic ? $_.'_'.$species : $_,$db_alias) || []}, @$analyses];
   }
 }
 
@@ -384,7 +390,6 @@ sub _is_coding_gene {
 
 sub get {
   my ($self,$args) = @_;
-
   my (@out,$genes);
   if($args->{'prediction'}) {
     $genes = $self->_get_prediction_transcripts($args);
