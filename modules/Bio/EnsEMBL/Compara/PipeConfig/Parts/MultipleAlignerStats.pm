@@ -121,7 +121,7 @@ sub pipeline_analyses_multiple_aligner_stats {
         {   -logic_name => 'genome_length_fetcher',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'    => 'SELECT SUM(length) AS genome_length FROM dnafrag WHERE genome_db_id = #genome_db_id#',
+                'inputquery'    => 'SELECT SUM(length) AS genome_length FROM dnafrag WHERE genome_db_id = #genome_db_id# AND is_reference = 1',
             },
             -flow_into  => {
                 2 => [ '?accu_name=genome_length&accu_address={genome_db_id}' ],
