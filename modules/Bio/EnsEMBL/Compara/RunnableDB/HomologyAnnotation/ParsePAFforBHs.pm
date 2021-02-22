@@ -21,6 +21,9 @@ Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::ParsePAFforBHs
 
 =head1 DESCRIPTION
 
+Parses peptide_align_feature table for RBBH (and BBH if there are no RBBHs)
+then stores analysis results as homologies in homology_table.
+
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::ParsePAFforBHs;
@@ -30,12 +33,11 @@ use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::PeptideAlignFeature;
-use List::MoreUtils qw/uniq/;
 use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub run {
+sub write_output {
     my $self = shift;
 
     my $query_gdb_id   = $self->param_required('genome_db_id');
@@ -59,30 +61,31 @@ sub run {
             print Dumper $rbh_entry if $self->debug == 9;
             $self->call_within_transaction( sub {
                 $self->compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 0");
-                    $self->_write_output($mlss, $rbh_entry, 'ortholog_one2one'); # Not really sure what to describe these as - possibly new enum value to distinguish between rbbh and bbh
-                    $self->compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 1");
+                $self->_write_homologies($mlss, $rbh_entry, 'homolog_rbbh');
+                $self->compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 1");
             }, 1, 1 );
         }
         # if no rbbh a bbh will have to do
-        if ( scalar @$rbh ) {
+        if ( ! scalar @$rbh ) {
             $bbh = $paf_adaptor->fetch_BBH_by_member_genomedb($member, $hit_gdb_id);
             foreach my $bbh_entry (@$bbh) {
                 $bbh_entry->{_hit_member} = $ref_mem_adap->fetch_by_dbID($bbh_entry->hit_member_id);
                 print Dumper $bbh_entry if $self->debug == 9;
                 $self->call_within_transaction( sub {
                     $self->compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 0");
-                    $self->_write_output($mlss, $bbh_entry, 'between_species_paralog'); # as with above
+                    $self->_write_homologies($mlss, $bbh_entry, 'homolog_bbh');
+                    $self->compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 1");
                 }, 1, 1 );
             }
 
-            if (scalar @$bbh ) {
+            if ( ! scalar @$bbh ) {
                 $self->warning( "For genome_db_id: " . $query_gdb_id . " seq_member_id: " . $member . " there are no reciprocal/best blast hits with genome_db_id " . $hit_gdb_id );
             }
         }
     }
 }
 
-sub _write_output {
+sub _write_homologies {
     my ($self, $mlss, $paf, $type) = @_;
 
     # Conversion of PAFs to Homology objects

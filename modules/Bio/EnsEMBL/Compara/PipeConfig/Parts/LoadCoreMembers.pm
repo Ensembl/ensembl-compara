@@ -80,7 +80,6 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
         {   -logic_name => 'load_query_genomedb_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'compara_db'        => $self->o('master_db'),   # that's where genome_db_ids come from
                 'all_current'       => 1,
                 'extra_parameters'  => [ 'locator' ],
             },
@@ -118,7 +117,7 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
                 'store_exon_coordinates'      => $self->o('store_exon_coordinates'),
                 'store_related_pep_sequences' => $self->o('store_related_pep_sequences'),
                 'compara_db'                  => $self->o('compara_db'),
-                'master_db'                   => $self->o('master_db'),
+                'master_db'                   => $self->o('compara_db'),
                 'skip_dna'                    => $self->o('skip_dna'),
             },
             -hive_capacity => 10,
@@ -143,15 +142,6 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode   => 'members_globally',
-            },
-            -flow_into          => [ 'insert_member_projections' ],
-            %hc_analysis_params,
-        },
-
-        {   -logic_name => 'insert_member_projections',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::InsertMemberProjections',
-            -parameters => {
-                'source_species_names'  => $self->o('projection_source_species_names'),
             },
         },
 

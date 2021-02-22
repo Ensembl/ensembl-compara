@@ -46,6 +46,11 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # Inherit the generic ones
 
+        # Mandatory species input, one or the other only
+        'species_list_file' => undef,
+        'species_list'      => [ ],
+        'division'          => 'homology_annotation',
+
         # Directories to write to
         'work_dir'     => $self->o('pipeline_dir'),
         'dump_path'    => $self->o('work_dir'),
@@ -57,10 +62,9 @@ sub default_options {
         # Set mandatory databases
         'compara_db'   => $self->pipeline_url(),
         'output_db'    => $self->o('compara_db'),
-        'master_db'    => $self->o('compara_db'),
         'member_db'    => $self->o('compara_db'),
         'ncbi_db'      => 'ncbi_taxonomy',
-        'rr_ref_db'    => 'rr_ref_master',
+        'rr_ref_db'    => 'compara_references',
         'meta_host'    => 'mysql-ens-meta-prod-1',
 
         # Member loading parameters - matches reference genome members
@@ -90,12 +94,6 @@ sub default_options {
         'copy_alignments_capacity' => 50,
         'copy_trees_capacity'      => 50,
 
-        # Other e-hive parameters
-        'reuse_capacity'           => 3,
-        'hc_capacity'              => 150,
-        'decision_capacity'        => 150,
-        'hc_priority'              => -10,
-
         # DIAMOND runnable parameters
         'num_sequences_per_blast_job' => 200,
         'blast_params'                => '--threads 4 -b1 -c1 --top 50 --dbsize 1000000 --sensitive',
@@ -103,11 +101,6 @@ sub default_options {
 
         # Set hybrid registry file that both metadata production and compara understand
         'reg_conf'      => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/conf/homology_annotation/production_reg_conf.pl',
-
-        # Mandatory species input, one or the other only
-        'species_list_file' => undef,
-        'species_list'      => [ ],
-        'division'          => 'homology_annotation',
 
     };
 }
@@ -137,7 +130,6 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
 
         'ncbi_db'           => $self->o('ncbi_db'),
         'member_db'         => $self->o('member_db'),
-        'master_db'         => $self->o('master_db'),
         'output_db'         => $self->o('output_db'),
         'rr_ref_db'         => $self->o('rr_ref_db'),
 
@@ -163,18 +155,6 @@ sub resource_classes {
 
 sub core_pipeline_analyses {
     my ($self) = @_;
-
-    my %hc_analysis_params = (
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
-            -batch_size         => 20,
-    );
-
-    my %decision_analysis_params = (
-            -analysis_capacity  => $self->o('decision_capacity'),
-            -priority           => $self->o('hc_priority'),
-            -batch_size         => 20,
-    );
 
     return [
 

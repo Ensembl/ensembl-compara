@@ -48,11 +48,10 @@ sub fetch_input {
         print "Loaded ".$self->param('expected_members')." query members\n";
     }
 
-    $self->param('all_blast_db', {});
-    my $fastafile = $self->param('blast_db');
+    my $fastafile = $self->param_required('blast_db');
 
     if ($self->param('blast_db')) {
-        my @files = glob("$fastafile*");
+        my @files = glob("$fastafile*.dmnd");
         die "Cound not find diamond_db .dmnd" unless @files;
         foreach my $file (@files) {
             # All files exist and have a nonzero size
@@ -89,7 +88,7 @@ sub run {
 
     my $cross_pafs = [];
 
-    my $target_genome_db_id = $self->param('target_genome_db_id') ? $self->param('target_genome_db_id') : $self->param('all_blast_db')->{$blast_db};
+    my $target_genome_db_id = $self->param('target_genome_db_id');
 
     my $cmd = "$diamond_exe blastp -d $blast_db --query $blast_infile --evalue $evalue_limit --out $blast_outfile --outfmt 6 qseqid sseqid evalue score nident pident qstart qend sstart send length positive ppos qseq_gapped sseq_gapped $blast_params";
 

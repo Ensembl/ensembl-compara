@@ -61,10 +61,12 @@ sub write_output {
 
     $self->SUPER::write_output();
     my @species = @{$self->param('species')};
-    $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
+    my ($pwp)   = $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
         'param_name' => 'species_list',
         'param_value' => \@species,
     );
+    my $adaptor = $self->db->get_PipelineWideParametersAdaptor;
+    $adaptor->store_or_update_one($pwp, ['param_name']);
 
     $self->dataflow_output_id( {}, 8);
 

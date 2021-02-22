@@ -49,7 +49,7 @@ sub fetch_input {
     my $query_gdb_id   = $self->param_required('genome_db_id');
     my $hit_gdb_id     = $self->param_required('target_genome_db_id');
 
-    my $seq_members    = $self->compara_dba->get_SeqMemberAdaptor->_fetch_all_representative_for_blast_by_genome_db_id($query_gdb_id);
+    my $seq_members    = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_GenomeDB($query_gdb_id);
     my @seq_member_ids = map {$_->dbID} @$seq_members;
 
     $self->param('full_member_id_list', \@seq_member_ids);

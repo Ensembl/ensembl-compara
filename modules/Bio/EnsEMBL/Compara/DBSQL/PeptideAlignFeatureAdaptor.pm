@@ -342,9 +342,18 @@ sub rank_and_store_PAFS {
   }
 }
 
-# query_genome_db_id should remain consistent, hit_genome_db_id can differ but top hits
-# are evaluated per target_genome_db_id. The very top hit(s) per query_member_id is returned
-# for each target_genome_db_id. This can be multiple hits if stats are identical.
+=head2 filter_top_PAFs
+
+  Arg [1]    : Array @parsed_features from blast output
+  Example    : $paf = $adaptor->filter_top_PAFs(@features);
+  Description: Stores the filtered PAFs meeting criteria. query_genome_db_id
+               should remain consistent, hit_genome_db_id can differ but top
+               hits are evaluated per hit_genome_db_id.
+  Returntype : None
+  Exceptions : None
+
+=cut
+
 sub filter_top_PAFs {
     my ($self, @features) = @_;
 
@@ -530,12 +539,12 @@ sub _objs_from_sth {
             '_perc_pos',
             '_hit_rank',
             '_cigar_line',
-         ], sub {
+          ], sub {
             no warnings 'misc'; # because the _hit_member may not be returned if reference in another db
             my $a = shift;
             return {
-                ($memberDBA->fetch_by_dbID($a->[1]) ? ('_query_member' => $memberDBA->fetch_by_dbID($a->[1])) : '_query_member' => $a->[1]),       # The object is not able to fetch this, so it's done here instead
-                ($memberDBA->fetch_by_dbID($a->[2]) ? ('_hit_member'   => $memberDBA->fetch_by_dbID($a->[2])) : '_hit_member'   => $a->[2]),       # The object is not able to fetch this, so it's done here instead
+                ($memberDBA->fetch_by_dbID($a->[1]) ? ('_query_member' => $memberDBA->fetch_by_dbID($a->[1])) : ()),       # The object is not able to fetch this, so it's done here instead
+                ($memberDBA->fetch_by_dbID($a->[2]) ? ('_hit_member'   => $memberDBA->fetch_by_dbID($a->[2])) : ()),       # The object is not able to fetch this, so it's done here instead
             };
         });
 }

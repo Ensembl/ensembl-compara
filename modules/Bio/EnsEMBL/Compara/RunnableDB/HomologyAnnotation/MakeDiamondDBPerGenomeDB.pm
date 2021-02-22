@@ -32,7 +32,6 @@ use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta');
 

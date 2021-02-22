@@ -65,6 +65,7 @@ use warnings;
 use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 #se overload '<=>' => "sort_by_score_evalue_and_pid";   # named method
 

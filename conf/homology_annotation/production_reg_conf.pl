@@ -40,7 +40,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 # FORMAT: alias name => [ host, db_name ]
 my $compara_dbs = {
     # necessary compara dbs
-    'rr_ref_master' => [ 'mysql-ens-compara-prod-4', 'carlac_reference_db_test' ],
+    'compara_references' => [ 'mysql-ens-compara-prod-4', 'carlac_reference_db_test' ],
 
 };
 
