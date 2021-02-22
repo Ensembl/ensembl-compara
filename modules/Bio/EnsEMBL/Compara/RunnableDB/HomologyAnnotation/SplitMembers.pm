@@ -64,11 +64,9 @@ sub write_output {
     my $seq_member_ids = $self->param('full_member_id_list');
     my $step           = $self->param('step');
 
-    for ( my $i = 0; $i < @$seq_member_ids; $i+=($step+1) ) {
-        my @job_list = @$seq_member_ids[$i..$i+$step];
-        my @job_array  = grep { defined && m/[^\s]/ } @job_list; # because the array is very rarely going to be exactly divisible by $step
+    while ( my @member_id_list = splice @$seq_member_ids, 0, $step ) {
         # A job is output for every $step query members against each reference diamond db
-        my $output_id = { 'member_id_list' => \@job_array, 'genome_db_id' => $query_gdb_id, 'target_genome_db_id' => $hit_gdb_id};
+        my $output_id = { 'member_id_list' => \@member_id_list, 'genome_db_id' => $query_gdb_id, 'target_genome_db_id' => $hit_gdb_id};
         $self->dataflow_output_id($output_id, 2);
     }
 }

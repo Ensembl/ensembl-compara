@@ -32,7 +32,7 @@ my $test_query_compara = Bio::EnsEMBL::Test::MultiTestDB->new( "homology_annotat
 my $query_compara_dba  = $test_query_compara->get_DBAdaptor( "compara" );
 
 my $test_ref_compara = Bio::EnsEMBL::Test::MultiTestDB->new( "test_ref_compara" );
-my $ref_master_dba   = $test_ref_compara->get_DBAdaptor( "compara" );
+my $ref_compara_dba  = $test_ref_compara->get_DBAdaptor( "compara" );
 
 #####################################################################
 ##                         Reuse Variables                         ##
@@ -45,8 +45,8 @@ my $ref_dump_dir       = abs_path($0);
 $ref_dump_dir          =~ s/taxonomicReferenceSelector\.t/homology_annotation_dirs/;
 my @file_dir_suffixes  = ('.fa', '.split', 'dmnd');
 
-my $human_gdb = $ref_master_dba->get_GenomeDBAdaptor->fetch_by_dbID(1);
-my $rat_gdb   = $ref_master_dba->get_GenomeDBAdaptor->fetch_by_dbID(3);
+my $human_gdb = $ref_compara_dba->get_GenomeDBAdaptor->fetch_by_dbID(1);
+my $rat_gdb   = $ref_compara_dba->get_GenomeDBAdaptor->fetch_by_dbID(3);
 my @genome_files;
 
 foreach my $gdb ($human_gdb, $rat_gdb) {
@@ -64,7 +64,7 @@ note("------------------------ collect_reference_classification testing --------
 
 subtest 'collect_reference_classification' => sub {
     my $ref_taxa_list;
-    ok($ref_taxa_list = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::collect_reference_classification($ref_master_dba));
+    ok($ref_taxa_list = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::collect_reference_classification($ref_compara_dba));
     is_deeply(
         $ref_taxa_list,
         \@taxon_list,
@@ -79,29 +79,29 @@ subtest 'match_query_to_reference_taxonomy' => sub {
     my $genome_db = $query_compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($query_genome_db_id);
     my $taxon_match;
     # test without @taxon_list
-    ok($taxon_match = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::match_query_to_reference_taxonomy($genome_db, $ref_master_dba));
-    is($taxon_match, $taxon_name, 'master_db taxon matched successfully');
+    ok($taxon_match = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::match_query_to_reference_taxonomy($genome_db, $ref_compara_dba));
+    is($taxon_match, $taxon_name, 'reference_db taxon matched successfully');
 
     # test with @taxon_list
     ok($taxon_match = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::match_query_to_reference_taxonomy($genome_db, undef, \@taxon_list));
     is($taxon_match, $taxon_name, 'taxon_list taxon matched successfully');
 
-    # test with both @taxon_list and $master_dba
+    # test with both @taxon_list and $reference_dba
     throws_ok {
-        $taxon_match = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::match_query_to_reference_taxonomy($genome_db, $ref_master_dba, \@taxon_list)
-    } qr/taxon_list and master_dba are mutually exclusive, pick one/, 'no matching when there are multiple taxon sources';
+        $taxon_match = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::match_query_to_reference_taxonomy($genome_db, $ref_compara_dba, \@taxon_list)
+    } qr/taxon_list and reference_dba are mutually exclusive, pick one/, 'no matching when there are multiple taxon sources';
 
-    # test with neither @taxon_list or $master_dba
+    # test with neither @taxon_list or $reference_dba
     throws_ok {
         $taxon_match = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::match_query_to_reference_taxonomy($genome_db)
-    } qr/Either taxon_list or master_dba need to be provided/, 'no matching if no taxon sources to match to';
+    } qr/Either taxon_list or reference_dba need to be provided/, 'no matching if no taxon sources to match to';
 };
 
 note("--------------------------- collect_species_set_dirs testing ------------------------------------");
 
 subtest 'collect_species_set_dirs' => sub {
     my $ref_paths;
-    ok($ref_paths = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::collect_species_set_dirs($ref_master_dba, $taxon_name, $ref_dump_dir));
+    ok($ref_paths = Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector::collect_species_set_dirs($ref_compara_dba, $taxon_name, $ref_dump_dir));
     is_deeply(
         $ref_paths,
         \@genome_files,

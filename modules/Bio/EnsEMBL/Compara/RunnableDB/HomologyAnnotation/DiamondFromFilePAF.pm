@@ -22,14 +22,15 @@ Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DiamondFromFilePAF
 =head1 DESCRIPTION
 
 Run DIAMOND blastp and parse the output into PeptideAlignFeature objects.
-Store PeptideAlignFeature objects in the compara database
+Store PeptideAlignFeature objects in the compara database.
 
 Supported parameters:
     'ref_fasta'    : the query fasta sequences already in fasta file format per genome (Mandatory)
     'blast_db'     : the predefined and indexed diamond database name (Mandatory)
+    'genome_db_id' : the genome_db_id of the query genome (single genome in ref_fasta) (Mandatory)
     'blast_params' : additional blast parameters that are not the default (Optional)
     'evalue_limit' : the minimum allowed evalue to filter results - blast/diamond parameter (Optional)
-    'genome_db_id' : the genome_db_id of the query genome (single genome in ref_fasta) (Mandatory)
+    'target_genome_db_id' : the genome_db_id of the target genome (Optional)
 
 =cut
 
@@ -41,16 +42,8 @@ use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-use Data::Dumper;
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BlastAndParsePAF');
 
-sub param_defaults {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::param_defaults},
-    }
-}
 
 sub fetch_input {
     my $self = shift;
@@ -78,7 +71,7 @@ sub run {
     my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1});
     print "Time for diamond search " . $run_cmd->runtime_msec . " msec\n";
 
-    my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param('genome_db_id'), $target_genome_db_id);
+    my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param_required('genome_db_id'), $target_genome_db_id);
 
     push @$cross_pafs, @$features;
     unlink $blast_outfile unless $self->debug;

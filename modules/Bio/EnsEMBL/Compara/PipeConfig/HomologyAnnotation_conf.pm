@@ -75,8 +75,8 @@ sub default_options {
         'store_ncrna'                 => 0,
         'store_others'                => 0,
         'store_exon_coordinates'      => 0,
-        'store_related_pep_sequences' => 0, # do we want CDS sequence as well as protein seqs?
-        'skip_dna'                    => 1, # we skip the dna in this case
+        'store_related_pep_sequences' => 0, # do we want CDS sequences as well as protein seqs?
+        'skip_dna'                    => 1, # skip storing the dna information
 
         # Member HC parameters
         'allow_ambiguity_codes'         => 1,
@@ -91,8 +91,6 @@ sub default_options {
         # DIAMOND e-hive parameters
         'blast_factory_capacity'   => 50,
         'blastpu_capacity'         => 150,
-        'copy_alignments_capacity' => 50,
-        'copy_trees_capacity'      => 50,
 
         # DIAMOND runnable parameters
         'num_sequences_per_blast_job' => 200,
@@ -100,7 +98,7 @@ sub default_options {
         'evalue_limit'                => '1e-5',
 
         # Set hybrid registry file that both metadata production and compara understand
-        'reg_conf'      => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/conf/homology_annotation/production_reg_conf.pl',
+        'reg_conf'      => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/conf/homology_annotation/production_reg_conf.pl',
 
     };
 }
@@ -170,7 +168,7 @@ sub core_pipeline_analyses {
                 8 => [
                     'backbone_fire_db_prepare',
                     { '?table_name=pipeline_wide_parameters' => { 'param_name' => 'initialised', 'param_value' => 1, 'insertion_method' => 'INSERT_IGNORE' } },
-                     ],
+                ],
             },
             -hive_capacity   => 1,
         },

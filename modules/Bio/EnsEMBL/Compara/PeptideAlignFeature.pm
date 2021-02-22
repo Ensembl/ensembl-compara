@@ -74,7 +74,7 @@ use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new(
 sub create_aligned_member {
     my $self = shift;
 
-    # Create new superficial AlignedMembers to attach the the homologies
+    # Create new superficial AlignedMembers to attach the homologies
     my $aligned_member_1 = Bio::EnsEMBL::Compara::AlignedMember->new(
         -stable_id => $self->query_member->gene_member->stable_id,
         -source_name => $self->query_member->gene_member->source_name,
@@ -114,7 +114,7 @@ sub create_homology {
         $self->create_aligned_member;
     }
 
-    $homology->add_Member($self->query_member, );
+    $homology->add_Member($self->query_member);
     $homology->add_Member($self->hit_member);
     $homology->description($type) if $type;
     $homology->is_tree_compliant(0);

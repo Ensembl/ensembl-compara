@@ -22,7 +22,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstQuery
 =head1 DESCRIPTION
 
 For the purpose of reciprocal DIAMOND BLAST, this partial config expects reference genomes
-preloaded in batched FASTA format and query genomes loaded into the pipeline. A DIAMOND db
+preloaded in batched FASTA files and query genomes loaded into the pipeline. A DIAMOND db
 is generated for each of the query genomes in pipeline.
 
 =cut

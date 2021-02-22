@@ -21,8 +21,9 @@ Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SpeciesFactory
 
 =head1 DESCRIPTION
 
-Wrapper factory to surround Productions SpeciesFactory. Take either a newline separated
-file of species_list_file or species_list parameter passed through the command line
+Wrapper factory to surround Production's SpeciesFactory. Takes either a
+newline-delimited text file of species_list_file or species_list parameter
+passed through the command line.
 
 =cut
 
@@ -33,7 +34,6 @@ use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
-use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Production::Pipeline::Common::SpeciesFactory');
 

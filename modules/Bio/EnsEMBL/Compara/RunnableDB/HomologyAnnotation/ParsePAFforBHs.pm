@@ -49,7 +49,7 @@ sub write_output {
     my $ref_mem_adap   = $ref_db->get_SeqMemberAdaptor;
     my $query_mem_adap = $self->compara_dba->get_SeqMemberAdaptor;
 
-    # mlss will not exist for hit_gdb is reference and belongs to a different db
+    # MLSS will not exist for hit_gdb: it is a reference and belongs to a different db
     my $mlss = $self->_create_superficial_mlss($self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($query_gdb_id), $ref_db->get_GenomeDBAdaptor->fetch_by_dbID($hit_gdb_id));
 
     foreach my $member ( @$seq_member_ids ) {
@@ -58,7 +58,7 @@ sub write_output {
         my $rbh = $paf_adaptor->fetch_BRH_by_member_genomedb($member, $hit_gdb_id);
         foreach my $rbh_entry (@$rbh) {
             $rbh_entry->{_hit_member} = $ref_mem_adap->fetch_by_dbID($rbh_entry->hit_member_id);
-            print Dumper $rbh_entry if $self->debug == 9;
+            print Dumper $rbh_entry if $self->debug;
             $self->call_within_transaction( sub {
                 $self->compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 0");
                 $self->_write_homologies($mlss, $rbh_entry, 'homolog_rbbh');
@@ -70,7 +70,7 @@ sub write_output {
             $bbh = $paf_adaptor->fetch_BBH_by_member_genomedb($member, $hit_gdb_id);
             foreach my $bbh_entry (@$bbh) {
                 $bbh_entry->{_hit_member} = $ref_mem_adap->fetch_by_dbID($bbh_entry->hit_member_id);
-                print Dumper $bbh_entry if $self->debug == 9;
+                print Dumper $bbh_entry if $self->debug;
                 $self->call_within_transaction( sub {
                     $self->compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 0");
                     $self->_write_homologies($mlss, $bbh_entry, 'homolog_bbh');
@@ -93,7 +93,7 @@ sub _write_homologies {
     my $homology      = $paf->create_homology($type, $mlss);
     my $dbid          = $paf->query_member->gene_member_id . $paf->hit_member->gene_member_id;
 
-    $homology_adap->store($homology,$dbid);
+    $homology_adap->store($homology, $dbid);
 
 }
 

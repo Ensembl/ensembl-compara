@@ -369,7 +369,7 @@ sub filter_top_PAFs {
             my $rank = 1;
             my $prevPaf = undef;
             foreach my $paf (@pafList) {
-                $rank++ if($prevPaf and !pafs_equal($prevPaf, $paf));
+                $rank++ if ($prevPaf and !pafs_equal($prevPaf, $paf));
                 $paf->hit_rank($rank);
                 $prevPaf = $paf;
             }
@@ -489,7 +489,7 @@ sub _tables {
 
   # sometimes paf is not genome specific
   if ( table_exists( $self->dbc, 'peptide_align_feature_' . $self->{_curr_gdb_id} ) ) {
-    return (['peptide_align_feature_' .$self->{_curr_gdb_id}, 'paf'] );
+      return (['peptide_align_feature_' . $self->{_curr_gdb_id}, 'paf'] );
   }
   else {
       return (['peptide_align_feature', 'paf'] );
@@ -632,7 +632,7 @@ sub fetch_all_by_dbID_list {
 sub fetch_BRH_by_member_genomedb {
     my ($self, $qmember_id, $hit_genome_db_id) = @_;
 
-    return unless($qmember_id and $hit_genome_db_id);
+    return unless ($qmember_id and $hit_genome_db_id);
     my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
     # using trick of specifying table twice so can join to self
@@ -671,7 +671,6 @@ sub fetch_BRH_by_member_genomedb {
   Description: Returns the top ranked PeptideAlignFeature from the database
   Returntype : array reference of Bio::EnsEMBL::Compara::PeptideAlignFeature objects
   Exceptions : none
-  Caller     : general
 
 =cut
 
@@ -679,7 +678,7 @@ sub fetch_BRH_by_member_genomedb {
 sub fetch_BBH_by_member_genomedb {
     my ($self, $qmember_id, $hit_genome_db_id) = @_;
 
-    return unless($qmember_id and $hit_genome_db_id);
+    return unless ($qmember_id and $hit_genome_db_id);
 
     my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
     my $qgenome_db_id = $member->genome_db_id;

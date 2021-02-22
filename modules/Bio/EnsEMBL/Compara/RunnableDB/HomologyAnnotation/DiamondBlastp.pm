@@ -42,15 +42,15 @@ sub fetch_input {
     my $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_dbID_list($member_id_list);
 
     $self->param('query_set', Bio::EnsEMBL::Compara::MemberSet->new(-members => $members));
-    $self->param('expected_members',scalar(@{$self->param('query_set')->get_all_Members}));
+    $self->param('expected_members', scalar @$members);
 
     if ( $self->debug ) {
-        print "Loaded ".$self->param('expected_members')." query members\n";
+        print "Loaded " . $self->param('expected_members') . " query members\n";
     }
 
     my $fastafile = $self->param_required('blast_db');
 
-    if ($self->param('blast_db')) {
+    if ($fastafile) {
         my @files = glob("$fastafile*.dmnd");
         die "Cound not find diamond_db .dmnd" unless @files;
         foreach my $file (@files) {
@@ -103,7 +103,7 @@ sub run {
     }
 
     push @$cross_pafs, @$features;
-    print Dumper $blast_outfile;
+    print Dumper $blast_outfile if $self->debug;
     unlink $blast_outfile unless $self->debug;
 
     $self->param('cross_pafs', $cross_pafs);
