@@ -50,7 +50,7 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    my $species_names    = $self->param('species_list');
+    my $species_names    = $self->param('species_list'); # From accu
     print Dumper $species_names if $self->debug;
     my $spec_hard_limit  = $self->param('hard_limit');
     my @species_list;
@@ -58,6 +58,7 @@ sub fetch_input {
     foreach my $species_name ( @$species_names ) {
         if ( scalar(@species_list) < $spec_hard_limit ) {
             push @species_list, $species_name if scalar(@species_list) < $spec_hard_limit;
+            print Dumper $species_name if $self->debug;
         }
         else {
             # We have a hard limit to prevent overlapping ids between reference database and pipeline database
@@ -75,8 +76,8 @@ sub run {
     my $new_genome_dbs = [];
 
     foreach my $species_name ( @$species_list ) {
-        print Dumper $species_name if $self->debug;
-        push @$new_genome_dbs, Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_genome($self->compara_dba), $species_name, -RELEASE => $self->param('release'), -FORCE => $self->param('force'), -SKIP_DNA => $self->param('skip_dna') ); # skip dna loading to save table space
+        print Dumper $species_name;
+        push @$new_genome_dbs, Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_genome($self->compara_dba, $species_name, -RELEASE => $self->param('release'), -FORCE => $self->param('force'), -SKIP_DNA => $self->param('skip_dna') ); # skip dna loading to save table space
     }
 }
 
