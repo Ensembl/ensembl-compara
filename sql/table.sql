@@ -182,7 +182,7 @@ CREATE TABLE genome_db (
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
 
   PRIMARY KEY (genome_db_id),
-  UNIQUE name (name,assembly,genebuild,genome_component)
+  UNIQUE KEY name (name,assembly,genome_component)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -1033,10 +1033,10 @@ CREATE TABLE gene_member (
 
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
-  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
+--  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (gene_member_id),
-  -- UNIQUE KEY (stable_id),
+  UNIQUE KEY (stable_id),
   KEY (source_name),
   KEY (canonical_member_id),
   KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
@@ -1137,10 +1137,10 @@ CREATE TABLE seq_member (
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
   FOREIGN KEY (sequence_id) REFERENCES sequence(sequence_id),
   FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id),
-  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
+--  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (seq_member_id),
-  -- UNIQUE KEY (stable_id),
+  UNIQUE KEY (stable_id),
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id),
@@ -1956,7 +1956,7 @@ CREATE TABLE hmm_curated_annot (
 CREATE TABLE homology (
   homology_id                 bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   method_link_species_set_id  INT unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
-  description                 ENUM('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','gene_split','between_species_paralog','alt_allele','homoeolog_one2one','homoeolog_one2many','homoeolog_many2many','homology_rbbh','homology_bbh') NOT NULL,
+  description                 ENUM('homolog_bbh', 'homolog_rbbh') NOT NULL,
   is_tree_compliant           tinyint(1) NOT NULL DEFAULT 0,
   dn                          float(10,5),
   ds                          float(10,5),
@@ -2284,3 +2284,8 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_104_105_a.sql|schema_version');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_104_105_b.sql|homology_enum');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_104_105_c.sql|drop_dnafrag_fk');
+
