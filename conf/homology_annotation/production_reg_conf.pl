@@ -28,12 +28,10 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Utils::Registry;
 
 my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
-my $prev_release = $curr_release - 1;
 
 # ---------------------- CURRENT CORE DATABASES---------------------------------
 
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
-# Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1:4519/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-5:4672/$curr_release");
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
