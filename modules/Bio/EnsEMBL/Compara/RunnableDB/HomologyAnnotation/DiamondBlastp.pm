@@ -42,16 +42,15 @@ sub fetch_input {
     my $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_dbID_list($member_id_list);
 
     $self->param('query_set', Bio::EnsEMBL::Compara::MemberSet->new(-members => $members));
-    $self->param('expected_members',scalar(@{$self->param('query_set')->get_all_Members}));
+    $self->param('expected_members', scalar @$members);
 
     if ( $self->debug ) {
-        print "Loaded ".$self->param('expected_members')." query members\n";
+        print "Loaded " . $self->param('expected_members') . " query members\n";
     }
 
-    $self->param('all_blast_db', {});
-    my $fastafile = $self->param('blast_db');
+    my $fastafile = $self->param_required('blast_db');
 
-    if ($self->param('blast_db')) {
+    if ($fastafile) {
         my @files = glob("$fastafile*");
         die "Cound not find diamond_db .dmnd" unless @files;
         foreach my $file (@files) {
@@ -89,7 +88,7 @@ sub run {
 
     my $cross_pafs = [];
 
-    my $target_genome_db_id = $self->param('target_genome_db_id') ? $self->param('target_genome_db_id') : $self->param('all_blast_db')->{$blast_db};
+    my $target_genome_db_id = $self->param('target_genome_db_id');
 
     my $cmd = "$diamond_exe blastp -d $blast_db --query $blast_infile --evalue $evalue_limit --out $blast_outfile --outfmt 6 qseqid sseqid evalue score nident pident qstart qend sstart send length positive ppos qseq_gapped sseq_gapped $blast_params";
 
@@ -104,7 +103,7 @@ sub run {
     }
 
     push @$cross_pafs, @$features;
-    print Dumper $blast_outfile;
+    print Dumper $blast_outfile if $self->debug;
     unlink $blast_outfile unless $self->debug;
 
     $self->param('cross_pafs', $cross_pafs);

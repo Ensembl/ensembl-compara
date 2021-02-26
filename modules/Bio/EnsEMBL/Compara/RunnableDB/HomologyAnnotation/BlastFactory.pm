@@ -25,7 +25,16 @@ Fetch list of member_ids per genome_db_id in db and create jobs for BlastAndPars
 
 =over
 
+=item rr_ref_db
+
+Mandatory. Rapid release Compara reference database. Can be an alias or an URL.
+
+=item ref_dump_dir
+
+Mandatory. Reference dump directory path.
+
 =item step
+
 Optional. How many sequences to write into the blast query file. Default: 200.
 
 =back
@@ -37,11 +46,10 @@ package Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BlastFactory;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector qw/ collect_reference_classification match_query_to_reference_taxonomy collect_species_set_dirs /;
+use Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector qw(:all);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-use Data::Dumper;
 
 sub param_defaults {
     my $self = shift;
@@ -62,7 +70,7 @@ sub fetch_input {
     foreach my $genome_db (@$genome_dbs) {
         my $genome_db_id = $genome_db->dbID;
         # Fetch canonical proteins into array
-        my $some_members = $self->compara_dba->get_SeqMemberAdaptor->_fetch_all_representative_for_blast_by_genome_db_id($genome_db_id);
+        my $some_members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_GenomeDB($genome_db_id);
 
         my @genome_members = map {$_->dbID} @$some_members;
         # Necessary to collect the reference taxonomy because this decides which reference species_set is used
@@ -82,7 +90,7 @@ sub write_output {
 
         my $genome_db_id  = $genome->{'genome_db_id'};
         my $query_members = $genome->{'member_ids'};
-        # There is a default species set if a clade specific species set does not exist for a species
+        # There is a default reference species set if a clade-specific reference species set does not exist for a species
         my $ref_taxa      = $genome->{'ref_taxa'} ? $genome->{'ref_taxa'} : "default";
         my $ref_dump_dir  = $self->param_required('ref_dump_dir');
         # Returns all the directories (fasta, split_fasta & diamond pre-indexed db) under all the references

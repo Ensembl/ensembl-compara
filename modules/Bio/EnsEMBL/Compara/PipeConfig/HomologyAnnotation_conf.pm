@@ -46,6 +46,11 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # Inherit the generic ones
 
+        # Mandatory species input, one or the other only
+        'species_list_file' => undef,
+        'species_list'      => [ ],
+        'division'          => 'homology_annotation',
+
         # Directories to write to
         'work_dir'     => $self->o('pipeline_dir'),
         'dump_path'    => $self->o('work_dir'),
@@ -57,10 +62,9 @@ sub default_options {
         # Set mandatory databases
         'compara_db'   => $self->pipeline_url(),
         'output_db'    => $self->o('compara_db'),
-        'master_db'    => $self->o('compara_db'),
         'member_db'    => $self->o('compara_db'),
         'ncbi_db'      => 'ncbi_taxonomy',
-        'rr_ref_db'    => 'rr_ref_master',
+        'rr_ref_db'    => 'compara_references',
         'meta_host'    => 'mysql-ens-meta-prod-1',
 
         # Member loading parameters - matches reference genome members
@@ -71,8 +75,8 @@ sub default_options {
         'store_ncrna'                 => 0,
         'store_others'                => 0,
         'store_exon_coordinates'      => 0,
-        'store_related_pep_sequences' => 0, # do we want CDS sequence as well as protein seqs?
-        'skip_dna'                    => 1, # we skip the dna in this case
+        'store_related_pep_sequences' => 0, # do we want CDS sequences as well as protein seqs?
+        'skip_dna'                    => 1, # skip storing the dna information
 
         # Member HC parameters
         'allow_ambiguity_codes'         => 1,
@@ -87,28 +91,11 @@ sub default_options {
         # DIAMOND e-hive parameters
         'blast_factory_capacity'   => 50,
         'blastpu_capacity'         => 150,
-        'copy_alignments_capacity' => 50,
-        'copy_trees_capacity'      => 50,
-
-        # Other e-hive parameters
-        'reuse_capacity'           => 3,
-        'hc_capacity'              => 150,
-        'decision_capacity'        => 150,
-        'hc_priority'              => -10,
 
         # DIAMOND runnable parameters
         'num_sequences_per_blast_job' => 200,
-        'blast_params'                => '--threads 4 -b1 -c1 --top 10 --dbsize 1000000 --sensitive',
+        'blast_params'                => '--threads 4 -b1 -c1 --top 50 --dbsize 1000000 --sensitive',
         'evalue_limit'                => '1e-5',
-
-        # Set hybrid registry file that both metadata production and compara understand
-        'reg_conf'      => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/conf/homology_annotation/production_reg_conf.pl',
-        'registry_file' => $self->o('reg_conf'),
-
-        # Mandatory species input, one or the other only
-        'species_list_file' => undef,
-        'species_list'      => [ ],
-        'division'          => 'homology_annotation',
 
     };
 }
@@ -138,7 +125,6 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
 
         'ncbi_db'           => $self->o('ncbi_db'),
         'member_db'         => $self->o('member_db'),
-        'master_db'         => $self->o('master_db'),
         'output_db'         => $self->o('output_db'),
         'rr_ref_db'         => $self->o('rr_ref_db'),
 
@@ -165,33 +151,18 @@ sub resource_classes {
 sub core_pipeline_analyses {
     my ($self) = @_;
 
-    my %hc_analysis_params = (
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
-            -batch_size         => 20,
-    );
-
-    my %decision_analysis_params = (
-            -analysis_capacity  => $self->o('decision_capacity'),
-            -priority           => $self->o('hc_priority'),
-            -batch_size         => 20,
-    );
-
     return [
 
         {   -logic_name      => 'core_species_factory',
             -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SpeciesFactory',
             -max_retry_count => 1,
             -input_ids       => [{
-                'registry_file'      => $self->o('registry_file'),
+                'registry_file'      => $self->o('reg_conf'),
                 'species_list'       => $self->o('species_list'),
                 'species_list_file'  => $self->o('species_list_file'),
             },],
             -flow_into       => {
-                8 => [
-                    'backbone_fire_db_prepare',
-                    { '?table_name=pipeline_wide_parameters' => { 'param_name' => 'initialised', 'param_value' => 1, 'insertion_method' => 'INSERT_IGNORE' } },
-                     ],
+                8 => [ 'backbone_fire_db_prepare' ],
             },
             -hive_capacity   => 1,
         },
@@ -204,6 +175,7 @@ sub core_pipeline_analyses {
                             ELSE                         [ 'copy_ncbi_tables_factory' ],
                 ),
                 'A->1'  => [ 'diamond_factory' ],
+                '8'     => { '?table_name=pipeline_wide_parameters' => { 'param_name' => 'initialised', 'param_value' => 1, 'insertion_method' => 'INSERT_IGNORE' } },
             },
         },
 
@@ -215,14 +187,32 @@ sub core_pipeline_analyses {
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into     => {
-                '2->A' => [ 'diamond_blastp', { 'make_query_blast_db' => { 'genome_db_id' => '#genome_db_id#', 'ref_taxa' => '#ref_taxa#' } } ],
-                'A->2' => { 'parse_paf_for_rbbh' => { 'genome_db_id' => '#genome_db_id#', 'target_genome_db_id' => '#target_genome_db_id#', }  },
+                '2->A' => [ 'diamond_blastp', { 'make_query_blast_db' => { 'genome_db_id' => '#genome_db_id#', 'ref_taxa' => '#ref_taxa#' } }, { 'copy_ref_genomes' => {'target_genome_db_id' => '#target_genome_db_id#'} } ],
+                'A->2' => { 'break_seq_members_into_batches' => { 'genome_db_id' => '#genome_db_id#', 'target_genome_db_id' => '#target_genome_db_id#', }  },
             },
+        },
+
+        {   -logic_name => 'copy_ref_genomes',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#rr_ref_db#',
+                'mode'          => 'insertignore',
+                'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
+                'table'         => 'genome_db',
+                'where'         => 'genome_db_id = #target_genome_db_id#',
+            },
+        },
+
+        {   -logic_name => 'break_seq_members_into_batches',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SplitMembers',
+            -flow_into  => {
+                2 => [ 'parse_paf_for_rbbh' ],
+            }
         },
 
         {   -logic_name => 'parse_paf_for_rbbh',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::ParsePAFforBHs',
-            -rc_name    => '1Gb_job',
+            -rc_name    => '2Gb_job',
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::LoadCoreMembers::pipeline_analyses_copy_ncbi_and_core_genome_db($self) },

@@ -21,8 +21,9 @@ Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SpeciesFactory
 
 =head1 DESCRIPTION
 
-Wrapper factory to surround Productions SpeciesFactory. Take either a newline separated
-file of species_list_file or species_list parameter passed through the command line
+Wrapper factory to surround Production's SpeciesFactory. Takes either a
+newline-delimited text file of species_list_file or species_list parameter
+passed through the command line.
 
 =cut
 
@@ -33,7 +34,6 @@ use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
-use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Production::Pipeline::Common::SpeciesFactory');
 
@@ -61,10 +61,12 @@ sub write_output {
 
     $self->SUPER::write_output();
     my @species = @{$self->param('species')};
-    $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
+    my ($pwp)   = $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
         'param_name' => 'species_list',
         'param_value' => \@species,
     );
+    my $adaptor = $self->db->get_PipelineWideParametersAdaptor;
+    $adaptor->store_or_update_one($pwp, ['param_name']);
 
     $self->dataflow_output_id( {}, 8);
 

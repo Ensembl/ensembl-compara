@@ -48,7 +48,7 @@ our @EXPORT_OK;
     Arg[1]      :  Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dbc (mandatory)
     Arg[2]      :  $table_name (mandatory)
     Description :  Check to see if table exists in specific database
-    Returns     :  True if table exists
+    Returns     :  True if table exists, False otherwise
     Exceptions  :  None.
 
 =cut

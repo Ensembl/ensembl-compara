@@ -49,19 +49,19 @@ our @EXPORT_OK;
 
 =head2 collect_reference_classification
 
-    Arg[1]     :  (string) $master_db or Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $master_db
+    Arg[1]     :  (string) $reference_db or Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $reference_db
     Description:  Collect reference ncbi taxonomic classifications by species_set. This expects a reference
-                  specific compara master database with taxonomically named species_sets.
-                  E.g. \@taxon_clade = collect_reference_classification('master_db');
+                  specific compara reference database with taxonomically named species_sets.
+    Example    : my $taxon_clade = collect_reference_classification('reference_db');
     Return     :  (arrayref) list of species_set names.
     Exceptions :  None.
 
 =cut
 
 sub collect_reference_classification {
-    my $master_db = shift;
+    my $reference_db = shift;
 
-    my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($master_db);
+    my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($reference_db);
     my $ss_adaptor = $dba->get_SpeciesSetAdaptor->fetch_all();
     my @ss_names   = map {$_->name()} @{$ss_adaptor};
     my @clean_ss   = grep ( s/^collection\-//g, @ss_names );
@@ -73,23 +73,23 @@ sub collect_reference_classification {
 
     Arg[1]     :  Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
     Arg[2]     :  Bio::EnsEMBL::Compara::GenomeDB
-    Arg[3]     :  (optional) Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $master_dba
+    Arg[3]     :  (optional) Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $reference_dba
                   Either/or
     Arg[4]     :  (optional) (arrayref) $taxon_list
     Description:  Match starting from lowest taxonomic rank climbing, returning string variable at first match.
-                  E.g. my $ref_clade = match_query_to_reference_taxonomy($compara_dba, $genome_db);
+    Example    : my $ref_clade = match_query_to_reference_taxonomy($compara_dba, $genome_db);
     Return     :  (string) $taxon_name or undef
-    Exceptions :  Throws if both $taxon_list and $master_dba provided
+    Exceptions :  Throws if both (or neither) $taxon_list and $reference_dba are provided
 
 =cut
 
 sub match_query_to_reference_taxonomy {
-    my ($genome_db, $master_dba, $taxon_list) = (@_);
+    my ($genome_db, $reference_dba, $taxon_list) = (@_);
 
-    throw ("taxon_list and master_dba are mutually exclusive, pick one") if $taxon_list && $master_dba;
-    throw ("Either taxon_list or master_dba need to be provided") unless $taxon_list || $master_dba;
+    throw ("taxon_list and reference_dba are mutually exclusive, pick one") if $taxon_list && $reference_dba;
+    throw ("Either taxon_list or reference_dba need to be provided") unless $taxon_list || $reference_dba;
 
-    my @taxon_list = $taxon_list ? @$taxon_list : @{collect_reference_classification($master_dba)};
+    my @taxon_list = $taxon_list ? @$taxon_list : @{collect_reference_classification($reference_dba)};
     my $parent     = $genome_db->taxon->parent;
 
     while ( $parent->name ne "root" ) {
@@ -106,22 +106,22 @@ sub match_query_to_reference_taxonomy {
 
 =head2 collect_species_set_dirs
 
-    Arg[1]     :  (string) $master_db or Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
+    Arg[1]     :  (string) $reference_db or Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
     Arg[2]     :  (string) $taxa_name
     Arg[3]     :  (string) $ref_dump_dir
     Description:  Collect list of dir_revhash paths for all genomes in taxonomic clade by species_set.
                   Does not return absolute paths, only the paths starting at the reverse hash of gdb, so
                   will require appending to dump path dir or working dir etc.
-                  E.g. my $dir_paths = collect_species_set_dirs($compara_dba, $ncbi_taxa_name);
+    Example    : my $dir_paths = collect_species_set_dirs($compara_dba, $ncbi_taxa_name);
     Return     :  (arrayref of hashes) list of directories
     Exceptions :  None.
 
 =cut
 
 sub collect_species_set_dirs {
-    my ($master_db, $taxa_name, $ref_dump_dir) = (@_);
+    my ($reference_db, $taxa_name, $ref_dump_dir) = (@_);
 
-    my $dba          = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($master_db);
+    my $dba          = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($reference_db);
     my $ss_adaptor   = $dba->get_SpeciesSetAdaptor;
     my $gdb_adaptor  = $dba->get_GenomeDBAdaptor;
     $gdb_adaptor->dump_dir_location($ref_dump_dir);

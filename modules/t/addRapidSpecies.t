@@ -55,7 +55,6 @@ standaloneJob(
     'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::AddRapidSpecies',
     {
         'compara_db'        => $compara_db,
-        'master_db'         => $compara_db,
         'member_db'         => $compara_db,
         'species_list'      => [ 'pan_troglodytes' ],
         'release'           => 1,

@@ -50,7 +50,7 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    my $species_names    = $self->param('species_list'); # From accu
+    my $species_names    = $self->param('species_list');
     print Dumper $species_names if $self->debug;
     my $spec_hard_limit  = $self->param('hard_limit');
     my @species_list;
@@ -67,9 +67,6 @@ sub fetch_input {
     }
 
     $self->param( 'max_species_list', \@species_list );
-
-    my $master_dba = $self->get_cached_compara_dba('master_db');
-    $self->param( 'master_dba', $master_dba );
 }
 
 sub run {
@@ -79,15 +76,14 @@ sub run {
     my $new_genome_dbs = [];
 
     foreach my $species_name ( @$species_list ) {
-        print Dumper $species_name;
-        push @$new_genome_dbs, Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_genome($self->param('master_dba'), $species_name, -RELEASE => $self->param('release'), -FORCE => $self->param('force'), -SKIP_DNA => $self->param('skip_dna') ); # skip dna loading to save table space
+        push @$new_genome_dbs, Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_genome($self->compara_dba, $species_name, -RELEASE => $self->param('release'), -FORCE => $self->param('force'), -SKIP_DNA => $self->param('skip_dna') ); # skip dna loading to save table space
     }
 }
 
 sub write_output {
     my $self = shift @_;
 
-    my $genome_dbs = $self->get_cached_compara_dba('master_db')->get_GenomeDBAdaptor->fetch_all();
+    my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
 
     foreach my $genome_db ( sort { $a->dbID() <=> $b->dbID() } @$genome_dbs ) {
         $self->dataflow_output_id( { 'genome_db_id' => $genome_db->dbID(), 'species_name' => $genome_db->name() }, 2 );

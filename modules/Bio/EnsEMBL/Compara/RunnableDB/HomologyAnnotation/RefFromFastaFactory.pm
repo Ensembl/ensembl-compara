@@ -28,8 +28,9 @@ BLASTing the reference genome against an initial query.
 Supported parameters:
     'rr_ref_db'     : rapid release reference genome database (mysql) (Mandatory)
     'ref_dumps_dir' : the genome dumps directory for the reference genomes (Mandatory)
-    'ref_taxa'      : selected reference species_set name. Default: 'default' (Optional)
     'query_db_name' : the name of the non-reference genome diamond database file (Mandatory)
+    'genome_db_id'  : the genome_db_id of the query genome (single genome in ref_fasta) (Mandatory)
+    'ref_taxa'      : selected reference species_set name. Default: 'default' (Optional)
 
 =cut
 
@@ -40,7 +41,6 @@ use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector qw/ collect_species_set_dirs /;
-use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -59,7 +59,7 @@ sub fetch_input {
         my $ref_splitfa  = $ref_gdb_dir->{'ref_splitfa'};
         my @ref_splitfas = glob($ref_splitfa . "/*.fasta");
 
-        push @all_paths, { 'ref_gdb_id' => $ref_gdb_id, 'ref_splitfa' => \@ref_splitfas, 'target_genome_db_id' => $self->param('genome_db_id') };
+        push @all_paths, { 'ref_gdb_id' => $ref_gdb_id, 'ref_splitfa' => \@ref_splitfas, 'target_genome_db_id' => $self->param_required('genome_db_id') };
     }
 
     $self->param('ref_fasta_files', \@all_paths);

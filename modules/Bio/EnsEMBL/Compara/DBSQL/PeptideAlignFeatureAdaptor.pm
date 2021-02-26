@@ -342,9 +342,18 @@ sub rank_and_store_PAFS {
   }
 }
 
-# query_genome_db_id should remain consistent, hit_genome_db_id can differ but top hits
-# are evaluated per target_genome_db_id. The very top hit(s) per query_member_id is returned
-# for each target_genome_db_id. This can be multiple hits if stats are identical.
+=head2 filter_top_PAFs
+
+  Arg [1]    : Array @parsed_features from blast output
+  Example    : $paf = $adaptor->filter_top_PAFs(@features);
+  Description: Stores the filtered PAFs meeting criteria. query_genome_db_id
+               should remain consistent, hit_genome_db_id can differ but top
+               hits are evaluated per hit_genome_db_id.
+  Returntype : None
+  Exceptions : None
+
+=cut
+
 sub filter_top_PAFs {
     my ($self, @features) = @_;
 
@@ -360,7 +369,7 @@ sub filter_top_PAFs {
             my $rank = 1;
             my $prevPaf = undef;
             foreach my $paf (@pafList) {
-                $rank++ if($prevPaf and !pafs_equal($prevPaf, $paf));
+                $rank++ if ($prevPaf and !pafs_equal($prevPaf, $paf));
                 $paf->hit_rank($rank);
                 $prevPaf = $paf;
             }
@@ -480,7 +489,7 @@ sub _tables {
 
   # sometimes paf is not genome specific
   if ( table_exists( $self->dbc, 'peptide_align_feature_' . $self->{_curr_gdb_id} ) ) {
-    return (['peptide_align_feature_' .$self->{_curr_gdb_id}, 'paf'] );
+      return (['peptide_align_feature_' . $self->{_curr_gdb_id}, 'paf'] );
   }
   else {
       return (['peptide_align_feature', 'paf'] );
@@ -530,11 +539,12 @@ sub _objs_from_sth {
             '_perc_pos',
             '_hit_rank',
             '_cigar_line',
-        ], sub {
+          ], sub {
+            no warnings 'misc'; # because the _hit_member may not be returned if reference in another db
             my $a = shift;
             return {
-                ($a->[1] ? ('_query_member' => $memberDBA->fetch_by_dbID($a->[1])) : ()),       # The object is not able to fetch this, so it's done here instead
-                ($a->[2] ? ('_hit_member'   => $memberDBA->fetch_by_dbID($a->[2])) : ()),       # The object is not able to fetch this, so it's done here instead
+                ($memberDBA->fetch_by_dbID($a->[1]) ? ('_query_member' => $memberDBA->fetch_by_dbID($a->[1])) : ()),       # The object is not able to fetch this, so it's done here instead
+                ($memberDBA->fetch_by_dbID($a->[2]) ? ('_hit_member'   => $memberDBA->fetch_by_dbID($a->[2])) : ()),       # The object is not able to fetch this, so it's done here instead
             };
         });
 }
@@ -620,11 +630,9 @@ sub fetch_all_by_dbID_list {
 
 
 sub fetch_BRH_by_member_genomedb {
-    my $self             = shift;
-    my $qmember_id       = shift;
-    my $hit_genome_db_id = shift;
+    my ($self, $qmember_id, $hit_genome_db_id) = @_;
 
-    return unless($qmember_id and $hit_genome_db_id);
+    return unless ($qmember_id and $hit_genome_db_id);
     my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
     # using trick of specifying table twice so can join to self
@@ -663,17 +671,14 @@ sub fetch_BRH_by_member_genomedb {
   Description: Returns the top ranked PeptideAlignFeature from the database
   Returntype : array reference of Bio::EnsEMBL::Compara::PeptideAlignFeature objects
   Exceptions : none
-  Caller     : general
 
 =cut
 
 
 sub fetch_BBH_by_member_genomedb {
-    my $self             = shift;
-    my $qmember_id       = shift;
-    my $hit_genome_db_id = shift;
+    my ($self, $qmember_id, $hit_genome_db_id) = @_;
 
-    return unless($qmember_id and $hit_genome_db_id);
+    return unless ($qmember_id and $hit_genome_db_id);
 
     my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
     my $qgenome_db_id = $member->genome_db_id;
