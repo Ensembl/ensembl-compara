@@ -50,7 +50,7 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    my $species_names    = $self->param('species_list'); # From accu
+    my $species_names    = $self->param('species_list');
     print Dumper $species_names if $self->debug;
     my $spec_hard_limit  = $self->param('hard_limit');
     my @species_list;
