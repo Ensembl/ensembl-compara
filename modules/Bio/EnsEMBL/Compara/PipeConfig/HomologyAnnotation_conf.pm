@@ -165,10 +165,7 @@ sub core_pipeline_analyses {
                 'species_list_file'  => $self->o('species_list_file'),
             },],
             -flow_into       => {
-                8 => [
-                    'backbone_fire_db_prepare',
-                    { '?table_name=pipeline_wide_parameters' => { 'param_name' => 'initialised', 'param_value' => 1, 'insertion_method' => 'INSERT_IGNORE' } },
-                ],
+                8 => [ 'backbone_fire_db_prepare' ],
             },
             -hive_capacity   => 1,
         },
@@ -181,6 +178,7 @@ sub core_pipeline_analyses {
                             ELSE                         [ 'copy_ncbi_tables_factory' ],
                 ),
                 'A->1'  => [ 'diamond_factory' ],
+                '8'     => { '?table_name=pipeline_wide_parameters' => { 'param_name' => 'initialised', 'param_value' => 1, 'insertion_method' => 'INSERT_IGNORE' } },
             },
         },
 
@@ -192,8 +190,19 @@ sub core_pipeline_analyses {
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into     => {
-                '2->A' => [ 'diamond_blastp', { 'make_query_blast_db' => { 'genome_db_id' => '#genome_db_id#', 'ref_taxa' => '#ref_taxa#' } } ],
+                '2->A' => [ 'diamond_blastp', { 'make_query_blast_db' => { 'genome_db_id' => '#genome_db_id#', 'ref_taxa' => '#ref_taxa#' } }, { 'copy_ref_genomes' => {'target_genome_db_id' => '#target_genome_db_id#'} } ],
                 'A->2' => { 'break_seq_members_into_batches' => { 'genome_db_id' => '#genome_db_id#', 'target_genome_db_id' => '#target_genome_db_id#', }  },
+            },
+        },
+
+        {   -logic_name => 'copy_ref_genomes',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#rr_ref_db#',
+                'mode'          => 'insertignore',
+                'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
+                'table'         => 'genome_db',
+                'where'         => 'genome_db_id = #target_genome_db_id#',
             },
         },
 
