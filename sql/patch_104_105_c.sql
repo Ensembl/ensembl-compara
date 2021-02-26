@@ -20,10 +20,8 @@
 # Description:
 #   Remove foreign keys for dnafrag to seq_member and gene_member
 
-ALTER TABLE dnafrag  DROP FOREIGN KEY seq_member_ibfk_5;
-ALTER TABLE dnafrag  DROP INDEX seq_member_ibfk_5;
-ALTER TABLE dnafrag DROP FOREIGN KEY gene_member_ibfk_3;
-ALTER TABLE dnafrag DROP INDEX gene_member_ibfk_3;
+ALTER TABLE seq_member  DROP FOREIGN KEY seq_member_ibfk_5;
+ALTER TABLE gene_member DROP FOREIGN KEY gene_member_ibfk_3;
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
