@@ -97,9 +97,6 @@ sub default_options {
         'blast_params'                => '--threads 4 -b1 -c1 --top 50 --dbsize 1000000 --sensitive',
         'evalue_limit'                => '1e-5',
 
-        # Set hybrid registry file that both metadata production and compara understand
-        'reg_conf'      => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/conf/homology_annotation/production_reg_conf.pl',
-
     };
 }
 

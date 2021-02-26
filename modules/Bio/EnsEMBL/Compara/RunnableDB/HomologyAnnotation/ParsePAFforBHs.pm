@@ -91,7 +91,6 @@ sub _write_homologies {
     # Conversion of PAFs to Homology objects
     my $homology_adap = $self->compara_dba->get_HomologyAdaptor;
     my $homology      = $paf->create_homology($type, $mlss);
-    my $dbid          = $paf->query_member->gene_member_id . $paf->hit_member->gene_member_id;
 
     $homology_adap->store($homology);
 
