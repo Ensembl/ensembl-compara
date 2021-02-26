@@ -76,7 +76,6 @@ sub run {
     my $new_genome_dbs = [];
 
     foreach my $species_name ( @$species_list ) {
-        print Dumper $species_name;
         push @$new_genome_dbs, Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_genome($self->compara_dba, $species_name, -RELEASE => $self->param('release'), -FORCE => $self->param('force'), -SKIP_DNA => $self->param('skip_dna') ); # skip dna loading to save table space
     }
 }

@@ -96,6 +96,7 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -parameters    => {
                 'db_version'      => $self->o('ensembl_release'),
+                'master_db'       => $self->o('compara_db'),
                 'registry_files'  => $self->o('curr_file_sources_locs'),
             },
             -flow_into     => {

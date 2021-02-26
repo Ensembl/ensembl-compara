@@ -93,15 +93,18 @@ sub _write_homologies {
     my $homology      = $paf->create_homology($type, $mlss);
     my $dbid          = $paf->query_member->gene_member_id . $paf->hit_member->gene_member_id;
 
-    $homology_adap->store($homology, $dbid);
+    $homology_adap->store($homology);
 
 }
 
 sub _create_superficial_mlss {
     my ($self, $gdb1, $gdb2) = @_;
-    my $mlss_adap   = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-    my $method_adap = $self->compara_dba->get_MethodAdaptor;
-    my $method      = $method_adap->fetch_by_type('ENSEMBL_HOMOLOGUES');
+
+    my $mlss_adap    = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+    my $method_adap  = $self->compara_dba->get_MethodAdaptor;
+    my $species_adap = $self->compara_dba->get_SpeciesSetAdaptor;
+    my $method       = $method_adap->fetch_by_type('ENSEMBL_HOMOLOGUES');
+    my $species_set  = $species_adap->fetch_by_GenomeDBs([$gdb1, $gdb2]);
 
     unless ($method) {
         $method = Bio::EnsEMBL::Compara::Method->new(
@@ -109,15 +112,22 @@ sub _create_superficial_mlss {
             -type            => 'ENSEMBL_HOMOLOGUES',
             -class           => 'Homology.homology',
             -display_name    => 'Homologues',
-            -adaptor         => $method_adap
+            -adaptor         => $method_adap,
         );
         $method_adap->store($method);
+    }
+    unless ($species_set) {
+        $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
+            -genome_dbs => [$gdb1, $gdb2]
+        );
+        $species_adap->store($species_set);
     }
     my $method_link_species_set = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
         -adaptor             => $mlss_adap,
         -method              => $method,
-        -species_set         => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$gdb1, $gdb2]),
+        -species_set         => $species_set,
     );
+    $mlss_adap->store($method_link_species_set);
     return $method_link_species_set;
 }
 

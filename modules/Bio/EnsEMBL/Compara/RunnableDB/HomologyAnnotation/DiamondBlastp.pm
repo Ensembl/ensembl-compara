@@ -51,7 +51,7 @@ sub fetch_input {
     my $fastafile = $self->param_required('blast_db');
 
     if ($fastafile) {
-        my @files = glob("$fastafile*.dmnd");
+        my @files = glob("$fastafile*");
         die "Cound not find diamond_db .dmnd" unless @files;
         foreach my $file (@files) {
             # All files exist and have a nonzero size
