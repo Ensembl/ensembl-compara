@@ -206,7 +206,9 @@ sub loadMembersFromCoreSlices {
             $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($slice, $self->param('genome_db'));
             $dnafrag_adaptor->store($dnafrag);
         } else {
-            $self->throw(sprintf('Cannot find / create a DnaFrag with name "%s" for "%s"', $slice->seq_region_name, $self->param('genome_db')->name));
+            unless ($self->param('skip_dna')) {
+                $self->throw(sprintf('Cannot find / create a DnaFrag with name "%s" for "%s"', $slice->seq_region_name, $self->param('genome_db')->name));
+            }
         }
     }
 
@@ -398,8 +400,6 @@ sub store_protein_coding_gene_and_all_transcripts {
             $self->store_exon_coordinates($transcript, $pep_member);
         }
 
-        $self->_store_seq_member_projection($pep_member, $transcript);
-
         print(" : stored\n") if($self->param('verbose'));
 
         if(($transcript->stable_id eq $canonical_transcript_stable_id) || defined($self->param('force_unique_canonical'))) {
@@ -481,8 +481,6 @@ sub store_gene_generic {
         if ($self->param('store_exon_coordinates')) {
             $self->store_exon_coordinates($transcript, $seq_member);
         }
-
-        $self->_store_seq_member_projection($seq_member, $transcript);
 
         $seq_member_adaptor->_set_member_as_canonical($seq_member) if $transcript->is_canonical;
 

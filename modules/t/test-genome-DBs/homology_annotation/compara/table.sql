@@ -1,0 +1,1 @@
+../../multi/compara/table.sql

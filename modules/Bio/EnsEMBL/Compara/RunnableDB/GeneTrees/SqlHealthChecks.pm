@@ -91,7 +91,10 @@ our $config = {
     #############
 
     members_per_genome => {
-        params => [ 'genome_db_id', 'allow_ambiguity_codes', 'allow_missing_coordinates', 'allow_missing_cds_seqs', 'only_canonical' ],
+        params => [
+            'genome_db_id', 'allow_ambiguity_codes', 'allow_missing_coordinates', 'allow_missing_cds_seqs',
+            'allow_missing_exon_boundaries', 'only_canonical'
+        ],
         tests => [
             {
                 description => 'Each genome should have some genes',
@@ -186,12 +189,11 @@ our $config = {
             },
             {
                 description => 'Each genome should have some exon_boundaries',
-                query => 'SELECT seq_member_id FROM seq_member JOIN exon_boundaries USING (seq_member_id) WHERE genome_db_id = #genome_db_id#',
-                expected_size => '> 0',
+                query => 'SELECT seq_member_id FROM seq_member s LEFT JOIN exon_boundaries e USING (seq_member_id) WHERE s.genome_db_id = #genome_db_id# AND e.gene_member_id IS NULL AND NOT #allow_missing_exon_boundaries#',
             },
             {
                 description => 'The gene_member_id<->seq_member_id links of the exon_boundaries table must be the same as in the seq_member table',
-                query => 'SELECT seq_member_id FROM seq_member JOIN exon_boundaries USING (seq_member_id) WHERE genome_db_id = #genome_db_id# AND seq_member.gene_member_id != exon_boundaries.gene_member_id',
+                query => 'SELECT seq_member_id FROM seq_member JOIN exon_boundaries USING (seq_member_id) WHERE genome_db_id = #genome_db_id# AND seq_member.gene_member_id != exon_boundaries.gene_member_id AND NOT #allow_missing_exon_boundaries#',
             }
         ],
     },
@@ -593,4 +595,3 @@ sub _embedded_call {
 
 
 1;
-

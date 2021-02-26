@@ -58,6 +58,7 @@ sub fetch_input {
 	# use metadata script to report genomes that need to be updated
     my ($genomes_to_update, $renamed_genomes, $updated_annotations) = $self->fetch_genome_report($release, $division, $allowed_species);
 
+
 	# check there are no seq_region changes in the existing species
 	my $list_cmd = "perl $list_genomes_script $metadata_script_options";
 	my @release_genomes = $self->get_command_output($list_cmd);
@@ -190,10 +191,12 @@ sub write_output {
 
     $self->dataflow_output_id( $self->param('genomes_to_verify'), 5);
 
-    $self->_spurt(
-        $self->param_required('annotation_file'),
-        join("\n", @{$self->param('genomes_to_update')}, @{$self->param('genomes_with_updated_annotation')}),
-    );
+    if ( $self->param('annotation_file') ) {
+        $self->_spurt(
+            $self->param('annotation_file'),
+            join("\n", @{$self->param('genomes_to_update')}, @{$self->param('genomes_with_updated_annotation')}),
+        );
+    }
 }
 
 sub fetch_genome_report {
@@ -229,7 +232,7 @@ sub fetch_genome_report {
         @updated_annotations = grep { exists $allowed_species->{$_} } @updated_annotations;
     }
 
-    return ([@new_genomes, @updated_assemblies], \%renamed_genomes, \@updated_annotations);
+    return ([@new_genomes, @updated_assemblies, @updated_annotations], \%renamed_genomes, \@updated_annotations);
 }
 
 1;

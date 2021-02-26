@@ -838,6 +838,35 @@ sub _get_genome_dump_path {
     return "$dir/$subdir/$filename";
 }
 
+=head2 _get_members_dump_path
+
+  Arg[1]      : String $dir. Base directory in which to find / place the Fasta files
+  Example     : $genome_db->_get_members_dump_path($base_dir);
+  Description : Returns the expected path for the Fasta dump of members of this genome.
+                This method guarantees that all pipelines agree on where to find the file.
+                To behave nicely at scale, the files are expected to be spread according
+                to the dbID of the GenomeDB, using eHive's dir_revhash, e.g.
+                "123456789" => "9/8/7/6/5/4/3/2", and to be named "$name.$assembly.$genebuild(_comp_X).fasta".
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub _get_members_dump_path {
+    my $self = shift;
+    my $dir  = shift;
+
+    require Bio::EnsEMBL::Hive::Utils;
+    my $subdir = $self->dbID ? Bio::EnsEMBL::Hive::Utils::dir_revhash($self->dbID) : '';
+
+    my $filename = join ('.', $self->name(), $self->assembly(), $self->genebuild()) .
+        ($self->genome_component ? '_comp_' . $self->genome_component : '') . '.fasta';
+    my $path = "$dir/$subdir/$filename";
+    $path =~ s/\/+/\//g;
+    return $path;
+}
 
 =head2 get_faidx_helper
 
@@ -875,5 +904,28 @@ sub get_faidx_helper {
     }
 }
 
+=head2 get_dmnd_helper
+
+  Example     : my $path = $genome_db->get_dmnd_helper();
+  Description : Returns the expected path for the diamond database of this genome
+                if a dump_dir_location has been specified for its adaptor.
+  Returntype  : String
+  Exceptions  : Raises error if the path where the diamond database should be
+                located does not exist.
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub get_dmnd_helper {
+    my $self  = shift;
+
+    if ($self->adaptor and (my $dump_dir_location = $self->adaptor->dump_dir_location)) {
+        my $path = $self->_get_members_dump_path($dump_dir_location, @_);
+        $path =~ s/fasta$/dmnd/;
+        die "Could not find diamond db for this genome" unless (-e $path);
+        return $path;
+    }
+}
 
 1;

@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2020] EMBL-European Bioinformatics Institute
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,6 +45,14 @@ Bio::EnsEMBL::Registry->add_DBAdaptor('mus_musculus', 'core', $mouse_dba);
 my $test_ref_human_2 = Bio::EnsEMBL::Test::MultiTestDB->new( "test_ref_human_2" );
 my $human2_dba = $test_ref_human_2->get_DBAdaptor('core');
 
+# Save status of database prior to alteration for restoration at end of tests
+$test_ref_compara->save('compara', 'genome_db');
+$test_ref_compara->save('compara', 'species_set');
+$test_ref_compara->save('compara', 'species_set_header');
+$test_ref_compara->save('compara', 'seq_member');
+$test_ref_compara->save('compara', 'gene_member');
+$test_ref_compara->save('compara', 'dnafrag');
+
 ##                                                                 ##
 #####################################################################
 
@@ -79,7 +87,7 @@ subtest "update_reference_genome", sub {
     isnt($human_1_gdb->dbID, $human_2_gdb->dbID, 'both humans have different ids');
 
     # delete a dnafrag to test force update
-    $compara_dba->dbc->do("DELETE FROM dnafrag WHERE name = '2' and genome_db_id = 143");
+    $compara_dba->dbc->do("DELETE FROM dnafrag WHERE name = '2' and genome_db_id = " . $human_2_gdb->dbID);
 
     # check -FORCE flag functionality
     throws_ok {
@@ -107,5 +115,13 @@ subtest "remove_reference_genome", sub {
     my ($dnafrag_count) = $compara_dba->dbc->db_handle->selectrow_array("SELECT COUNT(*) FROM dnafrag WHERE genome_db_id = $rat_genome_db_id");
     is( $dnafrag_count, 0, 'all dnafrags removed' );
 };
+
+# Restore the databases for next tests
+$test_ref_compara->restore('compara', 'genome_db');
+$test_ref_compara->restore('compara', 'species_set');
+$test_ref_compara->restore('compara', 'species_set_header');
+$test_ref_compara->restore('compara', 'seq_member');
+$test_ref_compara->restore('compara', 'gene_member');
+$test_ref_compara->restore('compara', 'dnafrag');
 
 done_testing();

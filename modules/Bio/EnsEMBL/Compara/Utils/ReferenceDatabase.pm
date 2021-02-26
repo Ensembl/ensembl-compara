@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -92,9 +92,9 @@ sub update_reference_genome {
 
   Arg[1]      : Bio::EnsEMBL::DBSQL::DBAdaptor $species_dba
   Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[4]      : (optional) boolean $force
-  Arg[5]      : (optional) int $taxon_id
-  Arg[6]      : (optional) int $offset
+  Arg[3]      : (optional) boolean $force
+  Arg[4]      : (optional) int $taxon_id
+  Arg[5]      : (optional) int $offset
   Description : This method takes all the information needed from the
                 species database in order to update the genome_db table
                 of the compara database
@@ -111,7 +111,7 @@ sub _update_reference_genome_db {
     my $new_genome_db = Bio::EnsEMBL::Compara::GenomeDB->new_from_DBAdaptor($species_dba);
 
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
-    my $stored_genome_db = eval {$genome_db_adaptor->fetch_by_core_DBAdaptor($species_dba)};
+    my $stored_genome_db = $genome_db_adaptor->fetch_by_core_DBAdaptor($species_dba);
 
     my $genome_db;
     if ($stored_genome_db and $stored_genome_db->dbID and $stored_genome_db->genebuild eq $new_genome_db->genebuild) {
@@ -148,7 +148,7 @@ sub _update_reference_genome_db {
             $genome_db_adaptor->update($stored_genome_db);
             $genome_db = $stored_genome_db;
         }
-    } else { # new genome or new assembly!!
+    } else { # new genome/assembly/annotation!!
         $new_genome_db->taxon_id( $taxon_id ) if $taxon_id;
 
         if (!defined($new_genome_db->name)) {

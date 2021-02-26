@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,17 +17,27 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BlastFactory 
+Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BlastFactory
 
 =head1 DESCRIPTION
 
-Fetch sorted list of member_ids and create jobs for BlastAndParsePAF. 
-Supported parameters:
+Fetch list of member_ids per genome_db_id in db and create jobs for BlastAndParsePAF.
 
-    'species_set_id' => <number>
+=over
 
-    'step'           => <number>
-        How many sequences to write into the blast query file.
+=item rr_ref_db
+
+Mandatory. Rapid release Compara reference database. Can be an alias or an URL.
+
+=item ref_dump_dir
+
+Mandatory. Reference dump directory path.
+
+=item step
+
+Optional. How many sequences to write into the blast query file. Default: 200.
+
+=back
 
 =cut
 
@@ -36,14 +46,16 @@ package Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BlastFactory;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector qw(:all);
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-use Data::Dumper;
 
 sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
+        'step' => 200,
     };
 }
 
@@ -51,25 +63,21 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    my $species_set_id = $self->param_required('species_set_id');
-    my $species_set    = $self->compara_dba->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id);
-    my $genome_dbs     = $species_set->genome_dbs;
-
-    my @all_members;
-    my @genome_db_ids;
+    my $ref_master = $self->param_required('rr_ref_db');
+    my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
+    my ( @genome_db_ids, @query_members );
 
     foreach my $genome_db (@$genome_dbs) {
         my $genome_db_id = $genome_db->dbID;
-        push @genome_db_ids, $genome_db_id;
-        my $some_members = $self->compara_dba->get_SeqMemberAdaptor->_fetch_all_representative_for_blast_by_genome_db_id($genome_db_id);
-        foreach my $member (@$some_members) {
-            my $member_id = $member->dbID;
-            push @all_members, $member_id;
-        }
+        # Fetch canonical proteins into array
+        my $some_members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_GenomeDB($genome_db_id);
+
+        my @genome_members = map {$_->dbID} @$some_members;
+        # Necessary to collect the reference taxonomy because this decides which reference species_set is used
+        push @query_members, { 'genome_db_id' => $genome_db_id, 'member_ids' => \@genome_members, 'ref_taxa' => match_query_to_reference_taxonomy($genome_db, $ref_master) };
     }
 
-    $self->param('query_members', \@all_members);
-    $self->param('genome_db_ids', \@genome_db_ids);
+    $self->param('query_members', \@query_members);
 }
 
 sub write_output {
@@ -78,13 +86,30 @@ sub write_output {
     my $step              = $self->param('step');
     my @query_member_list = @{$self->param('query_members')};
 
-    while (@query_member_list) {
-        my @job_array = splice(@query_member_list, 0, $step);
-        my $output_id = { 'member_id_list' => \@job_array };
-        #my $output_id = { 'start_member_id' => $job_array[0], 'end_member_id' => $job_array[-1] };
-        $self->dataflow_output_id($output_id, 2);
+    foreach my $genome ( @query_member_list ) {
+
+        my $genome_db_id  = $genome->{'genome_db_id'};
+        my $query_members = $genome->{'member_ids'};
+        # There is a default reference species set if a clade-specific reference species set does not exist for a species
+        my $ref_taxa      = $genome->{'ref_taxa'} ? $genome->{'ref_taxa'} : "default";
+        my $ref_dump_dir  = $self->param_required('ref_dump_dir');
+        # Returns all the directories (fasta, split_fasta & diamond pre-indexed db) under all the references
+        my $ref_dirs      = collect_species_set_dirs($self->param_required('rr_ref_db'), $ref_taxa, $ref_dump_dir);
+
+        foreach my $ref ( @$ref_dirs ) {
+            # Obtain the diamond indexed file for the reference, this is the only file we need from
+            # each reference at this point
+            my $ref_dmnd_path = $ref->{'ref_dmnd'};
+            for ( my $i = 0; $i < @$query_members; $i+=($step+1) ) {
+                my @job_list = @$query_members[$i..$i+$step];
+                my @job_array  = grep { defined && m/[^\s]/ } @job_list; # because the array is very rarely going to be exactly divisible by $step
+                # A job is output for every $step query members against each reference diamond db
+                my $output_id = { 'member_id_list' => \@job_array, 'blast_db' => $ref_dmnd_path, 'genome_db_id' => $genome_db_id, 'target_genome_db_id' => $ref->{'ref_gdb'}->dbID, 'ref_taxa' => $ref_taxa };
+                $self->dataflow_output_id($output_id, 2);
+            }
+        }
+        $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'ref_taxa' => $ref_taxa }, 1 );
     }
-    $self->dataflow_output_id( { 'genome_db_ids' => $self->param_required('genome_db_ids') }, 1 );
 }
 
 1;

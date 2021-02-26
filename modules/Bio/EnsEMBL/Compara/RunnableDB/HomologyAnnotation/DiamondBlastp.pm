@@ -1,7 +1,7 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2020] EMBL-European Bioinformatics Institute
+See the NOTICE file distributed with this work for additional information
+regarding copyright ownership.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,21 +34,46 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BlastAndParsePAF');
 
-sub get_queries {
+sub fetch_input {
     my $self = shift @_;
 
-    my $start_member_id = $self->param_required('start_member_id');
-    my $end_member_id   = $self->param_required('end_member_id');
+    my $member_id_list = $self->param_required('member_id_list');
 
-    #Get list of members and sequences
-    my $member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_seqs_missing_annot_by_range($start_member_id, $end_member_id, 'no_null');
-    return $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_dbID_list($member_ids);
+    my $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_dbID_list($member_id_list);
+
+    $self->param('query_set', Bio::EnsEMBL::Compara::MemberSet->new(-members => $members));
+    $self->param('expected_members', scalar @$members);
+
+    if ( $self->debug ) {
+        print "Loaded " . $self->param('expected_members') . " query members\n";
+    }
+
+    my $fastafile = $self->param_required('blast_db');
+
+    if ($fastafile) {
+        my @files = glob("$fastafile*");
+        die "Cound not find diamond_db .dmnd" unless @files;
+        foreach my $file (@files) {
+            # All files exist and have a nonzero size
+            die "Missing blast index: $file\n" unless -e "$file" and -s "$file";
+        }
+    }
+    # Load all the genome specific fasta files into memory
+    $self->preload_file_in_memory("$fastafile*");
+
+    if ($self->param('output_db')) {
+        $self->param('output_dba', $self->get_cached_compara_dba('output_db'));
+    } else {
+        $self->param('output_dba', $self->compara_dba);
+    }
+
 }
 
 sub run {
     my $self = shift @_;
 
     my $diamond_exe           = $self->param('diamond_exe');
+    my $blast_db              = $self->param_required('blast_db');
     my $blast_params          = $self->param('blast_params')  || '';  # no parameters to C++ binary means having composition stats on and -seg masking off
     my $evalue_limit          = $self->param('evalue_limit');
     my $worker_temp_directory = $self->worker_temp_directory;
@@ -62,26 +87,35 @@ sub run {
     $self->compara_dba->dbc->disconnect_if_idle();
 
     my $cross_pafs = [];
-    foreach my $blast_db (keys %{$self->param('all_blast_db')}) {
-        my $target_genome_db_id = $self->param('all_blast_db')->{$blast_db};
 
-        my $cmd = "$diamond_exe blastp -d $blast_db --query $blast_infile --evalue $evalue_limit --out $blast_outfile --outfmt 6 qseqid sseqid evalue score nident pident qstart qend sstart send length positive ppos qseq_gapped sseq_gapped $blast_params";
+    my $target_genome_db_id = $self->param('target_genome_db_id');
 
-        my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1});
-        print "Time for diamond search " . $run_cmd->runtime_msec . " msec\n";
+    my $cmd = "$diamond_exe blastp -d $blast_db --query $blast_infile --evalue $evalue_limit --out $blast_outfile --outfmt 6 qseqid sseqid evalue score nident pident qstart qend sstart send length positive ppos qseq_gapped sseq_gapped $blast_params";
 
-        my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param('genome_db_id'), $target_genome_db_id);
+    my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1});
+    print "Time for diamond search " . $run_cmd->runtime_msec . " msec\n";
 
-        unless ($self->param('expected_members') == scalar(keys(%{$self->param('num_query_member')}))) {
-            # Most likely, this is happening due to MEMLIMIT, so make the job sleep if it parsed 0 sequences, to wait for MEMLIMIT to happen properly.
-            sleep(5);
-        }
+    my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param('genome_db_id'), $target_genome_db_id);
 
-        push @$cross_pafs, @$features;
-        unlink $blast_outfile unless $self->debug;
+    unless ($self->param('expected_members') == scalar(keys(%{$self->param('num_query_member')}))) {
+        # Most likely, this is happening due to MEMLIMIT, so make the job sleep if it parsed 0 sequences, to wait for MEMLIMIT to happen properly.
+        sleep(5);
     }
 
+    push @$cross_pafs, @$features;
+    print Dumper $blast_outfile if $self->debug;
+    unlink $blast_outfile unless $self->debug;
+
     $self->param('cross_pafs', $cross_pafs);
+}
+
+sub write_output {
+    my ($self) = @_;
+    my $cross_pafs = $self->param('cross_pafs');
+
+    $self->call_within_transaction(sub {
+        $self->param('output_dba')->get_PeptideAlignFeatureAdaptor->filter_top_PAFs(@$cross_pafs);
+    });
 }
 
 1;
