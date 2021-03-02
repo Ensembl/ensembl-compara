@@ -15,24 +15,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor - An AlignSlice can be used to map genes from one species onto another one. This adaptor is used to fetch all the data needed for an AlignSlice from the database.
+Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor
 
-=head1 INHERITANCE
+=head1 DESCRIPTION
 
-This module inherits attributes and methods from Bio::EnsEMBL::DBSQL::BaseAdaptor
+An AlignSlice can be used to map genes from one species onto another one. This
+adaptor is used to fetch all the data needed for an AlignSlice from the database.
 
 =head1 SYNOPSIS
 
@@ -65,22 +55,8 @@ This module inherits attributes and methods from Bio::EnsEMBL::DBSQL::BaseAdapto
           "expanded"
       );
 
-=head1 OBJECT ATTRIBUTES
-
-=over
-
-=item db (from SUPER class)
-
-=back
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
-
 =cut
 
-
-# Let the code begin...
 
 package Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor;
 
@@ -95,8 +71,6 @@ use Bio::EnsEMBL::Compara::AlignSlice;
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-use Data::Dumper;
-#$Data::Dumper::Pad = '<br>';
 
 =head2 fetch_by_Slice_MethodLinkSpeciesSet
 
@@ -187,9 +161,7 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
 
   #Get the species tree for PECAN or HAL alignments
   if ($method_link_species_set->method->class =~ /GenomicAlignBlock.multiple_alignment/ and  @$genomic_align_blocks) {
-#      print Dumper $genomic_align_blocks->[0];
     my $first_genomic_align_block = $genomic_align_blocks->[0];
-#    print Dumper $first_genomic_align_block;
     my $genomic_align_tree = $first_genomic_align_block->get_GenomicAlignTree;
     
     #want to create species_order
@@ -197,14 +169,9 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
   } elsif ($method_link_species_set->method->class =~ /GenomicAlignTree/ and @$genomic_align_blocks) {
     my $genomic_align_tree_adaptor = $self->db->get_GenomicAlignTreeAdaptor;
     foreach my $this_genomic_align_block (@$genomic_align_blocks) {
-#       print $this_genomic_align_block->reference_genomic_align, "\n";
       my $this_genomic_align_tree = $genomic_align_tree_adaptor->
           fetch_by_GenomicAlignBlock($this_genomic_align_block);
       push(@$genomic_align_trees, $this_genomic_align_tree);
-#       $this_genomic_align_tree->print();
-#       foreach my $this_ga (@{$this_genomic_align_tree->get_all_sorted_genomic_align_nodes}) {
-#         print $this_ga->genomic_align->genome_db->name(), "\n";
-#       }
 
     }
     my $last_node_id = undef;
@@ -225,23 +192,10 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
     foreach my $this_genomic_align_tree (@$genomic_align_trees) {
       my $next_genomic_align_tree = $tree_order->{$this_genomic_align_tree->node_id}->{next};
       next if (!$next_genomic_align_tree);
-# # #       print STDERR "\nBEFORE:\n - ", join("\n - ", map {
-# # #               $_->{genome_db}->name." (".($_->{right_node_id} or "***").")  [".
-# # #               join(" : ", @{$_->{genomic_align_ids}})."]"
-# # #           } @$species_order), "\n";
-      _combine_genomic_align_trees($species_order, $this_genomic_align_tree, $next_genomic_align_tree);
-#       $next_genomic_align_tree->print();
-# # #       print STDERR "\nAFTER:\n - ", join("\n - ", map {
-# # #               $_->{genome_db}->name." (".($_->{right_node_id} or "***").")  [".
-# # #               join(" : ", @{$_->{genomic_align_ids}})."]"
-# # #           } @$species_order), "\n";
-# # #       <STDIN>;
-
+      _combine_genomic_align_trees($species_order, $next_genomic_align_tree);
     }
   }
 
-
-  #print Dumper { "gabs::AlignSliceAdaptor::254" => $genomic_align_blocks };
   my $align_slice = new Bio::EnsEMBL::Compara::AlignSlice(
           -adaptor => $self,
           -reference_Slice => $reference_slice,
@@ -376,9 +330,7 @@ sub _get_species_order {
 =head2 _combine_genomic_align_trees
 
   Arg[1]     : listref $species_order
-  Arg[2]     : Bio::EnsEMBL::Compara::GenomicAlignTree $this_tree
-  Arg[3]     : Bio::EnsEMBL::Compara::GenomicAlignTree $next_tree
-  Example    :
+  Arg[2]     : Bio::EnsEMBL::Compara::GenomicAlignTree $next_tree
   Description: This method tries to accommodate the nodes in $next_tree
                into $species_order. It uses several approaches. If there
                is information available about left and right node IDs, it
@@ -392,32 +344,28 @@ sub _get_species_order {
 =cut
 
 sub _combine_genomic_align_trees {
-  my ($species_order, $this_tree, $next_tree) = @_;
+  my ($species_order, $next_tree) = @_;
 
-  # $this_tree is already taken into account in the species_order. $next_tree is the new info to combine
-  my $species_counter = 0;
-  my $existing_node_ids; # Lists all node_ids in the next tree
-  my $existing_right_node_ids;
-  my $next_species_names; # Lists all species names in the next tree
-  my $existing_species_names; # Lists all species names in the $species_order tracks
+  my (%next_tree_node_ids, %existing_right_node_ids, %existing_species_names);
 
-  ## Initialise values
   foreach my $this_genomic_align_node (@{$next_tree->get_all_sorted_genomic_align_nodes}) {
     my $this_node_id = $this_genomic_align_node->node_id;
-    $existing_node_ids->{$this_node_id} = 1;
-    push(@$next_species_names, $this_genomic_align_node->genomic_align_group->genome_db->name)
-        if ($this_genomic_align_node->genomic_align_group and 
-            $this_genomic_align_node->genomic_align_group->genome_db->name ne "ancestral_sequences");
-  }
-  foreach my $species_def (@$species_order) {
-    my $right_node_id = $species_def->{right_node_id};
-    $existing_right_node_ids->{$right_node_id} = 1 if ($right_node_id);
-    push(@$existing_species_names, $species_def->{genome_db}->name);
+    $next_tree_node_ids{$this_node_id} = 1;
   }
 
-  ## MAIN LOOP. For each of the nodes in $next_tree, try to find the best position in $species_order.
-  ## First, rely on the right_node_id, then on the species_name. If $next_tree has a new species_name,
-  ## include it. If no good position has been found, append the node to the end of the $species_order.
+  while (my ($index, $species_def) = each @$species_order) {
+    my $right_node_id = $species_def->{right_node_id};
+    $existing_right_node_ids{$right_node_id} = 1 if ($right_node_id);
+    my $genome_db_name = $species_def->{genome_db}->name;
+    $existing_species_names{$genome_db_name} = $index if ($genome_db_name ne "ancestral_sequences");
+  }
+
+  my $pending_ancestral_species;
+  my $species_counter = 0;
+
+  ## MAIN LOOP. For each node in $next_tree, try to find the best position in $species_order. First,
+  ## rely on $right_node_id, then on the species name. If $next_tree has a new species name, include
+  ## it in the right place, if possible, or append the node to the end of $species_order.
   foreach my $this_genomic_align_node (@{$next_tree->get_all_sorted_genomic_align_nodes}) {
     next if (!@{$this_genomic_align_node->get_all_genomic_aligns_for_node});
     my $this_genomic_align = $this_genomic_align_node->get_all_genomic_aligns_for_node->[0];
@@ -433,111 +381,97 @@ sub _combine_genomic_align_trees {
 
     my $match = 0;
     ## SECONDARY LOOP. Note that the $species_counter is not reset at the end of the loop.
-    ## This ensures that we do not add two nodes to the same species_order track and that we
-    ## preserve the order in all existing and in the new tree.
-    while (!$match and $species_counter < @$species_order) {
-      my $species_genome_db = $species_order->[$species_counter]->{genome_db};
-      my $species_right_node_id = $species_order->[$species_counter]->{right_node_id};
+    ## This ensures that we do not add two nodes to $species_order and that we preserve as
+    ## far as possible the order in all existing and in the new trees.
+    while (!$match) {
+      my $species = $species_order->[$species_counter];
+      my ($species_genome_db, $species_right_node_id);
+      $species_genome_db = $species->{genome_db} if defined $species;
+      $species_right_node_id = $species->{right_node_id} if defined $species;
       $match = 1;
 
-      ## 1. Use info from species_right_node_id if available
+      ## 1. Use info from $species_right_node_id if available
       if (defined($species_right_node_id) and $species_right_node_id == $this_node_id) {
-          $species_order->[$species_counter]->{right_node_id} = $this_right_node_id;
-          # #         $species_order->[$species_counter]->{last_node} = $this_genomic_align_node;
-        push (@{$species_order->[$species_counter]->{genomic_align_ids}}, @$these_genomic_align_ids);
-        ## DEBUG info
-        # print "NODE LINK!\n";
-        # for (my $i = 0; $i<@$species_order; $i++) {
-        #   if ($i == $species_counter) {
-        #     print $species_order->[$i]->{genome_db}->name, "***\n";
-        #   } else {
-        #     print $species_order->[$i]->{genome_db}->name, "\n";
-        #   }
-        # }
-
-      ## 2. Force insertions in a math to the next right_node is expected
-      } elsif (defined($species_right_node_id) and exists($existing_node_ids->{$species_right_node_id})) {
-        splice(@$species_order, $species_counter, 0, {
-            genome_db => $this_genome_db,
-            right_node_id => $this_right_node_id,
-            genomic_align_ids => [@$these_genomic_align_ids],
-          });
-        ## DEBUG info
-        # print "FORCE INSERT!\n";
-        # for (my $i = 0; $i<@$species_order; $i++) {
-        #   if ($i == $species_counter) {
-        #     print $species_order->[$i]->{genome_db}->name, "***\n";
-        #   } else {
-        #     print $species_order->[$i]->{genome_db}->name, "\n";
-        #   }
-        # }
-
-      ## 3. If there is no info about right node or this points to a node not found in next tree,
-      ## rely on the species name
-      } elsif ($this_genome_db->name eq $species_genome_db->name
-                and (!defined($species_right_node_id) or
-                    !defined($existing_node_ids->{$species_right_node_id}))
-          ) {
         $species_order->[$species_counter]->{right_node_id} = $this_right_node_id;
         push (@{$species_order->[$species_counter]->{genomic_align_ids}}, @$these_genomic_align_ids);
-        ## DEBUG info
-        # print "MATCH!\n";
-        # for (my $i = 0; $i<@$species_order; $i++) {
-        #   if ($i == $species_counter) {
-        #     print $species_order->[$i]->{genome_db}->name, "***\n";
-        #   } else {
-        #     print $species_order->[$i]->{genome_db}->name, "\n";
-        #   }
-        # }
+        if (defined $pending_ancestral_species) {
+          my $prev_species_index = $species_counter - 1;
+          $species_order->[$prev_species_index]->{right_node_id} = $pending_ancestral_species->{right_node_id};
+          push @{$species_order->[$prev_species_index]->{genomic_align_ids}}, @{$pending_ancestral_species->{genomic_align_ids}};
+          undef $pending_ancestral_species;
+        }
+        # _debug_info("NODE LINK", $species_order, $species_counter);
 
-      ## 4. Insert this species if not found in the remaining set of existing species (in species_order)
-      } elsif (!defined($existing_right_node_ids->{$this_node_id})
-          and !grep {$_ eq $this_genome_db->name} @$existing_species_names) {
-        splice(@$species_order, $species_counter, 0, {
-            genome_db => $this_genome_db,
-            right_node_id => $this_right_node_id,
-            genomic_align_ids => [@$these_genomic_align_ids],
+      ## 2. If there is no info about right node or this points to a node not found in next tree,
+      ## rely on the species name
+      } elsif (defined $species_genome_db and ($species_genome_db->name eq $this_genome_db->name)) {
+        my $debug_msg = "MATCH";
+        if ($this_genome_db->name eq "ancestral_sequences") {
+          $pending_ancestral_species = {
+            genome_db         => $this_genome_db,
+            right_node_id     => $this_right_node_id,
+            genomic_align_ids => [ @$these_genomic_align_ids ],
+          };
+          $debug_msg = "TENTATIVE " . $debug_msg;
+        } else {
+          $species_order->[$species_counter]->{right_node_id} = $this_right_node_id;
+          push (@{$species_order->[$species_counter]->{genomic_align_ids}}, @$these_genomic_align_ids);
+          if (defined $pending_ancestral_species) {
+            my $prev_species_index = $species_counter - 1;
+            $species_order->[$prev_species_index]->{right_node_id} = $pending_ancestral_species->{right_node_id};
+            push @{$species_order->[$prev_species_index]->{genomic_align_ids}}, @{$pending_ancestral_species->{genomic_align_ids}};
+            undef $pending_ancestral_species;
+          }
+        }
+        # _debug_info($debug_msg, $species_order, $species_counter);
+
+      ## 3. If the species is in $species_order but next tree has a different order, link the node
+      ## information disregarding the next tree's species order
+      } elsif (exists $existing_species_names{$this_genome_db->name}) {
+        $species_counter = $existing_species_names{$this_genome_db->name};
+        $species_order->[$species_counter]->{right_node_id} = $this_right_node_id;
+        push (@{$species_order->[$species_counter]->{genomic_align_ids}}, @$these_genomic_align_ids);
+        if (defined $pending_ancestral_species) {
+          my $prev_species_index = $species_counter - 1;
+          $species_order->[$prev_species_index]->{right_node_id} = $pending_ancestral_species->{right_node_id};
+          push @{$species_order->[$prev_species_index]->{genomic_align_ids}}, @{$pending_ancestral_species->{genomic_align_ids}};
+          undef $pending_ancestral_species;
+        }
+        # _debug_info("OUT-OF-ORDER NODE LINK", $species_order, $species_counter);
+
+      ## 4. Insert/append this species if not found in $species_order
+      } elsif (!exists $existing_right_node_ids{$this_node_id} and !exists $existing_species_names{$this_genome_db->name}) {
+        my $debug_msg = "APPEND";
+        if ($this_genome_db->name eq "ancestral_sequences") {
+          $pending_ancestral_species = {
+            genome_db         => $this_genome_db,
+            right_node_id     => $this_right_node_id,
+            genomic_align_ids => [ @$these_genomic_align_ids ],
+          };
+          $debug_msg = "TENTATIVE " . $debug_msg;
+        } else {
+          $debug_msg = "INSERT" if ($species_counter < $#$species_order);
+          if (defined $pending_ancestral_species) {
+            splice(@$species_order, $species_counter - 1, 0, $pending_ancestral_species);
+            undef $pending_ancestral_species;
+          }
+          splice(@$species_order, $species_counter, 0, {
+            genome_db         => $this_genome_db,
+            right_node_id     => $this_right_node_id,
+            genomic_align_ids => [ @$these_genomic_align_ids ],
           });
-        ## DEBUG info
-        # print "INSERT!\n";
-        # for (my $i = 0; $i<@$species_order; $i++) {
-        #   if ($i == $species_counter) {
-        #     print $species_order->[$i]->{genome_db}->name, "***\n";
-        #   } else {
-        #     print $species_order->[$i]->{genome_db}->name, "\n";
-        #   }
-        # }
-
-      ## Unset $match, try with the next $species_order track.
+          # Update the existing species names
+          $existing_species_names{$this_genome_db->name} = $species_counter;
+        }
+        # _debug_info($debug_msg, $species_order, $species_counter);
       } else {
         $match = 0;
       }
       $species_counter++;
-      shift(@$existing_species_names);
-    }
-
-    ## 5. We have not found any good position for this node: add a new track to the $species_order
-    if (!$match) {
-      push(@$species_order, {
-            genome_db => $this_genome_db,
-            right_node_id => $this_right_node_id,
-            genomic_align_ids => [@$these_genomic_align_ids],
-        });
-      $species_counter++;
-      ## DEBUG info
-      # print "APPEND!\n";
-      # for (my $i = 0; $i<@$species_order; $i++) {
-      #   if ($i == $species_counter) {
-      #     print $species_order->[$i]->{genome_db}->name, "***\n";
-      #   } else {
-      #    print $species_order->[$i]->{genome_db}->name, "\n";
-      #   }
-      # }
     }
     ## DEBUG info
     # print "[ENTER]";
     # <STDIN>;
-    shift(@$next_species_names);
   }
 
   return;
@@ -560,6 +494,17 @@ sub _get_right_node_id {
   }
 
   return undef;
+}
+
+
+sub _debug_info {
+    my ($msg, $species_order, $species_counter) = @_;
+
+    print "$msg!\n";
+    while (my ($i, $elem) = each @$species_order) {
+        print $elem->{genome_db}->name, " [", join(',', @{$elem->{genomic_align_ids}}), "]",
+            ($i == $species_counter) ? " ***" : "", "\n";
+    }
 }
 
 
