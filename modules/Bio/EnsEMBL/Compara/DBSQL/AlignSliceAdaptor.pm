@@ -400,7 +400,6 @@ sub _combine_genomic_align_trees {
           push @{$species_order->[$prev_species_index]->{genomic_align_ids}}, @{$pending_ancestral_species->{genomic_align_ids}};
           undef $pending_ancestral_species;
         }
-        ## DEBUG info
         # _debug_info("NODE LINK", $species_order, $species_counter);
 
       ## 2. If there is no info about right node or this points to a node not found in next tree,
@@ -424,7 +423,6 @@ sub _combine_genomic_align_trees {
             undef $pending_ancestral_species;
           }
         }
-        ## DEBUG info
         # _debug_info($debug_msg, $species_order, $species_counter);
 
       ## 3. If the species is in $species_order but next tree has a different order, link the node
@@ -439,7 +437,6 @@ sub _combine_genomic_align_trees {
           push @{$species_order->[$prev_species_index]->{genomic_align_ids}}, @{$pending_ancestral_species->{genomic_align_ids}};
           undef $pending_ancestral_species;
         }
-        ## DEBUG info
         # _debug_info("OUT-OF-ORDER NODE LINK", $species_order, $species_counter);
 
       ## 4. Insert/append this species if not found in $species_order
@@ -466,7 +463,6 @@ sub _combine_genomic_align_trees {
           # Update the existing species names
           $existing_species_names{$this_genome_db->name} = $species_counter;
         }
-        ## DEBUG info
         # _debug_info($debug_msg, $species_order, $species_counter);
       } else {
         $match = 0;
