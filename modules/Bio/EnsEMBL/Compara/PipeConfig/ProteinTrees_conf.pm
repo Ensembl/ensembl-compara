@@ -71,7 +71,7 @@ sub default_options {
         'dbID_range_index'      => undef,
         'collection'            => 'default',
         'species_set_name'      => $self->o('collection'),
-        'label_prefix'          => undef,
+        'label_prefix'          => '',
         'member_type'           => 'protein',
 
     #default parameters for the geneset qc
@@ -3357,7 +3357,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => [
-                    'rib_fire_rename_labels',
                     'rib_fire_high_confidence_orths',
                 ],
                 'A->1' => 'compute_statistics',
@@ -3492,14 +3491,6 @@ sub core_pipeline_analyses {
             -flow_into  => WHEN('#do_homology_id_mapping#' => 'id_map_mlss_factory'),
         },
 
-        {   -logic_name => 'rib_fire_rename_labels',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -parameters => {
-                'label_prefix' => $self->o('label_prefix'),
-            },
-            -flow_into  => WHEN('#label_prefix#' => 'rename_labels'), # FIXME this assumes that label_prefix is set if the collection is not "default"
-        },
-
         {   -logic_name    => 'compute_statistics',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeStatistics',
             -rc_name       => '500Mb_job',
@@ -3511,7 +3502,7 @@ sub core_pipeline_analyses {
             -parameters     => {
                 'input_file'    => $self->o('tree_stats_sql'),
             },
-            -flow_into      => [ 'polyploid_move_back_factory' ],
+            -flow_into      => [ 'polyploid_move_back_factory', 'rename_labels' ],
         },
 
         {   -logic_name     => 'email_tree_stats_report',
@@ -3742,7 +3733,7 @@ sub core_pipeline_analyses {
 
         {
              -logic_name => 'rename_labels',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RenameLabelsBeforMerge',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RenameLabels',
              -parameters => {
                  'clusterset_id'=> $self->o('collection'),
                  'label_prefix' => $self->o('label_prefix'),
