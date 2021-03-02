@@ -76,7 +76,8 @@ the one set in ENSEMBL_REGISTRY will be used if defined, if not
 =item B<[--dbname compara_db_name]>
 
 the name of compara DB in the registry_configuration_file or any
-of its aliases. Default is "compara_curr".
+of its aliases.
+Default "compara_curr"
 
 =back
 
@@ -94,7 +95,8 @@ Query coordinate system. Default is "chromosome"
 
 =item B<--seq_region region_name>
 
-Query region name, i.e. the chromosome name. Default 13.
+Query region name, i.e. the chromosome name.
+Default 13
 
 =item B<--seq_region_start start>
 
@@ -106,7 +108,8 @@ Default 32906519
 
 =item B<[--seq_region_strand strand]>
 
-The strand of the query. It can be either +1 or -1. Default is +1.
+The strand of the query. It can be either +1 or -1.
+Default +1
 
 =back
 
@@ -116,7 +119,8 @@ The strand of the query. It can be either +1 or -1. Default is +1.
 
 =item B<[--alignment_type method_link_name]>
 
-The type of alignment. Default is "EPO".
+The type of alignment.
+Default "EPO"
 
 =item B<[--set_of_species species1:species2:species3:...]>
 
@@ -129,7 +133,7 @@ registry_configuration_file or any of its aliases
 
 Pre-defined name for the set of species used. For multiple alignment sets only.
 eg "mammals" or "primates" for EPO alignments; "amniotes" for PECAN alignments.
-Default is "mammals".
+Default "mammals"
 
 =item B<[--[no]condensed]>
 
