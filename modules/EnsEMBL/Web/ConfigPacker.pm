@@ -795,7 +795,22 @@ sub _summarise_funcgen_db {
       full_name => $row->[4]
     };
   }
-  
+
+  ## Finally, save the peak calling ids for all regulatory tracks 
+  my $p_aref = $dbh->selectall_arrayref('
+    select pc.peak_calling_id, eg.short_name, ft.name
+    from 
+        peak_calling as pc,
+        epigenome as eg,
+        feature_type as ft
+    where 
+        pc.epigenome_id = eg.epigenome_id
+        and pc.feature_type_id = ft.feature_type_id
+  ');
+  foreach (@$p_aref) {
+    $self->db_details($db_name)->{'peak_calling'}{$_->[1]}{$_->[2]} = $_->[0];
+  }
+ 
 #---------- Additional queries - by type...
 
 #
