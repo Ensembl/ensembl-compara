@@ -83,7 +83,7 @@ sub default_options {
 
         # create species sets options
         'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
-        'xml_file'            => $self->check_file_in_ensembl($self->o('config_dir') . '/mlss_conf.xml'),
+        'xml_file'            => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/mlss_conf.xml'),
     };
 }
 
