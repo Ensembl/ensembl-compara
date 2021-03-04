@@ -66,6 +66,12 @@ Optional. Also fetch the sister MLSS ids of the main MLSS:
    "ce_mlss_id" and "cs_mlss_id" keys
 By default, do not fetch them.
 
+=item use_prev_epo_ext
+
+Optional. If method_type is EPO_EXTENDED and add_sister_mlsss is requested,
+return the previous EPO Extended MLSS id as "mlss_id" instead of its related EPO
+MLSS id.
+
 =item branch_code
 
 Optional. Flow the MLSS id(s) into the given branch instead of saving them as
@@ -84,6 +90,11 @@ parameters.
         --master_db $(cp1 details url ensembl_compara_master) \
         --method_type EPO --species_set_name sauropsids --release 101 \
         --add_prev_mlss 1 --add_sister_mlsss 1 --branch_code 2
+
+    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::LoadMLSSids \
+        --master_db $(cp1 details url ensembl_compara_master) \
+        --method_type EPO_EXTENDED --species_set_name sauropsids --release 101 \
+        --add_sister_mlsss 1 --use_prev_epo_ext 1 --branch_code 2
 
 =cut
 
@@ -106,6 +117,7 @@ sub param_defaults {
 
         'add_prev_mlss'     => 0,
         'add_sister_mlsss'  => 0,
+        'use_prev_epo_ext'  => 0,
         'branch_code'       => undef,
     }
 }
@@ -117,6 +129,7 @@ sub fetch_input {
     my $release = $self->param_required('release');
     my $method_type = $self->param_required('method_type');
     my $species_set_name = $self->param_required('species_set_name');
+    my $use_prev_epo_ext = $self->param('use_prev_epo_ext') && ($method_type =~ /^EPO_EXTENDED$/i) && $self->param('add_sister_mlsss');
 
     my %mlss_ids;
     my $mlss_adaptor = $master_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -132,22 +145,28 @@ sub fetch_input {
     my $mlss = $curr_mlss[0];
     $mlss_ids{mlss_id} = $mlss->dbID;
 
-    if ( $self->param('add_prev_mlss') ) {
+    my @prev_mlss;
+    if ( $self->param('add_prev_mlss') || $use_prev_epo_ext ) {
         # Fetch the previous MLSS id
         my $prev_release = $mlss->first_release - 1;
-        my @prev_mlss = grep { (defined $_->last_release) && ($_->last_release == $prev_release) } @mlsss;
+        @prev_mlss = grep { (defined $_->last_release) && ($_->last_release == $prev_release) } @mlsss;
         $self->throw(sprintf("No previous MLSS found for MLSS '%s' (%s)", $mlss->name, $mlss->dbID)) unless @prev_mlss;
-        $mlss_ids{prev_mlss_id} = $prev_mlss[0]->dbID;
+        $mlss_ids{prev_mlss_id} = $prev_mlss[0]->dbID if $self->param('add_prev_mlss');
     }
 
     if ( $self->param('add_sister_mlsss') ) {
         if ( $method_type =~ /^EPO/i ) {
             my $is_epo = $method_type =~ /^EPO$/i;
-            # Fetch the linked MLSS id
-            my $linked_method_type = $is_epo ? 'EPO_EXTENDED' : 'EPO';
-            my @linked_mlss = grep { ($_->species_set->name eq $species_set_name) && $_->is_in_release($release) }
-                @{ $mlss_adaptor->fetch_all_by_method_link_type($linked_method_type) };
-            $self->throw(sprintf("No %s MLSS found for MLSS '%s' (%s)", $linked_method_type, $mlss->name, $mlss->dbID)) unless @linked_mlss;
+            my @linked_mlss;
+            if ($use_prev_epo_ext) {
+                @linked_mlss = @prev_mlss;
+            } else {
+                # Fetch the linked MLSS id
+                my $linked_method_type = $is_epo ? 'EPO_EXTENDED' : 'EPO';
+                @linked_mlss = grep { ($_->species_set->name eq $species_set_name) && $_->is_in_release($release) }
+                    @{ $mlss_adaptor->fetch_all_by_method_link_type($linked_method_type) };
+                $self->throw(sprintf("No %s MLSS found for MLSS '%s' (%s)", $linked_method_type, $mlss->name, $mlss->dbID)) unless @linked_mlss;
+            }
             # Assign the EPO MLSS id to mlss_id and EPO Extended MLSS id to ext_mlss_id
             if ($is_epo) {
                 $mlss_ids{ext_mlss_id} = $linked_mlss[0]->dbID;

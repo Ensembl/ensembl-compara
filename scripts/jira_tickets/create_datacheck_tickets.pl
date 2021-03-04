@@ -41,6 +41,10 @@ $COMPARA_DIV as default.
 Optional. Ensembl release version. If not given, uses environment variable 
 $CURR_ENSEMBL_RELEASE as default.
 
+=item B<-label> <label>
+
+Optional. Extra label(s) to add to every ticket. Can take several values.
+
 =item B<-update>
 
 Optional. Update the description of the JIRA tickets that already exist (same
@@ -73,13 +77,14 @@ use POSIX;
 
 use Bio::EnsEMBL::Compara::Utils::JIRA;
 
-my ( $release, $division, $update, $dry_run, $help );
+my ( $release, $division, @labels, $update, $dry_run, $help );
 $update  = 0;
 $dry_run = 0;
 $help    = 0;
 GetOptions(
     "d|division=s"    => \$division,
     "r|release=s"     => \$release,
+    "label=s"         => \@labels,
     "update"          => \$update,
     'dry_run|dry-run' => \$dry_run,
     "h|help"          => \$help,
@@ -88,9 +93,8 @@ pod2usage(1) if $help;
 pod2usage(1) unless @ARGV;
 my $dc_file = $ARGV[0];
 die "Cannot find $dc_file - file does not exist" unless -e $dc_file;
-# Get file absolute path and basename
+# Get file absolute path
 my $dc_abs_path = abs_path($dc_file);
-my $dc_basename = fileparse($dc_abs_path, qr{\.[a-zA-Z0-9_]+$});
 # Get a new Utils::JIRA object to create the tickets for the given division and
 # release
 my $jira_adaptor = Bio::EnsEMBL::Compara::Utils::JIRA->new(-DIVISION => $division, -RELEASE => $release);
@@ -106,7 +110,7 @@ my @json_subtasks;
 foreach my $testcase ( keys %$testcase_failures ) {
     my $failure_subtask_json = {
         summary     => "Datacheck $testcase failed",
-        description => $testcase_failures->{$testcase},
+        description => "*TAP file*: $dc_abs_path\n" . $testcase_failures->{$testcase},
         parent      => $merge_ticket_key,
     };
     push(@json_subtasks, $failure_subtask_json);
@@ -120,6 +124,7 @@ my $dc_task_keys = $jira_adaptor->create_tickets(
     -DEFAULT_PRIORITY   => 'Blocker',
     -EXTRA_COMPONENTS   => $components,
     -EXTRA_CATEGORIES   => $categories,
+    -EXTRA_LABELS       => \@labels,
     -UPDATE             => $update,
     -DRY_RUN            => $dry_run
 );
@@ -136,6 +141,8 @@ sub parse_datachecks {
     while (my $line = <$dc_fh>) {
         # Remove any spaces/tabs at the end of the line
         $line =~ s/\s+$//;
+        next unless $line;
+
         # Get the main test name
         if ($line =~ /^# Subtest: (\w+)$/) {
             $test = $1;

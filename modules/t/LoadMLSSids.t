@@ -113,4 +113,24 @@ standaloneJob(
     ],
 );
 
+standaloneJob(
+    'Bio::EnsEMBL::Compara::RunnableDB::LoadMLSSids',  # module
+    { # input param hash
+        'master_db'        => $compara_db,
+        'method_type'      => 'EPO_EXTENDED',
+        'species_set_name' => 'mammals',
+        'release'          => 80,
+        'branch_code'      => 1,
+        'add_sister_mlsss' => 1,
+        'use_prev_epo_ext' => 1,
+    },
+    [ # list of events to test for (just 1 event in this case)
+        [
+            'DATAFLOW',
+            {'mlss_id' => 593, 'ext_mlss_id' => 599, 'ce_mlss_id' => 600, 'cs_mlss_id' => 50040},
+            1,
+        ],
+    ],
+);
+
 done_testing();

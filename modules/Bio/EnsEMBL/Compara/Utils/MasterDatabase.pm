@@ -904,9 +904,9 @@ sub _mean {
 
     Arg[1]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
     Arg[2]      : Bio::EnsEMBL::DBSQL::DBAdaptor $species_dba (optional)
-    Description : This method compares the given $genome_db DnaFrags (names
-                  and lengths) with the toplevel Slices from its
-                  corresponding core database.
+    Description : This method compares the given $genome_db DnaFrags (names,
+                  coordinate systems and lengths) with the toplevel Slices from
+                  its corresponding core database.
     Returns     : 1 upon match; 0 upon mismatch
     Exceptions  :
 
@@ -919,31 +919,33 @@ sub dnafrags_match_core_slices {
     my $gdb_slices  = $genome_db->genome_component
         ? $species_dba->get_SliceAdaptor->fetch_all_by_genome_component($genome_db->genome_component)
         : $species_dba->get_SliceAdaptor->fetch_all('toplevel', undef, 1, 1, 1);
-    my %slice_len_by_name = map { $_->seq_region_name => $_->seq_region_length } @$gdb_slices;
+    my %slices = map { $_->seq_region_name => $_ } @$gdb_slices;
 
     my $dnafrag_adaptor = $genome_db->adaptor->db->get_DnaFragAdaptor;
     my $gdb_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB($genome_db);
-    my %dnafrag_len_by_name = map { $_->name => $_->length } @$gdb_dnafrags;
+    my %dnafrags = map { $_->name => $_ } @$gdb_dnafrags;
 
-    my (@missing_dnafrags, @differing_lens);
-    foreach my $s_name ( keys %slice_len_by_name ) {
-        if (defined $dnafrag_len_by_name{$s_name}) {
-            push( @differing_lens, $s_name ) unless $dnafrag_len_by_name{$s_name} == $slice_len_by_name{$s_name};
+    my (@missing_dnafrags, @differing_dnafrags);
+    foreach my $s_name ( keys %slices ) {
+        if (defined $dnafrags{$s_name}) {
+            if ( ($dnafrags{$s_name}->length != $slices{$s_name}->seq_region_length) ||
+                 ($dnafrags{$s_name}->coord_system_name ne $slices{$s_name}->coord_system->name) ) {
+                push( @differing_dnafrags, $s_name );
+            }
         } else {
             push( @missing_dnafrags, $s_name );
         }
     }
 
-    my (@missing_slices, @differing_slices);
-    foreach my $d_name ( keys %dnafrag_len_by_name ) {
-        if (defined $slice_len_by_name{$d_name}) {
-            push( @differing_slices, $d_name ) unless $dnafrag_len_by_name{$d_name} == $slice_len_by_name{$d_name};
-        } else {
+    my (@missing_slices);
+    foreach my $d_name ( keys %dnafrags ) {
+        # Differing slices will be the same as differing dnafrags, so there is no need to check it again
+        if (! defined $slices{$d_name}) {
             push( @missing_slices, $d_name );
         }
     }
 
-    if ( @missing_dnafrags || @missing_slices || @differing_lens ) {
+    if ( @missing_dnafrags || @missing_slices || @differing_dnafrags ) {
         if ( @missing_dnafrags ) {
             print scalar @missing_dnafrags . " slices found in core db, but missing dnafrags in compara db:\n\t";
             print join( "\n\t", @missing_dnafrags ) . "\n\n";
@@ -952,10 +954,11 @@ sub dnafrags_match_core_slices {
             print scalar @missing_slices . " dnafrags found in compara db, but missing slices in core db:\n\t";
             print join( "\n\t", @missing_slices ) . "\n\n";
         }
-        if ( @differing_lens ) {
-            print scalar @differing_lens . " dnafrags differ in length from their core counterparts:\n";
-            foreach my $d_name ( @differing_lens ) {
-                print "\t$d_name lengths: compara=" . ($dnafrag_len_by_name{$d_name} || 'NA') . ", core=" . ($slice_len_by_name{$d_name} || 'NA') . "\n";
+        if ( @differing_dnafrags ) {
+            print scalar @differing_dnafrags . " dnafrags differ from their core counterparts:\n";
+            foreach my $d_name ( @differing_dnafrags ) {
+                print "\t$d_name\n\t\tlengths: compara=" . ($dnafrags{$d_name}->length || 'NA') . ", core=" . ($slices{$d_name}->seq_region_length || 'NA') . "\n" .
+                      "\t\tcoordinate system names: compara=" . ($dnafrags{$d_name}->coord_system_name || 'NA') . ", core=" . ($slices{$d_name}->coord_system->name || 'NA') . "\n";
             }
         }
 

@@ -15,29 +15,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RenameLabelsBeforMerge
+Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RenameLabels
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
 Simple Runnable based on eHive's SqlCmd that offsets all the gene-related tables
 
 =cut
 
 
-package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RenameLabelsBeforMerge;
+package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RenameLabels;
 
 use strict;
 use warnings;

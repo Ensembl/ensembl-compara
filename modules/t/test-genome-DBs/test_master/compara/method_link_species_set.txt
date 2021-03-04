@@ -1,3 +1,6 @@
+592	13	34707	2 eutherian mammals EPO	ensembl		79	79
+593	14	34708	3 eutherian mammals EPO_EXTENDED	ensembl		79	79
+594	11	34708	Gerp Constrained Elements (3 amniota vertebrates)		79	79
 595	13	34709	12 eutherian mammals EPO	ensembl		80	\N
 597	10	34711	19 amniota vertebrates Pecan	ensembl		80	\N
 598	11	34711	Gerp Constrained Elements (19 amniota vertebrates)		80	\N
@@ -6,6 +9,7 @@
 40082	402	34873	nc trees	ensembl		79	79
 40083	401	34874	protein trees	ensembl		80	\N
 40084	402	34874	nc trees	ensembl		80	\N
+50038	501	34708	Gerp Conservation Scores (3 eutherian mammals)	ensembl		79	79
 50039	501	34711	Gerp Conservation Scores (19 amniota vertebrates)		80	\N
 50040	501	34879	Gerp Conservation Scores (35 eutherian mammals)	ensembl		80	\N
 123456	16	12345	test_pw_mlss	ensembl		80	\N

@@ -86,7 +86,7 @@ sub default_options {
         'dbID_range_index'      => 14,
         'collection'            => 'default',
         'species_set_name'      => $self->o('collection'),
-        'label_prefix'          => undef,
+        'label_prefix'          => '',
         'member_type'           => 'ncrna',
 
         # capacity values for some analysis:
@@ -423,7 +423,6 @@ sub core_pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
                 -parameters => {
                                 'compara_db'            => '#master_db#',   # that's where genome_db_ids come from
-                                'mlss_id'               => $self->o('mlss_id'),
                                 'extra_parameters'      => [ 'locator' ],
                                },
                 -flow_into => {
@@ -646,7 +645,7 @@ sub core_pipeline_analyses {
 
         {
              -logic_name => 'rename_labels',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RenameLabelsBeforMerge',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RenameLabels',
              -parameters => {
                  'clusterset_id'=> $self->o('collection'),
                  'label_prefix' => $self->o('label_prefix'),

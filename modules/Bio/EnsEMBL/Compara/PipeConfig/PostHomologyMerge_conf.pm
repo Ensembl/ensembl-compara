@@ -15,10 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::PostHomologyMerge_conf
@@ -30,9 +26,12 @@ Bio::EnsEMBL::Compara::PipeConfig::PostHomologyMerge_conf
 
 =head1 DESCRIPTION
 
-This pipeline imports alternative alleles as homologies. It combines a few
-steps that are run after having merged the homology-side of things in the
-release database.
+This pipeline combines a few steps that are run after having merged the
+homology-side of things from each gene-tree pipeline into the release database:
+    - Updates the 'families' column in gene_member_hom_stats table (if
+      "'do_member_stats_fam' => 1")
+    - Generate the MLSS tag 'perc_orth_above_wga_thresh' combining the WGA stats
+      from both gene-tree pipelines
 
 =cut
 
@@ -47,10 +46,7 @@ use Bio::EnsEMBL::Hive::Version 2.4;
 
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 
-
-# use Bio::EnsEMBL::Compara::PipeConfig::Parts::UpdateMemberNamesDescriptions;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
-# use Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -63,10 +59,6 @@ sub default_options {
         'compara_db'      => 'compara_curr',
         
         'do_member_stats_fam' => 1,
-
-        #Pipeline capacities:
-        # 'update_capacity'                           => 5,
-        # 'high_confidence_capacity'                  => 30,
     };
 }
 
@@ -88,12 +80,7 @@ sub pipeline_wide_parameters {
 
         'db_conn'               => $self->o('compara_db'),
 
-        # 'threshold_levels'  => $self->o('threshold_levels'),
-
-        # 'do_member_update'      => 0,
-        # 'do_member_stats_gt'    => 0,
         'do_member_stats_fam'   => $self->o('do_member_stats_fam'),
-        # 'do_high_confidence'    => 0,
     }
 }
 
@@ -108,31 +95,11 @@ sub pipeline_analyses {
                     'compara_db'    => $self->o('compara_db'),
                 } ],
             -flow_into  => {
-                # '1->A' => [
-                #     WHEN( '#do_member_stats_gt#'  => [ 'set_default_values' ] ),
-                #     WHEN( '#do_member_stats_fam#' => [ 'stats_families' ] ),
-                # ],
                 '1->A' => [WHEN( '#do_member_stats_fam#' => 'stats_families')],
                 'A->1' => ['summarise_wga_stats'],
             },
         },
 
-        # {   -logic_name => 'backbone_member_update',
-        #     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-        #     -flow_into  => {
-        #         '1->A' => WHEN( '#do_member_update#' => 'species_update_factory' ),
-        #         'A->1' => ['backbone_high_confidence'],
-        #     },
-        # },
-        # 
-        # {   -logic_name => 'backbone_high_confidence',
-        #     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-        #     -flow_into  => {
-        #         '1->A' => WHEN( '#do_high_confidence#' => { 'mlss_id_for_high_confidence_factory' => $self->o('high_confidence_ranges') } ),
-        #         'A->1' => ['backbone_end'],
-        #     },
-        # },
-        
         {   -logic_name => 'summarise_wga_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::SummariseWGAStats',
             -rc_name    => '500Mb_job',
@@ -143,10 +110,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         },
 
-        # @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_hom_stats($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_fam_stats($self) },
-        # @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::UpdateMemberNamesDescriptions::pipeline_analyses_member_names_descriptions($self) },
-        # @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs::pipeline_analyses_high_confidence($self) },
     ];
 }
 

@@ -84,7 +84,7 @@ sub default_options {
                               'vitis_vinifera',
                               'solanum_lycopersicum',
                               'selaginella_moellendorffii',
-                              'physcomitrella_patens',
+                              'physcomitrium_patens',
                               'oryza_sativa',
                               'marchantia_polymorpha',
                               'cyanidioschyzon_merolae',

@@ -71,7 +71,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
     Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
     Bio::EnsEMBL::Registry->load_registry_from_db(
         -host   => 'mysql-ens-sta-3-b',
-        -port   => 4631,
+        -port   => 4160,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -79,8 +79,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
     );
     # Bacteria server: all species used in Pan happen to be in this database
     Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-        -host   => 'mysql-ens-sta-4-n',
-        -port   => 4632,
+        -host   => 'mysql-ens-sta-4-b',
+        -port   => 4494,
         -user   => 'ensro',
         -pass   => '',
         -dbname => "bacteria_0_collection_core_${prev_eg_release}_${prev_release}_1",
@@ -98,8 +98,8 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    # 'compara_members'  => [ 'mysql-ens-compara-prod-10', 'cristig_pan_load_members_103' ],
-    # 'compara_ptrees'   => [ 'mysql-ens-compara-prod-7', 'cristig_default_pan_protein_trees_103' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-3', 'carlac_pan_load_members_104' ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', 'carlac_pan_pan_protein_trees_104' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );

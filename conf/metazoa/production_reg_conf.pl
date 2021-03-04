@@ -44,6 +44,15 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 # Or use the official staging servers
 #Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
 
+# Ensure we are using the correct cores for species that overlap with vertebrates
+my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster);
+Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
+my $overlap_cores = {
+    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_${curr_eg_release}_${curr_release}_269" ],
+    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_${curr_eg_release}_${curr_release}_9" ],
+};
+Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
+
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
@@ -67,11 +76,11 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    # 'compara_members'  => [ 'mysql-ens-compara-prod-', ''],
-    # 'compara_ptrees'   => [ 'mysql-ens-compara-prod-', '' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-8', 'jalvarez_metazoa_load_members_104'],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-9', 'jalvarez_metazoa_metazoa_protein_trees_104' ],
 
     # LastZ dbs
-    # 'lastz_batch_1' => [ 'mysql-ens-compara-prod-', '' ],
+    'lastz_batch_1' => [ 'mysql-ens-compara-prod-8', 'jalvarez_metazoa_lastz_batch1_104' ],
 
     # synteny
     # 'compara_syntenies' => [ 'mysql-ens-compara-prod-', '' ],

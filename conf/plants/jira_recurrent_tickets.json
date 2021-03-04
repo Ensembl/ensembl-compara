@@ -51,7 +51,7 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Species-tree\n*GitHub*: [CreateSpeciesTree_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/CreateSpeciesTree_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CreateSpeciesTree_conf -host mysql-ens-compara-prod-X -port XXXX -division plants -output_file $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/plants/species_tree.rice.branch_len.nw -species_set_id XXXXXX{code}",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Species-tree\n*GitHub*: [CreateSpeciesTree_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/CreateSpeciesTree_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CreateSpeciesTree_conf -host mysql-ens-compara-prod-X -port XXXX -division plants -output_file $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/plants/species_tree.rice.branch_len.nw -species_set_id XXXXXX{code}\n(!) Only needs to be recomputed if there is a change to the rice {{species_set}}",
             "summary": "Import the species-tree",
             "name_on_graph": "Species-tree"
          }
@@ -138,22 +138,22 @@
          {
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-DNAside",
-            "summary": "test the DNA data"
+            "summary": "Test the DNA data"
          },
          {
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Homologyside",
-            "summary": "test the homologies data"
+            "summary": "Test the homologies data"
          },
          {
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Downloads",
-            "summary": "test the downloads"
+            "summary": "Test the downloads"
          },
          {
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Documentation&Statistics",
-            "summary": "test the documentation and statistics"
+            "summary": "Test the documentation and statistics"
          },
          {
             "assignee": "<RelCo>",
@@ -186,13 +186,13 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites#Testthetestsites-Website",
-            "summary": "test the web site"
+            "summary": "Test the web site"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites#Testthetestsites-RESTserver",
-            "summary": "test the REST server"
+            "summary": "Test the REST server"
          }
       ],
       "summary": "<Division> Release <version> Final checks before public release"

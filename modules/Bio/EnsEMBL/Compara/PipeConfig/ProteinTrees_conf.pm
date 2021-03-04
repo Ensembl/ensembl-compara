@@ -71,7 +71,7 @@ sub default_options {
         'dbID_range_index'      => undef,
         'collection'            => 'default',
         'species_set_name'      => $self->o('collection'),
-        'label_prefix'          => undef,
+        'label_prefix'          => '',
         'member_type'           => 'protein',
 
     #default parameters for the geneset qc
@@ -3357,7 +3357,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => [
-                    'rib_fire_rename_labels',
                     'rib_fire_high_confidence_orths',
                 ],
                 'A->1' => 'compute_statistics',
@@ -3410,9 +3409,15 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'gene_dumps_genome_db_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'extra_parameters'  => [ 'is_polyploid' ],
+            },
             -rc_name    => '4Gb_job',
             -flow_into => {
-                2 => [ 'dump_genes' ],
+                2 => WHEN(
+                    '#is_polyploid#' => [ 'dump_polyploid_genes' ],
+                    ELSE                [ 'dump_genes' ],
+                ),
             },
         },
 
@@ -3422,6 +3427,29 @@ sub core_pipeline_analyses {
                 'output_file'   => '#gene_dumps_dir#/gene_member.#genome_db_id#.tsv',
                 'append'        => ['--batch', '--quick'],
                 'input_query'   => 'SELECT stable_id, gene_member_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand FROM gene_member WHERE genome_db_id = #genome_db_id# ORDER BY dnafrag_id, dnafrag_start',
+            },
+        },
+
+        {   -logic_name     => 'dump_polyploid_genes',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
+            -parameters     => {
+                'output_file'   => '#gene_dumps_dir#/gene_member.#genome_db_id#.tsv',
+                'append'        => ['--batch', '--quick'],
+                'input_query'   => q|
+                    SELECT gm.stable_id, gm.gene_member_id, df2.dnafrag_id, gm.dnafrag_start, gm.dnafrag_end, gm.dnafrag_strand
+                    FROM dnafrag df1
+                    JOIN gene_member gm USING (dnafrag_id)
+                    JOIN dnafrag df2 USING (name)
+                    WHERE df2.genome_db_id = #genome_db_id#
+                        AND gm.genome_db_id IN (
+                            SELECT gdb2.genome_db_id
+                            FROM genome_db gdb1
+                            JOIN genome_db gdb2 USING (name)
+                            WHERE gdb1.genome_db_id = #genome_db_id#
+                                AND gdb2.genome_component IS NOT NULL
+                        )
+                    ORDER BY df2.dnafrag_id, gm.dnafrag_start
+                |,
             },
         },
 
@@ -3463,14 +3491,6 @@ sub core_pipeline_analyses {
             -flow_into  => WHEN('#do_homology_id_mapping#' => 'id_map_mlss_factory'),
         },
 
-        {   -logic_name => 'rib_fire_rename_labels',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -parameters => {
-                'label_prefix' => $self->o('label_prefix'),
-            },
-            -flow_into  => WHEN('#label_prefix#' => 'rename_labels'), # FIXME this assumes that label_prefix is set if the collection is not "default"
-        },
-
         {   -logic_name    => 'compute_statistics',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeStatistics',
             -rc_name       => '500Mb_job',
@@ -3482,7 +3502,7 @@ sub core_pipeline_analyses {
             -parameters     => {
                 'input_file'    => $self->o('tree_stats_sql'),
             },
-            -flow_into      => [ 'polyploid_move_back_factory' ],
+            -flow_into      => [ 'polyploid_move_back_factory', 'rename_labels' ],
         },
 
         {   -logic_name     => 'email_tree_stats_report',
@@ -3713,7 +3733,7 @@ sub core_pipeline_analyses {
 
         {
              -logic_name => 'rename_labels',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RenameLabelsBeforMerge',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RenameLabels',
              -parameters => {
                  'clusterset_id'=> $self->o('collection'),
                  'label_prefix' => $self->o('label_prefix'),
