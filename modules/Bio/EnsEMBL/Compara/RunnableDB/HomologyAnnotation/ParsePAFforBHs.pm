@@ -37,12 +37,22 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{$self->SUPER::param_defaults},
+        # For rapid release we do not want to store the reference members
+        'no_store_refmem' => 1,
+    }
+}
+
 sub write_output {
     my $self = shift;
 
     my $query_gdb_id   = $self->param_required('genome_db_id');
     my $hit_gdb_id     = $self->param_required('target_genome_db_id');
     my $seq_member_ids = $self->param('member_id_list');
+    my $no_refmem      = $self->param('no_store_refmem');
 
     my $paf_adaptor    = $self->compara_dba->get_PeptideAlignFeatureAdaptor;
     my $ref_db         = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('rr_ref_db'));
@@ -61,7 +71,7 @@ sub write_output {
             print Dumper $rbh_entry if $self->debug;
             $self->call_within_transaction( sub {
                 $self->compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 0");
-                $self->_write_homologies($mlss, $rbh_entry, 'homolog_rbbh');
+                $self->_write_homologies($mlss, $rbh_entry, 'homolog_rbbh', $no_refmem);
                 $self->compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 1");
             }, 1, 1 );
         }
@@ -73,7 +83,7 @@ sub write_output {
                 print Dumper $bbh_entry if $self->debug;
                 $self->call_within_transaction( sub {
                     $self->compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 0");
-                    $self->_write_homologies($mlss, $bbh_entry, 'homolog_bbh');
+                    $self->_write_homologies($mlss, $bbh_entry, 'homolog_bbh', $no_refmem);
                     $self->compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 1");
                 }, 1, 1 );
             }
@@ -86,13 +96,13 @@ sub write_output {
 }
 
 sub _write_homologies {
-    my ($self, $mlss, $paf, $type) = @_;
+    my ($self, $mlss, $paf, $type, $no_refmem) = @_;
 
     # Conversion of PAFs to Homology objects
     my $homology_adap = $self->compara_dba->get_HomologyAdaptor;
     my $homology      = $paf->create_homology($type, $mlss);
 
-    $homology_adap->store($homology);
+    $homology_adap->store($homology, $no_refmem);
 
 }
 
