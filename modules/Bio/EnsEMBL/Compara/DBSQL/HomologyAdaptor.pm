@@ -602,7 +602,7 @@ sub _objs_from_sth {
 =cut
 
 sub store {
-  my ($self,$hom) = @_;
+  my ($self, $hom, $no_member_store) = @_;
   
   assert_ref($hom, 'Bio::EnsEMBL::Compara::Homology', 'hom');
 
@@ -624,6 +624,10 @@ sub store {
 
   my $sql = 'INSERT INTO homology_member (homology_id, gene_member_id, seq_member_id, cigar_line, perc_id, perc_pos, perc_cov) VALUES (?,?,?,?,?,?,?)';
   my $sth = $self->prepare($sql);
+
+  # Skip member storage for special cases such as the use of separate reference database
+  return $hom->dbID if $no_member_store;
+
   foreach my $member(@{$hom->get_all_Members}) {
     # Stores the member if not yet stored
     $self->db->get_SeqMemberAdaptor->store($member) unless (defined $member->dbID);
