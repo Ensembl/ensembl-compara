@@ -1218,15 +1218,8 @@ sub is_subset_of {
 
 sub is_leaf {
   my $self = shift;
-
-    my $child_count = $self->get_child_count;
-    if ( $child_count == 0 ) {
-        return 1;
-    } elsif ( $child_count == 1 && $self->tree->tree_type eq 'supertree' ) {
-        return 1;
-    } else {
-        return 0;
-    }
+  return 1 unless($self->get_child_count);
+  return 0;
 }
 
 sub merge_children {
@@ -1961,3 +1954,4 @@ sub _root_id {
 }
 
 1;
+
