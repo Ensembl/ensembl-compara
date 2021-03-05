@@ -293,6 +293,32 @@ sub root {
 }
 
 
+=head2 is_leaf
+
+  Example     : print "I'm a leaf" if $node->is_leaf();
+  Description : Detects and reports if a node is a leaf node. Includes
+                handling of supertree leaves (which have a single child)
+  Returntype  : Boolean
+  Exceptions  :
+  Caller      : general
+  Status      : stable
+
+=cut
+
+sub is_leaf {
+  my $self = shift;
+
+    my $child_count = $self->get_child_count;
+    if ( $child_count == 0 ) {
+        return 1;
+    } elsif ( $child_count == 1 && $self->tree->tree_type eq 'supertree' ) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+
 =head2 release_tree
 
   Description: Removes the to/from GeneTree reference to
@@ -627,4 +653,3 @@ sub binarize_flat_tree_with_species_tree {
 }
 
 1;
-
