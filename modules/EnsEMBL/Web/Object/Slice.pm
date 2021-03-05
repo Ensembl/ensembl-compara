@@ -412,8 +412,6 @@ sub get_cell_line_data {
 sub get_data {
   my ($self, $data, $filter) = @_;
   return $data unless scalar keys %$data;
-  #use Carp qw(cluck);
-  #cluck ('GETTING DATA FROM... '.$data);
 
   $filter ||= {};
   my $is_image = keys %$filter ? 0 : 1;
@@ -426,7 +424,6 @@ sub get_data {
   my %feature_sets_on;
 
   while (my($cell_line, $ftypes) = each(%$data)) {
-    warn ">>> CHECKING CELL LINE $cell_line";
     next if ($is_image && ($ftypes eq 'off' || !keys %{$ftypes||{}}));
     next if $filter->{'cell'} and !grep { $_ eq $cell_line } @{$filter->{'cell'}};
     next if $filter->{'cells_only'};
