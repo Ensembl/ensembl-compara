@@ -38,7 +38,7 @@
       <genome name="nematostella_vectensis"/>
       <genome name="adineta_vaga"/>
       <!-- Plants -->
-      <genome name="physcomitrella_patens"/>
+      <genome name="physcomitrium_patens"/>
       <genome name="oryza_sativa"/>
       <genome name="vitis_vinifera"/>
       <genome name="ostreococcus_lucimarinus"/>
