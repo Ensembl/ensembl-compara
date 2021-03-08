@@ -25,6 +25,7 @@ use strict;
 use EnsEMBL::Web::Utils::FormatText qw(helptip);
 use Encode qw(encode decode);
 use HTML::Entities;
+use URI::Escape qw(uri_unescape);
 
 use base qw(EnsEMBL::Web::Component::Variation);
 
@@ -370,7 +371,7 @@ sub synonyms {
            $url_id =~ s/\./#/;
         $url_ids{$id} = $url_id;
       }
-      @urls = map { s/%23/#/; $_ } map $hub->get_ExtURL_link($_, 'OMIM', $url_ids{$_}), @ids;
+      @urls = map { uri_unescape($_) } map $hub->get_ExtURL_link($_, 'OMIM', $url_ids{$_}), @ids;
     }
     elsif ($db =~ /clinvar/i) {
       foreach (@ids) {
