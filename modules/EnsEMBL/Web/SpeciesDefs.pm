@@ -868,9 +868,8 @@ sub _parse {
 
     ## Need to gather strain info for all species
     $config_packer->tree->{'IS_REFERENCE'} = 1;
-    $config_packer->tree->{'STRAIN_GROUP'} = undef if $SiteDefs::NO_STRAIN_GROUPS;
     my $strain_group = $config_packer->tree->{'STRAIN_GROUP'};
-    if ($strain_group) {
+    if ($strain_group && !$SiteDefs::NO_STRAIN_GROUPS) {
       $config_packer->tree->{'IS_REFERENCE'} = 0 if ($strain_group ne $species);
       if (!$config_packer->tree->{'IS_REFERENCE'}) {
         push @{$species_to_strains->{$strain_group}}, $config_packer->tree->{'SPECIES_URL'}; ## Key on actual URL, not production name
