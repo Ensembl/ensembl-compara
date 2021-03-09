@@ -45,8 +45,8 @@ sub fetch_input {
 	my $list_genomes_script = $self->param_required('list_genomes_script');
     my $meta_host = $self->param_required('meta_host');
 	my $release = $self->param_required('release');
-	my $division = $self->param_required('division');
-	my $metadata_script_options = "\$($meta_host details script) --release $release --division $division";
+	my $division = $self->param('division');
+	my $metadata_script_options = "\$($meta_host details script) --release $release" . ($division ? " --division $division" : "");
 
     # If provided, get the list of allowed species
     my $allowed_species_file = $self->param('allowed_species_file');
@@ -73,9 +73,9 @@ sub fetch_input {
         @release_genomes = grep { exists $allowed_species->{$_} } @release_genomes;
     }
 
-    #if pan do not die because the list of species used in pan is
-    #exclusively described in param('additional_species')
-    if ($division ne "pan"){
+    # if a division is given and it is pan do not die because the list of species used in pan is
+    # exclusively described in the parameter additional_species
+    if ($division and ($division ne "pan")) {
         die "No genomes reported for release" unless @release_genomes;
     }
 
@@ -205,25 +205,32 @@ sub fetch_genome_report {
     my $meta_host = $self->param_required('meta_host');
     my $work_dir = $self->param_required('work_dir');
     my $report_genomes_script = $self->param_required('report_genomes_script');
-    my $metadata_script_options = "\$($meta_host details script) --release $release --division $division";
+    my $metadata_script_options = "\$($meta_host details script) --release $release" . ($division ? " --division $division" : "");
     my $report_cmd = "perl $report_genomes_script $metadata_script_options -output_format json --dump_path $work_dir";
     my $report_out = $self->get_command_output($report_cmd);
 
     # add the division name output file
     my $report_file = "$work_dir/report_updates.json";
     my $report_file_with_div = $report_file;
-    $report_file_with_div =~ s/report_updates/report_updates.$division.$release/;
+    if ($division) {
+        $report_file_with_div =~ s/report_updates/report_updates.$division.$release/;
+    } else {
+        $report_file_with_div =~ s/report_updates/report_updates.all.$release/;
+    }
     $self->run_command("mv $report_file $report_file_with_div");
 
     # read and parse report
     my $decoded_meta_report = decode_json( $report_out );
-    $decoded_meta_report = $decoded_meta_report->{$division};
-    # print Dumper $decoded_meta_report;
 
-    my @new_genomes = keys %{$decoded_meta_report->{new_genomes}};
-    my @updated_assemblies = keys %{$decoded_meta_report->{updated_assemblies}};
-    my %renamed_genomes = map { $_->{name} => $_->{old_name} } values %{$decoded_meta_report->{renamed_genomes}};
-    my @updated_annotations = map {$_->{name}} values %{$decoded_meta_report->{updated_annotations}};
+    my (@new_genomes, @updated_assemblies, %renamed_genomes, @updated_annotations);
+    foreach my $this_division ( keys %$decoded_meta_report ) {
+        next if ($division and ($this_division ne $division));
+        my $division_report = $decoded_meta_report->{$this_division};
+        push @new_genomes, keys %{$division_report->{new_genomes}};
+        push @updated_assemblies, keys %{$division_report->{updated_assemblies}};
+        $renamed_genomes{$_->{name}} = $_->{old_name} for values %{$division_report->{renamed_genomes}};
+        push @updated_annotations, map {$_->{name}} values %{$division_report->{updated_annotations}};
+    }
 
     if ($allowed_species) {
         # Remove genomes reported from metadata not included in the allowed species list

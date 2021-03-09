@@ -184,9 +184,10 @@ sub core_pipeline_analyses {
                 'meta_host'             => $self->o('meta_host'),
                 'allowed_species_file'  => $self->o('config_dir') . '/allowed_species.json',
                 'perc_threshold'        => $self->o('perc_threshold'),
-                'division'              => 'vertebrates',
+                'division'              => '',  # our references cover every division
                 'master_db'             => '#ref_db#',
             },
+            -rc_name    => '1Gb_job',
             -flow_into  => {
                 '2->A' => [ 'update_reference_genome' ],
                 '3->A' => [ 'retire_reference' ],
