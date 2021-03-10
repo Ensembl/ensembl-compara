@@ -1036,7 +1036,8 @@ CREATE TABLE gene_member (
 --  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (gene_member_id),
-  UNIQUE KEY (stable_id),
+  CONSTRAINT genome_stable_id UNIQUE (genome_db_id, stable_id),
+  KEY (stable_id),
   KEY (source_name),
   KEY (canonical_member_id),
   KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
@@ -1140,7 +1141,8 @@ CREATE TABLE seq_member (
 --  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (seq_member_id),
-  UNIQUE KEY (stable_id),
+  CONSTRAINT genome_stable_id UNIQUE (genome_db_id, stable_id),
+  KEY (stable_id),
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id),
@@ -2288,4 +2290,5 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_104_105_b.sql|homology_enum');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_104_105_c.sql|drop_dnafrag_fk');
-
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_104_105_d.sql|add_genome_stable_id_key');
