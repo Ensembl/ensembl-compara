@@ -322,6 +322,8 @@ sub pipeline_create_commands_lfs_setstripe {
     my $self = shift;
     my $dirs = shift;
 
+    return [] unless $self->{'_is_second_pass'};
+
     # Prepare the list of directories
     $dirs = [$dirs] unless ref($dirs);
     my @dirs = map {$self->o($_)} @$dirs;
@@ -335,7 +337,7 @@ sub pipeline_create_commands_lfs_setstripe {
         # Do we need to "become" someone else ?
         my $owner = Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec("stat -c \"\%U\" $dir")->out;
         chomp $owner;
-        my $as_user = $ENV{USER} ne $owner ? "become -- $owner" : '';
+        my $as_user = $owner && $ENV{USER} ne $owner ? "become -- $owner" : '';
         push @cmds, qq{which lfs > /dev/null && lfs getstripe $dir >/dev/null 2>/dev/null && $as_user lfs setstripe $dir -c -1 || echo "Striping is not available on this system"};
     }
     return @cmds;
@@ -416,4 +418,3 @@ sub get_division_package_name {
 
 
 1;
-
