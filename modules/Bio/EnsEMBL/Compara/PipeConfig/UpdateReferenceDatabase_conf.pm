@@ -184,7 +184,7 @@ sub core_pipeline_analyses {
                 'meta_host'             => $self->o('meta_host'),
                 'allowed_species_file'  => $self->o('config_dir') . '/allowed_species.json',
                 'perc_threshold'        => $self->o('perc_threshold'),
-                'division'              => '',  # our references cover every division
+                'division'              => undef,  # our references cover every division
                 'master_db'             => '#ref_db#',
             },
             -rc_name    => '1Gb_job',
