@@ -39,7 +39,7 @@ sub param_defaults {
     my ($self) = @_;
     return {
         %{$self->SUPER::param_defaults},
-        'step'   => 200,
+        'step'   => 1000,
     }
 }
 
