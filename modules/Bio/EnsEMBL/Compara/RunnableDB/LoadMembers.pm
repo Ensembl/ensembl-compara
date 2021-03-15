@@ -15,16 +15,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=pod 
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::LoadMembers
-
-=cut
 
 =head1 SYNOPSIS
 
@@ -36,8 +29,6 @@ Bio::EnsEMBL::Compara::RunnableDB::LoadMembers
 
         # load reference coding exon members of a particular genome_db (rat)
     standaloneJob.pl LoadMembers.pm -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara2/lg4_test_loadmembers" -genome_db_id 3 -coding_exons 1 -min_length 20
-
-=cut
 
 =head1 DESCRIPTION
 
@@ -51,12 +42,6 @@ Which is a request to load coding exon members from a particular core database d
 
 You can also choose whether you want your members (peptides or coding exons) extracted from reference slices, nonreference slices (including LRGs) or both
 by using -include_reference <0|1> and -include_nonreference <0|1> parameters.
-
-=cut
-
-=head1 CONTACT
-
-Contact anybody in Compara.
 
 =cut
 
@@ -76,6 +61,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenomeStoreNCMembers')
 sub param_defaults {
     return {
         'verbose'                       => undef,
+        'offset_ids'                    => 0,
 
             # which input Slices are used to load Members from:
         'include_reference'             => 1,
@@ -158,8 +144,18 @@ sub run {
     if (not $self->param('sliceCount')) {
         $self->warning("No suitable toplevel slices found in ".$core_dba->dbc->dbname());
     }
-}
 
+    if ($self->param('offset_ids')) {
+        my $genome_db_id = $self->param_required('genome_db_id');
+        my $start_id = $genome_db_id * 100000000;
+        $compara_dba->dbc->sql_helper->transaction(-CALLBACK => sub {
+            $compara_dba->dbc->do("UPDATE gene_member JOIN (SELECT \@rank := $start_id) r
+                SET gene_member_id = \@rank := (\@rank + 1) WHERE genome_db_id = $genome_db_id");
+            $compara_dba->dbc->do("UPDATE seq_member JOIN (SELECT \@rank := $start_id) r
+                SET seq_member_id = \@rank := (\@rank + 1) WHERE genome_db_id = $genome_db_id");
+        });
+    }
+}
 
 
 ######################################
