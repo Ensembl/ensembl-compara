@@ -102,8 +102,8 @@ sub _write_homologies {
     # Conversion of PAFs to Homology objects
     my $homology_adap = $self->compara_dba->get_HomologyAdaptor;
     my $homology      = $paf->create_homology($type, $mlss);
+
     $homology->dbID($paf->query_member_id . $paf->hit_member_id);
-print Dumper $homology->dbID;
     $homology_adap->store($homology, $no_refmem);
 
 }
