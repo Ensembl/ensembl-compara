@@ -412,7 +412,11 @@ sub fetch_by_core_DBAdaptor {
     my $was_connected = $core_dba->dbc->connected;
     my $species_name = $core_dba->get_MetaContainer->get_production_name();
     my $species_assembly = $core_dba->assembly_name();
+    # genebuild.last_geneset_update is optional, but is how vertebrates typically track geneset changes. If
+    # that does not exist, fall back to genebuild.start_date, which is how EG tend to track changes, and is
+    # mandatory.
     my $species_genebuild = $core_dba->get_MetaContainer->single_value_by_key('genebuild.last_geneset_update');
+    $species_genebuild = $core_dba->get_MetaContainer->single_value_by_key('genebuild.start_date') unless $species_genebuild;
     $core_dba->dbc->disconnect_if_idle() unless $was_connected;
     return undef unless $species_name;
     return $self->fetch_by_name_assembly_genebuild($species_name, $species_assembly, $species_genebuild, $component);

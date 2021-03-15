@@ -182,7 +182,12 @@ sub db_adaptor {
             $self->name( $meta_container->get_production_name );
             $self->assembly( $dba->assembly_name );
             $self->taxon_id( $meta_container->get_taxonomy_id );
-            $self->genebuild( $meta_container->single_value_by_key('genebuild.last_geneset_update') );
+            # genebuild.last_geneset_update is optional, but is how vertebrates typically track geneset
+            # changes. If that does not exist, fall back to genebuild.start_date, which is how EG tend t
+            # track changes, and is mandatory.
+            my $genebuild = $meta_container->single_value_by_key('genebuild.last_geneset_update');
+            $genebuild = $meta_container->single_value_by_key('genebuild.start_date') unless $genebuild;
+            $self->genebuild( $genebuild );
             $self->has_karyotype( $genome_container->has_karyotype );
             $self->is_good_for_alignment( 0 );  # Cannot be inferred without the dnafrags
             $self->strain_name( $strain_name );

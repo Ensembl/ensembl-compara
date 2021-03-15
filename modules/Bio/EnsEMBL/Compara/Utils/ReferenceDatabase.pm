@@ -128,7 +128,7 @@ sub _update_reference_genome_db {
                 $match = Bio::EnsEMBL::Compara::Utils::MasterDatabase::dnafrags_match_core_slices($stored_genome_db, $species_dba);
             }
             my $msg = "\n\n** Reference GenomeDB with this name [$species_production_name], assembly" .
-                " [$this_assembly] and genebuild.last_geneset_update [$this_genebuild] is already in the compara DB **\n";
+                " [$this_assembly] and genebuild.last_geneset_update/start_date [$this_genebuild] is already in the compara DB **\n";
             if ($match) {
                 $msg .= "** And it has the right set of DnaFrags **\n";
                 $msg .= "** You can use the --force option to update the other GenomeDB fields IF YOU REALLY NEED TO!! **\n\n";
