@@ -615,7 +615,7 @@ sub store {
   assert_ref($hom->method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'hom->method_link_species_set');
   $hom->method_link_species_set_id($hom->method_link_species_set->dbID);
   
-  unless($hom->dbID) {
+  unless($hom->dbID and !defined $no_member_store) {
     my $sql = 'INSERT INTO homology (method_link_species_set_id, description, is_tree_compliant, species_tree_node_id, gene_tree_node_id, gene_tree_root_id) VALUES (?,?,?,?,?,?)';
     my $sth = $self->prepare($sql);
     $sth->execute($hom->method_link_species_set_id, $hom->description, $hom->is_tree_compliant, $hom->{_species_tree_node_id}, $hom->{_gene_tree_node_id}, $hom->{_gene_tree_root_id});
@@ -625,12 +625,9 @@ sub store {
   my $sql = 'INSERT INTO homology_member (homology_id, gene_member_id, seq_member_id, cigar_line, perc_id, perc_pos, perc_cov) VALUES (?,?,?,?,?,?,?)';
   my $sth = $self->prepare($sql);
 
-  # Skip member storage for special cases such as the use of separate reference database
-  return $hom->dbID if $no_member_store;
-
   foreach my $member(@{$hom->get_all_Members}) {
-    # Stores the member if not yet stored
-    $self->db->get_SeqMemberAdaptor->store($member) unless (defined $member->dbID);
+    # Optionally stores the member if not yet stored
+    $self->db->get_SeqMemberAdaptor->store($member) unless (defined $member->dbID or defined $no_member_store);
     $sth->execute($member->set->dbID, $member->gene_member_id, $member->dbID, $member->cigar_line, $member->perc_id, $member->perc_pos, $member->perc_cov);
   }
 
