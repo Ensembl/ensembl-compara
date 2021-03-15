@@ -73,6 +73,7 @@ sub default_options {
         'store_others'                => 0,
         'store_exon_coordinates'      => 0,
         'store_related_pep_sequences' => 0, # do we want CDS sequences as well as protein sequences?
+        'offset_ids'                  => 1, # offset member ids by the genome_db_id?
 
         # member HC options
         'allow_ambiguity_codes'         => 1,
@@ -217,6 +218,7 @@ sub core_pipeline_analyses {
                 'store_ncrna'                 => $self->o('store_ncrna'),
                 'store_others'                => $self->o('store_others'),
                 'store_exon_coordinates'      => $self->o('store_exon_coordinates'),
+                'offset_ids'                  => $self->o('offset_ids'),
             },
             -hive_capacity => 10,
             -rc_name => '4Gb_job',
