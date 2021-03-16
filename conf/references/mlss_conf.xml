@@ -20,6 +20,12 @@
       <genome name="plasmodium_falciparum"/>
     </collection>
 
+    <collection name ="shared_vertebrates">
+      <base_collection name="shared"/>
+      <genome name="mus_musculus"/>
+      <genome name="xenopus_tropicalis"/>
+    </collection>
+
     <collection name="default">
       <base_collection name="shared"/>
       <!-- Vertebrates -->
@@ -60,7 +66,7 @@
     </collection>
 
     <collection name="vertebrata">
-      <base_collection name="shared"/>
+      <base_collection name="shared_vertebrates"/>
       <!-- outgroup -->
       <genome name="ciona_intestinalis"/>
       <!-- Myxini -->
@@ -79,8 +85,8 @@
       <genome name="oryzias_latipes"/>
       <!-- Lobe-finned fish -->
       <genome name="latimeria_chalumnae"/>
-      <!-- Amphibians -->
-      <genome name="xenopus_tropicalis"/>
+      <!-- Amphibians in shared vertebrates-->
+
       <!-- Sauropsids -->
       <genome name="sphenodon_punctatus"/>
       <genome name="gopherus_evgoodei"/>
@@ -90,21 +96,19 @@
       <genome name="struthio_camelus_australis"/>
       <genome name="aquila_chrysaetos_chrysaetos"/>
       <genome name="anas_platyrhynchos"/>
-      <!-- Mammals -->
+      <!-- Mammals mouse in shared vertebrates-->
       <genome name="ornithorhynchus_anatinus"/>
       <genome name="sarcophilus_harrisii"/>
       <genome name="bos_taurus"/>
       <genome name="sus_scrofa"/>
-      <genome name="mus_musculus"/>
       <genome name="rattus_norvegicus"/>
       <genome name="macaca_mulatta"/>
       <genome name="canis_lupus_familiaris"/>
     </collection>
 
     <collection name="mammalia">
-      <base_collection name="shared"/>
-      <!-- Outgroups -->
-      <genome name="xenopus_tropicalis"/>
+      <base_collection name="shared_vertebrates"/>
+      <!-- Outgroups in shared vertebrates-->
       <!-- Prototheria -->
       <genome name="ornithorhynchus_anatinus"/>
       <!-- Metatheria -->
@@ -148,13 +152,11 @@
     </collection>
 
     <collection name="actinopterygii">
-      <base_collection name="shared"/>
+      <base_collection name="shared_vertebrates"/>
       <!-- Outgroups -->
       <genome name="ciona_intestinalis"/>
       <genome name="eptatretus_burgeri"/>
       <genome name="amblyraja_radiata"/>
-      <genome name="xenopus_tropicalis"/>
-      <genome name="mus_musculus"/>
       <!-- Polypteriformes  -->
       <genome name="erpetoichthys_calabaricus"/>
       <!-- Lepisosteiformes -->
@@ -203,12 +205,10 @@
     </collection>
 
     <collection name="sauropsida">
-      <base_collection name="shared"/>
+      <base_collection name="shared_vertebrates"/>
       <!-- Outgroup -->
       <genome name="ciona_intestinalis"/>
-      <genome name="xenopus_tropicalis"/>
       <genome name="oryzias_latipes"/>
-      <genome name="mus_musculus"/>
       <!-- Testudines -->
       <genome name="gopherus_evgoodei"/>
       <genome name="chrysemys_picta_bellii"/>
