@@ -37,6 +37,7 @@ use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLU
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::LoadCoreMembers;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstRef;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstQuery;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::DataCheckFactory;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -88,6 +89,15 @@ sub default_options {
         'projection_source_species_names' => [ ],
         'curr_file_sources_locs'          => [ ],
 
+        # Whole db DC parameters
+        'datacheck_groups' => ['compara_homology_annotation'],
+        'db_type'          => ['compara'],
+        'output_dir_path'  => $self->o('work_dir') . '/datachecks/',
+        'overwrite_files'  => 1,
+        'failures_fatal'   => 1, # no DC failure tolerance
+        'old_server_uri'   => $self->o('compara_db'),
+        'db_name'          => $self->o('dbowner') . '_' . $self->o('pipeline_name'),
+
         # DIAMOND e-hive parameters
         'blast_factory_capacity'   => 50,
         'blastpu_capacity'         => 150,
@@ -102,10 +112,23 @@ sub default_options {
 
 sub pipeline_create_commands {
     my ($self) = @_;
+
+    my $results_table_sql = q/
+        CREATE TABLE datacheck_results (
+            submission_job_id INT,
+            dbname VARCHAR(255) NOT NULL,
+            passed INT,
+            failed INT,
+            skipped INT,
+            INDEX submission_job_id_idx (submission_job_id)
+        );
+    /;
+
     return [
         @{$self->SUPER::pipeline_create_commands},  # Here we inherit creation of database, hive tables and compara tables
 
-        $self->pipeline_create_commands_rm_mkdir(['work_dir']), # Here we create directories
+        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'output_dir_path']), # Here we create directories
+        $self->db_cmd($results_table_sql),
 
     ];
 }
@@ -137,6 +160,11 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
         'dump_path'         => $self->o('dump_path'),
 
         'reg_conf'          => $self->o('reg_conf'),
+
+        'output_dir_path'  => $self->o('output_dir_path'),
+        'overwrite_files'  => $self->o('overwrite_files'),
+        'failures_fatal'   => $self->o('failures_fatal'),
+        'db_name'          => $self->o('db_name'),
 
     };
 }
@@ -174,8 +202,16 @@ sub core_pipeline_analyses {
                             '#initialised#' => [ 'locate_and_add_genomes' ],
                             ELSE                         [ 'copy_ncbi_tables_factory' ],
                 ),
-                'A->1'  => [ 'diamond_factory' ],
+                'A->1'  => [ 'backbone_fire_analyses_prepare' ],
                 '8'     => { '?table_name=pipeline_wide_parameters' => { 'param_name' => 'initialised', 'param_value' => 1, 'insertion_method' => 'INSERT_IGNORE' } },
+            },
+        },
+
+        {   -logic_name => 'backbone_fire_analyses_prepare',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A'  => [ 'diamond_factory' ],
+                'A->1'  => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'old_server_uri' => $self->o('old_server_uri'), 'compara_db' => $self->o('compara_db'), 'registry_file' => undef } },
             },
         },
 
@@ -218,7 +254,21 @@ sub core_pipeline_analyses {
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::LoadCoreMembers::pipeline_analyses_copy_ncbi_and_core_genome_db($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstRef::pipeline_analyses_diamond_against_refdb($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstQuery::pipeline_analyses_diamond_against_query($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DataCheckFactory::pipeline_analyses_datacheck_factory($self) },
+
     ];
+}
+
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+
+    delete $analyses_by_name->{'datacheck_fan'}->{'-flow_into'}->{2};
+    delete $analyses_by_name->{'datacheck_fan_high_mem'}->{'-flow_into'}->{2};
+    $analyses_by_name->{'datacheck_factory'}->{'-parameters'} = {'dba' => '#compara_db#'};
+    $analyses_by_name->{'datacheck_fan'}->{'-flow_into'}->{0} = ['jira_ticket_creation'];
+    $analyses_by_name->{'datacheck_fan_high_mem'}->{'-flow_into'}->{0} = ['jira_ticket_creation'];
+    $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
 }
 
 1;
