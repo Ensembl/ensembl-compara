@@ -74,7 +74,7 @@ sub write_output {
                 $self->compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 0");
                 $self->_write_homologies($mlss, $rbh_entry, 'homolog_rbbh', $no_refmem);
                 $self->compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 1");
-            }, 0, 0 );
+            } );
         }
         # if no rbbh a bbh will have to do
         if ( ! scalar @$rbh ) {
@@ -86,7 +86,7 @@ sub write_output {
                     $self->compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 0");
                     $self->_write_homologies($mlss, $bbh_entry, 'homolog_bbh', $no_refmem);
                     $self->compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 1");
-                }, 0, 0 );
+                } );
             }
 
             if ( ! scalar @$bbh ) {

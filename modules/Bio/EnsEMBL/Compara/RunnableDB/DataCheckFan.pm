@@ -23,7 +23,8 @@ Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan
 
 =head1 DESCRIPTION
 
-A compara runnable wrapper of Production's DataCheckFan
+A compara runnable wrapper of Production's DataCheckFan.
+For some pipelines the previous db is irrelevant so default to same db.
 
 =cut
 
@@ -42,7 +43,6 @@ sub fetch_input {
     unless ( $self->param('registry_file') ) {
         $self->param('server_uri', $self->param('compara_db'));
     }
-    # For some pipelines the previous db is irrelevant so default to same db
     unless ( $self->param('old_server_uri') ) {
         my $prev_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( 'compara_prev' );
         $self->param('old_server_uri', $prev_dba->url);
