@@ -147,7 +147,7 @@ sub run {
 
     if ($self->param('offset_ids')) {
         my $genome_db_id = $self->param_required('genome_db_id');
-        my $start_id = $genome_db_id * 100000000;
+        my $start_id = $genome_db_id * 10000000;
         $compara_dba->dbc->sql_helper->transaction(-CALLBACK => sub {
             $compara_dba->dbc->do("UPDATE gene_member JOIN (SELECT \@rank := $start_id) r
                 SET gene_member_id = \@rank := (\@rank + 1) WHERE genome_db_id = $genome_db_id");
