@@ -19,7 +19,7 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromMetadataFactory
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
 Returns the list of species/genomes to update, rename and retire in the master
 database, obtained from ensembl-metadata
@@ -58,6 +58,10 @@ sub fetch_input {
 	# use metadata script to report genomes that need to be updated
     my ($genomes_to_update, $renamed_genomes, $updated_annotations) = $self->fetch_genome_report($release, $division, $allowed_species);
 
+    # Have we forgotten to update the allowed species JSON file?
+    while (my ($new_name, $old_name) = each %$renamed_genomes) {
+        $allowed_species->{$new_name} = 1 if exists $allowed_species->{$old_name};
+    }
 
 	# check there are no seq_region changes in the existing species
 	my $list_cmd = "perl $list_genomes_script $metadata_script_options";
@@ -71,6 +75,9 @@ sub fetch_input {
     if ($allowed_species) {
         # Keep only the species included in the allowed list
         @release_genomes = grep { exists $allowed_species->{$_} } @release_genomes;
+        foreach my $species_name (keys %$renamed_genomes) {
+            delete $renamed_genomes->{$species_name} if (!exists $allowed_species->{$species_name});
+        }
     }
 
     # if a division is given and it is pan do not die because the list of species used in pan is
@@ -128,7 +135,13 @@ sub fetch_input {
     $current_gdbs{'ancestral_sequences'} = 1; # never retire ancestral_sequences
     foreach my $species_name ( @release_genomes ) {
         if (exists $renamed_genomes->{$species_name}) {
-            $current_gdbs{$renamed_genomes->{$species_name}} = 1;
+            my $current_name = $renamed_genomes->{$species_name};
+            if (! exists $current_gdbs{$current_name}) {
+                # The genome to be renamed is not present in the database: treat it as to be added instead
+                push @$genomes_to_update, $species_name;
+                delete $renamed_genomes->{$species_name};
+            }
+            $current_gdbs{$current_name} = 1;
         } else {
             # If the species has been added in this release, include it in the list of genomes to add
             push @$genomes_to_update, $species_name unless (exists $current_gdbs{$species_name});
