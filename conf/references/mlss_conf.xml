@@ -11,12 +11,11 @@
       <!-- Metazoa -->
       <genome name="drosophila_melanogaster"/>
       <genome name="caenorhabditis_elegans"/>
-      <genome name="octopus_bimaculoides"/>
       <!-- Fungi -->
       <genome name="saccharomyces_cerevisiae"/>
       <!-- Plants -->
       <genome name="arabidopsis_thaliana"/>
-      <genome name="triticum_aestivum"/>
+      <genome name="oryza_sativa"/>
       <!-- Protists -->
       <genome name="plasmodium_falciparum"/>
     </collection>
@@ -25,25 +24,25 @@
       <base_collection name="shared"/>
       <!-- Vertebrates -->
       <genome name="mus_musculus"/>
-      <genome name="anolis_carolinensis"/>
+      <genome name="thamnophis_elegans"/>
       <genome name="ciona_intestinalis"/>
       <genome name="xenopus_tropicalis"/>
       <genome name="oryzias_latipes"/>
-      <genome name="petromyzon_marinus"/>
+      <genome name="eptatretus_burgeri"/>
       <!-- Metazoas -->
-      <genome name="anopheles_gambiae"/>
-      <genome name="apis_mellifera"/>
-      <genome name="bombyx_mori"/>
-      <genome name="capitella_teleta"/>
-      <genome name="nematostella_vectensis"/>
-      <genome name="adineta_vaga"/>
+      <genome name="daphnia_pulex"/>
+      <genome name="amphimedon_queenslandica"/>
+      <genome name="clytia_hemisphaerica"/>
+      <genome name="lottia_gigantea"/>
+      <genome name="trichoplax_adhaerens"/>
+      <genome name=" mnemiopsis_leidyi"/>
       <!-- Plants -->
+      <genome name="glycine_max"/>
+      <genome name="solanum_lycopersicum"/>
+      <genome name="triticum_aestivum"/>
+      <genome name="marchantia_polymorpha"/>
       <genome name="physcomitrium_patens"/>
-      <genome name="oryza_sativa"/>
-      <genome name="vitis_vinifera"/>
-      <genome name="ostreococcus_lucimarinus"/>
-      <genome name="galdieria_sulphuraria"/>
-      <genome name="chondrus_crispus"/>
+      <genome name="chlamydomonas_reinhardtii"/>
       <!-- Protists -->
       <genome name="phytophthora_infestans"/>
       <genome name="leishmania_major"/>
@@ -57,94 +56,200 @@
       <genome name="magnaporthe_oryzae"/>
       <genome name="zymoseptoria_tritici"/>
       <genome name="erysiphe_necator_gca_000798715"/>
+      <genome name="schizosaccharomyces_pombe"/>
     </collection>
 
     <collection name="vertebrata">
       <base_collection name="shared"/>
+      <!-- outgroup -->
+      <genome name="ciona_intestinalis"/>
       <!-- Myxini -->
       <genome name="eptatretus_burgeri"/>
-      <!-- Hyperoartia -->
-      <genome name="petromyzon_marinus"/>
-      <!-- Cartilaginous fish -->
-      <genome name="callorhinchus_milii"/>
+      <!-- Chondrichthyes -->
+      <genome name="amblyraja_radiata"/>
       <!-- Actinopterigyle -->
       <genome name="erpetoichthys_calabaricus"/>
+      <genome name="lepisosteus_oculatus"/>
+      <genome name="paramormyrops_kingsleyae"/>
       <genome name="scleropages_formosus"/>
-      <genome name="salmo_salar"/>
+      <genome name="salmo_trutta"/>
       <genome name="scophthalmus_maximus"/>
-      <genome name="astatotilapia_calliptera"/>
-      <genome name="stegastes_partitus"/>
+      <genome name="myripristis_murdjan"/>
+      <genome name="gadus_morhua"/>
       <genome name="oryzias_latipes"/>
-      <genome name="takifugu_rubripes"/>
       <!-- Lobe-finned fish -->
       <genome name="latimeria_chalumnae"/>
       <!-- Amphibians -->
       <genome name="xenopus_tropicalis"/>
-      <genome name="leptobrachium_leishanense"/>
       <!-- Sauropsids -->
-      <genome name="anolis_carolinensis"/>
       <genome name="sphenodon_punctatus"/>
-      <genome name="naja_naja"/>
       <genome name="gopherus_evgoodei"/>
+      <genome name="anolis_carolinensis"/>
       <genome name="crocodylus_porosus"/>
+      <genome name="melopsittacus_undulatus"/>
       <genome name="struthio_camelus_australis"/>
-      <genome name="taeniopygia_guttata"/>
-      <genome name="strigops_habroptila"/>
+      <genome name="aquila_chrysaetos_chrysaetos"/>
+      <genome name="anas_platyrhynchos"/>
       <!-- Mammals -->
-      <genome name="monodelphis_domestica"/>
-      <genome name="canis_lupus_familiaris"/>
+      <genome name="ornithorhynchus_anatinus"/>
+      <genome name="sarcophilus_harrisii"/>
       <genome name="bos_taurus"/>
       <genome name="sus_scrofa"/>
       <genome name="mus_musculus"/>
       <genome name="rattus_norvegicus"/>
-      <genome name="pteropus_vampyrus"/>
-      <genome name="callithrix_jacchus"/>
+      <genome name="macaca_mulatta"/>
+      <genome name="canis_lupus_familiaris"/>
     </collection>
 
     <collection name="mammalia">
       <base_collection name="shared"/>
       <!-- Outgroups -->
-      <genome name="ciona_intestinalis"/>
-      <genome name="dasypus_novemcinctus"/>
       <genome name="xenopus_tropicalis"/>
-      <genome name="lepisosteus_oculatus"/>
-      <genome name="oryzias_latipes"/>
       <!-- Prototheria -->
       <genome name="ornithorhynchus_anatinus"/>
       <!-- Metatheria -->
       <genome name="monodelphis_domestica"/>
-      <genome name="phascolarctos_cinereus"/>
+      <genome name="sarcophilus_harrisii"/>
+      <!-- Proboscidea -->
+      <genome name="loxodonta_africana"/>
+      <!-- 	Cingulata -->
+      <genome name="dasypus_novemcinctus"/>
+      <!-- Carnivora -->
+      <genome name="canis_lupus_familiaris"/>
+      <genome name="felis_catus"/>
+      <!-- Equidae -->
+      <genome name="equus_caballus"/>
+      <!-- Bats -->
+      <genome name="artibeus_jamaicensis"/>
+      <genome name="phyllostomus_discolor"/>
       <!-- Artiodactyla -->
-      <genome name="camelus_dromedarius"/>
+      <genome name="camelus_ferus"/>
       <genome name="bos_taurus"/>
       <genome name="ovis_aries_rambouillet"/>
       <genome name="capra_hircus"/>
       <genome name="sus_scrofa"/>
-      <genome name="delphinapterus_leucas"/>
-      <!-- Equidae -->
-      <genome name="equus_caballus"/>
-      <!-- Bats -->
-      <genome name="myotis_lucifugus"/>
-      <genome name="pteropus_vampyrus"/>
-      <!-- Shrew -->
-      <genome name="sorex_araneus"/>
+      <genome name="balaenoptera_musculus"/>
+      <!-- Primates -->
+      <genome name="microcebus_murinus"/>
+      <genome name="carlito_syrichta"/>
+      <genome name="macaca_mulatta"/>
+      <genome name="pan_troglodytes"/>
       <!-- Lagomorph -->
-      <genome name="oryctolagus_cuniculus"/>
+      <genome name="Oryctolagus_cuniculus"/>
       <!-- Rodents -->
       <genome name="mus_musculus"/>
       <genome name="rattus_norvegicus"/>
       <genome name="sciurus_vulgaris"/>
-      <!-- Primates -->
-      <genome name="macaca_mulatta"/>
-      <genome name="pan_troglodytes"/>
-      <genome name="callithrix_jacchus"/>
-      <genome name="prolemur_simus"/>
-      <!-- Carnivora -->
-      <genome name="canis_lupus_familiaris"/>
-      <genome name="felis_catus"/>
-      <genome name="suricata_suricatta"/>
-      <!-- Afrotheria -->
-      <genome name="echinops_telfairi"/>
+      <genome name="chinchilla_lanigera"/>
+      <genome name="dipodomys_ordii"/>
+      <genome name="jaculus_jaculus"/>
+      <genome name="peromyscus_maniculatus_bairdii"/>
+      <genome name="Nannospalax_galili"/>
+    </collection>
+
+    <collection name="actinopterygii">
+      <base_collection name="shared"/>
+      <!-- Outgroups -->
+      <genome name="ciona_intestinalis"/>
+      <genome name="eptatretus_burgeri"/>
+      <genome name="amblyraja_radiata"/>
+      <genome name="xenopus_tropicalis"/>
+      <genome name="mus_musculus"/>
+      <!-- Polypteriformes  -->
+      <genome name="erpetoichthys_calabaricus"/>
+      <!-- Lepisosteiformes -->
+      <genome name="lepisosteus_oculatus"/>
+      <!-- 	Osteoglossiformes -->
+      <genome name="paramormyrops_kingsleyae"/>
+      <genome name="scleropages_formosus"/>
+      <!-- Clupeiformes -->
+      <genome name="denticeps_clupeoides"/>
+      <genome name="clupea_harengus"/>
+      <!-- Siluriformes -->
+      <genome name="ictalurus_punctatus"/>
+      <!-- Gymnotiformes -->
+      <genome name="electrophorus_electricus"/>
+      <!-- Characiformes -->
+      <genome name="astyanax_mexicanus"/>
+      <genome name="pygocentrus_nattereri"/>
+      <!-- Esociformes -->
+      <genome name="esox_lucius"/>
+      <!-- Salmoniformes -->
+      <genome name="salmo_trutta"/>
+      <genome name="oncorhynchus_mykiss"/>
+      <!-- Perciformes -->
+      <genome name="dicentrarchus_labrax"/>
+      <genome name="sparus_aurata"/>
+      <!-- Cypriniformes -->
+      <genome name="cyprinus_carpio"/>
+      <!-- Gadiformes -->
+      <genome name="gadus_morhua"/>
+      <!-- Beryciformes -->
+      <genome neme="myripristis_murdjan"/>
+      <!-- 	Tetraodontiformes -->
+      <genome name="takifugu_rubripes"/>
+      <!-- Anabantiformes -->
+      <genome name="betta_splendens"/>
+      <!-- Pleuronectiformes -->
+      <genome name="scophthalmus_maximus"/>
+      <!-- Scorpaeniformes -->
+      <genome name="cyclopterus_lumpus"/>
+      <!-- Cichliformes -->
+      <genome name="astatotilapia_calliptera"/>
+      <!-- 	Elopiformes -->
+      <genome name="megalops_cyprinoides"/>
+      <!-- Beloniformes -->
+      <genome name="oryzias_latipes"/>
+    </collection>
+
+    <collection name="sauropsida">
+      <base_collection name="shared"/>
+      <!-- Outgroup -->
+      <genome name="ciona_intestinalis"/>
+      <genome name="xenopus_tropicalis"/>
+      <genome name="oryzias_latipes"/>
+      <genome name="mus_musculus"/>
+      <!-- Testudines -->
+      <genome name="gopherus_evgoodei"/>
+      <genome name="chrysemys_picta_bellii"/>
+      <!-- Squamata-->
+      <genome name="anolis_carolinensis"/>
+      <genome name="naja_naja"/>
+      <genome name="thamnophis_elegans"/>
+      <genome name="zootoca_vivipara"/>
+      <genome name="podarcis_muralis"/>
+      <!-- Rhynchocephalia  -->
+      <genome name="sphenodon_punctatus"/>
+      <!-- Crocodilia -->
+      <genome name="crocodylus_porosus"/>
+      <!-- Struthioniformes -->
+      <genome name="struthio_camelus_australis"/>
+      <!-- Strigiformes -->
+      <genome name="otus_sunia"/>
+      <genome name="tyto_alba_alba"/>
+      <!-- Sphenisciformes -->
+      <genome name="aptenodytes_patagonicus"/>
+      <!-- Psittaciformes -->
+      <genome name="melopsittacus_undulatus"/>
+      <!-- Passeriformes -->
+      <genome name="camarhynchus_parvulus"/>
+      <genome name="corvus_moneduloides"/>
+      <genome name="molothrus_ater"/>
+      <genome name="catharus_ustulatus"/>
+      <!-- Galliformes -->
+      <genome name="meleagris_gallopavo"/>
+      <genome name="numida_meleagris"/>
+      <!-- Falconiformes -->
+      <genome name="falco_tinnunculus"/>
+      <!-- Charadriiformes -->
+      <genome name="calidris_pugnax"/>
+      <!-- Anseriformes -->
+      <genome name="cygnus_atratus"/>
+      <genome name="anas_platyrhynchos"/>
+      <!-- Accipitriformes -->
+      <genome name="aquila_chrysaetos_chrysaetos"/>
+      <!-- Apterygiformes -->
+      <genome name="apteryx_rowi"/>
     </collection>
 
   </collections>
