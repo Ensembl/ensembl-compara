@@ -22,6 +22,7 @@ Compara reference database.
 
     - update_reference_genome : add a reference genome to the given database
     - remove_reference_genome : remove reference from the db, incl. dnafrags and members
+    - rename_reference_genome : rename an existing genome in the given database
 
 =cut
 
@@ -223,5 +224,52 @@ sub remove_reference_genome {
 
     print "Removed GenomeDB [$genome_db_str]\n";
 }
+
+
+############################################################
+#          rename_reference_genome.pl methods              #
+############################################################
+
+=head2 rename_reference_genome
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
+  Arg[2]      : string $old_species_name
+  Arg[3]      : string $new_species_name
+  Arg[4]      : (optional) int $update
+  Description : Renames the GenomeDB entry for species $old_name to $new_name.
+  Exceptions  : Throws an error if cannot find reference GenomeDB for netiher
+                $old_name nor $new name, or if the species has not only been
+                renamed but also its assembly has been updated.
+
+=cut
+
+sub rename_reference_genome {
+    my ($compara_dba, $old_name, $new_name) = @_;
+
+    my $genome_db = $compara_dba->get_GenomeDBAdaptor()->fetch_by_name_assembly($old_name);
+    if (!$genome_db) {
+        warn("Could not find the reference GenomeDB for '$old_name'. Will check the assembly for '$new_name' instead\n");
+        $genome_db = $compara_dba->get_GenomeDBAdaptor()->fetch_by_name_assembly($new_name);
+        throw("Could not find the reference GenomeDB for neither '$old_name' not '$new_name'") if (!$genome_db);
+    }
+
+    # Check that the underlying assembly is the same
+    my $core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($new_name, 'core');
+    my ($output, $dnafrags_match);
+    {
+        local *STDOUT;
+        open (STDOUT, '>', \$output);
+        $dnafrags_match = Bio::EnsEMBL::Compara::Utils::MasterDatabase::dnafrags_match_core_slices($genome_db, $core_dba);
+    }
+    $core_dba->dbc()->disconnect_if_idle();
+
+    if ($dnafrags_match) {
+        $compara_dba->dbc->do("UPDATE genome_db SET name = ? WHERE name = ? AND first_release IS NOT NULL AND last_release IS NULL", undef, $new_name, $old_name);
+        print "Reference GenomeDB renamed from '$old_name' to '$new_name'\n";
+    } else {
+        throw("DnaFrags do not match core for " . $genome_db->name . "\n$output\n");
+    }
+}
+
 
 1;

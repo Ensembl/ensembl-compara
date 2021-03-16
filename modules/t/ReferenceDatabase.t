@@ -116,6 +116,21 @@ subtest "remove_reference_genome", sub {
     is( $dnafrag_count, 0, 'all dnafrags removed' );
 };
 
+note("------------------------ rename_reference_genome testing ---------------------------------");
+
+subtest "rename_reference_genome", sub {
+    my $mouse_gdb = $compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly('mus_musculus', 'GRCm38');
+    my $mouse_gdb_id = $mouse_gdb->dbID;
+    ok( Bio::EnsEMBL::Compara::Utils::ReferenceDatabase::rename_reference_genome($compara_dba, 'mus_musculus', 'mus_musculusus'), 'mouse reference renamed' );
+
+    my ($gdb_name) = $compara_dba->dbc->db_handle->selectrow_array("SELECT name FROM genome_db WHERE genome_db_id = $mouse_gdb_id");
+    is( $gdb_name, 0, 'mus_musculus reference renamed to mus_musculusus' );
+
+    throws_ok {
+        Bio::EnsEMBL::Compara::Utils::ReferenceDatabase::rename_reference_genome($compara_dba, 'rattus_norvegicus', 'rattus_corvegicus')
+    } qr/has been already removed from the compara DB/, 'cannot rename what is not there';
+};
+
 # Restore the databases for next tests
 $test_ref_compara->restore('compara', 'genome_db');
 $test_ref_compara->restore('compara', 'species_set');

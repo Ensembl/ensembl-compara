@@ -84,6 +84,7 @@ sub default_options {
 
         # create species sets options
         'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
+        'allowed_species_file'  => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/allowed_species.json'),
         'xml_file'            => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/mlss_conf.xml'),
     };
 }
@@ -192,6 +193,7 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 '2->A' => [ 'update_reference_genome' ],
                 '3->A' => [ 'retire_reference' ],
+                '4->A' => [ 'rename_reference_genome' ],
                 '5->A' => [ 'verify_genome' ],
                 'A->1' => [ 'update_collection' ],
             },
@@ -245,6 +247,16 @@ sub core_pipeline_analyses {
             -parameters => {
                 'compara_db' => '#ref_db#',
             }
+        },
+
+        {   -logic_name    => 'rename_reference_genome',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ReferenceGenomes::RenameReferenceGenome',
+            -parameters    => {
+                'compara_db'            => '#ref_db#',
+                'allowed_species_file'  => $self->o('allowed_species_file'),
+                'xml_file'              => $self->o('xml_file'),
+            },
+            -hive_capacity => 10,
         },
 
         {   -logic_name    => 'verify_genome',
