@@ -94,6 +94,7 @@ sub default_options {
         'output_dir_path'  => $self->o('pipeline_dir') . '/datachecks/',
         'overwrite_files'  => 1,
         'failures_fatal'   => 1, # no DC failure tolerance
+        'ref_dbname'       => 'ensembl_compara_references', # to be manually passed in init if differs
     };
 }
 
@@ -355,6 +356,6 @@ sub tweak_analyses {
     $analyses_by_name->{'datacheck_fan'}->{'-parameters'}->{'old_server_uri'} = '#ref_db#';
     $analyses_by_name->{'datacheck_fan'}->{'-flow_into'}->{0} = ['jira_ticket_creation'];
     $analyses_by_name->{'datacheck_fan_high_mem'}->{'-flow_into'}->{0} = ['jira_ticket_creation'];
-    $analyses_by_name->{'store_results'}->{'-parameters'}->{'dbname'} = 'ensembl_compara_references';
+    $analyses_by_name->{'store_results'}->{'-parameters'}->{'dbname'} = '#ref_dbname#';
 }
 1;
