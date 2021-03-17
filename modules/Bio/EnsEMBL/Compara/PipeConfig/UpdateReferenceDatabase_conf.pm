@@ -356,6 +356,6 @@ sub tweak_analyses {
     $analyses_by_name->{'datacheck_fan'}->{'-parameters'}->{'old_server_uri'} = '#ref_db#';
     $analyses_by_name->{'datacheck_fan'}->{'-flow_into'}->{0} = ['jira_ticket_creation'];
     $analyses_by_name->{'datacheck_fan_high_mem'}->{'-flow_into'}->{0} = ['jira_ticket_creation'];
-    $analyses_by_name->{'store_results'}->{'-parameters'}->{'dbname'} = '#ref_dbname#';
+    $analyses_by_name->{'store_results'}->{'-parameters'}->{'dbname'} = $self->o('ref_dbname');
 }
 1;
