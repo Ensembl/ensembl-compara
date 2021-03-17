@@ -34,6 +34,7 @@ use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpFastaDatabases;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::DataCheckFactory;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -86,20 +87,42 @@ sub default_options {
         'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
         'allowed_species_file'  => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/allowed_species.json'),
         'xml_file'            => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/mlss_conf.xml'),
+
+        # whole dc options
+        'datacheck_groups' => ['compara_references'],
+        'db_type'          => ['compara'],
+        'output_dir_path'  => $self->o('pipeline_dir') . '/datachecks/',
+        'overwrite_files'  => 1,
+        'failures_fatal'   => 1, # no DC failure tolerance
+        'ref_dbname'       => 'ensembl_compara_references', # to be manually passed in init if differs
     };
 }
 
 
 sub pipeline_create_commands {
     my ($self) = @_;
+
+    my $results_table_sql = q/
+        CREATE TABLE datacheck_results (
+            submission_job_id INT,
+            dbname VARCHAR(255) NOT NULL,
+            passed INT,
+            failed INT,
+            skipped INT,
+            INDEX submission_job_id_idx (submission_job_id)
+        );
+    /;
+
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
-        $self->pipeline_create_commands_rm_mkdir(['pipeline_dir', 'backups_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['pipeline_dir', 'backups_dir', 'output_dir_path']),
 
         # In case it doesn't exist yet
         'mkdir -p ' . $self->o('ref_member_dumps_dir'),
         # The files are going to be accessed by many processes in parallel
         $self->pipeline_create_commands_lfs_setstripe('ref_member_dumps_dir'),
+        # To store the Datachecks results
+        $self->db_cmd($results_table_sql),
     ];
 }
 
@@ -115,6 +138,10 @@ sub pipeline_wide_parameters {
 
         'backups_dir'       => $self->o('backups_dir'),
         'members_dumps_dir' => $self->o('ref_member_dumps_dir'),
+
+        'output_dir_path'  => $self->o('output_dir_path'),
+        'overwrite_files'  => $self->o('overwrite_files'),
+        'failures_fatal'   => $self->o('failures_fatal'),
     };
 }
 
@@ -296,7 +323,10 @@ sub core_pipeline_analyses {
                 'src_db_conn' => '#ref_db#',
                 'output_file' => '#backups_dir#/compara_references.post#release#.sql'
             },
-            -flow_into  => [ 'copy_backups_to_warehouse' ],
+            -flow_into  => {
+                '1->A'  => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => '#ref_db#', 'registry_file' => undef }},
+                'A->1'  => [ 'copy_backups_to_warehouse' ],
+            },
             -rc_name    => '1Gb_job',
         },
 
@@ -310,6 +340,7 @@ sub core_pipeline_analyses {
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpFastaDatabases::pipeline_analyses_dump_fasta_dbs($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DataCheckFactory::pipeline_analyses_datacheck_factory($self) },
     ];
 }
 
@@ -318,5 +349,13 @@ sub tweak_analyses {
     my $analyses_by_name = shift;
 
     $analyses_by_name->{'dump_full_fasta'}->{'-parameters'}->{'compara_db'} = '#ref_db#';
+    delete $analyses_by_name->{'datacheck_fan'}->{'-flow_into'}->{2};
+    delete $analyses_by_name->{'datacheck_fan_high_mem'}->{'-flow_into'}->{2};
+    $analyses_by_name->{'datacheck_factory'}->{'-parameters'}->{'compara_db'} = '#ref_db#';
+    $analyses_by_name->{'datacheck_fan'}->{'-parameters'}->{'compara_db'} = '#ref_db#';
+    $analyses_by_name->{'datacheck_fan'}->{'-parameters'}->{'old_server_uri'} = '#ref_db#';
+    $analyses_by_name->{'datacheck_fan'}->{'-flow_into'}->{0} = ['jira_ticket_creation'];
+    $analyses_by_name->{'datacheck_fan_high_mem'}->{'-flow_into'}->{0} = ['jira_ticket_creation'];
+    $analyses_by_name->{'store_results'}->{'-parameters'}->{'dbname'} = $self->o('ref_dbname');
 }
 1;
