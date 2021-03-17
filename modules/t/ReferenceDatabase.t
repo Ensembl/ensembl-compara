@@ -22,7 +22,7 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Utils::Registry;
 use Bio::EnsEMBL::Test::MultiTestDB;
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 use Test::Exception;
 
 # check module can be seen and compiled
@@ -44,6 +44,8 @@ Bio::EnsEMBL::Registry->add_DBAdaptor('mus_musculus', 'core', $mouse_dba);
 # create DBA, but don't add it to registry yet - will add it later
 my $test_ref_human_2 = Bio::EnsEMBL::Test::MultiTestDB->new( "test_ref_human_2" );
 my $human2_dba = $test_ref_human_2->get_DBAdaptor('core');
+my $test_fake_mouse = Bio::EnsEMBL::Test::MultiTestDB->new( "test_fake_mouse" );
+my $fake_mouse_dba = $test_fake_mouse->get_DBAdaptor('core');
 
 # Save status of database prior to alteration for restoration at end of tests
 $test_ref_compara->save('compara', 'genome_db');
@@ -119,16 +121,15 @@ subtest "remove_reference_genome", sub {
 note("------------------------ rename_reference_genome testing ---------------------------------");
 
 subtest "rename_reference_genome", sub {
+    # Add fake mouse to the registry
+    Bio::EnsEMBL::Registry->add_DBAdaptor('mus_musculusus', 'core', $fake_mouse_dba);
+
     my $mouse_gdb = $compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly('mus_musculus', 'GRCm38');
     my $mouse_gdb_id = $mouse_gdb->dbID;
     ok( Bio::EnsEMBL::Compara::Utils::ReferenceDatabase::rename_reference_genome($compara_dba, 'mus_musculus', 'mus_musculusus'), 'mouse reference renamed' );
 
     my ($gdb_name) = $compara_dba->dbc->db_handle->selectrow_array("SELECT name FROM genome_db WHERE genome_db_id = $mouse_gdb_id");
-    is( $gdb_name, 0, 'mus_musculus reference renamed to mus_musculusus' );
-
-    throws_ok {
-        Bio::EnsEMBL::Compara::Utils::ReferenceDatabase::rename_reference_genome($compara_dba, 'rattus_norvegicus', 'rattus_corvegicus')
-    } qr/has been already removed from the compara DB/, 'cannot rename what is not there';
+    is( $gdb_name, 'mus_musculusus', 'mus_musculus reference renamed to mus_musculusus' );
 };
 
 # Restore the databases for next tests
