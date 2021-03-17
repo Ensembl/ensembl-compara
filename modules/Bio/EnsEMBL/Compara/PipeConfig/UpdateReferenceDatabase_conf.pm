@@ -313,7 +313,10 @@ sub core_pipeline_analyses {
                 'xml_file'            => $self->o('xml_file'),
                 'cmd'                 => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #ref_db# -xml #xml_file# --release --verbose',
             },
-            -flow_into  => [ 'backup_ref_db_again' ],
+            -flow_into  => {
+                '1->A'  => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => '#ref_db#', 'registry_file' => undef }},
+                'A->1'  => [ 'backup_ref_db_again' ],
+            },
             -rc_name    => '2Gb_job',
         },
 
@@ -323,10 +326,7 @@ sub core_pipeline_analyses {
                 'src_db_conn' => '#ref_db#',
                 'output_file' => '#backups_dir#/compara_references.post#release#.sql'
             },
-            -flow_into  => {
-                '1->A'  => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => '#ref_db#', 'registry_file' => undef }},
-                'A->1'  => [ 'copy_backups_to_warehouse' ],
-            },
+            -flow_into  => [ 'copy_backups_to_warehouse' ],
             -rc_name    => '1Gb_job',
         },
 
