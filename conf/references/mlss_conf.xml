@@ -41,7 +41,7 @@
       <genome name="clytia_hemisphaerica"/>
       <genome name="lottia_gigantea"/>
       <genome name="trichoplax_adhaerens"/>
-      <genome name=" mnemiopsis_leidyi"/>
+      <genome name="mnemiopsis_leidyi"/>
       <!-- Plants -->
       <genome name="glycine_max"/>
       <genome name="solanum_lycopersicum"/>
