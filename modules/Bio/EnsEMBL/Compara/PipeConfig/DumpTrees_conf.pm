@@ -82,6 +82,8 @@ sub default_options {
         'xml_dir'     => '#target_dir#/xml/ensembl-compara/homologies/',                                                # where the XML dumps are put
         'emf_dir'     => '#target_dir#/emf/ensembl-compara/homologies/',                                                # where the EMF dumps are put
         'tsv_dir'     => '#target_dir#/tsv/ensembl-compara/homologies/',                                                # where the TSV dumps are put
+
+        'uniprot_file' => 'GeneTree_content.#clusterset_id#.e#curr_release#.txt',
     };
 }
 
@@ -108,6 +110,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'dump_trees_capacity' => $self->o('dump_trees_capacity'),
         'dump_hom_capacity'   => $self->o('dump_hom_capacity'  ),
         'dump_per_genome_cap' => $self->o('dump_per_genome_cap'),
+        'uniprot_file'        => $self->o('uniprot_file'),
     };
 }
 
