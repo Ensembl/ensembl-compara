@@ -718,7 +718,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     Ensembl.EventManager.trigger('changeMatrixTrackRenderers', config);
 
     $.extend(this.imageConfig, config);
-    return { imageConfig: config, menu_id: this.node_id };
+    return { imageConfig: config, menu_id: this.node_id, matrix: 1 };
   },
 
   updateFromTrackLabel: function(update) {

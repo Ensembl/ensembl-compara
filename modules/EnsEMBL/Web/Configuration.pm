@@ -205,7 +205,7 @@ sub create_node {
     type       => 'view',
     %{$options || {}}
   };
-  
+
   $details->{'availability'} = 1 if $details->{'type'} =~ /view/ && !defined $details->{'availability'};
   
   return $self->tree->root->append_child($self->tree->create_node($code, $details));

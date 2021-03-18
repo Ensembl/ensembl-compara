@@ -510,7 +510,7 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     Ensembl.EventManager.trigger('changeMatrixTrackRenderers', config);
 
     $.extend(this.imageConfig, config);
-    return { imageConfig: config };
+    return { imageConfig: config, matrix: 1 };
   },
 
   updateFromTrackLabel: function(update) {
