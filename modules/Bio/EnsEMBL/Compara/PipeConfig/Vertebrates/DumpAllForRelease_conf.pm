@@ -49,7 +49,7 @@ sub default_options {
         #'updated_mlss_ids' => [ 9802, 9803, 9804, 9805, 9806, 9807, 9788, 9789, 9810, 9794, 9809, 9748, 9749, 9750, 9751, 9763, 9764, 9765,
         #                        9766, 9778, 9779, 9780, 9781, 9797, 9798, 9799, 9800, 9801, 9808, 9787, 9813, 9814, 9812 ],
 
-        'dump_dir'         => '#dump_root#/release-#curr_release#',
+        'dump_dir'         => $self->o('dump_root') . '/release-' . $self->o('ensembl_release'),
         'ancestral_db'     => 'ancestral_curr',
 
         'division'          => 'vertebrates',
