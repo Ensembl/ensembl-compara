@@ -91,10 +91,14 @@ sub default_options {
         # whole dc options
         'datacheck_groups' => ['compara_references'],
         'db_type'          => ['compara'],
+        'dc_type'          => ['critical'],
         'output_dir_path'  => $self->o('pipeline_dir') . '/datachecks/',
         'overwrite_files'  => 1,
         'failures_fatal'   => 1, # no DC failure tolerance
         'ref_dbname'       => 'ensembl_compara_references', # to be manually passed in init if differs
+
+        # individual dc options
+        'dc_names' => ['CheckMemberIDRange'],
     };
 }
 
@@ -222,7 +226,7 @@ sub core_pipeline_analyses {
                 '3->A' => [ 'retire_reference' ],
                 '4->A' => [ 'rename_reference_genome' ],
                 '5->A' => [ 'verify_genome' ],
-                'A->1' => [ 'update_collection' ],
+                'A->1' => [ 'pre_collection_dc_dummy' ],
             },
         },
 
@@ -295,6 +299,14 @@ sub core_pipeline_analyses {
             -rc_name       => '16Gb_job',
         },
 
+        {   -logic_name    => 'pre_collection_dc_dummy',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into     => {
+                '1->A' =>  { 'datacheck_fan' => { 'db_type' => $self->o('db_type'), 'compara_db' => '#ref_db#', 'registry_file' => undef, 'datacheck_names' => $self->o('offset_ids') ? $self->o('dc_names') : [] } },
+                'A->1' => [ 'update_collection' ],
+            }
+        },
+
         {   -logic_name => 'update_collection',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CreateReleaseCollection',
             -parameters => {
@@ -314,7 +326,7 @@ sub core_pipeline_analyses {
                 'cmd'                 => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #ref_db# -xml #xml_file# --release --verbose',
             },
             -flow_into  => {
-                '1->A'  => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => '#ref_db#', 'registry_file' => undef }},
+                '1->A'  => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => '#ref_db#', 'registry_file' => undef, 'datacheck_types' => $self->o('dc_type') }},
                 'A->1'  => [ 'backup_ref_db_again' ],
             },
             -rc_name    => '2Gb_job',

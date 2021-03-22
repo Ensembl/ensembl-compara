@@ -38,6 +38,9 @@ use base ('Bio::EnsEMBL::DataCheck::Pipeline::DataCheckFan', 'Bio::EnsEMBL::Comp
 sub fetch_input {
     my $self = shift;
 
+    unless ( scalar @{$self->param('datacheck_names')} > 0 ) {
+        $self->complete_early("No datachecks to run");
+    }
     $self->param('dba', $self->compara_dba);
     # The pipeline may not be in the registry_file so server_uri needs to be explicitly passed
     unless ( $self->param('registry_file') ) {
