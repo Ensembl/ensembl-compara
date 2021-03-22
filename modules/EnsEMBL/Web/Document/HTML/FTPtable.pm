@@ -486,7 +486,7 @@ The MAF file format is described <a href="http://genome.ucsc.edu/FAQ/FAQformat.h
 
   unless ($sd->NO_VARIATION) {
     $html .= qq(
-dt class="bg1">GVF (variation data)</dt>
+<dt class="bg1">GVF (variation data)</dt>
 <dd class="bg1">GVF (Genome Variation Format) is a simple tab-delimited format derived
 from GFF3 for variation positions across the genome.
 There are GVF files for different types of variation data (e.g.
