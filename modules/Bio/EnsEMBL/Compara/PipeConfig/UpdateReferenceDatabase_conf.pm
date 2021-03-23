@@ -226,7 +226,7 @@ sub core_pipeline_analyses {
                 '3->A' => [ 'retire_reference' ],
                 '4->A' => [ 'rename_reference_genome' ],
                 '5->A' => [ 'verify_genome' ],
-                'A->1' => [ 'pre_collection_dc_dummy' ],
+                'A->1' => [ 'flow_pre_collection_dcs' ],
             },
         },
 
@@ -299,7 +299,7 @@ sub core_pipeline_analyses {
             -rc_name       => '16Gb_job',
         },
 
-        {   -logic_name    => 'pre_collection_dc_dummy',
+        {   -logic_name    => 'flow_pre_collection_dcs',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into     => {
                 '1->A' =>  { 'datacheck_fan' => { 'db_type' => $self->o('db_type'), 'compara_db' => '#ref_db#', 'registry_file' => undef, 'datacheck_names' => $self->o('offset_ids') ? $self->o('dc_names') : [] } },
