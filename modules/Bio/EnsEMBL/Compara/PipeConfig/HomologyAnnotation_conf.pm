@@ -224,7 +224,7 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into     => {
                 '2->A' => [ 'diamond_blastp', { 'make_query_blast_db' => { 'genome_db_id' => '#genome_db_id#', 'ref_taxa' => '#ref_taxa#' } }, { 'copy_ref_genomes' => {'target_genome_db_id' => '#target_genome_db_id#'} } ],
-                'A->2' => { 'break_seq_members_into_batches' => { 'genome_db_id' => '#genome_db_id#', 'target_genome_db_id' => '#target_genome_db_id#', }  },
+                'A->2' => { 'create_mlss_and_batch_members' => { 'genome_db_id' => '#genome_db_id#', 'target_genome_db_id' => '#target_genome_db_id#', }  },
             },
         },
 
@@ -239,8 +239,8 @@ sub core_pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'break_seq_members_into_batches',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SplitMembers',
+        {   -logic_name => 'create_mlss_and_batch_members',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::CreateSuperficialMLSS',
             -flow_into  => {
                 2 => [ 'parse_paf_for_rbbh' ],
             }

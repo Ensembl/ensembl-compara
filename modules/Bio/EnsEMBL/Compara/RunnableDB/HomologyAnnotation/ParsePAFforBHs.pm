@@ -59,9 +59,7 @@ sub write_output {
     my $ref_mem_adap   = $ref_db->get_SeqMemberAdaptor;
     my $query_mem_adap = $self->compara_dba->get_SeqMemberAdaptor;
 
-    # MLSS will not exist for hit_gdb: it is a reference and belongs to a different db
-    my $ss   = $self->_create_species_set($self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($query_gdb_id), $ref_db->get_GenomeDBAdaptor->fetch_by_dbID($hit_gdb_id));
-    my $mlss = $self->_create_superficial_mlss($self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($query_gdb_id), $ref_db->get_GenomeDBAdaptor->fetch_by_dbID($hit_gdb_id));
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_HOMOLOGUES', [ $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($query_gdb_id), $ref_db->get_GenomeDBAdaptor->fetch_by_dbID($hit_gdb_id) ] );
 
     foreach my $member ( @$seq_member_ids ) {
         # rbbh search for each member first
@@ -106,49 +104,6 @@ sub _write_homologies {
     $homology->dbID($paf->query_member_id . $paf->hit_member_id);
     $homology_adap->store($homology, $no_refmem);
 
-}
-
-sub _create_superficial_mlss {
-    my ($self, $gdb1, $gdb2) = @_;
-
-    my $mlss_adap    = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-    my $method_adap  = $self->compara_dba->get_MethodAdaptor;
-    my $species_adap = $self->compara_dba->get_SpeciesSetAdaptor;
-    my $method       = $method_adap->fetch_by_type('ENSEMBL_HOMOLOGUES');
-    my $species_set  = $species_adap->fetch_by_GenomeDBs([$gdb1, $gdb2]);
-
-    unless ($method) {
-        $method = Bio::EnsEMBL::Compara::Method->new(
-            -dbID            => 204,
-            -type            => 'ENSEMBL_HOMOLOGUES',
-            -class           => 'Homology.homology',
-            -display_name    => 'Homologues',
-            -adaptor         => $method_adap,
-        );
-        $method_adap->store($method);
-    }
-
-    my $method_link_species_set = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
-        -adaptor             => $mlss_adap,
-        -method              => $method,
-        -species_set         => $species_set,
-    );
-    $mlss_adap->store($method_link_species_set);
-    return $method_link_species_set;
-}
-
-sub _create_species_set {
-    my ($self, $gdb1, $gdb2) = @_;
-
-    my $species_adap = $self->compara_dba->get_SpeciesSetAdaptor;
-    my $species_set  = $species_adap->fetch_by_GenomeDBs([$gdb1, $gdb2]);
-    unless ($species_set) {
-        $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
-            -genome_dbs => [$gdb1, $gdb2],
-            -name       => $gdb1->name . "-" . $gdb2->name,
-        );
-        $species_adap->store($species_set);
-    }
 }
 
 1;
