@@ -21,8 +21,8 @@ Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::CreateSuperficialMLSS
 
 =head1 DESCRIPTION
 
-Create superficial MLSS for each genome_db_id and target_genome_db_id pair.
-Dataflow seq_member_ids in batches.
+Create superficial MLSS for each C<genome_db_id> and C<target_genome_db_id> pair.
+Optionally dataflow seq_member_ids in batches using C<step>.
 
 =cut
 
@@ -66,11 +66,16 @@ sub write_output {
     my $query_gdb_id   = $self->param_required('genome_db_id');
     my $hit_gdb_id     = $self->param_required('target_genome_db_id');
     my $seq_member_ids = $self->param('full_member_id_list');
-    my $step           = $self->param('step');
 
-    while ( my @member_id_list = splice @$seq_member_ids, 0, $step ) {
-        # A job is output for every $step query members against each reference diamond db
-        my $output_id = { 'member_id_list' => \@member_id_list, 'genome_db_id' => $query_gdb_id, 'target_genome_db_id' => $hit_gdb_id};
+    if ($self->param('step')) {
+        while ( my @member_id_list = splice @$seq_member_ids, 0, $self->param('step') ) {
+            # A job is output for every $step query members against each reference diamond db
+            my $output_id = { 'member_id_list' => \@member_id_list, 'genome_db_id' => $query_gdb_id, 'target_genome_db_id' => $hit_gdb_id};
+            $self->dataflow_output_id($output_id, 2);
+        }
+    }
+    else {
+        my $output_id = { 'member_id_list' => $seq_member_ids, 'genome_db_id' => $query_gdb_id, 'target_genome_db_id' => $hit_gdb_id};
         $self->dataflow_output_id($output_id, 2);
     }
 }
