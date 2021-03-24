@@ -54,7 +54,7 @@ sub run {
     my @seq_member_ids = map {$_->dbID} @$seq_members;
 
     # MLSS will not exist for hit_gdb: it is a reference and belongs to a different db
-    my $mlss = $self->_create_superficial_mlss($self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($query_gdb_id), $ref_db->get_GenomeDBAdaptor->fetch_by_dbID($hit_gdb_id));
+    my $mlss = $self->_create_and_store_superficial_mlss($self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($query_gdb_id), $ref_db->get_GenomeDBAdaptor->fetch_by_dbID($hit_gdb_id));
 
     $self->param('full_member_id_list', \@seq_member_ids);
 
@@ -80,7 +80,7 @@ sub write_output {
     }
 }
 
-sub _create_superficial_mlss {
+sub _create_and_store_superficial_mlss {
     my ($self, $gdb1, $gdb2) = @_;
 
     my $mlss_adap    = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
