@@ -59,13 +59,24 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift;
 
-    my $ref_ortholog_dba    = $self->get_cached_compara_dba('ref_ortholog_db');
-    my $ref_mlss_adaptor    = $ref_ortholog_dba->get_MethodLinkSpeciesSetAdaptor;
+    my $master_dba          = $self->get_cached_compara_dba('master_db');
+    my $master_mlss_adaptor = $master_dba->get_MethodLinkSpeciesSetAdaptor;
+    my $ref_collection_name = $self->param_required('ref_collection');
+    my $ref_collection      = $master_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($ref_collection_name);
+    die "Cannot find collection '$ref_collection_name' in master_db" unless $ref_collection;
+    my @ref_mlsses;
+    foreach my $ml ( qw(ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES ENSEMBL_HOMOEOLOGUES) ) {
+        foreach my $gdb1 ( @{ $ref_collection->genome_dbs } ) {
+            foreach my $gdb2 ( @{ $ref_collection->genome_dbs } ) {
+                my $mlss = $master_mlss_adaptor->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1, $gdb2]);
+                next unless $mlss->is_current;
+                push @ref_mlsses, $mlss;
+            }
+        }
+    }
+
     my $mlss_adaptor        = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-    my %homology_methods    = map {$_ => 1} qw(ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES ENSEMBL_HOMOEOLOGUES);
-    my @overlapping_mlsss   = grep {$mlss_adaptor->fetch_by_dbID($_->dbID)}
-                              grep {$homology_methods{$_->method->type}}
-                                   @{$ref_mlss_adaptor->fetch_all};
+    my @overlapping_mlsss   = grep {$mlss_adaptor->fetch_by_dbID($_->dbID)} @ref_mlsses;
 
     $self->param('overlapping_mlsss', \@overlapping_mlsss);
 }
@@ -84,6 +95,8 @@ sub _remove_homologies {
 
     $self->compara_dba->dbc->do('DELETE homology_member FROM homology_member JOIN homology USING (homology_id) WHERE method_link_species_set_id = ?', undef, $mlss_id);
     $self->compara_dba->dbc->do('DELETE FROM homology WHERE method_link_species_set_id = ?',                                                          undef, $mlss_id);
+    $self->compara_dba->dbc->do('DELETE FROM method_link_species_set_tag WHERE method_link_species_set_id = ?',                                       undef, $mlss_id);
+
 }
 
-1; 
+1;
