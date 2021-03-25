@@ -148,9 +148,6 @@ sub default_options {
             'per_family_table'         => 0,
             'cafe_species'             => [],
 
-            # Ortholog-clustering parameters
-            'ref_ortholog_db'           => undef,
-
             # Analyses usually don't fail
             'hive_default_max_retry_count'  => 1,
             
@@ -587,28 +584,8 @@ sub core_pipeline_analyses {
 
         {   -logic_name         => 'expand_clusters_with_projections',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExpandClustersWithProjections',
-            # -flow_into          => [ 'cluster_qc_factory' ],
-            -flow_into => WHEN(
-                '#ref_ortholog_db#' => 'check_strains_cluster_factory',
-                ELSE 'cluster_qc_factory',
-            ),
+            -flow_into          => [ 'cluster_qc_factory' ],
             -rc_name => '500Mb_job',
-        },
-        
-        {   -logic_name => 'check_strains_cluster_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputquery' => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
-            },
-            -flow_into  => {
-                '2->A' => [ 'cleanup_strains_clusters' ],
-                'A->1' => [ 'cluster_qc_factory' ],
-            },
-            -rc_name    => '1Gb_job',
-        },
-        
-        {   -logic_name => 'cleanup_strains_clusters',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingClusters',
         },
 
 # -------------------------------------------------[build trees]------------------------------------------------------------------
@@ -636,12 +613,6 @@ sub core_pipeline_analyses {
                                     ],
               %hc_params,
             },
-
-        {
-             -logic_name => 'remove_overlapping_homologies',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveOverlappingHomologies',
-             -flow_into  => [ 'rename_labels' ],
-        },
 
         {
              -logic_name => 'rename_labels',
@@ -1293,7 +1264,7 @@ sub core_pipeline_analyses {
             -rc_name => '1Gb_job',
             -hive_capacity => $self->o('homology_id_mapping_capacity'),
         },
-        
+
         {   -logic_name => 'rib_fire_homology_dumps',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
@@ -1304,14 +1275,9 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'rib_fire_homology_processing',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                1       => [ 
-                    WHEN('#ref_ortholog_db#' => 'remove_overlapping_homologies', ELSE [ 'homology_stats_factory', 'id_map_mlss_factory' ]),
-                    'rib_fire_orth_wga_and_high_conf',
-                ],
-            },
+            -flow_into  => [ 'rib_fire_orth_wga_and_high_conf', 'rename_labels' ],
         },
-        
+
         {   -logic_name => 'copy_dumps_to_shared_loc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {

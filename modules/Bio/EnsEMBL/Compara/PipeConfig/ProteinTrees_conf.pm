@@ -321,9 +321,6 @@ sub default_options {
         #   'homologies is like 'trees', but also copies the homologies  >> UNIMPLEMENTED <<
         'reuse_level'               => 'members',
 
-    # Ortholog-clustering parameters
-        'ref_ortholog_db'           => undef,
-
     # CAFE parameters
         'cafe_lambdas'             => '',  # For now, we don't supply lambdas
         'cafe_struct_tree_str'     => '',  # Not set by default
@@ -1567,28 +1564,8 @@ sub core_pipeline_analyses {
             -parameters         => {
                 blacklist_file      => $self->o('gene_blacklist_file'),
             },
-            # -flow_into          => [ 'hc_clusters' ],
-            -flow_into => WHEN(
-                '#ref_ortholog_db#' => 'check_strains_cluster_factory',
-                ELSE 'hc_clusters',
-            ),
+            -flow_into          => [ 'hc_clusters' ],
             -rc_name => '500Mb_job',
-        },
-
-        {   -logic_name => 'check_strains_cluster_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputquery' => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
-            },
-            -flow_into  => {
-                '2->A' => [ 'cleanup_strains_clusters' ],
-                'A->1' => [ 'hc_clusters' ],
-            },
-            -rc_name    => '1Gb_job',
-        },
-        {   -logic_name => 'cleanup_strains_clusters',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingClusters',
-
         },
 
         {   -logic_name         => 'hc_clusters',
@@ -1725,7 +1702,6 @@ sub core_pipeline_analyses {
             -flow_into  => [
                     WHEN('#do_stable_id_mapping#' => 'stable_id_mapping'),
                     WHEN('#do_treefam_xref#' => 'treefam_xref_idmap'),
-                    WHEN('#clustering_mode# eq "ortholog"' => 'remove_overlapping_homologies'),
                 ],
             %hc_analysis_params,
         },
@@ -3738,11 +3714,6 @@ sub core_pipeline_analyses {
                  'clusterset_id'=> $self->o('collection'),
                  'label_prefix' => $self->o('label_prefix'),
              },
-        },
-
-        {
-             -logic_name => 'remove_overlapping_homologies',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveOverlappingHomologies',
         },
 
         {   -logic_name => 'copy_dumps_to_shared_loc',

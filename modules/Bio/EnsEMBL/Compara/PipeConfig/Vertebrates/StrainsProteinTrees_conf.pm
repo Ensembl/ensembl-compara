@@ -59,14 +59,16 @@ sub default_options {
 
     # connection parameters to various databases:
 
-        # Where to draw the orthologues from
-        'ref_ortholog_db'   => 'compara_ptrees',
+        # collection in master that will have overlapping data
+        'ref_collection'   => 'default',
 
     # Extra analyses
         # gain/loss analysis ?
         'do_cafe'                => 0,
         # Do we want the Gene QC part to run ?
         'do_gene_qc'             => 0,
+
+        'multifurcation_deletes_all_subnodes' => undef,
     };
 }
 
@@ -77,10 +79,39 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
         'cdna'              => $self->o('use_dna_for_phylogeny'),
-        'ref_ortholog_db'   => $self->o('ref_ortholog_db'),
+        'ref_collection'    => $self->o('ref_collection'),
     }
 }
 
+sub core_pipeline_analyses {
+    my ($self) = @_;
+    return [
+        @{$self->SUPER::core_pipeline_analyses},
+
+        # include strain-specific analyses
+        {   -logic_name => 'check_strains_cluster_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery' => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
+            },
+            -flow_into  => {
+                '2->A' => [ 'cleanup_strains_clusters' ],
+                'A->1' => [ 'hc_clusters' ],
+            },
+            -rc_name    => '1Gb_job',
+        },
+        {   -logic_name => 'cleanup_strains_clusters',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingClusters',
+
+        },
+
+
+        {
+             -logic_name => 'remove_overlapping_homologies',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveOverlappingHomologies',
+        },
+    ]
+}
 
 sub tweak_analyses {
     my $self = shift;
@@ -90,6 +121,10 @@ sub tweak_analyses {
     $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = $self->o('multifurcation_deletes_all_subnodes');
     $analyses_by_name->{'expand_clusters_with_projections'}->{'-rc_name'} = '500Mb_job';
     $analyses_by_name->{'split_genes'}->{'-hive_capacity'} = 300;
+
+    # wire up strain-specific analyses
+    $analyses_by_name->{'remove_blacklisted_genes'}->{'-flow_into'} = ['check_strains_cluster_factory'];
+    push @{$analyses_by_name->{'hc_global_tree_set'}->{'-flow_into'}}, 'remove_overlapping_homologies';
 }
 
 
