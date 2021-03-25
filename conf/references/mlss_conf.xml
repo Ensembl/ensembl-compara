@@ -139,7 +139,7 @@
       <genome name="macaca_mulatta"/>
       <genome name="pan_troglodytes"/>
       <!-- Lagomorph -->
-      <genome name="Oryctolagus_cuniculus"/>
+      <genome name="oryctolagus_cuniculus"/>
       <!-- Rodents -->
       <genome name="mus_musculus"/>
       <genome name="rattus_norvegicus"/>
@@ -148,7 +148,7 @@
       <genome name="dipodomys_ordii"/>
       <genome name="jaculus_jaculus"/>
       <genome name="peromyscus_maniculatus_bairdii"/>
-      <genome name="Nannospalax_galili"/>
+      <genome name="nannospalax_galili"/>
     </collection>
 
     <collection name="actinopterygii">
@@ -187,7 +187,7 @@
       <!-- Gadiformes -->
       <genome name="gadus_morhua"/>
       <!-- Beryciformes -->
-      <genome neme="myripristis_murdjan"/>
+      <genome name="myripristis_murdjan"/>
       <!-- 	Tetraodontiformes -->
       <genome name="takifugu_rubripes"/>
       <!-- Anabantiformes -->
