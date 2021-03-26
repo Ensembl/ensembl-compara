@@ -1,4 +1,3 @@
-
 =head1 LICENSE
 
 See the NOTICE file distributed with this work for additional information
@@ -38,13 +37,14 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
         'force' => 0,
+        'store_components'  => 0,
     };
 }
 
 sub write_output{
     my $self = shift @_;
 
-    my ($new_ref_gdb, $comp_gdbs, $dnafrag_count) = @{ Bio::EnsEMBL::Compara::Utils::ReferenceDatabase::update_reference_genome($self->compara_dba(), $self->param('species_name'), -FORCE => $self->param('force') )};
+    my ($new_ref_gdb, $comp_gdbs, $dnafrag_count) = @{ Bio::EnsEMBL::Compara::Utils::ReferenceDatabase::update_reference_genome($self->compara_dba(), $self->param('species_name'), -FORCE => $self->param('force'), -STORE_COMPONENTS => $self->param('store_components') )};
     $self->dataflow_output_id( {genome_db_id => $new_ref_gdb->dbID}, 1 );
 }
 
