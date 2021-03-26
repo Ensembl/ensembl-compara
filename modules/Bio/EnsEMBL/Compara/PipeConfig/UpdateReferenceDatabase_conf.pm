@@ -236,6 +236,7 @@ sub core_pipeline_analyses {
                 'compara_db' => '#ref_db#',
             },
             -hive_capacity => 10,
+            -rc_name       => '500Mb_job',
             -flow_into     => ['load_members'],
         },
 
@@ -269,7 +270,7 @@ sub core_pipeline_analyses {
                 'allow_missing_coordinates'     => $self->o('allow_missing_coordinates'),
                 'allow_missing_exon_boundaries' => $self->o('allow_missing_exon_boundaries')
             },
-            -rc_name   => '4Gb_job',
+            -rc_name   => '1Gb_job',
             -flow_into => ['dump_full_fasta'],
         },
 
