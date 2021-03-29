@@ -1,0 +1,1 @@
+../../triticum_aestivum/core/genome_statistics.txt

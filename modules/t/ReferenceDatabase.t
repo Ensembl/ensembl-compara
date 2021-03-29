@@ -40,6 +40,9 @@ Bio::EnsEMBL::Registry->add_DBAdaptor('homo_sapiens', 'core', $human1_dba);
 my $test_ref_mouse = Bio::EnsEMBL::Test::MultiTestDB->new( "test_ref_mouse" );
 my $mouse_dba = $test_ref_mouse->get_DBAdaptor('core');
 Bio::EnsEMBL::Registry->add_DBAdaptor('mus_musculus', 'core', $mouse_dba);
+my $test_ref_wheat = Bio::EnsEMBL::Test::MultiTestDB->new( "test_ref_wheat" );
+my $wheat_dba = $test_ref_wheat->get_DBAdaptor('core');
+Bio::EnsEMBL::Registry->add_DBAdaptor('triticum_aestivum', 'core', $wheat_dba);
 
 # create DBA, but don't add it to registry yet - will add it later
 my $test_ref_human_2 = Bio::EnsEMBL::Test::MultiTestDB->new( "test_ref_human_2" );
@@ -62,7 +65,7 @@ note("------------------------ update_reference_genome testing -----------------
 
 subtest "update_reference_genome", sub {
     my ($ref_update, $components, $new_dnafrags);
-    my ($human_1_gdb, $human_2_gdb, $mouse_gdb);
+    my ($human_1_gdb, $human_2_gdb, $mouse_gdb, $wheat_gdb);
 
     # add initial references
     ok( $ref_update = Bio::EnsEMBL::Compara::Utils::ReferenceDatabase::update_reference_genome($compara_dba, 'homo_sapiens') );
@@ -76,6 +79,13 @@ subtest "update_reference_genome", sub {
     is( $mouse_gdb->name, 'mus_musculus', 'mouse added successfully' );
     is( $mouse_gdb->genebuild, '2012-07', 'mouse genebuild correct' );
     is( $new_dnafrags, 6, 'mouse dnafrags added' );
+
+    ok( $ref_update = Bio::EnsEMBL::Compara::Utils::ReferenceDatabase::update_reference_genome($compara_dba, 'triticum_aestivum', -TAXON_ID => 12345) );  # need fake taxon_id
+    ( $wheat_gdb, $components, $new_dnafrags ) = @$ref_update;
+    is( $wheat_gdb->name, 'triticum_aestivum', 'wheat added successfully' );
+    is( $wheat_gdb->genebuild, '2013-12-MIPS', 'wheat genebuild correct' );
+    is( $components, undef, 'no wheat genome components loaded' );
+    is( $new_dnafrags, 3, 'wheat dnafrags added' );
 
     # replace human in registry and test adding new annotation version
     Bio::EnsEMBL::Compara::Utils::Registry::remove_species(['homo_sapiens']);
@@ -101,6 +111,15 @@ subtest "update_reference_genome", sub {
     ( $human_3_gdb, $components, $new_dnafrags ) = @$ref_update;
     is( $new_dnafrags, 1, '1 human dnafrag force added' );
     is($human_2_gdb->dbID, $human_3_gdb->dbID, 'no new id - updated existing genome');
+
+    # check -STORE_COMPONENTS flag functionality
+    $compara_dba->dbc->do("DELETE FROM dnafrag WHERE genome_db_id = " . $wheat_gdb->dbID);
+    ok( $ref_update = Bio::EnsEMBL::Compara::Utils::ReferenceDatabase::update_reference_genome($compara_dba, 'triticum_aestivum', -FORCE => 1, -STORE_COMPONENTS => 1) );
+    ( $wheat_gdb, $components, $new_dnafrags ) = @$ref_update;
+    is( $wheat_gdb->name, 'triticum_aestivum', 'wheat added successfully' );
+    is( $wheat_gdb->genebuild, '2013-12-MIPS', 'wheat genebuild correct' );
+    is( scalar @$components, 3, 'wheat genome components loaded successfully' );
+    is( $new_dnafrags, 6, 'wheat dnafrags added' );
 };
 
 note("------------------------ remove_reference_genome testing ---------------------------------");

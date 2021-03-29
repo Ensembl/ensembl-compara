@@ -48,10 +48,12 @@ use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
   Arg[3]      : (optional) boolean $force
   Arg[4]      : (optional) int $taxon_id
   Arg[5]      : (optional) int $offset
+  Arg[6]      : (optional) boolean $store_components
   Description : Does everything for this species: create / update the GenomeDB entry, and load the DnaFrags.
                 If the GenomeDB already exists, set $force = 1 to force the update of DnaFrags. Use $taxon_id
                 to manually set the taxon id for this species (default is to find it in the core db).
                 $offset can be used to override autoincrement of dbID
+                $store_components can be used to include the genome components for this species
   Returns     : arrayref containing (1) new Bio::EnsEMBL::Compara::GenomeDB object, (2) arrayref of updated
                 component GenomeDBs, (3) number of dnafrags updated
   Exceptions  : none
@@ -62,7 +64,7 @@ sub update_reference_genome {
     my $compara_dba = shift;
     my $species = shift;
 
-    my ($force, $taxon_id, $offset) = rearrange([qw(FORCE TAXON_ID OFFSET)], @_);
+    my ($force, $taxon_id, $offset, $store_components) = rearrange([qw(FORCE TAXON_ID OFFSET STORE_COMPONENTS)], @_);
 
     my $species_no_underscores = $species;
     $species_no_underscores =~ s/\_/\ /;
@@ -79,9 +81,11 @@ sub update_reference_genome {
         print "Reference GenomeDB after update: ", $new_genome_db->toString, "\n\n";
         print "Fetching DnaFrags from " . $species_db->dbc->host . "/" . $species_db->dbc->dbname . "\n";
         $new_dnafrags = Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_dnafrags($compara_dba, $new_genome_db, $species_db);
-        $component_genome_dbs = Bio::EnsEMBL::Compara::Utils::MasterDatabase::_update_component_genome_dbs($new_genome_db, $species_db, $compara_dba);
-        foreach my $component_gdb (@$component_genome_dbs) {
-            $new_dnafrags += Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_dnafrags($compara_dba, $component_gdb, $species_db);
+        if ($store_components) {
+            $component_genome_dbs = Bio::EnsEMBL::Compara::Utils::MasterDatabase::_update_component_genome_dbs($new_genome_db, $species_db, $compara_dba);
+            foreach my $component_gdb (@$component_genome_dbs) {
+                $new_dnafrags += Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_dnafrags($compara_dba, $component_gdb, $species_db);
+            }
         }
     } );
     $species_db->dbc()->disconnect_if_idle();
