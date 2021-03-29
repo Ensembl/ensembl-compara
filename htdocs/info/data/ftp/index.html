@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>FTP Download</title> 
+<title>FTP Download</title>
 <meta name="order" content="4" />
 </head>
 
@@ -8,11 +8,17 @@
 
 <h1>FTP Download</h1>
 
-<p>You can download via a browser from our <a href="[[SPECIESDEFS::ENSEMBL_FTP_URL]]" rel="external">FTP site</a>, 
+<p>You can download via a browser from our <a href="[[SPECIESDEFS::ENSEMBL_FTP_URL]]" rel="external">FTP site</a>,
 use a script, or even use <a href="rsync.html">rsync</a> from the command line.</p>
+
+<h2>Globus</h2>
+
+<p>For rapid bulk download of files, the Ensembl FTP site is available as an end point in the <a href="https://www.globus.org/">Globus Online system</a>. In order to access the data you need to sign up for an account with Globus, install the Globus Connect Personal software and setup a personal endpoint to download the data.
+
+The Ensembl data is hosted at the EMBL-EBI end point called “Shared EMBL-EBI public endpoint”. Data from the Ensembl FTP site can then be found under the "/gridftp/ensemblorg/pub" directory within the EMBL-EBI public end point.</p>
 
 [[SCRIPT::EnsEMBL::Web::Document::HTML::FTPtable]]
 
-  
+
 </body>
 </html>
