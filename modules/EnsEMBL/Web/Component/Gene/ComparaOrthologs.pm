@@ -388,7 +388,6 @@ sub get_export_data {
   my $hub          = $self->hub;
   my $object       = $self->object || $hub->core_object('gene');
 
-
   if ($flag eq 'sequence') {
     return $object->get_homologue_alignments;
   }
@@ -427,23 +426,15 @@ sub buttons {
     my $dxr  = $gene->can('display_xref') ? $gene->display_xref : undef;
     my $name = $dxr ? $dxr->display_id : $gene->stable_id;
 
-    my $params  = {
-      'type'        => 'DataExport',
-      'action'      => 'Orthologs',
-      'data_type'   => 'Gene',
-      'component'   => 'ComparaOrthologs',
-      'data_action' => $hub->action,
-      'gene_name'   => $name,
-      'cdb'         => $hub->function =~ /pan_compara/ ? 'pan_compara' : 'compara',
+    my $params  = { 
+      'type'          => 'DataExport',
+      'action'        => 'Orthologs',
+      'data_type'     => 'Gene',
+      'component'     => 'ComparaOrthologs',
+      'data_action'   => $hub->action,
+      'gene_name'     => $name,
+      'cdb'           => $hub->function =~ /pan_compara/ ? 'pan_compara' : 'compara'
     };
-
-    ## Add any species settings
-    my $compara_spp = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'COMPARA_SPECIES'};
-    foreach (grep { /^species_/ } $self->param) {
-      (my $key = $_) =~ s/species_//;
-      next unless $compara_spp->{$key};
-      $params->{$_} = $self->param($_);
-    }
 
     push @buttons, {
                     'url'     => $hub->url($params),
