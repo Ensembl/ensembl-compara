@@ -54,13 +54,14 @@ sub _content {
       type  => 'Gene Symbol',
       label => $gene_desc
     });
-
-    $self->add_entry({
-      type  => 'Gene ID',
-      label => $object->stable_id,
-      link  => $hub->url({ type => 'Gene', action => 'Summary' })
-    });
   }
+  
+  $self->add_entry({
+    type  => 'Gene ID',
+    label => $object->stable_id,
+    link  => $hub->url({ type => 'Gene', action => 'Summary' })
+  });
+
   
   $self->add_entry({
     type  => 'Location',
