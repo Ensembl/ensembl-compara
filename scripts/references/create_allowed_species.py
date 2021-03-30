@@ -23,10 +23,10 @@ import json
 import argparse
 import xml.etree.ElementTree
 from xml.etree.ElementTree import ParseError
+from typing import List
 
 
-
-def get_species_list(mlss_conf_file):
+def get_species_list(mlss_conf_file: str) -> List:
     """
     Return a list with all species present in the mlss_conf.xml. Each species are unci in the list
 
@@ -50,7 +50,7 @@ def get_species_list(mlss_conf_file):
     return species_list
 
 
-def create_allowed_species_json(species, allowed_species_file):
+def create_allowed_species_json(species: List, allowed_species_file: str) -> None:
     """
     Create the json file with th list of allowed species
 
@@ -63,7 +63,7 @@ def create_allowed_species_json(species, allowed_species_file):
         json.dump(species, file_handle, indent=4)
 
 
-def main(mlss_conf_file, allowed_species_file):
+def main(mlss_conf_file: str, allowed_species_file: str) -> None:
     """
     Main function of the script
 
