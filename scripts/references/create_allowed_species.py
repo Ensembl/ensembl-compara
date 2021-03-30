@@ -22,6 +22,8 @@ import sys
 import json
 import argparse
 import xml.etree.ElementTree
+from xml.etree.ElementTree import ParseError
+
 
 
 def get_species_list(mlss_conf_file):
@@ -34,7 +36,7 @@ def get_species_list(mlss_conf_file):
 
     try:
         compara_db_tree = xml.etree.ElementTree.parse(mlss_conf_file)
-    except Exception as err:
+    except ParseError as err:
         print("issue with " + mlss_conf_file)
         print(err)
         sys.exit(1)
