@@ -889,7 +889,19 @@ sub get_homologue_alignments {
   my $database    = $self->database($compara_db);
   my $hub         = $self->hub;
   my $strain_tree = $hub->species_defs->get_config($hub->species,'RELATED_TAXON') if($hub->param('data_action') =~ /strain_/i);
+  my @filtered_sets =  split /\s*,\s*/, $hub->param('filtered_sets');
   my $msa;
+
+  my $species_group_2_species_set = {
+      Primates          => ['primates', 'placental'],
+      Euarchontoglires  => ['rodents', 'placental'],
+      Laurasiatheria    => ['laurasia', 'placental'],
+      Afrotheria        => ['placental'],
+      Xenarthra         => ['placental'],
+      Aves              => ['sauria'],
+      Sauropsida        => ['sauria'],
+      Actinopterygii    => ['fish']
+  };
 
   if ($database) {  
     my $member  = $self->get_compara_Member($compara_db);
@@ -899,7 +911,26 @@ sub get_homologue_alignments {
     my $compara_spp = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'COMPARA_SPECIES'};
     foreach (grep { /species_/ } $hub->param) {
       (my $sp = $_) =~ s/species_//;
-      push @$species, $sp if ($compara_spp->{$sp} && $hub->param($_) eq 'yes');
+
+      if ($compara_spp->{$sp} && $hub->param($_) eq 'yes'){
+
+        if($filtered_sets[0] eq 'all'){
+          push @$species, $sp;
+        } else {
+
+          my $group = $hub->species_defs->get_config(ucfirst($sp), 'SPECIES_GROUP');
+          
+          foreach my $set (@{$species_group_2_species_set->{$group}}){
+                
+                if (grep(/$set/,@filtered_sets)){
+                    push @$species, $sp;
+                    last;
+                }
+
+          }
+        }
+      }
+
     }
     push @params, $species if scalar @$species;
     $msa        = $tree->get_alignment_of_homologues(@params);
