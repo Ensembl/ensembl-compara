@@ -90,6 +90,7 @@ standaloneJob(
         'compara_db'    => $compara_db,
         'step'          => 4,
         'rr_ref_db'     => $ref_db,
+        'species_list'  => [ 'canis_lupus_familiaris' ],
         'ref_dump_dir'  => $ref_dump_dir,
     },
     # Output
