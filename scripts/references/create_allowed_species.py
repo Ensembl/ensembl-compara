@@ -53,7 +53,7 @@ def get_species_list(mlss_conf_file: str) -> List:
 
 
 def create_allowed_species_json(species: List, allowed_species_file: str) -> None:
-    """Create the json file with th list of allowed species
+    """Create the json file with the list of allowed species.
 
     Args:
         species: The list of species
