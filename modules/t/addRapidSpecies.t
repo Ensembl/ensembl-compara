@@ -42,10 +42,6 @@ my $pt_dba = $pan_troglodytes->get_DBAdaptor('core');
 Bio::EnsEMBL::Registry->add_DBAdaptor('pan_troglodytes', 'core', $pt_dba);
 # Expected dataflow
 my $exp_dataflow_1 = {
-    'genome_db_id' => '135',
-    'species_name' => 'canis_lupus_familiaris'
-};
-my $exp_dataflow_2 = {
     'genome_db_id' => '137',
     'species_name' => 'pan_troglodytes',
 };
@@ -64,11 +60,6 @@ standaloneJob(
         [
             'DATAFLOW',
             $exp_dataflow_1,
-            2
-        ],
-        [
-            'DATAFLOW',
-            $exp_dataflow_2,
             2
         ],
     ]
