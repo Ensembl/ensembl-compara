@@ -69,7 +69,7 @@ def create_allowed_species_json(species: List, allowed_species_file: str) -> Non
 
 def main(mlss_conf_file: str, allowed_species_file: str) -> None:
     """Main function of the script which process the MLSS XML configuration file to get the list of species
-    and write the list of a allowed species in to a JSON file
+    and write the list of allowed species into a JSON file
 
     Args:
         mlss_conf_file: Path to the mlss_conf.xml
