@@ -75,8 +75,6 @@ def main(mlss_conf_file: str, allowed_species_file: str) -> None:
         mlss_conf_file: Path to the mlss_conf.xml
         allowed_species_file: Path to the output allowed_species.json file
 
-    Returns:
-        None
     """
 
     # get the list fo species from the mlss_conf.xml
