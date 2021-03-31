@@ -59,9 +59,6 @@ def create_allowed_species_json(species: List, allowed_species_file: str) -> Non
         species: The list of species
         allowed_species_file: Path to the output json file
 
-    Returns:
-        None
-
     Raises:
         FileNotFoundError: If ``allowed_species_file`` cannot be created (wrong path).
     """
