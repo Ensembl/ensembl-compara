@@ -76,6 +76,7 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
                     { 'load_fresh_members_from_db' => { 'genome_db_id' => '#genome_db_id#' } },
                 ],
                 'A->1' => [ 'hc_members_globally' ],
+                '1'    => [ 'copy_ref_genomes_factory' ],
             },
         },
     #--------------------Query genome member loading------------------#
@@ -116,6 +117,28 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode   => 'members_globally',
+            },
+        },
+    #--------------------Reference genome loading------------------#
+        {   -logic_name => 'copy_ref_genomes_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'compara_db'    => '#rr_ref_db#',
+                'all_current'   => 1,
+            },
+            -flow_into  => {
+                2 => [ 'copy_ref_genomes' ],
+            },
+        },
+
+        {   -logic_name => 'copy_ref_genomes',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#rr_ref_db#',
+                'mode'          => 'insertignore',
+                'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
+                'table'         => 'genome_db',
+                'where'         => 'genome_db_id = #genome_db_id#',
             },
         },
 

@@ -231,22 +231,9 @@ sub core_pipeline_analyses {
                 '2->A' => [
                     { 'diamond_blastp'      => { 'genome_db_id' => '#genome_db_id#', 'member_id_list' => '#member_id_list#', 'blast_db' => '#blast_db#', 'target_genome_db_id' => '#target_genome_db_id#' } },
                     { 'make_query_blast_db' => { 'genome_db_id' => '#genome_db_id#', 'ref_taxa' => '#ref_taxa#' } },
-                    { 'copy_ref_genomes'    => { 'target_genome_db_id' => '#target_genome_db_id#' } }
                 ],
                 'A->2' => { 'create_mlss_and_batch_members' => { 'genome_db_id' => '#genome_db_id#', 'target_genome_db_id' => '#target_genome_db_id#', 'step' => $self->o('num_sequences_per_blast_job') }  },
             },
-        },
-
-        {   -logic_name => 'copy_ref_genomes',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters => {
-                'src_db_conn'   => '#rr_ref_db#',
-                'mode'          => 'insertignore',
-                'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
-                'table'         => 'genome_db',
-                'where'         => 'genome_db_id = #target_genome_db_id#',
-            },
-            -priority   => 20,
         },
 
         {   -logic_name => 'create_mlss_and_batch_members',
