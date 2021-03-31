@@ -1405,13 +1405,13 @@ CREATE TABLE peptide_align_feature (
   FOREIGN KEY (qgenome_db_id) REFERENCES genome_db(genome_db_id),
   FOREIGN KEY (hgenome_db_id) REFERENCES genome_db(genome_db_id),
 
-  PRIMARY KEY (peptide_align_feature_id)
+  PRIMARY KEY (peptide_align_feature_id),
 #  KEY hmember_hit (hmember_id, hit_rank)
 
-#  KEY qmember_id  (qmember_id),
-#  KEY hmember_id  (hmember_id),
+  KEY qmember_id  (qmember_id),
+  KEY hmember_id  (hmember_id),
 #  KEY hmember_qgenome  (hmember_id, qgenome_db_id),
-#  KEY qmember_hgenome  (qmember_id, hgenome_db_id)
+  KEY qmember_hgenome  (qmember_id, hgenome_db_id)
 ) MAX_ROWS = 100000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 /**
