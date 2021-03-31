@@ -78,12 +78,14 @@ sub run {
     foreach my $species_name ( @$species_list ) {
         push @$new_genome_dbs, Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_genome($self->compara_dba, $species_name, -RELEASE => $self->param('release'), -FORCE => $self->param('force'), -SKIP_DNA => $self->param('skip_dna') ); # skip dna loading to save table space
     }
+
+    $self->param('genome_dbs', $new_genome_dbs);
 }
 
 sub write_output {
     my $self = shift @_;
 
-    my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
+    my $genome_dbs = $self->param('genome_dbs');
 
     foreach my $genome_db ( sort { $a->dbID() <=> $b->dbID() } @$genome_dbs ) {
         $self->dataflow_output_id( { 'genome_db_id' => $genome_db->dbID(), 'species_name' => $genome_db->name() }, 2 );

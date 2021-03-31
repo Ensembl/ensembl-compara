@@ -33,6 +33,10 @@ Mandatory. Rapid release Compara reference database. Can be an alias or an URL.
 
 Mandatory. Reference dump directory path.
 
+=item species_list
+
+Mandatory. Query species name list.
+
 =item step
 
 Optional. How many sequences to write into the blast query file. Default: 200.
@@ -64,10 +68,12 @@ sub fetch_input {
     my $self = shift @_;
 
     my $ref_master = $self->param_required('rr_ref_db');
-    my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
+    my $species = $self->param_required('species_list');
+    my $gdb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
     my ( @genome_db_ids, @query_members );
 
-    foreach my $genome_db (@$genome_dbs) {
+    foreach my $species_name (@$species) {
+        my $genome_db = $gdb_adaptor->fetch_by_registry_name($species_name);
         my $genome_db_id = $genome_db->dbID;
         # Fetch canonical proteins into array
         my $some_members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_GenomeDB($genome_db_id);
