@@ -1384,8 +1384,8 @@ CREATE TABLE peptide_align_feature (
   peptide_align_feature_id    bigint  unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   qmember_id                  INT unsigned NOT NULL, # FK seq_member.seq_member_id
   hmember_id                  INT unsigned NOT NULL, # FK seq_member.seq_member_id
-  qgenome_db_id               INT unsigned, # FK genome.genome_id
-  hgenome_db_id               INT unsigned, # FK genome.genome_id
+  qgenome_db_id               INT unsigned NOT NULL, # FK genome.genome_id
+  hgenome_db_id               INT unsigned NOT NULL, # FK genome.genome_id
   qstart                      INT UNSIGNED DEFAULT 0 NOT NULL,
   qend                        INT UNSIGNED DEFAULT 0 NOT NULL,
   hstart                      int unsigned DEFAULT 0 NOT NULL,
@@ -1402,8 +1402,8 @@ CREATE TABLE peptide_align_feature (
 
 #  FOREIGN KEY (qmember_id) REFERENCES seq_member(seq_member_id),
 #  FOREIGN KEY (hmember_id) REFERENCES seq_member(seq_member_id),
-#  FOREIGN KEY (qgenome_db_id) REFERENCES genome_db(genome_db_id),
-#  FOREIGN KEY (hgenome_db_id) REFERENCES genome_db(genome_db_id),
+  FOREIGN KEY (qgenome_db_id) REFERENCES genome_db(genome_db_id),
+  FOREIGN KEY (hgenome_db_id) REFERENCES genome_db(genome_db_id),
 
   PRIMARY KEY (peptide_align_feature_id)
 #  KEY hmember_hit (hmember_id, hit_rank)

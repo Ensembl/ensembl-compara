@@ -88,14 +88,14 @@ sub run {
 
     my $cross_pafs = [];
 
-    my $target_genome_db_id = $self->param('target_genome_db_id');
+    my $target_genome_db_id = $self->param_required('target_genome_db_id');
 
     my $cmd = "$diamond_exe blastp -d $blast_db --query $blast_infile --evalue $evalue_limit --out $blast_outfile --outfmt 6 qseqid sseqid evalue score nident pident qstart qend sstart send length positive ppos qseq_gapped sseq_gapped $blast_params";
 
     my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1});
     print "Time for diamond search " . $run_cmd->runtime_msec . " msec\n";
 
-    my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param('genome_db_id'), $target_genome_db_id);
+    my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param_required('genome_db_id'), $target_genome_db_id);
 
     unless ($self->param('expected_members') == scalar(keys(%{$self->param('num_query_member')}))) {
         # Most likely, this is happening due to MEMLIMIT, so make the job sleep if it parsed 0 sequences, to wait for MEMLIMIT to happen properly.
