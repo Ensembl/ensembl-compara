@@ -15,48 +15,55 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Script to create the reference allowed_species.json automatically form the reference mlss_conf.xml """
+"""Script to create the reference 'allowed_species.json' automatically from the reference 'mlss_conf.xml'."""
 
 
-import sys
 import json
 import argparse
 import xml.etree.ElementTree
-from xml.etree.ElementTree import ParseError
 from typing import List
 
 
 def get_species_list(mlss_conf_file: str) -> List:
-    """
-    Return a list with all species present in the mlss_conf.xml. Each species are unci in the list
+    """Returns a list with all species present in the mlss_conf.xml. Each species will appear only once
 
-    :param mlss_conf_file: path to the mlss_conf.xml
-    :return: list of species
+    Args:
+        mlss_conf_file: Path to the mlss_conf.xml
+
+    Returns:
+        List of species
+
+    Raises:
+        xml.etree.ElementTree.ParseError: If ``mlss_conf_file`` cannot be parsed correctly.
     """
 
-    try:
-        compara_db_tree = xml.etree.ElementTree.parse(mlss_conf_file)
-    except ParseError as err:
-        print("issue with " + mlss_conf_file)
-        print(err)
-        sys.exit(1)
+    compara_db_tree = xml.etree.ElementTree.parse(mlss_conf_file)
 
     root = compara_db_tree.getroot()
     genomes = root.findall("./collections/collection/genome")
-    species_dic = {}
+    species_set = set()
     for genome in genomes:
-        species_dic[genome.get('name')] = 1
-    species_list = list(species_dic.keys())
+        species_set.add(genome.get('name'))
+    species_list = list(species_set)
+
+    # sort to keep an order that will make easier the allowed species file checking in github
+    species_list.sort()
+
     return species_list
 
 
 def create_allowed_species_json(species: List, allowed_species_file: str) -> None:
-    """
-    Create the json file with th list of allowed species
+    """Create the json file with th list of allowed species
 
-    :param species: the list of species
-    :param allowed_species_file: path to the output json file
-    :return: None
+    Args:
+        species: The list of species
+        allowed_species_file: Path to the output json file
+
+    Returns:
+        None
+
+    Raises:
+        FileNotFoundError: If ``allowed_species_file`` cannot be created (wrong path).
     """
 
     with open(allowed_species_file, "w") as file_handle:
@@ -64,12 +71,15 @@ def create_allowed_species_json(species: List, allowed_species_file: str) -> Non
 
 
 def main(mlss_conf_file: str, allowed_species_file: str) -> None:
-    """
-    Main function of the script
+    """Main function of the script which process the MLSS XML configuration file to get the list of species
+    and write the list of a allowed species in to a JSON file
 
-    :param mlss_conf_file: path to the mlss_conf.xml
-    :param allowed_species_file: path to the output allowed_species.json file
-    :return: None
+    Args:
+        mlss_conf_file: Path to the mlss_conf.xml
+        allowed_species_file: Path to the output allowed_species.json file
+
+    Returns:
+        None
     """
 
     # get the list fo species from the mlss_conf.xml
@@ -80,9 +90,10 @@ def main(mlss_conf_file: str, allowed_species_file: str) -> None:
 
 if __name__ == '__main__':
     # argument handling
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--mlss_conf', help="path to mlss_conf.xml file given as input")
-    parser.add_argument('--allowed', help="path to the allowed_species.json given as output")
+    parser = argparse.ArgumentParser(description="Creates the JSON file with the list of allowed species from"
+                                                 " a MLSS XML configuration file.")
+    parser.add_argument('--mlss_conf', help="Path to the MLSS XML configuration file.")
+    parser.add_argument('--allowed', help="Path to the allowed species JSON file.")
     args = parser.parse_args()
 
     main(args.mlss_conf, args.allowed)
