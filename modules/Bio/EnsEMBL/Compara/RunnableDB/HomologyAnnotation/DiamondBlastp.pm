@@ -32,6 +32,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DiamondBlastp;
 use strict;
 use warnings;
 
+use Data::Dumper;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BlastAndParsePAF');
 
 sub fetch_input {
