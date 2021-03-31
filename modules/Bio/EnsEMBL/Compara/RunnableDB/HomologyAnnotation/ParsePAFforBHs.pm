@@ -59,7 +59,7 @@ sub write_output {
     my $ref_mem_adap   = $ref_db->get_SeqMemberAdaptor;
     my $query_mem_adap = $self->compara_dba->get_SeqMemberAdaptor;
 
-    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_HOMOLOGUES', [ $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($query_gdb_id), $ref_db->get_GenomeDBAdaptor->fetch_by_dbID($hit_gdb_id) ] );
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_HOMOLOGUES', [ $query_gdb_id, $hit_gdb_id ] );
 
     foreach my $member ( @$seq_member_ids ) {
         # rbbh search for each member first

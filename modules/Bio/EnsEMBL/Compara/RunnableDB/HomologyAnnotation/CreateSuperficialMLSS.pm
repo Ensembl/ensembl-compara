@@ -49,13 +49,13 @@ sub run {
 
     my $query_gdb_id   = $self->param_required('genome_db_id');
     my $hit_gdb_id     = $self->param_required('target_genome_db_id');
-    my $ref_db         = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('rr_ref_db'));
+    my $gdb_adaptor    = $self->compara_dba->get_GenomeDBAdaptor;
     my $seq_members    = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_GenomeDB($query_gdb_id);
     my @seq_member_ids = map {$_->dbID} @$seq_members;
     my @sorted_seq_ids = sort { $a <=> $b } @seq_member_ids;
 
-    # MLSS will not exist for hit_gdb: it is a reference and belongs to a different db
-    my $mlss = $self->_create_and_store_superficial_mlss($self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($query_gdb_id), $ref_db->get_GenomeDBAdaptor->fetch_by_dbID($hit_gdb_id));
+    # MLSS will not exist for hit_gdb: it is a reference
+    my $mlss = $self->_create_and_store_superficial_mlss($gdb_adaptor->fetch_by_dbID($query_gdb_id), $gdb_adaptor->fetch_by_dbID($hit_gdb_id));
 
     $self->param('full_member_id_list', \@sorted_seq_ids);
 
