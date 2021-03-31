@@ -73,7 +73,7 @@ sub fetch_input {
     my ( @genome_db_ids, @query_members );
 
     foreach my $species_name (@$species) {
-        my $genome_db = $gdb_adaptor->fetch_by_registry_name($species_name);
+        my $genome_db = $gdb_adaptor->fetch_by_name_assembly($species_name);
         my $genome_db_id = $genome_db->dbID;
         # Fetch canonical proteins into array
         my $some_members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_GenomeDB($genome_db_id);
