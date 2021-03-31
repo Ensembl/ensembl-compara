@@ -229,7 +229,7 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into     => {
                 '2->A' => [
-                    { 'diamond_blastp'      => {'genome_db_id' => '#genome_db_id#', 'ref_taxa' => '#ref_taxa#', 'member_id_list' => '#member_id_list#', 'blast_db' =>'#blast_db#', 'target_genome_db_id' => '#target_genome_db_id#' } },
+                    { 'diamond_blastp'      => { 'genome_db_id' => '#genome_db_id#', 'member_id_list' => '#member_id_list#', 'blast_db' => '#blast_db#', 'target_genome_db_id' => '#target_genome_db_id#' } },
                     { 'make_query_blast_db' => { 'genome_db_id' => '#genome_db_id#', 'ref_taxa' => '#ref_taxa#' } },
                     { 'copy_ref_genomes'    => { 'target_genome_db_id' => '#target_genome_db_id#' } }
                 ],
