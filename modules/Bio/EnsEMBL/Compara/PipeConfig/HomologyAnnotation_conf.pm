@@ -227,6 +227,7 @@ sub core_pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BlastFactory',
             -parameters    => {
                 'step'  => $self->o('num_sequences_per_blast_job'),
+                'species_list'  => $self->o('species_list'),
             },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
