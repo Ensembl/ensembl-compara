@@ -72,40 +72,13 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
             -hive_capacity => 10,
             -rc_name       => '16Gb_job',
             -flow_into     => {
-                1 => [ 'load_query_genomedb_factory' ],
-            },
-        },
-
-    #--------------------Genome member loading------------------#
-        {   -logic_name => 'load_query_genomedb_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -parameters => {
-                'all_current'       => 1,
-                'extra_parameters'  => [ 'locator' ],
-            },
-            -rc_name    => '4Gb_job',
-            -flow_into  => {
-                '2->A' => {
-                    'load_genomedb' => { 'genome_db_id' => '#genome_db_id#', 'locator' => '#locator#', 'master_dbID' => '#genome_db_id#' },
-                },
+                '2->A' => [
+                    { 'load_fresh_members_from_db' => { 'genome_db_id' => '#genome_db_id#' } },
+                ],
                 'A->1' => [ 'hc_members_globally' ],
             },
         },
-
-        {   -logic_name    => 'load_genomedb',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
-            -parameters    => {
-                'db_version'      => $self->o('ensembl_release'),
-                'master_db'       => $self->o('compara_db'),
-                'registry_files'  => $self->o('curr_file_sources_locs'),
-            },
-            -flow_into     => {
-                1 => [ 'load_fresh_members_from_db' ],
-            },
-            -hive_capacity => 30,
-            -rc_name       => '2Gb_job',
-        },
-
+    #--------------------Query genome member loading------------------#
         {   -logic_name    => 'load_fresh_members_from_db',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
             -parameters    => {
