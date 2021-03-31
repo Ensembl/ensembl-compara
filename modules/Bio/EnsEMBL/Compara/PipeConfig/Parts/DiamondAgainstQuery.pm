@@ -80,6 +80,7 @@ sub pipeline_analyses_diamond_against_query {
                 %blastp_parameters,
             },
             -rc_name       => '2Gb_4c_job',
+            -priority      => 20,
             -hive_capacity => $self->o('blastpu_capacity'),
         },
 
