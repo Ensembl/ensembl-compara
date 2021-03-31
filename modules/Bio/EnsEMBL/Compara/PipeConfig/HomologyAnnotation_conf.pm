@@ -206,12 +206,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_fire_db_prepare',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A'  => WHEN (
-                            '#initialised#' => [ 'locate_and_add_genomes' ],
-                            ELSE                         [ 'copy_ncbi_tables_factory' ],
-                ),
+                '1->A'  => [ 'copy_ncbi_tables_factory' ],
                 'A->1'  => [ 'backbone_fire_analyses_prepare' ],
-                '8'     => { '?table_name=pipeline_wide_parameters' => { 'param_name' => 'initialised', 'param_value' => 1, 'insertion_method' => 'INSERT_IGNORE' } },
             },
         },
 
