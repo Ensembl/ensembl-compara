@@ -250,6 +250,7 @@ sub core_pipeline_analyses {
                 'table'         => 'genome_db',
                 'where'         => 'genome_db_id = #target_genome_db_id#',
             },
+            -priority   => 20,
         },
 
         {   -logic_name => 'create_mlss_and_batch_members',
