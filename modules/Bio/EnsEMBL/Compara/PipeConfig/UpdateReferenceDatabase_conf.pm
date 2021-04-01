@@ -83,6 +83,9 @@ sub default_options {
         'allow_missing_coordinates'     => 0,
         'allow_missing_exon_boundaries' => 1, # set to 0 if exon boundaries are loaded (see above)
 
+        # member dump options
+        'dump_only_canonical'   => 1,
+
         # create species sets options
         'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
         'allowed_species_file'  => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/allowed_species.json'),
@@ -362,6 +365,7 @@ sub tweak_analyses {
     my $analyses_by_name = shift;
 
     $analyses_by_name->{'dump_full_fasta'}->{'-parameters'}->{'compara_db'} = '#ref_db#';
+    $analyses_by_name->{'dump_full_fasta'}->{'-parameters'}->{'only_canonical'} = $self->o('dump_only_canonical');
     delete $analyses_by_name->{'datacheck_fan'}->{'-flow_into'}->{2};
     delete $analyses_by_name->{'datacheck_fan_high_mem'}->{'-flow_into'}->{2};
     $analyses_by_name->{'datacheck_factory'}->{'-parameters'}->{'compara_db'} = '#ref_db#';

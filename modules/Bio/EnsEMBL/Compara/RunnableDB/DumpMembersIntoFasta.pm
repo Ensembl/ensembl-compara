@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta
@@ -61,6 +50,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
         'only_representative' => 0, # if seq_member_projection table is populated, dump only representative sequences
+        'only_canonical'      => 0, # only dump canonical members
     };
 }
 
@@ -106,6 +96,10 @@ sub fetch_input {
         foreach my $gdb ( @gdb_ids ) {
             # push(@members, @{ $self->compara_dba->get_SeqMemberAdaptor->_fetch_all_canonical_for_blast_by_genome_db_id($gdb) });
             push(@members, @{ $self->compara_dba->get_SeqMemberAdaptor->_fetch_all_representative_for_blast_by_genome_db_id($gdb) });
+        }
+    } elsif ($self->param('only_canonical')) {
+        foreach my $gdb ( @gdb_ids ) {
+            push @members, @{ $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_GenomeDB($gdb) };
         }
     } else {
         foreach my $gdb ( @gdb_ids ) {
