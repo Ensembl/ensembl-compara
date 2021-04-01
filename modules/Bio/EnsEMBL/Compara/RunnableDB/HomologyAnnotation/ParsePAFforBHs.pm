@@ -54,7 +54,6 @@ sub write_output {
     my $seq_member_ids = $self->param('member_id_list');
     my $no_refmem      = $self->param('no_store_refmem');
 
-    my $homology_adap  = $self->compara_dba->get_HomologyAdaptor;
     my $paf_adaptor    = $self->compara_dba->get_PeptideAlignFeatureAdaptor;
     my $ref_db         = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('rr_ref_db'));
     my $ref_mem_adap   = $ref_db->get_SeqMemberAdaptor;
@@ -68,7 +67,6 @@ sub write_output {
         my $rbh = $paf_adaptor->fetch_BRH_by_member_genomedb($member, $hit_gdb_id);
         foreach my $rbh_entry (@$rbh) {
             $rbh_entry->{_hit_member} = $ref_mem_adap->fetch_by_dbID($rbh_entry->hit_member_id);
-            next if $homology_adap->fetch_by_dbID($rbh_entry->hit_member_id . $rbh_entry->query_member_id);
             print Dumper $rbh_entry if $self->debug;
             $self->call_within_transaction( sub {
                 $self->compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 0");
@@ -81,7 +79,6 @@ sub write_output {
             $bbh = $paf_adaptor->fetch_BBH_by_member_genomedb($member, $hit_gdb_id);
             foreach my $bbh_entry (@$bbh) {
                 $bbh_entry->{_hit_member} = $ref_mem_adap->fetch_by_dbID($bbh_entry->hit_member_id);
-                next if $homology_adap->fetch_by_dbID($bbh_entry->hit_member_id . $bbh_entry->query_member_id);
                 print Dumper $bbh_entry if $self->debug;
                 $self->call_within_transaction( sub {
                     $self->compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 0");
@@ -103,10 +100,12 @@ sub _write_homologies {
     # Conversion of PAFs to Homology objects
     my $homology_adap = $self->compara_dba->get_HomologyAdaptor;
     my $homology      = $paf->create_homology($type, $mlss);
+    my $dbID          = $paf->query_member_id.$paf->hit_member_id;
 
-    $homology->dbID($paf->hit_member_id . $paf->query_member_id);
-    $homology_adap->store($homology, $no_refmem);
-
+    unless (defined $homology_adap->fetch_by_dbID($dbID)) {
+        $homology->dbID($dbID);
+        $homology_adap->store($homology, $no_refmem);
+    }
 }
 
 1;
