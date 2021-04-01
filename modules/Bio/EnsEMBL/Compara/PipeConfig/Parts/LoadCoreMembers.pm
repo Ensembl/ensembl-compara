@@ -72,40 +72,14 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
             -hive_capacity => 10,
             -rc_name       => '16Gb_job',
             -flow_into     => {
-                1 => [ 'load_query_genomedb_factory' ],
-            },
-        },
-
-    #--------------------Genome member loading------------------#
-        {   -logic_name => 'load_query_genomedb_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -parameters => {
-                'all_current'       => 1,
-                'extra_parameters'  => [ 'locator' ],
-            },
-            -rc_name    => '4Gb_job',
-            -flow_into  => {
-                '2->A' => {
-                    'load_genomedb' => { 'genome_db_id' => '#genome_db_id#', 'locator' => '#locator#', 'master_dbID' => '#genome_db_id#' },
-                },
+                '2->A' => [
+                    { 'load_fresh_members_from_db' => { 'genome_db_id' => '#genome_db_id#' } },
+                ],
                 'A->1' => [ 'hc_members_globally' ],
+                '1'    => [ 'copy_ref_genomes_factory' ],
             },
         },
-
-        {   -logic_name    => 'load_genomedb',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
-            -parameters    => {
-                'db_version'      => $self->o('ensembl_release'),
-                'master_db'       => $self->o('compara_db'),
-                'registry_files'  => $self->o('curr_file_sources_locs'),
-            },
-            -flow_into     => {
-                1 => [ 'load_fresh_members_from_db' ],
-            },
-            -hive_capacity => 30,
-            -rc_name       => '2Gb_job',
-        },
-
+    #--------------------Query genome member loading------------------#
         {   -logic_name    => 'load_fresh_members_from_db',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
             -parameters    => {
@@ -143,6 +117,28 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode   => 'members_globally',
+            },
+        },
+    #--------------------Reference genome loading------------------#
+        {   -logic_name => 'copy_ref_genomes_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'compara_db'    => '#rr_ref_db#',
+                'all_current'   => 1,
+            },
+            -flow_into  => {
+                2 => [ 'copy_ref_genomes' ],
+            },
+        },
+
+        {   -logic_name => 'copy_ref_genomes',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#rr_ref_db#',
+                'mode'          => 'insertignore',
+                'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
+                'table'         => 'genome_db',
+                'where'         => 'genome_db_id = #genome_db_id#',
             },
         },
 

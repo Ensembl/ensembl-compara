@@ -95,7 +95,6 @@ sub _create_and_store_superficial_mlss {
             -genome_dbs => [$gdb1, $gdb2],
             -name       => $gdb1->name . "-" . $gdb2->name,
         );
-        $species_adap->store($species_set);
     }
 
     unless ($method) {
@@ -106,7 +105,6 @@ sub _create_and_store_superficial_mlss {
             -display_name    => 'Homologues',
             -adaptor         => $method_adap,
         );
-        $method_adap->store($method);
     }
 
     my $method_link_species_set = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
