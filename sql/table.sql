@@ -1033,7 +1033,6 @@ CREATE TABLE gene_member (
 
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
---  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (gene_member_id),
   CONSTRAINT genome_stable_id UNIQUE (genome_db_id, stable_id),
@@ -1138,7 +1137,6 @@ CREATE TABLE seq_member (
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
   FOREIGN KEY (sequence_id) REFERENCES sequence(sequence_id),
   FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id) ON UPDATE CASCADE,
---  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (seq_member_id),
   CONSTRAINT genome_stable_id UNIQUE (genome_db_id, stable_id),
@@ -1400,17 +1398,13 @@ CREATE TABLE peptide_align_feature (
   hit_rank                    SMALLINT UNSIGNED not null,
   cigar_line                  mediumtext,
 
-#  FOREIGN KEY (qmember_id) REFERENCES seq_member(seq_member_id),
-#  FOREIGN KEY (hmember_id) REFERENCES seq_member(seq_member_id),
   FOREIGN KEY (qgenome_db_id) REFERENCES genome_db(genome_db_id),
   FOREIGN KEY (hgenome_db_id) REFERENCES genome_db(genome_db_id),
 
   PRIMARY KEY (peptide_align_feature_id),
-#  KEY hmember_hit (hmember_id, hit_rank)
 
   KEY qmember_id  (qmember_id),
   KEY hmember_id  (hmember_id),
-#  KEY hmember_qgenome  (hmember_id, qgenome_db_id),
   KEY qmember_hgenome  (qmember_id, hgenome_db_id)
 ) MAX_ROWS = 100000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
