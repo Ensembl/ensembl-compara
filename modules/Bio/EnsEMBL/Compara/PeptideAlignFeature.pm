@@ -88,8 +88,11 @@ sub create_aligned_member {
 
     $aligned_member_1->gene_member($self->query_member->gene_member);
     $aligned_member_1->gene_member_id($self->query_member->gene_member->dbID);
+    $aligned_member_1->seq_member_id($self->query_member_id);
+
     $aligned_member_2->gene_member($self->hit_member->gene_member);
     $aligned_member_2->gene_member_id($self->hit_member->gene_member->dbID);
+    $aligned_member_2->seq_member_id($self->hit_member_id);
 
     # Assign cigar_line to each member
     my $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::collapse_cigar(Bio::EnsEMBL::Compara::Utils::Cigars::expand_cigar($self->cigar_line));
