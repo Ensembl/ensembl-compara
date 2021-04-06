@@ -60,7 +60,7 @@ use git to obtain a previous version if querying older databases.</p>
     );
   }
 
-  (my $ftp_domain = $ftp) =~ s/\/pub//;
+  my $mysql_dir = $species_defs->EG_DIVISION? "$ftp/current/mysql/" : "$ftp/current_mysql/";
  
   unless ($species_defs->NO_PUBLIC_MYSQL) { 
     $html .= qq(
@@ -70,11 +70,13 @@ Entire databases can be downloaded from our FTP site in a
 variety of formats. Please be aware that some of these files
 can run to many gigabytes of data.
 </p>
-<p><strong>Looking for <a href="$ftp/current_mysql/">MySQL dumps</a> to install databases locally?</strong> See our
+<p><strong>Looking for <a href="$mysql_dir">MySQL dumps</a> to install databases locally?</strong> See our
 <a href="https://www.ensembl.org/info/docs/webcode/mirror/install/ensembl-data.html">web installation instructions</a>
 for full details.</p>
 );
   }
+
+(my $ftp_domain = $ftp) =~ s/\/pub//;
 
   $html .= qq(<p>
 Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
@@ -214,7 +216,8 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
 
     my $sp_var    = $sp_dir. '_variation';
     my $databases = $hub->species_defs->get_config(ucfirst($sp_dir), 'databases');
-    my $variation_source_vcf  = $databases->{'DATABASE_VARIATION'}->{'meta_info'}->{0}->{'variation_source.vcf'}->[0];
+    my $meta_info = $databases->{'DATABASE_VARIATION'}->{'meta_info'}->{1};
+    my $has_vcf  = $meta_info && $meta_info->{'variation_source.vcf'}->[0] ne '1';
     
     push @$rows, {
       fave    => $sp->{'favourite'} ? 'Y' : '',
@@ -229,9 +232,9 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
       genes   => sprintf('<a rel="external" title="%s" href="%s/gtf/%s">GTF</a> <a rel="external" title="%s" href="%s/gff3/%s">GFF3</a>', $title{'gtf'}, $ftp_base, $sp_dir, $title{'gff3'}, $ftp_base, $sp_dir),
       xrefs   => sprintf('<a rel="external" title="%s" href="%s/tsv/%s">TSV</a> <a rel="external" title="%s" href="%s/rdf/%s">RDF</a> <a rel="external" title="%s" href="%s/json/%s">JSON</a>', $title{'tsv'}, $ftp_base, $sp_dir, $title{'rdf'}, $ftp_base, $sp_dir, $title{'json'}, $ftp_base, $sp_dir),
       mysql   => sprintf('<a rel="external" title="%s" href="%s/mysql/">MySQL</a>',          $title{'mysql'},  $ftp_base),
-      var2    => $databases->{'DATABASE_VARIATION'} && $variation_source_vcf != '1' ? sprintf('<a rel="external" title="%s" href="%s/variation/gvf/%s/">GVF</a>', $title{'gvf'}, $ftp_base, $sp_dir) : '-',
-      var4    => $databases->{'DATABASE_VARIATION'} && $variation_source_vcf != '1' ? sprintf('<a rel="external" title="%s" href="%s/variation/vcf/%s/">VCF</a>', $title{'vcf'}, $ftp_base, $sp_dir) : '-',
-      var3    => sprintf('<a rel="external" title="%s" href="%s/variation/vep/">VEP</a>',    $title{'vep'},  $ftp_base),
+      var2    => $has_vcf ? sprintf('<a rel="external" title="%s" href="%s/variation/gvf/%s/">GVF</a>', $title{'gvf'}, $ftp_base, $sp_dir) : '-',
+      var4    => $has_vcf ? sprintf('<a rel="external" title="%s" href="%s/variation/vcf/%s/">VCF</a>', $title{'vcf'}, $ftp_base, $sp_dir) : '-',
+      var3    => sprintf('<a rel="external" title="%s" href="%s/variation/vep/">VEP</a>',    $title{'vep'}, $ftp_base),
       funcgen => $required_lookup->{'funcgen'}{$sp_dir} ? sprintf('<a rel="external" title="%s" href="%s/regulation/%s/">Regulation</a> (GFF)',      $title{'funcgen'}, $ftp_base, $sp_dir) : '-',
       bam     => $databases->{'DATABASE_RNASEQ'}        ? sprintf('<a rel="external" title="%s" href="%s/bamcov/%s/genebuild/">BAM/BigWig</a>',      $title{'bam'},    $ftp_base, $sp_dir) : '-',
       files   => $required_lookup->{'files'}{$sp_dir}   ? sprintf('<a rel="external" title="%s" href="%s/data_files/%s/">Regulation data files</a>', $title{'files'}, $ftp_base, $sp_dir) : '-',
@@ -486,7 +489,7 @@ The MAF file format is described <a href="http://genome.ucsc.edu/FAQ/FAQformat.h
 
   unless ($sd->NO_VARIATION) {
     $html .= qq(
-dt class="bg1">GVF (variation data)</dt>
+<dt class="bg1">GVF (variation data)</dt>
 <dd class="bg1">GVF (Genome Variation Format) is a simple tab-delimited format derived
 from GFF3 for variation positions across the genome.
 There are GVF files for different types of variation data (e.g.
