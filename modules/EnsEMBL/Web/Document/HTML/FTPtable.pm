@@ -60,7 +60,7 @@ use git to obtain a previous version if querying older databases.</p>
     );
   }
 
-  (my $ftp_domain = $ftp) =~ s/\/pub//;
+  my $mysql_dir = $species_defs->EG_DIVISION? "$ftp/current/mysql/" : "$ftp/current_mysql/";
  
   unless ($species_defs->NO_PUBLIC_MYSQL) { 
     $html .= qq(
@@ -70,11 +70,13 @@ Entire databases can be downloaded from our FTP site in a
 variety of formats. Please be aware that some of these files
 can run to many gigabytes of data.
 </p>
-<p><strong>Looking for <a href="$ftp/current_mysql/">MySQL dumps</a> to install databases locally?</strong> See our
+<p><strong>Looking for <a href="$mysql_dir">MySQL dumps</a> to install databases locally?</strong> See our
 <a href="https://www.ensembl.org/info/docs/webcode/mirror/install/ensembl-data.html">web installation instructions</a>
 for full details.</p>
 );
   }
+
+(my $ftp_domain = $ftp) =~ s/\/pub//;
 
   $html .= qq(<p>
 Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
