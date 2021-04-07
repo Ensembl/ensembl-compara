@@ -159,12 +159,12 @@ sub _create_ProbeFeatures_linked_transcripts {
     my $id = $self->param('id');
     my $probe_set_adaptor = $db_adaptor->get_ProbeSetAdaptor;
     my $probe_set = shift @{$probe_set_adaptor->fetch_all_by_name($id)};
-    @db_entries = $probe_set ? @{$probe_set->fetch_all_ProbeSetTranscriptMappings} : ();
+    @db_entries = $probe_set ? @{$probe_set->get_all_ProbeSetTranscriptMappings} : ();
   } else {
     my $probe_adaptor = $db_adaptor->get_ProbeAdaptor;
     @probe_objs = @{$probe_adaptor->fetch_all_by_name($self->param('id'))};
     foreach my $probe (@probe_objs) {
-      my @entries = @{$probe->fetch_all_ProbeTranscriptMappings};
+      my @entries = @{$probe->get_all_ProbeTranscriptMappings};
       push(@db_entries, @entries);
     }
   }
