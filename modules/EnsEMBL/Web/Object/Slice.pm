@@ -487,10 +487,10 @@ sub get_table_data {
 
   foreach my $peak_calling (@{$all_peak_calling||[]}) {
 
-    my $ftype       = $peak_calling->fetch_FeatureType;
+    my $ftype       = $peak_calling->get_FeatureType;
     my $ftype_name  = $ftype->name;
 
-    my $epigenome   = $peak_calling->fetch_Epigenome;
+    my $epigenome   = $peak_calling->get_Epigenome;
     my $cell_line   = $epigenome->short_name;
 
     $data->{$cell_line}{$ftype_name} = $peak_calling;
