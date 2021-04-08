@@ -150,7 +150,7 @@ sub write_output {
     my $num_tries = 0;
     until ($import_done) {
         $num_tries++;
-        die "Import failed 20 times in a row... Something else must be wrong..\n" if $num_tries > 20;
+        die "Import failed 20 times in a row... Something else must be wrong\n" if $num_tries > 20;
         my $import_cmd = "mysql --host=$host --port=$port --user=$user --password=$pass --local-infile=1 $dbname -e \"$import_query\" --max_allowed_packet=1024M";
         my $command = $self->run_command($import_cmd);
 
@@ -248,7 +248,7 @@ sub hc_homology_import {
 
     # check homology.species_tree_node_id
     if ( $exp_vals->{total_rows} != $db_vals->{stn_count} ) {
-        $self->warning("The number of species_tree_nodes written in the homology table (" . $db_vals->{stn_count} . ") doesn't match the number of lines in the homology flat file (" . $exp_vals->{total_rows} . ")");
+        $self->warning("The number of species_tree_node_ids written in the homology table (" . $db_vals->{stn_count} . ") doesn't match the number of lines in the homology flat file (" . $exp_vals->{total_rows} . ")");
         return 0;
     } elsif ( $exp_vals->{min_stn} != $db_vals->{min_stn} || $exp_vals->{max_stn} != $db_vals->{max_stn} || $exp_vals->{avg_stn} != $db_vals->{avg_stn} ) {
         $self->warning("Some truncated species_tree_node_ids have been detected in the homology table:\n" . hc_report($exp_vals, $db_vals, 'stn'));
@@ -257,7 +257,7 @@ sub hc_homology_import {
 
     # check homology.gene_tree_node_id
     if ( $exp_vals->{total_rows} != $db_vals->{gtn_count} ) {
-        $self->warning("The number of gene_tree_nodes written in the homology table (" . $db_vals->{gtn_count} . ") doesn't match the number of lines in the homology flat file (" . $exp_vals->{total_rows} . ")");
+        $self->warning("The number of gene_tree_node_ids written in the homology table (" . $db_vals->{gtn_count} . ") doesn't match the number of lines in the homology flat file (" . $exp_vals->{total_rows} . ")");
         return 0;
     } elsif ( $exp_vals->{min_gtn} != $db_vals->{min_gtn} || $exp_vals->{max_gtn} != $exp_vals->{max_gtn} || $db_vals->{avg_gtn} != $db_vals->{avg_gtn} ) {
         $self->warning("Some truncated gene_tree_node_ids have been detected in the homology table:\n" . hc_report($exp_vals, $db_vals, 'gtn'));
@@ -265,7 +265,7 @@ sub hc_homology_import {
     }
 
     # check homology.gene_tree_root_id
-    die "The number of gene_tree_roots written in the homology table (" . $db_vals->{gtr_count} . ") doesn't match the number of lines in the homology flat file (" . $exp_vals->{total_rows} . ")" if $exp_vals->{total_rows} != $db_vals->{gtr_count};
+    die "The number of gene_tree_root_ids written in the homology table (" . $db_vals->{gtr_count} . ") doesn't match the number of lines in the homology flat file (" . $exp_vals->{total_rows} . ")" if $exp_vals->{total_rows} != $db_vals->{gtr_count};
     die "Some truncated gene_tree_root_ids have been detected in the homology table:\n" . hc_report($exp_vals, $db_vals, 'gtr')
         unless $exp_vals->{min_gtr} == $db_vals->{min_gtr} && $exp_vals->{max_gtr} == $exp_vals->{max_gtr} && $exp_vals->{avg_gtr} == $db_vals->{avg_gtr};
 
@@ -286,7 +286,7 @@ sub hc_homology_import {
 
     # HOMOLOGY_MEMBER check
     my $homology_id_start = $self->param_required('homology_id_start');
-    my $homology_id_end   = $homology_id_start + $total_rows - 1; # TODO: do we need -1?
+    my $homology_id_end   = $homology_id_start + $total_rows - 1;
     my $hm_sql = "SELECT COUNT(*) AS total_hm_rows, SUM(gene_member_id IS NOT NULL) AS gm_count,
                MIN(gene_member_id) as min_gm, MAX(gene_member_id) as max_gm, AVG(gene_member_id) as avg_gm,
                SUM(seq_member_id IS NOT NULL) AS sm_count, MIN(seq_member_id) as min_sm, MAX(seq_member_id) as max_sm,
