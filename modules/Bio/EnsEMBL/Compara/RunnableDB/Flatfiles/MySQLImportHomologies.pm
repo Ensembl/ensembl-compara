@@ -250,7 +250,7 @@ sub hc_homology_import {
     if ( $exp_vals->{total_rows} != $db_vals->{stn_count} ) {
         $self->warning("The number of species_tree_nodes written in the homology table (" . $db_vals->{stn_count} . ") doesn't match the number of lines in the homology flat file (" . $exp_vals->{total_rows} . ")");
         return 0;
-    } elsif ( $exp_vals->{min_stn} != $db_vals->{min_stn} || $exp_vals->{max_stn} != $exp_vals->{max_stn} || $exp_vals->{avg_stn} != $db_vals->{avg_stn} ) {
+    } elsif ( $exp_vals->{min_stn} != $db_vals->{min_stn} || $exp_vals->{max_stn} != $db_vals->{max_stn} || $exp_vals->{avg_stn} != $db_vals->{avg_stn} ) {
         $self->warning("Some truncated species_tree_node_ids have been detected in the homology table:\n" . hc_report($exp_vals, $db_vals, 'stn'));
         return 0;
     }
@@ -259,7 +259,7 @@ sub hc_homology_import {
     if ( $exp_vals->{total_rows} != $db_vals->{gtn_count} ) {
         $self->warning("The number of gene_tree_nodes written in the homology table (" . $db_vals->{gtn_count} . ") doesn't match the number of lines in the homology flat file (" . $exp_vals->{total_rows} . ")");
         return 0;
-    } elsif ( $exp_vals->{min_gtn} != $db_vals->{min_gtn} || $exp_vals->{max_gtn} != $exp_vals->{max_gtn} || $exp_vals->{avg_gtn} != $db_vals->{avg_gtn} ) {
+    } elsif ( $exp_vals->{min_gtn} != $db_vals->{min_gtn} || $exp_vals->{max_gtn} != $exp_vals->{max_gtn} || $db_vals->{avg_gtn} != $db_vals->{avg_gtn} ) {
         $self->warning("Some truncated gene_tree_node_ids have been detected in the homology table:\n" . hc_report($exp_vals, $db_vals, 'gtn'));
         return 0;
     }
@@ -309,7 +309,7 @@ sub hc_homology_import {
     if ( $total_hm_rows != $db_vals->{gm_count} ) {
         $self->warning("The number of gene_member_ids written in the homology_member table (" . $db_vals->{gm_count} . ") doesn't match the number of lines in the homology flat file (" . $total_hm_rows . ")");
         return 0;
-    } elsif ( $exp_vals->{min_gm} != $db_vals->{min_gm} || $exp_vals->{max_gm} != $exp_vals->{max_gm} || $exp_vals->{avg_gm} != $db_vals->{avg_gm} ) {
+    } elsif ( $exp_vals->{min_gm} != $db_vals->{min_gm} || $exp_vals->{max_gm} != $db_vals->{max_gm} || $exp_vals->{avg_gm} != $db_vals->{avg_gm} ) {
         $self->warning("Some truncated gene_member_ids have been detected in the homology_member table:\n" . hc_report($exp_vals, $db_vals, 'gm'));
         return 0;
     }
@@ -318,7 +318,7 @@ sub hc_homology_import {
     if ( $total_hm_rows != $db_vals->{sm_count} ){
         $self->warning("The number of seq_member_ids written in the homology_member table (" . $db_vals->{sm_count} . ") doesn't match the number of lines in the homology flat file (" . $total_hm_rows . ")");
         return 0;
-    } elsif ( $exp_vals->{min_sm} != $db_vals->{min_sm} || $exp_vals->{max_sm} != $exp_vals->{max_sm} || $exp_vals->{avg_sm} != $db_vals->{avg_sm} ) {
+    } elsif ( $exp_vals->{min_sm} != $db_vals->{min_sm} || $exp_vals->{max_sm} != $db_vals->{max_sm} || $exp_vals->{avg_sm} != $db_vals->{avg_sm} ) {
         $self->warning("Some truncated seq_member_ids have been detected in the homology_member table:\n" . hc_report($exp_vals, $db_vals, 'sm'));
         return 0;
     }
@@ -327,21 +327,21 @@ sub hc_homology_import {
     if ( $total_hm_rows != $db_vals->{cov_count} ) {
         $self->warning("The number of perc_cov values written in the homology_member table (" . $db_vals->{cov_count} . ") doesn't match the number of lines in the homology flat file (" . $total_hm_rows . ")");
         return 0;
-    } elsif ( $exp_vals->{min_cov} != $db_vals->{min_cov} || $exp_vals->{max_cov} != $exp_vals->{max_cov} || $exp_vals->{avg_cov} != $db_vals->{avg_cov} ) {
+    } elsif ( $exp_vals->{min_cov} != $db_vals->{min_cov} || $exp_vals->{max_cov} != $db_vals->{max_cov} || $exp_vals->{avg_cov} != $db_vals->{avg_cov} ) {
         $self->warning("Some truncated perc_cov values have been detected in the homology_member table:\n" . hc_report($exp_vals, $db_vals, 'cov'));
         return 0;
     }
     if ( $total_hm_rows != $db_vals->{id_count} ) {
         $self->warning("The number of perc_id values written in the homology_member table (" . $db_vals->{id_count} . ") doesn't match the number of lines in the homology flat file (" . $total_hm_rows . ")");
         return 0;
-    } elsif ( $exp_vals->{min_id} != $db_vals->{min_id} || $exp_vals->{max_id} != $exp_vals->{max_id} || $exp_vals->{avg_id} != $db_vals->{avg_id} ) {
+    } elsif ( $exp_vals->{min_id} != $db_vals->{min_id} || $exp_vals->{max_id} != $db_vals->{max_id} || $exp_vals->{avg_id} != $db_vals->{avg_id} ) {
         $self->warning("Some truncated perc_id values have been detected in the homology_member table:\n" . hc_report($exp_vals, $db_vals, 'id'));
         return 0;
     }
     if ( $total_hm_rows != $db_vals->{pos_count} ) {
         $self->warning("The number of perc_pos values written in the homology_member table (" . $db_vals->{pos_count} . ") doesn't match the number of lines in the homology flat file (" . $total_hm_rows . ")");
         return 0;
-    } elsif ( $exp_vals->{min_pos} != $db_vals->{min_pos} || $exp_vals->{max_pos} != $exp_vals->{max_pos} || $exp_vals->{avg_pos} != $db_vals->{avg_pos} ) {
+    } elsif ( $exp_vals->{min_pos} != $db_vals->{min_pos} || $exp_vals->{max_pos} != $db_vals->{max_pos} || $exp_vals->{avg_pos} != $db_vals->{avg_pos} ) {
         $self->warning("Some truncated perc_pos values have been detected in the homology_member table:\n" . hc_report($exp_vals, $db_vals, 'pos'));
         return 0;
     }
