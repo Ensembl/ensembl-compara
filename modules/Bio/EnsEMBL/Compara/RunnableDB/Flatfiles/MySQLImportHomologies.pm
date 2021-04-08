@@ -153,7 +153,7 @@ sub write_output {
     my $num_tries = 0;
     until ($import_done) {
         $num_tries++;
-        die "Import failed 20 times in a row... Something else must be wrong\n" if $num_tries > 20;
+        die "Import failed 10 times in a row... Something else must be wrong\n" if $num_tries > 10;
         my $import_cmd = "mysql --host=$host --port=$port --user=$user --password=$pass --local-infile=1 $dbname -e \"$import_query\" --max_allowed_packet=1024M";
         my $command = $self->run_command($import_cmd);
 
