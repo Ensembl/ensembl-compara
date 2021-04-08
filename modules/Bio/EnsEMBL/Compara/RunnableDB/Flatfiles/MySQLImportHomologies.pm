@@ -31,6 +31,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologies;
 
 use warnings;
 use strict;
+
+use List::Util qw(min max);
+
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
@@ -354,58 +357,40 @@ sub gather_hc_stats {
     my ( $self, $exp_vals, $row ) = @_;
 
     # homology table fields
-    $exp_vals->{min_stn} =  smallest([$row->{species_tree_node_id}, ($exp_vals->{min_stn}||10**12)]);
-    $exp_vals->{max_stn} =  largest( [$row->{species_tree_node_id}, ($exp_vals->{max_stn}||0)]);
+    $exp_vals->{min_stn} =  min $row->{species_tree_node_id}, ($exp_vals->{min_stn}||10**12);
+    $exp_vals->{max_stn} =  max $row->{species_tree_node_id}, ($exp_vals->{max_stn}||0);
     $exp_vals->{sum_stn} += $row->{species_tree_node_id};
 
-    $exp_vals->{min_gtn} =  smallest([$row->{gene_tree_node_id}, ($exp_vals->{min_gtn}||10**12)]);
-    $exp_vals->{max_gtn} =  largest( [$row->{gene_tree_node_id}, ($exp_vals->{max_gtn}||0)]);
+    $exp_vals->{min_gtn} =  min $row->{gene_tree_node_id}, ($exp_vals->{min_gtn}||10**12);
+    $exp_vals->{max_gtn} =  max $row->{gene_tree_node_id}, ($exp_vals->{max_gtn}||0);
     $exp_vals->{sum_gtn} += $row->{gene_tree_node_id};
 
-    $exp_vals->{min_gtr} =  smallest([$row->{gene_tree_root_id}, ($exp_vals->{min_gtr}||10**12)]);
-    $exp_vals->{max_gtr} =  largest( [$row->{gene_tree_root_id}, ($exp_vals->{max_gtr}||0)]);
+    $exp_vals->{min_gtr} =  min $row->{gene_tree_root_id}, ($exp_vals->{min_gtr}||10**12);
+    $exp_vals->{max_gtr} =  max $row->{gene_tree_root_id}, ($exp_vals->{max_gtr}||0);
     $exp_vals->{sum_gtr} += $row->{gene_tree_root_id};
 
     # homology_member table fields
-    $exp_vals->{min_gm} =  smallest([$row->{gene_member_id}, $row->{homology_gene_member_id}, ($exp_vals->{min_gm}||10**12)]);
-    $exp_vals->{max_gm} =  largest( [$row->{gene_member_id}, $row->{homology_gene_member_id}, ($exp_vals->{max_gm}||0)]);
+    $exp_vals->{min_gm} =  min $row->{gene_member_id}, $row->{homology_gene_member_id}, ($exp_vals->{min_gm}||10**12);
+    $exp_vals->{max_gm} =  max $row->{gene_member_id}, $row->{homology_gene_member_id}, ($exp_vals->{max_gm}||0);
     $exp_vals->{sum_gm} += ($row->{gene_member_id} + $row->{homology_gene_member_id});
 
-    $exp_vals->{min_sm} =  smallest([$row->{seq_member_id}, $row->{homology_seq_member_id}, ($exp_vals->{min_sm}||10**12)]);
-    $exp_vals->{max_sm} =  largest( [$row->{seq_member_id}, $row->{homology_seq_member_id}, ($exp_vals->{max_sm}||0)]);
+    $exp_vals->{min_sm} =  min $row->{seq_member_id}, $row->{homology_seq_member_id}, ($exp_vals->{min_sm}||10**12);
+    $exp_vals->{max_sm} =  max $row->{seq_member_id}, $row->{homology_seq_member_id}, ($exp_vals->{max_sm}||0);
     $exp_vals->{sum_sm} += ($row->{seq_member_id} + $row->{homology_seq_member_id});
 
-    $exp_vals->{min_cov} =  smallest([$row->{perc_cov}, $row->{homology_perc_cov}, ($exp_vals->{min_cov}||101)]);
-    $exp_vals->{max_cov} =  largest( [$row->{perc_cov}, $row->{homology_perc_cov}, ($exp_vals->{max_cov}||0)]);
+    $exp_vals->{min_cov} =  min $row->{perc_cov}, $row->{homology_perc_cov}, ($exp_vals->{min_cov}||101);
+    $exp_vals->{max_cov} =  max $row->{perc_cov}, $row->{homology_perc_cov}, ($exp_vals->{max_cov}||0);
     $exp_vals->{sum_cov} += ($row->{perc_cov} + $row->{homology_perc_cov});
 
-    $exp_vals->{min_id} =  smallest([$row->{perc_id}, $row->{homology_perc_id}, ($exp_vals->{min_id}||101)]);
-    $exp_vals->{max_id} =  largest( [$row->{perc_id}, $row->{homology_perc_id}, ($exp_vals->{max_id}||0)]);
+    $exp_vals->{min_id} =  min $row->{perc_id}, $row->{homology_perc_id}, ($exp_vals->{min_id}||101);
+    $exp_vals->{max_id} =  max $row->{perc_id}, $row->{homology_perc_id}, ($exp_vals->{max_id}||0);
     $exp_vals->{sum_id} += ($row->{perc_id} + $row->{homology_perc_id});
 
-    $exp_vals->{min_pos} =  smallest([$row->{perc_pos}, $row->{homology_perc_pos}, ($exp_vals->{min_pos}||101)]);
-    $exp_vals->{max_pos} =  largest( [$row->{perc_pos}, $row->{homology_perc_pos}, ($exp_vals->{max_pos}||0)]);
+    $exp_vals->{min_pos} =  min $row->{perc_pos}, $row->{homology_perc_pos}, ($exp_vals->{min_pos}||101);
+    $exp_vals->{max_pos} =  max $row->{perc_pos}, $row->{homology_perc_pos}, ($exp_vals->{max_pos}||0);
     $exp_vals->{sum_pos} += ($row->{perc_pos} + $row->{homology_perc_pos});
 
     return $exp_vals;
-}
-
-sub largest {
-    my $list = shift;
-    my $largest = shift @$list;
-    foreach my $i ( @$list ) {
-        $largest = $i if $i > $largest;
-    }
-    return $largest;
-}
-
-sub smallest {
-    my $list = shift;
-    my $smallest = shift @$list;
-    foreach my $i ( @$list ) {
-        $smallest = $i if $i < $smallest;
-    }
-    return $smallest;
 }
 
 sub cleanup_vals {
