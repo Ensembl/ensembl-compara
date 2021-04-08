@@ -262,15 +262,19 @@ sub hc_homology_import {
     if ( $exp_vals->{total_rows} != $db_vals->{gtn_count} ) {
         $self->warning("The number of gene_tree_node_ids written in the homology table (" . $db_vals->{gtn_count} . ") doesn't match the number of lines in the homology flat file (" . $exp_vals->{total_rows} . ")");
         return 0;
-    } elsif ( $exp_vals->{min_gtn} != $db_vals->{min_gtn} || $exp_vals->{max_gtn} != $exp_vals->{max_gtn} || $db_vals->{avg_gtn} != $db_vals->{avg_gtn} ) {
+    } elsif ( $exp_vals->{min_gtn} != $db_vals->{min_gtn} || $exp_vals->{max_gtn} != $db_vals->{max_gtn} || $exp_vals->{avg_gtn} != $db_vals->{avg_gtn} ) {
         $self->warning("Some truncated gene_tree_node_ids have been detected in the homology table:\n" . hc_report($exp_vals, $db_vals, 'gtn'));
         return 0;
     }
 
     # check homology.gene_tree_root_id
-    die "The number of gene_tree_root_ids written in the homology table (" . $db_vals->{gtr_count} . ") doesn't match the number of lines in the homology flat file (" . $exp_vals->{total_rows} . ")" if $exp_vals->{total_rows} != $db_vals->{gtr_count};
-    die "Some truncated gene_tree_root_ids have been detected in the homology table:\n" . hc_report($exp_vals, $db_vals, 'gtr')
-        unless $exp_vals->{min_gtr} == $db_vals->{min_gtr} && $exp_vals->{max_gtr} == $exp_vals->{max_gtr} && $exp_vals->{avg_gtr} == $db_vals->{avg_gtr};
+    if ( $exp_vals->{total_rows} != $db_vals->{gtr_count} ) {
+        $self->warning("The number of gene_tree_root_ids written in the homology table (" . $db_vals->{gtr_count} . ") doesn't match the number of lines in the homology flat file (" . $exp_vals->{total_rows} . ")");
+        return 0;
+    } elsif ( $exp_vals->{min_gtr} != $db_vals->{min_gtr} || $exp_vals->{max_gtr} != $db_vals->{max_gtr} || $exp_vals->{avg_gtr} != $db_vals->{avg_gtr} ) {
+        $self->warning("Some truncated gene_tree_root_ids have been detected in the homology table:\n" . hc_report($exp_vals, $db_vals, 'gtr'));
+        return 0;
+    }
 
     # check optional homology attributes: goc, wga, high_conf
     if ( $self->param('goc_expected') && $exp_vals->{total_rows} != $db_vals->{goc_count} ) {
