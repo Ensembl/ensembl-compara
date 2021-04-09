@@ -32,6 +32,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SpeciesFactory;
 use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Hive::Utils qw(stringify);
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
@@ -63,7 +64,7 @@ sub write_output {
     my @species = @{$self->param('species')};
     my ($pwp)   = $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
         'param_name' => 'species_list',
-        'param_value' => \@species,
+        'param_value' => stringify(\@species),
     );
     my $adaptor = $self->db->get_PipelineWideParametersAdaptor;
     $adaptor->store_or_update_one($pwp, ['param_name']);
