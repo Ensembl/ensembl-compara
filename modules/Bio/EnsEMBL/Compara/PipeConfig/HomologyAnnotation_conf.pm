@@ -46,6 +46,7 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::LoadCoreMembers;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstRef;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstQuery;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DataCheckFactory;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::PerSpeciesCopyFactory;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -67,6 +68,11 @@ sub default_options {
         'ref_dump_dir' => $self->o('ref_member_dumps_dir'),
         # Directory for diamond and fasta files for query genome
         'members_dumps_dir' => $self->o('dump_path'),
+        # Compara schema file path
+        'schema_file' => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
+        # Path to db_cmd.pl script
+        'hive_root_dir' => $ENV{'EHIVE_ROOT_DIR'},
+        'db_cmd_path'   => $self->o('hive_root_dir').'/scripts/db_cmd.pl',
 
         # Set mandatory databases
         'compara_db'   => $self->pipeline_url(),
@@ -215,7 +221,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A'  => [ 'diamond_factory' ],
-                'A->1'  => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'old_server_uri' => $self->o('old_server_uri'), 'compara_db' => $self->o('compara_db'), 'registry_file' => undef } },
+                'A->1'  => [ 'backbone_dc_and_copy_db' ],
             },
         },
 
@@ -228,31 +234,38 @@ sub core_pipeline_analyses {
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into     => {
-                '2->A' => [
-                    { 'diamond_blastp'      => { 'genome_db_id' => '#genome_db_id#', 'member_id_list' => '#member_id_list#', 'blast_db' => '#blast_db#', 'target_genome_db_id' => '#target_genome_db_id#' } },
-                    { 'make_query_blast_db' => { 'genome_db_id' => '#genome_db_id#', 'ref_taxa' => '#ref_taxa#' } },
-                ],
-                'A->2' => { 'create_mlss_and_batch_members' => { 'genome_db_id' => '#genome_db_id#', 'target_genome_db_id' => '#target_genome_db_id#', 'step' => $self->o('num_sequences_per_blast_job') }  },
+                '2->A' => [ 'diamond_blastp' ],
+                '1->A' => [ 'make_query_blast_db' ],
+                'A->3' => [ 'create_mlss_and_batch_members' ],
             },
         },
 
         {   -logic_name => 'create_mlss_and_batch_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::CreateSuperficialMLSS',
             -flow_into  => {
-                2 => [ 'parse_paf_for_rbbh' ],
+                2 => [ { 'parse_paf_for_rbbh' => { 'member_id_list' => '#member_id_list#', 'target_genome_db_id' => '#ref_genome_db_id#', 'genome_db_id' => '#genome_db_id#' } }],
             }
         },
 
         {   -logic_name => 'parse_paf_for_rbbh',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::ParsePAFforBHs',
             -rc_name    => '2Gb_job',
-            -hive_capacity => 10,
+            -hive_capacity => 100,
+        },
+
+        {   -logic_name => 'backbone_dc_and_copy_db',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A'  => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'old_server_uri' => $self->o('old_server_uri'), 'compara_db' => $self->o('compara_db'), 'registry_file' => undef } },
+                'A->1'  => [ 'create_db_factory' ],
+            }
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::LoadCoreMembers::pipeline_analyses_copy_ncbi_and_core_genome_db($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstRef::pipeline_analyses_diamond_against_refdb($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstQuery::pipeline_analyses_diamond_against_query($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DataCheckFactory::pipeline_analyses_datacheck_factory($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::PerSpeciesCopyFactory::pipeline_analyses_create_and_copy_per_species_db($self) },
 
     ];
 }
