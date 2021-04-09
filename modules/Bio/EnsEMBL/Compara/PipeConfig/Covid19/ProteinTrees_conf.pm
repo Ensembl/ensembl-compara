@@ -70,7 +70,8 @@ sub default_options {
         # more stringent clustering params than defaults
         'other_clustering_options' => '-w 0 -s 0.75 -b 0.1 -O -C',
 
-        # 'goc_taxlevels' => ['', '', ''],
+        'goc_taxlevels' => ['Coronaviridae'],
+        'do_goc'        => 1,
 
         'use_raxml'              => 1,
         'do_jaccard_index'       => 0,

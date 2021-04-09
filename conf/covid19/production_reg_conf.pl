@@ -72,6 +72,8 @@ my $compara_dbs = {
 
     'compara_members' => [ 'mysql-ens-compara-prod-6', 'carlac_covid19_load_members_101' ],
     'compara_ptrees'  => [ 'mysql-ens-compara-prod-6', 'carlac_default_covid19_protein_trees_103' ],
+
+    'register_hal' => [ 'mysql-ens-compara-prod-9', 'thiagogenez_covid19_register_halfile_102' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -80,7 +82,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-mirror-1', "ncbi_taxonomy_$curr_release" ],
 });
 
 # -------------------------------------------------------------------
