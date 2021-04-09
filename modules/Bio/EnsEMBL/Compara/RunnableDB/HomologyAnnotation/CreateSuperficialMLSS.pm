@@ -21,8 +21,19 @@ Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::CreateSuperficialMLSS
 
 =head1 DESCRIPTION
 
-Create superficial MLSS for each C<genome_db_id> and C<target_genome_db_id> pair.
+Create superficial MLSS for each of the C<genome_db_pairs>.
 Optionally dataflow seq_member_ids in batches using C<step>.
+
+=over
+
+=item genome_db_pairs
+Mandatory. Array of hashes containing ->{'ref_genome_db_id'} and ->{'genome_db_id'}
+pairs
+
+=item step
+Optional. Number member_ids to dataflow into each job. Default 1000.
+
+=back
 
 =cut
 
@@ -47,37 +58,48 @@ sub param_defaults {
 sub run {
     my $self = shift;
 
-    my $query_gdb_id   = $self->param_required('genome_db_id');
-    my $hit_gdb_id     = $self->param_required('target_genome_db_id');
-    my $gdb_adaptor    = $self->compara_dba->get_GenomeDBAdaptor;
-    my $seq_members    = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_GenomeDB($query_gdb_id);
-    my @seq_member_ids = map {$_->dbID} @$seq_members;
-    my @sorted_seq_ids = sort { $a <=> $b } @seq_member_ids;
+    my $genome_pairs = $self->param_required('genome_db_pairs');
+    my $gdb_adaptor  = $self->compara_dba->get_GenomeDBAdaptor;
+    my @full_member_id_list;
 
-    # MLSS will not exist for hit_gdb: it is a reference
-    my $mlss = $self->_create_and_store_superficial_mlss($gdb_adaptor->fetch_by_dbID($query_gdb_id), $gdb_adaptor->fetch_by_dbID($hit_gdb_id));
+    foreach my $pair ( @$genome_pairs ) {
+        my $hit_gdb_id   = $pair->{'ref_genome_db_id'};
+        print Dumper $hit_gdb_id;
+        my $query_gdb_id = $pair->{'genome_db_id'};
+        print Dumper $query_gdb_id;
+        my $seq_members    = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_GenomeDB($query_gdb_id);
+        my @seq_member_ids = map {$_->dbID} @$seq_members;
+        my @sorted_seq_ids = sort { $a <=> $b } @seq_member_ids;
+        # MLSS will not exist for hit_gdb: it is a reference
+        $self->_create_and_store_superficial_mlss($gdb_adaptor->fetch_by_dbID($query_gdb_id), $gdb_adaptor->fetch_by_dbID($hit_gdb_id));
+        push @full_member_id_list, { 'ref_genome_db_id' => $hit_gdb_id, 'genome_db_id' => $query_gdb_id, 'member_id_list' => \@sorted_seq_ids };
+    }
 
-    $self->param('full_member_id_list', \@sorted_seq_ids);
+    $self->param('full_member_id_list', \@full_member_id_list);
 
 }
 
 sub write_output {
     my $self = shift;
 
-    my $query_gdb_id   = $self->param_required('genome_db_id');
-    my $hit_gdb_id     = $self->param_required('target_genome_db_id');
-    my $seq_member_ids = $self->param('full_member_id_list');
+    my $gdb_members_list = $self->param_required('full_member_id_list');
 
-    if ($self->param('step')) {
-        while ( my @member_id_list = splice @$seq_member_ids, 0, $self->param('step') ) {
-            # A job is output for every $step query members against each reference diamond db
-            my $output_id = { 'member_id_list' => \@member_id_list, 'genome_db_id' => $query_gdb_id, 'target_genome_db_id' => $hit_gdb_id};
+    foreach my $list ( @$gdb_members_list ) {
+        my $query_gdb_id   = $list->{'genome_db_id'};
+        my $hit_gdb_id     = $list->{'ref_genome_db_id'};
+        my $seq_member_ids = $list->{'member_id_list'};
+
+        if ($self->param('step')) {
+            while ( my @member_id_list = splice @$seq_member_ids, 0, $self->param('step') ) {
+                # A job is output for every $step query members against each reference diamond db
+                my $output_id = { 'member_id_list' => \@member_id_list, 'genome_db_id' => $query_gdb_id, 'ref_genome_db_id' => $hit_gdb_id};
+                $self->dataflow_output_id($output_id, 2);
+            }
+        }
+        else {
+            my $output_id = { 'member_id_list' => $seq_member_ids, 'genome_db_id' => $query_gdb_id, 'ref_genome_db_id' => $hit_gdb_id};
             $self->dataflow_output_id($output_id, 2);
         }
-    }
-    else {
-        my $output_id = { 'member_id_list' => $seq_member_ids, 'genome_db_id' => $query_gdb_id, 'target_genome_db_id' => $hit_gdb_id};
-        $self->dataflow_output_id($output_id, 2);
     }
 }
 

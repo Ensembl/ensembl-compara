@@ -91,6 +91,7 @@ sub write_output {
 
     my $step              = $self->param('step');
     my @query_member_list = @{$self->param('query_members')};
+    my @funnel_output;
 
     foreach my $genome ( @query_member_list ) {
 
@@ -102,20 +103,24 @@ sub write_output {
         # Returns all the directories (fasta, split_fasta & diamond pre-indexed db) under all the references
         my $ref_dirs      = collect_species_set_dirs($self->param_required('rr_ref_db'), $ref_taxa, $ref_dump_dir);
 
+        $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'ref_taxa' => $ref_taxa }, 1 );
+
         foreach my $ref ( @$ref_dirs ) {
             # Obtain the diamond indexed file for the reference, this is the only file we need from
             # each reference at this point
             my $ref_dmnd_path = $ref->{'ref_dmnd'};
+            my $target_genome_db_id = $ref->{'ref_gdb'}->dbID;
             for ( my $i = 0; $i < @$query_members; $i+=($step+1) ) {
                 my @job_list = @$query_members[$i..$i+$step];
                 my @job_array  = grep { defined && m/[^\s]/ } @job_list; # because the array is very rarely going to be exactly divisible by $step
                 # A job is output for every $step query members against each reference diamond db
-                my $output_id = { 'member_id_list' => \@job_array, 'blast_db' => $ref_dmnd_path, 'genome_db_id' => $genome_db_id, 'target_genome_db_id' => $ref->{'ref_gdb'}->dbID, 'ref_taxa' => $ref_taxa };
+                my $output_id = { 'member_id_list' => \@job_array, 'blast_db' => $ref_dmnd_path, 'genome_db_id' => $genome_db_id, 'target_genome_db_id' => $target_genome_db_id, 'ref_taxa' => $ref_taxa };
                 $self->dataflow_output_id($output_id, 2);
             }
+            push @funnel_output, { 'ref_genome_db_id' => $target_genome_db_id, 'genome_db_id' => $genome_db_id };
         }
-        $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'ref_taxa' => $ref_taxa }, 1 );
     }
+    $self->dataflow_output_id( { 'genome_db_pairs' => \@funnel_output }, 3 );
 }
 
 1;
