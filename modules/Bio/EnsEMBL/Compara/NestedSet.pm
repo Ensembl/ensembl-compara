@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::NestedSet
@@ -29,18 +27,6 @@ based on the ObjectiveC retain/release design.
 Designed to be used as the Root class for all Compara 'proxy' classes 
 (Member, GenomeDB, DnaFrag, NCBITaxon) to allow them to be made into sets and trees.
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
-
 =cut
 
 
@@ -50,7 +36,8 @@ package Bio::EnsEMBL::Compara::NestedSet;
 use strict;
 use warnings;
 
-use List::Util qw(sum);
+use POSIX qw(floor);
+use List::Util qw(sum max);
 
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
@@ -886,9 +873,22 @@ sub _internal_string_tree {
   my $scale   = shift;
   my $buffer  = shift;
 
+  my $branch_length = $self->distance_to_parent();
+  my $num_characters = $branch_length * $scale;
+
   if(defined($indent)) {
     $$buffer .= $indent;
-    for(my $i=0; $i<$self->distance_to_parent()*$scale; $i++) { $$buffer .= '-'; }
+    if ($num_characters > $scale) {
+        # For long branches, fix the length to $scale and indicate so with "\\", including the branch length
+        # between the backslashes
+        my $half_len = max(floor($scale / 2 - 1), 1);
+        my $branch_repr = '-' x $half_len . sprintf("\\%.1f\\", $branch_length) . '-' x $half_len;
+        $$buffer .= $branch_repr;
+        # Update the number of characters printed to indent correctly
+        $num_characters = length $branch_repr;
+    } else {
+        $$buffer .= '-' x $num_characters;
+    }
   }
 
   $$buffer .= $self->string_node . "\n";
@@ -898,7 +898,7 @@ sub _internal_string_tree {
       chop($indent);
       $indent .= " ";
     }
-    for(my $i=0; $i<$self->distance_to_parent()*$scale; $i++) { $indent .= ' '; }
+    $indent .= ' ' x $num_characters;
   }
   $indent = '' unless(defined($indent));
   $indent .= "|";
