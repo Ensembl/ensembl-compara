@@ -40,13 +40,14 @@ my $compara_dbs = {
     # necessary compara dbs
     'compara_references' => [ 'mysql-ens-compara-prod-2', 'ensembl_compara_references' ],
 
+    'compara_halibut'    => [ 'mysql-ens-compara-prod-2', 'verasper_variegatus_compara_103' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-mirror-1', "ncbi_taxonomy_$curr_release" ],
 });
 
 # -------------------------------------------------------------------
