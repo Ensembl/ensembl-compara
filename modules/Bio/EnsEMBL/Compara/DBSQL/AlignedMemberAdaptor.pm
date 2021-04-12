@@ -116,7 +116,16 @@ sub fetch_all_by_Homology {
 
     my $extra_columns = ['hm.cigar_line', 'hm.perc_cov', 'hm.perc_id', 'hm.perc_pos', 'hm.homology_id'];
     my $join = [[['homology_member', 'hm'], 'm.seq_member_id = hm.seq_member_id', $extra_columns]];
-    return $self->generic_fetch_concatenate([map {$_->dbID} @_], 'hm.homology_id', SQL_INTEGER, $join);
+    my $results = $self->generic_fetch_concatenate([map {$_->dbID} @_], 'hm.homology_id', SQL_INTEGER, $join);
+
+    if (scalar @_ != (scalar @$results * 2)) {
+        my $src_db_name = $self->dbc->dbname;
+        my $ref_db_am_adaptor = Bio::EnsEMBL::Registry->get_adaptor('compara_references', 'compara', 'AlignedMember');
+        $join = [[["$src_db_name.homology_member", 'hm'], 'm.seq_member_id = hm.seq_member_id', $extra_columns]];
+        push @$results, @{ $ref_db_am_adaptor->generic_fetch_concatenate([map {$_->dbID} @_], 'hm.homology_id', SQL_INTEGER, $join) };
+    }
+
+    return $results;
 }
 
 =head2 fetch_all_by_Family
