@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf
@@ -127,17 +125,6 @@ sub default_options {
         	DumpAncestralAlleles => {
         		compara_db => '#compara_db#',
         	},
-        },
-
-        # define which files will each method_type generate in the FTP structure
-        # this will be used to generate a bash script to copy old data
-        ftp_locations => {
-        	LASTZ_NET => ['maf/ensembl-compara/pairwise_alignments'],
-        	EPO => ['emf/ensembl-compara/multiple_alignments', 'maf/ensembl-compara/multiple_alignments'],
-        	EPO_EXTENDED => ['emf/ensembl-compara/multiple_alignments', 'maf/ensembl-compara/multiple_alignments'],
-        	PECAN => ['emf/ensembl-compara/multiple_alignments', 'maf/ensembl-compara/multiple_alignments'],
-        	GERP_CONSTRAINED_ELEMENT => ['bed/ensembl-compara'],
-        	GERP_CONSERVATION_SCORE => ['compara/conservation_scores'],
         },
 
         # DumpMultiAlign options
@@ -331,9 +318,6 @@ sub pipeline_analyses {
 
         {	-logic_name => 'create_ftp_skeleton',
         	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::FTPSkeleton',
-        	-parameters => {
-        		'ftp_locations' => $self->o('ftp_locations'),
-        	},
         	-flow_into => [ 'symlink_prev_dumps' ],
         },
 

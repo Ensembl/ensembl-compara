@@ -15,10 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::FTPSkeleton
@@ -40,9 +36,7 @@ use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Data::Dumper;
 
-# use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
@@ -55,7 +49,7 @@ sub param_defaults {
         	EPO_EXTENDED => ['emf/ensembl-compara/multiple_alignments', 'maf/ensembl-compara/multiple_alignments'],
         	PECAN => ['emf/ensembl-compara/multiple_alignments', 'maf/ensembl-compara/multiple_alignments'],
         	GERP_CONSTRAINED_ELEMENT => ['bed/ensembl-compara'],
-        	# GERP_CONSERVATION_SCORE => ['compara/conservation_scores'],
+            GERP_CONSERVATION_SCORE  => ['compara/conservation_scores'],
         },
     }
 }
@@ -112,10 +106,8 @@ sub _mlss_dirs {
 
 	my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 	my @these_mlsses = map { $mlss_adaptor->fetch_by_dbID($_) } @{ $self->param_required('mlss_ids') };
-	# my @mlss_dirs;
 	my %mlss_dirs;
 	foreach my $mlss ( @these_mlsses ) {
-		# push( @mlss_dirs, $mlss->filename ) if $mlss->method->type eq $method_type;
 		$mlss_dirs{ $mlss->filename } = $mlss->dbID if $mlss->method->type eq $method_type;
 	}
 	return \%mlss_dirs;
