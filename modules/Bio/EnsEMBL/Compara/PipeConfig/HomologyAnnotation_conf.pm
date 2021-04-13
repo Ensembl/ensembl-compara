@@ -71,7 +71,7 @@ sub default_options {
         # Compara schema file path
         'schema_file' => $self->o('schema_file'),
         # Path to db_cmd.pl script
-        'db_cmd_path'   => $self->o('hive_root_dir').'/scripts/db_cmd.pl',
+        'db_cmd_path'   => $self->o('hive_root_dir') . '/scripts/db_cmd.pl',
 
         # Set mandatory databases
         'compara_db'   => $self->pipeline_url(),

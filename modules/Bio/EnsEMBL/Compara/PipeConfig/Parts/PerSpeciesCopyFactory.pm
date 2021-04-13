@@ -31,7 +31,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::PerSpeciesCopyFactory;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version 2.5;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf; # For WHEN and INPUT_PLUS
 
 sub pipeline_analyses_create_and_copy_per_species_db {
@@ -47,7 +47,7 @@ sub pipeline_analyses_create_and_copy_per_species_db {
         {   -logic_name => 'create_per_species_db',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::NewPerSpeciesComparaDB',
             -parameters => {
-                'curr_release' => $self->o('rel_with_suffix'),
+                'curr_release' => $self->o('ensembl_release'),
                 'db_cmd_path'  => $self->o('db_cmd_path'),
                 'schema_file'  => $self->o('schema_file'),
             },
