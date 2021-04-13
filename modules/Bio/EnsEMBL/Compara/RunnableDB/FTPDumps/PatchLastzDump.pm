@@ -15,10 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::PatchLastzDump
@@ -37,18 +33,9 @@ use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-# sub param_defaults {
-#     my $self = shift;
-#     return {
-#         %{$self->SUPER::param_defaults},
-        
-# 		'compara_db' => '#patch_db#',
-# 	}
-# }
 
 sub fetch_input {
 	my $self = shift;
@@ -72,8 +59,16 @@ sub fetch_input {
 
 	# where dump tarball of full lastz lives (from previous release)
 	my $ftp_root = $self->param_required('ftp_root');
-	my $prev_release = $self->param_required('curr_release') - 1;
-	my $prev_rel_tarball = "$ftp_root/release-$prev_release/$lastz_dump_path/$mlss_filename*";
+    my $division = $self->param_required('division');
+    my $prev_rel_tarball;
+    if ($division eq 'vertebrates') {
+        my $prev_release = $self->param_required('curr_release') - 1;
+        $prev_rel_tarball = "$ftp_root/release-$prev_release/$lastz_dump_path/$mlss_filename*";
+    } else {
+        my $prev_eg_release = $self->param_required('curr_eg_release') - 1;
+        my $div_folder = ($division =~ /^pan($|[^a-z])/) ? 'pan_ensembl' : $division;
+        $prev_rel_tarball = "$ftp_root/release-$prev_eg_release/$div_folder/$lastz_dump_path/$mlss_filename*";
+    }
 
 	my @tarballs = glob "$prev_rel_tarball";
 	die "Cannot find previous release tarball for mlss_id $mlss_id : $prev_rel_tarball\n" unless defined $tarballs[0];

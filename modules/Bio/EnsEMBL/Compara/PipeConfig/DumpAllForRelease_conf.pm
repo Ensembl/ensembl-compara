@@ -180,6 +180,9 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
+        'curr_release'      => $self->o('ensembl_release'),
+        'curr_eg_release'   => $self->o('eg_release'),
+
         'registry'        => '#reg_conf#',
         'dump_root'       => $self->o('dump_root' ),
         'dump_dir'        => $self->o('dump_dir'),
@@ -254,7 +257,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::CreateDumpJobs',
             -input_ids  => [ {
                     'compara_db'           => $self->o('compara_db'),
-                    'curr_release'         => $self->o('ensembl_release'),
                     'reuse_prev_rel'       => $self->o('reuse_prev_rel'),
                     'reg_conf'             => $self->o('reg_conf'),
                     'updated_mlss_ids'     => $self->o('updated_mlss_ids'),
