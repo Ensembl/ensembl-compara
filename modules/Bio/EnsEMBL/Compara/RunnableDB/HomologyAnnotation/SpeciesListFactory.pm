@@ -42,10 +42,8 @@ sub write_output {
     my $genome_dba   = $self->compara_dba->get_GenomeDBAdaptor;
 
     foreach my $genome_name ( @$species_list ) {
-        # There can only be one of each species_name in each pipeline
-        my @genome_db    = @{$genome_dba->fetch_all_by_name($genome_name)};
-        my $genome_db_id = $genome_db[0]->dbID;
-        $self->dataflow_output_id( { 'genome_name' => $genome_name, 'genome_db_id' => $genome_db_id }, 1 );
+        my $genome_db = $genome_dba->fetch_by_name_assembly($genome_name);
+        $self->dataflow_output_id( { 'genome_name' => $genome_name, 'genome_db_id' => $genome_db->dbID }, 1 );
     }
 }
 

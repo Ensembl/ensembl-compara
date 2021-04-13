@@ -69,9 +69,8 @@ sub default_options {
         # Directory for diamond and fasta files for query genome
         'members_dumps_dir' => $self->o('dump_path'),
         # Compara schema file path
-        'schema_file' => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
+        'schema_file' => $self->o('schema_file'),
         # Path to db_cmd.pl script
-        'hive_root_dir' => $ENV{'EHIVE_ROOT_DIR'},
         'db_cmd_path'   => $self->o('hive_root_dir').'/scripts/db_cmd.pl',
 
         # Set mandatory databases
@@ -243,7 +242,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'create_mlss_and_batch_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::CreateSuperficialMLSS',
             -flow_into  => {
-                2 => [ { 'parse_paf_for_rbbh' => { 'member_id_list' => '#member_id_list#', 'target_genome_db_id' => '#ref_genome_db_id#', 'genome_db_id' => '#genome_db_id#' } }],
+                2 => { 'parse_paf_for_rbbh' => { 'member_id_list' => '#member_id_list#', 'target_genome_db_id' => '#ref_genome_db_id#', 'genome_db_id' => '#genome_db_id#' } },
             }
         },
 

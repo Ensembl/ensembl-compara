@@ -51,7 +51,6 @@ sub pipeline_analyses_create_and_copy_per_species_db {
                 'db_cmd_path'  => $self->o('db_cmd_path'),
                 'schema_file'  => $self->o('schema_file'),
             },
-            #-flow_into  => [ 'copy_species_db' ],
         },
 
     ];

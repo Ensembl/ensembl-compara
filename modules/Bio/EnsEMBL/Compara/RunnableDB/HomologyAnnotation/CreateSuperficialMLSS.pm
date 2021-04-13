@@ -43,7 +43,6 @@ use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -64,9 +63,7 @@ sub run {
 
     foreach my $pair ( @$genome_pairs ) {
         my $hit_gdb_id   = $pair->{'ref_genome_db_id'};
-        print Dumper $hit_gdb_id;
         my $query_gdb_id = $pair->{'genome_db_id'};
-        print Dumper $query_gdb_id;
         my $seq_members    = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_GenomeDB($query_gdb_id);
         my @seq_member_ids = map {$_->dbID} @$seq_members;
         my @sorted_seq_ids = sort { $a <=> $b } @seq_member_ids;
