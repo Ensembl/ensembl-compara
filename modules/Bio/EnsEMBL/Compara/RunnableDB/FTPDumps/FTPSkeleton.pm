@@ -51,6 +51,7 @@ sub param_defaults {
         	GERP_CONSTRAINED_ELEMENT => ['bed/ensembl-compara'],
             GERP_CONSERVATION_SCORE  => ['compara/conservation_scores'],
         },
+        copy_ancestral_alleles => 0,
     }
 }
 
@@ -77,6 +78,11 @@ sub fetch_input {
 			}
 		}
 	}
+
+    if ($self->param_required('copy_ancestral_alleles')) {
+        my $basedir = $self->param_required('anc_output_basedir');
+        $mlss_dump_dirs{$basedir} = 'ANCESTRAL_ALLELES';
+    }
 
     $self->param('base_dump_dirs', \@base_dump_dirs);
 	$self->param('mlss_dump_dirs', \%mlss_dump_dirs);
