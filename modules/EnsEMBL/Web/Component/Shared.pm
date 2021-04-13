@@ -331,7 +331,7 @@ sub transcript_table {
       my $refseq_url;
       if ($trans_attribs->{$tsi}) {
         if ($trans_attribs->{$tsi}{'is_canonical'}) {
-          push @flags, helptip("Canonical", get_glossary_entry($hub, "Canonical transcript"));
+          push @flags, helptip("Ensembl Canonical", get_glossary_entry($hub, "Canonical transcript"));
         }
 
         foreach my $MANE_attrib_code (keys %MANE_attrib_codes) {
@@ -355,7 +355,7 @@ sub transcript_table {
         if ($trans_attribs->{$tsi}{'TSL'}) {
           my $tsl = uc($trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr);
           push @flags, helptip("TSL:$tsl", "<p>TSL $tsl: ".get_glossary_entry($hub, "TSL $tsl")."</p><p>".get_glossary_entry($hub, 'Transcript support level')."</p>");
-	      }
+        }
 
         if (my $incomplete = $self->get_CDS_text($trans_attribs->{$tsi})) {
           push @flags, $incomplete;
