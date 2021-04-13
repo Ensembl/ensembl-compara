@@ -144,7 +144,7 @@ foreach my $mlss ( @$mlsses ) {
 }
 
 if (scalar(keys %existing_files)) {
-    die "Found files that do not belong to any MethodLinkSpeciesSet:\n" . join('\n', keys %existing_files), "\n\n";
+    die "Some FTP dump files do not belong to any MethodLinkSpeciesSet:\n" . join("\n", keys %existing_files), "\n\n";
 }
 
 print "All MethodLinkSpeciesSets found in FTP\n\n";
