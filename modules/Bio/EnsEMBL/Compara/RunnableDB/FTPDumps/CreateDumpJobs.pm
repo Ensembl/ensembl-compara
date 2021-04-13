@@ -17,7 +17,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::CreateDumpJobs
+Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::CreateDumpJobs
 
 =head1 SYNOPSIS
 
