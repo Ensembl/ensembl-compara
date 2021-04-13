@@ -15,10 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::SymlinkPreviousDumps
@@ -31,42 +27,40 @@ use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-# sub param_defaults {
-#     my ($self) = @_;
-#     return {
-#         %{$self->SUPER::param_defaults},
-#         'param'   => undef,
-#     }
-# }
 
 sub fetch_input {
 	my $self = shift;
 
 	my $ftp_root = $self->param_required('ftp_root');
 	my $dump_dir = $self->param_required('dump_dir');
-	my $curr_release = $self->param_required('curr_release');
-	my $prev_release = $curr_release-1;
+    my $division = $self->param_required('division');
 
-	my (@cmds, %missing_dump_mlsses);
+    my ($prev_rel_ftp_root, @cmds, %missing_dump_mlsses);
+
+    if ($division eq 'vertebrates') {
+        my $prev_release = $self->param_required('curr_release') - 1;
+        $prev_rel_ftp_root = "$ftp_root/release-$prev_release";
+    } else {
+        my $prev_eg_release = $self->param_required('curr_eg_release') - 1;
+        $prev_rel_ftp_root = "$ftp_root/release-$prev_eg_release/$division";
+        $prev_rel_ftp_root .= '_ensembl' if ($division =~ /^pan($|[^a-z])/);
+    }
 
 	# first, symlink * from the mlss-specific dirs
 	my $mlss_dump_dirs = $self->param_required('mlss_dump_dirs');
 	foreach my $mlss_dir ( keys %$mlss_dump_dirs ) {
-		my $prev_ftp_dump = "$ftp_root/release-$prev_release/$mlss_dir";
+		my $prev_ftp_dump = "$prev_rel_ftp_root/$mlss_dir";
 		# check dir is non-empty
 		my @dir_files = glob "$prev_ftp_dump/*";
 		if ( defined $dir_files[0] ) {
-			# my $curr_dump_dest = "$dump_dir/release-$curr_release/$mlss_dir";
 			my $curr_dump_dest = "$dump_dir/$mlss_dir";
 			foreach my $dir_file ( @dir_files ) {
 				push ( @cmds, "ln -sL $dir_file $curr_dump_dest/" );
 			}
 		} else {
-			# push( @missing_dump_mlsses, $mlss_dump_dirs->{$mlss_dir} );
 			$missing_dump_mlsses{$mlss_dump_dirs->{$mlss_dir}} = 1;
 		}
 	}
@@ -74,12 +68,11 @@ sub fetch_input {
 	# next, symlink the individual archived files
 	my $archived_dumps = $self->param_required('archived_dumps');
 	foreach my $archive_prefix ( keys %$archived_dumps ) {
-		my $prev_ftp_arch_pref = "$ftp_root/release-$prev_release/$archive_prefix.*";
+		my $prev_ftp_arch_pref = "$prev_rel_ftp_root/$archive_prefix.*";
 		# check archive exists
 		my @arch_file_glob = glob "$prev_ftp_arch_pref";
 		my $prev_ftp_arch = $arch_file_glob[0] || undef;
 		if ( $prev_ftp_arch ) {
-			# my $curr_arch_dest = "$dump_dir/release-$curr_release/$archive_prefix";
 			my $curr_arch_dest = "$dump_dir/$archive_prefix";
 			my @dest_parts = split('/', $curr_arch_dest); 
 			pop @dest_parts; # remove the last part
@@ -87,7 +80,6 @@ sub fetch_input {
 
 			push ( @cmds, "ln -sL $prev_ftp_arch $curr_arch_dest/" );
 		} else {
-			# push( @missing_dump_mlsses, $archived_dumps->{$archive_prefix} );
 			$missing_dump_mlsses{$archived_dumps->{$archive_prefix}} = 1;
 		}
 		
