@@ -128,6 +128,7 @@ sub executable_locations {
         'copy_ancestral_core_exe'           => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/copy_ancestral_core.pl'),
 
         # Other dependencies (non executables)
+        'schema_file'                       => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
         'core_schema_sql'                   => $self->check_file_in_ensembl('ensembl/sql/table.sql'),
         'tree_stats_sql'                    => $self->check_file_in_ensembl('ensembl-compara/sql/tree-stats-as-stn_tags.sql'),
     };

@@ -51,37 +51,49 @@ my $blast_db_2 = "$ref_dump_dir/rattus_norvegicus.RGSC3.4.2009-03-Ensembl.dmnd";
 
 # Expected dataflow output
 my $exp_dataflow_1 = {
-    'member_id_list'      => [ 1, 2, 3, 4, 5 ],
-    'genome_db_id'        => 135,
-    'target_genome_db_id' => 1,
-    'ref_taxa'            => $ref_taxa,
-    'blast_db'            => $blast_db_1,
-};
-my $exp_dataflow_2 = {
-    'member_id_list'      => [ 6, 7, 8, 9 ],
-    'genome_db_id'        => 135,
-    'target_genome_db_id' => 1,
-    'ref_taxa'            => $ref_taxa,
-    'blast_db'            => $blast_db_1,
-};
-my $exp_dataflow_3 = {
-    'member_id_list'      => [ 1, 2, 3, 4, 5 ],
-    'genome_db_id'        => 135,
-    'target_genome_db_id' => 3,
-    'ref_taxa'            => $ref_taxa,
-    'blast_db'            => $blast_db_2,
-};
-my $exp_dataflow_4 = {
-    'member_id_list'      => [ 6, 7, 8, 9 ],
-    'genome_db_id'        => 135,
-    'target_genome_db_id' => 3,
-    'ref_taxa'            => $ref_taxa,
-    'blast_db'            => $blast_db_2,
-};
-my $exp_dataflow_5 = {
     'genome_db_id' => 135,
-    'ref_taxa'     => $ref_taxa,
+    'ref_taxa' => 'collection-mammalia'
 };
+
+my $exp_dataflow_2 = {
+    'member_id_list'      => [ 1, 2, 3, 4, 5 ],
+    'genome_db_id'        => 135,
+    'target_genome_db_id' => 1,
+    'ref_taxa'            => $ref_taxa,
+    'blast_db'            => $blast_db_1,
+};
+
+my $exp_dataflow_3 = {
+    'member_id_list'      => [ 6, 7, 8, 9 ],
+    'genome_db_id'        => 135,
+    'target_genome_db_id' => 1,
+    'ref_taxa'            => $ref_taxa,
+    'blast_db'            => $blast_db_1,
+};
+
+my $exp_dataflow_4 = {
+    'member_id_list'      => [ 1, 2, 3, 4, 5 ],
+    'genome_db_id'        => 135,
+    'target_genome_db_id' => 3,
+    'ref_taxa'            => $ref_taxa,
+    'blast_db'            => $blast_db_2,
+};
+
+my $exp_dataflow_5 = {
+    'member_id_list'      => [ 6, 7, 8, 9 ],
+    'genome_db_id'        => 135,
+    'target_genome_db_id' => 3,
+    'ref_taxa'            => $ref_taxa,
+    'blast_db'            => $blast_db_2,
+};
+
+my $exp_dataflow_6 = {
+    'genome_db_pairs' => [
+        { 'genome_db_id' => 135, 'ref_genome_db_id' => 1 },
+        { 'genome_db_id' => 135, 'ref_genome_db_id' => 3 },
+    ]
+};
+
 # Run standalone
 standaloneJob(
     'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BlastFactory',
@@ -98,7 +110,7 @@ standaloneJob(
         [
             'DATAFLOW',
             $exp_dataflow_1,
-            2
+            1
         ],
         [
             'DATAFLOW',
@@ -118,8 +130,13 @@ standaloneJob(
         [
             'DATAFLOW',
             $exp_dataflow_5,
-            1
+            2
         ],
+        [
+            'DATAFLOW',
+            $exp_dataflow_6,
+            3
+        ]
     ]
 );
 
