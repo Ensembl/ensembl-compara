@@ -57,8 +57,7 @@ sub param_defaults {
 sub fetch_input {
 	my $self = shift;
 
-	# my ( @mlss_dump_dirs, @archived_dumps );
-	my ( %mlss_dump_dirs, %archived_dumps );
+	my ( @base_dump_dirs, %mlss_dump_dirs, %archived_dumps );
 	my %ftp_locations = %{ $self->param_required('ftp_locations') };	
 	foreach my $method_type ( keys %ftp_locations ) {
 		my @base_dirlist = @{ $ftp_locations{$method_type} };		
@@ -66,7 +65,7 @@ sub fetch_input {
 		foreach my $bdir ( @base_dirlist ) {
 			# since LASTZ dumps are archived, we don't need to make
 			# per-MLSS dirs, just the base (pairwise_alignments) dir
-			$mlss_dump_dirs{$bdir} = 'LASTZ_NET' if $method_type eq 'LASTZ_NET';
+            push @base_dump_dirs, $bdir if $method_type eq 'LASTZ_NET';
 			foreach my $mdir ( keys %mlss_dirlist ) {
 				if ( $method_type eq 'LASTZ_NET' ) {
 					$archived_dumps{"$bdir/$mdir"} = $mlss_dirlist{$mdir};
@@ -78,6 +77,8 @@ sub fetch_input {
 			}
 		}
 	}
+
+    $self->param('base_dump_dirs', \@base_dump_dirs);
 	$self->param('mlss_dump_dirs', \%mlss_dump_dirs);
 	$self->param('archived_dumps', \%archived_dumps);
 }
@@ -86,7 +87,7 @@ sub run {
 	my $self = shift;
 
 	my $dump_dir = $self->param_required('dump_dir');
-	foreach my $mlss_dir ( keys %{ $self->param('mlss_dump_dirs') } ) {
+    foreach my $mlss_dir ( @{ $self->param('base_dump_dirs') }, keys %{ $self->param('mlss_dump_dirs') } ) {
 		my $mkdir_cmd = "mkdir -p $dump_dir/$mlss_dir";
 		print STDERR "Command to run: $mkdir_cmd\n" if $self->debug;
 		$self->run_command($mkdir_cmd);
