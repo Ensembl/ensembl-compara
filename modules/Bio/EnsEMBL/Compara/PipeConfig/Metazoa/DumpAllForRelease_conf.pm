@@ -47,7 +47,7 @@ sub default_options {
         # List of mlss_ids that we have re_ran/updated and cannot be detected through first_release
         # 'updated_mlss_ids' => [ 9802, 9803, 9804, 9805, 9806 ],
 
-        'dump_dir'         => '#dump_root#/release-' . $self->o('eg_release'),
+        'dump_dir'         => $self->o('dump_root') . '/release-' . $self->o('eg_release'),
 
         'division'         => 'metazoa',
     };
