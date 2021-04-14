@@ -52,8 +52,6 @@ the --insert-ignore option.
 
 Prints help message and exits.
 
-=over
-
 =item B<--pipeline_db pipeline_db_url>
 
 The pipeline database url.
@@ -66,19 +64,17 @@ The per-species compara database url.
 The URL format is:
 mysql://username[:passwd]@host[:port]/db_name
 
-=over
-
 =item B<--genome_name genome_name>
 
 The genome_name as used in database.
 E.g. --genome_name homo_sapiens
 
-=over
-
 =item B<--copy_dna>
 
 Flag to copy dna.
 Without flag, dna will not be copied.
+
+=back
 
 =cut
 
