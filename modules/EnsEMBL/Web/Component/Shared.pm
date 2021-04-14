@@ -263,15 +263,8 @@ sub transcript_table {
       $extra_links{refseq} = { first_match => "^RefSeq", name => "RefSeq", order => 1, title => "RefSeq transcripts with sequence similarity and genomic overlap"};
     }
 
-    sub sort_transcripts {
-      # Transcript order: is_canonical/MANE_Select => external_name => stable_id
-      return $trans_attribs->{$a->[1]}{'is_canonical'} || $trans_attribs->{$a->[1]}{'MANE_Select'} ? 1 : 
-        $trans_attribs->{$b->[1]}{'is_canonical'} || $trans_attribs->{$b->[1]}{'MANE_Select'} ? -1 :
-        ($a->[0] cmp $b->[0] || $a->[1] cmp $b->[1]);
-    }
-
     my %any_extras;
-    foreach (map { $_->[2] } sort sort_transcripts map { [ $_->external_name, $_->stable_id, $_ ] } @$transcripts) {
+    foreach (@$transcripts) {
       my $transcript_length = $_->length;
       my $version           = $_->version ? ".".$_->version : "";
       my $tsi               = $_->stable_id;
@@ -378,6 +371,7 @@ sub transcript_table {
         protein     => $protein_url ? sprintf '<a href="%s" title="View protein">%saa</a>', $protein_url, $protein_length : 'No protein',
         translation => $protein_url ? sprintf '<a href="%s" title="View protein">%s</a>', $protein_url, $translation_ver : '-',
         biotype     => $self->colour_biotype($biotype_text, $_),
+        is_canonical  => $trans_attribs->{$tsi}{'is_canonical'} || $trans_attribs->{$tsi}{'MANE_Select'}? 1 : 0,
         ccds        => $ccds,
         %extras,
         has_ccds    => $ccds eq '-' ? 0 : 1,
@@ -406,9 +400,10 @@ sub transcript_table {
     my $title = encode_entities('<a href="/info/genome/genebuild/transcript_quality_tags.html" target="_blank">Tags</a>');
     push @columns, { key => 'flags', sort => 'html', label => 'Flags', title => $title, class => '_ht'};
 
-    ## Additionally, sort by CCDS status and length
+    ## Transcript order: biotype => canonical => CCDS => length
     while (my ($k,$v) = each (%biotype_rows)) {
-      my @subsorted = sort {$b->{'has_ccds'} cmp $a->{'has_ccds'}
+      my @subsorted = sort {$b->{'is_canonical'} cmp $a->{'is_canonical'}
+                            || $b->{'has_ccds'} cmp $a->{'has_ccds'}
                             || $b->{'bp_length'} <=> $a->{'bp_length'}} @$v;
       $biotype_rows{$k} = \@subsorted;
     }
