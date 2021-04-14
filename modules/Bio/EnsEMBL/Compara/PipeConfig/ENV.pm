@@ -124,11 +124,12 @@ sub executable_locations {
         'emf2maf_program'                   => $self->check_exe_in_ensembl('ensembl-compara/scripts/dumps/emf2maf.pl'),
         'epo_stats_report_exe'              => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/epo_stats.pl'),
         'populate_new_database_exe'         => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/populate_new_database.pl'),
+        'populate_per_genome_database_exe'  => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/populate_per_genome_database.pl'),
         'create_datacheck_tickets_exe'      => $self->check_exe_in_ensembl('ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl'),
         'copy_ancestral_core_exe'           => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/copy_ancestral_core.pl'),
 
         # Other dependencies (non executables)
-        'schema_file'                       => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
+        'schema_file_sql'                   => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
         'core_schema_sql'                   => $self->check_file_in_ensembl('ensembl/sql/table.sql'),
         'tree_stats_sql'                    => $self->check_file_in_ensembl('ensembl-compara/sql/tree-stats-as-stn_tags.sql'),
     };
