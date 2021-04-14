@@ -60,7 +60,7 @@ sub write_output {
     my $password = Bio::EnsEMBL::Compara::Utils::Registry::get_rw_pass( $host );
 
     my $server_uri  = "mysql://" . $rw_user . ":" . $password . "@" . $host . ":" . $port;
-    my $new_db_name = $genome_name . "_" . "compara" . "_" . $release;
+    my $new_db_name = $genome_name . "_compara_" . $release;
     my $new_db      = $server_uri . "/" . $new_db_name;
     # To optionally dataflow to the next runnable if needed: e.g. to copy
     $self->param('per_species_db', $new_db);

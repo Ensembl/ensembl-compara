@@ -51,6 +51,17 @@ sub pipeline_analyses_create_and_copy_per_species_db {
                 'db_cmd_path'  => $self->o('db_cmd_path'),
                 'schema_file'  => $self->o('schema_file'),
             },
+            -flow_into => {
+                2 => [ 'copy_per_species_db' ],
+            },
+        },
+
+        {   -logic_name => 'copy_per_species_db',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::CopyPerSpeciesComparaDB',
+            -parameters => {
+                'program'    => $self->o('copy_program'),
+                'table_list' => $self->o('table_list'),
+            }
         },
 
     ];
