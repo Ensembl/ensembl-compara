@@ -91,7 +91,7 @@ sub loop_species {
   my ($self,$args,$subpart) = @_;
 
   my @out;
-  foreach my $sp (qw(Homo_sapiens Mus_musculus Danio_rerio)) {
+  foreach my $sp (@{$SiteDefs::PRECACHE_DEFAULT_SPECIES}) {
     next if ($subpart->{'species'}||$sp) ne $sp;
     my %out = %$args;
     $out{'species'} = $sp;
