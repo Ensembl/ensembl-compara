@@ -69,9 +69,11 @@ sub default_options {
         # Directory for diamond and fasta files for query genome
         'members_dumps_dir' => $self->o('dump_path'),
         # Compara schema file path
-        'schema_file' => $self->o('schema_file'),
+        'schema_file' => $self->o('schema_file_sql'),
         # Path to db_cmd.pl script
-        'db_cmd_path'   => $self->o('hive_root_dir') . '/scripts/db_cmd.pl',
+        'db_cmd_path' => $self->o('hive_root_dir') . '/scripts/db_cmd.pl',
+        # Copy databases program
+        'copy_program' => $self->o('populate_per_genome_database_exe'),
 
         # Set mandatory databases
         'compara_db'   => $self->pipeline_url(),
@@ -110,6 +112,15 @@ sub default_options {
         'failures_fatal'   => 1, # no DC failure tolerance
         'old_server_uri'   => $self->o('compara_db'),
         'db_name'          => $self->o('dbowner') . '_' . $self->o('pipeline_name'),
+
+        # DB copy list of tables for per-species rapid release
+        'table_list' => [
+            "genome_db",
+            "method_link_species_set",
+            "gene_member",
+            "peptide_align_feature",
+            "homology",
+        ],
 
         # DIAMOND e-hive parameters
         'blast_factory_capacity'   => 50,
