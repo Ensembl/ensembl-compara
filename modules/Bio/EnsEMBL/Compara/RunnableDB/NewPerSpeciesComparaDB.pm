@@ -36,7 +36,6 @@ use strict;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::Database qw/ table_exists /;
-use Bio::EnsEMBL::Compara::Utils::Registry qw/ get_port get_rw_user get_rw_pass /;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -49,19 +48,19 @@ sub param_defaults {
     };
 }
 
-sub fetch_input {
+sub write_output {
     my $self = shift;
 
     my $release     = $self->param_required( 'curr_release' );
     my $genome_name = $self->param_required( 'genome_name' );
     my $host        = $self->param_required( 'homology_host' );
     # Keep input to fewer parameters
-    my $port     = get_port( $host );
-    my $rw_user  = get_rw_user( $host );
-    my $password = get_rw_pass( $host );
+    my $port     = Bio::EnsEMBL::Compara::Utils::Registry::get_port( $host );
+    my $rw_user  = Bio::EnsEMBL::Compara::Utils::Registry::get_rw_user( $host );
+    my $password = Bio::EnsEMBL::Compara::Utils::Registry::get_rw_pass( $host );
 
     my $server_uri  = "mysql://" . $rw_user . ":" . $password . "@" . $host . ":" . $port;
-    my $new_db_name = $genome_name . "_compara_" . $release;
+    my $new_db_name = $genome_name . "_" . "compara" . "_" . $release;
     my $new_db      = $server_uri . "/" . $new_db_name;
     # To optionally dataflow to the next runnable if needed: e.g. to copy
     $self->param('per_species_db', $new_db);
@@ -77,6 +76,7 @@ sub fetch_input {
     my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $new_db );
     # Check to see if compara_db already exists with tables to avoid overwriting
     if ( table_exists( $dba->dbc, 'genome_db' ) ) {
+        $self->dataflow_output_id( { 'per_species_db' => $new_db }, 2 );
         $self->complete_early( "Completing early because compara schema is already in place" );
     }
     # Insert compara schema
@@ -84,12 +84,7 @@ sub fetch_input {
         $cmd = "$db_cmd_path -url $new_db < $schema_file";
         $self->run_command( $cmd, { die_on_failure => 1 } );
     }
-}
-
-sub write_output {
-    my $self = shift;
-
-    $self->dataflow_output_id( { 'per_species_db' => $self->param('per_species_db') }, 2 );
+    $self->dataflow_output_id( { 'per_species_db' => $new_db }, 2 );
 }
 
 1;
