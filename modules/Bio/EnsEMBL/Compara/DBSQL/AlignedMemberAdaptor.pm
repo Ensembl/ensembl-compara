@@ -120,7 +120,7 @@ sub fetch_all_by_Homology {
 
     if (scalar @_ != (scalar @$results * 2)) {
         my $src_db_name = $self->dbc->dbname;
-        my $ref_db_am_adaptor = Bio::EnsEMBL::Registry->get_adaptor('compara_references', 'compara', 'AlignedMember');
+        my $ref_db_am_adaptor = Bio::EnsEMBL::Registry->get_adaptor('Multi', 'compara', 'AlignedMember');
         $join = [[["$src_db_name.homology_member", 'hm'], 'm.seq_member_id = hm.seq_member_id', $extra_columns]];
         push @$results, @{ $ref_db_am_adaptor->generic_fetch_concatenate([map {$_->dbID} @_], 'hm.homology_id', SQL_INTEGER, $join) };
     }
