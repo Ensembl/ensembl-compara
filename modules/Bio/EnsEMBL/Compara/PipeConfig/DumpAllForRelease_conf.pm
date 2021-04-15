@@ -62,6 +62,8 @@ sub default_options {
         # Location of the previous dumps
         'ftp_root'     => '/nfs/production/panda/ensembl/production/ensemblftp/',
 
+        'prev_rel_ftp_root' => $self->o('ftp_root') . '/release-' . $self->o('prev_release'),
+
         'compara_db'   => 'compara_curr', # can be URL or reg alias
         'ancestral_db' => undef,
 
@@ -180,9 +182,6 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        'curr_release'      => $self->o('ensembl_release'),
-        'curr_eg_release'   => $self->o('eg_release'),
-
         'registry'        => '#reg_conf#',
         'dump_root'       => $self->o('dump_root' ),
         'dump_dir'        => $self->o('dump_dir'),
@@ -192,6 +191,7 @@ sub pipeline_wide_parameters {
         'genome_dumps_dir'=> $self->o('genome_dumps_dir'),
         'warehouse_dir'   => $self->o('warehouse_dir'),
         'uniprot_file'    => $self->o('uniprot_file'),
+        'prev_rel_ftp_root' => $self->o('prev_rel_ftp_root'),
 
         # tree params
         'dump_trees_capacity' => $self->o('dump_trees_capacity'),
@@ -258,6 +258,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::CreateDumpJobs',
             -input_ids  => [ {
                     'compara_db'           => $self->o('compara_db'),
+                    'curr_release'         => $self->o('ensembl_release'),
                     'reuse_prev_rel'       => $self->o('reuse_prev_rel'),
                     'reg_conf'             => $self->o('reg_conf'),
                     'updated_mlss_ids'     => $self->o('updated_mlss_ids'),

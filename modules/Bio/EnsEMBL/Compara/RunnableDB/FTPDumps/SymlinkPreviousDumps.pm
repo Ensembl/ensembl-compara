@@ -36,18 +36,9 @@ sub fetch_input {
 
 	my $ftp_root = $self->param_required('ftp_root');
 	my $dump_dir = $self->param_required('dump_dir');
-    my $division = $self->param_required('division');
+    my $prev_rel_ftp_root = $self->param_required('prev_rel_ftp_root');
 
-    my ($prev_rel_ftp_root, @cmds, %missing_dump_mlsses);
-
-    if ($division eq 'vertebrates') {
-        my $prev_release = $self->param_required('curr_release') - 1;
-        $prev_rel_ftp_root = "$ftp_root/release-$prev_release";
-    } else {
-        my $prev_eg_release = $self->param_required('curr_eg_release') - 1;
-        $prev_rel_ftp_root = "$ftp_root/release-$prev_eg_release/$division";
-        $prev_rel_ftp_root .= '_ensembl' if ($division =~ /^pan($|[^a-z])/);
-    }
+    my (@cmds, %missing_dump_mlsses);
 
 	# first, symlink * from the mlss-specific dirs
 	my $mlss_dump_dirs = $self->param_required('mlss_dump_dirs');

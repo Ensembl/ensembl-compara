@@ -58,17 +58,8 @@ sub fetch_input {
 	$self->param( 'patch_dump_dir', $patch_dump_dir );
 
 	# where dump tarball of full lastz lives (from previous release)
-	my $ftp_root = $self->param_required('ftp_root');
-    my $division = $self->param_required('division');
-    my $prev_rel_tarball;
-    if ($division eq 'vertebrates') {
-        my $prev_release = $self->param_required('curr_release') - 1;
-        $prev_rel_tarball = "$ftp_root/release-$prev_release/$lastz_dump_path/$mlss_filename*";
-    } else {
-        my $prev_eg_release = $self->param_required('curr_eg_release') - 1;
-        my $div_folder = ($division =~ /^pan($|[^a-z])/) ? 'pan_ensembl' : $division;
-        $prev_rel_tarball = "$ftp_root/release-$prev_eg_release/$div_folder/$lastz_dump_path/$mlss_filename*";
-    }
+    my $prev_rel_ftp_root = $self->param_required('prev_rel_ftp_root');
+    my $prev_rel_tarball = "$prev_rel_ftp_root/$lastz_dump_path/$mlss_filename*";
 
 	my @tarballs = glob "$prev_rel_tarball";
 	die "Cannot find previous release tarball for mlss_id $mlss_id : $prev_rel_tarball\n" unless defined $tarballs[0];
