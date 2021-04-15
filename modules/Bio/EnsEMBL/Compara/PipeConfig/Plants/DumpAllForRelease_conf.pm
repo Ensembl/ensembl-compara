@@ -54,6 +54,8 @@ sub default_options {
 
         'division'          => 'plants',
         'epo_reference_species' => ['oryza_sativa'],
+
+        'prev_rel_ftp_root' => $self->o('ftp_root') . '/release-' . $self->o('prev_eg_release') . '/' . $self->o('division'),
     };
 }
 
