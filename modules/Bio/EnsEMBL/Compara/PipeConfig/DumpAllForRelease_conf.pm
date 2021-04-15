@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf
@@ -63,6 +61,8 @@ sub default_options {
         'work_dir'     => $self->o('dump_root') . '/dump_hash/',
         # Location of the previous dumps
         'ftp_root'     => '/nfs/production/panda/ensembl/production/ensemblftp/',
+
+        'prev_rel_ftp_root' => $self->o('ftp_root') . '/release-' . $self->o('prev_release'),
 
         'compara_db'   => 'compara_curr', # can be URL or reg alias
         'ancestral_db' => undef,
@@ -129,17 +129,6 @@ sub default_options {
         	},
         },
 
-        # define which files will each method_type generate in the FTP structure
-        # this will be used to generate a bash script to copy old data
-        ftp_locations => {
-        	LASTZ_NET => ['maf/ensembl-compara/pairwise_alignments'],
-        	EPO => ['emf/ensembl-compara/multiple_alignments', 'maf/ensembl-compara/multiple_alignments'],
-        	EPO_EXTENDED => ['emf/ensembl-compara/multiple_alignments', 'maf/ensembl-compara/multiple_alignments'],
-        	PECAN => ['emf/ensembl-compara/multiple_alignments', 'maf/ensembl-compara/multiple_alignments'],
-        	GERP_CONSTRAINED_ELEMENT => ['bed/ensembl-compara'],
-        	GERP_CONSERVATION_SCORE => ['compara/conservation_scores'],
-        },
-
         # DumpMultiAlign options
         'split_size'          => 200,
         'masked_seq'          => 1,
@@ -202,6 +191,7 @@ sub pipeline_wide_parameters {
         'genome_dumps_dir'=> $self->o('genome_dumps_dir'),
         'warehouse_dir'   => $self->o('warehouse_dir'),
         'uniprot_file'    => $self->o('uniprot_file'),
+        'prev_rel_ftp_root' => $self->o('prev_rel_ftp_root'),
 
         # tree params
         'dump_trees_capacity' => $self->o('dump_trees_capacity'),
@@ -217,7 +207,8 @@ sub pipeline_wide_parameters {
 
         # ancestral alleles
         'anc_tmp_dir'    => "#work_dir#/ancestral_alleles",
-        'anc_output_dir' => "#dump_dir#/fasta/ancestral_alleles",
+        'anc_output_basedir' => 'fasta/ancestral_alleles',
+        'anc_output_dir'     => "#dump_dir#/#anc_output_basedir#",
         'ancestral_dump_program' => $self->o('ancestral_dump_program'),
         'ancestral_stats_program' => $self->o('ancestral_stats_program'),
 
@@ -331,9 +322,6 @@ sub pipeline_analyses {
 
         {	-logic_name => 'create_ftp_skeleton',
         	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::FTPSkeleton',
-        	-parameters => {
-        		'ftp_locations' => $self->o('ftp_locations'),
-        	},
         	-flow_into => [ 'symlink_prev_dumps' ],
         },
 

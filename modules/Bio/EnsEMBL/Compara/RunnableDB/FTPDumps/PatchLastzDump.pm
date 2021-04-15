@@ -15,10 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::PatchLastzDump
@@ -37,18 +33,9 @@ use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-# sub param_defaults {
-#     my $self = shift;
-#     return {
-#         %{$self->SUPER::param_defaults},
-        
-# 		'compara_db' => '#patch_db#',
-# 	}
-# }
 
 sub fetch_input {
 	my $self = shift;
@@ -71,9 +58,8 @@ sub fetch_input {
 	$self->param( 'patch_dump_dir', $patch_dump_dir );
 
 	# where dump tarball of full lastz lives (from previous release)
-	my $ftp_root = $self->param_required('ftp_root');
-	my $prev_release = $self->param_required('curr_release') - 1;
-	my $prev_rel_tarball = "$ftp_root/release-$prev_release/$lastz_dump_path/$mlss_filename*";
+    my $prev_rel_ftp_root = $self->param_required('prev_rel_ftp_root');
+    my $prev_rel_tarball = "$prev_rel_ftp_root/$lastz_dump_path/$mlss_filename*";
 
 	my @tarballs = glob "$prev_rel_tarball";
 	die "Cannot find previous release tarball for mlss_id $mlss_id : $prev_rel_tarball\n" unless defined $tarballs[0];

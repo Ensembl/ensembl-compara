@@ -69,7 +69,8 @@ sub pipeline_wide_parameters {
         'ancestral_db' => $self->o('ancestral_db'),
 
         'dump_dir' => $self->o('dump_dir'),
-        'anc_output_dir' => "#dump_dir#/fasta/ancestral_alleles",
+        'anc_output_basedir' => "fasta/ancestral_alleles",
+        'anc_output_dir'     => "#dump_dir#/#anc_output_basedir#",
         'anc_tmp_dir' => "#dump_dir#/tmp",
 
         'genome_dumps_dir' => $self->o('genome_dumps_dir'),
