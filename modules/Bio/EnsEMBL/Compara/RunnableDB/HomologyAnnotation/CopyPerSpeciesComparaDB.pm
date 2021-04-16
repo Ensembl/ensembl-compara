@@ -38,7 +38,7 @@ use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 sub fetch_input {
     my $self = shift;
 
-    my @table_list = @{ $self->param('table_list') };
+    my @table_list = @{ $self->param_required('table_list') };
     my @cmd;
 
     push @cmd, $self->param_required('program');
@@ -46,7 +46,7 @@ sub fetch_input {
     push @cmd, '--compara_db', $self->param_required('per_species_db');
     push @cmd, '--tables', join(',', @table_list);
     push @cmd, '--genome_name', $self->param('genome_name') if $self->param('genome_name');
-    push @cmd, '--copy_dna', unless $self->param('skip_dna');
+    push @cmd, '--copy_dna' unless $self->param('skip_dna');
 
     $self->param('cmd', \@cmd);
 

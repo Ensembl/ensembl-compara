@@ -113,7 +113,7 @@ sub default_options {
         'old_server_uri'   => $self->o('compara_db'),
         'db_name'          => $self->o('dbowner') . '_' . $self->o('pipeline_name'),
 
-        # DB copy list of tables for per-species rapid release
+        # List of tables to copy to per-species compara database
         'table_list' => [
             "genome_db",
             "method_link_species_set",
