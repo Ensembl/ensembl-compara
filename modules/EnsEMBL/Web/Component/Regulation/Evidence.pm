@@ -54,7 +54,7 @@ sub content {
     foreach my $experiment (sort keys %$experiments) {
       my $peak_calling = $experiments->{$experiment};
       next unless (ref($peak_calling) =~ /PeakCalling/);
-      my $feature_type = $peak_calling->fetch_FeatureType;
+      my $feature_type = $peak_calling->get_FeatureType;
       my $feature_name = $feature_type->name;
     
       my $source_link = $self->hub->url({
@@ -69,7 +69,7 @@ sub content {
         cell     => $cell_line,
         source   => sprintf(q(<a href="%s">%s</a>),
                   $source_link,
-                  $peak_calling->fetch_source_label),
+                  $peak_calling->get_source_label),
       };
     }
   }

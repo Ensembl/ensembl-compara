@@ -109,7 +109,6 @@ sub munge_config_tree {
 sub munge_config_tree_multi {
   my $self = shift;
   $self->_munge_website_multi;
-  $self->_munge_file_formats;
   $self->_munge_species_url_map;
 }
 
@@ -1867,71 +1866,6 @@ sub _munge_website_multi {
 
   $self->tree->{'ENSEMBL_HELP'} = $self->db_tree->{'ENSEMBL_HELP'};
   $self->tree->{'ENSEMBL_GLOSSARY'} = $self->db_tree->{'ENSEMBL_GLOSSARY'};
-}
-
-sub _munge_file_formats {
-  my $self = shift;
-
-  my %unsupported = map {uc($_) => 1} @{$self->tree->{'UNSUPPORTED_FILE_FORMATS'}||[]};
-  my (@upload, @remote);
-
-  ## Get info on all formats
-  my %formats = (
-    'bed'       => {'ext' => 'bed', 'label' => 'BED',       'display' => 'feature'},
-    'bedgraph'  => {'ext' => 'bed', 'label' => 'bedGraph',  'display' => 'graph'},
-    'gff'       => {'ext' => 'gff', 'label' => 'GFF',       'display' => 'feature'},
-    'gtf'       => {'ext' => 'gtf', 'label' => 'GTF',       'display' => 'feature'},
-    'psl'       => {'ext' => 'psl', 'label' => 'PSL',       'display' => 'feature'},
-    'vcf'       => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph'},
-    'vep_input' => {'ext' => 'txt', 'label' => 'VEP',       'display' => 'feature'},
-    'wig'       => {'ext' => 'wig', 'label' => 'WIG',       'display' => 'graph'},
-    ## Remote only - cannot be uploaded
-    'bam'       => {'ext' => 'bam', 'label' => 'BAM',       'display' => 'graph', 'remote' => 1},
-    'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph', 'remote' => 1},
-    'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph', 'remote' => 1},
-    'bigpsl'    => {'ext' => 'bb',  'label' => 'BigPsl',    'display' => 'graph', 'remote' => 1},
-    'bigint'    => {'ext' => 'bb',  'label' => 'BigInteract',    'display' => 'graph', 'remote' => 1},
-    'cram'      => {'ext' => 'cram','label' => 'CRAM',      'display' => 'graph', 'remote' => 1},
-    'trackhub'  => {'ext' => 'txt', 'label' => 'Track Hub', 'display' => 'graph', 'remote' => 1},
-    ## Export only
-    'fasta'     => {'ext' => 'fa',   'label' => 'FASTA'},
-    'clustalw'  => {'ext' => 'aln',  'label' => 'CLUSTALW'},
-    'msf'       => {'ext' => 'msf',  'label' => 'MSF'},
-    'mega'      => {'ext' => 'meg',  'label' => 'Mega'},
-    'newick'    => {'ext' => 'nh',   'label' => 'Newick'},
-    'nexus'     => {'ext' => 'nex',  'label' => 'Nexus'},
-    'nhx'       => {'ext' => 'nhx',  'label' => 'NHX'},
-    'orthoxml'  => {'ext' => 'xml',  'label' => 'OrthoXML'},
-    'phylip'    => {'ext' => 'phy',  'label' => 'Phylip'},
-    'phyloxml'  => {'ext' => 'xml',  'label' => 'PhyloXML'},
-    'pfam'      => {'ext' => 'pfam', 'label' => 'Pfam'},
-    'psi'       => {'ext' => 'psi',  'label' => 'PSI'},
-    'rtf'       => {'ext' => 'rtf',  'label' => 'RTF'},
-    'stockholm' => {'ext' => 'stk',  'label' => 'Stockholm'},
-    'emboss'    => {'ext' => 'txt',  'label' => 'EMBOSS'},
-    ## WashU formats
-    'pairwise'  => {'ext' => 'txt', 'label' => 'Pairwise interactions', 'display' => 'feature'},
-    'pairwise_tabix' => {'ext' => 'txt', 'label' => 'Pairwise interactions (indexed)', 'display' => 'feature', 'indexed' => 1},
-  );
-
-  ## Munge into something useful to this website
-  while (my ($format, $details) = each (%formats)) {
-    my $uc_name = uc($format);
-    if ($unsupported{$uc_name}) {
-      delete $formats{$format};
-      next;
-    }
-    if ($details->{'remote'}) {
-      push @remote, $format;
-    }
-    elsif ($details->{'display'}) {
-      push @upload, $format;
-    }
-  }
-
-  $self->tree->{'UPLOAD_FILE_FORMATS'} = \@upload;
-  $self->tree->{'REMOTE_FILE_FORMATS'} = \@remote;
-  $self->tree->{'DATA_FORMAT_INFO'} = \%formats;
 }
 
 sub _munge_species_url_map {

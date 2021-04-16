@@ -56,7 +56,7 @@ sub content {
   my $parent_distance = $node->distance_to_parent || 0;
 
   if ($is_leaf and $is_supertree) {
-    my $child = $node->adaptor->fetch_node_by_node_id($node->{_subtree}->root_id);
+    my $child = $node->children->[0] || $node->adaptor->fetch_node_by_node_id($node->{_subtree}->root_id);
     $node->add_tag('species_tree_node_id', $child->get_tagvalue('species_tree_node_id'));
     my $members = $node->adaptor->fetch_all_AlignedMember_by_root_id($child->node_id);
     $node->{_sub_leaves_count} = scalar(@$members);

@@ -20,8 +20,21 @@ Ensembl.Panel.ComparaOrtholog = Ensembl.Panel.Content.extend({
     this.base.apply(this, arguments);
     
     Ensembl.EventManager.register('dataTableFilterUpdated', this, this.updateWithoutOrthologList);
+    Ensembl.EventManager.register('dataTableFilterUpdated', this, this.updateDownloadButton);
   },
 
+  updateDownloadButton: function (classNames) {
+    var downloadButton = $('.export.modal_link')[0];
+    var exportButtonUrl = downloadButton.href;
+    // Remove the existing filtered_sets param
+    if(exportButtonUrl.indexOf(';filtered_sets=') > 0){
+      exportButtonUrl = exportButtonUrl.substring(0, exportButtonUrl.indexOf(';filtered_sets='));
+    }
+
+    // Append the new filtered_sets params
+    downloadButton.href = exportButtonUrl + ';filtered_sets=' + classNames.join(',').replace(/\s/g, '');
+
+  },
   updateWithoutOrthologList: function (classNames) {
     var noOrthoList = $('#no_ortho_species li');
     var noOrthoCount = 0;

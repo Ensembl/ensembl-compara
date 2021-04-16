@@ -258,11 +258,11 @@ sub content {
   my $cv_terms = $object->get_cv_terms;
   if (@$cv_terms) {
     my $first = shift @$cv_terms;
-    my $text = qq(<p>$first [<a href="/info/website/glossary.html class="constant">Definitions</a>]</p>);
+    my $text = qq(<p>$first [<a href="https://www.gencodegenes.org/pages/tags.html" class="constant" rel="external">Definitions</a>]</p>);
     foreach my $next (@$cv_terms) {
       $text .= "<p>$next</p>";
     }
-    $table->add_row('Annotation Attributes', $text) if $text;;
+    $table->add_row('Annotation Attributes', $text);
   }
 
   ## Secondary structure (currently only non-coding RNAs)

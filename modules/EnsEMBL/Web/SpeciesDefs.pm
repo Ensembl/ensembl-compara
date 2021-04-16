@@ -868,9 +868,8 @@ sub _parse {
 
     ## Need to gather strain info for all species
     $config_packer->tree->{'IS_REFERENCE'} = 1;
-    $config_packer->tree->{'STRAIN_GROUP'} = undef if $SiteDefs::NO_STRAIN_GROUPS;
     my $strain_group = $config_packer->tree->{'STRAIN_GROUP'};
-    if ($strain_group) {
+    if ($strain_group && !$SiteDefs::NO_STRAIN_GROUPS) {
       $config_packer->tree->{'IS_REFERENCE'} = 0 if ($strain_group ne $species);
       if (!$config_packer->tree->{'IS_REFERENCE'}) {
         push @{$species_to_strains->{$strain_group}}, $config_packer->tree->{'SPECIES_URL'}; ## Key on actual URL, not production name
@@ -1054,6 +1053,12 @@ sub _parse {
   ## New species list - currently only used by rapid release
   $tree->{'MULTI'}{'NEW_SPECIES'} = $self->_read_species_list_file('NEW_SPECIES');
 
+  ## File format info
+  my $format_info = $self->_get_file_format_info($tree);;
+  $tree->{'MULTI'}{'UPLOAD_FILE_FORMATS'} = $format_info->{'upload'};
+  $tree->{'MULTI'}{'REMOTE_FILE_FORMATS'} = $format_info->{'remote'};
+  $tree->{'MULTI'}{'DATA_FORMAT_INFO'} = $format_info->{'formats'};
+
   ## Parse species directories for static content
   $tree->{'SPECIES_INFO'} = $self->_load_in_species_pages;
   $CONF->{'_storage'} = $tree; # Store the tree
@@ -1090,6 +1095,73 @@ sub process_ini_files {
   }
 }
 
+sub _get_file_format_info {
+  my ($self, $tree) = @_;
+
+  my %unsupported = map {uc($_) => 1} @{$tree->{'MULTI'}{'UNSUPPORTED_FILE_FORMATS'}||[]};
+  my (@upload, @remote);
+
+  ## Get info on all formats
+  my %formats = (
+    'bed'       => {'ext' => 'bed', 'label' => 'BED',       'display' => 'feature'},
+    'bedgraph'  => {'ext' => 'bed', 'label' => 'bedGraph',  'display' => 'graph'},
+    'gff'       => {'ext' => 'gff', 'label' => 'GFF',       'display' => 'feature'},
+    'gtf'       => {'ext' => 'gtf', 'label' => 'GTF',       'display' => 'feature'},
+    'psl'       => {'ext' => 'psl', 'label' => 'PSL',       'display' => 'feature'},
+    'vcf'       => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph'},
+    'vep_input' => {'ext' => 'txt', 'label' => 'VEP',       'display' => 'feature'},
+    'wig'       => {'ext' => 'wig', 'label' => 'WIG',       'display' => 'graph'},
+    ## Remote only - cannot be uploaded
+    'bam'       => {'ext' => 'bam', 'label' => 'BAM',       'display' => 'graph', 'remote' => 1},
+    'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph', 'remote' => 1},
+    'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph', 'remote' => 1},
+    'bigpsl'    => {'ext' => 'bb',  'label' => 'BigPsl',    'display' => 'graph', 'remote' => 1},
+    'bigint'    => {'ext' => 'bb',  'label' => 'BigInteract',    'display' => 'graph', 'remote' => 1},
+    'cram'      => {'ext' => 'cram','label' => 'CRAM',      'display' => 'graph', 'remote' => 1},
+    'trackhub'  => {'ext' => 'txt', 'label' => 'Track Hub', 'display' => 'graph', 'remote' => 1},
+    ## Export only
+    'fasta'     => {'ext' => 'fa',   'label' => 'FASTA'},
+    'clustalw'  => {'ext' => 'aln',  'label' => 'CLUSTALW'},
+    'msf'       => {'ext' => 'msf',  'label' => 'MSF'},
+    'mega'      => {'ext' => 'meg',  'label' => 'Mega'},
+    'newick'    => {'ext' => 'nh',   'label' => 'Newick'},
+    'nexus'     => {'ext' => 'nex',  'label' => 'Nexus'},
+    'nhx'       => {'ext' => 'nhx',  'label' => 'NHX'},
+    'orthoxml'  => {'ext' => 'xml',  'label' => 'OrthoXML'},
+    'phylip'    => {'ext' => 'phy',  'label' => 'Phylip'},
+    'phyloxml'  => {'ext' => 'xml',  'label' => 'PhyloXML'},
+    'pfam'      => {'ext' => 'pfam', 'label' => 'Pfam'},
+    'psi'       => {'ext' => 'psi',  'label' => 'PSI'},
+    'rtf'       => {'ext' => 'rtf',  'label' => 'RTF'},
+    'stockholm' => {'ext' => 'stk',  'label' => 'Stockholm'},
+    'text'      => {'ext' => 'txt',  'label' => 'Text'},
+    'emboss'    => {'ext' => 'txt',  'label' => 'EMBOSS'},
+    ## WashU formats
+    'pairwise'  => {'ext' => 'txt', 'label' => 'Pairwise interactions', 'display' => 'feature'},
+    'pairwise_tabix' => {'ext' => 'txt', 'label' => 'Pairwise interactions (indexed)', 'display' => 'feature', 'indexed' => 1},
+  );
+
+  ## Munge into something useful to this website
+  while (my ($format, $details) = each (%formats)) {
+    my $uc_name = uc($format);
+    if ($unsupported{$uc_name}) {
+      delete $formats{$format};
+      next;
+    }
+    if ($details->{'remote'}) {
+      push @remote, $format;
+    }
+    elsif ($details->{'display'}) {
+      push @upload, $format;
+    }
+  }
+
+  return {
+          'upload' => \@upload,
+          'remote' => \@remote,
+          'formats' => \%formats
+          };
+}
 
 sub _munge_colours {
   my $self = shift;
