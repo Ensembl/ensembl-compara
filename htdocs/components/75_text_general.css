@@ -154,13 +154,16 @@ body.ie67 .plain-box      { zoom: 100%; }
 .half-padded { padding:8px 8px 0; }
 .noclear { clear:none; }
 
-
 /* Rounded boxes used in static content */
 table.blobs { width:100%; border-spacing: 16px; margin: 0 auto; }
-table.blobs td { padding:10px; border-width:1px; border-style:solid; border-color:#ccc; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
+table.blobs td { padding:10px; border-width:1px; border-style:solid; border-color:[[PALE_GREY]]; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
 table.blobs td.twocol   { width:50%;  }
 table.blobs td.fourcol  { width:25%;  }
 
+div#rapidbox  { margin: 10px 0px;  border-width:1px !important; border-style:solid !important; border-color:[[PALE_GREY]] !important; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
+div#rapidbox h2   { color:[[WHITE]] !important; background: #56abdc; padding:10px 16px 8px 16px; border-radius: 16px 16px 0px 0px; }
+div#rapidbox p { padding: 0px 16px; }
+div#rapidbox p.button a { background: #56abdc; }
 
 /************************************
           non-standard lists
