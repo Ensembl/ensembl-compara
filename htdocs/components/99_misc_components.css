@@ -27,7 +27,3 @@
   -moz-border-radius: 4px;
 }
 
-// Styling used by Rapid Release box
-div.blob  { margin: 10px 0px;  border-width:1px; border-style:solid; border-color:[[PALE_GREY]]; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
-div.blob h2   { color:[[WHITE]] !important; background: [[MAIN_DARK]]; padding:10px 16px 8px 16px; border-radius: 16px 16px 0px 0px; }
-div.blob p { padding: 0px 16px; }
