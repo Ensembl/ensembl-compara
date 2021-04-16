@@ -76,8 +76,7 @@ sub write_output {
     my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $new_db );
     # Check to see if compara_db already exists with tables to avoid overwriting
     if ( table_exists( $dba->dbc, 'genome_db' ) ) {
-        $self->dataflow_output_id( { 'per_species_db' => $new_db }, 2 );
-        $self->complete_early( "Completing early because compara schema is already in place" );
+        $self->warn( "Compara schema is already in place" );
     }
     # Insert compara schema
     else {

@@ -24,10 +24,9 @@ populate_per_genome_database.pl
 
 =head1 DESCRIPTION
 
-This script copies from pipeline db to an empty per-species compara db.
-
-This script only copies the data from the tables corresponding to the provided
-compara_db for the provided list of tables.
+Copies the genome_name species-related data in the given tables from the
+pipeline db to the given compara db. It will also copy all the information in
+"ncbi_taxa_node" and "ncbi_taxa_name" tables.
 
 =head1 SYNOPSIS
 
@@ -42,7 +41,7 @@ perl populate_per_genome_database.pl
 
 This script uses mysql, mysqldump and mysqlimport programs.
 It requires at least version 4.1.12 of mysqldump as it uses
-the --insert-ignore option.
+the --replace option.
 
 =head1 ARGUMENTS
 
@@ -64,15 +63,19 @@ The per-species compara database url.
 The URL format is:
 mysql://username[:passwd]@host[:port]/db_name
 
+=item B<--tables list_of_tables>
+
+List of tables to copy. Can take several values or a string of comma-separated values.
+E.g. --tables genome_db,homology,homology_member
+
 =item B<--genome_name genome_name>
 
-The genome_name as used in database.
+Optional. The genome_name as used in database.
 E.g. --genome_name homo_sapiens
 
 =item B<--copy_dna>
 
-Flag to copy dna.
-Without flag, dna will not be copied.
+Optional. Flag to copy dna. By default, dna will not be copied.
 
 =back
 
@@ -92,16 +95,15 @@ GetOptions(
     "copy_dna"      => \$dnafrag,
 );
 
-@list_of_tables = split(/,/,join(',',@list_of_tables));
+@list_of_tables = split( /,/, join( ',', @list_of_tables ) );
 my %tables      =  map { $_ => 1 } @list_of_tables;
 
 my $pipeline_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $pipeline_db );
 my $compara_dba  = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $compara_db );
 
 # Copy ncbi tables
-copy_table( $pipeline_dba->dbc, $compara_dba->dbc, "ncbi_taxa_node" );
-copy_table( $pipeline_dba->dbc, $compara_dba->dbc, "ncbi_taxa_name" );
-copy_table( $pipeline_dba->dbc, $compara_dba->dbc, "meta" );
+copy_table( $pipeline_dba->dbc, $compara_dba->dbc, "ncbi_taxa_node", 1 );
+copy_table( $pipeline_dba->dbc, $compara_dba->dbc, "ncbi_taxa_name", 1 );
 
 # Collect necessary genome_name as provided or from db
 $genome_name = $genome_name ? $genome_name : ( $compara_dba->dbc->dbname =~ /([a-z0-9_])_compara_/i );
@@ -118,7 +120,12 @@ if ( defined $tables{'method_link_species_set'} or defined $tables{'species_set'
 }
 
 if ( defined $tables{'gene_member'} or defined $tables{'seq_member'} ) {
-    copy_gene_and_seq_members( $pipeline_dba, $compara_dba, $genome_db, $dnafrag );
+    copy_gene_and_seq_members( $pipeline_dba, $compara_dba, $genome_db );
+    # For rapid release as of e103-e104 only canonical peptides are used -
+    # when pairwise alignments are introduced, dnafrags will also need to be copied
+    if ( $dnafrag ) {
+        copy_dnafrags( $pipeline_dba, $compara_dba, $genome_db->dbID );
+    }
 }
 
 if ( defined $tables{'peptide_align_feature'} ) {
@@ -181,10 +188,9 @@ sub copy_mlss_and_ss {
     Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba (Mandatory)
     Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba (Mandatory)
     Arg[3]      : Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor $genome_db (Mandatory)
-    Arg[4]      : $dnafrag default: undef (Optional)
+    Arg[4]      : $dnafrag (Optional)
     Description : copy from $from_dba to $to_dba just the gene_member and
-                  seq_members which correspond to $genome_db_id only. Optionally
-                  copies across dnafrags if required.
+                  seq_members which correspond to $genome_db_id only.
     Returns     : None
     Exceptions  : None
 
@@ -214,11 +220,6 @@ sub copy_gene_and_seq_members {
         my $sequence = $from_seq_adap->fetch_by_dbID( $seq_member->sequence_id );
         $to_seq_adap->store( $sequence );
         $to_sm_adap->store( $seq_member );
-        # For rapid release as of e103-e104 only canonical peptides are used -
-        # when pairwise alignments are introduced, dnafrags will also need to be copied
-        if ( $dnafrag ) {
-            copy_dnafrags( $from_dba, $to_dba, $genome_db->dbID );
-        }
     }
 }
 
@@ -239,7 +240,7 @@ sub copy_pafs {
 
     my $constraint = "hgenome_db_id = $genome_db_id OR qgenome_db_id = $genome_db_id";
 
-    copy_data( $from_dba->dbc, $to_dba->dbc, 'peptide_align_feature', "SELECT peptide_align_feature.* FROM peptide_align_feature WHERE $constraint" );
+    copy_table( $from_dba->dbc, $to_dba->dbc, 'peptide_align_feature', $constraint, 1 );
 }
 
 =head2 copy_homology_and_members
@@ -263,8 +264,8 @@ sub copy_homology_and_members {
     foreach my $mlss ( @$mlsss ) {
         my $mlss_id = $mlss->dbID;
         my $constraint = "method_link_species_set_id = $mlss_id";
-        copy_table( $from_dba->dbc, $to_dba->dbc, 'homology', $constraint );
-        copy_data( $from_dba->dbc, $to_dba->dbc, 'homology_member', "SELECT homology_member.* FROM homology_member JOIN homology USING (homology_id) WHERE $constraint" );
+        copy_table( $from_dba->dbc, $to_dba->dbc, 'homology', $constraint, 1 );
+        copy_data( $from_dba->dbc, $to_dba->dbc, 'homology_member', "SELECT homology_member.* FROM homology_member JOIN homology USING (homology_id) WHERE $constraint", 1 );
     }
 }
 
@@ -283,9 +284,9 @@ sub copy_homology_and_members {
 sub copy_dnafrags {
     my ($from_dba, $to_dba, $genome_db_id) = @_;
 
-    my $constraint = "genome_db_id = ".($genome_db->dbID);
-    copy_table( $from_dba->dbc, $to_dba->dbc, 'dnafrag', $constraint );
-    copy_data( $from_dba->dbc, $to_dba->dbc, 'dnafrag_alt_region', "SELECT dnafrag_alt_region.* FROM dnafrag_alt_region JOIN dnafrag USING (dnafrag_id) WHERE $constraint" );
+    my $constraint = "genome_db_id = $genome_db_id";
+    copy_table( $from_dba->dbc, $to_dba->dbc, 'dnafrag', $constraint, 1 );
+    copy_data( $from_dba->dbc, $to_dba->dbc, 'dnafrag_alt_region', "SELECT dnafrag_alt_region.* FROM dnafrag_alt_region JOIN dnafrag USING (dnafrag_id) WHERE $constraint", 1 );
 }
 
 1;
