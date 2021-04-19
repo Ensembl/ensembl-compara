@@ -673,6 +673,7 @@ sub core_pipeline_analyses {
             -rc_name    => '500Mb_job',
             -flow_into  => [
                 'email_tree_stats_report',
+                'wga_expected_dumps',
                 WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ),
             ],
         },
@@ -3722,6 +3723,13 @@ sub core_pipeline_analyses {
                 'cmd'         => '/bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtOp #homology_dumps_dir#/ #homology_dumps_shared_dir#"',
             },
             -rc_name    => '500Mb_job',
+        },
+
+        {   -logic_name => 'wga_expected_dumps',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpWGAExpectedTags',
+            -parameters => {
+                'wga_expected_file'  => '#dump_dir#/wga_expected.mlss_tags.tsv',
+            },
         },
 
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe($self) },

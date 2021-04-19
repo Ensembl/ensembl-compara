@@ -348,6 +348,7 @@ sub core_pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -flow_into  => [ 
                     'notify_pipeline_completed',
+                    'wga_expected_dumps',                    
                     WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ), 
                 ],
             },
@@ -1338,6 +1339,13 @@ sub core_pipeline_analyses {
                 'input_query'   => 'SELECT stable_id, gene_member_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand FROM gene_member WHERE genome_db_id = #genome_db_id# ORDER BY dnafrag_id, dnafrag_start',
             },
         },
+
+        {   -logic_name => 'wga_expected_dumps',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpWGAExpectedTags',
+            -parameters => {
+                'wga_expected_file'  => '#dump_dir#/wga_expected.mlss_tags.tsv',
+            },
+        },        
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe_with_full_species_tree($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_hom_stats($self) },
