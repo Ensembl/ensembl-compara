@@ -49,11 +49,11 @@ sub default_options {
         'division'      => 'qfo',
         'collection'    => undef,
         'master_db'     => undef,
-        'ncbi_db'       => 'compara_ncbi',
+        'ncbi_db'       => 'ncbi_taxonomy',
 
         'reuse_member_db' => undef,
 
-        'curr_file_sources_locs' => [ $self->o('warehouse_dir') . '/alumni/mateus/home/qfo/2019/qfo_2019.json' ],
+        'curr_file_sources_locs' => [ '/homes/cristig/workbench/master/ensembl-compara/conf/qfo/qfo_2021.json' ],
 
     #load uniprot members for family pipeline
         'load_uniprot_members'      => 0,
@@ -63,6 +63,23 @@ sub default_options {
     };
 }
 
+sub pipeline_wide_parameters {
+    my ($self) = @_;
 
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},
+        'ncbi_db' => $self->o('ncbi_db'),
+    },
+}
+
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+
+    $analyses_by_name->{'check_versions_match'}->{'-parameters'} = { 'manual_ok' => 1 };
+    delete $analyses_by_name->{'copy_table_from_master'}->{'-parameters'}->{'src_db_conn'};
+    $analyses_by_name->{'copy_table_from_master'}->{'-parameters'}->{'src_db_conn'} = '#ncbi_db#';
+
+}
 1;
 
