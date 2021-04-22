@@ -30,39 +30,16 @@ use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Utils::Registry;
 
-#my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
-my $curr_release = 103;
+my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
 my $prev_release = $curr_release - 1;
 my $curr_eg_release = 50;
 my $prev_eg_release = $curr_eg_release - 1;
-
-# Species found on both vertebrates and non-vertebrates servers
-my @overlap_species = qw(saccharomyces_cerevisiae drosophila_melanogaster caenorhabditis_elegans);
-
-# ---------------------- CURRENT CORE DATABASES----------------------------------
-
-# Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-mirror-1:4240/$curr_release");
-# # But remove the non-vertebrates species
-# Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
-# Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
-# # Non-Vertebrates server
-# Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-mirror-3:4275/$curr_release");
-# # Bacteria server: all species used in qfo happen to be dispersed among these databases
-# for my $i (0 .. 109) {
-#     Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-#         -host   => 'mysql-ens-mirror-4',
-#         -port   => 4495,
-#         -user   => 'ensro',
-#         -pass   => '',
-#         -dbname => "bacteria_" . $i . "_collection_core_${curr_eg_release}_${curr_release}_1",
-#     );
-# }
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
 my $compara_dbs = {
     # general compara dbs
-    #'compara_master' => [ 'mysql-ens-compara-prod-2', 'cristig_ensembl_compara_master_qfo' ],
+    'compara_master' => [ 'mysql-ens-compara-prod-2', 'cristig_ensembl_compara_master_qfo' ],
 
     # homology dbs
     # 'compara_members'  => [ 'mysql-ens-compara-prod-X', '' ],
