@@ -21,7 +21,7 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpWGAExpectedTags
 
 =head1 DESCRIPTION
 
-A runnable to dump wga_expected tag and delete it from a database.
+Dumps 'wga_expected' tags to the specified TSV file and deletes them from the database.
 
 =cut
 
@@ -34,7 +34,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub run {
-    my ($self) = shift @_;
+    my $self = shift;
    
     $self->dump_wga_expected();
 
@@ -43,7 +43,7 @@ sub run {
 
 
 sub dump_wga_expected {
-    my ($self) = shift @_;
+    my $self = shift;
 
     my $dump_file = $self->param_required('wga_expected_file');
     open( my $fh_out, '>', $dump_file ) || die "Could not open output file $dump_file";
@@ -61,7 +61,7 @@ sub dump_wga_expected {
 }
 
 sub delete_wga_expected {
-	my ($self) = shift @_;
+	my $self = shift;
 
 	print "Deleting wga_expected tag\n" if $self->debug;
 	my $sql = "DELETE FROM method_link_species_set_tag WHERE tag = 'wga_expected'";
