@@ -1,4 +1,3 @@
-
 =head1 LICENSE
 
 See the NOTICE file distributed with this work for additional information
@@ -16,16 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Noisy;
@@ -39,15 +28,6 @@ It uses that alignment as input to the filterring tool Noisy.
 input_id/parameters format eg: "{'gene_tree_id'=>1234}"
     gene_tree_id : use 'id' to fetch a cluster from the ProteinTree
 
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
-
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Noisy;
@@ -60,7 +40,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GenericRunnable');
 sub param_defaults {
     my $self = shift;
     return { %{ $self->SUPER::param_defaults },
-             'cmd'              => '#noisy_exe# -s -v --seqtype P --cutoff #noisy_cutoff# #alignment_file#',
+             'cmd'              => '#noisy_exe# -s -v --seqtype #noisy_seqtype# --cutoff #noisy_cutoff# #alignment_file#',
+             'noisy_seqtype'    => '#expr(#cdna# ? "D" : "P")expr#',
              'output_file'      => 'align.#gene_tree_id#_out.fas',
              'read_tags'        => 1,
              'runtime_tree_tag' => 'noisy_runtime',

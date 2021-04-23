@@ -1,4 +1,3 @@
-
 =head1 LICENSE
 
 See the NOTICE file distributed with this work for additional information
@@ -15,6 +14,10 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::AlignmentFilteringTagging
 
 =cut
 
@@ -72,7 +75,7 @@ sub _get_removed_columns {
             my $removed_aa;
 
             foreach my $pos (@removed_columns) {
-                my $removed_seq = $pos->[1] - $pos->[0];
+                my $removed_seq = $pos->[1] - $pos->[0] + 1;
                 $removed_aa += $removed_seq;
             }
             return $removed_aa;
@@ -90,6 +93,8 @@ sub _get_shrinking_factor {
     my ( $self, $n_removed_columns ) = @_;
 
     my $aln_length = $self->param('gene_tree')->get_value_for_tag('aln_length') || die "Could not fetch tag aln_length for root_id=" . $self->param_required('gene_tree_id');
+    # When using cDNA, the alignment passed to noisy is DNA, so we need to correct the alignment length
+    $aln_length = $aln_length * 3 if ($self->param('cdna'));
 
     #If no columns were removed, the alignment hasn't shrinked at all.
     if ( $n_removed_columns == 0 ) {
