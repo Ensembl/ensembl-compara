@@ -35,15 +35,13 @@ my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $compara_dba->
 my $compara_db = $dbc->url;
 
 # Number of tags before calling the module
-my $sql1 = "SELECT COUNT(*) AS total_rows FROM method_link_species_set_tag";
-my $db_vals1 = $dbc->db_handle->selectrow_hashref($sql1);
-my $all_count = $db_vals1->{total_rows};
+my $num_tags_query = "SELECT COUNT(*) FROM method_link_species_set_tag";
+my ($num_tags_before) = $dbc->db_handle->selectrow_array($num_tags_query);
 
-my $sql2 = "SELECT COUNT(*) AS wga_exp_rows FROM method_link_species_set_tag WHERE tag = 'wga_expected'";
-my $db_vals2 = $dbc->db_handle->selectrow_hashref($sql2);
-my $we_count = $db_vals2->{wga_exp_rows};
+my $num_wga_exp_query = "SELECT COUNT(*) FROM method_link_species_set_tag WHERE tag = 'wga_expected'";
+my ($num_wga_exp_before) = $dbc->db_handle->selectrow_array($num_wga_exp_query);
 
-my ($wefh, $test_wga_expected_file) = tempfile();
+my ($wga_exp_fh, $test_wga_expected_file) = tempfile();
 standaloneJob(
     'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpWGAExpectedTags', # module
     { # input param hash
@@ -67,16 +65,12 @@ my @got_output = <$fh>;
 
 is_deeply( \@got_output, $exp_output, 'wga_expected tags dumped correctly to a file' );
 
-# Check that wga_expected tags are deleted from the database and no others
-my $sql3 = "SELECT COUNT(*) AS wga_exp_rows_after FROM method_link_species_set_tag WHERE tag = 'wga_expected'";
-my $db_vals3 = $dbc->db_handle->selectrow_hashref($sql3);
-my $we_count_after = $db_vals3->{wga_exp_rows_after};
+# Check that only wga_expected tags are deleted from the database
+my ($num_wga_exp_after) = $dbc->db_handle->selectrow_array($num_wga_exp_query);
 
-my $sql4 = "SELECT COUNT(*) AS total_rows_after FROM method_link_species_set_tag";
-my $db_vals4 = $dbc->db_handle->selectrow_hashref($sql4);
-my $all_count_after = $db_vals4->{total_rows_after};
+my ($num_tags_after) = $dbc->db_handle->selectrow_array($num_tags_query);
 
-is( $we_count_after, 0, 'All wga_expected tags deleted from the method_link_species_set_tag table' );
-is( $all_count_after, $all_count - $we_count, 'The number of remaining entries in method_link_species_set_tag correct' );
+is( $num_wga_exp_after, 0, 'All wga_expected tags deleted from the method_link_species_set_tag table' );
+is( $num_tags_after, $num_tags_before - $num_wga_exp_before, 'The number of remaining entries in method_link_species_set_tag is correct' );
 
 done_testing();
