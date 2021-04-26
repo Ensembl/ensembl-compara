@@ -197,6 +197,14 @@ sub content {
   push @$columns, { key => 'Gene name(Xref)',  align => 'left', width => '15%', sort => 'html', title => 'Gene name(Xref)'} if(!$self->html_format);
   
   @rows = ();
+
+  my $pan_lookup = $hub->species_defs->multi_val('PAN_COMPARA_LOOKUP') || {};
+  my $rev_lookup;
+  if (keys %$pan_lookup) {
+    while (my($prod_name, $info) = each(%$pan_lookup)) {
+      $rev_lookup->{$info->{'species_url'}} = $prod_name;
+    }
+  } 
   
   foreach my $species (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %orthologue_list) {
     next if $skipped{$species};
@@ -216,8 +224,19 @@ sub content {
       my $goc_class  = ($goc_score ne "n/a" && $goc_score >= $orthologue->{goc_threshold}) ? "box-highlight" : "";
       my $wga_class  = ($wgac ne "n/a" && $wgac >= $orthologue->{wga_threshold}) ? "box-highlight" : "";
 
-      my $spp = $orthologue->{'spp'};    
-      my $link_url = $hub->url({
+      my $spp = $orthologue->{'spp'};
+      my $base_url;
+
+      if ($hub->function && $hub->function eq 'pan_compara') {
+        my $prod_name = $rev_lookup->{$spp};
+        my $site      = $pan_lookup->{$prod_name}{'division'};
+        if ($site ne $hub->species_defs->DIVISION) {
+          $site         = 'www' if $site eq 'vertebrates';
+          $base_url     = "https://$site.ensembl.org";
+        }
+      }
+
+      my $link_url = $base_url.$hub->url({
         species => $spp,
         action  => 'Summary',
         g       => $stable_id,
