@@ -56,6 +56,8 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # Inherit the generic ones
 
+        'pipeline_name'     => 'blastocyst_' . $self->o('rel_with_suffix'),
+
         # Mandatory species input, one or the other only
         'species_list_file' => undef,
         'species_list'      => [ ],
