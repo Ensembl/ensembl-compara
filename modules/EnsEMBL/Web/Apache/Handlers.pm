@@ -334,8 +334,8 @@ sub childInitHandler {
   ## @param Apache2::ServerRec server object
   # Storable defaults are now too small. Ideally these would be configurable,
   # perhaps in SiteDefs.
-  $Storable::recursion_limit = 20474;
-  $Storable::recursion_limit_hash = 12278;
+  $Storable::recursion_limit = $SiteDefs::STORABLE_RECURSION_LIMIT;
+  $Storable::recursion_limit_hash = $SiteDefs::STORABLE_RECURSION_LIMIT_HASH;
   srand;
   warn sprintf "[%s] Child initialised: %d\n", time_str, $$ if $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
 
