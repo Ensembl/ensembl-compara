@@ -163,15 +163,29 @@ sub content {
       });
     
       my $link_gene = $node->{_sub_reference_gene};
+      ## Strain trees and pon-compara trees are very different!
+      my ($species, $action, $base_url);  
+      if ($hub->action =~ /Strain/) {
+        $species = $hub->species_defs->production_name_mapping($link_gene->genome_db->name);
+        $action = $hub->action;
+      }
+      else {
+        my $pan_lookup = $hub->species_defs->multi_val('PAN_COMPARA_LOOKUP', $link_gene->genome_db->name);
+        $species = $pan_lookup->{'species_url'};
+        my $site = $pan_lookup->{'division'};
+        $site = 'www' if $site eq 'vertebrates';
+        $base_url = sprintf 'https://%s.ensembl.org', $site;
+        $action = 'Compara_Tree';
+      }
 
       $self->add_entry({
         type  => 'Gene',
         label => 'Switch to that tree',
         order => 11,
-        link  => $hub->url({
-          species  => $hub->species_defs->production_name_mapping($link_gene->genome_db->name),
+        link  => $base_url.$hub->url({
+          species  => $species,
           type     => 'Gene',
-          action   => $hub->referer->{ENSEMBL_ACTION},
+          action   => $action,
           __clear  => 1,
           g        => $link_gene->stable_id,
         })
