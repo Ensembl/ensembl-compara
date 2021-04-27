@@ -365,7 +365,7 @@ sub filter_top_PAFs {
 
     foreach my $hit_genome_db_id (keys %by_query) {
         foreach my $sub_features (values %{$by_query{$hit_genome_db_id}}) {
-            my @pafList = sort sort_by_score_evalue_pid_and_alnlen @$sub_features;
+            my @pafList = sort sort_by_all_the_scores @$sub_features;
             my $rank = 1;
             my $prevPaf = undef;
             foreach my $paf (@pafList) {
@@ -413,11 +413,12 @@ sub store_PAFS {
 }
 
 
-sub sort_by_score_evalue_pid_and_alnlen {
+sub sort_by_all_the_scores {
     $b->score <=> $a->score ||
         $a->evalue <=> $b->evalue ||
             $b->perc_ident <=> $a->perc_ident ||
-                $b->alignment_length <=> $a->alignment_length;
+                $b->perc_pos <=> $a->perc_pos ||
+                    $b->alignment_length <=> $a->alignment_length;
 }
 
 
