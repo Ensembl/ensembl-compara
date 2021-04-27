@@ -61,6 +61,7 @@ sub pipeline_analyses_create_and_copy_per_species_db {
             -parameters => {
                 'program'    => $self->o('copy_program'),
                 'table_list' => $self->o('table_list'),
+                'skip_dna'   => $self->o('skip_dna'),
             }
         },
 
