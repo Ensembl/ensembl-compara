@@ -365,11 +365,14 @@ sub filter_top_PAFs {
 
     foreach my $hit_genome_db_id (keys %by_query) {
         foreach my $sub_features (values %{$by_query{$hit_genome_db_id}}) {
-            my @pafList = sort sort_by_score_evalue_and_pid @$sub_features;
+            my @pafList = sort sort_by_score_evalue_pid_and_alnlen @$sub_features;
             my $rank = 1;
             my $prevPaf = undef;
             foreach my $paf (@pafList) {
                 $rank++ if ($prevPaf and !pafs_equal($prevPaf, $paf));
+                # Because otherwise rbbh and bbh are biased by %id, score and evalue
+                # where %id is based on typical BLAST - basic local alignment searches
+                $rank++ if ($paf->alignment_length < (0.5 * $paf->qlength));
                 $paf->hit_rank($rank);
                 $prevPaf = $paf;
             }
@@ -410,6 +413,13 @@ sub store_PAFS {
 }
 
 
+sub sort_by_score_evalue_pid_and_alnlen {
+    $b->score <=> $a->score ||
+        $a->evalue <=> $b->evalue ||
+            $b->perc_ident <=> $a->perc_ident ||
+                $b->alignment_length <=> $a->alignment_length;
+}
+
 
 sub sort_by_score_evalue_and_pid {
   $b->score <=> $a->score ||
@@ -425,7 +435,8 @@ sub pafs_equal {
   return 1 if(($paf1->score == $paf2->score) and
               ($paf1->evalue == $paf2->evalue) and
               ($paf1->perc_ident == $paf2->perc_ident) and
-              ($paf1->perc_pos == $paf2->perc_pos));
+              ($paf1->perc_pos == $paf2->perc_pos) and
+              ($paf1->alignment_length == $paf2->alignment_length));
   return 0;
 }
 

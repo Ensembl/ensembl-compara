@@ -94,10 +94,23 @@ sub create_aligned_member {
     $aligned_member_2->gene_member_id($self->hit_member->gene_member->dbID);
     $aligned_member_2->seq_member_id($self->hit_member_id);
 
+    $self->qlength($self->query_member->seq_length);
+    $self->hlength($self->hit_member->seq_length ? $self->hit_member->seq_length : $self->qlength);
+
     # Assign cigar_line to each member
     my $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::collapse_cigar(Bio::EnsEMBL::Compara::Utils::Cigars::expand_cigar($self->cigar_line));
     $aligned_member_1->cigar_line($cigar_line);
     $aligned_member_2->cigar_line($cigar_line);
+
+    # Assign perc_* to aligned_members
+    my $perc_cov_1 = $self->alignment_length < $self->qlength ? (( 100/$self->qlength ) * $self->alignment_length) : 100;
+    my $perc_cov_2 = $self->alignment_length < $self->hlength ? (( 100/$self->hlength ) * $self->alignment_length) : 100;
+    $aligned_member_1->perc_cov($perc_cov_1);
+    $aligned_member_1->perc_id($self->perc_ident);
+    $aligned_member_1->perc_pos($self->perc_pos);
+    $aligned_member_2->perc_cov($perc_cov_2);
+    $aligned_member_2->perc_id($self->perc_ident);
+    $aligned_member_2->perc_pos($self->perc_pos);
 
     # Reassign query_member and hit_member with AlignedMembers
     $self->query_member($aligned_member_1);
@@ -121,8 +134,6 @@ sub create_homology {
     $homology->add_Member($self->hit_member);
     $homology->description($type) if $type;
     $homology->is_tree_compliant(0);
-
-    $homology->update_alignment_stats;
 
     return $homology;
 }
