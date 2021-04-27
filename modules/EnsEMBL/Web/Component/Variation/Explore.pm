@@ -40,7 +40,7 @@ sub content {
   my ($seq_url, $gt_url, $pop_url, $geno_url, $context_url, $ld_url, $pheno_url, $phylo_url, $cit_url, $prot_url);
   my ($gt_count, $pop_count, $geno_count, $pheno_count, $cit_count);
 
-  if ($avail->{'has_locations'}) {
+  if ($avail->{'has_locations'} && $avail->{'has_alignments'}) {
     $seq_url      = $hub->url({'action' => 'Sequence'});
     $context_url  = $hub->url({'action' => 'Context'});
   }
