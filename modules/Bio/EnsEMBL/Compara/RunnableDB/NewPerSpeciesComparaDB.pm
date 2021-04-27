@@ -36,6 +36,7 @@ use strict;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::Database qw/ table_exists /;
+use Bio::EnsEMBL::Utils::Exception qw( warning );
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -76,7 +77,7 @@ sub write_output {
     my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $new_db );
     # Check to see if compara_db already exists with tables to avoid overwriting
     if ( table_exists( $dba->dbc, 'genome_db' ) ) {
-        $self->warn( "Compara schema is already in place" );
+        $self->warning( "Compara schema is already in place" );
     }
     # Insert compara schema
     else {
