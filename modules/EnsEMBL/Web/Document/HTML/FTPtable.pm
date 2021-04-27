@@ -46,7 +46,7 @@ sub render {
 );
   }
 
-  my $ftp = $species_defs->ENSEMBL_FTP_URL;
+  my $ftp = $species_defs->EG_DIVISION ? $species_defs->ENSEMBL_GENOMES_FTP_URL : $species_defs->ENSEMBL_FTP_URL;
   if ($species_defs->HAS_API_DOCS) {
     $html .= qq(
 <h2>API Code</h2>
