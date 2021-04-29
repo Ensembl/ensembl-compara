@@ -79,7 +79,7 @@ sub helptip {
   ## @param Display html
   ## @param Tip html
   my ($display_html, $tip_html) = @_;
-  return $tip_html ? sprintf('<span class="ht _ht"><span class="_ht_tip hidden">%s</span>%s</span>', encode_entities($tip_html), $display_html) : $display_html;
+  return $tip_html ? sprintf('<span class="ht _ht"><span class="_ht_tip hidden">%s</span>%s</span>', $tip_html, $display_html) : $display_html;
 }
 
 sub glossary_helptip {
