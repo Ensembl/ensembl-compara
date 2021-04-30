@@ -64,6 +64,7 @@ sub shared_default_options {
 
         # EG release number
         'eg_release'            => Bio::EnsEMBL::ApiVersion::software_version()-53,
+        'prev_eg_release'       => Bio::EnsEMBL::ApiVersion::software_version()-54,
 
         # TODO: make a $self method that checks whether this already exists, to prevent clashes like in the LastZ pipeline
         # NOTE: hps_dir and warehouse_dir are expected to be defined in the meadow JSON file

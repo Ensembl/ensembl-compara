@@ -321,8 +321,12 @@ sub core_pipeline_analyses {
         },
         # EPO Extended pipeline
         {   -logic_name => 'epo_extended_rib',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => WHEN( '#lastz_complete#' => [ 'create_default_pairwise_mlss' ] ),
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CheckSwitch',
+            -parameters => {
+                'switch_name' => 'lastz_complete',
+            },
+            -flow_into  => [ 'create_default_pairwise_mlss' ],
+            -max_retry_count => 0,
         },
         {   -logic_name => 'create_extended_genome_jobs',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',

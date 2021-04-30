@@ -26,7 +26,7 @@ staging server and submits a job to copy them onto the vertannot-staging
 server.
 
 The script doesn't do the copy itself but uses the Ensembl Production
-REST API. For convenience you will need a checkout of ensembl-prodinf-core
+REST API. For convenience you will need a checkout of ensembl-prodinf-tools
 under $ENSEMBL_CVS_ROOT_DIR.
 
 It can work without any arguments if your environment is set properly,
@@ -49,15 +49,14 @@ Prints help message and exits.
 
 =over
 
-=item B<[-s|--source_server_url]>
+=item B<[-s|--source_host]>
 
 Where to get the databases from. Defaults to mysql-ens-sta-1 for vertebrates
 and mysql-ens-sta-3 for non-vertebrate divisions.
 
-=item B<[-s|--target_server_url]>
+=item B<[-s|--target_host]>
 
-Where to copy the databases to. Defaults to mysql-vertannot-staging-ensadmin
-See L<--ensadmin_psw> to define the ensadmin password
+Where to copy the databases to. Defaults to mysql-vertannot-staging-ensadmin.
 
 =item B<[-u|--endpoint_uri]>
 
@@ -67,11 +66,7 @@ http://production-services.ensembl.org/api/${division}/db/
 =item B<[-c|--db_copy_client]>
 
 Path to the db_copy_client.py script. Defaults to
-${ENSEMBL_CVS_ROOT_DIR}/ensembl-prodinf-core/ensembl_prodinf/db_copy_client.py
-
-=item B<[--ensadmin_psw this_is_a_secret_password]>
-
-Password for the ensadmin MySQL user. Defaults to $ENV{ENSADMIN_PSW}
+${ENSEMBL_CVS_ROOT_DIR}/ensembl-prodinf-tools/src/scripts/dbcopy_client.py
 
 =back
 
@@ -88,16 +83,14 @@ use Bio::EnsEMBL::Registry;
 
 
 ## Command-line options
-my ($db_copy_client, $endpoint_uri, $source_server_url, $target_server_url, $ensadmin_psw, $force, $update, $division, $release, $dry_mode, $help);
+my ($db_copy_client, $endpoint_uri, $source_host, $target_host, $force, $division, $release, $dry_mode, $help);
 
 GetOptions(
-        's|source_server_url=s' => \$source_server_url,
-        't|target_server_url=s' => \$target_server_url,
+        's|source_host=s'       => \$source_host,
+        't|target_host=s'       => \$target_host,
         'u|endpoint_uri=s'      => \$endpoint_uri,
         'c|db_copy_client=s'    => \$db_copy_client,
-        'p|ensadmin_psw=s'      => \$ensadmin_psw,
         'f|force!'              => \$force,
-        'k|update!'             => \$update,
         'd|division=s'          => \$division,
         'r|release=i'           => \$release,
         'y|dry_mode!'           => \$dry_mode,
@@ -112,31 +105,18 @@ if (not $db_copy_client) {
     if (not $ENV{ENSEMBL_CVS_ROOT_DIR}) {
         die "--db_copy_client is not given, and cannot find \$ENSEMBL_CVS_ROOT_DIR in the environment\n";
     }
-    $db_copy_client = $ENV{ENSEMBL_CVS_ROOT_DIR}.'/ensembl-prodinf-core/ensembl_prodinf/db_copy_client.py';
+    $db_copy_client = $ENV{ENSEMBL_CVS_ROOT_DIR} . '/ensembl-prodinf-tools/src/scripts/dbcopy_client.py';
 }
 die "'$db_copy_client' is not executable (or doesn't exist ?)\n" unless -x $db_copy_client;
 
-if (not $target_server_url) {
-    if (not $ensadmin_psw) {
-        if (not $ENV{ENSADMIN_PSW}) {
-            die "--ensadmin_psw is not given, and cannot find \$ENSADMIN_PSW in the environment. The password is needed to build the default target URL.\n";
-        }
-        $ensadmin_psw = $ENV{ENSADMIN_PSW};
-    }
-}
-
 die "--division <division> must be provided\n" unless $division;
 
-$release            ||= software_version();
-$endpoint_uri       ||= "http://production-services.ensembl.org/api/$division/db/";
-$source_server_url  ||= $division eq 'vertebrates' ? 'mysql://ensro@mysql-ens-sta-1:4519/' : 'mysql://ensro@mysql-ens-sta-3:4160/';
-$target_server_url  ||= "mysql://ensadmin:$ensadmin_psw\@mysql-ens-vertannot-staging:4573/";
+$release      ||= software_version();
+$endpoint_uri ||= "http://production-services.ensembl.org/api/$division/db/";
+$source_host  ||= $division eq 'vertebrates' ? 'mysql-ens-sta-1:4519' : 'mysql-ens-sta-3:4160';
+$target_host  ||= "mysql-ens-vertannot-staging:4573";
 
-
-$source_server_url .= '/' unless $source_server_url =~ /\/$/;
-$target_server_url .= '/' unless $target_server_url =~ /\/$/;
-
-Bio::EnsEMBL::Registry->load_registry_from_url($target_server_url);
+Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@' . $target_host  . '/');
 my %existing_target_species; # Hash of Registry names, not production names (usually the same, though)
 foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')}) {
     push @{ $existing_target_species{ $db_adaptor->species } }, $db_adaptor->dbc->dbname;
@@ -187,12 +167,12 @@ foreach my $species_name (keys %meta_hash){
 }
 
 if (@existing_dbs) {
-    warn "These databases already exist on $target_server_url ! Check with the genebuilders that the assembly and geneset it contains are correct.\n";
+    warn "These databases already exist on '$target_host' ! Check with the genebuilders that the assembly and geneset it contains are correct.\n";
     warn join("\n", map {"\t$_"} @existing_dbs), "\n";
 }
 
 if (@db_clash) {
-    warn "These species have databases on $target_server_url with a different name ! The Registry may be confused ! Check with the genebuilders what they are and whether they can be dropped.\n";
+    warn "These species have databases on '$target_host' with a different name ! The Registry may be confused ! Check with the genebuilders what they are and whether they can be dropped.\n";
     foreach my $a (@db_clash) {
         warn "\t", $a->[0], "\t", join(" ", @{$a->[1]}), "\n";
     }
@@ -200,22 +180,17 @@ if (@db_clash) {
 
 print "\n";
 
-die "Add the --force option if you want to carry on with the copy of the other databases or --update option to ignore warnings and overwrite all the core db in the target server\n" if !$force && (@existing_dbs || @db_clash);
+die "Add the --force option if you want to carry on with the copy of the databases\n" if !$force && (@existing_dbs || @db_clash);
 
 my @base_cmd = ($db_copy_client, '-a' => 'submit', '-u' => $endpoint_uri);
-if ($update) {
-    push @base_cmd, ('-p' => 'UPDATE');
-} else {
-    push @base_cmd, ('-d' => 'DROP');
+if ($force) {
+    push @base_cmd, ('-w' => 'DROP');
 }
 
-foreach my $dbname (@databases_to_copy) {
-    my @cmd = ( @base_cmd, '-s' => "$source_server_url$dbname", '-t' => "$target_server_url$dbname" );
-    if ($dry_mode) {
-        print join( " ", @cmd ), "\n";
-    }
-    elsif ( system(@cmd) ) {
-        die "Could not run the command: ", join( " ", @cmd ), "\n";
-    }
+my @cmd = ( @base_cmd, '-s' => $source_host, '-t' => $target_host, '-i' => join(',', @databases_to_copy), '-r' => $ENV{USER}, '-e' => $ENV{USER} . '@ebi.ac.uk' );
+if ($dry_mode) {
+    print join( " ", @cmd ), "\n";
+} elsif ( system(@cmd) ) {
+    die "Could not run the command: ", join( " ", @cmd ), "\n";
 }
 

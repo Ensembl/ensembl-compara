@@ -1,0 +1,6 @@
+101	wga_expected	1
+102	wga_expected	0
+103	avg_protein_gene_split_perc_id	0
+104	wga_expected	0
+105	wga_expected	1
+106	wga_expected	1

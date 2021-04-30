@@ -51,7 +51,7 @@ GetOptions(
 );
 
 if ( !$server or !$division ) {
-    die "Usage: perl $0 --division [vertebrates|plants|grch37] --server [https://rest.ensembl.org]";
+    die "Usage: perl $0 --division [vertebrates|plants|metazoa|pan|grch37] --server [https://rest.ensembl.org]";
 }
 
 my $responseIDGet = $browser->get( ( $server . '/info/ping?content-type=application/json' ), { headers => { 'Content-type' => 'application/json', 'Accept' => 'application/json' } } );
@@ -118,6 +118,34 @@ elsif($division eq "plants"){
     $extra_params             = 'compara=plants';
     $skip_families            = 1;
     $skip_cactus              = 1;
+}
+elsif($division eq "metazoa"){
+    $gene_member_id           = "AGAP004707";
+    $gene_tree_id             = "EMGT00950000187810";
+    $lastz_alignment_region   = "2L:2358158-2431617";
+
+    $species_1                = "anopheles_gambiae";
+    $species_2                = "culex_quinquefasciatus";
+    $species_3                = "bombyx_mori";
+
+    $taxon_1                  = 7165;#anopheles_gambiae
+    $taxon_2                  = 7176;#culex_quinquefasciatus
+    $taxon_3                  = 7091;#bombyx_mori
+
+    $species_set_group        = "metazoa";
+
+    $gene_symbol              = "para";
+    $homology_type            = 'orthologues';
+    $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
+
+    $cactus_species           = 'caenorhabditis_elegans';
+    $cactus_region            = 'X:937766-957832:1';
+    $cactus_species_set       = 'wormbase-ws269';
+
+    $extra_params             = 'compara=metazoa';
+    $skip_families            = 1;
+    $skip_epo                 = 1;
+    $skip_cafe                = 1;
 }
 elsif($division eq 'pan' or $division eq 'pan_homology'){
     $gene_member_id           = 'AT5G06870';

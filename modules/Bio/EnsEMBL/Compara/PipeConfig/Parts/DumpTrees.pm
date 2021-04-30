@@ -69,7 +69,7 @@ sub pipeline_analyses_dump_trees {
                 'cmd'         => 'mkdir -p #hash_dir#/tar',
             },
             -flow_into  => [
-                    WHEN('#member_type# eq "protein"' => 'dump_for_uniprot'),
+                    WHEN('#member_type# eq "protein" && #clusterset_id# eq "default"' => 'dump_for_uniprot'),
                     {
                         'create_dump_jobs' => undef,
                         'factory_homology_range_dumps' => undef,
@@ -82,7 +82,7 @@ sub pipeline_analyses_dump_trees {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters => {
                 'db_conn'       => '#rel_db#',
-                'output_file'   => sprintf('#base_dir#/#division#.GeneTree_content.#clusterset_id#.e%s.txt', $self->o('ensembl_release')),
+                'output_file'   => '#base_dir#/#division#.#uniprot_file#',
                 'append'        => [qw(-N -q)],
                 'input_query'   => sprintf q|
                     SELECT

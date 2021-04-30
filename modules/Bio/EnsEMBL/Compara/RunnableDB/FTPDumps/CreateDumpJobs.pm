@@ -15,13 +15,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::CreateDumpJobs
+Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::CreateDumpJobs
 
 =head1 SYNOPSIS
 
@@ -164,10 +160,12 @@ sub write_output {
 	return 1 unless ( $self->param_required('reuse_prev_rel') );
 
 	my $copy_jobs = $self->param('copy_jobs');
-	return 1 unless $copy_jobs->[0];
+    my $copy_ancestral_alleles = (($self->param_required('division') eq 'vertebrates') && ! $self->param('dump_ancestral_alleles')) || 0;
+    return 1 unless (@$copy_jobs || $copy_ancestral_alleles);
 	print "\n\nTO COPY: \n";
 	print '(' . join(', ', @$copy_jobs) . ")\n";
-	$self->dataflow_output_id( { mlss_ids => $copy_jobs }, 8 );
+    print "ancestral alleles\n" if $copy_ancestral_alleles;
+    $self->dataflow_output_id( { mlss_ids => $copy_jobs, copy_ancestral_alleles => $copy_ancestral_alleles }, 8 );
 }
 
 sub _dump_multialign_jobs {

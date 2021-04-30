@@ -57,12 +57,11 @@ def formulate_condition(analyses_pattern: str, analyses_list: str) -> str:
             condition = " WHERE analysis_id IN (%s)" % analyses_pattern
     elif analyses_list:
         try:
-            f = open(analyses_list, 'r')
-            logic_names = ["'%s'" % x.strip() for x in f.readlines()]
-            if len(logic_names) < 1:
-                die_with_message("File '%s' is empty" % analyses_list)
-            condition = " WHERE logic_name IN (%s)" % ','.join(logic_names)
-            f.close()
+            with open(analyses_list, 'r') as f:
+                logic_names = ["'%s'" % x.strip() for x in f.readlines()]
+                if len(logic_names) < 1:
+                    die_with_message("File '%s' is empty" % analyses_list)
+                condition = " WHERE logic_name IN (%s)" % ','.join(logic_names)
         except FileNotFoundError:
             die_with_message("Cannot find analyses_list file: %s" % analyses_list)
 

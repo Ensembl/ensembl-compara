@@ -143,9 +143,28 @@ sub pipeline_analyses_high_confidence {
                 homology_flatfile => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
                 replace      => 0,
             },
-            -rc_name       => '500Mb_job',
-            -hive_capacity => $self->o('import_homologies_capacity'),
-            -max_retry_count    => 0,
+            -rc_name         => '500Mb_job',
+            -hive_capacity   => $self->o('import_homologies_capacity'),
+            -max_retry_count => 0,
+            -flow_into       => {
+                -1 => [ 'import_homology_table_himem' ],
+            }
+        },
+
+        {   -logic_name => 'import_homology_table_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Flatfiles::MySQLImportHomologies',
+            -parameters => {
+                attrib_files => {
+                    'goc'       => '#goc_file#',
+                    'wga'       => '#wga_file#',
+                    'high_conf' => '#high_conf_file#',
+                },
+                homology_flatfile => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
+                replace      => 0,
+            },
+            -rc_name         => '8Gb_job',
+            -hive_capacity   => $self->o('import_homologies_capacity'),
+            -max_retry_count => 0,
         },
 
     ];

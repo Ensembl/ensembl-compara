@@ -493,6 +493,11 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                 if ($exist_mlss->species_set->name ne $mlss->species_set->name) {
                     $compara_dba->dbc->do('UPDATE species_set_header SET name = ? WHERE species_set_id = ?', undef, $mlss->species_set->name, $exist_mlss->species_set->dbID);
                 }
+
+                # handle re-release : when an object was retired, but is being made current again.
+                # if we don't set this, it gets set to current release value and history is lost.
+                $mlss->first_release($exist_mlss->first_release);
+                $mlss->species_set->first_release($exist_mlss->species_set->first_release);
             }
             if ($exist_mlss and ($exist_mlss->is_current || $mlss->{_no_release})) {
                 push @mlsss_existing, $exist_mlss;

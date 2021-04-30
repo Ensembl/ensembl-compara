@@ -14,22 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 =head1 NAME
 
 DumpMultiAlign.pl
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
-=head1 COPYRIGHT
-
-This modules is part of the Ensembl project http://www.ensembl.org
 
 =head1 DESCRIPTION
 
@@ -445,7 +432,7 @@ if ($ancestral_db) {
     if (!$reg->get_DBAdaptor($ancestral_db, 'core')) {
         throw("Cannot find '$ancestral_db' in the Registry");
     }
-    if ($reg->get_DBAdaptor('ancestral_sequences', 'core')) {
+    if ($reg->alias_exists('ancestral_sequences')) {
         warn "Overriding the 'ancestral_sequences' Registry entry";
         $reg->remove_DBAdaptor('ancestral_sequences', 'core');
     }

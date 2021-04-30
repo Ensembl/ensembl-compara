@@ -65,21 +65,51 @@ sub default_options {
 
             'skip_epo'          => 1,
 
-            # Where to draw the orthologues from
-            'ref_ortholog_db'   => 'compara_nctrees',
+            # collection in master that will have overlapping data
+            'ref_collection'   => 'default',
 
             # CAFE parameters
             'do_cafe'  => 0,
+
+            'multifurcation_deletes_all_subnodes' => undef,
     };
-}   
+}
 
 sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
     my ($self) = @_;
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        'ref_ortholog_db'   => $self->o('ref_ortholog_db'),
+        'ref_collection'   => $self->o('ref_collection'),
     }
+}
+
+sub core_pipeline_analyses {
+    my ($self) = @_;
+    return [
+        @{$self->SUPER::core_pipeline_analyses},
+
+        {   -logic_name => 'check_strains_cluster_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery' => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
+            },
+            -flow_into  => {
+                '2->A' => [ 'cleanup_strains_clusters' ],
+                'A->1' => [ 'cluster_qc_factory' ],
+            },
+            -rc_name    => '1Gb_job',
+        },
+        {   -logic_name => 'cleanup_strains_clusters',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingClusters',
+        },
+
+
+        {
+             -logic_name => 'remove_overlapping_homologies',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveOverlappingHomologies',
+        },
+    ]
 }
 
 sub tweak_analyses {
@@ -90,6 +120,10 @@ sub tweak_analyses {
     $analyses_by_name->{'make_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;  # We have sub-species
     $analyses_by_name->{'make_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = $self->o('multifurcation_deletes_all_subnodes');
     $analyses_by_name->{'orthotree_himem'}->{'-rc_name'} = '2Gb_job';
+
+    # wire up strain-specific analyses
+    $analyses_by_name->{'expand_clusters_with_projections'}->{'-flow_into'} = 'check_strains_cluster_factory';
+    push @{$analyses_by_name->{'hc_global_tree_set'}->{'-flow_into'}}, 'remove_overlapping_homologies';
 }
 
 
