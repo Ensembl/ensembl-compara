@@ -65,6 +65,11 @@ sub run {
                 $dbc->do('DELETE FROM gene_align_member WHERE gene_align_id = ?', undef, $gene_align_id);
                 $dbc->do('DELETE FROM gene_align        WHERE gene_align_id = ?', undef, $gene_align_id);
             }
+
+            # remove from supertree alignments - we clean the supertree itself in "delete_tree" analysis
+            $dbc->do('DELETE m FROM gene_align_member m JOIN gene_tree_root r USING(gene_align_id)
+                      WHERE r.tree_type = "supertree" AND m.seq_member_id = ?;', undef, $self->param('seq_member_id'));
+
             $dbc->do('DELETE FROM gene_member_qc                  WHERE gene_member_stable_id = ?', undef, $self->param('gene_member_stable_id'));
             $dbc->do('DELETE FROM member_xref                     WHERE gene_member_id = ?',        undef, $self->param('gene_member_id'));
             $dbc->do('DELETE FROM gene_member_hom_stats           WHERE gene_member_id = ?',        undef, $self->param('gene_member_id'));
@@ -78,4 +83,3 @@ sub run {
 }
 
 1;
-
