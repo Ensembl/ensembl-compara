@@ -312,7 +312,8 @@ sub is_leaf {
     if ( $child_count == 0 ) {
         return 1;
     } elsif ( $child_count == 1 && $self->tree->tree_type eq 'supertree' ) {
-        return 1;
+        my $child = $self->children->[0];
+        return ($child->node_id == $child->root->node_id);
     } else {
         return 0;
     }

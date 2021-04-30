@@ -158,6 +158,7 @@ sub store {
 =head2 delete
 
  Arg [1]    : Bio::EnsEMBL::Compara::AlignedMemberSet $aln
+ Arg [2]    : (optional) arrayref of members to remove
  Example    : $AlignedMemberAdaptor->delete($aln)
  Description: Deletes an AlignedMemberSet object from a Compara database
  Returntype : none
@@ -174,5 +175,32 @@ sub delete {
     $self->dbc->do('DELETE FROM gene_align_member WHERE gene_align_id = ?', undef, $dbID);
     $self->dbc->do('DELETE FROM gene_align        WHERE gene_align_id = ?', undef, $dbID);
 }
+
+=head2 delete_members
+
+ Arg [1]    : Bio::EnsEMBL::Compara::AlignedMemberSet $aln
+ Arg [2]    : (optional) arrayref of members to remove
+ Example    : $AlignedMemberAdaptor->delete_members($aln, [$member1, $member2])
+ Description: Deletes some members from an AlignedMemberSet object
+ Returntype : none
+ Exceptions : none
+ Caller     : general
+
+=cut
+
+sub delete_members {
+    my ($self, $aln, $members) = @_;
+
+    assert_ref_or_dbID($aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet', 'aln');
+    my $dbID = ref($aln) ? $aln->dbID : $aln;
+
+    my $sql = 'DELETE FROM gene_align_member WHERE gene_align_id = ? AND seq_member_id = ?';
+    my $delete_sth = $self->dbc->prepare($sql);
+    foreach my $member ( @$members ) {
+        $delete_sth->execute($dbID, $member->dbID);
+    }
+}
+
+
 
 1;
