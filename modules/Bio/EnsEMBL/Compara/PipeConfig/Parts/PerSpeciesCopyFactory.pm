@@ -37,6 +37,13 @@ use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf; # For WHEN and INPUT_PLUS
 sub pipeline_analyses_create_and_copy_per_species_db {
     my ($self) = @_;
 
+    my %dc_parameters = (
+        'datacheck_groups' => $self->o('datacheck_groups'),
+        'db_type'          => $self->o('db_type'),
+        'old_server_uri'   => $self->o('compara_db'),
+        'registry_file'    => undef,
+    );
+
     return [
 
         {   -logic_name => 'create_db_factory',
@@ -52,7 +59,8 @@ sub pipeline_analyses_create_and_copy_per_species_db {
                 'schema_file'  => $self->o('schema_file'),
             },
             -flow_into => {
-                2 => [ 'copy_per_species_db' ],
+                '2->A' => [ 'copy_per_species_db' ],
+                'A->2'  => { 'datacheck_factory' => { 'compara_db' => '#per_species_db#', %dc_parameters } },
             },
         },
 
