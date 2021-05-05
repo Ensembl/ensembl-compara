@@ -120,7 +120,7 @@ if ( defined $tables{'method_link_species_set'} or defined $tables{'species_set'
 }
 
 if ( defined $tables{'gene_member'} or defined $tables{'seq_member'} ) {
-    copy_gene_and_seq_members( $pipeline_dba, $compara_dba, $genome_db );
+    copy_gene_and_seq_members( $pipeline_dba, $compara_dba, $genome_db->dbID );
     # For rapid release as of e103-e104 only canonical peptides are used -
     # when pairwise alignments are introduced, dnafrags will also need to be copied
     if ( $dnafrag ) {
@@ -187,8 +187,7 @@ sub copy_mlss_and_ss {
 
     Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $from_dba (Mandatory)
     Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $to_dba (Mandatory)
-    Arg[3]      : Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor $genome_db (Mandatory)
-    Arg[4]      : $dnafrag (Optional)
+    Arg[3]      : $genome_db_id (Mandatory)
     Description : copy from $from_dba to $to_dba just the gene_member and
                   seq_members which correspond to $genome_db_id only.
     Returns     : None
@@ -197,30 +196,12 @@ sub copy_mlss_and_ss {
 =cut
 
 sub copy_gene_and_seq_members {
-    my ($from_dba, $to_dba, $genome_db, $dnafrag) = @_;
+    my ($from_dba, $to_dba, $genome_db_id) = @_;
 
-    my $from_gene_adap = $from_dba->get_GeneMemberAdaptor;
-    my $to_gene_adap   = $to_dba->get_GeneMemberAdaptor;
-
-    my $from_dna_adap = $from_dba->get_DnaFragAdaptor;
-    my $to_dna_adap   = $to_dba->get_DnaFragAdaptor;
-
-    my $from_sm_adap = $from_dba->get_SeqMemberAdaptor;
-    my $to_sm_adap   = $to_dba->get_SeqMemberAdaptor;
-
-    my $from_seq_adap = $from_dba->get_SequenceAdaptor;
-    my $to_seq_adap   = $to_dba->get_SequenceAdaptor;
-
-    my $seq_members = $from_sm_adap->fetch_all_canonical_by_GenomeDB( $genome_db );
-    foreach my $seq_member ( @$seq_members ) {
-        # For some reason $seq_member->gene_member returns undef attribute.
-        # May be linked to intentional missing dnafrag for homology etc.
-        my $gene_member = $from_gene_adap->fetch_by_dbID( $seq_member->gene_member_id );
-        $to_gene_adap->store( $gene_member );
-        my $sequence = $from_seq_adap->fetch_by_dbID( $seq_member->sequence_id );
-        $to_seq_adap->store( $sequence );
-        $to_sm_adap->store( $seq_member );
-    }
+    my $constraint = "genome_db_id = $genome_db_id";
+    copy_table( $from_dba->dbc, $to_dba->dbc, 'gene_member', $constraint, 1 );
+    copy_table( $from_dba->dbc, $to_dba->dbc, 'seq_member', $constraint, 1 );
+    copy_data( $from_dba->dbc, $to_dba->dbc, 'sequence', "SELECT sequence.* FROM sequence JOIN seq_member USING (sequence_id) WHERE $constraint", 1 );
 }
 
 =head2 copy_pafs
