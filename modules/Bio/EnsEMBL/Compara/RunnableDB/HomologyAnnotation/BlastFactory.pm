@@ -91,6 +91,7 @@ sub write_output {
 
     my $step              = $self->param('step');
     my @query_member_list = @{$self->param('query_members')};
+    my $gdb_adaptor       = $self->compara_dba->get_GenomeDBAdaptor;
     my @funnel_output;
 
     foreach my $genome ( @query_member_list ) {
@@ -106,6 +107,8 @@ sub write_output {
         $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'ref_taxa' => $ref_taxa }, 1 );
 
         foreach my $ref ( @$ref_dirs ) {
+            # Skip the reference genome if it is the same as the query genome
+            next if $ref->{'ref_gdb'}->name eq $gdb_adaptor->fetch_by_dbID($genome_db_id)->name;
             # Obtain the diamond indexed file for the reference, this is the only file we need from
             # each reference at this point
             my $ref_dmnd_path = $ref->{'ref_dmnd'};
