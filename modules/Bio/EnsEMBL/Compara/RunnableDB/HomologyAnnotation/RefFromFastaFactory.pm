@@ -51,10 +51,13 @@ sub fetch_input {
     my $ref_dump_dir  = $self->param_required('ref_dump_dir');
     my $ref_taxa      = $self->param('ref_taxa') ? $self->param('ref_taxa') : 'default';
     my $ref_dir_paths = collect_species_set_dirs($ref_dba, $ref_taxa, $ref_dump_dir);
+    my $gdb_adaptor   = $self->compara_dba->get_GenomeDBAdaptor;
+
     my @all_paths;
 
     foreach my $ref_gdb_dir ( @$ref_dir_paths ) {
-
+        # Skip the reference genome if it is the same as the target genome
+        next if $ref_gdb_dir->{'ref_gdb'}->name eq $gdb_adaptor->fetch_by_dbID($self->param_required('genome_db_id'))->name;
         my $ref_gdb_id   = $ref_gdb_dir->{'ref_gdb'}->dbID;
         my $ref_splitfa  = $ref_gdb_dir->{'ref_splitfa'};
         my @ref_splitfas = glob($ref_splitfa . "/*.fasta");
