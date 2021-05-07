@@ -47,7 +47,9 @@ sub render {
   $html .= qq(<p class="right"><a href="http://www.ensembl.info/category/01-release/">More release news</a> on our blog</p>); 
 
   ## Rapid Release panel
-  $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/rapid_release.html");
+  unless ($sd->ENSEMBL_SUBTYPE eq 'GRCh37') {
+    $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/rapid_release.html");
+  }
   
   $html .= $self->_include_blog;
 
