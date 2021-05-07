@@ -33,6 +33,7 @@ sub render {
   my $self            = shift;
   my $hub             = $self->hub;
   my $species_defs    = $hub->species_defs;
+  my $division        = $species_defs->EG_DIVISION || '';
 
   my $html;
 
@@ -46,7 +47,7 @@ sub render {
 );
   }
 
-  my $ftp = $species_defs->EG_DIVISION ? $species_defs->ENSEMBL_GENOMES_FTP_URL : $species_defs->ENSEMBL_FTP_URL;
+  my $ftp = $division ? $species_defs->ENSEMBL_GENOMES_FTP_URL : $species_defs->ENSEMBL_FTP_URL;
   if ($species_defs->HAS_API_DOCS) {
     $html .= qq(
 <h2>API Code</h2>
@@ -60,7 +61,7 @@ use git to obtain a previous version if querying older databases.</p>
     );
   }
 
-  my $mysql_dir = $species_defs->EG_DIVISION? "$ftp/current/mysql/" : "$ftp/current_mysql/";
+  my $mysql_dir = $division ? "$ftp/current/mysql/" : "$ftp/current_mysql/";
  
   unless ($species_defs->NO_PUBLIC_MYSQL) { 
     $html .= qq(
@@ -195,6 +196,7 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
   my $ftp_base = $ftp;
   unless ($ftp_base =~ /rapid/) {
     $ftp_base .= "/$rel";
+    $ftp_base .= "/$division" if $division;
   }
 
   foreach my $sp (@$all_species) {
