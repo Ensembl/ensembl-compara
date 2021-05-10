@@ -44,13 +44,13 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the Vertebrates ones
 
         # custom pipeline name, in case you don't like the default one
-        'pipeline_name'         => 'qfo_2019_'.$self->o('rel_with_suffix'),
+        'pipeline_name'         => 'qfo_2021_103',
         # Tag attached to every single tree
         'division'              => 'qfo',
 
         # "Member" parameters:
         'allow_missing_coordinates' => 1,
-        'allow_missing_cds_seqs'    => 1,
+        'allow_missing_cds_seqs'    => 0,
 
         # blast parameters:
 
@@ -59,7 +59,7 @@ sub default_options {
         'outgroups'                 => { },
 
         # species tree reconciliation
-        'species_tree_input_file'   => '/homes/mateus/qfo/2019/species_tree_qfo_2019.tree',
+        'species_tree_input_file'   => undef,
 
         # homology_dnds parameters:
         # used by 'homology_dNdS'
@@ -68,6 +68,7 @@ sub default_options {
         # mapping parameters:
         'do_stable_id_mapping'      => 0,
         'do_treefam_xref'           => 0,
+        'do_homology_id_mapping'    => 0,
 
         # executable locations:
         #'treebest_exe'              => '/homes/muffato/workspace/treebest/treebest.qfo',
@@ -75,15 +76,15 @@ sub default_options {
         # connection parameters to various databases:
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db'     => undef,
+        'master_db'     => "compara_master",
         'prev_rel_db'   => undef,
-        'ncbi_db'       => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
-        'member_db'     => 'mysql://ensro@mysql-ens-compara-prod-6:4616/mateus_qfo_load_members_96',
+        'ncbi_db'       => "compara_master",
+        'member_db'     => "compara_members",
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         'curr_core_sources_locs'    => [ ],
-        'curr_file_sources_locs'    => [ '/homes/mateus/qfo/2019/qfo_2019.json' ],    # It can be a list of JSON files defining an additionnal set of species
+        'curr_file_sources_locs'    => [ '/homes/ivana/qfo_2021/qfo_2021.json' ],    # It can be a list of JSON files defining an additionnal set of species
 
         # Add the database entries for the core databases of the previous release
         'prev_core_sources_locs'   => [ ],
@@ -107,6 +108,10 @@ sub tweak_analyses {
         $analyses_by_name->{$logic_name}->{'-parameters'}{'store_filtered_align'} = 0;
         $analyses_by_name->{$logic_name}->{'-parameters'}{'store_tree_support'} = 0;
     }
+
+    $analyses_by_name->{'backbone_fire_db_prepare'}->{'-parameters'} = { 'manual_ok' => 1 };
+    $analyses_by_name->{'cluster_factory'}->{'-rc_name'} = '500Mb_job';
+    $analyses_by_name->{'load_mlss_id'}->{'-parameters'}->{'species_set_name'} = "qfo";
 }
 
 1;

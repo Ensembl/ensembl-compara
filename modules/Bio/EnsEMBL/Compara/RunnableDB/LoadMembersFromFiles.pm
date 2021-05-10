@@ -156,10 +156,9 @@ sub write_output {
             }
 
 		$gene_member_adaptor->store($gene_member);
-        my $source_name = $self->param('genome_content')->{'source'} eq "uniprot" ? "Uniprot/SPTREMBL" : "EXTERNALPEP";
 		my $pep_member = Bio::EnsEMBL::Compara::SeqMember->new(
                 -stable_id      => $prot_id,
-                -source_name    => $source_name,
+                -source_name    => "EXTERNALPEP",
                 -taxon_id       => $taxon_id,
                 -description    => $sequence->desc,
                 -genome_db_id   => $genome_db_id,
