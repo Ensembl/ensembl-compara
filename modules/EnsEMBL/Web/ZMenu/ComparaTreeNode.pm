@@ -173,8 +173,10 @@ sub content {
         my $pan_lookup = $hub->species_defs->multi_val('PAN_COMPARA_LOOKUP', $link_gene->genome_db->name);
         $species = $pan_lookup->{'species_url'};
         my $site = $pan_lookup->{'division'};
-        $site = 'www' if $site eq 'vertebrates';
-        $base_url = sprintf 'https://%s.ensembl.org', $site;
+        if ($site) {
+          $site = 'www' if $site eq 'vertebrates';
+          $base_url = sprintf 'https://%s.ensembl.org', $site;
+        }
         $action = 'Compara_Tree';
       }
 
