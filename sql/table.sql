@@ -755,7 +755,7 @@ CREATE TABLE genomic_align_block (
 
 /**
 @table genomic_align_tree
-@desc  This table is used to index tree alignments, e.g. EPO alignments. These alignments include inferred ancestral sequences. The tree required to index these sequences is stored in this table. This table stores the structure of the tree. Each node links to an entry in the @link genomic_align_group table, which links to one or several entries in the @link genomic_align table.<br />NOTE: Left_index and right_index are used to speed up fetching trees from the database. Any given node has its left_index larger than the left_index of its parent node and its right index smaller than the right_index of its parent node. In other words, all descendent nodes of a given node can be obtained by fetching all the node with a left_index (or right_index or both) between the left_index and the right_index of that node.
+@desc  This table is used to index tree alignments, e.g. EPO alignments. These alignments include inferred ancestral sequences. The tree required to index these sequences is stored in this table. This table stores the structure of the tree. Each node links to an entry in the @link genomic_align table.<br />NOTE: Left_index and right_index are used to speed up fetching trees from the database. Any given node has its left_index larger than the left_index of its parent node and its right index smaller than the right_index of its parent node. In other words, all descendent nodes of a given node can be obtained by fetching all the node with a left_index (or right_index or both) between the left_index and the right_index of that node.
 @colour #FF8500
 
 @example      The following query corresponds to the root of a tree, because parent_id = 0 and root_id = node_id
@@ -772,8 +772,6 @@ CREATE TABLE genomic_align_block (
 @column left_node_id        Link to the node on the left side of this node
 @column right_node_id       Link to the node on the right side of this node
 @column distance_to_parent  Phylogenetic distance between this node and its parent
-
-@see genomic_align_group
 */
 
 CREATE TABLE genomic_align_tree (
