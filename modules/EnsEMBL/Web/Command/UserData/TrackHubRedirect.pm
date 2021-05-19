@@ -40,8 +40,6 @@ sub process {
   my $pattern       = "^$extension\$";
   my ($redirect, $anchor);
   my $params        = {};
-  warn ">>> LOC ".$hub->param('r');
-  warn ">>> GENE ".$hub->param('g');
 
   ## Allow for manually-created URLs with capitalisation, and 
   ## also validate any user-provided species name
