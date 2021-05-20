@@ -27,10 +27,10 @@ server.
 
 The script doesn't do the copy itself but uses the Ensembl Production
 REST API. For convenience you will need a checkout of ensembl-prodinf-tools
-under $ENSEMBL_CVS_ROOT_DIR.
+under $ENSEMBL_ROOT_DIR.
 
 It can work without any arguments if your environment is set properly,
-i.e. ENSEMBL_CVS_ROOT_DIR and ENSADMIN_PSW are defined, otherwise the
+i.e. ENSEMBL_ROOT_DIR and ENSADMIN_PSW are defined, otherwise the
 options are listed below.
 
 =head1 OPTIONS
@@ -66,7 +66,7 @@ http://production-services.ensembl.org/api/${division}/db/
 =item B<[-c|--db_copy_client]>
 
 Path to the db_copy_client.py script. Defaults to
-${ENSEMBL_CVS_ROOT_DIR}/ensembl-prodinf-tools/src/scripts/dbcopy_client.py
+${ENSEMBL_ROOT_DIR}/ensembl-prodinf-tools/src/scripts/dbcopy_client.py
 
 =back
 
@@ -102,10 +102,10 @@ if ($help) {
 }
 
 if (not $db_copy_client) {
-    if (not $ENV{ENSEMBL_CVS_ROOT_DIR}) {
-        die "--db_copy_client is not given, and cannot find \$ENSEMBL_CVS_ROOT_DIR in the environment\n";
+    if (not $ENV{ENSEMBL_ROOT_DIR}) {
+        die "--db_copy_client is not given, and cannot find \$ENSEMBL_ROOT_DIR in the environment\n";
     }
-    $db_copy_client = $ENV{ENSEMBL_CVS_ROOT_DIR} . '/ensembl-prodinf-tools/src/scripts/dbcopy_client.py';
+    $db_copy_client = $ENV{ENSEMBL_ROOT_DIR} . '/ensembl-prodinf-tools/src/scripts/dbcopy_client.py';
 }
 die "'$db_copy_client' is not executable (or doesn't exist ?)\n" unless -x $db_copy_client;
 
@@ -127,7 +127,7 @@ my @db_clash;
 
 my @existing_dbs;
 print "Running on check meta mode\n";
-my $meta_script             = "\$ENSEMBL_CVS_ROOT_DIR/ensembl-metadata/misc_scripts/get_list_databases_for_division.pl";
+my $meta_script             = "\$ENSEMBL_ROOT_DIR/ensembl-metadata/misc_scripts/get_list_databases_for_division.pl";
 my $metadata_script_options = "\$(mysql-ens-meta-prod-1 details script) --division $division --release $release";
 my $cmd                     = "perl $meta_script $metadata_script_options | grep _core_";
 my $meta_run                = qx/$cmd/;

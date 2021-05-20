@@ -37,9 +37,9 @@ species-tree node names are out of date. It will update the latter.
 
 =head1 SYNOPSIS
 
-    perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/fix_species_tree_node_names.pl --help
+    perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/fix_species_tree_node_names.pl --help
 
-    perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/fix_species_tree_node_names.pl \
+    perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/fix_species_tree_node_names.pl \
          --compara $(mysql-ens-compara-prod-1 details url ensembl_compara_master)
 
 =head1 OPTIONS

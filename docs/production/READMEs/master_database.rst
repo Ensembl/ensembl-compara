@@ -65,11 +65,11 @@ eHive automatically sets PERL5LIB up at runtime. Please only do the following if
 
 .. code-block:: tcsh
 
-    setenv PERL5LIB ${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules:${PERL5LIB}
+    setenv PERL5LIB ${ENSEMBL_ROOT_DIR}/ensembl-hive/modules:${PERL5LIB}
 
 .. code-block:: bash
 
-    PERL5LIB=${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules:${PERL5LIB}
+    PERL5LIB=${ENSEMBL_ROOT_DIR}/ensembl-hive/modules:${PERL5LIB}
 
 Create master database
 ----------------------
@@ -79,7 +79,7 @@ Create an empty database with the compara schema
 .. code-block:: bash
 
     mysql -h HOST -P PORT -u USER -pPASS -e "CREATE DATABASE kb3_ensembl_compara_master"
-    mysql -h HOST -P PORT -u USER -pPASS kb3_ensembl_compara_master < $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/sql/table.sql
+    mysql -h HOST -P PORT -u USER -pPASS kb3_ensembl_compara_master < $ENSEMBL_ROOT_DIR/ensembl-compara/sql/table.sql
 
 
 Populate the master database
@@ -154,21 +154,21 @@ eg
 
 3. Add a new species or update the assembly of an existing species
 
-Use the ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl`` script.
+Use the ``$ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl`` script.
 
 ::
 
-    perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl --reg_conf master_reg.conf --compara compara_master --species "otolemur_garnettii"
+    perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl --reg_conf master_reg.conf --compara compara_master --species "otolemur_garnettii"
 
 This command needs a registry configuration file to define the location of the compara_master database and the core database. For an example, see ensembl-compara/docs/master_reg.conf
 
 4. Add a new method_link_species_set entry
 
-Use the ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl`` script
+Use the ``$ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl`` script
 
 Eg to add a pairwise method_link_species_set_id for species with genome_db_ids of 90 and 124. These must already be in the master database
 
 ::
 
-    perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type LASTZ_NET --genome_db_id 90,124 --source "ensembl"  --compara mysql://user:pass@host:port/kb3_ensembl_compara_master
+    perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type LASTZ_NET --genome_db_id 90,124 --source "ensembl"  --compara mysql://user:pass@host:port/kb3_ensembl_compara_master
 
