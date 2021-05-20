@@ -53,7 +53,7 @@ my $previous_statements = Bio::EnsEMBL::Compara::Utils::Test::read_sqls($filenam
 my $previous_db = Bio::EnsEMBL::Compara::Utils::Test::load_statements($multitestdb, $previous_db_name, $previous_statements, 'Can load the previous Compara schema');
 
 my @schema_patcher_command = (
-    "$ENV{ENSEMBL_CVS_ROOT_DIR}/ensembl/misc-scripts/schema_patcher.pl",
+    "$ENV{ENSEMBL_ROOT_DIR}/ensembl/misc-scripts/schema_patcher.pl",
     '--host'        => $multitestdb->db_conf->{'host'},
     '--port'        => $multitestdb->db_conf->{'port'},
     '--user'        => $multitestdb->db_conf->{'user'},

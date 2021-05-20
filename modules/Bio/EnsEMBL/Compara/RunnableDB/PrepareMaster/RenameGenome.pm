@@ -66,10 +66,10 @@ Optional. List of paths to the species tree files.
     standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::RenameGenome \
         -compara_db $(mysql-ens-compara-prod-10-ensadmin details url jalvarez_prep_citest_master_for_rel_100) \
         -old_name canis_familiaris -new_name perricus_bonicus -master_db compara_master -prev_dbs '*_prev' \
-        -xml_file $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/citest/mlss_conf.xml \
+        -xml_file $ENSEMBL_ROOT_DIR/ensembl-compara/conf/citest/mlss_conf.xml \
         -genome_dumps_dir /hps/nobackup2/production/ensembl/jalvarez/genome_dumps/ \
         -sketch_dir /hps/nobackup2/production/ensembl/jalvarez/species_tree/citest_sketches/ \
-        -species_trees "[$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/citest/species_tree.branch_len.nw]"
+        -species_trees "[$ENSEMBL_ROOT_DIR/ensembl-compara/conf/citest/species_tree.branch_len.nw]"
 
 =cut
 

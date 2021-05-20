@@ -14,7 +14,7 @@ Run the script ``find_assembly_patches.pl`` using the latest core database and t
 
 ::
 
-    $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/find_assembly_patches.pl -new_core "mysql://ensro@ens-staging1:3306/homo_sapiens_core_68_37?group=core&species=homo_sapiens" -prev_core "mysql://ensro@ens-livemirror:3306/homo_sapiens_core_67_37?group=core&species=homo_sapiens"
+    $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/find_assembly_patches.pl -new_core "mysql://ensro@ens-staging1:3306/homo_sapiens_core_68_37?group=core&species=homo_sapiens" -prev_core "mysql://ensro@ens-livemirror:3306/homo_sapiens_core_67_37?group=core&species=homo_sapiens"
 
 This produces output like:
 
@@ -59,7 +59,7 @@ This produces output like:
 
       ::
 
-          perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --compara compara_master --species human --force
+          perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl --reg_conf $ENSEMBL_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --compara compara_master --species human --force
 
       The registry configuration file needs to contain the information for the compara master.
       Check that these have been added.
@@ -79,7 +79,7 @@ The list of patches to use is given in the output of the find_assembly_patches.p
 
 ::
 
-    perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_patch_pairaligner_conf.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --patched_species homo_sapiens --patches chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1 > lastz.conf
+    perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_patch_pairaligner_conf.pl --reg_conf $ENSEMBL_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --patched_species homo_sapiens --patches chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1 > lastz.conf
 
 By default, the script will list all the species the "patched" species has alignments with, and select the ones that have chromosomes. You can use the --species parameter to define a list of your own, e.g.
 
@@ -109,7 +109,7 @@ Run the init_pipeline command, setting --conf_file to lastz.conf
 
 ::
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --conf_file lastz_patch_mouse_81.conf --pipeline_name lastz_mouse_patches_81 --patch_alignments 1
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf --reg_conf $ENSEMBL_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --conf_file lastz_patch_mouse_81.conf --pipeline_name lastz_mouse_patches_81 --patch_alignments 1
 
 (assuming the password is defined in your environment variable $ENSADMIN_PSW)
 
@@ -147,16 +147,16 @@ Command lines
 ::
 
     # human patches vs * chromosomes
-    perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_patch_pairaligner_conf.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --patched_species homo_sapiens --patches chromosome:CHR_HSCHR15_6_CTG8,chromosome:CHR_HG2290_PATCH,chromosome:CHR_HG1651_PATCH,chromosome:CHR_HSCHR16_3_CTG3_1,chromosome:CHR_HG2237_PATCH,chromosome:CHR_HG2235_PATCH,chromosome:CHR_HG1342_HG2282_PATCH,chromosome:CHR_HG2239_PATCH > lastz_patch_human_81.conf
+    perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_patch_pairaligner_conf.pl --reg_conf $ENSEMBL_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --patched_species homo_sapiens --patches chromosome:CHR_HSCHR15_6_CTG8,chromosome:CHR_HG2290_PATCH,chromosome:CHR_HG1651_PATCH,chromosome:CHR_HSCHR16_3_CTG3_1,chromosome:CHR_HG2237_PATCH,chromosome:CHR_HG2235_PATCH,chromosome:CHR_HG1342_HG2282_PATCH,chromosome:CHR_HG2239_PATCH > lastz_patch_human_81.conf
 
     # mouse patches vs * chromosomes (except human)
-    perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_patch_pairaligner_conf.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --patched_species mus_musculus --patches chromosome:CHR_MG3231_PATCH,chromosome:CHR_MG4265_PATCH,chromosome:CHR_MG4259_PATCH,chromosome:CHR_MG4266_PATCH,chromosome:CHR_MG4248_PATCH,chromosome:CHR_MG3561_PATCH,chromosome:CHR_MG4254_PATCH,chromosome:CHR_MG3609_PATCH,chromosome:CHR_MG3562_PATCH,chromosome:CHR_MG117_PATCH,chromosome:CHR_MG4255_PATCH,chromosome:CHR_MG132_PATCH,chromosome:CHR_MG4261_PATCH,chromosome:CHR_MG4249_PATCH,chromosome:CHR_MG4264_PATCH --skip_species homo_sapiens > lastz_patch_mouse_81a.conf
+    perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_patch_pairaligner_conf.pl --reg_conf $ENSEMBL_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --patched_species mus_musculus --patches chromosome:CHR_MG3231_PATCH,chromosome:CHR_MG4265_PATCH,chromosome:CHR_MG4259_PATCH,chromosome:CHR_MG4266_PATCH,chromosome:CHR_MG4248_PATCH,chromosome:CHR_MG3561_PATCH,chromosome:CHR_MG4254_PATCH,chromosome:CHR_MG3609_PATCH,chromosome:CHR_MG3562_PATCH,chromosome:CHR_MG117_PATCH,chromosome:CHR_MG4255_PATCH,chromosome:CHR_MG132_PATCH,chromosome:CHR_MG4261_PATCH,chromosome:CHR_MG4249_PATCH,chromosome:CHR_MG4264_PATCH --skip_species homo_sapiens > lastz_patch_mouse_81a.conf
 
     # human chromosomes vs mouse patches
-    perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_patch_pairaligner_conf.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --patched_species mus_musculus --patches chromosome:CHR_MG3231_PATCH,chromosome:CHR_MG4265_PATCH,chromosome:CHR_MG4259_PATCH,chromosome:CHR_MG4266_PATCH,chromosome:CHR_MG4248_PATCH,chromosome:CHR_MG3561_PATCH,chromosome:CHR_MG4254_PATCH,chromosome:CHR_MG3609_PATCH,chromosome:CHR_MG3562_PATCH,chromosome:CHR_MG117_PATCH,chromosome:CHR_MG4255_PATCH,chromosome:CHR_MG132_PATCH,chromosome:CHR_MG4261_PATCH,chromosome:CHR_MG4249_PATCH,chromosome:CHR_MG4264_PATCH --patched_species_is_alignment_reference 0 --species homo_sapiens > lastz_patch_mouse_81b.conf
+    perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_patch_pairaligner_conf.pl --reg_conf $ENSEMBL_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --patched_species mus_musculus --patches chromosome:CHR_MG3231_PATCH,chromosome:CHR_MG4265_PATCH,chromosome:CHR_MG4259_PATCH,chromosome:CHR_MG4266_PATCH,chromosome:CHR_MG4248_PATCH,chromosome:CHR_MG3561_PATCH,chromosome:CHR_MG4254_PATCH,chromosome:CHR_MG3609_PATCH,chromosome:CHR_MG3562_PATCH,chromosome:CHR_MG117_PATCH,chromosome:CHR_MG4255_PATCH,chromosome:CHR_MG132_PATCH,chromosome:CHR_MG4261_PATCH,chromosome:CHR_MG4249_PATCH,chromosome:CHR_MG4264_PATCH --patched_species_is_alignment_reference 0 --species homo_sapiens > lastz_patch_mouse_81b.conf
 
     # initialize a pipeline
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --conf_file {lastz_patch_???.conf} --pipeline_name {lastz_???_patches_81} --patch_alignments 1
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf --reg_conf $ENSEMBL_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --conf_file {lastz_patch_???.conf} --pipeline_name {lastz_???_patches_81} --patch_alignments 1
 
 
 

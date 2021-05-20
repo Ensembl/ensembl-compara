@@ -20,7 +20,7 @@ document:
    (which also generates ancestral sequences).
 
 
-All the scripts are located relative to $ENSEMBL_CVS_ROOT_DIR (location of the GIT checkout).
+All the scripts are located relative to $ENSEMBL_ROOT_DIR (location of the GIT checkout).
 You will need the following software components for all 3 parts of the pipeline:
 
 * MySQL 5.1             (or higher)
@@ -39,7 +39,7 @@ Generating the anchor sequences from a list of pairwise alignments
 ------------------------------------------------------------------
 
 The configuration parameters for the pipeline are contained in the Perl module:
-``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_pt1_conf.pm``
+``$ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_pt1_conf.pm``
 
 General description of the pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -52,7 +52,7 @@ The constrained elements are transfered to the anchor_align table (these are the
 and trimmed to a particular size range ito form the final anchor set(default mlss_id=10000).
 
 see diagram :
-``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/pipelines/diagrams/epo_pt1.png``
+``$ENSEMBL_ROOT_DIR/ensembl-compara/docs/pipelines/diagrams/epo_pt1.png``
 
 Necessary software components and databases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -78,7 +78,7 @@ Mapping the anchor sequences from a set of genomes
 --------------------------------------------------
 
 The configuration parameters for the pipeline are contained in the Perl module:
-``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_pt2_conf.pm``
+``$ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_pt2_conf.pm``
 
 General description of the pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -89,7 +89,7 @@ no mapped position is associated with more than one anchor (this is necessary fo
 reduced (trimmed) to a 2 base pair position on the target genome.
 
 see diagram :
-``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/pipelines/diagrams/epo_pt2.png``
+``$ENSEMBL_ROOT_DIR/ensembl-compara/docs/pipelines/diagrams/epo_pt2.png``
 
 Necessary software components and databases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -114,7 +114,7 @@ Generating the multiple sequence alignments from the mapped anchor positions
 ----------------------------------------------------------------------------
 
 The configuration parameters for the pipeline are contained in the Perl module:
-``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_pt3_conf.pm``
+``$ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_pt3_conf.pm``
 
 General description of the pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -129,7 +129,7 @@ entries are added to the dnafrag table in the compara db (one entry per ancestra
 Gerp is used to generate conservation scores and constrained elements from the alignments and are added to the appropriate tables in the compara db.
 
 see diagram :
-``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/docs/pipelines/diagrams/epo_pt3.png``
+``$ENSEMBL_ROOT_DIR/ensembl-compara/docs/pipelines/diagrams/epo_pt3.png``
 
 Necessary software components and databases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

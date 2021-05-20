@@ -40,7 +40,7 @@ before_install:
     - git clone --branch release-1-6-9 --depth 1 https://github.com/bioperl/bioperl-run
     - sed -i '/Bio::DB::HTS/d' ensembl-rest/cpanfile
     # Setup the environment variables
-    - export ENSEMBL_CVS_ROOT_DIR=$PWD
+    - export ENSEMBL_ROOT_DIR=$PWD
     - export EHIVE_ROOT_DIR=$PWD/ensembl-hive
     - export PERL5LIB=$PERL5LIB:$PWD/bioperl-live
     - export PERL5LIB=$PERL5LIB:$PWD/bioperl-run/lib

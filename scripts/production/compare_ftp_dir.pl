@@ -92,9 +92,9 @@ that the new FTP is either bigger or the same as the reference one.
 =head1 EXAMPLES
 
  # In e96, to check that the rsync is complete
- $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/production/compare_ftp_dir.pl -curr_dir /nfs/production/panda/ensembl/production/ensemblftp/release-96/ -prev_dir /hps/nobackup2/production/ensembl/mateus/release_dumps_ensembl_96/release-96 -division vertebrates -equal
+ $ perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/production/compare_ftp_dir.pl -curr_dir /nfs/production/panda/ensembl/production/ensemblftp/release-96/ -prev_dir /hps/nobackup2/production/ensembl/mateus/release_dumps_ensembl_96/release-96 -division vertebrates -equal
  # In e96, to compare against e95
- $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/production/compare_ftp_dir.pl -curr_dir /nfs/production/panda/ensembl/production/ensemblftp/release-96/ -prev_dir /nfs/production/panda/ensembl/production/ensemblftp/release-95/ -division vertebrates -bigger
+ $ perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/production/compare_ftp_dir.pl -curr_dir /nfs/production/panda/ensembl/production/ensemblftp/release-96/ -prev_dir /nfs/production/panda/ensembl/production/ensemblftp/release-95/ -division vertebrates -bigger
 
 =cut
 

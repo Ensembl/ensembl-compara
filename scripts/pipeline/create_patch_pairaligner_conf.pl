@@ -226,7 +226,7 @@ my $dna_collection;
 
 my $pair_aligner;
 
-my $primate_matrix = $ENV{'ENSEMBL_CVS_ROOT_DIR'}. "/ensembl-compara/scripts/pipeline/primate.matrix";
+my $primate_matrix = $ENV{'ENSEMBL_ROOT_DIR'}. "/ensembl-compara/scripts/pipeline/primate.matrix";
 %{$pair_aligner->{exception}} = ('parameters' => "\"{method_link=>\'LASTZ_RAW\',options=>\'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=$primate_matrix --ambiguous=iupac\'}\"");
 
 %{$pair_aligner->{mammal}} = ('parameters' => "\"{method_link=>\'LASTZ_RAW\',options=>\'T=1 K=3000 L=3000 H=2200 O=400 E=30 --ambiguous=iupac\'}\"");

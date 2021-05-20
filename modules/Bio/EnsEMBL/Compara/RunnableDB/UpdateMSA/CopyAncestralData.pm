@@ -21,7 +21,7 @@ Bio::EnsEMBL::Compara::RunnableDB::UpdateMSA::CopyAncestralData
 
 =head1 DESCRIPTION
 
-Runs the $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/copy_ancestral_core.pl
+Runs the $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/copy_ancestral_core.pl
 script, dealing with missing parameters.
 
 =cut

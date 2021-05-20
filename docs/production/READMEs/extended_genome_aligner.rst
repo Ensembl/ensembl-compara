@@ -52,23 +52,23 @@ This pipeline requires a compara "master" database containing information that m
 
    ::
 
-       perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl --reg_conf reg.conf --compara compara_master --species "homo_sapiens"
+       perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl --reg_conf reg.conf --compara compara_master --species "homo_sapiens"
 
 #. Update method_link_species_set table with new method_link_species_set entry.
    This must be added after the mlss_id for the high coverage EPO pipeline else the internal ids will not be set correctly.
 
-   For this pipeline, 3 new method_link_species_set entries (EPO_EXTENDED,GERP_CONSERVATION_SCORE and GERP_CONSTRAINED_ELEMENT) need to be added to the master using the ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl`` script.
+   For this pipeline, 3 new method_link_species_set entries (EPO_EXTENDED,GERP_CONSERVATION_SCORE and GERP_CONSTRAINED_ELEMENT) need to be added to the master using the ``$ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl`` script.
 
    ::
 
-       perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type EPO_EXTENDED --genome_db_id <list_of_genome_db_ids>  --source "ensembl" --compara mysql://user:pass@host:port/compara_master_db
-       perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type GERP_CONSERVATION_SCORE --genome_db_id <list_of_genome_db_ids>  --source "ensembl" --compara mysql://user:pass@host:port/compara_master_db
-       perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type GERP_CONSTRAINED_ELEMENT --genome_db_id <list_of_genome_db_ids>  --source "ensembl" --compara mysql://user:pass@host:port/compara_master_db
+       perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type EPO_EXTENDED --genome_db_id <list_of_genome_db_ids>  --source "ensembl" --compara mysql://user:pass@host:port/compara_master_db
+       perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type GERP_CONSERVATION_SCORE --genome_db_id <list_of_genome_db_ids>  --source "ensembl" --compara mysql://user:pass@host:port/compara_master_db
+       perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type GERP_CONSTRAINED_ELEMENT --genome_db_id <list_of_genome_db_ids>  --source "ensembl" --compara mysql://user:pass@host:port/compara_master_db
 
 Configure the pipeline
 ----------------------
 
-Modifiy ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/EpoExtended_conf.pm`` file if necessary.
+Modifiy ``$ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/EpoExtended_conf.pm`` file if necessary.
 Check that the default_options are set correctly.
 Options most likely to need changing are:
 
@@ -81,7 +81,7 @@ It is recommended that the mlss_id entries are set on the command line rather th
 
 :release:                      Ensembl release
 :prev_release:                 Previous ensembl release
-:ensembl_cvs_root_dir:         Root directory of the ensembl checkouts
+:ensembl_root_dir:             Root directory of the ensembl checkouts
 :work_dir:                     Directory for writing files
 
 :pairwise_exception_location:  Location of new pairwise alignments which are not in the release compara database ie new for this release

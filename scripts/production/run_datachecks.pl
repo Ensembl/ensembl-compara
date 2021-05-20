@@ -76,7 +76,7 @@ Defaults to "compara_prev".
 =item B<[--dc-runner /path/to/run_datachecks.pl]>
 
 The path to the run_datachecks.pl of ensembl-datacheck. If not given a
-default will be formed using the ENSEMBL_CVS_ROOT_DIR environment variable.
+default will be formed using the ENSEMBL_ROOT_DIR environment variable.
 
 =back
 
@@ -126,8 +126,8 @@ if ($prev_url and $prev_alias) {
 }
 
 unless ($dc_runner) {
-    die "Need to give the --dc-runner option or set the ENSEMBL_CVS_ROOT_DIR environment variable to use the default" unless $ENV{ENSEMBL_CVS_ROOT_DIR};
-    $dc_runner = $ENV{ENSEMBL_CVS_ROOT_DIR} . '/ensembl-datacheck/scripts/run_datachecks.pl';
+    die "Need to give the --dc-runner option or set the ENSEMBL_ROOT_DIR environment variable to use the default" unless $ENV{ENSEMBL_ROOT_DIR};
+    $dc_runner = $ENV{ENSEMBL_ROOT_DIR} . '/ensembl-datacheck/scripts/run_datachecks.pl';
 }
 die "ERROR: '$dc_runner' is not a valid executable" unless -x $dc_runner;
 

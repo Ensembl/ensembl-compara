@@ -3,7 +3,7 @@ Pairwise alignment
 
 This document describes how to set up the lastz or translated blat pairwise alignment system using the init_pipeline configuration system.
 
-All the scripts are located relative to $ENSEMBL_CVS_ROOT_DIR (location of the GIT checkout)
+All the scripts are located relative to $ENSEMBL_ROOT_DIR (location of the GIT checkout)
 
 
 General description of the pipeline
@@ -12,17 +12,17 @@ General description of the pipeline
 The pipeline consists of a number of stages. Firstly the pairwise executable (lastz or blat) is run. The alignments are then chained according to their location in both genomes and finally nets are produced which chooses the best sub-chain on the reference species in each region. A basic healthcheck is performed to check database consistency and can be compared to a previous release. The final stage is to report some basic statistical information about the alignment (eg coverage).
 
 The base configuration parameters for the pipeline is contained in a Perl module:
-``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/PairAligner_conf.pm``
+``$ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/PairAligner_conf.pm``
 
 and there are 3 specific configuration files:
 
-:``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Lastz_conf.pm``:
+:``$ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Lastz_conf.pm``:
       Default parameters for running Lastz between closely related species, eg between mammals
 
-:``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Lastz_primate_conf.pm``:
+:``$ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Lastz_primate_conf.pm``:
       Default parameters for running Lastz between primates
 
-:``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/TBlat_conf.pm``:
+:``$ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/TBlat_conf.pm``:
       Default parameters for running TBlat between distantly related species eg fish
 
 Necessary software components
@@ -114,13 +114,13 @@ It contains the following subroutines:
 
 There are 3 other Perl modules which inherit from this base class.
 
-:``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Lastz_conf.pm``:
+:``$ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Lastz_conf.pm``:
         Default parameters for running Lastz between closely related species eg mammals
 
-:``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Lastz_primate_conf.pm``:
+:``$ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Lastz_primate_conf.pm``:
         Default parameters for running Lastz between primates.
 
-:``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/TBlat_conf.pm``:
+:``$ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/TBlat_conf.pm``:
         Default parameters for running TBlat between distantly related species eg fish
 
 These 3 modules define default parameters suitable for running different pipelines. Values set in these
@@ -137,7 +137,7 @@ a) Parameters which may need changing:
 :dbname:                  It is recommended that this is set on the command line. Note that the user name defined in
                           $ENV{USER} is prepended to dbname so that a dbname of hsap_ptro_lastz will become kb3_hsap_ptro_lastz
 :release:                 Ensembl release. Used to create various filenames and default database name
-:ensembl_cvs_root_dir:    Root directory of the ensembl checkouts
+:ensembl_root_dir:        Root directory of the ensembl checkouts
 :faToNib_exe,lavToAxt_exe,axtChain_exe,chainNet_exe:  Location of Jim Kent's executables.
 :pipeline_db:                 Production database                  
 :master_db:                   Master database
@@ -175,7 +175,7 @@ d) ``cellular-component`` restrictions
 Using the pairwise alignment configuration file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-eg ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/compara-hive-pairaligner-chain-net.conf.example``.
+eg ``$ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/compara-hive-pairaligner-chain-net.conf.example``.
 If you are using this configuration file, you can provide only relevant parameters:
 
 The configuration file may define the PAIR_ALIGNER as simply:
@@ -203,13 +203,13 @@ The registry configuration file, reg.conf, should contain the compara_master and
 
 ::
 
-    perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl --reg_conf reg.conf --compara compara_master --species "homo_sapiens"
+    perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl --reg_conf reg.conf --compara compara_master --species "homo_sapiens"
 
 2. Update method_link_species_set table with new method_link_species_set entry
 
 ::
 
-   perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type LASTZ_NET --genome_db_id 90,124 --source "ensembl" --compara mysql://user:pass@host:port/compara_master_db --url "mysql://user@host:3306/kb3_hsap_ogar_lastz_65"
+   perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type LASTZ_NET --genome_db_id 90,124 --source "ensembl" --compara mysql://user:pass@host:port/compara_master_db --url "mysql://user@host:3306/kb3_hsap_ogar_lastz_65"
 
 
 Run init_pipeline.pl
@@ -239,7 +239,7 @@ eg
 
 3) Using a master database and a collection
 
-A collection is a name associated with a set of species. A collection can be populated using the ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl`` script. 
+A collection is a name associated with a set of species. A collection can be populated using the ``$ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl`` script.
 A collection can be used to run several small pairwise pipelines in a single database. If a reference species is defined using the ref_species flag, this reference will be run against all the species in the collection. The collection must additionally contain the reference species.
 eg if the ref_species is human and the collection contains human, dog, horse and mouse the following pairs will be created:
 
@@ -276,7 +276,7 @@ The master database is set to be a compara release for these tests and the human
 
 ::
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMasterReg_conf -dbname hsap_mmus_pairaligner_test -password *** -dump_dir /location/of/dir/to/dump/nib_files/ -host compara3 -mlss_id 601 -reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/reg.conf --ref_species homo_sapiens
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMasterReg_conf -dbname hsap_mmus_pairaligner_test -password *** -dump_dir /location/of/dir/to/dump/nib_files/ -host compara3 -mlss_id 601 -reg_conf $ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/reg.conf --ref_species homo_sapiens
 
 2) Master database and a method_link_species_set. Define core databases directly in pipeline config file
 
@@ -288,13 +288,13 @@ The master database is set to be a compara release for these tests and the human
 
 ::
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMasterConf_conf -dbname hsap_rodent_pairaligner_test  -password *** -conf_file $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/lastz.conf -host compara3
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMasterConf_conf -dbname hsap_rodent_pairaligner_test  -password *** -conf_file $ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/lastz.conf -host compara3
 
 4) No master and pairwise alignment configuration file. Run human vs mouse and human vs rat alignments
 
 ::
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzNoMasterConf_conf -dbname hsap_rodent_pairaligner_test  -password *** -conf_file $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/lastz.conf -dump_dir /location/of/dir/to/dump/nib_files/ -host compara3 
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzNoMasterConf_conf -dbname hsap_rodent_pairaligner_test  -password *** -conf_file $ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/lastz.conf -dump_dir /location/of/dir/to/dump/nib_files/ -host compara3
 
 5) No master. Define core databases directly in the pipeline config file
 

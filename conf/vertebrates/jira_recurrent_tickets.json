@@ -51,7 +51,7 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Species-tree\n*GitHub*: [CreateSpeciesTree_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/CreateSpeciesTree_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CreateSpeciesTree_conf -host mysql-ens-compara-prod-X -port XXXX -output_file $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/<division>/species_tree.branch_len.nw -division <division>{code}",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Species-tree\n*GitHub*: [CreateSpeciesTree_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/CreateSpeciesTree_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CreateSpeciesTree_conf -host mysql-ens-compara-prod-X -port XXXX -output_file $ENSEMBL_ROOT_DIR/ensembl-compara/conf/<division>/species_tree.branch_len.nw -division <division>{code}",
             "summary": "Run Create Species Tree pipeline",
             "name_on_graph": "Species-tree"
          }

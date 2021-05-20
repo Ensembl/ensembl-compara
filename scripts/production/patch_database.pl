@@ -60,7 +60,7 @@ The name or "species" under which the database is to be found in the Registry.
 =item B<[--schema_patcher /path/to/schema_patcher.pl]>
 
 The path to schema_patcher.pl. If not given a default will be
-formed using the ENSEMBL_CVS_ROOT_DIR environment variable.
+formed using the ENSEMBL_ROOT_DIR environment variable.
 
 =back
 
@@ -110,8 +110,8 @@ my $dba = $url
     : Bio::EnsEMBL::Registry->get_DBAdaptor( $reg_alias, $reg_type || 'compara' );
 
 unless ($schema_patcher) {
-    die "Need to give the --schema_patcher option or set the ENSEMBL_CVS_ROOT_DIR environment variable to use the default" unless $ENV{ENSEMBL_CVS_ROOT_DIR};
-    $schema_patcher = $ENV{ENSEMBL_CVS_ROOT_DIR} . '/ensembl/misc-scripts/schema_patcher.pl';
+    die "Need to give the --schema_patcher option or set the ENSEMBL_ROOT_DIR environment variable to use the default" unless $ENV{ENSEMBL_ROOT_DIR};
+    $schema_patcher = $ENV{ENSEMBL_ROOT_DIR} . '/ensembl/misc-scripts/schema_patcher.pl';
 }
 die "ERROR: '$schema_patcher' is not a valid executable" unless -x $schema_patcher;
 
