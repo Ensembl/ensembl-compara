@@ -24,7 +24,7 @@ unless ($ENV{LINUXBREW_HOME}) {
     plan skip_all => 'No linuxbrew installation available ($LINUXBREW_HOME missing)';
 }
 
-my $software_config_path = $ARGV[0] || $ENV{ENSEMBL_CVS_ROOT_DIR} . '/ensembl-compara/conf/software/LSF.EBI.json';
+my $software_config_path = $ARGV[0] || $ENV{ENSEMBL_ROOT_DIR} . '/ensembl-compara/conf/software/LSF.EBI.json';
 die "Cannot find file: $software_config_path\n" unless -e $software_config_path;
 
 find_and_check('check_file_in_cellar', sub {

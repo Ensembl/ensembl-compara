@@ -34,9 +34,9 @@ In standalone mode you will need to set --reg_conf to your registry configuratio
 You will have to refer to your compara database either via the full URL or (if you have a corresponding registry entry) via registry.
 Here are both examples:
 
-    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --compara_db compara_homology_merged --debug 1
+    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater --reg_conf $ENSEMBL_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --compara_db compara_homology_merged --debug 1
 
-    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --compara_db mysql://ensadmin:${ENSADMIN_PSW}@compara3:3306/lg4_compara_homology_merged_64 --debug 1
+    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater --reg_conf $ENSEMBL_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --compara_db mysql://ensadmin:${ENSADMIN_PSW}@compara3:3306/lg4_compara_homology_merged_64 --debug 1
 
 You should be able to limit the set of species being updated by adding --species "[ 90, 3 ]" or --species "[ 'human', 'rat' ]"
 

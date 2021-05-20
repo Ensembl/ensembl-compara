@@ -63,8 +63,8 @@ sub main {
     $division = $division ? lc $division : 'relco';
 
     # Check if the introduced/default tickets JSON file exists
-    $tickets_json = $ENV{'ENSEMBL_CVS_ROOT_DIR'} . '/ensembl-compara/conf/' . $division . '/jira_recurrent_tickets.json'
-        if $ENV{'ENSEMBL_CVS_ROOT_DIR'} && !$tickets_json;
+    $tickets_json = $ENV{'ENSEMBL_ROOT_DIR'} . '/ensembl-compara/conf/' . $division . '/jira_recurrent_tickets.json'
+        if $ENV{'ENSEMBL_ROOT_DIR'} && !$tickets_json;
     die "Tickets file '$tickets_json' not found! Please, specify one using -tickets option."
         if ( !-e $tickets_json );
 
@@ -100,8 +100,8 @@ create_compara_release_JIRA_tickets.pl -relco <string> -release <integer> -divis
 -division | -d       Compara division. Optional, will be obtained from environment variable \$COMPARA_DIV
                      if not supplied.
 -tickets             File that holds the input data for creating the JIRA tickets in JSON format. Optional,
-                     the script will look for 'jira_recurrent_tickets.json' in \$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/<division>
-                     if not supplied (assuming \$ENSEMBL_CVS_ROOT_DIR is set).
+                     the script will look for 'jira_recurrent_tickets.json' in \$ENSEMBL_ROOT_DIR/ensembl-compara/conf/<division>
+                     if not supplied (assuming \$ENSEMBL_ROOT_DIR is set).
 -dry_run | -dry-run  In dry-run mode, the JIRA tickets will not be submitted to the JIRA server. Optional,
                      dry-run mode is off by default.
 -help | -h           Prints this help text.

@@ -73,7 +73,7 @@ sub meadow_options {
     my ($self) = @_;
     my $valley = Bio::EnsEMBL::Hive::Valley->new();
     my $meadow = $valley->get_available_meadow_list->[0];
-    my $json_file = File::Spec->catfile($ENV{'ENSEMBL_CVS_ROOT_DIR'}, 'ensembl-compara', 'conf', 'software', sprintf('%s.%s.json', $meadow->type, $meadow->name));
+    my $json_file = File::Spec->catfile($ENV{'ENSEMBL_ROOT_DIR'}, 'ensembl-compara', 'conf', 'software', sprintf('%s.%s.json', $meadow->type, $meadow->name));
     my $json = decode_json(slurp($json_file));
     my %hash;
     while (my ($key, $value) = each %$json) {
@@ -147,19 +147,19 @@ sub check_dir_in_compara {
 sub check_exe_in_ensembl {
     my ($self, $exe_path) = @_;
     push @{$self->{'_ensembl_exe_paths'}}, $exe_path;
-    return $self->o('ensembl_cvs_root_dir').'/'.$exe_path;
+    return $self->o('ensembl_root_dir').'/'.$exe_path;
 }
 
 sub check_file_in_ensembl {
     my ($self, $file_path) = @_;
     push @{$self->{'_ensembl_file_paths'}}, $file_path;
-    return $self->o('ensembl_cvs_root_dir').'/'.$file_path;
+    return $self->o('ensembl_root_dir').'/'.$file_path;
 }
 
 sub check_dir_in_ensembl {
     my ($self, $dir_path) = @_;
     push @{$self->{'_ensembl_dir_paths'}}, $dir_path;
-    return $self->o('ensembl_cvs_root_dir').'/'.$dir_path;
+    return $self->o('ensembl_root_dir').'/'.$dir_path;
 }
 
 sub check_all_executables_exist {
@@ -176,16 +176,16 @@ sub check_all_executables_exist {
         _assert_exe( $linuxbrew_home.'/'.$p );
     }
    }
-   if (exists $self->root()->{'ensembl_cvs_root_dir'}) {
-       my $ensembl_cvs_root_dir = $self->root()->{'ensembl_cvs_root_dir'};
+   if (exists $self->root()->{'ensembl_root_dir'}) {
+       my $ensembl_root_dir = $self->root()->{'ensembl_root_dir'};
        foreach my $p (@{$self->{'_ensembl_dir_paths'}}) {
-           _assert_dir( $ensembl_cvs_root_dir.'/'.$self->substitute(\$p) );
+           _assert_dir( $ensembl_root_dir.'/'.$self->substitute(\$p) );
        }
        foreach my $p (@{$self->{'_ensembl_file_paths'}}) {
-           _assert_file( $ensembl_cvs_root_dir.'/'.$self->substitute(\$p) );
+           _assert_file( $ensembl_root_dir.'/'.$self->substitute(\$p) );
        }
        foreach my $p (@{$self->{'_ensembl_exe_paths'}}) {
-           _assert_exe( $ensembl_cvs_root_dir.'/'.$self->substitute(\$p) );
+           _assert_exe( $ensembl_root_dir.'/'.$self->substitute(\$p) );
        }
    }
    if (exists $self->root()->{'compara_software_home'}) {

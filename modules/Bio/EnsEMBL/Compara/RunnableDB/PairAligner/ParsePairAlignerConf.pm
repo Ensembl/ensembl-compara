@@ -922,22 +922,22 @@ sub write_parameters_to_mlss_tag {
     #Write pair aligner options to mlss_tag table for use with PairAligner jobs (eg lastz)
     my $this_param = $mlss->get_value_for_tag("param");
 
-    my $ensembl_cvs_root_dir = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
+    my $ensembl_root_dir = $ENV{'ENSEMBL_ROOT_DIR'};
 
     if ($this_param) {
         my $analysis_params = $pair_aligner->{'analysis_template'}->{'parameters'}{'options'};
         #Need to convert "Q=" if present
-        if ($ensembl_cvs_root_dir && $pair_aligner->{'analysis_template'}->{'parameters'}{'options'} =~ /(.*Q=)$ensembl_cvs_root_dir(.*)/) {
-            $analysis_params = $1.'$ENSEMBL_CVS_ROOT_DIR'.$2;
+        if ($ensembl_root_dir && $pair_aligner->{'analysis_template'}->{'parameters'}{'options'} =~ /(.*Q=)$ensembl_root_dir(.*)/) {
+            $analysis_params = $1.'$ENSEMBL_ROOT_DIR'.$2;
         } 
 
         if ($this_param ne $analysis_params) {
             throw "Trying to store a different set of options (" . $pair_aligner->{'analysis_template'}->{'parameters'}{'options'} . ") for the same method_link_species_set ($this_param). This is currently not supported";
         }
     } else {
-        #Convert expanded $ensembl_cvs_root_dir to the string '$ENSEMBL_CVS_ROOT_DIR' if it is present, else store the param as it is
-        if ($ensembl_cvs_root_dir && $pair_aligner->{'analysis_template'}->{'parameters'}{'options'} =~ /(.*Q=)$ensembl_cvs_root_dir(.*)/) {
-            $mlss->store_tag("param",  $1.'$ENSEMBL_CVS_ROOT_DIR'.$2);
+        #Convert expanded $ensembl_root_dir to the string '$ENSEMBL_ROOT_DIR' if it is present, else store the param as it is
+        if ($ensembl_root_dir && $pair_aligner->{'analysis_template'}->{'parameters'}{'options'} =~ /(.*Q=)$ensembl_root_dir(.*)/) {
+            $mlss->store_tag("param",  $1.'$ENSEMBL_ROOT_DIR'.$2);
         } else {
             $mlss->store_tag("param", $pair_aligner->{'analysis_template'}->{'parameters'}{'options'});
         }

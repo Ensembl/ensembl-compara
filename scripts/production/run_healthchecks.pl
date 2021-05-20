@@ -73,12 +73,12 @@ Defaults to 'compara_master', i.e. a Registry lookup.
 =item B<[--ensj-testrunner /path/to/run-configurable-testrunner.sh]>
 
 The path to run-configurable-testrunner.sh. If not given a default will be
-formed using the ENSEMBL_CVS_ROOT_DIR environment variable.
+formed using the ENSEMBL_ROOT_DIR environment variable.
 
 =item B<[--ensj-json-config /path/to/ensj-healthcheck.json]>
 
 The path to ensj-healthcheck.json. If not given a default will be formed
-using the ENSEMBL_CVS_ROOT_DIR environment variable.
+using the ENSEMBL_ROOT_DIR environment variable.
 
 =item B<[--repair]>
 
@@ -144,14 +144,14 @@ my $dba = $reg_alias
 my $division = ($dba->group eq 'compara') ? $dba->get_division : $ENV{COMPARA_DIV};
 
 unless ($ensj_testrunner) {
-    die "Need to give the --ensj-testrunner option or set the ENSEMBL_CVS_ROOT_DIR environment variable to use the default" unless $ENV{ENSEMBL_CVS_ROOT_DIR};
-    $ensj_testrunner = $ENV{ENSEMBL_CVS_ROOT_DIR} . '/ensj-healthcheck/run-configurable-testrunner.sh';
+    die "Need to give the --ensj-testrunner option or set the ENSEMBL_ROOT_DIR environment variable to use the default" unless $ENV{ENSEMBL_ROOT_DIR};
+    $ensj_testrunner = $ENV{ENSEMBL_ROOT_DIR} . '/ensj-healthcheck/run-configurable-testrunner.sh';
 }
 die "'$ensj_testrunner' is not a valid executable" unless -x $ensj_testrunner;
 
 unless ($ensj_json_config) {
-    die "Need to give the --ensj-config option or set the ENSEMBL_CVS_ROOT_DIR environment variable to use the default" unless $ENV{ENSEMBL_CVS_ROOT_DIR};
-    $ensj_json_config = $ENV{ENSEMBL_CVS_ROOT_DIR} . "/ensembl-compara/conf/$division/ensj-healthcheck.json";
+    die "Need to give the --ensj-config option or set the ENSEMBL_ROOT_DIR environment variable to use the default" unless $ENV{ENSEMBL_ROOT_DIR};
+    $ensj_json_config = $ENV{ENSEMBL_ROOT_DIR} . "/ensembl-compara/conf/$division/ensj-healthcheck.json";
 }
 die "'$ensj_json_config' is not a valid file" unless -e $ensj_json_config;
 my $ensj_config = decode_json(slurp($ensj_json_config));

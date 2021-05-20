@@ -112,10 +112,10 @@ The genome_db_id of that need to be retired.
 =cut
 
 #Delete a mlss_id:
-#perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/retire_genome.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/${COMPARA_DIV}/production_reg_conf.pl --compara compara_curr --mlss_id_to_change 1234 --mode delete --id_type mlss_id
+#perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/retire_genome.pl --reg_conf $ENSEMBL_ROOT_DIR/ensembl-compara/conf/${COMPARA_DIV}/production_reg_conf.pl --compara compara_curr --mlss_id_to_change 1234 --mode delete --id_type mlss_id
 
 #Retire a mlss_id:
-#perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/retire_genome.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/${COMPARA_DIV}/production_reg_conf.pl --compara compara_curr --mlss_id_to_change 1234 --mode retire --id_type mlss_id
+#perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/retire_genome.pl --reg_conf $ENSEMBL_ROOT_DIR/ensembl-compara/conf/${COMPARA_DIV}/production_reg_conf.pl --compara compara_curr --mlss_id_to_change 1234 --mode retire --id_type mlss_id
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::ApiVersion;

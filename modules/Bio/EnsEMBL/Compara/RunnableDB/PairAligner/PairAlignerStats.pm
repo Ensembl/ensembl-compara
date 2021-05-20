@@ -74,9 +74,9 @@ Optional. Don't run this runnable.
     standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats \
         -compara_db $(mysql-ens-compara-prod-8-ensadmin details url jalvarez_plants_lastz_polyploid_99) \
         -mlss_id 9880 -bed_dir /hps/nobackup2/production/ensembl/jalvarez/plants_lastz_polyploid_99/bed_dir \
-        -compare_beds $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/compare_beds.pl \
-        -create_pair_aligner_page $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/report/create_pair_aligner_page.pl \
-        -dump_features $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/dumps/dump_features.pl \
+        -compare_beds $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/compare_beds.pl \
+        -create_pair_aligner_page $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/report/create_pair_aligner_page.pl \
+        -dump_features $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/dumps/dump_features.pl \
         -output_dir /hps/nobackup2/production/ensembl/jalvarez/plants_lastz_polyploid_99/feature_dumps
 
 =cut

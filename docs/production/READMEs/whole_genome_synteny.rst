@@ -3,8 +3,8 @@ Whole Genome Synteny pipeline
 
 This document describes how to set up the synteny pipeline for whole genome alignments only. Currently there is no support for homologues.
 
-All the scripts are located relative to $ENSEMBL_CVS_ROOT_DIR (location of the *GIT* checkout).
-Further details can be in the file ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/synteny/README``
+All the scripts are located relative to $ENSEMBL_ROOT_DIR (location of the *GIT* checkout).
+Further details can be in the file ``$ENSEMBL_ROOT_DIR/ensembl-compara/scripts/synteny/README``
 
 General description of the pipeline
 -----------------------------------
@@ -18,7 +18,7 @@ Generally syntenies are only calculated for chromosomes that have a correspondin
 This can be over-ridden by setting the coord_system_name and the force flag to 1.
 
 The whole genome alignments are dumped in gff format using the
-``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl`` script for a given chromosome.
+``$ENSEMBL_ROOT_DIR/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl`` script for a given chromosome.
 For most alignments we use the default level 1 LASTZ_NET alignments but for human vs chimp we use both level 1 and level 2.
 Setting the level parameter to 1 will select level 1 alignments whilst setting it to 2 will select both level 1 and level 2 alignments.
 The module will write out all the matches into files named called 1.syten.gff, 2.syten.gff etc.
@@ -76,22 +76,22 @@ in tcsh
 
 .. code-block:: tcsh
 
-    setenv ENSEMBL_CVS_ROOT_DIR  /some/path/to/modules
-    setenv PERL5LIB   ${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules
-    setenv PATH $PATH:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/script/pipeline:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/scripts
+    setenv ENSEMBL_ROOT_DIR  /some/path/to/modules
+    setenv PERL5LIB   ${ENSEMBL_ROOT_DIR}/ensembl/modules:${ENSEMBL_ROOT_DIR}/ensembl-compara/modules:${ENSEMBL_ROOT_DIR}/ensembl-hive/modules
+    setenv PATH $PATH:${ENSEMBL_ROOT_DIR}/ensembl-compara/script/pipeline:${ENSEMBL_ROOT_DIR}/ensembl-hive/scripts
 
 in bash
 
 .. code-block:: bash
 
-    ENSEMBL_CVS_ROOT_DIR=/some/path/to/modules
-    PERL5LIB=${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules
-    PATH=$PATH:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/scripts
+    ENSEMBL_ROOT_DIR=/some/path/to/modules
+    PERL5LIB=${ENSEMBL_ROOT_DIR}/ensembl/modules:${ENSEMBL_ROOT_DIR}/ensembl-compara/modules:${ENSEMBL_ROOT_DIR}/ensembl-hive/modules
+    PATH=$PATH:${ENSEMBL_ROOT_DIR}/ensembl-compara/scripts/pipeline:${ENSEMBL_ROOT_DIR}/ensembl-hive/scripts
 
 Configure the pipeline
 ----------------------
 
-Modifiy ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm`` file if necessary.
+Modifiy ``$ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm`` file if necessary.
 Check that the default_options are set correctly. Alternatively, set the parameters on the command line.
 Options most likely to need changing are:
 

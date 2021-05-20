@@ -1,5 +1,5 @@
 {
-    "reference_dir": "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/citest/",
+    "reference_dir": "$ENSEMBL_ROOT_DIR/ensembl-compara/conf/citest/",
     "files_tests": [
         {
             "test": "content",

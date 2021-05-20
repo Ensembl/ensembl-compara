@@ -107,7 +107,7 @@ if not os.path.islink('xhive'):
 else:
     subprocess.check_call(['git', 'pull'], cwd = "xhive")
 ehive_root_dir = os.path.join(os.path.realpath('xhive'), os.path.pardir, os.path.pardir)
-os.environ.setdefault("ENSEMBL_CVS_ROOT_DIR", "")
+os.environ.setdefault("ENSEMBL_ROOT_DIR", "")
 from xhive import setup_if_needed
 setup_if_needed(release, False)
 os.environ["EHIVE_ROOT_DIR"] = ehive_root_dir

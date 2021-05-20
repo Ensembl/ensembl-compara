@@ -123,7 +123,7 @@ Options most likely to need changing are:
 
 :mlss_id:                          It is recommended that this is set on the command line rather than in the conf file
 :release:                          Ensembl release
-:ensembl_cvs_root_dir:             Root directory of the ensembl checkouts
+:ensembl_root_dir:                 Root directory of the ensembl checkouts
 :output_dir:                       Directory for dumps used for creating coverage statistics
 
 :pipeline_db:                      Production database

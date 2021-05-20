@@ -232,7 +232,7 @@ subtest "Test  Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor->delete_b
 
 sub load_pipeline_tables {
     my ($compara_dba, $table_name) = @_;
-    my $ensembl_root_dir =  $ENV{ENSEMBL_CVS_ROOT_DIR};
+    my $ensembl_root_dir =  $ENV{ENSEMBL_ROOT_DIR};
 
     #first check if table is present
     my $sql_helper = $compara_dba->dbc->sql_helper;
