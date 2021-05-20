@@ -30,11 +30,11 @@ necessary MethodLinkSpeciesSet objects.
 
 =head1 SYNOPSIS
 
-    perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_all_mlss.pl --help
+    perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_all_mlss.pl --help
 
-    perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_all_mlss.pl \
+    perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_all_mlss.pl \
          --compara $(mysql-ens-compara-prod-1 details url ensembl_compara_master) \
-         --xml $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/vertebrates/mlss_conf.xml --release
+         --xml $ENSEMBL_ROOT_DIR/ensembl-compara/conf/vertebrates/mlss_conf.xml --release
 
 =head1 OPTIONS
 
@@ -70,7 +70,7 @@ See conf/vertebrates/mlss_conf.xml for an example
 
 =item B<[--schema rng_schema_file]>
 
-The RelaxNG definition of the XML files. Defaults to $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/compara_db_config.rng
+The RelaxNG definition of the XML files. Defaults to $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/compara_db_config.rng
 
 =item B<[--output_file output_file]>
 
@@ -162,8 +162,8 @@ if (!$compara_dba) {
 my $genome_dba = $compara_dba->get_GenomeDBAdaptor;
 
 unless ($xml_schema) {
-    die "Need to give the --schema option or set the ENSEMBL_CVS_ROOT_DIR environment variable to use the default" unless $ENV{ENSEMBL_CVS_ROOT_DIR};
-    $xml_schema = $ENV{ENSEMBL_CVS_ROOT_DIR} . '/ensembl-compara/scripts/pipeline/compara_db_config.rng';
+    die "Need to give the --schema option or set the ENSEMBL_ROOT_DIR environment variable to use the default" unless $ENV{ENSEMBL_ROOT_DIR};
+    $xml_schema = $ENV{ENSEMBL_ROOT_DIR} . '/ensembl-compara/scripts/pipeline/compara_db_config.rng';
 }
 my $schema = XML::LibXML::RelaxNG->new(location => $xml_schema);
 

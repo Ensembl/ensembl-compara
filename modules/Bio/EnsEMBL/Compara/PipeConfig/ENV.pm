@@ -76,7 +76,7 @@ sub shared_default_options {
         'compara_software_home' => $self->o('warehouse_dir') . '/software/',
 
         # All the fixed parameters that depend on a "division" parameter
-        'config_dir'            => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/conf/'.$self->o('division'),
+        'config_dir'            => $self->o('ensembl_root_dir') . '/ensembl-compara/conf/' . $self->o('division'),
         # NOTE: Can't use $self->check_file_in_ensembl as long as we don't produce a file for each division
         'reg_conf'              => $self->o('config_dir').'/production_reg_conf.pl',
         'binary_species_tree'   => $self->o('config_dir').'/species_tree.branch_len.nw',

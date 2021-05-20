@@ -36,22 +36,22 @@ in tcsh
 
 .. code-block:: tcsh
 
-    setenv ENSEMBL_CVS_ROOT_DIR  /some/path/to/modules
-    setenv PERL5LIB   ${ENSEMBL_CVS_ROOT_DIR}/bioperl-live:${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules
-    setenv PATH $PATH:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/script/pipeline:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/scripts
+    setenv ENSEMBL_ROOT_DIR  /some/path/to/modules
+    setenv PERL5LIB   ${ENSEMBL_ROOT_DIR}/bioperl-live:${ENSEMBL_ROOT_DIR}/ensembl/modules:${ENSEMBL_ROOT_DIR}/ensembl-compara/modules:${ENSEMBL_ROOT_DIR}/ensembl-hive/modules
+    setenv PATH $PATH:${ENSEMBL_ROOT_DIR}/ensembl-compara/script/pipeline:${ENSEMBL_ROOT_DIR}/ensembl-hive/scripts
 
 in bash
 
 .. code-block:: bash
 
-    ENSEMBL_CVS_ROOT_DIR=/some/path/to/modules
-    PERL5LIB=${ENSEMBL_CVS_ROOT_DIR}/bioperl-live:${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules
-    PATH=$PATH:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/scripts
+    ENSEMBL_ROOT_DIR=/some/path/to/modules
+    PERL5LIB=${ENSEMBL_ROOT_DIR}/bioperl-live:${ENSEMBL_ROOT_DIR}/ensembl/modules:${ENSEMBL_ROOT_DIR}/ensembl-compara/modules:${ENSEMBL_ROOT_DIR}/ensembl-hive/modules
+    PATH=$PATH:${ENSEMBL_ROOT_DIR}/ensembl-compara/scripts/pipeline:${ENSEMBL_ROOT_DIR}/ensembl-hive/scripts
 
 Configure the pipeline
 ----------------------
 
-Modifiy ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/BaseAge_conf.pm`` file if necessary.
+Modifiy ``$ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/BaseAge_conf.pm`` file if necessary.
 Check that the default_options are set correctly.
 
 Options most likely to need changing are:

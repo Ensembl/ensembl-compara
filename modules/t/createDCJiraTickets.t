@@ -34,14 +34,14 @@ standaloneJob(
     {
         'output_results'               => $test_infile,
         'dry_run'                      => 1,
-        'create_datacheck_tickets_exe' => '$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl',
+        'create_datacheck_tickets_exe' => '$ENSEMBL_ROOT_DIR/ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl',
         'division'                     => 'vertebrates',
         'test_mode'                    => 1,
     },
     [
         [
             'WARNING',
-            "Command: \$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl $test_infile --update --division vertebrates  --dry_run",
+            "Command: \$ENSEMBL_ROOT_DIR/ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl $test_infile --update --division vertebrates  --dry_run",
         ],
     ]
 );
@@ -52,7 +52,7 @@ standaloneJob(
         'output_results'               => $test_infile,
         'datacheck_type'               => 'critical',
         'dry_run'                      => 1,
-        'create_datacheck_tickets_exe' => '$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl',
+        'create_datacheck_tickets_exe' => '$ENSEMBL_ROOT_DIR/ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl',
         'division'                     => 'vertebrates',
         'test_mode'                    => 1,
 
@@ -60,7 +60,7 @@ standaloneJob(
     [
         [
             'WARNING',
-            "Command: \$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl $test_infile --update --division vertebrates --label critical --dry_run",
+            "Command: \$ENSEMBL_ROOT_DIR/ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl $test_infile --update --division vertebrates --label critical --dry_run",
         ],
     ]
 );

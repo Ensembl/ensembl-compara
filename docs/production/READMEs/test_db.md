@@ -15,7 +15,7 @@ You'll need the ensembl-hive scripts to be set up in your $PATH, and the environ
   ```bash
   db_cmd.pl -url ${_TEST_DB_URL} -sql 'DROP DATABASE IF EXISTS'
   db_cmd.pl -url ${_TEST_DB_URL} -sql 'CREATE DATABASE'
-  db_cmd.pl -url ${_TEST_DB_URL} < ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/sql/table.sql
+  db_cmd.pl -url ${_TEST_DB_URL} < ${ENSEMBL_ROOT_DIR}/ensembl-compara/sql/table.sql
   ```
 
 3. Import the data
@@ -46,7 +46,7 @@ You'll need the ensembl-hive scripts to be set up in your $PATH, and the environ
 5. Dump
 
   ```bash
-  db_cmd.pl -url $_TEST_DB_URL -executable $ENSEMBL_CVS_ROOT_DIR/ensembl/misc-scripts/db/dump_mysql.pl -- --database mm14_homology_test_db_85 --verbose --testcompatible --directory dump_directory
+  db_cmd.pl -url $_TEST_DB_URL -executable $ENSEMBL_ROOT_DIR/ensembl/misc-scripts/db/dump_mysql.pl -- --database mm14_homology_test_db_85 --verbose --testcompatible --directory dump_directory
   ```
   Then edit the sql file and add `CHARSET=latin1` to the meta and external\_db tables.
 

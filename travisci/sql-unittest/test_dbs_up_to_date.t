@@ -51,7 +51,7 @@ foreach my $table_name (keys %$compara_schema) {
 
 # Load the Core schema for reference
 my $core_db_name = $multitestdb->create_db_name('core_schema');
-my $core_statements = Bio::EnsEMBL::Compara::Utils::Test::read_sqls("$ENV{ENSEMBL_CVS_ROOT_DIR}/ensembl/sql/table.sql");
+my $core_statements = Bio::EnsEMBL::Compara::Utils::Test::read_sqls("$ENV{ENSEMBL_ROOT_DIR}/ensembl/sql/table.sql");
 my $core_db = Bio::EnsEMBL::Compara::Utils::Test::load_statements($multitestdb, $core_db_name, $core_statements, 'Can load the reference Core schema');
 my $core_schema = Bio::EnsEMBL::Compara::Utils::Test::get_schema_from_database($core_db, $core_db_name);
 Bio::EnsEMBL::Compara::Utils::Test::drop_database($multitestdb, $core_db_name);

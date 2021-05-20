@@ -26,7 +26,7 @@ Refer to the following pages for tips about installation and setting up the envi
 - http://www.ensembl.org/info/docs/api/api_installation.html
 - http://www.ensembl.org/info/docs/eHive.html
 
-.. warning:: Please ensure that your PERL5LIB includes all of these modules and $ENSEMBL_CVS_ROOT_DIR points to the location of the checkouts
+.. warning:: Please ensure that your PERL5LIB includes all of these modules and $ENSEMBL_ROOT_DIR points to the location of the checkouts
 
 Perl libraries:
 
@@ -195,7 +195,7 @@ Be aware that the Ensembl Registry relies on a specific nomenclature to automati
 For instance, core databases must be named ``${SPECIES_NAME}_core_${ENSEMBL_VERSION}_${ASSEMBLY_VERSION}``.
 If you have built databases your own core databases using a different nomenclature, you'll have to (for each of them):
 
-- add a Registry entry in ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl`` with
+- add a Registry entry in ``$ENSEMBL_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl`` with
 
   ::
 
@@ -264,23 +264,23 @@ Export this in a new environment variable $ALL_GENOMEDB_IDS
    export ALL_GENOMEDB_IDS="..."
    echo $ALL_GENOMEDB_IDS
 
-Edit the "compara_master" section in ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl`` and run the following commands:
+Edit the "compara_master" section in ``$ENSEMBL_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl`` and run the following commands:
 
 .. code-block:: bash
 
     # orthologues
-    $ echo -e "201\n" | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --f \
-    --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl \
+    $ echo -e "201\n" | perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --f \
+    --reg_conf $ENSEMBL_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl \
     --pw --genome_db_id "$ALL_GENOMEDB_IDS" 1> create_mlss.ENSEMBL_ORTHOLOGUES.201.out 2> create_mlss.ENSEMBL_ORTHOLOGUES.201.err
 
     # paralogues
-    $ echo -e "202\n" | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --f \
-    --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl \
+    $ echo -e "202\n" | perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --f \
+    --reg_conf $ENSEMBL_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl \
     --sg --genome_db_id "$ALL_GENOMEDB_IDS" 1> create_mlss.ENSEMBL_PARALOGUES.wth.202.out 2> create_mlss.ENSEMBL_PARALOGUES.wth.202.err
 
     # protein trees
-    $ echo -e "401\n" | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --f \
-    --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl \
+    $ echo -e "401\n" | perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --f \
+    --reg_conf $ENSEMBL_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl \
     --name "protein trees" --genome_db_id "$ALL_GENOMEDB_IDS" 1> create_mlss.PROTEIN_TREES.401.out 2> create_mlss.PROTEIN_TREES.401.err
 
 Quickly inspect the .err files. They may contain warnings, but they shouldn't have any errors :)
@@ -447,7 +447,7 @@ Analysis "hc_members_per_genome": No genes / proteins have been loaded for this 
 
 A few things may have gone wrong:
 
-* Check that canonical transcripts have been defined for the genome_db shown in the error. If not, give a go to ``$ENSEMBL_CVS_ROOT_DIR/ensembl/misc-scripts/canonical_transcripts/set_canonical_transcripts.pl``
+* Check that canonical transcripts have been defined for the genome_db shown in the error. If not, give a go to ``$ENSEMBL_ROOT_DIR/ensembl/misc-scripts/canonical_transcripts/set_canonical_transcripts.pl``
 * Identify the load_fresh_members job for the problematic genome_id and rerun the job
 
   .. code-block:: sql

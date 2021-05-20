@@ -4,7 +4,7 @@ Mercator-Pecan multiple-alignment
 This README describes how to set up the multiple aligner system using the init_pipeline configuration system. 
 This pipeline has only been tested for the Mercator and Pecan combination. 
 
-All the scripts are located relative to $ENSEMBL_CVS_ROOT_DIR (location of the GIT checkout)
+All the scripts are located relative to $ENSEMBL_ROOT_DIR (location of the GIT checkout)
 
 General description of the pipeline
 -----------------------------------
@@ -14,7 +14,7 @@ Jobs failing due to memory are automatically rescheduled to run again with incre
 A basic healthcheck is performed to check database consistency and compared with a previous release.
 
 The configuration file for the pipeline is:
-``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/MercatorPecan_conf.pm``
+``$ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/MercatorPecan_conf.pm``
 
 Code API needed and executables
 -------------------------------
@@ -73,28 +73,28 @@ The pipeline requires a "master" database. This is a compara database containing
 
    ::
 
-       perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl --reg_conf reg.conf --compara compara_master --species "homo_sapiens"
+       perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl --reg_conf reg.conf --compara compara_master --species "homo_sapiens"
 
 #. Update method_link_species_set table with new method_link_species_set entry.
    For this pipeline, 3 new method_link_species_set entries (PECAN,GERP_CONSERVATION_SCORE and GERP_CONSTRAINED_ELEMENT) need to be added to the master using the ``ensembl-compara/scripts/pipeline/create_mlss.pl`` script.
 
    ::
 
-       perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type PECAN --genome_db_id <list_of_genome_db_ids>  --source "ensembl" --compara mysql://user:pass@host:port/compara_master
-       perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type GERP_CONSERVATION_SCORE --genome_db_id <list_of_genome_db_ids>  --source "ensembl" --compara mysql://user:pass@host:port/compara_master
-       perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type GERP_CONSTRAINED_ELEMENT --genome_db_id <list_of_genome_db_ids>  --source "ensembl" --compara mysql://user:pass@host:port/compara_master
+       perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type PECAN --genome_db_id <list_of_genome_db_ids>  --source "ensembl" --compara mysql://user:pass@host:port/compara_master
+       perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type GERP_CONSERVATION_SCORE --genome_db_id <list_of_genome_db_ids>  --source "ensembl" --compara mysql://user:pass@host:port/compara_master
+       perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type GERP_CONSTRAINED_ELEMENT --genome_db_id <list_of_genome_db_ids>  --source "ensembl" --compara mysql://user:pass@host:port/compara_master
 
 
 Configure the pipeline
 ----------------------
 
-Modifiy ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/MercatorPecan_conf.pm`` file if necessary.
+Modifiy ``$ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/MercatorPecan_conf.pm`` file if necessary.
 Check that the default_options are set correctly.
 Options most likely to need changing are:
 
 :mlss_id, ce_mlss_id, cs_mlss_id:  It is recommended that these are set on the command line rather than in the conf file
 :release:                          Ensembl release
-:ensembl_cvs_root_dir:             Root directory of the ensembl checkouts
+:ensembl_root_dir:                 Root directory of the ensembl checkouts
 :work_dir:                         Directory for writing files needed by blast and mercator.
 :jar_file:                         Location of Pecan jar file
 :gerp_exe_dir:                     Location of gerp executable directory

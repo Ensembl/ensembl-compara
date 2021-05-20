@@ -25,9 +25,9 @@ The pipeline will create all the necessary jobs, run scripts/dumps/DumpMultiAlig
 
 You need a reg_conf file containing the location of the EnsEMBL core sequences and the location of the compara database containing the alignments to dump.
 
-All the scripts are located relative to $ENSEMBL_CVS_ROOT_DIR (location of the GIT checkout)
+All the scripts are located relative to $ENSEMBL_ROOT_DIR (location of the GIT checkout)
 
-#. Edit ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/DumpMultiAlign_conf.pm``
+#. Edit ``$ENSEMBL_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/DumpMultiAlign_conf.pm``
 
    The location of the compara and core databases containing the alignments
    can be defined using the parameter 'reg_conf' and 'compara_db'. Defaults
