@@ -70,6 +70,7 @@ sub default_options {
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
         'tmp_hmmsearch'         => $self->o('work_dir') . '/tmp_hmmsearch',
+        'big_tmp_dir'           => $self->o('work_dir') . '/scratch',
         'seed_hmm_library_basedir'                  => $self->o('work_dir') . '/seed_hmms',
         'panther_hmm_library_basedir'               => $self->o('work_dir') . '/hmm_panther_12',
         'worker_compara_hmm_library_basedir'        => $self->o('work_dir') . '/compara_hmm_'.$self->o('ensembl_release'),
@@ -238,7 +239,7 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes('include_multi_threaded')},  # inherit the standard resource classes, incl. multi-threaded
 
-         '4Gb_big_tmp_job'  => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000,tmp=102400]"' },
+         '4Gb_big_tmp_job'  => { 'LSF' => ['-C0 -M4000 -R"select[mem>4000] rusage[mem=4000]"', '-worker_base_tmp_dir ' . $self->o('big_tmp_dir')] },
     };
 }
 
@@ -261,7 +262,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
-        $self->pipeline_create_commands_rm_mkdir(['cluster_dir', 'dump_dir', 'fasta_dir', 'tmp_hmmsearch']),
+        $self->pipeline_create_commands_rm_mkdir(['cluster_dir', 'dump_dir', 'fasta_dir', 'tmp_hmmsearch', 'big_tmp_dir']),
         $self->pipeline_create_commands_rm_mkdir(['compara_hmm_library_basedir', 'panther_hmm_library_basedir', 'seed_hmm_library_basedir']),
     ];
 }
