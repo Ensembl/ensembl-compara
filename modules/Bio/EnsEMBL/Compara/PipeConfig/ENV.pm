@@ -69,7 +69,7 @@ sub shared_default_options {
         # TODO: make a $self method that checks whether this already exists, to prevent clashes like in the LastZ pipeline
         # NOTE: hps_dir and warehouse_dir are expected to be defined in the meadow JSON file
         'pipeline_dir'          => $self->o('hps_dir') . '/' . $self->o('dbowner') . '/' . $self->o('pipeline_name'),
-        'shared_hps_dir'        => $self->o('hps_dir') . '/' . $self->o('shared_user'),
+        'shared_hps_dir'        => $self->o('hps_dir') . '/shared',
 
         # Where to find the linuxbrew installation
         'linuxbrew_home'        => $ENV{'LINUXBREW_HOME'} || $self->o('linuxbrew_home'),
@@ -151,7 +151,7 @@ sub resource_classes_single_thread {
         '48Gb_job'     => {'LSF' => ['-C0 -M48000 -R"select[mem>48000] rusage[mem=48000]"', $reg_requirement],             'LOCAL' => [ '', $reg_requirement ] },
         '64Gb_job'     => {'LSF' => ['-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"', $reg_requirement],             'LOCAL' => [ '', $reg_requirement ] },
         '96Gb_job'     => {'LSF' => ['-C0 -M96000 -R"select[mem>96000] rusage[mem=96000]"', $reg_requirement],             'LOCAL' => [ '', $reg_requirement ] },
-        '512Gb_job'    => {'LSF' => ['-C0 -M512000 -R"select[mem>512000] rusage[mem=512000]"', $reg_requirement],          'LOCAL' => [ '', $reg_requirement ] },
+        '512Gb_job'    => {'LSF' => ['-q bigmem -C0 -M512000 -R"select[mem>512000] rusage[mem=512000]"', $reg_requirement],    'LOCAL' => [ '', $reg_requirement ] },
 
         '250Mb_6_hour_job' => {'LSF' => ['-C0 -W 6:00 -M250   -R"select[mem>250]   rusage[mem=250]"',  $reg_requirement],  'LOCAL' => [ '', $reg_requirement ] },
         '500Mb_6_hour_job' => {'LSF' => ['-C0 -W 6:00 -M500   -R"select[mem>500]   rusage[mem=500]"',  $reg_requirement],  'LOCAL' => [ '', $reg_requirement ] },
@@ -203,27 +203,27 @@ sub resource_classes_multi_thread {
         '128Gb_64c_job' => {'LSF' => ['-n 64 -C0 -M128000 -R"select[mem>128000] rusage[mem=128000] span[hosts=1]"', $reg_requirement] },
         '256Gb_64c_job' => {'LSF' => ['-n 64 -C0 -M256000 -R"select[mem>256000] rusage[mem=256000] span[hosts=1]"', $reg_requirement] },
 
-        '8Gb_4c_mpi'   => {'LSF' => ['-q mpi-rh74 -n 4  -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=4]"', $reg_requirement] },
-        '8Gb_8c_mpi'   => {'LSF' => ['-q mpi-rh74 -n 8  -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=8]"', $reg_requirement] },
-        '8Gb_16c_mpi'  => {'LSF' => ['-q mpi-rh74 -n 16 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"', $reg_requirement] },
-        '8Gb_24c_mpi'  => {'LSF' => ['-q mpi-rh74 -n 24 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=12]"', $reg_requirement] },
-        '8Gb_32c_mpi'  => {'LSF' => ['-q mpi-rh74 -n 32 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"', $reg_requirement] },
-        '8Gb_64c_mpi'  => {'LSF' => ['-q mpi-rh74 -n 64 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"', $reg_requirement] },
+        '8Gb_4c_mpi'   => {'LSF' => ['-q mpi -n 4  -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=4]"', $reg_requirement] },
+        '8Gb_8c_mpi'   => {'LSF' => ['-q mpi -n 8  -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=8]"', $reg_requirement] },
+        '8Gb_16c_mpi'  => {'LSF' => ['-q mpi -n 16 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"', $reg_requirement] },
+        '8Gb_24c_mpi'  => {'LSF' => ['-q mpi -n 24 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=12]"', $reg_requirement] },
+        '8Gb_32c_mpi'  => {'LSF' => ['-q mpi -n 32 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"', $reg_requirement] },
+        '8Gb_64c_mpi'  => {'LSF' => ['-q mpi -n 64 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"', $reg_requirement] },
 
-        '16Gb_4c_mpi'  => {'LSF' => ['-q mpi-rh74 -n 4  -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"', $reg_requirement] },
-        '16Gb_8c_mpi'  => {'LSF' => ['-q mpi-rh74 -n 8  -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=8]"', $reg_requirement] },
-        '16Gb_16c_mpi' => {'LSF' => ['-q mpi-rh74 -n 16 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=16]"', $reg_requirement] },
-        '16Gb_24c_mpi' => {'LSF' => ['-q mpi-rh74 -n 24 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=12]"', $reg_requirement] },
-        '16Gb_32c_mpi' => {'LSF' => ['-q mpi-rh74 -n 32 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=16]"', $reg_requirement] },
+        '16Gb_4c_mpi'  => {'LSF' => ['-q mpi -n 4  -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"', $reg_requirement] },
+        '16Gb_8c_mpi'  => {'LSF' => ['-q mpi -n 8  -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=8]"', $reg_requirement] },
+        '16Gb_16c_mpi' => {'LSF' => ['-q mpi -n 16 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=16]"', $reg_requirement] },
+        '16Gb_24c_mpi' => {'LSF' => ['-q mpi -n 24 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=12]"', $reg_requirement] },
+        '16Gb_32c_mpi' => {'LSF' => ['-q mpi -n 32 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=16]"', $reg_requirement] },
 
-        '32Gb_4c_mpi'  => {'LSF' => ['-q mpi-rh74 -n 4  -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=4]"', $reg_requirement] },
-        '32Gb_8c_mpi'  => {'LSF' => ['-q mpi-rh74 -n 8  -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=8]"', $reg_requirement] },
-        '32Gb_16c_mpi' => {'LSF' => ['-q mpi-rh74 -n 16 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"', $reg_requirement] },
-        '32Gb_24c_mpi' => {'LSF' => ['-q mpi-rh74 -n 24 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=12]"', $reg_requirement] },
-        '32Gb_32c_mpi' => {'LSF' => ['-q mpi-rh74 -n 32 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"', $reg_requirement] },
-        '32Gb_64c_mpi' => {'LSF' => ['-q mpi-rh74 -n 64 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"', $reg_requirement] },
+        '32Gb_4c_mpi'  => {'LSF' => ['-q mpi -n 4  -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=4]"', $reg_requirement] },
+        '32Gb_8c_mpi'  => {'LSF' => ['-q mpi -n 8  -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=8]"', $reg_requirement] },
+        '32Gb_16c_mpi' => {'LSF' => ['-q mpi -n 16 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"', $reg_requirement] },
+        '32Gb_24c_mpi' => {'LSF' => ['-q mpi -n 24 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=12]"', $reg_requirement] },
+        '32Gb_32c_mpi' => {'LSF' => ['-q mpi -n 32 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"', $reg_requirement] },
+        '32Gb_64c_mpi' => {'LSF' => ['-q mpi -n 64 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"', $reg_requirement] },
 
-        '64Gb_4c_mpi'  => {'LSF' => ['-q mpi-rh74 -n 4  -M64000 -R"select[mem>64000] rusage[mem=64000] same[model] span[ptile=4]"', $reg_requirement] },
+        '64Gb_4c_mpi'  => {'LSF' => ['-q mpi -n 4  -M64000 -R"select[mem>64000] rusage[mem=64000] same[model] span[ptile=4]"', $reg_requirement] },
     };
 }
 
