@@ -25,13 +25,13 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141\n*GitHub*: [<Division>/PrepareMasterDatabaseForRelease_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/PrepareMasterDatabaseForRelease_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-5 -port 4615{code}",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141\n*GitHub*: [<Division>/PrepareMasterDatabaseForRelease_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/PrepareMasterDatabaseForRelease_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-5 -port 4615{code}",
             "summary": "Prepare the master database"
          },
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps\n*GitHub*: [DumpGenomes_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/DumpGenomes_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpGenomes_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps\n*GitHub*: [DumpGenomes_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/DumpGenomes_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpGenomes_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
             "summary": "Run the genome dumping pipeline",
             "name_on_graph": "Genome dumps"
          },
@@ -44,14 +44,14 @@
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Members\n*GitHub*: [<Division>/LoadMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/LoadMembers_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Members\n*GitHub*: [<Division>/LoadMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/LoadMembers_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the member loading pipeline",
             "name_on_graph": "Member loading"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Species-tree\n*GitHub*: [CreateSpeciesTree_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/CreateSpeciesTree_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CreateSpeciesTree_conf -host mysql-ens-compara-prod-X -port XXXX -division plants -output_file $ENSEMBL_ROOT_DIR/ensembl-compara/conf/plants/species_tree.rice.branch_len.nw -species_set_id XXXXXX{code}\n(!) Only needs to be recomputed if there is a change to the rice {{species_set}}",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Species-tree\n*GitHub*: [CreateSpeciesTree_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/CreateSpeciesTree_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CreateSpeciesTree_conf -host mysql-ens-compara-prod-X -port XXXX -division plants -output_file $ENSEMBL_ROOT_DIR/ensembl-compara/conf/plants/species_tree.rice.branch_len.nw -species_set_id XXXXXX{code}\n(!) Only needs to be recomputed if there is a change to the rice {{species_set}}",
             "summary": "Import the species-tree",
             "name_on_graph": "Species-tree"
          }
@@ -64,7 +64,7 @@
       "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Intentions+for+release+<version>",
       "subtasks": [{
             "component": "Production tasks",
-            "description": "*GitHub*: [<Division>/ProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/ProteinTrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "description": "*GitHub*: [<Division>/ProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/ProteinTrees_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the Protein-trees pipeline",
             "name_on_graph": "Protein-trees"
          },
@@ -75,13 +75,13 @@
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [Plants/EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/EPOwithExt_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name rice{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "description": "*GitHub*: [Plants/EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/EPOwithExt_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name rice{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Rice EPOwithExt pipeline",
             "name_on_graph": "EPOwithExt:Rice"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [Synteny_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
+            "description": "*GitHub*: [Synteny_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
             "name_on_graph": "Synteny",
             "summary": "Run the Synteny pipeline"
          }
