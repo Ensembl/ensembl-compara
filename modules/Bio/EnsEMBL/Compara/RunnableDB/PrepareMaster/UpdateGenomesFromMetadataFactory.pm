@@ -54,7 +54,10 @@ sub fetch_input {
     my $rr_meta_db = $self->param('rr_meta_name');
     my ($rr, $rr_meta_dba)     = _get_curr_rr_release($rr_meta_db, $meta_host);
 
-    my $meta_rr_script_options = "\$($meta_host details script) --dbname $rr_meta_db --release $rr --eg_first 1 --dump_path " . $self->param_required('work_dir') if $rr_meta_dba;
+    my $meta_rr_script_options;
+    if ( $rr_meta_dba ) {
+        $meta_rr_script_options = "\$($meta_host details script) --dbname $rr_meta_db --release $rr --eg_first 1 --dump_path " . $self->param_required('work_dir');
+    }
 
     # If provided, get the list of allowed species
     my $allowed_species_file = $self->param('allowed_species_file');
@@ -76,8 +79,13 @@ sub fetch_input {
 	my @release_genomes = $self->get_command_output($list_cmd);
     # and again for rr if rr is expected
     $meta_rr_script_options = "\$($meta_host details script) --dbname $rr_meta_db --release $rr";
-    my $rr_list_cmd = "perl $list_genomes_script $meta_rr_script_options" if $self->param('rr_meta_name');
-    my @rr_genomes  = $self->get_command_output($rr_list_cmd) if $rr_list_cmd;
+    my $rr_list_cmd;
+    my @rr_genomes;
+
+    if ( $self->param('rr_meta_name') ) {
+        $rr_list_cmd = "perl $list_genomes_script $meta_rr_script_options";
+        @rr_genomes  = $self->get_command_output($rr_list_cmd);
+    }
 
     if ( scalar(@rr_genomes) > 0 and $rr_genomes[0] =~ /Division/ ) {
         # Remove Division: <division> and any empty elements
