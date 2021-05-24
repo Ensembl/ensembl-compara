@@ -63,6 +63,7 @@ sub default_options {
         'report_genomes_script'  => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
         'update_metadata_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
         'meta_host' => 'mysql-ens-meta-prod-1',
+        'rr_meta_name' => 'ensembl_metadata_qrp',
         'perc_threshold' => 20,
 
         # member loading options
@@ -218,6 +219,7 @@ sub core_pipeline_analyses {
                 'report_genomes_script' => $self->o('report_genomes_script'),
                 'work_dir'              => $self->o('pipeline_dir'),
                 'meta_host'             => $self->o('meta_host'),
+                'rr_meta_name'          => $self->o('rr_meta_name'),
                 'allowed_species_file'  => $self->o('config_dir') . '/allowed_species.json',
                 'perc_threshold'        => $self->o('perc_threshold'),
                 'division'              => undef,  # our references cover every division
