@@ -38,7 +38,7 @@
       <!-- Metazoas -->
       <genome name="daphnia_pulex"/>
       <genome name="amphimedon_queenslandica"/>
-      <genome name="clytia_hemisphaerica"/>
+      <genome name="clytia_hemisphaerica_gca902728285"/>
       <genome name="lottia_gigantea"/>
       <genome name="trichoplax_adhaerens"/>
       <genome name="mnemiopsis_leidyi"/>
@@ -127,7 +127,7 @@
       <genome name="artibeus_jamaicensis"/>
       <genome name="phyllostomus_discolor"/>
       <!-- Artiodactyla -->
-      <genome name="camelus_ferus"/>
+      <genome name="camelus_ferus_gca009834535v1"/>
       <genome name="bos_taurus"/>
       <genome name="ovis_aries_rambouillet"/>
       <genome name="capra_hircus"/>
