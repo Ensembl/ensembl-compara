@@ -38,6 +38,9 @@ my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster saccharo
 
 # ---------------------- CURRENT CORE DATABASES---------------------------------
 
+# Load RR server first for priority
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-5:4684/$curr_release");
+Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
 # Use the mirror servers
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-mirror-1:4240/$curr_release");
 # but remove the Vertebrates version of the shared species
