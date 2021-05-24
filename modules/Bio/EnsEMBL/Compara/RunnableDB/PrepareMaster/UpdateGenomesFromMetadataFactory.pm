@@ -33,7 +33,11 @@ use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw/ map_row_to_header /;
+
 use JSON qw( decode_json );
+
+use List::MoreUtils qw/ uniq /;
 
 use Data::Dumper;
 
@@ -47,6 +51,10 @@ sub fetch_input {
 	my $release = $self->param_required('release');
 	my $division = $self->param('division');
 	my $metadata_script_options = "\$($meta_host details script) --release $release" . ($division ? " --division $division" : "");
+    my $rr_meta_db = $self->param('rr_meta_name');
+    my ($rr, $rr_meta_dba)     = _get_curr_rr_release($rr_meta_db, $meta_host);
+
+    my $meta_rr_script_options = "\$($meta_host details script) --dbname $rr_meta_db --release $rr --eg_first 1 --dump_path " . $self->param_required('work_dir') if $rr_meta_dba;
 
     # If provided, get the list of allowed species
     my $allowed_species_file = $self->param('allowed_species_file');
@@ -56,7 +64,7 @@ sub fetch_input {
         $allowed_species = { map { $_ => 1 } @{ decode_json($self->_slurp($allowed_species_file)) } };
     }
 	# use metadata script to report genomes that need to be updated
-    my ($genomes_to_update, $renamed_genomes, $updated_annotations) = $self->fetch_genome_report($release, $division, $allowed_species);
+    my ($genomes_to_update, $renamed_genomes, $updated_annotations) = $self->fetch_genome_report($release, $division, $allowed_species, $rr, $rr_meta_dba);
 
     # Have we forgotten to update the allowed species JSON file?
     while (my ($new_name, $old_name) = each %$renamed_genomes) {
@@ -66,6 +74,18 @@ sub fetch_input {
 	# check there are no seq_region changes in the existing species
 	my $list_cmd = "perl $list_genomes_script $metadata_script_options";
 	my @release_genomes = $self->get_command_output($list_cmd);
+    # and again for rr if rr is expected
+    $meta_rr_script_options = "\$($meta_host details script) --dbname $rr_meta_db --release $rr";
+    my $rr_list_cmd = "perl $list_genomes_script $meta_rr_script_options" if $self->param('rr_meta_name');
+    my @rr_genomes  = $self->get_command_output($rr_list_cmd) if $rr_list_cmd;
+
+    if ( scalar(@rr_genomes) > 0 and $rr_genomes[0] =~ /Division/ ) {
+        # Remove Division: <division> and any empty elements
+        @rr_genomes = grep { $_ ne '' and $_ !~ /^Division/ } @rr_genomes;
+
+        push @release_genomes, @rr_genomes
+    }
+
 	chomp @release_genomes;
     if ($release_genomes[0] =~ /Division/) {
         # Remove the first element reported by the script: Division: <division> and any empty elements
@@ -213,11 +233,22 @@ sub write_output {
 }
 
 sub fetch_genome_report {
-    my ( $self, $release, $division, $allowed_species ) = @_;
+    my ( $self, $release, $division, $allowed_species, $rr, $rr_meta_dba ) = @_;
 
     my $meta_host = $self->param_required('meta_host');
     my $work_dir = $self->param_required('work_dir');
     my $report_genomes_script = $self->param_required('report_genomes_script');
+
+    my (@new_genomes, @updated_assemblies, @updated_annotations, %renamed_genomes);
+
+    if ( $rr ) {
+        my ($new_genomes, $updated_assemblies, $updated_annotations, $renamed_genomes) = $self->_get_rr_reference_genomes($rr_meta_dba, $meta_host, $rr, $report_genomes_script, $work_dir);
+        @new_genomes = @$new_genomes;
+        @updated_assemblies = @$updated_assemblies;
+        @updated_annotations = @$updated_annotations;
+        %renamed_genomes = %$renamed_genomes;
+    }
+
     my $metadata_script_options = "\$($meta_host details script) --release $release" . ($division ? " --division $division" : "");
     my $report_cmd = "perl $report_genomes_script $metadata_script_options -output_format json --dump_path $work_dir";
     my $report_out = $self->get_command_output($report_cmd);
@@ -235,7 +266,6 @@ sub fetch_genome_report {
     # read and parse report
     my $decoded_meta_report = decode_json( $report_out );
 
-    my (@new_genomes, @updated_assemblies, %renamed_genomes, @updated_annotations);
     foreach my $this_division ( keys %$decoded_meta_report ) {
         next if ($division and ($this_division ne $division));
         my $division_report = $decoded_meta_report->{$this_division};
@@ -243,6 +273,13 @@ sub fetch_genome_report {
         push @updated_assemblies, keys %{$division_report->{updated_assemblies}};
         $renamed_genomes{$_->{name}} = $_->{old_name} for values %{$division_report->{renamed_genomes}};
         push @updated_annotations, map {$_->{name}} values %{$division_report->{updated_annotations}};
+    }
+
+    # Remove duplicates between main and rr updates
+    if ( $rr ) {
+        @new_genomes = uniq(@new_genomes);
+        @updated_assemblies = uniq(@updated_assemblies);
+        @updated_annotations = uniq(@updated_annotations);
     }
 
     if ($allowed_species) {
@@ -253,6 +290,124 @@ sub fetch_genome_report {
     }
 
     return ([@new_genomes, @updated_assemblies, @updated_annotations], \%renamed_genomes, \@updated_annotations);
+}
+
+# Internal method to find the current rapid release number and dba
+sub _get_curr_rr_release {
+    my ($name, $host) = @_;
+
+    my $port = Bio::EnsEMBL::Compara::Utils::Registry::get_port( $host );
+    my $dba  = Bio::EnsEMBL::MetaData::DBSQL::MetaDataDBAdaptor->new(
+        '-species' => 'multi',
+        '-group'   => 'metadata',
+        '-host'    => $host,
+        '-port'    => $port,
+        '-user'    => "ensro",
+        '-pass'    => "",
+        '-dbname'  => $name, );
+    my $helper = $dba->dbc->sql_helper;
+
+    my $sql = 'SELECT MAX(ensembl_genomes_version) FROM data_release WHERE is_current = 1';
+    # should only return one result, as there is only one current at a time
+    my $rr  = $helper->execute_single_result(-SQL => $sql);
+
+    return ($rr, $dba);
+}
+
+sub _get_rr_reference_genomes {
+    my ( $self, $metadata_dba, $meta_host, $rr, $report_exe, $dump_path ) = @_;
+
+    # this is the rapid release number
+    my $metadata_name = $self->param('rr_meta_name');
+
+    my $meta_options = "\$($meta_host details script) --dbname $metadata_name --release $rr --eg_first 1 --dump_path $dump_path";
+
+    my $cmd = "perl $report_exe $meta_options";
+    $self->run_command($cmd);
+
+    # script produces a per-division tsv text file - not support for json yet
+    my @new_genomes_files         = glob($dump_path . "/*-new_genomes.txt");
+    my @updated_assemblies_files  = glob($dump_path . "/*-updated_assemblies.txt");
+    my @updated_annotations_files = glob($dump_path . "/*-updated_annotations.txt");
+    my @renamed_genomes_files     = glob($dump_path . "/*-renamed_genomes.txt");
+
+    my ( @new_genomes, @updated_assemblies, @updated_annotations, %renamed_genomes );
+    foreach my $file ( @new_genomes_files ) {
+        push @new_genomes, _parse_name_to_array($file);
+    }
+    foreach my $file ( @updated_assemblies_files ) {
+        push @updated_assemblies, _parse_name_to_array($file);
+    }
+    foreach my $file ( @updated_annotations_files ) {
+        push @updated_annotations, _parse_name_to_array($file);
+    }
+    %renamed_genomes = %{_parse_rename_rr_files(\@renamed_genomes_files)};
+
+    return \@new_genomes, \@updated_assemblies, \@updated_annotations, \%renamed_genomes;
+}
+
+# Internal method to parse the report file generated by report_genomes_exe for rr - as not json compatible
+sub _parse_rr_genome_files {
+    my $file = shift;
+
+    open ( my $f, "<", $file ) or die "Cannot open report for new species $!";
+
+    my $header = <$f>;
+
+    $header =~ s/^\#//;
+
+    my @species_names;
+
+    while (<$f>) {
+        # header line is commented in output
+        next if $_ =~ /^\#name/;
+        next if $_ !~ /[a-z]/;
+        # the strain column can be blank, leading to mismatch of column numbers
+        $_ = $_ . 'NULL' if $_ !~ /[a-z0-9]$/;
+        my $row = map_row_to_header( $_, $header );
+        # only interested in the genome name
+        push @species_names, $row->{name};
+    }
+
+    close ($f);
+
+    return @species_names;
+}
+
+sub _parse_rename_rr_files {
+    my $files = shift;
+
+    my %renamed_genomes;
+    foreach my $file ( @$files ) {
+        open ( my $f, "<", $file ) or die "Cannot open report for new species $!";
+        my $header = <$f>;
+        $header =~ s/^\#//;
+
+        while (<$f>) {
+            # header line is commented in output
+            next if $_ =~ /^\#name/;
+            next if $_ !~ /[a-z]/;
+            # the strain column can be blank, leading to mismatch of column numbers
+            $_ = $_ . 'NULL' if $_ !~ /[a-z0-9]$/;
+            my $row = map_row_to_header( $_, $header );
+            # only interested in the genome name and old_name
+            $renamed_genomes{$row->{name}} = $row->{old_name};
+        }
+        close ($f);
+    }
+
+    return \%renamed_genomes;
+}
+
+sub _parse_name_to_array {
+    my $file = shift;
+
+    my @array;
+    my $line_count = `cat $file | wc -l`;
+    return if $line_count <= 1;
+
+    push @array, _parse_rr_genome_files($file);
+    return \@array;
 }
 
 1;
