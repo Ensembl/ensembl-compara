@@ -169,7 +169,7 @@ ls *.syten.gff | sed "s/\.syten\.gff//" | \
 
 chmod +x run
 
-bsub -R "select[mem>=8000] rusage[mem=8000]" -M8000000 -q yesterday -J HsapCfamSyn -o run.out -e run.err ./run
+bsub -R "select[mem>=8000] rusage[mem=8000]" -M8000000 -q production -J HsapCfamSyn -o run.out -e run.err ./run
 
 NOTE-1: the last parameter "false" is only needed for human/mouse, human/rat and mouse/rat NOT for 
 elegans/briggsae (it can be ommitted). Don't ask me (Abel) what that does, Steve Searle included this 

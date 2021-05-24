@@ -66,7 +66,7 @@ perl copy_ancestral_core.pl
 
 example:
 
-bsub  -q yesterday -ooutput_file -Jcopy_data -R "select[mem>5000] rusage[mem=5000]" -M5000000 \
+bsub -q production -ooutput_file -Jcopy_data -R "select[mem>5000] rusage[mem=5000]" -M5000000 \
   copy_ancestral_core.pl --from_url mysql://username@server_name/sf5_production \
   --to_url mysql://username:password@server_name/sf5_release --mlss 340
 
