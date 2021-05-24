@@ -88,8 +88,6 @@ sub pipeline_create_commands {
 
         # In case it doesn't exist yet
         'mkdir -p ' . $self->o('genome_dumps_dir'),
-        # The files are going to be accessed by many processes in parallel
-        $self->pipeline_create_commands_lfs_setstripe('genome_dumps_dir'),
     ];
 }
 

@@ -118,7 +118,6 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
         
         $self->pipeline_create_commands_rm_mkdir(['blastdb_dir', 'mercator_dir', 'output_dir', 'bed_dir']),
-        $self->pipeline_create_commands_lfs_setstripe('blastdb_dir'),
      ];
 }
 
