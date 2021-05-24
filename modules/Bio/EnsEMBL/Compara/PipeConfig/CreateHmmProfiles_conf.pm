@@ -263,8 +263,6 @@ sub pipeline_create_commands {
 
         $self->pipeline_create_commands_rm_mkdir(['cluster_dir', 'dump_dir', 'fasta_dir', 'tmp_hmmsearch']),
         $self->pipeline_create_commands_rm_mkdir(['compara_hmm_library_basedir', 'panther_hmm_library_basedir', 'seed_hmm_library_basedir']),
-        $self->pipeline_create_commands_lfs_setstripe('fasta_dir'),
-        $self->pipeline_create_commands_lfs_setstripe(['compara_hmm_library_basedir', 'panther_hmm_library_basedir', 'seed_hmm_library_basedir']),
     ];
 }
 
