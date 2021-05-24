@@ -15,18 +15,19 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+=cut
+
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::Example::QfoProteinTrees_conf
 
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::QfoProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX
+
 =head1 DESCRIPTION  
 
-Parameters to run the ProteinTrees pipeline on the Quest-for-Orthologs dataset using
-a all-vs-all blast clustering
-
-=head1 CONTACT
-
-Please contact Compara with questions/suggestions
+The QfO PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks. 
 
 =cut
 
