@@ -52,11 +52,9 @@ sub fetch_input {
 	my $division = $self->param('division');
 	my $metadata_script_options = "\$($meta_host details script) --release $release" . ($division ? " --division $division" : "");
     my $rr_meta_db = $self->param('rr_meta_name');
-    my ($rr, $rr_meta_dba)     = _get_curr_rr_release($rr_meta_db, $meta_host);
-
-    my $meta_rr_script_options;
-    if ( $rr_meta_dba ) {
-        $meta_rr_script_options = "\$($meta_host details script) --dbname $rr_meta_db --release $rr --eg_first 1 --dump_path " . $self->param_required('work_dir');
+    my ($rr, $rr_meta_dba);
+    if ( $rr_meta_db ) {
+        ($rr, $rr_meta_dba) = _get_curr_rr_release($rr_meta_db, $meta_host);
     }
 
     # If provided, get the list of allowed species
@@ -78,7 +76,7 @@ sub fetch_input {
 	my $list_cmd = "perl $list_genomes_script $metadata_script_options";
 	my @release_genomes = $self->get_command_output($list_cmd);
     # and again for rr if rr is expected
-    $meta_rr_script_options = "\$($meta_host details script) --dbname $rr_meta_db --release $rr";
+    my $meta_rr_script_options = "\$($meta_host details script) --dbname $rr_meta_db --release $rr";
     my $rr_list_cmd;
     my @rr_genomes;
 
@@ -322,6 +320,16 @@ sub _get_curr_rr_release {
     return ($rr, $dba);
 }
 
+sub _parse_name_to_array {
+    my $file = shift;
+
+    my $line_count = `cat $file | wc -l`;
+    return if $line_count <= 1;
+
+    my $species_names = _parse_rr_genome_files($file);
+    return $species_names;
+}
+
 sub _get_rr_reference_genomes {
     my ( $self, $metadata_dba, $meta_host, $rr, $report_exe, $dump_path ) = @_;
 
@@ -379,7 +387,7 @@ sub _parse_rr_genome_files {
 
     close ($f);
 
-    return @species_names;
+    return \@species_names;
 }
 
 sub _parse_rename_rr_files {
@@ -405,17 +413,6 @@ sub _parse_rename_rr_files {
     }
 
     return \%renamed_genomes;
-}
-
-sub _parse_name_to_array {
-    my $file = shift;
-
-    my @array;
-    my $line_count = `cat $file | wc -l`;
-    return if $line_count <= 1;
-
-    push @array, _parse_rr_genome_files($file);
-    return \@array;
 }
 
 1;
