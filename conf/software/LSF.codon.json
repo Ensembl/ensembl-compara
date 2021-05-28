@@ -16,6 +16,7 @@
     "cmbuild_exe"               : ["check_exe_in_cellar", "infernal/1.1.2/bin/cmbuild"],
     "cmsearch_exe"              : ["check_exe_in_cellar", "infernal/1.1.2/bin/cmsearch"],
     "codeml_exe"                : ["check_exe_in_cellar", "paml43/4.3.0/bin/codeml"],
+    "diamond_exe"               : ["check_exe_in_cellar", "diamond/2.0.4/bin/diamond"],
     "enredo_exe"                : ["check_exe_in_cellar", "enredo/0.5.0/bin/enredo"],
     "erable_exe"                : ["check_exe_in_cellar", "erable/1.0/bin/erable"],
     "esd2esi_exe"               : ["check_exe_in_cellar", "exonerate24/2.4.0/bin/esd2esi"],
