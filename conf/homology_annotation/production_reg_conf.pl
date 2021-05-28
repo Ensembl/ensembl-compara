@@ -31,7 +31,7 @@ my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
 
 # ---------------------- CURRENT CORE DATABASES---------------------------------
 
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-5:4672/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-5:4684/$curr_release");
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
