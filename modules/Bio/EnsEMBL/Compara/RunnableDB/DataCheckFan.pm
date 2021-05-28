@@ -23,7 +23,8 @@ Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan
 
 =head1 DESCRIPTION
 
-A compara runnable wrapper of Production's DataCheckFan
+A compara runnable wrapper of Production's DataCheckFan.
+For some pipelines the previous db is irrelevant so default to same db.
 
 =cut
 
@@ -36,11 +37,28 @@ use base ('Bio::EnsEMBL::DataCheck::Pipeline::DataCheckFan', 'Bio::EnsEMBL::Comp
 
 sub fetch_input {
     my $self = shift;
-    $self->param('dba', $self->compara_dba);
 
-    my $prev_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( 'compara_prev' );
-    $self->param('old_server_uri', $prev_dba->url);
-
+    unless ( scalar @{$self->param('datacheck_names')} > 0 ) {
+        $self->complete_early("No datachecks to run");
+    }
+    if ( $self->compara_dba ) {
+        $self->param('dba', $self->compara_dba);
+    }
+    # The pipeline may not be in the registry_file so server_uri needs to be explicitly passed
+    else {
+        my @server_uri = $self->param('compara_db');
+        $self->param('server_uri', \@server_uri);
+    }
+    if ( my $prev_db = $self->param('old_server_uri') ) {
+        if (ref($prev_db) ne 'ArrayRef[Str]') {
+            my @prev_db = $self->param('old_server_uri');
+            $self->param('old_server_uri', \@prev_db);
+        }
+    }
+    else {
+        my @prev_db = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( 'compara_prev' )->url;
+        $self->param('old_server_uri', \@prev_db);
+    }
     $self->SUPER::fetch_input;
 }
 
