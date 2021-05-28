@@ -41,14 +41,23 @@ sub fetch_input {
     unless ( scalar @{$self->param('datacheck_names')} > 0 ) {
         $self->complete_early("No datachecks to run");
     }
-    $self->param('dba', $self->compara_dba);
-    # The pipeline may not be in the registry_file so server_uri needs to be explicitly passed
-    unless ( $self->param('registry_file') ) {
-        $self->param('server_uri', $self->param('compara_db'));
+    if ( $self->compara_dba ) {
+        $self->param('dba', $self->compara_dba);
     }
-    unless ( $self->param('old_server_uri') ) {
-        my $prev_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( 'compara_prev' );
-        $self->param('old_server_uri', $prev_dba->url);
+    # The pipeline may not be in the registry_file so server_uri needs to be explicitly passed
+    else {
+        my @server_uri = $self->param('compara_db');
+        $self->param('server_uri', \@server_uri);
+    }
+    if ( my $prev_db = $self->param('old_server_uri') ) {
+        if (ref($prev_db) ne 'ArrayRef[Str]') {
+            my @prev_db = $self->param('old_server_uri');
+            $self->param('old_server_uri', \@prev_db);
+        }
+    }
+    else {
+        my @prev_db = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( 'compara_prev' )->url;
+        $self->param('old_server_uri', \@prev_db);
     }
     $self->SUPER::fetch_input;
 }
