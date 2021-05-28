@@ -25,13 +25,13 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141\n*GitHub*: [<Division>/PrepareMasterDatabaseForRelease_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/PrepareMasterDatabaseForRelease_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-1 -port 4485{code}",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141\n*GitHub*: [<Division>/PrepareMasterDatabaseForRelease_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/PrepareMasterDatabaseForRelease_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-1 -port 4485{code}",
             "summary": "Prepare the master database"
          },
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps\n*GitHub*: [DumpGenomes_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/DumpGenomes_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpGenomes_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps\n*GitHub*: [DumpGenomes_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/DumpGenomes_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpGenomes_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
             "summary": "Run the genome dumping pipeline",
             "name_on_graph": "Genome dumps"
          },
@@ -44,14 +44,14 @@
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Members\n*GitHub*: [<Division>/LoadMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/LoadMembers_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Members\n*GitHub*: [<Division>/LoadMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/LoadMembers_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the member loading pipeline",
             "name_on_graph": "Member loading"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Species-tree\n*GitHub*: [CreateSpeciesTree_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/CreateSpeciesTree_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CreateSpeciesTree_conf -host mysql-ens-compara-prod-X -port XXXX -output_file $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/<division>/species_tree.branch_len.nw -division <division>{code}",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Species-tree\n*GitHub*: [CreateSpeciesTree_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/CreateSpeciesTree_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CreateSpeciesTree_conf -host mysql-ens-compara-prod-X -port XXXX -output_file $ENSEMBL_ROOT_DIR/ensembl-compara/conf/<division>/species_tree.branch_len.nw -division <division>{code}",
             "summary": "Run Create Species Tree pipeline",
             "name_on_graph": "Species-tree"
          }
@@ -64,121 +64,121 @@
       "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Intentions+for+release+<version>",
       "subtasks": [{
             "component": "Production tasks",
-            "description": "*GitHub*: [<Division>/ProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/ProteinTrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "description": "*GitHub*: [<Division>/ProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/ProteinTrees_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the Protein-trees pipeline",
             "name_on_graph": "Protein-trees:Default vertebrates"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [<Division>/ncRNAtrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/ncRNAtrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::ncRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "description": "*GitHub*: [<Division>/ncRNAtrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/ncRNAtrees_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::ncRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the ncRNA-trees pipeline",
             "name_on_graph": "ncRNA-trees:Default vertebrates"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [MurinaeNcRNAtrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/MurinaeNcRNAtrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeNcRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "description": "*GitHub*: [MurinaeNcRNAtrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/MurinaeNcRNAtrees_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeNcRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the mouse strains ncRNA-trees pipeline",
             "name_on_graph": "ncRNA-trees:Murinae"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [MurinaeProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/MurinaeProteinTrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "description": "*GitHub*: [MurinaeProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/MurinaeProteinTrees_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MurinaeProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the mouse strains Protein-trees pipeline",
             "name_on_graph": "Protein-trees:Murinae"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [PigBreedsNcRNAtrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/PigBreedsNcRNAtrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsNcRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "description": "*GitHub*: [PigBreedsNcRNAtrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/PigBreedsNcRNAtrees_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsNcRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the pig breeds ncRNA-trees pipeline",
             "name_on_graph": "ncRNA-trees:Pig breeds"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [PigBreedsProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/PigBreedsProteinTrees_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "description": "*GitHub*: [PigBreedsProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/PigBreedsProteinTrees_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the pig breeds Protein-trees pipeline",
             "name_on_graph": "Protein-trees:Pig breeds"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [StrainsReindexMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/StrainsReindexMembers_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX -collection murinae -member_type protein{code}\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX -collection murinae -member_type ncrna{code}",
+            "description": "*GitHub*: [StrainsReindexMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/StrainsReindexMembers_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX -collection murinae -member_type protein{code}\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX -collection murinae -member_type ncrna{code}",
             "summary": "Reindex murinae gene trees",
             "name_on_graph": "Gene-tree reindexing:Murinae"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [StrainsReindexMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/StrainsReindexMembers_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX -collection pig_breeds -member_type protein{code}\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX -collection pig_breeds -member_type ncrna{code}",
+            "description": "*GitHub*: [StrainsReindexMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/StrainsReindexMembers_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX -collection pig_breeds -member_type protein{code}\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX -collection pig_breeds -member_type ncrna{code}",
             "summary": "Reindex pig gene trees",
             "name_on_graph": "Gene-tree reindexing:Pig breeds"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name mammals{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name mammals{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Mammal EPOwithExt pipeline",
             "name_on_graph": "EPOwithExt:Mammals"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [UpdateMSA_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/UpdateMSA_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::UpdateMSA_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -method_type epo -species_set_name mammals{code}",
+            "description": "*GitHub*: [UpdateMSA_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/UpdateMSA_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::UpdateMSA_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -method_type epo -species_set_name mammals{code}",
             "summary": "Update the Mammal EPO and EPO Extended MSAs",
             "name_on_graph": "Update MSA:Mammals"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name primates{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name primates{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Primates EPOwithExt pipeline",
             "name_on_graph": "EPOwithExt:Primates"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [UpdateMSA_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/UpdateMSA_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::UpdateMSA_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -method_type epo -species_set_name primates{code}",
+            "description": "*GitHub*: [UpdateMSA_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/UpdateMSA_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::UpdateMSA_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -method_type epo -species_set_name primates{code}",
             "summary": "Update the Primates EPO and EPO Extended MSAs",
             "name_on_graph": "Update MSA:Primates"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name murinae{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name murinae{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Murinae EPOwithExt pipeline",
             "name_on_graph": "EPOwithExt:Murinae"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name pig_breeds{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name pig_breeds{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Pigs EPOwithExt pipeline",
             "name_on_graph": "EPOwithExt:Pigs"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name fish{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name fish{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Fish EPOwithExt pipeline",
             "name_on_graph": "EPOwithExt:Fish"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [UpdateMSA_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/UpdateMSA_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::UpdateMSA_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -method_type epo -species_set_name fish{code}",
+            "description": "*GitHub*: [UpdateMSA_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/UpdateMSA_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::UpdateMSA_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -method_type epo -species_set_name fish{code}",
             "summary": "Update the Fish EPO and EPO Extended MSAs",
             "name_on_graph": "Update MSA:Fish"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name sauropsids{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name sauropsids{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Sauropsids EPOwithExt pipeline",
             "name_on_graph": "EPOwithExt:Sauropsids"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [UpdateMSA_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/UpdateMSA_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::UpdateMSA_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -method_type epo -species_set_name sauropsids{code}",
+            "description": "*GitHub*: [UpdateMSA_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/UpdateMSA_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::UpdateMSA_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -method_type epo -species_set_name sauropsids{code}",
             "summary": "Update the Sauropsids EPO and EPO Extended MSAs",
             "name_on_graph": "Update MSA:Sauropsids"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [UpdateMSA_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/UpdateMSA_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::UpdateMSA_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -method_type pecan -species_set_name amniotes{code}",
+            "description": "*GitHub*: [UpdateMSA_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/UpdateMSA_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::UpdateMSA_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -method_type pecan -species_set_name amniotes{code}",
             "summary": "Update the Amniotes Mercator-Pecan MSA",
             "name_on_graph": "Update MSA:Amniotes"
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [ImportAltAlleGroupsAsHomologies_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/ImportAltAlleGroupsAsHomologies_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportAltAlleGroupsAsHomologies_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
+            "description": "*GitHub*: [ImportAltAlleGroupsAsHomologies_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/ImportAltAlleGroupsAsHomologies_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportAltAlleGroupsAsHomologies_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
             "summary": "Import the Alt-allele groups",
             "name_on_graph": "Alt-alleles import"
          },
@@ -213,7 +213,7 @@
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [Synteny_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]\n{code}init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
+            "description": "*GitHub*: [Synteny_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
             "name_on_graph": "Synteny",
             "summary": "Run the Synteny pipeline"
          }

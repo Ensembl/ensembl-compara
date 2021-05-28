@@ -21,7 +21,7 @@ Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::PopulateNewDatabase
 
 =head1 DESCRIPTION
 
-Runs the $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/populate_new_database.pl
+Runs the $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/populate_new_database.pl
 script, dealing with missing parameters.
 
 =cut

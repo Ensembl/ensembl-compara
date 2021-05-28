@@ -69,7 +69,6 @@ use DBI qw(:sql_types);
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
-
 #
 # FETCH methods
 ###########################
@@ -413,7 +412,7 @@ sub store {
         $sth = $self->prepare('INSERT INTO gene_tree_root (tree_type, member_type, clusterset_id, gene_align_id, method_link_species_set_id, species_tree_root_id, stable_id, version, ref_root_id, root_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     }
     $sth->execute($tree->tree_type, $tree->member_type, $tree->clusterset_id, $tree->gene_align_id, $tree->method_link_species_set_id, $tree->species_tree_root_id, $tree->stable_id, $tree->version, $tree->ref_root_id, $root_id);
-    
+
     $tree->adaptor($self);
 
     return $root_id;
@@ -478,6 +477,11 @@ sub delete_tree {
         }
     }
 
+    # Is this a subtree of a supertree? If so, clean up the supertree too
+    if ( $tree->root->parent->tree->tree_type eq 'supertree' ) {
+        $self->_clean_supertree($tree->root);
+    }
+
     # Finally remove the root node
     $gene_tree_node_Adaptor->delete_node($tree->root) if $tree->root;
 
@@ -499,6 +503,61 @@ sub delete_tree {
         $self->dbc->do('DELETE FROM hmm_profile WHERE model_id = ?', undef, $root_id);
     }
 
+}
+
+sub _clean_supertree {
+    my ($self, $subtree_root) = @_;
+
+    my $gtn_adaptor = $self->db->get_GeneTreeNodeAdaptor;
+
+    my $supertree_leaf = $subtree_root->parent;
+    my $supertree_root = $supertree_leaf->root;
+    my $supertree_gene_align_id = $supertree_root->tree->gene_align_id;
+
+    my @supertree_leaves = @{$supertree_root->tree->get_all_leaves};
+    my @supertree_leaf_ids = map {$_->node_id} @supertree_leaves;
+    if ( scalar(@supertree_leaves) < 3 ) {
+        # removing a node from this supertree results in a single-leaf tree
+        # delete the whole supertree, leaving the other subtree intact
+        foreach my $supertree_leaf ( @supertree_leaves ) {
+            # link the subtree to the supertree's parent
+            # this is usually a clusterset, but may be another supertree
+            # (there is no easy way to do this using API calls in place of raw SQL)
+            my $unlink_subtree_sql = "UPDATE gene_tree_node SET parent_id = ? WHERE parent_id = ?";
+            my $sth = $self->prepare($unlink_subtree_sql);
+            $sth->execute($supertree_root->parent->node_id, $supertree_leaf->node_id);
+        }
+
+        $self->delete_tree($supertree_root->tree);
+    } else {
+        # remove the deleted subtree's parent node and minimize the supertree
+        # (i.e. clean up single-child nodes)
+        $gtn_adaptor->delete_node($supertree_leaf);
+        my $pruned_supertree = $supertree_root->tree;
+        my @orig_child_nodes = map {$_->node_id} @{$pruned_supertree->root->get_all_nodes()};
+
+        # clean the tree, update the indexes, update the tree in the db
+        my $minimized_tree = $pruned_supertree->root->minimize_tree;
+        # sometimes minimize_tree removes the old root - replace the original root_id
+        $minimized_tree->root->node_id($supertree_root->node_id);
+        # delete any nodes that have been removed in the minimization process from db
+        my %minimized_child_nodes = map {$_->node_id => 1} @{$minimized_tree->get_all_nodes()};
+        foreach my $orig_child_id ( @orig_child_nodes ) {
+            next if $minimized_child_nodes{$orig_child_id};
+            $gtn_adaptor->delete_node($gtn_adaptor->fetch_by_dbID($orig_child_id));
+        }
+        $minimized_tree->root->build_leftright_indexing();
+        $gtn_adaptor->update_subtree($minimized_tree);
+        $supertree_root = $minimized_tree->root;
+
+        # now remove subtree's members from the supertree alignment
+        my $subtree_members = $subtree_root->tree->get_all_Members;
+        $self->db->get_GeneAlignAdaptor->delete_members($supertree_gene_align_id, $subtree_root->tree->get_all_Members);
+
+        # memory management
+        $pruned_supertree->release_tree;
+        $minimized_tree->release_tree;
+    }
 }
 
 sub change_clusterset {

@@ -32,7 +32,7 @@ Calculate overall and coding coverage statistics for synteny.
 
 =head1 SYNOPSIS
 
- $ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::Synteny::SyntenyStats -compara_db compara_curr -mlss_id 10104 -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/conf/vertebrates/production_reg_conf.pl
+ $ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::Synteny::SyntenyStats -compara_db compara_curr -mlss_id 10104 -reg_conf ${ENSEMBL_ROOT_DIR}/ensembl-compara/conf/vertebrates/production_reg_conf.pl
  $ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::Synteny::SyntenyStats -mlss_id 10104 -compara_db mysql://ensro@compara3/database_with_genomedb_locators
 
 =head1 Author

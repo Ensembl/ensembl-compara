@@ -3,9 +3,9 @@ Import of the NCBI Taxonomy
 
 
 #. Loading of a fresh ncbi_taxonomy database is now done by initializing and running a small Hive pipeline.
-   Make sure you have ensembl, ensembl-hive and ensembl-compara checked out into $ENSEMBL_CVS_ROOT_DIR
+   Make sure you have ensembl, ensembl-hive and ensembl-compara checked out into $ENSEMBL_ROOT_DIR
 
-#. Edit ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/taxonomy/ensembl_aliases.sql`` to ensembl aliases if needed.
+#. Edit ``$ENSEMBL_ROOT_DIR/ensembl-compara/scripts/taxonomy/ensembl_aliases.sql`` to ensembl aliases if needed.
 
    The file needs to be updated as new species are integrated into Ensembl.
 
@@ -16,7 +16,7 @@ Import of the NCBI Taxonomy
     Unfortunately, the website is not able to give the age of an ancestral species directly.
     You will have to enter two extant species that have that ancestral species as their last common ancestor.
  
-#. Edit ``$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/taxonomy/web_name_patches.sql`` to patch web names if needed.
+#. Edit ``$ENSEMBL_ROOT_DIR/ensembl-compara/scripts/taxonomy/web_name_patches.sql`` to patch web names if needed.
 
    This should be agreed with the web team or just take the one they have chosen from the pre site.
 
@@ -26,7 +26,7 @@ Import of the NCBI Taxonomy
 
    ::
 
-      init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportNCBItaxonomy_conf -password <your_password> -ensembl_cvs_root_dir <path_to_your_ensembl_cvs_root>
+      init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportNCBItaxonomy_conf -password <your_password> -ensembl_root_dir <path_to_your_ensembl_root>
 
 #. Run the pipeline:
 

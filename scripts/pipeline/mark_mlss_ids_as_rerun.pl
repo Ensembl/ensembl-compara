@@ -91,7 +91,7 @@ The mlss_id of the data we are recomputing
 =head2 EXAMPLES
 
     # In e96
-    $ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/mark_mlss_ids_as_rerun.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/${COMPARA_DIV}/production_reg_conf.pl --compara compara_curr --mlss_id 1497
+    $ perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/mark_mlss_ids_as_rerun.pl --reg_conf $ENSEMBL_ROOT_DIR/ensembl-compara/conf/${COMPARA_DIV}/production_reg_conf.pl --compara compara_curr --mlss_id 1497
 
 =cut
 

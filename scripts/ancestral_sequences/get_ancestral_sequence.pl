@@ -126,7 +126,7 @@ seen. Extra verbose. No output files created.
 
 =head2 Examples
 
-perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/ancestral_sequences/get_ancestral_sequence.pl --conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --compara_url mysql://ensro@compara5/sf5_epo_8primates_77 --species homo_sapiens
+perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/ancestral_sequences/get_ancestral_sequence.pl --conf $ENSEMBL_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --compara_url mysql://ensro@compara5/sf5_epo_8primates_77 --species homo_sapiens
 
 =head1 INTERNAL METHODS
 
