@@ -278,10 +278,9 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'copy_pre_backup_to_warehouse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'shared_user'   => $self->o('shared_user'),
                 'backups_dir'   => $self->o('backups_dir'),
                 'warehouse_dir' => $self->o('warehouse_dir'),
-                'cmd'           => 'become #shared_user# cp #backups_dir#/compara_master_#division#.pre#release#.sql #warehouse_dir#/master_db_dumps/ensembl_compara_master_#division#.$(date "+%Y%m%d").pre#release#.sql',
+                'cmd'           => 'cp #backups_dir#/compara_master_#division#.pre#release#.sql #warehouse_dir#/master_db_dumps/ensembl_compara_master_#division#.$(date "+%Y%m%d").pre#release#.sql',
             },
             -flow_into  => [ 'copy_post_backup_to_warehouse' ],
         },
@@ -289,10 +288,9 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'copy_post_backup_to_warehouse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'shared_user'   => $self->o('shared_user'),
                 'backups_dir'   => $self->o('backups_dir'),
                 'warehouse_dir' => $self->o('warehouse_dir'),
-                'cmd'           => 'become #shared_user# cp #backups_dir#/compara_master_#division#.post#release#.sql #warehouse_dir#/master_db_dumps/ensembl_compara_master_#division#.$(date "+%Y%m%d").during#release#.sql',
+                'cmd'           => 'cp #backups_dir#/compara_master_#division#.post#release#.sql #warehouse_dir#/master_db_dumps/ensembl_compara_master_#division#.$(date "+%Y%m%d").during#release#.sql',
             },
             -flow_into  => WHEN(
                 '#do_update_from_metadata#' => 'copy_annotations_to_shared_loc'
