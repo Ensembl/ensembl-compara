@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<compara_db division="vertebrates">
+
+    <pairwise_alignments>
+
+        <pairwise_alignment method="LASTZ_NET" ref_genome="homo_sapiens_GRCh38" target_genome="homo_sapiens_CHM13"/>
+
+    </pairwise_alignments>
+
+</compara_db>
