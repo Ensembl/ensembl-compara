@@ -66,6 +66,7 @@ sub default_options {
         'backups_dir'   => $self->o('work_dir') . '/backups/',
 
         'master_db'         => 'compara_master',
+        'prev_dbs'          => undef,
         'schema_file'       => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
         'method_link_dump'  => $self->check_file_in_ensembl('ensembl-compara/sql/method_link.txt'),
         'clone_core_db_exe' => $self->check_exe_in_ensembl('ensembl-test/scripts/clone_core_database.pl'),
@@ -75,7 +76,7 @@ sub default_options {
         'reg_conf_tmpl' => undef,
         'dst_host'      => undef,
         'dst_port'      => undef,
-        
+
         'do_clone_species' => 0,
 
         # PrepareMasterDatabaseForRelease pipeline configuration:
@@ -93,6 +94,7 @@ sub default_options {
         'update_metadata_script'  => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
         'assembly_patch_species'  => [], # by default, skip this step
         'additional_species'      => {}, # by default, skip this step
+        'species_trees'           => undef,
         'do_update_from_metadata' => 0,
         'do_load_timetree'        => 0,
         'meta_host'               => undef, # required but not used: do_update_from_metadata = 0
