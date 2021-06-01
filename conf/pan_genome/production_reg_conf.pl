@@ -19,6 +19,8 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::Utils::Registry;
 
+my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
+
 # ---------------------------- CORE DATABASES ----------------------------------
 
 my $pan_genome_cores = {
