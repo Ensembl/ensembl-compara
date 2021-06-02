@@ -165,7 +165,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'method_link_dump' => $self->o('method_link_dump'),
-                'cmd'              => 'db_cmd.pl -reg_conf #init_reg_conf# -reg_type compara -reg_alias #master_db# -executable mysqlimport #method_link_dump#',
+                'cmd'              => 'db_cmd.pl -reg_conf #init_reg_conf# -reg_type compara -reg_alias #master_db# -executable mysqlimport -append "--local" #method_link_dump#',
             },
             -flow_into  => WHEN(
                 '#do_clone_species#' => 'seed_species_to_clone',
