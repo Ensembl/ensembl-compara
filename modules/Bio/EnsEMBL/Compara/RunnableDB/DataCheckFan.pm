@@ -50,7 +50,7 @@ sub fetch_input {
         $self->param('server_uri', \@server_uri);
     }
     if ( my $prev_db = $self->param('old_server_uri') ) {
-        if (ref($prev_db) ne 'ArrayRef[Str]') {
+        if (ref($prev_db) ne 'ARRAY') {
             my @prev_db = $self->param('old_server_uri');
             $self->param('old_server_uri', \@prev_db);
         }
