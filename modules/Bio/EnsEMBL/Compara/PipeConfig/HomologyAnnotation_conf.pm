@@ -112,7 +112,7 @@ sub default_options {
         'output_dir_path'  => $self->o('work_dir') . '/datachecks/',
         'overwrite_files'  => 1,
         'failures_fatal'   => 1, # no DC failure tolerance
-        'old_server_uri'   => $self->o('compara_db'),
+        'old_server_uri'   => [$self->o('compara_db')],
         'db_name'          => $self->o('dbowner') . '_' . $self->o('pipeline_name'),
 
         # List of tables to copy to per-species compara database
