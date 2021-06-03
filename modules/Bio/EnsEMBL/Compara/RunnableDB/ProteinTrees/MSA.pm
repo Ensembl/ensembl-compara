@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA
@@ -36,15 +25,6 @@ This module is an abstract RunnableDB used to run a multiple alignment on a
 gene tree. It is currently implemented in Mafft and MCoffee.
 
 The parameter 'gene_tree_id' is obligatory.
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
 
 =cut
 
@@ -252,6 +232,7 @@ sub update_single_peptide_tree {
   my $self   = shift;
   my $tree   = shift;
 
+  $tree->expand_subtrees;  # TODO: remove this additional call once ENSCOMPARASW-4276 is resolved
   foreach my $member (@{$tree->get_all_Members}) {
     $member->cigar_line(length($member->sequence)."M");
     printf("single_pepide_tree %s : %s\n", $member->stable_id, $member->cigar_line) if($self->debug);
