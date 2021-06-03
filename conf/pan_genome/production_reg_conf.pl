@@ -24,8 +24,8 @@ my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
 # ---------------------------- CORE DATABASES ----------------------------------
 
 my $pan_genome_cores = {
-    'homo_sapiens_GRCh38' => [ 'mysql-ens-genebuild-prod-1', 'kbillis_homo_sapiens_core_100_38_pan' ],
-    'homo_sapiens_CHR13'  => [ 'mysql-ens-genebuild-prod-1', 'kbillis_humans_compara_master_CHR13_1' ],
+    'homo_sapiens_GRCh38'         => [ 'mysql-ens-genebuild-prod-1', 'kbillis_homo_sapiens_core_100_38_pan' ],
+    'homo_sapiens_gca009914755v2' => [ 'mysql-ens-genebuild-prod-6', 'kbillis_homo_sapiens_gca009914755v2_core_105' ],
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $pan_genome_cores );
 
