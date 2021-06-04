@@ -72,7 +72,7 @@ CREATE TABLE `assembly_exception` (
   PRIMARY KEY (`assembly_exception_id`),
   KEY `sr_idx` (`seq_region_id`,`seq_region_start`),
   KEY `ex_idx` (`exc_seq_region_id`,`exc_seq_region_start`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=77 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `associated_group` (
   `associated_group_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -490,7 +490,7 @@ CREATE TABLE `meta` (
   PRIMARY KEY (`meta_id`),
   UNIQUE KEY `species_key_value_idx` (`species_id`,`meta_key`,`meta_value`),
   KEY `species_value_idx` (`species_id`,`meta_value`)
-) ENGINE=MyISAM AUTO_INCREMENT=1812 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1813 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `meta_coord` (
   `table_name` varchar(40) NOT NULL,
