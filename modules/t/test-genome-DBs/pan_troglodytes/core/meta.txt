@@ -1,5 +1,5 @@
 1	\N	schema_type	core
-2	\N	schema_version	104
+2	\N	schema_version	105
 3	\N	patch	patch_61_62_a.sql|schema_version
 4	\N	patch	patch_61_62_b.sql|synonym_field_extension
 5	\N	patch	patch_61_62_c.sql|db_name_db_release_idx
@@ -205,3 +205,4 @@
 746	\N	patch	patch_102_103_a.sql|schema_version
 747	\N	patch	patch_78_79_b.sql|bamcov support
 748	\N	patch	patch_103_104_a.sql|schema_version
+749	\N	patch	patch_104_105_a.sql|schema_version

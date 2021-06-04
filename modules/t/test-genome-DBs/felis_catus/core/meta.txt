@@ -1,4 +1,4 @@
-1	\N	schema_version	104
+1	\N	schema_version	105
 2	\N	patch	patch_38_39_a.sql|status_enum
 3	\N	patch	patch_38_39_b.sql|unique_assembly
 4	\N	patch	patch_38_39_c.sql|multiversion_objects
@@ -303,3 +303,4 @@
 1487	\N	patch	patch_102_103_a.sql|schema_version
 1488	\N	patch	patch_78_79_b.sql|bamcov support
 1489	\N	patch	patch_103_104_a.sql|schema_version
+1490	\N	patch	patch_104_105_a.sql|schema_version
