@@ -1,7 +1,7 @@
 # Ensembl Compara API
 
-[![Build Status](https://travis-ci.org/Ensembl/ensembl-compara.svg?branch=master)](https://travis-ci.org/Ensembl/ensembl-compara)
-[![Codecov Status](https://codecov.io/gh/ensembl/ensembl-compara/branch/master/graph/badge.svg)](https://codecov.io/github/Ensembl/ensembl-compara?branch=master)
+[![Build Status](https://travis-ci.org/Ensembl/ensembl-compara.svg?branch=release/105)](https://travis-ci.org/Ensembl/ensembl-compara)
+[![Codecov Status](https://codecov.io/gh/ensembl/ensembl-compara/branch/release/105/graph/badge.svg)](https://codecov.io/github/Ensembl/ensembl-compara?branch=release/105)
 [![Code Climate](https://api.codeclimate.com/v1/badges/2dd3c490030a5af7ff21/maintainability.svg)](https://codeclimate.com/github/Ensembl/ensembl-compara)
 
 The Ensembl Compara API (Application Programme Interface) serves as a
@@ -12,7 +12,7 @@ to the database.
 Find more information (including the installation guide and a tutorial) on
 the Ensembl website: <http://www.ensembl.org/info/docs/api/compara/>
 
-See [the main Ensembl repository](https://github.com/Ensembl/ensembl/blob/master/CONTRIBUTING.md)
+See [the main Ensembl repository](https://github.com/Ensembl/ensembl/blob/release/105/CONTRIBUTING.md)
 for the guidelines on user contributions.
 
 ## Installation
@@ -21,7 +21,7 @@ for the guidelines on user contributions.
 
 We use a number of Perl modules that are all available on CPAN. We recommend using cpanminus to install these.
 You will need both the [Core API
-dependencies](https://github.com/Ensembl/ensembl/blob/master/cpanfile) and
+dependencies](https://github.com/Ensembl/ensembl/blob/release/105/cpanfile) and
 [ours](cpanfile).
 
 ### API to access HAL alignments (progressive-Cactus)
