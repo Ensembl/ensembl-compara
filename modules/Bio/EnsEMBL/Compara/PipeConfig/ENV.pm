@@ -128,6 +128,7 @@ sub executable_locations {
         'populate_per_genome_database_exe'  => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/populate_per_genome_database.pl'),
         'create_datacheck_tickets_exe'      => $self->check_exe_in_ensembl('ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl'),
         'copy_ancestral_core_exe'           => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/copy_ancestral_core.pl'),
+        'symlink_fasta_exe'                 => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/symlink_fasta.py'),
 
         # Other dependencies (non executables)
         'schema_file_sql'                   => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
