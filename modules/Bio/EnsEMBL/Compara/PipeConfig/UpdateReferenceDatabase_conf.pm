@@ -58,6 +58,9 @@ sub default_options {
         'pipeline_name' => 'update_references_' . $self->o('rel_with_suffix'),
         'backups_dir'   => $self->o('pipeline_dir') . '/reference_db_backups/',
 
+        # shared location to symlink to fastas for orthofinder
+        'shared_fasta_dir' => $self->o('shared_hps_dir') . '/reference_fasta_symlinks/',
+
         # update from metadata options
         'list_genomes_script'    => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
         'report_genomes_script'  => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
@@ -127,8 +130,9 @@ sub pipeline_create_commands {
 
         # In case it doesn't exist yet
         'mkdir -p ' . $self->o('ref_member_dumps_dir'),
+        'mkdir -p ' . $self->o('shared_fasta_dir'),
         # The files are going to be accessed by many processes in parallel
-        $self->pipeline_create_commands_lfs_setstripe('ref_member_dumps_dir'),
+        #$self->pipeline_create_commands_lfs_setstripe('ref_member_dumps_dir'), #not available in codon
         # To store the Datachecks results
         $self->db_cmd($results_table_sql),
     ];
@@ -320,7 +324,7 @@ sub core_pipeline_analyses {
                 'master_db'       => '#ref_db#',
                 'incl_components' => 0,
             },
-            -flow_into  => [ 'create_reference_sets' ],
+            -flow_into  => [ 'create_reference_sets', 'fasta_dumps_per_collection_factory' ],
         },
 
         {   -logic_name => 'create_reference_sets',
@@ -336,6 +340,26 @@ sub core_pipeline_analyses {
                 'A->1'  => [ 'backup_ref_db_again' ],
             },
             -rc_name    => '2Gb_job',
+        },
+
+        {   -logic_name => 'fasta_dumps_per_collection_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PassFastaDumpsPerCollection',
+            -parameters => {
+                'symlink_dir'          => $self->o('shared_fasta_dir'),
+                'ref_member_dumps_dir' => $self->o('ref_member_dumps_dir'),
+            },
+            -rc_name    => '500Mb_job',
+            -flow_into  => [ 'symlink_fasta_to_shared_loc' ],
+            -wait_for   => [ 'create_reference_sets' ],
+        },
+
+        {   -logic_name => 'symlink_fasta_to_shared_loc',
+            -module     => 'ensembl.compara.runnable.SymlinkFasta',
+            -language   => 'python3',
+            -parameters => {
+                'symlink_fasta_exe' => $self->o('symlink_fasta_exe'),
+            },
+            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name => 'backup_ref_db_again',
@@ -372,7 +396,7 @@ sub tweak_analyses {
     delete $analyses_by_name->{'datacheck_fan_high_mem'}->{'-flow_into'}->{2};
     $analyses_by_name->{'datacheck_factory'}->{'-parameters'}->{'compara_db'} = '#ref_db#';
     $analyses_by_name->{'datacheck_fan'}->{'-parameters'}->{'compara_db'} = '#ref_db#';
-    $analyses_by_name->{'datacheck_fan'}->{'-parameters'}->{'old_server_uri'} = '#ref_db#';
+    $analyses_by_name->{'datacheck_fan'}->{'-parameters'}->{'old_server_uri'} = ['#ref_db#'];
     $analyses_by_name->{'datacheck_fan'}->{'-flow_into'}->{0} = ['jira_ticket_creation'];
     $analyses_by_name->{'datacheck_fan_high_mem'}->{'-flow_into'}->{0} = ['jira_ticket_creation'];
     $analyses_by_name->{'store_results'}->{'-parameters'}->{'dbname'} = $self->o('ref_dbname');
