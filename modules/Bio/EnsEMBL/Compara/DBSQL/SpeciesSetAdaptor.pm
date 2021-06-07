@@ -408,6 +408,26 @@ sub fetch_collection_by_name {
     return $self->_find_most_recent($all_ss);
 }
 
+=head2 fetch_collection_by_name
+
+  Arg [1]     : none
+  Example     : my $collections = $species_set_adaptor->fetch_all_current_collections();
+  Description : Fetches all the current "collection" SpeciesSet objects
+  Returntype  : arrayref of Bio::EnsEMBL::Compara::SpeciesSet
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub fetch_all_current_collections {
+    my ($self) = @_;
+
+    my $curr_ss;
+    my $all_objects = $self->fetch_all();
+
+    return [ map { ($_->is_current and $_->name =~ /^collection/) ? $_ : () } @$all_objects ];
+}
+
 
 =head2 update_collection
 
