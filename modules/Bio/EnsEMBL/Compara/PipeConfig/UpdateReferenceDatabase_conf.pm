@@ -131,8 +131,6 @@ sub pipeline_create_commands {
         # In case it doesn't exist yet
         'mkdir -p ' . $self->o('ref_member_dumps_dir'),
         'mkdir -p ' . $self->o('shared_fasta_dir'),
-        # The files are going to be accessed by many processes in parallel
-        #$self->pipeline_create_commands_lfs_setstripe('ref_member_dumps_dir'), #not available in codon
         # To store the Datachecks results
         $self->db_cmd($results_table_sql),
     ];
@@ -348,7 +346,6 @@ sub core_pipeline_analyses {
                 'symlink_dir'          => $self->o('shared_fasta_dir'),
                 'ref_member_dumps_dir' => $self->o('ref_member_dumps_dir'),
             },
-            -rc_name    => '500Mb_job',
             -flow_into  => [ 'symlink_fasta_to_shared_loc' ],
             -wait_for   => [ 'create_reference_sets' ],
         },
@@ -359,7 +356,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'symlink_fasta_exe' => $self->o('symlink_fasta_exe'),
             },
-            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name => 'backup_ref_db_again',

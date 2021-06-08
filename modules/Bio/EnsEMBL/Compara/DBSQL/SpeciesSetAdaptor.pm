@@ -408,14 +408,12 @@ sub fetch_collection_by_name {
     return $self->_find_most_recent($all_ss);
 }
 
-=head2 fetch_collection_by_name
+=head2 fetch_all_current_collections
 
-  Arg [1]     : none
   Example     : my $collections = $species_set_adaptor->fetch_all_current_collections();
   Description : Fetches all the current "collection" SpeciesSet objects
   Returntype  : arrayref of Bio::EnsEMBL::Compara::SpeciesSet
   Exceptions  : none
-  Caller      : general
 
 =cut
 

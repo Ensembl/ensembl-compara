@@ -22,7 +22,6 @@ import glob
 import os
 import re
 import sys
-
 from pathlib import Path
 
 parser = argparse.ArgumentParser()
@@ -54,8 +53,8 @@ if target_dir:
         # Skip split fasta files
         if re.search(r'split\b', fasta_file):
             continue
-        file_prefix = os.path.basename(fasta_file)
-        symlink_path = os.path.join(symlink_dir, file_prefix)
+        file_name = os.path.basename(fasta_file)
+        symlink_path = os.path.join(symlink_dir, file_name)
         if not os.path.exists(symlink_path):
             print('New symlink: {0} created for target: {1}'.format(symlink_path, fasta_file))
             os.symlink(fasta_file, symlink_path)
