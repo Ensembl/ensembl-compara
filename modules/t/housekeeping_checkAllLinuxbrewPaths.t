@@ -52,13 +52,13 @@ find_and_check('check_exe_in_linuxbrew_opt', sub {
     } );
 
 find_and_check('check_exe_in_compara', sub {
-        my $file = "/nfs/production/panda/ensembl/warehouse/compara/software/$_[0]";
+        my $file = "$ENV{COMPARA_WAREHOUSE}/software/$_[0]";
         ok(-e $file, "$file exists");
         ok(-x $file, "$file is executable");
     } );
 
 find_and_check('check_dir_in_compara', sub {
-        my $file = "/nfs/production/panda/ensembl/warehouse/compara/software/$_[0]";
+        my $file = "$ENV{COMPARA_WAREHOUSE}/software/$_[0]";
         ok(-e $file, "$file exists");
         ok(-d $file, "$file is a directory");
     } );
