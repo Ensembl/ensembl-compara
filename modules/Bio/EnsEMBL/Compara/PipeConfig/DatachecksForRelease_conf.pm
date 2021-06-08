@@ -52,7 +52,7 @@ sub default_options {
         db_type       => 'compara',
         compara_db    => 'compara_curr',
 
-        history_file       => '/nfs/panda/ensembl/production/datachecks/history/compara.json',
+        history_file       => '/nfs/production/flicek/ensembl/production/datachecks/history/compara.json',
         output_dir_path    => $self->o('pipeline_dir') . '/tapfile',
         datacheck_groups   => ['compara'],
         datacheck_types    => [],

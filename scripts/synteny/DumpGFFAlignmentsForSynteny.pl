@@ -52,7 +52,7 @@ my $force = 0; #use slice even if it has no karyotype
 my $output_dir = "";
 my $ref_coord_system_name = undef;
 my $non_ref_coord_system_name = undef;
-my $genome_dumps_dir = '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/';
+my $genome_dumps_dir = $ENV{'COMPARA_HPS'} . '/genome_dumps/';
 
 GetOptions('help' => \$help,
 	   'dbname=s' => \$dbname,
