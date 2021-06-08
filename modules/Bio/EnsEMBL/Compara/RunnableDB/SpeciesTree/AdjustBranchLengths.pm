@@ -52,8 +52,6 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
-        'output_display_name'  => 0, # when genome_db_ids are replaced in the final tree, 
-        							 # use $gdb->display_name instead. default is $gdb->name
     };
 }
 
@@ -64,8 +62,18 @@ sub run {
 	# generate file in correct format for erable
 	my $working_dir = $self->param('working_dir') || $self->worker_temp_directory;
 	my $erable_phylip = "$working_dir/erable.phy";
+
+	my $ss_adaptor = $self->compara_dba->get_SpeciesSetAdaptor;
+	my $species_set = $ss_adaptor->fetch_by_dbID($self->param_required('species_set_id'));
+	my @genome_dbs = grep {
+		$_->name ne 'ancestral_sequences'
+		&& !($_->is_polyploid && !defined $_->genome_component)
+	} @{ $species_set->genome_dbs };
+
+	my $gdb_id_map = { map {$_->_get_genome_dump_path($self->param('genome_dumps_dir')) => $_->dbID} @genome_dbs };
+
 	my $mash_matrix = Bio::EnsEMBL::Compara::Utils::DistanceMatrix->new( -file => $self->param_required('mash_dist_file') );
-	$mash_matrix = $mash_matrix->convert_to_genome_db_ids($self->compara_dba->get_GenomeDBAdaptor);
+	$mash_matrix = $mash_matrix->filter_and_convert_genome_db_ids($gdb_id_map);
 	$mash_matrix->phylip_from_matrix($erable_phylip, 'multi');
 
 	# write topology tree to file
@@ -99,7 +107,8 @@ sub run {
 	while ( $tree =~ m/gdb([0-9]+)/ ) {
 		my $this_gdb_id = $1;
 		my $gdb = $genome_db_adaptor->fetch_by_dbID($this_gdb_id);
-		my $species_name = $self->param('output_display_name') ? $gdb->display_name : $gdb->name;
+		my $gcomp = $gdb->genome_component ? ".comp" . $gdb->genome_component : '';
+		my $species_name = $gdb->name . $gcomp;
 		$tree =~ s/gdb$this_gdb_id/$species_name/;
 	}
 

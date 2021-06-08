@@ -70,6 +70,7 @@ sub fetch_input {
 	my $self = shift;
 
 	my $gdb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
+	my $ss_adaptor = $self->compara_dba->get_SpeciesSetAdaptor;
 	my $ncbi_adaptor = $self->compara_dba->get_NCBITaxonAdaptor;
 	
 	# parse matrix and replace filenames with genome_db_ids
@@ -78,16 +79,27 @@ sub fetch_input {
 	my $distance_matrix = Bio::EnsEMBL::Compara::Utils::DistanceMatrix->new(
 		-file => $mash_dist_file
 	);
-	$distance_matrix = $distance_matrix->convert_to_genome_db_ids($gdb_adaptor);
+
+	my $species_set = $ss_adaptor->fetch_by_dbID($self->param_required('species_set_id'));
+	my @genome_dbs = grep {
+		$_->name ne 'ancestral_sequences'
+		&& !($_->is_polyploid && !defined $_->genome_component)
+	} @{ $species_set->genome_dbs };
+
+	my $gdb_id_map = { map {$_->_get_genome_dump_path($self->param('genome_dumps_dir')) => $_->dbID} @genome_dbs };
+
+	print " -- Converting matrix keys to DB IDs\n" if $self->debug;
+	$distance_matrix = $distance_matrix->filter_and_convert_genome_db_ids($gdb_id_map);
+	print " -- Adding taxonomic distances\n" if $self->debug;
 	$distance_matrix = $distance_matrix->add_taxonomic_distance($gdb_adaptor);
 	
 	my @gdb_ids = $distance_matrix->members;
-	# print " -- matrix genomes: " . join(", ", @gdb_ids) . "\n";
+	print "\t -- Genome DB IDs: " . join(", ", @gdb_ids) . "\n" if $self->debug;
 	my @gdbs = map { $gdb_adaptor->fetch_by_dbID($_) } @gdb_ids;
-
 	# generate submatrices
 	print " -- Detecting optimal taxonomic groupings\n" if $self->debug;
 	my @tax_groups_ids = $self->_taxonomic_groups(\@gdbs);
+	print " -- Taxonomic IDs: " . join(", ", @tax_groups_ids) . "\n" if $self->debug;
 
 	my (@prev_group_ids, %all_groups, @matrices_dataflow, $this_outgroup);
 	foreach my $group_taxon_id ( @tax_groups_ids ) {
@@ -96,8 +108,22 @@ sub fetch_input {
 
 		# extract initial submatrix for the group
 		my @group_gdbs = @{$gdb_adaptor->fetch_all_current_by_ancestral_taxon_id($group_taxon_id)};
+
+		# Make sure that the outgroup is in the list if this is the determined root taxon
+		my @excepts = ();
+		if ( $group_taxon_id == $self->param('root_id') ) {
+			print "\t -- root_id is " . $self->param('root_id') . "\n" if $self->debug;
+			my $outgroup_gdb = $gdb_adaptor->fetch_by_dbID($self->param_required('outgroup_id'));
+			push(@group_gdbs, $outgroup_gdb) unless grep{$_->dbID == $self->param_required('outgroup_id')} @group_gdbs;
+		}
+		else {
+			@excepts = ($self->param_required('outgroup_id'));
+		}
+
 		print "\t -- fetching submatrix for " . scalar @group_gdbs . " genomes\n" if $self->debug;
 		my $submatrix = $distance_matrix->prune_gdbs_from_matrix( \@group_gdbs );
+
+		print "\t -- Submatrix has " . scalar $submatrix->members . " members\n" if $self->debug;
 
 		# add an outgroup
 		if ( $group_taxon_id == $self->param('root_id') ) {
@@ -113,10 +139,11 @@ sub fetch_input {
 			next unless $prev_group_taxon->has_ancestor($current_group_taxon);
 			print "\t -- " . $prev_group_taxon->name . " is a member of this group - collapsing it\n" if $self->debug;
 			my $prev_group_gdbs = $gdb_adaptor->fetch_all_current_by_ancestral_taxon_id($prev_group);
+			print "\t -- Prev IDs: " . join(", ", map {$_->dbID} @{$prev_group_gdbs}) . "\n" if $self->debug;
 			$submatrix = $submatrix->collapse_group_in_matrix( $prev_group_gdbs, "mrg_$prev_group" );
 		}
         
-        next if Bio::EnsEMBL::Compara::Utils::DistanceMatrix->empty_submatrix($submatrix);
+        next if Bio::EnsEMBL::Compara::Utils::DistanceMatrix->empty_submatrix($submatrix, \@excepts);
 
 		# add to dataflow
 		my $mdf = { 
@@ -150,6 +177,9 @@ sub _add_outgroup {
 	my @sub_gdb_ids = $submatrix->members;
 	my $rep_gdb_id  = $sub_gdb_ids[0];
 
+	#print " -- submatrix genomes: " . join(", ", @sub_gdb_ids) . "\n" if $self->debug;
+	#print " -- fullmatrix genomes: " . join(", ", $full_matrix->members) . "\n" if $self->debug;
+
 	my ( $closest_gdb_id, $min_distance) = (undef, 100);
 	foreach my $full_key ( $full_matrix->members ) {
 		next if ( defined $self->param('blacklisted_genome_db_ids') && grep { $full_key eq $_ } @{$self->param('blacklisted_genome_db_ids')} ); # skip any that are on the naughty list
@@ -157,6 +187,7 @@ sub _add_outgroup {
 		if ( $full_matrix->distance($rep_gdb_id, $full_key) < $min_distance ) {
 			$closest_gdb_id = $full_key;
 			$min_distance = $full_matrix->distance($rep_gdb_id, $full_key);
+			#print "$full_key gives dist $min_distance\n";
 		}
 	} 
 
@@ -164,9 +195,9 @@ sub _add_outgroup {
 		print "Can't find a suitable outgroup\n";
 		return $submatrix;
 	}
-
 	foreach my $sub_key ( $submatrix->members ) {
-		$submatrix = $submatrix->distance($sub_key, $closest_gdb_id, $full_matrix->distance($sub_key, $closest_gdb_id));
+		my $old_dist = $full_matrix->distance($sub_key, $closest_gdb_id);
+		$submatrix = $submatrix->distance($sub_key, $closest_gdb_id, $old_dist);
 	}
 
 	return ($submatrix, $closest_gdb_id);
@@ -207,6 +238,7 @@ sub _taxonomic_groups {
 
 	# first, grab all the ranks for each genome_db
 	my @ranks = @{ $self->param_required('taxonomic_ranks') };
+	print "Ranks: " . join(',', @ranks) . "\n" if $self->debug;
 	foreach my $gdb ( @$gdbs ) {
 		my $this_gdb_taxon = $ncbi_adaptor->fetch_node_by_taxon_id($gdb->taxon_id);
 		foreach my $rank ( @ranks ) {
@@ -217,7 +249,9 @@ sub _taxonomic_groups {
 
     # filter ranks shared across all species
     # only ranks describing subsets of the species set should be included
+    print "Total gdbs: " . scalar(@$gdbs) . "\n" if $self->debug;
     foreach my $key ( keys %group_taxon_ids ) {
+        print "Taxon $key has " . $group_taxon_ids{$key} . "gdbs\n" if $self->debug;
         delete $group_taxon_ids{$key} if $group_taxon_ids{$key} == (scalar(@$gdbs));
         unless ((scalar keys %group_taxon_ids) < 20) {
             delete $group_taxon_ids{$key} if $group_taxon_ids{$key} < (scalar(@$gdbs)/10);
