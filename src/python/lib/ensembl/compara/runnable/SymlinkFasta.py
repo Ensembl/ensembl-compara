@@ -22,7 +22,6 @@ Optionally cleans up broken symlinks first. By default cleanup_symlinks is False
 """
 
 import subprocess
-import sys
 
 from typing import Dict
 

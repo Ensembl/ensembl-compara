@@ -54,12 +54,11 @@ if target_dir:
         # Skip split fasta files
         if re.search(r'split\b', fasta_file):
             continue
-        else:
-            file_prefix = os.path.basename(fasta_file)
-            symlink_path = os.path.join(symlink_dir, file_prefix)
-            if not os.path.exists(symlink_path):
-                print('New symlink: {0} created for target: {1}'.format(symlink_path, fasta_file))
-                os.symlink(fasta_file, symlink_path)
+        file_prefix = os.path.basename(fasta_file)
+        symlink_path = os.path.join(symlink_dir, file_prefix)
+        if not os.path.exists(symlink_path):
+            print('New symlink: {0} created for target: {1}'.format(symlink_path, fasta_file))
+            os.symlink(fasta_file, symlink_path)
 else:
     file_prefix = os.path.basename(target_file)
     symlink_path = os.path.join(symlink_dir, file_prefix)
