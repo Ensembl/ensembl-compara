@@ -62,7 +62,7 @@ sub default_options {
         'dump_root'    => $self->o('pipeline_dir'),
         'work_dir'     => $self->o('dump_root') . '/dump_hash/',
         # Location of the previous dumps
-        'ftp_root'     => '/nfs/production/panda/ensembl/production/ensemblftp/',
+        'ftp_root'     => '/nfs/production/flicek/ensembl/production/ensemblftp/',
 
         'compara_db'   => 'compara_curr', # can be URL or reg alias
         'ancestral_db' => undef,

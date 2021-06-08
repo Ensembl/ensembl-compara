@@ -1,6 +1,6 @@
 {
     "reference_db": "mysql://ensro@mysql-ens-compara-prod-10:4648/citest_dump_genomes_99",
-    "reference_dir": "/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/citest",
+    "reference_dir": "/hps/nobackup/flicek/ensembl/compara/shared/genome_dumps/citest",
     "database_tests": {
         "job": [
             {

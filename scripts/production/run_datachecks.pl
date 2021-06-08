@@ -145,7 +145,7 @@ my @params = (
     '--user'   => 'ensro',             # Fallback to ensro to ensure we don't write to it by accident
     '--dbname' => $dba->dbc->dbname,
     '--dbtype' => 'compara',
-    '--history_file' => '/nfs/panda/ensembl/production/datachecks/history/compara.json',
+    '--history_file' => '/nfs/production/flicek/ensembl/production/datachecks/history/compara.json',
 );
 
 if ($reg_conf) {
