@@ -181,14 +181,9 @@ sub _check_for_distance_files {
 	foreach my $dfile ( @dist_files ) {
 		print " --- checking $dfile\n";
 		my $dist_matrix = Bio::EnsEMBL::Compara::Utils::DistanceMatrix->new( -file => $dfile );
-		try {
-			$dist_matrix = $dist_matrix->filter_and_convert_genome_db_ids($gdb_id_map);
-			return $dfile;
-		} catch {
-			warn "Caught error whilst parsing distance matrix file $dfile\nError: $_";
-		}
-	}	
-
+		$dist_matrix = $dist_matrix->filter_and_convert_genome_db_ids($gdb_id_map);
+		return $dfile if defined $dist_matrix;
+	}
 	return undef;
 }
 

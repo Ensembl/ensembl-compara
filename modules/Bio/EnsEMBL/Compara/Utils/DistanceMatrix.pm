@@ -155,7 +155,8 @@ sub filter_and_convert_genome_db_ids {
 
 	foreach my $f1 ( keys %{ $expected_id_map } ) {
 		foreach my $f2 ( keys %{ $expected_id_map } ) {
-			die "One or both of $f1 / $f2 could not be found in the distance matrix" unless (exists $matrix->{$f1} && exists $matrix->{$f2});
+			# If one of our expected gdb_ids is missing we return undef
+			return undef unless (exists $matrix->{$f1} && exists $matrix->{$f2});
 			$gdb_matrix->distance($expected_id_map->{$f1}, $expected_id_map->{$f2}, $matrix->distance($f1, $f2));
 		};
 	}
