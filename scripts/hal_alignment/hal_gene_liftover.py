@@ -24,7 +24,7 @@ Examples:
         --flank 5000 input.hal GRCh38 CHM13 output.psl
 
     # Do a liftover from GRCh38 to CHM13 of the
-    # features specified in an input BED file.
+    # features specified in an input BED file.
     python hal_gene_liftover.py --src-bed-file input.bed \
         --flank 5000 input.hal GRCh38 CHM13 output.psl
 """
@@ -138,7 +138,7 @@ if __name__ == '__main__':
 
         if src_region is not None:
             src_regions = [parse_region(src_region)]
-        else:  # i.e. bed_file is not None
+        else:  # i.e. bed_file is not None
             src_regions = pybedtools.BedTool(src_bed_file)
 
         make_src_region_file(src_regions, query_bed_file, flank_length=flank)
