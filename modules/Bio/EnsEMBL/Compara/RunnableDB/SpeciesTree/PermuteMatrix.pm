@@ -178,9 +178,6 @@ sub _add_outgroup {
 	my @sub_gdb_ids = $submatrix->members;
 	my $rep_gdb_id  = $sub_gdb_ids[0];
 
-	#print " -- submatrix genomes: " . join(", ", @sub_gdb_ids) . "\n" if $self->debug;
-	#print " -- fullmatrix genomes: " . join(", ", $full_matrix->members) . "\n" if $self->debug;
-
 	my ( $closest_gdb_id, $min_distance) = (undef, 100);
 	foreach my $full_key ( $full_matrix->members ) {
 		next if ( defined $self->param('blacklisted_genome_db_ids') && grep { $full_key eq $_ } @{$self->param('blacklisted_genome_db_ids')} ); # skip any that are on the naughty list
@@ -188,7 +185,6 @@ sub _add_outgroup {
 		if ( $full_matrix->distance($rep_gdb_id, $full_key) < $min_distance ) {
 			$closest_gdb_id = $full_key;
 			$min_distance = $full_matrix->distance($rep_gdb_id, $full_key);
-			#print "$full_key gives dist $min_distance\n";
 		}
 	} 
 
@@ -196,6 +192,7 @@ sub _add_outgroup {
 		print "Can't find a suitable outgroup\n";
 		return $submatrix;
 	}
+	
 	foreach my $sub_key ( $submatrix->members ) {
 		my $old_dist = $full_matrix->distance($sub_key, $closest_gdb_id);
 		$submatrix = $submatrix->distance($sub_key, $closest_gdb_id, $old_dist);
