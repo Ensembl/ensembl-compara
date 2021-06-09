@@ -146,6 +146,8 @@ if __name__ == '__main__':
         cmd1 = ['halLiftover', '--outPSL', hal_file, src_genome, query_bed_file, dest_genome,
                 'stdout']
         cmd2 = ['pslPosTarget', 'stdin', output_file]
-        p1 = Popen(cmd1, stdout=PIPE)
-        p2 = Popen(cmd2, stdin=p1.stdout)
-        p2.wait()
+        with Popen(cmd1, stdout=PIPE) as p1:
+            with Popen(cmd2, stdin=p1.stdout) as p2:
+                p2.wait()
+                p2.check_returncode()
+            p1.check_returncode()
