@@ -110,14 +110,14 @@ sub fetch_input {
 		my @group_gdbs = @{$gdb_adaptor->fetch_all_current_by_ancestral_taxon_id($group_taxon_id)};
 
 		# Make sure that the outgroup is in the list if this is the determined root taxon
-		my @excepts = ();
+		my $excepts = [];
 		if ( $group_taxon_id == $self->param('root_id') ) {
 			print "\t -- root_id is " . $self->param('root_id') . "\n" if $self->debug;
-			my $outgroup_gdb = $gdb_adaptor->fetch_by_dbID($self->param_required('outgroup_id'));
-			push(@group_gdbs, $outgroup_gdb) unless grep{$_->dbID == $self->param_required('outgroup_id')} @group_gdbs;
+			my $outgroup_gdb = $gdb_adaptor->fetch_by_dbID($outgroup_id);
+			push(@group_gdbs, $outgroup_gdb) unless grep{$_->dbID == $outgroup_id} @group_gdbs;
 		}
 		else {
-			@excepts = ($self->param_required('outgroup_id'));
+			$excepts = [$outgroup_id];
 		}
 
 		print "\t -- fetching submatrix for " . scalar @group_gdbs . " genomes\n" if $self->debug;
@@ -143,7 +143,7 @@ sub fetch_input {
 			$submatrix = $submatrix->collapse_group_in_matrix( $prev_group_gdbs, "mrg_$prev_group" );
 		}
         
-        next if Bio::EnsEMBL::Compara::Utils::DistanceMatrix->empty_submatrix($submatrix, \@excepts);
+        next if Bio::EnsEMBL::Compara::Utils::DistanceMatrix->empty_submatrix($submatrix, $excepts);
 
 		# add to dataflow
 		my $mdf = { 
