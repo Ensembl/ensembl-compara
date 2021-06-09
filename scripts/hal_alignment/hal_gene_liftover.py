@@ -151,5 +151,6 @@ if __name__ == '__main__':
                 p2.wait()
                 if p2.returncode != 0:
                     raise RuntimeError(f'pslPosTarget terminated with signal {-p2.returncode}')
+            p1.wait()
             if p1.returncode != 0:
                 raise RuntimeError(f'halLiftover terminated with signal {-p1.returncode}')
