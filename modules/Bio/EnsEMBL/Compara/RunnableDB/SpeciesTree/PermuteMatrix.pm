@@ -72,6 +72,7 @@ sub fetch_input {
 	my $gdb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
 	my $ss_adaptor = $self->compara_dba->get_SpeciesSetAdaptor;
 	my $ncbi_adaptor = $self->compara_dba->get_NCBITaxonAdaptor;
+	my $outgroup_id = $self->param_required('outgroup_id');
 	
 	# parse matrix and replace filenames with genome_db_ids
 	my $mash_dist_file = $self->param_required('mash_dist_file');
@@ -127,7 +128,7 @@ sub fetch_input {
 
 		# add an outgroup
 		if ( $group_taxon_id == $self->param('root_id') ) {
-			$this_outgroup = $self->param_required('outgroup_id');
+			$this_outgroup = $outgroup_id;
 		} else {
 			($submatrix, $this_outgroup) = $self->_add_outgroup( $submatrix, $distance_matrix );
 		}
