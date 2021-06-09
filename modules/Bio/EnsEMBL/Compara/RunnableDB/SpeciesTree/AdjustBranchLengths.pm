@@ -108,7 +108,7 @@ sub run {
 		my $this_gdb_id = $1;
 		my $gdb = $genome_db_adaptor->fetch_by_dbID($this_gdb_id);
 		my $gcomp = $gdb->genome_component ? ".comp" . $gdb->genome_component : '';
-		my $species_name = $gdb->name . $gcomp;
+		my $species_name = $self->param('output_display_name') ? $gdb->display_name : $gdb->name . $gcomp;
 		$tree =~ s/gdb$this_gdb_id/$species_name/;
 	}
 
