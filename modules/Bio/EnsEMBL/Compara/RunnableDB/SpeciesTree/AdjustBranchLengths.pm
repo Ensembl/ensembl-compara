@@ -52,6 +52,8 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
+        'output_display_name'  => 0, # when genome_db_ids are replaced in the final tree, 
+        							 # use $gdb->display_name instead. default is $gdb->name
     };
 }
 
