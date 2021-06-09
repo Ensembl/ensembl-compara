@@ -149,5 +149,7 @@ if __name__ == '__main__':
         with Popen(cmd1, stdout=PIPE) as p1:
             with Popen(cmd2, stdin=p1.stdout) as p2:
                 p2.wait()
-                p2.check_returncode()
-            p1.check_returncode()
+                if p2.returncode != 0:
+                    raise RuntimeError(f'pslPosTarget terminated with signal {-p2.returncode}')
+            if p1.returncode != 0:
+                raise RuntimeError(f'halLiftover terminated with signal {-p1.returncode}')
