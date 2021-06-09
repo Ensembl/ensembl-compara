@@ -49,7 +49,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Compara::Utils::DistanceMatrix;
 use File::Basename;
 use Data::Dumper;
-use Try::Tiny;
 
 sub fetch_input {
 	my $self = shift;
