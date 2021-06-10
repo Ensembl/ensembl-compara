@@ -96,12 +96,19 @@ sub members {
 sub distance {
 	my ($matrix, $s1, $s2, $new_distance) = @_;
 
-	return $matrix->{$s1}->{$s2} unless defined $new_distance;
-	$matrix->{$s1}->{$s2} = $new_distance;
-	$matrix->{$s2}->{$s1} = $new_distance;
-	$matrix->{$s1}->{$s1} = 0;
-	$matrix->{$s2}->{$s2} = 0; # deal with diagonals
-	return $matrix;
+	if ( defined $new_distance ){
+		$matrix->{$s1}->{$s2} = $new_distance;
+		$matrix->{$s2}->{$s1} = $new_distance;
+		$matrix->{$s1}->{$s1} = 0;
+		$matrix->{$s2}->{$s2} = 0; # deal with diagonals
+		return $matrix;
+	}
+	elsif ( exists $matrix->{$s1} && exists $matrix->{$s2} ){
+		return $matrix->{$s1}->{$s2};
+	}
+	else{
+		return undef;
+	}
 }
 
 sub parse_matrix {
@@ -130,44 +137,28 @@ sub parse_matrix {
 	return $matrix;
 }
 
-=head2 convert_to_genome_db_ids
+=head2 filter_and_convert_genome_db_ids
 
 	Arg [1] : Bio::EnsEMBL::Compara::GenomeDBAdaptor
-	Arg [2] : (optional) regex to extract species name and assembly from current id
-	Example: $matrix->convert_to_genome_db_ids( $genome_db_adaptor );
-	Example: $matrix->convert_to_genome_db_ids( $genome_db_adaptor, '(^[a-z]+)-([A-Z0-9]+)\.gz');
-	Description : Convert keys in a matrix from species names (+assemblies) to genome_db_id.
-	An optional regular expression may be passed if your filename format does not
-	follow species_name.assembly.fa standard. This regex must result in $1 = species name
-	and $2 = assembly name
+	Arg [2] : hashref of genome_db ids and expected filenames
+	Example: $matrix->filter_and_convert_genome_db_ids( $genome_db_adaptor, $genome_db_file_map );
+	Description : Convert keys in a matrix from species names (+assemblies) to genome_db_id and filter to
+		only the requested genome_db ids
 	Returntype : Bio::EnsEMBL::Compara::Utils::DistanceMatrix
 
 =cut 
 
-sub convert_to_genome_db_ids {
-	my ( $matrix, $gdb_adaptor, $opt_regex ) = @_;
-
-	# my $gdb_adaptor  = $self->compara_dba->get_GenomeDBAdaptor;
-	# my $ncbi_adaptor = $self->compara_dba->get_NCBITaxonAdaptor;
-
-	# map filenames to genome_db_ids
-	my $filename_regex = $opt_regex ? $opt_regex : '(^[A-Za-z_0-9]+)\.([A-Za-z0-9_\-\.]+)\.fa';
-
-	my %file_map;
-	foreach my $file ( $matrix->members ) {
-		my ( $species_name, $assembly_name ) = $matrix->_get_species_info_from_filename($file, $filename_regex);
-		my $this_gdb = $gdb_adaptor->fetch_by_name_assembly( $species_name, $assembly_name );
-		die "Cannot find species $species_name ($assembly_name) in compara database" unless $this_gdb;
-		$file_map{$file} = $this_gdb->dbID;
-	}
+sub filter_and_convert_genome_db_ids {
+	my ( $matrix, $expected_id_map ) = @_;
 	
 	my $gdb_matrix = Bio::EnsEMBL::Compara::Utils::DistanceMatrix->new();
-	foreach my $f1 ( $matrix->members ) {
-		my $f1_gdb_id = $file_map{$f1};
-		foreach my $f2 ( $matrix->members ) {
-			my $f2_gdb_id = $file_map{$f2};
-			$gdb_matrix->distance($f1_gdb_id, $f2_gdb_id, $matrix->distance($f1, $f2));
-		}
+
+	foreach my $f1 ( keys %{ $expected_id_map } ) {
+		foreach my $f2 ( keys %{ $expected_id_map } ) {
+			# If one of our expected gdb_ids is missing we return undef
+			return undef unless (exists $matrix->{$f1} && exists $matrix->{$f2});
+			$gdb_matrix->distance($expected_id_map->{$f1}, $expected_id_map->{$f2}, $matrix->distance($f1, $f2));
+		};
 	}
 	return $gdb_matrix;
 }
@@ -189,7 +180,7 @@ sub _get_species_info_from_filename {
 	Example : $matrix = $matrix->add_taxonomic_distance($genome_db_adaptor)
 	Description : replace all distances in a matrix with an average of the given distance
 		and the taxonomic distance for each pair of species. This method assumes that matrix
-		ids are genome_db_ids (if they are not, convert them with $matrix->convert_to_genome_db_ids)
+		ids are genome_db_ids (if they are not, convert them with $matrix->filter_and_convert_genome_db_ids)
 	Returntype : Bio::EnsEMBL::Compara::Utils::DistanceMatrix
 
 =cut
@@ -253,7 +244,6 @@ sub collapse_group_in_matrix {
 	my ($matrix, $to_collapse_full, $new_group_id) = @_;
 
 	# print "!!!! collapsing [" . join(',', map {$_->name . '(' . $_->dbID . ')'} @$to_collapse) . "] to $new_group_id\n";
-
 	# first, check species are in the matrix
 	my @to_collapse;
 	foreach my $gdb ( @$to_collapse_full ) {
@@ -367,11 +357,11 @@ sub phylip_from_matrix {
 }
 
 sub empty_submatrix {
-    my ($self, $submatrix) = @_;
+    my ($self, $submatrix, $excepts) = @_;
 
     my @members = $submatrix->members;
     foreach my $member ( @members ) {
-        return 0 unless $member =~ m/^mrg_/;
+        return 0 unless ( $member =~ m/^mrg_/ or grep { $member eq $_ } @{$excepts} );
     }
     return 1;
 }

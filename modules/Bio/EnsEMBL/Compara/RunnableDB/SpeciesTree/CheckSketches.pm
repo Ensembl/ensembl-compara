@@ -77,7 +77,11 @@ sub fetch_input {
 			$species_set = $ss_adaptor->fetch_by_dbID($species_set_id);
 			$self->param('collection', $species_set->name); # set this for file naming later
 		}
-		@genome_dbs = @{ $species_set->genome_dbs };
+		@genome_dbs = grep {
+			$_->name ne 'ancestral_sequences'
+			&& !($_->is_polyploid && !defined $_->genome_component)
+		} @{ $species_set->genome_dbs };
+
 	}
 
 	$self->param( 'genome_dbs', \@genome_dbs );
@@ -155,7 +159,7 @@ sub find_file_for_gdb {
 	
 	$suffixes = [''] unless defined $suffixes->[0];
 
-	my $prefix = $gdb->name . "." . $gdb->assembly;
+	my $prefix = basename($gdb->_get_genome_dump_path($self->param('genome_dumps_dir')));
 	foreach my $suffix ( @$suffixes ) {
 		my @found_files = glob "$dir/$prefix.*$suffix";
 		return $found_files[0] if $found_files[0];
@@ -169,21 +173,16 @@ sub _check_for_distance_files {
 	my $dir = $self->param_required('sketch_dir');
 	my $collection = $self->param_required('collection');
 	my @dist_files = glob "$dir/*$collection*.dists";
-	my @needed_gdb_ids = map {$_->dbID} @{ $self->param('genome_dbs') };
+	my $gdb_id_map = { map {$_->_get_genome_dump_path($self->param('genome_dumps_dir')) => $_->dbID} @{ $self->param('genome_dbs') } };
 
 	my $gdb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
 
 	foreach my $dfile ( @dist_files ) {
 		print " --- checking $dfile\n";
 		my $dist_matrix = Bio::EnsEMBL::Compara::Utils::DistanceMatrix->new( -file => $dfile );
-		$dist_matrix = $dist_matrix->convert_to_genome_db_ids($gdb_adaptor);
-
-		my @matrix_members = $dist_matrix->members;
-		my $overlap = $self->_overlap(\@needed_gdb_ids, \@matrix_members);
-		print " --- --- overlap = $overlap (" . scalar @needed_gdb_ids . " needed)\n";
-		return $dfile if $overlap >= scalar @needed_gdb_ids;
-	}	
-
+		$dist_matrix = $dist_matrix->filter_and_convert_genome_db_ids($gdb_id_map);
+		return $dfile if defined $dist_matrix;
+	}
 	return undef;
 }
 

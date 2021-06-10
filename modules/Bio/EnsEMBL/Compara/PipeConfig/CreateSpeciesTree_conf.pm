@@ -235,6 +235,7 @@ sub pipeline_analyses {
           -parameters => {
               'taxonomic_ranks' => $self->o('taxonomic_ranks'),
               'custom_groups'   => $self->o('custom_groups'  ),
+              'genome_dumps_dir' => $self->o('genome_dumps_dir'),
           },
           -flow_into => {
               '2->A' => [ 'neighbour_joining_tree' ],
@@ -271,6 +272,7 @@ sub pipeline_analyses {
               'erable_exe'    => $self->o('erable_exe'),
               'unroot_script' => $self->o('unroot_script'),
               'reroot_script' => $self->o('reroot_script'),
+              'genome_dumps_dir' => $self->o('genome_dumps_dir'),
           },
           -flow_into => {
               1 => ['copy_files_to_sketch_dir'],

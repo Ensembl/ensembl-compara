@@ -76,8 +76,12 @@ sub fetch_input {
         $self->param('collection', $species_set->name); # set this for file naming later
     } elsif ( $collection ) {
         $species_set = $ss_adaptor->fetch_collection_by_name($collection);
+        $self->param('species_set_id', $species_set->dbID);
     }
-	my @genome_dbs = grep {$_->name ne 'ancestral_sequences'} @{ $species_set->genome_dbs };
+	my @genome_dbs = grep {
+		$_->name ne 'ancestral_sequences'
+		&& !($_->is_polyploid && ! defined $_->genome_component)
+	} @{ $species_set->genome_dbs };
 
 	my @gdb_id_list = map { $_->dbID } @genome_dbs;
 	@gdb_id_list = sort {$a <=> $b} @gdb_id_list; 
@@ -126,6 +130,7 @@ sub write_output {
 	}
     
     $self->add_or_update_pipeline_wide_parameter('outgroup_id', $self->param('outgroup_genome_db_id'));
+    $self->add_or_update_pipeline_wide_parameter('species_set_id', $self->param('species_set_id'));
 }
 
 1;
