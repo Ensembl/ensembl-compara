@@ -60,7 +60,6 @@
              (
               hordeum_vulgare,
               hordeum_vulgare_goldenpromise,
-              hordeum_vulgare_tritex,
              )Hordeum,
              (
               (
@@ -148,7 +147,6 @@
           )Capsicum,
           (
            solanum_tuberosum,
-           solanum_tuberosum_rh8903916,
            solanum_lycopersicum,
           )Solanum,
          )Solanaceae,
@@ -164,9 +162,6 @@
          (
           olea_europaea_sylvestris,
          )Oleaceae,
-         (
-          sesamum_indicum,
-         )Pedaliaceae,
         )asterids,
         (
          vitis_vinifera,
@@ -212,7 +207,6 @@
           )Malpighiales,
           (
            quercus_lobata,
-           juglans_regia,
           )Fagales,
           (
            cucumis_sativus,
@@ -282,7 +276,7 @@
       )Mesangiospermae,
      )Magnoliophyta,
     )Tracheophyta,
-    physcomitrium_patens,
+    physcomitrella_patens,
     marchantia_polymorpha,
    )Embryophyta,
    (
