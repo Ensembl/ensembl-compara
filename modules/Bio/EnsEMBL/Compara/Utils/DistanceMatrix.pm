@@ -97,12 +97,12 @@ sub distance {
 	my ($matrix, $s1, $s2, $new_distance) = @_;
 
 	if ( defined $new_distance ){
-	$matrix->{$s1}->{$s2} = $new_distance;
-	$matrix->{$s2}->{$s1} = $new_distance;
-	$matrix->{$s1}->{$s1} = 0;
-	$matrix->{$s2}->{$s2} = 0; # deal with diagonals
-	return $matrix;
-}
+		$matrix->{$s1}->{$s2} = $new_distance;
+		$matrix->{$s2}->{$s1} = $new_distance;
+		$matrix->{$s1}->{$s1} = 0;
+		$matrix->{$s2}->{$s2} = 0; # deal with diagonals
+		return $matrix;
+	}
 	elsif ( exists $matrix->{$s1} && exists $matrix->{$s2} ){
 		return $matrix->{$s1}->{$s2};
 	}
