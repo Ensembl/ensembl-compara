@@ -36,13 +36,6 @@
              zea_mays,
              sorghum_bicolor,
             )Andropogoneae,
-            saccharum_spontaneum,
-            (
-             saccharum_spontaneum_A,
-             saccharum_spontaneum_B,
-             saccharum_spontaneum_C,
-             saccharum_spontaneum_D,
-            ),
            ),
            setaria_italica,
            setaria_viridis,
@@ -138,7 +131,6 @@
          )Ericales,
          (
           daucus_carota,
-          helianthus_annuus,
          )campanulids,
          (
           nicotiana_attenuata,
@@ -155,12 +147,13 @@
          )Rubiaceae,
          (
           cynara_cardunculus,
+          lactuca_sativa,
          )Asteraceae,
          (
           ipomoea_triloba,
          )Convolvulaceae,
          (
-          olea_europaea_sylvestris,
+          olea_europaea,
          )Oleaceae,
         )asterids,
         (
@@ -187,8 +180,8 @@
            (
             (
              malus_domestica_golden,
-            ) Maleae,
-            (
+            )Maleae,
+           (
              prunus_persica,
              prunus_avium,
              prunus_dulcis,
@@ -198,6 +191,9 @@
             rosa_chinensis,
            )Rosoideae,
            (
+            ficus_carica,
+           )Moraceae,
+           (
             cannabis_sativa_female,
            )Cannabaceae,
           )Rosales,
@@ -206,7 +202,12 @@
            populus_trichocarpa,
           )Malpighiales,
           (
-           quercus_lobata,
+           (
+            quercus_lobata,
+           )Fagaceae,
+           (
+            ficus_carica,
+           )Betulaceae,
           )Fagales,
           (
            cucumis_sativus,
@@ -218,7 +219,7 @@
           (
            (
             brassica_oleracea,
-            brassica_rapa,
+            brassica_rapa_ro18,
             brassica_napus,
            )Brassica,
            (
