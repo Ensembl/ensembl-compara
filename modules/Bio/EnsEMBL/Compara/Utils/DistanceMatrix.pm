@@ -244,7 +244,6 @@ sub collapse_group_in_matrix {
 	my ($matrix, $to_collapse_full, $new_group_id) = @_;
 
 	# print "!!!! collapsing [" . join(',', map {$_->name . '(' . $_->dbID . ')'} @$to_collapse) . "] to $new_group_id\n";
-	
 	# first, check species are in the matrix
 	my @to_collapse;
 	foreach my $gdb ( @$to_collapse_full ) {
