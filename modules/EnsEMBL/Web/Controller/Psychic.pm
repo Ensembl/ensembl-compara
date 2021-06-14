@@ -52,7 +52,6 @@ sub psychic {
   my $sp_param      = $hub->param('species');
   my $species       = $sp_param || $hub->species;
      $species       = '' if $species eq 'Multi';
-  my ($url, $site);
 
   if ($species eq 'all' && $dest_site eq 'ensembl') {
     $dest_site = 'ensembl_all';
@@ -78,6 +77,10 @@ sub psychic {
     $extra = join(';','',@extra);
   }
 
+  my $url = "/Multi/Search/Results?species=$species&idx=All&q=$query$extra";
+  my $site = '';
+
+  ## Probably don't need this any more
   if ($dest_site =~ /vega/) {
     if ($site_type eq 'vega') {
       $url = "/Multi/Search/Results?species=all&idx=All&q=$query";
@@ -88,8 +91,6 @@ sub psychic {
   } elsif ($site_type eq 'vega') {
     $url  = "/Multi/Search/Results?species=all&idx=All&q=$query";
     $site = '//www.ensembl.org'; 
-  } else {
-    $url = "/Multi/Search/Results?species=$species&idx=All&q=$query$extra";
   }
 
   my $flag = 0;
@@ -262,9 +263,10 @@ sub psychic {
       # BLAST
       $url = $self->escaped_url('/Tools/Blast?query_sequence=%s', $1);
     } else {
-      my $coll = $species_defs->get_config($species,'STRAIN_GROUP');
-      $species_path = "/$coll" if $coll;
-
+      unless ($self->species_defs->ENSEMBL_SOLR_ENDPOINT) { ## Can't search across strains without SOLR
+        my $coll = $species_defs->get_config($species,'STRAIN_GROUP');
+        $species_path = "/$coll" if $coll;
+      }
       $url = $self->escaped_url(($species eq 'ALL' || !$species ? '/Multi' : $species_path) . "/$script?species=%s;idx=%s;q=%s", $species || 'all', $index, $query);
     }
   }
