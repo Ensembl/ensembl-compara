@@ -31,6 +31,7 @@ Examples::
 """
 
 from argparse import ArgumentParser
+import os
 from pathlib import Path
 import re
 from subprocess import PIPE, Popen
@@ -134,10 +135,9 @@ if __name__ == '__main__':
     if flank < 0:
         raise ValueError(f'Flank length must be greater than or equal to 0: {flank}')
 
-    with TemporaryDirectory() as tmp_dir_name:
-        tmp_dir = Path(tmp_dir_name)
+    with TemporaryDirectory() as tmp_dir:
 
-        query_bed_file = tmp_dir / 'src_regions.bed'
+        query_bed_file = os.path.join(tmp_dir, 'src_regions.bed')
 
         if src_region is not None:
             src_regions = [parse_region(src_region)]
