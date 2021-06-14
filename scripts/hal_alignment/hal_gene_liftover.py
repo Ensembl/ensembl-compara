@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
 
     if flank < 0:
-        raise ValueError(f'invalid flank length: {flank}')
+        raise ValueError(f'Flank length must be greater than or equal to 0: {flank}')
 
     with TemporaryDirectory() as tmp_dir_name:
         tmp_dir = Path(tmp_dir_name)
