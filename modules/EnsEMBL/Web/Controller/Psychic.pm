@@ -263,7 +263,7 @@ sub psychic {
       # BLAST
       $url = $self->escaped_url('/Tools/Blast?query_sequence=%s', $1);
     } else {
-      unless ($self->species_defs->ENSEMBL_SOLR_ENDPOINT) { ## Can't search across strains without SOLR
+      if ($self->species_defs->ENSEMBL_SOLR_ENDPOINT) { ## Can't search across strains without SOLR
         my $coll = $species_defs->get_config($species,'STRAIN_GROUP');
         $species_path = "/$coll" if $coll;
       }
