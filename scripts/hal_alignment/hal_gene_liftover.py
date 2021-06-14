@@ -106,7 +106,7 @@ def parse_region(region: str) -> SimpleRegion:
 
 if __name__ == '__main__':
 
-    parser = ArgumentParser()
+    parser = ArgumentParser(description='Performs a gene liftover between two haplotypes in a HAL file.')
     parser.add_argument('hal_file', help="Input HAL file.")
     parser.add_argument('src_genome', help="Source genome name.")
     parser.add_argument('dest_genome', help="Destination genome name.")
