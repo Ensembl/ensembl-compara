@@ -27,6 +27,7 @@ Examples:
     # features specified in an input BED file.
     python hal_gene_liftover.py --src-bed-file input.bed \
         --flank 5000 input.hal GRCh38 CHM13 output.psl
+
 """
 
 from argparse import ArgumentParser
@@ -55,6 +56,7 @@ def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, 
         regions: Regions to write to output file.
         bed_file: Path of BED file to output.
         flank_length: Length of upstream/downstream flanking regions to request.
+
     """
     with open(bed_file, 'w') as f:
         name = '.'
@@ -77,6 +79,7 @@ def parse_region(region: str) -> SimpleRegion:
 
     Raises:
         ValueError: If `region` is an invalid region string.
+
     """
     seq_region_regex = re.compile(
         '^(?P<chrom>[^:]+):(?P<start>[0-9]+)-(?P<end>[0-9]+):(?P<strand>1|-1)$'
