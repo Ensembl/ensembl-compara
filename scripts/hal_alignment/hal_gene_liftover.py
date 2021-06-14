@@ -49,7 +49,7 @@ class SimpleRegion(NamedTuple):
 
 
 def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, SimpleRegion]],
-                         bed_file: Union[Path, str], flank_length: int = 0):
+                         bed_file: Union[Path, str], flank_length: int = 0) -> None:
     """Make source region file.
 
     Args:
