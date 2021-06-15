@@ -158,6 +158,42 @@ def parse_region(region: str) -> SimpleRegion:
     return SimpleRegion(region_chr, region_start, region_end, region_strand)
 
 
+def run_hal_liftover(in_hal_file: Union[Path, str], query_genome: str,
+                     in_bed_file: Union[Path, str], target_genome: str,
+                     out_psl_file: Union[Path, str]) -> None:
+    """Do HAL liftover and output result to a PSL file.
+
+    This is analogous to the shell command::
+
+        halLiftover --outPSL in.hal GRCh38 in.bed CHM13 stdout | pslPosTarget stdin out.psl
+
+    The target genome strand is positive and implicit in the output PSL file.
+
+    Args:
+        in_hal_file: Input HAL file.
+        query_genome: Source genome name.
+        in_bed_file: Input BED file of source features to liftover. To obtain
+                     strand-aware results, this must include a 'strand' column.
+        target_genome: Target genome name.
+        out_psl_file: Output PSL file.
+
+    Raises:
+        RuntimeError: If halLiftover or pslPosTarget have nonzero return code.
+
+    """
+    cmd1 = ['halLiftover', '--outPSL', in_hal_file, query_genome, in_bed_file, target_genome,
+            'stdout']
+    cmd2 = ['pslPosTarget', 'stdin', out_psl_file]
+    with Popen(cmd1, stdout=PIPE) as p1:
+        with Popen(cmd2, stdin=p1.stdout) as p2:
+            p2.wait()
+            if p2.returncode != 0:
+                raise RuntimeError(f'pslPosTarget terminated with signal {-p2.returncode}')
+        p1.wait()
+        if p1.returncode != 0:
+            raise RuntimeError(f'halLiftover terminated with signal {-p1.returncode}')
+
+
 if __name__ == '__main__':
 
     parser = ArgumentParser(description='Performs a gene liftover between two haplotypes in a HAL file.')
@@ -190,19 +226,5 @@ if __name__ == '__main__':
 
         make_src_region_file(src_regions, src_chr_sizes, query_bed_file, flank_length=args.flank)
 
-        # halLiftover --outPSL in.hal GRCh38 in.bed CHM13 stdout | pslPosTarget stdin out.psl
-        cmd1 = ['halLiftover', '--outPSL', args.hal_file, args.src_genome, query_bed_file,
-                args.dest_genome, 'stdout']
-        cmd2 = ['pslPosTarget', 'stdin', args.output_file]
-        with Popen(cmd1, stdout=PIPE) as p1:
-            with Popen(cmd2, stdin=p1.stdout) as p2:
-                p2.wait()
-                if p2.returncode != 0:
-                    status_type = 'exit code' if p2.returncode > 0 else 'signal'
-                    raise RuntimeError(
-                        f'pslPosTarget terminated with {status_type} {abs(p2.returncode)}')
-            p1.wait()
-            if p1.returncode != 0:
-                status_type = 'exit code' if p1.returncode > 0 else 'signal'
-                raise RuntimeError(
-                    f'halLiftover terminated with {status_type} {abs(p1.returncode)}')
+        run_hal_liftover(hal_file, src_genome, query_bed_file, dest_genome, output_file)
+
