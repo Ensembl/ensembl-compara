@@ -372,7 +372,7 @@ sub filter_top_PAFs {
                 $rank++ if ($prevPaf and !pafs_equal($prevPaf, $paf));
                 # Because otherwise rbbh and bbh are biased by %id, score and evalue
                 # where %id is based on typical BLAST - basic local alignment searches
-                $rank++ if ($paf->alignment_length < (0.5 * $paf->qlength));
+                $rank++ if (($paf->alignment_length < (0.5 * $paf->qlength)) or ($paf->alignment_length < (0.5 * $paf->hlength)));
                 $paf->hit_rank($rank);
                 $prevPaf = $paf;
             }

@@ -104,6 +104,9 @@ sub _write_homologies {
 
     unless (defined $homology_adap->fetch_by_dbID($dbID)) {
         $homology->dbID($dbID);
+        my @hom_members = @{$homology->get_all_Members};
+        # Filter out all homologies with coverage <50
+        next if $hom_members[0]->perc_cov < 50 or $hom_members[1]->perc_cov < 50;
         $homology_adap->store($homology, $no_refmem);
     }
 }
