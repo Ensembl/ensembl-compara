@@ -31,12 +31,13 @@ Examples::
 """
 
 from argparse import ArgumentParser
+import io
 import os
 from pathlib import Path
 import re
 from subprocess import PIPE, Popen, run
 from tempfile import TemporaryDirectory
-from typing import Dict, Iterable, Mapping, NamedTuple, Union
+from typing import Dict, Iterable, NamedTuple, Union
 
 import pybedtools  # type: ignore
 
@@ -49,43 +50,68 @@ class SimpleRegion(NamedTuple):
     strand: str
 
 
-def load_chr_sizes(hal_file: Union[Path, str], genome_name: str) -> Dict[str, int]:
-    """Load chromosome sizes from an input HAL file.
+def export_2bit_file(in_hal_file: Union[Path, str], genome_name: str,
+                     out_2bit_file: Union[Path, str]) -> None:
+    """Export genome assembly sequences in 2bit format.
 
     Args:
-        hal_file: Input HAL file.
-        genome_name: Name of the genome to get the chromosome sizes of.
+        in_hal_file: Input HAL file.
+        genome_name: Name of genome to export.
+        out_2bit_file: Output 2bit file.
+
+    Raises:
+        RuntimeError: If hal2fasta or faToTwoBit have nonzero return code.
+
+    """
+    cmd1 = ['hal2fasta', in_hal_file, genome_name]
+    cmd2 = ['faToTwoBit', 'stdin', out_2bit_file]
+    with Popen(cmd1, stdout=PIPE) as p1:
+        with Popen(cmd2, stdin=p1.stdout) as p2:
+            p2.wait()
+            if p2.returncode != 0:
+                raise RuntimeError(f'faToTwoBit terminated with signal {-p2.returncode}')
+        p1.wait()
+        if p1.returncode != 0:
+            raise RuntimeError(f'hal2fasta terminated with signal {-p1.returncode}')
+
+
+def load_chrom_sizes(in_2bit_file: Union[Path, str]) -> Dict[str, int]:
+    """Load chromosome sizes from a 2bit file.
+
+    Args:
+        in_2bit_file: Input 2bit file.
 
     Returns:
         Dictionary mapping chromosome names to their lengths.
 
     """
-    cmd = ['halStats', '--chromSizes', genome_name, hal_file]
-    process = run(cmd, check=True, capture_output=True, text=True, encoding='ascii')
+    cmd = ['twoBitInfo', in_2bit_file, 'stdout']
+    process = run(cmd, stdout=PIPE, check=True)
+    text = process.stdout.decode('ascii')
 
-    chr_sizes = {}
-    for line in process.stdout.splitlines():
-        chr_name, chr_size = line.rstrip().split('\t')
-        chr_sizes[chr_name] = int(chr_size)
+    chrom_sizes = dict()
+    with io.StringIO(text) as stream:
+        for line in stream:
+            chrom, chrom_size = line.rstrip().split('\t')
+            chrom_sizes[chrom] = int(chrom_size)
 
-    return chr_sizes
+    return chrom_sizes
 
 
-# pylint: disable-next=c-extension-no-member
 def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, SimpleRegion]],
-                         chr_sizes: Mapping[str, int], bed_file: Union[Path, str],
+                         chrom_sizes: Dict[str, int],
+                         bed_file: Union[Path, str],
                          flank_length: int = 0) -> None:
     """Make source region file.
 
     Args:
         regions: Regions to write to output file.
-        chr_sizes: Mapping of chromosome names to their lengths.
+        chrom_sizes: Dictionary mapping chromosome names to their lengths.
         bed_file: Path of BED file to output.
         flank_length: Length of upstream/downstream flanking regions to request.
 
     Raises:
-        ValueError: If any region has an unknown chromosome or invalid coordinates,
-            or if `flank_length` is negative.
+        ValueError: If any region is has an unknown chromosome or invalid coordinates.
 
     """
     if flank_length < 0:
@@ -97,19 +123,19 @@ def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, 
         for region in regions:
 
             try:
-                chr_size = chr_sizes[region.chrom]
+                chrom_size = chrom_sizes[region.chrom]
             except KeyError as e:
-                raise ValueError(f"chromosome ID not found in input file: '{region.chrom}'") from e
+                raise ValueError(f"region has unknown chromosome: '{region.chrom}'") from e
 
             if region.start < 0:
                 raise ValueError(f'region start must be greater than or equal to 0: {region.start}')
 
-            if region.end > chr_size:
-                raise ValueError(f'region end ({region.end}) must not be greater than the'
-                                 f' corresponding chromosome length ({region.chrom}: {chr_size})')
+            if region.end > chrom_size:
+                raise ValueError(f'region end ({region.end}) must not be greater'
+                                 f' than chromosome length ({chrom_size})')
 
             flanked_start = max(0, region.start - flank_length)
-            flanked_end = min(region.end + flank_length, chr_size)
+            flanked_end = min(region.end + flank_length, chrom_size)
 
             fields = [region.chrom, flanked_start, flanked_end, name, score, region.strand]
             print('\t'.join(str(x) for x in fields), file=f)
@@ -213,6 +239,18 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
 
+    hal_file_stem, hal_file_ext = os.path.splitext(hal_file)
+    hal_aux_dir = f'{hal_file_stem}_files'
+    os.makedirs(hal_aux_dir, exist_ok=True)
+
+    src_2bit_file = os.path.join(hal_aux_dir, f'{src_genome}.2bit')
+    if not os.path.isfile(src_2bit_file):
+        export_2bit_file(hal_file, src_genome, src_2bit_file)
+
+    dest_2bit_file = os.path.join(hal_aux_dir, f'{dest_genome}.2bit')
+    if not os.path.isfile(dest_2bit_file):
+        export_2bit_file(hal_file, dest_genome, dest_2bit_file)
+
     with TemporaryDirectory() as tmp_dir:
 
         query_bed_file = os.path.join(tmp_dir, 'src_regions.bed')
@@ -222,9 +260,9 @@ if __name__ == '__main__':
         else:  # i.e. bed_file is not None
             src_regions = pybedtools.BedTool(args.src_bed_file)
 
-        src_chr_sizes = load_chr_sizes(args.hal_file, args.src_genome)
+        src_chrom_sizes = load_chrom_sizes(src_2bit_file)
 
-        make_src_region_file(src_regions, src_chr_sizes, query_bed_file, flank_length=args.flank)
+        make_src_region_file(src_regions, src_chrom_sizes, query_bed_file, flank_length=flank)
 
         run_hal_liftover(hal_file, src_genome, query_bed_file, dest_genome, output_file)
 
