@@ -32,7 +32,7 @@ use parent qw(EnsEMBL::Draw::GlyphSet::vcf);
 
 sub get_iow {
   my ($self, $url, $args) = @_;
-  return EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BCF', $args);
+  return EnsEMBL::Web::IOWrapper::BCF::open($url, $args);
 }
 
 1;
