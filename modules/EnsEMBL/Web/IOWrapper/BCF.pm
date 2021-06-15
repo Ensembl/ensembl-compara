@@ -27,7 +27,7 @@ no warnings 'uninitialized';
 
 use Bio::EnsEMBL::IO::Parser::BCF;
 
-use parent qw(EnsEMBL::Web::IOWrapper);
+use parent qw(EnsEMBL::Web::IOWrapper::VCF4);
 
 sub open {
   ## Factory method - creates a wrapper of the appropriate type
