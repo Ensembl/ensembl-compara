@@ -146,6 +146,7 @@ if __name__ == '__main__':
 
         make_src_region_file(src_regions, query_bed_file, flank_length=flank)
 
+        # halLiftover --outPSL in.hal GRCh38 in.bed CHM13 stdout | pslPosTarget stdin out.psl
         cmd1 = ['halLiftover', '--outPSL', hal_file, src_genome, query_bed_file, dest_genome,
                 'stdout']
         cmd2 = ['pslPosTarget', 'stdin', output_file]
