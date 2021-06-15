@@ -184,6 +184,24 @@ def parse_region(region: str) -> SimpleRegion:
     return SimpleRegion(region_chr, region_start, region_end, region_strand)
 
 
+def run_axt_chain(in_psl_file: Union[Path, str], query_2bit_file: Union[Path, str],
+                  target_2bit_file: Union[Path, str], out_chain_file: Union[Path, str],
+                  linear_gap: Union[Path, str] = 'medium') -> None:
+    """Run axtChain on PSL file.
+
+    Args:
+        in_psl_file: Input PSL file.
+        query_2bit_file: Query 2bit file.
+        target_2bit_file: Target 2bit file.
+        out_chain_file: Output chain file.
+        linear_gap: axtChain linear gap parameter.
+
+    """
+    cmd = ['axtChain', '-psl', f'-linearGap={linear_gap}', in_psl_file, target_2bit_file,
+           query_2bit_file, out_chain_file]
+    run(cmd, check=True)
+
+
 def run_hal_liftover(in_hal_file: Union[Path, str], query_genome: str,
                      in_bed_file: Union[Path, str], target_genome: str,
                      out_psl_file: Union[Path, str]) -> None:
@@ -235,9 +253,22 @@ if __name__ == '__main__':
     parser.add_argument('--flank', default=0, type=int,
                         help="Requested length of upstream/downstream"
                              " flanking regions to include in query.")
+    parser.add_argument('--linear-gap', default='medium',
+                        help="axtChain linear gap parameter.")
 
     args = parser.parse_args()
 
+
+    hal_file = args.hal_file
+    src_genome = args.src_genome
+    dest_genome = args.dest_genome
+    src_region = args.src_region
+    src_bed_file = args.src_bed_file
+    flank = args.flank
+
+
+    if flank < 0:
+        raise ValueError(f'Flank length must be greater than or equal to 0: {flank}')
 
     hal_file_stem, hal_file_ext = os.path.splitext(hal_file)
     hal_aux_dir = f'{hal_file_stem}_files'
@@ -264,5 +295,9 @@ if __name__ == '__main__':
 
         make_src_region_file(src_regions, src_chrom_sizes, query_bed_file, flank_length=flank)
 
-        run_hal_liftover(hal_file, src_genome, query_bed_file, dest_genome, output_file)
+        psl_file = os.path.join(tmp_dir, 'alignment.psl')
 
+        run_hal_liftover(hal_file, src_genome, query_bed_file, dest_genome, psl_file)
+
+        run_axt_chain(psl_file, src_2bit_file, dest_2bit_file, args.output_file,
+                      linear_gap=args.linear_gap)
