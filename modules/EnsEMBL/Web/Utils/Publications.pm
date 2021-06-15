@@ -21,6 +21,14 @@ package EnsEMBL::Web::Utils::Publications;
 
 ## Given the ID of a publication, or a specific query string, 
 ## retrieve details from EuropePMC REST service 
+
+## Supported identifiers:
+##
+## PMC123456
+## MED/123456
+## PPR00123
+
+
 use strict;
 
 use URI::Escape qw(uri_escape);

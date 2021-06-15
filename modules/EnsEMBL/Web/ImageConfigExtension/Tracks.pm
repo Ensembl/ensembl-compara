@@ -1188,7 +1188,7 @@ sub add_regulation_builds {
   }
   @cell_lines = sort { lc $a cmp lc $b } @cell_lines;
 
-  my (@renderers, %matrix_rows);
+  my (@renderers, %matrix_tracks);
 
   if ($data->{$key_2}{'renderers'}) {
     push @renderers, $_, $data->{$key_2}{'renderers'}{$_} for sort keys %{$data->{$key_2}{'renderers'}};
@@ -1217,7 +1217,7 @@ sub add_regulation_builds {
       foreach (@{$all_types{$set}||[]})  {
       #warn ">>> ADDING TRACKS TO MATRIX FOR ID ".$_->dbID;
         if ($set_info->{$set}{$_->dbID}) {
-          $matrix_rows{$cell_line}{'core'}{$_->name} ||= {
+          $matrix_tracks{$cell_line}{'core'}{$_->name} ||= {
                             subset      => 'reg_feats_core',
                             row         => $_->name,
                             group       => $_->class,
@@ -1228,7 +1228,6 @@ sub add_regulation_builds {
     }
   }
 
-# =pod
   # Segmentation tracks
   my $segs = $hashref->{'segmentation'};
 
@@ -1259,7 +1258,6 @@ sub add_regulation_builds {
       height        => 4,
     }));
   }
-# =cut
 
   foreach my $cell_line (@cell_lines) {
     my $track_key = "reg_feats_$cell_line";
@@ -1289,6 +1287,9 @@ sub add_regulation_builds {
       }));
     }
 
+    ## Skip matrix on summary views
+    next if $params->{'reg_minimal'};
+    
     my $renderers = [
                       'off',            'Off',
                       'compact',        'Peaks',
@@ -1307,12 +1308,10 @@ sub add_regulation_builds {
       renderers => $renderers,
     );
 
-    next if $params->{'reg_minimal'};
-    
     my $matrix_rows = [];
-    foreach (grep exists $matrix_rows{$cell_line}{$_}, @sets) { 
+    foreach (grep exists $matrix_tracks{$cell_line}{$_}, @sets) { 
       # warn Data::Dumper::Dumper $menu->id, " $cell_line" if $cell_line=~/A549/;
-      push @$matrix_rows, values %{$matrix_rows{$cell_line}{$_}};
+      push @$matrix_rows, values %{$matrix_tracks{$cell_line}{$_}};
     }
     $self->_add_to_new_matrix({
       track_name  => "Experiments: $label",
@@ -1492,7 +1491,7 @@ sub add_sequence_variations_meta {
                               } @menus) {
     my $node;
     my $track_options = $options;
-    $track_options->{'db'} = 'variation_private' if ($menu_item->{'long_name'} =~ /(DECIPHER|LOVD)/i);
+    $track_options->{'db'} = 'variation_private' if ($menu_item->{'long_name'} =~ /(DECIPHER|LOVD|Mastermind)/i);
 
     if ($menu_item->{'type'} eq 'menu' || $menu_item->{'type'} eq 'menu_sub') { # just a named submenu
       $node = $self->create_menu_node($menu_item->{'key'}, $menu_item->{'long_name'});

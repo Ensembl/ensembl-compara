@@ -185,7 +185,7 @@ sub content {
   $html .= $self->structural_variation_table($slice, 'Structural variants',        'sv',  ['fetch_all_by_Slice','fetch_all_somatic_by_Slice'], 1);
   $html .= $self->structural_variation_table($slice, 'Copy number variant probes', 'cnv', ['fetch_all_cnv_probe_by_Slice']);
   $html .= $self->regulatory_feature_table($var_slice,  $vname, $image_config) if $hub->species_defs->databases->{'DATABASE_FUNCGEN'};
-  $html .= $self->constrained_element_table($var_slice, $vname);
+  $html .= $self->constrained_element_table($var_slice, $vname) unless $SiteDefs::NO_COMPARA;
   
   return $html;
 }

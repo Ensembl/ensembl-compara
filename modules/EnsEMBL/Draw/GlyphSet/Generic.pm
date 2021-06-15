@@ -40,7 +40,7 @@ sub init {
   $display = $self->my_config('default_display') if $display eq 'normal';
   my $style = $self->my_config('style') || $display || '';
 
-  if ($style eq 'wiggle' || $style =~ /signal/ || $style eq 'gradient') {
+  if ($style eq 'wiggle' || $style =~ /signal/ || $style eq 'tiling' || $style eq 'gradient') {
     push @roles, 'EnsEMBL::Draw::Role::Wiggle';
     if (exists($self->{'my_config'}{'data'}{'y_min'})) {
       $self->{'my_config'}->set('scaleable', 1);

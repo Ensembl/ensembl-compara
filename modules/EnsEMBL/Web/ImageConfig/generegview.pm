@@ -75,13 +75,9 @@ sub init_cacheable {
     my $tissue_readable = $tissue;
     $tissue_readable =~ s/_/ /g;
     my $manplot_desc = qq(
-      Complete set of eQTL correlation statistics as computed by the GTEx consortium on $tissue_readable samples.
-      Provided to Ensembl by the EBI eQTL catalog.
-      The GTEx Consortium. Science. 8 May 2015: Vol 348 no. 6235 pp 648-660.
-      DOI: <a href="https://doi.org/10.1126/science.1262110">10.1126/science.1262110</a>.
-      PMID: <a href="http://www.ncbi.nlm.nih.gov/pubmed/25954001">25954001</a>
+      Complete set of eQTL correlation statistics as computed on $tissue_readable samples. Provided to Ensembl by the EBI eQTL catalog (<a href="https://www.ebi.ac.uk/eqtl" target="_blank">www.ebi.ac.uk/eqtl</a>)
     );
-    $self->add_track('functional_gene_expression',"reg_manplot_$tissue","$tissue_readable GTEX eQTLs",'reg_manplot',{
+    $self->add_track('functional_gene_expression',"reg_manplot_$tissue","$tissue_readable eQTLs",'reg_manplot',{
       tissue => $tissue,
       display => ($tissue eq $gtex_tissue_example)?'normal':'off',
       strand => 'r',

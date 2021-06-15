@@ -309,7 +309,7 @@ sub format_table {
       if($freq_data->{$pop_id}{'missing_alleles'} && scalar keys %{$freq_data->{$pop_id}{'missing_alleles'}}) {
         $allele_content .= sprintf(
           '<span style="float:right" class="_ht sprite info_icon" title="%s has data not shown for the following alleles: <ul>%s</ul>'.
-          'These alleles are not defined in %s but may be present in co-located variants listed above."></span>',
+          'These alleles are not defined in %s but may be present in overlapping variants."></span>',
           $pop_info->{'Name'},
           join("", map {"<li>$_</li>"} sort {$a cmp $b} keys %{$freq_data->{$pop_id}{'missing_alleles'}}),
           $self->object->name,
@@ -508,6 +508,11 @@ sub generic_group_link {
   my $pop_use_url;
   if ($project_name =~ /ncbi alfa/i) {
     $pop_use_url = $self->hub->get_ExtURL('ALFA_POP_USE');
+    if ($pop_use_url) {
+      $terms = sprintf(' (<a href="%s" rel="external">Terms of Use</a>)', $pop_use_url);
+    }
+  } elsif ($project_name =~ /gem-j/i) {
+    $pop_use_url = $self->hub->get_ExtURL('GEM_J_POP_USE');
     if ($pop_use_url) {
       $terms = sprintf(' (<a href="%s" rel="external">Terms of Use</a>)', $pop_use_url);
     }

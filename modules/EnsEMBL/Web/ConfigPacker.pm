@@ -140,6 +140,24 @@ sub _summarise_generic {
   if( $self->_table_exists( $db_name, 'meta' ) ) {
     my $hash = {};
 
+    ## Get karyotype info for collection dbs
+    ## The idea is the people who produce the DB can define the lists in the meta table using 
+    ## region.toplevel meta key (although it does not seem to be in use at the moment). 
+    ## In case there is no such definition of the karyotype, we default to lists of 
+    ## top level seq_regions with name 'chromosome' or 'plasmid'
+    if ($db_name =~ /CORE/ && $self->is_collection('DATABASE_CORE')) {
+      my $t_aref = $dbh->selectall_arrayref(
+          qq{SELECT cs.species_id, s.name FROM seq_region s, coord_system cs
+          WHERE s.coord_system_id = cs.coord_system_id AND cs.attrib = 'default_version' AND cs.name IN ('plasmid', 'chromosome')
+          ORDER BY cs.species_id, s.name, s.seq_region_id}
+      );
+
+      foreach my $row ( @$t_aref ) {
+        push @{$hash->{$row->[0]}{'region.toplevel'}}, $row->[1];
+      }
+    }
+
+    ## Get meta info
     $t_aref  = $dbh->selectall_arrayref(
       'select meta_key,meta_value,meta_id, species_id
          from meta
@@ -150,7 +168,7 @@ sub _summarise_generic {
     foreach my $r( @$t_aref) {
       push @{ $hash->{$r->[3]+0}{$r->[0]}}, $r->[1];
     }
-    
+ 
     $self->db_details($db_name)->{'meta_info'} = $hash;
   }
 }
@@ -794,7 +812,22 @@ sub _summarise_funcgen_db {
       full_name => $row->[4]
     };
   }
-  
+
+  ## Finally, save the peak calling ids for all regulatory tracks 
+  my $p_aref = $dbh->selectall_arrayref('
+    select pc.peak_calling_id, eg.short_name, ft.name
+    from 
+        peak_calling as pc,
+        epigenome as eg,
+        feature_type as ft
+    where 
+        pc.epigenome_id = eg.epigenome_id
+        and pc.feature_type_id = ft.feature_type_id
+  ');
+  foreach (@$p_aref) {
+    $self->db_details($db_name)->{'peak_calling'}{$_->[1]}{$_->[2]} = $_->[0];
+  }
+ 
 #---------- Additional queries - by type...
 
 #
@@ -1203,6 +1236,10 @@ sub _summarise_compara_db {
   push @{$self->db_tree->{'compara_like_databases'}}, $db_name;
 
   $self->_summarise_generic($db_name, $dbh);
+
+  if ($code eq 'compara_pan_ensembl') {
+    $self->_summarise_pan_compara($dbh);
+  }
  
   # Get list of species in the compara db (no longer everything!)
   my $spp_aref = $dbh->selectall_arrayref('select name from genome_db');
@@ -1213,17 +1250,7 @@ sub _summarise_compara_db {
   }
  
   # See if there are any intraspecies alignments (ie a self compara)
-  my $intra_species_aref = $dbh->selectall_arrayref('
-    select mls.species_set_id, mls.method_link_species_set_id, count(*) as count
-      from method_link_species_set as mls, 
-        method_link as ml, species_set as ss, genome_db as gd 
-      where mls.species_set_id = ss.species_set_id
-        and ss.genome_db_id = gd.genome_db_id 
-        and mls.method_link_id = ml.method_link_id
-        and ml.class = "GenomicAlignBlock.pairwise_alignment"
-      group by mls.method_link_species_set_id, mls.method_link_id
-      having count = 1
-  ');
+  my $intra_species_aref = $dbh->selectall_arrayref($self->_intraspecies_sql);
   
   my (%intra_species, %intra_species_constraints);
   $intra_species{$_->[0]}{$_->[1]} = 1 for @$intra_species_aref;
@@ -1291,13 +1318,14 @@ sub _summarise_compara_db {
   # if there are intraspecies alignments then get full details of genomic alignments, ie start and stop, constrained by a set defined above (or no constraint for all alignments)
   $self->_summarise_compara_alignments($dbh, $db_name, \%intra_species_constraints) if scalar keys %intra_species_constraints;
   
+  # We've done the DB hash... So lets get on with the DNA, SYNTENY and GENE hashes;
   my %sections = (
     ENSEMBL_ORTHOLOGUES => 'GENE',
     HOMOLOGOUS_GENE     => 'GENE',
     HOMOLOGOUS          => 'GENE',
   );
   
-  # We've done the DB hash... So lets get on with the DNA, SYNTENY and GENE hashes;
+  ## Store a lookup using genome (species) names
   $res_aref = $dbh->selectall_arrayref('
     select ml.type, gd1.name, gd2.name
       from genome_db gd1, genome_db gd2, species_set ss1, species_set ss2,
@@ -1313,18 +1341,8 @@ sub _summarise_compara_db {
        ss2.genome_db_id = gd2.genome_db_id
   ');
   
-  ## That's the end of the compara region munging!
-
-  my $res_aref_2 = $dbh->selectall_arrayref(qq{
-    select ml.type, gd.name, gd.name, count(*) as count
-      from method_link_species_set as mls, method_link as ml, species_set as ss, genome_db as gd 
-      where mls.species_set_id = ss.species_set_id and
-        ss.genome_db_id = gd.genome_db_id and
-        mls.method_link_id = ml.method_link_id and
-        ml.type not like '%PARALOGUES'
-      group by mls.method_link_species_set_id, mls.method_link_id
-      having count = 1
-  });
+  ## Include intraspecies
+  my $res_aref_2 = $dbh->selectall_arrayref($self->_homologies_sql);
   
   push @$res_aref, $_ for @$res_aref_2;
   
@@ -1344,6 +1362,33 @@ sub _summarise_compara_db {
   ###################################################################
   
   $dbh->disconnect;
+}
+
+sub _intraspecies_sql {
+  return qq(
+    select mls.species_set_id, mls.method_link_species_set_id, count(*) as count
+      from method_link_species_set as mls, 
+        method_link as ml, species_set as ss, genome_db as gd 
+      where mls.species_set_id = ss.species_set_id
+        and ss.genome_db_id = gd.genome_db_id 
+        and mls.method_link_id = ml.method_link_id
+        and ml.class = "GenomicAlignBlock.pairwise_alignment"
+      group by mls.method_link_species_set_id, mls.method_link_id
+      having count = 1
+  );
+}
+
+sub _homologies_sql {
+  return qq(
+    select ml.type, gd.name, gd.name, count(*) as count
+      from method_link_species_set as mls, method_link as ml, species_set as ss, genome_db as gd 
+      where mls.species_set_id = ss.species_set_id and
+        ss.genome_db_id = gd.genome_db_id and
+        mls.method_link_id = ml.method_link_id and
+        ml.type not like '%PARALOGUES'
+      group by mls.method_link_species_set_id, mls.method_link_id
+      having count = 1
+  );
 }
 
 sub _summarise_compara_alignments {
@@ -1573,25 +1618,37 @@ sub _summarise_go_db {
   my $db_name = 'DATABASE_GO';
   my $dbh     = $self->db_connect( $db_name );
   return unless $dbh;
-  #$self->_summarise_generic( $db_name, $dbh );
   # get the list of the available ontologies
-  my $t_aref = $dbh->selectall_arrayref(
-     'select ontology.ontology_id, ontology.name, accession, term.name
-      from ontology
-        join term using (ontology_id)
-      where is_root = 1
-       and is_obsolete = 0
-      order by ontology.ontology_id');
+  my $sql = $self->_go_sql;
+  my $t_aref = $dbh->selectall_arrayref($sql);
   foreach my $row (@$t_aref) {
-      my ($oid, $ontology, $root_term, $description) = @$row;
-      $self->db_tree->{'ONTOLOGIES'}->{$oid} = {
-    db => $ontology,
-    root => $root_term,
-    description => $description
+    my ($oid, $ontology, $root_term, $description) = @$row;
+    next unless ($ontology && $root_term);
+
+    $oid =~ s/(-|\s)/_/g;
+    $description =~ s/\s+$//; # hack to strip trailing whitespace
+    $description =~ s/[-\s]/_/g;
+
+    $self->db_tree->{'ONTOLOGIES'}->{$oid} = {
+                db => $ontology,
+                root => $root_term,
+                description => $description
     };
   }
 
   $dbh->disconnect();
+}
+
+sub _go_sql {
+## Factored out bc non-vertebrates exclude some ontologies
+  return qq(
+     select o.ontology_id, o.name, t.accession, t.name
+      from ontology o
+        join term t using (ontology_id)
+      where is_root = 1
+       and is_obsolete = 0
+      order by o.ontology_id;
+  );
 }
 
 sub _munge_meta {
@@ -1615,37 +1672,45 @@ sub _munge_meta {
     species.taxonomy_id           TAXONOMY_ID
     species.url                   SPECIES_URL
     species.stable_id_prefix      SPECIES_PREFIX
-    species.display_name          SPECIES_DISPLAY_NAME
-    species.common_name           SPECIES_COMMON_NAME
     species.production_name       SPECIES_PRODUCTION_NAME
     species.db_name               SPECIES_DB_NAME
+    species.display_name          SPECIES_DISPLAY_NAME
+    species.common_name           SPECIES_COMMON_NAME
     species.scientific_name       SPECIES_SCIENTIFIC_NAME
+    species.species_name          SPECIES_BINOMIAL
     assembly.accession            ASSEMBLY_ACCESSION
     assembly.web_accession_source ASSEMBLY_ACCESSION_SOURCE
     assembly.web_accession_type   ASSEMBLY_ACCESSION_TYPE
     assembly.name                 ASSEMBLY_NAME
+    assembly.default              ASSEMBLY_NAME
     liftover.mapping              ASSEMBLY_MAPPINGS
+    genome.assembly_type          GENOME_ASSEMBLY_TYPE
+    assembly.provider_name        ASSEMBLY_PROVIDER_NAME
+    assembly.provider_url         ASSEMBLY_PROVIDER_URL
     genebuild.method              GENEBUILD_METHOD
+    genebuild.version             GENEBUILD_VERSION
     genebuild.last_geneset_update LAST_GENESET_UPDATE
     annotation.provider_name      ANNOTATION_PROVIDER_NAME
     annotation.provider_url       ANNOTATION_PROVIDER_URL
-    assembly.provider_name        ASSEMBLY_PROVIDER_NAME
-    assembly.provider_url         ASSEMBLY_PROVIDER_URL
     species.strain                SPECIES_STRAIN
     species.strain_group          STRAIN_GROUP
     strain.type                   STRAIN_TYPE
-    genome.assembly_type          GENOME_ASSEMBLY_TYPE
     gencode.version               GENCODE_VERSION
+    species.sql_name              SYSTEM_NAME
+    species.biomart_dataset       BIOMART_DATASET
+    species.wikipedia_url         WIKIPEDIA_URL
+    ploidy                        PLOIDY
   );
   
-  my @months    = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
-  my $meta_info = $self->_meta_info('DATABASE_CORE') || {};
-  my @sp_count  = grep { $_ > 0 } keys %$meta_info;
+  my @months      = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+  my $meta_info   = $self->_meta_info('DATABASE_CORE') || {};
+  my @sp_count    = grep { $_ > 0 } keys %$meta_info;
+  my $collection  = $self->is_collection('DATABASE_CORE'); 
 
   ## How many species in database?
   $self->tree->{'SPP_IN_DB'} = scalar @sp_count;
     
-  if (scalar @sp_count > 1) {
+  if ($collection) { 
     if ($meta_info->{0}{'species.group'}) {
       $self->tree->{'GROUP_DISPLAY_NAME'} = $meta_info->{0}{'species.group'};
     } else {
@@ -1656,12 +1721,15 @@ sub _munge_meta {
     $self->tree->{'GROUP_DISPLAY_NAME'} = $meta_info->{1}{'species.display_name'}[0];
   }
 
-
   while (my ($species_id, $meta_hash) = each (%$meta_info)) {
     next unless $species_id && $meta_hash && ref($meta_hash) eq 'HASH';
     
-    my $species  = $meta_hash->{'species.url'}[0];
-    my $bio_name = $meta_hash->{'species.scientific_name'}[0];
+    my $species = $meta_hash->{'species.url'}[0];
+    next unless $species;
+
+    ## We use this as the species key initially
+    my $prod_name = $meta_hash->{'species.production_name'}[0];
+    $self->tree($prod_name)->{'SPECIES_META_ID'} = $species_id;
     
     ## Put other meta info into variables
     while (my ($meta_key, $key) = each (%keys)) {
@@ -1669,17 +1737,22 @@ sub _munge_meta {
       
       my $value = scalar @{$meta_hash->{$meta_key}} > 1 ? $meta_hash->{$meta_key} : $meta_hash->{$meta_key}[0]; 
 
-      ## Set version of assembly name that we can use where space is limited 
-      if ($meta_key eq 'assembly.name') {
-        $self->tree->{'ASSEMBLY_SHORT_NAME'} = (length($value) > 16)
-                  ? $self->db_tree->{'ASSEMBLY_VERSION'} : $value;
-      }
-
-      $self->tree->{$key} = $value;
+      $self->tree($prod_name)->{$key} = $value;
     }
 
+    #### PROCESS VARIABLES ####
+
+    $self->tree($prod_name)->{'DB_SPECIES'} = [$species];
+    $self->tree($prod_name)->{'POLYPLOIDY'} = ($self->tree($prod_name)->{'PLOIDY'} && $self->tree($prod_name)->{'PLOIDY'} > 2);
+
+    ## Set version of assembly name that we can use where space is limited
+    my $assembly_name = $self->tree->{'ASSEMBLY_NAME'}; 
+    $self->tree->{'ASSEMBLY_SHORT_NAME'} = (length($assembly_name) > 16) ? $self->db_tree->{'ASSEMBLY_VERSION'} : $assembly_name;
+
     ## Uppercase first part of common name, for consistency
-    $self->tree->{'SPECIES_COMMON_NAME'} = ucfirst($self->tree->{'SPECIES_COMMON_NAME'});
+    if ($self->tree($prod_name)->{'SPECIES_COMMON_NAME'}) {
+      $self->tree($prod_name)->{'SPECIES_COMMON_NAME'} = ucfirst($self->tree($prod_name)->{'SPECIES_COMMON_NAME'});
+    }
 
     ## Do species group
     my $taxonomy = $meta_hash->{'species.classification'};
@@ -1687,9 +1760,9 @@ sub _munge_meta {
     if ($taxonomy && scalar(@$taxonomy)) {
       my %valid_taxa = map {$_ => 1} @{ $self->tree->{'TAXON_ORDER'} };
       my @matched_groups = grep {$valid_taxa{$_}} @$taxonomy;
-      $self->tree->{'TAXONOMY'} = $taxonomy;
-      $self->tree->{'SPECIES_GROUP'} = $matched_groups[0] if @matched_groups;
-      $self->tree->{'SPECIES_GROUP_HIERARCHY'} = \@matched_groups;
+      $self->tree($prod_name)->{'TAXONOMY'} = $taxonomy;
+      $self->tree($prod_name)->{'SPECIES_GROUP'} = $matched_groups[0] if @matched_groups;
+      $self->tree($prod_name)->{'SPECIES_GROUP_HIERARCHY'} = \@matched_groups;
     }
 
     ## create lookup hash for species aliases
@@ -1700,120 +1773,46 @@ sub _munge_meta {
     ## otherwise the mapping in Apache handlers will fail
     $self->full_tree->{'MULTI'}{'SPECIES_ALIASES'}{$species} = $species;
 
-    ## Used mainly in <head> links
-    ($self->tree->{'SPECIES_BIO_SHORT'} = $self->tree->{'SPECIES_URL'}) =~ s/^([A-Z])[a-z]+_([a-z]+)$/$1.$2/;
-    
-    if ($self->tree->{'ENSEMBL_SPECIES'}) {
-      push @{$self->tree->{'DB_SPECIES'}}, $species;
-    } else {
-      $self->tree->{'DB_SPECIES'} = [ $species ];
-    }
-    
-    $self->tree->{'SPECIES_META_ID'} = $species_id;
+    ## This parameter only seems to be used by the title attribute of opensearch links 
+    ## in the <head> of pages, e.g. M.mus, so it doesn't need to be unique
+    ($self->tree($prod_name)->{'SPECIES_BIO_SHORT'} = $self->tree($prod_name)->{'SPECIES_URL'}) =~ s/^([A-Z])[a-z]+_([a-z]+)/$1.$2/;
 
     ## fall back to 'strain' if no strain type set
-    if (!$self->tree->{'STRAIN_TYPE'}) {
-      $self->tree->{'STRAIN_TYPE'} = 'strain';
+    if (!$self->tree($prod_name)->{'STRAIN_TYPE'}) {
+      $self->tree($prod_name)->{'STRAIN_TYPE'} = 'strain';
     }
-
+    
     ## Munge genebuild info
     my @A = split '-', $meta_hash->{'genebuild.start_date'}[0];
     
-    $self->tree->{'GENEBUILD_START'} = $A[1] ? "$months[$A[1]] $A[0]" : undef;
+    $self->tree($prod_name)->{'GENEBUILD_START'} = $A[1] ? "$months[$A[1]] $A[0]" : undef;
 
     @A = split '-', $meta_hash->{'genebuild.initial_release_date'}[0];
     
-    $self->tree->{'GENEBUILD_RELEASE'} = $A[1] ? "$months[$A[1]] $A[0]" : undef;
+    $self->tree($prod_name)->{'GENEBUILD_RELEASE'} = $A[1] ? "$months[$A[1]] $A[0]" : undef;
     
     @A = split '-', $meta_hash->{'genebuild.last_geneset_update'}[0];
 
-    $self->tree->{'GENEBUILD_LATEST'} = $A[1] ? "$months[$A[1]] $A[0]" : undef;
+    $self->tree($prod_name)->{'GENEBUILD_LATEST'} = $A[1] ? "$months[$A[1]] $A[0]" : undef;
     
     @A = split '-', $meta_hash->{'assembly.date'}[0];
     
-    $self->tree->{'ASSEMBLY_DATE'} = $A[1] ? "$months[$A[1]] $A[0]" : undef;
+    $self->tree($prod_name)->{'ASSEMBLY_DATE'} = $A[1] ? "$months[$A[1]] $A[0]" : undef;
     
+    $self->tree($prod_name)->{'HAVANA_DATAFREEZE_DATE'} = $meta_hash->{'genebuild.havana_datafreeze_date'}[0];
 
-    $self->tree->{'HAVANA_DATAFREEZE_DATE'} = $meta_hash->{'genebuild.havana_datafreeze_date'}[0];
+    ## SAMPLE_DATA is quite complex, as we have to merge the db entries and ini file
+    $self->_munge_sample_data($prod_name, $meta_hash);
 
-    ## check if there are sample search entries from the ini file
-    my $ini_hash = $self->tree->{'SAMPLE_DATA'};
-
-    # check if there are sample search entries defined in meta table
-    my @mks = grep { /^sample\./ } keys %{$meta_hash || {}}; 
-    my $mk_hash = {};
-    foreach my $k (@mks) {
-      ## Convert key to format used in webcode
-      (my $k1 = $k) =~ s/^sample\.//;
-      $mk_hash->{uc $k1} = $meta_hash->{$k}->[0];
+    ## Extra stuff needed by collection databases
+    if ($collection) {
+      (my $group_name = (ucfirst $self->{'_species'})) =~ s/_collection//;
+      $self->tree($prod_name)->{'SPECIES_DATASET'} = $group_name;
+      push @{$self->tree->{'DB_SPECIES'}}, $species;
+      $self->tree($prod_name)->{'ENSEMBL_CHROMOSOMES'} = $meta_hash->{'regions.toplevel'} ? $meta_hash->{'regions.toplevel'} : [];
     }
-  
-    ## Merge param keys into single set
-    my (%seen, @param_keys, @other_keys);
-    foreach (keys %$mk_hash, keys %{$ini_hash || {}}) {
-      next if $seen{$_};
-      if ($_ =~ /PARAM/) {
-        push @param_keys, $_;
-      }
-      else {
-        push @other_keys, $_;
-      }
-      $seen{$_} = 1;
-    }
-
-    ## Merge the two sample sets into one hash, giving priority to ini file
-    my $sample_hash = {};
-    foreach my $key (@param_keys) {
-      (my $text_key = $key) =~ s/PARAM/TEXT/;
-
-      if ($ini_hash->{$key}) {
-        $sample_hash->{$key} = $ini_hash->{$key};
-        ## Now set accompanying text
-        if ($ini_hash->{$text_key}) {
-          $sample_hash->{$text_key} = $ini_hash->{$text_key};
-        }
-        else {
-          $sample_hash->{$text_key} = $ini_hash->{$key};
-        }
-      }
-      elsif ($mk_hash->{$key}) {
-        $sample_hash->{$key} = $mk_hash->{$key};
-        ## Now set accompanying text
-        if ($mk_hash->{$text_key}) {
-          $sample_hash->{$text_key} = $mk_hash->{$text_key};
-        }
-        else {
-          $sample_hash->{$text_key} = $mk_hash->{$key};
-        }
-      }
-    }
-    ## Deal with any atypical entries, e.g. search
-    foreach (@other_keys) {
-      next if $sample_hash->{$_};
-      if ($ini_hash->{$_}) {
-        $sample_hash->{$_} = $ini_hash->{$_};
-      }
-      elsif ($mk_hash->{$_}) {
-        $sample_hash->{$_} = $mk_hash->{$_};
-      }
-    }
-
-    ## Finally deduplicate any values
-    my $dedupe = {};
-    while (my($k,$v) = each(%$sample_hash)) {
-      next unless $k =~ /TEXT/;
-      if ($dedupe->{$v}) {
-        delete $sample_hash->{$k};
-      }
-      $dedupe->{$v}++;
-    }
-
-    $self->tree->{'SAMPLE_DATA'} = $sample_hash if scalar keys %$sample_hash;
-
-    # check if the karyotype/list of toplevel regions ( normally chroosomes) is defined in meta table
-    @{$self->tree->{'TOPLEVEL_REGIONS'}} = @{$meta_hash->{'regions.toplevel'}} if $meta_hash->{'regions.toplevel'};
+    
   }
-
 }
 
 sub _munge_variation {
@@ -1868,5 +1867,98 @@ sub _munge_species_url_map {
   $multi_tree->{'ENSEMBL_SPECIES_URL_MAP'} = \%species_map;
 }
 
+sub is_collection {
+  my ($self, $db_name) = @_;
+  $db_name ||= 'DATABASE_CORE';
+  my $database_name = $self->tree->{'databases'}->{$db_name}{'NAME'};
+  return $database_name =~ /_collection/;
+}
+
+sub _munge_sample_data {
+  my ($self, $prod_name, $meta_hash) = @_;
+
+  ## check if there are sample search entries from the ini file
+  my $ini_hash = $self->tree->{'SAMPLE_DATA'};
+
+  # check if there are sample search entries defined in meta table
+  my @mks = grep { /^sample\./ } keys %{$meta_hash || {}}; 
+  my $mk_hash = {};
+  foreach my $k (@mks) {
+    ## Convert key to format used in webcode
+    (my $k1 = $k) =~ s/^sample\.//;
+    $mk_hash->{uc $k1} = $meta_hash->{$k}->[0];
+  }
+ 
+  ## add in any missing values where text omitted because same as param
+  while (my ($key, $value) = each (%$mk_hash)) {
+    next unless $key =~ /PARAM/;
+    (my $type = $key) =~ s/_PARAM//;
+    unless ($mk_hash->{$type.'_TEXT'}) {
+      $mk_hash->{$type.'_TEXT'} = $value;
+    }
+  }
+
+  ## Merge param keys into single set
+  my (%seen, @param_keys, @other_keys);
+  foreach (keys %$mk_hash, keys %{$ini_hash || {}}) {
+    next if $seen{$_};
+    if ($_ =~ /PARAM/) {
+      push @param_keys, $_;
+    }
+    else {
+      push @other_keys, $_;
+    }
+    $seen{$_} = 1;
+  }
+
+  ## Merge the two sample sets into one hash, giving priority to ini file
+  my $sample_hash = {};
+  foreach my $key (@param_keys) {
+    (my $text_key = $key) =~ s/PARAM/TEXT/;
+
+    if ($ini_hash->{$key}) {
+      $sample_hash->{$key} = $ini_hash->{$key};
+      ## Now set accompanying text
+      if ($ini_hash->{$text_key}) {
+        $sample_hash->{$text_key} = $ini_hash->{$text_key};
+      }
+      else {
+        $sample_hash->{$text_key} = $ini_hash->{$key};
+      }
+    }
+    elsif ($mk_hash->{$key}) {
+      $sample_hash->{$key} = $mk_hash->{$key};
+      ## Now set accompanying text
+      if ($mk_hash->{$text_key}) {
+        $sample_hash->{$text_key} = $mk_hash->{$text_key};
+      }
+      else {
+        $sample_hash->{$text_key} = $mk_hash->{$key};
+      }
+    }
+  }
+  ## Deal with any atypical entries, e.g. search
+  foreach (@other_keys) {
+    next if $sample_hash->{$_};
+    if ($ini_hash->{$_}) {
+      $sample_hash->{$_} = $ini_hash->{$_};
+    }
+    elsif ($mk_hash->{$_}) {
+      $sample_hash->{$_} = $mk_hash->{$_};
+    }
+  }
+
+  ## Finally deduplicate any values
+  my $dedupe = {};
+  while (my($k,$v) = each(%$sample_hash)) {
+    next unless $k =~ /TEXT/;
+    if ($dedupe->{$v}) {
+      delete $sample_hash->{$k};
+    }
+    $dedupe->{$v}++;
+  }
+
+  $self->tree($prod_name)->{'SAMPLE_DATA'} = $sample_hash if scalar keys %$sample_hash;
+}
 
 1;

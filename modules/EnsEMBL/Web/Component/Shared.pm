@@ -177,31 +177,29 @@ sub transcript_table {
     #keys are attrib_type codes, values are glossary entries 
     my %MANE_attrib_codes = (
       MANE_Select => 'MANE Select',
-      MANE_Plus   => 'MANE Plus');
+      MANE_Plus_Clinical   => 'MANE Plus Clinical');
 
     my $trans_attribs = {};
-    my $trans_gencode = {};
+    my @attrib_types = ('is_canonical','gencode_basic','appris','TSL','CDS_start_NF','CDS_end_NF');
+    push(@attrib_types, keys %MANE_attrib_codes);
 
     foreach my $trans (@$transcripts) {
-      foreach my $attrib_type ('CDS_start_NF','CDS_end_NF','gencode_basic','TSL','appris',keys %MANE_attrib_codes) {
+      foreach my $attrib_type (@attrib_types) {
         (my $attrib) = @{$trans->get_all_Attributes($attrib_type)};
-        next unless $attrib;
-        if($attrib_type eq 'gencode_basic' && $attrib->value) {
-          $trans_gencode->{$trans->stable_id}{$attrib_type} = $attrib->value;
-        } 
-        elsif ($attrib_type eq 'appris'  && $attrib->value) {
+        next unless $attrib && $attrib->value;
+        if ($attrib_type eq 'appris') {
           ## Assume there is only one APPRIS attribute per transcript
           my $short_code = $attrib->value;
           ## Manually shorten the full attrib values to save space
           $short_code =~ s/ernative//;
           $short_code =~ s/rincipal//;
           $trans_attribs->{$trans->stable_id}{'appris'} = [$short_code, $attrib->value]; 
-          }
-        elsif ((grep {$attrib_type eq $_} keys %MANE_attrib_codes) && $attrib && $attrib->value) {
-          $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib;
+        }
+        elsif ($MANE_attrib_codes{$attrib_type}) {
+          $trans_attribs->{$trans->stable_id}{$attrib_type} = [$attrib->name, $attrib->value];
         }
         else {
-          $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value if ($attrib && $attrib->value);
+          $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value;
         }
       }
     }
@@ -264,9 +262,9 @@ sub transcript_table {
     if ($species eq 'Homo_sapiens' && $sub_type eq 'GRCh37' ) {
       $extra_links{refseq} = { first_match => "^RefSeq", name => "RefSeq", order => 1, title => "RefSeq transcripts with sequence similarity and genomic overlap"};
     }
+
     my %any_extras;
- 
-    foreach (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @$transcripts) {
+    foreach (@$transcripts) {
       my $transcript_length = $_->length;
       my $version           = $_->version ? ".".$_->version : "";
       my $tsi               = $_->stable_id;
@@ -300,6 +298,7 @@ sub transcript_table {
         @CCDS = sort keys %T;
         $ccds = join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS;
       }
+
       foreach my $k (keys %extra_links) {
         
         my @links = grep {$_->status ne 'PRED' } grep { $_->dbname =~ /$extra_links{$k}->{'first_match'}/i } @$dblinks;
@@ -320,32 +319,40 @@ sub transcript_table {
           $extras{$k} = $cell;
         }
       }
+
+      # Flag order: is_canonical, MANE_select, MANE_plus_clinical, gencode_basic, appris, TSL, CDS_start_NF, CDS_end_NF
+      my $refseq_url;
       if ($trans_attribs->{$tsi}) {
-        if (my $incomplete = $self->get_CDS_text($trans_attribs->{$tsi})) {
-          push @flags, $incomplete;
+        if ($trans_attribs->{$tsi}{'is_canonical'}) {
+          push @flags, helptip("Ensembl Canonical", get_glossary_entry($hub, "Ensembl canonical"));
         }
+
+        foreach my $MANE_attrib_code (keys %MANE_attrib_codes) {
+          if (my $mane_attrib = $trans_attribs->{$tsi}{$MANE_attrib_code}) {
+            my ($mane_name, $refseq_id) = @{$mane_attrib};
+            $refseq_url  = $hub->get_ExtURL_link($refseq_id, 'REFSEQ_MRNA', $refseq_id);
+            my $flagtip = helptip($mane_name, get_glossary_entry($hub, $MANE_attrib_codes{$MANE_attrib_code}));
+            $MANE_attrib_code eq  'MANE_Select'? unshift @flags, $flagtip : push @flags, $flagtip;
+          }
+        }
+
+        if ($trans_attribs->{$tsi}{'gencode_basic'}) {
+          push @flags, helptip('GENCODE basic', $gencode_desc);
+        }
+
+        if ($trans_attribs->{$tsi}{'appris'}) {
+          my ($code, $key) = @{$trans_attribs->{$tsi}{'appris'}};
+          my $short_code = $code ? ' '.uc($code) : '';
+          push @flags, helptip("APPRIS $short_code","<p>APPRIS $short_code: ".get_glossary_entry($hub, "APPRIS$short_code")."</p><p>".get_glossary_entry($hub, 'APPRIS')."</p>");
+        }
+
         if ($trans_attribs->{$tsi}{'TSL'}) {
           my $tsl = uc($trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr);
           push @flags, helptip("TSL:$tsl", "<p>TSL $tsl: ".get_glossary_entry($hub, "TSL $tsl")."</p><p>".get_glossary_entry($hub, 'Transcript support level')."</p>");
-	}
-      }
-      if ($trans_gencode->{$tsi}) {
-        if ($trans_gencode->{$tsi}{'gencode_basic'}) {
-          push @flags, helptip('GENCODE basic', $gencode_desc);
         }
-      }
-      if ($trans_attribs->{$tsi}{'appris'}) {
-        my ($code, $key) = @{$trans_attribs->{$tsi}{'appris'}};
-        my $short_code = $code ? ' '.uc($code) : '';
-         push @flags, helptip("APPRIS $short_code","<p>APPRIS $short_code: ".get_glossary_entry($hub, "APPRIS$short_code")."</p><p>".get_glossary_entry($hub, 'APPRIS')."</p>");
- 
-      }
-      my $refseq_url;
-      foreach my $MANE_attrib_code (keys %MANE_attrib_codes) {
-        if (my $mane_attrib = $trans_attribs->{$tsi}{$MANE_attrib_code}) {
-          my $refseq_id = $mane_attrib->value;
-          $refseq_url  = $hub->get_ExtURL_link($refseq_id, 'REFSEQ_MRNA', $refseq_id);
-          push @flags, helptip($mane_attrib->name, get_glossary_entry($hub, $MANE_attrib_codes{$MANE_attrib_code}));
+
+        if (my $incomplete = $self->get_CDS_text($trans_attribs->{$tsi})) {
+          push @flags, $incomplete;
         }
       }
 
@@ -365,6 +372,7 @@ sub transcript_table {
         protein     => $protein_url ? sprintf '<a href="%s" title="View protein">%saa</a>', $protein_url, $protein_length : 'No protein',
         translation => $protein_url ? sprintf '<a href="%s" title="View protein">%s</a>', $protein_url, $translation_ver : '-',
         biotype     => $self->colour_biotype($biotype_text, $_),
+        is_canonical  => $trans_attribs->{$tsi}{'is_canonical'} || $trans_attribs->{$tsi}{'MANE_Select'}? 1 : 0,
         ccds        => $ccds,
         %extras,
         has_ccds    => $ccds eq '-' ? 0 : 1,
@@ -393,9 +401,10 @@ sub transcript_table {
     my $title = encode_entities('<a href="/info/genome/genebuild/transcript_quality_tags.html" target="_blank">Tags</a>');
     push @columns, { key => 'flags', sort => 'html', label => 'Flags', title => $title, class => '_ht'};
 
-    ## Additionally, sort by CCDS status and length
+    ## Transcript order: biotype => canonical => CCDS => length
     while (my ($k,$v) = each (%biotype_rows)) {
-      my @subsorted = sort {$b->{'has_ccds'} cmp $a->{'has_ccds'}
+      my @subsorted = sort {$b->{'is_canonical'} cmp $a->{'is_canonical'}
+                            || $b->{'has_ccds'} cmp $a->{'has_ccds'}
                             || $b->{'bp_length'} <=> $a->{'bp_length'}} @$v;
       $biotype_rows{$k} = \@subsorted;
     }
@@ -761,29 +770,42 @@ sub species_stats {
   });
   $summary->add_row({
       'name' => '<b>Base Pairs</b>',
-      'stat' => $self->thousandify($genome_container->get_total_length()),
+      'stat' => $self->thousandify($genome_container->get_ref_length()),
   }) unless $no_stats;
   my $header = glossary_helptip($self->hub, 'Golden Path Length', 'Golden path length');
   $summary->add_row({
       'name' => "<b>$header</b>",
       'stat' => $self->thousandify($genome_container->get_ref_length())
   }) unless $no_stats;
-  my $prov_name = $sd->ANNOTATION_PROVIDER_NAME;
-  if ($prov_name) {
-    my @prov_names = ref $prov_name eq 'ARRAY' ? @$prov_name : ($prov_name);
-    my @providers;
-    foreach my $pv (@prov_names) {
-      $prov_name =~ s/_/ /g;
-      my $prov_url  = $sd->ANNOTATION_PROVIDER_URL;
-      $prov_url = 'http://'.$prov_url unless $prov_url =~ /^http/;
-      my $provider = $prov_url && $pv ne 'Ensembl' ? sprintf('<a href="%s">%s</a>', $prov_url, $pv) : $pv;
-      push @providers, $provider;
+
+  my @sources = qw(assembly annotation);
+  foreach my $source (@sources) {
+    my $meta_key = uc($source).'_PROVIDER_NAME';
+    my $prov_name = $sd->$meta_key;
+    if ($prov_name) {
+      my $i = 0;
+      my @prov_names  = ref $prov_name eq 'ARRAY' ? @$prov_name : ($prov_name);
+      my $url_key     = uc($source).'_PROVIDER_URL';
+      my $prov_url    = $sd->$url_key;
+      my @prov_urls   = ref $prov_url eq 'ARRAY' ? @$prov_url : ($prov_url);
+      my @providers;
+      foreach my $provider (@prov_names) {
+        $provider =~ s/_/ /g;
+        my $prov_url = $prov_urls[$i] || $prov_urls[0];
+        if ($prov_url && $provider ne 'Ensembl') {
+          $prov_url = 'http://'.$prov_url unless $prov_url =~ /^http/;
+          $provider = sprintf('<a href="%s">%s</a>', $prov_url, $provider);
+        }
+        push @providers, $provider;
+        $i++;
+      }
+      $summary->add_row({
+        'name' => sprintf('<b>%s provider</b>', ucfirst($source)),
+        'stat' => join(', ', @providers), 
+      });
     }
-    $summary->add_row({
-      'name' => '<b>Annotation provider</b>',
-      'stat' => join(', ', @providers), 
-    });
   }
+
   my @A         = @{$meta_container->list_value_by_key('genebuild.method')};
   my $method  = ucfirst($A[0]) || '';
   $method     =~ s/_/ /g;

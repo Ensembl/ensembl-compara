@@ -35,6 +35,7 @@ use Fcntl ':flock';
 use Sys::Hostname;
 use Time::HiRes qw(time);
 use POSIX qw(strftime);
+use Storable;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
@@ -331,7 +332,11 @@ sub childInitHandler {
   ## This handler gets called by Apache when initialising an Apache child process
   ## @param APR::Pool object
   ## @param Apache2::ServerRec server object
-  ## This handler only adds an entry to the logs
+  # Storable defaults are now too small. Ideally these would be configurable,
+  # perhaps in SiteDefs.
+  $Storable::recursion_limit = 20474;
+  $Storable::recursion_limit_hash = 12278;
+  srand;
   warn sprintf "[%s] Child initialised: %d\n", time_str, $$ if $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
 
   return OK;

@@ -344,16 +344,16 @@ sub get_species_info {
        @required_species  = grep {$species eq $_} @required_species if $species;
 
     for (@required_species) {
-      my $strain            = $species_defs->get_config($_, 'SPECIES_STRAIN') || '';
-      my $strain_group = $species_defs->get_config($_, 'STRAIN_GROUP') || '';
-      my $is_reference      = !$strain || ($strain && $strain =~ /reference/)
-                                       || !$strain_group;
+      my $strain        = $species_defs->get_config($_, 'SPECIES_STRAIN') || '';
+      my $strain_group  = $species_defs->get_config($_, 'STRAIN_GROUP') || '';
+                               
       $self->{'_species_info'}{$_} = {
         'key'               => $_,
         'name'              => $species_defs->get_config($_, 'SPECIES_URL'),
         'display_name'      => $species_defs->get_config($_, 'SPECIES_DISPLAY_NAME'),
         'common'            => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
-        'scientific'        => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
+        'scientific'        => $species_defs->get_config($_, 'SPECIES_BINOMIAL')
+                                || $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
         'assembly'          => $species_defs->get_config($_, 'ASSEMBLY_NAME'),
         'assembly_version'  => $species_defs->get_config($_, 'ASSEMBLY_VERSION'),
         'assembly_accession'=> $species_defs->get_config($_, 'ASSEMBLY_ACCESSION'),
@@ -361,7 +361,7 @@ sub get_species_info {
         'image'             => $species_defs->get_config($_, 'SPECIES_IMAGE') 
                                 || $species_defs->get_config($_, 'SPECIES_URL'),
         'strain'            => $strain,
-        'is_reference'      => $is_reference,
+        'is_reference'      => $species_defs->get_config($_, 'IS_REFERENCE'),
         'strain_group'      => $strain_group,
         'strain_type'       => $species_defs->get_config($_, 'STRAIN_TYPE'),
       } unless exists $self->{'_species_info'}{$_};

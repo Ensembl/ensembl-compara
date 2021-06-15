@@ -357,6 +357,12 @@ sub get_cell_line_data_closure {
 sub get_cell_line_data {
   my ($self, $image_config, $filter) = @_;
 
+  ## Check for cached data
+  if ($image_config && $image_config->{'data_by_cell_line'} 
+    && ref($image_config->{'data_by_cell_line'}) eq 'HASH') {
+    return $image_config->{'data_by_cell_line'};
+  }
+
   # First work out which tracks have been turned on in image_config
   my %cell_lines = ();
   if ( $self->species_defs->databases->{'DATABASE_FUNCGEN'} ) {
@@ -387,7 +393,7 @@ sub get_cell_line_data {
 
       if ($image_config) {
         my $display = $node->tree->user_data->{$id}{'display'};
-        $data->{$cell_line}{$experiment}{'renderer'} = $display if $display ne 'off';
+        $data->{$cell_line}{$experiment}{'renderer'} = $display if ($display && $display ne 'off');
       }
       else {
         $data->{$cell_line}{$experiment} = {};
@@ -406,61 +412,64 @@ sub get_cell_line_data {
 sub get_data {
   my ($self, $data, $filter) = @_;
   return $data unless scalar keys %$data;
+
   $filter ||= {};
   my $is_image = keys %$filter ? 0 : 1;
+  my $hub = $self->hub;
 
-  my $hub                 = $self->hub;
-  my $peak_calling_adaptor  = $hub->get_adaptor('get_PeakCallingAdaptor', 'funcgen');
-  my $all_peak_calling     = $peak_calling_adaptor->fetch_all;
-
-  my $count               = 0;
+  ## Get only the data we need
+  my $lookup        = $self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}{'peak_calling'};
+  my $pc_adaptor    = $hub->get_adaptor('get_PeakCallingAdaptor', 'funcgen');
+  my $peak_adaptor  = $hub->get_adaptor('get_PeakAdaptor', 'funcgen');
   my %feature_sets_on;
 
-  foreach my $peak_calling (@{$all_peak_calling||[]}) {
-
-    my $ftype       = $peak_calling->fetch_FeatureType;
-    my $ftype_name  = $ftype->name;
-
-    my $epigenome   = $peak_calling->get_Epigenome;
-    my $cell_line   = $epigenome->short_name;
-
-    next if ($is_image && (!$data->{$cell_line}{$ftype_name} || $data->{$cell_line} eq 'off'));
+  while (my($cell_line, $ftypes) = each(%$data)) {
+    next if ($is_image && ($ftypes eq 'off' || !keys %{$ftypes||{}}));
     next if $filter->{'cell'} and !grep { $_ eq $cell_line } @{$filter->{'cell'}};
     next if $filter->{'cells_only'};
     next unless exists $data->{$cell_line};
+    my $count = 0;
 
-    $count++;
-    my $unique_id = sprintf '%s:%s', $cell_line, $ftype_name;
+    while (my($ftype_name,$info) = each (%$ftypes)) {
+      next unless $info->{'renderer'};
+      ## Look up the peak calling ID from config.packed
+      my $pc_id  = $lookup->{$cell_line}{$ftype_name};
+      next unless $pc_id;
+
+      ## Instantiate the peak calling object
+      my $peak_calling  = $pc_adaptor->fetch_by_dbID($pc_id);
+      next unless $peak_calling;
+
+      $count++;
+
+      my $unique_id = sprintf '%s:%s', $cell_line, $ftype_name;
+      my $display_style = $is_image ? $info->{'renderer'} : '';
+      $feature_sets_on{$ftype_name} = 1;
     
-    my $display_style = $is_image ? $data->{$cell_line}{$ftype_name}{'renderer'} : '';
+      if ($filter->{'block_features'}
+          || grep { $display_style eq $_ } qw(compact tiling_feature signal_feature)) {
+        my $key = $unique_id.':'.$count;
+        my $block_features = $peak_adaptor->fetch_all_by_Slice_PeakCalling($self->Obj, $peak_calling);
+        $data->{$cell_line}{$ftype_name}{'block_features'}{$key} = $block_features || [];
+      }
 
-    $feature_sets_on{$ftype_name} = 1;
-    
-    if ($filter->{'block_features'}
-        || grep { $display_style eq $_ } qw(compact tiling_feature signal_feature)) {
-      my $key = $unique_id.':'.$count;
-      my $peak_adaptor = $hub->get_adaptor('get_PeakAdaptor', 'funcgen');
-      my $block_features = $peak_adaptor->fetch_all_by_Slice_PeakCalling($self->Obj, $peak_calling);
-
-      $data->{$cell_line}{$ftype_name}{'block_features'}{$key} = $block_features || [];
-    }
-
-    ## Get path to bigWig file
-    if (grep { $display_style eq $_ } qw(tiling tiling_feature signal signal_feature)) {
+      ## Get path to bigWig file
+      if ($display_style && grep { $display_style eq $_ } qw(tiling tiling_feature signal signal_feature)) {
       
-      my $alignment        = $peak_calling->fetch_signal_Alignment;
-      my $bigwig_file      = $alignment->fetch_bigwig_DataFile;
-      my $bigwig_file_name = $bigwig_file->path;
+        my $alignment        = $peak_calling->get_signal_Alignment;
+        my $bigwig_file      = $alignment->get_bigwig_DataFile;
+        my $bigwig_file_name = $bigwig_file->path;
       
-      my $file_path = join '/', 
-        $hub->species_defs->DATAFILE_BASE_PATH, 
-        lc $hub->species, 
-        $hub->species_defs->ASSEMBLY_VERSION, 
-        $bigwig_file_name;
+        my $file_path = join '/', 
+          $hub->species_defs->DATAFILE_BASE_PATH, 
+          lc $hub->species, 
+          $hub->species_defs->ASSEMBLY_VERSION, 
+          $bigwig_file_name;
 
-      my $key = $unique_id.':'.$alignment->dbID;
+        my $key = $unique_id.':'.$alignment->dbID;
       
-      $data->{$cell_line}{$ftype_name}{'wiggle_features'}{$key} = $file_path;
+        $data->{$cell_line}{$ftype_name}{'wiggle_features'}{$key} = $file_path;
+      }
     }
   }
 
@@ -478,10 +487,10 @@ sub get_table_data {
 
   foreach my $peak_calling (@{$all_peak_calling||[]}) {
 
-    my $ftype       = $peak_calling->fetch_FeatureType;
+    my $ftype       = $peak_calling->get_FeatureType;
     my $ftype_name  = $ftype->name;
 
-    my $epigenome   = $peak_calling->fetch_Epigenome;
+    my $epigenome   = $peak_calling->get_Epigenome;
     my $cell_line   = $epigenome->short_name;
 
     $data->{$cell_line}{$ftype_name} = $peak_calling;

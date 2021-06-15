@@ -159,8 +159,9 @@ sub content {
       my $species_selected = $set eq 'all' ? 'checked="checked"' : ''; # select all species by default
 
       my $none_title = $set_info->{'none'} ? sprintf('<a href="#list_no_ortho">%d</a>', $set_info->{'none'}) : 0;
+      my $total = $set_info->{'all'} || 0;
       push @rows, {
-        'set'       => "<strong>$set_info->{'title'}</strong> (<i>$set_info->{'all'} species</i>)<br />$set_info->{'desc'}",
+        'set'       => "<strong>$set_info->{'title'}</strong> (<i>$total species</i>)<br />$set_info->{'desc'}",
         'show'      => qq{<input type="checkbox" class="table_filter" title="Check to show these species in table below" name="orthologues" value="$set" $species_selected />},
         '1:1'       => $set_info->{'1-to-1'}       || 0,
         '1:many'    => $set_info->{'1-to-many'}    || 0,
@@ -196,6 +197,14 @@ sub content {
   push @$columns, { key => 'Gene name(Xref)',  align => 'left', width => '15%', sort => 'html', title => 'Gene name(Xref)'} if(!$self->html_format);
   
   @rows = ();
+
+  my $pan_lookup = $hub->species_defs->multi_val('PAN_COMPARA_LOOKUP') || {};
+  my $rev_lookup;
+  if (keys %$pan_lookup) {
+    while (my($prod_name, $info) = each(%$pan_lookup)) {
+      $rev_lookup->{$info->{'species_url'}} = $prod_name;
+    }
+  } 
   
   foreach my $species (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %orthologue_list) {
     next if $skipped{$species};
@@ -215,8 +224,19 @@ sub content {
       my $goc_class  = ($goc_score ne "n/a" && $goc_score >= $orthologue->{goc_threshold}) ? "box-highlight" : "";
       my $wga_class  = ($wgac ne "n/a" && $wgac >= $orthologue->{wga_threshold}) ? "box-highlight" : "";
 
-      my $spp = $orthologue->{'spp'};    
-      my $link_url = $hub->url({
+      my $spp = $orthologue->{'spp'};
+      my $base_url;
+
+      if ($hub->function && $hub->function eq 'pan_compara') {
+        my $prod_name = $rev_lookup->{$spp};
+        my $site      = $pan_lookup->{$prod_name}{'division'};
+        if ($site ne $hub->species_defs->DIVISION) {
+          $site         = 'www' if $site eq 'vertebrates';
+          $base_url     = "https://$site.ensembl.org";
+        }
+      }
+
+      my $link_url = $base_url.$hub->url({
         species => $spp,
         action  => 'Summary',
         g       => $stable_id,
@@ -387,7 +407,6 @@ sub get_export_data {
   my $hub          = $self->hub;
   my $object       = $self->object || $hub->core_object('gene');
 
-
   if ($flag eq 'sequence') {
     return $object->get_homologue_alignments;
   }
@@ -426,23 +445,15 @@ sub buttons {
     my $dxr  = $gene->can('display_xref') ? $gene->display_xref : undef;
     my $name = $dxr ? $dxr->display_id : $gene->stable_id;
 
-    my $params  = {
-      'type'        => 'DataExport',
-      'action'      => 'Orthologs',
-      'data_type'   => 'Gene',
-      'component'   => 'ComparaOrthologs',
-      'data_action' => $hub->action,
-      'gene_name'   => $name,
-      'cdb'         => $hub->function =~ /pan_compara/ ? 'pan_compara' : 'compara',
+    my $params  = { 
+      'type'          => 'DataExport',
+      'action'        => 'Orthologs',
+      'data_type'     => 'Gene',
+      'component'     => 'ComparaOrthologs',
+      'data_action'   => $hub->action,
+      'gene_name'     => $name,
+      'cdb'           => $hub->function =~ /pan_compara/ ? 'pan_compara' : 'compara'
     };
-
-    ## Add any species settings
-    my $compara_spp = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'COMPARA_SPECIES'};
-    foreach (grep { /^species_/ } $self->param) {
-      (my $key = $_) =~ s/species_//;
-      next unless $compara_spp->{$key};
-      $params->{$_} = $self->param($_);
-    }
 
     push @buttons, {
                     'url'     => $hub->url($params),

@@ -43,14 +43,14 @@ sub content {
 
   my $summit   = $peak->summit || 'undetermined';
   
-  $self->caption($peak_calling->fetch_FeatureType->evidence_type_label);
+  $self->caption($peak_calling->get_FeatureType->evidence_type_label);
   
   $self->add_entry({
     type  => 'Feature',
     label => $peak_calling->display_label
   });
 
-  my $source_label = $peak_calling->fetch_source_label;
+  my $source_label = $peak_calling->get_source_label;
 
   if(defined $source_label){
 

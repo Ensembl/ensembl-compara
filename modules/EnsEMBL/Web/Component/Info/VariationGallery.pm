@@ -233,6 +233,7 @@ sub _get_pages {
     my $has_strains     = $variation_db->{'#STRAINS'} if $variation_db;
     my $has_LD          = ($variation_db && $variation_db->{'DEFAULT_LD_POP'}) ? 1 : 0;
     my $has_papers      = $object->count_citations ? 1 : 0; 
+    my $has_variation_source_db = $object->has_variation_source_db ? 1 : 0;
 
     return {'Region in Detail' => {
                                   'link_to'   => {'type'    => 'Location',
@@ -265,8 +266,9 @@ sub _get_pages {
                                                     'action'  => 'Compara_Alignments',
                                                     'v'      => $v,
                                                     },
-                                  'img'     => 'variation_phylogenetic',
-                                  'caption' => 'Multiple species alignment of the 20bp around your variant',
+                                  'img'      => 'variation_phylogenetic',
+                                  'caption'  => 'Multiple species alignment of the 20bp around your variant',
+                                  'disabled' => !$has_variation_source_db,
                                   },
           'Gene Sequence' => {
                                   'link_to'       => {'type'  => 'Gene',

@@ -187,6 +187,12 @@ sub feature_content {
         label_html => $external_url
       });
     }
+    elsif ($source =~ /Mastermind/i) {
+      my $external_url = $hub->get_ExtURL_link("View in $source", 'Mastermind', { ID => $name });
+       $self->add_entry({
+         label_html => $external_url
+       });
+    }
     else {
       my $external_url = $hub->get_ExtURL_link("View in $source", uc($source));
       $self->add_entry({

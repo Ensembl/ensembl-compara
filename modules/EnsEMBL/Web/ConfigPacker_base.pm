@@ -75,6 +75,8 @@ sub db_tree {
 }
 
 sub species {
+  ## Return the "species" (actually the first part of the db name - could be 
+  ## a clade in the case of a collection database)
   my $self = shift;
   $self->{'_species'} = shift if @_;
   return $self->{'_species'};

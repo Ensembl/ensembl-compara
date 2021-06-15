@@ -110,7 +110,7 @@ sub form_fields {
     'label' => 'Show super-tree',
     'name'  => 'super_tree',
     'value' => 'on',
-  } unless ($self->species =~/Mus/ && $self->hub->species_defs->IS_STRAIN_OF); ###HACK (TO BE REMOVED) hide option for all mouse strains
+  };
 
   my @groups = ($self->hub->param('strain') || $self->hub->species_defs->IS_STRAIN_OF) ? () : $self->_groups; #hide these options for strain view or strain species
 

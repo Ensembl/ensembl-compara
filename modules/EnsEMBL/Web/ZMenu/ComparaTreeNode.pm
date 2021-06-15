@@ -56,7 +56,7 @@ sub content {
   my $parent_distance = $node->distance_to_parent || 0;
 
   if ($is_leaf and $is_supertree) {
-    my $child = $node->adaptor->fetch_node_by_node_id($node->{_subtree}->root_id);
+    my $child = $node->children->[0] || $node->adaptor->fetch_node_by_node_id($node->{_subtree}->root_id);
     $node->add_tag('species_tree_node_id', $child->get_tagvalue('species_tree_node_id'));
     my $members = $node->adaptor->fetch_all_AlignedMember_by_root_id($child->node_id);
     $node->{_sub_leaves_count} = scalar(@$members);
@@ -163,15 +163,31 @@ sub content {
       });
     
       my $link_gene = $node->{_sub_reference_gene};
+      ## Strain trees and pon-compara trees are very different!
+      my ($species, $action, $base_url);  
+      if ($hub->action =~ /Strain/) {
+        $species = $hub->species_defs->production_name_mapping($link_gene->genome_db->name);
+        $action = $hub->action;
+      }
+      else {
+        my $pan_lookup = $hub->species_defs->multi_val('PAN_COMPARA_LOOKUP', $link_gene->genome_db->name);
+        $species = $pan_lookup->{'species_url'};
+        my $site = $pan_lookup->{'division'};
+        if ($site) {
+          $site = 'www' if $site eq 'vertebrates';
+          $base_url = sprintf 'https://%s.ensembl.org', $site;
+        }
+        $action = 'Compara_Tree';
+      }
 
       $self->add_entry({
         type  => 'Gene',
         label => 'Switch to that tree',
         order => 11,
-        link  => $hub->url({
-          species  => $hub->species_defs->production_name_mapping($link_gene->genome_db->name),
+        link  => $base_url.$hub->url({
+          species  => $species,
           type     => 'Gene',
-          action   => 'Compara_Tree',
+          action   => $action,
           __clear  => 1,
           g        => $link_gene->stable_id,
         })

@@ -227,7 +227,7 @@ Ensembl.Panel.SpeciesList = Ensembl.Panel.extend({
       '</option>'
     );
     if (!favSection && species.strainspage) {
-      optgroup.append('<option value="' + species.strainspage + '">' + species.common + ' ' + species.strain_type + '</option>');
+      optgroup.append('<option value="' + species.strainspage + '">' + species.straintitle + ' ' + species.strain_type + '</option>');
     }
   },
 

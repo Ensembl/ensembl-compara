@@ -360,14 +360,19 @@ sub hover_label_tabs {
   }
 
   ## Horrible hack to fix file attachment
-  if ($label->{'conf_url'} && $label->{'conf_url'} =~ /contigviewbottom=url_/) {
-    $label->{'conf_url'} =~ /(url_[\w]+)/;
-    my $track_id = $1;
-    (my $code = $track_id) =~ s/^url_//;
-    my $record = $self->hub->session->get_record_data({'type' => 'url', 'code' => $code});
-    my $url = $record->{'url'};
-    (my $new_link = $label->{'conf_url'}) =~ s/$track_id/url:$url/;
-    $label->{'conf_url'} = $new_link;
+  if ($label->{'conf_url'}) {
+    if ($label->{'conf_url'} =~ /contigviewbottom=url_/) {
+      $label->{'conf_url'} =~ /(url_[\w]+)/;
+      my $track_id = $1;
+      (my $code = $track_id) =~ s/^url_//;
+      my $record = $self->hub->session->get_record_data({'type' => 'url', 'code' => $code});
+      my $url = $record->{'url'};
+      (my $new_link = $label->{'conf_url'}) =~ s/$track_id/url:$url/;
+      $label->{'conf_url'} = $new_link;
+    }
+    elsif ($label->{'conf_url'} =~ /contigviewbottom=trackhub_/) {
+      $label->{'conf_url'} = undef;
+    }
   }
 
   $label->{'conf_url'} = $sd->ENSEMBL_BASE_URL.$label->{'conf_url'} if $label->{'conf_url'};

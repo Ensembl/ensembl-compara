@@ -93,7 +93,7 @@ sub new {
   # Get info for all feature sets and pack it in an array of hashes
   foreach my $peak_calling (@$peak_callings) {
   
-    my $experiment = $peak_calling->fetch_Experiment;
+    my $experiment = $peak_calling->get_Experiment;
 
     if (! defined $experiment) {
       #warn "Failed to get Experiment for FeatureSet:\t".$peak_calling->name;
@@ -104,9 +104,9 @@ sub new {
     $experiment_group     = undef unless $experiment_group->is_project;
     my $project_name      = $experiment_group ? $experiment_group->name : '';
     my $source_info       = $experiment->_source_info; # returns [[source_label, source_link], [source_label, source_link], ...]
-    my $epigenome         = $peak_calling->fetch_Epigenome;
+    my $epigenome         = $peak_calling->get_Epigenome;
     my $epigenome_name    = $epigenome->short_name;
-    my $feature_type      = $peak_calling->fetch_FeatureType;
+    my $feature_type      = $peak_calling->get_FeatureType;
     my $evidence_label    = $feature_type->evidence_type_label;
 
     my $binding_matrices  = [];

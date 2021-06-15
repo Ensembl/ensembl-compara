@@ -46,6 +46,11 @@ sub render {
   ## Link to release news on blog
   $html .= qq(<p class="right"><a href="http://www.ensembl.info/category/01-release/">More release news</a> on our blog</p>); 
 
+  ## Rapid Release panel
+  unless ($sd->ENSEMBL_SUBTYPE eq 'GRCh37') {
+    $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/rapid_release.html");
+  }
+  
   $html .= $self->_include_blog;
 
   return $html;
@@ -114,7 +119,7 @@ sub get_rss_feed {
 
   my $ua = LWP::UserAgent->new;
   my $proxy = $hub->web_proxy;
-  $ua->proxy( 'http', $proxy ) if $proxy;
+  $ua->proxy( 'https', $proxy ) if $proxy;
   #$ua->timeout(5);
 
   my $items = [];

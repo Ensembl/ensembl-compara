@@ -1102,7 +1102,7 @@ sub get_oligo_probe_data {
   PROBE:
   foreach my $current_probe_transcript_mapping (@$probe_transcript_mapping) {
   
-    my $probe       = $current_probe_transcript_mapping->fetch_Probe;
+    my $probe       = $current_probe_transcript_mapping->get_Probe;
     my $description = $current_probe_transcript_mapping->description;
     
     my $array_chip = $probe->array_chip;
@@ -1137,7 +1137,7 @@ sub get_oligo_probe_data {
   
   foreach my $current_probe_set_transcript_mapping (@$probe_set_transcript_mapping) {
   
-    my $probe_set   = $current_probe_set_transcript_mapping->fetch_ProbeSet;
+    my $probe_set   = $current_probe_set_transcript_mapping->get_ProbeSet;
     my $description = $current_probe_set_transcript_mapping->description;
     
     my $probe_set_name = $probe_set->name;

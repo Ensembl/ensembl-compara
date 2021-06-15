@@ -47,74 +47,85 @@ sub render_normal {
 
 sub get_data {
   my ($self)  = @_;
-  my $slice   = $self->{'container'};
+  my $slice       = $self->{'container'};
   my $slice_start = $slice->start;
-  my $data    = [{'features' => []}];
+  my $colour      = $self->my_colour('lrg_import');
+  my $data        = [{'features' => []}];
 
-  my $lrg_slices = $slice->project('lrg');
-  if ($lrg_slices->[0]) {
-    my $lrg_slice = $lrg_slices->[0]->to_Slice;
-    my $genes     = $lrg_slice->get_all_Genes('LRG_import');
-    my $colour    = $self->my_colour('lrg_import');
+  my $lrg_slices = $slice->project('lrg') || [];
+  my $genes = [];
+  my %seen_genes;
 
-    foreach my $g (@$genes) {
-      next if $g->strand != $self->strand;
-
-      ## We don't really need the gene, as it's not rendered, so base
-      ## the data returned around the set of transcripts
-      my $transcripts = $g->get_all_Transcripts;
-      foreach my $t (@$transcripts) {
-
-        ## Project the transcript back onto the slice, so we can get the real coordinates
-        my $projection  = $t->project_to_slice($slice);
-        my $real_start  = $projection->[0][2]->start - $slice_start + 1;
-        my $real_end    = $projection->[0][2]->end - $slice_start + 1;
-
-        my $label;
-        $label = '< ' if ($g->strand == -1);
-        $label .= $t->stable_id;
-        $label .= ' >' if ($g->strand == 1);
-
-        my $t_coding_start  = $t->coding_region_start // -1e6;
-        my $t_coding_end    = $t->coding_region_end // -1e6;
-        my $offset          = $real_start - $t->start;
-        my $structure       = [];
-
-        foreach my $e (sort { $a->start <=> $b->start } @{$t->get_all_Exons}) {
-          next unless defined $e;
-          my ($start, $end) = ($e->start, $e->end); 
-          my $ef = {
-                    start => $start + $offset,
-                    end   => $end + $offset,
-                    };
-          ## Drawing code always defines UTRs wrt the forward strand
-          ## as that is how the glyphs are created
-          my $coding_start = max($t_coding_start,$start);
-          my $coding_end = min($t_coding_end,$end);
-          if ($coding_start > $end || $coding_end < $start) {
-            $ef->{'non_coding'} = 1;
-          }
-          else {
-            if ($coding_start > $start) {
-              $ef->{'utr_5'} = $coding_start + $offset;
-            }
-            if ($coding_end < $end) {
-              $ef->{'utr_3'} = $coding_end + $offset;
-            }
-          }
-          push @$structure, $ef;
-        }
-
-        my $tf = {
-                  start     => $real_start,
-                  end       => $real_end,
-                  colour    => $colour,
-                  label     => $label,
-                  href      => $self->href($g, $t),
-                  structure => $structure,
-                  };
-        push @{$data->[0]{'features'}}, $tf;
+  foreach (@$lrg_slices) {
+    my $lrg_slice = $_->to_Slice;
+    if ($lrg_slice) {
+      ## Dedupe, as one gene may span multiple projected slices
+      foreach my $g (@{$lrg_slice->get_all_Genes('LRG_import')||[]}) {
+        next if $seen_genes{$g->stable_id};
+        $seen_genes{$g->stable_id} = 1;
+        push @$genes, $g;
       }
+    }
+  }
+  return $data unless scalar @$genes;
+
+  foreach my $g (@$genes) {
+    next if $g->strand != $self->strand;
+
+    ## We don't really need the gene, as it's not rendered, so base
+    ## the data returned around the set of transcripts
+    my $transcripts = $g->get_all_Transcripts;
+    foreach my $t (@$transcripts) {
+
+      ## Project the transcript back onto the slice, so we can get the real coordinates
+      my $projection  = $t->project_to_slice($slice);
+      my $real_start  = $projection->[0][2]->start - $slice_start + 1;
+      my $real_end    = $projection->[0][2]->end - $slice_start + 1;
+
+      my $label;
+      $label = '< ' if ($g->strand == -1);
+      $label .= $t->stable_id;
+      $label .= ' >' if ($g->strand == 1);
+
+      my $t_coding_start  = $t->coding_region_start // -1e6;
+      my $t_coding_end    = $t->coding_region_end // -1e6;
+      my $offset          = $real_start - $t->start;
+      my $structure       = [];
+
+      foreach my $e (sort { $a->start <=> $b->start } @{$t->get_all_Exons}) {
+        next unless defined $e;
+        my ($start, $end) = ($e->start, $e->end); 
+        my $ef = {
+                  start => $start + $offset,
+                  end   => $end + $offset,
+                  };
+        ## Drawing code always defines UTRs wrt the forward strand
+        ## as that is how the glyphs are created
+        my $coding_start = max($t_coding_start,$start);
+        my $coding_end = min($t_coding_end,$end);
+        if ($coding_start > $end || $coding_end < $start) {
+          $ef->{'non_coding'} = 1;
+        }
+        else {
+          if ($coding_start > $start) {
+            $ef->{'utr_5'} = $coding_start + $offset;
+          }
+          if ($coding_end < $end) {
+            $ef->{'utr_3'} = $coding_end + $offset;
+          }
+        }
+        push @$structure, $ef;
+      }
+
+      my $tf = {
+                start     => $real_start,
+                end       => $real_end,
+                colour    => $colour,
+                label     => $label,
+                href      => $self->href($g, $t),
+                structure => $structure,
+                };
+      push @{$data->[0]{'features'}}, $tf;
     }
   }
 

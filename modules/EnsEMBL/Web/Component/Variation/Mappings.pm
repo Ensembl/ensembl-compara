@@ -358,7 +358,7 @@ sub content {
 
         my $row = {
             rf        => sprintf('<a href="%s">%s</a>', $url, $rfv->regulatory_feature->stable_id),
-            ftype     => $rf->feature_type->so_name,
+            ftype     => $rf->feature_type->so_term,
             allele    => $r_allele,
             type      => $type || '-',
             coverage  => $reg_length_label.$regulation_overlap

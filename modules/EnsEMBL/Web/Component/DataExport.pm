@@ -187,7 +187,12 @@ sub create_form {
       'name'    => 'export_action',
       'value'   => $hub->action,
     },
+    {
+      'name'    => 'filtered_sets',
+      'value'   => $hub->param('filtered_sets') || 'all',
+    }
   ]);
+
   ## Miscellaneous parameters from settings
   my $user_settings = $self->{'viewconfig'}{$hub->param('data_type')}->{_user_settings};
   foreach (@{$settings->{'Hidden'}||[]}) {
