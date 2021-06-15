@@ -37,6 +37,7 @@ sub open {
   my $wrapper;
   my $hub = $args->{'options'}{'hub'};
   if ($hub) {
+    ## This is a bit clunky but at least it works!
     my $parser = Bio::EnsEMBL::IO::Parser::BCF::open_with_location('Bio::EnsEMBL::IO::Parser::BCF', $url, $hub->species_defs->ENSEMBL_USERDATA_DIR.'/temporary/bcf_index/');
 
     if ($parser) {
@@ -49,14 +50,6 @@ sub open {
     }
   }
   return $wrapper;
-}
-
-sub coords {
-  ### Simple accessor to return the coordinates from the parser
-  my $self = shift;
-  my $record = $self->parser->{'record'};
-  my $header = $self->parser->header;
-  return ($record->chromosome($header), $record->position, $record->position);
 }
 
 sub nearest_feature { return undef; }
