@@ -20,7 +20,7 @@
 Examples::
     # Do a liftover from GRCh38 to CHM13 of the human INS gene
     # along with 5 kb upstream and downstream flanking regions.
-    python hal_gene_liftover.py --src-region chr11:2159779-2161221:-1 \
+    python hal_gene_liftover.py --src-region 'chr11:2159779-2161221:-' \
         --flank 5000 input.hal GRCh38 CHM13 output.psl
 
     # Do a liftover from GRCh38 to CHM13 of the
@@ -155,28 +155,20 @@ def parse_region(region: str) -> SimpleRegion:
 
     """
     seq_region_regex = re.compile(
-        r'^(?P<chr>[^:]+):(?P<start>[0-9]+)-(?P<end>[0-9]+):(?P<strand>.+)$'
+        r'^(?P<chrom>[^:]+):(?P<start>[0-9]+)-(?P<end>[0-9]+):(?P<strand>\+|-)$'
     )
     match = seq_region_regex.match(region)
 
     try:
-        region_chr = match['chr']  # type: ignore
-        match_start = int(match['start'])  # type: ignore
-        region_end = int(match['end'])  # type: ignore
-        match_strand = match['strand']  # type: ignore
+        region_chrom = match['chrom']  # type: ignore
+        match_start = match['start']  # type: ignore
+        match_end = match['end']  # type: ignore
+        region_strand = match['strand']  # type: ignore
     except TypeError as e:
         raise ValueError(f"region '{region}' could not be parsed") from e
 
-    if match_start < 1:
-        raise ValueError(f'region start must be greater than or equal to 1: {match_start}')
-    region_start = match_start - 1
-
-    if match_strand == '1':
-        region_strand = '+'
-    elif match_strand == '-1':
-        region_strand = '-'
-    else:
-        raise ValueError(f"region '{region}' has invalid strand: '{match_strand}'")
+    region_start = int(match_start) - 1
+    region_end = int(match_end)
 
     if region_start >= region_end:
         raise ValueError(f"region '{region}' has inverted/empty interval")
