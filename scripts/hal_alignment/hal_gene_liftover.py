@@ -111,7 +111,7 @@ def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, 
         flank_length: Length of upstream/downstream flanking regions to request.
 
     Raises:
-        ValueError: If any region is has an unknown chromosome or invalid coordinates.
+        ValueError: If any region has an unknown chromosome or invalid coordinates.
 
     """
     with open(bed_file, 'w') as f:
