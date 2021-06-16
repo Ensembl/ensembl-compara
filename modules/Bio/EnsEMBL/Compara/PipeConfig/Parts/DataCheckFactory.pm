@@ -45,7 +45,7 @@ sub pipeline_analyses_datacheck_factory {
             -analysis_capacity => 10,
             -max_retry_count   => 0,
             -flow_into         => {
-                '2->A' => [ 'datacheck_fan' ],
+                '2->A' => { 'datacheck_fan' => INPUT_PLUS() },
                 'A->1' => [ 'datacheck_funnel' ],
             },
         },
