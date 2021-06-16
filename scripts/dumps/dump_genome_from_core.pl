@@ -24,39 +24,34 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 
 use Getopt::Long;
 
-my $dbname;
-my $host;
-my $port;
-my $mask;
-my $genome_dump_file;
-my $help;
+my ($dbname, $host, $port, $mask, $genome_dump_file, $help);
 my $desc = "
-This script dump all toplevel sequences from a core database and store it at the fatsa.
+This script dumps all toplevel sequences from a core database and stores them in fasta file.
 The sequences can be unmasked, soft masked or hard masked.
 
-USAGE dumpGenomeFromCore.pl [-mask] -coreDB COREDB -host HOST -port PORT -outfile OUTFILE
+USAGE dump_genome_from_core.pl [-mask] -core-db COREDB -host HOST -port PORT -outfile OUTFILE
 
 Options:
-* -coreDB
-      the core database storing the genome sequence to be dumped
+* -core-db
+      the core database name storing the genome sequence to be dumped
 * --host
       server hosting the core database
 * --port
       port for the host database
 * --outfile
-      file where the dumped seqeunce will be sored at the fasta format
+      file where the dumped sequence will be sored in fasta format
 * --mask
       level of masking of the dumped sequences [soft/hard]. If this option is not defined then the
       sequence will be unmasked.
 ";
 
 GetOptions(
-    'coreDB=s' => \$dbname,
-    'host=s'   => \$host,
-    'port=s'     => \$port,
-    'mask=s'     => \$mask,
-    'outfile=s'  => \$genome_dump_file,
-    'help' => \$help
+    'coreDB=s'  => \$dbname,
+    'host=s'    => \$host,
+    'port=s'    => \$port,
+    'mask=s'    => \$mask,
+    'outfile=s' => \$genome_dump_file,
+    'help'      => \$help
   );
 
 
@@ -65,26 +60,30 @@ if ($help) {
   exit(0);
 }
 
+if ( defined $mask && $mask !~ /soft|hard/ ) {
+    die "ERROR: '--mask' has to be either 'soft' or 'hard'\n"
+}
+
 my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( -user   => 'ensro',
                                                -dbname => $dbname,
                                                -host   => $host,
                                                -port   => $port,
                                                -driver => 'mysql');
 
-my $slice_adaptor = $dba->get_adaptor("Slice");
-my $slices = $slice_adaptor->fetch_all("toplevel");
+my $slices = $dba->get_SliceAdaptor->fetch_all("toplevel");
 
 open(my $filehandle, '>', $genome_dump_file) or die "can't open $genome_dump_file for writing\n";
 
 
 # create a fasta serialiser that define the seq_region_name() as fasta header
-my $serializer = Bio::EnsEMBL::Utils::IO::FASTASerializer->new($filehandle,
-		  sub{
-            my $slice = shift;
-            $slice->seq_region_name();
-            return $slice->seq_region_name();
-          });
-
+my $serializer = Bio::EnsEMBL::Utils::IO::FASTASerializer->new(
+    $filehandle,
+    sub{
+        my $slice = shift;
+        $slice->seq_region_name();
+        return $slice->seq_region_name();
+    }
+);
 
 # dump the slices
 foreach my $slice (@$slices){
