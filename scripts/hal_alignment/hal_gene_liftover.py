@@ -20,7 +20,7 @@
 Examples::
     # Do a liftover from GRCh38 to CHM13 of the human INS gene
     # along with 5 kb upstream and downstream flanking regions.
-    python hal_gene_liftover.py --src-region chr11:2159779-2161221:-1 \
+    python hal_gene_liftover.py --src-region 'chr11:2159779-2161221:-' \
         --flank 5000 input.hal GRCh38 CHM13 output.psl
 
     # Do a liftover from GRCh38 to CHM13 of the
@@ -152,7 +152,7 @@ def parse_region(region: str) -> SimpleRegion:
 
     """
     seq_region_regex = re.compile(
-        '^(?P<chrom>[^:]+):(?P<start>[0-9]+)-(?P<end>[0-9]+):(?P<strand>1|-1)$'
+        r'^(?P<chrom>[^:]+):(?P<start>[0-9]+)-(?P<end>[0-9]+):(?P<strand>\+|-)$'
     )
     match = seq_region_regex.match(region)
 
@@ -160,13 +160,12 @@ def parse_region(region: str) -> SimpleRegion:
         region_chrom = match['chrom']  # type: ignore
         match_start = match['start']  # type: ignore
         match_end = match['end']  # type: ignore
-        match_strand = match['strand']  # type: ignore
+        region_strand = match['strand']  # type: ignore
     except TypeError as e:
         raise ValueError(f"region '{region}' could not be parsed") from e
 
     region_start = int(match_start) - 1
     region_end = int(match_end)
-    region_strand = '-' if match_strand == '-1' else '+'
 
     if region_start >= region_end:
         raise ValueError(f"region '{region}' has inverted/empty interval")
