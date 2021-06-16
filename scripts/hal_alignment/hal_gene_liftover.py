@@ -31,23 +31,145 @@ Examples::
 """
 
 from argparse import ArgumentParser
+from collections import defaultdict, OrderedDict
 import io
+import json
 import os
 from pathlib import Path
 import re
 from subprocess import PIPE, Popen, run
 from tempfile import TemporaryDirectory
-from typing import Dict, Iterable, NamedTuple, Union
+from typing import AbstractSet, Dict, Iterable, Mapping, NamedTuple, Set, Union
 
+from Bio.SeqIO.FastaIO import SimpleFastaParser
 import pybedtools  # type: ignore
 
 
-class SimpleRegion(NamedTuple):
-    """A simple region."""
+class StrandedRegion(NamedTuple):
+    """A stranded DNA sequence region."""
     chrom: str
     start: int
     end: int
     strand: str
+
+
+class UnstrandedRegion(NamedTuple):
+    """An unstranded DNA sequence region."""
+    chrom: str
+    start: int
+    end: int
+
+
+def convert_liftover_chain_to_bed(in_chain_file: Union[Path, str],
+                                  region_mapping: Mapping[UnstrandedRegion, AbstractSet[StrandedRegion]],
+                                  out_bed_file: Union[Path, str]) -> None:
+    """Extract target regions from chain file and write to BED format.
+
+    Args:
+        in_chain_file: Input chain file.
+        region_mapping: Dictionary mapping query regions to input regions.
+        out_bed_file: Output BED file of aligned intervals in target genome.
+
+    """
+    field_types = OrderedDict([
+        ('score', float),
+        ('tName', str),
+        ('tSize', int),
+        ('tStrand', str),
+        ('tStart', int),
+        ('tEnd', int),
+        ('qName', str),
+        ('qSize', int),
+        ('qStrand', str),
+        ('qStart', int),
+        ('qEnd', int),
+        ('id', str)
+    ])
+    field_names = list(field_types.keys())
+
+    with open(in_chain_file) as in_f, open(out_bed_file, 'w') as out_f:
+
+        score = 0
+        for line in in_f:
+            if not line.startswith('chain'):
+                continue
+            field_values = line.rstrip().split()
+            rec = {
+                k: field_types[k](x) for k, x in zip(field_names, field_values[1:])
+            }
+
+            q_chrom = rec['qName']
+            if rec['qStrand'] == '+':
+                q_start = rec['qStart']
+                q_end = rec['qEnd']
+                q_strand = '+'
+            else:
+                q_start = rec['qSize'] - rec['qEnd']
+                q_end = rec['qSize'] - rec['qStart']
+                q_strand = '-'
+            q_region = UnstrandedRegion(q_chrom, q_start, q_end)
+
+            assert rec['tStrand'] == '+', 'chain target strand must be positive'
+            t_chrom = rec['tName']
+            t_start = rec['tStart']
+            t_end = rec['tEnd']
+
+            for i_chrom, i_start, i_end, i_strand in region_mapping[q_region]:
+                # q_strand represents the relative strand of the query and target regions,
+                # so the target strand is determined by whether q_strand matches i_strand
+                t_strand = '+' if i_strand == q_strand else '-'
+
+                name = f'{t_chrom}:{t_start}-{t_end}:{t_strand}|{i_chrom}:{i_start}-{i_end}:{i_strand}'
+                fields = [t_chrom, t_start, t_end, name, score, t_strand]
+                print('\t'.join(str(x) for x in fields), file=out_f)
+
+
+def convert_liftover_fasta_to_json(in_fasta_file: Union[Path, str],
+                                   source_genome: str,
+                                   destination_genome: str,
+                                   out_json_file: Union[Path, str],
+                                   flank_length: int = 0) -> None:
+    """Convert liftover FASTA file to JSON format.
+
+    Args:
+        in_fasta_file: Input FASTA file.
+        source_genome: Name of source genome.
+        destination_genome: Name of destination genome.
+        out_json_file: Output JSON file.
+        flank_length: Length of upstream/downstream flanking regions to request.
+
+    """
+
+    src_to_dest = defaultdict(list)
+    with open(in_fasta_file) as f:
+        for header, sequence in SimpleFastaParser(f):
+            output_region, input_region = (parse_region(x) for x in header.split('|'))
+            src_to_dest[input_region].append({
+                'dest_chrom': output_region.chrom,
+                'dest_start': output_region.start,
+                'dest_end': output_region.end,
+                'dest_strand': output_region.strand,
+                'dest_sequence': sequence
+            })
+
+    data = list()
+    for input_region, results in src_to_dest.items():
+        params = {
+            'src_genome': source_genome,
+            'src_chrom': input_region.chrom,
+            'src_start': input_region.start,
+            'src_end': input_region.end,
+            'src_strand': input_region.strand,
+            'flank': flank_length,
+            'dest_genome': destination_genome
+        }
+        data.append({
+            'params': params,
+            'results': results
+        })
+
+    with open(out_json_file, 'w') as f:
+        json.dump(data, f)
 
 
 def export_2bit_file(in_hal_file: Union[Path, str], genome_name: str,
@@ -98,25 +220,26 @@ def load_chrom_sizes(in_2bit_file: Union[Path, str]) -> Dict[str, int]:
     return chrom_sizes
 
 
-def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, SimpleRegion]],
-                         chrom_sizes: Dict[str, int],
+def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, StrandedRegion]],
+                         chrom_sizes: Mapping[str, int],
                          bed_file: Union[Path, str],
-                         flank_length: int = 0) -> None:
+                         flank_length: int = 0) -> Dict[UnstrandedRegion, Set[StrandedRegion]]:
     """Make source region file.
 
     Args:
-        regions: Regions to write to output file.
+        regions: Regions from which to generate output BED file.
         chrom_sizes: Dictionary mapping chromosome names to their lengths.
         bed_file: Path of BED file to output.
         flank_length: Length of upstream/downstream flanking regions to request.
+
+    Returns:
+        Dictionary mapping query regions to input regions.
 
     Raises:
         ValueError: If any region has an unknown chromosome or invalid coordinates.
 
     """
-    if flank_length < 0:
-        raise ValueError(f"'flank_length' must be greater than or equal to 0: {flank_length}")
-
+    region_mapping: Dict[UnstrandedRegion, Set[StrandedRegion]] = dict()
     with open(bed_file, 'w') as f:
         name = '.'
         score = 0  # halLiftover requires an integer score in BED input
@@ -140,15 +263,26 @@ def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, 
             fields = [region.chrom, flanked_start, flanked_end, name, score, region.strand]
             print('\t'.join(str(x) for x in fields), file=f)
 
+            # We do not specify strand for the query region, as this info
+            # is not completely preserved during the liftover process.
+            query_region = UnstrandedRegion(region.chrom, flanked_start, flanked_end)
+            input_region = StrandedRegion(region.chrom, region.start, region.end, region.strand)
+            try:
+                region_mapping[query_region].add(input_region)
+            except KeyError:
+                region_mapping[query_region] = set([input_region])
 
-def parse_region(region: str) -> SimpleRegion:
+    return region_mapping
+
+
+def parse_region(region: str) -> StrandedRegion:
     """Parse a region string.
 
     Args:
         region: Region string.
 
     Returns:
-        A SimpleRegion object.
+        A StrandedRegion object.
 
     Raises:
         ValueError: If `region` is an invalid region string.
@@ -173,7 +307,7 @@ def parse_region(region: str) -> SimpleRegion:
     if region_start >= region_end:
         raise ValueError(f"region '{region}' has inverted/empty interval")
 
-    return SimpleRegion(region_chr, region_start, region_end, region_strand)
+    return StrandedRegion(region_chrom, region_start, region_end, region_strand)
 
 
 def run_axt_chain(in_psl_file: Union[Path, str], query_2bit_file: Union[Path, str],
@@ -230,6 +364,20 @@ def run_hal_liftover(in_hal_file: Union[Path, str], query_genome: str,
             raise RuntimeError(f'halLiftover terminated with signal {-p1.returncode}')
 
 
+def run_two_bit_to_fa(in_bed_file: Union[Path, str], in_2bit_file: Union[Path, str],
+                      out_fasta_file: Union[Path, str]) -> None:
+    """Run twoBitToFa to obtain sequences of aligned target regions.
+
+    Args:
+        in_bed_file: Input BED file.
+        in_2bit_file: Input 2bit file.
+        out_fasta_file: Output FASTA file.
+
+    """
+    cmd = ['twoBitToFa', f'-bed={in_bed_file}', in_2bit_file, out_fasta_file]
+    run(cmd, check=True)
+
+
 if __name__ == '__main__':
 
     parser = ArgumentParser(description='Performs a gene liftover between two haplotypes in a HAL file.')
@@ -276,20 +424,29 @@ if __name__ == '__main__':
 
     with TemporaryDirectory() as tmp_dir:
 
-        query_bed_file = os.path.join(tmp_dir, 'src_regions.bed')
-
-        if args.src_region is not None:
-            src_regions = [parse_region(args.src_region)]
+        if src_region is not None:
+            src_regions = [parse_region(src_region)]
         else:  # i.e. bed_file is not None
             src_regions = pybedtools.BedTool(args.src_bed_file)
 
         src_chrom_sizes = load_chrom_sizes(src_2bit_file)
 
-        make_src_region_file(src_regions, src_chrom_sizes, query_bed_file, flank_length=flank)
+        query_bed_file = os.path.join(tmp_dir, 'src_regions.bed')
+        region_map = make_src_region_file(src_regions, src_chrom_sizes, query_bed_file,
+                                          flank_length=flank)
 
         psl_file = os.path.join(tmp_dir, 'alignment.psl')
-
         run_hal_liftover(hal_file, src_genome, query_bed_file, dest_genome, psl_file)
 
-        run_axt_chain(psl_file, src_2bit_file, dest_2bit_file, args.output_file,
+        chain_file = os.path.join(tmp_dir, 'alignment.chain')
+        run_axt_chain(psl_file, src_2bit_file, dest_2bit_file, chain_file,
                       linear_gap=args.linear_gap)
+
+        chain_bed_file = os.path.join(tmp_dir, 'chain.bed')
+        convert_liftover_chain_to_bed(chain_file, region_map, chain_bed_file)
+
+        chain_fasta_file = os.path.join(tmp_dir, 'chain.fa')
+        run_two_bit_to_fa(chain_bed_file, dest_2bit_file, chain_fasta_file)
+
+        convert_liftover_fasta_to_json(chain_fasta_file, src_genome, dest_genome,
+                                       args.output_file, flank_length=flank)
