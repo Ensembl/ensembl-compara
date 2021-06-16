@@ -45,8 +45,8 @@ sub fetch_input {
     my $species_list = $self->param('species_list');
     my $species_file = $self->param('species_list_file');
 
-    throw "Cannot have both species_list and a species_list_file specified" if $species_list && $species_file;
-    if ( $species_list ) {
+    throw "species_list and species_list_file are mutually exclusive parameters" if (@$species_list > 0) && $species_file;
+    if ( defined $species_list && scalar(@$species_list) > 0 ) {
         $self->param( 'species' => \@$species_list );
     }
     elsif ( $species_file ) {

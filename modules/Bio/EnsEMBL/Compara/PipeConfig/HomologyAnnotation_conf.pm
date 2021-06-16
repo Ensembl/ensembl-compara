@@ -159,14 +159,6 @@ sub pipeline_create_commands {
     ];
 }
 
-sub hive_meta_table {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
-        'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
-    };
-}
-
 sub pipeline_wide_parameters {  # These parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
     my ($self) = @_;
     return {
@@ -241,7 +233,6 @@ sub core_pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BlastFactory',
             -parameters    => {
                 'step'  => $self->o('num_sequences_per_blast_job'),
-                'species_list'  => $self->o('species_list'),
             },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
@@ -254,6 +245,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'create_mlss_and_batch_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::CreateSuperficialMLSS',
+            -rc_name    => '4Gb_job',
             -flow_into  => {
                 2 => { 'parse_paf_for_rbbh' => { 'member_id_list' => '#member_id_list#', 'target_genome_db_id' => '#ref_genome_db_id#', 'genome_db_id' => '#genome_db_id#' } },
             }

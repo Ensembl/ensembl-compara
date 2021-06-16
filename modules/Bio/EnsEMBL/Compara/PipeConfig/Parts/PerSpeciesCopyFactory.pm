@@ -59,7 +59,7 @@ sub pipeline_analyses_create_and_copy_per_species_db {
                 'schema_file'  => $self->o('schema_file'),
             },
             -flow_into => {
-                '2->A' => [ 'copy_per_species_db' ],
+                '2->A'  => { 'copy_per_species_db'  => INPUT_PLUS() },
                 'A->2'  => { 'datacheck_factory' => { 'compara_db' => '#per_species_db#', %dc_parameters } },
             },
         },
@@ -70,7 +70,8 @@ sub pipeline_analyses_create_and_copy_per_species_db {
                 'program'    => $self->o('copy_program'),
                 'table_list' => $self->o('table_list'),
                 'skip_dna'   => $self->o('skip_dna'),
-            }
+            },
+            -hive_capacity => 1,
         },
 
     ];

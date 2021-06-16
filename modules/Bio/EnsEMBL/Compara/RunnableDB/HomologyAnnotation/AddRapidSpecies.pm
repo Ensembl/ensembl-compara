@@ -41,7 +41,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
         'force'        => 1,
-        'hard_limit'   => 100,
+        'hard_limit'   => 50,
         'release'      => 1,
         'skip_dna'     => 1,
     };
@@ -50,7 +50,7 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    my $species_names    = $self->param('species_list');
+    my $species_names    = $self->param_required('species_list');
     print Dumper $species_names if $self->debug;
     my $spec_hard_limit  = $self->param('hard_limit');
     my @species_list;
