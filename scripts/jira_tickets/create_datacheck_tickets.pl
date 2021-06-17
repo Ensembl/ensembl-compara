@@ -128,10 +128,22 @@ my $dc_task_keys = $jira_adaptor->create_tickets(
     -UPDATE             => $update,
     -DRY_RUN            => $dry_run
 );
+
 # Create a blocker issue link between the newly created datacheck ticket and the
-# handover ticket
+# handover ticket if it doesn't already exist
 my $blocked_ticket_key = find_labeled_ticket($jira_adaptor, 'Handover_anchor');
-$jira_adaptor->link_tickets('Blocks', $dc_task_keys->[0], $blocked_ticket_key, $dry_run);
+my $dc_ticket = $jira_adaptor->get_ticket($dc_task_keys->[0]);
+my $blocker_exists;
+foreach my $i ( @{$dc_ticket->{issuelinks}} ){
+    if ($i->{type}->{name} eq 'Blocks' && $i->{outwardIssue}->{key} eq $blocked_ticket_key) {
+        my $blocker_exists = 1;
+        last;
+    }
+}
+if ( $blocker_exists != 1 ) {
+    $jira_adaptor->link_tickets('Blocks', $dc_ticket->{key}, $blocked_ticket_key, $dry_run);
+}
+
 
 sub parse_datachecks {
     my $dc_file = shift;

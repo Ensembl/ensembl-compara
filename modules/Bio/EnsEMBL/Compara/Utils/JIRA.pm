@@ -282,6 +282,23 @@ sub fetch_tickets {
     return $tickets;
 }
 
+=head2 get_ticket
+
+  Arg[1]      : string - JIRA ticket key or ID
+  Example     : my $ticket = $jira_adaptor->get_ticket('ENSCOMPARASW-4300');
+  Description : Returns JIRA ticket JSON representation from API
+  Return type : hashref of JIRA ticket JSON representation
+  Exceptions  : none
+
+=cut
+
+sub get_ticket {
+    my $self, $key_or_id = @_;
+    my $url = my $url = "https://www.ebi.ac.uk/panda/jira/rest/api/latest/issue/$key_or_id"
+    my $ticket = $self->_http_request('GET', $url);
+    return $ticket;
+}
+
 =head2 link_tickets
 
   Arg[-LINK_TYPE]   : string - an issue link type
