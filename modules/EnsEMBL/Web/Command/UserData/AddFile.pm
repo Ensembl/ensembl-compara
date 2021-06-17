@@ -37,8 +37,6 @@ sub process {
   my $self = shift;
   my $hub  = $self->hub;
 
-  return $self->set_format if $hub->function eq 'set_format';
-
   my $url_params = $self->upload_or_attach;
 
   return $self->ajax_redirect($self->hub->url($url_params));
@@ -161,29 +159,6 @@ sub check_for_index {
     });
   }
   return $index_exists;
-}
-
-sub set_format {
-  my $self    = shift;
-  my $hub     = $self->hub;
-  my $session = $hub->session;
-  my $code    = $hub->param('code');
-  my $format  = $hub->param('format');
-
-  if ($format) {
-    my $record_data = $session->get_record_data({'code' => $code});
-    if (keys %$record_data) {
-      $record_data->{'format'} = $format;
-      $session->set_record_data($record_data);
-    }
-  }
-
-  $self->ajax_redirect($hub->url({
-    action   => $format ? 'UploadFeedback' : 'MoreInput',
-    function => undef,
-    format   => $format,
-    code     => $code
-  }));
 }
 
 1;

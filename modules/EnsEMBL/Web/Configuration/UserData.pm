@@ -51,7 +51,6 @@ sub populate_tree {
   ## Upload "wizard"
   $self->create_node('AddFile',   '', [], { command => 'EnsEMBL::Web::Command::UserData::AddFile'   });
   $self->create_node('SelectFile',     'Add your data', [qw(select_file  EnsEMBL::Web::Component::UserData::SelectFile)], {'no_menu_entry' => 1});
-  $self->create_node('MoreInput',      '',              [qw(more_input   EnsEMBL::Web::Component::UserData::MoreInput)]);
   $self->create_node('UploadFeedback', '',              [qw(feedback     EnsEMBL::Web::Component::UserData::UploadFeedback   parsed EnsEMBL::Web::Component::UserData::UploadParsed)]);
   $self->create_node('RemoteFeedback', '',              [qw(feedback     EnsEMBL::Web::Component::UserData::RemoteFeedback   parsed EnsEMBL::Web::Component::UserData::UploadParsed)]);
   $self->create_node('SelectShare',    '',              [qw(select_share EnsEMBL::Web::Component::UserData::SelectShare)], { filters => [ 'Shareable' ] });
@@ -70,7 +69,6 @@ sub populate_tree {
   $self->create_node('TrackHubResults',     'Track Hub Registry Search', [qw(track_hubs  EnsEMBL::Web::Component::UserData::TrackHubResults)], {'no_menu_entry' => 1});
   
   ## Saving remote data
-  $self->create_node('ShowRemote',      '', [qw(show_remote     EnsEMBL::Web::Component::UserData::ShowRemote)]);
   $self->create_node('ConfigureGraph',  '', [qw(remote_feedback EnsEMBL::Web::Component::UserData::ConfigureGraph)]);
   
   $self->create_node('SaveExtraConfig', '', [], { command => 'EnsEMBL::Web::Command::UserData::SaveExtraConfig' });
