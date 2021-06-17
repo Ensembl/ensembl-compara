@@ -81,6 +81,7 @@ sub create_hash {
     'label'         => join(',', @feature_ids),
     };
   my $parsed_info   = $self->parser->get_info || {};
+  use Data::Dumper; warn Dumper($parsed_info);
   my $allele_string = join('/', @alleles);
   my $vf_name       = $feature_ids[0] eq '.' ? sprintf('%s_%s_%s', $seqname, $feature_start, $allele_string) : $feature_ids[0];
   if ($metadata->{'display'} eq 'text') {
@@ -95,7 +96,6 @@ sub create_hash {
                         ];
 
     ## Convert INFO field into a hash
-    my %info_hash; 
     foreach my $field (sort keys %$parsed_info) {
       push @{$feature->{'extra'}}, {'name' => $field, 'value' => $parsed_info->{$field}};   
     }
