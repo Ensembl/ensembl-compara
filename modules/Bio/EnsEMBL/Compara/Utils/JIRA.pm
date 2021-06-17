@@ -326,6 +326,18 @@ sub link_tickets {
     my %jira_link_types = map { $_ => 1 } ('After', 'Before', 'Blocks', 'Cloners', 'Duplicate',
                                            'Issue split', 'Related', 'Relates', 'Required');
     if (exists $jira_link_types{$link_type}) {
+        my $inward_ticket = $self->get_ticket($inward_key);
+        my $link_exists = 0;
+        foreach my $i ( @{$inward_ticket->{issuelinks}} ){
+            if ($i->{type}->{name} eq $link_type && $i->{outwardIssue}->{key} eq $outward_key) {
+                my $link_exists = 1;
+                last;
+            }
+        }
+        if ( $link_exists == 1 ) {
+            $self->{_logger}->info("Issue link already exists. Doing nothing.\n")
+            return
+        }
         my $link_content = {
             "type"         => { "name" => $link_type },
             "inwardIssue"  => { "key"  => $inward_key },
