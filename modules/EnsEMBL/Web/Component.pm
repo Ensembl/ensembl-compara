@@ -550,7 +550,7 @@ sub EC_URL {
 }
 
 sub modal_form {
-  ## Creates a modal-friendly form with hidden elements to automatically pass to handle wizard buttons
+  ## Creates a modal-friendly form for user interactions
   ## Params Name (Id attribute) for form
   ## Params Action attribute
   ## Params HashRef with keys as accepted by Web::Form::ModalForm constructor
@@ -561,17 +561,8 @@ sub modal_form {
   $params->{'action'}   = $params->{'next'} = $action;
   $params->{'current'}  = $hub->action;
   $params->{'name'}     = $name;
-  $params->{$_}         = $options->{$_} for qw(class method wizard label no_back_button no_button buttons_on_top buttons_align skip_validation enctype);
+  $params->{$_}         = $options->{$_} for qw(class method label no_button buttons_on_top buttons_align skip_validation enctype);
   $params->{'enctype'}  = 'multipart/form-data' if !$self->renderer->{'_modal_dialog_'} && ($params->{'method'} || '') =~ /post/i;
-
-  if ($options->{'wizard'}) {
-    my $species = $hub->type eq 'UserData' ? $hub->data_species : $hub->species;
-    
-    $params->{'action'}  = $hub->species_path($species) if $species;
-    $params->{'action'} .= sprintf '/%s/Wizard', $hub->type;
-    my @tracks = $hub->param('_backtrack');
-    $params->{'backtrack'} = \@tracks if scalar @tracks; 
-  }
 
   return EnsEMBL::Web::Form::ModalForm->new($params);
 }

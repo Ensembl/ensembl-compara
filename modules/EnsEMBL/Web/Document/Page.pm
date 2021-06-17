@@ -116,11 +116,9 @@ sub ajax_redirect {
   my ($self, $url, $redirect_type, $modal_tab) = @_;
   
   my $r         = $self->renderer->{'r'};
-  my $back      = $self->{'input'}->param('wizard_back');
   my @backtrack = map $url =~ /_backtrack=$_\b/ ? () : $_, $self->{'input'}->param('_backtrack');
   
   $url .= ($url =~ /\?/ ? ';' : '?') . '_backtrack=' . join ';_backtrack=', @backtrack if scalar @backtrack;
-  $url .= ($url =~ /\?/ ? ';' : '?') . "wizard_back=$back" if $back;
   
   if ($self->renderer->{'_modal_dialog_'}) {
     if (!$self->{'ajax_redirect_url'}) {

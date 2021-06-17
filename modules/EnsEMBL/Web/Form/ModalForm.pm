@@ -24,8 +24,6 @@ use strict;
 use base qw(EnsEMBL::Web::Form);
 
 use constant {
-  WIZARD_CLASS_NAME => 'wizard',
-  
   _PARAMS_KEY       => '__modal_form_params',
 };
 
@@ -35,9 +33,7 @@ sub new {
   ##  - action          Action attribute
   ##  - class           Class attribute
   ##  - method          Method attribute
-  ##  - wizard          Flag on if form is a part of wizard
-  ##  - label           Label for the submit button if wizard - default "Next >"
-  ##  - no_back_button  Flag if on, back button is not displayed
+  ##  - label           Label for the submit button 
   ##  - no_button       No buttons displayed automatically if flag is on
   ##  - buttons_on_top  If flag on, dupicate buttons are added at the top of the form
   ##  - buttons_align   where to align the buttons - centre, left, right, default
@@ -54,7 +50,7 @@ sub new {
   $self->set_attribute('class', $params->{'class'}) if $params->{'class'};
 
   $self->{$self->_PARAMS_KEY} = {};
-  for (qw(wizard label no_back_button no_button backtrack current next buttons_on_top buttons_align)) {
+  for (qw(label no_button backtrack current next buttons_on_top buttons_align)) {
     $self->{$self->_PARAMS_KEY}{$_} = $params->{$_} if exists $params->{$_};
   }
   return $self;
@@ -70,22 +66,7 @@ sub render {
   my @buttons;
   my @hiddens;
 
-  if ($params->{'wizard'}) {
-    $self->set_attribute('class', $self->WIZARD_CLASS_NAME);
-    
-    push @buttons, {'type' => 'button', 'name' => 'wizard_back', 'value' => '< Back', 'class' => 'back submit'} unless $params->{'no_back_button'};
-    
-    # Include current and former nodes in _backtrack
-    if ($params->{'backtrack'}) {
-      for (@{$params->{'backtrack'}}) {
-        push @hiddens, {'name' => '_backtrack', 'value' => $_} if $_;
-      }
-    }
-    
-    push @buttons, {'type'  => 'Submit', 'name' => 'wizard_submit', 'value' => $label};
-    push @hiddens, {'name' => '_backtrack', 'value' => $params->{'current'}}, {'name' => 'wizard_next', 'value' => $params->{'next'}};
-
-  } elsif (!$params->{'no_button'}) {
+  if (!$params->{'no_button'}) {
     push @buttons, {'type' => 'Submit', 'name' => 'submit_button', 'value' => $label};
   }
   

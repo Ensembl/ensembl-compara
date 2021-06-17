@@ -35,7 +35,7 @@ sub content {
   my $self     = shift;
   my $hub      = $self->hub;
   my $sitename = $hub->species_defs->ENSEMBL_SITETYPE;
-  my $form     = $self->modal_form('share', $hub->url({ action => 'CheckShare', __clear => 1 }), { wizard => 1, no_back_button => 1 });
+  my $form     = $self->modal_form('share', $hub->url({ action => 'CheckShare', __clear => 1 }));
   my $session  = $hub->session;
   my $user     = $hub->user;
   my @groups   = $user && !$hub->param('code') ? $user->find_admin_groups : (); ## Can't share temp data (code) with group

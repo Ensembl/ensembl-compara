@@ -157,8 +157,6 @@ sub tree_cache_key {
 sub get_valid_action {
   my ($self, $action, $function,$assume_valid) = @_;
   
-  return $action if $action eq 'Wizard';
-  
   my $object   = $self->object;
   my $hub      = $self->hub;
   my $tree     = $self->tree;

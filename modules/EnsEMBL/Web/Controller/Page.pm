@@ -78,7 +78,7 @@ sub render_page {
   my $self = shift;
   my $hub  = $self->hub;
   
-  $self->SUPER::render_page if $self->access_ok && !$self->process_command;
+  $self->SUPER::render_page if !$self->process_command;
 }
 
 sub update_configuration_for_request {
@@ -142,7 +142,7 @@ sub process_command {
   my $command = $self->command;
   my $action  = $self->action;
   
-  return unless $command || $action eq 'Wizard';
+  return unless $command;
   
   my $object  = $self->object;
   my $page    = $self->page;
@@ -182,10 +182,8 @@ sub process_command {
     }
   } else {
     # Normal command module
-    my $class = $action eq 'Wizard' ? 'EnsEMBL::Web::Command::Wizard' : $command;
-    
-    if ($class && $self->dynamic_use($class)) {
-      my $command_module = $class->new({
+    if ($command && $self->dynamic_use($command)) {
+      my $command_module = $command->new({
         object => $object,
         hub    => $hub,
         page   => $page,
@@ -197,29 +195,6 @@ sub process_command {
       return defined $rtn ? $rtn : 1;
     }
   }
-}
-
-sub access_ok {
-  ### Checks if the given Command module is allowed, and forces a redirect if it isn't
-  
-  my $self = shift;
-  
-  my $filter = $self->not_allowed($self->hub, $self->object);
-  
-  if ($filter) {
-    my $url = $filter->redirect_url;
-    
-    # Double-check that a filter name is being passed, since we have the option 
-    # of using the default URL (current page) rather than setting it explicitly
-    $url .= ($url =~ /\?/ ? ';' : '?') . 'filter_module=' . $filter->name       unless $url =~ /filter_module/;
-    $url .= ($url =~ /\?/ ? ';' : '?') . 'filter_code='   . $filter->error_code unless $url =~ /filter_code/;
-    
-    $self->page->ajax_redirect($url);
-    
-    return 0;
-  }
-  
-  return 1;
 }
 
 1;

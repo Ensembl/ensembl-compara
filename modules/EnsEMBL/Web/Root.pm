@@ -164,27 +164,6 @@ sub get_module_names {
   return wantarray ? @return : $return[0];
 }
 
-# Loops through array of filters and returns the first one that fails
-sub not_allowed {
-  my ($self, $hub, $object) = @_;
-  
-  my $filters = $self->filters || [];
-  
-  foreach my $name (@$filters) {
-    my $class = 'EnsEMBL::Web::Filter::'.$name;
-    
-    if ($self->dynamic_use($class)) {
-      my $filter = $class->new({ hub => $hub , object => $object});
-      $filter->catch;
-      return $filter if $filter->error_code;
-    }  else {
-      warn "COULD NOT USE FILTER MODULE $class";
-    }
-  }
-  
-  return undef;
-}
-
 sub strip_HTML {
   my ($self, $string) = @_;
   $string =~ s/<[^>]+>//g;
