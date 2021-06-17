@@ -293,10 +293,10 @@ sub fetch_tickets {
 =cut
 
 sub get_ticket {
-    my $self, $key_or_id = @_;
-    my $url = my $url = "https://www.ebi.ac.uk/panda/jira/rest/api/latest/issue/$key_or_id"
+    my ( $self, $key_or_id ) = @_;
+    my $url = "https://www.ebi.ac.uk/panda/jira/rest/api/latest/issue/$key_or_id";
     my $ticket = $self->_http_request('GET', $url);
-    return $ticket;
+    return $ticket->{fields};
 }
 
 =head2 link_tickets
@@ -330,13 +330,13 @@ sub link_tickets {
         my $link_exists = 0;
         foreach my $i ( @{$inward_ticket->{issuelinks}} ){
             if ($i->{type}->{name} eq $link_type && $i->{outwardIssue}->{key} eq $outward_key) {
-                my $link_exists = 1;
+                $link_exists = 1;
                 last;
             }
         }
         if ( $link_exists == 1 ) {
-            $self->{_logger}->info("Issue link already exists. Doing nothing.\n")
-            return
+            $self->{_logger}->info("Issue link already exists. Doing nothing.\n");
+            return;
         }
         my $link_content = {
             "type"         => { "name" => $link_type },
