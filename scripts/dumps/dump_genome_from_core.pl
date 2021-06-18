@@ -75,7 +75,7 @@ my $slices = $dba->get_SliceAdaptor->fetch_all("toplevel");
 open(my $filehandle, '>', $genome_dump_file) or die "can't open $genome_dump_file for writing\n";
 
 
-# create a fasta serialiser that define the seq_region_name() as fasta header
+# create a fasta serialiser that defines the seq_region_name() as fasta header
 my $serializer = Bio::EnsEMBL::Utils::IO::FASTASerializer->new(
     $filehandle,
     sub{
