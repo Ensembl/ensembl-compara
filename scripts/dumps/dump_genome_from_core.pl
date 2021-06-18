@@ -39,7 +39,7 @@ Options:
 * --port
       port for the host database
 * --outfile
-      file where the dumped sequence will be sored in fasta format
+      file where the dumped sequence will be stored in fasta format
 * --mask
       level of masking of the dumped sequences [soft/hard]. If this option is not defined then the
       sequence will be unmasked.
