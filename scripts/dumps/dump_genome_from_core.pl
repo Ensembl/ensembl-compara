@@ -46,12 +46,12 @@ Options:
 ";
 
 GetOptions(
-    'coreDB=s'  => \$dbname,
-    'host=s'    => \$host,
-    'port=s'    => \$port,
-    'mask=s'    => \$mask,
-    'outfile=s' => \$genome_dump_file,
-    'help'      => \$help
+    'core-db|core_db=s' => \$dbname,
+    'host=s'            => \$host,
+    'port=s'            => \$port,
+    'mask=s'            => \$mask,
+    'outfile=s'         => \$genome_dump_file,
+    'help'              => \$help
   );
 
 
