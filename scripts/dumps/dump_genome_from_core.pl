@@ -32,7 +32,7 @@ The sequences can be unmasked, soft masked or hard masked.
 USAGE dump_genome_from_core.pl [-mask] -core-db COREDB -host HOST -port PORT -outfile OUTFILE
 
 Options:
-* -core-db
+* --core-db
       the core database name storing the genome sequence to be dumped
 * --host
       server hosting the core database
