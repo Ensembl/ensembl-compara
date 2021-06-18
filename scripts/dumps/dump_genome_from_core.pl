@@ -80,7 +80,6 @@ my $serializer = Bio::EnsEMBL::Utils::IO::FASTASerializer->new(
     $filehandle,
     sub{
         my $slice = shift;
-        $slice->seq_region_name();
         return $slice->seq_region_name();
     }
 );
