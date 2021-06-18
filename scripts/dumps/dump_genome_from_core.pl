@@ -56,8 +56,8 @@ GetOptions(
 
 
 if ($help) {
-  print $desc;
-  exit(0);
+    print $desc;
+    exit(0);
 }
 
 if ( defined $mask && $mask !~ /soft|hard/ ) {
