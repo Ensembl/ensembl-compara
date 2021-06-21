@@ -51,8 +51,8 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 my @metazoa_overlap_species = qw(drosophila_melanogaster caenorhabditis_elegans);
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@metazoa_overlap_species);
 my $metazoa_overlap_cores = {
-    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_105_9" ],
-    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_105_269" ],
+    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_" . $curr_release . "_9" ],
+    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_" . $curr_release . "_269" ],
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $metazoa_overlap_cores );
 
@@ -84,25 +84,25 @@ my $compara_dbs = {
     # 'compara_curr_3'   => [ 'mysql-ens-compara-prod-3', "ensembl_compara_$curr_release" ],
 
     # homology dbs
-    #'compara_members'         => [ 'mysql-ens-compara-prod-1',  'carlac_vertebrates_load_members_104' ],
-    #'compara_ptrees'          => [ 'mysql-ens-compara-prod-1',  'carlac_default_vertebrates_protein_trees_104' ],
-    #'compara_nctrees'         => [ 'mysql-ens-compara-prod-5',  'carlac_default_vertebrates_ncrna_trees_104' ],
-    #'murinae_ptrees'          => [ 'mysql-ens-compara-prod-2',  'carlac_vertebrates_murinae_protein_reindexed_trees_104' ],
-    #'murinae_nctrees'         => [ 'mysql-ens-compara-prod-2',  'carlac_vertebrates_murinae_ncrna_reindexed_trees_104' ],
+    #'compara_members'         => [ 'mysql-ens-compara-prod-1',  '' ],
+    #'compara_ptrees'          => [ 'mysql-ens-compara-prod-X',  '' ],
+    #'compara_nctrees'         => [ 'mysql-ens-compara-prod-X',  '' ],
+    #'murinae_ptrees'          => [ 'mysql-ens-compara-prod-X',  '' ],
+    #'murinae_nctrees'         => [ 'mysql-ens-compara-prod-X',  '' ],
     'murinae_ptrees_prev'     => [ 'mysql-ens-compara-prod-2',  'carlac_vertebrates_murinae_protein_reindexed_trees_104' ],
     'murinae_nctrees_prev'    => [ 'mysql-ens-compara-prod-2',  'carlac_vertebrates_murinae_ncrna_reindexed_trees_104' ],
-    #'pig_breeds_ptrees'       => [ 'mysql-ens-compara-prod-3',  'carlac_vertebrates_pig_breeds_protein_reindexed_trees_104' ],
-    #'pig_breeds_nctrees'      => [ 'mysql-ens-compara-prod-3',  'carlac_vertebrates_pig_breeds_ncrna_reindexed_trees_104' ],
+    #'pig_breeds_ptrees'       => [ 'mysql-ens-compara-prod-X',  '' ],
+    #'pig_breeds_nctrees'      => [ 'mysql-ens-compara-prod-X',  '' ],
     'pig_breeds_ptrees_prev'  => [ 'mysql-ens-compara-prod-3',  'carlac_vertebrates_pig_breeds_protein_reindexed_trees_104' ],
     'pig_breeds_nctrees_prev' => [ 'mysql-ens-compara-prod-3',  'carlac_vertebrates_pig_breeds_ncrna_reindexed_trees_104' ],
 
     # LASTZ dbs
-    #'lastz_batch_1'    => [ 'mysql-ens-compara-prod-2', 'carlac_vertebrates_lastz_batch1_104' ],
+    #'lastz_batch_1'    => [ 'mysql-ens-compara-prod-X', '' ],
     'unidir_lastz'     => [ 'mysql-ens-compara-prod-1', 'ensembl_vertebrates_unidirectional_lastz' ],
 
     # EPO dbs
     ## mammals
-    #'mammals_epo_w_ext'    => [ 'mysql-ens-compara-prod-4', 'jalvarez_mammals_epo_with2x_103' ],
+    #'mammals_epo_w_ext'    => [ 'mysql-ens-compara-prod-X', '' ],
     'mammals_epo_prev'     => [ 'mysql-ens-compara-prod-4', 'jalvarez_mammals_epo_with2x_103' ],
     'mammals_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
@@ -117,28 +117,28 @@ my $compara_dbs = {
     'fish_epo_anchors'  => [ 'mysql-ens-compara-prod-8', 'muffato_generate_anchors_fish_100' ],
 
     ## primates
-    #'primates_epo_w_ext'    => [ 'mysql-ens-compara-prod-7', 'jalvarez_primates_epo_with2x_103' ],
-    #'primates_epo_prev'     => [ 'mysql-ens-compara-prod-4', 'jalvarez_mammals_epo_with2x_103' ],  # Primates are reused from mammals of the *same release* (same anchors and subset of species)
+    #'primates_epo_w_ext'    => [ 'mysql-ens-compara-prod-X', '' ],
+    #'primates_epo_prev'     => [ 'mysql-ens-compara-prod-X', '' ],  # Primates are reused from mammals of the *same release* (same anchors and subset of species)
     'primates_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## pig strains
-    #'pig_breeds_epo_w_ext'     => [ 'mysql-ens-compara-prod-1', 'jalvarez_pig_breeds_epo_with2x_103' ],
-    #'pig_breeds_epo_prev'      => [ 'mysql-ens-compara-prod-4', 'jalvarez_mammals_epo_with2x_103' ],  # Pig breeds are reused from mammals of the *same release* (same anchors and subset of species)
+    #'pig_breeds_epo_w_ext'     => [ 'mysql-ens-compara-prod-X', '' ],
+    #'pig_breeds_epo_prev'      => [ 'mysql-ens-compara-prod-X', '' ],  # Pig breeds are reused from mammals of the *same release* (same anchors and subset of species)
     'pig_breeds_epo_anchors'   => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## murinae
-    #'murinae_epo'          => [ 'mysql-ens-compara-prod-4', 'jalvarez_murinae_epo_103' ],
+    #'murinae_epo'          => [ 'mysql-ens-compara-prod-X', '' ],
     'murinae_epo_prev'     => [ 'mysql-ens-compara-prod-4', 'jalvarez_murinae_epo_103' ],
     'murinae_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     # other alignments
-    #'amniotes_pecan'      => [ 'mysql-ens-compara-prod-3', 'carlac_amniotes_pecan_update_104' ],
+    #'amniotes_pecan'      => [ 'mysql-ens-compara-prod-X', '' ],
     'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-3', 'carlac_amniotes_pecan_update_104' ],
 
-    #'compara_syntenies'   => [ 'mysql-ens-compara-prod-2', 'jalvarez_vertebrates_synteny_104' ],
+    #'compara_syntenies'   => [ 'mysql-ens-compara-prod-X', '' ],
 
     # miscellaneous
-    #'alt_allele_projection' => [ 'mysql-ens-compara-prod-3', 'carlac_vertebrates_alt_allele_import_104' ],
+    #'alt_allele_projection' => [ 'mysql-ens-compara-prod-X', '' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -149,11 +149,11 @@ my $ancestral_dbs = {
     'ancestral_prev' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
     'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
 
-    #'mammals_ancestral'    => [ 'mysql-ens-compara-prod-4', 'jalvarez_mammals_ancestral_core_103' ],
-    #'primates_ancestral'   => [ 'mysql-ens-compara-prod-7', 'jalvarez_primates_ancestral_core_103' ],
+    #'mammals_ancestral'    => [ 'mysql-ens-compara-prod-X', '' ],
+    #'primates_ancestral'   => [ 'mysql-ens-compara-prod-X', '' ],
     'sauropsids_ancestral' => [ 'mysql-ens-compara-prod-4', 'carlac_sauropsids_ancestral_core_104' ],
     'fish_ancestral'       => [ 'mysql-ens-compara-prod-3', 'carlac_fish_ancestral_core_104' ],
-    #'murinae_ancestral'    => [ 'mysql-ens-compara-prod-4', 'jalvarez_murinae_ancestral_core_103' ],
+    #'murinae_ancestral'    => [ 'mysql-ens-compara-prod-X', '' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
