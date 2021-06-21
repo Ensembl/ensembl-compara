@@ -40,7 +40,6 @@ my $compara_dbs = {
     # necessary compara dbs
     'compara_references' => [ 'mysql-ens-compara-prod-2', 'ensembl_compara_references' ],
 
-    'compara_halibut'    => [ 'mysql-ens-compara-prod-2', 'verasper_variegatus_compara_103' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
