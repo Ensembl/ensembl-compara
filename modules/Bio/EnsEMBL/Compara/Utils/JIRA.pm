@@ -328,8 +328,8 @@ sub link_tickets {
     if (exists $jira_link_types{$link_type}) {
         my $inward_ticket = $self->get_ticket($inward_key);
         my $link_exists = 0;
-        foreach my $i ( @{$inward_ticket->{issuelinks}} ){
-            if ($i->{type}->{name} eq $link_type && $i->{outwardIssue}->{key} eq $outward_key) {
+        foreach my $link ( @{$inward_ticket->{issuelinks}} ){
+            if ($link->{type}->{name} eq $link_type && $link->{outwardIssue}->{key} eq $outward_key) {
                 $link_exists = 1;
                 last;
             }
