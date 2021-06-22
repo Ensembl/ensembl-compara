@@ -334,7 +334,7 @@ sub link_tickets {
                 last;
             }
         }
-        if ( $link_exists == 1 ) {
+        if ( $link_exists ) {
             $self->{_logger}->info("Issue link already exists. Doing nothing.\n");
             return;
         }
