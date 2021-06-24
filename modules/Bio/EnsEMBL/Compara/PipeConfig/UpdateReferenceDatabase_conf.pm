@@ -61,6 +61,10 @@ sub default_options {
         # shared location to symlink to fastas for orthofinder
         'shared_fasta_dir' => $self->o('shared_hps_dir') . '/reference_fasta_symlinks/',
 
+        # orthofinder executable
+        'orthofinder_dir' => '/hps/software/users/ensembl/compara/cristig/OrthoFinder',
+        'orthofinder_exe' => '/hps/software/users/ensembl/compara/cristig/OrthoFinder/orthofinder',
+
         # update from metadata options
         'list_genomes_script'    => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
         'report_genomes_script'  => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
@@ -322,7 +326,7 @@ sub core_pipeline_analyses {
                 'master_db'       => '#ref_db#',
                 'incl_components' => 0,
             },
-            -flow_into  => [ 'create_reference_sets', 'fasta_dumps_per_collection_factory' ],
+            -flow_into  => [ 'create_reference_sets' ],
         },
 
         {   -logic_name => 'create_reference_sets',
@@ -336,6 +340,8 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 '1->A'  => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => '#ref_db#', 'registry_file' => undef, 'datacheck_types' => $self->o('dc_type') }},
                 'A->1'  => [ 'backup_ref_db_again' ],
+                '1->B'  => [ 'fasta_dumps_per_collection_factory' ],
+                'B->1'  => [ 'orthofinder_factory' ],
             },
             -rc_name    => '2Gb_job',
         },
@@ -347,8 +353,9 @@ sub core_pipeline_analyses {
                 'ref_member_dumps_dir' => $self->o('ref_member_dumps_dir'),
                 'compara_db'           => '#ref_db#',
             },
-            -flow_into  => [ 'symlink_fasta_to_shared_loc' ],
-            -wait_for   => [ 'create_reference_sets' ],
+            -flow_into  => {
+                1 => [ 'symlink_fasta_to_shared_loc' ],
+            },
         },
 
         {   -logic_name => 'symlink_fasta_to_shared_loc',
@@ -357,6 +364,29 @@ sub core_pipeline_analyses {
             -parameters => {
                 'symlink_fasta_exe' => $self->o('symlink_fasta_exe'),
             },
+        },
+
+        {   -logic_name => 'orthofinder_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PassFastaDumpsPerCollection',
+            -parameters => {
+                'symlink_dir'          => $self->o('shared_fasta_dir'),
+                'ref_member_dumps_dir' => $self->o('ref_member_dumps_dir'),
+                'compara_db'           => $self->o('ref_db'),
+            },
+            -flow_into  => {
+                2 => [ 'run_orthofinder' ],
+            },
+        },
+
+        {   -logic_name => 'run_orthofinder',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'shared_user'     => $self->o('shared_user'),
+                'orthofinder_exe' => $self->o('orthofinder_exe'),
+                'orthofinder_dir' => $self->o('orthofinder_dir'),
+                'cmd'             => 'cd #orthofinder_dir#; #orthofinder_exe# -f #symlink_dir#',
+            },
+            -rc_name    => '132Gb_job',
         },
 
         {   -logic_name => 'backup_ref_db_again',
