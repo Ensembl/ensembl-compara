@@ -84,7 +84,7 @@ my $compara_dbs = {
     # 'compara_curr_3'   => [ 'mysql-ens-compara-prod-3', "ensembl_compara_$curr_release" ],
 
     # homology dbs
-    #'compara_members'         => [ 'mysql-ens-compara-prod-1',  '' ],
+    'compara_members'         => [ 'mysql-ens-compara-prod-3',  'ivana_vertebrates_load_members_105' ],
     #'compara_ptrees'          => [ 'mysql-ens-compara-prod-X',  '' ],
     #'compara_nctrees'         => [ 'mysql-ens-compara-prod-X',  '' ],
     #'murinae_ptrees'          => [ 'mysql-ens-compara-prod-X',  '' ],
@@ -97,7 +97,9 @@ my $compara_dbs = {
     'pig_breeds_nctrees_prev' => [ 'mysql-ens-compara-prod-3',  'carlac_vertebrates_pig_breeds_ncrna_reindexed_trees_104' ],
 
     # LASTZ dbs
-    #'lastz_batch_1'    => [ 'mysql-ens-compara-prod-X', '' ],
+    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-2', 'ivana_vertebrates_lastz_batch1_105' ],
+    #'lastz_batch_2'    => [ 'mysql-ens-compara-prod-X', '' ],
+    'lastz_batch_3'    => [ 'mysql-ens-compara-prod-1', 'ivana_vertebrates_lastz_batch3_105' ],
     'unidir_lastz'     => [ 'mysql-ens-compara-prod-1', 'ensembl_vertebrates_unidirectional_lastz' ],
 
     # EPO dbs
@@ -122,8 +124,8 @@ my $compara_dbs = {
     'primates_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## pig strains
-    #'pig_breeds_epo_w_ext'     => [ 'mysql-ens-compara-prod-X', '' ],
-    #'pig_breeds_epo_prev'      => [ 'mysql-ens-compara-prod-X', '' ],  # Pig breeds are reused from mammals of the *same release* (same anchors and subset of species)
+    'pig_breeds_epo_w_ext'     => [ 'mysql-ens-compara-prod-1', 'jalvarez_pig_breeds_epo_with2x_103' ],
+    'pig_breeds_epo_prev'      => [ 'mysql-ens-compara-prod-4', 'jalvarez_mammals_epo_with2x_103' ],  # Pig breeds are reused from mammals of the *same release* (same anchors and subset of species)
     'pig_breeds_epo_anchors'   => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## murinae
