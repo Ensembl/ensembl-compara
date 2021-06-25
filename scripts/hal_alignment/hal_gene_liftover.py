@@ -119,7 +119,10 @@ def convert_liftover_chain_to_bed(in_chain_file: Union[Path, str],
                 # so the target strand is determined by whether q_strand matches i_strand
                 t_strand = '+' if i_strand == q_strand else '-'
 
-                name = f'{t_chrom}:{t_start}-{t_end}:{t_strand}|{i_chrom}:{i_start}-{i_end}:{i_strand}'
+                t_region_name = f'{t_chrom}:{t_start + 1}-{t_end}:{t_strand}'
+                i_region_name = f'{i_chrom}:{i_start + 1}-{i_end}:{i_strand}'
+                name = f'{t_region_name}|{i_region_name}'
+
                 fields = [t_chrom, t_start, t_end, name, score, t_strand]
                 print('\t'.join(str(x) for x in fields), file=out_f)
 
@@ -144,21 +147,25 @@ def convert_liftover_fasta_to_json(in_fasta_file: Union[Path, str],
     with open(in_fasta_file) as f:
         for header, sequence in SimpleFastaParser(f):
             output_region, input_region = (parse_region(x) for x in header.split('|'))
+            out_start_pos = output_region.start + 1
+            out_end_pos = output_region.end
             src_to_dest[input_region].append({
                 'dest_chrom': output_region.chrom,
-                'dest_start': output_region.start,
-                'dest_end': output_region.end,
+                'dest_start': out_start_pos,
+                'dest_end': out_end_pos,
                 'dest_strand': output_region.strand,
                 'dest_sequence': sequence
             })
 
     data = list()
     for input_region, results in src_to_dest.items():
+        in_start_pos = input_region.start + 1
+        in_end_pos = input_region.end
         params = {
             'src_genome': source_genome,
             'src_chrom': input_region.chrom,
-            'src_start': input_region.start,
-            'src_end': input_region.end,
+            'src_start': in_start_pos,
+            'src_end': in_end_pos,
             'src_strand': input_region.strand,
             'flank': flank_length,
             'dest_genome': destination_genome
