@@ -141,11 +141,11 @@
       <!-- Lagomorph -->
       <genome name="oryctolagus_cuniculus"/>
       <!-- Rodents -->
-      <genome name="mus_musculus"/>
       <genome name="rattus_norvegicus"/>
       <genome name="sciurus_vulgaris"/>
       <genome name="chinchilla_lanigera"/>
       <genome name="dipodomys_ordii"/>
+      <genome name="cavia_porcellus"/>
       <genome name="jaculus_jaculus"/>
       <genome name="peromyscus_maniculatus_bairdii"/>
       <genome name="nannospalax_galili"/>
@@ -250,6 +250,56 @@
       <genome name="aquila_chrysaetos_chrysaetos"/>
       <!-- Apterygiformes -->
       <genome name="apteryx_rowi"/>
+    </collection>
+
+    <collection name="hexapoda">
+      <base_collection name="shared"/>
+
+      <!-- Outgroups -->
+      <genome name="strigamia_maritima"/>
+      <genome name="daphnia_pulex"/>
+      <genome name="ixodes_scapularis"/>
+
+      <!-- Phthiraptera -->
+      <genome name="pediculus_humanus"/>
+
+      <!-- diptera -->
+      <genome name="anopheles_gambiae"/>
+      <genome name="aedes_aegypti_lvpagwg"/>
+      <genome name="glossina_pallidipes"/>
+      <genome name="teleopsis_dalmanni"/>
+      <genome name="culex_quinquefasciatus"/>
+      <genome name="lucilia_cuprina"/>
+      <genome name="lutzomyia_longipalpis"/>
+      <genome name="musca_domestica"/>
+
+      <!-- lepidoptera -->
+      <genome name="bombyx_mori"/>
+      <genome name="danaus_plexippus"/>
+      <genome name="heliconius_melpomene"/>
+      <genome name="melitaea_cinxia"/>
+
+      <!-- hymenoptera -->
+      <genome name="apis_mellifera"/>
+      <genome name="bombus_impatiens"/>
+      <genome name="nasonia_vitripennis"/>
+      <genome name="solenopsis_invicta"/>
+      <genome name="atta_cephalotes"/>
+
+      <!-- coleoptera -->
+      <genome name="tribolium_castaneum"/>
+      <genome name="dendroctonus_ponderosae"/>
+      <genome name="anoplophora_glabripennis"/>
+
+      <!-- isoptera -->
+      <genome name="zootermopsis_nevadensis"/>
+
+      <!-- Hemiptera -->
+      <genome name="bemisia_tabaci_asiaii5"/>
+      <genome name="acyrthosiphon_pisum"/>
+      <genome name="rhodnius_prolixus"/>
+      <genome name="trialeurodes_vaporariorum_gca011764245"/>
+      <genome name="cimex_lectularius"/>
     </collection>
 
   </collections>
