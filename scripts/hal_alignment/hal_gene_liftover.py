@@ -21,12 +21,12 @@ Examples::
     # Do a liftover from GRCh38 to CHM13 of the human INS gene
     # along with 5 kb upstream and downstream flanking regions.
     python hal_gene_liftover.py --src-region 'chr11:2159779-2161221:-' \
-        --flank 5000 input.hal GRCh38 CHM13 output.psl
+        --flank 5000 input.hal GRCh38 CHM13 output.json
 
     # Do a liftover from GRCh38 to CHM13 of the
     # features specified in an input BED file.
     python hal_gene_liftover.py --src-bed-file input.bed \
-        --flank 5000 input.hal GRCh38 CHM13 output.psl
+        --flank 5000 input.hal GRCh38 CHM13 output.json
 
 """
 
