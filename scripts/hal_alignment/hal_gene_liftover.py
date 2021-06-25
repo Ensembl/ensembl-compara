@@ -115,7 +115,7 @@ def convert_liftover_chain_to_bed(in_chain_file: Union[Path, str],
             t_end = rec['tEnd']
 
             for i_chrom, i_start, i_end, i_strand in region_mapping[q_region]:
-                # q_strand represents the relative strand of the query and target regions,
+                # q_strand represents the relative strand of the query and target regions,
                 # so the target strand is determined by whether q_strand matches i_strand
                 t_strand = '+' if i_strand == q_strand else '-'
 
@@ -263,8 +263,8 @@ def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, 
             fields = [region.chrom, flanked_start, flanked_end, name, score, region.strand]
             print('\t'.join(str(x) for x in fields), file=f)
 
-            # We do not specify strand for the query region, as this info
-            # is not completely preserved during the liftover process.
+            # We do not specify strand for the query region, as this info
+            # is not completely preserved during the liftover process.
             query_region = UnstrandedRegion(region.chrom, flanked_start, flanked_end)
             input_region = StrandedRegion(region.chrom, region.start, region.end, region.strand)
             try:
