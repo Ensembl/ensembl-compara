@@ -252,7 +252,7 @@
       <genome name="apteryx_rowi"/>
     </collection>
 
-    <collection name="insecta">
+    <collection name="hexapoda">
       <base_collection name="shared"/>
 
       <!-- Outgroups -->
