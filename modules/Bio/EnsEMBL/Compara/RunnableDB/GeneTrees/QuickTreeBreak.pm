@@ -408,9 +408,6 @@ sub generate_subtrees {
                 $cluster2->add_Member($leaf);
             }
         }
-        else {
-            $cluster2->add_Member($leaf);
-        }
     }
 
     print "supertree_leaf1: $supertree_leaf1\n";
