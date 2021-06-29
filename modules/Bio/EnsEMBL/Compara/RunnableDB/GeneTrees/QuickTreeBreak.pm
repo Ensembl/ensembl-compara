@@ -84,6 +84,8 @@ use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
 use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks;
 
+use Bio::EnsEMBL::Utils::Scalar qw/check_ref_can/;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
 sub param_defaults {
@@ -397,10 +399,16 @@ sub generate_subtrees {
         $in_cluster1{$leaf_seq_member_id} = 1;
     }
 
-    foreach my $leaf (@{$members}) {
-        if (defined $in_cluster1{$leaf->seq_member_id}) {
-            $cluster1->add_Member($leaf);
-        } else {
+    foreach my $leaf (@$members) {
+        if (check_ref_can($leaf, 'seq_member_id')) {
+            if (defined $in_cluster1{$leaf->seq_member_id}) {
+                $cluster1->add_Member($leaf);
+            }
+            else {
+                $cluster2->add_Member($leaf);
+            }
+        }
+        else {
             $cluster2->add_Member($leaf);
         }
     }
