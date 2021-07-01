@@ -26,13 +26,15 @@ PYLINT_OUTPUT_FILE=$(mktemp)
 PYLINT_ERRORS=$(mktemp)
 find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \! -name "Ortheus.py" -print0 | xargs -0 pylint --rcfile pylintrc --verbose | tee "$PYLINT_OUTPUT_FILE"
 grep -v "\-\-\-\-\-\-\-\-\-" "$PYLINT_OUTPUT_FILE" | grep -v "Your code has been rated" | grep -v "\n\n" | sed '/^$/d' > "$PYLINT_ERRORS"
+echo "$PYLINT_ERRORS"
 ! [ -s "$PYLINT_ERRORS" ]
 rt1=$?
 rm "$PYLINT_OUTPUT_FILE" "$PYLINT_ERRORS"
 
 find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \! -name "Ortheus.py" -print0 | xargs -0 mypy --config-file mypy.ini --namespace-packages --explicit-package-bases
 rt2=$?
-
+echo "rt1=$rt1"
+echo "rt2=$rt2"
 if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then
   exit 0
 else
