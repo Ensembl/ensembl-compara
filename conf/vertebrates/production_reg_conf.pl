@@ -129,7 +129,7 @@ my $compara_dbs = {
     'pig_breeds_epo_anchors'   => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## murinae
-    #'murinae_epo'          => [ 'mysql-ens-compara-prod-X', '' ],
+    'murinae_epo'          => [ 'mysql-ens-compara-prod-3', 'ivana_murinae_epo_105' ],
     'murinae_epo_prev'     => [ 'mysql-ens-compara-prod-4', 'jalvarez_murinae_epo_103' ],
     'murinae_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
