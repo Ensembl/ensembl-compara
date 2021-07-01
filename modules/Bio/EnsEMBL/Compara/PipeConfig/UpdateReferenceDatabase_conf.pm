@@ -345,6 +345,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'symlink_dir'          => $self->o('shared_fasta_dir'),
                 'ref_member_dumps_dir' => $self->o('ref_member_dumps_dir'),
+                'compara_db'           => '#ref_db#',
             },
             -flow_into  => [ 'symlink_fasta_to_shared_loc' ],
             -wait_for   => [ 'create_reference_sets' ],
