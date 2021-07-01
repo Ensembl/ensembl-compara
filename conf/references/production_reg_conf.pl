@@ -77,7 +77,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-mirror-
 
 # FORMAT: species/alias name => [ host, db_name ]
 my $compara_dbs = {
-    'compara_references' => [ 'mysql-ens-compara-prod-2', 'ensembl_compara_references' ],
+    'compara_references' => [ 'mysql-ens-sta-5', 'ensembl_compara_references' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
