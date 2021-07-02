@@ -1,8 +1,8 @@
 {
     "reference_db": "mysql://ensro@mysql-ens-compara-prod-10:4648/citest_dump_genomes_99",
     "target_db": "mysql://ensro@mysql-ens-compara-prod-10:4648/jalvarez_citest_dump_genomes_99b",
-    "reference_dir": "/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/citest",
-    "target_dir": "/hps/nobackup2/production/ensembl/jalvarez/citest_dumps",
+    "reference_dir": "/hps/nobackup/flicek/ensembl/compara/shared/genome_dumps/citest",
+    "target_dir": "/hps/nobackup/flicek/ensembl/compara/jalvarez/citest_dumps",
     "database_tests": {
         "job": [
             {

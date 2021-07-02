@@ -135,9 +135,11 @@ sub pipeline_analyses {
                 'species_set_name' => $self->o('species_set_name'),
                 'release'          => $self->o('ensembl_release'),
                 'add_sister_mlsss' => 1,  # Load GERP MLSS ids as well
+                'master_db'        => $self->o('master_db'),
             },
             -input_ids  => [{}],
             -flow_into  => [ 'populate_new_database' ],
+            -rc_name    => '500Mb_job',
         },
 
 # ---------------------------------------------[Run poplulate_new_database.pl script ]---------------------------------------------------
@@ -190,14 +192,15 @@ sub pipeline_analyses {
         {   -logic_name => 'load_genomedb_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'compara_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
-
-                'extra_parameters'      => [ 'locator' ],
+                'compara_db'       => $self->o('master_db'),   # that's where genome_db_ids come from
+                'master_db'        => $self->o('master_db'),
+                'extra_parameters' => [ 'locator' ],
             },
-            -flow_into => {
-                '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
-                'A->1' => [ 'create_mlss_ss' ],
+            -flow_into  => {
+                '2->A'  => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
+                'A->1'  => [ 'create_mlss_ss' ],
             },
+            -rc_name    => '500Mb_job',
 	},
 
         {   -logic_name => 'load_genomedb',
@@ -239,10 +242,11 @@ sub pipeline_analyses {
         {   -logic_name => 'create_mlss_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareSpeciesSetsMLSS',
             -parameters => {
-                'master_db' => $self->o('master_db'),
-                'whole_method_links'    => [ $self->o('method_type') ],
+                'master_db'          => $self->o('master_db'),
+                'whole_method_links' => [ $self->o('method_type') ],
             },
-            -flow_into => [ 'make_species_tree' ],
+            -flow_into  => [ 'make_species_tree' ],
+            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name    => 'make_species_tree',
