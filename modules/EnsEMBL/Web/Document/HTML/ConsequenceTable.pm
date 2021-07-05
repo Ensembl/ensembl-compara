@@ -263,7 +263,7 @@ sub render {
       'colour'  => 'a52a2a', 
       'desc'    => 'A feature ablation whereby the deleted region includes a regulatory region', 
       'acc'     => '0001894', 
-      'impact'  => 'MODERATE',
+      'impact'  => 'MODIFIER',
     },
     {
       'term'    => 'regulatory_region_amplification', 
