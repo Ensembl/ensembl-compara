@@ -622,7 +622,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       // Update mastertree according to the flag true/false = select/deselect
       panel.elLk.mastertree.dynatree("getTree").selectKey(item.data.key, flag);
       if (flag) {
-        if (!$('li.'+item.data.key, panel.elLk.list).length) {
+        if (!$('li.' + CSS.escape(item.data.key), panel.elLk.list).length) {
           var img_filename = (item.data.special_type ?  item.data.special_type : item.data.key) + '.png';
           item.data.img_url = item.data.img_url || (panel.imagePath + img_filename);
 
@@ -637,7 +637,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
         }
       }
       else {
-        if($('li.'+item.data.key, panel.elLk.list).length) {
+        if($('li.' + CSS.escape(item.data.key), panel.elLk.list).length) {
           $.each($('li', panel.elLk.list), function(i, li) {
             if ($(li).data('key') === item.data.key) {
               $(li).remove();
