@@ -48,7 +48,12 @@ sub fetch_input {
     
     my $homology_files= [];
     my $wanted = sub { _wanted($homology_files, $member_type) };
-    find($wanted, $basedir);
+
+    {
+        local $File::Find::dont_use_nlink = 1;
+        find($wanted, $basedir);
+    }
+
     print "Found " . scalar @$homology_files . " homology dump files to scan..\n\n" if $self->debug;
     $self->param('homology_files', $homology_files);
 }
