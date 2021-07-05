@@ -104,7 +104,7 @@ my $compara_dbs = {
 
     # EPO dbs
     ## mammals
-    #'mammals_epo_w_ext'    => [ 'mysql-ens-compara-prod-X', '' ],
+    'mammals_epo_w_ext'    => [ 'mysql-ens-compara-prod-8', 'ivana_mammals_epo_with_ext_105' ],
     'mammals_epo_prev'     => [ 'mysql-ens-compara-prod-4', 'jalvarez_mammals_epo_with2x_103' ],
     'mammals_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
