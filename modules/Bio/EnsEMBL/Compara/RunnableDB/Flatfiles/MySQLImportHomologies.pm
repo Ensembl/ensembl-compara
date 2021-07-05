@@ -165,7 +165,8 @@ sub write_output {
         # Check what has happened
         if ($command->err =~ /Lock wait timeout exceeded/ || !$hc_passed) {
             # Try importing the data again but in replace mode, just in case some rows were half-copied
-            print ($hc_passed ? "Received 'Lock wait timeout exceeded'." : "The imported data appeared corrupted.") . " Retrying...\n" if $self->debug;
+            my $desc = $hc_passed ? "Received 'Lock wait timeout exceeded'." : "The imported data appeared corrupted.";
+            print $desc . " Retrying...\n" if $self->debug;
             if (! $replace) {
                 $import_query =~ s/  INTO / REPLACE INTO /g;
                 $replace = 1;

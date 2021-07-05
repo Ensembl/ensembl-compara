@@ -78,12 +78,12 @@ class TestDirCmp(BaseTestFilesys):
             1: {'common_files': {'b.txt', 'c.txt'}},
             2: {'common_files': {'a.nw', 'b.nwk'}},
         }
-        for i in expected:
+        for i, value in expected.items():
             key = Path(str(i))
             for attr in ['common_files', 'ref_only', 'target_only', 'subdirs']:
-                if attr in expected[i]:
-                    assert getattr(self.dir_cmp.subdirs[key], attr) == expected[i][attr], \
-                        "Expected {} '{}' at '{}/'".format(attr, "', '".join(expected[i][attr]), i)
+                if attr in value:
+                    assert getattr(self.dir_cmp.subdirs[key], attr) == value[attr], \
+                        "Expected {} '{}' at '{}/'".format(attr, "', '".join(value[attr]), i)
                 else:
                     assert not getattr(self.dir_cmp.subdirs[key], attr), \
                         f"Found unexpected {attr} elements at '{i}/'"

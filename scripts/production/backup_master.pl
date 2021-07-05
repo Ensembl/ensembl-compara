@@ -132,7 +132,7 @@ my @params = (
     '--user'    => 'ensro',
 );
 
-$dump_path //= '/nfs/production/panda/ensembl/warehouse/compara/master_db_dumps';
+$dump_path //= $ENV{'COMPARA_WAREHOUSE'} . '/master_db_dumps';
 $username  //= 'compara_ensembl';
 my $date = strftime '%Y%m%d', localtime;
 my $dump_name = "ensembl_compara_master_${division}.${date}" . ($label ? ".$label" : ''). ".sql";
