@@ -159,7 +159,11 @@ sub query_file_tree {
     # grab the list of files in the $dir
     my $filelist = [];
     my $wanted = sub { _wanted($filelist, ($ext || '.+')) };
-    find($wanted, $dir);
+
+    {
+        local $File::Find::dont_use_nlink = 1;
+        find($wanted, $dir);
+    }
 
     # sort files - important for unit testing (esp travis-ci)
     # as different versions of File::Find traverse in different order
