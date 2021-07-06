@@ -362,37 +362,37 @@ sub gather_hc_stats {
     my ( $self, $exp_vals, $row ) = @_;
 
     # homology table fields
-    $exp_vals->{min_stn} =  min $row->{species_tree_node_id}, ($exp_vals->{min_stn}||10**12);
-    $exp_vals->{max_stn} =  max $row->{species_tree_node_id}, ($exp_vals->{max_stn}||0);
+    $exp_vals->{min_stn} =  min $row->{species_tree_node_id}, ($exp_vals->{min_stn}//10**12);
+    $exp_vals->{max_stn} =  max $row->{species_tree_node_id}, ($exp_vals->{max_stn}//0);
     $exp_vals->{sum_stn} += $row->{species_tree_node_id};
 
-    $exp_vals->{min_gtn} =  min $row->{gene_tree_node_id}, ($exp_vals->{min_gtn}||10**12);
-    $exp_vals->{max_gtn} =  max $row->{gene_tree_node_id}, ($exp_vals->{max_gtn}||0);
+    $exp_vals->{min_gtn} =  min $row->{gene_tree_node_id}, ($exp_vals->{min_gtn}//10**12);
+    $exp_vals->{max_gtn} =  max $row->{gene_tree_node_id}, ($exp_vals->{max_gtn}//0);
     $exp_vals->{sum_gtn} += $row->{gene_tree_node_id};
 
-    $exp_vals->{min_gtr} =  min $row->{gene_tree_root_id}, ($exp_vals->{min_gtr}||10**12);
-    $exp_vals->{max_gtr} =  max $row->{gene_tree_root_id}, ($exp_vals->{max_gtr}||0);
+    $exp_vals->{min_gtr} =  min $row->{gene_tree_root_id}, ($exp_vals->{min_gtr}//10**12);
+    $exp_vals->{max_gtr} =  max $row->{gene_tree_root_id}, ($exp_vals->{max_gtr}//0);
     $exp_vals->{sum_gtr} += $row->{gene_tree_root_id};
 
     # homology_member table fields
-    $exp_vals->{min_gm} =  min $row->{gene_member_id}, $row->{homology_gene_member_id}, ($exp_vals->{min_gm}||10**12);
-    $exp_vals->{max_gm} =  max $row->{gene_member_id}, $row->{homology_gene_member_id}, ($exp_vals->{max_gm}||0);
+    $exp_vals->{min_gm} =  min $row->{gene_member_id}, $row->{homology_gene_member_id}, ($exp_vals->{min_gm}//10**12);
+    $exp_vals->{max_gm} =  max $row->{gene_member_id}, $row->{homology_gene_member_id}, ($exp_vals->{max_gm}//0);
     $exp_vals->{sum_gm} += ($row->{gene_member_id} + $row->{homology_gene_member_id});
 
-    $exp_vals->{min_sm} =  min $row->{seq_member_id}, $row->{homology_seq_member_id}, ($exp_vals->{min_sm}||10**12);
-    $exp_vals->{max_sm} =  max $row->{seq_member_id}, $row->{homology_seq_member_id}, ($exp_vals->{max_sm}||0);
+    $exp_vals->{min_sm} =  min $row->{seq_member_id}, $row->{homology_seq_member_id}, ($exp_vals->{min_sm}//10**12);
+    $exp_vals->{max_sm} =  max $row->{seq_member_id}, $row->{homology_seq_member_id}, ($exp_vals->{max_sm}//0);
     $exp_vals->{sum_sm} += ($row->{seq_member_id} + $row->{homology_seq_member_id});
 
-    $exp_vals->{min_cov} =  min $row->{perc_cov}, $row->{homology_perc_cov}, ($exp_vals->{min_cov}||101);
-    $exp_vals->{max_cov} =  max $row->{perc_cov}, $row->{homology_perc_cov}, ($exp_vals->{max_cov}||0);
+    $exp_vals->{min_cov} =  min $row->{perc_cov}, $row->{homology_perc_cov}, ($exp_vals->{min_cov}//101);
+    $exp_vals->{max_cov} =  max $row->{perc_cov}, $row->{homology_perc_cov}, ($exp_vals->{max_cov}//0);
     $exp_vals->{sum_cov} += ($row->{perc_cov} + $row->{homology_perc_cov});
 
-    $exp_vals->{min_id} =  min $row->{perc_id}, $row->{homology_perc_id}, ($exp_vals->{min_id}||101);
-    $exp_vals->{max_id} =  max $row->{perc_id}, $row->{homology_perc_id}, ($exp_vals->{max_id}||0);
+    $exp_vals->{min_id} =  min $row->{perc_id}, $row->{homology_perc_id}, ($exp_vals->{min_id}//101);
+    $exp_vals->{max_id} =  max $row->{perc_id}, $row->{homology_perc_id}, ($exp_vals->{max_id}//0);
     $exp_vals->{sum_id} += ($row->{perc_id} + $row->{homology_perc_id});
 
-    $exp_vals->{min_pos} =  min $row->{perc_pos}, $row->{homology_perc_pos}, ($exp_vals->{min_pos}||101);
-    $exp_vals->{max_pos} =  max $row->{perc_pos}, $row->{homology_perc_pos}, ($exp_vals->{max_pos}||0);
+    $exp_vals->{min_pos} =  min $row->{perc_pos}, $row->{homology_perc_pos}, ($exp_vals->{min_pos}//101);
+    $exp_vals->{max_pos} =  max $row->{perc_pos}, $row->{homology_perc_pos}, ($exp_vals->{max_pos}//0);
     $exp_vals->{sum_pos} += ($row->{perc_pos} + $row->{homology_perc_pos});
 
     return $exp_vals;
