@@ -120,7 +120,7 @@ my $compara_dbs = {
 
     ## primates
     #'primates_epo_w_ext'    => [ 'mysql-ens-compara-prod-X', '' ],
-    #'primates_epo_prev'     => [ 'mysql-ens-compara-prod-X', '' ],  # Primates are reused from mammals of the *same release* (same anchors and subset of species)
+    'primates_epo_prev'     => [ 'mysql-ens-compara-prod-8', 'ivana_mammals_epo_with_ext_105' ],  # Primates are reused from mammals of the *same release* (same anchors and subset of species)
     'primates_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## pig strains
