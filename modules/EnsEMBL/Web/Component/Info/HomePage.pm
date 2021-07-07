@@ -73,6 +73,13 @@ sub content {
   return $html;
 }
 
+sub pluralise {
+  my ($arg) = @_;
+
+  return $arg if $arg =~ s/([^aeiou])y$/$1ies/g;
+  return "${arg}s";
+}
+
 sub assembly_text {
   my $self              = shift;
   my $hub               = $self->hub;
@@ -148,7 +155,7 @@ sub assembly_text {
 
   ## Insert link to strains page 
   if ($strains) {
-    my $strain_text = $species_defs->STRAIN_TYPE.'s';
+    my $strain_text = pluralise($species_defs->STRAIN_TYPE);
     $html .= sprintf '<h3 class="light top-margin">Other %s</h3><p>This species has data on %s additional %s. <a href="%s">View list of %s</a></p>', 
                             $strain_text,
                             scalar @$strains,
