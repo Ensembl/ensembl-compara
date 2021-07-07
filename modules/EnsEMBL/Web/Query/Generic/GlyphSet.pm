@@ -175,7 +175,10 @@ sub fixup_alignslice {
         ref => $as->reference_Slice()->name,
         refsp => $self->context->{'config'}->hub->species,
         mlss => $as->get_MethodLinkSpeciesSet->dbID(),
-        name => $ass->name,
+	ass_species => $ass->genome_db->name,
+        ass_coord => $ass->coord_system->version,
+        ass_start => $ass->start,
+        ass_end => $ass->end
       };
     }
   } elsif($self->phase eq 'pre_generate') {
@@ -191,10 +194,23 @@ sub fixup_alignslice {
         $mlssa->fetch_by_dbID($data->{$key}{'mlss'}),
         'expanded','restrict'
       );
-      foreach my $sl (@{$as->get_all_Slices}) {
-        if($sl->name eq $data->{$key}{'name'}) {
-          $data->{$key} = $sl;
-          return;
+      # try an exact match first then match except for start/end (which we fix)
+      foreach my $approx ((0,1)) {
+        foreach my $sl (@{$as->get_all_Slices}) {
+          if($sl->coord_system->version eq $data->{$key}{'ass_coord'} and
+	     $sl->genome_db->name eq $data->{$key}{'ass_species'}) {
+            if($sl->start == $data->{$key}{'ass_start'} and
+               $sl->end   == $data->{$key}{'ass_end'}) {
+              $data->{$key} = $sl;
+              return;
+            }
+            next unless $approx;
+            # yuk, yuk, yuk! Need a way of serialising/deserialising AlSlSl
+            $sl->{'start'} = $data->{$key}{'ass_start'};
+            $sl->{'end'} = $data->{$key}{'ass_end'};
+            $data->{$key} = $sl;
+            return;
+          }
         }
       }
       die "AlignSlice::Slice not found";
