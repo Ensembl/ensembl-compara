@@ -62,6 +62,7 @@ sub write_output {
         foreach my $fasta_file ( @fastas ) {
             $self->dataflow_output_id( { 'symlink_dir' => $dir, 'target_file' => $fasta_file, 'cleanup_symlinks' => 1 }, 1 );
         }
+        $self->dataflow_output_id( { 'symlink_dir' => $dir }, 2);
     }
 }
 
