@@ -229,7 +229,6 @@ sub hc_homology_import {
     $exp_vals->{avg_cov} = $exp_vals->{sum_cov}/$total_hm_rows;
     $exp_vals->{avg_id}  = $exp_vals->{sum_id}/$total_hm_rows;
     $exp_vals->{avg_pos} = $exp_vals->{sum_pos}/$total_hm_rows;
-    $exp_vals = cleanup_vals($exp_vals);
 
     # HOMOLOGY check : HC number of rows and specific fields in homology table
     my $mlss_id = $self->param_required('mlss_id');
@@ -242,7 +241,6 @@ sub hc_homology_import {
                SUM(is_high_confidence IS NOT NULL) AS hc_count
                FROM homology WHERE method_link_species_set_id = $mlss_id";
     my $db_vals = $self->compara_dba->dbc->db_handle->selectrow_hashref($sql);
-    $db_vals = cleanup_vals($db_vals);
 
     # check homology row counts
     if ( $exp_vals->{total_rows} != $db_vals->{total_rows} ) {
@@ -254,7 +252,7 @@ sub hc_homology_import {
     if ( $exp_vals->{total_rows} != $db_vals->{stn_count} ) {
         $self->warning("The number of species_tree_node_ids written in the homology table (" . $db_vals->{stn_count} . ") doesn't match the number of lines in the homology flat file (" . $exp_vals->{total_rows} . ")");
         return 0;
-    } elsif ( $exp_vals->{min_stn} != $db_vals->{min_stn} || $exp_vals->{max_stn} != $db_vals->{max_stn} || $exp_vals->{avg_stn} != $db_vals->{avg_stn} ) {
+    } elsif ( $exp_vals->{min_stn} != $db_vals->{min_stn} || $exp_vals->{max_stn} != $db_vals->{max_stn} || ! approx_equal($exp_vals->{avg_stn}, $db_vals->{avg_stn}) ) {
         $self->warning("Some truncated species_tree_node_ids have been detected in the homology table:\n" . hc_report($exp_vals, $db_vals, 'stn'));
         return 0;
     }
@@ -263,7 +261,7 @@ sub hc_homology_import {
     if ( $exp_vals->{total_rows} != $db_vals->{gtn_count} ) {
         $self->warning("The number of gene_tree_node_ids written in the homology table (" . $db_vals->{gtn_count} . ") doesn't match the number of lines in the homology flat file (" . $exp_vals->{total_rows} . ")");
         return 0;
-    } elsif ( $exp_vals->{min_gtn} != $db_vals->{min_gtn} || $exp_vals->{max_gtn} != $db_vals->{max_gtn} || $exp_vals->{avg_gtn} != $db_vals->{avg_gtn} ) {
+    } elsif ( $exp_vals->{min_gtn} != $db_vals->{min_gtn} || $exp_vals->{max_gtn} != $db_vals->{max_gtn} || ! approx_equal($exp_vals->{avg_gtn}, $db_vals->{avg_gtn}) ) {
         $self->warning("Some truncated gene_tree_node_ids have been detected in the homology table:\n" . hc_report($exp_vals, $db_vals, 'gtn'));
         return 0;
     }
@@ -272,7 +270,7 @@ sub hc_homology_import {
     if ( $exp_vals->{total_rows} != $db_vals->{gtr_count} ) {
         $self->warning("The number of gene_tree_root_ids written in the homology table (" . $db_vals->{gtr_count} . ") doesn't match the number of lines in the homology flat file (" . $exp_vals->{total_rows} . ")");
         return 0;
-    } elsif ( $exp_vals->{min_gtr} != $db_vals->{min_gtr} || $exp_vals->{max_gtr} != $db_vals->{max_gtr} || $exp_vals->{avg_gtr} != $db_vals->{avg_gtr} ) {
+    } elsif ( $exp_vals->{min_gtr} != $db_vals->{min_gtr} || $exp_vals->{max_gtr} != $db_vals->{max_gtr} || ! approx_equal($exp_vals->{avg_gtr}, $db_vals->{avg_gtr}) ) {
         $self->warning("Some truncated gene_tree_root_ids have been detected in the homology table:\n" . hc_report($exp_vals, $db_vals, 'gtr'));
         return 0;
     }
@@ -305,7 +303,6 @@ sub hc_homology_import {
                MAX(perc_pos) as max_pos, AVG(perc_pos) as avg_pos
                FROM homology_member WHERE homology_id BETWEEN $homology_id_start AND $homology_id_end";
     $db_vals = $self->compara_dba->dbc->db_handle->selectrow_hashref($hm_sql);
-    $db_vals = cleanup_vals($db_vals);
 
     # check homology row counts
     if ( $total_hm_rows != $db_vals->{total_hm_rows} ) {
@@ -317,7 +314,7 @@ sub hc_homology_import {
     if ( $total_hm_rows != $db_vals->{gm_count} ) {
         $self->warning("The number of gene_member_ids written in the homology_member table (" . $db_vals->{gm_count} . ") doesn't match the number of lines in the homology flat file (" . $total_hm_rows . ")");
         return 0;
-    } elsif ( $exp_vals->{min_gm} != $db_vals->{min_gm} || $exp_vals->{max_gm} != $db_vals->{max_gm} || $exp_vals->{avg_gm} != $db_vals->{avg_gm} ) {
+    } elsif ( $exp_vals->{min_gm} != $db_vals->{min_gm} || $exp_vals->{max_gm} != $db_vals->{max_gm} || ! approx_equal($exp_vals->{avg_gm}, $db_vals->{avg_gm}) ) {
         $self->warning("Some truncated gene_member_ids have been detected in the homology_member table:\n" . hc_report($exp_vals, $db_vals, 'gm'));
         return 0;
     }
@@ -326,7 +323,7 @@ sub hc_homology_import {
     if ( $total_hm_rows != $db_vals->{sm_count} ){
         $self->warning("The number of seq_member_ids written in the homology_member table (" . $db_vals->{sm_count} . ") doesn't match the number of lines in the homology flat file (" . $total_hm_rows . ")");
         return 0;
-    } elsif ( $exp_vals->{min_sm} != $db_vals->{min_sm} || $exp_vals->{max_sm} != $db_vals->{max_sm} || $exp_vals->{avg_sm} != $db_vals->{avg_sm} ) {
+    } elsif ( $exp_vals->{min_sm} != $db_vals->{min_sm} || $exp_vals->{max_sm} != $db_vals->{max_sm} || ! approx_equal($exp_vals->{avg_sm}, $db_vals->{avg_sm}) ) {
         $self->warning("Some truncated seq_member_ids have been detected in the homology_member table:\n" . hc_report($exp_vals, $db_vals, 'sm'));
         return 0;
     }
@@ -335,21 +332,21 @@ sub hc_homology_import {
     if ( $total_hm_rows != $db_vals->{cov_count} ) {
         $self->warning("The number of perc_cov values written in the homology_member table (" . $db_vals->{cov_count} . ") doesn't match the number of lines in the homology flat file (" . $total_hm_rows . ")");
         return 0;
-    } elsif ( $exp_vals->{min_cov} != $db_vals->{min_cov} || $exp_vals->{max_cov} != $db_vals->{max_cov} || $exp_vals->{avg_cov} != $db_vals->{avg_cov} ) {
+    } elsif ( ! ( approx_equal($exp_vals->{min_cov}, $db_vals->{min_cov}) && approx_equal($exp_vals->{max_cov}, $db_vals->{max_cov}) && approx_equal($exp_vals->{avg_cov}, $db_vals->{avg_cov}) ) ) {
         $self->warning("Some truncated perc_cov values have been detected in the homology_member table:\n" . hc_report($exp_vals, $db_vals, 'cov'));
         return 0;
     }
     if ( $total_hm_rows != $db_vals->{id_count} ) {
         $self->warning("The number of perc_id values written in the homology_member table (" . $db_vals->{id_count} . ") doesn't match the number of lines in the homology flat file (" . $total_hm_rows . ")");
         return 0;
-    } elsif ( $exp_vals->{min_id} != $db_vals->{min_id} || $exp_vals->{max_id} != $db_vals->{max_id} || $exp_vals->{avg_id} != $db_vals->{avg_id} ) {
+    } elsif ( ! ( approx_equal($exp_vals->{min_id}, $db_vals->{min_id}) && approx_equal($exp_vals->{max_id}, $db_vals->{max_id}) && approx_equal($exp_vals->{avg_id}, $db_vals->{avg_id}) ) ) {
         $self->warning("Some truncated perc_id values have been detected in the homology_member table:\n" . hc_report($exp_vals, $db_vals, 'id'));
         return 0;
     }
     if ( $total_hm_rows != $db_vals->{pos_count} ) {
         $self->warning("The number of perc_pos values written in the homology_member table (" . $db_vals->{pos_count} . ") doesn't match the number of lines in the homology flat file (" . $total_hm_rows . ")");
         return 0;
-    } elsif ( $exp_vals->{min_pos} != $db_vals->{min_pos} || $exp_vals->{max_pos} != $db_vals->{max_pos} || $exp_vals->{avg_pos} != $db_vals->{avg_pos} ) {
+    } elsif ( ! ( approx_equal($exp_vals->{min_pos}, $db_vals->{min_pos}) && approx_equal($exp_vals->{max_pos}, $db_vals->{max_pos}) && approx_equal($exp_vals->{avg_pos}, $db_vals->{avg_pos}) ) ) {
         $self->warning("Some truncated perc_pos values have been detected in the homology_member table:\n" . hc_report($exp_vals, $db_vals, 'pos'));
         return 0;
     }
@@ -398,16 +395,15 @@ sub gather_hc_stats {
     return $exp_vals;
 }
 
-sub cleanup_vals {
-    my $vals = shift;
+sub approx_equal {
+    my ( $a, $b, $abs_tol ) = @_;
+    $abs_tol //= 0.0001;
 
-    # round any floating point nums to 4 places
-    foreach my $key ( keys %$vals ) {
-        if ( $vals->{$key} =~ /\./ ) {
-            $vals->{$key} = sprintf("%.4f", $vals->{$key});
-        }
+    if ( defined $a && defined $b && abs($a - $b) <= $abs_tol ) {
+        return 1;
+    } else {
+        return 0;
     }
-    return $vals;
 }
 
 sub hc_report {
