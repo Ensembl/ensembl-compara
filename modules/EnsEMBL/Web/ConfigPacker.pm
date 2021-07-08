@@ -1314,7 +1314,7 @@ sub _summarise_compara_db {
   }
   
   # if there are intraspecies alignments then get full details of genomic alignments, ie start and stop, constrained by a set defined above (or no constraint for all alignments)
-  $self->_summarise_compara_alignments($dbh, $db_name, \%intra_species_constraints) if scalar keys %intra_species_constraints;
+  $self->_summarise_compara_alignments($dbh, $db_name, \%intra_species_constraints);
   
   # We've done the DB hash... So lets get on with the DNA, SYNTENY and GENE hashes;
   my %sections = (
@@ -1391,12 +1391,10 @@ sub _homologies_sql {
 
 sub _summarise_compara_alignments {
   my ($self, $dbh, $db_name, $constraint) = @_;
-  my (%config, $lookup_species, @method_link_species_set_ids);
+  return unless keys %{$constraint||{}};
 
-  if ($constraint) {
-    $lookup_species              = join ',', map $dbh->quote($_), sort keys %$constraint;
-    @method_link_species_set_ids = map keys %$_, values %$constraint;
-  }
+  my $lookup_species              = join ',', map $dbh->quote($_), sort keys %$constraint;
+  my @method_link_species_set_ids = map keys %$_, values %$constraint;
   
   # get details of seq_regions in the database
   my $q = '
@@ -1459,7 +1457,7 @@ sub _summarise_compara_alignments {
   $rv  = $sth->execute || die $sth->errstr;
       
   # parse the data
-  my (@seen_ids, $prev_id, $prev_df_id, $prev_comparison, $prev_method, $prev_start, $prev_end, $prev_sr, $prev_species, $prev_coord_sys);
+  my (%config, @seen_ids, $prev_id, $prev_df_id, $prev_comparison, $prev_method, $prev_start, $prev_end, $prev_sr, $prev_species, $prev_coord_sys);
   
   while (my ($gabid, $mlss_id, $start, $end, $df_id) = $sth->fetchrow_array) {
     my $id = $gabid . $mlss_id;
