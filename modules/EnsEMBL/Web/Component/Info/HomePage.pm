@@ -187,7 +187,6 @@ sub genebuild_text {
   my $sp_prod_name = $species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
   my $sample_data  = $species_defs->SAMPLE_DATA;
   my $ftp          = $self->ftp_url;
-  my $vega         = $species_defs->SUBTYPE !~ /Archive|Pre/ && $species_defs->get_config('MULTI', 'ENSEMBL_VEGA') || {};
   my $idm_link     = $species_defs->ENSEMBL_IDM_ENABLED
     ? sprintf('<p><a href="%s" class="nodeco">%sUpdate your old Ensembl IDs</a></p>', $hub->url({ type => 'Tools', action => 'IDMapper', __clear => 1 }), sprintf($self->{'icon'}, 'tool'))
     : '';
