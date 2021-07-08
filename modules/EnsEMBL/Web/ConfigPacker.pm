@@ -1324,7 +1324,9 @@ sub _summarise_compara_db {
   );
   
   ## Store a lookup using genome (species) names
-  $res_aref = $dbh->selectall_arrayref('
+  ## Omit for bacteria as there are too many
+  my $division = $SiteDefs::EG_DIVISION;
+  $res_aref = ($division && $division eq 'bacteria') ? [] : $dbh->selectall_arrayref('
     select ml.type, gd1.name, gd2.name
       from genome_db gd1, genome_db gd2, species_set ss1, species_set ss2,
        method_link ml, method_link_species_set mls1,
