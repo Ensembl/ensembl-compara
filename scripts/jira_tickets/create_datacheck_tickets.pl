@@ -129,7 +129,7 @@ my $dc_task_keys = $jira_adaptor->create_tickets(
     -DRY_RUN            => $dry_run
 );
 # Create a blocker issue link between the newly created datacheck ticket and the
-# handover ticket
+# handover ticket if it doesn't already exist
 my $blocked_ticket_key = find_labeled_ticket($jira_adaptor, 'Handover_anchor');
 $jira_adaptor->link_tickets('Blocks', $dc_task_keys->[0], $blocked_ticket_key, $dry_run);
 
