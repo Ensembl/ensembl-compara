@@ -119,8 +119,11 @@ def convert_liftover_chain_to_bed(in_chain_file: Union[Path, str],
                 # so the target strand is determined by whether q_strand matches i_strand
                 t_strand = '+' if i_strand == q_strand else '-'
 
-                t_region_name = f'{t_chrom}:{t_start + 1}-{t_end}:{t_strand}'
-                i_region_name = f'{i_chrom}:{i_start + 1}-{i_end}:{i_strand}'
+                t_strand_num = 1 if t_strand == '+' else -1
+                i_strand_num = 1 if i_strand == '+' else -1
+
+                t_region_name = f'{t_chrom}:{t_start + 1}-{t_end}:{t_strand_num}'
+                i_region_name = f'{i_chrom}:{i_start + 1}-{i_end}:{i_strand_num}'
                 name = f'{t_region_name}|{i_region_name}'
 
                 fields = [t_chrom, t_start, t_end, name, score, t_strand]
@@ -149,11 +152,12 @@ def convert_liftover_fasta_to_json(in_fasta_file: Union[Path, str],
             output_region, input_region = (parse_region(x) for x in header.split('|'))
             out_start_pos = output_region.start + 1
             out_end_pos = output_region.end
+            out_strand_num = 1 if output_region.strand == '+' else -1
             src_to_dest[input_region].append({
                 'dest_chrom': output_region.chrom,
                 'dest_start': out_start_pos,
                 'dest_end': out_end_pos,
-                'dest_strand': output_region.strand,
+                'dest_strand': out_strand_num,
                 'dest_sequence': sequence
             })
 
@@ -161,12 +165,13 @@ def convert_liftover_fasta_to_json(in_fasta_file: Union[Path, str],
     for input_region, results in src_to_dest.items():
         in_start_pos = input_region.start + 1
         in_end_pos = input_region.end
+        in_strand_num = 1 if input_region.strand == '+' else -1
         params = {
             'src_genome': source_genome,
             'src_chrom': input_region.chrom,
             'src_start': in_start_pos,
             'src_end': in_end_pos,
-            'src_strand': input_region.strand,
+            'src_strand': in_strand_num,
             'flank': flank_length,
             'dest_genome': destination_genome
         }
@@ -296,7 +301,7 @@ def parse_region(region: str) -> StrandedRegion:
 
     """
     seq_region_regex = re.compile(
-        r'^(?P<chrom>[^:]+):(?P<start>[0-9]+)-(?P<end>[0-9]+):(?P<strand>\+|-)$'
+        r'^(?P<chrom>[^:]+):(?P<start>[0-9]+)-(?P<end>[0-9]+):(?P<strand>1|-1)$'
     )
     match = seq_region_regex.match(region)
 
@@ -304,12 +309,13 @@ def parse_region(region: str) -> StrandedRegion:
         region_chrom = match['chrom']  # type: ignore
         match_start = match['start']  # type: ignore
         match_end = match['end']  # type: ignore
-        region_strand = match['strand']  # type: ignore
+        match_strand = match['strand']  # type: ignore
     except TypeError as e:
         raise ValueError(f"region '{region}' could not be parsed") from e
 
     region_start = int(match_start) - 1
     region_end = int(match_end)
+    region_strand = '+' if match_strand == '1' else '-'
 
     if region_start >= region_end:
         raise ValueError(f"region '{region}' has inverted/empty interval")
