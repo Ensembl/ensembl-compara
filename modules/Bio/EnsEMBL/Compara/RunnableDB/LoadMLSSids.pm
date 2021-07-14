@@ -144,6 +144,7 @@ sub fetch_input {
     $self->throw("No MLSS found for method '$method_type' and species set '$species_set_name' in release $release") unless @curr_mlss;
     my $mlss = $curr_mlss[0];
     $mlss_ids{mlss_id} = $mlss->dbID;
+    $mlss_ids{ext_mlss_id} = $mlss->dbID if $method_type =~ /^EPO_EXTENDED$/i;
 
     my @prev_mlss;
     if ( $self->param('add_prev_mlss') || $use_prev_epo_ext ) {
