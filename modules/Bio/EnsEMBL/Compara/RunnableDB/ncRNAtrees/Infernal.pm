@@ -321,7 +321,7 @@ sub run_infernal {
   my $cmbuild_exe = $self->require_executable('cmbuild_exe');
 
   $cmd = $cmbuild_exe;
-  #Increasing the maximum allowable DP matrix size to <x> Mb  default(2048.0)
+  #Increasing the maximum allowable DP matrix size to <x> Mb  default(1028.0)
   # This may be necessary if cmbuild crashes.
   $cmd .= " --mxsize $infernal_mxsize " if defined $infernal_mxsize;
   $cmd .= " --refine $refined_stk_output";
