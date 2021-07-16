@@ -332,8 +332,6 @@ sub childInitHandler {
   ## This handler gets called by Apache when initialising an Apache child process
   ## @param APR::Pool object
   ## @param Apache2::ServerRec server object
-  # Storable defaults are now too small. Ideally these would be configurable,
-  # perhaps in SiteDefs.
   $Storable::recursion_limit = $SiteDefs::STORABLE_RECURSION_LIMIT;
   $Storable::recursion_limit_hash = $SiteDefs::STORABLE_RECURSION_LIMIT_HASH;
   srand;
