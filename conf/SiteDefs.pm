@@ -78,6 +78,8 @@ our $ENSEMBL_PROXY_PORT           = undef;                              # Port u
 our $ENSEMBL_LONGPROCESS_MINTIME  = 10;                                 # Warn extra info to logs if a process takes more than given time in seconds to serve request
 our $ENSEMBL_MAX_PROCESS_SIZE     = 1024 * 1024;                        # Value for Apache2::SizeLimit::MAX_PROCESS_SIZE
 our $ENSEMBL_MAIL_SERVER          = 'mail.mydomain.org';                # Mail server to be used for sending emails from the web server
+our $STORABLE_RECURSION_LIMIT     = 20474;				# see perl5 bug GitHub #16780; those new deafults are too small for ensembl
+our $STORABLE_RECURSION_LIMIT_HASH = 12278;				# see perl5 bug GitHub #16780; those new deafults are too small for ensembl
 ###############################################################################
 
 
