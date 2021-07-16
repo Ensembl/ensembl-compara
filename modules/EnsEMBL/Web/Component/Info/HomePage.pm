@@ -22,6 +22,7 @@ package EnsEMBL::Web::Component::Info::HomePage;
 use strict;
 
 use EnsEMBL::Web::Document::HTML::HomeSearch;
+use EnsEMBL::Web::Utils::FormatText;
 
 use parent qw(EnsEMBL::Web::Component::Info);
 
@@ -71,13 +72,6 @@ sub content {
   }
 
   return $html;
-}
-
-sub pluralise {
-  my ($arg) = @_;
-
-  return $arg if $arg =~ s/([^aeiou])y$/$1ies/g;
-  return "${arg}s";
 }
 
 sub assembly_text {

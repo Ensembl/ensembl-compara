@@ -25,6 +25,7 @@ no warnings "uninitialized";
 
 use EnsEMBL::Web::Controller::SSI;
 use EnsEMBL::Web::Document::Table;
+use EnsEMBL::Web::Utils::FormatText;
 
 use base qw(EnsEMBL::Web::Component);
 
@@ -43,7 +44,7 @@ sub content {
 
   my $strain_type = $sd->STRAIN_TYPE;
   my $name = $sd->USE_COMMON_NAMES ? $sd->SPECIES_DISPLAY_NAME : $sd->SPECIES_SCIENTIFIC_NAME;
-  $html .= sprintf '<h1>%s %ss</h1>', $name, $strain_type;
+  $html .= sprintf '<h1>%s %s</h1>', $name, pluralise($strain_type);
 
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, sprintf('/%s_strains.inc', $hub->species), 1);
 

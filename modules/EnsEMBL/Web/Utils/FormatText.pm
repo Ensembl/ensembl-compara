@@ -25,7 +25,7 @@ use HTML::Entities  qw(encode_entities);
 
 use base qw(Exporter);
 
-our @EXPORT = our @EXPORT_OK = qw(thousandify date_format pretty_date add_links helptip glossary_helptip get_glossary_entry);
+our @EXPORT = our @EXPORT_OK = qw(thousandify date_format pretty_date add_links helptip glossary_helptip get_glossary_entry pluralise);
 
 sub thousandify {
 # Returns comma separated version of number
@@ -105,6 +105,11 @@ sub get_glossary_entry {
   return $hub->glossary_lookup->{$entry} // '';
 }
 
+sub pluralise {
+  my ($arg) = @_;
 
+  return $arg if $arg =~ s/([^aeiou])y$/$1ies/g;
+  return "${arg}s";
+}
 
 1;
