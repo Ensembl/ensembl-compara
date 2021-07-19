@@ -20,7 +20,7 @@
 # Description:
 #   Widen genebuild field in genome_db to match an update done in core databases.
 
-ALTER TABLE genome_db MODIFY COLUMN genebuild varchar(255);
+ALTER TABLE genome_db MODIFY COLUMN genebuild varchar(255) DEFAULT '' NOT NULL;
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
