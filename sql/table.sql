@@ -169,7 +169,7 @@ CREATE TABLE genome_db (
   taxon_id                    INT unsigned DEFAULT NULL, # KF taxon.taxon_id
   name                        varchar(128) DEFAULT '' NOT NULL,
   assembly                    varchar(100) DEFAULT '' NOT NULL,
-  genebuild                   varchar(100) DEFAULT '' NOT NULL,
+  genebuild                   varchar(255) DEFAULT '' NOT NULL,
   has_karyotype			tinyint(1) NOT NULL DEFAULT 0,
   is_good_for_alignment       TINYINT(1) NOT NULL DEFAULT 0,
   genome_component            varchar(5) DEFAULT NULL,
@@ -2282,3 +2282,6 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_104_105_a.sql|schema_version');
+
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_104_105_b.sql|genebuild_varchar255');
