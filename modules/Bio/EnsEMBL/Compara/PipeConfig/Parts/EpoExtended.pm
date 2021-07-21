@@ -385,7 +385,7 @@ sub pipeline_analyses_healthcheck {
                         {'test' => 'conservation_scores','method_link_species_set_id'=>'#cs_mlss_id#'},
                     ],
                 } ),
-                'A->1' => WHEN( 'not #skip_multiplealigner_stats#' => { 'multiplealigner_stats_factory' => { 'mlss_id' => '#ext_mlss_id#' } },
+                'A->1' => WHEN( 'not #skip_multiplealigner_stats#' => [ 'multiplealigner_stats_factory' ],
                           ELSE [ 'end_pipeline' ]),
             },
         },

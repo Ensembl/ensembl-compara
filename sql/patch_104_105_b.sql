@@ -13,16 +13,15 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-# patch_104_105_a.sql
+# patch_104_105_b.sql
 #
-# Title: Update schema version.
+# Title: Widen genebuild field in genome_db.
 #
 # Description:
-#   Update schema_version in meta table to 105.
+#   Widen genebuild field in genome_db to match an update done in core databases.
 
-DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '105');
+ALTER TABLE genome_db MODIFY COLUMN genebuild varchar(255) DEFAULT '' NOT NULL;
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_104_105_a.sql|schema_version');
+  VALUES (NULL, 'patch', 'patch_104_105_b.sql|genebuild_varchar255');

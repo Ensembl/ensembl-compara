@@ -114,6 +114,8 @@ sub _get_mlss_filehandle {
 sub orthotree_files {
     my $self = shift;
 
+    local $File::Find::dont_use_nlink = 1;
+
     my @files;
     my $orthotree_dir = $self->param_required('orthotree_dir');
     find(sub {
