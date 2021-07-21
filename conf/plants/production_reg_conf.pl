@@ -88,16 +88,35 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $metazoa_overlap_cores );
 
 my $compara_dbs = {
     # general compara dbs
-    'compara_master' => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_master_plants' ],
-    'compara_curr'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${curr_eg_release}_${curr_release}" ],
-    'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
+    'compara_master' => [ 'mysql-ens-compara-prod-9', 'agymer_compara_master_plants_wheat_proj' ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-9', "agymer_plants_${curr_eg_release}_${curr_release}" ],
+    #'compara_curr'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${curr_eg_release}_${curr_release}" ],
+    #'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-3', 'ivana_plants_load_members_104'],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-5', 'ivana_plants_plants_protein_trees_104' ],
+    #'compara_members'  => [ 'mysql-ens-compara-prod-3', 'ivana_plants_load_members_104'],
+    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-5', 'ivana_plants_plants_protein_trees_104' ],
 
     # LASTZ dbs
-    'lastz_batch_1' => [ 'mysql-ens-compara-prod-5', 'ivana_plants_lastz_batch1_104' ],
+    'lastz_batch_0' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch0_104' ],
+    'lastz_batch_1' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch1_104' ],
+    'lastz_batch_2' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch2_104' ],
+    'lastz_batch_3' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch3_104' ],
+    'lastz_batch_4' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch4_104' ],
+    'lastz_batch_5' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch5_104' ],
+    'lastz_batch_6' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch6_104' ],
+    'lastz_batch_7' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch7_104' ],
+    'lastz_batch_8' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch8_104' ],
+    'lastz_batch_9' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch9_104' ],
+    'lastz_batch_10' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch10_104' ],
+    'lastz_batch_11' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch11_104' ],
+    'lastz_batch_12' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch12_104' ],
+    'lastz_batch_13' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch13_104' ],
+    'lastz_batch_14' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch14_104' ],
+    'lastz_batch_15' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch15_104' ],
+    'lastz_batch_16' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch16_104' ],
+    'lastz_batch_17' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch17_104' ],
+    'lastz_batch_18' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch18_104' ],
 
     # LASTZ dbs to merge in e105 or later
     # Wheat "strains" alignments
@@ -109,21 +128,21 @@ my $compara_dbs = {
     #'lastz_tdic'    => [ 'mysql-ens-compara-prod-8', 'muffato_plants_self_lastz_tdic_103' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-2', 'ivana_ivana_plants_synteny_104_3' ],
+    #'compara_syntenies' => [ 'mysql-ens-compara-prod-2', 'ivana_ivana_plants_synteny_104_3' ],
 
     # EPO dbs
     ## rice
     #'rice_epo_high_low' => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
-    'rice_epo_prev'     => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
-    'rice_epo_anchors'  => [ 'mysql-ens-compara-prod-5', 'cristig_generate_anchors_rice_99' ],
+    #'rice_epo_prev'     => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
+    #'rice_epo_anchors'  => [ 'mysql-ens-compara-prod-5', 'cristig_generate_anchors_rice_99' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # ----------------------NON-COMPARA DATABASES------------------------
 my $ancestral_dbs = {
-    'ancestral_prev' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${prev_eg_release}_$prev_release" ],
-    'ancestral_curr' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${curr_eg_release}_$curr_release" ],
+    #'ancestral_prev' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${prev_eg_release}_$prev_release" ],
+    #'ancestral_curr' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${curr_eg_release}_$curr_release" ],
 
     # 'rice_ancestral' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${prev_eg_release}_$prev_release" ],
 };
@@ -138,3 +157,4 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
 # -------------------------------------------------------------------
 
 1;
+

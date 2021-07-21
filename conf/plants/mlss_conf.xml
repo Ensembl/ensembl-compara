@@ -4,11 +4,10 @@
   <!-- Collections are species-sets that are needed to define several mlsss -->
   <collections>
 
-    <!-- Rice species tree including nearest grass relative -->
     <!-- used to compute branch lengths for EPO below -->
-    <collection name="rice-with-outgroup" no_release="1">
-      <taxonomic_group taxon_name="Oryza"/>
-      <genome name="leersia_perrieri"/>
+    <collection name="grass-with-outgroup" no_release="1">
+      <taxonomic_group taxon_name="Poaceae"/>
+      <genome name="asparagus_officinalis"/>
     </collection>
 
   </collections>
@@ -16,28 +15,7 @@
   <pairwise_alignments>
 
     <!-- By default use Arabidopsis thaliana for land plants -->
-    <one_vs_all method="LASTZ_NET" ref_genome="arabidopsis_thaliana">
-      <species_set>
-        <taxonomic_group taxon_name="Embryophyta"/>
-        <taxonomic_group taxon_name="Asterids" exclude="1"/>
-        <taxonomic_group taxon_name="Fabids" exclude="1"/>
-        <taxonomic_group taxon_name="Liliopsida" exclude="1"/>
-      </species_set>
-    </one_vs_all>
-
-    <!-- Reference species for specific clades -->
-    <one_vs_all method="LASTZ_NET" ref_genome="solanum_lycopersicum" against="Asterids"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="medicago_truncatula" against="Fabids"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa" against="Liliopsida"/>
-
-    <!-- Triticeae all v all, DFW work, downscaling
-    <all_vs_all method="LASTZ_NET">
-      <species_set in_collection="plants">
-        <taxonomic_group taxon_name="Triticeae"/> -->
-        <!-- Because not k-mer masked 
-        <genome name="triticum_urartu" exclude="1" />
-      </species_set>
-    </all_vs_all> -->
+    <one_vs_all method="LASTZ_NET" ref_genome="triticum_aestivum" against="Triticodae"/>
 
     <!-- Reference wheat vs all wheat cultivars (and spelt, which is a different species so needs its own rule)
     <one_vs_all method="LASTZ_NET" ref_genome="triticum_aestivum" against="Triticum aestivum"/>
@@ -48,50 +26,9 @@
 
   </pairwise_alignments>
 
-  <multiple_alignments>
-    <!-- Rice -->
-    <multiple_alignment method="EPO">
-      <species_set name="rice">
-        <genome name="oryza_barthii"/>
-        <genome name="oryza_glaberrima"/>
-        <genome name="oryza_glumipatula"/>
-        <genome name="oryza_indica"/>
-        <genome name="oryza_meridionalis"/>
-        <genome name="oryza_nivara"/>
-        <genome name="oryza_rufipogon"/>
-        <genome name="oryza_sativa"/>
-      </species_set>
-    </multiple_alignment>
-    <multiple_alignment method="EPO_EXTENDED">
-      <species_set name="rice">
-        <genome name="oryza_barthii"/>
-        <genome name="oryza_brachyantha"/>
-        <genome name="oryza_glaberrima"/>
-        <genome name="oryza_glumipatula"/>
-        <genome name="oryza_indica"/>
-        <genome name="oryza_longistaminata"/>
-        <genome name="oryza_meridionalis"/>
-        <genome name="oryza_nivara"/>
-        <genome name="oryza_punctata"/>
-        <genome name="oryza_rufipogon"/>
-        <genome name="oryza_sativa"/>
-      </species_set>
-    </multiple_alignment>
-
-  </multiple_alignments>
-
-  <!-- DFW work -->
-  <self_alignments>
-    <genome name="triticum_aestivum"/>
-    <genome name="triticum_dicoccoides"/>
-  </self_alignments>
-
-  <gene_trees>
-    <protein_trees collection="plants"/>
-  </gene_trees>
 
   <species_trees>
-    <species_tree collection="plants"/>
+    <species_tree collection="grass-with-outgroup"/>
   </species_trees>
 
 </compara_db>
