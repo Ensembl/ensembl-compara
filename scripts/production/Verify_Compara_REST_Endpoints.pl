@@ -159,7 +159,7 @@ elsif($division eq 'pan' or $division eq 'pan_homology'){
     $taxon_2                  = 29760;#vitis_vinifera
     $taxon_3                  = 55529;#guillardia_theta
 
-    $gene_symbol              = 'PGIP2';
+    $gene_symbol              = 'AT4G26860.2';
     $homology_type            = 'orthologues';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
 
