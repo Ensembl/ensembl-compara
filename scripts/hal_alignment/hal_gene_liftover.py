@@ -58,7 +58,8 @@ def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, 
         bed_file: Path of BED file to output.
         flank_length: Length of upstream/downstream flanking regions to request.
 
-    ValueError: If the flank length is negative.
+    Raises:
+        ValueError: If `flank_length` is negative.
 
     """
     if flank_length < 0:
