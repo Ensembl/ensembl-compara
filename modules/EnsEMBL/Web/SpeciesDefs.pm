@@ -1113,6 +1113,7 @@ sub _get_file_format_info {
     'wig'       => {'ext' => 'wig', 'label' => 'WIG',       'display' => 'graph'},
     ## Remote only - cannot be uploaded
     'bam'       => {'ext' => 'bam', 'label' => 'BAM',       'display' => 'graph', 'remote' => 1},
+    'bcf'       => {'ext' => 'bcf', 'label' => 'BCF',       'display' => 'graph', 'remote' => 1},
     'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph', 'remote' => 1},
     'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph', 'remote' => 1},
     'bigpsl'    => {'ext' => 'bb',  'label' => 'BigPsl',    'display' => 'graph', 'remote' => 1},

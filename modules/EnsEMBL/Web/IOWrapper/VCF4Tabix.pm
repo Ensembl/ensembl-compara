@@ -51,5 +51,4 @@ sub create_tracks {
   $self->SUPER::create_tracks($slice, $metadata);
 }
 
-
 1;

@@ -21,6 +21,7 @@ Ensembl.Panel.UserData = Ensembl.Panel.extend({
   formats: {
     'bam'  : 'BAM',
     'bb'   : 'BIGBED',
+    'bcf'  : 'BCF',
     'bed'  : 'BED',
     'bgr'  : 'BEDGRAPH',
     'bw'   : 'BIGWIG',

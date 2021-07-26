@@ -1166,6 +1166,32 @@ sub _add_vcf_track {
   );
 }
 
+sub _add_bcf_track {
+  my ($self, %args) = @_;
+
+  ## Override default renderer (mainly used by trackhubs)
+  my %options;
+  $options{'display'} = $args{'source'}{'display'} if %args && $args{'source'}{'display'};
+
+  $self->_add_file_format_track(
+    format    => 'BCF',
+    renderers => [
+      'off',       'Off',
+      'histogram', 'Histogram',
+      'simple',    'Compact'
+    ],
+    options => {
+      external   => 'external',
+      sources    => undef,
+      depth      => 0.5,
+      bump_width => 0,
+      colourset  => 'variation',
+      %options,
+    },
+    %args
+  );
+}
+
 sub _add_pairwise_track {
   shift->_add_file_format_track(
     format    => 'PAIRWISE',
@@ -1290,7 +1316,7 @@ sub _user_track_settings {
   else {
     @user_renderers = (@{$self->_alignment_renderers}, 'difference', 'Differences');
   }
-  $strand = 'f' if $format =~ /vcf/;
+  $strand = 'f' if $format =~ /[b|v]cf/;
   $default = $user_renderers[2] unless $default;
 
   return ($strand, \@user_renderers, $default);

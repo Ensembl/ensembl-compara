@@ -64,6 +64,7 @@ my %write_dirs = (
                                     'persistent'          => '',
                                     'temporary'           => '',
                                     'temporary/vcf_tabix' => '',
+                                    'temporary/bcf_index' => '',
                                   }],
   
                   'biomart'   => ['ENSEMBL_TMP_DIR', {

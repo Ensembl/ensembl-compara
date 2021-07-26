@@ -179,6 +179,7 @@ sub get_iow {
   return EnsEMBL::Web::IOWrapper::Indexed::open($url, 'VCF4Tabix', $args);
 }
 
+
 sub density_features {
 ### Merge the features into bins
 ### @return Arrayref of hashes
