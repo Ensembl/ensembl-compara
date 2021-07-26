@@ -63,7 +63,7 @@ def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, 
 
     """
     if flank_length < 0:
-        raise ValueError(f'Flank length must be greater than or equal to 0: {flank_length}')
+        raise ValueError(f"'flank_length' must be greater than or equal to 0: {flank_length}")
 
     with open(bed_file, 'w') as f:
         name = '.'
