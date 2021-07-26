@@ -58,7 +58,12 @@ def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, 
         bed_file: Path of BED file to output.
         flank_length: Length of upstream/downstream flanking regions to request.
 
+    ValueError: If the flank length is negative.
+
     """
+    if flank_length < 0:
+        raise ValueError(f'Flank length must be greater than or equal to 0: {flank_length}')
+
     with open(bed_file, 'w') as f:
         name = '.'
         score = 0  # halLiftover requires an integer score in BED input
@@ -131,9 +136,6 @@ if __name__ == '__main__':
     src_bed_file = args.src_bed_file
     flank = args.flank
 
-
-    if flank < 0:
-        raise ValueError(f'Flank length must be greater than or equal to 0: {flank}')
 
     with TemporaryDirectory() as tmp_dir:
 
