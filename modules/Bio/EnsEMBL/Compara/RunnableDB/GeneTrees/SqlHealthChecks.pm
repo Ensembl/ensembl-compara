@@ -410,7 +410,7 @@ our $config = {
             },
             {
                 description => 'The super-tree must have subtree children',
-                query => 'SELECT gtn1.root_id FROM (gene_tree_node gtn1 JOIN gene_tree_node gtn2 ON gtn1.parent_id = gtn2.node_id WHERE gtn1.root_id != gtn2.root_id AND gtn2.root_id = #gene_tree_id#',
+                query => 'SELECT gtn1.root_id FROM (gene_tree_node gtn1 JOIN gene_tree_root_attr USING (root_id)) JOIN gene_tree_node gtn2 ON gtn1.parent_id = gtn2.node_id WHERE gtn1.root_id != gtn2.root_id AND gtn2.root_id = #gene_tree_id#',
                 expected_size => '> 0',
             },
         ],
