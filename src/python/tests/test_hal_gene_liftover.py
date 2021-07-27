@@ -24,6 +24,7 @@ Typical usage example::
 """
 import filecmp
 from importlib.abc import Loader
+from importlib.machinery import ModuleSpec
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import sys
@@ -62,6 +63,8 @@ def import_module_from_file(module_file: Union[Path, str]) -> ModuleType:
 
     module_spec = spec_from_file_location(module_name, module_file)
 
+    if not isinstance(module_spec, ModuleSpec):
+        raise ImportError(f"ModuleSpec not created for module file '{module_file}'")
     if not isinstance(module_spec.loader, Loader):
         raise ImportError(f"no loader found for module file '{module_file}'")
 
