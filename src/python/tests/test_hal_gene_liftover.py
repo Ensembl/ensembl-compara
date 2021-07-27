@@ -22,8 +22,6 @@ Typical usage example::
     $ pytest test_hal_gene_liftover.py
 
 """
-
-from contextlib import nullcontext as does_not_raise
 import filecmp
 from importlib.abc import Loader
 from importlib.util import module_from_spec, spec_from_file_location
@@ -34,6 +32,11 @@ from typing import ContextManager, Dict, Union
 
 import pytest
 from pytest import raises
+
+if sys.version_info >= (3, 7):
+    from contextlib import nullcontext as does_not_raise
+else:
+    from contextlib import ExitStack as does_not_raise
 
 
 def import_module_from_file(module_file: Union[Path, str]) -> ModuleType:
