@@ -62,8 +62,8 @@ sub default_options {
         'shared_fasta_dir' => $self->o('shared_hps_dir') . '/reference_fasta_symlinks/',
 
         # orthofinder executable
-        'orthofinder_dir' => '/hps/software/users/ensembl/compara/cristig/OrthoFinder',
-        'orthofinder_exe' => '/hps/software/users/ensembl/compara/cristig/OrthoFinder/orthofinder',
+        'orthofinder_dir' => $self->o('orthofinder_dir'),
+        'orthofinder_exe' => $self->o('orthofinder_exe'),
 
         # update from metadata options
         'list_genomes_script'    => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
