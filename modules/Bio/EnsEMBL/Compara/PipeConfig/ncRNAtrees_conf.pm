@@ -216,6 +216,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'mapping_db'    => $self->o('mapping_db'),
 
         'pipeline_dir'              => $self->o('pipeline_dir'),
+        'dump_dir'                  => $self->o('dump_dir'),
         'homology_dumps_dir'        => $self->o('homology_dumps_dir'),
         'prev_homology_dumps_dir'   => $self->o('prev_homology_dumps_dir'),
         'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_dir'),

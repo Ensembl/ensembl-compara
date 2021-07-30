@@ -410,6 +410,11 @@ our $config = {
                 description => 'The "gene_count" tags must sum-up to the super-tree\'s',
                 query => 'SELECT COUNT(*), gtra1.gene_count, SUM(gtra2.gene_count) FROM (gene_tree_node gtn1 JOIN gene_tree_root_attr gtra1 USING (root_id))  JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id AND gtn2.root_id != gtn1.root_id JOIN gene_tree_root_attr gtra2 ON gtra2.root_id=gtn2.root_id WHERE gtn1.root_id = #gene_tree_id# HAVING gtra1.gene_count != SUM(gtra2.gene_count)',
             },
+            {
+                description => 'The super-tree must have subtree children',
+                query => 'SELECT gtn1.root_id FROM (gene_tree_node gtn1 JOIN gene_tree_root_attr USING (root_id)) JOIN gene_tree_node gtn2 ON gtn1.parent_id = gtn2.node_id WHERE gtn1.root_id != gtn2.root_id AND gtn2.root_id = #gene_tree_id#',
+                expected_size => '> 0',
+            },
         ],
     },
 

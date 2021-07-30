@@ -24,7 +24,8 @@ Bio::EnsEMBL::Compara::PipeConfig::ReindexMembers_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -prev_tree_db <db_alias_or_url> -collection <collection> -member_type <protein|ncrna>
+        -prev_tree_db <db_alias_or_url> -collection <collection> -member_type <protein|ncrna> \
+        -division <division> -pipeline_name <pipeline_name>
 
 =head1 DESCRIPTION
 

@@ -69,7 +69,7 @@ formed using the ENSEMBL_ROOT_DIR environment variable.
 use strict;
 use warnings;
 
-use Getopt::Long;
+use Getopt::Long qw(:config pass_through);
 
 use Bio::EnsEMBL::Registry;
 
@@ -87,10 +87,6 @@ GetOptions(
     'reg_alias|regname|reg_name=s'  => \$reg_alias,
     'schema_patcher=s'              => \$schema_patcher,
 ) or die "Error in command line arguments\n";
-
-if (@ARGV) {
-    die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
-}
 
 unless ($url or ($reg_conf and $reg_alias)) {
     print "\nERROR: Neither --url nor --reg_conf and --reg_alias are defined. Some of those are needed to refer to the database being patched\n\n";
@@ -128,6 +124,6 @@ my @params = (
     '--database' => $dba->dbc->dbname,
 );
 
-print "Executing: ", join(" ", $schema_patcher, @params), "\n\n";
+print "Executing: ", join(" ", $schema_patcher, @params, @ARGV), "\n\n";
 
-exec($schema_patcher, @params);
+exec($schema_patcher, @params, @ARGV);

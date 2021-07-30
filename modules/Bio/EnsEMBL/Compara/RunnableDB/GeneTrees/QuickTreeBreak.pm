@@ -347,9 +347,7 @@ sub rec_update_tags {
 
 
 sub generate_subtrees {
-    my $self                    = shift @_;
-    my $newtree                 = shift @_;
-    my $attach_node             = shift @_;
+    my ($self, $newtree, $attach_node) = @_;
 
     my $supertree = $attach_node->tree;
     my $members = $attach_node->get_all_leaves;
@@ -369,10 +367,10 @@ sub generate_subtrees {
                 $max_subtree = $child;
             }
         }
-        # Broke down to half, happy with it
-        print STDERR "QuickTreeBreak iterate -- $max_num_leaves (goal: $half_count)\n"; # if ($self->debug);
+        # Broke down to half or to the specified treebreak_gene_count, happy with it
+        print STDERR "QuickTreeBreak iterate -- $max_num_leaves (goal: $half_count)\n";
         die "Tree is empty - cannot break" if $max_num_leaves == 0;
-        if ($max_num_leaves <= $half_count) {
+        if (($max_num_leaves <= $half_count) or ($max_num_leaves <= ($self->param('treebreak_gene_count')))) {
             $keep_breaking = 0;
         }
     }
@@ -407,6 +405,9 @@ sub generate_subtrees {
             else {
                 $cluster2->add_Member($leaf);
             }
+        }
+        else {
+            $self->die_with_log("Not all leaves in this array of members are seq_members");
         }
     }
 

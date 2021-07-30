@@ -15,19 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels
@@ -50,16 +37,6 @@ $ncsecstructtree->write_output(); #writes to DB
 This RunnableDB builds phylogenetic trees using RAxML. RAxML can use several secondary
 structure substitution models. This Runnable can run several of them in a row, but it
 is recommended to run them in parallel.
-
-=head1 INHERITANCE TREE
-
-  Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable
-  +- Bio::EnsEMBL::Hive::Process
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
 
 =cut
 
@@ -177,7 +154,7 @@ sub write_output {
 }
 
 sub _run_bootstrap_raxml {
-    my $self = shift;
+    my ($self, $no_bfgs) = @_;
 
 
     ## Regarding RAxML 7.2.8 (http://www.phylo.org/tools/raxmlhpc2.html)
@@ -207,6 +184,7 @@ sub _run_bootstrap_raxml {
   $cmd .= " -s $aln_file";
   $cmd .= " -N $bootstrap_num";
   $cmd .= " -n $raxml_tag.$bootstrap_num";
+  $cmd .= " --no-bfgs" if $no_bfgs;
 
   my $worker_temp_directory = $self->worker_temp_directory;
   print "$cmd\n" if($self->debug);
@@ -235,7 +213,13 @@ sub _run_bootstrap_raxml {
         }
     }
     if ($command->exit_code) {
-        $command->die_with_log;
+        if ($command->err =~ /raxmlHPC-AVX: optimizeModel\.c:123: setRateModel: Assertion `rate >= RATE_MIN && rate <= RATE_MAX' failed\./) {
+            # This is the fix suggested in https://github.com/stamatak/standard-RAxML/issues/39
+            # NOTE: v8.2.10+ of RAxML already includes this fix, so this handler can be removed if updated
+            return $self->_run_bootstrap_raxml('use_no_bgfs');
+        } else {
+            $command->die_with_log;
+        }
     }
 
   my $bootstrap_msec = int(time()*1000-$bootstrap_starttime);

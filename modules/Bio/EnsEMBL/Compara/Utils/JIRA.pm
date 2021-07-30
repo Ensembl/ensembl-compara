@@ -282,6 +282,23 @@ sub fetch_tickets {
     return $tickets;
 }
 
+=head2 get_ticket
+
+  Arg[1]      : string - JIRA ticket key or ID
+  Example     : my $ticket = $jira_adaptor->get_ticket('ENSCOMPARASW-4300');
+  Description : Returns JIRA ticket JSON representation from API
+  Return type : hashref of JIRA ticket JSON representation
+  Exceptions  : none
+
+=cut
+
+sub get_ticket {
+    my ( $self, $key_or_id ) = @_;
+    my $url = "https://www.ebi.ac.uk/panda/jira/rest/api/latest/issue/$key_or_id";
+    my $ticket = $self->_http_request('GET', $url);
+    return $ticket->{fields};
+}
+
 =head2 link_tickets
 
   Arg[-LINK_TYPE]   : string - an issue link type
@@ -309,6 +326,13 @@ sub link_tickets {
     my %jira_link_types = map { $_ => 1 } ('After', 'Before', 'Blocks', 'Cloners', 'Duplicate',
                                            'Issue split', 'Related', 'Relates', 'Required');
     if (exists $jira_link_types{$link_type}) {
+        my $inward_ticket = $self->get_ticket($inward_key);
+        foreach my $link ( @{$inward_ticket->{issuelinks}} ){
+            if ($link->{type}->{name} eq $link_type && $link->{outwardIssue}->{key} eq $outward_key) {
+                $self->{_logger}->info("Issue link already exists. Doing nothing.\n");
+                return;
+            }
+        }
         my $link_content = {
             "type"         => { "name" => $link_type },
             "inwardIssue"  => { "key"  => $inward_key },

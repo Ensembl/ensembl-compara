@@ -69,7 +69,7 @@ sub fetch_input {
         foreach my $gdb1 ( @{ $ref_collection->genome_dbs } ) {
             foreach my $gdb2 ( @{ $ref_collection->genome_dbs } ) {
                 my $mlss = $master_mlss_adaptor->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1, $gdb2]);
-                next unless $mlss->is_current;
+                next unless defined $mlss and $mlss->is_current;
                 push @ref_mlsses, $mlss;
             }
         }

@@ -158,7 +158,6 @@ sub store {
 =head2 delete
 
  Arg [1]    : Bio::EnsEMBL::Compara::AlignedMemberSet $aln
- Arg [2]    : (optional) arrayref of members to remove
  Example    : $AlignedMemberAdaptor->delete($aln)
  Description: Deletes an AlignedMemberSet object from a Compara database
  Returntype : none

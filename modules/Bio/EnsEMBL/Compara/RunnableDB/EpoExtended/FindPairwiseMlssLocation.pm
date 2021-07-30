@@ -278,7 +278,7 @@ sub anchor_counts {
     return $self->param('anchor_counts') if $self->param('anchor_counts');
 
     print "fetching anchor counts\n" if $self->debug;
-    my $base_dba = $self->get_cached_compara_dba('base_location');
+    my $base_dba = $self->param('base_location') ? $self->get_cached_compara_dba('base_location') : $self->compara_dba;
     my $anchor_count_sql = "SELECT d.genome_db_id, COUNT(*) FROM anchor_align a JOIN dnafrag d USING(dnafrag_id) GROUP BY d.genome_db_id";
     my $anchor_counts = $base_dba->dbc->sql_helper->execute_into_hash( -SQL => $anchor_count_sql);
     $self->param('anchor_counts', $anchor_counts);

@@ -15,15 +15,13 @@
 
 # patch_104_105_b.sql
 #
-# Title: Update schema version.
+# Title: Widen genebuild field in genome_db.
 #
 # Description:
-#   Alter ENUM values in homology description to bbh & rbbh
+#   Widen genebuild field in genome_db to match an update done in core databases.
 
-ALTER TABLE  homology
-CHANGE  description  description ENUM( 'homology_bbh',  'homolog_rbbh' )
-COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+ALTER TABLE genome_db MODIFY COLUMN genebuild varchar(255) DEFAULT '' NOT NULL;
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_104_105_b.sql|homology_enum');
+  VALUES (NULL, 'patch', 'patch_104_105_b.sql|genebuild_varchar255');

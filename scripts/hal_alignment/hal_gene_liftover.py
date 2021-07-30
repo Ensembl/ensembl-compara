@@ -58,7 +58,13 @@ def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, 
         bed_file: Path of BED file to output.
         flank_length: Length of upstream/downstream flanking regions to request.
 
+    Raises:
+        ValueError: If `flank_length` is negative.
+
     """
+    if flank_length < 0:
+        raise ValueError(f"'flank_length' must be greater than or equal to 0: {flank_length}")
+
     with open(bed_file, 'w') as f:
         name = '.'
         score = 0  # halLiftover requires an integer score in BED input
@@ -83,21 +89,28 @@ def parse_region(region: str) -> SimpleRegion:
 
     """
     seq_region_regex = re.compile(
-        '^(?P<chrom>[^:]+):(?P<start>[0-9]+)-(?P<end>[0-9]+):(?P<strand>1|-1)$'
+        r'^(?P<chrom>[^:]+):(?P<start>[0-9]+)-(?P<end>[0-9]+):(?P<strand>.+)$'
     )
     match = seq_region_regex.match(region)
 
     try:
         region_chrom = match['chrom']  # type: ignore
-        match_start = match['start']  # type: ignore
-        match_end = match['end']  # type: ignore
+        match_start = int(match['start'])  # type: ignore
+        region_end = int(match['end'])  # type: ignore
         match_strand = match['strand']  # type: ignore
     except TypeError as e:
         raise ValueError(f"region '{region}' could not be parsed") from e
 
-    region_start = int(match_start) - 1
-    region_end = int(match_end)
-    region_strand = '-' if match_strand == '-1' else '+'
+    if match_start < 1:
+        raise ValueError(f'region start must be greater than or equal to 1: {match_start}')
+    region_start = match_start - 1
+
+    if match_strand == '1':
+        region_strand = '+'
+    elif match_strand == '-1':
+        region_strand = '-'
+    else:
+        raise ValueError(f"region '{region}' has invalid strand: '{match_strand}'")
 
     if region_start >= region_end:
         raise ValueError(f"region '{region}' has inverted/empty interval")
@@ -132,9 +145,6 @@ if __name__ == '__main__':
     flank = args.flank
 
 
-    if flank < 0:
-        raise ValueError(f'Flank length must be greater than or equal to 0: {flank}')
-
     with TemporaryDirectory() as tmp_dir:
 
         query_bed_file = os.path.join(tmp_dir, 'src_regions.bed')
@@ -154,7 +164,11 @@ if __name__ == '__main__':
             with Popen(cmd2, stdin=p1.stdout) as p2:
                 p2.wait()
                 if p2.returncode != 0:
-                    raise RuntimeError(f'pslPosTarget terminated with signal {-p2.returncode}')
+                    status_type = 'exit code' if p2.returncode > 0 else 'signal'
+                    raise RuntimeError(
+                        f'pslPosTarget terminated with {status_type} {abs(p2.returncode)}')
             p1.wait()
             if p1.returncode != 0:
-                raise RuntimeError(f'halLiftover terminated with signal {-p1.returncode}')
+                status_type = 'exit code' if p1.returncode > 0 else 'signal'
+                raise RuntimeError(
+                    f'halLiftover terminated with {status_type} {abs(p1.returncode)}')
