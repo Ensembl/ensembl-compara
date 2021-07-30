@@ -313,7 +313,6 @@ sub is_leaf {
     if ( $self->is_supertree and $child_count == 1 ) {
         my $child = $self->children->[0];
         return 1 if ($child->node_id != $child->root->node_id);
-        return 0;
     }
     return 0;
 }
@@ -323,9 +322,7 @@ sub is_leaf {
   Example     : print "I'm a supertree" if $node->is_supertree();
   Description : Detects and reports if a node is a supertree.
   Returntype  : Boolean
-  Exceptions  :
-  Caller      : general
-  Status      : stable
+  Exceptions  : None
 
 =cut
 
@@ -335,7 +332,6 @@ sub is_supertree {
         if ($self->tree->tree_type eq 'supertree') {
             return 1;
         }
-        return 0;
     }
     return 0;
 }
