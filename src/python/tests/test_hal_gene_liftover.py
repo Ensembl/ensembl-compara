@@ -34,10 +34,7 @@ from typing import ContextManager, Dict, Union
 import pytest
 from pytest import raises
 
-if sys.version_info >= (3, 7):
-    from contextlib import nullcontext as does_not_raise
-else:
-    from contextlib import ExitStack as does_not_raise
+from contextlib import nullcontext as does_not_raise
 
 
 def import_module_from_file(module_file: Union[Path, str]) -> ModuleType:
