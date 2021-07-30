@@ -59,9 +59,13 @@ sub default_options {
         'pipeline_name'     => 'blastocyst_' . $self->o('rel_with_suffix'),
 
         # Mandatory species input, one or the other only
-        'species_list_file' => undef,
-        'species_list'      => [ ],
-        'division'          => 'homology_annotation',
+        'species_list'  => undef,
+        'species'       => [ ],
+        'division'      => 'homology_annotation',
+        # Mandatory server host for species homology databases
+        'homology_host' => 'mysql-ens-sta-5',
+        # registry_file compatibility so can be overridden if necessary
+        'registry_file' => $self->o('reg_conf'),
 
         # Directories to write to
         'work_dir'     => $self->o('pipeline_dir'),
@@ -203,9 +207,9 @@ sub core_pipeline_analyses {
             -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SpeciesFactory',
             -max_retry_count => 1,
             -input_ids       => [{
-                'registry_file'      => $self->o('reg_conf'),
-                'species_list'       => $self->o('species_list'),
-                'species_list_file'  => $self->o('species_list_file'),
+                'registry_file'      => $self->o('registry_file'),
+                'species_list'       => $self->o('species'),
+                'species_list_file'  => $self->o('species_list'),
             },],
             -flow_into       => {
                 8 => [ 'backbone_fire_db_prepare' ],
