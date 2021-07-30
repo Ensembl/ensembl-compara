@@ -82,6 +82,7 @@ use List::Util qw(min);
 
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Scalar qw/check_ref_can/;
 
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
 
@@ -306,17 +307,33 @@ sub root {
 =cut
 
 sub is_leaf {
-  my $self = shift;
-
+    my $self = shift;
     my $child_count = $self->get_child_count;
-    if ( $child_count == 0 ) {
-        return 1;
-    } elsif ( $child_count == 1 && $self->tree->tree_type eq 'supertree' ) {
+    return 1 if ($child_count == 0);
+    if ( $self->is_supertree and $child_count == 1 ) {
         my $child = $self->children->[0];
-        return ($child->node_id == $child->root->node_id);
-    } else {
-        return 0;
+        return 1 if ($child->node_id != $child->root->node_id);
     }
+    return 0;
+}
+
+=head2 is_supertree
+
+  Example     : print "I'm a supertree" if $node->is_supertree();
+  Description : Detects and reports if a node is a supertree.
+  Returntype  : Boolean
+  Exceptions  : None
+
+=cut
+
+sub is_supertree {
+    my $self = shift;
+    if (check_ref_can($self->tree, 'tree_type')) {
+        if ($self->tree->tree_type eq 'supertree') {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 
