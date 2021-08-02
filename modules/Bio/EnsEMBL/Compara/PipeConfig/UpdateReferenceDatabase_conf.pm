@@ -387,7 +387,6 @@ sub core_pipeline_analyses {
         {   -logic_name => 'run_orthofinder',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'shared_user'     => $self->o('shared_user'),
                 'orthofinder_exe' => $self->o('orthofinder_exe'),
                 'orthofinder_dir' => $self->o('orthofinder_dir'),
                 'cmd'             => 'cd #orthofinder_dir#; #orthofinder_exe# -f #symlink_dir#',
