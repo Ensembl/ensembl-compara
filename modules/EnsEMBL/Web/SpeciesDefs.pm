@@ -538,10 +538,19 @@ sub _read_species_list_file {
   return $spp_list;
 }
 
+sub _get_cow_defaults {
+## Copy-on-write hash (only used by NV)
+  return {};
+}
+
 sub _read_in_ini_file {
   my ($self, $filename, $defaults) = @_;
   my $inifile = undef;
   my $tree    = {};
+  
+  ## Avoid deep-copying in NV divisions, to reduce size of packed files
+  ## See https://github.com/EnsemblGenomes/eg-web-common/commit/f702ab75235e66d7e9a979864b858fe0f88485f7
+  my $cow_from_defaults = $self->get_cow_defaults;
   
   foreach my $confdir (@SiteDefs::ENSEMBL_CONF_DIRS) {
     if (-e "$confdir/ini-files/$filename.ini") {
@@ -555,6 +564,7 @@ sub _read_in_ini_file {
       open FH, $inifile or die "Problem with $inifile: $!";
       
       my $current_section = undef;
+      my $defaults_used   = 0;
       my $line_number     = 0;
       
       while (<FH>) {
@@ -567,13 +577,20 @@ sub _read_in_ini_file {
         
         if (/^\[\s*(\w+)\s*\]/) { # New section - i.e. [ ... ]
           $current_section = $1;
-          $tree->{$current_section} ||= {}; # create new element if required
+
+          if ( defined $defaults->{$current_section} && exists $cow_from_defaults->{$current_section} ) {
+            $tree->{$current_section} = $defaults->{$current_section};
+            $defaults_used = 1;
+          }
+          else { 
+            $tree->{$current_section} ||= {}; # create new element if required
+            $defaults_used = 0;
           
-          # add settings from default
-          if (!%{$tree->{$current_section}} && defined $defaults->{$current_section}) {
-            my %hash = %{$defaults->{$current_section}};
-            
-            $tree->{$current_section}{$_} = $defaults->{$current_section}{$_} for keys %hash;
+            # add settings from default
+            if (defined $defaults->{$current_section}) {
+              my %hash = %{$defaults->{$current_section}};
+              $tree->{$current_section}{$_} = $defaults->{$current_section}{$_} for keys %hash;
+            }
           }
         } elsif (/([\w*]\S*)\s*=\s*(.*)/ && defined $current_section) { # Config entry
           my ($key, $value) = ($1, $2); # Add a config entry under the current 'top level'
@@ -584,7 +601,13 @@ sub _read_in_ini_file {
             my @array = split /\s+/, $1;
             $value = \@array;
           }
-          
+        
+          if ( $defaults_used && defined $defaults->{$current_section} ) {
+            my %hash = %{$defaults->{$current_section}};
+            $tree->{$current_section}{$_} = $defaults->{$current_section}{$_} for keys %hash;
+            $defaults_used = 0;
+          }
+
           $tree->{$current_section}{$key} = $value;
         } elsif (/([.\w]+)\s*=\s*(.*)/) { # precedes a [ ] section
           print STDERR "\t  [WARN] NO SECTION $filename.ini($line_number) -> $1 = $2;\n";
