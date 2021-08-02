@@ -540,6 +540,8 @@ sub _read_species_list_file {
 
 sub _get_cow_defaults {
 ## Copy-on-write hash (only used by NV)
+## Note: use method instead of an 'our' variable, as the latter can be a pain
+## when shared across plugins
   return {};
 }
 
@@ -1572,11 +1574,17 @@ sub production_name_mapping {
 ### As the name said, the function maps the production name with the species URL, 
 ### @param production_name - species production name
 ### Return string = the corresponding species.url name which is the name web uses for URL and other code
+### Fall back to production name if not found - mostly for pan-compara
   my ($self, $production_name) = @_;
+  my $mapping_name = $production_name;
   
   foreach ($self->valid_species) {
-    return $self->get_config($_, 'SPECIES_URL') if($self->get_config($_, 'SPECIES_PRODUCTION_NAME') eq lc($production_name));
+    if ($self->get_config($_, 'SPECIES_PRODUCTION_NAME') eq lc($production_name)) {
+    $mapping_name = $self->get_config($_, 'SPECIES_URL');
+    last;
   }
+
+  return $mapping_name;
 }
 
 sub assembly_lookup {
