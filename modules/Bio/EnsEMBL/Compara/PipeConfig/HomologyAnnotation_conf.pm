@@ -22,10 +22,10 @@ Bio::EnsEMBL::Compara::PipeConfig::HomologyAnnotation_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::HomologyAnnotation_conf -host mysql-ens-compara-prod-X -port XXXX \
-        --species_list <species_1,species_2,...,species_n>
+        --species species_1 --species species_2 --species species_n
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::HomologyAnnotation_conf -host mysql-ens-compara-prod-X -port XXXX \
-        --species_list_file <path/to/one_species_per_line_file.txt>
+        --species_list path/to/one_species_per_line_file.txt
 
 =head1 DESCRIPTION
 
