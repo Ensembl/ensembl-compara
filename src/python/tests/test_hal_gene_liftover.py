@@ -22,6 +22,7 @@ Typical usage example::
     $ pytest test_hal_gene_liftover.py
 
 """
+from contextlib import nullcontext as does_not_raise
 import filecmp
 from importlib.abc import Loader
 from importlib.machinery import ModuleSpec
@@ -33,8 +34,6 @@ from typing import ContextManager, Iterable, Mapping, Union
 
 import pytest
 from pytest import raises
-
-from contextlib import nullcontext as does_not_raise
 
 
 def import_module_from_file(module_file: Union[Path, str]) -> ModuleType:
