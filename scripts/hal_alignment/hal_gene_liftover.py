@@ -31,7 +31,6 @@ Examples::
 """
 
 from argparse import ArgumentParser
-import io
 import os
 from pathlib import Path
 import re
@@ -61,14 +60,12 @@ def load_chrom_sizes(in_hal_file: Union[Path, str], genome_name: str) -> Dict[st
 
     """
     cmd = ['halStats', '--chromSizes', genome_name, in_hal_file]
-    process = run(cmd, stdout=PIPE, check=True)
-    text = process.stdout.decode('ascii')
+    process = run(cmd, check=True, capture_output=True, text=True, encoding='ascii')
 
     chrom_sizes = dict()
-    with io.StringIO(text) as stream:
-        for line in stream:
-            chrom, chrom_size = line.rstrip().split('\t')
-            chrom_sizes[chrom] = int(chrom_size)
+    for line in process.stdout.splitlines():
+        chrom, chrom_size = line.rstrip().split('\t')
+        chrom_sizes[chrom] = int(chrom_size)
 
     return chrom_sizes
 
