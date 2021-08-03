@@ -62,7 +62,6 @@ sub default_options {
         'shared_fasta_dir' => $self->o('shared_hps_dir') . '/reference_fasta_symlinks/',
 
         # orthofinder executable
-        'orthofinder_dir' => $self->o('orthofinder_dir'),
         'orthofinder_exe' => $self->o('orthofinder_exe'),
 
         # update from metadata options
@@ -388,8 +387,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'orthofinder_exe' => $self->o('orthofinder_exe'),
-                'orthofinder_dir' => $self->o('orthofinder_dir'),
-                'cmd'             => 'cd #orthofinder_dir#; #orthofinder_exe# -f #symlink_dir#',
+                'cmd'             => '#orthofinder_exe# -t 16 -a 8 -f #symlink_dir#',
             },
             -rc_name    => '128Gb_16c_job',
         },
