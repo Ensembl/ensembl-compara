@@ -93,95 +93,73 @@ class TestHalGeneLiftover:
         """Loads necessary fixtures and values as class attributes."""
         type(self).ref_file_dir = pytest.files_dir / 'hal_alignment'
 
-    @pytest.mark.parametrize(
-        "kwargs, exp_output, expectation",
-        [
-            ({'region': 'chr1:16-18:1'}, SimpleRegion('chr1', 15, 18, '+'), does_not_raise()),
-            ({'region': 'chr1:16-18:-1'}, SimpleRegion('chr1', 15, 18, '-'), does_not_raise()),
-            ({'region': 'chr1:23-25:1'}, SimpleRegion('chr1', 22, 25, '+'), does_not_raise()),
-            ({'region': 'chr1:23-25:-1'}, SimpleRegion('chr1', 22, 25, '-'), does_not_raise()),
-            ({'region': 'chr1:7-8:1'}, SimpleRegion('chr1', 6, 8, '+'), does_not_raise()),
-            ({'region': 'chr1:27-32:1'}, SimpleRegion('chr1', 26, 32, '+'), does_not_raise()),
-            ({'region': 'chr1:1-2:1'}, SimpleRegion('chr1', 0, 2, '+'), does_not_raise()),
-            ({'region': 'chr1:32-33:1'}, SimpleRegion('chr1', 31, 33, '+'), does_not_raise()),
-            ({'region': 'chrN:1-3:1'}, SimpleRegion('chrN', 0, 3, '+'), does_not_raise()),
-            ({'region': 'chr1:32-34:1'}, SimpleRegion('chr1', 31, 34, '+'), does_not_raise()),
-            ({'region': 'chr1:0-2:1'}, None,
-             raises(ValueError, match=r"region start must be greater than or equal to 1: 0")),
-            ({'region': 'chr1:2-1:1'}, None,
-             raises(ValueError, match=r"region 'chr1:2-1:1' has inverted/empty interval")),
-            ({'region': 'chr1:1-1:+'}, None,
-             raises(ValueError, match=r"region 'chr1:1-1:\+' has invalid strand: '\+'")),
-            ({'region': 'chr1:1-1:-'}, None,
-             raises(ValueError, match=r"region 'chr1:1-1:-' has invalid strand: '-'")),
-            ({'region': 'dummy'}, None,
-             raises(ValueError, match=r"region 'dummy' could not be parsed"))
-        ]
-    )
-    def test_parse_region(self, kwargs: Dict, exp_output: SimpleRegion,
-                          expectation: ContextManager) -> None:
-        """Tests :func:`hal_gene_liftover.parse_region()` function.
+@pytest.mark.parametrize(
+    "region, exp_output, expectation",
+    [
+        ('chr1:16-18:1', SimpleRegion('chr1', 15, 18, '+'), does_not_raise()),
+        ('chrX:23-25:-1', SimpleRegion('chrX', 22, 25, '-'), does_not_raise()),
+        ('chr1:0-2:1', None, raises(ValueError,
+         match=r"region start must be greater than or equal to 1: 0")),
+        ('chr1:2-1:1', None, raises(ValueError,
+         match=r"region 'chr1:2-1:1' has inverted/empty interval")),
+        ('chr1:1-1:+', None, raises(ValueError,
+         match=r"region 'chr1:1-1:\+' has invalid strand: '\+'")),
+        ('dummy', None, raises(ValueError, match=r"region 'dummy' could not be parsed"))
+    ]
+)
+def test_parse_region(self, region: str, exp_output: SimpleRegion,
+                      expectation: ContextManager) -> None:
+    """Tests :func:`hal_gene_liftover.parse_region()` function.
 
-        Args:
-            kwargs: Named arguments to be passed to the function.
-            exp_output: Expected return value of the function.
-            expectation: Context manager for the expected exception, i.e. the test will only pass
-                         if that exception is raised. Use :class:`~contextlib.nullcontext` if no
-                         exception is expected.
+    Args:
+        region: Region string.
+        exp_output: Expected return value of the function.
+        expectation: Context manager for the expected exception, i.e. the test will only pass if that
+            exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
 
-        """
-        with expectation:
-            obs_output = hal_gene_liftover.parse_region(kwargs['region'])
-            assert obs_output == exp_output
+    """
+    with expectation:
+        obs_output = hal_gene_liftover.parse_region(region)
+        assert obs_output == exp_output
 
-    @pytest.mark.parametrize(
-        "kwargs, expectation",
-        [
-            ({'regions': [SimpleRegion('chr1', 15, 18, '+')],
-              'bed_file': 'a2b.one2one.plus.flank0.src.bed', 'flank_length': 0}, does_not_raise()),
-            ({'regions': [SimpleRegion('chr1', 15, 18, '+')],
-              'bed_file': 'a2b.one2one.plus.flank1.src.bed', 'flank_length': 1}, does_not_raise()),
-            ({'regions': [SimpleRegion('chr1', 15, 18, '-')],
-              'bed_file': 'a2b.one2one.minus.flank0.src.bed', 'flank_length': 0}, does_not_raise()),
-            ({'regions': [SimpleRegion('chr1', 15, 18, '-')],
-              'bed_file': 'a2b.one2one.minus.flank1.src.bed', 'flank_length': 1}, does_not_raise()),
-            ({'regions': [SimpleRegion('chr1', 22, 25, '+')],
-              'bed_file': 'b2a.one2one.plus.flank0.src.bed', 'flank_length': 0}, does_not_raise()),
-            ({'regions': [SimpleRegion('chr1', 22, 25, '+')],
-              'bed_file': 'b2a.one2one.plus.flank1.src.bed', 'flank_length': 1}, does_not_raise()),
-            ({'regions': [SimpleRegion('chr1', 22, 25, '-')],
-              'bed_file': 'b2a.one2one.minus.flank0.src.bed', 'flank_length': 0}, does_not_raise()),
-            ({'regions': [SimpleRegion('chr1', 22, 25, '-')],
-              'bed_file': 'b2a.one2one.minus.flank1.src.bed', 'flank_length': 1}, does_not_raise()),
-            ({'regions': [SimpleRegion('chr1', 6, 8, '+')],
-              'bed_file': 'a2b.one2many.flank0.src.bed', 'flank_length': 0}, does_not_raise()),
-            ({'regions': [SimpleRegion('chr1', 6, 8, '+')],
-              'bed_file': 'a2b.one2many.flank1.src.bed', 'flank_length': 1}, does_not_raise()),
-            ({'regions': [SimpleRegion('chr1', 26, 32, '+')],
-              'bed_file': 'a2b.inversion.flank0.src.bed', 'flank_length': 0}, does_not_raise()),
-            ({'regions': [SimpleRegion('chr1', 26, 32, '+')],
-              'bed_file': 'a2b.inversion.flank1.src.bed', 'flank_length': 1}, does_not_raise()),
-            ({'regions': [SimpleRegion('chr1', 15, 18, '+')],
-              'bed_file': 'a2b.negative_flank.src.bed', 'flank_length': -1},
-             raises(ValueError, match=r"'flank_length' must be greater than or equal to 0: -1")),
+@pytest.mark.parametrize(
+    "regions, chrom_sizes, bed_file, flank_length, expectation",
+    [
+        ([SimpleRegion('chr1', 15, 18, '+')], {'chr1': 33}, 'a2b.one2one.plus.flank0.src.bed', 0,
+         does_not_raise()),
+        ([SimpleRegion('chr1', 15, 18, '+')], {'chr1': 33}, 'a2b.one2one.plus.flank1.src.bed', 1,
+         does_not_raise()),
+        ([SimpleRegion('chr1', 0, 2, '+')], {'chr1': 33}, 'a2b.chrom_start.flank1.src.bed', 1,
+         does_not_raise()),
+        ([SimpleRegion('chr1', 31, 33, '+')], {'chr1': 33}, 'a2b.chrom_end.flank1.src.bed', 1,
+         does_not_raise()),
+        ([SimpleRegion('chr1', 15, 18, '+')], {'chr1': 33}, 'a2b.negative_flank.src.bed', -1,
+         raises(ValueError, match=r"'flank_length' must be greater than or equal to 0: -1")),
+        ([SimpleRegion('chrN', 0, 3, '+')], {'chr1': 33}, 'a2b.unknown_chrom.src.bed', 0,
+         raises(ValueError, match=r"chromosome ID not found in input file: 'chrN'")),
+        ([SimpleRegion('chr1', 31, 34, '+')], {'chr1': 33}, 'a2b.chrom_end.oor.src.bed', 0,
+         raises(ValueError,
+         match=r"region end \(34\) must not be greater than chromosome length \(33\)"))
+    ]
+)
+def test_make_src_region_file(self, regions: Iterable[SimpleRegion],
+                              chrom_sizes: Mapping[str, int], bed_file: str, flank_length: int,
+                              expectation: ContextManager, tmp_dir: Path) -> None:
+    """Tests :func:`hal_gene_liftover.make_src_region_file()` function.
 
-        ]
-    )
-    def test_make_src_region_file(self, kwargs: Dict, expectation: ContextManager,
-                                  tmp_dir: Path) -> None:
-        """Tests :func:`hal_gene_liftover.make_src_region_file()` function.
+    Args:
+        regions: Regions to write to output file.
+        chrom_sizes: Dictionary mapping chromosome names to their lengths.
+        bed_file: Path of BED file to output.
+        flank_length: Length of upstream/downstream flanking regions to request.
+        expectation: Context manager for the expected exception, i.e. the test will only pass if that
+            exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
+        tmp_dir: Unit test temp directory (fixture).
 
-        Args:
-            kwargs: Named arguments to be passed to the function.
-            expectation: Context manager for the expected exception, i.e. the test will only pass
-                         if that exception is raised. Use :class:`~contextlib.nullcontext` if no
-                         exception is expected.
-            tmp_dir: Unit test temp directory (fixture).
-
-        """
-        with expectation:
-            out_file_path = tmp_dir / kwargs['bed_file']
-            hal_gene_liftover.make_src_region_file(kwargs['regions'], out_file_path,
-                                                   kwargs['flank_length'])
-            ref_file_path = self.ref_file_dir / kwargs['bed_file']
-            assert filecmp.cmp(out_file_path, ref_file_path)
+    """
+    with expectation:
+        out_file_path = tmp_dir / bed_file
+        hal_gene_liftover.make_src_region_file(regions, chrom_sizes, out_file_path,
+                                               flank_length)
+        ref_file_path = self.ref_file_dir / bed_file
+        assert filecmp.cmp(out_file_path, ref_file_path)
