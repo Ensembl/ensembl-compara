@@ -92,73 +92,73 @@ class TestHalGeneLiftover:
         """Loads necessary fixtures and values as class attributes."""
         type(self).ref_file_dir = pytest.files_dir / 'hal_alignment'
 
-@pytest.mark.parametrize(
-    "region, exp_output, expectation",
-    [
-        ('chr1:16-18:1', SimpleRegion('chr1', 15, 18, '+'), does_not_raise()),
-        ('chrX:23-25:-1', SimpleRegion('chrX', 22, 25, '-'), does_not_raise()),
-        ('chr1:0-2:1', None, raises(ValueError,
-         match=r"region start must be greater than or equal to 1: 0")),
-        ('chr1:2-1:1', None, raises(ValueError,
-         match=r"region 'chr1:2-1:1' has inverted/empty interval")),
-        ('chr1:1-1:+', None, raises(ValueError,
-         match=r"region 'chr1:1-1:\+' has invalid strand: '\+'")),
-        ('dummy', None, raises(ValueError, match=r"region 'dummy' could not be parsed"))
-    ]
-)
-def test_parse_region(self, region: str, exp_output: SimpleRegion,
-                      expectation: ContextManager) -> None:
-    """Tests :func:`hal_gene_liftover.parse_region()` function.
+    @pytest.mark.parametrize(
+        "region, exp_output, expectation",
+        [
+            ('chr1:16-18:1', SimpleRegion('chr1', 15, 18, '+'), does_not_raise()),
+            ('chrX:23-25:-1', SimpleRegion('chrX', 22, 25, '-'), does_not_raise()),
+            ('chr1:0-2:1', None, raises(ValueError,
+             match=r"region start must be greater than or equal to 1: 0")),
+            ('chr1:2-1:1', None, raises(ValueError,
+             match=r"region 'chr1:2-1:1' has inverted/empty interval")),
+            ('chr1:1-1:+', None, raises(ValueError,
+             match=r"region 'chr1:1-1:\+' has invalid strand: '\+'")),
+            ('dummy', None, raises(ValueError, match=r"region 'dummy' could not be parsed"))
+        ]
+    )
+    def test_parse_region(self, region: str, exp_output: SimpleRegion,
+                          expectation: ContextManager) -> None:
+        """Tests :func:`hal_gene_liftover.parse_region()` function.
 
-    Args:
-        region: Region string.
-        exp_output: Expected return value of the function.
-        expectation: Context manager for the expected exception, i.e. the test will only pass if that
-            exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
+        Args:
+            region: Region string.
+            exp_output: Expected return value of the function.
+            expectation: Context manager for the expected exception, i.e. the test will only pass if that
+                exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
 
-    """
-    with expectation:
-        obs_output = hal_gene_liftover.parse_region(region)
-        assert obs_output == exp_output
+        """
+        with expectation:
+            obs_output = hal_gene_liftover.parse_region(region)
+            assert obs_output == exp_output
 
-@pytest.mark.parametrize(
-    "regions, chrom_sizes, bed_file, flank_length, expectation",
-    [
-        ([SimpleRegion('chr1', 15, 18, '+')], {'chr1': 33}, 'a2b.one2one.plus.flank0.src.bed', 0,
-         does_not_raise()),
-        ([SimpleRegion('chr1', 15, 18, '+')], {'chr1': 33}, 'a2b.one2one.plus.flank1.src.bed', 1,
-         does_not_raise()),
-        ([SimpleRegion('chr1', 0, 2, '+')], {'chr1': 33}, 'a2b.chrom_start.flank1.src.bed', 1,
-         does_not_raise()),
-        ([SimpleRegion('chr1', 31, 33, '+')], {'chr1': 33}, 'a2b.chrom_end.flank1.src.bed', 1,
-         does_not_raise()),
-        ([SimpleRegion('chr1', 15, 18, '+')], {'chr1': 33}, 'a2b.negative_flank.src.bed', -1,
-         raises(ValueError, match=r"'flank_length' must be greater than or equal to 0: -1")),
-        ([SimpleRegion('chrN', 0, 3, '+')], {'chr1': 33}, 'a2b.unknown_chrom.src.bed', 0,
-         raises(ValueError, match=r"chromosome ID not found in input file: 'chrN'")),
-        ([SimpleRegion('chr1', 31, 34, '+')], {'chr1': 33}, 'a2b.chrom_end.oor.src.bed', 0,
-         raises(ValueError,
-         match=r"region end \(34\) must not be greater than chromosome length \(33\)"))
-    ]
-)
-def test_make_src_region_file(self, regions: Iterable[SimpleRegion],
-                              chrom_sizes: Mapping[str, int], bed_file: str, flank_length: int,
-                              expectation: ContextManager, tmp_dir: Path) -> None:
-    """Tests :func:`hal_gene_liftover.make_src_region_file()` function.
+    @pytest.mark.parametrize(
+        "regions, chrom_sizes, bed_file, flank_length, expectation",
+        [
+            ([SimpleRegion('chr1', 15, 18, '+')], {'chr1': 33}, 'a2b.one2one.plus.flank0.src.bed', 0,
+             does_not_raise()),
+            ([SimpleRegion('chr1', 15, 18, '+')], {'chr1': 33}, 'a2b.one2one.plus.flank1.src.bed', 1,
+             does_not_raise()),
+            ([SimpleRegion('chr1', 0, 2, '+')], {'chr1': 33}, 'a2b.chrom_start.flank1.src.bed', 1,
+             does_not_raise()),
+            ([SimpleRegion('chr1', 31, 33, '+')], {'chr1': 33}, 'a2b.chrom_end.flank1.src.bed', 1,
+             does_not_raise()),
+            ([SimpleRegion('chr1', 15, 18, '+')], {'chr1': 33}, 'a2b.negative_flank.src.bed', -1,
+             raises(ValueError, match=r"'flank_length' must be greater than or equal to 0: -1")),
+            ([SimpleRegion('chrN', 0, 3, '+')], {'chr1': 33}, 'a2b.unknown_chrom.src.bed', 0,
+             raises(ValueError, match=r"chromosome ID not found in input file: 'chrN'")),
+            ([SimpleRegion('chr1', 31, 34, '+')], {'chr1': 33}, 'a2b.chrom_end.oor.src.bed', 0,
+             raises(ValueError,
+             match=r"region end \(34\) must not be greater than chromosome length \(33\)"))
+        ]
+    )
+    def test_make_src_region_file(self, regions: Iterable[SimpleRegion],
+                                  chrom_sizes: Mapping[str, int], bed_file: str, flank_length: int,
+                                  expectation: ContextManager, tmp_dir: Path) -> None:
+        """Tests :func:`hal_gene_liftover.make_src_region_file()` function.
 
-    Args:
-        regions: Regions to write to output file.
-        chrom_sizes: Dictionary mapping chromosome names to their lengths.
-        bed_file: Path of BED file to output.
-        flank_length: Length of upstream/downstream flanking regions to request.
-        expectation: Context manager for the expected exception, i.e. the test will only pass if that
-            exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
-        tmp_dir: Unit test temp directory (fixture).
+        Args:
+            regions: Regions to write to output file.
+            chrom_sizes: Dictionary mapping chromosome names to their lengths.
+            bed_file: Path of BED file to output.
+            flank_length: Length of upstream/downstream flanking regions to request.
+            expectation: Context manager for the expected exception, i.e. the test will only pass if that
+                exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
+            tmp_dir: Unit test temp directory (fixture).
 
-    """
-    with expectation:
-        out_file_path = tmp_dir / bed_file
-        hal_gene_liftover.make_src_region_file(regions, chrom_sizes, out_file_path,
-                                               flank_length)
-        ref_file_path = self.ref_file_dir / bed_file
-        assert filecmp.cmp(out_file_path, ref_file_path)
+        """
+        with expectation:
+            out_file_path = tmp_dir / bed_file
+            hal_gene_liftover.make_src_region_file(regions, chrom_sizes, out_file_path,
+                                                   flank_length)
+            ref_file_path = self.ref_file_dir / bed_file
+            assert filecmp.cmp(out_file_path, ref_file_path)
