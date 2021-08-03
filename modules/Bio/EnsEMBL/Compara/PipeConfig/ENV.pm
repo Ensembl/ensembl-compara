@@ -50,6 +50,9 @@ sub shared_default_options {
         # we sometimes initialise pipelines with a shared user
         'dbowner'               => $ENV{'EHIVE_USER'} || $ENV{'SUDO_USER'} || whoami() || $self->o('dbowner'),
 
+        # $ENSEMBL_ROOT_DIR is also loaded into ensembl_cvs_root_dir
+        'ensembl_root_dir'      => $self->o('ensembl_cvs_root_dir'),
+
         # Since we run the same pipeline for multiple divisions, include the division name in the pipeline name
         'pipeline_name'         => $self->o('division').'_'.$self->default_pipeline_name().'_'.$self->o('rel_with_suffix'),
 
