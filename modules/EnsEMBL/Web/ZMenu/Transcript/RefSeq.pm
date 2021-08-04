@@ -69,7 +69,16 @@ sub content {
   #remove standard links to transcript pages and replace with one to NCBI
   $self->delete_entry_by_type('Transcript');
   $self->delete_entry_by_value($transcript_link);
-
+if ($biotype =~ m/tRNA/ or $biotype =~ m/IG_/){
+    $self->add_entry({
+    type     => 'RefSeq transcript',
+    label    => $transcript_xref,
+    abs_url  => 1,
+    position => 2,
+  });
+}
+else
+{
   $self->add_entry({
     type     => 'RefSeq transcript',
     label    => $transcript_xref,
@@ -77,7 +86,10 @@ sub content {
     abs_url  => 1,
     position => 2,
   });
-
+}
+ 
+use Data::Dumper; warn Dumper($biotype=~ m/tRNA/);
+use Data::Dumper; warn Dumper(rindex $biotype,"tRNA",0);
   if ($translation) {
     my $translation_id = $translation->stable_id;
     $self->delete_entry_by_type('Protein');
