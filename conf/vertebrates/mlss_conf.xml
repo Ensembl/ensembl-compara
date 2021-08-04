@@ -114,17 +114,17 @@
     <multiple_alignment method="EPO">
       <species_set name="primates">
         <genome name="homo_sapiens"/>
-        <genome name="pongo_abelii" assembly="PPYG2"/>
+        <genome name="pongo_abelii"/>
+        <genome name="nomascus_leucogenys"/>
+        <genome name="macaca_mulatta"/>
+        <genome name="pan_troglodytes"/>
         <genome name="chlorocebus_sabaeus" assembly="ChlSab1.1"/>
         <genome name="macaca_fascicularis" assembly="Macaca_fascicularis_6.0"/>
-        <genome name="nomascus_leucogenys" assembly="Nleu_3.0"/>
         <genome name="microcebus_murinus" assembly="Mmur_3.0"/>
         <genome name="gorilla_gorilla" assembly="gorGor4"/>
         <genome name="pan_paniscus" assembly="panpan1.1"/>
-        <genome name="pan_troglodytes" assembly="Pan_tro_3.0"/>
         <genome name="papio_anubis" assembly="Panu_3.0"/>
         <genome name="callithrix_jacchus" assembly="ASM275486v1"/>
-        <genome name="macaca_mulatta" assembly="Mmul_10"/>
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="EPO_EXTENDED">
