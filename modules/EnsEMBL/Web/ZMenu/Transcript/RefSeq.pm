@@ -69,15 +69,8 @@ sub content {
   #remove standard links to transcript pages and replace with one to NCBI
   $self->delete_entry_by_type('Transcript');
   $self->delete_entry_by_value($transcript_link);
-  if ($biotype =~ m/tRNA/ or $biotype =~ m/IG_/){
-    $self->add_entry({
-    type     => 'RefSeq transcript',
-    label    => $transcript_xref,
-    abs_url  => 1,
-      position => 2,
-    });
-  }
-  else
+
+  unless ($biotype =~ m/tRNA/ or $biotype =~ m/IG_/)
   {
     $self->add_entry({
       type     => 'RefSeq transcript',
