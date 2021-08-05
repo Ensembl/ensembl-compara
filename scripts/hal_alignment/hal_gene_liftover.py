@@ -49,7 +49,7 @@ class SimpleRegion(NamedTuple):
     strand: str
 
 
-def load_chrom_sizes(in_hal_file: Union[Path, str], genome_name: str) -> Dict[str, int]:
+def load_chr_sizes(in_hal_file: Union[Path, str], genome_name: str) -> Dict[str, int]:
     """Load chromosome sizes from an input HAL file.
 
     Args:
@@ -63,22 +63,22 @@ def load_chrom_sizes(in_hal_file: Union[Path, str], genome_name: str) -> Dict[st
     cmd = ['halStats', '--chromSizes', genome_name, in_hal_file]
     process = run(cmd, check=True, capture_output=True, text=True, encoding='ascii')
 
-    chrom_sizes = dict()
+    chr_sizes = dict()
     for line in process.stdout.splitlines():
-        chrom, chrom_size = line.rstrip().split('\t')
-        chrom_sizes[chrom] = int(chrom_size)
+        chr_name, chr_size = line.rstrip().split('\t')
+        chr_sizes[chr_name] = int(chr_size)
 
-    return chrom_sizes
+    return chr_sizes
 
 
 def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, SimpleRegion]],
-                         chrom_sizes: Mapping[str, int], bed_file: Union[Path, str],
+                         chr_sizes: Mapping[str, int], bed_file: Union[Path, str],
                          flank_length: int = 0) -> None:
     """Make source region file.
 
     Args:
         regions: Regions to write to output file.
-        chrom_sizes: Mapping of chromosome names to their lengths.
+        chr_sizes: Mapping of chromosome names to their lengths.
         bed_file: Path of BED file to output.
         flank_length: Length of upstream/downstream flanking regions to request.
 
@@ -96,19 +96,19 @@ def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, 
         for region in regions:
 
             try:
-                chrom_size = chrom_sizes[region.chrom]
+                chr_size = chr_sizes[region.chrom]
             except KeyError as e:
                 raise ValueError(f"chromosome ID not found in input file: '{region.chrom}'") from e
 
             if region.start < 0:
                 raise ValueError(f'region start must be greater than or equal to 0: {region.start}')
 
-            if region.end > chrom_size:
+            if region.end > chr_size:
                 raise ValueError(f'region end ({region.end}) must not be greater'
-                                 f' than chromosome length ({chrom_size})')
+-                                f' than chromosome length ({chr_size})')
 
             flanked_start = max(0, region.start - flank_length)
-            flanked_end = min(region.end + flank_length, chrom_size)
+            flanked_end = min(region.end + flank_length, chr_size)
 
             fields = [region.chrom, flanked_start, flanked_end, name, score, region.strand]
             print('\t'.join(str(x) for x in fields), file=f)
@@ -128,12 +128,12 @@ def parse_region(region: str) -> SimpleRegion:
 
     """
     seq_region_regex = re.compile(
-        r'^(?P<chrom>[^:]+):(?P<start>[0-9]+)-(?P<end>[0-9]+):(?P<strand>.+)$'
+        r'^(?P<chr>[^:]+):(?P<start>[0-9]+)-(?P<end>[0-9]+):(?P<strand>.+)$'
     )
     match = seq_region_regex.match(region)
 
     try:
-        region_chrom = match['chrom']  # type: ignore
+        region_chr = match['chr']  # type: ignore
         match_start = int(match['start'])  # type: ignore
         region_end = int(match['end'])  # type: ignore
         match_strand = match['strand']  # type: ignore
@@ -154,7 +154,7 @@ def parse_region(region: str) -> SimpleRegion:
     if region_start >= region_end:
         raise ValueError(f"region '{region}' has inverted/empty interval")
 
-    return SimpleRegion(region_chrom, region_start, region_end, region_strand)
+    return SimpleRegion(region_chr, region_start, region_end, region_strand)
 
 
 if __name__ == '__main__':
@@ -193,9 +193,9 @@ if __name__ == '__main__':
         else:  # i.e. bed_file is not None
             src_regions = pybedtools.BedTool(src_bed_file)
 
-        src_chrom_sizes = load_chrom_sizes(hal_file, src_genome)
+        src_chr_sizes = load_chr_sizes(hal_file, src_genome)
 
-        make_src_region_file(src_regions, src_chrom_sizes, query_bed_file, flank_length=flank)
+        make_src_region_file(src_regions, src_chr_sizes, query_bed_file, flank_length=flank)
 
         # halLiftover --outPSL in.hal GRCh38 in.bed CHM13 stdout | pslPosTarget stdin out.psl
         cmd1 = ['halLiftover', '--outPSL', hal_file, src_genome, query_bed_file, dest_genome,
