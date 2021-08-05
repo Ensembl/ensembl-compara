@@ -150,7 +150,7 @@ class TestHalGeneLiftover:
 
         Args:
             regions: Regions to write to output file.
-            chrom_sizes: Dictionary mapping chromosome names to their lengths.
+            chrom_sizes: Mapping of chromosome names to their lengths.
             bed_file: Path of BED file to output.
             flank_length: Length of upstream/downstream flanking regions to request.
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
