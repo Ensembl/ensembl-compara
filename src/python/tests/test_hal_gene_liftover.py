@@ -139,6 +139,8 @@ class TestHalGeneLiftover:
             ([SimpleRegion('chr1', 31, 34, '+')], {'chr1': 33}, 'a2b.chrom_end.oor.src.bed', 0,
              raises(ValueError,
                     match=r"region end \(34\) must not be greater than chromosome length \(33\)")),
+            ([SimpleRegion('chr1', -4, 18, '+')], {'chr1': 33}, 'a2b.chrom_start.oor.src.bed', 0,
+             raises(ValueError, match=r"region start must be greater than or equal to 0: -4"),
         ]
     )
     def test_make_src_region_file(self, regions: Iterable[SimpleRegion],
