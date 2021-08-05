@@ -104,8 +104,8 @@ def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, 
                 raise ValueError(f'region start must be greater than or equal to 0: {region.start}')
 
             if region.end > chr_size:
-                raise ValueError(f'region end ({region.end}) must not be greater'
-                                 f' than chromosome length ({chr_size})')
+                raise ValueError(f'region end ({region.end}) must not be greater than the'
+                                 f' corresponding chromosome length ({region.chrom}: {chr_size})')
 
             flanked_start = max(0, region.start - flank_length)
             flanked_end = min(region.end + flank_length, chr_size)
