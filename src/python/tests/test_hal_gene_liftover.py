@@ -137,8 +137,8 @@ class TestHalGeneLiftover:
             ([SimpleRegion('chrN', 0, 3, '+')], {'chr1': 33}, 'a2b.unknown_chr.src.bed', 0,
              raises(ValueError, match=r"chromosome ID not found in input file: 'chrN'")),
             ([SimpleRegion('chr1', 31, 34, '+')], {'chr1': 33}, 'a2b.chr_end.oor.src.bed', 0,
-             raises(ValueError,
-                    match=r"region end \(34\) must not be greater than chromosome length \(33\)")),
+             raises(ValueError, match=r"region end \(34\) must not be greater than the"
+                                      r" corresponding chromosome length \(chr1: 33\)")),
             ([SimpleRegion('chr1', -4, 18, '+')], {'chr1': 33}, 'a2b.chr_start.oor.src.bed', 0,
              raises(ValueError, match=r"region start must be greater than or equal to 0: -4"))
         ]
