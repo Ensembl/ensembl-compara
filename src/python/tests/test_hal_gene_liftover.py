@@ -138,7 +138,7 @@ class TestHalGeneLiftover:
              raises(ValueError, match=r"chromosome ID not found in input file: 'chrN'")),
             ([SimpleRegion('chr1', 31, 34, '+')], {'chr1': 33}, 'a2b.chrom_end.oor.src.bed', 0,
              raises(ValueError,
-             match=r"region end \(34\) must not be greater than chromosome length \(33\)"))
+                    match=r"region end \(34\) must not be greater than chromosome length \(33\)")),
         ]
     )
     def test_make_src_region_file(self, regions: Iterable[SimpleRegion],
