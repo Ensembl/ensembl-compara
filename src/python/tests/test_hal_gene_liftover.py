@@ -14,9 +14,6 @@
 # limitations under the License.
 """Unit testing of `hal_gene_liftover.py` script.
 
-The unit testing is divided into one test class for all top-level functions, and one test class per
-class found in this script; and within each test class, one test method per public function/method.
-
 Typical usage example::
 
     $ pytest test_hal_gene_liftover.py
