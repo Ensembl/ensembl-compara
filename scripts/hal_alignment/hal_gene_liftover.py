@@ -54,6 +54,7 @@ def load_chrom_sizes(in_hal_file: Union[Path, str], genome_name: str) -> Dict[st
 
     Args:
         in_hal_file: Input HAL file.
+        genome_name: Name of the genome to get the chromosome sizes of.
 
     Returns:
         Dictionary mapping chromosome names to their lengths.
