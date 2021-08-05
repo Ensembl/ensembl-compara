@@ -78,7 +78,7 @@ def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, 
 
     Args:
         regions: Regions to write to output file.
-        chrom_sizes: Dictionary mapping chromosome names to their lengths.
+        chrom_sizes: Mapping of chromosome names to their lengths.
         bed_file: Path of BED file to output.
         flank_length: Length of upstream/downstream flanking regions to request.
 
