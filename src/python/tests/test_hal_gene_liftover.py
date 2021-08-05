@@ -158,7 +158,6 @@ class TestHalGeneLiftover:
         """
         with expectation:
             out_file_path = tmp_dir / bed_file
-            hal_gene_liftover.make_src_region_file(regions, chrom_sizes, out_file_path,
-                                                   flank_length)
+            hal_gene_liftover.make_src_region_file(regions, chrom_sizes, out_file_path, flank_length)
             ref_file_path = self.ref_file_dir / bed_file
             assert filecmp.cmp(out_file_path, ref_file_path)
