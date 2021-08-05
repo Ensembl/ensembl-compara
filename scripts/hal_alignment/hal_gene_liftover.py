@@ -49,18 +49,18 @@ class SimpleRegion(NamedTuple):
     strand: str
 
 
-def load_chr_sizes(in_hal_file: Union[Path, str], genome_name: str) -> Dict[str, int]:
+def load_chr_sizes(hal_file: Union[Path, str], genome_name: str) -> Dict[str, int]:
     """Load chromosome sizes from an input HAL file.
 
     Args:
-        in_hal_file: Input HAL file.
+        hal_file: Input HAL file.
         genome_name: Name of the genome to get the chromosome sizes of.
 
     Returns:
         Dictionary mapping chromosome names to their lengths.
 
     """
-    cmd = ['halStats', '--chromSizes', genome_name, in_hal_file]
+    cmd = ['halStats', '--chromSizes', genome_name, hal_file]
     process = run(cmd, check=True, capture_output=True, text=True, encoding='ascii')
 
     chr_sizes = dict()
@@ -105,7 +105,7 @@ def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, 
 
             if region.end > chr_size:
                 raise ValueError(f'region end ({region.end}) must not be greater'
--                                f' than chromosome length ({chr_size})')
+                                 f' than chromosome length ({chr_size})')
 
             flanked_start = max(0, region.start - flank_length)
             flanked_end = min(region.end + flank_length, chr_size)
@@ -175,32 +175,24 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    hal_file = args.hal_file
-    src_genome = args.src_genome
-    dest_genome = args.dest_genome
-    output_file = args.output_file
-    src_region = args.src_region
-    src_bed_file = args.src_bed_file
-    flank = args.flank
-
 
     with TemporaryDirectory() as tmp_dir:
 
         query_bed_file = os.path.join(tmp_dir, 'src_regions.bed')
 
-        if src_region is not None:
-            src_regions = [parse_region(src_region)]
+        if args.src_region is not None:
+            src_regions = [parse_region(args.src_region)]
         else:  # i.e. bed_file is not None
-            src_regions = pybedtools.BedTool(src_bed_file)
+            src_regions = pybedtools.BedTool(args.src_bed_file)
 
-        src_chr_sizes = load_chr_sizes(hal_file, src_genome)
+        src_chr_sizes = load_chr_sizes(args.hal_file, args.src_genome)
 
-        make_src_region_file(src_regions, src_chr_sizes, query_bed_file, flank_length=flank)
+        make_src_region_file(src_regions, src_chr_sizes, query_bed_file, flank_length=args.flank)
 
         # halLiftover --outPSL in.hal GRCh38 in.bed CHM13 stdout | pslPosTarget stdin out.psl
-        cmd1 = ['halLiftover', '--outPSL', hal_file, src_genome, query_bed_file, dest_genome,
-                'stdout']
-        cmd2 = ['pslPosTarget', 'stdin', output_file]
+        cmd1 = ['halLiftover', '--outPSL', args.hal_file, args.src_genome, query_bed_file,
+                args.dest_genome, 'stdout']
+        cmd2 = ['pslPosTarget', 'stdin', args.output_file]
         with Popen(cmd1, stdout=PIPE) as p1:
             with Popen(cmd2, stdin=p1.stdout) as p2:
                 p2.wait()
