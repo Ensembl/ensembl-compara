@@ -50,6 +50,10 @@ sub default_options {
         'ref_db'       => 'compara_references',
         'taxonomy_db'  => 'ncbi_taxonomy',
 
+        # Back compatibility for production team's use of '--pass' instead of '--password'
+        'pass'     => undef,
+        'password' => $self->o('pass') ? $self->o('pass') : $self->o('password'),
+
         # how many parts should per-genome files be split into?
         'num_fasta_parts'  => 100,
         # at which id should genome_db start?
