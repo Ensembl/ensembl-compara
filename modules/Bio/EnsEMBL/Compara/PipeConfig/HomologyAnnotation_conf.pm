@@ -57,6 +57,9 @@ sub default_options {
         %{$self->SUPER::default_options},   # Inherit the generic ones
 
         'pipeline_name'     => 'blastocyst_' . $self->o('rel_with_suffix'),
+        # Back compatibility for production team's use of '--pass' instead of '--password'
+        'pass'     => undef,
+        'password' => $self->o('pass') ? $self->o('pass') : $self->o('password'),
 
         # Mandatory species input, one or the other only
         'species_list'  => undef,
