@@ -57,6 +57,7 @@ sub pipeline_analyses_create_and_copy_per_species_db {
                 'curr_release' => $self->o('ensembl_release'),
                 'db_cmd_path'  => $self->o('db_cmd_path'),
                 'schema_file'  => $self->o('schema_file'),
+                'homology_host' => $self->o('homology_host'),
             },
             -flow_into => {
                 '2->A'  => { 'copy_per_species_db'  => INPUT_PLUS() },

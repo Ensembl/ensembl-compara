@@ -22,10 +22,10 @@ Bio::EnsEMBL::Compara::PipeConfig::HomologyAnnotation_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::HomologyAnnotation_conf -host mysql-ens-compara-prod-X -port XXXX \
-        --species_list <species_1,species_2,...,species_n>
+        --species species_1 --species species_2 --species species_n
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::HomologyAnnotation_conf -host mysql-ens-compara-prod-X -port XXXX \
-        --species_list_file <path/to/one_species_per_line_file.txt>
+        --species_list path/to/one_species_per_line_file.txt
 
 =head1 DESCRIPTION
 
@@ -57,11 +57,18 @@ sub default_options {
         %{$self->SUPER::default_options},   # Inherit the generic ones
 
         'pipeline_name'     => 'blastocyst_' . $self->o('rel_with_suffix'),
+        # Back compatibility for production team's use of '--pass' instead of '--password'
+        'pass'     => undef,
+        'password' => $self->o('pass') ? $self->o('pass') : $self->o('password'),
 
         # Mandatory species input, one or the other only
-        'species_list_file' => undef,
-        'species_list'      => [ ],
-        'division'          => 'homology_annotation',
+        'species_list'  => undef,
+        'species'       => [ ],
+        'division'      => 'homology_annotation',
+        # Mandatory server host for species homology databases
+        'homology_host' => 'mysql-ens-sta-5',
+        # registry_file compatibility so can be overridden if necessary
+        'registry_file' => $self->o('reg_conf'),
 
         # Directories to write to
         'work_dir'     => $self->o('pipeline_dir'),
@@ -203,9 +210,9 @@ sub core_pipeline_analyses {
             -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SpeciesFactory',
             -max_retry_count => 1,
             -input_ids       => [{
-                'registry_file'      => $self->o('reg_conf'),
-                'species_list'       => $self->o('species_list'),
-                'species_list_file'  => $self->o('species_list_file'),
+                'registry_file'      => $self->o('registry_file'),
+                'species_list'       => $self->o('species'),
+                'species_list_file'  => $self->o('species_list'),
             },],
             -flow_into       => {
                 8 => [ 'backbone_fire_db_prepare' ],
