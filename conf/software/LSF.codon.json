@@ -50,6 +50,7 @@
     "ortheus_c_exe"             : ["check_exe_in_compara", "ortheus/rc3/bin/ortheus_core"],
     "ortheus_lib_dir"           : ["check_dir_in_compara", "ortheus/rc3"],
     "ortheus_py"                : ["check_exe_in_compara", "ortheus/rc3/bin/Ortheus.py"],
+    "orthofinder_exe"           : ["check_exe_in_cellar", "orthofinder/2.5.4/bin/orthofinder"],
     "pantherScore_path"         : ["check_dir_in_cellar", "pantherscore/1.03"],
     "parse_examl_exe"           : ["check_exe_in_cellar", "examl/3.0.17/bin/parse-examl"],
     "parsimonator_exe"          : ["check_exe_in_cellar", "parsimonator/1.0.2/bin/parsimonator-SSE3"],
