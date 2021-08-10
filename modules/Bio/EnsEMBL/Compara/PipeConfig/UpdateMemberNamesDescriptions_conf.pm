@@ -53,6 +53,7 @@ sub default_options {
 
         #Pipeline capacities:
         'update_capacity'                           => '5',
+        'exclude_species'  => [],
 
     };
 }

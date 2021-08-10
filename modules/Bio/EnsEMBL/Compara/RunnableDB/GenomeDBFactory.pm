@@ -61,6 +61,8 @@ sub param_defaults {
         'component_genomes' => 1,
         'normal_genomes'    => 1,
         'ancestral_genomes' => 0,
+        # list of genome db names to exlcude
+        'exclude_species' => [],
 
         # List of GenomeDB attribute names that will be added to the output_ids
         'extra_parameters'  => [],
@@ -120,6 +122,21 @@ sub fetch_input {
     $genome_dbs = [grep {not $_->is_polyploid} @$genome_dbs] if not $self->param('polyploid_genomes');
     $genome_dbs = [grep {not $_->genome_component} @$genome_dbs] if not $self->param('component_genomes');
     $genome_dbs = [grep {($_->name eq 'ancestral_sequences') or $_->is_polyploid or $_->genome_component} @$genome_dbs] if not $self->param('normal_genomes');
+
+
+    # filter out exclude_species
+    my %exclude_species;
+    my $_exclude_species = $self->param('exclude_species');
+    if ( ref $_exclude_species eq 'ARRAY' ) {
+        @exclude_species{ @$_exclude_species } = ();
+    } else {
+        @exclude_species{ split(/\s+/, $_exclude_species) } = ();
+    }
+    my @_gdbs = ();
+    foreach my $gdb ( @{ $genome_dbs } ){
+        push(@_gdbs, $gdb) unless exists $exclude_species{$gdb->name};
+    }
+    $genome_dbs = \@_gdbs;
 
     if ($self->param('genome_db_data_source')) {
         my $genomedb_dba = $self->get_cached_compara_dba('genome_db_data_source');
