@@ -125,18 +125,18 @@ sub fetch_input {
 
 
     # filter out exclude_species
-    my %exclude_species;
-    my $_exclude_species = $self->param('exclude_species');
+    my %exclude_species_map;
+    my $excluded_species = $self->param('exclude_species');
     if ( ref $_exclude_species eq 'ARRAY' ) {
-        @exclude_species{ @$_exclude_species } = ();
+        @exclude_species_map{ @$excluded_species } = ();
     } else {
-        @exclude_species{ split(/\s+/, $_exclude_species) } = ();
+        @exclude_species_map{ split(/,/, $excluded_species) } = ();
     }
-    my @_gdbs = ();
+    my @gdbs = ();
     foreach my $gdb ( @{ $genome_dbs } ){
-        push(@_gdbs, $gdb) unless exists $exclude_species{$gdb->name};
+        push(@gdbs, $gdb) unless exists $excluded_species_map{$gdb->name};
     }
-    $genome_dbs = \@_gdbs;
+    $genome_dbs = \@gdbs;
 
     if ($self->param('genome_db_data_source')) {
         my $genomedb_dba = $self->get_cached_compara_dba('genome_db_data_source');
