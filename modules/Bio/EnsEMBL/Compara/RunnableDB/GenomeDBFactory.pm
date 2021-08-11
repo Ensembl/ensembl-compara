@@ -127,7 +127,7 @@ sub fetch_input {
     # filter out exclude_species
     my %exclude_species_map;
     my $excluded_species = $self->param('exclude_species');
-    if ( ref $_exclude_species eq 'ARRAY' ) {
+    if ( ref $excluded_species eq 'ARRAY' ) {
         @exclude_species_map{ @$excluded_species } = ();
     } else {
         @exclude_species_map{ split(/,/, $excluded_species) } = ();
