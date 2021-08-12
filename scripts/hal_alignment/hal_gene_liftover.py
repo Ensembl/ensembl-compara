@@ -20,7 +20,7 @@
 Examples::
     # Do a liftover from GRCh38 to CHM13 of the human INS gene
     # along with 5 kb upstream and downstream flanking regions.
-    python hal_gene_liftover.py --src-region 'chr11:2159779-2161221:-' \
+    python hal_gene_liftover.py --src-region 'chr11:2159779-2161221:-1' \
         --flank 5000 input.hal GRCh38 CHM13 output.json
 
     # Do a liftover from GRCh38 to CHM13 of the
