@@ -238,8 +238,8 @@ sub transcript_table {
     }   
 
     my @columns = (
-       { key => 'name',       sort => 'string',  label => 'Name', title => 'Transcript name', class => '_ht'},
        { key => 'transcript', sort => 'html',    label => 'Transcript ID', title => 'Stable ID', class => '_ht'},
+       { key => 'name',       sort => 'string',  label => 'Name', title => 'Transcript name', class => '_ht'},
        { key => 'bp_length',  sort => 'numeric', label => 'bp', title => 'Transcript length in base pairs', class => '_ht'},
        { key => 'protein',sort => 'html_numeric',label => 'Protein', title => 'Protein length in amino acids', class => '_ht'},
        { key => 'translation',sort => 'html',    label => 'Translation ID', title => 'Protein information', 'hidden' => 1, class => '_ht'},
@@ -366,7 +366,7 @@ sub transcript_table {
 
       $extras{$_} ||= '-' for(keys %extra_links);
       my $row = {
-        name        => { value => $_->display_xref ? $_->display_xref->display_id : '-', class => 'bold' },
+        name        => { value => $_->display_xref ? $_->display_xref->display_id : '-' },
         transcript  => sprintf('<a href="%s">%s%s</a>', $url, $tsi, $version),
         bp_length   => $transcript_length,
         protein     => $protein_url ? sprintf '<a href="%s" title="View protein">%saa</a>', $protein_url, $protein_length : 'No protein',
