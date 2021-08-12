@@ -134,7 +134,7 @@ sub fetch_input {
     }
     my @gdbs = ();
     foreach my $gdb ( @{ $genome_dbs } ){
-        push(@gdbs, $gdb) unless exists $excluded_species_map{$gdb->name};
+        push(@gdbs, $gdb) unless exists $exclude_species_map{$gdb->name};
     }
     $genome_dbs = \@gdbs;
 
