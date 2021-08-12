@@ -4,7 +4,16 @@ import fileinput
 import argparse
 import subprocess
 import os
-import yaml
+
+
+try:
+    import yaml
+except ModuleNotFoundError as err:
+    # Error handling
+    print(err)
+    print('Please, run "pip install PyYAML" to install PyYAML module')
+    exit(1)
+
 from yaml.loader import SafeLoader
 
 
