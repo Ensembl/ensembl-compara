@@ -203,10 +203,14 @@ def export_2bit_file(in_hal_file: Union[Path, str], genome_name: str,
         with Popen(cmd2, stdin=p1.stdout) as p2:
             p2.wait()
             if p2.returncode != 0:
-                raise RuntimeError(f'faToTwoBit terminated with signal {-p2.returncode}')
+                status_type = 'exit code' if p2.returncode > 0 else 'signal'
+                raise RuntimeError(
+                    f'faToTwoBit terminated with {status_type} {abs(p2.returncode)}')
         p1.wait()
         if p1.returncode != 0:
-            raise RuntimeError(f'hal2fasta terminated with signal {-p1.returncode}')
+            status_type = 'exit code' if p1.returncode > 0 else 'signal'
+            raise RuntimeError(
+                f'hal2fasta terminated with {status_type} {abs(p1.returncode)}')
 
 
 def load_chrom_sizes(in_2bit_file: Union[Path, str]) -> Dict[str, int]:
@@ -371,10 +375,14 @@ def run_hal_liftover(in_hal_file: Union[Path, str], query_genome: str,
         with Popen(cmd2, stdin=p1.stdout) as p2:
             p2.wait()
             if p2.returncode != 0:
-                raise RuntimeError(f'pslPosTarget terminated with signal {-p2.returncode}')
+                status_type = 'exit code' if p2.returncode > 0 else 'signal'
+                raise RuntimeError(
+                    f'pslPosTarget terminated with {status_type} {abs(p2.returncode)}')
         p1.wait()
         if p1.returncode != 0:
-            raise RuntimeError(f'halLiftover terminated with signal {-p1.returncode}')
+            status_type = 'exit code' if p1.returncode > 0 else 'signal'
+            raise RuntimeError(
+                f'halLiftover terminated with {status_type} {abs(p1.returncode)}')
 
 
 def run_two_bit_to_fa(in_bed_file: Union[Path, str], in_2bit_file: Union[Path, str],
