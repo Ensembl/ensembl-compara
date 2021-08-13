@@ -70,14 +70,17 @@ sub content {
   $self->delete_entry_by_type('Transcript');
   $self->delete_entry_by_value($transcript_link);
 
-  $self->add_entry({
-    type     => 'RefSeq transcript',
-    label    => $transcript_xref,
-    link     => $hub->get_ExtURL_link($transcript_xref, 'REFSEQ_MRNA_PREDICTED', $transcript_xref),
-    abs_url  => 1,
-    position => 2,
-  });
-
+  unless ($biotype =~ m/tRNA/ or $biotype =~ m/IG_/)
+  {
+    $self->add_entry({
+      type     => 'RefSeq transcript',
+      label    => $transcript_xref,
+      link     => $hub->get_ExtURL_link($transcript_xref, 'REFSEQ_MRNA_PREDICTED', $transcript_xref),
+      abs_url  => 1,
+      position => 2,
+    });
+  }
+ 
   if ($translation) {
     my $translation_id = $translation->stable_id;
     $self->delete_entry_by_type('Protein');
