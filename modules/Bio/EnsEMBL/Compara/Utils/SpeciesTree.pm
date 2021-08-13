@@ -269,7 +269,8 @@ sub create_species_tree {
 sub new_from_newick {
     my ($self, $newick, $compara_dba, @args) = @_;
 
-    my ($mlss_id) = rearrange([qw(MLSS_ID)], @args);
+    #my ($mlss_id) = rearrange([qw(MLSS_ID)], @args);
+    my $mlss_id = undef;
 
     my $species_tree_root = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $newick, 'Bio::EnsEMBL::Compara::SpeciesTreeNode' );
     $species_tree_root = $species_tree_root->minimize_tree;     # The user-defined trees may have some 1-child nodes

@@ -39,7 +39,18 @@ sub fetch_input {
 
 	my $reference_genome_db = $genome_db_adaptor->fetch_by_name_assembly($reference_genome_db_name);
 	my @dnafrag_region_jobs = ();
-	my $reference_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB($reference_genome_db, -IS_REFERENCE => 1);
+	my $reference_dnafrags;
+	if ($reference_genome_db->is_polyploid && ! defined $reference_genome_db->genome_component){
+		my @frag_array;
+		foreach my $gdb ( @{ $reference_genome_db->component_genome_dbs() }){
+			my $_frags = $dnafrag_adaptor->fetch_all_by_GenomeDB($gdb, -IS_REFERENCE => 1); 
+			push(@frag_array, @$_frags);
+		}
+		$reference_dnafrags = \@frag_array;
+	}
+	else { 
+		$reference_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB($reference_genome_db, -IS_REFERENCE => 1);
+	}
 	foreach my $dnafrag( @{ $reference_dnafrags } ){
 		my $dnafrag_len = $dnafrag->length;
 		if($dnafrag_len > $dnafrag_chunk_size){

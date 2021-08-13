@@ -56,7 +56,17 @@ sub fetch_input {
         my $methods = $compara_pairwise_dba->get_MethodAdaptor->fetch_all_by_class_pattern('GenomicAlignBlock.pairwise_alignment');
         my $main_mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
         $self->disconnect_from_databases;
-        foreach my $non_ref_genome_db (@{$main_mlss->species_set->genome_dbs}) {
+        my @non_ref_genome_db_list;
+        foreach my $gdb (@{$main_mlss->species_set->genome_dbs}){
+            my $principal = $gdb->principal_genome_db();
+            if (defined $principal) {
+                push (@non_ref_genome_db_list, $principal);
+            }
+            else {
+                push (@non_ref_genome_db_list, $gdb);
+            }
+        }
+        foreach my $non_ref_genome_db (@non_ref_genome_db_list) {
                 next if $non_ref_genome_db->dbID == $ref_genome_db->dbID;
                 my $species_set = $compara_pairwise_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( [$ref_genome_db, $non_ref_genome_db] )
                     || die "Cannot find a SpeciesSet for the pair ".$ref_genome_db->toString." + ".$non_ref_genome_db->toString."\n";

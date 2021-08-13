@@ -41,10 +41,10 @@ my @overlap_species = qw(saccharomyces_cerevisiae drosophila_melanogaster caenor
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
 # Use our mirror (which has all the databases)
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
 
 # Or use the official staging servers
-#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
 # and remove the Non-Vertebrates version of the shared species
 #Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
 #Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
@@ -97,26 +97,28 @@ my $compara_dbs = {
     #'compara_members'  => [ 'mysql-ens-compara-prod-3', 'ivana_plants_load_members_104'],
     #'compara_ptrees'   => [ 'mysql-ens-compara-prod-5', 'ivana_plants_plants_protein_trees_104' ],
 
+    'lastz_wheat_all' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_full_set' ]
+
     # LASTZ dbs
-    'lastz_batch_0' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch0_104' ],
-    'lastz_batch_1' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch1_104' ],
-    'lastz_batch_2' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch2_104' ],
-    'lastz_batch_3' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch3_104' ],
-    'lastz_batch_4' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch4_104' ],
-    'lastz_batch_5' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch5_104' ],
-    'lastz_batch_6' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch6_104' ],
-    'lastz_batch_7' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch7_104' ],
-    'lastz_batch_8' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch8_104' ],
-    'lastz_batch_9' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch9_104' ],
-    'lastz_batch_10' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch10_104' ],
-    'lastz_batch_11' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch11_104' ],
-    'lastz_batch_12' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch12_104' ],
-    'lastz_batch_13' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch13_104' ],
-    'lastz_batch_14' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch14_104' ],
-    'lastz_batch_15' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch15_104' ],
-    'lastz_batch_16' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch16_104' ],
-    'lastz_batch_17' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch17_104' ],
-    'lastz_batch_18' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch18_104' ],
+    #'lastz_batch_0' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch0_104' ],
+    #'lastz_batch_1' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch1_104' ],
+    #'lastz_batch_2' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch2_104' ],
+    #'lastz_batch_3' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch3_104' ],
+    #'lastz_batch_4' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch4_104' ],
+    #'lastz_batch_5' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch5_104' ],
+    #'lastz_batch_6' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch6_104' ],
+    #'lastz_batch_7' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch7_104' ],
+    #'lastz_batch_8' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch8_104' ],
+    #'lastz_batch_9' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch9_104' ],
+    #'lastz_batch_10' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch10_104' ],
+    #'lastz_batch_11' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch11_104' ],
+    #'lastz_batch_12' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch12_104' ],
+    #'lastz_batch_13' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch13_104' ],
+    #'lastz_batch_14' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch14_104' ],
+    #'lastz_batch_15' => [ 'mysql-ens-compara-prod-8', 'agymer_wheat_lastz_batch15_104' ],
+    #'lastz_batch_16' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch16_104' ],
+    #'lastz_batch_17' => [ 'mysql-ens-compara-prod-6', 'agymer_wheat_lastz_batch17_104' ],
+    #'lastz_batch_18' => [ 'mysql-ens-compara-prod-9', 'agymer_wheat_lastz_batch18_104' ],
 
     # LASTZ dbs to merge in e105 or later
     # Wheat "strains" alignments
