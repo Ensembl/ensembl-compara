@@ -61,7 +61,7 @@ sub param_defaults {
         'component_genomes' => 1,
         'normal_genomes'    => 1,
         'ancestral_genomes' => 0,
-        # list of genome db names to exlcude
+        # list of genome db names to exclude
         'exclude_species' => [],
 
         # List of GenomeDB attribute names that will be added to the output_ids
