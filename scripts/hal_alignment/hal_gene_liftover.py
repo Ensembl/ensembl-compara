@@ -41,12 +41,11 @@ from tempfile import TemporaryDirectory
 from typing import AbstractSet, Dict, Iterable, Mapping, NamedTuple, Set, Union
 
 from Bio.SeqIO.FastaIO import SimpleFastaParser
-import pybedtools  # type: ignore
 
 
 class StrandedRegion(NamedTuple):
     """A stranded DNA sequence region."""
-    chrom: str
+    chr: str
     start: int
     end: int
     strand: str
@@ -54,7 +53,7 @@ class StrandedRegion(NamedTuple):
 
 class UnstrandedRegion(NamedTuple):
     """An unstranded DNA sequence region."""
-    chrom: str
+    chr: str
     start: int
     end: int
 
@@ -153,7 +152,7 @@ def convert_liftover_fasta_to_json(fasta_file: Union[Path, str],
             out_end_pos = output_region.end
             out_strand_num = 1 if output_region.strand == '+' else -1
             src_to_dest[input_region].append({
-                'dest_chr': output_region.chrom,
+                'dest_chr': output_region.chr,
                 'dest_start': out_start_pos,
                 'dest_end': out_end_pos,
                 'dest_strand': out_strand_num,
@@ -167,7 +166,7 @@ def convert_liftover_fasta_to_json(fasta_file: Union[Path, str],
         in_strand_num = 1 if input_region.strand == '+' else -1
         params = {
             'src_genome': source_genome,
-            'src_chr': input_region.chrom,
+            'src_chr': input_region.chr,
             'src_start': in_start_pos,
             'src_end': in_end_pos,
             'src_strand': in_strand_num,
@@ -234,7 +233,7 @@ def load_chr_sizes(hal_file: Union[Path, str], genome_name: str) -> Dict[str, in
     return chr_sizes
 
 
-def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, StrandedRegion]],
+def make_src_region_file(regions: Iterable[StrandedRegion],
                          chr_sizes: Mapping[str, int], bed_file: Union[Path, str],
                          flank_length: int = 0) -> Dict[UnstrandedRegion, Set[StrandedRegion]]:
     """Make source region file.
@@ -263,27 +262,27 @@ def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, 
         for region in regions:
 
             try:
-                chr_size = chr_sizes[region.chrom]
+                chr_size = chr_sizes[region.chr]
             except KeyError as e:
-                raise ValueError(f"chromosome ID not found in input file: '{region.chrom}'") from e
+                raise ValueError(f"chromosome ID not found in input file: '{region.chr}'") from e
 
             if region.start < 0:
                 raise ValueError(f'region start must be greater than or equal to 0: {region.start}')
 
             if region.end > chr_size:
                 raise ValueError(f'region end ({region.end}) must not be greater than the'
-                                 f' corresponding chromosome length ({region.chrom}: {chr_size})')
+                                 f' corresponding chromosome length ({region.chr}: {chr_size})')
 
             flanked_start = max(0, region.start - flank_length)
             flanked_end = min(region.end + flank_length, chr_size)
 
-            fields = [region.chrom, flanked_start, flanked_end, name, score, region.strand]
+            fields = [region.chr, flanked_start, flanked_end, name, score, region.strand]
             print('\t'.join(str(x) for x in fields), file=f)
 
             # We do not specify strand for the query region, as this info
             # is not completely preserved during the liftover process.
-            query_region = UnstrandedRegion(region.chrom, flanked_start, flanked_end)
-            input_region = StrandedRegion(region.chrom, region.start, region.end, region.strand)
+            query_region = UnstrandedRegion(region.chr, flanked_start, flanked_end)
+            input_region = StrandedRegion(region.chr, region.start, region.end, region.strand)
             try:
                 region_mapping[query_region].add(input_region)
             except KeyError:
@@ -442,11 +441,7 @@ if __name__ == '__main__':
 
     with TemporaryDirectory() as tmp_dir:
 
-        if args.src_region is not None:
-            src_regions = [parse_region(args.src_region)]
-        else:  # i.e. bed_file is not None
-            src_regions = pybedtools.BedTool(args.src_bed_file)
-
+        src_regions = [parse_region(args.src_region)]
         src_chr_sizes = load_chr_sizes(args.hal_file, args.src_genome)
 
         query_bed_file = os.path.join(tmp_dir, 'src_regions.bed')
