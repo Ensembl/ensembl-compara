@@ -192,7 +192,7 @@ def liftover_region(src_region: SimpleRegion,
         'src_start': src_region.start + 1,
         'src_end': src_region.end,
         'src_strand': _strand_sign_to_num[src_region.strand],
-        'flank_length': flank_length,
+        'flank': flank_length,
         'dest_genome': dest_genome
     }
 
