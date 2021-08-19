@@ -680,38 +680,6 @@ sub get_alternative_locations {
   return \@alt_locs;
 }
 
-sub get_desc_mapping {
-### Returns descriptions for ortholog types.
-### TODO - get this info from compara API
-  my ($self, $match_type) = @_;
-  my %desc_mapping;
-
-  my %orth_mapping = (
-      ortholog_one2one          => '1 to 1 orthologue',
-      apparent_ortholog_one2one => '1 to 1 orthologue (apparent)',
-      ortholog_one2many         => '1 to many orthologue',
-      ortholog_many2many        => 'many to many orthologue',
-      possible_ortholog         => 'possible orthologue',
-  );
-  my %para_mapping = (
-      within_species_paralog    => 'paralogue (within species)',
-      other_paralog             => 'other paralogue (within species)',
-      putative_gene_split       => 'putative gene split',
-      contiguous_gene_split     => 'contiguous gene split',
-  );
-
-  if ($match_type eq 'Orthologue') {
-    %desc_mapping = %orth_mapping;
-  }
-  elsif ($match_type eq 'Paralogue') {
-    %desc_mapping = %para_mapping;
-  }
-  else {
-    %desc_mapping = (%orth_mapping, %para_mapping);
-  }
-  return %desc_mapping;
-}
-
 sub get_homology_matches {
   my ($self, $homology_source, $homology_description, $disallowed_homology, $compara_db) = @_;
   #warn ">>> MATCHING $homology_source, $homology_description BUT NOT $disallowed_homology";
@@ -732,9 +700,6 @@ sub get_homology_matches {
     my $adaptor_call = $self->param('gene_adaptor') || 'get_GeneAdaptor';
     my %homology_list;
 
-    # Convert descriptions into more readable form
-    my %desc_mapping = $self->get_desc_mapping;
-    
     foreach my $display_spp (keys %$homologues) {
       my $order = 0;
       
@@ -787,14 +752,10 @@ sub get_homologies {
   $homology_source      = 'ENSEMBL_HOMOLOGUES' unless defined $homology_source;
   $homology_description = 'ortholog' unless defined $homology_description;
   
-  my $geneid   = $self->stable_id;
   my $database = $self->database($compara_db);
-  my %homologues;
-
   return unless $database;
 
-  my $query_member   = $database->get_GeneMemberAdaptor->fetch_by_stable_id($geneid);
-
+  my $query_member   = $database->get_GeneMemberAdaptor->fetch_by_stable_id($self->stable_id);
   return unless defined $query_member;
   
   my $homology_adaptor = $database->get_HomologyAdaptor;

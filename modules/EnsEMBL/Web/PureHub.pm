@@ -62,7 +62,7 @@ sub database {
   my ($self,$species,$db) = @_;
 
   $db ||= 'core';
-  if($db =~ /compara/) {
+  if($db =~ /compara/ && !$self->sd->SINGLE_SPECIES_COMPARA) {
     $species = 'multi';
   }
   croak "No species specified getting '$db'" unless $species;

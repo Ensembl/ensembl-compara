@@ -58,7 +58,8 @@ sub pancompara_db_adaptor {
 sub compara_member {
   my ($self,$args) = @_;
 
-  return $self->source('Adaptors')->compara_member($args->{'gene'}->stable_id);
+  ## Pass current species in case this site has single-species compara
+  return $self->source('Adaptors')->compara_member($args->{'gene'}->stable_id, $args->{'species'});
 }
 
 sub pancompara_member {
