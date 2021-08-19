@@ -488,9 +488,10 @@ sub _load_in_species_pages {
   return $spp_tree;
 }
 
-sub _load_in_taxonomy_division {
-  my ($self) = @_;
-  my $filename = $SiteDefs::ENSEMBL_TAXONOMY_DIVISION_FILE;
+sub _load_json_config {
+  my ($self, $filename) = @_;
+  return unless $filename;
+
   my $json_text = do {
     open(my $json_fh, "<", $filename)
       or die("Can't open $filename: $!\n");
@@ -656,6 +657,7 @@ sub _expand_database_templates {
   ## Autoconfigure databases
   unless (exists $tree->{'databases'} && exists $tree->{'databases'}{'DATABASE_CORE'}) {
     my @db_types = qw(CORE CDNA OTHERFEATURES RNASEQ FUNCGEN VARIATION);
+    push @db_types, 'COMPARA' if $SiteDefs::SINGLE_SPECIES_COMPARA;
     my $db_details = {
                       'HOST'    => $HOST,
                       'PORT'    => $PORT,
@@ -671,7 +673,8 @@ sub _expand_database_templates {
         my $non_vert_version = $SiteDefs::SITE_RELEASE_VERSION;
         $db_name = sprintf('%s_%s', $filename, lc($_));
         $db_name .= '_'.$non_vert_version if $non_vert_version;                                 
-        $db_name .= sprintf('_%s_%s', $SiteDefs::ENSEMBL_VERSION, $species_version);
+        $db_name .= $_ eq 'COMPARA' ? sprintf('_%s', $SiteDefs::ENSEMBL_VERSION)
+                                    : sprintf('_%s_%s', $SiteDefs::ENSEMBL_VERSION, $species_version);
       }
       ## Does this database exist?
       $db_details->{'NAME'} = $db_name;
@@ -829,7 +832,7 @@ sub _parse {
   $self->_info_line('Filesystem', 'Trawled web tree');
   # Load taxonomy division json for species selector
   $self->_info_log('Loading', 'Loading taxonomy division json file');
-  $tree->{'ENSEMBL_TAXONOMY_DIVISION'} = $self->_load_in_taxonomy_division;
+  $tree->{'ENSEMBL_TAXONOMY_DIVISION'} = $self->_load_json_config($SiteDefs::ENSEMBL_TAXONOMY_DIVISION_FILE);
   
   # Load species lists, if not present in SiteDefs
   unless (scalar @{$SiteDefs::PRODUCTION_NAMES||[]}) {
@@ -866,19 +869,24 @@ sub _parse {
   my $species_to_strains = {};
   my $species_to_assembly = {};
 
+  ## Get favourites from file (rapid release only atm)
+  my $favourites = $self->_read_species_list_file('FAVOURITES')||[]; 
+  ## Also override primary & secondary species
+  if (scalar @$favourites) {
+    $SiteDefs::ENSEMBL_PRIMARY_SPECIES = $favourites->[0];
+    $SiteDefs::ENSEMBL_SECONDARY_SPECIES = $favourites->[1];
+  }
+
   # Loop over each tree and make further manipulations
   foreach my $species (@$SiteDefs::PRODUCTION_NAMES, 'MULTI') {
     $config_packer->species($species);
     $config_packer->munge('config_tree');
     $self->_info_line('munging', "$species config");
 
-    ## Configure favourites if not in DEFAULTS.ini (rapid release)
+    ## Configure favourites if not in DEFAULTS.ini 
     unless ($config_packer->tree->{'DEFAULT_FAVOURITES'}) {
-      my $favourites = $self->_read_species_list_file('FAVOURITES'); 
-      warn "!!! NO FAVOURITES CONFIGURED" unless scalar @{$favourites||[]};
+      warn "!!! NO FAVOURITES CONFIGURED" unless scalar @$favourites};
       $config_packer->tree->{'DEFAULT_FAVOURITES'} = $favourites;
-      $config_packer->tree->{'ENSEMBL_PRIMARY_SPECIES'} = $favourites->[0];
-      $config_packer->tree->{'ENSEMBL_SECONDARY_SPECIES'} = $favourites->[1];
     }
 
     # Replace any placeholder text in sample data
@@ -1047,8 +1055,9 @@ sub _parse {
   $tree->{'MULTI'}{'ENSEMBL_DATASETS'} = $datasets;
   #warn ">>> NEW KEYS: ".Dumper($tree);
 
-  ## New species list - currently only used by rapid release
+  ## Species lists - currently only used by rapid release
   $tree->{'MULTI'}{'NEW_SPECIES'} = $self->_read_species_list_file('NEW_SPECIES');
+  $tree->{'MULTI'}{'REFERENCE_LOOKUP'} = $self->_load_json_config($SiteDefs::REFERENCE_LOOKUP_FILE);
 
   ## File format info
   my $format_info = $self->_get_file_format_info($tree);;
@@ -1304,7 +1313,18 @@ sub multi {
 
 sub compara_like_databases {
   my $self = shift;
-  return $self->multi_val('compara_like_databases');
+  if ($self->SINGLE_SPECIES_COMPARA) {
+    my $species = shift;
+    if ($species) {
+      return $self->get_config($species, 'compara_like_databases');
+    }
+    else {
+      return $self->multi_val('compara_like_databases');
+    }
+  }
+  else {
+    return $self->multi_val('compara_like_databases');
+  }
 }
 
 sub multi_val {

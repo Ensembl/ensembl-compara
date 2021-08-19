@@ -44,6 +44,19 @@ sub fixup {
   $self->SUPER::fixup();
 }
 
+sub _count_homologues {
+  my ($self, $member, $args) = @_;
+
+  my $dbc   = $self->database_dbc($args->{'species'},'compara');
+  my $gmID  = $member->gene_member_id;
+  my $sql   = 'select count(*) from homology_member where gene_member_id = ?';
+  my $sth   = $dbc->prepare($sql);
+  $sth->execute($gmID);
+
+  my $results = $sth->fetchall_arrayref;
+  return ($results && scalar @$results) ?  $results->[0][0] : 0; 
+}
+
 sub _count_go {
   my ($self,$args,$out) = @_;
 
@@ -210,6 +223,9 @@ sub _counts {
     $out->{'paralogs'} = $member->number_of_paralogues // $member->number_of_paralogues($division) ;
     $out->{'strain_paralogs'} =  $self->sd_config($args,'RELATED_TAXON') ? $member->number_of_paralogues($self->sd_config($args,'RELATED_TAXON')) : 0;
     $out->{'families'} = $member->number_of_families // $member->number_of_families($division) ;
+    if ($self->sd_config($args,'SINGLE_SPECIES_COMPARA')) {
+      $out->{'homologs'} = $self->_count_homologues($member, $args);
+    }
   }
   my $alignments = $self->_count_alignments($args);
   $out->{'alignments'} = $alignments->{'all'} if $args->{'type'} eq 'core';
@@ -272,7 +288,7 @@ sub get {
   $out->{'family_count'} = $counts->{'families'};
   $out->{'not_rnaseq'} = $args->{'type'} ne 'rnaseq';
   for (qw(
-    transcripts alignments paralogs strain_paralogs orthologs strain_orthologs similarity_matches
+    transcripts alignments paralogs strain_paralogs orthologs strain_orthologs homologs similarity_matches
     operons structural_variation pairwise_alignments
   )) {
     $out->{"has_$_"} = $counts->{$_};
