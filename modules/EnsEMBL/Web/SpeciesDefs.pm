@@ -885,7 +885,7 @@ sub _parse {
 
     ## Configure favourites if not in DEFAULTS.ini 
     unless ($config_packer->tree->{'DEFAULT_FAVOURITES'}) {
-      warn "!!! NO FAVOURITES CONFIGURED" unless scalar @$favourites};
+      warn "!!! NO FAVOURITES CONFIGURED" unless scalar @$favourites;
       $config_packer->tree->{'DEFAULT_FAVOURITES'} = $favourites;
     }
 
