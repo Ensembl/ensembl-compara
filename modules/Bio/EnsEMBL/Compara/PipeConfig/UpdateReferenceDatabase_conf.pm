@@ -46,7 +46,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'division'     => 'references',
+        'division'     => 'aqua-faang',
         'ref_db'       => 'compara_references',
         'taxonomy_db'  => 'ncbi_taxonomy',
 
@@ -55,11 +55,11 @@ sub default_options {
         # at which id should genome_db start?
         'genome_db_offset' => 101,
 
-        'pipeline_name' => 'update_references_' . $self->o('rel_with_suffix'),
+        'pipeline_name' => 'aqua-faang_references_' . $self->o('rel_with_suffix'),
         'backups_dir'   => $self->o('pipeline_dir') . '/reference_db_backups/',
 
         # shared location to symlink to fastas for orthofinder
-        'shared_fasta_dir' => $self->o('shared_hps_dir') . '/reference_fasta_symlinks/',
+        'shared_fasta_dir' => $self->o('shared_hps_dir') . '/aqua-faang_fasta_symlinks/',
 
         # orthofinder executable
         # 'orthofinder_exe' => $self->o('orthofinder_exe'),
@@ -105,7 +105,7 @@ sub default_options {
         'output_dir_path'  => $self->o('pipeline_dir') . '/datachecks/',
         'overwrite_files'  => 1,
         'failures_fatal'   => 1, # no DC failure tolerance
-        'ref_dbname'       => 'ensembl_compara_references', # to be manually passed in init if differs
+        'ref_dbname'       => 'cristig_aqua_faang_references', # to be manually passed in init if differs
 
         # individual dc options
         'dc_names' => ['CheckMemberIDRange'],

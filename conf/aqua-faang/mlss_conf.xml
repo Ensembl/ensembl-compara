@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<compara_db division="aqua-faang">
+
+  <collections>
+    <!-- <collection name="default">
+    <taxonomic_group taxon_name="Vertebrata"/>
+    <taxonomic_group taxon_name="Tetrapoda" exclude="1"/>
+    </collection> -->
+    <collection name="aqua-faang">
+    <taxonomic_group taxon_name="Actinopterygii"/>
+    </collection>
+  </collections>
+
+</compara_db>
