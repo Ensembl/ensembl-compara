@@ -50,6 +50,9 @@ sub test_division {
     if (-e $allowed_species_file) {
         my $names = decode_json(slurp($allowed_species_file));
         %allowed_species = map {$_ => 1} @$names;
+        foreach my $name (@$names) {
+            unlike($name, qr/\s/, "'$name' does not contain a space");
+        }
     }
 
     # Load the species-tree if there is one
