@@ -66,7 +66,7 @@ sub default_options {
         'shared_fasta_dir' => $self->o('shared_hps_dir') . '/reference_fasta_symlinks/',
 
         # orthofinder executable
-        'orthofinder_exe' => $self->o('orthofinder_exe'),
+        # 'orthofinder_exe' => $self->o('orthofinder_exe'),
 
         # update from metadata options
         'list_genomes_script'    => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
@@ -158,6 +158,7 @@ sub pipeline_wide_parameters {
         'division' => $self->o('division'),
         'ref_db'   => $self->o('ref_db'),
         'release'  => $self->o('ensembl_release'),
+        'reg_conf' => $self->o('reg_conf'),
 
         'backups_dir'       => $self->o('backups_dir'),
         'members_dumps_dir' => $self->o('ref_member_dumps_dir'),
@@ -165,6 +166,7 @@ sub pipeline_wide_parameters {
         'output_dir_path'  => $self->o('output_dir_path'),
         'overwrite_files'  => $self->o('overwrite_files'),
         'failures_fatal'   => $self->o('failures_fatal'),
+
     };
 }
 
@@ -382,18 +384,18 @@ sub core_pipeline_analyses {
                 'ref_member_dumps_dir' => $self->o('ref_member_dumps_dir'),
                 'compara_db'           => $self->o('ref_db'),
             },
-            -flow_into  => {
-                2 => [ 'run_orthofinder' ],
-            },
-        },
-
-        {   -logic_name => 'run_orthofinder',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters => {
-                'orthofinder_exe' => $self->o('orthofinder_exe'),
-                'cmd'             => '#orthofinder_exe# -t 16 -a 8 -f #symlink_dir#',
-            },
-            -rc_name    => '128Gb_16c_job',
+        #     -flow_into  => {
+        #         2 => [ 'run_orthofinder' ],
+        #     },
+        # },
+        #
+        # {   -logic_name => 'run_orthofinder',
+        #     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+        #     -parameters => {
+        #         'orthofinder_exe' => $self->o('orthofinder_exe'),
+        #         'cmd'             => '#orthofinder_exe# -t 16 -a 8 -f #symlink_dir#',
+        #     },
+        #     -rc_name    => '128Gb_16c_job',
         },
 
         {   -logic_name => 'backup_ref_db_again',
@@ -434,5 +436,6 @@ sub tweak_analyses {
     $analyses_by_name->{'datacheck_fan'}->{'-flow_into'}->{0} = ['jira_ticket_creation'];
     $analyses_by_name->{'datacheck_fan_high_mem'}->{'-flow_into'}->{0} = ['jira_ticket_creation'];
     $analyses_by_name->{'store_results'}->{'-parameters'}->{'dbname'} = $self->o('ref_dbname');
+
 }
 1;

@@ -243,7 +243,7 @@ sub add_dbas {
         my ( $host, $db_name ) = @{ $compara_dbs->{$alias_name} };
 
         my ( $user, $pass );
-        if ( ($host =~ /-prod-/) && !($alias_name =~ /_prev/) ) {
+        if ( ($host =~ /-prod-/ or $alias_name eq "compara_references") && !($alias_name =~ /_prev/) ) {
             $user = get_rw_user($host);
             $pass = get_rw_pass($host);
         } else {
@@ -330,7 +330,7 @@ sub get_rw_user {
     my $host = shift;
     unless (exists $rw_users{$host}) {
         # There are several possible user names
-        my @rw_users = qw(ensadmin ensrw w);
+        my @rw_users = qw(ensadmin ensrw w ensprod);
         foreach my $rw_user (@rw_users) {
             my $rc = system("which $host-$rw_user > /dev/null 2> /dev/null");
             unless ($rc) {
