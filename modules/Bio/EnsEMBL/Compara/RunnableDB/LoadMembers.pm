@@ -149,6 +149,7 @@ sub run {
         my $genome_db_id = $self->param_required('genome_db_id');
         my $start_id = $genome_db_id * 10000000;
         $compara_dba->dbc->sql_helper->transaction(-CALLBACK => sub {
+            $compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 1"); # ON UPDATE CASCASE does not work if FOREIGN_KEY_CHECKS off
             $compara_dba->dbc->do("UPDATE gene_member JOIN (SELECT \@rank := $start_id) r
                 SET gene_member_id = \@rank := (\@rank + 1) WHERE genome_db_id = $genome_db_id");
             $compara_dba->dbc->do("UPDATE seq_member JOIN (SELECT \@rank := $start_id) r
