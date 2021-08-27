@@ -2,21 +2,40 @@
 
 import argparse
 import contextlib
-import os, tempfile
+import os, tempfile, stat
 import shutil
 import tempfile
 import pathlib
 import re
+from pathlib import Path
+from os import environ
 
-STRING_TABLE = {
-    "round": "### Round",
-    "align": "cactus-align",
-    "blast": "cactus-blast",
-    "hal2fasta": "hal2fasta",
-    "merging": "## HAL merging",
-    "alignment": "## Alignment",
-    "preprocessor": "## Preprocessor",
-}
+try:
+    import yaml
+    from yaml.loader import SafeLoader
+except ModuleNotFoundError as err:
+    # Error handling
+    print(err)
+    print('Please, run "pip install PyYAML" to install PyYAML module')
+    exit(1)
+
+# sanity check for environment variables CACTUS_IMAGE and CACTUS_GPU_IMAGE
+try:
+    for i in ["CACTUS_IMAGE", "CACTUS_GPU_IMAGE"]:
+        if os.environ.get(i) is None:
+            raise Exception(
+                "Please set the environment variable {} to point to singularity image.".format(
+                    i
+                )
+            )
+except Exception as err:
+    print(err)
+    sys.exit(1)
+
+
+###################################################################
+###                    UTILITY   FUNCTIONS                       ##
+###################################################################
 
 
 def symlink(target, link_name, overwrite=False):
@@ -62,6 +81,26 @@ def symlink(target, link_name, overwrite=False):
         raise
 
 
+def read_file(filename, line_number=False):
+    """Function to read a file
+
+    Args:
+        @filename: The name of the file to read
+        @line_number: return the number along with the line
+    """
+    with open(filename, mode="r") as f:
+        number = 0
+        while True:
+            line = f.readline()
+            if not line:
+                break
+            if line_number:
+                yield line, number
+                number = number + 1
+            else:
+                yield line
+
+
 def create_symlinks(src_dirs, dest):
     """Create relative symbolic links
 
@@ -77,7 +116,7 @@ def create_symlinks(src_dirs, dest):
         symlink(target=relativepath, link_name=fromfolderWithFoldername, overwrite=True)
 
 
-def append(filename, line):
+def append(filename, line, mode="a"):
     """Append content to a file
 
     Args:
@@ -86,99 +125,52 @@ def append(filename, line):
     """
 
     if line:
-        with open(filename, mode="a") as f:
+        with open(filename, mode) as f:
             if f.tell() > 0:
                 f.write("\n")
             f.write(line.strip())
 
 
-def parse(read_func, symlink_dirs, task_dir, task_name, stop_condition):
-    """Main function to parse the output file of Cactus-prepare
+def mkdir(path, force=False):
+    """Create a directory
 
     Args:
-        @read_func: pointer to the function that yields input lines
-        @symlink_dirs: list of directories (as source) for symlink creation
-        @task_dir: the directory to save parser's output
-        @task_name: parser rule name (preprocessor, alignment, merging)
-        @stop_condition: the condition to stop this parser
+        @path: path to create directories
+        @force: if the directory exists, delete and recreate it
+
     """
+    if force and Path(path).exists():
+        shutil.rmtree(path)
 
-    if "alignment" not in task_name:
-        path = "{}/{}".format(task_dir, task_name)
-        create_symlinks(src_dirs=symlink_dirs, dest=path)
-        commands_filename = "{}/commands.txt".format(path)
-
-    while True:
-        # get the next line
-        line = next(read_func, None)
-
-        # job done: NONE
-        if not line:
-            break
-
-        # strip the line
-        line = line.strip()
-
-        # empty line, next
-        if not line:
-            continue
-
-        # job done for task_name
-        if stop_condition and line.startswith(stop_condition):
-            break
-
-        if "alignment" in task_name:
-            # create a new round directory
-            if line.startswith(STRING_TABLE["round"]):
-                round_id = line.split()[-1]
-                round_path = "{}/alignments/{}".format(task_dir, round_id)
-                create_symlinks(src_dirs=symlink_dirs, dest=round_path)
-
-                all_blast_commands_filename = "{}/all-blast.txt".format(round_path)
-                all_align_commands_filename = "{}/all-align.txt".format(round_path)
-                all_hal2fa_commands_filename = "{}/all-hal2fasta.txt".format(round_path)
-
-                # go to the next line
-                continue
-
-            # sanity check
-            assert "round_path" in locals()
-
-            # get Anc_id from the current command-line
-            if "hal2fasta" in line:
-                anc_id = re.findall("(.*) --hdf5InMemory", line)[0].split()[-1]
-            else:
-                anc_id = re.findall("--root (.*)$", line)[0].split()[0]
-
-            # create block filename
-            commands_filename = "{}/{}.txt".format(round_path, anc_id)
-
-        if "cactus-blast" in line:
-            append(filename=all_blast_commands_filename, line=line)
-        elif "cactus-align" in line:
-            append(filename=all_align_commands_filename, line=line)
-        elif "hal2fasta" in line:
-            append(filename=all_hal2fa_commands_filename, line=line)
-
-        # write the current command-line in the file
-        append(filename=commands_filename, line=line)
+    Path(path).mkdir(parents=True, exist_ok=True)
 
 
-def read_file(filename):
-    """Function to read a file
+def make_executable(path):
+    """Make a file executable, e.g., chmod +x
 
     Args:
-        @filename: The name of the file to read
+        @path: path to a file
     """
-    with open(filename, mode="r") as f:
-        while True:
-            line = f.readline()
-            if not line:
-                break
-            yield line
+    st = os.stat(path)
+    os.chmod(path, st.st_mode | stat.S_IEXEC)
 
 
-if __name__ == "__main__":
+def create_bash_script(filename, shebang="#!/bin/bash"):
+    """Create executable bash script with shebang on it
+
+    Args:
+
+        @filename: Path of the file
+        @shebang: String containing bash shebang
+    """
+    append(filename=filename, mode="w", line=shebang)
+
+    # chmod +x on it
+    make_executable(path=filename)
+
+
+def create_argparser():
+    """Create argparser object to parse the input for this script"""
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -186,7 +178,7 @@ if __name__ == "__main__":
         metavar="PATH",
         type=str,
         required=True,
-        help="Output file from cactus-prepare command-line",
+        help="File containing the command lines generated by the cactus-prepare",
     )
     parser.add_argument(
         "--steps_dir",
@@ -203,73 +195,680 @@ if __name__ == "__main__":
         help="Location of the jobstore directory",
     )
     parser.add_argument(
-        "--alignments_dir",
-        metavar="PATH",
-        type=str,
-        default=os.getcwd(),
-        required=False,
-        help="Location of the alignment directory",
-    )
-    parser.add_argument(
-        "--preprocessor_dir",
-        metavar="PATH",
-        type=str,
-        default=os.getcwd(),
-        required=False,
-        help="Location of the preprocessor directory",
-    )
-    parser.add_argument(
-        "--merging_dir",
-        metavar="PATH",
-        type=str,
-        default=os.getcwd(),
-        required=False,
-        help="Location of the merging directory",
-    )
-    parser.add_argument(
         "--input_dir",
         metavar="PATH",
         type=str,
         required=True,
         help="Location of the input directory",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "--output_dir",
+        metavar="PATH",
+        type=str,
+        required=True,
+        help="Location of the output directory",
+    )
+    parser.add_argument(
+        "--slurm",
+        metavar="FILE",
+        type=str,
+        required=True,
+        help="YAML file describing the SLURM resources",
+    )
+    return parser
 
-    args.alignments_dir = os.path.abspath(args.alignments_dir)
+
+def cactus_job_command_name(line):
+    """Gathering information according to the cactus command line
+
+    Args:
+        @line: string containing a line read from the file
+
+    Returns:
+        a triple (command, extra_info, variable_name) informing:
+        - command: a string showing the given command line (cactus-preprocess, cactus-blast, cactus-align, etc.)
+        - extra_info: Info regarding the command line
+        - variable_name: a unique value for the given command line
+    """
+    if isinstance(line, str) and len(line) > 0:
+        command = line.split()[0]
+
+        if "cactus" in command:
+            jb = re.findall("\d+", line.split()[1])[0]
+            if "preprocess" in command:
+                input_names = (
+                    re.search("--inputNames (.*?) --", line).group(1).replace(" ", "_")
+                )
+                variable_name = "{}_{}_{}".format(
+                    command.replace("-", "_"), jb, input_names
+                ).upper()
+                return command, input_names, variable_name
+
+            elif "blast" in command or "align" in command:
+                anc_id = re.findall("--root (.*)$", line)[0].split()[0]
+                variable_name = "{}_{}_{}".format(
+                    command.replace("-", "_"), jb, anc_id
+                ).upper()
+                return command, anc_id, variable_name
+
+        elif command == "hal2fasta":
+            anc_id = re.findall("(.*) --hdf5InMemory", line)[0].split()[-1]
+            variable_name = "{}_{}".format(command, anc_id).upper()
+            return command, anc_id, variable_name
+
+        elif command == "halAppendSubtree":
+            parent_name = line.split()[3]
+            root_name = line.split()[4]
+            variable_name = "{}_{}_{}".format(command, parent_name, root_name).upper()
+            return command, "{}_{}".format(parent_name, root_name), variable_name
+
+
+def parse_yaml(filename):
+    """YAML parser.
+
+    Args:
+        filename: Filename path
+
+    Returns:
+        YAML content or None otherwise
+    """
+
+    with open(filename, mode="r") as f:
+        try:
+            return yaml.load(f, Loader=SafeLoader)
+        except yaml.YAMLError as err:
+            print(err)
+            sys.exit(1)
+
+    return None
+
+
+def check_slurm_resources_info(content, keys):
+
+    errors = []
+
+    if not isinstance(content, dict):
+        errors.append("{} is not a directory".format(content))
+
+    for key in keys:
+        if not key in content:
+            errors.append('key "{}" is missing'.format(key))
+
+    if len(errors) == 0:
+        return None
+
+    return errors
+
+
+###################################################################
+###               CACTUS-BATCHER  PARSING STEP                   ##
+###################################################################
+
+
+def parse(
+    read_func,
+    symlink_dir,
+    root_dir,
+    script_dir,
+    log_dir,
+    task_name,
+    task_type,
+    stop_condition,
+    ext="dat",
+):
+    """Main function to parse the output file of Cactus-prepare
+
+    Args:
+        @read_func: pointer to the function that yields input lines
+        @symlink_dir: list of directories (as source) for symlink creation
+        @root_dir: the directory to save parser's output
+        @task_name: parser rule name (preprocessor, alignment, merging)
+        @task_type: type of the given task
+        @stop_condition: the condition to stop this parser
+        @script_dir: list of extra directories to be created inside of @root_dir
+    """
+
+    # dict to point to parsed files
+    parsed_files = {}
+
+    # Preamble - create links and directories needed to execute Cactus at @root_dir
+    if "alignments" != task_type:
+
+        # For the alignment step, these links must be created inside of each round  directory - which is done inside of the while loop below
+        create_symlinks(src_dirs=symlink_dir, dest=root_dir)
+
+        # create log directory at root_dir
+        mkdir("{}/{}".format(root_dir, log_dir), force=True)
+
+        # create script directory at root_dir
+        for i in script_dir.values():
+            mkdir("{}/{}".format(root_dir, i), force=True)
+
+    while True:
+        # get the next line
+        line = next(read_func, None)
+
+        # job done: NONE
+        if not line:
+            break
+
+        # strip the line
+        line = line.strip()
+
+        # empty line, get the next one ...
+        if not line:
+            continue
+
+        # job done for task_name
+        if stop_condition and line.startswith(stop_condition):
+            break
+
+        if "preprocessor" == task_type:
+            # define the correct filenames to write the line
+            _, input_names, _ = cactus_job_command_name(line)
+
+            parsed_files["all"] = "{}/{}/all-{}.{}".format(
+                root_dir, script_dir["all"], task_type, ext
+            )
+
+        elif "alignments" == task_type:
+
+            # preamble - create a new round directory
+            if line.startswith("### Round"):
+                round_id = line.split()[-1]
+                round_path = "{}/{}".format(root_dir, round_id)
+
+                # create script directory at root_dir
+                for i in script_dir.values():
+                    mkdir("{}/{}".format(round_path, i), force=True)
+
+                # create log directory at root_dir
+                mkdir("{}/{}".format(round_path, log_dir), force=True)
+
+                # create links needed for execution
+                create_symlinks(src_dirs=symlink_dir, dest=round_path)
+
+                # go to the next line
+                continue
+
+            # sanity check
+            assert "round_path" in locals()
+
+            # get Anc_id from the current command-line
+            command, anc_id, _ = cactus_job_command_name(line)
+
+            # update filenames to write the line
+            parsed_files["all"] = "{}/{}/{}.{}".format(
+                round_path, script_dir["all"], anc_id, ext
+            )
+
+        # update filenames to write the line
+        elif "merging" == task_type:
+
+            # get parent and root node from the command line
+            _, parent_root_name, _ = cactus_job_command_name(line)
+
+            parsed_files["all"] = "{}/{}/all-{}.{}".format(
+                root_dir, script_dir["all"], task_type, ext
+            )
+
+        # write the line in the correct files
+        for i in parsed_files.keys():
+            append(filename=parsed_files[i], line=line)
+
+
+###################################################################
+###                  SLURM BASH SCRIPT CREATOR                   ##
+###################################################################
+
+
+def get_slurm_submission(
+    job_name,
+    variable_name,
+    work_dir,
+    log_dir,
+    partition,
+    gpus,
+    cpus,
+    commands,
+    dependencies,
+    singularity=True,
+):
+
+    """Prepare a Slurm string call
+
+    Args:
+        @name: name for the Slurm job
+        @word_dir: Location where the slurm should to to run the command
+        @log_dir: Path Cactus' log
+        @partition: Slurm partition name to dispatch the job
+        @gpus: Amount of GPUs to run the job
+        @cpus: Amount of CPUs to run the job
+        @commands: List of commands that the Slurm job must run
+        @dependencies: list of Job IDs that this job depends on
+        @singularity: True if @commands should run via singularity
+    """
+
+    # sbatch command line
+    sbatch = ["TASK_{}=$(sbatch".format(variable_name), "--parsable", "--requeue"]
+    sbatch.append("-J {}".format(job_name))
+
+    if work_dir is not None:
+        sbatch.append("-D {}".format(work_dir))
+
+    sbatch.append("-o {}/{}-%j.out".format(log_dir, job_name))
+    sbatch.append("-e {}/{}-%j.err".format(log_dir, job_name))
+    sbatch.append("-p {}".format(partition))
+
+    if gpus is not None and gpus != "None":
+        sbatch.append("--gres=gpu:{}".format(gpus))
+
+    if cpus is not None:
+        sbatch.append("-c {}".format(cpus))
+
+    if dependencies is not None and len(dependencies) > 0:
+        sbatch.append(
+            "--dependency=afterok:${}".format(
+                ":$".join(["TASK_" + dep for dep in dependencies])
+            )
+        )
+
+    # sanity check
+    if isinstance(commands, str):
+        commands = list(commands)
+
+    # define singularity
+    if singularity:
+
+        # get image PATH from environment variable
+        image = os.environ.get("CACTUS_IMAGE")
+
+        # for GPU usage, grab another image
+        if gpus is not None and gpus != "None":
+            image = "--nv {}".format(os.environ.get("CACTUS_GPU_IMAGE"))
+
+        # wrap the commands to use singularity
+        commands = [
+            "singularity run {} ".format(image) + command for command in commands
+        ]
+
+    # wrap the commands for SLURM
+    sbatch.append('--wrap "source ~/.bashrc; {}")'.format(";".join(commands)))
+
+    return sbatch
+
+
+def slurmify(
+    root_dir,
+    task_name,
+    task_type,
+    script_dirs,
+    log_dir,
+    resources,
+    initial_dependencies,
+    ext="dat",
+):
+    """Wraps each command line into a Slurm job
+
+    Args:
+        @root_dir: Location of the cactus task
+        @task_name: Name of the cactus task
+        @task_type: type of the given task
+        @script_dirs: Directory to read data and create scripts
+        @log_dir: Log path for Cactus call
+        @resources: Slurm resources information
+        @ext: Extension for the files that contains the command lines
+    """
+
+    # get list of filenames
+    filenames = next(
+        os.walk("{}/{}".format(root_dir, script_dirs["all"])), (None, None, [])
+    )[2]
+
+    # list of variable names that serve as dependencies for the next batch
+    extra_dependencies = []
+
+    for filename in filenames:
+
+        # sanity check
+        aggregated_bashscript_filename, file_extension = os.path.splitext(filename)
+        if ext not in file_extension:
+            continue
+
+        # create aggregated bash script
+        aggregated_bashscript_filename = "{}/{}/{}.sh".format(
+            root_dir, script_dirs["all"], aggregated_bashscript_filename
+        )
+        create_bash_script(filename=aggregated_bashscript_filename)
+
+        # dependency SLURM variable
+        intra_dependencies = list(initial_dependencies)
+
+        for line in read_file(
+            filename="{}/{}/{}".format(root_dir, script_dirs["all"], filename)
+        ):
+            # remove rubbish
+            line = line.strip()
+
+            # get the cactus command and variable name create that will serve as bash variable name and SLURM job name
+            command_key, job_name, variable_name = cactus_job_command_name(line)
+
+            # set Cactus log file for Toil outputs
+            if command_key != "halAppendSubtree" and command_key != "hal2fasta":
+                line = line + " --logFile {}/{}/{}-{}.log".format(
+                    root_dir, log_dir, command_key, job_name
+                )
+
+            # Set the working directory of the batch script to directory before it is executed
+            work_dir = "{}".format(root_dir)
+
+            # update the extra dependency between task types
+            extra_dependencies.append(variable_name)
+            if command_key == "cactus-blast" or command_key == "cactus-align":
+                extra_dependencies.pop()
+
+            # prepare SLURM submission
+            kwargs = {
+                "job_name": "{}-{}".format(command_key, job_name),
+                "variable_name": variable_name,
+                "work_dir": work_dir,
+                "log_dir": "{}/{}".format(root_dir, log_dir),
+                "partition": "{}".format(resources[command_key]["partition"]),
+                "cpus": resources[command_key]["cpus"],
+                "gpus": resources[command_key]["gpus"],
+                "commands": ["{}".format(line.strip())],
+                "dependencies": intra_dependencies,
+            }
+
+            # get the SLURM string call
+            sbatch = get_slurm_submission(**kwargs)
+
+            # update the intra dependency list between command_key
+            if (
+                command_key == "halAppendSubtree"
+                or command_key == "cactus-blast"
+                or command_key == "cactus-align"
+            ):
+                intra_dependencies.clear()
+                intra_dependencies.append(variable_name)
+
+            # create individual bash script
+            individual_bashscript_filename = "{}/{}/{}-{}.sh".format(
+                root_dir, script_dirs["separated"], command_key, job_name
+            )
+            create_bash_script(filename=individual_bashscript_filename)
+
+            # store it in the individual bash script
+            append(filename=individual_bashscript_filename, line=" ".join(sbatch))
+
+            # store it in the aggregated bash script
+            append(
+                filename=aggregated_bashscript_filename,
+                line="source {}".format(individual_bashscript_filename),
+            )
+
+    # dependencies for the next batch
+    return extra_dependencies
+
+
+###################################################################
+###          SLURM  WORKFLOW BASH SCRIPT CREATOR                 ##
+###################################################################
+
+
+def create_workflow_script(
+    root_dir, task_name, task_type, script_dir, workflow_filename
+):
+
+    # adding preprocess
+    append(filename=workflow_filename, line="\n### - {} step\n".format(task_type))
+
+    # get path path for all-{}.sh bash script
+    path = "{}/{}".format(
+        root_dir,
+        script_dir,
+    )
+    filenames = next(os.walk(path), (None, None, []))[2]
+
+    # check all files
+    for filename in filenames:
+
+        # update filename path
+        script = "{}/{}".format(path, filename)
+
+        # filtering files that aren't executable
+        if os.path.isfile(script) and not os.access(script, os.X_OK):
+            continue
+
+        line = ["source", script]
+
+        append(filename=workflow_filename, line=" ".join(line))
+
+
+###################################################################
+###                             MAIN                             ##
+###################################################################
+
+if __name__ == "__main__":
+
+    ###################################################################
+    ###                   PYTHON  ARGPARSE STEP                      ##
+    ###################################################################
+
+    # parse the args given
+    args = create_argparser().parse_args()
+
+    # get absolute path
     args.steps_dir = os.path.abspath(args.steps_dir)
     args.jobstore_dir = os.path.abspath(args.jobstore_dir)
     args.input_dir = os.path.abspath(args.input_dir)
-    args.preprocessor_dir = os.path.abspath(args.preprocessor_dir)
-    args.merging_dir = os.path.abspath(args.merging_dir)
+    args.output_dir = os.path.abspath(args.output_dir)
 
+    ###################################################################
+    ###                        SLURM  DATA                           ##
+    ###################################################################
+
+    # get SLURM resources
+    resources = parse_yaml(filename=args.slurm)
+
+    # sanity check resources
+    keys = [
+        [
+            "cactus-preprocess",
+            "cactus-align",
+            "cactus-blast",
+            "hal2fasta",
+            "halAppendSubtree",
+            "regular",
+        ],
+        ["gpus", "cpus", "partition"],
+    ]
+
+    errors = check_slurm_resources_info(content=resources, keys=keys[0])
+    if errors is not None:
+        raise Exception(
+            " The following keys are missing in the YAML file:\n{}".format(
+                "\n".join(errors)
+            )
+        )
+        exit(1)
+
+    for key in resources.keys():
+        errors = check_slurm_resources_info(content=resources[key], keys=keys[1])
+        if errors is not None:
+            raise Exception(
+                ' The following keys are missing in the "{}" key:\n{}'.format(
+                    key, "\n".join(errors)
+                )
+            )
+            exit(1)
+
+    # create pointer to the read function
     read_func = read_file(args.commands)
+
+    ###################################################################
+    ###                          DATA                                ##
+    ###################################################################
+
+    # essential data for parsing function
+    data = {
+        "trigger_parsing": "## Preprocessor",
+        "task_order": ["preprocessor", "alignments", "merging"],
+        "workflow_script_name": "run_cactus_workflow",
+        "jobs": {
+            "preprocessor": {
+                "task_name": "1-preprocessors",
+                "stop_condition": "## Alignment",
+                "directories": {
+                    "root": args.output_dir,
+                    "symlinks": [args.steps_dir, args.jobstore_dir, args.input_dir],
+                    "logs": "logs",
+                    "scripts": {
+                        "all": "scripts/all",
+                        "separated": "scripts/separated",
+                    },
+                    "rounds": [None],
+                },
+            },
+            "alignments": {
+                "task_name": "2-alignments",
+                "stop_condition": "## HAL merging",
+                "directories": {
+                    "root": args.output_dir,
+                    "symlinks": [args.steps_dir, args.jobstore_dir, args.input_dir],
+                    "logs": "logs",
+                    "scripts": {
+                        "all": "scripts/all",
+                        "separated": "scripts/separated",
+                    },
+                    "rounds": [None],
+                },
+            },
+            "merging": {
+                "task_name": "3-merging",
+                "stop_condition": None,
+                "directories": {
+                    "root": args.output_dir,
+                    "symlinks": [
+                        args.steps_dir,
+                        args.jobstore_dir,
+                    ],
+                    "logs": "logs",
+                    "scripts": {
+                        "all": "scripts/all",
+                        "separated": "scripts/separated",
+                    },
+                    "rounds": [None],
+                },
+            },
+        },
+    }
+
+    ###################################################################
+    ###               CACTUS-PREAPRE  PARSING STEP                   ##
+    ###################################################################
+
+    # Parsing loop
     while True:
+
+        # get a line from the input file
         line = next(read_func, "")
+
+        # parsing job done
         if not line:
             break
-        if not line.startswith(STRING_TABLE["preprocessor"]):
+
+        # wait...
+        if not line.startswith(data["trigger_parsing"]):
             continue
 
-        parse(
-            read_func=read_func,
-            symlink_dirs=[args.steps_dir, args.jobstore_dir, args.input_dir],
-            task_name="preprocessor",
-            task_dir=args.preprocessor_dir,
-            stop_condition=STRING_TABLE["alignment"],
-        )
+        # starting parsing procedure
+        for job in data["task_order"]:
+            root_dir = "{}/{}".format(
+                data["jobs"][job]["directories"]["root"], data["jobs"][job]["task_name"]
+            )
+            parse(
+                read_func=read_func,
+                symlink_dir=data["jobs"][job]["directories"]["symlinks"],
+                root_dir=root_dir,
+                script_dir=data["jobs"][job]["directories"]["scripts"],
+                log_dir=data["jobs"][job]["directories"]["logs"],
+                task_name=data["jobs"][job]["task_name"],
+                task_type=job,
+                stop_condition=data["jobs"][job]["stop_condition"],
+            )
 
-        parse(
-            read_func=read_func,
-            symlink_dirs=[args.steps_dir, args.jobstore_dir, args.input_dir],
-            task_name="alignment",
-            task_dir=args.alignments_dir,
-            stop_condition=STRING_TABLE["merging"],
-        )
+    ###################################################################
+    ###       UPDATE ALIGNMENT STEP ESSENTIAL DIRECTORIES            ##
+    ###################################################################
 
-        parse(
-            read_func=read_func,
-            symlink_dirs=[args.steps_dir, args.jobstore_dir],
-            task_name="merging",
-            task_dir=args.merging_dir,
-            stop_condition=None,
-        )
+    # update alignment job information including "script_dir" for each round dir
+    job = "alignments"
+
+    # get rounds
+    round_dirs = sorted(
+        next(
+            os.walk(
+                "{}/{}".format(
+                    data["jobs"][job]["directories"]["root"],
+                    data["jobs"][job]["task_name"],
+                )
+            ),
+            (None, None, []),
+        )[1]
+    )
+    data["jobs"][job]["directories"]["rounds"] = round_dirs
+
+    ###################################################################
+    ###                  SLURM BASH SCRIPT CREATOR                   ##
+    ###################################################################
+
+    # list to carry dependencies between job types, e.g., preprocess, alignment, merging
+    dependencies = []
+
+    for job in data["task_order"]:
+        directories = data["jobs"][job]["directories"]
+        for round_id in directories["rounds"]:
+            root_dir = (
+                "{}/{}".format(directories["root"], data["jobs"][job]["task_name"])
+                if round_id is None
+                else "{}/{}/{}".format(
+                    directories["root"], data["jobs"][job]["task_name"], round_id
+                )
+            )
+            # create SLURM batches jobs
+            dependencies = slurmify(
+                root_dir=root_dir,
+                task_name=data["jobs"][job]["task_name"],
+                task_type=job,
+                script_dirs=directories["scripts"],
+                log_dir=directories["logs"],
+                resources=resources,
+                initial_dependencies=dependencies,
+            )
+
+    ###################################################################
+    ###         FINAL CACTUS PIPELINE BASH SCRIPT USING SLURM        ##
+    ###################################################################
+
+    # create a new bash script file there
+    workflow_scripts = "{}/{}.sh".format(args.output_dir, data["workflow_script_name"])
+    create_bash_script(filename=workflow_scripts)
+
+    for job in data["task_order"]:
+        directories = data["jobs"][job]["directories"]
+        for round_id in directories["rounds"]:
+            root_dir = (
+                "{}/{}".format(directories["root"], data["jobs"][job]["task_name"])
+                if round_id is None
+                else "{}/{}/{}".format(
+                    directories["root"], data["jobs"][job]["task_name"], round_id
+                )
+            )
+            create_workflow_script(
+                root_dir=root_dir,
+                task_name=data["jobs"][job]["task_name"],
+                task_type=job,
+                script_dir=directories["scripts"]["all"],
+                workflow_filename=workflow_scripts,
+            )
