@@ -411,9 +411,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'copy_backups_to_warehouse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'shared_user'   => $self->o('shared_user'),
                 'warehouse_dir' => $self->o('warehouse_dir'),
-                'cmd'           => 'become #shared_user# cp #backups_dir#/*.sql #warehouse_dir#/reference_db_backups/',
+                'cmd'           => 'cp #backups_dir#/*.sql #warehouse_dir#/reference_db_backups/',
             },
         },
 
