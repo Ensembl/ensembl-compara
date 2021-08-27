@@ -1,6 +1,7 @@
 [
     "actinia_equina_gca011057435",
     "acyrthosiphon_pisum",
+    "ascaris_suum",
     "adineta_vaga",
     "aedes_aegypti_lvpagwg",
     "aedes_albopictus",
@@ -75,6 +76,7 @@
     "heliconius_melpomene",
     "helobdella_robusta",
     "hofstenia_miamia",
+    "hymenolepis_microstoma",
     "ixodes_scapularis",
     "ixodes_scapularis_ise6",
     "lepeophtheirus_salmonis",
@@ -90,6 +92,7 @@
     "mnemiopsis_leidyi",
     "musca_domestica",
     "nasonia_vitripennis",
+    "necator_americanus",
     "nematostella_vectensis",
     "octopus_bimaculoides",
     "onchocerca_volvulus",
@@ -114,6 +117,7 @@
     "tribolium_castaneum",
     "trichinella_spiralis",
     "trichoplax_adhaerens",
+    "trichuris_muris",
     "varroa_destructor_gca002443255",
     "zootermopsis_nevadensis"
 ]
