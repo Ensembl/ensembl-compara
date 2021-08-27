@@ -61,7 +61,7 @@ sub _get_dom_tree {
     if ($sp->{'strainspage'}) {
       push @$strains, {
                       'homepage'  => $sp->{'strainspage'},
-                      'name'      => $sp->{'name'},,
+                      'name'      => $sp->{'name'},
                       'common'    => (sprintf '%s %s', $sp->{'common'}, $sp->{'strain_type'}),
                       };
     }
@@ -318,7 +318,13 @@ sub _species_list {
     my $strain_type   = '';
     if ($species->{$_}{'strain_group'}) {
       $strainspage = $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Strains', '__clear' => 1});
-      $strain_type = $sd->get_config($_, 'STRAIN_TYPE').'s'; 
+      $strain_type = $sd->get_config($_, 'STRAIN_TYPE'); 
+      if ($strain_type =~ /(y)$/) {
+        $strain_type =~ s/$1/ies/;
+      }
+      else {
+        $strain_type .= 's';
+      }   
     }
 
     my $extra = $_ eq 'Homo_sapiens' ? '<a href="/info/website/tutorials/grch37.html" class="species-extra">Still using GRCh37?</a>' : '';
