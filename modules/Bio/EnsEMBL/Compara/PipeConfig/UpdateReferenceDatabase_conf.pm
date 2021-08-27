@@ -144,6 +144,7 @@ sub pipeline_create_commands {
         # In case it doesn't exist yet
         'mkdir -p ' . $self->o('ref_member_dumps_dir'),
         'mkdir -p ' . $self->o('shared_fasta_dir'),
+        'mkdir -p ' . $self->o('warehouse_dir') . '/reference_db_backups',
         # To store the Datachecks results
         $self->db_cmd($results_table_sql),
     ];
@@ -412,7 +413,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'warehouse_dir' => $self->o('warehouse_dir'),
-                'cmd'           => 'cp #backups_dir#/*.sql #warehouse_dir#/reference_db_backups/',
+                'cmd'           => 'rsync -aW #backups_dir#/*.sql #warehouse_dir#/reference_db_backups/',
             },
         },
 
