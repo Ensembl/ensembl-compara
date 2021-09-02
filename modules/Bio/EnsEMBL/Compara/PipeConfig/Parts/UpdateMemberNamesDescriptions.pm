@@ -81,7 +81,7 @@ sub pipeline_analyses_member_names_descriptions {
                 'genome_db_ids'           => [ '#genome_db_id#' ],
             },
             -flow_into => [ 'update_seq_member_display_labels' ],
-            -rc_name => '1Gb_job',
+            -rc_name => 'default',
         },
 
         {
@@ -96,7 +96,7 @@ sub pipeline_analyses_member_names_descriptions {
                 'genome_db_ids'           => [ '#genome_db_id#' ],
             },
             -flow_into => [ 'update_member_descriptions' ],
-            -rc_name => '1Gb_job',
+            -rc_name => 'default',
         },
 
         {
@@ -109,7 +109,7 @@ sub pipeline_analyses_member_names_descriptions {
                 'mode'                    => 'description',
                 'genome_db_ids'           => [ '#genome_db_id#' ],
             },
-            -rc_name => '1Gb_job',
+            -rc_name => 'default',
         },
 
     ];

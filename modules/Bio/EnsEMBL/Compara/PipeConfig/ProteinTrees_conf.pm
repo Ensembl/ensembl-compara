@@ -3719,7 +3719,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'copy_dumps_to_shared_loc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'         => '/bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtOp #homology_dumps_dir#/ #homology_dumps_shared_dir#"',
+                'cmd'         => '/bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtO #homology_dumps_dir#/ #homology_dumps_shared_dir#"',
             },
             -rc_name    => '500Mb_job',
         },
