@@ -113,7 +113,7 @@ sub content {
   }
   
   my $image = $self->new_image(\@images);
-  $image->{'export_params'} = ['align', $align];
+  $image->{'export_params'} = [['align', $align]];
 
   return if $self->_export_image($image);
   

@@ -79,9 +79,20 @@ sub buttons {
   return unless $options->{'action'};
 
   my @namespace = split('::', ref($self));
-  my $params  = {'type' => 'DataExport', 'action' => $options->{'action'}, 'data_type' => $self->hub->type, 'component' => $namespace[-1]};
+  my $params  = {
+    'type' => 'DataExport',
+    'action' => $options->{'action'},
+    'data_type' => $self->hub->type,
+    'component' => $namespace[-1]
+  };
   foreach (@{$options->{'params'} || []}) {
-    $params->{$_} = $self->param($_);
+    if (ref($_) eq 'ARRAY') {
+      $params->{$_->[0]} = $_->[1];
+    }
+    else {
+      $params->{$_} = $self->param($_);
+    }
+
   }
 
   
