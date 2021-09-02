@@ -241,7 +241,7 @@ sub core_pipeline_analyses {
             -parameters    => {
                 'step'  => $self->o('num_sequences_per_blast_job'),
             },
-            -rc_name       => '500Mb_job',
+            -rc_name       => '1Gb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into     => {
                 '2->A' => [ 'diamond_blastp' ],
