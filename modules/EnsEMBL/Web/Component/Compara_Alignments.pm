@@ -421,7 +421,9 @@ sub draw_tree {
   push @$highlights, $low_coverage_species;
 
   my $image = $self->new_image($restricted_tree, $image_config, $highlights);
-  $image->{'export_params'} = ['align'];
+
+  $image->{'export_params'} = [['align', $align]];
+
 
   return if $self->_export_image($image);
 
@@ -681,15 +683,15 @@ sub _get_low_coverage_genome_db_sets {
 sub export_options { 
   my $self = shift;
   my $hub = $self->hub;
-  my @species_options;
-  my $settings = $self->{'viewconfig'}{$hub->type}->{_user_settings};
-  my $align = $hub->param('align') || $settings->{'align'};
+
+  my $align_params = $hub->get_alignment_id || '';
+  my ($align)      = split '--', $align_params;
   
   return unless $align;  
 
   return {
           'action'  => 'TextAlignments', 
-          'params'  => ['align'], 
+          'params'  => [['align', $align]], 
           'caption' => 'Download alignment',
         }; 
 }
