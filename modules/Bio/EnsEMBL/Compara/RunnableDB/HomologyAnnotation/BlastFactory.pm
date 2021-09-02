@@ -73,7 +73,9 @@ sub fetch_input {
     my ( @genome_db_ids, @query_members );
 
     foreach my $species_name (@$species) {
-        my $genome_db = $gdb_adaptor->fetch_by_name_assembly($species_name);
+        # We want to get the GenomeDB of the query species, not the reference
+        my @genome_dbs = sort { $a->dbID <=> $b->dbID } @{ $gdb_adaptor->fetch_all_by_name($species_name) };
+        my $genome_db = $genome_dbs[0];
         my $genome_db_id = $genome_db->dbID;
         # Fetch canonical proteins into array
         my $some_members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_GenomeDB($genome_db_id);
