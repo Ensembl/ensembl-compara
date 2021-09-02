@@ -63,7 +63,7 @@ def load_chr_sizes(hal_file: Union[Path, str], genome_name: str) -> Dict[str, in
     cmd = ['halStats', '--chromSizes', genome_name, hal_file]
     process = run(cmd, check=True, capture_output=True, text=True, encoding='ascii')
 
-    chr_sizes = dict()
+    chr_sizes = {}
     for line in process.stdout.splitlines():
         chr_name, chr_size = line.rstrip().split('\t')
         chr_sizes[chr_name] = int(chr_size)
