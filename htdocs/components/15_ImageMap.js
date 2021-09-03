@@ -193,6 +193,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   initImagePanning: function () {
     var panel = this;
     if (this.elLk.boundaries.length && this.draggables.length) {
+      if(this.draggables[0].a.klass.noscroll) return;
       this.elLk.dragSwitch = this.elLk.toolbars.first().append([
         '<div class="scroll-switch">',
           '<span>Drag/Select:</span>',
