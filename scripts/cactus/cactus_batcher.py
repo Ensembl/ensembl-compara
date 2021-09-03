@@ -243,13 +243,17 @@ def cactus_job_command_name(line):
                     re.search("--inputNames (.*?) --", line).group(1).replace(" ", "_")
                 )
                 variable_name = "{}_{}_{}".format(
-                    command.replace("-", "_"), re.sub('[^a-zA-Z0-9 \n\\.]', '_', jobstore), info_id
+                    command.replace("-", "_"),
+                    jobstore,
+                    info_id,
                 ).upper()
 
             elif "blast" in command or "align" in command:
                 info_id = re.findall("--root (.*)$", line)[0].split()[0]
                 variable_name = "{}_{}_{}".format(
-                    command.replace("-", "_"), re.sub('[^a-zA-Z0-9 \n\\.]', '_', jobstore), info_id
+                    command.replace("-", "_"),
+                    jobstore,
+                    info_id,
                 ).upper()
 
         elif command == "hal2fasta":
@@ -265,7 +269,7 @@ def cactus_job_command_name(line):
         return {
             "command": command,
             "id": info_id,
-            "variable": variable_name,
+            "variable": re.sub("[^a-zA-Z0-9]", "_", variable_name),
             "jobstore": jobstore,
         }
 
@@ -500,7 +504,7 @@ def get_slurm_submission(
         command = "singularity run {} {}".format(image, command)
 
     # wrap the commands for SLURM
-    sbatch.append('--wrap "source ~/.bashrc; {}")'.format(command))
+    sbatch.append('--wrap "source ~/.bash_profile && {}")'.format(command))
 
     return sbatch
 
@@ -579,7 +583,7 @@ def slurmify(
                 # enabling restart option for Cactus if a jobstore folder exists
                 if info["jobstore"] is not None:
                     if os.path.isdir("{}/{}".format(root_dir, info["jobstore"])):
-                        command = "{} --restart".format(command)
+                        line = "{} --restart".format(line)
 
                 # get the SLURM string call
                 sbatch = get_slurm_submission(
