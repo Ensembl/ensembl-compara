@@ -145,7 +145,8 @@ def parse_yaml(file, dest):
                     core_db=core_db,
                     query='SELECT meta_value FROM meta WHERE meta_key="assembly.accession";',
                 )
-                gca_number = gca_number.replace(".", "v").lower()
+                # fix the name
+                gca_number = gca_number.replace(".", "v").replace('_','').lower()
                 specie_name = "{}_{}".format(specie_name, gca_number)
 
             if specie_name is not None:
