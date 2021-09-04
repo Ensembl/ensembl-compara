@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
 # ----  Function to wait the GPU to be loaded ----
+
+get_elapsed_time(){
+  echo "$SECONDS - $1" | bc -l
+}
+
+
 check_gpu(){
   start_time=$SECONDS
   stop_condition=600 #seconds
@@ -11,12 +17,12 @@ check_gpu(){
     status=$?
  
     # GPU loaded =)
-    [ $status -eq 0  ] && break
+    [ $status -eq 0 ] && break
  
     elapsed=$(get_elapsed_time $start_time)
  
     # GPU not loaded until now =/
-    [ $elapsed -gt $stop_condition  ] && break
+    [ $elapsed -gt $stop_condition ] && break
  
     sleep 10
   done
@@ -51,5 +57,5 @@ export PATH=${LOCAL_SCRIPTS}:$PATH
  
 # if this is a GPU-enable node, forcing the bash to stop until GPUs are loaded
 if [[ -d /usr/local/cuda/ ]]; then
-  status=$(check_gpu)
+  check_gpu
 fi
