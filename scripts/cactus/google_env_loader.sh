@@ -40,7 +40,7 @@ LOCAL_SCRIPTS="$HOME/.local/scripts"
  
 # Download scripts
 URL="https://raw.githubusercontent.com/thiagogenez/ensembl-compara/feature/cactus_scripts/scripts/cactus"
-CACTUS_SCRIPTS=(cactus_tree_prepare.py cactus_parser.py)
+CACTUS_SCRIPTS=(cactus_tree_prepare.py cactus_batcher.py)
 for i in ${CACTUS_SCRIPTS[@]}; do
 	wget --quiet $URL/$i -O $LOCAL_SCRIPTS/$i
 	chmod +x $LOCAL_SCRIPTS/$i
