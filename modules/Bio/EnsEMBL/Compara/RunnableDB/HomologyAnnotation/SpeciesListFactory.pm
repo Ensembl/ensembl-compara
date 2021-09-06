@@ -43,7 +43,7 @@ sub write_output {
 
     foreach my $genome_name ( @$species_list ) {
         # We want to get the GenomeDB of the query species, not the reference
-        my @genome_dbs = sort { $a->dbID <=> $b->dbID } @{ $gdb_adaptor->fetch_all_by_name($species_name) };
+        my @genome_dbs = sort { $a->dbID <=> $b->dbID } @{ $genome_dba->fetch_all_by_name($genome_name) };
         my $genome_db = $genome_dbs[0];
         $self->dataflow_output_id( { 'genome_name' => $genome_name, 'genome_db_id' => $genome_db->dbID }, 1 );
     }
