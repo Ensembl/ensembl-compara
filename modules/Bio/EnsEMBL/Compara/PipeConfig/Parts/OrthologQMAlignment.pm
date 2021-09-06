@@ -117,7 +117,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
         {   -logic_name => 'copy_files_to_shared_loc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd' => q(/bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtOp --exclude '*.wga_reuse.tsv' #wga_dumps_dir#/ #homology_dumps_shared_dir#"),
+                'cmd' => q(/bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtO --exclude '*.wga_reuse.tsv' #wga_dumps_dir#/ #homology_dumps_shared_dir#"),
             },
             -rc_name    => '500Mb_job',
         },

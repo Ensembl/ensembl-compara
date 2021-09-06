@@ -124,7 +124,7 @@
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name primates{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name primates -run_gerp 0{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Primates EPOwithExt pipeline",
             "name_on_graph": "EPOwithExt:Primates"
          },
@@ -136,8 +136,8 @@
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPOwithExt_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name murinae{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
-            "summary": "Run the Murinae EPOwithExt pipeline",
+            "description": "*GitHub*: [EPO_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name murinae{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "summary": "Run the Murinae EPO pipeline",
             "name_on_graph": "EPOwithExt:Murinae"
          },
          {
@@ -265,22 +265,22 @@
          {
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-DNAside",
-            "summary": "test the DNA data"
+            "summary": "Test the DNA data"
          },
          {
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Homologyside",
-            "summary": "test the homologies data"
+            "summary": "Test the homologies data"
          },
          {
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Downloads",
-            "summary": "test the downloads"
+            "summary": "Test the downloads"
          },
          {
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Documentation&Statistics",
-            "summary": "test the documentation and statistics"
+            "summary": "Test the documentation and statistics"
          },
          {
             "assignee": "<RelCo>",
@@ -313,13 +313,13 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites#Testthetestsites-Website",
-            "summary": "test the web site"
+            "summary": "Test the web site"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites#Testthetestsites-RESTserver",
-            "summary": "test the REST server"
+            "summary": "Test the REST server"
          }
       ],
       "summary": "<Division> Release <version> Final checks before public release"
