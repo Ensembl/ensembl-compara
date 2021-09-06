@@ -107,7 +107,9 @@ copy_table( $pipeline_dba->dbc, $compara_dba->dbc, "ncbi_taxa_name", 1 );
 
 # Collect necessary genome_name as provided or from db
 $genome_name = $genome_name ? $genome_name : ( $compara_dba->dbc->dbname =~ /([a-z0-9_])_compara_/i );
-my $genome_db = $pipeline_dba->get_GenomeDBAdaptor->fetch_by_name_assembly( $genome_name );
+# In case query is also a reference, choose the query GenomeDB
+my @genome_dbs = sort { $a->dbID <=> $b->dbID } @{ $pipeline_dba->get_GenomeDBAdaptor->fetch_all_by_name($genome_name) };
+my $genome_db = $genome_dbs[0];
 
 $compara_dba->dbc->do("SET FOREIGN_KEY_CHECKS = 0");
 
