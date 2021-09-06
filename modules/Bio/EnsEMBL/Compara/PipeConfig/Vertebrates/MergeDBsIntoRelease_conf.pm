@@ -93,6 +93,18 @@ sub default_options {
             'seq_member_projection' => 'protein_db',
             'peptide_align_feature%' => 'protein_db',
         },
+
+        # In these databases, ignore these tables
+        'ignored_tables' => {
+            # Mapping 'db_alias' => Arrayref of table names
+            'ncrna_db'       => [qw(ortholog_quality id_generator id_assignments)],
+            'protein_db'     => [qw(ortholog_quality id_generator id_assignments)],
+            'mouse_prot_db'  => [qw(ortholog_quality id_generator id_assignments)],
+            'mouse_ncrna_db' => [qw(ortholog_quality id_generator id_assignments)],
+            'pig_prot_db'    => [qw(ortholog_quality id_generator id_assignments)],
+            'pig_ncrna_db'   => [qw(ortholog_quality id_generator id_assignments)],
+            'projection_db'  => [qw(id_generator id_assignments)],
+        },
    };
 }
 
