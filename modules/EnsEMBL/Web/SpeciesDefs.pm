@@ -552,7 +552,7 @@ sub _read_in_ini_file {
   
   ## Avoid deep-copying in NV divisions, to reduce size of packed files
   ## See https://github.com/EnsemblGenomes/eg-web-common/commit/f702ab75235e66d7e9a979864b858fe0f88485f7
-  my $cow_from_defaults = $self->get_cow_defaults;
+  my $cow_from_defaults = $self->_get_cow_defaults;
   
   foreach my $confdir (@SiteDefs::ENSEMBL_CONF_DIRS) {
     if (-e "$confdir/ini-files/$filename.ini") {
