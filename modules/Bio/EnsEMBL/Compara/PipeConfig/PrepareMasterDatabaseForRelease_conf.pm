@@ -71,6 +71,7 @@ sub default_options {
         'prev_dbs'            => ['*_prev'],
         'taxonomy_db'         => 'ncbi_taxonomy',
         'incl_components'     => 1, # let's default this to 1 - will have no real effect if there are no component genomes (e.g. in vertebrates)
+        'patch_db_exe'        => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/patch_database.pl'),
         'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
         'xml_file'            => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/mlss_conf.xml'),
         'report_file'         => $self->o( 'work_dir' ) . '/mlss_ids_' . $self->o('division') . '.list',

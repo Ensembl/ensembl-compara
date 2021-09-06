@@ -42,11 +42,11 @@ sub pipeline_analyses_prep_master_db_for_release {
     my ($self) = @_;
     return [
         {   -logic_name => 'patch_master_db',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::PatchMasterDB',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'schema_file'  => $self->o('schema_file'),
-                'patch_dir'    => $self->o('patch_dir'),
-                'patch_names'  => '#patch_dir#/patch_' . $self->o('prev_release') . '_#release#_*.sql',
+                'patch_db_exe' => $self->o('patch_db_exe'),
+                'reg_conf'     => $self->o('reg_conf'),
+                'cmd'          => 'perl #patch_db_exe# --reg_conf #reg_conf# --reg_alias #master_db# --fixlast --nointeractive',
             },
             -flow_into  => ['load_ncbi_node'],
         },
