@@ -44,9 +44,7 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'patch_master_db',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'patch_db_exe' => $self->o('patch_db_exe'),
-                'reg_conf'     => $self->o('reg_conf'),
-                'cmd'          => 'perl #patch_db_exe# --reg_conf #reg_conf# --reg_alias #master_db# --fixlast --nointeractive',
+                'cmd' => [$self->o('patch_db_exe'), '--reg_conf', $self->o('reg_conf'), '--reg_alias', '#master_db#', '--fixlast', '--nointeractive'],
             },
             -flow_into  => ['load_ncbi_node'],
         },
