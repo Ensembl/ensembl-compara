@@ -102,8 +102,8 @@ my $pipeline_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_db
 my $compara_dba  = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $compara_db );
 
 # Copy ncbi tables
-copy_table( $pipeline_dba->dbc, $compara_dba->dbc, "ncbi_taxa_node", 1 );
-copy_table( $pipeline_dba->dbc, $compara_dba->dbc, "ncbi_taxa_name", 1 );
+copy_table( $pipeline_dba->dbc, $compara_dba->dbc, "ncbi_taxa_node", undef, 1 );
+copy_table( $pipeline_dba->dbc, $compara_dba->dbc, "ncbi_taxa_name", undef, 1 );
 
 # Collect necessary genome_name as provided or from db
 $genome_name = $genome_name ? $genome_name : ( $compara_dba->dbc->dbname =~ /([a-z0-9_])_compara_/i );
