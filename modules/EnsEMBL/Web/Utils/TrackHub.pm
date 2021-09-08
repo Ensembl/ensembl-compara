@@ -125,6 +125,8 @@ sub get_hub_internal {
 
   if ($cache && $search_cache) {
     $trackhub = $cache->get($cache_key);
+    ## Throw cache away unless it makes sense
+    $trackhub = undef unless (ref($trackhub) eq 'HASH' && keys %$trackhub);
   }
 
   my $parser        = $self->parser;
