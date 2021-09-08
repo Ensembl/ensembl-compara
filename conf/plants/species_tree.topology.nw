@@ -36,6 +36,13 @@
              zea_mays,
              sorghum_bicolor,
             )Andropogoneae,
+            saccharum_spontaneum,
+            (
+             saccharum_spontaneum_A,
+             saccharum_spontaneum_B,
+             saccharum_spontaneum_C,
+             saccharum_spontaneum_D,
+            ),
            ),
            setaria_italica,
            setaria_viridis,
@@ -55,6 +62,12 @@
               hordeum_vulgare_goldenpromise,
               hordeum_vulgare_tritex,
              )Hordeum,
+             (
+              secale_cereale,
+             )Hordeinae,
+             (
+              thinopyrum_elongatum,
+             )Thinopyrum,
              (
               (
                triticum_aestivum,
@@ -157,6 +170,7 @@
          )Convolvulaceae,
          (
           olea_europaea,
+          olea_europaea_sylvestris,
          )Oleaceae,
          (
           sesamum_indicum,
@@ -170,6 +184,9 @@
             trifolium_pratense,
             medicago_truncatula,
            )Trifolieae,
+           (
+            pisum_sativum,
+           )Fabeae,
            (
             lupinus_angustifolius,
            )Genisteae,
@@ -210,7 +227,7 @@
           (
            quercus_lobata,
            juglans_regia,
-           corylus_avellana,
+           corylus avellana,
           )Fagales,
           (
            cucumis_sativus,
@@ -224,6 +241,7 @@
             brassica_oleracea,
             brassica_rapa_ro18,
             brassica_napus,
+            brassica_rapa,
            )Brassica,
            (
             arabidopsis_lyrata,
@@ -252,13 +270,14 @@
            )Theobroma,
           )Malvaceae,
           (
-           citrus_clementina
+           citrus_clementina,
           )Rutaceae,
           (
            pistacia_vera,
           )Anacardiaceae,
           (
            eucalyptus_grandis,
+           corymbia_citriodora,
           )Myrtaceae,
          )malvids,
         )rosids,
@@ -277,6 +296,9 @@
        (
         papaver_somniferum,
        )Ranunculales,
+       (
+        macadamia_integrifolia,
+       )Proteaceae,
       )Mesangiospermae,
      )Magnoliophyta,
     )Tracheophyta,
