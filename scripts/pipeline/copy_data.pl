@@ -61,9 +61,9 @@ perl copy_data.pl
     --to_url release_database_url
     --method_link_type LASTZ_NET --method_link_type BLASTZ_NET
 
-example:
+=head1 EXAMPLES
 
-bsub  -q yesterday -ooutput_file -Jcopy_data -R "select[mem>5000] rusage[mem=5000]" -M5000000
+bsub -q production -ooutput_file -Jcopy_data -R "select[mem>5000] rusage[mem=5000]" -M5000000
 copy_data.pl --from_url mysql://username@server_name/sf5_production
 --to_url mysql://username:password@server_name/sf5_release --mlss 340
 
@@ -135,8 +135,6 @@ the copy to several mlss.
 If true, add new data to an existing data set in the release database. Default FALSE.
 
 =back
-
-=head1 INTERNAL METHODS
 
 =cut
 
@@ -662,8 +660,6 @@ sub copy_genomic_align_blocks {
       " ** ERROR **  convention!\n";
     exit(1);
   }
-
-  #print "SELECT count(*) FROM genomic_align_tree WHERE root_id >= $min_root_id AND root_id < $max_root_id\n\n";
 
   if(defined($max_gat)) {
     $sth = $to_dbc->prepare("SELECT count(*)
