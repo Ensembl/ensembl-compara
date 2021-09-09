@@ -932,7 +932,7 @@ sub copy_conservation_scores {
   if ($max_cs < 10**10) {
     ## Need to add $method_link_species_set_id * 10^10 to the internal_ids
     $fix = $lower_limit;
-  } elsif ($max_cs and $min_cs >= $lower_limit) {
+  } elsif ($min_cs >= $lower_limit and $max_cs < $upper_limit) {
     ## Internal IDs are OK.
     $fix = 0;
   } else {
@@ -1037,7 +1037,7 @@ sub copy_constrained_elements {
   if ($max_ce < 10**10) {
     ## Need to add $method_link_species_set_id * 10^10 to the internal_ids
     $fix = $lower_limit;
-  } elsif ($max_ce and $min_ce >= $lower_limit) {
+  } elsif ($min_ce >= $lower_limit and $max_ce < $upper_limit) {
     ## Internal IDs are OK.
     $fix = 0;
   } else {
