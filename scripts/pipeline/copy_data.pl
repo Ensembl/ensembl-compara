@@ -687,11 +687,22 @@ sub copy_genomic_align_blocks {
 
   #copy genomic_align_block table
   if ($fix_gab) {
-    copy_data($from_dbc, $to_dbc,
-       "genomic_align_block",
-       "SELECT genomic_align_block_id+$fix_gab, method_link_species_set_id, score, perc_id, length, group_id, level_id, direction" .
-         " FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id",
-       @copy_data_args);
+    my $sql = qq/
+        SELECT
+            genomic_align_block_id + $fix_gab,
+            method_link_species_set_id,
+            score,
+            perc_id,
+            length,
+            group_id,
+            level_id,
+            direction
+        FROM
+            genomic_align_block
+        WHERE
+            method_link_species_set_id = $mlss_id;
+    /;
+    copy_data($from_dbc, $to_dbc, "genomic_align_block", $sql, @copy_data_args);
   } else {
     copy_table($from_dbc, $to_dbc, 'genomic_align_block', "method_link_species_set_id = $mlss_id", undef, "skip_disable_keys");
   }
