@@ -943,10 +943,12 @@ sub _parse {
   ## Merge collection info into the species hash
   foreach my $prodname (@$SiteDefs::PRODUCTION_NAMES) {
     next unless $tree->{$prodname};
-    my @db_species = @{$tree->{$prodname}->{DB_SPECIES}};
-    my $species_lookup = { map {$_ => 1} @db_species };
-    foreach my $sp (@db_species) {
-      $self->_merge_species_tree( $tree->{$sp}, $tree->{$prodname}, $species_lookup);
+    my @db_species = @{$tree->{$prodname}->{DB_SPECIES}||[]};
+    if (scalar @db_species) {
+      my $species_lookup = { map {$_ => 1} @db_species };
+      foreach my $sp (@db_species) {
+        $self->_merge_species_tree( $tree->{$sp}, $tree->{$prodname}, $species_lookup);
+      }
     }
   }
 
