@@ -61,7 +61,7 @@ perl copy_data.pl
     --to_url release_database_url
     --method_link_type LASTZ_NET --method_link_type BLASTZ_NET
 
-example:
+=head1 EXAMPLES
 
 bsub -q production -ooutput_file -Jcopy_data -R "select[mem>5000] rusage[mem=5000]" -M5000000
 copy_data.pl --from_url mysql://username@server_name/sf5_production
@@ -135,8 +135,6 @@ the copy to several mlss.
 If true, add new data to an existing data set in the release database. Default FALSE.
 
 =back
-
-=head1 INTERNAL METHODS
 
 =cut
 
@@ -538,7 +536,6 @@ sub copy_genomic_align_blocks {
 
   my $minmax_sql = qq{ SELECT
         MIN(gab.genomic_align_block_id), MAX(gab.genomic_align_block_id),
-        MIN(gab.group_id), MAX(gab.group_id),
         MIN(ga.genomic_align_id), MAX(ga.genomic_align_id),
         MIN(gat.node_id), MAX(gat.node_id),
         MIN(gat.root_id), MAX(gat.root_id)
@@ -552,21 +549,18 @@ sub copy_genomic_align_blocks {
   my $sth = $from_dbc->prepare( $minmax_sql );
 
   $sth->execute($mlss_id);
-  my ($min_gab, $max_gab, $min_gab_gid, $max_gab_gid, $min_ga, $max_ga,
-		$min_gat, $max_gat, $min_root_id, $max_root_id) =
-      $sth->fetchrow_array();
+  my ($min_gab, $max_gab, $min_ga, $max_ga, $min_gat, $max_gat, $min_root_id, $max_root_id) = $sth->fetchrow_array();
 
   $sth->finish();
 
   my $fix_gab;
   my $fix_ga;
-  my $fix_gab_gid;
   my $fix_gat;
 
   #Want to add more data. Must find out current max(genomic_align_block) in TO
   #database and start from there
   #Currently only tested for pairwise alignments
-  my ($to_min_gab, $to_max_gab, $to_min_gab_gid, $to_max_gab_gid, $to_min_ga, $to_max_ga, $to_min_gat, $to_max_gat, $to_min_root_id, $to_max_root_id, $to_from_index_range_start);
+  my ($to_min_gab, $to_max_gab, $to_min_ga, $to_max_ga, $to_min_gat, $to_max_gat, $to_min_root_id, $to_max_root_id, $to_from_index_range_start);
 
   if ($merge) {
         # make sure keys are on if we are merging
@@ -580,17 +574,14 @@ sub copy_genomic_align_blocks {
       my $sth = $to_dbc->prepare( $minmax_sql );
 
       $sth->execute($mlss_id);
-      ($to_min_gab, $to_max_gab, $to_min_gab_gid, $to_max_gab_gid, $to_min_ga, $to_max_ga, $to_min_gat, $to_max_gat, $to_min_root_id, $to_max_root_id, $to_from_index_range_start) =  $sth->fetchrow_array();
+      ($to_min_gab, $to_max_gab, $to_min_ga, $to_max_ga, $to_min_gat, $to_max_gat, $to_min_root_id, $to_max_root_id, $to_from_index_range_start) =  $sth->fetchrow_array();
 
       $sth->finish();
       $fix_gab = $to_max_gab-$min_gab+1;
       $fix_ga = $to_max_ga-$min_ga+1;
       $fix_gat = $to_max_gat-$min_gat+1 if ($to_max_gat && $min_gat);
-      $fix_gab_gid = $to_max_gab_gid-$min_gab_gid+1;
-
-      #print "to max_gab $to_max_gab min_gab $to_min_gab max_ga $to_max_ga min_ga $to_min_ga max_gab_gid $to_max_gab_gid min_gab_gid $to_min_gab_gid\n";
   }
-  print "max_gab $max_gab min_gab $min_gab max_ga $max_ga min_ga $min_ga max_gab_gid $max_gab_gid min_gab_gid $min_gab_gid\n";
+  print "max_gab $max_gab min_gab $min_gab max_ga $max_ga min_ga $min_ga\n";
 
   my $lower_limit = $mlss_id * 10**10;
   my $upper_limit = ($mlss_id + 1) * 10**10;
@@ -615,30 +606,6 @@ sub copy_genomic_align_blocks {
       }
   }
 
-  if (!defined $fix_gab_gid) {
-      if (defined($max_gab_gid)) {
-          my ($chain_mlss_id, $lower_gid_limit, $upper_gid_limit);
-          if ($mlss->method->type eq "LASTZ_NET") {
-              # For LastZ, group ids are also allowed to be in the LastZ chain MLSS id range
-              my $chain_mlss = $from_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs("LASTZ_CHAIN", $mlss->species_set->genome_dbs());
-              $chain_mlss_id = $chain_mlss->dbID;
-              $lower_gid_limit = $chain_mlss_id * 10**10;
-              $upper_gid_limit = ($chain_mlss_id + 1) * 10**10;
-          }
-          if ($max_gab_gid < 10**10) {
-              $fix_gab_gid = $lower_limit;
-          } elsif ($min_gab_gid >= $lower_limit and $max_gab_gid < $upper_limit) {
-              $fix_gab_gid = 0;
-          } elsif ($min_gab_gid >= $lower_gid_limit and $max_gab_gid < $upper_gid_limit) {
-              $fix_gab_gid = ($mlss_id - $chain_mlss_id) * 10**10;
-          } else {
-              die " ** ERROR **  Internal IDs are funny: genomic_align_block.group_ids between $min_gab_gid and $max_gab_gid\n";
-          }
-      } else {
-          $fix_gab_gid = 0;
-      }
-  }
-
   if (!defined $fix_gat) {
       if (defined($max_gat)) {
           if ($max_gat < 10**10) {
@@ -652,6 +619,18 @@ sub copy_genomic_align_blocks {
           $fix_gat = 0;
       }
   }
+
+  # Check if group_id (when defined) needs to be fixed to be within the expected MLSS ID range
+  my $fix_gid_sql = qq{
+      SELECT group_id FROM genomic_align_block WHERE method_link_species_set_id = ?
+      AND (group_id < (method_link_species_set_id * 10000000000)
+      OR group_id > ((method_link_species_set_id + 1) * 10000000000))
+      LIMIT 1;
+  };
+  my $sth = $from_dbc->prepare( $fix_gid_sql );
+  $sth->execute( $mlss_id );
+  my ($fix_gab_gid) = $sth->fetchrow_array();
+  $sth->finish();
 
   ## Check availability of the internal IDs in the TO database
   $sth = $to_dbc->prepare("SELECT count(*)
@@ -682,8 +661,6 @@ sub copy_genomic_align_blocks {
     exit(1);
   }
 
-  #print "SELECT count(*) FROM genomic_align_tree WHERE root_id >= $min_root_id AND root_id < $max_root_id\n\n";
-
   if(defined($max_gat)) {
     $sth = $to_dbc->prepare("SELECT count(*)
         FROM genomic_align_tree
@@ -709,14 +686,37 @@ sub copy_genomic_align_blocks {
   my @copy_data_args = (undef, 'skip_disable_keys');
 
   #copy genomic_align_block table
-  if ($fix_gab or $fix_gab_gid) {
-    copy_data($from_dbc, $to_dbc,
-       "genomic_align_block",
-       "SELECT genomic_align_block_id+$fix_gab, method_link_species_set_id, score, perc_id, length, group_id+$fix_gab_gid, level_id, direction".
-         " FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id",
-       @copy_data_args);
+  if ($fix_gab) {
+    my $sql = qq/
+        SELECT
+            genomic_align_block_id + $fix_gab,
+            method_link_species_set_id,
+            score,
+            perc_id,
+            length,
+            group_id,
+            level_id,
+            direction
+        FROM
+            genomic_align_block
+        WHERE
+            method_link_species_set_id = $mlss_id;
+    /;
+    copy_data($from_dbc, $to_dbc, "genomic_align_block", $sql, @copy_data_args);
   } else {
     copy_table($from_dbc, $to_dbc, 'genomic_align_block', "method_link_species_set_id = $mlss_id", undef, "skip_disable_keys");
+  }
+
+  # Fix the group_id when it is not in its MLSS id range
+  if ($fix_gab_gid) {
+      $to_dbc->do("UPDATE genomic_align_block
+          SET group_id = CAST(CONCAT(method_link_species_set_id, LPAD(group_id, 10, '0')) AS UNSIGNED INTEGER)
+          WHERE group_id < 10000000000 AND method_link_species_set_id = $mlss_id;");
+      $to_dbc->do("UPDATE genomic_align_block
+          SET group_id = CAST(CONCAT(method_link_species_set_id, RIGHT(group_id, 10)) AS UNSIGNED INTEGER)
+          WHERE (group_id < (method_link_species_set_id * 10000000000)
+          OR group_id > ((method_link_species_set_id + 1) * 10000000000))
+          AND method_link_species_set_id = $mlss_id;");
   }
 
   #copy genomic_align_tree table
@@ -943,7 +943,7 @@ sub copy_conservation_scores {
   if ($max_cs < 10**10) {
     ## Need to add $method_link_species_set_id * 10^10 to the internal_ids
     $fix = $lower_limit;
-  } elsif ($max_cs and $min_cs >= $lower_limit) {
+  } elsif ($min_cs >= $lower_limit and $max_cs < $upper_limit) {
     ## Internal IDs are OK.
     $fix = 0;
   } else {
@@ -1048,7 +1048,7 @@ sub copy_constrained_elements {
   if ($max_ce < 10**10) {
     ## Need to add $method_link_species_set_id * 10^10 to the internal_ids
     $fix = $lower_limit;
-  } elsif ($max_ce and $min_ce >= $lower_limit) {
+  } elsif ($min_ce >= $lower_limit and $max_ce < $upper_limit) {
     ## Internal IDs are OK.
     $fix = 0;
   } else {
