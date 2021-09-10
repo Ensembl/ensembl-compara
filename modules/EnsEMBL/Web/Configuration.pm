@@ -211,6 +211,22 @@ sub create_node {
   return $self->tree->root->append_child($self->tree->create_node($code, $details));
 }
 
+sub insert_node_after {
+  my ($self, $node, $code, $caption, $components, $options) = @_;
+
+  my $details = {
+    caption    => $caption,
+    components => $components,
+    code       => $code,
+    type       => 'view',
+    %{$options || {}}
+  };
+
+  $details->{'availability'} = 1 if $details->{'type'} =~ /view/ && !defined $details->{'availability'};
+
+  return $self->tree->root->insert_after($self->tree->create_node($code, $details), $node);
+}
+
 sub create_subnode {
   my $self  = shift;
   $_[3]{'type'} = 'subview';
