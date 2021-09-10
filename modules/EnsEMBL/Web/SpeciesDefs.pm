@@ -538,7 +538,7 @@ sub _read_species_list_file {
   return $spp_list;
 }
 
-sub _get_cow_defaults {
+sub _get_deepcopy_defaults {
 ## Copy-on-write hash (only used by NV)
 ## Note: use method instead of an 'our' variable, as the latter can be a pain
 ## when shared across plugins
@@ -552,7 +552,7 @@ sub _read_in_ini_file {
   
   ## Avoid deep-copying in NV divisions, to reduce size of packed files
   ## See https://github.com/EnsemblGenomes/eg-web-common/commit/f702ab75235e66d7e9a979864b858fe0f88485f7
-  my $cow_from_defaults = $self->_get_cow_defaults;
+  my $deepcopy_defaults = $self->_get_deepcopy_defaults;
   
   foreach my $confdir (@SiteDefs::ENSEMBL_CONF_DIRS) {
     if (-e "$confdir/ini-files/$filename.ini") {
@@ -580,7 +580,7 @@ sub _read_in_ini_file {
         if (/^\[\s*(\w+)\s*\]/) { # New section - i.e. [ ... ]
           $current_section = $1;
 
-          if ( defined $defaults->{$current_section} && exists $cow_from_defaults->{$current_section} ) {
+          if ( defined $defaults->{$current_section} && exists $deepcopy_defaults->{$current_section} ) {
             $tree->{$current_section} = $defaults->{$current_section};
             $defaults_used = 1;
           }
