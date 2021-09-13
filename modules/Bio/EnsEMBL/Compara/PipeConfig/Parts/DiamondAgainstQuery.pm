@@ -67,7 +67,7 @@ sub pipeline_analyses_diamond_against_query {
             -parameters    => {
                 %blastp_parameters,
             },
-            -rc_name       => '500Mb_4c_20min_job',
+            -rc_name       => '500Mb_4c_job',
             -flow_into     => {
                -1 => [ 'diamond_blastp_ref_to_query_himem' ],  # MEMLIMIT
             },
