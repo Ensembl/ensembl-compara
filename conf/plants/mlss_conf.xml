@@ -6,16 +6,10 @@
 
     <!-- All plants except the triticum_aestivum cultivars -->
     <collection name="default">
-      <taxonomic_group taxon_name="Rhodophyta"/>
-      <taxonomic_group taxon_name="Viridiplantae">
+      <taxonomic_group taxon_name="Eukaryota">
         <!-- But exclude all triticum_aestivum cultivars -->
         <ref_for_taxon name="triticum_aestivum"/>
       </taxonomic_group>
-      <genome name="caenorhabditis_elegans"/>
-      <genome name="ciona_savignyi"/>
-      <genome name="drosophila_melanogaster"/>
-      <genome name="homo_sapiens"/>
-      <genome name="saccharomyces_cerevisiae"/>
     </collection>
 
     <!-- Rice species tree including nearest grass relative -->
