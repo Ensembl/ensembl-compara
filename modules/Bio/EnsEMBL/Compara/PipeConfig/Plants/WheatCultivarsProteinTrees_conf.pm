@@ -25,7 +25,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Plants::WheatCultivarsProteinTrees_conf
 
 =head1 DESCRIPTION
 
-The Wheat cultivars PipeConfig file for StrainsProteinTrees pipeline that should automate most of the pre-execution tasks.
+The Wheat cultivars PipeConfig file for CultivarsProteinTrees pipeline that should automate most of the pre-execution tasks.
 
 =cut
 
