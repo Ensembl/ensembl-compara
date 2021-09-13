@@ -70,6 +70,12 @@
          },
          {
             "component": "Production tasks",
+            "description": "*GitHub*: [WheatCultivarsProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/WheatCultivarsProteinTrees_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::WheatCultivarsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "summary": "Run the wheat cultivars Protein-trees pipeline",
+            "name_on_graph": "Protein-trees:Wheat cultivars"
+         },
+         {
+            "component": "Production tasks",
             "summary": "All LastZ",
             "name_on_graph": "All LastZ"
          },
