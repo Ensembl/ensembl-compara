@@ -55,7 +55,6 @@
       </species_set>
     </one_vs_all>
 
-    <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="saccharum_spontaneum"/>
     <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="setaria_italica"/>
     <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="sorghum_bicolor"/>
     <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="zea_mays"/>
