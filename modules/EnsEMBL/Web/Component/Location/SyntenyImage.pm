@@ -42,23 +42,35 @@ sub content {
   my $other_prodname = $hub->species_defs->get_config($other, 'SPECIES_PRODUCTION_NAME');
   my $chr     = $object->seq_region_name;
   my %chr_1   = map { $_, 1 } @{$hub->species_defs->ENSEMBL_CHROMOSOMES || []};
-  my $chr_2   = scalar @{$hub->species_defs->get_config($other, 'ENSEMBL_CHROMOSOMES')||[]};
+  my %chr_2   = map { $_, 1 } @{$hub->species_defs->get_config($other, 'ENSEMBL_CHROMOSOMES') || []};
   
   unless ($synteny{$other_prodname}) {
     $hub->problem('fatal', "Can't display synteny",  "There is no synteny data for these two species ($species and $other)");
     return undef;
   }
   
-  unless ($chr_1{$chr} && $chr_2 > 0) {
-    $hub->problem('fatal', "Unable to display", "Synteny view only displays synteny between real chromosomes - not fragments");
-    return undef;
-  }
-
   my $ka         = $hub->get_adaptor('get_KaryotypeBandAdaptor', 'core', $species);
   my $ka2        = $hub->get_adaptor('get_KaryotypeBandAdaptor', 'core', $other);
   my $compara_db = $hub->database('compara');
   my $raw_data   = $object->chromosome->get_all_compara_Syntenies($other, undef, $compara_db);   
   my $chr_length = $object->chromosome->length;
+  my $other_chr;
+
+  OUTER:
+  foreach my $synteny_region (@$raw_data) {
+    foreach my $dfr (@{$synteny_region->get_all_DnaFragRegions}) {
+      # Check if any of the synteny regions map to a chromosome in the other species
+      if ($dfr->dnafrag->genome_db->name eq $other_prodname && $chr_2{$dfr->dnafrag->name}) {
+        $other_chr = 1;
+        last OUTER;
+      }
+    }
+  }
+  
+  unless ($chr_1{$chr} && $other_chr) {
+    $hub->problem('fatal', 'Unable to display', 'Synteny view only displays synteny between real chromosomes - not fragments');
+    return undef;
+  }
   
   my ($localgenes, $offset) = $object->get_synteny_local_genes;
   my $loc = (@$localgenes ? $localgenes->[0]->start + $object->seq_region_start : 1); # Jump loc to the location of the genes
