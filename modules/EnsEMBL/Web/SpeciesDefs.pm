@@ -538,10 +538,21 @@ sub _read_species_list_file {
   return $spp_list;
 }
 
+sub _get_deepcopy_defaults {
+## Copy-on-write hash (only used by NV)
+## Note: use method instead of an 'our' variable, as the latter can be a pain
+## when shared across plugins
+  return {};
+}
+
 sub _read_in_ini_file {
   my ($self, $filename, $defaults) = @_;
   my $inifile = undef;
   my $tree    = {};
+  
+  ## Avoid deep-copying in NV divisions, to reduce size of packed files
+  ## See https://github.com/EnsemblGenomes/eg-web-common/commit/f702ab75235e66d7e9a979864b858fe0f88485f7
+  my $deepcopy_defaults = $self->_get_deepcopy_defaults;
   
   foreach my $confdir (@SiteDefs::ENSEMBL_CONF_DIRS) {
     if (-e "$confdir/ini-files/$filename.ini") {
@@ -555,6 +566,7 @@ sub _read_in_ini_file {
       open FH, $inifile or die "Problem with $inifile: $!";
       
       my $current_section = undef;
+      my $defaults_used   = 0;
       my $line_number     = 0;
       
       while (<FH>) {
@@ -567,13 +579,20 @@ sub _read_in_ini_file {
         
         if (/^\[\s*(\w+)\s*\]/) { # New section - i.e. [ ... ]
           $current_section = $1;
-          $tree->{$current_section} ||= {}; # create new element if required
+
+          if ( defined $defaults->{$current_section} && exists $deepcopy_defaults->{$current_section} ) {
+            $tree->{$current_section} = $defaults->{$current_section};
+            $defaults_used = 1;
+          }
+          else { 
+            $tree->{$current_section} ||= {}; # create new element if required
+            $defaults_used = 0;
           
-          # add settings from default
-          if (!%{$tree->{$current_section}} && defined $defaults->{$current_section}) {
-            my %hash = %{$defaults->{$current_section}};
-            
-            $tree->{$current_section}{$_} = $defaults->{$current_section}{$_} for keys %hash;
+            # add settings from default
+            if (defined $defaults->{$current_section}) {
+              my %hash = %{$defaults->{$current_section}};
+              $tree->{$current_section}{$_} = $defaults->{$current_section}{$_} for keys %hash;
+            }
           }
         } elsif (/([\w*]\S*)\s*=\s*(.*)/ && defined $current_section) { # Config entry
           my ($key, $value) = ($1, $2); # Add a config entry under the current 'top level'
@@ -584,7 +603,13 @@ sub _read_in_ini_file {
             my @array = split /\s+/, $1;
             $value = \@array;
           }
-          
+        
+          if ( $defaults_used && defined $defaults->{$current_section} ) {
+            my %hash = %{$defaults->{$current_section}};
+            $tree->{$current_section}{$_} = $defaults->{$current_section}{$_} for keys %hash;
+            $defaults_used = 0;
+          }
+
           $tree->{$current_section}{$key} = $value;
         } elsif (/([.\w]+)\s*=\s*(.*)/) { # precedes a [ ] section
           print STDERR "\t  [WARN] NO SECTION $filename.ini($line_number) -> $1 = $2;\n";
@@ -820,7 +845,7 @@ sub _parse {
   
   # Loop for each database exported from SiteDefs
   # grab the contents of the ini file AND
-  # IF  the DB packed files exist expand them
+  # IF the DB packed files exist, expand them
   # o/w attach the species databases
 
   # Note that because the code was developed for vertebrates first,
@@ -918,10 +943,12 @@ sub _parse {
   ## Merge collection info into the species hash
   foreach my $prodname (@$SiteDefs::PRODUCTION_NAMES) {
     next unless $tree->{$prodname};
-    my @db_species = @{$tree->{$prodname}->{DB_SPECIES}};
-    my $species_lookup = { map {$_ => 1} @db_species };
-    foreach my $sp (@db_species) {
-      $self->_merge_species_tree( $tree->{$sp}, $tree->{$prodname}, $species_lookup);
+    my @db_species = @{$tree->{$prodname}->{DB_SPECIES}||[]};
+    if (scalar @db_species) {
+      my $species_lookup = { map {$_ => 1} @db_species };
+      foreach my $sp (@db_species) {
+        $self->_merge_species_tree( $tree->{$sp}, $tree->{$prodname}, $species_lookup);
+      }
     }
   }
 
@@ -968,79 +995,9 @@ sub _parse {
     if ($url ne "MULTI" && $url ne "databases") {
                                      
       my $display_name = $tree->{$url}{'SPECIES_DISPLAY_NAME'};
-             
-      # Populate taxonomy division using e_divisions.json template
       push @{$species_to_assembly->{$display_name}}, $tree->{$url}->{'ASSEMBLY_VERSION'};
-      my $taxonomy = $tree->{$url}{'TAXONOMY'};
-      my $children = [];
-      my $other_species_children = [];
-      my @other_species = grep { $_->{key} =~ m/other_species/ } @{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}};
-      $other_species[0]->{child_nodes} = [] if ($other_species[0] && !$other_species[0]->{child_nodes});
-
-      my $strain_name = $tree->{$url}{'SPECIES_STRAIN'};
-      my $strain_group = $tree->{$url}{'STRAIN_GROUP'};
-      my $group_name   = $tree->{$url}{'SPECIES_COMMON_NAME'};
-      my $species_key = $tree->{$url}{'SPECIES_URL'}; ## Key on actual URL, not production name
-
-      foreach my $node (@{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}}) {
-        my $child = {
-          key             => $species_key,
-          scientific_name => $tree->{$url}{'SPECIES_SCIENTIFIC_NAME'},
-          common_name     => $tree->{$url}{'SPECIES_COMMON_NAME'},
-          display_name    => $tree->{$url}{'GROUP_DISPLAY_NAME'},
-          image           => $tree->{$url}{'SPECIES_IMAGE'},
-          is_leaf         => 'true'
-        };
-
-        if ($strain_group && $strain_name !~ /reference/) {
-          $child->{type} = $group_name . ' ' . $tree->{$url}{'STRAIN_TYPE'}. 's';
-        }
-        elsif($strain_group && $strain_name =~ /reference/) {
-          # Create display name for Reference species
-          my $ref_name = $tree->{$url}{'SPECIES_DISPLAY_NAME'} . ' '. $strain_name;
-          $child->{display_name} = $ref_name;
-        }
-
-        if (!$node->{taxa}) {
-          push @{$other_species[0]->{child_nodes}}, $child;
-        }
-        else {
-          my %taxa = map {$_ => 1} @{ $node->{taxa} };
-          my @matched_groups = grep { $taxa{$_} } @$taxonomy;
-          if ($#matched_groups >= 0) {
-            if ($node->{child_nodes}) {
-              my $cnode_match = {};
-              foreach my $cnode ( @{$node->{child_nodes}}) {
-                my @match = grep { /$matched_groups[0]/ }  @{$cnode->{taxa}};
-                if ($#match >=0 ) {
-                  $cnode_match = $cnode;
-                  last;
-                }
-              }
-
-              if (keys %$cnode_match) {
-                if (!$cnode_match->{child_nodes}) {
-                  $cnode_match->{child_nodes} = [];
-                }
-                push @{$cnode_match->{child_nodes}}, $child;
-                last;
-              }
-              else {
-                if (!$node->{child_nodes}) {
-                  $node->{child_nodes} = [];
-                }
-                push @{$node->{child_nodes}}, $child;
-                last;
-              }
-            }
-            else {
-              $node->{child_nodes} = [];
-              push @{$node->{child_nodes}}, $child;
-              last;
-            }
-          }
-        }
-      }
+             
+      $self->_populate_taxonomy_division($tree, $url) if $tree->{'ENSEMBL_TAXONOMY_DIVISION'};
     }
   }
 
@@ -1092,6 +1049,84 @@ sub process_ini_files {
     $self->_info_line(sprintf('** %s **', uc $type), $msg);
     
     lock_nstore($config_packer->{$tree_type}->{$species} || {}, $file);
+  }
+}
+
+
+sub _populate_taxonomy_division {
+# Populate taxonomy division using e_divisions.json template
+  my ($self, $tree, $url) = @_;
+
+  my $taxonomy = $tree->{$url}{'TAXONOMY'};
+  my $children = [];
+  my $other_species_children = [];
+
+  my @other_species = grep { $_->{key} =~ m/other_species/ } @{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}};
+  $other_species[0]->{child_nodes} = [] if ($other_species[0] && !$other_species[0]->{child_nodes});
+
+  my $strain_name = $tree->{$url}{'SPECIES_STRAIN'};
+  my $strain_group = $tree->{$url}{'STRAIN_GROUP'};
+  my $group_name   = $tree->{$url}{'SPECIES_COMMON_NAME'};
+  my $species_key = $tree->{$url}{'SPECIES_URL'}; ## Key on actual URL, not production name
+
+  foreach my $node (@{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}}) {
+    my $child = {
+                  key             => $species_key,
+                  scientific_name => $tree->{$url}{'SPECIES_SCIENTIFIC_NAME'},
+                  common_name     => $tree->{$url}{'SPECIES_COMMON_NAME'},
+                  display_name    => $tree->{$url}{'GROUP_DISPLAY_NAME'},
+                  image           => $tree->{$url}{'SPECIES_IMAGE'},
+                  is_leaf         => 'true'
+                };
+
+    if ($strain_group && $strain_name !~ /reference/) {
+      $child->{type} = $group_name . ' ' . $tree->{$url}{'STRAIN_TYPE'}. 's';
+    }
+    elsif($strain_group && $strain_name =~ /reference/) {
+      # Create display name for Reference species
+      my $ref_name = $tree->{$url}{'SPECIES_DISPLAY_NAME'} . ' '. $strain_name;
+      $child->{display_name} = $ref_name;
+    }
+
+    if (!$node->{taxa}) {
+      push @{$other_species[0]->{child_nodes}}, $child;
+    }
+    else {
+      my %taxa = map {$_ => 1} @{ $node->{taxa} };
+      my @matched_groups = grep { $taxa{$_} } @$taxonomy;
+      if ($#matched_groups >= 0) {
+        if ($node->{child_nodes}) {
+          my $cnode_match = {};
+          foreach my $cnode ( @{$node->{child_nodes}}) {
+            my @match = grep { /$matched_groups[0]/ }  @{$cnode->{taxa}};
+            if ($#match >=0 ) {
+              $cnode_match = $cnode;
+              last;
+            }
+          }
+
+          if (keys %$cnode_match) {
+            if (!$cnode_match->{child_nodes}) {
+              $cnode_match->{child_nodes} = [];
+            }
+            push @{$cnode_match->{child_nodes}}, $child;
+            last;
+          }
+          else {
+            if (!$node->{child_nodes}) {
+              $node->{child_nodes} = [];
+            }
+            push @{$node->{child_nodes}}, $child;
+            last;
+          }
+        }
+        else {
+          $node->{child_nodes} = [];
+          push @{$node->{child_nodes}}, $child;
+          last;
+        }
+      }
+    }
   }
 }
 
@@ -1541,11 +1576,18 @@ sub production_name_mapping {
 ### As the name said, the function maps the production name with the species URL, 
 ### @param production_name - species production name
 ### Return string = the corresponding species.url name which is the name web uses for URL and other code
+### Fall back to production name if not found - mostly for pan-compara
   my ($self, $production_name) = @_;
+  my $mapping_name = $production_name;
   
   foreach ($self->valid_species) {
-    return $self->get_config($_, 'SPECIES_URL') if($self->get_config($_, 'SPECIES_PRODUCTION_NAME') eq lc($production_name));
+    if ($self->get_config($_, 'SPECIES_PRODUCTION_NAME') eq $production_name) {
+      $mapping_name = $self->get_config($_, 'SPECIES_URL');
+      last;
+    }
   }
+
+  return $mapping_name;
 }
 
 sub assembly_lookup {
