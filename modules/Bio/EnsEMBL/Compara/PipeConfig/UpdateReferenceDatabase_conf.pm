@@ -421,7 +421,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'notify_done_by_email',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::NotifyByEmail',
             -parameters => {
-                'text'  => 'The pipeline has completed.',
+                'text'  => 'The rapid release references pipeline has completed.',
             },
         },
 
