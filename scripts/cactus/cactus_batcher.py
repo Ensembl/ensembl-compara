@@ -449,6 +449,7 @@ def get_slurm_submission(
     cpus,
     command,
     dependencies,
+    script_filename,
     singularity=True,
 ):
 
@@ -503,10 +504,19 @@ def get_slurm_submission(
         # wrap the commands to use singularity
         command = "singularity run {} {}".format(image, command)
 
-    # wrap the commands for SLURM
-    sbatch.append('--wrap "source ~/.bash_profile && {}")'.format(command))
+    # real wrapped job
+    job_filename = script_filename.replace(".sh", "-job.sh")
+    create_bash_script(filename=job_filename)
+    jobs = ["bash ~/.bashrc", command]
 
-    return sbatch
+    # write jobs to the file
+    append(filename=job_filename, line="\n".join(jobs))
+
+    # wrap the commands for SLURM
+    sbatch.append('--wrap "bash {}")'.format(job_filename))
+
+    # store it in the individual bash script
+    append(filename=script_filename, line=" ".join(sbatch))
 
 
 def slurmify(
@@ -585,12 +595,19 @@ def slurmify(
                     if os.path.isdir("{}/{}".format(root_dir, info["jobstore"])):
                         line = "{} --restart".format(line)
 
+                # create individual bash script
+                individual_bashscript_filename = "{}/{}/{}-{}.sh".format(
+                    root_dir, script_dirs["separated"], info["command"], info["id"]
+                )
+                create_bash_script(filename=individual_bashscript_filename)
+
                 # get the SLURM string call
-                sbatch = get_slurm_submission(
+                get_slurm_submission(
                     job_name="{}-{}".format(info["command"], info["id"]),
                     variable_name=info["variable"],
                     work_dir="{}".format(root_dir),
                     log_dir="{}/{}".format(root_dir, log_dir),
+                    script_filename=individual_bashscript_filename,
                     partition="{}".format(resources[info["command"]]["partition"]),
                     gpus=resources[info["command"]]["gpus"],
                     cpus=resources[info["command"]]["cpus"],
@@ -607,15 +624,6 @@ def slurmify(
                 ):
                     intra_dependencies.clear()
                     intra_dependencies.append(info["variable"])
-
-                # create individual bash script
-                individual_bashscript_filename = "{}/{}/{}-{}.sh".format(
-                    root_dir, script_dirs["separated"], info["command"], info["id"]
-                )
-                create_bash_script(filename=individual_bashscript_filename)
-
-                # store it in the individual bash script
-                append(filename=individual_bashscript_filename, line=" ".join(sbatch))
 
                 # store it in the aggregated bash script
                 append(

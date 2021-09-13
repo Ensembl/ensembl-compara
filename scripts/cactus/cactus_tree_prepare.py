@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
+"""This script prepare a file that will be consumed by cactus-prepare. It
+reads a given tree and attach the FASTA file paths"""
 
-import fileinput
 import argparse
 import os
 import sys
-import uuid
 import re
 from datetime import datetime
 
 # check if biopython package is installed
 try:
     from Bio import Phylo
-except ModuleNotFoundError as err:
-    print(err)
+except ModuleNotFoundError as error:
+    print(error)
     print('Please, run "pip install biopython" to install Biopython module')
-    exit(1)
+    sys.exit(1)
 
 
 def assemblies_parser(dest, ext):
@@ -39,7 +39,7 @@ def assemblies_parser(dest, ext):
     except FileNotFoundError as err:
         raise err
 
-    content = dict()
+    content = {}
 
     for filename in filenames:
         if filename.endswith(ext):
@@ -64,19 +64,19 @@ def assemblies_parser(dest, ext):
     return content
 
 
-def tree_parser(filename, format, output):
+def tree_parser(filename, tree_format, output):
     """A function to parse the given tree
 
     Args:
         filename: The path of the file containing the tree
-        format: The format of the tree
+        tree_format: The format of the tree
         output: The path to generate the cactus input file
 
     Returns:
         A dictionary containing the tree and path (where the Cactus input file will be saved)
 
     """
-    with open(filename, mode="r") as f:
+    with open(filename, encoding="utf-8", mode="r") as f:
 
         if output is None:
             output = os.path.dirname(os.path.realpath(f.name))
@@ -85,12 +85,12 @@ def tree_parser(filename, format, output):
 
         name, ext = os.path.splitext(os.path.basename(f.name))
         output += "/{}.processed{}".format(name, ext)
-        tree = Phylo.read(f, format=format)
+        tree = Phylo.read(f, format=tree_format)
 
     return {"tree": tree, "path": output}
 
 
-def create_new_tree(tree_content, assemblies_content, format):
+def create_new_tree(tree_content, assemblies_content, tree_format):
     """Create a Newick tree with sequence names based on the FASTA filenames parsed before
 
     Args:
@@ -99,7 +99,8 @@ def create_new_tree(tree_content, assemblies_content, format):
         format: The format of the tree
 
     Returns:
-        A list of filenames containing the FASTA files that have been parsed but not included in the given tree
+        A list of filenames containing the FASTA files that have been parsed but not
+        included in the given tree
 
     """
 
@@ -112,9 +113,6 @@ def create_new_tree(tree_content, assemblies_content, format):
                 fasta["used"] = True
                 break
 
-        if not fasta["used"]:
-            print("Not match any for {}".format(leaf.name))
-
     # remove labels on non-leaf nodes
     for non_leaf in tree_content["tree"].get_nonterminals():
         non_leaf.confidence = None
@@ -122,9 +120,9 @@ def create_new_tree(tree_content, assemblies_content, format):
     Phylo.write(
         trees=tree_content["tree"],
         file=tree_content["path"],
-        format=format,
+        format=tree_format,
         format_branch_length="%s",
-        format_confidence="%s",
+        branch_length_only=True,
     )
 
     # sanity check
@@ -145,7 +143,7 @@ def append_fasta_paths(filename, content):
         content: The content to be amended in the file
 
     """
-    with open(filename, mode="a") as f:
+    with open(filename, encoding="utf-8", mode="a") as f:
         for fasta in content.values():
             if fasta["used"]:
                 f.write("{} {}\n".format(fasta["name"], fasta["path"]))
@@ -171,13 +169,13 @@ def add_header(
 
     """
 
-    with open(cactus_prepare_filename, mode="r") as f:
-        new_content = f.read()
+    with open(cactus_prepare_filename, encoding="utf-8", mode="r") as f:
+        new_content = f.read().replace(":None", "")
 
-    with open(tree_filename, mode="r") as f:
+    with open(tree_filename, encoding="utf-8", mode="r") as f:
         old_content = f.read()
 
-    with open(cactus_prepare_filename, mode="w+") as f:
+    with open(cactus_prepare_filename, encoding="utf-8", mode="w+") as f:
         f.write(
             "# File generated On {}\n".format(
                 datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -245,25 +243,25 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # parse the fasta files
-    assemblies_content = assemblies_parser(dest=args.assemblies_dir, ext=args.extension)
+    assemblies_data = assemblies_parser(dest=args.assemblies_dir, ext=args.extension)
 
     # parse the tree and create the cactus input file
-    tree_content = tree_parser(
-        filename=args.tree, format=args.format, output=args.output_dir
+    tree_data = tree_parser(
+        filename=args.tree, tree_format=args.format, output=args.output_dir
     )
 
     # sanity check
-    unused_filenames = create_new_tree(tree_content, assemblies_content, args.format)
+    unused_filenames = create_new_tree(tree_data, assemblies_data, args.format)
 
     # append FASTA locations to the cactus input file
-    append_fasta_paths(tree_content["path"], assemblies_content)
+    append_fasta_paths(tree_data["path"], assemblies_data)
 
     # add a header as comments to the cactus input file
     add_header(
-        cactus_prepare_filename=tree_content["path"],
+        cactus_prepare_filename=tree_data["path"],
         tree_filename=args.tree,
         argv=sys.argv,
-        qtd_files=len(assemblies_content),
-        qtd_terminals=len(tree_content["tree"].get_terminals()),
+        qtd_files=len(assemblies_data),
+        qtd_terminals=len(tree_data["tree"].get_terminals()),
         unused_filenames=unused_filenames,
     )
