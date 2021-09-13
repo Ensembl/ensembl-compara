@@ -50,10 +50,6 @@ sub default_options {
         'ref_db'       => 'compara_references',
         'taxonomy_db'  => 'ncbi_taxonomy',
 
-        # Back compatibility for production team's use of '--pass' instead of '--password'
-        'pass'     => undef,
-        'password' => $self->o('pass') ? $self->o('pass') : $self->o('password'),
-
         # how many parts should per-genome files be split into?
         'num_fasta_parts'  => 100,
         # at which id should genome_db start?
@@ -167,6 +163,8 @@ sub pipeline_wide_parameters {
         'output_dir_path'  => $self->o('output_dir_path'),
         'overwrite_files'  => $self->o('overwrite_files'),
         'failures_fatal'   => $self->o('failures_fatal'),
+
+        'email' => $self->o('email'),
 
     };
 }
@@ -414,6 +412,16 @@ sub core_pipeline_analyses {
             -parameters => {
                 'warehouse_dir' => $self->o('warehouse_dir'),
                 'cmd'           => 'rsync -aW #backups_dir#/*.sql #warehouse_dir#/reference_db_backups/',
+            },
+            -flow_into => {
+                1 => [ 'notify_done_by_email' ],
+            },
+        },
+
+        {   -logic_name => 'notify_done_by_email',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::NotifyByEmail',
+            -parameters => {
+                'text'  => 'The pipeline has completed.',
             },
         },
 
