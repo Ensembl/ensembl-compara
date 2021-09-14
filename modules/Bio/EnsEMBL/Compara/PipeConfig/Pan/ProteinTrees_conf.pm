@@ -47,7 +47,6 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     'division'   => 'pan',
-    'collection' => $self->o('division'),
 
     # threshold used by per_genome_qc in order to check if the amount of orphan genes are acceptable
     # values were infered by checking previous releases, values that are out of these ranges may be caused by assembly and/or gene annotation problems.
