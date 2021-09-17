@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<compara_db division="benchmark">
+
+  <collections>
+
+    <collection name="test1">
+      <!-- Vertebrates -->
+      <genome name="danio_rerio"/>
+      <genome name="gallus_gallus"/>
+      <genome name="homo_sapiens"/>
+      <genome name="mus_musculus"/>
+      <genome name="strigamia_maritima"/>
+    </collection>
+
+    <collection name="test2">
+      <genome name="species_species"/>
+      <genome name="one_more"/>
+    </collection>
+
+    <collection name="test2">
+      <!-- Vertebrates -->
+      <genome name="gallus_gallus"/>
+      <genome name="homo_sapiens"/>
+    </collection>
+
+    <collection name="test3">
+      <genome name=""/>
+      <genome name="gallus_gallus"/>
+      <genome name="homo_sapiens"/>
+    </collection>
+
+    <collection name="">
+      <genome name="danio_rerio"/>
+      <genome name="mus_musculus"/>
+    </collection>
+
+    <collection name="test4">
+    </collection>
+
+  </collections>
+
+</compara_db>
+
