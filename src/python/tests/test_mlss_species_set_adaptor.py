@@ -52,7 +52,7 @@ test_files_dir = os.path.join(os.path.dirname(__file__), "flatfiles/config/")
 )
 
 def test_get_species_set_by_name(file: str, name: str, exp_output: List[str], expectation: ContextManager) -> None:
-    """Tests :meth:`config.get_species_set_by_name()` method.
+    """Tests :func:`config.get_species_set_by_name()` function.
 
     Args:
         file: Path to the XML file to be parsed.
