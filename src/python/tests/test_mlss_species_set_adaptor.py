@@ -63,4 +63,4 @@ def test_get_species_set_by_name(file: str, name: str, exp_output: List[str], ex
 
     """
     with expectation:
-        assert get_species_set_by_name(os.path.join(test_files_dir, file), name) == exp_output, "List returned differs from the one expected."
+        assert get_species_set_by_name(os.path.join(test_files_dir, file), name) == exp_output
