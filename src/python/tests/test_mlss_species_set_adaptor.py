@@ -29,7 +29,7 @@ from typing import ContextManager, List
 from xml.etree import ElementTree
 
 import pytest
-from pytest import param, raises
+from pytest import raises
 
 from ensembl.compara.config import get_species_set_by_name
 
@@ -55,9 +55,9 @@ def test_get_species_set_by_name(file: str, name: str, exp_output: List[str], ex
     """Tests :func:`config.get_species_set_by_name()` function.
 
     Args:
-        file: Path to the XML file to be parsed.
+        file: XML file to be parsed.
         name: Species set (collection) name.
-        exp_output: Expected return value of the method.
+        exp_output: Expected return value of the function.
         expectation: Context manager for the expected exception, i.e. the test will only pass if that
                 exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
 
