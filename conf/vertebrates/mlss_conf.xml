@@ -222,7 +222,7 @@
     <multiple_alignment method="EPO">
       <species_set name="fish">
         <genome name="danio_rerio"/>
-        <genome name="gasterosteus_aculeatus"/>
+        <genome name="gasterosteus_aculeatus" assembly="BROADS1"/>
         <genome name="tetraodon_nigroviridis" assembly="TETRAODON8"/>
         <genome name="lepisosteus_oculatus" assembly="LepOcu1"/>
         <genome name="amphiprion_percula" assembly="Nemo_v1"/>
