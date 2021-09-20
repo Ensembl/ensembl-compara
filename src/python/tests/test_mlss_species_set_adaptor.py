@@ -38,16 +38,16 @@ test_files_dir = os.path.join(os.path.dirname(__file__), "flatfiles/config/")
 @pytest.mark.parametrize(
     "file, name, exp_output, expectation",
     [
-        ("mlss_conf1.xml", "test1", ["danio_rerio", "gallus_gallus", "homo_sapiens", "mus_musculus", "strigamia_maritima"], does_not_raise()),
-        ("mlss_conf1.xml", "test3", ["", "gallus_gallus", "homo_sapiens"], does_not_raise()),
-        ("mlss_conf1.xml", "", ["danio_rerio", "mus_musculus"], does_not_raise()),
-        ("mlss_conf1.xml", "test4", [], does_not_raise()),
-        ("mlss_conf2.xml", "default", ["drosophila_melanogaster", "caenorhabditis_elegans", "saccharomyces_cerevisiae"], does_not_raise()),
-        ("mlss_conf2.xml", "murinae", [], does_not_raise()),
-        ("fake/path/mlss_conf1.xml", "test", None, raises(FileNotFoundError, match=r"mlss_conf file not found.")),
-        ("mlss_conf3.xml", "test", None, raises(ElementTree.ParseError)),
-        ("mlss_conf1.xml", "test", None, raises(NameError, match=r"Species set test not found.")),
-        ("mlss_conf1.xml", "test2", None, raises(NameError, match=r"2 species sets named test2 found."))
+        ("mlss_conf_simple.xml", "test1", ["danio_rerio", "gallus_gallus", "homo_sapiens", "mus_musculus", "strigamia_maritima"], does_not_raise()),
+        ("mlss_conf_simple.xml", "test3", ["", "gallus_gallus", "homo_sapiens"], does_not_raise()),
+        ("mlss_conf_simple.xml", "", ["danio_rerio", "mus_musculus"], does_not_raise()),
+        ("mlss_conf_simple.xml", "test4", [], does_not_raise()),
+        ("mlss_conf_realistic.xml", "default", ["drosophila_melanogaster", "caenorhabditis_elegans", "saccharomyces_cerevisiae"], does_not_raise()),
+        ("mlss_conf_realistic.xml", "murinae", [], does_not_raise()),
+        ("fake/path/mlss_simple.xml", "test", None, raises(FileNotFoundError, match=r"mlss_conf file not found.")),
+        ("mlss_conf_not_xml.xml", "test", None, raises(ElementTree.ParseError)),
+        ("mlss_conf_simple.xml", "test", None, raises(NameError, match=r"Species set test not found.")),
+        ("mlss_conf_simple.xml", "test2", None, raises(NameError, match=r"2 species sets named test2 found."))
     ]
 )
 
