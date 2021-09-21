@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<compara_db division="benchmark">
+
+  <collections>
+
+    <collection name="test">
+      <!-- Vertebrates -->
+      <genome name="gallus_gallus"/>
+      <genome name="homo_sapiens"/>
+    </collection>
+
+    <collection name="test">
+      <genome name="danio_rerio"/>
+      <genome name="homo_sapiens"/>
+    </collection>
+
+  </collections>
+
+</compara_db>
+
