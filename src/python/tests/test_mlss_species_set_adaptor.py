@@ -23,15 +23,13 @@ Typical usage example::
 
 """
 
-import os
 from contextlib import nullcontext as does_not_raise
-from typing import ContextManager, List
-from xml.etree import ElementTree
-
+from ensembl.compara.config import get_species_set_by_name
+import os
 import pytest
 from pytest import raises
-
-from ensembl.compara.config import get_species_set_by_name
+from typing import ContextManager, List
+from xml.etree import ElementTree
 
 test_files_dir = os.path.join(os.path.dirname(__file__), "flatfiles/config/")
 
