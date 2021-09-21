@@ -15,19 +15,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+__all__ = ['get_species_set_by_name']
+
 from typing import List
 from xml.etree import ElementTree
 import os
 
-def get_species_set_by_name(file: str, name: str) -> List[str]:
-    """Parses mlss_conf.xml file and returns a list of species for a specified species set name.
+def get_species_set_by_name(mlss_conf_file: str, species_set_name: str) -> List[str]:
+    """Parses `mlss_conf_file` and returns a list of species for the given species set name.
 
      Args:
         file: Path to the mlss_conf.xml.
         name: Species set (collection) name.
 
     Returns:
-        A list of species (genome names) for a specified species set name.
+        A list of species (genome names) for the given species set name.
 
     Raises:
         FileNotFoundError: If the file is not found.
@@ -40,10 +42,11 @@ def get_species_set_by_name(file: str, name: str) -> List[str]:
     tree = ElementTree.parse(file)
     root = tree.getroot()
 
-    collection = [collection for collection in root.iter("collection") if collection.attrib["name"] == name]
+    collection = [collection for collection in root.iter("collection")
+                      if collection.attrib["name"] == species_set_name]
 
     if len(collection) == 0:
-        raise NameError(f"Species set {name} not found.")
+        raise NameError(f"Species set '{species_set_name}' not found.")
     elif len(collection) > 1:
         raise NameError(f"{len(collection)} species sets named {name} found.")
 
