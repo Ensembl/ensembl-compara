@@ -32,20 +32,15 @@ from typing import ContextManager, List
 from xml.etree import ElementTree
 
 
-
 @pytest.mark.parametrize(
     "mlss_conf_file, species_set_name, exp_output, expectation",
     [
-        ("mlss_conf_simple.xml", "test1", ["danio_rerio", "gallus_gallus", "homo_sapiens", "mus_musculus", "strigamia_maritima"], does_not_raise()),
-        ("mlss_conf_simple.xml", "test3", ["", "gallus_gallus", "homo_sapiens"], does_not_raise()),
-        ("mlss_conf_simple.xml", "", ["danio_rerio", "mus_musculus"], does_not_raise()),
-        ("mlss_conf_simple.xml", "test4", [], does_not_raise()),
-        ("mlss_conf_realistic.xml", "default", ["drosophila_melanogaster", "caenorhabditis_elegans", "saccharomyces_cerevisiae"], does_not_raise()),
-        ("mlss_conf_realistic.xml", "murinae", [], does_not_raise()),
-        ("fake/path/mlss_simple.xml", "test", None, raises(FileNotFoundError)),
+        ("mlss_conf.xml", "default", ["drosophila_melanogaster", "caenorhabditis_elegans", "saccharomyces_cerevisiae"], does_not_raise()),
+        ("mlss_conf.xml", "test", [], does_not_raise()),
+        ("fake/path/mlss_conf.xml", "test", None, raises(FileNotFoundError)),
         ("mlss_conf_not_xml.xml", "test", None, raises(ElementTree.ParseError)),
-        ("mlss_conf_simple.xml", "test", None, raises(NameError, match=r"Species set 'test' not found.")),
-        ("mlss_conf_simple.xml", "test2", None, raises(RuntimeError, match=r"2 species sets named 'test2' found."))
+        ("mlss_conf.xml", "murinae", None, raises(NameError, match=r"Species set 'murinae' not found.")),
+        ("mlss_conf_duplicates.xml", "test", None, raises(RuntimeError, match=r"2 species sets named 'test' found."))
     ]
 )
 def test_get_species_set_by_name(mlss_conf_file: str, species_set_name: str, exp_output: List[str],
