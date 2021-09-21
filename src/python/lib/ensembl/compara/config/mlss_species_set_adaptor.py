@@ -17,9 +17,9 @@ limitations under the License.
 
 __all__ = ['get_species_set_by_name']
 
+import os
 from typing import List
 from xml.etree import ElementTree
-import os
 
 def get_species_set_by_name(mlss_conf_file: str, species_set_name: str) -> List[str]:
     """Parses `mlss_conf_file` and returns a list of species for the given species set name.
