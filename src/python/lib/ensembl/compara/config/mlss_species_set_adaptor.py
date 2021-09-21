@@ -34,8 +34,8 @@ def get_species_set_by_name(mlss_conf_file: str, species_set_name: str) -> List[
     """Parses `mlss_conf_file` and returns a list of species for the given species set name.
 
      Args:
-        file: Path to the mlss_conf.xml.
-        name: Species set (collection) name.
+        mlss_conf_file: Path to the MLSSs configuration XML file.
+        species_set_name: Species set (collection) name.
 
     Returns:
         A list of species (genome names) for the given species set name.
