@@ -41,14 +41,13 @@ def get_species_set_by_name(mlss_conf_file: str, species_set_name: str) -> List[
         A list of species (genome names) for the given species set name.
 
     Raises:
-        FileNotFoundError: If the file is not found.
-        ElementTree.ParseError: If there are issues with parsing the file.
-        NameError: If the number of species sets with a specified name is not 1.
-    """
-    if not os.path.exists(file):
-         raise FileNotFoundError("mlss_conf file not found.")
+        FileNotFoundError: If `mlss_conf_file` is not found.
+        ElementTree.ParseError: If there are issues with parsing `mlss_conf_file`.
+        NameError: If there is no species set matching `species_set_name`.
+        RuntimeError: If there is more than one species set corresponding to `species_set_name`.
 
-    tree = ElementTree.parse(file)
+    """
+    tree = ElementTree.parse(mlss_conf_file)
     root = tree.getroot()
 
     collection = [collection for collection in root.iter("collection")
@@ -57,7 +56,7 @@ def get_species_set_by_name(mlss_conf_file: str, species_set_name: str) -> List[
     if len(collection) == 0:
         raise NameError(f"Species set '{species_set_name}' not found.")
     elif len(collection) > 1:
-        raise NameError(f"{len(collection)} species sets named {name} found.")
+        raise RuntimeError(f"{len(collection)} species sets named '{speices_set_name}' found.")
 
     species_set = [element.attrib["name"] for element in collection[0] if element.tag == "genome"]
 
