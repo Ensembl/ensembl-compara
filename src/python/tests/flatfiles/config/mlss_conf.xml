@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<compara_db division="benchmark">
+
+  <collections>
+
+    <collection name="default">
+      <taxonomic_group taxon_name="Chordata">
+        <!-- But exclude everything below mus_musculus and sus_scrofa -->
+        <ref_for_taxon name="mus_musculus"/>
+        <ref_for_taxon name="sus_scrofa"/>
+      </taxonomic_group>
+      <genome name="drosophila_melanogaster"/>
+      <genome name="caenorhabditis_elegans"/>
+      <genome name="saccharomyces_cerevisiae"/>
+    </collection>
+
+    <collection name="test"/>
+
+  </collections>
+
+</compara_db>
+
