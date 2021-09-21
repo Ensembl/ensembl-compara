@@ -82,7 +82,6 @@ sub fetch_input {
     my $self = shift @_;
 
     my $genome_db_id            = $self->param_required('genome_db_id');
-    my $this_genome_db          = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
     my $this_species_tree       = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('mlss_id'), 'default');
     my $ncbi_taxon_adaptor      = $self->compara_dba->get_NCBITaxonAdaptor;
     my $this_species_tree_node  = $this_species_tree->root->find_leaves_by_field('genome_db_id', $genome_db_id)->[0];
@@ -138,7 +137,7 @@ sub write_output {
     my $species_tree_node       = $self->param('species_tree_node');
 
     $species_tree_node->store_tag('nb_genes',               $self->param('total_num_genes'));
-    $species_tree_node->store_tag('nb_genes_in_tree',       $self->param('total_num_genes')-$self->param('total_orphans_num'));
+    $species_tree_node->store_tag('nb_genes_in_unfiltered_cluster', $self->param('total_num_genes')-$self->param('total_orphans_num'));
     $species_tree_node->store_tag('nb_orphan_genes',        $self->param('total_orphans_num'));
 
     return unless $self->param('reuse_this');
