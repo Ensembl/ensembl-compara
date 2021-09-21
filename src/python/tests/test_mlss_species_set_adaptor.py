@@ -31,7 +31,6 @@ from pytest import raises
 from typing import ContextManager, List
 from xml.etree import ElementTree
 
-test_files_dir = os.path.join(os.path.dirname(__file__), "flatfiles/config/")
 
 @pytest.mark.parametrize(
     "file, name, exp_output, expectation",
@@ -61,5 +60,8 @@ def test_get_species_set_by_name(mlss_conf_file: str, species_set_name: str, exp
                 exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
 
     """
+    mlss_conf_path = pytest.files_dir / 'config' / mlss_conf_file
     with expectation:
-        assert get_species_set_by_name(os.path.join(test_files_dir, file), name) == exp_output
+        assert get_species_set_by_name(mlss_conf_path, species_set_name) == exp_output
+```#
+`pytest.files_dir` is defined in `contest.py` as a general pytest parameter, and uses the new [`Path` type](https://docs.python.org/3/library/pathlib.html).
