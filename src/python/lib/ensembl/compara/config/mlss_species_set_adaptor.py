@@ -33,8 +33,8 @@ from xml.etree import ElementTree
 def get_species_set_by_name(mlss_conf_file: str, species_set_name: str) -> List[str]:
     """Parses `mlss_conf_file` and returns a list of species for the given species set name.
 
-     Args:
-        mlss_conf_file: Path to the MLSSs configuration XML file.
+    Args:
+        mlss_conf_file: Path to the MLSS configuration XML file.
         species_set_name: Species set (collection) name.
 
     Returns:
