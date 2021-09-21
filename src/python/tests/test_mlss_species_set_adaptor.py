@@ -63,5 +63,3 @@ def test_get_species_set_by_name(mlss_conf_file: str, species_set_name: str, exp
     mlss_conf_path = pytest.files_dir / 'config' / mlss_conf_file
     with expectation:
         assert get_species_set_by_name(mlss_conf_path, species_set_name) == exp_output
-```#
-`pytest.files_dir` is defined in `contest.py` as a general pytest parameter, and uses the new [`Path` type](https://docs.python.org/3/library/pathlib.html).
