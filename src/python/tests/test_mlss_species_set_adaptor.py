@@ -53,8 +53,8 @@ def test_get_species_set_by_name(mlss_conf_file: str, species_set_name: str, exp
     """Tests :func:`config.get_species_set_by_name()` function.
 
     Args:
-        file: XML file to be parsed.
-        name: Species set (collection) name.
+        mlss_conf_file: MLSS configuration XML file to be parsed.
+        species_set_name: Species set (collection) name.
         exp_output: Expected return value of the function.
         expectation: Context manager for the expected exception, i.e. the test will only pass if that
                 exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
