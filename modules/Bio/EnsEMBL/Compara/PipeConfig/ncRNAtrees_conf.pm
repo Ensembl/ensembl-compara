@@ -339,7 +339,7 @@ sub core_pipeline_analyses {
             {   -logic_name => 'backbone_fire_posttree',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -flow_into  => {
-                    '1->A' => ['rib_fire_homology_dumps'],
+                    '1->A' => ['rib_fire_homology_dumps', 'rib_fire_tree_stats'],
                     'A->1' => ['backbone_pipeline_finished'],
                 },
             },
@@ -607,7 +607,7 @@ sub core_pipeline_analyses {
               -parameters         => {
                                       mode            => 'global_tree_set',
                                      },
-              -flow_into          => [ 'write_stn_tags',
+              -flow_into          => [
                                        # 'backbone_fire_homology_dumps',
                                         WHEN('#do_cafe# and  #binary_species_tree_input_file#', 'CAFE_species_tree'),
                                         WHEN('#do_cafe# and !#binary_species_tree_input_file#', 'make_full_species_tree'),
@@ -1272,6 +1272,29 @@ sub core_pipeline_analyses {
                 '1->A' => [ 'homology_dumps_mlss_id_factory', 'gene_dumps_genome_db_factory' ],
                 'A->1' => 'rib_fire_homology_processing',
             },
+        },
+
+        {   -logic_name => 'rib_fire_tree_stats',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => 'gene_count_factory',
+                'A->1' => 'write_stn_tags',
+            },
+        },
+
+        {   -logic_name => 'gene_count_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -rc_name    => '1Gb_job',
+            -parameters => {
+                'compara_db'      => '#master_db#',
+                'fan_branch_code' => 1,
+            },
+            -flow_into  => [ 'count_genes_in_tree' ],
+        },
+
+        {   -logic_name => 'count_genes_in_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CountGenesInTree',
+            -rc_name    => '1Gb_job',
         },
 
         {   -logic_name => 'rib_fire_homology_processing',

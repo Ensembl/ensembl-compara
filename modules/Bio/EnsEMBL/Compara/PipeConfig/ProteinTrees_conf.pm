@@ -3322,6 +3322,7 @@ sub core_pipeline_analyses {
                 '1->A' => [
                     'rib_fire_dnds',
                     'rib_fire_homology_stats',
+                    'rib_fire_tree_stats',
                     'rib_fire_hmm_build',
                     'rib_fire_goc'
                 ],
@@ -3450,6 +3451,11 @@ sub core_pipeline_analyses {
                 WHEN('#do_homology_stats#' => 'homology_stats_factory'),
                 'set_default_values',
             ],
+        },
+
+        {   -logic_name => 'rib_fire_tree_stats',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => 'gene_count_factory',
         },
 
         {   -logic_name => 'rib_fire_hmm_build',
@@ -3669,6 +3675,21 @@ sub core_pipeline_analyses {
         {   -logic_name => 'rib_fire_goc',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => WHEN('#do_goc#' => 'goc_entry_point'),
+        },
+
+        {   -logic_name => 'gene_count_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -rc_name    => '1Gb_job',
+            -parameters => {
+                'compara_db'      => '#master_db#',
+                'fan_branch_code' => 1,
+            },
+            -flow_into  => [ 'count_genes_in_tree' ],
+        },
+
+        {   -logic_name => 'count_genes_in_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CountGenesInTree',
+            -rc_name    => '1Gb_job',
         },
 
         {   -logic_name => 'homology_stats_factory',

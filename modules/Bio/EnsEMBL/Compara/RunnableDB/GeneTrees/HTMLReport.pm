@@ -33,11 +33,14 @@ my $txt = <<EOF;
 <h1>Statistics on #collection# #method_name#</h1>
 
 <ul>
-<li>Gene coverage: Number of genes and members in total, included in trees (either species-specific, or encompassing other species), and orphaned (not in any tree)</li>
+<li>Gene coverage: Number of genes and members in total, included in trees (either species-specific, or
+  encompassing other species), orphaned (not in any unfiltered cluster), and unassigned (not in any tree)</h3>
 <li>Tree size: Sizes of trees (genes, and distinct species), grouped according to the root ancestral species</li>
 <li>Predicted gene events: For each ancestral species, number of speciation and duplication nodes (inc. dubious ones), with the average duplication score</li>
 </ul>
-<br/><h3>Number of genes and members in total, included in trees (either species-specific, or encompassing other species), and orphaned (not in any tree)</h3>
+<br/>
+<h3>Number of genes and members in total, included in trees (either species-specific, or
+    encompassing other species), orphaned (not in any unfiltered cluster), and unassigned (not in any tree)</h3>
 #html_array1#
 
 <br/><h3>Sizes of trees (genes, and distinct species), grouped according to the root ancestral species</h3>
@@ -75,13 +78,15 @@ sub fetch_input {
 
     {
         my @data1 = ();
-        my @sums = (0) x 6;
+        my @sums = (0) x 8;
         push @data1, [
             'Taxon ID',
             'Taxon name',
             'Nb genes',
             'Nb sequences',
             'Nb orphaned genes',
+            'Nb genes in unfiltered clusters',
+            'Nb unassigned genes',
             'Nb genes in trees',
             '% genes in trees',
             'Nb genes in single-species trees',
@@ -95,15 +100,19 @@ sub fetch_input {
             $sums[0] += $species->get_value_for_tag('nb_genes');
             $sums[1] += $species->get_value_for_tag('nb_seq');
             $sums[2] += $species->get_value_for_tag('nb_orphan_genes');
-            $sums[3] += $species->get_value_for_tag('nb_genes_in_tree');
-            $sums[4] += $species->get_value_for_tag('nb_genes_in_tree_single_species');
-            $sums[5] += $species->get_value_for_tag('nb_genes_in_tree_multi_species');
+            $sums[3] += $species->get_value_for_tag('nb_genes_in_unfiltered_cluster');
+            $sums[4] += $species->get_value_for_tag('nb_genes_unassigned');
+            $sums[5] += $species->get_value_for_tag('nb_genes_in_tree');
+            $sums[6] += $species->get_value_for_tag('nb_genes_in_tree_single_species');
+            $sums[7] += $species->get_value_for_tag('nb_genes_in_tree_multi_species');
             push @data1, [
                 $species->taxon_id,
                 $species->node_name,
                 thousandify($species->get_value_for_tag('nb_genes')),
                 thousandify($species->get_value_for_tag('nb_seq')),
                 thousandify($species->get_value_for_tag('nb_orphan_genes')),
+                thousandify($species->get_value_for_tag('nb_genes_in_unfiltered_cluster')),
+                thousandify($species->get_value_for_tag('nb_genes_unassigned')),
                 thousandify($species->get_value_for_tag('nb_genes_in_tree')),
                 $species->get_value_for_tag('nb_genes') ? roundperc2($species->get_value_for_tag('nb_genes_in_tree') / $species->get_value_for_tag('nb_genes')) : 'NA',
                 thousandify($species->get_value_for_tag('nb_genes_in_tree_single_species')),
@@ -119,11 +128,13 @@ sub fetch_input {
             thousandify($sums[1]),
             thousandify($sums[2]),
             thousandify($sums[3]),
-            roundperc2($sums[3] / $sums[0]),
             thousandify($sums[4]),
-            roundperc2($sums[4] / $sums[0]),
             thousandify($sums[5]),
             roundperc2($sums[5] / $sums[0]),
+            thousandify($sums[6]),
+            roundperc2($sums[6] / $sums[0]),
+            thousandify($sums[7]),
+            roundperc2($sums[7] / $sums[0]),
         ];
         $self->param('html_array1', array_arrays_to_html_table(@data1));
     }
