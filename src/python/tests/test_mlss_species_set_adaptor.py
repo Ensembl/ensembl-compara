@@ -51,7 +51,8 @@ test_files_dir = os.path.join(os.path.dirname(__file__), "flatfiles/config/")
     ]
 )
 
-def test_get_species_set_by_name(file: str, name: str, exp_output: List[str], expectation: ContextManager) -> None:
+def test_get_species_set_by_name(mlss_conf_file: str, species_set_name: str, exp_output: List[str],
+                                 expectation: ContextManager) -> None:
     """Tests :func:`config.get_species_set_by_name()` function.
 
     Args:
