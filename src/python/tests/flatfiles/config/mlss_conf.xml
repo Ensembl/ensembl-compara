@@ -5,7 +5,6 @@
 
     <collection name="default">
       <taxonomic_group taxon_name="Chordata">
-        <!-- But exclude everything below mus_musculus and sus_scrofa -->
         <ref_for_taxon name="mus_musculus"/>
         <ref_for_taxon name="sus_scrofa"/>
       </taxonomic_group>
