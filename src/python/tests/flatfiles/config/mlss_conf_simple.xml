@@ -34,8 +34,7 @@
       <genome name="mus_musculus"/>
     </collection>
 
-    <collection name="test4">
-    </collection>
+    <collection name="test4"/>
 
   </collections>
 
