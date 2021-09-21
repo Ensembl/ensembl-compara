@@ -32,6 +32,7 @@ from typing import ContextManager, List
 from xml.etree import ElementTree
 
 
+
 @pytest.mark.parametrize(
     "file, name, exp_output, expectation",
     [
@@ -47,7 +48,6 @@ from xml.etree import ElementTree
         ("mlss_conf_simple.xml", "test2", None, raises(NameError, match=r"2 species sets named test2 found."))
     ]
 )
-
 def test_get_species_set_by_name(mlss_conf_file: str, species_set_name: str, exp_output: List[str],
                                  expectation: ContextManager) -> None:
     """Tests :func:`config.get_species_set_by_name()` function.
