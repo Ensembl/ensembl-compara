@@ -14,8 +14,8 @@
 # limitations under the License.
 """Methods for processing MLSS configuration XML file.
 
-This module provides the main function, :func:`get_species_set_by_name()`, that parses an MLSS configuration file and returns
-a species list for the given species set.
+This module provides the main function, :func:`get_species_set_by_name()`,
+that parses an MLSS configuration file and returns a species list for the given species set.
 
 Typical usage example::
 
@@ -26,7 +26,6 @@ Typical usage example::
 
 __all__ = ['get_species_set_by_name']
 
-import os
 from typing import List
 from xml.etree import ElementTree
 
@@ -55,7 +54,7 @@ def get_species_set_by_name(mlss_conf_file: str, species_set_name: str) -> List[
 
     if len(collection) == 0:
         raise NameError(f"Species set '{species_set_name}' not found.")
-    elif len(collection) > 1:
+    if len(collection) > 1:
         raise RuntimeError(f"{len(collection)} species sets named '{species_set_name}' found.")
 
     species_set = [element.attrib["name"] for element in collection[0] if element.tag == "genome"]
