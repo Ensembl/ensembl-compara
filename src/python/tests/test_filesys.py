@@ -83,7 +83,7 @@ class TestDirCmp(BaseTestFilesys):
             for attr in ['common_files', 'ref_only', 'target_only', 'subdirs']:
                 if attr in value:
                     assert getattr(self.dir_cmp.subdirs[key], attr) == value[attr], \
-                        "Expected {} '{}' at '{}/'".format(attr, "', '".join(value[attr]), i)
+                        f"Expected {attr} '{', '.join(value[attr])}' at '{i}/'"
                 else:
                     assert not getattr(self.dir_cmp.subdirs[key], attr), \
                         f"Found unexpected {attr} elements at '{i}/'"
