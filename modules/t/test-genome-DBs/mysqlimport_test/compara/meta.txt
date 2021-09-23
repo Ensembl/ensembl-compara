@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-27	\N	schema_version	107
-=======
 25	\N	schema_version	106
->>>>>>> release/106
 2	\N	schema_type	compara
 13	\N	patch	patch_101_102_a.sql|schema_version
 14	\N	patch	patch_101_102_b.sql|enum_other
@@ -15,7 +11,3 @@
 23	\N	patch	patch_104_105_a.sql|schema_version
 24	\N	patch	patch_104_105_b.sql|genebuild_varchar255
 26	\N	patch	patch_105_106_a.sql|schema_version
-<<<<<<< HEAD
-28	\N	patch	patch_106_107_a.sql|schema_version
-=======
->>>>>>> release/106
