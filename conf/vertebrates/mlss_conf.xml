@@ -261,7 +261,7 @@
         <genome name="cyclopterus_lumpus" assembly="fCycLum1.pri"/>
         <genome name="nothobranchius_furzeri" assembly="Nfu_20140520"/>
         <genome name="oncorhynchus_kisutch" assembly="Okis_V2"/>
-        <genome name="cyprinus_carpio_carpio" assembly="Cypcar_WagV4.0"/>
+        <genome name="cyprinus_carpio_carpio"/>
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="EPO_EXTENDED" gerp="1">
