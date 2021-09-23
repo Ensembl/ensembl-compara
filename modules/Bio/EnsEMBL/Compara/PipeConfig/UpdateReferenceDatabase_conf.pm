@@ -350,8 +350,8 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 '1->A'  => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => '#ref_db#', 'registry_file' => undef, 'datacheck_types' => $self->o('dc_type') }},
                 'A->1'  => [ 'backup_ref_db_again' ],
-                '1->B'  => [ 'fasta_dumps_per_collection_factory' ],
-                'B->1'  => [ 'orthofinder_factory' ],
+                1       => [ 'fasta_dumps_per_collection_factory' ],
+
             },
             -rc_name    => '2Gb_job',
         },
@@ -374,27 +374,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'symlink_fasta_exe' => $self->o('symlink_fasta_exe'),
             },
-        },
-
-        {   -logic_name => 'orthofinder_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PassFastaDumpsPerCollection',
-            -parameters => {
-                'symlink_dir'          => $self->o('shared_fasta_dir'),
-                'ref_member_dumps_dir' => $self->o('ref_member_dumps_dir'),
-                'compara_db'           => $self->o('ref_db'),
-            },
-        #     -flow_into  => {
-        #         2 => [ 'run_orthofinder' ],
-        #     },
-        # },
-        #
-        # {   -logic_name => 'run_orthofinder',
-        #     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-        #     -parameters => {
-        #         'orthofinder_exe' => $self->o('orthofinder_exe'),
-        #         'cmd'             => '#orthofinder_exe# -t 16 -a 8 -f #symlink_dir#',
-        #     },
-        #     -rc_name    => '128Gb_16c_job',
         },
 
         {   -logic_name => 'backup_ref_db_again',
