@@ -19,7 +19,7 @@ per public function/class method.
 
 Typical usage example::
 
-    $ pytest test_mlss_species_set_adaptor.py
+    $ pytest test_mlss_conf_parser.py
 
 """
 
