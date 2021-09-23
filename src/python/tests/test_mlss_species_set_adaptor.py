@@ -32,6 +32,7 @@ from pytest import raises
 
 from ensembl.compara.config import get_species_set_by_name
 
+
 @pytest.mark.parametrize(
     "mlss_conf_file, species_set_name, exp_output, expectation",
     [
