@@ -52,18 +52,18 @@ def formulate_condition(analyses_pattern: str, analyses_list: str) -> str:
     if analyses_pattern:
         a_range = re.match(r'(\d+)\.\.(\d+)', analyses_pattern)
         if a_range:
-            condition = " WHERE analysis_id BETWEEN %s AND %s" % (a_range.group(1), a_range.group(2))
+            condition = f" WHERE analysis_id BETWEEN {a_range.group(1)} AND {a_range.group(2)}"
         else:
-            condition = " WHERE analysis_id IN (%s)" % analyses_pattern
+            condition = f" WHERE analysis_id IN ({analyses_pattern})"
     elif analyses_list:
         try:
-            with open(analyses_list, 'r') as f:
-                logic_names = ["'%s'" % x.strip() for x in f.readlines()]
+            with open(analyses_list) as f:
+                logic_names = [f"'{x.strip()}'" for x in f.readlines()]
                 if len(logic_names) < 1:
-                    die_with_message("File '%s' is empty" % analyses_list)
-                condition = " WHERE logic_name IN (%s)" % ','.join(logic_names)
+                    die_with_message(f"File '{analyses_list}' is empty")
+                condition = f" WHERE logic_name IN ({','.join(logic_names)})"
         except FileNotFoundError:
-            die_with_message("Cannot find analyses_list file: %s" % analyses_list)
+            die_with_message(f"Cannot find analyses_list file: {analyses_list}")
 
     return condition
 
@@ -152,14 +152,14 @@ def main(opts: argparse.Namespace) -> None:
     # print summaries
     print("\nPipeline duration summary:")
     if pipeline_finish:
-        print("\t- began at %s and ended at %s" % (pipeline_start, pipeline_finish))
+        print(f"\t- began at {pipeline_start} and ended at {pipeline_finish}")
     else:
-        print("\t- began at %s and still running" % pipeline_start)
-    print("\t- %s including runtime gaps" % pipeline_gross_time)
-    print("\t- %s excluding runtime gaps" % pipeline_net_time)
-    print("\t- %s total runtime" % pipeline_total_runtime)
-    print("\t- %.1f running jobs on average" % average_running_jobs)
-    print("\t- %d gaps detected, totalling %s" % (len(runtime_gaps), gaps_total))
+        print(f"\t- began at {pipeline_start} and still running")
+    print(f"\t- {pipeline_gross_time} including runtime gaps")
+    print(f"\t- {pipeline_net_time} excluding runtime gaps")
+    print(f"\t- {pipeline_total_runtime} total runtime")
+    print(f"\t- {average_running_jobs:.1f} running jobs on average")
+    print(f"\t- {len(runtime_gaps)} gaps detected, totalling {gaps_total}")
 
     if opts.gap_list:
         print_gaps(runtime_gaps)
@@ -172,12 +172,11 @@ def print_gaps(runtime_gaps: list) -> None:
     for gap in runtime_gaps:
         analysis_str = ''
         if gap['analysis_a'] == gap['analysis_b']:
-            analysis_str = 'during %s' % gap['analysis_a']
+            analysis_str = f"during {gap['analysis_a']}"
         else:
-            analysis_str = 'between %s and %s' % (gap['analysis_a'], gap['analysis_b'])
+            analysis_str = f"between {gap['analysis_a']} and {gap['analysis_b']}"
         print(
-            "\t- %s between role_ids %d and %d (%s)" %
-            (gap['gap'], gap['role_id_a'], gap['role_id_b'], analysis_str)
+            f"\t- {gap['gap']} between role_ids {gap['role_id_a']} and {gap['role_id_b']} ({analysis_str})"
         )
 
 if __name__ == "__main__":

@@ -60,6 +60,7 @@ sub default_options {
         'src_db_aliases' => {
             'master_db'     => 'compara_master',
             'protein_db'    => 'compara_ptrees',
+            'wheat_prot_db' => 'wheat_cultivars_ptrees',
         },
 
         # From these databases, only copy these tables

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 155	\N	schema_version	107
+=======
+153	\N	schema_version	106
+>>>>>>> release/106
 2	\N	schema_type	compara
 3	\N	patch	patch_82_83_a.sql|schema_version
 57	\N	patch	patch_83_84_a.sql|schema_version
@@ -78,4 +82,7 @@
 151	\N	patch	patch_104_105_a.sql|schema_version
 152	\N	patch	patch_104_105_b.sql|genebuild_varchar255
 154	\N	patch	patch_105_106_a.sql|schema_version
+<<<<<<< HEAD
 156	\N	patch	patch_106_107_a.sql|schema_version
+=======
+>>>>>>> release/106

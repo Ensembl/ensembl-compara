@@ -246,7 +246,7 @@
         <genome name="clupea_harengus" assembly="Ch_v2.0.2"/>
         <genome name="betta_splendens" assembly="fBetSpl5.2"/>
         <genome name="sparus_aurata" assembly="fSpaAur1.1"/>
-        <genome name="salmo_salar" assembly="ICSASG_v2"/>
+        <genome name="salmo_salar"/>
         <genome name="takifugu_rubripes" assembly="fTakRub1.2"/>
         <genome name="scleropages_formosus" assembly="fSclFor1.1"/>
         <genome name="oreochromis_niloticus" assembly="O_niloticus_UMD_NMBU"/>
@@ -257,10 +257,11 @@
         <genome name="carassius_auratus" assembly="ASM336829v1"/>
         <genome name="oncorhynchus_mykiss"/>
         <genome name="esox_lucius" assembly="Eluc_v4"/>
-        <genome name="dicentrarchus_labrax" assembly="seabass_V1.0"/>
+        <genome name="dicentrarchus_labrax"/>
         <genome name="cyclopterus_lumpus" assembly="fCycLum1.pri"/>
         <genome name="nothobranchius_furzeri" assembly="Nfu_20140520"/>
         <genome name="oncorhynchus_kisutch" assembly="Okis_V2"/>
+        <genome name="cyprinus_carpio"/>
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="EPO_EXTENDED" gerp="1">
