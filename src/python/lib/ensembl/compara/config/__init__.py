@@ -14,4 +14,4 @@
 # limitations under the License.
 """Classes and methods related to configuration file processing."""
 
-from .mlss_species_set_adaptor import *
+from .mlss_conf_parser import *
