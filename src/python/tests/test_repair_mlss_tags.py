@@ -121,7 +121,7 @@ class TestRepairMLSSTags:
                 connection.execute(sql)
             connection.execute("SET FOREIGN_KEY_CHECKS = 1;")
         # Run the repair_mlss_tags.py command
-        cmd = [Path(__file__).parents[3] / 'scripts' / 'production' / 'repair_mlss_tags.py',
+        cmd = [str(Path(__file__).parents[3] / 'scripts' / 'production' / 'repair_mlss_tags.py'),
                '--url', self.dbc.url]
         if mlss_tag:
             cmd.append(f'--{mlss_tag}')
