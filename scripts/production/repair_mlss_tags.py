@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Repairs MLSS tags that may have the wrong value, may be missing, or belong to undefined MLSSs.
+"""Repairs MLSS tags that may have the wrong value, may be missing or belong to undefined MLSSs.
 
 The Method Link Species Set (MLSS) tags supported are:
     * `max_align`
@@ -38,35 +38,49 @@ from ensembl.compara.db import DBConnection
 
 EXPECTED_VALUES_SQL = {
     'max_align': """
-        SELECT method_link_species_set_id AS mlss_id, MAX(dnafrag_end - dnafrag_start) + 2 AS value
-        FROM constrained_element
+        SELECT 
+            method_link_species_set_id AS mlss_id,
+            MAX(dnafrag_end - dnafrag_start) + 2 AS value
+        FROM
+            constrained_element
+        GROUP BY method_link_species_set_id 
+        UNION SELECT 
+            method_link_species_set_id AS mlss_id,
+            MAX(dnafrag_end - dnafrag_start) + 2 AS value
+        FROM
+            genomic_align
         GROUP BY method_link_species_set_id
-        UNION
-        SELECT method_link_species_set_id AS mlss_id, MAX(dnafrag_end - dnafrag_start) + 2 AS value
-        FROM genomic_align
-        GROUP BY method_link_species_set_id;
     """,
     'msa_mlss_id': """
-        SELECT mlss1.method_link_species_set_id AS mlss_id, mlss2.method_link_species_set_id AS value
-        FROM method_link_species_set mlss1
-        JOIN method_link_species_set mlss2 ON mlss1.species_set_id = mlss2.species_set_id
-        JOIN method_link ml1 ON mlss1.method_link_id = ml1.method_link_id
-        JOIN method_link ml2 ON mlss2.method_link_id = ml2.method_link_id
-        WHERE (ml1.class = "ConservationScore.conservation_score"
-            OR ml1.class = "ConstrainedElement.constrained_element")
-        AND (ml2.class = "GenomicAlignBlock.multiple_alignment" OR ml2.class LIKE "GenomicAlignTree.%%")
-        AND ml1.type NOT LIKE "pGERP%%"
-        AND ml2.type NOT LIKE "pEPO%%";
+        SELECT 
+            mlss1.method_link_species_set_id AS mlss_id,
+            mlss2.method_link_species_set_id AS value
+        FROM
+            method_link_species_set mlss1
+                JOIN
+            method_link_species_set mlss2 ON mlss1.species_set_id = mlss2.species_set_id
+                JOIN
+            method_link ml1 ON mlss1.method_link_id = ml1.method_link_id
+                JOIN
+            method_link ml2 ON mlss2.method_link_id = ml2.method_link_id
+        WHERE
+            (ml1.class = 'ConservationScore.conservation_score'
+                OR ml1.class = 'ConstrainedElement.constrained_element')
+            AND (ml2.class = 'GenomicAlignBlock.multiple_alignment'
+                OR ml2.class LIKE 'GenomicAlignTree.%%')
+            AND ml1.type NOT LIKE 'pGERP%%'
+            AND ml2.type NOT LIKE 'pEPO%%'
     """
 }
 
 
 def repair_mlss_tag(dbc: DBConnection, mlss_tag: str) -> None:
-    """Repairs the given MLSS tag in the database, recomputing the expected values.
+    """Repairs a given method_link_species_set tag in the database by recomputing expected values.
 
-    It uses the predefined query in `EXPECTED_VALUES_SQL` for the given MLSS tag to extract the
-    expected value for each MLSS id. It also adds any missing tags as well as removes any rows that
-    may contain an invalid MLSS id.
+    This function uses the predefined query in `EXPECTED_VALUES_SQL` for a given
+    ``method_link_species_set_tag`` to extract the expected value for each ``method_link_species_set_id``.
+    It additionally inserts possible missing tags and removes rows that may contain an invalid
+    ``method_link_species_set_id``.
 
     Args:
         dbc: Compara database connection handler.
@@ -76,7 +90,7 @@ def repair_mlss_tag(dbc: DBConnection, mlss_tag: str) -> None:
     with dbc.connect() as connection:
         # Get the MLSS tags in method_link_species_set_tag table
         mlss_tag_values = connection.execute(f"SELECT method_link_species_set_id AS mlss_id, value "
-                                             f"FROM method_link_species_set_tag WHERE tag = '{mlss_tag}';")
+                                             f"FROM method_link_species_set_tag WHERE tag = '{mlss_tag}'")
         mlss_tags = {row.mlss_id: row.value for row in mlss_tag_values.fetchall()}
         # Extract the expected tag value based on the source data
         expected_values = connection.execute(EXPECTED_VALUES_SQL[mlss_tag])
@@ -87,17 +101,17 @@ def repair_mlss_tag(dbc: DBConnection, mlss_tag: str) -> None:
                 if str(mlss_tags[row.mlss_id]) != str(row.value):
                     connection.execute(f'UPDATE method_link_species_set_tag SET value = {row.value} '
                                        f'WHERE method_link_species_set_id = {row.mlss_id} '
-                                       f'    AND tag = "{mlss_tag}";')
+                                       f'    AND tag = "{mlss_tag}"')
                     print(f"Repaired MLSS tag '{mlss_tag}' for MLSS id '{row.mlss_id}'")
                 del mlss_tags[row.mlss_id]
             else:
                 connection.execute(f'INSERT INTO method_link_species_set_tag '
-                                   f'VALUES ({row.mlss_id}, "{mlss_tag}", {row.value});')
+                                   f'VALUES ({row.mlss_id}, "{mlss_tag}", {row.value})')
                 print(f"Added missing MLSS tag '{mlss_tag}' for MLSS id '{row.mlss_id}'")
         # Delete those MLSS tags that do not match any MLSS in method_link_species_set table
         for mlss_id in mlss_tags.keys():
             connection.execute(f'DELETE FROM method_link_species_set_tag '
-                               f'WHERE method_link_species_set_id = {mlss_id};')
+                               f'WHERE method_link_species_set_id = {mlss_id}')
             print(f"Deleted unexpected MLSS tag '{mlss_tag}' for MLSS id '{mlss_id}'")
 
 

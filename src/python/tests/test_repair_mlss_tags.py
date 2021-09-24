@@ -68,10 +68,10 @@ class TestRepairMLSSTags:
                 'max_align',
                 [
                     "UPDATE method_link_species_set_tag SET value = 1 "
-                        "WHERE method_link_species_set_id = 2 AND tag = 'max_align';",
+                        "WHERE method_link_species_set_id = 2 AND tag = 'max_align'",
                     "DELETE FROM method_link_species_set_tag "
-                        "WHERE method_link_species_set_id = 6 AND tag = 'max_align';",
-                    "INSERT INTO method_link_species_set_tag VALUES (404, 'max_align', 1);"
+                        "WHERE method_link_species_set_id = 6 AND tag = 'max_align'",
+                    "INSERT INTO method_link_species_set_tag VALUES (404, 'max_align', 1)"
                 ],
                 set([
                     "Repaired MLSS tag 'max_align' for MLSS id '2'",
@@ -86,10 +86,10 @@ class TestRepairMLSSTags:
                 'msa_mlss_id',
                 [
                     "UPDATE method_link_species_set_tag SET value = 1 "
-                        "WHERE method_link_species_set_id = 5 AND tag = 'msa_mlss_id';",
+                        "WHERE method_link_species_set_id = 5 AND tag = 'msa_mlss_id'",
                     "DELETE FROM method_link_species_set_tag "
-                        "WHERE method_link_species_set_id = 50001 AND tag = 'msa_mlss_id';",
-                    "INSERT INTO method_link_species_set_tag VALUES (404, 'msa_mlss_id', 1);"
+                        "WHERE method_link_species_set_id = 50001 AND tag = 'msa_mlss_id'",
+                    "INSERT INTO method_link_species_set_tag VALUES (404, 'msa_mlss_id', 1)"
                 ],
                 set([
                     "Repaired MLSS tag 'msa_mlss_id' for MLSS id '5'",
@@ -116,10 +116,10 @@ class TestRepairMLSSTags:
         """
         # Alter the MLSS tags table so there is something to repair
         with self.dbc.connect() as connection:
-            connection.execute("SET FOREIGN_KEY_CHECKS = 0;")
+            connection.execute("SET FOREIGN_KEY_CHECKS = 0")
             for sql in alt_queries:
                 connection.execute(sql)
-            connection.execute("SET FOREIGN_KEY_CHECKS = 1;")
+            connection.execute("SET FOREIGN_KEY_CHECKS = 1")
         # Run the repair_mlss_tags.py command
         cmd = [str(Path(__file__).parents[3] / 'scripts' / 'production' / 'repair_mlss_tags.py'),
                '--url', self.dbc.url]
@@ -133,6 +133,6 @@ class TestRepairMLSSTags:
                 # Check the database has the expected information
                 with self.dbc.connect() as connection:
                     result = connection.execute(f"SELECT method_link_species_set_id AS mlss_id, value "
-                                                f"FROM method_link_species_set_tag WHERE tag = '{mlss_tag}';")
+                                                f"FROM method_link_species_set_tag WHERE tag = '{mlss_tag}'")
                     curr_tag_value = {row.mlss_id: int(row.value) for row in result.fetchall()}
                     assert curr_tag_value == exp_tag_value
