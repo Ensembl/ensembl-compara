@@ -1,0 +1,4 @@
+3	\N	schema_version	100
+2	\N	schema_type	compara
+1	\N	division	pan
+4	\N	patch	patch_99_100_a.sql|schema_version
