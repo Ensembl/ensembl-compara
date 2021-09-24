@@ -36,9 +36,10 @@ my $prev_release = $curr_release - 1;
 # ---------------------- CURRENT CORE DATABASES---------------------------------
 
 # Use the mirror servers
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-mirror-1:4240/$curr_release");
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-5:4684/$curr_release");
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-genebuild-prod-6:4532/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
+# Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-mirror-1:4240/$curr_release");
+# Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-5:4684/$curr_release");
+# Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-genebuild-prod-6:4532/$curr_release");
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 

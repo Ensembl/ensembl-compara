@@ -154,8 +154,6 @@ sub run {
                 SET gene_member_id = \@rank := (\@rank + 1) WHERE genome_db_id = $genome_db_id");
             $compara_dba->dbc->do("UPDATE seq_member JOIN (SELECT \@rank := $start_id) r
                 SET seq_member_id = \@rank := (\@rank + 1) WHERE genome_db_id = $genome_db_id");
-            $compara_dba->dbc->do("UPDATE gene_member JOIN (SELECT \@rank := $start_id) r
-                SET canonical_member_id = \@rank := (\@rank + 1) WHERE genome_db_id = $genome_db_id");
         });
     }
 }
