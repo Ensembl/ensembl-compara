@@ -103,7 +103,7 @@ class TestRepairMLSSTags:
     )
     def test_repair_mlss_tag(self, mlss_tag: str, alt_queries: List[str], exp_stdout: Set[str],
                              exp_tag_value: Dict[int, int], expectation: ContextManager) -> None:
-        """Tests `repair_mlss_tags.py` script when all MLSS tags are correct.
+        """Tests `repair_mlss_tags.py` script, including its output.
 
         Args:
             mlss_tags: MLSS tag as found in the ``method_link_species_set_tag`` table.
