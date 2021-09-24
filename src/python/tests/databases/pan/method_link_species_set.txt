@@ -1,0 +1,65 @@
+1	16	3	Sspo-Taes LastZ (on Taes)	ensembl		100	\N
+10001	101	3	Sspo-Taes synteny	ensembl		100	\N
+2	16	4	Taes-Tdic LastZ (on Taes)	ensembl		100	\N
+10002	101	4	Taes-Tdic synteny	ensembl		100	\N
+3	16	5	Taes-Tura LastZ (on Taes)	ensembl		100	\N
+4	13	6	4 eutherian mammals EPO	ensembl		100	\N
+5	11	6	4 eutherian mammals GERP Constrained Elements	ensembl		100	\N
+50001	501	6	4 eutherian mammals GERP Conservation Scores	ensembl		100	\N
+6	14	7	5 mammals_with_feathers EPO-Extended	ensembl		100	\N
+7	11	7	5 mammals_with_feathers GERP Constrained Elements	ensembl		100	\N
+50002	501	7	5 mammals_with_feathers GERP Conservation Scores	ensembl		100	\N
+8	10	8	6 amniota vertebrates Mercator-Pecan	ensembl		100	\N
+9	11	8	6 amniota vertebrates GERP Constrained Elements	ensembl		100	\N
+50003	501	8	6 amniota vertebrates GERP Conservation Scores	ensembl		100	\N
+10	16	9	Taes LastZ (self-alignment)	ensembl		100	\N
+11	25	9	Taes polyploidy-aware self-alignment	ensembl		100	\N
+30001	301	2	chordata families	ensembl		100	\N
+40001	401	2	chordata protein-trees	ensembl		100	\N
+20001	201	10	Cfam-Mmus orthologues	ensembl		100	\N
+20002	201	11	Cfam-Ptro orthologues	ensembl		100	\N
+20003	201	12	Cfam-Ggal orthologues	ensembl		100	\N
+20004	201	13	Cfam-Locu orthologues	ensembl		100	\N
+20005	201	14	Cfam-Cint orthologues	ensembl		100	\N
+20006	201	15	Cfam-Hsap orthologues	ensembl		100	\N
+20007	201	16	Acar-Cfam orthologues	ensembl		100	\N
+20008	201	17	Cfam-Drer orthologues	ensembl		100	\N
+20009	201	18	Mmus-Ptro orthologues	ensembl		100	\N
+20010	201	19	Ggal-Mmus orthologues	ensembl		100	\N
+20011	201	20	Locu-Mmus orthologues	ensembl		100	\N
+20012	201	21	Cint-Mmus orthologues	ensembl		100	\N
+20013	201	22	Hsap-Mmus orthologues	ensembl		100	\N
+20014	201	23	Acar-Mmus orthologues	ensembl		100	\N
+20015	201	24	Drer-Mmus orthologues	ensembl		100	\N
+20016	201	25	Ggal-Ptro orthologues	ensembl		100	\N
+20017	201	26	Locu-Ptro orthologues	ensembl		100	\N
+20018	201	27	Cint-Ptro orthologues	ensembl		100	\N
+20019	201	28	Hsap-Ptro orthologues	ensembl		100	\N
+20020	201	29	Acar-Ptro orthologues	ensembl		100	\N
+20021	201	30	Drer-Ptro orthologues	ensembl		100	\N
+20022	201	31	Ggal-Locu orthologues	ensembl		100	\N
+20023	201	32	Cint-Ggal orthologues	ensembl		100	\N
+20024	201	33	Ggal-Hsap orthologues	ensembl		100	\N
+20025	201	34	Acar-Ggal orthologues	ensembl		100	\N
+20026	201	35	Drer-Ggal orthologues	ensembl		100	\N
+20027	201	36	Cint-Locu orthologues	ensembl		100	\N
+20028	201	37	Hsap-Locu orthologues	ensembl		100	\N
+20029	201	38	Acar-Locu orthologues	ensembl		100	\N
+20030	201	39	Drer-Locu orthologues	ensembl		100	\N
+20031	201	40	Cint-Hsap orthologues	ensembl		100	\N
+20032	201	41	Acar-Cint orthologues	ensembl		100	\N
+20033	201	42	Cint-Drer orthologues	ensembl		100	\N
+20034	201	43	Acar-Hsap orthologues	ensembl		100	\N
+20035	201	44	Drer-Hsap orthologues	ensembl		100	\N
+20036	201	45	Acar-Drer orthologues	ensembl		100	\N
+20037	202	46	Cfam paralogues	ensembl		100	\N
+20038	202	47	Mmus paralogues	ensembl		100	\N
+20039	202	48	Ptro paralogues	ensembl		100	\N
+20040	202	49	Ggal paralogues	ensembl		100	\N
+20041	202	50	Locu paralogues	ensembl		100	\N
+20042	202	51	Cint paralogues	ensembl		100	\N
+20043	202	52	Hsap paralogues	ensembl		100	\N
+20044	202	53	Acar paralogues	ensembl		100	\N
+20045	202	54	Drer paralogues	ensembl		100	\N
+40002	402	2	chordata ncRNA-trees	ensembl		100	\N
+60001	600	2	chordata species-tree	ensembl		100	\N

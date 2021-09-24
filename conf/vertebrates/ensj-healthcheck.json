@@ -1,4 +1,0 @@
-{
-    "host1": "mysql-ens-sta-1",
-    "secondary.host": "mysql-ens-mirror-1"
-}

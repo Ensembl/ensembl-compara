@@ -1,0 +1,21 @@
+1	\N	gallus_gallus	GRCg6a	2018-04-Ensembl	1	1	\N	\N	Chicken	\N	100	\N
+2	\N	danio_rerio	GRCz11	2017-08-Ensembl	1	1	\N	\N	Zebrafish	\N	100	\N
+3	\N	anolis_carolinensis	AnoCar2.0	2010-09-Ensembl	1	1	\N	\N	Anole lizard	\N	100	\N
+4	\N	mus_musculus	GRCm38	2012-01-Ensembl	1	1	\N	reference (CL57BL6) strain	Mouse	\N	100	\N
+5	\N	pan_troglodytes	Pan_tro_3.0	2017-08-Ensembl	1	1	\N	\N	Chimpanzee	\N	100	\N
+6	\N	canis_familiaris	CanFam3.1	2011-11-Ensembl	1	1	\N	reference breed	Dog	\N	100	\N
+7	\N	saccharum_spontaneum	Sspon.HiC_chr_asm	2019-08-UIL	1	1	\N	strain AP85-441	Saccharum spontaneum	\N	100	\N
+8	\N	saccharum_spontaneum	Sspon.HiC_chr_asm	2019-08-UIL	1	1	A	strain AP85-441	Saccharum spontaneum (component A)	\N	100	\N
+9	\N	saccharum_spontaneum	Sspon.HiC_chr_asm	2019-08-UIL	1	1	C	strain AP85-441	Saccharum spontaneum (component C)	\N	100	\N
+10	\N	triticum_dicoccoides	WEWSeq_v.1.0	2017-05-WEWSeq	1	1	\N	strain Zavitan (Atlit2015)	Triticum dicoccoides	\N	100	\N
+11	\N	triticum_dicoccoides	WEWSeq_v.1.0	2017-05-WEWSeq	1	1	A	strain Zavitan (Atlit2015)	Triticum dicoccoides (component A)	\N	100	\N
+12	\N	triticum_dicoccoides	WEWSeq_v.1.0	2017-05-WEWSeq	1	1	B	strain Zavitan (Atlit2015)	Triticum dicoccoides (component B)	\N	100	\N
+13	\N	triticum_aestivum	IWGSC	2018-04-IWGSC	1	1	\N	strain Chinese spring	Triticum aestivum	\N	100	\N
+14	\N	triticum_aestivum	IWGSC	2018-04-IWGSC	1	1	A	strain Chinese spring	Triticum aestivum (component A)	\N	100	\N
+15	\N	triticum_aestivum	IWGSC	2018-04-IWGSC	1	1	B	strain Chinese spring	Triticum aestivum (component B)	\N	100	\N
+16	\N	triticum_aestivum	IWGSC	2018-04-IWGSC	1	1	D	strain Chinese spring	Triticum aestivum (component D)	\N	100	\N
+17	\N	homo_sapiens	GRCh38	2014-01-Ensembl	1	1	\N	\N	Human	\N	100	\N
+18	\N	ciona_intestinalis	KH	2011-08-Ensembl	1	1	\N	\N	C.intestinalis	\N	100	\N
+19	\N	lepisosteus_oculatus	LepOcu1	2012-01-Ensembl	1	1	\N	\N	Spotted gar	\N	100	\N
+20	\N	triticum_urartu	ASM34745v1	2014-05-BGI	0	1	\N	strain G1812 (PI428198)	Triticum urartu	\N	100	\N
+63	\N	ancestral_sequences	\N	\N	0	0	\N	\N	Ancestral sequences	\N	100	\N
