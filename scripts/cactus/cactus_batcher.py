@@ -154,7 +154,7 @@ def make_executable(path):
     os.chmod(path, st.st_mode | stat.S_IEXEC)
 
 
-def create_bash_script(filename, shebang="#!/bin/bash"):
+def create_bash_script(filename, chmod_x=True, shebang="#!/bin/bash"):
     """Create executable bash script with shebang on it
 
     Args:
@@ -165,7 +165,8 @@ def create_bash_script(filename, shebang="#!/bin/bash"):
     append(filename=filename, mode="w", line=shebang)
 
     # chmod +x on it
-    make_executable(path=filename)
+    if chmod_x:
+        make_executable(path=filename)
 
 
 def create_argparser():
@@ -506,14 +507,16 @@ def get_slurm_submission(
 
     # real wrapped job
     job_filename = script_filename.replace(".sh", "-job.sh")
-    create_bash_script(filename=job_filename)
-    jobs = ["bash ~/.bashrc", command]
+    jobs = ["source ~/.google_env_loader.sh", command]
 
+    if os.environ.get("CACTUS_USAGE_LOGGER") is not None:
+        jobs.insert(1, "bash ~/git/thiago-ebi-tools/bin/usage.sh {} -o {}/{}.usage &".format("" if gpus is None else "-g", log_dir, job_name))
+    
     # write jobs to the file
-    append(filename=job_filename, line="\n".join(jobs))
+    append(filename=job_filename, line="\n\n".join(jobs))
 
     # wrap the commands for SLURM
-    sbatch.append('--wrap "bash {}")'.format(job_filename))
+    sbatch.append('--wrap "source {}")'.format(job_filename))
 
     # store it in the individual bash script
     append(filename=script_filename, line=" ".join(sbatch))
