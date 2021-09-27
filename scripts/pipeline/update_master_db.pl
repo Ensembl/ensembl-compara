@@ -22,19 +22,10 @@ use warnings;
 
 update_msater_db.pl
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =head1 DESCRIPTION
 
-This script will check that all the species found in the Registry are
-in the compara database, and with up-to-date meta-information (such as
-the genebuild, etc).
+This script will check that all the species found in the compara database are in the Registry
+and with up-to-date meta-information (such as the genebuild, etc).
 You probably want to run this script first with the --dry-run option to
 see the differences, and then remove --dry-run to actually perform the
 update.
@@ -46,7 +37,6 @@ update.
   perl update_master_db.pl
     --reg_conf registry_configuration_file
     --compara compara_db_name_or_alias
-    [--division ensembl_genomes_division]
     [--[no]check_species_with_no_core] [--[no]check_species_missing_from_compara]
     [--dry-run]
 
@@ -75,12 +65,6 @@ The Bio::EnsEMBL::Registry configuration file.
 The compara database to update. You can use either the original name or any of the
 aliases given in the registry_configuration_file
 
-=item B<[--division ensembl_genomes_division]>
-
-Restrict the search to a given division of Ensembl Genomes. You may consider
-setting --check_species_with_no_core to 1 if your master database contains more
-species than that division.
-
 =back
 
 =head2 REPORTING
@@ -89,8 +73,8 @@ species than that division.
 
 =item B<[--check_species_missing_from_compara]>
 
-Boolean (default: true).
-Reports all the species that have a core database but not a GenomeDB entry
+Boolean (default: false).
+Reports all the species that have a core database but not a GenomeDB entry.
 
 =item B<[--check_species_with_no_core]>
 
@@ -116,15 +100,13 @@ my $reg_conf;
 my $compara;
 my $force = 0;
 my $dry_run;
-my $check_species_missing_from_compara = 1;
+my $check_species_missing_from_compara = 0;
 my $check_species_with_no_core = 1;
-my $division = undef;
 
 GetOptions(
     "help" => \$help,
     "reg_conf=s" => \$reg_conf,
     "compara=s" => \$compara,
-    "division=s" => \$division,
     "dry_run|dry-run!" => \$dry_run,
     "check_species_missing_from_compara!" => \$check_species_missing_from_compara,
     "check_species_with_no_core!" => \$check_species_with_no_core,
@@ -138,11 +120,6 @@ if ($help or !$reg_conf or !$compara) {
     pod2usage({-exitvalue => 0, -verbose => 2});
 }
 
-if ($division) {
-    $division = "Ensembl$division" unless $division =~ /^ensembl/i;
-    $division = lc $division;
-}
-
 Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
 
 my $compara_db = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
@@ -150,7 +127,7 @@ my $genome_db_adaptor = $compara_db->get_GenomeDBAdaptor();
 my %found_genome_db_ids = ();
 my $has_errors = 0;
 
-my %genome_db_names = map {$_->name => 1} @{$genome_db_adaptor->fetch_all};
+my %genome_db_names = map {$_->name => 1} @{$genome_db_adaptor->fetch_all_current()};
 
 foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')}) {
 
@@ -172,7 +149,7 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
     # Get the production name and assembly to fetch our GenomeDBs
     my $mc = $db_adaptor->get_MetaContainer();
     my $that_species = $mc->get_production_name();
-    if (!$genome_db_names{$that_species} and $division and $mc->get_division and (lc $mc->get_division ne $division)) {
+    if (!$genome_db_names{$that_species}) {
         $db_adaptor->dbc->disconnect_if_idle();
         next;
     }
@@ -224,7 +201,7 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
 }
 
 if ($check_species_with_no_core) {
-    foreach my $master_genome_db (@{$genome_db_adaptor->fetch_all}) {
+    foreach my $master_genome_db (@{$genome_db_adaptor->fetch_all_current()}) {
         # the ancestral database is only ready towards the end of the release
         next if $master_genome_db->name eq 'ancestral_sequences';
         if ($master_genome_db->is_current and not $found_genome_db_ids{$master_genome_db->dbID}) {

@@ -188,7 +188,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -parameters => {
                 'update_metadata_script' => $self->o('update_metadata_script'),
                 'reg_conf'               => $self->o('reg_conf'),
-                'cmd' => 'perl #update_metadata_script# --reg_conf #reg_conf# --compara #master_db# --division #division# --nocheck_species_missing_from_compara'
+                'cmd'                    => 'perl #update_metadata_script# --reg_conf #reg_conf# --compara #master_db#',
             },
             -flow_into  => [ 'update_collection' ],
         },
