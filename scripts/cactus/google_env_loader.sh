@@ -26,7 +26,9 @@ check_gpu(){
  
     sleep 10
   done
- 
+
+  # HACKY to make nvidia-smi faster -> this must be included when the image is build
+  sudo nvidia-persistenced --persistence-mode
 }
  
 # ---- the following is for Cactus ----
