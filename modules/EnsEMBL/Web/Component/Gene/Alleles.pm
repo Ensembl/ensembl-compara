@@ -53,8 +53,8 @@ sub content {
     foreach my $allele(sort { $a->seq_region_name cmp $b->seq_region_name } @$alleles) {
       my $allele_id       = $allele->stable_id;
       my $seq_region_name = $allele->seq_region_name;
-      my $strand          =  $allele->seq_region_strand < 0 ? 'Reverse' : 'Forward';
-      my $display_label   = $allele->display_xref->display_id;
+      my $strand          = $allele->seq_region_strand < 0 ? 'Reverse' : 'Forward';
+      my $display_label   = $allele->display_xref ? $allele->display_xref->display_id : '';
       my $description = $allele->description || "";
 
       $c++;
