@@ -88,6 +88,10 @@ sub default_options {
           '6179'   => 0.65, # Flukes
       },
 
+      'ortho_tree_capacity'     => 50,
+      'other_paralogs_capacity' => 50,
+
+
       ######## THESE ARE PASSED INTO LOAD_REGISTRY_FROM_DB SO PASS IN DB_VERSION
       ######## ALSO RAISE THE POINT ABOUT LOAD_FROM_MULTIPLE_DBs
             
@@ -121,8 +125,25 @@ sub tweak_analyses {
   my $self = shift;
   my $analyses_by_name = shift;
   
-  $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '1Gb_job';
+  $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '16Gb_job';
+  $analyses_by_name->{'expand_clusters_with_projections'}->{'-rc_name'} = '4Gb_job';
+  $analyses_by_name->{'stable_id_mapping'}->{'-rc_name'} = '4Gb_job';
   $analyses_by_name->{'hcluster_run'}->{'-rc_name'} = '64Gb_job';
+  $analyses_by_name->{'ortho_tree'}->{'-rc_name'} = '2Gb_job';
+  $analyses_by_name->{'ortho_tree_himem'}->{'-rc_name'} = '4Gb_job';
+  $analyses_by_name->{'tree_building_entry_point'}->{'-rc_name'} = '1Gb_job';
+  $analyses_by_name->{'treebest_decision'}->{'-rc_name'} = '1Gb_job';
+  $analyses_by_name->{'hc_post_tree'}->{'-rc_name'} = '1Gb_job';
+  $analyses_by_name->{'hc_tree_homologies'}->{'-rc_name'} = '1Gb_job';
+  $analyses_by_name->{'ortho_tree_decision'}->{'-rc_name'} = '1Gb_job';
+  $analyses_by_name->{'break_batch_unannotated'}->{'-rc_name'} = '1Gb_job';
+  $analyses_by_name->{'treefam_xref_idmap'}->{'-rc_name'} = '4Gb_job';
+  $analyses_by_name->{'exon_boundaries_prep_himem'}->{'-rc_name'} = '2Gb_job';
+  $analyses_by_name->{'panther_paralogs'}->{'-rc_name'} = '1Gb_job';
+  $analyses_by_name->{'panther_paralogs_himem'}->{'-rc_name'} = '4Gb_job';
+  $analyses_by_name->{'dump_unannotated_members'}->{'-rc_name'} = '16Gb_job';
+  $analyses_by_name->{'ktreedist'}->{'-rc_name'} = '4Gb_job';
+  $analyses_by_name->{'ktreedist_himem'}->{'-rc_name'} = '8Gb_job';
 }
 
 

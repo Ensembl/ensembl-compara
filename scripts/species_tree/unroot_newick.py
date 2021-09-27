@@ -30,7 +30,7 @@ parser.add_argument('-v', '--verbose', action='store_true')
 opts = parser.parse_args(sys.argv[1:])
 
 if not os.path.isfile(opts.tree):
-    sys.stderr.write("File {0} not found".format(opts.tree))
+    sys.stderr.write(f"File {opts.tree} not found")
     sys.exit(1)
 
 t = Tree(opts.tree)

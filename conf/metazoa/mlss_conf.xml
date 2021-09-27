@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <compara_db division="metazoa">
 
+  <!-- Collections are species-sets that are needed to define several mlsss -->
+  <collections>
+
+    <!-- All metazoa -->
+    <collection name="default">
+      <taxonomic_group taxon_name="Eukaryota"/>
+    </collection>
+
+  </collections>
+
   <pairwise_alignments>
 
     <!-- bees and stuff (A.mel, A.cep, B.imp, B.ter, N.vit) -->
@@ -54,7 +64,7 @@
   </pairwise_alignments>
 
   <gene_trees>
-    <protein_trees collection="metazoa"/>
+    <protein_trees collection="default"/>
   </gene_trees>
 
 </compara_db>

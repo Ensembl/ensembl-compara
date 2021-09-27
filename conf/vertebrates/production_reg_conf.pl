@@ -85,11 +85,11 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'         => [ 'mysql-ens-compara-prod-3',  'ivana_vertebrates_load_members_105' ],
-    'compara_ptrees'          => [ 'mysql-ens-compara-prod-1',  'ivana_default_vertebrates_protein_trees_105' ],
+    'compara_ptrees'          => [ 'mysql-ens-compara-prod-1',  'cristig_default_vertebrates_protein_trees_105' ],
     'compara_ptrees_prev'     => [ 'mysql-ens-compara-prod-1',  'carlac_default_vertebrates_protein_trees_104' ],
-    'compara_nctrees'         => [ 'mysql-ens-compara-prod-3',  'ivana_default_vertebrates_ncrna_trees_105' ],
-    'murinae_ptrees'          => [ 'mysql-ens-compara-prod-8',  'ivana_murinae_vertebrates_protein_trees_105' ],
-    'murinae_nctrees'         => [ 'mysql-ens-compara-prod-4',  'ivana_murinae_vertebrates_ncrna_trees_105' ],
+    'compara_nctrees'         => [ 'mysql-ens-compara-prod-10',  'cristig_default_vertebrates_ncrna_trees_105' ],
+    'murinae_ptrees'          => [ 'mysql-ens-compara-prod-7',  'ivana_murinae_w_bugfix_vertebrates_protein_trees_105' ],
+    'murinae_nctrees'         => [ 'mysql-ens-compara-prod-4',  'cristig_murinae_vertebrates_ncrna_trees_105' ],
     'murinae_ptrees_prev'     => [ 'mysql-ens-compara-prod-2',  'carlac_vertebrates_murinae_protein_reindexed_trees_104' ],
     'murinae_nctrees_prev'    => [ 'mysql-ens-compara-prod-2',  'carlac_vertebrates_murinae_ncrna_reindexed_trees_104' ],
     'pig_breeds_ptrees'       => [ 'mysql-ens-compara-prod-8',  'ivana_vertebrates_pig_breeds_protein_reindexed_trees_105' ],

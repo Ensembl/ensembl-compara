@@ -215,7 +215,16 @@ elsif ( $registry_file ) {
     print "Using following aliases:\n\tancestral : $anc_alias\n\talignment : $aln_alias\n" if ( $debug );
 
     $compara_dba = $reg->get_DBAdaptor($aln_alias, "compara");
-    $reg->add_alias($anc_alias, 'ancestral_sequences') if ( ! $reg->get_DBAdaptor('ancestral_sequences', 'core') && $reg->get_DBAdaptor($anc_alias, 'core') );
+    if (!$reg->get_DBAdaptor($ancestral_db, 'core')) {
+        throw("Cannot find '$ancestral_db' in the Registry");
+    }
+    if ($reg->alias_exists('ancestral_sequences')) {
+        warn "Overriding the 'ancestral_sequences' Registry entry";
+        $reg->remove_DBAdaptor('ancestral_sequences', 'core');
+    }
+    $reg->add_alias($anc_alias, 'ancestral_sequences');
+    warn "Will connect to the ancestral database '$ancestral_db'\n";
+
 } 
 else {
     print "Loading live (ensembldb.ensembl.org) DB into registry\n" if ( $debug );

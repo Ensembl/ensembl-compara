@@ -98,8 +98,8 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'  => [ 'mysql-ens-compara-prod-3', 'thiagogenez_pan_load_members_105' ],
-    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', 'thiagogenez_pan_pan_protein_trees_105' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-3', 'thiagogenez_pan_load_members_105' ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-7', 'thiagogenez_pan_pan_protein_trees_105' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
