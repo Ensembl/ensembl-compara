@@ -25,9 +25,10 @@ from importlib.abc import Loader
 from importlib.machinery import ModuleSpec
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
+from subprocess import CalledProcessError
 import sys
 from types import ModuleType
-from typing import ContextManager, Iterable, Mapping, Union
+from typing import ContextManager, Dict, Iterable, Mapping, Union
 
 import pytest
 from pytest import raises
@@ -119,34 +120,61 @@ class TestHalGeneLiftover:
             assert obs_output == exp_output
 
     @pytest.mark.parametrize(
-        "regions, chr_sizes, bed_file, flank_length, expectation",
+        "hal_file, genome_name, exp_output, expectation",
         [
-            ([SimpleRegion('chr1', 15, 18, '+')], {'chr1': 33}, 'a2b.one2one.plus.flank0.src.bed', 0,
-             does_not_raise()),
-            ([SimpleRegion('chr1', 15, 18, '+')], {'chr1': 33}, 'a2b.one2one.plus.flank1.src.bed', 1,
-             does_not_raise()),
-            ([SimpleRegion('chr1', 0, 2, '+')], {'chr1': 33}, 'a2b.chr_start.flank1.src.bed', 1,
-             does_not_raise()),
-            ([SimpleRegion('chr1', 31, 33, '+')], {'chr1': 33}, 'a2b.chr_end.flank1.src.bed', 1,
-             does_not_raise()),
-            ([SimpleRegion('chr1', 15, 18, '+')], {'chr1': 33}, 'a2b.negative_flank.src.bed', -1,
+            ('aln.hal', 'genomeA', {'chr1': 33}, does_not_raise()),
+            ('aln.hal', 'genomeB', {'chr1': 40}, does_not_raise()),
+            ('nonexistent.hal', 'genomeB', None, raises(CalledProcessError)),
+            ('aln.hal', 'nonexistent', None, raises(CalledProcessError))
+        ]
+    )
+    def test_load_chr_sizes(self, hal_file: Union[Path, str], genome_name: str, exp_output: Dict[str, int],
+                            expectation: ContextManager) -> None:
+        """Tests :func:`hal_gene_liftover.load_chr_sizes()` function.
+
+        Args:
+            hal_file: Input HAL file.
+            genome_name: Name of the genome to get the chromosome sizes of.
+            exp_output: Expected return value of the function.
+            expectation: Context manager for the expected exception. The test will only pass if that
+                exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
+
+        """
+        with expectation:
+            hal_file_path = self.ref_file_dir / hal_file
+            obs_output = hal_gene_liftover.load_chr_sizes(hal_file_path, genome_name)
+            assert obs_output == exp_output
+
+    @pytest.mark.parametrize(
+        "regions, genome_name, chr_sizes, bed_file, flank_length, expectation",
+        [
+            ([SimpleRegion('chr1', 15, 18, '+')], 'genomeA', {'chr1': 33},
+             'a2b.one2one.plus.flank0.src.bed', 0, does_not_raise()),
+            ([SimpleRegion('chr1', 15, 18, '+')], 'genomeA', {'chr1': 33},
+             'a2b.one2one.plus.flank1.src.bed', 1, does_not_raise()),
+            ([SimpleRegion('chr1', 0, 2, '+')], 'genomeA', {'chr1': 33},
+             'a2b.chr_start.flank1.src.bed', 1, does_not_raise()),
+            ([SimpleRegion('chr1', 31, 33, '+')], 'genomeA', {'chr1': 33},
+             'a2b.chr_end.flank1.src.bed', 1, does_not_raise()),
+            ([SimpleRegion('chr1', 15, 18, '+')], 'genomeA', {'chr1': 33}, 'a2b.negative_flank.src.bed', -1,
              raises(ValueError, match=r"'flank_length' must be greater than or equal to 0: -1")),
-            ([SimpleRegion('chrN', 0, 3, '+')], {'chr1': 33}, 'a2b.unknown_chr.src.bed', 0,
-             raises(ValueError, match=r"chromosome ID not found in input file: 'chrN'")),
-            ([SimpleRegion('chr1', 31, 34, '+')], {'chr1': 33}, 'a2b.chr_end.oor.src.bed', 0,
+            ([SimpleRegion('chrN', 0, 3, '+')], 'genomeA', {'chr1': 33}, 'a2b.unknown_chr.src.bed', 0,
+             raises(ValueError, match=r"chromosome ID 'chrN' not found in HAL genome 'genomeA'")),
+            ([SimpleRegion('chr1', 31, 34, '+')], 'genomeA', {'chr1': 33}, 'a2b.chr_end.oor.src.bed', 0,
              raises(ValueError, match=r"region end \(34\) must not be greater than the"
                                       r" corresponding chromosome length \(chr1: 33\)")),
-            ([SimpleRegion('chr1', -4, 18, '+')], {'chr1': 33}, 'a2b.chr_start.oor.src.bed', 0,
+            ([SimpleRegion('chr1', -4, 18, '+')], 'genomeA', {'chr1': 33}, 'a2b.chr_start.oor.src.bed', 0,
              raises(ValueError, match=r"region start must be greater than or equal to 0: -4"))
         ]
     )
-    def test_make_src_region_file(self, regions: Iterable[SimpleRegion],
+    def test_make_src_region_file(self, regions: Iterable[SimpleRegion], genome_name: str,
                                   chr_sizes: Mapping[str, int], bed_file: str, flank_length: int,
                                   expectation: ContextManager, tmp_dir: Path) -> None:
         """Tests :func:`hal_gene_liftover.make_src_region_file()` function.
 
         Args:
             regions: Regions to write to output file.
+            genome_name: Genome for which the regions are specified.
             chr_sizes: Mapping of chromosome names to their lengths.
             bed_file: Path of BED file to output.
             flank_length: Length of upstream/downstream flanking regions to request.
@@ -157,6 +185,53 @@ class TestHalGeneLiftover:
         """
         with expectation:
             out_file_path = tmp_dir / bed_file
-            hal_gene_liftover.make_src_region_file(regions, chr_sizes, out_file_path, flank_length)
+            hal_gene_liftover.make_src_region_file(regions, genome_name, chr_sizes, out_file_path,
+                                                   flank_length)
             ref_file_path = self.ref_file_dir / bed_file
             assert filecmp.cmp(out_file_path, ref_file_path)
+
+    @pytest.mark.parametrize(
+        "hal_file, src_genome, bed_file, dest_genome, psl_file",
+        [
+            ('aln.hal', 'genomeA', 'a2b.one2one.plus.flank0.src.bed', 'genomeB',
+             'a2b.one2one.plus.flank0.psl'),
+            ('aln.hal', 'genomeA', 'a2b.one2one.plus.flank1.src.bed', 'genomeB',
+             'a2b.one2one.plus.flank1.psl'),
+            ('aln.hal', 'genomeA', 'a2b.chr_start.flank1.src.bed', 'genomeB',
+             'a2b.chr_start.flank1.psl'),
+            ('aln.hal', 'genomeA', 'a2b.chr_end.flank1.src.bed', 'genomeB',
+             'a2b.chr_end.flank1.psl'),
+            ('aln.hal', 'genomeA', 'a2b.one2many.flank1.src.bed', 'genomeB',
+             'a2b.one2many.flank1.psl'),
+            ('aln.hal', 'genomeA', 'a2b.inversion.flank1.src.bed', 'genomeB',
+             'a2b.inversion.flank1.psl')
+        ]
+    )
+    def test_run_hal_liftover(
+        self,
+        hal_file: Union[Path, str],
+        src_genome: str,
+        bed_file: Union[Path, str],
+        dest_genome: str,
+        psl_file: Union[Path, str],
+        tmp_dir: Path,
+    ) -> None:
+        """Tests :func:`hal_gene_liftover.run_hal_liftover()` function.
+
+        Args:
+            hal_file: Input HAL file.
+            src_genome: Source genome name.
+            bed_file: Input BED file of source features to liftover. To obtain
+                      strand-aware results, this must include a 'strand' column.
+            dest_genome: Destination genome name.
+            psl_file: Output PSL file.
+            tmp_dir: Unit test temp directory (fixture).
+
+        """
+        hal_file_path = self.ref_file_dir / hal_file
+        bed_file_path = self.ref_file_dir / bed_file
+        out_file_path = tmp_dir / psl_file
+        hal_gene_liftover.run_hal_liftover(hal_file_path, src_genome, bed_file_path,
+                                           dest_genome, out_file_path)
+        ref_file_path = self.ref_file_dir / psl_file
+        assert filecmp.cmp(out_file_path, ref_file_path)
