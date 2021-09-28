@@ -15,21 +15,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::LoadMembers_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -division $COMPARA_DIV
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 DESCRIPTION
 
-The pipeline will create a database with all the (gene|seq)_members of a
-collection of species (by default, '<division_name>' collection).
+The pipeline will create a database with all the (gene|seq)_members of all current species in the
+given "compara_master" database.
 
 =cut
 
@@ -49,8 +46,6 @@ sub default_options {
 
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-
-        'collection' => $self->o('division'),
 
         # names of species we don't want to reuse this time
         #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
@@ -122,8 +117,7 @@ sub pipeline_checks_pre_init {
         and ref $self->o('curr_file_sources_locs') and not scalar(@{$self->o('curr_file_sources_locs')});
 
     # The master db must be defined to allow mapping stable_ids and checking species for reuse
-    die "The master dabase must be defined with a collection" if $self->o('master_db') and not $self->o('collection');
-    die "collection can not be defined in the absence of a master dabase" if $self->o('collection') and not $self->o('master_db');
+    die "No master database provided" if not $self->o('master_db');
     die "Species reuse is only possible with a master database" if $self->o('reuse_member_db') and not $self->o('master_db');
     die "Species reuse is only possible with some previous core databases" if $self->o('reuse_member_db') and ref $self->o('prev_core_sources_locs') and not scalar(@{$self->o('prev_core_sources_locs')});
 }
@@ -209,7 +203,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'compara_db'        => '#master_db#',   # that's where genome_db_ids come from
-                'collection_name'   => $self->o('collection'),    # takes precedence over "all_current" below
                 'all_current'       => 1,
                 'extra_parameters'  => [ 'locator' ],
             },
