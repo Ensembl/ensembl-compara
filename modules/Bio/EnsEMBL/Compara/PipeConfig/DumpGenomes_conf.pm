@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::DumpGenomes_conf
@@ -66,9 +64,9 @@ sub default_options {
         # Which species-set to dump
         'species_set_id'    => undef,
         'species_set_name'  => undef,
-        'collection_name'   => $self->o('division'),
+        'collection_name'   => undef,
         'mlss_id'           => undef,
-        'all_current'       => undef,
+        'all_current'       => 1,
 
         # the master database to get the genome_dbs
         'master_db'         => 'compara_master',
