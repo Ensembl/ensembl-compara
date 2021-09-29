@@ -80,7 +80,8 @@ my $compara_dbs = {
     #'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', '' ],
 
     # LastZ dbs
-    #'lastz_batch_1' => [ 'mysql-ens-compara-prod-7', '' ],
+    'lastz_batch_1' => [ 'mysql-ens-compara-prod-2', 'ivana_metazoa_lastz_batch1_106' ],
+    'lastz_batch_2' => [ 'mysql-ens-compara-prod-6', 'ivana_metazoa_lastz_batch2_106' ],
 
     # synteny
     #'compara_syntenies' => [ 'mysql-ens-compara-prod-6', '' ],
