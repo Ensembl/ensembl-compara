@@ -76,7 +76,7 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'  => [ 'mysql-ens-compara-prod-6', ''],
+    'compara_members'  => [ 'mysql-ens-compara-prod-5', 'ivana_metazoa_load_members_106_backup'],
     #'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', '' ],
 
     # LastZ dbs
