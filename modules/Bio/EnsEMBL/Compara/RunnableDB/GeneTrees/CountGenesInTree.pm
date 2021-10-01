@@ -17,26 +17,9 @@ limitations under the License.
 
 =cut
 
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <https://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <https://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CountNumGenesInTrees
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
 
 =cut
 
