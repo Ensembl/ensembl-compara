@@ -137,8 +137,10 @@ sub write_output {
     my $species_tree_node       = $self->param('species_tree_node');
 
     $species_tree_node->store_tag('nb_genes',               $self->param('total_num_genes'));
-    $species_tree_node->store_tag('nb_genes_in_unfiltered_cluster', $self->param('total_num_genes')-$self->param('total_orphans_num'));
     $species_tree_node->store_tag('nb_orphan_genes',        $self->param('total_orphans_num'));
+
+    my $nb_genes_in_unfiltered_cluster = $self->param('total_num_genes') - $self->param('total_orphans_num');
+    $species_tree_node->store_tag('nb_genes_in_unfiltered_cluster', $nb_genes_in_unfiltered_cluster);
 
     return unless $self->param('reuse_this');
 
