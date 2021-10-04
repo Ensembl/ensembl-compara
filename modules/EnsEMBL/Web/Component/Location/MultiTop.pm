@@ -90,7 +90,7 @@ sub content {
     };
     
     $image_config->get_node('ruler')->set('caption', $_->{'short_name'} =~ s/^[^\s]+\s+//r);
-    $image_config->get_node('ruler')->set('caption_img',"f:24\@-6:".$hub->species_defs->get_config($_->{'species'}, 'SPECIES_IMAGE');
+    $image_config->get_node('ruler')->set('caption_img',"f:24\@-6:".$hub->species_defs->get_config($_->{'species'}, 'SPECIES_IMAGE'));
     $image_config->highlight($highlight_gene) if $highlight_gene;
     
     if ($connect_genes) {
