@@ -117,7 +117,7 @@ sub content {
 
     $image_config->get_node('scalebar')->set('caption', $_->{'short_name'} =~ s/^[^\s]+\s+//r);
     $image_config->get_node('scalebar')->set('name', $_->{'short_name'});
-    $image_config->get_node('scalebar')->set('caption_img',"f:24\@-6:".$_->{'species'});
+    $image_config->get_node('scalebar')->set('caption_img',"f:24\@-6:".$hub->species_defs->get_config($_->{'species'}, 'SPECIES_IMAGE');
     $_->{'slice'}->adaptor->db->set_adaptor('compara', $compara_db) if $compara_db;
     
     if ($i == 1) {
@@ -155,7 +155,7 @@ sub content {
         if ($join_alignments) {
           $primary_image_config->get_node('scalebar')->set('caption', $short_name =~ s/^[^\s]+\s+//r);
           $primary_image_config->get_node('scalebar')->set('name', $short_name);
-          $primary_image_config->get_node('scalebar')->set('caption_img',"f:24\@-11:".$slices->[0]->{'species'});
+          $primary_image_config->get_node('scalebar')->set('caption_img',"f:24\@-11:".$hub->species_defs->get_config($slices->[0]->{'species'}, 'SPECIES_NAME');
           $primary_image_config->multi($methods, $seq_region_name, 1, $max, $slices, map { $slices->[$_] } ($i - 1,$i));
         }
         
