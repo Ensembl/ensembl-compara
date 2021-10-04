@@ -98,7 +98,7 @@ sub content {
     my $asb = $image_config->get_node('alignscalebar');
     $asb->set_data('caption', $panel_caption);
     $asb->set_data('caption_position', 'bottom');
-    $asb->set_data('caption_img',"f:24\@$caption_img_offset:".$species_defs->production_name_mapping($_->{'name'}));
+    $asb->set_data('caption_img',"f:24\@$caption_img_offset:".$species_defs->get_config($_->{'name'}, 'SPECIES_IMAGE'));
     $asb->set_data('caption_height',$caption_height);
     $caption_img_offset = -20;
     $caption_height = 28;
