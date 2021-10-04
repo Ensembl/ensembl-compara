@@ -77,7 +77,7 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'  => [ 'mysql-ens-compara-prod-5', 'ivana_metazoa_load_members_106_backup'],
-    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', '' ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', 'ivana_default_metazoa_protein_trees_106' ],
 
     # LastZ dbs
     'lastz_batch_1' => [ 'mysql-ens-compara-prod-2', 'ivana_metazoa_lastz_batch1_106' ],
