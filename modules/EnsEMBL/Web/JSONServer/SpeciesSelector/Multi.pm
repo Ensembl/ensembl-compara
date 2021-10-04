@@ -40,7 +40,7 @@ sub json_fetch_species {
   my $species_defs    = $hub->species_defs;
   my $params          = $hub->multi_params; 
   my $alignments      = $species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'} || {};
-  my $primary_species = $species_defs->IS_STRAIN_OF ? ucfirst $species_defs->SPECIES_PRODUCTION_NAME($hub->species) : $hub->species;
+  my $primary_species = $species_defs->SPECIES_PRODUCTION_NAME;
   my $species_label   = $species_defs->species_label($primary_species, 1);
   my %shown           = map { $params->{"s$_"} => $_ } grep s/^s(\d+)$/$1/, keys %$params; # get species (and parameters) already shown on the page
   my $object          = $self->object;

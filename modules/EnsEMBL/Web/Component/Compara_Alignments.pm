@@ -69,7 +69,7 @@ sub content {
 
   my ($alert_box, $error) = $self->check_for_align_problems({
                     'align' => $align,
-                    'species' => $hub->species_defs->IS_STRAIN_OF ? ucfirst $hub->species_defs->SPECIES_PRODUCTION_NAME($object->species) : $object->species,
+                    'species' => $hub->species_defs->SPECIES_PRODUCTION_NAME,
                   });
   return $alert_box if $error;
   my ($warnings, $image_link);

@@ -373,6 +373,16 @@ sub get_species_info {
   return $species ? $self->{'_species_info'}{$species} : $self->{'_species_info'};
 }
 
+sub is_strain   {
+  my ($self, $species) = @_;
+  $species ||= $self->species;
+  my $sd = $self->species_defs;
+  return 1 if ($sd->get_config($species, 'STRAIN_GROUP') && $sd->get_config($species, 'STRAIN_GROUP') ne $sd->get_config($species, 'SPECIES_PRODUCTION_NAME'));
+  #return 1 if $self->action =~ /strain_/i;
+  return 0;
+}
+
+
 sub current_url {
   ## Gets the current url
   ## @return Relative url (String)

@@ -29,7 +29,7 @@ use Text::Wrap      qw(wrap);
 use List::Util      qw(first);
 use List::MoreUtils qw(uniq first_index);
 
-use EnsEMBL::Web::Utils::FormatText qw(helptip glossary_helptip get_glossary_entry);
+use EnsEMBL::Web::Utils::FormatText qw(helptip glossary_helptip get_glossary_entry pluralise);
 
 use parent qw(EnsEMBL::Web::Component);
 
@@ -433,7 +433,7 @@ sub transcript_table {
 
   $table->add_row('Location', $location_html);
 
-  if(@proj_attrib && $self->hub->species_defs->IS_STRAIN_OF) {
+  if(@proj_attrib && $hub->is_strain) {
     (my $ref_gene = $proj_attrib[0]->value) =~ s/\.\d+$//;
     my $strain_type = $hub->species_defs->STRAIN_TYPE;
     
@@ -959,15 +959,14 @@ sub check_for_missing_species {
     next if $_ eq $species;
     if ($align_details->{'class'} !~ /pairwise/
         && ($self->param(sprintf 'species_%d_%s', $align, lc) || 'off') eq 'off') {
-      push @skipped, $species_defs->production_name_mapping($_) unless ($args->{ignore} && $args->{ignore} eq 'ancestral_sequences');
+      push @skipped, $_ unless ($args->{ignore} && $args->{ignore} eq 'ancestral_sequences');
     }
     elsif (defined $slice and !$aligned_species{$_} and $_ ne 'ancestral_sequences') {
-      my $sp_prod = $hub->species_defs->production_name_mapping($_);
+      my $sp_url = $hub->species_defs->production_name_mapping($_);
 
-      my $key = ($species_info->{$sp_prod}{strain_group} && $species_info->{$sp_prod}{strain} !~ /reference/) ? 
-              $species_info->{$sp_prod}{strain_type}.'s' : 'species';
-      push @{$missing_hash->{$key}}, $species_info->{$sp_prod}{common};
-      push @missing, $species_defs->production_name_mapping($_);
+      my $key = $hub->is_strain($sp_url) ? pluralise($species_info->{$sp_url}{strain_type}) : 'species';
+      push @{$missing_hash->{$key}}, $species_info->{$sp_url}{common};
+      push @missing, $_;
     }
   }
 
@@ -1000,8 +999,8 @@ sub check_for_missing_species {
       if ($missing_hash->{strains}) {
         $count = scalar @{$missing_hash->{strains}};
         my $strain_type = $hub->species_defs->STRAIN_TYPE || 'strain';
+        $strain_type = pluralise($strain_type) if $count > 1;
         $str .= "$count $strain_type";
-        $str .= 's' if $count > 1;
       }
 
       $str .= ' and ' if ($missing_hash->{strains} && $missing_hash->{species});

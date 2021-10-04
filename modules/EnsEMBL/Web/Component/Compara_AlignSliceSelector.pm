@@ -47,10 +47,10 @@ sub content {
   }
   my $alignments   = $db_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {}; # Get the compara database hash
 
-  my $species = $hub->species;
+  my $prodname = $hub->species_defs->SPECIES_PRODUCTION_NAME;
   my $align_label = '';
   # Order by number of species (name is in the form "6 primates EPO"
-  foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {
+  foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$prodname} } values %$alignments) {
     (my $name = $row->{'name'}) =~ s/_/ /g;
     if ($row->{id} == $align) {
       $align_label = encode_entities($name);
@@ -63,7 +63,7 @@ sub content {
     my %species_hash;
     foreach my $key (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
       foreach (keys %{$alignments->{$key}->{'species'}}) {
-        if ($alignments->{$key}->{'species'}->{$species} && $_ ne $species) {
+        if ($alignments->{$key}->{'species'}->{$prodname} && $_ ne $prodname) {
           if ($key == $align) {
             $align_label = $species_defs->production_name_mapping($_);
             last;

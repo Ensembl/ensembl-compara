@@ -513,8 +513,11 @@ sub _info_panel {
   );
 }
 
-#the action check is wrong but for now will do, the reason for the action check is when you have both strain and main species menu on one page (maybe pass a key inside the configuration node and create a new hub->strain (set to the new key value) when the view is accessed)
-sub is_strain   { return $_[0]->hub->species_defs->IS_STRAIN_OF  || $_[0]->hub->action =~ /strain_/i ? 1 : 0; } 
+sub is_strain   { 
+## TODO - remove this when all components call method on hub directly
+  my $self = shift;
+  return $self->hub->is_strain(shift);
+}
 
 sub config_msg {
   my $self = shift;

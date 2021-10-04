@@ -41,7 +41,7 @@ sub json_fetch_species {
   my $extra_inputs = join '', map qq(<input type="hidden" name="$_" value="$url->[1]{$_}" />), sort keys %{$url->[1] || {}};
   my $alignments   = $db_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {}; # Get the compara database hash
   my $species_info = $hub->get_species_info;
-  my $species      = $sd->IS_STRAIN_OF ? ucfirst $sd->SPECIES_PRODUCTION_NAME($hub->species) : $hub->species;
+  my $species      = $sd->SPECIES_PRODUCTION_NAME;
   my $species_hash_multiple = ();
 
   # Order by number of species (name is in the form "6 primates EPO")

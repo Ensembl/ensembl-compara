@@ -92,7 +92,7 @@ sub _get_pages {
                           type    => $object->get_db,
                           gene    => $object->Obj,
                         })->[0];
-    my $not_strain      = $hub->species_defs->IS_STRAIN_OF ? 0 : 1;
+    my $not_strain      = $hub->is_strain ? 0 : 1;
     my $has_gxa         = $object->gxa_check;
     my $has_rna         = ($avail->{'has_2ndary'} && $avail->{'can_r2r'}); 
     my $has_tree        = ($avail->{'has_species_tree'} && $not_strain);

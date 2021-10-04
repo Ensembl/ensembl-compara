@@ -1270,7 +1270,7 @@ sub _summarise_compara_db {
   my %valid_species = map { $_ => 1 } keys %{$self->full_tree};
   
   foreach my $row (@$res_aref) { 
-    my ($class, $type, $species, $name, $id, $species_set_id) = ($row->[0], uc $row->[1], ucfirst $row->[2], $row->[3], $row->[4], $row->[5]);
+    my ($class, $type, $species, $name, $id, $species_set_id) = ($row->[0], uc $row->[1], $row->[2], $row->[3], $row->[4], $row->[5]);
     my $key = 'ALIGNMENTS';
     
     if ($class =~ /ConservationScore/ || $type =~ /CONSERVATION_SCORE/) {
@@ -1467,7 +1467,7 @@ sub _summarise_compara_alignments {
     if ($id eq $prev_id) {
       my $this_method    = $methods{$mlss_id};
       my $this_sr        = $genomic_regions{$df_id}->{'seq_region'};
-      my $this_species   = ucfirst $genomic_regions{$df_id}->{'species'};
+      my $this_species   = $genomic_regions{$df_id}->{'species'};
       my $this_coord_sys = $genomic_regions{$df_id}->{'coord_system'};
       my $comparison     = "$this_sr:$prev_sr";
       my $coords         = "$this_coord_sys:$prev_coord_sys";
@@ -1487,7 +1487,7 @@ sub _summarise_compara_alignments {
       $prev_start     = $start;
       $prev_end       = $end;
       $prev_sr        = $genomic_regions{$df_id}->{'seq_region'};
-      $prev_species   = ucfirst $genomic_regions{$df_id}->{'species'};
+      $prev_species   = $genomic_regions{$df_id}->{'species'};
       $prev_coord_sys = $genomic_regions{$df_id}->{'coord_system'};
     }        
   }
@@ -1539,8 +1539,8 @@ sub _summarise_compara_alignments {
           my $name         = $names{$mlss_id};
           my ($homologue)  = grep $_ != $mlss_id, @method_link_species_set_ids;
           
-          push @{$region_summary->{ucfirst $p_species}{$source_name}}, {
-            species     => { ucfirst "$s_species--$target_name" => 1, ucfirst "$p_species--$source_name" => 1 },
+          push @{$region_summary->{$p_species}{$source_name}}, {
+            species     => {"$s_species--$target_name" => 1, "$p_species--$source_name" => 1 },
             target_name => $target_name,
             start       => $source_start,
             end         => $source_end,

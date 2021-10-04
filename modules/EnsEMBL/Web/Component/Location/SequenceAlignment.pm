@@ -148,7 +148,7 @@ sub get_slices {
     my $slice = $_->get_all_Slice_Mapper_pairs->[0][0];
     
     push @slices, { 
-      name  => $slice->can('display_Slice_name') ? $slice->display_Slice_name : $config->{'species'}, 
+      name  => $slice->can('display_Slice_name') ? lc($slice->display_Slice_name) : $config->{'species'}, 
       slice => $slice,
       seq   => $_->seq(1)
     };

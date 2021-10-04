@@ -174,7 +174,7 @@ sub _count_alignments {
 
   my $c = { all => 0, pairwise => 0, multi => 0, patch => 0 };
   my %alignments = $self->sd_multi($args,'DATABASE_COMPARA','ALIGNMENTS');
-  my $species = ucfirst($self->sd_config($args,"SPECIES_PRODUCTION_NAME"));
+  my $species = $self->sd_config($args,"SPECIES_PRODUCTION_NAME");
   foreach (grep $_->{'species'}{$species}, values %alignments) {
     $c->{'all'}++ ;
     $c->{'pairwise'}++ if $_->{'class'} =~ /pairwise_alignment/ && scalar keys %{$_->{'species'}} == 2;

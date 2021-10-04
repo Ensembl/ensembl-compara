@@ -1518,7 +1518,7 @@ sub species_label {
   ###     no_formating    Boolean: omit italics from scientific name  
   my ($self, $key, $no_formatting) = @_;
 
-  my $url = ucfirst $key;
+  my $url = $self->production_name_mapping($key);
   my $display = $self->get_config($url, 'SPECIES_DISPLAY_NAME');
   my $label = '';
 
@@ -1574,7 +1574,7 @@ sub production_name_lookup {
 
 sub production_name_mapping {
 ### As the name said, the function maps the production name with the species URL, 
-### @param production_name - species production name
+### @param key - species production name (or URL in the case of some compara code) 
 ### Return string = the corresponding species.url name which is the name web uses for URL and other code
 ### Fall back to production name if not found - mostly for pan-compara
   my ($self, $production_name) = @_;

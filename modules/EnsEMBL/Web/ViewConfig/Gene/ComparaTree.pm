@@ -112,7 +112,7 @@ sub form_fields {
     'value' => 'on',
   };
 
-  my @groups = ($self->hub->param('strain') || $self->hub->species_defs->IS_STRAIN_OF) ? () : $self->_groups; #hide these options for strain view or strain species
+  my @groups = ($self->hub->param('strain') || $self->hub->is_strain) ? () : $self->_groups; #hide these options for strain view or strain species
 
   if (@groups) {
     my $taxon_labels = $self->hub->species_defs->TAXON_LABEL;

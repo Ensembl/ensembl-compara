@@ -53,7 +53,7 @@ sub content {
 
   return $self->_error('Unknown alignment', '<p>The alignment you have selected does not exist in the current database.</p>') unless $align_details;
   
-  my $primary_species = $species_defs->IS_STRAIN_OF ? ucfirst $species_defs->SPECIES_PRODUCTION_NAME($hub->species) : $hub->species;
+  my $primary_species = $species_defs->SPECIES_PRODUCTION_NAME;
 
   if (!exists $align_details->{'species'}->{$primary_species}) {
     return $self->_error('Unknown alignment', sprintf(

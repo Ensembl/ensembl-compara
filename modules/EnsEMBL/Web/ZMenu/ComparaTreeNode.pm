@@ -382,7 +382,7 @@ sub content {
     if ($hub->referer->{ENSEMBL_ACTION} ne 'Strain_Compara_Tree') {
 
       # Get wasabi files if found in session store
-      my $is_strain = $hub->species_defs->IS_STRAIN_OF ? 1 : 0;
+      my $is_strain           = $hub->is_strain ? 1 : 0; ## work this out here, as we use it in several places and it's a bit heavy
       my $gt_id               = $is_strain ? $gene->stable_id : $node->tree->stable_id;
       my $is_ncrna            = ($node->tree->member_type eq 'ncrna');
       $gt_id = $is_ncrna ? $hub->param('g') : $gt_id;

@@ -284,7 +284,7 @@ sub get_alt_allele_link {
 sub count_alignments {
   my $self       = shift;
   my $cdb        = shift || 'DATABASE_COMPARA';
-  my $species    = ucfirst($self->species_defs->get_config($self->species,"SPECIES_PRODUCTION_NAME"));
+  my $species    = $self->species_defs->get_config($self->species,"SPECIES_PRODUCTION_NAME");
   my %alignments = $self->species_defs->multi($cdb, 'ALIGNMENTS');
   my $c          = { all => 0, pairwise => 0, multi => 0 };
 
@@ -307,6 +307,8 @@ sub check_for_align_in_database {
       my $species_defs  = $hub->species_defs;
       my $db_key        = $cdb =~ /pan_ensembl/ ? 'DATABASE_COMPARA_PAN_ENSEMBL' : 'DATABASE_COMPARA';
       my $align_details = $species_defs->multi_hash->{$db_key}->{'ALIGNMENTS'}->{$align};
+      #use Data::Dumper;
+      #warn Dumper($align_details);
   
       if ($align_details) {
         unless (exists $align_details->{'species'}->{$species}) {
