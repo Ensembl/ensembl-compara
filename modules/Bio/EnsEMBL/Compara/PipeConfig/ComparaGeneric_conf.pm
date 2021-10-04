@@ -267,6 +267,7 @@ sub pipeline_create_commands {
 
   Arg[1]      : Arrayef of variable names
   Arg[2]      : (optional) username to become
+  Arg[3]      : (optional) boolean do not rm dirs if false
   Example     : $self->pipeline_create_commands_rm_mkdir('fasta_dir');
   Description : Helper method to build the commands necessary to delete and
                 create some directories. The directories come from calling
@@ -284,6 +285,7 @@ sub pipeline_create_commands_rm_mkdir {
     my $self = shift;
     my $dirs = shift;
     my $user = shift;
+    my $norm = shift;
 
     # Do we need to "become" someone else ?
     $user = $user ? "become -- $user" : '';
@@ -296,7 +298,7 @@ sub pipeline_create_commands_rm_mkdir {
     }
 
     my @cmds;
-    push @cmds, map {qq{$user rm -rf $_}} @dirs;
+    push @cmds, map {qq{$user rm -rf $_}} @dirs unless $norm; # do not rm dirs if flag passed true
     push @cmds, map {qq{$user mkdir -p $_}} @dirs;
     return @cmds;
 }

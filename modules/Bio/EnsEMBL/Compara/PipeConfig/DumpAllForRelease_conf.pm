@@ -22,7 +22,8 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf -host mysql-ens-compara-prod-X -port XXXX \
-         -division $COMPARA_DIV -dump_dir <path> -updated_mlss_ids <optional> -ancestral_db <optional>
+         -division $COMPARA_DIV -dump_dir <path> -updated_mlss_ids <optional> -ancestral_db <optional> \
+         -remove_existing_files <optional> -clean_intermediate_files <optional>
 
 =head1 DESCRIPTION
 
@@ -67,6 +68,7 @@ sub default_options {
         'compara_db'   => 'compara_curr', # can be URL or reg alias
         'ancestral_db' => undef,
 
+        'remove_existing_files'    => undef, # on by default
         'clean_intermediate_files' => 0, # off by default
 
         # were there lastz patches this release? pass hive pipeline urls if yes, pass undef if no
@@ -170,7 +172,8 @@ sub pipeline_create_commands {
 
     return [
         @{ $self->SUPER::pipeline_create_commands },
-        $self->pipeline_create_commands_rm_mkdir(['dump_root', 'work_dir', 'dump_dir']),
+
+        $self->pipeline_create_commands_rm_mkdir(['dump_root', 'work_dir', 'dump_dir'], undef, $self->o('remove_existing_files')),
 
         $self->db_cmd( 'CREATE TABLE other_gab (genomic_align_block_id bigint NOT NULL, PRIMARY KEY (genomic_align_block_id) )' ),
         $self->db_cmd( 'CREATE TABLE healthcheck (filename VARCHAR(400) NOT NULL, expected INT NOT NULL, dumped INT NOT NULL)' ),
@@ -276,7 +279,7 @@ sub pipeline_analyses {
                 '6->A' => [ 'DumpAncestralAlleles_start'    ],
                 '7->A' => [ 'DumpMultiAlignPatches_start'   ],
                 '8->A' => [ 'create_ftp_skeleton'           ],
-                'A->1' => [ 'clean_files_decision'          ],
+                'A->1' => { 'clean_files_decision' => { 'clean_intermediate_files' => $self->o('clean_intermediate_files') } },
             },
             -rc_name    => '1Gb_job',
         },
