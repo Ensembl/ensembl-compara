@@ -1602,8 +1602,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'overall_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OverallGroupsetQC',
             -parameters => {
-                'clusterset_id' => $self->o('collection'),
-                'reuse_db'      => '#mapping_db#',
+                'reuse_db' => '#mapping_db#',
             },
             -hive_capacity  => $self->o('reuse_capacity'),
             -rc_name    => '4Gb_job',

@@ -37,7 +37,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-        'clusterset_id'         => 'default',
         'unmap_tolerance'       => 0.2,
         'hmm_unmap_tolerance'   => 0.7,
     };
@@ -58,10 +57,7 @@ sub fetch_input {
     my $self = shift @_;
 
     $self->complete_early('No reuse_db, cannot compare the clusters') unless $self->param('reuse_db');
-    my $clusterset_id = $self->param('clusterset_id');
-    my $gene_trees = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => $clusterset_id);
-    $self->die_no_retry("Could not fetch groupset tree") unless @$gene_trees;
-    $self->param('groupset_tree', $gene_trees->[0]);
+    $self->param('groupset_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'default')->[0]) or $self->die_no_retry("Could not fetch groupset tree");
 }
 
 
