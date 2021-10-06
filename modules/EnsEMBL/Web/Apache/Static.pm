@@ -80,9 +80,8 @@ sub handler {
     $r->headers_out->set('X-MEMCACHED'    => 'yes');
     $r->headers_out->set('Accept-Ranges'  => 'bytes');
     $r->headers_out->set('Content-Length' => length $content);
-    $r->headers_out->set('Cache-Control'  => 'max-age=' . 60*60*24*30);
-    $r->headers_out->set('Expires'        => HTTP::Date::time2str(time + 60*60*24*30));
     $r->content_type(mime_type($uri));
+    add_caching_headers($r);
     $r->print($content);
     static_cache_hook($uri,$content);
     return OK;
@@ -129,8 +128,7 @@ sub handler {
 
     if (-e $file) {
       ## Send 2MB+ files without caching them
-      $r->headers_out->set('Cache-Control'  => 'max-age=' . 60*60*24*30);
-      $r->headers_out->set('Expires'        => HTTP::Date::time2str(time + 60*60*24*30));
+      add_caching_headers($r);
       $r->content_type(mime_type($uri));
       return $r->sendfile($file) if -s $file > 2*1024*1024;
 
@@ -182,5 +180,20 @@ sub htdoc_dir {
   return $file;
 }
 
+sub add_caching_headers {
+  my $r = shift;
+  if (should_skip_caching($r)) {
+    $r->headers_out->set('Cache-Control'  => 'no-store, max-age=0');
+  } else {
+    my $thirty_days = 60 * 60 * 24 * 30;
+    $r->headers_out->set('Cache-Control'  => 'max-age=' . $thirty_days);
+    $r->headers_out->set('Expires'        => HTTP::Date::time2str(time + $thirty_days));
+  }
+}
+
+#overwritten in public plugins
+sub should_skip_caching {
+  return 0;
+}
 
 1;

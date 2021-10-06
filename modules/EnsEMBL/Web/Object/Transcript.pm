@@ -71,6 +71,7 @@ sub availability {
       $availability->{"has_$_"}          = $counts->{$_} for qw(exons evidence similarity_matches oligos);
       $availability->{ref_slice}       //= $self->Obj->slice->is_reference();
       $availability->{'has_pdbe'}        = $self->has_pdbe_analysis();
+      $availability->{'has_afdb'}        = $self->has_afdb_analysis();
     }
   
     $self->{'_availability'} = $availability;
@@ -276,6 +277,11 @@ sub count_oligos {
 sub has_pdbe_analysis {
   my $self = shift;
   return ($self->table_info($self->get_db, 'protein_feature')->{'analyses'}{'sifts_import'}) ? 1 : 0;
+}
+
+sub has_afdb_analysis {
+  my $self = shift;
+  return ($self->table_info($self->get_db, 'protein_feature')->{'analyses'}{'alphafold_import'}) ? 1 : 0;
 }
 
 sub default_track_by_gene {
