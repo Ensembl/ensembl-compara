@@ -57,16 +57,17 @@ sub add_species_bioschema {
 ## Build bioschema data structure for a species
   my ($species_defs, $data) = @_;
 
-  $data->{'isPartOf'} = {
-                          '@type'         => 'BioChemEntity',
-                          'name'          => $species_defs->SPECIES_SCIENTIFIC_NAME,
-                          'alternateName' => $species_defs->SPECIES_DISPLAY_NAME,
-                          };
+  $data->{'taxonomicRange'} = {
+      '@type' => "Taxon",
+      'name'  => $species_defs->SPECIES_SCIENTIFIC_NAME,
+      'alternateName' => $species_defs->SPECIES_DISPLAY_NAME,
+  };
+
   my $taxon_id = $species_defs->TAXONOMY_ID;
   if ($taxon_id) {
     my $ncbi_url = sprintf '%s/%s', 'http://purl.bioontology.org/ontology/NCBITAXON', $taxon_id;
     my $uniprot_url = sprintf '%s/%s', 'http://purl.uniprot.org/taxonomy', $taxon_id;
-    $data->{'isPartOf'}{'codeCategory'} = {
+    $data->{'taxonomicRange'}{'codeCategory'} = {
                                             '@type'     => 'CategoryCode',
                                             'codeValue' => $taxon_id,
                                             'url'       => $ncbi_url,

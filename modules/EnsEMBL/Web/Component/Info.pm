@@ -98,7 +98,7 @@ sub include_bioschema_datasets {
 
   my $sitename = $species_defs->ENSEMBL_SITETYPE;
   my $server = $species_defs->ENSEMBL_SERVERNAME;
-  $server = 'http://'.$server unless ($server =~ /^http/);
+  $server = 'https://'.$server unless ($server =~ /^http/);
 
   my $display_name = $species_defs->SPECIES_DISPLAY_NAME;
   my $sci_name     = $species_defs->SPECIES_SCIENTIFIC_NAME;
@@ -140,6 +140,11 @@ sub include_bioschema_datasets {
   my $gff3_url  = sprintf '%s/gff3/%s/', $self->ftp_url, $species_defs->SPECIES_PRODUCTION_NAME;
   my $genebuild = {
       '@type'                 => 'Dataset',
+      '@id'                   => sprintf('%s/%s/Info/Index#gene-set', $server, $hub->species), 
+      'http://purl.org/dc/terms/conformsTo' => {
+          '@id'   => "https://bioschemas.org/profiles/Dataset/0.3-RELEASE-2019_06_14/",
+          '@type' => "CreativeWork"
+      },
       'name'                  => sprintf('%s %s Gene Set', $sitename, $display_name),
       'includedInDataCatalog' => $catalog_id,
       'version'               => $species_defs->GENEBUILD_LATEST || $species_defs->GENEBUILD_RELEASE || '',

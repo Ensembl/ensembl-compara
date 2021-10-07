@@ -58,8 +58,23 @@ sub content {
   ## Start assembling bioschema information
   my $bs_gene;
   if ($species_defs->BIOSCHEMAS_DATACATALOG) {
-    $bs_gene = {'@type' => 'Gene', 'identifier' => $object->gene->stable_id};
-    $bs_gene->{'name'} = $display_xref ? $display_xref->display_id : $gene->stable_id;
+    my $sitename = $species_defs->ENSEMBL_SITETYPE;
+    my $display_name = $species_defs->SPECIES_DISPLAY_NAME;
+
+    $bs_gene = {
+                  '@type' => 'Gene', 
+                  'http://purl.org/dc/terms/conformsTo' => {
+                      '@id'   => "https://bioschemas.org/profiles/Gene/1.0-RELEASE/",
+                      '@type' => "CreativeWork"
+                  },
+                  'isPartOf'  => {
+                      '@type' => "Dataset",
+                      '@id'   => sprintf('%s/%s/Info/Index#gene-set', $server, $hub->species),
+                      'name'  => sprintf('%s %s Gene Set', $sitename, $display_name), 
+                  },
+                  'identifier'  => $object->gene->stable_id
+                  'name'        => $display_xref ? $display_xref->display_id : $gene->stable_id
+                };
     my $description = $object->gene_description;
     $description = '' if $description eq 'No description';
     if ($description) {
@@ -279,17 +294,8 @@ sub content {
     }
   }
 
-  my $bioschema = '';
-  if (keys %$bs_gene) {
-    my $sitename = $hub->species_defs->ENSEMBL_SITETYPE;
-    my $bs_record = {
-                      '@type'       => 'DataRecord', 
-                      'identifier'  => $object->stable_id, 
-                      'mainEntity'  => $bs_gene,
-                      'isPartOf'    => sprintf('%s %s Gene Set', $sitename, $hub->species_defs->SPECIES_DISPLAY_NAME),
-                    };
-    $bioschema = create_bioschema($bs_record);
-  }
+  my $bioschema = keys %$bs_gene ? create_bioschema($bs_gene) : '';
+  
   return $table->render.$bioschema;
 }
 
