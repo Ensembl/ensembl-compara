@@ -58,6 +58,9 @@ sub content {
   ## Start assembling bioschema information
   my $bs_gene;
   if ($species_defs->BIOSCHEMAS_DATACATALOG) {
+   
+    my $server = $species_defs->ENSEMBL_SERVERNAME;
+    $server = 'https://'.$server unless ($server =~ /^http/); 
     my $sitename = $species_defs->ENSEMBL_SITETYPE;
     my $display_name = $species_defs->SPECIES_DISPLAY_NAME;
 
@@ -72,7 +75,7 @@ sub content {
                       '@id'   => sprintf('%s/%s/Info/Index#gene-set', $server, $hub->species),
                       'name'  => sprintf('%s %s Gene Set', $sitename, $display_name), 
                   },
-                  'identifier'  => $object->gene->stable_id
+                  'identifier'  => $object->gene->stable_id,
                   'name'        => $display_xref ? $display_xref->display_id : $gene->stable_id
                 };
     my $description = $object->gene_description;
