@@ -34,7 +34,7 @@ sub render {
   return unless $catalog;
 
   my $server = $sd->ENSEMBL_SERVERNAME;
-  $server = 'http://'.$server unless ($server =~ /^http/);
+  $server = 'https://'.$server unless ($server =~ /^http/);
   my $sitename = $sd->ENSEMBL_SITETYPE;
 
   my $data = {
@@ -43,8 +43,17 @@ sub render {
               'name'  => 'Ensembl',
               'url'   => $server, 
               'keywords' => 'genomics, bioinformatics, vertebrate, EBI, genetic, research, gene, regulation, variation, tool, download',
+              'http://purl.org/dc/terms/conformsTo' => {
+                  '@id'   => "https://bioschemas.org/profiles/DataCatalog/0.3-RELEASE-2019_07_01/",
+                  '@type' => "CreativeWork"
+              },
               'dataset' => {
                             '@type' => 'Dataset',
+                            '@id'   =>  "http://www.ensembl.org/#dataset",
+                            'http://purl.org/dc/terms/conformsTo' => {
+                                '@id'   => "https://bioschemas.org/profiles/Dataset/0.3-RELEASE-2019_06_14/",
+                                '@type' => "CreativeWork"
+                            },
                             'name'  =>  sprintf('%s Comparative Genomics Data', $sitename),
                             'includedInDataCatalog' => $catalog,
                             'url'   => 'http://www.ensembl.org/info/genome/compara/accessing_compara.html',
