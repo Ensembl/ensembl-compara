@@ -81,6 +81,7 @@ sub run {
     my $worker_temp_directory = $self->worker_temp_directory;
     my $blast_infile          = $worker_temp_directory . '/blast.in.' . $$;
     my $blast_outfile         = $worker_temp_directory . '/blast.out.' . $$;
+    my $ref_db                = $self->param('rr_ref_db');
 
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $self->param('query_set'));
 
@@ -97,7 +98,7 @@ sub run {
     my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1});
     print "Time for diamond search " . $run_cmd->runtime_msec . " msec\n";
 
-    my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param_required('genome_db_id'), $target_genome_db_id);
+    my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param_required('genome_db_id'), $target_genome_db_id, $ref_db);
 
     unless ($self->param('expected_members') == scalar(keys(%{$self->param('num_query_member')}))) {
         # Most likely, this is happening due to MEMLIMIT, so make the job sleep if it parsed 0 sequences, to wait for MEMLIMIT to happen properly.

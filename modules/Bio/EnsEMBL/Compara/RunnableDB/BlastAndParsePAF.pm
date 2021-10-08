@@ -184,7 +184,7 @@ sub fetch_input {
 }
 
 sub parse_blast_table_into_paf {
-    my ($self, $filename, $qgenome_db_id, $hgenome_db_id) = @_;
+    my ($self, $filename, $qgenome_db_id, $hgenome_db_id, $ref_db) = @_;
 
     my @features = ();
     $self->param('num_query_member', {});
@@ -192,6 +192,13 @@ sub parse_blast_table_into_paf {
     open(my $blast_fh, '<', $filename) || die "Could not open the blast table file '$filename'";
     
     print "blast $qgenome_db_id $hgenome_db_id $filename\n" if $self->debug;
+
+    my $ref_dba;
+    my $ref_gene_adap;
+    if ($ref_db) {
+        $ref_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($ref_db);
+        $ref_gene_adap = $ref_dba->get_GeneMemberAdaptor;
+    }
 
     while(my $line = <$blast_fh>) {
 
@@ -204,6 +211,15 @@ sub parse_blast_table_into_paf {
                 $qseq =~ s/ /-/g;
                 $sseq =~ s/ /-/g;
                 $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_two_alignment_strings($qseq, $sseq);
+            }
+            if ($ref_dba) {
+                # If sequences are associated with a compara_references db - these are likely stable_ids and need to be converted
+                if ( $qmember_id =~ /^[A-Z]+/i ) {
+                    $qmember_id = $ref_gene_adap->fetch_by_stable_id($qmember_id)->canonical_member_id();
+                }
+                if ( $hmember_id =~ /^[A-Z]+/i ) {
+                    $hmember_id = $ref_gene_adap->fetch_by_stable_id($hmember_id)->canonical_member_id();
+                }
             }
 
             my $feature = Bio::EnsEMBL::Compara::PeptideAlignFeature->new_fast({

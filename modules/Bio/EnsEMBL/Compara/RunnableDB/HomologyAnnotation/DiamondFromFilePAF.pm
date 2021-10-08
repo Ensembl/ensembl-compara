@@ -60,6 +60,7 @@ sub run {
     my $diamond_exe  = $self->param('diamond_exe');
     my $blast_params = $self->param('blast_params')  || '';
     my $evalue_limit = $self->param('evalue_limit');
+    my $ref_db       = $self->param('rr_ref_db');
 
     my $cross_pafs = [];
     my $worker_temp_directory = $self->worker_temp_directory;
@@ -71,7 +72,7 @@ sub run {
     my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1});
     print "Time for diamond search " . $run_cmd->runtime_msec . " msec\n";
 
-    my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param_required('genome_db_id'), $target_genome_db_id);
+    my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param_required('genome_db_id'), $target_genome_db_id, $ref_db);
 
     push @$cross_pafs, @$features;
     unlink $blast_outfile unless $self->debug;
