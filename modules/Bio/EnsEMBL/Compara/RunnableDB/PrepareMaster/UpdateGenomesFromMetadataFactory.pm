@@ -31,6 +31,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromMetad
 use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::MetaData::DBSQL::MetaDataDBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 use Bio::EnsEMBL::Compara::Utils::FlatFile qw/ map_row_to_header /;

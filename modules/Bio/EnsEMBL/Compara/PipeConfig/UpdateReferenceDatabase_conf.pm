@@ -92,6 +92,7 @@ sub default_options {
 
         # member dump options
         'dump_only_canonical'   => 1,
+        'fasta_header_id'       => 'STABLE_GENE',
 
         # create species sets options
         'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
@@ -415,6 +416,7 @@ sub tweak_analyses {
 
     $analyses_by_name->{'dump_full_fasta'}->{'-parameters'}->{'compara_db'} = '#ref_db#';
     $analyses_by_name->{'dump_full_fasta'}->{'-parameters'}->{'only_canonical'} = $self->o('dump_only_canonical');
+    $analyses_by_name->{'dump_full_fasta'}->{'-parameters'}->{'fasta_header_id'} = $self->o('fasta_header_id');
     delete $analyses_by_name->{'datacheck_fan'}->{'-flow_into'}->{2};
     delete $analyses_by_name->{'datacheck_fan_high_mem'}->{'-flow_into'}->{2};
     $analyses_by_name->{'datacheck_factory'}->{'-parameters'}->{'compara_db'} = '#ref_db#';

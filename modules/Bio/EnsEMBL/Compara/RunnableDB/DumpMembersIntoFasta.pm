@@ -114,11 +114,18 @@ sub run {
 
     my $members = $self->param('members');
     my $fasta_file = $self->param('fasta_file');
+    my $header_id  = $self->param('fasta_header_id');
 
     # write fasta file:
     my $member_set = Bio::EnsEMBL::Compara::MemberSet->new(-members => $members);
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $member_set);
-    $member_set->print_sequences_to_file($fasta_file);
+
+    if ( defined $header_id ) {
+        $member_set->print_sequences_to_file($fasta_file, -ID_TYPE => $header_id);
+    }
+    else {
+        $member_set->print_sequences_to_file($fasta_file);
+    }
 
     my $n_seq_expected = scalar(@$members);
     my $n_seq_in_file = $self->run_command(['grep', '-c', '^>', $fasta_file])->out;
