@@ -61,7 +61,7 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Intentions+for+release+<version>",
+      "description": "*Intentions for release*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Intentions+for+release+<version>\n*Production pipelines brief*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+Pipelines+Brief",
       "subtasks": [{
             "component": "Production tasks",
             "description": "*GitHub*: [<Division>/ProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/ProteinTrees_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
