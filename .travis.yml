@@ -55,6 +55,7 @@ before_install:
     - export PERL5LIB=$PERL5LIB:$PWD/ensembl-taxonomy/modules
     - export PERL5LIB=$PERL5LIB:$PWD/ensembl-io/modules
     - export PERL5LIB=$PERL5LIB:$PWD/ensembl-datacheck/lib
+    - export PERL5LIB=$PERL5LIB:$PWD/ensembl-production/modules
     - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
     - cp -f ensembl-rest/travisci/MultiTestDB.conf.travisci ensembl-rest/t/MultiTestDB.conf
     - cp -f ensembl/travisci/MultiTestDB.conf.travisci.mysql  ensembl/modules/t/MultiTestDB.conf
@@ -77,12 +78,12 @@ jobs:
         - shellcheck --version
       script: prove -rv ./travisci/all-housekeeping/
 
-    - language: perl
-      perl: 5.30
-      name: "SQL unit tests"
-      install:
-        - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
-      script: prove -r ./travisci/sql-unittest/
+    # - language: perl
+    #   perl: 5.30
+    #   name: "SQL unit tests"
+    #   install:
+    #     - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
+    #   script: prove -r ./travisci/sql-unittest/
 
     - language: perl
       dist: trusty   # 5.22 is the minimum on xenial
@@ -113,22 +114,22 @@ jobs:
       after_success:
         - cover --nosummary -report codecov
 
-    - language: perl
-      perl: 5.30
-      name: "Perl external unit tests on the latest version, with code coverage"
-      env:
-        - COVERAGE=true
-      install:
-        - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
-        # 8.43 is the last version compatible with Perl 5.14
-        - cpanm --quiet --notest Mojolicious@8.43
-        - cpanm --quiet --installdeps --notest --cpanfile ensembl-rest/cpanfile .
-        - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
-        - cpanm --quiet --installdeps --notest .
-        - cpanm --quiet --notest Devel::Cover::Report::Codecov
-      script: ./travisci/perl-external_unittest_harness.sh
-      after_success:
-        - cover --nosummary -report codecov
+    # - language: perl
+    #   perl: 5.30
+    #   name: "Perl external unit tests on the latest version, with code coverage"
+    #   env:
+    #     - COVERAGE=true
+    #   install:
+    #     - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
+    #     # 8.43 is the last version compatible with Perl 5.14
+    #     - cpanm --quiet --notest Mojolicious@8.43
+    #     - cpanm --quiet --installdeps --notest --cpanfile ensembl-rest/cpanfile .
+    #     - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
+    #     - cpanm --quiet --installdeps --notest .
+    #     - cpanm --quiet --notest Devel::Cover::Report::Codecov
+    #   script: ./travisci/perl-external_unittest_harness.sh
+    #   after_success:
+    #     - cover --nosummary -report codecov
 
     - language: perl
       perl: 5.30
@@ -138,7 +139,7 @@ jobs:
       script: ./travisci/perl-linter_harness.sh
 
     - language: python
-      python: 3.6
+      python: 3.7
       name: "Python unit tests on the minimum version"
       env:
         - TEST_COMPILATION=true
@@ -166,7 +167,7 @@ jobs:
         - codecov
 
     - language: python
-      python: 3.8
+      python: 3.9
       name: "Python linter"
       before_install:
         - echo
