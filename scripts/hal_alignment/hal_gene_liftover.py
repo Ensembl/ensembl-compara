@@ -30,24 +30,118 @@ Examples::
 
 """
 
+from __future__ import annotations
 from argparse import ArgumentParser
+import csv
+from dataclasses import dataclass, InitVar
 import json
 import os
 from pathlib import Path
 import re
 from subprocess import PIPE, Popen, run
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, Iterable, List, Mapping, NamedTuple, Tuple, Union
+from typing import Any, Dict, Generator, Iterable, List, Mapping, Tuple, Union
 
 from Bio.SeqIO.FastaIO import SimpleFastaParser
 
 
-class SimpleRegion(NamedTuple):
+@dataclass(frozen=True)
+class SimpleRegion:
     """A simple DNA sequence region."""
     chr: str
     start: int
     end: int
     strand: str
+    validate: InitVar[bool] = True
+
+    def __post_init__(self, validate):
+        if validate:
+            if self.start < 0:
+                raise ValueError(f"0-based region start must be greater than or equal to 0: {self.start}")
+
+            if self.start >= self.end:
+                raise ValueError(
+                    f"0-based region end ({self.end}) must be greater than region start ({self.start})")
+
+            if self.strand not in ('+', '-'):
+                raise ValueError(f"0-based region has invalid strand: '{self.strand}'")
+
+    @classmethod
+    def from_1_based_region_string(cls, region_string: str) -> SimpleRegion:
+        """Create a region object from a 1-based region string.
+
+        Args:
+            region_string: A 1-based region string.
+
+        Returns:
+            A region object.
+
+        Raises:
+            ValueError: If `region_string` is an invalid 1-based region string.
+
+        """
+
+        seq_region_regex = re.compile(
+            r'^(?P<chr>[^:]+):(?P<start>[0-9]+)-(?P<end>[0-9]+):(?P<strand>.+)$'
+        )
+        match = seq_region_regex.match(region_string)
+
+        try:
+            chr_ = match['chr']  # type: ignore
+            start = match['start']  # type: ignore
+            end = match['end']  # type: ignore
+            strand = match['strand']  # type: ignore
+        except TypeError as e:
+            raise ValueError(f"failed to tokenise 1-based region string: '{region_string}'") from e
+
+        return cls.from_1_based_region_attribs(chr_, start, end, strand)
+
+    @classmethod
+    def from_1_based_region_attribs(cls, chr_: str, start: Union[int, str], end: Union[int, str],
+                                    strand: Union[int, str]) -> SimpleRegion:
+        """Create a region object from 1-based region attributes.
+
+        Args:
+            chr_: Region chromosome name.
+            start: Region start position.
+            end: Region end position.
+            strand: Region strand; either '1' for plus strand or '-1' for minus strand.
+
+        Returns:
+            A region object.
+
+        Raises:
+            ValueError: If the region attributes represent an invalid region.
+
+        """
+        _strand_num_to_sign = {1: '+', -1: '-'}
+
+        start = int(start)
+        end = int(end)
+
+        if start < 1:
+            raise ValueError(f'1-based region start must be greater than or equal to 1: {start}')
+
+        if start > end:
+            raise ValueError(
+                f'1-based region end ({end}) must be greater than or equal to region start ({start})')
+
+        try:
+            strand = _strand_num_to_sign[int(strand)]
+        except (KeyError, ValueError) as e:
+            raise ValueError(f"1-based region has invalid strand: '{strand}'") from e
+
+        return cls(chr_, start - 1, end, strand, validate=False)
+
+    def to_1_based_region_string(self):
+        """Get the 1-based region string corresponding to this region."""
+        strand_num = 1 if self.strand == '+' else -1
+        return f'{self.chr}:{self.start + 1}-{self.end}:{strand_num}'
+
+
+class UnixTab(csv.unix_dialect):
+    """A tab-delimited Unix csv dialect."""
+    delimiter = '\t'
 
 
 def export_2bit_file(hal_file: Union[Path, str], genome_name: str,
@@ -269,6 +363,8 @@ def main() -> None:
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--src-region', metavar='STR', help="Region to liftover.")
+    group.add_argument('--src-region-tsv', metavar='FILE',
+                       help="Input TSV file containing regions to liftover.")
 
     parser.add_argument('--flank', metavar='INT', default=0, type=int,
                         help="Requested length of upstream/downstream"
@@ -299,7 +395,11 @@ def main() -> None:
         export_2bit_file(args.hal_file, args.dest_genome, dest_2bit_file)
 
     src_chr_sizes = load_chr_sizes(args.hal_file, args.src_genome)
-    src_regions = [parse_region(args.src_region)]
+
+    if args.src_region is not None:
+        src_regions: Iterable = [SimpleRegion.from_1_based_region_string(args.src_region)]
+    else:
+        src_regions = read_region_tsv_file(args.src_region_tsv)
 
     recs = []
     for src_region in src_regions:
@@ -356,47 +456,22 @@ def make_src_region_file(regions: Iterable[SimpleRegion], genome: str, chr_sizes
             print('\t'.join(str(x) for x in fields), file=f)
 
 
-def parse_region(region: str) -> SimpleRegion:
-    """Parse a region string.
+def read_region_tsv_file(region_tsv_file: Union[Path, str]) -> Generator[SimpleRegion, None, None]:
+    """Read region data from input TSV file.
 
     Args:
-        region: Region string.
+        region_tsv_file: Input TSV file containing 1-offset regions specified
+            in columns with headings 'chr', 'start', 'end' and 'strand'.
 
-    Returns:
-        A SimpleRegion object.
-
-    Raises:
-        ValueError: If `region` is an invalid region string.
+    Yields:
+        SimpleRegion: The region specified in the given row of the input TSV file.
 
     """
-    _strand_num_to_sign = {1: '+', -1: '-'}
-
-    seq_region_regex = re.compile(
-        r'^(?P<chr>[^:]+):(?P<start>[0-9]+)-(?P<end>[0-9]+):(?P<strand>.+)$'
-    )
-    match = seq_region_regex.match(region)
-
-    try:
-        region_chr = match['chr']  # type: ignore
-        match_start = int(match['start'])  # type: ignore
-        region_end = int(match['end'])  # type: ignore
-        match_strand = match['strand']  # type: ignore
-    except TypeError as e:
-        raise ValueError(f"region '{region}' could not be parsed") from e
-
-    if match_start < 1:
-        raise ValueError(f'region start must be greater than or equal to 1: {match_start}')
-    region_start = match_start - 1
-
-    try:
-        region_strand = _strand_num_to_sign[int(match_strand)]
-    except (KeyError, ValueError) as e:
-        raise ValueError(f"region '{region}' has invalid strand: '{match_strand}'") from e
-
-    if region_start >= region_end:
-        raise ValueError(f"region '{region}' has inverted/empty interval")
-
-    return SimpleRegion(region_chr, region_start, region_end, region_strand)
+    with open(region_tsv_file) as f:
+        reader = csv.DictReader(f, dialect=UnixTab)
+        for row in reader:
+            yield SimpleRegion.from_1_based_region_attribs(row['chr'], row['start'],
+                                                           row['end'], row['strand'])
 
 
 def run_axt_chain(psl_file: Union[Path, str], src_2bit_file: Union[Path, str],
