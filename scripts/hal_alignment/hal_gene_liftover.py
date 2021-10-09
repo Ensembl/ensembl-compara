@@ -275,10 +275,19 @@ def main() -> None:
                              " flanking regions to include in query.")
     parser.add_argument('--linear-gap', metavar='STR|FILE', default='medium',
                         help="axtChain linear gap parameter.")
+
+    parser.add_argument('--hal-aux-dir', metavar='PATH',
+                        help="Directory in which HAL-derived data files are created (e.g. genome sequence"
+                             " files). By default, the path of this directory is determined from the input"
+                             " HAL file (e.g. '/path/to/aln.hal'), by replacing the HAL file extension with"
+                             " the suffix '_files' (e.g. '/path/to/aln_files').")
     args = parser.parse_args()
 
-    hal_file_stem, _ = os.path.splitext(args.hal_file)
-    hal_aux_dir = f'{hal_file_stem}_files'
+    if args.hal_aux_dir is not None:
+        hal_aux_dir = args.hal_aux_dir
+    else:
+        hal_file_stem, _ = os.path.splitext(args.hal_file)
+        hal_aux_dir = f'{hal_file_stem}_files'
     os.makedirs(hal_aux_dir, exist_ok=True)
 
     src_2bit_file = os.path.join(hal_aux_dir, f'{args.src_genome}.2bit')
