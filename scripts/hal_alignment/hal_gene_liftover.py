@@ -372,6 +372,9 @@ def main() -> None:
     parser.add_argument('--linear-gap', metavar='STR|FILE', default='medium',
                         help="axtChain linear gap parameter.")
 
+    parser.add_argument('--output-format', metavar='STR', default='JSON', choices=['JSON', 'TSV'],
+                        help="Format of output file.")
+
     parser.add_argument('--hal-aux-dir', metavar='PATH',
                         help="Directory in which HAL-derived data files are created (e.g. genome sequence"
                              " files). By default, the path of this directory is determined from the input"
@@ -408,8 +411,39 @@ def main() -> None:
                               flank_length=args.flank, linear_gap=args.linear_gap)
         recs.append(rec)
 
-    with open(args.output_file, 'w') as f:
-        json.dump(recs, f)
+    if args.output_format == 'JSON':
+
+        with open(args.output_file, 'w') as f:
+            json.dump(recs, f)
+
+    elif args.output_format == 'TSV':
+
+        output_field_names = [
+            'src_genome',
+            'src_chr',
+            'src_start',
+            'src_end',
+            'src_strand',
+            'flank',
+            'dest_genome',
+            'lifted_src_chr',
+            'lifted_src_start',
+            'lifted_src_end',
+            'lifted_src_strand',
+            'dest_chr',
+            'dest_start',
+            'dest_end',
+            'dest_strand',
+            'dest_sequence'
+        ]
+
+        with open(args.output_file, 'w') as f:
+            writer = csv.DictWriter(f, output_field_names, dialect=UnixTab)
+            writer.writeheader()
+            for rec in recs:
+                params = rec['params']
+                for result in rec['results']:
+                    writer.writerow({**params, **result})
 
 
 def make_src_region_file(regions: Iterable[SimpleRegion], genome: str, chr_sizes: Mapping[str, int],
