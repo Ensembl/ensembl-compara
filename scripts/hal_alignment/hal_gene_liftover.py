@@ -99,8 +99,8 @@ def extract_liftover_regions(src_region: SimpleRegion, chain_file: Union[Path, s
     field_names = ['score', 'tName', 'tSize', 'tStrand', 'tStart', 'tEnd',
                    'qName', 'qSize', 'qStrand', 'qStart', 'qEnd', 'id']
 
-    chain_src_regions = list()
-    chain_dest_regions = list()
+    chain_src_regions = []
+    chain_dest_regions = []
     with open(chain_file) as f:
         for line in f:
             if not line.startswith('chain'):
@@ -185,7 +185,7 @@ def liftover_region(src_region: SimpleRegion,
     """
     _strand_sign_to_num = {'+': 1, '-': -1}
 
-    rec: Dict[str, Any] = dict()
+    rec: Dict[str, Any] = {}
     rec['params'] = {
         'src_genome': src_genome,
         'src_chr': src_region.chr,
@@ -196,7 +196,7 @@ def liftover_region(src_region: SimpleRegion,
         'dest_genome': dest_genome
     }
 
-    rec['results'] = list()
+    rec['results'] = []
     with TemporaryDirectory() as tmp_dir:
 
         src_bed_file = os.path.join(tmp_dir, 'src_regions.bed')
@@ -250,7 +250,7 @@ def load_chr_sizes(hal_file: Union[Path, str], genome_name: str) -> Dict[str, in
     cmd = ['halStats', '--chromSizes', genome_name, hal_file]
     process = run(cmd, check=True, capture_output=True, text=True, encoding='ascii')
 
-    chr_sizes = dict()
+    chr_sizes = {}
     for line in process.stdout.splitlines():
         chr_name, chr_size = line.rstrip().split('\t')
         chr_sizes[chr_name] = int(chr_size)
@@ -292,7 +292,7 @@ def main() -> None:
     src_chr_sizes = load_chr_sizes(args.hal_file, args.src_genome)
     src_regions = [parse_region(args.src_region)]
 
-    recs = list()
+    recs = []
     for src_region in src_regions:
         rec = liftover_region(src_region, args.src_genome, src_2bit_file, src_chr_sizes,
                               args.dest_genome, dest_2bit_file, args.hal_file,
