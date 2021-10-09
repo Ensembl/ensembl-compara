@@ -268,12 +268,12 @@ def main() -> None:
     parser.add_argument('output_file', help="Output file.")
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--src-region', help="Region to liftover.")
+    group.add_argument('--src-region', metavar='STR', help="Region to liftover.")
 
-    parser.add_argument('--flank', default=0, type=int,
+    parser.add_argument('--flank', metavar='INT', default=0, type=int,
                         help="Requested length of upstream/downstream"
                              " flanking regions to include in query.")
-    parser.add_argument('--linear-gap', default='medium',
+    parser.add_argument('--linear-gap', metavar='STR|FILE', default='medium',
                         help="axtChain linear gap parameter.")
     args = parser.parse_args()
 
