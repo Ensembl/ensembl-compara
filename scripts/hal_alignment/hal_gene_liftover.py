@@ -259,6 +259,7 @@ def liftover_region(src_region: SimpleRegion,
                     dest_2bit_file: Union[Path, str],
                     hal_file: Union[Path, str],
                     flank_length: int = 0,
+                    skip_chain: bool = False,
                     linear_gap: Union[Path, str] = 'medium') -> Dict[str, Any]:
     """Liftover a region from one genome to another.
 
@@ -271,6 +272,7 @@ def liftover_region(src_region: SimpleRegion,
         dest_2bit_file: 2bit file of destination genome sequences.
         hal_file: Input HAL file.
         flank_length: Length of upstream/downstream flanking regions to request.
+        skip_chain: Set to True to skip chaining of liftover alignment regions.
         linear_gap: axtChain linear gap parameter.
 
     Returns:
@@ -304,7 +306,10 @@ def liftover_region(src_region: SimpleRegion,
             return rec
 
         chain_file = os.path.join(tmp_dir, 'alignment.chain')
-        run_axt_chain(psl_file, src_2bit_file, dest_2bit_file, chain_file, linear_gap=linear_gap)
+        if skip_chain:
+            run_psl_to_chain(psl_file, chain_file)
+        else:
+            run_axt_chain(psl_file, src_2bit_file, dest_2bit_file, chain_file, linear_gap=linear_gap)
 
         lifted_src_regions, dest_regions = extract_liftover_regions(src_region, chain_file)
 
@@ -369,6 +374,8 @@ def main() -> None:
     parser.add_argument('--flank', metavar='INT', default=0, type=int,
                         help="Requested length of upstream/downstream"
                              " flanking regions to include in query.")
+    parser.add_argument('--skip-chain', action='store_true',
+                        help="Skip chaining of liftover alignment regions.")
     parser.add_argument('--linear-gap', metavar='STR|FILE', default='medium',
                         help="axtChain linear gap parameter.")
 
@@ -408,7 +415,8 @@ def main() -> None:
     for src_region in src_regions:
         rec = liftover_region(src_region, args.src_genome, src_2bit_file, src_chr_sizes,
                               args.dest_genome, dest_2bit_file, args.hal_file,
-                              flank_length=args.flank, linear_gap=args.linear_gap)
+                              flank_length=args.flank, skip_chain=args.skip_chain,
+                              linear_gap=args.linear_gap)
         recs.append(rec)
 
     if args.output_format == 'JSON':
@@ -563,6 +571,18 @@ def run_hal_liftover(hal_file: Union[Path, str], src_genome: str,
             status_type = 'exit code' if p1.returncode > 0 else 'signal'
             raise RuntimeError(
                 f'halLiftover terminated with {status_type} {abs(p1.returncode)}')
+
+
+def run_psl_to_chain(psl_file: Union[Path, str], chain_file: Union[Path, str]) -> None:
+    """Convert PSL file to chain format.
+
+    Args:
+        psl_file: Input PSL file.
+        chain_file: Output chain file.
+
+    """
+    cmd = ['pslToChain', psl_file, chain_file]
+    run(cmd, check=True)
 
 
 def run_two_bit_to_fa(bed_file: Union[Path, str], two_bit_file: Union[Path, str],
