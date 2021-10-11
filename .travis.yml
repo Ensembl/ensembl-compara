@@ -24,15 +24,14 @@ before_install:
     # yamllint disable-line rule:indentation
     - cpanm -nq local::lib
     - eval "$(perl -Mlocal::lib=${HOME}/deps)"
-    # yamllint disable rule:line-length
     - git clone --branch release/105 --depth 1 https://github.com/Ensembl/ensembl-test.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
     - git clone --branch release/105 --depth 1 https://github.com/Ensembl/ensembl-rest.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-rest.git
     - git clone --branch release/105 --depth 1 https://github.com/Ensembl/ensembl-funcgen.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-funcgen.git
     - git clone --branch release/105 --depth 1 https://github.com/Ensembl/ensembl-variation.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-variation.git
     - git clone --branch release/105 --depth 1 https://github.com/Ensembl/ensembl-io.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-io.git
     - git clone --branch release/105 --depth 1 https://github.com/Ensembl/ensembl.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
-    - git clone --branch release/105 --depth 1 https://github.com/Ensembl/ensembl-datacheck.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-datacheck.git
-    # yamllint enable rule:line-length
+    - git clone --branch release/105 --depth 1 https://github.com/Ensembl/ensembl-datacheck.git || git clone --branch main --depth 1 https://github.com/Ensembl/ensembl-datacheck.git
+    - git clone --branch release/105 --depth 1 https://github.com/Ensembl/ensembl-production.git || git clone --branch main --depth 1 https://github.com/Ensembl/ensembl-production.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-hive.git
     - git clone --branch stable --depth 1 https://github.com/Ensembl/ensembl-taxonomy.git
     - ln -s . ensembl-compara
@@ -74,29 +73,26 @@ jobs:
         - pip install --user yamllint
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
         - cpanm --quiet --installdeps --notest .
-        - yamllint --version
-        - shellcheck --version
-      script: prove -rv ./travisci/all-housekeeping/
+      script: prove -r ./travisci/all-housekeeping/
 
-    # - language: perl
-    #   perl: 5.30
-    #   name: "SQL unit tests"
-    #   install:
-    #     - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
-    #   script: prove -r ./travisci/sql-unittest/
+   # - language: perl
+   #   perl: 5.30
+   #   name: "SQL unit tests"
+   #   install:
+   #     - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
+   #   script: prove -r ./travisci/sql-unittest/
 
     - language: perl
       dist: trusty   # 5.22 is the minimum on xenial
       perl: 5.14
       name: "Perl unit tests on the minimum version"
       env:
-        - COVERAGE=true
+        - COVERAGE=false
       install:
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
         - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
         - cpanm --quiet --installdeps --notest --cpanfile ensembl-rest/cpanfile .
         - cpanm --quiet --installdeps --notest .
-        - cpanm --quiet --notest Devel::Cover::Report::Codecov
       script: ./travisci/perl-unittest_harness.sh
 
     - language: perl
@@ -113,23 +109,6 @@ jobs:
       script: ./travisci/perl-unittest_harness.sh
       after_success:
         - cover --nosummary -report codecov
-
-    # - language: perl
-    #   perl: 5.30
-    #   name: "Perl external unit tests on the latest version, with code coverage"
-    #   env:
-    #     - COVERAGE=true
-    #   install:
-    #     - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
-    #     # 8.43 is the last version compatible with Perl 5.14
-    #     - cpanm --quiet --notest Mojolicious@8.43
-    #     - cpanm --quiet --installdeps --notest --cpanfile ensembl-rest/cpanfile .
-    #     - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
-    #     - cpanm --quiet --installdeps --notest .
-    #     - cpanm --quiet --notest Devel::Cover::Report::Codecov
-    #   script: ./travisci/perl-external_unittest_harness.sh
-    #   after_success:
-    #     - cover --nosummary -report codecov
 
     - language: perl
       perl: 5.30
@@ -151,7 +130,7 @@ jobs:
       script: ./travisci/python-unittest_harness.sh
 
     - language: python
-      python: 3.8
+      python: 3.9
       name: "Python unit tests on the latest version, with code coverage"
       env:
         - TEST_COMPILATION=false    # Because the linters also check that the code compiles
@@ -175,4 +154,3 @@ jobs:
         - pip install pylint mypy
         - pip install -r requirements.txt .
       script: ./travisci/python-linter_harness.sh
-
