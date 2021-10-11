@@ -24,6 +24,7 @@ before_install:
     # yamllint disable-line rule:indentation
     - cpanm -nq local::lib
     - eval "$(perl -Mlocal::lib=${HOME}/deps)"
+    # yamllint disable rule:line-length
     - git clone --branch release/105 --depth 1 https://github.com/Ensembl/ensembl-test.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
     - git clone --branch release/105 --depth 1 https://github.com/Ensembl/ensembl-rest.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-rest.git
     - git clone --branch release/105 --depth 1 https://github.com/Ensembl/ensembl-funcgen.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-funcgen.git
@@ -32,6 +33,7 @@ before_install:
     - git clone --branch release/105 --depth 1 https://github.com/Ensembl/ensembl.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
     - git clone --branch release/105 --depth 1 https://github.com/Ensembl/ensembl-datacheck.git || git clone --branch main --depth 1 https://github.com/Ensembl/ensembl-datacheck.git
     - git clone --branch release/105 --depth 1 https://github.com/Ensembl/ensembl-production.git || git clone --branch main --depth 1 https://github.com/Ensembl/ensembl-production.git
+    # yamllint enable rule:line-length
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-hive.git
     - git clone --branch stable --depth 1 https://github.com/Ensembl/ensembl-taxonomy.git
     - ln -s . ensembl-compara
@@ -73,7 +75,9 @@ jobs:
         - pip install --user yamllint
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
         - cpanm --quiet --installdeps --notest .
-      script: prove -r ./travisci/all-housekeeping/
+        - yamllint --version
+        - shellcheck --version
+      script: prove -rv ./travisci/all-housekeeping/
 
    # - language: perl
    #   perl: 5.30
