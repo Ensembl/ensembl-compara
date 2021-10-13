@@ -113,12 +113,12 @@ my $compara_dbs = {
     'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
 
     ## fish
-    #'fish_epo_w_ext'    => [ 'mysql-ens-compara-prod-X', '' ],
+    'fish_epo_w_ext'    => [ 'mysql-ens-compara-prod-1', 'twalsh_fish_epo_with_ext_106_2' ],
     'fish_epo_prev'     => [ 'mysql-ens-compara-prod-3', 'carlac_fish_epo_update_104' ],
     'fish_epo_anchors'  => [ 'mysql-ens-compara-prod-8', 'muffato_generate_anchors_fish_100' ],
 
     ## primates
-    #'primates_epo_w_ext'    => [ 'mysql-ens-compara-prod-X', '' ],
+    'primates_epo_w_ext'    => [ 'mysql-ens-compara-prod-2', 'twalsh_primates_epo_with_ext_106_2' ],
     'primates_epo_prev'     => [ 'mysql-ens-compara-prod-8', 'ivana_mammals_epo_with_ext_105' ],  # Primates are reused from mammals of the *same release* (same anchors and subset of species)
     'primates_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
