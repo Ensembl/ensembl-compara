@@ -98,8 +98,8 @@ my $genes = $dba->get_GeneAdaptor()->fetch_all_by_biotype('protein_coding');
 
 my $seq_out = Bio::SeqIO->new( -file => ">$gene_set_dump_file", -format => 'Fasta');
 
-# dump the canonical peptide to file
-print scalar(@$genes) . "\n";
+# Dump the canonical peptides to a file
+print "Found ", scalar(@$genes), " genes.\n";
 
 foreach my $gene (@$genes) {
     my $can_transcript = $gene->canonical_transcript();
