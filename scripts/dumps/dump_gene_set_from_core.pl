@@ -14,6 +14,50 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+=head1 NAME
+
+dump_gene_set_from_core.pl
+
+=head1 DESCRIPTION
+
+This script dumps the canonical peptide of all protein coding genes from a core database.
+
+=head1 SYNOPSIS
+
+    perl dump_gene_set_from_core.pl --core-db <COREDB> --host <HOST> --port <PORT> --outfile <OUTFILE>
+
+=head1 EXAMPLES
+
+    perl dump_gene_set_from_core.pl --core-db bos_taurus_core_106_12 \
+        --host mysql-ens-vertannot-staging --port 4573 --outfile $HOME/bos_taurus_canon_pep.fasta
+
+=head1 OPTIONS
+
+=over
+
+=item B<-core-db> <core_db>, B<-core_db> <core_db>
+
+Core database name storing the genome sequence to be dumped.
+
+=item B<-host> <host>
+
+Server hosting the core database.
+
+=item B<-port> <port>
+
+Port for the host database.
+
+=item B<-outfile> <outfile>
+
+File where the dumped sequence will be stored (in fasta format).
+
+=item B<-h[elp]>
+
+Print usage information.
+
+=back
+
+=cut
 use strict;
 use warnings;
 
@@ -23,46 +67,35 @@ use Bio::Seq;
 use Bio::SeqIO;
 
 use Getopt::Long;
+use Pod::Usage;
 
 my ($dbname, $host, $port, $gene_set_dump_file, $help);
-my $desc = "
-This script dumps the canonical peptide of all protein coding genes from a core db
-
-USAGE dump_gene_set_from_core.pl -core-db COREDB -host HOST -port PORT -outfile OUTFILE
-
-Options:
-* --core-db
-      the core database name storing the genome sequence to be dumped
-* --host
-      server hosting the core database
-* --port
-      port for the host database
-* --outfile
-      file where the dumped sequence will be sored in fasta format
-";
 
 GetOptions(
-    'core-db=s'  => \$dbname,
-    'host=s'    => \$host,
-    'port=s'    => \$port,
-    'outfile=s' => \$gene_set_dump_file,
-    'help'      => \$help
-  );
+    'core-db|core_db=s' => \$dbname,
+    'host=s'            => \$host,
+    'port=s'            => \$port,
+    'outfile=s'         => \$gene_set_dump_file,
+    'h|help'            => \$help
+);
 
-if ($help) {
-  print $desc;
-  exit(0);
+pod2usage(1) if $help;
+unless ($dbname and $host and $port and $gene_set_dump_file) {
+    pod2usage(1);
 }
 
-my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( -user   => 'ensro',
-                                               -dbname => $dbname,
-                                               -host   => $host,
-                                               -port   => $port,
-                                               -driver => 'mysql');
+my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+    -user   => 'ensro',
+    -dbname => $dbname,
+    -host   => $host,
+    -port   => $port,
+    -driver => 'mysql',
+);
 
 my $genes = $dba->get_GeneAdaptor()->fetch_all_by_biotype('protein_coding');
 
-## create a Fasta seqIO object to store the sequences
+# Create a fasta SeqIO object to store the sequences
+
 my $seq_out = Bio::SeqIO->new( -file => ">$gene_set_dump_file", -format => 'Fasta');
 
 # dump the canonical peptide to file
