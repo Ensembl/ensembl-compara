@@ -101,8 +101,9 @@ my $seq_out = Bio::SeqIO->new( -file => ">$gene_set_dump_file", -format => 'Fast
 # dump the canonical peptide to file
 print scalar(@$genes) . "\n";
 
-foreach my $gene (@$genes){
-    my $can_transcript = $gene->canonical_transcript ();
+foreach my $gene (@$genes) {
+    my $can_transcript = $gene->canonical_transcript();
+
     if ( $can_transcript->translation() ) {
         my $pep = $can_transcript->translate();
         $seq_out->write_seq($pep);
