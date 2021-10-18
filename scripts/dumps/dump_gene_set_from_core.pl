@@ -94,7 +94,7 @@ my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
 
 my $genes = $dba->get_GeneAdaptor()->fetch_all_by_biotype('protein_coding');
 
-my $seq_out = Bio::SeqIO->new( -file => ">$gene_set_dump_file", -format => 'Fasta');
+my $seq_out = Bio::SeqIO->new( -file => ">$gene_set_dump_file", -format => 'Fasta' );
 
 print "Found ", scalar(@$genes), " genes.\n";
 
