@@ -94,11 +94,8 @@ my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
 
 my $genes = $dba->get_GeneAdaptor()->fetch_all_by_biotype('protein_coding');
 
-# Create a fasta SeqIO object to store the sequences
-
 my $seq_out = Bio::SeqIO->new( -file => ">$gene_set_dump_file", -format => 'Fasta');
 
-# Dump the canonical peptides to a file
 print "Found ", scalar(@$genes), " genes.\n";
 
 foreach my $gene (@$genes) {
