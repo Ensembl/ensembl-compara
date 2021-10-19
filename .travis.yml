@@ -146,20 +146,21 @@ jobs:
       before_install:
         - echo
       install:
-        - pip install -r requirements.txt .
+        - pip install -r requirements.txt -r requirements-test.txt
+        - pip install -e .
       script: ./travisci/python-unittest_harness.sh
 
     - language: python
       python: 3.9
       name: "Python unit tests on the latest version, with code coverage"
       env:
-        - TEST_COMPILATION=false    # Because the linters also check that the code compiles
+        - TEST_COMPILATION=false    # Linters also check that the code compiles
         - COVERAGE=true
       before_install:
         - echo
       install:
-        - pip install pytest-cov codecov
-        - pip install -r requirements.txt
+        - pip install codecov
+        - pip install -r requirements.txt -r requirements-test.txt
         - pip install -e .
       script: ./travisci/python-unittest_harness.sh
       after_success:
@@ -172,5 +173,6 @@ jobs:
         - echo
       install:
         - pip install pylint mypy
-        - pip install -r requirements.txt .
+        - pip install -r requirements.txt
+        - pip install -e .
       script: ./travisci/python-linter_harness.sh
