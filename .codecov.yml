@@ -1,4 +1,3 @@
-
 coverage:
   status:
     project:
@@ -6,4 +5,3 @@ coverage:
         # Don't report failures on pull-requests
         informational: true
     patch: off
-
