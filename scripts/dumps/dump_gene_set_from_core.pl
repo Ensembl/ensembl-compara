@@ -22,6 +22,9 @@ dump_gene_set_from_core.pl
 
 This script dumps the canonical peptide of all protein coding genes from a core database.
 
+It can be quite memory intensive, and typically requires a gigabyte
+or more of memory to dump a complete gene set.
+
 =head1 SYNOPSIS
 
     perl dump_gene_set_from_core.pl --core-db <COREDB> --host <HOST> --port <PORT> --outfile <OUTFILE>
@@ -98,11 +101,16 @@ my $seq_out = Bio::SeqIO->new( -file => ">$gene_set_dump_file", -format => 'Fast
 
 print "Found ", scalar(@$genes), " genes.\n";
 
+my $num_genes_done = 0;
 foreach my $gene (@$genes) {
     my $can_transcript = $gene->canonical_transcript();
 
     if ( $can_transcript->translation() ) {
         my $pep = $can_transcript->translate();
         $seq_out->write_seq($pep);
+        
+        $num_genes_done++;
     }
 }
+
+print "Processed ", $num_genes_done, " genes.\n";
