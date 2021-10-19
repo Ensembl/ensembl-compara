@@ -50,15 +50,13 @@ def assemblies_parser(dest, ext):
             assert key not in content
 
             content[key] = {
-                "path": "{}/{}".format(dest, filename),
+                "path": f"{dest}/{filename}",
                 "name": filename.rsplit(ext, 1)[0],
                 "used": False,
             }
         else:
             print(
-                "filename {} does not end with {}, thus it has been ignored".format(
-                    filename, ext
-                )
+                f"filename {filename} does not end with {ext}, thus it has been ignored"
             )
 
     return content
@@ -76,7 +74,7 @@ def tree_parser(filename, tree_format, output):
         A dictionary containing the tree and path (where the Cactus input file will be saved)
 
     """
-    with open(filename, encoding="utf-8", mode="r") as f:
+    with open(filename, encoding="utf-8") as f:
 
         if output is None:
             output = os.path.dirname(os.path.realpath(f.name))
@@ -84,7 +82,7 @@ def tree_parser(filename, tree_format, output):
             output = os.path.abspath(output)
 
         name, ext = os.path.splitext(os.path.basename(f.name))
-        output += "/{}.processed{}".format(name, ext)
+        output += f"/{name}.processed{ext}"
         tree = Phylo.read(f, format=tree_format)
 
     return {"tree": tree, "path": output}
@@ -129,7 +127,7 @@ def create_new_tree(tree_content, assemblies_content, tree_format):
     filenames_not_used = []
     for fasta in assemblies_content.values():
         if not fasta["used"]:
-            print("FASTA file not used in the tree: {}".format(fasta["name"]))
+            print(f"FASTA file not used in the tree: {fasta['name']}")
             filenames_not_used.append(fasta)
 
     return filenames_not_used
@@ -146,7 +144,7 @@ def append_fasta_paths(filename, content):
     with open(filename, encoding="utf-8", mode="a") as f:
         for fasta in content.values():
             if fasta["used"]:
-                f.write("{} {}\n".format(fasta["name"], fasta["path"]))
+                f.write(f"{fasta['name']} {fasta['path']}\n")
 
 
 def add_header(
@@ -169,27 +167,21 @@ def add_header(
 
     """
 
-    with open(cactus_prepare_filename, encoding="utf-8", mode="r") as f:
+    with open(cactus_prepare_filename, encoding="utf-8") as f:
         new_content = f.read().replace(":None", "")
 
-    with open(tree_filename, encoding="utf-8", mode="r") as f:
+    with open(tree_filename, encoding="utf-8") as f:
         old_content = f.read()
 
     with open(cactus_prepare_filename, encoding="utf-8", mode="w+") as f:
-        f.write(
-            "# File generated On {}\n".format(
-                datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            )
-        )
-        f.write("# by the following command: {}\n".format(" ".join(argv)))
+        f.write(f"# File generated On {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n")
+        f.write(f"# by the following command: {' '.join(argv)}\n")
         f.write("#\n")
         f.write("# Original tree:")
-        f.write("\n# {}".format(old_content))
+        f.write(f"\n# {old_content}")
         f.write("#\n")
         f.write(
-            "# Tree below contains files={} and terminals={}".format(
-                qtd_files - len(unused_filenames), qtd_terminals
-            )
+            f"# Tree below contains files={qtd_files - len(unused_filenames)} and terminals={qtd_terminals}"
         )
         f.write("\n# Files not used: ")
         if len(unused_filenames) == 0:
@@ -197,7 +189,7 @@ def add_header(
         else:
             f.write("\n")
             for fasta in unused_filenames:
-                f.write("# {} {}\n".format(fasta["name"], fasta["path"]))
+                f.write(f"# {fasta['name']} {fasta['path']}\n")
         f.write("#\n")
         f.write(new_content)
 
