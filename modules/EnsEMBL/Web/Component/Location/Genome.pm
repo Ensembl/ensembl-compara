@@ -417,10 +417,7 @@ sub _feature_table {
       
     $html .= "<h3>$table_info->{'header'}</h3>";
 
-    if (!@{$table_info->{'rows'}||[]} && $table_info->{'empty_msg'}) {
-      $html .= '<p>'.$table_info->{'empty_msg'}.'</p>';
-    }
-    else {
+    if ($table_info->{'rows'}) {
       my $table = $self->new_table($columns, $table_info->{'rows'}, { data_table => 1, id => "${feat_type}_table", %{$table_info->{'table_style'} || {}} });
       $html .= $table->render;
     }
@@ -546,7 +543,9 @@ sub _configure_ProbeTranscript_table {
 
   my $config = {'header' => $header, 'column_order' => $column_order, 'rows' => $rows}; 
   if (!@$rows) {
-    $config->{'empty_msg'} = 'This probe does not map to any transcripts';
+    $config ->{'header'} = '';
+    $config ->{'column_order'} = '';
+    $config ->{'rows'} = '';
   }
   return $config;
 }
