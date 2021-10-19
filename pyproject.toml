@@ -1,0 +1,41 @@
+[build-system]
+requires = [
+    "setuptools",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+addopts = "-v --tb=native --server=mysql://ensadmin:$ENSADMIN_PSW@mysql-ens-compara-prod-1:4485/"
+testpaths = [
+    "src/python/tests"
+]
+norecursedirs = [
+    "*.egg*",
+    "data",
+    "docs",
+    "env",
+    "tmp*"
+]
+
+[tool.coverage.run]
+source = ["src/python/lib"]
+
+[tool.mypy]
+python_version = 3.7
+mypy_path = "src/python/lib"
+ignore_missing_imports = true
+
+[tool.pylint.messages_control]
+max-line-length = 110
+disable = [
+    "invalid-name",
+    "no-self-use",
+    "relative-import",
+    "similarities",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-locals",
+    "too-many-statements",
+    "wildcard-import"
+]
