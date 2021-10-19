@@ -37,7 +37,7 @@ def get_species_set_by_name(mlss_conf_file: str, species_set_name: str) -> List[
         species_set_name: Species set (collection) name.
 
     Returns:
-        A list of species (genome names) for the given species set name.
+        A list of species (genome names) for a given species set name.
 
     Raises:
         FileNotFoundError: If `mlss_conf_file` is not found.
