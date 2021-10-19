@@ -1,4 +1,21 @@
 #!/usr/bin/env python3
+
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 """This script prompts a user to parse the output of cactus-prepare in order to
 a bash script that wraps the cactus pipeline into Slurm jobs."""
 
@@ -11,6 +28,7 @@ import shutil
 import pathlib
 import re
 from pathlib import Path
+from typing import Any, Union
 
 try:
     import yaml
@@ -637,7 +655,7 @@ def slurmify(
 ###################################################################
 
 
-def create_workflow_script(root_dir, task_type, script_dir, workflow_filename):
+def create_workflow_script(root_dir: Union[str, None], task_type: str, script_dir: str, workflow_filename: str) -> None:
     """Create Cactus pipeline using Slurm dependencies.
 
     Args:
@@ -792,7 +810,7 @@ if __name__ == "__main__":
     while True:
 
         # get a line from the input file
-        raw_line = next(reader, "")
+        raw_line: str = next(reader, "")
 
         # parsing job done
         if not raw_line:
@@ -868,16 +886,16 @@ if __name__ == "__main__":
     create_bash_script(filename=workflow_scripts)
 
     for job in data["task_order"]:
-        directories = data["jobs"][job]["directories"]
-        for round_dir in directories["rounds"]:
+        dir_: dict[str, Any] = data["jobs"][job]["directories"]
+        for round_dir in dir_["rounds"]:
 
             create_workflow_script(
                 root_dir=(
-                    f"{directories['root']}/{data['jobs'][job]['task_name']}"
+                    f"{dir_['root']}/{data['jobs'][job]['task_name']}"
                     if round_dir is None
-                    else f"{directories['root']}/{data['jobs'][job]['task_name']}/{round_dir}"
+                    else f"{dir_['root']}/{data['jobs'][job]['task_name']}/{round_dir}"
                 ),
                 task_type=job,
-                script_dir=directories["scripts"]["all"],
+                script_dir=dir_["scripts"]["all"],
                 workflow_filename=workflow_scripts,
             )
