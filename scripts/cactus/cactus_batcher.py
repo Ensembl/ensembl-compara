@@ -655,7 +655,9 @@ def slurmify(
 ###################################################################
 
 
-def create_workflow_script(root_dir: Union[str, None], task_type: str, script_dir: str, workflow_filename: str) -> None:
+def create_workflow_script(
+    root_dir: Union[str, None], task_type: str, script_dir: str, workflow_filename: str
+) -> None:
     """Create Cactus pipeline using Slurm dependencies.
 
     Args:
