@@ -93,8 +93,9 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-4', 'jalvarez_plants_load_members_106'],
-    # 'compara_ptrees'   => [ 'mysql-ens-compara-prod-', '' ],
+    'compara_members'        => [ 'mysql-ens-compara-prod-4', 'jalvarez_plants_load_members_106'],
+    'compara_ptrees'         => [ 'mysql-ens-compara-prod-4', 'jalvarez_default_plants_protein_trees_106' ],
+    'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-5', 'jalvarez_wheat_cultivars_plants_protein_trees_106' ],
 
     # LASTZ dbs
     'lastz_batch_1'  => [ 'mysql-ens-compara-prod-3', 'jalvarez_plants_lastz_batch1_106' ],
@@ -111,7 +112,7 @@ my $compara_dbs = {
     'lastz_batch_12' => [ 'mysql-ens-compara-prod-7', 'ivana_plants_lastz_batch12_106' ],
 
     # synteny
-    # 'compara_syntenies' => [ 'mysql-ens-compara-prod-', '' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-8', 'jalvarez_plants_synteny_106' ],
 
     # EPO dbs
     ## rice
