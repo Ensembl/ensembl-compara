@@ -37,7 +37,7 @@ check_gpu(){
     elapsed=$(get_elapsed_time $start_time)
  
     # GPU not loaded until now =/
-    [ $elapsed -gt $stop_condition ] && break
+    [ "$elapsed" -gt $stop_condition ] && break
  
     sleep 10
   done
@@ -59,14 +59,14 @@ export CACTUS_GPU_IMAGE="/apps/cactus/images/cactus-gpu.sif"
  
 # Create local folder to add some binaries
 LOCAL_SCRIPTS="$HOME/.local/scripts"
-[ -d $LOCAL_SCRIPTS ] || mkdir -p $LOCAL_SCRIPTS
+[ -d "$LOCAL_SCRIPTS" ] || mkdir -p "$LOCAL_SCRIPTS"
  
 # Download scripts
 URL="https://raw.githubusercontent.com/thiagogenez/ensembl-compara/feature/cactus_scripts/scripts/cactus"
 CACTUS_SCRIPTS=(cactus_tree_prepare.py cactus_batcher.py)
-for i in ${CACTUS_SCRIPTS[@]}; do
-	wget --quiet $URL/$i -O $LOCAL_SCRIPTS/$i
-	chmod +x $LOCAL_SCRIPTS/$i
+for i in "${CACTUS_SCRIPTS[@]}"; do
+	wget --quiet "$URL/$i" -O "$LOCAL_SCRIPTS/$i"
+	chmod +x "$LOCAL_SCRIPTS/$i"
 done 
 
 #UPDATE PATH
