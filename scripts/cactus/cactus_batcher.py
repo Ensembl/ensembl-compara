@@ -878,13 +878,13 @@ if __name__ == "__main__":
         for round_dir in directories["rounds"]:
 
             if round_dir is None:
-                root_dir = f"{directories['root']}/{data['jobs'][job]['task_name']}"
+                slurm_root_dir = f"{directories['root']}/{data['jobs'][job]['task_name']}"
             else:
-                root_dir = f"{directories['root']}/{data['jobs'][job]['task_name']}/{round_dir}"
+                slurm_root_dir = f"{directories['root']}/{data['jobs'][job]['task_name']}/{round_dir}"
 
             # create SLURM batches jobs
             slurm_job_dependencies = slurmify(
-                root_dir=root_dir,
+                root_dir=slurm_root_dir,
                 script_dirs=directories["scripts"],
                 log_dir=directories["logs"],
                 resources=slurm_config,
@@ -904,12 +904,12 @@ if __name__ == "__main__":
         for round_dir in dir_["rounds"]:
 
             if round_dir is None:
-                root_dir = f"{dir_['root']}/{data['jobs'][job]['task_name']}"
+                script_root_dir = f"{dir_['root']}/{data['jobs'][job]['task_name']}"
             else:
-                root_dir = f"{dir_['root']}/{data['jobs'][job]['task_name']}/{round_dir}"
+                script_root_dir = f"{dir_['root']}/{data['jobs'][job]['task_name']}/{round_dir}"
 
             create_workflow_script(
-                root_dir=root_dir,
+                root_dir=script_root_dir,
                 task_type=job,
                 script_dir=dir_["scripts"]["all"],
                 workflow_filename=workflow_scripts,
