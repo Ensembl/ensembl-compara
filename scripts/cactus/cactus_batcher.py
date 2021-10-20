@@ -55,7 +55,7 @@ for i in ["CACTUS_IMAGE", "CACTUS_GPU_IMAGE"]:
 ###################################################################
 
 
-def symlink(target, link_name, overwrite=False):
+def symlink(target: str, link_name: str, overwrite: bool = False) -> None:
     """Create a symbolic link named link_name pointing to target. If link_name
     exists then FileExistsError is raised, unless overwrite=True. When trying
     to overwrite a directory, IsADirectoryError is raised.
