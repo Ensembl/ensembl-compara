@@ -91,18 +91,22 @@ def symlink(target: str, link_name: str, overwrite: bool = False) -> None:
                 f"Cannot symlink over existing directory: '{link_name}'"
             )
         os.replace(temp_link_name, link_name)
-    except BaseException:
+    except Exception:
         if os.path.islink(temp_link_name):
             os.remove(temp_link_name)
         raise
 
 
-def read_file(filename, line_number=False):
++def read_file(filename: str) -> Generator[str, None, None]:
     """Function to read a file.
 
     Args:
-        @filename: The name of the file to read
+        filename: The name of the file to read.
         @line_number: return the number along with the line
+
+    Yields:
+        Each line of the input file.
+
     """
     with open(filename, encoding="utf-8") as file:
         while True:
@@ -116,10 +120,11 @@ def create_symlinks(src_dirs, dest):
     """Create relative symbolic links.
 
     Args:
-        @src_dirs: list of source directory for symlink generation
-        @dest: where the symlink must be created
+        src_dirs: List of source directories for symlink generation.
+        dest: The directory in which the symlinks must be created.
+
     """
-    pathlib.Path(dest).mkdir(parents=True, exist_ok=True)
+    Path(dest).mkdir(parents=True, exist_ok=True)
 
     for src in src_dirs:
         relativepath = os.path.relpath(src, dest)
@@ -127,13 +132,14 @@ def create_symlinks(src_dirs, dest):
         symlink(target=relativepath, link_name=fromfolderWithFoldername, overwrite=True)
 
 
-def append(filename, line, mode="a"):
+def append(filename: str, line: str, mode: str = "a") -> None:
     """Append content to a file.
 
     Args:
-        @filename: the name of the file to append information
-        @line: string to append in the file as a line
-        @mode: mode to open the file
+        filename: The name of the file to append information.
+        line: String to append in the file as a line.
+        mode: Mode to open the file.
+
     """
 
     if line:
@@ -143,12 +149,13 @@ def append(filename, line, mode="a"):
             file.write(line.strip())
 
 
-def mkdir(path, force=False):
+def mkdir(path: str, force: bool = False) -> None:
     """Create a directory.
 
     Args:
-        @path: path to create directories
-        @force: if the directory exists, delete and recreate it
+        path: Path to create directories.
+        force: If the directory exists, delete and recreate it.
+
     """
     if force and Path(path).exists():
         shutil.rmtree(path)
@@ -156,17 +163,18 @@ def mkdir(path, force=False):
     Path(path).mkdir(parents=True, exist_ok=True)
 
 
-def make_executable(path):
+def make_executable(path: str) -> None:
     """Make a file executable, e.g., chmod +x.
 
     Args:
-        @path: path to a file
+        path: Path to a file.
+
     """
     st = os.stat(path)
     os.chmod(path, st.st_mode | stat.S_IEXEC)
 
 
-def create_bash_script(filename, chmod_x=True, shebang="#!/bin/bash"):
+def create_bash_script(filename: str, chmod_x: bool = True, shebang: str = "#!/bin/bash") -> None:
     """Create executable bash script with shebang on it.
 
     Args:
@@ -181,7 +189,7 @@ def create_bash_script(filename, chmod_x=True, shebang="#!/bin/bash"):
         make_executable(path=filename)
 
 
-def create_argparser():
+def create_argparser() -> argparse.ArgumentParser:
     """Create argparser object to parse the input for this script."""
 
     parser = argparse.ArgumentParser()
@@ -318,7 +326,7 @@ def check_slurm_resources_info(content, keys):
     errors = []
 
     if not isinstance(content, dict):
-        errors.append(f"{content} is not a directory")
+        errors.append(f"{content} is not a dictionary")
 
     for key in keys:
         if not key in content:
@@ -336,24 +344,27 @@ def check_slurm_resources_info(content, keys):
 
 
 def parse(
-    read_func,
-    symlink_dir,
-    root_dir,
-    script_dirs,
-    log_dir,
-    task_type,
-    stop_condition,
-    ext="dat",
-):
+    read_func: Iterator[str],
+    symlink_dir: Iterable[str],
+    root_dir: str,
+    script_dirs: Mapping[str, str],
+    log_dir: str,
+    task_type: str,
+    stop_condition: Optional[str],
+    ext: str = "dat",
+) -> None:
     """Main function to parse the output file of Cactus-prepare.
 
     Args:
-        @read_func: pointer to the function that yields input lines
-        @symlink_dir: list of directories (as source) for symlink creation
-        @root_dir: the directory to save parser's output
-        @task_type: type of the given task
-        @stop_condition: the condition to stop this parser
-        @script_dirs: list of extra directories to be created inside of @root_dir
+        read_func: Pointer to the function that yields input lines.
+        symlink_dir: List of directories (as source) for symlink creation.
+        root_dir: The directory in which to save parser's output.
+        script_dirs: List of extra directories to be created inside of `root_dir`.
+        log_dir: Directory in which log files will be written.
+        task_type: Type of the given task.
+        stop_condition: The condition to stop this parser.
+        ext: Extension for the files that contain the command lines.
+
     """
 
     # dict to point to parsed files
@@ -396,9 +407,7 @@ def parse(
         if task_type == "preprocessor":
 
             # define the correct filenames to write the line
-            parsed_files[
-                "all"
-            ] = f"{root_dir}/{script_dirs['all']}/all-{task_type}.{ext}"
+            parsed_files["all"] = f"{root_dir}/{script_dirs['all']}/all-{task_type}.{ext}"
 
         elif task_type == "alignments":
 
@@ -427,17 +436,13 @@ def parse(
             info = cactus_job_command_name(line)
 
             # update filenames to write the line
-            parsed_files[
-                "all"
-            ] = f"{round_path}/{script_dirs['all']}/{info['id']}.{ext}"
+            parsed_files["all"] = f"{round_path}/{script_dirs['all']}/{info['id']}.{ext}"
 
         # update filenames to write the line
         elif task_type == "merging":
 
             # get parent and root node from the command line
-            parsed_files[
-                "all"
-            ] = f"{root_dir}/{script_dirs['all']}/all-{task_type}.{ext}"
+            parsed_files["all"] = f"{root_dir}/{script_dirs['all']}/all-{task_type}.{ext}"
 
         # write the line in the correct files
         for filename in parsed_files.values():
@@ -450,30 +455,34 @@ def parse(
 
 
 def get_slurm_submission(
-    job_name,
-    variable_name,
-    work_dir,
-    log_dir,
-    partition,
-    gpus,
-    cpus,
-    command,
-    dependencies,
-    script_filename,
-    singularity=True,
-):
+    job_name: str,
+    variable_name: str,
+    work_dir: str,
+    log_dir: str,
+    partition: str,
+    gpus: int,
+    cpus: int,
+    command: str,
+    dependencies: Sequence[str],
+    script_filename: str,
+    singularity: bool = True,
+) -> None:
     """Prepare a Slurm string call.
 
     Args:
-        @name: name for the Slurm job
-        @word_dir: Location where the slurm should to to run the command
-        @log_dir: Path Cactus' log
-        @partition: Slurm partition name to dispatch the job
-        @gpus: Amount of GPUs to run the job
-        @cpus: Amount of CPUs to run the job
-        @command: Command to be wrapped by Slurm
-        @dependencies: list of Job IDs that this job depends on
-        @singularity: True if @commands should run via singularity
+        job_name: Name for the Slurm job.
+        variable_name: A unique variable name to identify the given command.
+        work_dir: Location where the slurm should run the command.
+        log_dir: Path to Cactus' log.
+        partition: Slurm partition name to dispatch the job.
+        gpus: Amount of GPUs to run the job.
+        cpus: Amount of CPUs to run the job.
+        command: Command to be wrapped by Slurm.
+        dependencies: List of Job IDs that this job depends on.
+        script_filename: Path of bash script to which a Slurm
+            batch submission command will be written.
+        singularity: True if `command` should run via singularity.
+
     """
 
     # sbatch command line
@@ -532,22 +541,27 @@ def get_slurm_submission(
 
 
 def slurmify(
-    root_dir,
-    script_dirs,
-    log_dir,
-    resources,
-    initial_dependencies,
-    ext="dat",
-):
+    root_dir: str,
+    script_dirs: Mapping[str, str],
+    log_dir: str,
+    resources: Dict,
+    initial_dependencies: Sequence[str],
+    ext: str = "dat",
+) -> List[str]:
     """Wraps each command line into a Slurm job.
 
     Args:
-        @root_dir: Location of the cactus task
-        @script_dirs: Directory to read data and create scripts
-        @log_dir: Log path for Cactus call
-        @resources: Slurm resources information
-        @initial_dependencies: essential dependencies set before
-        @ext: Extension for the files that contains the command lines
+        root_dir: Location of the cactus task.
+        script_dirs: Directory to read data and create scripts.
+        log_dir: Log path for Cactus call.
+        resources: Slurm resources information.
+        initial_dependencies: Essential dependencies set before.
+        ext: Extension for the files that contains the command lines.
+
+    Returns:
+        A list of unique variable names representing the jobs that
+        are dependencies for the next batch of Slurm jobs.
+
     """
 
     # get list of filenames
@@ -572,9 +586,7 @@ def slurmify(
         # dependency SLURM variable
         intra_dependencies = list(initial_dependencies)
 
-        for commands in read_file(
-            filename=f"{root_dir}/{script_dirs['all']}/{filename}"
-        ):
+        for commands in read_file(filename=f"{root_dir}/{script_dirs['all']}/{filename}"):
             # just in case more than one command per line
             for line in commands.split(";"):
                 # remove rubbish
@@ -583,23 +595,15 @@ def slurmify(
                 # extract line info from the current command line to create key
                 # info for SLURM
                 info = cactus_job_command_name(line)
+                assert info is not None, "processed Cactus command info must not be empty"
 
                 # set Cactus log file for Toil outputs
-                if (
-                    info["command"] != "halAppendSubtree"
-                    and info["command"] != "hal2fasta"
-                ):
-                    line = (
-                        line
-                        + f" --logFile {root_dir}/{log_dir}/{info['command']}-{info['id']}.log"
-                    )
+                if info["command"] != "halAppendSubtree" and info["command"] != "hal2fasta":
+                    line = f"{line} --logFile {root_dir}/{log_dir}/{info['command']}-{info['id']}.log"
 
                 # update the extra dependency between task types
                 extra_dependencies.append(info["variable"])
-                if (
-                    info["command"] == "cactus-blast"
-                    or info["command"] == "cactus-align"
-                ):
+                if info["command"] == "cactus-blast" or info["command"] == "cactus-align":
                     extra_dependencies.pop()
 
                 # enabling restart option for Cactus if a jobstore folder
@@ -609,22 +613,22 @@ def slurmify(
                         line = f"{line} --restart"
 
                 # create individual bash script
-                individual_bashscript_filename = f"""
-                    {root_dir}/{script_dirs['separated']}/{info['command']}-{info['id']}.sh
-                """
+                individual_bashscript_filename = (
+                    f"{root_dir}/{script_dirs['separated']}/{info['command']}-{info['id']}.sh"
+                )
                 create_bash_script(filename=individual_bashscript_filename)
 
                 # get the SLURM string call
                 get_slurm_submission(
                     job_name=f"{info['command']}-{info['id']}",
                     variable_name=info["variable"],
-                    work_dir=f"{root_dir}",
+                    work_dir=root_dir,
                     log_dir=f"{root_dir}/{log_dir}",
                     script_filename=individual_bashscript_filename,
-                    partition=f"{resources[info['command']]['partition']}",
+                    partition=resources[info["command"]]["partition"]
                     gpus=resources[info["command"]]["gpus"],
                     cpus=resources[info["command"]]["cpus"],
-                    command=f"{line.strip()}",
+                    command=line.strip(),
                     dependencies=intra_dependencies,
                     singularity=True,
                 )
@@ -659,10 +663,11 @@ def create_workflow_script(
     """Create Cactus pipeline using Slurm dependencies.
 
     Args:
-        @root_dir: root directory where @task_type's bash local scripts are
-        @task_type: type of the given task
-        @script_dir: the directory where @task_type's scripts are
-        @workflow_filename: the name of the bash script that contains the Cactus pipeline
+        root_dir: Root directory under which bash scripts of `task_type` are located.
+        task_type: Type of the given task.
+        script_dir: The directory in which scripts of `task_type` are located.
+        workflow_filename: The name of the bash script that contains the Cactus pipeline.
+
     """
 
     # adding preprocess
