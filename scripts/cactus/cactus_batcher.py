@@ -848,15 +848,10 @@ if __name__ == "__main__":
     job = "alignments"
 
     # get rounds
-    round_dirs = sorted(
-        next(
-            os.walk(
-                f"{data['jobs'][job]['directories']['root']}/{data['jobs'][job]['task_name']}"
-            ),
-            (None, None, []),
-        )[1]
+    aln_dir = f"{data['jobs'][job]['directories']['root']}/{data['jobs'][job]['task_name']}"
+    data["jobs"][job]["directories"]["rounds"] = sorted(
+        x for x in os.listdir(aln_dir) if os.path.isdir(os.path.join(aln_dir, x))
     )
-    data["jobs"][job]["directories"]["rounds"] = round_dirs
 
     ###################################################################
     ###                  SLURM BASH SCRIPT CREATOR                   ##
