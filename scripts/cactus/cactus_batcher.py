@@ -107,6 +107,10 @@ def symlink(target: str, link_name: str, overwrite: bool = False) -> None:
     Yields:
         Each line of the input file.
 
+
+    Yields:
+        Each line of the input file.
+
     """
     with open(filename, encoding="utf-8") as file:
         while True:
@@ -659,7 +663,7 @@ def slurmify(
 
 
 def create_workflow_script(
-    root_dir: Union[str, None], task_type: str, script_dir: str, workflow_filename: str
+    root_dir: str, task_type: str, script_dir: str, workflow_filename: str
 ) -> None:
     """Create Cactus pipeline using Slurm dependencies.
 
