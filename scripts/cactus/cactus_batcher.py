@@ -676,7 +676,7 @@ def create_workflow_script(
 
     # get path path for all-{}.sh bash script
     path = f"{root_dir}/{script_dir}"
-    filenames = next(os.walk(path), (None, None, []))[2]
+    filenames = [x for x in os.listdir(path) if os.path.isfile(os.path.join(path, x))]
 
     # check all files
     for filename in filenames:
