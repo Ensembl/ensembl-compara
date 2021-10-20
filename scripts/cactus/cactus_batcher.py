@@ -105,16 +105,11 @@ def read_file(filename, line_number=False):
         @line_number: return the number along with the line
     """
     with open(filename, encoding="utf-8") as file:
-        number = 0
         while True:
             line = file.readline()
             if not line:
                 break
-            if line_number:
-                yield line, number
-                number = number + 1
-            else:
-                yield line
+            yield line
 
 
 def create_symlinks(src_dirs, dest):
