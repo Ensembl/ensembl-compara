@@ -16,8 +16,12 @@
 # limitations under the License.
 
 
-"""This script prompts a user to parse the output of cactus-prepare in order to
-a bash script that wraps the cactus pipeline into Slurm jobs."""
+"""This script prompts a user to parse the output of cactus-prepare.
+
+From this, it generates a bash script that
+wraps the cactus pipeline into Slurm jobs.
+
+"""
 
 import argparse
 import os
