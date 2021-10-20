@@ -19,10 +19,10 @@
 reads a given tree and attach the FASTA file paths"""
 
 import argparse
-import os
-import sys
-import re
 from datetime import datetime
+import os
+import re
+import sys
 
 # check if biopython package is installed
 try:
@@ -75,13 +75,13 @@ def assemblies_parser(dest, ext):
     return content
 
 
-def tree_parser(filename, tree_format, output):
+def tree_parser(filename, output, tree_format='newick'):
     """A function to parse the given tree
 
     Args:
         filename: The path of the file containing the tree
-        tree_format: The format of the tree
         output: The path to generate the cactus input file
+        tree_format: The format of the tree
 
     Returns:
         A dictionary containing the tree and path (where the Cactus input file will be saved)
@@ -101,13 +101,13 @@ def tree_parser(filename, tree_format, output):
     return {"tree": tree, "path": output}
 
 
-def create_new_tree(tree_content, assemblies_content, tree_format):
+def create_new_tree(tree_content, assemblies_content, tree_format='newick'):
     """Create a Newick tree with sequence names based on the FASTA filenames parsed before
 
     Args:
         tree_content: The dictionary containing the tree information
         assemblies_content: The dictionary containing the fasta file information
-        format: The format of the tree
+        tree_format: The format of the tree
 
     Returns:
         A list of filenames containing the FASTA files that have been parsed but not

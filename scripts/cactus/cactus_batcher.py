@@ -25,12 +25,12 @@ wraps the cactus pipeline into Slurm jobs.
 
 import argparse
 import os
-import tempfile
+from pathlib import Path
+import re
 import stat
 import sys
 import shutil
-import re
-from pathlib import Path
+import tempfile
 from typing import Any, Dict, Generator, Iterable, Iterator, List, Mapping, Optional, Sequence, Union
 
 try:
@@ -55,8 +55,10 @@ for i in ["CACTUS_IMAGE", "CACTUS_GPU_IMAGE"]:
 ###################################################################
 
 
-def symlink(target: str, link_name: str, overwrite: bool = False) -> None:
-    """Create a symbolic link named link_name pointing to target.
+def make_or_replace_symlink(target: str, link_name: str) -> None:
+    """Create a symbolic link named link_name pointing to target. If link_name
+    exists then FileExistsError is raised, unless overwrite=True. When trying
+    to overwrite a directory, IsADirectoryError is raised.
 
     Credit: https://stackoverflow.com/a/55742015/825924
 
@@ -73,10 +75,6 @@ def symlink(target: str, link_name: str, overwrite: bool = False) -> None:
             path to an existing directory.
 
     """
-
-    if not overwrite:
-        os.symlink(target, link_name)
-        return
 
     # os.replace() may fail if files are on different filesystems
     link_dir = os.path.dirname(link_name)
@@ -108,7 +106,7 @@ def symlink(target: str, link_name: str, overwrite: bool = False) -> None:
         raise
 
 
-+def read_file(filename: str) -> Generator[str, None, None]:
+def read_file(filename: str) -> Generator[str, None, None]:
     """Function to read a file.
 
     Args:
@@ -147,10 +145,10 @@ def create_symlinks(src_dirs, dest):
     for src in src_dirs:
         relativepath = os.path.relpath(src, dest)
         fromfolderWithFoldername = dest + "/" + os.path.basename(src)
-        symlink(target=relativepath, link_name=fromfolderWithFoldername, overwrite=True)
+        make_or_replace_symlink(target=relativepath, link_name=fromfolderWithFoldername)
 
 
-def append(filename: str, line: str, mode: str = "a") -> None:
+def appendln_file(filename: str, line: str, mode: str = "a") -> None:
     """Append content to a file.
 
     Args:
@@ -162,12 +160,12 @@ def append(filename: str, line: str, mode: str = "a") -> None:
 
     if line:
         with open(filename, mode, encoding="utf-8") as file:
-            if file.tell() > 0:
-                file.write("\n")
+            #if file.tell() > 0:
+            #    file.write("\n")
             file.write(line.strip())
 
 
-def mkdir(path: str, force: bool = False) -> None:
+def make_or_replace_dir(path: str, force: bool = False) -> None:
     """Create a directory.
 
     Args:
@@ -192,7 +190,7 @@ def make_executable(path: str) -> None:
     os.chmod(path, st.st_mode | stat.S_IEXEC)
 
 
-def create_bash_script(filename: str, chmod_x: bool = True, shebang: str = "#!/bin/bash") -> None:
+def create_bash_script(filename: str) -> None:
     """Create executable bash script with shebang on it.
 
     Args:
@@ -201,11 +199,10 @@ def create_bash_script(filename: str, chmod_x: bool = True, shebang: str = "#!/b
         shebang: String containing bash shebang.
 
     """
-    append(filename=filename, mode="w", line=shebang)
+    appendln_file(filename=filename, mode="w", line="#!/bin/bash")
 
     # chmod +x on it
-    if chmod_x:
-        make_executable(path=filename)
+    make_executable(path=filename)
 
 
 def create_argparser() -> argparse.ArgumentParser:
@@ -328,8 +325,6 @@ def parse_yaml(filename: str) -> Any:
             print(err)
             sys.exit(1)
 
-    return None
-
 
 def check_slurm_resources_info(content: Dict,
                                keys: Iterable[Union[bool, float, int, str]]) -> Optional[List[str]]:
@@ -351,9 +346,6 @@ def check_slurm_resources_info(content: Dict,
     for key in keys:
         if not key in content:
             errors.append(f'key "{key}" is missing')
-
-    if len(errors) == 0:
-        return None
 
     return errors
 
@@ -399,11 +391,11 @@ def parse(
         create_symlinks(src_dirs=symlink_dir, dest=root_dir)
 
         # create log directory at root_dir
-        mkdir(f"{root_dir}/{log_dir}", force=True)
+        make_or_replace_dir(f"{root_dir}/{log_dir}", force=True)
 
         # create script directory at root_dir
         for script_dir in script_dirs.values():
-            mkdir(f"{root_dir}/{script_dir}", force=True)
+            make_or_replace_dir(f"{root_dir}/{script_dir}", force=True)
 
     while True:
         # get the next line
@@ -438,10 +430,10 @@ def parse(
 
                 # create script directory at root_dir
                 for script_dir in script_dirs.values():
-                    mkdir(f"{round_path}/{script_dir}", force=True)
+                    make_or_replace_dir(f"{round_path}/{script_dir}", force=True)
 
                 # create log directory at root_dir
-                mkdir(f"{round_path}/{log_dir}", force=True)
+                make_or_replace_dir(f"{round_path}/{log_dir}", force=True)
 
                 # create links needed for execution
                 create_symlinks(src_dirs=symlink_dir, dest=round_path)
@@ -467,7 +459,7 @@ def parse(
 
         # write the line in the correct files
         for filename in parsed_files.values():
-            append(filename=filename, line=line)
+            appendln_file(filename=filename, line=line)
 
 
 ###################################################################
@@ -552,13 +544,13 @@ def get_slurm_submission(
         )
 
     # write jobs to the file
-    append(filename=job_filename, line="\n\n".join(jobs))
+    appendln_file(filename=job_filename, line="\n\n".join(jobs))
 
     # wrap the commands for SLURM
     sbatch.append(f'--wrap "source {job_filename}")')
 
     # store it in the individual bash script
-    append(filename=script_filename, line=" ".join(sbatch))
+    appendln_file(filename=script_filename, line=" ".join(sbatch))
 
 
 def slurmify(
@@ -648,7 +640,7 @@ def slurmify(
                     work_dir=root_dir,
                     log_dir=f"{root_dir}/{log_dir}",
                     script_filename=individual_bashscript_filename,
-                    partition=resources[info["command"]]["partition"]
+                    partition=resources[info["command"]]["partition"],
                     gpus=resources[info["command"]]["gpus"],
                     cpus=resources[info["command"]]["cpus"],
                     command=line.strip(),
@@ -666,7 +658,7 @@ def slurmify(
                     intra_dependencies.append(info["variable"])
 
                 # store it in the aggregated bash script
-                append(
+                appendln_file(
                     filename=aggregated_bashscript_filename,
                     line=f"source {individual_bashscript_filename}",
                 )
@@ -694,7 +686,7 @@ def create_workflow_script(
     """
 
     # adding preprocess
-    append(filename=workflow_filename, line=f"\n### - {task_type} step\n")
+    appendln_file(filename=workflow_filename, line=f"\n### - {task_type} step\n")
 
     # get path path for all-{}.sh bash script
     path = f"{root_dir}/{script_dir}"
@@ -710,7 +702,7 @@ def create_workflow_script(
         if os.path.isfile(script) and not os.access(script, os.X_OK):
             continue
 
-        append(filename=workflow_filename, line=" ".join(["source", script]))
+        appendln_file(filename=workflow_filename, line=" ".join(["source", script]))
 
 
 ###################################################################
@@ -753,7 +745,7 @@ if __name__ == "__main__":
     ]
 
     missing_slurm_data = check_slurm_resources_info(content=slurm_config, keys=slurm_key_data[0])
-    if missing_slurm_data is not None:
+    if missing_slurm_data:
         missing_slurm_lines = "\n".join(missing_slurm_data)
         raise Exception(f"The following keys are missing in the YAML file:\n{missing_slurm_lines}")
 
@@ -761,7 +753,7 @@ if __name__ == "__main__":
         missing_slurm_data = check_slurm_resources_info(
             content=slurm_config[node_type], keys=slurm_key_data[1]
         )
-        if missing_slurm_data is not None:
+        if missing_slurm_data:
             missing_slurm_lines = "\n".join(missing_slurm_data)
             raise Exception(
                 f"The following keys are missing in the '{node_type}' key:\n{missing_slurm_lines}"
@@ -885,13 +877,14 @@ if __name__ == "__main__":
         directories = data["jobs"][job]["directories"]
         for round_dir in directories["rounds"]:
 
+            if round_dir is None:
+                root_dir = f"{directories['root']}/{data['jobs'][job]['task_name']}"
+            else:
+                root_dir = f"{directories['root']}/{data['jobs'][job]['task_name']}/{round_dir}"
+
             # create SLURM batches jobs
             slurm_job_dependencies = slurmify(
-                root_dir=(
-                    f"{directories['root']}/{data['jobs'][job]['task_name']}"
-                    if round_dir is None
-                    else f"{directories['root']}/{data['jobs'][job]['task_name']}/{round_dir}"
-                ),
+                root_dir=root_dir,
                 script_dirs=directories["scripts"],
                 log_dir=directories["logs"],
                 resources=slurm_config,
@@ -910,12 +903,13 @@ if __name__ == "__main__":
         dir_: dict[str, Any] = data["jobs"][job]["directories"]
         for round_dir in dir_["rounds"]:
 
+            if round_dir is None:
+                root_dir = f"{dir_['root']}/{data['jobs'][job]['task_name']}"
+            else:
+                root_dir = f"{dir_['root']}/{data['jobs'][job]['task_name']}/{round_dir}"
+
             create_workflow_script(
-                root_dir=(
-                    f"{dir_['root']}/{data['jobs'][job]['task_name']}"
-                    if round_dir is None
-                    else f"{dir_['root']}/{data['jobs'][job]['task_name']}/{round_dir}"
-                ),
+                root_dir=root_dir,
                 task_type=job,
                 script_dir=dir_["scripts"]["all"],
                 workflow_filename=workflow_scripts,
