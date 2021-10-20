@@ -273,9 +273,14 @@ def cactus_job_command_name(line: str) -> Optional[Dict]:
             jobstore = line.split()[1]
 
             if "preprocess" in command:
-                info_id = (
-                    re.search("--inputNames (.*?) --", line).group(1).replace(" ", "_")
-                )
+                match = re.search("--inputNames (.*?) --", line)
+                try:
+                    input_names = match.group(1)  # type: ignore
+                except TypeError as e:
+                    raise ValueError(
+                        f"Could not find input genome names in cactus-preprocess command: '{line}'"
+                    ) from e
+                info_id = input_names.replace(" ", "_")
                 variable_name = (
                     f"{command.replace('-', '_')}_{jobstore}_{info_id}".upper()
                 )
