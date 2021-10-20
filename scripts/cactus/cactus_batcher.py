@@ -178,9 +178,10 @@ def create_bash_script(filename: str, chmod_x: bool = True, shebang: str = "#!/b
     """Create executable bash script with shebang on it.
 
     Args:
+        filename: Path of the file.
+        chmod_x: True if script should be executable.
+        shebang: String containing bash shebang.
 
-        @filename: Path of the file
-        @shebang: String containing bash shebang
     """
     append(filename=filename, mode="w", line=shebang)
 
