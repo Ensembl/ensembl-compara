@@ -29,7 +29,6 @@ import tempfile
 import stat
 import sys
 import shutil
-import pathlib
 import re
 from pathlib import Path
 from typing import Any, Union
