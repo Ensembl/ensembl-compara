@@ -50,10 +50,7 @@ def assemblies_parser(dest, ext):
     ext = re.sub("\\W+|_", "", ext).lower()
     ext = "." + ext
 
-    try:
-        filenames = os.listdir(dest)
-    except FileNotFoundError as err:
-        raise err
+    filenames = os.listdir(dest)
 
     content = {}
 
