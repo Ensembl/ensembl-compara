@@ -73,12 +73,13 @@ sub content {
 sub default_file_name {
   my $self = shift;
   my $name = $self->hub->species;
-  my $data_object = $self->hub->param('g') ? $self->hub->core_object('gene') : undef;
+  my $data_object = $self->hub->param('t') ? $self->hub->core_object('transcript') : undef;
   if ($data_object) {
     $name .= '_';
-    my $stable_id = $data_object->stable_id;
-    my ($disp_id) = $data_object->display_xref;
-    $name .= $disp_id || $stable_id;
+    my $versioned_stable_id = $data_object->translation_object()->stable_id_version || $data_object->translation_object()->stable_id;
+    # Replace '.' with '_' to avoid file extention clashes 
+    $versioned_stable_id =~ s/\./_/g; 
+    $name .= $versioned_stable_id;
   }
   $name .= '_sequence';
   return $name;

@@ -195,6 +195,21 @@ sub stable_id {
   return $self->translation ? $self->translation->stable_id : undef;
 }
 
+=head2 stable_id_version
+
+ Arg[1]         : none
+ Example     : $stable_id_version = $pepdata->stable_id_version
+ Description : Wrapper for stable_id_version on core_API
+ Return type : string
+                The features stable_id_version
+
+=cut
+
+sub stable_id_version {
+  my $self = shift;
+  return $self->translation ? $self->translation->stable_id_version : undef;
+}
+
 =head2 display_xref
 
  Arg[1]         : none
