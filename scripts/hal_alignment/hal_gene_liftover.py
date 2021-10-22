@@ -540,33 +540,33 @@ if __name__ == '__main__':
         hal_aux_dir = f'{hal_file_stem}_files'
     os.makedirs(hal_aux_dir, exist_ok=True)
 
-    src_2bit_file = os.path.join(hal_aux_dir, f'{args.src_genome}.2bit')
-    if not os.path.isfile(src_2bit_file):
-        export_2bit_file(args.hal_file, args.src_genome, src_2bit_file)
+    source_2bit_file = os.path.join(hal_aux_dir, f'{args.src_genome}.2bit')
+    if not os.path.isfile(source_2bit_file):
+        export_2bit_file(args.hal_file, args.src_genome, source_2bit_file)
 
-    dest_2bit_file = os.path.join(hal_aux_dir, f'{args.dest_genome}.2bit')
-    if not os.path.isfile(dest_2bit_file):
-        export_2bit_file(args.hal_file, args.dest_genome, dest_2bit_file)
+    destination_2bit_file = os.path.join(hal_aux_dir, f'{args.dest_genome}.2bit')
+    if not os.path.isfile(destination_2bit_file):
+        export_2bit_file(args.hal_file, args.dest_genome, destination_2bit_file)
 
-    src_chr_sizes = load_chr_sizes(args.hal_file, args.src_genome)
+    source_chr_sizes = load_chr_sizes(args.hal_file, args.src_genome)
 
     if args.src_region is not None:
-        src_regions: Iterable = [SimpleRegion.from_1_based_region_string(args.src_region)]
+        source_regions: Iterable = [SimpleRegion.from_1_based_region_string(args.src_region)]
     else:
-        src_regions = read_region_tsv_file(args.src_region_tsv)
+        source_regions = read_region_tsv_file(args.src_region_tsv)
 
-    recs = []
-    for src_region in src_regions:
-        rec = liftover_region(src_region, args.src_genome, src_2bit_file, src_chr_sizes,
-                              args.dest_genome, dest_2bit_file, args.hal_file,
-                              flank_length=args.flank, skip_chain=args.skip_chain,
-                              linear_gap=args.linear_gap)
-        recs.append(rec)
+    records = []
+    for source_region in source_regions:
+        record = liftover_region(source_region, args.src_genome, source_2bit_file, source_chr_sizes,
+                                 args.dest_genome, destination_2bit_file, args.hal_file,
+                                 flank_length=args.flank, skip_chain=args.skip_chain,
+                                 linear_gap=args.linear_gap)
+        records.append(record)
 
     if args.output_format == 'JSON':
 
-        with open(args.output_file, 'w') as f:
-            json.dump(recs, f)
+        with open(args.output_file, 'w') as file_obj:
+            json.dump(records, file_obj)
 
     elif args.output_format == 'TSV':
 
@@ -589,10 +589,10 @@ if __name__ == '__main__':
             'dest_sequence'
         ]
 
-        with open(args.output_file, 'w') as f:
-            writer = csv.DictWriter(f, output_field_names, dialect=UnixTab)
+        with open(args.output_file, 'w') as file_obj:
+            writer = csv.DictWriter(file_obj, output_field_names, dialect=UnixTab)
             writer.writeheader()
-            for rec in recs:
-                params = rec['params']
-                for result in rec['results']:
+            for record in records:
+                params = record['params']
+                for result in record['results']:
                     writer.writerow({**params, **result})
