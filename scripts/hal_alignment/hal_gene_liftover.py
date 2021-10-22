@@ -357,103 +357,6 @@ def load_chr_sizes(hal_file: Union[Path, str], genome_name: str) -> Dict[str, in
     return chr_sizes
 
 
-def main() -> None:
-    """Main HAL liftover function."""
-
-    parser = ArgumentParser(description='Performs a gene liftover between two haplotypes in a HAL file.')
-    parser.add_argument('hal_file', help="Input HAL file.")
-    parser.add_argument('src_genome', help="Source genome name.")
-    parser.add_argument('dest_genome', help="Destination genome name.")
-    parser.add_argument('output_file', help="Output file.")
-
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--src-region', metavar='STR', help="Region to liftover.")
-    group.add_argument('--src-region-tsv', metavar='FILE',
-                       help="Input TSV file containing regions to liftover.")
-
-    parser.add_argument('--flank', metavar='INT', default=0, type=int,
-                        help="Requested length of upstream/downstream"
-                             " flanking regions to include in query.")
-    parser.add_argument('--skip-chain', action='store_true',
-                        help="Skip chaining of liftover alignment regions.")
-    parser.add_argument('--linear-gap', metavar='STR|FILE', default='medium',
-                        help="axtChain linear gap parameter.")
-
-    parser.add_argument('--output-format', metavar='STR', default='JSON', choices=['JSON', 'TSV'],
-                        help="Format of output file.")
-
-    parser.add_argument('--hal-aux-dir', metavar='PATH',
-                        help="Directory in which HAL-derived data files are created (e.g. genome sequence"
-                             " files). By default, the path of this directory is determined from the input"
-                             " HAL file (e.g. '/path/to/aln.hal'), by replacing the HAL file extension with"
-                             " the suffix '_files' (e.g. '/path/to/aln_files').")
-    args = parser.parse_args()
-
-    if args.hal_aux_dir is not None:
-        hal_aux_dir = args.hal_aux_dir
-    else:
-        hal_file_stem, _ = os.path.splitext(args.hal_file)
-        hal_aux_dir = f'{hal_file_stem}_files'
-    os.makedirs(hal_aux_dir, exist_ok=True)
-
-    src_2bit_file = os.path.join(hal_aux_dir, f'{args.src_genome}.2bit')
-    if not os.path.isfile(src_2bit_file):
-        export_2bit_file(args.hal_file, args.src_genome, src_2bit_file)
-
-    dest_2bit_file = os.path.join(hal_aux_dir, f'{args.dest_genome}.2bit')
-    if not os.path.isfile(dest_2bit_file):
-        export_2bit_file(args.hal_file, args.dest_genome, dest_2bit_file)
-
-    src_chr_sizes = load_chr_sizes(args.hal_file, args.src_genome)
-
-    if args.src_region is not None:
-        src_regions: Iterable = [SimpleRegion.from_1_based_region_string(args.src_region)]
-    else:
-        src_regions = read_region_tsv_file(args.src_region_tsv)
-
-    recs = []
-    for src_region in src_regions:
-        rec = liftover_region(src_region, args.src_genome, src_2bit_file, src_chr_sizes,
-                              args.dest_genome, dest_2bit_file, args.hal_file,
-                              flank_length=args.flank, skip_chain=args.skip_chain,
-                              linear_gap=args.linear_gap)
-        recs.append(rec)
-
-    if args.output_format == 'JSON':
-
-        with open(args.output_file, 'w') as f:
-            json.dump(recs, f)
-
-    elif args.output_format == 'TSV':
-
-        output_field_names = [
-            'src_genome',
-            'src_chr',
-            'src_start',
-            'src_end',
-            'src_strand',
-            'flank',
-            'dest_genome',
-            'lifted_src_chr',
-            'lifted_src_start',
-            'lifted_src_end',
-            'lifted_src_strand',
-            'dest_chr',
-            'dest_start',
-            'dest_end',
-            'dest_strand',
-            'dest_sequence'
-        ]
-
-        with open(args.output_file, 'w') as f:
-            writer = csv.DictWriter(f, output_field_names, dialect=UnixTab)
-            writer.writeheader()
-            for rec in recs:
-                params = rec['params']
-                for result in rec['results']:
-                    writer.writerow({**params, **result})
-
-
 def make_src_region_file(regions: Iterable[SimpleRegion], genome: str, chr_sizes: Mapping[str, int],
                          bed_file: Union[Path, str], flank_length: int = 0) -> None:
     """Make source region file.
@@ -600,4 +503,96 @@ def run_two_bit_to_fa(bed_file: Union[Path, str], two_bit_file: Union[Path, str]
 
 
 if __name__ == '__main__':
-    main()
+
+    parser = ArgumentParser(description='Performs a gene liftover between two haplotypes in a HAL file.')
+    parser.add_argument('hal_file', help="Input HAL file.")
+    parser.add_argument('src_genome', help="Source genome name.")
+    parser.add_argument('dest_genome', help="Destination genome name.")
+    parser.add_argument('output_file', help="Output file.")
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--src-region', metavar='STR', help="Region to liftover.")
+    group.add_argument('--src-region-tsv', metavar='FILE',
+                       help="Input TSV file containing regions to liftover.")
+
+    parser.add_argument('--flank', metavar='INT', default=0, type=int,
+                        help="Requested length of upstream/downstream"
+                             " flanking regions to include in query.")
+    parser.add_argument('--skip-chain', action='store_true',
+                        help="Skip chaining of liftover alignment regions.")
+    parser.add_argument('--linear-gap', metavar='STR|FILE', default='medium',
+                        help="axtChain linear gap parameter.")
+
+    parser.add_argument('--output-format', metavar='STR', default='JSON', choices=['JSON', 'TSV'],
+                        help="Format of output file.")
+
+    parser.add_argument('--hal-aux-dir', metavar='PATH',
+                        help="Directory in which HAL-derived data files are created (e.g. genome sequence"
+                             " files). By default, the path of this directory is determined from the input"
+                             " HAL file (e.g. '/path/to/aln.hal'), by replacing the HAL file extension with"
+                             " the suffix '_files' (e.g. '/path/to/aln_files').")
+    args = parser.parse_args()
+
+    if args.hal_aux_dir is not None:
+        hal_aux_dir = args.hal_aux_dir
+    else:
+        hal_file_stem, _ = os.path.splitext(args.hal_file)
+        hal_aux_dir = f'{hal_file_stem}_files'
+    os.makedirs(hal_aux_dir, exist_ok=True)
+
+    src_2bit_file = os.path.join(hal_aux_dir, f'{args.src_genome}.2bit')
+    if not os.path.isfile(src_2bit_file):
+        export_2bit_file(args.hal_file, args.src_genome, src_2bit_file)
+
+    dest_2bit_file = os.path.join(hal_aux_dir, f'{args.dest_genome}.2bit')
+    if not os.path.isfile(dest_2bit_file):
+        export_2bit_file(args.hal_file, args.dest_genome, dest_2bit_file)
+
+    src_chr_sizes = load_chr_sizes(args.hal_file, args.src_genome)
+
+    if args.src_region is not None:
+        src_regions: Iterable = [SimpleRegion.from_1_based_region_string(args.src_region)]
+    else:
+        src_regions = read_region_tsv_file(args.src_region_tsv)
+
+    recs = []
+    for src_region in src_regions:
+        rec = liftover_region(src_region, args.src_genome, src_2bit_file, src_chr_sizes,
+                              args.dest_genome, dest_2bit_file, args.hal_file,
+                              flank_length=args.flank, skip_chain=args.skip_chain,
+                              linear_gap=args.linear_gap)
+        recs.append(rec)
+
+    if args.output_format == 'JSON':
+
+        with open(args.output_file, 'w') as f:
+            json.dump(recs, f)
+
+    elif args.output_format == 'TSV':
+
+        output_field_names = [
+            'src_genome',
+            'src_chr',
+            'src_start',
+            'src_end',
+            'src_strand',
+            'flank',
+            'dest_genome',
+            'lifted_src_chr',
+            'lifted_src_start',
+            'lifted_src_end',
+            'lifted_src_strand',
+            'dest_chr',
+            'dest_start',
+            'dest_end',
+            'dest_strand',
+            'dest_sequence'
+        ]
+
+        with open(args.output_file, 'w') as f:
+            writer = csv.DictWriter(f, output_field_names, dialect=UnixTab)
+            writer.writeheader()
+            for rec in recs:
+                params = rec['params']
+                for result in rec['results']:
+                    writer.writerow({**params, **result})
