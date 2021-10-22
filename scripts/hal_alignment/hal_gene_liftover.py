@@ -206,7 +206,7 @@ if __name__ == '__main__':
     parser.add_argument('hal_file', help="Input HAL file.")
     parser.add_argument('src_genome', help="Source genome name.")
     parser.add_argument('dst_genome', help="Destination genome name.")
-    parser.add_argument('output_file', help="Output file.")
+    parser.add_argument('output_file', help="Output PSL file.")
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--src-region', help="Region to liftover.")
