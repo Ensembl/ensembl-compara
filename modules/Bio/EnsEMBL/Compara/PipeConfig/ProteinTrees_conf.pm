@@ -360,6 +360,9 @@ sub default_options {
         'homology_dumps_dir'        => $self->o('dump_dir') . '/homology_dumps/',
         'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
         'prev_homology_dumps_dir'   => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
+
+        # Gene tree stats options
+        'gene_tree_stats_shared_dir' => $self->o('gene_tree_stats_shared_basedir') . '/' . $self->o('collection') . '/' . $self->o('ensembl_release'),
     };
 }
 
@@ -457,6 +460,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'orthotree_dir'             => $self->o('orthotree_dir'),
         'wga_dumps_dir'             => $self->o('wga_dumps_dir'),
         'prev_wga_dumps_dir'        => $self->o('prev_wga_dumps_dir'),
+        'gene_tree_stats_shared_dir' => $self->o('gene_tree_stats_shared_dir'),
 
         'goc_files_dir'      => $self->o('goc_files_dir'),
         'wga_files_dir'      => $self->o('wga_dumps_dir'),
@@ -671,7 +675,7 @@ sub core_pipeline_analyses {
             },
             -rc_name    => '500Mb_job',
             -flow_into  => [
-                'email_tree_stats_report',
+                'generate_tree_stats_report',
                 'wga_expected_dumps',
                 WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ),
             ],
@@ -3481,10 +3485,11 @@ sub core_pipeline_analyses {
             -flow_into      => [ 'polyploid_move_back_factory', 'rename_labels' ],
         },
 
-        {   -logic_name     => 'email_tree_stats_report',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport',
-            -parameters     => {
-                'email' => $self->o('email'),
+        {   -logic_name => 'generate_tree_stats_report',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StatsReport',
+            -parameters => {
+                'stats_exe'                  => $self->o('gene_tree_stats_report_exe'),
+                'gene_tree_stats_shared_dir' => $self->o('gene_tree_stats_shared_dir'),
             },
         },
 

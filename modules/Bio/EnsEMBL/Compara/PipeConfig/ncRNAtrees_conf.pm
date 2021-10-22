@@ -177,6 +177,8 @@ sub default_options {
             'goc_files_dir'               => $self->o('homology_dumps_dir'),
             'range_label'                 => $self->o('member_type'),
 
+        # Gene tree stats options
+        'gene_tree_stats_shared_dir' => $self->o('gene_tree_stats_shared_basedir') . '/' . $self->o('collection') . '/' . $self->o('ensembl_release'),
     };
 }
 
@@ -224,6 +226,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'wga_dumps_dir'             => $self->o('wga_dumps_dir'),
         'prev_wga_dumps_dir'        => $self->o('prev_wga_dumps_dir'),
         'gene_dumps_dir'            => $self->o('gene_dumps_dir'),
+        'gene_tree_stats_shared_dir' => $self->o('gene_tree_stats_shared_dir'),
 
         'goc_files_dir'      => $self->o('goc_files_dir'),
         'wga_files_dir'      => $self->o('wga_dumps_dir'),
@@ -630,13 +633,14 @@ sub core_pipeline_analyses {
             -parameters     => {
                 'input_file'    => $self->o('tree_stats_sql'),
             },
-            -flow_into      => [ 'email_tree_stats_report' ],
+            -flow_into      => [ 'generate_tree_stats_report' ],
         },
 
-        {   -logic_name     => 'email_tree_stats_report',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport',
-            -parameters     => {
-                'email' => $self->o('email'),
+        {   -logic_name => 'generate_tree_stats_report',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StatsReport',
+            -parameters => {
+                'stats_exe'                  => $self->o('gene_tree_stats_report_exe'),
+                'gene_tree_stats_shared_dir' => $self->o('gene_tree_stats_shared_dir'),
             },
         },
 

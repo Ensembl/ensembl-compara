@@ -93,6 +93,7 @@ sub shared_default_options {
         #'hmm_library_basedir'   => $self->o('shared_hps_dir') . '/compara_hmm_91/',
         
         'homology_dumps_shared_basedir' => $self->o('shared_hps_dir') . '/homology_dumps/'. $self->o('division'),
+        'gene_tree_stats_shared_basedir' => $self->o('shared_hps_dir') . '/gene_tree_stats/' . $self->o('division'),
     }
 }
 
@@ -129,6 +130,7 @@ sub executable_locations {
         'populate_new_database_exe'         => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/populate_new_database.pl'),
         'create_datacheck_tickets_exe'      => $self->check_exe_in_ensembl('ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl'),
         'copy_ancestral_core_exe'           => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/copy_ancestral_core.pl'),
+        'gene_tree_stats_report_exe'        => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/gene_tree_stats.pl'),
 
         # Other dependencies (non executables)
         'core_schema_sql'                   => $self->check_file_in_ensembl('ensembl/sql/table.sql'),
