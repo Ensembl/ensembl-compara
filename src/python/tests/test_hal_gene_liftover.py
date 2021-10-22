@@ -123,7 +123,6 @@ class TestHalGeneLiftover:
         "hal_file, genome_name, exp_output, expectation",
         [
             ('aln.hal', 'genomeA', {'chr1': 33}, does_not_raise()),
-            ('aln.hal', 'genomeB', {'chr1': 40}, does_not_raise()),
             ('nonexistent.hal', 'genomeB', None, raises(CalledProcessError)),
             ('aln.hal', 'nonexistent', None, raises(CalledProcessError))
         ]
@@ -191,31 +190,19 @@ class TestHalGeneLiftover:
             assert filecmp.cmp(out_file_path, ref_file_path)
 
     @pytest.mark.parametrize(
-        "hal_file, src_genome, bed_file, dest_genome, psl_file",
+        "hal_file, src_genome, bed_file, dst_genome, psl_file, expectation",
         [
             ('aln.hal', 'genomeA', 'a2b.one2one.plus.flank0.src.bed', 'genomeB',
-             'a2b.one2one.plus.flank0.psl'),
-            ('aln.hal', 'genomeA', 'a2b.one2one.plus.flank1.src.bed', 'genomeB',
-             'a2b.one2one.plus.flank1.psl'),
-            ('aln.hal', 'genomeA', 'a2b.chr_start.flank1.src.bed', 'genomeB',
-             'a2b.chr_start.flank1.psl'),
-            ('aln.hal', 'genomeA', 'a2b.chr_end.flank1.src.bed', 'genomeB',
-             'a2b.chr_end.flank1.psl'),
-            ('aln.hal', 'genomeA', 'a2b.one2many.flank1.src.bed', 'genomeB',
-             'a2b.one2many.flank1.psl'),
-            ('aln.hal', 'genomeA', 'a2b.inversion.flank1.src.bed', 'genomeB',
-             'a2b.inversion.flank1.psl')
+             'a2b.one2one.plus.flank0.psl', does_not_raise()),
+            ('aln.hal', 'genomeB', 'unmappable.src.bed', 'genomeA',
+             'empty.txt', does_not_raise()),
+            ('aln.hal', 'genomeA', 'nonexistent.src.bed', 'genomeB',
+             'nonexistent.psl', raises(RuntimeError))
         ]
     )
-    def test_run_hal_liftover(
-        self,
-        hal_file: Union[Path, str],
-        src_genome: str,
-        bed_file: Union[Path, str],
-        dest_genome: str,
-        psl_file: Union[Path, str],
-        tmp_dir: Path,
-    ) -> None:
+    def test_run_hal_liftover(self, hal_file: Union[Path, str], src_genome: str, bed_file: Union[Path, str],
+                              dst_genome: str, psl_file: Union[Path, str], expectation: ContextManager,
+                              tmp_dir: Path) -> None:
         """Tests :func:`hal_gene_liftover.run_hal_liftover()` function.
 
         Args:
@@ -223,15 +210,18 @@ class TestHalGeneLiftover:
             src_genome: Source genome name.
             bed_file: Input BED file of source features to liftover. To obtain
                       strand-aware results, this must include a 'strand' column.
-            dest_genome: Destination genome name.
+            dst_genome: Destination genome name.
             psl_file: Output PSL file.
+            expectation: Context manager for the expected exception. The test will only pass if that
+                exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
             tmp_dir: Unit test temp directory (fixture).
 
         """
-        hal_file_path = self.ref_file_dir / hal_file
-        bed_file_path = self.ref_file_dir / bed_file
-        out_file_path = tmp_dir / psl_file
-        hal_gene_liftover.run_hal_liftover(hal_file_path, src_genome, bed_file_path,
-                                           dest_genome, out_file_path)
-        ref_file_path = self.ref_file_dir / psl_file
-        assert filecmp.cmp(out_file_path, ref_file_path)
+        with expectation:
+            hal_file_path = self.ref_file_dir / hal_file
+            bed_file_path = self.ref_file_dir / bed_file
+            out_file_path = tmp_dir / psl_file
+            hal_gene_liftover.run_hal_liftover(hal_file_path, src_genome, bed_file_path,
+                                               dst_genome, out_file_path)
+            ref_file_path = self.ref_file_dir / psl_file
+            assert filecmp.cmp(out_file_path, ref_file_path)

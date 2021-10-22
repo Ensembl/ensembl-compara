@@ -69,36 +69,6 @@ def load_chr_sizes(hal_file: Union[Path, str], genome_name: str) -> Dict[str, in
     return chr_sizes
 
 
-def main() -> None:
-    """Main HAL liftover function."""
-
-    parser = ArgumentParser(description='Performs a gene liftover between two haplotypes in a HAL file.')
-    parser.add_argument('hal_file', help="Input HAL file.")
-    parser.add_argument('src_genome', help="Source genome name.")
-    parser.add_argument('dest_genome', help="Destination genome name.")
-    parser.add_argument('output_file', help="Output file.")
-
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--src-region', help="Region to liftover.")
-
-    parser.add_argument('--flank', default=0, type=int,
-                        help="Requested length of upstream/downstream"
-                             " flanking regions to include in query.")
-
-    args = parser.parse_args()
-
-    src_chr_sizes = load_chr_sizes(args.hal_file, args.src_genome)
-    src_regions = [parse_region(args.src_region)]
-
-    with TemporaryDirectory() as tmp_dir:
-
-        src_bed_file = os.path.join(tmp_dir, 'src_regions.bed')
-        make_src_region_file(src_regions, args.src_genome, src_chr_sizes, src_bed_file,
-                             flank_length=args.flank)
-
-        run_hal_liftover(args.hal_file, args.src_genome, src_bed_file, args.dest_genome, args.output_file)
-
-
 def make_src_region_file(regions: Iterable[SimpleRegion], genome_name: str, chr_sizes: Mapping[str, int],
                          bed_file: Union[Path, str], flank_length: int = 0) -> None:
     """Make source region file.
@@ -192,7 +162,7 @@ def parse_region(region: str) -> SimpleRegion:
 
 
 def run_hal_liftover(hal_file: Union[Path, str], src_genome: str,
-                     bed_file: Union[Path, str], dest_genome: str,
+                     bed_file: Union[Path, str], dst_genome: str,
                      psl_file: Union[Path, str]) -> None:
     """Do HAL liftover and output result to a PSL file.
 
@@ -207,14 +177,14 @@ def run_hal_liftover(hal_file: Union[Path, str], src_genome: str,
         src_genome: Source genome name.
         bed_file: Input BED file of source features to liftover. To obtain
             strand-aware results, this must include a 'strand' column.
-        dest_genome: Destination genome name.
+        dst_genome: Destination genome name.
         psl_file: Output PSL file.
 
     Raises:
         RuntimeError: If halLiftover or pslPosTarget have nonzero return code.
 
     """
-    cmd1 = ['halLiftover', '--outPSL', hal_file, src_genome, bed_file, dest_genome, 'stdout']
+    cmd1 = ['halLiftover', '--outPSL', hal_file, src_genome, bed_file, dst_genome, 'stdout']
     cmd2 = ['pslPosTarget', 'stdin', psl_file]
     with Popen(cmd1, stdout=PIPE) as p1:
         with Popen(cmd2, stdin=p1.stdout) as p2:
@@ -231,4 +201,29 @@ def run_hal_liftover(hal_file: Union[Path, str], src_genome: str,
 
 
 if __name__ == '__main__':
-    main()
+
+    parser = ArgumentParser(description='Performs a gene liftover between two haplotypes in a HAL file.')
+    parser.add_argument('hal_file', help="Input HAL file.")
+    parser.add_argument('src_genome', help="Source genome name.")
+    parser.add_argument('dst_genome', help="Destination genome name.")
+    parser.add_argument('output_file', help="Output file.")
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--src-region', help="Region to liftover.")
+
+    parser.add_argument('--flank', default=0, type=int,
+                        help="Requested length of upstream/downstream"
+                             " flanking regions to include in query.")
+
+    args = parser.parse_args()
+
+    source_chr_sizes = load_chr_sizes(args.hal_file, args.src_genome)
+    src_regions = [parse_region(args.src_region)]
+
+    with TemporaryDirectory() as tmp_dir:
+
+        src_bed_file = os.path.join(tmp_dir, 'src_regions.bed')
+        make_src_region_file(src_regions, args.src_genome, source_chr_sizes, src_bed_file,
+                             flank_length=args.flank)
+
+        run_hal_liftover(args.hal_file, args.src_genome, src_bed_file, args.dst_genome, args.output_file)
