@@ -47,25 +47,25 @@ class SimpleRegion(NamedTuple):
     strand: str
 
 
-def load_chr_sizes(hal_file: Union[Path, str], genome_name: str) -> Dict[str, int]:
-    """Load chromosome sizes from an input HAL file.
+def load_chr_sizes(chr_sizes_file: Union[Path, str]) -> Dict[str, int]:
+    """Load chromosome sizes from a file.
+
+    The expected input is a headerless two-column tab-delimited file,
+    in which each row contains the name of a chromosome in the first
+    column and the length of that chromosome in the second column.
 
     Args:
-        hal_file: Input HAL file.
-        genome_name: Name of the genome to get the chromosome sizes of.
+        chr_sizes_file: Input chromosome sizes file.
 
     Returns:
         Dictionary mapping chromosome names to their lengths.
 
     """
-    cmd = ['halStats', '--chromSizes', genome_name, hal_file]
-    process = run(cmd, check=True, capture_output=True, text=True, encoding='ascii')
-
     chr_sizes = {}
-    for line in process.stdout.splitlines():
-        chr_name, chr_size = line.rstrip().split('\t')
-        chr_sizes[chr_name] = int(chr_size)
-
+    with open(chr_sizes_file) as f:
+        for line in f:
+            chr_name, chr_size = line.rstrip().split('\t')
+            chr_sizes[chr_name] = int(chr_size)
     return chr_sizes
 
 
@@ -217,7 +217,16 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    source_chr_sizes = load_chr_sizes(args.hal_file, args.src_genome)
+    hal_file_stem, _ = os.path.splitext(args.hal_file)
+    hal_aux_dir = f'{hal_file_stem}_files'
+    os.makedirs(hal_aux_dir, exist_ok=True)
+
+    source_chr_sizes_file = os.path.join(hal_aux_dir, f'{args.src_genome}.chrom.sizes')
+    with open(source_chr_sizes_file, 'w') as file_obj:
+        source_chr_sizes_cmd = ['halStats', '--chromSizes', args.src_genome, args.hal_file]
+        run(source_chr_sizes_cmd, check=True, stdout=file_obj, text=True, encoding='ascii')
+    source_chr_sizes = load_chr_sizes(source_chr_sizes_file)
+
     src_regions = [parse_region(args.src_region)]
 
     with TemporaryDirectory() as tmp_dir:

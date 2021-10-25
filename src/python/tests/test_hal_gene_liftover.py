@@ -25,7 +25,6 @@ from importlib.abc import Loader
 from importlib.machinery import ModuleSpec
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
-from subprocess import CalledProcessError
 import sys
 from types import ModuleType
 from typing import ContextManager, Dict, Iterable, Mapping, Union
@@ -120,28 +119,26 @@ class TestHalGeneLiftover:
             assert obs_output == exp_output
 
     @pytest.mark.parametrize(
-        "hal_file, genome_name, exp_output, expectation",
+        "chr_sizes_file, exp_output, expectation",
         [
-            ('aln.hal', 'genomeA', {'chr1': 33}, does_not_raise()),
-            ('nonexistent.hal', 'genomeB', None, raises(CalledProcessError)),
-            ('aln.hal', 'nonexistent', None, raises(CalledProcessError))
+            ('genomeA.chrom.sizes', {'chr1': 33}, does_not_raise()),
+            ('nonexistent.chrom.sizes', None, raises(FileNotFoundError))
         ]
     )
-    def test_load_chr_sizes(self, hal_file: Union[Path, str], genome_name: str, exp_output: Dict[str, int],
+    def test_load_chr_sizes(self, chr_sizes_file: Union[Path, str], exp_output: Dict[str, int],
                             expectation: ContextManager) -> None:
         """Tests :func:`hal_gene_liftover.load_chr_sizes()` function.
 
         Args:
-            hal_file: Input HAL file.
-            genome_name: Name of the genome to get the chromosome sizes of.
+            chr_sizes_file: Input chromosome sizes file.
             exp_output: Expected return value of the function.
             expectation: Context manager for the expected exception. The test will only pass if that
                 exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
 
         """
         with expectation:
-            hal_file_path = self.ref_file_dir / hal_file
-            obs_output = hal_gene_liftover.load_chr_sizes(hal_file_path, genome_name)
+            chr_sizes_file_path = self.ref_file_dir / chr_sizes_file
+            obs_output = hal_gene_liftover.load_chr_sizes(chr_sizes_file_path)
             assert obs_output == exp_output
 
     @pytest.mark.parametrize(
@@ -187,41 +184,4 @@ class TestHalGeneLiftover:
             hal_gene_liftover.make_src_region_file(regions, genome_name, chr_sizes, out_file_path,
                                                    flank_length)
             ref_file_path = self.ref_file_dir / bed_file
-            assert filecmp.cmp(out_file_path, ref_file_path)
-
-    @pytest.mark.parametrize(
-        "hal_file, src_genome, bed_file, dst_genome, psl_file, expectation",
-        [
-            ('aln.hal', 'genomeA', 'a2b.one2one.plus.flank0.src.bed', 'genomeB',
-             'a2b.one2one.plus.flank0.psl', does_not_raise()),
-            ('aln.hal', 'genomeB', 'unmappable.src.bed', 'genomeA',
-             'empty.txt', does_not_raise()),
-            ('aln.hal', 'genomeA', 'nonexistent.src.bed', 'genomeB',
-             'nonexistent.psl', raises(RuntimeError))
-        ]
-    )
-    def test_run_hal_liftover(self, hal_file: Union[Path, str], src_genome: str, bed_file: Union[Path, str],
-                              dst_genome: str, psl_file: Union[Path, str], expectation: ContextManager,
-                              tmp_dir: Path) -> None:
-        """Tests :func:`hal_gene_liftover.run_hal_liftover()` function.
-
-        Args:
-            hal_file: Input HAL file.
-            src_genome: Source genome name.
-            bed_file: Input BED file of source features to liftover. To obtain
-                      strand-aware results, this must include a 'strand' column.
-            dst_genome: Destination genome name.
-            psl_file: Output PSL file.
-            expectation: Context manager for the expected exception. The test will only pass if that
-                exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
-            tmp_dir: Unit test temp directory (fixture).
-
-        """
-        with expectation:
-            hal_file_path = self.ref_file_dir / hal_file
-            bed_file_path = self.ref_file_dir / bed_file
-            out_file_path = tmp_dir / psl_file
-            hal_gene_liftover.run_hal_liftover(hal_file_path, src_genome, bed_file_path,
-                                               dst_genome, out_file_path)
-            ref_file_path = self.ref_file_dir / psl_file
             assert filecmp.cmp(out_file_path, ref_file_path)
