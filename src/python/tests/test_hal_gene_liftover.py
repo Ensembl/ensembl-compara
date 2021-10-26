@@ -119,26 +119,25 @@ class TestHalGeneLiftover:
             assert obs_output == exp_output
 
     @pytest.mark.parametrize(
-        "chr_sizes_file, exp_output, expectation",
+        "chr_sizes_text, exp_output, expectation",
         [
-            ('genomeA.chrom.sizes', {'chr1': 33}, does_not_raise()),
-            ('nonexistent.chrom.sizes', None, raises(FileNotFoundError))
+            ('chr1\t33\n', {'chr1': 33}, does_not_raise()),
+            ('Lorem ipsum dolor', None, raises(ValueError))
         ]
     )
-    def test_load_chr_sizes(self, chr_sizes_file: Union[Path, str], exp_output: Dict[str, int],
-                            expectation: ContextManager) -> None:
-        """Tests :func:`hal_gene_liftover.load_chr_sizes()` function.
+    def test_load_chr_sizes_from_string(self, chr_sizes_text: str, exp_output: Dict[str, int],
+                                        expectation: ContextManager) -> None:
+        """Tests :func:`hal_gene_liftover.test_load_chr_sizes_from_string()` function.
 
         Args:
-            chr_sizes_file: Input chromosome sizes file.
+            chr_sizes_text: Input chromosome sizes text.
             exp_output: Expected return value of the function.
             expectation: Context manager for the expected exception. The test will only pass if that
                 exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
 
         """
         with expectation:
-            chr_sizes_file_path = self.ref_file_dir / chr_sizes_file
-            obs_output = hal_gene_liftover.load_chr_sizes(chr_sizes_file_path)
+            obs_output = hal_gene_liftover.load_chr_sizes_from_string(chr_sizes_text)
             assert obs_output == exp_output
 
     @pytest.mark.parametrize(

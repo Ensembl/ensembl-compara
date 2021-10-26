@@ -47,25 +47,23 @@ class SimpleRegion(NamedTuple):
     strand: str
 
 
-def load_chr_sizes(chr_sizes_file: Union[Path, str]) -> Dict[str, int]:
-    """Load chromosome sizes from a file.
-
-    The expected input is a headerless two-column tab-delimited file,
-    in which each row contains the name of a chromosome in the first
-    column and the length of that chromosome in the second column.
+def load_chr_sizes_from_string(chr_sizes_text: str) -> Dict[str, int]:
+    """Load chromosome sizes from text.
 
     Args:
-        chr_sizes_file: Input chromosome sizes file.
+        chr_sizes_text: Input chromosome sizes text. This is expected to be in
+            a headerless two-column tab-delimited text format, in which each
+            row contains the name of a chromosome in the first column and the
+            length of that chromosome in the second column.
 
     Returns:
         Dictionary mapping chromosome names to their lengths.
 
     """
     chr_sizes = {}
-    with open(chr_sizes_file) as f:
-        for line in f:
-            chr_name, chr_size = line.rstrip().split('\t')
-            chr_sizes[chr_name] = int(chr_size)
+    for line in chr_sizes_text.splitlines():
+        chr_name, chr_size = line.rstrip().split('\t')
+        chr_sizes[chr_name] = int(chr_size)
     return chr_sizes
 
 
@@ -217,15 +215,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    hal_file_stem, _ = os.path.splitext(args.hal_file)
-    hal_aux_dir = f'{hal_file_stem}_files'
-    os.makedirs(hal_aux_dir, exist_ok=True)
-
-    source_chr_sizes_file = os.path.join(hal_aux_dir, f'{args.src_genome}.chrom.sizes')
-    with open(source_chr_sizes_file, 'w') as file_obj:
-        source_chr_sizes_cmd = ['halStats', '--chromSizes', args.src_genome, args.hal_file]
-        subprocess.run(source_chr_sizes_cmd, check=True, stdout=file_obj, text=True, encoding='ascii')
-    source_chr_sizes = load_chr_sizes(source_chr_sizes_file)
+    source_chr_sizes_text = subprocess.check_output(['halStats', '--chromSizes', args.src_genome,
+                                                     args.hal_file], text=True, encoding='ascii')
+    source_chr_sizes = load_chr_sizes_from_string(source_chr_sizes_text)
 
     src_regions = [parse_region(args.src_region)]
 
