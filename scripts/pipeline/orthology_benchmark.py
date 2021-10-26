@@ -29,14 +29,18 @@ from ensembl.compara.config import get_species_set_by_name
 def dump_genomes():
     """Docstring"""
 
+
 def prep_input_for_orth_tools():
     """Docstring"""
+
 
 def run_orthology_tools():
     """Docstring"""
 
+
 def prep_input_for_goc():
     """Docstring"""
+
 
 def calculate_goc_scores():
     """Docstring"""
@@ -56,4 +60,3 @@ if __name__ == '__main__':
     # run_orthology_tools()
     # prep_input_for_goc()
     # calculate_goc_scores()
-    
