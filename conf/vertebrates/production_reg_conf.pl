@@ -92,8 +92,8 @@ my $compara_dbs = {
     'murinae_nctrees'         => [ 'mysql-ens-compara-prod-2',  'twalsh_vertebrates_murinae_ncrna_reindexed_trees_106' ],
     'murinae_ptrees_prev'     => [ 'mysql-ens-compara-prod-7',  'ivana_murinae_w_bugfix_vertebrates_protein_trees_105' ],
     'murinae_nctrees_prev'    => [ 'mysql-ens-compara-prod-4',  'cristig_murinae_vertebrates_ncrna_trees_105' ],
-    'pig_breeds_ptrees'       => [ 'mysql-ens-compara-prod-8',  'ivana_vertebrates_pig_breeds_protein_reindexed_trees_105' ],
-    'pig_breeds_nctrees'      => [ 'mysql-ens-compara-prod-8',  'ivana_vertebrates_pig_breeds_ncrna_reindexed_trees_105' ],
+    'pig_breeds_ptrees'       => [ 'mysql-ens-compara-prod-3',  'twalsh_vertebrates_pig_breeds_protein_reindexed_trees_106' ],
+    'pig_breeds_nctrees'      => [ 'mysql-ens-compara-prod-3',  'twalsh_vertebrates_pig_breeds_ncrna_reindexed_trees_106' ],
     'pig_breeds_ptrees_prev'  => [ 'mysql-ens-compara-prod-8',  'ivana_vertebrates_pig_breeds_protein_reindexed_trees_105' ],
     'pig_breeds_nctrees_prev' => [ 'mysql-ens-compara-prod-8',  'ivana_vertebrates_pig_breeds_ncrna_reindexed_trees_105' ],
 
