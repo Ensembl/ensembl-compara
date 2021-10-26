@@ -21,25 +21,20 @@ access to the plugins, hooks and fixtures defined here.
 # Disable all the redefined-outer-name violations due to how pytest fixtures work
 # pylint: disable=redefined-outer-name
 
-from contextlib import ExitStack
 import os
 from pathlib import Path
 import shutil
 import time
-from typing import Any, Callable, Dict, Generator, Optional
 
 import pytest
 from _pytest.config import Config
-from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
-from _pytest.python_api import RaisesContext
-from _pytest.tmpdir import TempPathFactory
-import sqlalchemy
 
-from ensembl.database import UnitTestDB
 from ensembl.compara.filesys import DirCmp, PathLike
 
+
 pytest_plugins = ("ensembl.plugins.pytest_unittest",)
+
 
 def pytest_configure(config: Config) -> None:
     """Adds global variables and configuration attributes required by Compara's unit tests.
@@ -55,7 +50,7 @@ def pytest_configure(config: Config) -> None:
 
 
 @pytest.fixture(scope='session')
-def dir_cmp(request: FixtureRequest, tmp_dir: Path) -> DirCmp:
+def dir_cmp(request: FixtureRequest, tmp_dir: PathLike) -> DirCmp:
     """Returns a directory tree comparison (:class:`DirCmp`) object.
 
     Requires a dictionary with the following keys:
