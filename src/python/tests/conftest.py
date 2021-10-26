@@ -36,7 +36,7 @@ from _pytest.python_api import RaisesContext
 from _pytest.tmpdir import TempPathFactory
 import sqlalchemy
 
-from ensembl.compara.db import UnitTestDB
+from ensembl.database import UnitTestDB
 from ensembl.compara.filesys import DirCmp, PathLike
 
 
