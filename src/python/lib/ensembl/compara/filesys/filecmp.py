@@ -27,6 +27,8 @@ Typical usage examples::
 
 """
 
+__all__ = ['NEWICK_EXT', 'file_cmp']
+
 import filecmp
 from pathlib import Path
 
