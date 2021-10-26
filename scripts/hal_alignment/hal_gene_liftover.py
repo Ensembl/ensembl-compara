@@ -34,7 +34,7 @@ from argparse import ArgumentParser
 import os
 from pathlib import Path
 import re
-from subprocess import PIPE, Popen, run
+import subprocess
 from tempfile import TemporaryDirectory
 from typing import Dict, Iterable, Mapping, NamedTuple, Union
 
@@ -186,8 +186,8 @@ def run_hal_liftover(hal_file: Union[Path, str], src_genome: str,
     """
     cmd1 = ['halLiftover', '--outPSL', hal_file, src_genome, bed_file, dst_genome, 'stdout']
     cmd2 = ['pslPosTarget', 'stdin', psl_file]
-    with Popen(cmd1, stdout=PIPE) as p1:
-        with Popen(cmd2, stdin=p1.stdout) as p2:
+    with subprocess.Popen(cmd1, stdout=subprocess.PIPE) as p1:
+        with subprocess.Popen(cmd2, stdin=p1.stdout) as p2:
             p2.wait()
             if p2.returncode != 0:
                 status_type = 'exit code' if p2.returncode > 0 else 'signal'
@@ -224,7 +224,7 @@ if __name__ == '__main__':
     source_chr_sizes_file = os.path.join(hal_aux_dir, f'{args.src_genome}.chrom.sizes')
     with open(source_chr_sizes_file, 'w') as file_obj:
         source_chr_sizes_cmd = ['halStats', '--chromSizes', args.src_genome, args.hal_file]
-        run(source_chr_sizes_cmd, check=True, stdout=file_obj, text=True, encoding='ascii')
+        subprocess.run(source_chr_sizes_cmd, check=True, stdout=file_obj, text=True, encoding='ascii')
     source_chr_sizes = load_chr_sizes(source_chr_sizes_file)
 
     src_regions = [parse_region(args.src_region)]
