@@ -153,7 +153,7 @@ my $ancestral_dbs = {
     'mammals_ancestral'    => [ 'mysql-ens-compara-prod-8', 'ivana_mammals_ancestral_core_105' ],
     #'primates_ancestral'   => [ 'mysql-ens-compara-prod-X', '' ],
     'sauropsids_ancestral' => [ 'mysql-ens-compara-prod-4', 'carlac_sauropsids_ancestral_core_104' ],
-    #'fish_ancestral'       => [ 'mysql-ens-compara-prod-X', '' ],
+    'fish_ancestral'       => [ 'mysql-ens-compara-prod-1', 'twalsh_fish_ancestral_core_106' ],
     'murinae_ancestral'    => [ 'mysql-ens-compara-prod-3', 'ivana_murinae_ancestral_core_105' ],
 };
 
