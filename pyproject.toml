@@ -22,9 +22,8 @@ norecursedirs = [
 source = ["src/python/lib"]
 
 [tool.mypy]
-python_version = 3.7
-mypy_path = "src/python/lib"
 ignore_missing_imports = true
+warn_unused_configs = true
 
 [tool.pylint.messages_control]
 max-line-length = 110
