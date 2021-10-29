@@ -183,21 +183,7 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
   }
   push @$all_species, sort {$a->{'display_name'} cmp $b->{'display_name'}} @other_species;
 
-  my $version;
-
-  if ($species_defs->EG_DIVISION) {
-    $version = $species_defs->SITE_RELEASE_VERSION;
-  }
-  else {
-    $version = $species_defs->ORIGINAL_VERSION || $species_defs->ENSEMBL_VERSION;
-  }
-  my $rel = "release-$version"; # Always set to use the release number rather than current to get around the delay in FTP site links updating
-
-  my $ftp_base = $ftp;
-  unless ($ftp_base =~ /rapid/) {
-    $ftp_base .= "/$rel";
-    $ftp_base .= "/$division" if $division;
-  }
+  my ($ftp_base, $version, $rel) = $self->get_misc_params($ftp, $division);
 
   foreach my $sp (@$all_species) {
     my $sp_url    = $sp->{'url'};
@@ -271,6 +257,27 @@ Each directory on <a href="$ftp" rel="external">$ftp_domain</a> contains a
   }, $fave_text, $main_table->render, $self->metadata, $self->add_footnotes);
 
   return $html;
+}
+
+
+sub get_misc_params {
+  my ($self, $ftp, $division) = @_;
+  my $species_defs = $self->hub->species_defs;
+  my $version;
+
+  if ($division) {
+    $version = $species_defs->SITE_RELEASE_VERSION;
+  }
+  else {
+    $version = $species_defs->ORIGINAL_VERSION || $species_defs->ENSEMBL_VERSION;
+  }
+  my $rel = "release-$version"; # Always set to use the release number rather than current to get around the delay in FTP site links updating
+
+  my $ftp_base = $ftp;
+  $ftp_base .= "/$rel";
+  $ftp_base .= "/$division" if $division;
+
+  return ($ftp_base, $version, $rel);
 }
 
 # Lookup for the types we need for species
