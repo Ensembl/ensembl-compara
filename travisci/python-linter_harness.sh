@@ -30,7 +30,7 @@ grep -v "\-\-\-\-\-\-\-\-\-" "$PYLINT_OUTPUT_FILE" | grep -v "Your code has been
 rt1=$?
 rm "$PYLINT_OUTPUT_FILE" "$PYLINT_ERRORS"
 
-find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \! -name "Ortheus.py" -print0 | xargs -0 mypy --config-file pyproject.toml --namespace-packages --explicit-package-bases
+find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \! -name "Ortheus.py" \! -name "*citest*.py" \! -path "*/citest/*" -print0 | xargs -0 mypy --config-file pyproject.toml --namespace-packages --explicit-package-bases
 rt2=$?
 
 if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then
