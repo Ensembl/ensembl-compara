@@ -42,7 +42,8 @@ sub _bigbed_adaptor {
 sub check_data {
   my ($self) = @_;
   my $url = $self->{'url'};
-  my $error = '';
+  my $original_url = $url;
+  my $message = '';
   require Bio::DB::BigFile;
 
   $url = chase_redirects($url, {'hub' => $self->{'hub'}});
@@ -53,13 +54,19 @@ sub check_data {
     Bio::DB::BigFile->set_udc_defaults;
     $bigbed = Bio::DB::BigFile->bigBedFileOpen($url);
   };
-  warn $@ if $@;
-  warn "Failed to open BigBed " . $url unless $bigbed;
-
-  if ($@ or !$bigbed) {
-    $error = "Unable to open remote BigBed file: $url<br>Ensure that your web/ftp server is accessible to the Ensembl site";
+  my $error;
+  if (ref $url eq 'HASH' && $url->{'error'} && scalar @{$url->{'error'}}) {
+    $error = join(', ', @{$url->{'error'}});
   }
-  return ($url, $error);
+
+  if ($@ or $error or !$bigbed) {
+    $error = 'Unknown error' unless $error;
+    my $warning = "Failed to open bigBed $original_url ($error)";
+    $message = "$warning<br>Ensure that your web/ftp server is accessible to the Ensembl site";
+    $warning .= ": $@" if $@;
+    warn $warning;
+  }
+  return ($url, $message);
 }
 
 sub style {
