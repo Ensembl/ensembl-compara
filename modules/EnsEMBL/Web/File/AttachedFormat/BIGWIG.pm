@@ -43,13 +43,19 @@ sub check_data {
     $bigwig = Bio::DB::BigFile->bigWigFileOpen($url);
     my $chromosome_list = $bigwig->chromList;
   };
-  warn $@ if $@;
-  warn "Failed to open BigWig " . $url unless $bigwig;
-
-  if ($@ or !$bigwig) {
-    $error = "Unable to open remote BigWig file: $url<br>Ensure that your web/ftp server is accessible to the Ensembl site";
+  my $error;
+  if (ref $url eq 'HASH' && $url->{'error'} && scalar @{$url->{'error'}}) {
+    $error = join(', ', @{$url->{'error'}});
   }
-  return ($url, $error);
+
+  if ($@ or $error or !$bigwig) {
+    $error = 'Unknown error' unless $error;
+    my $warning = "Failed to open bigWig $original_url ($error)";
+    $message = "$warning<br>Ensure that your web/ftp server is accessible to the Ensembl site";
+    $warning .= ": $@" if $@;
+    warn $warning;
+  }
+  return ($url, $message);
 }
 
 
