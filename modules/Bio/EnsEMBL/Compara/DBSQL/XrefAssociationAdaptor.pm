@@ -68,10 +68,6 @@ my $insert_member_sql = $insert_member_base_sql. q/ select gene_member_id,?,? fr
  
 my $get_member_id_sql = q/select gene_member_id from gene_member where stable_id=? and source_name='ENSEMBLGENE'/;
 
-my $delete_member_sql = q/delete mx.* from member_xref mx, gene_member m, genome_db g
-where g.name=? and mx.external_db_id=?
-and g.genome_db_id=m.genome_db_id and m.gene_member_id=mx.gene_member_id/;
-
 my $base_get_sql = q/
 select distinct g.stable_id,x.dbprimary_acc
 from CORE.xref x
@@ -165,8 +161,6 @@ sub store_member_associations {
 		return $member_acc_hash;
 	};
 	my $member_acc_hash = $callback->( $self, $dba, $db_name );
-	
-	$self->dbc()->sql_helper()->execute_update(-SQL=>$delete_member_sql, -PARAMS=>[$dba->get_MetaContainer->get_production_name(),$external_db_id]);
 	
 	while(my ($sid,$accs) = each %$member_acc_hash) {
 		my ($gene_member_id) = @{$self->dbc()->sql_helper()->execute_simple(-SQL=>$get_member_id_sql, -PARAMS=>[$sid])};	
