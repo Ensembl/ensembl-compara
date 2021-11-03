@@ -38,7 +38,7 @@ sub pipeline_analyses_create_and_copy_per_species_db {
     my ($self) = @_;
 
     my %dc_parameters = (
-        'datacheck_groups' => $self->o('datacheck_groups'),
+        'datacheck_groups' => $self->o('dc_compara_grp'),
         'db_type'          => $self->o('db_type'),
         'old_server_uri'   => [$self->o('compara_db')],
         'registry_file'    => undef,

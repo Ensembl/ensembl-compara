@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS meta (
   UNIQUE    KEY species_key_value_idx (species_id, meta_key, meta_value(255)),
             KEY species_value_idx (species_id, meta_value(255))
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @header Taxonomy and species-tree
@@ -102,7 +102,7 @@ CREATE TABLE ncbi_taxa_node (
   KEY (left_index),
   KEY (right_index)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @table ncbi_taxa_name
@@ -131,7 +131,7 @@ CREATE TABLE ncbi_taxa_name (
   KEY (name),
   KEY (name_class)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -184,7 +184,7 @@ CREATE TABLE genome_db (
   PRIMARY KEY (genome_db_id),
   UNIQUE KEY name (name,assembly,genome_component)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -216,7 +216,7 @@ CREATE TABLE species_set_header (
 
   PRIMARY KEY (species_set_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -244,7 +244,7 @@ CREATE TABLE species_set (
 
   PRIMARY KEY  (species_set_id,genome_db_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -269,7 +269,7 @@ CREATE TABLE species_set_tag (
   PRIMARY KEY (species_set_id,tag),
   KEY tag (tag)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -298,7 +298,7 @@ CREATE TABLE method_link (
   PRIMARY KEY (method_link_id),
   UNIQUE KEY type (type)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -338,7 +338,7 @@ CREATE TABLE method_link_species_set (
   PRIMARY KEY (method_link_species_set_id),
   UNIQUE KEY method_link_id (method_link_id,species_set_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @table method_link_species_set_tag
@@ -363,7 +363,7 @@ CREATE TABLE method_link_species_set_tag (
   PRIMARY KEY (method_link_species_set_id,tag),
   KEY tag (tag)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -403,7 +403,7 @@ CREATE TABLE method_link_species_set_attr (
 
   PRIMARY KEY (method_link_species_set_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @header Taxonomy and species-tree
@@ -446,7 +446,7 @@ CREATE TABLE `species_tree_node` (
   PRIMARY KEY (`node_id`),
   KEY `parent_id` (`parent_id`),
   KEY `root_id` (`root_id`,`left_index`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 /**
 @table species_tree_root
@@ -473,7 +473,7 @@ CREATE TABLE `species_tree_root` (
   UNIQUE KEY (method_link_species_set_id, label),
 
   PRIMARY KEY (root_id)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 /**
 @table species_tree_node_tag
@@ -498,7 +498,7 @@ CREATE TABLE `species_tree_node_tag` (
   KEY `node_id_tag` (`node_id`,`tag`),
   KEY `tag` (`tag`)
   
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 /**
 @table species_tree_node_attr               this table contains the attribute calculated for each species tree node
@@ -570,7 +570,7 @@ CREATE TABLE `species_tree_node_attr` (
 
   FOREIGN KEY (node_id) REFERENCES species_tree_node(node_id),
   PRIMARY KEY (node_id)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
 
@@ -603,7 +603,7 @@ CREATE TABLE synteny_region (
   PRIMARY KEY (synteny_region_id),
   KEY (method_link_species_set_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -644,7 +644,7 @@ CREATE TABLE dnafrag (
   PRIMARY KEY (dnafrag_id),
   UNIQUE KEY name (genome_db_id, name)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -668,7 +668,7 @@ CREATE TABLE dnafrag_alt_region (
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (dnafrag_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 
 /**
@@ -708,7 +708,7 @@ CREATE TABLE dnafrag_region (
   KEY synteny (synteny_region_id,dnafrag_id),
   KEY synteny_reversed (dnafrag_id,synteny_region_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @header Genomic alignments
@@ -751,7 +751,7 @@ CREATE TABLE genomic_align_block (
   PRIMARY KEY genomic_align_block_id (genomic_align_block_id),
   KEY method_link_species_set_id (method_link_species_set_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @table genomic_align_tree
@@ -791,7 +791,7 @@ CREATE TABLE genomic_align_tree (
   KEY parent_id (parent_id),
   KEY left_index (root_id, left_index)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @table genomic_align
@@ -875,7 +875,7 @@ CREATE TABLE genomic_align (
   KEY method_link_species_set_id (method_link_species_set_id),
   KEY dnafrag (dnafrag_id, method_link_species_set_id, dnafrag_start, dnafrag_end),
   KEY node_id (node_id)
-) MAX_ROWS = 1000000000 AVG_ROW_LENGTH = 60 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) MAX_ROWS = 1000000000 AVG_ROW_LENGTH = 60 COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -908,7 +908,7 @@ CREATE TABLE conservation_score (
   FOREIGN KEY (genomic_align_block_id) REFERENCES genomic_align_block(genomic_align_block_id),
 
   KEY (genomic_align_block_id, window_size)
-) MAX_ROWS = 15000000 AVG_ROW_LENGTH = 841 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) MAX_ROWS = 15000000 AVG_ROW_LENGTH = 841 COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -953,7 +953,7 @@ CREATE TABLE constrained_element (
   KEY constrained_element_id_idx (constrained_element_id),
   KEY mlssid_dfId_dfStart_dfEnd_idx (method_link_species_set_id,dnafrag_id,dnafrag_start,dnafrag_end)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 # --------------------------------- Protein part of the schema ------------------------------------
@@ -984,7 +984,7 @@ CREATE TABLE sequence (
 
   PRIMARY KEY (sequence_id),
   KEY md5sum (md5sum)
-) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 19000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 19000 COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -1033,7 +1033,8 @@ CREATE TABLE gene_member (
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
 
   PRIMARY KEY (gene_member_id),
-  CONSTRAINT genome_stable_id UNIQUE (genome_db_id, stable_id),
+  UNIQUE KEY genome_stable_id (genome_db_id,stable_id),
+
   KEY (stable_id),
   KEY (source_name),
   KEY (canonical_member_id),
@@ -1041,7 +1042,7 @@ CREATE TABLE gene_member (
   KEY dnafrag_id_end (dnafrag_id,dnafrag_end),
   KEY biotype_dnafrag_id_start_end (biotype_group,dnafrag_id,dnafrag_start,dnafrag_end),
   KEY genome_db_id_biotype (genome_db_id, biotype_group)
-) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -1081,7 +1082,7 @@ CREATE TABLE gene_member_hom_stats (
 
   PRIMARY KEY (gene_member_id, collection)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -1131,21 +1132,22 @@ CREATE TABLE seq_member (
   dnafrag_strand              TINYINT,
   display_label               varchar(128) default NULL,
 
-  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
-  FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
-  FOREIGN KEY (sequence_id) REFERENCES sequence(sequence_id),
-  FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id) ON UPDATE CASCADE,
-
   PRIMARY KEY (seq_member_id),
-  CONSTRAINT genome_stable_id UNIQUE (genome_db_id, stable_id),
+  UNIQUE KEY genome_stable_id (genome_db_id,stable_id),
+
   KEY (stable_id),
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id),
   KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
   KEY dnafrag_id_end (dnafrag_id,dnafrag_end),
-  KEY seq_member_gene_member_id_end (seq_member_id,gene_member_id)
-) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+  KEY seq_member_gene_member_id_end (seq_member_id,gene_member_id),
+
+  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
+  FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
+  FOREIGN KEY (sequence_id) REFERENCES sequence(sequence_id),
+  FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id) ON UPDATE CASCADE
+) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -1185,7 +1187,7 @@ CREATE TABLE exon_boundaries (
 
 	INDEX (seq_member_id),
 	INDEX (gene_member_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 
 /**
@@ -1213,7 +1215,7 @@ CREATE TABLE seq_member_projection_stable_id (
   PRIMARY KEY (target_seq_member_id),
   INDEX (source_stable_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -1243,7 +1245,7 @@ CREATE TABLE seq_member_projection (
 
   PRIMARY KEY (target_seq_member_id),
   KEY (source_seq_member_id)
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 -- NOTE: this table is actually defined in another repository
@@ -1289,7 +1291,7 @@ CREATE TABLE `external_db` (
   `description` text,
   PRIMARY KEY (`external_db_id`),
   UNIQUE KEY `db_name_db_release_idx` (`db_name`,`db_release`)
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @table member_xref
@@ -1310,7 +1312,7 @@ CREATE TABLE `member_xref` (
   PRIMARY KEY (`gene_member_id`,`dbprimary_acc`,`external_db_id`),
   FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id),
   FOREIGN KEY (external_db_id) REFERENCES external_db(external_db_id)
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -1338,7 +1340,7 @@ CREATE TABLE other_member_sequence (
 
   PRIMARY KEY (seq_member_id, seq_type)
 
-) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 60000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 60000 COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @header   Gene trees and homologies
@@ -1404,7 +1406,7 @@ CREATE TABLE peptide_align_feature (
   KEY qmember_id  (qmember_id),
   KEY hmember_id  (hmember_id),
   KEY qmember_hgenome  (qmember_id, hgenome_db_id)
-) MAX_ROWS = 100000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) MAX_ROWS = 100000000 AVG_ROW_LENGTH = 133 COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @header Protein families
@@ -1442,7 +1444,7 @@ CREATE TABLE family (
   KEY (method_link_species_set_id),
   KEY (description(255))
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @table family_member
@@ -1468,7 +1470,7 @@ CREATE TABLE family_member (
   PRIMARY KEY family_seq_member_id (family_id,seq_member_id),
   KEY (seq_member_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 
@@ -1494,7 +1496,7 @@ CREATE TABLE gene_align (
 
   PRIMARY KEY (gene_align_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -1520,7 +1522,7 @@ CREATE TABLE gene_align_member (
   PRIMARY KEY (gene_align_id,seq_member_id),
   KEY seq_member_id (seq_member_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -1562,7 +1564,7 @@ CREATE TABLE gene_tree_node (
   KEY seq_member_id (seq_member_id),
   KEY root_id_left_index (root_id,left_index)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -1616,7 +1618,7 @@ CREATE TABLE gene_tree_root (
     KEY ref_root_id (ref_root_id),
     KEY (tree_type)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @table gene_tree_node_tag
@@ -1643,7 +1645,7 @@ CREATE TABLE gene_tree_node_tag (
   KEY node_id_tag (node_id, tag),
   KEY tag (tag)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -1670,7 +1672,7 @@ CREATE TABLE gene_tree_root_tag (
   KEY root_id_tag (root_id, tag),
   KEY tag (tag)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @table gene_tree_root_attr
@@ -1739,7 +1741,7 @@ CREATE TABLE `gene_tree_root_attr` (
   PRIMARY KEY (root_id),
   KEY (lca_node_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @table gene_tree_node_attr
@@ -1768,7 +1770,7 @@ CREATE TABLE gene_tree_node_attr (
 
   PRIMARY KEY (node_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @header Extra annotations on members
@@ -1800,7 +1802,7 @@ CREATE TABLE gene_member_qc (
 
   KEY (gene_member_stable_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @header Gene trees and homologies
@@ -1824,7 +1826,7 @@ CREATE TABLE `gene_tree_object_store` (
 
   PRIMARY KEY (root_id, data_label)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -1861,7 +1863,7 @@ CREATE TABLE hmm_profile (
 
   PRIMARY KEY (model_id,type)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -1892,7 +1894,7 @@ CREATE TABLE hmm_annot (
   PRIMARY KEY (seq_member_id),
   KEY (model_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 
@@ -1919,7 +1921,7 @@ CREATE TABLE hmm_curated_annot (
   PRIMARY KEY (seq_member_stable_id),
   KEY (model_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -1982,7 +1984,7 @@ CREATE TABLE homology (
   KEY (gene_tree_node_id),
   KEY (gene_tree_root_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -2147,7 +2149,7 @@ CREATE TABLE homology_member (
   PRIMARY KEY homology_member_id (homology_id,gene_member_id),
   KEY (gene_member_id),
   KEY (seq_member_id)
-) MAX_ROWS = 300000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) MAX_ROWS = 300000000 COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @header Stable-ID mapping
@@ -2178,7 +2180,7 @@ CREATE TABLE mapping_session (
     PRIMARY KEY ( mapping_session_id ),
     UNIQUE KEY  ( type, rel_from, rel_to, prefix )
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 /**
 @table stable_id_history
@@ -2205,7 +2207,7 @@ CREATE TABLE stable_id_history (
 
     PRIMARY KEY ( mapping_session_id, stable_id_from, stable_id_to )
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 /**
@@ -2246,7 +2248,7 @@ CREATE TABLE `CAFE_gene_family` (
   PRIMARY KEY (`cafe_gene_family_id`),
   KEY `root_id` (`root_id`),
   KEY `gene_tree_root_id` (`gene_tree_root_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=latin1;
 
 /**
 @table CAFE_species_gene
@@ -2270,7 +2272,7 @@ CREATE TABLE `CAFE_species_gene` (
 
   PRIMARY KEY (cafe_gene_family_id, node_id)
 
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
 # ------------------------ End of CAFE tables --------------------------------------
