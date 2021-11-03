@@ -44,6 +44,7 @@ sub content {
                     type       => 'Location',
                     label_html => $r, 
                     link       => $hub->url({
+                                    type    => 'Location',
                                     action  => 'View',
                                     r       => $r,
                                   }),
