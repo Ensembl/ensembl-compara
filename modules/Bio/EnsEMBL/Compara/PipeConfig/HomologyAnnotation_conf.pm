@@ -114,7 +114,8 @@ sub default_options {
         'curr_file_sources_locs'          => [ ],
 
         # Whole db DC parameters
-        'datacheck_groups' => ['compara_homology_annotation'],
+        'dc_pipeline_grp'  => ['compara_blastocyst'],
+        'dc_compara_grp'   => ['compara_homology_annotation'],
         'db_type'          => ['compara'],
         'output_dir_path'  => $self->o('work_dir') . '/datachecks/',
         'overwrite_files'  => 1,
@@ -204,6 +205,13 @@ sub resource_classes {
 sub core_pipeline_analyses {
     my ($self) = @_;
 
+    my %dc_parameters = (
+        'datacheck_groups' => $self->o('dc_pipeline_grp'),
+        'db_type'          => $self->o('db_type'),
+        'old_server_uri'   => $self->o('old_server_uri'),
+        'registry_file'    => undef,
+    );
+
     return [
 
         {   -logic_name      => 'core_species_factory',
@@ -267,7 +275,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_dc_and_copy_db',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A'  => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'old_server_uri' => $self->o('old_server_uri'), 'compara_db' => $self->o('compara_db'), 'registry_file' => undef } },
+                '1->A'  => { 'datacheck_factory' => { 'compara_db' => $self->o('compara_db'), %dc_parameters } },
                 'A->1'  => [ 'create_db_factory' ],
             }
         },
