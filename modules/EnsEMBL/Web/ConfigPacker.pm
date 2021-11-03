@@ -1676,8 +1676,6 @@ sub _munge_meta {
     assembly.accession            ASSEMBLY_ACCESSION
     assembly.web_accession_source ASSEMBLY_ACCESSION_SOURCE
     assembly.web_accession_type   ASSEMBLY_ACCESSION_TYPE
-    assembly.name                 ASSEMBLY_NAME
-    assembly.default              ASSEMBLY_NAME
     liftover.mapping              ASSEMBLY_MAPPINGS
     genome.assembly_type          GENOME_ASSEMBLY_TYPE
     assembly.provider_name        ASSEMBLY_PROVIDER_NAME
@@ -1725,7 +1723,14 @@ sub _munge_meta {
     ## We use this as the species key initially
     my $prod_name = $meta_hash->{'species.production_name'}[0];
     $self->tree($prod_name)->{'SPECIES_META_ID'} = $species_id;
-    
+   
+    ## Ugly hack - NV currently assign assembly name differently from verts,
+    ## which breaks BLAST if we don't use the same one as production
+    my $assembly_name     = $meta_hash->{'assembly.name'}[0];
+    my $assembly_default  = $meta_hash->{'assembly.default'}[0];
+    $self->tree($prod_name)->{'ASSEMBLY_NAME'} = $SiteDefs::EG_DIVISION ? $assembly_default 
+                                                                        : $assembly_name; 
+ 
     ## Put other meta info into variables
     while (my ($meta_key, $key) = each (%keys)) {
       next unless $meta_hash->{$meta_key};
