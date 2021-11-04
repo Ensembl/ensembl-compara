@@ -68,10 +68,6 @@ my $insert_member_sql = $insert_member_base_sql. q/ select gene_member_id,?,? fr
  
 my $get_member_id_sql = q/select gene_member_id from gene_member where stable_id=? and source_name='ENSEMBLGENE'/;
 
-my $delete_member_sql = q/delete mx.* from member_xref mx, gene_member m, genome_db g
-where g.name=? and mx.external_db_id=?
-and g.genome_db_id=m.genome_db_id and m.gene_member_id=mx.gene_member_id/;
-
 my $base_get_sql = q/
 select distinct g.stable_id,x.dbprimary_acc
 from CORE.xref x
@@ -130,7 +126,12 @@ my $get_external_db_id = q/select external_db_id from external_db where db_name=
   Arg[3]     : Optional callback that generates a hash of gene stable ID to external database accession
   Example    : $adaptor->store_member_associations($dba, 'GO');
 
-  Description: Method to retrieve external database accessions for genes in the supplied core and store them in the compara database
+  Description: Method to retrieve external database accessions for genes in the supplied core and store
+               them in the Compara database. Note: this method assumes that the member associations for
+               the given external database have not been previously stored in the Compara database. This
+               is true for the typical use case of this method, and making this assumption improves speed
+               significantly. If this assumption is violated, it is the responsibility of the caller to
+               ensure that previously member associations have been removed before calling this method.
   Returntype : None
   Exceptions :
   Caller     :
@@ -165,8 +166,6 @@ sub store_member_associations {
 		return $member_acc_hash;
 	};
 	my $member_acc_hash = $callback->( $self, $dba, $db_name );
-	
-	$self->dbc()->sql_helper()->execute_update(-SQL=>$delete_member_sql, -PARAMS=>[$dba->get_MetaContainer->get_production_name(),$external_db_id]);
 	
 	while(my ($sid,$accs) = each %$member_acc_hash) {
 		my ($gene_member_id) = @{$self->dbc()->sql_helper()->execute_simple(-SQL=>$get_member_id_sql, -PARAMS=>[$sid])};	
