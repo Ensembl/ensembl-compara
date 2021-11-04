@@ -112,7 +112,7 @@ class TestDumpGenomes:
         with expectation:
             host = self.core_dbs["gallus_gallus_core_99_6"].dbc.host
             #port = self.core_dbs["gallus_gallus_core_99_6"].dbc.port
-            port = 4485 # hardcoded until .dbc.port is merged into ensembl-py
+            port = 3306 # hardcoded until .dbc.port is merged into ensembl-py
             orthology_benchmark.dump_genomes(species_list, species_set_name, host, port, tmp_dir)
 
             out_files = tmp_dir / species_set_name
