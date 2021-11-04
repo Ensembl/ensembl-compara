@@ -25,6 +25,7 @@ Typical usage example::
 
 from contextlib import nullcontext as does_not_raise
 import filecmp
+import os
 from pathlib import Path
 import subprocess
 from typing import ContextManager
@@ -54,8 +55,8 @@ def test_prepare_input_orthofinder(source_dir: str, target_dir: str, tmp_dir: Pa
                 exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
 
     """
-    from_dir = pytest.files_dir / source_dir
-    to_dir = tmp_dir / target_dir
+    from_dir = os.fspath(pytest.files_dir / source_dir)
+    to_dir = os.fspath(tmp_dir / target_dir)
     with expectation:
         prepare_input_orthofinder(from_dir, to_dir)
         common = ["gallus_gallus_core_99_6.fasta", "homo_sapiens_core_99_38.fasta"]

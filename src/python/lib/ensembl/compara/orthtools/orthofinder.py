@@ -37,10 +37,9 @@ Typical usage example::
 __all__ = ['prepare_input_orthofinder', 'run_orthofinder']
 
 import os
-from pathlib import Path
 import subprocess
 
-def prepare_input_orthofinder(source_dir: Path, target_dir: Path) -> None:
+def prepare_input_orthofinder(source_dir: str, target_dir: str) -> None:
     """Prepares input files for running OrthoFinder, i.e. copies input files to a `target_dir`.
 
     Args:
