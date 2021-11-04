@@ -126,7 +126,12 @@ my $get_external_db_id = q/select external_db_id from external_db where db_name=
   Arg[3]     : Optional callback that generates a hash of gene stable ID to external database accession
   Example    : $adaptor->store_member_associations($dba, 'GO');
 
-  Description: Method to retrieve external database accessions for genes in the supplied core and store them in the compara database
+  Description: Method to retrieve external database accessions for genes in the supplied core and store
+               them in the Compara database. Note: this method assumes that the member associations for
+               the given external database have not been previously stored in the Compara database. This
+               is true for the typical use case of this method, and making this assumption improves speed
+               significantly. If this assumption is violated, it is the responsibility of the caller to
+               ensure that previously member associations have been removed before calling this method.
   Returntype : None
   Exceptions :
   Caller     :
