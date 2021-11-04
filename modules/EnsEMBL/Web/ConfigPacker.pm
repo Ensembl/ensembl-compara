@@ -1227,7 +1227,7 @@ sub _build_compara_mlss {
 
 sub _summarise_compara_db {
   my ($self, $code, $db_name) = @_;
-  
+ 
   my $dbh = $self->db_connect($db_name);
   return unless $dbh;
   
@@ -1252,7 +1252,7 @@ sub _summarise_compara_db {
   
   my (%intra_species, %intra_species_constraints);
   $intra_species{$_->[0]}{$_->[1]} = 1 for @$intra_species_aref;
-  
+
   # look at all the multiple alignments
   ## We've done the DB hash...So lets get on with the multiple alignment hash;
   my $res_aref = $dbh->selectall_arrayref('
@@ -1728,8 +1728,13 @@ sub _munge_meta {
     ## which breaks BLAST if we don't use the same one as production
     my $assembly_name     = $meta_hash->{'assembly.name'}[0];
     my $assembly_default  = $meta_hash->{'assembly.default'}[0];
-    $self->tree($prod_name)->{'ASSEMBLY_NAME'} = $SiteDefs::EG_DIVISION ? $assembly_default 
-                                                                        : $assembly_name; 
+    if ($SiteDefs::EG_DIVISION) {
+      $self->tree($prod_name)->{'ASSEMBLY_DISPLAY_NAME'}  = $assembly_name; 
+      $self->tree($prod_name)->{'ASSEMBLY_NAME'}          = $assembly_default; 
+    }
+    else {
+      $self->tree($prod_name)->{'ASSEMBLY_NAME'} = $assembly_name;
+    }
  
     ## Put other meta info into variables
     while (my ($meta_key, $key) = each (%keys)) {
@@ -1746,8 +1751,9 @@ sub _munge_meta {
     $self->tree($prod_name)->{'POLYPLOIDY'} = ($self->tree($prod_name)->{'PLOIDY'} && $self->tree($prod_name)->{'PLOIDY'} > 2);
 
     ## Set version of assembly name that we can use where space is limited
-    my $assembly_name = $self->tree->{'ASSEMBLY_NAME'}; 
-    $self->tree->{'ASSEMBLY_SHORT_NAME'} = (length($assembly_name) > 16) ? $self->db_tree->{'ASSEMBLY_VERSION'} : $assembly_name;
+    $assembly_name = $SiteDefs::EG_DIVISION ? $self->tree($prod_name)->{'ASSEMBLY_DISPLAY_NAME'}
+                                            : $self->tree($prod_name)->{'ASSEMBLY_NAME'}; 
+    $self->tree($prod_name)->{'ASSEMBLY_SHORT_NAME'} = (length($assembly_name) > 16) ? $self->db_tree->{'ASSEMBLY_VERSION'} : $assembly_name;
 
     ## Uppercase first part of common name, for consistency
     if ($self->tree($prod_name)->{'SPECIES_COMMON_NAME'}) {
