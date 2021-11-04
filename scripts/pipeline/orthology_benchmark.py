@@ -18,7 +18,7 @@
 Typical usage example::
 
     $ python orthology_benchmark.py --mlss_conf /path/to/mlss_conf.xml --species_set default \
-    --host mysql-ens-compara-prod-10 --port 4648 --out_dir $HPS_HOME
+    --host mysql-ens-compara-prod-10 --port 4648 --user ensro --out_dir $HPS_HOME
 
 """
 
@@ -34,7 +34,7 @@ from ensembl.compara.config import get_species_set_by_name
 
 
 def dump_genomes(species_list: List[str], species_set_name: str, host: str, port: int,
-                 out_dir: str) -> None:
+                 user: str, out_dir: str) -> None:
     """Dumps canonical peptides of protein-coding genes for a specified list of species
     from the latest available core databases to FASTA files using `dump_gene_set_from_core.pl`.
 
@@ -43,6 +43,7 @@ def dump_genomes(species_list: List[str], species_set_name: str, host: str, port
         species_set_name: Species set (collection) name.
         host: Database host.
         port: Host port.
+        user: Server username.
         out_dir: Directory to place `species_set_name/core_name.fasta` dumps.
 
     Raises:
@@ -53,7 +54,7 @@ def dump_genomes(species_list: List[str], species_set_name: str, host: str, port
 
     """
     # Check access to the host & port
-    MySQLdb.connect(host=host, port=port, user="ensro")
+    MySQLdb.connect(host=host, port=port, user=user)
 
     cores = get_core_names(species_list, host)
     dump_cores = [core for species, core in cores.items() if core != ""]
@@ -169,13 +170,14 @@ if __name__ == '__main__':
     parser.add_argument("--species_set", required=True, type=str, help="Species set (collection) name")
     parser.add_argument("--host", required=True, type=str, help="Database host")
     parser.add_argument("--port", required=True, type=int, help="Database port")
+    parser.add_argument("--user", required=True, type=str, help="Server username")
     parser.add_argument("--out_dir", required=True, type=str, help="Location for"
                                                                    "'species_set/core_name.fasta' dumps")
 
     args = parser.parse_args()
 
     genome_list = get_species_set_by_name(args.mlss_conf, args.species_set)
-    dump_genomes(genome_list, args.species_set, args.host, args.port, args.out_dir)
+    dump_genomes(genome_list, args.species_set, args.host, args.port, args.user, args.out_dir)
     # prep_input_for_orth_tools()
     # run_orthology_tools()
     # prep_input_for_goc()

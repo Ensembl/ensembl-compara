@@ -113,7 +113,8 @@ class TestDumpGenomes:
             host = self.core_dbs["gallus_gallus_core_99_6"].dbc.host
             #port = self.core_dbs["gallus_gallus_core_99_6"].dbc.port
             port = 3306 # hardcoded until .dbc.port is merged into ensembl-py
-            orthology_benchmark.dump_genomes(species_list, species_set_name, host, port, tmp_dir)
+            # user "travis" hardcoded until we find better solution
+            orthology_benchmark.dump_genomes(species_list, species_set_name, host, port, "travis", tmp_dir)
 
             out_files = tmp_dir / species_set_name
             exp_out = pytest.files_dir / "orth_benchmark"
@@ -129,8 +130,9 @@ class TestDumpGenomes:
 
         """
         with raises(MySQLdb.OperationalError):
+            # user "travis" hardcoded until we find better solution
             orthology_benchmark.dump_genomes(["mus_musculus", "naja_naja"], "default",
-                                             "fake-host", 666, tmp_dir)
+                                             "fake-host", 666, "travis", tmp_dir)
 
 
 @pytest.mark.parametrize(
