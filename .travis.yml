@@ -140,29 +140,25 @@ jobs:
     - language: python
       python: 3.7
       name: "Python unit tests on the minimum version"
-      env:
-        - TEST_COMPILATION=true
-        - COVERAGE=false
       before_install:
         - echo
       install:
         - pip install -r requirements.txt -r requirements-test.txt
         - pip install -e .
-      script: ./travisci/python-unittest_harness.sh
+      script:
+        - pytest --server=mysql://travis@127.0.0.1:3306/ src/python/tests/
 
     - language: python
       python: 3.9
       name: "Python unit tests on the latest version, with code coverage"
-      env:
-        - TEST_COMPILATION=false    # Because the linters also check that the code compiles
-        - COVERAGE=true
       before_install:
         - echo
       install:
         - pip install codecov
         - pip install -r requirements.txt -r requirements-test.txt
         - pip install -e .
-      script: ./travisci/python-unittest_harness.sh
+      script:
+        - pytest --cov=./ --cov-report=term-missing --server=mysql://travis@127.0.0.1:3306/ src/python/tests/
       after_success:
         - codecov
 
