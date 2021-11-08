@@ -38,6 +38,7 @@ __all__ = ['prepare_input_orthofinder', 'run_orthofinder']
 
 import fnmatch
 import os
+from pathlib import Path
 import subprocess
 
 def prepare_input_orthofinder(source_dir: str, target_dir: str) -> None:
@@ -62,7 +63,7 @@ def prepare_input_orthofinder(source_dir: str, target_dir: str) -> None:
     # To ensure a new directory is used for running OrthoFinder:
     os.mkdir(target_dir)
 
-    script = os.path.join(os.environ["ENSEMBL_ROOT_DIR"], "ensembl-compara", "scripts", "pipeline",
+    script = os.path.join(Path(__file__).parents[6], "scripts", "pipeline",
                           "symlink_fasta.py")
 
     subprocess.run([script, "-s", target_dir, "-d", source_dir], capture_output=True, check=True)
