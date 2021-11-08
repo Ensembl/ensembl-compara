@@ -43,37 +43,8 @@ sub check_data {
 ###               error ArrayRef
 ###               hub_info HashRef
   my ($self, $assembly_lookup) = @_;
-  my $error;
- 
-  ## Validate using hubCheck, if available - but don't bother if it's from the registry
-  ## as (in theory) it will have already been checked
-  ## However only warn the errors, as most hubs have minor errors and hubCheck
-  ## is not yet flexible enough to deal with them
-  my $hubCheck = $self->{'hub'}->species_defs->HUBCHECK_BIN;
   my $url = $self->{'url'};
-  if ($hubCheck && !$self->{'registry'}) {
-    my $hc_error = `$hubCheck '$url' -checkSettings -noTracks`;	
-    if ($hc_error) {
-      ## Parse and ignore issues we don't care about
-      my @lines = split /\n/, $hc_error;
-      my @error_lines;
-      my $problematic = 0;
-      for my $line (@lines) {
-        next if $line =~ m/deprecated|cram|^Found\s[0-9]*\sproblems?:$/;
-        push @error_lines, $line;
-      }
-      if (scalar @error_lines) {
-        my $error_list = '<ul><li>'.join('</li><li>', @error_lines).'</li></ul>'; 
-        my $warning = qq(<p>The trackhub at $url failed to validate with <a href="https://genome.ucsc.edu/goldenpath/help/hgTrackHubHelp.html#Debug">hubCheck</a>, producing the following errors:</p>$error_list<p>It may therefore not display correctly in Ensembl.</p>);
-        $self->{'hub'}->session->set_record_data({
-                        type     => 'message',
-                        code     => 'AttachURL',
-                        message  => $warning,
-                        function => '_warning'
-                      });
-      }
-    }
-  }
+  my $error;
  
   ## Check that we can use it with this website's species
   ## Hack to catch IHEC Epigenomes Portal issues
