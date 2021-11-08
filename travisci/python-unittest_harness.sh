@@ -18,11 +18,6 @@
 PYTHON_SOURCE_LOCATIONS=('scripts' 'src/python')
 PYTHON_TESTS_LOCATIONS=('src/python/tests/')
 
-# Setup the environment variables
-export ENSADMIN_PSW='dummy_pwd'
-# shellcheck disable=SC2155
-export PYTHONPATH=$PYTHONPATH:$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')
-
 # Check that all the Python files can be compiled
 if [ "$TEST_COMPILATION" = 'true' ]; then
   find "${PYTHON_SOURCE_LOCATIONS[@]}" -name '*.py' -print0 | xargs -0 travisci/compile.py
@@ -35,23 +30,10 @@ PYTEST_OPTIONS=()
 if [ "$COVERAGE" = 'true' ]; then
   PYTEST_OPTIONS+=('--cov=./' '--cov-report=term-missing')
 fi
-pytest "${PYTEST_OPTIONS[@]}" "${PYTHON_TESTS_LOCATIONS[@]}" --ignore="src/python/tests/test_db.py" --server="mysql://travis@127.0.0.1:3306/"
+pytest "${PYTEST_OPTIONS[@]}" -o server="mysql://travis@127.0.0.1:3306/" "${PYTHON_TESTS_LOCATIONS[@]}"
 rt2=$?
-if [ "$COVERAGE" = 'true' ]; then
-  PYTEST_OPTIONS+=('--cov-append')
-fi
-pytest "${PYTEST_OPTIONS[@]}" src/python/tests/test_db.py --server="mysql://travis@127.0.0.1:3306/"
-rt4=$?
-# Test SQLite-specific code
-if [ "$COVERAGE" = 'true' ]; then
-  PYTEST_OPTIONS+=('--cov-append' '-k UnitTestDB')
-  pytest "${PYTEST_OPTIONS[@]}" src/python/tests/test_db.py --server="sqlite:////tmp/"
-  rt3=$?
-else
-  rt3=0
-fi
 
-if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) && ($rt4 -eq 0) ]]; then
+if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then
   exit 0
 else
   exit 255

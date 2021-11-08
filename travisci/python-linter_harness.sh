@@ -30,6 +30,7 @@ grep -v "\-\-\-\-\-\-\-\-\-" "$PYLINT_OUTPUT_FILE" | grep -v "Your code has been
 rt1=$?
 rm "$PYLINT_OUTPUT_FILE" "$PYLINT_ERRORS"
 
+# CITest project is on hold and it needs to be updated before resuming its static type checker
 find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \! -name "Ortheus.py" \! -name "*citest*.py" \! -path "*/citest/*" -print0 | xargs -0 mypy --config-file pyproject.toml --namespace-packages --explicit-package-bases
 rt2=$?
 

@@ -27,7 +27,6 @@ import shutil
 import time
 
 import pytest
-from _pytest.config import Config
 from _pytest.fixtures import FixtureRequest
 
 from ensembl.compara.filesys import DirCmp, PathLike
@@ -36,14 +35,11 @@ from ensembl.compara.filesys import DirCmp, PathLike
 pytest_plugins = ("ensembl.plugins.pytest_unittest",)
 
 
-def pytest_configure(config: Config) -> None:
+def pytest_configure() -> None:
     """Adds global variables and configuration attributes required by Compara's unit tests.
 
     `Pytest initialisation hook
     <https://docs.pytest.org/en/latest/reference.html#_pytest.hookspec.pytest_configure>`_.
-
-    Args:
-        config: Access to configuration values, pluginmanager and plugin hooks.
 
     """
     pytest.files_dir = Path(__file__).parent / 'flatfiles'

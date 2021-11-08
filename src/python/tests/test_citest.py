@@ -35,7 +35,6 @@ from ensembl.compara.citest import CITestDBItem, CITestDBContentError, CITestDBG
 from ensembl.compara.filesys import DirCmp
 
 
-@pytest.mark.skip(reason="CITest project is on hold and these tests need to be updated")
 @pytest.mark.parametrize("multi_dbs", [[{'src': 'citest/reference'}, {'src': 'citest/target'}]],
                          indirect=True)
 class TestCITestDBItem:
@@ -123,7 +122,6 @@ class TestCITestDBItem:
             self.db_item.test_content(**kwargs)
 
 
-@pytest.mark.skip(reason="CITest project is on hold and these tests need to be updated")
 @pytest.mark.parametrize("dir_cmp", [{'ref': 'citest/reference', 'target': 'citest/target'}], indirect=True)
 class TestCITestFilesItem:
     """Tests CITest's :class:`CITestFilesItem` class.
