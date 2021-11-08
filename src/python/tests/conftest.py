@@ -42,7 +42,7 @@ def pytest_configure() -> None:
     <https://docs.pytest.org/en/latest/reference.html#_pytest.hookspec.pytest_configure>`_.
 
     """
-    pytest.files_dir = Path(__file__).parent / 'flatfiles'
+    pytest.files_dir = Path(__file__).parent / 'flatfiles'  # type: ignore[attr-defined]
 
 
 @pytest.fixture(scope='session')
@@ -68,12 +68,12 @@ def dir_cmp(request: FixtureRequest, tmp_dir: PathLike) -> DirCmp:
 
     """
     # Get the source and temporary absolute paths for reference and target root directories
-    ref = Path(request.param['ref'])
-    ref_src = ref if ref.is_absolute() else pytest.files_dir / ref
-    ref_tmp = tmp_dir / str(ref).replace(os.path.sep, '_')
-    target = Path(request.param['target'])
-    target_src = target if target.is_absolute() else pytest.files_dir / target
-    target_tmp = tmp_dir / str(target).replace(os.path.sep, '_')
+    ref = Path(request.param['ref'])  # type: ignore[attr-defined]
+    ref_src = ref if ref.is_absolute() else pytest.files_dir / ref  # type: ignore[attr-defined]
+    ref_tmp = Path(tmp_dir) / str(ref).replace(os.path.sep, '_')
+    target = Path(request.param['target'])  # type: ignore[attr-defined]
+    target_src = target if target.is_absolute() else pytest.files_dir / target  # type: ignore[attr-defined]
+    target_tmp = Path(tmp_dir) / str(target).replace(os.path.sep, '_')
     # Copy directory trees (if they have not been copied already) ignoring file metadata
     if not ref_tmp.exists():
         shutil.copytree(ref_src, ref_tmp, copy_function=shutil.copy)

@@ -87,7 +87,8 @@ class TestHalGeneLiftover:
     @pytest.fixture(scope='class', autouse=True)
     def setup(self) -> None:
         """Loads necessary fixtures and values as class attributes."""
-        type(self).ref_file_dir = pytest.files_dir / 'hal_alignment'
+        # pylint: disable-next=no-member
+        type(self).ref_file_dir = pytest.files_dir / 'hal_alignment'  # type: ignore[attr-defined]
 
     @pytest.mark.parametrize(
         "region, exp_output, expectation",

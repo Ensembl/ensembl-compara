@@ -71,6 +71,7 @@ def load_chr_sizes(hal_file: Union[Path, str], genome_name: str) -> Dict[str, in
     return chr_sizes
 
 
+# pylint: disable-next=c-extension-no-member
 def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, SimpleRegion]],
                          chr_sizes: Mapping[str, int], bed_file: Union[Path, str],
                          flank_length: int = 0) -> None:
