@@ -27,7 +27,6 @@ from contextlib import nullcontext as does_not_raise
 import filecmp
 import os
 from pathlib import Path
-import subprocess
 from typing import ContextManager
 
 import pytest
@@ -40,7 +39,9 @@ from ensembl.compara.orthtools import prepare_input_orthofinder
     [
         ("orthtools", "test1", does_not_raise()),
         ("orthtools", "test1", raises(FileExistsError)),
-        ("orthology_tools", "test2", raises(subprocess.CalledProcessError))
+        ("orthology_tools", "test2", raises(FileNotFoundError,
+                                            match=r"Directory containing fasta files not found.")),
+        ("orthtools/no_fasta", "test2", raises(FileNotFoundError, match=r"No fasta files found."))
     ]
 )
 def test_prepare_input_orthofinder(source_dir: str, target_dir: str, tmp_dir: Path,
@@ -49,7 +50,8 @@ def test_prepare_input_orthofinder(source_dir: str, target_dir: str, tmp_dir: Pa
 
     Args:
         source_dir: Path to the directory containing input fasta files.
-        target_dir: Path to the directory where the input data will be copied for OrthoFinder to use.
+        target_dir: Path to the directory where symlinks to fasta files will be created
+                for OrthoFinder to use.
         tmp_dir: Unit test temp directory (fixture).
         expectation: Context manager for the expected exception, i.e. the test will only pass if that
                 exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.

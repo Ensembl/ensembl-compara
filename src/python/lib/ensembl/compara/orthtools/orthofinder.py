@@ -36,26 +36,36 @@ Typical usage example::
 
 __all__ = ['prepare_input_orthofinder', 'run_orthofinder']
 
+import fnmatch
 import os
 import subprocess
 
 def prepare_input_orthofinder(source_dir: str, target_dir: str) -> None:
-    """Prepares input files for running OrthoFinder, i.e. copies input files to a `target_dir`.
+    """Creates symlinks to input fasta files in `target_dir`.
 
     Args:
         source_dir: Path to the directory containing fasta files.
-        target_dir: Path to the directory where the files will be copied to for OrthoFinder to use.
+        target_dir: Path to the directory where symlinks to fasta files will be created
+                for OrthoFinder to use.
 
     Raises:
         FileExistsError: If directory `target_dir` already exists.
-        subprocess.CalledProcessError: If copying files fails for some reason,
-                including `source_dir` not found.
+        FileNotFoundError: If directory `source_dir` does not exist or does not contain any fasta files.
+        subprocess.CalledProcessError: If creating symlinks fails for some other reason.
 
     """
-    os.mkdir(target_dir)
-    source_dir = os.path.join(source_dir, "")
+    if not os.path.isdir(source_dir):
+        raise FileNotFoundError("Directory containing fasta files not found.")
+    if len(fnmatch.filter(os.listdir(source_dir), '*.fasta')) == 0:
+        raise FileNotFoundError("No fasta files found.")
 
-    subprocess.run(["rsync", "-avz", source_dir, target_dir], capture_output=True, check=True)
+    # To ensure a new directory is used for running OrthoFinder:
+    os.mkdir(target_dir)
+
+    script = os.path.join(os.environ["ENSEMBL_ROOT_DIR"], "ensembl-compara", "scripts", "pipeline",
+                          "symlink_fasta.py")
+
+    subprocess.run([script, "-s", target_dir, "-d", source_dir], capture_output=True, check=True)
 
 
 def run_orthofinder(input_dir: str, number_of_threads: int = 32, number_of_orthofinder_threads: int = 8) \
