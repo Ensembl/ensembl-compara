@@ -66,8 +66,8 @@ sub configure {
     
     Bio::EnsEMBL::Registry->add_alias($species, $sp);
 
-    if ($sp ne 'ancestral_sequences' && $self->{'conf'}->{'_storage'}{$species} && $self->{'conf'}->{'_storage'}{$species}{$species}) {
-      my $prod_name = $self->{'conf'}->{'_storage'}{$species}{$species}{'SPECIES_PRODUCTION_NAME'};
+    if ($sp ne 'ancestral_sequences' && $self->{'conf'}->{'_storage'}{$species} && $self->{'conf'}->{'_storage'}{$species}) {
+      my $prod_name = $self->{'conf'}->{'_storage'}{$species}{'SPECIES_PRODUCTION_NAME'};
       Bio::EnsEMBL::Registry->add_alias($species, $prod_name);
     }
     
