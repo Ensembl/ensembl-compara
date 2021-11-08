@@ -158,7 +158,9 @@ jobs:
         - pip install -r requirements.txt -r requirements-test.txt
         - pip install -e .
       script:
+        # yamllint disable rule:line-length
         - pytest --cov=./ --cov-report=term-missing --server=mysql://travis@127.0.0.1:3306/ src/python/tests/
+        # yamllint enable rule:line-length
       after_success:
         - codecov
 
