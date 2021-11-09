@@ -117,7 +117,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                 -module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::CheckDnaFragReusability',
                 -parameters => {
                     'do_not_reuse_list' => $self->o('do_not_reuse_list'),
-                }
+                },
                 -rc_name   => '500Mb_job',
                 -flow_into => {
                     2 => '?accu_name=reused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
