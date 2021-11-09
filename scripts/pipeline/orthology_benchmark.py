@@ -17,8 +17,8 @@
 
 Typical usage example::
 
-    $ python orthology_benchmark.py --mlss_conf /path/to/mlss_conf.xml --species_set default \
-    --host mysql-ens-compara-prod-10 --port 4648 --user ensro --out_dir $HPS_HOME
+    $ python orthology_benchmark.py --mlss_conf /path/to/mlss_conf.xml --species_set name \
+    --host mysql-ens-compara-prod-X --port XXXX --user ensro --out_dir /path/to/out/dir
 
 """
 
