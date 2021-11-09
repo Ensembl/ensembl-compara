@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats
@@ -34,15 +23,6 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats
 
 Set of analyses to compute statistics on a multiple-alignment database.
 It is supposed to be embedded in pipelines.
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
 
 =cut
 
@@ -82,14 +62,14 @@ sub pipeline_analyses_multiple_aligner_stats {
 
         {   -logic_name => 'block_size_distribution',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
-            -flow_into  => [ 'email_stats_report' ],
+            -flow_into  => [ 'generate_msa_stats_report' ],
         },
 
-        {   -logic_name => 'email_stats_report',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::EmailStatsReport',
+        {   -logic_name => 'generate_msa_stats_report',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::StatsReport',
             -parameters => {
-                'stats_exe' => $self->o('epo_stats_report_exe'),
-                'email'     => $self->o('email'),
+                'stats_exe'            => $self->o('msa_stats_report_exe'),
+                'msa_stats_shared_dir' => $self->o('msa_stats_shared_dir'),
             },
         },
 

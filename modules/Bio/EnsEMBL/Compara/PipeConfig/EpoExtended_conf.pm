@@ -80,6 +80,7 @@ sub default_options {
         #Default statistics
         #
         'skip_multiplealigner_stats' => 0, #skip this module if set to 1
+        'msa_stats_shared_dir' => $self->o('msa_stats_shared_basedir') . '/' . $self->o('species_set_name') . '/' . $self->o('ensembl_release'),
 
         'work_dir'   => $self->o('pipeline_dir'),
         'bed_dir' => $self->o('work_dir') . '/bed_dir/',
@@ -105,6 +106,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
             'run_gerp' => $self->o('run_gerp'),
             'genome_dumps_dir' => $self->o('genome_dumps_dir'),
+            'msa_stats_shared_dir'  => $self->o('msa_stats_shared_dir'),
             'reg_conf' => $self->o('reg_conf'),
     };
 }

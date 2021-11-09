@@ -78,6 +78,7 @@ sub default_options {
         'bl2seq_dump_dir'     => $self->o('work_dir').'/bl2seq', # location for dumping sequences to determine strand (for bl2seq)
         'bl2seq_file_stem'    => '#bl2seq_dump_dir#/bl2seq',
         'output_dir'          => '#feature_dir#', # alias
+        'msa_stats_shared_dir' => $self->o('msa_stats_shared_basedir') . '/' . $self->o('species_set_name') . '/' . $self->o('ensembl_release'),
 
         # Capacities
         'low_capacity'                  => 10,
@@ -144,6 +145,7 @@ sub pipeline_wide_parameters {
         'enredo_output_file'    => $self->o('enredo_output_file'),
         'bed_dir'               => $self->o('bed_dir'),
         'genome_dumps_dir'      => $self->o('genome_dumps_dir'),
+        'msa_stats_shared_dir'  => $self->o('msa_stats_shared_dir'),
         'enredo_mapping_file'   => $self->o('enredo_mapping_file'),
         'bl2seq_dump_dir'       => $self->o('bl2seq_dump_dir'),
         'bl2seq_file_stem'      => $self->o('bl2seq_file_stem'),

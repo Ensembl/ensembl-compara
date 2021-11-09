@@ -109,6 +109,9 @@ sub default_options {
         'map_anchors_capacity'         => 2000,
         'trim_anchor_align_batch_size' => 20,
         'trim_anchor_align_capacity'   => 500,
+
+        # MSA stats options
+        'msa_stats_shared_dir' => $self->o('msa_stats_shared_basedir') . '/' . $self->o('species_set_name') . '/' . $self->o('ensembl_release'),
     };
 }
 
@@ -132,6 +135,7 @@ sub pipeline_wide_parameters {
         'enredo_output_file'    => $self->o('enredo_output_file'),
         'bed_dir'               => $self->o('bed_dir'),
         'genome_dumps_dir'      => $self->o('genome_dumps_dir'),
+        'msa_stats_shared_dir'  => $self->o('msa_stats_shared_dir'),
         'enredo_mapping_file'   => $self->o('enredo_mapping_file'),
         'bl2seq_dump_dir'       => $self->o('bl2seq_dump_dir'),
         'bl2seq_file_stem'      => $self->o('bl2seq_file_stem'),
