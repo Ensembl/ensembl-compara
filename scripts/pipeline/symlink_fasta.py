@@ -44,7 +44,7 @@ Path(symlink_dir).mkdir(parents=True, exist_ok=True)
 if opts.cleanup_symlinks:
     for link in glob.glob(os.path.join(symlink_dir, '**/*.fasta'), recursive=True):
         if not os.path.exists(os.readlink(link)):
-            print('Broken symlink: {0} to be removed'.format(link))
+            print(f'Broken symlink: {link} to be removed')
             os.remove(link)
 
 # Collect all the genome fasta files and symlink them
@@ -56,11 +56,11 @@ if target_dir:
         file_name = os.path.basename(fasta_file)
         symlink_path = os.path.join(symlink_dir, file_name)
         if not os.path.exists(symlink_path):
-            print('New symlink: {0} created for target: {1}'.format(symlink_path, fasta_file))
+            print(f'New symlink: {symlink_path} created for target: {fasta_file}')
             os.symlink(fasta_file, symlink_path)
 else:
     file_prefix = os.path.basename(target_file)
     symlink_path = os.path.join(symlink_dir, file_prefix)
     if not os.path.exists(symlink_path):
-        print('New symlink: {0} created for target: {1}'.format(symlink_path, target_file))
+        print(f'New symlink: {symlink_path} created for target: {target_file}')
         os.symlink(target_file, symlink_path)
