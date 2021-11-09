@@ -66,7 +66,7 @@ sub content {
   my $fields_by_format = {'OrthoXML' => [], 'PhyloXML' => []};
 
   ## Add formats output by BioPerl, unless this is a pan-compara page
-  unless ($cdb eq 'pan_compara') {
+  unless ($cdb eq 'compara_pan_ensembl') {
     foreach ($self->alignment_formats) {
       my $field = $_ eq 'FASTA' ? 'seq_type' : 'align_type';
       $fields_by_format->{$_} = [$field];

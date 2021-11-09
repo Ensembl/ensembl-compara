@@ -397,13 +397,25 @@ sub get_export_data {
     return $object->get_homologue_alignments;
   }
   else {
-    my $cdb = $flag || $self->param('cdb');
+    my $cdb = $self->param('cdb');
     unless ($cdb) {
-      $cdb = $hub->function =~ /pan_compara/ ? 'pan_compara' : 'compara';
+      $cdb = $hub->function =~ /pan_compara/ ? 'compara_pan_ensembl' : 'compara';
     }
     my ($homologies) = $object->get_homologies('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb);
 
     my %ok_species;
+
+    if($self->param('cdb') eq 'compara_pan_ensembl'){
+      my @orthologues = (
+        $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $self->param('cdb')), 
+      );
+      foreach my $homology_type (@orthologues) {
+        foreach my $species (keys %$homology_type) {
+          $ok_species{lc($species)} = 1;
+        }
+      }
+    }
+
     foreach (grep { /species_/ } $self->param) {
       (my $sp = $_) =~ s/species_//;
       $ok_species{$sp} = 1 if $self->param($_) eq 'yes';      
@@ -438,7 +450,7 @@ sub buttons {
       'component'     => 'ComparaOrthologs',
       'data_action'   => $hub->action,
       'gene_name'     => $name,
-      'cdb'           => $hub->function =~ /pan_compara/ ? 'pan_compara' : 'compara'
+      'cdb'           => $hub->function =~ /pan_compara/ ? 'compara_pan_ensembl' : 'compara'
     };
 
     push @buttons, {
