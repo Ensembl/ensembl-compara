@@ -15,11 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Utils::SpeciesTree
@@ -287,9 +282,11 @@ sub new_from_newick {
         my $gdb = $all_genome_dbs{lc $name};
         if ((not $gdb) and ($name =~ m/^(.*)_([^_]*)$/)) {
             # Perhaps the node represents the component of a polyploid genome
-            my $pgdb = $all_genome_dbs{lc $1};
-            if ($pgdb and $pgdb->is_polyploid) {
-                $gdb = $pgdb->component_genome_dbs($2) or die "No component named '$2' in '$1'\n";
+            my $species_name = $1;
+            my $component_name = $2;
+            my $pgdb = $all_genome_dbs{lc $species_name};
+            if ($pgdb and $pgdb->is_polyploid and ($component_name =~ /^[A-Z][0-9]?$/)) {
+                $gdb = $pgdb->component_genome_dbs($component_name) or die "No component named '$component_name' in '$species_name'\n";
             }
         }
         if ($gdb) {

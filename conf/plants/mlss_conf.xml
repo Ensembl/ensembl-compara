@@ -46,7 +46,11 @@
     <!-- Reference species for specific clades -->
     <one_vs_all method="LASTZ_NET" ref_genome="solanum_lycopersicum" against="Asterids"/>
     <one_vs_all method="LASTZ_NET" ref_genome="medicago_truncatula" against="Fabids"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa" against="Liliopsida"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa">
+      <species_set in_collection="default">
+        <taxonomic_group taxon_name="Liliopsida"/>
+      </species_set>
+    </one_vs_all>
 
     <!-- Reference wheat vs all wheat cultivars and related species -->
     <one_vs_all method="LASTZ_NET" ref_genome="triticum_aestivum">

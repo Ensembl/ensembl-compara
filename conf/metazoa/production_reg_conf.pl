@@ -48,7 +48,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster);
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
 my $overlap_cores = {
-    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_${curr_eg_release}_${curr_release}_269" ],
+    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_${curr_eg_release}_${curr_release}_279" ],
     'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_${curr_eg_release}_${curr_release}_9" ],
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
@@ -58,8 +58,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-3',
-        -port   => 4160,
+        -host   => 'mysql-ens-sta-3-b',
+        -port   => 4686,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -76,14 +76,15 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-6', 'twalsh_metazoa_load_members_105'],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', 'twalsh_metazoa_metazoa_protein_trees_105' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-5', 'ivana_metazoa_load_members_106_backup'],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', 'ivana_default_metazoa_protein_trees_106' ],
 
     # LastZ dbs
-    'lastz_batch_1' => [ 'mysql-ens-compara-prod-7', 'dthybert_metazoa_lastz_batch1_105' ],
+    'lastz_batch_1' => [ 'mysql-ens-compara-prod-2', 'ivana_metazoa_lastz_batch1_106' ],
+    'lastz_batch_2' => [ 'mysql-ens-compara-prod-6', 'ivana_metazoa_lastz_batch2_106' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-6', 'twalsh_metazoa_synteny_105' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-2', 'ivana_metazoa_synteny_106' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -91,7 +92,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 # ----------------------NON-COMPARA DATABASES------------------------
 # NCBI taxonomy database (maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-3-b', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-3', "ncbi_taxonomy_$curr_release" ],
 });
 
 # -------------------------------------------------------------------

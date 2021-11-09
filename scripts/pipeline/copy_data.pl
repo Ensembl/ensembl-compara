@@ -627,7 +627,7 @@ sub copy_genomic_align_blocks {
       OR group_id > ((method_link_species_set_id + 1) * 10000000000))
       LIMIT 1;
   };
-  my $sth = $from_dbc->prepare( $fix_gid_sql );
+  $sth = $from_dbc->prepare( $fix_gid_sql );
   $sth->execute( $mlss_id );
   my ($fix_gab_gid) = $sth->fetchrow_array();
   $sth->finish();

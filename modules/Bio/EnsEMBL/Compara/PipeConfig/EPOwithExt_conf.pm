@@ -15,8 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf
@@ -89,6 +87,8 @@ sub default_options {
         'trim_anchor_align_capacity'    => 500,
 
         # Options
+        # Avoid reusing any species?
+        'do_not_reuse_list'          => undef,
         #skip this module if set to 1
         'skip_multiplealigner_stats' => 0,
         # dont dump the MT sequence for mapping

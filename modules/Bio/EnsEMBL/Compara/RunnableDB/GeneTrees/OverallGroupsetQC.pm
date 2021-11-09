@@ -15,33 +15,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OverallGroupsetQC
 
 =head1 DESCRIPTION
 
-This RunnableDB compares the clusters of this compara database to another one's
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
+This RunnableDB compares the clusters of this compara database to another one's.
 
 =cut
 
@@ -78,7 +58,6 @@ sub fetch_input {
 
     $self->complete_early('No reuse_db, cannot compare the clusters') unless $self->param('reuse_db');
     $self->param('groupset_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'default')->[0]) or $self->die_no_retry("Could not fetch groupset tree");
-
 }
 
 

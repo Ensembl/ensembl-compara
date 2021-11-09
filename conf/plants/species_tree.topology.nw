@@ -117,8 +117,6 @@
               (
                aegilops_tauschii,
                triticum_aestivum_D,
-               triticum_dicoccoides_D,
-               triticum_turgidum_D,
                triticum_aestivum_arinalrfor_D,
                triticum_aestivum_jagger_D,
                triticum_aestivum_julius_D,
@@ -132,11 +130,9 @@
               (
                triticum_aestivum_U,
                triticum_turgidum_U,
-               triticum_aestivum_arinalrfor_U,
                triticum_aestivum_jagger_U,
                triticum_aestivum_julius_U,
                triticum_aestivum_lancer_U,
-               triticum_aestivum_landmark_U,
                triticum_aestivum_mace_U,
                triticum_aestivum_mattis_U,
                triticum_aestivum_norin61_U,

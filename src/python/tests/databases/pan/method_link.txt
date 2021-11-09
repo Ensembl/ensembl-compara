@@ -1,0 +1,39 @@
+1	BLASTZ_NET	GenomicAlignBlock.pairwise_alignment	BlastZ
+2	BLASTZ_NET_TIGHT	GenomicAlignBlock.pairwise_alignment	BlastZ (tight nets)
+3	BLASTZ_RECIP_NET	GenomicAlignBlock.pairwise_alignment	Reciprocal BlastZ
+4	PHUSION_BLASTN	GenomicAlignBlock.pairwise_alignment	
+5	PHUSION_BLASTN_TIGHT	GenomicAlignBlock.pairwise_alignment	
+6	TRANSLATED_BLAT	GenomicAlignBlock.pairwise_alignment	translated Blat (no nets)
+7	TRANSLATED_BLAT_NET	GenomicAlignBlock.pairwise_alignment	translated Blat
+8	BLASTZ_GROUP_TIGHT	GenomicAlignBlock.pairwise_alignment	
+9	MLAGAN	GenomicAlignBlock.multiple_alignment	Multi-LAGAN
+10	PECAN	GenomicAlignBlock.multiple_alignment	Mercator-Pecan
+11	GERP_CONSTRAINED_ELEMENT	ConstrainedElement.constrained_element	GERP Constrained Elements
+12	ORTHEUS	GenomicAlignTree.tree_alignment	Ortheus alignment
+13	EPO	GenomicAlignTree.ancestral_alignment	EPO
+14	EPO_EXTENDED	GenomicAlignTree.tree_alignment	EPO-Extended
+15	ENREDO	SyntenyRegion.enredo	Enredo
+16	LASTZ_NET	GenomicAlignBlock.pairwise_alignment	LastZ
+17	pEPO	GenomicAlignTree.ancestral_alignment	
+18	pGERP_CONSTRAINED_ELEMENT	ConstrainedElement.constrained_element	
+19	LASTZ_PATCH	GenomicAlignBlock.pairwise_alignment	LastZ-patch
+20	LASTZ_NET_HARD_MASKED	GenomicAlignBlock.pairwise_alignment	
+21	ATAC	GenomicAlignBlock.pairwise_alignment	ATAC Assembly mapping
+22	CACTUS_HAL	GenomicAlignBlock.multiple_alignment	Cactus
+23	CACTUS_HAL_PW	GenomicAlignBlock.pairwise_alignment	Cactus (restricted)
+24	EPO_GEN_ANCHORS	ConservationScore.conservation_score	EPO Anchor generation
+25	POLYPLOID	GenomicAlignBlock.pairwise_alignment	polyploidy-aware self-alignment
+101	SYNTENY	SyntenyRegion.synteny	synteny
+102	SYNTENY_HARD_MASKED	SyntenyRegion.synteny	
+201	ENSEMBL_ORTHOLOGUES	Homology.homology	orthologues
+202	ENSEMBL_PARALOGUES	Homology.homology	paralogues
+204	ENSEMBL_HOMOLOGUES	Homology.homology	homologues
+205	ENSEMBL_PROJECTIONS	Homology.homology	patch projections
+206	ENSEMBL_HOMOEOLOGUES	Homology.homology	homoeologues
+301	FAMILY	Family.family	families
+302	INTERPRO_FAMILY	Family.family	InterPro families
+401	PROTEIN_TREES	ProteinTree.protein_tree_node	protein-trees
+402	NC_TREES	NCTree.nc_tree_node	ncRNA-trees
+501	GERP_CONSERVATION_SCORE	ConservationScore.conservation_score	GERP Conservation Scores
+502	pGERP_CONSERVATION_SCORE	ConservationScore.conservation_score	
+600	SPECIES_TREE	SpeciesTree.species_tree_root	species-tree

@@ -331,11 +331,12 @@ sub run_infernal {
   # These two errors should be taken care of by the sequence filtering
   #  - cm_from_guide(), it's illegal to construct a CM with 0 MATL, MATR and BIF nodes.
   #  - Calculating QDBs, Z got insanely large (> 1000*clen)
+  # However, the last one could still happen, so we need to take care of it
   $run_cmd = $self->run_command($cmd);
 
   if ($run_cmd->exit_code) {
-      if ($self->handle_mxsize_error($run_cmd) < 0) {
-          # No analysis with more memory available
+      if (($self->handle_mxsize_error($run_cmd) < 0)
+          || ($run_cmd->err =~ /Error: Calculating QDBs, Z got insanely large/)) {
           # Let's use the previous alignment and skip the refined profile
           $self->param('stk_output', $stk_output);
           return 0;

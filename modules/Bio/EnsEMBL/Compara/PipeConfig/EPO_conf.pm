@@ -90,6 +90,8 @@ sub default_options {
         'output_dir'            => '#feature_dir#', # alias
 
         # Options
+        # Avoid reusing any species?
+        'do_not_reuse_list'          => undef,
         #skip this module if set to 1
         'skip_multiplealigner_stats' => 0,
         # dont dump the MT sequence for mapping
