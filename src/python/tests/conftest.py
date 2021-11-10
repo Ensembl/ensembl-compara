@@ -42,6 +42,7 @@ def pytest_configure() -> None:
     <https://docs.pytest.org/en/latest/reference.html#_pytest.hookspec.pytest_configure>`_.
 
     """
+    pytest.dbs_dir = Path(__file__).parent / 'databases'  # type: ignore[attr-defined]
     pytest.files_dir = Path(__file__).parent / 'flatfiles'  # type: ignore[attr-defined]
 
 
