@@ -14,37 +14,38 @@
 # limitations under the License.
 """Build script for setuptools."""
 
-from pathlib import Path
-
 from setuptools import setup, find_namespace_packages
 
 
-with open(Path(__file__).parent / 'README.md') as f:
+with open('README.md') as f:
     readme = f.read()
 
-with open(Path(__file__).parent / 'PIP_VERSION') as f:
+with open('PIP_VERSION') as f:
     version = f.read()
 
 
-def import_requirements():
-    """Import ``requirements.txt`` file located at the root of the repository."""
-    with open(Path(__file__).parent / 'requirements.txt') as file:
+def import_requirements(requirements_path):
+    """Import file located at the root of the repository."""
+    with open(requirements_path) as file:
         return [line.rstrip() for line in file.readlines()]
 
 
 setup(
     name='ensembl-compara',
     version=version,
+    packages=find_namespace_packages(where='src/python/lib'),
+    package_dir={"": "src/python/lib"},
     description="Ensembl Compara's Python library",
+    include_package_data=True,
+    install_requires=import_requirements('requirements.txt'),
+    tests_require=import_requirements('requirements-test.txt'),
     long_description=readme,
     author='Ensembl Compara',
     author_email='dev@ensembl.org',
     url='https://www.ensembl.org',
     download_url='https://github.com/Ensembl/ensembl-compara',
-    license="Apache License, Version 2.0",
-    package_dir={'': 'src/python/lib'},
-    packages=find_namespace_packages(where='src/python/lib'),
-    install_requires=import_requirements(),
+    license="Apache License 2.0",
+    python_requires=">=3.7",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",

@@ -1,19 +1,21 @@
-"""
-See the NOTICE file distributed with this work for additional information
-regarding copyright ownership.
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""CITest database comparison module."""
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
+__all__ = ['CITestDBItem', 'CITestDBError', 'CITestDBContentError', 'CITestDBGroupingError',
+           'CITestDBNumRowsError']
 
 from typing import Any, Dict, List, Union
 
@@ -24,7 +26,7 @@ from _pytest.fixtures import FixtureLookupErrorRepr
 from sqlalchemy import func
 from sqlalchemy.sql.expression import select, text
 
-from ..db import Query, DBConnection
+from ensembl.database import Query, DBConnection
 from ..utils import to_list
 from ._citest import CITestItem
 

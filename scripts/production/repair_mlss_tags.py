@@ -33,7 +33,7 @@ Examples::
 
 from argparse import ArgumentParser
 
-from ensembl.compara.db import DBConnection
+from ensembl.database import DBConnection
 
 
 EXPECTED_VALUES_SQL = {
