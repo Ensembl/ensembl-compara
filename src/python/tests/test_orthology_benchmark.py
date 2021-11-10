@@ -29,7 +29,7 @@ from pathlib import Path
 import sys
 from typing import ContextManager, Dict, List
 
-import MySQLdb
+import sqlalchemy
 
 import pytest
 from pytest import raises
@@ -111,7 +111,7 @@ class TestDumpGenomes:
         """
         with expectation:
             host = self.core_dbs["gallus_gallus_core_99_6"].dbc.host
-            #port = self.core_dbs["gallus_gallus_core_99_6"].dbc.port
+            # port = self.core_dbs["gallus_gallus_core_99_6"].dbc.port
             port = 3306 # hardcoded until .dbc.port is merged into ensembl-py
             # user "travis" hardcoded until we find better solution
             orthology_benchmark.dump_genomes(species_list, species_set_name, host, port, "travis", tmp_dir)
@@ -122,17 +122,17 @@ class TestDumpGenomes:
                 assert file_cmp(Path(out_files, os.environ['USER'] + "_" + db_name + ".fasta"),
                                 Path(exp_out, db_name + ".fasta"))
 
-    def test_dump_genomes_fake_server(self, tmp_dir: Path) -> None:
-        """Tests :func:`orthology_benchmark.dump_genomes()` function when provided fake server host and port.
+    def test_dump_genomes_fake_connection(self, tmp_dir: Path) -> None:
+        """Tests :func:`orthology_benchmark.dump_genomes()` function
+        when provided fake server connection details.
 
         Args:
             tmp_dir: Unit test temp directory (fixture).
 
         """
-        with raises(MySQLdb.OperationalError):
-            # user "travis" hardcoded until we find better solution
+        with raises(sqlalchemy.exc.OperationalError):
             orthology_benchmark.dump_genomes(["mus_musculus", "naja_naja"], "default",
-                                             "fake-host", 666, "travis", tmp_dir)
+                                             "fake-host", 666, "compara", tmp_dir)
 
 
 @pytest.mark.parametrize(
@@ -214,11 +214,13 @@ class TestGetCoreNames:
         """
         with expectation:
             host = self.core_dbs["mus_musculus_core_106_39"].dbc.host
-            assert orthology_benchmark.get_core_names(species_names, host) == exp_output
+            # port = self.core_dbs["gallus_gallus_core_99_6"].dbc.port
+            port = 3306 # hardcoded until .dbc.port is merged into ensembl-py
+            # user "travis" hardcoded until we find better solution
+            assert orthology_benchmark.get_core_names(species_names, host, port, "travis") == exp_output
 
-    # Not necessary for this script (it would throw an error earlier)
-    # but in case the function is used for other purposes:
-    def test_get_core_names_fake_host(self) -> None:
-        """Tests :func:`orthology_benchmark.get_core_names()` function when provided fake server host."""
-        with raises(FileNotFoundError):
-            orthology_benchmark.get_core_names(["danio_rerio", "mus_musculus"], "fake-host")
+    def test_get_core_names_fake_connection(self) -> None:
+        """Tests :func:`orthology_benchmark.get_core_names()` function
+        when provided fake server connection details."""
+        with raises(sqlalchemy.exc.OperationalError):
+            orthology_benchmark.get_core_names(["danio_rerio", "mus_musculus"], "fake-host", 666, "compara")

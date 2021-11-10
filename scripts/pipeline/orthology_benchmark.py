@@ -27,8 +27,8 @@ import os
 import subprocess
 from typing import Dict, List
 
-import MySQLdb
 import numpy
+from sqlalchemy import create_engine
 
 from ensembl.compara.config import get_species_set_by_name
 
@@ -48,15 +48,12 @@ def dump_genomes(species_list: List[str], species_set_name: str, host: str, port
 
     Raises:
         FileExistsError: If directory `out_dir/species_set_name` already exists.
-        MySQLdb.OperationalError: If connection to `host:port` cannot be established.
+        sqlalchemy.exc.OperationalError: If `user` cannot read from `host:port`.
         RuntimeError: If no cores are found for any species in `species_list` (`species_set_name`)
                 on `host:port`.
 
     """
-    # Check access to the host & port
-    MySQLdb.connect(host=host, port=port, user=user)
-
-    cores = get_core_names(species_list, host)
+    cores = get_core_names(species_list, host, port, user)
     dump_cores = [core for species, core in cores.items() if core != ""]
 
     if len(dump_cores) == 0:
@@ -110,16 +107,18 @@ def find_latest_core(core_names: List[str]) -> str:
     return core_name
 
 
-def get_core_names(species_names: List[str], host: str) -> Dict[str, str]:
+def get_core_names(species_names: List[str], host: str, port:int, user: str) -> Dict[str, str]:
     """Returns the latest core database names for a list of species.
 
     Args:
         species_names: Species (genome) names.
         host: Host for core databases.
+        port: Host port.
+        user: Server username.
 
     Raises:
         RuntimeError: If `species_list` is empty.
-        FileNotFoundError: If cannot connect to `host`.
+        sqlalchemy.exc.OperationalError: If `user` cannot read from `host:port`.
 
     Returns:
         Dictionary mapping species (genome) names to the latest version of available core names.
@@ -130,10 +129,9 @@ def get_core_names(species_names: List[str], host: str) -> Dict[str, str]:
 
     core_names = {}
 
-    sql = "SHOW DATABASES LIKE '%_core_%'"
-    cmd = subprocess.run([host, "-Ne", sql], capture_output=True, check=True)
-    out_decoded = cmd.stdout.decode('utf-8')
-    all_cores = out_decoded.split('\n')[:-1]
+    eng = create_engine("mysql://" + user + "@" + host + ":" + str(port) + "/")
+    out_tmp = eng.execute("SHOW DATABASES LIKE '%%_core_%%'").fetchall()
+    all_cores = [i[0] for i in out_tmp]
 
     for species in species_names:
         core_name = [core for core in all_cores if species + "_core_" in core]
