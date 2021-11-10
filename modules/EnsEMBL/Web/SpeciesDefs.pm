@@ -914,7 +914,7 @@ sub _parse {
   ## Final munging
   my $datasets = [];
   my $aliases  = $tree->{'MULTI'}{'ENSEMBL_SPECIES_URL_MAP'};
-  my $labels    = $tree->{'MULTI'}{'TAXON_LABEL'};  
+  my $labels   = $tree->{'MULTI'}{'TAXON_LABEL'};  
 
   ## Loop through all keys, not just PRODUCTION_NAMES (need for collection dbs)
   foreach my $key (sort keys %$tree) {
@@ -927,6 +927,19 @@ sub _parse {
       ## Add in aliases to production names
       $aliases->{$prodname} = $url;
     
+      ## Set RELATED TAXON to clusterset ID, so we don't need to hardcode it
+      my $clustersets = $config_packer->tree->{'DATABASE_COMPARA'}{'CLUSTERSETS'}; 
+      my $cid = $clustersets->{$prodname};
+      if ($cid && $cid ne 'default') {
+        $tree->{$prodname}{'RELATED_TAXON'} = $cid;
+        ## Also set RELATED TAXON for parent spp, as the clusterset is 'default' and
+        ## getting a meaningful value is really hard to do via SQL
+        my $parent_prodname = $tree->{$prodname}{'STRAIN_GROUP'};
+        if ($parent_prodname) {
+          $tree->{$parent_prodname}{'RELATED_TAXON'} = $cid; 
+        }
+      }
+
       ## Rename the tree keys for easy data access via URLs
       ## (and backwards compatibility!)
       if ($url ne $prodname) {

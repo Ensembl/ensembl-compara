@@ -1352,6 +1352,25 @@ sub _summarise_compara_db {
     $self->db_tree->{$db_name}{$key}{$species1}{$species2} = $valid_species{$species2};
   }             
   
+  ## Store clustersets for strains
+  foreach my $sp (keys %{$self->db_tree->{$db_name}{'COMPARA_SPECIES'}}) {
+    my $sth = $dbh->prepare('
+      select clusterset_id 
+        from gene_tree_root as gtr, 
+          method_link_species_set as mlss, 
+          species_set as ss, 
+          genome_db as gd 
+        where gtr.method_link_species_set_id = mlss.method_link_species_set_id 
+          and mlss.species_set_id = ss.species_set_id 
+          and ss.genome_db_id = gd.genome_db_id 
+          and gd.name = ? limit 1;
+    ');
+    $sth->bind_param(1,$sp);
+    $sth->execute;
+    my ($clusterset_id) = $sth->fetchrow_array;
+    $self->db_tree->{$db_name}{'CLUSTERSETS'}{$sp} = $clusterset_id;
+  }
+
   ###################################################################
   ## Cache MLSS for quick lookup in ImageConfig
 
@@ -1360,7 +1379,7 @@ sub _summarise_compara_db {
 
   ##
   ###################################################################
-  
+ 
   $dbh->disconnect;
 }
 
