@@ -144,7 +144,7 @@ jobs:
         - echo
       install:
         - pip install -r requirements.txt -r requirements-test.txt
-        - pip install -e .
+        - pip install .
       script:
         - pytest --server=mysql://travis@127.0.0.1:3306/ src/python/tests/
 
@@ -156,7 +156,7 @@ jobs:
       install:
         - pip install codecov
         - pip install -r requirements.txt -r requirements-test.txt
-        - pip install -e .
+        - pip install .
       script:
         # yamllint disable rule:line-length
         - pytest --cov=./ --cov-report=term-missing --server=mysql://travis@127.0.0.1:3306/ src/python/tests/
@@ -172,5 +172,5 @@ jobs:
       install:
         - pip install pylint mypy
         - pip install -r requirements.txt
-        - pip install -e .
+        - pip install .
       script: ./travisci/python-linter_harness.sh
