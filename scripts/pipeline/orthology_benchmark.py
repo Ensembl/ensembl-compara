@@ -35,8 +35,10 @@ from ensembl.compara.config import get_species_set_by_name
 
 def dump_genomes(species_list: List[str], species_set_name: str, host: str, port: int,
                  user: str, out_dir: str) -> None:
-    """Dumps canonical peptides of protein-coding genes for a specified list of species
-    from the latest available core databases to FASTA files using `dump_gene_set_from_core.pl`.
+    """Dumps canonical peptides of protein-coding genes for a specified list of species.
+
+    Peptides are dumped from the latest available core databases to FASTA files
+    using `dump_gene_set_from_core.pl`.
 
     Args:
         species_list: A list of species (genome) names to dump.
