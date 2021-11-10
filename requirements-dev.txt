@@ -1,4 +1,6 @@
+-r requirements.txt
+-r requirements-test.txt
+-r requirements-doc.txt
 pylint
 mypy
-pytest-cov
 yamllint

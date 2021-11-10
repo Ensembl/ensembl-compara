@@ -24,13 +24,15 @@ export MYPYPATH=$MYPYPATH:$PWD/src/python/lib
 
 PYLINT_OUTPUT_FILE=$(mktemp)
 PYLINT_ERRORS=$(mktemp)
-find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \! -name "Ortheus.py" -print0 | xargs -0 pylint --rcfile pylintrc --verbose | tee "$PYLINT_OUTPUT_FILE"
+# CITest project is on hold and it needs to be updated before resuming its linter checker
+find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \! -name "Ortheus.py" \! -name "*citest*.py" \! -path "*/citest/*" -print0 | xargs -0 pylint --rcfile pyproject.toml --verbose | tee "$PYLINT_OUTPUT_FILE"
 grep -v "\-\-\-\-\-\-\-\-\-" "$PYLINT_OUTPUT_FILE" | grep -v "Your code has been rated" | grep -v "\n\n" | sed '/^$/d' > "$PYLINT_ERRORS"
 ! [ -s "$PYLINT_ERRORS" ]
 rt1=$?
 rm "$PYLINT_OUTPUT_FILE" "$PYLINT_ERRORS"
 
-find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \! -name "Ortheus.py" -print0 | xargs -0 mypy --config-file mypy.ini --namespace-packages --explicit-package-bases
+# CITest project is on hold and it needs to be updated before resuming its static type checker
+find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \! -name "Ortheus.py" \! -name "*citest*.py" \! -path "*/citest/*" -print0 | xargs -0 mypy --config-file pyproject.toml --namespace-packages --explicit-package-bases
 rt2=$?
 
 if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then

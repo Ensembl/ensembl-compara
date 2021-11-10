@@ -1,0 +1,32 @@
+[build-system]
+requires = [
+    "setuptools",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+# CITest project is on hold and it needs to be updated before resuming its unit tests
+addopts = "-v --tb=native --server=mysql://ensadmin:$ENSADMIN_PSW@mysql-ens-compara-prod-1:4485/ --ignore=src/python/tests/test_citest.py"
+
+[tool.coverage.run]
+source = ["src/python/lib"]
+
+[tool.mypy]
+ignore_missing_imports = true
+warn_unused_configs = true
+
+[tool.pylint.messages_control]
+max-line-length = 110
+disable = [
+    "invalid-name",
+    "no-self-use",
+    "relative-import",
+    "similarities",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-locals",
+    "too-many-statements",
+    "unspecified-encoding",
+    "wildcard-import"
+]
