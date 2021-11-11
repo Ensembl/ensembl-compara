@@ -117,3 +117,4 @@
 153	\N	patch	patch_104_105_a.sql|schema_version
 154	\N	patch	patch_104_105_b.sql|genebuild_varchar255
 156	\N	patch	patch_105_106_a.sql|schema_version
+157	\N	patch	patch_105_106_b.sql|clusterset_id_varchar50
