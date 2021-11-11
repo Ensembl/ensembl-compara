@@ -38,7 +38,7 @@ sub get_details {
   my $member = $object->get_compara_Member($cdb);
   return (undef, '<strong>Gene is not in the compara database</strong>') unless $member;
 
-  my $strain_tree  = $self->hub->species_defs->get_config($self->hub->species,'RELATED_TAXON') if ($self->hub->is_strain || $self->hub->param('strain'));
+  my $strain_tree  = $self->hub->species_defs->get_config($self->hub->species,'RELATED_TAXON') if ($self->hub->is_strain || $self->hub->param('strain') || $self->hub->action =~ /Strain_/);
   my $species_tree = $object->get_SpeciesTree($cdb, $strain_tree);  
   my $tree = $object->get_GeneTree($cdb,"", $strain_tree);
   return (undef, '<strong>Gene is not in a compara tree</strong>') unless $tree;
