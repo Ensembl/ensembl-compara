@@ -126,7 +126,7 @@ sub thousandify {
 }
 
 
-=head2
+=head2 get_gene_tree_cov
 
     Calculates the gene coverage, i.e. number of genes and members in total, included in trees
     (either species-specific, or encompassing other species), and orphaned (not in any tree).
@@ -198,7 +198,7 @@ sub get_gene_tree_cov {
 }
 
 
-=head2
+=head2 get_tree_sizes
 
     Calculates the size of each tree (genes, and distinct species), grouped according to the root
     ancestral species.
@@ -281,7 +281,7 @@ sub get_tree_sizes {
 }
 
 
-=head2
+=head2 get_gene_events
 
     Calculates the predicted gene events, i.e. for each ancestral species, number of speciation and
     duplication nodes (including dubious ones), with the average duplication score.
