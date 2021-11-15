@@ -265,9 +265,9 @@ sub pipeline_create_commands {
 
 =head2 pipeline_create_commands_rm_mkdir
 
-  Arg[1]      : Arrayef of variable names
+  Arg[1]      : Arrayref of variable names
   Arg[2]      : (optional) username to become
-  Arg[3]      : (optional) boolean do not rm dirs if false
+  Arg[3]      : (optional) boolean do not rm dirs if true
   Example     : $self->pipeline_create_commands_rm_mkdir('fasta_dir');
   Description : Helper method to build the commands necessary to delete and
                 create some directories. The directories come from calling
