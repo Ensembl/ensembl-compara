@@ -35,6 +35,7 @@ use warnings;
 use File::Path qw/make_path/;
 
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw( dump_string_into_file );
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -75,19 +76,10 @@ sub write_output {
 
     my $stats_tables = $self->param('stats_tables');
     my @stats = split(/\n\n/, $stats_tables);
-    $self->dump_stats_into_tsv_file('gene_coverage', $stats[0]);
-    $self->dump_stats_into_tsv_file('tree_size', $stats[1]);
-    $self->dump_stats_into_tsv_file('gene_events', $stats[2]);
-}
-
-
-sub dump_stats_into_tsv_file {
-    my ($self, $type, $stats) = @_;
-
-    my $dump_file = $self->param('gene_tree_stats_shared_dir') . '/' . $self->param('method_name') . '_' . $type . '.tsv';
-    open( my $fh_tsv, '>', $dump_file ) || die "Could not open output file $dump_file";
-    print $fh_tsv "$stats\n";
-    close($fh_tsv);
+    my $dump_prefix = $self->param('gene_tree_stats_shared_dir') . '/' . $self->param('method_name');
+    dump_string_into_file($dump_prefix . '_gene_coverage.tsv', $stats[0]);
+    dump_string_into_file($dump_prefix . '_tree_size.tsv', $stats[1]);
+    dump_string_into_file($dump_prefix . '_gene_events.tsv', $stats[2]);
 }
 
 

@@ -34,6 +34,7 @@ use warnings;
 use File::Path qw/make_path/;
 
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw( dump_string_into_file );
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -67,9 +68,7 @@ sub write_output {
 
     my $stats_table = $self->param('stats_table');
     my $dump_file = $self->param('msa_stats_shared_dir') . '/' . $self->param('method_name') . '.tsv';
-    open( my $fh_tsv, '>', $dump_file ) || die "Could not open output file $dump_file";
-    print $fh_tsv "$stats_table\n";
-    close($fh_tsv);
+    dump_string_into_file($dump_file, $stats_table);
 }
 
 
