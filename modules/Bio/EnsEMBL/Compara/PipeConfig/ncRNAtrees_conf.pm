@@ -188,6 +188,7 @@ sub pipeline_create_commands {
             @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
             $self->pipeline_create_commands_rm_mkdir(['work_dir', 'dump_dir', 'ss_picts_dir', 'gene_dumps_dir']),
+            $self->pipeline_create_commands_rm_mkdir(['gene_tree_stats_shared_dir'], undef, 'do not rm'),
 
             $self->db_cmd( 'CREATE TABLE ortholog_quality (
                             homology_id              INT NOT NULL,

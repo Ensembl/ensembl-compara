@@ -31,8 +31,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::StatsReport;
 use strict;
 use warnings;
 
-use File::Path qw/make_path/;
-
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::FlatFile qw( dump_string_into_file );
 
@@ -45,8 +43,6 @@ sub fetch_input {
     my $mlss_id = $self->param_required('mlss_id');
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
     $self->param('method_name', lc $mlss->method->type);
-
-    make_path($self->param_required('msa_stats_shared_dir'));
 }
 
 
