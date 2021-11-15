@@ -116,7 +116,8 @@ class TestDumpGenomes:
             orthology_benchmark.dump_genomes(species_list, species_set_name, host, port, "travis", tmp_dir)
 
             out_files = tmp_dir / species_set_name
-            exp_out = pytest.files_dir / "orth_benchmark"
+            # pylint: disable-next=no-member
+            exp_out = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
             for db_name in self.core_dbs:
                 assert file_cmp(Path(out_files, os.environ['USER'] + "_" + db_name + ".fasta"),
                                 Path(exp_out, db_name + ".fasta"))
