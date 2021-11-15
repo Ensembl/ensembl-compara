@@ -93,7 +93,7 @@ class TestDumpGenomes:
             (["gallus_gallus", "homo_sapiens"], "default", does_not_raise()),
             (["homo_sapiens", "zea_mays"], "default", raises(FileExistsError)),
             (["felis_catus", "zea_mays"], "test", raises(RuntimeError,
-                    match=r"No cores found for the species set 'test' on host 'mysql-ens-compara-prod-1'."))
+                    match=r"No cores found for the species set 'test' on the specified host."))
         ]
     )
     def test_dump_genomes(self, species_list: List[str], species_set_name: str,
@@ -111,9 +111,8 @@ class TestDumpGenomes:
         """
         with expectation:
             host = self.core_dbs["gallus_gallus_core_99_6"].dbc.host
-            # port = self.core_dbs["gallus_gallus_core_99_6"].dbc.port
-            port = 3306 # hardcoded until .dbc.port is merged into ensembl-py
-            # user "travis" hardcoded until we find better solution
+            port = self.core_dbs["gallus_gallus_core_99_6"].dbc.port
+            # user "travis" hardcoded until we find a better solution
             orthology_benchmark.dump_genomes(species_list, species_set_name, host, port, "travis", tmp_dir)
 
             out_files = tmp_dir / species_set_name
@@ -214,9 +213,8 @@ class TestGetCoreNames:
         """
         with expectation:
             host = self.core_dbs["mus_musculus_core_106_39"].dbc.host
-            # port = self.core_dbs["gallus_gallus_core_99_6"].dbc.port
-            port = 3306 # hardcoded until .dbc.port is merged into ensembl-py
-            # user "travis" hardcoded until we find better solution
+            port = self.core_dbs["gallus_gallus_core_99_6"].dbc.port
+            # user "travis" hardcoded until we find a better solution
             assert orthology_benchmark.get_core_names(species_names, host, port, "travis") == exp_output
 
     def test_get_core_names_fake_connection(self) -> None:

@@ -59,7 +59,7 @@ def dump_genomes(species_list: List[str], species_set_name: str, host: str, port
     dump_cores = [core for species, core in cores.items() if core != ""]
 
     if len(dump_cores) == 0:
-        raise RuntimeError(f"No cores found for the species set '{species_set_name}' on host '{host}'.")
+        raise RuntimeError(f"No cores found for the species set '{species_set_name}' on the specified host.")
 
     dumps_dir = os.path.join(out_dir, species_set_name)
     os.mkdir(dumps_dir)
