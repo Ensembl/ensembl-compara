@@ -98,8 +98,7 @@ class TestDumpGenomes:
     )
     def test_dump_genomes(self, species_list: List[str], species_set_name: str,
                           tmp_dir: Path, expectation: ContextManager) -> None:
-        """Tests :func:`orthology_benchmark.dump_genomes()` function
-        when connection to the server host and port can be established.
+        """Tests :func:`orthology_benchmark.dump_genomes()` when server connection can be established.
 
         Args:
             species_list: A list of species (genome names).
