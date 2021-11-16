@@ -171,8 +171,8 @@ if __name__ == '__main__':
     parser.add_argument("--host", required=True, type=str, help="Database host")
     parser.add_argument("--port", required=True, type=int, help="Database port")
     parser.add_argument("--user", required=True, type=str, help="Server username")
-    parser.add_argument("--out_dir", required=True, type=str, help="Location for"
-                                                                   "'species_set/core_name.fasta' dumps")
+    parser.add_argument("--out_dir", required=True, type=str,
+                        help="Location for'species_set/core_name.fasta' dumps")
 
     args = parser.parse_args()
 
