@@ -214,7 +214,7 @@ class TestGetCoreNames:
         """
         with expectation:
             host = self.core_dbs["mus_musculus_core_106_39"].dbc.host
-            port = self.core_dbs["gallus_gallus_core_99_6"].dbc.port
+            port = self.core_dbs["mus_musculus_core_106_39"].dbc.port
             # user "travis" hardcoded until we find a better solution
             assert orthology_benchmark.get_core_names(species_names, host, port, "travis") == exp_output
 
