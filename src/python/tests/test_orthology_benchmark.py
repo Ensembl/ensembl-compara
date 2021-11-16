@@ -206,7 +206,7 @@ class TestGetCoreNames:
             species_names: Species (genome) names.
             exp_output: Expected return value of the function.
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
-                    exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
+                exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
 
         """
         with expectation:
