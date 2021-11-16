@@ -193,8 +193,8 @@ class TestGetCoreNames:
         "species_names, exp_output, expectation",
         [
             (["danio_rerio", "mus_musculus", "zea_mays"],
-             {"danio_rerio": os.environ['USER'] + "_" + "danio_rerio_core_105_11",
-             "mus_musculus": os.environ['USER'] + "_" + "mus_musculus_core_106_39", "zea_mays": ""},
+             {"danio_rerio": f"{os.environ['USER']}_danio_rerio_core_105_11",
+             "mus_musculus": f"{os.environ['USER']}_mus_musculus_core_106_39", "zea_mays": ""},
              does_not_raise()),
             ([], None, raises(RuntimeError,
                               match=r"Empty list of species names. Cannot search for core databases."))

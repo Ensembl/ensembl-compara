@@ -68,7 +68,7 @@ def dump_genomes(species_list: List[str], species_set_name: str, host: str, port
                           "dump_gene_set_from_core.pl")
 
     for core in dump_cores:
-        out_file = os.path.join(dumps_dir, core + ".fasta")
+        out_file = os.path.join(dumps_dir, f"{core}.fasta")
         subprocess.run([script, "-core-db", core, "-host", host, "-port", str(port),
                        "-outfile", out_file], capture_output=True, check=True)
 
@@ -131,12 +131,12 @@ def get_core_names(species_names: List[str], host: str, port:int, user: str) -> 
 
     core_names = {}
 
-    eng = create_engine("mysql://" + user + "@" + host + ":" + str(port) + "/")
+    eng = create_engine(f"mysql://{user}@{host}:{port}/")
     out_tmp = eng.execute("SHOW DATABASES LIKE '%%_core_%%'").fetchall()
     all_cores = [i[0] for i in out_tmp]
 
     for species in species_names:
-        core_name = [core for core in all_cores if species + "_core_" in core]
+        core_name = [core for core in all_cores if core.startswith(f"{species}_core_")]
         if len(core_name) == 0:
             core_names[species] = ""
         elif len(core_name) == 1:
