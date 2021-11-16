@@ -52,7 +52,7 @@ def dump_genomes(species_list: List[str], species_set_name: str, host: str, port
         FileExistsError: If directory `out_dir/species_set_name` already exists.
         sqlalchemy.exc.OperationalError: If `user` cannot read from `host:port`.
         RuntimeError: If no cores are found for any species in `species_list` (`species_set_name`)
-                on `host:port`.
+            on `host:port`.
 
     """
     cores = get_core_names(species_list, host, port, user)
