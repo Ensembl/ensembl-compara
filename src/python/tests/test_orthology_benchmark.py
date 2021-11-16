@@ -106,7 +106,7 @@ class TestDumpGenomes:
             species_set_name: Species set (collection) name.
             tmp_dir: Unit test temp directory (fixture).
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
-                    exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
+                exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
 
         """
         with expectation:
