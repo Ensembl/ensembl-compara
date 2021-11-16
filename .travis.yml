@@ -140,6 +140,8 @@ jobs:
     - language: python
       python: 3.7
       name: "Python unit tests on the minimum version"
+      env:
+        - export ENSEMBL_ROOT_DIR=$PWD
       before_install:
         - echo
       install:
