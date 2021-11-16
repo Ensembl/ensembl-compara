@@ -34,8 +34,6 @@ import sqlalchemy
 import pytest
 from pytest import raises
 
-from ensembl.compara.filesys import file_cmp
-
 
 script_path = Path(__file__).parents[3] / "scripts" / "pipeline" / "orthology_benchmark.py"
 script_name = script_path.stem
@@ -55,6 +53,8 @@ script_spec.loader.exec_module(orthology_benchmark_module)
 import orthology_benchmark  # type: ignore
 
 # pylint: enable=import-error,wrong-import-position
+
+from ensembl.compara.filesys import file_cmp
 
 
 @pytest.mark.parametrize(
