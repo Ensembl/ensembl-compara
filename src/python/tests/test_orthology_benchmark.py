@@ -122,8 +122,7 @@ class TestDumpGenomes:
                                 Path(exp_out, db_name + ".fasta"))
 
     def test_dump_genomes_fake_connection(self, tmp_dir: Path) -> None:
-        """Tests :func:`orthology_benchmark.dump_genomes()` function
-        when provided fake server connection details.
+        """Tests :func:`orthology_benchmark.dump_genomes()` with fake server details.
 
         Args:
             tmp_dir: Unit test temp directory (fixture).
