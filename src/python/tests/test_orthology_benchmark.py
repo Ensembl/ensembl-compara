@@ -202,8 +202,7 @@ class TestGetCoreNames:
     )
     def test_get_core_names(self, species_names: List[str], exp_output: Dict[str, str],
                             expectation: ContextManager) -> None:
-        """Tests :func:`orthology_benchmark.get_core_names()` function
-        when connection to the server host can be established.
+        """Tests :func:`orthology_benchmark.get_core_names()` when server connection can be established.
 
         Args:
             species_names: Species (genome) names.
