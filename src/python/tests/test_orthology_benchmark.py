@@ -218,7 +218,6 @@ class TestGetCoreNames:
             assert orthology_benchmark.get_core_names(species_names, host, port, "travis") == exp_output
 
     def test_get_core_names_fake_connection(self) -> None:
-        """Tests :func:`orthology_benchmark.get_core_names()` function
-        when provided fake server connection details."""
+        """Tests :func:`orthology_benchmark.get_core_names()` with fake server details."""
         with raises(sqlalchemy.exc.OperationalError):
             orthology_benchmark.get_core_names(["danio_rerio", "mus_musculus"], "fake-host", 666, "compara")
