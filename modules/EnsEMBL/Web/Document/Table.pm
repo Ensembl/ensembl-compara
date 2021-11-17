@@ -305,6 +305,7 @@ sub csv_escape {
   my $self  = shift;
   my $value = $self->strip_HTML(shift);
      $value =~ s/"/""/g;
+     $value =~ s/^\s+|\s+$//g; # trim white space on both ends of the string
   
   return $value;
 }
