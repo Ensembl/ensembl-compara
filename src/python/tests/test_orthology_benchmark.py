@@ -149,7 +149,7 @@ def test_find_latest_core(core_names: List[str], exp_output: str, expectation: C
         core_names: A list of core database names.
         exp_output: Expected return value of the function.
         expectation: Context manager for the expected exception, i.e. the test will only pass if that
-                exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
+            exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
 
     """
     with expectation:
