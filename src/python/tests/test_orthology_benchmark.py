@@ -136,8 +136,11 @@ class TestDumpGenomes:
 @pytest.mark.parametrize(
     "core_names, exp_output, expectation",
     [
-        (["mus_musculus_core_105_1", "mus_musculus_core_105_3", "mus_musculus_core_104_4"],
-         "mus_musculus_core_105_3", does_not_raise()),
+        (["mus_musculus_core_105_1", "mus_musculus_core_52_105_3", "mus_musculus_core_104_4"],
+         "mus_musculus_core_52_105_3", does_not_raise()),
+        # Just to test trimming after padding; will remove it when Travis passes:
+        (["mus_musculus_core_106_1", "mus_musculus_core_52_105_3", "mus_musculus_core_51_104_4"],
+         "mus_musculus_core_106_1", does_not_raise()),
         ([], None, raises(RuntimeError,
                           match=r"Empty list of core databases. Cannot determine the latest one."))
     ]

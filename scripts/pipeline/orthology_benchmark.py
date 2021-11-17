@@ -91,10 +91,19 @@ def find_latest_core(core_names: List[str]) -> str:
 
     rel_ver = [name.split("_core_")[1].split("_") for name in core_names]
     rel_ver_int = [list(map(int, i)) for i in rel_ver]
-    rel_ver_arr = numpy.array(rel_ver_int)
+
+    # There might be two types of versioning
+    # (e.g. caenorhabditis_elegans_core_106_279, caenorhabditis_elegans_core_53_106_279)
+    # Pad with zero(s) on the left (to get e.g. [[0, 106, 279], [53, 106, 279]])
+    max_length = max(len(r) for r in rel_ver_int)
+    pad_token = 0
+    rel_ver_int_pad = [[pad_token] * (max_length - len(r)) + r for r in rel_ver_int]
+
+    rel_ver_arr = numpy.array(rel_ver_int_pad)
 
     n_cols = rel_ver_arr.shape[1]
-    i = 0
+    # Skip columns with any padded values
+    i = max(max_length - len(r) for r in rel_ver_int)
     while i < n_cols:
         # Find max value in the i-th column
         # For the next iteration (i+1) consider only rows where i-th column == max value
@@ -103,7 +112,9 @@ def find_latest_core(core_names: List[str]) -> str:
         rel_ver_arr = rel_ver_arr[[rows_ind], :][0]
         i += 1
 
-    latest_rel_ver = '_'.join(map(str, rel_ver_arr[0]))
+    # Trim padded zeros, if any, to get only numbers that appear in the core db name
+    rel_ver_trimmed = numpy.trim_zeros(rel_ver_arr[0], "f")
+    latest_rel_ver = '_'.join(map(str, rel_ver_trimmed))
     core_name = [core for core in core_names if latest_rel_ver in core][0]
 
     return core_name
