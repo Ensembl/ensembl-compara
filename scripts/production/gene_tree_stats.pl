@@ -327,8 +327,8 @@ sub get_gene_events {
         'Nb of gene splits',
         'Nb of speciation nodes',
         'Nb of dubious nodes',
-        'Avg confidence score',
-        'Avg confidence score on non-dubious nodes',
+        'Avg confidence score (%)',
+        'Avg confidence score (%) on non-dubious nodes',
     ];
     # Add totals at the end of the array
     push @gene_events_sorted, [

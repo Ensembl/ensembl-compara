@@ -331,10 +331,10 @@ sub check_line_counts {
 =cut
 
 sub dump_string_into_file {
-    my ($dump_file, $table) = @_;
+    my ($dump_file, $str) = @_;
 
     open( my $fh, '>', $dump_file ) || die "Could not open output file $dump_file";
-    print $fh "$table\n";
+    print $fh "$str\n";
     close($fh);
 }
 

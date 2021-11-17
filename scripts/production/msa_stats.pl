@@ -82,7 +82,6 @@ pod2usage(-verbose => 1) if !$url or !$mlss_id;
 my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($url);
 
 my $mlss = $dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-my $mlss_id = $mlss->dbID;
 
 my @cols = (
 	'species_name', 'mlss_id', 'genome_len', 'genome_cov(bp)', 
