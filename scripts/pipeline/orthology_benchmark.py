@@ -18,7 +18,7 @@
 Typical usage example::
 
     $ python orthology_benchmark.py --mlss_conf /path/to/mlss_conf.xml --species_set name \
-    --host mysql-ens-compara-prod-X --port XXXX --user ensro --out_dir /path/to/out/dir
+    --host mysql-ens-compara-prod-X --port XXXX --user username --out_dir /path/to/out/dir
 
 """
 
@@ -129,12 +129,12 @@ def get_core_names(species_names: List[str], host: str, port:int, user: str) -> 
         port: Host port.
         user: Server username.
 
+    Returns:
+        Dictionary mapping species (genome) names to the latest version of available core names.
+
     Raises:
         RuntimeError: If `species_list` is empty.
         sqlalchemy.exc.OperationalError: If `user` cannot read from `host:port`.
-
-    Returns:
-        Dictionary mapping species (genome) names to the latest version of available core names.
 
     """
     if len(species_names) == 0:
@@ -142,9 +142,9 @@ def get_core_names(species_names: List[str], host: str, port:int, user: str) -> 
 
     core_names = {}
 
-    eng = create_engine(f"mysql://{user}@{host}:{port}/")
-    out_tmp = eng.execute("SHOW DATABASES LIKE '%%_core_%%'").fetchall()
-    all_cores = [i[0] for i in out_tmp]
+    engg = create_engine(f"mysql://{user}@{host}:{port}/")
+    result = eng.execute("SHOW DATABASES LIKE '%%_core_%%'").fetchall()
+    all_cores = [i[0] for i in result]
 
     for species in species_names:
         core_name = [core for core in all_cores if core.startswith(f"{species}_core_")]
@@ -183,7 +183,7 @@ if __name__ == '__main__':
     parser.add_argument("--port", required=True, type=int, help="Database port")
     parser.add_argument("--user", required=True, type=str, help="Server username")
     parser.add_argument("--out_dir", required=True, type=str,
-                        help="Location for'species_set/core_name.fasta' dumps")
+                        help="Location for 'species_set/core_name.fasta' dumps")
 
     args = parser.parse_args()
 
