@@ -130,7 +130,7 @@ class TestDumpGenomes:
         """
         with raises(sqlalchemy.exc.OperationalError):
             orthology_benchmark.dump_genomes(["mus_musculus", "naja_naja"], "default",
-                                             "fake-host", 666, "compara", tmp_dir)
+                                             "fake-host", 65536, "compara", tmp_dir)
 
 
 @pytest.mark.parametrize(
@@ -218,4 +218,4 @@ class TestGetCoreNames:
     def test_get_core_names_fake_connection(self) -> None:
         """Tests :func:`orthology_benchmark.get_core_names()` with fake server details."""
         with raises(sqlalchemy.exc.OperationalError):
-            orthology_benchmark.get_core_names(["danio_rerio", "mus_musculus"], "fake-host", 666, "compara")
+            orthology_benchmark.get_core_names(["danio_rerio", "mus_musculus"], "fake-host", 65536, "compara")
