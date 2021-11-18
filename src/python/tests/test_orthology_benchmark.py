@@ -73,7 +73,7 @@ class TestDumpGenomes:
 
     """
 
-    core_dbs = {} # type: Dict
+    core_dbs = {}  # type: Dict
 
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization
@@ -176,7 +176,7 @@ class TestGetCoreNames:
 
     """
 
-    core_dbs = {} # type: Dict
+    core_dbs = {}  # type: Dict
 
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization
@@ -195,7 +195,7 @@ class TestGetCoreNames:
         [
             (["danio_rerio", "mus_musculus", "zea_mays"],
              {"danio_rerio": f"{os.environ['USER']}_danio_rerio_core_105_11",
-             "mus_musculus": f"{os.environ['USER']}_mus_musculus_core_106_39", "zea_mays": ""},
+              "mus_musculus": f"{os.environ['USER']}_mus_musculus_core_106_39", "zea_mays": ""},
              does_not_raise()),
             ([], None, raises(RuntimeError,
                               match=r"Empty list of species names. Cannot search for core databases."))
