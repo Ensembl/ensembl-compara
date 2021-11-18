@@ -280,6 +280,10 @@ sub variation_text {
   if ($hub->database('variation')) {
     my $sample_data  = $species_defs->SAMPLE_DATA;
 
+    ## Is this species VCF-driven?
+    my $meta_info = $hub->species_defs->databases->{'DATABASE_VARIATION'}{'meta_info'}->{1};
+    my $vcf_only  = $meta_info && $meta_info->{'variation_source.database'}->[0] eq '0';
+
     ## Split variation param if required (e.g. vervet monkey)
     my ($v, $vf) = split(';vf=', $sample_data->{'VARIATION_PARAM'});
     my %v_params = ('v' => $v);
@@ -319,7 +323,7 @@ sub variation_text {
       
       sprintf($self->{'icon'}, 'info'), $species_defs->ENSEMBL_SITETYPE,
       
-      $ftp ? sprintf(
+      ($ftp && !$vcf_only) ? sprintf(
         '<p><a href="%s/variation/gvf/%s/" class="nodeco">%sDownload all variants</a> (GVF)</p>', ## Link to FTP site
         $ftp, $species_prod_name, sprintf($self->{'icon'}, 'download')
       ) : ''
