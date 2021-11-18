@@ -142,7 +142,7 @@ def get_core_names(species_names: List[str], host: str, port:int, user: str) -> 
 
     core_names = {}
 
-    engg = create_engine(f"mysql://{user}@{host}:{port}/")
+    eng = create_engine(f"mysql://{user}@{host}:{port}/")
     result = eng.execute("SHOW DATABASES LIKE '%%_core_%%'").fetchall()
     all_cores = [i[0] for i in result]
 
