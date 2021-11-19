@@ -32,7 +32,7 @@ from typing import ContextManager, Dict, List
 import sqlalchemy
 
 import pytest
-from pytest import raises
+from pytest import FixtureRequest, raises
 
 
 script_path = Path(__file__).parents[3] / "scripts" / "pipeline" / "orthology_benchmark.py"
@@ -78,14 +78,19 @@ class TestDumpGenomes:
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization
     @pytest.fixture(scope='class', autouse=True)
-    def setup(self, multi_dbs: Dict) -> None:
+    def setup(self, request: FixtureRequest, multi_dbs: Dict) -> None:
         """Loads the required fixtures and values as class attributes.
 
         Args:
+            request: Access to the requesting test context.
             multi_dbs: Dictionary of unit test databases (fixture).
 
         """
         type(self).core_dbs = multi_dbs
+        server_url = sqlalchemy.engine.url.make_url(request.config.getoption('server'))
+        type(self).host = server_url.host
+        type(self).port = server_url.port
+        type(self).username = "ensro" if server_url.username == "ensadmin" else server_url.username
 
     @pytest.mark.parametrize(
         "species_list, species_set_name, expectation",
@@ -109,17 +114,14 @@ class TestDumpGenomes:
 
         """
         with expectation:
-            host = self.core_dbs["gallus_gallus_core_99_6"].dbc.host
-            port = self.core_dbs["gallus_gallus_core_99_6"].dbc.port
-            # user "travis" hardcoded until we find a better solution
-            orthology_benchmark.dump_genomes(species_list, species_set_name, host, port, "travis", tmp_dir)
+            orthology_benchmark.dump_genomes(species_list, species_set_name, self.host, self.port, self.username, tmp_dir)
 
             out_files = tmp_dir / species_set_name
             # pylint: disable-next=no-member
             exp_out = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
             for db_name in self.core_dbs:
-                assert file_cmp(Path(out_files, os.environ['USER'] + "_" + db_name + ".fasta"),
-                                Path(exp_out, db_name + ".fasta"))
+                test_db_name = self.core_dbs[db_name].dbc.db_name
+                assert file_cmp(out_files / f"{test_db_name}.fasta", exp_out / f"{db_name}.fasta")
 
     def test_dump_genomes_fake_connection(self, tmp_dir: Path) -> None:
         """Tests :func:`orthology_benchmark.dump_genomes()` with fake server details.
@@ -181,21 +183,26 @@ class TestGetCoreNames:
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization
     @pytest.fixture(scope='class', autouse=True)
-    def setup(self, multi_dbs: Dict) -> None:
+    def setup(self, request: FixtureRequest, multi_dbs: Dict) -> None:
         """Loads the required fixtures and values as class attributes.
 
         Args:
+            request: Access to the requesting test context.
             multi_dbs: Dictionary of unit test databases (fixture).
 
         """
         type(self).core_dbs = multi_dbs
+        server_url = sqlalchemy.engine.url.make_url(request.config.getoption('server'))
+        type(self).host = server_url.host
+        type(self).port = server_url.port
+        type(self).username = "ensro" if server_url.username == "ensadmin" else server_url.username
 
     @pytest.mark.parametrize(
         "species_names, exp_output, expectation",
         [
             (["danio_rerio", "mus_musculus", "zea_mays"],
-             {"danio_rerio": f"{os.environ['USER']}_danio_rerio_core_105_11",
-              "mus_musculus": f"{os.environ['USER']}_mus_musculus_core_106_39", "zea_mays": ""},
+             {"danio_rerio": os.environ['USER'] + "_danio_rerio_core_105_11",
+              "mus_musculus": os.environ['USER'] + "_mus_musculus_core_106_39", "zea_mays": ""},
              does_not_raise()),
             ([], None, raises(RuntimeError,
                               match=r"Empty list of species names. Cannot search for core databases."))
@@ -213,10 +220,7 @@ class TestGetCoreNames:
 
         """
         with expectation:
-            host = self.core_dbs["mus_musculus_core_106_39"].dbc.host
-            port = self.core_dbs["mus_musculus_core_106_39"].dbc.port
-            # user "travis" hardcoded until we find a better solution
-            assert orthology_benchmark.get_core_names(species_names, host, port, "travis") == exp_output
+            assert orthology_benchmark.get_core_names(species_names, self.host, self.port, self.username) == exp_output
 
     def test_get_core_names_fake_connection(self) -> None:
         """Tests :func:`orthology_benchmark.get_core_names()` with fake server details."""
