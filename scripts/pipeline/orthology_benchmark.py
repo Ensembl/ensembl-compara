@@ -118,7 +118,6 @@ def find_latest_core(core_names: List[str]) -> str:
     latest_rel_ver = '_'.join(map(str, rel_ver_trimmed))
     core_name = [core for core in core_names if latest_rel_ver in core][0]
 
-
     return core_name
 
 
@@ -150,7 +149,6 @@ def get_core_names(species_names: List[str], host: str, port:int, user: str) -> 
 
     user_env = os.environ['USER']
     for species in species_names:
-        #core_name = [core for core in all_cores if core.startswith(f"{species}_core_")]
         core_name = [core for core in all_cores if re.match(f"^({user_env}_)?{species}_core_", core)]
         if len(core_name) == 0:
             core_names[species] = ""
