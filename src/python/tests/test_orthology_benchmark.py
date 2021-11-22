@@ -34,6 +34,8 @@ import sqlalchemy
 import pytest
 from pytest import FixtureRequest, raises
 
+from ensembl.compara.filesys import file_cmp
+
 
 script_path = Path(__file__).parents[3] / "scripts" / "pipeline" / "orthology_benchmark.py"
 script_name = script_path.stem
@@ -53,8 +55,6 @@ script_spec.loader.exec_module(orthology_benchmark_module)
 import orthology_benchmark  # type: ignore
 
 # pylint: enable=import-error,wrong-import-position
-
-from ensembl.compara.filesys import file_cmp
 
 
 @pytest.mark.parametrize(
@@ -119,14 +119,14 @@ class TestDumpGenomes:
 
         """
         with expectation:
-            orthology_benchmark.dump_genomes(species_list, species_set_name, self.host, self.port, self.username, tmp_dir)
+            orthology_benchmark.dump_genomes(species_list, species_set_name, self.host, self.port,
+                                             self.username, tmp_dir)
 
             out_files = tmp_dir / species_set_name
             # pylint: disable-next=no-member
             exp_out = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
-            for db_name in self.core_dbs:
-                test_db_name = self.core_dbs[db_name].dbc.db_name
-                assert file_cmp(out_files / f"{test_db_name}.fasta", exp_out / f"{db_name}.fasta")
+            for db_name, unittest_db in self.core_dbs.items():
+                assert file_cmp(out_files / f"{unittest_db.dbc.db_name}.fasta", exp_out / f"{db_name}.fasta")
 
     def test_dump_genomes_fake_connection(self, tmp_dir: Path) -> None:
         """Tests :func:`orthology_benchmark.dump_genomes()` with fake server details.
@@ -228,7 +228,8 @@ class TestGetCoreNames:
 
         """
         with expectation:
-            assert orthology_benchmark.get_core_names(species_names, self.host, self.port, self.username) == exp_output
+            assert orthology_benchmark.get_core_names(species_names, self.host, self.port,
+                                                      self.username) == exp_output
 
     def test_get_core_names_fake_connection(self) -> None:
         """Tests :func:`orthology_benchmark.get_core_names()` with fake server details."""
