@@ -74,6 +74,9 @@ class TestDumpGenomes:
     """
 
     core_dbs = {}  # type: Dict
+    host = None  # type: str
+    port = None  # type: int
+    username = None  # type: str
 
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization
@@ -181,6 +184,9 @@ class TestGetCoreNames:
     """
 
     core_dbs = {}  # type: Dict
+    host = None  # type: str
+    port = None  # type: int
+    username = None  # type: str
 
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization
