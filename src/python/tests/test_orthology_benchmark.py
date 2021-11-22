@@ -92,6 +92,8 @@ class TestDumpGenomes:
         type(self).port = server_url.port
         type(self).username = "ensro" if server_url.username == "ensadmin" else server_url.username
 
+    @pytest.mark.skipif(os.environ['USER'] == 'travis',
+                        reason="This test requires Python and Perl and this is not supported by Travis")
     @pytest.mark.parametrize(
         "species_list, species_set_name, expectation",
         [
