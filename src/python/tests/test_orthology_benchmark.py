@@ -27,7 +27,7 @@ from importlib.util import module_from_spec, spec_from_file_location
 import os
 from pathlib import Path
 import sys
-from typing import ContextManager, Dict, List
+from typing import ContextManager, Dict, List, Optional
 
 import sqlalchemy
 
@@ -73,9 +73,9 @@ class TestDumpGenomes:
     """
 
     core_dbs = {}  # type: Dict
-    host = None  # type: str
-    port = None  # type: int
-    username = None  # type: str
+    host = None  # type: Optional[str]
+    port = None  # type: Optional[int]
+    username = None  # type: Optional[str]
 
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization
@@ -179,9 +179,9 @@ class TestGetCoreNames:
     """
 
     core_dbs = {}  # type: Dict
-    host = None  # type: str
-    port = None  # type: int
-    username = None  # type: str
+    host = None  # type: Optional[str]
+    port = None  # type: Optional[int]
+    username = None  # type: Optional[str]
 
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization

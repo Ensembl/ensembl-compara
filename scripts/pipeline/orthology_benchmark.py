@@ -120,7 +120,7 @@ def find_latest_core(core_names: List[str]) -> str:
     return core_name
 
 
-def get_core_names(species_names: List[str], host: str, port:int, user: str) -> Dict[str, str]:
+def get_core_names(species_names: List[str], host: str, port: int, user: str) -> Dict[str, str]:
     """Returns the latest core database names for a list of species.
 
     Args:
