@@ -57,7 +57,7 @@ def dump_genomes(species_list: List[str], species_set_name: str, host: str, port
 
     """
     cores = get_core_names(species_list, host, port, user)
-    dump_cores = [core for species, core in cores.items() if core != ""]
+    dump_cores = [core for species, core in cores.items()]
 
     if len(dump_cores) == 0:
         raise RuntimeError(f"No cores found for the species set '{species_set_name}' on the specified host.")
@@ -150,11 +150,9 @@ def get_core_names(species_names: List[str], host: str, port:int, user: str) -> 
     user_env = os.environ['USER']
     for species in species_names:
         core_name = [core for core in all_cores if re.match(f"^({user_env}_)?{species}_core_", core)]
-        if len(core_name) == 0:
-            core_names[species] = ""
-        elif len(core_name) == 1:
+        if len(core_name) == 1:
             core_names[species] = core_name[0]
-        else:
+        elif len(core_name) > 1:
             core_names[species] = find_latest_core(core_name)
 
     return core_names

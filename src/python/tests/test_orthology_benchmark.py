@@ -207,7 +207,7 @@ class TestGetCoreNames:
         [
             (["danio_rerio", "mus_musculus", "zea_mays"],
              {"danio_rerio": os.environ['USER'] + "_danio_rerio_core_105_11",
-              "mus_musculus": os.environ['USER'] + "_mus_musculus_core_106_39", "zea_mays": ""},
+              "mus_musculus": os.environ['USER'] + "_mus_musculus_core_106_39"},
              does_not_raise()),
             ([], None, raises(ValueError,
                               match=r"Empty list of species names. Cannot search for core databases."))
