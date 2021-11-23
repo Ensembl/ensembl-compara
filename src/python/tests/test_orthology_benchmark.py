@@ -60,8 +60,7 @@ import orthology_benchmark  # type: ignore
 @pytest.mark.parametrize(
     "multi_dbs",
     [
-        [{'src': 'core/gallus_gallus_core_99_6', 'name': 'gallus_gallus_core_99_6'},
-         {'src': 'core/homo_sapiens_core_99_38', 'name': 'homo_sapiens_core_99_38'}]
+        [{'src': 'core/gallus_gallus_core_99_6'}, {'src': 'core/homo_sapiens_core_99_38'}]
     ],
     indirect=True
 )
@@ -166,9 +165,8 @@ def test_find_latest_core(core_names: List[str], exp_output: str, expectation: C
 @pytest.mark.parametrize(
     "multi_dbs",
     [
-        [{'src': 'core/danio_rerio_core_105_11', 'name': 'danio_rerio_core_105_11'},
-         {'src': 'core/mus_musculus_cbaj_core_107_1', 'name': 'mus_musculus_cbaj_core_107_1'},
-         {'src': 'core/mus_musculus_core_106_39', 'name': 'mus_musculus_core_106_39'}]
+        [{'src': 'core/danio_rerio_core_105_11'}, {'src': 'core/mus_musculus_cbaj_core_107_1'},
+         {'src': 'core/mus_musculus_core_106_39'}]
     ],
     indirect=True
 )
