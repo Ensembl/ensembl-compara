@@ -81,14 +81,14 @@ def find_latest_core(core_names: List[str]) -> str:
         core_names: A list of cores for a species of interest.
 
     Raises:
-        RuntimeError: If `core_names` is empty.
+        ValueError: If `core_names` is empty.
 
     Returns:
         Name of the latest core database (the latest Ensembl release, the latest version).
 
     """
     if len(core_names) == 0:
-        raise RuntimeError("Empty list of core databases. Cannot determine the latest one.")
+        raise ValueError("Empty list of core databases. Cannot determine the latest one.")
 
     rel_ver = [name.split("_core_")[1].split("_") for name in core_names]
     rel_ver_int = [list(map(int, i)) for i in rel_ver]
@@ -134,12 +134,12 @@ def get_core_names(species_names: List[str], host: str, port:int, user: str) -> 
         Dictionary mapping species (genome) names to the latest version of available core names.
 
     Raises:
-        RuntimeError: If `species_list` is empty.
+        ValueError: If `species_list` is empty.
         sqlalchemy.exc.OperationalError: If `user` cannot read from `host:port`.
 
     """
     if len(species_names) == 0:
-        raise RuntimeError("Empty list of species names. Cannot search for core databases.")
+        raise ValueError("Empty list of species names. Cannot search for core databases.")
 
     core_names = {}
 

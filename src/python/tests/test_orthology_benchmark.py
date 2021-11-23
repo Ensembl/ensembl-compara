@@ -145,7 +145,7 @@ class TestDumpGenomes:
     [
         (["mus_musculus_core_105_1", "mus_musculus_core_52_105_3", "mus_musculus_core_104_4"],
          "mus_musculus_core_52_105_3", does_not_raise()),
-        ([], None, raises(RuntimeError,
+        ([], None, raises(ValueError,
                           match=r"Empty list of core databases. Cannot determine the latest one."))
     ]
 )
@@ -209,7 +209,7 @@ class TestGetCoreNames:
              {"danio_rerio": os.environ['USER'] + "_danio_rerio_core_105_11",
               "mus_musculus": os.environ['USER'] + "_mus_musculus_core_106_39", "zea_mays": ""},
              does_not_raise()),
-            ([], None, raises(RuntimeError,
+            ([], None, raises(ValueError,
                               match=r"Empty list of species names. Cannot search for core databases."))
         ]
     )
