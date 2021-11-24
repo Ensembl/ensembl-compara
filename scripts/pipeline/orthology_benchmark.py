@@ -57,7 +57,7 @@ def dump_genomes(species_list: List[str], species_set_name: str, host: str, port
 
     """
     cores = get_core_names(species_list, host, port, user)
-    dump_cores = [core for core in cores.values()]
+    dump_cores = list(cores.values())
 
     if len(dump_cores) == 0:
         raise RuntimeError(f"No cores found for the species set '{species_set_name}' on the specified host.")
