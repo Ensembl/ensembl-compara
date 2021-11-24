@@ -27,7 +27,7 @@ from importlib.util import module_from_spec, spec_from_file_location
 import os
 from pathlib import Path
 import sys
-from typing import ContextManager, Dict, List, Optional
+from typing import ContextManager, Dict, List
 
 import sqlalchemy
 
@@ -73,9 +73,9 @@ class TestDumpGenomes:
     """
 
     core_dbs = {}  # type: Dict
-    host = None  # type: Optional[str]
-    port = None  # type: Optional[int]
-    username = None  # type: Optional[str]
+    host = None  # type: str
+    port = None  # type: int
+    username = None  # type: str
 
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization
@@ -125,7 +125,7 @@ class TestDumpGenomes:
             # pylint: disable-next=no-member
             exp_out = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
             for db_name, unittest_db in self.core_dbs.items():
-                assert file_cmp(out_files / f"{unittest_db.dbc.db_name}.fasta", exp_out / f"{db_name}.fasta")
+                assert file_cmp(out_files / f"{unittest_db.dbc.db_name}.fa", exp_out / f"{db_name}.fa")
 
     def test_dump_genomes_fake_connection(self, tmp_dir: Path) -> None:
         """Tests :func:`orthology_benchmark.dump_genomes()` with fake server details.
@@ -179,9 +179,9 @@ class TestGetCoreNames:
     """
 
     core_dbs = {}  # type: Dict
-    host = None  # type: Optional[str]
-    port = None  # type: Optional[int]
-    username = None  # type: Optional[str]
+    host = None  # type: str
+    port = None  # type: int
+    username = None  # type: str
 
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization

@@ -47,7 +47,7 @@ def dump_genomes(species_list: List[str], species_set_name: str, host: str, port
         host: Database host.
         port: Host port.
         user: Server username.
-        out_dir: Directory to place `species_set_name/core_name.fasta` dumps.
+        out_dir: Directory to place `species_set_name/core_name.fa` dumps.
 
     Raises:
         FileExistsError: If directory `out_dir/species_set_name` already exists.
@@ -69,7 +69,7 @@ def dump_genomes(species_list: List[str], species_set_name: str, host: str, port
                           "dump_gene_set_from_core.pl")
 
     for core in dump_cores:
-        out_file = os.path.join(dumps_dir, f"{core}.fasta")
+        out_file = os.path.join(dumps_dir, f"{core}.fa")
         subprocess.run([script, "-core-db", core, "-host", host, "-port", str(port),
                        "-outfile", out_file], capture_output=True, check=True)
 
@@ -183,7 +183,7 @@ if __name__ == '__main__':
     parser.add_argument("--port", required=True, type=int, help="Database port")
     parser.add_argument("--user", required=True, type=str, help="Server username")
     parser.add_argument("--out_dir", required=True, type=str,
-                        help="Location for 'species_set/core_name.fasta' dumps")
+                        help="Location for 'species_set/core_name.fa' dumps")
 
     args = parser.parse_args()
 
