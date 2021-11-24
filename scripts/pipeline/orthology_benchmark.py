@@ -57,7 +57,7 @@ def dump_genomes(species_list: List[str], species_set_name: str, host: str, port
 
     """
     cores = get_core_names(species_list, host, port, user)
-    dump_cores = [core for species, core in cores.items()]
+    dump_cores = [core for core in cores.values()]
 
     if len(dump_cores) == 0:
         raise RuntimeError(f"No cores found for the species set '{species_set_name}' on the specified host.")
@@ -75,15 +75,16 @@ def dump_genomes(species_list: List[str], species_set_name: str, host: str, port
 
 
 def find_latest_core(core_names: List[str]) -> str:
-    """Returns the name of the latest core database among the available ones.
-    
-    The latest refers to the latest Ensembl release and the latest version.
+    """Returns the latest core database among the available ones.
 
     Args:
         core_names: A list of cores for a species of interest.
 
     Raises:
         ValueError: If `core_names` is empty.
+
+    Returns:
+        Name of the latest core database (the latest Ensembl release, the latest version).
 
     """
     if len(core_names) == 0:
