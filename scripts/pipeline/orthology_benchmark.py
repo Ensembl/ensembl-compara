@@ -75,16 +75,15 @@ def dump_genomes(species_list: List[str], species_set_name: str, host: str, port
 
 
 def find_latest_core(core_names: List[str]) -> str:
-    """Returns the latest core database among the available ones.
+    """Returns the name of the latest core database among the available ones.
+    
+    The latest refers to the latest Ensembl release and the latest version.
 
     Args:
         core_names: A list of cores for a species of interest.
 
     Raises:
         ValueError: If `core_names` is empty.
-
-    Returns:
-        Name of the latest core database (the latest Ensembl release, the latest version).
 
     """
     if len(core_names) == 0:
