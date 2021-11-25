@@ -1,0 +1,7 @@
+gene	3	424670
+exon	3	4701
+dna_align_feature	3	50689
+transcript	3	10875
+protein_align_feature	3	402136
+intron_supporting_evidence	3	139798
+repeat_feature	3	1957

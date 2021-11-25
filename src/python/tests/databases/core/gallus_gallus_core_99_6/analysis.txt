@@ -1,0 +1,37 @@
+156	2018-07-06 05:01:59	ensembl	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+157	2018-10-04 18:33:56	xrefexoneratedna	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+158	2018-06-18 12:08:52	blast_isoseq	\N	\N	\N	\N	\N	\N	-num_threads 3 -window_size 40 -seg no	Bio::EnsEMBL::Analysis::Hive::RunnableDB::HiveBlastRNASeqPep	\N	\N	\N
+159	2018-10-04 18:33:56	xrefexonerateprotein	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+160	2018-10-04 19:55:07	xrefchecksum	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+161	2019-10-11 19:36:04	mobidblite	MobiDBLite	2.0	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+162	2019-10-11 19:23:07	cdd	CDD	3.17	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+163	2019-10-11 19:24:43	hmmpanther	PANTHER	14.1	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+164	2019-10-11 19:36:14	signalp	SignalP	4.1	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+165	2019-10-11 19:23:49	gene3d	Gene3D	4.2.0	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+166	2019-10-11 19:26:09	pfam	Pfam	32.0	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+167	2019-10-11 19:35:18	superfamily	SuperFamily	1.75	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+168	2019-10-11 19:37:27	tmhmm	TMHMM	2.0c	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+169	2019-10-11 19:38:12	seg	Seg	\N	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+170	2019-10-11 19:34:53	smart	Smart	7.1	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+171	2019-10-11 19:27:19	pfscan	Prosite_profiles	2019_01	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+172	2019-11-13 10:06:56	goa_import	GO	\N	\N	goa_import	\N	\N	\N	\N	\N	\N	\N
+173	2018-07-10 23:28:45	other_protein	uniprot	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+174	2018-06-11 13:10:54	blast_rnaseq_ise	\N	\N	\N	\N	\N	\N	-num_threads 3 -window_size 40	Bio::EnsEMBL::Analysis::Hive::RunnableDB::HiveBlastRNASeqPep	\N	\N	\N
+175	2018-05-01 22:58:26	best_targetted	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+176	2019-10-11 19:36:11	ncoils	ncoils	2.2.1	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+177	2019-11-12 09:26:59	xref_projection	\N	\N	\N	xref_projection	\N	\N	\N	\N	\N	\N	\N
+178	2019-10-11 19:30:25	prints	PRINTS	42.0	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+179	2019-10-11 19:32:11	scanprosite	Prosite_patterns	2019_01	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+180	2019-10-11 19:38:13	interpro2go	InterPro2GO	\N	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+181	2019-10-11 19:27:35	pirsf	PIRSF	3.02	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+182	2018-07-10 16:56:08	ncrna	\N	\N	/hps/nobackup2/production/ensembl/genebuild/blastdb/ncrna/ncrna_2016_05/	\N	\N	/nfs/software/ensembl/RHEL7-JUL2017-core2/linuxbrew/opt/infernal10/bin/cmsearch	\N	HiveInfernal	\N	\N	\N
+183	2018-07-10 16:32:17	blastmirna	\N	\N	/hps/nobackup2/production/ensembl/genebuild/blastdb/ncrna/mirbase_22/all_mirnas.fa	\N	\N	/nfs/software/ensembl/RHEL7-JUL2017-core2/linuxbrew/bin/blastn	 -num_threads 3 	HiveBlastmiRNA	\N	\N	\N
+184	2019-10-11 19:34:55	tigrfam	TIGRfam	15.0	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+185	2019-10-11 19:33:00	sfld	SFLD	4	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+186	2018-04-18 15:46:35	exonerate	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+187	2018-07-10 16:49:01	rfamblast	\N	\N	/hps/nobackup2/production/ensembl/genebuild/blastdb/ncrna/ncrna_2016_05/filtered.fasta	\N	\N	/nfs/software/ensembl/RHEL7-JUL2017-core2/linuxbrew/bin/blastn	 -num_threads 3 -word_size 12 -num_alignments 5000  -num_descriptions 5000 -max_hsps 1 	HiveBlastRfam	\N	\N	\N
+188	2019-10-11 19:38:20	interpro2pathway	InterPro2Pathway	\N	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+189	2019-10-11 19:29:42	hamap	HAMAP	2019_01	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+190	2018-04-17 11:47:36	dust	\N	\N	\N	\N	\N	/nfs/software/ensembl/RHEL7-JUL2017-core2/linuxbrew/bin/dustmasker	\N	HiveDust	\N	\N	\N
+191	2018-04-17 11:40:13	repeatmask_repbase_chicken	\N	\N	\N	\N	\N	/nfs/software/ensembl/RHEL7-JUL2017-core2/linuxbrew/bin/RepeatMasker	-nolow -species "gallus gallus" -engine "crossmatch"	HiveRepeatMasker	\N	\N	\N
+192	2018-04-17 11:48:49	trf	\N	\N	\N	\N	\N	/nfs/software/ensembl/RHEL7-JUL2017-core2/linuxbrew/bin/trf	\N	HiveTRF	\N	\N	\N
