@@ -18,12 +18,15 @@
 Typical usage example::
 
     $ python orthology_benchmark.py --mlss_conf /path/to/mlss_conf.xml --species_set name \
-    --host mysql-ens-compara-prod-X --port XXXX --user username --out_dir /path/to/out/dir
+    --host mysql-ens-compara-prod-X --port XXXX --user username --out_dir /path/to/out/dir \
+    --orthofinder_input /path/to/orthofinder/input/files
 
 """
 
 import argparse
+import fnmatch
 import os
+from pathlib import Path
 import re
 import subprocess
 from typing import Dict, List
@@ -47,7 +50,7 @@ def dump_genomes(species_list: List[str], species_set_name: str, host: str, port
         host: Database host.
         port: Host port.
         user: Server username.
-        out_dir: Directory to place `species_set_name/core_name.fa` dumps.
+        out_dir: Directory to place `species_set_name/core_name.fasta` dumps.
 
     Raises:
         FileExistsError: If directory `out_dir/species_set_name` already exists.
@@ -69,14 +72,14 @@ def dump_genomes(species_list: List[str], species_set_name: str, host: str, port
                           "dump_gene_set_from_core.pl")
 
     for core in dump_cores:
-        out_file = os.path.join(dumps_dir, f"{core}.fa")
+        out_file = os.path.join(dumps_dir, f"{core}.fasta")
         subprocess.run([script, "-core-db", core, "-host", host, "-port", str(port),
                        "-outfile", out_file], capture_output=True, check=True)
 
 
 def find_latest_core(core_names: List[str]) -> str:
     """Returns the name of the latest available core database.
-    
+
     The latest refers to the latest Ensembl release and the latest version.
 
     Args:
@@ -157,12 +160,49 @@ def get_core_names(species_names: List[str], host: str, port: int, user: str) ->
     return core_names
 
 
-def prep_input_for_orth_tools():
-    """Docstring"""
+def prep_input_for_orth_tools(source_dir: str, target_dir_ofinder: str) -> None:
+    """Prepares input files for selected orthology inference tools.
+
+    For OrthoFinder: Creates symlinks to input fasta files in `target_dir_ofinder`.
+    # For OMA: ...
+
+    Args:
+        source_dir: Path to the directory containing fasta files.
+        target_dir_ofinder: Path to the directory where symlinks to fasta files will be created
+            for OrthoFinder to use.
+
+    Raises:
+        FileExistsError: If directory `target_dir_ofinder` already exists.
+        FileNotFoundError: If directory `source_dir` does not exist or does not contain any fasta files.
+        subprocess.CalledProcessError: If creating symlinks fails for some other reason.
+    """
+    if not os.path.isdir(source_dir):
+        raise FileNotFoundError("Directory containing fasta files not found.")
+    if len(fnmatch.filter(os.listdir(source_dir), '*.fasta')) == 0:
+        raise FileNotFoundError("No fasta files found.")
+
+    # OrthoFinder
+    os.mkdir(target_dir_ofinder)
+    script_symlinks = os.path.join(Path(__file__).parents[2], "scripts", "pipeline", "symlink_fasta.py")
+    subprocess.run([script_symlinks, "-s", target_dir_ofinder, "-d", source_dir],
+                   capture_output=True, check=True)
 
 
-def run_orthology_tools():
-    """Docstring"""
+def run_orthology_tools(input_ofinder: str) -> None:
+    """Runs selected orthology inference tools: OrthoFinder.
+
+    Args:
+        input_ofinder: Path to the directory containing symlinks to the input fasta files for OrthoFinder.
+
+    Raises:
+        FileNotFoundError: If OrthoFinder executable (`orthofinder_exe`) cannot be found.
+        subprocess.CalledProcessError: If executing OrthoFinder command fails for some reason,
+            including `input_ofinder` not found.
+    """
+    # OrthoFinder
+    orthofinder_exe = "/hps/software/users/ensembl/ensw/C8-MAR21-sandybridge/linuxbrew/bin/orthofinder"
+    subprocess.run([orthofinder_exe, "-t", str(32), "-a", str(8), "-f", input_ofinder],
+                   capture_output=True, check=True)
 
 
 def prep_input_for_goc():
@@ -182,13 +222,19 @@ if __name__ == '__main__':
     parser.add_argument("--port", required=True, type=int, help="Database port")
     parser.add_argument("--user", required=True, type=str, help="Server username")
     parser.add_argument("--out_dir", required=True, type=str,
-                        help="Location for 'species_set/core_name.fa' dumps")
+                        help="Location for 'species_set/core_name.fasta' dumps")
+    parser.add_argument("--orthofinder_input", required=True, type=str,
+                        help="Location of input files for OrthoFinder")
 
     args = parser.parse_args()
 
+    print("Getting a list of species...")
     genome_list = get_species_set_by_name(args.mlss_conf, args.species_set)
+    print("Dumping cores into fasta files...")
     dump_genomes(genome_list, args.species_set, args.host, args.port, args.user, args.out_dir)
-    # prep_input_for_orth_tools()
-    # run_orthology_tools()
+    print("Preparing input for orthology inference tools...")
+    prep_input_for_orth_tools(os.path.join(args.out_dir, args.species_set), args.orthofinder_input)
+    print("Running orthology inference tools...")
+    run_orthology_tools(args.orthofinder_input)
     # prep_input_for_goc()
     # calculate_goc_scores()
