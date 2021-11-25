@@ -1,0 +1,47 @@
+9917	2014-05-23 13:41:28	ensembl_havana_gene_homo_sapiens	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+9918	2009-06-01 09:01:22	xrefexoneratedna	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+9919	2014-05-23 13:41:30	ensembl_havana_transcript_homo_sapiens	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+9920	2014-02-13 13:12:49	human_cdna2genome	\N	refseq_59	\N	\N	\N	/nfs/users/nfs_j/jhv/bin/exonerate.hacked.cdna2genome	\N	Exonerate2Genes	\N	\N	\N
+9921	2014-02-07 12:47:35	human_cdna	\N	refseq_59	\N	exonerate	0.9.0	/software/ensembl/genebuild/usrlocalensemblbin/exonerate-0.9.0	\N	Exonerate2Genes	\N	\N	\N
+9922	2014-05-23 10:14:31	est2genome_human_havana	\N	118	\N	\N	\N	\N	\N	ClusterDepthFilter	\N	\N	\N
+9923	2014-05-23 10:14:31	vertrna_havana	\N	10-Feb-14 (118)	\N	\N	\N	\N	\N	BlastGenscanDNA	\N	\N	\N
+9924	2014-02-13 13:12:49	human_protein	\N	refseq_59,uniprot_2014_01	\N	\N	\N	\N	\N	BestTargetted	\N	\N	\N
+9925	2014-05-23 10:14:31	uniprot_sw_havana	\N	2014_02	\N	\N	\N	\N	\N	DepthFilter	\N	\N	\N
+9926	2014-06-18 07:44:58	xrefexonerateprotein	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+9927	2014-06-18 08:25:03	xrefchecksum	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+9928	2019-09-30 10:41:23	mobidblite	MobiDBLite	2.0	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9929	2019-09-30 10:41:22	cdd	CDD	3.17	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9930	2017-03-30 14:24:22	sifts_import	sifts	2019/09/02	ftp://ftp.ebi.ac.uk/pub/databases/msd/sifts/flatfiles/tsv/pdb_chain_uniprot.tsv.gz	\N	\N	\N	\N	\N	\N	\N	\N
+9931	2019-09-30 10:41:22	hmmpanther	PANTHER	14.1	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9932	2019-09-30 10:41:22	gene3d	Gene3D	4.2.0	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9933	2019-09-30 10:41:22	pfam	Pfam	32.0	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9934	2019-09-30 10:41:22	superfamily	SuperFamily	1.75	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9935	2019-09-30 10:41:23	seg	Seg	\N	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9936	2019-09-30 10:41:22	smart	Smart	7.1	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9937	2019-09-30 10:41:22	pfscan	Prosite_profiles	2019_01	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9938	2019-09-30 10:41:23	interpro2go	InterPro2GO	\N	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9939	2019-11-13 10:07:05	goa_import	GO	\N	\N	goa_import	\N	\N	\N	\N	\N	\N	\N
+9940	2014-08-11 10:23:56	ccds	\N	160819	\N	\N	\N	\N	\N	\N	\N	\N	\N
+9941	2014-05-23 13:41:28	havana_homo_sapiens	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+9942	2014-04-16 13:56:36	ncrna_homo_sapiens	Rfam	11.0	/lustre/scratch110/ensembl/th3/GRCh38/ncRNA_wc	cmsearch	\N	/software/ensembl/bin/cmsearch_1.0	\N	Bio::EnsEMBL::Analysis::RunnableDB::Infernal	\N	ensembl	gene
+9943	2014-04-16 13:56:36	rfamblast	Rfam	11.0	/lustre/scratch110/ensembl/th3/GRCh38/ncRNA_wc/filtered.fasta	wublastn	\N	wublastn	W=12 B=10000 V=10000 -hspmax 0 -gspmax 0 -kap -cpus=1	Bio::EnsEMBL::Analysis::RunnableDB::BlastRfam	\N	ensembl	gene
+9944	2016-05-11 15:03:58	ensembl_homo_sapiens	\N	\N	\N	\N	\N	\N	\N	GeneBuilder	\N	\N	\N
+9945	2014-05-23 10:14:31	uniprot_tr_havana	\N	2014_02	\N	\N	\N	\N	\N	DepthFilter	\N	\N	\N
+9946	2019-09-30 10:41:22	pirsf	PIRSF	3.02	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9947	2019-09-30 10:41:23	signalp	SignalP	4.1	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9948	2019-09-30 10:41:23	tmhmm	TMHMM	2.0c	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9949	2019-09-30 10:41:22	sfld	SFLD	4	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9950	2019-09-30 10:41:22	tigrfam	TIGRfam	15.0	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9951	2019-09-30 10:41:22	prints	PRINTS	42.0	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9952	2019-09-30 10:41:22	scanprosite	Prosite_patterns	2019_01	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9953	2019-09-30 10:41:23	ncoils	ncoils	2.2.1	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9954	2014-05-23 10:14:31	est2genome_other_havana	\N	118	\N	\N	\N	\N	\N	ClusterDepthFilter	\N	\N	\N
+9955	2019-09-30 10:41:22	hamap	HAMAP	2019_01	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9956	2019-09-09 10:54:47	havana_tagene_homo_sapiens	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+9957	2014-05-28 16:12:37	ensembl_havana_lincrna_homo_sapiens	\N	\N	\N	\N	\N	\N	\N	lincRNAEvaluator	\N	\N	\N
+9958	2019-09-30 10:41:23	interpro2pathway	InterPro2Pathway	\N	\N	InterProScan	5.37-76.0	\N	\N	\N	\N	\N	\N
+9959	2014-06-13 13:24:12	lrg_import	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+9960	2014-01-24 14:27:05	repeatmask_repbase_human	repbase	20130422	repbase	RepeatMasker	3.3.0	/software/ensembl/bin/RepeatMasker_3_3_0/RepeatMasker	-nolow -s -species homo	RepeatMasker	\N	\N	\N
+9961	2014-01-28 10:16:30	dust	\N	\N	\N	dust	1	/software/ensembl/genebuild/usrlocalensemblbin/tcdust	\N	Dust	\N	\N	\N
+9962	2014-02-06 14:34:06	trf	\N	\N	\N	\N	\N	/software/ensembl/genebuild/usrlocalensemblbin/trf	\N	TRF	\N	\N	\N
+9963	2014-12-16 12:59:43	repeatmask_repbase_human_low	repbase	20130422	repbase	RepeatMasker	3.3.0	/software/ensembl/bin/RepeatMasker_3_3_0/RepeatMasker	-s -species homo	RepeatMasker	\N	\N	\N

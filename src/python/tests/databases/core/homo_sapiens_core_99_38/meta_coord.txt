@@ -1,0 +1,9 @@
+gene	4	741999
+exon	4	11523
+dna_align_feature	4	385340
+protein_align_feature	4	382042
+transcript	4	13089
+gene	10007	12430
+exon	10007	1144
+transcript	10007	2284
+repeat_feature	4	40799
