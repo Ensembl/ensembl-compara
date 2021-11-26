@@ -182,9 +182,9 @@ def prep_input_for_orth_tools(source_dir: str, target_dir: str) -> None:
         subprocess.CalledProcessError: If creating symlinks fails for some other reason.
     """
     if not os.path.isdir(source_dir):
-        raise FileNotFoundError("Directory containing fasta files not found.")
+        raise FileNotFoundError("Directory containing .fasta files not found.")
     if len(fnmatch.filter(os.listdir(source_dir), '*.fasta')) == 0:
-        raise FileNotFoundError("No fasta files found.")
+        raise FileNotFoundError("No .fasta files found.")
 
     # OrthoFinder
     os.mkdir(target_dir)
