@@ -15,11 +15,18 @@
 # limitations under the License.
 """Pipeline for benchmarking orthology inference tools.
 
-Typical usage example::
+Typical usage examples::
 
+    # With pipeline default numbers of threads for OrthoFinder
     $ python orthology_benchmark.py --mlss_conf /path/to/mlss_conf.xml --species_set name \
     --host mysql-ens-compara-prod-X --port XXXX --user username --out_dir /path/to/out/dir \
-    --orthofinder_input /path/to/orthofinder/input/files
+    ----orthology_input /path/to/orthofinder/input/files
+
+    # With user specified numbers of threads for OrthoFinder
+    $ python orthology_benchmark.py --mlss_conf /path/to/mlss_conf.xml --species_set name \
+    --host mysql-ens-compara-prod-X --port XXXX --user username --out_dir /path/to/out/dir \
+    ----orthology_input /path/to/orthofinder/input/files --number_of_threads XXXX \
+    --number_of_orthofinder_threads XXXX
 
 """
 
