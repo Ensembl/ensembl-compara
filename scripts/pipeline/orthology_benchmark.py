@@ -160,20 +160,18 @@ def get_core_names(species_names: List[str], host: str, port: int, user: str) ->
     return core_names
 
 
-def prep_input_for_orth_tools(source_dir: str, target_dir_ofinder: str) -> None:
+def prep_input_for_orth_tools(source_dir: str, target_dir: str) -> None:
     """Prepares input files for selected orthology inference tools.
 
-    For OrthoFinder: Creates symlinks to input fasta files in `target_dir_ofinder`.
-    # For OMA: ...
+    Creates symlinks to input fasta files in `target_dir`.
 
     Args:
-        source_dir: Path to the directory containing fasta files.
-        target_dir_ofinder: Path to the directory where symlinks to fasta files will be created
-            for OrthoFinder to use.
+        source_dir: Path to the directory containing .fasta files.
+        target_dir: Path to the directory where symlinks to .fasta files will be created.
 
     Raises:
-        FileExistsError: If directory `target_dir_ofinder` already exists.
-        FileNotFoundError: If directory `source_dir` does not exist or does not contain any fasta files.
+        FileExistsError: If directory `target_dir` already exists.
+        FileNotFoundError: If directory `source_dir` does not exist or does not contain any .fasta files.
         subprocess.CalledProcessError: If creating symlinks fails for some other reason.
     """
     if not os.path.isdir(source_dir):
@@ -182,27 +180,32 @@ def prep_input_for_orth_tools(source_dir: str, target_dir_ofinder: str) -> None:
         raise FileNotFoundError("No fasta files found.")
 
     # OrthoFinder
-    os.mkdir(target_dir_ofinder)
+    os.mkdir(target_dir)
     script_symlinks = os.path.join(Path(__file__).parents[2], "scripts", "pipeline", "symlink_fasta.py")
-    subprocess.run([script_symlinks, "-d", source_dir, "-s", target_dir_ofinder],
+    subprocess.run([script_symlinks, "-d", source_dir, "-s", target_dir],
                    capture_output=True, check=True)
 
 
-def run_orthology_tools(input_ofinder: str) -> None:
-    """Runs selected orthology inference tools: OrthoFinder.
+def run_orthology_tools(input_dir: str, number_of_threads: int, number_of_orthofinder_threads: int) -> None:
+    """Runs the selected orthology inference tool.
 
     Args:
-        input_ofinder: Path to the directory containing symlinks to the input fasta files for OrthoFinder.
+        input_dir: Path to the directory containing the input fasta files (or corresponding symlinks) for
+            orthology tools.
+        number_of_threads: The number of threads OrthoFinder will use for running the BLAST searches,
+            tree inference and gene-tree reconciliation in parallel.
+        number_of_orthofinder_threads: The number of parallel processes for other OrthoFinder steps
+            that have been parallelised.
 
     Raises:
         FileNotFoundError: If OrthoFinder executable (`orthofinder_exe`) cannot be found.
         subprocess.CalledProcessError: If executing OrthoFinder command fails for some reason,
-            including `input_ofinder` not found.
+            including `input_dir` not found.
     """
     # OrthoFinder
     orthofinder_exe = "/hps/software/users/ensembl/ensw/C8-MAR21-sandybridge/linuxbrew/bin/orthofinder"
-    subprocess.run([orthofinder_exe, "-t", str(32), "-a", str(8), "-f", input_ofinder],
-                   capture_output=True, check=True)
+    subprocess.run([orthofinder_exe, "-t", str(number_of_threads), "-a", str(number_of_orthofinder_threads),
+                    "-f", input_dir], capture_output=True, check=True)
 
 
 def prep_input_for_goc():
@@ -223,8 +226,12 @@ if __name__ == '__main__':
     parser.add_argument("--user", required=True, type=str, help="Server username")
     parser.add_argument("--out_dir", required=True, type=str,
                         help="Location for 'species_set/core_name.fasta' dumps")
-    parser.add_argument("--orthofinder_input", required=True, type=str,
-                        help="Location of input files for OrthoFinder")
+    parser.add_argument("--orthology_input", required=True, type=str,
+                        help="Location of input files for orthology tools")
+    parser.add_argument("--number_of_threads", default=32, type=int,
+                        help="OrthoFinder parameter '-t'")
+    parser.add_argument("--number_of_orthofinder_threads", default=8, type=int,
+                        help="OrthoFinder parameter '-a'")
 
     args = parser.parse_args()
 
@@ -233,8 +240,8 @@ if __name__ == '__main__':
     print("Dumping cores into fasta files...")
     dump_genomes(genome_list, args.species_set, args.host, args.port, args.user, args.out_dir)
     print("Preparing input for orthology inference tools...")
-    prep_input_for_orth_tools(os.path.join(args.out_dir, args.species_set), args.orthofinder_input)
+    prep_input_for_orth_tools(os.path.join(args.out_dir, args.species_set), args.orthology_input)
     print("Running orthology inference tools...")
-    run_orthology_tools(args.orthofinder_input)
+    run_orthology_tools(args.orthology_input, args.number_of_threads, args.number_of_orthofinder_threads)
     # prep_input_for_goc()
     # calculate_goc_scores()
