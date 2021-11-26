@@ -184,7 +184,7 @@ def prep_input_for_orth_tools(source_dir: str, target_dir_ofinder: str) -> None:
     # OrthoFinder
     os.mkdir(target_dir_ofinder)
     script_symlinks = os.path.join(Path(__file__).parents[2], "scripts", "pipeline", "symlink_fasta.py")
-    subprocess.run([script_symlinks, "-s", target_dir_ofinder, "-d", source_dir],
+    subprocess.run([script_symlinks, "-d", source_dir, "-s", target_dir_ofinder],
                    capture_output=True, check=True)
 
 
