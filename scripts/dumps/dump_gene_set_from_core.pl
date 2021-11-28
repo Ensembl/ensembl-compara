@@ -95,7 +95,7 @@ unless ($dbname and $host and $port and $gene_set_dump_file and $id_type) {
     pod2usage(1);
 }
 
-if ( $id_type !~ /gene|protein/ ) {
+if ( $id_type !~ /^(?:gene|protein)$/ ) {
     die "ERROR: '--id_type' has to be either 'gene' or 'protein'\n";
 }
 
