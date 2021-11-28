@@ -91,12 +91,8 @@ GetOptions(
 );
 
 pod2usage(1) if $help;
-unless ($dbname and $host and $port and $gene_set_dump_file and $id_type) {
+unless ($dbname and $host and $port and $gene_set_dump_file and grep( /^$id_type$/, qw(gene protein))) {
     pod2usage(1);
-}
-
-if ( $id_type !~ /^(?:gene|protein)$/ ) {
-    die "ERROR: '--id_type' has to be either 'gene' or 'protein'\n";
 }
 
 my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
