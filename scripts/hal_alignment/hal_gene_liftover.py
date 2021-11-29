@@ -38,6 +38,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 from subprocess import PIPE, Popen, run
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, Generator, Iterable, List, Mapping, Tuple, Union
@@ -177,9 +178,28 @@ def export_2bit_file(hal_file: Union[Path, str], genome_name: str,
                 f'hal2fasta terminated with {status_type} {abs(p1.returncode)}')
 
 
-def extract_liftover_regions(src_region: SimpleRegion, chain_file: Union[Path, str]
-                             ) -> Tuple[List[SimpleRegion], List[SimpleRegion]]:
-    """Extract region sequences from a 2bit file.
+def extract_liftover_regions_from_bed(bed_file: Union[Path, str]) -> List[SimpleRegion]:
+    """Extract liftover destination regions from a BED file.
+
+    Args:
+        bed_file: Input BED file.
+
+    Returns:
+        List of liftover destination regions.
+
+    """
+    dst_regions = []
+    with open(bed_file) as f:
+        for line in f:
+            chr_, start, end, _name, _score, strand, *_unused = line.rstrip().split('\t')
+            dst_regions.append(SimpleRegion(chr_, int(start), int(end), strand))
+
+    return dst_regions
+
+
+def extract_liftover_regions_from_chain(src_region: SimpleRegion, chain_file: Union[Path, str]
+                                        ) -> Tuple[List[SimpleRegion], List[SimpleRegion]]:
+    """Extract liftover regions from a chain file.
 
     Args:
         src_region: Liftover source region.
@@ -251,17 +271,71 @@ def extract_region_sequences(regions: Iterable[SimpleRegion],
     return sequences
 
 
-def liftover_region(src_region: SimpleRegion,
-                    src_genome: str,
-                    src_2bit_file: Union[Path, str],
-                    src_chr_sizes: Dict[str, int],
-                    dest_genome: str,
-                    dest_2bit_file: Union[Path, str],
-                    hal_file: Union[Path, str],
-                    flank_length: int = 0,
-                    skip_chain: bool = False,
-                    linear_gap: Union[Path, str] = 'medium') -> Dict[str, Any]:
-    """Liftover a region from one genome to another.
+def liftover_via_chain(src_region: SimpleRegion, src_genome: str, src_chr_sizes: Dict[str, int],
+                       dst_genome: str, dst_2bit_file: Union[Path, str], chain_file: Union[Path, str],
+                       flank_length: int = 0) -> Dict[str, Any]:
+    """Liftover a region using a pairwise assembly chain file.
+
+    Args:
+        src_region: Region to liftover.
+        src_genome: Source genome.
+        src_chr_sizes: Source genome chromosome name-to-length mapping.
+        dst_genome: Destination genome.
+        dst_2bit_file: 2bit file of destination genome sequences.
+        chain_file: Input pairwise assembly chain file.
+        flank_length: Length of upstream/downstream flanking regions to request.
+
+    Returns:
+        Dictionary containing liftover parameters and results.
+
+    """
+    _strand_sign_to_num = {'+': 1, '-': -1}
+
+    rec: Dict[str, Any] = {}
+    rec['params'] = {
+        'src_genome': src_genome,
+        'src_chr': src_region.chr,
+        'src_start': src_region.start + 1,
+        'src_end': src_region.end,
+        'src_strand': _strand_sign_to_num[src_region.strand],
+        'flank': flank_length,
+        'dest_genome': dst_genome
+    }
+
+    rec['results'] = []
+    with TemporaryDirectory() as tmp_dir:
+
+        src_bed_file = os.path.join(tmp_dir, 'src_regions.bed')
+        make_src_region_file([src_region], src_genome, src_chr_sizes, src_bed_file,
+                             flank_length=flank_length)
+
+        dst_bed_file = os.path.join(tmp_dir, 'dst_regions.bed')
+        run(['liftOver', '-multiple', src_bed_file, chain_file, dst_bed_file, os.devnull], check=True)
+
+        dst_regions = extract_liftover_regions_from_bed(dst_bed_file)
+
+        if dst_regions:
+            return rec
+
+        dst_sequences = extract_region_sequences(dst_regions, dst_2bit_file)
+
+        for dst_region, dst_sequence in zip(dst_regions, dst_sequences):
+            rec['results'].append({
+                'dest_chr': dst_region.chr,
+                'dest_start': dst_region.start + 1,
+                'dest_end': dst_region.end,
+                'dest_strand': _strand_sign_to_num[dst_region.strand],
+                'dest_sequence': dst_sequence
+            })
+
+    return rec
+
+
+def liftover_via_hal(src_region: SimpleRegion, src_genome: str, src_2bit_file: Union[Path, str],
+                     src_chr_sizes: Dict[str, int], dest_genome: str, dest_2bit_file: Union[Path, str],
+                     hal_file: Union[Path, str], flank_length: int = 0, skip_chain: bool = False,
+                     linear_gap: Union[Path, str] = 'medium') -> Dict[str, Any]:
+    """Liftover a region using a HAL file.
 
     Args:
         src_region: Region to liftover.
@@ -311,7 +385,7 @@ def liftover_region(src_region: SimpleRegion,
         else:
             run_axt_chain(psl_file, src_2bit_file, dest_2bit_file, chain_file, linear_gap=linear_gap)
 
-        lifted_src_regions, dest_regions = extract_liftover_regions(src_region, chain_file)
+        lifted_src_regions, dest_regions = extract_liftover_regions_from_chain(src_region, chain_file)
 
         if not dest_regions:
             return rec
@@ -355,6 +429,38 @@ def load_chr_sizes(hal_file: Union[Path, str], genome_name: str) -> Dict[str, in
         chr_sizes[chr_name] = int(chr_size)
 
     return chr_sizes
+
+
+def make_chain_file(src_genome: str, src_2bit_file: Union[Path, str], src_chr_sizes: Dict[str, int],
+                    dst_genome: str, dst_2bit_file: Union[Path, str], hal_file: Union[Path, str],
+                    chain_file: Union[Path, str], linear_gap: Union[Path, str] = 'medium') -> None:
+    """Make a pairwise assembly chain file from a HAL alignment.
+
+    Args:
+        src_genome: Source genome.
+        src_2bit_file: 2bit file of source genome sequences.
+        src_chr_sizes: Source genome chromosome name-to-length mapping.
+        dst_genome: Destination genome.
+        dst_2bit_file: 2bit file of destination genome sequences.
+        hal_file: Input HAL file.
+        chain_file: Output chain file.
+        linear_gap: axtChain linear gap parameter.
+
+    """
+    src_regions = [SimpleRegion(k, 0, x, '+') for k, x in src_chr_sizes.items()]
+
+    with TemporaryDirectory() as tmp_dir:
+
+        src_bed_file = os.path.join(tmp_dir, 'src_regions.bed')
+        make_src_region_file(src_regions, src_genome, src_chr_sizes, src_bed_file)
+
+        tmp_psl_file = os.path.join(tmp_dir, 'alignment.psl')
+        run_hal_liftover(hal_file, src_genome, src_bed_file, dst_genome, tmp_psl_file)
+
+        tmp_chain_file = os.path.join(tmp_dir, 'alignment.chain')
+        run_axt_chain(tmp_psl_file, src_2bit_file, dst_2bit_file, tmp_chain_file, linear_gap=linear_gap)
+
+        shutil.move(tmp_chain_file, chain_file)
 
 
 def make_src_region_file(regions: Iterable[SimpleRegion], genome: str, chr_sizes: Mapping[str, int],
@@ -518,13 +624,18 @@ if __name__ == '__main__':
     parser.add_argument('--flank', metavar='INT', default=0, type=int,
                         help="Requested length of upstream/downstream"
                              " flanking regions to include in query.")
-    parser.add_argument('--skip-chain', action='store_true',
-                        help="Skip chaining of liftover alignment regions.")
     parser.add_argument('--linear-gap', metavar='STR|FILE', default='medium',
                         help="axtChain linear gap parameter.")
 
     parser.add_argument('--output-format', metavar='STR', default='JSON', choices=['JSON', 'TSV'],
                         help="Format of output file.")
+
+    chain_params = parser.add_mutually_exclusive_group()
+    chain_params.add_argument('--skip-chain', action='store_true',
+                              help="Skip on-the-fly chaining of liftover alignment regions.")
+    chain_params.add_argument('--cache-chain', action='store_true',
+                              help="Use cached pairwise assembly chain file for"
+                                   " liftover, generating the chain file if necessary.")
 
     parser.add_argument('--hal-aux-dir', metavar='PATH',
                         help="Directory in which HAL-derived data files are created (e.g. genome sequence"
@@ -555,12 +666,30 @@ if __name__ == '__main__':
     else:
         source_regions = read_region_tsv_file(args.src_region_tsv)
 
+    if args.cache_chain:
+
+        if args.linear_gap not in ['medium', 'loose']:
+            raise ValueError(f"chain caching not yet supported for linear-gap value: '{args.linear_gap}'")
+
+        cached_chain_file = os.path.join(
+            hal_aux_dir,
+            f'{args.src_genome}_to_{args.dest_genome}.linearGap_{args.linear_gap}.chain'
+        )
+        if not os.path.isfile(cached_chain_file):
+            make_chain_file(args.src_genome, source_2bit_file, source_chr_sizes, args.dest_genome,
+                            destination_2bit_file, args.hal_file, cached_chain_file,
+                            linear_gap=args.linear_gap)
+
     records = []
     for source_region in source_regions:
-        record = liftover_region(source_region, args.src_genome, source_2bit_file, source_chr_sizes,
-                                 args.dest_genome, destination_2bit_file, args.hal_file,
-                                 flank_length=args.flank, skip_chain=args.skip_chain,
-                                 linear_gap=args.linear_gap)
+        if args.cache_chain:
+            record = liftover_via_chain(source_region, args.src_genome, source_chr_sizes, args.dest_genome,
+                                        destination_2bit_file, cached_chain_file, flank_length=args.flank)
+        else:
+            record = liftover_via_hal(source_region, args.src_genome, source_2bit_file, source_chr_sizes,
+                                       args.dest_genome, destination_2bit_file, args.hal_file,
+                                       flank_length=args.flank, skip_chain=args.skip_chain,
+                                       linear_gap=args.linear_gap)
         records.append(record)
 
     if args.output_format == 'JSON':
