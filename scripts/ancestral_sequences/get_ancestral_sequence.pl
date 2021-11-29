@@ -56,6 +56,7 @@ perl get_ancestral_sequence.pl
     [--mlss_id        mlss id                               ]
     [--dir            directory name for output             ]
     [--debug          run in debug mode                     ]
+    [--step           query species slice step size         ]
 
 =head1 OPTIONS
 
@@ -124,6 +125,16 @@ seen. Extra verbose. No output files created.
 
 =back
 
+=head2 OTHER PARAMETERS
+
+=over
+
+=item B<[--step step_size]>
+
+Slices of the query species top-level sequences are processed in intervals of step_size (default: 10,000,000 bases).
+
+=back
+
 =head2 Examples
 
 perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/ancestral_sequences/get_ancestral_sequence.pl --conf $ENSEMBL_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl --compara_url mysql://ensro@compara5/sf5_epo_8primates_77 --species homo_sapiens
@@ -135,6 +146,7 @@ perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/ancestral_sequences/get_ancestral
 
 use Data::Dumper;
 use Getopt::Long;
+use Pod::Usage;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::IO qw/:spurt/;
@@ -153,6 +165,8 @@ my $max_files_per_dir = 500000;
 my $genome_dumps_dir;
 my ( $default_aln_alias, $default_anc_alias ) = ( 'Multi', 'ancestral_curr' );
 my ( $help, $mlss_id, $alignment_db, $ancestral_db, $registry_file );
+my $min_step = 10_000_000;
+my $step = $min_step;
 
 GetOptions(
   "help" => \$help,
@@ -165,7 +179,9 @@ GetOptions(
   "dir=s" => \$dir,
   'genome_dumps_dir=s' => \$genome_dumps_dir,
   "debug" => \$debug,
-);
+  "step=i" => \$step,
+) or pod2usage(-help => 1);
+
 
 # Print Help and exit if help is requested
 if ($help) {
@@ -184,6 +200,8 @@ print "aln_url: $aln_url\taln_alias : $aln_alias\nanc_url : $anc_url\tanc_alias 
 
 # if only aliases are defined, a reg_conf is compulsory
 die ( "ERROR: aliases detected ('$aln_alias' & '$anc_alias'), but no registry file was given" ) if ( (defined $aln_alias || defined $anc_alias) && ! defined $registry_file );
+
+die ( "ERROR: step size $step is too small (min=$min_step)" ) unless ($step >= $min_step);
 
 # load DBs passed as URLs
 if ( defined $aln_url || defined $anc_url ) {
@@ -283,7 +301,6 @@ print_header($species_scientific_name, $species_assembly, $compara_dbc, $mlss);
 
 my $slices = $slice_adaptor->fetch_all("toplevel", undef, 0, 1);
 my %karyo_slices = map {$_->seq_region_name => 1} @{ $slice_adaptor->fetch_all_karyotype };
-my $step = 10000000;
 
 # sometimes too many files for a single directory will be created
 # partition the files into subdirs if this is the case
