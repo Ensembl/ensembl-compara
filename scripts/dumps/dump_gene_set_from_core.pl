@@ -59,7 +59,7 @@ File where the dumped sequence will be stored (in fasta format).
 =item B<-id_type> <id_type>
 
 Type of stable ID in the fasta file header.
-Either "gene" or "protein".
+Either "gene" or "protein". If not specified, "protein".
 
 =item B<-h[elp]>
 
@@ -81,6 +81,7 @@ use Pod::Usage;
 
 my ($dbname, $host, $port, $gene_set_dump_file, $help);
 my $id_type = "protein";
+
 GetOptions(
     'core-db|core_db=s' => \$dbname,
     'host=s'            => \$host,
@@ -91,7 +92,7 @@ GetOptions(
 );
 
 pod2usage(1) if $help;
-unless ($dbname and $host and $port and $gene_set_dump_file and grep( /^$id_type$/, qw(gene protein))) {
+unless ($dbname and $host and $port and $gene_set_dump_file and $id_type =~ /^(?:gene|protein)$/) {
     pod2usage(1);
 }
 
