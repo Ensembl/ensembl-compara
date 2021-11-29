@@ -79,8 +79,8 @@ use Bio::SeqIO;
 use Getopt::Long;
 use Pod::Usage;
 
-my ($dbname, $host, $port, $gene_set_dump_file, $id_type, $help);
-
+my ($dbname, $host, $port, $gene_set_dump_file, $help);
+my $id_type = "protein";
 GetOptions(
     'core-db|core_db=s' => \$dbname,
     'host=s'            => \$host,
