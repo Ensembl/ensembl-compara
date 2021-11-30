@@ -182,8 +182,16 @@ sub core_pipeline_analyses {
                 'src_db_conn' => '#ref_db#',
                 'output_file' => '#backups_dir#/compara_references.pre#release#.sql'
             },
-            -flow_into => [ 'load_ncbi_node' ],
+            -flow_into => [ 'patch_references_db' ],
             -rc_name   => '1Gb_job'
+        },
+
+        {   -logic_name => 'patch_references_db',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd' => [$self->o('patch_db_exe'), '--reg_conf', $self->o('reg_conf'), '--reg_alias', '#ref_db#', '--fixlast', '--nointeractive'],
+            },
+            -flow_into  => ['load_ncbi_node'],
         },
 
         {   -logic_name => 'load_ncbi_node',
