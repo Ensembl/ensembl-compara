@@ -957,16 +957,15 @@ sub check_for_missing_species {
 
   foreach (keys %{$align_details->{'species'}}) {
     next if $_ eq $species;
+    my $sp_url = $species_defs->production_name_mapping($_);
     if ($align_details->{'class'} !~ /pairwise/
         && ($self->param(sprintf 'species_%d_%s', $align, lc) || 'off') eq 'off') {
       push @skipped, $_ unless ($args->{ignore} && $args->{ignore} eq 'ancestral_sequences');
     }
-    elsif (defined $slice and !$aligned_species{$_} and $_ ne 'ancestral_sequences') {
-      my $sp_url = $hub->species_defs->production_name_mapping($_);
-
+    elsif (defined $slice and !$aligned_species{$sp_url} and $_ ne 'ancestral_sequences') {
       my $key = $hub->is_strain($sp_url) ? pluralise($species_info->{$sp_url}{strain_type}) : 'species';
       push @{$missing_hash->{$key}}, $species_info->{$sp_url}{common};
-      push @missing, $_;
+      push @missing, $sp_url;
     }
   }
 

@@ -45,19 +45,20 @@ sub content {
   my $align_params = $hub->get_alignment_id || '';
   my %options      = ( scores => $self->param('opt_conservation_scores'), constrained => $self->param('opt_constrained_elements') );
   my ($align)      = split '--', $align_params;
-  
+
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
   return $self->_info('No alignment specified', '<p>Select the alignment you wish to display from the box above.</p>') unless $align;
-  
+
   my $align_details = $species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'}->{$align};
 
   return $self->_error('Unknown alignment', '<p>The alignment you have selected does not exist in the current database.</p>') unless $align_details;
-  
-  my $primary_species = $species_defs->SPECIES_PRODUCTION_NAME;
 
-  if (!exists $align_details->{'species'}->{$primary_species}) {
+  my $primary_species = $hub->species;
+  my $prodname = $species_defs->SPECIES_PRODUCTION_NAME;
+
+  if (!exists $align_details->{'species'}->{$prodname}) {
     return $self->_error('Unknown alignment', sprintf(
-      '<p>%s is not part of the %s alignment in the database.</p>', 
+        '<p>%s is not part of the %s alignment in the database.</p>', 
       $species_defs->species_label($primary_species),
       encode_entities($align_details->{'name'})
     ));
@@ -126,7 +127,7 @@ sub content {
 
   my ($alert_box, $error) = $self->check_for_align_problems({
                                 'align'   => $align, 
-                                'species' => $primary_species, 
+                                'species' => $prodname, 
                                 'cdb'     => $self->param('cdb') || 'compara',
                                 });
 
