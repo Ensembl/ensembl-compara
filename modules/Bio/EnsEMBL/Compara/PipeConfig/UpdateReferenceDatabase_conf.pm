@@ -23,6 +23,10 @@ Bio::EnsEMBL::Compara::PipeConfig::UpdateReferenceDatabase_conf
 
     PipeConfig to update the reference database.
 
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::UpdateReferenceDatabase_conf -host mysql-ens-compara-prod-X -port XXXX
+
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::UpdateReferenceDatabase_conf;
