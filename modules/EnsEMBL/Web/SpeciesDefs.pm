@@ -985,7 +985,34 @@ sub _parse {
           }
         }
       }
+      else {
+        my $binomial = $tree->{$url}{SPECIES_BINOMIAL};
+        if ($binomial) {
+          $binomial =~ s/ /_/g;
+        }
+        else {
+          ## Make a guess based on URL. Note that some fungi have weird URLs bc 
+          ## their taxonomy is uncertain, so this regex doesn't try to include them
+          ## (none of them have images in any case)
+          $url =~ /^([A-Za-z]+_[a-z]+)/;
+          $binomial = $1;
+        }
+        my $species_path = $binomial ? sprintf '%s/%s.png', $image_dir, $binomial : '';
+        if (-e $image_path) {
+          $tree->{$url}{'SPECIES_IMAGE'} = $url;
+          $no_image = 0;
+        }
+        elsif ($species_path && -e $species_path) {
+          $tree->{$url}{'SPECIES_IMAGE'} = $binomial;
+          $no_image = 0;
+        }
+        else {
+          $tree->{$url}{'SPECIES_IMAGE'} = 'default';
+          $no_image = 0;
+        }
+      }
     }
+    ## If still no image (rapid release), set one based on taxonomy
     if ($no_image) {
       my $clade = $tree->{$url}{'SPECIES_GROUP'};
       $tree->{$url}{'SPECIES_IMAGE'} = $labels->{$clade};
