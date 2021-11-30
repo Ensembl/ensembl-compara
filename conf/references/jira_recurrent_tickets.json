@@ -18,7 +18,7 @@
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Update+Compara+References+for+Rapid+Release\n*GitHub*: [<Division>/PrepareMasterDatabaseForRelease_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/PrepareMasterDatabaseForRelease_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::UpdateReferenceDatabase_conf --host mysql-ens-compara-prod-X -port XXXX -email ensembl-production@ebi.ac.uk{code}",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Update+Compara+References+for+Rapid+Release\n*GitHub*: [<Division>/PrepareMasterDatabaseForRelease_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/PrepareMasterDatabaseForRelease_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::UpdateReferenceDatabase_conf --host mysql-ens-compara-prod-X -port XXXX -email=ensembl-production@ebi.ac.uk{code}",
             "summary": "Update the references database"
          }
       ],
