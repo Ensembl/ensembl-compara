@@ -30,6 +30,8 @@ use EnsEMBL::Web::File::Utils::URL qw(read_file);
 use JSON qw(from_json);
 use URI::Escape;
 
+our $CHROMOSOME_COUNT = 0;
+
 sub munge {
   my ($self, $func) = @_;
   
@@ -160,6 +162,7 @@ sub _summarise_generic {
 
       foreach my $row ( @$t_aref ) {
         push @{$hash->{$row->[0]}{'region.toplevel'}}, $row->[1];
+        $CHROMOSOME_COUNT++;
       }
     }
 
@@ -1845,36 +1848,8 @@ sub _munge_meta {
       #need to explicitly define as empty array by default otherwise SpeciesDefs looks for a value at collection level
       $self->tree($prod_name)->{'ENSEMBL_CHROMOSOMES'} = [];
 
-      if ($meta_hash->{'region.toplevel'}) {
-        ## Check if the toplevel contains non-chromosomal regions
-        #it's sufficient to check just the first elem, assuming the list doesn't contain a mixture of plasmid/chromosome and other than plasmid/chromosome regions:
-        my $sname  = $meta_hash->{'region.toplevel'}->[0];
-        my $t_aref = $dbh->selectall_arrayref(
-          "select       
-            coord_system.name, 
-            seq_region.name
-          from 
-            meta, 
-            coord_system, 
-            seq_region, 
-            seq_region_attrib
-          where 
-            coord_system.coord_system_id = seq_region.coord_system_id
-            and seq_region_attrib.seq_region_id = seq_region.seq_region_id
-            and seq_region_attrib.attrib_type_id =  (SELECT attrib_type_id FROM attrib_type where name = 'Top Level') 
-            and meta.species_id=coord_system.species_id 
-            and meta.meta_key = 'species.production_name'
-            and meta.meta_value = '" . $prod_name . "'
-            and seq_region.name = '" . $sname . "'
-            and coord_system.name not in ('plasmid', 'chromosome')"
-          ) || [];
-
-        if (@$t_aref) {
-          @{$self->tree($prod_name)->{'ENSEMBL_CHROMOSOMES'}} = ();
-        }
-        else {
+      if ($meta_hash->{'region.toplevel'} && $CHROMOSOME_COUNT) {
           @{$self->tree($prod_name)->{'ENSEMBL_CHROMOSOMES'}} = @{$meta_hash->{'region.toplevel'}};
-        }
       }
     }
     else {
