@@ -1829,14 +1829,50 @@ sub _munge_meta {
     ## SAMPLE_DATA is quite complex, as we have to merge the db entries and ini file
     $self->_munge_sample_data($prod_name, $meta_hash);
 
-    ## Extra stuff needed by collection databases
+    ## Sort out chromosome lists, species lists, etc
     if ($collection) {
       (my $group_name = (ucfirst $self->{'_species'})) =~ s/_collection//;
       $self->tree($prod_name)->{'SPECIES_DATASET'} = $group_name;
-      push @{$self->tree->{'DB_SPECIES'}}, $species;
+      push @{$self->tree->{'DB_SPECIES'}||[]}, $species;
+
+      #need to explicitly define as empty array by default otherwise SpeciesDefs looks for a value at collection level
+      $self->tree($prod_name)->{'ENSEMBL_CHROMOSOMES'} = [];
+
+      if ($meta_hash->{'region.toplevel'}) {
+        ## Check if the toplevel contains non-chromosomal regions
+        #it's sufficient to check just the first elem, assuming the list doesn't contain a mixture of plasmid/chromosome and other than plasmid/chromosome regions:
+        my $sname  = $meta_hash->{'region.toplevel'}->[0];
+        my $t_aref = $dbh->selectall_arrayref(
+          "select       
+            coord_system.name, 
+            seq_region.name
+          from 
+            meta, 
+            coord_system, 
+            seq_region, 
+            seq_region_attrib
+          where 
+            coord_system.coord_system_id = seq_region.coord_system_id
+            and seq_region_attrib.seq_region_id = seq_region.seq_region_id
+            and seq_region_attrib.attrib_type_id =  (SELECT attrib_type_id FROM attrib_type where name = 'Top Level') 
+            and meta.species_id=coord_system.species_id 
+            and meta.meta_key = 'species.production_name'
+            and meta.meta_value = '" . $prod_name . "'
+            and seq_region.name = '" . $sname . "'
+            and coord_system.name not in ('plasmid', 'chromosome')"
+          ) || [];
+
+        if (@$t_aref) {
+          @{$self->tree($prod_name)->{'ENSEMBL_CHROMOSOMES'}} = ();
+        }
+        else {
+          @{$self->tree($prod_name)->{'ENSEMBL_CHROMOSOMES'}} = @{$meta_hash->{'region.toplevel'}};
+        }
+      }
+    }
+    else {
       $self->tree($prod_name)->{'ENSEMBL_CHROMOSOMES'} = $meta_hash->{'regions.toplevel'} ? $meta_hash->{'regions.toplevel'} : [];
     }
-    
   }
 }
 
