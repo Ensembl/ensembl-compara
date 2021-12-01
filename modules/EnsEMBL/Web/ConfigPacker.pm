@@ -2003,4 +2003,10 @@ sub _munge_sample_data {
   $self->tree($prod_name)->{'SAMPLE_DATA'} = $sample_hash if scalar keys %$sample_hash;
 }
 
+sub is_collection {
+  my ($self, $db_name) = @_;
+  my $database_name = $self->tree->{'databases'}->{'DATABASE_CORE'}{'NAME'};
+  return $database_name =~ /_collection/;
+}
+
 1;
