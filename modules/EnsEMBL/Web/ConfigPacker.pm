@@ -117,6 +117,13 @@ sub modify_databases_multi   {}
 sub modify_config_tree       {}
 sub modify_config_tree_multi {}
 
+sub is_collection {
+  my ($self, $db_name) = @_;
+  $db_name ||= 'DATABASE_CORE';
+  my $database_name = $self->tree->{'databases'}->{$db_name}{'NAME'};
+  return $database_name =~ /_collection/;
+}
+
 sub _summarise_generic {
   my( $self, $db_name, $dbh ) = @_;
   my $t_aref = $dbh->selectall_arrayref( 'show table status' );
@@ -1928,13 +1935,6 @@ sub _munge_species_url_map {
   $multi_tree->{'ENSEMBL_SPECIES_URL_MAP'} = \%species_map;
 }
 
-sub is_collection {
-  my ($self, $db_name) = @_;
-  $db_name ||= 'DATABASE_CORE';
-  my $database_name = $self->tree->{'databases'}->{$db_name}{'NAME'};
-  return $database_name =~ /_collection/;
-}
-
 sub _munge_sample_data {
   my ($self, $prod_name, $meta_hash) = @_;
 
@@ -2020,12 +2020,6 @@ sub _munge_sample_data {
   }
 
   $self->tree($prod_name)->{'SAMPLE_DATA'} = $sample_hash if scalar keys %$sample_hash;
-}
-
-sub is_collection {
-  my ($self, $db_name) = @_;
-  my $database_name = $self->tree->{'databases'}->{'DATABASE_CORE'}{'NAME'};
-  return $database_name =~ /_collection/;
 }
 
 1;
