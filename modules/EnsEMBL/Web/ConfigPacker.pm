@@ -1821,7 +1821,153 @@ sub _munge_meta {
 
       if ($meta_hash->{'region.toplevel'}) {
         ## Check if the toplevel contains non-chromosomal regions
-  
+        #it's sufficient to check just the first elem, assuming the list doesn't contain a mixture of plasmid/chromosome and other than plasmid/chromosome regions:
+        my $sname  = $meta_hash->{'region.toplevel'}->[0];
+        my $t_aref = $dbh->selectall_arrayref(
+          "select       
+            coord_system.name, 
+            seq_region.name
+          from 
+            meta, 
+            coord_system, 
+            seq_region, 
+            seq_region_attrib
+          where 
+            coord_system.coord_system_id = seq_region.coord_system_id
+            and seq_region_attrib.seq_region_id = seq_region.seq_region_id
+            and seq_region_attrib.attrib_type_id =  (SELECT attrib_type_id FROM attrib_type where name = 'Top Level') 
+            and meta.species_id=coord_system.species_id 
+            and meta.meta_key = 'species.production_name'
+            and meta.meta_value = '" . $prod_name . "'
+            and seq_region.name = '" . $sname . "'
+            and coord_system.name not in ('plasmid', 'chromosome')"
+          ) || [];
+
+        if (@$t_aref) {
+          @{$self->tree($prod_name)->{'ENSEMBL_CHROMOSOMES'}} = ();
+        }
+        else {
+          @{$self->tree($prod_name)->{'ENSEMBL_CHROMOSOMES'}} = @{$meta_hash->{'region.toplevel'}};
+        }
+      }
+    }
+    else {
+      $self->tree($prod_name)->{'ENSEMBL_CHROMOSOMES'} = $meta_hash->{'regions.toplevel'} ? $meta_hash->{'regions.toplevel'} : [];
+    }
+  }
+}
+
+sub _munge_variation {
+  my $self = shift;
+  my $dbh     = $self->db_connect('DATABASE_VARIATION');
+  return unless $dbh;
+  return unless $self->db_details('DATABASE_VARIATION');
+  my $total = 0;
+  if ( $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DISPLAY_STRAINS'} ) {
+    $total +=  @{ $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DISPLAY_STRAINS'} };
+  }
+  if ( $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_STRAINS'} ) {
+    $total +=  @{ $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_STRAINS'} }; 
+  }
+  $self->tree->{'databases'}{'DATABASE_VARIATION'}{'#STRAINS'} = $total;
+    $self->tree->{'databases'}{'DATABASE_VARIATION'}{'DEFAULT_LD_POP'}   = $self->_meta_info('DATABASE_VARIATION','pairwise_ld.default_population')->[0] if $self->_meta_info('DATABASE_VARIATION','pairwise_ld.default_population');
+}
+
+sub _munge_website {
+  my $self = shift;
+
+  ## Release info for ID history etc
+  $self->tree->{'ASSEMBLIES'}       = $self->db_multi_tree->{'ASSEMBLIES'}{$self->{_species}};
+}
+
+sub _munge_website_multi {
+  my $self = shift;
+
+  $self->tree->{'ENSEMBL_HELP'} = $self->db_tree->{'ENSEMBL_HELP'};
+  $self->tree->{'ENSEMBL_GLOSSARY'} = $self->db_tree->{'ENSEMBL_GLOSSARY'};
+}
+
+sub _munge_species_url_map {
+  ## Used by apache handler to redirect requests to correct URLs for species
+  my $self        = shift;
+  my $multi_tree  = $self->full_tree->{'MULTI'};
+
+  return if $multi_tree->{'ENSEMBL_SPECIES_URL_MAP'};
+
+  my $aliases = $multi_tree->{'SPECIES_ALIASES'} || {};
+
+  my %species_map = (
+    %$aliases,
+    common        => 'common',
+    multi         => 'Multi',
+    perl          => $SiteDefs::ENSEMBL_PRIMARY_SPECIES,
+    map { lc($_)  => $SiteDefs::ENSEMBL_SPECIES_ALIASES->{$_} } keys %$SiteDefs::ENSEMBL_SPECIES_ALIASES
+  );
+
+  $species_map{lc $_} = $_ for values %species_map; # lower case species urls to the correct name
+
+  $multi_tree->{'ENSEMBL_SPECIES_URL_MAP'} = \%species_map;
+}
+
+sub is_collection {
+  my ($self, $db_name) = @_;
+  $db_name ||= 'DATABASE_CORE';
+  my $database_name = $self->tree->{'databases'}->{$db_name}{'NAME'};
+  return $database_name =~ /_collection/;
+}
+
+sub _munge_sample_data {
+  my ($self, $prod_name, $meta_hash) = @_;
+
+  ## check if there are sample search entries from the ini file
+  my $ini_hash = $self->tree->{'SAMPLE_DATA'};
+
+  # check if there are sample search entries defined in meta table
+  my @mks = grep { /^sample\./ } keys %{$meta_hash || {}}; 
+  my $mk_hash = {};
+  foreach my $k (@mks) {
+    ## Convert key to format used in webcode
+    (my $k1 = $k) =~ s/^sample\.//;
+    $mk_hash->{uc $k1} = $meta_hash->{$k}->[0];
+  }
+ 
+  ## add in any missing values where text omitted because same as param
+  while (my ($key, $value) = each (%$mk_hash)) {
+    next unless $key =~ /PARAM/;
+    (my $type = $key) =~ s/_PARAM//;
+    unless ($mk_hash->{$type.'_TEXT'}) {
+      $mk_hash->{$type.'_TEXT'} = $value;
+    }
+  }
+
+  ## Merge param keys into single set
+  my (%seen, @param_keys, @other_keys);
+  foreach (keys %$mk_hash, keys %{$ini_hash || {}}) {
+    next if $seen{$_};
+    if ($_ =~ /PARAM/) {
+      push @param_keys, $_;
+    }
+    else {
+      push @other_keys, $_;
+    }
+    $seen{$_} = 1;
+  }
+
+  ## Merge the two sample sets into one hash, giving priority to ini file
+  my $sample_hash = {};
+  foreach my $key (@param_keys) {
+    (my $text_key = $key) =~ s/PARAM/TEXT/;
+
+    if ($ini_hash->{$key}) {
+      $sample_hash->{$key} = $ini_hash->{$key};
+      ## Now set accompanying text
+      if ($ini_hash->{$text_key}) {
+        $sample_hash->{$text_key} = $ini_hash->{$text_key};
+      }
+      else {
+        $sample_hash->{$text_key} = $ini_hash->{$key};
+      }
+    }
     elsif ($mk_hash->{$key}) {
       $sample_hash->{$key} = $mk_hash->{$key};
       ## Now set accompanying text
