@@ -106,7 +106,7 @@ sub content {
         $skipped{$species}        += keys %{$homology_type->{$species}};
       }
 
-      delete $species_to_show{$species};
+      delete $species_to_show{$prod_name};
     }
   }
 
