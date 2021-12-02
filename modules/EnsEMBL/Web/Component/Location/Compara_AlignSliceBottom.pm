@@ -52,9 +52,9 @@ sub content {
   my $align_details = $species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'}->{$align};
 
   return $self->_error('Unknown alignment', '<p>The alignment you have selected does not exist in the current database.</p>') unless $align_details;
-  
+
   my $primary_species = $hub->species;
-  my $prodname        = $species_defs->SPECIES_PRODUCTION_NAME;
+  my $prodname = $species_defs->SPECIES_PRODUCTION_NAME;
 
   if (!exists $align_details->{'species'}->{$prodname}) {
     return $self->_error('Unknown alignment', sprintf(

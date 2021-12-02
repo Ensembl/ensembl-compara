@@ -30,8 +30,6 @@ use EnsEMBL::Web::File::Utils::URL qw(read_file);
 use JSON qw(from_json);
 use URI::Escape;
 
-our $CHROMOSOME_COUNT = 0;
-
 sub munge {
   my ($self, $func) = @_;
   
@@ -119,13 +117,6 @@ sub modify_databases_multi   {}
 sub modify_config_tree       {}
 sub modify_config_tree_multi {}
 
-sub is_collection {
-  my ($self, $db_name) = @_;
-  $db_name ||= 'DATABASE_CORE';
-  my $database_name = $self->tree->{'databases'}->{$db_name}{'NAME'};
-  return $database_name =~ /_collection/;
-}
-
 sub _summarise_generic {
   my( $self, $db_name, $dbh ) = @_;
   my $t_aref = $dbh->selectall_arrayref( 'show table status' );
@@ -162,7 +153,6 @@ sub _summarise_generic {
 
       foreach my $row ( @$t_aref ) {
         push @{$hash->{$row->[0]}{'region.toplevel'}}, $row->[1];
-        $CHROMOSOME_COUNT++;
       }
     }
 
@@ -1839,22 +1829,14 @@ sub _munge_meta {
     ## SAMPLE_DATA is quite complex, as we have to merge the db entries and ini file
     $self->_munge_sample_data($prod_name, $meta_hash);
 
-    ## Sort out chromosome lists, species lists, etc
+    ## Extra stuff needed by collection databases
     if ($collection) {
       (my $group_name = (ucfirst $self->{'_species'})) =~ s/_collection//;
       $self->tree($prod_name)->{'SPECIES_DATASET'} = $group_name;
-      push @{$self->tree->{'DB_SPECIES'}||[]}, $species;
-
-      #need to explicitly define as empty array by default otherwise SpeciesDefs looks for a value at collection level
-      $self->tree($prod_name)->{'ENSEMBL_CHROMOSOMES'} = [];
-
-      if ($meta_hash->{'region.toplevel'} && $CHROMOSOME_COUNT) {
-          @{$self->tree($prod_name)->{'ENSEMBL_CHROMOSOMES'}} = @{$meta_hash->{'region.toplevel'}};
-      }
-    }
-    else {
+      push @{$self->tree->{'DB_SPECIES'}}, $species;
       $self->tree($prod_name)->{'ENSEMBL_CHROMOSOMES'} = $meta_hash->{'regions.toplevel'} ? $meta_hash->{'regions.toplevel'} : [];
     }
+    
   }
 }
 
@@ -1908,6 +1890,13 @@ sub _munge_species_url_map {
   $species_map{lc $_} = $_ for values %species_map; # lower case species urls to the correct name
 
   $multi_tree->{'ENSEMBL_SPECIES_URL_MAP'} = \%species_map;
+}
+
+sub is_collection {
+  my ($self, $db_name) = @_;
+  $db_name ||= 'DATABASE_CORE';
+  my $database_name = $self->tree->{'databases'}->{$db_name}{'NAME'};
+  return $database_name =~ /_collection/;
 }
 
 sub _munge_sample_data {
