@@ -100,7 +100,7 @@ sub content {
     
     $html = $table->render;
   } else {
-    $html = '<p>Sorry, there are no genes in this region. Use the links in the navigation box to move to the nearest ones.</p>';
+    $html = $self->info_panel("No data", "<p>Sorry, there are no genes in this region. Use the links in the navigation box to move to the nearest ones.</p>");
   }
   
   return $html;
