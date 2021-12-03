@@ -1541,11 +1541,10 @@ sub species_label {
   ### This function will return the display name of all known (by Compara) species.
   ### Some species in genetree can be from other EG units, and some can be from external sources
   ### Arguments:
-  ###     key             String: species production name or URL
+  ###     url             String: species  URL
   ###     no_formating    Boolean: omit italics from scientific name  
-  my ($self, $key, $no_formatting) = @_;
+  my ($self, $url, $no_formatting) = @_;
 
-  my $url = $self->production_name_mapping($key);
   my $display = $self->get_config($url, 'SPECIES_DISPLAY_NAME');
   my $label = '';
 

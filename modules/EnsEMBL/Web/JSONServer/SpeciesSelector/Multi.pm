@@ -40,18 +40,20 @@ sub json_fetch_species {
   my $species_defs    = $hub->species_defs;
   my $params          = $hub->multi_params; 
   my $alignments      = $species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'} || {};
-  my $primary_species = $species_defs->SPECIES_PRODUCTION_NAME;
+  my $primary_species = $hub->species;
+  my $prodname        = $species_defs->SPECIES_PRODUCTION_NAME;
   my $species_label   = $species_defs->species_label($primary_species, 1);
   my %shown           = map { $params->{"s$_"} => $_ } grep s/^s(\d+)$/$1/, keys %$params; # get species (and parameters) already shown on the page
   my $object          = $self->object;
   my $chr             = $object->seq_region_name;
   my $start           = $object->seq_region_start;
   my $end             = $object->seq_region_end;
-  my $intra_species   = ($hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'INTRA_SPECIES_ALIGNMENTS'} || {})->{'REGION_SUMMARY'}{$primary_species};
+  my $intra_species   = ($hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'INTRA_SPECIES_ALIGNMENTS'} || {})->{'REGION_SUMMARY'}{$prodname};
   my $chromosomes     = $species_defs->ENSEMBL_CHROMOSOMES;
   my $species_info    = $hub->get_species_info;
   my (%available_species, %included_regions);
 
+  my $url_lookup = $species_defs->production_name_lookup;
   my $available_species_map = {};
   my $extras = {};
   my $uniq_assembly = {};
@@ -61,13 +63,14 @@ sub json_fetch_species {
     my $type = lc $alignment->{'type'};
     my ($s)  = grep /--$alignment->{'target_name'}$/, keys %{$alignment->{'species'}};
     my ($sp, $target) = split '--', $s;
+    my $url = $url_lookup->{$sp};
 
     # Check for alignment availability in the region
-    next if !$hub->get_adaptor('get_GenomicAlignBlockAdaptor', 'compara')->_has_alignment_for_region($alignment->{id}, $primary_species, $chr, $start, $end, $sp, $target);
+    next if !$hub->get_adaptor('get_GenomicAlignBlockAdaptor', 'compara')->_has_alignment_for_region($alignment->{id}, $prodname, $chr, $start, $end, $sp, $target);
 
     s/_/ /g for $type, $target;
 
-    $available_species{$s} = $species_defs->species_label($sp, 1) . (grep($target eq $_, @$chromosomes) ? ' chromosome' : '') . " $target - $type";
+    $available_species{$s} = $species_defs->species_label($url, 1) . (grep($target eq $_, @$chromosomes) ? ' chromosome' : '') . " $target - $type";
     my $tmp = {};
     $tmp->{scientific_name} = $s;
     $tmp->{key} = $s;
@@ -91,11 +94,11 @@ sub json_fetch_species {
 
   foreach (grep !$available_species{$_}, keys %shown) {
     my ($sp, $target) = split '--';
-    $included_regions{$target} = $intra_species->{$target} if $sp eq $primary_species;
+    $included_regions{$target} = $intra_species->{$target} if $sp eq $prodname;
   }
 
   foreach my $target (keys %included_regions) {
-    my $s     = "$primary_species--$target";
+    my $s     = "$prodname--$target";
     my $label = $species_label . (grep($target eq $_, @$chromosomes) ? ' chromosome' : '');
     
     foreach (grep $_->{'target_name'} eq $chr, @{$included_regions{$target}}) {
@@ -105,10 +108,10 @@ sub json_fetch_species {
     }
   }
 
-  foreach my $alignment (grep { $_->{'species'}{$primary_species} && $_->{'class'} =~ /pairwise/ } values %$alignments) {
+  foreach my $alignment (grep { $_->{'species'}{$prodname} && $_->{'class'} =~ /pairwise/ } values %$alignments) {
     foreach (keys %{$alignment->{'species'}}) {
-      $_ = $hub->species_defs->production_name_mapping($_);
-      if ($_ ne $primary_species) {
+      $_ = $url_lookup->{$_};
+      if ($_ ne $prodname) {
         my $type = lc $alignment->{'type'};
            $type =~ s/_net//;
            $type =~ s/_/ /g;
@@ -121,9 +124,9 @@ sub json_fetch_species {
     }
   }
 
-  if ($shown{$primary_species}) {
-    my ($chr) = split ':', $params->{"r$shown{$primary_species}"};
-    $available_species{$primary_species} = "$species_label - chromosome $chr";
+  if ($shown{$prodname}) {
+    my ($chr) = split ':', $params->{"r$shown{$prodname}"};
+    $available_species{$prodname} = "$species_label - chromosome $chr";
   }
 
   # create a map of all available species including the haplotypes etc
