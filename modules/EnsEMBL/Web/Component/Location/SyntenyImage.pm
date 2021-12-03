@@ -66,40 +66,44 @@ sub content {
       }
     }
   }
+
+  my $image_html;
+  if ($chr_1{$chr} && $other_chr) {
+
+    my ($localgenes, $offset) = $object->get_synteny_local_genes;
+    my $loc = (@$localgenes ? $localgenes->[0]->start + $object->seq_region_start : 1); # Jump loc to the location of the genes
   
-  unless ($chr_1{$chr} && $other_chr) {
-    $hub->problem('fatal', 'Unable to display', 'Synteny view only displays synteny between real chromosomes - not fragments');
-    return undef;
+    my $image_config = $hub->get_imageconfig('Vsynteny');
+  
+    $image_config->{'other_species_installed'} = $synteny{$other};
+    $image_config->container_width($chr_length);
+
+    my $image = $self->new_vimage({
+      chr           => $chr,
+      ka_main       => $ka,
+      sa_main       => $hub->get_adaptor('get_SliceAdaptor'),
+      ka_secondary  => $ka2,
+      sa_secondary  => $hub->get_adaptor('get_SliceAdaptor', 'core', $other),
+      synteny       => $raw_data,
+      other_species => $other,
+      line          => $loc,
+      format        => $hub->param('export')
+    }, $image_config);
+
+    $image->centred    = 1;  
+    $image->imagemap   = 'yes';
+    $image->image_type = 'syntenyview';
+    $image->image_name = "$species-$chr-$other";
+    $image->set_button('drag', 'title' => 'Click or drag to change region');
+
+    $image->{'export_params'} = [['otherspecies', $other]];
+    return if $self->_export_image($image,'no_text no_pdf');
+
+    $image_html = $image->render;
   }
-  
-  my ($localgenes, $offset) = $object->get_synteny_local_genes;
-  my $loc = (@$localgenes ? $localgenes->[0]->start + $object->seq_region_start : 1); # Jump loc to the location of the genes
-  
-  my $image_config = $hub->get_imageconfig('Vsynteny');
-  
-  $image_config->{'other_species_installed'} = $synteny{$other};
-  $image_config->container_width($chr_length);
-
-  my $image = $self->new_vimage({
-    chr           => $chr,
-    ka_main       => $ka,
-    sa_main       => $hub->get_adaptor('get_SliceAdaptor'),
-    ka_secondary  => $ka2,
-    sa_secondary  => $hub->get_adaptor('get_SliceAdaptor', 'core', $other),
-    synteny       => $raw_data,
-    other_species => $other,
-    line          => $loc,
-    format        => $hub->param('export')
-  }, $image_config);
-
-  $image->centred    = 1;  
-  $image->imagemap   = 'yes';
-  $image->image_type = 'syntenyview';
-  $image->image_name = "$species-$chr-$other";
-  $image->set_button('drag', 'title' => 'Click or drag to change region');
-
-  $image->{'export_params'} = [['otherspecies', $other]];
-
+  else {
+    $image_html = $self->info_panel("Unassembled chromosomes", "<p>No image can be drawn, because the syntenous species has no assembled chromosomes.</p>");
+  }
   my $chr_form = $self->chromosome_form('Vsynteny');
 
   $chr_form->add_element(
@@ -116,7 +120,6 @@ sub content {
                     $hub->species_defs->get_config($hub->otherspecies, 'SPECIES_DISPLAY_NAME'),
                 );
  
-  return if $self->_export_image($image,'no_text no_pdf');
   my $html = sprintf('
   <div class="synteny_image">
     <h2>%s</h2>
@@ -127,7 +130,7 @@ sub content {
     %s
     %s
   </div>
-', $caption, $image->render, $self->species_form->render, $chr_form->render);
+', $caption, $image_html, $self->species_form->render, $chr_form->render);
 
   return $html;
 }
@@ -154,7 +157,7 @@ sub species_form {
 
   $form->add_hidden({ name => $_, value => $url->[1]->{$_} }) for keys %{$url->[1]};
   $form->add_field({
-    'label'       => 'Change Species',
+    'label'       => 'Change species',
     'inline'      => 1,
     'elements'    => [{
       'type'        => 'dropdown',
