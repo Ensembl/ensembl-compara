@@ -1573,11 +1573,11 @@ sub species_label {
       ## Pan-compara species - get label from metadata db
       my $info = $self->get_config('MULTI', 'PAN_COMPARA_LOOKUP');
       if ($info) {
-        if ($info->{$key}) {
-          $label = $info->{$key}{'display_name'}
+        if ($info->{$url}) {
+          $label = $info->{$url}{'display_name'}
         }
         else {
-          $label = $info->{lc $key}{'display_name'}
+          $label = $info->{lc $url}{'display_name'}
         }
       }
     }
