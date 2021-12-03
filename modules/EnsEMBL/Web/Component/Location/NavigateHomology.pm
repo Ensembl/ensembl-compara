@@ -50,10 +50,10 @@ sub content {
   my $seq_region_end = $hub->param('r') =~ /:/ ? $object->seq_region_end : $max_len;
   my $chr            = $object->seq_region_name; 
 
-  ## Mainly a hack for stickleback, which doesn't have normal chromosomes
+  ## Check we have a chromosome-like assembly 
   my $coordAdaptor   = $hub->get_adaptor('get_CoordSystemAdaptor');
   my %coord_system   = map {$_->name => $_->name} @{$coordAdaptor->fetch_all};
-  my $cs_type        = $coord_system{'chromosome'} || $coord_system{'group'};
+  my $cs_type        = $coord_system{'chromosome'} || $coord_system{'group'} || $coord_system{'primary_assembly'};;
   return unless $cs_type;
 
   my $sliceAdaptor   = $hub->get_adaptor('get_SliceAdaptor');
