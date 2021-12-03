@@ -1834,7 +1834,7 @@ sub _munge_meta {
       (my $group_name = (ucfirst $self->{'_species'})) =~ s/_collection//;
       $self->tree($prod_name)->{'SPECIES_DATASET'} = $group_name;
       push @{$self->tree->{'DB_SPECIES'}}, $species;
-      $self->tree($prod_name)->{'ENSEMBL_CHROMOSOMES'} = $meta_hash->{'regions.toplevel'} ? $meta_hash->{'regions.toplevel'} : [];
+      $self->tree($prod_name)->{'ENSEMBL_CHROMOSOMES'} = $meta_hash->{'region.toplevel'} ? $meta_hash->{'region.toplevel'} : [];
     }
     
   }
