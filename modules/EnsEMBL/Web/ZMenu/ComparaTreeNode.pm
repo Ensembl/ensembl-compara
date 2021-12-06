@@ -153,7 +153,7 @@ sub content {
   
   }
 
-  my $lookup = $hub->species_defs->production_name_lookup;
+  my $lookup = $hub->species_defs->prodname_to_url_lookup;
   if ($is_leaf and $is_supertree) {
 
       # Gene count

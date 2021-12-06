@@ -528,7 +528,7 @@ sub _get_target_slice_table {
   } elsif ($class =~ /pairwise/) {
     #Find the non-reference species for pairwise alignments
     #get the non_ref name from the first block
-    $other_species = $hub->species_defs->production_name_mapping($gabs->[0]->get_all_non_reference_genomic_aligns->[0]->genome_db->name);
+    $other_species = $hub->species_defs->prodname_to_url($gabs->[0]->get_all_non_reference_genomic_aligns->[0]->genome_db->name);
   }
 
   my $merged_blocks = $self->object->build_features_into_sorted_groups($groups);
@@ -547,7 +547,7 @@ sub _get_target_slice_table {
   my $gab_num = 0; #block counter
 
   #Add blocks to the table
-  my $lookup = $hub->species_defs->production_name_lookup;
+  my $lookup = $hub->species_defs->prodname_to_url_lookup;
   foreach my $gab_group (@$merged_blocks) {
     next unless $gab_group; 
     my $min_start;

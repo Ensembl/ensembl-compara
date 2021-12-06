@@ -114,7 +114,7 @@ sub species_list {
     my $primary      = $referer->{'ENSEMBL_SPECIES'};
     my @species      = scalar keys %$alignment ? () : ([ $primary, $species_defs->SPECIES_DISPLAY_NAME($primary) ]);
 
-    my $lookup = $species_defs->production_name_lookup;
+    my $lookup = $species_defs->prodname_to_url_lookup;
     my @species_list = map { $_ = $lookup->{$_} || $_ } keys %$alignment;
 
     foreach (sort { $a->[1] cmp $b->[1] } map [ $_, $species_defs->SPECIES_DISPLAY_NAME($_) ], @species_list) {

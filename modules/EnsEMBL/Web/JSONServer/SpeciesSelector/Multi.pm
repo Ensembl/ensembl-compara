@@ -53,7 +53,7 @@ sub json_fetch_species {
   my $species_info    = $hub->get_species_info;
   my (%available_species, %included_regions);
 
-  my $url_lookup = $species_defs->production_name_lookup;
+  my $url_lookup = $species_defs->prodname_to_url_lookup;
   my $available_species_map = {};
   my $extras = {};
   my $uniq_assembly = {};

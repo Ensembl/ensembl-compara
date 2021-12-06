@@ -79,7 +79,7 @@ sub content {
   my (@images, $html);
   
   my ($caption_height,$caption_img_offset) = (0,-24);
-  my $lookup = $species_defs->production_name_lookup;
+  my $lookup = $species_defs->prodname_to_url_lookup;
   foreach (@$slices) {
     my $species      = $_->{'name'} eq 'Ancestral_sequences' ? 'Multi' : $lookup->{$_->{'name'}}; # Cheating: set species to Multi to stop errors due to invalid species.
     my $image_config = $hub->get_imageconfig({'type' => 'alignsliceviewbottom', 'cache_code' => "alignsliceviewbottom_$i", 'species' => $species});

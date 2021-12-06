@@ -1587,8 +1587,8 @@ sub species_label {
   return $label;
 }
 
-sub production_name_lookup {
-## Maps all species to their production name
+sub prodnames_to_urls_lookup {
+## Maps all species' production names to their URLs
   my $self = shift;
   my $names = {};
   
@@ -1598,11 +1598,12 @@ sub production_name_lookup {
   return $names;
 }
 
-sub production_name_mapping {
+sub prodname_to_url {
+### Given a production name, work out the species URL
 ### As the name said, the function maps the production name with the species URL, 
-### @param key - species production name (or URL in the case of some compara code) 
+### @param key - species production name
 ### Return string = the corresponding species.url name which is the name web uses for URL and other code
-### Fall back to production name if not found - mostly for pan-compara
+### Falls back to production name if not found, mostly for pan-compara - the production name _should_be an alias anyway, but this method ensures we get the "correct" value where possible
   my ($self, $production_name) = @_;
   my $mapping_name = $production_name;
   

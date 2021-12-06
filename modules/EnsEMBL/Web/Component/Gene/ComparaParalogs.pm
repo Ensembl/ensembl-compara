@@ -62,7 +62,7 @@ sub content {
   
   my @rows;
  
-  my $lookup = $hub->species_defs->production_name_lookup; 
+  my $lookup = $hub->species_defs->prodname_to_url_lookup; 
   foreach my $species (sort keys %paralogue_list) {
     foreach my $stable_id (sort {$paralogue_list{$species}{$a}{'order'} <=> $paralogue_list{$species}{$b}{'order'}} keys %{$paralogue_list{$species}}) {
       my $paralogue = $paralogue_list{$species}{$stable_id};
