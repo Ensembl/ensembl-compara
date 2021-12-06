@@ -587,7 +587,7 @@ sub genomic_alignment_links {
         $type =~ s/_net//;
         $type =~ s/_/ /g;
         
-        $species_hash{$species_defs->species_label($lookup->{$_}) . "###$type"} = $i;
+        $species_hash{$species_defs->species_label($url_lookup->{$_}) . "###$type"} = $i;
       }
     } 
   }
