@@ -1136,28 +1136,53 @@ sub add_regulation_builds {
   my $key_2         = 'Regulatory_Build';
   my $build         = $data->{$key_2};
   my $type          = $data->{$key_2}{'type'};
-  return unless $type;
 
-  ## Main regulation track - replaces 'MultiCell'
-  my $build_menu  = $reg_menu->append_child($self->create_menu_node('regbuild', 'Regulatory Build'));
-  $build_menu->append_child($self->create_track_node("regulatory_build", "Regulatory Build", {
-    glyphset    => 'fg_regulatory_features',
-    sources     => 'undef',
-    strand      => 'r',
-    labels      => 'on',
-    depth       => 0,
-    colourset   => 'fg_regulatory_features',
-    display     => 'normal',
-    description => $self->databases->{'DATABASE_FUNCGEN'}{'tables'}{'regulatory_build'}{'analyses'}{'Regulatory_Build'}{'desc'}{'reg_feats'},
-    renderers   => [qw(off Off normal On)],
-    caption     => 'Regulatory Build',
-  }));
+  if ($type){ #Only shows Regulatory Build menu if there is a Regulatory Build
+  	## Main regulation track - replaces 'MultiCell'
+  	my $build_menu  = $reg_menu->append_child($self->create_menu_node('regbuild', 'Regulatory Build'));
+  	$build_menu->append_child($self->create_track_node("regulatory_build", "Regulatory Build", {
+    		glyphset    => 'fg_regulatory_features',
+    		sources     => 'undef',
+    		strand      => 'r',
+    		labels      => 'on',
+    		depth       => 0,
+    		colourset   => 'fg_regulatory_features',
+    		display     => 'normal',
+    		description => $self->databases->{'DATABASE_FUNCGEN'}{'tables'}{'regulatory_build'}{'analyses'}{'Regulatory_Build'}{'desc'}{'reg_feats'},
+    		renderers   => [qw(off Off normal On)],
+    		caption     => 'Regulatory Build',
+  	}));
+  }
 
   my $db_tables = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
 
+  my $adaptor       = $db->get_FeatureTypeAdaptor;
+  my $evidence_info = $adaptor->get_regulatory_evidence_info; #get all experiment
+
+  my (@cell_lines, %cell_names, %epi_desc, %regbuild);
+
+  #get all cell types
+  foreach (keys %{$db_tables->{'cell_type'}{'ids'}||{}}) {
+  	(my $name = $_) =~ s/:\w+$//;
+  	push @cell_lines, $name;
+  	$cell_names{$name} = $db_tables->{'cell_type'}{'names'}{$_}||$name;
+  	$epi_desc{$name} = $db_tables->{'cell_type'}{'epi_desc'}{$_}||$name;
+  	## Add to lookup for regulatory build cell lines
+  	$regbuild{$name} = 1 if $db_tables->{'cell_type'}{'regbuild_ids'}{$_};
+  }
+  @cell_lines = sort { lc $a cmp lc $b } @cell_lines; 
+  
+  return unless @cell_lines;
+
+  my $menu_title = 'Features by Cell/Tissue';
+  
+  if (!$type){ #if there is no regulatory build menu it creates a cell/tissue menu 
+	my $cell_type_menu  = $reg_menu->append_child($self->create_menu_node('', ''));
+	$cell_type_menu->append_child($self->create_track_node("", $menu_title, {}));
+  }
+
   #######  NOW DO BIG MATRIX NODE!
 
-  my $menu_title    = 'Features by Cell/Tissue';
   my $menu = $reg_menu->append_child($self->create_menu_node('regulatory_features', $menu_title,
       {
         menu   => 'matrix',
@@ -1171,22 +1196,6 @@ sub add_regulation_builds {
 
   my $reg_feats     = $menu->append_child($self->create_menu_node('reg_features', 'Epigenomic activity'));
   my $reg_segs      = $menu->append_child($self->create_menu_node('seg_features', 'Segmentation features'));
-
-  my $adaptor       = $db->get_FeatureTypeAdaptor;
-  my $evidence_info = $adaptor->get_regulatory_evidence_info; #get all experiment
-
-  my (@cell_lines, %cell_names, %epi_desc, %regbuild);
-  
-  #get all cell types
-  foreach (keys %{$db_tables->{'cell_type'}{'ids'}||{}}) {
-    (my $name = $_) =~ s/:\w+$//;
-    push @cell_lines, $name;
-    $cell_names{$name} = $db_tables->{'cell_type'}{'names'}{$_}||$name;
-    $epi_desc{$name} = $db_tables->{'cell_type'}{'epi_desc'}{$_}||$name;
-    ## Add to lookup for regulatory build cell lines
-    $regbuild{$name} = 1 if $db_tables->{'cell_type'}{'regbuild_ids'}{$_};
-  }
-  @cell_lines = sort { lc $a cmp lc $b } @cell_lines;
 
   my (@renderers, %matrix_tracks);
 
