@@ -566,6 +566,7 @@ sub genomic_alignment_links {
   my $alignments    = $species_defs->multi_hash->{$ckey}{'ALIGNMENTS'}||{};
   my $species       = $hub->species;
   my $url           = $hub->url({ action => "Compara_Alignments$ckey", align => undef });
+  my $url_lookup    = $hub->species_defs->production_name_lookup;
   my (%species_hash, $list);
   
   foreach my $row_key (grep $alignments->{$_}{'class'} !~ /pairwise/, keys %$alignments) {
@@ -586,7 +587,7 @@ sub genomic_alignment_links {
         $type =~ s/_net//;
         $type =~ s/_/ /g;
         
-        $species_hash{$species_defs->species_label($_) . "###$type"} = $i;
+        $species_hash{$species_defs->species_label($lookup->{$_}) . "###$type"} = $i;
       }
     } 
   }

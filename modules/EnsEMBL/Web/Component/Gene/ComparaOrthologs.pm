@@ -192,9 +192,11 @@ sub content {
     }
   } 
   
+  my $lookup = $hub->species_defs->production_name_lookup;
   foreach my $species (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %orthologue_list) {
     next if $skipped{$species};
     next unless $species;
+    my $species_url = $lookup->{$species};
     
     foreach my $stable_id (sort keys %{$orthologue_list{$species}}) {
       my $orthologue = $orthologue_list{$species}{$stable_id};
@@ -316,7 +318,7 @@ sub content {
       });
 
       my $table_details = {
-        'Species'    => join('<br />(', split(/\s*\(/, $species_defs->species_label($species))),
+        'Species'    => join('<br />(', split(/\s*\(/, $species_defs->species_label($species_url))),
         'Type'       => $self->html_format ? glossary_helptip($hub, ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues").qq{<p class="top-margin"><a href="$tree_url">View Gene Tree</a></p>} : glossary_helptip($hub, ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues") ,
         'identifier' => $self->html_format ? $id_info : $stable_id,
         'Target %id' => qq{<span class="$target_class">}.sprintf('%.2f&nbsp;%%', $target).qq{</span>},
@@ -349,7 +351,7 @@ sub content {
       sprintf(
         '<p>%d orthologues not shown in the table above from the following species. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
         $count,
-        join "</li>\n<li>", sort map {$species_defs->species_label($_)." ($skipped{$_})"} keys %skipped
+        join "</li>\n<li>", sort map {$species_defs->species_label($lookup->{_})." ($skipped{$_})"} keys %skipped
       )
     );
   }   
@@ -377,10 +379,11 @@ sub get_no_ortho_species_html {
   my ($self, $species_to_show, $sets_by_species) = @_;
   my $hub = $self->hub;
   my $no_ortho_species_html = '';
+  my $lookup = $hub->species_defs->production_name_lookup;
 
   foreach (sort {lc $a cmp lc $b} keys %$species_to_show) {
     if ($sets_by_species->{$_}) {
-      $no_ortho_species_html .= '<li class="'. join(' ', @{$sets_by_species->{$_}}) .'">'. $hub->species_defs->species_label($_) .'</li>';
+      $no_ortho_species_html .= '<li class="'. join(' ', @{$sets_by_species->{$_}}) .'">'. $hub->species_defs->species_label($lookup->{$_}) .'</li>';
     }
   }
 

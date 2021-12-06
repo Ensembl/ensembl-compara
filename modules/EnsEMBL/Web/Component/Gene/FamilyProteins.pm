@@ -185,11 +185,12 @@ sub content_ensembl {
       { key => 'peptides', title => 'Proteins', width => '80%', align => 'left' },
     );
 
+    my $lookup = $production_name_lookup;
     foreach my $genomedb (sort { $a->name cmp $b->name } @genomedbs) {
       my $species_key = $genomedb->name;
 
       if ($hub->param('species_' . lc $species_key) ne 'yes') {
-        push @member_skipped_species, $species_defs->species_label($species_key);
+        push @member_skipped_species, $species_defs->species_label($lookup->{$species_key});
         $member_skipped_count += @{$data{$genomedb->dbID}};
         next;
       }
@@ -197,7 +198,7 @@ sub content_ensembl {
       next unless $data{$genomedb->dbID};
 
       my $row = {
-        species  => $species_defs->species_label($species_key),
+        species  => $species_defs->species_label($lookup->{$species_key}),
         peptides => '<dl class="long_id_list">'
       };
 
