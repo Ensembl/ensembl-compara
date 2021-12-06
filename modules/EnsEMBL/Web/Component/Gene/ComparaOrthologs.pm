@@ -192,11 +192,9 @@ sub content {
     }
   } 
   
-  my $lookup = $hub->species_defs->production_name_lookup;
   foreach my $species (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %orthologue_list) {
     next if $skipped{$species};
     next unless $species;
-    my $species_url = $lookup->{$species};
     
     foreach my $stable_id (sort keys %{$orthologue_list{$species}}) {
       my $orthologue = $orthologue_list{$species}{$stable_id};
@@ -318,7 +316,7 @@ sub content {
       });
 
       my $table_details = {
-        'Species'    => join('<br />(', split(/\s*\(/, $species_defs->species_label($species_url))),
+        'Species'    => join('<br />(', split(/\s*\(/, $species_defs->species_label($spp))),
         'Type'       => $self->html_format ? glossary_helptip($hub, ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues").qq{<p class="top-margin"><a href="$tree_url">View Gene Tree</a></p>} : glossary_helptip($hub, ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues") ,
         'identifier' => $self->html_format ? $id_info : $stable_id,
         'Target %id' => qq{<span class="$target_class">}.sprintf('%.2f&nbsp;%%', $target).qq{</span>},
@@ -351,7 +349,7 @@ sub content {
       sprintf(
         '<p>%d orthologues not shown in the table above from the following species. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
         $count,
-        join "</li>\n<li>", sort map {$species_defs->species_label($lookup->{_})." ($skipped{$_})"} keys %skipped
+        join "</li>\n<li>", sort map {$species_defs->species_label($_)." ($skipped{$_})"} keys %skipped
       )
     );
   }   
