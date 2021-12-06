@@ -1,4 +1,4 @@
-ensembl-py@git+https://github.com/Ensembl/ensembl-py.git@master#egg=ensembl-py
+ensembl-py@git+https://github.com/Ensembl/ensembl-py.git@main#egg=ensembl-py
 ensembl-prodinf-tools@git+https://github.com/Ensembl/ensembl-prodinf-tools.git@main#egg=ensembl-prodinf-tools
 biopython>=1.76
 ete3>=3.1.1
