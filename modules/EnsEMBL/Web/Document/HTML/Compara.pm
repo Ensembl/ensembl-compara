@@ -191,8 +191,9 @@ sub mlss_species_info {
   return [] unless $compara_db;
 
   my $species = [];
+  my $lookup =  $self->hub->species_defs->production_name_lookup;
   foreach my $db (@{$mlss->species_set->genome_dbs||[]}) {
-    push @$species, $self->hub->species_defs->production_name_mapping($db->name);
+    push @$species, $lookup->{$db->name};
   }
   return $self->get_species_info($species, 1, $mlss);
 }
@@ -221,6 +222,7 @@ sub pairwise_mlss_data {
   my %synt_methods;
 
   ## Munge all the necessary information
+  my $lookup = $self->hub->species_defs->production_name_lookup;
   foreach my $method (@{$methods||[]}) {
     my $mlss_sets  = $mlss_adaptor->fetch_all_by_method_link_type($method);
     if (@$mlss_sets and ($mlss_sets->[0]->method->class =~ /SyntenyRegion.synteny/)) {
@@ -229,9 +231,9 @@ sub pairwise_mlss_data {
 
     foreach my $mlss (@$mlss_sets) {
       my ($gdb1, $gdb2) = @{$mlss->species_set->genome_dbs};
-      my $name1 = $self->hub->species_defs->production_name_mapping($gdb1->name);
+      my $name1 = $lookup->{$gdb1->name};
       if ($gdb2) {
-        my $name2 = $self->hub->species_defs->production_name_mapping($gdb2->name);
+        my $name2 = $lookup->{$gdb2->name};
         push @{$data{$name1}->{$name2}}, [$method, $mlss->dbID];
         push @{$data{$name2}->{$name1}}, [$method, $mlss->dbID];
       } else {
@@ -255,6 +257,7 @@ sub mlss_data {
  
   my $data = {};
   my $species = {};
+  my $lookup = $self->hub->species_defs->production_name_lookup;
 
   ## Munge all the necessary information
   foreach my $method (@{$methods||[]}) {
@@ -267,7 +270,7 @@ sub mlss_data {
         my $ref_gdb_name = $mlss->get_value_for_tag('reference_species');
       
         ## Add to full list of species
-        my $ref_name = $self->hub->species_defs->production_name_mapping($ref_gdb_name);
+        my $ref_name = $lookup->{$ref_gdb_name};
         $species->{$ref_name}++;
 
         ## Build data matrix
@@ -275,7 +278,7 @@ sub mlss_data {
         if (scalar(@non_ref_genome_dbs)) {
           # Alignment between 2+ species
           foreach my $nonref_db (@non_ref_genome_dbs) {
-            my $nonref_name = $self->hub->species_defs->production_name_mapping($nonref_db->name);
+            my $nonref_name = $lookup->{$nonref_db->name};
             $species->{$nonref_name}++;
             $data->{$ref_name}{$nonref_name} = [$method, $mlss->dbID];
           }

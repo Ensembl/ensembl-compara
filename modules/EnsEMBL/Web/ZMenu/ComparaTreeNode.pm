@@ -62,7 +62,7 @@ sub content {
     $node->{_sub_leaves_count} = scalar(@$members);
     my $link_gene = $members->[0];
     foreach my $g (@$members) {
-      $link_gene = $g if (lc $hub->species_defs->production_name_mapping($g->genome_db->name)) eq (lc $hub->species);
+      $link_gene = $g if ($g->genome_db->name eq $hub->species_defs->SPECIES_PRODUCTION_NAME);
     }
     $node->{_sub_reference_gene} = $link_gene->gene_member;
   }
@@ -153,6 +153,7 @@ sub content {
   
   }
 
+  my $lookup = $hub->species_defs->production_name_lookup;
   if ($is_leaf and $is_supertree) {
 
       # Gene count
@@ -166,7 +167,7 @@ sub content {
       ## Strain trees and pon-compara trees are very different!
       my ($species, $action, $base_url);  
       if ($hub->action =~ /Strain/) {
-        $species = $hub->species_defs->production_name_mapping($link_gene->genome_db->name);
+        $species = $lookup->{$link_gene->genome_db->name};
         $action = $hub->action;
       }
       else {
@@ -328,11 +329,11 @@ sub content {
         next if $gene eq $hub->param('g');
         
         if ($s == 0) {
-          $url_params->{'species'} = $hub->species_defs->production_name_mapping($_->genome_db->name);
+          $url_params->{'species'} = $lookup->{$_->genome_db->name};
           $url_params->{'g'} = $gene;
         } 
         else {
-          $url_params->{"s$s"} = $hub->species_defs->production_name_mapping($_->genome_db->name);
+          $url_params->{"s$s"} = $lookup->{$_->genome_db->name};
           $url_params->{"g$s"} = $gene;
         }
         $s++;

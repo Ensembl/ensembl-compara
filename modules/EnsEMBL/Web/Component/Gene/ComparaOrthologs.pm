@@ -423,7 +423,8 @@ sub get_export_data {
 
     if (keys %ok_species) {
       # It's the lower case species url name which is passed through the data export URL
-      return [grep {$ok_species{lc($hub->species_defs->production_name_mapping($_->get_all_Members->[1]->genome_db->name))}} @$homologies];
+      my $lookup = $hub->species_defs->production_name_lookup;
+      return [grep {$ok_species{lc($lookup->{$_->get_all_Members->[1]->genome_db->name})}} @$homologies];
     }
     else {
       return $homologies;

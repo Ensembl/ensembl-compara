@@ -133,7 +133,7 @@ sub json_fetch_species {
     foreach my $align_id (keys %$final_alignments) {
       foreach (keys %{$final_alignments->{$align_id}->{'species'}}) {
         if ($alignments->{$align_id}{'species'}->{$species} && $_ ne $species) {
-          $_ = $hub->species_defs->production_name_mapping($_);
+          $_ = $url_lookup->{$_};
           $available_species_map->{$_} = $align_id;
         }
       }

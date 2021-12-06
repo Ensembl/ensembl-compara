@@ -59,13 +59,14 @@ sub content {
   }
 
   # For the variation compara view, only allow multi-way alignments
+  my $lookup = $species_defs->production_name_lookup;
   if ($align_label eq '') {
     my %species_hash;
     foreach my $key (grep { $alignments->{$_}{'class'} =~ /pairwise/ } keys %$alignments) {
       foreach (keys %{$alignments->{$key}->{'species'}}) {
         if ($alignments->{$key}->{'species'}->{$prodname} && $_ ne $prodname) {
           if ($key == $align) {
-            $align_label = $species_defs->production_name_mapping($_);
+            $align_label = $lookup->{$_};
             last;
           }
         }
