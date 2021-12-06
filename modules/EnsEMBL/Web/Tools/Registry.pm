@@ -47,6 +47,7 @@ sub configure {
     COMPARA             => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
     COMPARA_PAN_ENSEMBL => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
     USERDATA            => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+    METADATA            => 'Bio::EnsEMBL::MetaData::DBSQL::MetaDataDBAdaptor',
     COMPARA_MULTIPLE    => undef,
     WEBSITE             => undef,
     GENE_AUTOCOMPLETE   => undef,
