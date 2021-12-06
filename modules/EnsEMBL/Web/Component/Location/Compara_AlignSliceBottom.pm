@@ -92,7 +92,7 @@ sub content {
       more_slices     => $i != @$slices,
     });
     
-    my ($species_name, $slice_name) = split ':', $lookup->{$_->{'name'}};
+    my ($species_name, $slice_name) = split ':', $_->{'name'};
     
     my $panel_caption = $species_defs->get_config($species_name, 'SPECIES_DISPLAY_NAME') || 'Ancestral sequences';
     $panel_caption   .= " $slice_name" if $slice_name;
