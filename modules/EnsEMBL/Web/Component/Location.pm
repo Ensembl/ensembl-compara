@@ -44,7 +44,10 @@ sub chromosome_form {
   my $object        = $self->object || $hub->core_object('location');
   my $image_config  = $hub->get_imageconfig($ic);
   my $vwidth        = $image_config->image_height;
+  my $values        = [{ 'caption' => '-- Select --', 'value' => ''}];
   my @chrs          = map { 'caption' => $_, 'value' => $_.':1-1000' }, @{$hub->species_defs->ENSEMBL_CHROMOSOMES};
+  push @$values, @chrs;
+  my $is_chr        = grep {$_ eq $object->seq_region_name} @{$hub->species_defs->ENSEMBL_CHROMOSOMES};
   my $form          = $self->new_form({ id => 'change_chr', action => $hub->url({ __clear => 1 }), method => 'get', class => 'autocenter', style => $vwidth ? sprintf "width:${vwidth}px" : undef });
 
   $form->add_field({
@@ -53,8 +56,8 @@ sub chromosome_form {
     'elements'    => [{
       'type'        => 'dropdown',
       'name'        => 'r',
-      'values'      => \@chrs,
-      'value'       => $object->seq_region_name . ':1-1000',
+      'values'      => $values,
+      'value'       => $is_chr ? $object->seq_region_name.':1-1000' : '',
     }, {
       'type'        => 'submit',
       'value'       => 'Go'
