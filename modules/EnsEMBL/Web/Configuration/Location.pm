@@ -94,7 +94,7 @@ sub populate_tree {
       homo_nav EnsEMBL::Web::Component::Location::NavigateHomology
       matches  EnsEMBL::Web::Component::Location::SyntenyMatches
     )],
-    { 'availability' => 'chromosome has_synteny', 'concise' => 'Synteny' }
+    { 'availability' => 'has_synteny', 'concise' => 'Synteny' }
   ));
   
   $align_menu->append($self->create_node('Compara_Alignments/Image', 'Alignments (image)', 
