@@ -1546,7 +1546,7 @@ sub species_label {
   my ($self, $key, $no_formatting) = @_;
 
   # FIXME: ugly hack - better to always pass in URL so we don't have to mess with it here
-  my $url = $ucfirst($key);
+  my $url = ucfirst($key);
   my $display = $self->get_config($url, 'SPECIES_DISPLAY_NAME');
   my $label = '';
 
