@@ -58,7 +58,8 @@ sub content {
   
   my @rows;
 
-  foreach my $species (map $hub->species_defs->production_name_mapping($_), sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %orthologue_list) {
+  my $lookup = $hub->species_defs->prodname_to_url_lookup;
+  foreach my $species (map $lookup->{$_}, sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %orthologue_list) {
     next unless $hub->species_defs->get_config($species, 'databases') && $hub->species_defs->get_config($species, 'databases')->{'DATABASE_VARIATION'};
 
     my $pfa = $hub->get_adaptor('get_PhenotypeFeatureAdaptor', 'variation', $species);

@@ -61,7 +61,8 @@ sub content {
   ];
   
   my @rows;
-  
+ 
+  my $lookup = $hub->species_defs->prodname_to_url_lookup; 
   foreach my $species (sort keys %paralogue_list) {
     foreach my $stable_id (sort {$paralogue_list{$species}{$a}{'order'} <=> $paralogue_list{$species}{$b}{'order'}} keys %{$paralogue_list{$species}}) {
       my $paralogue = $paralogue_list{$species}{$stable_id};
@@ -144,7 +145,7 @@ sub content {
       } elsif (exists $cached_lca_desc{$species_tree_node->node_id}) {
         ($ancestral_taxonomy, $lca_desc) = @{$cached_lca_desc{$species_tree_node->node_id}};
       } elsif ($species_tree_node->is_leaf) {
-        $ancestral_taxonomy = $hub->species_defs->species_label($hub->species_defs->production_name_mapping($species_tree_node->genome_db->name));
+        $ancestral_taxonomy = $hub->species_defs->species_label($lookup->{$species_tree_node->genome_db->name});
       } else {
         $ancestral_taxonomy = species_tree_node_label($species_tree_node);
         my ($c0, $c1) = @{$species_tree_node->children()};

@@ -946,6 +946,7 @@ sub check_for_missing_species {
   my $db_key        = $args->{cdb} =~ /pan_ensembl/ ? 'DATABASE_COMPARA_PAN_ENSEMBL' : 'DATABASE_COMPARA';
   my $align_details = $species_defs->multi_hash->{$db_key}->{'ALIGNMENTS'}->{$align};
   my $species_info  = $hub->get_species_info;
+  my $url_lookup    = $species_defs->prodname_to_url_lookup;
   my $slice         = $args->{slice} || $self->object->slice;
   $slice = undef if $slice == 1; # weirdly, we get 1 if feature_Slice is missing
 
@@ -957,10 +958,10 @@ sub check_for_missing_species {
 
   foreach (keys %{$align_details->{'species'}}) {
     next if $_ eq $species;
-    my $sp_url = $species_defs->production_name_mapping($_);
+    my $sp_url = $url_lookup->{$_};
     if ($align_details->{'class'} !~ /pairwise/
         && ($self->param(sprintf 'species_%d_%s', $align, lc) || 'off') eq 'off') {
-      push @skipped, $_ unless ($args->{ignore} && $args->{ignore} eq 'ancestral_sequences');
+      push @skipped, $sp_url unless ($args->{ignore} && $args->{ignore} eq 'ancestral_sequences');
     }
     elsif (defined $slice and !$aligned_species{$sp_url} and $_ ne 'ancestral_sequences') {
       my $key = $hub->is_strain($sp_url) ? pluralise($species_info->{$sp_url}{strain_type}) : 'species';

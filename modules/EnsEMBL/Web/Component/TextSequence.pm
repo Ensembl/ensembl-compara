@@ -249,7 +249,7 @@ sub set_variations {
   my $name   = $slice_data->{'name'};
   my $slice  = $slice_data->{'slice'};
   
-  my $species = $slice->can('genome_db') ? $hub->species_defs->production_name_mapping($slice->genome_db->name) : $hub->species;
+  my $species = $slice->can('genome_db') ? $hub->species_defs->prodname_to_url($slice->genome_db->name) : $hub->species;
   return unless $hub->database('variation', $species);
   my $strand = $slice->strand;
   my $focus  = $name eq $config->{'species'} ? $config->{'focus_variant'} : undef;

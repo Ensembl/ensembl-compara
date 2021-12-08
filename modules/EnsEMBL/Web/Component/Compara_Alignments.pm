@@ -528,7 +528,7 @@ sub _get_target_slice_table {
   } elsif ($class =~ /pairwise/) {
     #Find the non-reference species for pairwise alignments
     #get the non_ref name from the first block
-    $other_species = $hub->species_defs->production_name_mapping($gabs->[0]->get_all_non_reference_genomic_aligns->[0]->genome_db->name);
+    $other_species = $hub->species_defs->prodname_to_url($gabs->[0]->get_all_non_reference_genomic_aligns->[0]->genome_db->name);
   }
 
   my $merged_blocks = $self->object->build_features_into_sorted_groups($groups);
@@ -547,6 +547,7 @@ sub _get_target_slice_table {
   my $gab_num = 0; #block counter
 
   #Add blocks to the table
+  my $lookup = $hub->species_defs->prodname_to_url_lookup;
   foreach my $gab_group (@$merged_blocks) {
     next unless $gab_group; 
     my $min_start;
@@ -576,7 +577,7 @@ sub _get_target_slice_table {
     my $slice_length = ($ref_end-$ref_start+1);
 
     my $align_params = "$align";
-    $align_params .= "--" . $hub->species_defs->production_name_mapping($non_ref_ga->genome_db->name) . "--" . $non_ref_ga->dnafrag->name . ":$non_ref_start-$non_ref_end" if ($non_ref_ga);
+    $align_params .= "--" . $lookup->{$non_ref_ga->genome_db->name} . "--" . $non_ref_ga->dnafrag->name . ":$non_ref_start-$non_ref_end" if ($non_ref_ga);
 
     my %url_params = (
                      species => $ref_species,
@@ -605,7 +606,7 @@ sub _get_target_slice_table {
     if ($other_species) {
       $other_string = $non_ref_ga->dnafrag->name.":".$non_ref_start."-".$non_ref_end;
       $other_link = $hub->url({
-                                   species => $hub->species_defs->production_name_mapping($non_ref_ga->genome_db->name),
+                                   species => $lookup->{$non_ref_ga->genome_db->name},
                                    type   => 'Location',
                                    action => 'View',
                                    r      => $other_string,

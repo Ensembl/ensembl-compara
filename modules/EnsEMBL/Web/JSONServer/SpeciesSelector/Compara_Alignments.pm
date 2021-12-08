@@ -43,6 +43,7 @@ sub json_fetch_species {
   my $species_info = $hub->get_species_info;
   my $species      = $sd->SPECIES_PRODUCTION_NAME;
   my $species_hash_multiple = ();
+  my $url_lookup   = $sd->prodname_to_url_lookup;
 
   # Order by number of species (name is in the form "6 primates EPO")
   foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {
@@ -57,18 +58,18 @@ sub json_fetch_species {
     $t->{children}   = [];
     my @children;
 
-    foreach (sort keys %{$row->{'species'}}) {
-      my $url_name  = $hub->species_defs->production_name_mapping($_);
-      my $prod_name = $hub->species_defs->get_config($url_name, 'SPECIES_PRODUCTION_NAME');
+    my ($prod_name, $url_name); 
+    foreach $_ (sort keys %{$row->{'species'}}) {
       my $ancestral = 0;
       if ($_ =~/ancestral_sequences/i) {
+        ## Not a real species, so it's legit to do ucfirst here!
         $url_name = ucfirst($_);
-        $prod_name = $_;
         $ancestral = 1;
       }
-
-      next unless $prod_name;
-      $prod_name = encode_entities($prod_name);
+      else {
+        $url_name = $url_lookup->{$_}; 
+      }
+      $prod_name = encode_entities($_);
       my $t_child = {};
       $t_child->{key}        = join '_', ('species', $row->{id}, lc($prod_name));
       $t_child->{title}      = encode_entities($ancestral ? '--Ancestral_sequences--' : $species_info->{$url_name}->{display_name});
@@ -132,7 +133,7 @@ sub json_fetch_species {
     foreach my $align_id (keys %$final_alignments) {
       foreach (keys %{$final_alignments->{$align_id}->{'species'}}) {
         if ($alignments->{$align_id}{'species'}->{$species} && $_ ne $species) {
-          $_ = $hub->species_defs->production_name_mapping($_);
+          $_ = $url_lookup->{$_};
           $available_species_map->{$_} = $align_id;
         }
       }

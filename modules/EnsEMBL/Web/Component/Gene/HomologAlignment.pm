@@ -69,11 +69,12 @@ sub content {
       my $data = [];
       my $flag = !$second_gene;
       
+      my $lookup = $species_defs->prodname_to_url_lookup;
       foreach my $peptide (@{$homology->get_all_Members}) {
         my $gene = $peptide->gene_member;
         $flag = 1 if $gene->stable_id eq $second_gene; 
 
-        my $member_species = $species_defs->production_name_mapping($peptide->genome_db->name);
+        my $member_species = $lookup->{$peptide->genome_db->name};
         my $location       = sprintf '%s:%d-%d', $gene->dnafrag->name, $gene->dnafrag_start, $gene->dnafrag_end;
        
         if (!$second_gene && $member_species ne $species && $hub->param('species_' . lc $member_species) eq 'off') {

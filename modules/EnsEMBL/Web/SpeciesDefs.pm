@@ -1554,11 +1554,10 @@ sub species_label {
   ### This function will return the display name of all known (by Compara) species.
   ### Some species in genetree can be from other EG units, and some can be from external sources
   ### Arguments:
-  ###     key             String: species production name or URL
+  ###     url             String: species  URL
   ###     no_formating    Boolean: omit italics from scientific name  
-  my ($self, $key, $no_formatting) = @_;
+  my ($self, $url, $no_formatting) = @_;
 
-  my $url = $self->production_name_mapping($key);
   my $display = $self->get_config($url, 'SPECIES_DISPLAY_NAME');
   my $label = '';
 
@@ -1587,11 +1586,11 @@ sub species_label {
       ## Pan-compara species - get label from metadata db
       my $info = $self->get_config('MULTI', 'PAN_COMPARA_LOOKUP');
       if ($info) {
-        if ($info->{$key}) {
-          $label = $info->{$key}{'display_name'}
+        if ($info->{$url}) {
+          $label = $info->{$url}{'display_name'}
         }
         else {
-          $label = $info->{lc $key}{'display_name'}
+          $label = $info->{lc $url}{'display_name'}
         }
       }
     }
@@ -1601,8 +1600,8 @@ sub species_label {
   return $label;
 }
 
-sub production_name_lookup {
-## Maps all species to their production name
+sub prodnames_to_urls_lookup {
+## Maps all species' production names to their URLs
   my $self = shift;
   my $names = {};
   
@@ -1612,11 +1611,12 @@ sub production_name_lookup {
   return $names;
 }
 
-sub production_name_mapping {
+sub prodname_to_url {
+### Given a production name, work out the species URL
 ### As the name said, the function maps the production name with the species URL, 
-### @param key - species production name (or URL in the case of some compara code) 
+### @param key - species production name
 ### Return string = the corresponding species.url name which is the name web uses for URL and other code
-### Fall back to production name if not found - mostly for pan-compara
+### Falls back to production name if not found, mostly for pan-compara - the production name _should_be an alias anyway, but this method ensures we get the "correct" value where possible
   my ($self, $production_name) = @_;
   my $mapping_name = $production_name;
   

@@ -316,7 +316,7 @@ sub content {
       });
 
       my $table_details = {
-        'Species'    => join('<br />(', split(/\s*\(/, $species_defs->species_label($species))),
+        'Species'    => join('<br />(', split(/\s*\(/, $species_defs->species_label($spp))),
         'Type'       => $self->html_format ? glossary_helptip($hub, ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues").qq{<p class="top-margin"><a href="$tree_url">View Gene Tree</a></p>} : glossary_helptip($hub, ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues") ,
         'identifier' => $self->html_format ? $id_info : $stable_id,
         'Target %id' => qq{<span class="$target_class">}.sprintf('%.2f&nbsp;%%', $target).qq{</span>},
@@ -377,10 +377,11 @@ sub get_no_ortho_species_html {
   my ($self, $species_to_show, $sets_by_species) = @_;
   my $hub = $self->hub;
   my $no_ortho_species_html = '';
+  my $lookup = $hub->species_defs->prodname_to_url_lookup;
 
   foreach (sort {lc $a cmp lc $b} keys %$species_to_show) {
     if ($sets_by_species->{$_}) {
-      $no_ortho_species_html .= '<li class="'. join(' ', @{$sets_by_species->{$_}}) .'">'. $hub->species_defs->species_label($_) .'</li>';
+      $no_ortho_species_html .= '<li class="'. join(' ', @{$sets_by_species->{$_}}) .'">'. $hub->species_defs->species_label($lookup->{$_}) .'</li>';
     }
   }
 
@@ -423,7 +424,8 @@ sub get_export_data {
 
     if (keys %ok_species) {
       # It's the lower case species url name which is passed through the data export URL
-      return [grep {$ok_species{lc($hub->species_defs->production_name_mapping($_->get_all_Members->[1]->genome_db->name))}} @$homologies];
+      my $lookup = $hub->species_defs->prodname_to_url_lookup;
+      return [grep {$ok_species{lc($lookup->{$_->get_all_Members->[1]->genome_db->name})}} @$homologies];
     }
     else {
       return $homologies;
