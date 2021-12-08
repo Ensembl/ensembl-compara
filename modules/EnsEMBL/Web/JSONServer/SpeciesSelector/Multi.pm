@@ -124,8 +124,8 @@ sub json_fetch_species {
     }
   }
 
-  if ($shown{$prodname}) {
-    my ($chr) = split ':', $params->{"r$shown{$prodname}"};
+  if ($shown{$primary_species}) {
+    my ($chr) = split ':', $params->{"r$shown{$primary_species}"};
     $available_species{$prodname} = "$species_label - chromosome $chr";
   }
 

@@ -58,8 +58,8 @@ sub json_fetch_species {
     $t->{children}   = [];
     my @children;
 
+    my ($prod_name, $url_name); 
     foreach $_ (sort keys %{$row->{'species'}}) {
-      my ($prod_name, $url_name); 
       my $ancestral = 0;
       if ($_ =~/ancestral_sequences/i) {
         ## Not a real species, so it's legit to do ucfirst here!
