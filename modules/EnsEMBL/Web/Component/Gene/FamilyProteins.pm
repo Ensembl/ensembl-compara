@@ -185,7 +185,7 @@ sub content_ensembl {
       { key => 'peptides', title => 'Proteins', width => '80%', align => 'left' },
     );
 
-    my $lookup = $prodname_to_url_lookup;
+    my $lookup = $species_defs->prodnames_to_urls_lookup;
     foreach my $genomedb (sort { $a->name cmp $b->name } @genomedbs) {
       my $species_key = $genomedb->name;
 
