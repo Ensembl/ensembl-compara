@@ -22,11 +22,11 @@ Typical usage examples::
     --host mysql-ens-compara-prod-X --port XXXX --user username --out_dir /path/to/out/dir \
     ----orthology_input /path/to/orthofinder/input/files
 
-    # With user specified numbers of threads for OrthoFinder
+    # With user specified numbers of threads for OrthoFinder & gene tree inference from msa
     $ python orthology_benchmark.py --mlss_conf /path/to/mlss_conf.xml --species_set name \
     --host mysql-ens-compara-prod-X --port XXXX --user username --out_dir /path/to/out/dir \
     ----orthology_input /path/to/orthofinder/input/files --number_of_threads XXXX \
-    --number_of_orthofinder_threads XXXX
+    --number_of_orthofinder_threads XXXX --tree_method msa
 
 """
 
@@ -193,7 +193,8 @@ def prep_input_for_orth_tools(source_dir: str, target_dir: str) -> None:
                    capture_output=True, check=True)
 
 
-def run_orthology_tools(input_dir: str, number_of_threads: int, number_of_orthofinder_threads: int) -> None:
+def run_orthology_tools(input_dir: str, number_of_threads: int, number_of_orthofinder_threads: int,
+                        tree_method: str) -> None:
     """Runs the selected orthology inference tool.
 
     Args:
@@ -203,6 +204,7 @@ def run_orthology_tools(input_dir: str, number_of_threads: int, number_of_orthof
             tree inference and gene-tree reconciliation in parallel.
         number_of_orthofinder_threads: The number of parallel processes for other OrthoFinder steps
             that have been parallelised.
+        tree_method: Method for OrthoFinder gene tree inference: 'dendroblast' or 'msa'.
 
     Raises:
         FileNotFoundError: If OrthoFinder executable (`orthofinder_exe`) cannot be found.
@@ -212,7 +214,7 @@ def run_orthology_tools(input_dir: str, number_of_threads: int, number_of_orthof
     # OrthoFinder
     orthofinder_exe = "/hps/software/users/ensembl/ensw/C8-MAR21-sandybridge/linuxbrew/bin/orthofinder"
     subprocess.run([orthofinder_exe, "-t", str(number_of_threads), "-a", str(number_of_orthofinder_threads),
-                    "-f", input_dir], capture_output=True, check=True)
+                    "-M", tree_method, "-f", input_dir], capture_output=True, check=True)
 
 
 def prep_input_for_goc():
@@ -239,6 +241,8 @@ if __name__ == '__main__':
                         help="OrthoFinder parameter '-t'")
     parser.add_argument("--number_of_orthofinder_threads", default=8, type=int,
                         help="OrthoFinder parameter '-a'")
+    parser.add_argument("--tree_method", default="dendroblast", type=str,
+                        help="OrthoFinder parameter '-M'")
 
     args = parser.parse_args()
 
@@ -249,6 +253,7 @@ if __name__ == '__main__':
     print("Preparing input for orthology inference tools...")
     prep_input_for_orth_tools(os.path.join(args.out_dir, args.species_set), args.orthology_input)
     print("Running orthology inference tools...")
-    run_orthology_tools(args.orthology_input, args.number_of_threads, args.number_of_orthofinder_threads)
+    run_orthology_tools(args.orthology_input, args.number_of_threads, args.number_of_orthofinder_threads,
+                        args.tree_method)
     # prep_input_for_goc()
     # calculate_goc_scores()
