@@ -32,7 +32,7 @@ from Bio.AlignIO.MafIO import MafIterator, MafWriter
 
 if __name__ == '__main__':
 
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(description='Extract a MAF alignment from a HAL file.')
     parser.add_argument('hal_file', help="Input HAL file.")
     parser.add_argument('maf_file', help="Output MAF file.")
 
