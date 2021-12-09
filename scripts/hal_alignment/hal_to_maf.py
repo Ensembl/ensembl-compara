@@ -43,9 +43,9 @@ if __name__ == '__main__':
     parser.add_argument('--keep-genomes-file', metavar='PATH', required=True,
                         help="File listing genomes to include in output alignments, one per line.")
 
-    parser.add_argument('--min-block-seqs', metavar='INT', type=int, default=2,
+    parser.add_argument('--min-block-seqs', metavar='INT', type=int, default=3,
                         help="Minimum number of sequences per block.")
-    parser.add_argument('--min-block-size', metavar='INT', type=int, default=1,
+    parser.add_argument('--min-block-size', metavar='INT', type=int, default=200,
                         help="Minimum number of columns per block.")
     args = parser.parse_args()
 
