@@ -67,10 +67,8 @@ if __name__ == '__main__':
 
         with subprocess.Popen(command, stdout=subprocess.PIPE, text=True) as process:
             for msa in MafIterator(process.stdout):
-
                 if len(msa) < args.min_block_seqs:
                     continue
-
                 if msa.get_alignment_length() < args.min_block_size:
                     continue
 
