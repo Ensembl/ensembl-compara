@@ -36,9 +36,9 @@ if __name__ == '__main__':
     parser.add_argument('hal_file', help="Input HAL file.")
     parser.add_argument('maf_file', help="Output MAF file.")
 
-    parser.add_argument('--refGenome', dest='ref_genome', metavar='STR', required=True,
+    parser.add_argument('--ref-genome', metavar='STR', required=True,
                         help="Reference genome for output MAF file.")
-    parser.add_argument('--refSequence', dest='ref_sequence', metavar='STR', required=True,
+    parser.add_argument('--ref-sequence', metavar='STR', required=True,
                         help="Output sequence within reference genome.")
     parser.add_argument('--keep-genomes-file', metavar='PATH', required=True,
                         help="File listing genomes to include in output alignments, one per line.")
