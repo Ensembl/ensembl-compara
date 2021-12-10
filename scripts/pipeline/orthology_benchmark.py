@@ -17,21 +17,19 @@
 
 Typical usage examples::
 
-    # With pipeline default numbers of threads for OrthoFinder
+    # With default OrthoFinder parameters
     $ python orthology_benchmark.py --mlss_conf /path/to/mlss_conf.xml --species_set name \
     --host mysql-ens-compara-prod-X --port XXXX --user username --out_dir /path/to/out/dir \
-    ----orthology_input /path/to/orthofinder/input/files
+    --orthology_input /path/to/orthofinder/input/files
 
-    # With user specified numbers of threads for OrthoFinder & gene tree inference from msa
+    # With additional user specified parameters for OrthoFinder
     $ python orthology_benchmark.py --mlss_conf /path/to/mlss_conf.xml --species_set name \
     --host mysql-ens-compara-prod-X --port XXXX --user username --out_dir /path/to/out/dir \
-    ----orthology_input /path/to/orthofinder/input/files --number_of_threads XXXX \
-    --number_of_orthofinder_threads XXXX --tree_method msa
+    --orthology_input /path/to/orthofinder/input/files --orthofinder_params "-t 4 -M msa"
 
 """
 
 import argparse
-import fnmatch
 import os
 from pathlib import Path
 import re
@@ -177,44 +175,47 @@ def prep_input_for_orth_tools(source_dir: str, target_dir: str) -> None:
         target_dir: Path to the directory where symlinks to .fasta files will be created.
 
     Raises:
-        FileExistsError: If directory `target_dir` already exists.
-        FileNotFoundError: If directory `source_dir` does not exist or does not contain any .fasta files.
-        subprocess.CalledProcessError: If creating symlinks fails for some other reason.
+        RuntimeError: If command to create symlinks fails for any reason.
     """
-    if not os.path.isdir(source_dir):
-        raise FileNotFoundError("Directory containing .fasta files not found.")
-    if len(fnmatch.filter(os.listdir(source_dir), '*.fasta')) == 0:
-        raise FileNotFoundError("No .fasta files found.")
-
     # OrthoFinder
-    os.mkdir(target_dir)
     script_symlinks = os.path.join(Path(__file__).parents[2], "scripts", "pipeline", "symlink_fasta.py")
-    subprocess.run([script_symlinks, "-d", source_dir, "-s", target_dir],
-                   capture_output=True, check=True)
+
+    try:
+        subprocess.run([script_symlinks, "-d", source_dir, "-s", target_dir],
+                       capture_output=True, check=True, text=True)
+    except subprocess.CalledProcessError as exc:
+        msg = f"Command '{exc.cmd}' returned non-zero exit status {exc.returncode}"
+        if exc.stdout:
+            msg += f"\n  StdOut: {exc.stdout}"
+        if exc.stderr:
+            msg += f"\n  StdErr: {exc.stderr}"
+        raise RuntimeError(msg) from exc
 
 
-def run_orthology_tools(input_dir: str, number_of_threads: int, number_of_orthofinder_threads: int,
-                        tree_method: str) -> None:
+def run_orthology_tools(input_dir: str, orthofinder_params: str) -> None:
     """Runs the selected orthology inference tool.
 
     Args:
         input_dir: Path to the directory containing the input fasta files (or corresponding symlinks) for
             orthology tools.
-        number_of_threads: The number of threads OrthoFinder will use for running the BLAST searches,
-            tree inference and gene-tree reconciliation in parallel.
-        number_of_orthofinder_threads: The number of parallel processes for other OrthoFinder steps
-            that have been parallelised.
-        tree_method: Method for OrthoFinder gene tree inference: 'dendroblast' or 'msa'.
+        orthofinder_params: Additional OrthoFinder parameters and their values.
 
     Raises:
-        FileNotFoundError: If OrthoFinder executable (`orthofinder_exe`) cannot be found.
-        subprocess.CalledProcessError: If executing OrthoFinder command fails for some reason,
-            including `input_dir` not found.
+        RuntimeError: If OrthoFinder command fails to execute for any reason.
     """
     # OrthoFinder
     orthofinder_exe = "/hps/software/users/ensembl/ensw/C8-MAR21-sandybridge/linuxbrew/bin/orthofinder"
-    subprocess.run([orthofinder_exe, "-t", str(number_of_threads), "-a", str(number_of_orthofinder_threads),
-                    "-M", tree_method, "-f", input_dir], capture_output=True, check=True)
+    cmd = f"{orthofinder_exe} -f {input_dir} {orthofinder_params}"
+
+    try:
+        subprocess.run(cmd, capture_output=True, check=True, shell=True, text=True)
+    except subprocess.CalledProcessError as exc:
+        msg = f"Command '{exc.cmd}' returned non-zero exi status {exc.returncode}"
+        if exc.stdout:
+            msg += f"\n  StdOut: {exc.stdout}"
+        if exc.stderr:
+            msg += f"\n  StdErr: {exc.stderr}"
+        raise RuntimeError(msg) from exc
 
 
 def prep_input_for_goc():
@@ -237,12 +238,8 @@ if __name__ == '__main__':
                         help="Location for 'species_set/core_name.fasta' dumps")
     parser.add_argument("--orthology_input", required=True, type=str,
                         help="Location of input files for orthology tools")
-    parser.add_argument("--number_of_threads", default=32, type=int,
-                        help="OrthoFinder parameter '-t'")
-    parser.add_argument("--number_of_orthofinder_threads", default=8, type=int,
-                        help="OrthoFinder parameter '-a'")
-    parser.add_argument("--tree_method", default="dendroblast", type=str,
-                        help="OrthoFinder parameter '-M'")
+    parser.add_argument("--orthofinder_params", required=False, default="", type=str,
+                        help="Additional OrthoFinder parameters and their values")
 
     args = parser.parse_args()
 
@@ -253,7 +250,6 @@ if __name__ == '__main__':
     print("Preparing input for orthology inference tools...")
     prep_input_for_orth_tools(os.path.join(args.out_dir, args.species_set), args.orthology_input)
     print("Running orthology inference tools...")
-    run_orthology_tools(args.orthology_input, args.number_of_threads, args.number_of_orthofinder_threads,
-                        args.tree_method)
+    run_orthology_tools(args.orthology_input, args.orthofinder_params)
     # prep_input_for_goc()
     # calculate_goc_scores()
