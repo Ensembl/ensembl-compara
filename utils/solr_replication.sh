@@ -189,6 +189,8 @@ if [[ $new_data == "y" ]] ; then
     if [[ $release_type == "even" ]]; then replicate_release_type="odd"; else replicate_release_type="even"; fi
   fi;
 
+  if [[ $site == "grch37" ]]; then generate_site=$site; else generate_site="ebi"; fi
+
   echo -e "\n $((step+=1)). Replicate data using a script."
   echo -e "\t ssh ens_adm02@ves-hx2-70"
   echo -e "\n\t NOTE: Run below in a screen session (screen -S solr-replication)"
@@ -203,7 +205,7 @@ if [[ $new_data == "y" ]] ; then
   echo -e "\t #IF NEEDED: You can also sync to individual server by prepending the host name and to individual shared by prepending the shards"
   echo -e "\t ./sync_indexes.pl -reltype ebi-$replicate_release_type --maxshards 3 -host ${machines_array[0]} --shards ensembl_core"
   echo -e "\n $((step+=1)). Generate the dictionary indexes. As mentioned above running the queries needed for this can identify problems with replication so if any of them fail you will need to take action. Speak to Steve."
-  echo -e "\t /nfs/public/release/ensweb-software/ensembl-solr/build/make_dictionaries.pl -reltype ebi-$replicate_release_type [-dry]"
+  echo -e "\t /nfs/public/release/ensweb-software/ensembl-solr/build/make_dictionaries.pl -reltype $generate_site-$replicate_release_type [-dry]"
 
   # for post release, we need to replicate data first and then switch port at the end
   if [[ $stage == "after" && $new_data != 'n' ]] ; then
