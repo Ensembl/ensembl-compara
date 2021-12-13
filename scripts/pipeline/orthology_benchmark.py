@@ -141,6 +141,7 @@ def dump_genomes(core_list: List[str], species_set_name: str, host: str, port: i
         id_type: Type of stable ids in .fasta header (gene or protein).
 
     Raises:
+        OSError: If creating `out_dir` fails for any reason.
         RuntimeError: If command to dump a core fails for any reason.
         ValueError: If `core_list` is empty.
 
@@ -149,13 +150,19 @@ def dump_genomes(core_list: List[str], species_set_name: str, host: str, port: i
         raise ValueError("No cores to dump.")
 
     dumps_dir = os.path.join(out_dir, species_set_name)
-    os.makedirs(dumps_dir, exist_ok=True)
+
+    try:
+        os.mkdir(dumps_dir)
+    except OSError as e:
+        raise OSError(f"Failed to create '{dumps_dir}' directory.") from e
 
     script = os.path.join(os.environ["ENSEMBL_ROOT_DIR"], "ensembl-compara", "scripts", "dumps",
                           "dump_gene_set_from_core.pl")
 
     for core in core_list:
+
         out_file = os.path.join(dumps_dir, f"{core}.fasta")
+
         try:
             subprocess.run([script, "-core-db", core, "-host", host, "-port", str(port),
                             "-outfile", out_file, "-id_type", id_type], capture_output=True, check=True)

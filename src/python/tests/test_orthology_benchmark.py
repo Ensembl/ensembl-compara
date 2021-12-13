@@ -137,9 +137,14 @@ class TestDumpGenomes:
 
         """
         with raises(RuntimeError):
-            orthology_benchmark.dump_genomes(["mus_musculus", "naja_naja"], "default",
+            orthology_benchmark.dump_genomes(["mus_musculus", "naja_naja"], "fake",
                                              "fake-host", 65536, tmp_dir, "protein")
 
+    def test_dump_genomes_fake_output_path(self) -> None:
+        """Tests :func:`orthology_benchmark.dump_genomes()` with fake output path."""
+        with raises(OSError):
+            orthology_benchmark.dump_genomes(["mus_musculus", "naja_naja"], "default",
+                                             self.host, self.port, "/compara", "protein")
 
 @pytest.mark.parametrize(
     "core_names, exp_output, expectation",
