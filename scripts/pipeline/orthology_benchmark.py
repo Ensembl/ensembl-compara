@@ -210,7 +210,7 @@ def run_orthology_tools(input_dir: str, orthofinder_params: str) -> None:
     try:
         subprocess.run(cmd, capture_output=True, check=True, shell=True, text=True)
     except subprocess.CalledProcessError as exc:
-        msg = f"Command '{exc.cmd}' returned non-zero exi status {exc.returncode}"
+        msg = f"Command '{exc.cmd}' returned non-zero exit status {exc.returncode}"
         if exc.stdout:
             msg += f"\n  StdOut: {exc.stdout}"
         if exc.stderr:
