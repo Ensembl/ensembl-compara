@@ -20,6 +20,12 @@
       <genome name="octopus_bimaculoides"/>
     </collection>
 
+    <collection name="test_test">
+      <!-- Vertebrates -->
+      <genome name="gallus_gallus"/>
+      <genome name="homo_sapiens"/>
+    </collection>
+
   </collections>
 
 </compara_db>

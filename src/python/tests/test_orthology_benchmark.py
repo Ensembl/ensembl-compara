@@ -50,11 +50,11 @@ orthology_benchmark_module = module_from_spec(script_spec)
 sys.modules[script_name] = orthology_benchmark_module
 script_spec.loader.exec_module(orthology_benchmark_module)
 
-# pylint: disable=import-error,wrong-import-position
+# pylint: disable=import-error,wrong-import-position,wrong-import-order
 
 import orthology_benchmark  # type: ignore
 
-# pylint: enable=import-error,wrong-import-position
+# pylint: enable=import-error,wrong-import-position,wrong-import-order
 
 
 @pytest.mark.parametrize(
@@ -125,7 +125,7 @@ class TestDumpGenomes:
             # pylint: disable-next=no-member
             exp_out = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
             for db_name, unittest_db in self.core_dbs.items():
-                assert file_cmp(out_files / f"{unittest_db.dbc.db_name}.fa", exp_out / f"{db_name}.fa")
+                assert file_cmp(out_files / f"{unittest_db.dbc.db_name}.fasta", exp_out / f"{db_name}.fasta")
 
     def test_dump_genomes_fake_connection(self, tmp_dir: Path) -> None:
         """Tests :func:`orthology_benchmark.dump_genomes()` with fake server details.
