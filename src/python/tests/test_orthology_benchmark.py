@@ -142,7 +142,7 @@ class TestDumpGenomes:
 
     def test_dump_genomes_fake_output_path(self) -> None:
         """Tests :func:`orthology_benchmark.dump_genomes()` with fake output path."""
-        with raises(OSError):
+        with raises(OSError, match=r"Failed to create '/compara/default' directory."):
             orthology_benchmark.dump_genomes(["mus_musculus", "naja_naja"], "default",
                                              self.host, self.port, "/compara", "protein")
 
