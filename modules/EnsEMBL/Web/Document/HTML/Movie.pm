@@ -38,7 +38,6 @@ sub render {
   if (!ref $movie) {
     my ($movie_id, @movie_params) = split /\s+/, $movie;
     $movie = shift @{EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->fetch_help_by_ids([ $movie_id ]) || []};
-    # TODO - handle movie_params
   }
 
   return unless $movie;
