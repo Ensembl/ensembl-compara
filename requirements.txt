@@ -1,5 +1,6 @@
 ensembl-py@git+https://github.com/Ensembl/ensembl-py.git@main#egg=ensembl-py
 ensembl-prodinf-tools@git+https://github.com/Ensembl/ensembl-prodinf-tools.git@main#egg=ensembl-prodinf-tools
+argschema>=3.0.1
 biopython>=1.76
 ete3>=3.1.1
 lxml==4.6.3
