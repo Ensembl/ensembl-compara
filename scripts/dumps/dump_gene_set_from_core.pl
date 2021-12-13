@@ -27,12 +27,14 @@ or more of memory to dump a complete gene set.
 
 =head1 SYNOPSIS
 
-    perl dump_gene_set_from_core.pl --core-db <COREDB> --host <HOST> --port <PORT> --outfile <OUTFILE>
+    perl dump_gene_set_from_core.pl --core-db <COREDB> --host <HOST> --port <PORT> --outfile <OUTFILE> \
+        --id_type <IDTYPE>
 
 =head1 EXAMPLES
 
     perl dump_gene_set_from_core.pl --core-db bos_taurus_core_106_12 \
-        --host mysql-ens-vertannot-staging --port 4573 --outfile $HOME/bos_taurus_canon_pep.fasta
+        --host mysql-ens-vertannot-staging --port 4573 --outfile $HOME/bos_taurus_canon_pep.fasta \
+        --id_type gene
 
 =head1 OPTIONS
 
@@ -54,6 +56,11 @@ Port for the host database.
 
 File where the dumped sequence will be stored (in fasta format).
 
+=item B<-id_type> <id_type>
+
+Type of stable ID in the fasta file header.
+Either "gene" or "protein". If not specified, "protein".
+
 =item B<-h[elp]>
 
 Print usage information.
@@ -73,17 +80,19 @@ use Getopt::Long;
 use Pod::Usage;
 
 my ($dbname, $host, $port, $gene_set_dump_file, $help);
+my $id_type = "protein";
 
 GetOptions(
     'core-db|core_db=s' => \$dbname,
     'host=s'            => \$host,
     'port=s'            => \$port,
     'outfile=s'         => \$gene_set_dump_file,
+    'id_type=s'         => \$id_type,
     'h|help'            => \$help
 );
 
 pod2usage(1) if $help;
-unless ($dbname and $host and $port and $gene_set_dump_file) {
+unless ($dbname and $host and $port and $gene_set_dump_file and $id_type =~ /^(?:gene|protein)$/) {
     pod2usage(1);
 }
 
@@ -107,8 +116,9 @@ foreach my $gene (@$genes) {
 
     if ( $can_transcript->translation() ) {
         my $pep = $can_transcript->translate();
+        if ($id_type eq "gene") { $pep->id( $gene->stable_id() ); }
         $seq_out->write_seq($pep);
-        
+
         $num_genes_done++;
     }
 }

@@ -49,6 +49,7 @@ our @EXPORT_OK;
     check_column_integrity
     get_line_count
     check_line_counts
+    dump_string_into_file
 );
 %EXPORT_TAGS = (
   all     => [@EXPORT_OK]
@@ -318,5 +319,24 @@ sub check_line_counts {
     die "Expected $exp_lines lines, but got $got_line_count: $file" if $exp_lines != $got_line_count;
     return 1;
 }
+
+
+=head2 dump_string_into_file
+
+    Arg [1]     : $dump_file
+    Arg [2]     : $str
+    Description : Dumps $str into $dump_file
+    Exceptions  : Throws if file cannot be opened in write mode
+
+=cut
+
+sub dump_string_into_file {
+    my ($dump_file, $str) = @_;
+
+    open( my $fh, '>', $dump_file ) || die "Could not open output file $dump_file";
+    print $fh "$str\n";
+    close($fh);
+}
+
 
 1;

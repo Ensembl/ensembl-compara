@@ -45,3 +45,4 @@
 59	\N	patch	patch_104_105_b.sql|genebuild_varchar255
 61	\N	patch	patch_105_106_a.sql|schema_version
 63	\N	patch	patch_106_107_a.sql|schema_version
+64	\N	patch	patch_105_106_b.sql|clusterset_id_varchar50

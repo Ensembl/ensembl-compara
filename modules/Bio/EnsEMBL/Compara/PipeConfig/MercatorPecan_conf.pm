@@ -91,6 +91,7 @@ sub default_options {
     'skip_multiplealigner_stats' => 0, #skip this module if set to 1
     'bed_dir' => $self->o('work_dir') . '/bed_dir/',
     'output_dir' => $self->o('work_dir') . '/feature_dumps/',
+    'msa_stats_shared_dir' => $self->o('msa_stats_shared_basedir') . '/' . $self->o('species_set_name') . '/' . $self->o('ensembl_release'),
 
      #Resource requirements
     'pecan_capacity'        => 500,
@@ -107,6 +108,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
         'genome_dumps_dir' => $self->o('genome_dumps_dir'),
+        'msa_stats_shared_dir'=> $self->o('msa_stats_shared_dir'),
         'work_dir'         => $self->o('work_dir'),
     };
 }
@@ -118,6 +120,7 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
         
         $self->pipeline_create_commands_rm_mkdir(['blastdb_dir', 'mercator_dir', 'output_dir', 'bed_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['msa_stats_shared_dir'], undef, 'do not rm'),
      ];
 }
 

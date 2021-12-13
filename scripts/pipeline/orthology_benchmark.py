@@ -77,7 +77,9 @@ def dump_genomes(species_list: List[str], species_set_name: str, host: str, port
                           "dump_gene_set_from_core.pl")
 
     for core in dump_cores:
+
         out_file = os.path.join(dumps_dir, f"{core}.fasta")
+
         subprocess.run([script, "-core-db", core, "-host", host, "-port", str(port),
                        "-outfile", out_file], capture_output=True, check=True)
 
