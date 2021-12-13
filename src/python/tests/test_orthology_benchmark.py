@@ -50,11 +50,11 @@ orthology_benchmark_module = module_from_spec(script_spec)
 sys.modules[script_name] = orthology_benchmark_module
 script_spec.loader.exec_module(orthology_benchmark_module)
 
-# pylint: disable=import-error,wrong-import-position
+# pylint: disable=import-error,wrong-import-position,wrong-import-order
 
 import orthology_benchmark  # type: ignore
 
-# pylint: enable=import-error,wrong-import-position
+# pylint: enable=import-error,wrong-import-position,wrong-import-order
 
 
 @pytest.mark.parametrize(
