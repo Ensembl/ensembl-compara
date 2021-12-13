@@ -34,9 +34,7 @@ sub embed_movie {
 
   my $movie_html = EnsEMBL::Web::Document::HTML::Movie->new($self->hub)->render($movie);
 
-  return sprintf '<h3>%s</h3>%s', $movie->{'title'}, $movie_html if $movie_html;
-
-  return '<p>Sorry, this tutorial has not yet been added to our channel.</p>';
+  return $movie_html ? sprintf('<h3>%s</h3>%s', $movie->{'title'}, $movie_html) : undef;
 }
 
 sub parse_help_html {
@@ -59,10 +57,15 @@ sub parse_help_html {
       $line = $self->embed_html_file($1, $adaptor);
     }
 
-    push @html, $line;
+    push @html, $line if $line;
   }
 
-  return join "\n", @html;
+  if (scalar @html) {
+    return join "\n", @html;
+  }
+  else {
+    return '<p>Sorry, this tutorial is not currently available.</p>';
+  }
 }
 
 sub help_feedback {
