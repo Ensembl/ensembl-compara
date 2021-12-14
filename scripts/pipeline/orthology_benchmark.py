@@ -42,6 +42,56 @@ from sqlalchemy import create_engine
 from ensembl.compara.config import get_species_set_by_name
 
 
+def dump_genomes(core_list: List[str], species_set_name: str, host: str, port: int,
+                 out_dir: str, id_type: str) -> None:
+    """Dumps canonical peptides of protein-coding genes for a specified list of species.
+
+    Peptides are dumped from the latest available core databases to FASTA files
+    using `dump_gene_set_from_core.pl`.
+
+    Args:
+        core_list: A list of core db names to dump.
+        species_set_name: Species set (collection) name.
+        host: Database host.
+        port: Host port.
+        out_dir: Directory to place `species_set_name/core_name.fasta` dumps.
+        id_type: Type of stable ids in .fasta header (gene or protein).
+
+    Raises:
+        OSError: If creating `out_dir` fails for any reason.
+        RuntimeError: If command to dump a core fails for any reason.
+        ValueError: If `core_list` is empty.
+
+    """
+    if len(core_list) == 0:
+        raise ValueError("No cores to dump.")
+
+    dumps_dir = os.path.join(out_dir, species_set_name)
+
+    try:
+        os.mkdir(dumps_dir)
+    except OSError as e:
+        raise OSError(f"Failed to create '{dumps_dir}' directory.") from e
+
+    script = os.path.join(os.environ["ENSEMBL_ROOT_DIR"], "ensembl-compara", "scripts", "dumps",
+                          "dump_gene_set_from_core.pl")
+
+    for core in core_list:
+
+        out_file = os.path.join(dumps_dir, f"{core}.fasta")
+
+        try:
+            subprocess.run([script, "-core-db", core, "-host", host, "-port", str(port),
+                            "-outfile", out_file, "-id_type", id_type], capture_output=True, check=True)
+        except subprocess.CalledProcessError as exc:
+            msg = f"Command '{exc.cmd}' returned non-zero exit status {exc.returncode}"
+            if exc.stdout:
+                msg += f"\n  StdOut: {exc.stdout}"
+            if exc.stderr:
+                msg += f"\n  StdErr: {exc.stderr}"
+            raise RuntimeError(msg) from exc
+
+
 def find_latest_core(core_names: List[str]) -> str:
     """Returns the name of the latest available core database.
 
@@ -123,56 +173,6 @@ def get_core_names(species_names: List[str], host: str, port: int, user: str) ->
             core_names[species] = find_latest_core(core_name)
 
     return core_names
-
-
-def dump_genomes(core_list: List[str], species_set_name: str, host: str, port: int,
-                 out_dir: str, id_type: str) -> None:
-    """Dumps canonical peptides of protein-coding genes for a specified list of species.
-
-    Peptides are dumped from the latest available core databases to FASTA files
-    using `dump_gene_set_from_core.pl`.
-
-    Args:
-        core_list: A list of core db names to dump.
-        species_set_name: Species set (collection) name.
-        host: Database host.
-        port: Host port.
-        out_dir: Directory to place `species_set_name/core_name.fasta` dumps.
-        id_type: Type of stable ids in .fasta header (gene or protein).
-
-    Raises:
-        OSError: If creating `out_dir` fails for any reason.
-        RuntimeError: If command to dump a core fails for any reason.
-        ValueError: If `core_list` is empty.
-
-    """
-    if len(core_list) == 0:
-        raise ValueError("No cores to dump.")
-
-    dumps_dir = os.path.join(out_dir, species_set_name)
-
-    try:
-        os.mkdir(dumps_dir)
-    except OSError as e:
-        raise OSError(f"Failed to create '{dumps_dir}' directory.") from e
-
-    script = os.path.join(os.environ["ENSEMBL_ROOT_DIR"], "ensembl-compara", "scripts", "dumps",
-                          "dump_gene_set_from_core.pl")
-
-    for core in core_list:
-
-        out_file = os.path.join(dumps_dir, f"{core}.fasta")
-
-        try:
-            subprocess.run([script, "-core-db", core, "-host", host, "-port", str(port),
-                            "-outfile", out_file, "-id_type", id_type], capture_output=True, check=True)
-        except subprocess.CalledProcessError as exc:
-            msg = f"Command '{exc.cmd}' returned non-zero exit status {exc.returncode}"
-            if exc.stdout:
-                msg += f"\n  StdOut: {exc.stdout}"
-            if exc.stderr:
-                msg += f"\n  StdErr: {exc.stderr}"
-            raise RuntimeError(msg) from exc
 
 
 def prep_input_for_orth_tools(source_dir: str, target_dir: str) -> None:
