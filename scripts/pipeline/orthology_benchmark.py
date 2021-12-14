@@ -42,46 +42,54 @@ from sqlalchemy import create_engine
 from ensembl.compara.config import get_species_set_by_name
 
 
-def dump_genomes(species_list: List[str], species_set_name: str, host: str, port: int,
-                 user: str, out_dir: str) -> None:
+def dump_genomes(core_list: List[str], species_set_name: str, host: str, port: int,
+                 out_dir: str, id_type: str = "protein") -> None:
     """Dumps canonical peptides of protein-coding genes for a specified list of species.
 
     Peptides are dumped from the latest available core databases to FASTA files
     using `dump_gene_set_from_core.pl`.
 
     Args:
-        species_list: A list of species (genome) names to dump.
+        core_list: A list of core db names to dump.
         species_set_name: Species set (collection) name.
         host: Database host.
         port: Host port.
-        user: Server username.
         out_dir: Directory to place `species_set_name/core_name.fasta` dumps.
+        id_type: Type of stable ids in .fasta header (gene or protein).
 
     Raises:
-        FileExistsError: If directory `out_dir/species_set_name` already exists.
-        sqlalchemy.exc.OperationalError: If `user` cannot read from `host:port`.
-        RuntimeError: If no cores are found for any species in `species_list` (`species_set_name`)
-            on `host:port`.
+        OSError: If creating `out_dir` fails for any reason.
+        RuntimeError: If command to dump a core fails for any reason.
+        ValueError: If `core_list` is empty.
 
     """
-    cores = get_core_names(species_list, host, port, user)
-    dump_cores = list(cores.values())
-
-    if len(dump_cores) == 0:
-        raise RuntimeError(f"No cores found for the species set '{species_set_name}' on the specified host.")
+    if len(core_list) == 0:
+        raise ValueError("No cores to dump.")
 
     dumps_dir = os.path.join(out_dir, species_set_name)
-    os.mkdir(dumps_dir)
+
+    try:
+        os.mkdir(dumps_dir)
+    except OSError as e:
+        raise OSError(f"Failed to create '{dumps_dir}' directory.") from e
 
     script = os.path.join(os.environ["ENSEMBL_ROOT_DIR"], "ensembl-compara", "scripts", "dumps",
                           "dump_gene_set_from_core.pl")
 
-    for core in dump_cores:
+    for core in core_list:
 
         out_file = os.path.join(dumps_dir, f"{core}.fasta")
 
-        subprocess.run([script, "-core-db", core, "-host", host, "-port", str(port),
-                       "-outfile", out_file], capture_output=True, check=True)
+        try:
+            subprocess.run([script, "-core-db", core, "-host", host, "-port", str(port),
+                            "-outfile", out_file, "-id_type", id_type], capture_output=True, check=True)
+        except subprocess.CalledProcessError as exc:
+            msg = f"Command '{exc.cmd}' returned non-zero exit status {exc.returncode}"
+            if exc.stdout:
+                msg += f"\n  StdOut: {exc.stdout}"
+            if exc.stderr:
+                msg += f"\n  StdErr: {exc.stderr}"
+            raise RuntimeError(msg) from exc
 
 
 def find_latest_core(core_names: List[str]) -> str:
@@ -143,7 +151,7 @@ def get_core_names(species_names: List[str], host: str, port: int, user: str) ->
         Dictionary mapping species (genome) names to the latest version of available core names.
 
     Raises:
-        ValueError: If `species_list` is empty.
+        ValueError: If `species_names` is empty.
         sqlalchemy.exc.OperationalError: If `user` cannot read from `host:port`.
 
     """
@@ -238,6 +246,8 @@ if __name__ == '__main__':
     parser.add_argument("--user", required=True, type=str, help="Server username")
     parser.add_argument("--out_dir", required=True, type=str,
                         help="Location for 'species_set/core_name.fasta' dumps")
+    parser.add_argument("--id_type", required=False, default="protein", type=str,
+                        help="Header ID type in .fasta dumps [gene/protein]")
     parser.add_argument("--orthology_input", required=True, type=str,
                         help="Location of input files for orthology tools")
     parser.add_argument("--orthofinder_params", required=False, default="", type=str,
@@ -247,8 +257,11 @@ if __name__ == '__main__':
 
     print("Getting a list of species...")
     genome_list = get_species_set_by_name(args.mlss_conf, args.species_set)
+    print("Getting a list of core db names...")
+    core_db_dict = get_core_names(genome_list, args.host, args.port, args.user)
     print("Dumping cores into fasta files...")
-    dump_genomes(genome_list, args.species_set, args.host, args.port, args.user, args.out_dir)
+    dump_genomes(list(core_db_dict.values()), args.species_set, args.host, args.port, args.out_dir,
+                 args.id_type)
     print("Preparing input for orthology inference tools...")
     prep_input_for_orth_tools(os.path.join(args.out_dir, args.species_set), args.orthology_input)
     print("Running orthology inference tools...")

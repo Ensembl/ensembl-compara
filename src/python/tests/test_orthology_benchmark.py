@@ -50,11 +50,11 @@ orthology_benchmark_module = module_from_spec(script_spec)
 sys.modules[script_name] = orthology_benchmark_module
 script_spec.loader.exec_module(orthology_benchmark_module)
 
-# pylint: disable=import-error,wrong-import-position,wrong-import-order
+# pylint: disable=import-error,wrong-import-order,wrong-import-position
 
 import orthology_benchmark  # type: ignore
 
-# pylint: enable=import-error,wrong-import-position,wrong-import-order
+# pylint: enable=import-error,wrong-import-order,wrong-import-position
 
 
 @pytest.mark.parametrize(
@@ -97,16 +97,18 @@ class TestDumpGenomes:
     @pytest.mark.skipif(os.environ['USER'] == 'travis',
                         reason="The test requires both Perl and Python which is not supported by Travis.")
     @pytest.mark.parametrize(
-        "species_list, species_set_name, expectation",
+        "core_list, species_set_name, id_type, expectation",
         [
-            (["gallus_gallus", "homo_sapiens"], "default", does_not_raise()),
-            (["homo_sapiens", "zea_mays"], "default", raises(FileExistsError)),
-            (["felis_catus", "zea_mays"], "test", raises(RuntimeError,
-                    match=r"No cores found for the species set 'test' on the specified host."))
+            (
+                [f"{os.environ['USER']}_gallus_gallus_core_99_6",
+                 f"{os.environ['USER']}_homo_sapiens_core_99_38"],
+                "default", "protein", does_not_raise()
+            ),
+            ([], "test", "gene", raises(ValueError, match=r"No cores to dump."))
         ]
     )
-    def test_dump_genomes(self, species_list: List[str], species_set_name: str,
-                          tmp_dir: Path, expectation: ContextManager) -> None:
+    def test_dump_genomes(self, core_list: List[str], species_set_name: str,
+                          tmp_dir: Path, id_type: str, expectation: ContextManager) -> None:
         """Tests :func:`orthology_benchmark.dump_genomes()` when server connection can be established.
 
         Args:
@@ -118,8 +120,8 @@ class TestDumpGenomes:
 
         """
         with expectation:
-            orthology_benchmark.dump_genomes(species_list, species_set_name, self.host, self.port,
-                                             self.username, tmp_dir)
+            orthology_benchmark.dump_genomes(core_list, species_set_name, self.host, self.port, tmp_dir,
+                                             id_type)
 
             out_files = tmp_dir / species_set_name
             # pylint: disable-next=no-member
@@ -134,10 +136,15 @@ class TestDumpGenomes:
             tmp_dir: Unit test temp directory (fixture).
 
         """
-        with raises(sqlalchemy.exc.OperationalError):
-            orthology_benchmark.dump_genomes(["mus_musculus", "naja_naja"], "default",
-                                             "fake-host", 65536, "compara", tmp_dir)
+        with raises(RuntimeError):
+            orthology_benchmark.dump_genomes(["mus_musculus", "naja_naja"], "fake",
+                                             "fake-host", 65536, tmp_dir, "protein")
 
+    def test_dump_genomes_fake_output_path(self) -> None:
+        """Tests :func:`orthology_benchmark.dump_genomes()` with fake output path."""
+        with raises(OSError, match=r"Failed to create '/compara/default' directory."):
+            orthology_benchmark.dump_genomes(["mus_musculus", "naja_naja"], "default",
+                                             self.host, self.port, "/compara", "protein")
 
 @pytest.mark.parametrize(
     "core_names, exp_output, expectation",
