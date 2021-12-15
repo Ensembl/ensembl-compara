@@ -40,14 +40,15 @@ sub json_fetch_species {
   my $species_defs    = $hub->species_defs;
   my $params          = $hub->multi_params; 
   my $alignments      = $species_defs->multi_hash->{'DATABASE_COMPARA'}->{'ALIGNMENTS'} || {};
-  my $primary_species = $species_defs->SPECIES_PRODUCTION_NAME;
+  my $primary_species = $hub->species;
+  my $prodname        = $species_defs->SPECIES_PRODUCTION_NAME;
   my $species_label   = $species_defs->species_label($primary_species, 1);
   my %shown           = map { $params->{"s$_"} => $_ } grep s/^s(\d+)$/$1/, keys %$params; # get species (and parameters) already shown on the page
   my $object          = $self->object;
   my $chr             = $object->seq_region_name;
   my $start           = $object->seq_region_start;
   my $end             = $object->seq_region_end;
-  my $intra_species   = ($hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'INTRA_SPECIES_ALIGNMENTS'} || {})->{'REGION_SUMMARY'}{$primary_species};
+  my $intra_species   = ($hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'INTRA_SPECIES_ALIGNMENTS'} || {})->{'REGION_SUMMARY'}{$prodname};
   my $chromosomes     = $species_defs->ENSEMBL_CHROMOSOMES;
   my $species_info    = $hub->get_species_info;
   my (%available_species, %included_regions);
@@ -55,43 +56,46 @@ sub json_fetch_species {
   my $available_species_map = {};
   my $extras = {};
   my $uniq_assembly = {};
+  my $lookup = $species_defs->production_name_lookup;
 
   # Adding haplotypes / patches
   foreach my $alignment (grep $start < $_->{'end'} && $end > $_->{'start'}, @{$intra_species->{$object->seq_region_name}}) {
     my $type = lc $alignment->{'type'};
     my ($s)  = grep /--$alignment->{'target_name'}$/, keys %{$alignment->{'species'}};
     my ($sp, $target) = split '--', $s;
+    my $sp_url = $lookup->{$sp};
+    my $sp_key = $sp_url.'--'.$target;
 
     # Check for alignment availability in the region
-    next if !$hub->get_adaptor('get_GenomicAlignBlockAdaptor', 'compara')->_has_alignment_for_region($alignment->{id}, $primary_species, $chr, $start, $end, $sp, $target);
+    next unless $hub->get_adaptor('get_GenomicAlignBlockAdaptor', 'compara')->_has_alignment_for_region($alignment->{id}, $prodname, $chr, $start, $end, $sp, $target);
 
     s/_/ /g for $type, $target;
 
-    $available_species{$s} = $species_defs->species_label($sp, 1) . (grep($target eq $_, @$chromosomes) ? ' chromosome' : '') . " $target - $type";
+    $available_species{$s} = $species_defs->species_label($sp_url, 1) . (grep($target eq $_, @$chromosomes) ? ' chromosome' : '') . " $target - $type";
     my $tmp = {};
-    $tmp->{scientific_name} = $s;
-    $tmp->{key} = $s;
+    $tmp->{scientific_name} = $sp_key;
+    $tmp->{key} = $sp_key;
     if (grep($target eq $_, @$chromosomes)) {
       $tmp->{display_name} = 'Chromosome ' . "$target";
       $tmp->{assembly_target} = $target;
       if (!$uniq_assembly->{$target}) {
-        push @{$extras->{$sp}->{'primary assembly'}->{data}}, $tmp;
+        push @{$extras->{$sp_url}->{'primary assembly'}->{data}}, $tmp;
         $uniq_assembly->{$target} = 1; # to remove duplicates
       }
-      if (!$extras->{$sp}->{'primary assembly'}->{create_folder}) {
-        $extras->{$sp}->{'primary assembly'}->{create_folder} = 1;
+      if (!$extras->{$sp_url}->{'primary assembly'}->{create_folder}) {
+        $extras->{$sp_url}->{'primary assembly'}->{create_folder} = 1;
       }
     }
     else {
       $tmp->{display_name} = "$target";
-      $extras->{$sp}->{'haplotypes and patches'}->{create_folder} = 1;
-      push @{$extras->{$sp}->{'haplotypes and patches'}->{data}}, $tmp;
+      $extras->{$sp_url}->{'haplotypes and patches'}->{create_folder} = 1;
+      push @{$extras->{$sp_url}->{'haplotypes and patches'}->{data}}, $tmp;
     }
   }
 
   foreach (grep !$available_species{$_}, keys %shown) {
     my ($sp, $target) = split '--';
-    $included_regions{$target} = $intra_species->{$target} if $sp eq $primary_species;
+    $included_regions{$target} = $intra_species->{$target} if $sp eq $prodname;
   }
 
   foreach my $target (keys %included_regions) {
@@ -105,17 +109,17 @@ sub json_fetch_species {
     }
   }
 
-  foreach my $alignment (grep { $_->{'species'}{$primary_species} && $_->{'class'} =~ /pairwise/ } values %$alignments) {
+  foreach my $alignment (grep { $_->{'species'}{$prodname} && $_->{'class'} =~ /pairwise/ } values %$alignments) {
     foreach (keys %{$alignment->{'species'}}) {
-      $_ = $hub->species_defs->production_name_mapping($_);
-      if ($_ ne $primary_species) {
+      my $url = $lookup->{$_};
+      if ($url ne $primary_species) {
         my $type = lc $alignment->{'type'};
            $type =~ s/_net//;
            $type =~ s/_/ /g;
-        if ($available_species{$_}) {
-          $available_species{$_} .= "/$type";
+        if ($available_species{$url}) {
+          $available_species{$url} .= "/$type";
         } else {
-          $available_species{$_} = $species_defs->species_label($_, 1) . " - $type";
+          $available_species{$url} = $species_defs->species_label($url, 1) . " - $type";
         }
       }
     }
