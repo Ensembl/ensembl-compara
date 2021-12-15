@@ -64,10 +64,10 @@ sub default_options {
         ],
 
         # Extra analyses:
-        # Compute dNdS for homologies?
-        'do_dnds'                => 1,
         # Gain/loss analysis?
         'do_cafe'                => 0,
+        # Compute dNdS for homologies?
+        'do_dnds'                => 1,
         # Do we want the Gene QC part to run?
         'do_gene_qc'             => 0,
         # Do we need a mapping between homology_ids of this database to another database?
