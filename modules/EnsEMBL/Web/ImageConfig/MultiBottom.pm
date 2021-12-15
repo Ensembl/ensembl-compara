@@ -103,7 +103,7 @@ sub glyphset_tracks {
 
 sub multi {
   my ($self, $methods, $chr, $pos, $total,$all_slices, @slices) = @_;
-  my $sp              = ucfirst $self->hub->species_defs->get_config($self->{'species'}, 'SPECIES_PRODUCTION_NAME');
+  my $prodname        = $self->hub->species_defs->get_config($self->{'species'}, 'SPECIES_PRODUCTION_NAME');
   my $multi_hash      = $self->species_defs->multi_hash;
   my $primary_species = $self->hub->species;
   my $p               = $pos == $total && $total > 2 ? 2 : 1;
@@ -115,19 +115,19 @@ sub multi {
   foreach my $db (@{$self->species_defs->compara_like_databases || []}) {
     next unless exists $multi_hash->{$db}; 
 
-    foreach (values %{$multi_hash->{$db}{'ALIGNMENTS'}}, @{$multi_hash->{$db}{'INTRA_SPECIES_ALIGNMENTS'}{'REGION_SUMMARY'}{$sp}{$chr} || []}) {
+    foreach (values %{$multi_hash->{$db}{'ALIGNMENTS'}}, @{$multi_hash->{$db}{'INTRA_SPECIES_ALIGNMENTS'}{'REGION_SUMMARY'}{$prodname}{$chr} || []}) {
 
       next unless $methods->{$_->{'type'}};
       next unless $_->{'class'} =~ /pairwise_alignment/;
-      next unless $_->{'species'}{$sp} || $_->{'species'}{"$sp--$chr"};
+      next unless $_->{'species'}{$prodname} || $_->{'species'}{"$prodname--$chr"};
 
       my %align = %$_; # Make a copy for modification
 
       $i = $p;
       foreach (@slices) {
-        my $species = ucfirst $self->hub->species_defs->get_config($_->{species}, 'SPECIES_PRODUCTION_NAME');
+        my $check_prodname = $self->species_defs->get_config($_->{'species_check'}, 'SPECIES_PRODUCTION_NAME');
 
-        if ($align{'species'}{$species eq $sp ? $_->{'species_check'} : $species} && !($_->{'species_check'} eq $primary_species && $sp eq $primary_species)) {
+        if ($align{'species'}{$check_prodname}) {
           $align{'order'} = $i;
           $align{'ori'}   = $_->{'strand'};
           $align{'gene'}  = $_->{'g'};
@@ -166,7 +166,7 @@ sub multi {
       my $strand = shift @strands;
 
       foreach my $align (sort { $a->{'type'} cmp $b->{'type'} } @{$alignments{$_}}) {
-        my ($other_species) = grep $_ ne $sp, keys %{$align->{'species'}};
+        my ($other_species) = grep $_ ne $prodname, keys %{$align->{'species'}};
 
         my $glyphset = $align->{'type'} =~ /CACTUS/ ? 'cactus_hal' : '_alignment_pairwise';
 
