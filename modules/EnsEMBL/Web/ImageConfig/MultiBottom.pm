@@ -125,9 +125,11 @@ sub multi {
 
       $i = $p;
       foreach (@slices) {
-        my $check_prodname = $self->species_defs->get_config($_->{'species_check'}, 'SPECIES_PRODUCTION_NAME');
+        my ($check_species, $check_chr) = split('--', $_->{'species_check'});
+        my $check_prodname  = $self->species_defs->get_config($check_species, 'SPECIES_PRODUCTION_NAME');
+        my $check_key       = $check_chr ? $check_prodname.'--'.$check_chr : $check_prodname;
 
-        if ($align{'species'}{$check_prodname}) {
+        if ($align{'species'}{$check_key}) {
           $align{'order'} = $i;
           $align{'ori'}   = $_->{'strand'};
           $align{'gene'}  = $_->{'g'};
