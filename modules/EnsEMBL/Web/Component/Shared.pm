@@ -962,7 +962,7 @@ sub check_for_missing_species {
         && ($self->param(sprintf 'species_%d_%s', $align, lc) || 'off') eq 'off') {
       push @skipped, $_ unless ($args->{ignore} && $args->{ignore} eq 'ancestral_sequences');
     }
-    elsif (defined $slice and !$aligned_species{$sp_url} and $_ ne 'ancestral_sequences') {
+    elsif (defined $slice and !$aligned_species{$_} and $_ ne 'ancestral_sequences') {
       my $key = $hub->is_strain($sp_url) ? pluralise($species_info->{$sp_url}{strain_type}) : 'species';
       push @{$missing_hash->{$key}}, $species_info->{$sp_url}{common};
       push @missing, $sp_url;
