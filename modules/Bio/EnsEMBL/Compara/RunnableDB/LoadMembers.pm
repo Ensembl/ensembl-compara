@@ -223,6 +223,25 @@ sub loadMembersFromCoreSlices {
         $self->warning("Discarded ".($n1-scalar(@relevant_genes))." genes because they span the end of circular chromosomes");
     }
 
+    # Discard genes whose canonical transcripts are readthrough transcripts
+    my $n2 = scalar(@relevant_genes);
+    my @readthrough_genes;
+    my $attrib_value = 'readthrough';
+    foreach my $gene (@relevant_genes){
+        my $can_transcript = $gene->canonical_transcript();
+        my @tr_attribs = @{$can_transcript->get_all_Attributes()};
+        my @readthrough = grep {$_->value() eq $attrib_value} @tr_attribs;
+        push @readthrough_genes, $gene if scalar(@readthrough) > 0;
+    }
+
+    my %h;
+    @h{@readthrough_genes} = undef;
+    @relevant_genes = grep {not exists $h{$_}} @relevant_genes;
+
+    if ($n2 != scalar(@relevant_genes)) {
+        $self->warning("Discarded ".($n2-scalar(@relevant_genes))." genes because they have a readthrough canonical transcipt");
+    }
+
     $self->param('geneCount', $self->param('geneCount') + scalar(@relevant_genes) );
 
     if ($self->param('coding_exons')) {
