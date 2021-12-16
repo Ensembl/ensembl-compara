@@ -345,7 +345,7 @@ sub get_slices {
   foreach (@slices) {
     next unless $_;
 
-    my $name = $_->can('display_Slice_name') ? $_->display_Slice_name : $args->{species};
+    my $name = $_->can('display_Slice_name') ? lc $_->display_Slice_name : $args->{species};
 
     my $cigar_line = $_->can('get_cigar_line') ? $_->get_cigar_line : "";
     #Need to change G to X if genetree glyphs are to be rendered correctly

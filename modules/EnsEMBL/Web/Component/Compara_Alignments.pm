@@ -505,7 +505,7 @@ sub _get_target_slice_table {
   $cdb   ||= 'compara';
 
   my $hub                     = $self->hub;
-  my $ref_species             = lc($hub->species);
+  my $ref_species             = $hub->species_defs->SPECIES_PRODUCTION_NAME;
   my $compara_db              = $hub->database($cdb);
   my $mlss_adaptor            = $compara_db->get_adaptor('MethodLinkSpeciesSet');
   my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($align);
@@ -513,6 +513,7 @@ sub _get_target_slice_table {
   my $html                    = '';
 
   my $other_species;
+  my $lookup        = $hub->species_defs->production_name_lookup;
 
   #Find the mapping reference species for EPO_LOW_COVERAGE alignments to distinguish the overlapping blocks
   if ($type =~ /EPO_LOW_COVERAGE/ && $is_low_coverage_species) {
@@ -528,7 +529,7 @@ sub _get_target_slice_table {
   } elsif ($class =~ /pairwise/) {
     #Find the non-reference species for pairwise alignments
     #get the non_ref name from the first block
-    $other_species = $hub->species_defs->prodname_to_url($gabs->[0]->get_all_non_reference_genomic_aligns->[0]->genome_db->name);
+    $other_species = $gabs->[0]->get_all_non_reference_genomic_aligns->[0]->genome_db->name;
   }
 
   my $merged_blocks = $self->object->build_features_into_sorted_groups($groups);
@@ -537,10 +538,10 @@ sub _get_target_slice_table {
   my @columns = (
                  { key => 'block', sort => 'none', title => 'Alignment (click to view)' },
                  { key => 'length', sort => 'numeric', title => 'Length (bp)' },
-                 { key => 'ref_species', sort => 'html', title => "Location on " . $self->object->get_slice_display_name(ucfirst($ref_species)) },
+                 { key => 'ref_species', sort => 'html', title => "Location on " . $self->object->get_slice_display_name($lookup->{$ref_species}) },
                 );
 
-  push @columns, { key => 'other_species', sort => 'html', title => "Location on " . $self->object->get_slice_display_name(ucfirst($other_species)) } if ($other_species);
+  push @columns, { key => 'other_species', sort => 'html', title => "Location on " . $self->object->get_slice_display_name($lookup->{$other_species}) } if ($other_species);
   push @columns, { key => 'additional_species', sort => 'numeric', title => 'Additional species'} unless ($class =~ /pairwise/);
 
   my @rows;
@@ -580,13 +581,13 @@ sub _get_target_slice_table {
     $align_params .= "--" . $lookup->{$non_ref_ga->genome_db->name} . "--" . $non_ref_ga->dnafrag->name . ":$non_ref_start-$non_ref_end" if ($non_ref_ga);
 
     my %url_params = (
-                     species => $ref_species,
+                     species => $lookup->{$ref_species},
                      type    => 'Location',
                      action  => 'Compara_Alignments'
                     );
 
     my $block_link = $hub->url({
-                               species => $ref_species,
+                               species => $lookup->{$ref_species},
                                type    => 'Location',
                                action  => 'Compara_Alignments',
                                align   => $align_params,
@@ -595,7 +596,7 @@ sub _get_target_slice_table {
 
     my $ref_string = "$ref_region:$ref_start-$ref_end";
     my $ref_link = $hub->url({
-                             species => $ref_species,
+                             species => $lookup->{$ref_species},
                              type   => 'Location',
                              action => 'View',
                              r      => $ref_string,
