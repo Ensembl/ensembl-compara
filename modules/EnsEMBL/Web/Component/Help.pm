@@ -34,7 +34,7 @@ sub embed_movie {
 
   my $movie_html = EnsEMBL::Web::Document::HTML::Movie->new($self->hub)->render($movie);
 
-  return $movie_html ? sprintf('<h3>%s</h3>%s', $movie->{'title'}, $movie_html) : undef;
+  return $movie_html ? sprintf('<h3>%s</h3>%s', $movie->{'title'}, $movie_html) : '';
 }
 
 sub parse_help_html {
@@ -51,13 +51,13 @@ sub parse_help_html {
       substr $line, $-[0], $+[0] - $-[0], qq(<img src="$img_url$1" alt="" $2 \/>); # replace square bracket tag with actual image
     }
 
-    if ($line =~ /\[\[MOVIE::(\d+)/i) {
-      $line = $self->embed_movie(@{$adaptor->fetch_help_by_ids([$1]) || []});
+    if ($line =~ /\[\[MOVIE::(\d+)\]\]/i) {
+      substr $line, $-[0], $+[0] - $-[0], $self->embed_movie(@{$adaptor->fetch_help_by_ids([$1]) || []});
     } elsif ($line =~ /\[\[HTML::(.+)\]\]/) {
-      $line = $self->embed_html_file($1, $adaptor);
+      substr $line, $-[0], $+[0] - $-[0],  $self->embed_html_file($1, $adaptor);
     }
 
-    push @html, $line if $line;
+    push @html, $line;
   }
 
   if (scalar @html) {
