@@ -127,7 +127,9 @@ do
     echo -e "\t op summary #to confirm kicker and solr-java are stopped"
   else
     # for post release we only disable kicker
-    echo -e "\n$((step+=1)). Disable kicker on $server"
+    echo -en "\n$((step+=1)). Disable kicker "
+    if [[ $site != "grch37" ]]; then echo -n "and remove indexes "; fi
+    echo -e "on $server"
     echo -e "\t ssh ens_adm02@ves-hx2-70"
     echo -e "\t ssh -i ~/.ssh/users/tc_ens02 tc_ens02@$server"
     echo -e "\t op stop kicker"
@@ -137,9 +139,14 @@ do
 
   # we dont need to remove previous indexes for 37 as there is enough spaces
   if [[ $site != "grch37" ]] ; then
-    echo -e "\n\t #Remove indexes from previous release to make sure there's enough disc space"
+    echo -e "\n\t #Remove the index files from previous release to make sure there's enough disc space"
     echo -e "\t cd /data/solr-data"
     echo -e "\t rm -rf * #(If you want to replicate just one shard, say core, you delete only that folder)"
+    echo -e "\n\t #Restart Solr to clear the indexes"
+    echo -e "\t op stop solr-java"
+    echo -e "\t op summary #to confirm solr-java is stopped"
+    echo -e "\t #Make sure solr-java is still not running by doing 'ps aux | grep java'. If it is, kill the process."
+    echo -e "\t op start solr-java"
     echo -e "\t exit;"
   fi
 
@@ -204,7 +211,8 @@ if [[ $new_data == "y" ]] ; then
   echo -e "\t ./sync_indexes.pl -reltype ebi-$replicate_release_type --maxshards 3 -host ${machines_array[0]}"
   echo -e "\t #IF NEEDED: You can also sync to individual server by prepending the host name and to individual shared by prepending the shards"
   echo -e "\t ./sync_indexes.pl -reltype ebi-$replicate_release_type --maxshards 3 -host ${machines_array[0]} --shards ensembl_core"
-  echo -e "\n $((step+=1)). Generate the dictionary indexes. As mentioned above running the queries needed for this can identify problems with replication so if any of them fail you will need to take action. Speak to Steve."
+  echo -e "\n $((step+=1)). Generate the dictionary indexes. Running the queries needed for this can identify problems with replication."
+  echo -e "   If any of them fail you will need to take action (retry the query in a web browser, speak to Steve)."
   echo -e "\t /nfs/public/release/ensweb-software/ensembl-solr/build/make_dictionaries.pl -reltype $generate_site-$replicate_release_type [-dry]"
 
   # for post release, we need to replicate data first and then switch port at the end
@@ -212,7 +220,7 @@ if [[ $new_data == "y" ]] ; then
     for server in "${machines_array[@]}"
     do
       echo -e "\n $((step+=1)). Switch ports for $server - Edit the controller script."
-      echo -e "\t ssh ens_adm02@$server"
+      echo -e "\t ssh -i ~/.ssh/users/tc_ens02 tc_ens02@$server"
       echo -e "\t cd /data"
 
       if [[ $release_type == "even" ]] ; then
@@ -230,10 +238,9 @@ if [[ $new_data == "y" ]] ; then
   fi
 
   
-  echo -e "\n $((step+=1)). Reenable kicker on Solr server"
-  
   for server in "${machines_array[@]}"
   do
+    echo -e "\n $((step+=1)). Reenable kicker on $server"
     echo -e "\t ssh -i ~/.ssh/users/tc_ens02 tc_ens02@$server"
 
     if [[ $stage == "after" && $new_data != 'n' ]] ; then
@@ -244,8 +251,8 @@ if [[ $new_data == "y" ]] ; then
     fi
     echo -e "\t op start kicker"
     echo -e "\t exit;"
-    echo -e "\t #wait for 2mins before doing below check"
-    echo -e "\t Check a query works: http://${server}:$release_port/solr-sanger/ensembl_core/ensemblshards?indent=on&version=2.2&q=brca2"
+    echo -e "\n\t #Wait for 2mins and check the query below works:"
+    echo -e "\t http://${server}:$release_port/solr-sanger/ensembl_core/ensemblshards?indent=on&version=2.2&q=brca2"
   done
 fi
 
