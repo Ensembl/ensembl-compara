@@ -15,17 +15,28 @@ for your downloads.</p>
 in your web browser to locate the files you need, then alter the FTP URL as follows:</p>
 <ul>
 <li>Change the protocol from <kbd>http:</kbd> to <kbd>rsync:</kbd></li>
-<li>Insert <kbd>ensembl</kbd> into the path after the domain name</li>
+<li>Insert <kbd>ensembl</kbd> into the path after the domain name before you paste. Note for downloading from ensemblgenomes sites use <kbd>ensemblgenomes</kbd> rather than <kbd>ensembl</kbd> (see example below).</li>
 </ul>
 <p>before you paste it into the command line.</p>
 
-<p>For example, the following command will download all the human EMBL files from 
-<kbd>http://ftp.ensembl.org/pub/current_embl/homo_sapiens/</kbd> 
+<p>Examples
+    <li>The following command will download all the human EMBL files from 
+<kbd>http://ftp.ensembl.org/pub/current_embl/homo_sapiens</kbd> 
 to the current directory:</p>
 
 <pre class="code">
 rsync -av rsync://ftp.ensembl.org/ensembl/pub/current_embl/homo_sapiens .
 </pre>
+</li>
+
+<li>The following command will download all the <i>Actinidia chinensis</i> FASTA files from
+    <kbd>http://ftp.ebi.ac.uk/ensemblgenomes/pub/plants/current/fasta/actinidia_chinensis</kbd> 
+    to the current directory:</p>
+    
+    <pre class="code">
+rsync -av rsync://ftp.ebi.ac.uk/ensemblgenomes/pub/plants/current/fasta/actinidia_chinensis/ .
+    </pre>
+    </li>
 
 
 </body>
