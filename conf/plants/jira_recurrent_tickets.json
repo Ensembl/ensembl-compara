@@ -127,6 +127,12 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines#Mergethehomologypipelines-Species-trees",
+            "summary": "Load the species tree"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines#Mergethehomologypipelines-PostHomologyMergepipeline",
             "summary": "Run the PostHomologyMerge_conf pipeline"
          },
