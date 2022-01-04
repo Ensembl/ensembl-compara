@@ -239,7 +239,7 @@ sub loadMembersFromCoreSlices {
     @relevant_genes = grep {not exists $h{$_}} @relevant_genes;
 
     if ($n2 != scalar(@relevant_genes)) {
-        $self->warning("Discarded ".($n2-scalar(@relevant_genes))." genes because they have a readthrough canonical transcipt");
+        $self->warning("Discarded " . ($n2 - scalar(@relevant_genes)) . " genes because they have a readthrough canonical transcipt");
     }
 
     $self->param('geneCount', $self->param('geneCount') + scalar(@relevant_genes) );
