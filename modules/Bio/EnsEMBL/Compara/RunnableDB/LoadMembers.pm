@@ -226,11 +226,10 @@ sub loadMembersFromCoreSlices {
     # Discard genes whose canonical transcripts are readthrough transcripts
     my $n2 = scalar(@relevant_genes);
     my @readthrough_genes;
-    my $attrib_value = 'readthrough';
     foreach my $gene (@relevant_genes){
-        my $can_transcript = $gene->canonical_transcript();
-        my @tr_attribs = @{$can_transcript->get_all_Attributes()};
-        my @readthrough = grep {$_->value() eq $attrib_value} @tr_attribs;
+        my $canonical_transcript = $gene->canonical_transcript();
+        my @tr_attribs = @{$canonical_transcript->get_all_Attributes()};
+        my @readthrough = grep {$_->value() eq 'readthrough'} @tr_attribs;
         push @readthrough_genes, $gene if scalar(@readthrough) > 0;
     }
 
