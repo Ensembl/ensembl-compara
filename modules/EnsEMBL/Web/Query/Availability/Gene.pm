@@ -185,6 +185,7 @@ sub _count_alignments {
 
 sub _counts {
   my ($self,$args,$member,$panmember) = @_;
+  my $division = $self->sd_config($args,"DIVISION");
 
   my $out = {
     transcripts => scalar @{$args->{'gene'}->get_all_Transcripts},
@@ -203,12 +204,12 @@ sub _counts {
     $out->{'phenotpyes'} = $self->_get_phenotype($args);
   }
   if($member) {
-    $out->{'orthologs'} = $member->number_of_orthologues;
+    $out->{'orthologs'} = $member->number_of_orthologues // $member->number_of_orthologues($division) ;
 
     $out->{'strain_orthologs'} =  $self->sd_config($args,'RELATED_TAXON') ? $member->number_of_orthologues($self->sd_config($args,'RELATED_TAXON')) : 0;
-    $out->{'paralogs'} = $member->number_of_paralogues;
+    $out->{'paralogs'} = $member->number_of_paralogues // $member->number_of_paralogues($division) ;
     $out->{'strain_paralogs'} =  $self->sd_config($args,'RELATED_TAXON') ? $member->number_of_paralogues($self->sd_config($args,'RELATED_TAXON')) : 0;
-    $out->{'families'} = $member->number_of_families;
+    $out->{'families'} = $member->number_of_families // $member->number_of_families($division) ;
   }
   my $alignments = $self->_count_alignments($args);
   $out->{'alignments'} = $alignments->{'all'} if $args->{'type'} eq 'core';
@@ -232,13 +233,14 @@ sub get {
   my $member = $self->compara_member($args) if $out->{'database:compara'};
   my $panmember = $self->pancompara_member($args) if $out->{'database:compara_pan_ensembl'};
   my $counts = $self->_counts($args,$member,$panmember);
+  my $division = $self->sd_config($args,"DIVISION");
 
   $out->{'counts'} = $counts;
   $out->{'history'} =
     0+!!($self->table_info($args,'stable_id_event')->{'rows'});
   $out->{'gene'} = 1;
   $out->{'core'} = $args->{'type'} eq 'core';
-  $out->{'has_gene_tree'} = $member ? $member->has_GeneTree : 0;
+  $out->{'has_gene_tree'} = $member ? $member->has_GeneTree // $member->has_GeneTree($division) : 0;
   $out->{'can_r2r'} = $self->sd_config($args,'R2R_BIN');
   if($self->sd_config($args,'RELATED_TAXON')) { #gene tree availability check for strain
     $out->{'has_strain_gene_tree'} = $member ? $member->has_GeneTree($self->sd_config($args,'RELATED_TAXON')) : 0; #TODO: replace hardcoded species

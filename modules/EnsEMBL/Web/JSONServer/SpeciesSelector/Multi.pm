@@ -57,6 +57,7 @@ sub json_fetch_species {
   my $available_species_map = {};
   my $extras = {};
   my $uniq_assembly = {};
+  my $lookup = $species_defs->production_name_lookup;
 
   # Adding haplotypes / patches
   foreach my $alignment (grep $start < $_->{'end'} && $end > $_->{'start'}, @{$intra_species->{$object->seq_region_name}}) {
@@ -72,23 +73,23 @@ sub json_fetch_species {
 
     $available_species{$s} = $species_defs->species_label($url, 1) . (grep($target eq $_, @$chromosomes) ? ' chromosome' : '') . " $target - $type";
     my $tmp = {};
-    $tmp->{scientific_name} = $s;
-    $tmp->{key} = $s;
+    $tmp->{scientific_name} = $sp_key;
+    $tmp->{key} = $sp_key;
     if (grep($target eq $_, @$chromosomes)) {
       $tmp->{display_name} = 'Chromosome ' . "$target";
       $tmp->{assembly_target} = $target;
       if (!$uniq_assembly->{$target}) {
-        push @{$extras->{$sp}->{'primary assembly'}->{data}}, $tmp;
+        push @{$extras->{$sp_url}->{'primary assembly'}->{data}}, $tmp;
         $uniq_assembly->{$target} = 1; # to remove duplicates
       }
-      if (!$extras->{$sp}->{'primary assembly'}->{create_folder}) {
-        $extras->{$sp}->{'primary assembly'}->{create_folder} = 1;
+      if (!$extras->{$sp_url}->{'primary assembly'}->{create_folder}) {
+        $extras->{$sp_url}->{'primary assembly'}->{create_folder} = 1;
       }
     }
     else {
       $tmp->{display_name} = "$target";
-      $extras->{$sp}->{'haplotypes and patches'}->{create_folder} = 1;
-      push @{$extras->{$sp}->{'haplotypes and patches'}->{data}}, $tmp;
+      $extras->{$sp_url}->{'haplotypes and patches'}->{create_folder} = 1;
+      push @{$extras->{$sp_url}->{'haplotypes and patches'}->{data}}, $tmp;
     }
   }
 
@@ -115,10 +116,10 @@ sub json_fetch_species {
         my $type = lc $alignment->{'type'};
            $type =~ s/_net//;
            $type =~ s/_/ /g;
-        if ($available_species{$_}) {
-          $available_species{$_} .= "/$type";
+        if ($available_species{$url}) {
+          $available_species{$url} .= "/$type";
         } else {
-          $available_species{$_} = $species_defs->species_label($_, 1) . " - $type";
+          $available_species{$url} = $species_defs->species_label($url, 1) . " - $type";
         }
       }
     }
