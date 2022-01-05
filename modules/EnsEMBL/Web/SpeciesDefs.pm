@@ -967,7 +967,7 @@ sub _parse {
         $tree->{$url}{'SPECIES_IMAGE'} = $url;
         $no_image = 0;
       }
-      elsif ($tree->{$url}{'SPECIES_STRAIN'}) {
+      elsif ($tree->{$url}{'STRAIN_GROUP'}) {
         ## Look for a strain image (needed for pig)
         my $parent_image = ucfirst($tree->{$url}{'STRAIN_GROUP'});
         my $strain_image = $parent_image.'_'.$tree->{$url}{'STRAIN_TYPE'};
