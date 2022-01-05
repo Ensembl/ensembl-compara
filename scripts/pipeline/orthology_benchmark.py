@@ -30,11 +30,13 @@ Typical usage examples::
 """
 
 import argparse
+import glob
 import os
 from pathlib import Path
 import re
 import subprocess
 from typing import Dict, List
+import warnings
 
 import numpy
 from sqlalchemy import create_engine
@@ -175,6 +177,63 @@ def get_core_names(species_names: List[str], host: str, port: int, user: str) ->
     return core_names
 
 
+def get_gtf_file(core_name: str, source_dir: str, target_dir: str) -> None:
+    """Finds and copies a GTF file for a specified core db.
+
+    Note:
+        The code utilises the structure of `production/ensemblftp` or MC's personal dir
+        to speed up file search.
+
+    Args:
+        core_name: Core db name.
+        source_dir: Path to the directory containing subdirectories with GTF files.
+            `production/ensemblftp` or MC's `nobackup/release_dumps`.
+        target_dir: Path to the directory where the GTF file will be copied.
+
+    Raises:
+        RuntimeError: If command to copy a file fails for any reason.
+
+    Warns:
+        UserWarning: If the GTF file was not found.
+
+    """
+    species_name = core_name.split("_core_")[0]
+    rel_ver = core_name.split("_core_")[1].split("_")
+
+    # gtf_dirs contains all subdirs of source_dir which could contain the gtf file
+    # Vertebrates in `production/ensemblftp`:
+    gtf_dirs = [os.path.join(source_dir, "release-" + rel_ver[0], "gtf", species_name)]
+    # Vertebrates in MC's personal dir and
+    # all other divisions whether in `production/ensemblftp` or MC's dir
+    divisions = ["vertebrates", "plants", "metazoa", "bacteria", "fungi", "protists"]
+    for division in divisions:
+        gtf_dirs.append(os.path.join(source_dir, "release-" + rel_ver[0], division, "gtf", species_name))
+
+    for directory in gtf_dirs:
+        try:
+            gtf_file = [file for file in glob.glob(os.path.join(directory, "*"))
+                        if file.endswith(f".{rel_ver[0]}.gtf.gz")][0]
+        except IndexError:
+            continue
+
+        try:
+            cmd = f"cp {gtf_file} {target_dir}"
+            result = subprocess.run(cmd, capture_output=True, check=True, shell=True, text=True)
+            break
+        except subprocess.CalledProcessError as exc:
+            msg = f"Command '{exc.cmd}' returned non-zero exit status {exc.returncode}"
+            if exc.stdout:
+                msg += f"\n  StdOut: {exc.stdout}"
+            if exc.stderr:
+                msg += f"\n  StdErr: {exc.stderr}"
+            raise RuntimeError(msg) from exc
+
+    try:
+        result
+    except NameError:
+        warnings.warn(f"GTF file for '{core_name}' not found.")
+
+
 def prep_input_for_orth_tools(source_dir: str, target_dir: str) -> None:
     """Prepares input files for selected orthology inference tools.
 
@@ -268,3 +327,4 @@ if __name__ == '__main__':
     run_orthology_tools(args.orthology_input, args.orthofinder_params)
     # prep_input_for_goc()
     # calculate_goc_scores()
+    
