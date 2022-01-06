@@ -64,10 +64,10 @@ sub configure {
     $sp = 'ancestral_sequences' if $sp eq 'MULTI';
     
     next unless ref $self->{'conf'}->{'_storage'}{$species};
-    ## Owing to code changes elsewhere, some top-level keys aren't actually species
+    ## Owing to code changes elsewhere, some top-level keys aren't actually species-related
     ## Hawever a real species _must_ have a production name
     my $prod_name = $self->{'conf'}->{'_storage'}{$species}{'SPECIES_PRODUCTION_NAME'};
-    next unless $prod_name;
+    next if (!$prod_name && $species ne 'MULTI');
     
     Bio::EnsEMBL::Registry->add_alias($species, $sp);
 
