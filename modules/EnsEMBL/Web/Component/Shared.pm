@@ -946,7 +946,7 @@ sub check_for_missing_species {
   my $db_key        = $args->{cdb} =~ /pan_ensembl/ ? 'DATABASE_COMPARA_PAN_ENSEMBL' : 'DATABASE_COMPARA';
   my $align_details = $species_defs->multi_hash->{$db_key}->{'ALIGNMENTS'}->{$align};
   my $species_info  = $hub->get_species_info;
-  my $url_lookup    = $species_defs->prodname_to_url_lookup;
+  my $url_lookup    = $species_defs->prodnames_to_urls_lookup;
   my $slice         = $args->{slice} || $self->object->slice;
   $slice = undef if $slice == 1; # weirdly, we get 1 if feature_Slice is missing
 

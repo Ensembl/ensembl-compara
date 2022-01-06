@@ -281,6 +281,7 @@ sub _get_sequence {
   $config->{'slices'} = $slices;
 
   my $view = $self->view;
+  my $lookup = $self->hub->species_defs->prodnames_to_urls_lookup;
 
   my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
 
@@ -288,7 +289,7 @@ sub _get_sequence {
 
   foreach my $slice (@{$config->{'slices'}}) {
     my $seq = shift @s2;
-    $seq->name($slice->{'display_name'} || $slice->{'name'});
+    $seq->name($lookup->{$slice->{'display_name'}} || $lookup->{$slice->{'name'}});
   }
 
   $view->markup($sequence,$markup,$config);
@@ -449,9 +450,10 @@ sub get_slice_table {
   
   my $table_rows = '';
   $_ = 0 for my ($species_padding, $region_padding, $number_padding, $ancestral_sequences);
+  my $lookup = $hub->species_defs->prodnames_to_urls_lookup;
 
   foreach (@$slices) {
-    my $species = $_->{'display_name'} || $_->{'name'};
+    my $species = $lookup->{$_->{'display_name'}} || $lookup->{$_->{'name'}};
     
     next unless $species;
     
@@ -461,7 +463,7 @@ sub get_slice_table {
       action  => 'View'
     );
 
-    $url_params{'__clear'} = 1 unless $_->{'name'} eq $primary_species;
+    $url_params{'__clear'} = 1 unless $lookup->{$_->{'name'}} eq $primary_species;
 
     $species_padding = length $species if $return_padding && length $species > $species_padding;
 
