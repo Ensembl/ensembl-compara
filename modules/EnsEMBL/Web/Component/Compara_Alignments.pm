@@ -513,7 +513,7 @@ sub _get_target_slice_table {
   my $html                    = '';
 
   my $other_species;
-  my $lookup        = $hub->species_defs->production_name_lookup;
+  my $lookup = $hub->species_defs->prodnames_to_urls_lookup;
 
   #Find the mapping reference species for EPO_LOW_COVERAGE alignments to distinguish the overlapping blocks
   if ($type =~ /EPO_LOW_COVERAGE/ && $is_low_coverage_species) {
@@ -548,7 +548,6 @@ sub _get_target_slice_table {
   my $gab_num = 0; #block counter
 
   #Add blocks to the table
-  my $lookup = $hub->species_defs->prodname_to_url_lookup;
   foreach my $gab_group (@$merged_blocks) {
     next unless $gab_group; 
     my $min_start;

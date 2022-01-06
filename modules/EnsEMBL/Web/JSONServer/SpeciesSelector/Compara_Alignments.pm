@@ -43,7 +43,7 @@ sub json_fetch_species {
   my $species_info = $hub->get_species_info;
   my $species      = $sd->SPECIES_PRODUCTION_NAME;
   my $species_hash_multiple = ();
-  my $url_lookup   = $sd->prodname_to_url_lookup;
+  my $url_lookup   = $sd->prodnames_to_urls_lookup;
 
   # Order by number of species (name is in the form "6 primates EPO")
   foreach my $row (sort { $a->{'name'} <=> $b->{'name'} } grep { $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species} } values %$alignments) {

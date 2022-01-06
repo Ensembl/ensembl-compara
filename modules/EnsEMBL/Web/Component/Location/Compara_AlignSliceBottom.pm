@@ -79,10 +79,13 @@ sub content {
   my (@images, $html);
   
   my ($caption_height,$caption_img_offset) = (0,-24);
-  my $lookup = $species_defs->prodname_to_url_lookup;
+  my $lookup = $species_defs->prodnames_to_urls_lookup;
   foreach (@$slices) {
-    my $species      = $_->{'name'} eq 'Ancestral_sequences' ? 'Multi' : $lookup->{$_->{'name'}}; # Cheating: set species to Multi to stop errors due to invalid species.
-    my $image_config = $hub->get_imageconfig({'type' => 'alignsliceviewbottom', 'cache_code' => "alignsliceviewbottom_$i", 'species' => $species});
+    my ($species_name, $slice_name) = split ':', $_->{'name'};
+    my $species       = $lookup->{$species_name};
+
+    my $species_url   = $species eq 'Ancestral_sequences' ? 'Multi' : $species; # Cheating: set species to Multi to stop errors due to invalid species.
+    my $image_config  = $hub->get_imageconfig({'type' => 'alignsliceviewbottom', 'cache_code' => "alignsliceviewbottom_$i", 'species' => $species_url});
     
     $image_config->set_parameters({
       container_width => $_->{'slice'}->length,
@@ -92,15 +95,13 @@ sub content {
       more_slices     => $i != @$slices,
     });
     
-    my ($species_name, $slice_name) = split ':', $_->{'name'};
-    
-    my $panel_caption = $species_defs->get_config($species_name, 'SPECIES_DISPLAY_NAME') || 'Ancestral sequences';
+    my $panel_caption = $species_defs->get_config($species, 'SPECIES_DISPLAY_NAME') || 'Ancestral sequences';
     $panel_caption   .= " $slice_name" if $slice_name;
 
     my $asb = $image_config->get_node('alignscalebar');
     $asb->set_data('caption', $panel_caption);
     $asb->set_data('caption_position', 'bottom');
-    $asb->set_data('caption_img',"f:24\@$caption_img_offset:".$species_defs->get_config($_->{'name'}, 'SPECIES_IMAGE'));
+    $asb->set_data('caption_img',"f:24\@$caption_img_offset:".$species_defs->get_config($species, 'SPECIES_IMAGE'));
     $asb->set_data('caption_height',$caption_height);
     $caption_img_offset = -20;
     $caption_height = 28;
