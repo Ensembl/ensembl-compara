@@ -183,7 +183,7 @@ sub content {
   my $gene_to_highlight = $hub->param('g1');
   my $highlight_gene_display_label;  
      
-  my $lookup = $hub->species_defs->prodname_to_url_lookup; 
+  my $lookup = $hub->species_defs->prodnames_to_urls_lookup; 
   foreach my $this_leaf (@$leaves) {
     if ($gene_to_highlight && $this_leaf->gene_member->stable_id eq $gene_to_highlight) {
       $highlight_gene_display_label = $this_leaf->gene_member->display_label || $gene_to_highlight;

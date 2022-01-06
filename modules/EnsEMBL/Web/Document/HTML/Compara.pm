@@ -191,7 +191,7 @@ sub mlss_species_info {
   return [] unless $compara_db;
 
   my $species = [];
-  my $lookup =  $self->hub->species_defs->prodname_to_url_lookup;
+  my $lookup =  $self->hub->species_defs->prodnames_to_urls_lookup;
   foreach my $db (@{$mlss->species_set->genome_dbs||[]}) {
     push @$species, $lookup->{$db->name};
   }
@@ -222,7 +222,7 @@ sub pairwise_mlss_data {
   my %synt_methods;
 
   ## Munge all the necessary information
-  my $lookup = $self->hub->species_defs->prodname_to_url_lookup;
+  my $lookup = $self->hub->species_defs->prodnames_to_urls_lookup;
   foreach my $method (@{$methods||[]}) {
     my $mlss_sets  = $mlss_adaptor->fetch_all_by_method_link_type($method);
     if (@$mlss_sets and ($mlss_sets->[0]->method->class =~ /SyntenyRegion.synteny/)) {
@@ -257,7 +257,7 @@ sub mlss_data {
  
   my $data = {};
   my $species = {};
-  my $lookup = $self->hub->species_defs->prodname_to_url_lookup;
+  my $lookup = $self->hub->species_defs->prodnames_to_urls_lookup;
 
   ## Munge all the necessary information
   foreach my $method (@{$methods||[]}) {

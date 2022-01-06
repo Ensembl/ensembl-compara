@@ -69,7 +69,7 @@ sub content {
       my $data = [];
       my $flag = !$second_gene;
       
-      my $lookup = $species_defs->prodname_to_url_lookup;
+      my $lookup = $species_defs->prodnames_to_urls_lookup;
       foreach my $peptide (@{$homology->get_all_Members}) {
         my $gene = $peptide->gene_member;
         $flag = 1 if $gene->stable_id eq $second_gene; 
