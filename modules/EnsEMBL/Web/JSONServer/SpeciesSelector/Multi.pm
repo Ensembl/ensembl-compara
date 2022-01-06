@@ -53,11 +53,10 @@ sub json_fetch_species {
   my $species_info    = $hub->get_species_info;
   my (%available_species, %included_regions);
 
-  my $url_lookup = $species_defs->prodname_to_url_lookup;
+  my $url_lookup = $species_defs->prodnames_to_urls_lookup;
   my $available_species_map = {};
   my $extras = {};
   my $uniq_assembly = {};
-  my $lookup = $species_defs->production_name_lookup;
 
   # Adding haplotypes / patches
   foreach my $alignment (grep $start < $_->{'end'} && $end > $_->{'start'}, @{$intra_species->{$object->seq_region_name}}) {
@@ -73,23 +72,23 @@ sub json_fetch_species {
 
     $available_species{$s} = $species_defs->species_label($url, 1) . (grep($target eq $_, @$chromosomes) ? ' chromosome' : '') . " $target - $type";
     my $tmp = {};
-    $tmp->{scientific_name} = $sp_key;
-    $tmp->{key} = $sp_key;
+    $tmp->{scientific_name} = $sp;
+    $tmp->{key} = $sp;
     if (grep($target eq $_, @$chromosomes)) {
       $tmp->{display_name} = 'Chromosome ' . "$target";
       $tmp->{assembly_target} = $target;
       if (!$uniq_assembly->{$target}) {
-        push @{$extras->{$sp_url}->{'primary assembly'}->{data}}, $tmp;
+        push @{$extras->{$url}->{'primary assembly'}->{data}}, $tmp;
         $uniq_assembly->{$target} = 1; # to remove duplicates
       }
-      if (!$extras->{$sp_url}->{'primary assembly'}->{create_folder}) {
-        $extras->{$sp_url}->{'primary assembly'}->{create_folder} = 1;
+      if (!$extras->{$url}->{'primary assembly'}->{create_folder}) {
+        $extras->{$url}->{'primary assembly'}->{create_folder} = 1;
       }
     }
     else {
       $tmp->{display_name} = "$target";
-      $extras->{$sp_url}->{'haplotypes and patches'}->{create_folder} = 1;
-      push @{$extras->{$sp_url}->{'haplotypes and patches'}->{data}}, $tmp;
+      $extras->{$url}->{'haplotypes and patches'}->{create_folder} = 1;
+      push @{$extras->{$url}->{'haplotypes and patches'}->{data}}, $tmp;
     }
   }
 
@@ -111,7 +110,7 @@ sub json_fetch_species {
 
   foreach my $alignment (grep { $_->{'species'}{$prodname} && $_->{'class'} =~ /pairwise/ } values %$alignments) {
     foreach (keys %{$alignment->{'species'}}) {
-      $_ = $url_lookup->{$_};
+      my $url = $url_lookup->{$_};
       if ($_ ne $prodname) {
         my $type = lc $alignment->{'type'};
            $type =~ s/_net//;
