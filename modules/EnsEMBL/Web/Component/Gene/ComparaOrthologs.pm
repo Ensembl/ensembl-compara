@@ -95,7 +95,7 @@ sub content {
       }
       else {
         ## Do not show any strain species on main species view
-        if ($strain_group) {
+        if ($strain_group && $strain_group ne $prod_name) {
           delete $species_to_show{$prod_name};
           next;
         }
