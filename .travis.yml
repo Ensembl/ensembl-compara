@@ -25,16 +25,18 @@ before_install:
     - cpanm -nq local::lib
     - eval "$(perl -Mlocal::lib=${HOME}/deps)"
     # yamllint disable rule:line-length
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-rest.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-funcgen.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-variation.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-io.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
-    - git clone --branch main --depth 1 https://github.com/Ensembl/ensembl-datacheck.git
+    - git clone --depth 1 https://github.com/Ensembl/ensembl-git-tools.git
+    - export PATH=$PATH:$PWD/ensembl-git-tools/bin
+    - git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl-test
+    - git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl-rest
+    - git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl-funcgen
+    - git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl-variation
+    - git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl-io
+    - git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl
+    - git-ensembl --clone --branch main --depth 1 ensembl-datacheck
     # yamllint enable rule:line-length
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-hive.git
-    - git clone --branch stable --depth 1 https://github.com/Ensembl/ensembl-taxonomy.git
+    - git-ensembl --clone --branch master --depth 1 ensembl-hive
+    - git-ensembl --clone --branch main --depth 1 ensembl-taxonomy
     - ln -s . ensembl-compara
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
     - git clone --branch release-1-6-9 --depth 1 https://github.com/bioperl/bioperl-run
