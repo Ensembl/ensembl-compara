@@ -23,6 +23,7 @@ use strict;
 use warnings;
 no warnings qw(uninitialized);
 
+use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
 use EnsEMBL::Web::IOWrapper::Indexed;
@@ -110,6 +111,7 @@ sub load_user_track_data {
   my $bin_size     = int(($self->container_width || 0) / $bins);
   my $colours      = [qw(darkred darkblue darkgreen purple grey red blue green orange brown magenta violet darkgrey)];
   my ($feature_adaptor, $slice_adaptor, %data, $max_value, $max_mean, $mapped, $unmapped);
+  my $format_info  = EnsEMBL::Web::Constants::USERDATA_FORMATS;
 
   my $menu = $self->get_node('user_data');
   my $i    = 0;
@@ -119,7 +121,7 @@ sub load_user_track_data {
     next if $display eq 'off';
     ## Of the remote formats, only bigwig is currently supported on this scale
     my $format = lc $track->get('format');
-    next if ($format eq 'bigbed' || $format eq 'bam' || $format eq 'cram');
+    next if $format_info->{$format}{'no_karyotype'};
 
     my $logic_name = $track->get('logic_name');
     my ($max1, $max2);
