@@ -198,21 +198,22 @@ def get_gtf_file(core_name: str, source_dir: str, target_dir: str) -> None:
 
     """
     species_name = core_name.split("_core_")[0]
-    rel_ver = core_name.split("_core_")[1].split("_")
+    release = core_name.split("_core_")[1].split("_")[0]
 
-    # gtf_dirs contains all subdirs of source_dir which could contain the gtf file
+    parent_dir = os.path.join(source_dir, "release-" + release)
+    # gtf_dirs contains all subdirs which could contain the gtf file
     # Vertebrates in `production/ensemblftp`:
-    gtf_dirs = [os.path.join(source_dir, "release-" + rel_ver[0], "gtf", species_name)]
+    gtf_dirs = [os.path.join(parent_dir, "gtf", species_name)]
     # Vertebrates in MC's personal dir and
     # all other divisions whether in `production/ensemblftp` or MC's dir
-    divisions = ["vertebrates", "plants", "metazoa", "bacteria", "fungi", "protists"]
-    for division in divisions:
-        gtf_dirs.append(os.path.join(source_dir, "release-" + rel_ver[0], division, "gtf", species_name))
+    potential_divisions = [f.name for f in os.scandir(parent_dir) if f.is_dir()]
+    for division in potential_divisions:
+        gtf_dirs.append(os.path.join(parent_dir, division, "gtf", species_name))
 
     for directory in gtf_dirs:
         try:
             gtf_file = [file for file in glob.glob(os.path.join(directory, "*"))
-                        if file.endswith(f".{rel_ver[0]}.gtf.gz")][0]
+                        if file.endswith(f".{release}.gtf.gz")][0]
         except IndexError:
             continue
 
