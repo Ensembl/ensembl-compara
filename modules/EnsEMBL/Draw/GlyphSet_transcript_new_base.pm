@@ -118,6 +118,7 @@ sub draw_expanded_transcripts {
   my $h = $self->my_config('height') || ($target ? 30 : 8);
   $self->{'my_config'}->set('height', $h);
   $self->{'my_config'}->set('bumped', 1);
+  $self->{'my_config'}->set('vspacing', 10);
   if ($labels) {
     $self->{'my_config'}->set('show_labels', 1);
   }

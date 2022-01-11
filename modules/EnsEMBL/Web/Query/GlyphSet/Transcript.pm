@@ -143,7 +143,15 @@ sub _feature_label {
 
   $transcript ||= $gene;
 
-  my $id = $transcript->external_name || $transcript->stable_id;
+
+  my $id = '';
+
+  if( $transcript->external_name && $transcript->stable_id){
+    $id = $transcript->external_name . " - " . $transcript->stable_id;
+  } else {
+    $id = $transcript->external_name || $transcript->stable_id;
+  }
+  
   $id = $transcript->strand == 1 ? "$id >" : "< $id";
   
   return $id if $args->{'shortlabels'} || $transcript == $gene;  
