@@ -200,7 +200,7 @@ def get_gtf_file(core_name: str, source_dir: str, target_dir: str) -> None:
     species_name = core_name.split("_core_")[0]
     release = core_name.split("_core_")[1].split("_")[0]
 
-    parent_dir = os.path.join(source_dir, "release-" + release)
+    parent_dir = os.path.join(source_dir, f"release-{release}")
     # gtf_dirs contains all subdirs which could contain the gtf file
     # Vertebrates in `production/ensemblftp`:
     gtf_dirs = [os.path.join(parent_dir, "gtf", species_name)]
@@ -210,10 +210,10 @@ def get_gtf_file(core_name: str, source_dir: str, target_dir: str) -> None:
     for division in potential_divisions:
         gtf_dirs.append(os.path.join(parent_dir, division, "gtf", species_name))
 
+    gtf_pattern = f"{species_name.capitalize()}.*.{release}.gtf.gz"
     for directory in gtf_dirs:
         try:
-            gtf_file = [file for file in glob.glob(os.path.join(directory, "*"))
-                        if file.endswith(f".{release}.gtf.gz")][0]
+            gtf_file = [file for file in glob.glob(os.path.join(directory, gtf_pattern))][0]
         except IndexError:
             continue
 
