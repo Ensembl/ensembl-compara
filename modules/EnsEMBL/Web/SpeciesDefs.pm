@@ -683,7 +683,7 @@ sub _expand_database_templates {
       else {
         ## Ignore this step for MULTI, as it may not have a core db
         unless ($filename eq 'MULTI') {
-          my $db_string = $db_name.'@'.$db_details->{'HOST'};
+          my $db_string = sprintf '%s@%s:%s', $db_name, $db_details->{'HOST'}, $db_details->{'PORT'};
           print STDERR "\t  [WARN] CORE DATABASE NOT FOUND - looking for '$db_string'\n" if $_ eq 'CORE';
           $self->_info_line('Databases', "-- database $db_name not available") if $SiteDefs::ENSEMBL_WARN_DATABASES;
         }
