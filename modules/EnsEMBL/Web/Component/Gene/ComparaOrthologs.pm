@@ -23,7 +23,7 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 
-use EnsEMBL::Web::Utils::FormatText qw(glossary_helptip get_glossary_entry);
+use EnsEMBL::Web::Utils::FormatText qw(glossary_helptip get_glossary_entry pluralise);
 
 use base qw(EnsEMBL::Web::Component::Gene);
 
@@ -381,21 +381,23 @@ sub export_options { return {'action' => 'Orthologs'}; }
 
 sub get_strain_refs_html {
   my ($self, $strain_refs, $species_not_shown) = @_;
+  my $species_defs = $self->hub->species_defs;
   my $count = 0;
-  my $list;
+  my ($list, %strain_types);
 
   foreach (sort {lc $strain_refs->{$a} cmp lc $strain_refs->{$b}} keys %$strain_refs) {
     next if $species_not_shown->{$_}; ## Don't mention if reference has no orthologues
+    $strain_types{$species_defs->get_config($_, 'STRAIN_TYPE')}++;
     $list .= sprintf '<li>%s</li>', $strain_refs->{$_};
     $count++;
   }
+  ## Select the most common strain type for this site
+  my @ordered_types = sort {$strain_types{$b} <=> $strain_types{$a}} keys %strain_types;
+  my $type = $ordered_types[0];
 
-  my $html = qq(<p>Additionally, strains of $count species are not shown in this table. Strain orthologues can be found on the gene pages of these reference species:</p>
-<ul>$list);
-  $html .= '</ul>';
+  my $html = sprintf '<p>Additionally, %s of %s species are not shown in this table. %s orthologues can be found on the gene pages of these reference species:</p><ul>%s</ul>', pluralise($type), $count, ucfirst($type), $list;
   return $html;
 }
-
 
 sub get_no_ortho_species_html {
   my ($self, $species_not_shown, $sets_by_species) = @_;
