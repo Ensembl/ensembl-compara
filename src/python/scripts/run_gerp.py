@@ -29,6 +29,7 @@ path where they can be found::
 
 """
 
+import os
 import subprocess
 
 import argschema
@@ -59,13 +60,13 @@ if __name__ == "__main__":
 
     cmd = ["gerpcol", "-t", mod.args["tree_file"], "-f", mod.args["msa_file"]]
     if "gerp_exe_dir" in mod.args:
-        cmd[0] = f"{mod.args['gerp_exe_dir']}/{cmd[0]}"
+        cmd[0] = os.path.join(mod.args['gerp_exe_dir'], cmd[0])
     subprocess.run(cmd, check=True)
 
     # By default, gerpcol's ouput filename has the MSA filename plus ".rates" suffix
     cmd = ["gerpelem", "-f", f"{mod.args['msa_file']}.rates"]
     if "gerp_exe_dir" in mod.args:
-        cmd[0] = f"{mod.args['gerp_exe_dir']}/{cmd[0]}"
+        cmd[0] = os.path.join(mod.args['gerp_exe_dir'], cmd[0])
     if "depth_threshold" in mod.args:
         cmd += ["-d", str(mod.args["depth_threshold"])]
     subprocess.run(cmd, check=True)
