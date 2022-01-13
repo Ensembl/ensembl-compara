@@ -34,6 +34,7 @@ import glob
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 from typing import Dict, List
 import warnings
@@ -191,7 +192,8 @@ def get_gtf_file(core_name: str, source_dir: str, target_dir: str) -> None:
         target_dir: Path to the directory where the GTF file will be copied.
 
     Raises:
-        RuntimeError: If command to copy a file fails for any reason.
+        IOError: If copying a file fails for any reason.
+        OSError: If `target_dir` does not exist and creating it fails for any reason.
 
     Warns:
         UserWarning: If the GTF file was not found.
@@ -201,36 +203,32 @@ def get_gtf_file(core_name: str, source_dir: str, target_dir: str) -> None:
     release = core_name.split("_core_")[1].split("_")[0]
 
     parent_dir = os.path.join(source_dir, f"release-{release}")
-    # gtf_dirs contains all subdirs which could contain the gtf file
-    # Vertebrates in `production/ensemblftp`:
-    gtf_dirs = [os.path.join(parent_dir, "gtf", species_name)]
-    # Vertebrates in MC's personal dir and
-    # all other divisions whether in `production/ensemblftp` or MC's dir
-    potential_divisions = [f.name for f in os.scandir(parent_dir) if f.is_dir()]
-    for division in potential_divisions:
-        gtf_dirs.append(os.path.join(parent_dir, division, "gtf", species_name))
+    gtf_dirs_patterns = [
+        os.path.join(parent_dir, "*", "gtf", species_name),
+        os.path.join(parent_dir, "gtf", species_name)  # vertebrates in `production/ensemblftp`
+    ]
 
-    gtf_pattern = f"{species_name.capitalize()}.*.{release}.gtf.gz"
-    for directory in gtf_dirs:
+    gtf_file_pattern = f"{species_name.capitalize()}.*.{release}.gtf.gz"
+    for pattern in gtf_dirs_patterns:
         try:
-            gtf_file = [file for file in glob.glob(os.path.join(directory, gtf_pattern))][0]
+            gtf_file = list(glob.glob(os.path.join(pattern, gtf_file_pattern)))[0]
         except IndexError:
             continue
 
         try:
-            cmd = f"cp {gtf_file} {target_dir}"
-            result = subprocess.run(cmd, capture_output=True, check=True, shell=True, text=True)
-            break
-        except subprocess.CalledProcessError as exc:
-            msg = f"Command '{exc.cmd}' returned non-zero exit status {exc.returncode}"
-            if exc.stdout:
-                msg += f"\n  StdOut: {exc.stdout}"
-            if exc.stderr:
-                msg += f"\n  StdErr: {exc.stderr}"
-            raise RuntimeError(msg) from exc
+            os.makedirs(target_dir, exist_ok=True)
+        except OSError as e:
+            raise OSError(f"Failed to create '{target_dir}' directory.") from e
+
+        try:
+            shutil.copy(gtf_file, target_dir)
+        except IOError as err:
+            raise IOError(f"Failed to copy '{gtf_file}' file.") from err
+        else:
+            copied = True
 
     try:
-        result
+        copied
     except NameError:
         warnings.warn(f"GTF file for '{core_name}' not found.")
 
