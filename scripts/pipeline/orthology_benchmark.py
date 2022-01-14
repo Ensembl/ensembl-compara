@@ -204,6 +204,7 @@ def get_gtf_file(core_name: str, source_dir: str, target_dir: str) -> None:
         os.path.join(parent_dir, "gtf", species_name)  # vertebrates in `production/ensemblftp`
     ]
 
+    gtf_file = None
     gtf_file_pattern = f"{species_name.capitalize()}.*.{release}.gtf.gz"
     for pattern in gtf_dirs_patterns:
         try:
@@ -213,11 +214,8 @@ def get_gtf_file(core_name: str, source_dir: str, target_dir: str) -> None:
 
         os.makedirs(target_dir, exist_ok=True)
         shutil.copy(gtf_file, target_dir)
-        copied = True
 
-    try:
-        copied
-    except NameError:
+    if gtf_file is None:
         warnings.warn(f"GTF file for '{core_name}' not found.")
 
 
@@ -314,4 +312,3 @@ if __name__ == '__main__':
     run_orthology_tools(args.orthology_input, args.orthofinder_params)
     # prep_input_for_goc()
     # calculate_goc_scores()
-    
