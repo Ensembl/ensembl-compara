@@ -266,28 +266,3 @@ def test_get_gtf_file(core_name: str, tmp_dir: Path, expectation: ContextManager
     exp_out = test_source_dir / "release-51" / "plants" / "gtf" / "juglans_regia" / \
               "Juglans_regia.Walnut_2.0.51.gtf.gz"
     assert file_cmp( tmp_dir / "Juglans_regia.Walnut_2.0.51.gtf.gz", exp_out)
-
-
-@pytest.mark.skipif(os.environ['USER'] == 'travis',
-                    reason="The test requires a file which cannot be copied, e.g. due to no permission, and"
-                           "'git add --ignore-errors --force' does not add files which it cannot index.")
-def test_get_gtf_file_copy_error(tmp_dir: Path) -> None:
-    """Tests :func:`orthology_benchmark.get_gtf_file()` when the GTF file cannot be copied.
-
-    Args:
-        tmp_dir: Unit test temp directory (fixture).
-
-    """
-    with raises(IOError):
-        # pylint: disable-next=no-member
-        test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
-        orthology_benchmark.get_gtf_file("musa_acuminata_core_51_104_2", test_source_dir, tmp_dir)
-
-
-def test_get_gtf_file_target_error() -> None:
-    """Tests :func:`orthology_benchmark.get_gtf_file()` when the target directory does not exist and
-    cannot be created."""
-    with raises(OSError, match=r"Failed to create '/test/' directory."):
-        # pylint: disable-next=no-member
-        test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
-        orthology_benchmark.get_gtf_file("juglans_regia_core_51_104_1", test_source_dir, "/test/")

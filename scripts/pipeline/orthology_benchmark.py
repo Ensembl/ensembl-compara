@@ -191,10 +191,6 @@ def get_gtf_file(core_name: str, source_dir: str, target_dir: str) -> None:
             `production/ensemblftp` or MC's `nobackup/release_dumps`.
         target_dir: Path to the directory where the GTF file will be copied.
 
-    Raises:
-        IOError: If copying a file fails for any reason.
-        OSError: If `target_dir` does not exist and creating it fails for any reason.
-
     Warns:
         UserWarning: If the GTF file was not found.
 
@@ -215,17 +211,9 @@ def get_gtf_file(core_name: str, source_dir: str, target_dir: str) -> None:
         except IndexError:
             continue
 
-        try:
-            os.makedirs(target_dir, exist_ok=True)
-        except OSError as e:
-            raise OSError(f"Failed to create '{target_dir}' directory.") from e
-
-        try:
-            shutil.copy(gtf_file, target_dir)
-        except IOError as err:
-            raise IOError(f"Failed to copy '{gtf_file}' file.") from err
-        else:
-            copied = True
+        os.makedirs(target_dir, exist_ok=True)
+        shutil.copy(gtf_file, target_dir)
+        copied = True
 
     try:
         copied
