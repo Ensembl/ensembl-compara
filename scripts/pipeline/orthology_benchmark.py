@@ -212,11 +212,11 @@ def get_gtf_file(core_name: str, source_dir: str, target_dir: str) -> None:
         except IndexError:
             continue
 
-        os.makedirs(target_dir, exist_ok=True)
-        shutil.copy(gtf_file, target_dir)
-
     if gtf_file is None:
         warnings.warn(f"GTF file for '{core_name}' not found.")
+    else:
+        os.makedirs(target_dir, exist_ok=True)
+        shutil.copy(gtf_file, target_dir)
 
 
 def prep_input_for_orth_tools(source_dir: str, target_dir: str) -> None:
