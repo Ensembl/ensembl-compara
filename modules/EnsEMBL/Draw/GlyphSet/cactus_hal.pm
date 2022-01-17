@@ -149,6 +149,7 @@ sub get_data {
   }
 
   my $features = [];
+  my $lookup = $self->{'config'}->hub->species_defs->prodnames_to_urls_lookup;
 
   foreach my $gab (@{$gabs||[]}) {
     #warn "\n\n### NEXT";
@@ -164,7 +165,7 @@ sub get_data {
     ## Annoyingly we can't reliably get these params any other way
     unless ($nonref_sp) {
       my $prod_name = $nonref->dnafrag->genome_db->name;
-      $nonref_sp = $self->{'config'}->hub->species_defs->production_name_mapping($prod_name);
+      $nonref_sp = $lookup->{$prod_name};
     }
     unless ($other_start) {
       foreach ( $self->{'config'}{'hub'}->param) {
