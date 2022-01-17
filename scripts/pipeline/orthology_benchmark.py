@@ -211,6 +211,8 @@ def get_gtf_file(core_name: str, source_dir: str, target_dir: str) -> None:
             gtf_file = list(glob.glob(os.path.join(pattern, gtf_file_pattern)))[0]
         except IndexError:
             continue
+        else:
+            break
 
     if gtf_file is None:
         warnings.warn(f"GTF file for '{core_name}' not found.")
