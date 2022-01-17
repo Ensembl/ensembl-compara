@@ -453,6 +453,7 @@ sub get_slice_table {
   my $lookup = $hub->species_defs->prodnames_to_urls_lookup;
 
   foreach (@$slices) {
+    warn ">>> NAME ".$_->{'name'};
     my $species = $lookup->{$_->{'display_name'}} || $lookup->{$_->{'name'}};
     
     next unless $species;
