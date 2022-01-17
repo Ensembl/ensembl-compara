@@ -30,11 +30,14 @@ Typical usage examples::
 """
 
 import argparse
+import glob
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 from typing import Dict, List
+import warnings
 
 import numpy
 from sqlalchemy import create_engine
@@ -173,6 +176,49 @@ def get_core_names(species_names: List[str], host: str, port: int, user: str) ->
             core_names[species] = find_latest_core(core_name)
 
     return core_names
+
+
+def get_gtf_file(core_name: str, source_dir: str, target_dir: str) -> None:
+    """Finds and copies a GTF file for a specified core db.
+
+    Note:
+        The code utilises the structure of `production/ensemblftp` or MC's personal dir
+        to speed up file search.
+
+    Args:
+        core_name: Core db name.
+        source_dir: Path to the directory containing subdirectories with GTF files.
+            `production/ensemblftp` or MC's `nobackup/release_dumps`.
+        target_dir: Path to the directory where the GTF file will be copied.
+
+    Warns:
+        UserWarning: If the GTF file was not found.
+
+    """
+    species_name = core_name.split("_core_")[0]
+    release = core_name.split("_core_")[1].split("_")[0]
+
+    parent_dir = os.path.join(source_dir, f"release-{release}")
+    gtf_dirs_patterns = [
+        os.path.join(parent_dir, "*", "gtf", species_name),
+        os.path.join(parent_dir, "gtf", species_name)  # vertebrates in `production/ensemblftp`
+    ]
+
+    gtf_file = None
+    gtf_file_pattern = f"{species_name.capitalize()}.*.{release}.gtf.gz"
+    for pattern in gtf_dirs_patterns:
+        try:
+            gtf_file = list(glob.glob(os.path.join(pattern, gtf_file_pattern)))[0]
+        except IndexError:
+            continue
+        else:
+            break
+
+    if gtf_file is None:
+        warnings.warn(f"GTF file for '{core_name}' not found.")
+    else:
+        os.makedirs(target_dir, exist_ok=True)
+        shutil.copy(gtf_file, target_dir)
 
 
 def prep_input_for_orth_tools(source_dir: str, target_dir: str) -> None:

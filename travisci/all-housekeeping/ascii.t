@@ -51,7 +51,7 @@ foreach my $f (@all_files) {
     # The conservation_score table has scores compressed in binary form
     next if $f =~ /modules\/t\/test-genome-DBs\/.*\/conservation_score.txt$/;
     # These files are binary by nature
-    next if $f =~ /\.(pdf|png|dia|hal|jar|so|o|pyc)$/;
+    next if $f =~ /\.(pdf|png|dia|hal|jar|so|o|pyc|gz)$/;
     # This file is for Travis only
     next if $f =~ /\/travis_wait_\d+\.log$/;
     is_ascii($f);
