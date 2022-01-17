@@ -1603,7 +1603,7 @@ sub species_label {
 sub prodnames_to_urls_lookup {
 ## Maps all species' production names to their URLs
   my $self = shift;
-  my $names = {};
+  my $names = {'ancestral_sequences' => 'Ancestral sequences'};
   
   foreach ($self->valid_species) {
     $names->{$self->get_config($_, 'SPECIES_PRODUCTION_NAME')} = $_;
