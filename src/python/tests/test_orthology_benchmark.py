@@ -32,7 +32,7 @@ from typing import ContextManager, Dict, List
 import sqlalchemy
 
 import pytest
-from pytest import FixtureRequest, raises
+from pytest import FixtureRequest, raises, warns
 
 from ensembl.compara.filesys import file_cmp
 
@@ -237,3 +237,32 @@ class TestGetCoreNames:
         """Tests :func:`orthology_benchmark.get_core_names()` with fake server details."""
         with raises(sqlalchemy.exc.OperationalError):
             orthology_benchmark.get_core_names(["danio_rerio", "mus_musculus"], "fake-host", 65536, "compara")
+
+
+@pytest.mark.parametrize(
+    "core_name, expectation",
+    [
+        ("juglans_regia_core_51_104_1", does_not_raise()),
+        ("ensembl_compara_core_53_106_30", warns(UserWarning,
+                                                 match=r"GTF file for 'ensembl_compara_core_53_106_30' "
+                                                       r"not found."))
+    ]
+)
+def test_get_gtf_file(core_name: str, tmp_dir: Path, expectation: ContextManager) -> None:
+    """Tests :func:`orthology_benchmark.get_gtf_file()` function.
+
+    Args:
+        core_name: Core db name.
+        tmp_dir: Unit test temp directory (fixture).
+        expectation: Context manager for the expected exception, i.e. the test will only pass if that
+            exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
+
+    """
+    # pylint: disable-next=no-member
+    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
+    with expectation:
+        orthology_benchmark.get_gtf_file(core_name, test_source_dir, tmp_dir)
+
+    exp_out = test_source_dir / "release-51" / "plants" / "gtf" / "juglans_regia" / \
+              "Juglans_regia.Walnut_2.0.51.gtf.gz"
+    assert file_cmp( tmp_dir / "Juglans_regia.Walnut_2.0.51.gtf.gz", exp_out)
