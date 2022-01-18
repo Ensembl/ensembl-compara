@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<compara_db division="protists">
+
+  <!-- Collections are species-sets that are needed to define several mlsss -->
+  <collections>
+
+    <!-- All representative genomes from Eukaryotes - whilst not a monophyeltic clade, this
+         taxonomic grouping excludes Metazoa, Plants and Fungi except as outgroups -->
+    <collection name="default">
+      <taxonomic_group taxon_name="Eukaryota"/>
+    </collection>
+
+  </collections>
+
+  <gene_trees>
+    <protein_trees collection="default"/>
+  </gene_trees>
+
+</compara_db>
