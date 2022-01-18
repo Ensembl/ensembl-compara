@@ -30,17 +30,17 @@ use base qw(EnsEMBL::Draw::GlyphSet_simple);
 
 sub features {
   my $self      = shift;
-  my $species   = $self->species_defs->get_config(ucfirst $self->my_config('species'), 'SPECIES_PRODUCTION_NAME');
+  my $prod_name  = $self->my_config('species');
 
   # ENSWEB-5972
-  my $prod_species = $self->species_defs->production_name_mapping($species);
+  my $species_url = $self->species_defs->prodname_to_url($prod_name);
 
   ## How do we retrieve the features from the database. in this case
   ## we do a get_all_compara_Syntenies
   ## NOTE THAT THIS IS NOT MULTI COMPARA SAFE... NEEDS TO REALLY
   ## KNOW ABOUT THE COMPARA DATABASE... WHICH THE WEBCODE WILL PASS IN!!
 
-  my $syntenies = $self->{'container'}->get_all_compara_Syntenies($prod_species, 'SYNTENY', $self->dbadaptor('multi', $self->my_config('db')));
+  my $syntenies = $self->{'container'}->get_all_compara_Syntenies($species_url, 'SYNTENY', $self->dbadaptor('multi', $self->my_config('db')));
   my $offset    = $self->{'container'}->start - 1;
   my @features;
   
@@ -48,7 +48,7 @@ sub features {
     my ($main_dfr, $other_dfr);
     
     foreach my $dfr (@{$_->get_all_DnaFragRegions}) {
-      if ($dfr->dnafrag->genome_db->name eq $species) {
+      if ($dfr->dnafrag->genome_db->name eq $prod_name) {
         $other_dfr = $dfr;
       } else {
         $main_dfr = $dfr;

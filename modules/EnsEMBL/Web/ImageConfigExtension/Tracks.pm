@@ -861,12 +861,14 @@ sub add_synteny {
   my $species_defs = $self->species_defs;
   my $colours      = $species_defs->colour('synteny');
   my $self_label   = $species_defs->species_label($species, 'no_formatting');
+  my $lookup       = $species_defs->prodnames_to_urls_lookup;
 
   foreach my $species_2 (@synteny_species) {
-    (my $species_readable = $species_2) =~ s/_/ /g;
+    my $sp_url  = $lookup->{$species_2};
+    (my $species_readable = $sp_url) =~ s/_/ /g;
     my ($a, $b) = split / /, $species_readable;
     my $caption = substr($a, 0, 1) . ".$b synteny";
-    my $label   = $species_defs->species_label($species_2, 'no_formatting');
+    my $label   = $species_defs->species_label($sp_url, 'no_formatting');
     (my $name   = "Synteny with $label") =~ s/<.*?>//g;
 
     $menu->append_child($self->create_track_node("synteny_$species_2", $name, {
