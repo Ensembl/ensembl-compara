@@ -242,12 +242,11 @@ def prepare_gtf_files(core_names: List[str], source_dir: str, target_dir: str) -
     for core in core_names:
         get_gtf_file(core, source_dir, target_dir)
 
-    gtf_files = [os.path.join(target_dir, file) for file in os.listdir(target_dir)
-                 if os.path.isfile(os.path.join(target_dir, file)) and file.endswith(".gtf.gz")]
+    gtf_files = glob.glob(os.path.join(target_dir, "*.gtf.gz"))
 
     for file in gtf_files:
         with gzip.open(file, "rb") as f_in:
-            with open(file.replace(".gz", ""), "wb") as f_out:
+            with open(re.sub(".gz$", "", file), "wb") as f_out:
                 shutil.copyfileobj(f_in, f_out)
 
 

@@ -290,9 +290,8 @@ def test_prepare_gtf_files(core_names: str, tmp_dir: Path, expectation: ContextM
     with expectation:
         orthology_benchmark.prepare_gtf_files(core_names, test_source_dir, tmp_dir)
 
-        exp_out1 = test_source_dir / "release-51" / "plants" / "gtf" / "juglans_regia" / \
-              "Juglans_regia.Walnut_2.0.51.gtf"
-        exp_out2 = test_source_dir / "release-51" / "metazoa" / "gtf" / "anopheles_albimanus" / \
-              "Anopheles_albimanus.AalbS2.51.gtf"
+        rel_dir = test_source_dir / "release-51"
+        exp_out1 = rel_dir / "plants" / "gtf" / "juglans_regia" / "Juglans_regia.Walnut_2.0.51.gtf"
+        exp_out2 = rel_dir / "metazoa" / "gtf" / "anopheles_albimanus" / "Anopheles_albimanus.AalbS2.51.gtf"
         assert file_cmp( tmp_dir / "Juglans_regia.Walnut_2.0.51.gtf", exp_out1)
         assert file_cmp( tmp_dir / "Anopheles_albimanus.AalbS2.51.gtf", exp_out2)
