@@ -56,7 +56,7 @@ sub new {
     %{$args || {}}
   };
 
-  if ($image_configs) {
+  if (scalar @$image_configs) {
     $args->{'toolbars'}{$_} = $image_configs->[0]->get_parameter($_.'_toolbar') for qw(top bottom);
   }
 

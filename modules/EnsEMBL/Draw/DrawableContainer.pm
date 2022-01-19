@@ -47,6 +47,7 @@ sub new {
   my $class           = shift;
   my $self            = $class->_init(@_); 
   my $primary_config  = $self->{'config'};
+  return unless $primary_config;
   my $legend          = {};
 
   ## Enable caching between glyphsets - useful for campara views
