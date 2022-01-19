@@ -356,19 +356,28 @@ sub content {
     );
   }   
 
-  if (keys %$species_not_shown) {
+  if (($hub->action =~ /^Strain_/ && keys %$strains_not_shown)
+    || ($hub->action !~ /^Strain_/ && keys %$species_not_shown)) {
+    my @args;
+    if ($hub->action =~ /^Strain_/) {
+      push @args, scalar(keys %$strains_not_shown), 
+                  $self->object->Obj->stable_id;
+                  $self->get_no_ortho_species_html($strains_not_shown, $sets_by_species),
+                  '';
+    }
+    else {
+      push @args, scalar(keys %$species_not_shown), 
+                  $self->object->Obj->stable_id,
+                  $self->get_no_ortho_species_html($species_not_shown, $sets_by_species),
+                  $self->get_strain_refs_html($strain_refs, $species_not_shown);
+    }
     $html .= '<br /><a name="list_no_ortho"/>' . $self->_info(
       'Species without orthologues',
       sprintf(
         qq(<p><span class="no_ortho_count">%d</span> species are not shown in the table above because they don't have any orthologue with %s.</p>
 <ul id="no_ortho_species">%s</ul>
 %s
-</p> <input type="hidden" class="panel_type" value="ComparaOrtholog" />),
-        scalar(keys %$species_not_shown),
-        $self->object->Obj->stable_id,
-        $self->get_no_ortho_species_html($species_not_shown, $sets_by_species),
-        scalar keys %$strain_refs ? $self->get_strain_refs_html($strain_refs, $species_not_shown) : '',
-      ),
+</p> <input type="hidden" class="panel_type" value="ComparaOrtholog" />), @args),
       undef,
       'no_ortho_message_pad'
     );
@@ -381,6 +390,8 @@ sub export_options { return {'action' => 'Orthologs'}; }
 
 sub get_strain_refs_html {
   my ($self, $strain_refs, $species_not_shown) = @_;
+  return '' unless keys %{$strain_refs||{}};
+
   my $species_defs = $self->hub->species_defs;
   my $count = 0;
   my ($list, %strain_types);
