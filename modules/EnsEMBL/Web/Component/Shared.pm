@@ -991,7 +991,7 @@ sub check_for_missing_species {
     if ($align_details->{'class'} =~ /pairwise/) {
       $warnings .= sprintf '<p>%s has no alignment in this region</p>', $species_defs->species_label($missing[0]);
     } elsif ($not_missing == $multi_check) {
-      $warnings .= sprintf('<p>None of the other species in this set align to %s in this region</p>', $species_defs->SPECIES_COMMON_NAME);
+      $warnings .= sprintf('<p>None of the other species in this set align to %s in this region</p>', $species_defs->SPECIES_DISPLAY_NAME);
     } else {
       my $str = '';
       my $count = 0;
