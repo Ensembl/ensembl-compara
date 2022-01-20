@@ -230,7 +230,9 @@ def prepare_gtf_files(core_names: List[str], source_dir: str, target_dir: str) -
         core_names: Core db names.
         source_dir: Path to the directory containing subdirectories with GTF files.
             `production/ensemblftp` or MC's `nobackup/release_dumps`.
-        target_dir: Path to the directory where the GTF files will be copied.
+        target_dir: Path to the directory where the GTF files will be copied. This
+            directory should not contain any gzip-compressed GTF files that you do
+            not intend to decompress.
 
     Raises:
         ValueError: If `core_names` is empty.
@@ -323,7 +325,8 @@ if __name__ == '__main__':
                         help="Location for 'species_set/' with 'core_name.fasta' dumps and "
                              "corresponding GTF files")
     parser.add_argument("--gtf_dir", required=True, type=str,
-                        help="Path to the directory containing subdirectories with GTF files.")
+                        help="Path to the directory containing subdirectories with the ")
+                             "GTF files that will be used as input."
     parser.add_argument("--id_type", required=False, default="protein", type=str,
                         help="Header ID type in .fasta dumps [gene/protein]")
     parser.add_argument("--orthology_input", required=True, type=str,
