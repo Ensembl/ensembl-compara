@@ -1,5 +1,8 @@
 #!/usr/bin/env nextflow
 
+keep_genomes_file = file(params.keep_genomes_file)
+tree_file = file(params.tree_file)
+
 // Initialise workflow
 Channel
     .fromPath(params.hal_file)
@@ -14,12 +17,11 @@ process getMAFfiles {
     output:
     file "*.maf" into maf_files mode flatten
 
-    script:
-    """
-    # python $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/hal_alignment/hal_to_maf.py $hal_file output.maf
-    touch file1.maf
-    touch file2.maf
-    """
+    shell:
+    '''
+    python $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/hal_alignment/hal_to_maf.py !{hal_file} output.maf \
+        --ref-genome "" --ref-sequence "" --keep-genomes-file !{keep_genomes_file}
+    '''
 }
 
 process convertMAFtoMFA {
@@ -46,13 +48,14 @@ process runGERP {
     output:
     file "*.ce" into ce_files mode flatten
     
-    script:
-    """
-    touch ${mfa.baseName}.ce
-    """
+    shell:
+    '''
+    python $ENSEMBL_ROOT_DIR/ensembl-compara/src/python/scripts/run_gerp.py --msa_file !{mfa} \
+        --tree_file !{tree_file}
+    '''
 }
 
-process loadConstElemsIntoDB {
+process mergeConstElems {
     label 'rc_default'
     echo true
 
