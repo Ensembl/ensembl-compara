@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-genomes_file = file(params.genomes_file)
+keep_genomes_file = file(params.keep_genomes_file)
 tree_file = file(params.tree_file)
 
 // Initialise workflow
@@ -20,7 +20,7 @@ process getMAFfiles {
     shell:
     '''
     python $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/hal_alignment/hal_to_maf.py !{hal_file} output.maf \
-        --ref-genome "" --ref-sequence "" --keep-genomes-file !{genomes_file}
+        --ref-genome "" --ref-sequence "" --keep-genomes-file !{keep_genomes_file}
     '''
 }
 
