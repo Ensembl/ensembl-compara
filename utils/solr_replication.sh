@@ -97,9 +97,9 @@ declare -A machines
 machines[grch37_test]="wp-p2m-2f"
 machines[grch37_before]="wp-p2m-26"
 machines[grch37_after]="wp-p1m-74:wp-p1m-95"
-machines[www_test]="ves-oy-aa"
-machines[www_before]="ves-oy-ab:ves-oy-ac"
-machines[www_after]="ves-pg-aa:ves-pg-ab:ves-pg-ac:ves-pg-ad"
+machines[www_test]="wp-p2m-95"
+machines[www_before]="wp-p2m-96:wp-p2m-97"
+machines[www_after]="wp-p1m2-59:wp-p1m2-5a:wp-p1m2-5b:wp-p1m2-5c"
 
 key="${site}_${stage}"
 
