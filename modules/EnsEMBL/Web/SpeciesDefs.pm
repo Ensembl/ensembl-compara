@@ -960,78 +960,67 @@ sub _parse {
     }
   }
 
-  ## Continue with munging
+  ## Species-specific munging
   my $image_dir = $SiteDefs::SPECIES_IMAGE_DIR;
-  foreach my $url (@$datasets) {
+  foreach my $key (sort @$datasets) {
+    next if ($key eq "MULTI" || $key eq "databases");
 
-    ## Assign an image to this species
-    my $no_image  = 1;
-    if ($image_dir) {
-      ## This site has individual species images for all/most species
-      ## So check if it exists
-      my $image_path = $image_dir.'/'.$url.'.png';
+    my $display_name = $tree->{$key}{'SPECIES_DISPLAY_NAME'};
+    push @{$species_to_assembly->{$display_name}}, $tree->{$key}->{'ASSEMBLY_VERSION'};
+           
+    $self->_populate_taxonomy_division($tree, $key) if $tree->{'ENSEMBL_TAXONOMY_DIVISION'};
+
+    ## Now assign an image to this species
+    my $image_path = $image_dir.'/'.$key.'.png';
+
+    if ($SiteDefs::RAPID_RELEASE_VERSION || $SiteDefs::ENSEMBL_COVID19_VERSION) {
+      ## Do these sites first, to avoid issues with common names
+      my $clade = $tree->{$key}{'SPECIES_GROUP'};
+      $tree->{$key}{'SPECIES_IMAGE'} = $labels->{$clade};
+    }
+    elsif (-e $image_path) {
+      ## Check for individual species images
+      $tree->{$key}{'SPECIES_IMAGE'} = $key;
+    }
+    elsif ($tree->{$key}{'STRAIN_GROUP'}) {
+      ## Look for a strain image (needed for pig)
+      my $parent_image = ucfirst($tree->{$key}{'STRAIN_GROUP'});
+      my $strain_image = $parent_image.'_'.$tree->{$key}{'STRAIN_TYPE'};
+      $image_path =  $image_dir.'/'.$strain_image.'.png';
       if (-e $image_path) {
-        $tree->{$url}{'SPECIES_IMAGE'} = $url;
-        $no_image = 0;
-      }
-      elsif ($tree->{$url}{'STRAIN_GROUP'}) {
-        ## Look for a strain image (needed for pig)
-        my $parent_image = ucfirst($tree->{$url}{'STRAIN_GROUP'});
-        my $strain_image = $parent_image.'_'.$tree->{$url}{'STRAIN_TYPE'};
-        $image_path =  $image_dir.'/'.$strain_image.'.png';
-        if (-e $image_path) {
-          $tree->{$url}{'SPECIES_IMAGE'} = $strain_image;
-          $no_image = 0;
-        }
-        else {
-          ## Use the parent image for this strain
-          $image_path = $image_dir.'/'.$parent_image.'.png';
-          if (-e $image_path) {
-            $tree->{$url}{'SPECIES_IMAGE'} = $parent_image;
-            $no_image = 0;
-          }
-        }
+        $tree->{$key}{'SPECIES_IMAGE'} = $strain_image;
       }
       else {
-        my $binomial = $tree->{$url}{SPECIES_BINOMIAL};
-        if ($binomial) {
-          $binomial =~ s/ /_/g;
-        }
-        else {
-          ## Make a guess based on URL. Note that some fungi have weird URLs bc 
-          ## their taxonomy is uncertain, so this regex doesn't try to include them
-          ## (none of them have images in any case)
-          $url =~ /^([A-Za-z]+_[a-z]+)/;
-          $binomial = $1;
-        }
-        my $species_path = $binomial ? sprintf '%s/%s.png', $image_dir, $binomial : '';
+        ## Use the parent image for this strain
+        $image_path = $image_dir.'/'.$parent_image.'.png';
         if (-e $image_path) {
-          $tree->{$url}{'SPECIES_IMAGE'} = $url;
-          $no_image = 0;
-        }
-        elsif ($species_path && -e $species_path) {
-          $tree->{$url}{'SPECIES_IMAGE'} = $binomial;
-          $no_image = 0;
-        }
-        else {
-          $tree->{$url}{'SPECIES_IMAGE'} = 'default';
-          $no_image = 0;
+          $tree->{$key}{'SPECIES_IMAGE'} = $parent_image;
         }
       }
     }
-    ## If still no image (rapid release), set one based on taxonomy
-    if ($no_image) {
-      my $clade = $tree->{$url}{'SPECIES_GROUP'};
-      $tree->{$url}{'SPECIES_IMAGE'} = $labels->{$clade};
-    }
-
-    ## Species-specific munging
-    if ($url ne "MULTI" && $url ne "databases") {
-                                     
-      my $display_name = $tree->{$url}{'SPECIES_DISPLAY_NAME'};
-      push @{$species_to_assembly->{$display_name}}, $tree->{$url}->{'ASSEMBLY_VERSION'};
-             
-      $self->_populate_taxonomy_division($tree, $url) if $tree->{'ENSEMBL_TAXONOMY_DIVISION'};
+    else {
+      ## Non-vertebrate site  
+      my $binomial = $tree->{$key}{SPECIES_BINOMIAL};
+      if ($binomial) {
+        $binomial =~ s/ /_/g;
+      }
+      else {
+        ## Make a guess based on URL. Note that some fungi have weird URLs bc 
+        ## their taxonomy is uncertain, so this regex doesn't try to include them
+        ## (none of them have images in any case)
+        $key =~ /^([A-Za-z]+_[a-z]+)/;
+        $binomial = $1;
+      }
+      my $species_path = $binomial ? sprintf '%s/%s.png', $image_dir, $binomial : '';
+      if (-e $image_path) {
+        $tree->{$key}{'SPECIES_IMAGE'} = $key;
+      }
+      elsif ($species_path && -e $species_path) {
+        $tree->{$key}{'SPECIES_IMAGE'} = $binomial;
+      }
+      else {
+        $tree->{$key}{'SPECIES_IMAGE'} = 'default';
+      }
     }
   }
 
