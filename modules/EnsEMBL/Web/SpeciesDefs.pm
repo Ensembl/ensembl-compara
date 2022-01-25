@@ -961,11 +961,10 @@ sub _parse {
   }
 
   ## Continue with munging
-  foreach my $sp (@$datasets) {
-    my $url = $tree->{$sp}{'SPECIES_URL'};
+  my $image_dir = $SiteDefs::SPECIES_IMAGE_DIR;
+  foreach my $url (@$datasets) {
 
     ## Assign an image to this species
-    my $image_dir = $SiteDefs::SPECIES_IMAGE_DIR;
     my $no_image  = 1;
     if ($image_dir) {
       ## This site has individual species images for all/most species
