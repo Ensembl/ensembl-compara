@@ -325,8 +325,8 @@ if __name__ == '__main__':
                         help="Location for 'species_set/' with 'core_name.fasta' dumps and "
                              "corresponding GTF files")
     parser.add_argument("--gtf_dir", required=True, type=str,
-                        help="Path to the directory containing subdirectories with the ")
-                             "GTF files that will be used as input."
+                        help="Path to the directory containing subdirectories with the "
+                             "GTF files that will be used as input.")
     parser.add_argument("--id_type", required=False, default="protein", type=str,
                         help="Header ID type in .fasta dumps [gene/protein]")
     parser.add_argument("--orthology_input", required=True, type=str,
