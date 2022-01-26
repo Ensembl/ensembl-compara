@@ -263,6 +263,7 @@ def prep_input_for_orth_tools(source_dir: str, target_dir: str) -> None:
 
     Raises:
         RuntimeError: If command to create symlinks fails for any reason.
+
     """
     # OrthoFinder
     script_symlinks = os.path.join(Path(__file__).parents[2], "scripts", "pipeline", "symlink_fasta.py")
@@ -289,6 +290,7 @@ def run_orthology_tools(input_dir: str, orthofinder_params: str) -> None:
 
     Raises:
         RuntimeError: If OrthoFinder command fails to execute for any reason.
+
     """
     # OrthoFinder
     orthofinder_exe = "/hps/software/users/ensembl/ensw/C8-MAR21-sandybridge/linuxbrew/bin/orthofinder"
