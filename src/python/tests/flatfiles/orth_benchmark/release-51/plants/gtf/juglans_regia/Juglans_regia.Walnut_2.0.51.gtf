@@ -1,0 +1,10 @@
+#!genome-build Walnut_2.0
+#!genome-version Walnut_2.0
+#!genome-date 2020-07
+#!genome-build-accession GCA_001411555.2
+#!genebuild-last-updated 2020-11
+7   UCD gene    12902178    12904827    .   +   .   gene_id "Jr07_09670"; gene_source "UCD"; gene_biotype "protein_coding";
+7   UCD transcript  12902178    12904827    .   +   .   gene_id "Jr07_09670"; transcript_id "Jr07_09670_p1"; gene_source "UCD"; gene_biotype "protein_coding"; transcript_source "UCD"; transcript_biotype "protein_coding";
+7   UCD exon    12902178    12902448    .   +   .   gene_id "Jr07_09670"; transcript_id "Jr07_09670_p1"; exon_number "1"; gene_source "UCD"; gene_biotype "protein_coding"; transcript_source "UCD"; transcript_biotype "protein_coding"; exon_id "Jr07_09670_p1-E1";
+7   UCD CDS 12902178    12902448    .   +   0   gene_id "Jr07_09670"; transcript_id "Jr07_09670_p1"; exon_number "1"; gene_source "UCD"; gene_biotype "protein_coding"; transcript_source "UCD"; transcript_biotype "protein_coding"; protein_id "cds.Jr07_09670_p1";
+7   UCD start_codon 12902178    12902180    .   +   0   gene_id "Jr07_09670"; transcript_id "Jr07_09670_p1"; exon_number "1"; gene_source "UCD"; gene_biotype "protein_coding"; transcript_source "UCD"; transcript_biotype "protein_coding";
