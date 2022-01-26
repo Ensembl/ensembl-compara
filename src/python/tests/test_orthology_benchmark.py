@@ -69,6 +69,9 @@ class TestDumpGenomes:
 
     Attributes:
         core_dbs: A set of test core databases.
+        host: Host of the test database server.
+        port: Port of the test database server.
+        username: Username to access the test `host:port`
 
     """
 
@@ -182,6 +185,9 @@ class TestGetCoreNames:
 
     Attributes:
         core_dbs: A set of test core databases.
+        host: Host of the test database server.
+        port: Port of the test database server.
+        username: Username to access the test `host:port`
 
     """
 
