@@ -266,3 +266,32 @@ def test_get_gtf_file(core_name: str, tmp_dir: Path, expectation: ContextManager
     exp_out = test_source_dir / "release-51" / "plants" / "gtf" / "juglans_regia" / \
               "Juglans_regia.Walnut_2.0.51.gtf.gz"
     assert file_cmp( tmp_dir / "Juglans_regia.Walnut_2.0.51.gtf.gz", exp_out)
+
+
+@pytest.mark.parametrize(
+    "core_names, expectation",
+    [
+        (["juglans_regia_core_51_104_1", "anopheles_albimanus_core_51_104_2"], does_not_raise()),
+        ([], raises(ValueError, match=r"Empty list of core db names. Cannot search for GTF files."))
+    ]
+)
+def test_prepare_gtf_files(core_names: str, tmp_dir: Path, expectation: ContextManager) -> None:
+    """Tests :func:`orthology_benchmark.prepare_gtf_files()` function.
+
+    Args:
+        core_names: Core db names.
+        tmp_dir: Unit test temp directory (fixture).
+        expectation: Context manager for the expected exception, i.e. the test will only pass if that
+            exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
+
+    """
+    # pylint: disable-next=no-member
+    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
+    with expectation:
+        orthology_benchmark.prepare_gtf_files(core_names, test_source_dir, tmp_dir)
+
+        rel_dir = test_source_dir / "release-51"
+        exp_out1 = rel_dir / "plants" / "gtf" / "juglans_regia" / "Juglans_regia.Walnut_2.0.51.gtf"
+        exp_out2 = rel_dir / "metazoa" / "gtf" / "anopheles_albimanus" / "Anopheles_albimanus.AalbS2.51.gtf"
+        assert file_cmp( tmp_dir / "Juglans_regia.Walnut_2.0.51.gtf", exp_out1)
+        assert file_cmp( tmp_dir / "Anopheles_albimanus.AalbS2.51.gtf", exp_out2)
