@@ -20,17 +20,19 @@ Typical usage examples::
     # With default OrthoFinder parameters
     $ python orthology_benchmark.py --mlss_conf /path/to/mlss_conf.xml --species_set name \
     --host mysql-ens-compara-prod-X --port XXXX --user username --out_dir /path/to/out/dir \
-    --orthology_input /path/to/orthofinder/input/files
+    --gtf_dir /path/to/gtfs/dir --orthology_input /path/to/orthofinder/input/files
 
     # With additional user specified parameters for OrthoFinder
     $ python orthology_benchmark.py --mlss_conf /path/to/mlss_conf.xml --species_set name \
     --host mysql-ens-compara-prod-X --port XXXX --user username --out_dir /path/to/out/dir \
-    --orthology_input /path/to/orthofinder/input/files --orthofinder_params "-t 4 -M msa"
+    --gtf_dir /path/to/gtfs/dir --orthology_input /path/to/orthofinder/input/files \
+    --orthofinder_params "-t 4 -M msa"
 
 """
 
 import argparse
 import glob
+import gzip
 import os
 from pathlib import Path
 import re
@@ -221,6 +223,35 @@ def get_gtf_file(core_name: str, source_dir: str, target_dir: str) -> None:
         shutil.copy(gtf_file, target_dir)
 
 
+def prepare_gtf_files(core_names: List[str], source_dir: str, target_dir: str) -> None:
+    """Finds, copies and gunzips GTF files for specified core dbs.
+
+    Args:
+        core_names: Core db names.
+        source_dir: Path to the directory containing subdirectories with GTF files.
+            `production/ensemblftp` or MC's `nobackup/release_dumps`.
+        target_dir: Path to the directory where the GTF files will be copied. This
+            directory should not contain any gzip-compressed GTF files that you do
+            not intend to decompress.
+
+    Raises:
+        ValueError: If `core_names` is empty.
+
+    """
+    if len(core_names) == 0:
+        raise ValueError("Empty list of core db names. Cannot search for GTF files.")
+
+    for core in core_names:
+        get_gtf_file(core, source_dir, target_dir)
+
+    gtf_files = glob.glob(os.path.join(target_dir, "*.gtf.gz"))
+
+    for file in gtf_files:
+        with gzip.open(file, "rb") as f_in:
+            with open(re.sub(".gz$", "", file), "wb") as f_out:
+                shutil.copyfileobj(f_in, f_out)
+
+
 def prep_input_for_orth_tools(source_dir: str, target_dir: str) -> None:
     """Prepares input files for selected orthology inference tools.
 
@@ -291,7 +322,11 @@ if __name__ == '__main__':
     parser.add_argument("--port", required=True, type=int, help="Database port")
     parser.add_argument("--user", required=True, type=str, help="Server username")
     parser.add_argument("--out_dir", required=True, type=str,
-                        help="Location for 'species_set/core_name.fasta' dumps")
+                        help="Location for 'species_set/' with 'core_name.fasta' dumps and "
+                             "corresponding GTF files")
+    parser.add_argument("--gtf_dir", required=True, type=str,
+                        help="Path to the directory containing subdirectories with the "
+                             "GTF files that will be used as input.")
     parser.add_argument("--id_type", required=False, default="protein", type=str,
                         help="Header ID type in .fasta dumps [gene/protein]")
     parser.add_argument("--orthology_input", required=True, type=str,
@@ -308,6 +343,8 @@ if __name__ == '__main__':
     print("Dumping cores into fasta files...")
     dump_genomes(list(core_db_dict.values()), args.species_set, args.host, args.port, args.out_dir,
                  args.id_type)
+    print("Looking for GTF files...")
+    prepare_gtf_files(list(core_db_dict.values()), args.gtf_dir, os.path.join(args.out_dir, args.species_set))
     print("Preparing input for orthology inference tools...")
     prep_input_for_orth_tools(os.path.join(args.out_dir, args.species_set), args.orthology_input)
     print("Running orthology inference tools...")
