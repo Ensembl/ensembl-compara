@@ -80,3 +80,4 @@
 102	\N	patch	patch_105_106_a.sql|schema_version
 104	\N	patch	patch_106_107_a.sql|schema_version
 105	\N	patch	patch_105_106_b.sql|clusterset_id_varchar50
+106	\N	patch	patch_106_107_b.sql|unique_gdb_gene_stable_id
