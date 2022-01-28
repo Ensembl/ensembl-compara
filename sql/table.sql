@@ -1034,7 +1034,7 @@ CREATE TABLE gene_member (
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (gene_member_id),
-  UNIQUE KEY gdb_stable_id (genome_db_id,stable_id),
+  UNIQUE KEY (stable_id),
   KEY (source_name),
   KEY (canonical_member_id),
   KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
@@ -1138,7 +1138,7 @@ CREATE TABLE seq_member (
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (seq_member_id),
-  UNIQUE KEY gdb_stable_id (genome_db_id,stable_id),
+  UNIQUE KEY (stable_id),
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id),
@@ -2282,7 +2282,3 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_106_107_a.sql|schema_version');
-
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_106_107_b.sql|unique_gdb_gene_stable_id');
-

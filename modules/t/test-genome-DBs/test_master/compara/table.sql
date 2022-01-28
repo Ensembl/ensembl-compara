@@ -152,7 +152,7 @@ CREATE TABLE `gene_member` (
   `dnafrag_strand` tinyint(4) DEFAULT NULL,
   `display_label` varchar(128) DEFAULT NULL,
   PRIMARY KEY (`gene_member_id`),
-  UNIQUE KEY `gdb_stable_id` (`genome_db_id`,`stable_id`),
+  UNIQUE KEY `stable_id` (`stable_id`),
   KEY `taxon_id` (`taxon_id`),
   KEY `source_name` (`source_name`),
   KEY `canonical_member_id` (`canonical_member_id`),
@@ -437,7 +437,7 @@ CREATE TABLE `meta` (
   PRIMARY KEY (`meta_id`),
   UNIQUE KEY `species_key_value_idx` (`species_id`,`meta_key`,`meta_value`(255)),
   KEY `species_value_idx` (`species_id`,`meta_value`(255))
-) ENGINE=MyISAM AUTO_INCREMENT=161 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=159 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `method_link` (
   `method_link_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -557,7 +557,7 @@ CREATE TABLE `seq_member` (
   `dnafrag_strand` tinyint(4) DEFAULT NULL,
   `display_label` varchar(128) DEFAULT NULL,
   PRIMARY KEY (`seq_member_id`),
-  UNIQUE KEY `gdb_stable_id` (`genome_db_id`,`stable_id`),
+  UNIQUE KEY `stable_id` (`stable_id`),
   KEY `taxon_id` (`taxon_id`),
   KEY `genome_db_id` (`genome_db_id`),
   KEY `source_name` (`source_name`),

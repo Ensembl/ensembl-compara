@@ -119,4 +119,3 @@
 156	\N	patch	patch_105_106_a.sql|schema_version
 158	\N	patch	patch_106_107_a.sql|schema_version
 159	\N	patch	patch_105_106_b.sql|clusterset_id_varchar50
-160	\N	patch	patch_106_107_b.sql|unique_gdb_gene_stable_id
