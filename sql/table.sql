@@ -1783,7 +1783,7 @@ CREATE TABLE gene_tree_node_attr (
 */
 
 CREATE TABLE gene_member_qc (
-  gene_member_stable_id       varchar(128) NOT NULL,
+  gene_member_stable_id       varchar(128) BINARY NOT NULL,
   genome_db_id                INT unsigned NOT NULL,
   seq_member_id               INT unsigned,
   n_species                   INT,

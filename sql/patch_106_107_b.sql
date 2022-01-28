@@ -22,6 +22,7 @@
 
 ALTER TABLE gene_member MODIFY stable_id VARCHAR(128) BINARY NOT NULL;
 ALTER TABLE seq_member MODIFY stable_id VARCHAR(128) BINARY NOT NULL;
+ALTER TABLE geme_member_qc MODIFY gene_member_stable_id VARCHAR(128) BINARY NOT NULL;
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
