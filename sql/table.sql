@@ -1015,7 +1015,7 @@ CREATE TABLE sequence (
 
 CREATE TABLE gene_member (
   gene_member_id              INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
+  stable_id                   varchar(128) BINARY NOT NULL, # e.g. ENSP000001234 or P31946
   version                     INT UNSIGNED DEFAULT 0,
   source_name                 ENUM('ENSEMBLGENE', 'EXTERNALGENE') NOT NULL,
   taxon_id                    INT unsigned NOT NULL, # FK taxon.taxon_id
@@ -1115,7 +1115,7 @@ CREATE TABLE gene_member_hom_stats (
 
 CREATE TABLE seq_member (
   seq_member_id               INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
+  stable_id                   varchar(128) BINARY NOT NULL, # e.g. ENSP000001234 or P31946
   version                     INT UNSIGNED DEFAULT 0,
   source_name                 ENUM('ENSEMBLPEP','ENSEMBLTRANS','Uniprot/SPTREMBL','Uniprot/SWISSPROT','EXTERNALPEP','EXTERNALTRANS','EXTERNALCDS') NOT NULL,
   taxon_id                    INT unsigned NOT NULL, # FK taxon.taxon_id
@@ -2282,3 +2282,6 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_106_107_a.sql|schema_version');
+
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_106_107_b.sql|case_sensitive_stable_id');
