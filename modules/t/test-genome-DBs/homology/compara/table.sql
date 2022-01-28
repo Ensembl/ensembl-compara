@@ -175,7 +175,7 @@ CREATE TABLE `gene_member_hom_stats` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE `gene_member_qc` (
-  `gene_member_stable_id` varchar(128) NOT NULL,
+  `gene_member_stable_id` varchar(128) BINARY NOT NULL,
   `genome_db_id` int(10) unsigned NOT NULL,
   `seq_member_id` int(10) unsigned DEFAULT NULL,
   `n_species` int(11) DEFAULT NULL,
