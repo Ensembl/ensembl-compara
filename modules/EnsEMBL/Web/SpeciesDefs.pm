@@ -589,21 +589,22 @@ sub _read_in_ini_file {
             $defaults_used = 0;
           
             # add settings from default
-            if (defined $defaults->{$current_section}) {
+            if (!%{$tree->{$current_section}} && defined $defaults->{$current_section}) {
               my %hash = %{$defaults->{$current_section}};
               $tree->{$current_section}{$_} = $defaults->{$current_section}{$_} for keys %hash;
             }
           }
         } elsif (/([\w*]\S*)\s*=\s*(.*)/ && defined $current_section) { # Config entry
           my ($key, $value) = ($1, $2); # Add a config entry under the current 'top level'
+
           $value =~ s/\s*$//;
-          
+
           # [ - ] signifies an array
           if ($value =~ /^\[\s*(.*?)\s*\]$/) {
             my @array = split /\s+/, $1;
             $value = \@array;
           }
-        
+
           if ( $defaults_used && defined $defaults->{$current_section} ) {
             my %hash = %{$defaults->{$current_section}};
             $tree->{$current_section}{$_} = $defaults->{$current_section}{$_} for keys %hash;
@@ -779,18 +780,12 @@ sub _get_valid_urls {
         opendir(CMD, $cmd_dir) || die "Can't open $cmd_dir";
         my @subdirs = grep { /^[\.]/ && $_ ne 'CVS' } readdir(CMD);
         
-        # warn "@@@ FOUND DIRS @subdirs";
         foreach my $subdir (@subdirs) {
           my $sub = "$dir/Command/$subdir";
-          # warn "... subdir $sub";
           
           opendir(SUB, $sub) || die "Can't open $sub";
           
           my @modules = grep { /\.pm$/ } readdir(SUB);
-          
-          foreach my $module (@modules) {
-            # warn "!!! COMMAND $module";
-          }
           
           closedir(SUB);
         }
@@ -906,10 +901,6 @@ sub _parse {
   while (my($k, $v) = each (%$species_to_strains)) {
     $tree->{$k}{'ALL_STRAINS'} = $v;
   } 
-
-  #$Data::Dumper::Maxdepth = 2;
-  #$Data::Dumper::Sortkeys = 1;
-  #warn ">>> ORIGINAL KEYS: ".Dumper($tree);
 
   ## Final munging
   my $datasets = [];
@@ -1031,7 +1022,6 @@ sub _parse {
   $tree->{'SPECIES_ASSEMBLY_MAP'} = $species_to_assembly;
 
   $tree->{'MULTI'}{'ENSEMBL_DATASETS'} = $datasets;
-  #warn ">>> NEW KEYS: ".Dumper($tree);
 
   ## New species list - currently only used by rapid release
   $tree->{'MULTI'}{'NEW_SPECIES'} = $self->_read_species_list_file('NEW_SPECIES');
@@ -1473,12 +1463,8 @@ sub _is_available_artefact {
     my @T    = split /\|/, $test[1];
     my $flag = 1;
     
-    #  warn Dumper($ft);
-    
     foreach (@T) {
       $flag = 0 if $ft->{uc $_};
-      # warn "looking for $_";
-      # warn "flag is $flag";
     }
     
     return $flag ? $fail : $success;
