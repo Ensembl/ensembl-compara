@@ -10,7 +10,7 @@
       <taxonomic_group taxon_name="Chordata">
         <!-- But exclude everything below mus_musculus and sus_scrofa -->
         <ref_for_taxon name="mus_musculus"/>
-        <ref_for_taxon name="sus_scrofa"/>
+        <ref_for_taxon name="sus_scrofa_gca000003025v6"/>
       </taxonomic_group>
       <genome name="drosophila_melanogaster"/>
       <genome name="caenorhabditis_elegans"/>
@@ -65,7 +65,7 @@
     <!-- Switch to bos_taurus if equus_caballus gets an assembly update -->
     <one_vs_all method="LASTZ_NET" ref_genome="equus_caballus" against="Perissodactyla"/>
 
-    <one_vs_all method="LASTZ_NET" ref_genome="sus_scrofa" against="Sus"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="sus_scrofa_gca000003025v6" against="Sus"/>
 
     <one_vs_all method="LASTZ_NET" ref_genome="monodelphis_domestica">
       <species_set in_collection="default">
@@ -75,7 +75,7 @@
     </one_vs_all>
 
     <!-- Sauropsids -->
-    <one_vs_all method="LASTZ_NET" ref_genome="gallus_gallus">
+    <one_vs_all method="LASTZ_NET" ref_genome="gallus_gallus_gca016699485v1">
       <species_set>
         <taxonomic_group taxon_name="Sarcopterygii"/>
         <taxonomic_group taxon_name="Mammalia" exclude="1"/>
@@ -152,7 +152,7 @@
         <genome name="microcebus_murinus" assembly="Mmur_3.0"/>
         <genome name="gorilla_gorilla" assembly="gorGor4"/>
         <genome name="pan_paniscus" assembly="panpan1.1"/>
-        <genome name="sus_scrofa"/>
+        <genome name="sus_scrofa_gca000003025v6"/>
         <genome name="mus_caroli" assembly="CAROLI_EIJ_v1.1"/>
         <genome name="mus_pahari" assembly="PAHARI_EIJ_v1.1"/>
         <genome name="cricetulus_griseus_chok1gshd" assembly="CHOK1GS_HDv1"/>
@@ -193,7 +193,7 @@
     <!-- Sauropsids -->
     <multiple_alignment method="EPO">
       <species_set name="sauropsids">
-        <genome name="gallus_gallus"/>
+        <genome name="gallus_gallus_gca016699485v1"/>
         <genome name="anolis_carolinensis" assembly="AnoCar2.0"/>
         <genome name="meleagris_gallopavo" assembly="Turkey_2.01"/>
         <genome name="serinus_canaria" assembly="SCA1"/>
@@ -274,7 +274,7 @@
     <!-- Special case: base EPO should remain internal/unreleased, but should still be updated -->
     <multiple_alignment method="EPO" no_release="1">
       <species_set name="pig_breeds" display_name="pig breeds">
-        <genome name="sus_scrofa"/>
+        <genome name="sus_scrofa_gca000003025v6"/>
         <genome name="sus_scrofa_usmarc"/>
         <genome name="bos_taurus"/>
         <genome name="ovis_aries_rambouillet"/>
@@ -292,7 +292,7 @@
     <multiple_alignment method="PECAN" gerp="1">
       <species_set name="amniotes" display_name="amniota vertebrates">
         <genome name="homo_sapiens"/>
-        <genome name="gallus_gallus"/>
+        <genome name="gallus_gallus_gca016699485v1"/>
         <genome name="pongo_abelii" assembly="PPYG2"/>
         <genome name="loxodonta_africana" assembly="loxAfr3"/>
         <genome name="oryctolagus_cuniculus" assembly="OryCun2.0"/>
@@ -310,7 +310,7 @@
         <genome name="microcebus_murinus" assembly="Mmur_3.0"/>
         <genome name="gorilla_gorilla" assembly="gorGor4"/>
         <genome name="pan_paniscus" assembly="panpan1.1"/>
-        <genome name="sus_scrofa" assembly="Sscrofa11.1"/>
+        <genome name="sus_scrofa_gca000003025v6"/>
         <genome name="mus_caroli" assembly="CAROLI_EIJ_v1.1"/>
         <genome name="mus_pahari" assembly="PAHARI_EIJ_v1.1"/>
         <genome name="cricetulus_griseus_chok1gshd" assembly="CHOK1GS_HDv1"/>
