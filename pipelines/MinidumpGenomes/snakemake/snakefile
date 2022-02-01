@@ -1,0 +1,110 @@
+#!/usr/bin/env snakemake
+
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import glob
+import json
+import os
+from pathlib import Path
+import re
+
+
+envvars:
+    "HPS_HOME",
+    "ENSEMBL_ROOT_DIR",
+    "LINUXBREW_HOME",
+    "COMPARA_REG_PATH"
+
+configfile: "config.yaml"
+workdir: os.path.expandvars(config['outdir'])
+wildcard_constraints:
+    i="\d+",
+    j="\d+"
+
+
+with open(os.path.expandvars(config['species_json'])) as fjson:
+    SPECIES = json.load(fjson)
+
+
+rule all:
+    input:
+        expand(
+            os.path.expandvars(Path(config['species_json'], "{i}", "{j}", "{species_name}.*.fa")),
+            i=glob_wildcards(os.path.expandvars(Path(config['species_json'], "{i}", "{j}", "{species_name}.*.fa"))).i,
+            j=glob_wildcards(os.path.expandvars(Path(config['species_json'], "{i}", "{j}", "{species_name}.*.fa"))).j,
+            species_name=SPECIES
+        )
+
+
+rule gather_gdb_id:
+    input:
+        os.path.expandvars(config['species_json'])
+    output:
+        "dataflow.json"
+    params:
+        get_gdb_ids_exe=os.path.expandvars(config['get_gdb_ids_exe'])
+    shell:
+        "python {params.get_gdb_ids_exe} --url {config[master_url]} --species {input} > {output}"
+
+
+rule genome_dump_factory:
+    input:
+        "dataflow.json"
+    output:
+        "dataflow/{species_name}.txt"
+    run:
+        with open(input[0]) as fin:
+            for line in fin.readlines():
+                gdb_id = int(re.search(r'\"genome_db_id\": (\d+)', line).group(1))
+                sp = re.search(r'\"species_name\": \"(\w+)\"', line).group(1)
+                with open(f"dataflow/{sp}.txt", 'w') as fout:
+                    print(gdb_id, file=fout)
+
+
+rule genome_dump_unmasked:
+    input:
+        "dataflow/{species_name}.txt"
+    output:
+        os.path.expandvars(Path(config['species_json'], "{i}", "{j}", "{species_name}.*.fa"))
+    resources:
+        mem_mb = 1000
+    params:
+        genome_db_id=lambda wildcards, input: int(Path(input[0]).read_text())
+    shell:
+        """
+        standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::DumpGenomes::DumpUnmaskedGenomeSequence \
+            --reg_conf $COMPARA_REG_PATH \
+            --input_id \"{{'genome_db_id' => {params.genome_db_id}, 'force_redump' => [], \
+                           'genome_dumps_dir' => '{config[genome_dumps_dir]}', \
+                           'compara_db' => '{config[master_url]}'}}\"
+        """
+
+
+# rule build_faidx_index:
+#     input:
+#         rules.genome_dump_unmasked.output
+#     output:
+#         expand(
+#             os.path.expandvars(Path(config['species_json'], "{i}", "{j}", "{species_name}.*.fai")),
+#             i=glob_wildcards(os.path.expandvars(Path(config['species_json'], "{i}", "{j}", "{species_name}.*.fai"))).i,
+#             j=glob_wildcards(os.path.expandvars(Path(config['species_json'], "{i}", "{j}", "{species_name}.*.fai"))).j,
+#             species_name=SPECIES
+#         )
+#     params:
+#         samtools_exe = os.path.expandvars(config['samtools_exe'])
+#     shell:
+#         "(test -e {output} && test {input} -ot {output}) || "
+#         "{params.samtools_exe} faidx {input}"

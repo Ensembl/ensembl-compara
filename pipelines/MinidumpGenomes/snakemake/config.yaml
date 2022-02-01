@@ -1,0 +1,6 @@
+outdir:           "${HPS_HOME}/minidump_genomes.snakemake"
+species_json:     "${HPS_HOME}/pluggable_test_files/mini_species.json"
+master_url:       'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master'
+genome_dumps_dir: "${HPS_HOME}/pluggable_test_files/dumps_sm"
+get_gdb_ids_exe:  "${ENSEMBL_ROOT_DIR}/ensembl-compara/scripts/pipeline/get_gdb_id.py"
+samtools_exe:     "${LINUXBREW_HOME}/Cellar/samtools/1.12/bin/samtools"
