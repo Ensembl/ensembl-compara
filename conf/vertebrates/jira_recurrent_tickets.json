@@ -172,6 +172,12 @@
          },
          {
             "component": "Production tasks",
+            "description": "*GitHub*: [MercatorPecan_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/MercatorPecan_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MercatorPecan_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "summary": "Run the Amniotes pecan pipeline",
+            "name_on_graph": "Mercator Pecan:Amniotes"
+         },
+         {
+            "component": "Production tasks",
             "description": "*GitHub*: [UpdateMSA_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/UpdateMSA_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::UpdateMSA_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -method_type pecan -species_set_name amniotes{code}",
             "summary": "Update the Amniotes Mercator-Pecan MSA",
             "name_on_graph": "Update MSA:Amniotes"
