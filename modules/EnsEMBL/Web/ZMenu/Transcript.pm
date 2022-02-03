@@ -148,6 +148,37 @@ sub content {
     });
  }
 
+  if($transcript->is_mane){
+
+    my $mane_select = $transcript->get_all_Attributes('MANE_Select')->[0];
+    my $mane_plus_clinical = $transcript->get_all_Attributes('MANE_Plus_Clinical')->[0];
+
+    my $refseq_id = '';
+    if($mane_select){
+      $refseq_id = $mane_select->value;
+      $self->add_entry({
+        type  => ' ',
+        label => 'MANE Select'
+      });
+    }
+
+    if($mane_plus_clinical){
+      $refseq_id = $mane_plus_clinical->value;
+      $self->add_entry({
+        type  => ' ',
+        label => 'MANE Plus Clinical'
+      });
+    }
+
+    if($refseq_id){
+      $self->add_entry({
+        type  => 'RefSeq Match',
+        label => $refseq_id,
+        link => $hub->get_ExtURL('REFSEQ_DNA', {'ID' => $refseq_id})
+      });
+    }
+  }
+
   $self->add_entry({
     type  => ' ',
     label => "Exons",
