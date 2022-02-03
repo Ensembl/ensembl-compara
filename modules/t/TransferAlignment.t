@@ -34,6 +34,9 @@ my $multi_db = Bio::EnsEMBL::Test::MultiTestDB->new('update_msa_test');
 my $dba = $multi_db->get_DBAdaptor('compara');
 my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $dba );
 
+# Make a copy of dnafrag, GAB, GA and GAT tables before editing them
+$multi_db->save('compara', 'dnafrag', 'genomic_align', 'genomic_align_block', 'genomic_align_tree');
+
 # Load required adaptors
 my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 my $gab_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor();
@@ -109,5 +112,8 @@ is_deeply( \@curr_gat_ids, \@projected_gat_ids, 'Genomic align trees transferred
 my @curr_anc_dnafrags = grep { $_->genome_db->name eq 'ancestral_sequences' } map { $_->dnafrag() } @curr_gas;
 my @curr_anc_df_info = map { ( $_->dbID, $_->name ) } @curr_anc_dnafrags;
 is_deeply( \@curr_anc_df_info, \@projected_anc_df_info, 'Ancestral dnafrags transferred with the right ID offset and name' );
+
+# Restore dnafrag, GAB, GA and GAT tables
+$multi_db->restore('compara', 'dnafrag', 'genomic_align', 'genomic_align_block', 'genomic_align_tree');
 
 done_testing();
