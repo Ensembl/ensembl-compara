@@ -973,7 +973,7 @@ sub check_for_missing_species {
   if (scalar @skipped) {
     $title = 'hidden';
     $warnings .= sprintf(
-                             '<p>The following %d species in the alignment are not shown. Use "<strong>Select alignment</strong>" button above to turn alignments on/off.<ul><li>%s</li></ul></p>',
+                             '<p>The following %d species in the alignment are not shown. Use "<strong>Select another alignment</strong>" button (above the image) to turn alignments on/off.<ul><li>%s</li></ul></p>',
                              scalar @skipped,
                              join "</li>\n<li>", sort map $species_defs->species_label($_), @skipped
                             );
