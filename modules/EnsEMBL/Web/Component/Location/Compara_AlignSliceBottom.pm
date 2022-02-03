@@ -131,6 +131,7 @@ sub content {
                                 'align'   => $align, 
                                 'species' => $prodname, 
                                 'cdb'     => $self->param('cdb') || 'compara',
+                                'ignore'  => 'ancestral_sequences',
                                 });
 
   return $alert_box if $error;
