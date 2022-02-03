@@ -111,6 +111,8 @@ sub species_list {
     my $referer      = $self->hub->referer;
     my ($align)      = split '--', $referer->{'params'}{'align'}[0];
     my $alignment    = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'species'} || {};
+    ## Ancestral sequence is not configurable in this context and causes errors
+    delete $alignment->{'ancestral_sequences'};
     my $primary      = $referer->{'ENSEMBL_SPECIES'};
     my @species      = scalar keys %$alignment ? () : ([ $primary, $species_defs->SPECIES_DISPLAY_NAME($primary) ]);
 
@@ -120,8 +122,6 @@ sub species_list {
     foreach (sort { $a->[1] cmp $b->[1] } map [ $_, $species_defs->SPECIES_DISPLAY_NAME($_) ], @species_list) {
       if ($_->[0] eq $primary) {
         unshift @species, $_;
-      } elsif ($_->[0] eq 'ancestral_sequences') {
-        push @species, [ 'Multi', 'Ancestral sequences' ]; # Cheating: set species to Multi to stop errors due to invalid species.
       } else {
         push @species, $_;
       }
