@@ -27,6 +27,7 @@
     'test_master' => {'compara' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor'},
     'update_homologies_test' => {'compara' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor'},
     'mysqlimport_test' => {'compara' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor'},
+    'update_msa_test' => {'compara' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor'},
  }
 
 #uncomment to use preloaded databases (useful when doing lots of testing)
