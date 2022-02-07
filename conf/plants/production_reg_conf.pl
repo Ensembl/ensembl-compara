@@ -93,23 +93,12 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-#    'compara_members'        => [ 'mysql-ens-compara-prod-', ''],
+    'compara_members'        => [ 'mysql-ens-compara-prod-2', 'ivana_plants_load_members_107'],
 #    'compara_ptrees'         => [ 'mysql-ens-compara-prod-', '' ],
     'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-5', 'jalvarez_wheat_cultivars_plants_protein_trees_106' ],
 
     # LASTZ dbs
-#    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-', '' ],
-#    'lastz_batch_2'  => [ 'mysql-ens-compara-prod-', '' ],
-#    'lastz_batch_3'  => [ 'mysql-ens-compara-prod-', '' ],
-#    'lastz_batch_4'  => [ 'mysql-ens-compara-prod-', '' ],
-#    'lastz_batch_5'  => [ 'mysql-ens-compara-prod-', '' ],
-#    'lastz_batch_6'  => [ 'mysql-ens-compara-prod-', '' ],
-#    'lastz_batch_7'  => [ 'mysql-ens-compara-prod-', '' ],
-#    'lastz_batch_8'  => [ 'mysql-ens-compara-prod-', '' ],
-    # 'lastz_batch_9'  => [ 'mysql-ens-compara-prod-', '' ],
-#    'lastz_batch_10' => [ 'mysql-ens-compara-prod-', '' ],
-#    'lastz_batch_11' => [ 'mysql-ens-compara-prod-', '' ],
-#    'lastz_batch_12' => [ 'mysql-ens-compara-prod-', '' ],
+    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-5', 'ivana_plants_lastz_batch1_107' ],
 
     # synteny
 #    'compara_syntenies' => [ 'mysql-ens-compara-prod-', '' ],
