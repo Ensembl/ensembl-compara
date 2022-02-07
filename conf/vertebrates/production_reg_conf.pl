@@ -71,12 +71,8 @@ my $compara_dbs = {
     'compara_curr'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$curr_release" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],
 
-    # release replicates - to speed up dumping
-    # 'compara_curr_2'   => [ 'mysql-ens-compara-prod-2', "ensembl_compara_$curr_release" ],
-    # 'compara_curr_3'   => [ 'mysql-ens-compara-prod-3', "ensembl_compara_$curr_release" ],
-
     # homology dbs
-    # 'compara_members'         => [ 'mysql-ens-compara-prod-',  '' ],
+    'compara_members'         => [ 'mysql-ens-compara-prod-3',  'jalvarez_vertebrates_load_members_107' ],
     # 'compara_ptrees'          => [ 'mysql-ens-compara-prod-',  '' ],
     'compara_ptrees_prev'     => [ 'mysql-ens-compara-prod-3',  'twalsh_default_vertebrates_protein_trees_106' ],
     # 'compara_nctrees'         => [ 'mysql-ens-compara-prod-',  '' ],
@@ -90,7 +86,10 @@ my $compara_dbs = {
     'pig_breeds_nctrees_prev' => [ 'mysql-ens-compara-prod-3',  'twalsh_vertebrates_pig_breeds_ncrna_reindexed_trees_106' ],
 
     # LASTZ dbs
-    # 'lastz_batch_1'    => [ 'mysql-ens-compara-prod-', '' ],
+    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-4', 'jalvarez_vertebrates_lastz_batch1_107' ],
+    'lastz_batch_2'    => [ 'mysql-ens-compara-prod-8', 'jalvarez_vertebrates_lastz_batch2_107' ],
+    'lastz_batch_3'    => [ 'mysql-ens-compara-prod-9', 'jalvarez_vertebrates_lastz_batch3_107' ],
+    'lastz_batch_4'    => [ 'mysql-ens-compara-prod-4', 'jalvarez_vertebrates_lastz_batch4_107' ],
     'unidir_lastz'     => [ 'mysql-ens-compara-prod-1', 'ensembl_vertebrates_unidirectional_lastz' ],
 
     # EPO dbs
