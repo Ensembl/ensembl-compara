@@ -99,6 +99,7 @@ my $compara_dbs = {
 
     # LASTZ dbs
     'lastz_batch_1'  => [ 'mysql-ens-compara-prod-5', 'ivana_plants_lastz_batch1_107' ],
+    'lastz_batch_2'  => [ 'mysql-ens-compara-prod-3', 'ivana_plants_lastz_batch2_107' ],
 
     # synteny
 #    'compara_syntenies' => [ 'mysql-ens-compara-prod-', '' ],
