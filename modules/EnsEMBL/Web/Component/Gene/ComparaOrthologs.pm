@@ -82,8 +82,9 @@ sub content {
 
     ## Should we be showing this orthologue on this pagpe by default?
     my $strain_group  = $species_defs->get_config($species, 'STRAIN_GROUP');
+    my $related_taxon = $species_defs->get_config($species, 'RELATED_TAXON');
     if ($hub->action =~ /^Strain_/) {
-      unless ($strain_group && $strain_group eq $this_group) {
+      unless (($strain_group && $strain_group eq $this_group) || ($related_taxon && $related_taxon eq $species_defs->RELATED_TAXON)) {
         $species_not_shown->{$species} = $label;
         next;
       }
