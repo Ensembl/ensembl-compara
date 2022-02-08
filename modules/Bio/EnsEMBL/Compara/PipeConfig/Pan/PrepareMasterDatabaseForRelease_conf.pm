@@ -60,7 +60,7 @@ sub default_options {
                               'monodelphis_domestica',
                               'homo_sapiens',
                               'gasterosteus_aculeatus',
-                              'gallus_gallus_gca016699485v1',
+                              'gallus_gallus',
                               'danio_rerio',
                               'ciona_savignyi',
                               'anolis_carolinensis'
