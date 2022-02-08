@@ -94,9 +94,6 @@ sub run {
 
     my $group = $self->param('altallele_group_adaptor')->fetch_by_dbID($self->param('alt_allele_group_id'));
     my @genes = @{$group->get_all_Genes};
-    my @refs = grep {$genes[$_]->slice->is_reference} 0..(scalar(@genes)-1);
-    return unless scalar(@refs);
-    die if scalar(@refs) > 1;
 
     # Discard genes whose canonical transcripts are readthrough transcripts
     my %readthrough_genes;
@@ -108,6 +105,10 @@ sub run {
     @genes = grep {not exists $readthrough_genes{$_}} @genes;
 
     $self->complete_early("All alt alleles are readthrough transcripts. Skipping.") if scalar @genes < 2;
+
+    my @refs = grep {$genes[$_]->slice->is_reference} 0..(scalar(@genes)-1);
+    return unless scalar(@refs);
+    die if scalar(@refs) > 1;
 
     my @seq_members = map {$self->copy_and_fetch_gene($_)} @genes;
     map {bless $_, 'Bio::EnsEMBL::Compara::AlignedMember'} @seq_members;
