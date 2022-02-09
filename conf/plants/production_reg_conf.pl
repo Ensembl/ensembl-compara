@@ -89,7 +89,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $metazoa_overlap_cores );
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_master_plants' ],
-#    'compara_curr'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${curr_eg_release}_${curr_release}" ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${curr_eg_release}_${curr_release}" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
@@ -102,7 +102,7 @@ my $compara_dbs = {
     'lastz_batch_2'  => [ 'mysql-ens-compara-prod-3', 'ivana_plants_lastz_batch2_107' ],
 
     # synteny
-#    'compara_syntenies' => [ 'mysql-ens-compara-prod-', '' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-3', 'ivana_plants_synteny_107' ],
 
     # EPO dbs
     ## rice
