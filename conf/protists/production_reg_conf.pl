@@ -107,8 +107,8 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    # 'compara_members'  => [ 'mysql-ens-compara-prod-x', '' ],
-    # 'compara_ptrees'   => [ 'mysql-ens-compara-prod-x', '' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-8', 'cristig_protists_load_members_107' ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', 'cristig_default_protists_protein_trees_107' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
