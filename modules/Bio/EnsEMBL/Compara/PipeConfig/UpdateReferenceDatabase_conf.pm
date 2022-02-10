@@ -392,8 +392,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'copy_to_bucket',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'ssh_ip_loc' => $self->o('ssh_ip_loc'),
-                'ref_bucket' => $self->o('ref_bucket'),
+                'ssh_ip_loc'  => $self->o('ssh_ip_loc'),
+                'ref_bucket'  => $self->o('ref_bucket'),
                 'symlink_dir' => $self->o('shared_fasta_dir'),
                 'cmd'         => 'cd #symlink_dir#; tar cfhp - * | ssh ${USER}@#ssh_ip_loc# \'(cd #ref_bucket#; tar xfp - )\'',
             },
