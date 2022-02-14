@@ -20,7 +20,7 @@ use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Utils::Registry;
 
-my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
+my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'} || $ENV{'ENS_VERSION'};
 my $curr_eg_release = $curr_release - 53;
 
 # Core databases:
