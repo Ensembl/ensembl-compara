@@ -62,9 +62,8 @@ def test_find_latest_core_naive() -> None:
         core_names: A list of core database names.
 
     """
-    assert data_dumps.find_latest_core(
-        ["mus_musculus_core_105_1", "mus_musculus_core_52_105_3", "mus_musculus_core_104_4"]
-            ) == "mus_musculus_core_52_105_3"
+    core_names = ["mus_musculus_core_105_1", "mus_musculus_core_52_105_3", "mus_musculus_core_104_4"]
+    assert data_dumps.find_latest_core(core_names) == "mus_musculus_core_52_105_3"
 
 
 def test_find_latest_core_naive_error() -> None:
@@ -158,9 +157,10 @@ class TestDumpGenomes:
         """Tests :func:`data_dumps.dump_genomes()` when server connection can be established.
 
         Args:
-            species_list: A list of species (genome names).
+            core_list: A list of core db names.
             species_set_name: Species set (collection) name.
             tmp_dir: Unit test temp directory (fixture).
+            id_type: Type of identifier to use in the dumps.
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
                 exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
 
@@ -190,4 +190,4 @@ class TestDumpGenomes:
         """Tests :func:`data_dumps.dump_genomes()` with fake output path."""
         with pytest.raises(OSError):
             data_dumps.dump_genomes(["mus_musculus", "naja_naja"], "default",
-                                             self.host, self.port, "/compara", "protein")
+                                             self.host, self.port, "/nonexistent/path", "protein")

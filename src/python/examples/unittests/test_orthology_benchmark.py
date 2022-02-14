@@ -115,7 +115,7 @@ class TestDumpGenomes:
         """Tests :func:`orthology_benchmark.dump_genomes()` when server connection can be established.
 
         Args:
-            species_list: A list of species (genome names).
+            core_list: A list of core database names.
             species_set_name: Species set (collection) name.
             tmp_dir: Unit test temp directory (fixture).
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
@@ -145,9 +145,9 @@ class TestDumpGenomes:
 
     def test_dump_genomes_fake_output_path(self) -> None:
         """Tests :func:`orthology_benchmark.dump_genomes()` with fake output path."""
-        with raises(OSError, match=r"Failed to create '/compara/default' directory."):
+        with raises(OSError, match=r"Failed to create '/nonexistent/path/default' directory."):
             orthology_benchmark.dump_genomes(["mus_musculus", "naja_naja"], "default",
-                                             self.host, self.port, "/compara", "protein")
+                                             self.host, self.port, "/nonexistent/path", "protein")
 
 @pytest.mark.parametrize(
     "core_names, exp_output, expectation",
