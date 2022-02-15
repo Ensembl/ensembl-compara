@@ -29,7 +29,8 @@ sub init_cacheable {
   my $self = shift;
 
   $self->image_config_type('chromosome');
-  $self->title('Chromosome Image');
+  my $title = $self->hub->action eq 'Chromosome' ? 'Overview' : 'Chromosome';
+  $self->title("$title Image");
 }
 
 sub form_fields { } # No default fields
