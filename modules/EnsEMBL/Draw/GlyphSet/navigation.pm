@@ -63,11 +63,8 @@ sub render {
   if ($compara ne 'primary') {
     push @{$sprites->{'right'}}, [ 'flip_strand', 'flip' ];
     $sprites->{'right'}[0] += $sprite_step;
-  }
-  if ($compara eq 'secondary') { 
-    # Not available for paralogues
     $sprites->{'right'}[0] += $sprite_step;
-    push @{$sprites->{'right'}}, [ 'set_as_primary', 'primary' ];
+    push @{$sprites->{'right'}}, [ 'set_as_primary_sequence', 'primary' ];
   }
 
   foreach my $key (keys %$sprites) {
