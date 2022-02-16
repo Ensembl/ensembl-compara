@@ -73,12 +73,39 @@ sub _init {
   my @t_stains = qw(gpos25 gpos75);
   if(@bands) {
     $done_one_acen = 1 if @bands>1 && lc($bands[0]->stain) eq 'acen' && lc($bands[1]->stain) ne 'acen';
+    my $prev_end = 0;
+    my $i = 0;
     foreach my $band (@bands){
       my $bandname       = $band->name();
       my $vc_band_start  = $band->start();
       my $vc_band_end    = $band->end();
       my $stain          = lc($band->stain());
       push @t_stains, $stain = shift @t_stains unless $stain;
+
+      ## Check for gaps in bands (haplotypes don't have bands projected onto them any more)
+      if ($prev_end && $prev_end < $vc_band_start - 1) {
+        my $gap_start = $prev_end + 1;
+        my $gap_end   = $bands[$i + 1]->start - 1;
+        $self->push($self->Line({
+          'x'      => $gap_start,
+          'y'      => 2,
+          'width'  => $gap_end - $gap_start + 1,
+          'height' => 0,
+          'colour' => $black,
+          'absolutey' => 1,
+        }));
+        $self->push($self->Line({
+          'x'      => $gap_start,
+          'y'      => $h+4,
+          'width'  => $gap_end - $gap_start + 1,
+          'height' => 0,
+          'colour' => $black,
+          'absolutey' => 1,
+        }));
+
+      }
+      $prev_end = $vc_band_end;
+      $i++;
 
 #  print STDERR "$chr band:$bandname stain:$stain start:$vc_band_start end:$vc_band_end\n";    
       my $colour = $self->my_colour( $stain );
