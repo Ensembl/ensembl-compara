@@ -806,9 +806,7 @@ sub species_stats {
     }
   }
 
-  my @A         = @{$meta_container->list_value_by_key('genebuild.method')};
-  my $method  = ucfirst($A[0]) || '';
-  $method     =~ s/_/ /g;
+  my $method = $self->_format_genebuild_method($meta_container);
   $summary->add_row({
       'name' => '<b>Annotation method</b>',
       'stat' => $method
@@ -884,6 +882,16 @@ sub species_stats {
   }
 
   return $html;
+}
+
+sub _format_genebuild_method {
+  my ($self, $meta_container) = @_;
+
+  my @A       = @{$meta_container->list_value_by_key('genebuild.method')};
+  my $method  = ucfirst($A[0]) || '';
+  $method     =~ s/_/ /g;
+
+  return $method;
 }
 
 ########### COMPARA #################################
