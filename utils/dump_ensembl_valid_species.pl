@@ -30,7 +30,7 @@ use LoadPlugins;
 use EnsEMBL::Web::SpeciesDefs;
 
 my $sd = EnsEMBL::Web::SpeciesDefs->new;
-my @sp_list = keys %{$sd->production_name_lookup()};
+my @sp_list = keys %{$sd->prodnames_to_urls_lookup()};
 print join "\n", @sp_list;
 
 1;
