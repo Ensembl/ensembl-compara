@@ -894,7 +894,18 @@ sub get_homologue_alignments {
 
     }
     push @params, $species if scalar @$species;
-    $msa        = $tree->get_alignment_of_homologues(@params);
+
+    ## Make sure we use the correct tree
+    if ($tree->root->is_supertree) {
+      $msa = $tree->get_alignment_of_homologues(@params);
+    } else {
+      my $supertree = $database->get_GeneTreeAdaptor->fetch_parent_tree($tree);
+      if ($supertree and $supertree->tree_type ne 'clusterset') {
+        $msa = $supertree->get_alignment_of_homologues(@params);
+      } else {
+        $msa = $tree->get_alignment_of_homologues(@params);
+      }
+    }
     $tree->release_tree;
   }
   return $msa;
