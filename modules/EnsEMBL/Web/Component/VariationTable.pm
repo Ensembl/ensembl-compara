@@ -344,7 +344,7 @@ sub make_table {
     helptip => 'Variant identifier',
     link_url => {
       type   => 'Variation',
-      action => 'Summary',
+      action => 'Explore',
       vf     => ["vf"],
       v      => undef # remove the 'v' param from the links if already present
     }
