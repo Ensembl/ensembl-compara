@@ -825,9 +825,6 @@ sub _parse {
   # Parse the web tree to create the static content site map
   $tree->{'STATIC_INFO'}  = $self->_load_in_webtree;
   $self->_info_line('Filesystem', 'Trawled web tree');
-  # Load taxonomy division json for species selector
-  $self->_info_log('Loading', 'Loading taxonomy division json file');
-  $tree->{'ENSEMBL_TAXONOMY_DIVISION'} = $self->_load_json_config($SiteDefs::ENSEMBL_TAXONOMY_DIVISION_FILE);
   
   # Load species lists, if not present in SiteDefs
   unless (scalar @{$SiteDefs::PRODUCTION_NAMES||[]}) {
@@ -915,6 +912,11 @@ sub _parse {
   my $aliases  = $tree->{'MULTI'}{'ENSEMBL_SPECIES_URL_MAP'};
   my $labels   = $tree->{'MULTI'}{'TAXON_LABEL'};  
 
+  ## Load taxonomy division json for species selector
+  $self->_info_log('Loading', 'Loading taxonomy division json file');
+  $tree->{'MULTI'}{'ENSEMBL_TAXONOMY'} = $self->_load_json_config($SiteDefs::ENSEMBL_TAXONOMY_DIVISION_FILE);
+  $self->_populate_taxonomy_division($tree) if $tree->{'MULTI'}{'ENSEMBL_TAXONOMY'};
+
   ## Loop through all keys, not just PRODUCTION_NAMES (need for collection dbs)
   foreach my $key (sort keys %$tree) {
     next unless (defined $tree->{$key}{'SPECIES_PRODUCTION_NAME'}); # skip if not a species key
@@ -971,8 +973,6 @@ sub _parse {
 
     my $display_name = $tree->{$key}{'SPECIES_DISPLAY_NAME'};
     push @{$species_to_assembly->{$display_name}}, $tree->{$key}->{'ASSEMBLY_VERSION'};
-           
-    $self->_populate_taxonomy_division($tree, $key) if $tree->{'ENSEMBL_TAXONOMY_DIVISION'};
 
     ## Now assign an image to this species
     my $image_path = $image_dir.'/'.$key.'.png';
@@ -1052,21 +1052,21 @@ sub _parse {
 sub process_ini_files {
   my ($self, $species, $config_packer, $defaults) = @_;
   my $type = 'db';
-  
+
   my $msg  = "$species databases";
   my $file = File::Spec->catfile($self->{'_conf_dir'}, 'packed', "$species.$type.packed");
   my $full_tree = $config_packer->full_tree;
   my $tree_type = "_${type}_tree";
-  
+
   if (!$full_tree->{$species}) {
     $full_tree->{$species} = $self->_read_in_ini_file($species, $defaults);
     $full_tree->{'MULTI'}{'COLOURSETS'} = $self->_munge_colours($self->_read_in_ini_file('COLOUR', {})) if $species eq 'MULTI';
-    
+
     $self->_info_line('Parsing', "$species ini file");
     $self->_expand_database_templates($species, $full_tree->{$species}, $config_packer);
     $self->_promote_general($full_tree->{$species});
   }
-  
+
   if (-e $file) {
     $config_packer->{$tree_type}->{$species} = lock_retrieve($file);
     $self->_info_line('Retrieve', $species eq 'MULTI' ? 'MULTI ini file' : $msg);
@@ -1074,87 +1074,105 @@ sub process_ini_files {
     $config_packer->munge('rest');
     $config_packer->munge('databases');
     $self->_info_line(sprintf('** %s **', uc $type), $msg);
-    
+
     lock_nstore($config_packer->{$tree_type}->{$species} || {}, $file);
   }
 }
 
 
 sub _populate_taxonomy_division {
-# Populate taxonomy division using e_divisions.json template
-  my ($self, $tree, $url) = @_;
+  my ($self, $tree) = @_;
 
-  my $taxonomy = $tree->{$url}{'TAXONOMY'};
-  my $children = [];
-  my $other_species_children = [];
-
-  my @other_species = grep { $_->{key} =~ m/other_species/ } @{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}};
-  $other_species[0]->{child_nodes} = [] if ($other_species[0] && !$other_species[0]->{child_nodes});
-
-  my $strain_name = $tree->{$url}{'SPECIES_STRAIN'};
-  my $strain_group = $tree->{$url}{'STRAIN_GROUP'};
-  my $group_name   = $tree->{$url}{'SPECIES_COMMON_NAME'};
-  my $species_key = $tree->{$url}{'SPECIES_URL'}; ## Key on actual URL, not production name
-
-  foreach my $node (@{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}}) {
-    my $child = {
-                  key             => $species_key,
-                  scientific_name => $tree->{$url}{'SPECIES_SCIENTIFIC_NAME'},
-                  common_name     => $tree->{$url}{'SPECIES_COMMON_NAME'},
-                  display_name    => $tree->{$url}{'GROUP_DISPLAY_NAME'},
-                  image           => $tree->{$url}{'SPECIES_IMAGE'},
-                  is_leaf         => 'true'
-                };
-
-    if ($strain_group && $strain_name !~ /reference/) {
-      $child->{type} = $group_name . ' ' . $tree->{$url}{'STRAIN_TYPE'}. 's';
-    }
-    elsif($strain_group && $strain_name =~ /reference/) {
-      # Create display name for Reference species
-      my $ref_name = $tree->{$url}{'SPECIES_DISPLAY_NAME'} . ' '. $strain_name;
-      $child->{display_name} = $ref_name;
-    }
-
-    if (!$node->{taxa}) {
-      push @{$other_species[0]->{child_nodes}}, $child;
-    }
-    else {
-      my %taxa = map {$_ => 1} @{ $node->{taxa} };
-      my @matched_groups = grep { $taxa{$_} } @$taxonomy;
-      if ($#matched_groups >= 0) {
-        if ($node->{child_nodes}) {
-          my $cnode_match = {};
-          foreach my $cnode ( @{$node->{child_nodes}}) {
-            my @match = grep { /$matched_groups[0]/ }  @{$cnode->{taxa}};
-            if ($#match >=0 ) {
-              $cnode_match = $cnode;
-              last;
-            }
-          }
-
-          if (keys %$cnode_match) {
-            if (!$cnode_match->{child_nodes}) {
-              $cnode_match->{child_nodes} = [];
-            }
-            push @{$cnode_match->{child_nodes}}, $child;
-            last;
-          }
-          else {
-            if (!$node->{child_nodes}) {
-              $node->{child_nodes} = [];
-            }
-            push @{$node->{child_nodes}}, $child;
-            last;
-          }
-        }
-        else {
-          $node->{child_nodes} = [];
-          push @{$node->{child_nodes}}, $child;
-          last;
-        }
-      }
+  ## Parse file content into useful variables
+  my $taxonomy = $tree->{'MULTI'}{'ENSEMBL_TAXONOMY'};
+  my $taxa = {};
+  foreach my $level_1 (@$taxonomy) {
+    $taxa->{$level_1->{'taxon'}} = 1;
+    foreach my $level_2 (@{$level_1->{'children'}||[]}) {
+      $taxa->{$level_2->{'taxon'}} = 1 unless $level_2->{'taxon'} eq 'other';
     }
   }
+
+  ## Sort the species into their respective taxa
+  my $groups = {};
+  foreach my $prodname (@$SiteDefs::PRODUCTION_NAMES) {
+    my $species_taxonomy = $tree->{$prodname}{'TAXONOMY'};
+    my @matched_groups = grep {$taxa->{$_}} @$species_taxonomy;
+    my $group = $matched_groups[0] || 'other';
+    push @{$groups->{$group}}, $prodname;
+  }
+
+  ## Now build the tree
+  my $taxon_tree = {
+    "key"               => "All Divisions",
+    "display_name"      => "All Divisions",
+    "is_internal_node"  => "true",
+    "child_nodes"       => []
+  };
+  foreach my $level_1 (@$taxonomy) {
+    my $label = $level_1->{'label'} || $level_1->{'taxon'};
+    my $child = {
+      "key"               => $level_1->{'taxon'},
+      "display_name"      => $label,
+      "is_internal_node"  => "true",
+    };
+    if ($level_1->{'children'}) {
+      foreach my $level_2 (@{$level_1->{'children'}}) {
+        my $label = $level_2->{'label'} || $level_2->{'taxon'};
+        my $leaves = $self->_get_leaves($tree, $groups, $level_2);
+        push @{$child->{'child_nodes'}}, {
+          "key"               => $level_2->{'taxon'},
+          "display_name"      => $label,
+          "is_internal_node"  => "true",
+          "child_nodes"       => $leaves,
+        };
+      }
+    }
+    else {
+      $child->{'child_nodes'} = $self->_get_leaves($tree, $groups, $level_1);
+    }
+    push @{$taxon_tree->{'child_nodes'}}, $child;
+  }
+  #warn Dumper($taxon_tree);
+  use Data::Dumper;
+  $Dumper::Sortkeys = 0;
+  use EnsEMBL::Web::File::Utils::IO qw/:all/;
+  my $output_file = $SiteDefs::ENSEMBL_TMP_DIR.'/taxon.txt';
+  write_file($output_file, {'content' => Dumper($taxon_tree)});
+
+  ## Save to main tree
+  $tree->{'MULTI'}{'ENSEMBL_TAXONOMY_DIVISION'} = $taxon_tree;
+}
+
+sub _get_leaves {
+  my ($self, $tree, $groups, $node) = @_;
+  ## Add individual species
+  my $leaves = [];
+  warn ">>> NODE ".$node->{'taxon'};
+  foreach (@{$groups->{$node->{'taxon'}}}) {
+    my $leaf = {
+      key             => $tree->{$_}{'SPECIES_URL'},
+      scientific_name => $tree->{$_}{'SPECIES_SCIENTIFIC_NAME'},
+      common_name     => $tree->{$_}{'SPECIES_COMMON_NAME'},
+      display_name    => $tree->{$_}{'GROUP_DISPLAY_NAME'},
+      image           => $tree->{$_}{'SPECIES_IMAGE'},
+      is_leaf         => 'true'
+    };
+    my $strain_name   = $tree->{$_}{'SPECIES_STRAIN'};
+    my $strain_group  = $tree->{$_}{'STRAIN_GROUP'};
+    my $group_name    = $tree->{$_}{'SPECIES_COMMON_NAME'};
+    if ($strain_group && $strain_name !~ /reference/) {
+      $leaf->{type} = $group_name . ' ' . $tree->{$_}{'STRAIN_TYPE'}. 's';
+    }
+    elsif ($strain_group && $strain_name =~ /reference/) {
+      # Create display name for Reference species
+      my $ref_name = $tree->{$_}{'SPECIES_DISPLAY_NAME'} . ' '. $strain_name;
+      $leaf->{display_name} = $ref_name;
+    }
+    push @$leaves, $leaf;
+  }
+
+  return $leaves;
 }
 
 sub _get_file_format_info {
