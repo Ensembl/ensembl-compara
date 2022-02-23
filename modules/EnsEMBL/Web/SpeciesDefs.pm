@@ -1082,12 +1082,12 @@ sub _populate_taxonomy_division {
   my ($self, $tree) = @_;
   return unless $SiteDefs::ENSEMBL_TAXONOMY_DIVISION_FILE;
 
+  ## Get taxonomy information
   $self->_info_log('Loading', 'Loading taxonomy division json file');
   my $taxonomy = $self->_load_json_config($SiteDefs::ENSEMBL_TAXONOMY_DIVISION_FILE);
   return unless ($taxonomy && ref($taxonomy) eq 'ARRAY' && scalar @$taxonomy);
-  
   ## Add 'other species' catch-all category
-  push @$taxonomy, {'taxon' => 'other_species', 'label' => 'Other Species'};
+  push @$taxonomy, {'taxon' => 'other_species', 'label' => 'Other species'};
 
   ## Create a lookup of valid clades
   my $lookup = {};
@@ -1097,21 +1097,18 @@ sub _populate_taxonomy_division {
       $lookup->{$level_2->{'taxon'}} = 1 unless $level_2->{'taxon'} =~ /^other/;
     }
   }
-  use Data::Dumper;
-  $Dumper::Sortkeys = 1;
 
   ## Sort the species into their respective taxa
   my $groups = {};
   foreach my $key (keys %$tree) {
-    next unless $tree->{$key}{'SPECIES_PRODUCTION_NAME'};
+    next unless $tree->{$key}{'SPECIES_PRODUCTION_NAME'}; ## Not a real species
     my $species_taxonomy = $tree->{$key}{'TAXONOMY'};
     my @matched_groups = grep {$lookup->{$_}} @$species_taxonomy;
     my $group = $matched_groups[0] || 'other_species';
     push @{$groups->{$group}}, $key;
   }
-  #warn Dumper($groups);
 
-  ## Now build the tree
+  ## Now build the tree that will power the interface
   my $taxon_tree = {
     "key"               => "All Divisions",
     "display_name"      => "All Divisions",
@@ -1126,30 +1123,28 @@ sub _populate_taxonomy_division {
       "is_internal_node"  => "true",
     };
     if ($level_1->{'children'}) {
-      my $taxa = [];
+      $child->{'is_submenu'} = 'true';
+
       foreach my $level_2 (@{$level_1->{'children'}}) {
         my $label = $level_2->{'label'} || $level_2->{'taxon'};
+        ## Species that don't match any 2nd level clade will have been assigned to the parent clade
         my $group = $level_2->{'taxon'} =~ /^other/ ? $groups->{$level_1->{'taxon'}} : $groups->{$level_2->{'taxon'}};
-        my $leaves = $self->_get_leaves($tree, $group, $level_2);
+        ## Create nodes for individual species
+        my $leaves = $self->_get_leaves($tree, $group);
         push @{$child->{'child_nodes'}}, {
           "key"               => $level_2->{'taxon'},
           "display_name"      => $label,
           "is_internal_node"  => "true",
           "child_nodes"       => $leaves,
         };
-        push @$taxa, $level_2->{'taxon'};
       }
-      $child->{'taxa'} = $taxa;
     }
     else {
+      ## No secondary level, just species
       $child->{'child_nodes'} = $self->_get_leaves($tree, $groups->{$level_1->{'taxon'}});
     }
     push @{$taxon_tree->{'child_nodes'}}, $child;
   }
-
-  use EnsEMBL::Web::File::Utils::IO qw/:all/;
-  my $output_file = $SiteDefs::ENSEMBL_TMP_DIR.'/taxon.txt';
-  write_file($output_file, {'content' => Dumper($taxon_tree)});
 
   ## Save to main tree
   $tree->{'MULTI'}{'ENSEMBL_TAXONOMY_DIVISION'} = $taxon_tree;
