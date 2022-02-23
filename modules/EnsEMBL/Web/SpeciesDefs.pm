@@ -912,9 +912,6 @@ sub _parse {
   my $aliases  = $tree->{'MULTI'}{'ENSEMBL_SPECIES_URL_MAP'};
   my $labels   = $tree->{'MULTI'}{'TAXON_LABEL'};  
 
-  ## Load taxonomy division json for species selector
-  $self->_populate_taxonomy_division($tree);
-
   ## Loop through all keys, not just PRODUCTION_NAMES (need for collection dbs)
   foreach my $key (sort keys %$tree) {
     next unless (defined $tree->{$key}{'SPECIES_PRODUCTION_NAME'}); # skip if not a species key
@@ -1026,6 +1023,9 @@ sub _parse {
     }
   }
 
+  ## Load taxonomy division json for species selector
+  $self->_populate_taxonomy_division($tree);
+
   # Used for grouping same species with different assemblies in species selector
   $tree->{'SPECIES_ASSEMBLY_MAP'} = $species_to_assembly;
 
@@ -1102,11 +1102,12 @@ sub _populate_taxonomy_division {
 
   ## Sort the species into their respective taxa
   my $groups = {};
-  foreach my $prodname (@$SiteDefs::PRODUCTION_NAMES) {
-    my $species_taxonomy = $tree->{$prodname}{'TAXONOMY'};
+  foreach my $key (keys %$tree) {
+    next unless $tree->{$key}{'SPECIES_PRODUCTION_NAME'};
+    my $species_taxonomy = $tree->{$key}{'TAXONOMY'};
     my @matched_groups = grep {$lookup->{$_}} @$species_taxonomy;
     my $group = $matched_groups[0] || 'other_species';
-    push @{$groups->{$group}}, $prodname;
+    push @{$groups->{$group}}, $key;
   }
   #warn Dumper($groups);
 
@@ -1146,10 +1147,9 @@ sub _populate_taxonomy_division {
     push @{$taxon_tree->{'child_nodes'}}, $child;
   }
 
-  #warn Dumper($taxon_tree);
-  #use EnsEMBL::Web::File::Utils::IO qw/:all/;
-  #my $output_file = $SiteDefs::ENSEMBL_TMP_DIR.'/taxon.txt';
-  #write_file($output_file, {'content' => Dumper($taxon_tree)});
+  use EnsEMBL::Web::File::Utils::IO qw/:all/;
+  my $output_file = $SiteDefs::ENSEMBL_TMP_DIR.'/taxon.txt';
+  write_file($output_file, {'content' => Dumper($taxon_tree)});
 
   ## Save to main tree
   $tree->{'MULTI'}{'ENSEMBL_TAXONOMY_DIVISION'} = $taxon_tree;
