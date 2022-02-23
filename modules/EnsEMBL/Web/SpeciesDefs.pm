@@ -913,9 +913,7 @@ sub _parse {
   my $labels   = $tree->{'MULTI'}{'TAXON_LABEL'};  
 
   ## Load taxonomy division json for species selector
-  $self->_info_log('Loading', 'Loading taxonomy division json file');
-  $tree->{'MULTI'}{'ENSEMBL_TAXONOMY'} = $self->_load_json_config($SiteDefs::ENSEMBL_TAXONOMY_DIVISION_FILE);
-  $self->_populate_taxonomy_division($tree) if $tree->{'MULTI'}{'ENSEMBL_TAXONOMY'};
+  $self->_populate_taxonomy_division($tree);
 
   ## Loop through all keys, not just PRODUCTION_NAMES (need for collection dbs)
   foreach my $key (sort keys %$tree) {
@@ -1082,9 +1080,13 @@ sub process_ini_files {
 
 sub _populate_taxonomy_division {
   my ($self, $tree) = @_;
+  return unless $SiteDefs::ENSEMBL_TAXONOMY_DIVISION_FILE;
+
+  $self->_info_log('Loading', 'Loading taxonomy division json file');
+  my $taxonomy = $self->_load_json_config($SiteDefs::ENSEMBL_TAXONOMY_DIVISION_FILE);
+  return unless ($taxonomy && ref($taxonomy) eq 'ARRAY' && scalar @$taxonomy);
 
   ## Parse file content into useful variables
-  my $taxonomy = $tree->{'MULTI'}{'ENSEMBL_TAXONOMY'};
   my $taxa = {};
   foreach my $level_1 (@$taxonomy) {
     $taxa->{$level_1->{'taxon'}} = 1;
@@ -1134,11 +1136,11 @@ sub _populate_taxonomy_division {
     push @{$taxon_tree->{'child_nodes'}}, $child;
   }
   #warn Dumper($taxon_tree);
-  use Data::Dumper;
-  $Dumper::Sortkeys = 0;
-  use EnsEMBL::Web::File::Utils::IO qw/:all/;
-  my $output_file = $SiteDefs::ENSEMBL_TMP_DIR.'/taxon.txt';
-  write_file($output_file, {'content' => Dumper($taxon_tree)});
+  #use Data::Dumper;
+  #$Dumper::Sortkeys = 0;
+  #use EnsEMBL::Web::File::Utils::IO qw/:all/;
+  #my $output_file = $SiteDefs::ENSEMBL_TMP_DIR.'/taxon.txt';
+  #write_file($output_file, {'content' => Dumper($taxon_tree)});
 
   ## Save to main tree
   $tree->{'MULTI'}{'ENSEMBL_TAXONOMY_DIVISION'} = $taxon_tree;

@@ -144,7 +144,7 @@ sub json_fetch_species {
   my $sp_assembly_map = $sd->SPECIES_ASSEMBLY_MAP;
 
   $self->{species_selector_data} = {
-    division_json => $sd->multiX('ENSEMBL_TAXONOMY_DIVISION'),
+    division_json => $sd->multi_val('ENSEMBL_TAXONOMY_DIVISION'),
     sp_assembly_map => $sd->SPECIES_ASSEMBLY_MAP,
     available_species => $available_species_map,
     internal_node_select => 0
