@@ -1085,24 +1085,30 @@ sub _populate_taxonomy_division {
   $self->_info_log('Loading', 'Loading taxonomy division json file');
   my $taxonomy = $self->_load_json_config($SiteDefs::ENSEMBL_TAXONOMY_DIVISION_FILE);
   return unless ($taxonomy && ref($taxonomy) eq 'ARRAY' && scalar @$taxonomy);
+  
+  ## Add 'other species' catch-all category
+  push @$taxonomy, {'taxon' => 'other_species', 'label' => 'Other Species'};
 
-  ## Parse file content into useful variables
-  my $taxa = {};
+  ## Create a lookup of valid clades
+  my $lookup = {};
   foreach my $level_1 (@$taxonomy) {
-    $taxa->{$level_1->{'taxon'}} = 1;
+    $lookup->{$level_1->{'taxon'}} = 1;
     foreach my $level_2 (@{$level_1->{'children'}||[]}) {
-      $taxa->{$level_2->{'taxon'}} = 1 unless $level_2->{'taxon'} eq 'other';
+      $lookup->{$level_2->{'taxon'}} = 1 unless $level_2->{'taxon'} =~ /^other/;
     }
   }
+  use Data::Dumper;
+  $Dumper::Sortkeys = 1;
 
   ## Sort the species into their respective taxa
   my $groups = {};
   foreach my $prodname (@$SiteDefs::PRODUCTION_NAMES) {
     my $species_taxonomy = $tree->{$prodname}{'TAXONOMY'};
-    my @matched_groups = grep {$taxa->{$_}} @$species_taxonomy;
-    my $group = $matched_groups[0] || 'other';
+    my @matched_groups = grep {$lookup->{$_}} @$species_taxonomy;
+    my $group = $matched_groups[0] || 'other_species';
     push @{$groups->{$group}}, $prodname;
   }
+  #warn Dumper($groups);
 
   ## Now build the tree
   my $taxon_tree = {
@@ -1119,25 +1125,28 @@ sub _populate_taxonomy_division {
       "is_internal_node"  => "true",
     };
     if ($level_1->{'children'}) {
+      my $taxa = [];
       foreach my $level_2 (@{$level_1->{'children'}}) {
         my $label = $level_2->{'label'} || $level_2->{'taxon'};
-        my $leaves = $self->_get_leaves($tree, $groups, $level_2);
+        my $group = $level_2->{'taxon'} =~ /^other/ ? $groups->{$level_1->{'taxon'}} : $groups->{$level_2->{'taxon'}};
+        my $leaves = $self->_get_leaves($tree, $group, $level_2);
         push @{$child->{'child_nodes'}}, {
           "key"               => $level_2->{'taxon'},
           "display_name"      => $label,
           "is_internal_node"  => "true",
           "child_nodes"       => $leaves,
         };
+        push @$taxa, $level_2->{'taxon'};
       }
+      $child->{'taxa'} = $taxa;
     }
     else {
-      $child->{'child_nodes'} = $self->_get_leaves($tree, $groups, $level_1);
+      $child->{'child_nodes'} = $self->_get_leaves($tree, $groups->{$level_1->{'taxon'}});
     }
     push @{$taxon_tree->{'child_nodes'}}, $child;
   }
+
   #warn Dumper($taxon_tree);
-  #use Data::Dumper;
-  #$Dumper::Sortkeys = 0;
   #use EnsEMBL::Web::File::Utils::IO qw/:all/;
   #my $output_file = $SiteDefs::ENSEMBL_TMP_DIR.'/taxon.txt';
   #write_file($output_file, {'content' => Dumper($taxon_tree)});
@@ -1147,11 +1156,11 @@ sub _populate_taxonomy_division {
 }
 
 sub _get_leaves {
-  my ($self, $tree, $groups, $node) = @_;
-  ## Add individual species
+  ## Munge individual species for adding to the tree
+  my ($self, $tree, $group) = @_;
   my $leaves = [];
-  warn ">>> NODE ".$node->{'taxon'};
-  foreach (@{$groups->{$node->{'taxon'}}}) {
+  
+  foreach (@$group) {
     my $leaf = {
       key             => $tree->{$_}{'SPECIES_URL'},
       scientific_name => $tree->{$_}{'SPECIES_SCIENTIFIC_NAME'},

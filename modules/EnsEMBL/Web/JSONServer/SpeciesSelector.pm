@@ -69,8 +69,14 @@ sub traverse() {
       my $assembly_group;
 
       my @child_nodes = $node->{child_nodes};
+      #use Data::Dumper;
+      #$Data::Dumper::Sortkeys = 1;
+      #$Data::Dumper::Maxdepth = 2;
+      #warn '>>> SELECTOR DATA '.Dumper($self->{species_selector_data});
 
       foreach (@{$node->{child_nodes}}) {
+        #warn '>>> NODE KEY '.$_->{key};
+        #warn '... COMMON '.$_->{common_name};
         if ($_->{type}) { # for strains and stuff that could come from configpacker
           push @{$type->{$_->{type}}}, $self->traverse($_);
         }
