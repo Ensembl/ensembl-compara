@@ -34,7 +34,7 @@ sub json_data {
   my $self = shift;
   my $hub             = $self->hub;
   my $species_defs    = $hub->species_defs;
-  my $division_json   = $species_defs->multiX('ENSEMBL_TAXONOMY_DIVISION');
+  my $division_json   = $species_defs->multi_val('ENSEMBL_TAXONOMY_DIVISION');
   ## get assembly info for each species
   my $adaptor = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
   my $assemblies = $adaptor->fetch_archive_assemblies();
