@@ -794,7 +794,6 @@ sub fetch_homology_species_hash {
   my $name_lookup          = $self->hub->species_defs->prodnames_to_urls_lookup;
   my ($homologies, $classification, $query_member) = $self->get_homologies($homology_source, $homology_description, $compara_db);
   my %homologues;
-  my $missing;
 
   foreach my $homology (@$homologies) {
     my ($query_perc_id, $target_perc_id, $genome_db_name, $target_member, $dnds_ratio, $goc_score, $wgac, $highconfidence, $goc_threshold, $wga_threshold);
@@ -827,15 +826,6 @@ sub fetch_homology_species_hash {
     else {
       $missing++; 
     }
-  }
-
-  if ($missing && $self->hub->action ne 'Phenotype') { 
-    $self->hub->session->set_record_data({
-        'type'      => 'message',
-        'function'  => '_info',
-        'code'      => 'mouse_strain_bug',
-        'message'   => sprintf 'Homology data for mouse strains is missing from this release. Please visit the <a href="http://e88.ensembl.org%s">release 88 archive site</a> to view this data', $self->hub->url,
-      });
   }
 
   @{$homologues{$_}} = sort { $classification->{$a->[2]} <=> $classification->{$b->[2]} } @{$homologues{$_}} for keys %homologues;  
