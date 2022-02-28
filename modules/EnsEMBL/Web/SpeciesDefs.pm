@@ -1093,8 +1093,15 @@ sub _populate_taxonomy_division {
   my $lookup = {};
   foreach my $level_1 (@$taxonomy) {
     $lookup->{$level_1->{'taxon'}} = 1;
-    foreach my $level_2 (@{$level_1->{'children'}||[]}) {
-      $lookup->{$level_2->{'taxon'}} = 1 unless $level_2->{'taxon'} =~ /^other/;
+    if (@{$level_1->{'children'}||[]}) {
+      ## Sanity check - the sorting algorithm only allows one "other" category
+      my @others = grep { $_->{'taxon'} =~ /^other/ } @{$level_1->{'children'}};
+      if (scalar @others > 1) {
+        warn "\t ".sprintf('[ERROR] Group "%s" has more than one catch-all "other_" taxon - please correct JSON configuration', $level_1->{'label'});
+      }
+      foreach my $level_2 (@{$level_1->{'children'}||[]}) {
+        $lookup->{$level_2->{'taxon'}} = 1 unless $level_2->{'taxon'} =~ /^other/;
+      }
     }
   }
 
