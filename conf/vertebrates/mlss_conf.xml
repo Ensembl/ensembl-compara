@@ -84,7 +84,12 @@
       </species_set>
     </one_vs_all>
 
-    <one_vs_all method="LASTZ_NET" ref_genome="xenopus_tropicalis" against="Amphibia"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="xenopus_tropicalis">
+      <species_set>
+        <taxonomic_group taxon_name="Amphibia"/>
+        <genome name="leptobrachium_leishanense" assembly="ASM966780v1" exclude="1"/>
+      </species_set>
+    </one_vs_all>
 
     <!-- Fish -->
     <one_vs_all method="LASTZ_NET" ref_genome="danio_rerio">
