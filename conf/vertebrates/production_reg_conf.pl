@@ -87,7 +87,6 @@ my $compara_dbs = {
 
     # LASTZ dbs
     'lastz_batch_1'    => [ 'mysql-ens-compara-prod-4', 'jalvarez_vertebrates_lastz_batch1_107' ],
-    'lastz_batch_2'    => [ 'mysql-ens-compara-prod-8', 'jalvarez_vertebrates_lastz_batch2_107' ],
     'lastz_batch_3'    => [ 'mysql-ens-compara-prod-9', 'jalvarez_vertebrates_lastz_batch3_107' ],
     'lastz_batch_4'    => [ 'mysql-ens-compara-prod-4', 'jalvarez_vertebrates_lastz_batch4_107' ],
     'lastz_batch_5'    => [ 'mysql-ens-compara-prod-10', 'jalvarez_vertebrates_lastz_batch5_107' ],
