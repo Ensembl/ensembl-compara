@@ -20,7 +20,7 @@
 Examples::
     # Extract a MAF alignment with chromosome 19 of GRCh38 as reference.
     python hal_to_maf.py --ref-genome GRCh38 --ref-sequence chr19 \
-      --keep-genomes-file genome_list.txt input.hal output.maf
+      --genomes-file genome_list.txt input.hal output.maf
 
 """
 
@@ -40,7 +40,7 @@ if __name__ == '__main__':
                         help="Reference genome for output MAF file.")
     parser.add_argument('--ref-sequence', metavar='STR', required=True,
                         help="Output sequence within reference genome.")
-    parser.add_argument('--keep-genomes-file', metavar='PATH', required=True,
+    parser.add_argument('--genomes-file', metavar='PATH', required=True,
                         help="File listing genomes to include in output alignments, one per line.")
 
     parser.add_argument('--min-block-seqs', metavar='INT', type=int, default=3,
@@ -49,8 +49,8 @@ if __name__ == '__main__':
                         help="Minimum number of columns per block.")
     args = parser.parse_args()
 
-    with open(args.keep_genomes_file) as f:
-        keep_genomes = [line.rstrip() for line in f]
+    with open(args.genomes_file) as f:
+        target_genomes = [line.rstrip() for line in f]
 
     command = [
         'hal2maf',
@@ -58,7 +58,7 @@ if __name__ == '__main__':
         'stdout',
         '--refGenome', args.ref_genome,
         '--refSequence', args.ref_sequence,
-        '--targetGenomes', ','.join(keep_genomes)
+        '--targetGenomes', ','.join(target_genomes)
     ]
 
     with open(args.maf_file, 'w') as out_f:
