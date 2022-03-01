@@ -44,6 +44,7 @@ def collect_taxonomys_from_path(session: Session, rootdir: Union[str, Path]) -> 
     """Returns a list of ncbi_taxa_name.names
 
     Args:
+        session: sqlalchemy.orm.Session object holding database connection
         rootdir: Collections directory containing directories
         named by taxonomic classification
     """
@@ -59,6 +60,7 @@ def match_taxon_to_reference(session: Session, taxon_name: str, taxon_list: list
     """Returns a taxonomic clade name within the ``taxon_list`` and ``taxon_name`` ancestry
 
     Args:
+        session: sqlalchemy.orm.Session object holding database connection
         taxon_name: Scientific ncbi_taxa_name.name of genome in database
         taxon_list: List of clade ncbi_taxa_name.names
     """
