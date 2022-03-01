@@ -39,7 +39,7 @@ my $prev_eg_release = $curr_eg_release - 1;
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
 # Non-Vertebrates server
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3-b:4686/$curr_release");
 # Protist collections
 my @collection_groups = qw(
     alveolata1
@@ -56,6 +56,13 @@ my @collection_groups = qw(
     rhizaria1
     stramenopiles1
 );
+my @overlap_species = qw(hyaloperonospora_arabidopsidis);
+Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
+my $overlap_cores = {
+    'hyaloperonospora_arabidopsidis'  => [ 'mysql-ens-sta-3-b', "hyaloperonospora_arabidopsidis_core_${curr_eg_release}_${curr_release}_1"],
+};
+Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
+
 foreach my $group ( @collection_groups ) {
     Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
         -host   => 'mysql-ens-sta-3-b',
@@ -100,8 +107,8 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    # 'compara_members'  => [ 'mysql-ens-compara-prod-x', '' ],
-    # 'compara_ptrees'   => [ 'mysql-ens-compara-prod-x', '' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-8', 'cristig_protists_load_members_107' ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', 'cristig_default_protists_protein_trees_107' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );

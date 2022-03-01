@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak
@@ -58,15 +47,6 @@ my $quicktreebreak = Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBrea
 $quicktreebreak->fetch_input(); #reads from DB
 $quicktreebreak->run();
 $quicktreebreak->write_output(); #writes to DB
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
 
 =cut
 
@@ -230,6 +210,7 @@ sub _write_output {
 
     # Wrapper around Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks
     # NB: this will be testing $self->param('gene_tree_id')
+    $self->param('db_conn', $dbc) if !$self->param_is_defined('db_conn');  # Ensure the transaction connection is retained
     Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_embedded_call($self, 'supertrees');
 }
 

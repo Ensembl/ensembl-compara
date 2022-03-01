@@ -3190,7 +3190,7 @@ sub core_pipeline_analyses {
                 'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
-            -rc_name        => '500Mb_job',
+            -rc_name        => '1Gb_job',
             -flow_into      => {
                 3 => [ 'other_paralogs_himem' ],
             }
