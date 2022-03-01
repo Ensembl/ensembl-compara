@@ -63,7 +63,7 @@ sub pipeline_analyses_member_names_descriptions {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'exclude_species'  => $self->o('exclude_species'),
-            }
+            },
             -flow_into => {
                 2   => [ 'update_member_display_labels' ],
             },
