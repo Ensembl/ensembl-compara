@@ -45,12 +45,34 @@ if __name__ == '__main__':
 
     parser.add_argument('--min-block-seqs', metavar='INT', type=int, default=3,
                         help="Minimum number of sequences per block.")
-    parser.add_argument('--min-block-size', metavar='INT', type=int, default=200,
+    parser.add_argument('--min-block-length', metavar='INT', type=int, default=200,
                         help="Minimum number of columns per block.")
+    parser.add_argument('--max-block-length', metavar='INT', type=int,
+                        help="Maximum number of columns per block.")
+    parser.add_argument('--max-ref-gap', metavar='INT', type=int,
+                        help="Maximum reference sequence gap length.")
     args = parser.parse_args()
 
     with open(args.genomes_file) as f:
         target_genomes = [line.rstrip() for line in f]
+
+    # Ensembl defaults
+    if len(target_genomes) > 1:
+        default_max_block_length = 1_000_000
+        default_max_ref_gap = 500
+    else:
+        default_max_block_length = 500_000
+        default_max_ref_gap = 50
+
+    if args.max_block_length is not None:
+        max_block_length = args.max_block_length
+    else:
+        max_block_length = default_max_block_length
+
+    if args.max_ref_gap is not None:
+        max_ref_gap = args.max_ref_gap
+    else:
+        max_ref_gap = default_max_ref_gap
 
     command = [
         'hal2maf',
@@ -58,7 +80,9 @@ if __name__ == '__main__':
         'stdout',
         '--refGenome', args.ref_genome,
         '--refSequence', args.ref_sequence,
-        '--targetGenomes', ','.join(target_genomes)
+        '--targetGenomes', ','.join(target_genomes),
+        '--maxBlockLen', str(args.max_block_length),
+        '--maxRefGap', str(args.max_ref_gap)
     ]
 
     with open(args.maf_file, 'w') as out_f:
@@ -69,7 +93,7 @@ if __name__ == '__main__':
             for msa in MafIterator(process.stdout):
                 if len(msa) < args.min_block_seqs:
                     continue
-                if msa.get_alignment_length() < args.min_block_size:
+                if msa.get_alignment_length() < args.min_block_length:
                     continue
 
                 writer.write_alignment(msa)
