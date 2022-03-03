@@ -38,7 +38,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import warnings
 
 import numpy
@@ -307,8 +307,51 @@ def run_orthology_tools(input_dir: str, orthofinder_params: str) -> None:
         raise RuntimeError(msg) from exc
 
 
-def prep_input_for_goc():
-    """Docstring"""
+def extract_orthologs(input_dir: str, species1: str, species2: str) -> List[Tuple[str, str]]:
+    """Returns a list of putative orthologous pairs inferred by OrthoFinder for a specified pair
+    of species.
+
+    If there are results for multiple OrthoFinder runs, the function uses those in the
+    most recently modified `Results_*` directory. This allows running the pipeline without user intervention.
+
+    Args:
+        input_dir: Path to the directory with OrthoFinder output.
+        species1: Name of one species of interest.
+        species2: Name of another species of interest.
+
+    Raises:
+        FileNotFoundError: If there is no `OrthoFinder/Results_*` directory in `input_dir`.
+
+    """
+    orthologs = []
+
+    try:
+        orthofinder_res = [f.path for f in os.scandir(os.path.join(input_dir, "OrthoFinder"))
+                           if f.is_dir() and f.name.startswith("Results")]
+    except FileNotFoundError as e:
+        raise FileNotFoundError("Could not find OrthoFinder output.") from e
+
+    latest_res = max(orthofinder_res, key=os.path.getmtime)
+
+    predictions_subdir = [f.path for f in os.scandir(os.path.join(latest_res, "Orthologues"))
+                          if f.is_dir() and re.match(f"(.*){species1}(.*)", f.name)][0]
+    predictions_file = [f.path for f in os.scandir(predictions_subdir) if f.is_file() and
+                        re.match(f"(.*){species1}(.*){species2}(.*)", f.name)][0]
+
+    with open(predictions_file) as file_handler:
+        for line in file_handler:
+            if "Orthogroup" in line:
+                continue
+
+            temp = line.replace("\n", "").split("\t")
+            genes1 = temp[1].replace(" ", "").split(",")
+            genes2 = temp[2].replace(" ", "").split(",")
+
+            for gene1 in genes1:
+                for gene2 in genes2:
+                    orthologs.append((gene1, gene2))
+
+    return orthologs
 
 
 def calculate_goc_scores():
@@ -351,5 +394,4 @@ if __name__ == '__main__':
     prep_input_for_orth_tools(os.path.join(args.out_dir, args.species_set), args.orthology_input)
     print("Running orthology inference tools...")
     run_orthology_tools(args.orthology_input, args.orthofinder_params)
-    # prep_input_for_goc()
     # calculate_goc_scores()
