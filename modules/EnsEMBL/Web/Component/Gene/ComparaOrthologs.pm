@@ -45,6 +45,7 @@ sub content {
   my $object       = $self->object;
   my $species_defs = $hub->species_defs;
   my $cdb          = shift || $self->param('cdb') || 'compara';
+  my $is_pan       = $cdb =~/compara_pan_ensembl/;
   my $availability = $object->availability;
   my $is_ncrna     = ($object->Obj->biotype =~ /RNA/);
   my $species_name = $species_defs->GROUP_DISPLAY_NAME;
@@ -63,9 +64,23 @@ sub content {
   }
   return '<p>No orthologues have been identified for this gene</p>' unless keys %orthologue_list;
 
+  ## Get species info
+  my $compara_species   = {};
+  my $lookup            = {};
+  my $pan_info          = {};
+  if ($is_pan) {
+    $pan_info      = $species_defs->multi_val('PAN_COMPARA_LOOKUP');
+    foreach (keys %$pan_info) {
+      $compara_species->{$_}  = 1;
+      $lookup->{$_}           = $pan_info->{$_}{'species_url'};
+    } 
+  }
+  else {
+    $compara_species  = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'COMPARA_SPECIES'};;
+    $lookup           = $species_defs->prodnames_to_urls_lookup;
+  }
+
   ## Work out which species we want to skip over, based on page type  and user's configuration
-  my $compara_species   = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'COMPARA_SPECIES'};
-  my $lookup            = $species_defs->prodnames_to_urls_lookup;
   my $this_group        = $species_defs->STRAIN_GROUP;
   my $species_not_shown = {}; 
   my $strains_not_shown = {};
@@ -76,8 +91,6 @@ sub content {
     ## Use URL as hash key
     my $species = $lookup->{$prod_name};
     next if $species eq $hub->species; ## Ignore current species
-    $species = 'Ancestral sequence' unless $species; ## Fake species!
-
     my $label = $species_defs->species_label($species);
 
     ## Should we be showing this orthologue on this pagpe by default?
@@ -198,7 +211,16 @@ sub content {
     next unless $species;
     next if $species_not_shown->{$species};
     next if $strains_not_shown->{$species};
-    
+
+    my ($species_label, $prodname);
+    if ($is_pan) {
+      $prodname = $rev_lookup->{$species};
+      $species_label = $pan_lookup->{$prodname}{'display_name'};
+    }
+    else {
+      $species_label = $species_defs->species_label($species);
+    }
+
     foreach my $stable_id (sort keys %{$orthologue_list{$species}}) {
       my $orthologue = $orthologue_list{$species}{$stable_id};
       my ($target, $query);
@@ -213,12 +235,10 @@ sub content {
       my $goc_class  = ($goc_score ne "n/a" && $goc_score >= $orthologue->{goc_threshold}) ? "box-highlight" : "";
       my $wga_class  = ($wgac ne "n/a" && $wgac >= $orthologue->{wga_threshold}) ? "box-highlight" : "";
 
-      my $spp = $orthologue->{'spp'};
       my $base_url;
 
-      if ($hub->function && $hub->function eq 'pan_compara') {
-        my $prod_name = $rev_lookup->{$spp};
-        my $site      = $pan_lookup->{$prod_name}{'division'};
+      if ($is_pan) {
+        my $site      = $pan_lookup->{$prodname}{'division'};
         if ($site ne $hub->species_defs->DIVISION) {
           $site         = 'www' if $site eq 'vertebrates';
           $base_url     = "https://$site.ensembl.org";
@@ -226,7 +246,7 @@ sub content {
       }
 
       my $link_url = $base_url.$hub->url({
-        species => $spp,
+        species => $species,
         action  => 'Summary',
         g       => $stable_id,
         __clear => 1
@@ -243,7 +263,7 @@ sub content {
           type   => 'Location',
           action => 'Multi',
           g1     => $stable_id,
-          s1     => $spp,
+          s1     => $species,
           r      => $hub->create_padded_region()->{'r'} || $self->param('r'),
           config => 'opt_join_genes_bottom=on',
         })
@@ -310,7 +330,7 @@ sub content {
 
       ##Location - split into elements to reduce horizonal space
       my $location_link = $hub->url({
-        species => $spp,
+        species => $species,
         type    => 'Location',
         action  => 'View',
         r       => $orthologue->{'location'},
@@ -318,8 +338,9 @@ sub content {
         __clear => 1
       });
 
+
       my $table_details = {
-        'Species'    => join('<br />(', split(/\s*\(/, $species_defs->species_label($spp))),
+        'Species'    => join('<br />(', split(/\s*\(/, $species_label)),
         'Type'       => $self->html_format ? glossary_helptip($hub, ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues").qq{<p class="top-margin"><a href="$tree_url">View Gene Tree</a></p>} : glossary_helptip($hub, ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues") ,
         'identifier' => $self->html_format ? $id_info : $stable_id,
         'Target %id' => qq{<span class="$target_class">}.sprintf('%.2f&nbsp;%%', $target).qq{</span>},
@@ -327,7 +348,7 @@ sub content {
         'goc_score'  => qq{<span class="$goc_class">$goc_score</span>},
         'wgac'       => qq{<span class="$wga_class">$wgac</span>},
         'confidence' => $confidence,
-        'options'    => { class => join(' ', @{$sets_by_species->{$species} || []}) }
+        'options'    => { class => join(' ', @{$sets_by_species->{$species} || []}), data_table_config => {iDisplayLength => 25}  }
       };      
       $table_details->{'Gene name(Xref)'} = $orthologue->{'display_id'} if (!$self->html_format);
 
@@ -359,26 +380,27 @@ sub content {
 
   if (($hub->action =~ /^Strain_/ && keys %$strains_not_shown)
     || ($hub->action !~ /^Strain_/ && keys %$species_not_shown)) {
-    my @args;
+    my ($total, $no_ortho_species, $strain_refs_html);
     if ($hub->action =~ /^Strain_/) {
-      push @args, scalar(keys %$strains_not_shown), 
-                  $self->object->Obj->stable_id;
-                  $self->get_no_ortho_species_html($strains_not_shown, $sets_by_species),
-                  '';
+      $total = scalar keys %$strains_not_shown; 
+      $no_ortho_species = $self->get_no_ortho_species_html($strains_not_shown, $sets_by_species);
+      $strain_refs_html = '';
     }
     else {
-      push @args, scalar(keys %$species_not_shown), 
-                  $self->object->Obj->stable_id,
-                  $self->get_no_ortho_species_html($species_not_shown, $sets_by_species),
-                  $self->get_strain_refs_html($strain_refs, $species_not_shown);
+      $total = scalar keys %$species_not_shown; 
+      unless ($is_pan) {
+        $no_ortho_species = $self->get_no_ortho_species_html($species_not_shown, $sets_by_species);
+        $strain_refs_html = $self->get_strain_refs_html($strain_refs, $species_not_shown);
+      }
     }
+    my $not_shown_list = $is_pan ? '' : sprintf('<ul id="no_ortho_species">%s</ul>', $no_ortho_species);
     $html .= '<br /><a name="list_no_ortho"/>' . $self->_info(
       'Species without orthologues',
       sprintf(
         qq(<p><span class="no_ortho_count">%d</span> species are not shown in the table above because they don't have any orthologue with %s.</p>
-<ul id="no_ortho_species">%s</ul>
 %s
-</p> <input type="hidden" class="panel_type" value="ComparaOrtholog" />), @args),
+%s
+</p> <input type="hidden" class="panel_type" value="ComparaOrtholog" />), $total, $self->object->Obj->stable_id, $not_shown_list, $strain_refs_html),
       undef,
       'no_ortho_message_pad'
     );
