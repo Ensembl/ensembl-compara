@@ -307,8 +307,7 @@ def test_prepare_gtf_files(core_names: str, tmp_dir: Path, expectation: ContextM
     "input_dir, exp_output, expectation",
     [
         ("orth_benchmark",
-         [("ENSGALG00000049392", "ENSG00000241128"), ("ENSGALG00000049748", "ENSG00000241128"),
-          ("ENSGALG00000030005", "ENSG00000147255"), ("ENSGALG00000030005", "ENSG00000121410")],
+         [("ENSGALG00000030005", "ENSG00000147255"), ("ENSGALG00000030005", "ENSG00000121410")],
          does_not_raise()),
         ("", None, raises(FileNotFoundError, match=r"Could not find OrthoFinder output."))
     ]
