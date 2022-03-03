@@ -306,9 +306,7 @@ def test_prepare_gtf_files(core_names: str, tmp_dir: Path, expectation: ContextM
 @pytest.mark.parametrize(
     "input_dir, exp_output, expectation",
     [
-        ("orth_benchmark",
-         [("ENSGALG00000030005", "ENSG00000147255"), ("ENSGALG00000030005", "ENSG00000121410")],
-         does_not_raise()),
+        ("orth_benchmark", [("ENSGALG00000030005", "ENSG00000147255")], does_not_raise()),
         ("", None, raises(FileNotFoundError, match=r"Could not find OrthoFinder output."))
     ]
 )
