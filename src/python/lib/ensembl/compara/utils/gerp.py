@@ -20,14 +20,16 @@ the constrained elements (suffixed with ".elems").
 
 Typical usage example::
 
-    $ python run_gerp.py --msa_file alignment.mfa --tree_file tree.nw
+    $ python gerp.py --msa_file alignment.mfa --tree_file tree.nw
 
 If ``gerpcol`` and/or ``gerpelem`` are not accesible from ``$PATH``, you will need to provide the
 path where they can be found::
 
-    $ python run_gerp.py --msa_file alignment.mfa --tree_file tree.nw --gerp_exe_dir path/to/gerp/
+    $ python gerp.py --msa_file alignment.mfa --tree_file tree.nw --gerp_exe_dir path/to/gerp/
 
 """
+
+__all__ = ['main']
 
 import os
 import subprocess
@@ -55,18 +57,29 @@ class InputSchema(argschema.ArgSchema):
     )
 
 
+def main(msa_file: str, tree_file: str, depth_threshold: float = None, gerp_exe_dir: str = None) -> None:
+    """Calculates the conservation scores and constrained elements of the given MSA.
+    
+    Args:
+        msa_file: MSA file (MFA format)
+        tree_file: Tree file (Newick format)
+        depth_threshold: Constrained elements' depth threshold for shallow columns, in substitutions per site
+        gerp_exe_dir: Path where `gerpcol` and `gerpelem` binaries can be found
+    
+    """
+    cmd = ["gerpcol", "-t", tree_file, "-f", msa_file]
+    if gerp_exe_dir:
+        cmd[0] = os.path.join(gerp_exe_dir, cmd[0])
+    subprocess.run(cmd, check=True)
+    # By default, gerpcol's ouput filename has the MSA filename plus ".rates" suffix
+    cmd = ["gerpelem", "-f", f"{msa_file}.rates"]
+    if gerp_exe_dir:
+        cmd[0] = os.path.join(gerp_exe_dir, cmd[0])
+    if depth_threshold:
+        cmd += ["-d", str(depth_threshold)]
+    subprocess.run(cmd, check=True)
+
+
 if __name__ == "__main__":
     mod = argschema.ArgSchemaParser(schema_type=InputSchema)
-
-    cmd = ["gerpcol", "-t", mod.args["tree_file"], "-f", mod.args["msa_file"]]
-    if "gerp_exe_dir" in mod.args:
-        cmd[0] = os.path.join(mod.args['gerp_exe_dir'], cmd[0])
-    subprocess.run(cmd, check=True)
-
-    # By default, gerpcol's ouput filename has the MSA filename plus ".rates" suffix
-    cmd = ["gerpelem", "-f", f"{mod.args['msa_file']}.rates"]
-    if "gerp_exe_dir" in mod.args:
-        cmd[0] = os.path.join(mod.args['gerp_exe_dir'], cmd[0])
-    if "depth_threshold" in mod.args:
-        cmd += ["-d", str(mod.args["depth_threshold"])]
-    subprocess.run(cmd, check=True)
+    main(**mod.args)

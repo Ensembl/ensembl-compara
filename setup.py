@@ -57,6 +57,6 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     scripts=[
-        'src/python/scripts/run_gerp.py'
+        'src/python/lib/ensembl/compara/utils/gerp.py'
     ]
 )
