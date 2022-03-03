@@ -791,7 +791,16 @@ sub fetch_homology_species_hash {
   my $homology_source      = shift;
   my $homology_description = shift;
   my $compara_db           = shift || 'compara';
-  my $name_lookup          = $self->hub->species_defs->prodnames_to_urls_lookup;
+  my $name_lookup          = {};
+  if ($compara_db =~ /pan/) {
+    my $pan_info = $self->hub->species_defs->multi_val('PAN_COMPARA_LOOKUP');
+    foreach (keys %$pan_info) {
+      $name_lookup->{$_} = $pan_info->{$_}{'species_url'};
+    }
+  }
+  else {
+    $name_lookup = $self->hub->species_defs->prodnames_to_urls_lookup;
+  }
   my ($homologies, $classification, $query_member) = $self->get_homologies($homology_source, $homology_description, $compara_db);
   my %homologues;
 
