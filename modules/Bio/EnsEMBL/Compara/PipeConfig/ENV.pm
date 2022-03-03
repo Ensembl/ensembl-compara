@@ -74,6 +74,11 @@ sub shared_default_options {
         'pipeline_dir'          => $self->o('hps_dir') . '/' . $self->o('dbowner') . '/' . $self->o('pipeline_name'),
         'shared_hps_dir'        => $self->o('hps_dir') . '/shared',
 
+        # Embassy IP for rapid release project
+        'embassy_ip_rr' => '45.88.81.155',
+        # S3 buckets on Embassy cloud
+        'embassy_ref_bucket' => '/storage/s3/long-term/',
+
         # Where to find the linuxbrew installation
         'linuxbrew_home'        => $ENV{'LINUXBREW_HOME'} || $self->o('linuxbrew_home'),
         'compara_software_home' => $self->o('warehouse_dir') . '/software/',

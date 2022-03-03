@@ -64,8 +64,8 @@ sub default_options {
 
         # shared locations to symlink and copy fastas for orthofinder
         'shared_fasta_dir' => $self->o('shared_hps_dir') . '/reference_fasta_symlinks/',
-        'ssh_ip_loc' => '45.88.81.155',
-        'ref_bucket' => '/bucket1/',
+        'ssh_ip_loc' => $self->o('embassy_ip_rr'),
+        'ref_bucket' => $self->o('embassy_ref_bucket'),
 
         # update from metadata options
         'list_genomes_script'    => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
