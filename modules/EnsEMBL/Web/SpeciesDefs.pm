@@ -1577,7 +1577,6 @@ sub table_info_other {
 
 sub species_label {
   ### This function will return the display name of all known (by Compara) species.
-  ### Some species in genetree can be from other EG units, and some can be from external sources
   ### Arguments:
   ###     url             String: species  URL
   ###     no_formating    Boolean: omit italics from scientific name  
@@ -1599,28 +1598,13 @@ sub species_label {
         $label = "$display ($sci)";
       }
     }
-    else {
-      $label = 'Ancestral sequence';
-    }
   }
   else {
     if ($display) {
       $label = $display;
     }
-    else {
-      ## Pan-compara species - get label from metadata db
-      my $info = $self->get_config('MULTI', 'PAN_COMPARA_LOOKUP');
-      if ($info) {
-        if ($info->{$url}) {
-          $label = $info->{$url}{'display_name'}
-        }
-        else {
-          $label = $info->{lc $url}{'display_name'}
-        }
-      }
-    }
-    $label = 'Ancestral sequence' unless $label;
   }
+  $label = 'Ancestral sequence' unless $label;
   
   return $label;
 }
