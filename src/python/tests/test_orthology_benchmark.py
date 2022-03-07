@@ -27,7 +27,7 @@ from importlib.util import module_from_spec, spec_from_file_location
 import os
 from pathlib import Path
 import sys
-from typing import ContextManager, Dict, List, Tuple
+from typing import ContextManager, Dict, List
 
 import sqlalchemy
 
