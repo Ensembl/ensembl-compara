@@ -34,21 +34,21 @@ from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
 
-def compile_maf_src_regex(genome_names: Sequence[str]) -> Pattern:
+def compile_maf_src_regex(genome_names: Sequence[str]) -> Pattern[str]:
     """Make a MAF src field regex for the given genome names.
 
     In the UCSC multiple alignment format (MAF), the src field can be of the form '<genome>.<seqid>',
     which is useful for storing both the genome and sequence name; these can then be extracted by taking
     the substrings before and after the dot character ('.'), respectively. However, this cannot be done
     unambiguously if there is a dot in either the genome or sequence name. Taking the names of genomes
-    known to be in a MAF file, this function creates a re.Pattern object that can be used to extract
+    known to be in a MAF file, this function creates a string Pattern object that can be used to extract
     the genome and sequence names from a MAF src field of the form '<genome>.<seqid>'.
 
     Args:
         genome_names: The genome names expected to be in the input MAF file.
 
     Returns:
-        Compiled re.Pattern object.
+        Compiled string Pattern object.
 
     Raises:
         ValueError: If any of the input genome names is a prefix of any other genome name
