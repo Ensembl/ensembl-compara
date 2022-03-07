@@ -27,14 +27,14 @@ import json
 import os
 from pathlib import Path
 import re
-from typing import Dict, Pattern, Sequence, Tuple, Union
+from typing import Dict, Iterable, Pattern, Tuple, Union
 
 from Bio.AlignIO.MafIO import MafIterator
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
 
-def compile_maf_src_regex(genome_names: Sequence[str]) -> Pattern[str]:
+def compile_maf_src_regex(genome_names: Iterable[str]) -> Pattern[str]:
     """Make a MAF src field regex for the given genome names.
 
     In the UCSC multiple alignment format (MAF), the src field can be of the form '<genome>.<seqid>',
@@ -75,7 +75,7 @@ def compile_maf_src_regex(genome_names: Sequence[str]) -> Pattern[str]:
                                  f" is a prefix of '{genome_name}'")
     genome_patt = '|'.join(map(re.escape, genome_names))
     if not genome_patt:
-        raise ValueError('cannot create a MAF src regex - no genome names')
+        raise ValueError("'genome_names' must be an iterable containing at least one genome name")
     maf_src_patt = f'^(?P<genome>{genome_patt})[.](?P<seqid>.+)$'
     return re.compile(maf_src_patt)
 
