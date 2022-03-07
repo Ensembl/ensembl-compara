@@ -303,26 +303,10 @@ def test_prepare_gtf_files(core_names: str, tmp_dir: Path, expectation: ContextM
         assert file_cmp( tmp_dir / "Anopheles_albimanus.AalbS2.51.gtf", exp_out2)
 
 
-@pytest.mark.parametrize(
-    "input_dir, exp_output, expectation",
-    [
-        ("orth_benchmark", [("ENSGALG00000030005", "ENSG00000147255")], does_not_raise()),
-        ("", None, raises(FileNotFoundError, match=r"Could not find OrthoFinder output."))
-    ]
-)
-def test_extract_orthologs(input_dir: str, exp_output: List[Tuple[str, str]], expectation: ContextManager) \
-        -> None:
+def test_extract_orthologs() -> None:
     """Tests :func:`orthology_benchmark.extract_orthologs()` function.
-
-    Args:
-        input_dir: Directory with OrthoFinder output.
-        exp_output: Expected return value of the function.
-        expectation: Context manager for the expected exception, i.e. the test will only pass if that
-            exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
-
     """
     # pylint: disable-next=no-member
-    test_files_dir = pytest.files_dir  # type: ignore[attr-defined]
-    with expectation:
-        assert orthology_benchmark.extract_orthologs\
-                       (test_files_dir / input_dir, "gallus_gallus", "homo_sapiens") == exp_output
+    test_files_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
+    assert orthology_benchmark.extract_orthologs(test_files_dir , "gallus_gallus", "homo_sapiens") == \
+           [("ENSGALG00000030005", "ENSG00000147255")]

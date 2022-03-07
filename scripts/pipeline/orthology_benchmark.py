@@ -311,32 +311,29 @@ def extract_orthologs(input_dir: str, species1: str, species2: str) -> List[Tupl
     """Returns a list of putative orthologous pairs inferred by OrthoFinder for a specified pair
     of species.
 
-    If there are results for multiple OrthoFinder runs, the function uses those in the
-    most recently modified `Results_*` directory. This allows running the pipeline without user intervention.
+    If there are results for multiple OrthoFinder runs, the function uses those in the most recently modified
+    `Results_*` directory. The rationale behind this choice is that once OrthoFinder completes, the pipeline
+    automatically proceeds with calculating GOC scores for the predictions. At that point, it makes more sense
+    to take the most recent results than older ones. This also allows running the pipeline without user
+    intervention.
 
     Args:
         input_dir: Path to the directory with OrthoFinder output.
         species1: Name of one species of interest.
         species2: Name of another species of interest.
 
-    Raises:
-        FileNotFoundError: If there is no `OrthoFinder/Results_*` directory in `input_dir`.
-
     """
     orthologs = []
 
-    try:
-        orthofinder_res = [f.path for f in os.scandir(os.path.join(input_dir, "OrthoFinder"))
+    orthofinder_res = [f.path for f in os.scandir(os.path.join(input_dir, "OrthoFinder"))
                            if f.is_dir() and f.name.startswith("Results")]
-    except FileNotFoundError as e:
-        raise FileNotFoundError("Could not find OrthoFinder output.") from e
 
     latest_res = max(orthofinder_res, key=os.path.getmtime)
 
     predictions_subdir = [f.path for f in os.scandir(os.path.join(latest_res, "Orthologues"))
-                          if f.is_dir() and re.match(f"(.*){species1}(.*)", f.name)][0]
+                          if f.is_dir() and re.match(f"(.*){species1}_core_(.*)", f.name)][0]
     predictions_file = [f.path for f in os.scandir(predictions_subdir) if f.is_file() and
-                        re.match(f"(.*){species1}(.*){species2}(.*)", f.name)][0]
+                        re.match(f"(.*){species1}_core_(.*){species2}_core_(.*)", f.name)][0]
 
     with open(predictions_file) as file_handler:
         for line in file_handler:
