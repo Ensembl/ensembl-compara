@@ -74,6 +74,8 @@ def compile_maf_src_regex(genome_names: Sequence[str]) -> Pattern[str]:
                 raise ValueError(f"cannot create a MAF src regex — genome name '{prefix}'"
                                  f" is a prefix of '{genome_name}'")
     genome_patt = '|'.join(map(re.escape, genome_names))
+    if not genome_patt:
+        raise ValueError('cannot create a MAF src regex — no genome names')
     maf_src_patt = f'^(?P<genome>{genome_patt})[.](?P<seqid>.+)$'
     return re.compile(maf_src_patt)
 
