@@ -71,11 +71,11 @@ def compile_maf_src_regex(genome_names: Sequence[str]) -> Pattern[str]:
         for match in dot_regex.finditer(genome_name):
             prefix = genome_name[:match.start()]
             if prefix in genome_names:
-                raise ValueError(f"cannot create a MAF src regex — genome name '{prefix}'"
+                raise ValueError(f"cannot create a MAF src regex - genome name '{prefix}'"
                                  f" is a prefix of '{genome_name}'")
     genome_patt = '|'.join(map(re.escape, genome_names))
     if not genome_patt:
-        raise ValueError('cannot create a MAF src regex — no genome names')
+        raise ValueError('cannot create a MAF src regex - no genome names')
     maf_src_patt = f'^(?P<genome>{genome_patt})[.](?P<seqid>.+)$'
     return re.compile(maf_src_patt)
 
@@ -127,7 +127,7 @@ def main(maf_file: Union[Path, str], output_dir: Union[Path, str],
                             if genomes_file is None:
                                 raise ValueError(
                                     "MAF src field parse failed due to multiple dot separators"
-                                    " — please set genome names with the '--genomes-file' parameter"
+                                    " - please set genome names with the '--genomes-file' parameter"
                                 ) from exc
 
                             match = maf_src_regex.match(maf_src)
