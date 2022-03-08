@@ -1,0 +1,6 @@
+>genomeA.1:chr1:1:4
+ATCA
+>genomeB.1:chr1:1:3
+A-CA
+>genomeC:chr1:1:2
+A--A
