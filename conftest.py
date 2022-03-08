@@ -42,8 +42,9 @@ def pytest_configure() -> None:
     <https://docs.pytest.org/en/latest/reference.html#_pytest.hookspec.pytest_configure>`_.
 
     """
-    pytest.dbs_dir = Path(__file__).parent / 'databases'  # type: ignore[attr-defined]
-    pytest.files_dir = Path(__file__).parent / 'flatfiles'  # type: ignore[attr-defined]
+    test_data_dir = Path(__file__).parent / 'src' / 'python' / 'tests'
+    pytest.dbs_dir = test_data_dir / 'databases'  # type: ignore[attr-defined]
+    pytest.files_dir = test_data_dir / 'flatfiles'  # type: ignore[attr-defined]
 
 
 @pytest.fixture(scope='session')
