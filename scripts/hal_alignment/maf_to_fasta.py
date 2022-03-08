@@ -17,6 +17,8 @@
 
 """Convert each block of a multiple alignment format (MAF) file to FASTA format.
 
+Metadata are stored in a JSON file corresponding to each FASTA file.
+
 Examples::
     python maf_to_fasta.py --genomes-file genomes.txt input.maf output_dir/
 
@@ -84,10 +86,12 @@ def main(maf_file: Union[Path, str], output_dir: Union[Path, str],
          genomes_file: Union[Path, str] = None) -> None:
     """Convert each block of a MAF alignment to a FASTA file.
 
+    Metadata are stored in a JSON file corresponding to each FASTA file.
+
     Args:
         maf_file: Input MAF file with alignment blocks. The src fields of
             this MAF file should be of the form '<genome>.<seqid>'.
-        output_dir: Output directory under which FASTA files will be created.
+        output_dir: Output directory under which FASTA and JSON files will be created.
         genomes_file: File listing the genomes in the input MAF file, one per line. This is used
             to compile a regex that splits MAF src fields of the form '<genome>.<seqid>'
             into their component parts. If any of the genomes or their DNA assembly
@@ -225,12 +229,13 @@ def map_uint_to_path(non_negative_integer: int) -> Path:
 if __name__ == '__main__':
 
     parser = ArgumentParser(description='Convert each block of a multiple alignment format (MAF) file to'
-                                        ' FASTA format.')
+                                        ' FASTA format. Metadata are stored in a JSON file corresponding'
+                                        ' to each FASTA file.')
     parser.add_argument('maf_file', metavar='PATH',
                         help="Input MAF file with alignment blocks. The src fields of"
                              "this MAF file should be of the form '<genome>.<seqid>'.")
     parser.add_argument('output_dir', metavar='PATH',
-                        help='Output directory under which FASTA files will be created.')
+                        help='Output directory under which FASTA and JSON files will be created.')
     parser.add_argument('--genomes-file', metavar='PATH',
                         help="File listing the genomes in the input MAF file, one per line. This is used"
                              " to compile a regex that splits MAF src fields of the form '<genome>.<seqid>'"
