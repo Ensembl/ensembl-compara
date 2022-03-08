@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Convert each block of a MAF alignment to a FASTA file.
+"""Convert each block of a multiple alignment format (MAF) file to FASTA format.
 
 Examples::
     python maf_to_fasta.py --genomes-file genomes.txt input.maf output_dir/
@@ -37,7 +37,7 @@ from Bio.SeqRecord import SeqRecord
 def compile_maf_src_regex(genome_names: Iterable[str]) -> Pattern[str]:
     """Make a MAF src field regex for the given genome names.
 
-    In the UCSC multiple alignment format (MAF), the src field can be of the form '<genome>.<seqid>',
+    In a UCSC MAF file, the src field can be of the form '<genome>.<seqid>',
     which is useful for storing both the genome and sequence name; these can then be extracted by taking
     the substrings before and after the dot character ('.'), respectively. However, this cannot be done
     unambiguously if there is a dot in either the genome or sequence name. Taking the names of genomes
@@ -90,8 +90,8 @@ def main(maf_file: Union[Path, str], output_dir: Union[Path, str],
         output_dir: Output directory under which FASTA files will be created.
         genomes_file: File listing the genomes in the input MAF file, one per line. This is used
             to compile a regex that splits MAF src fields of the form '<genome>.<seqid>'
-            into their component parts. If any of the genomes or their sequences in the
-            MAF file contains a dot ('.'), this is required.
+            into their component parts. If any of the genomes or their DNA assembly
+            sequences in the MAF file contains a dot ('.'), this is required.
 
     Raises:
         ValueError: If a MAF src field cannot be parsed.
@@ -224,7 +224,8 @@ def map_uint_to_path(non_negative_integer: int) -> Path:
 
 if __name__ == '__main__':
 
-    parser = ArgumentParser(description='Convert each block of a MAF alignment to a FASTA file.')
+    parser = ArgumentParser(description='Convert each block of a multiple alignment format (MAF) file to'
+                                        ' FASTA format.')
     parser.add_argument('maf_file', metavar='PATH',
                         help="Input MAF file with alignment blocks. The src fields of"
                              "this MAF file should be of the form '<genome>.<seqid>'.")
