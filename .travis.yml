@@ -146,7 +146,7 @@ jobs:
         - pip install -r requirements.txt -r requirements-test.txt
         - pip install .
       script:
-        - pytest --server=mysql://travis@127.0.0.1:3306/ src/python/tests/
+        - pytest --server=mysql://travis@127.0.0.1:3306/
 
     - language: python
       python: 3.9
@@ -157,7 +157,7 @@ jobs:
         - pip install .
       script:
         # yamllint disable rule:line-length
-        - pytest --cov=./ --cov-report=term-missing --server=mysql://travis@127.0.0.1:3306/ src/python/tests/
+        - pytest --cov=./ --cov-report=term-missing --server=mysql://travis@127.0.0.1:3306/
         # yamllint enable rule:line-length
       after_success:
         - codecov
