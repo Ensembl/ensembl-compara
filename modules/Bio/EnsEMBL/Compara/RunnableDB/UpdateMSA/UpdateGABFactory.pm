@@ -89,7 +89,8 @@ sub write_output {
     my $self = shift;
     my $affected_gabs = $self->param('affected_gabs');
 
-    foreach my $gab_id ( keys %$affected_gabs ) {
+    my @gab_ids_sorted = sort keys(%$affected_gabs); # important for testing
+    foreach my $gab_id ( @gab_ids_sorted ) {
         $self->dataflow_output_id({
             'gab_id'     => $gab_id,
             'ga_id_list' => $affected_gabs->{$gab_id},
