@@ -29,13 +29,15 @@ from pathlib import Path
 import re
 import sys
 from types import ModuleType
-from typing import ContextManager, Iterable, List, Pattern, Union
+from typing import ContextManager, Iterable, List, Optional, Pattern
 
 import pytest
 from pytest import raises
 
+from ensembl.compara.filesys.dircmp import PathLike
 
-def import_module_from_file(module_file: Union[Path, str]) -> ModuleType:
+
+def import_module_from_file(module_file: PathLike) -> ModuleType:
     """Import module from file path.
 
     The name of the imported module is the basename of the specified module
@@ -82,7 +84,7 @@ import maf_to_fasta  # type: ignore
 
 
 class TestMafToFasta:
-    """Tests script maf_to_fasta.py"""
+    """Tests script ``maf_to_fasta.py``"""
 
     ref_file_dir = None  # type: Path
 
@@ -125,7 +127,7 @@ class TestMafToFasta:
             ('gabs.maf', 'gabs', None, [], raises(ValueError))
         ]
     )
-    def test_main(self, maf_file: Union[Path, str], output_dir: Union[Path, str], genomes_file: Union[Path, str],
+    def test_main(self, maf_file: PathLike, output_dir: PathLike, genomes_file: Optional[PathLike],
                   out_file_rel_paths: List[str], expectation: ContextManager, tmp_dir: Path) -> None:
         """Tests :func:`maf_to_fasta.main()` function.
 

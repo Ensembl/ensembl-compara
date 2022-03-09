@@ -17,7 +17,8 @@
 
 """Convert each block of a multiple alignment format (MAF) file to FASTA format.
 
-Metadata are stored in a JSON file corresponding to each FASTA file.
+Each block is stored in a FASTA file (e.g. '123.fa'), with its metadata stored in a
+matching JSON file (e.g. '123.json'), where both file names have the same file stem.
 
 Examples::
     python maf_to_fasta.py --genomes-file genomes.txt input.maf output_dir/
@@ -29,22 +30,24 @@ import json
 import os
 from pathlib import Path
 import re
-from typing import Dict, Iterable, Pattern, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Pattern
 
 from Bio.AlignIO.MafIO import MafIterator
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
+from ensembl.compara.filesys.dircmp import PathLike
+
 
 def compile_maf_src_regex(genome_names: Iterable[str]) -> Pattern[str]:
     """Make a MAF src field regex for the given genome names.
 
-    In a UCSC MAF file, the src field can be of the form '<genome>.<seqid>',
-    which is useful for storing both the genome and sequence name; these can then be extracted by taking
-    the substrings before and after the dot character ('.'), respectively. However, this cannot be done
-    unambiguously if there is a dot in either the genome or sequence name. Taking the names of genomes
-    known to be in a MAF file, this function creates a string Pattern object that can be used to extract
-    the genome and sequence names from a MAF src field of the form '<genome>.<seqid>'.
+    In a UCSC MAF file, the src field can be of the form '<genome>.<seqid>', which is useful for storing
+    both the genome and sequence name; these can then be extracted by taking the substrings before and
+    after the dot character ('.'), respectively. However, this cannot be done unambiguously if there is
+    a dot in either the genome or sequence name. Taking the names of genomes known to be in a MAF file,
+    this function creates a string Pattern object that can be used to extract the genome and sequence
+    names from a MAF src field of the form '<genome>.<seqid>'.
 
     Args:
         genome_names: The genome names expected to be in the input MAF file.
@@ -82,11 +85,12 @@ def compile_maf_src_regex(genome_names: Iterable[str]) -> Pattern[str]:
     return re.compile(maf_src_patt)
 
 
-def main(maf_file: Union[Path, str], output_dir: Union[Path, str],
-         genomes_file: Union[Path, str] = None) -> None:
+def main(maf_file: PathLike, output_dir: PathLike,
+         genomes_file: Optional[PathLike] = None) -> None:
     """Convert each block of a MAF alignment to a FASTA file.
 
-    Metadata are stored in a JSON file corresponding to each FASTA file.
+    Each block is stored in a FASTA file (e.g. '123.fa'), with its metadata stored in a
+    matching JSON file (e.g. '123.json'), where both file names have the same file stem.
 
     Args:
         maf_file: Input MAF file with alignment blocks. The src fields of
@@ -104,12 +108,12 @@ def main(maf_file: Union[Path, str], output_dir: Union[Path, str],
 
     if genomes_file is not None:
         with open(genomes_file) as f:
-            genome_names = [line.rstrip() for line in f]
+            genome_names = [line.strip() for line in f]
         maf_src_regex = compile_maf_src_regex(genome_names)
 
     out_dir_path = Path(output_dir)
 
-    maf_src_map: Dict[str, Tuple[str, str]] = {}
+    maf_src_map: Dict[str, List[str]] = {}
     with open(maf_file) as in_f:
         for idx, msa in enumerate(MafIterator(in_f)):
             idx_dir_path = out_dir_path / map_uint_to_path(idx)
@@ -122,27 +126,21 @@ def main(maf_file: Union[Path, str], output_dir: Union[Path, str],
                     maf_src = rec.id
 
                     try:
-                        genome_name, dnafrag_name = maf_src_map[maf_src]
-                    except KeyError:
+                        genome_name, dnafrag_name = maf_src_map.setdefault(maf_src, maf_src.split('.'))
+                    except ValueError as exc:
+                        if not genomes_file:
+                            raise ValueError(
+                                "MAF src field parse failed due to multiple dot separators"
+                                " - please set genome names with the '--genomes-file' parameter"
+                            ) from exc
+                        match = maf_src_regex.match(maf_src)
                         try:
-                            genome_name, dnafrag_name = maf_src.split('.')
-                            maf_src_map[maf_src] = (genome_name, dnafrag_name)
-                        except ValueError as exc:
-                            if genomes_file is None:
-                                raise ValueError(
-                                    "MAF src field parse failed due to multiple dot separators"
-                                    " - please set genome names with the '--genomes-file' parameter"
-                                ) from exc
-
-                            match = maf_src_regex.match(maf_src)
-                            try:
-                                genome_name = match['genome']  # type: ignore
-                                dnafrag_name = match['seqid']  # type: ignore
-                            except TypeError as exc:
-                                raise ValueError(
-                                    "MAF src regex failed to parse MAF src field: '{maf_src}'") from exc
-
-                            maf_src_map[maf_src] = (genome_name, dnafrag_name)
+                            genome_name = match['genome']  # type: ignore
+                            dnafrag_name = match['seqid']  # type: ignore
+                        except TypeError as exc:
+                            raise ValueError(
+                                "MAF src regex failed to parse MAF src field: '{maf_src}'") from exc
+                        maf_src_map[maf_src] = [genome_name, dnafrag_name]
 
                     maf_start = rec.annotations['start']
                     maf_size = rec.annotations['size']
@@ -171,7 +169,7 @@ def main(maf_file: Union[Path, str], output_dir: Union[Path, str],
 
             json_file_path = idx_dir_path / f'{idx}.json'
             with open(json_file_path, 'w') as f:
-                json.dump(ga_recs, f)
+                json.dump(ga_recs, f, indent=4)
 
 
 def map_uint_to_path(non_negative_integer: int) -> Path:
@@ -198,7 +196,7 @@ def map_uint_to_path(non_negative_integer: int) -> Path:
         non_negative_integer: A non-negative integer.
 
     Returns:
-        The composed pathlib.Path object.
+        The composed :class:`~pathlib.Path` object.
 
     Raises:
         TypeError: If the argument ``non_negative_integer`` is not of integer type,
@@ -228,9 +226,10 @@ def map_uint_to_path(non_negative_integer: int) -> Path:
 
 if __name__ == '__main__':
 
-    parser = ArgumentParser(description='Convert each block of a multiple alignment format (MAF) file to'
-                                        ' FASTA format. Metadata are stored in a JSON file corresponding'
-                                        ' to each FASTA file.')
+    parser = ArgumentParser(description="Convert each block of a multiple alignment format (MAF) file to"
+                                        " FASTA format. Each block is stored in a FASTA file (e.g. '123.fa'),"
+                                        " with its metadata stored in a matching JSON file (e.g. '123.json'),"
+                                        " where both file names have the same file stem.")
     parser.add_argument('maf_file', metavar='PATH',
                         help="Input MAF file with alignment blocks. The src fields of"
                              "this MAF file should be of the form '<genome>.<seqid>'.")
@@ -239,8 +238,8 @@ if __name__ == '__main__':
     parser.add_argument('--genomes-file', metavar='PATH',
                         help="File listing the genomes in the input MAF file, one per line. This is used"
                              " to compile a regex that splits MAF src fields of the form '<genome>.<seqid>'"
-                             " into their component parts. If any of the genomes or their sequences in the"
-                             " MAF file contains a dot ('.'), this is required.")
+                             " into their component parts. If any of the genomes or their DNA assembly"
+                             " sequences in the MAF file contains a dot ('.'), this is required.")
 
     args = parser.parse_args()
     main(**vars(args))
