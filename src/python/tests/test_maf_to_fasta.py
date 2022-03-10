@@ -127,6 +127,5 @@ class TestMafToFasta:
 
         """
         with expectation:
-            # pylint: disable-next=no-member
             obs_output = maf_to_fasta.map_uint_to_path(non_negative_integer)
             assert obs_output == exp_output
