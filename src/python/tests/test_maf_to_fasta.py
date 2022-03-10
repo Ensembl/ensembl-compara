@@ -93,19 +93,20 @@ class TestMafToFasta:
             tmp_dir: Unit test temp directory (fixture).
 
         """
-        with expectation:
-            maf_file_path = self.ref_file_dir / maf_file
-            out_dir_path = tmp_dir / output_dir
-            if genomes_file is not None:
-                genomes_file = self.ref_file_dir / genomes_file
+        maf_file_path = self.ref_file_dir / maf_file
+        out_dir_path = tmp_dir / output_dir
+        if genomes_file is not None:
+            genomes_file = self.ref_file_dir / genomes_file
 
+        with expectation:
             # pylint: disable-next=no-member
             maf_to_fasta.convert_maf_to_fasta(maf_file_path, out_dir_path, genomes_file=genomes_file)
 
-            for out_file_rel_path in out_file_rel_paths:
-                obs_file_path = out_dir_path / out_file_rel_path
-                ref_file_path = self.ref_file_dir / output_dir / out_file_rel_path
-                assert filecmp.cmp(obs_file_path, ref_file_path)
+        ref_dir_path = self.ref_file_dir / output_dir
+        for out_file_rel_path in out_file_rel_paths:
+            out_file_path = out_dir_path / out_file_rel_path
+            ref_file_path = ref_dir_path / out_file_rel_path
+            assert filecmp.cmp(out_file_path, ref_file_path)
 
     @pytest.mark.parametrize(
         "non_negative_integer, exp_output, expectation",
