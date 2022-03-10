@@ -29,7 +29,7 @@ from typing import ContextManager, Iterable, List, Optional, Pattern
 import pytest
 from pytest import raises
 
-from ensembl.compara.filesys.dircmp import PathLike
+from ensembl.compara.filesys import PathLike
 from ensembl.compara.hal import maf_to_fasta
 
 

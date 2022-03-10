@@ -38,7 +38,7 @@ from Bio.AlignIO.MafIO import MafIterator
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
-from ensembl.compara.filesys.dircmp import PathLike
+from ensembl.compara.filesys import PathLike
 
 
 def compile_maf_src_regex(genome_names: Iterable[str]) -> Pattern[str]:
