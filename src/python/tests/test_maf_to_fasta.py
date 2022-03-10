@@ -22,65 +22,15 @@ Typical usage example::
 
 from contextlib import nullcontext as does_not_raise
 import filecmp
-from importlib.abc import Loader
-from importlib.machinery import ModuleSpec
-from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import re
-import sys
-from types import ModuleType
 from typing import ContextManager, Iterable, List, Optional, Pattern
 
 import pytest
 from pytest import raises
 
 from ensembl.compara.filesys.dircmp import PathLike
-
-
-def import_module_from_file(module_file: PathLike) -> ModuleType:
-    """Import module from file path.
-
-    The name of the imported module is the basename of the specified module
-    file without its extension.
-
-    In addition to being returned by this function, the imported module is
-    loaded into the sys.modules dictionary, allowing for commands such as
-    :code:`from <module> import <class>`.
-
-    Args:
-        module_file: File path of module to import.
-
-    Returns:
-        The imported module.
-
-    """
-    if not isinstance(module_file, Path):
-        module_file = Path(module_file)
-    module_name = module_file.stem
-
-    module_spec = spec_from_file_location(module_name, module_file)
-
-    if not isinstance(module_spec, ModuleSpec):
-        raise ImportError(f"ModuleSpec not created for module file '{module_file}'")
-    if not isinstance(module_spec.loader, Loader):
-        raise ImportError(f"no loader found for module file '{module_file}'")
-
-    module = module_from_spec(module_spec)
-    sys.modules[module_name] = module
-    module_spec.loader.exec_module(module)
-
-    return module
-
-
-script_path = Path(__file__).parents[3] / 'scripts' / 'hal_alignment' / 'maf_to_fasta.py'
-import_module_from_file(script_path)
-
-
-# pylint: disable=import-error,wrong-import-order,wrong-import-position
-
-import maf_to_fasta  # type: ignore
-
-# pylint: enable=import-error,wrong-import-order,wrong-import-position
+from ensembl.compara.hal import maf_to_fasta
 
 
 class TestMafToFasta:
@@ -127,9 +77,10 @@ class TestMafToFasta:
             ('gabs.maf', 'gabs', None, [], raises(ValueError))
         ]
     )
-    def test_main(self, maf_file: PathLike, output_dir: PathLike, genomes_file: Optional[PathLike],
-                  out_file_rel_paths: List[str], expectation: ContextManager, tmp_dir: Path) -> None:
-        """Tests :func:`maf_to_fasta.main()` function.
+    def test_convert_maf_to_fasta(self, maf_file: PathLike, output_dir: PathLike,
+                                  genomes_file: Optional[PathLike], out_file_rel_paths: List[str],
+                                  expectation: ContextManager, tmp_dir: Path) -> None:
+        """Tests :func:`maf_to_fasta.convert_maf_to_fasta()` function.
 
         Args:
             maf_file: Input MAF file with alignment blocks. The src fields of
@@ -149,7 +100,7 @@ class TestMafToFasta:
                 genomes_file = self.ref_file_dir / genomes_file
 
             # pylint: disable-next=no-member
-            maf_to_fasta.main(maf_file_path, out_dir_path, genomes_file=genomes_file)
+            maf_to_fasta.convert_maf_to_fasta(maf_file_path, out_dir_path, genomes_file=genomes_file)
 
             for out_file_rel_path in out_file_rel_paths:
                 obs_file_path = out_dir_path / out_file_rel_path

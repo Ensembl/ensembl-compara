@@ -25,6 +25,8 @@ Examples::
 
 """
 
+__all__ = ['convert_maf_to_fasta']
+
 from argparse import ArgumentParser
 import json
 import os
@@ -85,8 +87,8 @@ def compile_maf_src_regex(genome_names: Iterable[str]) -> Pattern[str]:
     return re.compile(maf_src_patt)
 
 
-def main(maf_file: PathLike, output_dir: PathLike,
-         genomes_file: Optional[PathLike] = None) -> None:
+def convert_maf_to_fasta(maf_file: PathLike, output_dir: PathLike,
+                         genomes_file: Optional[PathLike] = None) -> None:
     """Convert each block of a MAF alignment to a FASTA file.
 
     Each block is stored in a FASTA file (e.g. '123.fa'), with its metadata stored in a
@@ -242,4 +244,4 @@ if __name__ == '__main__':
                              " sequences in the MAF file contains a dot ('.'), this is required.")
 
     args = parser.parse_args()
-    main(**vars(args))
+    convert_maf_to_fasta(**vars(args))
