@@ -65,7 +65,6 @@ class TestMafToFasta:
 
         """
         with expectation:
-            # pylint: disable-next=no-member
             obs_output = maf_to_fasta.compile_maf_src_regex(genome_names)
             assert obs_output == exp_output
 
