@@ -99,7 +99,6 @@ class TestMafToFasta:
             genomes_file = self.ref_file_dir / genomes_file
 
         with expectation:
-            # pylint: disable-next=no-member
             maf_to_fasta.convert_maf_to_fasta(maf_file_path, out_dir_path, genomes_file=genomes_file)
 
         ref_dir_path = self.ref_file_dir / output_dir
