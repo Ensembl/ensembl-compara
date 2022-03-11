@@ -30,7 +30,7 @@ foreach my $f (@all_files) {
     next unless $f =~ /\.([chtr]|p[lmy]|sh|java|(my|pg|)sql|sqlite)$/i;
     # Except the .sql of the test-database dumps
     next if $f =~ /modules\/t\/test-genome-DBs\/.*\.sql$/;
-    next if $f =~ /src\/python\/tests\/databases\/.*\.sql$/;
+    next if $f =~ /src\/test_data\/.*\.sql$/;
     # Fake libraries
     next if $f =~ /\/fake_libs\//;
     # CLEAN.t
