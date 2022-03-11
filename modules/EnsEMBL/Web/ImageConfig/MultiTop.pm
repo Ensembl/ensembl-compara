@@ -37,13 +37,12 @@ sub init_cacheable {
     opt_lines        => 1,     # draw registry lines
   });
 
+  my $spritelib = {%{$self->get_parameter('spritelib')||{}}};
   my $sp_img = $self->species_defs->SPECIES_IMAGE_DIR;
   if(-e $sp_img) {
-    $self->set_parameters({ spritelib => {
-      %{$self->get_parameter('spritelib')||{}},
-      species => $sp_img,
-    }});
+    $spritelib->{species} = $sp_img;
   }
+  $self->set_parameters({spritelib => $spritelib});
 
   $self->create_menus(qw(
     sequence
