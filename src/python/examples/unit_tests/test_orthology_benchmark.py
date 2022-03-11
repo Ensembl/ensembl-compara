@@ -128,7 +128,7 @@ class TestDumpGenomes:
 
             out_files = tmp_dir / species_set_name
             # pylint: disable-next=no-member
-            exp_out = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
+            exp_out = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined,operator]
             for db_name, unittest_db in self.core_dbs.items():
                 assert file_cmp(out_files / f"{unittest_db.dbc.db_name}.fasta", exp_out / f"{db_name}.fasta")
 
@@ -265,7 +265,7 @@ def test_get_gtf_file(core_name: str, tmp_dir: Path, expectation: ContextManager
 
     """
     # pylint: disable-next=no-member
-    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
+    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined,operator]
     with expectation:
         orthology_benchmark.get_gtf_file(core_name, test_source_dir, tmp_dir)
 
@@ -292,7 +292,7 @@ def test_prepare_gtf_files(core_names: str, tmp_dir: Path, expectation: ContextM
 
     """
     # pylint: disable-next=no-member
-    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
+    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined,operator]
     with expectation:
         orthology_benchmark.prepare_gtf_files(core_names, test_source_dir, tmp_dir)
 

@@ -171,7 +171,7 @@ class TestDumpGenomes:
 
             out_files = tmp_dir / species_set_name
             # pylint: disable-next=no-member
-            exp_out = pytest.files_dir / "dump_genomes"  # type: ignore[attr-defined]
+            exp_out = pytest.files_dir / "dump_genomes"  # type: ignore[attr-defined,operator]
             for db_name, unittest_db in self.core_dbs.items():
                 assert file_cmp(out_files / f"{unittest_db.dbc.db_name}.fasta", exp_out / f"{db_name}.fasta")
 
