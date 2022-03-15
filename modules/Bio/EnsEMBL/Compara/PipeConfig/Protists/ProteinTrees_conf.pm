@@ -67,6 +67,12 @@ sub default_options {
             },
         ],
 
+        'mapped_gene_ratio_per_taxon' => {
+            '72018'   => 0.5,    #sphaeroforma
+            '207245'  => 0.5,    #fornicata
+            '2759'    => 0.5,    #eukaryotes
+        },
+
         # Extra analyses:
         # Gain/loss analysis?
         'do_cafe'                => 0,
