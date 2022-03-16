@@ -308,5 +308,6 @@ def test_extract_orthologs() -> None:
     """
     # pylint: disable-next=no-member
     test_files_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
-    assert orthology_benchmark.extract_orthologs(test_files_dir , "gallus_gallus", "homo_sapiens") == \
-           [("ENSGALG00000030005", "ENSG00000147255")]
+    assert orthology_benchmark.extract_orthologs(test_files_dir, "gallus_gallus", "homo_sapiens") == [
+        ("ENSGALG00000030005", "ENSG00000147255")
+    ]

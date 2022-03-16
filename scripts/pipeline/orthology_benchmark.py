@@ -335,14 +335,11 @@ def extract_orthologs(input_dir: str, species1: str, species2: str) -> List[Tupl
     predictions_file = [f.path for f in os.scandir(predictions_subdir) if f.is_file() and
                         re.match(f"(.*){species1}_core_(.*){species2}_core_(.*)", f.name)][0]
 
-    with open(predictions_file) as file_handler:
-        for line in file_handler:
-            if "Orthogroup" in line:
-                continue
-
-            temp = line.replace("\n", "").split("\t")
-            genes1 = temp[1].replace(" ", "").split(",")
-            genes2 = temp[2].replace(" ", "").split(",")
+    with open(predictions_file) as file_handle:
+        reader = csv.DictReader(file_handle, delimiter="\t")
+        for row in reader:
+            genes1 = row[species_key1].split(", ")
+            genes2 = row[species_key2].split(", ")
 
             for gene1 in genes1:
                 for gene2 in genes2:
@@ -390,5 +387,17 @@ if __name__ == '__main__':
     print("Preparing input for orthology inference tools...")
     prep_input_for_orth_tools(os.path.join(args.out_dir, args.species_set), args.orthology_input)
     print("Running orthology inference tools...")
-    run_orthology_tools(args.orthology_input, args.orthofinder_params)
+    for unsupported_flagset in [("-n", "--name"), ("-o", "--output")]:
+        if any(x in unsupported_flagset for x in shlex.split(args.orthofinder_params)):
+            raise RuntimeError(
+                f"argument --orthofinder_params: '{'/'.join(unsupported_flagset)}' not supported")
+    res_ts = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
+    orthofinder_params = f"{args.orthofinder_params} --name {res_ts}"
+
+    run_orthology_tools(args.orthology_input, orthofinder_params)
+
+    res_path_spec = os.path.join(args.orthology_input, "OrthoFinder", f"Results_{res_ts}*")
+    res_path, *clashing_paths = glob.glob(res_path_spec)
+    if clashing_paths:
+        raise RuntimeError(f"multiple directories match OrthoFinder results path spec: '{res_path_spec}'")
     # calculate_goc_scores()
