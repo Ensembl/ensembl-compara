@@ -31,11 +31,14 @@ Typical usage examples::
 """
 
 import argparse
+import csv
+import datetime
 import glob
 import gzip
 import os
 from pathlib import Path
 import re
+import shlex
 import shutil
 import subprocess
 from typing import Dict, List, Tuple
@@ -280,13 +283,13 @@ def prep_input_for_orth_tools(source_dir: str, target_dir: str) -> None:
         raise RuntimeError(msg) from exc
 
 
-def run_orthology_tools(input_dir: str, orthofinder_params: str) -> None:
+def run_orthology_tools(input_dir: str, orthofinder_parameters: str) -> None:
     """Runs the selected orthology inference tool.
 
     Args:
         input_dir: Path to the directory containing the input fasta files (or corresponding symlinks) for
             orthology tools.
-        orthofinder_params: Additional OrthoFinder parameters and their values.
+        orthofinder_parameters: Additional OrthoFinder parameters and their values.
 
     Raises:
         RuntimeError: If OrthoFinder command fails to execute for any reason.
@@ -294,7 +297,7 @@ def run_orthology_tools(input_dir: str, orthofinder_params: str) -> None:
     """
     # OrthoFinder
     orthofinder_exe = "/hps/software/users/ensembl/ensw/C8-MAR21-sandybridge/linuxbrew/bin/orthofinder"
-    cmd = f"{orthofinder_exe} -f {input_dir} {orthofinder_params}"
+    cmd = f"{orthofinder_exe} -f {input_dir} {orthofinder_parameters}"
 
     try:
         subprocess.run(cmd, capture_output=True, check=True, shell=True, text=True)
@@ -307,33 +310,20 @@ def run_orthology_tools(input_dir: str, orthofinder_params: str) -> None:
         raise RuntimeError(msg) from exc
 
 
-def extract_orthologs(input_dir: str, species1: str, species2: str) -> List[Tuple[str, str]]:
+def extract_orthologs(res_dir: str, species_key1: str, species_key2: str) -> List[Tuple[str, str]]:
     """Returns a list of putative orthologous pairs inferred by OrthoFinder for a specified pair
-    of species.
-
-    If there are results for multiple OrthoFinder runs, the function uses those in the most recently modified
-    `Results_*` directory. The rationale behind this choice is that once OrthoFinder completes, the pipeline
-    automatically proceeds with calculating GOC scores for the predictions. At that point, it makes more sense
-    to take the most recent results than older ones. This also allows running the pipeline without user
-    intervention.
+    of species identificators used in the OrthoFinder analysis.
 
     Args:
-        input_dir: Path to the directory with OrthoFinder output.
-        species1: Name of one species of interest.
-        species2: Name of another species of interest.
+        res_dir: Path to the directory with OrthoFinder results.
+        species_key1: OrthoFinder identificator of one species of interest.
+        species_key2: OrthoFinder identificator of another species of interest.
 
     """
     orthologs = []
 
-    orthofinder_res = [f.path for f in os.scandir(os.path.join(input_dir, "OrthoFinder"))
-                           if f.is_dir() and f.name.startswith("Results")]
-
-    latest_res = max(orthofinder_res, key=os.path.getmtime)
-
-    predictions_subdir = [f.path for f in os.scandir(os.path.join(latest_res, "Orthologues"))
-                          if f.is_dir() and re.match(f"(.*){species1}_core_(.*)", f.name)][0]
-    predictions_file = [f.path for f in os.scandir(predictions_subdir) if f.is_file() and
-                        re.match(f"(.*){species1}_core_(.*){species2}_core_(.*)", f.name)][0]
+    predictions_subdir = os.path.join(res_dir, "Orthologues", f"Orthologues_{species_key1}")
+    predictions_file = os.path.join(predictions_subdir, f"{species_key1}__v__{species_key2}.tsv")
 
     with open(predictions_file) as file_handle:
         reader = csv.DictReader(file_handle, delimiter="\t")
