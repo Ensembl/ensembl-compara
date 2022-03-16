@@ -133,13 +133,11 @@ sub _get_gd {
   my $font     = shift || 'Arial';
   my $ptsize   = shift || 10;
   my $font_key = "${font}--${ptsize}";
-
-  my $gd = $cache->get($font_key);
-
-  return $gd if $gd;
-
+ 
+  return GD::Simple->newFromPngData($cache->get($font_key)) if ($cache->get($font_key));
+ 
   my $fontpath = $image_config->species_defs->get_font_path."$font.ttf";
-  $gd = GD::Simple->new(400, 400);
+  my $gd = GD::Simple->new(400, 400);
 
   eval {
     if (-e $fontpath) {
@@ -160,7 +158,7 @@ sub _get_gd {
 
   warn $@ if $@;
 
-  $cache->set($font_key, $gd); # Update font cache
+  $cache->set($font_key, $gd->png); # Update font cache using PNG format
 
   return $gd;
 }

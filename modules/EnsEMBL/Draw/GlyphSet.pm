@@ -925,8 +925,8 @@ sub get_gd {
   my $ptsize   = shift || 10;
   my $font_key = "${font}--${ptsize}"; 
   
-  return $cache{$font_key} if exists $cache{$font_key};
-  
+  return GD::Simple->newFromPngData($cache{$font_key}) if exists $cache{$font_key};
+
   my $fontpath = $self->{'config'}->species_defs->get_font_path."$font.ttf";
   my $gd       = GD::Simple->new(400, 400);
   
@@ -949,7 +949,8 @@ sub get_gd {
   
   warn $@ if $@;
 
-  return $cache{$font_key} = $gd; # Update font cache
+  $cache{$font_key} = $gd->png; # Update font cache using PNG format
+  return $gd;
 }
 
 sub bp_to_nearest_unit {
