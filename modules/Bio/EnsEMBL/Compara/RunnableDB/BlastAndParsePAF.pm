@@ -215,10 +215,14 @@ sub parse_blast_table_into_paf {
             if ($ref_dba) {
                 # If sequences are associated with a compara_references db - these are likely stable_ids and need to be converted
                 if ( $qmember_id =~ /^[A-Z]+/i ) {
-                    $qmember_id = $ref_gene_adap->fetch_by_stable_id($qmember_id)->canonical_member_id();
+                    my ($qmember, @unexpected_matches) = grep { $_->genome_db_id == $qgenome_db_id } @{$ref_gene_adap->fetch_all_by_stable_id_list([$qmember_id])};
+                    die "Multiple gene members match stable ID: $qmember_id\n" if @unexpected_matches;
+                    $qmember_id = $qmember->canonical_member_id();
                 }
                 if ( $hmember_id =~ /^[A-Z]+/i ) {
-                    $hmember_id = $ref_gene_adap->fetch_by_stable_id($hmember_id)->canonical_member_id();
+                    my ($hmember, @unexpected_matches) = grep { $_->genome_db_id == $hgenome_db_id } @{$ref_gene_adap->fetch_all_by_stable_id_list([$hmember_id])};
+                    die "Multiple gene members match stable ID: $hmember_id\n" if @unexpected_matches;
+                    $hmember_id = $hmember->canonical_member_id();
                 }
             }
 
