@@ -80,7 +80,7 @@ class TestTaxonomySelection:
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
                 exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
         """
-        dirpath = self.dir / subdir
+        dirpath = self.dir / subdir # type: ignore[operator]
         with self.dbc.session_scope() as session:
             with expectation:
                 result = collect_taxonomys_from_path(session, str(dirpath))
