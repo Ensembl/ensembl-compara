@@ -311,13 +311,16 @@ def run_orthology_tools(input_dir: str, orthofinder_parameters: str) -> None:
 
 
 def extract_orthologs(res_dir: str, species_key1: str, species_key2: str) -> List[Tuple[str, str]]:
-    """Returns a list of putative orthologous pairs inferred by OrthoFinder for a specified pair
-    of species identificators used in the OrthoFinder analysis.
+    """Reads in putative orthologs inferred by OrthoFinder.
 
     Args:
         res_dir: Path to the directory with OrthoFinder results.
         species_key1: OrthoFinder identificator of one species of interest.
         species_key2: OrthoFinder identificator of another species of interest.
+
+    Returns:
+        A list of putative orthologous pairs for a specified pair of species identificators used in the
+        OrthoFinder analysis.
 
     """
     orthologs = []
