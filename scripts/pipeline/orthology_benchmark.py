@@ -31,14 +31,17 @@ Typical usage examples::
 """
 
 import argparse
+import csv
+import datetime
 import glob
 import gzip
 import os
 from pathlib import Path
 import re
+import shlex
 import shutil
 import subprocess
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import warnings
 
 import numpy
@@ -280,13 +283,13 @@ def prep_input_for_orth_tools(source_dir: str, target_dir: str) -> None:
         raise RuntimeError(msg) from exc
 
 
-def run_orthology_tools(input_dir: str, orthofinder_params: str) -> None:
+def run_orthology_tools(input_dir: str, orthofinder_parameters: str) -> None:
     """Runs the selected orthology inference tool.
 
     Args:
         input_dir: Path to the directory containing the input fasta files (or corresponding symlinks) for
             orthology tools.
-        orthofinder_params: Additional OrthoFinder parameters and their values.
+        orthofinder_parameters: Additional OrthoFinder parameters and their values.
 
     Raises:
         RuntimeError: If OrthoFinder command fails to execute for any reason.
@@ -294,7 +297,7 @@ def run_orthology_tools(input_dir: str, orthofinder_params: str) -> None:
     """
     # OrthoFinder
     orthofinder_exe = "/hps/software/users/ensembl/ensw/C8-MAR21-sandybridge/linuxbrew/bin/orthofinder"
-    cmd = f"{orthofinder_exe} -f {input_dir} {orthofinder_params}"
+    cmd = f"{orthofinder_exe} -f {input_dir} {orthofinder_parameters}"
 
     try:
         subprocess.run(cmd, capture_output=True, check=True, shell=True, text=True)
@@ -307,8 +310,35 @@ def run_orthology_tools(input_dir: str, orthofinder_params: str) -> None:
         raise RuntimeError(msg) from exc
 
 
-def prep_input_for_goc():
-    """Docstring"""
+def extract_orthologs(res_dir: str, species_key1: str, species_key2: str) -> List[Tuple[str, str]]:
+    """Reads in putative orthologs inferred by OrthoFinder.
+
+    Args:
+        res_dir: Path to the directory with OrthoFinder results.
+        species_key1: OrthoFinder identificator of one species of interest.
+        species_key2: OrthoFinder identificator of another species of interest.
+
+    Returns:
+        A list of putative orthologous pairs for a specified pair of species identificators used in the
+        OrthoFinder analysis.
+
+    """
+    orthologs = []
+
+    predictions_subdir = os.path.join(res_dir, "Orthologues", f"Orthologues_{species_key1}")
+    predictions_file = os.path.join(predictions_subdir, f"{species_key1}__v__{species_key2}.tsv")
+
+    with open(predictions_file) as file_handle:
+        reader = csv.DictReader(file_handle, delimiter="\t")
+        for row in reader:
+            genes1 = row[species_key1].split(", ")
+            genes2 = row[species_key2].split(", ")
+
+            for gene1 in genes1:
+                for gene2 in genes2:
+                    orthologs.append((gene1, gene2))
+
+    return orthologs
 
 
 def calculate_goc_scores():
@@ -350,6 +380,17 @@ if __name__ == '__main__':
     print("Preparing input for orthology inference tools...")
     prep_input_for_orth_tools(os.path.join(args.out_dir, args.species_set), args.orthology_input)
     print("Running orthology inference tools...")
-    run_orthology_tools(args.orthology_input, args.orthofinder_params)
-    # prep_input_for_goc()
+    for unsupported_flagset in [("-n", "--name"), ("-o", "--output")]:
+        if any(x in unsupported_flagset for x in shlex.split(args.orthofinder_params)):
+            raise RuntimeError(
+                f"argument --orthofinder_params: '{'/'.join(unsupported_flagset)}' not supported")
+    res_ts = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
+    orthofinder_params = f"{args.orthofinder_params} --name {res_ts}"
+
+    run_orthology_tools(args.orthology_input, orthofinder_params)
+
+    res_path_spec = os.path.join(args.orthology_input, "OrthoFinder", f"Results_{res_ts}*")
+    res_path, *clashing_paths = glob.glob(res_path_spec)
+    if clashing_paths:
+        raise RuntimeError(f"multiple directories match OrthoFinder results path spec: '{res_path_spec}'")
     # calculate_goc_scores()
