@@ -106,7 +106,7 @@ if ($sitemap_url) {
 warn "Writing files to $sitemap_path";
 warn "Actual URL will be $sitemap_url\n\n";
 
-my $name_lookup = $hub->species_defs->production_name_lookup;
+my $name_lookup = $hub->species_defs->prodnames_to_urls_lookup;
 
 # create the 'common' sitemap for non-species urls
 my $map = Search::Sitemap->new();
