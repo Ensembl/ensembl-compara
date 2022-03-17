@@ -341,6 +341,39 @@ def extract_orthologs(res_dir: str, species_key1: str, species_key2: str) -> Lis
     return orthologs
 
 
+def extract_paralogs(res_dir: str, species_key: str) -> List[Tuple[str, str]]:
+    """Reads in putative paralogs inferred by OrthoFinder.
+
+    Args:
+        res_dir: Path to the directory with OrthoFinder results.
+        species_key: OrthoFinder identificator of the species of interest.
+
+    Returns:
+        A list of putative paralogous pairs for a specified species identificator used in the
+        OrthoFinder analysis.
+
+    """
+    paralogs = []
+
+    predictions_file = os.path.join(res_dir, "Gene_Duplication_Events", "Duplications.tsv")
+
+    with open(predictions_file) as file_handle:
+        reader = csv.DictReader(file_handle, delimiter="\t")
+        for row in reader:
+            species = row["Species Tree Node"]
+            genes1 = row["Genes 1"].split(", ")
+            genes2 = row["Genes 2"].split(", ")
+
+            if species == species_key:
+                for gene1 in genes1:
+                    for gene2 in genes2:
+                        paralogs.append(
+                            (gene1.split(f"{species_key}_")[1], gene2.split(f"{species_key}_")[1])
+                        )
+
+    return paralogs
+
+
 def calculate_goc_scores():
     """Docstring"""
 
