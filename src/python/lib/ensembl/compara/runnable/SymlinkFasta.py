@@ -43,9 +43,9 @@ class SymlinkFasta(eHive.BaseRunnable):
         cleanup_symlinks = self.param('cleanup_symlinks')
 
         if self.param('target_file') is not None:
-            target = '--target_file {0}'.format(self.param('target_file'))
+            target = f"--target_file {self.param('target_file')}"
         else:
-            target = '--target_dir {0}'.format(self.param('target_dir'))
+            target = f"--target_dir {self.param('target_dir')}"
 
         # Run symlink_exe script
         cmd = ' '.join([symlink_exe, target, '--symlink_dir', symlink_dir])
