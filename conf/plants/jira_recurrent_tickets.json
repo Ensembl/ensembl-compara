@@ -82,6 +82,7 @@
          },
          {
             "component": "Production tasks",
+            "description": "Mark as done when all LastZs have been merged into the new release database.",
             "summary": "All LastZ",
             "name_on_graph": "All LastZ"
          },
