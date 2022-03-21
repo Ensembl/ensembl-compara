@@ -454,20 +454,27 @@ sub get_slice_table {
 
   foreach (@$slices) {
     my $species = $lookup->{$_->{'display_name'}} || $lookup->{$_->{'name'}};
-    
     next unless $species;
-    
+    my ($species_url, $display_name);
+    if ($species eq 'Ancestral sequences') {
+      $species_url = ''; 
+      $display_name = $species;
+    }
+    else {
+      $species_url = $species;
+      $display_name = $hub->species_defs->get_config($species, 'SPECIES_DISPLAY_NAME');
+    }
+
     my %url_params = (
-      species => $_->{'name'},
+      species => $species_url,
       type    => 'Location',
       action  => 'View'
     );
+    $url_params{'__clear'} = 1 unless $species_url eq $primary_species;
 
-    $url_params{'__clear'} = 1 unless $lookup->{$_->{'name'}} eq $primary_species;
+    $species_padding = length $display_name if $return_padding && length $display_name > $species_padding;
 
-    $species_padding = length $species if $return_padding && length $species > $species_padding;
-
-    $table_rows .= sprintf '<tr><th>%s&nbsp;&rsaquo;</th><td>', $species =~ s/\s/&nbsp;/r;
+    $table_rows .= sprintf '<tr><th>%s&nbsp;&rsaquo;</th><td>', $display_name =~ s/\s/&nbsp;/r;
 
     foreach my $slice (@{$_->{'underlying_slices'}}) {
       next if $slice->seq_region_name eq 'GAP';
@@ -480,7 +487,7 @@ sub get_slice_table {
         $number_padding = length $end    if length $end    > $number_padding;
       }
       
-      if ($species =~ /^Ancestral sequences/) {
+      if ($species eq 'Ancestral sequences') {
         $table_rows .= $slice->{'_tree'};
         $ancestral_sequences = 1;
       } else {
