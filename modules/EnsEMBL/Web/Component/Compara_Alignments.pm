@@ -321,6 +321,17 @@ sub draw_tree {
   my ($self, $cdb, $align_blocks, $slice, $align, $class, $groups, $slices) = @_;
   my $hub             = $self->hub;
   my $compara_db      = $hub->database($cdb);
+  my $html;
+
+  my $num_groups = (keys %$groups);
+  # Do not draw a tree if there is a pairwise alignment or no alignment
+  if ($class =~ /pairwise/ || $num_groups < 1) {
+    return;
+  }
+  elsif ($num_groups > 1) { ## or if more than one group in a multiple alignment
+    $html = $self->info_panel("Species Tree", "<p>No tree is drawn when there is more than one block displayed because each block is represented by a separate tree");
+    return $html;
+  }
 
   my $image_config    = $hub->get_imageconfig('speciestreeview');
 
@@ -331,19 +342,6 @@ sub draw_tree {
   my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($align);
 
   my $highlights;
-  my $html;
-
-  my $num_groups = (keys %$groups);
-  #Do not draw a tree if have more than group or for pairwise alignments
-  if ($num_groups > 1) {
-    $html = $self->info_panel("Species Tree", "<p>No tree is drawn when there is more than one block displayed because each block is represented by a separate tree");
-    return $html;
-  } elsif ($num_groups < 1) {
-    #No alignment found
-    return;
-  } elsif ($class =~ /pairwise/) {
-    return;
-  }
 
   $image_config->set_parameters({
 				 container_width => $image_width,
