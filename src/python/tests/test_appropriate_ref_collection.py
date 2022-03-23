@@ -125,7 +125,7 @@ class TestAppropriateRefCollection:
         with expectation:
             output = subprocess.check_output(cmd, shell=True).decode().strip()
             if isdir(output):
-                # pylint: disable=no-member 
+                # pylint: disable=no-member
                 assert output == f"{self.dir}/{exp_stdout}" # type: ignore[attr-defined]
             else:
                 assert output == exp_stdout

@@ -124,14 +124,13 @@ jobs:
       script: ./travisci/perl-linter_harness.sh
 
     - language: python
-      python: 3.7
+      python: 3.7.9
       name: "Python unit tests on the minimum version"
       before_install:
         - echo
       install:
-        - python3 -m pip install -U -r requirements.txt 
-        - python3 -m pip install -U -r requirements-test.txt
-        - python3 -m pip install -U .
+        - pip install -r requirements.txt -r requirements-test.txt
+        - pip install .
       script:
         - pytest --server=mysql://travis@127.0.0.1:3306/ src/python/tests/
 
