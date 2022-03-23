@@ -129,8 +129,9 @@ jobs:
       before_install:
         - echo
       install:
-        - pip install -r requirements.txt -r requirements-test.txt
-        - pip install .
+        - python3 -m pip install -U -r requirements.txt 
+        - python3 -m pip install -U -r requirements-test.txt
+        - python3 -m pip install -U .
       script:
         - pytest --server=mysql://travis@127.0.0.1:3306/ src/python/tests/
 
