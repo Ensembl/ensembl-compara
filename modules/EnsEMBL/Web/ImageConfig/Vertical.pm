@@ -44,18 +44,17 @@ sub load_user_tracks {
 
   return unless $menu;
 
-  $self->SUPER::load_user_tracks;
+  $self->SUPER::load_user_tracks('vertical');
 
-  my $width           = $self->get_parameter('all_chromosomes') eq 'yes' ? 10 : 60;
-  my %remote_formats  = map { lc $_ => 1 } @{$self->hub->species_defs->multi_val('REMOTE_FILE_FORMATS') || []};
+  my $width        = $self->get_parameter('all_chromosomes') eq 'yes' ? 10 : 60;
+  my $format_info  = EnsEMBL::Web::Constants::USERDATA_FORMATS;
 
   foreach (@{$menu->get_all_nodes}) {
     my $format = $_->get_data('format');
-
-    # except bigwig, remove all tracks with big remote formats
-    if (($remote_formats{lc $format} && lc $format ne 'bigwig') || (lc $format eq 'vcf' && $_->get_data('url'))) {
+    if ($format_info->{$format}{'no_karyotype'}) {
       $_->remove;
-    } else {
+    }
+    else {
       my ($strand, $renderers) = $self->_user_track_settings($format);
       $_->set('renderers', $renderers);
       $_->set('glyphset',  'Vuserdata');
@@ -119,9 +118,6 @@ sub load_user_track_data {
   foreach my $track ($menu ? @{$menu->get_all_nodes} : ()) {
     my $display = $track->get('display');
     next if $display eq 'off';
-    ## Of the remote formats, only bigwig is currently supported on this scale
-    my $format = lc $track->get('format');
-    next if $format_info->{$format}{'no_karyotype'};
 
     my $logic_name = $track->get('logic_name');
     my ($max1, $max2);
