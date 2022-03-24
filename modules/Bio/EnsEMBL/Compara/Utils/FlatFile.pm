@@ -270,7 +270,7 @@ sub group_hash_by {
 sub check_column_integrity {
     my ($file, $delimiter) = @_;
 
-    my $awk_opts = $delimiter ? "-F$delimiter" : "";
+    my $awk_opts = $delimiter ? "-F'$delimiter'" : "";
 
     my $run_awk = Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec(
         "awk $awk_opts '{print NF}' $file | sort | uniq -c",
