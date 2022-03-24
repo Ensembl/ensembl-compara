@@ -364,12 +364,17 @@ def extract_paralogs(res_dir: str, species_key: str) -> List[Tuple[str, str]]:
             genes1 = row["Genes 1"].split(", ")
             genes2 = row["Genes 2"].split(", ")
 
+            gene_pattern = re.compile(f'{re.escape(species_key)}_(?P<gene_id>.+)')
             if species == species_key:
                 for gene1 in genes1:
+                    gene1_match = gene_pattern.fullmatch(gene1)
+                    if gene1_match:
+                        gene1_bare_id = gene1_match["gene_id"]
                     for gene2 in genes2:
-                        paralogs.append(
-                            (gene1.split(f"{species_key}_")[1], gene2.split(f"{species_key}_")[1])
-                        )
+                        gene2_match = gene_pattern.fullmatch(gene2)
+                        if gene2_match:
+                            gene2_bare_id = gene2_match["gene_id"]
+                        paralogs.append((gene1_bare_id, gene2_bare_id))
 
     return paralogs
 
