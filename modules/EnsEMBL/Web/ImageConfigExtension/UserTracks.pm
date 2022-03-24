@@ -33,7 +33,7 @@ use EnsEMBL::Web::Utils::Sanitize qw(clean_id strip_HTML);
 
 sub load_user_tracks {
   ## Loads tracks attached by user
-  my $self = shift;
+  my ($self, $flag) = @_;
   my $menu = $self->get_node('user_data');
 
   # Custom tracks menu not present - custom tracks not allowed
@@ -43,7 +43,7 @@ sub load_user_tracks {
   $self->_load_url_feature_track($menu);
 
   # Load tracks attached via url
-  $self->_load_remote_url_tracks($menu);
+  $self->_load_remote_url_tracks($menu, $flag);
 
   # Load tracks from uploaded files
   $self->_load_uploaded_tracks($menu);
@@ -143,14 +143,14 @@ sub _load_url_feature_track {
 sub _load_remote_url_tracks {
   ## @private
   ## Adds tracks attached via remote url
-  my ($self, $menu)   = @_;
+  my ($self, $menu, $flag)   = @_;
   my $hub             = $self->hub;
   my $session         = $hub->session;
   my $user            = $hub->user;
   my $session_records = $session->records({'type' => 'url', 'species' => $self->species});
   my $user_records    = $user ? $user->records({'type' => 'url', 'species' => $self->species}) : [];
   my $saved_config    = $self->get_user_settings->{'nodes'} || {};
-
+  my $format_info     = EnsEMBL::Web::Constants::USERDATA_FORMATS;
   my %tracks_data;
 
   foreach my $record (@$session_records, @$user_records) {
@@ -160,6 +160,9 @@ sub _load_remote_url_tracks {
     next if $data->{'no_attach'};
     ## Don't turn off tracks that were added before disconnection code
     next if (defined $data->{'disconnected'} && $data->{'disconnected'} == 1);
+
+    ## Don't include unsupported formats on vertical displays
+    next if ($flag && $flag eq 'vertical' && $data->{'format'} && $format_info->{lc $data->{'format'}}{'no_karyotype'});
 
     my $source_name = strip_HTML($data->{'name'}) || $data->{'url'};
 
