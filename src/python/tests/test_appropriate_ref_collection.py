@@ -24,9 +24,11 @@ from contextlib import nullcontext as does_not_raise
 from pathlib import Path
 from os.path import isdir
 import subprocess
+from subprocess import CalledProcessError
 from typing import ContextManager, List
 
 import pytest
+from pytest import raises
 
 from ensembl.database import UnitTestDB
 
@@ -78,25 +80,25 @@ class TestAppropriateRefCollection:
                 "gallus_gallus",
                 ["--taxon_name", "--url"],
                 "A valid --taxon_name, --ref_base_dir and --url are required",
-                does_not_raise(),
+                raises(CalledProcessError),
             ),
             (
                 "gallus_gallus",
                 ["--ref_base_dir", "--url"],
                 "A valid --taxon_name, --ref_base_dir and --url are required",
-                does_not_raise(),
+                raises(CalledProcessError),
             ),
             (
                 "gallus_gallus",
                 ["--taxon_name", "--ref_base_dir"],
                 "A valid --taxon_name, --ref_base_dir and --url are required",
-                does_not_raise(),
+                raises(CalledProcessError),
             ),
             (
                 "chocolate_chip_cookie",
                 ["--taxon_name", "--ref_base_dir", "--url"],
                 "A valid --taxon_name, --ref_base_dir and --url are required",
-                does_not_raise(),
+                raises(CalledProcessError),
             ),
         ],
     )

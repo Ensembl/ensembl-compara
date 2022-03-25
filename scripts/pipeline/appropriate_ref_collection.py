@@ -78,3 +78,4 @@ if __name__ == "__main__":
             print(collection_path)
     except (TypeError, AttributeError, NoResultFound):
         print("A valid --taxon_name, --ref_base_dir and --url are required")
+        sys.exit(1)
