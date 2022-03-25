@@ -357,6 +357,7 @@ def extract_paralogs(res_dir: str, species_key: str) -> List[Tuple[str, str]]:
 
     predictions_file = os.path.join(res_dir, "Gene_Duplication_Events", "Duplications.tsv")
 
+    gene_pattern = re.compile(f'{re.escape(species_key)}_(?P<gene_id>.+)')
     with open(predictions_file) as file_handle:
         reader = csv.DictReader(file_handle, delimiter="\t")
         for row in reader:
@@ -364,7 +365,6 @@ def extract_paralogs(res_dir: str, species_key: str) -> List[Tuple[str, str]]:
             genes1 = row["Genes 1"].split(", ")
             genes2 = row["Genes 2"].split(", ")
 
-            gene_pattern = re.compile(f'{re.escape(species_key)}_(?P<gene_id>.+)')
             if species == species_key:
                 for gene1 in genes1:
                     gene1_match = gene_pattern.fullmatch(gene1)
