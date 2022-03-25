@@ -1,4 +1,4 @@
-homology_id	homology_type	gene_tree_node_id	gene_tree_root_id	species_tree_node_id	gene_member_id	seq_member_id	stable_id	genome_db_id  species	perc_id	homology_gene_member_id	homology_seq_member_id	homology_stable_id	homology_genome_db_id homology_species	homology_perc_id
+homology_id	homology_type	gene_tree_node_id	gene_tree_root_id	species_tree_node_id	gene_member_id	seq_member_id	stable_id	genome_db_id	species	perc_id	homology_gene_member_id	homology_seq_member_id	homology_stable_id	homology_genome_db_id	homology_species	homology_perc_id
 2089891	ortholog_one2one	4084544	4084544	40133000	1317571	1776012	ENSMEUP00000010101	111	anolis_carolinensis	25.2	902949217	904807664	C43H8.2.2	142	gallus_gallus	25.7143
 2094923	ortholog_one2one	4084040	4084040	40133001	1327596	1786077	ENSMEUP00000001319	111	anolis_carolinensis	36.9627	903101985	905107315	K02B2.3.1	142	gallus_gallus	38.7387
 4385940	ortholog_one2one	7018131	482468	40133001	1312823	1771145	ENSMEUP00000010655	111	anolis_carolinensis	29.9435	903091057	905089591	K08D12.3a.1	142	gallus_gallus	35.0993
