@@ -368,12 +368,10 @@ def extract_paralogs(res_dir: str, species_key: str) -> List[Tuple[str, str]]:
             if species == species_key:
                 for gene1 in genes1:
                     gene1_match = gene_pattern.fullmatch(gene1)
-                    if gene1_match:
-                        gene1_bare_id = gene1_match["gene_id"]
+                    gene1_bare_id = gene1_match["gene_id"]  # type: ignore
                     for gene2 in genes2:
                         gene2_match = gene_pattern.fullmatch(gene2)
-                        if gene2_match:
-                            gene2_bare_id = gene2_match["gene_id"]
+                        gene2_bare_id = gene2_match["gene_id"]  # type: ignore
                         paralogs.append((gene1_bare_id, gene2_bare_id))
 
     return paralogs
