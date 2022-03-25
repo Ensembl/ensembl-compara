@@ -312,3 +312,14 @@ def test_extract_orthologs() -> None:
     assert orthology_benchmark.extract_orthologs(
         orthofinder_res, "gallus_gallus_core_106_6", "homo_sapiens_core_106_38"
     ) == [("ENSGALG00000030005", "ENSG00000147255")]
+
+
+def test_extract_paralogs() -> None:
+    """Tests :func:`orthology_benchmark.extract_paralogs()` function.
+    """
+    # pylint: disable-next=no-member
+    test_files_dir = pytest.files_dir / "orth_benchmark" # type: ignore[attr-defined]
+    orthofinder_res = test_files_dir  / "OrthoFinder" / "Results_Mar03"
+    assert orthology_benchmark.extract_paralogs(
+        orthofinder_res, "homo_sapiens_core_106_38"
+    ) == [("ENSG00000163565", "ENSG00000163568")]

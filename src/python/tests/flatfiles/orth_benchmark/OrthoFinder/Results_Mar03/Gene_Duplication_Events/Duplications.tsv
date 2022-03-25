@@ -1,0 +1,3 @@
+Orthogroup	Species Tree Node	Gene Tree Node	Support	Type	Genes 1	Genes 2
+OG0000873	homo_sapiens_core_106_38	n0	1.0	Terminal	homo_sapiens_core_106_38_ENSG00000163565	homo_sapiens_core_106_38_ENSG00000163568
+OG0000790	gallus_gallus_core_106_6	n1	1.0	Terminal	gallus_gallus_core_106_6_ENSGALG00000015336	gallus_gallus_core_106_6_ENSGALG00000004096
