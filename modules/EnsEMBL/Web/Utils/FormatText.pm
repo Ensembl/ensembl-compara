@@ -108,6 +108,7 @@ sub get_glossary_entry {
 sub pluralise {
   my ($arg) = @_;
 
+  return $arg if lc $arg eq 'species';
   return $arg if $arg =~ s/([^aeiou])y$/$1ies/g;
   return "${arg}s";
 }
