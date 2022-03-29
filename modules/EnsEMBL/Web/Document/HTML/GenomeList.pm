@@ -24,6 +24,7 @@ use warnings;
 
 use JSON;
 use HTML::Entities qw(encode_entities);
+use EnsEMBL::Web::Utils::FormatText qw(pluralise);
 
 use parent qw(EnsEMBL::Web::Document::HTML);
 
@@ -278,10 +279,10 @@ sub add_genome_groups {
 sub get_featured_genomes {
   return (
            {
-            'url'   => 'Sus_scrofa/Info/Strains/',
+            'url'   => 'Sus_scrofa/Info/Breeds/',
             'img'   => 'Sus_scrofa.png',
             'name'  => 'Pig breeds',
-            'more'  => qq(<a href="/Sus_scrofa/" class="nodeco">Pig reference genome</a> and <a href="Sus_scrofa/Info/Strains/" class="nodeco">12 additional breeds</a>),
+            'more'  => qq(<a href="/Sus_scrofa/" class="nodeco">Pig reference genome</a> and <a href="Sus_scrofa/Info/Breeds/" class="nodeco">12 additional breeds</a>),
            },
           );
 }
@@ -314,17 +315,10 @@ sub _species_list {
 
     my $homepage      = $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Index', '__clear' => 1});
     my $alt_assembly  = $sd->get_config($_, 'SWITCH_ASSEMBLY');
-    my $strainspage   = '';
-    my $strain_type   = '';
+    my ($strainspage,  $strain_type);
     if ($species->{$_}{'strain_group'}) {
-      $strainspage = $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Strains', '__clear' => 1});
-      $strain_type = $sd->get_config($_, 'STRAIN_TYPE'); 
-      if ($strain_type =~ /(y)$/) {
-        $strain_type =~ s/$1/ies/;
-      }
-      else {
-        $strain_type .= 's';
-      }   
+      $strain_type = pluralise($sd->get_config($_, 'STRAIN_TYPE')); 
+      $strainspage = $hub->url({'species' => $_, 'type' => 'Info', 'function' => ucfirst $strain_type, '__clear' => 1});
     }
 
     my $extra = $_ eq 'Homo_sapiens' ? '<a href="/info/website/tutorials/grch37.html" class="species-extra">Still using GRCh37?</a>' : '';
@@ -340,9 +334,9 @@ sub _species_list {
       assembly    => $species->{$_}{'assembly'},
       assembly_v  => $species->{$_}{'assembly_version'},
       favourite   => $fav{$_} ? 1 : 0,
-      strainspage => $strainspage,
+      strainspage => $strainspage || '',
       straintitle => $sd->USE_COMMON_NAMES ? $species->{$_}{'display_name'} : $species->{$_}{'scientific'},
-      strain_type => $strain_type,
+      strain_type => $strain_type || '',
       has_alt     => $alt_assembly ? 1 : 0,
       extra       => $extra,
     };

@@ -25,7 +25,7 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 
-use EnsEMBL::Web::Utils::FormatText qw(glossary_helptip);
+use EnsEMBL::Web::Utils::FormatText qw(glossary_helptip pluralise);
 
 use base qw(EnsEMBL::Web::Document::Element);
 
@@ -93,8 +93,8 @@ sub init_species_list {
    
   #adding species strain (Mouse strains, Pig breeds, etc) to the list above
   foreach ($species_defs->valid_species) {
-    my $strain_type = ucfirst($species_defs->get_config($_, 'STRAIN_TYPE').'s');
-    $species_defs->get_config($_, 'ALL_STRAINS') ? push( @{$self->{'species_list'}}, [ $hub->url({ species => $_, type => 'Info', action => 'Strains', __clear => 1 }), $species_defs->get_config($_, $name_key)." $strain_type"] ) : next;
+    my $strain_type = pluralise($species_defs->get_config($_, 'STRAIN_TYPE'));
+    $species_defs->get_config($_, 'ALL_STRAINS') ? push( @{$self->{'species_list'}}, [ $hub->url({ species => $_, type => 'Info', action => ucfirst $strain_type, __clear => 1 }), $species_defs->get_config($_, $name_key)." $strain_type"] ) : next;
   }
   @{$self->{'species_list'}} = sort { $a->[1] cmp $b->[1] } @{$self->{'species_list'}}; #just a precautionary bit - sorting species list again after adding the strain  
   

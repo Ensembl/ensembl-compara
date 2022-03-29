@@ -154,7 +154,7 @@ sub assembly_text {
                             $strain_text,
                             scalar @$strains,
                             $strain_text,
-                            $hub->url({'action' => 'Strains'}), 
+                            $hub->url({'action' => ucfirst $strain_text}), 
                             $strain_text,
   }
   

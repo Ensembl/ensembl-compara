@@ -22,6 +22,7 @@ package EnsEMBL::Web::Configuration::Info;
 use strict;
 
 use EnsEMBL::Web::Constants;
+use EnsEMBL::Web::Utils::FormatText qw(pluralise);
 
 use base qw(EnsEMBL::Web::Configuration);
 
@@ -52,13 +53,6 @@ sub populate_tree {
   my $species_defs   = $self->hub->species_defs;
   my %error_messages = EnsEMBL::Web::Constants::ERROR_MESSAGES;
 
-  ## Redirect strains to the strain page for the parent species as long as we're not on the parent species
-  if ( $self->hub->action ne 'Strains' && $species_defs->STRAIN_GROUP && !$species_defs->IS_REFERENCE
-    ) {
-    my $url = $self->hub->url({'species' => $species_defs->STRAIN_GROUP, 'action' => 'Strains'});
-    $self->hub->redirect($url);
-  }
-
   my $index = $self->create_node('Index', '', [qw(homepage EnsEMBL::Web::Component::Info::HomePage)], {});
 
   $self->create_node('Annotation', '',
@@ -67,14 +61,33 @@ sub populate_tree {
 
   my $has_strains = $species_defs->ALL_STRAINS;
   if ($has_strains) {
-    $self->create_node('Strains', '',
-      [qw(blurb EnsEMBL::Web::Component::Info::Strains)]
+    my $strain_term   = $species_defs->STRAIN_TYPE || 'strain';
+    my $strain_title  = pluralise(ucfirst $species_defs->STRAIN_TYPE);
+    my $lookup        = $species_defs->prodnames_to_urls_lookup;
+
+    ## Redirect strains to the strain page for the parent species 
+    ## as long as we're not on the parent species
+    if ( $self->hub->action ne 'Strains' && $self->hub->action ne $strain_title 
+        && $species_defs->STRAIN_GROUP && !$species_defs->IS_REFERENCE) {
+      my $url = $self->hub->url({'species' => $lookup->{$species_defs->STRAIN_GROUP}, 'action' => $strain_title});
+      $self->hub->redirect($url);
+    }
+
+    $self->create_node($strain_title, '',
+        [$strain_term, 'EnsEMBL::Web::Component::Info::Strains']
     );
+    if ($strain_term ne 'strain') {
+      ## Fallback node to avoid broken links
+      $self->create_node('Strains', '',
+        [qw(blurb EnsEMBL::Web::Component::Info::Strains)],
+        { no_menu_entry => 1 }
+      );
+    }
   }
 
   $index->append_child($self->create_subnode('Error', 'Unknown error',
     [qw(error EnsEMBL::Web::Component::Info::SpeciesBurp)],
-    { no_menu_entry => 1, }
+    { no_menu_entry => 1 }
   ));
   
   foreach (keys %error_messages) {
