@@ -29,6 +29,7 @@ sub is_ascii {
     my $has_non_ascii;
     open(my $fh, '<', $filename) or die "Cannot open '$filename' because '$!'\n";
     while(<$fh>) {
+        $_ = s/""".*?"""//gs if $filename =~ /\.nf$/; # strip multiline groovy comments out for nf workfows
         if (/[^[:space:][:print:]]/) {
             $has_non_ascii = 1;
             s/([^[:space:][:print:]]+)/colored($1, 'on_red')/eg;
