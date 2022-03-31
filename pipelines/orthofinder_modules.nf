@@ -43,6 +43,7 @@ process orthoFinderFactory {
     """
     rsync -Lavz ${params.dir}/${x} ${params.ref_destination}/
     """
+
 }
 
 /**
@@ -50,7 +51,7 @@ process orthoFinderFactory {
 */
 process runOrthoFinder {
 
-    label 'rc_64Gb_32C'
+    label 'slurm_default'
 
     input:
     val x
@@ -59,27 +60,33 @@ process runOrthoFinder {
     """
     ${params.orthofinder_exe} -t 32 -a 8 -f ${params.ref_destination}/${x}
     """
+
+    stub:
+    """
+    echo 'Orthofinder on references complete!'
+    """
 }
 
+// todo: queryFactory to use rest DataFile API to collect metadata json_string
 /**
 *@input takes a valid ncbi taxonomy species name
 *@output json formatted file metadata.json containing metadata about species
 */
-process queryFactory {
-
-    label 'lsf_default'
-
-    input:
-    val x
-
-    output:
-    file 'metadata.json'
-
-    shell:
-    """
-    curl -X GET --header 'Accept: application/json' 'http://test.datafile.production.ensembl.org/search?file_format=fasta&ens_releases[]=99&species[]=${x}' > metadata.json
-    """
-}
+// process queryFactory {
+//
+//     label 'lsf_default'
+//
+//     input:
+//     val x
+//
+//     output:
+//     stdout
+//
+//     shell:
+//     """
+//     curl -X GET --header 'Accept: application/json' 'http://test.datafile.production.ensembl.org/search?file_format=fasta&ens_releases[]=99&species[]=${x}'
+//     """
+// }
 
 /**
 *@input takes a taxon_name, requires params.ncbi_taxonomy_url and params.ref_destination
@@ -93,14 +100,20 @@ process queryTaxonSelectionFactory {
     val x
 
     output:
-    path out_dir
+    stdout
 
-    shell:
+    script:
     """
     python ${params.taxon_selector_exe} \
         --taxon_name ${x} \
         --url ${params.ncbi_taxonomy_url} \
         --ref_base_dir ${params.ref_destination} \
+    """
+
+    stub:
+    """
+    mkdir mammalia
+    echo "mammalia"
     """
 }
 
@@ -112,24 +125,26 @@ process mergeRefToQuery {
 
     label 'lsf_default'
 
-    publishDir "${params.short_term_bucket}/${query}", mode:'copy'
+    publishDir "${params.query_destination}/${query}"
 
     input:
     val query
-    path query_fasta
-    path ref_dir
+    val query_fasta // todo: When DataFile API works this will be file not val
+    val ref_dir // todo: When DataFile API works this will be path not val
 
     output:
-    path "${params.short_term_bucket}/${query}"
-
-    when:
-    // Include conditional on file age
+    val "${query}"
 
     shell:
     """
     mkdir ${query};
-    rsync -Lavz ${ref_dir} ${query}/;
-    cp ${query_fasta} ${params.short_term_bucket}/${query};
+    rsync -Lavz ${ref_dir} ${params.query_destination}/${query}/;
+    cp ${query_fasta} ${params.query_destination}/${query};
+    """
+
+    stub:
+    """
+    echo ${query}
     """
 }
 
@@ -139,21 +154,25 @@ process mergeRefToQuery {
 */
 process updateOrthofinderRun {
 
-    label 'rc_64Gb_32C'
-
-    publishDir "${params.short_term_bucket}/${x}", mode:'copy'
+    label 'lsf_default'
 
     input:
     val x
 
     output:
-    val x
+    stdout
 
     shell:
     """
     ${params.orthofinder_exe} \
     -t 32 -a 8 \
-    -b \$(find ${params.query_destination}/${x}/OrthoFinder -maxdepth 1 -mindepth 1 -type d) \
-    -f ${params.short_term_bucket}/${x}
+    -b \$(find ${x}/OrthoFinder -maxdepth 1 -mindepth 1 -type d) \
+    -f ${x}
+    """
+
+    stub:
+    """
+    echo 'Orthofinder update complete on '
+    hostname
     """
 }
