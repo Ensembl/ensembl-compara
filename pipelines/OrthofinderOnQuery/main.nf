@@ -16,7 +16,12 @@
 */
 nextflow.enable.dsl=2
 
-include { queryFactory; queryTaxonSelectionFactory; updateOrthofinderRun; mergeRefToQuery } from './../orthofinder_modules.nf'
+include {
+    // queryFactory; // todo: Include when DataFile API available
+    queryTaxonSelectionFactory;
+    updateOrthofinderRun;
+    mergeRefToQuery
+} from './../orthofinder_modules.nf'
 include { ensemblLogo } from './../utilities.nf'
 
 def helpMessage() {
@@ -26,12 +31,15 @@ def helpMessage() {
     The typical command for running the pipeline is as follows:
     nextflow run  pipelines/OrthofinderOnQuery/main.nf --species canis_lupis_familiaris
     Mandatory arguments:
-      --species [str]                 Name of ncbi_taxonomy species/genome.
-                                      Example:
-                                        canis_lupis_familiaris
+      --species [str]           Name of ncbi_taxonomy species/genome.
+                                Example:
+                                    canis_lupis_familiaris (mandatory)
+      --genome_fasta [str]      Path to peptide fasta file (optional)
+                                  Example:
+                                    /ensemblftp/genomes/canis_lupis_familiaris.pep.fasta
     """.stripIndent()
 }
-
+params.help = ''
 if (params.help) {
     helpMessage()
     exit 0
@@ -43,12 +51,17 @@ if (!params.species) {
 }
 
 workflow {
+    println(ensemblLogo())
     Channel
-        .from(param.species)
+        .from(params.species)
         .set{ collection_ch }
 
-    queryFactory(collection_ch)
-    runTaxonSelectionFactory(queryFactory.out)
-    mergeRefToQuery(collection_ch, queryFactory.out, runTaxonSelectionFactory.out)
-    updateOrthofinderRun(runTaxonSelectionFactory.out)
+    // queryFactory(collection_ch) // Not ready yet needs DataFile API
+    // queryTaxonSelectionFactory(queryFactory.out) // As above
+    queryTaxonSelectionFactory(collection_ch) // Direct parameter usage stop-gap for DataFile API
+    // todo: params.genome_fasta to come from metadata.json parseJSONSoloEntry(json_string, key_name)
+    // todo: Include data mover S3 wrapper with loop-check on modification before next step
+    mergeRefToQuery(collection_ch, params.genome_fasta, queryTaxonSelectionFactory.out)
+    updateOrthofinderRun(mergeRefToQuery.out)
+    updateOrthofinderRun.out.view()
 }

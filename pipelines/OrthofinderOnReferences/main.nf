@@ -27,19 +27,20 @@ def helpMessage() {
     The typical command for running the pipeline is as follows:
     nextflow run  pipelines/OrthofinderOnReferences/main.nf --dir collection_fasta
     Mandatory arguments:
-      --dir [directory]                  Directory containing subdirectories of reference collection fasta files.
-                                      Example:
-                                        └──collection_fasta
-                                              ├── actinopterygii
-                                              │   ├── amblyraja_radiata.sAmbRad1.pri.2020-06.fasta
-                                              │   ├── arabidopsis_thaliana.TAIR10.2010-09.fasta
-                                              │   └── xenopus_tropicalis.Xenopus_tropicalis_v9.1.2019-12.fasta
-                                              └── default
-                                                  └── amphimedon_queenslandica.Aqu1.2015-05-Degnan.fasta
+      --dir [directory]     Directory containing subdirectories of reference collection fasta files.
+                            (mandatory)
+                              Example:
+                                └──collection_fasta
+                                      ├── actinopterygii
+                                      │   ├── amblyraja_radiata.sAmbRad1.pri.2020-06.fasta
+                                      │   ├── arabidopsis_thaliana.TAIR10.2010-09.fasta
+                                      │   └── xenopus_tropicalis.Xenopus_tropicalis_v9.1.2019-12.fasta
+                                      └── default
+                                          └── amphimedon_queenslandica.Aqu1.2015-05-Degnan.fasta
     """.stripIndent()
 }
 
-// Show help message
+params.help = ''
 if (params.help) {
     helpMessage()
     exit 0
@@ -55,6 +56,7 @@ base_dir = file(params.dir)
 dir_list = listSubDirs(base_dir, "references")
 
 workflow {
+    println(ensemblLogo())
     // The starting flow of data to use in the orthofinder factory (first process)
     Channel
         .from(dir_list)
