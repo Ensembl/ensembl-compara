@@ -138,7 +138,7 @@ jobs:
       script: ./travisci/perl-linter_harness.sh
 
     - language: python
-      python: 3.7
+      python: 3.7.9
       name: "Python unit tests on the minimum version"
       env:
         - TEST_COMPILATION=true
