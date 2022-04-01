@@ -153,11 +153,11 @@ elsif($division eq 'pan' or $division eq 'pan_homology'){
 
     $species_1                = 'arabidopsis_thaliana';
     $species_2                = "vitis_vinifera";
-    $species_3                = 'guillardia_theta';
+    $species_3                = 'amphimedon_queenslandica';
 
     $taxon_1                  = 3702;#arabidopsis_thaliana
     $taxon_2                  = 29760;#vitis_vinifera
-    $taxon_3                  = 55529;#guillardia_theta
+    $taxon_3                  = 400682;#amphimedon_queenslandica
 
     $gene_symbol              = 'AT4G26860.2';
     $homology_type            = 'orthologues';
@@ -586,7 +586,7 @@ try{
         ok( $jsontxt->{data}[0]->{homologies}[0]->{target}->{taxon_id} == $taxon_2 , "Check homology endpoint target_taxon option validity");
 
         if ( defined $species_2 && defined $species_3 ) {
-            $orthoXml = process_orthoXml_get($server."/homology/id/$gene_member_id?content-type=text/x-orthoxml+xml;target_species=$species_1;target_species=$species_2;target_species=$species_3;".($extra_params ? ";$extra_params" : ''));
+            $orthoXml = process_orthoXml_get($server."/homology/id/$gene_member_id?content-type=text/x-orthoxml+xml;target_species=$species_1;target_species=$species_2;target_species=$species_3".($extra_params ? ";$extra_params" : ''));
             @pruned_species = keys %{ $orthoXml->{species} };
             %pruned_species = map {$_ => 1} @pruned_species;
             ok((exists($pruned_species{$species_1})) && (exists($pruned_species{$species_2})) && (exists($pruned_species{$species_3} )), "Check homology endpoint target species option Validity");

@@ -93,8 +93,8 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'        => [ 'mysql-ens-compara-prod-2', 'ivana_plants_load_members_107'],
-#    'compara_ptrees'         => [ 'mysql-ens-compara-prod-', '' ],
+    'compara_members'        => [ 'mysql-ens-compara-prod-4', 'ivana_test_cleanup_plants_load_members_107'],
+    'compara_ptrees'         => [ 'mysql-ens-compara-prod-5', 'ivana_default_plants_protein_trees_107' ],
     'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-5', 'jalvarez_wheat_cultivars_plants_protein_trees_106' ],
 
     # LASTZ dbs
