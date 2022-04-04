@@ -73,7 +73,18 @@ sub pipeline_analyses_create_and_copy_per_species_db {
                 'skip_dna'   => $self->o('skip_dna'),
             },
             -hive_capacity => 1,
+            -flow_into => {
+                1 => { 'record_species_set' => INPUT_PLUS() },
+            }
         },
+
+        {   -logic_name => 'record_species_set',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::RecordSpeciesSet',
+            -parameters => {
+                'species_set_record' => $self->o('species_set_record'),
+            },
+            -hive_capacity => 1,
+        }
 
     ];
 }

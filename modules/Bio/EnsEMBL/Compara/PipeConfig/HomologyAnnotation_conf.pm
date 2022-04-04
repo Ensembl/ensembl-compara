@@ -77,6 +77,8 @@ sub default_options {
         'ref_dump_dir' => $self->o('ref_member_dumps_dir'),
         # Directory for diamond and fasta files for query genome
         'members_dumps_dir' => $self->o('dump_path'),
+        # Directory for species set record of references to query
+        'species_set_record' => $self->o('rr_species_set_record'),
         # Compara schema file path
         'schema_file' => $self->o('schema_file_sql'),
         # Path to db_cmd.pl script
@@ -162,6 +164,7 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # Here we inherit creation of database, hive tables and compara tables
 
         $self->pipeline_create_commands_rm_mkdir(['work_dir', 'output_dir_path']), # Here we create directories
+        $self->pipeline_create_commands_rm_mkdir(['species_set_record'], undef, 1),
         $self->db_cmd($results_table_sql),
 
     ];
