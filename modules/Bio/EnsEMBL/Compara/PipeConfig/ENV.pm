@@ -91,7 +91,8 @@ sub shared_default_options {
         'genome_dumps_dir'      => $self->o('shared_hps_dir') . '/genome_dumps/'.$self->o('division').'/',
         'ref_member_dumps_dir'  => $self->o('shared_hps_dir') . '/reference_dumps/',
         'sketch_dir'            => $self->o('shared_hps_dir') . '/species_tree/' . $self->o('division') . '_sketches/',
-
+        # Record of the species that have been run with each reference in RR
+        'rr_species_set_record' => $self->o('shared_hps_dir') . '/species_set_record/' . Bio::EnsEMBL::ApiVersion::software_version() . '/',
         # HMM library
         'hmm_library_version'   => '2',
         'hmm_library_basedir'   => $self->o('shared_hps_dir') . '/treefam_hmms/2019-01-02',
