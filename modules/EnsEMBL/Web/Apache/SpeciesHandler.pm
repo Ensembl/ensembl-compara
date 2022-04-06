@@ -23,6 +23,7 @@ use strict;
 use warnings;
 
 use Apache2::Const qw(:common :http :methods);
+use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Web::Exceptions;
 use EnsEMBL::Web::OldLinks qw(get_redirect);
@@ -79,7 +80,7 @@ sub handler {
   my $species         = $r->subprocess_env('ENSEMBL_SPECIES');
   my $path            = $r->subprocess_env('ENSEMBL_PATH');
   my $query           = $r->subprocess_env('ENSEMBL_QUERY');
-  my @path_segments   = grep $_, split '/', $path;
+  my @path_segments   = map { encode_entities($_) } grep $_, split '/', $path;
 
   # handle redirects
   if (my $redirect = get_redirect_uri($species, \@path_segments, $query)) {
