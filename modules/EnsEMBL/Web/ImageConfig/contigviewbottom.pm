@@ -291,6 +291,8 @@ sub init_cacheable {
     [ 'codons',    'Start/stop codons',   'codons',   { display => 'off',    strand => 'b', description => $desc{'codons'},    colourset => 'codons',   threshold => 50                   }],
   );
 
+  $self->add_track('decorations', 'gc_plot', '%GC', 'gcplot', { display => 'off', strand => 'r', description => 'Shows percentage of Gs & Cs in region', sortable => 1 });
+
   # Add in additional tracks
   $self->load_tracks;
   $self->load_configured_trackhubs;
