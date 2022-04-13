@@ -269,7 +269,6 @@ sub transcript_table {
 
   my $has_ccds = $hub->species eq 'Homo_sapiens' || $hub->species =~ /^Mus_musculus/;
   my @columns = $self->set_columns($has_ccds);
-
   my @rows;
 
   my $gencode_desc    = qq(The GENCODE set is the gene set for human and mouse. <a href="/Help/Glossary?id=500" class="popup">GENCODE Basic</a> is a subset of representative transcripts (splice variants).);
