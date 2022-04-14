@@ -68,9 +68,28 @@ sub get_data {
   }
   my $reg_feats = $rfa->fetch_all_by_Slice($self->{'container'}); 
 
-  my $drawable        = []; 
   my $entries         = $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'} || {};
   my $activities      = $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'} || {};
+  
+  ## We need to sort features into 3 rows (subtracks) by type
+  my $subtracks = [];
+  my $metadata = {
+                  force_strand => '-1',
+                  default_strand => 1,
+                  omit_feature_links => 1,
+                  display => 'normal'
+                };
+  for (0..2) {
+    push @$subtracks, {'features' => [], 'metadata' => $metadata};
+  }
+  my $row_lookup = {
+                    'promoter' => 0,
+                    'enhancer' => 1,
+                    'open_chromatin' => 1,
+                    'tf_binding' => 1,
+                    'ctcf' => 2,
+                    }; 
+
   foreach my $rf (@{$reg_feats||[]}) {
     my ($type, $activity)  = $self->colour_key($rf);
 
@@ -100,12 +119,12 @@ sub get_data {
       elsif ($activity eq 'inactive') { ## Only show one generic entry for all inactive features
         $legend_params->{'stripe'}  = $patterncolour;
         $legend_params->{'colour'}  = 'grey80';
-        $legend_params->{'legend'}  = 'Activity in epigenome: Inactive';
+        $legend_params->{'legend'}  = 'activity in epigenome: inactive';
         $activities->{'inactive'}   = $legend_params;
       }
       else {
-        my $label = 'Activity in epigenome: ';
-        $label .= $_ eq 'na' ? 'Insufficient evidence' : ucfirst($activity);
+        my $label = 'activity in epigenome: ';
+        $label .= $_ eq 'na' ? 'insufficient evidence' : $activity;
         $legend_params->{'legend'} = $label; 
         $activities->{$activity} = $legend_params;
       }
@@ -136,13 +155,14 @@ sub get_data {
       my ($extra_blocks, $flank_colour, $has_motifs) = $self->get_structure($rf, $type, $activity, $appearance);
     
       ## Extra legend items as required
-      $entries->{'promoter_flanking'} = {'legend' => 'Promoter Flank', 'colour' => $flank_colour} if $flank_colour;
-      $entries->{'x_motif'} = {'legend' => 'Motif feature', 'colour' => 'black', 'width' => 4} if $has_motifs;
+      $entries->{'promoter_flanking'} = {'legend' => 'promoter flank', 'colour' => $flank_colour} if $flank_colour;
+      $entries->{'x_motif'} = {'legend' => 'motif feature', 'colour' => 'black', 'width' => 4} if $has_motifs;
       $feature->{extra_blocks}  = $extra_blocks;
     }
 
     ## OK, done
-    push @$drawable, $feature;
+    my $row = $row_lookup->{$type};
+    push @{$subtracks->[$row]{'features'}}, $feature;
   }
 
 
@@ -151,16 +171,7 @@ sub get_data {
   $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'}     = $entries;
   $self->{'legend'}{'fg_regulatory_features_legend'}{'activities'}  = $activities;
 
-  #use Data::Dumper; warn Dumper($drawable);
-  return [{
-    features => $drawable,
-    metadata => {
-      force_strand => '-1',
-      default_strand => 1,
-      omit_feature_links => 1,
-      display => 'normal'
-    }
-  }];
+  return $subtracks;
 }
 
 sub features {
@@ -249,12 +260,12 @@ sub colour_key {
     $type = 'enhancer';
   } elsif($type =~ /Open chromatin/i) {
     $type = 'open_chromatin';
-  } elsif($type =~ /TF binding site/i) {
-    $type = 'tf_binding_site';
-  } elsif($type =~ /Promoter Flanking Region/i) {
-    $type = 'promoter_flanking';
+  } elsif($type =~ /TF binding/i) {
+    $type = 'tf_binding';
   } elsif($type =~ /Promoter/i) {
     $type = 'promoter';
+  } elsif($type =~ /Enhancer II/i) {
+    $type = 'promoter_flanking';
   } else  {
     $type = 'Unclassified';
   }
