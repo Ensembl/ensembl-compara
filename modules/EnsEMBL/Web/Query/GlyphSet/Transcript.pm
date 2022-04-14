@@ -73,6 +73,42 @@ sub precache {
         shortlabels => '',
       }
     },
+    MANE_Select => {
+      loop => ['species','genome'],
+      args => {
+        db => "core",
+        logic_names => [qw(
+          assembly_patch_ensembl    ensembl      ensembl_havana_gene
+          ensembl_havana_ig_gene    ensembl_havana_lincrna
+          ensembl_lincrna           havana       havana_ig_gene
+          mt_genbank_import         ncrna        proj_ensembl
+          proj_ensembl_havana_gene  proj_ensembl_havana_ig_gene
+          proj_ensembl_havana_lincrna   proj_havana
+          proj_havana_ig_gene       proj_ncrna    ensembl_havana_transcript
+        )],
+        label_key => "[display_label]",
+        only_attrib => "MANE_Select",
+        shortlabels => '',
+      }
+    },
+    MANE_Plus_Clinical => {
+      loop => ['species','genome'],
+      args => {
+        db => "core",
+        logic_names => [qw(
+          assembly_patch_ensembl    ensembl      ensembl_havana_gene
+          ensembl_havana_ig_gene    ensembl_havana_lincrna
+          ensembl_lincrna           havana       havana_ig_gene
+          mt_genbank_import         ncrna        proj_ensembl
+          proj_ensembl_havana_gene  proj_ensembl_havana_ig_gene
+          proj_ensembl_havana_lincrna   proj_havana
+          proj_havana_ig_gene       proj_ncrna    ensembl_havana_transcript
+        )],
+        label_key => "[display_label]",
+        only_attrib => "MANE_Plus_Clinical",
+        shortlabels => '',
+      }
+    },
     genscan => {
       loop => ['species','genome'],
       args => {
@@ -207,25 +243,29 @@ sub _get_prediction_transcripts {
 
 sub _get_genes {
   my ($self,$args) = @_;
-  
   my $slice          = $args->{'slice'};
   my $analyses       = $args->{'logic_names'};
   my $db_alias       = $args->{'db'};
   my $species        = $args->{'species'};
   my $only_attrib    = $args->{'only_attrib'} || '' ;
-  my $is_gencode_basic = $only_attrib eq 'gencode_basic' ? 1 : 0;
+
+  my $analyses_postfix = '';
+
+  if( $only_attrib eq 'gencode_basic' || $only_attrib eq 'MANE_Select' || $only_attrib eq 'MANE_Plus_Clinical'){
+    $analyses_postfix = '_'. $species; 
+  }
 
   if ($analyses->[0] eq 'LRG_import' && !$slice->isa('Bio::EnsEMBL::LRGSlice')) {
     warn "!!! DEPRECATED CODE - please change this track to use GlyphSet::lrg";
     my $lrg_slices = $slice->project('lrg');
     if ($lrg_slices->[0]) {
       my $lrg_slice = $lrg_slices->[0]->to_Slice;
-      return [map @{$lrg_slice->get_all_Genes($is_gencode_basic ? $_.'_'. $species : $_,$db_alias) || []}, @$analyses];
+      return [map @{$lrg_slice->get_all_Genes($_.$analyses_postfix,$db_alias) || []}, @$analyses];
     }
   } elsif ($slice->isa('Bio::EnsEMBL::LRGSlice') && $analyses->[0] ne 'LRG_import') {
-    return [map @{$slice->feature_Slice->get_all_Genes($is_gencode_basic ? $_.'_'.$species : $_, $db_alias) || []}, @$analyses];
+    return [map @{$slice->feature_Slice->get_all_Genes($_.$analyses_postfix, $db_alias) || []}, @$analyses];
   } else {
-    return [map @{$slice->get_all_Genes($is_gencode_basic ? $_.'_'.$species : $_,$db_alias) || []}, @$analyses];
+    return [map @{$slice->get_all_Genes($_.$analyses_postfix,$db_alias) || []}, @$analyses];
   }
 }
 
@@ -368,6 +408,7 @@ sub _get_transcripts {
     if($args->{'only_attrib'}) {
       next unless @{$t->get_all_Attributes($args->{'only_attrib'})};
     }
+
     my $tf = {
       _unique => $self->_unique($args,$t),
       start => $t->start,
@@ -408,6 +449,7 @@ sub get {
   } else {
     $genes = $self->_get_genes($args);
   }
+
   foreach my $g (@$genes) {
     my $title = sprintf("Gene: %s; Location: %s:%s-%s",
                         $g->stable_id,$g->seq_region_name,
