@@ -169,7 +169,7 @@ CREATE TABLE genome_db (
   taxon_id                    INT unsigned DEFAULT NULL, # KF taxon.taxon_id
   name                        varchar(128) DEFAULT '' NOT NULL,
   assembly                    varchar(100) DEFAULT '' NOT NULL,
-  genebuild                   varchar(100) DEFAULT '' NOT NULL,
+  genebuild                   varchar(255) DEFAULT '' NOT NULL,
   has_karyotype			tinyint(1) NOT NULL DEFAULT 0,
   is_good_for_alignment       TINYINT(1) NOT NULL DEFAULT 0,
   genome_component            varchar(5) DEFAULT NULL,
@@ -1599,7 +1599,7 @@ CREATE TABLE gene_tree_root (
     root_id                         INT UNSIGNED NOT NULL,
     member_type                     ENUM('protein', 'ncrna') NOT NULL,
     tree_type                       ENUM('clusterset', 'supertree', 'tree') NOT NULL,
-    clusterset_id                   VARCHAR(30) NOT NULL DEFAULT 'default',
+    clusterset_id                   VARCHAR(50) NOT NULL DEFAULT 'default',
     method_link_species_set_id      INT UNSIGNED NOT NULL,
     species_tree_root_id            BIGINT UNSIGNED,
     gene_align_id                   INT UNSIGNED,
@@ -2279,19 +2279,14 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '105');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '106');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_104_105_a.sql|schema_version');
+  VALUES (NULL, 'patch', 'patch_105_106_a.sql|schema_version');
+
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_104_105_b.sql|homology_enum');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_104_105_c.sql|drop_dnafrag_fk');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_104_105_d.sql|add_genome_stable_id_key');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_104_105_e.sql|member_id_fk_cascade');
+  VALUES (NULL, 'patch', 'patch_105_106_b.sql|clusterset_id_varchar50');

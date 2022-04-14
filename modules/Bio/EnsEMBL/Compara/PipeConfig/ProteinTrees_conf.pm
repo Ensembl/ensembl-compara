@@ -360,6 +360,9 @@ sub default_options {
         'homology_dumps_dir'        => $self->o('dump_dir') . '/homology_dumps/',
         'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
         'prev_homology_dumps_dir'   => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
+
+        # Gene tree stats options
+        'gene_tree_stats_shared_dir' => $self->o('gene_tree_stats_shared_basedir') . '/' . $self->o('collection') . '/' . $self->o('ensembl_release'),
     };
 }
 
@@ -406,6 +409,7 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
         $self->pipeline_create_commands_rm_mkdir(['work_dir', 'cluster_dir', 'dump_dir', 'gene_dumps_dir', 'dump_pafs_dir', 'examl_dir', 'tmp_dir', 'fasta_dir', 'plots_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['gene_tree_stats_shared_dir'], undef, 'do not rm'),
 
         $self->db_cmd( 'CREATE TABLE ortholog_quality (
             homology_id              INT NOT NULL,
@@ -457,6 +461,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'orthotree_dir'             => $self->o('orthotree_dir'),
         'wga_dumps_dir'             => $self->o('wga_dumps_dir'),
         'prev_wga_dumps_dir'        => $self->o('prev_wga_dumps_dir'),
+        'gene_tree_stats_shared_dir' => $self->o('gene_tree_stats_shared_dir'),
 
         'goc_files_dir'      => $self->o('goc_files_dir'),
         'wga_files_dir'      => $self->o('wga_dumps_dir'),
@@ -671,7 +676,7 @@ sub core_pipeline_analyses {
             },
             -rc_name    => '500Mb_job',
             -flow_into  => [
-                'email_tree_stats_report',
+                'generate_tree_stats_report',
                 'wga_expected_dumps',
                 WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ),
             ],
@@ -1602,7 +1607,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'overall_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OverallGroupsetQC',
             -parameters => {
-                'reuse_db'  => '#mapping_db#',
+                'reuse_db' => '#mapping_db#',
             },
             -hive_capacity  => $self->o('reuse_capacity'),
             -rc_name    => '4Gb_job',
@@ -3481,10 +3486,11 @@ sub core_pipeline_analyses {
             -flow_into      => [ 'polyploid_move_back_factory', 'rename_labels' ],
         },
 
-        {   -logic_name     => 'email_tree_stats_report',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport',
-            -parameters     => {
-                'email' => $self->o('email'),
+        {   -logic_name => 'generate_tree_stats_report',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StatsReport',
+            -parameters => {
+                'stats_exe'                  => $self->o('gene_tree_stats_report_exe'),
+                'gene_tree_stats_shared_dir' => $self->o('gene_tree_stats_shared_dir'),
             },
         },
 

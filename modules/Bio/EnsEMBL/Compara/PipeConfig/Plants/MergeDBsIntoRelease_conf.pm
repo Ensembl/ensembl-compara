@@ -60,6 +60,8 @@ sub default_options {
         'src_db_aliases' => {
             'master_db'     => 'compara_master',
             'protein_db'    => 'compara_ptrees',
+            'wheat_prot_db' => 'wheat_cultivars_ptrees',
+            'members_db'    => 'compara_members',
         },
 
         # From these databases, only copy these tables
@@ -71,6 +73,20 @@ sub default_options {
         # These tables have a unique source. Content from other databases is ignored
         'exclusive_tables'  => {
             'mapping_session'         => 'master_db',
+            'exon_boundaries'         => 'members_db',
+            'gene_member'             => 'members_db',
+            'other_member_sequence'   => 'members_db',
+            'seq_member'              => 'members_db',
+            'sequence'                => 'members_db',
+            'hmm_annot'               => 'protein_db',
+            'peptide_align_feature%'  => 'protein_db',
+        },
+
+        # In these databases, ignore these tables
+        'ignored_tables' => {
+            # 'db_alias'     => Arrayref of table names
+            'protein_db'     => [qw(ortholog_quality id_generator id_assignments)],
+            'wheat_prot_db'  => [qw(ortholog_quality id_generator id_assignments)],
         },
     };
 }

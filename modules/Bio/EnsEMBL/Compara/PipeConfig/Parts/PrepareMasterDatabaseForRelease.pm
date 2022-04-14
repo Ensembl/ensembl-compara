@@ -42,11 +42,9 @@ sub pipeline_analyses_prep_master_db_for_release {
     my ($self) = @_;
     return [
         {   -logic_name => 'patch_master_db',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::PatchMasterDB',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'schema_file'  => $self->o('schema_file'),
-                'patch_dir'    => $self->o('patch_dir'),
-                'patch_names'  => '#patch_dir#/patch_' . $self->o('prev_release') . '_#release#_*.sql',
+                'cmd' => [$self->o('patch_db_exe'), '--reg_conf', $self->o('reg_conf'), '--reg_alias', '#master_db#', '--fixlast', '--nointeractive'],
             },
             -flow_into  => ['load_ncbi_node'],
         },
@@ -190,7 +188,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -parameters => {
                 'update_metadata_script' => $self->o('update_metadata_script'),
                 'reg_conf'               => $self->o('reg_conf'),
-                'cmd' => 'perl #update_metadata_script# --reg_conf #reg_conf# --compara #master_db# --division #division# --nocheck_species_missing_from_compara'
+                'cmd'                    => 'perl #update_metadata_script# --reg_conf #reg_conf# --compara #master_db#',
             },
             -flow_into  => [ 'update_collection' ],
         },

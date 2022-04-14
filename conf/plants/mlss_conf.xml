@@ -4,11 +4,29 @@
   <!-- Collections are species-sets that are needed to define several mlsss -->
   <collections>
 
+    <!-- All plants except the triticum_aestivum cultivars -->
+    <collection name="default">
+      <taxonomic_group taxon_name="Eukaryota">
+        <!-- But exclude all triticum_aestivum cultivars -->
+        <ref_for_taxon name="triticum_aestivum"/>
+      </taxonomic_group>
+    </collection>
+
     <!-- Rice species tree including nearest grass relative -->
     <!-- used to compute branch lengths for EPO below -->
     <collection name="rice-with-outgroup" no_release="1">
       <taxonomic_group taxon_name="Oryza"/>
       <genome name="leersia_perrieri"/>
+    </collection>
+
+    <!-- Wheat cultivars -->
+    <collection name="wheat_cultivars">
+      <taxonomic_group taxon_name="Triticum"/>
+      <genome name="aegilops_tauschii"/>
+      <genome name="hordeum_vulgare"/>
+      <genome name="secale_cereale"/>
+      <!-- Outgroup -->
+      <genome name="brachypodium_distachyon"/>
     </collection>
 
   </collections>
@@ -28,23 +46,26 @@
     <!-- Reference species for specific clades -->
     <one_vs_all method="LASTZ_NET" ref_genome="solanum_lycopersicum" against="Asterids"/>
     <one_vs_all method="LASTZ_NET" ref_genome="medicago_truncatula" against="Fabids"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa" against="Liliopsida"/>
-
-    <!-- Triticeae all v all, DFW work, downscaling
-    <all_vs_all method="LASTZ_NET">
-      <species_set in_collection="plants">
-        <taxonomic_group taxon_name="Triticeae"/> -->
-        <!-- Because not k-mer masked 
-        <genome name="triticum_urartu" exclude="1" />
+    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa">
+      <species_set in_collection="default">
+        <taxonomic_group taxon_name="Liliopsida"/>
       </species_set>
-    </all_vs_all> -->
+    </one_vs_all>
 
-    <!-- Reference wheat vs all wheat cultivars (and spelt, which is a different species so needs its own rule)
-    <one_vs_all method="LASTZ_NET" ref_genome="triticum_aestivum" against="Triticum aestivum"/>
-    <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="triticum_spelta"/>
-    -->
+    <!-- Reference wheat vs all wheat cultivars and related species -->
+    <one_vs_all method="LASTZ_NET" ref_genome="triticum_aestivum">
+      <species_set in_collection="wheat_cultivars">
+        <taxonomic_group taxon_name="Eukaryota"/> <!-- I.e. everything in the collection -->
+      </species_set>
+    </one_vs_all>
 
+    <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="setaria_italica"/>
+    <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="sorghum_bicolor"/>
+    <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="zea_mays"/>
+
+    <!-- Other relevant PWAs -->
     <pairwise_alignment method="LASTZ_NET" ref_genome="zea_mays" target_genome="sorghum_bicolor"/>
+    <pairwise_alignment method="LASTZ_NET" ref_genome="zea_mays" target_genome="brachypodium_distachyon"/>
 
   </pairwise_alignments>
 
@@ -87,7 +108,8 @@
   </self_alignments>
 
   <gene_trees>
-    <protein_trees collection="plants"/>
+    <protein_trees collection="default"/>
+    <protein_trees collection="wheat_cultivars"/>
   </gene_trees>
 
   <species_trees>

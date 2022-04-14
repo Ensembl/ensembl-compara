@@ -46,7 +46,6 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'division'   => 'metazoa',
-        'collection' => $self->o('division'),
 
         # homology_dnds parameters:
         'taxlevels' => ['Drosophila' ,'Hymenoptera', 'Nematoda'],
