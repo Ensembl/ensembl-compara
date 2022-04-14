@@ -323,6 +323,15 @@ sub _species_list {
 
     my $extra = $_ eq 'Homo_sapiens' ? '<a href="/info/website/tutorials/grch37.html" class="species-extra">Still using GRCh37?</a>' : '';
 
+    my $strain_title;
+    if ($sd->USE_COMMON_NAMES) {
+      $strain_title = $species->{$_}{'display_name'};
+      $strain_title =~ s/\(.+//;
+    }
+    else {
+      $strain_title = $species->{$_}{'scientific'};
+    }
+
     ## This data is a bit repetitive because it has to be easy for the JavaScript to process
     push @list, {
       key         => $_,
@@ -335,7 +344,7 @@ sub _species_list {
       assembly_v  => $species->{$_}{'assembly_version'},
       favourite   => $fav{$_} ? 1 : 0,
       strainspage => $strainspage || '',
-      straintitle => $sd->USE_COMMON_NAMES ? $species->{$_}{'display_name'} : $species->{$_}{'scientific'},
+      straintitle => $strain_title,
       strain_type => $strain_type || '',
       has_alt     => $alt_assembly ? 1 : 0,
       extra       => $extra,
