@@ -325,6 +325,7 @@ sub _species_list {
 
     my $strain_title;
     if ($sd->USE_COMMON_NAMES) {
+      ## Remove extraneous content from display name
       $strain_title = $species->{$_}{'display_name'};
       $strain_title =~ s/\(.+//;
     }

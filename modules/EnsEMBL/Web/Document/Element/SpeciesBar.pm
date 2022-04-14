@@ -93,8 +93,14 @@ sub init_species_list {
    
   #adding species strain (Mouse strains, Pig breeds, etc) to the list above
   foreach ($species_defs->valid_species) {
+    ## Remove stuff in brackets from display name
+    my $parent_name = $species_defs->get_config($_, $name_key);
+    if ($species_defs->USE_COMMON_NAMES) {
+      $parent_name =~ s/\(.+//;
+    }
     my $strain_type = pluralise($species_defs->get_config($_, 'STRAIN_TYPE'));
-    $species_defs->get_config($_, 'ALL_STRAINS') ? push( @{$self->{'species_list'}}, [ $hub->url({ species => $_, type => 'Info', action => ucfirst $strain_type, __clear => 1 }), $species_defs->get_config($_, $name_key)." $strain_type"] ) : next;
+
+    $species_defs->get_config($_, 'ALL_STRAINS') ? push( @{$self->{'species_list'}}, [ $hub->url({ species => $_, type => 'Info', action => ucfirst $strain_type, __clear => 1 }), "$parent_name $strain_type"] ) : next;
   }
   @{$self->{'species_list'}} = sort { $a->[1] cmp $b->[1] } @{$self->{'species_list'}}; #just a precautionary bit - sorting species list again after adding the strain  
   
