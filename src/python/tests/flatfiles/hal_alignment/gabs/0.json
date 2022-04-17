@@ -1,0 +1,23 @@
+[
+    {
+        "genome_name": "genomeA.1",
+        "dnafrag_name": "chr1",
+        "dnafrag_start": 1,
+        "dnafrag_end": 4,
+        "dnafrag_strand": 1
+    },
+    {
+        "genome_name": "genomeB.1",
+        "dnafrag_name": "chr1",
+        "dnafrag_start": 1,
+        "dnafrag_end": 3,
+        "dnafrag_strand": 1
+    },
+    {
+        "genome_name": "genomeC",
+        "dnafrag_name": "chr1",
+        "dnafrag_start": 1,
+        "dnafrag_end": 2,
+        "dnafrag_strand": 1
+    }
+]

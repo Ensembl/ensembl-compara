@@ -1,0 +1,11 @@
+##maf version=1 scoring=N/A
+
+a 
+s genomeA.1.chr1 0 4 + 41 ATCA
+s genomeB.1.chr1 0 3 + 27 A-CA
+s genomeC.chr1 0 2 + 22 A--A
+
+a 
+s genomeA.1.chr1 5 4 + 41 AGAT
+s genomeB.1.chr1 5 4 + 27 AGAT
+s genomeC.chr1 13 4 - 22 AGAT
