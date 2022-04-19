@@ -122,6 +122,10 @@ sub tweak_analyses {
     $analyses_by_name->{'expand_clusters_with_projections'}->{'-rc_name'} = '500Mb_job';
     $analyses_by_name->{'split_genes'}->{'-hive_capacity'} = 300;
 
+    # datacheck specific tweaks for pipelines
+    $analyses_by_name->{'datacheck_factory'}->{'-parameters'} = {'dba' => '#compara_db#'};
+    $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
+
     # wire up strain-specific analyses
     $analyses_by_name->{'remove_blacklisted_genes'}->{'-flow_into'} = ['check_strains_cluster_factory'];
     push @{$analyses_by_name->{'backbone_pipeline_finished'}->{'-flow_into'}}, 'remove_overlapping_homologies';

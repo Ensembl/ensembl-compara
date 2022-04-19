@@ -46,7 +46,9 @@ sub pipeline_analyses_datacheck_fan {
             -flow_into         => {
                 '1'  => [ '?accu_name=results&accu_address=[]' ],
                 '-1' => [ 'datacheck_fan_high_mem' ],
-                '2'  => [ 'jira_ticket_creation' ],
+                '2'  => [
+                    WHEN( '#do_jira_ticket_creation#' => 'jira_ticket_creation' )
+                ],
             },
         },
 
@@ -58,7 +60,9 @@ sub pipeline_analyses_datacheck_fan {
             -rc_name           => '8Gb_job',
             -flow_into         => {
                 '1' => [ '?accu_name=results&accu_address=[]' ],
-                '2' => [ 'jira_ticket_creation' ],
+                '2' => [
+                    WHEN( '#do_jira_ticket_creation#' => 'jira_ticket_creation' )
+                ],
             },
         },
 

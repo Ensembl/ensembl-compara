@@ -63,6 +63,8 @@ sub default_options {
         failures_fatal         => 0,
         parallelize_datachecks => 1,
 
+        do_jira_ticket_creation => 1,
+
         meta_filters  => {},
         tag           => undef,
         timestamp     => undef,
