@@ -35,12 +35,15 @@ import json
 
 
 def add_ce_to_json(ce_file: str, json_file: str) -> None:
-    '''Enrich the json file with the constraint elements
+    """Enrich the json file with the constraint elements
 
-    :param ce_file: file containing the constraint elements
-    :param json_file: json file with genome coordinate elevel
-    :return: None
-    '''
+    Args:
+        ce_file: file containing the constraint elements.
+        json_file: json file with genome coordinate level.
+
+    Returns:
+        None
+    """
     with open(json_file, 'r') as json_file_handler:
         align_set = json.load(json_file_handler)
 
@@ -69,8 +72,11 @@ def main(param: argparse.Namespace) -> None:
     This function is running gerpcol that define a gerpscore for every column of the genomic alignment bloc
     and gerpelem that identify constraint elements across the alignment bloc
 
-    :param param: argparse.Namespace storing all the script parameters
-    :return: None
+    Args:
+        param: argparse.Namespace storing all the script parameters
+
+    Returns:
+        None
     '''
 
     cmd = ["gerpcol", "-t", param.tree_file, "-f", param.msa_file]
@@ -88,7 +94,7 @@ def main(param: argparse.Namespace) -> None:
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Calculate GERP score and identify constraint elements.')
     parser.add_argument('--msa_file', type=str, required=True, help='MSA file (MFA format) (REQUIRED)')
     parser.add_argument('--tree_file', type=str, required=True, help='Tree file (Newick format). Must '
                                                 'include every species in the MSA. (REQUIRED)')
