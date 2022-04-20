@@ -60,7 +60,7 @@ use Scalar::Util qw(looks_like_number);
 
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 
 use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 
@@ -80,7 +80,7 @@ sub fetch_by_stable_id { ## DEPRECATED
     my ($self, $stable_id) = @_;
 
     deprecate(
-        "MemberAdaptor::fetch_by_stable_id() is to be deprecated and will be removed in e109. Use fetch_all_by_stable_id_genome_db instead."
+        "MemberAdaptor::fetch_by_stable_id() is to be deprecated and will be removed in e109. Use fetch_all_by_stable_id_genomeDB instead."
     );
 
     throw("MemberAdaptor::fetch_by_stable_id() must have an stable_id") unless $stable_id;
