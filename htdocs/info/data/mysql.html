@@ -82,14 +82,17 @@ webservice</a>.
 <h2>Summary of servers and ports</h2>
 
 <p>
-<strong>Important note:</strong> Because we are serving databases on
-both MySQL4 and MySQL5, not all MySQL instances use the default port;
-please ensure that you specify the correct port when trying to
+<strong>Databases prior to release 48</strong> The MySQL version 4 servers providing access to databases from release 47 and earlier have retired. 
+The files are still available from our FTP site and can be hosted locally using a Docker container we provide. See our <a href="https://www.ensembl.info/2022/02/22/retiring-our-public-databases-for-ensembl-releases-24-to-47/">blog post</a> for more details.
+</p>
+
+<p>
+Not all of our MySQL instances use the default port so please ensure that you specify the correct port when trying to
 connect. In addition, if your computer is behind a
 <strong>firewall</strong>, outgoing TCP/IP connections to the
 corresponding ports will also need to be allowed.
 </p>
-<p>The useastdb and asiadb mirrors use MariaDB rather than MySQL. For all practical purposes <a href"https://mariadb.com/kb/en/mariadb/mariadb-vs-mysql-compatibility/">these are identical</a>.<p>
+<p>The useastdb and asiadb mirrors use MariaDB rather than MySQL. For all practical purposes <a href="https://mariadb.com/kb/en/mariadb/mariadb-vs-mysql-compatibility/">these are identical</a>.<p>
 <table class="ss">
 
 <tr>
@@ -144,24 +147,6 @@ corresponding ports will also need to be allowed.
 <td class="center">3337</td>
 <td class="center">MySQl 5.6.33</td>
 <td class="left">Databases for <b>archive GRCh37</b> - <strong>release 79 onwards</strong></td>
-</tr>
-
-<tr class="bg1">
-<td>ensembldb.ensembl.org</td>
-<td>anonymous</td>
-<td class="center">-</td>
-<td class="center">4306</td>
-<td class="center">MySQL 4.1.20</td>
-<td class="left">Up to Ensembl <strong>47</strong> only</td>
-</tr>
-
-<tr class="bg1">
-<td>martdb.ensembl.org</td>
-<td>anonymous</td>
-<td class="center">-</td>
-<td class="center">3316</td>
-<td class="center">MySQL 4.1.20</td>
-<td class="left">Up to Ensembl <strong>47</strong> only</td>
 </tr>
 
 </table>
