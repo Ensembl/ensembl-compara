@@ -106,7 +106,7 @@ sub fetch_by_stable_id { ## DEPRECATED
 =head2 fetch_by_stable_id_genomeDB
   Arg [1]       : string $stable_id
   Arg [2]       : integer $genome_db_id or Bio::EnsEMBL::Compara::GenomeDB object
-  Example       : my $member = $ma->fetch_by_stable_id_genome_db("O93279", $genome_db);
+  Example       : my $member = $ma->fetch_by_stable_id_genomeDB("O93279", $genome_db);
   Description   : Fetches the member corresponding to this $stable_id and $genome_db.
                   This method accepts versionned stable IDs, such as ENSG00000157764.12
   Returntype    : Bio::EnsEMBL::Compara::Member object
