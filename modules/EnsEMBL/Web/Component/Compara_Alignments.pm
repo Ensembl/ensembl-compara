@@ -226,6 +226,115 @@ sub content_sub_slice {
   return $html;
 }
 
+sub check_for_align_problems {
+  ## Compile possible error messages for a given alignment
+  ## @return HTML
+  my ($self, $args) = @_;
+  my $object = $self->object || $self->hub->core_object(lc($self->hub->param('data_type')));
+
+  my @messages = $object->check_for_align_in_database($args->{align}, $args->{species}, $args->{cdb});
+
+  if (scalar @messages <= 0) {
+    push @messages, $self->check_for_missing_species($args);
+  }
+
+  return $self->show_warnings(\@messages);
+}
+
+sub check_for_missing_species {
+  ## Check what species are not present in the alignment
+  my ($self, $args) = @_;
+
+  my (@skipped, @missing, $title, $warnings, %aligned_species, $missing_hash);
+
+  my $hub           = $self->hub;
+  my $species_defs  = $hub->species_defs;
+  my $species       = $args->{species};
+  my $align         = $args->{align};
+  my $db_key        = $args->{cdb} =~ /pan_ensembl/ ? 'DATABASE_COMPARA_PAN_ENSEMBL' : 'DATABASE_COMPARA';
+  my $align_details = $species_defs->multi_hash->{$db_key}->{'ALIGNMENTS'}->{$align};
+  my $species_info  = $hub->get_species_info;
+  my $url_lookup    = $species_defs->prodnames_to_urls_lookup;
+  my $slice         = $args->{slice} || $self->object->slice;
+  $slice = undef if $slice == 1; # weirdly, we get 1 if feature_Slice is missing
+
+  if(defined $slice) {
+    $args->{slice}   = $slice;
+    my ($slices)     = $self->object->get_slices($args);
+    %aligned_species = map { $_->{'name'} => 1 } @$slices;
+  }
+
+  foreach (keys %{$align_details->{'species'}}) {
+    next if $_ eq $species;
+    my $sp_url = $url_lookup->{$_};
+    if ($align_details->{'class'} !~ /pairwise/
+        && ($self->param(sprintf 'species_%d_%s', $align, lc) || 'off') eq 'off') {
+      push @skipped, $sp_url unless ($args->{ignore} && $args->{ignore} eq 'ancestral_sequences');
+    }
+    elsif (defined $slice and !$aligned_species{$_} and $_ ne 'ancestral_sequences') {
+      my $key = $hub->is_strain($sp_url) ? pluralise($species_info->{$sp_url}{strain_type}) : 'species';
+      push @{$missing_hash->{$key}}, $species_info->{$sp_url}{common};
+      push @missing, $sp_url;
+    }
+  }
+
+ if (scalar @skipped) {
+    $title = 'hidden';
+    $warnings .= sprintf(
+                             '<p>The following %d species in the alignment are not shown. Use "<strong>Select another alignment</strong>" button (above the image) to turn alignments on/off.<ul><li>%s</li></ul></p>',
+                             scalar @skipped,
+                             join "</li>\n<li>", sort map $species_defs->species_label($_), @skipped
+                            );
+  }
+
+  if (scalar @skipped && scalar @missing) {
+    $title .= ' and ';
+  }
+
+  my $not_missing = scalar(keys %{$align_details->{'species'}}) - scalar(@missing);
+  my $ancestral = grep {$_ =~ /ancestral/} keys %{$align_details->{'species'}};
+  my $multi_check = $ancestral ? 2 : 1;
+  if (scalar @missing) {
+    $title .= ' missing species';
+    if ($align_details->{'class'} =~ /pairwise/) {
+      $warnings .= sprintf '<p>%s has no alignment in this region</p>', $species_defs->species_label($missing[0]);
+    } elsif ($not_missing == $multi_check) {
+      $warnings .= sprintf('<p>None of the other species in this set align to %s in this region</p>', $species_defs->SPECIES_DISPLAY_NAME);
+    } else {
+      my $str = '';
+      my $count = 0;
+
+      if ($missing_hash->{strains}) {
+        $count = scalar @{$missing_hash->{strains}};
+        my $strain_type = $hub->species_defs->STRAIN_TYPE || 'strain';
+        $strain_type = pluralise($strain_type) if $count > 1;
+        $str .= "$count $strain_type";
+      }
+
+      $str .= ' and ' if ($missing_hash->{strains} && $missing_hash->{species});
+
+      $warnings .= sprintf('<p>The following %s no alignment in this region:<ul><li>%s</li></ul></p>',
+                                 $str,
+                                 join "</li>\n<li>", sort map $species_defs->species_label($_), @missing
+                            );
+    }
+  }
+  return $warnings ? ({'severity' => 'info', 'title' => $title, 'message' => $warnings}) : ();
+}
+
+sub show_warnings {
+  my ($self, $messages) = @_;
+  return '' unless defined $messages;
+
+  my $html;
+  my $is_error;
+  foreach (@$messages) {
+    $html .= $self->_info_panel($_->{severity}, ucfirst $_->{title}, $_->{message});
+    $is_error = 1 if $_->{severity} eq 'error';
+  }
+  return ($html, $is_error);
+}
+
 sub _get_sequence {
   my $self = shift;
   my ($slice, $slices, $defaults, $cdb) = @_;

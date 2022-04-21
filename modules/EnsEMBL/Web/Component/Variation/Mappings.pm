@@ -775,6 +775,105 @@ sub detail_panel {
   return $html;
 }
 
+sub render_score_prediction {
+  ## render a sift or polyphen prediction with colours and a hidden span with a rank for sorting
+  my ($self, $pred, $score) = @_;
+
+  return '-' unless defined($pred) || defined($score);
+
+  my %classes = (
+    '-'                 => '',
+    'likely deleterious' => 'bad',
+    'likely benign' => 'good',
+    'likely disease causing' => 'bad',
+    'tolerated' => 'good',
+    'damaging'   => 'bad',
+    'high'    => 'bad',
+    'medium'  => 'ok',
+    'low'     => 'good',
+    'neutral' => 'good',
+  );
+
+  my %ranks = (
+    '-'                 => 0,
+    'likely deleterious' => 4,
+    'likely benign' => 2,
+    'likely disease causing' => 4,
+    'tolerated' => 2,
+    'damaging'   => 4,
+    'high'    => 4,
+    'medium'  => 3,
+    'low'     => 2,
+    'neutral' => 2,
+  );
+
+  my ($rank, $rank_str);
+
+  if(defined($score)) {
+    $rank_str = "$score";
+  }
+  else {
+    $rank = $ranks{$pred};
+    $rank_str = $pred;
+  }
+ 
+  return qq(
+    <span class="hidden">$rank</span><span class="hidden export">$pred(</span><div align="center"><div title="$pred" class="_ht score score_$classes{$pred}">$rank_str</div></div><span class="hidden export">)</span>
+  );
+}
+
+sub render_sift_polyphen {
+  ## render a sift or polyphen prediction with colours and a hidden span with a rank for sorting
+  my ($self, $pred, $score) = @_;
+
+  return '-' unless defined($pred) || defined($score);
+
+  my %classes = (
+    '-'                 => '',
+    'probably damaging' => 'bad',
+    'possibly damaging' => 'ok',
+    'benign'            => 'good',
+    'unknown'           => 'neutral',
+    'tolerated'         => 'good',
+    'deleterious'       => 'bad',
+
+    # slightly different format for SIFT low confidence states
+    # depending on whether they come direct from the API
+    # or via the VEP's no-whitespace processing
+    'tolerated - low confidence'   => 'neutral',
+    'deleterious - low confidence' => 'neutral',
+    'tolerated low confidence'     => 'neutral',
+    'deleterious low confidence'   => 'neutral',
+  );
+
+  my %ranks = (
+    '-'                 => 0,
+    'probably damaging' => 4,
+    'possibly damaging' => 3,
+    'benign'            => 1,
+    'unknown'           => 2,
+    'tolerated'         => 1,
+    'deleterious'       => 2,
+  );
+
+  my ($rank, $rank_str);
+
+  if(defined($score)) {
+    $rank = int(1000 * $score) + 1;
+    $rank_str = "$score";
+  }
+  else {
+    $rank = $ranks{$pred};
+    $rank_str = $pred;
+  }
+
+  return qq(
+    <span class="hidden">$rank</span><span class="hidden export">$pred(</span><div align="center"><div title="$pred" class="_ht score score_$classes{$pred}">$rank_str</div></div><span class="hidden export">)</span>
+  );
+}
+
+
+
 ## THIS METHOD IS WIP AND NOT IN USE RIGHT NOW
 ## WILL BE USED TO RENDER THE CONTEXT OF THE VARIANT WITH
 ## PREDICTED PEPTIDE SEQUENCE IF FRAMESHIFT ETC

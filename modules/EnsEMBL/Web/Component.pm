@@ -98,6 +98,12 @@ sub button_style {
   return {};
 }
 
+sub coltab {
+  my ($self, $text, $colour, $title) = @_;
+
+  return sprintf(qq(<div class="coltab"><span class="coltab-tab" style="background-color:%s;">&nbsp;</span><div class="coltab-text">%s</div></div>), $colour, helptip($text, $title));
+}
+
 sub param {
   my $self  = shift;
   my $hub   = $self->hub;
@@ -409,24 +415,6 @@ sub append_s_to_plural {
   ## Appends an 's' to the string in case the flag is on
   my ($self, $string, $flag) = @_;
   return $flag ? "${string}s" : $string;
-}
-
-sub helptip {
-  my ($self, $display_html, $tip_html) = @_;
-  warn '### DEPRECATED - use EnsEMBL::Web::Utils::FormatText::helptip instead';
-  return &EnsEMBL::Web::Utils::FormatText::helptip($display_html, $tip_html);
-}
-
-sub glossary_helptip {
-  my ($self, $display_html, $entry) = @_;
-  warn '### DEPRECATED - use EnsEMBL::Web::Utils::FormatText::helptip instead';
-  return &EnsEMBL::Web::Utils::FormatText::glossary_helptip($self->hub, $display_html, $entry);
-}
-
-sub get_glossary_entry {
-  my ($self, $entry) = @_;
-  warn '### DEPRECATED - use EnsEMBL::Web::Utils::FormatText::get_glossary_entry instead';
-  return &EnsEMBL::Web::Utils::FormatText::get_glossary_entry($self->hub, $entry);;
 }
 
 sub error_panel {

@@ -25,7 +25,7 @@ no warnings 'uninitialized';
 
 use HTML::Entities qw(encode_entities);
 
-use parent qw(EnsEMBL::Web::Component::Gene);
+use parent qw(EnsEMBL::Web::Component::Summary);
 
 sub _init {
   my $self = shift;
@@ -58,7 +58,8 @@ sub content {
     $html .= $self->_hint($hints[2],$hints[0],$hints[1]);
   }
   
-  $html .= $self->transcript_table;
+  ## Summary content used by both genes and transcripts
+  $html .= $self->summary('gene');
 
   return $html;
 }

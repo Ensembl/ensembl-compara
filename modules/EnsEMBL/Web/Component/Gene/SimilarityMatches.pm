@@ -21,7 +21,7 @@ package EnsEMBL::Web::Component::Gene::SimilarityMatches;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::Gene);
+use base qw(EnsEMBL::Web::Component::Shared);
 
 sub _init {
   my $self = shift;
@@ -32,7 +32,7 @@ sub _init {
 sub content {
   my $self       = shift;
   my @dbtypes   = qw(MISC LIT);
-  my $matches    = $self->_matches('similarity_matches', 'Similarity Matches', 'PRIMARY_DB_SYNONYM', @dbtypes, 'RenderAsTables');
+  my $matches    = $self->get_matches('similarity_matches', 'Similarity Matches', 'PRIMARY_DB_SYNONYM', @dbtypes, 'RenderAsTables');
   my $no_matches = qq(<p>No external references assigned to this gene.</p><br />);
   my $html       = $matches ? $matches : $no_matches;
   $html         .= $self->matches_to_html(@dbtypes) if($self->hub->species_defs->ENSEMBL_SUBTYPE ne 'mobile');

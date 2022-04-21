@@ -23,7 +23,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use base qw(EnsEMBL::Web::Component::Transcript);
+use base qw(EnsEMBL::Web::Component::Transcript EnsEMBL::Web::Component::Summary);
 
 sub _init {
   my $self = shift;
@@ -56,7 +56,8 @@ sub content {
     if(@hints>1 and $hints[0] and $hints[1]) {
       $html .= $self->_hint($hints[2],$hints[0],$hints[1]);
     }
-    $html .= $self->transcript_table;
+    ## Summary content used by both genes and transcripts
+    $html .= $self->summary('transcript');
   }
   else {
     my ($function, $text);

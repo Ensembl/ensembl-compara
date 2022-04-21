@@ -24,7 +24,7 @@ use strict;
 use EnsEMBL::Web::Document::Image::R2R;
 use EnsEMBL::Web::Utils::Bioschemas qw(create_bioschema add_species_bioschema);
 
-use base qw(EnsEMBL::Web::Component::Gene);
+use parent qw(EnsEMBL::Web::Component::Summary EnsEMBL::Web::Component::Shared);
 
 sub _init {
   my $self = shift;
@@ -43,7 +43,7 @@ sub content {
   my @CCDS          = @{$object->Obj->get_all_DBLinks('CCDS')};
   my @Uniprot       = @{$object->Obj->get_all_DBLinks('Uniprot/SWISSPROT')};
   my $db            = $object->get_db;
-  my $alt_genes     = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE', 'show_version'); #gets all xrefs, sorts them and stores them on the object. Returns HTML only for ALT_GENES
+  my $alt_genes     = $self->get_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE', 'show_version'); #gets all xrefs, sorts them and stores them on the object. Returns HTML only for ALT_GENES
   my $ensembl_select = $gene->get_all_Attributes('Ensembl_select')->[0] ? $gene->get_all_Attributes('Ensembl_select')->[0]->value : '';
   my $display_xref  = $gene->display_xref;
   my ($link_url)    = $display_xref ? $self->get_gene_display_link($gene, $display_xref) : ();

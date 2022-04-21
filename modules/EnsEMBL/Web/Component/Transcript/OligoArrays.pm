@@ -22,7 +22,8 @@ package EnsEMBL::Web::Component::Transcript::OligoArrays;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Transcript);
+
+use parent qw(EnsEMBL::Web::Component::Transcript EnsEMBL::Web::Component::Shared);
 
 sub _init {
   my $self = shift;
@@ -39,7 +40,7 @@ sub content {
 
   my $transcript = $self->object;
   $transcript->get_oligo_probe_data;
-  return $self->_matches('oligo_arrays', 'Oligo Matches', 'ARRAY', 'RenderAsTwoCol');
+  return $self->get_matches('oligo_arrays', 'Oligo Matches', 'ARRAY', 'RenderAsTwoCol');
 
 }
 

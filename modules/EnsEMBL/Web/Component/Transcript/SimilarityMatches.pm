@@ -22,7 +22,8 @@ package EnsEMBL::Web::Component::Transcript::SimilarityMatches;
 use strict;
 use warnings;
 no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Transcript);
+
+use parent qw(EnsEMBL::Web::Component::Transcript);
 
 sub _init {
   my $self = shift;
@@ -36,8 +37,8 @@ sub caption {
 
 sub content {
   my $self = shift;
-  my $object   = $self->object;
-  my $matches =  $self->_matches( 'similarity_matches', 'Similarity Matches', 'PRIMARY_DB_SYNONYM', 'MISC' ,'RenderAsTables');
+  my $object  = $self->object;
+  my $matches = $self->get_matches('similarity_matches', 'Similarity Matches', 'PRIMARY_DB_SYNONYM', 'MISC' ,'RenderAsTables');
   my $html = $matches ? $matches : '<p>No external records attached to this transcript</p>';
   return $html;
 }

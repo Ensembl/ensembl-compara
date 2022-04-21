@@ -24,7 +24,7 @@ use HTML::Entities  qw(encode_entities);
 
 use EnsEMBL::Web::Utils::FormatText qw(get_glossary_entry helptip glossary_helptip);
 
-use base qw(EnsEMBL::Web::Component::Transcript);
+use parent qw(EnsEMBL::Web::Component::Transcript EnsEMBL::Web::Component::Shared);
 
 sub _init {
   my $self = shift;
@@ -207,7 +207,7 @@ sub content {
   }
 
   ## add alternative transcript info
-  my $alt_trans = $self->_matches('alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS', 'show_version');
+  my $alt_trans = $self->get_matches('alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS', 'show_version');
   $table->add_row('Alternative transcripts', $alt_trans) if $alt_trans;
 
   my $cv_terms = $object->get_cv_terms;
