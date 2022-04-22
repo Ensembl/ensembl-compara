@@ -1700,6 +1700,7 @@ sub _munge_meta {
     assembly.provider_name        ASSEMBLY_PROVIDER_NAME
     assembly.provider_url         ASSEMBLY_PROVIDER_URL
     genebuild.method              GENEBUILD_METHOD
+    genebuild.method_display      GENEBUILD_METHOD_DISPLAY
     genebuild.version             GENEBUILD_VERSION
     genebuild.last_geneset_update LAST_GENESET_UPDATE
     annotation.provider_name      ANNOTATION_PROVIDER_NAME
