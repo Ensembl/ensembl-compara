@@ -23,11 +23,11 @@ use Bio::EnsEMBL::Compara::Utils::Registry;
 my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'} || $ENV{'ENS_VERSION'};
 
 # Core databases:
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1:4519/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1-b:4685/$curr_release");
 
 # Compara databases:
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas({
-    'compara_curr'   => [ 'mysql-ens-compara-prod-9', "jalvarez_ensembl_compara_${curr_release}" ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-9', "ensembl_compara_${curr_release}" ],
 });
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas({
     'ancestral_curr' => [ 'mysql-ens-compara-prod-9', "ensembl_ancestral_${curr_release}" ],
@@ -35,7 +35,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas({
 
 # Other databases:
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', "ncbi_taxonomy_${curr_release}" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-1-b', "ncbi_taxonomy_${curr_release}" ],
 });
 
 
