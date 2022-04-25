@@ -49,8 +49,14 @@
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Static+documentation+update",
-            "summary": "Generate and commit diagrams"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Static+documentation+update#Staticdocumentationupdate-Comparastaticdocumentation",
+            "summary": "Update Compara static documentation"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Static+documentation+update#Staticdocumentationupdate-Schemadocumentation",
+            "summary": "Update Compara schema documentation in Ensembl plugins"
          }
       ],
       "summary": "Release <version> Post-handover"
