@@ -80,7 +80,7 @@ sub fetch_by_stable_id { ## DEPRECATED
     my ($self, $stable_id) = @_;
 
     deprecate(
-        "MemberAdaptor::fetch_by_stable_id() is to be deprecated and will be removed in e109. Use fetch_all_by_stable_id_genomeDB instead."
+        "MemberAdaptor::fetch_by_stable_id() is to be deprecated and will be removed in e109. Use fetch_all_by_stable_id_GenomeDB instead."
     );
 
     throw("MemberAdaptor::fetch_by_stable_id() must have an stable_id") unless $stable_id;
@@ -103,21 +103,21 @@ sub fetch_by_stable_id { ## DEPRECATED
     }
 }
 
-=head2 fetch_by_stable_id_genomeDB
+=head2 fetch_by_stable_id_GenomeDB
   Arg [1]       : string $stable_id
   Arg [2]       : integer $genome_db_id or Bio::EnsEMBL::Compara::GenomeDB object
-  Example       : my $member = $ma->fetch_by_stable_id_genomeDB("O93279", $genome_db);
+  Example       : my $member = $ma->fetch_by_stable_id_GenomeDB("O93279", $genome_db);
   Description   : Fetches the member corresponding to this $stable_id and $genome_db.
-                  This method accepts versionned stable IDs, such as ENSG00000157764.12
+                  This method accepts versioned stable IDs, such as ENSG00000157764.12
   Returntype    : Bio::EnsEMBL::Compara::Member object
   Exceptions    : throws if $stable_id and/or $genome_db is undef or has no dbID
 =cut
 
-sub fetch_by_stable_id_genomeDB {
+sub fetch_by_stable_id_GenomeDB {
     my ( $self, $stable_id, $genome_db ) = @_;
 
-    throw( "MemberAdaptor::fetch_by_stable_id_genomeDB() must have a stable_id" ) unless $stable_id;
-    throw( "MemberAdaptor::fetch_by_stable_id_genomeDB() must have a genome_db" ) unless $genome_db;
+    throw( "MemberAdaptor::fetch_by_stable_id_GenomeDB() must have a stable_id" ) unless $stable_id;
+    throw( "MemberAdaptor::fetch_by_stable_id_GenomeDB() must have a genome_db" ) unless $genome_db;
     my $genome_db_id;
     if ( $genome_db and ( $genome_db =~ /^\d+$/ ) ) {
         $genome_db_id = $genome_db;

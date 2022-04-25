@@ -65,12 +65,12 @@ my $sm_sql = q/
 my ($s_member_id, $s_stable_id, $s_version, $s_source_name, $s_taxon_id, $s_genome_db_id, $s_sequence_id, $s_gene_member_id, $has_transcript_edits, $has_translation_edits, $s_description, $s_dnafrag_id, $s_dnafrag_start, $s_dnafrag_end, $s_dnafrag_strand, $s_display_label) =
         $compara_dba->dbc->db_handle->selectrow_array($sm_sql);
 
-subtest "Test Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::fetch_by_stable_id_genomeDB gene_member", sub {
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::fetch_by_stable_id_GenomeDB gene_member", sub {
 
     my $gma = $compara_dba->get_GeneMemberAdaptor;
     isa_ok($gma, 'Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor', "Getting the gene_member adaptor");
 
-    my $g_member = $gma->fetch_by_stable_id_genomeDB($g_stable_id, $hs_gdb);
+    my $g_member = $gma->fetch_by_stable_id_GenomeDB($g_stable_id, $hs_gdb);
 
     ok( $g_member->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor"), "Fetching gene_member by stable_id genomedb is gene_member" );
     is( $g_member->dbID, $g_member_id, "Fetching gene_member by stable_id genomedb dbID" );
@@ -85,16 +85,18 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::fetch_by_stable_id_ge
     is( $g_member->dnafrag_strand, $g_dnafrag_strand, "Fetching gene_member by stable_id genomedb dnafrag_end" );
     is( $g_member->taxon_id, $g_taxon_id, "Fetching gene_member by stable_id genomedb taxon_id" );
     is( $g_member->genome_db_id, $g_genome_db_id, "Fetching gene_member by stable_id genomedb genome_db_id" );
+    is( $g_member->canonical_member_id, $g_canonical_id, "Fetching gene_member by stable_id genomedb canonical_member_id" );
+    is( $g_member->biotype_group, $g_biotype, "Fetching gene_member by stable_id genomedb canonical_member_id" );
 
     done_testing();
 };
 
-subtest "Test Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::fetch_by_stable_id_genomeDB seq_member", sub {
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::fetch_by_stable_id_GenomeDB seq_member", sub {
 
     my $sma = $compara_dba->get_SeqMemberAdaptor;
     isa_ok($sma, 'Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor', "Getting the seq_member adaptor");
 
-    my $s_member = $sma->fetch_by_stable_id_genomeDB($s_stable_id, $hs_gdb);
+    my $s_member = $sma->fetch_by_stable_id_GenomeDB($s_stable_id, $hs_gdb);
 
     ok( $s_member->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor"), "Fetching seq_member by stable_id genomedb is seq_member" );
     is( $s_member->dbID, $s_member_id, "Fetching seq_member by stable_id genomedb dbID" );
@@ -116,5 +118,3 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::fetch_by_stable_id_ge
 };
 
 done_testing();
-
-1;
