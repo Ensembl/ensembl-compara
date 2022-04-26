@@ -247,12 +247,13 @@ div.boundaries_wrapper div.boundaries_panning ul          { overflow: hidden; }
 
 /* Icon toolbar for dynamic images */
 
-div.image_toolbar                 { background-color: [[MAIN_DARK]]; color: [[WHITE]]; height: 16px; padding: 4px 0; overflow: hidden; }
+div.image_toolbar                 { background-color: [[MAIN_DARK]]; color: [[WHITE]]; height: 16px; padding: 2px 0; overflow: hidden; }
 div.image_toolbar.top             { border-bottom: 1px solid [[MEDIUM_GREY]]; }
 div.image_toolbar.bottom          { border-top: 1px solid [[MEDIUM_GREY]]; }
-div.image_toolbar a               { float: left; width: 16px; height: 16px; display: block; margin: -2px 2px 2px; border: [[MAIN_DARK]] solid 2px; border-radius: 2px; cursor: pointer; }
+div.image_toolbar a               { float: left; height: 16px; display: block; border-right: 1px solid white; cursor: pointer; background-position: 6px; background-repeat: no-repeat; color: white; padding: 0 10px 0 28px; text-decoration: none; font-size: 12px; line-height: 1.4; }
+div.image_toolbar a:last-child    { border-right: none; }
 div.image_toolbar a:hover,
-div.image_toolbar a.selected      { border-color: [[MAIN_V_DARK]]; background-color: [[MAIN_V_DARK]]; }
+div.image_toolbar a.selected      { background-color: [[MAIN_V_DARK]]; }
 
 div.image_toolbar a.config        { background-image: url(/i/16/rev/setting.png);       }
 div.image_toolbar a.data          { background-image: url(/i/16/rev/page-user.png);     }

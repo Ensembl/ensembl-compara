@@ -148,11 +148,12 @@ sub _render_toolbars {
 
   my $toolbar;
   foreach my $icon (@$icons) {
-    $toolbar .= sprintf('<a href="%s" class="%s" title="%s" rel="%s"></a>',
+    $toolbar .= sprintf('<a href="%s" class="%s" title="%s" rel="%s">%s</a>',
                           $icon->{'href'} || '#',
                           $icon->{'class'} || '',
                           $icon_mappings->{$icon->{'icon_key'}}{'title'} || '',
                           $icon->{'rel'} || '',
+                          $icon->{'text'} || ''
                         );
   }
 
@@ -179,6 +180,7 @@ sub add_config_icon {
           'href'      => $config_url,
           'class'     => 'config modal_link force',
           'icon_key'  => 'config',
+          'text'      => 'Add/remove tracks',
           'rel'       => 'modal_config_'.lc($component_id),
           };
 }
@@ -196,6 +198,7 @@ sub add_userdata_icon {
           'href'      => $data_url,
           'class'     => 'data modal_link',
           'icon_key'  => 'userdata',
+          'text'      => 'Custom tracks',
           'rel'       => 'modal_user_data',
           };
 }
@@ -210,6 +213,7 @@ sub add_share_icon {
           'href'      => $share_url,
           'class'     => 'share popup',
           'icon_key'  => 'share',
+          'text'      => 'Share'
           };
 }
 
@@ -239,6 +243,7 @@ sub add_export_icon {
           'href'      => $hub->url($params),
           'class'     => 'download modal_link',
           'icon_key'  => 'download',
+          'text'      => 'Export'
           };
 }
 
@@ -251,6 +256,7 @@ sub add_resize_icon {
           'href'      => $hub->url,
           'class'     => 'resize popup',
           'icon_key'  => 'resize',
+          'text'      => 'Resize image'
           };
 }
 
@@ -307,6 +313,7 @@ sub add_image_export_icon {
           'href'      => $hub->url($params),
           'class'     => 'export modal_link '.$self->{'export'},
           'icon_key'  => 'image',
+          'text'      => 'Export image'
           };
 }
 
@@ -321,6 +328,7 @@ sub add_config_reset_icon {
           'href'      => $url,
           'class'     => 'config-reset _reset',
           'icon_key'  => 'reset_config',
+          'text'      => 'Reset configuration',
           };
 }
 sub add_order_reset_icon {
@@ -333,6 +341,7 @@ sub add_order_reset_icon {
           'href'      => $url,
           'class'     => 'order-reset _reset',
           'icon_key'  => 'reset_order',
+          'text'      => 'Reset track order'
           };
 }
 
