@@ -35,10 +35,10 @@ import json
 
 
 def add_ce_to_json(ce_file: str, json_file: str) -> None:
-    """Enrich the json file with the constraint elements
+    """Enrich the json file with the constrained elements
 
     Args:
-        ce_file: file containing the constraint elements.
+        ce_file: file containing the constrained elements.
         json_file: json file with genome coordinate level.
 
     Returns:
@@ -48,19 +48,19 @@ def add_ce_to_json(ce_file: str, json_file: str) -> None:
         align_set = json.load(json_file_handler)
 
     with open(ce_file) as ce_file_handler:
-        constraint_elements = [ce.split() for ce in ce_file_handler if ce.rstrip() != ""]
+        constrained_elements = [ce.split() for ce in ce_file_handler if ce.rstrip() != ""]
 
-    # enrich json file with constraint elements info
-    constraint_elems = []
-    for ce in constraint_elements:
-        constraint_elem = {}
-        constraint_elem["start"] = int(ce[0])
-        constraint_elem["end"] = int(ce[1])
-        constraint_elem["length"] = int(ce[2])
-        constraint_elem["score"] = ce[3]
-        constraint_elem["p-val"] = ce[4]
-        constraint_elems.append(constraint_elem)
-    align_set["constraint_elems"] = constraint_elems
+    # enrich json file with constrained elements info
+    constrained_elems = []
+    for ce in constrained_elements:
+        constrained_elem = {}
+        constrained_elem["start"] = ce[0]
+        constrained_elem["end"] = ce[1]
+        constrained_elem["length"] = ce[2]
+        constrained_elem["score"] = ce[3]
+        constrained_elem["p-val"] = ce[4]
+        constrained_elems.append(constrained_elem)
+    align_set["constraint_elems"] = constrained_elems
 
     with open(json_file, 'w') as json_file_handler:
         json.dump(align_set, json_file_handler)
@@ -70,7 +70,7 @@ def main(param: argparse.Namespace) -> None:
     ''' Main function of the run_gerp.py script
 
     This function is running gerpcol that define a gerpscore for every column of the genomic alignment bloc
-    and gerpelem that identify constraint elements across the alignment bloc
+    and gerpelem that identify constrained elements across the alignment bloc
 
     Args:
         param: argparse.Namespace storing all the script parameters
