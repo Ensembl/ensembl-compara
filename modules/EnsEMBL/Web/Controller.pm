@@ -308,7 +308,7 @@ sub renderer {
 
 sub page {
   my $self       = shift;
-  my $outputtype = $ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/ ? 'search_bot' : shift;
+  my $outputtype = ($ENV{'HTTP_USER_AGENT'} && $ENV{'HTTP_USER_AGENT'} =~ /Sanger Search Bot/) ? 'search_bot' : shift;
 
   if (!$self->{'page'}) {
     my $document_module = 'EnsEMBL::Web::Document::Page::' . $self->page_type;
