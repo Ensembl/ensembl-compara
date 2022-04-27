@@ -113,6 +113,8 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::fetch_by_stable_id_Ge
     is( $s_member->has_transcript_edits, $has_transcript_edits, "Fetching seq_member by stable_id genomedb has_transcript_edits" );
     is( $s_member->has_translation_edits, $has_translation_edits, "Fetching seq_member by stable_id genomedb has_translation_edits" );
     is( $s_member->sequence_id, $s_sequence_id, "Fetching seq_member by stable_id genomedb sequence_id" );
+    is( $s_member->gene_member_id, $s_gene_member_id, "Fetching seq_member by stable_id genomedb gene_member_id" );
+    is( $s_member->description, $s_description, "Fetching seq_member by stable_id genomedb description" );
 
     done_testing();
 };
