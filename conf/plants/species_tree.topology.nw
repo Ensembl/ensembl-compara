@@ -68,6 +68,9 @@
               secale_cereale,
              )Hordeinae,
              (
+              lolium_perenne,
+             )Loliinae,
+             (
               thinopyrum_elongatum,
              )Thinopyrum,
              (
@@ -288,6 +291,7 @@
             brassica_rapa_ro18,
             brassica_napus,
             brassica_rapa,
+            brassica_juncea,
            )Brassica,
            (
             arabidopsis_lyrata,
