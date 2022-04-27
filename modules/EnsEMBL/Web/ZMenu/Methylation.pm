@@ -187,7 +187,7 @@ sub _menu_setup {
   my $bigbed_file = $meth->file;
 
   # Substitute path, if necessary. 
-  my $file_path = join '/', $hub->species_defs->DATAFILE_BASE_PATH, lc $hub->species, $hub->species_defs->ASSEMBLY_VERSION;
+  my $file_path = join '/', $hub->species_defs->DATAFILE_BASE_PATH, $hub->species_defs->SPECIES_PRODUCTION_NAME, $hub->species_defs->ASSEMBLY_VERSION;
   $bigbed_file = "$file_path/$bigbed_file" unless $bigbed_file =~ /^$file_path/;
 
   ## Clean up any whitespace

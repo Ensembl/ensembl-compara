@@ -1250,7 +1250,7 @@ sub _add_file_format_track {
 
   if ($args{'internal'}) {
     $desc = $args{'description'};
-    $url = join '/', $self->hub->species_defs->DATAFILE_BASE_PATH, lc $self->hub->species, $self->hub->species_defs->ASSEMBLY_VERSION, $args{'source'}{'dir'}, $args{'source'}{'file'};
+    $url = join '/', $self->hub->species_defs->DATAFILE_BASE_PATH, $self->hub->species_defs->SPECIES_PRODUCTION_NAME, $self->hub->species_defs->ASSEMBLY_VERSION, $args{'source'}{'dir'}, $args{'source'}{'file'};
     $args{'options'}{'external'} = undef;
   } else {
     if ($args{'source'}{'source_type'} =~ /^session|user$/i) {
