@@ -183,7 +183,7 @@
       <genome name="dicentrarchus_labrax"/>
       <genome name="sparus_aurata"/>
       <!-- Cypriniformes -->
-      <genome name="cyprinus_carpio"/>
+      <genome name="cyprinus_carpio_carpio"/>
       <!-- Gadiformes -->
       <genome name="gadus_morhua"/>
       <!-- Beryciformes -->
