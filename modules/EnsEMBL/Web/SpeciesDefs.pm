@@ -406,6 +406,15 @@ sub parse {
   $self->store;
   $reg_conf->configure;
 
+  ## Sanity check - did parsing actually work?
+  ## Using ENSEMBL_STYLE as the litmus test, because its absence will cause 
+  ## (misleading) errors in OpenSearch, a few lines down from here. Plus,
+  ## if it's empty, all the CSS will be broken anyway.
+  my $style = $self->ENSEMBL_STYLE;
+  unless ($style && ref $style eq 'HASH') {
+    die "[FATAL] Parsing did not complete successfully, and many values in SpeciesDefs are likely to be empty - please check your site configuration";
+  }
+
   EnsEMBL::Web::Tools::RobotsTxt::create($self->multi_hash->{'ENSEMBL_DATASETS'}, $self);
   EnsEMBL::Web::Tools::OpenSearchDescription::create($self);
   
