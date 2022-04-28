@@ -22,6 +22,11 @@ PYTHON_SOURCE_LOCATIONS=('scripts' 'src/python')
 export PYTHONPATH=$PYTHONPATH:$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')
 export MYPYPATH=$MYPYPATH:$PWD/src/python/lib
 
+
+# Check mypy and pyling versions 
+pylint --version
+mypy --version 
+
 PYLINT_OUTPUT_FILE=$(mktemp)
 PYLINT_ERRORS=$(mktemp)
 # CITest project is on hold and it needs to be updated before resuming its linter checker
