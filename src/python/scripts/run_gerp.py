@@ -51,12 +51,13 @@ def add_ce_to_json(ce_file: str, json_file: str) -> None:
     # enrich json file with constrained elements info
     constrained_elems = []
     for ce in constrained_elements:
-        constrained_elem = {}
-        constrained_elem["start"] = ce[0]
-        constrained_elem["end"] = ce[1]
-        constrained_elem["length"] = ce[2]
-        constrained_elem["score"] = ce[3]
-        constrained_elem["p-val"] = ce[4]
+        constrained_elem = {
+            "start": int(ce[0]),
+            "end": int(ce[1]),
+            "length": int(ce[2]),
+            "score": float(ce[3]),
+            "p-val": float(ce[4])
+        }
         constrained_elems.append(constrained_elem)
     align_set["constraint_elems"] = constrained_elems
 
