@@ -24,8 +24,9 @@ export MYPYPATH=$MYPYPATH:$PWD/src/python/lib
 
 
 # Check mypy and pyling versions 
-pylint --version
-mypy --version 
+echo "$(pylint --version)"
+echo "$(mypy --version)"
+
 
 PYLINT_OUTPUT_FILE=$(mktemp)
 PYLINT_ERRORS=$(mktemp)
@@ -43,5 +44,7 @@ rt2=$?
 if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then
   exit 0
 else
+  echo "pylint exitcode=$rt1"
+  echo "mypy exitcode=$rt2"
   exit 255
 fi
