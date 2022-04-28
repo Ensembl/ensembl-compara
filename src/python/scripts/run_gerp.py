@@ -41,8 +41,6 @@ def add_ce_to_json(ce_file: str, json_file: str) -> None:
         ce_file: file containing the constrained elements.
         json_file: json file with genome coordinate level.
 
-    Returns:
-        None
     """
     with open(json_file, 'r') as json_file_handler:
         align_set = json.load(json_file_handler)
