@@ -24,8 +24,8 @@ export MYPYPATH=$MYPYPATH:$PWD/src/python/lib
 
 
 # Check mypy and pyling versions 
-echo "$(pylint --version)"
-echo "$(mypy --version)"
+pylint --version
+mypy --version
 
 
 PYLINT_OUTPUT_FILE=$(mktemp)
