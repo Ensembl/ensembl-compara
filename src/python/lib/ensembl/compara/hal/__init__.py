@@ -15,4 +15,3 @@
 """Module for working with HAL alignment data."""
 
 from .maf_to_fasta import *
-
