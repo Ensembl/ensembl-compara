@@ -169,9 +169,11 @@ def convert_maf_to_fasta(maf_file: PathLike, output_dir: PathLike,
                         'dnafrag_strand': dnafrag_strand
                     })
 
+            output_data = {'aligned_seq': ga_recs}
+
             json_file_path = idx_dir_path / f'{idx}.json'
             with open(json_file_path, 'w') as f:
-                json.dump(ga_recs, f, indent=4)
+                json.dump(output_data, f, indent=4)
 
 
 def map_uint_to_path(non_negative_integer: int) -> Path:
