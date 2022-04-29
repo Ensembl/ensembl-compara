@@ -139,9 +139,9 @@ def convert_maf_to_fasta(maf_file: PathLike, output_dir: PathLike,
                         try:
                             genome_name = match['genome']  # type: ignore
                             dnafrag_name = match['seqid']  # type: ignore
-                        except TypeError as exc:
+                        except TypeError as exc_err:
                             raise ValueError(
-                                "MAF src regex failed to parse MAF src field: '{maf_src}'") from exc
+                                "MAF src regex failed to parse MAF src field: '{maf_src}'") from exc_err
                         maf_src_map[maf_src] = [genome_name, dnafrag_name]
 
                     maf_start = rec.annotations['start']

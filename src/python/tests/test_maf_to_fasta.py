@@ -41,7 +41,7 @@ class TestMafToFasta:
     @pytest.fixture(scope='class', autouse=True)
     def setup(self) -> None:
         """Loads necessary fixtures and values as class attributes."""
-        type(self).ref_file_dir = pytest.files_dir / 'hal_alignment'
+        type(self).ref_file_dir = pytest.files_dir / 'hal_alignment' # type: ignore[attr-defined,operator]
 
     @pytest.mark.parametrize(
         "genome_names, exp_output, expectation",
@@ -95,10 +95,10 @@ class TestMafToFasta:
         maf_file_path = self.ref_file_dir / maf_file
         out_dir_path = tmp_dir / output_dir
         if genomes_file is not None:
-            genomes_file = self.ref_file_dir / genomes_file
+            genomes_file = self.ref_file_dir / genomes_file # type: ignore[attr-defined,operator]
 
         with expectation:
-            maf_to_fasta.convert_maf_to_fasta(maf_file_path, out_dir_path, genomes_file=genomes_file)
+            maf_to_fasta.convert_maf_to_fasta(maf_file_path, out_dir_path, genomes_file=genomes_file) # type: ignore[attr-defined,operator]
 
         ref_dir_path = self.ref_file_dir / output_dir
         for out_file_rel_path in out_file_rel_paths:
