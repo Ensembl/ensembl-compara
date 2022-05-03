@@ -85,11 +85,11 @@ sub default_options {
 }
 
 sub tweak_analyses {
-		my $self = shift;
-		my $analyses_by_name = shift;
-		# datacheck specific tweaks for pipelines
-		$analyses_by_name->{'datacheck_factory'}->{'-parameters'} = {'dba' => '#compara_db#'};
-		$analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
+        my $self = shift;
+        my $analyses_by_name = shift;
+        # datacheck specific tweaks for pipelines
+        $analyses_by_name->{'datacheck_factory'}->{'-parameters'} = {'dba' => '#compara_db#'};
+        $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
  }
 
 1;

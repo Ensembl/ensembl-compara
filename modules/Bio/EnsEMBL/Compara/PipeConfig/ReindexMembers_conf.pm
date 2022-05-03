@@ -100,14 +100,14 @@ sub default_options {
         # Main capacity for the pipeline
         'copy_capacity'                 => 4,
 
-		# Whole db DC parameters
-		'datacheck_groups' => ['compara_gene_tree_pipelines'],
-		'db_type'          => ['compara'],
-		'work_dir' => $self->o('pipeline_dir'),
-		'output_dir_path'  => $self->o('work_dir') . '/datachecks/',
-		'overwrite_files'  => 1,
-		'failures_fatal'   => 1, # no DC failure tolerance
-		'db_name'          => $self->o('dbowner') . '_' . $self->o('pipeline_name'),
+        # Whole db DC parameters
+        'datacheck_groups' => ['compara_gene_tree_pipelines'],
+        'db_type'          => ['compara'],
+        'work_dir' => $self->o('pipeline_dir'),
+        'output_dir_path'  => $self->o('work_dir') . '/datachecks/',
+        'overwrite_files'  => 1,
+        'failures_fatal'   => 1, # no DC failure tolerance
+        'db_name'          => $self->o('dbowner') . '_' . $self->o('pipeline_name'),
 
         # Params for healthchecks;
         'hc_capacity'                     => 40,
@@ -118,17 +118,17 @@ sub default_options {
 sub pipeline_create_commands {
     my ($self) = @_;
     return [
-		@{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
-		$self->pipeline_create_commands_rm_mkdir(['output_dir_path']),
+        @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
+        $self->pipeline_create_commands_rm_mkdir(['output_dir_path']),
 
-		$self->db_cmd('CREATE TABLE datacheck_results (
-					      submission_job_id INT,
-					      dbname VARCHAR(255) NOT NULL,
-					      passed INT,
-					      failed INT,
-					      skipped INT,
-					      INDEX submission_job_id_idx (submission_job_id)
-					 )'),
+        $self->db_cmd('CREATE TABLE datacheck_results (
+                          submission_job_id INT,
+                          dbname VARCHAR(255) NOT NULL,
+                          passed INT,
+                          failed INT,
+                          skipped INT,
+                          INDEX submission_job_id_idx (submission_job_id)
+                     )'),
 
     ];
 }
@@ -143,7 +143,7 @@ sub pipeline_wide_parameters {
         'member_db'     => $self->o('member_db'),
         'prev_tree_db'  => $self->o('prev_tree_db'),
         'member_type'   => $self->o('member_type'),
-		'output_dir_path' => $self->o('output_dir_path'),
+        'output_dir_path' => $self->o('output_dir_path'),
     }
 }
 
@@ -327,11 +327,11 @@ sub pipeline_analyses {
             },
         },
 
-		{   -logic_name    => 'fire_datachecks',
+        {   -logic_name    => 'fire_datachecks',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into     => {
                 '1->A' => { 'delete_flat_trees_factory' => INPUT_PLUS },
-				'A->1'  => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => $self->pipeline_url(), 'registry_file' => undef }},
+                'A->1'  => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => $self->pipeline_url(), 'registry_file' => undef }},
             }
         },
 
@@ -364,16 +364,16 @@ sub pipeline_analyses {
         },
 
         @$hc_analyses,
-		@{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DataCheckFactory::pipeline_analyses_datacheck_factory($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DataCheckFactory::pipeline_analyses_datacheck_factory($self) },
     ];
 }
 
 sub tweak_analyses {
-		my $self = shift;
-		my $analyses_by_name = shift;	
-		# datacheck specific tweaks for pipelines
-		$analyses_by_name->{'datacheck_factory'}->{'-parameters'} = {'dba' => '#compara_db#'};
-		$analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
+        my $self = shift;
+        my $analyses_by_name = shift;
+        # datacheck specific tweaks for pipelines
+        $analyses_by_name->{'datacheck_factory'}->{'-parameters'} = {'dba' => '#compara_db#'};
+        $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
 }
 
 1;
