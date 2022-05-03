@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<compara_db division="fungi">
+
+  <gene_trees>
+    <protein_trees collection="fungi"/>
+  </gene_trees>
+
+</compara_db>
