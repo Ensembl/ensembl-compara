@@ -136,6 +136,12 @@ sub write_output {
         $clusterset_tree->store_tag( 'stat.number_of_orphan_proteins', $self->param('number_of_orphan_proteins') );
     }
 
+    #number_of_unassigned_proteins
+    if ( $self->param('number_of_unassigned_proteins') > 0 ) {
+        print "\nStoring number_of_unassigned_proteins\n" if $self->debug;
+        $clusterset_tree->store_tag( 'stat.number_of_unassigned_proteins', $self->param('number_of_unassigned_proteins') );
+    }
+
     #number_of_proteins_in_single_species_trees
     if ( $self->param('number_of_proteins_in_single_species_trees') > 0 ) {
         print "\nStoring number_of_proteins_in_single_species_trees\n" if $self->debug;
@@ -242,6 +248,21 @@ sub _get_number_of_proteins_used {
         $self->param( 'number_of_proteins_in_single_species_trees', $number_of_proteins_in_single_species_trees );
     }
     $sth->finish();
+
+    # Compute the number of genes that are unassigned to a tree
+    my $sql2 = q/
+        SELECT SUM(stnt.value)
+        FROM species_tree_node_tag stnt JOIN species_tree_node USING (node_id)
+        WHERE stnt.tag = 'nb_genes_unassigned'
+        AND node_id IN (SELECT node_id FROM species_tree_node WHERE genome_db_id IS NOT NULL)
+    /;
+
+    my $sth2 = $self->compara_dba->dbc->prepare( $sql2, { 'mysql_use_result' => 1 } );
+    $sth2->execute();
+    while ( my @row = $sth2->fetchrow_array() ) {
+        $self->param( 'number_of_unassigned_proteins', $row[0] );
+    }
+    $sth2->finish();
 }
 
 sub _get_sizes_summary {
