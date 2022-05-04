@@ -632,9 +632,8 @@ sub core_pipeline_analyses {
                                      },
               -flow_into          => [ 'write_stn_tags',
                                        # 'backbone_fire_homology_dumps',
-                                        WHEN('#do_cafe# and  #binary_species_tree_input_file#', 'CAFE_species_tree'),
-                                        WHEN('#do_cafe# and !#binary_species_tree_input_file#', 'make_full_species_tree'),
-                                    ],
+                                       WHEN('#do_cafe# and  #binary_species_tree_input_file#', 'CAFE_species_tree'),
+                                       WHEN('#do_cafe# and !#binary_species_tree_input_file#', 'make_full_species_tree'),],
               %hc_params,
             },
 
