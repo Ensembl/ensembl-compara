@@ -134,7 +134,7 @@ sub fetch_by_stable_id_GenomeDB {
     $self->bind_param_generic_fetch( $genome_db_id, SQL_INTEGER );
     my $m = $self->generic_fetch_one( 'm.stable_id = ? AND m.genome_db_id = ?' );
     return $m if $m;
-
+    # In the case of versioned stable_ids $m is not returned so continue with a versioned expectation
     my $vindex = rindex( $stable_id, '.' );
     return undef if $vindex <= 0;  # bail out if there is no dot, or if the string starts with a dot (since that would make the stable_id part empty)
     my $version = substr( $stable_id, ( $vindex + 1 ) );
