@@ -28,11 +28,10 @@ path where they can be found::
     $ python run_gerp.py --msa_file alignment.mfa --tree_file tree.nw --gerp_exe_dir path/to/gerp/
 
 """
-import os
-import subprocess
 import argparse
 import json
-
+import os
+import subprocess
 
 def add_ce_to_json(ce_file: str, json_file: str) -> None:
     """Enrich the json file with the constrained elements.
@@ -42,31 +41,32 @@ def add_ce_to_json(ce_file: str, json_file: str) -> None:
         json_file: json file with genome coordinate level.
 
     """
-    with open(json_file, 'r') as json_file_handler:
-        align_set = json.load(json_file_handler)
+    with open(json_file, 'r') as json_file_obj:
+        align_set = json.load(json_file_obj)
 
-    with open(ce_file) as ce_file_handler:
-        constrained_elements = [ce.split() for ce in ce_file_handler if ce.rstrip() != ""]
-
-    # enrich json file with constrained elements info
     constrained_elems = []
-    for ce in constrained_elements:
-        constrained_elem = {
-            "start": int(ce[0]),
-            "end": int(ce[1]),
-            "length": int(ce[2]),
-            "score": float(ce[3]),
-            "p-val": float(ce[4])
-        }
-        constrained_elems.append(constrained_elem)
-    align_set["constraint_elems"] = constrained_elems
+    with open(ce_file) as ce_file_obj:
+        # enrich json file with constrained elements info
+        for cons_elem in ce_file_obj:
+            if cons_elem.rstrip() == "":
+                continue
+            ce = cons_elem.split()
+            constrained_elem = {
+                "start": int(ce[0]),
+                "end": int(ce[1]),
+                "length": int(ce[2]),
+                "score": float(ce[3]),
+                "p-val": float(ce[4])
+            }
+            constrained_elems.append(constrained_elem)
+    align_set["constrained_elems"] = constrained_elems
 
-    with open(json_file, 'w') as json_file_handler:
-        json.dump(align_set, json_file_handler)
+    with open(json_file, 'w') as json_file_obj:
+        json.dump(align_set, json_file_obj)
 
 
 def main(param: argparse.Namespace) -> None:
-    ''' Main function of the run_gerp.py script
+    """ Main function of the run_gerp.py script
 
     This function is running gerpcol that define a gerpscore for every column of the genomic alignment bloc
     and gerpelem that identify constrained elements across the alignment bloc
@@ -74,9 +74,7 @@ def main(param: argparse.Namespace) -> None:
     Args:
         param: argparse.Namespace storing all the script parameters
 
-    Returns:
-        None
-    '''
+    """
 
     cmd = ["gerpcol", "-t", param.tree_file, "-f", param.msa_file]
     cmd[0] = os.path.join(param.gerp_exe_dir, cmd[0])
@@ -88,7 +86,7 @@ def main(param: argparse.Namespace) -> None:
     cmd += ["-d", str(param.depth_threshold)]
     subprocess.run(cmd, check=True)
 
-    add_ce_to_json(f"{param.msa_file}.rates.elems", param.msa_file.replace(".fa", ".json"))
+    add_ce_to_json(f"{param.msa_file}.rates.elems", f"{os.path.splitext(param.msa_file)[0]}.json")
 
 
 if __name__ == "__main__":
