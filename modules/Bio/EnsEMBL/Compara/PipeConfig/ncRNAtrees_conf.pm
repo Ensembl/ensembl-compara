@@ -43,6 +43,7 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::OrthologQMAlignment;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::DataCheckFactory;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -81,6 +82,14 @@ sub default_options {
         'alt_aln_dbs'     => [
             'compara_curr',
         ],
+
+     # Whole db DC parameters
+     'datacheck_groups' => ['compara_gene_tree_pipelines'],
+     'db_type'          => ['compara'],
+     'output_dir_path'  => $self->o('work_dir') . '/datachecks/',
+     'overwrite_files'  => 1,
+     'failures_fatal'   => 1, # no DC failure tolerance
+     'db_name'          => $self->o('dbowner') . '_' . $self->o('pipeline_name'),
 
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => 14,
@@ -187,7 +196,7 @@ sub pipeline_create_commands {
     return [
             @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
-            $self->pipeline_create_commands_rm_mkdir(['work_dir', 'dump_dir', 'ss_picts_dir', 'gene_dumps_dir']),
+            $self->pipeline_create_commands_rm_mkdir(['work_dir', 'dump_dir', 'ss_picts_dir', 'gene_dumps_dir', 'output_dir_path']),
             $self->pipeline_create_commands_rm_mkdir(['gene_tree_stats_shared_dir'], undef, 'do not rm'),
 
             $self->db_cmd( 'CREATE TABLE ortholog_quality (
@@ -201,6 +210,15 @@ sub pipeline_create_commands {
                             intron_length            INT NOT NULL,
                             INDEX (homology_id)
             )'),
+
+           $self->db_cmd( 'CREATE TABLE datacheck_results (
+                                  submission_job_id INT,
+                                  dbname VARCHAR(255) NOT NULL,
+                                  passed INT,
+                                  failed INT,
+                                  skipped INT,
+                                  INDEX submission_job_id_idx (submission_job_id)
+             )'),
     ];
 }
 
@@ -219,6 +237,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'mapping_db'    => $self->o('mapping_db'),
 
         'pipeline_dir'              => $self->o('pipeline_dir'),
+        'output_dir_path'           => $self->o('output_dir_path'),
         'dump_dir'                  => $self->o('dump_dir'),
         'homology_dumps_dir'        => $self->o('homology_dumps_dir'),
         'prev_homology_dumps_dir'   => $self->o('prev_homology_dumps_dir'),
@@ -613,9 +632,8 @@ sub core_pipeline_analyses {
                                      },
               -flow_into          => [ 'write_stn_tags',
                                        # 'backbone_fire_homology_dumps',
-                                        WHEN('#do_cafe# and  #binary_species_tree_input_file#', 'CAFE_species_tree'),
-                                        WHEN('#do_cafe# and !#binary_species_tree_input_file#', 'make_full_species_tree'),
-                                    ],
+                                       WHEN('#do_cafe# and  #binary_species_tree_input_file#', 'CAFE_species_tree'),
+                                       WHEN('#do_cafe# and !#binary_species_tree_input_file#', 'make_full_species_tree'),],
               %hc_params,
             },
 
@@ -1367,6 +1385,9 @@ sub core_pipeline_analyses {
             -parameters => {
                 'wga_expected_file'  => '#dump_dir#/wga_expected.mlss_tags.tsv',
             },
+            -flow_into => {
+                1 => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => $self->pipeline_url(), 'registry_file' => undef }},
+            },
         },        
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe_with_full_species_tree($self) },
@@ -1374,8 +1395,17 @@ sub core_pipeline_analyses {
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree::pipeline_analyses_split_homologies_posttree($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::OrthologQMAlignment::pipeline_analyses_ortholog_qm_alignment($self)  },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs::pipeline_analyses_high_confidence($self) },
-
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DataCheckFactory::pipeline_analyses_datacheck_factory($self) },
     ];
 }
+
+sub tweak_analyses {
+        my $self = shift;
+        my $analyses_by_name = shift;
+
+        # datacheck specific tweaks for pipelines
+        $analyses_by_name->{'datacheck_factory'}->{'-parameters'} = {'dba' => '#compara_db#'};
+        $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
+        }
 
 1;
