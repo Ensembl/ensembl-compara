@@ -2,7 +2,7 @@
 # regarding copyright ownership.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
+# you may not use this file except in compliance with the License.ls -l
 # You may obtain a copy of the License at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
@@ -21,10 +21,13 @@ Typical usage examples::
 
 __all__ = ['aligned_seq_to_cigar', 'alignment_to_seq_coordinate', 'get_cigar_array']
 
-from typing import List
+from typing import List, Tuple
 
 def aligned_seq_to_cigar(aligned_seq:str) -> str:
     """ Convert an aligned_seq to its cigar line
+
+    The cigar line use [legth][operation] order and if the operation length is 1 it give the operation
+    A-TGC---CC --> MD3M3D2M
 
     Params:
         aligned_seq: the aligned sequence (str)
@@ -43,7 +46,7 @@ def aligned_seq_to_cigar(aligned_seq:str) -> str:
             matches = 0
             gaps = gaps + 1
         elif nt == "-" and matches > 1: # matches > 1
-            cigar = f"{cigar}M{matches}"
+            cigar = f"{cigar}{matches}M"
             matches = 0
             gaps = gaps + 1
         elif nt != "-" and gaps == 0:
@@ -53,7 +56,7 @@ def aligned_seq_to_cigar(aligned_seq:str) -> str:
             gaps = 0
             matches = matches + 1
         elif nt != "-" and gaps > 1:
-            cigar = f"{cigar}D{gaps}"
+            cigar = f"{cigar}{gaps}D"
             gaps = 0
             matches = matches + 1
 
@@ -61,17 +64,17 @@ def aligned_seq_to_cigar(aligned_seq:str) -> str:
     if gaps != 0 and gaps == 1:
         cigar = f"{cigar}D"
     elif gaps != 0 and gaps > 1:
-        cigar = f"{cigar}D{gaps}"
+        cigar = f"{cigar}{gaps}D"
     elif matches != 0 and matches == 1:
         cigar = f"{cigar}M"
     elif matches != 0 and matches > 1:
-        cigar = f"{cigar}M{matches}"
+        cigar = f"{cigar}{matches}M"
 
     return cigar
 
 
-def get_cigar_array(cigar:str) -> List:
-    """Return an array of the cigar line, e.g.: [('M', 34), ('D', 12), ('M', 5) ...]
+def get_cigar_array(cigar:str) -> List[Tuple]:
+    """Return an array of the cigar line, e.g.: [(34, 'M'), (12, 'D'), ( 5, 'M') ...]
 
     Params:
         cigar: cigar line of the aligned sequence (str)
@@ -81,31 +84,38 @@ def get_cigar_array(cigar:str) -> List:
     """
     number = ""
     result = []
-    symbol = ""
     for c in cigar:
-        if not c.isdigit():
-            if symbol == "" and number == "":
-                symbol = c
-            elif symbol != "" and number == "": # new symbol precede by a different symbol then leght is 1
-                result.append((symbol, 1))
-                symbol = c
-            elif symbol != "" and number != "":
-                result.append((symbol, int(number)))
-                number = ""
-                symbol = c
-        else:  # in this case chr.isdigit():
+        if c.isdigit():
             number = number + c
-    if number != "":
-        result.append((symbol, int(number)))
+        elif not c.isdigit() and number == "":
+            result.append((1, c))
+        elif not c.isdigit() and number != "":
+            result.append((int(number), c))
+            number = ""
+        else:
+            print("issue")
     return result
 
 
-def alignment_to_seq_coordinate(cigar: str, coord: int) -> int:
+def alignment_to_seq_coordinate(cigar: str, coord: int) -> List[int]:
     '''Covert coordinate from the alignment level to sequence level
+
+    This function will convert a position at the coordinate level to the sequence level. To be able to
+    deal with gasp and give the maximum information the function is return a list of position. If the
+    position at the alignemnt level fall into a gap then the position just before the gap and just after
+    the gap (in the same order) is returned in the list . If the position is on a non gapped part of the
+    sequence then it return the corresponding position at the sequence level in one list of a unic element.
+
+    Exemple:
+
+        V                              V
+    123456789       return      123456789     return
+    ATGC---CG   --> [4,5]       ATGC---CG  --> [5]
+    1234   56                   1234   56
 
     Params:
         cigar: cigar line of the aligned sequence (str)
-        coord: coordinate at the alignment level (int)
+        coord: coordinate at the alignment level (List[int])
 
     Returns:
         coordinate at the unaligned sequence level (int)
@@ -117,29 +127,32 @@ def alignment_to_seq_coordinate(cigar: str, coord: int) -> int:
     if coord < 1:
         raise ValueError(f"coord need to be > 0 : current value {coord}")
 
-    cigar_array =  get_cigar_array(cigar)
+    result = []
+    cigar_array = get_cigar_array(cigar)
     seq_level_coord = coord
     align_index = 0
     for cigar_elem in cigar_array:
-        align_index = align_index + cigar_elem[1]
-        if cigar_elem[0] == "M":
+        align_index = align_index + cigar_elem[0]
+        if cigar_elem[1] == "M":
             if coord <= align_index:
                 # in this case coord is included in the M cigar_elem
                 # so seq_level_coord  has been trim from all the gap and has now the correct coordinate
+                result = [seq_level_coord]
                 break
-        elif cigar_elem[0] == "D":
+        elif cigar_elem[1] == "D":
             if coord <= align_index:
                 # in this case coord is included in the D cigar_elem
                 # so we need to trim only a few gaps from seq_level_coord  to have the correct coordinate
-                start_gap = align_index - cigar_elem[1]
+                start_gap = align_index - cigar_elem[0]
                 gap_to_remove = coord - start_gap
                 seq_level_coord = seq_level_coord - gap_to_remove
+                result = [seq_level_coord, seq_level_coord+1]
                 break
-            seq_level_coord = seq_level_coord - cigar_elem[1]
+            seq_level_coord = seq_level_coord - cigar_elem[0]
         else:
             raise ValueError("no valid cigar line")
 
     if coord > align_index:
         raise ValueError(f"{coord} is larger than the maximum size of the alignment {align_index}")
 
-    return seq_level_coord
+    return result
