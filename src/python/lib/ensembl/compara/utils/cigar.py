@@ -81,6 +81,8 @@ def get_cigar_array(cigar:str) -> List[Tuple]:
 
     Returns:
         cigar array (list<tuple>)
+    Raises:
+        ValueError :  if cigar line incorrect
     """
     number = ""
     result = []
@@ -93,12 +95,12 @@ def get_cigar_array(cigar:str) -> List[Tuple]:
             result.append((int(number), c))
             number = ""
         else:
-            print("issue")
+            raise ValueError(f"issue with cigar line {cigar}")
     return result
 
 
 def alignment_to_seq_coordinate(cigar: str, coord: int) -> List[int]:
-    '''Covert coordinate from the alignment level to sequence level
+    """Covert coordinate from the alignment level to sequence level
 
     This function will convert a position at the coordinate level to the sequence level. To be able to
     deal with gasp and give the maximum information the function is return a list of position. If the
@@ -122,7 +124,7 @@ def alignment_to_seq_coordinate(cigar: str, coord: int) -> List[int]:
 
     Raises:
         ValueError :  if coord is  <= 0 and if coord > alignment length
-    '''
+    """
 
     if coord < 1:
         raise ValueError(f"coord need to be > 0 : current value {coord}")
