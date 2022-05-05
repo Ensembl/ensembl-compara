@@ -251,10 +251,20 @@ sub _get_number_of_proteins_used {
 
     # Compute the number of genes that are unassigned to a tree
     my $sql2 = q/
-        SELECT SUM(stnt.value)
-        FROM species_tree_node_tag stnt JOIN species_tree_node USING (node_id)
-        WHERE stnt.tag = 'nb_genes_unassigned'
-        AND node_id IN (SELECT node_id FROM species_tree_node WHERE genome_db_id IS NOT NULL)
+        SELECT
+            SUM(stnt.value)
+        FROM
+            species_tree_node_tag stnt
+                JOIN
+            species_tree_node USING (node_id)
+        WHERE
+            stnt.tag = 'nb_genes_unassigned'
+                AND node_id IN (SELECT
+                    node_id
+                FROM
+                    species_tree_node
+                WHERE
+                    genome_db_id IS NOT NULL)
     /;
 
     my $sth2 = $self->compara_dba->dbc->prepare( $sql2, { 'mysql_use_result' => 1 } );

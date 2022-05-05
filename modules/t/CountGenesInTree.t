@@ -35,7 +35,7 @@ my $gene_count_exe = catfile(
     $ENV{ENSEMBL_ROOT_DIR},
     'ensembl-compara',
     'scripts',
-    'production',
+    'pipeline',
     'count_genes_in_tree.pl'
 );
 
