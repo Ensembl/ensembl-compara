@@ -32,7 +32,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CountGenesInTree;
 use strict;
 use warnings;
 
-use JSON qw(decode_json);
+use Bio::EnsEMBL::Compara::Utils::RunCommand;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

@@ -66,7 +66,6 @@ use warnings;
 
 use DBI;
 use Getopt::Long;
-use JSON qw(encode_json);
 use Pod::Usage;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
