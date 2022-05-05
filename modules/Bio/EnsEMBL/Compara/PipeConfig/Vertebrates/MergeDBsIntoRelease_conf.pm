@@ -89,6 +89,7 @@ sub default_options {
             'sequence'              => 'members_db',
             'exon_boundaries'       => 'members_db',
             'seq_member_projection_stable_id' => 'members_db',
+            'method_link_species_set_attr'    => 'protein_db',
             'seq_member_projection' => 'protein_db',
             'peptide_align_feature%' => 'protein_db',
         },
