@@ -149,4 +149,3 @@ sub drop_inappropriate_db {
     }
 }
 
-1;
