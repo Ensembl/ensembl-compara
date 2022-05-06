@@ -109,6 +109,7 @@ sub tweak_analyses {
     # datacheck specific tweaks for pipelines
     $analyses_by_name->{'datacheck_factory'}->{'-parameters'} = {'dba' => '#compara_db#'};
     $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
+    $analyses_by_name->{'datacheck_factory'}->{'-wait_for'} = 'remove_overlapping_homologies';
 }
 
 
