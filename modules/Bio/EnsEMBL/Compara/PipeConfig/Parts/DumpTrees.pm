@@ -373,7 +373,7 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name => 'archive_long_files',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'         => 'gzip #full_name#',
+                'cmd'         => 'gzip -f #full_name#',
             },
         },
 
