@@ -60,7 +60,7 @@ use Scalar::Util qw(looks_like_number);
 
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 
 use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 
@@ -76,21 +76,12 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 #
 #####################
 
-
-=head2 fetch_by_stable_id
-
-  Arg [1]    : string $stable_id
-  Example    : my $member = $ma->fetch_by_stable_id("O93279");
-  Description: Fetches the member corresponding to this $stable_id.
-               This method accepts versionned stable IDs, such as ENSG00000157764.12
-  Returntype : Bio::EnsEMBL::Compara::Member object
-  Exceptions : throws if $stable_id is undef
-  Caller     : 
-
-=cut
-
-sub fetch_by_stable_id {
+sub fetch_by_stable_id { ## DEPRECATED
     my ($self, $stable_id) = @_;
+
+    deprecate(
+        "MemberAdaptor::fetch_by_stable_id() is to be deprecated and will be removed in e109. Use fetch_all_by_stable_id_GenomeDB instead."
+    );
 
     throw("MemberAdaptor::fetch_by_stable_id() must have an stable_id") unless $stable_id;
 
@@ -112,6 +103,51 @@ sub fetch_by_stable_id {
     }
 }
 
+=head2 fetch_by_stable_id_GenomeDB
+  Arg [1]       : string $stable_id
+  Arg [2]       : integer $genome_db_id or Bio::EnsEMBL::Compara::GenomeDB object
+  Example       : my $member = $ma->fetch_by_stable_id_GenomeDB("O93279", $genome_db);
+  Description   : Fetches the member corresponding to this $stable_id and $genome_db.
+                  This method accepts versioned stable IDs, such as ENSG00000157764.12
+  Returntype    : Bio::EnsEMBL::Compara::Member object
+  Exceptions    : throws if $stable_id and/or $genome_db is undef or has no dbID
+=cut
+
+sub fetch_by_stable_id_GenomeDB {
+    my ( $self, $stable_id, $genome_db ) = @_;
+
+    throw( "MemberAdaptor::fetch_by_stable_id_GenomeDB() must have a stable_id" ) unless $stable_id;
+    throw( "MemberAdaptor::fetch_by_stable_id_GenomeDB() must have a genome_db" ) unless $genome_db;
+    my $genome_db_id;
+    if ( $genome_db and ( $genome_db =~ /^\d+$/ ) ) {
+        $genome_db_id = $genome_db;
+    }
+    else {
+        assert_ref( $genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db' );
+        $genome_db_id = $genome_db->dbID;
+        if ( !$genome_db_id ) {
+            throw( "[$genome_db] does not have a dbID" );
+        }
+    }
+
+    $self->bind_param_generic_fetch( $stable_id, SQL_VARCHAR );
+    $self->bind_param_generic_fetch( $genome_db_id, SQL_INTEGER );
+    my $m = $self->generic_fetch_one( 'm.stable_id = ? AND m.genome_db_id = ?' );
+    return $m if $m;
+    # In the case of versioned stable_ids $m is not returned so continue with a versioned expectation
+    my $vindex = rindex( $stable_id, '.' );
+    return undef if $vindex <= 0;  # bail out if there is no dot, or if the string starts with a dot (since that would make the stable_id part empty)
+    my $version = substr( $stable_id, ( $vindex + 1 ) );
+    if ( looks_like_number( $version ) ) {  # to avoid DBI complains
+        $self->bind_param_generic_fetch( substr( $stable_id, 0, $vindex ), SQL_VARCHAR);
+        $self->bind_param_generic_fetch( $version, SQL_INTEGER );
+        $self->bind_param_generic_fetch( $genome_db_id, SQL_INTEGER );
+        return $self->generic_fetch_one( 'm.stable_id = ? AND m.version = ? AND m.genome_db_id = ?' );
+    }
+    else {
+        return undef;
+    }
+}
 
 =head2 fetch_all_by_stable_id_list
 
