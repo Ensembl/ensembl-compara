@@ -103,7 +103,7 @@ sub default_options {
         # Whole db DC parameters
         'datacheck_groups' => ['compara_gene_tree_pipelines'],
         'db_type'          => ['compara'],
-        'work_dir' => $self->o('pipeline_dir'),
+        'work_dir'         => $self->o('pipeline_dir'),
         'output_dir_path'  => $self->o('work_dir') . '/datachecks/',
         'overwrite_files'  => 1,
         'failures_fatal'   => 1, # no DC failure tolerance
