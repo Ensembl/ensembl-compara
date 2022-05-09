@@ -83,13 +83,13 @@ sub default_options {
             'compara_curr',
         ],
 
-     # Whole db DC parameters
-     'datacheck_groups' => ['compara_gene_tree_pipelines'],
-     'db_type'          => ['compara'],
-     'output_dir_path'  => $self->o('work_dir') . '/datachecks/',
-     'overwrite_files'  => 1,
-     'failures_fatal'   => 1, # no DC failure tolerance
-     'db_name'          => $self->o('dbowner') . '_' . $self->o('pipeline_name'),
+        # Whole db DC parameters
+        'datacheck_groups' => ['compara_gene_tree_pipelines'],
+        'db_type'          => ['compara'],
+        'output_dir_path'  => $self->o('work_dir') . '/datachecks/',
+        'overwrite_files'  => 1,
+        'failures_fatal'   => 1, # no DC failure tolerance
+        'db_name'          => $self->o('dbowner') . '_' . $self->o('pipeline_name'),
 
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => 14,
