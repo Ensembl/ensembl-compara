@@ -169,7 +169,7 @@ sub content {
 sub sift_poly_classes {
   my ($self,$table) = @_;
 
-  my %sp_classes = EnsEMBL::Web::Constants::PREDICTIONS_CLASSES;
+  my $sp_classes = EnsEMBL::Web::Constants::PREDICTIONS_CLASSES;
 
   foreach my $column_name (qw(sift polyphen cadd revel meta_lr mutation_assessor)) {
     my $value_column = $table->column("${column_name}_value");
@@ -177,8 +177,8 @@ sub sift_poly_classes {
     next unless $value_column and $class_column;
     $value_column->editorial_type('lozenge');
     $value_column->editorial_source("${column_name}_class");
-    foreach my $pred (keys %sp_classes) {
-      $value_column->editorial_cssclass($pred,"score_$sp_classes{$pred}");
+    foreach my $pred (keys %$sp_classes) {
+      $value_column->editorial_cssclass($pred,"score_$sp_classes->{$pred}");
       $value_column->editorial_helptip($pred,$pred);
     }
     # TODO: make decorators accessible to filters. Complexity is that
