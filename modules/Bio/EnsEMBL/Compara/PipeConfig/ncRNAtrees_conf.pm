@@ -211,7 +211,7 @@ sub pipeline_create_commands {
                             INDEX (homology_id)
             )'),
 
-           $self->db_cmd( 'CREATE TABLE datacheck_results (
+            $self->db_cmd( 'CREATE TABLE datacheck_results (
                                   submission_job_id INT,
                                   dbname VARCHAR(255) NOT NULL,
                                   passed INT,
