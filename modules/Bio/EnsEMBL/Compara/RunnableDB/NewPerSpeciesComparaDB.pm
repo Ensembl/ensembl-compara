@@ -25,7 +25,9 @@ Creates new MySQL compara database for a single genome_name
 E.g. standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::NewPerSpeciesComparaDB \
     -homology_host mysql-ens-compara-prod-2 \
     -genome_name canis_lupus_familiaris \
-    -curr_release 103
+    -curr_release 103 \
+    -schema_file $ENSEMBL_ROOT_DIR/ensembl-compara/sql/table.sql \
+    -db_cmd_path ${EHIVE_ROOT_DIR}/scripts/db_cmd.pl
 
 =cut
 
