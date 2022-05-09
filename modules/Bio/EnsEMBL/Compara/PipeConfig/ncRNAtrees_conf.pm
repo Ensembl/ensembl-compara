@@ -218,7 +218,7 @@ sub pipeline_create_commands {
                                   failed INT,
                                   skipped INT,
                                   INDEX submission_job_id_idx (submission_job_id)
-             )'),
+            )'),
     ];
 }
 
