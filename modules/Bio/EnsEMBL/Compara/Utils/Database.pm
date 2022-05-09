@@ -38,6 +38,7 @@ our @EXPORT_OK;
 
 @EXPORT_OK = qw(
     table_exists
+    db_exists
 );
 %EXPORT_TAGS = (
   all     => [@EXPORT_OK]
@@ -64,5 +65,40 @@ sub table_exists {
 
     return scalar( @info );
 }
+
+=head2 db_exists
+
+    Arg[1]      :  Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba (mandatory)
+    Arg[2]      :  $dbname (mandatory)
+    Description :  Check to see if database exists
+    Returns     :  True if database exists, False otherwise
+    Exceptions  :  None.
+
+=cut
+
+sub db_exists {
+    my ($host, $dbname) = @_;
+
+    my $port    = Bio::EnsEMBL::Compara::Utils::Registry::get_port($host);
+    my $rw_user = Bio::EnsEMBL::Compara::Utils::Registry::get_rw_user($host);
+    my $rw_pwd  = Bio::EnsEMBL::Compara::Utils::Registry::get_rw_pass($host);
+
+    my $dsn = "DBI:mysql:database=;host=$host" . ";port=$port";
+    my $dbh = DBI->connect( $dsn, $rw_user, $rw_pwd ) || die "Could not connect to MySQL server";
+    my $sql = qq/
+        SELECT
+            SCHEMA_NAME
+        FROM
+            INFORMATION_SCHEMA.SCHEMATA
+        WHERE
+            SCHEMA_NAME = "$dbname"
+    /;
+    my $sth = $dbh->prepare($sql);
+    $sth->execute();
+    my @info = $sth->fetchrow_array;
+
+    return scalar( @info );
+}
+
 
 1;
