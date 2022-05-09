@@ -1,0 +1,16 @@
+#!genome-build AalbS2
+#!genome-version AalbS2
+#!genome-build-accession GCA_000349125.2
+2R	VectorBase	gene	44548737	44555057	.	+	.	gene_id "AALB014269"; gene_version "1"; gene_source "VectorBase"; gene_biotype "protein_coding";
+2R	VectorBase	transcript	44548737	44555057	.	+	.	gene_id "AALB014269"; gene_version "1"; transcript_id "AALB014269-RA"; transcript_version "1"; gene_source "VectorBase"; gene_biotype "protein_coding"; transcript_source "VectorBase"; transcript_biotype "protein_coding";
+2R	VectorBase	exon	44548737	44550010	.	+	.	gene_id "AALB014269"; gene_version "1"; transcript_id "AALB014269-RA"; transcript_version "1"; exon_number "1"; gene_source "VectorBase"; gene_biotype "protein_coding"; transcript_source "VectorBase"; transcript_biotype "protein_coding"; exon_id "AALB014269-RC-E1"; exon_version "1";
+2R	VectorBase	gene	30120952	30126022	.	-	.	gene_id "AALB008253"; gene_version "1"; gene_source "VectorBase"; gene_biotype "protein_coding";
+2R	VectorBase	transcript	30120952	30126022	.	-	.	gene_id "AALB008253"; gene_version "1"; transcript_id "AALB008253-RA"; transcript_version "1"; gene_source "VectorBase"; gene_biotype "protein_coding"; transcript_source "VectorBase"; transcript_biotype "protein_coding";
+2R	VectorBase	exon	30125749	30126022	.	-	.	gene_id "AALB008253"; gene_version "1"; transcript_id "AALB008253-RA"; transcript_version "1"; exon_number "1"; gene_source "VectorBase"; gene_biotype "protein_coding"; transcript_source "VectorBase"; transcript_biotype "protein_coding"; exon_id "AALB008253-RA-E1"; exon_version "1";
+2R	VectorBase	CDS	30125749	30125895	.	-	0	gene_id "AALB008253"; gene_version "1"; transcript_id "AALB008253-RA"; transcript_version "1"; exon_number "1"; gene_source "VectorBase"; gene_biotype "protein_coding"; transcript_source "VectorBase"; transcript_biotype "protein_coding"; protein_id "AALB008253-PA"; protein_version "1";
+2R	VectorBase	gene	16547908	16549308	.	+	.	gene_id "AALB007248"; gene_version "1"; gene_source "VectorBase"; gene_biotype "protein_coding";
+2R	VectorBase	transcript	16547908	16549308	.	+	.	gene_id "AALB007248"; gene_version "1"; transcript_id "AALB007248-RA"; transcript_version "1"; gene_source "VectorBase"; gene_biotype "protein_coding"; transcript_source "VectorBase"; transcript_biotype "protein_coding";
+2R	VectorBase	exon	16547908	16549308	.	+	.	gene_id "AALB007248"; gene_version "1"; transcript_id "AALB007248-RA"; transcript_version "1"; exon_number "1"; gene_source "VectorBase"; gene_biotype "protein_coding"; transcript_source "VectorBase"; transcript_biotype "protein_coding"; exon_id "AALB007248-RA-E1"; exon_version "1";
+2R	VectorBase	CDS	16547908	16549305	.	+	0	gene_id "AALB007248"; gene_version "1"; transcript_id "AALB007248-RA"; transcript_version "1"; exon_number "1"; gene_source "VectorBase"; gene_biotype "protein_coding"; transcript_source "VectorBase"; transcript_biotype "protein_coding"; protein_id "AALB007248-PA"; protein_version "1";
+3L	VectorBase	gene	11249104	11253606	.	-	.	gene_id "AALB004554"; gene_version "1"; gene_source "VectorBase"; gene_biotype "protein_coding";
+3L	VectorBase	transcript	11249104	11253606	.	-	.	gene_id "AALB004554"; gene_version "1"; transcript_id "AALB004554-RA"; transcript_version "1"; gene_source "VectorBase"; gene_biotype "protein_coding"; transcript_source "VectorBase"; transcript_biotype "protein_coding";
