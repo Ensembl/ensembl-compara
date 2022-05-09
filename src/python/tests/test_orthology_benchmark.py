@@ -29,6 +29,7 @@ from pathlib import Path
 import sys
 from typing import ContextManager, Dict, List
 
+import pandas
 import sqlalchemy
 
 import pytest
@@ -323,3 +324,34 @@ def test_extract_paralogs() -> None:
     assert orthology_benchmark.extract_paralogs(
         orthofinder_res, "homo_sapiens_core_106_38"
     ) == [("ENSG00000163565", "ENSG00000163568")]
+
+
+@pytest.mark.parametrize(
+    "species_name, exp_data, expectation",
+    [
+        ("anopheles_albimanus",
+         [["2R", "AALB007248", 16547908, 16549308, "+"], ["2R", "AALB008253", 30120952, 30126022, "-"],
+          ["2R", "AALB014269", 44548737, 44555057, "+"], ["3L", "AALB004554", 11249104, 11253606, "-"]],
+         does_not_raise()),
+        ("ensembl_compara", None, warns(UserWarning, match=r"GTF file for 'ensembl_compara' not found."))
+    ]
+)
+def test_read_in_gtf(species_name, exp_data, expectation) -> None:
+    """Tests :func:`orthology_benchmark.read_in_gtf()` function.
+
+    Args:
+        species_name: Species (genome) name.
+        exp_data: Expected values in return data frame of the function.
+        expectation: Context manager for the expected exception, i.e. the test will only pass if that
+            exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
+
+    """
+    # pylint: disable-next=no-member
+    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
+    test_gtf_dir = test_source_dir / "release-51" / "metazoa" / "gtf" / "anopheles_albimanus"
+
+    with expectation:
+        out_df = orthology_benchmark.read_in_gtf(species_name, test_gtf_dir)
+        if out_df is not None:
+            exp_df = pandas.DataFrame(exp_data, columns=["seqname", "gene_id", "start", "end", "strand"])
+            pandas.testing.assert_frame_equal(out_df, exp_df)

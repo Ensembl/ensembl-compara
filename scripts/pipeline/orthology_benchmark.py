@@ -41,10 +41,12 @@ import re
 import shlex
 import shutil
 import subprocess
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 import warnings
 
+import gtfparse
 import numpy
+import pandas
 from sqlalchemy import create_engine
 
 from ensembl.compara.config import get_species_set_by_name
@@ -375,6 +377,39 @@ def extract_paralogs(res_dir: str, species_key: str) -> List[Tuple[str, str]]:
                         paralogs.append((gene1_bare_id, gene2_bare_id))
 
     return paralogs
+
+
+def read_in_gtf(species_name: str, gtf_dir: str) -> Union[pandas.DataFrame, type[None]]:
+    """Reads in gene entries from a GTF file for a specified species.
+
+    Args:
+        species_name: Species (genome) name.
+        gtf_dir: Path to the directory with GTF files.
+
+    Returns:
+        A pandas DataFrame with a name of the chromosome or scaffold, start, end and strand for all genes,
+        if the GTF file was found. Otherwise `None`.
+
+    Warns:
+        UserWarning: If the GTF file was not found.
+
+    """
+    gtf_file = None
+    gtf_file_pattern = f"{species_name.capitalize()}.*.gtf"
+
+    try:
+        gtf_file = list(glob.glob(os.path.join(gtf_dir, gtf_file_pattern)))[0]
+    except IndexError:
+        warnings.warn(f"GTF file for '{species_name}' not found.")
+        return None
+
+    df = gtfparse.read_gtf(gtf_file)
+    df_genes = df[df["feature"] == "gene"][["seqname", "gene_id", "start", "end", "strand"]]
+    df_genes_sorted = df_genes.sort_values(["seqname", "start"])
+    df_genes_sorted_reset = df_genes_sorted.reset_index()
+    df_genes_final = df_genes_sorted_reset.drop("index", 1)
+
+    return df_genes_final
 
 
 def calculate_goc_scores():
