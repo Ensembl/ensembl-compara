@@ -693,6 +693,35 @@ sub VARIATION_OPTIONS {
   );
 }
 
+sub PREDICTIONS_CLASSES {
+  return {
+    '-'                 => '',
+    'probably damaging' => 'bad',
+    'possibly damaging' => 'ok',
+    'benign'            => 'good',
+    'unknown'           => 'neutral',
+    'tolerated'         => 'good',
+    'deleterious'       => 'bad',
+
+    'likely deleterious'     => 'bad',
+    'likely benign'          => 'good',
+    'likely disease causing' => 'bad',
+    'damaging'               => 'bad',
+    'high'                   => 'bad',
+    'medium'                 => 'ok',
+    'low'                    => 'good',
+    'neutral'                => 'neutral',
+
+    # slightly different format for SIFT low confidence states
+    # depending on whether they come direct from the API
+    # or via the VEP's no-whitespace processing
+    'tolerated - low confidence'   => 'neutral',
+    'deleterious - low confidence' => 'neutral',
+    'tolerated low confidence'     => 'neutral',
+    'deleterious low confidence'   => 'neutral',
+  };
+} 
+
 sub MESSAGE_PRIORITY {
 ### Priority order for message boxes - errors, warnings, etc
   return (
