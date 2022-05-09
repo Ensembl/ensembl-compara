@@ -35,7 +35,7 @@ use warnings;
 use strict;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::Utils::Database qw/ table_exists /;
+use Bio::EnsEMBL::Compara::Utils::Database qw/ table_exists db_exists /;
 use Bio::EnsEMBL::Utils::Exception qw( warning );
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -68,6 +68,8 @@ sub write_output {
 
     my $schema_file = $self->param_required( 'schema_file' );
     my $db_cmd_path = $self->param_required( 'db_cmd_path' );
+    # Preferred behaviour is to die if the database already exists
+    die $new_db . " already exists" if db_exists( $host, $new_db_name );
 
     my @cmd;
     my $sql = "CREATE DATABASE IF NOT EXISTS $new_db_name";
@@ -75,15 +77,9 @@ sub write_output {
     $self->run_command( $cmd, { die_on_failure => 1 } );
 
     my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $new_db );
-    # Check to see if compara_db already exists with tables to avoid overwriting
-    if ( table_exists( $dba->dbc, 'genome_db' ) ) {
-        $self->warning( "Compara schema is already in place" );
-    }
-    # Insert compara schema
-    else {
-        $cmd = "$db_cmd_path -url $new_db < $schema_file";
-        $self->run_command( $cmd, { die_on_failure => 1 } );
-    }
+    $cmd = "$db_cmd_path -url $new_db < $schema_file";
+    $self->run_command( $cmd, { die_on_failure => 1 } );
+
     $self->dataflow_output_id( { 'per_species_db' => $new_db }, 2 );
 }
 
