@@ -1,5 +1,0 @@
-#!genome-build AalbS2
-#!genome-version AalbS2
-#!genome-build-accession GCA_000349125.2
-2R	VectorBase	gene	39590442	39592019	.	-	.	gene_id "AALB003604"; gene_version "1"; gene_source "VectorBase"; gene_biotype "protein_coding";
-2R	VectorBase	transcript	39590442	39592019	.	-	.	gene_id "AALB003604"; gene_version "1"; transcript_id "AALB003604-RA"; transcript_version "1"; gene_source "VectorBase"; gene_biotype "protein_coding"; transcript_source "VectorBase"; transcript_biotype "protein_coding";
