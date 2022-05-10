@@ -346,7 +346,8 @@ sub transcript_table {
       $protein_length = $translation->length;
     }
 
-    my ($ccds_string, $dblinks);
+    my $ccds_string;
+    my $dblinks = [];
 
     if ($has_ccds) {
       $dblinks = $_->get_all_DBLinks;
