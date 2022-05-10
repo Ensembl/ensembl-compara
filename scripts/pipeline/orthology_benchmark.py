@@ -394,7 +394,6 @@ def read_in_gtf(species_name: str, gtf_dir: str) -> Union[pandas.DataFrame, type
         UserWarning: If the GTF file was not found.
 
     """
-    gtf_file = None
     gtf_file_pattern = f"{species_name.capitalize()}.*.gtf"
 
     try:
