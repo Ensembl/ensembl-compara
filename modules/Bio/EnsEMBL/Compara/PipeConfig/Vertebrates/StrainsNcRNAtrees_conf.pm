@@ -105,6 +105,11 @@ sub tweak_analyses {
     # wire up strain-specific analyses
     $analyses_by_name->{'expand_clusters_with_projections'}->{'-flow_into'} = 'check_strains_cluster_factory';
     push @{$analyses_by_name->{'backbone_pipeline_finished'}->{'-flow_into'}}, 'remove_overlapping_homologies';
+
+    # datacheck specific tweaks for pipelines
+    $analyses_by_name->{'datacheck_factory'}->{'-parameters'} = {'dba' => '#compara_db#'};
+    $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
+    $analyses_by_name->{'datacheck_factory'}->{'-wait_for'} = 'remove_overlapping_homologies';
 }
 
 
