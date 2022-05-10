@@ -330,10 +330,11 @@ def test_extract_paralogs() -> None:
     "species_name, exp_data, expectation",
     [
         ("anopheles_albimanus",
-         [["2R", "AALB007248", 16547908, 16549308, "+"], ["2R", "AALB008253", 30120952, 30126022, "-"],
-          ["2R", "AALB014269", 44548737, 44555057, "+"], ["3L", "AALB004554", 11249104, 11253606, "-"]],
+         [["2R", "AALB007248", 16547908, "+"], ["2R", "AALB008253", 30120952, "-"],
+          ["2R", "AALB014269", 44548737, "+"], ["3L", "AALB004554", 11249104, "-"]],
          does_not_raise()),
-        ("ensembl_compara", None, warns(UserWarning, match=r"GTF file for 'ensembl_compara' not found."))
+        ("ensembl_compara", None, raises(FileNotFoundError,
+                                         match=r"GTF file for 'ensembl_compara' not found."))
     ]
 )
 def test_read_in_gtf(species_name, exp_data, expectation) -> None:
@@ -352,6 +353,5 @@ def test_read_in_gtf(species_name, exp_data, expectation) -> None:
 
     with expectation:
         out_df = orthology_benchmark.read_in_gtf(species_name, test_gtf_dir)
-        if out_df is not None:
-            exp_df = pandas.DataFrame(exp_data, columns=["seqname", "gene_id", "start", "end", "strand"])
-            pandas.testing.assert_frame_equal(out_df, exp_df)
+        exp_df = pandas.DataFrame(exp_data, columns=["seqname", "gene_id", "start", "strand"])
+        pandas.testing.assert_frame_equal(out_df, exp_df)

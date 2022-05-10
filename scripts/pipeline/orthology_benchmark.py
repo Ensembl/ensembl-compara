@@ -41,10 +41,10 @@ import re
 import shlex
 import shutil
 import subprocess
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple
 import warnings
 
-import gtfparse
+import gtfparse  # https://pypi.org/project/gtfparse/
 import numpy
 import pandas
 from sqlalchemy import create_engine
@@ -379,7 +379,7 @@ def extract_paralogs(res_dir: str, species_key: str) -> List[Tuple[str, str]]:
     return paralogs
 
 
-def read_in_gtf(species_name: str, gtf_dir: str) -> Union[pandas.DataFrame, type[None]]:
+def read_in_gtf(species_name: str, gtf_dir: str) -> pandas.DataFrame:
     """Reads in gene entries from a GTF file for a specified species.
 
     Args:
@@ -387,28 +387,27 @@ def read_in_gtf(species_name: str, gtf_dir: str) -> Union[pandas.DataFrame, type
         gtf_dir: Path to the directory with GTF files.
 
     Returns:
-        A pandas DataFrame with a name of the chromosome or scaffold, start, end and strand for all genes,
-        if the GTF file was found. Otherwise `None`.
+        A data frame with a name of the chromosome or scaffold, start position and strand for all genes.
 
-    Warns:
-        UserWarning: If the GTF file was not found.
+    Raises:
+        FileNotFoundError: If the GTF file was not found.
 
     """
     gtf_file_pattern = f"{species_name.capitalize()}.*.gtf"
 
     try:
         gtf_file = list(glob.glob(os.path.join(gtf_dir, gtf_file_pattern)))[0]
-    except IndexError:
-        warnings.warn(f"GTF file for '{species_name}' not found.")
-        return None
+    except IndexError as exc:
+        msg = f"GTF file for '{species_name}' not found."
+        raise FileNotFoundError(msg) from exc
 
     df = gtfparse.read_gtf(gtf_file)
-    df_genes = df[df["feature"] == "gene"][["seqname", "gene_id", "start", "end", "strand"]]
-    df_genes_sorted = df_genes.sort_values(["seqname", "start"])
-    df_genes_sorted_reset = df_genes_sorted.reset_index()
-    df_genes_final = df_genes_sorted_reset.drop("index", 1)
+    df_genes = df[df["feature"] == "gene"][["seqname", "gene_id", "start", "strand"]]
+    df_genes = df_genes.sort_values(["seqname", "start"])
+    df_genes = df_genes.reset_index()
+    df_genes = df_genes.drop("index", 1)
 
-    return df_genes_final
+    return df_genes
 
 
 def calculate_goc_scores():
