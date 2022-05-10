@@ -362,8 +362,16 @@ sub core_pipeline_analyses {
             {   -logic_name => 'backbone_fire_posttree',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -flow_into  => {
-                    '1->A' => ['rib_fire_homology_dumps', 'rib_fire_tree_stats'],
+                    '1->A' => ['rib_fire_posttree_processing'],
                     'A->1' => ['backbone_pipeline_finished'],
+                },
+            },
+
+            {   -logic_name => 'rib_fire_posttree_processing',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+                -flow_into  => {
+                    '1->A' => [ 'rib_fire_tree_stats' ],
+                    'A->1' => [ 'rib_fire_homology_dumps' ],
                 },
             },
 
