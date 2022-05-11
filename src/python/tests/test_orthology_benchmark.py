@@ -129,7 +129,7 @@ class TestDumpGenomes:
 
             out_files = tmp_dir / species_set_name
             # pylint: disable-next=no-member
-            exp_out = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
+            exp_out = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined, operator]
             for db_name, unittest_db in self.core_dbs.items():
                 assert file_cmp(out_files / f"{unittest_db.dbc.db_name}.fasta", exp_out / f"{db_name}.fasta")
 
@@ -266,7 +266,7 @@ def test_get_gtf_file(core_name: str, tmp_dir: Path, expectation: ContextManager
 
     """
     # pylint: disable-next=no-member
-    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
+    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined, operator]
     with expectation:
         orthology_benchmark.get_gtf_file(core_name, test_source_dir, tmp_dir)
 
@@ -308,7 +308,7 @@ def test_extract_orthologs() -> None:
     """Tests :func:`orthology_benchmark.extract_orthologs()` function.
     """
     # pylint: disable-next=no-member
-    test_files_dir = pytest.files_dir / "orth_benchmark" # type: ignore[attr-defined]
+    test_files_dir = pytest.files_dir / "orth_benchmark" # type: ignore[attr-defined, operator]
     orthofinder_res = test_files_dir  / "OrthoFinder" / "Results_Mar03"
     assert orthology_benchmark.extract_orthologs(
         orthofinder_res, "gallus_gallus_core_106_6", "homo_sapiens_core_106_38"
@@ -319,7 +319,7 @@ def test_extract_paralogs() -> None:
     """Tests :func:`orthology_benchmark.extract_paralogs()` function.
     """
     # pylint: disable-next=no-member
-    test_files_dir = pytest.files_dir / "orth_benchmark" # type: ignore[attr-defined]
+    test_files_dir = pytest.files_dir / "orth_benchmark" # type: ignore[attr-defined, operator]
     orthofinder_res = test_files_dir  / "OrthoFinder" / "Results_Mar03"
     assert orthology_benchmark.extract_paralogs(
         orthofinder_res, "homo_sapiens_core_106_38"
@@ -348,7 +348,7 @@ def test_read_in_gtf(species_name, exp_data, expectation) -> None:
 
     """
     # pylint: disable-next=no-member
-    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
+    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined, operator]
     test_gtf_dir = test_source_dir / "release-51" / "metazoa" / "gtf" / "anopheles_albimanus"
 
     with expectation:
