@@ -403,9 +403,9 @@ def read_in_gtf(species_name: str, gtf_dir: str) -> pandas.DataFrame:
 
     df = gtfparse.read_gtf(gtf_file)
     df_genes = df[df["feature"] == "gene"][["seqname", "gene_id", "start", "strand"]]
-    df_genes = df_genes.sort_values(["seqname", "start"])
-    df_genes = df_genes.reset_index()
-    df_genes = df_genes.drop("index", 1)
+    df_genes.sort_values(["seqname", "start"], inplace=True)
+    df_genes.reset_index(inplace=True)
+    df_genes.drop("index", 1, inplace=True)
 
     return df_genes
 
