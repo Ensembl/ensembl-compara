@@ -59,6 +59,6 @@ def test_get_species_set_by_name(mlss_conf_file: str, species_set_name: str, exp
 
     """
     # pylint: disable-next=no-member
-    mlss_conf_path = pytest.files_dir / 'config' / mlss_conf_file  # type: ignore[attr-defined]
+    mlss_conf_path = pytest.files_dir / 'config' / mlss_conf_file  # type: ignore[attr-defined, operator]
     with expectation:
         assert get_species_set_by_name(mlss_conf_path, species_set_name) == exp_output
