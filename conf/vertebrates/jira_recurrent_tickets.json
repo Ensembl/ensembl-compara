@@ -350,7 +350,7 @@
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps- Databaseupdate",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Databaseupdate",
             "summary": "Incremental copy back release database"
          },
          {
