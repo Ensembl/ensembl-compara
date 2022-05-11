@@ -346,16 +346,11 @@ sub transcript_table {
       $protein_length = $translation->length;
     }
 
-    my $ccds_string;
-    my $dblinks = [];
-
-    if ($has_ccds) {
-      $dblinks = $_->get_all_DBLinks;
-      if (my @CCDS = grep { $_->dbname eq 'CCDS' } @$dblinks) { 
-        my %T = map { $_->primary_id => 1 } @CCDS;
-        @CCDS = sort keys %T;
-        $ccds = join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS;
-      }
+    my $ccds;
+    if (my @CCDS = @{ $_->get_all_DBLinks('CCDS') }) { 
+      my %T = map { $_->primary_id => 1 } @CCDS;
+      @CCDS = sort keys %T;
+      $ccds = join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS;
     }
 
     foreach my $k (keys %extra_links) {
@@ -366,7 +361,7 @@ sub transcript_table {
         @links = grep {$_->status ne 'PRED' } @{ $_->get_all_DBLinks($extra_links{$k}->{'match'}) }
       }
       else {
-        $dblinks = $_->get_all_DBLinks unless scalar @$dblinks; ## Get links for non-CCDS species
+        my $dblinks = $_->get_all_DBLinks; 
         @links = grep {$_->status ne 'PRED' } grep { $_->dbname =~ /$extra_links{$k}->{'first_match'}/i } @$dblinks;
         ## Try second match
         if(!@links && $extra_links{$k}->{'second_match'}){
