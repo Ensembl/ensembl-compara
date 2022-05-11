@@ -33,7 +33,7 @@ import pandas
 import sqlalchemy
 
 import pytest
-from pytest import FixtureRequest, raises, warns
+from pytest import FixtureRequest, raises, warns  # type: ignore
 
 from ensembl.compara.filesys import file_cmp
 
