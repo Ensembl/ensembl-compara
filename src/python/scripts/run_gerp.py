@@ -37,7 +37,7 @@ def add_ce_to_json(ce_file: str, json_file: str) -> None:
     """Enrich the json file with the constrained elements.
 
     Args:
-        ce_file: file containing the constrained elements.
+        ce_file: file containing the constrained elements (csv format).
         json_file: json file with genome coordinate level.
 
     """
@@ -68,8 +68,8 @@ def add_ce_to_json(ce_file: str, json_file: str) -> None:
 def main(param: argparse.Namespace) -> None:
     """ Main function of the run_gerp.py script
 
-    This function is running gerpcol that define a gerpscore for every column of the genomic alignment bloc
-    and gerpelem that identify constrained elements across the alignment bloc
+    This function runs gerpcol to define a GERP score for every column of the genomic alignment block
+    and gerpelem to identify constrained elements across the genomic alignment block.
 
     Args:
         param: argparse.Namespace storing all the script parameters
@@ -91,15 +91,15 @@ def main(param: argparse.Namespace) -> None:
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='Calculate GERP score and identify constraint elements.')
-    parser.add_argument('--msa_file', type=str, required=True, help='MSA file (MFA format) (REQUIRED)')
-    parser.add_argument('--tree_file', type=str, required=True, help='Tree file (Newick format). Must '
-                                                'include every species in the MSA. (REQUIRED)')
-    parser.add_argument('--depth_threshold', default=0.5, type=float, help='Constrained elements depth '
-                                                'threshold for shallow columns, in substitutions per site. '
-                                                'By default, 0.5.')
-    parser.add_argument('--gerp_exe_dir', default="", type=str, help='Path where "gerpcol" and "gerpelem" '
-                                                'binaries can be found. By default, resort to $PATH.')
+    parser = argparse.ArgumentParser(description="Calculate GERP score and identify constrained elements.")
+    parser.add_argument("--msa_file", type=str, required=True, help="MSA file (MFA format) (REQUIRED)")
+    parser.add_argument("--tree_file", type=str, required=True, help="Tree file (Newick format). Must "
+                                                "include every species in the MSA. (REQUIRED)")
+    parser.add_argument("--depth_threshold", default=0.5, type=float, help="Constrained elements depth "
+                                                "threshold for shallow columns, in substitutions per site. "
+                                                "By default, 0.5.")
+    parser.add_argument("--gerp_exe_dir", default="", type=str, help="Path where 'gerpcol' and 'gerpelem' "
+                                                "binaries can be found. By default, resort to $PATH.")
 
     args = parser.parse_args()
     main(args)
