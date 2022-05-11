@@ -71,14 +71,14 @@ my $prev_eg_release = $curr_eg_release - 1;
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
 # Server for single species fungal cores
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3-b:4686/$curr_release");
 Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
 
 # Fungi collection databases for current cores if any - if none, can remove
 # for my $dbname (@dbnames_current) {
 #     Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-#         -host   => 'mysql-ens-sta-3',
-#         -port   => 4160,
+#         -host   => 'mysql-ens-sta-3-b',
+#         -port   => 4686,
 #         -user   => 'ensro',
 #         -pass   => '',
 #         -dbname => $dbname,
@@ -91,8 +91,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-3-b',
-        -port   => 4686,
+        -host   => 'mysql-ens-sta-3',
+        -port   => 4160,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -103,8 +103,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
     # Fungi collection databases
     # for my $dbname (@dbnames_previous) {
     #     Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-    #         -host   => 'mysql-ens-sta-3-b',
-    #         -port   => 4686,
+    #         -host   => 'mysql-ens-sta-3',
+    #         -port   => 4160,
     #         -user   => 'ensro',
     #         -pass   => '',
     #         -dbname => $dbname,
@@ -117,13 +117,13 @@ Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
 
 my $compara_dbs = {
     # general compara dbs
-    'compara_master' => [ 'mysql-ens-compara-prod-4', 'ensembl_compara_master_fungi' ], # Edit for server and correct db name
-    'compara_curr'   => [ 'mysql-ens-compara-prod-4', "ensembl_compara_fungi_${curr_eg_release}_${curr_release}" ],
-    'compara_prev'   => [ 'mysql-ens-compara-prod-4', "ensembl_compara_fungi_${prev_eg_release}_${prev_release}" ],
+    'compara_master' => [ 'mysql-ens-microbes-prod-3', 'ensembl_compara_master_fungi' ], # Edit for server and correct db name
+    'compara_curr'   => [ 'mysql-ens-microbes-prod-3', "ensembl_compara_fungi_${curr_eg_release}_${curr_release}" ],
+    'compara_prev'   => [ 'mysql-ens-sta-3', "ensembl_compara_fungi_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'  => [ 'mysql-ens-compara-prod-X',  '' ],
-    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-X',  '' ],
+    'compara_members'  => [ 'mysql-ens-microbes-prod-3', 'fungi_load_members_105' ],
+    'compara_ptrees'   => [ 'mysql-ens-microbes-prod-3', 'fungi_protein_trees_105' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -132,7 +132,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-3', "ncbi_taxonomy_${curr_release}" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-3-b', "ncbi_taxonomy_${curr_release}" ],
 });
 
 # -------------------------------------------------------------------
