@@ -293,7 +293,7 @@ def test_prepare_gtf_files(core_names: str, tmp_dir: Path, expectation: ContextM
 
     """
     # pylint: disable-next=no-member
-    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
+    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined, operator]
     with expectation:
         orthology_benchmark.prepare_gtf_files(core_names, test_source_dir, tmp_dir)
 
