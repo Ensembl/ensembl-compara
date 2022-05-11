@@ -24,6 +24,7 @@ use strict;
 use base qw(EnsEMBL::Web::Component::Variation);
 use Bio::EnsEMBL::Variation::Utils::VariationEffect qw(overlap);
 use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
+use EnsEMBL::Web::Utils::Variation qw(render_sift_polyphen);
 
 sub _init {
   my $self = shift;
@@ -229,8 +230,8 @@ sub content {
     my $type = $self->render_consequence_type($tva);
     
     # sift
-    my $sift = $self->render_sift_polyphen($tva->sift_prediction, $tva->sift_score);
-    my $poly = $self->render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
+    my $sift = render_sift_polyphen($tva->sift_prediction, $tva->sift_score);
+    my $poly = render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
 
     my $cadd = $self->render_score_prediction($tva->cadd_prediction, $tva->cadd_score);
     my $dbnsfp_revel             = $self->render_score_prediction($tva->dbnsfp_revel_prediction, $tva->dbnsfp_revel_score);
@@ -821,58 +822,6 @@ sub render_score_prediction {
     <span class="hidden">$rank</span><span class="hidden export">$pred(</span><div align="center"><div title="$pred" class="_ht score score_$classes{$pred}">$rank_str</div></div><span class="hidden export">)</span>
   );
 }
-
-sub render_sift_polyphen {
-  ## render a sift or polyphen prediction with colours and a hidden span with a rank for sorting
-  my ($self, $pred, $score) = @_;
-
-  return '-' unless defined($pred) || defined($score);
-
-  my %classes = (
-    '-'                 => '',
-    'probably damaging' => 'bad',
-    'possibly damaging' => 'ok',
-    'benign'            => 'good',
-    'unknown'           => 'neutral',
-    'tolerated'         => 'good',
-    'deleterious'       => 'bad',
-
-    # slightly different format for SIFT low confidence states
-    # depending on whether they come direct from the API
-    # or via the VEP's no-whitespace processing
-    'tolerated - low confidence'   => 'neutral',
-    'deleterious - low confidence' => 'neutral',
-    'tolerated low confidence'     => 'neutral',
-    'deleterious low confidence'   => 'neutral',
-  );
-
-  my %ranks = (
-    '-'                 => 0,
-    'probably damaging' => 4,
-    'possibly damaging' => 3,
-    'benign'            => 1,
-    'unknown'           => 2,
-    'tolerated'         => 1,
-    'deleterious'       => 2,
-  );
-
-  my ($rank, $rank_str);
-
-  if(defined($score)) {
-    $rank = int(1000 * $score) + 1;
-    $rank_str = "$score";
-  }
-  else {
-    $rank = $ranks{$pred};
-    $rank_str = $pred;
-  }
-
-  return qq(
-    <span class="hidden">$rank</span><span class="hidden export">$pred(</span><div align="center"><div title="$pred" class="_ht score score_$classes{$pred}">$rank_str</div></div><span class="hidden export">)</span>
-  );
-}
-
-
 
 ## THIS METHOD IS WIP AND NOT IN USE RIGHT NOW
 ## WILL BE USED TO RENDER THE CONTEXT OF THE VARIANT WITH
