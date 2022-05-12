@@ -229,7 +229,7 @@ sub _get_prediction_transcripts {
   my $slice = $args->{'slice'};
   my $db_alias = $args->{'db'};
   my @out;
-  my $is_gencode_basic = $args->{'only_attrib'} eq 'gencode_basic' ? 1 : 0;
+  my $is_gencode_basic = ($args->{'only_attrib'} && $args->{'only_attrib'} eq 'gencode_basic') ? 1 : 0;
 
   foreach my $logic_name (@{$args->{'logic_names'}}) {
     my $logic_name_with_species = $is_gencode_basic ?  $logic_name.'_'.$args->{'species'} : $logic_name;

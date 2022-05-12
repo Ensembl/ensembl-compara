@@ -318,6 +318,7 @@ sub calculate_collapsed_connections {
   my $ga = $hub->get_adaptor('get_GeneAdaptor',
                              $self->my_config('db'),$self->species);
   my $gene = $ga->fetch_by_stable_id($gene_stable_id);
+  return unless $gene;
  
   my $previous_species = $self->my_config('previous_species');
   my $next_species     = $self->my_config('next_species');
