@@ -89,7 +89,7 @@ sub biomart_link {
   my (@species)   = split /_/, $self->object->species;
   my $attr_prefix = lc(substr($species[0], 0, 1) . $species[scalar(@species)-1] . "_gene_ensembl"); 
   my $link        = "//".$SiteDefs::ENSEMBL_SERVERNAME."/biomart/martview?VIRTUALSCHEMANAME=default&ATTRIBUTES=$attr_prefix.default.feature_page.ensembl_gene_id|$attr_prefix.default.feature_page.ensembl_transcript_id|$attr_prefix.default.feature_page.external_gene_name|$attr_prefix.default.feature_page.description|$attr_prefix.default.feature_page.chromosome_name|$attr_prefix.default.feature_page.start_position|$attr_prefix.default.feature_page.end_position&FILTERS=$attr_prefix.default.filters.go_parent_term.$go"; 
-  my $url         = $self->hub->species_defs->ENSEMBL_MART_ENABLED ? qq{<a href="$link">Search BioMart</a>} : ""; 
+  my $url         = $self->hub->is_in_biomart ? qq{<a href="$link">Search BioMart</a>} : ""; 
   
   return $url;
 }

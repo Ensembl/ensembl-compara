@@ -382,6 +382,17 @@ sub is_strain   {
   return 0;
 }
 
+sub is_in_biomart {
+## Mainly for vertebrates, bc not all of them are in biomart
+  my ($self, $species) = @_;
+  $species ||= $self->species;
+  my $sd = $self->species_defs;
+  return 0 unless $sd->ENSEMBL_MART_ENABLED;
+  return 1 if $sd->EG_DIVISION;
+  my $in_compara = $sd->multi_hash->{'DATABASE_COMPARA'}{'COMPARA_SPECIES'};
+  my $in_biomart = $in_compara->{$sd->SPECIES_PRODUCTION_NAME};
+  return $in_biomart ? 1 : 0;
+}
 
 sub current_url {
   ## Gets the current url
