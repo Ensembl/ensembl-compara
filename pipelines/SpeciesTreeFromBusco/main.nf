@@ -39,6 +39,7 @@ if (!params.dir) {
 }
 
 process prepareBusco {
+    label 'lsf_default'
     input:
         path protfa
     output:
