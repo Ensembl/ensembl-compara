@@ -17,7 +17,7 @@
 
 nextflow.enable.dsl=2
 
-include { listSubDirs; ensemblLogo } from './../utilities.nf'
+include { ensemblLogo } from './../utilities.nf'
 
 def helpMessage() {
     log.info ensemblLogo()
