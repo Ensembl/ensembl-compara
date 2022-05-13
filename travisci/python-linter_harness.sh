@@ -22,6 +22,12 @@ PYTHON_SOURCE_LOCATIONS=('scripts' 'src/python')
 export PYTHONPATH=$PYTHONPATH:$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')
 export MYPYPATH=$MYPYPATH:$PWD/src/python/lib
 
+
+# Check mypy and pyling versions 
+pylint --version
+mypy --version
+
+
 PYLINT_OUTPUT_FILE=$(mktemp)
 PYLINT_ERRORS=$(mktemp)
 # CITest project is on hold and it needs to be updated before resuming its linter checker
@@ -38,5 +44,7 @@ rt2=$?
 if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then
   exit 0
 else
+  echo "pylint exitcode=$rt1"
+  echo "mypy exitcode=$rt2"
   exit 255
 fi
