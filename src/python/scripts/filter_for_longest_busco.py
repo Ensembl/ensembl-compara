@@ -45,4 +45,4 @@ if __name__ == '__main__':
     with open(args.l, "w") as oh:
         oh.write("Gene\n")
         for gene in db.keys():
-            oh.write("{}\n".format(gene))
+            oh.write(f"{gene}\n")
