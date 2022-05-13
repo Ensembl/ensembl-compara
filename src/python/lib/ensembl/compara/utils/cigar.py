@@ -103,8 +103,8 @@ def alignment_to_seq_coordinate(cigar: str, coord: int) -> List[int]:
     """Covert coordinate from the alignment level to sequence level
 
     This function will convert a position at the coordinate level to the sequence level. To be able to
-    deal with gasp and give the maximum information the function is return a list of position. If the
-    position at the alignemnt level fall into a gap then the position just before the gap and just after
+    deal with gaps and give the maximum information the function is return a list of position. If the
+    position at the alignment level fall into a gap then the position just before the gap and just after
     the gap (in the same order) is returned in the list . If the position is on a non gapped part of the
     sequence then it return the corresponding position at the sequence level in one list of a unic element.
 
