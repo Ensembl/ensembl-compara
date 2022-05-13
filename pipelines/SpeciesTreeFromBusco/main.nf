@@ -45,7 +45,7 @@ process prepareBusco {
         path "longest_busco_proteins.fas"
     script:
     """
-    ${params.scriptsDir}/filter_for_longest_busco.py -i $protfa -o longest_busco_proteins.fas
+    ${params.longest_busco_filter_exe} -i $protfa -o longest_busco_proteins.fas
     """
 }
 
