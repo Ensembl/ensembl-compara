@@ -60,10 +60,10 @@ process buscoAnnot {
         path "cdna/*.fas"
     script:
     """
-	mkdir anno_res
-	export ENSCODE=$params.enscode
+    mkdir anno_res
+    export ENSCODE=$params.enscode
     ln -s `which tblastn` .
-	python3 $params.anno_exe \
+    python3 $params.anno_exe \
     --output_dir anno_res \
     --genome_file $genome \
     --num_threads 30 \
