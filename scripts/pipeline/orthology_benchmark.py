@@ -44,7 +44,9 @@ import subprocess
 from typing import Dict, List, Tuple
 import warnings
 
+import gtfparse  # https://pypi.org/project/gtfparse/
 import numpy
+import pandas
 from sqlalchemy import create_engine
 
 from ensembl.compara.config import get_species_set_by_name
@@ -375,6 +377,37 @@ def extract_paralogs(res_dir: str, species_key: str) -> List[Tuple[str, str]]:
                         paralogs.append((gene1_bare_id, gene2_bare_id))
 
     return paralogs
+
+
+def read_in_gtf(species_name: str, gtf_dir: str) -> pandas.DataFrame:
+    """Reads in gene entries from a GTF file for a specified species.
+
+    Args:
+        species_name: Species (genome) name.
+        gtf_dir: Path to the directory with GTF files.
+
+    Returns:
+        A data frame with a name of the chromosome or scaffold, start position and strand for all genes.
+
+    Raises:
+        FileNotFoundError: If the GTF file was not found.
+
+    """
+    gtf_file_pattern = f"{species_name.capitalize()}.*.gtf"
+
+    try:
+        gtf_file = list(glob.glob(os.path.join(gtf_dir, gtf_file_pattern)))[0]
+    except IndexError as exc:
+        msg = f"GTF file for '{species_name}' not found."
+        raise FileNotFoundError(msg) from exc
+
+    df = gtfparse.read_gtf(gtf_file)
+    df_genes = df[df["feature"] == "gene"][["seqname", "gene_id", "start", "strand"]]
+    df_genes.sort_values(["seqname", "start"], inplace=True)
+    df_genes.reset_index(inplace=True)
+    df_genes.drop("index", 1, inplace=True)
+
+    return df_genes
 
 
 def calculate_goc_scores():

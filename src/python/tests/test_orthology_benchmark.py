@@ -29,10 +29,11 @@ from pathlib import Path
 import sys
 from typing import ContextManager, Dict, List
 
+import pandas
 import sqlalchemy
 
 import pytest
-from pytest import FixtureRequest, raises, warns
+from pytest import FixtureRequest, raises, warns  # type: ignore
 
 from ensembl.compara.filesys import file_cmp
 
@@ -128,7 +129,7 @@ class TestDumpGenomes:
 
             out_files = tmp_dir / species_set_name
             # pylint: disable-next=no-member
-            exp_out = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
+            exp_out = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined, operator]
             for db_name, unittest_db in self.core_dbs.items():
                 assert file_cmp(out_files / f"{unittest_db.dbc.db_name}.fasta", exp_out / f"{db_name}.fasta")
 
@@ -265,7 +266,7 @@ def test_get_gtf_file(core_name: str, tmp_dir: Path, expectation: ContextManager
 
     """
     # pylint: disable-next=no-member
-    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
+    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined, operator]
     with expectation:
         orthology_benchmark.get_gtf_file(core_name, test_source_dir, tmp_dir)
 
@@ -292,7 +293,7 @@ def test_prepare_gtf_files(core_names: str, tmp_dir: Path, expectation: ContextM
 
     """
     # pylint: disable-next=no-member
-    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined]
+    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined, operator]
     with expectation:
         orthology_benchmark.prepare_gtf_files(core_names, test_source_dir, tmp_dir)
 
@@ -307,7 +308,7 @@ def test_extract_orthologs() -> None:
     """Tests :func:`orthology_benchmark.extract_orthologs()` function.
     """
     # pylint: disable-next=no-member
-    test_files_dir = pytest.files_dir / "orth_benchmark" # type: ignore[attr-defined]
+    test_files_dir = pytest.files_dir / "orth_benchmark" # type: ignore[attr-defined, operator]
     orthofinder_res = test_files_dir  / "OrthoFinder" / "Results_Mar03"
     assert orthology_benchmark.extract_orthologs(
         orthofinder_res, "gallus_gallus_core_106_6", "homo_sapiens_core_106_38"
@@ -318,8 +319,39 @@ def test_extract_paralogs() -> None:
     """Tests :func:`orthology_benchmark.extract_paralogs()` function.
     """
     # pylint: disable-next=no-member
-    test_files_dir = pytest.files_dir / "orth_benchmark" # type: ignore[attr-defined]
+    test_files_dir = pytest.files_dir / "orth_benchmark" # type: ignore[attr-defined, operator]
     orthofinder_res = test_files_dir  / "OrthoFinder" / "Results_Mar03"
     assert orthology_benchmark.extract_paralogs(
         orthofinder_res, "homo_sapiens_core_106_38"
     ) == [("ENSG00000163565", "ENSG00000163568")]
+
+
+@pytest.mark.parametrize(
+    "species_name, exp_data, expectation",
+    [
+        ("anopheles_albimanus",
+         [["2R", "AALB007248", 16547908, "+"], ["2R", "AALB008253", 30120952, "-"],
+          ["2R", "AALB014269", 44548737, "+"], ["3L", "AALB004554", 11249104, "-"]],
+         does_not_raise()),
+        ("ensembl_compara", None, raises(FileNotFoundError,
+                                         match=r"GTF file for 'ensembl_compara' not found."))
+    ]
+)
+def test_read_in_gtf(species_name, exp_data, expectation) -> None:
+    """Tests :func:`orthology_benchmark.read_in_gtf()` function.
+
+    Args:
+        species_name: Species (genome) name.
+        exp_data: Expected values in return data frame of the function.
+        expectation: Context manager for the expected exception, i.e. the test will only pass if that
+            exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
+
+    """
+    # pylint: disable-next=no-member
+    test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined, operator]
+    test_gtf_dir = test_source_dir / "release-51" / "metazoa" / "gtf" / "anopheles_albimanus"
+
+    with expectation:
+        out_df = orthology_benchmark.read_in_gtf(species_name, test_gtf_dir)
+        exp_df = pandas.DataFrame(exp_data, columns=["seqname", "gene_id", "start", "strand"])
+        pandas.testing.assert_frame_equal(out_df, exp_df)
