@@ -169,6 +169,4 @@ jobs:
         - pip install pylint mypy
         - pip install -r requirements.txt
         - pip install .
-        - pylint --version
-        - mypy --version
       script: ./travisci/python-linter_harness.sh

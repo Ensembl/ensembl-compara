@@ -15,4 +15,3 @@
 """Utils module."""
 
 from .tools import *
-from .cigar import *
