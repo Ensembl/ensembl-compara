@@ -39,11 +39,12 @@ if (!params.dir) {
 }
 
 process prepareBusco {
-    label 'lsf_default'
+    label 'rc_4Gb'
     input:
         path protfa
     output:
-        path "longest_busco_proteins.fas"
+        path "longest_busco_proteins.fas", emit: busco_prots
+        path "busco_genes.tsv", emit: busco_genes
     script:
     """
     ${params.longest_busco_filter_exe} -i $protfa -o longest_busco_proteins.fas
@@ -74,11 +75,25 @@ process buscoAnnot {
     """
 }
 
-process collateBusco{
+process collateBusco {
+    label 'rc_16Gb'
 	input:
 		val cdnas
+        path genes_tsv
+
+    output:
+        path "cdnas_fofn.txt", emit: fofon
+        stdout emit:debug
 	script:
+    fh = new File("$workDir/cdnas_fofn.txt")
+    for (line : cdnas)  {
+        fh.append("$line\n")
+    }
 	"""
+    mv ${workDir}/cdnas_fofn.txt .
+    mkdir per_gene
+    ${params.scriptsDir}/collate_busco_results.py -i cdnas_fofn.txt -l $genes_tsv -o per_gene
+
 	"""
 
 }
@@ -88,7 +103,8 @@ workflow {
         prepareBusco(params.busco_proteins)
         genomes = Channel.fromPath("${params.dir}/*.fas")
 
-        buscoAnnot(prepareBusco.out, genomes)
-		collateBusco(buscoAnnot.out.collect())
+        buscoAnnot(prepareBusco.out.busco_prots, genomes)
+		collateBusco(buscoAnnot.out.collect(), prepareBusco.out.busco_genes)
+        collateBusco.out.debug.view()
 }
 
