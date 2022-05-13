@@ -84,7 +84,7 @@ process collateBusco {
     output:
         path "cdnas_fofn.txt", emit: fofon
         stdout emit:debug
-	script:
+    script:
     fh = new File("$workDir/cdnas_fofn.txt")
     for (line : cdnas)  {
         fh.append("$line\n")
