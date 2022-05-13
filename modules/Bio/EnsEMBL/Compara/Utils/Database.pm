@@ -68,7 +68,7 @@ sub table_exists {
 
 =head2 db_exists
 
-    Arg[1]      :  Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba (mandatory)
+    Arg[1]      :  $host (mandatory)
     Arg[2]      :  $dbname (mandatory)
     Description :  Check to see if database exists
     Returns     :  True if database exists, False otherwise
