@@ -89,11 +89,11 @@ process collateBusco {
     for (line : cdnas)  {
         fh.append("$line\n")
     }
-	"""
+    """
     mv ${workDir}/cdnas_fofn.txt .
     mkdir per_gene
     python ${params.collate_busco_results_exe} -i cdnas_fofn.txt -l $genes_tsv -o per_gene
-	"""
+    """
 
 }
 
