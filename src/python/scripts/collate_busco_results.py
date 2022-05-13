@@ -14,12 +14,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Script for collating per-genome BUSCO cDNA results.
+"""
 
 import argparse
-import sys
 import pandas as pd
-from typing import Dict, List
-from Bio import SeqIO
 
 # Parse command line arguments:
 parser = argparse.ArgumentParser(

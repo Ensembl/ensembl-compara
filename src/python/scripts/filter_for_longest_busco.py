@@ -14,6 +14,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Script for filtering for the longest protein isoform per gene.
+"""
 
 import argparse
 from Bio import SeqIO
@@ -45,5 +48,5 @@ if __name__ == '__main__':
 
     with open(args.l, "w") as oh:
         oh.write("Gene\n")
-        for gene in db.keys():
+        for gene in db:
             oh.write(f"{gene}\n")
