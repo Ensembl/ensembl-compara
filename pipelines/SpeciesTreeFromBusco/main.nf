@@ -77,8 +77,8 @@ process buscoAnnot {
 
 process collateBusco {
     label 'rc_16Gb'
-	input:
-		val cdnas
+    input:
+        val cdnas
         path genes_tsv
 
     output:
