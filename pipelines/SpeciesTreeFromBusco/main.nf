@@ -61,7 +61,13 @@ process buscoAnnot {
 	mkdir anno_res
 	export ENSCODE=$params.enscode
     ln -s `which tblastn` .
-	python3 $params.anno_exe --output_dir anno_res --genome_file $genome --num_threads 30 --max_intron_length 100000 --run_busco 1 --busco_protein_file $busco_prot
+	python3 $params.anno_exe \
+	--output_dir anno_res \
+	--genome_file $genome \
+	--num_threads 30 \
+	--max_intron_length 100000 \
+	--run_busco 1 \
+	--busco_protein_file $busco_prot
 	GEN=`basename $genome`
 	gffread -w cdna_\$GEN -g $genome anno_res/busco_output/annotation.gtf
     """
