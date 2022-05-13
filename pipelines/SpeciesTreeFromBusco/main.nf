@@ -47,7 +47,7 @@ process prepareBusco {
         path "busco_genes.tsv", emit: busco_genes
     script:
     """
-    ${params.longest_busco_filter_exe} -i $protfa -o longest_busco_proteins.fas
+    python ${params.longest_busco_filter_exe} -i $protfa -o longest_busco_proteins.fas
     """
 }
 
@@ -57,21 +57,21 @@ process buscoAnnot {
         path busco_prot
         path genome
     output:
-        path "cdna_*.fas"
+        path "cdna/*.fas"
     script:
     """
 	mkdir anno_res
 	export ENSCODE=$params.enscode
     ln -s `which tblastn` .
 	python3 $params.anno_exe \
-	--output_dir anno_res \
-	--genome_file $genome \
-	--num_threads 30 \
-	--max_intron_length 100000 \
-	--run_busco 1 \
-	--busco_protein_file $busco_prot
-	GEN=`basename $genome`
-	gffread -w cdna_\$GEN -g $genome anno_res/busco_output/annotation.gtf
+    --output_dir anno_res \
+    --genome_file $genome \
+    --num_threads 30 \
+    --max_intron_length 100000 \
+    --run_busco 1 \
+    --busco_protein_file $busco_prot
+    mkdir cdna
+    gffread -w cdna/$genome -g $genome anno_res/busco_output/annotation.gtf
     """
 }
 
@@ -92,8 +92,7 @@ process collateBusco {
 	"""
     mv ${workDir}/cdnas_fofn.txt .
     mkdir per_gene
-    ${params.scriptsDir}/collate_busco_results.py -i cdnas_fofn.txt -l $genes_tsv -o per_gene
-
+    python ${params.collate_busco_results_exe} -i cdnas_fofn.txt -l $genes_tsv -o per_gene
 	"""
 
 }
@@ -104,7 +103,7 @@ workflow {
         genomes = Channel.fromPath("${params.dir}/*.fas")
 
         buscoAnnot(prepareBusco.out.busco_prots, genomes)
-		collateBusco(buscoAnnot.out.collect(), prepareBusco.out.busco_genes)
+        collateBusco(buscoAnnot.out.collect(), prepareBusco.out.busco_genes)
         collateBusco.out.debug.view()
 }
 

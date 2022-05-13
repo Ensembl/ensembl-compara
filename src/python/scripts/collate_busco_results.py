@@ -31,18 +31,12 @@ parser.add_argument(
     '-o', metavar='output', type=str, help="Output directory.", default="per_gene")
 
 
-def load_seq(seq_file: str):
-    with open("example.fasta") as handle:
-        for record in SeqIO.parse(handle, "fasta"):
-            print(record.id)
-
-
 if __name__ == '__main__':
     args = parser.parse_args()
 
     genes = pd.read_csv(args.l, sep="\t")
     with open(args.i) as x:
-        seq_files = [ y.strip() for y in x.readlines()]
+        seq_files = [y.strip() for y in x.readlines()]
 
     for seq_file in seq_files:
-        load_seq(seq_file)
+        print(seq_file)
