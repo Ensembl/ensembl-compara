@@ -73,14 +73,14 @@ def aligned_seq_to_cigar(aligned_seq:str) -> str:
     return cigar
 
 
-def get_cigar_array(cigar:str) -> List[Tuple]:
+def get_cigar_array(cigar:str) -> List[Tuple[int, str]]:
     """Return an array of the cigar line, e.g.: [(34, 'M'), (12, 'D'), ( 5, 'M') ...]
 
     Params:
         cigar: cigar line of the aligned sequence (str)
 
     Returns:
-        cigar array (list<tuple>)
+        cigar array (List[Tuple[int, str]])
     Raises:
         ValueError :  if cigar line incorrect
     """
