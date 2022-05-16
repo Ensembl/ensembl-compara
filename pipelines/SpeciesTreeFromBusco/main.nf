@@ -76,13 +76,20 @@ process buscoAnnot {
 }
 
 process collateBusco {
-    label 'rc_16Gb'
+    label 'rc_16gb'
+
+    publishDir "${params.results_dir}/busco_genes", pattern: "cdnas_fofn.txt", mode: "copy"
+    publishDir "${params.results_dir}/busco_genes/prot", pattern: "gene_prot_*.fas", mode: "copy"
+    publishDir "${params.results_dir}/busco_genes/cdna", pattern: "gene_cdna_*.fas", mode: "copy"
+    publishDir "${params.results_dir}/busco_genes", pattern: "busco_stats.tsv", mode: "copy"
+
     input:
         val cdnas
         path genes_tsv
 
     output:
         path "cdnas_fofn.txt", emit: fofon
+        path "gene_prot_*.fas", emit: prot_seq
         stdout emit:debug
     script:
     fh = new File("$workDir/cdnas_fofn.txt")
@@ -92,7 +99,24 @@ process collateBusco {
     """
     mv ${workDir}/cdnas_fofn.txt .
     mkdir per_gene
-    python ${params.collate_busco_results_exe} -i cdnas_fofn.txt -l $genes_tsv -o per_gene
+    python ${params.collate_busco_results_exe} -s busco_stats.tsv -i cdnas_fofn.txt -l $genes_tsv -o ./
+    """
+
+}
+
+process alignProt {
+    label 'rc_16Gb'
+
+    input:
+        val protFas
+    output:
+        path "prot_aln_*.fas", emit: prot_aln
+   
+    script:
+    id = (protFas =~ /.*prot_(.*)\.fas$/)[0][1]
+    """
+    mafft --auto $protFas > prot_aln_${id}.fas
+    # muscle -in  $protFas -out prot_aln_${id}.fas
     """
 
 }
@@ -105,5 +129,6 @@ workflow {
     buscoAnnot(prepareBusco.out.busco_prots, genomes)
     collateBusco(buscoAnnot.out.collect(), prepareBusco.out.busco_genes)
     collateBusco.out.debug.view()
+    alignProt(collateBusco.out.prot_seq.flatten())
 }
 

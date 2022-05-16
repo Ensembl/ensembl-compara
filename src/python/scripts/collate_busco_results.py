@@ -19,7 +19,13 @@ Script for collating per-genome BUSCO cDNA results.
 """
 
 import argparse
+from collections import defaultdict, OrderedDict
+from os import path
+from typing import Dict, List
+
 import pandas as pd
+from Bio import SeqIO
+from Bio.SeqRecord import SeqRecord
 
 # Parse command line arguments:
 parser = argparse.ArgumentParser(
@@ -30,14 +36,65 @@ parser.add_argument(
     '-l', metavar='genes', type=str, help="List of busco genes.")
 parser.add_argument(
     '-o', metavar='output', type=str, help="Output directory.", default="per_gene")
+parser.add_argument(
+    '-s', metavar='stats', type=str, help="Output stats TSV.")
+
+
+def load_sequences(infile: str) -> Dict[str, List[SeqRecord]]:
+    genes = defaultdict(list)
+    with open(infile) as handle:
+        for record in SeqIO.parse(handle, "fasta"):
+            gene = str(record.id).split("_")[0]
+            genes[gene].append(record)
+    filtered = {}
+    duplicates = 0
+    for gene, records in genes.items():
+        if len(records) > 1:
+            duplicates += 1
+        else:
+            filtered[gene] = records[0]
+    return filtered, duplicates
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    genes = pd.read_csv(args.l, sep="\t")
+    all_genes = pd.read_csv(args.l, sep="\t")
     with open(args.i) as x:
         seq_files = [y.strip() for y in x.readlines()]
 
+    taxa = []
+    dups = []
+    usable = []
+    per_gene = defaultdict(list)
     for seq_file in seq_files:
-        print(seq_file)
+        genes, duplicates = load_sequences(seq_file)
+        taxon = path.basename(seq_file).rsplit(".", 1)[0]
+        for g, s in genes.items():
+            s.id = taxon
+            s.description = ""
+            per_gene[g].append(s)
+        taxa.append(taxon)
+        dups.append(duplicates)
+        usable.append(len(genes))
+
+    stat_data = OrderedDict([('Taxa', taxa), ('Genes', usable), ('Duplicates', dups)])
+    stat_df = pd.DataFrame(stat_data)
+    stat_df["SetGenes"] = len(all_genes.Gene)
+    stat_df["UsablePercent"] = (stat_df.Genes * 100) / stat_df.SetGenes
+    stat_df.to_csv(args.s, sep="\t", index=False)
+
+    # Dump per-gene cDNAs:
+    for g, s in per_gene.items():
+        with open(path.join(args.o, f"gene_cdna_{g}.fas"), "w") as output_handle:
+            SeqIO.write(s, output_handle, "fasta")
+
+        ts = []
+        for x in s:
+            y = x.translate()
+            y.id = x.id
+            y.description = ""
+            ts.append(y)
+
+        with open(path.join(args.o, f"gene_prot_{g}.fas"), "w") as output_handle:
+            SeqIO.write(ts, output_handle, "fasta")
