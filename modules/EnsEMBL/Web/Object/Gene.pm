@@ -730,7 +730,8 @@ sub get_homology_matches {
           wgac                => $wgac,
           wga_threshold       => $wga_threshold,
           highconfidence      => $highconfidence,
-          location            => sprintf('%s:%s-%s:%s', $homologue->dnafrag()->name, map $self->thousandify($homologue->$_), qw(dnafrag_start dnafrag_end dnafrag_strand))
+          location            => sprintf('%s:%s-%s:%s', $homologue->dnafrag()->name, map $self->thousandify($homologue->$_), qw(dnafrag_start dnafrag_end dnafrag_strand)),
+          rparam              => sprintf('%s:%s-%s:%s', $homologue->dnafrag()->name, map $homologue->$_, qw(dnafrag_start dnafrag_end dnafrag_strand)),
         };
         
         $order++;
