@@ -98,12 +98,12 @@ process collateBusco {
 }
 
 workflow {
-        println(ensemblLogo())
-        prepareBusco(params.busco_proteins)
-        genomes = Channel.fromPath("${params.dir}/*.fas")
+    println(ensemblLogo())
+    prepareBusco(params.busco_proteins)
+    genomes = Channel.fromPath("${params.dir}/*.fas")
 
-        buscoAnnot(prepareBusco.out.busco_prots, genomes)
-        collateBusco(buscoAnnot.out.collect(), prepareBusco.out.busco_genes)
-        collateBusco.out.debug.view()
+    buscoAnnot(prepareBusco.out.busco_prots, genomes)
+    collateBusco(buscoAnnot.out.collect(), prepareBusco.out.busco_genes)
+    collateBusco.out.debug.view()
 }
 
