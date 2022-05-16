@@ -41,7 +41,7 @@ import re
 import shlex
 import shutil
 import subprocess
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 import warnings
 
 import gtfparse  # https://pypi.org/project/gtfparse/
@@ -406,6 +406,54 @@ def read_in_gtf(species_name: str, gtf_dir: str) -> pandas.DataFrame:
     df_genes.sort_values(["seqname", "start"], inplace=True)
     df_genes.reset_index(inplace=True)
     df_genes.drop("index", 1, inplace=True)
+
+    return df_genes
+
+
+def collapse_tandem_paralogs(df_genes: pandas.DataFrame, paralogs: List[Tuple[str, str]],
+                             keep_collapsed: bool = False) -> Union[pandas.DataFrame, Dict[str, str]]:
+    """Removes tandem paralogs from a data frame containing all genes, with an option to store their
+    `gene_ids` in a dictionary.
+
+    All tandem paralogs are removed except the gene copy with min start position on a chromosome or scaffold.
+
+    Args:
+        df_genes: A data frame with a name of the chromosome or scaffold, `gene_id`, gene start position and
+            strand.
+        paralogs: A list of pairs of paralogous genes.
+        keep_collapsed: To return (true) or not (false) a dictionary of collapsed paralogs.
+
+    Returns:
+        A data frame without genes arising from tandem duplications, and if chosen, a dictionary mapping
+        `gene_id` of a removed (collapsed) gene copy with a `gene_id` of the retained copy.
+
+    """
+    if keep_collapsed:
+        tandem_paralogs = {}
+
+    to_collapse = []
+
+    for (gene1, gene2) in paralogs:
+        seqname1 = df_genes[df_genes["gene_id"] == gene1]["seqname"].values[0]
+        seqname2 = df_genes[df_genes["gene_id"] == gene2]["seqname"].values[0]
+
+        if seqname1 == seqname2:
+            index1 = df_genes.index[df_genes["gene_id"] == gene1][0]
+            index2 = df_genes.index[df_genes["gene_id"] == gene2][0]
+
+            # collapse tandem paralogs
+            if abs(index1 - index2) == 1:
+                to_collapse.append(max(index1, index2))
+                if keep_collapsed:
+                    tandem_paralogs[df_genes.iloc[[max(index1, index2)]]["gene_id"].values[0]] = \
+                        df_genes.iloc[[min(index1, index2)]]["gene_id"].values[0]
+
+    df_genes.drop(df_genes.index[to_collapse], inplace=True)
+    df_genes.reset_index(inplace=True)
+    df_genes.drop("index", 1, inplace=True)
+
+    if keep_collapsed:
+        return df_genes, tandem_paralogs
 
     return df_genes
 

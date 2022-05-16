@@ -355,3 +355,71 @@ def test_read_in_gtf(species_name, exp_data, expectation) -> None:
         out_df = orthology_benchmark.read_in_gtf(species_name, test_gtf_dir)
         exp_df = pandas.DataFrame(exp_data, columns=["seqname", "gene_id", "start", "strand"])
         pandas.testing.assert_frame_equal(out_df, exp_df)
+
+@pytest.mark.parametrize(
+    "test_genes, test_paralogs, exp_genes, exp_paralogs",
+    [
+        ([["ML997581.1", "ENSOSUG000006", 6188, "+"], ["ML997581.1", "ENSOSUG000008", 15846, "+"],
+          ["ML997581.1", "ENSOSUG000012", 25596, "+"], ["ML997581.1", "ENSOSUG000020", 34779, "+"],
+          ["ML997581.1", "ENSOSUG000063", 55600, "+"], ["ML997581.1", "ENSOSUG000105", 84807, "+"],
+          ["PYXB01141513.1", "ENSOSUG003211", 2, "-"], ["PYXB01142552.1", "ENSOSUG003223", 38, "-"],
+          ["PYXB01142696.1", "ENSOSUG003240", 12, "-"]],
+         [("ENSOSUG000006", "ENSOSUG000105"), ("ENSOSUG000008", "ENSOSUG000012"),
+          ("ENSOSUG000020", "ENSOSUG000008"), ("ENSOSUG000020", "ENSOSUG000012"),
+          ("ENSOSUG000020", "ENSOSUG000063"), ("ENSOSUG000105", "ENSOSUG003211")],
+         [["ML997581.1", "ENSOSUG000006", 6188, "+"], ["ML997581.1", "ENSOSUG000008", 15846, "+"],
+          ["ML997581.1", "ENSOSUG000105", 84807, "+"], ["PYXB01141513.1", "ENSOSUG003211", 2, "-"],
+          ["PYXB01142552.1", "ENSOSUG003223", 38, "-"], ["PYXB01142696.1", "ENSOSUG003240", 12, "-"]],
+         {"ENSOSUG000012": "ENSOSUG000008", "ENSOSUG000020": "ENSOSUG000012",
+          "ENSOSUG000063": "ENSOSUG000020"}),
+        ([["ML997581.1", "ENSOSUG000006", 6188, "+"], ["ML997581.1", "ENSOSUG000008", 15846, "+"],
+          ["ML997581.1", "ENSOSUG000012", 25596, "+"]],
+         [("ENSOSUG000008", "ENSOSUG000012")],
+         [["ML997581.1", "ENSOSUG000006", 6188, "+"], ["ML997581.1", "ENSOSUG000008", 15846, "+"]],
+         {"ENSOSUG000012": "ENSOSUG000008"}),
+        ([["ML997581.1", "ENSOSUG000006", 6188, "+"], ["ML997581.1", "ENSOSUG000008", 15846, "+"],
+          ["ML997581.1", "ENSOSUG000012", 25596, "+"], ["PYXB01141513.1", "ENSOSUG003211", 2, "-"]],
+         [("ENSOSUG000012", "ENSOSUG003211")],
+         [["ML997581.1", "ENSOSUG000006", 6188, "+"], ["ML997581.1", "ENSOSUG000008", 15846, "+"],
+          ["ML997581.1", "ENSOSUG000012", 25596, "+"], ["PYXB01141513.1", "ENSOSUG003211", 2, "-"]],
+         {}),
+        ([["ML997581.1", "ENSOSUG000006", 6188, "+"], ["ML997581.1", "ENSOSUG000008", 15846, "+"],
+          ["ML997581.1", "ENSOSUG000012", 25596, "+"], ["PYXB01141513.1", "ENSOSUG003211", 2, "-"]],
+         [("ENSOSUG000006", "ENSOSUG000012")],
+         [["ML997581.1", "ENSOSUG000006", 6188, "+"], ["ML997581.1", "ENSOSUG000008", 15846, "+"],
+           ["ML997581.1", "ENSOSUG000012", 25596, "+"], ["PYXB01141513.1", "ENSOSUG003211", 2, "-"]],
+          {}),
+    ]
+)
+def test_collapse_tandem_paralogs_w_keep(test_genes, test_paralogs, exp_genes, exp_paralogs) -> None:
+    """Tests :func:`orthology_benchmark.collapse_tandem_paralogs()` function when it returns an optional
+    dictionary.
+
+    Args:
+        test_genes: A list of lists containing information about test genes (GTF "seqname", "gene_id",
+            "start", "strand").
+        test_paralogs: A list of test putative paralogous pairs.
+        exp_genes: A list of lists containing information about genes in the expected output data frame
+            (GTF "seqname", "gene_id", "start", "strand").
+        exp_paralogs: A list of putative paralogous pairs in the expected output.
+
+    """
+    test_df = pandas.DataFrame(test_genes, columns=["seqname", "gene_id", "start", "strand"])
+    exp_df = pandas.DataFrame(exp_genes, columns=["seqname", "gene_id", "start", "strand"])
+    out_df, tandem_paralogs = orthology_benchmark.collapse_tandem_paralogs(test_df, test_paralogs, True)
+    pandas.testing.assert_frame_equal(out_df, exp_df)
+    assert tandem_paralogs == exp_paralogs
+
+
+def test_collapse_tandem_paralogs_wo_keep() -> None:
+    """Tests :func:`orthology_benchmark.collapse_tandem_paralogs()` function when it does not return an
+    optional dictionary.
+    """
+    test_genes = [["ML997581.1", "ENSOSUG000006", 6188, "+"], ["ML997581.1", "ENSOSUG000008", 15846, "+"],
+                  ["ML997581.1", "ENSOSUG000012", 25596, "+"]]
+    test_df = pandas.DataFrame(test_genes, columns=["seqname", "gene_id", "start", "strand"])
+    test_paralogs = [("ENSOSUG000008", "ENSOSUG000012")]
+    exp_genes = [["ML997581.1", "ENSOSUG000006", 6188, "+"], ["ML997581.1", "ENSOSUG000008", 15846, "+"]]
+    exp_df = pandas.DataFrame(exp_genes, columns=["seqname", "gene_id", "start", "strand"])
+    out_df = orthology_benchmark.collapse_tandem_paralogs(test_df, test_paralogs, False)
+    pandas.testing.assert_frame_equal(out_df, exp_df)
