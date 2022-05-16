@@ -265,6 +265,7 @@ sub content {
           g1     => $stable_id,
           s1     => $species,
           r      => $hub->create_padded_region()->{'r'} || $self->param('r'),
+          r1     => $orthologue->{'rparam'},
           config => 'opt_join_genes_bottom=on',
         })
       ) : $orthologue->{'location'};
