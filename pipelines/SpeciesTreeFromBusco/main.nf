@@ -115,8 +115,7 @@ process alignProt {
     script:
     id = (protFas =~ /.*prot_(.*)\.fas$/)[0][1]
     """
-    mafft --auto $protFas > prot_aln_${id}.fas
-    # muscle -in  $protFas -out prot_aln_${id}.fas
+    ${params.mafft_exe} --auto $protFas > prot_aln_${id}.fas
     """
 
 }

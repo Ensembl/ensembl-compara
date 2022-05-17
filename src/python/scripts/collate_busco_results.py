@@ -47,7 +47,7 @@ def load_sequences(infile: str) -> Tuple[Dict[str, List[SeqRecord]], int]:
     lgenes = defaultdict(list)
     with open(infile) as handle:
         for record in SeqIO.parse(handle, "fasta"):
-            gene = str(record.id).split("_")[0]
+            gene = str(record.id).split("_", maxsplit=1)[0]
             lgenes[gene].append(record)
     filtered = {}
     lduplicates = 0
