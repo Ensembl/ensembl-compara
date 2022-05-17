@@ -74,8 +74,8 @@ if __name__ == '__main__':
         genes, duplicates = load_sequences(seq_file)
         taxon = path.basename(seq_file).rsplit(".", maxsplit=1)[0]
         for g, s in genes.items():
-            s.id = taxon
-            s.description = ""
+            s.id = taxon        # type: ignore
+            s.description = ""  # type: ignore
             per_gene[g].append(s)
         taxa.append(taxon)
         dups.append(duplicates)
@@ -93,9 +93,9 @@ if __name__ == '__main__':
             SeqIO.write(s, output_handle, "fasta")
 
         ts = []
-        for x in s:
-            y = x.translate()
-            y.id = x.id
+        for x in s:     # type: ignore
+            y = x.translate()   # type: ignore
+            y.id = x.id     # type: ignore
             y.description = ""
             ts.append(y)
 
