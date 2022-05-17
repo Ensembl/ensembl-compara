@@ -78,10 +78,9 @@ process buscoAnnot {
 process collateBusco {
     label 'rc_16gb'
 
-    publishDir "${params.results_dir}/busco_genes", pattern: "cdnas_fofn.txt", mode: "copy"
-    publishDir "${params.results_dir}/busco_genes/prot", pattern: "gene_prot_*.fas", mode: "copy"
-    publishDir "${params.results_dir}/busco_genes/cdna", pattern: "gene_cdna_*.fas", mode: "copy"
-    publishDir "${params.results_dir}/busco_genes", pattern: "busco_stats.tsv", mode: "copy"
+    publishDir "${params.results_dir}/busco_genes", pattern: "cdnas_fofn.txt", mode: "copy", overwrite: true
+    publishDir "${params.results_dir}/busco_genes/prot", pattern: "gene_prot_*.fas", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/busco_genes", pattern: "busco_stats.tsv", mode: "copy",  overwrite: true
 
     input:
         val cdnas
@@ -90,7 +89,8 @@ process collateBusco {
     output:
         path "cdnas_fofn.txt", emit: fofon
         path "gene_prot_*.fas", emit: prot_seq
-        stdout emit:debug
+        path "gene_cdna_*.fas", emit: cdnas
+        path "busco_stats.tsv", emit: stats
     script:
     fh = new File("$workDir/cdnas_fofn.txt")
     for (line : cdnas)  {
@@ -107,15 +107,18 @@ process collateBusco {
 process alignProt {
     label 'rc_16Gb'
 
+    publishDir "${params.results_dir}/", pattern: "alignments/prot_aln_*.fas", mode: "copy",  overwrite: true
+
     input:
         val protFas
     output:
-        path "prot_aln_*.fas", emit: prot_aln
+        path "alignments/prot_aln_*.fas", emit: prot_aln
    
     script:
     id = (protFas =~ /.*prot_(.*)\.fas$/)[0][1]
     """
-    ${params.mafft_exe} --auto $protFas > prot_aln_${id}.fas
+    mkdir alignments
+    ${params.mafft_exe} --auto $protFas > alignments/prot_aln_${id}.fas
     """
 
 }
@@ -127,7 +130,6 @@ workflow {
 
     buscoAnnot(prepareBusco.out.busco_prots, genomes)
     collateBusco(buscoAnnot.out.collect(), prepareBusco.out.busco_genes)
-    collateBusco.out.debug.view()
     alignProt(collateBusco.out.prot_seq.flatten())
 }
 
