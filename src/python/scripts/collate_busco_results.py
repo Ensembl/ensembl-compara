@@ -21,7 +21,7 @@ Script for collating per-genome BUSCO cDNA results.
 import argparse
 from collections import defaultdict, OrderedDict
 from os import path
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import pandas as pd
 from Bio import SeqIO
@@ -40,20 +40,23 @@ parser.add_argument(
     '-s', metavar='stats', type=str, help="Output stats TSV.")
 
 
-def load_sequences(infile: str) -> Dict[str, List[SeqRecord]]:
-    genes = defaultdict(list)
+def load_sequences(infile: str) -> Tuple[Dict[str, List[SeqRecord]], int]:
+    """
+    Load sequences from fasta files and filter out duplicates.
+    """
+    lgenes = defaultdict(list)
     with open(infile) as handle:
         for record in SeqIO.parse(handle, "fasta"):
             gene = str(record.id).split("_")[0]
-            genes[gene].append(record)
+            lgenes[gene].append(record)
     filtered = {}
-    duplicates = 0
-    for gene, records in genes.items():
+    lduplicates = 0
+    for gene, records in lgenes.items():
         if len(records) > 1:
-            duplicates += 1
+            lduplicates += 1
         else:
             filtered[gene] = records[0]
-    return filtered, duplicates
+    return filtered, lduplicates
 
 
 if __name__ == '__main__':
@@ -69,7 +72,7 @@ if __name__ == '__main__':
     per_gene = defaultdict(list)
     for seq_file in seq_files:
         genes, duplicates = load_sequences(seq_file)
-        taxon = path.basename(seq_file).rsplit(".", 1)[0]
+        taxon = path.basename(seq_file).rsplit(".", maxsplit=1)[0]
         for g, s in genes.items():
             s.id = taxon
             s.description = ""
