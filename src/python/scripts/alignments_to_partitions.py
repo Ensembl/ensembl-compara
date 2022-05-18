@@ -50,7 +50,7 @@ if __name__ == '__main__':
         merged[t] = ""
 
     # Open partitions file:
-    part_fh = open(args.p, "w")
+    part_fh = open(args.p, "w") # type: ignore
 
     # Slurp list of input alignemnts:
     with open(args.i) as x:
@@ -86,8 +86,6 @@ if __name__ == '__main__':
     part_fh.close()
 
     # Write out merged alignment file:
-    fas_fh = open(args.o, "w")
-    for taxa, seq in merged.items():
-        fas_fh.write(f">{taxa}\n{seq}\n")
-    fas_fh.flush()
-    fas_fh.close()
+    with open(args.o, "w") as fas_fh:
+        for taxa, seq in merged.items():
+            fas_fh.write(f">{taxa}\n{seq}\n")
