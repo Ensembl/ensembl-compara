@@ -22,7 +22,7 @@ Typical usage example::
 
     $ python run_gerp.py --msa_file alignment.mfa --tree_file tree.nw
 
-If ``gerpcol`` and/or ``gerpelem`` are not accesible from ``$PATH``, you will need to provide the
+If ``gerpcol`` and/or ``gerpelem`` are not accessible from ``$PATH``, you will need to provide the
 path where they can be found::
 
     $ python run_gerp.py --msa_file alignment.mfa --tree_file tree.nw --gerp_exe_dir path/to/gerp/
@@ -37,7 +37,7 @@ def add_ce_to_json(ce_file: str, json_file: str) -> None:
     """Enrich the json file with the constrained elements.
 
     Args:
-        ce_file: file containing the constrained elements (csv format).
+        ce_file: file containing the constrained elements (space-delimited format).
         json_file: json file with genome coordinate level.
 
     """
