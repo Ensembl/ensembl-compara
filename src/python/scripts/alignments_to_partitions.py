@@ -50,7 +50,8 @@ if __name__ == '__main__':
         merged[t] = ""
 
     # Open partitions file:
-    part_fh = open(args.p, "w") # type: ignore
+    #  pylint: disable=consider-using-with
+    part_fh = open(args.p, "w")
 
     # Slurp list of input alignemnts:
     with open(args.i) as x:
