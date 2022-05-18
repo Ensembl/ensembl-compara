@@ -66,7 +66,7 @@ process buscoAnnot {
     python3 $params.anno_exe \
     --output_dir anno_res \
     --genome_file $genome \
-    --num_threads 30 \
+    --num_threads ${params.cores} \
     --max_intron_length 100000 \
     --run_busco 1 \
     --busco_protein_file $busco_prot
