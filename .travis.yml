@@ -27,13 +27,13 @@ before_install:
     # yamllint disable rule:line-length
     - git clone --depth 1 https://github.com/Ensembl/ensembl-git-tools.git
     - export PATH=$PATH:$PWD/ensembl-git-tools/bin
-    - git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl-test
-    - git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl-rest
-    - git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl-funcgen
-    - git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl-variation
-    - git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl-io
-    - git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl
-    - git-ensembl --clone --branch main --depth 1 ensembl-datacheck
+    - git-ensembl --clone --branch release/108 --depth 1 ensembl-test || git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl-test
+    - git-ensembl --clone --branch release/108 --depth 1 ensembl-rest || git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl-rest
+    - git-ensembl --clone --branch release/108 --depth 1 ensembl-funcgen || git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl-funcgen
+    - git-ensembl --clone --branch release/108 --depth 1 ensembl-variation || git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl-variation
+    - git-ensembl --clone --branch release/108 --depth 1 ensembl-io || git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl-io
+    - git-ensembl --clone --branch release/108 --depth 1 ensembl || git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl
+    - git-ensembl --clone --branch release/108 --depth 1 ensembl-datacheck || git-ensembl --clone --branch main --depth 1 ensembl-datacheck
     # yamllint enable rule:line-length
     - git-ensembl --clone --branch main --depth 1 ensembl-hive
     - git-ensembl --clone --branch main --depth 1 ensembl-taxonomy
