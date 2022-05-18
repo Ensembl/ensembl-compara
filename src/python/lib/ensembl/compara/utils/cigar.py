@@ -26,7 +26,7 @@ from typing import List, Tuple
 def aligned_seq_to_cigar(aligned_seq:str) -> str:
     """ Convert an aligned_seq to its cigar line
 
-    The cigar line use [legth][operation] order and if the operation length is 1 it give the operation
+    The cigar line uses [length][operation] order and if the operation length is 1 it gives the operation only
     A-TGC---CC --> MD3M3D2M
 
     Params:
@@ -35,42 +35,45 @@ def aligned_seq_to_cigar(aligned_seq:str) -> str:
     Returns:
          cigar line (str)
     """
-    cigar = ""
+    # to construct the cigar string each element of the line is added to the list and then join as a string.
+    # this approach is more performant than using a successive concatenation of strings which runtime scale
+    # quadratically with the length of the string in python
+    list_cigar = []
     matches = 0
     gaps = 0
     for nt in aligned_seq:
         if nt == "-" and matches == 0:
             gaps = gaps + 1
         elif nt == "-" and matches == 1:
-            cigar = f"{cigar}M"
+            list_cigar.append("M")
             matches = 0
             gaps = gaps + 1
-        elif nt == "-" and matches > 1: # matches > 1
-            cigar = f"{cigar}{matches}M"
+        elif nt == "-" and matches > 1:
+            list_cigar.append(f"{matches}M")
             matches = 0
             gaps = gaps + 1
         elif nt != "-" and gaps == 0:
             matches = matches + 1
         elif nt != "-" and gaps == 1:
-            cigar = f"{cigar}D"
+            list_cigar.append("D")
             gaps = 0
             matches = matches + 1
         elif nt != "-" and gaps > 1:
-            cigar = f"{cigar}{gaps}D"
+            list_cigar.append(f"{gaps}D")
             gaps = 0
             matches = matches + 1
 
     ## process the remaining gap/matched after the loop
-    if gaps != 0 and gaps == 1:
-        cigar = f"{cigar}D"
-    elif gaps != 0 and gaps > 1:
-        cigar = f"{cigar}{gaps}D"
-    elif matches != 0 and matches == 1:
-        cigar = f"{cigar}M"
-    elif matches != 0 and matches > 1:
-        cigar = f"{cigar}{matches}M"
+    if gaps == 1:
+        list_cigar.append("D")
+    elif gaps > 1:
+        list_cigar.append(f"{gaps}D")
+    elif matches == 1:
+        list_cigar.append("M")
+    elif matches > 1:
+        list_cigar.append(f"{matches}M")
 
-    return cigar
+    return "".join(list_cigar)
 
 
 def get_cigar_array(cigar:str) -> List[Tuple[int, str]]:
