@@ -73,7 +73,7 @@ def dir_cmp(request: FixtureRequest, tmp_dir: PathLike) -> DirCmp:
     ref_src = ref if ref.is_absolute() else pytest.files_dir / ref  # type: ignore[attr-defined,operator]
     ref_tmp = Path(tmp_dir) / str(ref).replace(os.path.sep, '_')
     target = Path(request.param['target'])  # type: ignore[attr-defined]
-    target_src = target if target.is_absolute() else pytest.files_dir / target  # type: ignore[attr-defined]
+    target_src = target if target.is_absolute() else pytest.files_dir / target  # type: ignore[attr-defined,operator]
     target_tmp = Path(tmp_dir) / str(target).replace(os.path.sep, '_')
     # Copy directory trees (if they have not been copied already) ignoring file metadata
     if not ref_tmp.exists():
