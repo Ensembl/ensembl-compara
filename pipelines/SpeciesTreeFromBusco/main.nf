@@ -60,7 +60,7 @@ process buscoAnnot {
         path "cdna/*.fas"
     script:
     """
-    mkdir anno_res
+    mkdir -p anno_res
     export ENSCODE=$params.enscode
     ln -s `which tblastn` .
     python3 $params.anno_exe \
@@ -70,7 +70,7 @@ process buscoAnnot {
     --max_intron_length 100000 \
     --run_busco 1 \
     --busco_protein_file $busco_prot
-    mkdir cdna
+    mkdir -p cdna
     gffread -w cdna/$genome -g $genome anno_res/busco_output/annotation.gtf
     """
 }
@@ -87,10 +87,11 @@ process collateBusco {
         path genes_tsv
 
     output:
-        path "cdnas_fofn.txt", emit: fofon
+        path "cdnas_fofn.txt", emit: fofn
         path "gene_prot_*.fas", emit: prot_seq
         path "gene_cdna_*.fas", emit: cdnas
         path "busco_stats.tsv", emit: stats
+        path "taxa.tsv", emit: taxa
     script:
     fh = new File("$workDir/cdnas_fofn.txt")
     for (line : cdnas)  {
@@ -98,8 +99,8 @@ process collateBusco {
     }
     """
     mv ${workDir}/cdnas_fofn.txt .
-    mkdir per_gene
-    python ${params.collate_busco_results_exe} -s busco_stats.tsv -i cdnas_fofn.txt -l $genes_tsv -o ./
+    mkdir -p per_gene
+    python ${params.collate_busco_results_exe} -s busco_stats.tsv -i cdnas_fofn.txt -l $genes_tsv -o ./ -t taxa.tsv
     """
 
 }
@@ -117,10 +118,62 @@ process alignProt {
     script:
     id = (protFas =~ /.*prot_(.*)\.fas$/)[0][1]
     """
-    mkdir alignments
+    mkdir -p alignments
     ${params.mafft_exe} --auto $protFas > alignments/prot_aln_${id}.fas
     """
 
+}
+
+process mergeAlns {
+    label 'rc_24gb'
+
+    publishDir "${params.results_dir}/", pattern: "merged_protein_alns.fas", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/", pattern: "partitions.tsv", mode: "copy",  overwrite: true
+
+    input:
+        val alns
+        path genes_tsv
+        path taxa
+
+    output:
+        path "alns_fofn.txt", emit: alns_fofn
+        path "merged_protein_alns.fas", emit: merged_aln
+        path "partitions.tsv", emit: partitions
+        stdout emit: debug
+    script:
+    fh = new File("$workDir/alns_fofn.txt")
+    for (line : alns)  {
+        fh.append("$line\n")
+    }
+    """
+    mv ${workDir}/alns_fofn.txt .
+    python ${params.alignments_to_partitions_exe} -i alns_fofn.txt -o merged_protein_alns.fas -p partitions.tsv -t $taxa
+    """
+
+}
+process runIqtree {
+    label 'rc_32gb'
+
+    publishDir "${params.results_dir}/", pattern: "species_tree.nwk", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/", pattern: "iqtree_report.txt", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/", pattern: "iqtree_log.txt", mode: "copy",  overwrite: true
+
+    input:
+        path merged_aln
+        path partitions
+    output:
+        path "species_tree.nwk", emit: newick
+        path "iqtree_report.txt", emit: iqrtree_report
+        path "iqtree_log.txt", emit: iqtree_log
+        stdout emit: debug
+
+    script:
+    """
+    ${params.iqtree_exe} -s $merged_aln -p $partitions -nt ${params.cores}
+    mv partitions.tsv.treefile species_tree.nwk
+    mv partitions.tsv.iqtree iqtree_report.txt
+    mv partitions.tsv.log iqtree_log.txt
+    """
 }
 
 workflow {
@@ -131,5 +184,8 @@ workflow {
     buscoAnnot(prepareBusco.out.busco_prots, genomes)
     collateBusco(buscoAnnot.out.collect(), prepareBusco.out.busco_genes)
     alignProt(collateBusco.out.prot_seq.flatten())
+    mergeAlns(alignProt.out.prot_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
+    mergeAlns.out.debug.view()
+    runIqtree(mergeAlns.out.merged_aln, mergeAlns.out.partitions)
 }
 

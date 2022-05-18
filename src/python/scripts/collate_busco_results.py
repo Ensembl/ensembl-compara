@@ -29,7 +29,7 @@ from Bio.SeqRecord import SeqRecord
 
 # Parse command line arguments:
 parser = argparse.ArgumentParser(
-    description='Filter for longest BUSCO isoform.')
+    description='Collate BUSCO results and build per-gene fasta files.')
 parser.add_argument(
     '-i', metavar='input', type=str, help="Input fofn.")
 parser.add_argument(
@@ -38,6 +38,8 @@ parser.add_argument(
     '-o', metavar='output', type=str, help="Output directory.", default="per_gene")
 parser.add_argument(
     '-s', metavar='stats', type=str, help="Output stats TSV.")
+parser.add_argument(
+    '-t', metavar='taxa', type=str, help="Output taxa TSV.")
 
 
 def load_sequences(infile: str) -> Tuple[Dict[str, List[SeqRecord]], int]:
@@ -86,6 +88,8 @@ if __name__ == '__main__':
     stat_df["SetGenes"] = len(all_genes.Gene)
     stat_df["UsablePercent"] = (stat_df.Genes * 100) / stat_df.SetGenes
     stat_df.to_csv(args.s, sep="\t", index=False)
+    taxa_df = pd.DataFrame({"Taxa": taxa})
+    taxa_df.to_csv(args.t, sep="\t", index=False)
 
     # Dump per-gene cDNAs:
     for g, s in per_gene.items():
