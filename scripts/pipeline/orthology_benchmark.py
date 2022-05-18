@@ -415,7 +415,14 @@ def collapse_tandem_paralogs(df_genes: pandas.DataFrame, paralogs: List[Tuple[st
     """Removes tandem paralogs from a data frame containing all genes, with an option to store their
     `gene_ids` in a dictionary.
 
-    All tandem paralogs are removed except the gene copy with min start position on a chromosome or scaffold.
+    The function iterates through the list of pairs of putative paralogs, checks if they are on the same
+    chromosome or scaffold ("seqname" in a GTF file), and if yes, checks if they follow each other. If they
+    are one after another, the succeeding gene is added to the list of genes that should be collapsed, i.e.
+    removed from the data frame containing all genes. Gene copies are collapsed only after having comprised
+    the whole list of gene copies to be collapsed. Effectively, for each tandem duplication, the gene copy
+    with min start position on a chromosome or scaffold is left. If a user sets `keep_collapsed` to True, the
+    function also creates a dictionary mapping collapsed genes to the genes preceding them on the chromosome
+    or scaffold.
 
     Args:
         df_genes: A data frame with a name of the chromosome or scaffold, `gene_id`, gene start position and
@@ -425,7 +432,7 @@ def collapse_tandem_paralogs(df_genes: pandas.DataFrame, paralogs: List[Tuple[st
 
     Returns:
         A data frame without genes arising from tandem duplications, and if chosen, a dictionary mapping
-        `gene_id` of a removed (collapsed) gene copy with a `gene_id` of the retained copy.
+        `gene_id` of a removed (collapsed) gene copy with a `gene_id` of the preceding gene copy.
 
     """
     if keep_collapsed:
@@ -434,21 +441,24 @@ def collapse_tandem_paralogs(df_genes: pandas.DataFrame, paralogs: List[Tuple[st
     to_collapse = []
 
     for (gene1, gene2) in paralogs:
+        # Get the name of the chromosome or scaffold for each gene
         seqname1 = df_genes[df_genes["gene_id"] == gene1]["seqname"].values[0]
         seqname2 = df_genes[df_genes["gene_id"] == gene2]["seqname"].values[0]
 
-        if seqname1 == seqname2:
+        if seqname1 == seqname2:  # If genes are on the same chromosome or scaffold
+            # get their indices in the dataframe
             index1 = df_genes.index[df_genes["gene_id"] == gene1][0]
             index2 = df_genes.index[df_genes["gene_id"] == gene2][0]
 
-            # collapse tandem paralogs
-            if abs(index1 - index2) == 1:
+            if abs(index1 - index2) == 1:  # If genes are consecutive
+                # they should be collapsed
                 to_collapse.append(max(index1, index2))
                 if keep_collapsed:
+                    # tandem_paralogs[succeeding_gene] = preceding_gene
                     tandem_paralogs[df_genes.iloc[[max(index1, index2)]]["gene_id"].values[0]] = \
                         df_genes.iloc[[min(index1, index2)]]["gene_id"].values[0]
 
-    df_genes.drop(df_genes.index[to_collapse], inplace=True)
+    df_genes.drop(df_genes.index[to_collapse], inplace=True)  # Collapse tandem paralogs
     df_genes.reset_index(inplace=True)
     df_genes.drop("index", 1, inplace=True)
 
