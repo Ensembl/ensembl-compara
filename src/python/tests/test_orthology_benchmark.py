@@ -359,11 +359,11 @@ def test_read_in_gtf(species_name, exp_data, expectation) -> None:
 @pytest.mark.parametrize(
     "test_genes, test_paralogs, exp_genes, exp_paralogs",
     [
-        ([["ML997581.1", "ENSOSUG000006", 6188, "+"], ["ML997581.1", "ENSOSUG000008", 15846, "+"],
-          ["ML997581.1", "ENSOSUG000012", 25596, "+"], ["ML997581.1", "ENSOSUG000020", 34779, "+"],
-          ["ML997581.1", "ENSOSUG000063", 55600, "+"], ["ML997581.1", "ENSOSUG000105", 84807, "+"],
-          ["PYXB01141513.1", "ENSOSUG003211", 2, "-"], ["PYXB01142552.1", "ENSOSUG003223", 38, "-"],
-          ["PYXB01142696.1", "ENSOSUG003240", 12, "-"]],
+        ([["PYXB01142696.1", "ENSOSUG003240", 12, "-"], ["PYXB01142552.1", "ENSOSUG003223", 38, "-"],
+          ["ML997581.1", "ENSOSUG000105", 84807, "+"], ["ML997581.1", "ENSOSUG000063", 55600, "+"],
+          ["ML997581.1", "ENSOSUG000020", 34779, "+"], ["ML997581.1", "ENSOSUG000012", 25596, "+"],
+          ["ML997581.1", "ENSOSUG000006", 6188, "+"], ["ML997581.1", "ENSOSUG000008", 15846, "+"],
+          ["PYXB01141513.1", "ENSOSUG003211", 2, "-"]],
          [("ENSOSUG000006", "ENSOSUG000105"), ("ENSOSUG000008", "ENSOSUG000012"),
           ("ENSOSUG000020", "ENSOSUG000008"), ("ENSOSUG000020", "ENSOSUG000012"),
           ("ENSOSUG000020", "ENSOSUG000063"), ("ENSOSUG000105", "ENSOSUG003211")],

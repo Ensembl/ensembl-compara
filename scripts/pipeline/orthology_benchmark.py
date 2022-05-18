@@ -426,7 +426,7 @@ def collapse_tandem_paralogs(df_genes: pandas.DataFrame, paralogs: List[Tuple[st
 
     Args:
         df_genes: A data frame with a name of the chromosome or scaffold, `gene_id`, gene start position and
-            strand.
+            strand for all genes.
         paralogs: A list of pairs of paralogous genes.
         keep_collapsed: To return (true) or not (false) a dictionary of collapsed paralogs.
 
@@ -435,6 +435,11 @@ def collapse_tandem_paralogs(df_genes: pandas.DataFrame, paralogs: List[Tuple[st
         `gene_id` of a removed (collapsed) gene copy with a `gene_id` of the preceding gene copy.
 
     """
+    # Sort genes according to their location
+    df_genes.sort_values(["seqname", "start"], inplace=True)
+    df_genes.reset_index(inplace=True)
+    df_genes.drop("index", 1, inplace=True)
+
     if keep_collapsed:
         tandem_paralogs = {}
 
