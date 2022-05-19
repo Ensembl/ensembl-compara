@@ -113,7 +113,7 @@ sub get_synonym_html {
 }
 
 sub get_location_html {
-  my ($self, $location, $page_type) = @_;
+  my ($self, $page_type) = @_;
   my $object  = $self->object;
   my $hub     = $self->hub;
 
