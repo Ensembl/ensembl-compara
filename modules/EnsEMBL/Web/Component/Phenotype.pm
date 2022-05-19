@@ -15,7 +15,7 @@ package EnsEMBL::Web::Component::Phenotype;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::Shared);
+use base qw(EnsEMBL::Web::Component);
 
 ## Retrieve all the ontology accessions associated with a phenotype
 sub get_all_ontology_data{

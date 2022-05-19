@@ -24,7 +24,7 @@ use HTML::Entities  qw(encode_entities);
 
 use EnsEMBL::Web::Utils::FormatText qw(get_glossary_entry helptip glossary_helptip);
 
-use parent qw(EnsEMBL::Web::Component::Transcript EnsEMBL::Web::Component::Summary);
+use parent qw(EnsEMBL::Web::Component::Transcript EnsEMBL::Web::Component::Summary EnsEMBL::Web::Component::Shared);
 
 sub _init {
   my $self = shift;

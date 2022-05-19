@@ -21,7 +21,7 @@ package EnsEMBL::Web::Component::Transcript;
 
 use strict;
 
-use parent qw(EnsEMBL::Web::Component::Shared);
+use parent qw(EnsEMBL::Web::Component);
 
 ## No sub stable_id   <- uses Gene's stable_id
 ## No sub name        <- uses Gene's name

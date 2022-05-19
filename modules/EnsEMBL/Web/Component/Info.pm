@@ -26,7 +26,7 @@ no warnings 'uninitialized';
 use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 use EnsEMBL::Web::Utils::Bioschemas qw(create_bioschema add_species_bioschema);
 
-use parent qw(EnsEMBL::Web::Component::Shared);
+use parent qw(EnsEMBL::Web::Component);
 
 sub ftp_url {
 ### Set this via a function, so it can easily be updated (or 

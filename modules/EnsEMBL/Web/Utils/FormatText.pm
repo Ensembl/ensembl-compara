@@ -25,7 +25,7 @@ use HTML::Entities  qw(encode_entities);
 
 use base qw(Exporter);
 
-our @EXPORT = our @EXPORT_OK = qw(thousandify date_format pretty_date add_links helptip glossary_helptip get_glossary_entry pluralise);
+our @EXPORT = our @EXPORT_OK = qw(thousandify date_format pretty_date coltab add_links helptip glossary_helptip get_glossary_entry pluralise);
 
 sub thousandify {
 # Returns comma separated version of number
@@ -59,6 +59,12 @@ sub pretty_date {
   my @days = ('Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat');
   my @months = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
   return $days[$date[6]].' '.$date[3].' '.$months[$date[4]].', '.($date[5] + 1900);
+}
+
+sub coltab {
+  my ($text, $colour, $title) = @_;
+
+  return sprintf(qq(<div class="coltab"><span class="coltab-tab" style="background-color:%s;">&nbsp;</span><div class="coltab-text">%s</div></div>), $colour, helptip($text, $title));
 }
 
 sub add_links {

@@ -24,7 +24,7 @@ use strict;
 use EnsEMBL::Web::Controller::SSI;
 use EnsEMBL::Web::Document::Table;
 
-use base qw(EnsEMBL::Web::Component::Info);
+use parent qw(EnsEMBL::Web::Component::Info EnsEMBL::Web::Component::Shared);
 
 
 sub _init {

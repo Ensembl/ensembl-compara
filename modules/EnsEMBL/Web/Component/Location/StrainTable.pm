@@ -25,6 +25,7 @@ use List::Util qw(max min);
 use Bio::EnsEMBL::Variation::Utils::Config qw(%ATTRIBS);
 use Bio::EnsEMBL::Variation::Utils::Constants qw(%VARIATION_CLASSES);
 use Bio::EnsEMBL::Variation::Utils::VariationEffect qw($UPSTREAM_DISTANCE $DOWNSTREAM_DISTANCE);
+use EnsEMBL::Web::Utils::FormatText qw(coltab);
 use EnsEMBL::Web::NewTable::NewTable;
 
 use Bio::EnsEMBL::Variation::Utils::VariationEffect;
@@ -50,7 +51,7 @@ sub consequence_type {
   my $hex = $var_styles->{lc $oc->SO_term} ? 
               $colourmap->hex_by_name($var_styles->{lc $oc->SO_term}->{'default'}) :
               $colourmap->hex_by_name($var_styles->{'default'}->{'default'});
-  return $self->coltab($oc->label, $hex, $oc->description);
+  return coltab($oc->label, $hex, $oc->description);
 }
 
 sub table_content {

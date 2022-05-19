@@ -25,7 +25,7 @@ use Digest::MD5 qw(md5_hex);
 
 use EnsEMBL::Draw::Utils::ColourMap;
 
-use base qw(EnsEMBL::Web::Component::Shared);
+use base qw(EnsEMBL::Web::Component);
 
 sub _configure_display {
   my ($self, $message) = @_;

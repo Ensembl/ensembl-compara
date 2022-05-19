@@ -21,6 +21,8 @@ package EnsEMBL::Web::Component::StructuralVariation::Mappings;
 
 use strict;
 
+use EnsEMBL::Web::Utils::Variation qw(render_consequence_type render_var_coverage);
+
 use base qw(EnsEMBL::Web::Component::StructuralVariation);
 
 sub _init {
@@ -187,7 +189,7 @@ sub gene_transcript_table {
       
     $trans_name .= ".".$t->version if($t->version); #transcript version
     foreach my $tsva(@{$tsv->get_all_StructuralVariationOverlapAlleles}) {
-      my $type = $self->render_consequence_type($tsva);
+      my $type = render_consequence_type($hub, $tsva);
       
       my %row = (
         gene      => qq{<a href="$gene_url">$gene_name</a><br/><span class="small" style="white-space:nowrap;">$gene_hgnc</span>},
@@ -241,7 +243,7 @@ sub regfeat_table {
     });
      
     foreach my $rsva(@{$rsv->get_all_StructuralVariationOverlapAlleles}) {
-      my $type = $self->render_consequence_type($rsva);
+      my $type = render_consequence_type($hub, $rsva);
       my %row = (
         rf       => sprintf('<a href="%s">%s</a>', $url, $rf),
         ftype    => $ftype,
@@ -292,7 +294,7 @@ sub _coverage_glyph {
     $pc = sprintf("%.2f", 100 * ($bp / ($f->feature_Slice->length)));
   }
   
-  my $glyph = $self->render_var_coverage($f_s, $f_e, $v_s, $v_e, $self->object->get_class_colour($v->class_SO_term));
+  my $glyph = render_var_coverage($f_s, $f_e, $v_s, $v_e, $self->object->get_class_colour($v->class_SO_term));
   $html .= $glyph if ($glyph);
   
   return

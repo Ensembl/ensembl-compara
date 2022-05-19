@@ -24,6 +24,7 @@ use strict;
 use HTML::Entities qw(encode_entities);
 use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 use EnsEMBL::Web::Utils::FormatText qw(helptip);
+use EnsEMBL::Web::Utils::Variation qw(render_p_value display_items_list);
 use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
@@ -294,7 +295,7 @@ sub table_data {
     foreach my $attr (@stats_col) {
       if ($attributes->{$attr}) {
         my $attr_label = ($attr eq 'beta_coef') ? 'beta_coefficient' : (($attr eq 'p_value') ? 'p-value' : $attr);
-        push @stats, "$attr_label:".(($attr eq 'p_value') ? $self->render_p_value($attributes->{$attr}) : $attributes->{$attr});
+        push @stats, "$attr_label:".(($attr eq 'p_value') ? render_p_value($attributes->{$attr}) : $attributes->{$attr});
         $column_flags{'stats'} = 1;
       }
     }
@@ -378,14 +379,14 @@ sub table_data {
     my $term_html = '-';
     if ($terms) {
       my $div_id = $pf_id."_term";
-      $term_html = $self->display_items_list($div_id, 'ontology terms', 'terms', $terms, $terms);
+      $term_html = display_items_list($div_id, 'ontology terms', 'terms', $terms, $terms);
     }
     $row->{terms} = $term_html;
 
     my $accession_html = '-';
     if ($accessions) {
       my $div_id = $pf_id."_accession";
-      $accession_html = $self->display_items_list($div_id, 'ontology accessions', 'accessions', $accessions, $accessions_no_url);
+      $accession_html = display_items_list($div_id, 'ontology accessions', 'accessions', $accessions, $accessions_no_url);
     }
     $row->{accessions} = $accession_html;
 
@@ -394,7 +395,7 @@ sub table_data {
       my $div_id = $pf_id."_evidence";
       my @url_data = values(%$evidence_list);
       my @export_data = keys(%$evidence_list);
-      my $ev_html = $self->display_items_list($div_id, 'evidence', 'Evidence', \@url_data, \@export_data, 1);
+      my $ev_html = display_items_list($div_id, 'evidence', 'Evidence', \@url_data, \@export_data, 1);
       $row->{s_evidence} = $ev_html;
       $column_flags{s_evidence} = 1;
     }

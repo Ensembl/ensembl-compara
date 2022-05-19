@@ -389,6 +389,7 @@ sub is_in_biomart {
   my $sd = $self->species_defs;
   return 0 unless $sd->ENSEMBL_MART_ENABLED;
   return 1 if $sd->EG_DIVISION;
+  ## At the moment, compara and biomart use the same species set
   my $in_compara = $sd->multi_hash->{'DATABASE_COMPARA'}{'COMPARA_SPECIES'};
   my $in_biomart = $in_compara->{$sd->SPECIES_PRODUCTION_NAME};
   return $in_biomart ? 1 : 0;

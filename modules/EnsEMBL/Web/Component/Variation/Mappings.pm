@@ -24,7 +24,7 @@ use strict;
 use base qw(EnsEMBL::Web::Component::Variation);
 use Bio::EnsEMBL::Variation::Utils::VariationEffect qw(overlap);
 use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
-use EnsEMBL::Web::Utils::Variation qw(render_sift_polyphen);
+use EnsEMBL::Web::Utils::Variation qw(render_sift_polyphen render_consequence_type render_var_coverage);
 
 sub _init {
   my $self = shift;
@@ -227,7 +227,7 @@ sub content {
     my $strand = $trans->strand < 1 ? '-' : '+';
 
     # consequence type
-    my $type = $self->render_consequence_type($tva);
+    my $type = render_consequence_type($hub, $tva);
     
     # sift
     my $sift = render_sift_polyphen($tva->sift_prediction, $tva->sift_score);
@@ -353,7 +353,7 @@ sub content {
       my $reg_length_label = $self->_overlap_glyph_label($var_pos_start, $var_pos_end, $reg_length);
 
       for my $rfva (@{ $rfv->get_all_alternate_RegulatoryFeatureVariationAlleles }) {
-        my $type = $self->render_consequence_type($rfva);
+        my $type = render_consequence_type($hub, $rfva);
 
         my $r_allele = $self->trim_large_string($rfva->variation_feature_seq,'rfva_'.$rfv->regulatory_feature->stable_id,25);
 
@@ -395,7 +395,7 @@ sub content {
       my $motif_length  = $mf->length;
 
       for my $mfva (@{ $mfv->get_all_alternate_MotifFeatureVariationAlleles }) {
-        my $type = $self->render_consequence_type($mfva);
+        my $type = render_consequence_type($hub, $mfva);
         
         my $m_allele = $self->trim_large_string($mfva->variation_feature_seq,'mfva_'.$mf->stable_id,25);
         
@@ -1128,7 +1128,7 @@ sub _overlap_glyph {
   my $var_pos  = ($v_s == $v_e) ? $v_s : "$v_s-$v_e";
      $var_pos  = 1 if ((!$var_pos || $var_pos eq '') && ($v_s || $v_e));
 
-  my $glyph = $self->render_var_coverage($f_s, $f_e, $v_s, $v_e, $colour);
+  my $glyph = render_var_coverage($f_s, $f_e, $v_s, $v_e, $colour);
   $html .= $glyph if ($glyph);
 
   my $desc = "Variant position: $var_pos | $f_label length: $f_length";

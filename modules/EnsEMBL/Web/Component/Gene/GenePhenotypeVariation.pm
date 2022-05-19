@@ -22,6 +22,7 @@ package EnsEMBL::Web::Component::Gene::GenePhenotypeVariation;
 use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;
+use EnsEMBL::Web::Utils::Variation qw(render_p_value display_items_list);
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -385,14 +386,14 @@ sub variation_table {
       # Sort by the lowest p-value first
       @pvalues_list = sort { $b =~ /e-0?$max_exp$/ <=> $a =~ /e-0?$max_exp$/ } @pvalues_list if (scalar @pvalues_list);
 
-      @pvalues_list = map { $self->render_p_value($_, 1) } @pvalues_list;
+      @pvalues_list = map { render_p_value($_, 1) } @pvalues_list;
 
       my $source_data = "";
       foreach my $source (sort(keys(%sources_list))) {
         my $div_id = 'src_'.$var_name.'_'.$source;
            $div_id =~ s/ //g;
         my @export_data = $source_exp_list{$source};
-        my $source_content = $self->display_items_list($div_id,"$source entries",$source,$sources_list{$source},\@export_data,1,$max_items_per_source);
+        my $source_content = display_items_list($div_id,"$source entries",$source,$sources_list{$source},\@export_data,1,$max_items_per_source);
 
         $source_data .= ', ' if ($source_data ne "");
         if (scalar(@{$sources_list{$source}}) < $max_items_per_source ) {

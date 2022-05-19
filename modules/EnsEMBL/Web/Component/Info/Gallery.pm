@@ -25,7 +25,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use parent qw(EnsEMBL::Web::Component::Shared);
+use parent qw(EnsEMBL::Web::Component);
 
 our $data_type = {
                   'Gene'      => {'param'     => 'g',

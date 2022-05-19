@@ -21,7 +21,7 @@ package EnsEMBL::Web::Component::Gene::SimilarityMatches;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::Shared);
+use parent qw(EnsEMBL::Web::Component::Shared);
 
 sub _init {
   my $self = shift;

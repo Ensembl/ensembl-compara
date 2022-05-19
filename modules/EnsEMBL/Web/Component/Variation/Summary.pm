@@ -22,10 +22,12 @@ package EnsEMBL::Web::Component::Variation::Summary;
 
 use strict;
 
-use EnsEMBL::Web::Utils::FormatText qw(helptip);
 use Encode qw(encode decode);
 use HTML::Entities;
 use URI::Escape qw(uri_unescape);
+
+use EnsEMBL::Web::Utils::FormatText qw(helptip);
+use EnsEMBL::Web::Utils::Variation qw(render_consequence_type);
 
 use base qw(EnsEMBL::Web::Component::Variation);
 
@@ -898,7 +900,7 @@ sub most_severe_consequence {
      v      => $self->object->name,
   });
 
-  my $html_consequence = $self->render_consequence_type($vf_object,1);
+  my $html_consequence = render_consequence_type($self->hub, $vf_object,1);
 
   # Check if the variant overlaps at least one transcript or regulatory feature.
   my $consequence_link = '';

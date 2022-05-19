@@ -26,8 +26,8 @@ use List::Util qw(max min);
 use Bio::EnsEMBL::Variation::Utils::Config qw(%ATTRIBS);
 use Bio::EnsEMBL::Variation::Utils::Constants qw(%VARIATION_CLASSES);
 use Bio::EnsEMBL::Variation::Utils::VariationEffect qw($UPSTREAM_DISTANCE $DOWNSTREAM_DISTANCE);
+use EnsEMBL::Web::Utils::Variation qw(classify_sift_polyphen classify_score_prediction predictions_classes);
 use EnsEMBL::Web::NewTable::NewTable;
-use EnsEMBL::Web::Constants;
 
 use Bio::EnsEMBL::Variation::Utils::VariationEffect;
 
@@ -169,7 +169,7 @@ sub content {
 sub sift_poly_classes {
   my ($self,$table) = @_;
 
-  my $sp_classes = EnsEMBL::Web::Constants::PREDICTIONS_CLASSES;
+  my $sp_classes = predictions_classes; 
 
   foreach my $column_name (qw(sift polyphen cadd revel meta_lr mutation_assessor)) {
     my $value_column = $table->column("${column_name}_value");
@@ -717,12 +717,12 @@ sub variation_table {
             my $only_coding = $tv_count > $TV_MAX ? 1 : 0;
             my $type = $self->new_consequence_type($tva, $only_coding);
             
-            my $sifts = $self->classify_sift_polyphen($tva->sift_prediction, $tva->sift_score);
-            my $polys = $self->classify_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
-            my $cadds = $self->classify_score_prediction($tva->cadd_prediction, $tva->cadd_score);
-            my $revels = $self->classify_score_prediction($tva->dbnsfp_revel_prediction, $tva->dbnsfp_revel_score);
-            my $meta_lrs = $self->classify_score_prediction($tva->dbnsfp_meta_lr_prediction, $tva->dbnsfp_meta_lr_score);
-            my $mutation_assessors = $self->classify_score_prediction($tva->dbnsfp_mutation_assessor_prediction, $tva->dbnsfp_mutation_assessor_score);
+            my $sifts = classify_sift_polyphen($tva->sift_prediction, $tva->sift_score);
+            my $polys = classify_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
+            my $cadds = classify_score_prediction($tva->cadd_prediction, $tva->cadd_score);
+            my $revels = classify_score_prediction($tva->dbnsfp_revel_prediction, $tva->dbnsfp_revel_score);
+            my $meta_lrs = classify_score_prediction($tva->dbnsfp_meta_lr_prediction, $tva->dbnsfp_meta_lr_score);
+            my $mutation_assessors = classify_score_prediction($tva->dbnsfp_mutation_assessor_prediction, $tva->dbnsfp_mutation_assessor_score);
  
             # Adds LSDB/LRG sources
             if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {

@@ -39,7 +39,7 @@ use EnsEMBL::Web::TextSequence::Annotation::Alignments;
 
 use List::MoreUtils qw(any);
 
-use base qw(EnsEMBL::Web::Component::Shared);
+use base qw(EnsEMBL::Web::Component);
 
 sub new {
   my $class = shift;

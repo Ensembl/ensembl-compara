@@ -21,7 +21,7 @@ package EnsEMBL::Web::Component::SVImage;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::Shared);
+use base qw(EnsEMBL::Web::Component);
 
 sub _init {
   my $self = shift;

@@ -25,7 +25,7 @@ use strict;
 
 use EnsEMBL::Web::Controller::SSI;
 
-use base qw(EnsEMBL::Web::Component::Location);
+use parent qw(EnsEMBL::Web::Component::Location EnsEMBL::Web::Component::Shared);
 
 sub _init {
   my $self = shift;

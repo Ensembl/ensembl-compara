@@ -23,6 +23,7 @@ use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;
 use HTML::Entities qw(encode_entities);
+use EnsEMBL::Web::Utils::Variation qw(display_items_list);
 use base qw(EnsEMBL::Web::Component::LRG);
 
 sub _init {
@@ -122,7 +123,7 @@ sub gene_phenotypes {
     # Loop after each phenotype entry
     foreach my $phe (sort(keys(%phenotypes))) {
       my @pmids = keys(%{$phenotypes{$phe}{'pmids'}});
-      my $study = (scalar(@pmids) != 0) ? $self->display_items_list($phenotypes{$phe}{'id'}.'pmids', 'Study links', 'Study links', \@pmids, \@pmids, 1) : '-';
+      my $study = (scalar(@pmids) != 0) ? display_items_list($phenotypes{$phe}{'id'}.'pmids', 'Study links', 'Study links', \@pmids, \@pmids, 1) : '-';
 
       push @rows, {
         source    => join(', ', keys(%{$phenotypes{$phe}{'source'}})),

@@ -23,7 +23,7 @@ use strict;
 
 use Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
 
-use base qw(EnsEMBL::Web::Component::Shared);
+use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
   my $self = shift;

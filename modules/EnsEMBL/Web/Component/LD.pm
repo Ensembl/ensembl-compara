@@ -20,7 +20,7 @@ limitations under the License.
 package EnsEMBL::Web::Component::LD;
 
 use strict;
-use base qw(EnsEMBL::Web::Component::Shared);
+use base qw(EnsEMBL::Web::Component);
 
 sub _init {
   my $self = shift;

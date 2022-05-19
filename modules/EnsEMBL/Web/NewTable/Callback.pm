@@ -159,8 +159,8 @@ sub run_phase {
   my ($self,$phase,$keymeta) = @_;
 
   my $era = $phase->{'era'};
-  my $req_start = ($self->{'req_lengths'}{$era}||=0);
-  my $shadow_start = ($self->{'shadow_lengths'}{$era}||=0);
+  my $req_start = $era ? ($self->{'req_lengths'}{$era}||=0) : 0;
+  my $shadow_start = $era ? ($self->{'shadow_lengths'}{$era}||=0) : 0;
 
   $req_start = 0+$req_start;
 
@@ -172,8 +172,10 @@ sub run_phase {
 
   push @{$self->{'out'}},$out->{'out'};
 
-  $self->{'req_lengths'}{$era} = $out->{'request_num'};
-  $self->{'shadow_lengths'}{$era} = $out->{'shadow_num'};
+  if ($era) {
+    $self->{'req_lengths'}{$era} = $out->{'request_num'};
+    $self->{'shadow_lengths'}{$era} = $out->{'shadow_num'};
+  }
 }
 
 sub newtable_data_request {

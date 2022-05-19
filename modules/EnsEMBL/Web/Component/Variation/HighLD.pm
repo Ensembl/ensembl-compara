@@ -24,6 +24,7 @@ use strict;
 use HTML::Entities qw(encode_entities);
 
 use Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor;
+use EnsEMBL::Web::Utils::Variation qw(render_consequence_type display_items_list);
 
 use base qw(EnsEMBL::Web::Component::Variation);
 
@@ -392,7 +393,7 @@ sub linked_var_table {
 
       my @phe_gene_texts = sort { lc($a) cmp lc($b) } values(%pgenes);
       
-      my $pgene = $self->display_items_list($variation_name.'_gene_phe', 'phenotypess', 'phenotypes', \@phe_gene_links, \@phe_gene_texts);
+      my $pgene = display_items_list($variation_name.'_gene_phe', 'phenotypess', 'phenotypes', \@phe_gene_links, \@phe_gene_texts);
 
 
       # build URLs
@@ -418,7 +419,7 @@ sub linked_var_table {
         distance    => abs($start - ($vf_start > $vf_end ? $vf_end : $vf_start)),
         r2          => sprintf("%.3f", $ld->{'r2'}),
         d_prime     => sprintf("%.3f", $ld->{'d_prime'}),
-        ctype       => $self->render_consequence_type($ld_vf,1),
+        ctype       => render_consequence_type($hub, $ld_vf, 1),
         genes       => $genes     || '-',
         pfs         => $pf_string || '-',
         pgene       => $pgene     || '-',

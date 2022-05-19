@@ -21,6 +21,8 @@ package EnsEMBL::Web::Component::StructuralVariation::Phenotype;
 
 use strict;
 
+use EnsEMBL::Web::Utils::Variation qw(display_items_list);
+
 use base qw(EnsEMBL::Web::Component::StructuralVariation);
 
 sub _init {
@@ -174,7 +176,7 @@ sub table_data {
       if ($terms && $terms->{$phe}) {
         my $div_id = $terms->{$phe}{'id'}."_term";
         my @terms_list = sort(keys(%{$terms->{$phe}{'term'}}));
-        $terms_html = $self->display_items_list($div_id, 'ontology terms', 'terms', \@terms_list, \@terms_list);
+        $terms_html = display_items_list($div_id, 'ontology terms', 'terms', \@terms_list, \@terms_list);
       }
       $phenotypes{$phe}{terms} = $terms_html;
 
@@ -184,7 +186,7 @@ sub table_data {
         my $div_id = $accessions->{$phe}{'id'}."_accession";
         my @accessions_list = sort(keys(%{$accessions->{$phe}{'acc'}}));
         my @accessions_urls = sort(keys(%{$accessions->{$phe}{'url'}}));
-        $accessions_html = $self->display_items_list($div_id, 'ontology accessions', 'accessions', \@accessions_urls, \@accessions_list);
+        $accessions_html = display_items_list($div_id, 'ontology accessions', 'accessions', \@accessions_urls, \@accessions_list);
       }
       $phenotypes{$phe}{accessions} = $accessions_html;
 

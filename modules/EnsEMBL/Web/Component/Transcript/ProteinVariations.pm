@@ -24,7 +24,7 @@ use strict;
 use Bio::EnsEMBL::Variation::Utils::Config qw(%ATTRIBS);
 use Bio::EnsEMBL::Variation::Utils::Constants qw(%VARIATION_CLASSES);
 use EnsEMBL::Web::NewTable::NewTable;
-use EnsEMBL::Web::Constants;
+use EnsEMBL::Web::Utils::Variation qw(predictions_classes classify_sift_polyphen classify_score_prediction);
 
 use base qw(EnsEMBL::Web::Component::Transcript EnsEMBL::Web::Component::Variation);
 
@@ -99,12 +99,12 @@ sub table_content {
       my $type = $self->new_consequence_type($tva);    
 
       # SIFT, PolyPhen-2 and other prediction tools
-      my $sifts = $self->classify_sift_polyphen($tva->sift_prediction,$tva->sift_score);
-      my $polys = $self->classify_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
-      my $cadds = $self->classify_score_prediction($tva->cadd_prediction, $tva->cadd_score);
-      my $revels = $self->classify_score_prediction($tva->dbnsfp_revel_prediction, $tva->dbnsfp_revel_score);
-      my $meta_lrs = $self->classify_score_prediction($tva->dbnsfp_meta_lr_prediction, $tva->dbnsfp_meta_lr_score);
-      my $mutation_assessors = $self->classify_score_prediction($tva->dbnsfp_mutation_assessor_prediction, $tva->dbnsfp_mutation_assessor_score);
+      my $sifts = classify_sift_polyphen($tva->sift_prediction,$tva->sift_score);
+      my $polys = classify_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
+      my $cadds = classify_score_prediction($tva->cadd_prediction, $tva->cadd_score);
+      my $revels = classify_score_prediction($tva->dbnsfp_revel_prediction, $tva->dbnsfp_revel_score);
+      my $meta_lrs = classify_score_prediction($tva->dbnsfp_meta_lr_prediction, $tva->dbnsfp_meta_lr_score);
+      my $mutation_assessors = classify_score_prediction($tva->dbnsfp_mutation_assessor_prediction, $tva->dbnsfp_mutation_assessor_score);
 
       my $row = {
         vf      => $var->{'vf'}->dbID,
@@ -382,7 +382,7 @@ sub snptype_classes {
 sub sift_poly_classes {
   my ($self,$table) = @_;
 
-  my $sp_classes = EnsEMBL::Web::Constants::PREDICTIONS_CLASSES;
+  my $sp_classes = predictions_classes; 
 
   foreach my $column_name (qw(sift polyphen cadd revel meta_lr mutation_assessor)) {
     my $value_column = $table->column("${column_name}_value");

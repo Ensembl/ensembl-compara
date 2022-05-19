@@ -21,7 +21,7 @@ package EnsEMBL::Web::Component::Regulation;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::Shared);
+use base qw(EnsEMBL::Web::Component);
 
 sub shown_cells {
   my ($self,$image_config) = @_;
@@ -100,6 +100,7 @@ sub all_evidences {
 sub buttons { return @{$_[0]->{'buttons'}||[]}; }
 
 sub button_portal {
+## Override standard layout
   my ($self, $buttons, $class) = @_;
   $class ||= '';
   my $html;

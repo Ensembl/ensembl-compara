@@ -27,7 +27,7 @@ use HTML::Entities  qw(encode_entities);
 use List::Util      qw(first);
 use List::MoreUtils qw(first_index);
 
-use EnsEMBL::Web::Utils::FormatText qw(helptip get_glossary_entry);
+use EnsEMBL::Web::Utils::FormatText qw(coltab helptip get_glossary_entry);
 
 use parent qw(EnsEMBL::Web::Component);
 
@@ -508,7 +508,7 @@ sub colour_biotype {
   my $colour  = ($colours->{lc($key)} || {})->{'default'};
   my $hex     = $self->hub->colourmap->hex_by_name($colour);
 
-  return $self->coltab($text, $hex, $title);
+  return coltab($text, $hex, $title);
 }
 
 sub get_extra_links {

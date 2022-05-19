@@ -23,7 +23,11 @@ package EnsEMBL::Web::Component;
 ###
 ### Note: should only contain functionality that is generic enough to be used 
 ### in any component. If you have an output method that needs to be shared
-### between components descended from different object types, put it into 
+### between components descended from DIFFERENT OBJECT TYPES, there are two
+### ways to handle it:
+### 1. If it is just a matter of formatting and requires no database access,
+### add the method to one of the Utils modules (or create a new one)
+### 2. If it requires some data munging, it may be best to add it to 
 ### EnsEMBL::Web::Component::Shared, which has been set up for this usage
 
 use strict;
@@ -98,10 +102,23 @@ sub button_style {
   return {};
 }
 
-sub coltab {
-  my ($self, $text, $colour, $title) = @_;
+sub button_portal {
+  my ($self, $buttons, $class) = @_;
+  $class ||= '';
+  my $html;
 
-  return sprintf(qq(<div class="coltab"><span class="coltab-tab" style="background-color:%s;">&nbsp;</span><div class="coltab-text">%s</div></div>), $colour, helptip($text, $title));
+  my $img_url = $self->img_url;
+
+  foreach (@{$buttons || []}) {
+    if ($_->{'url'}) {
+      my $counts = qq(<span class="counts">$_->{'count'}</span>) if $_->{'count'};
+      $html .= qq(<div><a href="$_->{'url'}" title="$_->{'title'}" class="_ht"><img src="$img_url$_->{'img'}" alt="$_->{'title'}" />$counts</a></div>);
+    } else {
+      $html .= qq|<div><img src="$img_url$_->{'img'}" class="_ht unavailable" alt="$_->{'title'} (Not available)" title="$_->{'title'} (Not available)" /></div>|;
+    }
+  }
+
+  return qq{<div class="portal $class">$html</div><div class="invisible"></div>};
 }
 
 sub param {
