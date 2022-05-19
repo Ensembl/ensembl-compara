@@ -97,10 +97,10 @@ if __name__ == "__main__":
                                                 "include every species in the MSA. (REQUIRED)")
     parser.add_argument("--depth_threshold", default=0.5, type=float, help="Constrained elements depth "
                                                 "threshold for shallow columns, in substitutions per site. "
-                                                "By default, 0.5.")
+                                                "The default is 0.5.")
     parser.add_argument("--gerp_exe_dir", default="", type=str,
-                        help="Path where 'gerpcol' and 'gerpelem' binaries can be found."
-                             " By default, these are assumed to be accessible from the $PATH.")
+                        help="Path where 'gerpcol' and 'gerpelem' executable binaries can be found."
+                             " The default is $PATH.")
 
     args = parser.parse_args()
     main(args)
