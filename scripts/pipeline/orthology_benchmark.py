@@ -473,6 +473,44 @@ def collapse_tandem_paralogs(df_genes: pandas.DataFrame, paralogs: List[Tuple[st
     return df_genes
 
 
+def get_neighbours(gene: str, df_genes: pandas.DataFrame, n: int) -> pandas.DataFrame:
+    """Returns a specified number of neighbouring genes for a gene of interest - `n` to its left and `n` to
+    its right, or fewer if there are not that many genes on the same chromosome or scaffold.
+
+    Args:
+        gene: `gene_id` of interest.
+        df_genes: A data frame with a name of the chromosome or scaffold, `gene_id`, gene start position and
+            strand for all genes.
+        n: Radius of the neighbourhood.
+
+    Raises:
+        ValueError: When `gene` is not found in `df_genes`.
+
+    """
+    # Sort genes according to their location
+    df_genes.sort_values(["seqname", "start"], inplace=True)
+    df_genes.reset_index(inplace=True)
+    df_genes.drop("index", 1, inplace=True)
+
+    try: # Get index of `gene`
+        index = df_genes.index[df_genes["gene_id"] == gene][0]
+    except IndexError as exc:
+        msg = f"Gene '{gene}' not found."
+        raise ValueError(msg) from exc
+
+    seqname = df_genes.iloc[index]["seqname"]  # Name of a chromosome of scaffold
+
+    # Extract n genes before the gene and n genes after the gene of interest, if there are that many
+    neighbourhood = df_genes[max(0, index - n): min(len(df_genes), index + n + 1)]
+    # Neighbours should be on the same chromosome of scaffold as the gene
+    neighbourhood = neighbourhood[neighbourhood["seqname"] == seqname]
+
+    neighbourhood.reset_index(inplace=True)
+    neighbourhood.drop("index", 1, inplace=True)
+
+    return neighbourhood
+
+
 def calculate_goc_scores():
     """Docstring"""
 
