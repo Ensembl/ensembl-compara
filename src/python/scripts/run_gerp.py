@@ -33,6 +33,7 @@ import json
 import os
 import subprocess
 
+
 def add_ce_to_json(ce_file: str, json_file: str) -> None:
     """Enrich the json file with the constrained elements.
 
