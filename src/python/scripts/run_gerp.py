@@ -67,7 +67,7 @@ def add_ce_to_json(ce_file: str, json_file: str) -> None:
 
 
 def main(param: argparse.Namespace) -> None:
-    """ Main function of the run_gerp.py script
+    """Main function of the run_gerp.py script
 
     This function runs gerpcol to define a GERP score for every column of the genomic alignment block
     and gerpelem to identify constrained elements across the genomic alignment block.
