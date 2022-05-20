@@ -423,3 +423,43 @@ def test_collapse_tandem_paralogs_wo_keep() -> None:
     exp_df = pandas.DataFrame(exp_genes, columns=["seqname", "gene_id", "start", "strand"])
     out_df = orthology_benchmark.collapse_tandem_paralogs(test_df, test_paralogs, False)
     pandas.testing.assert_frame_equal(out_df, exp_df)
+
+
+@pytest.mark.parametrize(
+    "gene, n, exp_genes, expectation",
+    [
+        ("ENSOSUG000012", 4, [["ML997581.1", "ENSOSUG000006", 6188, "+"],
+                              ["ML997581.1", "ENSOSUG000008", 15846, "+"],
+                              ["ML997581.1", "ENSOSUG000012", 25596, "+"],
+                              ["ML997581.1", "ENSOSUG000020", 34779, "+"],
+                              ["ML997581.1", "ENSOSUG000063", 55600, "+"],
+                              ["ML997581.1", "ENSOSUG000105", 84807, "+"]], does_not_raise()),
+        ("ENSOSUG000006", 1, [["ML997581.1", "ENSOSUG000006", 6188, "+"],
+                              ["ML997581.1", "ENSOSUG000008", 15846, "+"]], does_not_raise()),
+        ("ENSOSUG000105", 1, [["ML997581.1", "ENSOSUG000063", 55600, "+"],
+                              ["ML997581.1", "ENSOSUG000105", 84807, "+"]], does_not_raise()),
+        ("ENSOSUG003240", 2, [["PYXB01142696.1", "ENSOSUG003240", 12, "-"]], does_not_raise()),
+        ("ensembl_compara", 2, None, raises(ValueError, match=r"Gene 'ensembl_compara' not found."))
+    ]
+)
+def test_get_neighbours(gene: str, n: int, exp_genes, expectation) -> None:
+    """Tests :func:`orthology_benchmark.get_neighbours()` function.
+
+    Args:
+        gene: `gene_id` of interest.
+        n: Radius of the neighbourhood.
+        exp_genes: Expected values in return data frame of the function.
+        expectation: Context manager for the expected exception, i.e. the test will only pass if that
+            exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
+
+    """
+    test_data = [["ML997581.1", "ENSOSUG000012", 25596, "+"], ["PYXB01142696.1", "ENSOSUG003240", 12, "-"],
+                 ["ML997581.1", "ENSOSUG000020", 34779, "+"], ["ML997581.1", "ENSOSUG000006", 6188, "+"],
+                 ["ML997581.1", "ENSOSUG000008", 15846, "+"], ["ML997581.1", "ENSOSUG000063", 55600, "+"],
+                 ["ML997581.1", "ENSOSUG000105", 84807, "+"], ["PYXB01141513.1", "ENSOSUG003211", 2, "-"],
+                 ["PYXB01142552.1", "ENSOSUG003223", 38, "-"]]
+    test_df = pandas.DataFrame(test_data, columns=["seqname", "gene_id", "start", "strand"])
+    with expectation:
+        out_df = orthology_benchmark.get_neighbours(gene, test_df, n)
+        exp_df = pandas.DataFrame(exp_genes, columns=["seqname", "gene_id", "start", "strand"])
+        pandas.testing.assert_frame_equal(out_df, exp_df)
