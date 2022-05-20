@@ -62,7 +62,7 @@ def add_ce_to_json(ce_file: str, json_file: str) -> None:
             constrained_elems.append(constrained_elem)
     align_set["constrained_elems"] = constrained_elems
 
-    with open(json_file, 'w') as json_file_obj:
+    with open(json_file, "w") as json_file_obj:
         json.dump(align_set, json_file_obj)
 
 
