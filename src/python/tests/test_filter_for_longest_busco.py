@@ -42,12 +42,13 @@ class TestFilterForLongestBusco:
         """
         # Run the command
         cmd = [sys.executable, str(Path(__file__).parents[3] / 'pipelines' / 'SpeciesTreeFromBusco' / 'scripts' / 'filter_for_longest_busco.py'),
-               '-i', str(Path(__file__).parents[3] / 'src' / 'python' / 'tests' / 'flatfiles' / 'busco_filter_test.fas'), '-o', tmp_dir / "longest_busco.fas", '-l', tmp_dir / "busco_genes.tsv"]
+               '-i', str(Path(__file__).parents[3] / 'src' / 'python' / 'tests' / 'flatfiles' / 'busco_filter_test.fas'), '-o', str(tmp_dir / "longest_busco.fas"),
+               '-l', str(tmp_dir / "busco_genes.tsv")]
         subprocess.check_call(cmd)
 
         # Compare with expected output:
         expected_genes = "flatfiles/busco_filter_test_genes.tsv"
         expected_output = "flatfiles/busco_filter_test_output.fas"
 
-        assert file_cmp(tmp_dir / "longest_busco.fas", expected_output)
-        assert file_cmp(tmp_dir / "busco_genes.tsv", expected_genes)
+        assert file_cmp(tmp_dir / "longest_busco.fas", expected_output)  # type: ignore
+        assert file_cmp(tmp_dir / "busco_genes.tsv", expected_genes)  # type: ignore
