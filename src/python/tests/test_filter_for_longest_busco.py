@@ -32,18 +32,22 @@ class TestFilterForLongestBusco:
     """Tests for the `filter_for_longest_busco.py` script.
     """
 
-    def test_filter_for_longest(self, tmp_dir: Path) -> None:
+    def test_filter_for_longest_output(self, tmp_dir: Path) -> None:
         """Tests the output of `filter_for_longest_busco.py` script.
 
         Args:
             tmp_dir: Unit test temp directory (fixture).
         """
+        input_file = str(Path(__file__).parents[0] /
+                         'flatfiles' / 'busco_filter_test.fas')
+        output_file = str(tmp_dir / "longest_busco.fas")
+        output_genes = str(tmp_dir / "busco_genes.tsv")
+
         # Run the command
         cmd = [sys.executable, str(Path(__file__).parents[3] / 'pipelines' /
-               'SpeciesTreeFromBusco' / 'scripts' / 'filter_for_longest_busco.py'),
-               '-i', str(Path(__file__).parents[3] / 'src' / 'python' / 'tests' /
-                         'flatfiles' / 'busco_filter_test.fas'),
-               '-o', str(tmp_dir / "longest_busco.fas"), '-l', str(tmp_dir / "busco_genes.tsv")]
+                                   'SpeciesTreeFromBusco' / 'scripts' / 'filter_for_longest_busco.py'),
+               '-i', input_file,
+               '-o', output_file, '-l', output_genes]
         subprocess.check_call(cmd)
 
         # Compare with expected output:
