@@ -24,6 +24,7 @@ import sys
 import subprocess
 
 from pathlib import Path
+from pytest import raises
 
 from ensembl.compara.filesys import file_cmp
 
@@ -56,3 +57,19 @@ class TestFilterForLongestBusco:
 
         assert file_cmp(tmp_dir / "longest_busco.fas", expected_output)  # type: ignore
         assert file_cmp(tmp_dir / "busco_genes.tsv", expected_genes)  # type: ignore
+
+    def test_filter_for_longest_missing_input(self) -> None:
+        """Tests `filter_for_longest_busco.py` script when input file is missing.
+
+        Args:
+        """
+        input_file = ""
+        output_file = "dummy.fas"
+        output_genes = "dummy.tsv"
+        # Run the command
+        cmd = [sys.executable, str(Path(__file__).parents[3] / 'pipelines' /
+                                   'SpeciesTreeFromBusco' / 'scripts' / 'filter_for_longest_busco.py'),
+               '-i', input_file,
+               '-o', output_file, '-l', output_genes]
+        with raises(subprocess.CalledProcessError):
+            subprocess.check_call(cmd)
