@@ -16,18 +16,16 @@
 
 Typical usage example::
 
-    $ pytest
+    $ pytest filter_for_longest_busco.py
 
 """
 
-from pathlib import Path
-import pytest
-import subprocess
-import os
 import sys
+import subprocess
+
+from pathlib import Path
 
 from ensembl.compara.filesys import file_cmp
-from ensembl.plugins.pytest_unittest import tmp_dir
 
 
 class TestFilterForLongestBusco:
@@ -41,9 +39,11 @@ class TestFilterForLongestBusco:
             tmp_dir: Unit test temp directory (fixture).
         """
         # Run the command
-        cmd = [sys.executable, str(Path(__file__).parents[3] / 'pipelines' / 'SpeciesTreeFromBusco' / 'scripts' / 'filter_for_longest_busco.py'),
-               '-i', str(Path(__file__).parents[3] / 'src' / 'python' / 'tests' / 'flatfiles' / 'busco_filter_test.fas'), '-o', str(tmp_dir / "longest_busco.fas"),
-               '-l', str(tmp_dir / "busco_genes.tsv")]
+        cmd = [sys.executable, str(Path(__file__).parents[3] / 'pipelines' /
+               'SpeciesTreeFromBusco' / 'scripts' / 'filter_for_longest_busco.py'),
+               '-i', str(Path(__file__).parents[3] / 'src' / 'python' / 'tests' /
+                         'flatfiles' / 'busco_filter_test.fas'),
+               '-o', str(tmp_dir / "longest_busco.fas"), '-l', str(tmp_dir / "busco_genes.tsv")]
         subprocess.check_call(cmd)
 
         # Compare with expected output:
