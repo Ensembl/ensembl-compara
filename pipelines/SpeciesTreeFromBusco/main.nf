@@ -52,9 +52,7 @@ process prepareBusco {
 }
 
 process buscoAnnot {
-    label 'lsf_32Gb_16C'
-    cpus 16
-    memory '32 GB'
+    label 'lsf_16Gb'
 
     input:
         path busco_prot
@@ -80,7 +78,6 @@ process buscoAnnot {
 
 process collateBusco {
     label 'rc_16gb'
-    memory '16 GB'
 
     publishDir "${params.results_dir}/busco_genes", pattern: "cdnas_fofn.txt", mode: "copy", overwrite: true
     publishDir "${params.results_dir}/busco_genes/prot", pattern: "gene_prot_*.fas", mode: "copy",  overwrite: true
@@ -111,7 +108,6 @@ process collateBusco {
 
 process alignProt {
     label 'rc_16Gb'
-    memory '16 GB'
 
     publishDir "${params.results_dir}/", pattern: "alignments/prot_aln_*.fas", mode: "copy",  overwrite: true
 
@@ -131,7 +127,6 @@ process alignProt {
 
 process mergeAlns {
     label 'rc_24gb'
-    memory '24 GB'
 
     publishDir "${params.results_dir}/", pattern: "merged_protein_alns.fas", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "partitions.tsv", mode: "copy",  overwrite: true
@@ -159,7 +154,6 @@ process mergeAlns {
 }
 process runIqtree {
     label 'rc_32gb'
-    memory '32 GB'
     cpus 30
 
     publishDir "${params.results_dir}/", pattern: "species_tree.nwk", mode: "copy",  overwrite: true
