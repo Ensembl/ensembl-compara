@@ -73,3 +73,22 @@ class TestFilterForLongestBusco:
                '-o', output_file, '-l', output_genes]
         with raises(subprocess.CalledProcessError):
             subprocess.check_call(cmd)
+
+    def test_filter_for_longest_empty_input(self, tmp_dir: Path) -> None:
+        """Tests `filter_for_longest_busco.py` script when input file is empty.
+
+        Args:
+            tmp_dir: Unit test temp directory (fixture).
+        """
+        input_file = ""
+        input_file = str(Path(__file__).parents[0] /
+                         'flatfiles' / 'empty_file.txt')
+        output_file = str(tmp_dir / "dummy.fas")
+        output_genes = str(tmp_dir / "dummy.tsv")
+        # Run the command
+        cmd = [sys.executable, str(Path(__file__).parents[3] / 'pipelines' /
+                                   'SpeciesTreeFromBusco' / 'scripts' / 'filter_for_longest_busco.py'),
+               '-i', input_file,
+               '-o', output_file, '-l', output_genes]
+        with raises(subprocess.CalledProcessError):
+            subprocess.check_call(cmd)
