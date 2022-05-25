@@ -34,7 +34,7 @@ parser.add_argument(
 parser.add_argument(
     '-p', metavar='output', type=str, help="Partition file.", default="partitions.tsv")
 parser.add_argument(
-    '-t', metavar='input_list', type=str, help="Input list.")
+    '-t', metavar='input_list', type=str, help="Input taxa file.")
 
 
 if __name__ == '__main__':
