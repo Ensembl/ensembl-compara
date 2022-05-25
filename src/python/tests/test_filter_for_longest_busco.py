@@ -40,7 +40,7 @@ class TestFilterForLongestBusco:
             tmp_dir: Unit test temp directory (fixture).
         """
         input_file = str(Path(__file__).parents[0] /
-                         'flatfiles' / 'busco_filter_test.fas')
+                         'flatfiles' / 'SpeciesTreeFromBusco' / 'busco_filter_test.fas')
         output_file = str(tmp_dir / "longest_busco.fas")
         output_genes = str(tmp_dir / "busco_genes.tsv")
 
@@ -52,8 +52,8 @@ class TestFilterForLongestBusco:
         subprocess.check_call(cmd)
 
         # Compare with expected output:
-        expected_genes = str(Path(__file__).parents[0] / "flatfiles/busco_filter_test_genes.tsv")
-        expected_output = str(Path(__file__).parents[0] / "flatfiles/busco_filter_test_output.fas")
+        expected_genes = str(Path(__file__).parents[0] / "flatfiles/SpeciesTreeFromBusco/busco_filter_test_genes.tsv")
+        expected_output = str(Path(__file__).parents[0] / "flatfiles/SpeciesTreeFromBusco/busco_filter_test_output.fas")
 
         assert file_cmp(tmp_dir / "longest_busco.fas", expected_output)  # type: ignore
         assert file_cmp(tmp_dir / "busco_genes.tsv", expected_genes)  # type: ignore
@@ -82,7 +82,7 @@ class TestFilterForLongestBusco:
         """
         input_file = ""
         input_file = str(Path(__file__).parents[0] /
-                         'flatfiles' / 'empty_file.txt')
+                         'flatfiles' / 'SpeciesTreeFromBusco' / 'empty_file.txt')
         output_file = str(tmp_dir / "dummy.fas")
         output_genes = str(tmp_dir / "dummy.tsv")
         # Run the command
