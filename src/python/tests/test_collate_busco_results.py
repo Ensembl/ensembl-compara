@@ -47,11 +47,13 @@ class TestCollateBusco:
         output_taxa = str(tmp_dir / "taxa.tsv")
 
         # Run the command
+
         cmd = [sys.executable, str(Path(__file__).parents[3] / 'pipelines' /
                                    'SpeciesTreeFromBusco' / 'scripts' / 'collate_busco_results.py'),
                '-i', input_file,
                '-o', str(tmp_dir), '-l', input_genes, '-s', output_stats, '-t', output_taxa]
-        subprocess.check_call(cmd)
+        location = str(Path(__file__).parents[0])
+        subprocess.check_call(cmd, cwd=location)
 
         # Compare with expected output:
         expected_stats = str(Path(__file__).parents[0] / "flatfiles" / "SpeciesTreeFromBusco"
@@ -72,10 +74,10 @@ class TestCollateBusco:
         assert file_cmp(output_taxa, expected_taxa)
 
         # Compare per-gene output:
-        assert file_cmp(tmp_dir / "gene_prot_gene1.fas", expected_gene1)
-        assert file_cmp(tmp_dir / "gene_prot_gene2.fas", expected_gene2)
-        assert file_cmp(tmp_dir / "gene_prot_gene3.fas", expected_gene3)
-        assert file_cmp(tmp_dir / "gene_prot_gene4.fas", expected_gene4)
+        assert file_cmp(str(tmp_dir / "gene_prot_gene1.fas"), expected_gene1)
+        assert file_cmp(str(tmp_dir / "gene_prot_gene2.fas"), expected_gene2)
+        assert file_cmp(str(tmp_dir / "gene_prot_gene3.fas"), expected_gene3)
+        assert file_cmp(str(tmp_dir / "gene_prot_gene4.fas"), expected_gene4)
 
     def test_collate_for_empty_input(self, tmp_dir: Path) -> None:
         """Tests the `collate_busco_results.py` script when input is empty.
