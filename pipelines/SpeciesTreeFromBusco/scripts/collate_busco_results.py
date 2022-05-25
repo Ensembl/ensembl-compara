@@ -17,7 +17,7 @@
 """
 Script for collating per-genome BUSCO cDNA results.
 """
-
+import sys
 import argparse
 from collections import defaultdict, OrderedDict
 from os import path
@@ -67,6 +67,10 @@ if __name__ == '__main__':
     all_genes = pd.read_csv(args.l, sep="\t")
     with open(args.i) as x:
         seq_files = [y.strip() for y in x.readlines()]
+
+    if len(seq_files) == 0:
+        sys.stderr.write("No input cDNA files specified in the fofn file!\n")
+        sys.exit(1)
 
     taxa = []
     dups = []
