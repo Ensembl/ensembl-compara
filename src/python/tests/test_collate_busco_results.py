@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Testing of `` script.
+"""Testing of `collate_busco_results.py` script.
 
 Typical usage example::
 
