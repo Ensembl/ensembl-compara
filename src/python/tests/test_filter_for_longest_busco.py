@@ -52,8 +52,10 @@ class TestFilterForLongestBusco:
         subprocess.check_call(cmd)
 
         # Compare with expected output:
-        expected_genes = str(Path(__file__).parents[0] / "flatfiles/SpeciesTreeFromBusco/busco_filter_test_genes.tsv")
-        expected_output = str(Path(__file__).parents[0] / "flatfiles/SpeciesTreeFromBusco/busco_filter_test_output.fas")
+        expected_genes = str(Path(__file__).parents[0] / 'flatfiles' /
+                             'SpeciesTreeFromBusco' / 'busco_filter_test_genes.tsv')
+        expected_output = str(Path(__file__).parents[0] / "flatfiles" /
+                              "SpeciesTreeFromBusco" / "busco_filter_test_output.fas")
 
         assert file_cmp(tmp_dir / "longest_busco.fas", expected_output)  # type: ignore
         assert file_cmp(tmp_dir / "busco_genes.tsv", expected_genes)  # type: ignore
