@@ -52,7 +52,8 @@ process prepareBusco {
 }
 
 process buscoAnnot {
-    label 'rc_64Gb'
+    label 'lsf_16Gb'
+
     input:
         path busco_prot
         path genome
@@ -71,7 +72,7 @@ process buscoAnnot {
     --run_busco 1 \
     --busco_protein_file $busco_prot
     mkdir -p cdna
-    gffread -w cdna/$genome -g $genome anno_res/busco_output/annotation.gtf
+    ${params.gffread_exe} -w cdna/$genome -g $genome anno_res/busco_output/annotation.gtf
     """
 }
 
@@ -153,6 +154,7 @@ process mergeAlns {
 }
 process runIqtree {
     label 'rc_32gb'
+    cpus 30
 
     publishDir "${params.results_dir}/", pattern: "species_tree.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_report.txt", mode: "copy",  overwrite: true

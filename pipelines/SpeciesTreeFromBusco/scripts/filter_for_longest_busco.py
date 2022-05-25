@@ -17,7 +17,7 @@
 """
 Script for filtering for the longest protein isoform per gene.
 """
-
+import sys
 import argparse
 from Bio import SeqIO
 
@@ -42,6 +42,10 @@ if __name__ == '__main__':
                 db[gene] = record
             elif len(record.seq) > len(db[gene].seq):
                 db[gene] = record
+
+    if len(db) == 0:
+        sys.stderr.write("Empty BUSCO gene set!\n")
+        sys.exit(1)
 
     with open(args.o, "w") as output_handle:
         SeqIO.write(db.values(), output_handle, "fasta")
