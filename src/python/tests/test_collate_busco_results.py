@@ -33,7 +33,7 @@ class TestCollateBusco:
     """Tests for the `collate_busco_results.py` script.
     """
 
-    def test__collate_output(self, tmp_dir: Path) -> None:
+    def test_collate_output(self, tmp_dir: Path) -> None:
         """Tests the output of `collate_busco_results.py` script.
 
         Args:
