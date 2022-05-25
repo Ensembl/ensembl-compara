@@ -14,21 +14,18 @@
 # limitations under the License.
 """Unit testing of :mod:`cigar` module.
 
-The unit testing is divided into one test class per submodule/class found in this module, and one test method
-per public function/class method.
-
 Typical usage example::
 
     $ pytest test_cigar.py
 
 """
 
-from typing import Tuple, ContextManager, List
 from contextlib import nullcontext as does_not_raise
+from typing import Tuple, ContextManager, List
 
 import pytest
 
-from ensembl.compara.utils import aligned_seq_to_cigar, get_cigar_array, alignment_to_seq_coordinate
+from ensembl.compara.utils import aligned_seq_to_cigar, alignment_to_seq_coordinate, get_cigar_array
 
 
 class TestCigar:
@@ -48,11 +45,11 @@ class TestCigar:
         ],
     )
     def test_aligned_seq_to_cigar(self, aligned_seq: str, cigar: str) -> None:
-        """Tests :meth:`cigar.aligned_seq_to_cigar()` method.
+        """Tests :meth:`cigar.aligned_seq_to_cigar()` function.
 
         Args:
-            aligned_seq: aligned sequence (str).
-            cigar: Expected cigar line (str).
+            aligned_seq: aligned sequence.
+            cigar: Expected cigar line.
 
         """
         assert aligned_seq_to_cigar(aligned_seq) == cigar, "cigar line returned differs from the one expected"
@@ -70,8 +67,8 @@ class TestCigar:
         """Tests :meth:`cigar.aligned_seq_to_cigar()` method.
 
             Args:
-                cigar: cigar line (str).
-                cigar_array: Expected cigar array (List[Tuple])
+                cigar: cigar line.
+                cigar_array: Expected cigar array.
         """
         assert get_cigar_array(cigar) == cigar_array, "cigar line returned differs from the one expected"
 
@@ -83,9 +80,7 @@ class TestCigar:
             ("10M3D5M2D2M", 12, [10, 11], does_not_raise()),
             ("10M3D5M2D2M", 13, [10, 11], does_not_raise()),
             ("10M3D5M2D2M", 11, [10, 11], does_not_raise()),
-            ("10M3D5M2D2M", 19, [15, 16], does_not_raise()),
-            ("10M3D5M2D2M", 20, [15, 16], does_not_raise()),
-            ("17D",15, [0, 1], does_not_raise()),
+            ("17D", 15, [0, 1], does_not_raise()),
             ("17M", 15, [15], does_not_raise()),
             ("10M3D5M2D2M", 30, None, pytest.raises(ValueError)),
             ("10M3D5M2D2M", 0, None, pytest.raises(ValueError)),
@@ -94,15 +89,15 @@ class TestCigar:
     )
     def test_alignment_to_seq_coordinate(self, cigar: str, coord_align: int,
                                          coord_seq: int, expectation: ContextManager) -> None:
-        """Tests :meth:`cigar.alignment_to_seq_coordinate()` method.
+        """Tests :func:`cigar.alignment_to_seq_coordinate()` method.
 
             Args:
-                cigar: cigar line (str).
-                coord_align: Coordinate at the alignment level (int)
-                coord_seq: expected coordinat at the sequence level
+                cigar: cigar line.
+                coord_align: Coordinate at the alignment level.
+                coord_seq: expected coordinate at the sequence level
                 expectation: Context manager for the expected exception, i.e. the test will only pass if that
                     exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
         """
-        error = "difference of coord_seq compared tot he one expected with  coord_align"
+        error = "difference of coord_seq compared tot he one expected with coord_align"
         with expectation:
             assert alignment_to_seq_coordinate(cigar, coord_align) == coord_seq, error
