@@ -186,7 +186,7 @@ sub species_stats {
 
 sub _format_genebuild_method {
   my $self     = shift;
-  my $method  = ucfirst($sd->GENEBUILD_METHOD) || '';
+  my $method  = ucfirst($self->hub->species_defs->GENEBUILD_METHOD) || '';
   $method     =~ s/_/ /g;
   return $method;
 }
