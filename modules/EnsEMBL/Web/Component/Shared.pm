@@ -106,8 +106,7 @@ sub species_stats {
     }
   }
 
-  my $method  = ucfirst($sd->GENEBUILD_METHOD) || '';
-  $method     =~ s/_/ /g;
+  my $method  = $self->_format_genebuild_method; 
   $summary->add_row({
       'name' => '<b>Annotation method</b>',
       'stat' => $method
@@ -183,6 +182,13 @@ sub species_stats {
   }
 
   return $html;
+}
+
+sub _format_genebuild_method {
+  my $self     = shift;
+  my $method  = ucfirst($sd->GENEBUILD_METHOD) || '';
+  $method     =~ s/_/ /g;
+  return $method;
 }
 
 sub _add_gene_counts {
