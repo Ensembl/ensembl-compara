@@ -18,10 +18,13 @@ nextflow.enable.dsl=2
 
 params.orthofinder_exe = ''
 params.dir = ''
-params.ref_destination = ''
+params.ref_destination_farm = ''
+params.ref_destination_cloud = ''
 params.query_destination = ''
 params.taxon_selector_exe = ''
 params.ncbi_taxonomy_url = ''
+params.output_path = ''
+params.embassy = false
 
 /**
 *@input takes list of directories containing fasta files
@@ -31,17 +34,23 @@ process orthoFinderFactory {
 
     label 'slurm_default'
 
-    publishDir "$params.ref_destination"
+    publishDir "${params.ref_destination_cloud}/", mode: 'copy', overwrite: 'true'
 
     input:
     val x
 
     output:
-    val x
+    path "${x}/"
 
     shell:
     """
-    rsync -Lavz ${params.dir}/${x} ${params.ref_destination}/
+    rsync -Lavz ${params.dir}/${x}/ ${x}
+    """
+
+    stub:
+    """
+    mkdir -p ${params.dir}/${x}
+    echo "hello" > ${params.dir}/${x}/test.txt
     """
 
 }
@@ -51,14 +60,18 @@ process orthoFinderFactory {
 */
 process runOrthoFinder {
 
-    label 'slurm_default'
+    label 'slurm_64Gb_32C'
+
+    scratch true
+
+    publishDir "${params.ref_destination_cloud}/${x}", mode: 'copy', overwrite: 'true'
 
     input:
-    val x
+    path x
 
     shell:
     """
-    ${params.orthofinder_exe} -t 32 -a 8 -f ${params.ref_destination}/${x}
+    ${params.orthofinder_exe} -t 32 -a 8 -f ${x}
     """
 
     stub:
@@ -89,8 +102,35 @@ process runOrthoFinder {
 // }
 
 /**
-*@input takes a taxon_name, requires params.ncbi_taxonomy_url and params.ref_destination
-*@output path of new directory containing query and reference fasta files
+*@input takes a genome fasta file or fasta.gz file
+*@output path of uncompressed fasta file
+*/
+process processGenomeFasta {
+
+    label 'lsf_default'
+
+    input:
+    path x
+
+    output:
+    path y
+
+    script:
+    y = file(x).getBaseName()
+    """
+    gunzip -c ${x} > ${y}
+    """
+
+    stub:
+    y = file(x).getBaseName()
+    """
+    echo '>gene1\nMAPSQRP' > ${y}
+    """
+}
+
+/**
+*@input takes a taxon_name, requires params.ncbi_taxonomy_url and params.ref_destination_farm
+*@output path of appropriate reference collection directory
 */
 process queryTaxonSelectionFactory {
 
@@ -107,14 +147,9 @@ process queryTaxonSelectionFactory {
     python ${params.taxon_selector_exe} \
         --taxon_name ${x} \
         --url ${params.ncbi_taxonomy_url} \
-        --ref_base_dir ${params.ref_destination} \
+        --ref_base_dir ${params.ref_destination_farm} \
     """
 
-    stub:
-    """
-    mkdir mammalia
-    echo "mammalia"
-    """
 }
 
 /**
@@ -125,34 +160,34 @@ process mergeRefToQuery {
 
     label 'lsf_default'
 
-    publishDir "${params.query_destination}/${query}"
+    publishDir "${params.query_destination}/${query}", mode: 'copy'
 
     input:
     val query
-    val query_fasta // todo: When DataFile API works this will be file not val
-    val ref_dir // todo: When DataFile API works this will be path not val
+    path query_fasta
+    val ref_dir
 
     output:
-    val "${query}"
+    path "${query}/"
 
     shell:
     """
-    mkdir ${query};
-    rsync -Lavz ${ref_dir} ${params.query_destination}/${query}/;
-    cp ${query_fasta} ${params.query_destination}/${query};
+    rsync -Lavz ${ref_dir}/ ${query};
+    cp ${query_fasta} ${query}/;
     """
 
     stub:
     """
-    echo ${query}
+    mkdir ${query}
+    echo '>${query}\nMAPSQRP' > ${query}.fasta
     """
 }
 
 /**
 *@input takes path of directory of fasta and precomputed orthofinder results
-*@output path of results
+*@output same as input
 */
-process updateOrthofinderRun {
+process triggerUpdateOrthofinderNF {
 
     label 'lsf_default'
 
@@ -161,6 +196,49 @@ process updateOrthofinderRun {
 
     output:
     stdout
+
+    shell:
+    if ( params.embassy ) {
+        """
+        ssh ${USER}@45.88.81.155 \
+        ' nextflow run  ensembl-compara/pipelines/OrthofinderOnQuery/orthofinder_part.nf \
+        --orthodir ${x} '
+        STDOUT=\$( ssh ${USER}@45.88.81.155 ' echo "Orthofinder update complete on " & hostname ' )
+        echo \$STDOUT
+        """
+    } else {
+        """
+        nextflow run  ensembl-compara/pipelines/OrthofinderOnQuery/orthofinder_part.nf --orthodir ${x}
+        """
+    }
+
+    stub:
+    if ( params.embassy ) {
+        """
+        STDOUT=\$(ssh ${USER}@45.88.81.155 ' echo -n ${x} ' )
+        echo -n \$STDOUT
+        """
+    } else {
+        """
+        echo ${x}
+        """
+    }
+}
+
+/**
+*@input takes path of directory of fasta and precomputed orthofinder results
+*@output path of results
+*/
+process updateOrthofinderRun {
+
+    label params.embassy ? 'slurm_default' : 'lsf_default'
+
+    input:
+    val x
+
+    output:
+    path x, emit: "out_dir"
+    stdout emit "debug"
 
     shell:
     """
@@ -172,7 +250,33 @@ process updateOrthofinderRun {
 
     stub:
     """
-    echo 'Orthofinder update complete on '
-    hostname
+    echo ${x}/OrthoFinder
     """
 }
+
+/**
+*@input takes path of directory of computed orthofinder results
+*@output Publishable results directory for example FTP
+*/
+// process copyToFTP {
+// 
+//     label 'lsf_default'
+// 
+//     publishDir "${params.output_path}${x}", mode: 'copy'
+// 
+//     input:
+//     path x
+// 
+//     output:
+//     val "${params.output_path}/${x}"
+// 
+//     shell:
+//     """
+//     #datamover
+//     """
+// 
+//     stub:
+//     """
+//     ls ${params.output_path}/${x}
+//     """
+// }
