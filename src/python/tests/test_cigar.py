@@ -64,7 +64,7 @@ class TestCigar:
         ],
     )
     def test_get_cigar_array(self, cigar: str, cigar_array: List[Tuple]) -> None:
-        """Tests :meth:`cigar.aligned_seq_to_cigar()` method.
+        """Tests :func:`cigar.aligned_seq_to_cigar()` function.
 
             Args:
                 cigar: cigar line.
