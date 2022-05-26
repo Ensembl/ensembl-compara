@@ -50,7 +50,6 @@ def aligned_seq_to_cigar(aligned_seq: str) -> str:
                 list_cigar.append("D" if gaps == 1 else f"{gaps}D")
                 gaps = 0
             matches = matches + 1
-    
     ## process the remaining gap/matched after the loop
     if gaps == 1:
         list_cigar.append("D")
