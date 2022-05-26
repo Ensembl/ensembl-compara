@@ -27,7 +27,7 @@ from importlib.util import module_from_spec, spec_from_file_location
 import os
 from pathlib import Path
 import sys
-from typing import ContextManager, Dict, List
+from typing import ContextManager, Dict, List, Tuple
 
 import pandas
 import sqlalchemy
@@ -315,15 +315,37 @@ def test_extract_orthologs() -> None:
     ) == [("ENSGALG00000030005", "ENSG00000147255")]
 
 
-def test_extract_paralogs() -> None:
+@pytest.mark.parametrize(
+    "species_key, exp_output",
+    [
+        ("homo_sapiens_core_106_38",
+         [("ENSG00000163565", "ENSG00000163568"), ("ENSG00000186081", "ENSG00000135480"),
+          ("ENSG00000170465", "ENSG00000135480"), ("ENSG00000185479", "ENSG00000135480"),
+          ("ENSG00000205420", "ENSG00000135480")]),
+        ("gallus_gallus_core_106_6",
+         [("ENSGALG00000032672", "ENSGALG00000035972"), ("ENSGALG00000032672", "ENSGALG00000030629"),
+          ("ENSGALG00000032672", "ENSGALG00000038579"), ("ENSGALG00000032672", "ENSGALG00000033381"),
+          ("ENSGALG00000032672", "ENSGALG00000043689"), ("ENSGALG00000032672", "ENSGALG00000034868"),
+          ("ENSGALG00000035972", "ENSGALG00000038579"), ("ENSGALG00000035972", "ENSGALG00000033381"),
+          ("ENSGALG00000035972", "ENSGALG00000043689"), ("ENSGALG00000035972", "ENSGALG00000034868"),
+          ("ENSGALG00000030629", "ENSGALG00000038579"), ("ENSGALG00000030629", "ENSGALG00000033381"),
+          ("ENSGALG00000030629", "ENSGALG00000043689"), ("ENSGALG00000030629", "ENSGALG00000034868"),
+          ("ENSGALG00000035972", "ENSGALG00000030629")]),
+        ("ensembl_compara", [])
+    ]
+)
+def test_extract_paralogs(species_key: str, exp_output: List[Tuple[str, str]]) -> None:
     """Tests :func:`orthology_benchmark.extract_paralogs()` function.
+
+    Args:
+        species_key: OrthoFinder identificator of the species of interest.
+        exp_output: Expected return value of the function.
+
     """
     # pylint: disable-next=no-member
-    test_files_dir = pytest.files_dir / "orth_benchmark" # type: ignore[attr-defined, operator]
-    orthofinder_res = test_files_dir  / "OrthoFinder" / "Results_Mar03"
-    assert orthology_benchmark.extract_paralogs(
-        orthofinder_res, "homo_sapiens_core_106_38"
-    ) == [("ENSG00000163565", "ENSG00000163568")]
+    test_files_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined, operator]
+    orthofinder_res = test_files_dir / "OrthoFinder" / "Results_Mar03"
+    assert orthology_benchmark.extract_paralogs(orthofinder_res, species_key) == exp_output
 
 
 @pytest.mark.parametrize(
