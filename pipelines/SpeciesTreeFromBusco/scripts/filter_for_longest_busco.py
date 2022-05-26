@@ -16,6 +16,9 @@
 # limitations under the License.
 """
 Script for filtering for the longest protein isoform per gene.
+
+Example:
+    $ python filter_for_longest_busco.py -i input.fas -o output.fas -l output.genes.tsv
 """
 import sys
 import argparse
@@ -25,11 +28,13 @@ from Bio import SeqIO
 parser = argparse.ArgumentParser(
     description='Filter for longest BUSCO isoform.')
 parser.add_argument(
-    '-i', metavar='input', type=str, help="Input.")
+    '-i', metavar='input', type=str, help="Input fasta.", required=True)
 parser.add_argument(
-    '-o', metavar='output', type=str, help="Output.", default="filtered_busco.fas")
+    '-o', metavar='output', type=str, help="Output fasta.",
+    default="filtered_busco.fas", required=True)
 parser.add_argument(
-    '-l', metavar='output', type=str, help="List of BUSCO genes.", default="busco_genes.tsv")
+    '-l', metavar='output', type=str, help="List of BUSCO genes.",
+    required=True)
 
 if __name__ == '__main__':
     args = parser.parse_args()
