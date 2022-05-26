@@ -344,7 +344,7 @@ def extract_orthologs(res_dir: str, species_key1: str, species_key2: str) -> Lis
 
 
 def extract_paralogs(res_dir: str, species_key: str) -> List[Tuple[str, str]]:
-    """Reads in putative paralogs inferred by OrthoFinder.
+    """Reads in putative within species paralogs inferred by OrthoFinder.
 
     Args:
         res_dir: Path to the directory with OrthoFinder results.
@@ -367,12 +367,17 @@ def extract_paralogs(res_dir: str, species_key: str) -> List[Tuple[str, str]]:
             genes1 = row["Genes 1"].split(", ")
             genes2 = row["Genes 2"].split(", ")
 
-            if species == species_key:
+            # To parse all lines except those corresponding to duplication events within other extant species
+            if species == species_key or re.match("^N[0-9]+", species):
                 for gene1 in genes1:
                     gene1_match = gene_pattern.fullmatch(gene1)
+                    if not gene1_match:  # Gene from other species
+                        continue
                     gene1_bare_id = gene1_match["gene_id"]  # type: ignore
                     for gene2 in genes2:
                         gene2_match = gene_pattern.fullmatch(gene2)
+                        if not gene2_match:  # Gene from other species
+                            continue
                         gene2_bare_id = gene2_match["gene_id"]  # type: ignore
                         paralogs.append((gene1_bare_id, gene2_bare_id))
 
