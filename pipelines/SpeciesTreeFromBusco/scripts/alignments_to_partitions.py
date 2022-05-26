@@ -21,6 +21,7 @@ Example:
     $ python alignments_to_partitions.py -i input.fofn -o output.fas -p output_partitions.csv -t input.taxa
 """
 
+import sys
 import argparse
 from collections import OrderedDict
 
@@ -59,6 +60,10 @@ if __name__ == '__main__':
     # Slurp list of input alignemnts:
     with open(args.i) as x:
         aln_files = [y.strip() for y in x.readlines()]
+
+    if len(aln_files) == 0:
+        sys.stderr.write("No alignment files specified in the input fofn file!\n")
+        sys.exit(1)
 
     # Total alignment length so far:
     total_len = 0
