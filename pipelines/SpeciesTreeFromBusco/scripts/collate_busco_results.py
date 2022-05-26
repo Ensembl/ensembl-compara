@@ -16,8 +16,12 @@
 # limitations under the License.
 """
 Script for collating per-genome BUSCO cDNA results.
-"""
 
+Example:
+      $ python collate_busco_results.py --input input.fofn --genes busco_genes.txt \
+              --output per_busco_genes --stats output_stats.tsv --taxa taxa.tsv
+"""
+import sys
 import argparse
 from collections import defaultdict, OrderedDict
 from os import path
@@ -31,15 +35,15 @@ from Bio.SeqRecord import SeqRecord
 parser = argparse.ArgumentParser(
     description='Collate BUSCO results and build per-gene fasta files.')
 parser.add_argument(
-    '-i', metavar='input', type=str, help="Input fofn.")
+    '-i', metavar='input', type=str, help="Input fofn.", required=True)
 parser.add_argument(
-    '-l', metavar='genes', type=str, help="List of busco genes.")
+    '-l', metavar='genes', type=str, help="List of busco genes.", required=True)
 parser.add_argument(
-    '-o', metavar='output', type=str, help="Output directory.", default="per_gene")
+    '-o', metavar='output', type=str, help="Output directory.", required=True)
 parser.add_argument(
-    '-s', metavar='stats', type=str, help="Output stats TSV.")
+    '-s', metavar='stats', type=str, help="Output stats TSV.", required=True)
 parser.add_argument(
-    '-t', metavar='taxa', type=str, help="Output taxa TSV.")
+    '-t', metavar='taxa', type=str, help="Output taxa TSV.", required=True)
 
 
 def load_sequences(infile: str) -> Tuple[Dict[str, List[SeqRecord]], int]:
@@ -68,6 +72,10 @@ if __name__ == '__main__':
     with open(args.i) as x:
         seq_files = [y.strip() for y in x.readlines()]
 
+    if len(seq_files) == 0:
+        sys.stderr.write("No input cDNA files specified in the fofn file!\n")
+        sys.exit(1)
+
     taxa = []
     dups = []
     usable = []
@@ -83,7 +91,8 @@ if __name__ == '__main__':
         dups.append(duplicates)
         usable.append(len(genes))
 
-    stat_data = OrderedDict([('Taxa', taxa), ('Genes', usable), ('Duplicates', dups)])
+    stat_data = OrderedDict(
+        [('Taxa', taxa), ('Genes', usable), ('Duplicates', dups)])
     stat_df = pd.DataFrame(stat_data)
     stat_df["SetGenes"] = len(all_genes.Gene)
     stat_df["UsablePercent"] = (stat_df.Genes * 100) / stat_df.SetGenes

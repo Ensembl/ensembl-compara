@@ -16,6 +16,9 @@
 # limitations under the License.
 """
 Merge alignments into partitions.
+
+Example:
+    $ python alignments_to_partitions.py -i input.fofn -o output.fas -p output_partitions.csv -t input.taxa
 """
 
 import argparse
@@ -28,13 +31,13 @@ from Bio import SeqIO
 parser = argparse.ArgumentParser(
     description='Merge alignments with common (possibly partial) taxa.')
 parser.add_argument(
-    '-i', metavar='input', type=str, help="Input fofn.")
+    '-i', metavar='input', type=str, help="Input fofn.", required=True)
 parser.add_argument(
-    '-o', metavar='output', type=str, help="Output fasta.", default="merged.fas")
+    '-o', metavar='output', type=str, help="Output fasta.", required=True)
 parser.add_argument(
-    '-p', metavar='output', type=str, help="Partition file.", default="partitions.tsv")
+    '-p', metavar='output', type=str, help="Partition file.", required=True)
 parser.add_argument(
-    '-t', metavar='input_list', type=str, help="Input list.")
+    '-t', metavar='input_list', type=str, help="Input taxa file.", required=True)
 
 
 if __name__ == '__main__':

@@ -1,0 +1,3 @@
+flatfiles/SpeciesTreeFromBusco/busco_collate_A.fas
+flatfiles/SpeciesTreeFromBusco/busco_collate_B.fas
+flatfiles/SpeciesTreeFromBusco/busco_collate_C.fas
