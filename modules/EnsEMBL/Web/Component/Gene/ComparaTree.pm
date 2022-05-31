@@ -181,23 +181,18 @@ sub content {
 
   # store g1 param in a different param as $highlight_gene can be undef if highlighting is disabled
   my $gene_to_highlight = $hub->param('g1');
-  my $current_gene = $hub->param('g'); # stable ID of current gene
+  my $current_gene_display_name = $gene->Obj->display_xref->display_id;
   my $highlight_gene_display_label;  
      
   my $lookup = $hub->species_defs->prodnames_to_urls_lookup; 
   foreach my $this_leaf (@$leaves) {
     if ($gene_to_highlight && $this_leaf->gene_member->stable_id eq $gene_to_highlight) {
-      $highlight_gene_display_label = $this_leaf->gene_member->display_label;
+      $highlight_gene_display_label = $this_leaf->gene_member->display_label || $current_gene_display_name;
       $highlight_species            = $lookup->{$this_leaf->gene_member->genome_db->name};
       $highlight_species_name       = $this_leaf->gene_member->genome_db->display_name;
       $highlight_genome_db_id       = $this_leaf->gene_member->genome_db_id;
       last;
     }
-  }
-
-  if ($highlight_gene_display_label eq undef) {
-    # $highlight_gene_display_label = $gene->display_name;
-    $highlight_gene_display_label = $current_gene;
   }
 
   # check if highlight ancestor (anc param) is available or not
