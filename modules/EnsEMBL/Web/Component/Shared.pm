@@ -195,7 +195,7 @@ sub _add_gene_counts {
   my ($self,$genome_container,$sd,$cols,$options,$tail,$our_type) = @_;
 
   my @order           = qw(coding_cnt noncoding_cnt noncoding_cnt/s noncoding_cnt/l noncoding_cnt/m pseudogene_cnt transcript);
-  my @suffixes        = (['','~'], ['r',' (incl ~ '.glossary_helptip($self->hub, 'readthrough', 'Readthrough').')']);
+  my @suffixes        = (['','~'], ['r',' (excl ~ '.glossary_helptip($self->hub, 'readthrough', 'Readthrough').')']);
   my $glossary_lookup = {
     'coding_cnt'        => 'Protein coding',
     'noncoding_cnt/s'   => 'Small non coding gene',
