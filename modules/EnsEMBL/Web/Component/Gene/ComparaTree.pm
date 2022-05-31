@@ -181,8 +181,13 @@ sub content {
 
   # store g1 param in a different param as $highlight_gene can be undef if highlighting is disabled
   my $gene_to_highlight = $hub->param('g1');
-  my $current_gene_display_name = $gene->Obj->display_xref->display_id;
-  my $highlight_gene_display_label;  
+  my ($current_gene_display_name, $highlight_gene_display_label);
+
+  if (defined $gene->Obj->display_xref) {
+    $current_gene_display_name = $gene->Obj->display_xref->display_id;
+  } else {
+    $current_gene_display_name = $hub->param('g') 
+  } 
      
   my $lookup = $hub->species_defs->prodnames_to_urls_lookup; 
   foreach my $this_leaf (@$leaves) {
