@@ -56,7 +56,7 @@ my @metazoa_overlap_species = qw(drosophila_melanogaster caenorhabditis_elegans)
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@metazoa_overlap_species);
 my $metazoa_overlap_cores = {
     'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_108_9" ],
-    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_108_279" ],
+    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_108_282" ],
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $metazoa_overlap_cores );
 
@@ -94,14 +94,14 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'        => [ 'mysql-ens-compara-prod-5', 'cristig_plants_load_members_108'],
-    #'compara_ptrees'         => [ 'mysql-ens-compara-prod-X', 'cristig_default_plants_protein_trees_108' ],
+    'compara_ptrees'         => [ 'mysql-ens-compara-prod-7', 'cristig_default_plants_protein_trees_108' ],
     'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_plants_${prev_eg_release}_${prev_release}' ],
 
     # LASTZ dbs
     'lastz_batch_1'  => [ 'mysql-ens-compara-prod-5', 'cristig_plants_lastz_batch1_108' ],
 
     # synteny
-    #'compara_syntenies' => [ 'mysql-ens-compara-prod-X', 'cristig_plants_synteny_108' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'cristig_plants_synteny_108' ],
 
     # EPO dbs
     ## rice
