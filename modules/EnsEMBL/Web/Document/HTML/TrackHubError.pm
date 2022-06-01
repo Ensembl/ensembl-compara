@@ -136,5 +136,10 @@ sub unknown_species {
   return $message;
 }
 
+sub no_url {
+### Link to trackhub had no URL
+  my $self = shift;
+  return qq(<p>No track hub url was provided - please check your link and try again.</p>);
+}
 
 1;
