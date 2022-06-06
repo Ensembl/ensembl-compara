@@ -72,18 +72,18 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],
 
     # homology dbs
-    #'compara_members'         => [ 'mysql-ens-compara-prod-X',  '' ],
+    'compara_members'         => [ 'mysql-ens-compara-prod-2',  'ivana_vertebrates_load_members_108' ],
     #'compara_ptrees'          => [ 'mysql-ens-compara-prod-X',  '' ],
-    'compara_ptrees_prev'          => [ 'mysql-ens-compara-prod-2',  'jalvarez_default_vertebrates_protein_trees_107' ],
+    'compara_ptrees_prev'     => [ 'mysql-ens-compara-prod-2',  'jalvarez_default_vertebrates_protein_trees_107' ],
     #'compara_nctrees'         => [ 'mysql-ens-compara-prod-X',  '' ],
     #'murinae_ptrees'          => [ 'mysql-ens-compara-prod-X',  '' ],
     #'murinae_nctrees'         => [ 'mysql-ens-compara-prod-X', '' ],
-    'murinae_ptrees_prev'          => [ 'mysql-ens-compara-prod-4',  'jalvarez_vertebrates_murinae_protein_reindexed_trees_107' ],
-    'murinae_nctrees_prev'         => [ 'mysql-ens-compara-prod-10', 'jalvarez_vertebrates_murinae_ncrna_reindexed_trees_107' ],
+    'murinae_ptrees_prev'     => [ 'mysql-ens-compara-prod-4',  'jalvarez_vertebrates_murinae_protein_reindexed_trees_107' ],
+    'murinae_nctrees_prev'    => [ 'mysql-ens-compara-prod-10', 'jalvarez_vertebrates_murinae_ncrna_reindexed_trees_107' ],
     #'pig_breeds_ptrees'       => [ 'mysql-ens-compara-prod-X',  '' ],
     #'pig_breeds_nctrees'      => [ 'mysql-ens-compara-prod-X', '' ],
-    'pig_breeds_ptrees_prev'       => [ 'mysql-ens-compara-prod-4',  'jalvarez_vertebrates_pig_breeds_protein_reindexed_trees_107' ],
-    'pig_breeds_nctrees_prev'      => [ 'mysql-ens-compara-prod-10', 'jalvarez_vertebrates_pig_breeds_ncrna_reindexed_trees_107' ],
+    'pig_breeds_ptrees_prev'  => [ 'mysql-ens-compara-prod-4',  'jalvarez_vertebrates_pig_breeds_protein_reindexed_trees_107' ],
+    'pig_breeds_nctrees_prev' => [ 'mysql-ens-compara-prod-10', 'jalvarez_vertebrates_pig_breeds_ncrna_reindexed_trees_107' ],
 
     # LASTZ dbs
     #'lastz_batch_1'    => [ 'mysql-ens-compara-prod-X', '' ],
