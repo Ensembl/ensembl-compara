@@ -97,8 +97,8 @@ sub default_options {
         # In these databases, ignore these tables
         'ignored_tables'    => {
             # Mapping 'db_alias' => Arrayref of table names
-            'ncrna_db'      => [qw(ortholog_quality id_generator id_assignments)],
-            'protein_db'    => [qw(ortholog_quality id_generator id_assignments)],
+            'ncrna_db'      => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
+            'protein_db'    => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
             'projection_db' => [qw(id_generator id_assignments)],
         },
 
