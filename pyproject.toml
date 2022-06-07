@@ -20,8 +20,6 @@ warn_unused_configs = true
 max-line-length = 110
 disable = [
     "invalid-name",
-    "no-self-use",
-    "relative-import",
     "similarities",
     "too-few-public-methods",
     "too-many-arguments",
