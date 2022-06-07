@@ -161,9 +161,10 @@ sub resource_classes_single_thread {
         '96Gb_job'     => {'LSF' => ['-C0 -M96000 -R"select[mem>96000] rusage[mem=96000]"', $reg_requirement],             'LOCAL' => [ '', $reg_requirement ] },
         '512Gb_job'    => {'LSF' => ['-q bigmem -C0 -M512000 -R"select[mem>512000] rusage[mem=512000]"', $reg_requirement],    'LOCAL' => [ '', $reg_requirement ] },
 
-        '250Mb_6_hour_job'  => {'LSF' => ['-C0 -W 6:00 -M250   -R"select[mem>250]   rusage[mem=250]"',      $reg_requirement], 'LOCAL' => [ '', $reg_requirement ] },
-        '500Mb_6_hour_job'  => {'LSF' => ['-C0 -W 6:00 -M500   -R"select[mem>500]   rusage[mem=500]"',      $reg_requirement], 'LOCAL' => [ '', $reg_requirement ] },
-        '2Gb_6_hour_job'    => {'LSF' => ['-C0 -W 6:00 -M2000  -R"select[mem>2000]  rusage[mem=2000]"',     $reg_requirement], 'LOCAL' => [ '', $reg_requirement ] },
+        '250Mb_6_hour_job' => {'LSF' => ['-C0 -W 6:00 -M250   -R"select[mem>250]   rusage[mem=250]"',  $reg_requirement],  'LOCAL' => [ '', $reg_requirement ] },
+        '500Mb_6_hour_job' => {'LSF' => ['-C0 -W 6:00 -M500   -R"select[mem>500]   rusage[mem=500]"',  $reg_requirement],  'LOCAL' => [ '', $reg_requirement ] },
+        '2Gb_6_hour_job'   => {'LSF' => ['-C0 -W 6:00 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $reg_requirement],  'LOCAL' => [ '', $reg_requirement ] },
+
         '1Gb_datamover_job' => {'LSF' => ['-q datamover -C0 -M1000 -R"select[mem>1000]  rusage[mem=1000]"', $reg_requirement], 'LOCAL' => [ '', $reg_requirement ] },
     };
 }
