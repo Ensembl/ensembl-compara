@@ -58,13 +58,13 @@ my @collection_groups = qw(
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
 # Server for single species fungal cores
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
 Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
 
 foreach my $group ( @collection_groups ) {
     Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-        -host   => 'mysql-ens-sta-3',
-        -port   => 4160,
+        -host   => 'mysql-ens-vertannot-staging',
+        -port   => 4573,
         -user   => 'ensro',
         -pass   => '',
         -dbname => "fungi_${group}_collection_core_${curr_eg_release}_${curr_release}_1",
