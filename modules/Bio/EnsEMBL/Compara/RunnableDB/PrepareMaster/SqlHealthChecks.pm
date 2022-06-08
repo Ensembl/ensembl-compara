@@ -71,8 +71,8 @@ my $config = {
                 expected_size => 0,
             },
             {
-                description => 'genome_db taxon_ids are valid',
-                query => 'SELECT genome_db.* FROM genome_db LEFT JOIN ncbi_taxa_node USING (taxon_id) WHERE genome_db.taxon_id IS NOT NULL AND ncbi_taxa_node.taxon_id IS NULL',
+                description => 'current genome_db taxon_ids are valid',
+                query => 'SELECT genome_db.* FROM genome_db LEFT JOIN ncbi_taxa_node USING (taxon_id) WHERE genome_db.first_release IS NOT NULL AND genome_db.last_release IS NULL AND genome_db.taxon_id IS NOT NULL AND ncbi_taxa_node.taxon_id IS NULL',
                 expected_size => 0,
             }
         ],
