@@ -72,7 +72,7 @@ my $config = {
             },
             {
                 description => 'genome_db taxon_ids are valid',
-                query => 'SELECT genome_db.* FROM genome_db LEFT JOIN ncbi_taxa_node USING (taxon_id) WHERE genome_db.taxon_id IS NOT NULL AND ncbi_taxa_node.taxon_id IS NULL AND genome_db_id != 76', # tarsier always fails - exclude it
+                query => 'SELECT genome_db.* FROM genome_db LEFT JOIN ncbi_taxa_node USING (taxon_id) WHERE genome_db.taxon_id IS NOT NULL AND ncbi_taxa_node.taxon_id IS NULL',
                 expected_size => 0,
             }
         ],
