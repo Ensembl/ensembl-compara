@@ -301,7 +301,9 @@ sub make_named_species_set_from_XML_node {
 # There can be a single 'compara_db' node in the document
 my $division_node = $xml_document->documentElement();
 my $division_name = $division_node->getAttribute('division');
-my $division_species_set = $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($division_name);
+my $division_species_set = $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($division_name)
+    ? $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($division_name)
+    : $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name("default");
 $collections{$division_name} = $division_species_set;
 my $division_genome_dbs = [sort {$a->dbID <=> $b->dbID} @{$division_species_set->genome_dbs}];
 foreach my $collection_node (@{$division_node->findnodes('collections/collection')}) {

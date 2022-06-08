@@ -55,8 +55,8 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 my @metazoa_overlap_species = qw(drosophila_melanogaster caenorhabditis_elegans);
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@metazoa_overlap_species);
 my $metazoa_overlap_cores = {
-    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_107_9" ],
-    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_107_279" ],
+    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_108_9" ],
+    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_108_282" ],
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $metazoa_overlap_cores );
 
@@ -65,8 +65,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $metazoa_overlap_cores );
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-3',
-        -port   => 4160,
+        -host   => 'mysql-ens-sta-3-b',
+        -port   => 4686,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -75,8 +75,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $metazoa_overlap_cores );
     Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
     Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-1',
-        -port   => 4519,
+        -host   => 'mysql-ens-sta-1-b',
+        -port   => 4685,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -93,16 +93,15 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'        => [ 'mysql-ens-compara-prod-4', 'ivana_test_cleanup_plants_load_members_107'],
-    'compara_ptrees'         => [ 'mysql-ens-compara-prod-5', 'ivana_default_plants_protein_trees_107' ],
-    'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-5', 'jalvarez_wheat_cultivars_plants_protein_trees_106' ],
+    'compara_members'        => [ 'mysql-ens-compara-prod-5', 'cristig_plants_load_members_108'],
+    'compara_ptrees'         => [ 'mysql-ens-compara-prod-7', 'cristig_default_plants_protein_trees_108' ],
+    'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_plants_${prev_eg_release}_${prev_release}' ],
 
     # LASTZ dbs
-    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-5', 'ivana_plants_lastz_batch1_107' ],
-    'lastz_batch_2'  => [ 'mysql-ens-compara-prod-3', 'ivana_plants_lastz_batch2_107' ],
+    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-5', 'cristig_plants_lastz_batch1_108' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-3', 'ivana_plants_synteny_107' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'cristig_plants_synteny_108' ],
 
     # EPO dbs
     ## rice
@@ -125,7 +124,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-3-b', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-3', "ncbi_taxonomy_$curr_release" ],
 });
 
 # -------------------------------------------------------------------

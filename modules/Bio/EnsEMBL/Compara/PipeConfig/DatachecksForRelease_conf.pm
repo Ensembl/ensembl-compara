@@ -167,6 +167,8 @@ sub pipeline_wide_parameters {
         json_by_species        => $self->o('json_by_species'),
         json_passed            => $self->o('json_passed'),
 
+        do_jira_ticket_creation => $self->o('do_jira_ticket_creation'),
+
     };
 }
 
