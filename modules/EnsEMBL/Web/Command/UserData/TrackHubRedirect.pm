@@ -35,7 +35,7 @@ sub process {
   my $url           = $hub->param('url');
      $url           =~ s/(^\s+|\s+$)//g; # Trim leading and trailing whitespace
   my $filename      = [split '/', $url]->[-1];
-  my ($redirect, $anchor, $trackhub);
+  my ($redirect, $anchor);
   my $params        = {};
   my $new_action    = '';
 
@@ -48,42 +48,20 @@ sub process {
     $species            = undef;
   }
   elsif ($species && !$species_defs->valid_species($species)) {
-    $species = undef;
+    $redirect = '/trackhub_error.html';
+    $params->{'species'}  = $species;
+    $params->{'error'}    = 'unknown_species';
+    $species              = undef;
   } 
   else {
     ## Sanity check to see if we're already attached this hub
     ($new_action, $params) = $hub->param('assembly_name') ? () : check_attachment($hub, $url);
 
-    ## Either way, we need to know which species to use
     if ($new_action) {
+      $species = delete $params->{'species'}; 
+      ## Just in case we don't have a species, fall back to primary
+      $species ||= $species_defs->ENSEMBL_PRIMARY_SPECIES;
 
-    }
-    else {
-      ## Check if we have any supported assemblies
-      $trackhub = EnsEMBL::Web::File::AttachedFormat::TRACKHUB->new('hub' => $self->hub, 'url' => $url);
-    }
-  }
-
-  my $assembly_lookup = $species_defs->assembly_lookup;
-  my $hub_info        = $trackhub->{'trackhub'}->get_hub({'assembly_lookup' => $assembly_lookup, 'parse_tracks' => 0});
-  
-  ## Get first species if none has been provided
-  unless ($species) {
-    my @genomes         = keys %{$hub_info->{'genomes'}||[]};
-    my $first_genome    = $genomes[0];
-    foreach ($species_defs->valid_species) {
-      if ($species_defs->get_config($_, 'ASSEMBLY_NAME') eq $first_genome || $species_defs->get_config($_, 'ASSEMBLY_VERSION') eq $first_genome) {
-        $species = $_;
-        last;
-      }
-    }
-  }
- 
-  ## Still need to make sure we have a valid species
-  if ($species) {
-
-    if ($new_action) {
-      ## Hub is already attached, so just go there
       $redirect = sprintf('/%s/Location/View', $species);
       $anchor   = 'modal_config_viewbottom';
       if ($params->{'menu'}) {
@@ -92,18 +70,10 @@ sub process {
       }
     }
     else {
-
-      ## Does the URL include an assembly name (needed where there are multiple assemblies
-      ## per species on a given site, eg. fungi)
-      my $assembly_name = $hub->param('assembly_name');
-      if ($assembly_name) {
-        my $url = $assembly_lookup->{$assembly_name}[0];
-        ## check that this looks like the right species
-        if ($url =~ /^$species/) {
-          $species = $url;
-        }
-      }
-
+      my $trackhub        = EnsEMBL::Web::File::AttachedFormat::TRACKHUB->new('hub' => $self->hub, 'url' => $url);
+      my $assembly_lookup = $species_defs->assembly_lookup;
+      my $hub_info        = $trackhub->{'trackhub'}->get_hub({'assembly_lookup' => $assembly_lookup, 'parse_tracks' => 0});
+  
       if ($hub_info->{'unsupported_genomes'}) {
         $redirect = '/trackhub_error.html';
         $params->{'error'}  = 'archive_only';
@@ -113,10 +83,33 @@ sub process {
         foreach (@{$hub_info->{'unsupported_genomes'}||{}}) {
           my $info = $lookup->{$_};
           $params->{'species_'.$info->[0]} = $info->[1];
-        }
+        }       
       }
       else {
         ($new_action, $params) = $self->attach($trackhub, $filename); 
+
+        ## Get first species if none has been provided
+        unless ($species) {
+          my @genomes         = keys %{$hub_info->{'genomes'}||[]};
+          my $first_genome    = $genomes[0];
+          foreach ($species_defs->valid_species) {
+            if ($species_defs->get_config($_, 'ASSEMBLY_NAME') eq $first_genome || $species_defs->get_config($_, 'ASSEMBLY_VERSION') eq $first_genome) {
+              $species = $_;
+              last;
+            }
+          }
+        }
+
+        ## Does the URL include an assembly name (needed where there are multiple assemblies
+        ## per species on a given site, eg. fungi)
+        my $assembly_name = $hub->param('assembly_name');
+        if ($assembly_name) {
+          my $url = $assembly_lookup->{$assembly_name}[0];
+          ## check that this looks like the right species
+          if ($url =~ /^$species/) {
+            $species = $url;
+          }
+        }
 
         ## Override standard redirect with sample location
         $redirect     = sprintf('/%s/Location/View', $species);
@@ -152,32 +145,27 @@ sub process {
           }
         }
       }
-
-      if ($redirect =~ /Location/) {
-        ## Allow optional gene parameter to override the location
-        if ($hub->param('gene')) {
-          $params->{'g'} = $hub->param('gene');
-          delete $params->{'r'};
-        }
-        else {
-          my $location    = $hub->param('r') || $hub->param('location') || $hub->param('Location');
-          unless ($location) {
-            my $sample_links  = $species_defs->get_config($species, 'SAMPLE_DATA');
-            $location         = $sample_links->{'LOCATION_PARAM'} if $sample_links;
-          }
-          $params->{'r'} = $location;
-        }
-      } else {
-        $redirect           = '/trackhub_error.html';
-        $params->{'error'}  = 'no_url';
-      }
     }
-  }
-  else {
-    $redirect = '/trackhub_error.html';
-    $params->{'species'}  = $species;
-    $params->{'error'}    = 'unknown_species';
-    $species              = undef;
+
+    if ($redirect =~ /Location/) {
+      ## Allow optional gene parameter to override the location
+      if ($hub->param('gene')) {
+        $params->{'g'} = $hub->param('gene');
+        delete $params->{'r'};
+      }
+      else {
+        my $location    = $hub->param('r') || $hub->param('location') || $hub->param('Location');
+        unless ($location) {
+          my $sample_links  = $species_defs->get_config($species, 'SAMPLE_DATA');
+          $location         = $sample_links->{'LOCATION_PARAM'} if $sample_links;
+        }
+        $params->{'r'} = $location;
+      }
+    } else {
+      $redirect           = '/trackhub_error.html';
+      $params->{'error'}  = 'no_url';
+    }
+
   }
   
   $self->ajax_redirect($redirect, $params, $anchor);  
