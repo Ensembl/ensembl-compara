@@ -106,8 +106,23 @@ sub archive_only {
   return $message;
 }
 
-sub no_url { 
-  return '<p>No trackhub URL was provided.</p>'; 
+sub other { 
+  my $self = shift;
+  my $message;
+  my $error = $self->hub->session->get_record_data({
+                type     => 'message',
+                code     => 'HubAttachError',
+              });
+
+  if ($error && $error->{'message'}) {
+    $message = sprintf '<div class="error"><h3>Attachment Error</h3><div class="message-pad">%s</div></div>', 
+                          $error->{'message'};
+    $self->hub->session->delete_records({'type' => 'message', 'code' => 'HubAttachError'});
+  }
+  else {
+    $message = qq(<p>Sorry, your track hub could not be attached. Please check the URL and try again</p>);
+  }
+  return $message;
 }
 
 sub unknown_species {
