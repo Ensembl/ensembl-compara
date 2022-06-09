@@ -59,7 +59,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
         -host   => 'mysql-ens-sta-3-b',
-        -port   => 4160,
+        -port   => 4686,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
