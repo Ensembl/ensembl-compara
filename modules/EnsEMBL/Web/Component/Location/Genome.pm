@@ -296,7 +296,7 @@ sub _render_features {
     }
 
   } elsif (!scalar @$chromosomes) {
-    $html .= $self->_info('Unassembled genome', '<p>No karyotype image is available for this species.</p>');
+    $html .= $self->_info('Unassembled genome', '<p>This genome has not yet been assembled into chromosomes.</p>');
   }
 
   ## Create HTML tables for features, if any
