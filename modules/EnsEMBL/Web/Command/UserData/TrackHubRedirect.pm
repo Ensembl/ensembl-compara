@@ -71,14 +71,17 @@ sub process {
     }
     else {
       my $trackhub        = EnsEMBL::Web::File::AttachedFormat::TRACKHUB->new('hub' => $self->hub, 'url' => $url);
+      ## When attaching hub, only analyse current assemblies
       my $assembly_lookup = $species_defs->assembly_lookup;
       my $hub_info        = $trackhub->{'trackhub'}->get_hub({'assembly_lookup' => $assembly_lookup, 'parse_tracks' => 0});
   
       if ($hub_info->{'unsupported_genomes'}) {
+        ## This should only be triggered if there are no genomes in the hub that are
+        ## compatible with this site - see E::W::Utils::Trackhub::get_hub_internal 
         $redirect = '/trackhub_error.html';
         $params->{'error'}  = 'archive_only';
         $params->{'url'}    = $url;
-        ## Get lookup that includes old assemblies
+        ## Get version of lookup that includes old assemblies
         my $lookup = $species_defs->assembly_lookup(1);
         foreach (@{$hub_info->{'unsupported_genomes'}||{}}) {
           my $info = $lookup->{$_};
@@ -161,9 +164,6 @@ sub process {
         }
         $params->{'r'} = $location;
       }
-    } else {
-      $redirect           = '/trackhub_error.html';
-      $params->{'error'}  = 'no_url';
     }
 
   }
