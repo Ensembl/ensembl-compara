@@ -1820,7 +1820,7 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'mafft_update',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft_update',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MafftUpdate',
             -parameters => {
                 'mafft_exe'                  => $self->o('mafft_exe'),
             },

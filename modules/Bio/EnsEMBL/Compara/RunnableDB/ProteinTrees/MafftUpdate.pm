@@ -19,7 +19,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft_update
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MafftUpdate
 
 =head1 DESCRIPTION
 
@@ -30,7 +30,7 @@ It is used to add sequences to already existing alignments.
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft_update;
+package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MafftUpdate;
 
 use strict;
 use warnings;
