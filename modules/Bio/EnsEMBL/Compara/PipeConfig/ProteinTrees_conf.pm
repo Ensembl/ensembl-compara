@@ -455,6 +455,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'reuse_db'      => $self->o('prev_rel_db'),
         'mapping_db'    => $self->o('mapping_db'),
         'alt_aln_dbs'   => $self->o('alt_aln_dbs'),
+        'db_name'       => $self->o('db_name'),
 
         'ensembl_release' => $self->o('ensembl_release'),
 
