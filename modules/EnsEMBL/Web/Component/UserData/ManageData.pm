@@ -187,7 +187,7 @@ sub content {
   if (keys %{$other_species_data}) {
     my @species_list;
     foreach (keys %{$other_species_data}) {
-      push @species_list, $hub->species_defs->get_config($_, 'SPECIES_DISPLAY_NAME');
+      push @species_list, sprintf '<a href="/%s/Info/Index">%s</a>', $_, $hub->species_defs->get_config($_, 'SPECIES_DISPLAY_NAME');
     }
     my $also = $data_on_this_species > 0 ? 'also' : '';
     my $message = sprintf('You %s have data for the following other species: %s', $also, join(', ', @species_list)); 
