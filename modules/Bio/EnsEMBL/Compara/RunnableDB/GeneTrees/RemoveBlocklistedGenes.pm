@@ -19,7 +19,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveBlacklistedGenes
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveBlocklistedGenes
 
 =head1 DESCRIPTION
 
@@ -31,7 +31,7 @@ ENSTNIG00000004377 65
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveBlacklistedGenes;
+package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveBlocklistedGenes;
 
 use strict;
 use warnings;

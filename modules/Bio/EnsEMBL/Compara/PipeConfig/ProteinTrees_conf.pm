@@ -118,7 +118,7 @@ sub default_options {
         # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
         'clustering_max_gene_halfcount' => 750,
         # File with gene / peptide names that must be excluded from the clusters (e.g. know to disturb the trees)
-        'gene_blacklist_file'           => '/dev/null',
+        'gene_blocklist_file'           => '/dev/null',
 
     # tree building parameters:
         'use_raxml'                 => 0,
@@ -1575,19 +1575,19 @@ sub core_pipeline_analyses {
             -parameters => {
                 'tags_to_copy'              => [ 'division' ],
             },
-            -flow_into  => [ 'remove_blacklisted_genes' ],
+            -flow_into  => [ 'remove_blocklisted_genes' ],
             -rc_name => '4Gb_job',
         },
 
         {   -logic_name         => 'expand_clusters_with_projections',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExpandClustersWithProjections',
-            -flow_into          => [ 'remove_blacklisted_genes' ],
+            -flow_into          => [ 'remove_blocklisted_genes' ],
         },
 
-        {   -logic_name         => 'remove_blacklisted_genes',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveBlacklistedGenes',
+        {   -logic_name         => 'remove_blocklisted_genes',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveBlocklistedGenes',
             -parameters         => {
-                blacklist_file      => $self->o('gene_blacklist_file'),
+                'blocklist_file' => $self->o('gene_blocklist_file'),
             },
             -flow_into          => [ 'hc_clusters' ],
             -rc_name => '500Mb_job',
