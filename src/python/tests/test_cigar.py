@@ -45,7 +45,7 @@ class TestCigar:
         ],
     )
     def test_aligned_seq_to_cigar(self, aligned_seq: str, cigar: str) -> None:
-        """Tests :func:`cigar.aligned_seq_to_cigar()` function.
+        """Tests :meth:`cigar.aligned_seq_to_cigar()` function.
 
         Args:
             aligned_seq: aligned sequence.
@@ -64,13 +64,13 @@ class TestCigar:
         ],
     )
     def test_get_cigar_array(self, cigar: str, cigar_array: List[Tuple]) -> None:
-        """Tests :func:`cigar.aligned_seq_to_cigar()` function.
+        """Tests :meth:`cigar.aligned_seq_to_cigar()` method.
 
             Args:
                 cigar: cigar line.
                 cigar_array: Expected cigar array.
         """
-        assert get_cigar_array(cigar) == cigar_array, "cigar line returned differs from the one expected"
+        assert get_cigar_array(cigar) == cigar_array, "cigar list returned differs from the one expected"
 
 
     @pytest.mark.parametrize(
@@ -89,7 +89,7 @@ class TestCigar:
     )
     def test_alignment_to_seq_coordinate(self, cigar: str, coord_align: int,
                                          coord_seq: int, expectation: ContextManager) -> None:
-        """Tests :func:`cigar.alignment_to_seq_coordinate()` function.
+        """Tests :func:`cigar.alignment_to_seq_coordinate()` method.
 
             Args:
                 cigar: cigar line.
@@ -98,6 +98,6 @@ class TestCigar:
                 expectation: Context manager for the expected exception, i.e. the test will only pass if that
                     exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
         """
-        error = "difference of coord_seq compared tot he one expected with coord_align"
+        error = "difference of coord_seq compared to the one expected with coord_align"
         with expectation:
             assert alignment_to_seq_coordinate(cigar, coord_align) == coord_seq, error

@@ -2,7 +2,7 @@
 # regarding copyright ownership.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.ls -l
+# you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
@@ -12,9 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Collection of utils methods targeted to cigar line manipulation.
-
-"""
+"""Collection of utils methods targeted to cigar line manipulation."""
 
 __all__ = ['aligned_seq_to_cigar', 'alignment_to_seq_coordinate', 'get_cigar_array']
 
@@ -64,13 +62,18 @@ def aligned_seq_to_cigar(aligned_seq: str) -> str:
 
 
 def get_cigar_array(cigar: str) -> List[Tuple[int, str]]:
-    """Return a list of the cigar line, e.g.: [(34, 'M'), (12, 'D'), ( 5, 'M') ...]
+    """Return a list of the cigar line.
 
     Args:
         cigar: cigar line of the aligned sequence
 
     Returns:
         List of cigar [length][operation] tuples.
+
+    Example:
+        >>> x = get_cigar_array("34M12D5MD")
+        >>> print(x)
+        [(34, 'M'), (12, 'D'), (5, 'M'), (1, 'D')]
     """
     number = ""
     result = []
@@ -87,7 +90,7 @@ def get_cigar_array(cigar: str) -> List[Tuple[int, str]]:
 def alignment_to_seq_coordinate(cigar: str, coord: int) -> List[int]:
     """Convert coordinate from the alignment level to sequence level
 
-    This function will convert a position at the coordinate level to the sequence level. To be able to
+    This function will convert a position at the alignment level to the sequence level. To be able to
     deal with gaps and give the maximum information the function is return a list of position. If the
     position at the alignment level fall into a gap then the position just before the gap and just after
     the gap (in the same order) is returned in the list. If the position is on a non gapped part of the
@@ -108,7 +111,7 @@ def alignment_to_seq_coordinate(cigar: str, coord: int) -> List[int]:
         coordinate at the unaligned sequence level
 
     Raises:
-        ValueError: if coord is <= 0 and if coord > alignment length
+        ValueError: if coord is <= 0 or if coord > alignment length
     """
 
     if coord < 1:
