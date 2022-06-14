@@ -54,11 +54,13 @@ sub check_attachment {
   }
 
   ## Check user's own data
+  my $species;
   unless ($already_attached) {
     my @attachments = $hub->session->get_records_data({'type' => 'url'});
     foreach (@attachments) {
       if ($_->{'url'} eq $url) {
         $already_attached = 'user';
+        $species = $_->{'species'};
         $menu = clean_id($_->{'name'});
         last;
       }
@@ -69,6 +71,7 @@ sub check_attachment {
     $redirect = 'RemoteFeedback';
     $params = {'format' => 'TRACKHUB', 'reattach' => $already_attached};
     $params->{'menu'} = $menu if $menu;
+    $params->{'species'} = $species if $species;
   }
 
   return ($redirect, $params);

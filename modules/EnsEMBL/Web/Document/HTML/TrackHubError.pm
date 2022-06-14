@@ -106,8 +106,23 @@ sub archive_only {
   return $message;
 }
 
-sub no_url { 
-  return '<p>No trackhub URL was provided.</p>'; 
+sub other { 
+  my $self = shift;
+  my $message;
+  my $error = $self->hub->session->get_record_data({
+                type     => 'message',
+                code     => 'HubAttachError',
+              });
+
+  if ($error && $error->{'message'}) {
+    $message = sprintf '<div class="error"><h3>Attachment Error</h3><div class="message-pad">%s</div></div>', 
+                          $error->{'message'};
+    $self->hub->session->delete_records({'type' => 'message', 'code' => 'HubAttachError'});
+  }
+  else {
+    $message = qq(<p>Sorry, your track hub could not be attached. Please check the URL and try again</p>);
+  }
+  return $message;
 }
 
 sub unknown_species {
@@ -120,14 +135,14 @@ sub unknown_species {
   my $message = qq(<p>$species could not be found on this site. Please check the spelling in your URL, or try one of our sister sites:</p>
 <ul>);
 
-  my @sisters   = qw(www pre bacteria fungi plants protists metazoa);
+  my @sisters   = qw(www bacteria fungi plants protists metazoa rapid);
   my @domain    = split(/\./, $hub->species_defs->ENSEMBL_SERVERNAME);
   my $subdomain = $domain[0];
 
   foreach (@sisters) {
     next if $subdomain eq $_;
     my $name  = 'Ensembl';
-    $name    .= ' '.ucfirst($_) unless $_ eq 'www';
+    $name    .= $_ eq 'www' ? ' Vertebrates' : ' '.ucfirst($_);
     $message .= sprintf('<li><a href="//%s.ensembl.org">%s</a></li>', $_, $name);
   }
 
@@ -136,5 +151,10 @@ sub unknown_species {
   return $message;
 }
 
+sub no_url {
+### Link to trackhub had no URL
+  my $self = shift;
+  return qq(<p>No track hub url was provided - please check your link and try again.</p>);
+}
 
 1;
