@@ -47,12 +47,17 @@ process prepareBusco {
         path "busco_genes.tsv", emit: busco_genes
     script:
     """
-    python ${params.longest_busco_filter_exe} -i $protfa -o longest_busco_proteins.fas
+    python ${params.longest_busco_filter_exe} -i $protfa -o longest_busco_proteins.fas -l busco_genes.tsv
     """
 }
 
 process buscoAnnot {
-    label 'lsf_16Gb'
+    executor 'lsf'
+    memory { 16.GB * task.attempt }
+    time { 168.hour }
+    errorStrategy { (task.exitStatus == 140 || task.exitStatus == 130) ? 'retry' : 'terminate' }
+    maxRetries = { (task.exitStatus == 140 || task.exitStatus == 130) ? 7 : 1 }
+    cpus 32
 
     input:
         path busco_prot
@@ -101,7 +106,7 @@ process collateBusco {
     """
     mv ${workDir}/cdnas_fofn.txt .
     mkdir -p per_gene
-    python ${params.collate_busco_results_exe} -s busco_stats.tsv -i cdnas_fofn.txt -l $genes_tsv -o ./ -t taxa.tsv
+    python ${params.collate_busco_results_exe} -s busco_stats.tsv -i cdnas_fofn.txt -l $genes_tsv -o ./ -t taxa.tsv -m ${params.min_taxa}
     """
 
 }
@@ -153,8 +158,12 @@ process mergeAlns {
 
 }
 process runIqtree {
-    label 'rc_32gb'
-    cpus 30
+    executor 'lsf'
+    memory { 32.GB * task.attempt }
+    time { 168.hour }
+    errorStrategy { (task.exitStatus == 140 || task.exitStatus == 130) ? 'retry' : 'terminate' }
+    maxRetries = { (task.exitStatus == 140 || task.exitStatus == 130) ? 6 : 1 }
+    cpus 32
 
     publishDir "${params.results_dir}/", pattern: "species_tree.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_report.txt", mode: "copy",  overwrite: true
