@@ -52,13 +52,7 @@ process prepareBusco {
 }
 
 process buscoAnnot {
-    executor 'lsf'
-    memory { 16.GB * task.attempt }
-    time { 168.hour }
-    errorStrategy { (task.exitStatus == 140 || task.exitStatus == 130) ? 'retry' : 'terminate' }
-    maxRetries = { (task.exitStatus == 140 || task.exitStatus == 130) ? 7 : 1 }
-    cpus 32
-
+    label 'retry_with_16gb_mem_c32'
     input:
         path busco_prot
         path genome
@@ -160,13 +154,7 @@ process mergeAlns {
 
 }
 process runIqtree {
-    executor 'lsf'
-    memory { 32.GB * task.attempt }
-    time { 168.hour }
-    errorStrategy { (task.exitStatus == 140 || task.exitStatus == 130) ? 'retry' : 'terminate' }
-    maxRetries = { (task.exitStatus == 140 || task.exitStatus == 130) ? 6 : 1 }
-    cpus 32
-
+    label 'retry_with_32gb_mem_c32'
     publishDir "${params.results_dir}/", pattern: "species_tree.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_report.txt", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_log.txt", mode: "copy",  overwrite: true
