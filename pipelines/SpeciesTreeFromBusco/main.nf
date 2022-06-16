@@ -106,7 +106,9 @@ process collateBusco {
     """
     mv ${workDir}/cdnas_fofn.txt .
     mkdir -p per_gene
-    python ${params.collate_busco_results_exe} -s busco_stats.tsv -i cdnas_fofn.txt -l $genes_tsv -o ./ -t taxa.tsv -m ${params.min_taxa}
+    python ${params.collate_busco_results_exe} -s busco_stats.tsv \
+    -i cdnas_fofn.txt -l $genes_tsv -o ./ \
+    -t taxa.tsv -m ${params.min_taxa}
     """
 
 }
