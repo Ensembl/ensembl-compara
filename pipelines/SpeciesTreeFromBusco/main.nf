@@ -47,13 +47,12 @@ process prepareBusco {
         path "busco_genes.tsv", emit: busco_genes
     script:
     """
-    python ${params.longest_busco_filter_exe} -i $protfa -o longest_busco_proteins.fas
+    python ${params.longest_busco_filter_exe} -i $protfa -o longest_busco_proteins.fas -l busco_genes.tsv
     """
 }
 
 process buscoAnnot {
-    label 'lsf_16Gb'
-
+    label 'retry_with_16gb_mem_c32'
     input:
         path busco_prot
         path genome
@@ -101,7 +100,9 @@ process collateBusco {
     """
     mv ${workDir}/cdnas_fofn.txt .
     mkdir -p per_gene
-    python ${params.collate_busco_results_exe} -s busco_stats.tsv -i cdnas_fofn.txt -l $genes_tsv -o ./ -t taxa.tsv
+    python ${params.collate_busco_results_exe} -s busco_stats.tsv \
+    -i cdnas_fofn.txt -l $genes_tsv -o ./ \
+    -t taxa.tsv -m ${params.min_taxa}
     """
 
 }
@@ -153,9 +154,7 @@ process mergeAlns {
 
 }
 process runIqtree {
-    label 'rc_32gb'
-    cpus 30
-
+    label 'retry_with_32gb_mem_c32'
     publishDir "${params.results_dir}/", pattern: "species_tree.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_report.txt", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_log.txt", mode: "copy",  overwrite: true
