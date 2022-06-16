@@ -44,6 +44,8 @@ parser.add_argument(
     '-s', metavar='stats', type=str, help="Output stats TSV.", required=True)
 parser.add_argument(
     '-t', metavar='taxa', type=str, help="Output taxa TSV.", required=True)
+parser.add_argument(
+    '-m', metavar='min_taxa', type=float, help="Minimum fraction of taxa.", required=True)
 
 
 def load_sequences(infile: str) -> Tuple[Dict[str, List[SeqRecord]], int]:
@@ -102,6 +104,9 @@ if __name__ == '__main__':
 
     # Dump per-gene cDNAs:
     for g, s in per_gene.items():
+        # Filter out gene if we don't have enough taxa:
+        if len(s) / len(taxa) < args.m:
+            continue
         with open(path.join(args.o, f"gene_cdna_{g}.fas"), "w") as output_handle:
             SeqIO.write(s, output_handle, "fasta")
 

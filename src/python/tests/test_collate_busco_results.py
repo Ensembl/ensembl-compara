@@ -50,7 +50,7 @@ class TestCollateBusco:
 
         cmd = [sys.executable, str(Path(__file__).parents[3] / 'pipelines' /
                                    'SpeciesTreeFromBusco' / 'scripts' / 'collate_busco_results.py'),
-               '-i', input_file,
+               '-i', input_file, '-m', '0.6',
                '-o', str(tmp_dir), '-l', input_genes, '-s', output_stats, '-t', output_taxa]
         location = str(Path(__file__).parents[0])
         subprocess.check_call(cmd, cwd=location)
@@ -95,7 +95,7 @@ class TestCollateBusco:
         # Run the command
         cmd = [sys.executable, str(Path(__file__).parents[3] / 'pipelines' /
                                    'SpeciesTreeFromBusco' / 'scripts' / 'collate_busco_results.py'),
-               '-i', input_file,
+               '-i', input_file, '-m', '0.5',
                '-o', str(tmp_dir), '-l', input_genes, '-s', output_stats, '-t', output_taxa]
 
         with raises(subprocess.CalledProcessError):
