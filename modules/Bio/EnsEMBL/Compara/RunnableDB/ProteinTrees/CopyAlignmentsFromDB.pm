@@ -112,12 +112,6 @@ sub fetch_input {
         $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) );
         $self->param( 'reuse_gene_tree_id', $self->param('reuse_gene_tree')->root_id );
 
-        #Newly added genes will not be added here, only genes that were removed or altered will be excluded.
-        #if ( defined( $members_2_b_updated{ $member->stable_id } ) ) {
-        #print "Removing updated gene: ".$member->stable_id."\n" if ( $self->debug );
-        #$self->param('sa')->remove_seq( $self->param('sa')->each_seq_with_id( $member->seq_member_id ) );
-        #}
-
         #Get all the cigar lines for all members in the reused tree.
         my %cigar_lines_reuse_tree;
         foreach my $member ( @{ $self->param('reuse_gene_tree')->get_all_Members } ) {
@@ -127,9 +121,12 @@ sub fetch_input {
 
         #Copying the cigar lines to the new tree excluding the members that need update:
         foreach my $current_member ( @{ $self->param('copy_gene_tree')->get_all_Members } ) {
-            if ( defined( $cigar_lines_reuse_tree{ $current_member->stable_id } ) && ( !defined( $members_2_b_added_updated{ $current_member->stable_id } ) ) ) {
+            my $stable_id = $current_member->stable_id;
+            my $gdb_id = $current_member->genome_db_id;
+            if ( defined( $cigar_lines_reuse_tree{ $stable_id } )
+                && ( !defined( $members_2_b_added_updated{ $stable_id . " " . $gdb_id } ) ) ) {
                 $current_member->cigar_line( $cigar_lines_reuse_tree{ $current_member->stable_id } );
-                print "copying_cigar:" . $current_member->stable_id . "\n" if ( $self->debug );
+                print "copying_cigar:" . $stable_id . " for gdb_id " . $gdb_id . "\n" if ( $self->debug );
             }
         }
 

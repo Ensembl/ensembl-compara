@@ -1,4 +1,3 @@
-
 =head1 LICENSE
 
 See the NOTICE file distributed with this work for additional information
@@ -18,14 +17,6 @@ limitations under the License.
 
 =cut
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FlagUpdateClusters
@@ -34,9 +25,11 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FlagUpdateClusters
 
 1) This module loops through all the genes from the current and previous databases.
 
-2) Identifies the genes that have been updated, deleted or added.
+2) Identifies and flags the genes that have been updated, deleted or newly added and
+stores them as appropriate: "updated_genes_list", "added_genes_list" and "deleted_genes_list"
 
-3) Checks for all these flagged genes (%flagged) in the list of members from all the root_ids and updated the flag "needs_update" in the gene_tree_root_tag table. 
+3) Checks for all the flagged genes (%flagged) in the list of members from all the
+root_ids and updated the flag "needs_update" in the gene_tree_root_tag table.
 
 =cut
 
@@ -131,31 +124,30 @@ sub run {
 
             foreach my $member (@reused_members) {
                 my $reused_stable_id = $member->stable_id;
-                $reused_members_hash{$reused_stable_id} = 1;
+                my $reused_genome_db_id = $member->genome_db_id;
+                $reused_members_hash{ $reused_stable_id . " " . $reused_genome_db_id } = 1;
             }
         }
 
         foreach my $current_member (@current_members) {
 
-            $current_members_hash{ $current_member->stable_id } = 1;
+            my $current_stable_id_genome_db_id = $current_member->stable_id . " "  . $current_member->genome_db_id;
+            $current_members_hash{ $current_stable_id_genome_db_id } = 1;
 
-            #updated:
-            if ( exists( $updated{ $current_member->stable_id } ) ) {
-                $root_ids_2_update{$gene_tree_id}{ $current_member->stable_id } = 1;
-
-                #print "\t$gene_tree_id:UPD:".$current_member->stable_id."\n";
+            if ( exists( $updated{ $current_stable_id_genome_db_id } ) ) {
+                $root_ids_2_update{$gene_tree_id}{ $current_stable_id_genome_db_id } = 1;
             }
 
-            #added
-            if ( exists( $added{ $current_member->stable_id } ) ) {
-                $root_ids_2_add{$gene_tree_id}{ $current_member->stable_id } = 1;
-
-                #print "\t$gene_tree_id:ADD:".$current_member->stable_id."\n";
+            if ( exists( $added{ $current_stable_id_genome_db_id } ) ) {
+                $root_ids_2_add{$gene_tree_id}{ $current_stable_id_genome_db_id } = 1;
             }
 
             if ($reused_gene_tree) {
-                if ( !exists( $reused_members_hash{ $current_member->stable_id } ) && ( !exists( $added{ $current_member->stable_id } ) ) && ( !exists( $updated{ $current_member->stable_id } ) ) ) {
-                    $root_ids_2_add{$gene_tree_id}{ $current_member->stable_id } = 1;
+                if ( !exists( $reused_members_hash{ $current_stable_id_genome_db_id } )
+                    && ( !exists( $added{ $current_stable_id_genome_db_id } ) )
+                    && ( !exists( $updated{ $current_stable_id_genome_db_id } ) )
+                ) {
+                    $root_ids_2_add{$gene_tree_id}{ $current_stable_id_genome_db_id } = 1;
                 }
             }
         }
@@ -163,17 +155,16 @@ sub run {
         if ($reused_gene_tree) {
             foreach my $reused_member (@reused_members) {
 
-                #deleted
-                if ( exists( $deleted{ $reused_member->stable_id } ) ) {
-                    $root_ids_2_delete{$gene_tree_id}{ $reused_member->stable_id } = 1;
-
-                    #print "\t$gene_tree_id:DEL:" . $reused_member->stable_id . "\n";
+                my $reused_stable_id_genome_db_id = $reused_member->stable_id . " " . $reused_member->genome_db_id;
+                if ( exists( $deleted{ $reused_stable_id_genome_db_id } ) ) {
+                    $root_ids_2_delete{$gene_tree_id}{ $reused_stable_id_genome_db_id } = 1;
                 }
 
-                # Removing members that are present in the reused tree but not in the current tree. But have the same sequence.
-                #  this happens if there were diffences in the clustering, given that the sequences were the same they were not caught by previous MD5 checksum tests.
-                if ( !$current_members_hash{ $reused_member->stable_id } ) {
-                    $root_ids_2_delete{$gene_tree_id}{ $reused_member->stable_id } = 1;
+                # Removing members that are present in the reused tree and are not in the current tree
+                # with the same sequence. This happens if there were diffences in the clustering, since
+                # the sequences were the same they were not caught by previous MD5 checksum tests.
+                if ( !$current_members_hash{ $reused_stable_id_genome_db_id } ) {
+                    $root_ids_2_delete{$gene_tree_id}{ $reused_stable_id_genome_db_id } = 1;
                 }
 
             }
@@ -181,13 +172,11 @@ sub run {
         }
         else {
 
-            #print "Could not fetch reused tree with with stable_id=$current_stable_id. Tree will be build from scratch\n" if ($self->debug);
             $current_gene_tree->store_tag( 'new_build', 1 ) || die "Could not store_tag 'new_build'";
         }
 
         my $members_2_change = scalar( keys( %{ $root_ids_2_add{$gene_tree_id} } ) ) + scalar( keys( %{ $root_ids_2_update{$gene_tree_id} } ) );
 
-        #print "Memebers to change (add+update): $members_2_change | members to delete: " . scalar( keys( %{ $root_ids_2_delete{$gene_tree_id} } ) ) . "\n" if ($self->debug);
         if ( ( $members_2_change/scalar(@current_members) ) >= $self->param_required('update_threshold_trees') ) {
             $current_gene_tree->store_tag( 'new_build', 1 ) || die "Could not store_tag 'new_build'";
         }
@@ -195,20 +184,17 @@ sub run {
         #releasing tree from memory
         $current_gene_tree->release_tree;
 
-    } ## end foreach my $current_stable_id...
-} ## end sub run
+    }
+}
 
 sub write_output {
     my $self = shift;
 
-    print "writing outs\n" if ( $self->debug );
-
-    #-----------------------------------------------------------------------------------------------------------------------------------------------
-    # When a genome is updated it may contain the same sequences and stable ids, but the seq_member_ids will be different
-    #   since it was re-inserted into the database.
-    # This will cause the trees copy from the previous database to fail, since the old seq_member_ids will not be the same for the current database.
-    # We just store the mapping now, it will later be used by copy_trees_from_previous_release.
-    #-----------------------------------------------------------------------------------------------------------------------------------------------
+    # When a genome is updated it may contain the same sequences and stable ids, but the seq_member_ids
+    # will be different since it was re-inserted into the database when loading members.
+    # This will cause the copying of the trees from the previous database to fail, since the old seq_member_ids
+    # will not be the same as in the current database.
+    # We just store the mapping now, it will later be used by Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyTreesFromDB.
 
     my @mapping_data;
     foreach my $stable_id ( keys %{ $self->param('seq_member_id_map') } ) {
@@ -260,9 +246,9 @@ sub write_output {
              ( !keys( %{ $self->param('root_ids_2_delete')->{$gene_tree_id} } ) ) ) {
             $gene_tree->store_tag( 'identical_copy', 1 ) || die "Could not store_tag 'identical_copy' for $gene_tree_id";
         }
-    } ## end foreach my $current_stable_id...
+    }
 
-} ## end sub write_output
+}
 
 ##########################################
 #
@@ -337,7 +323,7 @@ sub _get_stable_id_root_id_list {
     $sth_reused->finish();
 
     return ( \%current_stable_ids, \%reused_stable_ids );
-} ## end sub _get_stable_id_root_id_list
+}
 
 sub _seq_member_map {
     my $reuse_compara_dba = shift;
@@ -364,6 +350,6 @@ sub _seq_member_map {
     $sth_current->finish();
 
     return \%map;
-} ## end sub _seq_member_map
+}
 
 1;
