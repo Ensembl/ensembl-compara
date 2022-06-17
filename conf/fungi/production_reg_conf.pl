@@ -123,7 +123,7 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-4', "ensembl_compara_fungi_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'  => [ 'mysql-ens-compara-prod-X',  '' ],
+    'compara_members' => [ 'mysql-ens-compara-prod-4', 'twalsh_fungi_load_members_20220617_108' ],
     #'compara_ptrees'   => [ 'mysql-ens-compara-prod-X',  '' ],
 };
 
