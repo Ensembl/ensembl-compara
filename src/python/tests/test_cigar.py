@@ -45,7 +45,7 @@ class TestCigar:
         ],
     )
     def test_aligned_seq_to_cigar(self, aligned_seq: str, cigar: str) -> None:
-        """Tests :meth:`cigar.aligned_seq_to_cigar()` function.
+        """Tests :func:`cigar.aligned_seq_to_cigar()` function.
 
         Args:
             aligned_seq: aligned sequence.
