@@ -37,9 +37,6 @@
 body.ie67 .nav                         { margin-top: 3px; }
 body.ie67 .nav ul.local_context li img { margin: 0; vertical-align: top; }
 
-div#mobile_context        { display: none; }
-ul.mobile_context li img  { display: none; }
-
 div.share_page          { background: [[WHITE]]; color: [[BLACK]]; z-index: 1000; border: 1px solid [[BLACK]]; position: absolute; display: none; width: 300px; padding: 16px; }
 div.share_page ul       { position: relative; list-style: none; clear: both; margin-bottom: 16px; }
 div.share_page ul li    { list-style-image: none; }

@@ -1666,7 +1666,6 @@ EnsEMBL::Web::Document::Element::Javascript
 EnsEMBL::Web::Document::Element::Links
 EnsEMBL::Web::Document::Element::Logo
 EnsEMBL::Web::Document::Element::Meta
-EnsEMBL::Web::Document::Element::MobileNavigation
 EnsEMBL::Web::Document::Element::Modal
 EnsEMBL::Web::Document::Element::Navigation
 EnsEMBL::Web::Document::Element::Prefetch

@@ -440,7 +440,6 @@ sub dumpHelp {
          FROM help_record hr, help_link hl
         WHERE status = 'live'
           AND type = lower('$type')
-          AND hl.page_url NOT LIKE 'Mobile%'
           AND hr.help_record_id = hl.help_record_id
       ));
       $sth->execute;

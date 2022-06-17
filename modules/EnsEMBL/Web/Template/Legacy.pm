@@ -78,7 +78,6 @@ sub add_body {
     content          EnsEMBL::Web::Document::Element::Content
     modal            EnsEMBL::Web::Document::Element::Modal
     acknowledgements EnsEMBL::Web::Document::Element::Acknowledgements
-    mobile_nav       EnsEMBL::Web::Document::Element::MobileNavigation
     copyright        EnsEMBL::Web::Document::Element::Copyright
     footerlinks      EnsEMBL::Web::Document::Element::FooterLinks
     fatfooter        EnsEMBL::Web::Document::Element::FatFooter
@@ -174,7 +173,6 @@ sub render_content {
           $elements->{'breadcrumbs'}
           $elements->{'message'}
           $elements->{'content'}
-          $elements->{'mobile_nav'}
       </div>
   );
 }

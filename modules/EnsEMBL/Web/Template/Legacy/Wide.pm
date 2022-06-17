@@ -54,7 +54,6 @@ sub add_body {
     tools            EnsEMBL::Web::Document::Element::ToolLinks
     content          EnsEMBL::Web::Document::Element::Content
     modal            EnsEMBL::Web::Document::Element::Modal
-    mobile_nav       EnsEMBL::Web::Document::Element::MobileNavigation
     copyright        EnsEMBL::Web::Document::Element::Copyright
     footerlinks      EnsEMBL::Web::Document::Element::FooterLinks
     fatfooter        EnsEMBL::Web::Document::Element::FatFooter
