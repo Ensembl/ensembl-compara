@@ -51,10 +51,6 @@ sub content {
   my $species = $self->hub->{'_species'};
   $species = '' if ($species eq 'Multi');
 
-  $html .= sprintf '<span class="mobile-only species-header">%s</span>',
-              $species ? $self->species_defs->SPECIES_DISPLAY_NAME 
-                       : $self->species_defs->ENSEMBL_SITETYPE; 
-
   $html .= $self->logo_print;
 
   return $html;

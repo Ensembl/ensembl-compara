@@ -65,7 +65,7 @@ sub render_Rect {
   $y2++;
   $x2++;
 
-  $self->render_area('rect', [ $y1, $x1, $y2, $x2 ], $attrs) if($self->{'config'}->species_defs->ENSEMBL_SITETYPE ne 'Ensembl mobile');  
+  $self->render_area('rect', [ $y1, $x1, $y2, $x2 ], $attrs);  
 }
 
 sub render_Poly {
@@ -74,7 +74,7 @@ sub render_Poly {
   
   return unless $attrs;
 
-  $self->render_area('poly', [ reverse @{$glyph->pixelpoints} ], $attrs) if($self->{'config'}->species_defs->ENSEMBL_SITETYPE ne 'Ensembl mobile');
+  $self->render_area('poly', [ reverse @{$glyph->pixelpoints} ], $attrs);
 }
 
 sub render_area {

@@ -57,7 +57,7 @@ sub content {
     %s
   </div>
 </div>', 
-    $self->side_nav, $self->column_left, $self->column_right);
+    $self->column_left, $self->column_right);
 
   return $html;
 }
@@ -121,12 +121,6 @@ sub column_right {
   $html .= '</div>';
 
   return $html;  
-}
-
-# MOBILE - This is implemented in the mobile plugins to create the side menu for the species annotation page
-# Return empty string for www
-sub side_nav {
-  return "";
 }
 
 sub _wikipedia_link {

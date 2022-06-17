@@ -44,8 +44,6 @@ sub content {
   return $self->gene_phenotypes();
 }
 
-sub _inheritance { return $_[1]->{'inheritance_type'}; }  #overwritten in mobile plugins
-
 sub gene_phenotypes {
   my $self             = shift;
   my $object           = $self->object;
@@ -171,7 +169,7 @@ sub gene_phenotypes {
         $phenotypes{$phe}{'url'} = $phe_class eq $skip_phenotypes_link? $phe : $phe_url;
 
         my $allelic_requirement = '-';
-        if ($self->_inheritance($attribs)) {
+        if ($attribs->{'inheritance_type'}) {
           $phenotypes{$phe}{'allelic_requirement'}{$attribs->{'inheritance_type'}} = 1;
           $has_allelic = 1;
         }
