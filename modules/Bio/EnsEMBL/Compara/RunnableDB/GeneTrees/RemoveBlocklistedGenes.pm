@@ -17,35 +17,21 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveBlacklistedGenes
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveBlocklistedGenes
 
 =head1 DESCRIPTION
 
-Removes from the (flat) clusters the genes listed in a file
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
+Removes the stable_id corresponding to a genome_db from a flat gene tree/cluster.
+    The blocklist_file should follow the format:
+<stable_id> <genome_db_id>
+ENSTNIG00000004376 65
+ENSTNIG00000004377 65
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveBlacklistedGenes;
+package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveBlocklistedGenes;
 
 use strict;
 use warnings;
@@ -59,44 +45,47 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $blacklist_genes         = slurp_to_array($self->param_required('blacklist_file'), 1);
+    my $blocklist_genes_genomes = slurp_to_array($self->param_required('blocklist_file'), 1);
 
-    # remove members related to blacklisted genes
+    # remove members related to blocklisted genes
     my $gene_member_adaptor     = $self->compara_dba->get_GeneMemberAdaptor;
     my $seq_member_adaptor      = $self->compara_dba->get_SeqMemberAdaptor;
     my $gene_tree_node_adaptor  = $self->compara_dba->get_GeneTreeNodeAdaptor;
 
-    my @blacklist_seq_members;
-    foreach my $gene_name (@$blacklist_genes) {
-        my $member = $gene_member_adaptor->fetch_by_stable_id($gene_name) || $seq_member_adaptor->fetch_by_stable_id($gene_name);
-        unless ( $member ){
-            $self->warning( "Cannot find '$gene_name' in the database\n" );
+    my @blocklist_seq_members;
+    foreach my $stable_id_genome_db_id ( @$blocklist_genes_genomes ) {
+        my ($stable_id, $genome_db_id) = split / /, $stable_id_genome_db_id;
+        my $member = $gene_member_adaptor->fetch_by_stable_id_GenomeDB($stable_id, $genome_db_id) ||
+            $seq_member_adaptor->fetch_by_stable_id_GenomeDB($stable_id, $genome_db_id) ||
+            undef;
+        if (! defined $member) {
+            $self->warning( "Cannot find '$stable_id' for '$genome_db_id' in the database\n" );
             next;
         }
 
         my $aligned_member = $gene_tree_node_adaptor->fetch_default_AlignedMember_for_Member($member);
         unless ( $aligned_member ) {
-            $self->warning( "Cannot find alignment for '$gene_name' in the database\n" );
+            $self->warning( "Cannot find alignment for '$stable_id' for '$genome_db_id' in the database\n" );
             next;
         }
-        push @blacklist_seq_members, $aligned_member;
+        push @blocklist_seq_members, $aligned_member;
     }
 
-    $self->param('blacklist_seq_members', \@blacklist_seq_members);
+    $self->param('blocklist_seq_members', \@blocklist_seq_members);
 }
 
 sub write_output {
     my $self = shift @_;
 
-    my $blacklist_seq_members   = $self->param('blacklist_seq_members');
+    my $blocklist_seq_members   = $self->param('blocklist_seq_members');
     my $gene_tree_node_adaptor  = $self->compara_dba->get_GeneTreeNodeAdaptor;
     my $gene_tree_adaptor       = $self->compara_dba->get_GeneTreeAdaptor;
 
-    print Dumper $blacklist_seq_members if $self->debug;
+    print Dumper $blocklist_seq_members if $self->debug;
 
     $self->call_within_transaction( sub {
         # NOTE: Here we assume that the default tree is flat !
-        foreach my $m (@$blacklist_seq_members) {
+        foreach my $m (@$blocklist_seq_members) {
             if (!$m->tree){
                 next;
             }

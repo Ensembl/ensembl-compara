@@ -51,7 +51,7 @@ sub default_options {
         # affects 'hcluster_dump_input_per_genome'
         'outgroups'                     => { 'saccharomyces_cerevisiae' => 2 },
         # File with gene / peptide names that must be excluded from the clusters (e.g. know to disturb the trees)
-        'gene_blacklist_file'           => $self->o('warehouse_dir') . '/proteintree_blacklist.e82.txt',
+        'gene_blocklist_file'           => $self->o('warehouse_dir') . '/template_blocklist.txt',
 
     # species tree reconciliation
         # you can define your own species_tree for 'notung' or 'CAFE'. It *has* to be binary
