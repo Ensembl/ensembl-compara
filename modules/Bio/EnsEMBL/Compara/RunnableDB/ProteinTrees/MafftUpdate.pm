@@ -23,10 +23,9 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MafftUpdate
 
 =head1 DESCRIPTION
 
-This RunnableDB adds new genes to already existing alignments.
-It fetches the genes to be added from the root_tag 'updated_genes_list'
-
-It is used to add sequences to already existing alignments.
+This RunnableDB adds gene sequences to already existing alignments by
+retrieving genes from the gene_tree_root_tag 'updated_genes_list' which
+contains a comma separated string value of "stable_id genome_db_id"
 
 =cut
 
@@ -34,9 +33,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MafftUpdate;
 
 use strict;
 use warnings;
-
-use Data::Dumper;
-use Array::Utils qw/ array_minus /;
 
 use Bio::EnsEMBL::Compara::MemberSet;
 
@@ -59,11 +55,6 @@ sub fetch_input {
     my $current_gene_tree = $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') );
     $self->param(
         'current_gene_tree', $current_gene_tree || $self->die_no_retry("Could not fetch current_gene_tree")
-    );
-    #get previous tree adaptor
-    $self->param( 'reuse_tree_adaptor', $self->param('reuse_compara_dba')->get_GeneTreeAdaptor );
-    $self->param( 'previous_gene_tree',
-        $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $current_gene_tree->stable_id )
     );
 
     my $copy_tree = $self->param('current_gene_tree')->alternative_trees->{ $self->param('input_clusterset_id') };
@@ -105,26 +96,27 @@ sub get_msa_command_line {
 
     my $new_seq_file = $self->worker_temp_directory . "/" . $self->param_required('gene_tree_id') . "_new_seq.fasta";
 
-    my @prev_member_list = @{$self->param('previous_gene_tree')->get_all_Members()};
-    my @curr_member_list = @{$self->param('current_gene_tree')->get_all_Members()};
-    my %prev_members = ( map { ($_->genome_db->dbID . " " . $_->stable_id) => 1 } @prev_member_list );
-    my %curr_members = ( map { ($_->genome_db->dbID . " " . $_->stable_id) => 1 } @curr_member_list );
-
-    my @prev_members = keys %prev_members;
-    my @curr_members = keys %curr_members;
-    my @updated_genome_db_members = array_minus( @curr_members, @prev_members );
-
-	print "members to update:\n" if ( $self->debug );
-    my @members_to_print;
-    my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor;
-
-    foreach my $updated_genome_db_member_stable_id ( @updated_genome_db_members ) {
-        my ($genome_db_id, $stable_id) = split / /, $updated_genome_db_member_stable_id;
-        my $seq_member = $seq_member_adaptor->fetch_by_stable_id_GenomeDB($stable_id, $genome_db_id);
-        print $stable_id . "|" . $seq_member->seq_member_id . "|" . $seq_member->sequence_id . "\n" if ( $self->debug );
-        push @members_to_print, $seq_member;
+    my %members_2_b_updated;
+    my %members_2_b_added;
+    if ( $self->param('current_gene_tree')->has_tag('updated_genes_list') ) {
+        %members_2_b_updated = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list') );
     }
 
+    if ( $self->param('current_gene_tree')->has_tag('added_genes_list') ) {
+        %members_2_b_added = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('added_genes_list') );
+    }
+
+	@members_2_b_updated{keys %members_2_b_added} = values %members_2_b_added;
+
+	print "Members to update:\n" if ( $self->debug );
+    my @members_to_print;
+    my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor;
+    foreach my $updated_member_stable_id ( keys %members_2_b_updated ) {
+        my ($stable_id, $gdb_id) = split / /, $updated_member_stable_id;
+        my $seq_member = $seq_member_adaptor->fetch_by_stable_id_GenomeDB($stable_id, $gdb_id);
+        print "$stable_id|".$seq_member->seq_member_id."|".$seq_member->sequence_id."\n" if ( $self->debug );
+        push @members_to_print, $seq_member;
+    }
     Bio::EnsEMBL::Compara::MemberSet->new(-MEMBERS => \@members_to_print)->print_sequences_to_file($new_seq_file, -FORMAT => 'fasta', -ID_TYPE => 'SEQUENCE_ID', -SEQ_TYPE => $self->param('cdna') ? 'cds' : undef);
 
     return sprintf( '%s --add %s --anysymbol --thread 1 --auto %s > %s', $mafft_exe, $new_seq_file, $self->param('alignment_file'), $self->param('msa_output') );
