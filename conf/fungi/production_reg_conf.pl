@@ -37,8 +37,41 @@ my $curr_eg_release = $ENV{'CURR_EG_RELEASE'};
 my $prev_eg_release = $curr_eg_release - 1;
 
 
-# Fungi collections
-my @collection_groups = qw(
+# ---------------------- CURRENT CORE DATABASES----------------------------------
+
+my @curr_collection_groups = qw(
+    ascomycota1
+    ascomycota2
+    ascomycota3
+    ascomycota4
+    basidiomycota1
+    blastocladiomycota1
+    chytridiomycota1
+    entomophthoromycota1
+    microsporidia1
+    mucoromycota1
+    neocallimastigomycota1
+    rozellomycota1
+);
+
+# Server for single species fungal cores
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
+Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
+
+foreach my $group ( @curr_collection_groups ) {
+    Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+        -host   => 'mysql-ens-vertannot-staging',
+        -port   => 4573,
+        -user   => 'ensro',
+        -pass   => '',
+        -dbname => "fungi_${group}_collection_core_${curr_eg_release}_${curr_release}_1",
+    );
+}
+
+
+# ---------------------- PREVIOUS CORE DATABASES---------------------------------
+
+my @prev_collection_groups = qw(
     ascomycota1
     ascomycota2
     ascomycota3
@@ -55,25 +88,6 @@ my @collection_groups = qw(
     rozellomycota1
 );
 
-# ---------------------- CURRENT CORE DATABASES----------------------------------
-
-# Server for single species fungal cores
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
-Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
-
-foreach my $group ( @collection_groups ) {
-    Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-        -host   => 'mysql-ens-vertannot-staging',
-        -port   => 4573,
-        -user   => 'ensro',
-        -pass   => '',
-        -dbname => "fungi_${group}_collection_core_${curr_eg_release}_${curr_release}_1",
-    );
-}
-
-
-# ---------------------- PREVIOUS CORE DATABASES---------------------------------
-
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
@@ -87,7 +101,7 @@ foreach my $group ( @collection_groups ) {
     Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
 
     # Fungi collection databases
-    foreach my $group ( @collection_groups ) {
+    foreach my $group ( @prev_collection_groups ) {
         Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
             -host           => 'mysql-ens-sta-3-b',
             -port           => 4686,
