@@ -89,7 +89,7 @@ class TestCigar:
     )
     def test_alignment_to_seq_coordinate(self, cigar: str, coord_align: int,
                                          coord_seq: int, expectation: ContextManager) -> None:
-        """Tests :func:`cigar.alignment_to_seq_coordinate()` method.
+        """Tests :func:`cigar.alignment_to_seq_coordinate()` function.
 
             Args:
                 cigar: cigar line.
