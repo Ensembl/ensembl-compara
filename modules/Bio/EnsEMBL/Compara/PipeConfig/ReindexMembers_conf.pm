@@ -144,6 +144,7 @@ sub pipeline_wide_parameters {
         'prev_tree_db'  => $self->o('prev_tree_db'),
         'member_type'   => $self->o('member_type'),
         'output_dir_path' => $self->o('output_dir_path'),
+        'db_name'         => $self->o('db_name'),
     }
 }
 

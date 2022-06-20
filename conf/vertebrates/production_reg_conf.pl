@@ -68,7 +68,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $metazoa_overlap_cores );
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-1', 'ensembl_compara_master' ],
-    #'compara_curr'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$curr_release" ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$curr_release" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],
 
     # homology dbs
@@ -76,12 +76,12 @@ my $compara_dbs = {
     #'compara_ptrees'          => [ 'mysql-ens-compara-prod-X',  '' ],
     'compara_ptrees_prev'     => [ 'mysql-ens-compara-prod-2',  'jalvarez_default_vertebrates_protein_trees_107' ],
     #'compara_nctrees'         => [ 'mysql-ens-compara-prod-X',  '' ],
-    #'murinae_ptrees'          => [ 'mysql-ens-compara-prod-X',  '' ],
-    #'murinae_nctrees'         => [ 'mysql-ens-compara-prod-X', '' ],
+    'murinae_ptrees'          => [ 'mysql-ens-compara-prod-3',  'ivana_vertebrates_murinae_protein_reindexed_trees_108' ],
+    'murinae_nctrees'         => [ 'mysql-ens-compara-prod-3',  'ivana_vertebrates_murinae_ncrna_reindexed_trees_108' ],
     'murinae_ptrees_prev'     => [ 'mysql-ens-compara-prod-4',  'jalvarez_vertebrates_murinae_protein_reindexed_trees_107' ],
     'murinae_nctrees_prev'    => [ 'mysql-ens-compara-prod-10', 'jalvarez_vertebrates_murinae_ncrna_reindexed_trees_107' ],
-    #'pig_breeds_ptrees'       => [ 'mysql-ens-compara-prod-X',  '' ],
-    #'pig_breeds_nctrees'      => [ 'mysql-ens-compara-prod-X', '' ],
+    'pig_breeds_ptrees'       => [ 'mysql-ens-compara-prod-4',  'jalvarez_vertebrates_pig_breeds_protein_reindexed_trees_107' ],
+    'pig_breeds_nctrees'      => [ 'mysql-ens-compara-prod-10', 'jalvarez_vertebrates_pig_breeds_ncrna_reindexed_trees_107' ],
     'pig_breeds_ptrees_prev'  => [ 'mysql-ens-compara-prod-4',  'jalvarez_vertebrates_pig_breeds_protein_reindexed_trees_107' ],
     'pig_breeds_nctrees_prev' => [ 'mysql-ens-compara-prod-10', 'jalvarez_vertebrates_pig_breeds_ncrna_reindexed_trees_107' ],
 
@@ -130,7 +130,7 @@ my $compara_dbs = {
     #'compara_syntenies'   => [ 'mysql-ens-compara-prod-X', '' ],
 
     # miscellaneous
-    #'alt_allele_projection' => [ 'mysql-ens-compara-prod-X', '' ],
+    'alt_allele_projection' => [ 'mysql-ens-compara-prod-3', 'ivana_vertebrates_alt_allele_import_108' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -139,7 +139,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 my $ancestral_dbs = {
     'ancestral_prev' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
-    #'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
+    'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
 
     'mammals_ancestral'    => [ 'mysql-ens-compara-prod-8', 'ivana_mammals_ancestral_core_105' ],
     'primates_ancestral'   => [ 'mysql-ens-compara-prod-2', 'twalsh_primates_ancestral_core_106' ],
