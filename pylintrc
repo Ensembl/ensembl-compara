@@ -16,8 +16,6 @@ jobs=1
 # --disable=W"
 disable=
   invalid-name,
-  no-self-use,
-  relative-import,
   similarities,
   too-many-statements,
   too-many-arguments,
