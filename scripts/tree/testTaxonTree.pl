@@ -54,6 +54,7 @@ GetOptions('help'        => \$help,
            'tre=s'       => \$self->{'newick_file'},
            'tree_id=i'   => \$self->{'tree_id'},
            'gene=s'      => \$self->{'gene_stable_id'},
+           'species=s'   => \$self->{'species'},
            'reroot=i'    => \$self->{'new_root_id'},
            'align'       => \$self->{'print_align'},
            'cdna'        => \$self->{'cdna'},
@@ -87,8 +88,8 @@ if($self->{'tree_id'}) {
 
 if ($self->{'tree_id'}) {
     print_protein_tree($self);
-} elsif ($self->{'gene_stable_id'}) {
-    fetch_protein_tree_with_gene($self, $self->{'gene_stable_id'});
+} elsif ($self->{'gene_stable_id'} and $self->{'species'}) {
+    fetch_protein_tree_with_gene($self, $self->{'gene_stable_id'}, $self->{'species'});
 } elsif ($self->{'newick_file'}) {
     parse_newick($self);
 } elsif ($self->{'new_root_id'}) {
@@ -256,8 +257,10 @@ sub print_protein_tree {
 sub fetch_protein_tree_with_gene {
   my $self = shift;
   my $gene_stable_id = shift;
+  my $species = shift;
 
-  my $member = $self->{'comparaDBA'}->get_GeneMemberAdaptor->fetch_by_stable_id($gene_stable_id);
+  my $genomedb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly($species);
+  my $member = $self->{'comparaDBA'}->get_GeneMemberAdaptor->fetch_by_stable_id_GenomeDB($gene_stable_id, $genomedb);
   print $member->toString(), "\n";
   print $member->get_canonical_SeqMember->toString(), "\n";
 
