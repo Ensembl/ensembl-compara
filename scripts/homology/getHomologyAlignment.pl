@@ -14,68 +14,82 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+=head1 NAME
+
+getHomologyAlignment.pl
+
+=head1 DESCRIPTION
+
+This script retrieves the homology alignments for a gene.
+
+=head1 SYNOPSIS
+
+perl getHomologyAlignment.pl \
+    --url mysql://ensro@mysql-ens-compara-prod-5:4617/ensembl_compara_plants_55_108 \
+    --gene LR48_Vigan1529s000400 \
+    --species vigna_angularis \
+    --linewidth 60
+
+=head1 OPTIONS
+
+=over
+
+=item B<[--help]>
+Prints help message and exits.
+
+=item B<[--url URL]>
+(Mandatory) The mysql URL mysql://user@host:port/database_name
+
+=item B<[--gene stable_id]>
+(Mandatory) The gene_member stable_id. Requires --species parameter.
+
+=item B<[--species genome]>
+(Mandatory) The species name. Requires --gene parameter.
+
+=item B<[--linewidth aa-line width]>
+(Optional) Specify line width for amino acids in alignment dump.
+
+
+=back
+
+=cut
 
 use strict;
 use warnings;
 use Getopt::Long;
+use Pod::Usage;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 my $self = {};
 
-$self->{'compara_conf'} = {};
-$self->{'compara_conf'}->{'-user'} = 'ensro';
-$self->{'compara_conf'}->{'-port'} = 3306;
-
-$self->{'outputFasta'} = undef;
-$self->{'noSplitSeqLines'} = undef;
-
+my $help;
+$self->{'gene_stable_id'} = undef;
+$self->{'species'} = undef;
 my $aaPerLine = 60;
-my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
 
-GetOptions('help'     => \$help,
-           'dbhost=s' => \$host,
-           'dbport=i' => \$port,
-           'dbuser=s' => \$user,
-           'dbpass=s' => \$pass,
-           'dbname=s' => \$dbname,
-           'g=s'      => \$self->{'gene_stable_id'},
-	   'sp=s'     => \$self->{'species'},
-	   'l=i'      => \$aaPerLine,
-          );
+GetOptions(
+  'url=s'       => \$self->{'url'},
+  'gene=s'      => \$self->{'gene_stable_id'},
+  'species=s'   => \$self->{'species'},
+  'linewidth=i' => \$aaPerLine,
+  'help'        => \$help,
+) or pod2usage(-verbose => 2);
+pod2usage(-exitvalue => 0, -verbose => 2) if $help;
 
-if ($help) { usage(); }
-
-$self->{'member_stable_id'} = shift if(@_);
-
-if($host)   { $self->{'compara_conf'}->{'-host'}   = $host; }
-if($port)   { $self->{'compara_conf'}->{'-port'}   = $port; }
-if($dbname) { $self->{'compara_conf'}->{'-dbname'} = $dbname; }
-if($user)   { $self->{'compara_conf'}->{'-user'}   = $user; }
-if($pass)   { $self->{'compara_conf'}->{'-pass'}   = $pass; }
-
-
-unless(defined($self->{'compara_conf'}->{'-host'})
-       and defined($self->{'compara_conf'}->{'-user'})
-       and defined($self->{'compara_conf'}->{'-dbname'}))
-{
-  print "\nERROR : must specify host, user, and database to connect to compara\n\n";
-  usage(); 
+if ( !defined $self->{'url'} ) {
+  pod2usage(-exitvalue => 0, -verbose => 2);
 }
 
-unless(defined($self->{'gene_stable_id'}) and defined($self->{'species'})) 
-{
-  print "\nERROR : must specify query gene and target species\n\n";
-  usage(); 
+if ( !defined $self->{'gene_stable_id'} or !defined $self->{'species'}) {
+  pod2usage(-exitvalue => 0, -verbose => 2)
 }
 
-$self->{'comparaDBA'}  = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'compara_conf'}});
+$self->{'comparaDBA'} = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor( -URL => $self->{'url'} );
 
-my $member;
-$member = $self->{'comparaDBA'}->get_GeneMemberAdaptor->fetch_by_stable_id($self->{'gene_stable_id'});
-#print $member->toString(), "\n" if($member);
+my $gdb    = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly($self->{'species'});
+my $member = $self->{'comparaDBA'}->get_GeneMemberAdaptor->fetch_by_stable_id_GenomeDB($self->{'gene_stable_id'}, $gdb);
 
 my ($homology) = @{$self->{'comparaDBA'}->get_HomologyAdaptor->fetch_all_by_Member($member, -TARGET_SPECIES => $self->{'species'})};
-#print $homology->toString(), "\n" if($homology);
 
 my $queryMA;
 my $orthMA;
@@ -95,9 +109,6 @@ foreach my $other_member (@{$homology->get_all_Members}) {
 }
 print("Homology between ", $queryMA->{'gene'}->stable_id, "(",$queryMA->{'pep_len'}, ")" ,
       " and ", $orthMA->{'gene'}->stable_id, "(",$orthMA->{'pep_len'}, ")\n\n"); 
-#print($queryMA->{'peptide'}->sequence, "\n");
-#print($orthMA->{'peptide'}->sequence, "\n");
-
 
 #
 # now get the alignment region
@@ -130,28 +141,3 @@ while($numLines>0) {
 }
 
 exit(0);
-
-
-#######################
-#
-# subroutines
-#
-#######################
-
-sub usage {
-  print "getHomologyAlignment.pl [options] <member stable_id>\n";
-  print "  -help                  : print this help\n";
-  print "  -dbhost <machine>      : compara mysql database host <machine>\n";
-  print "  -dbport <port#>        : compara mysql port number\n";
-  print "  -dbname <name>         : compara mysql database <name>\n";
-  print "  -dbuser <name>         : compara mysql connection user <name>\n";
-  print "  -dbpass <pass>         : compara mysql connection password\n";
-  print "  -g <id>                : stable_id of query gene\n";
-  print "  -sp <name>             : name of target species\n";
-  print "  -l <num>               : number if bases per line for pretty output\n";
-  print "getHomologyAlignment.pl v1.1\n";
-  
-  exit(1);  
-}
-
-
