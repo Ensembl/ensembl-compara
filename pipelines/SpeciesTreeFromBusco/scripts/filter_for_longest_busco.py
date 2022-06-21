@@ -52,10 +52,17 @@ if __name__ == '__main__':
         sys.stderr.write("Empty BUSCO gene set!\n")
         sys.exit(1)
 
+    i = 0
+    for k, v in db.items():
+        v.id = f"g{i}"
+        v.description = ""
+        i += 1
+
     with open(args.o, "w") as output_handle:
         SeqIO.write(db.values(), output_handle, "fasta")
 
     with open(args.l, "w") as oh:
-        oh.write("Gene\n")
-        for gene in db:
-            oh.write(f"{gene}\n")
+        oh.write("Gene\tGeneId\n")
+        for gene, rec in db.items():
+            gid = rec.id
+            oh.write(f"{gene}\t{gid}\n")
