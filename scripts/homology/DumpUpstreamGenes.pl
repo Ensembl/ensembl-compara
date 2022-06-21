@@ -14,6 +14,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+=head1 NAME
+
+DumpUpstreamGenes
+
+=head1 DESCRIPTION
+
+This script dumps the upstream genes of a specified genome up to a
+defined length
+
+=head1 SYNOPSIS
+
+perl DumpUpstreamGenes.pl \
+    --upstream_length 6000 \
+    --species_name gallus_gallus
+
+=head1 OPTIONS
+
+=over
+
+=item B<[--help]>
+
+Prints help message and exits.
+
+=item B<[--upstream_length Length]>
+
+(Mandatory) The length of the upstream region to cover.
+
+=item B<[--species_name species name]>
+
+(Mandatory) The name of the genome to dump genes from.
+
+=back
+
+=cut
 
 use strict;
 use warnings;
@@ -47,7 +81,7 @@ my $gene_members = $ma->fetch_all_by_GenomeDB($gdb, 'ENSEMBLGENE');
 foreach my $gene_member (@{$gene_members}) {
   
   my $ga = $gene_member->genome_db->db_adaptor->get_GeneAdaptor;
-  my $gene = $ga->fetch_by_stable_id($gene_member->stable_id);
+  my $gene = $ga->fetch_by_stable_id_GenomeDB($gene_member->stable_id, $gdb);
   $gene->transform('toplevel');
   my $sa = $gene_member->genome_db->db_adaptor->get_SliceAdaptor;
   my $slice;
