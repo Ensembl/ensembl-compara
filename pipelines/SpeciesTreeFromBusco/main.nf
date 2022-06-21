@@ -52,12 +52,13 @@ process prepareBusco {
 }
 
 process buscoAnnot {
-    label 'retry_with_16gb_mem_c32'
+    label 'retry_with_8gb_mem_c16'
     input:
         path busco_prot
         path genome
     output:
-        path "cdna/*.fas"
+        path "anno_res/busco_output/annotation.gtf", emit: busco_annot
+        path genome, emit: genome
     script:
     """
     mkdir -p anno_res
@@ -68,12 +69,25 @@ process buscoAnnot {
     --genome_file $genome \
     --num_threads ${params.cores} \
     --max_intron_length 100000 \
-    --run_busco 1 \
+    --run_busco \
     --busco_protein_file $busco_prot
-    mkdir -p cdna
-    ${params.gffread_exe} -w cdna/$genome -g $genome anno_res/busco_output/annotation.gtf
     """
 }
+
+process runGffread {
+    label 'rc_4gb'
+    input:
+        path busco_annot
+        path genome
+    output:
+        path "cdna/*.fas"
+    script:
+    """
+    mkdir -p cdna
+    ${params.gffread_exe} -w cdna/$genome -g $genome $busco_annot
+    """
+}
+
 
 process collateBusco {
     label 'rc_16gb'
@@ -108,7 +122,7 @@ process collateBusco {
 }
 
 process alignProt {
-    label 'rc_16Gb'
+    label 'retry_with_4gb_mem_c1'
 
     publishDir "${params.results_dir}/", pattern: "alignments/prot_aln_*.fas", mode: "copy",  overwrite: true
 
@@ -123,11 +137,30 @@ process alignProt {
     mkdir -p alignments
     ${params.mafft_exe} --auto $protFas > alignments/prot_aln_${id}.fas
     """
+}
+
+process trimAlignments {
+    label 'rc_2Gb'
+
+    publishDir "${params.results_dir}/", pattern: "trimmed_alignments/trim_aln_*.fas", mode: "copy",  overwrite: true
+
+    input:
+        path full_aln
+    output:
+        path "trimmed_alignments/trim_aln_*.fas", emit: trim_aln
+
+    script:
+    id = (full_aln =~ /.*prot_(.*)\.fas$/)[0][1]
+    """
+    mkdir -p trimmed_alignments
+    trimal -automated1 -in $full_aln -out trimmed_alignments/trim_${id}.fas
+    """
 
 }
 
+
 process mergeAlns {
-    label 'rc_24gb'
+    label 'rc_16gb'
 
     publishDir "${params.results_dir}/", pattern: "merged_protein_alns.fas", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "partitions.tsv", mode: "copy",  overwrite: true
@@ -170,7 +203,7 @@ process runIqtree {
 
     script:
     """
-    ${params.iqtree_exe} -s $merged_aln -p $partitions -nt ${params.cores}
+    ${params.iqtree_exe} -s $merged_aln -p $partitions --fast -T ${params.cores}
     mv partitions.tsv.treefile species_tree.nwk
     mv partitions.tsv.iqtree iqtree_report.txt
     mv partitions.tsv.log iqtree_log.txt
@@ -183,9 +216,11 @@ workflow {
     genomes = Channel.fromPath("${params.dir}/*.fas")
 
     buscoAnnot(prepareBusco.out.busco_prots, genomes)
-    collateBusco(buscoAnnot.out.collect(), prepareBusco.out.busco_genes)
+    runGffread(buscoAnnot.out.busco_annot, buscoAnnot.out.genome)
+    collateBusco(runGffread.out.collect(), prepareBusco.out.busco_genes)
     alignProt(collateBusco.out.prot_seq.flatten())
-    mergeAlns(alignProt.out.prot_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
+    trimAlignments(alignProt.out.prot_aln)
+    mergeAlns(trimAlignments.out.trim_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
     mergeAlns.out.debug.view()
     runIqtree(mergeAlns.out.merged_aln, mergeAlns.out.partitions)
 }
