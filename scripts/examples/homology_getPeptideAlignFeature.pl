@@ -28,9 +28,13 @@ $reg->load_registry_from_db(
 );
 
 my $gene_stable_id = "ENSG00000060069";
+my $genome_name    = "homo_sapiens";
 
 my $gene_member_adaptor = Bio::EnsEMBL::Registry->get_adaptor('Multi', 'compara', 'GeneMember');
-my $gene_member = $gene_member_adaptor->fetch_by_stable_id($gene_stable_id);
+my $genome_db_adaptor   = Bio::EnsEMBL::Registry->get_adaptor('Multi', 'compara', 'GenomeDB');
+
+my $genome = $genome_db_adaptor->fetch_by_name_assembly($genome_name);
+my $gene_member = $gene_member_adaptor->fetch_by_stable_id_GenomeDB($gene_stable_id, $genome);
 my $peptide_member = $gene_member->get_canonical_SeqMember;
 print "QUERY PEP: ", $peptide_member->toString(), "\n";
 
