@@ -153,7 +153,7 @@ process trimAlignments {
     id = (full_aln =~ /.*prot_(.*)\.fas$/)[0][1]
     """
     mkdir -p trimmed_alignments
-    trimal -automated1 -in $full_aln -out trimmed_alignments/trim_${id}.fas
+    trimal -gappyout -in $full_aln -out trimmed_alignments/trim_${id}.fas
     """
 
 }
