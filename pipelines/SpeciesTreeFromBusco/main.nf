@@ -38,6 +38,11 @@ if (!params.dir) {
     exit 0
 }
 
+/**
+*@input path to BUSCO gene set protein fasta
+*@output path to fasta with longest protein isoforms per gene
+*@output path to gene list TSV
+*/
 process prepareBusco {
     label 'rc_4Gb'
     input:
@@ -51,6 +56,12 @@ process prepareBusco {
     """
 }
 
+/**
+*@input path to BUSCO longest protein isoforms
+*@input path to genome fasta
+*@output path to annotation GTF
+*@output path to genome fasta
+*/
 process buscoAnnot {
     label 'retry_with_8gb_mem_c16'
     input:
@@ -74,6 +85,11 @@ process buscoAnnot {
     """
 }
 
+/**
+*@input path to annotation GTF
+*@input path to genome fasta
+*@output path to cDNA fasta
+*/
 process runGffread {
     label 'rc_4gb'
     input:
@@ -88,7 +104,15 @@ process runGffread {
     """
 }
 
-
+/**
+*@input list of paths to cDNA fasta files
+*@input path to genes list TSV
+*@output file of cDNA fasta paths
+*@output path to per gene protein sequence fasta
+*@output path to per gene cDNA sequence fasta
+*@output path to gene stats TSV
+*@output path to taxon list TSV
+*/
 process collateBusco {
     label 'rc_16gb'
 
@@ -121,6 +145,10 @@ process collateBusco {
 
 }
 
+/**
+*@input path to protein fasta
+*@output path to aligned protein fasta
+*/
 process alignProt {
     label 'retry_with_4gb_mem_c1'
 
@@ -139,6 +167,10 @@ process alignProt {
     """
 }
 
+/**
+*@input path to protein alignment fasta
+*@output path to trimmed protein alignment
+*/
 process trimAlignments {
     label 'rc_2Gb'
 
@@ -159,6 +191,14 @@ process trimAlignments {
 }
 
 
+/**
+*@input list of filtered alignments
+*@input path to list of genes TSV
+*@input path to taxon list TSV
+*@output file of alignment file paths
+*@output path to merged alignments fasta
+*@output path to RAXML style partition file
+*/
 process mergeAlns {
     label 'rc_16gb'
 
@@ -174,7 +214,6 @@ process mergeAlns {
         path "alns_fofn.txt", emit: alns_fofn
         path "merged_protein_alns.fas", emit: merged_aln
         path "partitions.tsv", emit: partitions
-        stdout emit: debug
     script:
     fh = new File("$workDir/alns_fofn.txt")
     for (line : alns)  {
@@ -186,6 +225,14 @@ process mergeAlns {
     """
 
 }
+
+/**
+*@input path to merged alignment fasta
+*@input path to partition file
+*@output path to tree in newick format
+*@output path to iqtree2 report
+*@output path to iqtree2 log file
+*/
 process runIqtree {
     label 'retry_with_32gb_mem_c32'
     publishDir "${params.results_dir}/", pattern: "species_tree.nwk", mode: "copy",  overwrite: true
@@ -221,7 +268,6 @@ workflow {
     alignProt(collateBusco.out.prot_seq.flatten())
     trimAlignments(alignProt.out.prot_aln)
     mergeAlns(trimAlignments.out.trim_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
-    mergeAlns.out.debug.view()
     runIqtree(mergeAlns.out.merged_aln, mergeAlns.out.partitions)
 }
 
