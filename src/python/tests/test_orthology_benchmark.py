@@ -493,20 +493,20 @@ def test_get_neighbours(gene: str, n: int, exp_genes: List[Tuple[str, str, float
 
 
 @pytest.mark.parametrize(
-    "gene1, gene2, neighbours1, neighbours2, n, allowed_gap, exp_out",
+    "gene1, gene2, neighbours1, neighbours2, n, exp_out",
     [
         # Gene with no neighbours
         ("11", "35",
          [["1", "11", 1, "+"]],
          [["3", "32", 101, "+"], ["3", "33", 201, "+"], ["3", "34", 301, "+"], ["3", "35", 401, "+"],
           ["3", "36", 501, "+"], ["3", "37", 601, "+"], ["3", "38", 701, "+"]],
-         2, 1, 0),
+         2, 0),
         # Gene with no neighbours on one side
         ("21", "35",
          [["2", "21", 1, "+"], ["2", "22", 101, "+"], ["2", "23", 201, "+"]],
          [["3", "32", 101, "+"], ["3", "33", 201, "+"], ["3", "34", 301, "+"], ["3", "35", 401, "+"],
           ["3", "36", 501, "+"], ["3", "37", 601, "+"], ["3", "38", 701, "+"]],
-         2, 1, 50),
+         2, 50),
         # Gene with one neighbour with multiple orthologous matches ("23" - "31", "23" - "38") (and a
         # collapsed paralogous neighbour ("26"))
         ("25", "33",
@@ -515,44 +515,37 @@ def test_get_neighbours(gene: str, n: int, exp_genes: List[Tuple[str, str, float
          [["3", "31", 1, "+"], ["3", "32", 101, "+"], ["3", "33", 201, "+"], ["3", "34", 301, "+"],
           ["3", "35", 401, "+"], ["3", "36", 501, "+"], ["3", "37", 601, "+"], ["3", "38", 701, "+"],
           ["3", "39", 801, "+"]],
-         2, 4, 100),
+         2, 100),
         # All neighbours have an orthologous match and corresponding strands are in agreement
         ("24", "32",
          [["2", "23", 201, "+"], ["2", "24", 301, "+"], ["2", "25", 401, "+"]],
          [["3", "31", 1, "+"], ["3", "32", 101, "+"], ["3", "33", 201, "+"]],
-         1, 0, 100),
+         1, 100),
         # Genes of interest on the opposite strands and all neighbours have an orthologous match on the
         # opposite strand
         ("42", "62",
          [["4", "41", 1, "-"], ["4", "42", 101, "-"], ["4", "43", 201, "+"]],
          [["6", "61", 1, "-"], ["6", "62", 101, "+"], ["6", "63", 201, "+"]],
-         1, 2, 100),
-        # Genes of interest on the opposite strands and one neighbour has an orthologous match on the same
+         1, 100),
+        # Genes of interest on the opposite strands and neighbours have an orthologous match on the same
         # strand
         ("45", "52",
          [["4", "43", 201, "+"], ["4", "44", 301, "+"], ["4", "45", 401, "+"], ["4", "46", 501, "-"],
           ["4", "47", 601, "+"]],
          [["5", "51", 1, "-"], ["5", "52", 101, "-"], ["5", "53", 201, "-"], ["5", "54", 301, "+"]],
-         2, 0, 25),
-        # Too large gap between orthologous matches
-        ("72", "82",
-         [["7", "71", 1, "+"], ["7", "72", 101, "+"], ["7", "73", 201, "+"]],
-         [["8", "81", 1, "+"], ["8", "82", 101, "+"], ["8", "83", 201, "+"], ["8", "84", 301, "+"],
-          ["8", "85", 401, "+"], ["8", "86", 501, "+"], ["8", "87", 601, "+"]],
-         2, 3, 0),
-        # An orthologous match preceding the last (current) match, hence, should not be taken into account
-        # (and a collapsed paralogous neighbour ("26"))
+         2, 25),
+        # Orthologous matches don't appear sequentially among the `neighbours2` (and a collapsed paralogous
+        # neighbour ("26"))
         ("36", "22",
          [["3", "34", 301, "+"], ["3", "35", 401, "+"], ["3", "36", 501, "+"], ["3", "37", 601, "+"],
           ["3", "38", 701, "+"]],
          [["2", "21", 1, "+"], ["2", "22", 101, "+"], ["2", "23", 201, "+"], ["2", "24", 301, "+"],
           ["2", "25", 401, "+"], ["2", "27", 601, "+"], ["2", "28", 701, "+"], ["2", "29", 801, "+"]],
-         2, 4, 50)
+         2, 100)
     ]
 )
 def test_calculate_goc_genes(gene1: str, gene2: str, neighbours1: List[Tuple[str, str, int, str]],
-                             neighbours2: List[Tuple[str, str, int, str]], n: int,
-                             allowed_gap: int, exp_out: float) -> None:
+                             neighbours2: List[Tuple[str, str, int, str]], n: int, exp_out: float) -> None:
     """Tests :func:`orthology_benchmark.calculate_goc_genes()` function.
 
     Args:
@@ -564,7 +557,6 @@ def test_calculate_goc_genes(gene1: str, gene2: str, neighbours1: List[Tuple[str
             "gene_id", "start", "strand").
         n: (Maximum) Radius of `gene1`'s neighbourhood. Effectively, the neighbourhood can be smaller if
             there are fewer genes around `gene1`.
-        allowed_gap: Allowed gap between subsequent orthologous matches in `gene2`'s neighbourhood.
         exp_out: Expected return value of the function.
 
     """
@@ -575,5 +567,5 @@ def test_calculate_goc_genes(gene1: str, gene2: str, neighbours1: List[Tuple[str
     neighbourhood1 = pandas.DataFrame(neighbours1, columns=["seqname", "gene_id", "start", "strand"])
     neighbourhood2 = pandas.DataFrame(neighbours2, columns=["seqname", "gene_id", "start", "strand"])
     assert orthology_benchmark.calculate_goc_genes(
-        gene1, gene2, neighbourhood1, neighbourhood2, orthologs, n, allowed_gap
+        gene1, gene2, neighbourhood1, neighbourhood2, orthologs, n
     ) == exp_out

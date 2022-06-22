@@ -35,7 +35,6 @@ import csv
 import datetime
 import glob
 import gzip
-import itertools
 import os
 from pathlib import Path
 import re
@@ -518,8 +517,8 @@ def get_neighbours(gene: str, df_genes: pandas.DataFrame, n: int) -> pandas.Data
 
 
 def calculate_goc_genes(gene1: str, gene2: str, neighbourhood1: pandas.DataFrame,
-                        neighbourhood2: pandas.DataFrame, orthologs: List[Tuple[str, str]], n: int = 2,
-                        allowed_gap: int = 1) -> float:
+                        neighbourhood2: pandas.DataFrame, orthologs: List[Tuple[str, str]], n: int = 2)\
+        -> float:
     """Returns unidirectional GOC score for two genes.
 
     Please note, the final GOC score for two genes is the maximum of the two unidirectional GOC scores, i.e.
@@ -535,7 +534,6 @@ def calculate_goc_genes(gene1: str, gene2: str, neighbourhood1: pandas.DataFrame
         orthologs: Putative orthologous pairs between species containing `gene1` and `gene2`.
         n: (Maximum) Radius of `neighbourhood1`. Effectively, `neighbourhood1` can be smaller if there are
             fewer genes around `gene1`.
-        allowed_gap: Allowed gap between subsequent orthologous matches in `neighbourhood2`.
 
     """
     index1 = neighbourhood1.index[neighbourhood1["gene_id"] == gene1][0]
@@ -544,47 +542,41 @@ def calculate_goc_genes(gene1: str, gene2: str, neighbourhood1: pandas.DataFrame
     strand2 = neighbourhood2.iloc[index2]["strand"]
 
     if strand1 != strand2:
+        # Reverse `neighbourhood2` to potentially speed up search for putative orthologous matches later
         neighbourhood2 = neighbourhood2.reindex(index=neighbourhood2.index[::-1])
         neighbourhood2.reset_index(inplace=True)
         neighbourhood2.drop("index", 1, inplace=True)
+        index2 = neighbourhood2.index[neighbourhood2["gene_id"] == gene2][0]
         strand_mismatch = True
     else:
         strand_mismatch = False
 
+    # Remove `gene1` and `gene2` from `neighbourhood1` and `neighbourhood2` before looking for putative
+    # orthologs between genes in `neighbourhood1` and `neighbourhood2`
+    neighbourhood1.drop(index=index1, inplace=True)
+    neighbourhood1.reset_index(inplace=True)
+    neighbourhood1.drop("index", 1, inplace=True)
+
+    neighbourhood2.drop(index=index2, inplace=True)
+    neighbourhood2.reset_index(inplace=True)
+    neighbourhood2.drop("index", 1, inplace=True)
+
     shared_orthologs = 0
-    prev_match = -1
     for i in neighbourhood1.iterrows():
         gene_i = i[1]["gene_id"]
-
-        if gene_i == gene1:  # Skip gene1
-            continue
-
         strand_i = i[1]["strand"]
 
-        # Check if there are orthologous matches starting from (`prev_match` + 1)th position in
-        # `neighbourhood2`
-        for index, row in itertools.islice(neighbourhood2.iterrows(), prev_match + 1, None):
-            gene_j = row["gene_id"]
+        # Check if there are orthologous matches in `neighbourhood2`
+        for j in neighbourhood2.iterrows():
+            gene_j = j[1]["gene_id"]
 
-            if gene_j == gene2:
-                prev_match = index  # Current index
-                continue  # Skip gene2
-
-            # Check that gene_i and gene_j share directionality; if not, go to next gene in `neighbourhood2`
-            strand_j = row["strand"]
+            # Check the directionality of gene_i and gene_j
+            strand_j = j[1]["strand"]
             if (strand_mismatch and strand_i == strand_j) or (not strand_mismatch and strand_i != strand_j):
                 continue
 
             if (gene_i, gene_j) in orthologs or (gene_j, gene_i) in orthologs:
-                # If prev_match >=0 and gap too big, i.e. abs(j-prev_match) > allowed_gap + 1:
-                #   Ignore that match
-                # Else:
-                #   shared_orthologs++
-                curr_pos_j = index
-                if prev_match < 0 or abs(curr_pos_j - prev_match) <= allowed_gap + 1:
-                    shared_orthologs += 1
-
-                prev_match = curr_pos_j
+                shared_orthologs += 1
                 break  # Don't look for multiple matches
 
     return (shared_orthologs / (2 * n)) * 100
