@@ -234,7 +234,7 @@ process mergeAlns {
 *@output path to iqtree2 log file
 */
 process runIqtree {
-    label 'retry_with_32gb_mem_c32'
+    label 'retry_with_8gb_mem_c5'
     publishDir "${params.results_dir}/", pattern: "species_tree.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_report.txt", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_log.txt", mode: "copy",  overwrite: true
