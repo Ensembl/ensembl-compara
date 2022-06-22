@@ -21,7 +21,6 @@ _All files (e.g. scripts) under these directories will be deleted_
 
 # Deprecated methods scheduled for deletion
 
-* `DBSQL::'*MemberAdaptor::fetch_by_stable_id()` in Ensembl 109
 * `AlignedMember::get_cigar_breakout()` in Ensembl 102
 * `AlignedMember::get_cigar_array()` in Ensembl 102
 
@@ -31,6 +30,10 @@ _All files (e.g. scripts) under these directories will be deleted_
 * `GenomicAlignTree::get_all_GenomicAligns()`
 
 # Methods removed in previous versions of Ensembl
+
+## Ensembl 109
+
+* `DBSQL::'*MemberAdaptor::fetch_by_stable_id()`
 
 ## Ensembl 100
 
