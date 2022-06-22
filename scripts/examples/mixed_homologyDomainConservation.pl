@@ -35,11 +35,13 @@ Bio::EnsEMBL::Registry->load_registry_from_db(-host=>"ensembldb.ensembl.org", -u
 my $human_gene_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Homo sapiens", "core", "Gene");
 my $gene_member_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GeneMember");
 my $gene_tree_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GeneTree");
+my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GenomeDB");;
 
+my $genome = $genome_db_adaptor->fetch_by_name_assembly("homo_sapiens");
 my $genes = $human_gene_adaptor->fetch_all_by_external_name('BRCA2');
 
 foreach my $gene (@$genes) {
-  my $member = $gene_member_adaptor->fetch_by_stable_id($gene->stable_id);
+  my $member = $gene_member_adaptor->fetch_by_stable_id_GenomeDB($gene->stable_id, $genome);
   die "no members" unless (defined $member);
   # Fetch the gene tree
   my $tree =  $gene_tree_adaptor->fetch_default_for_Member($member);
