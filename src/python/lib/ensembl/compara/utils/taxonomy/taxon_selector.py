@@ -66,13 +66,14 @@ def match_taxon_to_reference(session: Session, taxon_name: str, taxon_list: list
     """
     node = Taxonomy.fetch_taxon_by_species_name(session, taxon_name)
     ancestor_nodes = Taxonomy.fetch_ancestors(session, node.taxon_id)
-    ancestors = [ancestor["taxon_id"] for ancestor in ancestor_nodes]
-    ancestors.reverse()
+    ordered_ancestors = order_ancestry(session, ancestor_nodes)
+    ancestors = [ancestor["taxon_id"] for ancestor in ordered_ancestors]
+    result = None
     for ancestor in ancestors:
         ancestor_name = fetch_scientific_name(session, ancestor)
         if any(str(ancestor_name).lower() in taxon.lower() for taxon in taxon_list):
-            return str(ancestor_name).lower()
-    return "default"
+            result = str(ancestor_name).lower()
+    return result if result is not None else "default"
 
 
 def filter_real_taxon(session: Session, taxon_name: str)-> Optional[str]:
@@ -106,3 +107,17 @@ def fetch_scientific_name(session: Session, taxon_id: int) -> str:
     if not q:
         raise NoResultFound()
     return q.name
+
+def order_ancestry(session: Session, ancestors: tuple) -> tuple:
+    """Returns an ordered and filtered tuple of ancestor objects
+
+    Args:
+        ancestors: tuple of ancestor node objects
+    """
+    ancestor_nodes = list(ancestors)
+    ordered_ancestors = sorted(
+        ancestor_nodes,
+        key=lambda x: Taxonomy.num_descendants(session, x["taxon_id"]),
+        reverse=True
+    )
+    return tuple(ordered_ancestors)

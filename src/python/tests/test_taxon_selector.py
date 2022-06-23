@@ -21,7 +21,7 @@ Typical usage example::
 """
 
 from contextlib import nullcontext as does_not_raise
-from typing import ContextManager
+from typing import ContextManager, List
 
 import pytest
 from pytest import raises
@@ -33,8 +33,10 @@ from ensembl.compara.utils.taxonomy import (
     collect_taxonomys_from_path,
     match_taxon_to_reference,
     filter_real_taxon,
-    fetch_scientific_name
+    fetch_scientific_name,
+    order_ancestry
 )
+from ensembl.ncbi_taxonomy.api.utils import Taxonomy
 
 
 @pytest.mark.parametrize("db", [{"src": "ncbi_db"}], indirect=True)
@@ -47,7 +49,7 @@ class TestTaxonomySelection:
 
     """
 
-    dbc = None # type: UnitTestDB
+    dbc: UnitTestDB = None
     dir = None
 
     @pytest.fixture(scope="class", autouse=True)
@@ -153,4 +155,59 @@ class TestTaxonomySelection:
         with self.dbc.session_scope() as session:
             with expectation:
                 result = fetch_scientific_name(session, taxon_id)
+                assert result == exp_out
+
+    @pytest.mark.parametrize(
+        "taxon_id, exp_out, expectation",
+        [
+            (
+                9611,
+                [
+                    1,
+                    131567,
+                    2759,
+                    33154,
+                    33208,
+                    6072,
+                    33213,
+                    33511,
+                    7711,
+                    89593,
+                    7742,
+                    7776,
+                    117570,
+                    117571,
+                    8287,
+                    32523,
+                    32524,
+                    40674,
+                    32525,
+                    9347,
+                    314145,
+                    33554,
+                    379584,
+                    9608,
+                ],
+                does_not_raise(),
+            ),
+            (
+                1, [], raises(NoResultFound),
+            ),
+        ],
+    )
+    def test_order_ancestry(
+        self, taxon_id: int, exp_out: List, expectation: ContextManager
+    ) -> None:
+        """Tests :func:`order_ancestry()`
+
+        Args:
+            taxon_id: a real taxon_id
+            exp_out: list of taxon_ids
+            expectation: Raises NoResultFound()
+        """
+        with self.dbc.session_scope() as session:
+            with expectation:
+                ancestors = Taxonomy.fetch_ancestors(session, taxon_id)
+                ordered_ancs = order_ancestry(session, ancestors)
+                result = [ancestor["taxon_id"] for ancestor in ordered_ancs]
                 assert result == exp_out
