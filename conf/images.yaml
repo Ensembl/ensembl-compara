@@ -29,8 +29,6 @@ properties:
       - .*/img/vep_cache_build_thumb.png
       - .*/img/variation_schema_thumb.png
       - .*/i/mirrors/ensembl-.*
-      # Mobile things
-      - .*/i/species.png
     action:
       exclude: 1
 

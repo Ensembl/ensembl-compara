@@ -512,7 +512,7 @@ sub get_permanent_url {
   ## @param URL (string or hashref as expected by self->url method) (optional - takes current url as default)
   ## @param Hashref with following keys:
   ##  - ignore_archive Flag will on will not create a archive permalink
-  ##  - allow_redirect Flag if on will not add params that prevent mirror/mobile redirect
+  ##  - allow_redirect Flag if on will not add params that prevent mirror redirect
   my ($self, $url, $options) = @_;
 
   $options ||= {};
@@ -523,12 +523,12 @@ sub get_permanent_url {
   $url  ||= $self->current_url;
   $url    = $self->url($url) if ref $url;
 
-  # remove time, redirect and mobileredirect params
-  $url =~ s/(\;|\&)*(time|redirect|mobileredirect)=[^\;\&]+(\;|\&)*/$1 && $3 ? q(;) : q()/eg;
+  # remove time, redirect params
+  $url =~ s/(\;|\&)*(time|redirect)=[^\;\&]+(\;|\&)*/$1 && $3 ? q(;) : q()/eg;
   $url =~ s/\;$//;
 
   # add params to prevent redirect
-  $url .= ($url =~ /\?/ ? ';' : '?').'redirect=no;mobileredirect=no' unless $options->{'allow_redirect'};
+  $url .= ($url =~ /\?/ ? ';' : '?').'redirect=no' unless $options->{'allow_redirect'};
 
   return sprintf '%s/%s',
     ($options->{'ignore_archive'} ? $sd->ENSEMBL_BASE_URL : $self->_get_permanent_url_base) =~ s/\/*$//r,

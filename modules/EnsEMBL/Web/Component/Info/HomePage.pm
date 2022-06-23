@@ -363,7 +363,6 @@ sub funcgen_text {
     return sprintf('
       <div class="homepage-icon">
         %s
-        %s
       </div>
       <h2>Regulation</h2>
       <p><strong>What can I find?</strong> DNA methylation, transcription factor binding sites, histone modifications, and regulatory features such as enhancers and repressors, and microarray annotations.</p>
@@ -377,10 +376,6 @@ sub funcgen_text {
         "Go to regulatory feature $sample_data->{'REGULATION_TEXT'}", 'regulation', 'Example regulatory feature'
       ),
       
-      $species eq 'Homo_sapiens' ? '
-        <a class="nodeco _ht _ht_track" href="/info/website/tutorials/encode.html" title="Find out about ENCODE data"><img src="/img/ENCODE_logo.jpg" class="bordered" /><span>ENCODE data in Ensembl</span></a>
-      ' : '',
-
       sprintf($self->{'icon'}, 'info'), $species_defs->ENSEMBL_SITETYPE,
       
       $hub->url({'type' => 'Experiment', 'action' => 'Sources', 'ex' => 'all'}), sprintf($self->{'icon'}, 'info'), 

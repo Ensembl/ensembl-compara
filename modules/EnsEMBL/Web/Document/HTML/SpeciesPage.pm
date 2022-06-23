@@ -134,7 +134,6 @@ sub render {
   return $html;  
 }
 
-# Overwritten in mobile plugins to hide some columns
 # Return array of columns
 sub table_columns {
   my $self = shift;

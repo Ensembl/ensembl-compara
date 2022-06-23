@@ -71,7 +71,7 @@ sub content {
   return $html;
 };
 
-# Description : Simple function to just add the columns in the table (can be overwritten in mobile plugins)
+# Description : Simple function to just add the columns in the table (can be overwritten in other plugins)
 # Arg1        : $table hash
 # Returns     : $table(hash)
 sub add_table_columns {

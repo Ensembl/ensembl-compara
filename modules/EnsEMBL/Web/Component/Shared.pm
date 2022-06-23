@@ -106,8 +106,7 @@ sub species_stats {
     }
   }
 
-  my $method  = ucfirst($sd->GENEBUILD_METHOD) || '';
-  $method     =~ s/_/ /g;
+  my $method  = $self->_format_genebuild_method; 
   $summary->add_row({
       'name' => '<b>Annotation method</b>',
       'stat' => $method
@@ -185,11 +184,18 @@ sub species_stats {
   return $html;
 }
 
+sub _format_genebuild_method {
+  my $self     = shift;
+  my $method  = ucfirst($self->hub->species_defs->GENEBUILD_METHOD) || '';
+  $method     =~ s/_/ /g;
+  return $method;
+}
+
 sub _add_gene_counts {
   my ($self,$genome_container,$sd,$cols,$options,$tail,$our_type) = @_;
 
   my @order           = qw(coding_cnt noncoding_cnt noncoding_cnt/s noncoding_cnt/l noncoding_cnt/m pseudogene_cnt transcript);
-  my @suffixes        = (['','~'], ['r',' (incl ~ '.glossary_helptip($self->hub, 'readthrough', 'Readthrough').')']);
+  my @suffixes        = (['','~'], ['r',' (excl ~ '.glossary_helptip($self->hub, 'readthrough', 'Readthrough').')']);
   my $glossary_lookup = {
     'coding_cnt'        => 'Protein coding',
     'noncoding_cnt/s'   => 'Small non coding gene',

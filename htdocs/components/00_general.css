@@ -104,8 +104,6 @@ body.mac h1,
 body.mac h2     { padding-top: 4px; }
 
 .invisible      { font-size: 1px; color:[[WHITE]]; height: 0; clear: both; overflow: hidden; margin: 0!important; line-height: 0!important; }
-.mobile-only    { display:none; }
-a.mobile-link   { font-size: 15px; } /* footer mobile site link */
 
 /*----------------------------------------------------------------------
  Links 
@@ -241,7 +239,3 @@ div.notes p  { margin-bottom: 8px; }
 /* external links have an extra ..... ed line under them... */
 
 a._external_link_ { border-bottom: 1px dotted [[LINK]]; }
-
-/* mobile version site */
-/*.full-site-box {  display: none; } */
-#menu_icon 				{  display: none; }

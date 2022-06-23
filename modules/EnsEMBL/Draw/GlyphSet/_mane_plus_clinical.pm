@@ -29,4 +29,6 @@ sub max_label_rows { return $_[0]->my_config('max_label_rows') || 2; }
 
 sub only_attrib { return 'MANE_Plus_Clinical'; }
 
+sub get_gene_connections { return 1; }
+
 1;

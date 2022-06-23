@@ -163,7 +163,7 @@ sub content {
     if ($trans_name !~ m/^LRG/) {
       $gene_url = $hub->url({
         type   => 'Gene',
-        action => $self->gene_action,
+        action => 'Variation_Gene/Table',
         db     => 'core',
         r      => undef,
         g      => $gene_name,
@@ -290,7 +290,7 @@ sub content {
     my $row = {
       allele    => $allele,
       gene      => qq{<a href="$gene_url">$gene_name</a><br/><span class="small" style="white-space:nowrap;">$gene_hgnc</span>},
-      trans     => qq{<a href="$transcript_url" class="mobile-nolink">$trans_display</a> ($strand)<br/><span class="small" style="white-space:nowrap;">$trans_type</span>},
+      trans     => qq{<a href="$transcript_url">$trans_display</a> ($strand)<br/><span class="small" style="white-space:nowrap;">$trans_type</span>},
       type      => $type,
       trans_pos => $trans_length_label . $cdna_overlap,
       cds_pos   => $cds_length_label . $cds_overlap,
@@ -423,7 +423,7 @@ sub content {
     return $html;
 }
 
-# Description: Return hash of columns, this can be overwritten in the mobile plugins to remove columns not required.
+# Description: Return hash of columns, this can be overwritten in other plugins to remove columns not required.
 sub table_columns {
   my $self = shift;
   my $column_flags = shift;
@@ -468,15 +468,8 @@ sub table_columns {
   return @columns;
 }
 
-# Description: href/link for gene link, can be overwritten in mobile plugins
-sub gene_action {
-  my $self = @_;
-  
-  return 'Variation_Gene/Table';
-}
-
 # Arg         : Any tables that need to be rendered
-# Description : just returning all the tables thats been rendered (overwritten in mobile plugins)
+# Description : just returning all the tables thats been rendered
 # Returns     : html string
 sub render_tables {
   my ($self, $table, $reg_table, $motif_table, $flag) = @_;
