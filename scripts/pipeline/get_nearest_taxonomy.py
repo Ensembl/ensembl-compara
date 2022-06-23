@@ -47,6 +47,8 @@ def get_nearest_taxonomy(session: Session, taxon: str, ref_taxa: List[str]) -> s
     return ref_taxon
 
 def main():
+    """Main function to classify the nearest set of comparators for a taxon by taxonomic classification
+    """
     parser = ArgumentParser(
         description="Selects appropriate reference taxonomy from `taxon_list` for a given `taxon_name`."
     )
