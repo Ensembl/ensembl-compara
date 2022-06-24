@@ -81,6 +81,7 @@ process buscoAnnot {
     --num_threads ${params.cores} \
     --max_intron_length 100000 \
     --run_busco \
+    --genblast_timeout  32400\
     --busco_protein_file $busco_prot
     """
 }
