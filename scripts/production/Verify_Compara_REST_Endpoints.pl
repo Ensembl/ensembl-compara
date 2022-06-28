@@ -184,6 +184,27 @@ elsif ( $division eq 'grch37' ) {
     $skip_genetrees = 1;
     $skip_cactus    = 1;
 }
+elsif ($division eq 'protists' ) {
+    $gene_member_id           = 'LMJF_27_0290';
+    $gene_tree_id             = 'EPrGT00960000189529';
+
+    $species_1                = 'leishmania_major';
+    $species_2                = 'plasmodium_falciparum';
+    $species_3                = 'plasmopara_halstedii_gca_900000015';
+
+    $taxon_1                  = 347515;#leishmania_major
+    $taxon_2                  = 4781;#plasmodium_falciparum
+    $taxon_3                  = 36329;#plasmopara_halstedii_gca_900000015
+
+    $gene_symbol              = 'LMJF_27_0290';
+    $homology_type            = 'orthologues';
+    $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
+
+    $skip_cafe                = 1;
+    $skip_alignments          = 1;
+    $skip_families            = 1;
+    $skip_cactus              = 1;
+}
 else {
     die "Division '$division' is not understood\n";
 }
