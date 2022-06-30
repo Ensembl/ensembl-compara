@@ -478,6 +478,8 @@ sub get_data {
 }
 
 sub get_data_file_species_name {
+  my $self = shift;
+  my $hub  = $self->hub;
   return $hub->species_defs->SPECIES_PRODUCTION_NAME;
 }
 
