@@ -462,7 +462,7 @@ sub get_data {
       
         my $file_path = join '/', 
           $hub->species_defs->DATAFILE_BASE_PATH, 
-          lc $hub->species, 
+          $self->get_data_file_species_name(), 
           $hub->species_defs->ASSEMBLY_VERSION, 
           $bigwig_file_name;
 
@@ -475,6 +475,10 @@ sub get_data {
 
   $data->{'colours'} = \%feature_sets_on;
   return $data;
+}
+
+sub get_data_file_species_name {
+  return $hub->species_defs->SPECIES_PRODUCTION_NAME;
 }
 
 sub get_table_data {
