@@ -121,6 +121,7 @@ sub pipeline_wide_parameters {
         'curr_rel_db'   => $self->o('curr_rel_db'),
         'analyze_optimize'  => $self->o('analyze_optimize'),
         'backup_tables'     => $self->o('backup_tables'),
+        'move_components'   => $self->o('move_components'),
     }
 }
 
@@ -162,8 +163,11 @@ sub pipeline_analyses {
             -rc_name    => '2Gb_job',
             -input_ids  => [ {} ],
             -flow_into  => {
-                2      => [ 'copy_table'  ],
-                3      => WHEN(
+                'A->1'  => WHEN(
+                            '#move_components#' => 'polyploid_move_back_factory'
+                        ),
+                '2->A'  => [ 'copy_table'  ],
+                '3->A'  => WHEN(
                             '#backup_tables#' => 'backup_table',
                             ELSE 'disable_keys',
                         ),
@@ -267,6 +271,31 @@ sub pipeline_analyses {
                 ]
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
+        },
+
+        {   -logic_name => 'polyploid_move_back_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'component_genomes' => 0,
+                'normal_genomes'    => 0,
+            },
+            -flow_into => {
+                2 => [ 'component_genome_dbs_move_back_factory' ],
+            },
+        },
+
+        {   -logic_name => 'component_genome_dbs_move_back_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory',
+            -flow_into => {
+                2 => {
+                    'move_back_component_genes' => { 'source_gdb_id' => '#component_genome_db_id#', 'target_gdb_id' => '#principal_genome_db_id#'},
+                },
+            },
+        },
+
+        {   -logic_name => 'move_back_component_genes',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MoveComponentGenes',
+            -hive_capacity => 3,
         },
 
     ];

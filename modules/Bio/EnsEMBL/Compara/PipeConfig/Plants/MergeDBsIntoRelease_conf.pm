@@ -55,7 +55,8 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
         'division' => 'plants',
-        
+        'move_components' => 1,
+
         # All the source databases
         'src_db_aliases' => {
             'master_db'     => 'compara_master',
