@@ -43,16 +43,52 @@ if (!params.dir) {
 *@output path to fasta with longest protein isoforms per gene
 *@output path to gene list TSV
 */
+process prepareGenome {
+    label 'rc_4Gb'
+    input:
+      path genome
+
+    output:
+        path "processed/*", emit: proc_genome
+    script:
+        id = (genome =~ /(.*)\..*$/)[0][1]
+        ext = (genome =~ /.*\.(.*)$/)[0][1]
+        if (ext == 'gz')
+            """
+                mkdir -p processed
+                zcat $genome > processed/$id
+            """
+        else
+            """
+                mkdir -p processed
+                ln -s `realpath $genome` processed/$id
+            """
+}
+
+/**
+*@input path to BUSCO gene set protein fasta
+*@output path to fasta with longest protein isoforms per gene
+*@output path to fasta with filtered out sequences
+*@output path to gene list TSV
+*/
 process prepareBusco {
     label 'rc_4Gb'
+
+    publishDir "${params.results_dir}/busco_genes", pattern: "longest_busco_proteins.fas", mode: "copy", overwrite: true
+    publishDir "${params.results_dir}/busco_genes", pattern: "busco_genes.tsv", mode: "copy", overwrite: true
+    publishDir "${params.results_dir}/busco_genes", pattern: "repeat_filtered_busco.fas", mode: "copy", overwrite: true
+
     input:
         path protfa
     output:
         path "longest_busco_proteins.fas", emit: busco_prots
         path "busco_genes.tsv", emit: busco_genes
+        path "repeat_filtered_busco.fas", emit: busco_rep
     script:
     """
-    python ${params.longest_busco_filter_exe} -i $protfa -o longest_busco_proteins.fas -l busco_genes.tsv
+    python ${params.longest_busco_filter_exe} -r 10 \
+    -f repeat_filtered_busco.fas -i $protfa \
+    -o longest_busco_proteins.fas -l busco_genes.tsv
     """
 }
 
@@ -97,7 +133,7 @@ process runGffread {
         path busco_annot
         path genome
     output:
-        path "cdna/*.fas"
+        path "cdna/*"
     script:
     """
     mkdir -p cdna
@@ -235,7 +271,7 @@ process mergeAlns {
 *@output path to iqtree2 log file
 */
 process runIqtree {
-    label 'retry_with_8gb_mem_c5'
+    label 'retry_with_8gb_mem_c16'
     publishDir "${params.results_dir}/", pattern: "species_tree.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_report.txt", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_log.txt", mode: "copy",  overwrite: true
@@ -261,9 +297,10 @@ process runIqtree {
 workflow {
     println(ensemblLogo())
     prepareBusco(params.busco_proteins)
-    genomes = Channel.fromPath("${params.dir}/*.fas")
+    genomes = Channel.fromPath("${params.dir}/*.*")
+    prepareGenome(genomes)
 
-    buscoAnnot(prepareBusco.out.busco_prots, genomes)
+    buscoAnnot(prepareBusco.out.busco_prots, prepareGenome.out.proc_genome)
     runGffread(buscoAnnot.out.busco_annot, buscoAnnot.out.genome)
     collateBusco(runGffread.out.collect(), prepareBusco.out.busco_genes)
     alignProt(collateBusco.out.prot_seq.flatten())
