@@ -112,7 +112,7 @@ class TestCigar:
             ("4M5D5M8D4M", 6, 12, (5,7)),  # start in gap and end not in gap
             ("4M5D5M8D4M", 4, 18, (4,9)),  # start not in gap and end  in gap
             ("4M5D5M8D4M", 5, 18, (5,9)),  # start and end in different gaps
-            ("4M5D5M8D4M", 5, 9, None),    # start and end in same gap
+            ("4M5D5M8D4M", 5, 9, ()),      # start and end in same gap
             ("4M5D5M8D4M", 4, 6, (4,4)),   # start last element of non gap and end the gap following the non
                                            # gap
             ("4M5D5M8D4M", 9, 10, (5,5))   # start  gap and end in the first element of the following non gap

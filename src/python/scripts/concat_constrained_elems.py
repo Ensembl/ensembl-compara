@@ -13,8 +13,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Concatenate the constrained elements from each GAB into one file for each species present in the
-alignment
+"""Concatenate the constrained elements from each Genomic Align Block (GAB) into one file for each species
+present in the alignment
 
 The coordinates of each constrained element are translated from the GAB coordinate level to the Genome
 coordinate level of each species and then they are concatenated into one file per species
@@ -33,16 +33,16 @@ from ensembl.compara.utils import alignment_to_seq_region
 
 
 def translate_ce_coordinates(json_conf: str) -> Dict:
-    """Project each constrained elements to the unaligned genomic level in each species contained in the
-    alignment
+    """Project each of the constrained elements to the unaligned genomic coordinates in each
+    genome/species aligned
 
-    Params:
+    Args:
         json_conf: file storing the list of json files to analyse
 
     Returns:
-        a dictionary that has for key the assembly name and the value is the list of constrained elements at
-        the genomic coordinate level for this assembly a constraint element is a list of the type
-        [seq_name, start, end, score, pval, strand]
+        A dictionary of assembly name to constrained element at the genomic coordinate level for the named
+        assembly.The constrained element is a list of the type [seq_name, start, end, score, pval, strand]
+
     """
     result = {}  # type: ignore
     with open(json_conf, 'r') as json_file_handler:
@@ -54,7 +54,7 @@ def translate_ce_coordinates(json_conf: str) -> Dict:
             cigar = aligned_seq["cigar"]
             unaligned_seq_size = int(aligned_seq["dnafrag_end"]) - int(aligned_seq["dnafrag_start"]) + 1
             for constrained_elem in constrained_elems:
-                # covert from align coordinate to unaligned coordinate
+                # convert from aligned coordinate to unaligned coordinate
 
                 region = alignment_to_seq_region(cigar, int(constrained_elem["start"]),
                                                  int(constrained_elem["end"]))
@@ -88,7 +88,7 @@ def save_constrained_elements(constraint_species: dict, out_dir: str) -> None:
         The format is the following: <seq name> \t <start> \t <end> \t <score> \t <pval> \t <strand>
         The file name will be prefixed with the name of the assembly and post-fixed with .tsv
 
-    Params:
+    Args:
         constraint_species: Dictionary with key the species and value the list of constraint elements
         out_dir: out directory where the bed files are saved
     """
@@ -106,7 +106,7 @@ def save_constrained_elements(constraint_species: dict, out_dir: str) -> None:
 def main(params: argparse.Namespace) -> None:
     """ Main function of the script
 
-    Params:
+    Args:
         params argparse.Namespace parameters provided by the user.
     """
     # concatenate the constraints elements per species
@@ -125,7 +125,7 @@ def main(params: argparse.Namespace) -> None:
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Process some integers.")
-    parser.add_argument("--json_desc", type=str, required=True, help="File listign the path to all the "
+    parser.add_argument("--json_desc", type=str, required=True, help="File listing the path to all the "
                                                "align set json file for a given alignment")
     parser.add_argument("--out_dir", type=str, required=True, help="out directory storing all the  "
                                                "constrained element files concatenated at the species level")

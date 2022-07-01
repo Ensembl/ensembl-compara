@@ -22,33 +22,34 @@ from typing import List, Tuple, Optional
 def alignment_to_seq_region(cigar: str, start: int, end: int) -> Optional[Tuple[int,int]]:
     """Convert the coordinate of a region from the alignment level to the unaligned seq level
 
-         A region with a start and a end in a non-gaped area will return a direct coordinate mapping i.e
-         the region with a start = 3 and end = 12 in the aligned sequence below will return (3,7).
-         A region with start and end in the same gap will return an empty couple as the region does not
-         exist in this sequence a start with i.e a region with start=5 and end=8 will return ()
-         A region with a start in a gap will return the first position after the gap whether the end is in
-         a non-gaped or another gap, ie start = 6 and end = 14 will return (5,9).
-         A region with a end in a gap will return the last position before the gap whether the start is
-         in a non-gaped or a different gap. i.e start = 6 and end = 20 will return (5,9)
+         An ungapped with a start and an end in a non-gaped area will return a direct coordinate mapping i.e
+         the region with a start = 3 and an end = 12 in the aligned sequence below will return (3,7).
+         A region with start and end in the single gap opening will return an empty pair as the region
+         does not exist in this sequence, i.e a region with start=5 and end=8 will return ()
+         A region with a start in a gap opening will return the first position after the gap closes whether
+         the end is in an alternative gapped or ungapped position ie start = 6 and end = 14 will return (5,9).
+         A region with an end in a gap will return the last position before the gap whether the start is
+         in an ungapped or alternative gap position. i.e start = 6 and end = 20 will return (5,9)
 
         aligned:     1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
                      A  A  T  C  -  -  -  -  -  A  C  T  C  T  -  -  -  -  -  -  -  -  T  C  T  C
         unaligned:   1  2  3  4                 5  6  7  8  9                          10 11 12 13
 
 
-        Params:
+        Args:
             cigar: cigar line of the aligned sequence
-            start: start of the regions in the alignment
-            end: end of the region in the alignment
+            start: start coordinate of the region in the alignment
+            end: end coordinate of the region in the alignment
         Returns:
-            start and end of the region at the unaligned sequence level, None if the region is inside a gap
+            coordinate of the unaligned region at the sequence level, empty tuple if the region is
+            inside a gap
         Raises:
             AssertionError : if start >= end
 a         """
     ## test precondition for this function
     assert start < end, f"error start: {start} is not smaller than end: {end}"
 
-    result = None
+    result = ()
     ce_seq_start = alignment_to_seq_coordinate(cigar, start)
     ce_seq_end = alignment_to_seq_coordinate(cigar, end)
 
@@ -60,7 +61,7 @@ a         """
         result = (int(ce_seq_start[1]), int(ce_seq_end[0]))
     elif len(ce_seq_start) == 2 and len(ce_seq_end) == 2:  # start and end in gapped
         if ce_seq_start[0] == ce_seq_end[0] and ce_seq_start[1] == ce_seq_end[1]:  # region inside same gap
-            result = None  # if the region is inside a gap then te region does not exist in this sequence
+            result = ()  # if the region is inside a same gap then te region does not exist in the sequence
         else:
             result = (int(ce_seq_start[1]), int(ce_seq_end[0]))
     return result
