@@ -73,9 +73,9 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'         => [ 'mysql-ens-compara-prod-2',  'ivana_vertebrates_load_members_108' ],
-    #'compara_ptrees'          => [ 'mysql-ens-compara-prod-X',  '' ],
+    'compara_ptrees'          => [ 'mysql-ens-compara-prod-2',  'ivana_default_vertebrates_protein_trees_2_108' ],
     'compara_ptrees_prev'     => [ 'mysql-ens-compara-prod-2',  'jalvarez_default_vertebrates_protein_trees_107' ],
-    #'compara_nctrees'         => [ 'mysql-ens-compara-prod-X',  '' ],
+    'compara_nctrees'         => [ 'mysql-ens-compara-prod-1',  'ivana_default_vertebrates_ncrna_trees_108' ],
     'murinae_ptrees'          => [ 'mysql-ens-compara-prod-3',  'ivana_vertebrates_murinae_protein_reindexed_trees_108' ],
     'murinae_nctrees'         => [ 'mysql-ens-compara-prod-3',  'ivana_vertebrates_murinae_ncrna_reindexed_trees_108' ],
     'murinae_ptrees_prev'     => [ 'mysql-ens-compara-prod-4',  'jalvarez_vertebrates_murinae_protein_reindexed_trees_107' ],
