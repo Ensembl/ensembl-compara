@@ -75,6 +75,11 @@ if __name__ == '__main__':
                 v.id = f"g{i}"
                 v.description = ""
                 i += 1
+        else:
+                v.id = f"g{i}"
+                v.description = ""
+                i += 1
+
 
     with open(args.o, "w") as output_handle:
         SeqIO.write(db.values(), output_handle, "fasta")
