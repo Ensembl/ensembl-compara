@@ -278,6 +278,7 @@ sub pipeline_analyses {
             -parameters => {
                 'component_genomes' => 0,
                 'normal_genomes'    => 0,
+                'compara_db'        => '#curr_rel_db#',
             },
             -flow_into => {
                 2 => [ 'component_genome_dbs_move_back_factory' ],
@@ -286,6 +287,9 @@ sub pipeline_analyses {
 
         {   -logic_name => 'component_genome_dbs_move_back_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory',
+            -parameters => {
+                'compara_db' => '#curr_rel_db#',
+            },
             -flow_into => {
                 2 => {
                     'move_back_component_genes' => { 'source_gdb_id' => '#component_genome_db_id#', 'target_gdb_id' => '#principal_genome_db_id#'},
@@ -295,6 +299,9 @@ sub pipeline_analyses {
 
         {   -logic_name => 'move_back_component_genes',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MoveComponentGenes',
+            -parameters => {
+                'compara_db' => '#curr_rel_db#',
+            },
             -hive_capacity => 3,
         },
 
