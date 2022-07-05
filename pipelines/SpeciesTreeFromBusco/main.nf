@@ -99,7 +99,7 @@ process prepareBusco {
 *@output path to genome fasta
 */
 process buscoAnnot {
-    label 'retry_with_8gb_mem_c16'
+    label 'retry_with_8gb_mem_c1'
     input:
         path busco_prot
         path genome
@@ -237,7 +237,7 @@ process trimAlignments {
 *@output path to RAXML style partition file
 */
 process mergeAlns {
-    label 'rc_16gb'
+    label 'rc_4gb'
 
     publishDir "${params.results_dir}/", pattern: "merged_protein_alns.fas", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "partitions.tsv", mode: "copy",  overwrite: true
@@ -271,7 +271,7 @@ process mergeAlns {
 *@output path to iqtree2 log file
 */
 process runIqtree {
-    label 'retry_with_8gb_mem_c16'
+    label 'retry_with_8gb_mem_c1'
     publishDir "${params.results_dir}/", pattern: "species_tree.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_report.txt", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_log.txt", mode: "copy",  overwrite: true
