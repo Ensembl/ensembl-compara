@@ -128,7 +128,7 @@ def convert_maf_to_fasta(maf_file: PathLike, output_dir: PathLike,
                     maf_src = rec.id
 
                     try:
-                        genome_name, dnafrag_name = maf_src_map.setdefault(maf_src, maf_src.split('.'))
+                        genome_name, region_name = maf_src_map.setdefault(maf_src, maf_src.split('.'))
                     except ValueError as exc:
                         if not genomes_file:
                             raise ValueError(
@@ -138,35 +138,35 @@ def convert_maf_to_fasta(maf_file: PathLike, output_dir: PathLike,
                         match = maf_src_regex.match(maf_src)
                         try:
                             genome_name = match['genome']  # type: ignore
-                            dnafrag_name = match['seqid']  # type: ignore
+                            region_name = match['seqid']  # type: ignore
                         except TypeError as exc_err:
                             raise ValueError(
                                 "MAF src regex failed to parse MAF src field: '{maf_src}'") from exc_err
-                        maf_src_map[maf_src] = [genome_name, dnafrag_name]
+                        maf_src_map[maf_src] = [genome_name, region_name]
 
                     maf_start = rec.annotations['start']
                     maf_size = rec.annotations['size']
                     maf_end = maf_start + maf_size
-                    dnafrag_strand = rec.annotations['strand']
+                    region_strand = rec.annotations['strand']
 
-                    if dnafrag_strand == 1:
-                        dnafrag_start = maf_start + 1
-                        dnafrag_end = maf_end
+                    if region_strand == 1:
+                        region_start = maf_start + 1
+                        region_end = maf_end
                     else:
                         maf_src_size = rec.annotations['srcSize']
-                        dnafrag_start = maf_src_size - maf_end + 1
-                        dnafrag_end = maf_src_size - maf_start
+                        region_start = maf_src_size - maf_end + 1
+                        region_end = maf_src_size - maf_start
 
-                    fasta_id = f'{genome_name}:{dnafrag_name}:{dnafrag_start}:{dnafrag_end}'
+                    fasta_id = f'{genome_name}:{region_name}:{region_start}:{region_end}'
                     fasta_rec = SeqRecord(rec.seq, id=fasta_id, name='', description='')
                     SeqIO.write([fasta_rec], out_f, 'fasta')
 
                     ga_recs.append({
-                        'genome_name': genome_name,
-                        'dnafrag_name': dnafrag_name,
-                        'dnafrag_start': dnafrag_start,
-                        'dnafrag_end': dnafrag_end,
-                        'dnafrag_strand': dnafrag_strand
+                        'assembly_name': genome_name,
+                        'region_name': region_name,
+                        'region_start': region_start,
+                        'region_end': region_end,
+                        'region_strand': region_strand
                     })
 
             output_data = {'aligned_seq': ga_recs}

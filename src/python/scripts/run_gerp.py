@@ -55,12 +55,11 @@ def add_ce_to_json(ce_file: str, json_file: str) -> None:
             constrained_elem = {
                 "start": int(ce[0]),
                 "end": int(ce[1]),
-                "length": int(ce[2]),
                 "score": float(ce[3]),
                 "p-val": float(ce[4])
             }
             constrained_elems.append(constrained_elem)
-    align_set["constrained_elems"] = constrained_elems
+    align_set["constrained_elements"] = constrained_elems
 
     with open(json_file, "w") as json_file_obj:
         json.dump(align_set, json_file_obj)

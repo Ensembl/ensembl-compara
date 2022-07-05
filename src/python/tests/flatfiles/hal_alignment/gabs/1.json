@@ -1,25 +1,25 @@
 {
     "aligned_seq": [
         {
-            "genome_name": "genomeA.1",
-            "dnafrag_name": "chr1",
-            "dnafrag_start": 6,
-            "dnafrag_end": 9,
-            "dnafrag_strand": 1
+            "assembly_name": "genomeA.1",
+            "region_name": "chr1",
+            "region_start": 6,
+            "region_end": 9,
+            "region_strand": 1
         },
         {
-            "genome_name": "genomeB.1",
-            "dnafrag_name": "chr1",
-            "dnafrag_start": 6,
-            "dnafrag_end": 9,
-            "dnafrag_strand": 1
+            "assembly_name": "genomeB.1",
+            "region_name": "chr1",
+            "region_start": 6,
+            "region_end": 9,
+            "region_strand": 1
         },
         {
-            "genome_name": "genomeC",
-            "dnafrag_name": "chr1",
-            "dnafrag_start": 6,
-            "dnafrag_end": 9,
-            "dnafrag_strand": -1
+            "assembly_name": "genomeC",
+            "region_name": "chr1",
+            "region_start": 6,
+            "region_end": 9,
+            "region_strand": -1
         }
     ]
 }
