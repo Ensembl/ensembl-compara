@@ -117,7 +117,7 @@ process buscoAnnot {
     --num_threads ${params.cores} \
     --max_intron_length 100000 \
     --run_busco \
-    --genblast_timeout  32400\
+    --genblast_timeout  64800\
     --busco_protein_file $busco_prot
     """
 }
@@ -155,6 +155,7 @@ process collateBusco {
 
     publishDir "${params.results_dir}/busco_genes", pattern: "cdnas_fofn.txt", mode: "copy", overwrite: true
     publishDir "${params.results_dir}/busco_genes/prot", pattern: "gene_prot_*.fas", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/busco_genes/cdna", pattern: "gene_cdna_*.fas", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/busco_genes", pattern: "busco_stats.tsv", mode: "copy",  overwrite: true
 
     input:
@@ -273,6 +274,7 @@ process mergeAlns {
 process runIqtree {
     label 'retry_with_8gb_mem_c1'
     publishDir "${params.results_dir}/", pattern: "species_tree.nwk", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/", pattern: "iqtree_bioinj.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_report.txt", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_log.txt", mode: "copy",  overwrite: true
 
@@ -287,10 +289,11 @@ process runIqtree {
 
     script:
     """
-    ${params.iqtree_exe} -s $merged_aln -p $partitions --fast -T ${params.cores}
+    ${params.iqtree_exe} -s $merged_aln -p $partitions --terrace --fast -T ${params.cores}
     mv partitions.tsv.treefile species_tree.nwk
     mv partitions.tsv.iqtree iqtree_report.txt
     mv partitions.tsv.log iqtree_log.txt
+    mv partitions.tsv.bioinj iqtree_bioinj.nwk
     """
 }
 
