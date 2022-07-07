@@ -293,7 +293,7 @@ process runIqtree {
     mv partitions.tsv.treefile species_tree.nwk
     mv partitions.tsv.iqtree iqtree_report.txt
     mv partitions.tsv.log iqtree_log.txt
-    mv partitions.tsv.bioinj iqtree_bioinj.nwk
+    mv partitions.tsv.bionj iqtree_bioinj.nwk
     """
 }
 
