@@ -289,7 +289,7 @@ process runIqtree {
 
     script:
     """
-    ${params.iqtree_exe} -s $merged_aln -p $partitions --terrace --fast -T ${params.cores}
+    ${params.iqtree_exe} -s $merged_aln -p $partitions --fast -T ${params.cores}
     mv partitions.tsv.treefile species_tree.nwk
     mv partitions.tsv.iqtree iqtree_report.txt
     mv partitions.tsv.log iqtree_log.txt
