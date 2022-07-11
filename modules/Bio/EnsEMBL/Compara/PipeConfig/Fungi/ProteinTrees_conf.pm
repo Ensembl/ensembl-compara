@@ -75,8 +75,6 @@ sub default_options {
         # Do we need a mapping between homology_ids of this database to another database?
         # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
         'do_homology_id_mapping' => 0,
-        # Quick tree break is not suitable for fungi dataset due to divergence causing inappropriate subtrees
-        'use_quick_tree_break'   => 0,
     };
 }
 
