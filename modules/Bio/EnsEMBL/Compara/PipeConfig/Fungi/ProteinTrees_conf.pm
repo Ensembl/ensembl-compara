@@ -63,6 +63,7 @@ sub default_options {
 
         'mapped_gene_ratio_per_taxon' => {
             '2759'    => 0.5,    # eukaryotes
+            '6029'    => 0.4,    # microsporidia
         },
 
         # Extra analyses:
