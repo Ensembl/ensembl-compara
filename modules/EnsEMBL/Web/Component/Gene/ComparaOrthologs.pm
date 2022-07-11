@@ -190,9 +190,9 @@ sub content {
     { key => 'identifier', align => 'left', width => '15%', sort => 'none', title => 'Orthologue'},      
     { key => 'Target %id', align => 'left', width => '5%',  sort => 'position_html', label => 'Target %id', help => "Percentage of the orthologous sequence matching the $species_name sequence" },
     { key => 'Query %id',  align => 'left', width => '5%',  sort => 'position_html', label => 'Query %id',  help => "Percentage of the $species_name sequence matching the sequence of the orthologue" },
-    { key => 'goc_score',  align => 'left', width => '5%',  sort => 'position_html', label => 'GOC Score',  help => "<a href='/info/genome/compara/Ortholog_qc_manual.html/#goc'>Gene Order Conservation Score (values are 0-100)</a>" },
-    { key => 'wgac',  align => 'left', width => '5%',  sort => 'position_html', label => 'WGA Coverage',  help => "<a href='/info/genome/compara/Ortholog_qc_manual.html/#wga'>Whole Genome Alignment Coverage (values are 0-100)</a>" },
-    { key => 'confidence',  align => 'left', width => '5%',  sort => 'html', label => 'High Confidence', help => "<a href='/info/genome/compara/Ortholog_qc_manual.html/#hc'>Homology with high %identity and high GOC score or WGA coverage (as available), Yes or No.</a>"},
+    { key => 'goc_score',  align => 'left', width => '5%',  sort => 'position_html', label => 'GOC Score',  help => "<a href='/info/genome/compara/Ortholog_qc_manual.html#goc'>Gene Order Conservation Score (values are 0-100)</a>" },
+    { key => 'wgac',  align => 'left', width => '5%',  sort => 'position_html', label => 'WGA Coverage',  help => "<a href='/info/genome/compara/Ortholog_qc_manual.html#wga'>Whole Genome Alignment Coverage (values are 0-100)</a>" },
+    { key => 'confidence',  align => 'left', width => '5%',  sort => 'html', label => 'High Confidence', help => "<a href='/info/genome/compara/Ortholog_qc_manual.html#hc'>Homology with high %identity and high GOC score or WGA coverage (as available), Yes or No.</a>"},
   ];
   
   push @$columns, { key => 'Gene name(Xref)',  align => 'left', width => '15%', sort => 'html', title => 'Gene name(Xref)'} if(!$self->html_format);
