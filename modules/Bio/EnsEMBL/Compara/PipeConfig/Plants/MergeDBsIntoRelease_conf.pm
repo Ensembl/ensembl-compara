@@ -87,8 +87,8 @@ sub default_options {
         # In these databases, ignore these tables
         'ignored_tables' => {
             # 'db_alias'     => Arrayref of table names
-            'protein_db'     => [qw(ortholog_quality id_generator id_assignments)],
-            'wheat_prot_db'  => [qw(ortholog_quality id_generator id_assignments)],
+            'protein_db'     => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
+            'wheat_prot_db'  => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
         },
     };
 }
