@@ -53,16 +53,10 @@ process prepareGenome {
     script:
         id = (genome =~ /(.*)\..*$/)[0][1]
         ext = (genome =~ /.*\.(.*)$/)[0][1]
-        if (ext == 'gz')
-            """
-                mkdir -p processed
-                zcat $genome > processed/$id
-            """
-        else
-            """
-                mkdir -p processed
-                ln -s `realpath $genome` processed/$id
-            """
+        """
+            mkdir -p processed
+            seqkit -j 5 grep -n -v -r -p "PATCH_*,HAP" $genome > processed/$id
+        """
 }
 
 /**
