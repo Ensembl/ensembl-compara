@@ -53,16 +53,10 @@ process prepareGenome {
     script:
         id = (genome =~ /(.*)\..*$/)[0][1]
         ext = (genome =~ /.*\.(.*)$/)[0][1]
-        if (ext == 'gz')
-            """
-                mkdir -p processed
-                zcat $genome > processed/$id
-            """
-        else
-            """
-                mkdir -p processed
-                ln -s `realpath $genome` processed/$id
-            """
+        """
+            mkdir -p processed
+            seqkit -j 5 grep -n -v -r -p "PATCH_*,HAP" $genome > processed/$id
+        """
 }
 
 /**
@@ -99,7 +93,7 @@ process prepareBusco {
 *@output path to genome fasta
 */
 process buscoAnnot {
-    label 'retry_with_8gb_mem_c16'
+    label 'retry_with_8gb_mem_c1'
     input:
         path busco_prot
         path genome
@@ -117,7 +111,7 @@ process buscoAnnot {
     --num_threads ${params.cores} \
     --max_intron_length 100000 \
     --run_busco \
-    --genblast_timeout  32400\
+    --genblast_timeout  64800\
     --busco_protein_file $busco_prot
     """
 }
@@ -155,6 +149,7 @@ process collateBusco {
 
     publishDir "${params.results_dir}/busco_genes", pattern: "cdnas_fofn.txt", mode: "copy", overwrite: true
     publishDir "${params.results_dir}/busco_genes/prot", pattern: "gene_prot_*.fas", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/busco_genes/cdna", pattern: "gene_cdna_*.fas", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/busco_genes", pattern: "busco_stats.tsv", mode: "copy",  overwrite: true
 
     input:
@@ -237,7 +232,7 @@ process trimAlignments {
 *@output path to RAXML style partition file
 */
 process mergeAlns {
-    label 'rc_16gb'
+    label 'rc_4gb'
 
     publishDir "${params.results_dir}/", pattern: "merged_protein_alns.fas", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "partitions.tsv", mode: "copy",  overwrite: true
@@ -271,8 +266,9 @@ process mergeAlns {
 *@output path to iqtree2 log file
 */
 process runIqtree {
-    label 'retry_with_8gb_mem_c16'
+    label 'retry_with_8gb_mem_c1'
     publishDir "${params.results_dir}/", pattern: "species_tree.nwk", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/", pattern: "iqtree_bioinj.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_report.txt", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_log.txt", mode: "copy",  overwrite: true
 
@@ -291,6 +287,7 @@ process runIqtree {
     mv partitions.tsv.treefile species_tree.nwk
     mv partitions.tsv.iqtree iqtree_report.txt
     mv partitions.tsv.log iqtree_log.txt
+    mv partitions.tsv.bionj iqtree_bioinj.nwk
     """
 }
 
