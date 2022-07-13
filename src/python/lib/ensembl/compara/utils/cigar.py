@@ -25,7 +25,7 @@ def alignment_to_seq_region(cigar: str, start: int, end: int) -> Optional[Tuple[
          An ungapped with a start and an end in a non-gaped area will return a direct coordinate mapping i.e
          the region with a start = 3 and an end = 12 in the aligned sequence below will return (3,7).
          A region with start and end in the single gap opening will return an empty pair as the region
-         does not exist in this sequence, i.e a region with start=5 and end=8 will return ()
+         does not exist in this sequence, i.e a region with start=5 and end=8 will return None
          A region with a start in a gap opening will return the first position after the gap closes whether
          the end is in an alternative gapped or ungapped position ie start = 6 and end = 14 will return (5,9).
          A region with an end in a gap will return the last position before the gap whether the start is
@@ -49,7 +49,7 @@ a         """
     ## test precondition for this function
     assert start < end, f"error start: {start} is not smaller than end: {end}"
 
-    result = ()
+    result = None
     ce_seq_start = alignment_to_seq_coordinate(cigar, start)
     ce_seq_end = alignment_to_seq_coordinate(cigar, end)
 
@@ -61,7 +61,7 @@ a         """
         result = (int(ce_seq_start[1]), int(ce_seq_end[0]))
     elif len(ce_seq_start) == 2 and len(ce_seq_end) == 2:  # start and end in gapped
         if ce_seq_start[0] == ce_seq_end[0] and ce_seq_start[1] == ce_seq_end[1]:  # region inside same gap
-            result = ()  # if the region is inside a same gap then te region does not exist in the sequence
+            result = None  # if the region is inside a same gap then te region does not exist in the sequence
         else:
             result = (int(ce_seq_start[1]), int(ce_seq_end[0]))
     return result
