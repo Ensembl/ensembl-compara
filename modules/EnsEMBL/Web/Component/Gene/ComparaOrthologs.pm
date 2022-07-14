@@ -426,6 +426,8 @@ sub get_strain_refs_html {
     $list .= sprintf '<li>%s</li>', $strain_refs->{$_};
     $count++;
   }
+  return '' if $count == 0;
+
   ## Select the most common strain type for this site
   my @ordered_types = sort {$strain_types{$b} <=> $strain_types{$a}} keys %strain_types;
   my $type = $ordered_types[0];
