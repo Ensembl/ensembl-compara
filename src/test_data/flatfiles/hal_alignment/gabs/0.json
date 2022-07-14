@@ -5,21 +5,24 @@
             "region_name": "chr1",
             "region_start": 1,
             "region_end": 4,
-            "region_strand": 1
+            "region_strand": 1,
+            "cigar": "4M"
         },
         {
             "assembly_name": "genomeB.1",
             "region_name": "chr1",
             "region_start": 1,
             "region_end": 3,
-            "region_strand": 1
+            "region_strand": 1,
+            "cigar": "MD2M"
         },
         {
             "assembly_name": "genomeC",
             "region_name": "chr1",
             "region_start": 1,
             "region_end": 2,
-            "region_strand": 1
+            "region_strand": 1,
+            "cigar": "M2DM"
         }
     ]
 }
