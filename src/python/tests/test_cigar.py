@@ -21,11 +21,12 @@ Typical usage example::
 """
 
 from contextlib import nullcontext as does_not_raise
-from typing import Tuple, ContextManager, List
+from typing import Tuple, ContextManager, List, Optional
 
 import pytest
 
-from ensembl.compara.utils import aligned_seq_to_cigar, alignment_to_seq_coordinate, get_cigar_array
+from ensembl.compara.utils import aligned_seq_to_cigar, alignment_to_seq_coordinate, \
+                                  get_cigar_array, alignment_to_seq_region
 
 
 class TestCigar:
@@ -98,6 +99,35 @@ class TestCigar:
                 expectation: Context manager for the expected exception, i.e. the test will only pass if that
                     exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
         """
-        error = "difference of coord_seq compared to the one expected with coord_align"
+        error = "difference with expected output regions"
         with expectation:
             assert alignment_to_seq_coordinate(cigar, coord_align) == coord_seq, error
+
+
+    @pytest.mark.parametrize(
+        "cigar, start, end, output",
+        [
+            ("4M5D5M8D4M", 1, 4, (1,4)),   # before first gap
+            ("4M5D5M8D4M", 3, 12,(3,7)),   # start and end not in a gap but a gap between them
+            ("4M5D5M8D4M", 6, 12, (5,7)),  # start in gap and end not in gap
+            ("4M5D5M8D4M", 4, 18, (4,9)),  # start not in gap and end  in gap
+            ("4M5D5M8D4M", 5, 18, (5,9)),  # start and end in different gaps
+            ("4M5D5M8D4M", 5, 9, None),      # start and end in same gap
+            ("4M5D5M8D4M", 4, 6, (4,4)),   # start last element of non gap and end the gap following the non
+                                           # gap
+            ("4M5D5M8D4M", 9, 10, (5,5))   # start  gap and end in the first element of the following non gap
+                                           # element
+        ],
+    )
+    def test_alignment_to_seq_region(self, cigar: str, start: int, end: int,
+                                     output: Optional[Tuple[int,int]]) -> None:
+        """Tests :func:`alignment_to_seq_region()` function.
+
+        Args:
+            cigar: cigar line.
+            start: start of the region
+            end: end of the region
+            output: tuple corresponding to the region of the sequence coordinate level
+        """
+        assert alignment_to_seq_region(cigar, start, end) == output, "cigar line returned differs " \
+                                                                     "from the one expected"
