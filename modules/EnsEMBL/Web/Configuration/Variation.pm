@@ -53,7 +53,7 @@ sub populate_tree {
   
   my $context_menu = $self->create_node('Context', 'Genomic context',
     [qw( context EnsEMBL::Web::Component::Variation::Context )],
-    { 'availability' => 'variation has_locations database:compara has_alignments', 'concise' => 'Context' }
+    { 'availability' => 'variation has_locations', 'concise' => 'Context' }
   );
   
   $context_menu->append($self->create_node('Mappings', 'Genes and regulation',
