@@ -124,7 +124,7 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members' => [ 'mysql-ens-compara-prod-4', 'twalsh_fungi_load_members_20220617_108' ],
-    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-X',  '' ],
+    'compara_ptrees'  => [ 'mysql-ens-compara-prod-4', 'twalsh_default_fungi_protein_trees_108' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
