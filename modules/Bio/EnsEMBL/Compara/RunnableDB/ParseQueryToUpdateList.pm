@@ -54,11 +54,12 @@ sub write_output {
     foreach my $file ( @records ) {
         my $contents = $self->_slurp( $file );
         push @queries, ( split( /\n/, $contents ) );
-        my $cmd = "mv $file $file" . ".used";
+        my $cmd = "mv --force $file $file" . ".used";
         $self->run_command($cmd);
     }
     my @query_list = sort ( uniq( @queries ) );
     $self->_spurt( $out_file, join( "\n", @query_list ) );
+    $self->dataflow_output_id( { 'queries_to_update' => \@query_list }, 1);
 
 }
 
