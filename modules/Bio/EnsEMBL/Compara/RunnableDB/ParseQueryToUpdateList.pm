@@ -58,7 +58,7 @@ sub write_output {
         $self->run_command($cmd);
     }
     my @query_list = sort ( uniq( @queries ) );
-    $self->_spurt( $out_file, join( "\n", @query_list ) );
+    $self->_spurt( $out_file, join( "\n", @query_list, 1 ) );
     $self->dataflow_output_id( { 'queries_to_update' => \@query_list }, 1);
 
 }
