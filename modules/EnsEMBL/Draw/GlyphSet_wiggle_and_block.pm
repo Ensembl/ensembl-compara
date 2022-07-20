@@ -192,7 +192,7 @@ sub _render {
   
   ## Check to see if we draw anything because of size!
 
-  my $max_length  = $self->my_config('threshold')   || 10000;
+  my $max_length  = $self->my_config('threshold')   || $self->{'config'}->species_defs->MAX_DRAWING_LENGTH || 10000;
   my $wiggle_name = $self->my_config('wiggle_name') || $self->my_config('label');
 
   if ($self->{'container'}->length > $max_length * 1010) {

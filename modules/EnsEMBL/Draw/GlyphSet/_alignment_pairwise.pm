@@ -455,9 +455,14 @@ sub draw_boxes {
  
   my $feature_key    = lc $self->my_config('type');
   my $pix_per_bp     = $self->scalex;
-  my $draw_cigar     = $pix_per_bp > 0.2 || $debug_force_cigar;
   my $container      = $self->{'container'};
   my $length         = $container->length;
+
+  ## ENSEMBL-3424 not possible to show joins between cigar & non-cigar boxes - so only draw non-cigars for NV
+  my $draw_cigar = 0;
+  unless ($self->{'config'}->species_defs->EG_DIVISION) {
+    $draw_cigar = $pix_per_bp > 0.2 || $debug_force_cigar;
+  }
 
   my $params = {
     feature_colour => $self->my_colour($feature_key),

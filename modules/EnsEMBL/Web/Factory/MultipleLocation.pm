@@ -50,6 +50,67 @@ sub createObjects {
   return if $self->generate_url($object->slice);
   
   my $hub       = $self->hub;
+  my $species_defs = $hub->species_defs;
+
+  ## Hack to handle polyploid view in Region Comparison - see ENSEMBL-3444
+  if ($species_defs->EG_DIVISION) {
+    if ($hub->action =~ /Polyploid/) {
+      my $primary_slice   = $object->slice;
+      my $primary_species = $hub->species;
+      my $alignments      = $hub->intra_species_alignments('DATABASE_COMPARA', $primary_species, $primary_slice);
+
+      if (@$alignments > 20) {
+        $object->__data->{'too_many_alignments'} = 1;
+      } else {
+        my %align_species;
+
+        foreach my $align (sort { $a->{target_name} cmp $b->{target_name} } @$alignments) {
+          next unless $align->{'class'} =~ /pairwise_alignment/;
+          next unless $align->{'species'}{"$primary_species--" . $primary_slice->seq_region_name};
+          my $sp = sprintf('%s--%s', $primary_species, $align->{target_name});
+          $align_species{$sp} = 1;
+        }
+
+        my $already_configured = !!$hub->param("s1");
+
+         # check if current configured species are valid for polyploid view
+        if ($already_configured) {
+          my $i = 1;
+          while (my $s = $hub->param("s$i")) {
+            $already_configured = 0 if !$align_species{$s};
+            $i ++;
+          }
+          if (!$already_configured) {
+            # clear old params
+            my $i = 1;
+            while ($hub->param("s$i")) {
+              $hub->delete_param("s$i", "r$i");
+              $i ++;
+            }
+          }
+        }
+
+        if (!$already_configured) {
+          # set up default intra-species comparisons for polyploid view
+          my $i = 1;
+          for (keys %align_species) {
+            $hub->param("s$i", $_);
+            $i ++;
+          }
+        }
+      }
+    } 
+    elsif (!$hub->param("r1")) {
+      # if we have got default species, and this is not a self referral (i.e. from species selector)
+      if ($species_defs->DEFAULT_COMPARISON_SPECIES and $hub->referer->{ENSEMBL_ACTION} ne 'Multi') {
+        my @species = @{ $species_defs->DEFAULT_COMPARISON_SPECIES };
+        for my $i (1..@species) {
+          $hub->param("s$i", $species[$i-1]);
+        }
+      }
+    }
+  }
+
   my $action_id = $self->param('id');
   my $gene      = 0;
   my $invalid   = 0;
@@ -286,8 +347,12 @@ sub best_guess {
   my ($self, $slice, $id, $species, $seq_region_name) = @_;
   
   my $width = $slice->end - $slice->start + 1;
-  
-  foreach my $method ($seq_region_name && $species eq $self->species ? 'LASTZ_PATCH' : (), qw(BLASTZ_NET LASTZ_NET TRANSLATED_BLAT TRANSLATED_BLAT_NET BLASTZ_RAW LASTZ_RAW BLASTZ_CHAIN CACTUS_HAL_PW)) {    
+
+  my @methods = qw(BLASTZ_NET LASTZ_NET TRANSLATED_BLAT TRANSLATED_BLAT_NET BLASTZ_RAW LASTZ_RAW BLASTZ_CHAIN CACTUS_HAL_PW);
+  unshift @methods, 'ATAC' if $self->species_defs->EG_DIVISION;
+  unshift @methods, 'LASTZ_PATCH' if ($seq_region_name && $species eq $self->species);
+ 
+  foreach my $method (@methods) {    
 
     my ($seq_region, $cp, $strand);
   

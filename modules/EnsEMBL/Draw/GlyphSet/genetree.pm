@@ -66,6 +66,23 @@ sub _init {
   my $cdb = $Config->get_parameter('cdb');
   my $skey = $cdb =~ /pan/ ? "_pan_compara" : '';
 
+  ## There are a few minor tweak in non-vertebrate divisions
+  my $is_nv = $Config->species_defs->EG_DIVISION ? 1 : 0;
+
+  my ($highlight_gene, $highlight_annotations, %highlight_map, @hiterms, $highlight_param);
+  if ($is_nv) {
+    $highlight_gene         = $Config->get_parameter('highlight_gene');
+    $highlight_annotations  = $self->{highlights}->[8];
+    foreach (split(';',$highlight_annotations)) {
+      my ($acc,$colour,@genes_to_highlight) = split(',',$_);
+      push(@hiterms,$acc);
+      foreach my $gth (@genes_to_highlight){
+        $highlight_map{$gth}=$colour;
+      }
+    }
+    $highlight_param = join(',',@hiterms) if @hiterms;
+  }
+
   $CURRENT_ROW = 1;
   $CURRENT_Y   = 1;
 #  warn ("A-0:".localtime());
@@ -224,21 +241,19 @@ sub _init {
     $collapsed_colour = 'grey' if (!$collapsed_colour); # Default colour
 
     #cafetree zmenu else comparatree zmenu
+    my $url_params = {
+        node        => $f->{'_id'},
+        genetree_id => $Config->get_parameter('genetree_id'),
+        collapse    => $collapsed_nodes_str
+    };
+    $url_params->{'ht'} = $highlight_param if $is_nv;
+
     if ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode')){
-      $node_href = $self->_url({ 
-        action      => "SpeciesTree",
-        node        => $f->{'_id'},
-        genetree_id => $Config->get_parameter('genetree_id'),
-        collapse    => $collapsed_nodes_str
-      });
+      $url_params->{'action'} = "SpeciesTree";
     } elsif (!$tree->isa('Bio::EnsEMBL::Compara::GenomicAlignTree')) {
-      $node_href = $self->_url({ 
-        action      => "ComparaTreeNode$skey",
-        node        => $f->{'_id'},
-        genetree_id => $Config->get_parameter('genetree_id'),
-        collapse    => $collapsed_nodes_str
-      });
+      $url_params->{'action'} = "ComparaTreeNode$skey";
     }
+    $node_href = $self->_url({$url_params});
 
     my $collapsed_xoffset = 0;
     if ($f->{_bg_colour}) {
@@ -383,6 +398,22 @@ sub _init {
             'zindex' => 40,
 	        });
 
+      if ($is_nv) {
+        my @highlight_matches = ();
+        map { push (@highlight_matches,$highlight_map{$_}) if exists $highlight_map{$_}} keys %{$f->{'_genes'}};
+        if (@highlight_matches) {
+          my $label_highlight = EnsEMBL::Draw::Glyph::Rect->new({
+              'height'     => $font_height + 2,
+              'width'      => $labels_bitmap_width,
+              'colour'     => $highlight_matches[0],
+              'y' => $f->{y} - int($font_height/2) - 1,
+              'x' => $f->{x} + 10 + $collapsed_xoffset,
+              'zindex' => -100,
+            });
+          push(@labels, $label_highlight);
+        }
+      }
+
       # increase the size of the text that has been flagged as bold
       $txt->{'ptsize'} = 8 if ($bold);
       
@@ -406,8 +437,8 @@ sub _init {
   
   $self->push( @bg_glyphs );
 
-  my $max_x = (sort {$a->{x} <=> $b->{x}} @nodes)[-1]->{x};
-  my $min_y = (sort {$a->{y} <=> $b->{y}} @nodes)[0]->{y};
+  my $max_x = (sort {$a->{x} <=> $b->{x}} @nodes)[-1]->{'x'};
+  my $min_y = (sort {$a->{y} <=> $b->{y}} @nodes)[0]->{'y'};
 
 #  warn ("MAX X: $max_x" );
 #  warn ("C-0:".localtime());
@@ -436,20 +467,19 @@ sub _init {
 
   if ($tree->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
     $alignment_length = $tree->tree->aln_length;
-  } else {
-
-  #Find the alignment length from the first alignment
-  my @cigar = grep {$_} split(/(\d*[GDMmXI])/, $alignments[0]->[1]);
-  for my $cigElem ( @cigar ) {
-    my $cigType = substr( $cigElem, -1, 1 );
-    my $cigCount = substr( $cigElem, 0 ,-1 );
-    $cigCount = 1 unless ($cigCount =~ /^\d+$/);
-    #Do not include I in the alignment length
-    if ($cigType =~ /[GDMmX]/) {
-      $alignment_length += $cigCount;
+  } 
+  else {
+    #Find the alignment length from the first alignment
+    my @cigar = grep {$_} split(/(\d*[GDMmXI])/, $alignments[0]->[1]);
+    for my $cigElem ( @cigar ) {
+      my $cigType = substr( $cigElem, -1, 1 );
+      my $cigCount = substr( $cigElem, 0 ,-1 );
+      $cigCount = 1 unless ($cigCount =~ /^\d+$/);
+      #Do not include I in the alignment length
+      if ($cigType =~ /[GDMmX]/) {
+        $alignment_length += $cigCount;
+      }
     }
-  }
-
   }
 
   $alignment_length ||= $alignment_width; # All nodes collapsed

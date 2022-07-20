@@ -97,8 +97,11 @@ sub biomart_link {
 sub process_data {
   my ($self, $table, $data, $extdb) = @_;
   
-  my $hub              = $self->hub;
-  # this is a dirty way of having all the go term description until core decide to have a table for them, this is how we will have to do thing
+  my $hub = $self->hub;
+  my $is_nv = $hub->species_defs->EG_DIVISION ? 1 : 0;
+
+  # this is a dirty way of having all the go term descriptions - until core decide to have a table for them, 
+  # this is how we will have to do things
   my $description_hash = {
                           'EXP' => 'Inferred from Experiment', 
                           'HDA' => 'High-throughput Direct Assay',
@@ -121,12 +124,20 @@ sub process_data {
                           'RCA' => 'Inferred from Reviewed Computational Analysis', 
                           'TAS' => 'Traceable Author Statement', 
                         };
-  
+ 
+  my $use_karyotype;
+  if ($is_nv) {
+    $use_karyotype = scalar @{$self->hub->species_defs->ENSEMBL_CHROMOSOMES||[]} && $hub->species_defs->MAX_CHR_LENGTH;
+  }
+  else {
+    $use_karyotype = scalar @{$self->hub->species_defs->ENSEMBL_CHROMOSOMES||[]};
+  }
+ 
   foreach my $go (sort keys %$data) {
     my $hash        = $data->{$go} || {};
     my $go_link     = $hub->get_ExtURL_link($go, $extdb, $go);
     my $mart_link   = $self->biomart_link($go) ? "<li>".$self->biomart_link($go)."</li>": "";
-    my $loc_link    = '<li><a rel="notexternal" href="' . $hub->url({type  => 'Location', action => 'Genome', ftype => 'Gene', id  => $go, gotype => $extdb}) . ( scalar @{$self->hub->species_defs->ENSEMBL_CHROMOSOMES} ? '">View on karyotype</a></li>' : '">View associated genes</a></li>' );
+    my $loc_link    = '<li><a rel="notexternal" href="' . $hub->url({type  => 'Location', action => 'Genome', ftype => 'Gene', id  => $go, gotype => $extdb}) . ( $use_karyotype ? '">View on karyotype</a></li>' : '">View associated genes</a></li>' );
 
     my $goslim      = $hash->{'goslim'} || {};
     my $row         = {};
@@ -144,8 +155,16 @@ sub process_data {
       $row->{'source'}           = $hash->{'source'} || '';
       $row->{'transcript_id'}    = %all_trans ? join("<br>", map { qq{<a href="$all_trans{$_}">$_</a>} } keys %all_trans) : '<a href="'.$hub->url({type => 'Transcript', action => 'Summary',t => $hash->{transcript_id},}).'">'.$hash->{transcript_id}.'</a>';
       $row->{'extra_link'}       = $mart_link || $loc_link ? qq{<ul class="compact">$mart_link$loc_link</ul>} : "";
-      
+     
       $table->add_row($row);
+
+      if ($is_nv) {
+        foreach (@{$hash->{extensions}}) {
+          $_->{term} = delete $_->{description}; # rename column description -> term
+          $table->add_row($_);
+        }
+      }
+ 
     }
   }
   

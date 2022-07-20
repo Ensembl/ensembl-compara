@@ -33,10 +33,6 @@ sub _init {
   $self->ajaxable(1);
 }
 
-## Stub - implement in plugin if you want to display a summary table
-## (see public-plugins/ensembl for an example data structure)
-sub _species_sets {}
-
 our %button_set = ('download' => 1, 'view' => 0);
 
 sub content {
@@ -127,14 +123,13 @@ sub content {
     }
   }
 
-  my %orthologue_map = qw(SEED BRH PIP RHS);
-  my $alignview      = 0;
- 
-  my ($html, $columns, @rows);
-
   ##--------------------------- SUMMARY TABLE ----------------------------------------
 
-  my ($species_sets, $sets_by_species, $set_order) = $self->_species_sets(\%orthologue_list, \%orthologue_map, $cdb);
+  my %orthologue_map = qw(SEED BRH PIP RHS);
+  my $alignview      = 0;
+  my ($html, $columns, @rows);
+
+  my ($species_sets, $sets_by_species, $set_order) = $self->species_sets(\%orthologue_list, \%orthologue_map, $cdb);
 
   if ($species_sets) {
     $html .= qq{
@@ -411,6 +406,66 @@ sub content {
 }
 
 sub export_options { return {'action' => 'Orthologs'}; }
+
+sub species_sets {
+## Group species into set
+  my ($self, $orthologue_list, $orthologue_map, $cdb) = @_;
+  my $hub             = $self->hub;
+  my $species_defs    = $hub->species_defs;
+
+  return "" if $self->hub->action =~ /^Strain/; #No summary table needed for strains
+
+  my ($set_order, $species_sets, $set_mappings) = $self->species_set_config;
+  return "" unless $set_order;
+
+  my $compara_spp     = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'COMPARA_SPECIES'};
+  my $lookup          = $species_defs->prodnames_to_urls_lookup;
+  my %orthologue_map  = qw(SEED BRH PIP RHS);
+  my $sets_by_species = {};
+  my $ortho_type      = {};
+
+  foreach (keys %$compara_spp) {
+    my $species = $lookup->{$_};
+    next if $self->hub->is_strain($species); #skip strain species
+
+    my $orthologues = $orthologue_list->{$species} || {};
+    my $no_ortho = 0;
+    if (!$orthologue_list->{$species} && $species ne $self->hub->species) {
+      $no_ortho = 1;
+    }
+
+    foreach my $stable_id (keys %$orthologues) {
+      my $orth_info = $orthologue_list->{$species}{$stable_id};
+      my $orth_desc = ucfirst($orthologue_map{$orth_info->{'homology_desc'}} || $orth_info->{'homology_desc'});
+      $ortho_type->{$species}{$orth_desc} = 1;
+    }
+
+    if ($species ne $self->hub->species && !$ortho_type->{$species}{'1-to-1'} && !$ortho_type->{$species}{'1-to-many'}
+          && !$ortho_type->{$species}{'Many-to-many'}) {
+      $no_ortho = 1;
+    }  
+
+    my $taxon_group     = $species_defs->get_config($species, 'SPECIES_GROUP');
+    my @compara_groups  = $set_mappings ? @{$set_mappings->{$taxon_group}}
+                                        : ($taxon_group);
+    my $sets = [];
+
+    foreach my $ss_name ('all', @compara_groups) {
+      push @{$species_sets->{$ss_name}{'species'}}, $species;
+      push @$sets, $ss_name;
+      while (my ($k, $v) = each (%{$ortho_type->{$species}})) {
+        $species_sets->{$ss_name}{$k} += $v;
+      }
+      $species_sets->{$ss_name}{'none'}++ if $no_ortho;
+      $species_sets->{$ss_name}{'all'}++ if $species ne $self->hub->species;
+    }
+    $sets_by_species->{$species} = $sets;
+  }
+
+  return ($species_sets, $sets_by_species, $set_order);
+}
+
+sub species_set_config {} # Stub, as it's clade-specific - implement in plugins
 
 sub get_strain_refs_html {
   my ($self, $strain_refs, $species_not_shown) = @_;

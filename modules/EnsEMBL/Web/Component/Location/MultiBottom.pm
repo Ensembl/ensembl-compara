@@ -42,8 +42,10 @@ sub content {
   
   return if $self->param('show_bottom_panel') eq 'no';
   
-  my $threshold = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
+  ## Used by non-vertebrate alignments
+  return $self->_warning('Too many alignments', '<p>The region selected contains too many alignments to display in this view - use the navigation above to zoom in...</p>') if $object->{'data'}{'too_many_alignments'};
   
+  my $threshold = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
   return $self->_warning('Region too large', '<p>The region selected is too large to display in this view - use the navigation above to zoom in...</p>') if $object->length > $threshold;
   
   my $image_width     = $self->image_width;
@@ -65,6 +67,10 @@ sub content {
                           LASTZ_RAW => $self->param('opt_pairwise_raw') || '',
                           CACTUS_HAL_PW => $self->param('opt_pairwise_cactus_hal_pw') || ''
                         };
+  if ($hub->species_defs->EG_DIVISION) {
+    $methods->{'ATAC'} = 1; 
+    $methods->{'POLYPLOID'} = 1;
+  }
 
   my ($join_alignments, $cacti);
 

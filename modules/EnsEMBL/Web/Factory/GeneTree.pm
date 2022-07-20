@@ -37,20 +37,15 @@ sub createObjects {
      
   return $self->problem('fatal', 'Valid Gene Tree ID required', 'Please enter a valid gene tree ID in the URL.') unless $gt;
 
-  my $cdb = ($gt =~ /^EGGT/) ? 'compara_pan_ensembl' : 'compara';
+  my $cdb = 'compara';
+  if ($self->species_defs->EG_DIVISION && $gt =~ /^EGGT|ENSGT/) {
+    $cdb = 'compara_pan_ensembl';
+  }
   my $database = $self->database($cdb);
   
   return $self->problem('fatal', 'Database Error', 'Could not connect to the compara database.') unless $database;
   
   my $tree = $database->get_GeneTreeAdaptor->fetch_by_stable_id($gt);
-  #if ($self->param('super_tree') eq 'on') {
-  #  my $parent = $database->get_GeneTreeAdaptor->fetch_parent_tree($tree);
-  #  if ($parent->tree_type ne 'clusterset') {
-  #    $parent->expand_subtrees();
-  #    $parent->attach_alignment('super-align');
-  #    $tree = $parent;
-  #  }
-  #}
  
   if ($tree) {
     $self->DataObjects($self->new_object('GeneTree', $tree->root, $self->__data));

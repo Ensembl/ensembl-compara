@@ -930,26 +930,33 @@ sub add_alignments {
 
   return unless grep $self->get_node($_), qw(multiple_align pairwise_tblat pairwise_blastz pairwise_other conservation cactus_hal_pw);
 
-  my $species_defs = $self->species_defs;
+  my $species_defs  = $self->species_defs;
+  my $alignments    = {};
+  my $self_label    = $species_defs->species_label($species, 'no_formatting');
+  my $prod_name     = $species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
+  my $lookup        = $species_defs->prodnames_to_urls_lookup;
 
-  return if $species_defs->ENSEMBL_SUBTYPE eq 'Pre';
-
-  my $alignments = {};
-  my $self_label = $species_defs->species_label($species, 'no_formatting');
-  my $static     = '/info/genome/compara/analyses.html';
-  my $prod_name  = $species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
-  my $map        = $species_defs->multi_val('ENSEMBL_SPECIES_URL_MAP');
-  my $comp_key   = $prod_name;
+  my ($static, $wga_page);
+  my $division = $species_defs->EG_DIVISION;
+  if ($division) {
+    $wga_page = $static = 'whole_genome_alignment.html';
+  }
+  else {
+    $static = 'analyses.html';
+    $wga_page = $static.'#conservation';
+  }
 
   foreach my $row (values %{$hashref->{'ALIGNMENTS'}}) {
-    next unless $row->{'species'}{$comp_key};
+    next unless $row->{'species'}{$prod_name};
 
     if ($row->{'class'} =~ /pairwise_alignment/) {
-      my ($other_species) = grep { !/^$comp_key$|ancestral_sequences$/ } keys %{$row->{'species'}};
-      $other_species ||= $comp_key if scalar keys %{$row->{'species'}} == 1;
-      ## Map back to actual species URL
-      $other_species = $map->{$other_species};
-      my $other_label     = $species_defs->species_label($other_species, 'no_formatting');
+      my ($other_species) = grep { !/^$prod_name$|ancestral_sequences$/ } keys %{$row->{'species'}};
+      $other_species ||= $prod_name if scalar keys %{$row->{'species'}} == 1;
+      my $other_species_url = $lookup->{$other_species};
+      my $other_label = $species_defs->species_label($other_species_url, 'no_formatting');
+      my $caption     = $division ? $species_defs->abbreviated_species_label($other_species_url)
+                                  : $other_label; 
+
       my ($menu_key, $description, $type);
 
       if ($row->{'type'} =~ /(B?)LASTZ_(\w+)/) {
@@ -976,7 +983,7 @@ sub add_alignments {
         db                         => $key,
         glyphset                   => '_alignment_pairwise',
         name                       => $other_label . ($type ?  " - $type" : ''),
-        caption                    => $other_label,
+        caption                    => $caption,
         type                       => $row->{'type'},
         species                    => $other_species,
         method_link_species_set_id => $row->{'id'},
@@ -1005,7 +1012,7 @@ sub add_alignments {
       if ($row->{'conservation_score'}) {
         my ($program) = $hashref->{'CONSERVATION_SCORES'}{$row->{'conservation_score'}}{'type'} =~ /(.+)_CONSERVATION_SCORE/;
 
-        $options{'description'} = qq{<a href="/info/genome/compara/analyses.html#conservation">$program conservation scores</a> based on the $row->{'name'}};
+        $options{'description'} = sprintf '<a href="/info/genome/compara/%s">%s conservation scores</a> based on the %s', $wga_page, $program, $row->{'name'};
 
         $alignments->{'conservation'}{"$row->{'id'}_scores"} = {
           %options,
@@ -1035,8 +1042,8 @@ sub add_alignments {
         order       => sprintf('%12d::%s::%s', 1e12-$n_species*10-1, $row->{'type'}, $row->{'name'}),
         display     => 'off',
         renderers   => [ 'off', 'Off', 'compact', 'On' ],
-        description => qq{<a href="/info/genome/compara/analyses.html#conservation">$n_species way whole-genome multiple alignments</a>.; } .
-                       join('; ', sort map { $species_defs->species_label($_, 'no_formatting') } grep { $_ ne 'ancestral_sequences' } keys %{$row->{'species'}}),
+        description => sprintf('<a href="/info/genome/compara/%s">%s way whole-genome multiple alignments</a>.;', $wga_page, $n_species) .
+                       join('; ', sort map { $species_defs->species_label($lookup->{$_}, 'no_formatting') } grep { $_ ne 'ancestral_sequences' } keys %{$row->{'species'}}),
       };
     }
   }

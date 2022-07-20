@@ -226,6 +226,10 @@ sub _counts {
     if ($self->sd_config($args,'SINGLE_SPECIES_COMPARA')) {
       $out->{'homologs'} = $self->_count_homologues($member, $args);
     }
+    my $division = $self->sd_config($args,"DIVISION");
+    if ($division) {
+      $out->{'homoeologues'} = $member->number_of_homoeologues // $member->number_of_homoeologues($division);
+    }
   }
   my $alignments = $self->_count_alignments($args);
   $out->{'alignments'} = $alignments->{'all'} if $args->{'type'} eq 'core';

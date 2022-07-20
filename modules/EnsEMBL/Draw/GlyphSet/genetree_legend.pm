@@ -34,7 +34,7 @@ sub render_normal {
   my $other_gene         = $self->{'highlights'}[5];
   my $highlight_ancestor = $self->{'highlights'}[6];
   my $cafe               = $container->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode');
-  my $gat               = $container->isa('Bio::EnsEMBL::Compara::GenomicAlignTree');
+  my $gat                = $container->isa('Bio::EnsEMBL::Compara::GenomicAlignTree');
   my @nodes;
   
   if ($cafe) {
@@ -50,10 +50,10 @@ sub render_normal {
   # Branch length vertical group
   if ($cafe) {
     $self->add_vgroup_to_legend([
-      { legend => 'N number of members',   colour => 'blue',    style => 'nsymbol'           },
-      { legend => 'Significant Expansion',             colour => '#800000', style => 'line', height => 1 },
-      { legend => 'Significant Contraction',           colour => '#008000', style => 'line', height => 1 },
-      { legend => 'No significant change', colour => 'blue',    style => 'line'              },
+      { legend => 'N number of members',      colour => 'blue',    style => 'nsymbol'           },
+      { legend => 'Significant Expansion',    colour => '#800000', style => 'line',     height => 1 },
+      { legend => 'Significant Contraction',  colour => '#008000', style => 'line',     height => 1 },
+      { legend => 'No significant change',    colour => 'blue',    style => 'line'              },
     ], '');
   } else {
     $self->add_vgroup_to_legend([

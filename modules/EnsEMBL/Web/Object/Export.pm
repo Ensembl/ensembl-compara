@@ -749,24 +749,11 @@ sub gff3_features {
     ordered_attributes => {},
     feature_order      => {},
     feature_type_count => 0,
-    
-    # TODO: feature types
-    #    feature_map => {
-    #      dna_align          => { func => 'get_all_DnaAlignFeatures',          type => 'nucleotide_match' },
-    #      marker             => { func => 'get_all_MarkerFeatures',            type => 'region' },
-    #      repeat             => { func => 'get_all_RepeatFeatures',            type => 'repeat_region' },
-    #      assembly_exception => { func => 'get_all_AssemblyExceptionFeatures', type => '' },
-    #      ditag              => { func => 'get_all_DitagFeatures',             type => '' },
-    #      external           => { func => 'get_all_ExternalFeatures',          type => '' },
-    #      oligo              => { func => 'get_all_OligoFeatures',             type => 'oligo' },
-    #      qtl                => { func => 'get_all_QtlFeatures',               type => 'region' },
-    #      simple             => { func => 'get_all_SimpleFeatures',            type => '' },
-    #      protein_align      => { func => 'get_all_ProteinAlignFeatures',      type => 'protein_match' }
-    #    }
   };
 
   my ($g_id, $t_id);
   my $dbs = $self->dbs;
+  my $div = $self->hub->species_defs->EG_DIVISION; 
   foreach my $db (@{$dbs}) {
     foreach my $g (@{$slice->get_all_Genes(undef, $db)}) {
       my $properties = { source => $self->gene_source($g,$db) };
@@ -774,14 +761,16 @@ sub gff3_features {
       if ($params->{'gene'}) {
         $g_id = $g->stable_id;
         $g_id .= '.'.$g->version if $g->version;
-        $self->feature('gene', $g, { ID => $g_id, Name => $g_id, biotype => $g->biotype }, $properties);
+        my $g_name = ($div && $g->display_xref) ? $g->display_xref->display_id : $g_id;
+        $self->feature('gene', $g, { ID => $g_id, Name => $g_name, biotype => $g->biotype }, $properties);
       }
 
       foreach my $t (@{$g->get_all_Transcripts}) {
         if ($params->{'transcript'}) {
           $t_id = $t->stable_id;
           $t_id .= '.'.$t->version if $t->version;
-          $self->feature('transcript', $t, { ID => $t_id, Parent => $g_id, Name => $t_id, biotype => $t->biotype }, $properties);
+          my $t_name = ($div && $t->display_xref) ? $t->display_xref->display_id : $t_id;
+          $self->feature('transcript', $t, { ID => $t_id, Parent => $g_id, Name => $t_name, biotype => $t->biotype }, $properties);
         }
 
         if ($params->{'intron'}) {

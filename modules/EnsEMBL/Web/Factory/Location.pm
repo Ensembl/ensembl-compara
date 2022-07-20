@@ -778,7 +778,7 @@ sub _create_from_slice {
         }
       }
         
-      $location = $self->new_location($slice);
+      $location = $self->new_location($slice, $type);
       
       my $object_types = { %{$self->hub->object_types}, Exon => 'g' }; # Use gene factory to generate tabs when using exon to find location
       
@@ -794,7 +794,7 @@ sub _create_from_slice {
 }
 
 sub new_location {
-  my ($self, $slice) = @_;
+  my ($self, $slice, $type) = @_;
   
   if ($slice->start > $slice->end && !$slice->is_circular) {
     $self->problem('fatal', 'Invalid location',
@@ -803,14 +803,27 @@ sub new_location {
     
     return undef;
   }
-  
+
+  ## Adjust for small genomes (typical of NV) 
+  my $start = $slice->start;
+  my $end   = $slice->end;
+  if ($self->species_defs->EG_DIVISION) {
+    $type ||= '';
+    if (lc($type) =~ /contig/) {
+      my $threshold   = 1000100 * ($self->species_defs->ENSEMBL_GENOME_SIZE||1);
+      my $mid =  $start + int(($end - $start)/2);
+      $start =  int($mid - ($threshold/2)) > $start ? int($mid - ($threshold/2)) : $start;
+      $end   =  int($mid + ($threshold/2)) < $end   ? int($mid + ($threshold/2)) : $end;
+    }
+  }
+
   my $location = $self->new_object('Location', {
     type               => 'Location',
     real_species       => $self->__species,
     name               => $slice->seq_region_name,
     seq_region_name    => $slice->seq_region_name,
-    seq_region_start   => $slice->start,
-    seq_region_end     => $slice->end,
+    seq_region_start   => $start,
+    seq_region_end     => $end,
     seq_region_strand  => 1,
     seq_region_type    => $slice->coord_system->name,
     raw_feature_strand => 1,

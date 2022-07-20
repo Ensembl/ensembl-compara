@@ -120,10 +120,6 @@ sub populate_tree {
     { 'availability' => 'database:rnaseq' }
   );
 
-  $self->create_node('WhatsNew', '',
-    [qw(whatsnew EnsEMBL::Web::Component::Info::WhatsNew)]
-  );
-
   ## Generic node for including arbitrary HTML files about a species
   $self->create_node('Content', '',
     [qw(content EnsEMBL::Web::Component::Info::Content)]
