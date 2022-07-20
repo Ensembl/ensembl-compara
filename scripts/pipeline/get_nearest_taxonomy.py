@@ -43,6 +43,9 @@ def get_nearest_taxonomy(session: Session, taxon: str, ref_taxa: List[str]) -> s
         taxon: Scientific taxon name as in ncbi_taxonomy
         taxon_list: list of reference taxonomic classifications
     """
+    gca = '_gca'
+    if taxon is not None:
+        taxon = taxon = taxon.split(gca, 1)[0]
     ref_taxon = match_taxon_to_reference(session, taxon, ref_taxa)
     return ref_taxon
 
