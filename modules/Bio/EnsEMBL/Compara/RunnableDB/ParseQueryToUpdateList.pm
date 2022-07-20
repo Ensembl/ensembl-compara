@@ -31,7 +31,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::ParseQueryToUpdateList;
 use warnings;
 use strict;
 use List::MoreUtils qw/ uniq /;
-use File::Copy qw/ move /;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
