@@ -541,6 +541,7 @@ def calculate_goc_genes(gene1: str, gene2: str, neighbourhood1: pandas.DataFrame
     strand1 = neighbourhood1.iloc[index1]["strand"]
     strand2 = neighbourhood2.iloc[index2]["strand"]
 
+    strand_mismatch = False
     if strand1 != strand2:
         # Reverse `neighbourhood2` to potentially speed up search for putative orthologous matches later
         neighbourhood2 = neighbourhood2.reindex(index=neighbourhood2.index[::-1])
@@ -548,8 +549,6 @@ def calculate_goc_genes(gene1: str, gene2: str, neighbourhood1: pandas.DataFrame
         neighbourhood2.drop("index", 1, inplace=True)
         index2 = neighbourhood2.index[neighbourhood2["gene_id"] == gene2][0]
         strand_mismatch = True
-    else:
-        strand_mismatch = False
 
     # Remove `gene1` and `gene2` from `neighbourhood1` and `neighbourhood2` before looking for putative
     # orthologs between genes in `neighbourhood1` and `neighbourhood2`
