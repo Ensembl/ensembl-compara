@@ -516,6 +516,31 @@ def get_neighbours(gene: str, df_genes: pandas.DataFrame, n: int) -> pandas.Data
     return neighbourhood
 
 
+def check_neighbourhood_valid_for_goc(neighbourhood: pandas.DataFrame) -> None:
+    """Checks if neighbourhood data frame has necessary columns and valid values for GOC score calculation.
+
+    Args:
+        neighbourhood: A data frame intended to use as input for function `calculate_goc_genes`.
+
+    Raises:
+        ValueError: If `neighbourhood` is missing `gene_id` and/or `strand` column. If at least one `strand`
+            value is invalid (neither + nor -).
+
+    """
+    # Check if `neighbourhood` has necessary columns
+    necessary_columns = ["gene_id", "strand"]
+    if not set(necessary_columns).issubset(neighbourhood.columns):
+        raise ValueError("Neighbourhood is missing at least one of the following columns: gene_id, strand.")
+
+    # Check that gene strands are not corrupted
+    allowed_strands = ["+", "-"]
+    for i in neighbourhood.iterrows():
+        strand_i = i[1]["strand"]
+        if strand_i not in allowed_strands:
+            gene_i = i[1]["gene_id"]
+            raise ValueError(f"The strand of gene '{gene_i}' is neither + nor -.")
+
+
 def calculate_goc_genes(gene1: str, gene2: str, neighbourhood1: pandas.DataFrame,
                         neighbourhood2: pandas.DataFrame, orthologs: List[Tuple[str, str]], n: int = 2)\
         -> float:
@@ -535,9 +560,30 @@ def calculate_goc_genes(gene1: str, gene2: str, neighbourhood1: pandas.DataFrame
         n: (Maximum) Radius of `neighbourhood1`. Effectively, `neighbourhood1` can be smaller if there are
             fewer genes around `gene1`.
 
+    Raises:
+        ValueError: When `gene1` is not found in `neighbourhood1`, when `gene2` is not found in
+            `neighbourhood2`.
+
     """
-    index1 = neighbourhood1.index[neighbourhood1["gene_id"] == gene1][0]
-    index2 = neighbourhood2.index[neighbourhood2["gene_id"] == gene2][0]
+    # Check that `neighbourhood1` and `neighbourhood2` have necessary columns and valid values
+    # ("gene_id", "strand")
+    check_neighbourhood_valid_for_goc(neighbourhood1)
+    check_neighbourhood_valid_for_goc(neighbourhood2)
+
+    # Get index of `gene1` in `neighbourhood1`
+    try:
+        index1 = neighbourhood1.index[neighbourhood1["gene_id"] == gene1][0]
+    except IndexError as exc:
+        msg = f"Gene '{gene1}' not found in corresponding neighbourhood dataframe."
+        raise ValueError(msg) from exc
+
+    # Get index of `gene2` in `neighbourhood2`
+    try:
+        index2 = neighbourhood2.index[neighbourhood2["gene_id"] == gene2][0]
+    except IndexError as exc:
+        msg = f"Gene '{gene2}' not found in corresponding neighbourhood dataframe."
+        raise ValueError(msg) from exc
+
     strand1 = neighbourhood1.iloc[index1]["strand"]
     strand2 = neighbourhood2.iloc[index2]["strand"]
 
@@ -571,6 +617,7 @@ def calculate_goc_genes(gene1: str, gene2: str, neighbourhood1: pandas.DataFrame
 
             # Check the directionality of gene_i and gene_j
             strand_j = j[1]["strand"]
+
             if (strand_mismatch and strand_i == strand_j) or (not strand_mismatch and strand_i != strand_j):
                 continue
 
