@@ -268,7 +268,7 @@ process mergeAlns {
 process runIqtree {
     label 'retry_with_8gb_mem_c1'
     publishDir "${params.results_dir}/", pattern: "species_tree.nwk", mode: "copy",  overwrite: true
-    publishDir "${params.results_dir}/", pattern: "iqtree_bioinj.nwk", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/", pattern: "iqtree_bionj.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_report.txt", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_log.txt", mode: "copy",  overwrite: true
 
@@ -279,6 +279,7 @@ process runIqtree {
         path "species_tree.nwk", emit: newick
         path "iqtree_report.txt", emit: iqrtree_report
         path "iqtree_log.txt", emit: iqtree_log
+        path "iqtree_bionj.nwk", emit: iqtree_nj
         stdout emit: debug
 
     script:
@@ -287,7 +288,7 @@ process runIqtree {
     mv partitions.tsv.treefile species_tree.nwk
     mv partitions.tsv.iqtree iqtree_report.txt
     mv partitions.tsv.log iqtree_log.txt
-    mv partitions.tsv.bionj iqtree_bioinj.nwk
+    mv partitions.tsv.bionj iqtree_bionj.nwk
     """
 }
 
