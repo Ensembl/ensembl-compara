@@ -81,7 +81,7 @@ if __name__ == '__main__':
         # Define partition number:
         shift_part = nr_part + 1
         # Write out partition:
-        part_fh.write(f"LG+F+I+G4, part{shift_part} = {start}-{end}\n")
+        part_fh.write(f"LG+F+G, part{shift_part} = {start}-{end}\n")
         # Advance length counter:
         total_len += curr_len
         # For each taxa concatenate the sequence if present, gaps if missing:

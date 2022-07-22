@@ -112,7 +112,11 @@ if __name__ == '__main__':
 
         ts = []
         for x in s:     # type: ignore
+            if (len(x.seq) % 3) != 0:
+                continue
             y = x.translate()   # type: ignore
+            if str(y.seq).count("X") > 10:
+                continue
             y.id = x.id     # type: ignore
             y.description = ""
             ts.append(y)
