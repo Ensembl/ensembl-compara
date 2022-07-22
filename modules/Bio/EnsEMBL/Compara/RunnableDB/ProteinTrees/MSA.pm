@@ -144,16 +144,18 @@ sub write_output {
         $method =~ /::([^:]*)$/;
         $self->param('protein_tree')->aln_method($1);
 
-        my $aln_ok = $self->parse_and_store_alignment_into_proteintree;
-        unless ($aln_ok) {
-            # Probably an ongoing MEMLIMIT
-            # Let's wait a bit to let LSF kill the worker as it should
-            sleep 30;
-            # If we're still there, there is something weird going on.
-            # Perhaps not a MEMLIMIT, after all. Let's die and hope that
-            # next run will be better
-            die "There is no output file !\n";
-        }
+        $self->call_within_transaction(sub {
+            my $aln_ok = $self->parse_and_store_alignment_into_proteintree;
+            unless ($aln_ok) {
+                # Probably an ongoing MEMLIMIT
+                # Let's wait a bit to let LSF kill the worker as it should
+                sleep 30;
+                # If we're still there, there is something weird going on.
+                # Perhaps not a MEMLIMIT, after all. Let's die and hope that
+                # next run will be better
+                die "There is no output file !\n";
+            }
+        });
     }
 
     # The second parameter is 1 to make sure we don't have "leftovers" from
@@ -275,6 +277,8 @@ sub parse_and_store_alignment_into_proteintree {
   return 0 unless($msa_output and -e $msa_output);
 
   $self->param('protein_tree')->load_cigars_from_file($msa_output, -FORMAT => 'fasta', -ID_TYPE => 'SEQUENCE', -CHECK_SEQ => $self->param('check_seq'));
+
+  $self->compara_dba->dbc->disconnect_if_idle();
 
   return 1;
 }
