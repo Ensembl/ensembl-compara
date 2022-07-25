@@ -26,6 +26,7 @@ from importlib.machinery import ModuleSpec
 from importlib.util import module_from_spec, spec_from_file_location
 import os
 from pathlib import Path
+import re
 import sys
 from typing import ContextManager, Dict, List, Tuple
 
@@ -133,22 +134,25 @@ class TestDumpGenomes:
             for db_name, unittest_db in self.core_dbs.items():
                 assert file_cmp(out_files / f"{unittest_db.dbc.db_name}.fasta", exp_out / f"{db_name}.fasta")
 
-    def test_dump_genomes_fake_connection(self, tmp_dir: Path) -> None:
-        """Tests :func:`orthology_benchmark.dump_genomes()` with fake server details.
-
-        Args:
-            tmp_dir: Unit test temp directory (fixture).
-
-        """
-        with raises(RuntimeError):
-            orthology_benchmark.dump_genomes(["mus_musculus", "naja_naja"], "fake",
-                                             "fake-host", 65536, tmp_dir, "protein")
 
     def test_dump_genomes_fake_output_path(self) -> None:
         """Tests :func:`orthology_benchmark.dump_genomes()` with fake output path."""
         with raises(OSError, match=r"Failed to create '/compara/default' directory."):
             orthology_benchmark.dump_genomes(["mus_musculus", "naja_naja"], "default",
                                              self.host, self.port, "/compara", "protein")
+
+
+def test_dump_genomes_fake_connection(tmp_dir: Path) -> None:
+    """Tests :func:`orthology_benchmark.dump_genomes()` with fake server details.
+
+    Args:
+        tmp_dir: Unit test temp directory (fixture).
+
+    """
+    with raises(RuntimeError):
+        orthology_benchmark.dump_genomes(["mus_musculus", "naja_naja"], "fake", "fake-host", 65536,
+                                         tmp_dir, "protein")
+
 
 @pytest.mark.parametrize(
     "core_names, exp_output, expectation",
@@ -240,10 +244,10 @@ class TestGetCoreNames:
             assert orthology_benchmark.get_core_names(species_names, self.host, self.port,
                                                       self.username) == exp_output
 
-    def test_get_core_names_fake_connection(self) -> None:
-        """Tests :func:`orthology_benchmark.get_core_names()` with fake server details."""
-        with raises(sqlalchemy.exc.OperationalError):
-            orthology_benchmark.get_core_names(["danio_rerio", "mus_musculus"], "fake-host", 65536, "compara")
+def test_get_core_names_fake_connection() -> None:
+    """Tests :func:`orthology_benchmark.get_core_names()` with fake server details."""
+    with raises(sqlalchemy.exc.OperationalError):
+        orthology_benchmark.get_core_names(["danio_rerio", "mus_musculus"], "fake-host", 65536, "compara")
 
 
 @pytest.mark.parametrize(
@@ -493,20 +497,61 @@ def test_get_neighbours(gene: str, n: int, exp_genes: List[Tuple[str, str, float
 
 
 @pytest.mark.parametrize(
-    "gene1, gene2, neighbours1, neighbours2, n, allowed_gap, exp_out",
+    "neighbours, columns, expectation",
+    [
+        ([["6", "61", 1, "-"], ["6", "62", 101, "+"]], ["seqname", "gene_id", "start", "strand"],
+         does_not_raise()),
+        # Missing `gene_id`
+        ([["6", 1, "-"], ["6", 101, "+"]], ["seqname", "start", "strand"],
+         raises(ValueError, match=r"Neighbourhood is missing at least one of the following columns: "
+                                  r"gene_id, strand.")),
+        # Missing `strand`
+        ([["6", "61", 1], ["6", "62", 101]], ["seqname", "gene_id", "start"],
+         raises(ValueError, match=r"Neighbourhood is missing at least one of the following columns: "
+                                  r"gene_id, strand.")),
+        # Missing `gene_id` and `strand`
+        ([["6", 1], ["6", 101]], ["seqname", "start"],
+         raises(ValueError, match=r"Neighbourhood is missing at least one of the following columns: "
+                                  r"gene_id, strand.")),
+        # Corrupted strand
+        ([["6", "61", 1, "1"], ["6", "62", 101, "+"]], ["seqname", "gene_id", "start", "strand"],
+         raises(ValueError, match=re.escape("The strand of gene '61' is neither + nor -."))),
+        ([["6", "61", 1, "-"], ["6", "62", 101, ""]], ["seqname", "gene_id", "start", "strand"],
+         raises(ValueError, match=re.escape("The strand of gene '62' is neither + nor -.")))
+    ]
+)
+def test_check_neighbourhood_valid_for_goc(neighbours: List[Tuple], columns: List[str],
+                                           expectation: ContextManager) -> None:
+    """Tests :func:`orthology_benchmark.check_neighbourhood_valid_for_goc()` function.
+
+    Args:
+        neighbours: A list of lists containing information from a GTF file. It might have values for e.g.
+            "seqname", "gene_id", "start", "strand".
+        columns: Column names for `neighbourhood` data frame.
+        expectation: Context manager for the expected exception, i.e. the test will only pass if that
+            exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
+
+    """
+    with expectation:
+        neighbourhood = pandas.DataFrame(neighbours, columns=columns)
+        assert orthology_benchmark.check_neighbourhood_valid_for_goc(neighbourhood) is None
+
+
+@pytest.mark.parametrize(
+    "gene1, gene2, neighbours1, neighbours2, n, exp_out, expectation",
     [
         # Gene with no neighbours
         ("11", "35",
          [["1", "11", 1, "+"]],
          [["3", "32", 101, "+"], ["3", "33", 201, "+"], ["3", "34", 301, "+"], ["3", "35", 401, "+"],
           ["3", "36", 501, "+"], ["3", "37", 601, "+"], ["3", "38", 701, "+"]],
-         2, 1, 0),
+         2, 0, does_not_raise()),
         # Gene with no neighbours on one side
         ("21", "35",
          [["2", "21", 1, "+"], ["2", "22", 101, "+"], ["2", "23", 201, "+"]],
          [["3", "32", 101, "+"], ["3", "33", 201, "+"], ["3", "34", 301, "+"], ["3", "35", 401, "+"],
           ["3", "36", 501, "+"], ["3", "37", 601, "+"], ["3", "38", 701, "+"]],
-         2, 1, 50),
+         2, 50, does_not_raise()),
         # Gene with one neighbour with multiple orthologous matches ("23" - "31", "23" - "38") (and a
         # collapsed paralogous neighbour ("26"))
         ("25", "33",
@@ -515,44 +560,63 @@ def test_get_neighbours(gene: str, n: int, exp_genes: List[Tuple[str, str, float
          [["3", "31", 1, "+"], ["3", "32", 101, "+"], ["3", "33", 201, "+"], ["3", "34", 301, "+"],
           ["3", "35", 401, "+"], ["3", "36", 501, "+"], ["3", "37", 601, "+"], ["3", "38", 701, "+"],
           ["3", "39", 801, "+"]],
-         2, 4, 100),
+         2, 100, does_not_raise()),
         # All neighbours have an orthologous match and corresponding strands are in agreement
         ("24", "32",
          [["2", "23", 201, "+"], ["2", "24", 301, "+"], ["2", "25", 401, "+"]],
          [["3", "31", 1, "+"], ["3", "32", 101, "+"], ["3", "33", 201, "+"]],
-         1, 0, 100),
+         1, 100, does_not_raise()),
         # Genes of interest on the opposite strands and all neighbours have an orthologous match on the
         # opposite strand
         ("42", "62",
          [["4", "41", 1, "-"], ["4", "42", 101, "-"], ["4", "43", 201, "+"]],
          [["6", "61", 1, "-"], ["6", "62", 101, "+"], ["6", "63", 201, "+"]],
-         1, 2, 100),
-        # Genes of interest on the opposite strands and one neighbour has an orthologous match on the same
+         1, 100, does_not_raise()),
+        # Genes of interest on the opposite strands and neighbours have an orthologous match on the same
         # strand
         ("45", "52",
          [["4", "43", 201, "+"], ["4", "44", 301, "+"], ["4", "45", 401, "+"], ["4", "46", 501, "-"],
           ["4", "47", 601, "+"]],
          [["5", "51", 1, "-"], ["5", "52", 101, "-"], ["5", "53", 201, "-"], ["5", "54", 301, "+"]],
-         2, 0, 25),
-        # Too large gap between orthologous matches
-        ("72", "82",
-         [["7", "71", 1, "+"], ["7", "72", 101, "+"], ["7", "73", 201, "+"]],
-         [["8", "81", 1, "+"], ["8", "82", 101, "+"], ["8", "83", 201, "+"], ["8", "84", 301, "+"],
-          ["8", "85", 401, "+"], ["8", "86", 501, "+"], ["8", "87", 601, "+"]],
-         2, 3, 0),
-        # An orthologous match preceding the last (current) match, hence, should not be taken into account
-        # (and a collapsed paralogous neighbour ("26"))
+         2, 25, does_not_raise()),
+        # Orthologous matches don't appear sequentially among the `neighbours2` (and a collapsed paralogous
+        # neighbour ("26"))
         ("36", "22",
          [["3", "34", 301, "+"], ["3", "35", 401, "+"], ["3", "36", 501, "+"], ["3", "37", 601, "+"],
           ["3", "38", 701, "+"]],
          [["2", "21", 1, "+"], ["2", "22", 101, "+"], ["2", "23", 201, "+"], ["2", "24", 301, "+"],
           ["2", "25", 401, "+"], ["2", "27", 601, "+"], ["2", "28", 701, "+"], ["2", "29", 801, "+"]],
-         2, 4, 50)
+         2, 100, does_not_raise()),
+        # `gene1` not found in `neighbourhood1
+        ("42", "62",
+         [["4", "41", 1, "-"], ["4", "43", 201, "+"]],
+         [["6", "61", 1, "-"], ["6", "62", 101, "+"], ["6", "63", 201, "+"]],
+         1, None, raises(ValueError,
+                         match=r"Gene '42' not found in corresponding neighbourhood dataframe.")),
+        # `gene2` not found in `neighbourhood2`
+        ("42", "62",
+         [["4", "41", 1, "-"], ["4", "42", 101, "-"], ["4", "43", 201, "+"]],
+         [["6", "61", 1, "-"], ["6", "63", 201, "+"]],
+         1, None, raises(ValueError,
+                         match=r"Gene '62' not found in corresponding neighbourhood dataframe.")),
+        # Empty neighbourhood of a query gene
+        ("42", "62",
+         [],
+         [["6", "61", 1, "-"], ["6", "62", 101, "+"], ["6", "63", 201, "+"]],
+         1, None, raises(ValueError,
+                         match=r"Gene '42' not found in corresponding neighbourhood dataframe.")),
+        # `gene1` has invalid strand (neither + nor -)
+        # [checked by :func:`check_neighbourhood_valid_for_goc()`]
+        ("42", "62",
+         [["4", "41", 1, "-"], ["4", "42", 101, "*"], ["4", "43", 201, "+"]],
+         [["6", "61", 1, "-"], ["6", "62", 101, "+"], ["6", "63", 201, "+"]],
+         1, None, raises(ValueError,
+                         match=re.escape(r"The strand of gene '42' is neither + nor -."))),
     ]
 )
 def test_calculate_goc_genes(gene1: str, gene2: str, neighbours1: List[Tuple[str, str, int, str]],
-                             neighbours2: List[Tuple[str, str, int, str]], n: int,
-                             allowed_gap: int, exp_out: float) -> None:
+                             neighbours2: List[Tuple[str, str, int, str]], n: int, exp_out: float,
+                             expectation: ContextManager) -> None:
     """Tests :func:`orthology_benchmark.calculate_goc_genes()` function.
 
     Args:
@@ -564,16 +628,37 @@ def test_calculate_goc_genes(gene1: str, gene2: str, neighbours1: List[Tuple[str
             "gene_id", "start", "strand").
         n: (Maximum) Radius of `gene1`'s neighbourhood. Effectively, the neighbourhood can be smaller if
             there are fewer genes around `gene1`.
-        allowed_gap: Allowed gap between subsequent orthologous matches in `gene2`'s neighbourhood.
         exp_out: Expected return value of the function.
+        expectation: Context manager for the expected exception, i.e. the test will only pass if that
+            exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
 
     """
     orthologs = [("11", "35"), ("21", "35"), ("22", "36"), ("23", "31"), ("23", "38"), ("24", "32"),
                  ("25", "33"), ("26", "33"), ("27", "34"), ("28", "39"), ("29", "37"), ("41", "56"),
                  ("41", "63"), ("42", "55"), ("42", "62"), ("43", "53"), ("43", "61"), ("45", "52"),
                  ("46", "51"), ("47", "54"), ("72", "82"), ("73", "87")]
-    neighbourhood1 = pandas.DataFrame(neighbours1, columns=["seqname", "gene_id", "start", "strand"])
-    neighbourhood2 = pandas.DataFrame(neighbours2, columns=["seqname", "gene_id", "start", "strand"])
+
+    with expectation:
+        neighbourhood1 = pandas.DataFrame(neighbours1, columns=["seqname", "gene_id", "start", "strand"])
+        neighbourhood2 = pandas.DataFrame(neighbours2, columns=["seqname", "gene_id", "start", "strand"])
+        assert orthology_benchmark.calculate_goc_genes(
+            gene1, gene2, neighbourhood1, neighbourhood2, orthologs, n
+        ) == exp_out
+
+
+def test_calculate_goc_genes_atypical_input() -> None:
+    """Tests :func:`orthology_benchmark.calculate_goc_genes()` function when gene neighbourhood data frames
+    contain only information needed for GOC score calculation and nothing beyond it.
+
+    This is not supposed to be the case for Benchmark Orthology pipeline.
+
+    """
+    orthologs = [("41", "56"), ("41", "63"), ("42", "55"), ("42", "62"), ("43", "53"), ("43", "61")]
+
+    columns = ["gene_id", "strand"]
+    neighbourhood1 = pandas.DataFrame([["41", "-"], ["42", "-"], ["43", "+"]], columns=columns)
+    neighbourhood2 = pandas.DataFrame([["61", "-"], ["62", "+"], ["63", "+"]], columns=columns)
+
     assert orthology_benchmark.calculate_goc_genes(
-        gene1, gene2, neighbourhood1, neighbourhood2, orthologs, n, allowed_gap
-    ) == exp_out
+        "42", "62", neighbourhood1, neighbourhood2, orthologs, 1
+    ) == 100
