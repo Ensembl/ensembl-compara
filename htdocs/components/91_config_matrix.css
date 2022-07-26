@@ -378,7 +378,7 @@ span.track-key.partzero   { background:linear-gradient(-45deg,#ffffff 49%,#aaa 4
 span.track-key.partial    { background:linear-gradient(-45deg,#ffffff 49%,#aaa 49%, #0735ba 50%); }
 span.track-key.peak       { border: none; margin-top: 2px; }
 span.track-key.signal     { border: none; margin-top: 2px; }
-div.xContainer            { z-index: 1; display: flex; flex-grow: 0; flex-shrink: 0; padding-left: 110px; position: sticky; top: 0px; background: #eee; }
+div.xContainer            { z-index: 1; display: flex; flex-grow: 0; flex-shrink: 0; padding-left: 210px; position: sticky; top: 0px; background: #eee; }
 
 div.xContainer .positionFix { height:26px; padding: 64px 0 0 0; }
 div.xContainer .rotate      { width:31px; overflow: visible; -webkit-transform: rotate(-60deg); -moz-transform: rotate(-60deg); filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3); -ms-transform: rotate(-60deg); }
@@ -386,12 +386,12 @@ div.xContainer .overflow    { top:5px; position:relative; display:inline-block; 
 div.xContainer .overflow span { pointer-events: none; }
 div.yContainer            { z-index: 1; position: sticky; left: 0px; border-right: 1px solid #ccc; background: #eee; }
 div.yBoxWrapper           { display: flex; flex-grow: 0; flex-shrink: 0; }
-div.yLabel                { width: 100px; min-height: 32px; text-align: right; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; margin: 0 8px -1px 0; position: relative; top: 10px; cursor: default;}
+div.yLabel                { width: 100px; min-height: 32px; text-align: right; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; margin: 0 8px -1px 0; position: relative; top: 10px; cursor: default; min-width: 200px;}
 div.yLabel span           { pointer-events: none; }
 div.xBoxes                { width: 30px; height: 30px; border: #ccc 1px solid; margin: 0 0 -1px -1px; }
 div.boxContainer          { display: flex; flex-direction: column; }
 div.rowContainer          { display: flex; }
-div.hidebox { width: 109px; height: 91px; background: #eee; z-index: 3; position: absolute; }
+div.hidebox { width: 209px; height: 91px; background: #eee; z-index: 3; position: absolute; }
 /*div.ConfigRegMatrixForm div.hidebox { width: 110px; height: 100px; background: #eee; z-index: 3; top: -84px; position: relative; left: 119px; clear: both; }*/
 div#filter-box div.filter-rhs-popup { width: 150px; display: none; font-size: 11px; max-width: 190px; background-color: [[LIGHT_GREY]]; border: #b7b7b7 1px solid; position: absolute; float: left; box-shadow: 5px 5px 15px #666; z-index: 1; }
 div#filter-box div.filter-rhs-popup div { padding: 4px 8px; }
