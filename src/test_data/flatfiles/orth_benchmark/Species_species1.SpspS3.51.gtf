@@ -1,0 +1,23 @@
+#!genome-build SpspS3
+#!genome-version pspS3
+#!genome-build-accession GCA_000349125.3
+1	Ensembl	gene	1	100	.	+	.	gene_id "11"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+2	Ensembl	gene	1	100	.	+	.	gene_id "21"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+2	Ensembl	gene	101	200	.	+	.	gene_id "22"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+2	Ensembl	gene	201	300	.	+	.	gene_id "23"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+2	Ensembl	gene	301	400	.	+	.	gene_id "24"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+2	Ensembl	gene	401	500	.	+	.	gene_id "25"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+2	Ensembl	gene	501	600	.	+	.	gene_id "26"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+2	Ensembl	gene	601	700	.	+	.	gene_id "27"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+2	Ensembl	gene	701	800	.	+	.	gene_id "28"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+2	Ensembl	gene	801	900	.	+	.	gene_id "29"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+4	Ensembl	gene	1	100	.	-	.	gene_id "41"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+4	Ensembl	gene	101	200	.	-	.	gene_id "42"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+4	Ensembl	gene	201	300	.	+	.	gene_id "43"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+4	Ensembl	gene	301	400	.	+	.	gene_id "44"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+4	Ensembl	gene	401	500	.	+	.	gene_id "45"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+4	Ensembl	gene	501	600	.	-	.	gene_id "46"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+4	Ensembl	gene	601	700	.	+	.	gene_id "47"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+7	Ensembl	gene	1	100	.	+	.	gene_id "71"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+7	Ensembl	gene	101	200	.	+	.	gene_id "72"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";
+7	Ensembl	gene	201	300	.	+	.	gene_id "73"; gene_version "1"; gene_source "Ensembl"; gene_biotype "protein_coding";

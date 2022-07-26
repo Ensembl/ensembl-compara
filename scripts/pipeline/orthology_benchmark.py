@@ -628,6 +628,68 @@ def calculate_goc_genes(gene1: str, gene2: str, neighbourhood1: pandas.DataFrame
     return (shared_orthologs / (2 * n)) * 100
 
 
+def calculate_goc_genomes(core_name1: str, core_name2: str, gtf_dir: str, res_dir: str, n: int, m: int)\
+        -> List[Tuple[str, str, float]]:
+    """Returns GOC scores for all putative orthologs between two species (core dbs).
+
+    Args:
+        core_name1: Name of one core db of interest.
+        core_name2: Name of another core db of interest.
+        gtf_dir: Path to the directory with GTF files.
+        res_dir: Path to the directory with OrthoFinder results.
+        n: (Maximum) Radius of the neighbourhood of genes in `core_name1`. Effectively, a neighbourhood can
+            be smaller if there are fewer genes around a gene.
+        m: (Maximum) Radius of the neighbourhood of genes in `core_name2`. Effectively, a neighbourhood can
+            be smaller if there are fewer genes around a gene.
+
+    """
+    goc = []
+
+    species_name1 = core_name1.split("_core_")[0]
+    species_name2 = core_name2.split("_core_")[0]
+
+    # Get info from GTF files
+    genome1 = read_in_gtf(species_name1, gtf_dir)
+    genome2 = read_in_gtf(species_name2, gtf_dir)
+
+    # Get homology predictions
+    orthologs = extract_orthologs(res_dir, core_name1, core_name2)
+    paralogs1 = extract_paralogs(res_dir, core_name1)
+    paralogs2 = extract_paralogs(res_dir, core_name2)
+
+    # Collapse tandem paralogs
+    genome1 = collapse_tandem_paralogs(genome1, paralogs1)
+    genome2 = collapse_tandem_paralogs(genome2, paralogs2)
+
+    for pair in orthologs:
+        gene1 = pair[0]
+        gene2 = pair[1]
+
+        # Get gene neighbourhood for each gene
+        try:
+            neighbours1 = get_neighbours(gene1, genome1, n)
+        except ValueError:  # gene1 is a collapsed tandem paralog or somehow doesn't appear in the GTF
+            continue
+
+        try:
+            neighbours2 = get_neighbours(gene2, genome2, m)
+        except ValueError:  # gene2 is a collapsed tandem paralog or somehow doesn't appear in the GTF
+            continue
+
+        # Calculate GOC score in one direction
+        score1 = calculate_goc_genes(gene1, gene2, neighbours1, neighbours2, orthologs, n)
+
+        if score1 < 100:  # Calculate GOC score in the other direction as well
+            neighbours1 = get_neighbours(gene1, genome1, m)
+            neighbours2 = get_neighbours(gene2, genome2, n)
+            score2 = calculate_goc_genes(gene2, gene1, neighbours2, neighbours1, orthologs, n)
+            goc.append((gene1, gene2, max(score1, score2)))
+        else:
+            goc.append((gene1, gene2, 100))
+
+    return goc
+
+
 def calculate_goc_scores():
     """Docstring"""
 

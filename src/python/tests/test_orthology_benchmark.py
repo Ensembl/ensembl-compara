@@ -662,3 +662,20 @@ def test_calculate_goc_genes_atypical_input() -> None:
     assert orthology_benchmark.calculate_goc_genes(
         "42", "62", neighbourhood1, neighbourhood2, orthologs, 1
     ) == 100
+
+
+def test_calculate_goc_genomes() -> None:
+    """Tests :func:`orthology_benchmark.calculate_goc_genomes()`.
+    """
+    # pylint: disable-next=no-member
+    test_files_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined, operator]
+    orthofinder_res = test_files_dir / "OrthoFinder" / "Results_Mar03"
+    exp_out = [("11", "35", 0), ("21", "35", 50), ("22", "36", 50), ("23", "31", 50), ("23", "38", 50),
+               ("24", "32", 75), ("25", "33", 75), ("27", "34", 75), ("28", "39", 25), ("29", "37", 50),
+               ("41", "56", 50), ("41", "63", 50), ("42", "55", 50), ("42", "62", 50), ("43", "53", 75),
+               ("43", "61", 50), ("45", "52", 25), ("46", "51", 25), ("47", "54", 25), ("72", "82", 0),
+               ("73", "87", 0)]
+    assert orthology_benchmark.calculate_goc_genomes(
+        "species_species1_core_51_104_3", "species_species2_core_51_104_5", test_files_dir, orthofinder_res,
+        2, 3
+    ) == exp_out
