@@ -675,7 +675,9 @@ def test_calculate_goc_genomes() -> None:
                ("41", "56", 50), ("41", "63", 50), ("42", "55", 50), ("42", "62", 50), ("43", "53", 75),
                ("43", "61", 50), ("45", "52", 25), ("46", "51", 25), ("47", "54", 25), ("72", "82", 0),
                ("73", "87", 0)]
-    assert orthology_benchmark.calculate_goc_genomes(
-        "species_species1_core_51_104_3", "species_species2_core_51_104_5", test_files_dir, orthofinder_res,
-        2, 3
-    ) == exp_out
+    with warns(UserWarning, match=r"Gene '26' is either a collapsed tandem paralog or not present in the GTF "
+                                  r"file."):
+        assert orthology_benchmark.calculate_goc_genomes(
+            "species_species1_core_51_104_3", "species_species2_core_51_104_5", test_files_dir,
+            orthofinder_res, 2, 3
+        ) == exp_out

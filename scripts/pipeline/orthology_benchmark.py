@@ -628,8 +628,8 @@ def calculate_goc_genes(gene1: str, gene2: str, neighbourhood1: pandas.DataFrame
     return (shared_orthologs / (2 * n)) * 100
 
 
-def calculate_goc_genomes(core_name1: str, core_name2: str, gtf_dir: str, res_dir: str, n: int, m: int)\
-        -> List[Tuple[str, str, float]]:
+def calculate_goc_genomes(core_name1: str, core_name2: str, gtf_dir: str, res_dir: str, n: int = 2,
+                          m: int = 3) -> List[Tuple[str, str, float]]:
     """Returns GOC scores for all putative orthologs between two species (core dbs).
 
     Args:
@@ -668,12 +668,16 @@ def calculate_goc_genomes(core_name1: str, core_name2: str, gtf_dir: str, res_di
         # Get gene neighbourhood for each gene
         try:
             neighbours1 = get_neighbours(gene1, genome1, n)
-        except ValueError:  # gene1 is a collapsed tandem paralog or somehow doesn't appear in the GTF
+        except ValueError:
+            warnings.warn(f"Gene '{gene1}' is either a collapsed tandem paralog or not present in the GTF "
+                          f"file.")
             continue
 
         try:
             neighbours2 = get_neighbours(gene2, genome2, m)
-        except ValueError:  # gene2 is a collapsed tandem paralog or somehow doesn't appear in the GTF
+        except ValueError:
+            warnings.warn(f"Gene '{gene2}' is either a collapsed tandem paralog or not present in the GTF "
+                          f"file.")
             continue
 
         # Calculate GOC score in one direction
