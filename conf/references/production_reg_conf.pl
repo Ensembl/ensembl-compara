@@ -49,6 +49,22 @@ Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
 # before loading all Non-Vertebrates
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-mirror-3:4275/$curr_release");
 
+# Used for protist collection databases
+Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+    -host   => 'mysql-ens-sta-3',
+    -port   => 4160,
+    -user   => 'ensro',
+    -pass   => '',
+    -dbname => "protists_choanoflagellida1_collection_core_${curr_eg_release}_${curr_release}_1",
+);
+Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+    -host   => 'mysql-ens-sta-3',
+    -port   => 4160,
+    -user   => 'ensro',
+    -pass   => '',
+    -dbname => "protists_ichthyosporea1_collection_core_${curr_eg_release}_${curr_release}_1",
+);
+
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
 # previous release core databases will be required by PrepareMasterDatabaseForRelease, LoadMembers and MercatorPecan
