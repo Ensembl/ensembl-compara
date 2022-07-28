@@ -681,3 +681,34 @@ def test_calculate_goc_genomes() -> None:
             "species_species1_core_51_104_3", "species_species2_core_51_104_5", test_files_dir,
             orthofinder_res, 2, 3
         ) == exp_out
+
+
+def test_write_goc_scores(tmp_dir: Path) -> None:
+    """Tests :func:`orthology_benchmark.write_goc_scores()`.
+
+    Args:
+        tmp_dir:Unit test temp directory (fixture).
+
+    """
+    out_file = tmp_dir / "test_goc_out.txt"
+    orthology_benchmark.write_goc_scores([("11", "35", 0), ("21", "35", 50), ("22", "36", 50)], out_file)
+    orthology_benchmark.write_goc_scores([("23", "31", 50), ("23", "38", 50)], out_file)
+
+    # pylint: disable-next=no-member
+    test_files_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined, operator]
+    assert file_cmp(out_file, test_files_dir / "goc_scores.txt")
+
+
+def test_write_goc_scores_errors() -> None:
+    """Tests :func:`orthology_benchmark.write_goc_scores()` when it fails to write to an output file.
+    """
+    scores = [("23", "31", 50), ("23", "38", 50)]
+
+    with raises(OSError, match=r"Could not create a file '/compara/goc.txt' for writing."):
+        orthology_benchmark.write_goc_scores(scores, "/compara/goc.txt")
+
+    # pylint: disable-next=no-member
+    test_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined, operator]
+    test_file = test_dir / "goc_no_permission.txt"
+    with raises(OSError, match=fr"Could not open a file '{test_file}' for writing."):
+        orthology_benchmark.write_goc_scores(scores, test_file)

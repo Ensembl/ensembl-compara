@@ -694,6 +694,37 @@ def calculate_goc_genomes(core_name1: str, core_name2: str, gtf_dir: str, res_di
     return goc
 
 
+def write_goc_scores(goc_scores: List[Tuple[str, str, float]], output_file: str) -> None:
+    """Writes (appends) calculated GOC scores for putative orthologs to a specified file.
+
+    Format: gene1_id \t gene2_id \t goc_score \n. If the file does not exist, the function creates it.
+
+    Args:
+        goc_scores: A list with putative orthologs and corresponding GOC scores.
+        output_file: Path to the output file.
+
+    Raises:
+        OSError: If `output_file` does not exist and cannot be created. If `output_file` exists but cannot be
+            opened for writing.
+
+    """
+    if not os.path.exists(output_file):
+        try:
+            with open(output_file, "a") as file_handler:
+                file_handler.write("gene_1_id\tgene_2_id\tgoc_score\n")
+        except OSError as e:
+            msg = f"Could not create a file '{output_file}' for writing."
+            raise OSError(msg) from e
+
+    try:
+        with open(output_file, "a") as file_handler:
+            for i in goc_scores:
+                file_handler.write(f"{i[0]}\t{i[1]}\t{i[2]}\n")
+    except OSError as e:
+        msg = f"Could not open a file '{output_file}' for writing."
+        raise OSError(msg) from e
+
+
 def calculate_goc_scores():
     """Docstring"""
 
