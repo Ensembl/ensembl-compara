@@ -1,0 +1,3 @@
+gene_1_id	gene_2_id	goc_score
+11	35	0
+
