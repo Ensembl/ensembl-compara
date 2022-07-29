@@ -150,6 +150,7 @@ jobs:
       python: 3.9
       name: "Python linter"
       install:
+        - pip freeze | grep -v -f requirements.txt - | grep -v '^#' | xargs pip uninstall -y
         - pip install pylint mypy
         - pip install -r requirements.txt
         - pip install .
