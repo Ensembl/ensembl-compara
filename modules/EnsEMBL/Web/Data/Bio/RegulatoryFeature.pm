@@ -49,7 +49,7 @@ sub convert_to_drawing_parameters {
       @stable_ids   = ($stable_id);
       $mirna_id     = $reg->accession;
     }
-    else {
+    elsif (ref($reg) !~ /ExternalFeature/) {
       my $db_ent = $reg->get_all_DBEntries;
       foreach ( @{ $db_ent} ) {
         push @stable_ids, $_->primary_id;
@@ -74,6 +74,7 @@ sub convert_to_drawing_parameters {
     }
     ## Final value has to be a string, to aid auto-display
     my $analyses = join(', ', @extra_results);
+    $gene_links ||= '-';
 
     push @$results, {
       'region'   => $reg->seq_region_name,
@@ -91,7 +92,7 @@ sub convert_to_drawing_parameters {
   }
    my $extra_columns = [
                     {'key' => 'gene',     'title' => 'Associated gene'},
-                    {'key' => 'analysis', 'title' => 'Link to Tarbase', 'sort' => 'html'},
+                    {'key' => 'analysis', 'title' => 'Link to external resource', 'sort' => 'html'},
   ];
   return [$results, $extra_columns];
 }
