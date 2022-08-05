@@ -458,6 +458,9 @@ sub create_mlss {
         foreach my $gdb (@{$all_genome_dbs}) {
           my $species_name = $gdb->name;
           $species_name =~ s/\b(\w)/\U$1/g;
+          my @species_name_split = split('_', $species_name);
+          my @first_two_species_name_split = @species_name_split[0, 1];
+          $species_name = join('_',@first_two_species_name_split);
           $species_name =~ s/(\S)\S+\_/$1\./;
           $species_name = substr($species_name, 0, 5);
           push @individual_names, $species_name;
