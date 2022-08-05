@@ -397,6 +397,17 @@ sub transcript_table {
         }
       }
 
+      if ($sub_type eq 'GRCh37') {
+        ## Get RefSeq id from xrefs
+        my @db_links =  @{$_->get_all_DBLinks(undef, 'MISC')};
+        foreach my $db_entry (@db_links) {
+          my $key = $db_entry->db_display_name;
+          next unless $key eq "RefSeq mRNA";
+          my $refseq_id = $db_entry->display_id;
+          $refseq_url   = $hub->get_ExtURL_link($refseq_id, 'REFSEQ_MRNA', $refseq_id);
+        }
+      }
+
       if ($trans_attribs->{$tsi}{'gencode_basic'}) {
         push @flags, helptip('GENCODE basic', $gencode_desc);
       }
@@ -439,7 +450,7 @@ sub transcript_table {
       has_ccds    => $ccds eq '-' ? 0 : 1,
       cds_tag     => $cds_tag,
       gencode_set => $gencode_set,
-      refseq_match  => $refseq_url ? $refseq_url : '-',
+      refseq  => $refseq_url ? $refseq_url : '-',
       options     => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' },
       flags       => @flags ? join('',map { $_ =~ /<img/ ? $_ : "<span class='ts_flag'>$_<span class='hidden export'>, </span></span>" } @flags) : '-',
       evidence    => join('', @evidence),
@@ -456,8 +467,13 @@ sub transcript_table {
     push @columns, { key => $k, sort => 'html', title => $x->{'title'}, label => $x->{'name'}, class => '_ht'};
   }
 
-  if ($species eq 'Homo_sapiens' && $sub_type ne 'GRCh37') {
-    push @columns, { key => 'refseq_match', sort => 'html', label => 'RefSeq Match', title => get_glossary_entry($self->hub, 'RefSeq Match'), class => '_ht' };
+  if ($species eq 'Homo_sapiens') {
+    if ($sub_type eq 'GRCh37') {
+      push @columns, { key => 'refseq', sort => 'html', label => 'RefSeq', title => get_glossary_entry($self->hub, 'RefSeq'), class => '_ht' };
+    }
+    else {
+      push @columns, { key => 'refseq', sort => 'html', label => 'RefSeq Match', title => get_glossary_entry($self->hub, 'RefSeq Match'), class => '_ht' };
+    }
   }
 
   my $title = encode_entities('<a href="/info/genome/genebuild/transcript_quality_tags.html" target="_blank">Tags</a>');
