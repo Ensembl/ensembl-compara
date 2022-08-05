@@ -456,7 +456,7 @@ sub transcript_table {
     push @columns, { key => $k, sort => 'html', title => $x->{'title'}, label => $x->{'name'}, class => '_ht'};
   }
 
-  if ($species eq 'Homo_sapiens' && $sub_type eq 'GRCh37') {
+  if ($species eq 'Homo_sapiens' && $sub_type ne 'GRCh37') {
     push @columns, { key => 'refseq_match', sort => 'html', label => 'RefSeq Match', title => get_glossary_entry($self->hub, 'RefSeq Match'), class => '_ht' };
   }
 
