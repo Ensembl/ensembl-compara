@@ -64,19 +64,20 @@ our @EXPORT_OK;
 =cut
 
 sub map_row_to_header {
-    my ($line, $header) = @_;
+    my ($line, $header, $delimiter_pattern) = @_;
+    $delimiter_pattern //= "\\s+";
     
     chomp $line;
     chomp $header;
-    my @cols      = split(/\s+/, $line);
+    my @cols      = split(/$delimiter_pattern/, $line);
     my @head_cols;
     if ( ref $header eq 'ARRAY' ) {
         @head_cols = @$header;
     } else {
-        @head_cols = split(/\s+/, $header);
+        @head_cols = split(/$delimiter_pattern/, $header);
     }
     
-    die "Number of columns in header do not match row" unless scalar @cols == scalar @head_cols;
+    die "Number of columns in header (", (scalar @head_cols),") do not match row (", (scalar @cols),")" unless scalar @cols == scalar @head_cols;
     
     my $row;
     for ( my $i = 0; $i < scalar @cols; $i++ ) {
@@ -84,6 +85,7 @@ sub map_row_to_header {
     }
     return $row;
 }
+
 
 =head2 parse_flatfile_into_hash
 
