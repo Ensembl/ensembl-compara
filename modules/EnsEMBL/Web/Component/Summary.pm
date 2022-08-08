@@ -157,7 +157,7 @@ sub get_location_html {
         
         $location_html .= sprintf('
           <li><a href="/%s/Location/View?l=%s:%s-%s" class="constant">%s : %s-%s</a></li>', 
-          $self->species, $altchr, $altstart, $altend, $altchr,
+          $self->hub->species, $altchr, $altstart, $altend, $altchr,
           $self->thousandify($altstart),
           $self->thousandify($altend)
         );
