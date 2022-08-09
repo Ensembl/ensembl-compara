@@ -339,10 +339,10 @@ sub transcript_table {
     my $url = $hub->url({ %url_params, t => $tsi });
 
     if (my $translation = $_->translation) {
-      $protein_url    = $hub->url({ type => 'Transcript', action => 'ProteinSummary', t => $tsi });
-      $translation_id = $translation->stable_id;
-      $translation_ver = $translation->version ? $translation_id.'.'.$translation->version:$translation_id;
-      $protein_length = $translation->length;
+      $translation_id   = $translation->stable_id;
+      $protein_url      = $hub->url({ type => 'Transcript', action => $self->protein_action($translation_id), t => $tsi });
+      $translation_ver  = $translation->version ? $translation_id.'.'.$translation->version:$translation_id;
+      $protein_length   = $translation->length;
     }
 
     my $ccds;
@@ -438,7 +438,7 @@ sub transcript_table {
 
     $extras{$_} ||= '-' for(keys %extra_links);
     my $row = {
-      name        => { value => $_->display_xref ? $_->display_xref->display_id : '-' },
+      name        => $self->transcript_name,
       transcript  => sprintf('<a href="%s">%s%s</a>', $url, $tsi, $version),
       bp_length   => $transcript_length,
       protein     => $protein_url ? sprintf '<a href="%s" title="View protein">%saa</a>', $protein_url, $protein_length : 'No protein',
@@ -510,6 +510,16 @@ sub set_columns {
   push @columns, { key => 'ccds', sort => 'html', label => 'CCDS', class => '_ht' } if $has_ccds;
 
   return @columns;
+}
+
+sub transcript_name {
+  my ($self, $transcript) = @_;
+  return { value => $transcript->display_xref ? $transcript->display_xref->display_id : '-' };
+}
+
+sub protein_action { 
+  ## overridden in eg-web-bacteria
+  return 'ProteinSummary'; 
 }
 
 sub colour_biotype {
