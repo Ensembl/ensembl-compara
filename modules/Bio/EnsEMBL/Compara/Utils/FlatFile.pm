@@ -65,7 +65,7 @@ our @EXPORT_OK;
 
 sub map_row_to_header {
     my ($line, $header, $delimiter_pattern) = @_;
-    $delimiter_pattern //= "\\s+";
+    $delimiter_pattern //= '\s+';
     
     chomp $line;
     chomp $header;
