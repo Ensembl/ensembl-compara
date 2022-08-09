@@ -74,7 +74,7 @@ sub map_row_to_header {
     if ( ref $header eq 'ARRAY' ) {
         @head_cols = @$header;
     } else {
-        @head_cols = split(/$delimiter_pattern/, $header);
+        @head_cols = split(/$delimiter_pattern/, $header, -1);
     }
     
     die "Number of columns in header (", (scalar @head_cols),") do not match row (", (scalar @cols),")" unless scalar @cols == scalar @head_cols;
