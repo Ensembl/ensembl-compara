@@ -25,7 +25,7 @@ use Bio::EnsEMBL::Compara::Utils::FlatFile;
 
 subtest 'map_row_to_header' => sub {
     my $line_1 = "a\tb\tc\td";
-    my $line_2 = "a;b;c;d";
+    my $line_2 = "a b  c   d";
     my @header1 = (1, 2, 3, 4);
     my @header2 = (1, 2);
 
@@ -35,66 +35,57 @@ subtest 'map_row_to_header' => sub {
     );
 
     is_deeply( 
-        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, "1\t2\t3\t4"), 
-        { 1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd' }
-    );
-    
-    is_deeply( 
         Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, \@header1, "\t"), 
         { 1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd' }
     );
 
     is_deeply( 
-        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, \@header1, '\t'), 
+        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, "1\t2\t3\t4"), 
         { 1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd' }
     );
 
     is_deeply( 
-        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, "1\t2\t3\t4", "\t"), 
-        { 1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd' }
+        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header("a\tb\tc\t", "1\t2\t3\t4"), 
+        { 1 => 'a', 2 => 'b', 3 => 'c', 4 => '' }
     );
-
-    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, \@header2) } qr/Number of columns in header \(2\) do not match row \(4\)/, "Header doesn't match";
-    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, "1\t2")  } qr/Number of columns in header \(2\) do not match row \(4\)/, "Header doesn't match";
-    # to test LIMIT = -1 of split function: https://perldoc.perl.org/functions/split
-    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, "1\t2\t")  } qr/Number of columns in header \(3\) do not match row \(4\)/, "Header doesn't match";
-
-    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, \@header2, "\t") } qr/Number of columns in header \(2\) do not match row \(4\)/, "Header doesn't match";
-    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, "1\t2", "\t") } qr/Number of columns in header \(2\) do not match row \(4\)/, "Header doesn't match";
-    # to test LIMIT = -1 of split function: https://perldoc.perl.org/functions/split
-    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, "1\t2\t", "\t") } qr/Number of columns in header \(3\) do not match row \(4\)/, "Header doesn't match";
-
-    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, \@header2, '\t') } qr/Number of columns in header \(2\) do not match row \(4\)/, "Header doesn't match";
-    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, "1\t2", '\t') } qr/Number of columns in header \(2\) do not match row \(4\)/, "Header doesn't match";
-    # to test LIMIT = -1 of split function: https://perldoc.perl.org/functions/split
-    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, "1\t2\t", '\t') } qr/Number of columns in header \(3\) do not match row \(4\)/, "Header doesn't match";
-
     
     is_deeply( 
-        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_2, \@header1, ";"), 
+        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header("a\t\tc\td", "1\t2\t3\t4", "\t"), 
+        { 1 => 'a', 2 => '', 3 => 'c', 4 => 'd' }
+    );
+
+    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, \@header2) }        qr/Number of columns in header \(2\) do not match row \(4\)/, "Header doesn't match";
+    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, \@header2, "\t") }  qr/Number of columns in header \(2\) do not match row \(4\)/, "Header doesn't match";
+    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header("a\t\tc\td", "1\t2\t3\t4") } qr/Number of columns in header \(4\) do not match row \(3\)/, "Header doesn't match";
+    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, \@header2, '\t') }  qr/Number of columns in header \(2\) do not match row \(4\)/, "Header doesn't match";
+    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, "1\t2", "\t") }     qr/Number of columns in header \(2\) do not match row \(4\)/, "Header doesn't match";
+    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, "1\t2") }           qr/Number of columns in header \(2\) do not match row \(4\)/, "Header doesn't match";
+
+    # to test LIMIT = -1 of split function: https://perldoc.perl.org/functions/split
+    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, "1\t2\t") }         qr/Number of columns in header \(3\) do not match row \(4\)/, "Header doesn't match";
+    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, "1\t2\t", "\t") }   qr/Number of columns in header \(3\) do not match row \(4\)/, "Header doesn't match";
+    
+    is_deeply( 
+        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_2, \@header1), 
         { 1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd' }
     );
 
     is_deeply( 
-        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_2, "1;2;3;4", ";"), 
+        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header("a b c d", \@header1), 
         { 1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd' }
     );
 
     is_deeply( 
-        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_2, \@header1, ';'), 
-        { 1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd' }
+        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header("a b c d ", "1 2 3 4 "), 
+        { 1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd', '' => ''}
     );
 
     is_deeply( 
-        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_2, "1;2;3;4", ';'), 
+        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_2, "1 2 3 4"), 
         { 1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd' }
     );
 
-    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_2, \@header1) } qr/Number of columns in header \(4\) do not match row \(1\)/, "Header doesn't match";
-    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_2, \@header2) } qr/Number of columns in header \(2\) do not match row \(1\)/, "Header doesn't match";
-
-
-
+    throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header("a b c d ", \@header1) }   qr/Number of columns in header \(4\) do not match row \(5\)/, "Header doesn't match";
 };
 
 subtest 'group_array_of_hashes_by' => sub {

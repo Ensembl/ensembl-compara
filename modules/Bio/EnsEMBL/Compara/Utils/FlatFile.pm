@@ -69,7 +69,7 @@ sub map_row_to_header {
     
     chomp $line;
     chomp $header;
-    my @cols      = split(/$delimiter_pattern/, $line);
+    my @cols      = split(/$delimiter_pattern/, $line, -1);
     my @head_cols;
     if ( ref $header eq 'ARRAY' ) {
         @head_cols = @$header;
@@ -85,7 +85,6 @@ sub map_row_to_header {
     }
     return $row;
 }
-
 
 =head2 parse_flatfile_into_hash
 
