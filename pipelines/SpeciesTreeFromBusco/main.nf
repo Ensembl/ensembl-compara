@@ -51,8 +51,7 @@ process prepareGenome {
     output:
         path "processed/*", emit: proc_genome
     script:
-        id = (genome =~ /(.*)\..*$/)[0][1]
-        ext = (genome =~ /.*\.(.*)$/)[0][1]
+        id = (genome =~ /(.+)\..+?$/)[0][1]
         """
             mkdir -p processed
             seqkit -j 5 grep -n -v -r -p "PATCH_*,HAP" $genome > processed/$id
@@ -86,6 +85,30 @@ process prepareBusco {
     """
 }
 
+
+/**
+*@input path to the genome fasta
+*@output path to annotation GTF
+*@output path to genome fasta
+*/
+process linkAnnoCache {
+    label 'rc_1Gb'
+
+    publishDir "${params.results_dir}/anno_cache/$genome", pattern: "annotation.gtf", mode: "copy",  overwrite: true
+
+    input:
+        path genome
+    output:
+        path "annotation.gtf", emit: busco_annot
+        path genome, emit: genome
+    script:
+    base = new File("$genome")
+    base = base.getName()
+    """
+    ln -s ${params.anno_cache}/$base/annotation.gtf .
+    """
+}
+
 /**
 *@input path to BUSCO longest protein isoforms
 *@input path to genome fasta
@@ -94,17 +117,21 @@ process prepareBusco {
 */
 process buscoAnnot {
     label 'retry_with_8gb_mem_c1'
+
+    publishDir "${params.results_dir}/anno_cache/$genome", pattern: "annotation.gtf", mode: "copy",  overwrite: true
+
     input:
         path busco_prot
         path genome
     output:
-        path "anno_res/busco_output/annotation.gtf", emit: busco_annot
+        path "annotation.gtf", emit: busco_annot
         path genome, emit: genome
     script:
     """
     mkdir -p anno_res
     export ENSCODE=$params.enscode
     ln -s `which tblastn` .
+
     python3 $params.anno_exe \
     --output_dir anno_res \
     --genome_file $genome \
@@ -113,6 +140,8 @@ process buscoAnnot {
     --run_busco \
     --genblast_timeout  64800\
     --busco_protein_file $busco_prot
+
+    mv anno_res/busco_output/annotation.gtf .
     """
 }
 
@@ -292,18 +321,56 @@ process runIqtree {
     """
 }
 
+// Function to check if a genome is present in
+// the annotation cache.
+def annoInCache(genome, anno_cache) {
+    genome = new File("$genome")
+    genome = genome.getName()
+    File file = new File("${anno_cache}/${genome}/annotation.gtf")
+    return file.exists()
+}
+
 workflow {
     println(ensemblLogo())
+
+    // Prepare busco protein set:
     prepareBusco(params.busco_proteins)
+
+    // Prepare input genomes:
     genomes = Channel.fromPath("${params.dir}/*.*")
     prepareGenome(genomes)
 
-    buscoAnnot(prepareBusco.out.busco_prots, prepareGenome.out.proc_genome)
-    runGffread(buscoAnnot.out.busco_annot, buscoAnnot.out.genome)
+    // Branch the genomes channel based on presence in the
+    // annotation cache:
+    prepareGenome.out.proc_genome.branch {
+        annot: !annoInCache(it, params.anno_cache)
+        link: annoInCache(it, params.anno_cache)
+    }.set { genome_fork }
+
+    // Link annotations present in the cache:
+    linkAnnoCache(genome_fork.link)
+    // Annotate genomes not present in the cache:
+    buscoAnnot(prepareBusco.out.busco_prots, genome_fork.annot)
+
+    // Merge the output of link and annotate steps:
+    genomes = buscoAnnot.out.genome.mix(linkAnnoCache.out.genome)
+    annots = buscoAnnot.out.busco_annot.mix(linkAnnoCache.out.busco_annot)
+
+    // Get cDNA from the genomes and annotations:
+    runGffread(annots, genomes)
+ 
+    // Organise sequences per-gene:
     collateBusco(runGffread.out.collect(), prepareBusco.out.busco_genes)
+
+    // Align protein sequences:
     alignProt(collateBusco.out.prot_seq.flatten())
+
+    // Trim protein alignments:
     trimAlignments(alignProt.out.prot_aln)
+
+    // Merge alignments:
     mergeAlns(trimAlignments.out.trim_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
+
+    // Calculate species tree using iqtree2:
     runIqtree(mergeAlns.out.merged_aln, mergeAlns.out.partitions)
 }
-
