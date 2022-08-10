@@ -52,7 +52,6 @@ process prepareGenome {
         path "processed/*", emit: proc_genome
     script:
         id = (genome =~ /(.+)\..+?$/)[0][1]
-        ext = (genome =~ /.+\.(.+?)$/)[0][1]
         """
             mkdir -p processed
             seqkit -j 5 grep -n -v -r -p "PATCH_*,HAP" $genome > processed/$id
