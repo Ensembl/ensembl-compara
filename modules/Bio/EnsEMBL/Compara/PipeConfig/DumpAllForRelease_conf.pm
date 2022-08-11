@@ -150,7 +150,7 @@ sub default_options {
         'ce_readme'             => $self->check_file_in_ensembl('ensembl-compara/docs/ftp/constrained_elements.txt'),
         'bigbed_autosql'        => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/constrainedelements_autosql.as'),
 
-        'uniprot_dir'  => '/nfs/ftp/pub/databases/ensembl/ensembl_compara/gene_trees_for_uniprot/',
+        'uniprot_dir'  => '/nfs/ftp/public/databases/ensembl/ensembl_compara/gene_trees_for_uniprot/',
         'uniprot_file' => 'GeneTree_content.#clusterset_id#.e#curr_release#.txt',
 
     };
@@ -380,6 +380,7 @@ sub pipeline_analyses {
                     'mv ensembl.#uniprot_file#* #uniprot_dir#',
                 ))
             },
+            -rc_name       => '1Gb_datamover_job',
         },
 
         {   -logic_name     => 'remove_uniprot_file',

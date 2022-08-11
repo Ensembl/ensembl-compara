@@ -235,6 +235,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'prev_rel_db'   => $self->o('prev_rel_db'),
         'alt_aln_dbs'   => $self->o('alt_aln_dbs'),
         'mapping_db'    => $self->o('mapping_db'),
+        'db_name'       => $self->o('db_name'),
 
         'pipeline_dir'              => $self->o('pipeline_dir'),
         'output_dir_path'           => $self->o('output_dir_path'),

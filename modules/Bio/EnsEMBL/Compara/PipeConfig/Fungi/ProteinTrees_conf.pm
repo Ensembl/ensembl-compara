@@ -63,6 +63,7 @@ sub default_options {
 
         'mapped_gene_ratio_per_taxon' => {
             '2759'    => 0.5,    # eukaryotes
+            '6029'    => 0.4,    # microsporidia
         },
 
         # Extra analyses:
@@ -75,8 +76,6 @@ sub default_options {
         # Do we need a mapping between homology_ids of this database to another database?
         # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
         'do_homology_id_mapping' => 0,
-        # Quick tree break is not suitable for fungi dataset due to divergence causing inappropriate subtrees
-        'use_quick_tree_break'   => 0,
     };
 }
 
@@ -87,6 +86,8 @@ sub tweak_analyses {
     $analyses_by_name->{'unannotated_all_vs_all_factory'}->{'-parameters'}->{'num_sequences_per_blast_job'} = 5000;
     $analyses_by_name->{'members_against_allspecies_factory'}->{'-parameters'}->{'num_sequences_per_blast_job'} = 5000;
     $analyses_by_name->{'members_against_allspecies_factory'}->{'-parameters'}->{'num_sequences_per_blast_job'} = 5000;
+
+    $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;
 }
 
 1;

@@ -101,7 +101,7 @@ sub default_options {
         'clustering_max_gene_halfcount' => 750,
         # File with gene / peptide names that must be excluded from the
         # clusters (e.g. know to disturb the trees)
-        'gene_blacklist_file'           => '/dev/null',
+        'gene_blocklist_file'           => '/dev/null',
 
     # tree building parameters:
         'use_quick_tree_break'      => 1,
@@ -910,7 +910,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into => {
                 '1->A' => [ 'load_PANTHER' ],
-                'A->1' => [ 'remove_blacklisted_genes' ],
+                'A->1' => [ 'remove_blocklisted_genes' ],
             },
         },
 
@@ -972,10 +972,10 @@ sub core_pipeline_analyses {
         },
 
 
-        {   -logic_name         => 'remove_blacklisted_genes',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveBlacklistedGenes',
+        {   -logic_name         => 'remove_blocklisted_genes',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveBlocklistedGenes',
             -parameters         => {
-                blacklist_file      => $self->o('gene_blacklist_file'),
+                'blocklist_file' => $self->o('gene_blocklist_file'),
             },
             -flow_into          => [ 'clusterset_backup' ],
             -rc_name => '500Mb_job',

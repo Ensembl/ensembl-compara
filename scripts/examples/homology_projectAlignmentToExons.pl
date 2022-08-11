@@ -34,15 +34,17 @@ $reg->load_registry_from_db(
 );
 
 
-my $human_gene_adaptor = Bio::EnsEMBL::Registry->get_adaptor ("Homo sapiens", "core", "Gene");
-my $gene_member_adaptor = Bio::EnsEMBL::Registry->get_adaptor ("Multi", "compara", "GeneMember");
-my $homology_adaptor = Bio::EnsEMBL::Registry->get_adaptor ("Multi", "compara", "Homology");
+my $human_gene_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Homo sapiens", "core", "Gene");
+my $gene_member_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GeneMember");
+my $homology_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "Homology");
+my $genome_db_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", "GenomeDB");
 
+my $genome = $genome_db_adaptor->fetch_by_name_assembly("homo_sapiens");
 my $genes = $human_gene_adaptor-> fetch_all_by_external_name('BRCA2');
 
 my $gene = shift @$genes; # We assume we have only one gene
 
-my $member = $gene_member_adaptor->fetch_by_stable_id($gene->stable_id);
+my $member = $gene_member_adaptor->fetch_by_stable_id_GenomeDB($gene->stable_id, $genome);
 my @mouse_homologies = @{$homology_adaptor->fetch_all_by_Member($member, -TARGET_SPECIES => 'Mus_musculus', -METHOD_LINK_TYPE => 'ENSEMBL_ORTHOLOGUES')};
 my @rat_homologies = @{$homology_adaptor->fetch_all_by_Member($member, -TARGET_SPECIES => 'Rattus_norvegicus', -METHOD_LINK_TYPE => 'ENSEMBL_ORTHOLOGUES')};
 
@@ -143,7 +145,7 @@ foreach my $homology (@mouse_homologies, @rat_homologies) {
     $gene1 = $gene2;
     $gene2 = $temp;
   }
-  my $member2 = $gene_member_adaptor->fetch_by_stable_id($gene2->stable_id);
+  my $member2 = $gene_member_adaptor->fetch_by_stable_id_GenomeDB($gene2->stable_id, $gene2->genome_db);
 
   print_transcript($member->get_canonical_SeqMember->get_Transcript, $cdna_simple_align);
   print_transcript($member2->get_canonical_SeqMember->get_Transcript, $cdna_simple_align);

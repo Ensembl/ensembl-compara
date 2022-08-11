@@ -20,7 +20,8 @@ PYTHON_SOURCE_LOCATIONS=('scripts' 'src/python')
 # Setup the environment variables
 # shellcheck disable=SC2155
 export PYTHONPATH=$PYTHONPATH:$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')
-export MYPYPATH=$MYPYPATH:$PWD/src/python/lib
+# more info: https://mypy.readthedocs.io/en/stable/running_mypy.html#mapping-file-paths-to-modules
+export MYPYPATH=$MYPYPATH:src/python/lib
 
 PYLINT_OUTPUT_FILE=$(mktemp)
 PYLINT_ERRORS=$(mktemp)

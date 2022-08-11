@@ -14,10 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-
-=pod
-
 =head1 NAME
 
 GenerateSSPict
@@ -29,19 +25,11 @@ secondary structures (in bracket notation) created by Infernal.
 In addition to secondary structure plots for the whole alignments 
 of the family, plots for individual members are also created.
 
-=head1 CONTACT
-
-   Please email comments or questions to the public Ensembl
-   developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-   Questions may also be sent to the Ensembl help desk at
-   <http://www.ensembl.org/Help/Contact>
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-
-Internal methods are usually preceded with an underscore (_)
+=head1 SYNOPSIS
+perl GenerateSSPict.pl \
+    --compara_url mysql://ensro@mysql-ens-compara-prod-5:4617/ensembl_compara_plants_55_108 \
+    --id LR48_Vigan1529s000400
+    --gdb vigna_angularis
 
 =cut
 
@@ -53,7 +41,6 @@ use Getopt::Long;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::IO qw/:spurt/;
-#use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 my $reg = "Bio::EnsEMBL::Registry";
 
@@ -62,6 +49,7 @@ my $registry_file;
 my $url;
 my $compara_url;
 my $stable_id;
+my $species;
 my $thumbnail;
 my $help;
 
@@ -71,20 +59,22 @@ GetOptions(
            "compara_url=s"   => \$compara_url,
            "conf|registry=s" => \$registry_file,
            "id|stable_id:s"  => \$stable_id,
+           "gdb|species:s"   => \$species,
            "thumbnail"       => \$thumbnail,
            "help"            => \$help,
           );
 
-if (! defined $stable_id || $help) {
+if (! defined $stable_id || ! defined $species || $help) {
       print <<'EOH';
 GenerateSSPict.pl -- Generate secondary structure of Ensembl ncRNA trees
-./GenerateSSPict.pl -compara_url <compara_url> -id <gene_member_stable_id>
+./GenerateSSPict.pl -compara_url <compara_url> -id <gene_member_stable_id> -gdb <species>
 
 Options:
     --url                 [Optional] URL for Ensembl databases
     --compara_url         [Optional] URL for Ensembl Compara database
     --conf | --registry   [Optional] Path to a configuration file
     --id   | --stable_id             Ensembl gene stable id
+    --gdb  | --species               Ensembl genome/species name
     --r2r_exe                        Path to the r2r executable
                                      [Defaults to the version 1.0.4 in the linuxbrew cellar]
     --thumbnail           [Optional] If present, only a thumbnail of the family is created
@@ -115,8 +105,11 @@ if ($compara_url) {
 my $geneMemberAdaptor = $compara_dba->get_GeneMemberAdaptor();
 my $seqMemberAdaptor  = $compara_dba->get_SeqMemberAdaptor();
 my $geneTreeAdaptor   = $compara_dba->get_GeneTreeAdaptor();
+my $genomeDBAdaptor   = $compara_dba->get_GenomeDBAdaptor();
 
-my $gene_member = $geneMemberAdaptor->fetch_by_stable_id($stable_id);
+my $genome_db = $genomeDBAdaptor->fetch_by_name_assembly($species);
+check($genome_db, "genomedb", $species);
+my $gene_member = $geneMemberAdaptor->fetch_by_stable_id_GenomeDB($stable_id, $genome_db);
 check($gene_member, "gene", $stable_id);
 my $transc = $seqMemberAdaptor->fetch_canonical_for_gene_member_id($gene_member->gene_member_id);
 check($transc, "transcript", $stable_id);

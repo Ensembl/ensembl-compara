@@ -76,33 +76,6 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 #
 #####################
 
-sub fetch_by_stable_id { ## DEPRECATED
-    my ($self, $stable_id) = @_;
-
-    deprecate(
-        "MemberAdaptor::fetch_by_stable_id() is to be deprecated and will be removed in e109. Use fetch_all_by_stable_id_GenomeDB instead."
-    );
-
-    throw("MemberAdaptor::fetch_by_stable_id() must have an stable_id") unless $stable_id;
-
-    my $constraint = 'm.stable_id = ?';
-    $self->bind_param_generic_fetch($stable_id, SQL_VARCHAR);
-    my $m = $self->generic_fetch_one($constraint);
-    return $m if $m;
-
-    my $vindex = rindex($stable_id, '.');
-    return undef if $vindex <= 0;  # bail out if there is no dot, or if the string starts with a dot (since that would make the stable_id part empty)
-    my $version = substr($stable_id,$vindex+1);
-    if (looks_like_number($version)) {  # to avoid DBI complains
-        $constraint = 'm.stable_id = ? AND m.version = ?';
-        $self->bind_param_generic_fetch(substr($stable_id,0,$vindex), SQL_VARCHAR);
-        $self->bind_param_generic_fetch($version, SQL_INTEGER);
-        return $self->generic_fetch_one($constraint);
-    } else {
-        return undef;
-    }
-}
-
 =head2 fetch_by_stable_id_GenomeDB
   Arg [1]       : string $stable_id
   Arg [2]       : integer $genome_db_id or Bio::EnsEMBL::Compara::GenomeDB object
