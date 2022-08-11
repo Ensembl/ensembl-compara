@@ -209,8 +209,6 @@ process collateBusco {
 process alignProt {
     label 'retry_with_4gb_mem_c1'
 
-    publishDir "${params.results_dir}/", pattern: "alignments/prot_aln_*.fas", mode: "copy",  overwrite: true
-
     input:
         val protFas
         path cdnas
@@ -252,17 +250,37 @@ process protAlnToCodon {
     ${params.seqkit_exe} -j 5 fx2tab -n $prot_aln > prot.ids
     ${params.seqkit_exe} grep -j 5 -n -f prot.ids $cdna > filtered_cdna.fas
     # Convert AA to codon alignment:
-    ${params.pal2nal_exe} $prot_aln filtered_cdna.fas -output fasta > alignments/codon_aln_${id}.fas.raw
-    if [ -s alignments/codon_aln_${id}.fas.raw ];
+    ${params.pal2nal_exe} $prot_aln filtered_cdna.fas -output fasta > alignments/codon_aln_${id}.fas
+    if [ -s alignments/codon_aln_${id}.fas ];
     then
         true;
     else
         echo "Codon alignment is empty!"
         exit 1
     fi
-    # Remove stop codons:
+    """
+}
+
+/**
+*@input path to codon alignment fasta
+*@output path to codon alignment fasta with stop codons removed
+*/
+process removeStopCodons {
+    label 'rc_1Gb'
+
+    publishDir "${params.results_dir}/", pattern: "alignments/codon_aln_*.fas", mode: "copy",  overwrite: true
+
+    input:
+        path codon_aln
+    output:
+        path "alignments/codon_aln_*.fas", emit: codon_aln
+
+    script:
+    id = (codon_aln =~ /.*codon_aln_(.*)\.fas$/)[0][1]
+    """
+    mkdir -p alignments
     java -jar ${params.macse_jar} -prog exportAlignment \
-    -align alignments/codon_aln_${id}.fas.raw \
+    -align $codon_aln \
     -codonForFinalStop --- \
     -codonForInternalStop NNN \
     -out_NT alignments/codon_aln_${id}.fas
@@ -567,8 +585,11 @@ workflow {
     // Convert protein alignments to codon alignment:
     protAlnToCodon(alignProt.out.prot_aln, alignProt.out.cdnas)
 
+    // Remove stop codons from codon alignment:
+    removeStopCodons(protAlnToCodon.out.codon_aln)
+
     // Calculate trees from the codon alignments:
-    calcGeneTrees(protAlnToCodon.out.codon_aln)
+    calcGeneTrees(removeStopCodons.out.codon_aln)
 
     // Calculate trees from the protein alignments:
     calcProtTrees(alignProt.out.prot_aln)
