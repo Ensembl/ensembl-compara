@@ -59,7 +59,7 @@ our @EXPORT_OK;
 
     To avoid hard-coding array indexes, map the values in each row based on the
     header line. This way, it doesn't matter if we add extra fields to the input
-    file. This subroutine uses `\s+` as default separator between fields. This 
+    file. This subroutine uses `\s+` as default separator between fields. This
     behaviour can be changed using the `delimiter_pattern` parameter. Tab value
     `\t` has been tested
 

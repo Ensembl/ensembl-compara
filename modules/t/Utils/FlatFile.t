@@ -30,27 +30,26 @@ subtest 'map_row_to_header' => sub {
     my @header2 = (1, 2);
 
     is_deeply( 
-        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, \@header1), 
+        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, \@header1),
         { 1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd' }
     );
 
-    is_deeply( 
-        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, \@header1, "\t"), 
+    is_deeply(
+        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, \@header1, "\t"),
         { 1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd' }
     );
 
-    is_deeply( 
-        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, "1\t2\t3\t4"), 
+    is_deeply(
+        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, "1\t2\t3\t4"),
         { 1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd' }
     );
 
-    is_deeply( 
-        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header("a\tb\tc\t", "1\t2\t3\t4"), 
+    is_deeply(
+        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header("a\tb\tc\t", "1\t2\t3\t4"),
         { 1 => 'a', 2 => 'b', 3 => 'c', 4 => '' }
     );
-    
-    is_deeply( 
-        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header("a\t\tc\td", "1\t2\t3\t4", "\t"), 
+    is_deeply(
+        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header("a\t\tc\td", "1\t2\t3\t4", "\t"),
         { 1 => 'a', 2 => '', 3 => 'c', 4 => 'd' }
     );
 
@@ -64,24 +63,23 @@ subtest 'map_row_to_header' => sub {
     # to test LIMIT = -1 of split function: https://perldoc.perl.org/functions/split
     throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, "1\t2\t") }         qr/Number of columns in header \(3\) do not match row \(4\)/, "Header doesn't match";
     throws_ok { Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_1, "1\t2\t", "\t") }   qr/Number of columns in header \(3\) do not match row \(4\)/, "Header doesn't match";
-    
-    is_deeply( 
-        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_2, \@header1), 
+    is_deeply(
+        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_2, \@header1),
         { 1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd' }
     );
 
-    is_deeply( 
-        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header("a b c d", \@header1), 
+    is_deeply(
+        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header("a b c d", \@header1),
         { 1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd' }
     );
 
-    is_deeply( 
-        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header("a b c d ", "1 2 3 4 "), 
+    is_deeply(
+        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header("a b c d ", "1 2 3 4 "),
         { 1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd', '' => ''}
     );
 
-    is_deeply( 
-        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_2, "1 2 3 4"), 
+    is_deeply(
+        Bio::EnsEMBL::Compara::Utils::FlatFile::map_row_to_header($line_2, "1 2 3 4"),
         { 1 => 'a', 2 => 'b', 3 => 'c', 4 => 'd' }
     );
 
