@@ -59,24 +59,27 @@ our @EXPORT_OK;
 
     To avoid hard-coding array indexes, map the values in each row based on the
     header line. This way, it doesn't matter if we add extra fields to the input
-    file
+    file. This subroutine uses `\s+` as default separator between fields. This
+    behaviour can be changed using the `delimiter_pattern` parameter. Tab value
+    `\t` has been tested
 
 =cut
 
 sub map_row_to_header {
-    my ($line, $header) = @_;
+    my ($line, $header, $delimiter_pattern) = @_;
+    $delimiter_pattern //= '\s+';
     
     chomp $line;
     chomp $header;
-    my @cols      = split(/\s+/, $line);
+    my @cols      = split(/$delimiter_pattern/, $line, -1);
     my @head_cols;
     if ( ref $header eq 'ARRAY' ) {
         @head_cols = @$header;
     } else {
-        @head_cols = split(/\s+/, $header);
+        @head_cols = split(/$delimiter_pattern/, $header, -1);
     }
     
-    die "Number of columns in header do not match row" unless scalar @cols == scalar @head_cols;
+    die "Number of columns in header (", (scalar @head_cols),") do not match row (", (scalar @cols),")" unless scalar @cols == scalar @head_cols;
     
     my $row;
     for ( my $i = 0; $i < scalar @cols; $i++ ) {
