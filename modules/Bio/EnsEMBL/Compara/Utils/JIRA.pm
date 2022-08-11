@@ -368,7 +368,7 @@ sub link_tickets {
 
 sub _validate_division {
     my ( $self, $division ) = @_;
-    my %compara_divisions = map { $_ => 1 } qw(vertebrates plants ensembl metazoa bacteria pan protists fungi);
+    my %compara_divisions = map { $_ => 1 } qw(vertebrates plants ensembl metazoa bacteria pan protists fungi references);
     # RelCo tickets do not need a specific division
     if ($division eq '') {
         return $division;

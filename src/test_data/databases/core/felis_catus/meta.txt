@@ -1,4 +1,4 @@
-1	\N	schema_version	107
+1	\N	schema_version	108
 2	\N	patch	patch_38_39_a.sql|status_enum
 3	\N	patch	patch_38_39_b.sql|unique_assembly
 4	\N	patch	patch_38_39_c.sql|multiversion_objects
@@ -307,3 +307,4 @@
 1491	\N	patch	patch_105_106_a.sql|schema_version
 1492	\N	patch	patch_106_107_a.sql|schema_version
 1493	\N	patch	patch_106_107_b.sql|Added index for seq_region_mapping
+1494	\N	patch	patch_107_108_a.sql|schema_version

@@ -35,12 +35,15 @@ $reg->load_registry_from_db(
 
 
 my $gene_name = shift;
+my $genome_name = shift;
 $gene_name="ENSDARG00000052960" unless(defined($gene_name));
+$genome_name="danio_rerio" unless(defined($genome_name));
 
 
 # get compara DBAdaptor
-my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('Multi', 'compara');
-my $gene_member = $comparaDBA->get_GeneMemberAdaptor->fetch_by_stable_id($gene_name);
+my $comparaDBA = Bio::EnsEMBL::Registry->get_DBAdaptor('Multi', 'compara');
+my $genome = $comparaDBA->get_GenomeDBAdaptor->fetch_by_name_assembly($genome_name);
+my $gene_member = $comparaDBA->get_GeneMemberAdaptor->fetch_by_stable_id_GenomeDB($gene_name, $genome);
 my ($homologies, $genes) = $comparaDBA->get_HomologyAdaptor->fetch_orthocluster_with_Member($gene_member);
 
 foreach my $homology (@$homologies) {

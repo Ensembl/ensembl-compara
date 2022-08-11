@@ -1,4 +1,4 @@
 1	9606	homo_sapiens	GRCh38	2014-01-Ensembl	1	1	\N	\N	Human	\N	76	\N
 2	10090	mus_musculus	GRCm39	2020-08-Ensembl	1	1	\N	reference (CL57BL6) strain	Mouse	\N	103	\N
 3	9365	erinaceus_europaeus	HEDGEHOG	2006-10-Ensembl	0	0	\N	\N	Hedgehog	\N	43	\N
-63	\N	ancestral_sequences	\N	\N	0	0	\N	\N	Ancestral sequences	\N	49	\N
+63	\N	ancestral_sequences			0	0	\N	\N	Ancestral sequences	\N	49	\N
