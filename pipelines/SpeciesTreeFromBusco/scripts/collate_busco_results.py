@@ -114,7 +114,7 @@ if __name__ == '__main__':
         for x in s:     # type: ignore
             if (len(x.seq) % 3) != 0:
                 continue
-            y = x.translate()   # type: ignore
+            y = x.translate(stop_symbol='*', to_stop=False, cds=False)   # type: ignore
             if str(y.seq).count("X") > 10:
                 continue
             y.id = x.id     # type: ignore
