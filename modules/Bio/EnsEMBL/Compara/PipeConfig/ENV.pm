@@ -92,7 +92,8 @@ sub shared_default_options {
         'ref_member_dumps_dir'  => $self->o('shared_hps_dir') . '/reference_dumps/',
         'sketch_dir'            => $self->o('shared_hps_dir') . '/species_tree/' . $self->o('division') . '_sketches/',
         # Record of the species that have been run with each reference in RR
-        'rr_species_set_record' => $self->o('shared_hps_dir') . '/species_set_record/' . Bio::EnsEMBL::ApiVersion::software_version() . '/',
+        'all_rr_records'        => $self->o('shared_hps_dir') . '/species_set_record/',
+        'rr_species_set_record' => $self->o('all_rr_records') . '/' . Bio::EnsEMBL::ApiVersion::software_version() . '/',
         # HMM library
         'hmm_library_version'   => '2',
         'hmm_library_basedir'   => $self->o('shared_hps_dir') . '/treefam_hmms/2019-01-02',
@@ -140,6 +141,7 @@ sub executable_locations {
         'populate_per_genome_database_exe'  => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/populate_per_genome_database.pl'),
         'create_datacheck_tickets_exe'      => $self->check_exe_in_ensembl('ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl'),
         'copy_ancestral_core_exe'           => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/copy_ancestral_core.pl'),
+        'get_nearest_taxonomy_exe'          => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/get_nearest_taxonomy.py'),
         'gene_tree_stats_report_exe'        => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/gene_tree_stats.pl'),
         'symlink_fasta_exe'                 => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/symlink_fasta.py'),
 
