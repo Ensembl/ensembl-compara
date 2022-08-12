@@ -10,7 +10,7 @@
       <taxonomic_group taxon_name="Chordata">
         <!-- But exclude everything below mus_musculus and sus_scrofa -->
         <ref_for_taxon name="mus_musculus"/>
-        <ref_for_taxon name="sus_scrofa_gca000003025v6"/>
+        <ref_for_taxon name="sus_scrofa"/>
       </taxonomic_group>
       <genome name="caenorhabditis_elegans"/>
       <genome name="drosophila_melanogaster"/>
@@ -65,7 +65,7 @@
     <!-- Switch to bos_taurus if equus_caballus gets an assembly update -->
     <one_vs_all method="LASTZ_NET" ref_genome="equus_caballus" against="Perissodactyla"/>
 
-    <one_vs_all method="LASTZ_NET" ref_genome="sus_scrofa_gca000003025v6" against="Sus"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="sus_scrofa" against="Sus"/>
 
     <one_vs_all method="LASTZ_NET" ref_genome="monodelphis_domestica">
       <species_set in_collection="default">
@@ -75,7 +75,7 @@
     </one_vs_all>
 
     <!-- Sauropsids -->
-    <one_vs_all method="LASTZ_NET" ref_genome="gallus_gallus_gca016699485v1">
+    <one_vs_all method="LASTZ_NET" ref_genome="gallus_gallus">
       <species_set>
         <taxonomic_group taxon_name="Sarcopterygii"/>
         <taxonomic_group taxon_name="Mammalia" exclude="1"/>
@@ -186,7 +186,7 @@
         <genome name="rattus_norvegicus"/>
         <genome name="rhinolophus_ferrumequinum" assembly="mRhiFer1_v1.p"/>
         <genome name="sciurus_vulgaris" assembly="mSciVul1.1"/>
-        <genome name="sus_scrofa_gca000003025v6"/>
+        <genome name="sus_scrofa"/>
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="EPO_EXTENDED" gerp="1">
@@ -203,7 +203,7 @@
         <genome name="aquila_chrysaetos_chrysaetos" assembly="bAquChr1.2"/>
         <genome name="coturnix_japonica" assembly="Coturnix_japonica_2.0"/>
         <genome name="crocodylus_porosus" assembly="CroPor_comp1"/>
-        <genome name="gallus_gallus_gca016699485v1"/>
+        <genome name="gallus_gallus"/>
         <genome name="gopherus_evgoodei" assembly="rGopEvg1_v1.p"/>
         <genome name="meleagris_gallopavo" assembly="Turkey_5.1"/>
         <genome name="naja_naja" assembly="Nana_v5"/>
@@ -282,7 +282,7 @@
         <genome name="bos_taurus"/>
         <genome name="equus_caballus"/>
         <genome name="ovis_aries_rambouillet"/>
-        <genome name="sus_scrofa_gca000003025v6"/>
+        <genome name="sus_scrofa"/>
         <genome name="sus_scrofa_usmarc"/>
       </species_set>
     </multiple_alignment>
@@ -318,7 +318,7 @@
         <genome name="delphinapterus_leucas" assembly="ASM228892v3"/>
         <genome name="equus_caballus" assembly="EquCab3.0"/>
         <genome name="felis_catus" assembly="Felis_catus_9.0"/>
-        <genome name="gallus_gallus_gca016699485v1"/>
+        <genome name="gallus_gallus"/>
         <genome name="gopherus_evgoodei" assembly="rGopEvg1_v1.p"/>
         <genome name="gorilla_gorilla" assembly="gorGor4"/>
         <genome name="homo_sapiens"/>
@@ -358,7 +358,7 @@
         <genome name="sciurus_vulgaris" assembly="mSciVul1.1"/>
         <genome name="serinus_canaria" assembly="SCA1"/>
         <genome name="strigops_habroptila" assembly="bStrHab1_v1.p"/>
-        <genome name="sus_scrofa_gca000003025v6"/>
+        <genome name="sus_scrofa"/>
         <genome name="taeniopygia_guttata" assembly="bTaeGut1_v1.p"/>
         <genome name="terrapene_carolina_triunguis" assembly="T_m_triunguis-2.0"/>
       </species_set>
