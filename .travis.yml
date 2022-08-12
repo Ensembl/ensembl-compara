@@ -25,6 +25,8 @@ before_install:
     - cpanm -nq local::lib
     - eval "$(perl -Mlocal::lib=${HOME}/deps)"
     # yamllint disable rule:line-length
+    - git clone --depth 1 https://github.com/Ensembl/ensembl-git-tools.git
+    - export PATH=$PATH:$PWD/ensembl-git-tools/bin
     - git clone --branch release/106 --depth 1 https://github.com/Ensembl/ensembl-test.git || git-ensembl --clone --branch main --depth 1 ensembl-test
     - git clone --branch release/106 --depth 1 https://github.com/Ensembl/ensembl-rest.git || git-ensembl --clone --branch main --depth 1 ensembl-rest
     - git clone --branch release/106 --depth 1 https://github.com/Ensembl/ensembl-funcgen.git || git-ensembl --clone --branch main --depth 1 ensembl-funcgen
