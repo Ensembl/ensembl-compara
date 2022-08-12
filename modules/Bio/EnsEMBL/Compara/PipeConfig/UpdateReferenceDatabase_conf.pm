@@ -62,6 +62,10 @@ sub default_options {
         'pipeline_name' => 'update_references_' . $self->o('rel_with_suffix'),
         'backups_dir'   => $self->o('pipeline_dir') . '/reference_db_backups/',
 
+        # stored records in filesystem to keep track or RR queries to each reference genoem
+        'species_set_record'     => $self->o('all_rr_records'),
+        'queries_to_update_file' => $self->o('pipeline_dir') . 'query_update_list.txt',
+
         # shared locations to symlink and copy fastas for orthofinder
         'shared_fasta_dir' => $self->o('shared_hps_dir') . '/reference_fasta_symlinks/',
         'ssh_ip_loc' => $self->o('embassy_ip_rr'),
@@ -101,6 +105,9 @@ sub default_options {
         'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
         'allowed_species_file'  => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/allowed_species.json'),
         'xml_file'            => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/mlss_conf.xml'),
+
+        # script to select nearest taxonomy for queries to update on collection update
+        'get_nearest_taxonomy_exe' => $self->o('get_nearest_taxonomy_exe'),
 
         # whole dc options
         'datacheck_groups' => ['compara_references'],
@@ -163,6 +170,9 @@ sub pipeline_wide_parameters {
 
         'backups_dir'       => $self->o('backups_dir'),
         'members_dumps_dir' => $self->o('ref_member_dumps_dir'),
+
+        'species_set_record'     => $self->o('species_set_record'),
+        'queries_to_update_file' => $self->o('queries_to_update_file'),
 
         'output_dir_path'  => $self->o('output_dir_path'),
         'overwrite_files'  => $self->o('overwrite_files'),
@@ -255,12 +265,22 @@ sub core_pipeline_analyses {
             },
             -rc_name    => '1Gb_job',
             -flow_into  => {
-                '2->A' => [ 'update_reference_genome' ],
+                '2->A' => [ 'to_queries_to_update', 'update_reference_genome' ],
                 '3->A' => [ 'retire_reference' ],
                 '4->A' => [ 'rename_reference_genome' ],
                 '5->A' => [ 'verify_genome' ],
                 'A->1' => [ 'flow_pre_collection_dcs' ],
             },
+        },
+
+        {   -logic_name    => 'to_queries_to_update',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ParseQueryToUpdateList',
+            -parameters    => {
+                'species_name'           => '#species_name#',
+                'species_set_record'     => $self->o('species_set_record'),
+                'queries_to_update_file' => $self->o('queries_to_update_file'),
+            },
+            -rc_name       => '500Mb_job',
         },
 
         {   -logic_name    => 'update_reference_genome',
@@ -360,11 +380,23 @@ sub core_pipeline_analyses {
                 'cmd'                 => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #ref_db# -xml #xml_file# --release --verbose',
             },
             -flow_into  => {
-                '1->A'  => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => '#ref_db#', 'registry_file' => undef, 'datacheck_types' => $self->o('dc_type') }},
+                '1->A'  => {
+                    'datacheck_factory' => {
+                        'datacheck_groups' => $self->o('datacheck_groups'),
+                        'db_type'          => $self->o('db_type'),
+                        'compara_db'       => '#ref_db#',
+                        'registry_file'    => undef,
+                        'datacheck_types'  => $self->o('dc_type')
+                    },
+                    'more_appropriate_collection_for_query_update' => {
+                        'species_set_record'     => $self->o('species_set_record'),
+                        'queries_to_update_file' => $self->o('queries_to_update_file'),
+                        'compara_db'             => '#ref_db#',
+                    },
+                },
                 'A->1'  => [ 'backup_ref_db_again' ],
                 'B->1'  => [ 'copy_to_bucket' ],
                 '1->B'  => [ 'fasta_dumps_per_collection_factory' ],
-
             },
             -rc_name    => '2Gb_job',
         },
@@ -396,6 +428,23 @@ sub core_pipeline_analyses {
                 'ref_bucket'  => $self->o('ref_bucket'),
                 'symlink_dir' => $self->o('shared_fasta_dir'),
                 'cmd'         => 'cd #symlink_dir#; tar cfhp - * | ssh ${USER}@#ssh_ip_loc# \'(cd #ref_bucket#; tar xfp - )\'',
+            },
+        },
+
+        {   -logic_name => 'more_appropriate_collection_for_query_update',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MoreAppropriateCollectionToQuery',
+            -parameters => {
+                'get_nearest_taxonomy_exe' => $self->o('get_nearest_taxonomy_exe'),
+            },
+            -flow_into  => [ 'email_queries_to_update' ],
+            -rc_name    => '500Mb_job',
+        },
+
+        {   -logic_name => 'email_queries_to_update',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::NotifyByEmail',
+            -parameters => {
+                'text'        => 'Attached is the RR queries list that require homologies to be recomputed once reference update has completed.',
+                'attachments' => [ $self->o('queries_to_update_file') ],
             },
         },
 
