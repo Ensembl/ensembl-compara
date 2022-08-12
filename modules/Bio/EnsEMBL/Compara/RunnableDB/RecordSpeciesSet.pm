@@ -59,8 +59,8 @@ sub write_output {
     my $query = $self->param('genome_name');
     foreach my $ref ( @ref_genomes ) {
         next if $ref eq $query;
-        my $cmd = "echo '$query' >> $base_dir" . "/$ref.txt";
-        $self->run_command($cmd);
+        my $outfile = $base_dir . "/$ref" . ".txt";
+        $self->_spurt( $outfile, $query . "\n", 1);
     }
 }
 
