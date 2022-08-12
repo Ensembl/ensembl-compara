@@ -1110,9 +1110,26 @@ sub core_pipeline_analyses {
          -flow_into => {
                         3 => [ 'fast_trees_himem' ],
                         2 => [ 'genomic_tree_himem' ],
+                        -1 => [ 'genomic_alignment_mammoth' ],
                        },
         },
-
+        {   -logic_name        => 'genomic_alignment_mammoth',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment',
+            -parameters        => {
+                %raxml_parameters,
+                'raxml_number_of_cores' => 8,
+                'mafft_exe'             => $self->o('mafft_exe'),
+                'prank_exe'             => $self->o('prank_exe'),
+                'genome_dumps_dir'      => $self->o('genome_dumps_dir'),
+                'inhugemem'             => 1,
+            },
+            -analysis_capacity => $self->o('genomic_alignment_capacity'),
+            -rc_name           => '96Gb_8c_job',
+            -flow_into         => {
+                3 => [ 'fast_trees_himem' ],
+                2 => [ 'genomic_tree_himem' ],
+            },
+        },
 
             {
              -logic_name => 'genomic_tree',

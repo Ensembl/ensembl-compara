@@ -15,20 +15,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::DnaFrag - Defines the DNA sequences used in the database.
+Bio::EnsEMBL::Compara::DnaFrag
 
 =head1 SYNOPSIS
 
@@ -98,10 +87,6 @@ corresponds to dnafrag.coord_system_name
 corresponds to dnafrag.name
 
 =back
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
 
 =cut
 
@@ -218,6 +203,7 @@ sub new_from_Slice {
     }
 
     my %seq_loc_to_cell_component = ( 'nuclear_chromosome' => 'NUC', 'mitochondrial_chromosome' => 'MT', 'chloroplast_chromosome' => 'PT' );
+    # FIXME this default nuclear assignment means that genomes without assignment in cores that should be mitochondrial for example, are later processed for pairwise alignment and synteny incorrectly
     my $cellular_component = 'NUC';
 
     if ($sequence_location) {

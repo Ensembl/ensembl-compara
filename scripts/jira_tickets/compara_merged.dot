@@ -3,7 +3,7 @@ digraph {
     "Patches against their primary assembly";
 
     "Genome dumps" -> { "Species-tree", "LastZ" };
-    "Species-tree" -> { "EPOwithExt", "Protein-trees", "Update MSA" };
+    "Species-tree" -> { "EPOwithExt", "Protein-trees", "Update MSA", "Mercator Pecan" };
     "All LastZ" -> "EPOwithExt";
     "Member loading" -> { "Protein-trees", "ncRNA-trees", "Gene-tree reindexing", "Alt-alleles import" };
     {"All LastZ", "EPOwithExt", "Update MSA"} -> "All alignments for WGA Orthology QC";
@@ -17,6 +17,7 @@ digraph {
     "EPOwithExt" -> "EPOwithExt" [style="dashed", fontsize="8", label="Anchor\nmapping\nonly", headport="Pigs:e", tailport="Mammals:e"];
     "EPOwithExt" -> "Age of Base" [style="dashed", headport="Human:w", tailport="Mammals:e"];
     "Update MSA" -> "EPOwithExt" [style="dashed", dir=none, fontsize="8", label="XOR"];
+    "Update MSA" -> "Mercator Pecan" [style="dashed", dir=none, fontsize="8", label="XOR"];
 
     // Helps laying out the graph
     {rank = same; "Genome dumps"; "Member loading"; }

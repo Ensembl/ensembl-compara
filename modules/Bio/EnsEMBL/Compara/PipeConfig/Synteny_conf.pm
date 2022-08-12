@@ -152,7 +152,7 @@ sub pipeline_analyses {
                     'pairwise_mlss_id'    => $self->o('pairwise_mlss_id'),
                     'from_first_release'    => $self->o('ensembl_release'),
                 },
-            
+            -rc_name    => '500Mb_job',
             -flow_into  => {
                 2 => 'create_work_dir',
             },

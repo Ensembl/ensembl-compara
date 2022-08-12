@@ -103,7 +103,7 @@ sub test_division {
                 }
             };
         }
-        if (%allowed_species) {
+        if (%allowed_species and scalar(@names_to_test) > 0) {
             # 3. All species listed in mlss_conf.xml exist in allowed_species.json
             $has_files_to_test = 1;
             subtest "$mlss_file vs $allowed_species_file" => sub {

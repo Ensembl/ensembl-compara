@@ -35,8 +35,8 @@ before_install:
     - git clone --branch release/106 --depth 1 https://github.com/Ensembl/ensembl-production.git || git-ensembl --clone --branch main --depth 1 ensembl-production
     - git clone --branch release/106 --depth 1 https://github.com/Ensembl/ensembl-metadata.git || git-ensembl --clone --branch main --depth 1 ensembl-metadata
     # yamllint enable rule:line-length
-    - git clone --branch main --depth 1 https://github.com/Ensembl/ensembl-hive.git
-    - git clone --branch main --depth 1 https://github.com/Ensembl/ensembl-taxonomy.git
+    - git-ensembl --clone --branch main --depth 1 ensembl-hive
+    - git-ensembl --clone --branch main --depth 1 ensembl-taxonomy
     - ln -s . ensembl-compara
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
     - git clone --branch release-1-6-9 --depth 1 https://github.com/bioperl/bioperl-run

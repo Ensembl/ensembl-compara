@@ -208,6 +208,7 @@ sub run_analysis {
 
     my $tmp_time = time();
     print "build paralogs graph\n" if ($self->debug);
+    $gene_tree->adaptor->dbc->disconnect_if_idle;
     my $ngenepairlinks = $self->rec_add_paralogs($gene_tree);
     print "$ngenepairlinks pairings\n" if ($self->debug);
 
@@ -225,6 +226,8 @@ sub rec_add_paralogs {
     return 0 unless $ancestor->get_child_count;
 
     my ($child1, $child2) = @{$ancestor->children};
+    $child1->adaptor->dbc->disconnect_if_idle;
+    $child2->adaptor->dbc->disconnect_if_idle;
 
     # All the homologies will share this information
     my $this_taxon = $ancestor->get_value_for_tag('species_tree_node_id');

@@ -9,7 +9,7 @@
     "blast_bin_dir"             : ["check_dir_in_cellar", "blast/2.2.30/bin"],
     "blastn_exe"                : ["check_exe_in_cellar", "blast/2.2.30/bin/blastn"],
     "blat_exe"                  : ["check_exe_in_cellar", "kent/v335_1/bin/blat"],
-    "cafe_shell"                : ["check_exe_in_cellar", "cafe/4.2.1/bin/cafe"],
+    "cafe_shell"                : "/hps/software/users/ensembl/compara/shared/build/cafe/4.2.1/bin/cafe",
     "cdhit_exe"                 : ["check_exe_in_cellar", "cd-hit/4.8.1/bin/cd-hit"],
     "chainNet_exe"              : ["check_exe_in_cellar", "kent/v335_1/bin/chainNet"],
     "cmalign_exe"               : ["check_exe_in_cellar", "infernal/1.1.2/bin/cmalign"],

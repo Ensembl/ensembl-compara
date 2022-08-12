@@ -15,24 +15,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ImportAltAlleGroupAsHomologies
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
 
 =cut
 
@@ -109,10 +94,21 @@ sub run {
 
     my $group = $self->param('altallele_group_adaptor')->fetch_by_dbID($self->param('alt_allele_group_id'));
     my @genes = @{$group->get_all_Genes};
+
+    # Discard genes whose canonical transcripts are readthrough transcripts
+    my %readthrough_genes;
+    foreach my $gene (@genes){
+        my $canonical_transcript = $gene->canonical_transcript();
+        my %attribs = map {$_->value => 1} @{$canonical_transcript->get_all_Attributes()};
+        $readthrough_genes{$gene} = 1 if exists $attribs{'readthrough'};
+    }
+    @genes = grep {not exists $readthrough_genes{$_}} @genes;
+
+    $self->complete_early("All alt alleles are readthrough transcripts. Skipping.") if scalar @genes < 2;
+
     my @refs = grep {$genes[$_]->slice->is_reference} 0..(scalar(@genes)-1);
     return unless scalar(@refs);
     die if scalar(@refs) > 1;
-    my @canon_transcripts = map {$_->canonical_transcript} @genes;
 
     my @seq_members = map {$self->copy_and_fetch_gene($_)} @genes;
     map {bless $_, 'Bio::EnsEMBL::Compara::AlignedMember'} @seq_members;
