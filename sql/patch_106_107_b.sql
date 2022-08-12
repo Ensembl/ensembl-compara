@@ -26,7 +26,6 @@ ALTER TABLE seq_member MODIFY stable_id VARCHAR(128) BINARY NOT NULL;
 ALTER TABLE gene_member_qc MODIFY gene_member_stable_id VARCHAR(128) BINARY NOT NULL;
 SET FOREIGN_KEY_CHECKS = 1;
 
-
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_106_107_b.sql|case_sensitive_stable_id');
