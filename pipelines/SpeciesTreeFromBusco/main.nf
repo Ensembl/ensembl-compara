@@ -424,7 +424,7 @@ process calcGeneTrees {
         path "codon_aln_*.treefile", emit: tree
     script:
     """
-    ${params.iqtree_exe} -st CODON -s $aln -m KOSI07_GY --fast -T ${params.cores}
+    ${params.iqtree_exe} -st CODON -s $aln -m KOSI07_GY+F+G --fast -T ${params.cores}
     """
 }
 
@@ -442,7 +442,7 @@ process calcProtTrees {
         path "prot_aln_*.treefile", emit: tree
     script:
     """
-    ${params.iqtree_exe} -s $aln -m LG+R --fast -T ${params.cores}
+    ${params.iqtree_exe} -s $aln -m LG+F+G --fast -T ${params.cores}
     """
 }
 
@@ -496,7 +496,7 @@ process calcCodonBranchesIqtree {
 
     script:
     """
-    ${params.iqtree_exe} -st CODON -s $codon_aln -m KOSI07_GY -g $input_tree -T ${params.cores}
+    ${params.iqtree_exe} -st CODON -s $codon_aln -m KOSI07_GY+F+G -g $input_tree --fast -T ${params.cores}
     mv merged_codon_alns.fas.treefile species_tree_codon_bl.nwk
     mv merged_codon_alns.fas.iqtree iqtree_report_codon_bl.txt
     mv merged_codon_alns.fas.log iqtree_log_codon_bl.txt
@@ -529,7 +529,7 @@ process calcCodonBranchesAstral {
 
     script:
     """
-    ${params.iqtree_exe} -st CODON -s $codon_aln -m KOSI07_GY -g $input_tree -T ${params.cores}
+    ${params.iqtree_exe} -st CODON -s $codon_aln -m KOSI07_GY+F+G -g $input_tree --fast -T ${params.cores}
     mv merged_codon_alns.fas.treefile astral_species_tree_codon_bl.nwk
     mv merged_codon_alns.fas.iqtree astral_iqtree_report_codon_bl.txt
     mv merged_codon_alns.fas.log astral_iqtree_log_codon_bl.txt
@@ -606,7 +606,7 @@ workflow {
     mergeProtAlns(trimAlignments.out.trim_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
 
     // Merge codon alignments:
-    mergeCodonAlns(protAlnToCodon.out.codon_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
+    mergeCodonAlns(removeStopCodons.out.codon_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
 
     // Calculate species tree using iqtree2:
     runIqtree(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions)
