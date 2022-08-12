@@ -379,8 +379,7 @@ sub _parse_rr_genome_files {
         # header line is commented in output
         next if $_ =~ /^\#name/;
         next if $_ !~ /[a-z]/;
-        # the strain column can be blank, leading to mismatch of column numbers
-        $_ = $_ . 'NULL' if $_ !~ /[a-z0-9]$/;
+        # the strain column can be blank; therefore, applying "\t" as field separator
         my $row = map_row_to_header( $_, $header, "\t" );
         # only interested in the genome name
         push @species_names, $row->{name};
@@ -404,8 +403,7 @@ sub _parse_rename_rr_files {
             # header line is commented in output
             next if $_ =~ /^\#name/;
             next if $_ !~ /[a-z]/;
-            # the strain column can be blank, leading to mismatch of column numbers
-            $_ = $_ . 'NULL' if $_ !~ /[a-z0-9]$/;
+            # the strain column can be blank; therefore, applying "\t" as field separator
             my $row = map_row_to_header( $_, $header, "\t" );
             # only interested in the genome name and old_name
             $renamed_genomes{$row->{name}} = $row->{old_name};
