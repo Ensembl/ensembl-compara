@@ -378,10 +378,10 @@
       <genome name="lineus_longissimus_gca910592395v2"/>
       <!-- Platyhelminthes -->
       <genome name="hymenolepis_microstoma"/>
-      <genome name="clonorchis_sinensis_gca003604175v2"/>
-      <genome name="schmidtea_mediterranea_gca002600895v1"/>
+      <genome name="clonorchis_sinensis_gca003604175v2wb"/>
+      <genome name="schmidtea_mediterranea_gca002600895v1wb"/>
       <genome name="schistosoma_mansoni"/>
-      <genome name="echinococcus_multilocularis_gca000469725v3"/>
+      <genome name="echinococcus_multilocularis_gca000469725v3wb"/>
       <!-- Priapulida -->
       <genome name="priapulus_caudatus_gca000485595v2"/>
       <!-- Tardigrada -->
@@ -394,7 +394,7 @@
       <genome name="onchocerca_volvulus"/>
       <genome name="trichuris_muris"/>
       <genome name="strongyloides_ratti"/>
-      <genome name="haemonchus_contortus_gca000469685v2"/>
+      <genome name="haemonchus_contortus_gca000469685v2wb"/>
       <!-- Arthropoda -->
       <genome name="nasonia_vitripennis"/>
       <genome name="rhipicephalus_sanguineus_gca013339695v1"/>
@@ -438,8 +438,8 @@
       <genome name="lineus_longissimus_gca910592395v2"/>
       <!-- Platyhelminthes -->
       <genome name="hymenolepis_microstoma"/>
-      <genome name="clonorchis_sinensis_gca003604175v2"/>
-      <genome name="schmidtea_mediterranea_gca002600895v1"/>
+      <genome name="clonorchis_sinensis_gca003604175v2wb"/>
+      <genome name="schmidtea_mediterranea_gca002600895v1wb"/>
       <!-- Priapulida -->
       <genome name="priapulus_caudatus_gca000485595v2"/>
       <!-- Tardigrada -->
@@ -448,7 +448,7 @@
       <genome name="adineta_vaga"/>
       <!-- Nematoda -->
       <genome name="strongyloides_ratti"/>
-      <genome name="haemonchus_contortus_gca000469685v2"/>
+      <genome name="haemonchus_contortus_gca000469685v2wb"/>
       <!-- Arthropoda -->
       <genome name="ixodes_scapularis_gca016920785v2"/>
       <genome name="daphnia_pulex"/>
