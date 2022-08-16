@@ -1783,7 +1783,7 @@ CREATE TABLE gene_tree_node_attr (
 */
 
 CREATE TABLE gene_member_qc (
-  gene_member_stable_id       varchar(128) BINARY NOT NULL,
+  gene_member_id              INT unsigned NOT NULL,
   genome_db_id                INT unsigned NOT NULL,
   seq_member_id               INT unsigned,
   n_species                   INT,
@@ -1791,11 +1791,11 @@ CREATE TABLE gene_member_qc (
   avg_cov                     FLOAT,
   status                      varchar(50) NOT NULL,
 
-  FOREIGN KEY (gene_member_stable_id) REFERENCES gene_member(stable_id),
+  FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id),
   FOREIGN KEY (seq_member_id) REFERENCES seq_member(seq_member_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
 
-  KEY (gene_member_stable_id)
+  KEY (gene_member_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -2282,3 +2282,7 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_108_109_a.sql|schema_version');
+
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_108_109_b.sql|gene_member_qc_key');
+

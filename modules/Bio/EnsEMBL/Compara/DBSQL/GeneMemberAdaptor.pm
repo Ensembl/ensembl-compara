@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor
@@ -39,15 +28,6 @@ Most of the methods are shared with the SeqMemberAdaptor.
 
   Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor
   +- Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
 
 =cut
 
@@ -261,7 +241,7 @@ sub delete {
     foreach my $seq_member (@{$gene_member->get_all_SeqMembers}) {
         $seq_member->adaptor->delete($seq_member);
     }
-    $self->dbc->do('DELETE FROM gene_member_qc          WHERE gene_member_stable_id = ?', undef, $gene_member->stable_id);
+    $self->dbc->do('DELETE FROM gene_member_qc          WHERE gene_member_id = ?', undef, $gene_member->dbID);
     $self->dbc->do('DELETE FROM member_xref             WHERE gene_member_id = ?', undef, $gene_member->dbID);
     $self->dbc->do('DELETE FROM gene_member_hom_stats   WHERE gene_member_id = ?', undef, $gene_member->dbID);
     $self->dbc->do('DELETE FROM gene_member             WHERE gene_member_id = ?', undef, $gene_member->dbID);
