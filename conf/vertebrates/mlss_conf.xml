@@ -111,6 +111,9 @@
     <one_vs_all method="LASTZ_NET" ref_genome="ciona_intestinalis" against="Ciona" ref_amongst="Cyclostomata"/>
     <one_vs_all method="LASTZ_NET" ref_genome="petromyzon_marinus" against="Cyclostomata" ref_amongst="Ciona"/>
 
+    <!-- Chicken vs Human LastZ (on Human) -->
+    <pairwise_alignment method="LASTZ_NET" ref_genome="homo_sapiens" target_genome="gallus_gallus"/>
+
   </pairwise_alignments>
 
   <multiple_alignments>
