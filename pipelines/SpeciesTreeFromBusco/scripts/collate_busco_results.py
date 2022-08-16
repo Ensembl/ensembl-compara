@@ -84,7 +84,7 @@ if __name__ == '__main__':
     per_gene = defaultdict(list)
     for seq_file in seq_files:
         genes, duplicates = load_sequences(seq_file)
-        taxon = path.basename(seq_file).rsplit(".", maxsplit=1)[0]
+        taxon = path.basename(seq_file)
         for g, s in genes.items():
             s.id = taxon        # type: ignore
             s.description = ""  # type: ignore
@@ -101,6 +101,10 @@ if __name__ == '__main__':
     stat_df.to_csv(args.s, sep="\t", index=False)
     taxa_df = pd.DataFrame({"Taxa": taxa})
     taxa_df.to_csv(args.t, sep="\t", index=False)
+
+    if sum(stat_df.Genes == 0) > 0:
+        sys.stderr.write("Some genomes have no usable genes annotated! Please check the stats file!\n")
+        sys.exit(1)
 
     # Dump per-gene cDNAs:
     for g, s in per_gene.items():

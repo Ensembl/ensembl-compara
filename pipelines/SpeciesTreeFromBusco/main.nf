@@ -39,6 +39,45 @@ if (!params.dir) {
 }
 
 /**
+*@output path to text file with software versions
+*/
+process dumpVersions {
+    label 'rc_1Gb'
+
+    publishDir "${params.results_dir}/", pattern: "software_versions.txt", mode: "copy", overwrite: true
+
+    output:
+        path "software_versions.txt", emit: versions
+    script:
+    out = "software_versions.txt"
+    """
+    echo "Software versions" >> $out
+    echo "-----------------" >> $out
+    echo "python:" >> $out
+    python --version >> $out
+    echo "perl:" >> $out
+    perl -v | grep "This is" >> $out
+    echo "gffread:" >> $out
+    ${params.gffread_exe} --version >> $out
+    echo "mafft:" >> $out
+    (${params.mafft_exe} --version 2>&1) >> $out
+    echo "iqtree:" >> $out
+    ${params.iqtree_exe} --version | grep "version" >> $out
+    echo "trimal:" >> $out
+    ${params.trimal_exe} --version | grep "build" >> $out
+    echo "seqkit:" >> $out
+    ${params.seqkit_exe} version >> $out
+    echo "pal2nal:" >> $out
+    (${params.pal2nal_exe} 2>&1| grep "(v") >> $out
+    echo "astral:" >> $out
+    (java -jar $params.astral_jar 2>&1| grep "This is") >> $out
+    echo "macse:" >> $out
+    (java -jar $params.macse_jar -help 2>&1| grep "This is") >> $out
+    """
+
+}
+
+/**
 *@input path to BUSCO gene set protein fasta
 *@output path to fasta with longest protein isoforms per gene
 *@output path to gene list TSV
@@ -547,6 +586,9 @@ def annoInCache(genome, anno_cache) {
 
 workflow {
     println(ensemblLogo())
+
+    // Dump software versions:
+    dumpVersions()
 
     // Prepare busco protein set:
     prepareBusco(params.busco_proteins)
