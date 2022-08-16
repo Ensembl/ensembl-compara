@@ -589,6 +589,7 @@ process scaleToNucleotide {
 
     output:
         path "astral_species_tree_neutral_bl.nwk", emit: tree
+
     script:
     """
     ${params.gotree_exe} brlen scale -f 0.33333333333 < $in_tree > astral_species_tree_neutral_bl.nwk
