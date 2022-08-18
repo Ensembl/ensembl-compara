@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::CompareToCloseSpecies
@@ -42,15 +31,6 @@ the reference species.
 
 standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::CompareToCloseSpecies \
  -compara_db mysql://server/mm14_protein_trees_82
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
 
 =cut
 
@@ -163,8 +143,12 @@ sub analyze_number_copies {
         join(',', grep {$_} (map {$strs{$_}} @other_gdb_ids)) || 'NULL',
     );
 
-    printf("BRANCH_LENGTH\t%s\t%f\t%s\t%f\n", $sample_gene{$genome_db_id}->stable_id, $sample_gene{$genome_db_id}->distance_to_parent, $sample_gene{$ref_gdb_id}->stable_id, $sample_gene{$ref_gdb_id}->distance_to_parent) if $counts{$ref_gdb_id} == 1 and $counts{$genome_db_id} == 1;
-
+    if (($counts{$ref_gdb_id} == 1) and ($counts{$genome_db_id} == 1)) {
+        printf("BRANCH_LENGTH\t%d\t%s\t%f\t%d\t%s\t%f\n",
+            $genome_db_id, $sample_gene{$genome_db_id}->stable_id, $sample_gene{$genome_db_id}->distance_to_parent,
+            $ref_gdb_id, $sample_gene{$ref_gdb_id}->stable_id, $sample_gene{$ref_gdb_id}->distance_to_parent
+        );
+    }
 }
 
 

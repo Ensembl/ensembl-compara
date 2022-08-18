@@ -49,3 +49,4 @@
 65	\N	patch	patch_106_107_b.sql|case_sensitive_stable_id
 67	\N	patch	patch_107_108_a.sql|schema_version
 69	\N	patch	patch_108_109_a.sql|schema_version
+70	\N	patch	patch_108_109_b.sql|gene_member_qc_key
