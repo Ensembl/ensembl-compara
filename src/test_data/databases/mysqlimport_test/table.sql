@@ -559,7 +559,6 @@ CREATE TABLE `seq_member` (
   PRIMARY KEY (`seq_member_id`),
   UNIQUE KEY `genome_db_stable_id` (`genome_db_id`,`stable_id`),
   KEY `taxon_id` (`taxon_id`),
-  KEY `genome_db_id` (`genome_db_id`),
   KEY `source_name` (`source_name`),
   KEY `sequence_id` (`sequence_id`),
   KEY `gene_member_id` (`gene_member_id`),
