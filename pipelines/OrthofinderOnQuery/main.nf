@@ -57,7 +57,7 @@ workflow {
         .set{ collection_ch }
 
     // todo: queryFactory(collection_ch) // Not ready yet needs DataFile API
-    // rodo: queryTaxonSelectionFactory(queryFactory.out) // As above
+    // todo: queryTaxonSelectionFactory(queryFactory.out) // As above
     queryTaxonSelectionFactory(collection_ch) // Direct parameter usage stop-gap for DataFile API
     // todo: params.genome_fasta to come from metadata.json parseJSONSoloEntry(json_string, key_name)
     mergeRefToQuery(collection_ch, params.genome_fasta, queryTaxonSelectionFactory.out)
