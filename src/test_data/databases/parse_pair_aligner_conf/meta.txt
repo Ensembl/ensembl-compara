@@ -50,3 +50,4 @@
 67	\N	patch	patch_107_108_a.sql|schema_version
 69	\N	patch	patch_108_109_a.sql|schema_version
 70	\N	patch	patch_108_109_b.sql|gene_member_qc_key
+71	\N	patch	patch_108_109_c.sql|stable_id_unique_per_genome

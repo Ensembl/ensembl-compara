@@ -84,3 +84,4 @@
 160	\N	patch	patch_107_108_a.sql|schema_version
 162	\N	patch	patch_108_109_a.sql|schema_version
 163	\N	patch	patch_108_109_b.sql|gene_member_qc_key
+164	\N	patch	patch_108_109_c.sql|stable_id_unique_per_genome
