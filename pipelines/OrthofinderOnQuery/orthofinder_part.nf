@@ -17,10 +17,7 @@
 nextflow.enable.dsl=2
 
 include {
-    // queryFactory; // todo: Include when DataFile API available
-    queryTaxonSelectionFactory;
     updateOrthofinderRun;
-    mergeRefToQuery
 } from './../orthofinder_modules.nf'
 include { ensemblLogo } from './../utilities.nf'
 
@@ -29,14 +26,10 @@ def helpMessage() {
     log.info """
     Usage:
     The typical command for running the pipeline is as follows:
-    nextflow run  pipelines/OrthofinderOnQuery/main.nf --species canis_lupis_familiaris
-    Mandatory arguments:
-      --species [str]           Name of ncbi_taxonomy species/genome.
-                                Example:
-                                    canis_lupis_familiaris (mandatory)
-      --genome_fasta [str]      Path to peptide fasta file (optional)
+    nextflow run  pipelines/OrthofinderOnQuery/orthofinder_part.nf --ortho_dir s3_short-term:canis_lupus
+      --orthodir [str]      Path to peptide fasta file directory (mandatory)
                                   Example:
-                                    /ensemblftp/genomes/canis_lupis_familiaris.pep.fasta
+                                    s3_short-term:canis_lupus
     """.stripIndent()
 }
 params.help = ''
@@ -53,15 +46,9 @@ if (!params.species) {
 workflow {
     println(ensemblLogo())
     Channel
-        .from(params.species)
-        .set{ collection_ch }
+        .from(params.orthodir)
+        .set{ orthodir_ch }
 
-    // todo: queryFactory(collection_ch) // Not ready yet needs DataFile API
-    // rodo: queryTaxonSelectionFactory(queryFactory.out) // As above
-    queryTaxonSelectionFactory(collection_ch) // Direct parameter usage stop-gap for DataFile API
-    // todo: params.genome_fasta to come from metadata.json parseJSONSoloEntry(json_string, key_name)
-    mergeRefToQuery(collection_ch, params.genome_fasta, queryTaxonSelectionFactory.out)
-    triggerUpdateOrthofinderNF(mergeRefToQuery.out)
-    copyToFTP(triggerUpdateOrthofinderNF.out)
-    copyToFTP.out.view()
+    updateOrthofinderRun(orthodir_ch)
+    updateOrthofinderRun.out.view()
 }

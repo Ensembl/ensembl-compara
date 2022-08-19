@@ -24,6 +24,8 @@ params.query_destination = ''
 params.taxon_selector_exe = ''
 params.ncbi_taxonomy_url = ''
 params.output_path = ''
+params.long_term_bucket = ''
+params.short_term_bucket = ''
 params.embassy = false
 
 /**
@@ -64,7 +66,7 @@ process runOrthoFinder {
 
     scratch true
 
-    publishDir "${params.ref_destination_cloud}/${x}", mode: 'copy', overwrite: 'true'
+    publishDir "${params.ref_destination_cloud}/${x}/OrthoFinder", mode: 'move', overwrite: 'true'
 
     input:
     path x
@@ -158,9 +160,9 @@ process queryTaxonSelectionFactory {
 */
 process mergeRefToQuery {
 
-    label 'lsf_default'
+    label 'datamover'
 
-    publishDir "${params.query_destination}/${query}", mode: 'copy'
+    publishDir "${params.query_destination}/${query}", mode: 'copy', overwrite: 'true'
 
     input:
     val query
@@ -171,10 +173,27 @@ process mergeRefToQuery {
     path "${query}/"
 
     shell:
+    if ( params.embassy ) {
+    collection = ref_dir.get_name()
+    dir = params.long_term_bucket + ":" + "comparator_results" + collection
     """
-    rsync -Lavz ${ref_dir}/ ${query};
-    cp ${query_fasta} ${query}/;
+        while [ \$( bfind ${dir}/OrthoFinder/ -mmin -30 -type f ) < 1 ]
+        do
+            bmkdir ${params.short_term_bucket}:${query};
+            brsync -Lavz ${dir}/ ${query};
+            bcp ${query_fasta} ${query}/;
+        done
     """
+    } else {
+    """
+        while [ \$( find ${ref_dir}/OrthoFinder -mmin -30 -type f ) < 1 ]
+        do
+            mkdir ${query}
+            rsync -Lavz ${ref_dir}/ ${query};
+            cp ${query_fasta} ${query}/;
+        done
+    """
+    }
 
     stub:
     """
@@ -203,12 +222,13 @@ process triggerUpdateOrthofinderNF {
         ssh ${USER}@45.88.81.155 \
         ' nextflow run  ensembl-compara/pipelines/OrthofinderOnQuery/orthofinder_part.nf \
         --orthodir ${x} '
-        STDOUT=\$( ssh ${USER}@45.88.81.155 ' echo "Orthofinder update complete on " & hostname ' )
+        STDOUT=\$( ssh ${USER}@45.88.81.155 ' echo -n "${x}" ' )
         echo \$STDOUT
         """
     } else {
         """
         nextflow run  ensembl-compara/pipelines/OrthofinderOnQuery/orthofinder_part.nf --orthodir ${x}
+        echo -n ${x}
         """
     }
 
@@ -220,7 +240,7 @@ process triggerUpdateOrthofinderNF {
         """
     } else {
         """
-        echo ${x}
+        echo -n ${x}
         """
     }
 }
@@ -246,11 +266,12 @@ process updateOrthofinderRun {
     -t 32 -a 8 \
     -b \$(find ${x}/OrthoFinder -maxdepth 1 -mindepth 1 -type d) \
     -f ${x}
+    echo -n ${x}
     """
 
     stub:
     """
-    echo ${x}/OrthoFinder
+    echo -n ${x}
     """
 }
 
@@ -258,25 +279,33 @@ process updateOrthofinderRun {
 *@input takes path of directory of computed orthofinder results
 *@output Publishable results directory for example FTP
 */
-// process copyToFTP {
-// 
-//     label 'lsf_default'
-// 
-//     publishDir "${params.output_path}${x}", mode: 'copy'
-// 
-//     input:
-//     path x
-// 
-//     output:
-//     val "${params.output_path}/${x}"
-// 
-//     shell:
-//     """
-//     #datamover
-//     """
-// 
-//     stub:
-//     """
-//     ls ${params.output_path}/${x}
-//     """
-// }
+process copyToFTP {
+
+    label 'datamover'
+
+    publishDir "${params.output_path}/${x}/OrthoFinder", mode: 'copy', overwrite: 'true'
+
+    input:
+    path x
+
+    output:
+    path "${params.output_path}/${x}"
+
+    shell:
+    if ( params.embassy ) {
+        """
+        brsync -Lavz ${params.short_term_bucket}:${x}/OrthoFinder ${params.output_path}/${x}/OrthoFinder
+        echo "OrthoFinder update with query complete"
+        """
+    } else {
+        """
+        rsync -Lavz ${x}/OrthoFinder ${params.output_path}/${x}/OrthoFinder
+        echo "OrthoFinder update with query complete"
+        """
+    }
+
+    stub:
+    """
+    echo "OrthoFinder update with query complete"
+    """
+}
