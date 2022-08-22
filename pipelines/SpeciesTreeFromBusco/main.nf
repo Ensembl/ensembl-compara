@@ -67,6 +67,8 @@ process dumpVersions {
     ${params.trimal_exe} --version | grep "build" >> $out
     echo "seqkit:" >> $out
     ${params.seqkit_exe} version >> $out
+    echo "gotree:" >> $out
+    ${params.gotree_exe} version >> $out
     echo "pal2nal:" >> $out
     (${params.pal2nal_exe} 2>&1| grep "(v") >> $out
     echo "astral:" >> $out
@@ -83,7 +85,7 @@ process dumpVersions {
 *@output path to gene list TSV
 */
 process prepareGenome {
-    label 'rc_4Gb'
+    label 'retry_with_8gb_mem_c1'
     input:
       path genome
 
@@ -271,8 +273,6 @@ process alignProt {
 process protAlnToCodon {
     label 'rc_1Gb'
 
-    publishDir "${params.results_dir}/", pattern: "alignments/codon_aln_*.fas", mode: "copy",  overwrite: true
-
     input:
         path prot_aln
         val cdna
@@ -423,7 +423,7 @@ process mergeCodonAlns {
 *@output path to iqtree2 log file
 */
 process runIqtree {
-    label 'retry_with_8gb_mem_c1'
+    label 'retry_with_16gb_mem_c1'
     publishDir "${params.results_dir}/", pattern: "species_tree.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_bionj.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_report.txt", mode: "copy",  overwrite: true
@@ -517,7 +517,7 @@ process runAstral {
 *@output path to iqtree2 log file
 */
 process calcCodonBranchesIqtree {
-    label 'retry_with_8gb_mem_c1'
+    label 'retry_with_16gb_mem_c1'
 
     publishDir "${params.results_dir}/", pattern: "species_tree_codon_bl.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_report_codon_bl.txt", mode: "copy",  overwrite: true
@@ -535,7 +535,7 @@ process calcCodonBranchesIqtree {
 
     script:
     """
-    ${params.iqtree_exe} -st CODON -s $codon_aln -m KOSI07_GY+F+G -g $input_tree --fast -T ${params.cores}
+    ${params.iqtree_exe} -st CODON -s $codon_aln -m KOSI07_GY+F -g $input_tree --fast -T ${params.cores}
     mv merged_codon_alns.fas.treefile species_tree_codon_bl.nwk
     mv merged_codon_alns.fas.iqtree iqtree_report_codon_bl.txt
     mv merged_codon_alns.fas.log iqtree_log_codon_bl.txt
@@ -550,7 +550,7 @@ process calcCodonBranchesIqtree {
 *@output path to iqtree2 log file
 */
 process calcCodonBranchesAstral {
-    label 'retry_with_8gb_mem_c1'
+    label 'retry_with_16gb_mem_c1'
 
     publishDir "${params.results_dir}/", pattern: "astral_species_tree_codon_bl.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "astral_iqtree_report_codon_bl.txt", mode: "copy",  overwrite: true
@@ -568,10 +568,51 @@ process calcCodonBranchesAstral {
 
     script:
     """
-    ${params.iqtree_exe} -st CODON -s $codon_aln -m KOSI07_GY+F+G -g $input_tree --fast -T ${params.cores}
+    ${params.iqtree_exe} -st CODON -s $codon_aln -m KOSI07_GY+F -g $input_tree --fast -T ${params.cores}
     mv merged_codon_alns.fas.treefile astral_species_tree_codon_bl.nwk
     mv merged_codon_alns.fas.iqtree astral_iqtree_report_codon_bl.txt
     mv merged_codon_alns.fas.log astral_iqtree_log_codon_bl.txt
+    """
+}
+
+/**
+*@input path to input tree with codon branch lengths
+*@output path to output tree with nucleotide brnach lengths
+*/
+process scaleToNucleotide {
+    label 'rc_2Gb'
+
+    publishDir "${params.results_dir}/", pattern: "astral_species_tree_neutral_bl.nwk", mode: "copy",  overwrite: true
+
+    input:
+        path in_tree
+
+    output:
+        path "astral_species_tree_neutral_bl.nwk", emit: tree
+    script:
+    """
+    ${params.gotree_exe} brlen scale -f 0.33333333333 < $in_tree > astral_species_tree_neutral_bl.nwk
+    """
+}
+
+/**
+*@input path to unrooted input tree
+*@output path to rooted output tree
+*/
+process outgroupRooting {
+    label 'rc_2Gb'
+
+    publishDir "${params.results_dir}/", pattern: "rooted_astral_species_tree_neutral_bl.nwk", mode: "copy",  overwrite: true
+
+    input:
+        path utree
+
+    output:
+        path "rooted_astral_species_tree_neutral_bl.nwk", emit: tree
+    when: params.outgroup != ""
+    script:
+    """
+    ${params.rooting_exe} -t $utree -o ${params.outgroup} > rooted_astral_species_tree_neutral_bl.nwk
     """
 }
 
@@ -583,6 +624,7 @@ def annoInCache(genome, anno_cache) {
     File file = new File("${anno_cache}/${genome}/annotation.gtf")
     return file.exists()
 }
+
 
 workflow {
     println(ensemblLogo())
@@ -621,8 +663,8 @@ workflow {
     // Align protein sequences:
     alignProt(collateBusco.out.prot_seq.flatten(), collateBusco.out.cdnas.flatten())
 
-    // Trim protein alignments:
-    trimAlignments(alignProt.out.prot_aln)
+    // Trim protein alignments (removed):
+    // trimAlignments(alignProt.out.prot_aln)
 
     // Convert protein alignments to codon alignment:
     protAlnToCodon(alignProt.out.prot_aln, alignProt.out.cdnas)
@@ -630,32 +672,36 @@ workflow {
     // Remove stop codons from codon alignment:
     removeStopCodons(protAlnToCodon.out.codon_aln)
 
-    // Calculate trees from the codon alignments:
-    calcGeneTrees(removeStopCodons.out.codon_aln)
+    // Calculate trees from the codon alignments (removed):
+    // calcGeneTrees(removeStopCodons.out.codon_aln)
 
     // Calculate trees from the protein alignments:
     calcProtTrees(alignProt.out.prot_aln)
 
-    // Collect gene trees into a single file:
-    treesChan = calcGeneTrees.out.tree.mix(calcProtTrees.out.tree)
-    trees = treesChan.collectFile(name: 'gene_trees.nwk', newLine: true)
+    trees = calcProtTrees.out.tree.collectFile(name: 'gene_trees.nwk', newLine: true)
 
     // Run astral to calculate species tree from
     // the gene trees:
     runAstral(trees)
 
-    // Merge protein alignments:
-    mergeProtAlns(trimAlignments.out.trim_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
+    // Merge protein alignments (removed):
+    //mergeProtAlns(trimAlignments.out.trim_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
 
     // Merge codon alignments:
     mergeCodonAlns(removeStopCodons.out.codon_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
 
-    // Calculate species tree using iqtree2:
-    runIqtree(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions)
+    // Calculate species tree from protein alignments using iqtree2 (removed):
+    // runIqtree(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions)
 
-    // Calculate neutral branch lenghts from codon alignment:
-    calcCodonBranchesIqtree(mergeCodonAlns.out.merged_aln, runIqtree.out.newick)
+    // Calculate neutral branch lenghts from codon alignment (removed):
+    // calcCodonBranchesIqtree(mergeCodonAlns.out.merged_aln, runIqtree.out.newick)
 
     // Calculate neutral branch lenghts from codon alignment for the astral tree:
     calcCodonBranchesAstral(mergeCodonAlns.out.merged_aln, runAstral.out.tree)
+
+    // Scale the branch lengths to nucleotide sites:
+    scaleToNucleotide(calcCodonBranchesAstral.out.newick)
+
+    // Perform outgroup rooting:
+    outgroupRooting(scaleToNucleotide.out.tree)
 }
