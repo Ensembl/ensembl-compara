@@ -75,7 +75,7 @@ sub write_output {
     # force db drop if requested
     my $cmd = "";
     my $sql = ""; 
-    my $force = $self->param('force')
+    my $force = $self->param('force');
     if ( db_exists( $host, $new_db_name ) && $force ){
         $sql = "DROP DATABASE IF EXISTS $new_db_name";
         $cmd = "$db_cmd_path -url $server_uri -sql '$sql'";
