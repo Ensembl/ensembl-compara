@@ -48,6 +48,7 @@ sub param_defaults {
     return {
         %{$self->SUPER::param_defaults()},
         'homology_host'  => 'mysql-ens-compara-prod-2',
+        'force' => 0,
     };
 }
 
@@ -70,16 +71,24 @@ sub write_output {
 
     my $schema_file = $self->param_required( 'schema_file' );
     my $db_cmd_path = $self->param_required( 'db_cmd_path' );
-    # Preferred behaviour is to die if the database already exists
-    die $new_db . " already exists" if db_exists( $host, $new_db_name );
 
-    my @cmd;
+    # force db drop if requested
+    my $force = $self->param('force')
+    if ( db_exists( $host, $new_db_name ) && $force ){
+        my $sql = "DROP DATABASE IF EXISTS $new_db_name";
+        my $cmd = "$db_cmd_path -url $server_uri -sql '$sql'";
+        $self->run_command( $cmd, { die_on_failure => 1 } );
+    }
+
+    # Preferred behaviour is to die if the database already exists
+    die $new_db . " already exists. You can use the --force option to drop the mentioned db" if db_exists( $host, $new_db_name );
+
     my $sql = "CREATE DATABASE IF NOT EXISTS $new_db_name";
     my $cmd = "$db_cmd_path -url $server_uri -sql '$sql'";
     $self->run_command( $cmd, { die_on_failure => 1 } );
 
     my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $new_db );
-    $cmd = "$db_cmd_path -url $new_db < $schema_file";
+    my $cmd = "$db_cmd_path -url $new_db < $schema_file";
     $self->run_command( $cmd, { die_on_failure => 1 } );
 
     $self->dataflow_output_id( { 'per_species_db' => $new_db }, 2 );
