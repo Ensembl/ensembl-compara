@@ -24,8 +24,6 @@ import sys
 import subprocess
 from pathlib import Path
 
-from pytest import raises
-
 from ensembl.compara.filesys import file_cmp
 
 
@@ -52,6 +50,7 @@ class TestPickThirdSite:
         subprocess.check_call(cmd, cwd=location)
 
         # Compare with expected output:
-        expected_fas = str(Path(__file__).parents[0] / "flatfiles" / "SpeciesTreeFromBusco" / "pick_third_site_expected.fas")
+        expected_fas = str(Path(
+            __file__).parents[0] / "flatfiles" / "SpeciesTreeFromBusco" / "pick_third_site_expected.fas")
 
         assert file_cmp(output_fas, expected_fas)
