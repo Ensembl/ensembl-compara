@@ -97,4 +97,5 @@ if __name__ == '__main__':
     # Write out merged alignment file:
     with open(args.o, "w") as fas_fh:
         for taxa, seq in merged.items():
-            fas_fh.write(f">{taxa}\n{seq}\n")
+            if seq.count("-") < len(seq):
+                fas_fh.write(f">{taxa}\n{seq}\n")
