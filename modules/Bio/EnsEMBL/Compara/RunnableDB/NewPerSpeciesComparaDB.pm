@@ -83,7 +83,7 @@ sub write_output {
     }
 
     # Preferred behaviour is to die if the database already exists
-    die $new_db . " already exists. You can use the --force option equal to 1 to drop the mentioned db" if db_exists( $host, $new_db_name );
+    die $new_db . " already exists. You can use the -force option equal to 1 to drop the mentioned db" if db_exists( $host, $new_db_name );
 
     $sql = "CREATE DATABASE IF NOT EXISTS $new_db_name";
     $cmd = "$db_cmd_path -url $server_uri -sql '$sql'";
