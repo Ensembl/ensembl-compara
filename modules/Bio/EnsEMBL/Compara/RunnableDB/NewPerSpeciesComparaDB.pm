@@ -73,22 +73,24 @@ sub write_output {
     my $db_cmd_path = $self->param_required( 'db_cmd_path' );
 
     # force db drop if requested
+    my $cmd = "";
+    my $sql = ""; 
     my $force = $self->param('force')
     if ( db_exists( $host, $new_db_name ) && $force ){
-        my $sql = "DROP DATABASE IF EXISTS $new_db_name";
-        my $cmd = "$db_cmd_path -url $server_uri -sql '$sql'";
+        $sql = "DROP DATABASE IF EXISTS $new_db_name";
+        $cmd = "$db_cmd_path -url $server_uri -sql '$sql'";
         $self->run_command( $cmd, { die_on_failure => 1 } );
     }
 
     # Preferred behaviour is to die if the database already exists
-    die $new_db . " already exists. You can use the --force option to drop the mentioned db" if db_exists( $host, $new_db_name );
+    die $new_db . " already exists. You can use the --force option equal to 1 to drop the mentioned db" if db_exists( $host, $new_db_name );
 
-    my $sql = "CREATE DATABASE IF NOT EXISTS $new_db_name";
-    my $cmd = "$db_cmd_path -url $server_uri -sql '$sql'";
+    $sql = "CREATE DATABASE IF NOT EXISTS $new_db_name";
+    $cmd = "$db_cmd_path -url $server_uri -sql '$sql'";
     $self->run_command( $cmd, { die_on_failure => 1 } );
 
     my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $new_db );
-    my $cmd = "$db_cmd_path -url $new_db < $schema_file";
+    $cmd = "$db_cmd_path -url $new_db < $schema_file";
     $self->run_command( $cmd, { die_on_failure => 1 } );
 
     $self->dataflow_output_id( { 'per_species_db' => $new_db }, 2 );
