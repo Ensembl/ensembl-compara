@@ -60,17 +60,43 @@ sub content {
 
   $table->add_row('Statistics', $html);
 
-  ## add CCDS info
-  if (scalar @CCDS) {
-    my %T = map { $_->primary_id => 1 } @CCDS;
-    @CCDS = sort keys %T;
-    $table->add_row('CCDS', sprintf('<p>This transcript is a member of the %s CCDS set: %s</p>', $sp, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS));
+  ## add MANE info
+  if ($transcript->is_mane) {
+    my $mane_select = $transcript->get_all_Attributes('MANE_Select')->[0];
+    my $mane_plus_clinical = $transcript->get_all_Attributes('MANE_Plus_Clinical')->[0];
+    my $mane_type = $mane_select ? 'MANE_Select' : 'MANE_Plus_Clinical';
+    my $mane_type_str = $mane_select ? 'MANE Select' : 'MANE Plus Clinical';
+
+    my $transcript_refseq_id = $mane_select ? $mane_select->value : $mane_plus_clinical->value;
+    my $transcript_refseq_url = $hub->get_ExtURL('REFSEQ_DNA', { 'ID' => $transcript_refseq_id });
+    my $refseq_links = sprintf('<a href="%s">%s</a>', $transcript_refseq_url, $transcript_refseq_id);
+
+    my $mane_transcript_translation_url = $hub->url({ type => 'Transcript', action => 'ProteinSummary', t => $transcript->translation->stable_id });
+    my $mane_transcript_translation_link = sprintf('<a href="%s">%s</a>', $mane_transcript_translation_url, $transcript->translation->stable_id);
+
+    my $translation_refseq_id = $transcript->translation->get_all_Attributes($mane_type)->[0]->value;
+
+    if ($translation_refseq_id) {
+      my $translation_refseq_url = $hub->get_ExtURL('REFSEQ_RNA', { 'ID' => $translation_refseq_id });
+
+      $refseq_links .= sprintf(' and <a href="%s">%s</a>', $translation_refseq_url, $translation_refseq_id);
+    }
+
+    $table->add_row('MANE', sprintf('<p>This %s transcript contains %s and matches to %s</p>', $mane_type_str, $mane_transcript_translation_link, $refseq_links));
   }
+
   ## add Uniprot info
   if (scalar @Uniprot) {
     my %T = map { $_->primary_id => 1 } @Uniprot;
     @Uniprot = sort keys %T;
     $table->add_row('Uniprot', sprintf('<p>This transcript corresponds to the following Uniprot identifiers: %s</p>', join ', ', map $hub->get_ExtURL_link($_, 'Uniprot/SWISSPROT', $_), @Uniprot));
+  }
+
+  ## add CCDS info
+  if (scalar @CCDS) {
+    my %T = map { $_->primary_id => 1 } @CCDS;
+    @CCDS = sort keys %T; 
+    $table->add_row('CCDS', sprintf('<p>This transcript is a member of the %s CCDS set: %s</p>', $sp, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS));
   }
 
   ## add TSL info

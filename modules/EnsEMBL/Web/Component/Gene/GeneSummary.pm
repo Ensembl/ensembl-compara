@@ -44,7 +44,7 @@ sub content {
   my @Uniprot       = @{$object->Obj->get_all_DBLinks('Uniprot/SWISSPROT')};
   my $db            = $object->get_db;
   my $alt_genes     = $self->get_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE', 'show_version'); #gets all xrefs, sorts them and stores them on the object. Returns HTML only for ALT_GENES
-  my $ensembl_select = $gene->get_all_Attributes('Ensembl_select')->[0] ? $gene->get_all_Attributes('Ensembl_select')->[0]->value : '';
+  my $ensembl_select     = $gene->get_all_Attributes('Ensembl_Select')->[0] ? $gene->get_all_Attributes('Ensembl_Select')->[0]->value : '';
   my $display_xref  = $gene->display_xref;
   my ($link_url)    = $display_xref ? $self->get_gene_display_link($gene, $display_xref) : ();
 
@@ -53,6 +53,53 @@ sub content {
       ? sprintf('<p><a href="%s" class="constant">%s</a> (%s)</p>', $link_url, $display_xref->display_id, $display_xref->db_display_name)
       : sprintf('<p>%s (%s)</p>', $display_xref->display_id, $display_xref->db_display_name)
     );
+  }
+
+  my ($has_mane_select, $has_mane_plus_clinical) = 0;
+  my ($mane_select, $mane_select_translation, $mane_plus_clinical, $mane_plus_clinical_translation);
+
+  ## add MANE info
+  if ($ensembl_select) {
+    foreach my $t (@{$gene->get_all_Transcripts}) {
+      next if $has_mane_select;
+      next unless $t->stable_id eq $ensembl_select;
+
+      $has_mane_select = 1 if (@{$t->get_all_Attributes('MANE_Select')});
+
+      $mane_select = $t->stable_id if $has_mane_select;
+      $mane_select_translation = $t->translation->stable_id if $has_mane_select;
+    }
+
+    foreach my $t (@{$gene->get_all_Transcripts}) {
+      next if $has_mane_plus_clinical;
+
+      $has_mane_plus_clinical = 1 if (@{$t->get_all_Attributes('MANE_Plus_Clinical')});
+
+      $mane_plus_clinical = $t->stable_id if $has_mane_plus_clinical;
+      $mane_plus_clinical_translation = $t->translation->stable_id if $has_mane_plus_clinical;
+    }
+  }
+
+  if ($has_mane_select) {
+    my $mane_select_url = $hub->url({ type => 'Transcript', action => 'Summary', t => $mane_select });
+    my $mane_select_link = sprintf('<a href="%s">%s</a>', $mane_select_url, $mane_select);
+
+    my $mane_select_translation_url = $hub->url({ type => 'Transcript', action => 'ProteinSummary', t => $mane_select_translation });
+    my $mane_select_translation_link = sprintf('<a href="%s">%s</a>', $mane_select_translation_url, $mane_select_translation);
+
+    my $mane_description = sprintf('This gene contains MANE Select %s, %s', $mane_select_link, $mane_select_translation_link);
+
+    if ($has_mane_plus_clinical) {
+      my $mane_plus_clinical_url = $hub->url({ type => 'Transcript', action => 'Summary', t => $mane_plus_clinical });
+      my $mane_plus_clinical_link = sprintf('<a href="%s">%s</a>', $mane_plus_clinical_url, $mane_plus_clinical);
+      
+      my $mane_plus_clinical_translation_url = $hub->url({ type => 'Transcript', action => 'ProteinSummary', t => $mane_plus_clinical_translation });
+      my $mane_plus_clinical_translation_link = sprintf('<a href="%s">%s</a>', $mane_plus_clinical_translation_url, $mane_plus_clinical_translation);
+
+      $mane_description .= sprintf(' and MANE Plus Clinical %s, %s', $mane_plus_clinical_link, $mane_plus_clinical_translation_link);
+    }
+
+    $table->add_row('MANE', $mane_description);
   }
 
   ## Start assembling bioschema information
@@ -92,21 +139,6 @@ sub content {
     add_species_bioschema($species_defs, $bs_gene);
   }
 
-  # add CCDS info
-  if (scalar @CCDS) {
-    my %temp = map { $_->display_id, 1 } @CCDS;
-    @CCDS = sort keys %temp;
-    my $template  = '<p>This gene is a member of the %s CCDS set: %s</p>';
-    my $sp_name   = $species_defs->SPECIES_DISPLAY_NAME; 
-    ## Mouse strains hack
-    if ($species_defs->STRAIN_GROUP && $species_defs->STRAIN_GROUP eq 'mus_musculus') {
-      my $ref_sp = 'Mus_musculus';
-      $template = 'This gene is similar to a CCDS gene on %s: %s';
-      $sp_name  = sprintf '%s %s', $species_defs->get_config($ref_sp, 'SPECIES_DISPLAY_NAME'), $species_defs->get_config($ref_sp, 'ASSEMBLY_VERSION');
-    }
-    $table->add_row('CCDS', sprintf($template, $sp_name, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS));
-  }
-
   # add Uniprot info
   if (scalar @Uniprot) {
     my %temp = map { $_->primary_id, 1 } @Uniprot;
@@ -122,18 +154,25 @@ sub content {
       g      => $gene->stable_id, 
     });
     my $msg = 'This Ensembl/Gencode gene does not contain any transcripts for which we have <a href="/info/genome/genebuild/mane.html">selected identical model(s) in RefSeq</a>.'; 
-    my $has_mane_select = 0;
-    if ($ensembl_select) {
-      foreach my $t (@{$gene->get_all_Transcripts}){
-        next if $has_mane_select;
-        next unless $t->stable_id eq $ensembl_select;
-        $has_mane_select = 1 if (@{$t->get_all_Attributes('MANE_select')});
-      }
-    }  
     if ($has_mane_select) {
       $msg = 'This Ensembl/Gencode gene contains transcript(s) for which we have <a href="/info/genome/genebuild/mane.html">selected identical RefSeq transcript(s)</a>.';
     }
     $table->add_row('RefSeq', sprintf(qq{%s If there are other RefSeq transcripts available they will be in the <a href="%s">External references</a> table}, $msg, $url)); 
+  }
+
+  # add CCDS info
+  if (scalar @CCDS) {
+    my %temp = map { $_->display_id, 1 } @CCDS;
+    @CCDS = sort keys %temp;
+    my $template  = '<p>This gene is a member of the %s CCDS set: %s</p>';
+    my $sp_name   = $species_defs->SPECIES_DISPLAY_NAME; 
+    ## Mouse strains hack
+    if ($species_defs->STRAIN_GROUP && $species_defs->STRAIN_GROUP eq 'mus_musculus') {
+      my $ref_sp = 'Mus_musculus';
+      $template = 'This gene is similar to a CCDS gene on %s: %s';
+      $sp_name  = sprintf '%s %s', $species_defs->get_config($ref_sp, 'SPECIES_DISPLAY_NAME'), $species_defs->get_config($ref_sp, 'ASSEMBLY_VERSION');
+    }   
+    $table->add_row('CCDS', sprintf($template, $sp_name, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS));
   }
 
   ## LRG info
