@@ -409,6 +409,41 @@ def liftover_via_hal(src_region: SimpleRegion, src_genome: str, src_2bit_file: U
     return rec
 
 
+def load_liftover_alt_synonyms(alt_synonym_json_file: Union[Path, str], src_genome: str,
+                               dest_genome: str) -> Tuple[Dict, Dict, Dict]:
+    """Load liftover alt-synonym data from JSON file.
+
+    Args:
+        alt_synonym_json_file: Input JSON file containing a mapping of each genome name in a HAL file to its
+            alt-synonym mapping object. In the alt-synonym mapping of a genome, each key is a chromosome name,
+            and its corresponding 'alternative name' value is the name of that chromosome within the HAL file.
+        src_genome: Source genome.
+        dest_genome: Destination genome.
+
+    Returns:
+        A tuple of the three alt-synonym mappings that are useful for liftover:
+        the source genome forward mapping (chromosome name to alternative name),
+        the source genome reverse mapping (alternative name to chromosome name),
+        and the destination genome reverse mapping.
+
+    Raises:
+        ValueError: If a genome alt-synonym mapping is not a one-to-one mapping.
+
+    """
+    with open(alt_synonym_json_file) as f:
+        alt_synonym_data = json.load(f)
+
+    fwd_maps = {}
+    rev_maps = {}
+    for genome in (src_genome, dest_genome):
+        fwd_maps[genome] = alt_synonym_data[genome]
+        rev_maps[genome] = {x: k for k, x in fwd_maps[genome].items()}
+        if len(rev_maps[genome]) != len(fwd_maps[genome]):
+            raise ValueError(f"alt-synonym mapping is not one-to-one for HAL genome '{genome}'")
+
+    return fwd_maps[src_genome], rev_maps[src_genome], rev_maps[dest_genome]
+
+
 def load_chr_sizes(hal_file: Union[Path, str], genome_name: str) -> Dict[str, int]:
     """Load chromosome sizes from an input HAL file.
 
@@ -642,6 +677,10 @@ if __name__ == '__main__':
                              " files). By default, the path of this directory is determined from the input"
                              " HAL file (e.g. '/path/to/aln.hal'), by replacing the HAL file extension with"
                              " the suffix '_files' (e.g. '/path/to/aln_files').")
+
+    parser.add_argument('--alt-synonym-json', metavar='FILE',
+                        help="Input JSON file with, for each genome in the HAL file, a one-to-one mapping"
+                             " between each chromosome name and its alternative synonym in the HAL file.")
     args = parser.parse_args()
 
     if args.hal_aux_dir is not None:
@@ -665,6 +704,15 @@ if __name__ == '__main__':
         source_regions: Iterable = [SimpleRegion.from_1_based_region_string(args.src_region)]
     else:
         source_regions = read_region_tsv_file(args.src_region_tsv)
+
+    if args.alt_synonym_json is not None:
+        src_chr_to_alt, src_alt_to_chr, dest_alt_to_chr = load_liftover_alt_synonyms(args.alt_synonym_json,
+                                                                                     args.src_genome,
+                                                                                     args.dest_genome)
+        source_regions = (
+            SimpleRegion(src_chr_to_alt[x.chr], x.start, x.end, x.strand, validate=False)
+            for x in source_regions
+        )
 
     if args.cache_chain:
 
@@ -691,6 +739,14 @@ if __name__ == '__main__':
                                        flank_length=args.flank, skip_chain=args.skip_chain,
                                        linear_gap=args.linear_gap)
         records.append(record)
+
+    if args.alt_synonym_json is not None:
+        for record in records:
+            record['params']['src_chr'] = src_alt_to_chr[record['params']['src_chr']]
+            for result in record['results']:
+                result['dest_chr'] = dest_alt_to_chr[result['dest_chr']]
+                if 'lifted_src_chr' in result:
+                    result['lifted_src_chr'] = src_alt_to_chr[result['lifted_src_chr']]
 
     if args.output_format == 'JSON':
 
