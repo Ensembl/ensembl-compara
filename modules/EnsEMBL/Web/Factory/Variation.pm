@@ -95,8 +95,15 @@ sub createObjects {
       $help_extra = sprintf('Note: If the NCBI has released a new build since %s for Human, there may be new variants which have not yet been incorporated into Ensembl. If this is the case, you may find information about this %s on the NCBI website: <a href="http://www.ncbi.nlm.nih.gov/sites/entrez?db=snp&cmd=search&term=%s" target="external">http://www.ncbi.nlm.nih.gov/sites/entrez?db=snp&cmd=search&term=%s</a>.',
                             $db->{'dbSNP_VERSION'},
                             $identifier,$identifier,$identifier);
+      return $self->problem('fatal', "Could not find variation $identifier", $self->_help($help_message,$help_extra));
     }
-    return $self->problem('fatal', "Could not find variation $identifier", $self->_help($help_message,$help_extra));
+    elsif ($hub-$species_defs->ENSEMBL_SUBTYPE eq 'Rapid Release') {
+      my $message = sprintf('Variants on this site are served from VCF files, which cannot be searched by ID. Please visit "Region in Detail" and enter the coordinates for %s to view variation tracks in this location.', $hub->param('v'));
+      return $self->problem('fatal', 'Unable to search for variation IDs', $message);
+    }
+    else {
+      return $self->problem('fatal', "Could not find variation $identifier", $self->_help($help_message,$help_extra));
+    }
   }
 }
 
