@@ -88,14 +88,16 @@ process prepareGenome {
     label 'retry_with_8gb_mem_c1'
     input:
       path genome
-
     output:
         path "processed/*", emit: proc_genome
     script:
         id = (genome =~ /(.+)\..+?$/)[0][1]
         """
             mkdir -p processed
-            seqkit -j 5 grep -n -v -r -p "PATCH_*,HAP" $genome > processed/$id
+            ${params.seqkit_exe} -j 5 grep -n -v -r -p "PATCH_*,HAP" $genome > processed/$id
+            # Add a dummy softmasked sequence to prevent disabling of
+            # blast softmasking during the genblast processing:
+            echo -e ">REPMASK_DUMMY_DECOY\na" >> processed/$id
         """
 }
 
