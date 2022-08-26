@@ -71,6 +71,10 @@
               lolium_perenne,
              )Loliinae,
              (
+              avena_sativa_ot3098,
+              avena_sativa_sang,
+             )Aveninae,
+             (
               thinopyrum_elongatum,
              )Thinopyrum,
              (
@@ -217,6 +221,7 @@
           ipomoea_triloba,
          )Convolvulaceae,
          (
+          fraxinus_excelsior,
           olea_europaea,
           olea_europaea_sylvestris,
          )Oleaceae,
@@ -246,6 +251,7 @@
             )Vigna,
             phaseolus_vulgaris,
             glycine_max,
+            cajanus_cajan,
            )Phaseoleae,
           )Papilionoideae,
           (
