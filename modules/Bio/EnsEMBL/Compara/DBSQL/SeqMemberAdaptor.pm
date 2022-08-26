@@ -417,13 +417,13 @@ sub store {
     $sth->finish;
   } else {
     $sth->finish;
-    #UNIQUE(stable_id) prevented insert since seq_member was already inserted
+    #UNIQUE(genome_db_id,stable_id) prevented insert since a seq_member was already inserted for this genome_db
     #so get seq_member_id with select
-    my $sth2 = $self->prepare("SELECT seq_member_id, sequence_id, genome_db_id FROM seq_member WHERE stable_id=?");
-    $sth2->execute($member->stable_id);
-    my($id, $sequence_id, $genome_db_id) = $sth2->fetchrow_array();
+    my $sth2 = $self->prepare("SELECT seq_member_id, sequence_id FROM seq_member WHERE genome_db_id = ? AND stable_id = ?");
+    $sth2->execute($member->genome_db_id, $member->stable_id);
+    my ($id, $sequence_id) = $sth2->fetchrow_array();
     warn("SeqMemberAdaptor: insert failed, but seq_member_id select failed too") unless($id);
-    throw(sprintf('%s already exists and belongs to a different species (%s) ! Stable IDs must be unique across the whole set of species', $member->stable_id, $self->db->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id)->name )) if $genome_db_id and $member->genome_db_id and $genome_db_id != $member->genome_db_id;
+    throw(sprintf('%s already exists in this species (%s) ! Stable IDs must be unique within a species', $member->stable_id, $member->genome_db->name));
     $member->dbID($id);
     $member->sequence_id($sequence_id) if ($sequence_id) and $member->isa('Bio::EnsEMBL::Compara::SeqMember');
     $sth2->finish;

@@ -993,7 +993,7 @@ CREATE TABLE sequence (
 @colour   #808000
 
 @example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 150) gene ENSG00000176105
-      @sql                          SELECT * FROM gene_member WHERE stable_id = "ENSG00000176105";
+    @sql   SELECT * FROM gene_member WHERE genome_db_id = 150 AND stable_id = "ENSG00000176105";
 
 @column gene_member_id             Internal unique ID
 @column stable_id             EnsEMBL stable ID
@@ -1034,7 +1034,7 @@ CREATE TABLE gene_member (
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (gene_member_id),
-  UNIQUE KEY (stable_id),
+  UNIQUE KEY genome_db_stable_id (genome_db_id,stable_id),
   KEY (source_name),
   KEY (canonical_member_id),
   KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
@@ -1091,7 +1091,7 @@ CREATE TABLE gene_member_hom_stats (
 @colour   #808000
 
 @example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 150) peptide ENSP00000324740
-      @sql                          SELECT * FROM seq_member WHERE stable_id = "ENSP00000324740";
+    @sql   SELECT * FROM seq_member WHERE genome_db_id = 150 AND stable_id = "ENSP00000324740";
 
 @column seq_member_id             Internal unique ID
 @column stable_id             EnsEMBL stable ID or external ID (for Uniprot/SWISSPROT and Uniprot/SPTREMBL)
@@ -1138,7 +1138,7 @@ CREATE TABLE seq_member (
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (seq_member_id),
-  UNIQUE KEY (stable_id),
+  UNIQUE KEY genome_db_stable_id (genome_db_id,stable_id),
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id),
@@ -2285,4 +2285,7 @@ INSERT INTO meta (species_id, meta_key, meta_value)
 
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_108_109_b.sql|gene_member_qc_key');
+
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_108_109_c.sql|stable_id_unique_per_genome');
 
