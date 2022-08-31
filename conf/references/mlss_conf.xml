@@ -25,23 +25,7 @@
       <genome name="mus_musculus"/>
       <genome name="xenopus_tropicalis"/>
     </collection>
-
-    <collection name="shared_metazoa">
-      <!-- Vertebrates -->
-      <genome name="homo_sapiens"/>
-      <genome name="gallus_gallus"/>
-      <genome name="danio_rerio"/>
-      <!-- Ecdysozoans -->
-      <genome name="drosophila_melanogaster"/>
-      <genome name="caenorhabditis_elegans"/>
-      <!-- Protists -->
-      <genome name="plasmodium_falciparum"/>
-      <!-- Protists (Collection DBs) -->
-      <genome name="salpingoeca_rosetta_gca_000188695"/>
-      <genome name="sphaeroforma_arctica_jp610_gca_001186125"/>
-      <genome name="capsaspora_owczarzaki_atcc_30864_gca_000151315"/>
-    </collection>
-
+    
     <collection name="default">
       <base_collection name="shared"/>
       <!-- Vertebrates -->
@@ -269,10 +253,11 @@
     </collection>
 
     <collection name="hexapoda">
-      <base_collection name="shared_metazoa"/>
+      <base_collection name="shared"/>
       <!-- outgroup -->
       <genome name="daphnia_magna_gca020631705v2"/>
       <genome name="strigamia_maritima"/>
+      <!-- Collembola -->
       <genome name="folsomia_candida"/>
 
       <!-- Paraneoptera -->
@@ -311,7 +296,7 @@
     </collection>
 
     <collection name="arthropoda">
-      <base_collection name="shared_metazoa"/>
+      <base_collection name="shared"/>
       <!-- outgroups -->
       <!-- Priapulida -->
       <genome name="priapulus_caudatus_gca000485595v2"/>
@@ -354,7 +339,7 @@
     </collection>
 
     <collection name="protostomia">
-      <base_collection name="shared_metazoa"/>
+      <base_collection name="shared"/>
       <!-- outgroups -->
       <!-- Xenacoelomorpha -->
       <genome name="hofstenia_miamia"/>
@@ -404,7 +389,7 @@
 
     <collection name="metazoa">
       <!-- outgroup -->
-      <base_collection name="shared_metazoa"/>
+      <base_collection name="shared"/>
       <!-- Porifera -->
       <genome name="amphimedon_queenslandica"/>
       <!-- Xenacoelomorpha -->
