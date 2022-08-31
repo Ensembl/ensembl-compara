@@ -104,7 +104,7 @@ if __name__ == '__main__':
 
     if sum(stat_df.Genes == 0) > 0:
         sys.stderr.write("Some genomes have no usable genes annotated! Please check the stats file!\n")
-        sys.exit(1)
+        # sys.exit(1)
 
     # Dump per-gene cDNAs:
     for g, s in per_gene.items():

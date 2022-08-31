@@ -88,14 +88,16 @@ process prepareGenome {
     label 'retry_with_8gb_mem_c1'
     input:
       path genome
-
     output:
         path "processed/*", emit: proc_genome
     script:
         id = (genome =~ /(.+)\..+?$/)[0][1]
         """
             mkdir -p processed
-            seqkit -j 5 grep -n -v -r -p "PATCH_*,HAP" $genome > processed/$id
+            ${params.seqkit_exe} -j 5 grep -n -v -r -p "PATCH_*,HAP" $genome > processed/$id
+            # Add a dummy softmasked sequence to prevent disabling of
+            # blast softmasking during the genblast processing:
+            echo -e ">REPMASK_DUMMY_DECOY\na" >> processed/$id
         """
 }
 
@@ -404,6 +406,7 @@ process mergeCodonAlns {
     output:
         path "codon_alns_fofn.txt", emit: alns_fofn
         path "merged_codon_alns.fas", emit: merged_aln
+
     script:
     fh = new File("$workDir/codon_alns_fofn.txt")
     for (line : alns)  {
@@ -412,6 +415,26 @@ process mergeCodonAlns {
     """
     mv ${workDir}/codon_alns_fofn.txt .
     python ${params.alignments_to_partitions_exe} -i codon_alns_fofn.txt -o merged_codon_alns.fas -p codon_partitions.tsv -t $taxa
+    """
+}
+
+/**
+*@input codon alignment fasta
+*@output fasta alignment with every third site.
+*/
+process pickThirdCodonSite {
+    label 'rc_4gb'
+
+    publishDir "${params.results_dir}/", pattern: "merged_third_sites_alns.fas", mode: "copy",  overwrite: true
+
+    input:
+        path codon_aln
+
+    output:
+        path "merged_third_sites_alns.fas", emit: third_aln
+    script:
+    """
+    python ${params.pick_third_site_exe} -i $codon_aln -o merged_third_sites_alns.fas
     """
 }
 
@@ -543,7 +566,39 @@ process calcCodonBranchesIqtree {
 }
 
 /**
-*@input path to merged codon alignment fasta
+*@input path to alignment fasta
+*@input path to input newick tree
+*@output path to output tree in newick format
+*@output path to iqtree2 report
+*@output path to iqtree2 log file
+*/
+process calcNeutralBranchesAstral {
+    label 'retry_with_16gb_mem_c1'
+
+    publishDir "${params.results_dir}/", pattern: "astral_species_tree_neutral_bl.nwk", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/", pattern: "astral_iqtree_report_neutral_bl.txt", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/", pattern: "astral_iqtree_log_neutral_bl.txt", mode: "copy",  overwrite: true
+
+    input:
+        path aln
+        path input_tree
+
+    output:
+        path "astral_species_tree_neutral_bl.nwk", emit: newick
+        path "astral_iqtree_report_neutral_bl.txt", emit: iqrtree_report
+        path "astral_iqtree_log_neutral_bl.txt", emit: iqtree_log
+
+    script:
+    """
+    ${params.iqtree_exe} -s $aln -m GTR+G -g $input_tree --fast -T ${params.cores}
+    mv *.treefile astral_species_tree_neutral_bl.nwk
+    mv *.iqtree astral_iqtree_report_neutral_bl.txt
+    mv *.log astral_iqtree_log_neutral_bl.txt
+    """
+}
+
+/**
+*@input path to codon alignment fasta
 *@input path to input newick tree
 *@output path to output tree in newick format
 *@output path to iqtree2 report
@@ -555,7 +610,6 @@ process calcCodonBranchesAstral {
     publishDir "${params.results_dir}/", pattern: "astral_species_tree_codon_bl.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "astral_iqtree_report_codon_bl.txt", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "astral_iqtree_log_codon_bl.txt", mode: "copy",  overwrite: true
-
 
     input:
         path codon_aln
@@ -575,23 +629,25 @@ process calcCodonBranchesAstral {
     """
 }
 
+
 /**
 *@input path to input tree with codon branch lengths
-*@output path to output tree with nucleotide brnach lengths
+*@output path to output tree with nucleotide branch lengths
 */
 process scaleToNucleotide {
     label 'rc_2Gb'
 
-    publishDir "${params.results_dir}/", pattern: "astral_species_tree_neutral_bl.nwk", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/", pattern: "astral_species_tree_nuc_bl.nwk", mode: "copy",  overwrite: true
 
     input:
         path in_tree
 
     output:
-        path "astral_species_tree_neutral_bl.nwk", emit: tree
+        path "astral_species_tree_nuc_bl.nwk", emit: tree
+
     script:
     """
-    ${params.gotree_exe} brlen scale -f 0.33333333333 < $in_tree > astral_species_tree_neutral_bl.nwk
+    ${params.gotree_exe} brlen scale -f 0.33333333333 < $in_tree > astral_species_tree_nuc_bl.nwk
     """
 }
 
@@ -690,6 +746,12 @@ workflow {
     // Merge codon alignments:
     mergeCodonAlns(removeStopCodons.out.codon_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
 
+    // Pick out every third site from the merged codon alignment:
+    pickThirdCodonSite(mergeCodonAlns.out.merged_aln)
+
+    // Calculate branch lenghts based on the third codon sites:
+    calcNeutralBranchesAstral(pickThirdCodonSite.out.third_aln, runAstral.out.tree)
+
     // Calculate species tree from protein alignments using iqtree2 (removed):
     // runIqtree(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions)
 
@@ -703,5 +765,5 @@ workflow {
     scaleToNucleotide(calcCodonBranchesAstral.out.newick)
 
     // Perform outgroup rooting:
-    outgroupRooting(scaleToNucleotide.out.tree)
+    outgroupRooting(calcNeutralBranchesAstral.out.newick)
 }
