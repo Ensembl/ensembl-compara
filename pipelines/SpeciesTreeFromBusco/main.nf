@@ -629,6 +629,39 @@ process calcCodonBranchesAstral {
     """
 }
 
+/**
+*@input path to protein alignment fasta
+*@input path to partition file
+*@input path to input newick tree
+*@output path to output tree in newick format
+*@output path to iqtree2 report
+*@output path to iqtree2 log file
+*/
+process calcProtBranchesAstral {
+    label 'retry_with_16gb_mem_c1'
+
+    publishDir "${params.results_dir}/", pattern: "astral_species_tree_prot_bl.nwk", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/", pattern: "astral_iqtree_report_prot_bl.txt", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/", pattern: "astral_iqtree_log_prot_bl.txt", mode: "copy",  overwrite: true
+
+    input:
+        path aln
+        path partitions
+        path input_tree
+
+    output:
+        path "astral_species_tree_prot_bl.nwk", emit: newick
+        path "astral_iqtree_report_prot_bl.txt", emit: iqrtree_report
+        path "astral_iqtree_log_prot_bl.txt", emit: iqtree_log
+
+    script:
+    """
+    ${params.iqtree_exe} -s $aln -p $partitions -g $input_tree --fast -T ${params.cores}
+    mv *.treefile astral_species_tree_prot_bl.nwk
+    mv *.iqtree astral_iqtree_report_prot_bl.txt
+    mv *.log astral_iqtree_log_prot_bl.txt
+    """
+}
 
 /**
 *@input path to input tree with codon branch lengths
@@ -720,7 +753,7 @@ workflow {
     alignProt(collateBusco.out.prot_seq.flatten(), collateBusco.out.cdnas.flatten())
 
     // Trim protein alignments (removed):
-    // trimAlignments(alignProt.out.prot_aln)
+    trimAlignments(alignProt.out.prot_aln)
 
     // Convert protein alignments to codon alignment:
     protAlnToCodon(alignProt.out.prot_aln, alignProt.out.cdnas)
@@ -740,8 +773,8 @@ workflow {
     // the gene trees:
     runAstral(trees)
 
-    // Merge protein alignments (removed):
-    //mergeProtAlns(trimAlignments.out.trim_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
+    // Merge protein alignments:
+    mergeProtAlns(trimAlignments.out.trim_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
 
     // Merge codon alignments:
     mergeCodonAlns(removeStopCodons.out.codon_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
@@ -758,11 +791,14 @@ workflow {
     // Calculate neutral branch lenghts from codon alignment (removed):
     // calcCodonBranchesIqtree(mergeCodonAlns.out.merged_aln, runIqtree.out.newick)
 
-    // Calculate neutral branch lenghts from codon alignment for the astral tree:
-    calcCodonBranchesAstral(mergeCodonAlns.out.merged_aln, runAstral.out.tree)
+    // Calculate branch lenghts from protein alignment:
+    calcProtBranchesAstral(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions, runAstral.out.tree)
 
-    // Scale the branch lengths to nucleotide sites:
-    scaleToNucleotide(calcCodonBranchesAstral.out.newick)
+    // Calculate branch lenghts from codon alignment for the astral tree (removed):
+    // calcCodonBranchesAstral(mergeCodonAlns.out.merged_aln, runAstral.out.tree)
+
+    // Scale the branch lengths to nucleotide sites (removed):
+    // scaleToNucleotide(calcCodonBranchesAstral.out.newick)
 
     // Perform outgroup rooting:
     outgroupRooting(calcNeutralBranchesAstral.out.newick)
