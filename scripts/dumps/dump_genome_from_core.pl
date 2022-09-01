@@ -79,7 +79,7 @@ my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( -user   => 'ensro',
 if (defined $genome_component) {
     my @core_db_components = @{$dba->get_GenomeContainer->get_genome_components()};
     if (!@core_db_components) {
-        die "ERROR: invalid option '--genome-component' — no components found in core database '$dbname'\n";
+        die "ERROR: invalid option '--genome-component' - no components found in core database '$dbname'\n";
     }
     elsif (! grep { $_ eq $genome_component } @core_db_components) {
         die "ERROR: genome component '$genome_component' not found in core database '$dbname'\n";
