@@ -14,12 +14,90 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+=head1 NAME
+
+testTaxonTree.pl
+
+=head1 DESCRIPTION
+
+This script tests access to trees in a database via various options
+
+=head1 SYNOPSIS
+
+perl testTaxonTree.pl \
+    --url mysql://ensro@mysql-ens-compara-prod-5:4617/ensembl_compara_plants_55_108 \
+    --gene LR48_Vigan1529s000400 \
+    --species vigna_angularis
+
+=head1 OPTIONS
+
+=over
+
+=item B<[--help]>
+Prints help message and exits.
+
+=item B<[--url URL]>
+(Mandatory) The mysql URL mysql://user@host:port/database_name
+
+=item B<[--tre Newick File]>
+(Optional) Newick formatted file containing tree.
+
+=item B<[--tree tree_id]>
+(Optional) The stable_id of the gene tree.
+
+=item B<[--gene stable_id]>
+(Optional) The gene_member stable_id. Requires --species parameter.
+
+=item B<[--species genome]>
+(Optional) The species name. Requires --gene parameter.
+
+=item B<[--reroot root_id]>
+(Optional) New root_id.
+
+=item B<[--align]>
+(Optional) New root_id.
+
+=item B<[--cdna]>
+(Optional) Print cdna in alignment instead of protein.
+
+=item B<[--tag filename_tag]>
+(Optional) Add tagged name to file out.
+
+=item B<[--create_species_tree]>
+(Optional) Create a new species tree from NCBI taxonomy.
+
+=item B<[--extrataxon_sequenced taxon_names]>
+(Optional) Include taxon_names.
+
+=item B<[--multifurcation_deletes_node taxon_node]>
+(Optional) Multifurcate tree by taxon_nodes deletion.
+
+=item B<[--multifurcation_deletes_all_subnodes taxon_subnodes]>
+(Optional) Propagate flattened node following multifurcated parent node.
+
+=item B<[--njtree_output_filename outfile.nw]>
+(Optional) Output filename for neighbour joining tree.
+
+=item B<[--no_other_files ]>
+(Optional) Default undef to write to other files, put 1 to write to additional files.
+
+=item B<[--no_print_tree ]>
+(Optional) Default undef to write to file, write to STDERR if 1.
+
+=item B<[--scale scale_factor]>
+(Optional) Default 10. Scale factor for printing tree.
+
+=back
+
+=cut
+
 
 use strict;
 use warnings;
 
 use DBI;
 use Getopt::Long;
+use Pod::Usage;
 
 use Bio::AlignIO;
 
@@ -54,6 +132,7 @@ GetOptions('help'        => \$help,
            'tre=s'       => \$self->{'newick_file'},
            'tree_id=i'   => \$self->{'tree_id'},
            'gene=s'      => \$self->{'gene_stable_id'},
+           'species=s'   => \$self->{'species'},
            'reroot=i'    => \$self->{'new_root_id'},
            'align'       => \$self->{'print_align'},
            'cdna'        => \$self->{'cdna'},
@@ -67,17 +146,13 @@ GetOptions('help'        => \$help,
            'no_other_files'             => \$self->{'no_other_files'},          # and shut up the rest of it :)
            'no_print_tree'              => \$self->{'no_print_tree'},           # so all output goes to STDERR
            'scale=f'     => \$self->{'scale'},
-          );
-
-if ($help) { usage(); }
+) or pod2usage(-verbose => 2);
+pod2usage(-exitvalue => 0, -verbose => 2) if $help;
 
 if ($url) {
   $self->{'comparaDBA'} = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor( -URL => $url );
 }
-unless(defined($self->{'comparaDBA'})) {
-  warn "Could not create compara_dba from url '$url'\n\n";
-  usage();
-} 
+pod2usage(-exitvalue => 0, -verbose => 2) if !defined $self->{'comparaDBA'};
 
 if($self->{'tree_id'}) {
   my $treeDBA = $self->{'comparaDBA'}->get_GeneTreeAdaptor;
@@ -87,8 +162,8 @@ if($self->{'tree_id'}) {
 
 if ($self->{'tree_id'}) {
     print_protein_tree($self);
-} elsif ($self->{'gene_stable_id'}) {
-    fetch_protein_tree_with_gene($self, $self->{'gene_stable_id'});
+} elsif ($self->{'gene_stable_id'} and $self->{'species'}) {
+    fetch_protein_tree_with_gene($self, $self->{'gene_stable_id'}, $self->{'species'});
 } elsif ($self->{'newick_file'}) {
     parse_newick($self);
 } elsif ($self->{'new_root_id'}) {
@@ -117,22 +192,6 @@ exit(0);
 # subroutines
 #
 #######################
-
-sub usage {
-  warn "testTaxonTree.pl [options]\n";
-  warn "  -help                  : print this help\n";
-  warn "  -url <url>             : connect to compara at url\n";
-  warn "  -tree_id <id>          : print tree with node_id\n";
-  warn "  -name <string>         : search for <name> and print tree from that node\n";
-  warn "  -align                 : print multiple alignment\n";
-  warn "  -scale <num>           : scale factor for printing tree (def: 100)\n";
-  warn "  -mini                  : minimize tree\n";
-  warn "testTaxonTree.pl v1.1\n";
-  
-  exit(1);  
-}
-
-
 
 sub fetch_compara_ncbi_taxa {
   my $self = shift;
@@ -256,8 +315,10 @@ sub print_protein_tree {
 sub fetch_protein_tree_with_gene {
   my $self = shift;
   my $gene_stable_id = shift;
+  my $species = shift;
 
-  my $member = $self->{'comparaDBA'}->get_GeneMemberAdaptor->fetch_by_stable_id($gene_stable_id);
+  my $genomedb = $self->{'comparaDBA'}->get_GenomeDBAdaptor->fetch_by_name_assembly($species);
+  my $member = $self->{'comparaDBA'}->get_GeneMemberAdaptor->fetch_by_stable_id_GenomeDB($gene_stable_id, $genomedb);
   print $member->toString(), "\n";
   print $member->get_canonical_SeqMember->toString(), "\n";
 

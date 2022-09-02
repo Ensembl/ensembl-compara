@@ -65,7 +65,7 @@ standaloneJob(
 		],
 		[
 			'WARNING',
-			"Found LASTZ alignment. mlss_id = 634"
+			"Found pairwise alignment. mlss_id = 634"
 		],
 		[
 			'DATAFLOW',
@@ -108,7 +108,7 @@ standaloneJob(
 	[ # list of events to test for (just 1 event in this case)
 		[
 			'WARNING',
-			"Found LASTZ alignment. mlss_id = 719"
+			"Found pairwise alignment. mlss_id = 719"
 		],
 		[ # start event
 			'DATAFLOW', # event to test for (could be WARNING)

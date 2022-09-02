@@ -33,16 +33,15 @@ $reg->load_registry_from_db(
   -user=>'anonymous',
 );
 
-
 my $gene_stable_id = 'ENSG00000120685';
+my $genome_name = "homo_sapiens";
 
-
-my $gene_member_adaptor = $reg->get_adaptor ("Multi", "compara", "GeneMember");
-my $gene_tree_adaptor   = $reg->get_adaptor ("Multi", "compara", "GeneTree");
-my $cafe_tree_adaptor   = $reg->get_adaptor ("Multi", "compara", "CAFEGeneFamily");
-my $genome_db_adaptor   = $reg->get_adaptor ("Multi", "compara", "GenomeDB");
-
-my $member = $gene_member_adaptor->fetch_by_stable_id($gene_stable_id);
+my $gene_member_adaptor = $reg->get_adaptor("Multi", "compara", "GeneMember");
+my $gene_tree_adaptor   = $reg->get_adaptor("Multi", "compara", "GeneTree");
+my $cafe_tree_adaptor   = $reg->get_adaptor("Multi", "compara", "CAFEGeneFamily");
+my $genome_db_adaptor   = $reg->get_adaptor("Multi", "compara", "GenomeDB");
+my $genome = $genome_db_adaptor->fetch_by_name_assembly($genome_name);
+my $member = $gene_member_adaptor->fetch_by_stable_id_GenomeDB($gene_stable_id, $genome);
 my $gene_tree = $gene_tree_adaptor->fetch_default_for_Member($member);
 my $cafe_tree = $cafe_tree_adaptor->fetch_by_GeneTree($gene_tree);
 
@@ -59,7 +58,7 @@ print $gene_tree->stable_id, "\t";
 die "No gene gain/loss tree for this gene\n" unless (defined $cafe_tree);
 
 my $tree_fmt = '%{-s}%{x-}_%{N}:%{d}';
-#my $tree_fmt = '%{s|x}_%{N}:%{d}';
+
 print $cafe_tree->root->newick_format('ryo', $tree_fmt), "\t";
 print $cafe_tree->pvalue_avg, "\n";
 
@@ -79,7 +78,3 @@ for my $node (@{$pruned_tree->get_all_nodes}) {
   }
   print "$node_name => $node_n_members ($node_pvalue) $dynamics\n";
 }
-
-
-
-

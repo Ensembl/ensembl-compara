@@ -203,11 +203,16 @@ sub new_from_Slice {
     }
 
     my %seq_loc_to_cell_component = ( 'nuclear_chromosome' => 'NUC', 'mitochondrial_chromosome' => 'MT', 'chloroplast_chromosome' => 'PT' );
-    # By default, do not process a sequence that has no cellular component assigned
-    my $cellular_component = 'OTHER';
+    # FIXME this default nuclear assignment means that genomes without assignment in cores that should be mitochondrial for example, are later processed for pairwise alignment and synteny incorrectly
+    my $cellular_component = 'NUC';
 
-    if ($sequence_location and exists $seq_loc_to_cell_component{$sequence_location}) {
-        $cellular_component = $seq_loc_to_cell_component{$sequence_location};
+    if ($sequence_location) {
+        if (exists $seq_loc_to_cell_component{$sequence_location}) {
+            $cellular_component = $seq_loc_to_cell_component{$sequence_location};
+        }
+        else {
+            $cellular_component = 'OTHER';
+        }
     }
 
     return $class->new_fast( {

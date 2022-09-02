@@ -17,9 +17,6 @@ limitations under the License.
 
 =cut
 
-
-=pod 
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtEntries
@@ -83,22 +80,6 @@ sub run {
         return;
     }
 
-    my $ids         = $self->param('ids');
-
-    my @not_yet_stored_ids = ();
-  
-    foreach my $id (@$ids) {
-        my $stable_id = ($id =~ /^(\S+)\.\d+$/) ? $1 : $id;     # drop the version number if it's there
-        my $seq_member = $self->compara_dba()->get_SeqMemberAdaptor->fetch_by_stable_id($stable_id);
-        my $seq_member_id;
-
-        if($seq_member and $seq_member_id = $seq_member->seq_member_id) {
-            print "Member '$stable_id' already stored (seq_member_id=$seq_member_id), skipping\n";
-        } else {    # skip the ones that have been already stored
-            push @not_yet_stored_ids, $id;
-        }
-    }
-    $self->param('member_ids', $self->fetch_and_store_a_chunk($source_name, join(' ',@not_yet_stored_ids), scalar @not_yet_stored_ids) );
 }
 
 

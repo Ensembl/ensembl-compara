@@ -153,11 +153,11 @@ elsif($division eq 'pan' or $division eq 'pan_homology'){
 
     $species_1                = 'arabidopsis_thaliana';
     $species_2                = "vitis_vinifera";
-    $species_3                = 'guillardia_theta';
+    $species_3                = 'amphimedon_queenslandica';
 
     $taxon_1                  = 3702;#arabidopsis_thaliana
     $taxon_2                  = 29760;#vitis_vinifera
-    $taxon_3                  = 55529;#guillardia_theta
+    $taxon_3                  = 400682;#amphimedon_queenslandica
 
     $gene_symbol              = 'AT4G26860.2';
     $homology_type            = 'orthologues';
@@ -183,6 +183,27 @@ elsif ( $division eq 'grch37' ) {
     $skip_epo       = 1;
     $skip_genetrees = 1;
     $skip_cactus    = 1;
+}
+elsif ($division eq 'protists' ) {
+    $gene_member_id           = 'LMJF_27_0290';
+    $gene_tree_id             = 'EPrGT00960000189529';
+
+    $species_1                = 'leishmania_major';
+    $species_2                = 'plasmodium_falciparum';
+    $species_3                = 'plasmopara_halstedii_gca_900000015';
+
+    $taxon_1                  = 347515;#leishmania_major
+    $taxon_2                  = 4781;#plasmodium_falciparum
+    $taxon_3                  = 36329;#plasmopara_halstedii_gca_900000015
+
+    $gene_symbol              = 'LMJF_27_0290';
+    $homology_type            = 'orthologues';
+    $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
+
+    $skip_cafe                = 1;
+    $skip_alignments          = 1;
+    $skip_families            = 1;
+    $skip_cactus              = 1;
 }
 else {
     die "Division '$division' is not understood\n";
@@ -566,8 +587,8 @@ try{
     }
 
     unless ( $skip_alignments || $skip_lastz ) {
-        $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;method=LASTZ_NET;species_set=$species_1;species_set=$species_2".($extra_params ? ";$extra_params" : ''));
-        ok( index($jsontxt->[0]->{tree},"$species_1") !=-1 && index($jsontxt->[0]->{tree},$species_2) !=-1, "Check get alignment region method option");
+        $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;method=LASTZ_NET;species_set=$species_1;species_set=$species_3".($extra_params ? ";$extra_params" : ''));
+        ok( index($jsontxt->[0]->{tree},"$species_1") !=-1 && index($jsontxt->[0]->{tree},$species_3) !=-1, "Check get alignment region method option");
     }
 
     unless ( $skip_homology ) {
@@ -586,7 +607,7 @@ try{
         ok( $jsontxt->{data}[0]->{homologies}[0]->{target}->{taxon_id} == $taxon_2 , "Check homology endpoint target_taxon option validity");
 
         if ( defined $species_2 && defined $species_3 ) {
-            $orthoXml = process_orthoXml_get($server."/homology/id/$gene_member_id?content-type=text/x-orthoxml+xml;target_species=$species_1;target_species=$species_2;target_species=$species_3;".($extra_params ? ";$extra_params" : ''));
+            $orthoXml = process_orthoXml_get($server."/homology/id/$gene_member_id?content-type=text/x-orthoxml+xml;target_species=$species_1;target_species=$species_2;target_species=$species_3".($extra_params ? ";$extra_params" : ''));
             @pruned_species = keys %{ $orthoXml->{species} };
             %pruned_species = map {$_ => 1} @pruned_species;
             ok((exists($pruned_species{$species_1})) && (exists($pruned_species{$species_2})) && (exists($pruned_species{$species_3} )), "Check homology endpoint target species option Validity");

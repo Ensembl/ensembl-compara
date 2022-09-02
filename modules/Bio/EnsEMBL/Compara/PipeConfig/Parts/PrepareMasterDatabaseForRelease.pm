@@ -135,7 +135,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 '5->A' => [ 'verify_genome' ],
                 'A->1' => [ 'sync_metadata' ],
             },
-            -rc_name    => '16Gb_job',
+            -rc_name    => '2Gb_job',
         },
 
         {   -logic_name => 'update_genome_from_registry_factory',
@@ -149,14 +149,14 @@ sub pipeline_analyses_prep_master_db_for_release {
                 '5->A' => [ 'verify_genome' ],
                 'A->1' => [ 'sync_metadata' ],
             },
-            -rc_name    => '16Gb_job',
+            -rc_name    => '2Gb_job',
         },
 
         {   -logic_name    => 'add_species_into_master',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::AddSpeciesToMaster',
             -parameters    => { 'release' => 1 },
             -hive_capacity => 10,
-            -rc_name       => '16Gb_job',
+            -rc_name       => '2Gb_job',
         },
 
         {   -logic_name => 'retire_species_from_master',
@@ -180,7 +180,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'compara_db'        => $self->o('master_db'),
             },
             -hive_capacity => 10,
-            -rc_name       => '16Gb_job',
+            -rc_name       => '4Gb_job',
         },
 
         {   -logic_name => 'sync_metadata',
@@ -212,7 +212,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'cmd'                 => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #master_db# -xml #xml_file# --release --output_file #report_file# --verbose',
             },
             -flow_into  => [ 'retire_old_species_sets' ],
-            -rc_name    => '2Gb_job',
+            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name => 'retire_old_species_sets',
@@ -260,7 +260,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 1 => { 'backup_master' => {} },
             },
             -max_retry_count => 0,
-            -rc_name         => '500Mb_job',
+            -rc_name         => '1Gb_job',
         },
 
         {   -logic_name => 'backup_master',

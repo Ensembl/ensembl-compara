@@ -68,6 +68,13 @@
               secale_cereale,
              )Hordeinae,
              (
+              lolium_perenne,
+             )Loliinae,
+             (
+              avena_sativa_ot3098,
+              avena_sativa_sang,
+             )Aveninae,
+             (
               thinopyrum_elongatum,
              )Thinopyrum,
              (
@@ -214,6 +221,7 @@
           ipomoea_triloba,
          )Convolvulaceae,
          (
+          fraxinus_excelsior,
           olea_europaea,
           olea_europaea_sylvestris,
          )Oleaceae,
@@ -243,6 +251,7 @@
             )Vigna,
             phaseolus_vulgaris,
             glycine_max,
+            cajanus_cajan,
            )Phaseoleae,
           )Papilionoideae,
           (
@@ -271,9 +280,10 @@
            populus_trichocarpa,
           )Malpighiales,
           (
-           quercus_lobata,
            juglans_regia,
            corylus_avellana,
+           quercus_lobata,
+           quercus_suber,
           )Fagales,
           (
            cucumis_sativus,
@@ -288,6 +298,7 @@
             brassica_rapa_ro18,
             brassica_napus,
             brassica_rapa,
+            brassica_juncea,
            )Brassica,
            (
             arabidopsis_lyrata,

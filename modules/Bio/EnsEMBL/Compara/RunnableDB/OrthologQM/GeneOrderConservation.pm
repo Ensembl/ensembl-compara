@@ -126,6 +126,7 @@ sub fetch_input {
             'neighbourhood'      => \%neighbourhood,
         };
     }
+    $mlss->adaptor->dbc->disconnect_if_idle();
 
     $self->param('gene_neighborhoods', \@gene_neighborhoods);
     $self->param('mlss', $mlss);

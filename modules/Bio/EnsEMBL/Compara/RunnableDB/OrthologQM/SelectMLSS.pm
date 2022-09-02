@@ -124,11 +124,17 @@ sub fetch_input {
 		}
 	}
 	# Last, look for a LASTZ aln between pair
-	my $lastz = $mlss_adap->fetch_by_method_link_type_genome_db_ids( "LASTZ_NET", [ $species1_gdb->dbID, $species2_gdb->dbID ] );
-	if ( defined $lastz && $lastz->is_current ) {
-        $new_alignment = 1 if $lastz->first_release == $current_release;
-		push( @aln_mlss_ids, $lastz->dbID );
-		$self->warning( "Found LASTZ alignment. mlss_id = " . $lastz->dbID );
+
+    my $pw_aln = @{$mlss_adap->fetch_all_by_method_link_type( "LASTZ_NET" )}
+        ? $mlss_adap->fetch_by_method_link_type_genome_db_ids( "LASTZ_NET",
+        [ $species1_gdb->dbID, $species2_gdb->dbID ] )
+        : $mlss_adap->fetch_by_method_link_type_genome_db_ids( "TRANSLATED_BLAT_NET",
+        [ $species1_gdb->dbID, $species2_gdb->dbID ] );
+
+	if ( defined $pw_aln && $pw_aln->is_current ) {
+        $new_alignment = 1 if $pw_aln->first_release == $current_release;
+		push( @aln_mlss_ids, $pw_aln->dbID );
+		$self->warning( "Found pairwise alignment. mlss_id = " . $pw_aln->dbID );
 	}
         elsif (not defined $common_mlss_list) {
 		$self->input_job->autoflow(0);

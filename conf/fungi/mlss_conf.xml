@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<compara_db division="fungi">
+
+  <!-- Collections are species-sets that are needed to define several method-link species sets. -->
+  <collections>
+    <collection name="default">
+      <taxonomic_group taxon_name="Eukaryota"/>
+    </collection>
+
+  </collections>
+
+  <gene_trees>
+    <protein_trees collection="default"/>
+  </gene_trees>
+
+</compara_db>

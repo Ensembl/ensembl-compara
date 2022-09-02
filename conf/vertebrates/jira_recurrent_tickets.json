@@ -25,6 +25,12 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-ReviewMLSSsconfigurationfile",
+            "summary": "Review MLSSs configuration file"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
             "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141\n*GitHub*: [<Division>/PrepareMasterDatabaseForRelease_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/PrepareMasterDatabaseForRelease_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-1 -port 4485{code}",
             "summary": "Prepare the master database"
          },
@@ -172,6 +178,12 @@
          },
          {
             "component": "Production tasks",
+            "description": "*GitHub*: [MercatorPecan_conf|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/MercatorPecan_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MercatorPecan_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "summary": "Run the Amniotes pecan pipeline",
+            "name_on_graph": "Mercator Pecan:Amniotes"
+         },
+         {
+            "component": "Production tasks",
             "description": "*GitHub*: [UpdateMSA_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/UpdateMSA_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::UpdateMSA_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -method_type pecan -species_set_name amniotes{code}",
             "summary": "Update the Amniotes Mercator-Pecan MSA",
             "name_on_graph": "Update MSA:Amniotes"
@@ -202,6 +214,7 @@
          },
          {
             "component": "Production tasks",
+            "description": "Mark as done when all LastZs have been merged into the new release database.",
             "summary": "All LastZ",
             "name_on_graph": "All LastZ"
          },
@@ -329,5 +342,24 @@
          }
       ],
       "summary": "<Division> Release <version> Final checks before public release"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Databaseupdate",
+            "summary": "Incremental copy back release database"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Runningthepipeline",
+            "summary": "Data dump"
+         }
+      ],
+      "summary": "<Division> Release <version> FTP Dumps"
    }
 ]

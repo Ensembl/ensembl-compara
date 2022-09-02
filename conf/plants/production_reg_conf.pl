@@ -55,8 +55,8 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 my @metazoa_overlap_species = qw(drosophila_melanogaster caenorhabditis_elegans);
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@metazoa_overlap_species);
 my $metazoa_overlap_cores = {
-    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_106_9" ],
-    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_106_279" ],
+    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_108_9" ],
+    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_108_282" ],
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $metazoa_overlap_cores );
 
@@ -93,26 +93,15 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'        => [ 'mysql-ens-compara-prod-4', 'jalvarez_plants_load_members_106'],
-    'compara_ptrees'         => [ 'mysql-ens-compara-prod-4', 'jalvarez_default_plants_protein_trees_106' ],
+    'compara_members'        => [ 'mysql-ens-compara-prod-5', 'cristig_plants_load_members_108'],
+    'compara_ptrees'         => [ 'mysql-ens-compara-prod-7', 'cristig_default_plants_protein_trees_108' ],
     'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-5', 'jalvarez_wheat_cultivars_plants_protein_trees_106' ],
 
     # LASTZ dbs
-    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-3', 'jalvarez_plants_lastz_batch1_106' ],
-    'lastz_batch_2'  => [ 'mysql-ens-compara-prod-5', 'jalvarez_plants_lastz_batch2_106' ],
-    'lastz_batch_3'  => [ 'mysql-ens-compara-prod-9', 'cristig_plants_lastz_batch3_106' ],
-    'lastz_batch_4'  => [ 'mysql-ens-compara-prod-8', 'cristig_plants_lastz_batch4_106' ],
-    'lastz_batch_5'  => [ 'mysql-ens-compara-prod-8', 'cristig_plants_lastz_batch5_106' ],
-    'lastz_batch_6'  => [ 'mysql-ens-compara-prod-10', 'jalvarez_plants_lastz_batch6_106' ],
-    'lastz_batch_7'  => [ 'mysql-ens-compara-prod-9', 'cristig_plants_lastz_batch7_106' ],
-    'lastz_batch_8'  => [ 'mysql-ens-compara-prod-8', 'cristig_plants_lastz_batch8_106' ],
-    # 'lastz_batch_9'  => [ 'mysql-ens-compara-prod-8', 'jalvarez_plants_lastz_batch9_106' ],  # MLSS removed from release
-    'lastz_batch_10' => [ 'mysql-ens-compara-prod-5', 'jalvarez_plants_lastz_batch10_106' ],
-    'lastz_batch_11' => [ 'mysql-ens-compara-prod-3', 'ivana_plants_lastz_batch11_106' ],
-    'lastz_batch_12' => [ 'mysql-ens-compara-prod-7', 'ivana_plants_lastz_batch12_106' ],
+    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-5', 'cristig_plants_lastz_batch1_108' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-8', 'jalvarez_plants_synteny_106' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'cristig_plants_synteny_108' ],
 
     # EPO dbs
     ## rice

@@ -37,7 +37,9 @@ $reg->load_registry_from_db(
 my $human_gene_adaptor = $reg->get_adaptor("Homo sapiens", "core", "Gene");
 my $gene_member_adaptor = $reg->get_adaptor("Multi", "compara", "GeneMember");
 my $gene_tree_adaptor = $reg->get_adaptor("Multi", "compara", "GeneTree");
+my $genome_db_adaptor = $reg->get_adaptor("Multi", "compara", "GenomeDB");
 
+my $genome = $genome_db_adaptor->fetch_by_name_assembly("homo_sapiens");
 my $interpro_domain = "IPR002305";
 
 ## Get all the human Genes with that interpro domain
@@ -50,7 +52,7 @@ my $human_genes = $human_gene_adaptor->fetch_all_by_domain($interpro_domain);
 foreach my $this_human_gene (@$human_genes) {
   print "GENE: ", $this_human_gene->stable_id, " - ", $this_human_gene->external_name, "\n";
   ## Get the gene member for this human gene
-  my $gene_member = $gene_member_adaptor->fetch_by_stable_id($this_human_gene->stable_id);
+  my $gene_member = $gene_member_adaptor->fetch_by_stable_id_GenomeDB($this_human_gene->stable_id, $genome);
   ## Get the canonical peptide Member, i.e. the one used for building the trees
   my $peptide_member = $gene_member->get_canonical_SeqMember;
 

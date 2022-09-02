@@ -210,7 +210,9 @@ sub fetch_by_Translation {
     my ($self, $translation, $verbose) = @_;
 
     assert_ref($translation, 'Bio::EnsEMBL::Translation', 'translation');
-    my $seq_member = $self->fetch_by_stable_id($translation->stable_id);
+    my $species = $translation->adaptor->db->get_MetaContainer->get_production_name();
+    my $genome_db = $self->db->get_GenomeDBAdaptor->fetch_by_name_assembly($species);
+    my $seq_member = $self->fetch_by_stable_id_GenomeDB($translation->stable_id, $genome_db);
     warn $translation->stable_id." does not exist in the Compara database\n" if $verbose and not $seq_member;
     return $seq_member;
 }
@@ -235,7 +237,9 @@ sub fetch_by_Transcript {
 
     assert_ref($transcript, 'Bio::EnsEMBL::Transcript', 'transcript');
     my $stable_id_for_compara = $transcript->translation ? $transcript->translation->stable_id : $transcript->stable_id;
-    my $seq_member = $self->fetch_by_stable_id($stable_id_for_compara);
+    my $species = $transcript->adaptor->db->get_MetaContainer->get_production_name();
+    my $genome_db = $self->db->get_GenomeDBAdaptor->fetch_by_name_assembly($species);
+    my $seq_member = $self->fetch_by_stable_id_GenomeDB($stable_id_for_compara, $genome_db);
     warn $stable_id_for_compara." does not exist in the Compara database\n" if $verbose and not $seq_member;
     return $seq_member;
 }
@@ -413,13 +417,13 @@ sub store {
     $sth->finish;
   } else {
     $sth->finish;
-    #UNIQUE(stable_id) prevented insert since seq_member was already inserted
+    #UNIQUE(genome_db_id,stable_id) prevented insert since a seq_member was already inserted for this genome_db
     #so get seq_member_id with select
-    my $sth2 = $self->prepare("SELECT seq_member_id, sequence_id, genome_db_id FROM seq_member WHERE stable_id=?");
-    $sth2->execute($member->stable_id);
-    my($id, $sequence_id, $genome_db_id) = $sth2->fetchrow_array();
+    my $sth2 = $self->prepare("SELECT seq_member_id, sequence_id FROM seq_member WHERE genome_db_id = ? AND stable_id = ?");
+    $sth2->execute($member->genome_db_id, $member->stable_id);
+    my ($id, $sequence_id) = $sth2->fetchrow_array();
     warn("SeqMemberAdaptor: insert failed, but seq_member_id select failed too") unless($id);
-    throw(sprintf('%s already exists and belongs to a different species (%s) ! Stable IDs must be unique across the whole set of species', $member->stable_id, $self->db->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id)->name )) if $genome_db_id and $member->genome_db_id and $genome_db_id != $member->genome_db_id;
+    throw(sprintf('%s already exists in this species (%s) ! Stable IDs must be unique within a species', $member->stable_id, $member->genome_db->name));
     $member->dbID($id);
     $member->sequence_id($sequence_id) if ($sequence_id) and $member->isa('Bio::EnsEMBL::Compara::SeqMember');
     $sth2->finish;

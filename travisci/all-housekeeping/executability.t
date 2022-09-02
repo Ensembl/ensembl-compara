@@ -34,7 +34,7 @@ foreach my $f (@all_files) {
     my $should_be_executable = ($f =~ /$regex/);
     # Exceptions
     $should_be_executable = '' if $f =~ /\bdocs\/conf\.py$/;
-    $should_be_executable = '' if $f =~ /production.*reg_conf.*\.pl$/;
+    $should_be_executable = '' if $f =~ /(production|dumps).*reg_conf.*\.pl$/;
     $should_be_executable = '' if $f =~ /\bsrc\/python\/lib\/.*\.py$/;
     $should_be_executable = '' if $f =~ /\bsrc\/python\/tests\/.*\.py$/;
     $should_be_executable = '' if $f =~ /\/conftest\.py$/;

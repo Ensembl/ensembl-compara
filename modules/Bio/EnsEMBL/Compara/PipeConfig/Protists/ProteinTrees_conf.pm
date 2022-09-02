@@ -58,10 +58,20 @@ sub default_options {
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
             {
+                'taxa'          => [ 'Alveolata', 'Amoebozoa', 'Apusozoa', 'Choanoflagellida', 'Cryptophyta', 'Euglenozoa', 'Fornicata', 'Heterolobosea', 'Ichthyosporea', 'Nucleariidae', 'Fonticulagroup', 'Parabasalia', 'Rhizaria', 'Stramenopiles' ],
+                'thresholds'    => [ 25, 25, 25 ],
+            },
+            {
                 'taxa'          => [ 'all' ],
-                'thresholds'    => [ undef, undef, 25 ],
+                'thresholds'    => [ undef, 25, 25 ],
             },
         ],
+
+        'mapped_gene_ratio_per_taxon' => {
+            '72018'   => 0.5,    #sphaeroforma
+            '207245'  => 0.5,    #fornicata
+            '2759'    => 0.5,    #eukaryotes
+        },
 
         # Extra analyses:
         # Gain/loss analysis?
@@ -73,8 +83,17 @@ sub default_options {
         # Do we need a mapping between homology_ids of this database to another database?
         # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
         'do_homology_id_mapping' => 0,
+        # Quick tree break is not suitable for protists dataset due to divergence causing inappropriate subtrees
+        'use_quick_tree_break' => 0,
 
     };
+}
+
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+
+    $analyses_by_name->{'HMMer_classify_factory'}->{'-parameters'}->{'step'} = 50;
 }
 
 1;

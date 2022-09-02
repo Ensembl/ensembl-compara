@@ -1,4 +1,3 @@
-
 =head1 LICENSE
 
 See the NOTICE file distributed with this work for additional information
@@ -18,16 +17,6 @@ limitations under the License.
 
 =cut
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyTreesFromDB
@@ -36,11 +25,11 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyTreesFromDB
 
 1) Used to copy all the trees from a previous database.
 
-2) It identifies the genes that have been updated, deleted or added.
+2) It identifies the genes in compara_dba that have been updated, deleted or added
+when compared to the reuse_compara_dba.
 
-3) It disavows all the genes that were flagged by FlagUpdateClusters.pm
-
-4) But it wont add any new genes at this point. New genes will be addeed by mafft/raxml
+3) It disavows all the genes that were flagged by FlagUpdateClusters.pm and stored
+in gene_tree_root_tag as "updated_genes_list", "added_genes_list" and "deleted_genes_list"
 
 =cut
 
@@ -48,7 +37,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyTreesFromDB;
 
 use strict;
 use warnings;
-use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
@@ -56,16 +44,11 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 sub fetch_input {
     my $self = shift @_;
 
-        #Get adaptors
-        #----------------------------------------------------------------------------------------------------------------------------
         #get compara_dba adaptor
         $self->param( 'compara_dba', $self->compara_dba );
 
         #get reuse compara_dba adaptor
         $self->param( 'reuse_compara_dba', $self->get_cached_compara_dba('reuse_db') );
-
-        #print Dumper $self->param('compara_dba')       if ( $self->debug );
-        #print Dumper $self->param('reuse_compara_dba') if ( $self->debug );
 
         #get reuse tree adaptor
         $self->param( 'reuse_tree_adaptor', $self->param('reuse_compara_dba')->get_GeneTreeAdaptor ) || die "Could not get GeneTreeAdaptor for: reuse_tree_adaptor";
@@ -73,15 +56,10 @@ sub fetch_input {
         #get current tree adaptor
         $self->param( 'current_tree_adaptor', $self->param('compara_dba')->get_GeneTreeAdaptor ) || die "Could not get GeneTreeAdaptor for: current_tree_adaptor";
 
-        #----------------------------------------------------------------------------------------------------------------------------
-
-        #Get gene_tree
-        #----------------------------------------------------------------------------------------------------------------------------
+        #Get current gene_tree
         $self->param( 'current_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) ) ||
           die "update: Could not get current_gene_tree for stable_id\t" . $self->param('stable_id');
         $self->param( 'stable_id', $self->param('current_gene_tree')->get_value_for_tag('model_name') ) || die "Could not get value_for_tag: model_name";
-
-        #----------------------------------------------------------------------------------------------------------------------------
 
         #Is tree marked as 'new_build'? If so we need to dataflow it to alignment_entry_point. (Tree has changed too much)
         if ( ( $self->param('current_gene_tree')->has_tag('new_build') ) && ( $self->param('current_gene_tree')->get_value_for_tag('new_build') == 1 ) ) {
@@ -117,16 +95,13 @@ sub fetch_input {
             $self->param( 'updated_and_added_members_count', \%updated_and_added_members_count );
 
             #Get list of updated genes
-
             my $updated_genes_list = $self->param('current_gene_tree')->get_value_for_tag( 'updated_genes_list', '' );
             my %members_2_b_updated = map { $_ => 1 } split( /,/, $updated_genes_list );
-            %updated_and_added_members_count = map { $_ => 1 } split( /,/, $updated_genes_list );
 
             #Get list of genes to add
             my $added_genes_list = $self->param('current_gene_tree')->get_value_for_tag( 'added_genes_list', '' );
             my %members_2_b_added = map { $_ => 1 } split( /,/, $added_genes_list );
             $self->param( 'members_2_b_added', \%members_2_b_added );
-            %updated_and_added_members_count = map { $_ => 1 } split( /,/, $added_genes_list );
 
             #Get list of genes to remove
             my $deleted_genes_list = $self->param('current_gene_tree')->get_value_for_tag( 'deleted_genes_list', '' );
@@ -157,7 +132,7 @@ sub fetch_input {
                 $members_2_b_added_updated{$updated_member} = 1;
             }
 
-        } ## end if ( ( $self->param('current_gene_tree'...)))
+        }
         elsif ( ( $self->param('current_gene_tree')->has_tag('only_needs_deleting') ) && ( $self->param('current_gene_tree')->get_value_for_tag('only_needs_deleting') == 1 ) ) {
 
             #List of members that were either added, updated or removed
@@ -174,7 +149,7 @@ sub fetch_input {
             }
 
         }
-} ## end sub fetch_input
+}
 
 sub write_output {
     my $self = shift;
@@ -243,9 +218,9 @@ sub write_output {
                                                                  $self->param('current_gene_tree'),
                                                                  undef, 1 );
             }
-        } ## end else [ if ( scalar( keys %{ $self...}))]
+        }
 
-    } ## end if ( ( $self->param('current_gene_tree'...)))
+    }
 
     #all trees from this point on, there is no need for alignment/tree inference
     else{
@@ -269,7 +244,7 @@ sub write_output {
                                                       $self->param('current_gene_tree'),
                                                       undef, 1 );
     }
-} ## end sub write_output
+}
 
 ##########################################
 #
@@ -278,15 +253,24 @@ sub write_output {
 ##########################################
 
 # This function is used to remap the old seq_member_ids in the re_used tree with the new ones used in the current_tree.
-# This is necessary for the cases where a species have been updated (gene-set || assembly), this means that the seq_members will be
-#   re-inserted therefore not sharing the same ids with the reusede database.
+# This is necessary for the cases where a species has been updated (gene-set || assembly).
+# This means that the seq_members will be re-inserted in order to avoid conflict with reuse db.
 # For more details check Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FlagUpdateClusters::_seq_member_map
 sub _remap_leaves {
     my ( $self, $all_leaves ) = @_;
 
     foreach my $leaf ( @{$all_leaves} ) {
         my $stable_id = $leaf->stable_id;
-        my $sql = "SELECT seq_member_id_current FROM seq_member_id_current_reused_map WHERE stable_id = '$stable_id'";
+        my $old_member_id = $leaf->dbID;
+        my $sql = qq/
+        SELECT
+            seq_member_id_current
+        FROM
+            seq_member_id_current_reused_map
+        WHERE
+            stable_id = "$stable_id"
+                AND seq_member_id_reused = $old_member_id;
+            /;
         my $sth = $self->param('compara_dba')->dbc->prepare($sql);
         $sth->execute() || die "Could not execute ($sql)";
         my $seq_member_id_current = $sth->fetchrow();
@@ -312,7 +296,8 @@ sub _disavow_unused_members {
     #loop through the list of members, if any found in the 2_b_deleted list, then need to disavow, if not, just copy over
     foreach my $this_leaf ( @{ $self->param('all_leaves') } ) {
         my $seq_id = $this_leaf->name;
-        if ( $members_2_b_changed->{$seq_id} ) {
+        my $gdb_id = $this_leaf->genome_db_id;
+        if ( $members_2_b_changed->{ $seq_id . " " . $gdb_id } ) {
             print "DELETING:$seq_id\n" if ( $self->debug );
             $this_leaf->disavow_parent;
 

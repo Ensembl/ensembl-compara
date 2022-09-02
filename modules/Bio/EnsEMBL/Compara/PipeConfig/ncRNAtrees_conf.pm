@@ -43,6 +43,7 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::OrthologQMAlignment;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::DataCheckFactory;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -81,6 +82,14 @@ sub default_options {
         'alt_aln_dbs'     => [
             'compara_curr',
         ],
+
+        # Whole db DC parameters
+        'datacheck_groups' => ['compara_gene_tree_pipelines'],
+        'db_type'          => ['compara'],
+        'output_dir_path'  => $self->o('work_dir') . '/datachecks/',
+        'overwrite_files'  => 1,
+        'failures_fatal'   => 1, # no DC failure tolerance
+        'db_name'          => $self->o('dbowner') . '_' . $self->o('pipeline_name'),
 
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => 14,
@@ -187,7 +196,7 @@ sub pipeline_create_commands {
     return [
             @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
-            $self->pipeline_create_commands_rm_mkdir(['work_dir', 'dump_dir', 'ss_picts_dir', 'gene_dumps_dir']),
+            $self->pipeline_create_commands_rm_mkdir(['work_dir', 'dump_dir', 'ss_picts_dir', 'gene_dumps_dir', 'output_dir_path']),
             $self->pipeline_create_commands_rm_mkdir(['gene_tree_stats_shared_dir'], undef, 'do not rm'),
 
             $self->db_cmd( 'CREATE TABLE ortholog_quality (
@@ -200,6 +209,15 @@ sub pipeline_create_commands {
                             exon_length              INT NOT NULL,
                             intron_length            INT NOT NULL,
                             INDEX (homology_id)
+            )'),
+
+            $self->db_cmd( 'CREATE TABLE datacheck_results (
+                                  submission_job_id INT,
+                                  dbname VARCHAR(255) NOT NULL,
+                                  passed INT,
+                                  failed INT,
+                                  skipped INT,
+                                  INDEX submission_job_id_idx (submission_job_id)
             )'),
     ];
 }
@@ -217,8 +235,10 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'prev_rel_db'   => $self->o('prev_rel_db'),
         'alt_aln_dbs'   => $self->o('alt_aln_dbs'),
         'mapping_db'    => $self->o('mapping_db'),
+        'db_name'       => $self->o('db_name'),
 
         'pipeline_dir'              => $self->o('pipeline_dir'),
+        'output_dir_path'           => $self->o('output_dir_path'),
         'dump_dir'                  => $self->o('dump_dir'),
         'homology_dumps_dir'        => $self->o('homology_dumps_dir'),
         'prev_homology_dumps_dir'   => $self->o('prev_homology_dumps_dir'),
@@ -343,8 +363,16 @@ sub core_pipeline_analyses {
             {   -logic_name => 'backbone_fire_posttree',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -flow_into  => {
-                    '1->A' => ['rib_fire_homology_dumps'],
+                    '1->A' => ['rib_fire_posttree_processing'],
                     'A->1' => ['backbone_pipeline_finished'],
+                },
+            },
+
+            {   -logic_name => 'rib_fire_posttree_processing',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+                -flow_into  => {
+                    '1->A' => [ 'rib_fire_tree_stats' ],
+                    'A->1' => [ 'rib_fire_homology_dumps' ],
                 },
             },
 
@@ -611,7 +639,7 @@ sub core_pipeline_analyses {
               -parameters         => {
                                       mode            => 'global_tree_set',
                                      },
-              -flow_into          => [ 'write_stn_tags',
+              -flow_into          => [
                                        # 'backbone_fire_homology_dumps',
                                         WHEN('#do_cafe# and  #binary_species_tree_input_file#', 'CAFE_species_tree'),
                                         WHEN('#do_cafe# and !#binary_species_tree_input_file#', 'make_full_species_tree'),
@@ -1110,9 +1138,26 @@ sub core_pipeline_analyses {
          -flow_into => {
                         3 => [ 'fast_trees_himem' ],
                         2 => [ 'genomic_tree_himem' ],
+                        -1 => [ 'genomic_alignment_mammoth' ],
                        },
         },
-
+        {   -logic_name        => 'genomic_alignment_mammoth',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment',
+            -parameters        => {
+                %raxml_parameters,
+                'raxml_number_of_cores' => 8,
+                'mafft_exe'             => $self->o('mafft_exe'),
+                'prank_exe'             => $self->o('prank_exe'),
+                'genome_dumps_dir'      => $self->o('genome_dumps_dir'),
+                'inhugemem'             => 1,
+            },
+            -analysis_capacity => $self->o('genomic_alignment_capacity'),
+            -rc_name           => '96Gb_8c_job',
+            -flow_into         => {
+                3 => [ 'fast_trees_himem' ],
+                2 => [ 'genomic_tree_himem' ],
+            },
+        },
 
             {
              -logic_name => 'genomic_tree',
@@ -1279,6 +1324,32 @@ sub core_pipeline_analyses {
             },
         },
 
+        {   -logic_name => 'rib_fire_tree_stats',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => 'gene_count_factory',
+                'A->1' => 'write_stn_tags',
+            },
+        },
+
+        {   -logic_name => 'gene_count_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -rc_name    => '1Gb_job',
+            -parameters => {
+                'component_genomes' => 0,
+                'fan_branch_code' => 1,
+            },
+            -flow_into  => [ 'count_genes_in_tree' ],
+        },
+
+        {   -logic_name => 'count_genes_in_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CountGenesInTree',
+            -rc_name    => '1Gb_job',
+            -parameters => {
+                'gene_count_exe' => $self->o('count_genes_in_tree_exe'),
+            },
+        },
+
         {   -logic_name => 'rib_fire_homology_processing',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => [ 'rib_fire_orth_wga_and_high_conf', 'rename_labels' ],
@@ -1350,6 +1421,9 @@ sub core_pipeline_analyses {
             -parameters => {
                 'wga_expected_file'  => '#dump_dir#/wga_expected.mlss_tags.tsv',
             },
+            -flow_into => {
+                1 => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => $self->pipeline_url(), 'registry_file' => undef }},
+            },
         },        
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe_with_full_species_tree($self) },
@@ -1357,8 +1431,17 @@ sub core_pipeline_analyses {
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree::pipeline_analyses_split_homologies_posttree($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::OrthologQMAlignment::pipeline_analyses_ortholog_qm_alignment($self)  },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs::pipeline_analyses_high_confidence($self) },
-
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DataCheckFactory::pipeline_analyses_datacheck_factory($self) },
     ];
+}
+
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+
+    # datacheck specific tweaks for pipelines
+    $analyses_by_name->{'datacheck_factory'}->{'-parameters'} = {'dba' => '#compara_db#'};
+    $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
 }
 
 1;

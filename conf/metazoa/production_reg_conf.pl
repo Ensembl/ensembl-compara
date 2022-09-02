@@ -48,7 +48,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster);
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
 my $overlap_cores = {
-    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_${curr_eg_release}_${curr_release}_279" ],
+    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_${curr_eg_release}_${curr_release}_282" ],
     'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_${curr_eg_release}_${curr_release}_9" ],
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
@@ -72,19 +72,19 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-6', 'ensembl_compara_master_metazoa' ],
-    'compara_curr'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${curr_eg_release}_${curr_release}" ],
+     'compara_curr'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${curr_eg_release}_${curr_release}" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-5', 'ivana_metazoa_load_members_106_backup'],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', 'ivana_default_metazoa_protein_trees_106' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-6', 'sbotond_metazoa_load_members_108'],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', 'sbotond_default_metazoa_protein_trees_108_take2' ],
 
     # LastZ dbs
-    'lastz_batch_1' => [ 'mysql-ens-compara-prod-2', 'ivana_metazoa_lastz_batch1_106' ],
-    'lastz_batch_2' => [ 'mysql-ens-compara-prod-6', 'ivana_metazoa_lastz_batch2_106' ],
+    # 'lastz_batch_1' => [ 'mysql-ens-compara-prod-X', '' ],
+    # 'lastz_batch_2' => [ 'mysql-ens-compara-prod-X', '' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-2', 'ivana_metazoa_synteny_106' ],
+    # 'compara_syntenies' => [ 'mysql-ens-compara-prod-X', '' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );

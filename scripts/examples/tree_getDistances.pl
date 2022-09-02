@@ -39,11 +39,13 @@ $reg->load_registry_from_db(
 my $human_gene_adaptor = $reg->get_adaptor ("Homo sapiens", "core", "Gene");
 my $gene_member_adaptor = $reg->get_adaptor ("Multi", "compara", "GeneMember");
 my $gene_tree_adaptor = $reg->get_adaptor ("Multi", "compara", "GeneTree");
+my $genome_db_adaptor = $reg->get_adaptor("Multi", "compara", "GenomeDB");;
 
+my $genome = $genome_db_adaptor->fetch_by_name_assembly("homo_sapiens");
 my $genes = $human_gene_adaptor-> fetch_all_by_external_name('PAX6');
 
 foreach my $gene (@$genes) {
-  my $gene_member = $gene_member_adaptor-> fetch_by_stable_id($gene->stable_id);
+  my $gene_member = $gene_member_adaptor-> fetch_by_stable_id_GenomeDB($gene->stable_id, $genome);
   die "no members" unless (defined $gene_member);
 
   # Fetch the gene tree

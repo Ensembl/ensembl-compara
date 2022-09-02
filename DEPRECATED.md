@@ -31,6 +31,10 @@ _All files (e.g. scripts) under these directories will be deleted_
 
 # Methods removed in previous versions of Ensembl
 
+## Ensembl 109
+
+* `DBSQL::'*MemberAdaptor::fetch_by_stable_id()`
+
 ## Ensembl 100
 
 * `DBSQL::'*MemberAdaptor::get_source_taxon_count()`

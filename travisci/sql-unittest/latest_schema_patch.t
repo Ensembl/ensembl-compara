@@ -25,7 +25,7 @@ use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Compara::Utils::Test;
 
 
-## Check that the schemas test databases are fully compliant with the SQL standard
+## Check that the schema patches correctly and fully patch the schema
 
 my $compara_dir = Bio::EnsEMBL::Compara::Utils::Test::get_repository_root();
 my $multitestdb = Bio::EnsEMBL::Compara::Utils::Test::create_multitestdb();
@@ -35,9 +35,13 @@ my $current_db_name = $multitestdb->create_db_name('current_schema');
 my $current_statements = Bio::EnsEMBL::Compara::Utils::Test::read_sqls("${compara_dir}/sql/table.sql");
 my $current_db = Bio::EnsEMBL::Compara::Utils::Test::load_statements($multitestdb, $current_db_name, $current_statements, 'Can load the current Compara schema');
 my $current_schema = Bio::EnsEMBL::Compara::Utils::Test::get_schema_from_database($current_db, $current_db_name);
+
+my @row = $current_db->selectrow_array('SELECT meta_value FROM meta WHERE meta_key = "schema_version"');
+die('Failed to obtain current Compara schema version') if scalar(@row) == 0;
+my $curr_release = $row[0];
+
 Bio::EnsEMBL::Compara::Utils::Test::drop_database($multitestdb, $current_db_name);
 
-my $curr_release = software_version();
 my $prev_release = $curr_release -1;
 
 

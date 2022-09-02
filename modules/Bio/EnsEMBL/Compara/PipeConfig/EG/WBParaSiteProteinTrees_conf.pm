@@ -144,6 +144,17 @@ sub tweak_analyses {
   $analyses_by_name->{'dump_unannotated_members'}->{'-rc_name'} = '16Gb_job';
   $analyses_by_name->{'ktreedist'}->{'-rc_name'} = '4Gb_job';
   $analyses_by_name->{'ktreedist_himem'}->{'-rc_name'} = '8Gb_job';
+  $analyses_by_name->{'final_tree_steps'}->{'-rc_name'} = '1Gb_job';
+  $analyses_by_name->{'hc_post_tree'}->{'-rc_name'} = '1Gb_job';
+  $analyses_by_name->{'treebest_decision'}->{'-rc_name'} = '1Gb_job';
+  $analyses_by_name->{'tree_building_entry_point'}->{'-rc_name'} = '1Gb_job';
+  $analyses_by_name->{'rib_group_2'}->{'-rc_name'} = '1Gb_job';
+  $analyses_by_name->{'rib_fire_goc'}->{'-rc_name'} = '1Gb_job';
+  $analyses_by_name->{'rib_fire_homology_stats'}->{'-rc_name'} = '1Gb_job';
+  $analyses_by_name->{'goc_entry_point'}->{'-rc_name'} = '1Gb_job';
+  $analyses_by_name->{'dump_unannotated_members'}->{'-rc_name'} = '8Gb_job';
+  $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '8Gb_job';
+  
 }
 
 
