@@ -39,6 +39,7 @@ from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
 from ensembl.compara.filesys import PathLike
+from ensembl.compara.utils.cigar import aligned_seq_to_cigar
 
 
 def compile_maf_src_regex(genome_names: Iterable[str]) -> Pattern[str]:
@@ -166,7 +167,8 @@ def convert_maf_to_fasta(maf_file: PathLike, output_dir: PathLike,
                         'region_name': region_name,
                         'region_start': region_start,
                         'region_end': region_end,
-                        'region_strand': region_strand
+                        'region_strand': region_strand,
+                        'cigar': aligned_seq_to_cigar(rec.seq)
                     })
 
             output_data = {'aligned_seq': ga_recs}
