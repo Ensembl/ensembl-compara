@@ -17,7 +17,6 @@ source = ["src/python/lib"]
 ignore_missing_imports = true
 show_error_codes = true
 warn_unused_configs = true
-show_error_codes = true
 
 [tool.pylint.messages_control]
 max-line-length = 110
