@@ -390,6 +390,9 @@
     <collection name="metazoa">
       <!-- outgroup -->
       <base_collection name="shared"/>
+      <!-- Protists (Collection DBs) -->
+      <genome name="salpingoeca_rosetta_gca_000188695"/>
+      <genome name="capsaspora_owczarzaki_atcc_30864_gca_000151315"/>
       <!-- Porifera -->
       <genome name="amphimedon_queenslandica"/>
       <!-- Xenacoelomorpha -->
@@ -408,8 +411,6 @@
       <genome name="ciona_intestinalis"/>
       <!-- Vertebrata -->
       <genome name="xenopus_tropicalis"/>
-      <genome name="oryzias_latipes"/>
-      <genome name="sus_scrofa"/>
       <!-- Annelida -->
       <genome name="helobdella_robusta"/>
       <genome name="owenia_fusiformis_gca903813345v1"/>
