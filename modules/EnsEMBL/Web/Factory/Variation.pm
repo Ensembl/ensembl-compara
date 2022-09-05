@@ -97,7 +97,7 @@ sub createObjects {
                             $identifier,$identifier,$identifier);
       return $self->problem('fatal', "Could not find variation $identifier", $self->_help($help_message,$help_extra));
     }
-    elsif ($hub->$species_defs->ENSEMBL_SUBTYPE eq 'Rapid Release') {
+    elsif ($hub->species_defs->ENSEMBL_SUBTYPE eq 'Rapid Release') {
       my $message = sprintf('Variants on this site are served from VCF files, which cannot be searched by ID. Please visit "Region in Detail" and enter the coordinates for %s to view variation tracks in this location.', $hub->param('v'));
       return $self->problem('fatal', 'Unable to search for variation IDs', $message);
     }
