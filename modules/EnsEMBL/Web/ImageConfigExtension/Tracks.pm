@@ -83,8 +83,13 @@ sub load_tracks {
       : ($dbs_hash, $species_defs->get_config($species, "${db_type}_like_databases"));
 
     # For all the dbs belonging to a particular db type, call all the methods, one be one, to add tracks for that db type
+    use Data::Dumper;
+    $Data::Dumper::Sortkeys = 1;
+    $Data::Dumper::Maxdepth = 2;
+    warn Dumper($db_hash) if $db_type eq 'variation';
     foreach my $db_key (grep exists $db_hash->{$_}, @{$databases || []}) {
       my $db_name = lc substr $db_key, 9;
+      warn "... DB KEY $db_key, DB NAME $db_name" if $db_type eq 'variation';
 
       foreach my $method (@{$methods_for_dbtypes{$db_type}}) {
         $self->$method($db_name, $db_hash->{$db_key}{'tables'} || $db_hash->{$db_key}, $species, @_);
