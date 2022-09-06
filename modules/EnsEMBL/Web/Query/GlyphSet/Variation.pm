@@ -233,6 +233,7 @@ sub fetch_features {
       my $vcf_id = $id;
       $vcf_id =~ s/^variation_vcf_//;
       if(my $vc = $vca->fetch_by_id($vcf_id)) {
+	$no_cons = $vc->{use_vcf_consequences} if defined($vc->{use_vcf_consequences});
         @vari_features = @{$vc->get_all_VariationFeatures_by_Slice($slice, $no_cons)};
       }
     } else {
