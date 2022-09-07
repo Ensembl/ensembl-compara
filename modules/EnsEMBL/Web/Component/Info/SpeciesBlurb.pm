@@ -48,7 +48,7 @@ sub content {
   ## if there are e.g. multiple human gene sets in the results!
   $html .= $self->include_bioschema_datasets if $self->hub->species_defs->BIOSCHEMAS_DATACATALOG;
 
-  $html .= sprintf('%s
+  $html .= sprintf('
 <div class="column-wrapper">  
   <div class="column-two">
     %s
