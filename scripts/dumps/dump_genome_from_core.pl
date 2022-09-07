@@ -24,7 +24,7 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 
 use Getopt::Long;
 
-my ($dbname, $host, $port, $mask, $genome_component, $genome_dump_file, $help);
+my ($dbname, $host, $port, $user, $pass, $mask, $genome_component, $genome_dump_file, $help);
 my $desc = "
 This script dumps all toplevel sequences from a core database and stores them in fasta file.
 The sequences can be unmasked, soft masked or hard masked.
@@ -38,6 +38,10 @@ Options:
       server hosting the core database
 * --port
       port for the host database
+* --user
+      username for accessing the core database
+* --pass
+      password for accessing the core database
 * --outfile
       file where the dumped sequence will be stored in fasta format
 * --mask
@@ -53,6 +57,8 @@ GetOptions(
     'core-db|core_db=s'  => \$dbname,
     'host=s'             => \$host,
     'port=s'             => \$port,
+    'user=s'             => \$user,
+    'pass=s'             => \$pass,
     'mask=s'             => \$mask,
     'genome-component=s' => \$genome_component,
     'outfile=s'          => \$genome_dump_file,
@@ -69,7 +75,8 @@ if ( defined $mask && $mask !~ /soft|hard/ ) {
     die "ERROR: '--mask' has to be either 'soft' or 'hard'\n"
 }
 
-my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( -user   => 'ensro',
+my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( -user   => $user,
+                                               -pass   => $pass,
                                                -dbname => $dbname,
                                                -host   => $host,
                                                -port   => $port,

@@ -52,6 +52,8 @@ my @comp_dump_command = (
     '--core-db'          => $core_dbc->dbname,
     '--host'             => $core_dbc->host,
     '--port'             => $core_dbc->port,
+    '--user'             => $core_dbc->user,
+    '--pass'             => $core_dbc->pass,
     '--outfile'          => $test_dump_file,
     '--genome-component' => 'B',
 );
