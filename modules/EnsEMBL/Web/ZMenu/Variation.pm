@@ -180,7 +180,7 @@ sub feature_content {
        });
     }
     elsif ($source =~ /DECIPHER/i) {
-      # https://decipher.sanger.ac.uk/browser#q/20:62037542-62103993
+      # https://www.deciphergenomics.org/browser#q/20:62037542-62103993
       my ($id,$chr,$start,$end) = split('_',$name);
       my $external_url = $hub->get_ExtURL_link("View in $source (GRCh37)", 'DECIPHER_BROWSER', { ID => "$chr:$start-$end" });
       $self->add_entry({
