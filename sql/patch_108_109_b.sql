@@ -18,18 +18,27 @@
 # Title: Change the gene_member_qc key to gene_member_id.
 #
 # Description:
-#   To allow for duplicate stable IDs between genomes, replace the
-#   gene_member_stable_id column of gene_member_qc with gene_member_id.
+#   To facilitate the transition to allowing duplicate stable IDs between genomes:
+#     - replace the gene_member_stable_id column of gene_member_qc with gene_member_id;
+#     - set each gene_member_id from its corresponding row in the gene_member table; and
+#     - preserve the name of the foreign-key constraint referencing the gene_member table.
 
 SET session sql_mode='TRADITIONAL';
 
 ALTER TABLE gene_member_qc
-  DROP FOREIGN KEY gene_member_stable_id,
+  ADD COLUMN gene_member_id INT unsigned NOT NULL FIRST;
+
+UPDATE gene_member_qc gmq JOIN gene_member gm ON gmq.gene_member_stable_id = gm.stable_id
+  SET gmq.gene_member_id = gm.gene_member_id;
+
+ALTER TABLE gene_member_qc
+  DROP FOREIGN KEY gene_member_qc_ibfk_1,
   DROP KEY gene_member_stable_id,
-  DROP COLUMN gene_member_stable_id,
-  ADD COLUMN gene_member_id INT unsigned NOT NULL FIRST,
+  DROP COLUMN gene_member_stable_id;
+
+ALTER TABLE gene_member_qc
   ADD KEY (gene_member_id),
-  ADD FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id);
+  ADD CONSTRAINT gene_member_qc_ibfk_1 FOREIGN KEY (gene_member_id) REFERENCES gene_member (gene_member_id);
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
