@@ -63,6 +63,12 @@
          },
          {
             "component": "Production tasks",
+            "description": "Mark as done when all LastZs have been merged into the new release database.",
+            "summary": "All LastZ",
+            "name_on_graph": "All LastZ"
+         },
+         {
+            "component": "Production tasks",
             "description": "*GitHub*: [Synteny_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
             "name_on_graph": "Synteny",
             "summary": "Run the Synteny pipeline"
