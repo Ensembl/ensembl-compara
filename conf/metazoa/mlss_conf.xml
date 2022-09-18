@@ -11,58 +11,6 @@
 
   </collections>
 
-  <pairwise_alignments>
-
-    <!-- bees and stuff (A.mel, A.cep, B.imp, B.ter, N.vit) -->
-    <all_vs_all method="LASTZ_NET">
-        <species_set>
-          <taxonomic_group taxon_name="Apocrita"/>
-        </species_set>
-    </all_vs_all>
-
-    <!-- VB flies (G.aus, G.fus, G.mor, G.pall, G.palp, M.dom) + (L.cup, S.cal) -->
-    <all_vs_all method="LASTZ_NET">
-        <species_set>
-          <taxonomic_group taxon_name="Calyptratae"/>
-        </species_set>
-    </all_vs_all>
-
-    <!-- VB Anopheles but strains -->
-    <all_vs_all method="LASTZ_NET">
-        <species_set>
-          <taxonomic_group taxon_name="Anopheles"/>
-          <!-- Exclude strains -->
-          <genome name="anopheles_coluzzii_ngousso" exclude="1" />
-          <genome name="anopheles_sinensis_china" exclude="1" />
-          <genome name="anopheles_stephensi_indian" exclude="1" />
-        </species_set>
-    </all_vs_all>
-
-    <!-- VB Aedes -->
-    <all_vs_all method="LASTZ_NET">
-        <species_set>
-          <taxonomic_group taxon_name="Aedes"/>
-        </species_set>
-    </all_vs_all>
-
-    <!-- VB cross group comparison (A.gam, A.aeg, C.qui) -->
-    <all_vs_all method="LASTZ_NET">
-        <species_set>
-          <genome name="anopheles_gambiae"/>
-          <genome name="aedes_aegypti_lvpagwg"/>
-          <genome name="culex_quinquefasciatus"/>
-        </species_set>
-    </all_vs_all>
-
-    <!-- VB strains, but no ngousso because it's a pacbio based assembly -->
-    <!-- one_vs_all method="LASTZ_NET" ref_genome="anopheles_sinensis" against="Anopheles_sinensis_china"/-->
-    <!-- one_vs_all method="LASTZ_NET" ref_genome="anopheles_stephensi" against="anopheles_stephensi_indian"/ -->
-
-    <one_vs_all method="LASTZ_NET" ref_genome="anopheles_sinensis" against="Anopheles sinensis"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="anopheles_stephensi" against="Anopheles stephensi"/>
-
-  </pairwise_alignments>
-
   <gene_trees>
     <protein_trees collection="default"/>
   </gene_trees>
