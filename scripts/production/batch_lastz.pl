@@ -419,12 +419,15 @@ Usage: batch_lastz.pl --master_db <master url or alias> --release <release numbe
 
 Options:
 	master_db         : url or registry alias of master db containing the method_link MLSSes (required)
-	release           : current release version (required)
+	release           : current release version (required). The standard criteria for choosing which
+	                    LASTZ MLSSes to batch are that the 'first_release' attribute of the MLSS matches
+	                    the current release, or that a 'rerun_in_XXX' MLSS tag is defined for the MLSS,
+	                    (where 'XXX' is the current release).
 	reg_conf          : registry config file (required if using alias for master)
 	max_jobs          : maximum number of jobs allowed per-database (default: 6,000,000)
-	include_mlss_ids  : list of comma separated MLSS IDs to add
-	exclude_mlss_ids  : list of MLSS IDs to ignore (if they've already been run).
-	                    list should be comma separated values.
+	include_mlss_ids  : comma-separated list of MLSS IDs to batch IN ADDITION to those selected
+	                    by the standard criteria
+	exclude_mlss_ids  : comma-separated list of MLSS IDs to ignore (e.g. if they've already been run).
 	method_link       : method used to select MLSSes (default: LASTZ_NET)
 	start_index       : number to assign to the first batch (default: 1)
 	jira_off|jira-off : do not submit JIRA tickets to the JIRA server (default: tickets are submitted)
