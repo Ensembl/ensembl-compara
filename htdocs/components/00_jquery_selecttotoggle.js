@@ -32,10 +32,10 @@
       var escapeDotInClassName = function (className) {
         var i = 0;
 
-        return className.replace(/[.]/g, function (match) {
+        return className ? className.replace(/[.]/g, function (match) {
            i += 1;
            return i > 1 ? '\\\.' : '.';
-        });
+        }) : '';
       };
 
       // go through all the selectors in the toggleMap and hide them except the one that corresponds to current element's value
@@ -74,7 +74,7 @@
 
   $.fn.selectToToggle = function (
     toggleMap,  // map of select element's option value to corresponding jquery selectors strings (as accepted by find() method) (Optional - defaults to '._stt_[className]' if class name uses prefix _stt__, or '._stt_[value]' otherwise)
-                // string 'trigger' to trigger toggling for an existing element (this is useful is option is selected by JS)
+                // string 'trigger' to trigger toggling for an existing element (this is useful if option is selected by JS)
                 // string 'destroy' to remove all selectToToggle data and events from the element
     wrapper     // wrapper element to call method 'find(selectors)' on - defaults to $(document.body)
   ) {
@@ -102,7 +102,7 @@
         el        = getAllEls(el, wrapper);
 
         if ($.isEmptyObject(tMap)) {
-          (this.nodeName == 'SELECT' ? el.find('option') : el).each(function() {
+          (this.nodeName === 'SELECT' ? el.find('option') : el).each(function() {
             if (this.value) {
               var filters = $.map(this.className.match(/(\s+|^)_stt__([^\s]+)/g) || [], function(str) { return str.replace('_stt__', '._stt_') });
                   filters.push('._stt_' + this.value);
