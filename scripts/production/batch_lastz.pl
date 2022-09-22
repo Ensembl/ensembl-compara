@@ -40,7 +40,7 @@ my @intervals_in_mbp = (
 my $method_link = 'LASTZ_NET';
 my $index = 1;
 
-my ( $help, $reg_conf, $master_db, $release, $include_mlss_ids, $exclude_mlss_ids, $jira_off, $dry_run );
+my ( $help, $reg_conf, $master_db, $release, $include_mlss_ids, $exclude_mlss_ids, $exclude_mlss_ids_file, $jira_off, $dry_run );
 my ( $verbose, $very_verbose );
 $jira_off = 0;
 $dry_run = 0;
@@ -52,6 +52,7 @@ GetOptions(
     "max_jobs=i"         => \$max_jobs,
     'include_mlss_ids=s' => \$include_mlss_ids,
     'exclude_mlss_ids=s' => \$exclude_mlss_ids,
+    'exclude_mlss_ids_file=s' => \$exclude_mlss_ids_file,
     'method_link=s'      => \$method_link,
     'start_index=i'      => \$index,
     'jira_off|jira-off!' => \$jira_off,
@@ -73,13 +74,31 @@ my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $maste
 print STDERR "Fetching current $method_link MethodLinkSpeciesSets from the database..\n";
 my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor();
 my $all_lastz_mlsses = $mlss_adaptor->fetch_all_by_method_link_type($method_link);
-my %mlss_ids_to_include = map {$_ => 1} split(/[\s,]+/, $include_mlss_ids);
+
+my %mlss_ids_to_include;
+if (defined $include_mlss_ids) {
+    %mlss_ids_to_include = map {$_ => 1} split(/[\s,]+/, $include_mlss_ids);
+}
+
+my %mlss_ids_to_exclude;
+if (defined $exclude_mlss_ids) {
+    if (defined $exclude_mlss_ids_file) {
+        die "Options '--exclude_mlss_ids' and '--exclude_mlss_ids_file' are mutually exclusive - please choose one.";
+    }
+    %mlss_ids_to_exclude = map {$_ => 1} split(/[\s,]+/, $exclude_mlss_ids);
+} elsif (defined $exclude_mlss_ids_file) {
+    open(my $fh, '<', $exclude_mlss_ids_file) or die("Could not open file [$exclude_mlss_ids_file]");
+    chomp(my @exclude_mlss_ids_list = <$fh>);
+    %mlss_ids_to_exclude = map {$_ => 1} @exclude_mlss_ids_list;
+    close($fh) or die("Could not close file [$exclude_mlss_ids_file]");
+}
+
 my (@current_lastz_mlsses, %genome_dbs);
 foreach my $this_mlss ( @$all_lastz_mlsses ) {
     if ((($this_mlss->first_release || 0) == $release)
         || $mlss_ids_to_include{$this_mlss->dbID}
         || (defined $this_mlss->get_tagvalue("rerun_in_$release"))) {
-		next if defined $exclude_mlss_ids && grep { $this_mlss->dbID == $_ } split(/[\s,]+/, $exclude_mlss_ids );
+		next if exists $mlss_ids_to_exclude{$this_mlss->dbID} && $mlss_ids_to_exclude{$this_mlss->dbID};
 		push @current_lastz_mlsses, $this_mlss;
 		foreach my $this_gdb ( @{ $this_mlss->species_set->genome_dbs } ) {
 			$genome_dbs{$this_gdb->dbID} = $this_gdb;
@@ -414,12 +433,16 @@ Usage: batch_lastz.pl --master_db <master url or alias> --release <release numbe
 
 Options:
 	master_db         : url or registry alias of master db containing the method_link MLSSes (required)
-	release           : current release version (required)
+	release           : current release version (required). The standard criteria for choosing which
+	                    LASTZ MLSSes to batch are that the 'first_release' attribute of the MLSS matches
+	                    the current release, or that a 'rerun_in_XXX' MLSS tag is defined for the MLSS,
+	                    (where 'XXX' is the current release).
 	reg_conf          : registry config file (required if using alias for master)
 	max_jobs          : maximum number of jobs allowed per-database (default: 6,000,000)
-	include_mlss_ids  : list of comma separated MLSS IDs to add
-	exclude_mlss_ids  : list of MLSS IDs to ignore (if they've already been run).
-	                    list should be comma separated values.
+	include_mlss_ids  : comma-separated list of MLSS IDs to batch IN ADDITION to those selected
+	                    by the standard criteria
+	exclude_mlss_ids  : comma-separated list of MLSS IDs to ignore (e.g. if they've already been run).
+	exclude_mlss_ids_file : text file listing MLSS IDs (one per line) which should be ignored
 	method_link       : method used to select MLSSes (default: LASTZ_NET)
 	start_index       : number to assign to the first batch (default: 1)
 	jira_off|jira-off : do not submit JIRA tickets to the JIRA server (default: tickets are submitted)
