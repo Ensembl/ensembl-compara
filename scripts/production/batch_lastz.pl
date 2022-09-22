@@ -73,7 +73,12 @@ my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $maste
 print STDERR "Fetching current $method_link MethodLinkSpeciesSets from the database..\n";
 my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor();
 my $all_lastz_mlsses = $mlss_adaptor->fetch_all_by_method_link_type($method_link);
-my %mlss_ids_to_include = map {$_ => 1} split(/[\s,]+/, $include_mlss_ids);
+
+my %mlss_ids_to_include;
+if (defined $include_mlss_ids) {
+    %mlss_ids_to_include = map {$_ => 1} split(/[\s,]+/, $include_mlss_ids);
+}
+
 my (@current_lastz_mlsses, %genome_dbs);
 foreach my $this_mlss ( @$all_lastz_mlsses ) {
     if ((($this_mlss->first_release || 0) == $release)
