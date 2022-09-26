@@ -446,7 +446,7 @@ sub species_sets {
     }  
 
     my $taxon_group     = $species_defs->get_config($species, 'SPECIES_GROUP');
-    my @compara_groups  = $set_mappings ? @{$set_mappings->{$taxon_group}}
+    my @compara_groups  = $set_mappings ? @{$set_mappings->{$taxon_group}||[]}
                                         : ($taxon_group);
     my $sets = [];
 
