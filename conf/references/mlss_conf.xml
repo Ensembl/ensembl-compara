@@ -25,7 +25,7 @@
       <genome name="mus_musculus"/>
       <genome name="xenopus_tropicalis"/>
     </collection>
-
+    
     <collection name="default">
       <base_collection name="shared"/>
       <!-- Vertebrates -->
@@ -254,54 +254,192 @@
 
     <collection name="hexapoda">
       <base_collection name="shared"/>
-
-      <!-- Outgroups -->
+      <!-- outgroup -->
+      <genome name="daphnia_magna_gca020631705v2"/>
       <genome name="strigamia_maritima"/>
-      <genome name="daphnia_pulex"/>
-      <genome name="ixodes_scapularis"/>
+      <!-- Collembola -->
+      <genome name="folsomia_candida"/>
 
-      <!-- Phthiraptera -->
-      <genome name="pediculus_humanus"/>
-
-      <!-- diptera -->
-      <genome name="anopheles_gambiae"/>
-      <genome name="aedes_aegypti_lvpagwg"/>
-      <genome name="glossina_pallidipes"/>
-      <genome name="teleopsis_dalmanni"/>
-      <genome name="culex_quinquefasciatus"/>
-      <genome name="lucilia_cuprina"/>
-      <genome name="lutzomyia_longipalpis"/>
-      <genome name="musca_domestica"/>
-
-      <!-- lepidoptera -->
-      <genome name="bombyx_mori"/>
-      <genome name="danaus_plexippus"/>
-      <genome name="heliconius_melpomene"/>
-      <genome name="melitaea_cinxia"/>
-
-      <!-- hymenoptera -->
-      <genome name="apis_mellifera"/>
-      <genome name="bombus_impatiens"/>
-      <genome name="nasonia_vitripennis"/>
-      <genome name="solenopsis_invicta"/>
-      <genome name="atta_cephalotes"/>
-
-      <!-- coleoptera -->
-      <genome name="tribolium_castaneum"/>
-      <genome name="dendroctonus_ponderosae"/>
-      <genome name="anoplophora_glabripennis"/>
-
-      <!-- isoptera -->
+      <!-- Paraneoptera -->
+      <genome name="frankliniella_occidentalis_gca000697945v4"/>
       <genome name="zootermopsis_nevadensis"/>
-
       <!-- Hemiptera -->
       <genome name="bemisia_tabaci_asiaii5"/>
       <genome name="acyrthosiphon_pisum"/>
+      <genome name="myzus_persicae_gca001856785v1"/>
       <genome name="rhodnius_prolixus"/>
       <genome name="trialeurodes_vaporariorum_gca011764245"/>
-      <genome name="cimex_lectularius"/>
+      <genome name="rhopalosiphum_maidis_gca003676215v3"/>
+      <!-- Coleoptera -->
+      <genome name="leptinotarsa_decemlineata_gca000500325v2"/>
+      <genome name="tribolium_castaneum"/>
+      <genome name="anoplophora_glabripennis"/>
+      <genome name="agrilus_planipennis_gca000699045v2"/>
+      <genome name="dendroctonus_ponderosae_gca000355655v1"/>
+      <!-- Hymenoptera -->
+      <genome name="aphidius_gifuensis_gca014905175v1"/>
+      <genome name="solenopsis_invicta"/>
+      <genome name="vespula_vulgaris_gca905475345v1"/>
+      <genome name="apis_mellifera"/>
+      <genome name="athalia_rosae_gca917208135v1"/>
+      <!-- Diptera -->
+      <genome name="anopheles_gambiae"/>
+      <genome name="glossina_fuscipes"/>
+      <genome name="aedes_aegypti_lvpagwg"/>
+      <genome name="bactrocera_tryoni_gca016617805v2"/>
+      <!-- Lepidoptera -->
+      <genome name="chrysoteuchia_culmella_gca910589605v1"/>
+      <genome name="noctua_janthe_gca910589295v1"/>
+      <genome name="danaus_plexippus"/>
+      <genome name="bombyx_mori"/>
+      <genome name="ennomos_quercinarius_gca910589525v1"/>
     </collection>
 
+    <collection name="arthropoda">
+      <base_collection name="shared"/>
+      <!-- outgroups -->
+      <!-- Priapulida -->
+      <genome name="priapulus_caudatus_gca000485595v2"/>
+      <!-- Tardigrada -->
+      <genome name="hypsibius_exemplaris_gca002082055v1"/>
+      <!-- Nematoda -->
+      <genome name="trichuris_muris"/>
+      <genome name="onchocerca_volvulus"/>
+
+      <!-- Chelicerata -->
+      <genome name="limulus_polyphemus_gca000517525v1"/>
+      <genome name="varroa_destructor_gca002443255"/>
+      <genome name="tetranychus_urticae"/>
+      <genome name="centruroides_sculpturatus_gca000671375v2"/>
+      <genome name="ixodes_scapularis_gca016920785v2"/>
+      <genome name="rhipicephalus_sanguineus_gca013339695v1"/>
+      <!-- Myriapoda -->
+      <genome name="strigamia_maritima"/>
+      <!-- Crustacea -->
+      <genome name="pollicipes_pollicipes_gca011947565v2"/>
+      <genome name="homarus_americanus_gca018991925v1"/>
+      <genome name="portunus_trituberculatus_gca017591435v1"/>
+      <genome name="eurytemora_affinis_gca000591075v2"/>
+      <genome name="hyalella_azteca_gca000764305v2"/>
+      <genome name="daphnia_pulex"/>
+      <!-- Hexapoda -->
+      <genome name="sipha_flava_gca003268045v1"/>
+      <genome name="cimex_lectularius"/>
+      <genome name="atta_cephalotes"/>
+      <genome name="bombus_terrestris"/>
+      <genome name="anoplius_nigerrimus_gca914767735v1"/>
+      <genome name="melitaea_cinxia"/>
+      <genome name="bombyx_mori"/>
+      <genome name="aedes_aegypti_lvpagwg"/>
+      <genome name="glossina_fuscipes"/>
+      <genome name="pediculus_humanus"/>
+      <genome name="coccinella_septempunctata_gca907165205v1"/>
+      <genome name="tribolium_castaneum"/>
+      <genome name="orchesella_cincta"/>
+    </collection>
+
+    <collection name="protostomia">
+      <base_collection name="shared"/>
+      <!-- outgroups -->
+      <!-- Xenacoelomorpha -->
+      <genome name="hofstenia_miamia"/>
+      <!-- Placozoa -->
+      <genome name="trichoplax_adhaerens"/>
+      <!-- Cnidaria -->
+      <genome name="acropora_millepora_gca013753865v1"/>
+
+      <!-- Annelida -->
+      <genome name="helobdella_robusta"/>
+      <genome name="owenia_fusiformis_gca903813345v1"/>
+      <!-- Brachiopoda -->
+      <genome name="lingula_anatina_gca001039355v2"/>
+      <!-- Mollusca -->
+      <genome name="crassostrea_virginica_gca002022765v4"/>
+      <genome name="mercenaria_mercenaria_gca014805675v2"/>
+      <genome name="patella_pellucida_gca917208275v1"/>
+      <genome name="octopus_sinensis_gca006345805v1"/>
+      <genome name="pomacea_canaliculata_gca003073045v1"/>
+      <!-- Nemertea -->
+      <genome name="lineus_longissimus_gca910592395v2"/>
+      <!-- Platyhelminthes -->
+      <genome name="hymenolepis_microstoma"/>
+      <genome name="clonorchis_sinensis_gca003604175v2wb"/>
+      <genome name="schmidtea_mediterranea_gca002600895v1wb"/>
+      <genome name="schistosoma_mansoni"/>
+      <genome name="echinococcus_multilocularis_gca000469725v3wb"/>
+      <!-- Priapulida -->
+      <genome name="priapulus_caudatus_gca000485595v2"/>
+      <!-- Tardigrada -->
+      <genome name="hypsibius_exemplaris_gca002082055v1"/>
+      <!-- Rotifera -->
+      <genome name="adineta_vaga"/>
+      <!-- Nematoda -->
+      <genome name="ascaris_suum"/>
+      <genome name="brugia_malayi"/>
+      <genome name="onchocerca_volvulus"/>
+      <genome name="trichuris_muris"/>
+      <genome name="strongyloides_ratti"/>
+      <genome name="haemonchus_contortus_gca000469685v2wb"/>
+      <!-- Arthropoda -->
+      <genome name="nasonia_vitripennis"/>
+      <genome name="rhipicephalus_sanguineus_gca013339695v1"/>
+      <genome name="daphnia_magna_gca020631705v2"/>
+      <genome name="diabrotica_virgifera_gca003013835v2"/>
+    </collection>
+
+    <collection name="metazoa">
+      <!-- outgroup -->
+      <base_collection name="shared"/>
+      <!-- Protists (Collection DBs) -->
+      <genome name="salpingoeca_rosetta_gca_000188695"/>
+      <genome name="capsaspora_owczarzaki_atcc_30864_gca_000151315"/>
+      <!-- Porifera -->
+      <genome name="amphimedon_queenslandica"/>
+      <!-- Xenacoelomorpha -->
+      <genome name="hofstenia_miamia"/>
+      <!-- Placozoa -->
+      <genome name="trichoplax_adhaerens"/>
+      <!-- Cnidaria -->
+      <genome name="acropora_millepora_gca013753865v1"/>
+      <!-- Echinodermata -->
+      <genome name="asterias_rubens_gca902459465v3"/>
+      <genome name="lytechinus_variegatus_gca018143015v1"/>
+      <!-- Hemichordata -->
+      <genome name="saccoglossus_kowalevskii_gca000003605v1"/>
+      <!-- Chordata -->
+      <genome name="branchiostoma_lanceolatum"/>
+      <genome name="ciona_intestinalis"/>
+      <!-- Vertebrata -->
+      <genome name="xenopus_tropicalis"/>
+      <!-- Annelida -->
+      <genome name="helobdella_robusta"/>
+      <genome name="owenia_fusiformis_gca903813345v1"/>
+      <!-- Brachiopoda -->
+      <genome name="lingula_anatina_gca001039355v2"/>
+      <!-- Mollusca -->
+      <genome name="crassostrea_virginica_gca002022765v4"/>
+      <genome name="mercenaria_mercenaria_gca014805675v2"/>
+      <genome name="patella_pellucida_gca917208275v1"/>
+      <!-- Nemertea -->
+      <genome name="lineus_longissimus_gca910592395v2"/>
+      <!-- Platyhelminthes -->
+      <genome name="hymenolepis_microstoma"/>
+      <genome name="clonorchis_sinensis_gca003604175v2wb"/>
+      <genome name="schmidtea_mediterranea_gca002600895v1wb"/>
+      <!-- Priapulida -->
+      <genome name="priapulus_caudatus_gca000485595v2"/>
+      <!-- Tardigrada -->
+      <genome name="hypsibius_exemplaris_gca002082055v1"/>
+      <!-- Rotifera -->
+      <genome name="adineta_vaga"/>
+      <!-- Nematoda -->
+      <genome name="strongyloides_ratti"/>
+      <genome name="haemonchus_contortus_gca000469685v2wb"/>
+      <!-- Arthropoda -->
+      <genome name="ixodes_scapularis_gca016920785v2"/>
+      <genome name="daphnia_pulex"/>
+      <genome name="agrilus_planipennis_gca000699045v2"/>
+    </collection>
   </collections>
 
 </compara_db>

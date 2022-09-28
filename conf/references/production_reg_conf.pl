@@ -32,6 +32,8 @@ use Bio::EnsEMBL::Compara::Utils::Registry;
 
 my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
 my $prev_release = $curr_release - 1;
+my $curr_eg_release = $curr_release - 53;
+my $prev_eg_release = $curr_eg_release - 1;
 
 # Species found on both vertebrates and non-vertebrates servers
 my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster saccharomyces_cerevisiae);
@@ -48,6 +50,22 @@ Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
 Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
 # before loading all Non-Vertebrates
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-mirror-3:4275/$curr_release");
+
+# Used for protist collection databases
+Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+    -host   => 'mysql-ens-mirror-3',
+    -port   => 4275,
+    -user   => 'ensro',
+    -pass   => '',
+    -dbname => "protists_choanoflagellida1_collection_core_${curr_eg_release}_${curr_release}_1",
+);
+Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+    -host   => 'mysql-ens-mirror-3',
+    -port   => 4275,
+    -user   => 'ensro',
+    -pass   => '',
+    -dbname => "protists_ichthyosporea1_collection_core_${curr_eg_release}_${curr_release}_1",
+);
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
@@ -72,6 +90,22 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-mirror-
         -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
     );
 };
+
+# Used for protist collection databases
+Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+    -host   => 'mysql-ens-mirror-3',
+    -port   => 4275,
+    -user   => 'ensro',
+    -pass   => '',
+    -dbname => "protists_choanoflagellida1_collection_core_${prev_eg_release}_${prev_release}_1",
+);
+Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+    -host   => 'mysql-ens-mirror-3',
+    -port   => 4275,
+    -user   => 'ensro',
+    -pass   => '',
+    -dbname => "protists_ichthyosporea1_collection_core_${prev_eg_release}_${prev_release}_1",
+);
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
