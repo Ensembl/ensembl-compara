@@ -28,7 +28,7 @@ sub init {
   my $self = shift;
   $self->{'main_class'}       = 'main';
   $self->{'lefthand_menu'}    = 1;
-  $self->{'has_species_bar'}  = $self->hub->species && $self->hub->species !~ /multi|common/i ? 1 : 0;
+  $self->{'has_species_bar'}  = $self->hub->species && $self->hub->species !~ /^(multi|common)$/i ? 1 : 0;
   $self->{'has_tabs'}         = $self->hub->controller->configuration->has_tabs;
   $self->add_head;
   $self->add_body;
