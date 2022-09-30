@@ -80,7 +80,7 @@ sub fetch_by_stable_id { ## DEPRECATED
     my ($self, $stable_id) = @_;
 
     deprecate(
-        "MemberAdaptor::fetch_by_stable_id() is to be deprecated and will be removed in e109. Use fetch_all_by_stable_id_GenomeDB instead."
+        "MemberAdaptor::fetch_by_stable_id() is to be deprecated and will be removed in e109. Please use fetch_by_stable_id_GenomeDB instead."
     );
 
     throw("MemberAdaptor::fetch_by_stable_id() must have an stable_id") unless $stable_id;
