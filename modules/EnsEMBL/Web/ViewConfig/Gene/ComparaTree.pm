@@ -157,7 +157,7 @@ sub init_form_non_cacheable {
 
   if($hub->param('g')) {
     my $database           = $hub->database($cdb);
-    my $member             = $database->get_GeneMemberAdaptor->fetch_all_by_stable_id_GenomeDB($hub->core_params->{'g'});
+    my $member             = $database->get_GeneMemberAdaptor->fetch_by_stable_id($hub->core_params->{'g'});
     my $adaptor            = $database->get_GeneTreeAdaptor;
     my $gene_tree          = $adaptor->fetch_default_for_Member($member);
     %other_clustersets     = map { $_->clusterset_id => 1 } @{$adaptor->fetch_all_linked_trees($gene_tree)};

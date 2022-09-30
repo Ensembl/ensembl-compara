@@ -171,7 +171,7 @@ sub get_homologies {
   my $gene_id      = $object->stable_id;
 
   my $database     = $hub->database($cdb);
-  my $qm           = $database->get_GeneMemberAdaptor->fetch_all_by_stable_id_GenomeDB($gene_id);
+  my $qm           = $database->get_GeneMemberAdaptor->fetch_by_stable_id($gene_id);
   my $homologies;
   my $ok_homologies = [];
   my $action        = $hub->param('data_action') || $hub->action;

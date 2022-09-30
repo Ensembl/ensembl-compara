@@ -756,7 +756,7 @@ sub get_homologies {
   my $database = $self->database($compara_db);
   return unless $database;
 
-  my $query_member   = $database->get_GeneMemberAdaptor->fetch_all_by_stable_id_GenomeDB($self->stable_id);
+  my $query_member   = $database->get_GeneMemberAdaptor->fetch_by_stable_id($self->stable_id);
   return unless defined $query_member;
   
   my $homology_adaptor = $database->get_HomologyAdaptor;
@@ -917,7 +917,7 @@ sub get_compara_Member {
   if (!$self->{$cache_key}) {
     my $compara_dba = $self->database($compara_db)              || return;
     my $adaptor     = $compara_dba->get_adaptor('GeneMember')   || return;
-    my $member      = $adaptor->fetch_all_by_stable_id_GenomeDB($stable_id);
+    my $member      = $adaptor->fetch_by_stable_id($stable_id);
     
     $self->{$cache_key} = $member if $member;
   }

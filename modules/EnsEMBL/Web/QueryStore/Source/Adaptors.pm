@@ -139,7 +139,7 @@ sub compara_member {
   ## Pass species in case this site has single-species compara
   my $gma = $self->_get_adaptor('get_GeneMemberAdaptor','compara', $species);
   return undef unless $gma;
-  return $gma->fetch_all_by_stable_id_GenomeDB($id);
+  return $gma->fetch_by_stable_id($id);
 }
 
 sub pancompara_member {
@@ -147,7 +147,7 @@ sub pancompara_member {
 
   my $gma = $self->_get_adaptor('get_GeneMemberAdaptor','compara_pan_ensembl');
   return undef unless $gma;
-  return $gma->fetch_all_by_stable_id_GenomeDB($id);
+  return $gma->fetch_by_stable_id($id);
 }
 
 sub phenotype_feature_adaptor {
