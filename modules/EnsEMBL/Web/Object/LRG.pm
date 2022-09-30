@@ -815,7 +815,7 @@ sub fetch_homology_species_hash {
 
   return {} unless $database;
 
-  my $query_member = $database->get_GeneMemberAdaptor->fetch_by_stable_id($geneid);
+  my $query_member = $database->get_GeneMemberAdaptor->fetch_all_by_stable_id_GenomeDB($geneid);
 
   return {} unless defined $query_member ;
 
@@ -904,7 +904,7 @@ sub get_compara_Member{
     my $genemember_adaptor = $compara_dba->get_adaptor('GeneMember') || &$error( "Cannot COMPARA->get_adaptor('GeneMember')" );
     # Fetch the object
     my $id = $self->stable_id;
-    my $member = $genemember_adaptor->fetch_by_stable_id($id) || &$error( "<h3>No compara ENSEMBLGENE member for $id</h3>" );
+    my $member = $genemember_adaptor->fetch_all_by_stable_id_GenomeDB($id) || &$error( "<h3>No compara ENSEMBLGENE member for $id</h3>" );
     # Update the cache
     $self->{$cachekey} = $member;
   }

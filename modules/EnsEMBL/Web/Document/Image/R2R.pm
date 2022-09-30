@@ -54,7 +54,7 @@ sub find_ss_in_compara {
     my $gma = $database->get_GeneMemberAdaptor();
     my $gta = $database->get_GeneTreeAdaptor();
 
-    my $member = $gma->fetch_by_stable_id($self->component->object->stable_id);
+    my $member = $gma->fetch_all_by_stable_id_GenomeDB($self->component->object->stable_id);
     if ($member and $member->has_GeneTree) {
       my $transcript = $member->get_canonical_SeqMember();
       my $gene_tree  = $gta->fetch_default_for_Member($member);
