@@ -102,11 +102,11 @@ elsif($division eq "plants"){
     $lastz_alignment_region   = "1:12928-15180";
 
     $species_1                = "oryza_sativa";
-    $species_2                = "vitis_vinifera";
+    $species_2                = "glycine_max";
     $species_3                = "arabidopsis_thaliana";
 
     $taxon_1                  = 39947;#oryza_sativa
-    $taxon_2                  = 29760;#vitis_vinifera
+    $taxon_2                  = 3847;#glycine_max
     $taxon_3                  = 3702;#arabidopsis_thaliana
 
     $species_set_group        = "rice";
@@ -566,8 +566,8 @@ try{
     }
 
     unless ( $skip_alignments || $skip_lastz ) {
-        $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;method=LASTZ_NET;species_set=$species_1;species_set=$species_3".($extra_params ? ";$extra_params" : ''));
-        ok( index($jsontxt->[0]->{tree},"$species_1") !=-1 && index($jsontxt->[0]->{tree},$species_3) !=-1, "Check get alignment region method option");
+        $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;method=LASTZ_NET;species_set=$species_1;species_set=$species_2".($extra_params ? ";$extra_params" : ''));
+        ok( index($jsontxt->[0]->{tree},"$species_1") !=-1 && index($jsontxt->[0]->{tree},$species_2) !=-1, "Check get alignment region method option");
     }
 
     unless ( $skip_homology ) {
