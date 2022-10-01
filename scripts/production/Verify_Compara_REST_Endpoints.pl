@@ -148,8 +148,8 @@ elsif($division eq "metazoa"){
     $skip_cafe                = 1;
 }
 elsif($division eq 'pan' or $division eq 'pan_homology'){
-    $gene_member_id           = 'AT5G06870';
-    $gene_tree_id             = 'EGGT00960000274462';
+    $gene_member_id           = 'AT3G55510';
+    $gene_tree_id             = 'EGGT00050000005918';
 
     $species_1                = 'arabidopsis_thaliana';
     $species_2                = "vitis_vinifera";
@@ -159,7 +159,7 @@ elsif($division eq 'pan' or $division eq 'pan_homology'){
     $taxon_2                  = 29760;#vitis_vinifera
     $taxon_3                  = 400682;#amphimedon_queenslandica
 
-    $gene_symbol              = 'AT4G26860.2';
+    $gene_symbol              = 'RBL';
     $homology_type            = 'orthologues';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
 
