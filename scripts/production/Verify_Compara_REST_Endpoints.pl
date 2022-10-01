@@ -206,6 +206,29 @@ elsif ($division eq 'protists' ) {
     $skip_families            = 1;
     $skip_cactus              = 1;
 }
+elsif ($division eq 'fungi' ) {
+    $lastz_alignment_region   = 'I:529814-541420:1';
+    $gene_member_id           = 'SPBC23G7.12c';
+    $gene_tree_id             = 'EFGT01080000065287';
+
+    $species_1                = 'schizosaccharomyces_pombe';
+    $species_2                = 'schizosaccharomyces_cryophilus';
+    $species_3                = 'aspergillus_nidulans';
+
+    $taxon_1                  = 284812;#schizosaccharomyces_pombe
+    $taxon_2                  = 653667;#schizosaccharomyces_cryophilus
+    $taxon_3                  = 227321;#aspergillus_nidulans
+
+    $gene_symbol              = 'rpt6';
+    $homology_type            = 'orthologues';
+    $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
+
+    $extra_params             = 'compara=fungi';
+    $skip_cafe                = 1;
+    $skip_epo                 = 1;
+    $skip_cactus              = 1;
+    $skip_families            = 1;
+}
 else {
     die "Division '$division' is not understood\n";
 }
