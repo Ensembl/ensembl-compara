@@ -80,8 +80,8 @@ my $compara_dbs = {
     'murinae_nctrees'         => [ 'mysql-ens-compara-prod-10', 'twalsh_vertebrates_murinae_ncrna_reindexed_trees_109' ],
     'murinae_ptrees_prev'     => [ 'mysql-ens-compara-prod-3',  'ivana_vertebrates_murinae_protein_reindexed_trees_108' ],
     'murinae_nctrees_prev'    => [ 'mysql-ens-compara-prod-3',  'ivana_vertebrates_murinae_ncrna_reindexed_trees_108' ],
-    #'pig_breeds_ptrees'       => [ 'mysql-ens-compara-prod-X',  '' ],
-    #'pig_breeds_nctrees'      => [ 'mysql-ens-compara-prod-X',  '' ],
+    'pig_breeds_ptrees'       => [ 'mysql-ens-compara-prod-9',  'twalsh_vertebrates_pig_breeds_protein_reindexed_trees_109' ],
+    'pig_breeds_nctrees'      => [ 'mysql-ens-compara-prod-9',  'twalsh_vertebrates_pig_breeds_ncrna_reindexed_trees_109' ],
     'pig_breeds_ptrees_prev'  => [ 'mysql-ens-compara-prod-4',  'jalvarez_vertebrates_pig_breeds_protein_reindexed_trees_107' ],
     'pig_breeds_nctrees_prev' => [ 'mysql-ens-compara-prod-10', 'jalvarez_vertebrates_pig_breeds_ncrna_reindexed_trees_107' ],
 
