@@ -193,13 +193,14 @@ elsif ($division eq 'protists' ) {
     $species_3                = 'plasmopara_halstedii_gca_900000015';
 
     $taxon_1                  = 347515;#leishmania_major
-    $taxon_2                  = 4781;#plasmodium_falciparum
-    $taxon_3                  = 36329;#plasmopara_halstedii_gca_900000015
+    $taxon_2                  = 36329;#plasmodium_falciparum
+    $taxon_3                  = 4781;#plasmopara_halstedii_gca_900000015
 
     $gene_symbol              = 'LMJF_27_0290';
     $homology_type            = 'orthologues';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
 
+    $extra_params             = 'compara=protists';
     $skip_cafe                = 1;
     $skip_alignments          = 1;
     $skip_families            = 1;
