@@ -756,7 +756,8 @@ sub get_homologies {
   my $database = $self->database($compara_db);
   return unless $database;
 
-  my $query_member   = $database->get_GeneMemberAdaptor->fetch_by_stable_id($self->stable_id);
+  my $args = {'stable_id' => $self->stable_id, 'cdb' => $compara_db};
+  my $query_member   = $self->get_compara_Member($args); 
   return unless defined $query_member;
   
   my $homology_adaptor = $database->get_HomologyAdaptor;
@@ -862,7 +863,8 @@ sub get_homologue_alignments {
   };
 
   if ($database) {  
-    my $member  = $self->get_compara_Member($compara_db);
+    my $args = {'stable_id' => $self->stable_id, 'cdb' => $compara_db};
+    my $member  = $self->get_compara_Member($args);
     my $tree    = $self->get_GeneTree($compara_db, 1, $strain_tree);
     my @params  = ($member, $type);
     my $species = [];
@@ -908,22 +910,6 @@ sub get_homologue_alignments {
   return $msa;
 }
 
-sub get_compara_Member {
-  my $self       = shift;
-  my $compara_db = shift || 'compara';
-  my $stable_id  = shift || $self->stable_id;
-  my $cache_key  = "_compara_member_$compara_db\_$stable_id";
-  
-  if (!$self->{$cache_key}) {
-    my $compara_dba = $self->database($compara_db)              || return;
-    my $adaptor     = $compara_dba->get_adaptor('GeneMember')   || return;
-    my $member      = $adaptor->fetch_by_stable_id($stable_id);
-    
-    $self->{$cache_key} = $member if $member;
-  }
-  
-  return $self->{$cache_key};
-}
 
 sub get_GeneTree {
   my $self        = shift;
@@ -934,8 +920,9 @@ sub get_GeneTree {
   my $cache_key  = sprintf('_protein_tree_%s_%s_%s', $compara_db, $clusterset_id, $strain_tree);
 
   if (!$self->{$cache_key}) {  
-    my $member  = $self->get_compara_Member($compara_db)           || return;
-    my $adaptor = $member->adaptor->db->get_adaptor('GeneTree')    || return;
+    my $args = {'stable_id' => $self->stable_id, 'cdb' => $compara_db};
+    my $member  = $self->get_compara_Member($args)  || return;
+    my $adaptor = $member->adaptor->db->get_adaptor('GeneTree') || return;
     my $tree    = $adaptor->fetch_all_by_Member($member, -clusterset_id => $clusterset_id)->[0];
     unless ($tree) {
         $tree = $adaptor->fetch_default_for_Member($member);
@@ -995,7 +982,8 @@ sub get_SpeciesTree {
     my $cafeTree_Adaptor = $database->get_CAFEGeneFamilyAdaptor();
     my $geneTree_Adaptor = $database->get_GeneTreeAdaptor();
     
-    my $member   = $self->get_compara_Member($compara_db)           || return;        
+    my $args = {'stable_id' => $self->stable_id, 'cdb' => $compara_db};
+    my $member   = $self->get_compara_Member($args)           || return;        
     my $geneTree = $geneTree_Adaptor->fetch_default_for_Member($member, $strain_tree) || return;
     my $cafeTree = $cafeTree_Adaptor->fetch_by_GeneTree($geneTree) || return;		   
     
@@ -1024,7 +1012,8 @@ sub get_SpeciesTreeJSON {
 
     my $json_label = $collapsability eq 'part' ? 'cafe_lca' : 'cafe';
 
-    my $member   = $self->get_compara_Member($compara_db)           || return;
+    my $args = {'stable_id' => $self->stable_id, 'cdb' => $compara_db};
+    my $member   = $self->get_compara_Member($args)           || return;
     my $geneTree = $geneTree_Adaptor->fetch_default_for_Member($member) || return;
     my $cafeTree = $gtos_Adaptor->fetch_by_GeneTree_and_label($geneTree, $json_label) || return;
 

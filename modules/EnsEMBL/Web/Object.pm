@@ -330,6 +330,30 @@ sub check_for_align_in_database {
     return @messages;
 }
 
+sub get_compara_Member {
+  my ($self, $args) = @_;
+  my $stable_id = $args->{'stable_id'};
+  return unless $stable_id;
+  my $species   = $args->{'species'} || $self->hub->species;
+  my $cdb       = $args->{'cdb'} || 'compara';
+  my $cache_key  = "_compara_member_$cdb\_$species\_$stable_id";
+
+  if (!$self->{$cache_key}) {
+    my $dba = $self->database($cdb) || return;
+    my $gda = $dba->get_adaptor('GenomeDB')   || return;
+    my $gma = $dba->get_adaptor('GeneMember') || return;
+  
+    my $prod_name = $self->hub->species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
+    my $genome_db = $gda->fetch_by_name_assembly($prod_name);
+    if ($genome_db) {
+      my $member = $gma->fetch_by_stable_id_GenomeDB($stable_id, $genome_db);
+      $self->{$cache_key} = $member if $member;
+    }
+  }
+
+  return $self->{$cache_key};
+}
+
 sub get_slices {
   my ($self, $args) = @_;
   my (@slices, @formatted_slices, $length);

@@ -35,7 +35,7 @@ sub get_details {
   my $cdb    = shift;
   my $object = shift || $self->object || $self->hub->core_object('gene');
 
-  my $member = $object->get_compara_Member($cdb);
+  my $member = $object->get_compara_Member({'stable_id' => $object->stable_id, 'cdb' => $cdb});
   return (undef, '<strong>Gene is not in the compara database</strong>') unless $member;
 
   my $strain_tree  = $self->hub->species_defs->get_config($self->hub->species,'RELATED_TAXON') if ($self->hub->is_strain || $self->hub->param('strain') || $self->hub->action =~ /Strain_/);
