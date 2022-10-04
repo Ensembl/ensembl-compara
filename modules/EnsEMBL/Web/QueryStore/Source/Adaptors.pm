@@ -134,7 +134,11 @@ sub epigenome_by_stableid {
 }
 
 sub compara_member {
-  my ($self,$id, $species) = @_;
+  my ($self, $id, $species) = @_;
+  if (ref $id eq 'HASH') {
+    $id       = $id->{'gene'}->stable_id;
+    $species  = $id->{'species'};
+  }
 
   ## Pass species in case this site has single-species compara
   my $gda = $self->_get_adaptor('get_GenomeDBAdaptor','compara', $species);
@@ -150,13 +154,16 @@ sub compara_member {
 
 sub pancompara_member {
   my ($self, $id, $species) = @_;
+  if (ref $id eq 'HASH') {
+    $id       = $id->{'gene'}->stable_id;
+    $species  = $id->{'species'};
+  }
   my $compara = 'compara_pan_ensembl';
-  warn ">>> PAN COMPARA SPECIES $species";
 
   ## Pass species in case this site has single-species compara
   my $gda = $self->_get_adaptor('get_GenomeDBAdaptor', $compara, $species);
   return undef unless $gda;
-  #my $prod_name = $self->{_sd}->get_config($species, 'SPECIES_PRODUCTION_NAME');
+  #my $prod_name = $self->{_sd}->get_config($species_url, 'SPECIES_PRODUCTION_NAME');
   my $genome_db = $gda->fetch_by_name_assembly($species);
   return undef unless $genome_db;
 
@@ -164,16 +171,6 @@ sub pancompara_member {
   return undef unless $gma;
   return $gma->fetch_by_stable_id_GenomeDB($id, $genome_db);
 }
-
-=pod
-sub pancompara_member {
-  my ($self,$id) = @_;
-
-  my $gma = $self->_get_adaptor('get_GeneMemberAdaptor','compara_pan_ensembl');
-  return undef unless $gma;
-  return $gma->fetch_by_stable_id($id);
-}
-=cut
 
 sub phenotype_feature_adaptor {
   my ($self,$species) = @_;

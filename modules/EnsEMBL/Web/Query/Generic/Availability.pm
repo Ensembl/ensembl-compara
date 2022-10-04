@@ -65,7 +65,7 @@ sub compara_member {
 sub pancompara_member {
   my ($self,$args) = @_;
 
-  return $self->source('Adaptors')->pancompara_member($args->{'gene'}->stable_id);
+  return $self->source('Adaptors')->pancompara_member($args->{'gene'}->stable_id, $args->{'species'});
 }
 
 sub default_gene_tree {
