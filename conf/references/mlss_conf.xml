@@ -352,7 +352,7 @@
       <genome name="helobdella_robusta"/>
       <genome name="owenia_fusiformis_gca903813345v1"/>
       <!-- Brachiopoda -->
-      <genome name="lingula_anatina_gca001039355v2"/>
+      <genome name="lingula_anatina_gca001039355v2rs"/>
       <!-- Mollusca -->
       <genome name="crassostrea_virginica_gca002022765v4"/>
       <genome name="mercenaria_mercenaria_gca014805675v2"/>
