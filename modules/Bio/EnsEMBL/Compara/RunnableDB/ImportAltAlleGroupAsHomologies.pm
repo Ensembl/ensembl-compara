@@ -77,6 +77,8 @@ sub copy_and_fetch_gene {
     my $self = shift;
     my $gene = shift;
 
+    copy_data_with_foreign_keys_by_constraint($self->param('member_dbc'), $self->compara_dba->dbc, 'gene_member', 'stable_id', $gene->stable_id, undef, 'expand_tables');
+
     # Gene Member
     my $species = $gene->adaptor->db->get_MetaContainer->get_production_name();
     my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($species);
@@ -84,8 +86,6 @@ sub copy_and_fetch_gene {
     if ($self->debug) {
         print "GENE: $gene_member ", $gene_member->toString(), "\n";
     }
-
-    copy_data_with_foreign_keys_by_constraint($self->param('member_dbc'), $self->compara_dba->dbc, 'gene_member', 'gene_member_id', $gene_member->dbID, undef, 'expand_tables');
 
     # Transcript Member
     return $gene_member->get_canonical_SeqMember;
