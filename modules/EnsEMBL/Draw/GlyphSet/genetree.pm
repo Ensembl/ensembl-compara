@@ -241,19 +241,21 @@ sub _init {
     $collapsed_colour = 'grey' if (!$collapsed_colour); # Default colour
 
     #cafetree zmenu else comparatree zmenu
-    my $url_params = {
+    if ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode')){
+      $node_href = $self->_url({ 
+        action      => "SpeciesTree",
         node        => $f->{'_id'},
         genetree_id => $Config->get_parameter('genetree_id'),
         collapse    => $collapsed_nodes_str
-    };
-    $url_params->{'ht'} = $highlight_param if $is_nv;
-
-    if ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode')){
-      $url_params->{'action'} = "SpeciesTree";
+      });
     } elsif (!$tree->isa('Bio::EnsEMBL::Compara::GenomicAlignTree')) {
-      $url_params->{'action'} = "ComparaTreeNode$skey";
+      $node_href = $self->_url({ 
+        action      => "ComparaTreeNode$skey",
+        node        => $f->{'_id'},
+        genetree_id => $Config->get_parameter('genetree_id'),
+        collapse    => $collapsed_nodes_str
+      });
     }
-    $node_href = $self->_url({$url_params});
 
     my $collapsed_xoffset = 0;
     if ($f->{_bg_colour}) {
