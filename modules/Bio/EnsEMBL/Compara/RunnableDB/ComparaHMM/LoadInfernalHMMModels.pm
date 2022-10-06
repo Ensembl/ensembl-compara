@@ -28,7 +28,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadInfernalHMMModels
 =head1 SYNOPSIS
 
 To load RFAM models from the FTP, use these parameters:
- url: ftp://ftp.ebi.ac.uk/pub/databases/Rfam/12.0/
+ url: https://ftp.ebi.ac.uk/pub/databases/Rfam/12.0/
  remote_file: Rfam.cm.gz
  expander: gunzip
  expanded_basename: Rfam.cm
