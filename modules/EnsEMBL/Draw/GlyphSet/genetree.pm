@@ -657,6 +657,7 @@ sub features {
   my $show_exons = shift || 0;
   my $slice_cigar_lines = shift;
   my $low_coverage_species = shift || {};
+  my $species_defs = $self->species_defs;
   my $node_type;
 
   # Scale the branch length
@@ -690,7 +691,7 @@ sub features {
   my $n_members = ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode'))? $tree->n_members : '';
   $cut = 0 if ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode')); #only for cafe tree, cut is 0 so that the branch are single blue line (no dotted or other colours)
   $n_members = $tree->{_counter_position} if $tree->isa('Bio::EnsEMBL::Compara::GenomicAlignTree');
-  my $lookup = $self->species_defs->prodnames_to_urls_lookup;
+  my $lookup = $species_defs->prodnames_to_urls_lookup;
 
   my $f = {
     _distance    => $distance,
@@ -790,17 +791,23 @@ sub features {
      my $n_members = $tree->n_members;
      $n_members = $n_members < 10 ? (sprintf '%-8s', $n_members) : (sprintf '%-7s', $n_members);
 
-     $f->{'_species_label'} = $self->species_defs->get_config($f->{'_species'}, 'SPECIES_SCIENTIFIC_NAME') || $self->species_defs->species_label($f->{'_species'}) || $f->{'_species'};      
+     $f->{'_species_label'} = $species_defs->get_config($f->{'_species'}, 'SPECIES_SCIENTIFIC_NAME') || $species_defs->species_label($f->{'_species'}) || $f->{'_species'};      
      $f->{'label'} = $f->{'_display_id'} = $n_members."$f->{'_species_label'}";
    }
 
   # Process alignment
+  my $pan_lookup = $species_defs->multi_val('PAN_COMPARA_LOOKUP');
   if ($tree->isa('Bio::EnsEMBL::Compara::AlignedMember')) {
     if ($tree->genome_db) {
-      $f->{'_species'} = $lookup->{$tree->genome_db->name}; # This will be used in URLs
+      # This will be used in URLs
+      $f->{'_species'} = $lookup->{$tree->genome_db->name} 
+                          || $pan_lookup->{$tree->genome_db->name}{'species_url'}; 
 
       # This will be used for display
-      $f->{'_species_label'} = $self->species_defs->get_config($f->{'_species'}, 'SPECIES_DISPLAY_NAME') || $self->species_defs->species_label($f->{'_species'}) || $f->{'_species'}; 
+      $f->{'_species_label'} = $species_defs->get_config($f->{'_species'}, 'SPECIES_DISPLAY_NAME') 
+                              || $pan_lookup->{$tree->genome_db->name}{'display_name'}
+                              || $species_defs->species_label($f->{'_species'}) 
+                              || $f->{'_species'}; 
       $f->{'_genome_dbs'} ||= {};
       $f->{'_genome_dbs'}->{$tree->genome_db->dbID}++;
     }
@@ -878,7 +885,7 @@ sub features {
     if ($cigar_line =~ /M/) {
       $f->{'_cigar_line'} = $cigar_line;
     }
-    $f->{'label'} = $self->species_defs->get_config($lookup->{$name}, 'SPECIES_DISPLAY_NAME');
+    $f->{'label'} = $species_defs->get_config($lookup->{$name}, 'SPECIES_DISPLAY_NAME');
     if ($low_coverage_species && $low_coverage_species->{$genomic_align->genome_db->dbID}) {
      $f->{'_gat'}{'colour'} = 'brown';
     }
