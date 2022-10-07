@@ -129,7 +129,7 @@ my $compara_dbs = {
     'compara_syntenies'   => [ 'mysql-ens-compara-prod-1', 'twalsh_vertebrates_synteny_109' ],
 
     # miscellaneous
-    #'alt_allele_projection' => [ 'mysql-ens-compara-prod-X', '' ],
+    'alt_allele_projection' => [ 'mysql-ens-compara-prod-1', 'twalsh_vertebrates_alt_allele_import_20221004_109' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
