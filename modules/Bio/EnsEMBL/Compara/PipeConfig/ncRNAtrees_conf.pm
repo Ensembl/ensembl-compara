@@ -131,7 +131,7 @@ sub default_options {
         'hc_batch_size' => 10,
 
         # RFAM parameters
-        'rfam_ftp_url'           => 'ftp://ftp.ebi.ac.uk/pub/databases/Rfam/12.0/',
+        'rfam_ftp_url'           => 'https://ftp.ebi.ac.uk/pub/databases/Rfam/12.0/',
         'rfam_remote_file'       => 'Rfam.cm.gz',
         'rfam_expanded_basename' => 'Rfam.cm',
         'rfam_expander'          => 'gunzip ',
