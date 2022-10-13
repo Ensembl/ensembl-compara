@@ -24,11 +24,8 @@ FamilyAdaptor - This object represents a family coming from a database of protei
 =head1 SYNOPSIS
 
   my $fa = Bio::EnsEMBL::Registry->get_adaptor('Multi', 'Compara', 'Family');
-  my $ma = Bio::EnsEMBL::Registry->get_adaptor('Multi', 'Compara', 'SeqMember');
 
   my $fam = $fa->fetch_by_stable_id('ENSF000013034');
-  my $member = $ma->fetch_by_stable_id('YSV4_CAEEL')};   # This is UniProt accession symbol
-  my $fam = $fa->fetch_by_SeqMember($member);
 
   @fam = @{$fa->fetch_by_description_with_wildcards('interleukin',1)};
 
