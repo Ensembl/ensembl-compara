@@ -86,3 +86,4 @@
 163	\N	patch	patch_108_109_b.sql|gene_member_qc_key
 164	\N	patch	patch_108_109_c.sql|stable_id_unique_per_genome
 165	\N	patch	patch_108_109_d.sql|case_insensitive_stable_id
+166	\N	patch	patch_108_109_e.sql|case_sensitive_stable_id_again
