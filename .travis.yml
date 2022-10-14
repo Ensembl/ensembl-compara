@@ -27,15 +27,15 @@ before_install:
     # yamllint disable rule:line-length
     - git clone --depth 1 https://github.com/Ensembl/ensembl-git-tools.git
     - export PATH=$PATH:$PWD/ensembl-git-tools/bin
-    - git clone --branch release/106 --depth 1 https://github.com/Ensembl/ensembl-test.git || git-ensembl --clone --branch main --depth 1 ensembl-test
-    - git clone --branch release/106 --depth 1 https://github.com/Ensembl/ensembl-rest.git || git-ensembl --clone --branch main --depth 1 ensembl-rest
-    - git clone --branch release/106 --depth 1 https://github.com/Ensembl/ensembl-funcgen.git || git-ensembl --clone --branch main --depth 1 ensembl-funcgen
-    - git clone --branch release/106 --depth 1 https://github.com/Ensembl/ensembl-variation.git || git-ensembl --clone --branch master --secondary_branch main --depth 1 ensembl-variation
-    - git clone --branch release/106 --depth 1 https://github.com/Ensembl/ensembl-io.git || git-ensembl --clone --branch main --depth 1 ensembl-io
-    - git clone --branch release/106 --depth 1 https://github.com/Ensembl/ensembl.git || git-ensembl --clone --branch main --depth 1 ensembl
-    - git clone --branch release/106 --depth 1 https://github.com/Ensembl/ensembl-datacheck.git || git-ensembl --clone --branch main --depth 1 ensembl-datacheck
-    - git clone --branch release/106 --depth 1 https://github.com/Ensembl/ensembl-production.git || git-ensembl --clone --branch main --depth 1 ensembl-production
-    - git clone --branch release/106 --depth 1 https://github.com/Ensembl/ensembl-metadata.git || git-ensembl --clone --branch main --depth 1 ensembl-metadata
+    - git-ensembl --clone --branch release/107 --secondary_branch main --depth 1 ensembl-test
+    - git-ensembl --clone --branch release/107 --secondary_branch main --depth 1 ensembl-rest
+    - git-ensembl --clone --branch release/107 --secondary_branch main --depth 1 ensembl-funcgen
+    - git-ensembl --clone --branch release/107 --secondary_branch main --depth 1 ensembl-variation
+    - git-ensembl --clone --branch release/107 --secondary_branch main --depth 1 ensembl-io
+    - git-ensembl --clone --branch release/107 --secondary_branch main --depth 1 ensembl
+    - git-ensembl --clone --branch release/107 --secondary_branch main --depth 1 ensembl-datacheck
+    - git-ensembl --clone --branch release/107 --secondary_branch main --depth 1 ensembl-production
+    - git-ensembl --clone --branch release/107 --secondary_branch main --depth 1 ensembl-metadata
     # yamllint enable rule:line-length
     - git-ensembl --clone --branch main --depth 1 ensembl-hive
     - git-ensembl --clone --branch main --depth 1 ensembl-taxonomy
