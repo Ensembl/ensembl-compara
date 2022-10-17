@@ -5,9 +5,120 @@
   <collections>
 
     <!-- All metazoa -->
-    <collection name="default">
-      <taxonomic_group taxon_name="Eukaryota"/>
-    </collection>
+	<collection name="Metazoa - Default">
+	  <taxonomic_group taxon_name="Metazoa"/>
+	  <!-- But exclude everything below Arthropoda -->
+	  <taxonomic_group taxon_name="Arthropoda" exclude="1"/>
+	  <genome name="ixodes_scapularis_gca016920785v2"/>
+	  <genome name="daphnia_magna_gca020631705v2"/>
+	  <genome name="daphnia_pulex_gca021134715v1rs"/>
+	  <genome name="daphnia_pulicaria_gca021234035v2rs"/>
+	  <genome name="strigamia_maritima"/>
+	  <genome name="eurytemora_affinis_gca000591075v2"/>
+	  <genome name="tigriopus_californicus_gca007210705"/>
+	  <genome name="lepeophtheirus_salmonis_gca016086655v3rs"/>
+	  <genome name="zootermopsis_nevadensis"/>
+	  <genome name="tribolium_castaneum"/>
+	  <genome name="anopheles_gambiae"/>
+	  <genome name="drosophila_melanogaster"/>
+	  <genome name="acyrthosiphon_pisum"/>
+	  <genome name="cimex_lectularius"/>
+	  <genome name="apis_mellifera"/>
+	  <genome name="bombus_terrestris"/>
+	  <genome name="bombyx_mori"/>
+	  <genome name="schistocerca_americana_gca021461395v2"/>
+	  <genome name="hyalella_azteca_gca000764305v2"/>
+	  <genome name="procambarus_clarkii_gca020424385v2"/>
+	  <genome name="penaeus_chinensis_gca019202785v2rs"/>
+	  <genome name="penaeus_japonicus_gca017312705v1"/>
+	  <genome name="penaeus_monodon_gca015228065v1"/>
+	  <genome name="penaeus_vannamei_gca003789085v1"/>
+	  <genome name="portunus_trituberculatus_gca017591435v1"/>
+	  <genome name="limulus_polyphemus_gca000517525v1"/>
+	  <genome name="amphibalanus_amphitrite_gca019059575v1"/>
+	  <genome name="pollicipes_pollicipes_gca011947565v2"/>
+	  <!-- But exclude everything below Nematoda -->
+	  <taxonomic_group taxon_name="Nematode" exclude="1"/>
+	  <genome name="loa_loa"/>
+	  <genome name="caenorhabditis_elegans"/>
+	  <!-- But exclude everything below Mollusca -->
+	  <taxonomic_group taxon_name="Mollusca" exclude="1"/>
+	  <genome name="crassostrea_gigas"/>
+	  <genome name="mizuhopecten_yessoensis_gca002113885v2"/>
+	  <genome name="octopus_bimaculoides_gca001194135v1"/>
+	  <genome name="haliotis_rubra_gca003918875v1rs"/>
+	  <genome name="haliotis_rufescens_gca023055435v1rs"/>
+	  <genome name="lottia_gigantea"/>
+	  <genome name="gigantopelta_aegis_gca016097555v1"/>
+	  <genome name="biomphalaria_glabrata"/>
+	  <!-- But exclude everything below Annelida -->
+	  <taxonomic_group taxon_name="Annelida" exclude="1"/>
+	  <genome name="pomphorhynchus_laevis_gca012934845v2gb"/>
+	  <genome name="helobdella_robusta"/>
+	  <genome name="dimorphilus_gyrociliatus_gca904063045v1"/>
+	  <genome name="owenia_fusiformis_gca903813345v1"/>
+	  <!-- But exclude everything below Cnidaria -->
+	  <taxonomic_group taxon_name="Cnidaria" exclude="1"/>
+	  <genome name="actinia_equina_gca011057435"/>
+	  <genome name="exaiptasia_diaphana_gca001417965v1"/>
+	  <genome name="nematostella_vectensis"/>
+	  <genome name="dendronephthya_gigantea_gca004324835v1"/>
+	  <genome name="acropora_millepora_gca013753865v1"/>
+	  <genome name="orbicella_faveolata_gca002042975v1"/>
+	  <genome name="stylophora_pistillata_gca002571385v1"/>
+	  <genome name="hydra_vulgaris_gca022113875v1rs"/>
+	  <genome name="clytia_hemisphaerica_gca902728285"/>
+	  <genome name="thelohanellus_kitauei"/>
+	  <!-- But exclude everything below Platyhelminthes -->
+	  <taxonomic_group taxon_name="Platyhelminthes" exclude="1"/>
+	  <genome name="echinococcus_granulosus_gca000524195v1rs"/>
+	  <genome name="schistosoma_mansoni"/>
+	</collection>
+
+
+	<!-- All Invertebrate protostomes -->
+	<collection name="Protostome Inverts">
+	  <taxonomic_group taxon_name="Protostomia"/>
+	  <!-- Exclude everything below Arthropoda -->
+	  <taxonomic_group taxon_name="Arthropoda" exclude="1"/>
+	  <genome name="haemaphysalis_longicornis_gca013339765v1"/>
+	  <genome name="ixodes_scapularis_gca016920785v2"/>
+	  <genome name="rhipicephalus_sanguineus_gca013339695v1"/>
+	  <genome name="dermatophagoides_pteronyssinus_gca001901225v2"/>
+	  <genome name="centruroides_sculpturatus_gca000671375v2"/>
+	  <genome name="tetranychus_urticae"/>
+	  <genome name="strigamia_maritima"/>
+	  <genome name="zootermopsis_nevadensis"/>
+	  <genome name="diabrotica_virgifera_gca917563875v2"/>
+	  <genome name="tribolium_castaneum"/>
+	  <genome name="anopheles_gambiae"/>
+	  <genome name="drosophila_melanogaster"/>
+	  <genome name="acyrthosiphon_pisum"/>
+	  <genome name="apis_mellifera"/>
+	  <genome name="bombyx_mori"/>
+	  <genome name="schistocerca_americana_gca021461395v2"/>
+	</collection>
+
+
+	<!-- All Insects  -->
+	<collection name="Insects">
+	  <taxonomic_group taxon_name="Hexapoda"/>
+	  <!-- Exclude everything below Culicidae -->
+	  <taxonomic_group taxon_name="Culicidae" exclude="1"/>
+	  <genome name="aedes_aegypti_lvpagwg"/>
+	  <genome name="anopheles_coluzzii_ngousso"/>
+	  <genome name="anopheles_gambiae"/>
+	  <genome name="anopheles_sinensis"/>
+	  <genome name="culex_quinquefasciatus_gca015732765v1"/>
+	  <!-- Exclude everything below Drosophila -->
+	  <taxonomic_group taxon_name="Drosophila" exclude="1"/>
+	  <genome name="drosophila_melanogaster"/>
+	  <genome name="drosophila_yakuba"/>
+	  <!-- Exclude everything below Glossina -->
+	  <taxonomic_group taxon_name="Glossina" exclude="1"/>
+	  <genome name="glossina_fuscipes"/>
+	  <genome name="glossina_morsitans"/>
+	</collection>
 
   </collections>
 
