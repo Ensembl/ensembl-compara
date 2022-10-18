@@ -5,7 +5,7 @@
   <collections>
 
     <!-- All metazoa -->
-	<collection name="Metazoa - Default">
+	<collection name="default">
 	  <taxonomic_group taxon_name="Metazoa"/>
 	  <!-- But exclude everything below Arthropoda -->
 	  <taxonomic_group taxon_name="Arthropoda" exclude="1"/>
@@ -77,7 +77,7 @@
 
 
 	<!-- All Invertebrate protostomes -->
-	<collection name="Protostome Inverts">
+	<collection name="protostomes">
 	  <taxonomic_group taxon_name="Protostomia"/>
 	  <!-- Exclude everything below Arthropoda -->
 	  <taxonomic_group taxon_name="Arthropoda" exclude="1"/>
@@ -101,7 +101,7 @@
 
 
 	<!-- All Insects  -->
-	<collection name="Insects">
+	<collection name="insects">
 	  <taxonomic_group taxon_name="Hexapoda"/>
 	  <!-- Exclude everything below Culicidae -->
 	  <taxonomic_group taxon_name="Culicidae" exclude="1"/>
@@ -124,6 +124,8 @@
 
   <gene_trees>
     <protein_trees collection="default"/>
+    <protein_trees collection="protostomes"/>
+    <protein_trees collection="insects"/>
   </gene_trees>
 
 </compara_db>
