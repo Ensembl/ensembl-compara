@@ -67,7 +67,7 @@
     <!-- Other relevant PWAs -->
     <pairwise_alignment method="LASTZ_NET" ref_genome="zea_mays" target_genome="sorghum_bicolor"/>
     <pairwise_alignment method="LASTZ_NET" ref_genome="zea_mays" target_genome="brachypodium_distachyon"/>
-    <pairwise_alignment method="LASTZ_NET" ref_genome="avena_sativa_sang" target_genome="avena_sativa_ot3098"/>
+    <!-- pairwise_alignment method="LASTZ_NET" ref_genome="avena_sativa_sang" target_genome="avena_sativa_ot3098"/> -->
 
   </pairwise_alignments>
 
