@@ -125,17 +125,6 @@ sub populate_tree {
   
   $compara_menu->append($pl_node);
   
-  my $fam_node = $self->create_node('Family', 'Ensembl protein families',
-    [qw( family EnsEMBL::Web::Component::Gene::Family )],
-    { 'availability' => 'family not_strain', 'concise' => 'Ensembl protein families' }
-  );
-  
-  $fam_node->append($self->create_subnode('Family/Genes', uc($species_defs->get_config($hub->species, 'SPECIES_DISPLAY_NAME')) . ' genes in this family',
-    [qw( genes EnsEMBL::Web::Component::Gene::FamilyGenes )],
-    { 'availability'  => 'family not_strain', 'no_menu_entry' => 1 }
-  ));
-
-  $compara_menu->append($fam_node);
   
   # Compara menu for strain (strain menu available on main species but collapse, main menu not available/grey out/collapse on strain page)
   # The node key (Strain_) is used by Component.pm to determine if it is a strain link on the main species page, so be CAREFUL when changing this  

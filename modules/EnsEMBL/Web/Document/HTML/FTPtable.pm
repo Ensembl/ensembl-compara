@@ -426,7 +426,7 @@ broken into chunks of 1000 sequence records for easier downloading.
   <dt>EMBL</dt>
   <dd>Ensembl database dumps in <a href="http://www.ebi.ac.uk/ena/about/sequence_format"
   rel="external">EMBL</a> nucleotide
-  sequence <a href="http://ftp.ebi.ac.uk/pub/databases/embl/doc/usrman.txt"
+  sequence <a href="https://ftp.ebi.ac.uk/pub/databases/embl/doc/usrman.txt"
   rel="external">database format</a></dd>
 
   <dt>GenBank</dt>

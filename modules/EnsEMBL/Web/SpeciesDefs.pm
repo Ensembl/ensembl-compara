@@ -981,9 +981,11 @@ sub _parse {
     ## Now assign an image to this species
     my $image_path = $image_dir.'/'.$key.'.png';
 
+    ## Do these sites first, to avoid issues with common names
     if ($SiteDefs::RAPID_RELEASE_VERSION || $SiteDefs::ENSEMBL_COVID19_VERSION) {
-      ## Do these sites first, to avoid issues with common names
-      my $clade = $tree->{$key}{'SPECIES_GROUP'};
+      ## Explicitly set clade for human, because there's no way to tell us apart 
+      ## from other apes via the species.classification hash
+      my $clade = $key =~ /Homo_sapiens/ ? 'Homo' : $tree->{$key}{'SPECIES_GROUP'};
       $tree->{$key}{'SPECIES_IMAGE'} = $labels->{$clade};
     }
     elsif (-e $image_path) {
