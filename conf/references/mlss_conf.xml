@@ -261,12 +261,12 @@
       <genome name="folsomia_candida"/>
 
       <!-- Paraneoptera -->
-      <genome name="frankliniella_occidentalis_gca000697945v4"/>
+      <genome name="frankliniella_occidentalis_gca000697945v4gb"/>
       <genome name="zootermopsis_nevadensis"/>
       <!-- Hemiptera -->
       <genome name="bemisia_tabaci_asiaii5"/>
       <genome name="acyrthosiphon_pisum"/>
-      <genome name="myzus_persicae_gca001856785v1"/>
+      <genome name="myzus_persicae_gca001856785v1rs"/>
       <genome name="rhodnius_prolixus"/>
       <genome name="trialeurodes_vaporariorum_gca011764245"/>
       <genome name="rhopalosiphum_maidis_gca003676215v3"/>
