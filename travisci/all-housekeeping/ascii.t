@@ -51,6 +51,7 @@ foreach my $f (@all_files) {
     next if $f =~ /\/_build\//;
     # The conservation_score table has scores compressed in binary form
     next if $f =~ /modules\/t\/test-genome-DBs\/.*\/conservation_score.txt$/;
+    next if $f =~ /src\/test_data\/.*\/conservation_score.txt$/;
     # These files are binary by nature
     next if $f =~ /\.(pdf|png|dia|hal|jar|so|o|pyc)$/;
     # This file is for Travis only

@@ -8,12 +8,14 @@ build-backend = "setuptools.build_meta"
 [tool.pytest.ini_options]
 # CITest project is on hold and it needs to be updated before resuming its unit tests
 addopts = "-v --tb=native --server=mysql://ensadmin:$ENSADMIN_PSW@mysql-ens-compara-prod-1:4485/ --ignore=src/python/tests/test_citest.py"
+testpaths = ["src/python/tests"]
 
 [tool.coverage.run]
 source = ["src/python/lib"]
 
 [tool.mypy]
 ignore_missing_imports = true
+show_error_codes = true
 warn_unused_configs = true
 
 [tool.pylint.messages_control]

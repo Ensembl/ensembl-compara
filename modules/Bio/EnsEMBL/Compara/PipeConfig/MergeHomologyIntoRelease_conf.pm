@@ -80,7 +80,7 @@ sub default_options {
                                  'hive_meta', 'job', 'job_file', 'log_message',
                                  'resource_class', 'resource_description',
                                  'role', 'pipeline_wide_parameters',
-                                 'worker', 'worker_resource_usage',
+                                 'worker', 'worker_resource_usage', 'datacheck_results'
                                ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)

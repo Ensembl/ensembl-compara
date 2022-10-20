@@ -17,15 +17,6 @@ limitations under the License.
 
 =cut
 
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor
@@ -34,22 +25,6 @@ Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor
 
 Adaptor for a GeneTree object (individual nodes will be internally retrieved
 with the GeneTreeNodeAdaptor).
-
-=head1 INHERITANCE TREE
-
-  Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor
-  +- Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor
-  `- Bio::EnsEMBL::Compara::DBSQL::TagAdaptor
-
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
 
 =cut
 
@@ -428,9 +403,19 @@ sub delete_tree {
     $tree->_load_tags;
 
     my $root_id = $tree->root->node_id;
-
+    my $clusterset_id = $tree->clusterset_id;
     # Query to reset gene_member_hom_stats
-    my $gene_member_hom_stats_sql = 'UPDATE gene_member_hom_stats SET gene_trees = 0, orthologues = 0, paralogues = 0, homoeologues = 0 WHERE gene_member_id = ?';
+    my $gene_member_hom_stats_sql = qq/
+        UPDATE gene_member_hom_stats
+        SET
+            gene_trees = 0,
+            orthologues = 0,
+            paralogues = 0,
+            homoeologues = 0
+        WHERE
+            gene_member_id = ?
+                AND collection = "$clusterset_id"
+    /;
     for my $leaf (@{$tree->get_all_leaves}) {
         if ($leaf->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
             $self->dbc->do($gene_member_hom_stats_sql, undef, $leaf->gene_member_id);
@@ -478,7 +463,7 @@ sub delete_tree {
     }
 
     # Is this a subtree of a supertree? If so, clean up the supertree too
-    if ( $tree->root->parent->tree->tree_type eq 'supertree' ) {
+    if ( defined $tree->root->parent->tree and $tree->root->parent->tree->tree_type eq 'supertree' ) {
         $self->_clean_supertree($tree->root);
     }
 

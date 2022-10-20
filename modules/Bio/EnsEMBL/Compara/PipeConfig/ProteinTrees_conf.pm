@@ -47,6 +47,7 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::OrthologQMAlignment;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::DataCheckFactory;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -363,6 +364,14 @@ sub default_options {
 
         # Gene tree stats options
         'gene_tree_stats_shared_dir' => $self->o('gene_tree_stats_shared_basedir') . '/' . $self->o('collection') . '/' . $self->o('ensembl_release'),
+
+        # Whole db DC parameters
+        'datacheck_groups' => ['compara_gene_tree_pipelines'],
+        'db_type'          => ['compara'],
+        'output_dir_path'  => $self->o('work_dir') . '/datachecks/',
+        'overwrite_files'  => 1,
+        'failures_fatal'   => 1, # no DC failure tolerance
+        'db_name'          => $self->o('dbowner') . '_' . $self->o('pipeline_name'),
     };
 }
 
@@ -405,10 +414,11 @@ sub pipeline_checks_pre_init {
 
 sub pipeline_create_commands {
     my ($self) = @_;
+
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
-        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'cluster_dir', 'dump_dir', 'gene_dumps_dir', 'dump_pafs_dir', 'examl_dir', 'tmp_dir', 'fasta_dir', 'plots_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'cluster_dir', 'dump_dir', 'gene_dumps_dir', 'dump_pafs_dir', 'examl_dir', 'tmp_dir', 'fasta_dir', 'plots_dir', 'output_dir_path']),
         $self->pipeline_create_commands_rm_mkdir(['gene_tree_stats_shared_dir'], undef, 'do not rm'),
 
         $self->db_cmd( 'CREATE TABLE ortholog_quality (
@@ -421,6 +431,14 @@ sub pipeline_create_commands {
             exon_length              INT NOT NULL,
             intron_length            INT NOT NULL,
             INDEX (homology_id)
+        )'),
+        $self->db_cmd( 'CREATE TABLE datacheck_results (
+            submission_job_id INT,
+            dbname VARCHAR(255) NOT NULL,
+            passed INT,
+            failed INT,
+            skipped INT,
+            INDEX submission_job_id_idx (submission_job_id)
         )'),
     ];
 }
@@ -437,6 +455,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'reuse_db'      => $self->o('prev_rel_db'),
         'mapping_db'    => $self->o('mapping_db'),
         'alt_aln_dbs'   => $self->o('alt_aln_dbs'),
+        'db_name'       => $self->o('db_name'),
 
         'ensembl_release' => $self->o('ensembl_release'),
 
@@ -470,6 +489,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'wga_file'           => '#wga_files_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.wga.tsv',
         'previous_wga_file'  => defined $self->o('prev_wga_dumps_dir') ? '#prev_wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv' : undef,
         'high_conf_file'     => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.high_conf.tsv',
+
+        'output_dir_path'    => $self->o('output_dir_path'),
 
         'clustering_mode'   => $self->o('clustering_mode'),
         'reuse_level'       => $self->o('reuse_level'),
@@ -1707,8 +1728,28 @@ sub core_pipeline_analyses {
             -flow_into  => [
                     WHEN('#do_stable_id_mapping#' => 'stable_id_mapping'),
                     WHEN('#do_treefam_xref#' => 'treefam_xref_idmap'),
+                    { 'datacheck_trees' => { 'db_type' => $self->o('db_type'), 'compara_db' => '#ref_db#', 'registry_file' => undef, 'datacheck_names' => ['CheckFlatProteinTrees'] } },
                 ],
             %hc_analysis_params,
+        },
+
+        {
+            -logic_name        => 'datacheck_trees',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+            -analysis_capacity => 100,
+            -max_retry_count   => 0,
+            -rc_name           => '500Mb_job',
+            -flow_into         => {
+                '-1' => [ 'datacheck_trees_high_mem' ],
+            },
+        },
+
+        {
+            -logic_name        => 'datacheck_trees_high_mem',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+            -analysis_capacity => 100,
+            -max_retry_count   => 0,
+            -rc_name           => '8Gb_job',
         },
 
         {   -logic_name    => 'compute_jaccard_index',
@@ -3327,6 +3368,7 @@ sub core_pipeline_analyses {
                 '1->A' => [
                     'rib_fire_dnds',
                     'rib_fire_homology_stats',
+                    'rib_fire_tree_stats',
                     'rib_fire_hmm_build',
                     'rib_fire_goc'
                 ],
@@ -3457,6 +3499,11 @@ sub core_pipeline_analyses {
             ],
         },
 
+        {   -logic_name => 'rib_fire_tree_stats',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => 'gene_count_factory',
+        },
+
         {   -logic_name => 'rib_fire_hmm_build',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => WHEN('#do_hmm_export#' => 'build_HMM_factory'),
@@ -3475,7 +3522,10 @@ sub core_pipeline_analyses {
         {   -logic_name    => 'compute_statistics',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeStatistics',
             -rc_name       => '500Mb_job',
-            -flow_into     => 'write_stn_tags',
+            -flow_into     => {
+                '1->A'  => [ 'write_stn_tags' ],
+                'A->1'  => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => $self->pipeline_url(), 'registry_file' => undef } },
+            },
         },
 
         {   -logic_name     => 'write_stn_tags',
@@ -3677,6 +3727,24 @@ sub core_pipeline_analyses {
             -flow_into  => WHEN('#do_goc#' => 'goc_entry_point'),
         },
 
+        {   -logic_name => 'gene_count_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -rc_name    => '1Gb_job',
+            -parameters => {
+                'component_genomes' => 0,
+                'fan_branch_code' => 1,
+            },
+            -flow_into  => [ 'count_genes_in_tree' ],
+        },
+
+        {   -logic_name => 'count_genes_in_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CountGenesInTree',
+            -rc_name    => '1Gb_job',
+            -parameters => {
+                'gene_count_exe' => $self->o('count_genes_in_tree_exe'),
+            },
+        },
+
         {   -logic_name => 'homology_stats_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
             -parameters => {
@@ -3744,7 +3812,17 @@ sub core_pipeline_analyses {
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree::pipeline_analyses_split_homologies_posttree($self) },
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::OrthologQMAlignment::pipeline_analyses_ortholog_qm_alignment($self)  },
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs::pipeline_analyses_high_confidence($self) },
+            @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DataCheckFactory::pipeline_analyses_datacheck_factory($self) },
     ];
+}
+
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+
+    # datacheck specific tweaks for pipelines
+    $analyses_by_name->{'datacheck_factory'}->{'-parameters'} = {'dba' => '#compara_db#'};
+    $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
 }
 
 1;
