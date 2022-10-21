@@ -1,7 +1,7 @@
 # Ensembl Compara API
 
-[![Build Status](https://travis-ci.org/Ensembl/ensembl-compara.svg?branch=release/108)](https://travis-ci.org/Ensembl/ensembl-compara)
-[![Codecov Status](https://codecov.io/gh/ensembl/ensembl-compara/branch/release/108/graph/badge.svg)](https://codecov.io/github/Ensembl/ensembl-compara)
+[![Build Status](https://travis-ci.org/Ensembl/ensembl-compara.svg?branch=feature/homology_annotation)](https://travis-ci.org/Ensembl/ensembl-compara)
+[![Codecov Status](https://codecov.io/gh/ensembl/ensembl-compara/branch/feature/homology_annotation/graph/badge.svg)](https://codecov.io/github/Ensembl/ensembl-compara)
 [![Code Climate](https://api.codeclimate.com/v1/badges/2dd3c490030a5af7ff21/maintainability.svg)](https://codeclimate.com/github/Ensembl/ensembl-compara)
 
 The Ensembl Compara API (Application Programme Interface) serves as a
