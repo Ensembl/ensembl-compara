@@ -1119,8 +1119,12 @@ sub _populate_taxonomy_division {
   ## Sort the species into their respective taxa
   my $groups = {};
   foreach my $key (keys %$tree) {
-    next unless $tree->{$key}{'SPECIES_PRODUCTION_NAME'}; ## Not a real species
-    my $species_taxonomy = $tree->{$key}{'TAXONOMY'};
+    my $prodname = $tree->{$key}{'SPECIES_PRODUCTION_NAME'}; ## Not a real species
+    next unless $prodname;
+    ## Force classification for human on ropid release, as we're too closely related to other apes
+    ## to use species.classification as our source
+    my $species_taxonomy = ($SiteDefs::RAPID_RELEASE_VERSION && $prodname =~ /^homo_sapiens/) 
+                              ? ['Homo'] : $tree->{$key}{'TAXONOMY'};
     my @matched_groups = grep {$lookup->{$_}} @$species_taxonomy;
     my $group = $matched_groups[0] || 'other_species';
     push @{$groups->{$group}}, $key;
