@@ -711,7 +711,27 @@ sub detail_panel {
         }
       }
       foreach my $domain_src (sort(keys(%domains))) {
-        $data{domains} .= "<b>$domain_src</b><div class=\"column-right\"><ul class=\"compact\"><li>".join('</li><li>', @{$domains{$domain_src}})."</li></ul></div>";
+        $data{domains} .= "<b>$domain_src</b><div class=\"column-right\"><ul class=\"compact\">";
+        foreach my $value (@{$domains{$domain_src}}) {
+          my $key = uc $domain_src;
+          my $value_url = $value;
+
+          if ($key eq 'PANTHER') {
+            $key = "PANTHERDB";
+          } elsif ($key =~ '^PROSITE') {
+            $key = "PROSITE";
+          } elsif ($key =~ '^PDB-ENSP') {
+            $key = "PDB";
+            ( $value_url ) = $value =~ /(.+)\./;
+          } elsif ($key =~ '^AFDB-ENSP') {
+            $key = "ALPHAFOLD";
+            ( $value_url ) = $value =~ /-(.+)-/;
+          } elsif ($key eq 'GENE3D') {
+            $value_url = "G3DSA:$value" unless $value =~ /^G3DSA:/;
+          }
+          $data{domains} .= '<li>' . $hub->get_ExtURL_link($value, $key, $value_url) . '</li>';
+        }
+        $data{domains} .= "</ul></div>";
       }
 
 
