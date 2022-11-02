@@ -1406,6 +1406,11 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   displayCheckbox: function(obj) {
 
     var data = obj.data;
+
+    if (!data) {
+      return;
+    }
+
     var container = obj.container;
     var listType = obj.listType;
     var parentTabContainer = obj.parentTabContainer;
