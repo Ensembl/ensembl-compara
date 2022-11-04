@@ -68,6 +68,9 @@
               secale_cereale,
              )Hordeinae,
              (
+              lolium_perenne,
+             )Loliinae,
+             (
               thinopyrum_elongatum,
              )Thinopyrum,
              (
@@ -271,9 +274,10 @@
            populus_trichocarpa,
           )Malpighiales,
           (
-           quercus_lobata,
            juglans_regia,
            corylus_avellana,
+           quercus_lobata,
+           quercus_suber,
           )Fagales,
           (
            cucumis_sativus,
@@ -288,6 +292,7 @@
             brassica_rapa_ro18,
             brassica_napus,
             brassica_rapa,
+            brassica_juncea,
            )Brassica,
            (
             arabidopsis_lyrata,

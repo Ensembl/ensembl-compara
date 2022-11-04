@@ -102,11 +102,11 @@ elsif($division eq "plants"){
     $lastz_alignment_region   = "1:12928-15180";
 
     $species_1                = "oryza_sativa";
-    $species_2                = "vitis_vinifera";
+    $species_2                = "glycine_max";
     $species_3                = "arabidopsis_thaliana";
 
     $taxon_1                  = 39947;#oryza_sativa
-    $taxon_2                  = 29760;#vitis_vinifera
+    $taxon_2                  = 3847;#glycine_max
     $taxon_3                  = 3702;#arabidopsis_thaliana
 
     $species_set_group        = "rice";
@@ -148,8 +148,8 @@ elsif($division eq "metazoa"){
     $skip_cafe                = 1;
 }
 elsif($division eq 'pan' or $division eq 'pan_homology'){
-    $gene_member_id           = 'AT5G06870';
-    $gene_tree_id             = 'EGGT00960000274462';
+    $gene_member_id           = 'AT3G55510';
+    $gene_tree_id             = 'EGGT00050000005918';
 
     $species_1                = 'arabidopsis_thaliana';
     $species_2                = "vitis_vinifera";
@@ -159,7 +159,7 @@ elsif($division eq 'pan' or $division eq 'pan_homology'){
     $taxon_2                  = 29760;#vitis_vinifera
     $taxon_3                  = 400682;#amphimedon_queenslandica
 
-    $gene_symbol              = 'AT4G26860.2';
+    $gene_symbol              = 'RBL';
     $homology_type            = 'orthologues';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
 
@@ -183,6 +183,51 @@ elsif ( $division eq 'grch37' ) {
     $skip_epo       = 1;
     $skip_genetrees = 1;
     $skip_cactus    = 1;
+}
+elsif ($division eq 'protists' ) {
+    $gene_member_id           = 'LMJF_27_0290';
+    $gene_tree_id             = 'EPrGT00960000189529';
+
+    $species_1                = 'leishmania_major';
+    $species_2                = 'plasmodium_falciparum';
+    $species_3                = 'plasmopara_halstedii_gca_900000015';
+
+    $taxon_1                  = 347515;#leishmania_major
+    $taxon_2                  = 36329;#plasmodium_falciparum
+    $taxon_3                  = 4781;#plasmopara_halstedii_gca_900000015
+
+    $gene_symbol              = 'LMJF_27_0290';
+    $homology_type            = 'orthologues';
+    $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
+
+    $extra_params             = 'compara=protists';
+    $skip_cafe                = 1;
+    $skip_alignments          = 1;
+    $skip_families            = 1;
+    $skip_cactus              = 1;
+}
+elsif ($division eq 'fungi' ) {
+    $lastz_alignment_region   = 'I:529814-541420:1';
+    $gene_member_id           = 'SPBC23G7.12c';
+    $gene_tree_id             = 'EFGT01080000065287';
+
+    $species_1                = 'schizosaccharomyces_pombe';
+    $species_2                = 'schizosaccharomyces_cryophilus';
+    $species_3                = 'aspergillus_nidulans';
+
+    $taxon_1                  = 284812;#schizosaccharomyces_pombe
+    $taxon_2                  = 653667;#schizosaccharomyces_cryophilus
+    $taxon_3                  = 227321;#aspergillus_nidulans
+
+    $gene_symbol              = 'rpt6';
+    $homology_type            = 'orthologues';
+    $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
+
+    $extra_params             = 'compara=fungi';
+    $skip_cafe                = 1;
+    $skip_epo                 = 1;
+    $skip_cactus              = 1;
+    $skip_families            = 1;
 }
 else {
     die "Division '$division' is not understood\n";
@@ -566,8 +611,8 @@ try{
     }
 
     unless ( $skip_alignments || $skip_lastz ) {
-        $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;method=LASTZ_NET;species_set=$species_1;species_set=$species_3".($extra_params ? ";$extra_params" : ''));
-        ok( index($jsontxt->[0]->{tree},"$species_1") !=-1 && index($jsontxt->[0]->{tree},$species_3) !=-1, "Check get alignment region method option");
+        $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;method=LASTZ_NET;species_set=$species_1;species_set=$species_2".($extra_params ? ";$extra_params" : ''));
+        ok( index($jsontxt->[0]->{tree},"$species_1") !=-1 && index($jsontxt->[0]->{tree},$species_2) !=-1, "Check get alignment region method option");
     }
 
     unless ( $skip_homology ) {

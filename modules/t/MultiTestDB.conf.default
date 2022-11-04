@@ -34,6 +34,7 @@
     'test_fake_mouse'  => {'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor'},
     'homology_annotation' => {'compara' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor'},
     'mysqlimport_test' => {'compara' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor'},
+    'update_msa_test' => {'compara' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor'},
  },
 
 

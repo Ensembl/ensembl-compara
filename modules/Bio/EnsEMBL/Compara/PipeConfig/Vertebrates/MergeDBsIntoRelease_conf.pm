@@ -89,6 +89,7 @@ sub default_options {
             'sequence'              => 'members_db',
             'exon_boundaries'       => 'members_db',
             'seq_member_projection_stable_id' => 'members_db',
+            'method_link_species_set_attr'    => 'protein_db',
             'seq_member_projection' => 'protein_db',
             'peptide_align_feature%' => 'protein_db',
         },
@@ -96,12 +97,12 @@ sub default_options {
         # In these databases, ignore these tables
         'ignored_tables' => {
             # Mapping 'db_alias' => Arrayref of table names
-            'ncrna_db'       => [qw(ortholog_quality id_generator id_assignments)],
-            'protein_db'     => [qw(ortholog_quality id_generator id_assignments)],
-            'mouse_prot_db'  => [qw(ortholog_quality id_generator id_assignments)],
-            'mouse_ncrna_db' => [qw(ortholog_quality id_generator id_assignments)],
-            'pig_prot_db'    => [qw(ortholog_quality id_generator id_assignments)],
-            'pig_ncrna_db'   => [qw(ortholog_quality id_generator id_assignments)],
+            'ncrna_db'       => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
+            'protein_db'     => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
+            'mouse_prot_db'  => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
+            'mouse_ncrna_db' => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
+            'pig_prot_db'    => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
+            'pig_ncrna_db'   => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
             'projection_db'  => [qw(id_generator id_assignments)],
         },
    };

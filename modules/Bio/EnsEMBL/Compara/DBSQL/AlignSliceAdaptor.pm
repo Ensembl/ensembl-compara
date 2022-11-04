@@ -440,7 +440,8 @@ sub _combine_genomic_align_trees {
         # _debug_info("OUT-OF-ORDER NODE LINK", $species_order, $species_counter);
 
       ## 4. Insert/append this species if not found in $species_order
-      } elsif (!exists $existing_right_node_ids{$this_node_id} and !exists $existing_species_names{$this_genome_db->name}) {
+      } elsif ( (!exists $existing_right_node_ids{$this_node_id} and !exists $existing_species_names{$this_genome_db->name})
+                || $species_counter >= scalar(@$species_order) ) {
         my $debug_msg = "APPEND";
         if ($this_genome_db->name eq "ancestral_sequences") {
           $pending_ancestral_species = {

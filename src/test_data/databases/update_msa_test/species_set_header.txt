@@ -1,0 +1,3 @@
+1	mammals	3	103	103
+2	mammals	2	104	\N
+3	primates-and-rodents	2	104	\N

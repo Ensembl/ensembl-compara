@@ -63,6 +63,8 @@ sub default_options {
         failures_fatal         => 0,
         parallelize_datachecks => 1,
 
+        do_jira_ticket_creation => 1,
+
         meta_filters  => {},
         tag           => undef,
         timestamp     => undef,
@@ -164,6 +166,8 @@ sub pipeline_wide_parameters {
         tap_to_json            => $self->o('tap_to_json'),
         json_by_species        => $self->o('json_by_species'),
         json_passed            => $self->o('json_passed'),
+
+        do_jira_ticket_creation => $self->o('do_jira_ticket_creation'),
 
     };
 }

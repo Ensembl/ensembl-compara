@@ -16,12 +16,16 @@
 
 use strict;
 use warnings;
+
 use Getopt::Long;
+use JSON qw(decode_json);
+
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Utils::IO qw(slurp);
 
 # Parameters:
 # URL to the Compara database
-my $compara_url;
+my ($compara_url, $species_json);
 # Group ranks in taxonomy table?
 # E.g.:
 #   CLASS     SUPERORDER        ORDER     SUBORDER     FAMILY   SUBFAMILY       SPECIES             GENOMEDB NAME
@@ -33,17 +37,15 @@ my $compara_url;
 #   ''        ''                ''        ''           ''       Cebinae         Cebus capucinus     cebus_capucinus
 my $group_ranks = 0;
 # Handle input arguments
-GetOptions("compara_url=s" => \$compara_url,
-           "group" => \$group_ranks
+GetOptions("compara_url=s"  => \$compara_url,
+           "group"          => \$group_ranks,
+           "species_json=s" => \$species_json,
           ) or die("Error in command line arguments\n");
 die "Error in command line arguments: -compara_url mysql://user:pass\@host:port/db_name"
     if (!$compara_url);
 
 # Create new Compara database adaptor and get the GenomeDB adaptor
 my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url => $compara_url);
-my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
-# Get all the Genome DBs
-my $list_of_gdbs = $genome_db_adaptor->fetch_all();
 # Declare the taxonomic ranks of interest (sorted)
 my @target_ranks = qw(class superorder order suborder family subfamily species);
 # Number of ranks (plus the default addition of "GenomeDB name" as last rank)
@@ -51,17 +53,34 @@ my $num_ranks = $#target_ranks + 1;
 # Create the taxonomy template: if a rank is missing, assign "N/A"
 my $null_value = 'N/A';
 my %rank_template = map {$_ => $null_value} @target_ranks;
+# Get the taxon node for each species either in the species JSON file or in the genome_db table
+my %taxon_hash;
+if ($species_json) {
+    my $species_list = decode_json(slurp($species_json));
+    my $taxon_adaptor = $compara_dba->get_NCBITaxonAdaptor();
+    foreach my $species (@$species_list) {
+        my $species_name = ($species =~ s/_/ /gr);
+        $taxon_hash{$species} = $taxon_adaptor->fetch_node_by_name($species_name);
+    }
+} else {
+    my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
+    # Get all the Genome DBs
+    my $list_of_gdbs = $genome_db_adaptor->fetch_all();
+    foreach my $gdb (@{$list_of_gdbs}) {
+        # There are some $gdb that may not have 'taxon_id', so we need to handle the
+        # exception, report the troubling $gdb and move to the next one
+        if (!$gdb->taxon_id() || !defined($gdb->taxon())) {
+            warn "Undefined taxon_id for '", $gdb->name(), "'.\n";
+            next;
+        }
+        $taxon_hash{$gdb->name()} = $gdb->taxon();
+    }
+}
 # @taxonomy_table will have one string per species' taxonomy in tab-separated
 # values (TSV) format
 my @taxonomy_table;
-foreach my $gdb (@{$list_of_gdbs}) {
-    # There are some $gdb that may not have 'taxon_id', so we need to handle the
-    # exception, report the troubling $gdb and move to the next one
-    if (!$gdb->taxon_id() || !defined($gdb->taxon())) {
-        warn "Undefined taxon_id for '", $gdb->name(), "'.\n";
-        next;
-    }
-    my $node = $gdb->taxon();
+foreach my $species (keys %taxon_hash) {
+    my $node = $taxon_hash{$species};
     # Copy taxonomy template and fill it in
     my %taxonomy = %rank_template;
     while ($node->name() ne 'root') {
@@ -73,7 +92,7 @@ foreach my $gdb (@{$list_of_gdbs}) {
     }
     # Get the taxonomy in a TSV-like string, add GenomeDB name as the last
     # level/rank and append it to the taxonomy table
-    my $taxonomy_str = join("\t", (map {$taxonomy{$_}} @target_ranks), $gdb->name());
+    my $taxonomy_str = join("\t", (map {$taxonomy{$_}} @target_ranks), $species);
     push(@taxonomy_table, $taxonomy_str);
 }
 # Sort the rows in alphabetical order
@@ -117,6 +136,6 @@ if ($group_ranks) {
     }
 }
 # Write the array into STDOUT with @target_ranks as headers
-print join("\t", map(ucfirst, @target_ranks), 'GenomeDB name'), "\n",
+print join("\t", map(ucfirst, @target_ranks), 'Requested name'), "\n",
       join("\n", @taxonomy_table), "\n";
 
