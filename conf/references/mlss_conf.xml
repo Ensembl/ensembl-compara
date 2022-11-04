@@ -324,7 +324,7 @@
       <genome name="daphnia_pulex"/>
       <!-- Hexapoda -->
       <genome name="sipha_flava_gca003268045v1rs"/>
-      <genome name="cimex_lectularius_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs_gca000648675v3rs"/>
+      <genome name="cimex_lectularius_gca000648675v3rs"/>
       <genome name="atta_cephalotes"/>
       <genome name="bombus_terrestris"/>
       <genome name="anoplius_nigerrimus_gca914767735v1"/>
