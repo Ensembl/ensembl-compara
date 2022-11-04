@@ -9,7 +9,7 @@
       <genome name="gallus_gallus"/>
       <genome name="danio_rerio"/>
       <!-- Metazoa -->
-      <genome name="drosophila_melanogaster_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb_gca000001215v4fb"/>
+      <genome name="drosophila_melanogaster_gca000001215v4fb"/>
       <genome name="caenorhabditis_elegans"/>
       <!-- Fungi -->
       <genome name="saccharomyces_cerevisiae"/>
