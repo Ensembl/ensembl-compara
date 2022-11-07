@@ -41,7 +41,7 @@ sub field_order {
   ## Abstract method implementation
   my $self = shift;
 
-  return qw(opt_join_genes_top show_top_panel);
+  return qw(opt_join_genes_top);
 }
 
 sub form_fields {

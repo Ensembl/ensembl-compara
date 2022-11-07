@@ -39,7 +39,7 @@ sub init_cacheable {
 
 sub field_order {
   ## Abstract method implementation
-  return qw(flanking show_panel);
+  return qw(flanking);
 }
 
 sub form_fields {
