@@ -76,8 +76,6 @@ sub process {
     $error = 'Format not recognised';
   }
   else {
-    ## TODO - replace relevant parts with Bio::EnsEMBL::IO::Writer in due course
-  
     ## Create the component we need to get data from 
     ($component, $error) = $self->object->create_component;
 
