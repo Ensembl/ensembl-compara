@@ -546,20 +546,30 @@ sub add_species_fieldset {
   my $self          = shift;
   my $hub           = $self->view_config->hub;
   my $species_defs  = $self->view_config->species_defs;
-  my %species       = map { $species_defs->species_label($_) => $_ } keys %{$species_defs->multi_hash->{'DATABASE_COMPARA'}{'COMPARA_SPECIES'}};
+  my $lookup        = $species_defs->prodnames_to_urls_lookup;
+  my $species;
+  foreach (keys %{$species_defs->multi_hash->{'DATABASE_COMPARA'}{'COMPARA_SPECIES'}}) {
+    my $url = $lookup->{$_};
+    $species->{$_} = {'url' => $url, 'name' => $species_defs->species_label($url)};
+  }
 
-  foreach (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %species) { 
-    # complicated if statement which shows/hides strains or main species depending on the view you are on (i.e. when you are on a main species, do not show strain species, and when you are on a strain species or strain view from main species, show only strain species)
-    next if (
-              (!$hub->param('strain') && $hub->is_strain($species{$_})) 
-              || (($hub->param('strain') || $hub->is_strain) && !$self->view_config->species_defs->get_config($species{$_}, 'RELATED_TAXON'))
-            ); 
+  foreach (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %$species) { 
+    ## If statement to show/hide strain or main species depending on the view you are on
+    ##  When you are on a main species, do not show strain species 
+    my $url = $species->{$_}{'url'};
+    next if (!$hub->param('strain') && $hub->is_strain($url));
+    ## When you are on a strain species or strain view from main species, show only strain species         
+    next if (($hub->param('strain')  || $hub->is_strain) && !$hub->species_defs->get_config($url, 'RELATED_TAXON'));
+    ## But only show strains from the same group as the current species!
+    next if ($hub->param('strain') && (lc $hub->species_defs->get_config($url, 'RELATED_TAXON')
+                                          ne lc $hub->species_defs->get_config($hub->species, 'RELATED_TAXON')));
+
     
     $self->add_form_element({
       'fieldset'  => 'Selected species',
       'type'      => 'CheckBox',
-      'label'     => $_,
-      'name'      => 'species_' . lc $species{$_},
+      'label'     => $species->{$_}{'name'},
+      'name'      => 'species_'.$_,
       'value'     => 'yes',
     });
   }

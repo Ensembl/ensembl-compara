@@ -74,18 +74,20 @@ sub content {
         my $gene = $peptide->gene_member;
         $flag = 1 if $gene->stable_id eq $second_gene; 
 
-        my $member_species = $lookup->{$peptide->genome_db->name};
+        my $prodname       = $peptide->genome_db->name;
+        my $member_species = $lookup->{$prodname};
+        my $label          = $species_defs->species_label($member_species);
         my $location       = sprintf '%s:%d-%d', $gene->dnafrag->name, $gene->dnafrag_start, $gene->dnafrag_end;
        
-        if (!$second_gene && $member_species ne $species && $hub->param('species_' . lc $member_species) eq 'off') {
+        if (!$second_gene && $member_species ne $species && $hub->param('species_' .$prodname) eq 'off') {
           $flag = 0;
-          $skipped{$species_defs->species_label($member_species)}++;
+          $skipped{$label}++;
           next;
         }
 
         if ($gene->stable_id eq $gene_id) {
           push @$data, [
-            $species_defs->species_label($member_species),
+            $label,
             $gene->stable_id,
             $peptide->stable_id,
             sprintf('%d %s', $peptide->seq_length, $unit),
@@ -95,7 +97,7 @@ sub content {
           ]; 
         } else {
           push @$data, [
-            $species_defs->species_label($member_species),
+            $label,
             sprintf('<a href="%s">%s</a>',
               $hub->url({ species => $member_species, type => 'Gene', action => 'Summary', g => $gene->stable_id, r => undef }),
               $gene->stable_id

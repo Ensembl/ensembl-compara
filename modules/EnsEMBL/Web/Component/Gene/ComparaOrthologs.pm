@@ -118,6 +118,8 @@ sub content {
     }
   
     ## Also hide anything turned off in config
+    #my $show = $self->param('species_' . $prod_name);
+    #warn ">>> SHOW $prod_name? $show";
     if ($self->param('species_' . $prod_name) eq 'off') {
       $hidden->{$label} = scalar keys %{$orthologue_list{$species}||{}};
     }
@@ -532,7 +534,6 @@ sub get_export_data {
         }
       }
     }
-
     foreach (grep { /species_/ } $self->param) {
       (my $sp = $_) =~ s/species_//;
       $ok_species{$sp} = 1 if $self->param($_) eq 'yes';      

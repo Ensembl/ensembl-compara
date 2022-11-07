@@ -37,13 +37,16 @@ sub init_cacheable {
   ## Abstract method implementation
   my $self = shift;
   my $hub = $self->hub;
-  foreach ($self->species_defs->valid_species) {
-    # complicated if statement which shows/hides strain or main species depending on the view you are (i.e. when you are on a main species, do not show strain species and when you are on a strain species or strain view from main species, show only strain species)          
-    next if (
-            ($hub->action !~ /Strain_/ && $hub->is_strain($_)) || 
-            (($hub->action =~ /Strain_/  || $hub->is_strain) && !$self->hub->species_defs->get_config($_, 'RELATED_TAXON'))
-            );
-    $self->set_default_options({ 'species_' . lc($_) => 'yes' });    
+  foreach (sort $hub->species_defs->valid_species) {
+    ## If statement to show/hide strain or main species depending on the view you are on
+    ##  When you are on a main species, do not show strain species 
+    next if ($hub->action !~ /Strain_/ && $hub->is_strain($_));
+    ## When you are on a strain species or strain view from main species, show only strain species         
+    next if (($hub->action =~ /Strain_/  || $hub->is_strain) && !$hub->species_defs->get_config($_, 'RELATED_TAXON'));
+    ## But only show strains from the same group as the current species!
+    next if ($hub->action =~ /Strain_/ && (lc $hub->species_defs->get_config($_, 'RELATED_TAXON') 
+                                          ne lc $hub->species_defs->get_config($hub->species, 'RELATED_TAXON')));
+    $self->set_default_options({ 'species_' . $hub->species_defs->get_config($_, 'SPECIES_PRODUCTION_NAME') => 'yes' });    
   }
 
   $self->title('Homologs');

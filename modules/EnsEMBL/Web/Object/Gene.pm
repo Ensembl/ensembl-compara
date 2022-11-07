@@ -869,21 +869,23 @@ sub get_homologue_alignments {
     my @params  = ($member, $type);
     my $species = [];
     my $compara_spp = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'COMPARA_SPECIES'};
+    my $lookup  = $hub->species_defs->prodnames_to_urls_lookup;
     foreach (grep { /species_/ } $hub->param) {
-      (my $sp = $_) =~ s/species_//;
+      (my $prodname = $_) =~ s/species_//;
+      #warn ">>> SPECIES $prodname";
 
-      if ($compara_spp->{$sp} && $hub->param($_) eq 'yes'){
+      if ($compara_spp->{$prodname} && $hub->param($_) eq 'yes'){
 
         if($filtered_sets[0] eq 'all'){
-          push @$species, $sp;
+          push @$species, $prodname;
         } else {
 
-          my $group = $hub->species_defs->get_config(ucfirst($sp), 'SPECIES_GROUP');
+          my $group = $hub->species_defs->get_config($lookup->{$prodname}, 'SPECIES_GROUP');
           
           foreach my $set (@{$species_group_2_species_set->{$group}}){
                 
                 if (grep(/$set/,@filtered_sets)){
-                    push @$species, $sp;
+                    push @$species, $prodname;
                     last;
                 }
 
@@ -892,6 +894,7 @@ sub get_homologue_alignments {
       }
 
     }
+    #warn "@@@ SPECIES @$species";
     push @params, $species if scalar @$species;
 
     ## Make sure we use the correct tree
