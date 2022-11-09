@@ -33,10 +33,11 @@ if (params.help) {
     exit 0
 }
 
-if (!params.dir) {
+if (!params.dir && !params.url) {
     helpMessage()
     exit 0
 }
+
 
 /**
 *@output path to text file with software versions
@@ -80,16 +81,16 @@ process dumpVersions {
 }
 
 /**
-*@input path to BUSCO gene set protein fasta
-*@output path to fasta with longest protein isoforms per gene
-*@output path to gene list TSV
+*@input path to genome
+*@output path to processed genome
 */
 process prepareGenome {
     label 'retry_with_8gb_mem_c1'
     input:
-      path genome
+        path genome
     output:
         path "processed/*", emit: proc_genome
+    when: params.dir != ""
     script:
         id = (genome =~ /(.+)\..+?$/)[0][1]
         """
@@ -98,6 +99,35 @@ process prepareGenome {
             # Add a dummy softmasked sequence to prevent disabling of
             # blast softmasking during the genblast processing:
             echo -e ">REPMASK_DUMMY_DECOY\na" >> processed/$id
+        """
+}
+
+/**
+*@output path to processed genome
+*@output path to input genomes info csv
+*/
+process prepareGenomeFromDb {
+    label 'retry_with_8gb_mem_c1'
+
+    publishDir "${params.results_dir}", pattern: "input_genomes.csv", mode: "copy", overwrite: true
+
+    output:
+        path "processed/*", emit: proc_genome
+        path "input_genomes.csv", emit: input_genomes
+    when: params.dir == ""
+    script:
+        """
+            mkdir -p processed
+            python ${params.fetch_genomes_exe} -u ${params.url} -c "${params.collection}" -s "${params.species_set}" -d ${params.dump_path} -o input_genomes.csv
+            while read -r line; do
+                source=`echo \$line | cut -d ',' -f 8`
+                target=`echo \$line | cut -d ',' -f 10`
+                echo Processing: \$source -> \$target
+                ${params.seqkit_exe} -j 5 grep -n -v -r -p "PATCH_*,HAP" \$source > processed/\$target
+                # Add a dummy softmasked sequence to prevent disabling of
+                # blast softmasking during the genblast processing:
+                echo -e ">REPMASK_DUMMY_DECOY\na" >> processed/\$target
+            done < input_genomes.csv
         """
 }
 
@@ -582,6 +612,7 @@ process calcNeutralBranchesAstral {
     input:
         path aln
         path input_tree
+        path genomes_csv
 
     output:
         path "astral_species_tree_neutral_bl.nwk", emit: newick
@@ -589,12 +620,23 @@ process calcNeutralBranchesAstral {
         path "astral_iqtree_log_neutral_bl.txt", emit: iqtree_log
 
     script:
+    if (params.dir == "")
+    """
+    ${params.iqtree_exe} -s $aln -m GTR+G -g $input_tree --fast -T ${params.cores}
+    mv *.treefile astral_species_tree_neutral_bl.nwk
+    mv *.iqtree astral_iqtree_report_neutral_bl.txt
+    mv *.log astral_iqtree_log_neutral_bl.txt
+    python ${params.fix_leaf_names_exe} -t astral_species_tree_neutral_bl.nwk -c $genomes_csv -o TMP.nwk
+    mv TMP.nwk astral_species_tree_neutral_bl.nwk
+    """
+    else
     """
     ${params.iqtree_exe} -s $aln -m GTR+G -g $input_tree --fast -T ${params.cores}
     mv *.treefile astral_species_tree_neutral_bl.nwk
     mv *.iqtree astral_iqtree_report_neutral_bl.txt
     mv *.log astral_iqtree_log_neutral_bl.txt
     """
+
 }
 
 /**
@@ -648,6 +690,7 @@ process calcProtBranchesAstral {
         path aln
         path partitions
         path input_tree
+        path genomes_csv
 
     output:
         path "astral_species_tree_prot_bl.nwk", emit: newick
@@ -655,6 +698,16 @@ process calcProtBranchesAstral {
         path "astral_iqtree_log_prot_bl.txt", emit: iqtree_log
 
     script:
+    if (params.dir == "")
+    """
+    ${params.iqtree_exe} -s $aln -p $partitions -g $input_tree --fast -T ${params.cores}
+    mv *.treefile astral_species_tree_prot_bl.nwk
+    mv *.iqtree astral_iqtree_report_prot_bl.txt
+    mv *.log astral_iqtree_log_prot_bl.txt
+    python ${params.fix_leaf_names_exe} -t astral_species_tree_prot_bl.nwk -c $genomes_csv -o TMP.nwk
+    mv TMP.nwk astral_species_tree_prot_bl.nwk
+    """
+    else
     """
     ${params.iqtree_exe} -s $aln -p $partitions -g $input_tree --fast -T ${params.cores}
     mv *.treefile astral_species_tree_prot_bl.nwk
@@ -714,7 +767,11 @@ def annoInCache(genome, anno_cache) {
     return file.exists()
 }
 
-
+if (params.dir != "") {
+    genomes = Channel.fromPath("${params.dir}/*.fa*", type: 'file')
+} else {
+    genomes = null
+}
 workflow {
     println(ensemblLogo())
 
@@ -725,12 +782,19 @@ workflow {
     prepareBusco(params.busco_proteins)
 
     // Prepare input genomes:
-    genomes = Channel.fromPath("${params.dir}/*.*")
+    if (params.dir != "") {
+        genomes = Channel.fromPath("${params.dir}/*.*", type: 'file')
+    } else {
+        genomes = Channel.of()
+    }
     prepareGenome(genomes)
+    prepareGenomeFromDb()
+
+    proc_genomes = prepareGenome.out.proc_genome.flatten().mix(prepareGenomeFromDb.out.proc_genome.flatten())
 
     // Branch the genomes channel based on presence in the
     // annotation cache:
-    prepareGenome.out.proc_genome.branch {
+    proc_genomes.branch {
         annot: !annoInCache(it, params.anno_cache)
         link: annoInCache(it, params.anno_cache)
     }.set { genome_fork }
@@ -783,7 +847,7 @@ workflow {
     pickThirdCodonSite(mergeCodonAlns.out.merged_aln)
 
     // Calculate branch lenghts based on the third codon sites:
-    calcNeutralBranchesAstral(pickThirdCodonSite.out.third_aln, runAstral.out.tree)
+    calcNeutralBranchesAstral(pickThirdCodonSite.out.third_aln, runAstral.out.tree, prepareGenomeFromDb.out.input_genomes)
 
     // Calculate species tree from protein alignments using iqtree2 (removed):
     // runIqtree(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions)
@@ -792,7 +856,7 @@ workflow {
     // calcCodonBranchesIqtree(mergeCodonAlns.out.merged_aln, runIqtree.out.newick)
 
     // Calculate branch lenghts from protein alignment:
-    calcProtBranchesAstral(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions, runAstral.out.tree)
+    calcProtBranchesAstral(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions, runAstral.out.tree, prepareGenomeFromDb.out.input_genomes)
 
     // Calculate branch lenghts from codon alignment for the astral tree (removed):
     // calcCodonBranchesAstral(mergeCodonAlns.out.merged_aln, runAstral.out.tree)
