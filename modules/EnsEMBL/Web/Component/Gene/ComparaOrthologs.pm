@@ -118,10 +118,8 @@ sub content {
     }
   
     ## Also hide anything turned off in config
-    #my $show = $self->param('species_' . $prod_name);
-    #warn ">>> SHOW $prod_name? $show";
     if ($self->param('species_' . $prod_name) eq 'off') {
-      $hidden->{$label} = scalar keys %{$orthologue_list{$species}||{}};
+      $hidden->{$species} = {'name' => $label, 'count' => scalar keys %{$orthologue_list{$species}||{}}};
     }
   }
 
@@ -208,6 +206,7 @@ sub content {
     next unless $species;
     next if $species_not_shown->{$species};
     next if $strains_not_shown->{$species};
+    next if $hidden->{$species};
 
     my ($species_label, $prodname);
     if ($is_pan) {
@@ -363,15 +362,18 @@ sub content {
   $html .= '<div class="toggleable selected_orthologues_table">' . $table->render . '</div>';
   
   if (scalar keys %$hidden) {
-    my $count;
-    $count += $_ for values %$hidden;
+    my ($count, @names);
+    while (my ($k, $h) = each (%$hidden)) {
+      $count += $h->{'count'};
+      push @names, $h->{'name'};
+    }
     
     $html .= '<br />' . $self->_info(
       'Orthologues hidden by configuration',
       sprintf(
         '<p>%d orthologues not shown in the table above from the following species. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
         $count,
-        join "</li>\n<li>", sort keys %$hidden
+        join "</li>\n<li>", sort @names 
       )
     );
   }   

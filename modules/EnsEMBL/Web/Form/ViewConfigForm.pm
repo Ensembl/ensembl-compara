@@ -553,7 +553,8 @@ sub add_species_fieldset {
     $species->{$_} = {'url' => $url, 'name' => $species_defs->species_label($url)};
   }
 
-  foreach (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %$species) { 
+  foreach (sort { ($species->{$a}{'name'} =~ /^<.*?>(.+)/ ? $1 : $species->{$a}{'name'}) 
+              cmp ($species->{$b}{'name'} =~ /^<.*?>(.+)/ ? $1 : $species->{$b}{'name'}) } keys %$species) { 
     ## If statement to show/hide strain or main species depending on the view you are on
     ##  When you are on a main species, do not show strain species 
     my $url = $species->{$_}{'url'};
