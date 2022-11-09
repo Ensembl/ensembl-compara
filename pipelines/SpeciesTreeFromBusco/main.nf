@@ -22,7 +22,23 @@ include { ensemblLogo } from './../utilities.nf'
 def helpMessage() {
     log.info ensemblLogo()
     log.info """
-    Usage:
+    Usage examples:
+
+    * Basic usage:
+        \$ nextflow run main.nf --dir /path/to/fastas/ --results_dir ./Res
+
+    * Using cached annotations:
+        \$ nextflow run main.nf --dir /path/to/fastas/ --results_dir ./Res --anno_cache /absolute/path/to/Res/anno_cache
+
+    * Using collection in compara master database and shared dumps as input:
+        \$ nextflow run main.nf --url='mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master' --collection pig_breeds \
+        --dump_path /hps/nobackup/flicek/ensembl/compara/shared/genome_dumps/vertebrates --results_dir ./Res
+
+    * Using species set in compara master database and shared dumps as input:
+        \$ nextflow run main.nf --url='mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master' --species_set 81206 \
+        --dump_path /hps/nobackup/flicek/ensembl/compara/shared/genome_dumps/vertebrates --results_dir ./Res
+
+    See 'nextflow.config' for additional options.
 
     """.stripIndent()
 }
