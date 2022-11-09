@@ -25,9 +25,9 @@ Bio::EnsEMBL::Compara::PipeConfig::Example::QfoProteinTrees_conf
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::QfoProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX
 
-=head1 DESCRIPTION  
+=head1 DESCRIPTION
 
-The QfO PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks. 
+The QfO PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
 
 =cut
 
@@ -45,7 +45,7 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the Vertebrates ones
 
         # custom pipeline name, in case you don't like the default one
-        'pipeline_name'         => 'qfo_2021_103',
+        'pipeline_name'         => 'qfo_2022_109',
         # Tag attached to every single tree
         'division'              => 'qfo',
 
@@ -85,7 +85,7 @@ sub default_options {
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         'curr_core_sources_locs'    => [ ],
-        'curr_file_sources_locs'    => [ '/homes/ivana/qfo_2021/qfo_2021.json' ],    # It can be a list of JSON files defining an additionnal set of species
+        'curr_file_sources_locs'    => [ $ENV{ENSEMBL_ROOT_DIR}.'/ensembl-compara/conf/qfo/qfo_2022.json' ],    # It can be a list of JSON files defining an additionnal set of species
 
         # Add the database entries for the core databases of the previous release
         'prev_core_sources_locs'   => [ ],
