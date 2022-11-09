@@ -212,9 +212,13 @@ sub write_output {
                 my $sql = qq/
                 UPDATE dnafrag SET length = $sequence_length
                 WHERE dnafrag_id = $dnafrag_id;
+                /;
+                $self->dbc->do($sql);
+                my $sql = q/
                 UPDATE dnafrag SET cellular_component='NUC'
                 WHERE (cellular_component = '' OR cellular_component IS NULL);
                 /;
+                $self->dbc->do($sql);
             }
       };
 	print "$count genes and peptides loaded\n" if ($self->debug);

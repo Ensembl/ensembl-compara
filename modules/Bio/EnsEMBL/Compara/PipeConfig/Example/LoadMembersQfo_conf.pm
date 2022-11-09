@@ -53,7 +53,7 @@ sub default_options {
 
         'reuse_member_db' => undef,
 
-        'curr_file_sources_locs' => [ '/homes/cristig/workbench/master/ensembl-compara/conf/qfo/qfo_2021.json' ],
+        'curr_file_sources_locs' => [ $ENV{ENSEMBL_ROOT_DIR}.'/ensembl-compara/conf/qfo/qfo_2022.json' ],
 
     #load uniprot members for family pipeline
         'load_uniprot_members'      => 0,

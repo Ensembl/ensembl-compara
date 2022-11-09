@@ -32,18 +32,18 @@ use Bio::EnsEMBL::Compara::Utils::Registry;
 
 my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
 my $prev_release = $curr_release - 1;
-my $curr_eg_release = 50;
+my $curr_eg_release = $curr_release - 53;
 my $prev_eg_release = $curr_eg_release - 1;
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
 my $compara_dbs = {
     # general compara dbs
-    'compara_master' => [ 'mysql-ens-compara-prod-2', 'cristig_ensembl_compara_master_qfo' ],
+    # 'compara_master' => [ 'mysql-ens-compara-prod-X', '' ],
 
     # homology dbs
-    # 'compara_members'  => [ 'mysql-ens-compara-prod-X', '' ],
-    # 'compara_ptrees'   => [ 'mysql-ens-compara-prod-X', '' ],
+    # 'compara_members' => [ 'mysql-ens-compara-prod-X', '' ],
+    # 'compara_ptrees'  => [ 'mysql-ens-compara-prod-X', '' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -52,7 +52,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-mirror-1', "ncbi_taxonomy_${curr_release}" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-1-b', "ncbi_taxonomy_109" ],
 });
 
 # -------------------------------------------------------------------
