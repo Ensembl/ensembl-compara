@@ -75,10 +75,10 @@ sub content {
         my $gene = $peptide->gene_member;
         $flag = 1 if $gene->stable_id eq $second_gene; 
 
-        my $member_species = $lookup->{$peptide->genome_db->name};
-        my $external_species = $member_species ? 0 : 1;
-        $member_species =  $pan_lookup->{$peptide->genome_db->name}{'species_url'};
-        my $location       = sprintf '%s:%d-%d', $gene->dnafrag->name, $gene->dnafrag_start, $gene->dnafrag_end;
+        my $member_species    = $lookup->{$peptide->genome_db->name};
+        my $external_species  = $member_species ? 0 : 1;
+        $member_species       ||= $pan_lookup->{$peptide->genome_db->name}{'species_url'};
+        my $location          = sprintf '%s:%d-%d', $gene->dnafrag->name, $gene->dnafrag_start, $gene->dnafrag_end;
        
         if (!$second_gene && $member_species ne $species && $hub->param('species_' . lc $member_species) eq 'off') {
           $flag = 0;
