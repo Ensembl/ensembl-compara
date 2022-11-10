@@ -70,13 +70,16 @@ sub content {
       my $flag = !$second_gene;
       
       my $lookup = $species_defs->prodnames_to_urls_lookup;
+      my $pan_lookup = $hub->species_defs->multi_val('PAN_COMPARA_LOOKUP') || {};
       foreach my $peptide (@{$homology->get_all_Members}) {
         my $gene = $peptide->gene_member;
         $flag = 1 if $gene->stable_id eq $second_gene; 
 
-        my $prodname       = $peptide->genome_db->name;
-        my $member_species = $lookup->{$prodname};
-        my $label          = $species_defs->species_label($member_species);
+        my $prodname          = $peptide->genome_db->name;
+        my $member_species    = $lookup->{$prodname};
+        my $external_species  = $member_species ? 0 : 1;
+        $member_species       ||= $pan_lookup->{$prodname}{'species_url'};
+        my $label             = $external_species ? $pan_lookup->{$prodname}{'display_name'} : $species_defs->species_label($member_species);
         my $location       = sprintf '%s:%d-%d', $gene->dnafrag->name, $gene->dnafrag_start, $gene->dnafrag_end;
        
         if (!$second_gene && $member_species ne $species && $hub->param('species_' .$prodname) eq 'off') {
@@ -96,20 +99,29 @@ sub content {
             $location,
           ]; 
         } else {
+          my $division  = $pan_lookup->{$peptide->genome_db->name}{'division'};
+          my $site      = '';
+          if ($division) {
+            $division = 'www' if $division eq 'vertebrates';
+            $site     =  sprintf('https://%s.ensembl.org', $division);
+          }
           push @$data, [
             $label,
-            sprintf('<a href="%s">%s</a>',
+            sprintf('<a href="%s%s">%s</a>',
+              $site,
               $hub->url({ species => $member_species, type => 'Gene', action => 'Summary', g => $gene->stable_id, r => undef }),
               $gene->stable_id
             ),
-            sprintf('<a href="%s">%s</a>',
+            sprintf('<a href="%s%s">%s</a>',
+              $site,
               $hub->url({ species => $member_species, type => 'Transcript', action => 'ProteinSummary', peptide => $peptide->stable_id, __clear => 1 }),
               $peptide->stable_id
             ),
             sprintf('%d %s', $peptide->seq_length, $unit),
             sprintf('%d %%', $peptide->perc_id),
             sprintf('%d %%', $peptide->perc_cov),
-            sprintf('<a href="%s">%s</a>',
+            sprintf('<a href="%s%s">%s</a>',
+              $site,
               $hub->url({ species => $member_species, type => 'Location', action => 'View', g => $gene->stable_id, r => $location, t => undef }),
               $location
             )
