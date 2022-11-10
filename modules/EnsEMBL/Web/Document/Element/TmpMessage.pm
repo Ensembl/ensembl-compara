@@ -74,6 +74,7 @@ sub content {
 
   my $announcement_banner_message = $self->{'file'}{'banner_message'} ? $self->dom->create_element('div', {
     'id'          => 'announcement-banner',
+    'class'       => $self->{'file'}{'colour'},
     'inner_HTML'  => $self->{'file'}{'banner_message'}
   })->render : '';
 
