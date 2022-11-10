@@ -872,7 +872,6 @@ sub get_homologue_alignments {
     my $lookup  = $hub->species_defs->prodnames_to_urls_lookup;
     foreach (grep { /species_/ } $hub->param) {
       (my $prodname = $_) =~ s/species_//;
-      #warn ">>> SPECIES $prodname";
 
       if ($compara_spp->{$prodname} && $hub->param($_) eq 'yes'){
 
