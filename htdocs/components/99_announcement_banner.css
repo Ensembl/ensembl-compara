@@ -17,21 +17,23 @@
 
 
 #announcement-banner {
-    background-color: #dc0b0b;
     padding: 12px 8px 12px 8px;
     color: #fdf5f5;
     text-align: center;
+    margin: 0;
+    color: black;
 }
-
+#announcement-banner.info {
+    background-color: #c3c3c3;
+}
+#announcement-banner.warning {
+    background-color: #dc9d0b;
+}
+#announcement-banner.alert {
+    background-color: #dc0b0b;
+    color: white;
+}
 #announcement-banner p{
     margin:0;
-    font-weight: bold;
-}
-
-#announcement-banner a{
-    color: khaki;
-}
-
-#announcement-banner a:visited {
-    color: darkgray;
+    font-weight: normal;
 }
