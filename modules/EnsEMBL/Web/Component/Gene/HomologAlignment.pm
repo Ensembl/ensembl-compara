@@ -279,6 +279,7 @@ sub buttons {
                   'align'       => $hub->param('seq') || 'protein',
                   'g1'          => $hub->param('g1'),
                   'hom_id'      => $hub->param('hom_id'),
+                  'cdb'         => $hub->function =~ /pan_compara/ ? 'compara_pan_ensembl' : 'compara',
                 };
 
   return {
