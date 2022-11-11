@@ -24,6 +24,7 @@ Example:
 import sys
 import argparse
 from os import path
+from sqlalchemy.engine.row import Row
 from sqlalchemy import create_engine, text
 
 # Parse command line arguments:
@@ -40,14 +41,14 @@ parser.add_argument(
     '-o', metavar='output', type=str, help="Output tsv.", required=True)
 
 
-def _dir_revhash(gid):
+def _dir_revhash(gid: int) -> str:
     """Build directory hash from genome db id."""
     dir_hash = list(reversed(str(gid)))
     dir_hash.pop()
     return '/'.join(dir_hash)
 
 
-def _build_dump_path(row):
+def _build_dump_path(row: Row) -> str:
     gcomp = ""
     if row.genome_component is not None:
         gcomp = f"comp{row.genome_component}."
