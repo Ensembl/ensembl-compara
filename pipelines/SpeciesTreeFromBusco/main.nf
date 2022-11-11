@@ -54,6 +54,15 @@ if (!params.dir && !params.url) {
     exit 0
 }
 
+File fileResDir = new File(params.results_dir);
+absResPath = fileResDir.getCanonicalPath();
+
+File annoCacheDir = new File(params.anno_cache);
+absAnnoCache = annoCacheDir.getCanonicalPath();
+
+File dumpPathDir = new File(params.dump_path);
+absDumpPath = dumpPathDir.getCanonicalPath();
+
 
 /**
 *@output path to text file with software versions
@@ -134,7 +143,7 @@ process prepareGenomeFromDb {
     script:
         """
             mkdir -p processed
-            python ${params.fetch_genomes_exe} -u ${params.url} -c "${params.collection}" -s "${params.species_set}" -d ${params.dump_path} -o input_genomes.csv
+            python ${params.fetch_genomes_exe} -u ${params.url} -c "${params.collection}" -s "${params.species_set}" -d ${absDumpPath} -o input_genomes.csv
             while read -r line; do
                 source=`echo \$line | cut -d ',' -f 8`
                 target=`echo \$line | cut -d ',' -f 10`
@@ -192,7 +201,7 @@ process linkAnnoCache {
     base = new File("$genome")
     base = base.getName()
     """
-    ln -s ${params.anno_cache}/$base/annotation.gtf .
+    ln -s ${absAnnoCache}/$base/annotation.gtf .
     """
 }
 
@@ -628,7 +637,6 @@ process calcNeutralBranchesAstral {
     input:
         path aln
         path input_tree
-        path genomes_csv
 
     output:
         path "astral_species_tree_neutral_bl.nwk", emit: newick
@@ -642,7 +650,7 @@ process calcNeutralBranchesAstral {
     mv *.treefile astral_species_tree_neutral_bl.nwk
     mv *.iqtree astral_iqtree_report_neutral_bl.txt
     mv *.log astral_iqtree_log_neutral_bl.txt
-    python ${params.fix_leaf_names_exe} -t astral_species_tree_neutral_bl.nwk -c $genomes_csv -o TMP.nwk
+    python ${params.fix_leaf_names_exe} -t astral_species_tree_neutral_bl.nwk -c ${absResPath}/input_genomes.csv -o TMP.nwk
     mv TMP.nwk astral_species_tree_neutral_bl.nwk
     """
     else
@@ -706,7 +714,6 @@ process calcProtBranchesAstral {
         path aln
         path partitions
         path input_tree
-        path genomes_csv
 
     output:
         path "astral_species_tree_prot_bl.nwk", emit: newick
@@ -720,7 +727,7 @@ process calcProtBranchesAstral {
     mv *.treefile astral_species_tree_prot_bl.nwk
     mv *.iqtree astral_iqtree_report_prot_bl.txt
     mv *.log astral_iqtree_log_prot_bl.txt
-    python ${params.fix_leaf_names_exe} -t astral_species_tree_prot_bl.nwk -c $genomes_csv -o TMP.nwk
+    python ${params.fix_leaf_names_exe} -t astral_species_tree_prot_bl.nwk -c ${absResPath}/input_genomes.csv -o TMP.nwk
     mv TMP.nwk astral_species_tree_prot_bl.nwk
     """
     else
@@ -863,7 +870,7 @@ workflow {
     pickThirdCodonSite(mergeCodonAlns.out.merged_aln)
 
     // Calculate branch lenghts based on the third codon sites:
-    calcNeutralBranchesAstral(pickThirdCodonSite.out.third_aln, runAstral.out.tree, prepareGenomeFromDb.out.input_genomes)
+    calcNeutralBranchesAstral(pickThirdCodonSite.out.third_aln, runAstral.out.tree)
 
     // Calculate species tree from protein alignments using iqtree2 (removed):
     // runIqtree(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions)
@@ -872,7 +879,7 @@ workflow {
     // calcCodonBranchesIqtree(mergeCodonAlns.out.merged_aln, runIqtree.out.newick)
 
     // Calculate branch lenghts from protein alignment:
-    calcProtBranchesAstral(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions, runAstral.out.tree, prepareGenomeFromDb.out.input_genomes)
+    calcProtBranchesAstral(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions, runAstral.out.tree)
 
     // Calculate branch lenghts from codon alignment for the astral tree (removed):
     // calcCodonBranchesAstral(mergeCodonAlns.out.merged_aln, runAstral.out.tree)
