@@ -637,6 +637,7 @@ process calcNeutralBranchesAstral {
     input:
         path aln
         path input_tree
+        val genomes_csv
 
     output:
         path "astral_species_tree_neutral_bl.nwk", emit: newick
@@ -650,7 +651,7 @@ process calcNeutralBranchesAstral {
     mv *.treefile astral_species_tree_neutral_bl.nwk
     mv *.iqtree astral_iqtree_report_neutral_bl.txt
     mv *.log astral_iqtree_log_neutral_bl.txt
-    python ${params.fix_leaf_names_exe} -t astral_species_tree_neutral_bl.nwk -c ${absResPath}/input_genomes.csv -o TMP.nwk
+    python ${params.fix_leaf_names_exe} -t astral_species_tree_neutral_bl.nwk -c ${genomes_csv} -o TMP.nwk
     mv TMP.nwk astral_species_tree_neutral_bl.nwk
     """
     else
@@ -714,6 +715,7 @@ process calcProtBranchesAstral {
         path aln
         path partitions
         path input_tree
+        val genomes_csv
 
     output:
         path "astral_species_tree_prot_bl.nwk", emit: newick
@@ -727,7 +729,7 @@ process calcProtBranchesAstral {
     mv *.treefile astral_species_tree_prot_bl.nwk
     mv *.iqtree astral_iqtree_report_prot_bl.txt
     mv *.log astral_iqtree_log_prot_bl.txt
-    python ${params.fix_leaf_names_exe} -t astral_species_tree_prot_bl.nwk -c ${absResPath}/input_genomes.csv -o TMP.nwk
+    python ${params.fix_leaf_names_exe} -t astral_species_tree_prot_bl.nwk -c ${genomes_csv} -o TMP.nwk
     mv TMP.nwk astral_species_tree_prot_bl.nwk
     """
     else
@@ -813,6 +815,12 @@ workflow {
     prepareGenome(genomes)
     prepareGenomeFromDb()
 
+    if (params.dir == "") {
+        genCsvChan = prepareGenomeFromDb.out.input_genomes
+    } else {
+        genCsvChan = Channel.of("/dummy/path")
+    }
+
     proc_genomes = prepareGenome.out.proc_genome.flatten().mix(prepareGenomeFromDb.out.proc_genome.flatten())
 
     // Branch the genomes channel based on presence in the
@@ -870,7 +878,7 @@ workflow {
     pickThirdCodonSite(mergeCodonAlns.out.merged_aln)
 
     // Calculate branch lenghts based on the third codon sites:
-    calcNeutralBranchesAstral(pickThirdCodonSite.out.third_aln, runAstral.out.tree)
+    calcNeutralBranchesAstral(pickThirdCodonSite.out.third_aln, runAstral.out.tree, genCsvChan)
 
     // Calculate species tree from protein alignments using iqtree2 (removed):
     // runIqtree(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions)
@@ -879,7 +887,7 @@ workflow {
     // calcCodonBranchesIqtree(mergeCodonAlns.out.merged_aln, runIqtree.out.newick)
 
     // Calculate branch lenghts from protein alignment:
-    calcProtBranchesAstral(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions, runAstral.out.tree)
+    calcProtBranchesAstral(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions, runAstral.out.tree, genCsvChan)
 
     // Calculate branch lenghts from codon alignment for the astral tree (removed):
     // calcCodonBranchesAstral(mergeCodonAlns.out.merged_aln, runAstral.out.tree)
