@@ -198,7 +198,7 @@ sub draw_aggregate {
   ## Finally create the popup menu and add the header to the glyphset
   my $colour_legend = $self->_colour_legend($data_for_legend);
   my $params = {
-                label           => 'Legend & More',
+                label           => 'Legend',
                 title           => $label,
                 colour_legend   => $colour_legend,
                 sublegend_links => $self->_sublegend_links,

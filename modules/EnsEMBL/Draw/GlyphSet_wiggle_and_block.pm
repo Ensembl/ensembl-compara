@@ -111,7 +111,7 @@ sub _draw_mini_label {
   my ($self,$label,$offset) = @_;
 
   my %font_details = $self->get_font_details('innertext', 1);
-  my @res_analysis = $self->get_text_width(0,'Legend & More', '',
+  my @res_analysis = $self->get_text_width(0,'Legend', '',
                                            %font_details);
   $self->push($self->Text({
     text      => $label,
