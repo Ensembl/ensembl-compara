@@ -279,7 +279,7 @@ sub check_for_missing_species {
   }
 
  if (scalar @skipped) {
-    $title = 'hidden';
+    $title = 'Hidden';
     $warnings .= sprintf(
                              '<p>The following %d species in the alignment are not shown. Use "<strong>Select another alignment</strong>" button (above the image) to turn alignments on/off.<ul><li>%s</li></ul></p>',
                              scalar @skipped,
@@ -287,31 +287,38 @@ sub check_for_missing_species {
                             );
   }
 
-  if (scalar @skipped && scalar @missing) {
-    $title .= ' and ';
-  }
-
   my $not_missing = scalar(keys %{$align_details->{'species'}}) - scalar(@missing);
   my $ancestral = grep {$_ =~ /ancestral/} keys %{$align_details->{'species'}};
   my $multi_check = $ancestral ? 2 : 1;
   if (scalar @missing) {
-    $title .= ' missing species';
+    if ($title) {
+      $title .= ' and missing';
+    }
+    else {
+      $title = 'Missing';
+    }
     if ($align_details->{'class'} =~ /pairwise/) {
       $warnings .= sprintf '<p>%s has no alignment in this region</p>', $species_defs->species_label($missing[0]);
     } elsif ($not_missing == $multi_check) {
       $warnings .= sprintf('<p>None of the other species in this set align to %s in this region</p>', $species_defs->SPECIES_DISPLAY_NAME);
     } else {
       my $str = '';
-      my $count = 0;
+      my $strain_count = scalar @{$missing_hash->{'strains'}||[]}; 
+      my $species_count = scalar @{$missing_hash->{'species'}||[]}; 
 
-      if ($missing_hash->{strains}) {
-        $count = scalar @{$missing_hash->{strains}};
+      if ($strain_count) {
         my $strain_type = $hub->species_defs->STRAIN_TYPE || 'strain';
-        $strain_type = pluralise($strain_type) if $count > 1;
-        $str .= "$count $strain_type";
+        $strain_type = pluralise($strain_type) if $strain_count > 1;
+        $str .= scalar @{$missing_hash->{'strains'}}." $strain_type";
+        $str .= ' and ' if ($species_count);
       }
 
-      $str .= ' and ' if ($missing_hash->{strains} && $missing_hash->{species});
+      if ($species_count) {
+        $str .= "$species_count species";
+      }
+
+      $str .= ($strain_count + $species_count) > 1 ? ' have ' : ' has ';
+      
 
       $warnings .= sprintf('<p>The following %s no alignment in this region:<ul><li>%s</li></ul></p>',
                                  $str,
@@ -319,6 +326,7 @@ sub check_for_missing_species {
                             );
     }
   }
+  $title .= ' species' if $title;
   return $warnings ? ({'severity' => 'info', 'title' => $title, 'message' => $warnings}) : ();
 }
 
