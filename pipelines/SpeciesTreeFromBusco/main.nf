@@ -917,7 +917,8 @@ workflow {
     // Scale the branch lengths to nucleotide sites (removed):
     // scaleToNucleotide(calcCodonBranchesAstral.out.newick)
 
-    // Perform outgroup rooting:
+    // Perform outgroup rooting for tree with neutral branch lengths:
     outgroupRootingNeutral(calcNeutralBranchesAstral.out.newick)
+    // Perform outgroup rooting for tree with protein alignment based branch lengths:
     outgroupRootingProt(calcProtBranchesAstral.out.newick)
 }
