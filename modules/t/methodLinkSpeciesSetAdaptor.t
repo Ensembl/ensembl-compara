@@ -52,6 +52,10 @@ my ($num_human_lastz) = $compara_db->dbc->db_handle->selectrow_array("
     JOIN method_link USING (method_link_id)
     WHERE type = 'LASTZ_NET' AND name LIKE '%H.sap%'");
 
+# Allow plenty of space to avoid truncation of species_set
+# GROUP_CONCAT result and consequent spurious test failure.
+$compara_db->dbc->db_handle->do("SET SESSION group_concat_max_len = 10000");
+
 my $all_rows = $compara_db->dbc->db_handle->selectall_arrayref("
     SELECT mlss.method_link_species_set_id, ml.method_link_id, ml.type, ml.class,
         GROUP_CONCAT(gdb.name ORDER BY gdb.name),
