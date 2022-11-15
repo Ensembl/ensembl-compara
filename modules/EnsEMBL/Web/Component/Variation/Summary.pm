@@ -224,6 +224,9 @@ sub variation_source {
     } else {
       $source_link = "";
     } 
+  } elsif ($source eq "EVA") {
+    $source_link = $hub->get_ExtURL_link("$source_prefix $source", $source, $name);
+
   } elsif ($source =~ /ClinVar/i) {
     $sname = ($name =~ /^rs/) ?  'CLINVAR_DBSNP' : 'CLINVAR';
     $source_link = $hub->get_ExtURL_link("About $source", $sname, $name);
