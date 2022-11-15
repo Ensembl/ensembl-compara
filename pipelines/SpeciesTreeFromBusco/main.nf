@@ -766,22 +766,44 @@ process scaleToNucleotide {
 *@input path to unrooted input tree
 *@output path to rooted output tree
 */
-process outgroupRooting {
+process outgroupRootingNeutral {
     label 'rc_2Gb'
 
-    publishDir "${params.results_dir}/", pattern: "rooted_astral_species_tree_neutral_bl.nwk", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/", pattern: "rooted_*.nwk", mode: "copy",  overwrite: true
 
     input:
         path utree
 
     output:
-        path "rooted_astral_species_tree_neutral_bl.nwk", emit: tree
+        path "rooted_*.nwk", emit: tree
     when: params.outgroup != ""
     script:
     """
-    ${params.rooting_exe} -t $utree -o ${params.outgroup} > rooted_astral_species_tree_neutral_bl.nwk
+    ${params.rooting_exe} -t $utree -o ${params.outgroup} > rooted_`basename $utree`
     """
 }
+
+/**
+*@input path to unrooted input tree
+*@output path to rooted output tree
+*/
+process outgroupRootingProt {
+    label 'rc_2Gb'
+
+    publishDir "${params.results_dir}/", pattern: "rooted_*.nwk", mode: "copy",  overwrite: true
+
+    input:
+        path utree
+
+    output:
+        path "rooted_*.nwk", emit: tree
+    when: params.outgroup != ""
+    script:
+    """
+    ${params.rooting_exe} -t $utree -o ${params.outgroup} > rooted_`basename $utree`
+    """
+}
+
 
 // Function to check if a genome is present in
 // the annotation cache.
@@ -896,5 +918,6 @@ workflow {
     // scaleToNucleotide(calcCodonBranchesAstral.out.newick)
 
     // Perform outgroup rooting:
-    outgroupRooting(calcNeutralBranchesAstral.out.newick)
+    outgroupRootingNeutral(calcNeutralBranchesAstral.out.newick)
+    outgroupRootingProt(calcProtBranchesAstral.out.newick)
 }
