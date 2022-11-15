@@ -69,7 +69,7 @@ sub init_cacheable {
   );
 
   $self->modify_configs(
-    [ 'variation_feature_variation', 'somatic_mutation_all', 'regulatory_features', 'functional_other_regulatory_regions' ],
+    [ 'variation_feature_variation', 'somatic_mutation_all', 'functional_other_regulatory_regions'],
     { display => 'normal' }
   );
 
