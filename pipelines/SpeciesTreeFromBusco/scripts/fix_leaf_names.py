@@ -48,7 +48,6 @@ if __name__ == '__main__':
 
     tree = Phylo.read(args.t, format="newick")
     for leaf in tree.get_terminals():
-        print(leaf)
         leaf.name = trans_map[leaf.name]
 
     Phylo.write(
