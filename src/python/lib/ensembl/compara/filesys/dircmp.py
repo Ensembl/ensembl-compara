@@ -22,7 +22,7 @@ import functools
 import itertools
 import os
 from pathlib import Path
-from typing import Callable, Deque, Dict, Iterator, List, Tuple, TypeVar, Union
+from typing import Callable, Deque, Dict, Iterator, List, Optional, Tuple, TypeVar, Union
 
 from ..utils import to_list
 
@@ -80,8 +80,8 @@ class DirCmp:
         for dirname in ref_dnames & target_dnames:
             self.subdirs[Path(dirname)] = DirCmp(self.ref_path / dirname, self.target_path / dirname)
 
-    def _traverse(self, attr: str, patterns: Union[str, List] = None,
-                  paths: Union[PathLike, List] = None) -> Iterator[str]:
+    def _traverse(self, attr: str, patterns: Optional[Union[str, List]] = None,
+                  paths: Optional[Union[PathLike, List]] = None) -> Iterator[str]:
         """Yields each element of the requested attribute found in the directory trees.
 
         This method traverses the shared directory tree in breadth-first order.
@@ -124,8 +124,8 @@ class DirCmp:
             for ename in elements:
                 yield str(dirname / str(ename))
 
-    def apply_test(self, test_func: Callable, patterns: Union[str, List] = None,
-                   paths: Union[PathLike, List] = None) -> List[str]:
+    def apply_test(self, test_func: Callable, patterns: Optional[Union[str, List]] = None,
+                   paths: Optional[Union[PathLike, List]] = None) -> List[str]:
         """Returns the files in the shared directory tree for which the test function returns True.
 
         Args:
@@ -144,7 +144,7 @@ class DirCmp:
                 positives.append(filepath)
         return positives
 
-    def common_list(self, patterns: Union[str, List] = None, paths: Union[PathLike, List] = None
+    def common_list(self, patterns: Optional[Union[str, List]] = None, paths: Optional[Union[PathLike, List]] = None
                    ) -> List[str]:
         """Returns the files/directories found in the shared directory tree.
 
@@ -155,7 +155,7 @@ class DirCmp:
         """
         return list(self._traverse('common_files', patterns, paths))
 
-    def ref_only_list(self, patterns: Union[str, List] = None, paths: Union[PathLike, List] = None
+    def ref_only_list(self, patterns: Optional[Union[str, List]] = None, paths: Optional[Union[PathLike, List]] = None
                      ) -> List[str]:
         """Returns the files/directories only found in the reference directory tree.
 
@@ -166,7 +166,7 @@ class DirCmp:
         """
         return list(self._traverse('ref_only', patterns, paths))
 
-    def target_only_list(self, patterns: Union[str, List] = None, paths: Union[PathLike, List] = None
+    def target_only_list(self, patterns: Optional[Union[str, List]] = None, paths: Optional[Union[PathLike, List]] = None
                         ) -> List[str]:
         """Returns the files/directories only found in the target directory tree.
 
