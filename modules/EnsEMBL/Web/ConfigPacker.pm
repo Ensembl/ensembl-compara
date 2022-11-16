@@ -1692,6 +1692,7 @@ sub _munge_meta {
     species.common_name           SPECIES_COMMON_NAME
     species.scientific_name       SPECIES_SCIENTIFIC_NAME
     species.species_name          SPECIES_BINOMIAL
+    species.annotation_source     SPECIES_ANNOTATION_SOURCE
     assembly.accession            ASSEMBLY_ACCESSION
     assembly.web_accession_source ASSEMBLY_ACCESSION_SOURCE
     assembly.web_accession_type   ASSEMBLY_ACCESSION_TYPE
