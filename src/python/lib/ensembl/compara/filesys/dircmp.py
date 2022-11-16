@@ -144,8 +144,8 @@ class DirCmp:
                 positives.append(filepath)
         return positives
 
-    def common_list(self, patterns: Optional[Union[str, List]] = None, paths: Optional[Union[PathLike, List]] = None
-                   ) -> List[str]:
+    def common_list(self, patterns: Optional[Union[str, List]] = None,
+                    paths: Optional[Union[PathLike, List]] = None) -> List[str]:
         """Returns the files/directories found in the shared directory tree.
 
         Args:
@@ -155,8 +155,8 @@ class DirCmp:
         """
         return list(self._traverse('common_files', patterns, paths))
 
-    def ref_only_list(self, patterns: Optional[Union[str, List]] = None, paths: Optional[Union[PathLike, List]] = None
-                     ) -> List[str]:
+    def ref_only_list(self, patterns: Optional[Union[str, List]] = None,
+                      paths: Optional[Union[PathLike, List]] = None) -> List[str]:
         """Returns the files/directories only found in the reference directory tree.
 
         Args:
@@ -166,8 +166,8 @@ class DirCmp:
         """
         return list(self._traverse('ref_only', patterns, paths))
 
-    def target_only_list(self, patterns: Optional[Union[str, List]] = None, paths: Optional[Union[PathLike, List]] = None
-                        ) -> List[str]:
+    def target_only_list(self, patterns: Optional[Union[str, List]] = None,
+                         paths: Optional[Union[PathLike, List]] = None) -> List[str]:
         """Returns the files/directories only found in the target directory tree.
 
         Args:
