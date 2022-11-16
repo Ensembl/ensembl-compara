@@ -825,16 +825,21 @@ workflow {
 
     // Prepare input genomes:
     if (params.dir != "") {
-        genomes = Channel.fromPath("${params.dir}/*.*", type: 'file')
+        // Get a channel of input genomes if directory is specified:
+        genomes = Channel.fromPath("${params.dir}/*.fa*", type: 'file')
     } else {
+        // Otherwise initialise an empty channel to avoid nextflow crash:
         genomes = Channel.of()
     }
     prepareGenome(genomes)
     prepareGenomeFromDb()
 
     if (params.dir == "") {
+        // The input is from DB, the genomes CSV comes from the process:
         genCsvChan = prepareGenomeFromDb.out.input_genomes
     } else {
+        // The input is from fasta file, specify a dummy path for the
+        // CSV file so the branch length calculations are executed:
         genCsvChan = Channel.of("/dummy/path")
     }
 

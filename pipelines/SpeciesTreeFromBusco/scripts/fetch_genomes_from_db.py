@@ -23,6 +23,7 @@ Example:
 
 import sys
 import argparse
+import csv
 from os import path
 from sqlalchemy.engine.row import Row
 from sqlalchemy import create_engine, text
@@ -38,14 +39,14 @@ parser.add_argument(
 parser.add_argument(
     '-c', metavar='cid', type=str, help="Collection id.", required=False, default=None)
 parser.add_argument(
-    '-o', metavar='output', type=str, help="Output tsv.", required=True)
+    '-o', metavar='output', type=str, help="Output CSV.", required=True)
 
 
 def _dir_revhash(gid: int) -> str:
     """Build directory hash from genome db id."""
     dir_hash = list(reversed(str(gid)))
     dir_hash.pop()
-    return path.join(dir_hash)
+    return path.join(*dir_hash)
 
 
 def _build_dump_path(row: Row) -> str:
@@ -77,30 +78,35 @@ if __name__ == '__main__':
         sys.exit(1)
 
     ss_query = f"""
-        SELECT genome_db_id, genome_db.name, assembly, genebuild, strain_name, display_name, genome_component FROM species_set JOIN genome_db USING(genome_db_id) WHERE species_set_id = {ss_id};
+        SELECT genome_db_id, genome_db.name, assembly, genebuild,
+        strain_name, display_name, genome_component
+        FROM species_set JOIN genome_db USING(genome_db_id)
+        WHERE species_set_id = {ss_id};
     """
     c_query = f"""
-        SELECT genome_db_id, genome_db.name, assembly, genebuild,strain_name, display_name, genome_component FROM species_set_header JOIN species_set USING(species_set_id) JOIN genome_db USING(genome_db_id) where species_set_header.name='{coll_id}' AND species_set_header.last_release is NULL AND species_set_header.first_release IS NOT NULL;
+        SELECT genome_db_id, genome_db.name, assembly, genebuild,
+        strain_name, display_name, genome_component
+        FROM species_set_header JOIN species_set USING(species_set_id)
+        JOIN genome_db USING(genome_db_id) WHERE species_set_header.name='{coll_id}'
+        AND species_set_header.last_release is NULL
+        AND species_set_header.first_release IS NOT NULL;
     """
     query = ss_query
     if coll_id is not None:
         query = c_query
 
     missing_fas = []
-    ofh = open(args.o, "w")
-    with engine.connect() as conn:
+    with engine.connect() as conn, open(args.o, "w") as ofh:
         result = conn.execute(text(query))
+        writer = csv.writer(ofh, lineterminator="\n")
         for row in result:
             gpath = _build_dump_path(row)
             fa_name = str(row.name) + "_" + str(row.assembly)
             dump_exists = path.exists(gpath)
             if not dump_exists:
                 missing_fas.append(gpath)
-            fields = [str(row.genome_db_id), str(row.name), str(row.assembly), str(row.genebuild), str(row.strain_name), str(row.display_name), str(row.genome_component), gpath, str(dump_exists), fa_name]
-            tsv_row = ",".join(fields) + "\n"
-            ofh.write(tsv_row)
-    ofh.flush()
-    ofh.close()
+            writer.writerow([row.genome_db_id, row.name, row.assembly, row.genebuild, row.strain_name,
+                             row.display_name, row.genome_component, gpath, dump_exists, fa_name])
 
     if len(missing_fas) > 0:
         sys.stderr.write("Fatal error! The following genome dumps are missing:\n")
