@@ -814,11 +814,6 @@ def annoInCache(genome, anno_cache) {
     return file.exists()
 }
 
-if (params.dir != "") {
-    genomes = Channel.fromPath("${params.dir}/*.fa*", type: 'file')
-} else {
-    genomes = null
-}
 workflow {
     println(ensemblLogo())
 
