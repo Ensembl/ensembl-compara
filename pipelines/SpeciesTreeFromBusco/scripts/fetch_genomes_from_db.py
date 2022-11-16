@@ -45,7 +45,7 @@ def _dir_revhash(gid: int) -> str:
     """Build directory hash from genome db id."""
     dir_hash = list(reversed(str(gid)))
     dir_hash.pop()
-    return '/'.join(dir_hash)
+    return path.join(dir_hash)
 
 
 def _build_dump_path(row: Row) -> str:
