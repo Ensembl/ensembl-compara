@@ -22,7 +22,23 @@ include { ensemblLogo } from './../utilities.nf'
 def helpMessage() {
     log.info ensemblLogo()
     log.info """
-    Usage:
+    Usage examples:
+
+    * Basic usage:
+        \$ nextflow run main.nf --dir /path/to/fastas/ --results_dir ./Res
+
+    * Using cached annotations:
+        \$ nextflow run main.nf --dir /path/to/fastas/ --results_dir ./Res --anno_cache /absolute/path/to/Res/anno_cache
+
+    * Using collection in compara master database and shared dumps as input:
+        \$ nextflow run main.nf --url='mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master' --collection pig_breeds \
+        --dump_path /hps/nobackup/flicek/ensembl/compara/shared/genome_dumps/vertebrates --results_dir ./Res
+
+    * Using species set in compara master database and shared dumps as input:
+        \$ nextflow run main.nf --url='mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master' --species_set 81206 \
+        --dump_path /hps/nobackup/flicek/ensembl/compara/shared/genome_dumps/vertebrates --results_dir ./Res
+
+    See 'nextflow.config' for additional options.
 
     """.stripIndent()
 }
@@ -33,10 +49,20 @@ if (params.help) {
     exit 0
 }
 
-if (!params.dir) {
+if (!params.dir && !params.url) {
     helpMessage()
     exit 0
 }
+
+File fileResDir = new File(params.results_dir);
+absResPath = fileResDir.getCanonicalPath();
+
+File annoCacheDir = new File(params.anno_cache);
+absAnnoCache = annoCacheDir.getCanonicalPath();
+
+File dumpPathDir = new File(params.dump_path);
+absDumpPath = dumpPathDir.getCanonicalPath();
+
 
 /**
 *@output path to text file with software versions
@@ -80,16 +106,16 @@ process dumpVersions {
 }
 
 /**
-*@input path to BUSCO gene set protein fasta
-*@output path to fasta with longest protein isoforms per gene
-*@output path to gene list TSV
+*@input path to genome
+*@output path to processed genome
 */
 process prepareGenome {
     label 'retry_with_8gb_mem_c1'
     input:
-      path genome
+        path genome
     output:
         path "processed/*", emit: proc_genome
+    when: params.dir != ""
     script:
         id = (genome =~ /(.+)\..+?$/)[0][1]
         """
@@ -98,6 +124,35 @@ process prepareGenome {
             # Add a dummy softmasked sequence to prevent disabling of
             # blast softmasking during the genblast processing:
             echo -e ">REPMASK_DUMMY_DECOY\na" >> processed/$id
+        """
+}
+
+/**
+*@output path to processed genome
+*@output path to input genomes info csv
+*/
+process prepareGenomeFromDb {
+    label 'retry_with_8gb_mem_c1'
+
+    publishDir "${params.results_dir}", pattern: "input_genomes.csv", mode: "copy", overwrite: true
+
+    output:
+        path "processed/*", emit: proc_genome
+        path "input_genomes.csv", emit: input_genomes
+    when: params.dir == ""
+    script:
+        """
+            mkdir -p processed
+            python ${params.fetch_genomes_exe} -u ${params.url} -c "${params.collection}" -s "${params.species_set}" -d ${absDumpPath} -o input_genomes.csv
+            while read -r line; do
+                source=`echo \$line | cut -d ',' -f 8`
+                target=`echo \$line | cut -d ',' -f 10`
+                echo Processing: \$source -> \$target
+                ${params.seqkit_exe} -j 5 grep -n -v -r -p "PATCH_*,HAP" \$source > processed/\$target
+                # Add a dummy softmasked sequence to prevent disabling of
+                # blast softmasking during the genblast processing:
+                echo -e ">REPMASK_DUMMY_DECOY\na" >> processed/\$target
+            done < input_genomes.csv
         """
 }
 
@@ -146,7 +201,7 @@ process linkAnnoCache {
     base = new File("$genome")
     base = base.getName()
     """
-    ln -s ${params.anno_cache}/$base/annotation.gtf .
+    ln -s ${absAnnoCache}/$base/annotation.gtf .
     """
 }
 
@@ -582,6 +637,7 @@ process calcNeutralBranchesAstral {
     input:
         path aln
         path input_tree
+        val genomes_csv
 
     output:
         path "astral_species_tree_neutral_bl.nwk", emit: newick
@@ -589,12 +645,23 @@ process calcNeutralBranchesAstral {
         path "astral_iqtree_log_neutral_bl.txt", emit: iqtree_log
 
     script:
+    if (params.dir == "")
+    """
+    ${params.iqtree_exe} -s $aln -m GTR+G -g $input_tree --fast -T ${params.cores}
+    mv *.treefile astral_species_tree_neutral_bl.nwk
+    mv *.iqtree astral_iqtree_report_neutral_bl.txt
+    mv *.log astral_iqtree_log_neutral_bl.txt
+    python ${params.fix_leaf_names_exe} -t astral_species_tree_neutral_bl.nwk -c ${genomes_csv} -o TMP.nwk
+    mv TMP.nwk astral_species_tree_neutral_bl.nwk
+    """
+    else
     """
     ${params.iqtree_exe} -s $aln -m GTR+G -g $input_tree --fast -T ${params.cores}
     mv *.treefile astral_species_tree_neutral_bl.nwk
     mv *.iqtree astral_iqtree_report_neutral_bl.txt
     mv *.log astral_iqtree_log_neutral_bl.txt
     """
+
 }
 
 /**
@@ -648,6 +715,7 @@ process calcProtBranchesAstral {
         path aln
         path partitions
         path input_tree
+        val genomes_csv
 
     output:
         path "astral_species_tree_prot_bl.nwk", emit: newick
@@ -655,6 +723,16 @@ process calcProtBranchesAstral {
         path "astral_iqtree_log_prot_bl.txt", emit: iqtree_log
 
     script:
+    if (params.dir == "")
+    """
+    ${params.iqtree_exe} -s $aln -p $partitions -g $input_tree --fast -T ${params.cores}
+    mv *.treefile astral_species_tree_prot_bl.nwk
+    mv *.iqtree astral_iqtree_report_prot_bl.txt
+    mv *.log astral_iqtree_log_prot_bl.txt
+    python ${params.fix_leaf_names_exe} -t astral_species_tree_prot_bl.nwk -c ${genomes_csv} -o TMP.nwk
+    mv TMP.nwk astral_species_tree_prot_bl.nwk
+    """
+    else
     """
     ${params.iqtree_exe} -s $aln -p $partitions -g $input_tree --fast -T ${params.cores}
     mv *.treefile astral_species_tree_prot_bl.nwk
@@ -688,22 +766,44 @@ process scaleToNucleotide {
 *@input path to unrooted input tree
 *@output path to rooted output tree
 */
-process outgroupRooting {
+process outgroupRootingNeutral {
     label 'rc_2Gb'
 
-    publishDir "${params.results_dir}/", pattern: "rooted_astral_species_tree_neutral_bl.nwk", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/", pattern: "rooted_*.nwk", mode: "copy",  overwrite: true
 
     input:
         path utree
 
     output:
-        path "rooted_astral_species_tree_neutral_bl.nwk", emit: tree
+        path "rooted_*.nwk", emit: tree
     when: params.outgroup != ""
     script:
     """
-    ${params.rooting_exe} -t $utree -o ${params.outgroup} > rooted_astral_species_tree_neutral_bl.nwk
+    ${params.rooting_exe} -t $utree -o ${params.outgroup} > rooted_`basename $utree`
     """
 }
+
+/**
+*@input path to unrooted input tree
+*@output path to rooted output tree
+*/
+process outgroupRootingProt {
+    label 'rc_2Gb'
+
+    publishDir "${params.results_dir}/", pattern: "rooted_*.nwk", mode: "copy",  overwrite: true
+
+    input:
+        path utree
+
+    output:
+        path "rooted_*.nwk", emit: tree
+    when: params.outgroup != ""
+    script:
+    """
+    ${params.rooting_exe} -t $utree -o ${params.outgroup} > rooted_`basename $utree`
+    """
+}
+
 
 // Function to check if a genome is present in
 // the annotation cache.
@@ -713,7 +813,6 @@ def annoInCache(genome, anno_cache) {
     File file = new File("${anno_cache}/${genome}/annotation.gtf")
     return file.exists()
 }
-
 
 workflow {
     println(ensemblLogo())
@@ -725,12 +824,30 @@ workflow {
     prepareBusco(params.busco_proteins)
 
     // Prepare input genomes:
-    genomes = Channel.fromPath("${params.dir}/*.*")
+    if (params.dir != "") {
+        // Get a channel of input genomes if directory is specified:
+        genomes = Channel.fromPath("${params.dir}/*.fa*", type: 'file')
+    } else {
+        // Otherwise initialise an empty channel to avoid nextflow crash:
+        genomes = Channel.of()
+    }
     prepareGenome(genomes)
+    prepareGenomeFromDb()
+
+    if (params.dir == "") {
+        // The input is from DB, the genomes CSV comes from the process:
+        genCsvChan = prepareGenomeFromDb.out.input_genomes
+    } else {
+        // The input is from fasta file, specify a dummy path for the
+        // CSV file so the branch length calculations are executed:
+        genCsvChan = Channel.of("/dummy/path")
+    }
+
+    proc_genomes = prepareGenome.out.proc_genome.flatten().mix(prepareGenomeFromDb.out.proc_genome.flatten())
 
     // Branch the genomes channel based on presence in the
     // annotation cache:
-    prepareGenome.out.proc_genome.branch {
+    proc_genomes.branch {
         annot: !annoInCache(it, params.anno_cache)
         link: annoInCache(it, params.anno_cache)
     }.set { genome_fork }
@@ -783,7 +900,7 @@ workflow {
     pickThirdCodonSite(mergeCodonAlns.out.merged_aln)
 
     // Calculate branch lenghts based on the third codon sites:
-    calcNeutralBranchesAstral(pickThirdCodonSite.out.third_aln, runAstral.out.tree)
+    calcNeutralBranchesAstral(pickThirdCodonSite.out.third_aln, runAstral.out.tree, genCsvChan)
 
     // Calculate species tree from protein alignments using iqtree2 (removed):
     // runIqtree(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions)
@@ -792,7 +909,7 @@ workflow {
     // calcCodonBranchesIqtree(mergeCodonAlns.out.merged_aln, runIqtree.out.newick)
 
     // Calculate branch lenghts from protein alignment:
-    calcProtBranchesAstral(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions, runAstral.out.tree)
+    calcProtBranchesAstral(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions, runAstral.out.tree, genCsvChan)
 
     // Calculate branch lenghts from codon alignment for the astral tree (removed):
     // calcCodonBranchesAstral(mergeCodonAlns.out.merged_aln, runAstral.out.tree)
@@ -800,6 +917,8 @@ workflow {
     // Scale the branch lengths to nucleotide sites (removed):
     // scaleToNucleotide(calcCodonBranchesAstral.out.newick)
 
-    // Perform outgroup rooting:
-    outgroupRooting(calcNeutralBranchesAstral.out.newick)
+    // Perform outgroup rooting for tree with neutral branch lengths:
+    outgroupRootingNeutral(calcNeutralBranchesAstral.out.newick)
+    // Perform outgroup rooting for tree with protein alignment based branch lengths:
+    outgroupRootingProt(calcProtBranchesAstral.out.newick)
 }
