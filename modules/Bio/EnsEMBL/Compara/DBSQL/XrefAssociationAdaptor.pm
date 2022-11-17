@@ -66,7 +66,7 @@ my $insert_member_base_sql = q/insert ignore into member_xref(gene_member_id,dbp
 
 my $insert_member_sql = $insert_member_base_sql. q/ select gene_member_id,?,? from gene_member where stable_id=? and source_name='ENSEMBLGENE'/;
  
-my $get_member_id_sql = q/select gene_member_id from gene_member where stable_id=? and source_name='ENSEMBLGENE'/;
+my $get_member_id_sql = q/select gene_member_id from gene_member where stable_id=? and genome_db_id=? and source_name='ENSEMBLGENE'/;
 
 my $base_get_sql = q/
 select distinct g.stable_id,x.dbprimary_acc
@@ -167,8 +167,10 @@ sub store_member_associations {
 	};
 	my $member_acc_hash = $callback->( $self, $dba, $db_name );
 	
+	my $genome_db_adaptor = $self->db()->get_GenomeDBAdaptor();
+	my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($dba->species);
 	while(my ($sid,$accs) = each %$member_acc_hash) {
-		my ($gene_member_id) = @{$self->dbc()->sql_helper()->execute_simple(-SQL=>$get_member_id_sql, -PARAMS=>[$sid])};	
+		my ($gene_member_id) = @{$self->dbc()->sql_helper()->execute_simple(-SQL=>$get_member_id_sql, -PARAMS=>[$sid,$genome_db->dbID])};
 		if(defined $gene_member_id) {	
 			my @pars = map {"($gene_member_id,\"$_\",$external_db_id)"} uniq(@$accs);
 			my $sql = $insert_member_base_sql . 'values' . join(',',@pars);

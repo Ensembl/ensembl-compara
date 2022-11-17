@@ -306,6 +306,9 @@ sub load_cigars_from_file {
     my %unseen = (map {$_ => 1} (keys %aln_string_hash));
 
     ## Then we associate each member with its alignment, based on the required $id_type
+    if ($self->isa('Bio::EnsEMBL::Compara::GeneTree') && $self->root->is_supertree()) {
+        $self->expand_subtrees; # TODO: remove this additional call once ENSCOMPARASW-4276 is resolved
+    }
     foreach my $member (@{$self->get_all_Members}) {
 
         my $seqID = $member->seq_member_id;

@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor
@@ -39,15 +28,6 @@ Most of the methods are shared with the SeqMemberAdaptor.
 
   Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor
   +- Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
 
 =cut
 
@@ -239,13 +219,12 @@ sub store {
     $sth->finish;
   } else {
     $sth->finish;
-    #UNIQUE(stable_id) prevented insert since gene_member was already inserted
+    #UNIQUE(genome_db_id,stable_id) prevented insert since this gene_member was already inserted for this genome_db
     #so get gene_member_id with select
-    my $sth2 = $self->prepare("SELECT gene_member_id, genome_db_id FROM gene_member WHERE stable_id=?");
-    $sth2->execute($member->stable_id);
-    my($id, $genome_db_id) = $sth2->fetchrow_array();
-    warn("GeneMemberAdaptor: insert failed, but gene_member_id select failed too") unless($id);
-    throw(sprintf('%s already exists and belongs to a different species (%s) ! Stable IDs must be unique across the whole set of species', $member->stable_id, $self->db->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id)->name )) if $genome_db_id and $member->genome_db_id and $genome_db_id != $member->genome_db_id;
+    my $sth2 = $self->prepare("SELECT gene_member_id FROM gene_member WHERE genome_db_id = ? AND stable_id = ?");
+    $sth2->execute($member->genome_db_id, $member->stable_id);
+    my ($id) = $sth2->fetchrow_array();
+    throw("GeneMemberAdaptor: insert failed, but gene_member_id select failed too") unless($id);
     $member->dbID($id);
     $sth2->finish;
   }
@@ -261,7 +240,7 @@ sub delete {
     foreach my $seq_member (@{$gene_member->get_all_SeqMembers}) {
         $seq_member->adaptor->delete($seq_member);
     }
-    $self->dbc->do('DELETE FROM gene_member_qc          WHERE gene_member_stable_id = ?', undef, $gene_member->stable_id);
+    $self->dbc->do('DELETE FROM gene_member_qc          WHERE gene_member_id = ?', undef, $gene_member->dbID);
     $self->dbc->do('DELETE FROM member_xref             WHERE gene_member_id = ?', undef, $gene_member->dbID);
     $self->dbc->do('DELETE FROM gene_member_hom_stats   WHERE gene_member_id = ?', undef, $gene_member->dbID);
     $self->dbc->do('DELETE FROM gene_member             WHERE gene_member_id = ?', undef, $gene_member->dbID);

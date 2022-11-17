@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::GetSplitGenes
@@ -71,7 +60,7 @@ sub fetch_input {
     my $genome_db_id = $self->param_required('genome_db_id');
   
     # Fetch the split genes
-    my $split_genes = $self->compara_dba->dbc->db_handle->selectall_arrayref('SELECT seq_member_id, gm.stable_id FROM split_genes sg JOIN seq_member sm USING (seq_member_id) JOIN gene_member gm USING (gene_member_id) WHERE sm.genome_db_id = ?', undef, $genome_db_id);
+    my $split_genes = $self->compara_dba->dbc->db_handle->selectall_arrayref('SELECT seq_member_id, gene_member_id FROM split_genes JOIN seq_member USING (seq_member_id) WHERE genome_db_id = ?', undef, $genome_db_id);
     $self->param('split_genes_hash', $split_genes);
     print Dumper($split_genes) if ($self->debug >3);
 #    die;
@@ -84,7 +73,7 @@ sub run {
   
   for my $smid (@sg_keys) {
     print " $smid->[0]    %%%%%%%%%% $smid->[1]   %%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" if ($self->debug >3);
-    $self->dataflow_output_id( {'genome_db_id' => $self->param_required('genome_db_id'), 'seq_member_id' => $smid->[0], 'gene_member_stable_id' => $smid->[1], 'status' => 'split-gene' }, 2 );
+    $self->dataflow_output_id( {'genome_db_id' => $self->param_required('genome_db_id'), 'seq_member_id' => $smid->[0], 'gene_member_id' => $smid->[1], 'status' => 'split-gene' }, 2 );
     $count +=1;
 #    if ($count == 10){
  #     last;

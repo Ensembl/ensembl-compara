@@ -70,7 +70,7 @@ sub run {
             $dbc->do('DELETE m FROM gene_align_member m JOIN gene_tree_root r USING(gene_align_id)
                       WHERE r.tree_type = "supertree" AND m.seq_member_id = ?;', undef, $self->param('seq_member_id'));
 
-            $dbc->do('DELETE FROM gene_member_qc                  WHERE gene_member_stable_id = ?', undef, $self->param('gene_member_stable_id'));
+            $dbc->do('DELETE FROM gene_member_qc                  WHERE gene_member_id = ?',        undef, $self->param('gene_member_id'));
             $dbc->do('DELETE FROM member_xref                     WHERE gene_member_id = ?',        undef, $self->param('gene_member_id'));
             $dbc->do('DELETE FROM gene_member_hom_stats           WHERE gene_member_id = ?',        undef, $self->param('gene_member_id'));
             $dbc->do('DELETE FROM seq_member_projection_stable_id WHERE target_seq_member_id = ?',  undef, $self->param('seq_member_id'));

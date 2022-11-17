@@ -76,8 +76,8 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-6', 'sbotond_metazoa_load_members_108'],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', 'sbotond_default_metazoa_protein_trees_108_take2' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-6', 'thiagogenez_metazoa_load_members_109' ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', 'dthybert_default_metazoa_protein_trees_109' ],
 
     # LastZ dbs
     # 'lastz_batch_1' => [ 'mysql-ens-compara-prod-X', '' ],
@@ -92,7 +92,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 # ----------------------NON-COMPARA DATABASES------------------------
 # NCBI taxonomy database (maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-3', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-3-b', "ncbi_taxonomy_$curr_release" ],
 });
 
 # -------------------------------------------------------------------

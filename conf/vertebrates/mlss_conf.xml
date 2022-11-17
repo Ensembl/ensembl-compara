@@ -111,6 +111,9 @@
     <one_vs_all method="LASTZ_NET" ref_genome="ciona_intestinalis" against="Ciona" ref_amongst="Cyclostomata"/>
     <one_vs_all method="LASTZ_NET" ref_genome="petromyzon_marinus" against="Cyclostomata" ref_amongst="Ciona"/>
 
+    <!-- Chicken vs Human LastZ (on Human) -->
+    <pairwise_alignment method="LASTZ_NET" ref_genome="homo_sapiens" target_genome="gallus_gallus"/>
+
   </pairwise_alignments>
 
   <multiple_alignments>
@@ -118,7 +121,7 @@
     <!-- Primates -->
     <multiple_alignment method="EPO">
       <species_set name="primates">
-        <genome name="callithrix_jacchus" assembly="mCalJac1.pat.X"/>
+        <!-- <genome name="callithrix_jacchus" assembly="mCalJac1.pat.X"/> -->
         <genome name="chlorocebus_sabaeus" assembly="ChlSab1.1"/>
         <genome name="gorilla_gorilla" assembly="gorGor4"/>
         <genome name="homo_sapiens"/>
@@ -128,7 +131,7 @@
         <genome name="nomascus_leucogenys"/>
         <genome name="pan_paniscus" assembly="panpan1.1"/>
         <genome name="pan_troglodytes"/>
-        <genome name="papio_anubis" assembly="Panubis1.0"/>
+        <!-- <genome name="papio_anubis" assembly="Panubis1.0"/> -->
         <genome name="pongo_abelii"/>
       </species_set>
     </multiple_alignment>
@@ -145,7 +148,7 @@
         <genome name="bos_grunniens" assembly="LU_Bosgru_v3.0"/>
         <genome name="bos_indicus_hybrid" assembly="UOA_Brahman_1"/>
         <genome name="bos_taurus"/>
-        <genome name="callithrix_jacchus" assembly="mCalJac1.pat.X"/>
+        <!-- <genome name="callithrix_jacchus" assembly="mCalJac1.pat.X"/> -->
         <genome name="camelus_dromedarius" assembly="CamDro2"/>
         <genome name="canis_lupus_dingo" assembly="ASM325472v1"/>
         <genome name="canis_lupus_familiaris"/>
@@ -178,11 +181,11 @@
         <genome name="pan_troglodytes" assembly="Pan_tro_3.0"/>
         <genome name="panthera_leo" assembly="PanLeo1.0"/>
         <genome name="panthera_pardus" assembly="PanPar1.0"/>
-        <genome name="papio_anubis" assembly="Panubis1.0"/>
+        <!-- <genome name="papio_anubis" assembly="Panubis1.0"/> -->
         <genome name="peromyscus_maniculatus_bairdii" assembly="HU_Pman_2.1"/>
         <genome name="phocoena_sinus" assembly="mPhoSin1.pri"/>
         <genome name="physeter_catodon" assembly="ASM283717v2"/>
-        <genome name="pongo_abelii" assembly="Susie_PABv2"/>
+        <!-- <genome name="pongo_abelii" assembly="Susie_PABv2"/> -->
         <genome name="rattus_norvegicus"/>
         <genome name="rhinolophus_ferrumequinum" assembly="mRhiFer1_v1.p"/>
         <genome name="sciurus_vulgaris" assembly="mSciVul1.1"/>
@@ -227,7 +230,7 @@
     <multiple_alignment method="EPO">
       <species_set name="fish">
         <genome name="amphiprion_percula" assembly="Nemo_v1"/>
-        <genome name="anabas_testudineus" assembly="fAnaTes1.2"/>
+        <!-- <genome name="anabas_testudineus" assembly="fAnaTes1.2"/> -->
         <genome name="astatotilapia_calliptera" assembly="fAstCal1.2"/>
         <genome name="astyanax_mexicanus" assembly="Astyanax_mexicanus-2.0"/>
         <genome name="betta_splendens" assembly="fBetSpl5.2"/>
@@ -246,7 +249,7 @@
         <genome name="ictalurus_punctatus" assembly="IpCoco_1.2"/>
         <genome name="larimichthys_crocea" assembly="L_crocea_2.0"/>
         <genome name="lepisosteus_oculatus" assembly="LepOcu1"/>
-        <genome name="mastacembelus_armatus" assembly="fMasArm1.2"/>
+        <!-- <genome name="mastacembelus_armatus" assembly="fMasArm1.2"/> -->
         <genome name="maylandia_zebra" assembly="M_zebra_UMD2a"/>
         <genome name="myripristis_murdjan" assembly="fMyrMur1.1"/>
         <genome name="nothobranchius_furzeri" assembly="Nfu_20140520"/>

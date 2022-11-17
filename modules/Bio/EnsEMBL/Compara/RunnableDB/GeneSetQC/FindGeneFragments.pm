@@ -32,11 +32,6 @@ when the average has been computed against enough species) are reported.
 
 standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::get_gene_fragment_stat -longer <1/0>  -genome_db_id <genome_db_id> -coverage_threshold <> -species_threshold <>
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
-
 =cut
 
 
@@ -95,49 +90,36 @@ sub run {
     if ($self->param_required('gene_status') eq 'ambiguous_sequence') {
         my $missing_sequence_threshold = $self->param_required('missing_sequence_threshold');
 
-        $sql = 'SELECT gene_member.stable_id as stable_id, seq_member_id, sequence FROM other_member_sequence JOIN seq_member USING (seq_member_id) JOIN gene_member USING (gene_member_id) WHERE seq_member.genome_db_id = ? AND seq_type = "cds" AND sequence LIKE "%N%";';
+        $sql = 'SELECT gene_member_id, seq_member_id, sequence FROM other_member_sequence JOIN seq_member USING (seq_member_id) WHERE seq_member.genome_db_id = ? AND seq_type = "cds" AND sequence LIKE "%N%";';
         my $sth = $self->compara_dba->dbc->prepare($sql);
         $sth->execute($genome_db_id);
 
         my $regex = '[^ACGT]'; #https://droog.gs.washington.edu/parc/images/iupac.html
         my $seq_length;
         while (my $row = $sth->fetchrow_hashref()) {
-            my $stable_id = $row->{stable_id};
+            my $gene_member_id = $row->{gene_member_id};
             my $sequence = $row->{sequence};
             my $seq_member_id = $row->{seq_member_id};
             my @gaps = _match_all_positions( $regex, \$sequence);
             $seq_length = length($sequence);
             if (_is_very_ambiguous( \@gaps, $seq_length, $missing_sequence_threshold)){
-                $self->dataflow_output_id( { 'gene_member_stable_id' => $row->{stable_id}, 'genome_db_id' => $genome_db_id, 'seq_member_id' => $seq_member_id, 'status' => "ambiguous-sequence" }, 2);
+                $self->dataflow_output_id( { 'gene_member_id' => $gene_member_id, 'genome_db_id' => $genome_db_id, 'seq_member_id' => $seq_member_id, 'status' => "ambiguous-sequence" }, 2);
             }
         }
     }
     elsif ($self->param_required('gene_status') eq 'orphaned') {
-      $sql = 'SELECT mg.stable_id, mg.canonical_member_id FROM gene_member mg LEFT JOIN gene_tree_node gtn ON (mg.canonical_member_id = gtn.seq_member_id) WHERE gtn.seq_member_id IS NULL AND mg.genome_db_id = ?';
+      $sql = 'SELECT mg.gene_member_id, mg.canonical_member_id FROM gene_member mg LEFT JOIN gene_tree_node gtn ON (mg.canonical_member_id = gtn.seq_member_id) WHERE gtn.seq_member_id IS NULL AND mg.genome_db_id = ?';
       my $sth = $self->compara_dba->dbc->prepare($sql);
       $sth->execute($genome_db_id);
 
       while (my $row = $sth->fetchrow_hashref()) {
-        $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'gene_member_stable_id' => $row->{stable_id}, 'seq_member_id' => $row->{canonical_member_id}, 'status' => "orphaned-gene" }, 2);
+        $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'gene_member_id' => $row->{gene_member_id}, 'seq_member_id' => $row->{canonical_member_id}, 'status' => "orphaned-gene" }, 2);
       }
 
     } else {
         my $coverage_threshold  = $self->param_required('coverage_threshold');
         my $species_threshold   = $self->param_required('species_threshold');
         my $split_genes         = $self->param_required('split_genes_hash');
-    
-        # first, fetch gene_member stable_ids
-        print "Fetching gene_member stable_id info\n" if $self->debug;
-        my $gene_file = $self->param_required('gene_dumps_dir') . "/gene_member.${genome_db_id}.tsv";
-        open( my $gene_fh, '<', $gene_file) or die "Cannot open $gene_file";
-        my $header = <$gene_fh>;
-        my @head_cols = split(/\s+/, $header);
-        my %gm_stable_id_map;
-        while ( my $line = <$gene_fh> ) {
-            my $row = map_row_to_header( $line, \@head_cols );
-            $gm_stable_id_map{$row->{'gene_member_id'}} = $row->{'stable_id'};
-        }
-        close($gene_fh);
 
         my $coverage_stats;
         print "Finding homology dump files\n" if $self->debug;
@@ -192,7 +174,7 @@ sub run {
             
             my $dataflow = {
                 'genome_db_id'          => $these_stats->{genome_db_id},
-                'gene_member_stable_id' => $gm_stable_id_map{$gm_id},
+                'gene_member_id'        => $gm_id,
                 'seq_member_id'         => $these_stats->{seq_member_id},
                 'n_species'             => $n_species,
                 'n_orth'                => $these_stats->{n_orth},
