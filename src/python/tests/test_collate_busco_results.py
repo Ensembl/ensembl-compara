@@ -39,10 +39,10 @@ class TestCollateBusco:
         Args:
             tmp_dir: Unit test temp directory (fixture).
         """
-        input_file = str(Path(__file__).parents[0] /
-                         'flatfiles' / 'SpeciesTreeFromBusco' / 'busco_collate_fofn.txt')
-        input_genes = str(Path(__file__).parents[0] /
-                          'flatfiles' / 'SpeciesTreeFromBusco' / 'busco_collate_genes.tsv')
+        input_file = str(Path(__file__).parents[1] /
+                         'test_data' / 'flatfiles' / 'SpeciesTreeFromBusco' / 'busco_collate_fofn.txt')
+        input_genes = str(Path(__file__).parents[1] /
+                          'test_data' / 'flatfiles' / 'SpeciesTreeFromBusco' / 'busco_collate_genes.tsv')
         output_stats = str(tmp_dir / "stats.tsv")
         output_taxa = str(tmp_dir / "taxa.tsv")
 
@@ -56,17 +56,17 @@ class TestCollateBusco:
         subprocess.check_call(cmd, cwd=location)
 
         # Compare with expected output:
-        expected_stats = str(Path(__file__).parents[0] / "flatfiles" / "SpeciesTreeFromBusco"
+        expected_stats = str(Path(__file__).parents[1] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco"
                              / "collate_output_stats.tsv")
-        expected_taxa = str(Path(__file__).parents[0] / "flatfiles" / "SpeciesTreeFromBusco"
+        expected_taxa = str(Path(__file__).parents[1] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco"
                             / "collate_output_taxa.tsv")
-        expected_gene1 = str(Path(__file__).parents[0] / "flatfiles" / "SpeciesTreeFromBusco"
+        expected_gene1 = str(Path(__file__).parents[1] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco"
                              / "collate_gene_prot_gene1.fas")
-        expected_gene2 = str(Path(__file__).parents[0] / "flatfiles" / "SpeciesTreeFromBusco"
+        expected_gene2 = str(Path(__file__).parents[1] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco"
                              / "collate_gene_prot_gene2.fas")
-        expected_gene3 = str(Path(__file__).parents[0] / "flatfiles" / "SpeciesTreeFromBusco"
+        expected_gene3 = str(Path(__file__).parents[1] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco"
                              / "collate_gene_prot_gene3.fas")
-        expected_gene4 = str(Path(__file__).parents[0] / "flatfiles" / "SpeciesTreeFromBusco"
+        expected_gene4 = str(Path(__file__).parents[1] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco"
                              / "collate_gene_prot_gene4.fas")
 
         # Compare stats and taxa:
@@ -85,10 +85,10 @@ class TestCollateBusco:
         Args:
             tmp_dir: Unit test temp directory (fixture).
         """
-        input_file = str(Path(__file__).parents[0] /
-                         'flatfiles' / 'SpeciesTreeFromBusco' / 'empty_file.txt')
-        input_genes = str(Path(__file__).parents[0] /
-                          'flatfiles' / 'SpeciesTreeFromBusco' / 'busco_collate_genes.tsv')
+        input_file = str(Path(__file__).parents[1] /
+                         'test_data' / 'flatfiles' / 'SpeciesTreeFromBusco' / 'empty_file.txt')
+        input_genes = str(Path(__file__).parents[1] /
+                          'test_data' / 'flatfiles' / 'SpeciesTreeFromBusco' / 'busco_collate_genes.tsv')
         output_stats = str(tmp_dir / "stats.tsv")
         output_taxa = str(tmp_dir / "taxa.tsv")
 
