@@ -37,7 +37,7 @@ class TestPickThirdSite:
         Args:
             tmp_dir: Unit test temp directory (fixture).
         """
-        input_file = str(Path(__file__).parents[1] / 'test_data' /
+        input_file = str(Path(__file__).parents[2] / 'test_data' /
                          'flatfiles' / 'SpeciesTreeFromBusco' / 'pick_third_site_input.fas')
         output_fas = str(tmp_dir / "pick_third_site_output.fas")
 
@@ -51,6 +51,6 @@ class TestPickThirdSite:
 
         # Compare with expected output:
         expected_fas = str(Path(
-            __file__).parents[1] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco" / "pick_third_site_expected.fas")
+            __file__).parents[2] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco" / "pick_third_site_expected.fas")
 
         assert file_cmp(output_fas, expected_fas)

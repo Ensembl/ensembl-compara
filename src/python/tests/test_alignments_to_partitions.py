@@ -39,9 +39,9 @@ class TestAlignmentsToParitions:
         Args:
             tmp_dir: Unit test temp directory (fixture).
         """
-        input_file = str(Path(__file__).parents[1] /
+        input_file = str(Path(__file__).parents[2] /
                          'test_data' / 'flatfiles' / 'SpeciesTreeFromBusco' / 'busco_merge_input_fofn.txt')
-        input_taxa = str(Path(__file__).parents[1] /
+        input_taxa = str(Path(__file__).parents[2] /
                          'test_data' / 'flatfiles' / 'SpeciesTreeFromBusco' / 'collate_output_taxa.tsv')
         output_fasta = str(tmp_dir / "merged_fasta.tsv")
         output_parts = str(tmp_dir / "paritions.tsv")
@@ -56,7 +56,7 @@ class TestAlignmentsToParitions:
         subprocess.check_call(cmd, cwd=location)
 
         # Compare with expected output:
-        expected_fasta = str(Path(__file__).parents[1] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco"
+        expected_fasta = str(Path(__file__).parents[2] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco"
                              / "busco_merged.fas")
 
         assert file_cmp(output_fasta, expected_fasta)
@@ -67,9 +67,9 @@ class TestAlignmentsToParitions:
         Args:
             tmp_dir: Unit test temp directory (fixture).
         """
-        input_file = str(Path(__file__).parents[1] /
+        input_file = str(Path(__file__).parents[2] /
                          'test_data' / 'flatfiles' / 'SpeciesTreeFromBusco' / 'empty_file.txt')
-        input_taxa = str(Path(__file__).parents[1] /
+        input_taxa = str(Path(__file__).parents[2] /
                          'test_data' / 'flatfiles' / 'SpeciesTreeFromBusco' / 'collate_output_taxa.tsv')
         output_fasta = str(tmp_dir / "merged_fasta.tsv")
         output_parts = str(tmp_dir / "paritions.tsv")
