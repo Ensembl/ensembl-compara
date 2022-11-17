@@ -73,7 +73,7 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'         => [ 'mysql-ens-compara-prod-2',  'twalsh_vertebrates_load_members_109' ],
-    #'compara_ptrees'          => [ 'mysql-ens-compara-prod-X',  '' ],
+    'compara_ptrees'          => [ 'mysql-ens-compara-prod-3',  'twalsh_default_vertebrates_protein_trees_109' ],
     'compara_ptrees_prev'     => [ 'mysql-ens-compara-prod-2',  'ivana_default_vertebrates_protein_trees_2_108' ],
     'compara_nctrees'         => [ 'mysql-ens-compara-prod-2',  'twalsh_default_vertebrates_ncrna_trees_109' ],
     'murinae_ptrees'          => [ 'mysql-ens-compara-prod-10', 'twalsh_vertebrates_murinae_protein_reindexed_trees_109' ],
@@ -138,7 +138,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 my $ancestral_dbs = {
     'ancestral_prev' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
-    #'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
+    'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
 
     'mammals_ancestral'    => [ 'mysql-ens-compara-prod-8', 'ivana_mammals_ancestral_core_105' ],
     'primates_ancestral'   => [ 'mysql-ens-compara-prod-2', 'twalsh_primates_ancestral_core_106' ],

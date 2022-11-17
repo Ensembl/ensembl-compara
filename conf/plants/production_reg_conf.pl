@@ -89,19 +89,20 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $metazoa_overlap_cores );
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_master_plants' ],
-    #'compara_curr'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${curr_eg_release}_${curr_release}" ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${curr_eg_release}_${curr_release}" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'        => [ 'mysql-ens-compara-prod-X', ''],
-    #'compara_ptrees'         => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_members'        => [ 'mysql-ens-compara-prod-5', 'sbotond_plants_load_members_109'],
+    'compara_ptrees'         => [ 'mysql-ens-compara-prod-5', 'sbotond_default_plants_protein_trees_109' ],
     'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-5', 'jalvarez_wheat_cultivars_plants_protein_trees_106' ],
 
     # LASTZ dbs
-    #'lastz_batch_1'  => [ 'mysql-ens-compara-prod-X', '' ],
+    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-7', 'sbotond_plants_lastz_batch1_109' ],
+    'lastz_batch_2'  => [ 'mysql-ens-compara-prod-4', 'sbotond_plants_lastz_batch2_109' ],
 
     # synteny
-    #'compara_syntenies' => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-7', 'sbotond_plants_synteny_109' ],
 
     # EPO dbs
     ## rice
@@ -115,7 +116,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 # ----------------------NON-COMPARA DATABASES------------------------
 my $ancestral_dbs = {
     'ancestral_prev' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${prev_eg_release}_$prev_release" ],
-    #'ancestral_curr' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${curr_eg_release}_$curr_release" ],
+    'ancestral_curr' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${curr_eg_release}_$curr_release" ],
 
     # 'rice_ancestral' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${prev_eg_release}_$prev_release" ],
 };
