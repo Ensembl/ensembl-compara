@@ -28,7 +28,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3-b
 
 # Compara databases:
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas({
-    'compara_curr'   => [ 'mysql-ens-compara-prod-8', "ensembl_compara_fungi_${curr_eg_release}_${curr_release}" ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-4', "ensembl_compara_fungi_${curr_eg_release}_${curr_release}" ],
 });
 
 # Other databases:
