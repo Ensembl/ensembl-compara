@@ -16,3 +16,4 @@
 168	\N	patch	patch_108_109_c.sql|stable_id_unique_per_genome
 169	\N	patch	patch_108_109_d.sql|case_insensitive_stable_id
 170	\N	patch	patch_108_109_e.sql|case_sensitive_stable_id_again
+171	\N	patch	patch_108_109_f.sql|stable_id_key_again

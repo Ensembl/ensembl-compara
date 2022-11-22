@@ -1035,6 +1035,7 @@ CREATE TABLE gene_member (
 
   PRIMARY KEY (gene_member_id),
   UNIQUE KEY genome_db_stable_id (genome_db_id,stable_id),
+  KEY (stable_id),
   KEY (source_name),
   KEY (canonical_member_id),
   KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
@@ -1139,6 +1140,7 @@ CREATE TABLE seq_member (
 
   PRIMARY KEY (seq_member_id),
   UNIQUE KEY genome_db_stable_id (genome_db_id,stable_id),
+  KEY (stable_id),
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id),
@@ -2294,3 +2296,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
 
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_108_109_e.sql|case_sensitive_stable_id_again');
+
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_108_109_f.sql|stable_id_key_again');
