@@ -282,15 +282,35 @@ sub bound_location_string {
 }
 
 sub get_evidence_data {
-  my ($self, $slice, $filter) = @_;
-  $filter ||= {};
-  $filter->{'block_features'} = 1;
+  my $self = shift;
+  my $data = {};
 
-  my $slice_object = EnsEMBL::Web::Object::Slice->new({'_hub' => $self->hub, '_object' => $slice});
+  my $reg_feature = $self->Obj;
+  my $hub         = $self->hub;
 
-  my $data = $slice_object->get_cell_line_data(undef, $filter);
+  my $active_epigenomes     = {};
+  my @activities            = @{$reg_feature->regulatory_activity||[]};
+  foreach my $activity (@activities) {
+    my $epigenome = $activity->get_Epigenome;
+    $active_epigenomes->{$epigenome->short_name} = 1;
+  }
 
-  return { data => $data, cells => [ keys %$data ] };
+  my $peak_calling_adaptor  = $hub->get_adaptor('get_PeakCallingAdaptor', 'funcgen');
+  my $all_peak_calling      = $peak_calling_adaptor->fetch_all;
+
+  foreach my $peak_calling (@{$all_peak_calling||[]}) {
+
+    my $epigenome   = $peak_calling->get_Epigenome;
+    my $cell_line   = $epigenome->short_name;
+    next unless $active_epigenomes->{$cell_line};
+
+    my $ftype       = $peak_calling->get_FeatureType;
+    my $ftype_name  = $ftype->name;
+
+    $data->{$cell_line}{$ftype_name} = $peak_calling;
+  }
+
+  return $data;
 }
 
 sub all_epigenomes {

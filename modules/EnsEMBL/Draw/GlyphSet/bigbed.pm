@@ -36,8 +36,10 @@ sub can_json { return 1; }
 sub my_url { return $_[0]->my_config('url'); }
 
 sub get_data {
-  my ($self, $url) = @_;
+  my ($self, $url, $track_metadata) = @_;
   return $self->{'data'} if scalar @{$self->{'data'}||[]};
+
+  $track_metadata ||= {};
   my $hub         = $self->{'config'}->hub;
   $url          ||= $self->my_url;
   my $container   = $self->{'container'};
@@ -60,7 +62,7 @@ sub get_data {
   if ($iow) {
     ## We need to pass 'faux' metadata to the ensembl-io wrapper, because
     ## most files won't have explicit colour settings
-    my $colour = $self->my_config('colour');
+    my $colour = $track_metadata->{'colour'} || $self->my_config('colour');
     ## Don't try and scale if we're just doing a zmenu!
     my $pix_per_bp = $self->{'display'} eq 'text' ? '' : $self->scalex;
     my $metadata = {

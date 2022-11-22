@@ -977,6 +977,25 @@ sub _summarise_funcgen_db {
     $self->db_details($db_name)->{'tables'}{'feature_types'}{$set} = $data;
   }
 
+  ## Save epigenome track ids for all regulatory tracks
+  my $et_aref = $dbh->selectall_arrayref('
+    select et.epigenome_track_id, et.data_file_id, eg.short_name, ft.name, et.track_type
+    from
+      epigenome_track as et,
+      epigenome as eg,
+      feature_type as ft
+    where
+      et.epigenome_id = eg.epigenome_id
+      and et.feature_type_id = ft.feature_type_id
+  ');
+
+  foreach (@$et_aref) {
+    $self->db_details($db_name)->{'tables'}{'epigenome_track'}{$_->[2]}{$_->[3]}{$_->[4]} = {
+      track_id => $_->[0],
+      data_file_id => $_->[1]
+    };
+  }
+
   $dbh->disconnect();
 }
 

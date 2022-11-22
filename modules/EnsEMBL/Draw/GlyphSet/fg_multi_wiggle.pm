@@ -26,7 +26,7 @@ use strict;
 
 use EnsEMBL::Draw::Style::Extra::Header;
 
-use parent qw(EnsEMBL::Draw::GlyphSet::bigwig);
+use parent qw(EnsEMBL::Draw::GlyphSet::bigwig EnsEMBL::Draw::GlyphSet::bigbed);
 
 sub label { return undef; }
 
@@ -57,6 +57,7 @@ sub data_by_cell_line {
 
   my $config  = $self->{'config'};
   my $data    = $config->{'data_by_cell_line'};
+
   ## Lazy evaluation
   if (ref($data) eq 'CODE') {
     $data       = $data->() if ref($data) eq 'CODE';
@@ -139,32 +140,31 @@ sub draw_aggregate {
 
   ## Draw the peaks
   if (%blocks) {
-    my $style_class = 'EnsEMBL::Draw::Style::Feature::Peaks';
-    if ($self->dynamic_use($style_class)) {
+    ## Add a summary title in the lefthand margin
+    my $tracks_on = '';
+    $subhead_height = $header->draw_margin_subhead('Experiments', $tracks_on);
 
-      ## Add a summary title in the lefthand margin
-      my $tracks_on = '';
-      $subhead_height = $header->draw_margin_subhead('Experiments', $tracks_on);
+    ## Push features down a bit, so their labels don't overlap this header
+    my $y_start = $self->{'my_config'}->get('y_start');
+    $self->{'my_config'}->set('y_start', $y_start + $subhead_height);
 
-      ## Push features down a bit, so their labels don't overlap this header
-      my $y_start = $self->{'my_config'}->get('y_start');
-      $self->{'my_config'}->set('y_start', $y_start + $subhead_height);
+    ## Draw features
+    $args->{'feature_type'} = 'block_features';
+    my $subtrack  = $self->get_features(\%blocks, $args);
+    my $subtrack_data = $subtrack->{'data'};
+    my $style_class = $subtrack->{'drawing_style'};
+    $self->dynamic_use($style_class);
+    $block_style  = $style_class->new(\%config, $subtrack_data);
 
-      ## Draw features
-      $args->{'feature_type'} = 'block_features';
-      my $subset    = $self->get_features(\%blocks, $args);
-      $block_style  = $style_class->new(\%config, $subset);
+    if ($block_style) {
+      $self->{'my_config'}->set('has_sublabels', 1);
+      $self->push($block_style->create_glyphs);
 
-      if ($block_style) {
-        $self->{'my_config'}->set('has_sublabels', 1);
-        $self->push($block_style->create_glyphs);
+      ## Label each subtrack in the margin
+      $header->draw_margin_sublabels($subtrack_data);
 
-        ## Label each subtrack in the margin
-        $header->draw_margin_sublabels($subset);
-
-        ## And add to legend
-        push @$data_for_legend, @$subset;
-      }
+      ## And add to legend
+      push @$data_for_legend, @$subtrack_data;
     }
   }
 
@@ -186,11 +186,12 @@ sub draw_aggregate {
 
       ## Draw features
       $args->{'feature_type'} = 'wiggle_features';
-      my $subset    = $self->get_features(\%wiggles, $args);
-      $wiggle_style  = $style_class->new(\%config, $subset);
+      my $subtrack  = $self->get_features(\%wiggles, $args);
+      my $subtrack_data = $subtrack->{'data'};
+      $wiggle_style  = $style_class->new(\%config, $subtrack_data);
 
       ## And add to legend
-      push @$data_for_legend, @$subset;
+      push @$data_for_legend, @$subtrack_data;
     }
   }
   $self->push($wiggle_style->create_glyphs) if $wiggle_style;
@@ -246,6 +247,7 @@ sub get_features {
 
   my $data = [];
   my $legend = {};
+  my $drawing_style = '';
 
   foreach my $key (sort { $a cmp $b } keys %$tracks) {
     my $subtrack = {'metadata' => {},
@@ -268,23 +270,43 @@ sub get_features {
 
     if ($args->{'feature_type'} eq 'block_features') {
       $subtrack->{'metadata'}{'feature_height'} = 8;
-      my $features = $tracks->{$key};
-      foreach my $f (@$features) {
-        my $href = $self->_block_zmenu($f);
-        my $hash = {
-                    start     => $f->start,
-                    end       => $f->end,
-                    midpoint  => $f->summit,
-                    label     => $label,
-                    href      => $href,
-                    };
-        push @{$subtrack->{'features'}}, $hash; 
+      my $features_or_file_path = $tracks->{$key}; # this can either be an array of Peak objects retrieved from the database, or a string of a path to a bigbed file
+
+      if (ref $features_or_file_path eq 'ARRAY') {
+        my $features = $features_or_file_path; # this branch deals with an array of Peak objects
+        $drawing_style = 'EnsEMBL::Draw::Style::Feature::Peaks';
+        foreach my $f (@$features) {
+          my $href = $self->_block_zmenu($f);
+          my $hash = {
+                      start     => $f->start,
+                      end       => $f->end,
+                      midpoint  => $f->summit,
+                      label     => $label,
+                      href      => $href,
+                      };
+          push @{$subtrack->{'features'}}, $hash;
+        }
+      } else {
+        # this branch deals with retrieving the data from a bigbed file
+        my $bigbed_file_path = $features_or_file_path;
+        $self->{'my_config'}->set('zmenu_action', 'BigbedPeak');
+        $self->{'my_config'}->set('zmenu_extras', {
+                                                    'cell_line' => $cell_line,
+                                                    'feat_name' => $feature_name,
+                                                  });
+        my $bigbed_data = $self->EnsEMBL::Draw::GlyphSet::bigbed::get_data($bigbed_file_path, $subtrack->{'metadata'});
+        $drawing_style = 'EnsEMBL::Draw::Style::Feature::MultiBlocks';
+        my $bigbed_metadata = $bigbed_data->[0]{'metadata'};
+        $subtrack->{'features'} = $bigbed_data->[0]{'features'};
+        while (my ($key, $value) = each %{$bigbed_metadata || {}}) {
+          $subtrack->{'metadata'}{$key} = $value;
+        }
       }
     }
     elsif ($args->{'feature_type'} eq 'wiggle_features') {
       my $bins                    = $self->bins;
       my $url                     = $tracks->{$key};
-      my $wiggle                  = $self->get_data($bins, $url);
+      my $wiggle                  = $self->EnsEMBL::Draw::GlyphSet::bigwig::get_data($bins, $url);
       $subtrack->{'features'}     = $wiggle->[0]{'features'};
 
       ## Don't override values that we've already set!
@@ -304,7 +326,10 @@ sub get_features {
                                                     colours => $legend_colours };
   }
 
-  return $data; 
+  return {
+    "data" => $data,
+    "drawing_style" => $drawing_style
+  };
 }
 
 sub get_colours {
