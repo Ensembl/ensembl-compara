@@ -112,7 +112,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     };
 }
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
 
     return [
@@ -123,7 +123,57 @@ sub pipeline_analyses {
 sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
+
+    #'analysis[create_default_pairwise_mlss].param[base_location]={epo_pipeline_db_name}'
     $analyses_by_name->{'create_default_pairwise_mlss'}->{'-parameters'}->{'base_location'} = $self->o('epo_db');
+
+    #'analysis[load_mlss_ids].param[add_sister_mlsss]=1'
+    $analyses_by_name->{'load_mlss_ids'}->{'-parameters'}->{'add_sister_mlsss'} = 1;
+
+    #'analysis[load_genomedb_factory].param[mlss_id]=#ext_mlss_id#'
+    $analyses_by_name->{'load_genomedb_factory'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+
+    #'analysis[make_species_tree].param[mlss_id]=#ext_mlss_id#'
+    $analyses_by_name->{'make_species_tree'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+
+    #'analysis[set_gerp_neutral_rate].param[mlss_id]=#ext_mlss_id#'
+    $analyses_by_name->{'set_gerp_neutral_rate'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+
+    #'analysis[extended_genome_alignment].param[mlss_id]=#ext_mlss_id#'
+    $analyses_by_name->{'extended_genome_alignment'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+
+    #'analysis[extended_genome_alignment_himem].param[mlss_id]=#ext_mlss_id#'
+    $analyses_by_name->{'extended_genome_alignment_himem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+
+    #'analysis[extended_genome_alignment_hugemem].param[mlss_id]=#ext_mlss_id#'
+    $analyses_by_name->{'extended_genome_alignment_hugemem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+
+    #'analysis[gerp].param[mlss_id]=#ext_mlss_id#'
+    $analyses_by_name->{'gerp'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+
+    #'analysis[gerp_himem].param[mlss_id]=#ext_mlss_id#'
+    $analyses_by_name->{'gerp_himem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+
+    #'analysis[multiplealigner_stats_factory].param[mlss_id]=#ext_mlss_id#'
+    $analyses_by_name->{'multiplealigner_stats_factory'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+
+    #'analysis[multiplealigner_stats].param[mlss_id]=#ext_mlss_id#'
+    $analyses_by_name->{'multiplealigner_stats'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+
+    #'analysis[gab_factory].param[mlss_id]=#ext_mlss_id#'
+    $analyses_by_name->{'gab_factory'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+
+    #'analysis[genome_db_factory].param[mlss_id]=#ext_mlss_id#'
+    $analyses_by_name->{'genome_db_factory'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+
+    #'analysis[block_stats_aggregator].param[mlss_id]=#ext_mlss_id#'
+    $analyses_by_name->{'block_stats_aggregator'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+
+    #'analysis[block_size_distribution].param[mlss_id]=#ext_mlss_id#'
+    $analyses_by_name->{'block_size_distribution'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+
+    #'analysis[generate_msa_stats_report].param[mlss_id]=#ext_mlss_id#'
+    $analyses_by_name->{'generate_msa_stats_report'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
 }
 
 1;
