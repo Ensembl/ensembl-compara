@@ -159,7 +159,8 @@ CREATE TABLE `gene_member` (
   KEY `dnafrag_id_start` (`dnafrag_id`,`dnafrag_start`),
   KEY `dnafrag_id_end` (`dnafrag_id`,`dnafrag_end`),
   KEY `biotype_dnafrag_id_start_end` (`biotype_group`,`dnafrag_id`,`dnafrag_start`,`dnafrag_end`),
-  KEY `genome_db_id_biotype` (`genome_db_id`,`biotype_group`)
+  KEY `genome_db_id_biotype` (`genome_db_id`,`biotype_group`),
+  KEY `stable_id` (`stable_id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=74 DEFAULT CHARSET=latin1 MAX_ROWS=100000000;
 
 CREATE TABLE `gene_member_hom_stats` (
@@ -437,7 +438,7 @@ CREATE TABLE `meta` (
   PRIMARY KEY (`meta_id`),
   UNIQUE KEY `species_key_value_idx` (`species_id`,`meta_key`,`meta_value`(255)),
   KEY `species_value_idx` (`species_id`,`meta_value`(255))
-) ENGINE=MyISAM AUTO_INCREMENT=117 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=118 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `method_link` (
   `method_link_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -564,7 +565,8 @@ CREATE TABLE `seq_member` (
   KEY `gene_member_id` (`gene_member_id`),
   KEY `dnafrag_id_start` (`dnafrag_id`,`dnafrag_start`),
   KEY `dnafrag_id_end` (`dnafrag_id`,`dnafrag_end`),
-  KEY `seq_member_gene_member_id_end` (`seq_member_id`,`gene_member_id`)
+  KEY `seq_member_gene_member_id_end` (`seq_member_id`,`gene_member_id`),
+  KEY `stable_id` (`stable_id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=74 DEFAULT CHARSET=latin1 MAX_ROWS=100000000;
 
 CREATE TABLE `seq_member_projection` (
