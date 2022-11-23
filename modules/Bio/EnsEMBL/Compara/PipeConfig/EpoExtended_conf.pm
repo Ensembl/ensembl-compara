@@ -112,7 +112,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     };
 }
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
 
     return [
@@ -123,7 +123,31 @@ sub pipeline_analyses {
 sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
+
     $analyses_by_name->{'create_default_pairwise_mlss'}->{'-parameters'}->{'base_location'} = $self->o('epo_db');
+
+    # Tweak to add sister mlsss necessary for running GERPi and setting up EPO mlss.
+    # For EPO extended this loads the mlss ids fro EPO and GERP.
+    #'analysis[load_mlss_ids].param[add_sister_mlsss]=1'
+    $analyses_by_name->{'load_mlss_ids'}->{'-parameters'}->{'add_sister_mlsss'} = 1;
+
+    # Tweaks to set the mlss id to be EPO extended and not EPO:
+    #'analysis[*].param[mlss_id]=#ext_mlss_id#'
+    $analyses_by_name->{'load_genomedb_factory'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'make_species_tree'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'set_gerp_neutral_rate'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'extended_genome_alignment'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'extended_genome_alignment_himem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'extended_genome_alignment_hugemem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'gerp'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'gerp_himem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'multiplealigner_stats_factory'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'multiplealigner_stats'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'gab_factory'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'genome_db_factory'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'block_stats_aggregator'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'block_size_distribution'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'generate_msa_stats_report'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
 }
 
 1;
