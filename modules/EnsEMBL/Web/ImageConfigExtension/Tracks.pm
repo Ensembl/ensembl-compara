@@ -1440,6 +1440,7 @@ sub add_oligo_probes {
   foreach my $key_2 (sort keys %$data) {
     my $key_3 = $key_2;
     $key_2    =~ s/:/__/;
+    (my $caption = $key_3) =~ s/:/: /;
 
     $menu->append_child($self->create_track_node("oligo_${key}_" . $key_2, $key_3, {
       glyphset    => '_oligo',
@@ -1449,7 +1450,7 @@ sub add_oligo_probes {
       object_type => 'ProbeFeature',
       colourset   => 'feature',
       description => $description,
-      caption     => $key_3,
+      caption     => $caption,
       strand      => 'b',
       display     => 'off',
       renderers   => $self->_alignment_renderers
