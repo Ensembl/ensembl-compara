@@ -25,56 +25,111 @@ from tempfile import TemporaryDirectory
 from typing import Dict, Union
 
 from Bio import SeqIO
+import pandas as pd
 
 
-def parse_qfo_proteome_table(qfo_readme_file: Union[str, Path]) -> Dict:
+def generate_production_name(species_name: str) -> str:
+    """Returns a production name generated from the given species name."""
+    unqualified_species_name = re.sub(r"\(.+$", "", species_name).rstrip()
+    underscored_species_name = re.sub(r"\s+", "_", unqualified_species_name)
+    lowercased_species_name = underscored_species_name.lower()
+    return re.sub("[^a-z0-9_]", "", lowercased_species_name)
+
+
+def parse_qfo_proteome_table(qfo_readme_file: Union[Path, str]) -> pd.DataFrame:
     """Parse table in QfO reference proteome README file.
 
     Args:
         qfo_readme_file: Input QfO reference proteome README file.
 
     Returns:
-        Dictionary containing QfO reference proteome metadata.
+        A pandas DataFrame containing QfO reference proteome metadata.
 
     """
-    qfo_species_header_re = re.compile(
-        r"Proteome_ID\s+Tax_ID\s+OSCODE\s+SUPERREGNUM\s+#\(1\)\s+#\(2\)\s+#\(3\)\s+Species_Name"
-    )
+    # This dict holds key meta-info about the format of the table in the QfO README file. By default, the
+    # table format meta-info of the most recent known release is used, so it should be possible to use this
+    # script on subsequent releases, provided that the table format has not changed since the most recent
+    # release included here. If there have been changes to the table format, you may need to update this dict
+    # with the new header line and updated sanitised column names. (Why sanitise the column names? Keeping
+    # them consistent, valid as Python identifiers etc. makes it easier to handle the proteome metadata.)
+    release_meta = {
+        "2015_to_2020": {
+            "header": "Proteome_ID Tax_ID  OSCODE     #(1)    #(2)    #(3)  Species Name",
+            "columns": [
+                "proteome_id",
+                "tax_id",
+                "oscode",
+                "num_canonical",
+                "num_additional",
+                "num_gene2acc",
+                "species_name"
+            ],
+            "releases": ["2015_04", "2016_04", "2017_04", "2018_04", "2019_04"]
+        },
+        "2020_to_date": {
+            "header": "Proteome_ID     Tax_ID  OSCODE  SUPERREGNUM     #(1)    #(2)    #(3)    Species_Name",
+            "columns": [
+                "proteome_id",
+                "tax_id",
+                "oscode",
+                "superregnum",
+                "num_canonical",
+                "num_additional",
+                "num_gene2acc",
+                "species_name"
+            ],
+            "releases": ["2020_04", "2021_03", "2022_02"]
+        },
+    }
 
+    release_to_header: Dict = {}
+    release_to_columns: Dict = {}
+    for meta in release_meta.values():
+        release_to_header.update(dict.fromkeys(meta["releases"], meta["header"]))
+        release_to_columns.update(dict.fromkeys(meta["releases"], meta["columns"]))
+
+    # Release '2020_04' README contains a table with
+    # post-2020 columns underneath a pre-2020 header.
+    release_to_header["2020_04"] = release_meta["2015_to_2020"]["header"]
+
+    release_re = re.compile(r"Release (?P<release>[0-9]{4}_[0-9]{2}), [0-9]{2}-[A-Z][a-z]+-[0-9]{4}")
+
+    release = None
     table_lines = []
     with open(qfo_readme_file) as file_obj:
+        exp_header_line = None
         reading_table = False
         for line in file_obj:
             line = line.rstrip("\n")
-            if qfo_species_header_re.fullmatch(line):
-                reading_table = True
-                continue
-            if reading_table and line == "":
-                break
-            if reading_table:
+            if not reading_table:
+                release_line_match = release_re.fullmatch(line)
+                if release_line_match:
+                    release = release_line_match["release"]
+                    try:
+                        exp_header_line = release_to_header[release]
+                    except KeyError:
+                        release = max(release_to_header.keys())
+                        exp_header_line = release_to_header[release]
+                elif exp_header_line and line == exp_header_line:
+                    reading_table = True
+                    continue
+            else:
+                if not line:
+                    break
                 table_lines.append(line)
 
     if not table_lines:
         raise RuntimeError(f"failed to extract QfO proteome table from '{qfo_readme_file}'")
 
-    proteome_meta = {}
-    for table_line in table_lines:
-        proteome_id, tax_id, _, superregnum, *_unused, species_name = table_line.split(maxsplit=7)
-        sub_dir = superregnum.capitalize()
+    max_split = len(release_to_columns[release]) - 1
+    rows = [x.split(maxsplit=max_split) for x in table_lines]
+    proteome_meta = pd.DataFrame(rows, columns=release_to_columns[release])
 
-        species_name = re.sub(r"\(.+$", "", species_name).rstrip()
-        species_name = re.sub(r"\s+", "_", species_name)
-        species_name = species_name.lower()
-        species_name = re.sub("[^a-z0-9_]", "", species_name)
-
-        if species_name in proteome_meta:
-            raise ValueError(f"duplicate species production name: {species_name}")
-
-        proteome_meta[species_name] = {
-            "proteome_id": proteome_id,
-            "tax_id": int(tax_id),
-            "sub_dir": sub_dir,
-        }
+    prod_names = proteome_meta["species_name"].apply(generate_production_name)
+    if prod_names.duplicated().any():
+        dup_prod_names = set(prod_names[prod_names.duplicated()])
+        raise ValueError(f"duplicate species production name(s): {','.join(dup_prod_names)}")
+    proteome_meta["production_name"] = prod_names
 
     return proteome_meta
 
@@ -103,11 +158,11 @@ if __name__ == "__main__":
         os.makedirs(out_dir, exist_ok=True)
 
         source_meta = []
-        for prod_name, meta in uniprot_meta.items():
-            in_dir = os.path.join(tmp_dir, meta["sub_dir"])
+        for row in uniprot_meta.itertuples():
+            in_dir = os.path.join(tmp_dir, row.superregnum.capitalize())
 
-            in_cds_file_path = os.path.join(in_dir, f"{meta['proteome_id']}_{meta['tax_id']}_DNA.fasta")
-            out_cds_file_path = os.path.join(out_dir, f"{meta['tax_id']}_{prod_name}.cds.fasta")
+            in_cds_file_path = os.path.join(in_dir, f"{row.proteome_id}_{row.tax_id}_DNA.fasta")
+            out_cds_file_path = os.path.join(out_dir, f"{row.tax_id}_{row.production_name}.cds.fasta")
 
             cds_ids = set()
             with open(in_cds_file_path) as in_file_obj, open(out_cds_file_path, "w") as out_file_obj:
@@ -117,8 +172,8 @@ if __name__ == "__main__":
                         SeqIO.write([rec], out_file_obj, "fasta")
                         cds_ids.add(uniq_id)
 
-            in_prot_file_path = os.path.join(in_dir, f"{meta['proteome_id']}_{meta['tax_id']}.fasta")
-            out_prot_file_path = os.path.join(out_dir, f"{meta['tax_id']}_{prod_name}.prot.fasta")
+            in_prot_file_path = os.path.join(in_dir, f"{row.proteome_id}_{row.tax_id}.fasta")
+            out_prot_file_path = os.path.join(out_dir, f"{row.tax_id}_{row.production_name}.prot.fasta")
 
             with open(in_prot_file_path) as in_file_obj, open(out_prot_file_path, "w") as out_file_obj:
                 for rec in SeqIO.parse(in_file_obj, "fasta"):
@@ -127,8 +182,8 @@ if __name__ == "__main__":
                         SeqIO.write([rec], out_file_obj, "fasta")
 
             source_meta.append({
-                "production_name": prod_name,
-                "taxonomy_id": meta["tax_id"],
+                "production_name": row.production_name,
+                "taxonomy_id": int(row.tax_id),
                 "cds_fasta": out_cds_file_path,
                 "prot_fasta": out_prot_file_path,
                 "source": "uniprot"
