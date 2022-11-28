@@ -146,22 +146,30 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    with TemporaryDirectory() as tmp_dir:
+    with TarFile.open(args.qfo_archive) as tar_file, TemporaryDirectory() as tmp_dir:
 
-        with TarFile.open(args.qfo_archive) as tar_file:
-            tar_file.extractall(tmp_dir)
-
+        tar_file.extract("README", tmp_dir)
         readme_file = os.path.join(tmp_dir, "README")
         uniprot_meta = parse_qfo_proteome_table(readme_file)
+
+        fa_name_to_tar_info = {}
+        for tar_info in tar_file.getmembers():
+            if tar_info.isfile() and tar_info.name.endswith(".fasta"):
+                fa_name = os.path.basename(tar_info.name)
+                fa_name_to_tar_info[fa_name] = tar_info
 
         out_dir = os.path.abspath(args.output_dir)
         os.makedirs(out_dir, exist_ok=True)
 
         source_meta = []
         for row in uniprot_meta.itertuples():
-            in_dir = os.path.join(tmp_dir, row.superregnum.capitalize())
+            exp_cds_fa_name = f"{row.proteome_id}_{row.tax_id}_DNA.fasta"
+            cds_member = fa_name_to_tar_info[exp_cds_fa_name]
+            exp_prot_fa_name = f"{row.proteome_id}_{row.tax_id}.fasta"
+            prot_member = fa_name_to_tar_info[exp_prot_fa_name]
+            tar_file.extractall(tmp_dir, [cds_member, prot_member])
 
-            in_cds_file_path = os.path.join(in_dir, f"{row.proteome_id}_{row.tax_id}_DNA.fasta")
+            in_cds_file_path = os.path.join(tmp_dir, cds_member.name)
             out_cds_file_path = os.path.join(out_dir, f"{row.tax_id}_{row.production_name}.cds.fasta")
 
             cds_ids = set()
@@ -171,8 +179,9 @@ if __name__ == "__main__":
                     if set(str(rec.seq)) <= set("ACGTN"):
                         SeqIO.write([rec], out_file_obj, "fasta")
                         cds_ids.add(uniq_id)
+            os.remove(in_cds_file_path)
 
-            in_prot_file_path = os.path.join(in_dir, f"{row.proteome_id}_{row.tax_id}.fasta")
+            in_prot_file_path = os.path.join(tmp_dir, prot_member.name)
             out_prot_file_path = os.path.join(out_dir, f"{row.tax_id}_{row.production_name}.prot.fasta")
 
             with open(in_prot_file_path) as in_file_obj, open(out_prot_file_path, "w") as out_file_obj:
@@ -180,6 +189,7 @@ if __name__ == "__main__":
                     db_name, uniq_id, entry_name = rec.id.split("|")
                     if uniq_id in cds_ids:
                         SeqIO.write([rec], out_file_obj, "fasta")
+            os.remove(in_prot_file_path)
 
             source_meta.append({
                 "production_name": row.production_name,
