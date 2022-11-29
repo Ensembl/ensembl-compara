@@ -228,7 +228,7 @@ sub _counts {
     }
     my $division = $self->sd_config($args,"DIVISION");
     if ($division) {
-      $out->{'homoeologues'} = $member->number_of_homoeologues // $member->number_of_homoeologues($division);
+      $out->{'homoeologs'} = $member->number_of_homoeologues // $member->number_of_homoeologues($division);
     }
   }
   my $alignments = $self->_count_alignments($args);
@@ -292,8 +292,8 @@ sub get {
   $out->{'family_count'} = $counts->{'families'};
   $out->{'not_rnaseq'} = $args->{'type'} ne 'rnaseq';
   for (qw(
-    transcripts alignments paralogs strain_paralogs orthologs strain_orthologs homologs similarity_matches
-    operons structural_variation pairwise_alignments
+    transcripts alignments paralogs strain_paralogs orthologs strain_orthologs homologs 
+    homoeologs similarity_matches operons structural_variation pairwise_alignments
   )) {
     $out->{"has_$_"} = $counts->{$_};
   }
