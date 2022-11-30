@@ -226,7 +226,7 @@ sub variation_source {
     } 
   } elsif ($source =~ /ClinVar/i) {
     $sname = ($name =~ /^rs/) ?  'CLINVAR_DBSNP' : 'CLINVAR';
-    $source_link = $hub->get_ExtURL_link("About $source", $sname, $name);
+    $source_link = $hub->get_ExtURL_link("View in $source", $sname, $name);
   } elsif ($source =~ /SGRP/) {
     $source_link = $hub->get_ExtURL_link("About $source", 'SGRP_PROJECT');
   } elsif ($source =~ /COSMIC/) {
