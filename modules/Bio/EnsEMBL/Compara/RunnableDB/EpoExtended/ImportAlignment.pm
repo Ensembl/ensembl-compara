@@ -140,7 +140,7 @@ sub importAlignment {
         $gat_sql = "SELECT gat.*".
                     " FROM genomic_align ga".
                     " JOIN dnafrag USING (dnafrag_id)".
-                    " LEFT JOIN genomic_align_tree gat USING (node_id) WHERE ga.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id $ancestral_dbID_constraint ".
+                    " LEFT JOIN genomic_align_tree gat USING (node_id) WHERE ga.node_id IS NOT NULL AND ga.method_link_species_set_id = $mlss_id ".
                     "ORDER BY node_id DESC";
     }
 
