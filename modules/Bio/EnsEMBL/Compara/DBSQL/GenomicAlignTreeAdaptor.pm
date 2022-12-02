@@ -822,7 +822,9 @@ sub delete {
       "DELETE FROM genomic_align_tree WHERE root_id = ?"
     );
     $tree_update_sth->execute($root->node_id);
+    $self->dbc->do("SET FOREIGN_KEY_CHECKS=0");
     $tree_delete_sth->execute($root->node_id);
+    $self->dbc->do("SET FOREIGN_KEY_CHECKS=1");
 }
 
 
