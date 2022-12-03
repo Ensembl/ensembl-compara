@@ -17,9 +17,11 @@
 
 import argparse
 import json
+import logging
 import os
 from pathlib import Path
 import re
+import string
 from tarfile import TarFile
 from tempfile import TemporaryDirectory
 from typing import Dict, Union
@@ -143,8 +145,19 @@ if __name__ == "__main__":
                         help="Output JSON file of proteome metadata.")
     parser.add_argument("output_dir",
                         help="Directory to which proteome data will be output.")
+    parser.add_argument("--disallow-ambiguity-codes", action="store_true",
+                        help="Filter out CDS FASTA records containing symbols"
+                             " other than 'A', 'C', 'G', 'T' or 'N'.")
+    parser.add_argument("--skip-invalid-cds", action="store_true",
+                        help="Skip CDS FASTA records with invalid DNA sequence.")
 
     args = parser.parse_args()
+
+    valid_cds_symbols = set("ABCDGHKMNRSTVWY"
+                            "abcdghkmnrstvwy")
+    strict_cds_symbols = set("ACGTN"
+                             "acgtn")
+    valid_aa_symbols = set(string.ascii_letters)
 
     with TarFile.open(args.qfo_archive) as tar_file, TemporaryDirectory() as tmp_dir:
 
@@ -173,12 +186,37 @@ if __name__ == "__main__":
             out_cds_file_path = os.path.join(out_dir, f"{row.tax_id}_{row.production_name}.cds.fasta")
 
             cds_ids = set()
+            skipped_ambig_cds_ids = set()
+            skipped_invalid_cds_ids = set()
             with open(in_cds_file_path) as in_file_obj, open(out_cds_file_path, "w") as out_file_obj:
                 for rec in SeqIO.parse(in_file_obj, "fasta"):
                     db_name, uniq_id, entry_name = rec.id.split("|")
-                    if set(str(rec.seq)) <= set("ACGTN"):
-                        SeqIO.write([rec], out_file_obj, "fasta")
-                        cds_ids.add(uniq_id)
+                    seq_symbols = set(str(rec.seq))
+
+                    issues = []
+                    action = "keeping"
+                    if (seq_symbols & valid_cds_symbols) - strict_cds_symbols:
+                        if args.disallow_ambiguity_codes:
+                            skipped_ambig_cds_ids.add(uniq_id)
+                            issues.append("disallowed ambiguity codes")
+                            action = "skipping"
+
+                    if seq_symbols - valid_cds_symbols:
+                        if args.skip_invalid_cds:
+                            skipped_invalid_cds_ids.add(uniq_id)
+                            issues.append("invalid sequence")
+                            action = "skipping"
+
+                    if issues:
+                        logging.warning("FASTA record '%s' in '%s' has %s, %s",
+                                        rec.id, cds_member.name, " and ".join(issues), action)
+                        if action == "skipping":
+                            continue
+
+                    SeqIO.write([rec], out_file_obj, "fasta")
+                    cds_ids.add(uniq_id)
+
+            skipped_cds_ids = skipped_ambig_cds_ids | skipped_invalid_cds_ids
             os.remove(in_cds_file_path)
 
             in_prot_file_path = os.path.join(tmp_dir, prot_member.name)
@@ -187,8 +225,14 @@ if __name__ == "__main__":
             with open(in_prot_file_path) as in_file_obj, open(out_prot_file_path, "w") as out_file_obj:
                 for rec in SeqIO.parse(in_file_obj, "fasta"):
                     db_name, uniq_id, entry_name = rec.id.split("|")
+                    if not set(str(rec.seq)) <= valid_aa_symbols:
+                        raise ValueError(
+                            f"FASTA record '{rec.id}' in '{prot_member.name}' has invalid AA sequence")
                     if uniq_id in cds_ids:
                         SeqIO.write([rec], out_file_obj, "fasta")
+                    elif uniq_id not in skipped_cds_ids:
+                        logging.warning("FASTA record '%s' in '%s' has no CDS, skipping",
+                                        rec.id, cds_member.name)
             os.remove(in_prot_file_path)
 
             source_meta.append({
