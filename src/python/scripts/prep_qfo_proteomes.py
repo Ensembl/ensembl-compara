@@ -150,6 +150,8 @@ if __name__ == "__main__":
                              " other than 'A', 'C', 'G', 'T' or 'N'.")
     parser.add_argument("--skip-invalid-cds", action="store_true",
                         help="Skip CDS FASTA records with invalid DNA sequence.")
+    parser.add_argument("--stats-file", metavar="PATH",
+                        help="Output TSV file of proteome prep stats.")
 
     args = parser.parse_args()
 
@@ -174,6 +176,7 @@ if __name__ == "__main__":
         out_dir = os.path.abspath(args.output_dir)
         os.makedirs(out_dir, exist_ok=True)
 
+        prep_stats = []
         source_meta = []
         for row in uniprot_meta.itertuples():
             exp_cds_fa_name = f"{row.proteome_id}_{row.tax_id}_DNA.fasta"
@@ -186,6 +189,8 @@ if __name__ == "__main__":
             out_cds_file_path = os.path.join(out_dir, f"{row.tax_id}_{row.production_name}.cds.fasta")
 
             cds_ids = set()
+            num_part_ambig_cds = 0
+            num_invalid_cds = 0
             skipped_ambig_cds_ids = set()
             skipped_invalid_cds_ids = set()
             with open(in_cds_file_path) as in_file_obj, open(out_cds_file_path, "w") as out_file_obj:
@@ -200,12 +205,14 @@ if __name__ == "__main__":
                             skipped_ambig_cds_ids.add(uniq_id)
                             issues.append("disallowed ambiguity codes")
                             action = "skipping"
+                        num_part_ambig_cds += 1
 
                     if seq_symbols - valid_cds_symbols:
                         if args.skip_invalid_cds:
                             skipped_invalid_cds_ids.add(uniq_id)
                             issues.append("invalid sequence")
                             action = "skipping"
+                        num_invalid_cds += 1
 
                     if issues:
                         logging.warning("FASTA record '%s' in '%s' has %s, %s",
@@ -222,6 +229,9 @@ if __name__ == "__main__":
             in_prot_file_path = os.path.join(tmp_dir, prot_member.name)
             out_prot_file_path = os.path.join(out_dir, f"{row.tax_id}_{row.production_name}.prot.fasta")
 
+            num_canonical = 0
+            num_without_cds = 0
+            num_prepped = 0
             with open(in_prot_file_path) as in_file_obj, open(out_prot_file_path, "w") as out_file_obj:
                 for rec in SeqIO.parse(in_file_obj, "fasta"):
                     db_name, uniq_id, entry_name = rec.id.split("|")
@@ -230,9 +240,12 @@ if __name__ == "__main__":
                             f"FASTA record '{rec.id}' in '{prot_member.name}' has invalid AA sequence")
                     if uniq_id in cds_ids:
                         SeqIO.write([rec], out_file_obj, "fasta")
+                        num_prepped += 1
                     elif uniq_id not in skipped_cds_ids:
                         logging.warning("FASTA record '%s' in '%s' has no CDS, skipping",
                                         rec.id, cds_member.name)
+                        num_without_cds += 1
+                    num_canonical += 1
             os.remove(in_prot_file_path)
 
             source_meta.append({
@@ -243,5 +256,20 @@ if __name__ == "__main__":
                 "source": "uniprot"
             })
 
+            prep_stats.append({
+                "production_name": row.production_name,
+                "num_canonical": num_canonical,
+                "num_part_ambig_cds": num_part_ambig_cds,
+                "num_invalid_cds": num_invalid_cds,
+                "num_skipped_cds": len(skipped_cds_ids),
+                "num_without_cds": num_without_cds,
+                "num_prepped": num_prepped
+            })
+
         with open(args.meta_file, "w") as out_file_obj:
             json.dump(source_meta, out_file_obj)
+
+        if args.stats_file:
+            stats_df = pd.DataFrame(prep_stats)
+            stats_df.sort_values(by="production_name", inplace=True)
+            stats_df.to_csv(args.stats_file, sep="\t", index=False)
