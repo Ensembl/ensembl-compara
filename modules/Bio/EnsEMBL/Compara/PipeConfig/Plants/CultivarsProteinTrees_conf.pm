@@ -121,7 +121,7 @@ sub tweak_analyses {
     $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
 
     # Wire up cultivar-specific analyses
-    $analyses_by_name->{'remove_blacklisted_genes'}->{'-flow_into'} = ['check_strains_cluster_factory'];
+    $analyses_by_name->{'remove_blocklisted_genes'}->{'-flow_into'} = ['check_strains_cluster_factory'];
     push @{$analyses_by_name->{'backbone_pipeline_finished'}->{'-flow_into'}}, 'remove_overlapping_homologies';
 }
 
