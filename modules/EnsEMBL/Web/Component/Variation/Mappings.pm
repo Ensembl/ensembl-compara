@@ -711,7 +711,32 @@ sub detail_panel {
         }
       }
       foreach my $domain_src (sort(keys(%domains))) {
-        $data{domains} .= "<b>$domain_src</b><div class=\"column-right\"><ul class=\"compact\">";
+
+        # add button to PDB and AlphaFold models
+        my $structure_button = "";
+        my $consequence = $tv->display_consequence;
+        $consequence =~ s/_/ /g;
+
+        my $isPDB = $domain_src =~ '^PDB-ENSP';
+        my $isAFDB = $domain_src =~ '^AFDB-ENSP' && $consequence && $consequence eq 'missense variant';
+        if ( $isPDB || $isAFDB ) {
+          my $button_url = $hub->url({
+            type    => $isPDB ? 'Variation' : 'Tools',
+            action  => $isPDB ? 'PDB' : 'VEP/AFDB',
+            var     => $object->name,
+            pos     => $tv->translation_start,
+            cons    => $consequence,
+            g       => $gene_id,
+            t       => $tr_id,
+            species => $hub->species
+          });
+
+          my $model_type = $isPDB ? "Protein Structure View" : "Alphafold model";
+          $structure_button = qq{<div class="in-table-button"><a href="$button_url">$model_type</a></div>};
+        }
+
+        $data{domains} .= "<b>$domain_src</b>" . $structure_button . "<div class=\"column-right\"><ul class=\"compact\">";
+
         foreach my $value (@{$domains{$domain_src}}) {
           my $key = uc $domain_src;
           my $value_url = $value;
@@ -725,6 +750,7 @@ sub detail_panel {
             ( $value_url ) = $value =~ /(.+)\./;
           } elsif ($key =~ '^AFDB-ENSP') {
             $key = "ALPHAFOLD";
+            ( $value ) = $value =~ /(.+)\./; # remove chain from AlphaFold ID
             ( $value_url ) = $value =~ /-(.+)-/;
           } elsif ($key eq 'GENE3D') {
             $value_url = "G3DSA:$value" unless $value =~ /^G3DSA:/;
