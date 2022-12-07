@@ -42,34 +42,47 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::MergeDBsIntoRelease_conf');
 
-
 sub default_options {
     my ($self) = @_;
-
     return {
         %{$self->SUPER::default_options},
-
         'division' => 'metazoa',
 
         # All the source databases
-        'src_db_aliases' => {
-            'master_db'     => 'compara_master',
-            'protein_db'    => 'compara_ptrees',
+        # edit the reg_conf file rather than adding URLs
+        'src_db_aliases'    => {
+            'master_db'                 => 'compara_master',
+            'default_protein_db'        => 'compara_ptrees',
+            'protostomes_protein_db'    => 'protostomes_compara_ptrees',
+            'members_db'                => 'compara_members',
         },
 
         # From these databases, only copy these tables
-        'only_tables' => {
-            # Cannot be copied by populate_new_database because it does not contain the new
-            # mapping_session_ids yet
-            'master_db' => [ qw(mapping_session) ],
+        'only_tables'       => {
+           # Cannot be copied by populate_new_database because it doesn't contain the new mapping_session_ids yet
+           'master_db'     => [qw(mapping_session)],
         },
 
-        # These tables have a unique source. Content from other databases is ignored.
-        'exclusive_tables' => {
-            'mapping_session'         => 'master_db',
+        # These tables have a unique source. Content from other databases is ignored
+        'exclusive_tables'  => {
+            'mapping_session'                   => 'master_db',
+            'hmm_annot'                         => 'default_protein_db',
+            'gene_member'                       => 'members_db',
+            'seq_member'                        => 'members_db',
+            'other_member_sequence'             => 'members_db',
+            'sequence'                          => 'members_db',
+            'exon_boundaries'                   => 'members_db',
+            'method_link_species_set_attr'      => 'default_protein_db',
+            'method_link_species_set_tag'       => 'default_protein_db',
+            'peptide_align_feature%'            => 'default_protein_db',
         },
-    };
+
+        # In these databases, ignore these tables
+        'ignored_tables' => {
+            # Mapping 'db_alias' => Arrayref of table names
+            'default_protein_db'        => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
+            'protostomes_protein_db'    => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
+        }
+    }
 }
-
-
 1;
