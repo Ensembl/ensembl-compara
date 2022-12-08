@@ -53,7 +53,7 @@ sub content {
   ## Pagination
   my $entries_per_page  = 5;
   my $current_page      = $hub->param('page') || 1;
-  my $url_params = {'page' => $current_page, 'entries_per_page' => $entries_per_page};
+  my $url_params = {'page' => $current_page, 'entries_per_page' => $entries_per_page, '_delimiter' => '&'};
   
   my ($result, $error) = $self->object->thr_search($url_params);
 
