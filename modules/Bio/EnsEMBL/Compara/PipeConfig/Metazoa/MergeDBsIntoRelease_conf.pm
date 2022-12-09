@@ -53,7 +53,7 @@ sub default_options {
         'src_db_aliases'    => {
             'master_db'                 => 'compara_master',
             'default_protein_db'        => 'compara_ptrees',
-            'protostomes_protein_db'    => 'protostomes_compara_ptrees',
+            'protostomes_protein_db'    => 'protostomes_ptrees',
             'members_db'                => 'compara_members',
         },
 
