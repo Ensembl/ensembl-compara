@@ -112,7 +112,7 @@
       <genome name="apis_mellifera"/>
       <genome name="bombyx_mori"/>
       <genome name="centruroides_sculpturatus_gca000671375v2"/>
-      <genome name="dermacentor_andersoni_gca013339745v2rs"/>
+      <genome name="dermacentor_andersoni_gca023375885v2rs"/>
       <genome name="dermatophagoides_pteronyssinus_gca001901225v2"/>
       <genome name="diabrotica_virgifera_gca917563875v2rs"/>
       <genome name="drosophila_melanogaster"/>
@@ -224,7 +224,7 @@
       <genome name="drosophila_yakuba"/>
       <genome name="dufourea_novaeangliae_gca001272555v1rs"/>
       <genome name="eufriesea_mexicana_gca001483705v1rs"/>
-      <genome name="folsomia_candida_gca002217175v1rs"/>
+      <genome name="folsomia_candida"/>
       <genome name="glossina_fuscipes"/>
       <genome name="glossina_morsitans"/>
       <genome name="habropoda_laboriosa_gca001263275v1rs"/>
