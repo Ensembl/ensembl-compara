@@ -36,15 +36,15 @@ my $prev_release = $curr_release - 1;
 # ---------------------- CURRENT CORE DATABASES---------------------------------
 
 # All the core databases live on the Vertebrates staging server or our mirror
-#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1.ebi.ac.uk:4519/$curr_release");
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1-b:4685/$curr_release");
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
 
 # Ensure we're using the correct cores for species that overlap with metazoa
 my @metazoa_overlap_species = qw(drosophila_melanogaster caenorhabditis_elegans);
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@metazoa_overlap_species);
 my $metazoa_overlap_cores = {
-    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_" . $curr_release . "_9" ],
-    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_" . $curr_release . "_282" ],
+    'drosophila_melanogaster' => [ 'mysql-ens-sta-1-b', "drosophila_melanogaster_core_" . $curr_release . "_9" ],
+    'caenorhabditis_elegans'  => [ 'mysql-ens-sta-1-b', "caenorhabditis_elegans_core_" . $curr_release . "_282" ],
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $metazoa_overlap_cores );
 
