@@ -122,7 +122,7 @@ CREATE TABLE ncbi_taxa_node (
 
 CREATE TABLE ncbi_taxa_name (
   taxon_id                    int(10) unsigned NOT NULL,
-  name                        varchar(255) NOT NULL,
+  name                        varchar(500) NOT NULL,
   name_class                  varchar(50) NOT NULL,
 
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
@@ -2284,6 +2284,7 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_109_110_a.sql|schema_version');
-
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_109_110_b.sql|case_insensitive_stable_id_again');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_109_110_c.sql|ncbi_taxa_name_varchar500');
