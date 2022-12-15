@@ -76,3 +76,4 @@
 106	\N	patch	patch_105_106_b.sql|clusterset_id_varchar50
 107	\N	patch	patch_106_107_b.sql|case_sensitive_stable_id
 109	\N	patch	patch_107_108_a.sql|schema_version
+110	\N	patch	patch_107_108_b.sql|ncbi_taxa_name_varchar500
