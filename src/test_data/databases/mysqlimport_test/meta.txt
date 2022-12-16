@@ -15,3 +15,4 @@
 29	\N	patch	patch_105_106_b.sql|clusterset_id_varchar50
 30	\N	patch	patch_106_107_b.sql|case_sensitive_stable_id
 32	\N	patch	patch_107_108_a.sql|schema_version
+33	\N	patch	patch_107_108_b.sql|ncbi_taxa_name_varchar500
