@@ -160,7 +160,7 @@ CREATE TABLE `gene_member` (
   KEY `dnafrag_id_end` (`dnafrag_id`,`dnafrag_end`),
   KEY `biotype_dnafrag_id_start_end` (`biotype_group`,`dnafrag_id`,`dnafrag_start`,`dnafrag_end`),
   KEY `genome_db_id_biotype` (`genome_db_id`,`biotype_group`)
-) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=latin1 MAX_ROWS=100000000 ROW_FORMAT=DYNAMIC;
+) ENGINE=MyISAM AUTO_INCREMENT=915675731 DEFAULT CHARSET=latin1 MAX_ROWS=100000000 ROW_FORMAT=DYNAMIC;
 
 CREATE TABLE `gene_member_hom_stats` (
   `gene_member_id` int(10) unsigned NOT NULL,
