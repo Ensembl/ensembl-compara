@@ -13,7 +13,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-# patch_105_106_b.sql
+# patch_109_110_c.sql
 #
 # Title: Widen the name field in ncbi_taxa_name.
 #
@@ -24,4 +24,4 @@ ALTER TABLE ncbi_taxa_name MODIFY COLUMN name VARCHAR(500) NOT NULL;
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_109_110_b.sql|ncbi_taxa_name_varchar500');
+  VALUES (NULL, 'patch', 'patch_109_110_c.sql|ncbi_taxa_name_varchar500');
