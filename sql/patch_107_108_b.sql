@@ -13,7 +13,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-# patch_105_106_b.sql
+# patch_107_108_b.sql
 #
 # Title: Widen the name field in ncbi_taxa_name.
 #
