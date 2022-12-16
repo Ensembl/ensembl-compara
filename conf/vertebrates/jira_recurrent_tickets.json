@@ -342,24 +342,5 @@
          }
       ],
       "summary": "<Division> Release <version> Final checks before public release"
-   },
-   {
-      "assignee": "<RelCo>",
-      "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps",
-      "subtasks": [{
-            "assignee": "<RelCo>",
-            "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Databaseupdate",
-            "summary": "Incremental copy back release database"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Runningthepipeline",
-            "summary": "Data dump"
-         }
-      ],
-      "summary": "<Division> Release <version> FTP Dumps"
    }
 ]
