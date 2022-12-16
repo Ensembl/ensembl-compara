@@ -84,3 +84,4 @@
 116	\N	patch	patch_108_109_f.sql|stable_id_key_again
 118	\N	patch	patch_109_110_a.sql|schema_version
 119	\N	patch	patch_109_110_b.sql|case_insensitive_stable_id_again
+120	\N	patch	patch_109_110_c.sql|ncbi_taxa_name_varchar500
