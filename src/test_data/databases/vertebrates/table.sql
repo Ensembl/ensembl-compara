@@ -566,7 +566,7 @@ CREATE TABLE `seq_member` (
   KEY `dnafrag_id_start` (`dnafrag_id`,`dnafrag_start`),
   KEY `dnafrag_id_end` (`dnafrag_id`,`dnafrag_end`),
   KEY `seq_member_gene_member_id_end` (`seq_member_id`,`gene_member_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=latin1 MAX_ROWS=100000000 ROW_FORMAT=DYNAMIC;
+) ENGINE=MyISAM AUTO_INCREMENT=952569014 DEFAULT CHARSET=latin1 MAX_ROWS=100000000 ROW_FORMAT=DYNAMIC;
 
 CREATE TABLE `seq_member_projection` (
   `source_seq_member_id` int(10) unsigned NOT NULL,
