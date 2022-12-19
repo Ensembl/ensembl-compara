@@ -72,8 +72,6 @@ sub default_options {
             'other_member_sequence'             => 'members_db',
             'sequence'                          => 'members_db',
             'exon_boundaries'                   => 'members_db',
-            'method_link_species_set_attr'      => 'default_protein_db',
-            'method_link_species_set_tag'       => 'default_protein_db',
             'peptide_align_feature%'            => 'default_protein_db',
         },
 
