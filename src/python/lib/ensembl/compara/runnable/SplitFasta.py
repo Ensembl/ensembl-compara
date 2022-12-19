@@ -90,17 +90,10 @@ class SplitFasta(eHive.BaseRunnable):
         num_seqs = self.param('num_seqs')
         out_dir = self.param('out_dir')
 
-        records_written = 0
         files_written = 1
-        dst_file = os.path.join(out_dir, f"{file_prefix}.{files_written}.fasta")
-        out_file = open(dst_file, 'w')
-        for fasta_record in fasta_records:
-            if (records_written > 0) and (records_written % num_seqs == 0):
-                out_file.close()
-                files_written += 1
-                dst_file = os.path.join(out_dir, f"{file_prefix}.{files_written}.fasta")
-                out_file = open(dst_file, 'w')
-
-            out_file.write(f">{fasta_record[0]}\n{fasta_record[1]}\n")
-            records_written += 1
-        out_file.close()
+        for seq_idx in range(0, len(fasta_records), num_seqs):
+            dst_file = os.path.join(out_dir, f"{file_prefix}.{files_written}.fasta")
+            with open(dst_file, 'w') as out_file:
+                for fasta_record in fasta_records[seq_idx:seq_idx+num_seqs]:
+                    out_file.write(f">{fasta_record[0]}\n{fasta_record[1]}\n")
+            files_written += 1
