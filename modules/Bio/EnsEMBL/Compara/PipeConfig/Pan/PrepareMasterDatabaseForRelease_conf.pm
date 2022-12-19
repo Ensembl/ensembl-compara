@@ -103,7 +103,7 @@ sub default_options {
                               'stegodyphus_mimosarum',
                               'schistosoma_mansoni',
                               'pediculus_humanus',
-                              'octopus_bimaculoides_gca001194135v1',
+                              'octopus_bimaculoides',
                               'nematostella_vectensis',
                               'mnemiopsis_leidyi',
                               'lottia_gigantea',
