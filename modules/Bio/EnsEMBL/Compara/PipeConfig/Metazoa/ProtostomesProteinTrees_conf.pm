@@ -49,7 +49,7 @@ sub default_options {
         'collection'          => 'protostomes',
         'dbID_range_index'    => 10,
         'ref_collection'      => 'default',
-	'label_prefix' => 'protostomes_',
+        'label_prefix' => 'protostomes_',
     };
 }
 
