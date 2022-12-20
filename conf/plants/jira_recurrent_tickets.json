@@ -82,6 +82,13 @@
          },
          {
             "component": "Production tasks",
+            "description": "*GitHub*: [RiceCultivarsProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/RiceCultivarsProteinTrees_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::RiceCultivarsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "summary": "Run the rice cultivars Protein-trees pipeline",
+            "name_on_graph": "Protein-trees:Rice cultivars"
+         },
+         
+         {
+            "component": "Production tasks",
             "description": "Mark as done when all LastZs have been merged into the new release database.",
             "summary": "All LastZ",
             "name_on_graph": "All LastZ"
