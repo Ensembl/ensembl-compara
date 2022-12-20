@@ -55,8 +55,8 @@ sub default_options {
         # and homologies are removed during the complementary protein-trees pipeline. This should be
         # defined in the PipeConfig file for each complementary collection (or on the command line).
         'ref_collection'   => undef,
-	'do_stable_id_mapping' => 0,
-	'do_treefam_xref' => 0,
+        'do_stable_id_mapping' => 0,
+        'do_treefam_xref' => 0,
     };
 }
 
