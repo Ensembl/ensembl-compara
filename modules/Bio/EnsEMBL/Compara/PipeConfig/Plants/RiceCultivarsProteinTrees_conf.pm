@@ -61,7 +61,8 @@ sub default_options {
         # Threshold used by per_genome_qc in order to check if the amount of orphan genes are acceptable
         # values are lower than in the Plants config file because the clustering method is less comprehensive
         'mapped_gene_ratio_per_taxon' => {
-            '1648030' => 0.75,
+            '2759'    => 0.5,     # eukaryotes
+            '4527'    => 0.75,    # oryza
         },
 
         # GOC parameters
