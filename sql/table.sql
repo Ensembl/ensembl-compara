@@ -122,7 +122,7 @@ CREATE TABLE ncbi_taxa_node (
 
 CREATE TABLE ncbi_taxa_name (
   taxon_id                    int(10) unsigned NOT NULL,
-  name                        varchar(255) NOT NULL,
+  name                        varchar(500) NOT NULL,
   name_class                  varchar(50) NOT NULL,
 
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
@@ -1015,7 +1015,7 @@ CREATE TABLE sequence (
 
 CREATE TABLE gene_member (
   gene_member_id              INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  stable_id                   varchar(128) BINARY NOT NULL, # e.g. ENSP000001234 or P31946
+  stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
   version                     INT UNSIGNED DEFAULT 0,
   source_name                 ENUM('ENSEMBLGENE', 'EXTERNALGENE') NOT NULL,
   taxon_id                    INT unsigned NOT NULL, # FK taxon.taxon_id
@@ -1116,7 +1116,7 @@ CREATE TABLE gene_member_hom_stats (
 
 CREATE TABLE seq_member (
   seq_member_id               INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  stable_id                   varchar(128) BINARY NOT NULL, # e.g. ENSP000001234 or P31946
+  stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
   version                     INT UNSIGNED DEFAULT 0,
   source_name                 ENUM('ENSEMBLPEP','ENSEMBLTRANS','Uniprot/SPTREMBL','Uniprot/SWISSPROT','EXTERNALPEP','EXTERNALTRANS','EXTERNALCDS') NOT NULL,
   taxon_id                    INT unsigned NOT NULL, # FK taxon.taxon_id
@@ -2276,26 +2276,15 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '109');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '110');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_108_109_a.sql|schema_version');
-
+  VALUES (NULL, 'patch', 'patch_109_110_a.sql|schema_version');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_108_109_b.sql|gene_member_qc_key');
-
+  VALUES (NULL, 'patch', 'patch_109_110_b.sql|case_insensitive_stable_id_again');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_108_109_c.sql|stable_id_unique_per_genome');
-
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_108_109_d.sql|case_insensitive_stable_id');
-
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_108_109_e.sql|case_sensitive_stable_id_again');
-
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_108_109_f.sql|stable_id_key_again');
+  VALUES (NULL, 'patch', 'patch_109_110_c.sql|ncbi_taxa_name_varchar500');

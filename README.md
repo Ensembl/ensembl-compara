@@ -1,7 +1,7 @@
 # Ensembl Compara API
 
-[![Build Status](https://travis-ci.org/Ensembl/ensembl-compara.svg?branch=release/109)](https://travis-ci.org/Ensembl/ensembl-compara)
-[![Codecov Status](https://codecov.io/gh/ensembl/ensembl-compara/branch/release/109)/graph/badge.svg)](https://codecov.io/github/Ensembl/ensembl-compara)
+[![Build Status](https://travis-ci.org/Ensembl/ensembl-compara.svg?branch=main)](https://travis-ci.org/Ensembl/ensembl-compara)
+[![Codecov Status](https://codecov.io/gh/ensembl/ensembl-compara/branch/main/graph/badge.svg)](https://codecov.io/github/Ensembl/ensembl-compara)
 [![Code Climate](https://api.codeclimate.com/v1/badges/2dd3c490030a5af7ff21/maintainability.svg)](https://codeclimate.com/github/Ensembl/ensembl-compara)
 
 The Ensembl Compara API (Application Programme Interface) serves as a
@@ -12,7 +12,7 @@ to the database.
 Find more information (including the installation guide and a tutorial) on
 the Ensembl website: <http://www.ensembl.org/info/docs/api/compara/>
 
-See [the main Ensembl repository](https://github.com/Ensembl/ensembl/blob/release/109/CONTRIBUTING.md)
+See [the main Ensembl repository](https://github.com/Ensembl/ensembl/blob/main/CONTRIBUTING.md)
 for the guidelines on user contributions.
 
 ## Installation
@@ -21,7 +21,7 @@ for the guidelines on user contributions.
 
 We use a number of Perl modules that are all available on CPAN. We recommend using cpanminus to install these.
 You will need both the [Core API
-dependencies](https://github.com/Ensembl/ensembl/blob/release/109/cpanfile) and
+dependencies](https://github.com/Ensembl/ensembl/blob/main/cpanfile) and
 [ours](cpanfile).
 
 ### API to access HAL alignments (progressive-Cactus)
@@ -123,7 +123,7 @@ And run this makefile
 
 Alignments using the _method_ `CACTUS_HAL` or `CACTUS_HAL_PW` require extra
 files to be downloaded from
-<ftp://ftp.ensembl.org/pub/data_files/multi/hal_files/> in order to be fetched with the
+<https://ftp.ensembl.org/pub/data_files/multi/hal_files/> in order to be fetched with the
 API. The files must have the same name as on the FTP and must be placed
 under `multi/hal_files/` within your directory of choice.
 Finally, you need to define the environment variable `COMPARA_HAL_DIR` to

@@ -44,7 +44,7 @@ Perl libraries:
 Any compiled binaries mentioned in ``ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/EnsemblProteinTrees_conf.pm``
 Here is the list of the versions that we used for the e78 production:
 
-* NCBI-blast 2.2.28+   - ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.28/
+* NCBI-blast 2.2.28+   - https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.28/
 * mcoffee 9.03.r1318   - http://www.tcoffee.org/Projects/mcoffee/
 * MAFFT 7.113          - http://mafft.cbrc.jp/alignment/software/
 * hcluster_sg          - http://treesoft.svn.sourceforge.net/viewvc/treesoft/branches/lh3/hcluster/

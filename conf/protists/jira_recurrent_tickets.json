@@ -70,8 +70,8 @@
          {
             "component": "Production tasks",
             "description": "Mark as done when all LastZs have been merged into the new release database.",
-            "summary": "All LastZ",
-            "name_on_graph": "All LastZ"
+            "summary": "Merge all LastZ",
+            "name_on_graph": "Merge all LastZ"
          },
          {
             "component": "Production tasks",
@@ -98,7 +98,7 @@
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data",
             "summary": "Merge DNA data",
-            "name_on_graph": "All alignments for WGA Orthology QC"
+            "name_on_graph": "Merge all alignments for WGA Orthology QC"
          },
          {
             "assignee": "<RelCo>",
@@ -178,24 +178,5 @@
          }
       ],
       "summary": "<Division> Release <version> Final checks before public release"
-   },
-   {
-      "assignee": "<RelCo>",
-      "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps",
-      "subtasks": [{
-            "assignee": "<RelCo>",
-            "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Databaseupdate",
-            "summary": "Incremental copy back release database"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Runningthepipeline",
-            "summary": "Data dump"
-         }
-      ],
-      "summary": "<Division> Release <version> FTP Dumps"
    }
 ]

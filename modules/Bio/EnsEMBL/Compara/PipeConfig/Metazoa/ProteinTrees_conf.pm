@@ -110,6 +110,9 @@ sub default_options {
 
 sub tweak_analyses {
     my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
     my $analyses_by_name = shift;
 
     # Extend this section to redefine the resource names of some analysis

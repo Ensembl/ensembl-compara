@@ -100,6 +100,9 @@ sub default_options {
 
 sub tweak_analyses {
     my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
     my $analyses_by_name = shift;
 
     # Pan division doesn't run any type of alignment
