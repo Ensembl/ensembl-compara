@@ -96,6 +96,11 @@ sub core_pipeline_analyses {
         {
              -logic_name => 'remove_overlapping_homologies',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveOverlappingHomologies',
+             -flow_into  => [ 'remove_overlapping_data_by_member' ],
+        },
+        {
+             -logic_name => 'remove_overlapping_data_by_member',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingDataByMember',
         },
     ]
 }

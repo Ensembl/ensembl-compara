@@ -66,18 +66,17 @@ sub default_options {
         # These tables have a unique source. Content from other databases is ignored
         'exclusive_tables'  => {
             'mapping_session'                   => 'master_db',
-            'hmm_annot'                         => 'default_protein_db',
             'gene_member'                       => 'members_db',
             'seq_member'                        => 'members_db',
             'other_member_sequence'             => 'members_db',
             'sequence'                          => 'members_db',
             'exon_boundaries'                   => 'members_db',
-            'peptide_align_feature%'            => 'default_protein_db',
         },
 
         # In these databases, ignore these tables
         'ignored_tables' => {
             # Mapping 'db_alias' => Arrayref of table names
+            'members_db'                => [qw(hmm_annot)],
             'default_protein_db'        => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
             'protostomes_protein_db'    => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
         }
