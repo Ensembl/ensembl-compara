@@ -45,9 +45,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'division'   => 'plants',
+    'division'   => 'plants',
 
-        # clustering parameters:
+    # clustering parameters:
         # affects 'hcluster_dump_input_per_genome'
         'outgroups' => {
             'homo_sapiens'             => 2,
@@ -59,17 +59,17 @@ sub default_options {
         # File with gene / peptide names that must be excluded from the clusters (e.g. know to disturb the trees)
         'gene_blocklist_file'          => $self->o('warehouse_dir') . '/template_blocklist.txt',
 
-        # species tree reconciliation
+    # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
         'species_tree_input_file'        => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/species_tree.topology.nw'),
         'binary_species_tree_input_file' => undef,
 
-        # homology_dnds parameters:
+    # homology_dnds parameters:
         # used by 'homology_dNdS'
         'taxlevels' => ['Liliopsida', 'eudicotyledons', 'Chlorophyta'],
 
-        # threshold used by per_genome_qc in order to check if the amount of orphan genes are acceptable
-        # values were infered by checking previous releases, values that are out of these ranges may be caused by assembly and/or gene annotation problems.
+    # threshold used by per_genome_qc in order to check if the amount of orphan genes are acceptable
+    # values were infered by checking previous releases, values that are out of these ranges may be caused by assembly and/or gene annotation problems.
         'mapped_gene_ratio_per_taxon' => {
             '2759'    => 0.5,     #eukaryotes
             '33090'   => 0.65,    #plants
@@ -77,10 +77,10 @@ sub default_options {
             '3041'    => 0.65,    #green algae
         },
 
-        # GOC parameters
+    # GOC parameters
         'goc_taxlevels' => ['Panicoideae', 'Oryzinae', 'Pooideae', 'Solanaceae', 'Brassicaceae', 'Malvaceae', 'fabids'],
 
-        # HighConfidenceOrthologs Parameters
+    # HighConfidenceOrthologs Parameters
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
             {
