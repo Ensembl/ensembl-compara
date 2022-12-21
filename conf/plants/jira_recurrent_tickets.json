@@ -134,6 +134,12 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+CACTUS+HAL+Alignment+to+Compara",
+            "summary": "Merge the HAL alignment data"
+         }, 
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines#Mergethehomologypipelines-Species-trees",
             "summary": "Load the species tree"
          },
