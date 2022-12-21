@@ -57,9 +57,8 @@ sub fetch_input {
     my $genome_db_id    = $self->param_required('genome_db_id');
     my $genome_db       = $member_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id)
                             or die "'$genome_db_id' is not a valid GenomeDB dbID";
-    my $core_dba        = $genome_db->db_adaptor
+    $self->param('core_dba', $genome_db->db_adaptor)
                             or die sprintf("Cannot find a Core DBAdaptor for %s/%s", $genome_db->name, $genome_db_id);
-    $self->param('altallele_group_adaptor', $core_dba->get_AltAlleleGroupAdaptor);
     $self->param('member_dbc', $member_dba->dbc);
 
     # The master database provides the MLSS
@@ -96,7 +95,39 @@ sub run {
 
     copy_data_with_foreign_keys_by_constraint($self->param('master_dbc'), $self->compara_dba->dbc, 'method_link_species_set', 'method_link_species_set_id', $self->param('mlss')->dbID);
 
-    my $group = $self->param('altallele_group_adaptor')->fetch_by_dbID($self->param('alt_allele_group_id'));
+    my $altallele_group_adaptor = $self->param('core_dba')->get_AltAlleleGroupAdaptor;
+    my $group = $altallele_group_adaptor->fetch_by_dbID($self->param('alt_allele_group_id'));
+
+    my @par_gene_ids = map {$_->[0]} @{$group->get_all_members_with_type('IS_PAR')};
+    if (scalar(@par_gene_ids) > 0) {
+        my $gene_adaptor = $self->param('core_dba')->get_GeneAdaptor;
+        my @par_gene_group = map {$gene_adaptor->fetch_by_dbID($_)} @par_gene_ids;
+
+        foreach my $par_gene (@par_gene_group) {
+            my $seq_region = $par_gene->seq_region_name;
+            my $gene_id = $par_gene->dbID;
+
+            # The LoadMembers pipeline discards Y-PAR gene members, so we discard them here too.
+            # We also discard the 'IS_PAR' alt-allele attribute of any X-chromosome gene that
+            # has one, since it relates to the gene allele in the corresponding Y-PAR region.
+            if ($seq_region eq 'Y') {
+                $group->remove_member($gene_id);
+            } elsif ($seq_region eq 'X') {
+                $group->remove_attribs($gene_id, 'IS_PAR');
+                my @member_attribs = keys %{$group->attribs($gene_id)};
+                if (scalar(@member_attribs) == 0) {
+                    $group->remove_member($gene_id);
+                }
+            } else {
+                $self->throw("Unexpected ${seq_region}-PAR gene found");
+            }
+        }
+
+        if ($group->size < 2) {
+            $self->complete_early("All alt alleles are Y-PAR genes. Skipping.");
+        }
+    }
+
     my @genes = @{$group->get_all_Genes};
 
     # Discard genes whose canonical transcripts are readthrough transcripts

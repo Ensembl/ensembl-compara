@@ -97,6 +97,9 @@ sub default_options {
 
 sub tweak_analyses {
     my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
     my $analyses_by_name = shift;
 
     $analyses_by_name->{'join_panther_subfam'}->{'-parameters'}->{'exclude_list'} = [ 'PTHR24420' ];

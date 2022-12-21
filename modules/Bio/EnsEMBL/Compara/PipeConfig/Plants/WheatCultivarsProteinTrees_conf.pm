@@ -72,6 +72,9 @@ sub default_options {
 
 sub tweak_analyses {
     my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
     my $analyses_by_name = shift;
 
     $analyses_by_name->{'fasttree'}->{'-parameters'}->{'cmd'} = '#fasttree_exe# -nosupport -pseudo -quiet -nopr -wag #alignment_file# > #output_file#';

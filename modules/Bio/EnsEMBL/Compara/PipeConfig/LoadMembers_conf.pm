@@ -70,8 +70,8 @@ sub default_options {
         'load_uniprot_members'      => 0,
         'work_dir'        => $self->o('pipeline_dir'),
         'uniprot_dir'     => $self->o('work_dir').'/uniprot',
-        'uniprot_rel_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/reldate.txt',
-        'uniprot_ftp_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',
+        'uniprot_rel_url' => 'https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/reldate.txt',
+        'uniprot_ftp_url' => 'https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',
 
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   3,
