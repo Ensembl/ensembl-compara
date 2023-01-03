@@ -133,6 +133,10 @@ def parse_qfo_proteome_table(qfo_readme_file: Union[Path, str]) -> pd.DataFrame:
         raise ValueError(f"duplicate species production name(s): {','.join(dup_prod_names)}")
     proteome_meta["production_name"] = prod_names
 
+    # With consistently ordered proteome metadata,
+    # it will be easier to track meaningful changes.
+    proteome_meta.sort_values(by="production_name", inplace=True)
+
     return proteome_meta
 
 
@@ -267,7 +271,7 @@ if __name__ == "__main__":
             })
 
         with open(args.meta_file, "w") as out_file_obj:
-            json.dump(source_meta, out_file_obj)
+            json.dump(source_meta, out_file_obj, indent=4)
 
         if args.stats_file:
             stats_df = pd.DataFrame(prep_stats)
