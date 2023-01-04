@@ -173,7 +173,7 @@ sub _build_transcript {
           }
           ## NOTE: Don't make this an elsif, as a CDS can lie wholely within one exon
           if ($cds->{'end'} < $exon->{'end'}) {
-            $exon->{'utr_3'} = $cds->{'end'};
+            $exon->{'utr_3'} = $cds->{'end'} - 1;
             #warn "... SET UTR 3";
           }
           ## Ignore multiple CDSs for an exon for now, as we can't draw them
