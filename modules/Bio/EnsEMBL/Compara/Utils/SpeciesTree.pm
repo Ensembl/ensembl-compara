@@ -400,9 +400,7 @@ sub get_timetree_estimate_for_node {
                 #foreach my $child2_rep (@{$child2->get_all_leaves()}) {
                     #next unless $child1_rep->taxon_id && $child2_rep->taxon_id;
                     #return 0 if $child1_rep->taxon_id == $child2_rep->taxon_id;
-            my $child1_name = $child1_rep->isa('Bio::EnsEMBL::Compara::NCBITaxon') ? $child1_rep->name : $child1_rep->taxon->name;
-            my $child2_name = $child2_rep->isa('Bio::EnsEMBL::Compara::NCBITaxon') ? $child2_rep->name : $child2_rep->taxon->name;
-            my $url = sprintf($url_template, uri_escape($child1_name), uri_escape($child2_name));
+            my $url = sprintf($url_template, $child1_rep->taxon_id, $child2_rep->taxon_id);
             $last_page = $url;
             my $timetree_page = get($url);
             next unless $timetree_page;
