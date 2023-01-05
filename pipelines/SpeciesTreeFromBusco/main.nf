@@ -117,7 +117,7 @@ process prepareGenome {
         path "processed/*", emit: proc_genome
     when: params.dir != ""
     script:
-        id = (genome =~ /(.+)\..+?$/)[0][1]
+        id = (genome =~ /(.+)\.fas?(\.gz)?$/)[0][1]
         """
             mkdir -p processed
             ${params.seqkit_exe} -j 5 grep -n -v -r -p "PATCH_*,HAP" $genome > processed/$id
@@ -826,7 +826,7 @@ workflow {
     // Prepare input genomes:
     if (params.dir != "") {
         // Get a channel of input genomes if directory is specified:
-        genomes = Channel.fromPath("${params.dir}/*.fa*", type: 'file')
+        genomes = Channel.fromPath("${params.dir}/*.fa{,s}{,.gz}", type: 'file')
     } else {
         // Otherwise initialise an empty channel to avoid nextflow crash:
         genomes = Channel.of()
