@@ -117,7 +117,7 @@ process prepareGenome {
         path "processed/*", emit: proc_genome
     when: params.dir != ""
     script:
-        id = (genome =~ /(.+)\.fas?(.gz)?$/)[0][1]
+        id = (genome =~ /(.+)\.fas?(\.gz)?$/)[0][1]
         """
             mkdir -p processed
             ${params.seqkit_exe} -j 5 grep -n -v -r -p "PATCH_*,HAP" $genome > processed/$id
