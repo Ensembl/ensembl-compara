@@ -51,10 +51,13 @@ sub default_options {
 
     # complementary collection parameters:
 
-        # Collection in master that may have overlapping data. Potentially overlapping clusters
+        # Collection(s) in master that may have overlapping data. Potentially overlapping clusters
         # and homologies are removed during the complementary protein-trees pipeline. This should be
         # defined in the PipeConfig file for each complementary collection (or on the command line).
-        'ref_collection'   => undef,
+        'ref_collection_list' => undef,
+
+    # mapping parameters:
+
         'do_stable_id_mapping' => 0,
         'do_treefam_xref' => 0,
     };
@@ -66,7 +69,7 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},
 
-        'ref_collection' => $self->o('ref_collection'),
+        'ref_collection_list' => $self->o('ref_collection_list'),
     }
 }
 
@@ -91,6 +94,9 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'cleanup_strains_clusters',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingClusters',
+             -parameters => {
+                 'collection'=> $self->o('collection'),
+             },
         },
 
         {
@@ -101,6 +107,9 @@ sub core_pipeline_analyses {
         {
              -logic_name => 'remove_overlapping_data_by_member',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingDataByMember',
+             -parameters => {
+                 'collection'=> $self->o('collection'),
+             },
         },
     ]
 }

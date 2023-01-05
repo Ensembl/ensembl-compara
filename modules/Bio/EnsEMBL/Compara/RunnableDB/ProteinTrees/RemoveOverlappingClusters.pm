@@ -38,7 +38,8 @@ use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Data::Dumper;
+use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
+use Bio::EnsEMBL::Hive::Utils qw(destringify);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DeleteOneTree');
 
@@ -81,19 +82,23 @@ sub _find_overlapping_species {
     my $self = shift;
 
     my $master_dba = $self->get_cached_compara_dba('master_db');
-    my $ref_collection_name = $self->param_required('ref_collection');
-    my $ref_collection = $master_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($ref_collection_name);
-    die "Cannot find collection '$ref_collection_name' in master_db" unless $ref_collection;
-    my @ref_genome_ids = map { $_->dbID } @{ $ref_collection->genome_dbs };
+    my $collection_name = $self->param_required('collection');
 
-    my $this_gdb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
-    my @these_genome_ids = map { $_->dbID } @{ $this_gdb_adaptor->fetch_all };
-
-    my @overlapping_species;
-    foreach my $ref_gdb_id ( @ref_genome_ids ) {
-        push @overlapping_species, $ref_gdb_id if grep { $ref_gdb_id == $_ } @these_genome_ids;
+    my $ref_collection_names;
+    if ( $self->param_is_defined('ref_collection') && $self->param_is_defined('ref_collection_list') ) {
+        $self->throw("Only one of parameters 'ref_collection' or 'ref_collection_list' can be defined")
+    } elsif ( $self->param_is_defined('ref_collection') ) {
+        $ref_collection_names = [$self->param('ref_collection')];
+    } elsif ( $self->param_is_defined('ref_collection_list') ) {
+        $ref_collection_names = destringify($self->param('ref_collection_list'));
+    } else {
+        $self->throw("One of parameters 'ref_collection' or 'ref_collection_list' must be defined")
     }
-    $self->param('overlapping_species', \@overlapping_species);
+
+    my $overlapping_species = Bio::EnsEMBL::Compara::Utils::MasterDatabase::find_overlapping_genome_db_ids($master_dba,
+                                                                                                           $collection_name,
+                                                                                                           $ref_collection_names);
+    $self->param('overlapping_species', $overlapping_species);
 }
 
 sub _get_non_overlapping_species_count {
