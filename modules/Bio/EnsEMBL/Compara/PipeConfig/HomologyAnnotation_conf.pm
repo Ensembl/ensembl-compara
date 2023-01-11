@@ -66,7 +66,7 @@ sub default_options {
         'species'       => [ ],
         'division'      => 'homology_annotation',
         # Mandatory server host for species homology databases
-        'homology_host' => 'mysql-ens-sta-5',
+        'homology_host' => 'mysql-ens-compara-prod-2',
         # registry_file compatibility so can be overridden if necessary
         'registry_file' => $self->o('reg_conf'),
 
@@ -124,6 +124,14 @@ sub default_options {
         'failures_fatal'   => 1, # no DC failure tolerance
         'old_server_uri'   => [$self->o('compara_db')],
         'db_name'          => $self->o('dbowner') . '_' . $self->o('pipeline_name'),
+        
+        #Dump script location 
+	'dump_homologies_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/dumps/dump_homologies.py'),
+
+	#Dump dir path for GenomeDirectoryPath module
+	'dump_dir' => $self->o('work_dir') . '/homology_tsv_dump_dir',
+
+	'ftp_root' => undef,
 
         # List of tables to copy to per-species compara database
         'table_list' => [
@@ -163,7 +171,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # Here we inherit creation of database, hive tables and compara tables
 
-        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'output_dir_path']), # Here we create directories
+        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'output_dir_path', 'dump_dir']), # Here we create directories
         $self->pipeline_create_commands_rm_mkdir(['species_set_record'], undef, 1),
         $self->db_cmd($results_table_sql),
 
@@ -194,7 +202,12 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
         'overwrite_files'  => $self->o('overwrite_files'),
         'failures_fatal'   => $self->o('failures_fatal'),
         'db_name'          => $self->o('db_name'),
-
+        
+	#Try the following
+	'dump_homologies_script' => $self->o('dump_homologies_script'),
+	#'dump_homologies_script' => $self->o('dump_homologies_script'),
+	'dump_dir' => $self->o('dump_dir'),
+	'ftp_root' => $self->o('ftp_root'),
     };
 }
 

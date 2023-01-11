@@ -74,10 +74,67 @@ sub pipeline_analyses_create_and_copy_per_species_db {
             },
             -hive_capacity => 1,
             -flow_into => {
-                1 => { 'record_species_set' => INPUT_PLUS() },
+                1 => [{'record_species_set' => INPUT_PLUS()}, {'production_species_factory'=> INPUT_PLUS()}],
             }
         },
+        { -logic_name => 'production_species_factory',
+	  -module => 'Bio::EnsEMBL::Production::Pipeline::Common::DbAwareSpeciesFactory',
+	  -max_retry_count => 1,
+	  -analysis_capacity => 20,
+	  -parameters => {
+		  'genome_name' => '#genome_name#', 
+	  },
+	  -flow_into => {
+		  '2' => [{'GenomeDirectoryPaths'=> INPUT_PLUS()}],
+	  }
 
+	}, 
+        {
+            -logic_name        => 'GenomeDirectoryPaths',
+            -module            => 'Bio::EnsEMBL::Production::Pipeline::FileDump::DirectoryPaths',
+            -max_retry_count   => 1,
+            -analysis_capacity => 20,
+            -parameters        => {
+                data_category  => 'homology',
+                analysis_types => ['Homologies'],
+            },
+            -flow_into         => {
+		    '3' => [{'dump_species_db_to_tsv'=> INPUT_PLUS()}]
+            },
+        },
+
+	{ -logic_name => 'dump_species_db_to_tsv',
+	  -module => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DumpSpeciesDBToTsv',
+	  -parameters => {
+		  'rr_ref_db' => $self->o('rr_ref_db'),
+	  },
+	  -flow_into => {
+		  '2' => [{'CompressHomologyTSV'=> INPUT_PLUS()}],
+	  },
+	  -rc_name       => "4Gb_job",
+        },
+	{ -logic_name => 'CompressHomologyTSV',
+	  -module => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+	  -max_retry_count   => 1,
+	  -analysis_capacity => 10,
+	  -batch_size        => 10,
+	  -parameters => {
+		'cmd' =>  'if [ -s "#filepath#" ]; then gzip -n -f "#filepath#"; fi',
+	 },
+	  -flow_into         => WHEN('defined #ftp_dir#' => ['Sync']),
+	  -rc_name       => "4Gb_job",
+	},
+        {
+          -logic_name        => 'Sync',
+          -module            => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+          -max_retry_count   => 1,
+          -analysis_capacity => 10,
+          -batch_size        => 10,
+          -parameters        => {
+              cmd => 'rsync -aLW #dump_dir#/ #ftp_root#',
+           },
+          -rc_name       => "1Gb_datamover_job",
+        },
         {   -logic_name => 'record_species_set',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::RecordSpeciesSet',
             -parameters => {
