@@ -52,7 +52,7 @@ sub fetch_input {
 
 sub run {
     my $self = shift;
-    mkpath($self->param('output_dir'),1,0777);
+    mkpath($self->param('output_dir'),1,oct("777"));
     my $dump_homologies_script = $self->param('dump_homologies_script');
     my $db_url = $self->param('per_species_db');
     my $ref_db = $self->param('rr_ref_db');

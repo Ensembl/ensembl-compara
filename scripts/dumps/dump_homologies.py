@@ -18,10 +18,10 @@
 """
 Dump rapid release homologies into TSV files.
 Example:
-    $ python dump_homologies.py -u "mysql://ensro@mysql-ens-compara-prod-2:4522/accipiter_gentilis_compara_105" -r ensembl_compara_references -o test.tsv
+    $ python dump_homologies.py -u "mysql://ensro@mysql-ens-compara-prod-2:4522/accipiter_gentilis_compara_105" \
+            -r ensembl_compara_references -o test.tsv
 """
 
-import sys
 import argparse
 from sqlalchemy import create_engine, text
 
@@ -59,8 +59,9 @@ if __name__ == '__main__':
         WHERE gm1.genome_db_id > gm2.genome_db_id;
     """
 
-    fields = ["ref_species", "ref_assembly", "query_species", "query_assembly", "ref_gene_stable_id", "ref_gene_name",
-              "query_gene_stable_id", "query_gene_name", "homology_type", "query_perc_id", "query_perc_cov"]
+    fields = ["ref_species", "ref_assembly", "query_species", "query_assembly", "ref_gene_stable_id",
+            "ref_gene_name", "query_gene_stable_id", "query_gene_name",
+            "homology_type", "query_perc_id", "query_perc_cov"]
 
     with open(args.o, "w") as fh:
         tsv_header = "\t".join(fields) + "\n"
@@ -68,5 +69,6 @@ if __name__ == '__main__':
         with engine.connect() as conn:
             result = conn.execute(text(query))
             for dict_row in result.mappings():
-                tsv_row = "\t".join([str(dict_row[f]) if dict_row[f] is not None else "" for f in fields]) + "\n"
+                tsv_row = "\t".join([str(dict_row[f]) if dict_row[f] is not None else "" for f in fields])\
+                        + "\n"
                 fh.write(tsv_row)
