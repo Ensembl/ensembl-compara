@@ -683,6 +683,9 @@ if __name__ == '__main__':
                              " between each chromosome name and its alternative synonym in the HAL file.")
     args = parser.parse_args()
 
+    if args.cache_chain:
+        raise RuntimeError("'cache-chain' mode is currently disabled")
+
     if args.hal_aux_dir is not None:
         hal_aux_dir = args.hal_aux_dir
     else:
