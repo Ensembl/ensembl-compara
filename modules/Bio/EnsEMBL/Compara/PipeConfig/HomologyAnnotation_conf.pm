@@ -203,9 +203,7 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
         'failures_fatal'   => $self->o('failures_fatal'),
         'db_name'          => $self->o('db_name'),
         
-	#Try the following
 	'dump_homologies_script' => $self->o('dump_homologies_script'),
-	#'dump_homologies_script' => $self->o('dump_homologies_script'),
 	'dump_dir' => $self->o('dump_dir'),
 	'ftp_root' => $self->o('ftp_root'),
     };
