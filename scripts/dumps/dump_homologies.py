@@ -18,7 +18,8 @@
 """
 Dump rapid release homologies into TSV files.
 Example:
-    $ python dump_homologies.py -u "mysql://ensro@mysql-ens-compara-prod-2:4522/accipiter_gentilis_compara_105" \
+    $ python dump_homologies.py -u \
+            "mysql://ensro@mysql-ens-compara-prod-2:4522/accipiter_gentilis_compara_105" \
             -r ensembl_compara_references -o test.tsv
 """
 
