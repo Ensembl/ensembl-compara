@@ -97,7 +97,7 @@ sub USERDATA_FORMATS {
     'pairwise'    => {'ext' => 'txt',     'label' => 'Pairwise interactions', 'display' => 'feature', 'no_karyotype' => 1},
     'psl'         => {'ext' => 'psl',     'label' => 'PSL',       'display' => 'feature'},
     'trackhub'    => {'ext' => 'txt',     'label' => 'Track Hub', 'display' => 'graph',   'limit' => 'remote'},
-    'vcf'         => {'ext' => 'vcf',     'label' => 'VCF',       'display' => 'graph'},
+    'vcf'         => {'ext' => 'vcf',     'label' => 'VCF',       'display' => 'graph', 'no_karyotype' => 'if_remote'},
     'vep_output'  => {'ext' => 'txt',     'label' => 'VEP',       'display' => 'feature'},
     'wig'         => {'ext' => 'wig',     'label' => 'WIG',       'display' => 'graph'},
   };

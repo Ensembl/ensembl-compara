@@ -162,7 +162,10 @@ sub _load_remote_url_tracks {
     next if (defined $data->{'disconnected'} && $data->{'disconnected'} == 1);
 
     ## Don't include unsupported formats on vertical displays
-    next if ($flag && $flag eq 'vertical' && $data->{'format'} && $format_info->{lc $data->{'format'}}{'no_karyotype'});
+    my $no_karyotype = $format_info->{lc $data->{'format'}}{'no_karyotype'};
+    ## Distinguish between remote (indexed) VCF and uploaded VCF
+    $no_karyotype = 0 if ($no_karyotype eq 'is_remote' && !$data->{'url'});
+    next if ($flag && $flag eq 'vertical' && $data->{'format'} && $no_karyotype);
 
     my $source_name = strip_HTML($data->{'name'}) || $data->{'url'};
 
