@@ -653,7 +653,7 @@ sub _get_target_slice_table {
   } elsif ($class =~ /pairwise/) {
     #Find the non-reference species for pairwise alignments
     #get the non_ref name from the first block
-    $other_species = $hub->species_defs->prodname_to_url($gabs->[0]->get_all_non_reference_genomic_aligns->[0]->genome_db->name);
+    $other_species = $gabs->[0]->get_all_non_reference_genomic_aligns->[0]->genome_db->name;
   }
 
   my $merged_blocks = $self->object->build_features_into_sorted_groups($groups);
