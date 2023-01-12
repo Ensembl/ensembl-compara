@@ -86,6 +86,8 @@ sub draw_features {
     }
 
     my $name = $metadata->{'name'};
+    ## Ignore name if it's meaningless
+    $name = '' if $name eq 'data'; 
     if ($name && $hover_label->{'header'} && $hover_label->{'header'} !~ /$name/) { ## Don't add the track name more than once!
       if ($mod_header) {
         $hover_label->{'header'} .= ': ';
