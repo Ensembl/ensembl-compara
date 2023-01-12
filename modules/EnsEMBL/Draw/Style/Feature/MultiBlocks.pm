@@ -60,7 +60,7 @@ sub draw_feature {
   my $x                     = $feature->{'start'} - 1;
   $x                        = 0 if $x < 0;
   $params{'x'}              = $x;
-  $params{'width'}          = $position->{'width'} - 1;
+  $params{'width'}          = $position->{'width'};
   $params{'colour'}         = $feature->{'colour'};
   $params{'bordercolour'}   = $feature->{'bordercolour'};
   $params{'pattern'}        = $feature->{'pattern'};
@@ -73,8 +73,8 @@ sub draw_feature {
       ## Check in case outside viewport
       next if ($element->{'end'} < 0 || $element->{'start'} > $position->{'image_width'});
       $composite->push($self->Rect({
-                                    x             => $element->{'start'} - 1,
-                                    width         => $element->{'end'} - $element->{'start'} + 1,
+                                    x             => $element->{'start'},
+                                    width         => $element->{'end'} - $element->{'start'},
                                     colour        => $element->{'colour'},
                                     pattern       => $element->{'pattern'},
                                     patterncolour => $element->{'patterncolour'},
