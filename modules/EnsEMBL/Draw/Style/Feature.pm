@@ -170,6 +170,7 @@ sub create_glyphs {
         $drawn_end        = $slice_width if $drawn_end > $slice_width;
         my $feature_width = $drawn_end - $drawn_start + 1; 
         $feature_width    = 1 if $feature_width < 1;
+        $feature_width    = $drawn_end if $drawn_start == 0;
   
         my $labels_height   = $label_row * $label_height;
 

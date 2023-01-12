@@ -204,7 +204,7 @@ sub get_structure {
     $bound_start = 0 if $bound_start < 0;
     push @$extra_blocks, {
       start  => $bound_start,
-      end    => $start,
+      end    => $start - 1,
       %$appearance
     },{
       start  => $end,
