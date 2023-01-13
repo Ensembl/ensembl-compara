@@ -98,7 +98,6 @@ sub content {
 
   my $type   = $self->param('data_type') || $hub->type;
   my $vc = $self->view_config($type);
-  warn ">>> GENE TREE? $is_genetree";
 
   if ($is_genetree) {
     $tree   = $object->Obj;

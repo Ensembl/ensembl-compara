@@ -41,7 +41,7 @@ sub content {
   my $view_config  = $self->view_config;
 
   my $settings = $view_config->form_fields('export');
-  $settings->{'Hidden'} = [qw(align align_type node)];
+  $settings->{'Hidden'} = [qw(align align_type node strain)];
 
   ## Add export-specific settings
   my $fields_by_format;
