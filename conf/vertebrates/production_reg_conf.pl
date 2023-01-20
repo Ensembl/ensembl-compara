@@ -56,7 +56,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $metazoa_overlap_cores );
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
         -host   => 'mysql-ens-sta-1-b',
-        -port   => 4519,
+        -port   => 4685,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
