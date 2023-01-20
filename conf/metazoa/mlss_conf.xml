@@ -85,7 +85,7 @@
       <genome name="echinococcus_granulosus_gca000524195v1rs"/>
       <genome name="schistosoma_mansoni"/>
       <!-- Included species from Porifera -->
-      <genome name="amphimedon_queenslandica"/>
+      <genome name="amphimedon_queenslandica_gca000090795v2rs"/>
       <!-- Included species from Priapulida -->
       <genome name="priapulus_caudatus_gca000485595v2"/>
       <!-- Included species from Rotifera -->
