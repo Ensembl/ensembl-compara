@@ -47,29 +47,26 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstRef;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstQuery;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DataCheckFactory;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::PerSpeciesCopyFactory;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
-
     return {
         %{$self->SUPER::default_options},   # Inherit the generic ones
-
         'pipeline_name'     => 'blastocyst_' . $self->o('rel_with_suffix'),
         # Back compatibility for production team's use of '--pass' instead of '--password'
         'pass'     => undef,
         'password' => $self->o('pass') ? $self->o('pass') : $self->o('password'),
-
         # Mandatory species input, one or the other only
         'species_list'  => undef,
         'species'       => [ ],
         'division'      => 'homology_annotation',
         # Mandatory server host for species homology databases
-        'homology_host' => 'mysql-ens-sta-5',
+        'homology_host' => 'mysql-ens-compara-prod-2',
         # registry_file compatibility so can be overridden if necessary
         'registry_file' => $self->o('reg_conf'),
-
         # Directories to write to
         'work_dir'     => $self->o('pipeline_dir'),
         'dump_path'    => $self->o('work_dir'),
@@ -111,7 +108,6 @@ sub default_options {
         'allow_missing_cds_seqs'        => 1, # set to 0 if we store CDS (see above)
         'allow_missing_coordinates'     => 1,
         'allow_missing_exon_boundaries' => 1, # set to 0 if exon boundaries are loaded (see above)
-
         'projection_source_species_names' => [ ],
         'curr_file_sources_locs'          => [ ],
 
@@ -124,15 +120,14 @@ sub default_options {
         'failures_fatal'   => 1, # no DC failure tolerance
         'old_server_uri'   => [$self->o('compara_db')],
         'db_name'          => $self->o('dbowner') . '_' . $self->o('pipeline_name'),
-        
-        #Dump script location 
-	'dump_homologies_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/dumps/dump_homologies.py'),
+        'ref_dbname'       => 'ensembl_compara_references',
 
-	#Dump dir path for GenomeDirectoryPath module
-	'dump_dir' => $self->o('work_dir') . '/homology_tsv_dump_dir',
+        #Dump script location
+        'dump_homologies_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/dumps/dump_homologies.py'),
 
-	'ftp_root' => undef,
-
+        #Dump dir path for GenomeDirectoryPath module
+	    'dump_dir' => $self->o('work_dir') . '/homology_tsv_dump_dir',
+	    'ftp_root' => undef,
         # List of tables to copy to per-species compara database
         'table_list' => [
             "genome_db",
@@ -150,13 +145,11 @@ sub default_options {
         'num_sequences_per_blast_job' => 200,
         'blast_params'                => '--threads 4 -b1 -c1 --top 50 --dbsize 1000000 --sensitive',
         'evalue_limit'                => '1e-5',
-
     };
 }
 
 sub pipeline_create_commands {
     my ($self) = @_;
-
     my $results_table_sql = q/
         CREATE TABLE datacheck_results (
             submission_job_id INT,
@@ -167,14 +160,11 @@ sub pipeline_create_commands {
             INDEX submission_job_id_idx (submission_job_id)
         );
     /;
-
     return [
         @{$self->SUPER::pipeline_create_commands},  # Here we inherit creation of database, hive tables and compara tables
-
         $self->pipeline_create_commands_rm_mkdir(['work_dir', 'output_dir_path', 'dump_dir']), # Here we create directories
         $self->pipeline_create_commands_rm_mkdir(['species_set_record'], undef, 1),
         $self->db_cmd($results_table_sql),
-
     ];
 }
 
@@ -182,30 +172,25 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
     my ($self) = @_;
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # Here we inherit anything from the base class
-
         'ncbi_db'           => $self->o('ncbi_db'),
         'member_db'         => $self->o('member_db'),
         'output_db'         => $self->o('output_db'),
         'rr_ref_db'         => $self->o('rr_ref_db'),
-
         'blast_params'      => $self->o('blast_params'),
         'evalue_limit'      => $self->o('evalue_limit'),
         'diamond_exe'       => $self->o('diamond_exe'),
-
         'members_dumps_dir' => $self->o('members_dumps_dir'),
         'ref_dump_dir'      => $self->o('ref_dump_dir'),
         'dump_path'         => $self->o('dump_path'),
-
         'reg_conf'          => $self->o('reg_conf'),
-
         'output_dir_path'  => $self->o('output_dir_path'),
         'overwrite_files'  => $self->o('overwrite_files'),
         'failures_fatal'   => $self->o('failures_fatal'),
         'db_name'          => $self->o('db_name'),
-        
-	'dump_homologies_script' => $self->o('dump_homologies_script'),
-	'dump_dir' => $self->o('dump_dir'),
-	'ftp_root' => $self->o('ftp_root'),
+	    'dump_homologies_script' => $self->o('dump_homologies_script'),
+	    'dump_dir' => $self->o('dump_dir'),
+	    'ftp_root' => $self->o('ftp_root'),
+        'ref_dbname' => $self->o('ref_dbname'),
     };
 }
 
@@ -218,7 +203,6 @@ sub resource_classes {
 
 sub core_pipeline_analyses {
     my ($self) = @_;
-
     my %dc_parameters = (
         'datacheck_groups' => $self->o('dc_pipeline_grp'),
         'db_type'          => $self->o('db_type'),
@@ -227,7 +211,6 @@ sub core_pipeline_analyses {
     );
 
     return [
-
         {   -logic_name      => 'core_species_factory',
             -module          => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SpeciesFactory',
             -max_retry_count => 1,
@@ -241,7 +224,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity   => 1,
         },
-
         {   -logic_name => 'backbone_fire_db_prepare',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
@@ -249,7 +231,6 @@ sub core_pipeline_analyses {
                 'A->1'  => [ 'backbone_fire_analyses_prepare' ],
             },
         },
-
         {   -logic_name => 'backbone_fire_analyses_prepare',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
@@ -257,7 +238,6 @@ sub core_pipeline_analyses {
                 'A->1'  => [ 'backbone_dc_and_copy_db' ],
             },
         },
-
         {   -logic_name    => 'diamond_factory',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BlastFactory',
             -parameters    => {
@@ -271,7 +251,6 @@ sub core_pipeline_analyses {
                 'A->3' => [ 'create_mlss_and_batch_members' ],
             },
         },
-
         {   -logic_name => 'create_mlss_and_batch_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::CreateSuperficialMLSS',
             -rc_name    => '4Gb_job',
@@ -279,13 +258,11 @@ sub core_pipeline_analyses {
                 2 => { 'parse_paf_for_rbbh' => { 'member_id_list' => '#member_id_list#', 'target_genome_db_id' => '#ref_genome_db_id#', 'genome_db_id' => '#genome_db_id#' } },
             }
         },
-
         {   -logic_name => 'parse_paf_for_rbbh',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::ParsePAFforBHs',
             -rc_name    => '2Gb_job',
             -hive_capacity => 100,
         },
-
         {   -logic_name => 'backbone_dc_and_copy_db',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
@@ -293,20 +270,17 @@ sub core_pipeline_analyses {
                 'A->1'  => [ 'create_db_factory' ],
             }
         },
-
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::LoadCoreMembers::pipeline_analyses_copy_ncbi_and_core_genome_db($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstRef::pipeline_analyses_diamond_against_refdb($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstQuery::pipeline_analyses_diamond_against_query($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DataCheckFactory::pipeline_analyses_datacheck_factory($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::PerSpeciesCopyFactory::pipeline_analyses_create_and_copy_per_species_db($self) },
-
     ];
 }
 
 sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
-
     delete $analyses_by_name->{'datacheck_fan'}->{'-flow_into'}->{2};
     delete $analyses_by_name->{'datacheck_fan_high_mem'}->{'-flow_into'}->{2};
     $analyses_by_name->{'datacheck_factory'}->{'-parameters'} = {'dba' => '#compara_db#'};
