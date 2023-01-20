@@ -64,7 +64,7 @@ sub default_options {
         'species'       => [ ],
         'division'      => 'homology_annotation',
         # Mandatory server host for species homology databases
-        'homology_host' => 'mysql-ens-compara-prod-2',
+        'homology_host' => 'mysql-ens-sta-5',
         # registry_file compatibility so can be overridden if necessary
         'registry_file' => $self->o('reg_conf'),
         # Directories to write to
