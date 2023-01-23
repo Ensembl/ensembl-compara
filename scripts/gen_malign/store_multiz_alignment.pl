@@ -198,12 +198,13 @@ Bio::EnsEMBL::Registry->load_all($reg_conf);
 
 
 ## Read directory and get the list of multiz files
-if (!$multiz_dir or !opendir(MULTIZ_DIR, $multiz_dir)) {
+my $dh;
+if (!$multiz_dir or !opendir($dh, $multiz_dir)) {
   print "ERROR: Cannot open <$multiz_dir> directory!\n", $usage;
   exit(1);
 }
-my @multiz_files = grep { /\.maf/ } readdir(MULTIZ_DIR);
-closedir(MULTIZ_DIR);
+my @multiz_files = grep { /\.maf/ } readdir($dh);
+closedir($dh);
 
 
 ## Get Compara adaptors
