@@ -42,7 +42,6 @@ if __name__ == '__main__':
 
     ref_db = args.r
     species_db_url = args.u
-    server_url, species_db = species_db_url.rsplit("/", 1)
 
     engine = create_engine(species_db_url, future=True)
 
