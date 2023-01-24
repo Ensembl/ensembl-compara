@@ -45,10 +45,12 @@ sub pipeline_analyses_create_and_copy_per_species_db {
     );
 
     return [
+
     { -logic_name => 'create_db_factory',
       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SpeciesListFactory',
       -flow_into  => [ 'create_per_species_db' ],
     },
+
     { -logic_name => 'create_per_species_db',
       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::NewPerSpeciesComparaDB',
       -parameters => {
@@ -75,6 +77,7 @@ sub pipeline_analyses_create_and_copy_per_species_db {
                 1 => [{'record_species_set' => INPUT_PLUS()}, {'production_species_factory'=> INPUT_PLUS()}],
             }
     },
+
     { -logic_name => 'production_species_factory',
 	  -module => 'Bio::EnsEMBL::Production::Pipeline::Common::DbAwareSpeciesFactory',
 	  -max_retry_count => 1,
@@ -86,6 +89,7 @@ sub pipeline_analyses_create_and_copy_per_species_db {
 		  '2' => [{'GenomeDirectoryPaths'=> INPUT_PLUS()}],
 	      }
 	}, 
+
     { -logic_name        => 'GenomeDirectoryPaths',
       -module            => 'Bio::EnsEMBL::Production::Pipeline::FileDump::DirectoryPaths',
       -max_retry_count   => 1,
@@ -98,6 +102,7 @@ sub pipeline_analyses_create_and_copy_per_species_db {
 		    '3' => [{'dump_species_db_to_tsv'=> INPUT_PLUS()}]
             },
     },
+
     { -logic_name => 'dump_species_db_to_tsv',
 	  -module => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DumpSpeciesDBToTsv',
 	  -parameters => {
@@ -108,7 +113,8 @@ sub pipeline_analyses_create_and_copy_per_species_db {
 	       },
 	  -rc_name       => "4Gb_job",
     },
-	{ -logic_name => 'CompressHomologyTSV',
+
+    { -logic_name => 'CompressHomologyTSV',
 	  -module => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
 	  -max_retry_count   => 1,
 	  -analysis_capacity => 10,
@@ -119,6 +125,7 @@ sub pipeline_analyses_create_and_copy_per_species_db {
 	  -flow_into         => WHEN('defined #ftp_dir#' => ['Sync']),
 	  -rc_name       => "4Gb_job",
 	},
+
     { -logic_name        => 'Sync',
       -module            => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
       -max_retry_count   => 1,
@@ -129,6 +136,7 @@ sub pipeline_analyses_create_and_copy_per_species_db {
            },
           -rc_name       => "1Gb_datamover_job",
     },
+
     { -logic_name => 'record_species_set',
       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::RecordSpeciesSet',
       -parameters => {
@@ -136,6 +144,7 @@ sub pipeline_analyses_create_and_copy_per_species_db {
             },
       -hive_capacity => 1,
     }
+
     ];
 }
 
