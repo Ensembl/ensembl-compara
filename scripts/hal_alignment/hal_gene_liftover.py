@@ -314,7 +314,7 @@ def liftover_via_chain(src_region: SimpleRegion, src_genome: str, src_chr_sizes:
 
         dst_regions = extract_liftover_regions_from_bed(dst_bed_file)
 
-        if dst_regions:
+        if not dst_regions:
             return rec
 
         dst_sequences = extract_region_sequences(dst_regions, dst_2bit_file)
