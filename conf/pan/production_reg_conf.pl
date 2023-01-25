@@ -45,7 +45,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1-b
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
 Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
 # Non-Vertebrates server
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3-b:4686/$curr_release");
 # Bacteria server: all species used in Pan happen to be in this database
 Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
     -host   => 'mysql-ens-sta-4-b',

@@ -194,6 +194,7 @@ sub extract_stats {
     while (my $filename = readdir($dirh)) {
         next if $filename eq '.';
         next if $filename eq '..';
+        next if $filename eq 'CHECKSUMS';
         if (-l $filename) {
             $filename = readlink $filename;
         }
@@ -259,6 +260,7 @@ foreach my $d (@compara_dirs) {
     my $curr_dir = File::Spec->catfile($curr_base_path, $d);
     my $prev_dir = File::Spec->catfile($prev_base_path, $d);
     subtest $d, sub {
+        plan skip_all => 'Reference directory does not exist' unless(-e $prev_dir);
         # A) Check completeness
         ok(-d $curr_dir, "Directory exists");
         return unless -d $curr_dir;
@@ -284,6 +286,7 @@ foreach my $f (@compara_files) {
     my $curr_file = File::Spec->catfile($curr_base_path, $f);
     my $prev_file = File::Spec->catfile($prev_base_path, $f);
     subtest $f, sub {
+        plan skip_all => 'Reference file does not exist' unless(-e $prev_file);
         # A) Check completeness
         ok(-f $curr_file, 'File exists');
         # B) Compare against another directory

@@ -76,11 +76,11 @@ if ($division eq "vertebrates"){
     $lastz_alignment_region   = "2:106041430-106041480:1";
 
     $species_1                = "homo_sapiens";
-    $species_2                = "macaca_mulatta";
+    $species_2                = "pan_paniscus";
     $species_3                = "pan_troglodytes";
 
     $taxon_1                  = 9606;#homo_sapiens
-    $taxon_2                  = 9544;#macaca_mulatta
+    $taxon_2                  = 9597;#pan_paniscus
     $taxon_3                  = 9598;#pan_troglodytes
 
     $gene_symbol              = "BRCA2";
