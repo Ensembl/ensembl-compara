@@ -383,7 +383,7 @@ def liftover_via_hal(src_region: SimpleRegion, src_genome: str, src_2bit_file: U
         if skip_chain:
             run_psl_to_chain(psl_file, chain_file)
         else:
-            run_axt_chain(psl_file, src_2bit_file, dest_2bit_file, chain_file, linear_gap=linear_gap)
+            run_axt_chain(psl_file, dest_2bit_file, src_2bit_file, chain_file, linear_gap=linear_gap)
 
         lifted_src_regions, dest_regions = extract_liftover_regions_from_chain(src_region, chain_file)
 
@@ -466,34 +466,34 @@ def load_chr_sizes(hal_file: Union[Path, str], genome_name: str) -> Dict[str, in
     return chr_sizes
 
 
-def make_chain_file(src_genome: str, src_2bit_file: Union[Path, str], src_chr_sizes: Dict[str, int],
-                    dst_genome: str, dst_2bit_file: Union[Path, str], hal_file: Union[Path, str],
+def make_chain_file(query_genome: str, query_2bit_file: Union[Path, str], query_chr_sizes: Dict[str, int],
+                    target_genome: str, target_2bit_file: Union[Path, str], hal_file: Union[Path, str],
                     chain_file: Union[Path, str], linear_gap: Union[Path, str] = 'medium') -> None:
     """Make a pairwise assembly chain file from a HAL alignment.
 
     Args:
-        src_genome: Source genome.
-        src_2bit_file: 2bit file of source genome sequences.
-        src_chr_sizes: Source genome chromosome name-to-length mapping.
-        dst_genome: Destination genome.
-        dst_2bit_file: 2bit file of destination genome sequences.
+        query_genome: Query genome.
+        query_2bit_file: 2bit file of query genome sequences.
+        query_chr_sizes: Query genome chromosome name-to-length mapping.
+        target_genome: Target genome.
+        target_2bit_file: 2bit file of target genome sequences.
         hal_file: Input HAL file.
         chain_file: Output chain file.
         linear_gap: axtChain linear gap parameter.
 
     """
-    src_regions = [SimpleRegion(k, 0, x, '+') for k, x in src_chr_sizes.items()]
+    query_regions = [SimpleRegion(k, 0, x, '+') for k, x in query_chr_sizes.items()]
 
     with TemporaryDirectory() as tmp_dir:
 
-        src_bed_file = os.path.join(tmp_dir, 'src_regions.bed')
-        make_src_region_file(src_regions, src_genome, src_chr_sizes, src_bed_file)
+        query_bed_file = os.path.join(tmp_dir, 'query_regions.bed')
+        make_src_region_file(query_regions, query_genome, query_chr_sizes, query_bed_file)
 
         tmp_psl_file = os.path.join(tmp_dir, 'alignment.psl')
-        run_hal_liftover(hal_file, src_genome, src_bed_file, dst_genome, tmp_psl_file)
+        run_hal_liftover(hal_file, query_genome, query_bed_file, target_genome, tmp_psl_file)
 
         tmp_chain_file = os.path.join(tmp_dir, 'alignment.chain')
-        run_axt_chain(tmp_psl_file, src_2bit_file, dst_2bit_file, tmp_chain_file, linear_gap=linear_gap)
+        run_axt_chain(tmp_psl_file, target_2bit_file, query_2bit_file, tmp_chain_file, linear_gap=linear_gap)
 
         shutil.move(tmp_chain_file, chain_file)
 
@@ -560,21 +560,21 @@ def read_region_tsv_file(region_tsv_file: Union[Path, str]) -> Generator[SimpleR
                                                            row['end'], row['strand'])
 
 
-def run_axt_chain(psl_file: Union[Path, str], src_2bit_file: Union[Path, str],
-                  dest_2bit_file: Union[Path, str], chain_file: Union[Path, str],
+def run_axt_chain(psl_file: Union[Path, str], target_2bit_file: Union[Path, str],
+                  query_2bit_file: Union[Path, str], chain_file: Union[Path, str],
                   linear_gap: Union[Path, str] = 'medium') -> None:
     """Run axtChain on PSL file.
 
     Args:
         psl_file: Input PSL file.
-        src_2bit_file: Source 2bit file.
-        dest_2bit_file: Destination 2bit file.
+        target_2bit_file: Target 2bit file.
+        query_2bit_file: Query 2bit file.
         chain_file: Output chain file.
         linear_gap: axtChain linear gap parameter.
 
     """
-    cmd = ['axtChain', '-psl', f'-linearGap={linear_gap}', psl_file, dest_2bit_file,
-           src_2bit_file, chain_file]
+    cmd = ['axtChain', '-psl', f'-linearGap={linear_gap}', psl_file, target_2bit_file,
+           query_2bit_file, chain_file]
     run(cmd, check=True)
 
 
@@ -683,9 +683,6 @@ if __name__ == '__main__':
                              " between each chromosome name and its alternative synonym in the HAL file.")
     args = parser.parse_args()
 
-    if args.cache_chain:
-        raise RuntimeError("'cache-chain' mode is currently disabled")
-
     if args.hal_aux_dir is not None:
         hal_aux_dir = args.hal_aux_dir
     else:
@@ -727,8 +724,9 @@ if __name__ == '__main__':
             f'{args.src_genome}_to_{args.dest_genome}.linearGap_{args.linear_gap}.chain'
         )
         if not os.path.isfile(cached_chain_file):
-            make_chain_file(args.src_genome, source_2bit_file, source_chr_sizes, args.dest_genome,
-                            destination_2bit_file, args.hal_file, cached_chain_file,
+            destination_chr_sizes = load_chr_sizes(args.hal_file, args.dest_genome)
+            make_chain_file(args.dest_genome, destination_2bit_file, destination_chr_sizes,
+                            args.src_genome, source_2bit_file, args.hal_file, cached_chain_file,
                             linear_gap=args.linear_gap)
 
     records = []
