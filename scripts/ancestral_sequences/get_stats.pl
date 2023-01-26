@@ -22,9 +22,10 @@ if (@ARGV) {
   $dir = shift;
 }
 
-opendir(DIR, $dir) or die;
-my @fasta_files = sort grep {/\.fa$/} readdir(DIR);
-closedir(DIR);
+my $dh;
+opendir($dh, $dir) or die;
+my @fasta_files = sort grep {/\.fa$/} readdir($dh);
+closedir($dh);
 
 print join("\t", "FILENAME", "high-conf(ACTG)", "perc", "low-conf(actg)", "perc", "fail(N)", "perc", "insertions(-)", "perc", "no coverage(.)", "perc", "total"), "\n";
 
