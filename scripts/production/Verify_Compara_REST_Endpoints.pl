@@ -76,11 +76,11 @@ if ($division eq "vertebrates"){
     $lastz_alignment_region   = "2:106041430-106041480:1";
 
     $species_1                = "homo_sapiens";
-    $species_2                = "macaca_mulatta";
+    $species_2                = "pan_paniscus";
     $species_3                = "pan_troglodytes";
 
     $taxon_1                  = 9606;#homo_sapiens
-    $taxon_2                  = 9544;#macaca_mulatta
+    $taxon_2                  = 9597;#pan_paniscus
     $taxon_3                  = 9598;#pan_troglodytes
 
     $gene_symbol              = "BRCA2";
@@ -125,11 +125,11 @@ elsif($division eq "metazoa"){
     $lastz_alignment_region   = "2L:2358158-2431617";
 
     $species_1                = "anopheles_gambiae";
-    $species_2                = "culex_quinquefasciatus";
+    $species_2                = "culex_quinquefasciatus_gca015732765v1";
     $species_3                = "bombyx_mori";
 
     $taxon_1                  = 7165;#anopheles_gambiae
-    $taxon_2                  = 7176;#culex_quinquefasciatus
+    $taxon_2                  = 7176;#culex_quinquefasciatus_gca015732765v1
     $taxon_3                  = 7091;#bombyx_mori
 
     $species_set_group        = "metazoa";
@@ -153,11 +153,11 @@ elsif($division eq 'pan' or $division eq 'pan_homology'){
 
     $species_1                = 'arabidopsis_thaliana';
     $species_2                = "vitis_vinifera";
-    $species_3                = 'amphimedon_queenslandica';
+    $species_3                = 'amphimedon_queenslandica_gca000090795v2rs';
 
     $taxon_1                  = 3702;#arabidopsis_thaliana
     $taxon_2                  = 29760;#vitis_vinifera
-    $taxon_3                  = 400682;#amphimedon_queenslandica
+    $taxon_3                  = 400682;#amphimedon_queenslandica_gca000090795v2rs
 
     $gene_symbol              = 'RBL';
     $homology_type            = 'orthologues';

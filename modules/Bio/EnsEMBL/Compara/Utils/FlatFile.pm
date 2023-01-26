@@ -47,6 +47,7 @@ our @EXPORT_OK;
     query_file_tree
     group_hash_by
     check_column_integrity
+    check_for_null_characters
     get_line_count
     check_line_counts
     dump_string_into_file
@@ -282,6 +283,35 @@ sub check_column_integrity {
     my $awk_output = $run_awk->out;
     my @col_counts = split("\n", $awk_output);
     die "Expected equal number of columns throughout the file. Got:\n$awk_output" if scalar @col_counts > 1;
+    return 1;
+}
+
+=head2 check_for_null_characters
+
+    Arg [1]     : $filename
+    Description : Checks for null characters in an ASCII text file.
+    Returntype  : 1 if file passes check
+    Exceptions  : dies if the file contains any null characters
+
+=cut
+
+sub check_for_null_characters {
+    my ($filename) = @_;
+
+    my $null_found = 0;
+    open(my $fh, "<:encoding(ASCII)", $filename) or die "Cannot open ASCII text file $filename";
+    while ( my $line = <$fh> ) {
+        if ( $line =~ /\0/ ) {
+            $null_found = 1;
+            last;
+        }
+    }
+    close $fh or die "Cannot close $filename";
+
+    if ($null_found) {
+        die "Unexpected null character found in file: $filename";
+    }
+
     return 1;
 }
 
