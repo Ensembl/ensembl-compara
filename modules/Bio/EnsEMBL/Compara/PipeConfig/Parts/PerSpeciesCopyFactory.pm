@@ -46,104 +46,105 @@ sub pipeline_analyses_create_and_copy_per_species_db {
 
     return [
 
-    { -logic_name => 'create_db_factory',
-      -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SpeciesListFactory',
-      -flow_into  => [ 'create_per_species_db' ],
-    },
+        {   -logic_name => 'create_db_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::SpeciesListFactory',
+            -flow_into  => [ 'create_per_species_db' ],
+        },
 
-    { -logic_name => 'create_per_species_db',
-      -module     => 'Bio::EnsEMBL::Compara::RunnableDB::NewPerSpeciesComparaDB',
-      -parameters => {
+        {   -logic_name => 'create_per_species_db',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::NewPerSpeciesComparaDB',
+            -parameters => {
                 'curr_release' => $self->o('ensembl_release'),
                 'db_cmd_path'  => $self->o('db_cmd_path'),
                 'schema_file'  => $self->o('schema_file'),
                 'homology_host' => $self->o('homology_host'),
             },
-      -flow_into => {
+            -flow_into => {
                 '2->A'  => { 'copy_per_species_db'  => INPUT_PLUS() },
                 'A->2'  => { 'datacheck_factory' => { 'compara_db' => '#per_species_db#', %dc_parameters } },
             },
-    },
+        },
 
-    { -logic_name => 'copy_per_species_db',
-      -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::CopyPerSpeciesComparaDB',
-      -parameters => {
+        {   -logic_name => 'copy_per_species_db',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::CopyPerSpeciesComparaDB',
+            -parameters => {
                 'program'    => $self->o('copy_program'),
                 'table_list' => $self->o('table_list'),
                 'skip_dna'   => $self->o('skip_dna'),
             },
-      -hive_capacity => 1,
-      -flow_into => {
+            -hive_capacity => 1,
+            -flow_into => {
                 1 => [{'record_species_set' => INPUT_PLUS()}, {'production_species_factory'=> INPUT_PLUS()}],
             }
-    },
+        },
 
-    { -logic_name => 'production_species_factory',
-	  -module => 'Bio::EnsEMBL::Production::Pipeline::Common::DbAwareSpeciesFactory',
-	  -max_retry_count => 1,
-	  -analysis_capacity => 20,
-	  -parameters => {
-		  'genome_name' => '#genome_name#', 
-	      },
-	  -flow_into => {
-		  '2' => [{'GenomeDirectoryPaths'=> INPUT_PLUS()}],
-	      }
-	}, 
+        {   -logic_name => 'production_species_factory',
+            -module => 'Bio::EnsEMBL::Production::Pipeline::Common::DbAwareSpeciesFactory',
+            -max_retry_count => 1,
+            -analysis_capacity => 20,
+            -parameters => {
+                'genome_name' => '#genome_name#',
+            },
+            -flow_into => {
+                '2' => [{'GenomeDirectoryPaths'=> INPUT_PLUS()}],
+            }
+        },
 
-    { -logic_name        => 'GenomeDirectoryPaths',
-      -module            => 'Bio::EnsEMBL::Production::Pipeline::FileDump::DirectoryPaths',
-      -max_retry_count   => 1,
-      -analysis_capacity => 20,
-      -parameters        => {
+        {   -logic_name        => 'GenomeDirectoryPaths',
+            -module            => 'Bio::EnsEMBL::Production::Pipeline::FileDump::DirectoryPaths',
+            -max_retry_count   => 1,
+            -analysis_capacity => 20,
+            -parameters        => {
+
                 data_category  => 'homology',
                 analysis_types => ['Homologies'],
             },
-      -flow_into         => {
-		    '3' => [{'dump_species_db_to_tsv'=> INPUT_PLUS()}]
+            -flow_into         => {
+                '3' => [{'dump_species_db_to_tsv'=> INPUT_PLUS()}]
             },
-    },
+        },
 
-    { -logic_name => 'dump_species_db_to_tsv',
-	  -module => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DumpSpeciesDBToTsv',
-	  -parameters => {
-		  'ref_dbname' => $self->o('ref_dbname'),
-	       },
-	  -flow_into => {
-		  '2' => [{'CompressHomologyTSV'=> INPUT_PLUS()}],
-	       },
-	  -rc_name       => "4Gb_job",
-    },
+        {   -logic_name => 'dump_species_db_to_tsv',
+            -module => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DumpSpeciesDBToTsv',
+            -parameters => {
+                'ref_dbname' => $self->o('ref_dbname'),
+            },
+            -flow_into => {
+                '2' => [{'CompressHomologyTSV'=> INPUT_PLUS()}],
+            },
+            -rc_name       => "4Gb_job",
+        },
 
-    { -logic_name => 'CompressHomologyTSV',
-	  -module => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-	  -max_retry_count   => 1,
-	  -analysis_capacity => 10,
-	  -batch_size        => 10,
-	  -parameters => {
-		'cmd' =>  'if [ -s "#filepath#" ]; then gzip -n -f "#filepath#"; fi',
-	       },
-	  -flow_into         => WHEN('defined #ftp_dir#' => ['Sync']),
-	  -rc_name       => "4Gb_job",
-	},
+        {   -logic_name => 'CompressHomologyTSV',
+            -module => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -max_retry_count   => 1,
+            -analysis_capacity => 10,
+            -batch_size        => 10,
+            -parameters => {
+               'cmd' =>  'if [ -s "#filepath#" ]; then gzip -n -f "#filepath#"; fi',
+            },
+            -flow_into         => WHEN('defined #ftp_dir#' => ['Sync']),
+            -rc_name       => "4Gb_job",
+        },
 
-    { -logic_name        => 'Sync',
-      -module            => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-      -max_retry_count   => 1,
-      -analysis_capacity => 10,
-      -batch_size        => 10,
-      -parameters        => {
-	      cmd => 'mkdir -p #ftp_dir#; rsync -aLW #output_dir#/ #ftp_dir#',
-           },
-          -rc_name       => "1Gb_datamover_job",
-    },
+        {   -logic_name        => 'Sync',
+            -module            => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -max_retry_count   => 1,
+            -analysis_capacity => 10,
+            -batch_size        => 10,
+            -parameters        => {
+                cmd => 'mkdir -p #ftp_dir#; rsync -aLW #output_dir#/ #ftp_dir#',
+            },
+            -rc_name       => "1Gb_datamover_job",
+        },
 
-    { -logic_name => 'record_species_set',
-      -module     => 'Bio::EnsEMBL::Compara::RunnableDB::RecordSpeciesSet',
-      -parameters => {
+        {   -logic_name => 'record_species_set',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::RecordSpeciesSet',
+            -parameters => {
                 'species_set_record' => $self->o('species_set_record'),
             },
-      -hive_capacity => 1,
-    }
+            -hive_capacity => 1,
+        }
 
     ];
 }
