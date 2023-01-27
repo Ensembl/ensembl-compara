@@ -172,9 +172,9 @@
     </collection>
     
     
-    <!-- All Insects  -->
+    <!-- All Insects
     <collection name="insects">
-      <!-- Included species from Insects -->
+
       <genome name="acromyrmex_echinatior_gca000204515v1rs"/>
       <genome name="acyrthosiphon_pisum_gca005508785v2rs"/>
       <genome name="aedes_aegypti_lvpagwg"/>
@@ -283,14 +283,14 @@
       <genome name="venturia_canescens_gca019457755v1rs"/>
       <genome name="zerene_cesonia_gca012273895v2rs"/>
       <genome name="zootermopsis_nevadensis"/>
-    </collection>
+    </collection> -->
 
   </collections>
 
   <gene_trees>
     <protein_trees collection="default"/>
     <protein_trees collection="protostomes"/>
-    <protein_trees collection="insects"/>
+    <!-- <protein_trees collection="insects"/> -->
   </gene_trees>
 
 </compara_db>
