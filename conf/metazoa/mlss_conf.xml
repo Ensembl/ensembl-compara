@@ -13,7 +13,7 @@
       <genome name="helobdella_robusta"/>
       <genome name="owenia_fusiformis_gca903813345v1"/>
       <!-- Included species from Arthropoda -->
-      <genome name="acyrthosiphon_pisum_gca005508785v2"/>
+      <genome name="acyrthosiphon_pisum_gca005508785v2rs"/>
       <genome name="amphibalanus_amphitrite_gca019059575v1"/>
       <genome name="anopheles_gambiae"/>
       <genome name="apis_mellifera"/>
@@ -107,7 +107,7 @@
       <genome name="helobdella_robusta"/>
       <genome name="owenia_fusiformis_gca903813345v1"/>
       <!-- Included species from Arthropoda -->
-      <genome name="acyrthosiphon_pisum_gca005508785v2"/>
+      <genome name="acyrthosiphon_pisum_gca005508785v2rs"/>
       <genome name="anopheles_gambiae"/>
       <genome name="apis_mellifera"/>
       <genome name="bombyx_mori"/>
@@ -119,7 +119,7 @@
       <genome name="haemaphysalis_longicornis_gca013339765v1"/>
       <genome name="ixodes_scapularis_gca016920785v2"/>
       <genome name="parasteatoda_tepidariorum_gca000365465v3"/>
-      <genome name="rhipicephalus_sanguineus_gca013339695v2rs"/>
+      <genome name="rhipicephalus_sanguineus_gca013339695v1"/>
       <genome name="schistocerca_americana_gca021461395v2rs"/>
       <genome name="stegodyphus_dumicola_gca010614865v2rs"/>
       <genome name="stegodyphus_mimosarum"/>
@@ -176,7 +176,7 @@
     <collection name="insects">
       <!-- Included species from Insects -->
       <genome name="acromyrmex_echinatior_gca000204515v1rs"/>
-      <genome name="acyrthosiphon_pisum_gca005508785v2"/>
+      <genome name="acyrthosiphon_pisum_gca005508785v2rs"/>
       <genome name="aedes_aegypti_lvpagwg"/>
       <genome name="aethina_tumida_gca024364675v1rs"/>
       <genome name="agrilus_planipennis_gca000699045v2"/>
