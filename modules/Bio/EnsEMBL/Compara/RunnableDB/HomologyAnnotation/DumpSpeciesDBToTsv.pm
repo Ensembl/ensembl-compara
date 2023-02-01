@@ -21,8 +21,7 @@ Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DumpSpeciesDBToTSV
 
 =head1 DESCRIPTION
 
-Takes a compara registry alias to output the corresponding database name.
-Gets the required parameters for and runs the python script to dump homologies to a tsv file. 
+Fetches the required parameters and runs the python script to dump homologies to a tsv file. 
 
 
 =cut

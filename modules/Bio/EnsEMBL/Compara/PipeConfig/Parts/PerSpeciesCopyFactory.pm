@@ -22,7 +22,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::PerSpeciesCopyFactory
 =head1 DESCRIPTION
 
     This is a partial PipeConfig for creating and copying independent
-    species-specific compara databases
+    species-specific compara databases and dumping homologies.
 
 =cut
 
