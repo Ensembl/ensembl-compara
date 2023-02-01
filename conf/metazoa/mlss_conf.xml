@@ -174,7 +174,7 @@
     
     <!-- All Insects
     <collection name="insects">
-
+      <!** Included species from Insects **>
       <genome name="acromyrmex_echinatior_gca000204515v1rs"/>
       <genome name="acyrthosiphon_pisum_gca005508785v2rs"/>
       <genome name="aedes_aegypti_lvpagwg"/>
