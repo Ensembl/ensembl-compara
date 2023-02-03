@@ -112,6 +112,7 @@ use XML::LibXML;
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
@@ -217,6 +218,19 @@ sub fetch_genome_dbs_by_taxon_name {
     return fetch_genome_dbs_by_taxon_id($taxon->dbID, $pool);
 }
 
+sub fetch_most_recent_current_collection_by_name {
+    my ($ss_adaptor, $collection) = @_;
+
+    assert_ref($ss_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor', 'ss_adaptor');
+    throw('$collection is required') unless $collection;
+
+    my @matching_ss = @{$ss_adaptor->fetch_all_by_name($collection =~ /^collection-/ ? $collection : "collection-$collection")};
+
+    my @matching_current_ss = grep { $_->is_current() } @matching_ss;
+
+    return $ss_adaptor->_find_most_recent(\@matching_current_ss);
+}
+
 sub make_species_set_from_XML_node {
     my ($xml_ss, $pool) = @_;
 
@@ -301,9 +315,17 @@ sub make_named_species_set_from_XML_node {
 # There can be a single 'compara_db' node in the document
 my $division_node = $xml_document->documentElement();
 my $division_name = $division_node->getAttribute('division');
-my $division_species_set = $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($division_name)
-    ? $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($division_name)
-    : $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name("default");
+
+my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
+my $division_species_set = fetch_most_recent_current_collection_by_name($ss_adaptor, $division_name);
+if (!defined $division_species_set) {
+    $division_species_set = fetch_most_recent_current_collection_by_name($ss_adaptor, 'default');
+
+    if (!defined $division_species_set) {
+        throw("Cannot find a current division collection named '$division_name' or 'default'");
+    }
+}
+
 $collections{$division_name} = $division_species_set;
 my $division_genome_dbs = [sort {$a->dbID <=> $b->dbID} @{$division_species_set->genome_dbs}];
 foreach my $collection_node (@{$division_node->findnodes('collections/collection')}) {
@@ -431,7 +453,6 @@ foreach my $st_node (@{$division_node->findnodes('species_trees/species_tree')})
 }
 
 my $method_adaptor = $compara_dba->get_MethodAdaptor;
-my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
 my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 my %mlss_ids_to_find = map {$_->dbID => $_} @{$mlss_adaptor->fetch_all_current};
 
