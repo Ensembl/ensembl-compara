@@ -43,9 +43,9 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 my @metazoa_overlap_species = qw(drosophila_melanogaster caenorhabditis_elegans);
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@metazoa_overlap_species);
 my $metazoa_overlap_cores = {
-    #'drosophila_melanogaster' => [ 'mysql-ens-sta-1-b', "drosophila_melanogaster_core_" . $curr_release . "_9" ],
+    #'drosophila_melanogaster' => [ 'mysql-ens-sta-1-b', "drosophila_melanogaster_core_" . $curr_release . "_10" ],
     #'caenorhabditis_elegans'  => [ 'mysql-ens-sta-1-b', "caenorhabditis_elegans_core_" . $curr_release . "_282" ],
-    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_" . $curr_release . "_9" ],
+    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_" . $curr_release . "_10" ],
     'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_" . $curr_release . "_282" ],
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $metazoa_overlap_cores );
@@ -70,7 +70,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $metazoa_overlap_cores );
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-1', 'ensembl_compara_master' ],
-    # 'compara_curr'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$curr_release" ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$curr_release" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],
 
     # homology dbs
@@ -78,12 +78,12 @@ my $compara_dbs = {
     #'compara_ptrees'          => [ 'mysql-ens-compara-prod-X',  '' ],
     'compara_ptrees_prev'      => [ 'mysql-ens-compara-prod-3',  'twalsh_default_vertebrates_protein_trees_109' ],
     #'compara_nctrees'         => [ 'mysql-ens-compara-prod-X',  '' ],
-    #'murinae_ptrees'          => [ 'mysql-ens-compara-prod-X, '' ],
-    #'murinae_nctrees'         => [ 'mysql-ens-compara-prod-X', '' ],
+    'murinae_ptrees'          => [ 'mysql-ens-compara-prod-9', 'sbotond_vertebrates_murinae_protein_reindexed_trees_110' ],
+    'murinae_nctrees'         => [ 'mysql-ens-compara-prod-9', 'sbotond_vertebrates_murinae_ncrna_reindexed_trees_110' ],
     'murinae_ptrees_prev'     => [ 'mysql-ens-compara-prod-10', 'twalsh_vertebrates_murinae_protein_reindexed_trees_109' ],
     'murinae_nctrees_prev'    => [ 'mysql-ens-compara-prod-10', 'twalsh_vertebrates_murinae_ncrna_reindexed_trees_109' ],
     #'pig_breeds_ptrees'       => [ 'mysql-ens-compara-prod-X',  '' ],
-    #'pig_breeds_nctrees'      => [ 'mysql-ens-compara-prod-X',  '' ],
+    'pig_breeds_nctrees'      => [ 'mysql-ens-compara-prod-9',  'sbotond_pig_breeds_vertebrates_ncrna_trees_110' ],
     'pig_breeds_ptrees_prev'  => [ 'mysql-ens-compara-prod-9',  'twalsh_vertebrates_pig_breeds_protein_reindexed_trees_109' ],
     'pig_breeds_nctrees_prev' => [ 'mysql-ens-compara-prod-9',  'twalsh_vertebrates_pig_breeds_ncrna_reindexed_trees_109' ],
 
