@@ -87,8 +87,7 @@ jobs:
       script: prove -r ./travisci/sql-unittest/
 
     - language: perl
-      dist: trusty   # 5.22 is the minimum on xenial
-      perl: 5.14
+      perl: 5.26
       name: "Perl unit tests on the minimum version"
       env:
         - COVERAGE=true
