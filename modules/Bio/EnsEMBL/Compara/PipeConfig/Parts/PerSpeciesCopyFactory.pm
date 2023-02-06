@@ -95,7 +95,6 @@ sub pipeline_analyses_create_and_copy_per_species_db {
             -max_retry_count   => 1,
             -analysis_capacity => 20,
             -parameters        => {
-
                 data_category  => 'homology',
                 analysis_types => ['Homologies'],
             },

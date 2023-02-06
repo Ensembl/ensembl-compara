@@ -130,8 +130,8 @@ sub default_options {
         'dump_homologies_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/dumps/dump_homologies.py'),
 
         #Dump dir path for GenomeDirectoryPath module
-	    'dump_dir' => $self->o('work_dir') . '/homology_tsv_dump_dir',
-	    'ftp_root' => undef,
+        'dump_dir' => $self->o('work_dir') . '/homology_tsv_dump_dir',
+        'ftp_root' => undef,
 
         # List of tables to copy to per-species compara database
         'table_list' => [
@@ -197,6 +197,7 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
         'dump_path'         => $self->o('dump_path'),
 
         'reg_conf'          => $self->o('reg_conf'),
+
         'output_dir_path'  => $self->o('output_dir_path'),
         'overwrite_files'  => $self->o('overwrite_files'),
         'failures_fatal'   => $self->o('failures_fatal'),
