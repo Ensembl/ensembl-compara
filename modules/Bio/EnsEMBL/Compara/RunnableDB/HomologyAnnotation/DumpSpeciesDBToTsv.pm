@@ -17,11 +17,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DumpSpeciesDBToTSV
+Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DumpSpeciesDBToTsv
 
 =head1 DESCRIPTION
 
-Fetches the required parameters and runs the python script to dump homologies to a tsv file. 
+Fetches the required parameters and runs the python script to dump homologies to a tsv file.
 
 
 =cut
