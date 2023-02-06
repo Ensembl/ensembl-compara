@@ -102,6 +102,38 @@ sub fetch_by_stable_id_GenomeDB {
     }
 }
 
+sub fetch_all_by_stable_id {
+    my ($self, $stable_id) = @_;
+
+    throw("MemberAdaptor::fetch_all_by_stable_id() must have a stable_id") unless $stable_id;
+
+    my $members;
+
+    my $constraint1 = 'm.stable_id = ?';
+    $self->bind_param_generic_fetch($stable_id, SQL_VARCHAR);
+    foreach my $member (@{$self->generic_fetch($constraint1)}) {
+        push @{$members}, $member;
+    }
+
+    # In fetch_by_stable_id_GenomeDB we could return matching members already,
+    # but this method is intended to fetch all matches, so we press on.
+    my $vindex = rindex( $stable_id, '.' );
+    if ($vindex > 0) { # skip if no dot (unversioned stable_id) or string starts with dot (empty stable_id)
+        my $unversioned_id = substr( $stable_id, 0, $vindex );
+        my $version = substr( $stable_id, ($vindex + 1) );
+        if ( looks_like_number( $version ) ) {
+            my $constraint2 = 'm.stable_id = ? AND m.version = ?';
+            $self->bind_param_generic_fetch( $unversioned_id, SQL_VARCHAR );
+            $self->bind_param_generic_fetch( $version, SQL_INTEGER );
+            foreach my $member ( @{$self->generic_fetch( $constraint2 )} ) {
+                push @{$members}, $member;
+            }
+        }
+    }
+
+    return $members;
+}
+
 =head2 fetch_all_by_stable_id_list
 
   Arg [1]    : arrayref of string $stable_id
