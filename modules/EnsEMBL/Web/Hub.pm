@@ -48,6 +48,7 @@ use EnsEMBL::Web::ViewConfig;
 use EnsEMBL::Web::Tools::Misc qw(style_by_filesize);
 use EnsEMBL::Web::Tools::FailOver::SNPedia;
 use EnsEMBL::Web::Tools::FailOver::AlleleRegistry;
+use EnsEMBL::Web::Tools::FailOver::MolInt;
 
 use EnsEMBL::Web::QueryStore;
 use EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl;
@@ -890,6 +891,20 @@ sub snpedia_status {
     warn "SNPEDIA failure";
   };
 
+  return $out;
+}
+
+# check to see if Molecular interactions site is up or down
+# if $out then site is up
+sub mol_int_status {
+  my $self = shift;
+  my $failover = EnsEMBL::Web::Tools::FailOver::MolInt->new($self);
+  my $out;
+  try {
+    $out = $failover->get_cached;
+  } catch {
+    warn "Molecular interactions failure";
+  };
   return $out;
 }
 
