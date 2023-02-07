@@ -103,6 +103,7 @@ sub munge_config_tree {
   $self->_munge_meta;
   $self->_munge_variation;
   $self->_munge_website;
+  $self->_add_available_interactions;
 }
 
 sub munge_config_tree_multi {
@@ -2062,5 +2063,31 @@ sub _summarise_pan_compara {
   }
 }
 
+sub _add_available_interactions {
+  my ($self) = @_;
+  my $data = '';
+  my $url = $SiteDefs::MOLECULAR_INTERACTIONS_URL . '/interactions_by_prodname/';
+  my $response = read_file($url,{
+                    nice => 1,
+                    no_exception => 1,
+                  });
+
+  if($response->{'error'}) {
+    warn "REST ERROR at $url\n";
+  }
+  else {
+    eval { $data = from_json($response->{'content'}); };
+    if ($@) {
+      warn "ERROR FROM REST SERVER: $@\n";
+      $data = '';
+    }
+  }
+
+  if ($data && $data ne '') {
+    foreach my $sp (keys %$data) {
+      $self->tree($sp)->{'INTERACTION_GENELIST'} = $data->{$sp};
+    }
+  }
+}
 
 1;

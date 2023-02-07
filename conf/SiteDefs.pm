@@ -233,6 +233,8 @@ our $ENSEMBL_JAVA         = "java"; # For js/css minification
 our $OLS_REST_API          = 'https://www.ebi.ac.uk/ols/api/';
 our $ENSEMBL_GLOSSARY_REST = $OLS_REST_API.'ontologies/ensemblglossary';
 our $ENSEMBL_GLOSSARY_URL  = 'https://www.ebi.ac.uk/ols/ontologies/ensemblglossary';
+# Molecular interaction REST API
+our $MOLECULAR_INTERACTIONS_URL = 'https://interactions.rest.ensembl.org';
 
 ###############################################################################
 ## See Memoize.pm for meaning of these

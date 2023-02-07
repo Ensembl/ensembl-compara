@@ -62,7 +62,8 @@ sub availability {
       $availability->{'family'} = 1;
     }
     $availability->{'not_strain'} = $self->hub->is_strain ? 0 : 1; #availability to check if species is a strain or not, it has to be this way round (used in Gene Configuration to disable main compara view on strain species)
- 
+    $availability->{"has_interactions"} = $self->interaction_check; # check if interactions data is available for a gene
+
     $self->{'_availability'} = $availability;
   }
 
@@ -517,6 +518,14 @@ sub get_latest_incarnation      { return $_[0]->Obj->get_latest_incarnation; }
 sub get_all_associated_archived { return $_[0]->Obj->get_all_associated_archived; }
 sub gxa_check                   { return; } #implemented in widget plugin, to check for gene expression atlas availability
 sub pathway_check               { return; } #implemented in widget plugin, to check for plant reactome availability
+
+sub interaction_check {
+  my $self = shift;
+  my $interactionsGenelist = $self->species_defs->get_config($self->species, 'INTERACTION_GENELIST');
+  my $gene = $self->gene->stable_id;
+  my $match = grep /$gene/, @$interactionsGenelist;
+  return $match ? 1 : 0;
+}
 
 
 sub get_database_matches {
@@ -1623,6 +1632,21 @@ sub can_export {
   ## Don't export main sequence from compara views
   return 0 if $self->action =~ /TranscriptComparison|Compara|Tree|Family/;
   return $self->action eq 'Sequence' ? 'Download sequence' : 1;
+}
+
+sub get_molecular_interactions {
+  my ($self, $gene_id) = @_;
+  my $hub = $self->hub;
+  my $mol_int_url = $SiteDefs::MOLECULAR_INTERACTIONS_URL . '/display_by_gene';
+
+  my $rest = EnsEMBL::Web::REST->new($hub, $mol_int_url);
+
+  my ($ref, $error) = $rest->fetch($gene_id);
+
+  if($error) {
+    return {};
+  }
+  return $ref;
 }
 
 1;
