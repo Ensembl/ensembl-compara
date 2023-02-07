@@ -48,7 +48,7 @@ Ensembl.Panel.Interaction = Ensembl.Panel.extend({
     const otherMetadata = this.elLk.intr_metadata.other;
     var ele, label, value, metahtml;
 
-    speciesMetadata.forEach((md, i) => {
+    speciesMetadata && speciesMetadata.forEach((md, i) => {
       ele = this.elLk.speciesRows[i];
       metahtml = '<div class="meta">'
       md.forEach((meta) => {
