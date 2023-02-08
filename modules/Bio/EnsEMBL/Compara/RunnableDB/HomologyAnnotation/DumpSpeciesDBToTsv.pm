@@ -17,11 +17,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DumpSpeciesDBToTSV
+Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DumpSpeciesDBToTsv
 
 =head1 DESCRIPTION
 
-Fetches the required parameters and runs the python script to dump homologies to a tsv file. 
+Fetches the required parameters and runs the python script to dump homologies to a tsv file.
 
 
 =cut
@@ -39,34 +39,31 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my $self = shift;
-    my $compara_db = $self->param('ref_dbname');
-    $self->param('compara_db', $compara_db);
     my $filename = $self->param('species_name') . '-' . $self->param('assembly') . '-' . $self->param('geneset') . '-' . 'homology' . '.tsv';
     $self->param('filename', $filename);
-    my $filepath = $self->param('output_dir') .'/'. $self->param('filename');
+    my $filepath = $self->param_required('output_dir') .'/'. $self->param('filename');
     $self->param('filepath', $filepath);
 }
 
 sub run {
     my $self = shift;
-    mkpath($self->param('output_dir'),1,oct("755"));
+    mkpath($self->param('output_dir'), 1, oct("755"));
     my $dump_homologies_script = $self->param('dump_homologies_script');
-    my $db_url = $self->param('per_species_db');
+    my $db_url = $self->param_required('per_species_db');
     my $out_dir = $self->param('output_dir');
     my $filename = $self->param('filename');
-    my $compara_db = $self->param('compara_db');
-    my $filepath = $self->param('filepath');
+    my $compara_db = $self->param_required('ref_dbname');
     my $cmd = "python $dump_homologies_script -u $db_url -r $compara_db -o $out_dir/$filename";
     my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1});
-    print "Time for dumping the homologies... " . $run_cmd->runtime_msec . " msec\n";
+    print "Time for dumping the homologies... " . $run_cmd->runtime_msec . " msec\n" if $self->debug();
 }
 
 sub write_output {
-	my $self = shift;
-	my $output_id = {
-		filepath    => $self->param_required('filepath'),
-		dump_source => $self->param_required('output_dir'),
-	};
+    my $self = shift;
+    my $output_id = {
+        filepath    => $self->param_required('filepath'),
+        dump_source => $self->param_required('output_dir'),
+    };
     $self->dataflow_output_id( $output_id, 2 );
 }
 1;
