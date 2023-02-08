@@ -39,20 +39,21 @@ my %mlss_xml_genome_paths = (
 
 
 sub test_division {
-    my ($division, $division_dir) = @_;
+    my ($division, $division_dir, $allowed_species_info) = @_;
 
     # Track if we have anything to test for this division
     my $has_files_to_test;
 
-    # Load allowed_species.json if it exists
+    # Fetch allowed-species info if allowed_species.json exists for this division
     my %allowed_species;
-    my $allowed_species_file = File::Spec->catfile($division_dir, 'allowed_species.json');
-    if (-e $allowed_species_file) {
-        my $names = decode_json(slurp($allowed_species_file));
-        %allowed_species = map {$_ => 1} @$names;
-        foreach my $name (@$names) {
-            unlike($name, qr/\s/, "'$name' does not contain a space");
-        }
+    my $allowed_species_file;
+    if (exists $allowed_species_info->{$division}) {
+        $allowed_species_file = $allowed_species_info->{$division}{'allowed_species_file'};
+        %allowed_species = %{$allowed_species_info->{$division}{'allowed_species'}};
+    }
+
+    foreach my $name (keys %allowed_species) {
+        unlike($name, qr/\s/, "'$name' does not contain a space");
     }
 
     # Load the species-tree if there is one
@@ -115,6 +116,26 @@ sub test_division {
         }
     }
 
+    # Load additional_species.json if it exists
+    my $additional_species_file = File::Spec->catfile($division_dir, 'additional_species.json');
+    if (-e $additional_species_file) {
+        my $additional_species = decode_json(slurp($additional_species_file));
+        my @divisions_to_test = grep { exists $allowed_species_info->{$_} } keys %$additional_species;
+        if (scalar(@divisions_to_test) > 0) {
+            # 4. Each species in additional_species.json must be in relevant division allowed-species list
+            $has_files_to_test = 1;
+            foreach my $other_div (@divisions_to_test) {
+                my $other_div_allowed_species_file = $allowed_species_info->{$other_div}{'allowed_species_file'};
+                subtest "$additional_species_file vs $other_div_allowed_species_file" => sub {
+                    my %other_div_allowed_species = %{$allowed_species_info->{$other_div}{'allowed_species'}};
+                    foreach my $name (@{$additional_species->{$other_div}}) {
+                        ok(exists $other_div_allowed_species{$name}, "$name is allowed");
+                    }
+                }
+            }
+        }
+    }
+
     # Nothing to test but it's alright. Not all divisions have files to cross-check
     plan skip_all => 'No files to test' unless $has_files_to_test;
 }
@@ -122,15 +143,30 @@ sub test_division {
 my $compara_root = Bio::EnsEMBL::Compara::Utils::Test::get_repository_root();
 my $config_dir = File::Spec->catfile($compara_root, 'conf');
 
+my %div_to_div_dir;
+my $allowed_species_info;
 opendir(my $dirh, $config_dir);
 foreach my $division (File::Spec->no_upwards(readdir $dirh)) {
     my $division_dir = File::Spec->catfile($config_dir, $division);
     if (-d $division_dir) {
-        subtest $division => sub {
-            test_division($division, $division_dir);
-        };
+        $div_to_div_dir{$division} = $division_dir;
+        my $allowed_species_file = File::Spec->catfile($division_dir, 'allowed_species.json');
+        if (-e $allowed_species_file) {
+            my $names = decode_json(slurp($allowed_species_file));
+            my %allowed_species = map {$_ => 1} @$names;
+            $allowed_species_info->{$division} = {
+                'allowed_species_file' => $allowed_species_file,
+                'allowed_species' => \%allowed_species
+            };
+        }
     }
 }
 close($dirh);
+
+while (my ($division, $division_dir) = each %div_to_div_dir) {
+    subtest $division => sub {
+        test_division($division, $division_dir, $allowed_species_info);
+    };
+}
 
 done_testing();

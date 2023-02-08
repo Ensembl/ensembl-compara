@@ -78,10 +78,21 @@ sub fetch_input {
         die "No genomes reported for release" unless @release_genomes;
     }
 
+    my $additional_species;
+    if ($self->param_is_defined('additional_species') && $self->param_is_defined('additional_species_file')) {
+        $self->throw("Only one of parameters 'additional_species' or 'additional_species_file' can be defined")
+    } elsif ($self->param_is_defined('additional_species')) {
+        $additional_species = $self->param('additional_species');
+    } elsif ($self->param_is_defined('additional_species_file')) {
+        my $additional_species_file = $self->param('additional_species_file');
+        die "Additional species JSON file ('$additional_species_file') does not exist" unless -e $additional_species_file;
+        die "Additional species JSON file ('$additional_species_file') should not be empty" if -z $additional_species_file;
+        $additional_species = decode_json($self->_slurp($additional_species_file));
+    }
+
     # check if additional species have been defined and include them
     # in the appropriate data structures
-    if ( $self->param('additional_species') ) {
-        my $additional_species = $self->param('additional_species');
+    if (defined $additional_species) {
         foreach my $additional_div ( keys %$additional_species ) {
             # first, add them to the release_genomes
             my @add_species_for_div = @{$additional_species->{$additional_div}};
