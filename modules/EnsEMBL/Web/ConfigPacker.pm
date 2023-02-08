@@ -103,13 +103,13 @@ sub munge_config_tree {
   $self->_munge_meta;
   $self->_munge_variation;
   $self->_munge_website;
-  $self->_add_available_interactions;
 }
 
 sub munge_config_tree_multi {
   my $self = shift;
   $self->_munge_website_multi;
   $self->_munge_species_url_map;
+  $self->_add_available_interactions;
 }
 
 # Implemented in plugins
