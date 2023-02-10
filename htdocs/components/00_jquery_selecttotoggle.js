@@ -30,6 +30,10 @@
       var currValue = this.nodeName === 'INPUT' && this.type === 'checkbox' && !this.checked ? false : this.value; // if checkbox is not ticked, ignore it's value
 
       var escapeDotInClassName = function (className) {
+        if (!className) {
+          return;
+        }
+
         var escapeDot = function (str) {
           var i = 0;
           
