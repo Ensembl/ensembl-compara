@@ -15,15 +15,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-# POD documentation - main docs before the code
-
-=pod 
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO
+
+=head1 DESCRIPTION
+
+This runnable recovers the genomic alignments from the GenomicAlignBlocks and
+GenomicAlignTrees as stored by EPO_EXTENDED multiple whole genome alignment methods
 
 =cut
 
@@ -43,51 +42,14 @@ $nc_recover_epo->write_output(); #writes to DB
 =cut
 
 
-=head1 DESCRIPTION
-
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl 
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>
-
-=cut
-
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
-
-=cut
-
-
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO;
 
 use strict;
 use warnings;
-use Data::Dumper;
 
 use Bio::EnsEMBL::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
-
-=head2 fetch_input
-
-    Title   :   fetch_input
-    Usage   :   $self->fetch_input
-    Function:   Fetches input data from the database
-    Returns :   none
-    Args    :   none
-
-=cut
-
 
 sub fetch_input {
   my $self = shift @_;
@@ -112,41 +74,16 @@ sub fetch_input {
   $self->param('epo_mlss_adaptor', $epo_dba->get_MethodLinkSpeciesSetAdaptor);
 }
 
-=head2 run
-
-    Title   :   run
-    Usage   :   $self->run
-    Function:   runs something
-    Returns :   none
-    Args    :   none
-
-=cut
-
 sub run {
   my $self = shift @_;
 
-  # $self->run_ncrecoverepo;
   $self->iterate_over_lowcov_mlsss;
 }
-
-
-=head2 write_output
-
-    Title   :   write_output
-    Usage   :   $self->write_output
-    Function:   stores something
-    Returns :   none
-    Args    :   none
-
-=cut
-
 
 sub write_output {
   my $self = shift @_;
 
-#  $self->param('predictions_to_add', {});
   $self->remove_low_cov_predictions;
-#  $self->add_matching_predictions;
 }
 
 
@@ -241,29 +178,29 @@ sub run_ncrecoverepo {
           my $found_prediction; my $validated_prediction = 0;
           print STDERR "#   Other genome: ", $genomic_align->genome_db->name, "\n" if ($self->debug);
           foreach my $gene (@$genes) {
-            my $gene_stable_id = $gene->stable_id;
-            if (defined($nc_tree_gene_ids{$gene_stable_id})) {
-              $found_prediction->{$gene_stable_id} = 1;
+            my $gene_member = $self->param('gene_member_adaptor')->fetch_by_Gene($gene);
+            if (defined($nc_tree_gene_ids{$gene_member->stable_id})) {
+              $found_prediction->{$gene_member->dbID} = 1;
               $validated_prediction = 1;
             } elsif ($gene->biotype !~ /coding/) {
-              $found_prediction->{$gene_stable_id} = 1;
-              print STDERR "#     $gene_stable_id, biotype:", $gene->biotype, "\n" if ($self->debug);
+              $found_prediction->{$gene_member->dbID} = 1;
+              print STDERR "#     " . $gene_member->stable_id . ", biotype:", $gene->biotype, "\n" if ($self->debug);
             }
           }
           if (defined($found_prediction) && 0 == $validated_prediction) {
-            foreach my $found_gene_stable_id (keys %$found_prediction) {
+            foreach my $found_gene_member_id (keys %$found_prediction) {
               # Store it in the table
+              my $gene_member = $self->param('gene_member_adaptor')->fetch_by_dbID($found_gene_member_id);
               my $sth = $self->compara_dba->dbc->prepare
                 ("INSERT IGNORE INTO recovered_member 
                            (node_id,
                             stable_id,
                             genome_db_id) VALUES (?,?,?)");
               $sth->execute($root_id,
-                            $found_gene_stable_id,
+                            $gene_member->stable_id,
                             $other_genome_db_id);
               $sth->finish;
               # See if we can match the RFAM name or RFAM id
-              my $gene_member = $self->param('gene_member_adaptor')->fetch_by_stable_id($found_gene_stable_id);
               next unless (defined($gene_member));
               # FIXME: this code cannot work because nctree_adaptor is not defined !
               my $other_tree = $self->param('nctree_adaptor')->fetch_by_Member_root_id($gene_member);
@@ -277,7 +214,7 @@ sub run_ncrecoverepo {
               my $acc_description = $1 || '';
               my $model_id = $self->param('nc_tree')->get_value_for_tag('model_id');
               if ($acc_description eq $model_id) {
-                $self->param('predictions_to_add')->{$found_gene_stable_id} = 1;
+                $self->param('predictions_to_add')->{$found_gene_member_id} = 1;
               } else {
                 print STDERR "#     found_prediction but Acc not mapped: $acc_description [$model_id]\n" if ($self->debug);
               }
@@ -478,8 +415,8 @@ sub add_matching_predictions {
   my $self = shift;
 
   # Insert the members that are found new and have matching Acc
-  foreach my $gene_stable_id_to_add (keys %{$self->param('predictions_to_add')}) {
-    my $gene_member = $self->param('gene_member_adaptor')->fetch_by_stable_id($gene_stable_id_to_add);
+  foreach my $gene_member_id_to_add (keys %{$self->param('predictions_to_add')}) {
+    my $gene_member = $self->param('gene_member_adaptor')->fetch_by_dbID($gene_member_id_to_add);
     # Incorporate the canonical seq_member into the cluster
     my $node = new Bio::EnsEMBL::Compara::GeneTreeMember;
     $node->seq_member_id($gene_member->get_canonical_SeqMember->seq_member_id);
@@ -488,7 +425,7 @@ sub add_matching_predictions {
     #the building method uses seq_member_id's to reference unique nodes
     #which are stored in the node_id value, copy to seq_member_id
     # We won't do the store until the end, otherwise it will affect the main loop
-    print STDERR "adding matching prediction $gene_stable_id_to_add\n" if($self->debug);
+    print STDERR "adding matching prediction $gene_member_id_to_add\n" if($self->debug);
     $self->param('treenode_adaptor')->store_node($node);
   }
 

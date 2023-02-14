@@ -993,7 +993,7 @@ CREATE TABLE sequence (
 @colour   #808000
 
 @example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 150) gene ENSG00000176105
-      @sql                          SELECT * FROM gene_member WHERE stable_id = "ENSG00000176105";
+    @sql   SELECT * FROM gene_member WHERE genome_db_id = 150 AND stable_id = "ENSG00000176105";
 
 @column gene_member_id             Internal unique ID
 @column stable_id             EnsEMBL stable ID
@@ -1092,7 +1092,7 @@ CREATE TABLE gene_member_hom_stats (
 @colour   #808000
 
 @example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 150) peptide ENSP00000324740
-      @sql                          SELECT * FROM seq_member WHERE stable_id = "ENSP00000324740";
+    @sql   SELECT * FROM seq_member WHERE genome_db_id = 150 AND stable_id = "ENSP00000324740";
 
 @column seq_member_id             Internal unique ID
 @column stable_id             EnsEMBL stable ID or external ID (for Uniprot/SWISSPROT and Uniprot/SPTREMBL)
@@ -1778,7 +1778,7 @@ CREATE TABLE gene_tree_node_attr (
 @desc  This table contains gene quality information from the geneset_QC pipeline
 @colour   #FFCC66
 
-@column gene_member_stable_id    EnsEMBL stable ID
+@column gene_member_id           External reference to gene_member_id in the @link gene_member table.
 @column genome_db_id             Internal unique ID for this table
 @column seq_member_id            canonical seq_member_id
 @column n_species                -n_species
@@ -1788,7 +1788,7 @@ CREATE TABLE gene_tree_node_attr (
 */
 
 CREATE TABLE gene_member_qc (
-  gene_member_stable_id       varchar(128) BINARY NOT NULL,
+  gene_member_id              INT unsigned NOT NULL,
   genome_db_id                INT unsigned NOT NULL,
   seq_member_id               INT unsigned,
   n_species                   INT,
@@ -1796,11 +1796,11 @@ CREATE TABLE gene_member_qc (
   avg_cov                     FLOAT,
   status                      varchar(50) NOT NULL,
 
-  FOREIGN KEY (gene_member_stable_id) REFERENCES gene_member(stable_id),
+  FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id),
   FOREIGN KEY (seq_member_id) REFERENCES seq_member(seq_member_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
 
-  KEY (gene_member_stable_id)
+  KEY (gene_member_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
@@ -2279,7 +2279,7 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '108');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '109');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');

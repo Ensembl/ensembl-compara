@@ -1,4 +1,4 @@
-31	\N	schema_version	108
+33	\N	schema_version	109
 2	\N	schema_type	compara
 13	\N	patch	patch_101_102_a.sql|schema_version
 14	\N	patch	patch_101_102_b.sql|enum_other

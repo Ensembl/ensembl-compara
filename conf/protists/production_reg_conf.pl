@@ -107,8 +107,18 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-8', 'cristig_protists_load_members_107' ],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', 'cristig_default_protists_protein_trees_107' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${prev_eg_release}_${prev_release}" ],
+    'compara_ptrees'  => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${prev_eg_release}_${prev_release}" ],
+
+    # LastZ dbs
+    'lastz_batch_1' => [ 'mysql-ens-compara-prod-1', 'sbhurji_protists_lastz_batch1_109' ],
+    'lastz_batch_2' => [ 'mysql-ens-compara-prod-9', 'sbhurji_protists_lastz_batch2_109' ],
+    'lastz_batch_3' => [ 'mysql-ens-compara-prod-8', 'sbhurji_protists_lastz_batch3_109' ],
+    'lastz_batch_4' => [ 'mysql-ens-compara-prod-9', 'sbhurji_protists_lastz_batch4_109' ],
+
+    # synteny
+    #
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-8', 'sbhurji_protists_synteny_109' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );

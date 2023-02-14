@@ -59,7 +59,7 @@ subtest "Test fetch methods", sub {
 
     ok(1);
 
-    my $member = $ma->fetch_by_stable_id($member_stable_id);
+    my $member = $ma->fetch_by_stable_id_GenomeDB($member_stable_id, $hs_gdb);
 
     ok($member);
 

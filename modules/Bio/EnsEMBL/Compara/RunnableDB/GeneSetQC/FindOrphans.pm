@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindOrphans
@@ -41,15 +30,6 @@ follow this rule.
 standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindOrphans \
  -compara_db mysql://server/mm14_protein_trees_82 -genome_db_id 150
 
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
-
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindOrphans;
@@ -62,9 +42,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub run {
     my $self = shift @_;
 
-    my $sql_no_trees = q{SELECT stable_id FROM gene_member LEFT JOIN gene_tree_node ON canonical_member_id = seq_member_id WHERE genome_db_id = ? AND node_id IS NULL AND};
-    my $sql_species_only_trees = q{SELECT stable_id FROM gene_member JOIN gene_tree_node gtn ON canonical_member_id = gtn.seq_member_id JOIN (SELECT root_id FROM gene_tree_node JOIN seq_member USING (seq_member_id) JOIN gene_tree_root USING (root_id) WHERE clusterset_id = "default" GROUP BY root_id HAVING COUNT(genome_db_id) = SUM(genome_db_id = ?)) t USING (root_id) WHERE};
-    my $sql_normal_trees = q{SELECT stable_id FROM gene_member JOIN gene_tree_node gtn ON canonical_member_id = gtn.seq_member_id JOIN (SELECT root_id FROM gene_tree_node JOIN seq_member USING (seq_member_id) JOIN gene_tree_root USING (root_id) WHERE clusterset_id = "default" GROUP BY root_id HAVING COUNT(DISTINCT genome_db_id) > 1) t USING (root_id) WHERE genome_db_id = ? AND};
+    my $sql_no_trees = q{SELECT gene_member_id FROM gene_member LEFT JOIN gene_tree_node ON canonical_member_id = seq_member_id WHERE genome_db_id = ? AND node_id IS NULL AND};
+    my $sql_species_only_trees = q{SELECT gene_member_id FROM gene_member JOIN gene_tree_node gtn ON canonical_member_id = gtn.seq_member_id JOIN (SELECT root_id FROM gene_tree_node JOIN seq_member USING (seq_member_id) JOIN gene_tree_root USING (root_id) WHERE clusterset_id = "default" GROUP BY root_id HAVING COUNT(genome_db_id) = SUM(genome_db_id = ?)) t USING (root_id) WHERE};
+    my $sql_normal_trees = q{SELECT gene_member_id FROM gene_member JOIN gene_tree_node gtn ON canonical_member_id = gtn.seq_member_id JOIN (SELECT root_id FROM gene_tree_node JOIN seq_member USING (seq_member_id) JOIN gene_tree_root USING (root_id) WHERE clusterset_id = "default" GROUP BY root_id HAVING COUNT(DISTINCT genome_db_id) > 1) t USING (root_id) WHERE genome_db_id = ? AND};
 
     # Add this to the above queries to restrict the search to prot / rna
     my $sql_prot_member = q{ biotype_group = "coding"};
@@ -74,12 +54,12 @@ sub run {
     # we only use the canonical ones here 1) to allow the comparison with
     # the gene-trees and 2) because the other proteins have different
     # structures which causes them to be clustered differently
-    my $sql_fam_wrapper = q{SELECT stable_id FROM family_member JOIN (%s) t USING (family_id) JOIN gene_member ON canonical_member_id = seq_member_id WHERE genome_db_id = ?};
+    my $sql_fam_wrapper = q{SELECT gene_member_id FROM family_member JOIN (%s) t USING (family_id) JOIN gene_member ON canonical_member_id = seq_member_id WHERE genome_db_id = ?};
     my $sql_fam_count_template = q{SELECT family_id FROM family_member JOIN seq_member USING (seq_member_id) GROUP BY family_id HAVING COUNT(*) %s 1 AND COUNT(*) %s SUM(genome_db_id IS NOT NULL AND genome_db_id = ?)};
     my $sql_fam_singlespec = sprintf($sql_fam_count_template, '>', '=');
     my $sql_fam_singleton = sprintf($sql_fam_count_template, '=', '=');
     my $sql_fam_normal = sprintf($sql_fam_count_template, '>', '>');
-    my $sql_no_fam = q{SELECT stable_id FROM gene_member LEFT JOIN family_member ON canonical_member_id = seq_member_id WHERE genome_db_id = ? AND family_id IS NULL};
+    my $sql_no_fam = q{SELECT gene_member_id FROM gene_member LEFT JOIN family_member ON canonical_member_id = seq_member_id WHERE genome_db_id = ? AND family_id IS NULL};
 
     # Let's do the RNAs first
     $self->_group_analyze([
@@ -114,7 +94,7 @@ sub _group_analyze {
     my %skip = map {$_ => 1} qw(no_families normal_trees/normal_families);
     while (my ($gene,$reasons) = each(%no_support)) {
         next if $skip{$reasons};
-        $self->dataflow_output_id( { gene_stable_id => $gene, status => $reasons }, 2);
+        $self->dataflow_output_id( { gene_member_id => $gene, status => $reasons }, 2);
     }
 }
 

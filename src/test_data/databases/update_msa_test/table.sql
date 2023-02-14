@@ -152,7 +152,7 @@ CREATE TABLE `gene_member` (
   `dnafrag_strand` tinyint(4) DEFAULT NULL,
   `display_label` varchar(128) DEFAULT NULL,
   PRIMARY KEY (`gene_member_id`),
-  UNIQUE KEY `stable_id` (`stable_id`),
+  UNIQUE KEY `genome_db_stable_id` (`genome_db_id`,`stable_id`),
   KEY `taxon_id` (`taxon_id`),
   KEY `source_name` (`source_name`),
   KEY `canonical_member_id` (`canonical_member_id`),
@@ -175,7 +175,7 @@ CREATE TABLE `gene_member_hom_stats` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 ROW_FORMAT=DYNAMIC;
 
 CREATE TABLE `gene_member_qc` (
-  `gene_member_stable_id` varchar(128) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
+  `gene_member_id` int(10) unsigned NOT NULL,
   `genome_db_id` int(10) unsigned NOT NULL,
   `seq_member_id` int(10) unsigned DEFAULT NULL,
   `n_species` int(11) DEFAULT NULL,
@@ -557,9 +557,8 @@ CREATE TABLE `seq_member` (
   `dnafrag_strand` tinyint(4) DEFAULT NULL,
   `display_label` varchar(128) DEFAULT NULL,
   PRIMARY KEY (`seq_member_id`),
-  UNIQUE KEY `stable_id` (`stable_id`),
+  UNIQUE KEY `genome_db_stable_id` (`genome_db_id`,`stable_id`),
   KEY `taxon_id` (`taxon_id`),
-  KEY `genome_db_id` (`genome_db_id`),
   KEY `source_name` (`source_name`),
   KEY `sequence_id` (`sequence_id`),
   KEY `gene_member_id` (`gene_member_id`),

@@ -1,6 +1,6 @@
 1	\N	division	vertebrates
 2	\N	schema_type	compara
-163	\N	schema_version	108
+165	\N	schema_version	109
 4	\N	patch	patch_103_104_a.sql|schema_version
 5	\N	patch	patch_103_104_b.sql|dnafrag_alt_region
 6	\N	patch	patch_103_104_c.sql|fix_int_types

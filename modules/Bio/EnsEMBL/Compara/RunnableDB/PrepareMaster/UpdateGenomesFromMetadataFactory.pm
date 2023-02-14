@@ -294,6 +294,9 @@ sub fetch_genome_report {
         @new_genomes = grep { exists $allowed_species->{$_} } @new_genomes;
         @updated_assemblies = grep { exists $allowed_species->{$_} } @updated_assemblies;
         @updated_annotations = grep { exists $allowed_species->{$_} } @updated_annotations;
+        # Filter renamed genomes:
+        my @allowed_keys = grep { exists $allowed_species->{$_} } keys %renamed_genomes;
+        %renamed_genomes = map { $_ => $renamed_genomes{$_} } @allowed_keys;
     }
 
     return ([@new_genomes, @updated_assemblies, @updated_annotations], \%renamed_genomes, \@updated_annotations);

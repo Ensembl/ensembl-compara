@@ -45,6 +45,9 @@ $reg->no_version_check(1) unless ($debug);
 
 my $gene_member_adaptor = $reg->get_adaptor("Multi", "compara", "GeneMember");
 my $homology_adaptor = $reg->get_adaptor("Multi", "compara", "Homology");
+my $genome_db_adaptor = $reg->get_adaptor("Multi", "compara", "GenomeDB");
+
+my $genome = $genome_db_adaptor->fetch_by_name_assembly("homo_sapiens");
 
 my $bioperl_dnastats = 0;
 eval {require Bio::Align::DNAStatistics;};
@@ -55,7 +58,7 @@ my $result = undef;
 
 print "spa,labela,spb,labelb,dn,ds\n";
 foreach my $gene_id (split(':',$input)) {
-  my $member = $gene_member_adaptor->fetch_by_stable_id($gene_id);
+  my $member = $gene_member_adaptor->fetch_by_stable_id_GenomeDB($gene_id, $genome);
   next unless (defined($member));
   my $all_homologies = $homology_adaptor->fetch_all_by_Member($member, -TARGET_SPECIES => $species2);
   next unless (defined($all_homologies));

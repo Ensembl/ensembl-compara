@@ -1,4 +1,4 @@
-107	\N	schema_version	108
+109	\N	schema_version	109
 2	\N	schema_type	compara
 3	\N	patch	patch_82_83_a.sql|schema_version
 5	\N	patch	patch_83_84_a.sql|schema_version

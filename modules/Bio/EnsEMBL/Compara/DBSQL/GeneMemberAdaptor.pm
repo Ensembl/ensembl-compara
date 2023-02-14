@@ -87,7 +87,9 @@ sub fetch_by_Gene {
     my ($self, $gene, $verbose) = @_;
 
     assert_ref($gene, 'Bio::EnsEMBL::Gene', 'gene');
-    my $gene_member = $self->fetch_by_stable_id($gene->stable_id);
+    my $species = $gene->adaptor->db->get_MetaContainer->get_production_name();
+    my $genome_db = $self->db->get_GenomeDBAdaptor->fetch_by_name_assembly($species);
+    my $gene_member = $self->fetch_by_stable_id_GenomeDB($gene->stable_id, $genome_db);
     warn $gene->stable_id." does not exist in the Compara database\n" if $verbose and not $gene_member;
     return $gene_member;
 }
@@ -233,7 +235,7 @@ sub delete {
     foreach my $seq_member (@{$gene_member->get_all_SeqMembers}) {
         $seq_member->adaptor->delete($seq_member);
     }
-    $self->dbc->do('DELETE FROM gene_member_qc          WHERE gene_member_stable_id = ?', undef, $gene_member->stable_id);
+    $self->dbc->do('DELETE FROM gene_member_qc          WHERE gene_member_id = ?', undef, $gene_member->dbID);
     $self->dbc->do('DELETE FROM member_xref             WHERE gene_member_id = ?', undef, $gene_member->dbID);
     $self->dbc->do('DELETE FROM gene_member_hom_stats   WHERE gene_member_id = ?', undef, $gene_member->dbID);
     $self->dbc->do('DELETE FROM gene_member             WHERE gene_member_id = ?', undef, $gene_member->dbID);

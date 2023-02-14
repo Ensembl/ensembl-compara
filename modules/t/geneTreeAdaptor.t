@@ -29,7 +29,8 @@ my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "homology" );
 my $compara_dba = $multi->get_DBAdaptor( "compara" );
 
 my $gene_tree_adaptor = $compara_dba->get_GeneTreeAdaptor();
-my $gene_member = $compara_dba->get_GeneMemberAdaptor->fetch_by_stable_id("ENSTSYG00000021671");
+my $gdb = $compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly("tarsius_syrichta");
+my $gene_member = $compara_dba->get_GeneMemberAdaptor->fetch_by_stable_id_GenomeDB("ENSTSYG00000021671", $gdb);
 my $gene_tree_other = $gene_tree_adaptor->fetch_default_for_Member($gene_member, "other");
 my $gene_tree_default = $gene_tree_adaptor->fetch_default_for_Member($gene_member, "default");
 
@@ -40,7 +41,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor delete_tree method",
     is($default_before, 1, "Num default trees");
     is($other_before, 1, "Num other trees");
     $gene_tree_adaptor->delete_tree($gene_tree_default);
-    $gene_member = $compara_dba->get_GeneMemberAdaptor->fetch_by_stable_id("ENSTSYG00000021671");
+    $gene_member = $compara_dba->get_GeneMemberAdaptor->fetch_by_stable_id_GenomeDB("ENSTSYG00000021671", $gdb);
     my $default_after = $gene_member->has_GeneTree("default");
     my $other_after = $gene_member->has_GeneTree("other");
     is($default_after, 0, "Num default tree after delete");
