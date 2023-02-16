@@ -12,7 +12,7 @@ to the database.
 Find more information (including the installation guide and a tutorial) on
 the Ensembl website: <http://www.ensembl.org/info/docs/api/compara/>
 
-See [the main Ensembl repository](https://github.com/Ensembl/ensembl/blob/release/107/CONTRIBUTING.md)
+See [the main Ensembl repository](https://github.com/Ensembl/ensembl/blob/release/109/CONTRIBUTING.md)
 for the guidelines on user contributions.
 
 ## Installation
@@ -21,7 +21,7 @@ for the guidelines on user contributions.
 
 We use a number of Perl modules that are all available on CPAN. We recommend using cpanminus to install these.
 You will need both the [Core API
-dependencies](https://github.com/Ensembl/ensembl/blob/release/107/cpanfile) and
+dependencies](https://github.com/Ensembl/ensembl/blob/release/109/cpanfile) and
 [ours](cpanfile).
 
 ### API to access HAL alignments (progressive-Cactus)
