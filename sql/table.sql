@@ -2292,16 +2292,4 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_108_109_b.sql|gene_member_qc_key');
 
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_108_109_c.sql|stable_id_unique_per_genome');
-
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_108_109_d.sql|case_insensitive_stable_id');
-
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_108_109_e.sql|case_sensitive_stable_id_again');
-
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_108_109_f.sql|stable_id_key_again');
-
-INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_108_109_g.sql|ncbi_taxa_name_varchar500');
