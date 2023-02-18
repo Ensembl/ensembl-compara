@@ -30,13 +30,13 @@ def helpMessage() {
       --dir [directory]     Directory containing subdirectories of reference collection fasta files.
                             (mandatory)
                               Example:
-                                └──collection_fasta
-                                      ├── actinopterygii
-                                      │   ├── amblyraja_radiata.sAmbRad1.pri.2020-06.fasta
-                                      │   ├── arabidopsis_thaliana.TAIR10.2010-09.fasta
-                                      │   └── xenopus_tropicalis.Xenopus_tropicalis_v9.1.2019-12.fasta
-                                      └── default
-                                          └── amphimedon_queenslandica.Aqu1.2015-05-Degnan.fasta
+                                |--collection_fasta
+                                      |-- actinopterygii
+                                      |   |-- amblyraja_radiata.sAmbRad1.pri.2020-06.fasta
+                                      |   |-- arabidopsis_thaliana.TAIR10.2010-09.fasta
+                                      |   |-- xenopus_tropicalis.Xenopus_tropicalis_v9.1.2019-12.fasta
+                                      |-- default
+                                          |-- amphimedon_queenslandica.Aqu1.2015-05-Degnan.fasta
     """.stripIndent()
 }
 
