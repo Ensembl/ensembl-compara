@@ -136,7 +136,7 @@ sub collect_species_set_dirs {
         my $ref_dmnd    = $gdb->get_dmnd_helper(); # diamond db indexed file
         push @genome_files => { 'ref_gdb' => $gdb, 'ref_fa' => $ref_fasta, 'ref_dmnd' => $ref_dmnd, 'ref_splitfa' => $ref_splitfa };
     }
-    my @sorted_genome_files = sort { $a->{ref_gdb} <=> $b->{ref_gdb} } @genome_files;
+    my @sorted_genome_files = sort { $a->{ref_gdb}->dbID <=> $b->{ref_gdb}->dbID } @genome_files;
     return \@sorted_genome_files;
 }
 
