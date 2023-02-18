@@ -315,7 +315,7 @@ sub update_genome {
     my ( $new_genome_db, $component_genome_dbs, $new_dnafrags );
     my $gdbs = $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
         $new_genome_db = _update_genome_db($species_db, $compara_dba, $release, $force, $taxon_id, $offset);
-        next if $skip_dna;
+        return if $skip_dna;
         print "GenomeDB after update: ", $new_genome_db->toString, "\n\n";
         print "Fetching DnaFrags from " . $species_db->dbc->host . "/" . $species_db->dbc->dbname . "\n";
         $new_dnafrags = update_dnafrags($compara_dba, $new_genome_db, $species_db);
