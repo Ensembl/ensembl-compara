@@ -1,1 +1,0 @@
-../../mus_musculus/core/alt_allele_group.txt

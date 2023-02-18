@@ -1,1 +1,0 @@
-../../homo_sapiens/core/mapping_set.txt

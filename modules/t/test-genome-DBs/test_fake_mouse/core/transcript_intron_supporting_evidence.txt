@@ -1,1 +1,0 @@
-../../mus_musculus/core/transcript_intron_supporting_evidence.txt

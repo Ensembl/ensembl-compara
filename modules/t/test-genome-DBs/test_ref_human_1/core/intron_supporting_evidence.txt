@@ -1,1 +1,0 @@
-../../homo_sapiens/core/intron_supporting_evidence.txt

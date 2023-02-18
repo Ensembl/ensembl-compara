@@ -1,1 +1,0 @@
-../../mus_musculus/core/transcript_supporting_feature.txt

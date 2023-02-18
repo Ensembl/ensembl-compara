@@ -1,0 +1,1 @@
+../../core/triticum_aestivum/translation_attrib.txt

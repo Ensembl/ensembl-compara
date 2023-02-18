@@ -1,0 +1,1 @@
+../../core/mus_musculus/seq_region_attrib.txt

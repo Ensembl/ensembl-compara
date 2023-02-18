@@ -1,1 +1,0 @@
-../../homo_sapiens/core/table.sql

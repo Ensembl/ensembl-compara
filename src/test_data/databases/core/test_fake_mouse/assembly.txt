@@ -1,0 +1,1 @@
+../../core/mus_musculus/assembly.txt

@@ -1,1 +1,0 @@
-../../homo_sapiens/core/alt_allele.txt
