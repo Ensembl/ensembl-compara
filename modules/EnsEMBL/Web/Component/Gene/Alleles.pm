@@ -36,7 +36,7 @@ sub content {
   my $self = shift;
   my $hub  = $self->hub;
   my $this_species = $hub->species;
-  my $alleles = $self->object->get_all_alt_alleles;
+  my $alleles = $self->object->get_alt_alleles;
 
   my $html;
   if (@$alleles) {
