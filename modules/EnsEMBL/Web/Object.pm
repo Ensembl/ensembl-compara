@@ -259,19 +259,14 @@ sub get_all_alt_alleles {
   return [] unless $gene; # eg GENSCAN is type Transcript, ->gene is undef
   my $stable_id = $gene->stable_id;
   my $alleles = [];
-  if ($gene->slice->is_reference) {
-    $alleles = $gene->get_all_alt_alleles;
-  }
-  else {
-    my $adaptor = $self->hub->get_adaptor('get_AltAlleleGroupAdaptor');
-    # fetch one or more alt allele groups by gene id
-    my $groups = $adaptor->fetch_all_by_gene_id($gene->dbID);
-    if ($groups) {
-      foreach my $group (@$groups) {
-        foreach my $alt_allele_gene (@{$group->get_all_Genes}) {
-          if ($alt_allele_gene->stable_id ne $stable_id) {
-            push @$alleles, $alt_allele_gene;
-          }
+  my $adaptor = $self->hub->get_adaptor('get_AltAlleleGroupAdaptor');
+  # fetch one or more alt allele groups by gene id
+  my $groups = $adaptor->fetch_all_by_gene_id($gene->dbID);
+  if ($groups) {
+    foreach my $group (@$groups) {
+      foreach my $alt_allele_gene (@{$group->get_all_Genes}) {
+        if ($alt_allele_gene->stable_id ne $stable_id) {
+          push @$alleles, $alt_allele_gene;
         }
       }
     }
