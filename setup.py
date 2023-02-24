@@ -45,7 +45,7 @@ setup(
     url='https://www.ensembl.org',
     download_url='https://github.com/Ensembl/ensembl-compara',
     license="Apache License 2.0",
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",
