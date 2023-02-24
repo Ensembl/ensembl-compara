@@ -1,1 +1,0 @@
-../../homo_sapiens/core/protein_align_feature.txt

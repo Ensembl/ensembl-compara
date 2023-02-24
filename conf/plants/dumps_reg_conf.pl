@@ -33,10 +33,10 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1-b
 
 # Compara databases:
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas({
-    'compara_curr'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_plants_${curr_eg_release}_${curr_release}" ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${curr_eg_release}_${curr_release}" ],
 });
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas({
-    'ancestral_curr' => [ 'mysql-ens-compara-prod-6', "ensembl_ancestral_plants_${curr_eg_release}_${curr_release}" ],
+    'ancestral_curr' => [ 'mysql-ens-compara-prod-5', "ensembl_ancestral_plants_${curr_eg_release}_${curr_release}" ],
 });
 
 # Other databases:

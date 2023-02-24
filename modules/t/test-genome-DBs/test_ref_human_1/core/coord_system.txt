@@ -1,1 +1,0 @@
-../../homo_sapiens/core/coord_system.txt

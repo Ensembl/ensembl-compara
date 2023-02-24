@@ -40,7 +40,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
 
 # Compara databases:
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas({
-    'compara_curr'   => [ 'mysql-ens-compara-prod-3', "ensembl_compara_pan_homology_${curr_eg_release}_${curr_release}" ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${curr_eg_release}_${curr_release}" ],
 });
 
 # Other databases:

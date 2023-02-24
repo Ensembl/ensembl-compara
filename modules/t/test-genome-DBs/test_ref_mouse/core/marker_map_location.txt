@@ -1,1 +1,0 @@
-../../mus_musculus/core/marker_map_location.txt

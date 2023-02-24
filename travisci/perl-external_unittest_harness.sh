@@ -23,7 +23,7 @@ ENSEMBL_PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl
 ENSEMBL_TESTER="$PWD/ensembl-test/scripts/runtests.pl"
 ENSEMBL_TESTER_OPTIONS=()
 CORE_SCRIPTS=("$PWD/ensembl/modules/t/compara.t")
-REST_SCRIPTS=("$PWD/ensembl-rest/t/genomic_alignment.t" "$PWD/ensembl-rest/t/info.t" "$PWD/ensembl-rest/t/taxonomy.t" "$PWD/ensembl-rest/t/homology.t" "$PWD/ensembl-rest/t/gene_tree.t" "$PWD/ensembl-rest/t/cafe_tree.t" "$PWD/ensembl-rest/t/family.t")
+REST_SCRIPTS=("$PWD/ensembl-rest/t/genomic_alignment.t" "$PWD/ensembl-rest/t/info.t" "$PWD/ensembl-rest/t/taxonomy.t" "$PWD/ensembl-rest/t/homology.t" "$PWD/ensembl-rest/t/gene_tree.t" "$PWD/ensembl-rest/t/cafe_tree.t")
 
 if [ "$COVERAGE" = 'true' ]; then
   EFFECTIVE_PERL5OPT="$ENSEMBL_PERL5OPT"

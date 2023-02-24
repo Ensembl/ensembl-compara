@@ -253,7 +253,7 @@ sub pipeline_wide_parameters {
 }
 
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
 
     my @all_pa = (
@@ -408,6 +408,13 @@ sub pipeline_analyses {
     };
     push( @all_pa, @$tree_pa );
     return \@all_pa;
+}
+
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+
+    $analyses_by_name->{'dump_per_genome_homologies_tsv'}->{'-parameters'} = {'healthcheck' => 'unexpected_nulls'};
 }
 
 1;

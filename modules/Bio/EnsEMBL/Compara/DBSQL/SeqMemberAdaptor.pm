@@ -185,7 +185,9 @@ sub fetch_by_Translation {
     my ($self, $translation, $verbose) = @_;
 
     assert_ref($translation, 'Bio::EnsEMBL::Translation', 'translation');
-    my $seq_member = $self->fetch_by_stable_id($translation->stable_id);
+    my $species = $translation->adaptor->db->get_MetaContainer->get_production_name();
+    my $genome_db = $self->db->get_GenomeDBAdaptor->fetch_by_name_assembly($species);
+    my $seq_member = $self->fetch_by_stable_id_GenomeDB($translation->stable_id, $genome_db);
     warn $translation->stable_id." does not exist in the Compara database\n" if $verbose and not $seq_member;
     return $seq_member;
 }
@@ -210,7 +212,9 @@ sub fetch_by_Transcript {
 
     assert_ref($transcript, 'Bio::EnsEMBL::Transcript', 'transcript');
     my $stable_id_for_compara = $transcript->translation ? $transcript->translation->stable_id : $transcript->stable_id;
-    my $seq_member = $self->fetch_by_stable_id($stable_id_for_compara);
+    my $species = $transcript->adaptor->db->get_MetaContainer->get_production_name();
+    my $genome_db = $self->db->get_GenomeDBAdaptor->fetch_by_name_assembly($species);
+    my $seq_member = $self->fetch_by_stable_id_GenomeDB($stable_id_for_compara, $genome_db);
     warn $stable_id_for_compara." does not exist in the Compara database\n" if $verbose and not $seq_member;
     return $seq_member;
 }

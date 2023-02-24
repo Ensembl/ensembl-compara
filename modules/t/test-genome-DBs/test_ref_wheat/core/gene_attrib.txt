@@ -1,1 +1,0 @@
-../../triticum_aestivum/core/gene_attrib.txt

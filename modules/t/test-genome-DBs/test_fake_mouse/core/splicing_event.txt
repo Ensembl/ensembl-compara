@@ -1,1 +1,0 @@
-../../mus_musculus/core/splicing_event.txt

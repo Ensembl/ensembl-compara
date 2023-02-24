@@ -1,1 +1,0 @@
-../../homo_sapiens/core/transcript_supporting_feature.txt

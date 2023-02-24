@@ -39,7 +39,9 @@ my $human_gene_adaptor = $reg->get_adaptor("Homo sapiens", "core", "Gene");
 my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('Multi', 'compara');
 my $gene_member_adaptor = $comparaDBA->get_GeneMemberAdaptor;
 my $genetree_adaptor = $comparaDBA->get_GeneTreeAdaptor;
+my $genome_db_adaptor = $comparaDBA->get_GenomeDBAdaptor;
 
+my $genome = $genome_db_adaptor->fetch_by_name_assembly("homo_sapiens");
 my $genes = $human_gene_adaptor->fetch_all_by_external_name('FRY');
 
 my @list = ("homo_sapiens", "pan_troglodytes", "pongo_pygmaeus", "macaca_mulatta", "gorilla_gorilla");
@@ -49,7 +51,7 @@ foreach my $id (@list) {
 }
 
 foreach my $gene (@$genes) {
-  my $member = $gene_member_adaptor->fetch_by_stable_id($gene->stable_id);
+  my $member = $gene_member_adaptor->fetch_by_stable_id_GenomeDB($gene->stable_id, $genome);
   die "no members" unless (defined $member);
 
   # Fetch the gene tree

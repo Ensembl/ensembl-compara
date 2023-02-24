@@ -27,10 +27,10 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1-b
 
 # Compara databases:
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas({
-    'compara_curr'   => [ 'mysql-ens-compara-prod-9', "ensembl_compara_${curr_release}" ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_${curr_release}" ],
 });
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas({
-    'ancestral_curr' => [ 'mysql-ens-compara-prod-9', "ensembl_ancestral_${curr_release}" ],
+    'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_${curr_release}" ],
 });
 
 # Other databases:

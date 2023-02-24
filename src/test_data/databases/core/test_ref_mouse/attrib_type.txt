@@ -1,0 +1,1 @@
+../../core/mus_musculus/attrib_type.txt

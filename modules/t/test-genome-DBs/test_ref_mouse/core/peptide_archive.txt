@@ -1,1 +1,0 @@
-../../mus_musculus/core/peptide_archive.txt

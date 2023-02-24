@@ -1,1 +1,0 @@
-../../triticum_aestivum/core/density_type.txt
