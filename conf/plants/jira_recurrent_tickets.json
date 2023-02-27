@@ -76,15 +76,15 @@
          },
          {
             "component": "Production tasks",
-            "description": "Mark as done when all LastZs have been merged into the new release database.\nThis should be done at the  Task<rib_fire_orth_wga> in the Protein Tree pipeline before setting <--dna_alns_complete> to 1",
-            "summary": "Merge all LastZ",
-            "name_on_graph": "Merge all LastZ"
-         }, 
-         {
-            "component": "Production tasks",
             "description": "*GitHub*: [WheatCultivarsProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/WheatCultivarsProteinTrees_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::WheatCultivarsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the wheat cultivars Protein-trees pipeline",
             "name_on_graph": "Protein-trees:Wheat cultivars"
+         },
+         {
+            "component": "Production tasks",
+            "description": "Mark as done when all LastZs have been merged into the new release database.",
+            "summary": "Merge all LastZ",
+            "name_on_graph": "Merge all LastZ"
          },
          {
             "component": "Production tasks",

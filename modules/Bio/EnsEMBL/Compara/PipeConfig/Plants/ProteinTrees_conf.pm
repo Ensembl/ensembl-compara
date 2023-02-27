@@ -125,42 +125,6 @@ sub tweak_analyses {
     $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_6_hour_job';
     $analyses_by_name->{'get_species_set'}->{'-parameters'}->{'polyploid_genomes'} = 0;
     $analyses_by_name->{'copy_dumps_to_shared_loc'}->{'-rc_name'}   = '500Mb_job';
-    $analyses_by_name->{'quick_tree_break_himem'}->{'-rc_name'}   = '16Gb_job';
-    $analyses_by_name->{'quick_tree_break'}->{'-rc_name'}   = '4Gb_job';
-    $analyses_by_name->{'alignment_entry_point'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'subcluster_factory'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'subcluster_factory'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'treebest_decision'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'hc_post_tree'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'ortho_tree_decision'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'tree_backup'}->{'-rc_name'}   = '4Gb_job';
-    $analyses_by_name->{'hc_global_tree_set'}->{'-rc_name'}   = '4Gb_job';
-    $analyses_by_name->{'hc_stable_id_mapping'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'homology_dumps_mlss_id_factory'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'rib_group_1'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'rib_fire_homology_id_mapping'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'rib_fire_cafe'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'rib_fire_gene_qc'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'rib_fire_orth_wga'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'pair_species'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'get_split_genes'}->{'-rc_name'}   = '2Gb_job';
-    $analyses_by_name->{'hc_cafe_species_tree'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'select_mlss'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'ortholog_mlss_factory'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'check_file_copy'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'CAFE_analysis_himem'}->{'-rc_name'}   = '4Gb_job';
-    $analyses_by_name->{'hc_cafe_results'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'rib_group_2'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'rib_fire_tree_stats'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'rib_fire_goc'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'rib_fire_homology_stats'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'set_default_values'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'goc_entry_point'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'goc_group_genomes_under_taxa'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'orthology_stats'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'rib_group_3'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'rib_fire_high_confidence_orths'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'paralogue_for_import_factory'}->{'-rc_name'}   = '1Gb_job';
 }
 
 
