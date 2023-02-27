@@ -1703,8 +1703,8 @@ sub core_pipeline_analyses {
                 'mafft_himem_gene_count'    => $self->o('mafft_himem_gene_count'),
                 'mafft_runtime'             => $self->o('mafft_runtime'),
             },
-
-            -flow_into  => {
+            -rc_name   => '1Gb_job',
+            -flow_into => {
                 '1->A' => WHEN (
                     '(#tree_gene_count# <  #mcoffee_short_gene_count#)                                                      and     (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)'  => 'mcoffee_short',
                     '(#tree_gene_count# >= #mcoffee_short_gene_count# and #tree_gene_count# < #mcoffee_himem_gene_count#)   and     (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)'  => 'mcoffee',
@@ -2190,6 +2190,7 @@ sub core_pipeline_analyses {
                 'treebest_threshold_n_residues'     => $self->o('treebest_threshold_n_residues'),
                 'treebest_threshold_n_genes'        => $self->o('treebest_threshold_n_genes'),
             },
+            -rc_name   => '1Gb_job',
             -flow_into  => {
                 1 => WHEN (
                     '(#tree_aln_num_residues# < #treebest_threshold_n_residues#)'   => 'treebest_short',
@@ -3032,10 +3033,11 @@ sub core_pipeline_analyses {
 
 # ---------------------------------------------[orthologies]-------------------------------------------------------------
 
-        {   -logic_name => 'hc_post_tree',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HCOneTree',
-            -flow_into  => [ 'ortho_tree_decision' ],
-            -hive_capacity        => $self->o('hc_post_tree_capacity'),
+        {   -logic_name     => 'hc_post_tree',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HCOneTree',
+            -flow_into      => [ 'ortho_tree_decision' ],
+            -hive_capacity  => $self->o('hc_post_tree_capacity'),
+            -rc_name        => '1Gb_job',
             %hc_analysis_params,
         },
 
@@ -3192,7 +3194,7 @@ sub core_pipeline_analyses {
                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
-            -rc_name   => '2Gb_job',
+            -rc_name   => '4Gb_job',
             -flow_into => {
                 1 => [ 'other_paralogs', 'subcluster_factory' ],
                 -1 => 'quick_tree_break_himem',
@@ -3207,7 +3209,7 @@ sub core_pipeline_analyses {
                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
-            -rc_name   => '4Gb_job',
+            -rc_name   => '16Gb_job',
             -flow_into => [ 'other_paralogs_himem', 'subcluster_factory' ],
         },
 
@@ -3243,6 +3245,7 @@ sub core_pipeline_analyses {
                 'inputquery'    => 'SELECT gtn1.root_id AS gene_tree_id, gene_count AS tree_gene_count FROM (gene_tree_node gtn1 JOIN gene_tree_root_attr USING (root_id)) JOIN gene_tree_node gtn2 ON gtn1.parent_id = gtn2.node_id WHERE gtn1.root_id != gtn2.root_id AND gtn2.root_id = #gene_tree_id#',
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
+            -rc_name        => '1Gb_job',
             -flow_into      => {
                 2 => [ 'tree_backup' ],
             }
@@ -3253,7 +3256,8 @@ sub core_pipeline_analyses {
             -parameters    => {
                 'sql'         => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL AND root_id = #gene_tree_id#',
             },
-            -flow_into      => [ 'alignment_entry_point' ],
+            -rc_name       => '1Gb_job',
+            -flow_into     => [ 'alignment_entry_point' ],
         },
 
         {   -logic_name     => 'join_panther_subfam',

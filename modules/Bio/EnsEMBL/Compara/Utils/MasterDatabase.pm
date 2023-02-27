@@ -202,7 +202,7 @@ sub _remove_deprecated_dnafrags {
 
     my $delete_warning = "Removed " . scalar(@$dnafrags) . " dnafrags:\n\t";
     $delete_warning .= join( "\n\t", map { $_->name . '(' . $_->dbID . ')' } @$dnafrags ) . "\n";
-    die $delete_warning;
+    #die $delete_warning;
 }
 
 
