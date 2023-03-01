@@ -172,7 +172,7 @@ def flag_for_update(
 
             match = rr_compara_dbname_regex.fullmatch(dbname)
             try:
-                genome = match["prod_name"]
+                genome = match["prod_name"]  # type: ignore
             except TypeError as exc:
                 raise ValueError(f"failed to extract genome name from dbname {dbname}") from exc
 
