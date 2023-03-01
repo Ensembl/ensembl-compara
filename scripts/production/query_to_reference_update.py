@@ -31,6 +31,7 @@ Example::
 
 from argparse import ArgumentParser
 import os
+import re
 from typing import Any, Dict, List
 import warnings
 import json
@@ -40,7 +41,7 @@ from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm.exc import NoResultFound
 
 from ensembl.database import DBConnection
-from ensembl.compara.utils.taxonomy import match_taxon_to_reference
+from ensembl.compara.utils.taxonomy import fetch_scientific_name, match_taxon_to_reference
 
 
 def collect_rr_dbs(rr_server: str, db_pattern: str = "") -> list:
@@ -160,14 +161,26 @@ def flag_for_update(
     to_update = []
     curr_ss_names = [x["name"] for x in curr_collections]
 
+    rr_compara_dbname_regex = re.compile("(?P<prod_name>[a-z0-9_]+)_compara_[0-9]+.*")
+    gca_suffix_regex = re.compile("_gca_?[0-9]+(?:v[0-9]+(?:[a-z0-9_]+)?)?$")
     with dbc.session_scope() as sesh:
 
         for query, collection_info in q_to_c_map.items():
             url = make_url(query)
             dbname = url.database
-            genome = dbname.split("_compara", 1)[0]
-            taxon = genome.split("_gca", 1)[0]
             comparator_taxonomy = ""
+
+            match = rr_compara_dbname_regex.fullmatch(dbname)
+            try:
+                genome = match["prod_name"]
+            except TypeError as exc:
+                raise ValueError(f"failed to extract genome name from dbname {dbname}") from exc
+
+            query_taxon_id = get_taxon_id_from_rapid_compara_db(query)
+            try:
+                taxon = fetch_scientific_name(sesh, query_taxon_id)
+            except NoResultFound:
+                taxon = gca_suffix_regex.sub("", genome)
 
             potential_ss_ids = [
                 collection_info[x]["species_set_id"] for x in collection_info
@@ -181,7 +194,13 @@ def flag_for_update(
                     )
                 except NoResultFound:
                     core = query.replace("compara", "core") + "_1"
-                    taxon = get_species_name(core)
+
+                    core_taxon_id = get_taxon_id_from_rapid_core_db(core)
+                    try:
+                        taxon = fetch_scientific_name(sesh, core_taxon_id)
+                    except NoResultFound:
+                        taxon = get_species_name(core)
+
                     try:
                         comparator_taxonomy = match_taxon_to_reference(
                             sesh, taxon, list(set(curr_ss_names))
@@ -216,6 +235,42 @@ def get_species_name(url: str) -> str:
     result = q.fetchone()
     if not result:
         raise NoResultFound()
+    return result["meta_value"]
+
+
+def get_taxon_id_from_rapid_compara_db(url: str) -> int:
+    """Returns NCBI Taxonomy ID of species in Rapid Compara database
+
+    This method expects there to be exactly one GenomeDB in
+    the specified Compara database, and an exception will be
+    raised if this is not the case.
+
+    Args:
+        url: url of Rapid Compara database
+    """
+    eng = create_engine(url)
+    q = eng.execute(
+        "SELECT taxon_id FROM genome_db"
+    )
+    result = q.one()
+    return result["taxon_id"]
+
+
+def get_taxon_id_from_rapid_core_db(url: str) -> int:
+    """Returns NCBI Taxonomy ID of species in Rapid core database
+
+    This method expects there to be exactly one 'species.taxonomy_id' entry
+    in the meta table of the given core database, and an exception will be
+    raised if this is not the case.
+
+    Args:
+        url: url of Rapid core database
+    """
+    eng = create_engine(url)
+    q = eng.execute(
+        "SELECT meta_value FROM meta WHERE meta_key = 'species.taxonomy_id'"
+    )
+    result = q.one()
     return result["meta_value"]
 
 
