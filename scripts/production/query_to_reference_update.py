@@ -81,7 +81,7 @@ def initial_release(url: str) -> int:
     result = q.fetchall()
     if not result:
         raise NoResultFound()
-    release = str(result[0]).split("_", 2)[1]
+    release = str(result[0]).split("_", 3)[2]
     return int(release)
 
 
