@@ -180,12 +180,13 @@ sub fetch_gdb_orphan_genes {
 sub _is_above_orphan_ratio {
     my ( $self, $genome_db_id, $ncbi_taxon_adaptor ) = @_;
 
-    my $taxon     = $ncbi_taxon_adaptor->fetch_node_by_genome_db_id($genome_db_id);
-    my $ancestors = $taxon->get_all_ancestors();
+    my $genome_db_taxon = $ncbi_taxon_adaptor->fetch_node_by_genome_db_id($genome_db_id);
+    my $ancestors       = $genome_db_taxon->get_all_ancestors();
+    my @lineage         = ($genome_db_taxon, @$ancestors);
 
-    foreach my $ancestor (@$ancestors) {
-        if ( exists( $self->param('mapped_gene_ratio_per_taxon')->{ $ancestor->taxon_id } ) ) {
-            if ( $self->param('mapped_gene_ratio') >= $self->param('mapped_gene_ratio_per_taxon')->{ $ancestor->taxon_id } ) {
+    foreach my $taxon (@lineage) {
+        if ( exists( $self->param('mapped_gene_ratio_per_taxon')->{ $taxon->taxon_id } ) ) {
+            if ( $self->param('mapped_gene_ratio') >= $self->param('mapped_gene_ratio_per_taxon')->{ $taxon->taxon_id } ) {
                 return 1;
             } else {
                 return 0;
