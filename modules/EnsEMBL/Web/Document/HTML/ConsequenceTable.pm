@@ -259,6 +259,13 @@ sub render {
       'impact'  => 'MODIFIER',
     },
     {
+      'term'    => 'coding_transcript_variant', 
+      'colour'  => '458b00', 
+      'desc'    => 'A transcript variant of a protein coding gene', 
+      'acc'     => '0001968', 
+      'impact'  => 'MODIFIER',
+    },
+    {
       'term'    => 'upstream_gene_variant', 
       'colour'  => 'a2b5cd', 
       'desc'    => "A sequence variant located 5' of a gene", 
