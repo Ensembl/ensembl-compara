@@ -14,8 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-use 5.014002;
+use v5.26.2;
 use ExtUtils::MakeMaker;
 
 # Version of Makefile.pl that assumes that all the dependencies can be found via linuxbrew
@@ -23,7 +22,7 @@ my $linuxbrew_home = $ARGV[0] || $ENV{LINUXBREW_HOME};
 die "The path to the linuxbrew installation must be provided, either on the command-line or via the environment LINUXBREW_HOME" unless $linuxbrew_home;
 
 my $lib_location = $linuxbrew_home.'/lib';
-# We need hdf5 1.10 (1.8 is not compatible)
+# We need hdf5 1.10 because Linuxbrew's HAL has been compilied using hdf5@1.10
 my $hdf5_location = $linuxbrew_home.'/opt/hdf5@1.10';
 
 print "! Using linuxbrew installation at $ENV{LINUXBREW_HOME}\n";
@@ -50,4 +49,9 @@ WriteMakefile(
     MYEXTLIB => "$lib_location/halChain.a $lib_location/halLod.a $lib_location/halLiftover.a $lib_location/halLib.a $lib_location/halMaf.a $lib_location/sonLib.a",
     # Un-comment this if you add C files to link with later:
     # OBJECT            => '$(O_FILES)', # link all the C files too
+    # Variable below is used for the library dynamic linking process,
+    # however the this MakeMaker doesn't include (somehow!) the hdf5_location/lib 
+    # into the LDDLFLAGS inside the generated Makefile
+    # Un-comment the line below if you want to LDDLFLAGS be created automatically
+    LDDLFLAGS =>  "-shared -O2 -L$hdf5_location/lib,/usr/local/lib,$lib_location/opt/libnsl/lib -fstack-protector-strong",
 );
