@@ -244,6 +244,36 @@ sub get_alt_alleles {
   return $alleles;
 }
 
+=head2 get_all_alt_alleles
+
+ Example     : my $alleles = $gene->object->get_all_alt_alleles;
+ Description : retrieves details of alt_alleles from one
+               or more alt allele groups
+ Return type : list (arrayref of B::E::Genes)
+
+=cut
+
+sub get_all_alt_alleles {
+  my $self = shift;
+  my $gene = $self->type eq 'Gene' ? $self->Obj : $self->gene;
+  return [] unless $gene; # eg GENSCAN is type Transcript, ->gene is undef
+  my $stable_id = $gene->stable_id;
+  my $alleles = [];
+  my $adaptor = $self->hub->get_adaptor('get_AltAlleleGroupAdaptor');
+  # fetch one or more alt allele groups by gene id
+  my $groups = $adaptor->fetch_all_by_gene_id($gene->dbID);
+  if ($groups) {
+    foreach my $group (@$groups) {
+      foreach my $alt_allele_gene (@{$group->get_all_Genes}) {
+        if ($alt_allele_gene->stable_id ne $stable_id) {
+          push @$alleles, $alt_allele_gene;
+        }
+      }
+    }
+  }
+  return $alleles;
+}
+
 sub get_alt_allele_link {
   my ($self, $type) = @_;
   my $hub   = $self->hub;
