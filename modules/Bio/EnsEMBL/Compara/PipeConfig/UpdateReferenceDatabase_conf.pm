@@ -201,7 +201,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'patch_references_db',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd' => [$self->o('patch_db_exe'), '--reg_conf', $self->o('reg_conf'), '--reg_alias', '#ref_db#', '--fixlast', '--nointeractive'],
+                'cmd' => [$self->o('patch_db_exe'), '--reg_conf', $self->o('reg_conf'), '--reg_alias', '#ref_db#', '--fixlast', '--nointeractive', '--gitdir', $self->o('ensembl_root_dir')],
             },
             -flow_into  => ['load_ncbi_node'],
         },
