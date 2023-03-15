@@ -106,9 +106,6 @@ sub default_options {
         'allowed_species_file'  => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/allowed_species.json'),
         'xml_file'            => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/mlss_conf.xml'),
 
-        # script to select nearest taxonomy for queries to update on collection update
-        'get_nearest_taxonomy_exe' => $self->o('get_nearest_taxonomy_exe'),
-
         # whole dc options
         'datacheck_groups' => ['compara_references'],
         'db_type'          => ['compara'],
