@@ -34,6 +34,8 @@ package Bio::EnsEMBL::Compara::PipeConfig::UpdateReferenceDatabase_conf;
 use strict;
 use warnings;
 
+use File::Spec::Functions;
+
 use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
@@ -64,7 +66,7 @@ sub default_options {
 
         # stored records in filesystem to keep track or RR queries to each reference genoem
         'species_set_record'     => $self->o('all_rr_records'),
-        'queries_to_update_file' => $self->o('pipeline_dir') . 'query_update_list.txt',
+        'queries_to_update_file' => catfile($self->o('pipeline_dir'), 'query_update_list.txt'),
 
         # shared locations to symlink and copy fastas for orthofinder
         'shared_fasta_dir' => $self->o('shared_hps_dir') . '/reference_fasta_symlinks/',
