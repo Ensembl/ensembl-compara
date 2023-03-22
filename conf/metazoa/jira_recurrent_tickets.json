@@ -69,6 +69,12 @@
          },
          {
             "component": "Production tasks",
+            "description": "*GitHub*: [<Division>/InsectsProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/InsectsProteinTrees_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::InsectsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "summary": "Run the Insects Protein-trees pipeline",
+            "name_on_graph": "Protein-trees:Insects"
+         },
+         {
+            "component": "Production tasks",
             "description": "Mark as done when all LastZs have been merged into the new release database.",
             "summary": "Merge all LastZ",
             "name_on_graph": "Merge all LastZ"
