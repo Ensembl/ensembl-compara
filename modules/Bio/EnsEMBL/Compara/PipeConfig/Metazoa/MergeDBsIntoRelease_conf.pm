@@ -54,6 +54,7 @@ sub default_options {
             'master_db'                 => 'compara_master',
             'default_protein_db'        => 'compara_ptrees',
             'protostomes_protein_db'    => 'protostomes_ptrees',
+            'insects_protein_db'        => 'insects_ptrees',
             'members_db'                => 'compara_members',
         },
 
@@ -79,6 +80,7 @@ sub default_options {
             'members_db'                => [qw(hmm_annot)],
             'default_protein_db'        => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
             'protostomes_protein_db'    => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
+            'insects_protein_db'        => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
         }
     }
 }
