@@ -26,6 +26,32 @@ my $curr_eg_release = $curr_release - 53;
 # Core databases:
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3-b:4686/$curr_release");
 
+# Fungal collections:
+my @collection_groups = (
+    'ascomycota1',
+    'ascomycota2',
+    'ascomycota3',
+    'ascomycota4',
+    'basidiomycota1',
+    'blastocladiomycota1',
+    'chytridiomycota1',
+    'entomophthoromycota1',
+    'microsporidia1',
+    'mucoromycota1',
+    'neocallimastigomycota1',
+    'rozellomycota1',
+);
+
+foreach my $group ( @collection_groups ) {
+    Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+        -host   => 'mysql-ens-sta-3',
+        -port   => 4160,
+        -user   => 'ensro',
+        -pass   => '',
+        -dbname => "fungi_${group}_collection_core_${curr_eg_release}_${curr_release}_1",
+    );
+}
+
 # Compara databases:
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas({
     'compara_curr'   => [ 'mysql-ens-compara-prod-4', "ensembl_compara_fungi_${curr_eg_release}_${curr_release}" ],
