@@ -361,7 +361,7 @@ sub get_species_info {
       my $id = $gdb->dbID;
       my @stats = qw(genome_coverage genome_length coding_exon_coverage coding_exon_length);
       foreach (@stats) {
-        $info->{$sp}{$_} = $genome_db_id_2_node_hash ? $genome_db_id_2_node_hash->{$id}->get_value_for_tag($_) : $mlss->get_value_for_tag($_.'_'.$id);
+        $info->{$sp}{$_} = $genome_db_id_2_node_hash && exists $genome_db_id_2_node_hash->{$id} ? $genome_db_id_2_node_hash->{$id}->get_value_for_tag($_) : $mlss->get_value_for_tag($_.'_'.$id);
       }
     }
   }
