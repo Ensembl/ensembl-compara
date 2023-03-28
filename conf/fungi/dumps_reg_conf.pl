@@ -24,7 +24,7 @@ my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'} || $ENV{'ENS_VERSION'};
 my $curr_eg_release = $curr_release - 53;
 
 # Core databases:
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3-b:4686/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
 
 # Fungal collections:
 my @collection_groups = (
@@ -59,7 +59,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas({
 
 # Other databases:
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-3-b', "ncbi_taxonomy_${curr_release}" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-3', "ncbi_taxonomy_${curr_release}" ],
 });
 
 
