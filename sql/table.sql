@@ -653,7 +653,7 @@ CREATE TABLE dnafrag (
 @colour #808000
 
 @example    This query lists some haplotypes of the human chromosome 20, incl. the length of the complete patched chromosome and the coordinates of the region that differs.
-    @sql    SELECT dnafrag_id, name, length, dnafrag_start, dnafrag_end FROM dnafrag_alt_region JOIN dnafrag USING (dnafrag_id) WHERE name LIKE "CHR\_HSCHR20\_%";
+    @sql    SELECT dnafrag_id, name, length, dnafrag_start, dnafrag_end FROM dnafrag_alt_region JOIN dnafrag USING (dnafrag_id) WHERE name LIKE "HSCHR20\_%";
 
 @column dnafrag_id      External reference to dnafrag_id in the @link dnafrag table
 @column dnafrag_start   Position of the first nucleotide from this dnafrag that differs from the reference dnafrag
