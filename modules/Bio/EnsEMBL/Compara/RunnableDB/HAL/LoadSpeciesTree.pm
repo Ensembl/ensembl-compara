@@ -55,6 +55,9 @@ sub fetch_input {
         my $hal_species = $species_map{$gdb_id};
         my $gdb = $gdb_adap->fetch_by_dbID($gdb_id);
         my $ens_species = $gdb->name;
+        if ( defined $gdb->genome_component ) {
+            $ens_species = $ens_species . '_' . $gdb->genome_component;
+        }
         $newick_tree =~ s/$hal_species/$ens_species/g;
     }
 

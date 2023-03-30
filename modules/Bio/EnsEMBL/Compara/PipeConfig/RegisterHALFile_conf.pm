@@ -90,11 +90,41 @@ sub pipeline_analyses {
                 'db_conn'                       => '#master_db#',
                 'method_link_species_set_id'    => '#mlss_id#',
             },
-            -flow_into => [ 'find_pairwise_mlss_ids', 'set_name_mapping_tag' ],
+            -flow_into => [ 'load_component_genomedb_factory' ],
             -input_ids => [ {
                 'mlss_id'   => $self->o('mlss_id'),
                 'species_name_mapping'  => $self->o('species_name_mapping'),
             } ],
+        },
+
+        {   -logic_name => 'load_component_genomedb_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'compara_db'                  => '#master_db#',
+                'expand_polyploid_components' => 1,
+                'component_genomes'           => 1,
+                'normal_genomes'              => 0,
+                'polyploid_genomes'           => 0,
+            },
+            -rc_name    => '4Gb_job',
+            -flow_into  => {
+                '2->A'  => {
+                    'load_component_genomedb' => { 'master_dbID' => '#genome_db_id#' },
+                },
+                'A->1'  => [ 'fire_hal_file_registration' ],
+            },
+        },
+
+        {   -logic_name      => 'load_component_genomedb',
+            -module          => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
+            -batch_size      => 10,
+            -hive_capacity   => 30,
+            -max_retry_count => 2,
+        },
+
+        {   -logic_name => 'fire_hal_file_registration',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => [ 'find_pairwise_mlss_ids', 'set_name_mapping_tag' ],
         },
 
         {   -logic_name => 'find_pairwise_mlss_ids',
@@ -135,15 +165,15 @@ sub pipeline_analyses {
             -parameters => {
                 'sql' => [ 'INSERT IGNORE INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#mlss_id#, "HAL_mapping", "#species_name_mapping#")' ],
             },
-            -flow_into  => [ 'load_species_tree', 'species_factory' ],
+            -flow_into  => [ 'load_species_tree', 'hal_genomedb_factory' ],
         },
 
         {   -logic_name => 'load_species_tree',
 	        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadSpeciesTree',
         },
 
-        {   -logic_name => 'species_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+        {   -logic_name => 'hal_genomedb_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halGenomeDBFactory',
             -flow_into  => {
                     2   => { "generate_coverage_stats" => INPUT_PLUS() },
                 '2->A' => { 'get_synonyms' => INPUT_PLUS() },
