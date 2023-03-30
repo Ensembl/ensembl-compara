@@ -145,8 +145,8 @@ process prepareGenomeFromDb {
             mkdir -p processed
             python ${params.fetch_genomes_exe} -u ${params.url} -c "${params.collection}" -s "${params.species_set}" -d ${absDumpPath} -o input_genomes.csv
             while read -r line; do
-                source=`echo \$line | cut -d ',' -f 8`
-                target=`echo \$line | cut -d ',' -f 10`
+                source=`echo "\$line" | cut -f 8`
+                target=`echo "\$line" | cut -f 10`
                 echo Processing: \$source -> \$target
                 ${params.seqkit_exe} -j 5 grep -n -v -r -p "PATCH_*,HAP" \$source > processed/\$target
                 # Add a dummy softmasked sequence to prevent disabling of

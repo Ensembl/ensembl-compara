@@ -41,7 +41,7 @@ parser.add_argument(
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    df = pd.read_csv(args.c, header=None)
+    df = pd.read_csv(args.c, delimiter="\t", header=None)
     trans_map = {}
     for r in df.itertuples():
         trans_map[r[10]] = r[2]
