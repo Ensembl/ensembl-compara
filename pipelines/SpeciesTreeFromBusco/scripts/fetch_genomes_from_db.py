@@ -98,7 +98,7 @@ if __name__ == '__main__':
     missing_fas = []
     with engine.connect() as conn, open(args.o, "w") as ofh:
         result = conn.execute(text(query))
-        writer = csv.writer(ofh, lineterminator="\n")
+        writer = csv.writer(ofh, delimiter="\t", lineterminator="\n")
         for row in result:
             gpath = _build_dump_path(row)
             fa_name = str(row.name) + "_" + str(row.assembly)
