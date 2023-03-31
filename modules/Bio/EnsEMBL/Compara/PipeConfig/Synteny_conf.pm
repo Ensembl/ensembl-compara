@@ -142,7 +142,6 @@ sub pipeline_analyses {
             -flow_into  => WHEN( 'defined (#ptree_db#)' => ['compute_synteny_start_using_orthologs'] ,
                                  ELSE ['compute_synteny_start_using_alignments']
                              ),
-            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name => 'compute_synteny_start_using_alignments',
@@ -152,7 +151,6 @@ sub pipeline_analyses {
                     'pairwise_mlss_id'    => $self->o('pairwise_mlss_id'),
                     'from_first_release'    => $self->o('ensembl_release'),
                 },
-            -rc_name    => '500Mb_job',
             -flow_into  => {
                 2 => 'create_work_dir',
             },
@@ -192,7 +190,6 @@ sub pipeline_analyses {
               -flow_into => WHEN('defined (#ptree_db#)' => ['dump_gff_homologs'] ,
                     ELSE ['chr_name_factory']),
               -analysis_capacity => 50,
-              -rc_name    => '500Mb_job',
             },
             #dump chr names
             {   -logic_name => 'chr_name_factory',

@@ -42,7 +42,6 @@ sub pipeline_analyses_datacheck_fan {
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
             -analysis_capacity => 100,
             -max_retry_count   => 0,
-            -rc_name           => '500Mb_job',
             -flow_into         => {
                 '1'  => [ '?accu_name=results&accu_address=[]' ],
                 '-1' => [ 'datacheck_fan_high_mem' ],
