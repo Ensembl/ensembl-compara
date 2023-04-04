@@ -36,7 +36,7 @@ logger.setLevel(logging.INFO)
 
 
 def hal_genomic_coverage(hal_path: Union[Path, str], ref_genome: str, ref_sequence: str,
-                         no_ancestors: bool = False, step: int = 1) -> Dict:
+                         no_ancestors: bool = False) -> Dict:
     """Uses halAlignmentDepth to get genomic coverage for the given genome and sequence.
 
     Args:
@@ -44,7 +44,6 @@ def hal_genomic_coverage(hal_path: Union[Path, str], ref_genome: str, ref_sequen
         ref_genome: Reference genome against which alignment depth is calculated.
         ref_sequence: Sequence in reference genome for which alignment depth is calculated.
         no_ancestors: Exclude ancestral genomes from depth calculations.
-        step: Step size.
 
     Returns:
         Nested dictionary of coverage stats, with the key being the sequence name,
@@ -58,7 +57,6 @@ def hal_genomic_coverage(hal_path: Union[Path, str], ref_genome: str, ref_sequen
         hal_path,
         ref_genome,
         "--refSequence", ref_sequence,
-        "--step", str(step)
     ]
 
     if no_ancestors:
@@ -186,8 +184,6 @@ def main() -> None:
                              " genomic coverage is calculated.")
     parser.add_argument("--include-ancestors", action="store_true",
                         help="Include ancestral genomes in stats output.")
-    parser.add_argument("--step-size", metavar="INT", type=int, default=1,
-                        help="Size of step between coverage sample positions.")
     parser.add_argument("--min-seq-length", metavar="INT", type=int, default=1,
                         help="Minimum length of sequences to consider.")
     parser.add_argument("-n", "--num-procs", metavar="INT", default=1, type=int,
@@ -238,7 +234,7 @@ def main() -> None:
         param_sets = []
         for seq_name in chr_by_length_desc:
             param_sets.append((args.in_hal_path, genome_name, seq_name,
-                               no_ancestors, args.step_size))
+                               no_ancestors)
 
         with Pool(processes=args.num_procs) as pool:
             result_parts = pool.starmap(hal_genomic_coverage, param_sets, chunksize=1)
@@ -249,7 +245,7 @@ def main() -> None:
         for seq_name, seq_stats in result.items():
 
             obs_sampled_bp = seq_stats["sites_sampled_bp"]
-            exp_sampled_bp = math.floor(seq_lengths[seq_name] / seq_stats["step"]) + 1
+            exp_sampled_bp = seq_lengths[seq_name]
             if obs_sampled_bp != exp_sampled_bp:
                 raise ValueError(f"site-count mismatch for '{seq_name}':"
                                  f" {obs_sampled_bp} vs {exp_sampled_bp}")
