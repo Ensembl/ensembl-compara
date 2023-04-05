@@ -133,6 +133,7 @@ sub executable_locations {
         'create_datacheck_tickets_exe'      => $self->check_exe_in_ensembl('ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl'),
         'copy_ancestral_core_exe'           => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/copy_ancestral_core.pl'),
         'gene_tree_stats_report_exe'        => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/gene_tree_stats.pl'),
+        'hal_cov_one_seq_exe'               => $self->check_exe_in_ensembl('ensembl-compara/scripts/hal_alignment/hal_cov_one_seq.py'),
 
         # Other dependencies (non executables)
         'core_schema_sql'                   => $self->check_file_in_ensembl('ensembl/sql/table.sql'),
