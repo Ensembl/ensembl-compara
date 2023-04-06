@@ -21,11 +21,11 @@ from pathlib import Path
 import re
 import subprocess
 from tempfile import SpooledTemporaryFile
-from typing import Dict, Optional, TextIO, Union
+from typing import Dict, TextIO, Union
 
 
 def hal_genomic_coverage(hal_path: Union[Path, str], ref_genome: str, ref_sequence: str,
-                         hal_alignment_depth_exe: Optional[Union[Path, str]] = "halAlignmentDepth") -> Dict:
+                         hal_alignment_depth_exe: Union[Path, str] = "halAlignmentDepth") -> Dict:
     """Uses halAlignmentDepth to get genomic coverage for the given genome and sequence.
 
     Args:
@@ -112,7 +112,7 @@ def load_genomic_coverage_wiggle(wiggle_file_obj: Union[SpooledTemporaryFile, Te
 
 
 def load_seq_lengths(hal_file: Union[Path, str], genome_name: str,
-                     hal_stats_exe: Optional[Union[Path, str]] = "halStats") -> Dict[str, int]:
+                     hal_stats_exe: Union[Path, str] = "halStats") -> Dict[str, int]:
     """Load sequence lengths from an input HAL file.
 
     Args:
