@@ -107,7 +107,7 @@ sub fetch_all_by_stable_id {
 
     throw("MemberAdaptor::fetch_all_by_stable_id() must have a stable_id") unless $stable_id;
 
-    my $members;
+    my $members = [];
 
     my $constraint1 = 'm.stable_id = ?';
     $self->bind_param_generic_fetch($stable_id, SQL_VARCHAR);
