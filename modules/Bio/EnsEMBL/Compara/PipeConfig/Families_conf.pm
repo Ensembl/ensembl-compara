@@ -424,7 +424,6 @@ sub pipeline_analyses {
                             },
              -hive_capacity => $self->o('HMMer_classify_capacity'),
             -batch_size     => 2,
-             -rc_name => '500Mb_job',
              -flow_into => {
                  -1 => 'HMMer_classifyPantherScore_himem',
              },
@@ -637,7 +636,6 @@ sub pipeline_analyses {
         {   -logic_name    => 'consensifier_himem',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::ConsensifyAfamily',
             -hive_capacity => $self->o('cons_capacity'),
-            -rc_name       => '500Mb_job',
         },
 # </Consensifier sub-branch>
 

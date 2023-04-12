@@ -196,7 +196,6 @@ sub pipeline_analyses {
             -flow_into         => ['?accu_name=cloned_dbs&accu_address={species}'],
             # Restrict the number of running workers to one at a time to avoid overload the server
             -analysis_capacity => 4,
-            -rc_name           => '500Mb_job',
         },
 
         {   -logic_name => 'reconfigure_pipeline',

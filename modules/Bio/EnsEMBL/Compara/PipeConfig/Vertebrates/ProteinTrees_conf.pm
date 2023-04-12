@@ -113,10 +113,6 @@ sub tweak_analyses {
         'split_genes'               => 'default',   # This is 250Mb
         'CAFE_species_tree'         => '24Gb_job',
         'stable_id_mapping'         => '4Gb_job',
-        'pair_species'              => '500Mb_job',
-        'ortholog_mlss_factory'     => '500Mb_job',
-        'expand_clusters_with_projections' => '500Mb_job',
-        'homology_dumps_mlss_id_factory'   => '500Mb_job',
         'get_long_short_orth_genes_himem'  => '4Gb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
