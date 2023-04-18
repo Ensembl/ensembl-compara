@@ -295,7 +295,7 @@ sub get_features {
                                                     'feat_name' => $feature_name,
                                                   });
         my $bigbed_data = $self->EnsEMBL::Draw::GlyphSet::bigbed::get_data($bigbed_file_path, $subtrack->{'metadata'});
-        $drawing_style = 'EnsEMBL::Draw::Style::Feature::MultiBlocks';
+        $drawing_style = 'EnsEMBL::Draw::Style::Feature::Structured';
         my $bigbed_metadata = $bigbed_data->[0]{'metadata'};
         $subtrack->{'features'} = $bigbed_data->[0]{'features'};
         while (my ($key, $value) = each %{$bigbed_metadata || {}}) {
