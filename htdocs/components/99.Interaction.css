@@ -52,3 +52,11 @@
   width: 270px;
   display: inline-block;
 }
+
+.interactionsNavHeading {
+  display: flex;
+}
+
+.interactionsSubTitle {
+  padding: 10px 20px;
+}
