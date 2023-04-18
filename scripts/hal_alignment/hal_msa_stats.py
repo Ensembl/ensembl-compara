@@ -20,7 +20,6 @@ from collections import Counter
 import csv
 import itertools
 import logging
-import math
 from multiprocessing import Pool
 from operator import itemgetter
 from pathlib import Path
@@ -234,7 +233,7 @@ def main() -> None:
         param_sets = []
         for seq_name in chr_by_length_desc:
             param_sets.append((args.in_hal_path, genome_name, seq_name,
-                               no_ancestors)
+                               no_ancestors))
 
         with Pool(processes=args.num_procs) as pool:
             result_parts = pool.starmap(hal_genomic_coverage, param_sets, chunksize=1)
