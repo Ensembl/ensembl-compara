@@ -93,8 +93,6 @@ sub default_options {
 
       'ortho_tree_capacity'     => 50,
       'other_paralogs_capacity' => 50,
-      
-      'old_server_uri' => ['mysql://ensro@mysql-ps-staging-1.ebi.ac.uk:4451/'],
 
 
       ######## THESE ARE PASSED INTO LOAD_REGISTRY_FROM_DB SO PASS IN DB_VERSION
