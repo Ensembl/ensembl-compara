@@ -159,17 +159,17 @@ sub tweak_analyses {
   $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '8Gb_job';
   $analyses_by_name->{'HMMer_classifyPantherScore_himem'}->{'-rc_name'} = '32Gb_job';
   $analyses_by_name->{'hc_global_tree_set'}->{'-rc_name'} = '32Gb_job';
-  $analyses_by_name->{'homology_dumps_mlss_id_factory'}->{'-rc_name'} = '8Gb_job'
-  $analyses_by_name->{'rib_group_1'}->{'-rc_name'} = '8Gb_job'
-  $analyses_by_name->{'rib_group_2'}->{'-rc_name'} = '8Gb_job'
-  $analyses_by_name->{'rib_group_3'}->{'-rc_name'} = '8Gb_job'
-  $analyses_by_name->{'rib_fire_tree_stats.resource_class_id'}->{'-rc_name'} = '8Gb_job'
-  $analyses_by_name->{'set_default_values'}->{'-rc_name'} = '8Gb_job'
-  $analyses_by_name->{'rib_fire_high_confidence_orths'}->{'-rc_name'} = '8Gb_job'
-  $analyses_by_name->{'paralogue_for_import_factory'}->{'-rc_name'} = '8Gb_job'
-  $analyses_by_name->{'mlss_id_for_high_confidence_factory'}->{'-rc_name'} = '8Gb_job'
-  $analyses_by_name->{'flag_high_confidence_orthologs'}->{'-rc_name'} = '2Gb_job'
-  $analyses_by_name->{'write_stn_tags'}->{'-rc_name'} = '8Gb_job'
+  $analyses_by_name->{'homology_dumps_mlss_id_factory'}->{'-rc_name'} = '8Gb_job';
+  $analyses_by_name->{'rib_group_1'}->{'-rc_name'} = '8Gb_job';
+  $analyses_by_name->{'rib_group_2'}->{'-rc_name'} = '8Gb_job';
+  $analyses_by_name->{'rib_group_3'}->{'-rc_name'} = '8Gb_job';
+  $analyses_by_name->{'rib_fire_tree_stats.resource_class_id'}->{'-rc_name'} = '8Gb_job';
+  $analyses_by_name->{'set_default_values'}->{'-rc_name'} = '8Gb_job';
+  $analyses_by_name->{'rib_fire_high_confidence_orths'}->{'-rc_name'} = '8Gb_job';
+  $analyses_by_name->{'paralogue_for_import_factory'}->{'-rc_name'} = '8Gb_job';
+  $analyses_by_name->{'mlss_id_for_high_confidence_factory'}->{'-rc_name'} = '8Gb_job';
+  $analyses_by_name->{'flag_high_confidence_orthologs'}->{'-rc_name'} = '2Gb_job';
+  $analyses_by_name->{'write_stn_tags'}->{'-rc_name'} = '8Gb_job';
 }
 
 
