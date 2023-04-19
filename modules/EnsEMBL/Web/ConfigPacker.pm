@@ -2066,7 +2066,7 @@ sub _summarise_pan_compara {
 sub _add_available_interactions {
   my ($self) = @_;
   my $data = '';
-  my $url = $SiteDefs::MOLECULAR_INTERACTIONS_URL . '/interactors/ensembl_name';
+  my $url = $SiteDefs::MOLECULAR_INTERACTIONS_URL . '/interactor/ensembl_name';
   my $response = read_file($url,{
                     nice => 1,
                     no_exception => 1,
