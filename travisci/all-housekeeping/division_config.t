@@ -115,6 +115,20 @@ sub test_division {
         }
     }
 
+
+    # Load biomart_species.json if it exists
+    my $biomart_species_file = File::Spec->catfile($division_dir, 'biomart_species.json');
+    if (-e $biomart_species_file and %allowed_species) {
+        # 5. All species listed in biomart_species.json exist in allowed_species.json
+        $has_files_to_test = 1;
+        my $biomart_species = decode_json(slurp($biomart_species_file));
+        subtest "$biomart_species_file vs $allowed_species_file" => sub {
+            foreach my $name (@{$biomart_species}) {
+                ok(exists $allowed_species{$name}, "$name is allowed");
+            }
+        }
+    }
+
     # Nothing to test but it's alright. Not all divisions have files to cross-check
     plan skip_all => 'No files to test' unless $has_files_to_test;
 }
