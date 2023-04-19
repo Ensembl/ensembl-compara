@@ -173,7 +173,6 @@ sub pipeline_analyses {
             -parameters => {
                 'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree"',
             },
-            -rc_name    => '500Mb_job',
             -flow_into  => {
                 2 => [ 'hc_tree_structure', 'hc_tree_attributes' ],
             },

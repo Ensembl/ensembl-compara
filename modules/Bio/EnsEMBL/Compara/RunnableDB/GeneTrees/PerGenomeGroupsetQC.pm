@@ -32,9 +32,19 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC
 
 =head1 DESCRIPTION
 
-This Analysis will take the sequences from a cluster, the cm from
-nc_profile and run a profiled alignment, storing the results as
-cigar_lines for each sequence.
+For a given genome, this runnable calculates and stores various statistics,
+such as the number of genes (i.e. 'nb_genes'), the number of genes mapped to
+a cluster (i.e. 'nb_genes_in_unfiltered_cluster'), and the number of genes
+not mapped to any cluster (i.e. 'nb_orphan_genes').
+
+In addition, it calculates a mapped-gene ratio: the fraction of genes in the given
+genome that have been mapped to a cluster. If this mapped-gene ratio does not meet
+the taxon-specific threshold taken from the parameter 'mapped_gene_ratio_per_taxon',
+the runnable dies.
+
+A mapped-gene ratio check may fail due to issues with genome assembly, gene
+annotation, flow control in the gene-trees pipeline, or an overly stringent
+mapped-gene ratio threshold.
 
 =head1 SYNOPSIS
 
@@ -170,12 +180,13 @@ sub fetch_gdb_orphan_genes {
 sub _is_above_orphan_ratio {
     my ( $self, $genome_db_id, $ncbi_taxon_adaptor ) = @_;
 
-    my $taxon     = $ncbi_taxon_adaptor->fetch_node_by_genome_db_id($genome_db_id);
-    my $ancestors = $taxon->get_all_ancestors();
+    my $genome_db_taxon = $ncbi_taxon_adaptor->fetch_node_by_genome_db_id($genome_db_id);
+    my $ancestors       = $genome_db_taxon->get_all_ancestors();
+    my @lineage         = ($genome_db_taxon, @$ancestors);
 
-    foreach my $ancestor (@$ancestors) {
-        if ( exists( $self->param('mapped_gene_ratio_per_taxon')->{ $ancestor->taxon_id } ) ) {
-            if ( $self->param('mapped_gene_ratio') >= $self->param('mapped_gene_ratio_per_taxon')->{ $ancestor->taxon_id } ) {
+    foreach my $taxon (@lineage) {
+        if ( exists( $self->param('mapped_gene_ratio_per_taxon')->{ $taxon->taxon_id } ) ) {
+            if ( $self->param('mapped_gene_ratio') >= $self->param('mapped_gene_ratio_per_taxon')->{ $taxon->taxon_id } ) {
                 return 1;
             } else {
                 return 0;

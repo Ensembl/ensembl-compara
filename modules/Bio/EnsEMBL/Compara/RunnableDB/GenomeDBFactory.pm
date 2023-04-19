@@ -80,6 +80,10 @@ sub param_defaults {
         'collection_name'   => undef,
         'mlss_id'           => undef,
         'all_current'       => undef,
+
+        # Set to 1 to expand polyploid genomes and include any of
+        # their components that have not already been included.
+        'expand_polyploid_components' => 0,
     }
 }
 
@@ -114,6 +118,18 @@ sub fetch_input {
 
     } else {
         $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
+    }
+
+    if ($self->param('expand_polyploid_components')) {
+        foreach my $gdb (@{$genome_dbs}){
+            if ($gdb->is_polyploid()) {
+                foreach my $comp_gdb (@{$gdb->component_genome_dbs()}) {
+                    if (!grep { $comp_gdb->dbID == $_->dbID } @{$genome_dbs}) {
+                        push(@{$genome_dbs}, $comp_gdb);
+                    }
+                }
+            }
+        }
     }
 
     # Now we apply the filters

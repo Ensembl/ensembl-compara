@@ -211,7 +211,6 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'cmd'                 => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #master_db# -xml #xml_file# --release --output_file #report_file# --verbose',
             },
             -flow_into  => [ 'retire_old_species_sets' ],
-            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name => 'retire_old_species_sets',

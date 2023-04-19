@@ -117,12 +117,6 @@ sub tweak_analyses {
         'hcluster_run'                  => '1Gb_job',
         'hcluster_parse_output'         => '2Gb_job',
         # Many decision-type analyses take more memory for Pan. Because of the fatter Registry ?
-        'tree_building_entry_point'     => '500Mb_job',
-        'treebest_decision'             => '500Mb_job',
-        'hc_post_tree'                  => '500Mb_job',
-        'ortho_tree_decision'           => '500Mb_job',
-        'copy_dumps_to_shared_loc'      => '500Mb_job',
-        'homology_dumps_mlss_id_factory'    => '500Mb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};

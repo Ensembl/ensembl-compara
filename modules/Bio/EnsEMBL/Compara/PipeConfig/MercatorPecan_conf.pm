@@ -142,7 +142,6 @@ sub pipeline_analyses {
             },
             -input_ids  => [{}],
             -flow_into  => [ 'populate_new_database' ],
-            -rc_name    => '500Mb_job',
         },
 
 # ---------------------------------------------[Run poplulate_new_database.pl script ]---------------------------------------------------
@@ -203,7 +202,6 @@ sub pipeline_analyses {
                 '2->A'  => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
                 'A->1'  => [ 'create_mlss_ss' ],
             },
-            -rc_name    => '500Mb_job',
 	},
 
         {   -logic_name => 'load_genomedb',
@@ -249,7 +247,6 @@ sub pipeline_analyses {
                 'whole_method_links' => [ $self->o('method_type') ],
             },
             -flow_into  => [ 'make_species_tree' ],
-            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name    => 'make_species_tree',
