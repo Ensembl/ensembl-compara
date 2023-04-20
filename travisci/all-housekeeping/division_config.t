@@ -110,7 +110,7 @@ sub test_division {
             subtest "$mlss_file vs $allowed_species_file" => sub {
                 foreach my $a (@names_to_test) {
                     my ($name, $node) = @$a;
-                    ok(exists $allowed_fspecies{$name}, "$node is allowed");
+                    ok(exists $allowed_species{$name}, "$node is allowed");
                 }
             };
         }
