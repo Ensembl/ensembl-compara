@@ -17,15 +17,15 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::HAL::CalculateHalSequenceCoverage
+Bio::EnsEMBL::Compara::RunnableDB::HAL::CalculateHalSeqChunkCoverage
 
 =head1 DESCRIPTION
 
-Calculate genomic coverage for one HAL sequence.
+Calculate genomic coverage for one HAL sequence chunk.
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::HAL::CalculateHalSequenceCoverage;
+package Bio::EnsEMBL::Compara::RunnableDB::HAL::CalculateHalSeqChunkCoverage;
 
 use strict;
 use warnings;
@@ -35,34 +35,35 @@ use JSON qw(decode_json);
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub fetch_input {
-    my $self = shift @_;
-
-    my $mlss_id = $self->param_required('mlss_id');
-    my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor();
-    my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
-    $self->param('hal_file', $mlss->url);
-}
-
-
 sub run {
     my $self = shift @_;
 
-    my $hal_cov_one_seq_exe = $self->param_required('hal_cov_one_seq_exe');
+    my $hal_cov_one_seq_chunk_exe = $self->param_required('hal_cov_one_seq_chunk_exe');
     my $hal_alignment_depth_exe = $self->param_required('hal_alignment_depth_exe');
-    my $hal_stats_exe = $self->param_required('hal_stats_exe');
+    my $hal_file_path = $self->param_required('hal_file_path');
 
-    my $hal_genome_name = $self->param_required('hal_genome_name');
-    my $hal_sequence_name = $self->param_required('hal_sequence_name');
-    my $hal_file = $self->param('hal_file');
+    my $ref_genome_name = $self->param_required('hal_genome_name');
+    my $ref_sequence_name = $self->param_required('hal_sequence_name');
+    my $chunk_offset = $self->param_required('chunk_offset');
+    my $chunk_length = $self->param_required('chunk_length');
+
+    my $species_map = $self->param_required('species_name_mapping');
+    my $target_genomes_arg = join(',', values %{$species_map});
 
     my $cmd = [
-        $hal_cov_one_seq_exe,
-        $hal_file,
-        $hal_genome_name,
-        $hal_sequence_name,
-        '--hal_alignment_depth_exe', $hal_alignment_depth_exe,
-        '--hal_stats_exe', $hal_stats_exe,
+        $hal_cov_one_seq_chunk_exe,
+        $hal_file_path,
+        $ref_genome_name,
+        '--ref-sequence',
+        $ref_sequence_name,
+        '--start',
+        $chunk_offset,
+        '--length',
+        $chunk_length,
+        '--target-genomes',
+        $target_genomes_arg,
+        '--hal_alignment_depth_exe',
+        $hal_alignment_depth_exe,
     ];
 
     my $output = $self->get_command_output($cmd);
@@ -77,11 +78,11 @@ sub write_output {
     my $self = shift;
 
     $self->dataflow_output_id({
-        'hal_genome_name'       => $self->param('hal_genome_name'),
         'hal_sequence_name'     => $self->param('hal_sequence_name'),
+        'chunk_offset'          => $self->param('chunk_offset'),
         'num_positions'         => $self->param('num_positions'),
         'num_aligned_positions' => $self->param('num_aligned_positions'),
-    }, 2);
+    }, 3);
 }
 
 
