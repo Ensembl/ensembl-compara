@@ -19,9 +19,8 @@ against the taxonomically closest reference species.
 
 Usage example::
     python homology_stats_rapid.py\
-    -d mysql://ensro@mysql-ens-compara-prod-2:4522/gallus_gallus_gca016699485v1_compara_107\
-    -r ensembl_compara_references\
-    -t mysql://ensro@mysql-ens-mirror-1:4240/ncbi_taxonomy_109 -o gallus.json
+    -d mysql://ensro@mysql-ens-sta-5:4684/accipiter_gentilis_compara_109\
+    -r ensembl_compara_references -o gallus.json
 """
 
 import argparse
@@ -38,7 +37,8 @@ def parse_arguments() -> argparse.Namespace:
     """
     Parse command line arguments.
 
-    :return: Parsed command line arguments
+    Returns:
+        argparse.Namespace: Parsed command line arguments
     """
     parser = argparse.ArgumentParser(
         description="Query gene and homology counts from an Ensembl compara rapid release database."
@@ -49,9 +49,6 @@ def parse_arguments() -> argparse.Namespace:
         "--ref_db",
         required=True,
         help="Reference database name. Must be on same server as target database.",
-    )
-    parser.add_argument(
-        "-t", "--tax_db", required=True, help="NCBI taxonomy database URL."
     )
     parser.add_argument(
         "-o", "--output", required=True, help="Output file in JSON format"
@@ -65,15 +62,16 @@ def get_closest_ref(
     """
     Get the closest reference for the given rapid release database.
 
-    :param tax_dbc: Taxonomy database connection
-    :param rr_dbc: Rapid release database connection
-    :param ref_db: Reference database name
-    :return: Tuple
-    """
+    Args:
+        tax_dbc (DBConnection): Taxonomy database connection
+        rr_dbc (Connection): Rapid release database connection
+        ref_db (str): Reference database name
 
+    Returns:
+        Tuple[int, str, int, str, int]: Result tuple
+    """
     query1 = """
-    SELECT name, taxon_id FROM genome_db
-    WHERE genome_db_id = 1;
+    SELECT name, taxon_id FROM genome_db LIMIT 1;
     """
 
     with rr_dbc.connect() as conn:
@@ -95,7 +93,7 @@ def get_closest_ref(
                 continue
             anc = Taxonomy.all_common_ancestors(session, query_taxid, taxid)
             res.append((dict_row["genome_db_id"], dict_row["name"], taxid, len(anc)))
-    res = sorted(res, key=lambda x: x[3], reverse=True)
+    res = sorted(res, key=lambda x: (x[3], x[2]), reverse=True)
     return res[0][0], res[0][1], res[0][2], query_species, query_taxid
 
 
@@ -105,10 +103,13 @@ def query_rr_database(
     """
     Query the database for the number of homologs and genes.
 
-    :param rr_dbc: Rapid release database connection
-    :param genome_db_id: Genome database ID
-    :param ref_db: Reference database name
-    :return: Tuple containing the number of homologs and genes
+    Args:
+        rr_dbc (Connection): Rapid release database connection
+        genome_db_id (int): Genome database ID
+        ref_db (str): Reference database name
+
+    Returns:
+        Tuple[int, int]: Tuple containing the number of homologs and genes
     """
     connection: Connection = rr_dbc.connect()
 
@@ -144,17 +145,14 @@ def query_rr_database(
     return nr_homologs, nr_genes
 
 
-def write_results_to_json(
-    output_file: str,
-    data: dict
-) -> None:
+def write_results_to_json(output_file: str, data: dict) -> None:
     """
     Write results to a JSON file.
 
-    :param output_file: Output file name
-    :param data: Data to write to JSON
+    Args:
+        output_file (str): Output file name
+        data (Dict): Data to write to JSON
     """
-
     with open(output_file, "w", encoding="utf-8") as outfile:
         json.dump(data, outfile)
 
@@ -165,11 +163,10 @@ def main() -> None:
     """
     args = parse_arguments()
     db_url = args.database
-    tax_url = args.tax_db
     output_file = args.output
     ref_db = args.ref_db
 
-    tax_dbc = DBConnection(tax_url)
+    tax_dbc = DBConnection(db_url)
     rr_dbc = create_engine(db_url, future=True)
 
     ref_gdb, ref_species, ref_taxid, query_species, query_taxid = get_closest_ref(
@@ -185,10 +182,7 @@ def main() -> None:
         "nr_query_genes": nr_genes,
         "nr_homologies": nr_homologs,
     }
-    write_results_to_json(
-        output_file,
-        json_data
-    )
+    write_results_to_json(output_file, json_data)
 
 
 if __name__ == "__main__":
