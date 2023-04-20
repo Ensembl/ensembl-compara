@@ -102,10 +102,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
         },
 
         {   -logic_name  => 'check_file_copy',
-            -module      => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters  => {
-                'sql' => [ 'UPDATE pipeline_wide_parameters SET param_value = 1 WHERE param_name = "orth_wga_complete"' ],
-            },
+            -module      => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into   => {
                 1 => [
                     WHEN( '#homology_dumps_shared_dir#' => 'copy_files_to_shared_loc' ),
