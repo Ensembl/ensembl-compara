@@ -71,7 +71,7 @@ def match_taxon_to_reference(session: Session, taxon_name: str, taxon_list: list
     result = None
     for ancestor in ancestors:
         ancestor_name = fetch_scientific_name(session, ancestor)
-        if any(str(ancestor_name).lower() in taxon.lower() for taxon in taxon_list):
+        if any(str(ancestor_name).lower() == taxon.lower() for taxon in taxon_list):
             result = str(ancestor_name).lower()
     return result if result is not None else "default"
 
