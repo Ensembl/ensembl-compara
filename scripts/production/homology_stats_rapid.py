@@ -77,7 +77,6 @@ def get_closest_ref(
     with rr_dbc.connect() as conn:
         query_species, query_taxid = conn.execute(text(query1)).one()
 
-    print(query_species, query_taxid)
     query2 = f"""
     SELECT genome_db_id, gdb.taxon_id, gdb.name
     FROM species_set JOIN {ref_db}.genome_db gdb USING(genome_db_id)
