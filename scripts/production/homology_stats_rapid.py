@@ -28,7 +28,7 @@ import argparse
 import json
 from typing import Tuple, List
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from sqlalchemy.engine import Connection
 from ensembl.database import DBConnection
 from ensembl.ncbi_taxonomy.api.utils import Taxonomy
@@ -58,18 +58,17 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def get_closest_ref(
-    tax_dbc: DBConnection, rr_dbc: Connection, ref_db: str
+    rr_dbc: DBConnection, ref_db: str
 ) -> Tuple[int, str, int, str, int]:
     """
     Get the closest reference for the given rapid release database.
 
     Args:
-        tax_dbc (DBConnection): Taxonomy database connection
-        rr_dbc (Connection): Rapid release database connection
-        ref_db (str): Reference database name
+        rr_dbc: Rapid release database connection
+        ref_db Reference database name
 
     Returns:
-        Tuple[int, str, int, str, int]: Result tuple
+        Result tuple
     """
     query1 = """
     SELECT name, taxon_id FROM genome_db LIMIT 1;
@@ -78,22 +77,24 @@ def get_closest_ref(
     with rr_dbc.connect() as conn:
         query_species, query_taxid = conn.execute(text(query1)).one()
 
+    print(query_species, query_taxid)
     query2 = f"""
     SELECT genome_db_id, gdb.taxon_id, gdb.name
     FROM species_set JOIN {ref_db}.genome_db gdb USING(genome_db_id)
     WHERE genome_db_id > 100;
     """
 
-    with rr_dbc.connect() as conn, tax_dbc.session_scope() as session:
+    with rr_dbc.connect() as conn, rr_dbc.session_scope() as session:
         result = conn.execute(text(query2))
         res: List[Tuple] = []
-        for dict_row in result.mappings():
-            taxid = dict_row["taxon_id"]
+        for gdb_id, taxid, name in result:
             if taxid == query_taxid:
                 continue
             anc = Taxonomy.all_common_ancestors(session, query_taxid, taxid)
-            res.append((dict_row["genome_db_id"], dict_row["name"], taxid, len(anc)))
-    ref_gdb, ref_species, ref_taxid = sorted(res, key=lambda x: (x[3], x[2]))[0]
+            res.append((gdb_id, name, taxid, len(anc)))
+    ref_gdb, ref_species, ref_taxid, _ = sorted(
+        res, key=lambda x: (x[3], x[2]), reverse=True
+    )[0]
     return ref_gdb, ref_species, ref_taxid, query_species, query_taxid
 
 
@@ -104,57 +105,44 @@ def query_rr_database(
     Query the database for the number of homologs and genes.
 
     Args:
-        rr_dbc (Connection): Rapid release database connection
-        genome_db_id (int): Genome database ID
-        ref_db (str): Reference database name
+        rr_dbc: Rapid release database connection
+        genome_db_id: Genome database ID
+        ref_db: Reference database name
 
     Returns:
-        Tuple[int, int]: Tuple containing the number of homologs and genes
+        Tuple containing the number of homologs and genes
     """
-    connection: Connection = rr_dbc.connect()
-
-    # Query nr_homologs
-    query1 = text(
-        f"""
-        SELECT COUNT(DISTINCT gene_member_id) AS nr_homologs
-        FROM homology
-        JOIN homology_member USING(homology_id)
-        JOIN {ref_db}.gene_member gm USING(gene_member_id)
-        JOIN {ref_db}.genome_db gdb USING(genome_db_id)
-        WHERE gm.biotype_group = 'coding'
-        AND homology.description LIKE 'homolog_%'
-        AND gdb.genome_db_id = {genome_db_id}
-    """
-    )
-    result1 = connection.execute(query1).fetchone()
-    nr_homologs = result1["nr_homologs"]
-
-    # Query nr_genes
-    query2 = text(
+    with rr_dbc.connect() as connection:
+        # Query nr_homologs
+        query1 = text(
+            f"""
+            SELECT COUNT(DISTINCT gene_member_id) AS nr_homologs
+            FROM homology
+            JOIN homology_member USING(homology_id)
+            JOIN {ref_db}.gene_member gm USING(gene_member_id)
+            JOIN {ref_db}.genome_db gdb USING(genome_db_id)
+            WHERE gm.biotype_group = 'coding'
+            AND homology.description LIKE 'homolog_%'
+            AND gdb.genome_db_id = {genome_db_id}
         """
-        SELECT COUNT(gene_member_id) AS nr_genes
-        FROM gene_member
-        JOIN genome_db USING(genome_db_id)
-        WHERE gene_member.biotype_group = 'coding'
-        AND genome_db_id = 1
-    """
-    )
-    result2 = connection.execute(query2).fetchone()
-    nr_genes = result2["nr_genes"]
+        )
+        result1 = connection.execute(query1).fetchone()
+        nr_homologs = result1["nr_homologs"]
+
+        # Query nr_genes
+        query2 = text(
+            """
+            SELECT COUNT(gene_member_id) AS nr_genes
+            FROM gene_member
+            JOIN genome_db USING(genome_db_id)
+            WHERE gene_member.biotype_group = 'coding'
+            AND genome_db_id <= 100
+        """
+        )
+        result2 = connection.execute(query2).fetchone()
+        nr_genes = result2["nr_genes"]
 
     return nr_homologs, nr_genes
-
-
-def write_results_to_json(output_file: str, data: dict) -> None:
-    """
-    Write results to a JSON file.
-
-    Args:
-        output_file (str): Output file name
-        data (Dict): Data to write to JSON
-    """
-    with open(output_file, "w", encoding="utf-8") as outfile:
-        json.dump(data, outfile)
 
 
 def main() -> None:
@@ -163,14 +151,12 @@ def main() -> None:
     """
     args = parse_arguments()
     db_url = args.database
-    output_file = args.output
     ref_db = args.ref_db
 
-    tax_dbc = DBConnection(db_url)
-    rr_dbc = create_engine(db_url, future=True)
+    rr_dbc = DBConnection(db_url)
 
     ref_gdb, ref_species, ref_taxid, query_species, query_taxid = get_closest_ref(
-        tax_dbc, rr_dbc, ref_db
+        rr_dbc, ref_db
     )
 
     nr_homologs, nr_genes = query_rr_database(rr_dbc, ref_gdb, ref_db)
