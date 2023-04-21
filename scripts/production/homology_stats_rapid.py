@@ -18,9 +18,10 @@ This script fetches the number of coding genes and number of coding genes with h
 against the taxonomically closest reference species.
 
 Usage example::
+
     python homology_stats_rapid.py\
     -d mysql://ensro@mysql-ens-sta-5:4684/accipiter_gentilis_compara_109\
-    -r ensembl_compara_references -o gallus.json
+    -r ensembl_compara_references -o accipiter_gentilis.json
 """
 
 import argparse
@@ -38,7 +39,7 @@ def parse_arguments() -> argparse.Namespace:
     Parse command line arguments.
 
     Returns:
-        argparse.Namespace: Parsed command line arguments
+        Parsed command line arguments
     """
     parser = argparse.ArgumentParser(
         description="Query gene and homology counts from an Ensembl compara rapid release database."
@@ -75,12 +76,11 @@ def get_closest_ref(
     """
 
     with rr_dbc.connect() as conn:
-        tmp = conn.execute(text(query1)).one()
-        query_species, query_taxid = tmp["name"], tmp["taxon_id"]
+        query_species, query_taxid = conn.execute(text(query1)).one()
 
     query2 = f"""
-    SELECT genome_db_id, gdb.taxon_id, gdb.name FROM
-    species_set JOIN {ref_db}.genome_db gdb USING(genome_db_id)
+    SELECT genome_db_id, gdb.taxon_id, gdb.name
+    FROM species_set JOIN {ref_db}.genome_db gdb USING(genome_db_id)
     WHERE genome_db_id > 100;
     """
 
@@ -93,8 +93,8 @@ def get_closest_ref(
                 continue
             anc = Taxonomy.all_common_ancestors(session, query_taxid, taxid)
             res.append((dict_row["genome_db_id"], dict_row["name"], taxid, len(anc)))
-    res = sorted(res, key=lambda x: (x[3], x[2]), reverse=True)
-    return res[0][0], res[0][1], res[0][2], query_species, query_taxid
+    ref_gdb, ref_species, ref_taxid = sorted(res, key=lambda x: (x[3], x[2]))[0]
+    return ref_gdb, ref_species, ref_taxid, query_species, query_taxid
 
 
 def query_rr_database(
@@ -182,7 +182,8 @@ def main() -> None:
         "nr_query_genes": nr_genes,
         "nr_homologies": nr_homologs,
     }
-    write_results_to_json(output_file, json_data)
+    with open(args.output, "w", encoding="utf-8") as outfile:
+        json.dump(json_data, outfile)
 
 
 if __name__ == "__main__":
