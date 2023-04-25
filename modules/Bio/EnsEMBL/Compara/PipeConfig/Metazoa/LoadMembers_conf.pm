@@ -35,6 +35,8 @@ package Bio::EnsEMBL::Compara::PipeConfig::Metazoa::LoadMembers_conf;
 use strict;
 use warnings;
 
+use File::Spec::Functions;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::LoadMembers_conf');
 
 
@@ -54,6 +56,13 @@ sub default_options {
         'store_ncrna'   => 0,  # Store ncRNA genes
         'store_others'  => 0,  # Store other genes
     };
+}
+
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+
+    $analyses_by_name->{'check_reusability'}->{'-parameters'}{'must_reuse_list_file'} = catfile($self->o('config_dir'), 'must_reuse_species.json');
 }
 
 

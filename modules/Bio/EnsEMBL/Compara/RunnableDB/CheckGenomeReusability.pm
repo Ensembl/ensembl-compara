@@ -36,12 +36,17 @@ supported parameters:
     'do_not_reuse_list' => <list_of_species_ids_or_names>
         (optional)  is a 'veto' list of species we definitely do not want to be reused this time
 
+    'must_reuse_list_file' => <json_file>
+        (optional)  a list of species which MUST be reused this time
+
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::CheckGenomeReusability;
 
 use strict;
 use warnings;
+
+use JSON qw(decode_json);
 
 use Scalar::Util qw(looks_like_number);
 
@@ -75,7 +80,32 @@ sub fetch_input {
 
     my $genome_db_id = $self->param('genome_db_id');
     my $genome_db    = $genome_db_adaptor->fetch_by_dbID($genome_db_id) or $self->die_no_retry("Could not fetch genome_db with genome_db_id='$genome_db_id'");
+    $self->param('genome_db', $genome_db);
     my $species_name = $genome_db->name();
+
+    # We need to read the must-reuse list before doing any assessment of reusability.
+    my $reuse_required = 0;
+    if ( $self->param_is_defined('must_reuse_list_file') ) {
+        my $must_reuse_list = decode_json($self->_slurp($self->param('must_reuse_list_file')));
+
+        foreach my $must_reuse_candidate (@$must_reuse_list) {
+            if( looks_like_number( $must_reuse_candidate ) ) {
+
+                if( $must_reuse_candidate == $genome_db_id ) {
+                    $reuse_required = 1;
+                    last;
+                }
+
+            } else {
+
+                if( $must_reuse_candidate eq $species_name ) {
+                    $reuse_required = 1;
+                    last;
+                }
+            }
+        }
+    }
+    $self->param('reuse_required', $reuse_required);
 
     # For polyploid genomes, the reusability is only assessed on the principal genome
     if ($genome_db->genome_component) {
@@ -92,25 +122,32 @@ sub fetch_input {
         return;
     }
 
-    return if(defined($self->param('reuse_this')));  # bypass fetch_input() and run() in case 'reuse_this' has already been passed
+    return if(defined($self->param('reuse_this')));  # bypass fetch_input() in case 'reuse_this' has already been passed
 
-
+    my $reuse_forbidden = 0;
     my $do_not_reuse_list = $self->param('do_not_reuse_list') || [];
     foreach my $do_not_reuse_candidate (@$do_not_reuse_list) {
         if( looks_like_number( $do_not_reuse_candidate ) ) {
 
             if( $do_not_reuse_candidate == $genome_db_id ) {
-                $self->param('reuse_this', 0);
-                return;
+                $reuse_forbidden = 1;
+                last;
             }
 
         } else {    # not using registry names here to avoid clashes with previous release registry entries:
 
             if( $do_not_reuse_candidate eq $genome_db->name ) {
-                $self->param('reuse_this', 0);
-                return;
+                $reuse_forbidden = 1;
+                last;
             }
         }
+    }
+
+    if ($reuse_required && $reuse_forbidden) {
+        $self->die_no_retry("cannot both require and forbid reuse of genome_db '$species_name' (genome_db_id: $genome_db_id)");
+    } elsif ($reuse_forbidden) {
+        $self->param('reuse_this', 0);
+        return;
     }
 
     if(my $reuse_db = $self->param('reuse_db')) {
@@ -139,7 +176,6 @@ sub fetch_input {
             return;
         }
 
-        $self->param('genome_db', $genome_db);
         $self->param('reuse_genome_db', $reuse_genome_db);
 
         return unless $self->param('needs_core_db');
@@ -192,10 +228,22 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    return if(defined($self->param('reuse_this')));  # bypass run() in case 'reuse_this' has either been passed or already computed
+    # bypass run_comparison() if 'reuse_this' has either been passed or already computed
+    if (!defined $self->param('reuse_this')) {
+        # run_comparison is to be implemented in a sub-class
+        $self->param('reuse_this', $self->run_comparison());
+    }
 
-    # run_comparison is to be implemented in a sub-class
-    $self->param('reuse_this', $self->run_comparison());
+    if ($self->param('reuse_required')) {
+        my $genome_db = $self->param('genome_db');
+        my $species_name = $genome_db->name;
+        my $genome_db_id = $genome_db->dbID;
+        if ($self->param('reuse_this') < 0) {
+            $self->warning("GenomeDB '$species_name' (genome_db_id: $genome_db_id) must be reused, but cannot assess its reusability");
+        } elsif (!$self->param('reuse_this')) {
+            $self->die_no_retry("GenomeDB '$species_name' (genome_db_id: $genome_db_id) must be reused, but is configured as non-reusable");
+        }
+    }
 }
 
 
