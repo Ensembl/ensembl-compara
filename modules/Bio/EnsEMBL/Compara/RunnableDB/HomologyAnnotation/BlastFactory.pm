@@ -50,6 +50,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BlastFactory;
 use strict;
 use warnings;
 
+use JSON qw(decode_json);
+
 use Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector qw(:all);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -108,9 +110,45 @@ sub write_output {
 
         $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'ref_taxa' => $ref_taxa }, 1 );
 
+        my $query_gdb = $gdb_adaptor->fetch_by_dbID($genome_db_id);
         foreach my $ref ( @$ref_dirs ) {
-            # Skip the reference genome if it is the same as the query genome
-            next if $ref->{'ref_gdb'}->name eq $gdb_adaptor->fetch_by_dbID($genome_db_id)->name;
+
+            my $reason_to_skip;
+            if ($ref->{'ref_gdb'}->name eq $query_gdb->name) {
+                $reason_to_skip = 'identical production name';
+
+            } elsif ($ref->{'ref_gdb'}->taxon_id == $query_gdb->taxon_id
+                     && $ref->{'ref_gdb'}->assembly eq $query_gdb->assembly
+                     && $ref->{'ref_gdb'}->genebuild eq $query_gdb->genebuild) {
+
+                my $query_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($query_gdb->name, 'core');
+                my $query_genebuild_id = $query_core_dba->get_MetaContainer->single_value_by_key('genebuild.id');
+
+                # The Genebuild ID is not stored in Compara databases, so it must be accessed from
+                # the core database. But reference genome core databases are typically unavailable
+                # via the homology annotation registry, so we access it indirectly using a script.
+                my $get_genebuild_id_exe = $self->param_required('get_genebuild_id_exe');
+                my $ref_reg_conf = $self->param_required('ref_reg_conf');
+                my $cmd = [$get_genebuild_id_exe, '--reg_conf', $ref_reg_conf, '--species', $ref->{'ref_gdb'}->name];
+                my $result = decode_json($self->get_command_output($cmd));
+                my $ref_genebuild_id = $result->{'genebuild_id'};
+
+                if (defined $query_genebuild_id && defined $ref_genebuild_id && $ref_genebuild_id == $query_genebuild_id) {
+                    $reason_to_skip = sprintf(
+                        "identical taxon_id (%d), assembly (%s), genebuild (%s) and Genebuild ID (%d)",
+                        $query_gdb->taxon_id, $query_gdb->assembly, $query_gdb->genebuild, $query_genebuild_id
+                    );
+                }
+            }
+
+            if ($reason_to_skip) {
+                $self->warning(sprintf(
+                    "skipping DIAMOND BLAST of query '%s' against reference '%s' due to %s",
+                    $query_gdb->name, $ref->{'ref_gdb'}->name, $reason_to_skip
+                ));
+                next;
+            }
+
             # Obtain the diamond indexed file for the reference, this is the only file we need from
             # each reference at this point
             my $ref_dmnd_path = $ref->{'ref_dmnd'};
