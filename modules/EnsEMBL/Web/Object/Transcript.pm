@@ -281,7 +281,7 @@ sub has_pdbe_analysis {
 
 sub has_afdb_analysis {
   my $self = shift;
-  return ($self->table_info($self->get_db, 'protein_feature')->{'analyses'}{'alphafold_import'}) ? 1 : 0;
+  return ($self->table_info($self->get_db, 'protein_feature')->{'analyses'}{'alphafold'}) ? 1 : 0;
 }
 
 sub default_track_by_gene {
