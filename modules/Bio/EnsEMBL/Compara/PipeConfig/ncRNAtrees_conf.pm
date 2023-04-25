@@ -176,8 +176,6 @@ sub default_options {
             'orth_batch_size'   => 10,
             # set to 1 when all pairwise and multiple WGA complete
             'dna_alns_complete' => 0,
-            # populated by the check_file_copy analysis when wga analyses finished
-            'orth_wga_complete' => 0,
 
             #Parameters for HighConfidenceOrthologs
             'threshold_levels'            => [ ],          # division specific
@@ -269,7 +267,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'range_label'       => $self->o('range_label'),
 
         'dna_alns_complete' => $self->o('dna_alns_complete'), # manually change to 1 when all wgas have finished
-        'orth_wga_complete' => $self->o('orth_wga_complete'), # populated by the check_file_copy analysis when wga analyses finished
 
         'orth_batch_size'             => $self->o('orth_batch_size'),
         'high_confidence_capacity'    => $self->o('high_confidence_capacity'),
@@ -1368,10 +1365,12 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'rib_fire_orth_wga',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CheckSwitch',
-            -parameters => {
-                'switch_name' => 'dna_alns_complete',
-            },
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => WHEN('#do_orth_wga#' => 'check_dna_alns_complete'),
+        },
+
+        {   -logic_name => 'check_dna_alns_complete',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CheckDnaAlnsComplete',
             -flow_into  => {
                 1 => { 'pair_species' => { 'species_set_name' => $self->o('wga_species_set_name') } },
             },
@@ -1379,12 +1378,8 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'rib_fire_high_confidence_orths',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CheckSwitch',
-            -parameters => {
-                'switch_name' => 'orth_wga_complete',
-            },
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => [ 'mlss_id_for_high_confidence_factory', 'paralogue_for_import_factory' ],
-            -max_retry_count => 0,
         },
 
         {   -logic_name => 'paralogue_for_import_factory',

@@ -60,7 +60,7 @@ sub default_options {
         },
 
     # Pan division doesn't run any type of alignment
-    'orth_wga_complete' => 1,
+    'do_orth_wga' => 0,
 
     # plots
         #compute Jaccard Index and Gini coefficient (Lorenz curve)
