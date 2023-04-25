@@ -38,8 +38,6 @@ use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
-use Bio::EnsEMBL::Hive::Utils qw(destringify);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DeleteOneTree');
 
@@ -48,7 +46,6 @@ sub fetch_input {
     my $tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param_required('gene_tree_id'));
     $self->param('gene_tree', $tree);
     $self->_extract_tree_data;
-    $self->_find_overlapping_species;
 }
 
 sub run {
@@ -78,34 +75,11 @@ sub _extract_tree_data {
     $self->param( 'gene_tree_leaves', $gene_tree_leaves );
 }
 
-sub _find_overlapping_species {
-    my $self = shift;
-
-    my $master_dba = $self->get_cached_compara_dba('master_db');
-    my $collection_name = $self->param_required('collection');
-
-    my $ref_collection_names;
-    if ( $self->param_is_defined('ref_collection') && $self->param_is_defined('ref_collection_list') ) {
-        $self->throw("Only one of parameters 'ref_collection' or 'ref_collection_list' can be defined")
-    } elsif ( $self->param_is_defined('ref_collection') ) {
-        $ref_collection_names = [$self->param('ref_collection')];
-    } elsif ( $self->param_is_defined('ref_collection_list') ) {
-        $ref_collection_names = destringify($self->param('ref_collection_list'));
-    } else {
-        $self->throw("One of parameters 'ref_collection' or 'ref_collection_list' must be defined")
-    }
-
-    my $overlapping_species = Bio::EnsEMBL::Compara::Utils::MasterDatabase::find_overlapping_genome_db_ids($master_dba,
-                                                                                                           $collection_name,
-                                                                                                           $ref_collection_names);
-    $self->param('overlapping_species', $overlapping_species);
-}
-
 sub _get_non_overlapping_species_count {
     my $self = shift;
     
     my %genomes_in_cluster = %{$self->param('genomes_list')};
-    my @overlapping_species = @{$self->param('overlapping_species')};
+    my @overlapping_species = @{$self->param_required('overlapping_genomes')};
     
     foreach my $overlap_species_id ( @overlapping_species ) {
         $genomes_in_cluster{$overlap_species_id} = 0;

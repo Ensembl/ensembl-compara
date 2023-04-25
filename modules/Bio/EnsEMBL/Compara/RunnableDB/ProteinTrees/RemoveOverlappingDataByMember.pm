@@ -33,32 +33,13 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingDataBy
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
-use Bio::EnsEMBL::Hive::Utils qw(destringify);
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub run {
     my $self = shift;
 
-    my $master_dba = $self->get_cached_compara_dba('master_db');
-    my $collection_name = $self->param_required('collection');
-
-    my $ref_collection_names;
-    if ( $self->param_is_defined('ref_collection') && $self->param_is_defined('ref_collection_list') ) {
-        $self->throw("Only one of parameters 'ref_collection' or 'ref_collection_list' can be defined")
-    } elsif ( $self->param_is_defined('ref_collection') ) {
-        $ref_collection_names = [$self->param('ref_collection')];
-    } elsif ( $self->param_is_defined('ref_collection_list') ) {
-        $ref_collection_names = destringify($self->param('ref_collection_list'));
-    } else {
-        $self->throw("One of parameters 'ref_collection' or 'ref_collection_list' must be defined")
-    }
-
-    my $overlapping_species = Bio::EnsEMBL::Compara::Utils::MasterDatabase::find_overlapping_genome_db_ids($master_dba,
-                                                                                                           $collection_name,
-                                                                                                           $ref_collection_names);
+    my $overlapping_species = $self->param_required('overlapping_genomes');
     my $overlap_genome_db_ids = '(' . join(',', @{$overlapping_species}) . ')';
 
     my $hmm_annot_sql = qq/

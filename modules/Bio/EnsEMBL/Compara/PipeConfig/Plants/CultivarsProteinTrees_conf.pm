@@ -84,6 +84,14 @@ sub core_pipeline_analyses {
         @{$self->SUPER::core_pipeline_analyses},
 
         # Include strain-specific analyses
+        {   -logic_name => 'find_overlapping_genomes',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FindOverlappingGenomes',
+            -parameters => {
+                'collection' => $self->o('collection'),
+            },
+            -flow_into  => [ 'check_strains_cluster_factory' ],
+        },
+
         {   -logic_name => 'check_strains_cluster_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
@@ -98,9 +106,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'cleanup_strains_clusters',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingClusters',
-            -parameters => {
-                'collection'=> $self->o('collection'),
-            },
         },
 
         {   -logic_name => 'remove_overlapping_homologies',
@@ -123,7 +128,7 @@ sub tweak_analyses {
     $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
 
     # Wire up cultivar-specific analyses
-    $analyses_by_name->{'remove_blocklisted_genes'}->{'-flow_into'} = ['check_strains_cluster_factory'];
+    $analyses_by_name->{'remove_blocklisted_genes'}->{'-flow_into'} = ['find_overlapping_genomes'];
     push @{$analyses_by_name->{'backbone_pipeline_finished'}->{'-flow_into'}}, 'remove_overlapping_homologies';
 }
 
