@@ -161,7 +161,7 @@ sub content {
         if ($join_alignments) {
           $primary_image_config->get_node('scalebar')->set('caption', $short_name =~ s/^[^\s]+\s+//r);
           $primary_image_config->get_node('scalebar')->set('name', $short_name);
-          $primary_image_config->get_node('scalebar')->set('caption_img',"f:24\@-11:".$hub->species_defs->get_config($slices->[0]->{'species'}, 'SPECIES_NAME'));
+          $primary_image_config->get_node('scalebar')->set('caption_img',"f:24\@-11:".$hub->species_defs->get_config($slices->[0]->{'species'}, 'SPECIES_IMAGE'));
           $primary_image_config->multi($methods, $seq_region_name, 1, $max, $slices, map { $slices->[$_] } ($i - 1,$i));
         }
         
