@@ -42,7 +42,7 @@ sub content {
   my $object         = $self->new_object('Regulation', $reg_feature, $self->object->__data);
   
   $self->add_entry({
-    type  => 'Stable ID',
+    type  => 'ID',
     label => $object->stable_id,
     link  => $object->get_summary_page_url
   });

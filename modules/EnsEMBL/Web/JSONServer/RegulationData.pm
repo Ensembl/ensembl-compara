@@ -53,7 +53,7 @@ sub json_data {
     set => 'reg_feats',
     renderer => "normal",
     popupType => "column-cell",
-    defaultState => "track-on"
+    defaultState => "track-off"
   };
 
   $final->{data}->{segmentation_features} = {
@@ -116,22 +116,30 @@ sub json_data {
           };
           push @$cell_evidence, $hash;
 
-          # Add regulatory features only of it is available.
+          # Add epigenomic activity if needed
           if ($db_tables->{'cell_type'}{'ids'}->{$id_key}) {
-            foreach my $k (@{$final->{extra_dimensions}}) {
-              my $ex = $final->{data}->{$k};
-              if (!$tmp_hash->{$ex->{label}}) {
-                # print Data::Dumper::Dumper $tmp_hash;
-                $tmp_hash->{$ex->{label}} = 1;
-                $hash =  {
-                  dimension => $k,
-                  val => $ex->{label},
-                  set => $ex->{set},
-                  defaultState => $ex->{defaultState} || "track-off"
-                };
-                push @$cell_evidence, $hash;
-              }
-            }
+            my $epigenomic_activity = $final->{data}->{epigenomic_activity};
+            $hash =  {
+              dimension => "epigenomic_activity",
+              val => $epigenomic_activity->{label},
+              set => $epigenomic_activity->{set},
+              defaultState => $epigenomic_activity->{defaultState} || "track-off"
+            };
+            push @$cell_evidence, $hash;
+          }
+
+          # Add segmentation features if available
+          my ($segmentation_lookup_key) = split(":", $id_key); # the id_key here is a colon-separated epigenome short name and epigenome id; see ConfigPacker for details
+          $segmentation_lookup_key = "Segmentation:$segmentation_lookup_key";
+          if ($db_tables->{'segmentation'}{$segmentation_lookup_key}) { # i.e. if the cell line actually has segmentation features
+            my $segmentation_features = $final->{data}->{segmentation_features};
+            $hash =  {
+              dimension => "segmentation_features",
+              val => $segmentation_features->{label},
+              set => $segmentation_features->{set},
+              defaultState => $segmentation_features->{defaultState} || "track-off"
+            };
+            push @$cell_evidence, $hash;
           }
         }
       }
