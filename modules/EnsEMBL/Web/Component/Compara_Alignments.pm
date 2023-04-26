@@ -27,6 +27,7 @@ use HTML::Entities qw(encode_entities);
 use List::Util qw(min max);
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::TextSequence::View::ComparaAlignments;
+use EnsEMBL::Web::Utils::FormatText qw(pluralise);
 
 use base qw(EnsEMBL::Web::Component::TextSequence);
 
