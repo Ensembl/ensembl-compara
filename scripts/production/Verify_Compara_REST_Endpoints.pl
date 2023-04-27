@@ -35,7 +35,7 @@ use Getopt::Long;
 my $browser = HTTP::Tiny->new('timeout' => 300);
 my $server = 'https://test.rest.ensembl.org';
 my $division;
-my ( $skip_genetrees, $skip_cafe, $skip_alignments, $skip_epo, $skip_lastz, $skip_families, $skip_homology, $skip_cactus );
+my ( $skip_genetrees, $skip_cafe, $skip_alignments, $skip_epo, $skip_lastz, $skip_homology, $skip_cactus );
 
 GetOptions( 
     "server=s"        => \$server, 
@@ -46,7 +46,6 @@ GetOptions(
     'skip_epo'        => \$skip_epo,
     'skip_lastz'      => \$skip_lastz,
     'skip_cactus'     => \$skip_cactus,
-    'skip_families'   => \$skip_families,
     'skip_homology'   => \$skip_homology,
 );
 
@@ -92,7 +91,6 @@ if ($division eq "vertebrates"){
     $cactus_region            = '2:56040000-56040100:1';
     $cactus_species_set       = 'murinae';
 
-    $skip_families            = 1;
     $skip_cactus              = 1;
 }
 elsif($division eq "plants"){
@@ -116,7 +114,6 @@ elsif($division eq "plants"){
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
     
     $extra_params             = 'compara=plants';
-    $skip_families            = 1;
     $skip_cactus              = 1;
 }
 elsif($division eq "metazoa"){
@@ -143,7 +140,6 @@ elsif($division eq "metazoa"){
     $cactus_species_set       = 'wormbase-ws269';
 
     $extra_params             = 'compara=metazoa';
-    $skip_families            = 1;
     $skip_epo                 = 1;
     $skip_cafe                = 1;
 }
@@ -166,7 +162,6 @@ elsif($division eq 'pan' or $division eq 'pan_homology'){
     $extra_params             = 'compara=pan_homology';
     $skip_cafe                = 1;
     $skip_alignments          = 1;
-    $skip_families            = 1;
     $skip_cactus              = 1;
 }
 elsif ( $division eq 'grch37' ) {
@@ -179,7 +174,6 @@ elsif ( $division eq 'grch37' ) {
     $homology_type            = 'projections';
     $homology_method_link     = 'ENSEMBL_PROJECTIONS';
 
-    $skip_families  = 1;
     $skip_epo       = 1;
     $skip_genetrees = 1;
     $skip_cactus    = 1;
@@ -203,7 +197,6 @@ elsif ($division eq 'protists' ) {
     $extra_params             = 'compara=protists';
     $skip_cafe                = 1;
     $skip_alignments          = 1;
-    $skip_families            = 1;
     $skip_cactus              = 1;
 }
 elsif ($division eq 'fungi' ) {
@@ -227,7 +220,6 @@ elsif ($division eq 'fungi' ) {
     $skip_cafe                = 1;
     $skip_epo                 = 1;
     $skip_cactus              = 1;
-    $skip_families            = 1;
 }
 else {
     die "Division '$division' is not understood\n";
@@ -523,56 +515,6 @@ try{
 
         $nh = process_nh_get($server."/cafe/genetree/member/symbol/$species_1/$gene_symbol?content-type=text/x-nh;nh_format=simple".($extra_params ? ";$extra_params" : ''));
         ok($nh->get_leaf_nodes, "Check get cafe tree member by symbol validity");
-    }
-
-    unless ( $skip_families ) {
-        print "\nTesting GET family\/id\/\:id \n\n";
-
-        my $ext = '/family/id/TF660629';
-        $ext .= "?$extra_params" if $extra_params;
-
-        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check JSON validity");
-
-        $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json'.($extra_params ? ";$extra_params" : ''));
-        ok($jsontxt->{family_stable_id} eq 'TF660629', "Check get family validity");
-
-        $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=uniprot'.($extra_params ? ";$extra_params" : ''));
-        ok( (index($jsontxt->{members}[0]->{source_name}, 'Uniprot') != -1 ), "Check get family UNIPROT memeber filter validity");
-
-        $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=ensembl'.($extra_params ? ";$extra_params" : ''));
-        ok( ($jsontxt->{members}[0]->{source_name} eq 'ENSEMBLPEP' ) , "Check get family ensembl member filter validity");
-
-        $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=ensembl;aligned=1'.($extra_params ? ";$extra_params" : ''));
-        ok( exists($jsontxt->{members}[0]->{protein_alignment}), "Check get family aligned == 1 validity");
-
-        $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=ensembl;aligned=0'.($extra_params ? ";$extra_params" : ''));
-        ok( exists ($jsontxt->{members}[0]->{protein_seq}), "Check get family aligned == 0 validity");
-
-
-        print "\nTesting GET family member\/id\/\:id \n\n";
-
-        $ext = "/family/member/id/$gene_member_id";
-        $ext .= "?$extra_params" if $extra_params;
-
-        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check JSON validity");
-
-
-        $jsontxt = process_json_get($server."/family/member/id/$gene_member_id?content-type=application/json;aligned=0;sequence=none".($extra_params ? ";$extra_params" : ''));
-        ok($jsontxt->{1}->{family_stable_id}, "Check get family by member validity");
-
-
-        print "\nTesting GET family member by species symbol\/:species\/\:symbol \n\n";
-
-        $ext = "/family/member/symbol/$species_1/$gene_symbol";
-        $ext .= "?$extra_params" if $extra_params;
-
-        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check JSON validity");
-
-        $jsontxt = process_json_get($server."/family/member/symbol/$species_1/$gene_symbol?content-type=application/json;aligned=0;sequence=none;member_source=ensembl".($extra_params ? ";$extra_params" : ''));
-        ok($jsontxt->{1}->{family_stable_id}, "Check family member by species symbol validity");
     }
 
     # EPO not working until web roll out correct ensembl_ancestral!
