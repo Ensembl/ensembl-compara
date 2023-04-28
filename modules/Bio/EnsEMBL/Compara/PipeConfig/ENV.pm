@@ -135,6 +135,7 @@ sub executable_locations {
         'DumpGFFAlignmentsForSynteny_exe'   => $self->check_exe_in_ensembl('ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl'),
         'DumpGFFHomologuesForSynteny_exe'   => $self->check_exe_in_ensembl('ensembl-compara/scripts/synteny/DumpGFFHomologuesForSynteny.pl'),
         'emf2maf_program'                   => $self->check_exe_in_ensembl('ensembl-compara/scripts/dumps/emf2maf.pl'),
+        'get_genebuild_id_exe'              => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/get_core_genebuild_id.pl'),
         'msa_stats_report_exe'              => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/msa_stats.pl'),
         'patch_db_exe'                      => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/patch_database.pl'),
         'populate_new_database_exe'         => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/populate_new_database.pl'),

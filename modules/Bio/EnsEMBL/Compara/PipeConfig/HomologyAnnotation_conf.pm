@@ -39,6 +39,8 @@ package Bio::EnsEMBL::Compara::PipeConfig::HomologyAnnotation_conf;
 use strict;
 use warnings;
 
+use File::Spec::Functions;
+
 use Bio::EnsEMBL::Hive::Version 2.5;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 
@@ -263,6 +265,8 @@ sub core_pipeline_analyses {
         {   -logic_name    => 'diamond_factory',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::BlastFactory',
             -parameters    => {
+                'get_genebuild_id_exe' => $self->o('get_genebuild_id_exe'),
+                'ref_reg_conf'         => catfile($self->o('ensembl_root_dir'), 'ensembl-compara', 'conf', 'references', 'production_reg_conf.pl'),
                 'step'  => $self->o('num_sequences_per_blast_job'),
             },
             -rc_name       => '1Gb_job',
