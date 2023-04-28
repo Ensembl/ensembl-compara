@@ -145,27 +145,108 @@ sub resource_classes_single_thread {
     my ($self) = @_;
     my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
     return {
-        # 1Gb seems to be the minimum we need nowadays
-        'default'      => {'LSF' => ['-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $reg_requirement],              'LOCAL' => [ '', $reg_requirement ] },
+        # 1 Gb seems to be the minimum we need nowadays
+        'default' => {
+            'LSF'   => ['-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --time=24:00:00 --mem=1g', $reg_requirement],
+            'LOCAL' => ['', $reg_requirement],
+        },
 
-        '500Mb_job'    => {'LSF' => ['-C0 -M500   -R"select[mem>500]   rusage[mem=500]"',  $reg_requirement],              'LOCAL' => [ '', $reg_requirement ] },
-        '1Gb_job'      => {'LSF' => ['-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $reg_requirement],              'LOCAL' => [ '', $reg_requirement ] },
-        '2Gb_job'      => {'LSF' => ['-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $reg_requirement],              'LOCAL' => [ '', $reg_requirement ] },
-        '4Gb_job'      => {'LSF' => ['-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"', $reg_requirement],              'LOCAL' => [ '', $reg_requirement ] },
-        '8Gb_job'      => {'LSF' => ['-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"', $reg_requirement],              'LOCAL' => [ '', $reg_requirement ] },
-        '16Gb_job'     => {'LSF' => ['-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"', $reg_requirement],             'LOCAL' => [ '', $reg_requirement ] },
-        '24Gb_job'     => {'LSF' => ['-C0 -M24000 -R"select[mem>24000] rusage[mem=24000]"', $reg_requirement],             'LOCAL' => [ '', $reg_requirement ] },
-        '32Gb_job'     => {'LSF' => ['-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"', $reg_requirement],             'LOCAL' => [ '', $reg_requirement ] },
-        '48Gb_job'     => {'LSF' => ['-C0 -M48000 -R"select[mem>48000] rusage[mem=48000]"', $reg_requirement],             'LOCAL' => [ '', $reg_requirement ] },
-        '64Gb_job'     => {'LSF' => ['-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"', $reg_requirement],             'LOCAL' => [ '', $reg_requirement ] },
-        '96Gb_job'     => {'LSF' => ['-C0 -M96000 -R"select[mem>96000] rusage[mem=96000]"', $reg_requirement],             'LOCAL' => [ '', $reg_requirement ] },
-        '512Gb_job'    => {'LSF' => ['-q bigmem -C0 -M512000 -R"select[mem>512000] rusage[mem=512000]"', $reg_requirement],    'LOCAL' => [ '', $reg_requirement ] },
+        '500Mb_job'    => {
+            'LSF'   => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --time=24:00:00 --mem=500m', $reg_requirement],
+            'LOCAL' => [ '', $reg_requirement ]
+        },
 
-        '250Mb_6_hour_job' => {'LSF' => ['-C0 -W 6:00 -M250   -R"select[mem>250]   rusage[mem=250]"',  $reg_requirement],  'LOCAL' => [ '', $reg_requirement ] },
-        '500Mb_6_hour_job' => {'LSF' => ['-C0 -W 6:00 -M500   -R"select[mem>500]   rusage[mem=500]"',  $reg_requirement],  'LOCAL' => [ '', $reg_requirement ] },
-        '2Gb_6_hour_job'   => {'LSF' => ['-C0 -W 6:00 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $reg_requirement],  'LOCAL' => [ '', $reg_requirement ] },
+        '1Gb_job' => {
+            'LSF'   => ['-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --time=24:00:00 --mem=1g', $reg_requirement],
+            'LOCAL' => ['', $reg_requirement],
+        },
 
-        '1Gb_datamover_job' => {'LSF' => ['-q datamover -C0 -M1000 -R"select[mem>1000]  rusage[mem=1000]"', $reg_requirement], 'LOCAL' => [ '', $reg_requirement ] },
+        '2Gb_job' => {
+            'LSF'   => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --time=24:00:00 --mem=2g', $reg_requirement],
+            'LOCAL' => ['', $reg_requirement],
+        },
+
+        '4Gb_job' => {
+            'LSF'   => ['-C0 -M4000 -R"select[mem>4000] rusage[mem=4000]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --time=24:00:00 --mem=4g', $reg_requirement],
+            'LOCAL' => ['', $reg_requirement],
+        },
+
+        '8Gb_job' => {
+            'LSF'   => ['-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --time=24:00:00 --mem=8g', $reg_requirement],
+            'LOCAL' => ['', $reg_requirement],
+        },
+
+        '16Gb_job' => {
+            'LSF'   => ['-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --time=24:00:00 --mem=16g', $reg_requirement],
+            'LOCAL' => ['', $reg_requirement],
+        },
+
+        '24Gb_job' => {
+            'LSF'   => ['-C0 -M24000 -R"select[mem>24000] rusage[mem=24000]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --time=24:00:00 --mem=24g', $reg_requirement],
+            'LOCAL' => ['', $reg_requirement],
+        },
+
+        '32Gb_job' => {
+            'LSF'   => ['-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --time=24:00:00 --mem=32g', $reg_requirement],
+            'LOCAL' => ['', $reg_requirement],
+        },
+
+        '48Gb_job' => {
+            'LSF'   => ['-C0 -M48000 -R"select[mem>48000] rusage[mem=48000]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --time=24:00:00 --mem=48g', $reg_requirement],
+            'LOCAL' => ['', $reg_requirement],
+        },
+
+        '64Gb_job' => {
+            'LSF'   => ['-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --time=24:00:00 --mem=64g', $reg_requirement],
+            'LOCAL' => ['', $reg_requirement],
+        },
+
+        '96Gb_job' => {
+            'LSF'   => ['-C0 -M96000 -R"select[mem>96000] rusage[mem=96000]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --time=24:00:00 --mem=96g', $reg_requirement],
+            'LOCAL' => ['', $reg_requirement],
+        },
+
+        '512Gb_job' => {
+            'LSF'   => ['-q bigmem -C0 -M512000 -R"select[mem>512000] rusage[mem=512000]"', $reg_requirement],
+            'SLURM' => ['--partition=bigmem --time=24:00:00 --mem=512g', $reg_requirement],
+            'LOCAL' => ['', $reg_requirement],
+        },
+
+        '250Mb_6_hour_job' => {
+            'LSF'   => ['-C0 -W 6:00 -M250 -R"select[mem>250] rusage[mem=250]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --time=6:00:00 --mem=250m', $reg_requirement],
+            'LOCAL' => ['', $reg_requirement],
+        },
+
+        '500Mb_6_hour_job' => {
+            'LSF'   => ['-C0 -W 6:00 -M500 -R"select[mem>500] rusage[mem=500]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --time=6:00:00 --mem=500m', $reg_requirement],
+            'LOCAL' => ['', $reg_requirement],
+        },
+
+        '2Gb_6_hour_job' => {
+            'LSF'   => ['-C0 -W 6:00 -M2000 -R"select[mem>2000] rusage[mem=2000]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --time=6:00:00 --mem=2g', $reg_requirement],
+            'LOCAL' => ['', $reg_requirement],
+        },
+
+        '1Gb_datamover_job' => {
+            'LSF'   => ['-q datamover -C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"', $reg_requirement],
+            'SLURM' => ['--partition=datamover --time=24:00:00 --mem=1g', $reg_requirement],
+            'LOCAL' => ['', $reg_requirement],
+        },
     };
 }
 
@@ -175,43 +256,165 @@ sub resource_classes_multi_thread {
     return {
         # In theory, LOCAL should also be defined, but I assumed it is very unlikely we use it for multi-threaded jobs
 
-        '500Mb_2c_job' => { 'LSF' => ['-C0 -n 2 -M500  -R"span[hosts=1] select[mem>500] rusage[mem=500]"', $reg_requirement] },
-        '1Gb_2c_job'   => { 'LSF' => ['-C0 -n 2 -M1000 -R"span[hosts=1] select[mem>1000] rusage[mem=1000]"', $reg_requirement] },
-        '2Gb_2c_job'   => { 'LSF' => ['-C0 -n 2 -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"', $reg_requirement] },
-        '4Gb_2c_job'   => { 'LSF' => ['-C0 -n 2 -M4000 -R"span[hosts=1] select[mem>4000] rusage[mem=4000]"', $reg_requirement] },
-        '8Gb_2c_job'   => { 'LSF' => ['-C0 -n 2 -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', $reg_requirement] },
+        '500Mb_2c_job' => {
+            'LSF'   => ['-C0 -n 2 -M500 -R"span[hosts=1] select[mem>500] rusage[mem=500]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=2 --time=24:00:00 --mem=500m', $reg_requirement],
+        },
 
-        '1Gb_4c_job'   => {'LSF' => ['-n 4 -C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]  span[hosts=1]"', $reg_requirement] },
-        '2Gb_4c_job'   => {'LSF' => ['-n 4 -C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]  span[hosts=1]"', $reg_requirement] },
-        '4Gb_4c_job'   => {'LSF' => ['-n 4 -C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]  span[hosts=1]"', $reg_requirement] },
-        '8Gb_4c_job'   => {'LSF' => ['-n 4 -C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]  span[hosts=1]"', $reg_requirement] },
-        '16Gb_4c_job'  => {'LSF' => ['-n 4 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"', $reg_requirement] },
-        '32Gb_4c_job'  => {'LSF' => ['-n 4 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"', $reg_requirement] },
+        '1Gb_2c_job'   => {
+            'LSF'   => ['-C0 -n 2 -M1000 -R"span[hosts=1] select[mem>1000] rusage[mem=1000]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=2 --time=24:00:00 --mem=1g', $reg_requirement],
+        },
 
-        '2Gb_8c_job'   => {'LSF' => ['-n 8 -C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]  span[hosts=1]"', $reg_requirement] },
-        '4Gb_8c_job'   => {'LSF' => ['-n 8 -C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]  span[hosts=1]"', $reg_requirement] },
-        '8Gb_8c_job'   => {'LSF' => ['-n 8 -C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]  span[hosts=1]"', $reg_requirement] },
-        '16Gb_8c_job'  => {'LSF' => ['-n 8 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"', $reg_requirement] },
-        '32Gb_8c_job'  => {'LSF' => ['-n 8 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"', $reg_requirement] },
-        '64Gb_8c_job'  => {'LSF' => ['-n 8 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"', $reg_requirement] },
-        '96Gb_8c_job'  => {'LSF' => ['-n 8 -C0 -M96000 -R"select[mem>96000] rusage[mem=96000] span[hosts=1]"', $reg_requirement] },
+        '2Gb_2c_job'   => {
+            'LSF'   => ['-C0 -n 2 -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=2 --time=24:00:00 --mem=2g', $reg_requirement],
+        },
 
-        '8Gb_16c_job'  => {'LSF' => ['-n 16 -C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]  span[hosts=1]"', $reg_requirement] },
-        '16Gb_16c_job' => {'LSF' => ['-n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"', $reg_requirement] },
-        '32Gb_16c_job' => {'LSF' => ['-n 16 -C0 -M16000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"', $reg_requirement] },
-        '64Gb_16c_job' => {'LSF' => ['-n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"', $reg_requirement] },
-        '128Gb_16c_job'  => {'LSF' => ['-n 16 -C0 -M128000 -R"select[mem>128000] rusage[mem=128000] span[hosts=1]"', $reg_requirement] },
+        '4Gb_2c_job'   => {
+            'LSF'   => ['-C0 -n 2 -M4000 -R"span[hosts=1] select[mem>4000] rusage[mem=4000]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=2 --time=24:00:00 --mem=4g', $reg_requirement],
+        },
 
-        '16Gb_32c_job' => {'LSF' => ['-n 32 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"', $reg_requirement] },
-        '32Gb_32c_job' => {'LSF' => ['-n 32 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"', $reg_requirement] },
-        '64Gb_32c_job' => {'LSF' => ['-n 32 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"', $reg_requirement] },
-        '128Gb_32c_job' => {'LSF' => ['-n 32 -C0 -M128000 -R"select[mem>128000] rusage[mem=128000] span[hosts=1]"', $reg_requirement] },
+        '8Gb_2c_job'   => {
+            'LSF'   => ['-C0 -n 2 -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=2 --time=24:00:00 --mem=8g', $reg_requirement],
+        },
 
-        '16Gb_64c_job' => {'LSF' => ['-n 64 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"', $reg_requirement] },
-        '32Gb_64c_job' => {'LSF' => ['-n 64 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"', $reg_requirement] },
-        '64Gb_64c_job' => {'LSF' => ['-n 64 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"', $reg_requirement] },
-        '128Gb_64c_job' => {'LSF' => ['-n 64 -C0 -M128000 -R"select[mem>128000] rusage[mem=128000] span[hosts=1]"', $reg_requirement] },
-        '256Gb_64c_job' => {'LSF' => ['-n 64 -C0 -M256000 -R"select[mem>256000] rusage[mem=256000] span[hosts=1]"', $reg_requirement] },
+        '1Gb_4c_job'   => {
+            'LSF'   => ['-n 4 -C0 -M1000 -R"select[mem>1000] rusage[mem=1000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=4 --time=24:00:00 --mem=1g', $reg_requirement],
+        },
+
+        '2Gb_4c_job'   => {
+            'LSF'   => ['-n 4 -C0 -M2000 -R"select[mem>2000] rusage[mem=2000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=4 --time=24:00:00 --mem=2g', $reg_requirement],
+        },
+
+        '4Gb_4c_job'   => {
+            'LSF'   => ['-n 4 -C0 -M4000 -R"select[mem>4000] rusage[mem=4000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=4 --time=24:00:00 --mem=4g', $reg_requirement],
+        },
+
+        '8Gb_4c_job'   => {
+            'LSF'   => ['-n 4 -C0 -M8000 -R"select[mem>8000] rusage[mem=8000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=4 --time=24:00:00 --mem=8g', $reg_requirement],
+        },
+
+        '16Gb_4c_job'  => {
+            'LSF'   => ['-n 4 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=4 --time=24:00:00 --mem=16g', $reg_requirement],
+        },
+
+        '32Gb_4c_job'  => {
+            'LSF'   => ['-n 4 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=4 --time=24:00:00 --mem=32g', $reg_requirement],
+        },
+
+        '2Gb_8c_job'   => {
+            'LSF'   => ['-n 8 -C0 -M2000 -R"select[mem>2000] rusage[mem=2000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=8 --time=24:00:00 --mem=2g', $reg_requirement],
+        },
+
+        '4Gb_8c_job'   => {
+            'LSF'   => ['-n 8 -C0 -M4000 -R"select[mem>4000] rusage[mem=4000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=8 --time=24:00:00 --mem=4g', $reg_requirement],
+        },
+
+        '8Gb_8c_job'   => {
+            'LSF'   => ['-n 8 -C0 -M8000 -R"select[mem>8000] rusage[mem=8000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=8 --time=24:00:00 --mem=8g', $reg_requirement],
+        },
+
+        '16Gb_8c_job'  => {
+            'LSF'   => ['-n 8 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=8 --time=24:00:00 --mem=16g', $reg_requirement],
+        },
+
+        '32Gb_8c_job'  => {
+            'LSF'   => ['-n 8 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=8 --time=24:00:00 --mem=32g', $reg_requirement],
+        },
+
+        '64Gb_8c_job'  => {
+            'LSF'   => ['-n 8 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=8 --time=24:00:00 --mem=64g', $reg_requirement],
+        },
+
+        '96Gb_8c_job'  => {
+            'LSF'   => ['-n 8 -C0 -M96000 -R"select[mem>96000] rusage[mem=96000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=8 --time=24:00:00 --mem=96g', $reg_requirement],
+        },
+
+        '8Gb_16c_job'  => {
+            'LSF'   => ['-n 16 -C0 -M8000 -R"select[mem>8000] rusage[mem=8000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=16 --time=24:00:00 --mem=8g', $reg_requirement],
+        },
+
+        '16Gb_16c_job' => {
+            'LSF'   => ['-n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=16 --time=24:00:00 --mem=16g', $reg_requirement],
+        },
+
+        '32Gb_16c_job' => {
+            'LSF'   => ['-n 16 -C0 -M16000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=16 --time=24:00:00 --mem=32g', $reg_requirement],
+        },
+
+        '64Gb_16c_job' => {
+            'LSF'   => ['-n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=16 --time=24:00:00 --mem=64g', $reg_requirement],
+        },
+
+        '128Gb_16c_job'  => {
+            'LSF' => ['-n 16 -C0 -M128000 -R"select[mem>128000] rusage[mem=128000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=16 --time=24:00:00 --mem=128g', $reg_requirement],
+        },
+
+        '16Gb_32c_job' => {
+            'LSF' => ['-n 32 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=32 --time=24:00:00 --mem=16g', $reg_requirement],
+        },
+
+        '32Gb_32c_job' => {
+            'LSF' => ['-n 32 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=32 --time=24:00:00 --mem=32g', $reg_requirement],
+        },
+
+        '64Gb_32c_job' => {
+            'LSF' => ['-n 32 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=32 --time=24:00:00 --mem=64g', $reg_requirement],
+        },
+
+        '128Gb_32c_job' => {
+            'LSF' => ['-n 32 -C0 -M128000 -R"select[mem>128000] rusage[mem=128000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=32 --time=24:00:00 --mem=128g', $reg_requirement],
+        },
+
+        '16Gb_64c_job' => {
+            'LSF' => ['-n 64 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=64 --time=24:00:00 --mem=16g', $reg_requirement],
+        },
+
+        '32Gb_64c_job' => {
+            'LSF' => ['-n 64 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=64 --time=24:00:00 --mem=32g', $reg_requirement],
+        },
+
+        '64Gb_64c_job' => {
+            'LSF' => ['-n 64 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=64 --time=24:00:00 --mem=64g', $reg_requirement],
+        },
+
+        '128Gb_64c_job' => {
+            'LSF' => ['-n 64 -C0 -M128000 -R"select[mem>128000] rusage[mem=128000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=64 --time=24:00:00 --mem=128g', $reg_requirement],
+        },
+
+        '256Gb_64c_job' => {
+            'LSF' => ['-n 64 -C0 -M256000 -R"select[mem>256000] rusage[mem=256000] span[hosts=1]"', $reg_requirement],
+            'SLURM' => ['--partition=standard --cpus-per-task=64 --time=24:00:00 --mem=256g', $reg_requirement],
+        },
 
         '8Gb_4c_mpi'   => {'LSF' => ['-q mpi -n 4  -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=4]"', $reg_requirement] },
         '8Gb_8c_mpi'   => {'LSF' => ['-q mpi -n 8  -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=8]"', $reg_requirement] },
