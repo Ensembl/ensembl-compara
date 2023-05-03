@@ -117,21 +117,21 @@ elsif($division eq "plants"){
     $skip_cactus              = 1;
 }
 elsif($division eq "metazoa"){
-    $gene_member_id           = "AGAP004707";
-    $gene_tree_id             = "EMGT00950000187810";
-    $lastz_alignment_region   = "2L:2358158-2431617";
+    $gene_member_id           = "LOC726692";
+    $gene_tree_id             = "EMGT01090000374023";
+    $lastz_alignment_region   = "CM009944.2:6529304-6531367";
 
-    $species_1                = "anopheles_gambiae";
-    $species_2                = "culex_quinquefasciatus_gca015732765v1";
+    $species_1                = "apis_mellifera";
+    $species_2                = "bombus_terrestris";
     $species_3                = "bombyx_mori";
 
-    $taxon_1                  = 7165;#anopheles_gambiae
-    $taxon_2                  = 7176;#culex_quinquefasciatus_gca015732765v1
+    $taxon_1                  = 7460;#apis_mellifera
+    $taxon_2                  = 30195;#bombus_terrestris
     $taxon_3                  = 7091;#bombyx_mori
 
     $species_set_group        = "metazoa";
 
-    $gene_symbol              = "para";
+    $gene_symbol              = "Para";
     $homology_type            = 'orthologues';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
 
