@@ -102,10 +102,14 @@ if __name__ == '__main__':
         for row in result:
             gpath = _build_dump_path(row)
             fa_name = str(row.name) + "_" + str(row.assembly)
+            prod_name = row.name
+            if row.genome_component is not None:
+                fa_name += f"_{row.genome_component}"
+                prod_name += f"_{row.genome_component}"
             dump_exists = path.exists(gpath)
             if not dump_exists:
                 missing_fas.append(gpath)
-            writer.writerow([row.genome_db_id, row.name, row.assembly, row.genebuild, row.strain_name,
+            writer.writerow([row.genome_db_id, prod_name, row.assembly, row.genebuild, row.strain_name,
                              row.display_name, row.genome_component, gpath, dump_exists, fa_name])
 
     if len(missing_fas) > 0:
