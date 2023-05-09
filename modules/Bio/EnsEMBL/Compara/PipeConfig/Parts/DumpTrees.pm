@@ -129,7 +129,7 @@ sub pipeline_analyses_dump_trees {
             },
             -hive_capacity => $self->o('dump_trees_capacity'),
             -flow_into => {
-                '2->A' => [ 'dump_per_genome_homologies_tsv' ],
+                '2->A' => [ 'fetch_exp_line_count_per_genome' ],
                 'A->1' => [ 'concatenate_genome_homologies_tsv' ],
             },
         },
@@ -206,6 +206,38 @@ sub pipeline_analyses_dump_trees {
                 ]
             }},
             -rc_name => '16Gb_job',
+        },
+
+        {   -logic_name => 'fetch_exp_line_count_per_genome',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'db_conn' => '#rel_db#',
+                'inputquery' => q/SELECT
+                                      COUNT(*) AS exp_line_count
+                                  FROM
+                                      homology h
+                                      JOIN (
+                                            homology_member hm1
+                                            JOIN gene_member gm1 USING (gene_member_id)
+                                            JOIN genome_db gdb1 USING (genome_db_id)
+                                            JOIN seq_member sm1 USING (seq_member_id)
+                                      ) USING (homology_id)
+                                      JOIN (
+                                            homology_member hm2
+                                            JOIN gene_member gm2 USING (gene_member_id)
+                                            JOIN genome_db gdb2 USING (genome_db_id)
+                                            JOIN seq_member sm2 USING (seq_member_id)
+                                      ) USING (homology_id)
+                                  WHERE
+                                      homology_id BETWEEN #min_hom_id# AND #max_hom_id#
+                                      AND hm1.gene_member_id > hm2.gene_member_id
+                                      AND gdb1.genome_db_id = #genome_db_id#/,
+                'column_names' => 1,
+            },
+            -hive_capacity => $self->o('dump_per_genome_cap'),
+            -flow_into => {
+                2 => [ 'dump_per_genome_homologies_tsv' ],
+            },
         },
 
           { -logic_name => 'dump_per_genome_homologies_tsv',
