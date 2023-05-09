@@ -1255,7 +1255,7 @@ sub core_pipeline_analyses {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 %blastp_parameters,
             },
-            -rc_name       => '250Mb_6_hour_job',
+            -rc_name       => '1Gb_6_hour_job',
             -flow_into => {
                -1 => [ 'blastp_unannotated_himem' ],  # MEMLIMIT
                -2 => 'break_batch_unannotated',
@@ -1423,7 +1423,7 @@ sub core_pipeline_analyses {
                 %blastp_parameters,
             },
             -batch_size    => 25,
-            -rc_name       => '250Mb_6_hour_job',
+            -rc_name       => '1Gb_6_hour_job',
             -flow_into => {
                -1 => [ 'blastp_himem' ],  # MEMLIMIT
                -2 => [ 'break_batch' ],   # RUNLIMIT
@@ -2279,7 +2279,7 @@ sub core_pipeline_analyses {
                     '(#raxml_cores# >  4)  && (#raxml_cores# <= 8)'     => 'raxml_parsimony_8_cores',
                     '(#raxml_cores# >  8)  && (#raxml_cores# <= 16)'    => 'raxml_parsimony_16_cores',
                     '(#raxml_cores# >  16) && (#raxml_cores# <= 32)'    => 'raxml_parsimony_32_cores',
-                    '(#raxml_cores# >  32)'                             => 'raxml_parsimony_64_cores',
+                    '(#raxml_cores# >  32)'                             => 'raxml_parsimony_48_cores',
                 ),
                 'A->1' => 'raxml_decision',
             },
@@ -2427,31 +2427,31 @@ sub core_pipeline_analyses {
             -rc_name 		=> '32Gb_32c_job',
         },
 
-        {   -logic_name => 'raxml_parsimony_64_cores',
+        {   -logic_name => 'raxml_parsimony_48_cores',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
             -parameters => {
                 %raxml_parsimony_parameters,
-                'raxml_number_of_cores'     => 64,
+                'raxml_number_of_cores'     => 48,
                 'cmd_max_runtime'           => '518400',
                 'escape_branch'             => -1,
             },
             -hive_capacity  => $self->o('raxml_capacity'),
-            -rc_name 		=> '16Gb_64c_job',
+            -rc_name 		=> '16Gb_48c_job',
             -flow_into      => {
-                -1 => [ 'raxml_parsimony_64_cores_himem' ],
+                -1 => [ 'raxml_parsimony_48_cores_himem' ],
                 -2 => [ 'fasttree' ],
             }
         },
 
-        {   -logic_name => 'raxml_parsimony_64_cores_himem',
+        {   -logic_name => 'raxml_parsimony_48_cores_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
             -parameters => {
                 %raxml_parsimony_parameters,
-                'raxml_number_of_cores'     => 64,
+                'raxml_number_of_cores'     => 48,
                 'cmd_max_runtime'           => '518400',
             },
             -hive_capacity  => $self->o('raxml_capacity'),
-            -rc_name 		=> '32Gb_64c_job',
+            -rc_name 		=> '32Gb_48c_job',
             -flow_into      => {
                 -2 => [ 'fasttree' ],
             }
@@ -2485,9 +2485,9 @@ sub core_pipeline_analyses {
                     '(#raxml_cores# >  8)  && (#raxml_cores# <= 16)'    => 'raxml_16_cores',
                     # examl can handle ~4x more patterns
                     '(#raxml_cores# >  16) && (#raxml_cores# <= 32)'    => 'examl_8_cores',
-                    '(#raxml_cores# >  32) && (#raxml_cores# <= 64)'    => 'examl_16_cores',
-                    '(#raxml_cores# >  64) && (#raxml_cores# <= 128)'   => 'examl_32_cores',
-                    '(#raxml_cores# >  128)'                            => 'examl_64_cores',
+                    '(#raxml_cores# >  32) && (#raxml_cores# <= 48)'    => 'examl_16_cores',
+                    '(#raxml_cores# >  48) && (#raxml_cores# <= 96)'    => 'examl_32_cores',
+                    '(#raxml_cores# >  96)'                             => 'examl_48_cores',
                 ),
             },
         },
@@ -2550,7 +2550,7 @@ sub core_pipeline_analyses {
             -rc_name => '8Gb_32c_mpi',
             -flow_into => {
                -1 => [ 'examl_32_cores_himem' ],  # MEMLIMIT
-               -2 => [ 'examl_64_cores' ],  	  # RUNTIME
+               -2 => [ 'examl_48_cores' ],  	  # RUNTIME
             }
         },
 
@@ -2903,7 +2903,7 @@ sub core_pipeline_analyses {
                     '(#tree_gene_count# > 500)  && (#tree_gene_count# <= 1000)' => 'raxml_bl_8',
                     '(#tree_gene_count# > 1000) && (#tree_gene_count# <= 2000)' => 'raxml_bl_16',
                     '(#tree_gene_count# > 3000) && (#tree_gene_count# <= 10000)' => 'raxml_bl_32',
-                    '(#tree_gene_count# > 10000)'                                => 'raxml_bl_64',
+                    '(#tree_gene_count# > 10000)'                                => 'raxml_bl_48',
                 ),
             },
             %decision_analysis_params,
@@ -2964,14 +2964,14 @@ sub core_pipeline_analyses {
             }
         },
 
-        {   -logic_name => 'raxml_bl_64',
+        {   -logic_name => 'raxml_bl_48',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_bl',
             -parameters => {
                 %raxml_bl_parameters,
-                'raxml_number_of_cores'     => 64,
+                'raxml_number_of_cores'     => 48,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name    => '256Gb_64c_job',
+            -rc_name    => '256Gb_48c_job',
             -flow_into  => {
                 1  => [ 'copy_raxml_bl_tree_2_default_tree' ],
                 2 => [ 'copy_treebest_tree_2_raxml_bl_tree' ],

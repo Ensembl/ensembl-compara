@@ -38,7 +38,7 @@ This pipeline assumes the param_stack is turned on. There is 1 stream
 of jobs per species, so you will have to set 'update_capacity' not to
 overload the database.
 
-Jobs usually take 500MB of memory and expect the 500Mb_job resource-class
+Jobs usually take 500MB of memory and expect the default resource-class
 to be defined.
 
 =head2 Seeding
