@@ -166,6 +166,9 @@ sub default_options {
             'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
             'prev_homology_dumps_dir'   => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
 
+
+            # Do we want to do OrthologQMAlignment ?
+            'do_orth_wga'                => 1,
             # Parameters for OrthologQMAlignment
             'wga_species_set_name'       => "collection-" . $self->o('collection'),
             'homology_method_link_types' => ['ENSEMBL_ORTHOLOGUES'],
@@ -260,6 +263,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'member_type'       => $self->o('member_type'),
         'create_ss_picts'   => $self->o('create_ss_picts'),
+        'do_orth_wga'       => $self->o('do_orth_wga'),
         'do_cafe'           => $self->o('do_cafe'),
         'dbID_range_index'  => $self->o('dbID_range_index'),
         'clustering_mode'   => $self->o('clustering_mode'),
