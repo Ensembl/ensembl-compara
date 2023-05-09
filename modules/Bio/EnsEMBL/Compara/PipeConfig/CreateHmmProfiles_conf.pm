@@ -836,7 +836,7 @@ sub core_pipeline_analyses {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 %blastp_parameters,
             },
-            -rc_name       => '250Mb_6_hour_job',
+            -rc_name       => '1Gb_6_hour_job',
             -flow_into => {
                -1 => [ 'blastp_unannotated_himem' ],  # MEMLIMIT
                -2 => 'break_batch',

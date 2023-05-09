@@ -121,7 +121,7 @@ sub tweak_analyses {
     $analyses_by_name->{'threshold_on_dS'}->{'-rc_name'}          = '1Gb_job';
     $analyses_by_name->{'HMMer_classifyPantherScore'}->{'-rc_name'} = '2Gb_job';
     $analyses_by_name->{'HMMer_classifyPantherScore'}->{'-hive_capacity'} = '2000';
-    $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_6_hour_job';
+    $analyses_by_name->{'blastp'}->{'-rc_name'} = '1Gb_6_hour_job';
     $analyses_by_name->{'get_species_set'}->{'-parameters'}->{'polyploid_genomes'} = 0;
     $analyses_by_name->{'quick_tree_break_himem'}->{'-rc_name'}   = '16Gb_job';
     $analyses_by_name->{'quick_tree_break'}->{'-rc_name'}   = '4Gb_job';

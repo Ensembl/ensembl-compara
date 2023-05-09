@@ -931,7 +931,7 @@ sub core_pipeline_analyses {
                             2 => [ 'secondary_structure_decision' ],
                             3 => [ 'pre_sec_struct_tree_4_cores' ],
                           },
-            -rc_name => '500Mb_2c_job',
+            -rc_name => '1Gb_2c_job',
         },
 
         {   -logic_name    => 'pre_sec_struct_tree_4_cores', ## pre_sec_struct_tree
@@ -1008,7 +1008,7 @@ sub core_pipeline_analyses {
                            -1 => [ 'sec_struct_model_tree_4_cores' ],   # This analysis has more cores *and* more memory
                             3 => [ 'sec_struct_model_tree_4_cores' ],
                        },
-            -rc_name => '500Mb_2c_job',
+            -rc_name => '1Gb_2c_job',
         },
 
         {   -logic_name    => 'sec_struct_model_tree_4_cores', ## sec_struct_model_tree
