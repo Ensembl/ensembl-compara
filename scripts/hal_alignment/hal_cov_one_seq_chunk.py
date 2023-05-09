@@ -53,7 +53,6 @@ def hal_genomic_coverage(
         hal_alignment_depth_exe,
         hal_path,
         ref_genome,
-        "--countDupes",
         "--noAncestors",
         "--refSequence",
         ref_sequence,

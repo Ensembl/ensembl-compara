@@ -111,7 +111,7 @@ sub pipeline_analyses {
                 '2->A'  => {
                     'load_component_genomedb' => { 'master_dbID' => '#genome_db_id#' },
                 },
-                'A->1'  => [ 'fire_hal_file_registration' ],
+                'A->1'  => [ 'copy_dnafrag_genomedb_factory' ],
             },
         },
 
@@ -120,6 +120,19 @@ sub pipeline_analyses {
             -batch_size      => 10,
             -hive_capacity   => 30,
             -max_retry_count => 2,
+        },
+
+        {   -logic_name => 'copy_dnafrag_genomedb_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -rc_name    => '4Gb_job',
+            -flow_into  => {
+                '2->A'  => [ 'genome_dnafrag_copy' ],
+                'A->1'  => [ 'fire_hal_file_registration' ],
+            },
+        },
+
+        {   -logic_name => 'genome_dnafrag_copy',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDnaFragsByGenomeDB',
         },
 
         {   -logic_name => 'fire_hal_file_registration',
@@ -165,21 +178,25 @@ sub pipeline_analyses {
             -parameters => {
                 'sql' => [ 'INSERT IGNORE INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#mlss_id#, "HAL_mapping", "#species_name_mapping#")' ],
             },
-            -flow_into  => [ 'load_species_tree', 'hal_genomedb_factory' ],
+            -flow_into  => [
+                'load_species_tree',
+                'pairwise_coverage_factory',
+                'per_genome_coverage_factory',
+                'synonyms_genome_factory'
+            ],
         },
 
         {   -logic_name => 'load_species_tree',
 	        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadSpeciesTree',
         },
 
-        {   -logic_name => 'hal_genomedb_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halGenomeDBFactory',
-            -flow_into  => {
-                    2   => { "generate_coverage_stats" => INPUT_PLUS() },
+        {   -logic_name => 'synonyms_genome_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halDualGenomeFactory',
+             -flow_into => {
                 '2->A' => { 'get_synonyms' => INPUT_PLUS() },
-		        'A->1' => [ 'aggregate_synonyms' ],
+                'A->1' => [ 'aggregate_synonyms' ],
             },
-	},
+        },
 
         {   -logic_name => 'get_synonyms',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadSynonyms',
@@ -198,11 +215,59 @@ sub pipeline_analyses {
 	    -rc_name    => '1Gb_job',
         },
 
+        {   -logic_name => 'pairwise_coverage_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halDualGenomeFactory',
+             -flow_into => {
+                    3   => { 'generate_pairwise_coverage_stats' => INPUT_PLUS() },
+            },
+        },
+
         {
-            -logic_name => 'generate_coverage_stats',
+            -logic_name => 'generate_pairwise_coverage_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halCoverageStats',
             -rc_name    => '4Gb_job',
-        }
+        },
+
+        {   -logic_name => 'per_genome_coverage_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halDualGenomeFactory',
+             -flow_into => {
+                '3->A'  => { 'hal_seq_chunk_factory' => INPUT_PLUS() },
+                'A->2'  => { 'aggregate_per_genome_coverage' => INPUT_PLUS() },
+            },
+        },
+
+        {   -logic_name => 'hal_seq_chunk_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halSeqChunkFactory',
+            -rc_name    => '4Gb_job',
+            -parameters => {
+                'hal_stats_exe' => $self->o('halStats_exe'),
+            },
+            -flow_into  => {
+                2 => { 'calculate_seq_chunk_coverage' => INPUT_PLUS() },
+                3 => [ '?accu_name=hal_sequence_names&accu_address=[]&accu_input_variable=hal_sequence_name' ],
+            },
+        },
+
+        {   -logic_name        => 'calculate_seq_chunk_coverage',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::CalculateHalSeqChunkCoverage',
+            -rc_name           => '8Gb_job',
+            -analysis_capacity => 700,
+            -parameters        => {
+                'hal_cov_one_seq_chunk_exe' => $self->o('hal_cov_one_seq_chunk_exe'),
+                'hal_alignment_depth_exe'   => $self->o('halAlignmentDepth_exe'),
+            },
+            -flow_into => {
+                3 => [
+                    '?accu_name=num_aligned_positions_by_chunk&accu_address={hal_sequence_name}{chunk_offset}&accu_input_variable=num_aligned_positions',
+                    '?accu_name=num_positions_by_chunk&accu_address={hal_sequence_name}{chunk_offset}&accu_input_variable=num_positions',
+                ],
+            },
+        },
+
+        {   -logic_name => 'aggregate_per_genome_coverage',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::AggregateHalGenomicCoverage',
+            -rc_name    => '4Gb_job',
+        },
 
      ];
 }

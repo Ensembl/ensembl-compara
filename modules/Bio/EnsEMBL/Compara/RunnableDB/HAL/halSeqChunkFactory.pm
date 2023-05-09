@@ -41,7 +41,9 @@ sub run {
 
     my $hal_stats_exe = $self->param_required('hal_stats_exe');
 
-    my $hal_file_path = $self->param_required('hal_file_path');
+    my $mlss_id = $self->param_required('mlss_id');
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+    my $hal_file_path = $mlss->url;
     my $hal_genome_name = $self->param_required('hal_genome_name');
 
     my $cmd = [

@@ -32,6 +32,8 @@ use warnings;
 
 use JSON qw(decode_json);
 
+use Bio::EnsEMBL::Hive::Utils qw(destringify);
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -40,14 +42,18 @@ sub run {
 
     my $hal_cov_one_seq_chunk_exe = $self->param_required('hal_cov_one_seq_chunk_exe');
     my $hal_alignment_depth_exe = $self->param_required('hal_alignment_depth_exe');
-    my $hal_file_path = $self->param_required('hal_file_path');
 
     my $ref_genome_name = $self->param_required('hal_genome_name');
     my $ref_sequence_name = $self->param_required('hal_sequence_name');
     my $chunk_offset = $self->param_required('chunk_offset');
     my $chunk_length = $self->param_required('chunk_length');
 
-    my $species_map = $self->param_required('species_name_mapping');
+    my $mlss_id = $self->param_required('mlss_id');
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+
+    my $hal_file_path = $mlss->url;
+
+    my $species_map = destringify($mlss->get_value_for_tag('HAL_mapping', '{}'));
     my $target_genomes_arg = join(',', values %{$species_map});
 
     my $cmd = [
