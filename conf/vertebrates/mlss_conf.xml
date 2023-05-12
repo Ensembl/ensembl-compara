@@ -20,6 +20,9 @@
     <!-- Default gene-tree collection -->
     <collection name="default">
       <base_collection name="vertebrate_species"/>
+      <!-- Human is added here as a placeholder genome, to be removed after at least one
+           'genome' or 'taxonomic_group' element has been added to this collection. -->
+      <genome name="homo_sapiens"/>
     </collection>
 
     <!-- Mouse-strains analyses, i.e. incl. the closely relative -->
