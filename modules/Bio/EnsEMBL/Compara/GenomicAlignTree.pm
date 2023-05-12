@@ -1396,6 +1396,19 @@ sub annotate_node_type {
     }
 }
 
+sub get_genome_db_for_node {
+    my ($self) = @_;
+
+    my $genome_db;
+    if (defined $self->{_genome_db}) {
+        $genome_db = $self->{_genome_db};
+    } elsif (defined $self->genomic_align_group) {
+        $genome_db = $self->genomic_align_group->genome_db;
+    }
+
+    return $genome_db;
+}
+
 #sub DESTROY {
 #    my ($self) = @_;
 #

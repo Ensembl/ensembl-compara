@@ -268,6 +268,21 @@ sub name{
   return $self->{'name'};
 }
 
+=head2 get_distinct_name
+
+  Example     : print $genome_db->get_distinct_name();
+  Description : Returns the name of the GenomeDB, with additional information
+                (e.g. genome component) appended if relevant to allow it to be
+                distinguished from other GenomeDBs with the same name.
+  Returntype  : String
+  Exceptions  : none
+
+=cut
+
+sub get_distinct_name {
+    my $self = shift;
+    return $self->genome_component ? $self->name . '_' . $self->genome_component : $self->name;
+}
 
 =head2 get_short_name
 

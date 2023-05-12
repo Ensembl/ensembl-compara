@@ -130,6 +130,7 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::HAL::UCSCMapping;
+use Bio::EnsEMBL::Compara::Utils::Polyploid qw(map_dnafrag_to_genome_component);
 use Bio::EnsEMBL::Compara::Utils::Projection;
 
 use List::Util qw( max );
@@ -1417,7 +1418,10 @@ sub _get_GenomicAlignBlocks_from_HAL {
           }
       }
 
+      my %mlss_sp_tree_gdb_ids = map { $_ => 1 } keys %{$mlss->species_tree->get_genome_db_id_2_node_hash()};
+
       my %hal_species_map;
+      my %group_key_map;
       while (my ($map_gdb_id, $hal_genome_name) = each %{$species_map}) {
           my $genome_db = $genome_db_adaptor->fetch_by_dbID($map_gdb_id);
 
@@ -1425,10 +1429,19 @@ sub _get_GenomicAlignBlocks_from_HAL {
           # mapping back to the principal GenomeDB simplifies the reverse mapping process.
           my $principal = $genome_db->principal_genome_db();
           $hal_species_map{$hal_genome_name} = defined $principal ? $principal->dbID : $map_gdb_id;
+
+          if (exists $mlss_sp_tree_gdb_ids{$map_gdb_id}) {
+            $group_key_map{$hal_genome_name} = $map_gdb_id;
+          } elsif (defined $principal && exists $mlss_sp_tree_gdb_ids{$principal->dbID}) {
+            $group_key_map{$hal_genome_name} = $principal->dbID;
+          } else {
+            throw(sprintf("Cannot find HAL genome '%s' in species tree of MLSS %d", $hal_genome_name, $mlss->dbID));
+          }
       }
 
       $mlss->{'_hal_species_name_mapping'} = $species_map;
       $mlss->{'_hal_species_name_mapping_reverse'} = \%hal_species_map;
+      $mlss->{'_hal_genome_name_to_group_key'} = \%group_key_map;
     }
 
     my ($linking_ref_gdb, $linking_dnafrag) = @{$self->_get_hal_linking_genome_dnafrag($dnafrag_adaptor, $ref_gdb, $dnafrag, $mlss->{'_hal_species_name_mapping'})};
@@ -1440,8 +1453,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my $hal_seq_reg = $e2u_mappings->{ $dnafrag->name } || $linking_dnafrag->name;
 
     my $num_targets  = scalar @$targets_gdb;
-    my $id_base      = $mlss->dbID * 10000000000;
-    my ($gab_id_count, $ga_id_count)  = (0, 0);
     my $min_gab_len = !$mlss->has_tag('no_filter_small_blocks') && int(abs($end-$start)/1000);
     my $min_ga_len  = !$mlss->has_tag('no_filter_small_blocks') && $min_gab_len/4;
 
@@ -1452,7 +1463,9 @@ sub _get_GenomicAlignBlocks_from_HAL {
 
         if (exists $mlss->{'_hal_species_name_mapping'}->{ $target_gdb->dbID }) {
           push(@hal_target_gdbs, $target_gdb);
-        } elsif ($target_gdb->is_polyploid()) {
+        }
+
+        if ($target_gdb->is_polyploid()) {
           my $target_comp_gdbs = $target_gdb->component_genome_dbs();
           my @hal_target_comp_gdbs = grep { exists $mlss->{'_hal_species_name_mapping'}->{ $_->dbID } } @{$target_comp_gdbs};
           push(@hal_target_gdbs, @hal_target_comp_gdbs);
@@ -1488,7 +1501,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
       push(@hal_genome_names, $hal_ref_name) if (!exists $hal_target_set{$hal_ref_name});
 
       for my $aln_block ( @$maf_info ) {
-        my $duplicates_found = 0;
         my %species_found;
         my $block_len = length($aln_block->[0]->{seq});
 
@@ -1498,13 +1510,13 @@ sub _get_GenomicAlignBlocks_from_HAL {
           -length => $block_len,
           -method_link_species_set => $mlss,
           -adaptor => $self,
-          # -dbID => $id_base + $gab_id_count,
         );
         $gab->reference_slice_strand( $linking_dnafrag->slice->strand );
-        $gab_id_count++;
 
         my $ga_adaptor = $self->db->get_GenomicAlignAdaptor;
-        my (@genomic_align_array, $ref_genomic_align);
+        my $ref_genomic_align;
+        my @hal_ga_group_order;
+        my $grouped_genomic_aligns;
         foreach my $seq (@$aln_block) {
           # find dnafrag for the region
           my ( $species_id, $chr );
@@ -1515,12 +1527,12 @@ sub _get_GenomicAlignBlocks_from_HAL {
           # a dot in either the genome or sequence name (e.g. genome 'oryza_sativa.IRGSP-1.0', sequence 'KN549081.1').
           # So we check the MAF src against patterns prefixed by the names of the genomes known to be in the HAL file,
           # in order to allow the HAL genome and sequence names to be extracted.
+          my $genomic_align_group_key;
           my $maf_src_id = $seq->{display_id};
           my @matching_genome_names = grep { $maf_src_id =~ /^\Q$_\E[.].+/ } @hal_genome_names;
           if ( scalar(@matching_genome_names) == 1 ) {
-              my $matching_genome_name = $matching_genome_names[0];
-              $species_id = substr($maf_src_id, 0, length($matching_genome_name));
-              $chr = substr($maf_src_id, length($matching_genome_name) + 1);
+              $species_id = $matching_genome_names[0];
+              $chr = substr($maf_src_id, length($species_id) + 1);
           } elsif ( scalar(@matching_genome_names) == 0 ) {
               throw("Cannot map MAF src field '$maf_src_id' to any HAL genome name");
           } else {
@@ -1545,16 +1557,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
           # check length of genomic align meets threshold
           next if abs( $seq->{end} - $seq->{start} + 1) < $min_ga_len;
 
-          if ( !$duplicates_found ){
-            my $species_name = $this_dnafrag->genome_db->name;
-            if ( $species_found{$species_name} ){
-                $duplicates_found = 1;
-            } else {
-                $species_found{$species_name} = 1;
-            }
-          }
-          
-
           # create cigar line
           my $this_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($seq->{seq});
 
@@ -1566,7 +1568,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
             -dnafrag_end => $seq->{end},
             -dnafrag_strand => $seq->{strand},
             -cigar_line => $this_cigar, 
-            # -dbID => $id_base + $ga_id_count,
             -visible => 1,
             -adaptor => $ga_adaptor,
           );
@@ -1575,10 +1576,24 @@ sub _get_GenomicAlignBlocks_from_HAL {
           $genomic_align->genomic_align_block( $gab );
           $genomic_align->method_link_species_set($mlss);
           $genomic_align->dbID( join('-', $this_dnafrag->genome_db->dbID, $this_dnafrag->dbID, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end) );
-          push( @genomic_align_array, $genomic_align );
+
+          my $ga_group_key = $mlss->{'_hal_genome_name_to_group_key'}{$species_id};
+          if (!exists $grouped_genomic_aligns->{$ga_group_key}) {
+            push(@hal_ga_group_order, $ga_group_key);
+          }
+          push(@{$grouped_genomic_aligns->{$ga_group_key}}, $genomic_align);
+
           $ref_genomic_align = $genomic_align if ( $this_gdb->dbID == $ref_gdb->dbID );
-          $ga_id_count++;
         }
+
+        # check for duplicates
+        my @genomic_align_counts = map { scalar(@{$_}) } values %{$grouped_genomic_aligns};
+        if (max(@genomic_align_counts) > 1) {
+            ## e87 HACK, updated for e110 ##
+            $grouped_genomic_aligns = $self->_resolve_duplicates($grouped_genomic_aligns);
+            ##############
+        }
+        my @genomic_align_array = map { $grouped_genomic_aligns->{$_}[0] } @hal_ga_group_order;
 
         next if ( scalar(@genomic_align_array) < 2 || !defined $ref_genomic_align );
 
@@ -1588,27 +1603,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
         	$ga->genomic_align_block_id( $gab->dbID );
         }
         $gab->genomic_align_array(\@genomic_align_array);
-
-        # check for duplicate species
-        if ( $duplicates_found ) {
-            ## e87 HACK ##
-            my $resolved_gab = $self->_resolve_duplicates( $gab, $min_gab_len );
-            push( @gabs, $resolved_gab );
-            $gab_id_count++;
-            ##############
-
-            # my $split_gabs = $self->_split_genomic_aligns( $gab, $min_gab_len );
-
-            # foreach my $this_gab ( @$split_gabs ) {
-            #     $this_gab->adaptor($self);
-            #     $this_gab->dbID($id_base + $gab_id_count);
-
-            #     push( @gabs, $this_gab );
-            #     $gab_id_count++;
-            # }
-        } else {
-            push(@gabs, $gab);
-        }
+        push(@gabs, $gab);
       }
       undef $maf_file_str;
     }
@@ -1648,9 +1643,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
                   -length => @$entry[3],
                   -method_link_species_set => $mlss,
                   -adaptor => $self,
-                  # -dbID => $id_base + $gab_id_count,
               );
-              $gab_id_count++;
   		
               my $ga_adaptor = $self->db->get_GenomicAlignAdaptor;
   		        # Create cigar strings
@@ -1676,16 +1669,13 @@ sub _get_GenomicAlignBlocks_from_HAL {
                   -dnafrag_end => @$entry[2] + @$entry[3] + (@$entry[4] eq '+' ? 0 : -1),
                   -dnafrag_strand => @$entry[4] eq '+' ? 1 : -1,
                   -cigar_line => $target_cigar,
-                  # -dbID => $id_base + $ga_id_count,
                   -visible => 1,
                   -adaptor => $ga_adaptor,
   	          );
               $genomic_align->cigar_line($target_cigar);
               $genomic_align->aligned_sequence( $target_aln_seq );
               $genomic_align->genomic_align_block( $gab );
-              # $genomic_align->dbID( $id_base + $ga_id_count );
               $genomic_align->dbID( join('-', $target_dnafrag->genome_db->dbID, $target_dnafrag->dbID, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end) );
-              $ga_id_count+=1;
 
               $dnafrag->{'_slice'} = undef;
               my $ref_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
@@ -1696,7 +1686,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
                 -dnafrag_end => @$entry[1] + @$entry[3],
                 -dnafrag_strand => 1,
                 -cigar_line => $ref_cigar,
-                # -dbID => $id_base + $ga_id_count,
                 -visible => 1,
                 -adaptor => $ga_adaptor,
   		        );
@@ -1704,7 +1693,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
               $ref_genomic_align->aligned_sequence( $ref_aln_seq );
               $ref_genomic_align->genomic_align_block( $gab );
               $ref_genomic_align->dbID( join('-', $dnafrag->genome_db->dbID, $dnafrag->dbID, $ref_genomic_align->dnafrag_start, $ref_genomic_align->dnafrag_end) );
-              $ga_id_count++;
 
 
   		      $gab->genomic_align_array([$ref_genomic_align, $genomic_align]);
@@ -1720,9 +1708,10 @@ sub _get_GenomicAlignBlocks_from_HAL {
     return \@gabs;
 }
 
-# Get a 'linking' GenomeDB and DnaFrag. For accessing per-subgenome Cactus alignments, these are
-# are the polyploid component GenomeDB and DnaFrag corresponding to the input principal GenomeDB
-# and DnaFrag. Otherwise the input GenomeDB and DnaFrag are returned.
+# Get a 'linking' GenomeDB and DnaFrag, assuming the GenomeDB is present in the HAL mapping.
+# For accessing per-subgenome Cactus alignments, these may be the polyploid component GenomeDB
+# and DnaFrag corresponding to the input principal GenomeDB and DnaFrag. For cases where the
+# input GenomeDB is present in the HAL mapping, the input GenomeDB and DnaFrag are returned.
 sub _get_hal_linking_genome_dnafrag {
     my ($self, $dnafrag_adaptor, $genome_db, $dnafrag, $hal_species_map) = @_;
 
@@ -1736,29 +1725,15 @@ sub _get_hal_linking_genome_dnafrag {
 
     } elsif ($genome_db->is_polyploid()) {
 
-        my $comp_gdbs = $genome_db->component_genome_dbs();
-        my @comp_dnafrags = grep { defined } map { $dnafrag_adaptor->fetch_by_GenomeDB_and_name($_, $dnafrag->name) } @{$comp_gdbs};
+        my $comp_dnafrag = map_dnafrag_to_genome_component($dnafrag);
 
-        if (scalar(@comp_dnafrags) == 1) {
-
-            my $comp_dnafrag = $comp_dnafrags[0];
-            my $comp_gdb = $comp_dnafrag->genome_db;
-
-            # It's possible for a polyploid subgenome GenomeDB to be excluded from a Cactus alignment,
-            # so we should only set it as a linking GenomeDB if it is present in the HAL mapping.
-            if (exists $hal_species_map->{ $comp_gdb->dbID }) {
-                $linking_dnafrag = $comp_dnafrag;
-                $linking_genome_db = $comp_gdb;
-            }
-
-        } elsif (scalar(@comp_dnafrags) == 0) {
-            # If a dnafrag is present in the polyploid principal GenomeDB but not in any
-            # subgenome (e.g. scaffold_v5_108365 in triticum_aestivum_landmark), it will
-            # not be present in a per-component Cactus alignment, so there is no linking
-            # DnaFrag or GenomeDB.
-            warning('Cannot map dnafrag ' . $dnafrag->name . ' to any subgenome of ' . $genome_db->name);
-        } else {
-            throw('Cannot map dnafrag ' . $dnafrag->name . ' to a unique subgenome of ' . $genome_db->name);
+        # It's possible for a DnaFrag to be present only in a principal GenomeDB, or for
+        # a polyploid subgenome GenomeDB to be excluded from a Cactus alignment, so we
+        # should only set a linking DnaFrag and GenomeDB if the given DnaFrag maps to a
+        # component GenomeDB and that component GenomeDB is present in the HAL mapping.
+        if (defined $comp_dnafrag && exists $hal_species_map->{ $comp_dnafrag->genome_db->dbID }) {
+            $linking_dnafrag = $comp_dnafrag;
+            $linking_genome_db = $comp_dnafrag->genome_db;
         }
 
     } else {
@@ -1772,32 +1747,20 @@ sub _get_hal_linking_genome_dnafrag {
  # discard the smaller duplicated alignments for now
 
 sub _resolve_duplicates {
-    my ( $self, $gab, $min_gab_len ) = @_;
-    my @ga_array = @{ $gab->genomic_align_array };
+    my ( $self, $grouped_genomic_aligns ) = @_;
 
-    # split genomic_aligns by species
-    # take note of species order   
-    my (%sort_gas, @species_order);
-    for my $ga ( @ga_array ) {
-        my $sp_name = $ga->genome_db->name;
-        push( @species_order, $sp_name ) unless ( defined $sort_gas{$sp_name} );
-        push( @{ $sort_gas{$sp_name} }, $ga );
-    }
-
-    my %resolved_ga_for_species;
-    for my $species ( keys %sort_gas ) {
+    my %resolved_ga_for_hal_genomes;
+    for my $ga_group_key ( keys %{$grouped_genomic_aligns} ) {
         # if it's a duplicate, keep the longer alignment
         # if not, always keep it
-        if ( scalar( @{ $sort_gas{$species} } ) > 1 ) {
-            $resolved_ga_for_species{$species} = $self->_longer_alignment( $sort_gas{$species} );
+        if ( scalar( @{ $grouped_genomic_aligns->{$ga_group_key} } ) > 1 ) {
+            $resolved_ga_for_hal_genomes{$ga_group_key} = [$self->_longer_alignment($grouped_genomic_aligns->{$ga_group_key})];
         } else {
-            $resolved_ga_for_species{$species} = $sort_gas{$species}->[0];
+            $resolved_ga_for_hal_genomes{$ga_group_key} = $grouped_genomic_aligns->{$ga_group_key};
         }
     }
 
-    my @resolved_genomic_aligns = map { $resolved_ga_for_species{$_} } @species_order;
-    $gab->genomic_align_array( \@resolved_genomic_aligns );
-    return $gab;
+    return \%resolved_ga_for_hal_genomes;
 }
 
 sub _longer_alignment {
@@ -1814,77 +1777,6 @@ sub _longer_alignment {
     return $size{ $max_len };
 }
 ##################################
-
-sub _split_genomic_aligns {
-    my ( $self, $gab, $min_gab_len ) = @_;
-    my @ga_array = @{ $gab->genomic_align_array };
-
-    my @cigar_lines       = map { $_->cigar_line } @ga_array;
-    my $ref_genomic_align = shift @ga_array;
-    my $ref_cigar         = shift @cigar_lines;
-
-    my @non_matching_cigars = grep { $_ ne $ref_cigar } @cigar_lines;
-    my @m_end = grep { $_ =~ m/M$/ } @non_matching_cigars;
-    my @d_end = grep { $_ =~ m/D$/ } @non_matching_cigars;
-
-    my $max_end_match = 0;
-    foreach my $end_match ( @d_end ){
-        $end_match =~ m/(\d+)D$/;
-        $max_end_match = $1 if ( $1 > $max_end_match );
-    }
-
-    # check whether we can split the block in half(ish) or whether it's
-    # better to keep the main block intact and move the offending genomic_aligns
-    # to a new block
-    my ($can_split, $trim) = (1, 0);
-    foreach my $end_gap ( @d_end ) {
-        # if it also starts with a deletion, then the match is surrounded on each
-        # side and we can't just split the block down the middle. If the deletion
-        # is shorter than the matched region, we should just trim it off (we lose
-        # less data this way) and split in two as usual
-        if ( $end_gap =~ m/^(\d*)D(\d*)M/ ) {
-            my $d = $1 eq '' ? 1 : $1;
-            my $m = $2 eq '' ? 1 : $2;
-            if ( $d < $m ) {
-                $trim = $d if ( $d > $trim );
-            } else {
-                $can_split = 0;
-                last;
-            }
-        }
-        $end_gap =~ m/(\d+)D$/;
-        if ( $1 < $max_end_match ){
-            $can_split = 0;
-        }
-    }
-
-    if ( $trim > 0) {
-        my $new_gab = $gab->restrict_between_alignment_positions($trim+1, $gab->length, 1 );
-        $gab = $new_gab;
-        $can_split = 1;
-    }
-
-    my @split_blocks = ();
-    if ( $can_split ){ # restrict the block to create 2, non-overlapping ones
-        my $aln_length = $gab->length;
-        my $split_pos  = ($aln_length - $max_end_match);
-
-        if ( $split_pos > $min_gab_len ) {
-            my $block1 = $gab->restrict_between_alignment_positions(1, $split_pos, 1 );
-            push( @split_blocks, $block1 );
-        }
-
-        if ( $max_end_match > $min_gab_len ) {
-            my $block2 = $gab->restrict_between_alignment_positions($split_pos+1, $aln_length, 1 );
-            push( @split_blocks, $block2 );
-        }
-        return \@split_blocks if ( scalar @split_blocks > 1 );
-    }
-    # if the above method fails to split, or the block just can't be split
-    # then keep main block, but remove offending duplications
-    return [ $self->_resolve_duplicates($gab, $min_gab_len) ];
-}
-
 
 sub _parse_maf {
   my ($self, $maf_lines) = @_;

@@ -205,6 +205,7 @@ use Bio::EnsEMBL::Compara::AlignSlice::Exon;
 use Bio::EnsEMBL::Compara::AlignSlice::Slice;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::GenomicAlign;
+use Bio::EnsEMBL::Compara::Utils::Polyploid qw(map_dnafrag_to_genome_component);
 use Bio::SimpleAlign;
 
 use Data::Dumper;
@@ -657,11 +658,12 @@ sub get_SimpleAlign {
   my $genome_db_name_counter;
 
   foreach my $slice (@{$self->get_all_Slices(@species)}) {
+    my $slice_gdb_name = $slice->display_Slice_name;
     my $seq = Bio::LocatableSeq->new(
             -SEQ    => $slice->seq,
             -START  => $slice->start,
             #-END    => $slice->end,
-            -ID     => $slice->genome_db->name.($genome_db_name_counter->{$slice->genome_db->name} or ""),
+            -ID     => $slice_gdb_name.($genome_db_name_counter->{$slice_gdb_name} or ""),
             -STRAND => $slice->strand
         );
     # Avoid warning in BioPerl about len(seq) != end-start+1
@@ -669,10 +671,10 @@ sub get_SimpleAlign {
 
     ## This allows to have several sequences for the same species. Bio::SimpleAlign complains
     ## about having the same ID, START and END for two sequences...
-    if (!defined($genome_db_name_counter->{$slice->genome_db->name})) {
-      $genome_db_name_counter->{$slice->genome_db->name} = 2;
+    if (!defined($genome_db_name_counter->{$slice_gdb_name})) {
+      $genome_db_name_counter->{$slice_gdb_name} = 2;
     } else {
-      $genome_db_name_counter->{$slice->genome_db->name}++;
+      $genome_db_name_counter->{$slice_gdb_name}++;
     }
 
     $simple_align->add_seq($seq);
@@ -935,6 +937,7 @@ sub get_all_ConstrainedElements {
   Arg[2]     : [optional] boolean $expanded (default = FALSE)
   Arg[3]     : [optional] boolean $solve_overlapping (default = FALSE)
   Arg[4]     : [optional] boolean $preserve_blocks (default = FALSE)
+  Arg[5]     : [optional] string $species_order (default = undef)
   Example    : 
   Description: Creates a set of Bio::EnsEMBL::Compara::AlignSlice::Slices
                and attach it to this object. 
@@ -955,7 +958,6 @@ sub _create_underlying_Slices {
     $last_ref_pos = $self->reference_Slice->end;
   }
 
-  my $ref_genome_db = $self->adaptor->db->get_GenomeDBAdaptor->fetch_by_Slice($self->reference_Slice);
   my $big_mapper = Bio::EnsEMBL::Mapper->new("sequence", "alignment");
   my $sorted_genomic_align_blocks;
 
@@ -1084,9 +1086,47 @@ sub _create_underlying_Slices {
     $align_slice_length += $this_gap_between_genomic_align_blocks;
   }
 
+  my %ga_tree_gdb_id_set;
+  my %ga_id_to_slice_gdb;
+  if ($species_order) {
+    foreach my $species_def (@{$species_order}) {
+      $ga_tree_gdb_id_set{$species_def->{genome_db}->dbID} = 1;
+      foreach my $genomic_align_id (@{$species_def->{genomic_align_ids}}) {
+        $ga_id_to_slice_gdb{$genomic_align_id} = $species_def->{genome_db};
+      }
+    }
+  } else {
+    foreach my $ga_block (@$sorted_genomic_align_blocks) {
+      my $is_genomic_align_tree = UNIVERSAL::isa($ga_block, "Bio::EnsEMBL::Compara::GenomicAlignTree");
+      my $ga_tree = $is_genomic_align_tree ? $ga_block : $ga_block->get_GenomicAlignTree();
+      foreach my $ga_node (@{$ga_tree->get_all_nodes}) {
+        my @genomic_aligns = @{$ga_node->get_all_genomic_aligns_for_node};
+        if (@genomic_aligns) {
+          my $genome_db = $ga_node->get_genome_db_for_node;
+          $ga_tree_gdb_id_set{$genome_db->dbID} = 1;
+          foreach my $genomic_align (@genomic_aligns) {
+            my $ga_id = $genomic_align->dbID ? $genomic_align->dbID : $genomic_align->original_dbID;
+            $ga_id_to_slice_gdb{$ga_id} = $genome_db;
+          }
+        }
+      }
+    }
+  }
+
+  my $dnafrag_adaptor = $self->adaptor->db->get_DnaFragAdaptor;
+  my $temp_dnafrag = $dnafrag_adaptor->fetch_by_Slice($self->reference_Slice);
+  my $ref_genome_db = $temp_dnafrag->genome_db;
+  if ($ref_genome_db->is_polyploid()) {
+    my $comp_dnafrag = map_dnafrag_to_genome_component($temp_dnafrag);
+    my $ref_comp_gdb = $comp_dnafrag->genome_db if defined($comp_dnafrag);
+    if (exists $ga_tree_gdb_id_set{$ref_comp_gdb->dbID}) {
+      $ref_genome_db = $ref_comp_gdb;
+    }
+  }
+
   if ($species_order) {
     foreach my $species_def (@$species_order) {
-      my $genome_db_name = $species_def->{genome_db}->name;
+      my $genome_db_name = $species_def->{genome_db}->get_distinct_name;
       my $new_slice = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
               -length => $align_slice_length,
               -requesting_slice => $self->reference_Slice,
@@ -1098,11 +1138,11 @@ sub _create_underlying_Slices {
       foreach my $this_genomic_align_id (@{$species_def->{genomic_align_ids}}) {
         $new_slice->{genomic_align_ids}->{$this_genomic_align_id} = 1;
       }
-      push(@{$self->{slices}->{lc($genome_db_name)}}, $new_slice);
+      push(@{$self->{slices}->{$genome_db_name}}, $new_slice);
       push(@{$self->{_slices}}, $new_slice);
     }
   } else {
-    $self->{slices}->{lc($ref_genome_db->name)} = [new Bio::EnsEMBL::Compara::AlignSlice::Slice(
+    $self->{slices}->{$ref_genome_db->get_distinct_name} = [new Bio::EnsEMBL::Compara::AlignSlice::Slice(
             -length => $align_slice_length,
             -requesting_slice => $self->reference_Slice,
             -align_slice => $self,
@@ -1110,10 +1150,10 @@ sub _create_underlying_Slices {
             -genome_db => $ref_genome_db,
             -expanded => $expanded,
         )];
-    $self->{_slices} = [$self->{slices}->{lc($ref_genome_db->name)}->[0]];
+    $self->{_slices} = [$self->{slices}->{$ref_genome_db->get_distinct_name}->[0]];
   }
 
-  $self->{slices}->{lc($ref_genome_db->name)}->[0]->add_Slice_Mapper_pair(
+  $self->{slices}->{$ref_genome_db->get_distinct_name}->[0]->add_Slice_Mapper_pair(
           $self->reference_Slice,
           $big_mapper,
           1,
@@ -1135,16 +1175,18 @@ sub _create_underlying_Slices {
           # Link to genomic_align_block may have been lost during tree minimization
           $this_genomic_align->genomic_align_block_id(0);
           $this_genomic_align->genomic_align_block($this_genomic_align_block);
+          my $ga_id = $this_genomic_align->dbID ? $this_genomic_align->dbID : $this_genomic_align->original_dbID;
           $self->_add_GenomicAlign_to_a_Slice($this_genomic_align, $this_genomic_align_block,
-              $species_order, $align_slice_length);
+              $species_order, $align_slice_length, $ga_id_to_slice_gdb{$ga_id});
         }
       }
     } else {
       ## For plain alignments, just use all non-reference GenomicAlign objects
       foreach my $this_genomic_align
               (@{$this_genomic_align_block->get_all_non_reference_genomic_aligns}) {
+        my $ga_id = $this_genomic_align->dbID ? $this_genomic_align->dbID : $this_genomic_align->original_dbID;
         $self->_add_GenomicAlign_to_a_Slice($this_genomic_align, $this_genomic_align_block,
-            $species_order, $align_slice_length);
+            $species_order, $align_slice_length, $ga_id_to_slice_gdb{$ga_id});
       }
     }
   }
@@ -1163,7 +1205,7 @@ sub _create_underlying_Slices {
       for (my $i = (@$slices-1); $i >= 0; --$i) {
 	  if (@{$slices->[$i]->get_all_Slice_Mapper_pairs()} == 0) {
 	      #remove from {slices}
-	      delete $self->{slices}->{$slices->[$i]->genome_db->name};
+          delete $self->{slices}->{$slices->[$i]->genome_db->get_distinct_name};
 	      #remove from {_slices}
 	      splice @$slices, $i, 1;
 	  }
@@ -1180,20 +1222,20 @@ sub _create_underlying_Slices {
 =cut
 
 sub _add_GenomicAlign_to_a_Slice {
-  my ($self, $this_genomic_align, $this_genomic_align_block, $species_order, $align_slice_length) = @_;
+  my ($self, $this_genomic_align, $this_genomic_align_block, $species_order, $align_slice_length, $this_genome_db) = @_;
   my $expanded = $self->{expanded};
-  my $species = $this_genomic_align->dnafrag->genome_db->name;
+  my $species = $this_genome_db->get_distinct_name;
 
-  if (!defined($self->{slices}->{lc($species)})) {
-    $self->{slices}->{lc($species)} = [new Bio::EnsEMBL::Compara::AlignSlice::Slice(
+  if (!defined($self->{slices}->{$species})) {
+    $self->{slices}->{$species} = [new Bio::EnsEMBL::Compara::AlignSlice::Slice(
             -length => $align_slice_length,
             -requesting_slice => $self->reference_Slice,
             -align_slice => $self,
             -method_link_species_set => $self->{_method_link_species_set},
-            -genome_db => $this_genomic_align->dnafrag->genome_db,
+            -genome_db => $this_genome_db,
             -expanded => $expanded,
         )];
-    push(@{$self->{_slices}}, $self->{slices}->{lc($species)}->[0]);
+    push(@{$self->{_slices}}, $self->{slices}->{$species}->[0]);
   }
 
   my $this_block_start = $this_genomic_align_block->start;
@@ -1277,7 +1319,7 @@ sub _add_GenomicAlign_to_a_Slice {
 
   # Choose the appropriate AS::Slice for adding this bit of the alignment
   my $this_underlying_slice = $self->_choose_underlying_Slice($this_genomic_align, $this_block_start,
-      $this_block_end, $align_slice_length, $species_order);
+      $this_block_end, $align_slice_length, $species_order, $this_genome_db);
 
   # Add a Slice, Mapper, and start-end-strand coordinates to an underlying AS::Slice
   $this_underlying_slice->add_Slice_Mapper_pair(
@@ -1292,11 +1334,11 @@ sub _add_GenomicAlign_to_a_Slice {
 
 
 sub _choose_underlying_Slice {
-  my ($self, $this_genomic_align, $this_block_start, $this_block_end, $align_slice_length, $species_order) = @_;
+  my ($self, $this_genomic_align, $this_block_start, $this_block_end, $align_slice_length, $species_order, $this_genome_db) = @_;
   my $underlying_slice = undef;
 
   my $expanded = $self->{expanded};
-  my $species = $this_genomic_align->dnafrag->genome_db->name;
+  my $species = $this_genome_db->get_distinct_name;
 
   if (defined($this_genomic_align->{_temporary_AS_underlying_Slice})) {
     my $preset_underlying_slice = $this_genomic_align->{_temporary_AS_underlying_Slice};
@@ -1304,18 +1346,18 @@ sub _choose_underlying_Slice {
     return $preset_underlying_slice;
   }
 
-  if (!defined($self->{slices}->{lc($species)})) {
+  if (!defined($self->{slices}->{$species})) {
     ## No slice for this species yet. Create, store and return it
     $underlying_slice = new Bio::EnsEMBL::Compara::AlignSlice::Slice(
             -length => $align_slice_length,
             -requesting_slice => $self->reference_Slice,
             -align_slice => $self,
             -method_link_species_set => $self->{_method_link_species_set},
-            -genome_db => $this_genomic_align->dnafrag->genome_db,
+            -genome_db => $this_genome_db,
             -expanded => $expanded,
         );
     push(@{$self->{_slices}}, $underlying_slice);
-    push(@{$self->{slices}->{lc($species)}}, $underlying_slice);
+    push(@{$self->{slices}->{$species}}, $underlying_slice);
     return $underlying_slice;
   }
   if ($species_order) {
@@ -1323,7 +1365,7 @@ sub _choose_underlying_Slice {
     if (!$this_genomic_align->{_original_dbID} and $this_genomic_align->dbID) {
       $this_genomic_align->{_original_dbID} = $this_genomic_align->dbID;
     }
-    foreach my $this_underlying_slice (@{$self->{slices}->{lc($species)}}) {
+    foreach my $this_underlying_slice (@{$self->{slices}->{$species}}) {
       if ($this_underlying_slice->{genomic_align_ids}->{$this_genomic_align->{_original_dbID}}) {
         $preset_underlying_slice = $this_underlying_slice;
         last;
@@ -1352,7 +1394,7 @@ sub _choose_underlying_Slice {
 
   if (!$underlying_slice) {
     ## Try to add this alignment to an existing underlying Bio::EnsEMBL::Compara::AlignSlice::Slice
-    SLICE: foreach my $this_underlying_slice (@{$self->{slices}->{lc($species)}}) {
+    SLICE: foreach my $this_underlying_slice (@{$self->{slices}->{$species}}) {
       my $slice_mapper_pairs = $this_underlying_slice->get_all_Slice_Mapper_pairs();
       PAIRS: foreach my $slice_mapper_pair (@$slice_mapper_pairs) {
         my $block_start = $slice_mapper_pair->{start};
@@ -1374,11 +1416,11 @@ sub _choose_underlying_Slice {
             -requesting_slice => $self->reference_Slice,
             -align_slice => $self,
             -method_link_species_set => $self->{_method_link_species_set},
-            -genome_db => $this_genomic_align->dnafrag->genome_db,
+            -genome_db => $this_genome_db,
             -expanded => $expanded,
         );
     push(@{$self->{_slices}}, $underlying_slice);
-    push(@{$self->{slices}->{lc($species)}}, $underlying_slice);
+    push(@{$self->{slices}->{$species}}, $underlying_slice);
   }
 
 #   if ($this_genomic_align->cigar_line =~ /X/) {
