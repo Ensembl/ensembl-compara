@@ -176,6 +176,7 @@ if ($@) {
 }
 print "'$xml_config' valid. Now parsing ...\n";
 
+my %unstored_collection_names;
 my %collections;
 my @mlsss;
 
@@ -333,6 +334,11 @@ foreach my $collection_node (@{$division_node->findnodes('collections/collection
     my $genome_dbs = make_species_set_from_XML_node($collection_node, $division_genome_dbs);
     my $collection_name = $collection_node->getAttribute('name');
     $collections{$collection_name} = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($genome_dbs, "collection-$collection_name", $no_release);
+
+    my $no_store = $collection_node->getAttribute('no_store') // 0;
+    if ($no_store) {
+        $unstored_collection_names{$collection_name} = 1;
+    }
 }
 # Do not create MLSSs for genome components (polyploids will be handled by each pipeline accordingly)
 @{$division_genome_dbs} = grep {!$_->genome_component} @{$division_genome_dbs};
@@ -471,6 +477,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
         }
 
         foreach my $collection_name (sort keys %collections) {
+            next if exists $unstored_collection_names{$collection_name};
             next if $collection_name eq $division_name;
             my $collection = $collections{$collection_name};
             # Check if it is already in the database
