@@ -6,7 +6,7 @@
 
     <!-- All chordates except the mouse strains, pig breeds and the three outgroups -->
     <!-- NB: we have several genomes of the same species, e.g. CHO, NMR -->
-    <collection name="default">
+    <collection name="vertebrate_species" no_store="1">
       <taxonomic_group taxon_name="Chordata">
         <!-- But exclude everything below mus_musculus and sus_scrofa -->
         <ref_for_taxon name="mus_musculus"/>
@@ -15,6 +15,11 @@
       <genome name="caenorhabditis_elegans"/>
       <genome name="drosophila_melanogaster"/>
       <genome name="saccharomyces_cerevisiae"/>
+    </collection>
+
+    <!-- Default gene-tree collection -->
+    <collection name="default">
+      <base_collection name="vertebrate_species"/>
     </collection>
 
     <!-- Mouse-strains analyses, i.e. incl. the closely relative -->
@@ -35,10 +40,10 @@
   <pairwise_alignments>
 
     <!-- Mammals -->
-    <!-- Use of "default" collection excludes the mouse strains and the pig breeds -->
+    <!-- Use of "vertebrate_species" collection excludes the mouse strains and the pig breeds -->
     <!-- NB: we have an EPO alignment for mouse strains and an EPO Extended MSA for pig breeds -->
     <one_vs_all method="LASTZ_NET" ref_genome="homo_sapiens">
-      <species_set in_collection="default">
+      <species_set in_collection="vertebrate_species">
         <taxonomic_group taxon_name="Eutheria"/>
         <!-- Remove all the taxa that have a better reference than human -->
         <taxonomic_group taxon_name="Rodentia" exclude="1"/>
@@ -49,7 +54,7 @@
     </one_vs_all>
 
     <one_vs_all method="LASTZ_NET" ref_genome="mus_musculus">
-      <species_set in_collection="default">
+      <species_set in_collection="vertebrate_species">
         <taxonomic_group taxon_name="Rodentia"/>
       </species_set>
     </one_vs_all>
@@ -57,7 +62,7 @@
     <one_vs_all method="LASTZ_NET" ref_genome="canis_lupus_familiaris" against="Carnivora"/>
 
     <one_vs_all method="LASTZ_NET" ref_genome="bos_taurus">
-      <species_set in_collection="default">
+      <species_set in_collection="vertebrate_species">
         <taxonomic_group taxon_name="Artiodactyla"/>
       </species_set>
     </one_vs_all>
@@ -68,7 +73,7 @@
     <one_vs_all method="LASTZ_NET" ref_genome="sus_scrofa" against="Sus"/>
 
     <one_vs_all method="LASTZ_NET" ref_genome="monodelphis_domestica">
-      <species_set in_collection="default">
+      <species_set in_collection="vertebrate_species">
         <taxonomic_group taxon_name="Metatheria"/>
         <taxonomic_group taxon_name="Prototheria"/>
       </species_set>
@@ -193,7 +198,7 @@
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="EPO_EXTENDED" gerp="1">
-      <species_set name="mammals" display_name="eutherian mammals" in_collection="default">
+      <species_set name="mammals" display_name="eutherian mammals" in_collection="vertebrate_species">
         <taxonomic_group taxon_name="Eutheria"/>
       </species_set>
     </multiple_alignment>
