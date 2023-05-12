@@ -224,7 +224,13 @@ sub create_species_tree {
                             throw("Could not find the leaf with taxon_id $taxon_id");
         my $new_node = $current_leaf->copy_node();
         $new_node->node_id($taxon_id);
-        $current_leaf->parent->add_child($new_node);
+
+        if (defined $current_leaf->parent) {
+          $current_leaf->parent->add_child($new_node);
+        } else {
+          $stn_root = $new_node;
+        }
+
         $new_node->add_child($current_leaf);
         $new_node->{'_genome_db_id'} = undef;
         $new_node->name($current_leaf->taxon->name);
