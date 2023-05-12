@@ -1118,9 +1118,8 @@ sub _create_underlying_Slices {
   my $ref_genome_db = $temp_dnafrag->genome_db;
   if ($ref_genome_db->is_polyploid()) {
     my $comp_dnafrag = map_dnafrag_to_genome_component($temp_dnafrag);
-    my $ref_comp_gdb = $comp_dnafrag->genome_db if defined($comp_dnafrag);
-    if (exists $ga_tree_gdb_id_set{$ref_comp_gdb->dbID}) {
-      $ref_genome_db = $ref_comp_gdb;
+    if (defined($comp_dnafrag) && exists $ga_tree_gdb_id_set{$comp_dnafrag->genome_db->dbID}) {
+      $ref_genome_db = $comp_dnafrag->genome_db;
     }
   }
 
