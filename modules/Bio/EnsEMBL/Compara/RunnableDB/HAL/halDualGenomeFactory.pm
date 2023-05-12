@@ -36,24 +36,31 @@ package Bio::EnsEMBL::Compara::RunnableDB::HAL::halDualGenomeFactory;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Utils qw(destringify);
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub fetch_input {
     my $self = shift @_;
 
-    my $species_map = $self->param_required('species_name_mapping');
+    my $mlss_id = $self->param_required('mlss_id');
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+    my $species_map = destringify($mlss->get_value_for_tag('HAL_mapping', '{}'));
 
     my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
 
     my %linking_map;
     while (my ($map_gdb_id, $hal_genome_name) = each %{$species_map}) {
         my $genome_db = $genome_db_adaptor->fetch_by_dbID($map_gdb_id);
+
+        my $main_gdb_id = $map_gdb_id;
         if ($genome_db->genome_component) {
             my $principal = $genome_db->principal_genome_db();
-            $map_gdb_id = $principal->dbID;
+            $main_gdb_id = $principal->dbID;
         }
-        push(@{$linking_map{$map_gdb_id}}, $hal_genome_name);
+
+        $linking_map{$main_gdb_id}{$map_gdb_id} = $hal_genome_name;
     }
 
     $self->param('linking_map', \%linking_map);
@@ -63,8 +70,12 @@ sub fetch_input {
 sub write_output {
     my $self = shift;
 
-    while (my ($main_gdb_id, $hal_genome_names) = each %{$self->param('linking_map')}) {
-        $self->dataflow_output_id({ 'hal_genome_names' => $hal_genome_names }, 3);
+    while (my ($main_gdb_id, $species_map_pairs) = each %{$self->param('linking_map')}) {
+
+        while (my ($map_gdb_id, $hal_genome_name) = each %{$species_map_pairs}) {
+            $self->dataflow_output_id({ 'genome_db_id' => $map_gdb_id, 'hal_genome_name' => $hal_genome_name }, 3);
+        }
+
         $self->dataflow_output_id({ 'genome_db_id' => $main_gdb_id }, 2);
     }
 }
