@@ -44,6 +44,7 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::FlatFile qw(check_for_null_characters check_line_counts);
+use Bio::EnsEMBL::Hive::Utils qw(destringify);
 
 use File::Basename qw/dirname/;
 use File::Path qw/make_path/;
@@ -114,7 +115,7 @@ sub fetch_input {
         $self->param('extra_filter', "AND h.method_link_species_set_id = $mlss_id");
     }
     
-    make_path(dirname($self->param('output_file')));
+    make_path(dirname($self->param_required('output_file')));
     $compara_dba->dbc->disconnect_if_idle; # hive code will open a new connection regardless
 
     $self->SUPER::fetch_input();
@@ -123,7 +124,9 @@ sub fetch_input {
 sub write_output {
     my $self = shift;
 
-    $self->_healthcheck($self->param('healthcheck')) if $self->param('healthcheck');
+    if ( $self->param_is_defined('healthcheck') || $self->param_is_defined('healthcheck_list') ) {
+        $self->_healthcheck();
+    }
 
     $self->SUPER::write_output();
 }
@@ -131,14 +134,26 @@ sub write_output {
 sub _healthcheck {
     my $self = shift;
 
-    my $hc_type = $self->param('healthcheck');
-    if ( $hc_type eq 'line_count' ) {
-        my $exp_line_count = $self->param('exp_line_count') + 1; # incl header line
-        check_line_counts($self->param('output_file'), $exp_line_count);
-    } elsif ( $hc_type eq 'unexpected_nulls' ) {
-        check_for_null_characters($self->param('output_file'));
+    my $healthcheck_list;
+    if ( $self->param_is_defined('healthcheck') && $self->param_is_defined('healthcheck_list') ) {
+        $self->throw("Only one of parameters 'healthcheck' or 'healthcheck_list' can be defined")
+    } elsif ( $self->param_is_defined('healthcheck') ) {
+        $healthcheck_list = [$self->param('healthcheck')];
+    } elsif ( $self->param_is_defined('healthcheck_list') ) {
+        $healthcheck_list = destringify($self->param('healthcheck_list'));
     } else {
-        die "Healthcheck type '$hc_type' not recognised";
+        $self->throw("One of parameters 'healthcheck' or 'healthcheck_list' must be defined")
+    }
+
+    foreach my $hc_type (@{$healthcheck_list}) {
+        if ( $hc_type eq 'line_count' ) {
+            my $exp_line_count = $self->param_required('exp_line_count') + 1; # incl header line
+            check_line_counts($self->param('output_file'), $exp_line_count);
+        } elsif ( $hc_type eq 'unexpected_nulls' ) {
+            check_for_null_characters($self->param('output_file'));
+        } else {
+            die "Healthcheck type '$hc_type' not recognised";
+        }
     }
 }
 
