@@ -58,6 +58,15 @@ my @curr_collection_groups = qw(
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
 Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
 
+# Ensure we're using the correct cores for species that overlap with other divisions
+my @overlap_species = qw(saccharomyces_cerevisiae);
+Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
+my $overlap_cores = {
+    #'saccharomyces_cerevisiae' => [ 'mysql-ens-sta-1-b', "saccharomyces_cerevisiae_core_${curr_eg_release}_${curr_release}_4" ],
+    'saccharomyces_cerevisiae' => [ 'mysql-ens-vertannot-staging', "saccharomyces_cerevisiae_core_${curr_eg_release}_${curr_release}_4" ],
+};
+Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
+
 foreach my $group ( @curr_collection_groups ) {
     Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
         -host   => 'mysql-ens-vertannot-staging',

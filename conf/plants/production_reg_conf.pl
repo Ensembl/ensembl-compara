@@ -51,14 +51,15 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 # before loading the Vertebrates version
 #Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1:4519/$curr_release");
 
-# Ensure we're using the correct cores for species that overlap with metazoa
-my @metazoa_overlap_species = qw(drosophila_melanogaster caenorhabditis_elegans);
-Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@metazoa_overlap_species);
-my $metazoa_overlap_cores = {
+# Ensure we're using the correct cores for species that overlap with other divisions
+Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
+my $overlap_cores = {
     'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_110_10" ],
     'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_110_282" ],
+    'saccharomyces_cerevisiae' => [ 'mysql-ens-vertannot-staging', "saccharomyces_cerevisiae_core_110_4" ],
 };
-Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $metazoa_overlap_cores );
+Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
+
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
