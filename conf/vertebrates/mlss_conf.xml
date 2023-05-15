@@ -122,6 +122,9 @@
     <!-- Chicken vs Human LastZ (on Human) -->
     <pairwise_alignment method="LASTZ_NET" ref_genome="homo_sapiens" target_genome="gallus_gallus"/>
 
+    <!-- Tasmanian devil vs Human LastZ (on Human) -->
+    <pairwise_alignment method="LASTZ_NET" ref_genome="homo_sapiens" target_genome="sarcophilus_harrisii"/>    
+
   </pairwise_alignments>
 
   <multiple_alignments>
