@@ -81,6 +81,7 @@ sub fetch_input {
     $self->param_required('fam_id');
     $self->param_required('mlss_id');
     $self->param_required('lambda');
+    $self->param_required('num_threads');
 
     my $cafeTree_Adaptor = $self->compara_dba->get_CAFEGeneFamilyAdaptor;
     $self->param('cafeTree_Adaptor', $cafeTree_Adaptor);
@@ -117,6 +118,7 @@ sub run_cafe_script {
     my $mlss_id = $self->param('mlss_id');
     my $fam_id = $self->param('fam_id');
     my $pval_lim = $self->param('pvalue_lim');
+    my $num_threads = $self->param('num_threads');
 
     my $tmp_dir = $self->worker_temp_directory;
     my $cafe_table_file = $tmp_dir . "/cafe_${mlss_id}_${fam_id}.in";
@@ -141,7 +143,7 @@ sub run_cafe_script {
 
     print $sf '#!' . $cafe_shell . "\n\n";
     print $sf "tree $cafe_tree_str\n\n";
-    print $sf "load -p ${pval_lim} -i $cafe_table_file -t 1\n\n";
+    print $sf "load -p ${pval_lim} -i $cafe_table_file -t $num_threads\n\n";
     print $sf "lambda -l $lambda\n";
 #    print $sf $cafe_lambdas ? " -l $cafe_lambdas\n\n" : " -s\n\n";
 #    print $sf $cafe_lambdas ? "-l $cafe_lambdas -t $cafe_struct_tree\n\n" : " -s\n\n";

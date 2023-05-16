@@ -130,8 +130,9 @@ sub pipeline_analyses_cafe {
 #                             'cafe_struct_taxons'  => $self->o('cafe_'),
                              'cafe_struct_tree_str' => $self->o('cafe_struct_tree_str'),
                              'cafe_shell'           => $self->o('cafe_shell'),
+                             'num_threads'          => 8,   
                             },
-             -rc_name => '1Gb_job',
+             -rc_name => '1Gb_8c_job',
              -hive_capacity => $self->o('cafe_capacity'),
              -meadow_type => 'LSF',
              -flow_into => {
@@ -148,8 +149,9 @@ sub pipeline_analyses_cafe {
 #                             'cafe_struct_taxons'  => $self->o('cafe_'),
                              'cafe_struct_tree_str' => $self->o('cafe_struct_tree_str'),
                              'cafe_shell'           => $self->o('cafe_shell'),
+                             'num_threads'          => 48,
                             },
-             -rc_name => '2Gb_job',
+             -rc_name => '4Gb_48c_job',
              -hive_capacity => $self->o('cafe_capacity'),
              -meadow_type => 'LSF',
              -flow_into => {
