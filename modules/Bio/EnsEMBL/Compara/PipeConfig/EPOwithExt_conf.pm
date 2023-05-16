@@ -290,7 +290,6 @@ sub tweak_analyses {
 
     # set mlss_id for "extended_genome_alignment*"
     $analyses_by_name->{'extended_genome_alignment'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
-    $analyses_by_name->{'extended_genome_alignment_again'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
     $analyses_by_name->{'extended_genome_alignment_himem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
     $analyses_by_name->{'extended_genome_alignment_hugemem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
 
