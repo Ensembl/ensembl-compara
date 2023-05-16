@@ -127,7 +127,6 @@ sub tweak_analyses {
     $analyses_by_name->{'quick_tree_break'}->{'-rc_name'}   = '4Gb_job';
     $analyses_by_name->{'hc_cafe_species_tree'}->{'-rc_name'}   = '2Gb_job';
     $analyses_by_name->{'get_split_genes'}->{'-rc_name'}   = '2Gb_job';
-    $analyses_by_name->{'CAFE_analysis_himem'}->{'-rc_name'}   = '4Gb_job';
     $analyses_by_name->{'import_homology_table_himem'}->{'-rc_name'}   = '16Gb_job';
     $analyses_by_name->{'import_homology_table'}->{'-rc_name'}   = '1Gb_job';
     $analyses_by_name->{'check_file_copy'}->{'-rc_name'}   = '1Gb_job';
