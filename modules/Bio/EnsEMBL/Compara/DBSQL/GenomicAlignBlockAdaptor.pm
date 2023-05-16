@@ -1490,7 +1490,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
       for my $aln_block ( @$maf_info ) {
         my $duplicates_found = 0;
         my %species_found;
-        my $block_len = $aln_block->[0]->{length};
+        my $block_len = length($aln_block->[0]->{seq});
 
         next if ( $block_len <= $min_gab_len );
 
