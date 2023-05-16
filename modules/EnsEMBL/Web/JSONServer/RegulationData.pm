@@ -104,7 +104,33 @@ sub json_data {
     $set_info->{'core'}     = $db_tables->{'feature_types'}{'core'}{$name}     || {};
     $set_info->{'non_core'} = $db_tables->{'feature_types'}{'non_core'}{$name} || {};
     my $cell_evidence = [];
-    my $tmp_hash = ();
+
+    # Add epigenomic activity if needed
+    if ($db_tables->{'cell_type'}{'ids'}->{$id_key}) {
+      my $epigenomic_activity = $final->{data}->{epigenomic_activity};
+      my $hash = {
+        dimension => "epigenomic_activity",
+        val => $epigenomic_activity->{label},
+        set => $epigenomic_activity->{set},
+        defaultState => $epigenomic_activity->{defaultState} || "track-off"
+      };
+      push @$cell_evidence, $hash;
+    }
+
+    # Add segmentation features if available
+    my ($segmentation_lookup_key) = split(":", $id_key); # the id_key here is a colon-separated epigenome short name and epigenome id; see ConfigPacker for details
+    $segmentation_lookup_key = "Segmentation:$segmentation_lookup_key";
+    if ($db_tables->{'segmentation'}{$segmentation_lookup_key}) { # i.e. if the cell line actually has segmentation features
+      my $segmentation_features = $final->{data}->{segmentation_features};
+      my $hash = {
+        dimension => "segmentation_features",
+        val => $segmentation_features->{label},
+        set => $segmentation_features->{set},
+        defaultState => $segmentation_features->{defaultState} || "track-off"
+      };
+      push @$cell_evidence, $hash;
+    }
+
     foreach my $set (qw(core non_core)) {
       foreach (@{$all_types{$set}||[]}) {
         if ($set_info->{$set}{$_->dbID}) {
@@ -115,32 +141,6 @@ sub json_data {
             defaultState => "track-on"
           };
           push @$cell_evidence, $hash;
-
-          # Add epigenomic activity if needed
-          if ($db_tables->{'cell_type'}{'ids'}->{$id_key}) {
-            my $epigenomic_activity = $final->{data}->{epigenomic_activity};
-            $hash =  {
-              dimension => "epigenomic_activity",
-              val => $epigenomic_activity->{label},
-              set => $epigenomic_activity->{set},
-              defaultState => $epigenomic_activity->{defaultState} || "track-off"
-            };
-            push @$cell_evidence, $hash;
-          }
-
-          # Add segmentation features if available
-          my ($segmentation_lookup_key) = split(":", $id_key); # the id_key here is a colon-separated epigenome short name and epigenome id; see ConfigPacker for details
-          $segmentation_lookup_key = "Segmentation:$segmentation_lookup_key";
-          if ($db_tables->{'segmentation'}{$segmentation_lookup_key}) { # i.e. if the cell line actually has segmentation features
-            my $segmentation_features = $final->{data}->{segmentation_features};
-            $hash =  {
-              dimension => "segmentation_features",
-              val => $segmentation_features->{label},
-              set => $segmentation_features->{set},
-              defaultState => $segmentation_features->{defaultState} || "track-off"
-            };
-            push @$cell_evidence, $hash;
-          }
         }
       }
     }
