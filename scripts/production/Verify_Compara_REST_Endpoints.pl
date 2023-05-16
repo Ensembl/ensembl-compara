@@ -57,12 +57,13 @@ my $responseIDGet = $browser->get( ( $server . '/info/ping?content-type=applicat
 die "Server unavailable - please check your URL\n" unless $responseIDGet->{status} == 200;
 
 my ($gene_member_id, $gene_tree_id, $alignment_region, $lastz_alignment_region);
-my ($species_1, $species_2, $species_3, $taxon_1, $taxon_2, $taxon_3);
+my ($member_species, $species_1, $species_2, $species_3, $taxon_1, $taxon_2, $taxon_3);
 my ($gene_symbol, $species_set_group, $homology_type, $homology_method_link);
 my ($cactus_species, $cactus_region, $cactus_species_set);
 my $extra_params;
 
 # RULES
+# $member_species must be the species of $gene_member_id
 # $taxon_X must be the taxon_id of $species_X
 # $species_1 must be the species of $gene_symbol
 # $gene_symbol must have orthologues in both $species_2 and $species_3
@@ -74,6 +75,7 @@ if ($division eq "vertebrates"){
     $alignment_region         = "2:106040000-106040050:1";
     $lastz_alignment_region   = "2:106041430-106041480:1";
 
+    $member_species           = "homo_sapiens";
     $species_1                = "homo_sapiens";
     $species_2                = "pan_paniscus";
     $species_3                = "pan_troglodytes";
@@ -99,6 +101,7 @@ elsif($division eq "plants"){
     $alignment_region         = "1:8001-18000:1";
     $lastz_alignment_region   = "1:12928-15180";
 
+    $member_species           = "arabidopsis_thaliana";
     $species_1                = "oryza_sativa";
     $species_2                = "glycine_max";
     $species_3                = "arabidopsis_thaliana";
@@ -117,21 +120,22 @@ elsif($division eq "plants"){
     $skip_cactus              = 1;
 }
 elsif($division eq "metazoa"){
-    $gene_member_id           = "AGAP004707";
-    $gene_tree_id             = "EMGT00950000187810";
-    $lastz_alignment_region   = "2L:2358158-2431617";
+    $gene_member_id           = "LOC726692";
+    $gene_tree_id             = "EMGT01090000374023";
+    $lastz_alignment_region   = "CM009944.2:6529304-6531367";
 
-    $species_1                = "anopheles_gambiae";
-    $species_2                = "culex_quinquefasciatus_gca015732765v1";
+    $member_species           = "apis_mellifera";
+    $species_1                = "apis_mellifera";
+    $species_2                = "bombus_terrestris";
     $species_3                = "bombyx_mori";
 
-    $taxon_1                  = 7165;#anopheles_gambiae
-    $taxon_2                  = 7176;#culex_quinquefasciatus_gca015732765v1
+    $taxon_1                  = 7460;#apis_mellifera
+    $taxon_2                  = 30195;#bombus_terrestris
     $taxon_3                  = 7091;#bombyx_mori
 
     $species_set_group        = "metazoa";
 
-    $gene_symbol              = "para";
+    $gene_symbol              = "Para";
     $homology_type            = 'orthologues';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
 
@@ -147,6 +151,7 @@ elsif($division eq 'pan' or $division eq 'pan_homology'){
     $gene_member_id           = 'AT3G55510';
     $gene_tree_id             = 'EGGT00050000005918';
 
+    $member_species           = "arabidopsis_thaliana";
     $species_1                = 'arabidopsis_thaliana';
     $species_2                = "vitis_vinifera";
     $species_3                = 'amphimedon_queenslandica_gca000090795v2rs';
@@ -167,6 +172,8 @@ elsif($division eq 'pan' or $division eq 'pan_homology'){
 elsif ( $division eq 'grch37' ) {
     $lastz_alignment_region = "17:64155265-64255266:1";
     $gene_member_id         = "ENSG00000173786";
+
+    $member_species         = "homo_sapiens";
     $species_1              = "homo_sapiens";
     $species_2              = "homo_sapiens"; #only self-aln in GRCh37
     $gene_symbol            = "CNP";
@@ -182,6 +189,7 @@ elsif ($division eq 'protists' ) {
     $gene_member_id           = 'LMJF_27_0290';
     $gene_tree_id             = 'EPrGT00960000189529';
 
+    $member_species           = "leishmania_major";
     $species_1                = 'leishmania_major';
     $species_2                = 'plasmodium_falciparum';
     $species_3                = 'plasmopara_halstedii_gca_900000015';
@@ -204,6 +212,7 @@ elsif ($division eq 'fungi' ) {
     $gene_member_id           = 'SPBC23G7.12c';
     $gene_tree_id             = 'EFGT01080000065287';
 
+    $member_species           = "schizosaccharomyces_pombe";
     $species_1                = 'schizosaccharomyces_pombe';
     $species_2                = 'schizosaccharomyces_cryophilus';
     $species_3                = 'aspergillus_nidulans';
@@ -451,6 +460,27 @@ try{
         ok($jsontxt->{tree}, "check gene tree member  validity");
 
 
+        print "\nTesting GET genetree by member\/id\/\:species\/\:id \n\n";
+
+        $ext = "/genetree/member/id/$member_species/$gene_member_id";
+        $ext .= "?$extra_params" if $extra_params;
+
+        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
+        ok($responseIDGet->{success}, "Check JSON validity");
+
+        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
+        ok($responseIDGet->{success}, "Check phyloXml validity");
+
+        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-orthoxml+xml' } } );
+        ok($responseIDGet->{success}, "Check orthoXml validity");
+
+        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-nh' } } );
+        ok($responseIDGet->{success}, "Check New Hampshire NH validity");
+
+        $jsontxt = process_json_get($server."/genetree/member/id/$member_species/$gene_member_id?content-type=application/json".($extra_params ? ";$extra_params" : ''));
+        ok($jsontxt->{tree}, "check gene tree member validity");
+
+
         print "\nTesting GET genetree by member symbol\/\:species\/\:symbol \n\n";
 
         $ext = "/genetree/member/symbol/$species_1/$gene_symbol";
@@ -499,6 +529,21 @@ try{
 
 
         $jsontxt = process_json_get($server."/cafe/genetree/member/id/$gene_member_id?content-type=application/json".($extra_params ? ";$extra_params" : ''));
+        ok(exists $jsontxt->{pvalue_avg}, "Check get cafe tree by transcript member validity");
+
+
+        print "\nTesting GET Cafe tree by member\/id\/\:species\/\:id \n\n";
+
+        $ext = "/cafe/genetree/member/id/$member_species/$gene_member_id";
+        $ext .= "?$extra_params" if $extra_params;
+
+        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
+        ok($responseIDGet->{success}, "Check JSON validity");
+
+        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-nh' } } );
+        ok($responseIDGet->{success}, "Check New Hampshire NH validity");
+
+        $jsontxt = process_json_get($server."/cafe/genetree/member/id/$member_species/$gene_member_id?content-type=application/json".($extra_params ? ";$extra_params" : ''));
         ok(exists $jsontxt->{pvalue_avg}, "Check get cafe tree by transcript member validity");
 
 
@@ -598,10 +643,57 @@ try{
         ok( exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{cigar_line} , "Check homology endpoint cigar line =1 validity");
 
         $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;cigar_line=0".($extra_params ? ";$extra_params" : ''));
-        ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{cigar_line}) , "Check homology endpoint cigar line =1 validity");
+        ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{cigar_line}) , "Check homology endpoint cigar line =0 validity");
 
         $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;format=condensed".($extra_params ? ";$extra_params" : ''));
         ok(!(exists $jsontxt->{data}[0]->{homologies}[0]->{source}), "Check homology endpoint format validity");
+
+
+        print "\nTesting GET homology \/id\/\:species\/\:id \n\n";
+
+        $ext = "/homology/id/$member_species/$gene_member_id";
+        $ext .= "?$extra_params" if $extra_params;
+
+        $responseIDGet = $browser->get($server.$ext, { headers => {'Content-type' => 'application/json' } } );
+        ok($responseIDGet->{success}, "Check JSON validity");
+
+        $responseIDGet = $browser->get($server.$ext, { headers => {'Content-type' => 'text/x-orthoxml+xml'} } );
+        ok($responseIDGet->{success}, "Check orthoXml validity");
+
+        $jsontxt = process_json_get($server."/homology/id/$member_species/$gene_member_id?content-type=application/json;target_taxon=$taxon_2".($extra_params ? ";$extra_params" : ''));
+        ok( $jsontxt->{data}[0]->{homologies}[0]->{target}->{taxon_id} == $taxon_2 , "Check homology endpoint target_taxon option validity");
+
+        if ( defined $species_2 && defined $species_3 ) {
+            $orthoXml = process_orthoXml_get($server."/homology/id/$member_species/$gene_member_id?content-type=text/x-orthoxml+xml;target_species=$species_1;target_species=$species_2;target_species=$species_3".($extra_params ? ";$extra_params" : ''));
+            @pruned_species = keys %{ $orthoXml->{species} };
+            %pruned_species = map {$_ => 1} @pruned_species;
+            ok((exists($pruned_species{$species_1})) && (exists($pruned_species{$species_2})) && (exists($pruned_species{$species_3} )), "Check homology endpoint target species option Validity");
+        }
+
+        $jsontxt = process_json_get($server."/homology/id/$member_species/$gene_member_id?content-type=application/json;sequence=cdna".($extra_params ? ";$extra_params" : ''));
+        ok( index($jsontxt->{data}[0]->{homologies}[0]->{source}->{align_seq}, 'M') == -1 , "Check homology endpoint sequence CDNA option validity");
+
+        $jsontxt = process_json_get($server."/homology/id/$member_species/$gene_member_id?content-type=application/json;sequence=protein".($extra_params ? ";$extra_params" : ''));
+        ok( index($jsontxt->{data}[0]->{homologies}[0]->{source}->{align_seq}, 'M') != -1 , "Check homology endpoint sequence protein option validity");
+
+        $jsontxt = process_json_get($server."/homology/id/$member_species/$gene_member_id?content-type=application/json;aligned=0;sequence=none".($extra_params ? ";$extra_params" : ''));
+        ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{seq}), "Check homology endpoint sequence none option validity");
+
+        $jsontxt = process_json_get($server."/homology/id/$member_species/$gene_member_id?content-type=text/x-orthoxml+xml;type=$homology_type".($extra_params ? ";$extra_params" : ''));
+        ok( $jsontxt->{data}[0]->{homologies}[0]->{method_link_type} eq $homology_method_link, "Check homology endpoint type option validity");
+
+        $jsontxt = process_json_get($server."/homology/id/$member_species/$gene_member_id?content-type=application/json;aligned=0".($extra_params ? ";$extra_params" : ''));
+        ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{align_seq}), "Check homology endpoint aligned =0 option validity");
+
+        $jsontxt = process_json_get($server."/homology/id/$member_species/$gene_member_id?content-type=application/json;cigar_line=1".($extra_params ? ";$extra_params" : ''));
+        ok( exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{cigar_line} , "Check homology endpoint cigar line =1 validity");
+
+        $jsontxt = process_json_get($server."/homology/id/$member_species/$gene_member_id?content-type=application/json;cigar_line=0".($extra_params ? ";$extra_params" : ''));
+        ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{cigar_line}) , "Check homology endpoint cigar line =0 validity");
+
+        $jsontxt = process_json_get($server."/homology/id/$member_species/$gene_member_id?content-type=application/json;format=condensed".($extra_params ? ";$extra_params" : ''));
+        ok(!(exists $jsontxt->{data}[0]->{homologies}[0]->{source}), "Check homology endpoint format validity");
+
 
         print "\nTesting GET homology by symbol and species\/\:species\/\:symbol \n\n";
 
