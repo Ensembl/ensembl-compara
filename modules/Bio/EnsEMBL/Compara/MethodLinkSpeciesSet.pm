@@ -274,7 +274,6 @@ sub url {
       #warn "-> $url";
 
       if (-e $url) {
-          $self->{'original_url'} = $url;
           $self->{'url'} = $url;
       } else {
           die "'$url' does not exist on this machine\n";
