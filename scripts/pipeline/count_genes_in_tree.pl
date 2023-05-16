@@ -27,12 +27,12 @@ as a tag for the relevant species-tree node in the given Compara database.
 
 =head1 SYNOPSIS
 
-    perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/production/count_genes_in_tree.pl \
+    perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/count_genes_in_tree.pl \
         --url <db_url> --genome_db_id <genome_db_id> --mlss_id <mlss_id>
 
 =head1 EXAMPLES
 
-    perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/production/count_genes_in_tree.pl \
+    perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/pipeline/count_genes_in_tree.pl \
         --url mysql://ensadmin:xxxxx@mysql-ens-compara-prod-0:65536/jo_default_plants_protein_trees_107 \
         --genome_db_id 421 --mlss_id 40160
 
