@@ -269,12 +269,15 @@ sub url {
       my $data_dir = $self->adaptor->base_dir_location;
       my $url = $self->{'url'};
       #warn "<- $url";
+      
+      # store the original, non-resolved url
+      $self->{'original_url'} = $url;
+
       $url =~ s/#base_dir#/$data_dir/;
       $url =~ s/\/multi\/+multi\//\/multi\//;    # temporary hack for e88 production until the database has been updated
       #warn "-> $url";
 
       if (-e $url) {
-          $self->{'original_url'} = $url;
           $self->{'url'} = $url;
       } else {
           die "'$url' does not exist on this machine\n";
