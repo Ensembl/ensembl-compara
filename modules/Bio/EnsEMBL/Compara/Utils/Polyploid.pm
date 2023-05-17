@@ -30,6 +30,8 @@ package Bio::EnsEMBL::Compara::Utils::Polyploid;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+
 use base qw(Exporter);
 
 
