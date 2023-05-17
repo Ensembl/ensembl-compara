@@ -39,7 +39,7 @@ my $prev_eg_release = $curr_eg_release - 1;
 
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
-my @curr_collection_groups = qw(
+my @collection_groups = qw(
     ascomycota1
     ascomycota2
     ascomycota3
@@ -67,7 +67,7 @@ my $overlap_cores = {
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 
-foreach my $group ( @curr_collection_groups ) {
+foreach my $group ( @collection_groups ) {
     Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
         -host   => 'mysql-ens-vertannot-staging',
         -port   => 4573,
@@ -79,23 +79,6 @@ foreach my $group ( @curr_collection_groups ) {
 
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
-
-my @prev_collection_groups = qw(
-    ascomycota1
-    ascomycota2
-    ascomycota3
-    ascomycota4
-    ascomycota5
-    basidiomycota1
-    basidiomycota2
-    blastocladiomycota1
-    chytridiomycota1
-    entomophthoromycota1
-    microsporidia1
-    mucoromycota1
-    neocallimastigomycota1
-    rozellomycota1
-);
 
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
@@ -110,7 +93,7 @@ my @prev_collection_groups = qw(
     Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
 
     # Fungi collection databases
-    foreach my $group ( @prev_collection_groups ) {
+    foreach my $group ( @collection_groups ) {
         Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
             -host           => 'mysql-ens-sta-3-b',
             -port           => 4686,
@@ -131,9 +114,17 @@ my $compara_dbs = {
     'compara_curr'   => [ 'mysql-ens-compara-prod-4', "ensembl_compara_fungi_${curr_eg_release}_${curr_release}" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-4', "ensembl_compara_fungi_${prev_eg_release}_${prev_release}" ],
 
+    # LASTZ dbs
+    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_lastz_batch1_110' ],
+    'lastz_batch_2'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_lastz_batch2_110' ],
+    'lastz_batch_3'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_lastz_batch3_110' ],
+    'lastz_batch_4'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_lastz_batch4_110' ],
+    #Synteny
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-4', 'sbhurji_sbhurji_fungi_synteny_take2_110' ],
+
     # homology dbs
-    'compara_members' => [ 'mysql-ens-compara-prod-4', 'twalsh_fungi_load_members_20220617_108' ],
-    'compara_ptrees'  => [ 'mysql-ens-compara-prod-4', 'twalsh_default_fungi_protein_trees_108' ],
+    #'compara_members' => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_ptrees'  => [ 'mysql-ens-compara-prod-4', 'ensembl_compara_fungi_56_109' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
