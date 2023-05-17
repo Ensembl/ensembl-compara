@@ -1088,27 +1088,20 @@ sub _create_underlying_Slices {
 
   my %ga_tree_gdb_id_set;
   my %ga_id_to_slice_gdb;
-  if ($species_order) {
-    foreach my $species_def (@{$species_order}) {
-      $ga_tree_gdb_id_set{$species_def->{genome_db}->dbID} = 1;
-      foreach my $genomic_align_id (@{$species_def->{genomic_align_ids}}) {
-        $ga_id_to_slice_gdb{$genomic_align_id} = $species_def->{genome_db};
-      }
-    }
-  } else {
-    foreach my $ga_block (@$sorted_genomic_align_blocks) {
-      my $is_genomic_align_tree = UNIVERSAL::isa($ga_block, "Bio::EnsEMBL::Compara::GenomicAlignTree");
-      my $ga_tree = $is_genomic_align_tree ? $ga_block : $ga_block->get_GenomicAlignTree();
-      foreach my $ga_node (@{$ga_tree->get_all_nodes}) {
-        my @genomic_aligns = @{$ga_node->get_all_genomic_aligns_for_node};
-        if (@genomic_aligns) {
-          my $genome_db = $ga_node->get_genome_db_for_node;
-          $ga_tree_gdb_id_set{$genome_db->dbID} = 1;
-          foreach my $genomic_align (@genomic_aligns) {
-            my $ga_id = $genomic_align->dbID ? $genomic_align->dbID : $genomic_align->original_dbID;
-            $ga_id_to_slice_gdb{$ga_id} = $genome_db;
-          }
+  foreach my $ga_block (@$sorted_genomic_align_blocks) {
+    my $is_genomic_align_tree = UNIVERSAL::isa($ga_block, "Bio::EnsEMBL::Compara::GenomicAlignTree");
+    my $ga_tree = $is_genomic_align_tree ? $ga_block : $ga_block->get_GenomicAlignTree();
+    foreach my $ga_node (@{$ga_tree->get_all_nodes}) {
+      my @genomic_aligns = @{$ga_node->get_all_genomic_aligns_for_node};
+      if (@genomic_aligns) {
+
+        my $genome_db = $ga_node->get_genome_db_for_node;
+        foreach my $genomic_align (@genomic_aligns) {
+          my $ga_id = $genomic_align->dbID ? $genomic_align->dbID : $genomic_align->original_dbID;
+          $ga_id_to_slice_gdb{$ga_id} = $genome_db;
         }
+
+        $ga_tree_gdb_id_set{$genome_db->dbID} = 1;
       }
     }
   }
