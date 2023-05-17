@@ -658,7 +658,7 @@ sub get_SimpleAlign {
   my $genome_db_name_counter;
 
   foreach my $slice (@{$self->get_all_Slices(@species)}) {
-    my $slice_gdb_name = $slice->display_Slice_name;
+    my $slice_gdb_name = lcfirst $slice->distinct_Slice_name;
     my $seq = Bio::LocatableSeq->new(
             -SEQ    => $slice->seq,
             -START  => $slice->start,

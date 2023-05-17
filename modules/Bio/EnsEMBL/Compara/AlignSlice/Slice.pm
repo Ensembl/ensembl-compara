@@ -143,7 +143,7 @@ sub new {
   $self->{adaptor} = undef;
   $self->{coord_system} = $coord_system;
   $self->genome_db($genome_db) if (defined($genome_db));
-  $self->{seq_region_name} = (eval{$genome_db->get_distinct_name} or "FakeAlignSlice");
+  $self->{seq_region_name} = (eval{$genome_db->name} or "FakeAlignSlice");
   $self->{display_Slice_name} = $self->{seq_region_name};
   $self->{display_Slice_name} =~ s/ /_/g;
   $self->{seq_region_length} = $length;
@@ -195,6 +195,8 @@ sub genome_db {
     throw("[$genome_db] must bu a Bio::EnsEMBL::Compara::GenomeDB object")
       unless ($genome_db and ref($genome_db) and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB"));
 
+    $self->{distinct_Slice_name} = ucfirst($genome_db->get_distinct_name) || "FakeAlignSlice";
+
     if(defined($genome_db->genome_component)) {
       $self->{_genome_component} = $genome_db->genome_component;
       $genome_db = $genome_db->principal_genome_db;
@@ -224,6 +226,22 @@ sub display_Slice_name {
   }
 
   return ucfirst $self->{display_Slice_name};
+}
+
+
+=head2 distinct_Slice_name
+
+  Arg[1]     : string $name
+  Example    : $slice->distinct_Slice_name("triticum_aestivum_A");
+  Description: getter for the attribute distinct_Slice_name
+  Returntype : string
+
+=cut
+
+sub distinct_Slice_name {
+  my ($self) = @_;
+
+  return $self->{distinct_Slice_name};
 }
 
 
