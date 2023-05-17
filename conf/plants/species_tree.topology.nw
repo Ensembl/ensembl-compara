@@ -167,7 +167,24 @@
                 ),
                 (
                  (
-                  oryza_sativa,
+                  (
+                   oryza_sativa,
+                   oryza_sativa_arc,
+                   oryza_sativa_azucena,
+                   oryza_sativa_chaomeo,
+                   oryza_sativa_gobolsailbalam,
+                   oryza_sativa_ir64,
+                   oryza_sativa_ketannangka,
+                   oryza_sativa_khaoyaiguang,
+                   oryza_sativa_larhamugad,
+                   oryza_sativa_lima,
+                   oryza_sativa_liuxu,
+                   oryza_sativa_mh63,
+                   oryza_sativa_n22,
+                   oryza_sativa_natelboro,
+                   oryza_sativa_pr106,
+                   oryza_sativa_zs97,
+                  ),
                   oryza_rufipogon,
                  ),
                  (
@@ -250,7 +267,10 @@
              vigna_unguiculata,
             )Vigna,
             phaseolus_vulgaris,
-            glycine_max,
+            (
+             glycine_max,
+             glycine_soja,
+            ),
             cajanus_cajan,
            )Phaseoleae,
           )Papilionoideae,
