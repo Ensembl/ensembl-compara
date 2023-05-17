@@ -1396,6 +1396,19 @@ sub annotate_node_type {
     }
 }
 
+=head2 get_genome_db_for_node
+
+  Arg []     : none
+  Example    : my $genome_db = $genomic_align_tree->get_genome_db_for_node();
+  Description: Returns the GenomeDB associated with this genomic align tree or node.
+  Returntype : GenomeDB associated with the given GenomicAlignTree or node,
+               or undef if there is no associated GenomeDB.
+  Exceptions : none
+  Caller     : general
+  Status     : Experimental
+
+=cut
+
 sub get_genome_db_for_node {
     my ($self) = @_;
 

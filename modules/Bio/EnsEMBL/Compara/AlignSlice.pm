@@ -1095,12 +1095,17 @@ sub _create_underlying_Slices {
       my @genomic_aligns = @{$ga_node->get_all_genomic_aligns_for_node};
       if (@genomic_aligns) {
 
+        # We build up a mapping of each GenomicAlign ID to the GenomeDB of its corresponding GenomicAlignTree node.
+        # That GenomeDB is then used to generate the key by which Slices are grouped, so that if the GenomicAlignTree
+        # contains nodes associated with subgenome components, corresponding Slices will be grouped by subgenome.
         my $genome_db = $ga_node->get_genome_db_for_node;
         foreach my $genomic_align (@genomic_aligns) {
           my $ga_id = $genomic_align->dbID ? $genomic_align->dbID : $genomic_align->original_dbID;
           $ga_id_to_slice_gdb{$ga_id} = $genome_db;
         }
 
+        # We also record the set of GenomeDBs represented in the GenomicAlignTree, to help decide
+        # whether the reference GenomeDB, if polyploid, should be mapped to its component GenomeDB.
         $ga_tree_gdb_id_set{$genome_db->dbID} = 1;
       }
     }
@@ -1109,6 +1114,11 @@ sub _create_underlying_Slices {
   my $dnafrag_adaptor = $self->adaptor->db->get_DnaFragAdaptor;
   my $temp_dnafrag = $dnafrag_adaptor->fetch_by_Slice($self->reference_Slice);
   my $ref_genome_db = $temp_dnafrag->genome_db;
+
+  # If the reference GenomeDB is polyploid, take the component GenomeDB as the reference,
+  # but only if the reference DnaFrag maps to a component and that component GenomeDB is
+  # present in the GenomicAlignTree. This ensures that the reference GenomeDB is grouped
+  # consistently with the other genomes, whether at the level of the genome or subgenome.
   if ($ref_genome_db->is_polyploid()) {
     my $comp_dnafrag = map_dnafrag_to_genome_component($temp_dnafrag);
     if (defined($comp_dnafrag) && exists $ga_tree_gdb_id_set{$comp_dnafrag->genome_db->dbID}) {

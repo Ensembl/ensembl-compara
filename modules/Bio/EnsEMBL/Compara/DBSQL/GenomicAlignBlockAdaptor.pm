@@ -1430,6 +1430,13 @@ sub _get_GenomicAlignBlocks_from_HAL {
           my $principal = $genome_db->principal_genome_db();
           $hal_species_map{$hal_genome_name} = defined $principal ? $principal->dbID : $map_gdb_id;
 
+          # With the current implementation of a Cactus GenomicAlignBlock, only one aligned sequence can
+          # be included per species-tree node, so aligned sequences are grouped and the one that has the
+          # longest ungapped sequence is kept. The grouping key for this is the genome_db_id associated
+          # with the given HAL genome (as indicated by the HAL mapping). For polyploids we fall back to
+          # grouping by the principal GenomeDB if present in the MLSS species tree. Polypoid alignment
+          # sequences may therefore be grouped by principal or component GenomeDB, depending on whether
+          # they are represented at the genome or subgenome level (respectively) in the MLSS species tree.
           if (exists $mlss_sp_tree_gdb_ids{$map_gdb_id}) {
             $group_key_map{$hal_genome_name} = $map_gdb_id;
           } elsif (defined $principal && exists $mlss_sp_tree_gdb_ids{$principal->dbID}) {

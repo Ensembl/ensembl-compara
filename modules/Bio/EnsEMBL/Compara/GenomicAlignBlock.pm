@@ -1466,6 +1466,9 @@ sub get_GenomicAlignTree {
 
             my $comp_dnafrag = map_dnafrag_to_genome_component($genomic_align->dnafrag);
 
+            # We don't have the species tree yet, so we don't know whether it represents polyploids as genomes
+            # or subgenomes. But to avoid a duplicate GenomicAlign error, we assume that they are represented
+            # as subgenomes and map each polyploid to its component GenomeDB if possible.
             if (defined($comp_dnafrag)) {
                 $comp_gdb = $comp_dnafrag->genome_db;
                 $gdb_id_to_gdb{$comp_gdb->dbID} = $comp_gdb;
@@ -1483,6 +1486,9 @@ sub get_GenomicAlignTree {
     }
 
     while (my ($princ_gdb_id, $comp_gdb_ids) = each %polyploid_gdb_id_map) {
+        # We hedge our bets with polyploids whose GenomicAligns have been linked to their
+        # component GenomeDB, by also linking them to the principal GenomeDB, except where
+        # this would result in mapping multiple GenomicAligns to the same principal GenomeDB.
         if (!defined($gdb_id_to_ga->{$princ_gdb_id}) && scalar(@{$comp_gdb_ids}) == 1) {
             my $comp_gdb_id = $comp_gdb_ids->[0];
             $polyploid_gdb_id_map{$princ_gdb_id} = $comp_gdb_id;
@@ -1526,6 +1532,8 @@ sub get_GenomicAlignTree {
             my $leaf_gdb = $gdb_id_to_gdb{$leaf_gdb_id};
             $this_leaf->name($leaf_gdb->get_distinct_name);
             if ($leaf_gdb_id != $this_genomic_align->genome_db->dbID) {
+                # The leaf GenomeDB can differ from that of the GenomicAlign
+                # if, for example, it is a polyploid component GenomeDB.
                 $this_leaf->{_genome_db} = $leaf_gdb;
             }
 
