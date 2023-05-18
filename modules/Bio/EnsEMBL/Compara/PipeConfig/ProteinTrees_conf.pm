@@ -2486,8 +2486,8 @@ sub core_pipeline_analyses {
                     # examl can handle ~4x more patterns
                     '(#raxml_cores# >  16) && (#raxml_cores# <= 32)'    => 'examl_8_cores',
                     '(#raxml_cores# >  32) && (#raxml_cores# <= 48)'    => 'examl_16_cores',
-                    '(#raxml_cores# >  48) && (#raxml_cores# <= 96)'    => 'examl_32_cores',
-                    '(#raxml_cores# >  96)'                             => 'examl_48_cores',
+                    '(#raxml_cores# >  48) && (#raxml_cores# <= 128)'   => 'examl_32_cores',
+                    '(#raxml_cores# >  128)'                            => 'examl_64_cores',
                 ),
             },
         },
@@ -2550,7 +2550,7 @@ sub core_pipeline_analyses {
             -rc_name => '8Gb_32c_mpi',
             -flow_into => {
                -1 => [ 'examl_32_cores_himem' ],  # MEMLIMIT
-               -2 => [ 'examl_48_cores' ],  	  # RUNTIME
+               -2 => [ 'examl_64_cores' ],  	  # RUNTIME
             }
         },
 
