@@ -697,6 +697,14 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
         my $ref = $dnafrag->genome_db;
         my @targets = grep { $_->dbID != $ref->dbID } @{ $method_link_species_set->species_set->genome_dbs };
 
+        if ($ref->is_polyploid()) {
+          my @all_ref_comp_gdbs = ($ref, @{$ref->component_genome_dbs()});
+          my $comp_dnafrag = map_dnafrag_to_genome_component($dnafrag);
+          my $ref_comp_gdb = defined $comp_dnafrag ? $comp_dnafrag->genome_db : $ref;
+          my @target_comp_gdbs = grep { $_->dbID != $ref_comp_gdb->dbID } @all_ref_comp_gdbs;
+          push(@targets, @target_comp_gdbs);
+        }
+
         my $block_start = defined $start ? $start : $dnafrag->slice->start;
         my $block_end   = defined $end ? $end : $dnafrag->slice->end;
         return $self->_get_GenomicAlignBlocks_from_HAL( $method_link_species_set, $ref, \@targets, $dnafrag, $block_start, $block_end, $limit_number );
@@ -1455,6 +1463,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
     return [] if (!defined $linking_ref_gdb);
 
     my $hal_ref_name = $mlss->{'_hal_species_name_mapping'}->{ $linking_ref_gdb->dbID };
+    my $ref_group_key = $mlss->{'_hal_genome_name_to_group_key'}->{ $hal_ref_name };
 
     my $e2u_mappings = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{ $dnafrag->genome_db_id };
     my $hal_seq_reg = $e2u_mappings->{ $dnafrag->name } || $linking_dnafrag->name;
@@ -1480,7 +1489,8 @@ sub _get_GenomicAlignBlocks_from_HAL {
 
         foreach my $hal_target_gdb (@hal_target_gdbs) {
           my $hal_target = $mlss->{'_hal_species_name_mapping'}->{ $hal_target_gdb->dbID };
-          $hal_target_set{$hal_target} = 1 if (defined $hal_target);
+          my $target_group_key = $mlss->{'_hal_genome_name_to_group_key'}->{ $hal_target };
+          $hal_target_set{$hal_target} = 1 if (defined $hal_target && $target_group_key != $ref_group_key);
         }
       }
 
@@ -1590,7 +1600,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
           }
           push(@{$grouped_genomic_aligns->{$ga_group_key}}, $genomic_align);
 
-          $ref_genomic_align = $genomic_align if ( $this_gdb->dbID == $ref_gdb->dbID );
+          $ref_genomic_align = $genomic_align if ( $ga_group_key == $ref_group_key );
         }
 
         # check for duplicates
