@@ -50,6 +50,27 @@ sub default_options {
         'dbID_range_index'    => 20,
         'ref_collection_list'      => ['default','protostomes'],
         'label_prefix' => 'insects_',
+
+        #GOC parameters:
+        'goc_taxlevels' => ['Hymenoptera', 'Diptera', 'Ditrysia', 'Hemiptera'],
+
+        # HighConfidenceOrthologs parameters:
+        # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
+        'threshold_levels' => [
+            {
+                'taxa'          => [ 'Aculeata', 'Anophelinae', 'Drosophila', 'Glossinidae', 'Ditrysia', 'Tephritidae', 'Aphididae', 'Bemisia', 'Orthoptera', 'Trichoptera' ],
+                'thresholds'    => [ 50, 50, 25 ],
+            },
+            {
+                'taxa'          => [ 'Brachycera', 'Culicinae', 'Hemiptera', 'Phlebotominae', 'Hymenoptera', 'Diptera' ],
+                'thresholds'    => [ 25, 25, 25 ],
+            },
+            {
+                'taxa'          => [ 'all' ],
+                'thresholds'    => [ undef, undef, 25 ],
+            },
+        ],
+
     };
 }
 
