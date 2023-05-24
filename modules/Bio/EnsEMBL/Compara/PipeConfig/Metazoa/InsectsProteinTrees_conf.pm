@@ -1,4 +1,4 @@
-=head1 LICENSE
+]=head1 LICENSE
 
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.
@@ -58,11 +58,11 @@ sub default_options {
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
             {
-                'taxa'          => [ 'Aculeata', 'Anophelinae', 'Drosophila', 'Glossinidae', 'Ditrysia', 'Tephritidae', 'Aphididae', 'Bemisia', 'Orthoptera', 'Trichoptera' ],
+                'taxa'          => [ 'Aculeata', 'Anophelinae', 'Drosophila', 'Glossinidae', 'Ditrysia', 'Tephritidae', 'Aphididae', 'Bemisia', 'Culicinae', 'Acrididae' ],
                 'thresholds'    => [ 50, 50, 25 ],
             },
             {
-                'taxa'          => [ 'Brachycera', 'Culicinae', 'Hemiptera', 'Phlebotominae', 'Hymenoptera', 'Diptera' ],
+                'taxa'          => [ 'Brachycera', 'Hemiptera', 'Phlebotominae', 'Hymenoptera', 'Diptera', 'Orthoptera', 'Trichoptera' ],
                 'thresholds'    => [ 25, 25, 25 ],
             },
             {
