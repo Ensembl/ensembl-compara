@@ -26,11 +26,11 @@ def chainFileHasData(chain_file) {
     * @return true if chain file has data; false otherwise.
     */
     def stream = new GZIPInputStream(chain_file.newInputStream())
-    def reader = new InputStreamReader(stream, 'utf-8')
+    def reader = new InputStreamReader(stream, "utf-8")
 
     def data_found = false
     while ((line = reader.readLine()) != null) {
-        if (!line.startsWith('#')) {
+        if (!line.startsWith("#")) {
             data_found = true
             break
         }
@@ -48,22 +48,22 @@ def composeChainFileName(task_params, level, gzip) {
     * @return Chain file name.
     */
     def source_tag_parts = [task_params.source_genome]
-    if (level in ['sequence', 'location']) {
+    if (level in ["sequence", "location"]) {
         source_tag_parts.add(task_params.source_sequence)
 
-        if (level == 'location') {
+        if (level == "location") {
             source_tag_parts.addAll([task_params.source_start,
                                      task_params.source_end,
                                      task_params.source_strand])
         }
     }
 
-    def chain_file_name = sprintf('%s_to_%s.linearGap_medium.chain',
-                                  source_tag_parts.join('_'),
+    def chain_file_name = sprintf("%s_to_%s.linearGap_medium.chain",
+                                  source_tag_parts.join("_"),
                                   task_params.dest_genome)
 
     if (gzip) {
-        chain_file_name += '.gz'
+        chain_file_name += ".gz"
     }
 
     return chain_file_name
@@ -76,7 +76,7 @@ def convertTaskParamTypes(task_params) {
     * @param task_params Input task parameters.
     * @return Task parameters with converted types.
     */
-    def int_param_names = ['group_size', 'source_start', 'source_end']
+    def int_param_names = ["group_size", "source_start", "source_end"]
 
     int_param_names.each { param_name ->
         if (task_params.containsKey(param_name)) {
@@ -116,10 +116,10 @@ def getDefaultHalCachePath(hal_file_path) {
     * @return Path of HAL cache.
     */
     def hal_cache_prefix = hal_file_path
-    if (hal_file_path.endsWith('.hal')) {
-        hal_cache_prefix = hal_file_path.substring(0, hal_file_path.lastIndexOf('.hal'))
+    if (hal_file_path.endsWith(".hal")) {
+        hal_cache_prefix = hal_file_path.substring(0, hal_file_path.lastIndexOf(".hal"))
     }
-    return sprintf('%s_cache', hal_cache_prefix)
+    return sprintf("%s_cache", hal_cache_prefix)
 }
 
 def getNonemptyChains(chain_files) {
@@ -140,11 +140,11 @@ def loadMappingFromTsv(file_path) {
     * @return Mapping of each value in the first column
     * to its corresponding value in the second column.
     */
-    def lines = file_path.readLines('utf-8')
+    def lines = file_path.readLines("utf-8")
 
     def mapping = [:]
     lines.each { line ->
-        def (key, value) = line.split('\t')
+        def (key, value) = line.split("\t")
         mapping[key] = value
     }
 
