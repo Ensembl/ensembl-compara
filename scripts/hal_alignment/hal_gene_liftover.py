@@ -60,13 +60,16 @@ class SimpleRegion:
     def __post_init__(self, validate):
         if validate:
             if self.start < 0:
-                raise ValueError(f"0-based region start must be greater than or equal to 0: {self.start}")
+                raise ValueError(
+                    f"0-based region start must be greater than or equal to 0: {self.start}"
+                )
 
             if self.start >= self.end:
                 raise ValueError(
-                    f"0-based region end ({self.end}) must be greater than region start ({self.start})")
+                    f"0-based region end ({self.end}) must be greater than region start ({self.start})"
+                )
 
-            if self.strand not in ('+', '-'):
+            if self.strand not in ("+", "-"):
                 raise ValueError(f"0-based region has invalid strand: '{self.strand}'")
 
     @classmethod
@@ -81,17 +84,16 @@ class SimpleRegion:
 
         Raises:
             ValueError: If `region_string` is an invalid 1-based region string.
-
         """
 
         seq_region_regex = re.compile(
-            r'^(?P<chr>[^:]+):(?P<start>[0-9]+)-(?P<end>[0-9]+):(?P<strand>.+)$'
+            r"^(?P<chr>[^:]+):(?P<start>[0-9]+)-(?P<end>[0-9]+):(?P<strand>.+)$"
         )
         match = seq_region_regex.match(region_string)
 
         if match := seq_region_regex.fullmatch(region_string):
             region = cls.from_1_based_region_attribs(
-                match['chr'], match['start'], match['end'], match['strand']
+                match["chr"], match["start"], match["end"], match["strand"]
             )
         else:
             raise ValueError(
@@ -101,8 +103,13 @@ class SimpleRegion:
         return region
 
     @classmethod
-    def from_1_based_region_attribs(cls, chr_: str, start: Union[int, str], end: Union[int, str],
-                                    strand: Union[int, str]) -> SimpleRegion:
+    def from_1_based_region_attribs(
+        cls,
+        chr_: str,
+        start: Union[int, str],
+        end: Union[int, str],
+        strand: Union[int, str],
+    ) -> SimpleRegion:
         """Create a region object from 1-based region attributes.
 
         Args:
@@ -116,36 +123,39 @@ class SimpleRegion:
 
         Raises:
             ValueError: If the region attributes represent an invalid region.
-
         """
-        _strand_num_to_sign = {1: '+', -1: '-'}
+        _strand_num_to_sign = {1: "+", -1: "-"}
 
         start = int(start)
         end = int(end)
 
         if start < 1:
-            raise ValueError(f'1-based region start must be greater than or equal to 1: {start}')
+            raise ValueError(
+                f"1-based region start must be greater than or equal to 1: {start}"
+            )
 
         if start > end:
             raise ValueError(
-                f'1-based region end ({end}) must be greater than or equal to region start ({start})')
+                f"1-based region end ({end}) must be greater than or equal to region start ({start})"
+            )
 
         try:
             strand = _strand_num_to_sign[int(strand)]
-        except (KeyError, ValueError) as e:
-            raise ValueError(f"1-based region has invalid strand: '{strand}'") from e
+        except (KeyError, ValueError) as exc:
+            raise ValueError(f"1-based region has invalid strand: '{strand}'") from exc
 
         return cls(chr_, start - 1, end, strand, validate=False)
 
     def to_1_based_region_string(self):
         """Get the 1-based region string corresponding to this region."""
-        strand_num = 1 if self.strand == '+' else -1
-        return f'{self.chr}:{self.start + 1}-{self.end}:{strand_num}'
+        strand_num = 1 if self.strand == "+" else -1
+        return f"{self.chr}:{self.start + 1}-{self.end}:{strand_num}"
 
 
 class UnixTab(csv.unix_dialect):
     """A tab-delimited Unix csv dialect."""
-    delimiter = '\t'
+
+    delimiter = "\t"
 
 
 def extract_liftover_regions_from_bed(bed_file: Union[Path, str]) -> List[SimpleRegion]:
@@ -161,14 +171,13 @@ def extract_liftover_regions_from_bed(bed_file: Union[Path, str]) -> List[Simple
     dst_regions = []
     with open(bed_file) as f:
         for line in f:
-            chr_, start, end, _name, _score, strand, *_unused = line.rstrip().split('\t')
+            chr_, start, end, _name, _score, strand, *_unused = line.rstrip().split("\t")
             dst_regions.append(SimpleRegion(chr_, int(start), int(end), strand))
 
     return dst_regions
 
 
-def extract_region_sequences(regions: Iterable[SimpleRegion],
-                             two_bit_file: Union[Path, str]) -> List[str]:
+def extract_region_sequences(regions: Iterable[SimpleRegion], two_bit_file: Union[Path, str]) -> List[str]:
     """Extract region sequences from a 2bit file.
 
     Args:
@@ -180,14 +189,13 @@ def extract_region_sequences(regions: Iterable[SimpleRegion],
 
     """
     with TemporaryDirectory() as tmp_dir:
-
-        chain_bed_file = os.path.join(tmp_dir, 'chain.bed')
-        with open(chain_bed_file, 'w') as f:
+        chain_bed_file = os.path.join(tmp_dir, "chain.bed")
+        with open(chain_bed_file, "w") as f:
             for idx, region in enumerate(regions):
                 fields = [region.chr, region.start, region.end, idx, 0, region.strand]
-                print('\t'.join(str(x) for x in fields), file=f)
+                print("\t".join(str(x) for x in fields), file=f)
 
-        chain_fasta_file = os.path.join(tmp_dir, 'chain.fa')
+        chain_fasta_file = os.path.join(tmp_dir, "chain.fa")
         run_two_bit_to_fa(chain_bed_file, two_bit_file, chain_fasta_file)
 
         with open(chain_fasta_file) as f:
@@ -196,9 +204,15 @@ def extract_region_sequences(regions: Iterable[SimpleRegion],
     return sequences
 
 
-def liftover_via_chain(src_region: SimpleRegion, src_genome: str, src_chr_sizes: Dict[str, int],
-                       dst_genome: str, dst_2bit_file: Union[Path, str], chain_file: Union[Path, str],
-                       flank_length: int = 0) -> Dict[str, Any]:
+def liftover_via_chain(
+    src_region: SimpleRegion,
+    src_genome: str,
+    src_chr_sizes: Dict[str, int],
+    dst_genome: str,
+    dst_2bit_file: Union[Path, str],
+    map_tree: Dict,
+    flank_length: int = 0,
+) -> Dict[str, Any]:
     """Liftover a region using a pairwise assembly chain file.
 
     Args:
@@ -214,29 +228,34 @@ def liftover_via_chain(src_region: SimpleRegion, src_genome: str, src_chr_sizes:
         Dictionary containing liftover parameters and results.
 
     """
-    _strand_sign_to_num = {'+': 1, '-': -1}
+    _strand_sign_to_num = {"+": 1, "-": -1}
 
     rec: Dict[str, Any] = {}
-    rec['params'] = {
-        'src_genome': src_genome,
-        'src_chr': src_region.chr,
-        'src_start': src_region.start + 1,
-        'src_end': src_region.end,
-        'src_strand': _strand_sign_to_num[src_region.strand],
-        'flank': flank_length,
-        'dest_genome': dst_genome
+    rec["params"] = {
+        "src_genome": src_genome,
+        "src_chr": src_region.chr,
+        "src_start": src_region.start + 1,
+        "src_end": src_region.end,
+        "src_strand": _strand_sign_to_num[src_region.strand],
+        "flank": flank_length,
+        "dest_genome": dst_genome,
     }
 
-    rec['results'] = []
-    with TemporaryDirectory() as tmp_dir:
+    rec["results"] = []
+    #with TemporaryDirectory() as tmp_dir:
+    if True:
+        tmp_dir = "tmp_dir"
+        src_bed_file = os.path.join(tmp_dir, "src_regions.bed")
+        make_src_region_file(
+            [src_region],
+            src_genome,
+            src_chr_sizes,
+            src_bed_file,
+            flank_length=flank_length,
+        )
 
-        src_bed_file = os.path.join(tmp_dir, 'src_regions.bed')
-        make_src_region_file([src_region], src_genome, src_chr_sizes, src_bed_file,
-                             flank_length=flank_length)
-
-        dst_bed_file = os.path.join(tmp_dir, 'dst_regions.bed')
+        dst_bed_file = os.path.join(tmp_dir, "dst_regions.bed")
         crossmap_bed_file(map_tree, src_bed_file, dst_bed_file)
-
         dst_regions = extract_liftover_regions_from_bed(dst_bed_file)
 
         if not dst_regions:
@@ -245,19 +264,22 @@ def liftover_via_chain(src_region: SimpleRegion, src_genome: str, src_chr_sizes:
         dst_sequences = extract_region_sequences(dst_regions, dst_2bit_file)
 
         for dst_region, dst_sequence in zip(dst_regions, dst_sequences):
-            rec['results'].append({
-                'dest_chr': dst_region.chr,
-                'dest_start': dst_region.start + 1,
-                'dest_end': dst_region.end,
-                'dest_strand': _strand_sign_to_num[dst_region.strand],
-                'dest_sequence': dst_sequence
-            })
+            rec["results"].append(
+                {
+                    "dest_chr": dst_region.chr,
+                    "dest_start": dst_region.start + 1,
+                    "dest_end": dst_region.end,
+                    "dest_strand": _strand_sign_to_num[dst_region.strand],
+                    "dest_sequence": dst_sequence,
+                }
+            )
 
     return rec
 
 
-def load_liftover_alt_synonyms(alt_synonym_json_file: Union[Path, str], src_genome: str,
-                               dest_genome: str) -> Tuple[Dict, Dict, Dict]:
+def load_liftover_alt_synonyms(
+    alt_synonym_json_file: Union[Path, str], src_genome: str, dest_genome: str
+) -> Tuple[Dict, Dict, Dict]:
     """Load liftover alt-synonym data from JSON file.
 
     Args:
@@ -302,19 +324,24 @@ def load_chr_sizes(hal_file: Union[Path, str], genome_name: str) -> Dict[str, in
         Dictionary mapping chromosome names to their lengths.
 
     """
-    cmd = ['halStats', '--chromSizes', genome_name, hal_file]
-    process = run(cmd, check=True, capture_output=True, text=True, encoding='ascii')
+    cmd = ["halStats", "--chromSizes", genome_name, hal_file]
+    process = run(cmd, check=True, capture_output=True, text=True, encoding="ascii")
 
     chr_sizes = {}
     for line in process.stdout.splitlines():
-        chr_name, chr_size = line.rstrip().split('\t')
+        chr_name, chr_size = line.rstrip().split("\t")
         chr_sizes[chr_name] = int(chr_size)
 
     return chr_sizes
 
 
-def make_src_region_file(regions: Iterable[SimpleRegion], genome: str, chr_sizes: Mapping[str, int],
-                         bed_file: Union[Path, str], flank_length: int = 0) -> None:
+def make_src_region_file(
+    regions: Iterable[SimpleRegion],
+    genome: str,
+    chr_sizes: Mapping[str, int],
+    bed_file: Union[Path, str],
+    flank_length: int = 0,
+) -> None:
     """Make source region file.
 
     Args:
@@ -332,29 +359,36 @@ def make_src_region_file(regions: Iterable[SimpleRegion], genome: str, chr_sizes
     if flank_length < 0:
         raise ValueError(f"'flank_length' must be greater than or equal to 0: {flank_length}")
 
-    with open(bed_file, 'w') as f:
-        name = '.'
+    with open(bed_file, "w") as f:
+        name = "."
         score = 0  # halLiftover requires an integer score in BED input
         for region in regions:
-
             try:
                 chr_size = chr_sizes[region.chr]
-            except KeyError as e:
-                raise ValueError(
-                    f"chromosome ID '{region.chr}' not found in HAL genome '{genome}'") from e
+            except KeyError as exc:
+                raise ValueError(f"chromosome ID '{region.chr}' not found in HAL genome '{genome}'") from exc
 
             if region.start < 0:
-                raise ValueError(f'region start must be greater than or equal to 0: {region.start}')
+                raise ValueError(f"region start must be greater than or equal to 0: {region.start}")
 
             if region.end > chr_size:
-                raise ValueError(f'region end ({region.end}) must not be greater than the'
-                                 f' corresponding chromosome length ({region.chr}: {chr_size})')
+                raise ValueError(
+                    f"region end ({region.end}) must not be greater than the"
+                    f" corresponding chromosome length ({region.chr}: {chr_size})"
+                )
 
             flanked_start = max(0, region.start - flank_length)
             flanked_end = min(region.end + flank_length, chr_size)
 
-            fields = [region.chr, flanked_start, flanked_end, name, score, region.strand]
-            print('\t'.join(str(x) for x in fields), file=f)
+            fields = [
+                region.chr,
+                flanked_start,
+                flanked_end,
+                name,
+                score,
+                region.strand,
+            ]
+            print("\t".join(str(x) for x in fields), file=f)
 
 
 def read_region_tsv_file(region_tsv_file: Union[Path, str]) -> Generator[SimpleRegion, None, None]:
@@ -371,12 +405,16 @@ def read_region_tsv_file(region_tsv_file: Union[Path, str]) -> Generator[SimpleR
     with open(region_tsv_file) as f:
         reader = csv.DictReader(f, dialect=UnixTab)
         for row in reader:
-            yield SimpleRegion.from_1_based_region_attribs(row['chr'], row['start'],
-                                                           row['end'], row['strand'])
+            yield SimpleRegion.from_1_based_region_attribs(
+                row["chr"], row["start"], row["end"], row["strand"]
+            )
 
 
-def run_two_bit_to_fa(bed_file: Union[Path, str], two_bit_file: Union[Path, str],
-                      fasta_file: Union[Path, str]) -> None:
+def run_two_bit_to_fa(
+    bed_file: Union[Path, str],
+    two_bit_file: Union[Path, str],
+    fasta_file: Union[Path, str],
+) -> None:
     """Run twoBitToFa to obtain sequences of aligned target regions.
 
     Args:
@@ -385,66 +423,80 @@ def run_two_bit_to_fa(bed_file: Union[Path, str], two_bit_file: Union[Path, str]
         fasta_file: Output FASTA file.
 
     """
-    cmd = ['twoBitToFa', f'-bed={bed_file}', two_bit_file, fasta_file]
+    cmd = ["twoBitToFa", f"-bed={bed_file}", two_bit_file, fasta_file]
     run(cmd, check=True)
 
 
-if __name__ == '__main__':
-
-    parser = ArgumentParser(description='Performs a gene liftover between two haplotypes in a HAL file.')
-    parser.add_argument('hal_file', help="Input HAL file.")
-    parser.add_argument('src_genome', help="Source genome name.")
-    parser.add_argument('dest_genome', help="Destination genome name.")
-    parser.add_argument('output_file', help="Output file.")
+if __name__ == "__main__":
+    parser = ArgumentParser(description="Performs a gene liftover between two haplotypes in a HAL file.")
+    parser.add_argument("hal_file", help="Input HAL file.")
+    parser.add_argument("src_genome", help="Source genome name.")
+    parser.add_argument("dest_genome", help="Destination genome name.")
+    parser.add_argument("output_file", help="Output file.")
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--src-region', metavar='STR', help="Region to liftover.")
-    group.add_argument('--src-region-tsv', metavar='FILE',
-                       help="Input TSV file containing regions to liftover.")
+    group.add_argument("--src-region", metavar="STR", help="Region to liftover.")
+    group.add_argument(
+        "--src-region-tsv",
+        metavar="FILE",
+        help="Input TSV file containing regions to liftover.",
+    )
 
-    parser.add_argument('--flank', metavar='INT', default=0, type=int,
-                        help="Requested length of upstream/downstream"
-                             " flanking regions to include in query.")
-    parser.add_argument('--linear-gap', metavar='STR|FILE', default='medium',
-                        help="axtChain linear gap parameter.")
+    parser.add_argument(
+        "--flank",
+        metavar="INT",
+        default=0,
+        type=int,
+        help="Requested length of upstream/downstream" " flanking regions to include in query.",
+    )
+    parser.add_argument(
+        "--linear-gap",
+        metavar="STR|FILE",
+        default="medium",
+        help="axtChain linear gap parameter.",
+    )
 
-    parser.add_argument('--output-format', metavar='STR', default='JSON', choices=['JSON', 'TSV'],
-                        help="Format of output file.")
+    parser.add_argument(
+        "--output-format",
+        metavar="STR",
+        default="JSON",
+        choices=["JSON", "TSV"],
+        help="Format of output file.",
+    )
 
-    chain_params = parser.add_mutually_exclusive_group()
-    chain_params.add_argument('--skip-chain', action='store_true',
-                              help="Skip on-the-fly chaining of liftover alignment regions.")
-    chain_params.add_argument('--cache-chain', action='store_true',
-                              help="Use cached pairwise assembly chain file for"
-                                   " liftover, generating the chain file if necessary.")
+    parser.add_argument(
+        "--hal-cache",
+        metavar="PATH",
+        help="Directory in which HAL-derived data files are created (e.g. genome sequence"
+        " files). By default, the path of this directory is determined from the input"
+        " HAL file (e.g. '/path/to/aln.hal'), by replacing the HAL file extension with"
+        " the suffix '_cache' (e.g. '/path/to/aln_cache').",
+    )
 
-    parser.add_argument('--hal-aux-dir', metavar='PATH',
-                        help="Directory in which HAL-derived data files are created (e.g. genome sequence"
-                             " files). By default, the path of this directory is determined from the input"
-                             " HAL file (e.g. '/path/to/aln.hal'), by replacing the HAL file extension with"
-                             " the suffix '_files' (e.g. '/path/to/aln_files').")
-
-    parser.add_argument('--alt-synonym-json', metavar='FILE',
-                        help="Input JSON file with, for each genome in the HAL file, a one-to-one mapping"
-                             " between each chromosome name and its alternative synonym in the HAL file.")
+    parser.add_argument(
+        "--alt-synonym-json",
+        metavar="FILE",
+        help="Input JSON file with, for each genome in the HAL file, a one-to-one mapping"
+        " between each chromosome name and its alternative synonym in the HAL file.",
+    )
     args = parser.parse_args()
 
     if args.hal_cache is not None:
         hal_cache = args.hal_cache
     else:
         hal_file_stem, _ = os.path.splitext(args.hal_file)
-        hal_cache = f'{hal_file_stem}_cache'
+        hal_cache = f"{hal_file_stem}_cache"
     os.makedirs(hal_cache, exist_ok=True)
 
-    source_2bit_file = os.path.join(hal_cache, 'genome', '2bit', f'{args.src_genome}.2bit')
+    source_2bit_file = os.path.join(hal_cache, "genome", "2bit", f"{args.src_genome}.2bit")
     if not os.path.isfile(source_2bit_file):
-        raise RuntimeError(f'cannot find source genome 2bit file {source_2bit_file}')
+        raise RuntimeError(f"cannot find source genome 2bit file {source_2bit_file}")
 
-    destination_2bit_file = os.path.join(hal_cache, 'genome', '2bit', f'{args.dest_genome}.2bit')
+    destination_2bit_file = os.path.join(hal_cache, "genome", "2bit", f"{args.dest_genome}.2bit")
     if not os.path.isfile(destination_2bit_file):
-        raise RuntimeError(f'cannot find destination genome 2bit file {destination_2bit_file}')
+        raise RuntimeError(f"cannot find destination genome 2bit file {destination_2bit_file}")
 
-    cached_chain_dir = os.path.join(hal_cache, 'sequence', 'chain')
+    cached_chain_dir = os.path.join(hal_cache, "sequence", "chain")
 
     source_chr_sizes = load_chr_sizes(args.hal_file, args.src_genome)
 
@@ -454,9 +506,9 @@ if __name__ == '__main__':
         source_regions = read_region_tsv_file(args.src_region_tsv)
 
     if args.alt_synonym_json is not None:
-        src_chr_to_alt, src_alt_to_chr, dest_alt_to_chr = load_liftover_alt_synonyms(args.alt_synonym_json,
-                                                                                     args.src_genome,
-                                                                                     args.dest_genome)
+        src_chr_to_alt, src_alt_to_chr, dest_alt_to_chr = load_liftover_alt_synonyms(
+            args.alt_synonym_json, args.src_genome, args.dest_genome
+        )
         source_regions = (
             SimpleRegion(src_chr_to_alt[x.chr], x.start, x.end, x.strand, validate=False)
             for x in source_regions
@@ -468,7 +520,7 @@ if __name__ == '__main__':
     records = []
     for source_chr_name, source_regions in regions_by_chr.items():
         cached_chain_name = (
-            f'{args.src_genome}_{source_chr_name}_to_{args.dest_genome}.linearGap_{args.linear_gap}.chain.gz'
+            f"{args.src_genome}_{source_chr_name}_to_{args.dest_genome}.linearGap_{args.linear_gap}.chain.gz"
         )
         cached_chain_path = os.path.join(cached_chain_dir, cached_chain_name)
 
@@ -487,42 +539,40 @@ if __name__ == '__main__':
 
     if args.alt_synonym_json is not None:
         for record in records:
-            record['params']['src_chr'] = src_alt_to_chr[record['params']['src_chr']]
-            for result in record['results']:
-                result['dest_chr'] = dest_alt_to_chr[result['dest_chr']]
-                if 'lifted_src_chr' in result:
-                    result['lifted_src_chr'] = src_alt_to_chr[result['lifted_src_chr']]
+            record["params"]["src_chr"] = src_alt_to_chr[record["params"]["src_chr"]]
+            for result in record["results"]:
+                result["dest_chr"] = dest_alt_to_chr[result["dest_chr"]]
+                if "lifted_src_chr" in result:
+                    result["lifted_src_chr"] = src_alt_to_chr[result["lifted_src_chr"]]
 
-    if args.output_format == 'JSON':
-
-        with open(args.output_file, 'w') as file_obj:
+    if args.output_format == "JSON":
+        with open(args.output_file, "w") as file_obj:
             json.dump(records, file_obj)
 
-    elif args.output_format == 'TSV':
-
+    elif args.output_format == "TSV":
         output_field_names = [
-            'src_genome',
-            'src_chr',
-            'src_start',
-            'src_end',
-            'src_strand',
-            'flank',
-            'dest_genome',
-            'lifted_src_chr',
-            'lifted_src_start',
-            'lifted_src_end',
-            'lifted_src_strand',
-            'dest_chr',
-            'dest_start',
-            'dest_end',
-            'dest_strand',
-            'dest_sequence'
+            "src_genome",
+            "src_chr",
+            "src_start",
+            "src_end",
+            "src_strand",
+            "flank",
+            "dest_genome",
+            "lifted_src_chr",
+            "lifted_src_start",
+            "lifted_src_end",
+            "lifted_src_strand",
+            "dest_chr",
+            "dest_start",
+            "dest_end",
+            "dest_strand",
+            "dest_sequence",
         ]
 
-        with open(args.output_file, 'w') as file_obj:
+        with open(args.output_file, "w") as file_obj:
             writer = csv.DictWriter(file_obj, output_field_names, dialect=UnixTab)
             writer.writeheader()
             for record in records:
-                params = record['params']
-                for result in record['results']:
+                params = record["params"]
+                for result in record["results"]:
                     writer.writerow({**params, **result})
