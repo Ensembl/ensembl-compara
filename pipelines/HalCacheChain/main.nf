@@ -36,6 +36,9 @@ def helpMessage() {
     * Basic usage:
         \$ nextflow run main.nf --input /path/to/input.tsv --hal /path/to/alignment.hal
 
+    This workflow is based on the document by Mark Diekhans describing generation of pairwise chain files from a HAL alignment.
+    ( See https://github.com/ComparativeGenomicsToolkit/hal/blob/f8a457713d7d578464dc17f760583a0128080085/doc/chaining-mapping.md )
+
     See "nextflow.config" for additional options.
 
     """.stripIndent()
