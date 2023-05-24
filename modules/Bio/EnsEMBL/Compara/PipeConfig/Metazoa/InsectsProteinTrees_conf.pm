@@ -1,4 +1,4 @@
-]=head1 LICENSE
+=head1 LICENSE
 
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.
