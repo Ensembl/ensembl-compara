@@ -211,7 +211,7 @@ process linkAnnoCache {
 *@output tuple of path to annotation GTF and genome fasta
 */
 process buscoAnnot {
-    label 'retry_with_8gb_mem_c1'
+    label 'retry_with_32gb_mem_c32'
 
     publishDir "${params.results_dir}/anno_cache/$genome", pattern: "annotation.gtf", mode: "copy",  overwrite: true
 
@@ -559,7 +559,10 @@ process calcProtTrees {
         path "prot_aln_*.treefile", emit: tree
     script:
     """
-    ${params.iqtree_exe} -s $aln -m LG+F+G --fast -T ${params.cores}
+    # Remove taxa with gaps and stop codons only:
+    ${params.seqkit_exe} grep -v -s -r -p "^[*-]*\$" $aln > ${aln}.proc
+    # Run iqtree:
+    ${params.iqtree_exe} -s ${aln}.proc -m LG+F+G --fast -T ${params.cores}
     """
 }
 
