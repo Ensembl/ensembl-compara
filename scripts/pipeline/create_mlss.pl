@@ -504,6 +504,7 @@ sub create_mlss {
   }
   
   my $new_mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
+                                                                 -adaptor => $mlssa,
                                                                  -method => $method,
                                                                  -species_set => $species_set,
                                                                  -name => $mlss_name,

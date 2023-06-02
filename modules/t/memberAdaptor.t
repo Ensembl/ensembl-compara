@@ -112,6 +112,57 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::fetch_by_stable_id_Ge
     done_testing();
 };
 
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::fetch_all_by_stable_id unversioned gene_member stable_id", sub {
+
+    my @g_members = @{$gma->fetch_all_by_stable_id($g_stable_id)};
+    is( scalar(@g_members), 2, "Num gene_members matching unversioned stable_id" );
+
+    my ($hsap_g_member) = grep { $_->genome_db_id == $hs_gdb->dbID } @g_members;
+
+    is( $hsap_g_member->dbID, $g_member_id, "Fetching all gene_members by unversioned stable_id dbID" );
+    is( $hsap_g_member->stable_id, $g_stable_id, "Fetching all gene_members by unversioned stable_id stable_id" );
+    is( $hsap_g_member->version, $g_version, "Fetching all gene_members by unversioned stable_id version" );
+    is( $hsap_g_member->display_label, $g_display_label, "Fetching all gene_members by unversioned stable_id display_label" );
+    is( $hsap_g_member->description, $g_description, "Fetching all gene_members by unversioned stable_id description" );
+    is( $hsap_g_member->source_name, $g_source_name, "Fetching all gene_members by unversioned stable_id source_name" );
+    is( $hsap_g_member->dnafrag_id, $g_dnafrag_id, "Fetching all gene_members by unversioned stable_id dnafrag_id" );
+    is( $hsap_g_member->dnafrag_start, $g_dnafrag_start, "Fetching all gene_members by unversioned stable_id dnafrag_start" );
+    is( $hsap_g_member->dnafrag_end, $g_dnafrag_end, "Fetching all gene_members by unversioned stable_id dnafrag_end" );
+    is( $hsap_g_member->dnafrag_strand, $g_dnafrag_strand, "Fetching all gene_members by unversioned stable_id dnafrag_strand" );
+    is( $hsap_g_member->taxon_id, $g_taxon_id, "Fetching all gene_members by unversioned stable_id taxon_id" );
+    is( $hsap_g_member->genome_db_id, $g_genome_db_id, "Fetching all gene_members by unversioned stable_id genome_db_id" );
+    is( $hsap_g_member->canonical_member_id, $g_canonical_id, "Fetching all gene_members by unversioned stable_id canonical_member_id" );
+    is( $hsap_g_member->biotype_group, $g_biotype, "Fetching all gene_members by unversioned stable_id biotype_group" );
+
+    done_testing();
+};
+
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::fetch_all_by_stable_id versioned gene_member stable_id", sub {
+
+    my $g_stable_id_ver = "${g_stable_id}.${g_version}";
+    my @g_members = @{$gma->fetch_all_by_stable_id($g_stable_id_ver)};
+    is( scalar(@g_members), 1, "Num gene_members matching versioned stable_id" );
+
+    my $g_member = $g_members[0];
+
+    is( $g_member->dbID, $g_member_id, "Fetching all gene_members by versioned stable_id dbID" );
+    is( $g_member->stable_id, $g_stable_id, "Fetching all gene_members by versioned stable_id stable_id" );
+    is( $g_member->version, $g_version, "Fetching all gene_members by versioned stable_id version" );
+    is( $g_member->display_label, $g_display_label, "Fetching all gene_members by versioned stable_id display_label" );
+    is( $g_member->description, $g_description, "Fetching all gene_members by versioned stable_id description" );
+    is( $g_member->source_name, $g_source_name, "Fetching all gene_members by versioned stable_id source_name" );
+    is( $g_member->dnafrag_id, $g_dnafrag_id, "Fetching all gene_members by versioned stable_id dnafrag_id" );
+    is( $g_member->dnafrag_start, $g_dnafrag_start, "Fetching all gene_members by versioned stable_id dnafrag_start" );
+    is( $g_member->dnafrag_end, $g_dnafrag_end, "Fetching all gene_members by versioned stable_id dnafrag_end" );
+    is( $g_member->dnafrag_strand, $g_dnafrag_strand, "Fetching all gene_members by versioned stable_id dnafrag_strand" );
+    is( $g_member->taxon_id, $g_taxon_id, "Fetching all gene_members by versioned stable_id taxon_id" );
+    is( $g_member->genome_db_id, $g_genome_db_id, "Fetching all gene_members by versioned stable_id genome_db_id" );
+    is( $g_member->canonical_member_id, $g_canonical_id, "Fetching all gene_members by versioned stable_id canonical_member_id" );
+    is( $g_member->biotype_group, $g_biotype, "Fetching all gene_members by versioned stable_id biotype_group" );
+
+    done_testing();
+};
+
 subtest "Test Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::fetch_by_Gene gene_member", sub {
 
     my $g_member = $gma->fetch_by_Gene($gene);
@@ -163,6 +214,61 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::fetch_by_stable_id_Ge
     is( $s_member->sequence_id, $s_sequence_id, "Fetching seq_member by stable_id genomedb sequence_id" );
     is( $s_member->gene_member_id, $s_gene_member_id, "Fetching seq_member by stable_id genomedb gene_member_id" );
     is( $s_member->description, $s_description, "Fetching seq_member by stable_id genomedb description" );
+
+    done_testing();
+};
+
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::fetch_all_by_stable_id unversioned seq_member stable_id", sub {
+
+    my @s_members = @{$sma->fetch_all_by_stable_id($s_stable_id)};
+    is( scalar(@s_members), 2, "Num seq_members matching unversioned stable_id" );
+
+    my ($hsap_s_member) = grep { $_->genome_db_id == $hs_gdb->dbID } @s_members;
+
+    is( $hsap_s_member->dbID, $s_member_id, "Fetching all seq_members by unversioned stable_id dbID" );
+    is( $hsap_s_member->stable_id, $s_stable_id, "Fetching all seq_members by unversioned stable_id stable_id" );
+    is( $hsap_s_member->version, $s_version, "Fetching all seq_members by unversioned stable_id version" );
+    is( $hsap_s_member->display_label, $s_display_label, "Fetching all seq_members by unversioned stable_id display_label" );
+    is( $hsap_s_member->source_name, $s_source_name, "Fetching all seq_members by unversioned stable_id source_name" );
+    is( $hsap_s_member->dnafrag_id, $s_dnafrag_id, "Fetching all seq_members by unversioned stable_id dnafrag_id" );
+    is( $hsap_s_member->dnafrag_start, $s_dnafrag_start, "Fetching all seq_members by unversioned stable_id dnafrag_start" );
+    is( $hsap_s_member->dnafrag_end, $s_dnafrag_end, "Fetching all seq_members by unversioned stable_id dnafrag_end" );
+    is( $hsap_s_member->dnafrag_strand, $s_dnafrag_strand, "Fetching all seq_members by unversioned stable_id dnafrag_strand" );
+    is( $hsap_s_member->taxon_id, $s_taxon_id, "Fetching all seq_members by unversioned stable_id taxon_id" );
+    is( $hsap_s_member->genome_db_id, $s_genome_db_id, "Fetching all seq_members by unversioned stable_id genome_db_id" );
+    is( $hsap_s_member->has_transcript_edits, $has_transcript_edits, "Fetching all seq_members by unversioned stable_id has_transcript_edits" );
+    is( $hsap_s_member->has_translation_edits, $has_translation_edits, "Fetching all seq_members by unversioned stable_id has_translation_edits" );
+    is( $hsap_s_member->sequence_id, $s_sequence_id, "Fetching all seq_members by unversioned stable_id sequence_id" );
+    is( $hsap_s_member->gene_member_id, $s_gene_member_id, "Fetching all seq_members by unversioned stable_id gene_member_id" );
+    is( $hsap_s_member->description, $s_description, "Fetching all seq_members by unversioned stable_id description" );
+
+    done_testing();
+};
+
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::fetch_all_by_stable_id versioned seq_member stable_id", sub {
+
+    my $s_stable_id_ver = "${s_stable_id}.${s_version}";
+    my @s_members = @{$sma->fetch_all_by_stable_id($s_stable_id_ver)};
+    is( scalar(@s_members), 1, "Num seq_members matching versioned stable_id" );
+
+    my $s_member = $s_members[0];
+
+    is( $s_member->dbID, $s_member_id, "Fetching all seq_members by versioned stable_id dbID" );
+    is( $s_member->stable_id, $s_stable_id, "Fetching all seq_members by versioned stable_id stable_id" );
+    is( $s_member->version, $s_version, "Fetching all seq_members by versioned stable_id version" );
+    is( $s_member->display_label, $s_display_label, "Fetching all seq_members by versioned stable_id display_label" );
+    is( $s_member->source_name, $s_source_name, "Fetching all seq_members by versioned stable_id source_name" );
+    is( $s_member->dnafrag_id, $s_dnafrag_id, "Fetching all seq_members by versioned stable_id dnafrag_id" );
+    is( $s_member->dnafrag_start, $s_dnafrag_start, "Fetching all seq_members by versioned stable_id dnafrag_start" );
+    is( $s_member->dnafrag_end, $s_dnafrag_end, "Fetching all seq_members by versioned stable_id dnafrag_end" );
+    is( $s_member->dnafrag_strand, $s_dnafrag_strand, "Fetching all seq_members by versioned stable_id dnafrag_strand" );
+    is( $s_member->taxon_id, $s_taxon_id, "Fetching all seq_members by versioned stable_id taxon_id" );
+    is( $s_member->genome_db_id, $s_genome_db_id, "Fetching all seq_members by versioned stable_id genome_db_id" );
+    is( $s_member->has_transcript_edits, $has_transcript_edits, "Fetching all seq_members by versioned stable_id has_transcript_edits" );
+    is( $s_member->has_translation_edits, $has_translation_edits, "Fetching all seq_members by versioned stable_id has_translation_edits" );
+    is( $s_member->sequence_id, $s_sequence_id, "Fetching all seq_members by versioned stable_id sequence_id" );
+    is( $s_member->gene_member_id, $s_gene_member_id, "Fetching all seq_members by versioned stable_id gene_member_id" );
+    is( $s_member->description, $s_description, "Fetching all seq_members by versioned stable_id description" );
 
     done_testing();
 };

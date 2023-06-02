@@ -70,7 +70,6 @@ sub pipeline_analyses_ortholog_qm_alignment {
                 1 => [ '?accu_name=alignment_mlsses&accu_address=[]&accu_input_variable=accu_dataflow' ],
                 2 => [ '?accu_name=mlss_db_mapping&accu_address={mlss_id}&accu_input_variable=mlss_db' ],
             },
-            -rc_name => '500Mb_job',
             -analysis_capacity => 50,
         },
 
@@ -119,7 +118,6 @@ sub pipeline_analyses_ortholog_qm_alignment {
             -parameters => {
                 'cmd' => q(/bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtO --exclude '*.wga_reuse.tsv' #wga_dumps_dir#/ #homology_dumps_shared_dir#"),
             },
-            -rc_name    => '500Mb_job',
         },
 
     ];

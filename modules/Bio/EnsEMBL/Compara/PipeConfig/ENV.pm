@@ -157,8 +157,8 @@ sub resource_classes_single_thread {
     my ($self) = @_;
     my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
     return {
-        # 250 Mb seems to be the minimum we need nowadays, especially since we load the registry
-        'default'      => {'LSF' => ['-C0 -M250   -R"select[mem>250]   rusage[mem=250]"', $reg_requirement],               'LOCAL' => [ '', $reg_requirement ] },
+        # 1Gb seems to be the minimum we need nowadays
+        'default'      => {'LSF' => ['-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $reg_requirement],              'LOCAL' => [ '', $reg_requirement ] },
 
         '500Mb_job'    => {'LSF' => ['-C0 -M500   -R"select[mem>500]   rusage[mem=500]"',  $reg_requirement],              'LOCAL' => [ '', $reg_requirement ] },
         '1Gb_job'      => {'LSF' => ['-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $reg_requirement],              'LOCAL' => [ '', $reg_requirement ] },

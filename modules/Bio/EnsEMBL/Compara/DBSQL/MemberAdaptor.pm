@@ -56,33 +56,6 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 #
 #####################
 
-sub fetch_by_stable_id { ## DEPRECATED
-    my ($self, $stable_id) = @_;
-
-    deprecate(
-        "MemberAdaptor::fetch_by_stable_id() is deprecated and will be removed in e110. Please use fetch_by_stable_id_GenomeDB instead."
-    );
-
-    throw("MemberAdaptor::fetch_by_stable_id() must have an stable_id") unless $stable_id;
-
-    my $constraint = 'm.stable_id = ?';
-    $self->bind_param_generic_fetch($stable_id, SQL_VARCHAR);
-    my $m = $self->generic_fetch_one($constraint);
-    return $m if $m;
-
-    my $vindex = rindex($stable_id, '.');
-    return undef if $vindex <= 0;  # bail out if there is no dot, or if the string starts with a dot (since that would make the stable_id part empty)
-    my $version = substr($stable_id,$vindex+1);
-    if (looks_like_number($version)) {  # to avoid DBI complains
-        $constraint = 'm.stable_id = ? AND m.version = ?';
-        $self->bind_param_generic_fetch(substr($stable_id,0,$vindex), SQL_VARCHAR);
-        $self->bind_param_generic_fetch($version, SQL_INTEGER);
-        return $self->generic_fetch_one($constraint);
-    } else {
-        return undef;
-    }
-}
-
 =head2 fetch_by_stable_id_GenomeDB
   Arg [1]       : string $stable_id
   Arg [2]       : integer $genome_db_id or Bio::EnsEMBL::Compara::GenomeDB object
@@ -127,6 +100,38 @@ sub fetch_by_stable_id_GenomeDB {
     else {
         return undef;
     }
+}
+
+sub fetch_all_by_stable_id {
+    my ($self, $stable_id) = @_;
+
+    throw("MemberAdaptor::fetch_all_by_stable_id() must have a stable_id") unless $stable_id;
+
+    my $members = [];
+
+    my $constraint1 = 'm.stable_id = ?';
+    $self->bind_param_generic_fetch($stable_id, SQL_VARCHAR);
+    foreach my $member (@{$self->generic_fetch($constraint1)}) {
+        push @{$members}, $member;
+    }
+
+    # In fetch_by_stable_id_GenomeDB we could return matching members already,
+    # but this method is intended to fetch all matches, so we press on.
+    my $vindex = rindex( $stable_id, '.' );
+    if ($vindex > 0) { # skip if no dot (unversioned stable_id) or string starts with dot (empty stable_id)
+        my $unversioned_id = substr( $stable_id, 0, $vindex );
+        my $version = substr( $stable_id, ($vindex + 1) );
+        if ( looks_like_number( $version ) ) {
+            my $constraint2 = 'm.stable_id = ? AND m.version = ?';
+            $self->bind_param_generic_fetch( $unversioned_id, SQL_VARCHAR );
+            $self->bind_param_generic_fetch( $version, SQL_INTEGER );
+            foreach my $member ( @{$self->generic_fetch( $constraint2 )} ) {
+                push @{$members}, $member;
+            }
+        }
+    }
+
+    return $members;
 }
 
 =head2 fetch_all_by_stable_id_list

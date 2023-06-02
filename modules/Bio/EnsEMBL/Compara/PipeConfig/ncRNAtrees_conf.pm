@@ -131,7 +131,7 @@ sub default_options {
         'hc_batch_size' => 10,
 
         # RFAM parameters
-        'rfam_ftp_url'           => 'ftp://ftp.ebi.ac.uk/pub/databases/Rfam/12.0/',
+        'rfam_ftp_url'           => 'https://ftp.ebi.ac.uk/pub/databases/Rfam/12.0/',
         'rfam_remote_file'       => 'Rfam.cm.gz',
         'rfam_expanded_basename' => 'Rfam.cm',
         'rfam_expander'          => 'gunzip ',
@@ -618,7 +618,6 @@ sub core_pipeline_analyses {
         {   -logic_name         => 'expand_clusters_with_projections',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExpandClustersWithProjections',
             -flow_into          => [ 'cluster_qc_factory' ],
-            -rc_name => '500Mb_job',
         },
 
 # -------------------------------------------------[build trees]------------------------------------------------------------------
@@ -1253,7 +1252,6 @@ sub core_pipeline_analyses {
                 'hashed_mlss_id'    => '#expr(dir_revhash(#mlss_id#))expr#',
                 'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
             },
-            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('ortho_stats_capacity'),
         },
         
@@ -1263,7 +1261,6 @@ sub core_pipeline_analyses {
                 'hashed_mlss_id'    => '#expr(dir_revhash(#mlss_id#))expr#',
                 'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
             },
-            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('ortho_stats_capacity'),
         },
 
@@ -1360,7 +1357,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'cmd'         => '/bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtO #homology_dumps_dir#/ #homology_dumps_shared_dir#"',
             },
-            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name => 'rib_fire_orth_wga_and_high_conf',

@@ -91,8 +91,7 @@ jobs:
    #   script: prove -r ./travisci/sql-unittest/
 
     - language: perl
-      dist: trusty   # 5.22 is the minimum on xenial
-      perl: 5.14
+      perl: 5.26
       name: "Perl unit tests on the minimum version"
       env:
         - COVERAGE=false
@@ -126,7 +125,7 @@ jobs:
       script: ./travisci/perl-linter_harness.sh
 
     - language: python
-      python: 3.7.9
+      python: 3.8
       name: "Python unit tests on the minimum version"
       install:
         - pip install -r requirements.txt -r requirements-test.txt

@@ -414,7 +414,7 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
-    $analyses_by_name->{'dump_per_genome_homologies_tsv'}->{'-parameters'} = {'healthcheck' => 'unexpected_nulls'};
+    $analyses_by_name->{'dump_per_genome_homologies_tsv'}->{'-parameters'}{'healthcheck'} = 'unexpected_nulls';
 }
 
 1;

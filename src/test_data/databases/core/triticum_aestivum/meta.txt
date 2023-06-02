@@ -1,5 +1,5 @@
 1	\N	schema_type	core
-2	\N	schema_version	109
+2	\N	schema_version	110
 3	\N	patch	patch_68_69_a.sql|schema_version
 4	1	species.taxonomy_id	4565
 6	1	species.alias	bread wheat
@@ -176,3 +176,6 @@
 258	\N	patch	patch_107_108_a.sql|schema_version
 259	\N	patch	patch_108_109_a.sql|schema_version
 260	\N	patch	patch_108_109_b.sql|Added xref source GeneCards into external_db
+261	\N	patch	patch_109_110_a.sql|schema_version
+262	\N	patch	patch_109_110_b.sql|Add IS_PAR relationship to link X- and Y-PAR genes
+263	\N	patch	patch_109_110_c.sql|Allow gene id to belong to multiple alt allele groups

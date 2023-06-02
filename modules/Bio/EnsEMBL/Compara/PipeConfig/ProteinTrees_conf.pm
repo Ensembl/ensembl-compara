@@ -695,7 +695,6 @@ sub core_pipeline_analyses {
                 'exclude_list'  => 1,
                 'output_file'   => '#dump_dir#/snapshot_4_pipeline_finished.sql.gz',
             },
-            -rc_name    => '500Mb_job',
             -flow_into  => [
                 'generate_tree_stats_report',
                 'wga_expected_dumps',
@@ -1353,7 +1352,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'dump_canonical_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',   # Gets fasta_dir from pipeline_wide_parameters
-            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('reuse_capacity'),
             #-flow_into => [ 'cdhit' ],
         },
@@ -1376,7 +1374,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'dump_representative_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',
-            -rc_name    => '500Mb_job',
             -parameters => {
                 'only_canonical' => 0,
                 'only_representative' => 1,
@@ -1399,7 +1396,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'step' => $self->o('num_sequences_per_blast_job'),
             },
-            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
                 '2->A' => { 'blastp' => INPUT_PLUS() },
@@ -1413,7 +1409,6 @@ sub core_pipeline_analyses {
                 'species_set_id'    => '#nonreuse_ss_id#',
                 'step'              => $self->o('num_sequences_per_blast_job'),
             },
-            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
                 '2->A' => { 'blastp' => INPUT_PLUS() },
@@ -1591,7 +1586,6 @@ sub core_pipeline_analyses {
                 'blocklist_file' => $self->o('gene_blocklist_file'),
             },
             -flow_into          => [ 'hc_clusters' ],
-            -rc_name => '500Mb_job',
         },
 
         {   -logic_name         => 'hc_clusters',
@@ -1738,7 +1732,6 @@ sub core_pipeline_analyses {
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
             -analysis_capacity => 100,
             -max_retry_count   => 0,
-            -rc_name           => '500Mb_job',
             -flow_into         => {
                 '-1' => [ 'datacheck_trees_high_mem' ],
             },
@@ -1902,7 +1895,6 @@ sub core_pipeline_analyses {
                     ELSE 'aln_tagging',
                 ),
             },
-            -rc_name    => '500Mb_job',
             -hive_capacity  => $self->o('split_genes_capacity'),
             -batch_size     => 20,
         },
@@ -1937,7 +1929,6 @@ sub core_pipeline_analyses {
                 split_genes_gene_count  => $self->o('split_genes_gene_count'),
             },
             -hive_capacity  => $self->o('split_genes_capacity'),
-            -rc_name        => '500Mb_job',
             -batch_size     => 20,
             -flow_into      => {
                 '2->A' => 'split_genes_per_species',
@@ -1949,7 +1940,6 @@ sub core_pipeline_analyses {
         {   -logic_name     => 'split_genes_per_species',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
             -hive_capacity  => $self->o('split_genes_capacity'),
-            -rc_name        => '500Mb_job',
         },
 
         {   -logic_name     => 'split_genes_himem',
@@ -2032,7 +2022,6 @@ sub core_pipeline_analyses {
                 #'trimal_exe'    => $self->o('trimal_exe'),
             #},
             #-hive_capacity  => $self->o('alignment_filtering_capacity'),
-            #-rc_name        => '500Mb_job',
             #-batch_size     => 5,
             #-flow_into      => [ 'aln_filtering_tagging' ],
         #},
@@ -2210,7 +2199,6 @@ sub core_pipeline_analyses {
                 'treebest_exe'              => $self->o('treebest_exe'),
             },
             -hive_capacity        => $self->o('treebest_capacity'),
-            -rc_name    => '500Mb_job',
             -batch_size => 10,
             -flow_into  => {
                 -1 => 'treebest',
@@ -3100,7 +3088,6 @@ sub core_pipeline_analyses {
                               },
             -hive_capacity => $self->o('ktreedist_capacity'),
             -batch_size    => 5,
-            -rc_name       => '500Mb_job',
             -flow_into     => {
                 -1 => [ 'ktreedist_himem' ],
             },
@@ -3118,7 +3105,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name     => 'consensus_cigar_line_prep',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnConsensusCigarLine',
-            -rc_name        => '500Mb_job',
             -hive_capacity  => $self->o('ktreedist_capacity'),
             -batch_size     => 20,
             -flow_into      => {
@@ -3165,7 +3151,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('build_hmm_capacity'),
             -batch_size     => 5,
-            -rc_name        => '500Mb_job',
             -flow_into      => {
                 -1  => 'build_HMM_cds_v3_himem'
             },
@@ -3521,7 +3506,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name    => 'compute_statistics',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeStatistics',
-            -rc_name       => '500Mb_job',
             -flow_into     => {
                 '1->A'  => [ 'write_stn_tags' ],
                 'A->1'  => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => $self->pipeline_url(), 'registry_file' => undef } },
@@ -3561,7 +3545,6 @@ sub core_pipeline_analyses {
                     'ENSEMBL_ORTHOLOGUES'   => 2,
                 },
             },
-            -rc_name   => '500Mb_job',
             -flow_into => {
                 2 => [ 'mlss_id_mapping' ],
             },
@@ -3573,7 +3556,6 @@ sub core_pipeline_analyses {
                 'prev_rel_db'   => '#mapping_db#',
             },
             -hive_capacity => $self->o('homology_dNdS_capacity'),
-            -rc_name   => '500Mb_job',
             -flow_into  => {
                 -1 => [ 'mlss_id_mapping_himem' ],
                 1 => { 'homology_id_mapping' => INPUT_PLUS() },
@@ -3610,7 +3592,6 @@ sub core_pipeline_analyses {
                 'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homology_id_map.tsv',
             },
             -hive_capacity => $self->o('homology_dNdS_factory_capacity'),
-            -rc_name       => '500Mb_job',
             -flow_into => {
                 'A->1' => [ 'hc_dnds' ],
                 '2->A' => [ 'homology_dNdS' ],
@@ -3683,7 +3664,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('homology_dNdS_capacity'),
             -priority=> 20,
-            -rc_name => '500Mb_job',
         },
 
         {   -logic_name => 'copy_homology_dNdS',
@@ -3691,7 +3671,6 @@ sub core_pipeline_analyses {
             -parameters => {
             },
             -hive_capacity        => $self->o('copy_homology_dNdS_capacity'),
-            -rc_name => '500Mb_job',
             -batch_size => 5,
             -flow_into  => {
                 2 => [ 'homology_dNdS' ],
@@ -3719,7 +3698,6 @@ sub core_pipeline_analyses {
         {   -logic_name => 'threshold_on_dS_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS',
             -hive_capacity => $self->o('homology_dNdS_capacity'),
-            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name => 'rib_fire_goc',
@@ -3753,7 +3731,6 @@ sub core_pipeline_analyses {
                     'ENSEMBL_PARALOGUES'    => 3,
                 },
             },
-            -rc_name   => '500Mb_job',
             -flow_into => {
                 2 => [ 'orthology_stats', ],
                 3 => [ 'paralogy_stats',  ],
@@ -3766,7 +3743,6 @@ sub core_pipeline_analyses {
                 'hashed_mlss_id'    => '#expr(dir_revhash(#mlss_id#))expr#',
                 'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
             },
-            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('ortho_stats_capacity'),
         },
 
@@ -3777,7 +3753,6 @@ sub core_pipeline_analyses {
                 'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
                 'species_tree_label'    => $self->o('use_notung') ? 'binary' : 'default',
             },
-            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('ortho_stats_capacity'),
         },
 
@@ -3795,7 +3770,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'cmd'         => '/bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtO #homology_dumps_dir#/ #homology_dumps_shared_dir#"',
             },
-            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name => 'wga_expected_dumps',

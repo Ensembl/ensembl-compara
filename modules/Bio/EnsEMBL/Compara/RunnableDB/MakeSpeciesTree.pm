@@ -93,6 +93,13 @@ sub fetch_input {
 
     } else {    # generate the tree from the database+params
 
+        if ($self->param_is_defined('species_set_id')) {
+            my $species_set_adaptor = $self->compara_dba->get_SpeciesSetAdaptor();
+            my $species_set_id = $self->param('species_set_id');
+            my $species_set = $species_set_adaptor->fetch_by_dbID($species_set_id);
+            $self->param('species_set', $species_set);
+        }
+
         my @tree_creation_args = ();
 
         foreach my $config_param

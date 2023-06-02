@@ -91,6 +91,9 @@ sub default_options {
 
 sub tweak_analyses {
     my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
     my $analyses_by_name = shift;
 
     $analyses_by_name->{'HMMer_classify_factory'}->{'-parameters'}->{'step'} = 50;

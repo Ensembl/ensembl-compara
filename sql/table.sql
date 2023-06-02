@@ -653,7 +653,7 @@ CREATE TABLE dnafrag (
 @colour #808000
 
 @example    This query lists some haplotypes of the human chromosome 20, incl. the length of the complete patched chromosome and the coordinates of the region that differs.
-    @sql    SELECT dnafrag_id, name, length, dnafrag_start, dnafrag_end FROM dnafrag_alt_region JOIN dnafrag USING (dnafrag_id) WHERE name LIKE "CHR\_HSCHR20\_%";
+    @sql    SELECT dnafrag_id, name, length, dnafrag_start, dnafrag_end FROM dnafrag_alt_region JOIN dnafrag USING (dnafrag_id) WHERE name LIKE "HSCHR20\_%";
 
 @column dnafrag_id      External reference to dnafrag_id in the @link dnafrag table
 @column dnafrag_start   Position of the first nucleotide from this dnafrag that differs from the reference dnafrag
@@ -1015,7 +1015,7 @@ CREATE TABLE sequence (
 
 CREATE TABLE gene_member (
   gene_member_id              INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  stable_id                   varchar(128) BINARY NOT NULL, # e.g. ENSP000001234 or P31946
+  stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
   version                     INT UNSIGNED DEFAULT 0,
   source_name                 ENUM('ENSEMBLGENE', 'EXTERNALGENE') NOT NULL,
   taxon_id                    INT unsigned NOT NULL, # FK taxon.taxon_id
@@ -1116,7 +1116,7 @@ CREATE TABLE gene_member_hom_stats (
 
 CREATE TABLE seq_member (
   seq_member_id               INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  stable_id                   varchar(128) BINARY NOT NULL, # e.g. ENSP000001234 or P31946
+  stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
   version                     INT UNSIGNED DEFAULT 0,
   source_name                 ENUM('ENSEMBLPEP','ENSEMBLTRANS','Uniprot/SPTREMBL','Uniprot/SWISSPROT','EXTERNALPEP','EXTERNALTRANS','EXTERNALCDS') NOT NULL,
   taxon_id                    INT unsigned NOT NULL, # FK taxon.taxon_id
@@ -2279,7 +2279,7 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '109');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '110');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');

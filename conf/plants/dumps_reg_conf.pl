@@ -26,10 +26,10 @@ my $curr_eg_release = $curr_release - 53;
 # Core databases:
 # Load from the expected server species found on both vertebrates and non-vertebrates servers
 my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster saccharomyces_cerevisiae);
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3-b:4686/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
 Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1-b:4685/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1:4519/$curr_release");
 
 # Compara databases:
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas({
@@ -41,7 +41,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas({
 
 # Other databases:
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-3-b', "ncbi_taxonomy_${curr_release}" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-3', "ncbi_taxonomy_${curr_release}" ],
 });
 
 
