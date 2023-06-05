@@ -1749,8 +1749,8 @@ sub core_pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeJaccardIndex',
             -parameters => {
 
-                'r_shell'   => $self->o('r_shell'),
-                'renv_dir'  => $self->o('renv_dir'),
+                'rscript_exe'    => $self->o('rscript_exe'),
+                'renv_dir'       => $self->o('renv_dir'),
 
                 'jaccard_index_script'  => $self->o('jaccard_index_script'),
                 'lorentz_curve_script'  => $self->o('lorentz_curve_script'),

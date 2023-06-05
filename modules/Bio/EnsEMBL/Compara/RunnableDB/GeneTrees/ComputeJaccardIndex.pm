@@ -111,11 +111,11 @@ sub run {
     $ENV{'R_LIBS'} = $self->param_required('renv_dir');
 
     #Plot Jaccard:
-    my $cmd = [ $self->param_required('r_shell'), $self->param_required('jaccard_index_script'), $self->param('output_jaccard_file'), $self->param('output_jaccard_pdf')];
+    my $cmd = [ $self->param_required('rscript_exe'), $self->param_required('jaccard_index_script'), $self->param('output_jaccard_file'), $self->param('output_jaccard_pdf')];
     my $cmd_out = $self->run_command($cmd, { die_on_failure => 1 });
 
     #Plot the Lorentz curve for the Gini coefficient:
-    $cmd = [ $self->param_required('r_shell'), $self->param_required('lorentz_curve_script'), $self->param('output_gini_file'), $self->param('output_gini_pdf')];
+    $cmd = [ $self->param_required('rscript_exe'), $self->param_required('lorentz_curve_script'), $self->param('output_gini_file'), $self->param('output_gini_pdf')];
     $cmd_out = $self->run_command($cmd, { die_on_failure => 1 });
 
 
