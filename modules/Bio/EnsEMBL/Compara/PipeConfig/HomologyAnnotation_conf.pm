@@ -66,7 +66,7 @@ sub default_options {
         'species'       => [ ],
         'division'      => 'homology_annotation',
         # Mandatory server host for species homology databases
-        'homology_host' => 'mysql-ens-sta-5',
+        'homology_host' => 'mysql-ens-sta-6',
         # registry_file compatibility so can be overridden if necessary
         'registry_file' => $self->o('reg_conf'),
 
@@ -124,7 +124,7 @@ sub default_options {
         'failures_fatal'   => 1, # no DC failure tolerance
         'old_server_uri'   => [$self->o('compara_db')],
         'db_name'          => $self->o('dbowner') . '_' . $self->o('pipeline_name'),
-        'ref_dbname'       => 'ensembl_compara_references',
+        'ref_dbname'       => 'ensembl_compara_references_mvp',
 
         #Dump script location
         'dump_homologies_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/dumps/dump_homologies.py'),

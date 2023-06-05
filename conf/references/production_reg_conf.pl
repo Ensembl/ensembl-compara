@@ -111,7 +111,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
 
 # FORMAT: species/alias name => [ host, db_name ]
 my $compara_dbs = {
-    'compara_references' => [ 'mysql-ens-compara-prod-2', 'ensembl_compara_references' ],
+    'compara_references' => [ 'mysql-ens-compara-prod-2', 'ensembl_compara_references_mvp' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
