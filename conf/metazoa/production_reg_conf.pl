@@ -58,8 +58,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-3-b',
-        -port   => 4686,
+        -host   => 'mysql-ens-sta-3',
+        -port   => 4160,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -76,9 +76,10 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-6', 'sbhurji_metazoa_load_members_110' ],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', 'sbhurji_default_metazoa_protein_trees_110' ],
-    'protostomes_ptrees' => [ 'mysql-ens-compara-prod-8', 'twalsh_protostomes_metazoa_protein_trees_20230209_110' ],
+    #'compara_members'  => [ 'mysql-ens-compara-prod-6', '' ],
+    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', 'sbhurji_default_metazoa_protein_trees_110' ],
+    #'protostomes_ptrees' => [ 'mysql-ens-compara-prod-8', 'twalsh_protostomes_metazoa_protein_trees_20230209_110' ],
+    #'insects_ptrees'   => [ 'mysql-ens-compara-prod-X', '' ],
 
     # LastZ dbs
     # 'lastz_batch_1' => [ 'mysql-ens-compara-prod-X', '' ],
@@ -93,7 +94,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 # ----------------------NON-COMPARA DATABASES------------------------
 # NCBI taxonomy database (maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-3', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-3-b', "ncbi_taxonomy_$curr_release" ],
 });
 
 # -------------------------------------------------------------------
