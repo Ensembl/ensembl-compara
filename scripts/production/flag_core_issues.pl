@@ -303,7 +303,6 @@ foreach my $division (@divisions) {
 
         done_testing();
     };
-
 }
 
 done_testing();
