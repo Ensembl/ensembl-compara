@@ -114,6 +114,9 @@ my $reg_conf = catfile($config_dir, 'production_reg_conf.pl');
 my $registry = 'Bio::EnsEMBL::Registry';
 $registry->load_all($reg_conf, 0, 0, 0, 'throw_if_missing');
 
+my $ncbi_taxa_dba = $registry->get_DBAdaptor('ncbi_taxonomy', 'taxonomy');
+my $ncbi_taxa_node_dba = $ncbi_taxa_dba->get_TaxonomyNodeAdaptor();
+
 
 my %species_names_by_division;
 
@@ -165,6 +168,9 @@ foreach my $division (@divisions) {
             }
             my $meta_release = $meta_container->get_schema_version();
 
+            my $meta_species_taxon_id = $meta_container->single_value_by_key('species.species_taxonomy_id');
+            my $meta_taxon_id = $meta_container->get_taxonomy_id();
+
             my $db_conn = $registry->get_DBAdaptor($registry_name, 'core', 1)->dbc;
             my $db_name = $db_conn->dbname;
 
@@ -180,6 +186,8 @@ foreach my $division (@divisions) {
                 'production_name' => $meta_prod_name,
                 'division' => $meta_division,
                 'database_name' => $db_name,
+                'taxonomy_id' => $meta_taxon_id,
+                'species_taxonomy_id' => $meta_species_taxon_id,
             };
         }
     }
@@ -255,6 +263,31 @@ foreach my $division (@divisions) {
         done_testing();
     };
 
+    subtest "Check core species taxonomy metadata ($division)", sub {
+
+        my @species_names = sort keys %info_by_species;
+        foreach my $species_name (@species_names) {
+            my $info_by_reg_entry = $info_by_species{$species_name};
+            my @registry_names = sort keys %{$info_by_reg_entry};
+            foreach my $registry_name (@registry_names) {
+                my $reg_entry_info = $info_by_reg_entry->{$registry_name};
+                my $db_name = $reg_entry_info->{'database_name'};
+
+                my $taxon_node = $ncbi_taxa_node_dba->fetch_by_taxon_id($reg_entry_info->{'taxonomy_id'});
+                ok(defined $taxon_node && $taxon_node->isa('Bio::EnsEMBL::Taxonomy::TaxonomyNode'),
+                   "core meta entry 'species.taxonomy_id' is current for '$registry_name' ($db_name)");
+
+                if (defined($reg_entry_info->{'species_taxonomy_id'})) {
+                    my $species_taxon_node = $ncbi_taxa_node_dba->fetch_by_taxon_id($reg_entry_info->{'species_taxonomy_id'});
+                    ok(defined $species_taxon_node && $species_taxon_node->isa('Bio::EnsEMBL::Taxonomy::TaxonomyNode'),
+                       "core meta entry 'species.species_taxonomy_id' is current for $registry_name");
+                }
+            }
+        }
+
+        done_testing();
+    };
+
     subtest "Check for duplicate/missing cores ($division)", sub {
 
         foreach my $species_name (@species_names) {
@@ -270,6 +303,7 @@ foreach my $division (@divisions) {
 
         done_testing();
     };
+
 }
 
 done_testing();
