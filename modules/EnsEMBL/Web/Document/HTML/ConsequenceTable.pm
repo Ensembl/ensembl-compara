@@ -147,17 +147,17 @@ sub render {
       'impact'  => 'MODERATE',
     },
     {
-      'term'    => 'splice_region_variant', 
-      'colour'  => 'ff7f50', 
-      'desc'    => 'A sequence variant in which a change has occurred within the region of the splice site, either within 1-3 bases of the exon or 3-8 bases of the intron', 
-      'acc'     => '0001630', 
-      'impact'  => 'LOW',
-    },
-    {
       'term'    => 'splice_donor_5th_base_variant',
       'colour'  => 'ff7f50',
       'desc'    => 'A sequence variant that causes a change at the 5th base pair after the start of the intron in the orientation of the transcript',
       'acc'     => '0001787',
+      'impact'  => 'LOW',
+    },
+    {
+      'term'    => 'splice_region_variant',
+      'colour'  => 'ff7f50',
+      'desc'    => 'A sequence variant in which a change has occurred within the region of the splice site, either within 1-3 bases of the exon or 3-8 bases of the intron',
+      'acc'     => '0001630',
       'impact'  => 'LOW',
     },
     {
@@ -326,6 +326,13 @@ sub render {
       'colour'  => '636363', 
       'desc'    => 'A sequence variant located in the intergenic region, between genes', 
       'acc'     => '0001628', 
+      'impact'  => 'MODIFIER',
+    },
+    {
+      'term'    => 'sequence_variant', 
+      'colour'  => '636363', 
+      'desc'    => 'A sequence_variant is a non exact copy of a sequence_feature or genome exhibiting one or more sequence_alteration', 
+      'acc'     => '0001060', 
       'impact'  => 'MODIFIER',
     },
   ];
