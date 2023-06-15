@@ -138,7 +138,7 @@ my $compara_dbs = {
     'amniotes_pecan'      => [ 'mysql-ens-compara-prod-4', 'jalvarez_amniotes_mercator_pecan_107' ],
     'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-4', 'jalvarez_amniotes_mercator_pecan_107' ],
 
-    #'compara_syntenies'   => [ 'mysql-ens-compara-prod-2', 'thiagogenez_vertebrates_synteny_111' ],
+    'compara_syntenies'   => [ 'mysql-ens-compara-prod-4', 'twalsh_vertebrates_synteny_111' ],
 
     # miscellaneous
     'alt_allele_projection' => [ 'mysql-ens-compara-prod-2', 'twalsh_vertebrates_alt_allele_import_111' ],
