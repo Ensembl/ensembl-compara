@@ -2,6 +2,8 @@
     "hps_dir"                   : "/hps/nobackup/flicek/ensembl/compara",
     "warehouse_dir"             : "/nfs/production/flicek/ensembl/compara/warehouse",
 
+    "renv_dir"                  : "/hps/software/users/ensembl/compara/shared/renv/4.1.1",
+
     "axtChain_exe"              : ["check_exe_in_cellar", "kent/v335_1/bin/axtChain"],
     "big_bed_exe"               : ["check_exe_in_cellar", "kent/v335_1/bin/bedToBigBed"],
     "big_wig_exe"               : ["check_exe_in_cellar", "kent/v335_1/bin/bedGraphToBigWig"],
@@ -57,6 +59,7 @@
     "prank_exe"                 : ["check_exe_in_cellar", "prank/140603/bin/prank"],
     "prottest_jar"              : ["check_file_in_cellar", "prottest3/3.4.2/libexec/prottest-3.4.2.jar"],
     "quicktree_exe"             : ["check_exe_in_cellar", "quicktree/2.2/bin/quicktree"],
+    "rscript_exe"               : "/hps/software/spack/opt/spack/linux-centos8-sandybridge/gcc-9.3.0/r-4.1.1-jkdw35fv6wrc5jm5ljuby7fp5ysnm2y2/bin/Rscript",
     "r2r_exe"                   : ["check_exe_in_cellar", "r2r/1.0.5/bin/r2r"],
     "rapidnj_exe"               : ["check_exe_in_cellar", "rapidnj/2.3.2/bin/rapidnj"],
     "raxml_exe_avx"             : ["check_exe_in_cellar", "raxml/8.2.8/bin/raxmlHPC-AVX"],
