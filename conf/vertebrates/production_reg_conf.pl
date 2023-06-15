@@ -90,7 +90,15 @@ my $compara_dbs = {
     'pig_breeds_nctrees_prev' => [ 'mysql-ens-compara-prod-9',  'sbotond_pig_breeds_vertebrates_ncrna_trees_110' ],
 
     # LASTZ dbs
-    #'lastz_batch_1'    => [ 'mysql-ens-compara-prod-3', 'thiagogenez_vertebrates_lastz_batch1_111' ],
+    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-1', 'twalsh_vertebrates_lastz_batch1_111' ],
+    'lastz_batch_2'    => [ 'mysql-ens-compara-prod-3', 'twalsh_vertebrates_lastz_batch2_111' ],
+    'lastz_batch_3'    => [ 'mysql-ens-compara-prod-4', 'twalsh_vertebrates_lastz_batch3_111' ],
+    'lastz_batch_4'    => [ 'mysql-ens-compara-prod-6', 'twalsh_vertebrates_lastz_batch4_111' ],
+    'lastz_batch_5'    => [ 'mysql-ens-compara-prod-3', 'twalsh_vertebrates_lastz_batch5_111' ],
+    'lastz_batch_6'    => [ 'mysql-ens-compara-prod-4', 'twalsh_vertebrates_lastz_batch6_111' ],
+    'lastz_batch_7'    => [ 'mysql-ens-compara-prod-7', 'twalsh_vertebrates_lastz_batch7_111' ],
+    'lastz_batch_8'    => [ 'mysql-ens-compara-prod-9', 'twalsh_vertebrates_lastz_batch8_111' ],
+    'lastz_batch_9'    => [ 'mysql-ens-compara-prod-6', 'twalsh_vertebrates_lastz_batch9_111' ],
     'unidir_lastz'     => [ 'mysql-ens-compara-prod-1', 'ensembl_vertebrates_unidirectional_lastz' ],
 
     # EPO dbs
