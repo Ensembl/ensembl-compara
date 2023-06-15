@@ -77,8 +77,8 @@ sub default_options {
         'list_genomes_script'    => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
         'report_genomes_script'  => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
         'update_metadata_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
-        'meta_host' => 'mysql-ens-meta-prod-1',
-        'rr_meta_name' => 'ensembl_metadata_qrp',
+        'meta_host' => 'mysql-ens-sta-6',
+        'rr_meta_name' => 'ensembl_metadata',
         'perc_threshold' => 20,
 
         # member loading options
