@@ -56,12 +56,6 @@ my @collection_groups = qw(
     rhizaria1
     stramenopiles1
 );
-my @overlap_species = qw(hyaloperonospora_arabidopsidis);
-Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
-my $overlap_cores = {
-    'hyaloperonospora_arabidopsidis'  => [ 'mysql-ens-vertannot-staging', "hyaloperonospora_arabidopsidis_core_${curr_eg_release}_${curr_release}_1"],
-};
-Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 
 foreach my $group ( @collection_groups ) {
     Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
@@ -103,7 +97,7 @@ foreach my $group ( @collection_groups ) {
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-8', 'ensembl_compara_master_protists' ],
-    'compara_curr'   => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${curr_eg_release}_${curr_release}" ],
+    #'compara_curr'   => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${curr_eg_release}_${curr_release}" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
@@ -111,14 +105,11 @@ my $compara_dbs = {
     'compara_ptrees'  => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${prev_eg_release}_${prev_release}" ],
 
     # LastZ dbs
-    'lastz_batch_1' => [ 'mysql-ens-compara-prod-1', 'sbhurji_protists_lastz_batch1_109' ],
-    'lastz_batch_2' => [ 'mysql-ens-compara-prod-9', 'sbhurji_protists_lastz_batch2_109' ],
-    'lastz_batch_3' => [ 'mysql-ens-compara-prod-8', 'sbhurji_protists_lastz_batch3_109' ],
-    'lastz_batch_4' => [ 'mysql-ens-compara-prod-9', 'sbhurji_protists_lastz_batch4_109' ],
+    #'lastz_batch_1' => [ 'mysql-ens-compara-prod-X', '' ],
 
     # synteny
     #
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-8', 'sbhurji_protists_synteny_109' ],
+    #'compara_syntenies' => [ 'mysql-ens-compara-prod-X', '' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
