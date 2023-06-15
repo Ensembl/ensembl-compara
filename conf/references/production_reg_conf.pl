@@ -41,7 +41,7 @@ my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster saccharo
 # ---------------------- CURRENT CORE DATABASES---------------------------------
 
 # Load RR server first for priority
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-5:4684/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-6:4695/$curr_release");
 Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
 # Use the mirror servers
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-mirror-1:4240/$curr_release");
@@ -65,6 +65,14 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
     -user   => 'ensro',
     -pass   => '',
     -dbname => "protists_ichthyosporea1_collection_core_${curr_eg_release}_${curr_release}_1",
+);
+
+Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+    -host   => 'mysql-ens-compara-prod-6',
+    -port   => 4616,
+    -user   => 'ensro',
+    -pass   => '',
+    -dbname => "bacteria_0_collection_core_${curr_eg_release}_${curr_release}_1",
 );
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
@@ -107,11 +115,21 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
     -dbname => "protists_ichthyosporea1_collection_core_${prev_eg_release}_${prev_release}_1",
 );
 
+# Bacteria server: all species used in Pan happen to be in this database
+Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+        -host   => 'mysql-ens-mirror-4',
+        -port   => 4495,
+        -user   => 'ensro',
+        -pass   => '',
+        -dbname => "bacteria_0_collection_core_${prev_eg_release}_${prev_release}_1",
+        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
+);
+
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
 # FORMAT: species/alias name => [ host, db_name ]
 my $compara_dbs = {
-    'compara_references' => [ 'mysql-ens-compara-prod-2', 'ensembl_compara_references_mvp' ],
+    'compara_references' => [ 'mysql-ens-compara-prod-6', 'ensembl_compara_references_mvp' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -120,7 +138,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-5', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', "ncbi_taxonomy_$curr_release" ],
 });
 
 # -------------------------------------------------------------------
