@@ -68,8 +68,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
 );
 
 Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-    -host   => 'mysql-ens-compara-prod-6',
-    -port   => 4616,
+    -host   => 'mysql-ens-sta-6',
+    -port   => 4695,
     -user   => 'ensro',
     -pass   => '',
     -dbname => "bacteria_0_collection_core_${curr_eg_release}_${curr_release}_1",
