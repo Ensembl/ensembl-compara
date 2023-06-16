@@ -31,14 +31,14 @@ my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
 
 # ---------------------- CURRENT CORE DATABASES---------------------------------
 
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-5:4684/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-6:4695/$curr_release");
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
 # FORMAT: alias name => [ host, db_name ]
 my $compara_dbs = {
     # necessary compara dbs
-    'compara_references' => [ 'mysql-ens-sta-5', 'ensembl_compara_references' ],
+    'compara_references' => [ 'mysql-ens-sta-6', 'ensembl_compara_references_mvp' ],
 
 };
 
@@ -46,7 +46,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-5', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', "ncbi_taxonomy_110" ],
 });
 
 # -------------------------------------------------------------------

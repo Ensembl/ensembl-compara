@@ -92,7 +92,7 @@ sub default_options {
         'member_db'    => $self->o('compara_db'),
         'ncbi_db'      => 'ncbi_taxonomy',
         'rr_ref_db'    => 'compara_references',
-        'meta_host'    => 'mysql-ens-meta-prod-1',
+        'meta_host'    => 'mysql-ens-sta-6',
 
         # Member loading parameters - matches reference genome members
         'include_reference'           => 1,
