@@ -36,8 +36,8 @@ supported parameters:
     'do_not_reuse_list' => <list_of_species_ids_or_names>
         (optional)  is a 'veto' list of species we definitely do not want to be reused this time
 
-    'must_reuse_list_file' => <json_file>
-        (optional)  a list of species which MUST be reused this time
+    'must_reuse_collection_file' => <json_file>
+        (optional)  file configuring the collections for which species MUST be reused this time
 
 =cut
 
@@ -48,11 +48,13 @@ use warnings;
 
 use JSON qw(decode_json);
 
+use File::Temp qw(tempfile);
 use Scalar::Util qw(looks_like_number);
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::Utils::Registry;
+use Bio::EnsEMBL::Compara::Utils::RunCommand;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -85,23 +87,29 @@ sub fetch_input {
 
     # We need to read the must-reuse list before doing any assessment of reusability.
     my $reuse_required = 0;
-    if ( $self->param_is_defined('must_reuse_list_file') ) {
-        my $must_reuse_list = decode_json($self->_slurp($self->param('must_reuse_list_file')));
+    if ( $self->param_is_defined('must_reuse_collection_file') ) {
+
+        my ($fh, $must_reuse_list_file) = tempfile(UNLINK => 1);
+        my $cmd_args = [
+            $self->param('list_must_reuse_species_exe'),
+            "--input-file",
+            $self->param('must_reuse_collection_file'),
+            "--mlss-conf-file",
+            $self->param('mlss_conf_file'),
+            "--ensembl-release",
+            $self->param('ensembl_release'),
+            "--output-file",
+            $must_reuse_list_file,
+        ];
+        Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd_args, {'die_on_failure' => 1});
+        close($fh);
+
+        my $must_reuse_list = decode_json($self->_slurp($must_reuse_list_file));
 
         foreach my $must_reuse_candidate (@$must_reuse_list) {
-            if( looks_like_number( $must_reuse_candidate ) ) {
-
-                if( $must_reuse_candidate == $genome_db_id ) {
-                    $reuse_required = 1;
-                    last;
-                }
-
-            } else {
-
-                if( $must_reuse_candidate eq $species_name ) {
-                    $reuse_required = 1;
-                    last;
-                }
+            if( $must_reuse_candidate eq $species_name ) {
+                $reuse_required = 1;
+                last;
             }
         }
     }
