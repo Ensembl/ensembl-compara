@@ -129,7 +129,7 @@ sub pipeline_analyses_multiple_aligner_stats {
 
         {   -logic_name => 'block_stats_aggregator',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::BlockStatsAggregator',
-            -rc_name    => '8Gb_job',
+            -rc_name    => '16Gb_job',
         },
 
     ];
