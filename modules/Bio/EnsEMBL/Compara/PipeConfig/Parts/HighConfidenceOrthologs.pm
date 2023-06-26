@@ -159,7 +159,7 @@ sub pipeline_analyses_high_confidence {
                 homology_flatfile => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
                 replace      => 0,
             },
-            -rc_name         => '8Gb_job',
+            -rc_name         => '16Gb_job',
             -hive_capacity   => $self->o('import_homologies_capacity'),
             -max_retry_count => 0,
         },
