@@ -30,6 +30,7 @@
     "gerp_exe_dir"              : ["check_dir_in_cellar", "gerp/20080211_1/bin"],
     "getPatterns_exe"           : ["check_exe_in_cellar", "raxml-get-patterns/1.0/bin/getPatterns"],
     "halStats_exe"              : ["check_exe_in_cellar", "hal/1a89bd2/bin/halStats"],
+    "halAlignmentDepth_exe"     : ["check_exe_in_cellar", "hal/1a89bd2/bin/halAlignmentDepth"],
     "hcluster_exe"              : ["check_exe_in_cellar", "hclustersg/0.5.0/bin/hcluster_sg"],
     "hmmer2_home"               : ["check_dir_in_cellar", "hmmer2/2.3.2/bin"],
     "hmmer3_home"               : ["check_dir_in_cellar", "hmmer/3.1b2_1/bin"],
