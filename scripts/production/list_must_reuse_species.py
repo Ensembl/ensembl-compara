@@ -31,19 +31,17 @@ from lxml import etree
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="Generate list of must-reuse species.")
-    parser.add_argument("-i", "--input-file", metavar="PATH", required=True,
-                        help="Input must-reuse collection file.")
-    parser.add_argument("--mlss-conf-file", metavar="PATH", required=True,
-                        help="Input MLSS conf file.")
-    parser.add_argument("--ensembl-release", metavar="INT", required=True, type=int,
-                        help="Ensembl release.")
-    parser.add_argument("-o", "--output-file", metavar="PATH", required=True,
-                        help="Output allowed-species JSON file.")
+    parser.add_argument(
+        "-i", "--input-file", metavar="PATH", required=True, help="Input must-reuse collection file."
+    )
+    parser.add_argument("--mlss-conf-file", metavar="PATH", required=True, help="Input MLSS conf file.")
+    parser.add_argument("--ensembl-release", metavar="INT", required=True, type=int, help="Ensembl release.")
+    parser.add_argument(
+        "-o", "--output-file", metavar="PATH", required=True, help="Output allowed-species JSON file."
+    )
 
     args = parser.parse_args()
-
 
     with open(args.input_file) as in_file_obj:
         muse_reuse_config = json.load(in_file_obj)
