@@ -105,7 +105,9 @@ my $compara_dbs = {
     'compara_ptrees'  => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${prev_eg_release}_${prev_release}" ],
 
     # LastZ dbs
-    #'lastz_batch_1' => [ 'mysql-ens-compara-prod-X', '' ],
+    'lastz_batch_1' => [ 'mysql-ens-compara-prod-8', 'sbhurji_protists_lastz_batch1_111' ],
+    'lastz_batch_2' => [ 'mysql-ens-compara-prod-8', 'twalsh_protists_lastz_batch2_111' ],
+    'lastz_batch_3' => [ 'mysql-ens-compara-prod-8', 'twalsh_protists_lastz_batch3_111' ],
 
     # synteny
     #
