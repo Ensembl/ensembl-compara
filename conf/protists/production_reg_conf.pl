@@ -110,8 +110,7 @@ my $compara_dbs = {
     'lastz_batch_3' => [ 'mysql-ens-compara-prod-8', 'twalsh_protists_lastz_batch3_111' ],
 
     # synteny
-    #
-    #'compara_syntenies' => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-8', 'twalsh_protists_synteny_111' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
