@@ -99,6 +99,8 @@ sub default_options {
 
         # Do we want to initialise the CAFE part now ?
         'do_cafe'  => 0,
+        # gene order conservation ?
+        'do_goc'   => 0,
 
     };
 }
