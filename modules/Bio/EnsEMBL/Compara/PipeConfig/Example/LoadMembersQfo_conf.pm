@@ -80,6 +80,8 @@ sub tweak_analyses {
     delete $analyses_by_name->{'copy_table_from_master'}->{'-parameters'}->{'src_db_conn'};
     $analyses_by_name->{'copy_table_from_master'}->{'-parameters'}->{'src_db_conn'} = '#ncbi_db#';
 
+    $analyses_by_name->{'load_fresh_members_from_file'}->{'-parameters'}{'allow_ambiguity_codes'} = $self->o('allow_ambiguity_codes');
+    $analyses_by_name->{'load_fresh_members_from_file'}->{'-parameters'}{'mask_invalid_cds_seq'} = 1;
 }
 1;
 

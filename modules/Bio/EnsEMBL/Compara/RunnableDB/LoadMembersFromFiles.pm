@@ -66,6 +66,8 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults()},
+        'allow_ambiguity_codes' => 0,
+        'mask_invalid_cds_seq' => 0,
         'need_cds_seq'  => 0,
     }
 }
@@ -100,6 +102,11 @@ sub write_output {
       my $gene_member_adaptor = $compara_dba->get_GeneMemberAdaptor();
       my $seq_member_adaptor = $compara_dba->get_SeqMemberAdaptor();
       my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor();
+
+      my $valid_cds_symbols;
+      if ($self->param('mask_invalid_cds_seq')) {
+        $valid_cds_symbols = $self->param('allow_ambiguity_codes') ? 'ACGTNKMRSWYVHDB' : 'ACGTN';
+      }
 
       print Dumper($self->param('genome_content')) if $self->debug;
       my ($prot_seq,$cds_seq) = $self->param('genome_content')->get_sequences;
@@ -197,7 +204,11 @@ sub write_output {
             $seq_member_adaptor->_set_member_as_canonical($pep_member);
 
             if (exists $cds_seq->{ $prot_id }) {
-                $sequence_adaptor->store_other_sequence($pep_member, $cds_seq->{ $prot_id }->{'seq_obj'}->seq, 'cds');
+                my $cds_sequence = $cds_seq->{ $prot_id }->{'seq_obj'}->seq;
+                if ($self->param('mask_invalid_cds_seq')) {
+                    $cds_sequence =~ s/[^\Q$valid_cds_symbols\E]/N/gi;
+                }
+                $sequence_adaptor->store_other_sequence($pep_member, $cds_sequence, 'cds');
             } elsif ($self->param('need_cds_seq')) {
                 die $prot_id, " does not have cds sequence\n";
             } else {
