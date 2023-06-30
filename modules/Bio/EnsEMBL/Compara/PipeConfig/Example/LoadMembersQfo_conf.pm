@@ -56,7 +56,7 @@ sub default_options {
 
         'reuse_member_db' => undef,
 
-        'curr_file_sources_locs' => [ $ENV{ENSEMBL_ROOT_DIR}.'/ensembl-compara/conf/qfo/qfo_2022.json' ],
+        'curr_file_sources_locs' => [ $ENV{ENSEMBL_ROOT_DIR} . '/ensembl-compara/conf/qfo/genome_mf.json' ],
 
     #load uniprot members for family pipeline
         'load_uniprot_members'      => 0,

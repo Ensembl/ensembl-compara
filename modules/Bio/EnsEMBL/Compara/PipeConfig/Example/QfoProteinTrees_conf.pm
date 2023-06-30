@@ -92,7 +92,7 @@ sub default_options {
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         'curr_core_sources_locs'    => [ ],
-        'curr_file_sources_locs'    => [ $ENV{ENSEMBL_ROOT_DIR}.'/ensembl-compara/conf/qfo/qfo_2022.json' ],    # It can be a list of JSON files defining an additionnal set of species
+        'curr_file_sources_locs'    => [ $ENV{ENSEMBL_ROOT_DIR} . '/ensembl-compara/conf/qfo/genome_mf.json' ],  # Can be a list of JSON files defining an additional set of species
 
         # Add the database entries for the core databases of the previous release
         'prev_core_sources_locs'   => [ ],
