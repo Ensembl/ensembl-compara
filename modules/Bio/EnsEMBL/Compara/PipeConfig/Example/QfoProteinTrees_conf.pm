@@ -74,6 +74,10 @@ sub default_options {
         'do_treefam_xref'           => 0,
         'do_homology_id_mapping'    => 0,
 
+        # homology dumps options
+        'prev_homology_dumps_dir'   => undef,
+        'homology_dumps_shared_dir' => undef,
+
         # executable locations:
         #'treebest_exe'              => '/homes/muffato/workspace/treebest/treebest.qfo',
 
@@ -96,6 +100,16 @@ sub default_options {
         # Do we want to initialise the CAFE part now ?
         'do_cafe'  => 0,
 
+    };
+}
+
+
+sub pipeline_wide_parameters {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},
+
+        'gene_tree_stats_shared_dir' => $self->o('work_dir') . '/' . 'gene_tree_stats',
     };
 }
 
