@@ -46,6 +46,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+        # custom pipeline name, in case you don't like the default one
+        'pipeline_name'         => 'qfo_' . $ENV{QFO_RELEASE} . '_load_members_' . $self->o('rel_with_suffix'),
+
         'division'      => 'qfo',
         'collection'    => undef,
         'master_db'     => undef,

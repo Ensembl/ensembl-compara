@@ -45,7 +45,7 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the Vertebrates ones
 
         # custom pipeline name, in case you don't like the default one
-        'pipeline_name'         => 'qfo_2022_109',
+        'pipeline_name'         => 'qfo_' . $ENV{QFO_RELEASE} . '_protein_trees_' . $self->o('rel_with_suffix'),
         # Tag attached to every single tree
         'division'              => 'qfo',
 
