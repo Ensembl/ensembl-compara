@@ -143,6 +143,7 @@ sub write_output {
                 if (!defined $cached_dnafrags{$coord->[0]}) {
                     $cached_dnafrags{$coord->[0]} = Bio::EnsEMBL::Compara::DnaFrag->new(-GENOME_DB => $self->param('genome_db'), -NAME => $coord->[0]);
                     if ( $self->param('genome_content')->{'source'} eq 'uniprot' ) {
+                        $cached_dnafrags{$coord->[0]}->cellular_component('NUC');
                         my $gene_length = $coord->[2] - $coord->[1] + 1;
                         $cached_dnafrags{$coord->[0]}->length($gene_length);
                     }
