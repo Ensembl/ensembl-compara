@@ -204,23 +204,12 @@ sub write_output {
                 warn $prot_id, " does not have cds sequence\n";
             }
             if ( $self->param('genome_content')->{'source'} eq "uniprot" ) {
-                my $gene_member_id = $gene_member->dbID;
-                my $seq_member_id = $pep_member->dbID;
                 my $dnafrag_start = $gene_coordinates->{$prot_id}->{'coord'}->[1];
                 my $dnafrag_end = $gene_coordinates->{$prot_id}->{'coord'}->[2];
-                my $sequence_length = $dnafrag_end-$dnafrag_start;
-                my $leftover = 0;
-                my $sql = qq/
-                    INSERT INTO exon_boundaries(gene_member_id,seq_member_id,dnafrag_start,dnafrag_end,sequence_length,left_over) VALUES(
-                        $gene_member_id,$seq_member_id,$dnafrag_start,$dnafrag_end,$sequence_length,$leftover
-                    )
-                /;
-                $self->dbc->do($sql);
-                my $sql = q/
-                UPDATE dnafrag SET cellular_component='NUC'
-                WHERE (cellular_component = '' OR cellular_component IS NULL);
-                /;
-                $self->dbc->do($sql);
+                my $sequence_length = $dnafrag_end - $dnafrag_start + 1;
+                my $left_over = 0;
+                my @exons = ([$dnafrag_start, $dnafrag_end, $sequence_length, $left_over]);
+                $seq_member_adaptor->_store_exon_boundaries_for_SeqMember($pep_member, \@exons);
             }
       };
 	print "$count genes and peptides loaded\n" if ($self->debug);
