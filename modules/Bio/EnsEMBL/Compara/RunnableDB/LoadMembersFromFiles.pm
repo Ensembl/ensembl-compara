@@ -99,6 +99,7 @@ sub write_output {
       my $sequence_adaptor = $compara_dba->get_SequenceAdaptor();
       my $gene_member_adaptor = $compara_dba->get_GeneMemberAdaptor();
       my $seq_member_adaptor = $compara_dba->get_SeqMemberAdaptor();
+      my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor();
 
       print Dumper($self->param('genome_content')) if $self->debug;
       my ($prot_seq,$cds_seq) = $self->param('genome_content')->get_sequences;
@@ -135,14 +136,16 @@ sub write_output {
 
 		$gene_member->display_label($display_name);
         if ( $self->param('genome_content')->{'source'} eq 'uniprot' ) {
-            $gene_member->dnafrag_id($self->dbc->db_handle->last_insert_id(undef, undef, 'dnafrag', 'dnafrag_id'));
             $gene_member->biotype_group('coding');
         }
             if (exists $gene_coordinates->{$prot_id}) {
                my $coord = $gene_coordinates->{$prot_id}->{'coord'};
                 if (!defined $cached_dnafrags{$coord->[0]}) {
                     $cached_dnafrags{$coord->[0]} = Bio::EnsEMBL::Compara::DnaFrag->new(-GENOME_DB => $self->param('genome_db'), -NAME => $coord->[0]);
-                    my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor();
+                    if ( $self->param('genome_content')->{'source'} eq 'uniprot' ) {
+                        my $gene_length = $coord->[2] - $coord->[1] + 1;
+                        $cached_dnafrags{$coord->[0]}->length($gene_length);
+                    }
 		            $dnafrag_adaptor->store($cached_dnafrags{$coord->[0]}) || die "Could not store dnafrags";
                 }
 
@@ -167,9 +170,13 @@ sub write_output {
             $pep_member->gene_member_id($gene_member->dbID);
             if (exists $cds_coordinates->{$prot_id}) {
                 my $coord = $cds_coordinates->{$prot_id};
-                if (not $cached_dnafrags{$coord->[0]}) {
+                if (!defined $cached_dnafrags{$coord->[0]}) {
                     $cached_dnafrags{$coord->[0]} = Bio::EnsEMBL::Compara::DnaFrag->new(-GENOME_DB => $self->param('genome_db'), -NAME => $coord->[0]);
-                    my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor();
+                    if ( $self->param('genome_content')->{'source'} eq 'uniprot' ) {
+                        my $gene_coord = $gene_coordinates->{$prot_id}->{'coord'};
+                        my $gene_length = $gene_coord->[2] - $gene_coord->[1] + 1;
+                        $cached_dnafrags{$coord->[0]}->length($gene_length);
+                    }
 		            $dnafrag_adaptor->store($cached_dnafrags{$coord->[0]}) || die "Could not store dnafrag";
                 }
                 $pep_member->dnafrag($cached_dnafrags{$coord->[0]});
@@ -206,12 +213,6 @@ sub write_output {
                     INSERT INTO exon_boundaries(gene_member_id,seq_member_id,dnafrag_start,dnafrag_end,sequence_length,left_over) VALUES(
                         $gene_member_id,$seq_member_id,$dnafrag_start,$dnafrag_end,$sequence_length,$leftover
                     )
-                /;
-                $self->dbc->do($sql);
-                my $dnafrag_id = $gene_member->dnafrag_id;
-                my $sql = qq/
-                UPDATE dnafrag SET length = $sequence_length
-                WHERE dnafrag_id = $dnafrag_id;
                 /;
                 $self->dbc->do($sql);
                 my $sql = q/
