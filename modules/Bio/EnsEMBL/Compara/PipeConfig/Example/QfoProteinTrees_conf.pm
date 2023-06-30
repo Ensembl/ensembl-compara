@@ -53,6 +53,9 @@ sub default_options {
         'allow_missing_coordinates' => 1,
         'allow_missing_cds_seqs'    => 0,
 
+        # projection parameters
+        'projection_source_species_names' => [],
+
         # blast parameters:
 
         # clustering parameters:
