@@ -120,6 +120,8 @@ sub tweak_analyses {
 
     my $analyses_by_name = shift;
 
+    $analyses_by_name->{'check_reusability'}->{'-parameters'}{'reuse_this'} = 0;
+
     foreach my $logic_name (qw(treebest treebest_short treebest_long_himem)) {
         #$analyses_by_name->{$logic_name}->{'-parameters'}{'cdna'} = 0;
         $analyses_by_name->{$logic_name}->{'-parameters'}{'store_intermediate_trees'} = 0;
