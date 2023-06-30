@@ -89,7 +89,9 @@ sub locator {
 sub get_coordinates {
     my $self = shift;
 
-    $self->_load_coordinates unless exists $self->{'_coordinates'};
+    if ( !(exists $self->{'_gene_coordinates'} && exists $self->{'_cds_coordinates'}) ) {
+        $self->_load_coordinates;
+    }
     return ($self->{'_gene_coordinates'}, $self->{'_cds_coordinates'})
 }
 
@@ -228,10 +230,10 @@ sub _load_coordinates {
             $local_mrna_coordinates{$prot_id}{'parent'} = $prot_id;
             $local_gene_coordinates{$prot_id}{'protein_id'} = $prot_id;
             if ( defined $cds_seq->{$prot_id} ) {
-                $local_gene_coordinates{$prot_id}{'coord'} = [ $prot_id, 0, length($cds_seq->{$prot_id}->{'seq_obj'}->seq), 1 ];
+                $local_gene_coordinates{$prot_id}{'coord'} = [ $prot_id, 1, length($cds_seq->{$prot_id}->{'seq_obj'}->seq), 1 ];
             }
             else {
-                $local_gene_coordinates{$prot_id}{'coord'} = [ $prot_id, 0, length($prot_seq->{$prot_id}->{'seq_obj'}->seq), 1 ];
+                $local_gene_coordinates{$prot_id}{'coord'} = [ $prot_id, 1, length($prot_seq->{$prot_id}->{'seq_obj'}->seq), 1 ];
             }
             $local_cds_coordinates{$prot_id}{'coord'} = $local_gene_coordinates{$prot_id}{'coord'};
             $local_mrna_coordinates{$prot_id}{'coord'} = $local_gene_coordinates{$prot_id}{'coord'};
@@ -277,7 +279,10 @@ sub _load_coordinates {
 
 sub get_sequences {
     my $self = shift;
-    $self->_load_sequences();
+
+    if ( !(exists $self->{'_seqs'} && exists $self->{'_seqs'}{'prot'} && exists $self->{'_seqs'}{'cds'}) ) {
+        $self->_load_sequences();
+    }
     return ($self->{'_seqs'}{'prot'},$self->{'_seqs'}{'cds'});
 }
 
