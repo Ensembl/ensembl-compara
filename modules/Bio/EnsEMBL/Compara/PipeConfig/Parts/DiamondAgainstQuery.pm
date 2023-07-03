@@ -32,6 +32,8 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::DiamondAgainstQuery;
 use strict;
 use warnings;
 
+use File::Spec::Functions;
+
 use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf; # For WHEN and INPUT_PLUS
 
@@ -56,6 +58,10 @@ sub pipeline_analyses_diamond_against_query {
 
         {   -logic_name    => 'ref_from_fasta_factory',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::RefFromFastaFactory',
+            -parameters    => {
+                'get_genebuild_id_exe' => $self->o('get_genebuild_id_exe'),
+                'ref_reg_conf'         => catfile($self->o('ensembl_root_dir'), 'ensembl-compara', 'conf', 'references', 'production_reg_conf.pl'),
+            },
             -priority      => 1,
             -flow_into     => {
                 '2' => { 'diamond_blastp_ref_to_query'  => INPUT_PLUS() },
