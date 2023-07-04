@@ -85,7 +85,7 @@ my $compara_dbs = {
     'murinae_ptrees_prev'     => [ 'mysql-ens-compara-prod-9', 'sbotond_vertebrates_murinae_protein_reindexed_trees_110' ],
     'murinae_nctrees_prev'    => [ 'mysql-ens-compara-prod-9', 'sbotond_vertebrates_murinae_ncrna_reindexed_trees_110' ],
     #'pig_breeds_ptrees'       => [ 'mysql-ens-compara-prod-3',  'dd_thiagogenez_pig_breeds_vertebrates_protein_trees_111' ],
-    #'pig_breeds_nctrees'      => [ 'mysql-ens-compara-prod-9',  'dd_thiagogenez_pig_breeds_vertebrates_ncrna_trees_111' ],
+    'pig_breeds_nctrees'      => [ 'mysql-ens-compara-prod-3',  'thiagogenez_pig_breeds_vertebrates_ncrna_trees_111' ],
     'pig_breeds_ptrees_prev'  => [ 'mysql-ens-compara-prod-3',  'sbotond_pig_breeds_vertebrates_protein_trees_110' ],
     'pig_breeds_nctrees_prev' => [ 'mysql-ens-compara-prod-9',  'sbotond_pig_breeds_vertebrates_ncrna_trees_110' ],
 
@@ -125,7 +125,7 @@ my $compara_dbs = {
     'primates_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## pig strains
-    'pig_breeds_epo_w_ext'     => [ 'mysql-ens-compara-prod-1', 'jalvarez_pig_breeds_epo_with2x_103' ],
+    'pig_breeds_epo_w_ext'     => [ 'mysql-ens-compara-prod-1', 'thiagogenez_thiagogenez_pig_breeds_epo_with_ext_111_take2' ],
     'pig_breeds_epo_prev'      => [ 'mysql-ens-compara-prod-3', 'twalsh_mammals_epo_with_ext_111' ],  # Pig breeds are reused from mammals of the *same release* (same anchors and subset of species) - not needed.
     'pig_breeds_epo_anchors'   => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
@@ -152,7 +152,7 @@ my $ancestral_dbs = {
     'ancestral_prev' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
     'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
 
-    'mammals_ancestral'    => [ 'mysql-ens-compara-prod-8', 'ivana_mammals_ancestral_core_105' ],
+    'mammals_ancestral'    => [ 'mysql-ens-compara-prod-3', 'twalsh_mammals_ancestral_core_111' ],
     'primates_ancestral'   => [ 'mysql-ens-compara-prod-2', 'twalsh_primates_ancestral_core_106' ],
     'sauropsids_ancestral' => [ 'mysql-ens-compara-prod-10', 'jalvarez_sauropsids_ancestral_core_107' ],
     'fish_ancestral'       => [ 'mysql-ens-compara-prod-1', 'twalsh_fish_ancestral_core_106' ],
