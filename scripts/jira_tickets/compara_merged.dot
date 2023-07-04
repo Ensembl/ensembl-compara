@@ -1,6 +1,6 @@
 digraph {
     rankdir=LR;  # Left-to-right graph instead of top-to-bottom
-    "Merge the HAL alignment data";
+    "Register HAL alignment data";
     "Patches against their primary assembly";
 
     "Genome dumps" -> { "Species-tree", "LastZ" };

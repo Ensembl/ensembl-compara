@@ -95,6 +95,12 @@
          },
          {
             "component": "Production tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+CACTUS+HAL+Alignment+to+Compara",
+            "summary": "Register HAL alignment data",
+            "name_on_graph": "Register HAL alignment data"
+         },
+         {
+            "component": "Production tasks",
             "description": "*GitHub*: [Plants/EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/EPOwithExt_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name rice{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Rice EPOwithExt pipeline",
             "name_on_graph": "EPOwithExt:Rice"
@@ -138,12 +144,6 @@
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
             "summary": "Merge the homology pipelines"
          },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+CACTUS+HAL+Alignment+to+Compara",
-            "summary": "Merge the HAL alignment data"
-         }, 
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",

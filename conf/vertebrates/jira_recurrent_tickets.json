@@ -220,6 +220,12 @@
          },
          {
             "component": "Production tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+CACTUS+HAL+Alignment+to+Compara",
+            "summary": "Register HAL alignment data",
+            "name_on_graph": "Register HAL alignment data"
+         },
+         {
+            "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Age+of+Base",
             "summary": "Age of Base",
             "name_on_graph": "Age of Base:Human"
