@@ -15,14 +15,25 @@
       <genome name="caenorhabditis_elegans"/>
       <genome name="drosophila_melanogaster"/>
       <genome name="saccharomyces_cerevisiae"/>
+      <!-- Exclude species that are currently Cactus-only -->
+      <genome name="castor_canadensis" exclude="1"/>
+      <genome name="cavia_aperea" exclude="1"/>
+      <genome name="colobus_angolensis_palliatus" exclude="1"/>
+      <genome name="cricetulus_griseus_picr" exclude="1"/>
+      <genome name="fukomys_damarensis" exclude="1"/>
+      <genome name="lynx_canadensis" exclude="1"/>
+      <genome name="meriones_unguiculatus" exclude="1"/>
+      <genome name="piliocolobus_tephrosceles" exclude="1"/>
+      <genome name="spermophilus_dauricus" exclude="1"/>
+      <genome name="suricata_suricatta" exclude="1"/>
+      <genome name="theropithecus_gelada" exclude="1"/>
+      <genome name="ursus_thibetanus_thibetanus" exclude="1"/>
+      <genome name="zalophus_californianus" exclude="1"/>
     </collection>
 
     <!-- Default gene-tree collection -->
     <collection name="default">
       <base_collection name="vertebrate_species"/>
-      <!-- Human is added here as a placeholder genome, to be removed after at least one
-           'genome' or 'taxonomic_group' element has been added to this collection. -->
-      <genome name="homo_sapiens"/>
       <genome name="sinocyclocheilus_grahami" exclude="1"/>
     </collection>
 
@@ -63,7 +74,11 @@
       </species_set>
     </one_vs_all>
 
-    <one_vs_all method="LASTZ_NET" ref_genome="canis_lupus_familiaris" against="Carnivora"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="canis_lupus_familiaris">
+      <species_set in_collection="vertebrate_species">
+        <taxonomic_group taxon_name="Carnivora"/>
+      </species_set>
+    </one_vs_all>
 
     <one_vs_all method="LASTZ_NET" ref_genome="bos_taurus">
       <species_set in_collection="vertebrate_species">
@@ -85,7 +100,7 @@
 
     <!-- Sauropsids -->
     <one_vs_all method="LASTZ_NET" ref_genome="gallus_gallus">
-      <species_set>
+      <species_set in_collection="vertebrate_species">
         <taxonomic_group taxon_name="Sarcopterygii"/>
         <taxonomic_group taxon_name="Mammalia" exclude="1"/>
         <!-- Remove all the taxa that have a better reference than chicken -->
@@ -113,6 +128,7 @@
     <one_vs_all method="LASTZ_NET" ref_genome="oryzias_latipes">
       <species_set>
         <taxonomic_group taxon_name="Actinopterygii"/>
+        <genome name="xiphophorus_couchianus" exclude="1"/>
       </species_set>
     </one_vs_all>
 
@@ -148,7 +164,7 @@
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="EPO_EXTENDED">
-      <species_set name="primates">
+      <species_set name="primates" in_collection="vertebrate_species">
         <taxonomic_group taxon_name="Primates"/>
       </species_set>
     </multiple_alignment>
@@ -233,7 +249,7 @@
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="EPO_EXTENDED" gerp="1">
-      <species_set name="sauropsids">
+      <species_set name="sauropsids" in_collection="vertebrate_species">
         <taxonomic_group taxon_name="Sauropsida"/>
       </species_set>
     </multiple_alignment>
@@ -285,8 +301,9 @@
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="EPO_EXTENDED" gerp="1">
-      <species_set name="fish">
+      <species_set name="fish" in_collection="vertebrate_species">
         <taxonomic_group taxon_name="Actinopterygii"/>
+        <genome name="xiphophorus_couchianus" exclude="1"/>
       </species_set>
     </multiple_alignment>
 
@@ -317,7 +334,6 @@
         <genome name="balaenoptera_musculus" assembly="mBalMus1.v2"/>
         <genome name="bos_grunniens" assembly="LU_Bosgru_v3.0"/>
         <genome name="bos_indicus_hybrid" assembly="UOA_Brahman_1"/>
-        <genome name="bos_taurus" assembly="ARS-UCD1.2"/>
         <genome name="callithrix_jacchus" assembly="mCalJac1.pat.X"/>
         <genome name="camelus_dromedarius" assembly="CamDro2"/>
         <genome name="canis_lupus_dingo" assembly="ASM325472v1"/>
@@ -354,7 +370,6 @@
         <genome name="nomascus_leucogenys" assembly="Nleu_3.0"/>
         <genome name="ornithorhynchus_anatinus" assembly="mOrnAna1.p.v1"/>
         <genome name="oryctolagus_cuniculus" assembly="OryCun2.0"/>
-        <genome name="ovis_aries_rambouillet" assembly="Oar_rambouillet_v1.0"/>
         <genome name="panthera_leo" assembly="PanLeo1.0"/>
         <genome name="panthera_pardus" assembly="PanPar1.0"/>
         <genome name="pan_paniscus" assembly="panpan1.1"/>
@@ -403,6 +418,111 @@
         <genome name="mus_spretus"/>
         <genome name="mus_spicilegus"/>
         <genome name="rattus_norvegicus"/>
+      </species_set>
+    </multiple_alignment>
+
+    <multiple_alignment method="CACTUS_HAL">
+      <species_set name="mammals">
+        <genome name="anolis_carolinensis"/>
+        <genome name="aotus_nancymaae"/>
+        <genome name="balaenoptera_musculus"/>
+        <genome name="bison_bison_bison"/>
+        <genome name="bos_grunniens"/>
+        <genome name="bos_indicus_hybrid"/>
+        <genome name="bos_mutus"/>
+        <genome name="bos_taurus"/>
+        <genome name="callithrix_jacchus"/>
+        <genome name="camelus_dromedarius"/>
+        <genome name="canis_lupus_dingo"/>
+        <genome name="capra_hircus"/>
+        <genome name="carlito_syrichta"/>
+        <genome name="castor_canadensis"/>
+        <genome name="catagonus_wagneri"/>
+        <genome name="cavia_aperea"/>
+        <genome name="cavia_porcellus"/>
+        <genome name="cebus_imitator"/>
+        <genome name="cercocebus_atys"/>
+        <genome name="cervus_hanglu_yarkandensis"/>
+        <genome name="chinchilla_lanigera"/>
+        <genome name="chlorocebus_sabaeus"/>
+        <genome name="colobus_angolensis_palliatus"/>
+        <genome name="cricetulus_griseus_picr"/>
+        <genome name="danio_rerio"/>
+        <genome name="dasypus_novemcinctus"/>
+        <genome name="delphinapterus_leucas"/>
+        <genome name="dipodomys_ordii"/>
+        <genome name="equus_asinus"/>
+        <genome name="equus_caballus"/>
+        <genome name="felis_catus"/>
+        <genome name="fukomys_damarensis"/>
+        <genome name="gallus_gallus"/>
+        <genome name="gorilla_gorilla"/>
+        <genome name="heterocephalus_glaber_female"/>
+        <genome name="homo_sapiens"/>
+        <genome name="ictidomys_tridecemlineatus"/>
+        <genome name="jaculus_jaculus"/>
+        <genome name="lepisosteus_oculatus"/>
+        <genome name="loxodonta_africana"/>
+        <genome name="lynx_canadensis"/>
+        <genome name="macaca_fascicularis"/>
+        <genome name="macaca_mulatta"/>
+        <genome name="macaca_nemestrina"/>
+        <genome name="mandrillus_leucophaeus"/>
+        <genome name="marmota_marmota_marmota"/>
+        <genome name="meriones_unguiculatus"/>
+        <genome name="mesocricetus_auratus"/>
+        <genome name="microcebus_murinus"/>
+        <genome name="microtus_ochrogaster"/>
+        <genome name="monodelphis_domestica"/>
+        <genome name="monodon_monoceros"/>
+        <genome name="moschus_moschiferus"/>
+        <genome name="mus_musculus"/>
+        <genome name="mus_spicilegus"/>
+        <genome name="mustela_putorius_furo"/>
+        <genome name="myotis_lucifugus"/>
+        <genome name="nannospalax_galili"/>
+        <genome name="neovison_vison"/>
+        <genome name="nomascus_leucogenys"/>
+        <genome name="notamacropus_eugenii"/>
+        <genome name="octodon_degus"/>
+        <genome name="ornithorhynchus_anatinus"/>
+        <genome name="oryctolagus_cuniculus"/>
+        <genome name="oryzias_latipes"/>
+        <genome name="otolemur_garnettii"/>
+        <genome name="ovis_aries_rambouillet"/>
+        <genome name="pan_paniscus"/>
+        <genome name="pan_troglodytes"/>
+        <genome name="panthera_leo"/>
+        <genome name="panthera_pardus"/>
+        <genome name="panthera_tigris_altaica"/>
+        <genome name="papio_anubis"/>
+        <genome name="peromyscus_maniculatus_bairdii"/>
+        <genome name="phascolarctos_cinereus"/>
+        <genome name="phocoena_sinus"/>
+        <genome name="physeter_catodon"/>
+        <genome name="piliocolobus_tephrosceles"/>
+        <genome name="pongo_abelii"/>
+        <genome name="prolemur_simus"/>
+        <genome name="propithecus_coquereli"/>
+        <genome name="rattus_norvegicus"/>
+        <genome name="rhinolophus_ferrumequinum"/>
+        <genome name="rhinopithecus_bieti"/>
+        <genome name="rhinopithecus_roxellana"/>
+        <genome name="saimiri_boliviensis_boliviensis"/>
+        <genome name="sarcophilus_harrisii"/>
+        <genome name="sciurus_vulgaris"/>
+        <genome name="spermophilus_dauricus"/>
+        <genome name="suricata_suricatta"/>
+        <genome name="sus_scrofa"/>
+        <genome name="theropithecus_gelada"/>
+        <genome name="urocitellus_parryii"/>
+        <genome name="ursus_americanus"/>
+        <genome name="ursus_maritimus"/>
+        <genome name="ursus_thibetanus_thibetanus"/>
+        <genome name="vombatus_ursinus"/>
+        <genome name="vulpes_vulpes"/>
+        <genome name="xenopus_tropicalis"/>
+        <genome name="zalophus_californianus"/>
       </species_set>
     </multiple_alignment>
 

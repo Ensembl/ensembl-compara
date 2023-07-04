@@ -133,6 +133,7 @@ sub executable_locations {
         'create_datacheck_tickets_exe'      => $self->check_exe_in_ensembl('ensembl-compara/scripts/jira_tickets/create_datacheck_tickets.pl'),
         'copy_ancestral_core_exe'           => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/copy_ancestral_core.pl'),
         'gene_tree_stats_report_exe'        => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/gene_tree_stats.pl'),
+        'hal_cov_one_seq_chunk_exe'         => $self->check_exe_in_ensembl('ensembl-compara/scripts/hal_alignment/hal_cov_one_seq_chunk.py'),
 
         # Other dependencies (non executables)
         'core_schema_sql'                   => $self->check_file_in_ensembl('ensembl/sql/table.sql'),
@@ -238,7 +239,7 @@ sub resource_classes_single_thread {
     );
     %{$resource_classes} = (%{$resource_classes}, %additional_resource_classes);
 
-    _apply_common_rc_config($resource_classes);
+    _apply_common_rc_config($self, $resource_classes);
 
     $resource_classes->{'default'} = \%{$resource_classes->{'1Gb_job'}};
 
@@ -516,16 +517,16 @@ sub resource_classes_multi_thread {
 
     my $resource_classes = _generate_resource_classes($resource_class_templates, $long_running_rc_keys);
 
-    _apply_common_rc_config($resource_classes);
+    _apply_common_rc_config($self, $resource_classes);
 
     return $resource_classes;
 }
 
 sub _apply_common_rc_config {
-    my ($resource_classes) = @_;
+    my ($pipe_config, $resource_classes) = @_;
 
     my $local_submission_cmd_args = '';
-    my $worker_cmd_args = '--reg_conf production_reg_conf.pl';
+    my $worker_cmd_args = sprintf('--reg_conf %s', $pipe_config->o('reg_conf'));
     while (my ($rc_name, $rc_config) = each %{$resource_classes}) {
         $rc_config->{'LOCAL'} = [$local_submission_cmd_args];
 

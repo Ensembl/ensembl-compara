@@ -86,6 +86,7 @@ sub default_options {
 
         # Default statistics
         'skip_multiplealigner_stats'    => 0,  # skip this module if set to 1
+        'msa_stats_shared_dir' => $self->o('msa_stats_shared_basedir') . '/' . $self->o('species_set_name') . '/' . $self->o('ensembl_release'),
 
         # Resource requirements
         'gerp_capacity' => 500,
@@ -107,6 +108,7 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # inherit creation of DB, hive tables and compara tables
 
         $self->pipeline_create_commands_rm_mkdir(['work_dir', 'output_dir', 'bed_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['msa_stats_shared_dir'], undef, 'do not rm'),
     ];
 }
 

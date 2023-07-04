@@ -164,7 +164,7 @@ sub fetch_input {
             } else {
                 # Fetch the linked MLSS id
                 my $linked_method_type = $is_epo ? 'EPO_EXTENDED' : 'EPO';
-                @linked_mlss = grep { ($_->species_set->name eq $species_set_name) && $_->is_in_release($release) }
+                @linked_mlss = grep { ($_->species_set->name =~ /^(collection-)?$species_set_name$/ ) && $_->is_in_release($release) }
                     @{ $mlss_adaptor->fetch_all_by_method_link_type($linked_method_type) };
                 $self->throw(sprintf("No %s MLSS found for MLSS '%s' (%s)", $linked_method_type, $mlss->name, $mlss->dbID)) unless @linked_mlss;
             }
