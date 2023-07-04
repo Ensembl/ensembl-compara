@@ -115,9 +115,14 @@ elsif($division eq "plants"){
     $gene_symbol              = "PAD4";
     $homology_type            = 'orthologues';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
-    
+
+    # rice
+    $cactus_species           = 'oryza_sativa';
+    $cactus_region            = '5:20683551-20684336';
+    $cactus_species_set       = 'collection-rice';
+
     $extra_params             = 'compara=plants';
-    $skip_cactus              = 1;
+    $skip_cactus              = 0;
 }
 elsif($division eq "metazoa"){
     $gene_member_id           = "LOC726692";
