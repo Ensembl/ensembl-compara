@@ -167,7 +167,7 @@ process CHAIN_ALN {
     def target_2bit_file = twobit_file_map[task_params.source_genome]
     def query_2bit_file = twobit_file_map[task_params.dest_genome]
 
-    def chain_file_name = composeChainFileName(task_params, task_params.liftover_level, false)
+    def chain_file_name = composeChainFileName(task_params, task_params.liftover_level)
     """
     ${params.axt_chain_exe} -psl -linearGap=medium $swapped_psl \
         $target_2bit_file $query_2bit_file $chain_file_name
@@ -186,13 +186,7 @@ process COMPRESS_CHAIN {
 
     script:
     """
-    #!/usr/bin/env python3
-    import gzip
-    import shutil
-
-    with open("$chain_file", "rb") as in_file_obj:
-        with gzip.open("${chain_file}.gz", "wb") as out_file_obj:
-            shutil.copyfileobj(in_file_obj, out_file_obj)
+    gzip -c "$chain_file" > "${chain_file}.gz"
     """
 }
 
@@ -201,15 +195,16 @@ process MERGE_CHAINS {
     publishDir "${hal_cache}/${task_params.group_level}/chain", mode: "copy",  overwrite: true
 
     input:
-    tuple val(task_params), val(chain_files)
+    tuple val(task_params), path(chain_files)
 
     output:
     path("*.chain.gz"), emit: merged_chain
 
     script:
-    def merged_chain_file_path = composeChainFileName(task_params, task_params.group_level, true)
+    def merged_chain_file_path = composeChainFileName(task_params, task_params.group_level)
     """
-    ${params.cat_gzip_files_exe} ${chain_files.join(" ")} --output-file $merged_chain_file_path
+    find . -maxdepth 1 -name '*.chain.gz' -exec zcat {} '+' >> "$merged_chain_file_path"
+    gzip -c "$merged_chain_file_path" > "${merged_chain_file_path}.gz"
     """
 }
 

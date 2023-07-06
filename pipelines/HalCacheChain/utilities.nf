@@ -39,7 +39,7 @@ def chainFileHasData(chain_file) {
     return data_found
 }
 
-def composeChainFileName(task_params, level, gzip) {
+def composeChainFileName(task_params, level) {
     /**
     * Compose chain file name.
     *
@@ -61,10 +61,6 @@ def composeChainFileName(task_params, level, gzip) {
     def chain_file_name = sprintf("%s_to_%s.linearGap_medium.chain",
                                   source_tag_parts.join("_"),
                                   task_params.dest_genome)
-
-    if (gzip) {
-        chain_file_name += ".gz"
-    }
 
     return chain_file_name
 }
