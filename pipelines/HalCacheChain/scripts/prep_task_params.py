@@ -18,40 +18,17 @@
 from __future__ import annotations
 from argparse import ArgumentParser
 from pathlib import Path
-import subprocess
-from typing import Dict, Union
 
 import pandas as pd
 
-
-def load_chr_sizes(hal_file: Union[Path, str], genome_name: str) -> Dict[str, int]:
-    """Load chromosome sizes from an input HAL file.
-
-    Args:
-        hal_file: Input HAL file.
-        genome_name: Name of the genome to get the chromosome sizes of.
-
-    Returns:
-        Dictionary mapping chromosome names to their lengths.
-
-    """
-    cmd = ["halStats", "--chromSizes", genome_name, hal_file]
-    process = subprocess.run(
-        cmd, check=True, capture_output=True, text=True, encoding="ascii"
-    )
-
-    chr_sizes = {}
-    for line in process.stdout.splitlines():
-        chr_name, chr_size = line.rstrip().split("\t")
-        chr_sizes[chr_name] = int(chr_size)
-
-    return chr_sizes
+from ensembl.compara.utils.ucsc import load_chrom_sizes_file
 
 
 if __name__ == "__main__":
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("input_tsv", help="Input parameter TSV file.")
     parser.add_argument("hal_file", help="Input HAL file.")
+    parser.add_argument("chrom_sizes_dir", help="Directory of chrom sizes files.")
     parser.add_argument("output_tsv", help="Output prepped parameter TSV file.")
     args = parser.parse_args()
 
@@ -70,9 +47,11 @@ if __name__ == "__main__":
 
     genomes = set(param_df["source_genome"]) | set(param_df["dest_genome"])
 
+    chrom_sizes_dir_path = Path(args.chrom_sizes_dir)
     genome_to_chr_sizes = {}
     for genome in genomes:
-        genome_to_chr_sizes[genome] = load_chr_sizes(args.hal_file, genome)
+        chrom_sizes_file_path = chrom_sizes_dir_path / f"{genome}.chrom.sizes"
+        genome_to_chr_sizes[genome] = load_chrom_sizes_file(chrom_sizes_file_path)
 
     known_location_params = {"source_start", "source_end", "source_strand"}
     specified_location_params = set(param_df.columns) & known_location_params

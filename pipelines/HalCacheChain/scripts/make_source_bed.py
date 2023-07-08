@@ -20,8 +20,9 @@ from argparse import ArgumentParser
 from dataclasses import dataclass, InitVar
 from pathlib import Path
 import re
-import subprocess
-from typing import Dict, Iterable, Mapping, Union
+from typing import Iterable, Mapping, Union
+
+from ensembl.compara.utils.ucsc import load_chrom_sizes_file
 
 
 @dataclass(frozen=True)
@@ -128,29 +129,6 @@ class SimpleRegion:
         return f"{self.chr}:{self.start + 1}-{self.end}:{strand_num}"
 
 
-def load_chr_sizes(hal_file: Union[Path, str], genome_name: str) -> Dict[str, int]:
-    """Load chromosome sizes from an input HAL file.
-
-    Args:
-        hal_file: Input HAL file.
-        genome_name: Name of the genome to get the chromosome sizes of.
-
-    Returns:
-        Dictionary mapping chromosome names to their lengths.
-    """
-    cmd = ["halStats", "--chromSizes", genome_name, hal_file]
-    process = subprocess.run(
-        cmd, check=True, capture_output=True, text=True, encoding="ascii"
-    )
-
-    chr_sizes = {}
-    for line in process.stdout.splitlines():
-        chr_name, chr_size = line.rstrip().split("\t")
-        chr_sizes[chr_name] = int(chr_size)
-
-    return chr_sizes
-
-
 def make_src_region_file(
     regions: Iterable[SimpleRegion],
     genome: str,
@@ -215,6 +193,7 @@ def make_src_region_file(
 if __name__ == "__main__":
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("hal_file", help="Input HAL file.")
+    parser.add_argument("chrom_sizes_dir", help="Directory of chrom sizes files.")
     parser.add_argument("source_genome", help="Source HAL genome name.")
     parser.add_argument("source_sequence", help="Source HAL sequence name.")
     parser.add_argument("bed_file", help="Source region BED file.")
@@ -235,7 +214,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    source_chr_sizes = load_chr_sizes(args.hal_file, args.source_genome)
+    chrom_sizes_dir_path = Path(args.chrom_sizes_dir)
+    chrom_sizes_file_path = chrom_sizes_dir_path / f"{args.source_genome}.chrom.sizes"
+    source_chr_sizes = load_chrom_sizes_file(chrom_sizes_file_path)
 
     region_start = args.start if args.start is not None else 0
     region_end = args.end if args.end else source_chr_sizes[args.source_sequence]

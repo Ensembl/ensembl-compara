@@ -57,17 +57,38 @@ if (!params.input || !params.hal) {
 def hal_cache = params.hal_cache ?: getDefaultHalCachePath(params.hal)
 
 
+process DUMP_HAL_CHROM_SIZES {
+
+    publishDir "${hal_cache}/genome/chrom_sizes", mode: "copy",  overwrite: false
+
+    input:
+    path(hal)
+
+    output:
+    path("*.chrom.sizes"), emit: genome_chrom_sizes
+
+    shell:
+    '''
+    !{params.hal_stats_exe} --genomes !{hal} | tr ' ' '\\n' > hal_genome_names.txt
+
+    while read genome_name
+    do !{params.hal_stats_exe} --chromSizes $genome_name !{hal} > "${genome_name}.chrom.sizes"
+    done < hal_genome_names.txt
+    '''
+}
+
 process PREP_TASK_PARAMS {
 
     input:
     tuple path(task_sheet), path(hal)
+    val(chrom_sizes)
 
     output:
     path "prepped_param_sets.tsv", emit: prepped_param_sets
 
     script:
     """
-    ${params.prep_task_params_exe} $task_sheet $hal prepped_param_sets.tsv
+    ${params.prep_task_params_exe} $task_sheet $hal ${hal_cache}/genome/chrom_sizes prepped_param_sets.tsv
     """
 }
 
@@ -100,6 +121,7 @@ process MAKE_SOURCE_BED {
     """
     ${params.make_source_bed_exe} \
         ${params.hal} \
+        ${hal_cache}/genome/chrom_sizes \
         ${task_params.source_genome} \
         ${task_params.source_sequence} \
         liftover_source.bed \
@@ -211,10 +233,20 @@ process MERGE_CHAINS {
 workflow {
     println(ensemblLogo())
 
+    channel.value(params.hal) \
+        | set { input_hal }
+
+    DUMP_HAL_CHROM_SIZES ( input_hal )
+
+    DUMP_HAL_CHROM_SIZES.out.genome_chrom_sizes \
+        | collect
+        | set { chrom_sizes }
+
+
     channel.value([params.input, params.hal]) \
         | set { input_task_params }
 
-    PREP_TASK_PARAMS ( input_task_params )
+    PREP_TASK_PARAMS ( input_task_params, chrom_sizes )
 
     PREP_TASK_PARAMS.out.prepped_param_sets \
         | splitCsv(charset: "utf-8", header: true, sep: "\t") \

@@ -39,13 +39,15 @@ import json
 import os
 from pathlib import Path
 import re
-from subprocess import PIPE, Popen, run
+from subprocess import run
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, Generator, Iterable, List, Mapping, Tuple, Union
 
 from Bio.SeqIO.FastaIO import SimpleFastaParser
 from cmmodule.mapbed import crossmap_bed_file
 from cmmodule.utils import read_chain_file
+
+from ensembl.compara.utils.ucsc import load_chrom_sizes_file
 
 
 @dataclass(frozen=True)
@@ -311,28 +313,6 @@ def load_liftover_alt_synonyms(
     return fwd_maps[src_genome], rev_maps[src_genome], rev_maps[dest_genome]
 
 
-def load_chr_sizes(hal_file: Union[Path, str], genome_name: str) -> Dict[str, int]:
-    """Load chromosome sizes from an input HAL file.
-
-    Args:
-        hal_file: Input HAL file.
-        genome_name: Name of the genome to get the chromosome sizes of.
-
-    Returns:
-        Dictionary mapping chromosome names to their lengths.
-
-    """
-    cmd = ["halStats", "--chromSizes", genome_name, hal_file]
-    process = run(cmd, check=True, capture_output=True, text=True, encoding="ascii")
-
-    chr_sizes = {}
-    for line in process.stdout.splitlines():
-        chr_name, chr_size = line.rstrip().split("\t")
-        chr_sizes[chr_name] = int(chr_size)
-
-    return chr_sizes
-
-
 def make_src_region_file(
     regions: Iterable[SimpleRegion],
     genome: str,
@@ -496,7 +476,13 @@ if __name__ == "__main__":
 
     cached_chain_dir = os.path.join(hal_cache, "sequence", "chain")
 
-    source_chr_sizes = load_chr_sizes(args.hal_file, args.src_genome)
+    chrom_sizes_file_path = os.path.join(
+        args.hal_cache,
+        "genome",
+        "chrom_sizes",
+        f"{args.src_genome}.chrom.sizes"
+    )
+    source_chr_sizes = load_chrom_sizes_file(chrom_sizes_file_path)
 
     if args.src_region is not None:
         source_regions: Iterable = [SimpleRegion.from_1_based_region_string(args.src_region)]
