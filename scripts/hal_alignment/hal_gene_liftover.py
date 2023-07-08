@@ -45,14 +45,9 @@ from Bio.SeqIO.FastaIO import SimpleFastaParser
 from cmmodule.mapbed import crossmap_bed_file
 from cmmodule.utils import read_chain_file
 
+from ensembl.compara.utils.csv import UnquotedUnixTab
 from ensembl.compara.utils.hal import make_src_region_file, SimpleRegion
 from ensembl.compara.utils.ucsc import load_chrom_sizes_file
-
-
-class UnixTab(csv.unix_dialect):
-    """A tab-delimited Unix csv dialect."""
-
-    delimiter = "\t"
 
 
 def extract_liftover_regions_from_bed(bed_file: Union[Path, str]) -> List[SimpleRegion]:
@@ -220,7 +215,7 @@ def read_region_tsv_file(region_tsv_file: Union[Path, str]) -> Generator[SimpleR
 
     """
     with open(region_tsv_file) as f:
-        reader = csv.DictReader(f, dialect=UnixTab)
+        reader = csv.DictReader(f, dialect=UnquotedUnixTab)
         for row in reader:
             yield SimpleRegion.from_1_based_region_attribs(
                 row["chr"], row["start"], row["end"], row["strand"]
@@ -390,7 +385,7 @@ if __name__ == "__main__":
         ]
 
         with open(args.output_file, "w") as file_obj:
-            writer = csv.DictWriter(file_obj, output_field_names, dialect=UnixTab)
+            writer = csv.DictWriter(file_obj, output_field_names, dialect=UnquotedUnixTab)
             writer.writeheader()
             for record in records:
                 params = record["params"]
