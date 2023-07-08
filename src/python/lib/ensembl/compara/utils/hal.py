@@ -17,12 +17,22 @@
 
 from __future__ import annotations
 
-__all__ = ["SimpleRegion", "make_src_region_file"]
+__all__ = [
+    "extract_region_sequences_from_2bit",
+    "extract_regions_from_bed",
+    "make_src_region_file",
+    "SimpleRegion",
+]
 
 from dataclasses import dataclass, InitVar
+import os
 from pathlib import Path
 import re
-from typing import Iterable, Mapping, Union
+import subprocess
+from tempfile import TemporaryDirectory
+from typing import Iterable, List, Mapping, Union
+
+from Bio.SeqIO.FastaIO import SimpleFastaParser
 
 
 @dataclass(frozen=True)
@@ -120,6 +130,55 @@ class SimpleRegion:
         """Get the 1-based region string corresponding to this region."""
         strand_num = 1 if self.strand == "+" else -1
         return f"{self.chrom}:{self.start + 1}-{self.end}:{strand_num}"
+
+
+def extract_region_sequences_from_2bit(
+    regions: Iterable[SimpleRegion], two_bit_file: Union[Path, str]
+) -> List[str]:
+    """Extract region sequences from a 2bit file.
+
+    Args:
+        regions: Regions to extract.
+        two_bit_file: 2bit sequence file.
+
+    Returns:
+        List of region sequences.
+
+    """
+    with TemporaryDirectory() as tmp_dir:
+        tmp_bed_file = os.path.join(tmp_dir, "regions.bed")
+        with open(tmp_bed_file, "w") as out_file_obj:
+            for idx, region in enumerate(regions):
+                fields = [region.chrom, region.start, region.end, idx, 0, region.strand]
+                print("\t".join(str(x) for x in fields), file=out_file_obj)
+
+        tmp_fasta_file = os.path.join(tmp_dir, "regions.fa")
+        cmd_args = ["twoBitToFa", f"-bed={tmp_bed_file}", two_bit_file, tmp_fasta_file]
+        subprocess.run(cmd_args, check=True)
+
+        with open(tmp_fasta_file) as in_file_obj:
+            sequences = [seq for _, seq in SimpleFastaParser(in_file_obj)]
+
+    return sequences
+
+
+def extract_regions_from_bed(bed_file: Union[Path, str]) -> List[SimpleRegion]:
+    """Extract liftover destination regions from a BED file.
+
+    Args:
+        bed_file: Input BED file.
+
+    Returns:
+        List of regions.
+
+    """
+    dst_regions = []
+    with open(bed_file) as in_file_obj:
+        for line in in_file_obj:
+            chrom, start, end, _name, _score, strand, *_unused = line.rstrip("\n").split("\t")
+            dst_regions.append(SimpleRegion(chrom, int(start), int(end), strand))
+
+    return dst_regions
 
 
 def make_src_region_file(

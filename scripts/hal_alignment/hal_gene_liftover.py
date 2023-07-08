@@ -37,63 +37,20 @@ import itertools
 import json
 import os
 from pathlib import Path
-from subprocess import run
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, Iterable, List, Union
+from typing import Any, Dict, Union
 
-from Bio.SeqIO.FastaIO import SimpleFastaParser
 from cmmodule.mapbed import crossmap_bed_file
 from cmmodule.utils import read_chain_file
 
 from ensembl.compara.utils.csv import UnquotedUnixTab
-from ensembl.compara.utils.hal import make_src_region_file, SimpleRegion
+from ensembl.compara.utils.hal import (
+    extract_region_sequences_from_2bit,
+    extract_regions_from_bed,
+    make_src_region_file,
+    SimpleRegion,
+)
 from ensembl.compara.utils.ucsc import load_chrom_sizes_file
-
-
-def extract_liftover_regions_from_bed(bed_file: Union[Path, str]) -> List[SimpleRegion]:
-    """Extract liftover destination regions from a BED file.
-
-    Args:
-        bed_file: Input BED file.
-
-    Returns:
-        List of liftover destination regions.
-
-    """
-    dst_regions = []
-    with open(bed_file) as f:
-        for line in f:
-            chr_, start, end, _name, _score, strand, *_unused = line.rstrip().split("\t")
-            dst_regions.append(SimpleRegion(chr_, int(start), int(end), strand))
-
-    return dst_regions
-
-
-def extract_region_sequences(regions: Iterable[SimpleRegion], two_bit_file: Union[Path, str]) -> List[str]:
-    """Extract region sequences from a 2bit file.
-
-    Args:
-        regions: Regions to extract.
-        two_bit_file: 2bit sequence file.
-
-    Returns:
-        List of region sequences.
-
-    """
-    with TemporaryDirectory() as tmp_dir:
-        chain_bed_file = os.path.join(tmp_dir, "chain.bed")
-        with open(chain_bed_file, "w") as f:
-            for idx, region in enumerate(regions):
-                fields = [region.chrom, region.start, region.end, idx, 0, region.strand]
-                print("\t".join(str(x) for x in fields), file=f)
-
-        chain_fasta_file = os.path.join(tmp_dir, "chain.fa")
-        run_two_bit_to_fa(chain_bed_file, two_bit_file, chain_fasta_file)
-
-        with open(chain_fasta_file) as f:
-            sequences = [seq for _, seq in SimpleFastaParser(f)]
-
-    return sequences
 
 
 def liftover_via_chain(
@@ -146,12 +103,12 @@ def liftover_via_chain(
 
         dst_bed_file = os.path.join(tmp_dir, "dst_regions.bed")
         crossmap_bed_file(map_tree, src_bed_file, dst_bed_file)
-        dst_regions = extract_liftover_regions_from_bed(dst_bed_file)
+        dst_regions = extract_regions_from_bed(dst_bed_file)
 
         if not dst_regions:
             return rec
 
-        dst_sequences = extract_region_sequences(dst_regions, dst_2bit_file)
+        dst_sequences = extract_region_sequences_from_2bit(dst_regions, dst_2bit_file)
 
         for dst_region, dst_sequence in zip(dst_regions, dst_sequences):
             rec["results"].append(
@@ -165,23 +122,6 @@ def liftover_via_chain(
             )
 
     return rec
-
-
-def run_two_bit_to_fa(
-    bed_file: Union[Path, str],
-    two_bit_file: Union[Path, str],
-    fasta_file: Union[Path, str],
-) -> None:
-    """Run twoBitToFa to obtain sequences of aligned target regions.
-
-    Args:
-        bed_file: Input BED file.
-        two_bit_file: Input 2bit file.
-        fasta_file: Output FASTA file.
-
-    """
-    cmd = ["twoBitToFa", f"-bed={bed_file}", two_bit_file, fasta_file]
-    run(cmd, check=True)
 
 
 if __name__ == "__main__":
@@ -256,8 +196,8 @@ if __name__ == "__main__":
     if args.src_region is not None:
         source_regions = [SimpleRegion.from_1_based_region_string(args.src_region)]
     else:
-        with open(args.src_region_tsv) as in_file_obj:
-            reader = csv.DictReader(in_file_obj, dialect=UnquotedUnixTab)
+        with open(args.src_region_tsv) as tsv_file_obj:
+            reader = csv.DictReader(tsv_file_obj, dialect=UnquotedUnixTab)
             source_regions = [
                 SimpleRegion.from_1_based_region_attribs(row["chr"], row["start"], row["end"], row["strand"])
                 for row in reader
