@@ -39,7 +39,7 @@ import os
 from pathlib import Path
 from subprocess import run
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, Generator, Iterable, List, Tuple, Union
+from typing import Any, Dict, Iterable, List, Union
 
 from Bio.SeqIO.FastaIO import SimpleFastaParser
 from cmmodule.mapbed import crossmap_bed_file
@@ -167,25 +167,6 @@ def liftover_via_chain(
     return rec
 
 
-def read_region_tsv_file(region_tsv_file: Union[Path, str]) -> Generator[SimpleRegion, None, None]:
-    """Read region data from input TSV file.
-
-    Args:
-        region_tsv_file: Input TSV file containing 1-offset regions specified
-            in columns with headings 'chr', 'start', 'end' and 'strand'.
-
-    Yields:
-        SimpleRegion: The region specified in the given row of the input TSV file.
-
-    """
-    with open(region_tsv_file) as f:
-        reader = csv.DictReader(f, dialect=UnquotedUnixTab)
-        for row in reader:
-            yield SimpleRegion.from_1_based_region_attribs(
-                row["chr"], row["start"], row["end"], row["strand"]
-            )
-
-
 def run_two_bit_to_fa(
     bed_file: Union[Path, str],
     two_bit_file: Union[Path, str],
@@ -273,9 +254,14 @@ if __name__ == "__main__":
     source_chr_sizes = load_chrom_sizes_file(chrom_sizes_file_path)
 
     if args.src_region is not None:
-        source_regions: Iterable = [SimpleRegion.from_1_based_region_string(args.src_region)]
+        source_regions = [SimpleRegion.from_1_based_region_string(args.src_region)]
     else:
-        source_regions = read_region_tsv_file(args.src_region_tsv)
+        with open(args.src_region_tsv) as in_file_obj:
+            reader = csv.DictReader(in_file_obj, dialect=UnquotedUnixTab)
+            source_regions = [
+                SimpleRegion.from_1_based_region_attribs(row["chr"], row["start"], row["end"], row["strand"])
+                for row in reader
+            ]
 
     regions_by_chr = {k: list(x) for k, x in itertools.groupby(source_regions, key=lambda x: x.chrom)}
     source_chr_names = sorted(regions_by_chr)
