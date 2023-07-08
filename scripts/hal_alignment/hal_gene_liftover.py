@@ -84,7 +84,7 @@ def extract_region_sequences(regions: Iterable[SimpleRegion], two_bit_file: Unio
         chain_bed_file = os.path.join(tmp_dir, "chain.bed")
         with open(chain_bed_file, "w") as f:
             for idx, region in enumerate(regions):
-                fields = [region.chr, region.start, region.end, idx, 0, region.strand]
+                fields = [region.chrom, region.start, region.end, idx, 0, region.strand]
                 print("\t".join(str(x) for x in fields), file=f)
 
         chain_fasta_file = os.path.join(tmp_dir, "chain.fa")
@@ -125,7 +125,7 @@ def liftover_via_chain(
     rec: Dict[str, Any] = {}
     rec["params"] = {
         "src_genome": src_genome,
-        "src_chr": src_region.chr,
+        "src_chr": src_region.chrom,
         "src_start": src_region.start + 1,
         "src_end": src_region.end,
         "src_strand": _strand_sign_to_num[src_region.strand],
@@ -156,7 +156,7 @@ def liftover_via_chain(
         for dst_region, dst_sequence in zip(dst_regions, dst_sequences):
             rec["results"].append(
                 {
-                    "dest_chr": dst_region.chr,
+                    "dest_chr": dst_region.chrom,
                     "dest_start": dst_region.start + 1,
                     "dest_end": dst_region.end,
                     "dest_strand": _strand_sign_to_num[dst_region.strand],
@@ -325,11 +325,11 @@ if __name__ == "__main__":
             args.alt_synonym_json, args.src_genome, args.dest_genome
         )
         source_regions = (
-            SimpleRegion(src_chr_to_alt[x.chr], x.start, x.end, x.strand, validate=False)
+            SimpleRegion(src_chr_to_alt[x.chrom], x.start, x.end, x.strand, validate=False)
             for x in source_regions
         )
 
-    regions_by_chr = {k: list(x) for k, x in itertools.groupby(source_regions, key=lambda x: x.chr)}
+    regions_by_chr = {k: list(x) for k, x in itertools.groupby(source_regions, key=lambda x: x.chrom)}
     source_chr_names = sorted(regions_by_chr)
 
     records = []
