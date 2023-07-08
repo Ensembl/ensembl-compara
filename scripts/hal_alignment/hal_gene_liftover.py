@@ -33,125 +33,20 @@ Examples::
 from __future__ import annotations
 from argparse import ArgumentParser
 import csv
-from dataclasses import dataclass, InitVar
 import itertools
 import json
 import os
 from pathlib import Path
-import re
 from subprocess import run
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, Generator, Iterable, List, Mapping, Tuple, Union
+from typing import Any, Dict, Generator, Iterable, List, Tuple, Union
 
 from Bio.SeqIO.FastaIO import SimpleFastaParser
 from cmmodule.mapbed import crossmap_bed_file
 from cmmodule.utils import read_chain_file
 
+from ensembl.compara.utils.hal import make_src_region_file, SimpleRegion
 from ensembl.compara.utils.ucsc import load_chrom_sizes_file
-
-
-@dataclass(frozen=True)
-class SimpleRegion:
-    """A simple DNA sequence region."""
-    chr: str
-    start: int
-    end: int
-    strand: str
-    validate: InitVar[bool] = True
-
-    def __post_init__(self, validate):
-        if validate:
-            if self.start < 0:
-                raise ValueError(
-                    f"0-based region start must be greater than or equal to 0: {self.start}"
-                )
-
-            if self.start >= self.end:
-                raise ValueError(
-                    f"0-based region end ({self.end}) must be greater than region start ({self.start})"
-                )
-
-            if self.strand not in ("+", "-"):
-                raise ValueError(f"0-based region has invalid strand: '{self.strand}'")
-
-    @classmethod
-    def from_1_based_region_string(cls, region_string: str) -> SimpleRegion:
-        """Create a region object from a 1-based region string.
-
-        Args:
-            region_string: A 1-based region string.
-
-        Returns:
-            A region object.
-
-        Raises:
-            ValueError: If `region_string` is an invalid 1-based region string.
-        """
-
-        seq_region_regex = re.compile(
-            r"^(?P<chr>[^:]+):(?P<start>[0-9]+)-(?P<end>[0-9]+):(?P<strand>.+)$"
-        )
-        match = seq_region_regex.match(region_string)
-
-        if match := seq_region_regex.fullmatch(region_string):
-            region = cls.from_1_based_region_attribs(
-                match["chr"], match["start"], match["end"], match["strand"]
-            )
-        else:
-            raise ValueError(
-                f"failed to tokenise 1-based region string: '{region_string}'"
-            )
-
-        return region
-
-    @classmethod
-    def from_1_based_region_attribs(
-        cls,
-        chr_: str,
-        start: Union[int, str],
-        end: Union[int, str],
-        strand: Union[int, str],
-    ) -> SimpleRegion:
-        """Create a region object from 1-based region attributes.
-
-        Args:
-            chr_: Region chromosome name.
-            start: Region start position.
-            end: Region end position.
-            strand: Region strand; either '1' for plus strand or '-1' for minus strand.
-
-        Returns:
-            A region object.
-
-        Raises:
-            ValueError: If the region attributes represent an invalid region.
-        """
-        _strand_num_to_sign = {1: "+", -1: "-"}
-
-        start = int(start)
-        end = int(end)
-
-        if start < 1:
-            raise ValueError(
-                f"1-based region start must be greater than or equal to 1: {start}"
-            )
-
-        if start > end:
-            raise ValueError(
-                f"1-based region end ({end}) must be greater than or equal to region start ({start})"
-            )
-
-        try:
-            strand = _strand_num_to_sign[int(strand)]
-        except (KeyError, ValueError) as exc:
-            raise ValueError(f"1-based region has invalid strand: '{strand}'") from exc
-
-        return cls(chr_, start - 1, end, strand, validate=False)
-
-    def to_1_based_region_string(self):
-        """Get the 1-based region string corresponding to this region."""
-        strand_num = 1 if self.strand == "+" else -1
-        return f"{self.chr}:{self.start + 1}-{self.end}:{strand_num}"
 
 
 class UnixTab(csv.unix_dialect):
@@ -313,62 +208,6 @@ def load_liftover_alt_synonyms(
     return fwd_maps[src_genome], rev_maps[src_genome], rev_maps[dest_genome]
 
 
-def make_src_region_file(
-    regions: Iterable[SimpleRegion],
-    genome: str,
-    chr_sizes: Mapping[str, int],
-    bed_file: Union[Path, str],
-    flank_length: int = 0,
-) -> None:
-    """Make source region file.
-
-    Args:
-        regions: Regions to write to output file.
-        genome: Genome for which the regions are specified.
-        chr_sizes: Mapping of chromosome names to their lengths.
-        bed_file: Path of BED file to output.
-        flank_length: Length of upstream/downstream flanking regions to request.
-
-    Raises:
-        ValueError: If any region has an unknown chromosome or invalid coordinates,
-            or if `flank_length` is negative.
-
-    """
-    if flank_length < 0:
-        raise ValueError(f"'flank_length' must be greater than or equal to 0: {flank_length}")
-
-    with open(bed_file, "w") as f:
-        name = "."
-        score = 0  # halLiftover requires an integer score in BED input
-        for region in regions:
-            try:
-                chr_size = chr_sizes[region.chr]
-            except KeyError as exc:
-                raise ValueError(f"chromosome ID '{region.chr}' not found in HAL genome '{genome}'") from exc
-
-            if region.start < 0:
-                raise ValueError(f"region start must be greater than or equal to 0: {region.start}")
-
-            if region.end > chr_size:
-                raise ValueError(
-                    f"region end ({region.end}) must not be greater than the"
-                    f" corresponding chromosome length ({region.chr}: {chr_size})"
-                )
-
-            flanked_start = max(0, region.start - flank_length)
-            flanked_end = min(region.end + flank_length, chr_size)
-
-            fields = [
-                region.chr,
-                flanked_start,
-                flanked_end,
-                name,
-                score,
-                region.strand,
-            ]
-            print("\t".join(str(x) for x in fields), file=f)
-
-
 def read_region_tsv_file(region_tsv_file: Union[Path, str]) -> Generator[SimpleRegion, None, None]:
     """Read region data from input TSV file.
 
@@ -477,10 +316,7 @@ if __name__ == "__main__":
     cached_chain_dir = os.path.join(hal_cache, "sequence", "chain")
 
     chrom_sizes_file_path = os.path.join(
-        args.hal_cache,
-        "genome",
-        "chrom_sizes",
-        f"{args.src_genome}.chrom.sizes"
+        args.hal_cache, "genome", "chrom_sizes", f"{args.src_genome}.chrom.sizes"
     )
     source_chr_sizes = load_chrom_sizes_file(chrom_sizes_file_path)
 
