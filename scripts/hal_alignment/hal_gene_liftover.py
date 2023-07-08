@@ -242,9 +242,7 @@ def liftover_via_chain(
     }
 
     rec["results"] = []
-    #with TemporaryDirectory() as tmp_dir:
-    if True:
-        tmp_dir = "tmp_dir"
+    with TemporaryDirectory() as tmp_dir:
         src_bed_file = os.path.join(tmp_dir, "src_regions.bed")
         make_src_region_file(
             [src_region],
