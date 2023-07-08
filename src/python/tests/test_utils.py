@@ -23,11 +23,24 @@ Typical usage example::
 
 """
 
-from typing import Any, List
+from contextlib import nullcontext as does_not_raise
+import filecmp
+from pathlib import Path
+import subprocess
+from typing import Any, ContextManager, Dict, Iterable, List, Mapping
 
 import pytest
+from pytest import raises
 
 from ensembl.compara.utils import to_list
+
+from ensembl.compara.utils.hal import (
+    extract_region_sequences_from_2bit,
+    extract_regions_from_bed,
+    make_src_region_file,
+    SimpleRegion,
+)
+from ensembl.compara.utils.ucsc import load_chrom_sizes_file
 
 
 class TestTools:
@@ -52,3 +65,171 @@ class TestTools:
 
         """
         assert to_list(arg) == output, "List returned differs from the one expected"
+
+
+class TestUcscUtils:
+    """Tests :mod:`ucsc` utils submodule."""
+
+    ref_file_dir = None  # type: Path
+
+    @pytest.fixture(scope="class", autouse=True)
+    def setup(self) -> None:
+        """Loads necessary fixtures and values as class attributes."""
+        # pylint: disable-next=no-member
+        type(self).ref_file_dir = pytest.files_dir / "hal_alignment"  # type: ignore
+
+    @pytest.mark.parametrize(
+        "chrom_sizes_file_name, exp_output, expectation",
+        [
+            ("genomeA.chrom.sizes", {"chr1": 33}, does_not_raise()),
+            ("too_few_cols.chrom.sizes", None, raises(ValueError)),
+            ("too_many_cols.chrom.sizes", None, raises(ValueError)),
+        ],
+    )
+    def test_load_chrom_sizes_file(
+        self, chrom_sizes_file_name: str, exp_output: Dict[str, int], expectation: ContextManager
+    ) -> None:
+        """Tests :func:`utils.ucsc.load_chrom_sizes_file()` function."""
+        with expectation:
+            chrom_sizes_file_path = self.ref_file_dir / chrom_sizes_file_name
+            obs_output = load_chrom_sizes_file(chrom_sizes_file_path)
+            assert obs_output == exp_output
+
+
+class TestHalUtils:
+    """Tests :mod:`ucsc` utils submodule."""
+
+    ref_file_dir = None  # type: Path
+
+    @pytest.fixture(scope="class", autouse=True)
+    def setup(self) -> None:
+        """Loads necessary fixtures and values as class attributes."""
+        # pylint: disable-next=no-member
+        type(self).ref_file_dir = pytest.files_dir / "hal_alignment"  # type: ignore
+
+    @pytest.mark.parametrize(
+        "regions, two_bit_file_name, exp_output, expectation",
+        [
+            (
+                [SimpleRegion("chr1", 15, 18, "+")],
+                "genomeA.2bit",
+                ["TAA"],
+                does_not_raise(),
+            ),
+            (
+                [SimpleRegion("chr1", 31, 34, "+")],
+                "genomeA.2bit",
+                None,
+                raises(subprocess.CalledProcessError),
+            ),
+        ],
+    )
+    def test_extract_region_sequences_from_2bit(
+        self,
+        regions: Iterable[SimpleRegion],
+        two_bit_file_name: str,
+        exp_output: List[str],
+        expectation: ContextManager,
+    ) -> None:
+        """Tests :func:`utils.hal.extract_region_sequences_from_2bit()` function."""
+        with expectation:
+            two_bit_file_path = self.ref_file_dir / two_bit_file_name
+            obs_output = extract_region_sequences_from_2bit(regions, two_bit_file_path)
+            assert obs_output == exp_output
+
+    @pytest.mark.parametrize(
+        "bed_file_name, exp_output",
+        [
+            ("a2b.one2one.plus.flank0.src.bed", [SimpleRegion("chr1", 15, 18, "+")]),
+            ("a2b.one2one.plus.flank1.src.bed", [SimpleRegion("chr1", 14, 19, "+")]),
+            ("a2b.chr_start.flank1.src.bed", [SimpleRegion("chr1", 0, 3, "+")]),
+            ("a2b.chr_end.flank1.src.bed", [SimpleRegion("chr1", 30, 33, "+")]),
+        ],
+    )
+    def test_extract_regions_from_bed(self, bed_file_name: str, exp_output: List[str]) -> None:
+        """Tests :func:`utils.hal.extract_regions_from_bed()` function."""
+        bed_file_path = self.ref_file_dir / bed_file_name
+        obs_output = extract_regions_from_bed(bed_file_path)
+        assert obs_output == exp_output
+
+    @pytest.mark.parametrize(
+        "regions, genome, chrom_sizes, bed_file_name, flank_length, expectation",
+        [
+            (
+                [SimpleRegion("chr1", 15, 18, "+")],
+                "genomeA",
+                {"chr1": 33},
+                "a2b.one2one.plus.flank0.src.bed",
+                0,
+                does_not_raise(),
+            ),
+            (
+                [SimpleRegion("chr1", 15, 18, "+")],
+                "genomeA",
+                {"chr1": 33},
+                "a2b.one2one.plus.flank1.src.bed",
+                1,
+                does_not_raise(),
+            ),
+            (
+                [SimpleRegion("chr1", 0, 2, "+")],
+                "genomeA",
+                {"chr1": 33},
+                "a2b.chr_start.flank1.src.bed",
+                1,
+                does_not_raise(),
+            ),
+            (
+                [SimpleRegion("chr1", 31, 33, "+")],
+                "genomeA",
+                {"chr1": 33},
+                "a2b.chr_end.flank1.src.bed",
+                1,
+                does_not_raise(),
+            ),
+            (
+                [SimpleRegion("chr1", 15, 18, "+")],
+                "genomeA",
+                {"chr1": 33},
+                "a2b.negative_flank.src.bed",
+                -1,
+                raises(ValueError, match=r"'flank_length' must be greater than or equal to 0: -1"),
+            ),
+            (
+                [SimpleRegion("chrN", 0, 3, "+")],
+                "genomeA",
+                {"chr1": 33},
+                "a2b.unknown_chr.src.bed",
+                0,
+                raises(ValueError, match=r"chromosome ID 'chrN' not found in genome 'genomeA'"),
+            ),
+            (
+                [SimpleRegion("chr1", 31, 34, "+")],
+                "genomeA",
+                {"chr1": 33},
+                "a2b.chr_end.oor.src.bed",
+                0,
+                raises(
+                    ValueError,
+                    match=r"region end \(34\) must not be greater than the"
+                    r" corresponding chromosome length \(chr1: 33\)",
+                ),
+            ),
+        ],
+    )
+    def test_make_src_region_file(
+        self,
+        regions: Iterable[SimpleRegion],
+        genome: str,
+        chrom_sizes: Mapping[str, int],
+        bed_file_name: str,
+        flank_length: int,
+        expectation: ContextManager,
+        tmp_dir: Path,
+    ) -> None:
+        """Tests :func:`utils.hal.make_src_region_file()` function."""
+        with expectation:
+            out_file_path = tmp_dir / bed_file_name
+            make_src_region_file(regions, genome, chrom_sizes, out_file_path, flank_length)
+            ref_file_path = self.ref_file_dir / bed_file_name
+            assert filecmp.cmp(out_file_path, ref_file_path)
