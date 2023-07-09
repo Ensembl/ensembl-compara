@@ -1,0 +1,1 @@
+[{"params": {"src_genome": "genomeA", "src_chr": "chr1", "src_start": 16, "src_end": 18, "src_strand": 1, "flank": 0, "dest_genome": "genomeB"}, "results": [{"dest_chr": "chr1", "dest_start": 23, "dest_end": 25, "dest_strand": 1, "dest_sequence": "TAA"}]}]

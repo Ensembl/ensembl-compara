@@ -142,7 +142,6 @@ def extract_region_sequences_from_2bit(
 
     Returns:
         List of region sequences.
-
     """
     with TemporaryDirectory() as tmp_dir:
         tmp_bed_file = os.path.join(tmp_dir, "regions.bed")
@@ -169,7 +168,6 @@ def extract_regions_from_bed(bed_file: Union[Path, str]) -> List[SimpleRegion]:
 
     Returns:
         List of regions.
-
     """
     dst_regions = []
     with open(bed_file) as in_file_obj:

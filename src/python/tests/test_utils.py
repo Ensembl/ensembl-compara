@@ -31,6 +31,7 @@ from typing import Any, ContextManager, Dict, Iterable, List, Mapping
 
 import pytest
 from pytest import raises
+from pytest_mock import MockerFixture
 
 from ensembl.compara.utils import to_list
 
@@ -40,21 +41,24 @@ from ensembl.compara.utils.hal import (
     make_src_region_file,
     SimpleRegion,
 )
+from ensembl.compara.utils.tools import import_module_from_file
 from ensembl.compara.utils.ucsc import load_chrom_sizes_file
+
+
+helpers = import_module_from_file("helpers.py")
+
+# pylint: disable=import-error,wrong-import-position
+
+from helpers import mock_two_bit_to_fa
+
+# pylint: enable=import-error,wrong-import-position
 
 
 class TestTools:
     """Tests :mod:`tools` submodule."""
 
     @pytest.mark.parametrize(
-        "arg, output",
-        [
-            (None, []),
-            ('', []),
-            (0, []),
-            ('a', ['a']),
-            (['a', 'b'], ['a', 'b'])
-        ],
+        "arg, output", [(None, []), ("", []), (0, []), ("a", ["a"]), (["a", "b"], ["a", "b"])],
     )
     def test_file_cmp(self, arg: Any, output: List[Any]) -> None:
         """Tests :meth:`tools.to_list()` method.
@@ -91,7 +95,8 @@ class TestUcscUtils:
     ) -> None:
         """Tests :func:`utils.ucsc.load_chrom_sizes_file()` function."""
         with expectation:
-            chrom_sizes_file_path = self.ref_file_dir / chrom_sizes_file_name
+            chrom_sizes_dir_path = self.ref_file_dir / "aln_cache" / "genome" / "chrom_sizes"
+            chrom_sizes_file_path = chrom_sizes_dir_path / chrom_sizes_file_name
             obs_output = load_chrom_sizes_file(chrom_sizes_file_path)
             assert obs_output == exp_output
 
@@ -110,12 +115,7 @@ class TestHalUtils:
     @pytest.mark.parametrize(
         "regions, two_bit_file_name, exp_output, expectation",
         [
-            (
-                [SimpleRegion("chr1", 15, 18, "+")],
-                "genomeA.2bit",
-                ["TAA"],
-                does_not_raise(),
-            ),
+            ([SimpleRegion("chr1", 15, 18, "+")], "genomeA.2bit", ["TAA"], does_not_raise()),
             (
                 [SimpleRegion("chr1", 31, 34, "+")],
                 "genomeA.2bit",
@@ -130,10 +130,13 @@ class TestHalUtils:
         two_bit_file_name: str,
         exp_output: List[str],
         expectation: ContextManager,
+        mocker: MockerFixture,
     ) -> None:
         """Tests :func:`utils.hal.extract_region_sequences_from_2bit()` function."""
+        mocker.patch("subprocess.run", side_effect=mock_two_bit_to_fa)
         with expectation:
-            two_bit_file_path = self.ref_file_dir / two_bit_file_name
+            two_bit_dir_path = self.ref_file_dir / "aln_cache" / "genome" / "2bit"
+            two_bit_file_path = two_bit_dir_path / two_bit_file_name
             obs_output = extract_region_sequences_from_2bit(regions, two_bit_file_path)
             assert obs_output == exp_output
 

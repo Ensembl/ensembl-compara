@@ -1,2 +1,4 @@
 coverage[toml]
+pytest-console-scripts
 pytest-cov
+pytest-mock

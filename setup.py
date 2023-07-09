@@ -46,6 +46,11 @@ setup(
     download_url='https://github.com/Ensembl/ensembl-compara',
     license="Apache License 2.0",
     python_requires=">=3.8",
+    entry_points = {
+        "console_scripts": [
+            "hal-liftover=ensembl.compara.cmd.hal_liftover:main",
+        ],
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",
