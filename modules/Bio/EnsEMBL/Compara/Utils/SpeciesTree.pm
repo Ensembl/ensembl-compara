@@ -145,6 +145,13 @@ sub create_species_tree {
             if ($allow_subtaxa) {
                 #warn sprintf('%s will be added later because it is below a node (%s) that is already in the tree', $taxon->name, $anc->name);
                 push @{$extra_gdbs_by_taxon_id{$anc->dbID}}, $ref_gdb_by_taxon_id{$taxon->dbID};
+
+                # If there are other GenomeDBs associated with the given
+                # subtaxon, associate those with the ancestral taxon too.
+                if (exists $extra_gdbs_by_taxon_id{$taxon->dbID}) {
+                    push @{$extra_gdbs_by_taxon_id{$anc->dbID}}, @{$extra_gdbs_by_taxon_id{$taxon->dbID}};
+                    delete $extra_gdbs_by_taxon_id{$taxon->dbID};
+                }
                 next;
             } else {
                 throw(sprintf('Cannot add %s because it is below a node (%s) that is already in the tree', $taxon->name, $anc->name));
