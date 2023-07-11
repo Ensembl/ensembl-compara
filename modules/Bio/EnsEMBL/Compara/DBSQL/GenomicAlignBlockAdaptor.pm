@@ -1445,6 +1445,10 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my $min_gab_len = !$mlss->has_tag('no_filter_small_blocks') && int(abs($end-$start)/1000);
     my $min_ga_len  = !$mlss->has_tag('no_filter_small_blocks') && $min_gab_len/4;
 
+    # Min GAB and GA lengths must always be greater than zero.
+    $min_gab_len = max(1, $min_gab_len);
+    $min_ga_len = max(1, $min_ga_len);
+
     if ( !$target_dnafrag or ($num_targets > 1) ){ # multiple sequence alignment, or unfiltered pairwise alignment
       my %hal_target_set;
       foreach my $target_gdb (@$targets_gdb) {
@@ -1492,7 +1496,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
         my %species_found;
         my $block_len = length($aln_block->[0]->{seq});
 
-        next if ( $block_len <= $min_gab_len );
+        next if ( $block_len < $min_gab_len );
 
         my $gab = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
           -length => $block_len,
