@@ -38,6 +38,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::RefFromFastaFacto
 
 use warnings;
 use strict;
+
+use JSON qw(decode_json);
+
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::TaxonomicReferenceSelector qw/ collect_species_set_dirs /;
@@ -55,9 +58,45 @@ sub fetch_input {
 
     my @all_paths;
 
+    my $query_gdb = $gdb_adaptor->fetch_by_dbID($self->param_required('genome_db_id'));
     foreach my $ref_gdb_dir ( @$ref_dir_paths ) {
-        # Skip the reference genome if it is the same as the target genome
-        next if $ref_gdb_dir->{'ref_gdb'}->name eq $gdb_adaptor->fetch_by_dbID($self->param_required('genome_db_id'))->name;
+
+        my $reason_to_skip;
+        if ($ref_gdb_dir->{'ref_gdb'}->name eq $query_gdb->name) {
+            $reason_to_skip = 'identical production name';
+
+        } elsif ($ref_gdb_dir->{'ref_gdb'}->taxon_id == $query_gdb->taxon_id
+                 && $ref_gdb_dir->{'ref_gdb'}->assembly eq $query_gdb->assembly
+                 && $ref_gdb_dir->{'ref_gdb'}->genebuild eq $query_gdb->genebuild) {
+
+            my $query_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($query_gdb->name, 'core');
+            my $query_genebuild_id = $query_core_dba->get_MetaContainer->single_value_by_key('genebuild.id');
+
+            # The Genebuild ID is not stored in Compara databases, so it must be accessed from
+            # the core database. But reference genome core databases are typically unavailable
+            # via the homology annotation registry, so we access it indirectly using a script.
+            my $get_genebuild_id_exe = $self->param_required('get_genebuild_id_exe');
+            my $ref_reg_conf = $self->param_required('ref_reg_conf');
+            my $cmd = [$get_genebuild_id_exe, '--reg_conf', $ref_reg_conf, '--species', $ref_gdb_dir->{'ref_gdb'}->name];
+            my $result = decode_json($self->get_command_output($cmd));
+            my $ref_genebuild_id = $result->{'genebuild_id'};
+
+            if (defined $query_genebuild_id && defined $ref_genebuild_id && $ref_genebuild_id == $query_genebuild_id) {
+                $reason_to_skip = sprintf(
+                    "identical taxon_id (%d), assembly (%s), genebuild (%s) and Genebuild ID (%d)",
+                    $query_gdb->taxon_id, $query_gdb->assembly, $query_gdb->genebuild, $query_genebuild_id
+                );
+            }
+        }
+
+        if ($reason_to_skip) {
+            $self->warning(sprintf(
+                "skipping DIAMOND BLAST of reference '%s' against query '%s' due to %s",
+                $ref_gdb_dir->{'ref_gdb'}->name, $query_gdb->name, $reason_to_skip
+            ));
+            next;
+        }
+
         my $ref_gdb_id   = $ref_gdb_dir->{'ref_gdb'}->dbID;
         my $ref_splitfa  = $ref_gdb_dir->{'ref_splitfa'};
         my @ref_splitfas = glob($ref_splitfa . "/*.fasta");
