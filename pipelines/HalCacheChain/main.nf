@@ -119,14 +119,25 @@ process MAKE_SOURCE_BED {
 
     script:
     """
-    ${params.make_source_bed_exe} \
-        ${params.hal} \
-        ${hal_cache}/genome/chrom_sizes \
-        ${task_params.source_genome} \
-        ${task_params.source_sequence} \
-        liftover_source.bed \
-        --start ${task_params.source_start} \
-        --end ${task_params.source_end}
+    #!/usr/bin/env python3
+    from pathlib import Path
+
+    from ensembl.compara.utils.hal import make_src_region_file
+    from ensembl.compara.utils.ucsc import load_chrom_sizes_file
+
+    chrom_sizes_dir = Path("${hal_cache}") / "genome" / "chrom_sizes"
+    chrom_sizes_file = chrom_sizes_dir / "${task_params.source_genome}.chrom.sizes"
+    source_chrom_sizes = load_chrom_sizes_file(chrom_sizes_file)
+
+    make_src_region_file(
+        "${task_params.source_sequence}",
+        ${task_params.source_start},
+        ${task_params.source_end},
+        ${task_params.source_strand},
+        "${task_params.source_genome}",
+        source_chrom_sizes,
+        "liftover_source.bed",
+    )
     """
 }
 

@@ -27,7 +27,7 @@ from contextlib import nullcontext as does_not_raise
 import filecmp
 from pathlib import Path
 import subprocess
-from typing import Any, ContextManager, Dict, Iterable, List, Mapping
+from typing import Any, ContextManager, Dict, Iterable, List, Mapping, Tuple
 
 import pytest
 from pytest import raises
@@ -156,10 +156,10 @@ class TestHalUtils:
         assert obs_output == exp_output
 
     @pytest.mark.parametrize(
-        "regions, genome, chrom_sizes, bed_file_name, flank_length, expectation",
+        "region_tuple, genome, chrom_sizes, bed_file_name, flank_length, expectation",
         [
             (
-                [SimpleRegion("chr1", 15, 18, "+")],
+                ("chr1", 16, 18, 1),
                 "genomeA",
                 {"chr1": 33},
                 "a2b.one2one.plus.flank0.src.bed",
@@ -167,7 +167,7 @@ class TestHalUtils:
                 does_not_raise(),
             ),
             (
-                [SimpleRegion("chr1", 15, 18, "+")],
+                ("chr1", 16, 18, 1),
                 "genomeA",
                 {"chr1": 33},
                 "a2b.one2one.plus.flank1.src.bed",
@@ -175,7 +175,7 @@ class TestHalUtils:
                 does_not_raise(),
             ),
             (
-                [SimpleRegion("chr1", 0, 2, "+")],
+                ("chr1", 1, 2, 1),
                 "genomeA",
                 {"chr1": 33},
                 "a2b.chr_start.flank1.src.bed",
@@ -183,7 +183,7 @@ class TestHalUtils:
                 does_not_raise(),
             ),
             (
-                [SimpleRegion("chr1", 31, 33, "+")],
+                ("chr1", 32, 33, 1),
                 "genomeA",
                 {"chr1": 33},
                 "a2b.chr_end.flank1.src.bed",
@@ -191,7 +191,7 @@ class TestHalUtils:
                 does_not_raise(),
             ),
             (
-                [SimpleRegion("chr1", 15, 18, "+")],
+                ("chr1", 16, 18, 1),
                 "genomeA",
                 {"chr1": 33},
                 "a2b.negative_flank.src.bed",
@@ -199,7 +199,7 @@ class TestHalUtils:
                 raises(ValueError, match=r"'flank_length' must be greater than or equal to 0: -1"),
             ),
             (
-                [SimpleRegion("chrN", 0, 3, "+")],
+                ("chrN", 1, 3, 1),
                 "genomeA",
                 {"chr1": 33},
                 "a2b.unknown_chr.src.bed",
@@ -207,7 +207,7 @@ class TestHalUtils:
                 raises(ValueError, match=r"chromosome ID 'chrN' not found in genome 'genomeA'"),
             ),
             (
-                [SimpleRegion("chr1", 31, 34, "+")],
+                ("chr1", 32, 34, 1),
                 "genomeA",
                 {"chr1": 33},
                 "a2b.chr_end.oor.src.bed",
@@ -222,7 +222,7 @@ class TestHalUtils:
     )
     def test_make_src_region_file(
         self,
-        regions: Iterable[SimpleRegion],
+        region_tuple: Tuple[str, int, int, str],
         genome: str,
         chrom_sizes: Mapping[str, int],
         bed_file_name: str,
@@ -233,6 +233,6 @@ class TestHalUtils:
         """Tests :func:`utils.hal.make_src_region_file()` function."""
         with expectation:
             out_file_path = tmp_dir / bed_file_name
-            make_src_region_file(regions, genome, chrom_sizes, out_file_path, flank_length)
+            make_src_region_file(*region_tuple, genome, chrom_sizes, out_file_path, flank_length)
             ref_file_path = self.ref_file_dir / bed_file_name
             assert filecmp.cmp(out_file_path, ref_file_path)

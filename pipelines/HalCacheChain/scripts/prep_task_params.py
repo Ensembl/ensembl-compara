@@ -105,6 +105,7 @@ if __name__ == "__main__":
         param_df["source_end"] = param_df.apply(
             lambda x: genome_to_chr_sizes[x.source_genome][x.source_sequence], axis=1
         )
+        param_df["source_strand"] = 1
 
     param_df["liftover_level"] = liftover_level
 

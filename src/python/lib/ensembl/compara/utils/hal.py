@@ -179,7 +179,10 @@ def extract_regions_from_bed(bed_file: Union[Path, str]) -> List[SimpleRegion]:
 
 
 def make_src_region_file(
-    regions: Iterable[SimpleRegion],
+    chrom: str,
+    start: int,
+    end: int,
+    strand: str,
     genome: str,
     chrom_sizes: Mapping[str, int],
     bed_file: Union[Path, str],
@@ -188,7 +191,10 @@ def make_src_region_file(
     """Make source region BED file for halLiftover.
 
     Args:
-        regions: Regions to write to output file.
+        chrom: Genome sequence name.
+        start: Region start position.
+        end: Region end position.
+        strand: Region strand; either '1' for plus strand or '-1' for minus strand.
         genome: Genome for which the regions are specified.
         chrom_sizes: Mapping of genome sequence names to their lengths.
         bed_file: Path of BED file to output.
@@ -201,33 +207,35 @@ def make_src_region_file(
     if flank_length < 0:
         raise ValueError(f"'flank_length' must be greater than or equal to 0: {flank_length}")
 
+    region = SimpleRegion.from_1_based_region_attribs(chrom, start, end, strand)
+
     with open(bed_file, "w") as f:
         name = "."
         score = 0  # halLiftover requires an integer score in BED input
-        for region in regions:
-            try:
-                chrom_size = chrom_sizes[region.chrom]
-            except KeyError as exc:
-                raise ValueError(f"chromosome ID '{region.chrom}' not found in genome '{genome}'") from exc
 
-            if region.start < 0:
-                raise ValueError(f"region start must be greater than or equal to 0: {region.start}")
+        try:
+            chrom_size = chrom_sizes[region.chrom]
+        except KeyError as exc:
+            raise ValueError(f"chromosome ID '{region.chrom}' not found in genome '{genome}'") from exc
 
-            if region.end > chrom_size:
-                raise ValueError(
-                    f"region end ({region.end}) must not be greater than the"
-                    f" corresponding chromosome length ({region.chrom}: {chrom_size})"
-                )
+        if region.start < 0:
+            raise ValueError(f"region start must be greater than or equal to 0: {region.start}")
 
-            flanked_start = max(0, region.start - flank_length)
-            flanked_end = min(region.end + flank_length, chrom_size)
+        if region.end > chrom_size:
+            raise ValueError(
+                f"region end ({region.end}) must not be greater than the"
+                f" corresponding chromosome length ({region.chrom}: {chrom_size})"
+            )
 
-            fields = [
-                region.chrom,
-                flanked_start,
-                flanked_end,
-                name,
-                score,
-                region.strand,
-            ]
-            print("\t".join(str(x) for x in fields), file=f)
+        flanked_start = max(0, region.start - flank_length)
+        flanked_end = min(region.end + flank_length, chrom_size)
+
+        fields = [
+            region.chrom,
+            flanked_start,
+            flanked_end,
+            name,
+            score,
+            region.strand,
+        ]
+        print("\t".join(str(x) for x in fields), file=f)

@@ -78,7 +78,10 @@ def liftover_via_chain(
 
         src_bed_file = tmp_dir_path / "src_regions.bed"
         make_src_region_file(
-            [src_region],
+            src_region.chrom,
+            src_region.start + 1,
+            src_region.end,
+            _strand_sign_to_num[src_region.strand],
             src_genome,
             src_chr_sizes,
             src_bed_file,
