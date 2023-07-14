@@ -27,7 +27,6 @@ from ensembl.compara.utils.ucsc import load_chrom_sizes_file
 if __name__ == "__main__":
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("input_tsv", help="Input parameter TSV file.")
-    parser.add_argument("hal_file", help="Input HAL file.")
     parser.add_argument("chrom_sizes_dir", help="Directory of chrom sizes files.")
     parser.add_argument("output_tsv", help="Output prepped parameter TSV file.")
     args = parser.parse_args()

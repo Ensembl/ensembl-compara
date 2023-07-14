@@ -80,7 +80,7 @@ process DUMP_HAL_CHROM_SIZES {
 process PREP_TASK_SHEET {
 
     input:
-    tuple path(task_sheet), path(hal)
+    tuple path(task_sheet), path(hal_cache)
     val(chrom_sizes)
 
     output:
@@ -88,7 +88,7 @@ process PREP_TASK_SHEET {
 
     script:
     """
-    ${params.prep_task_sheet_exe} $task_sheet $hal ${hal_cache}/genome/chrom_sizes prepped_param_sets.tsv
+    ${params.prep_task_sheet_exe} $task_sheet ${hal_cache}/genome/chrom_sizes prepped_param_sets.tsv
     """
 }
 
@@ -254,7 +254,7 @@ workflow {
         | set { chrom_sizes }
 
 
-    channel.value([params.input, params.hal]) \
+    channel.value([params.input, hal_cache]) \
         | set { input_task_params }
 
     PREP_TASK_SHEET ( input_task_params, chrom_sizes )
