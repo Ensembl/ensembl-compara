@@ -58,12 +58,16 @@ sub default_options {
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
             {
-		'taxa'          => [ 'Aculeata', 'Anophelinae', 'Drosophila', 'Glossinidae', 'Ditrysia', 'Tephritidae', 'Aphididae', 'Bemisia', 'Culicinae', 'Acrididae' ],
+		'taxa'          => [ 'Aculeata', 'Anophelinae', 'Drosophila', 'Glossinidae', 'Ditrysia', 'Tephritidae', 'Aphidomorpha', 'Bemisia', 'Culicinae', 'Acrididae' ],
                 'thresholds'    => [ 50, 50, 25 ],
             },
             {
-                'taxa'          => [ 'Brachycera', 'Hemiptera', 'Phlebotominae', 'Hymenoptera', 'Diptera', 'Orthoptera', 'Trichoptera' ],
+                'taxa'          => [ 'Brachycera', 'Phlebotominae', 'Hymenoptera', 'Orthoptera', 'Trichoptera' ],
                 'thresholds'    => [ 25, 25, 25 ],
+            },
+            {
+                'taxa'          => [ 'Diptera', 'Hemiptera' ],
+                'thresholds'    => [ undef, undef, 25 ],
             },
             {
                 'taxa'          => [ 'all' ],
