@@ -31,7 +31,10 @@ class TestPrepTaskSheet:
         """Loads necessary fixtures and values as class attributes."""
         # pylint: disable-next=no-member
         type(self).ref_file_dir = pytest.files_dir / "hal_alignment"  # type: ignore
-        type(self).script_path = Path(__file__).parents[3] / "pipelines" / "HalCacheChain" / "scripts" / "prep_task_sheet.py"
+        # pylint: disable-next=no-member
+        type(self).script_path = (  # type: ignore
+            Path(__file__).parents[3] / "pipelines" / "HalCacheChain" / "scripts" / "prep_task_sheet.py"
+        )
 
     @pytest.mark.parametrize(
         "in_file_name, out_file_name",
@@ -55,7 +58,8 @@ class TestPrepTaskSheet:
         out_file_path = tmp_dir / out_file_name
 
         cmd_args = [
-            self.script_path,
+            # pylint: disable-next=no-member
+            self.script_path,  # type: ignore
             in_file_path,
             chrom_sizes_dir,
             out_file_path,

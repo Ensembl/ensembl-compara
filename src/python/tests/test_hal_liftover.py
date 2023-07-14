@@ -27,11 +27,11 @@ from ensembl.compara.utils.tools import import_module_from_file
 helpers_module_path = Path(__file__).parents[0] / "helpers.py"
 helpers = import_module_from_file(helpers_module_path)
 
-# pylint: disable=import-error,wrong-import-position
+# pylint: disable=import-error,wrong-import-order,wrong-import-position
 
 from helpers import mock_two_bit_to_fa
 
-# pylint: enable=import-error,wrong-import-position
+# pylint: enable=import-error,wrong-import-order,wrong-import-position
 
 
 class TestHalLiftover:
