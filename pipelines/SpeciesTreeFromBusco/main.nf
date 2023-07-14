@@ -631,7 +631,7 @@ process calcCodonBranchesIqtree {
 *@output path to iqtree2 log file
 */
 process calcNeutralBranchesAstral {
-    label 'retry_with_16gb_mem_c1'
+    label 'retry_with_128gb_mem_c32'
 
     publishDir "${params.results_dir}/", pattern: "astral_species_tree_neutral_bl.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "astral_iqtree_report_neutral_bl.txt", mode: "copy",  overwrite: true
@@ -708,7 +708,7 @@ process calcCodonBranchesAstral {
 *@output path to iqtree2 log file
 */
 process calcProtBranchesAstral {
-    label 'retry_with_16gb_mem_c1'
+    label 'retry_with_128gb_mem_c32'
 
     publishDir "${params.results_dir}/", pattern: "astral_species_tree_prot_bl.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "astral_iqtree_report_prot_bl.txt", mode: "copy",  overwrite: true
