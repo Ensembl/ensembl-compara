@@ -45,7 +45,8 @@ from ensembl.compara.utils.tools import import_module_from_file
 from ensembl.compara.utils.ucsc import load_chrom_sizes_file
 
 
-helpers = import_module_from_file("helpers.py")
+helpers_module_path = Path(__file__).parents[0] / "helpers.py"
+helpers = import_module_from_file(helpers_module_path)
 
 # pylint: disable=import-error,wrong-import-position
 

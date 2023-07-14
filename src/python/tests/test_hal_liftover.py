@@ -24,7 +24,8 @@ from pytest_mock import MockerFixture
 from ensembl.compara.utils.tools import import_module_from_file
 
 
-helpers = import_module_from_file("helpers.py")
+helpers_module_path = Path(__file__).parents[0] / "helpers.py"
+helpers = import_module_from_file(helpers_module_path)
 
 # pylint: disable=import-error,wrong-import-position
 
