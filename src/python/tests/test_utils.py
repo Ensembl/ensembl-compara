@@ -223,7 +223,7 @@ class TestHalUtils:
     )
     def test_make_src_region_file(
         self,
-        region_tuple: Tuple[str, int, int, str],
+        region_tuple: Tuple[str, int, int, int],
         genome: str,
         chrom_sizes: Mapping[str, int],
         bed_file_name: str,

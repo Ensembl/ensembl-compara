@@ -182,7 +182,7 @@ def make_src_region_file(
     chrom: str,
     start: int,
     end: int,
-    strand: str,
+    strand: int,
     genome: str,
     chrom_sizes: Mapping[str, int],
     bed_file: Union[Path, str],
