@@ -62,7 +62,10 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
-    $analyses_by_name->{'check_reusability'}->{'-parameters'}{'must_reuse_list_file'} = catfile($self->o('config_dir'), 'must_reuse_species.json');
+    $analyses_by_name->{'check_reusability'}->{'-parameters'}{'list_must_reuse_species_exe'} = $self->o('list_must_reuse_species_exe');
+    $analyses_by_name->{'check_reusability'}->{'-parameters'}{'must_reuse_collection_file'} = catfile($self->o('config_dir'), 'must_reuse_collections.json');
+    $analyses_by_name->{'check_reusability'}->{'-parameters'}{'mlss_conf_file'} = catfile($self->o('config_dir'), 'mlss_conf.xml');
+    $analyses_by_name->{'check_reusability'}->{'-parameters'}{'ensembl_release'} = $self->o('ensembl_release');
 }
 
 
