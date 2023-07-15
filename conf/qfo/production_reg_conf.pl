@@ -39,11 +39,11 @@ my $prev_eg_release = $curr_eg_release - 1;
 
 my $compara_dbs = {
     # general compara dbs
-    'compara_master' => [ 'mysql-ens-compara-prod-9', 'twalsh_qfo_2022_02_load_members_109' ],
+    'compara_master' => [ 'mysql-ens-compara-prod-8', 'twalsh_qfo_2023_03_load_members_111' ],
 
     # homology dbs
-    'compara_members' => [ 'mysql-ens-compara-prod-9', 'twalsh_qfo_2022_02_load_members_109' ],
-    'compara_ptrees'  => [ 'mysql-ens-compara-prod-9', 'twalsh_qfo_2022_02_protein_trees_109' ],
+    'compara_members' => [ 'mysql-ens-compara-prod-8', 'twalsh_qfo_2023_03_load_members_111' ],
+    'compara_ptrees'  => [ 'mysql-ens-compara-prod-8', 'twalsh_qfo_2023_03_protein_trees_111' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -52,7 +52,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-mirror-1', 'ncbi_taxonomy_109' ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-1-b', 'ncbi_taxonomy_111' ],
 });
 
 # -------------------------------------------------------------------
