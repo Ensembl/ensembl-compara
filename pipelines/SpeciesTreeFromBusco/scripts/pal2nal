@@ -240,7 +240,7 @@
 $| = 1;
 
 undef $/;
-$myos = $^O;
+$myos = "NOT_LINUX";
 
 if ($#ARGV < 1) {
     & showhelp();
