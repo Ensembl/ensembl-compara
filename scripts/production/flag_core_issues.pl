@@ -90,15 +90,19 @@ sub get_core_schema_table_names {
 my $help;
 my $division = $ENV{'COMPARA_DIV'};
 my $release  = $ENV{'CURR_ENSEMBL_RELEASE'};
+my $verbose = 0;
 
 GetOptions(
     'help|?'     => \$help,
     'division=s' => \$division,
     'release=i'  => \$release,
+    'verbose'    => \$verbose,
 );
 pod2usage(-exitvalue => 0, -verbose => 1) if $help;
 pod2usage(-verbose => 1) if !$division or !$release;
 
+
+Test::More->builder->output('/dev/null') unless ($verbose);
 
 my %known_overlap_species = (
     'caenorhabditis_elegans' => 1,
