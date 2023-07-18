@@ -167,8 +167,10 @@ jobs:
       python: 3.9
       name: "Python linter"
       install:
-        - pip freeze | grep -v -f requirements.txt - | grep -v '^#' | xargs pip uninstall -y
+        # yamllint disable rule:line-length
+        - pip freeze | grep -v -f requirements.txt - | grep -v -f requirements-test.txt - | grep -v '^#' | xargs pip uninstall -y
+        # yamllint disable rule:line-length
         - pip install pylint mypy
-        - pip install -r requirements.txt
+        - pip install -r requirements.txt -r requirements-test.txt
         - pip install .
       script: ./travisci/python-linter_harness.sh
