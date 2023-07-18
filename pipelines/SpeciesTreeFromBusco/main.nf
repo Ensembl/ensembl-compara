@@ -352,7 +352,6 @@ process protAlnToCodon {
         true;
     else
         echo "Codon alignment is empty!"
-        exit 1
     fi
     """
 }
@@ -375,11 +374,16 @@ process removeStopCodons {
     id = (codon_aln =~ /.*codon_aln_(.*)\.fas$/)[0][1]
     """
     mkdir -p alignments
+    if [ -s $codon_aln ];
+    then
     java -jar ${params.macse_jar} -prog exportAlignment \
     -align $codon_aln \
     -codonForFinalStop --- \
     -codonForInternalStop NNN \
     -out_NT alignments/codon_aln_${id}.fas
+    else
+    touch alignments/codon_aln_${id}.fas
+    fi
     """
 }
 
