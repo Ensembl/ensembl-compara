@@ -252,7 +252,7 @@ process runGffread {
     script:
     """
     mkdir -p cdna
-    ${params.gffread_exe} -w cdna/$genome -g $genome $busco_annot
+    ${params.gffread_exe} -x cdna/$genome -g $genome $busco_annot
     """
 }
 
@@ -346,7 +346,7 @@ process protAlnToCodon {
     ${params.seqkit_exe} -j 5 fx2tab -n $prot_aln > prot.ids
     ${params.seqkit_exe} grep -j 5 -n -f prot.ids $cdna > filtered_cdna.fas
     # Convert AA to codon alignment:
-    ${params.pal2nal_exe} $prot_aln filtered_cdna.fas -output fasta > alignments/codon_aln_${id}.fas
+    (perl ${params.run_pal2nal_exe} ${params.pal2nal_exe} $prot_aln filtered_cdna.fas -output fasta) > alignments/codon_aln_${id}.fas
     if [ -s alignments/codon_aln_${id}.fas ];
     then
         true;
