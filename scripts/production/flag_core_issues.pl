@@ -90,15 +90,19 @@ sub get_core_schema_table_names {
 my $help;
 my $division = $ENV{'COMPARA_DIV'};
 my $release  = $ENV{'CURR_ENSEMBL_RELEASE'};
+my $verbose = 0;
 
 GetOptions(
     'help|?'     => \$help,
     'division=s' => \$division,
     'release=i'  => \$release,
+    'verbose'    => \$verbose,
 );
 pod2usage(-exitvalue => 0, -verbose => 1) if $help;
 pod2usage(-verbose => 1) if !$division or !$release;
 
+
+Test::More->builder->output('/dev/null') unless ($verbose);
 
 my %known_overlap_species = (
     'caenorhabditis_elegans' => 1,
@@ -144,6 +148,7 @@ foreach my $division (@divisions) {
     my %info_by_species;
     my %info_by_db;
 
+    my %div_host_to_db_names;
     foreach my $species_name (@species_names) {
 
         if (exists $known_overlap_species{$species_name}) {
@@ -173,6 +178,8 @@ foreach my $division (@divisions) {
 
             my $db_conn = $registry->get_DBAdaptor($registry_name, 'core', 1)->dbc;
             my $db_name = $db_conn->dbname;
+
+            $div_host_to_db_names{$db_conn->host}{$db_name} += 1;
 
             if (!exists $info_by_db{$db_name}) {
                 my @db_table_names = sort @{$db_conn->db_handle->selectcol_arrayref('SHOW TABLES')};
@@ -302,6 +309,41 @@ foreach my $division (@divisions) {
         }
 
         done_testing();
+    };
+
+    subtest "Check for database name clashes ($division)", sub {
+
+        my $core_db_pattern = qr/^(?<core_key>[a-z0-9_]+(?:_collection)?_core(?:_\d+)?_\d+)_\w+$/;
+
+        my %div_cores_by_key;
+        my %all_cores_by_key;
+        while (my ($db_host, $db_names) = each %div_host_to_db_names) {
+            foreach my $db_name (keys %{$db_names}) {
+                if ($db_name =~ /$core_db_pattern/) {
+                    push(@{$div_cores_by_key{$+{core_key}}}, $db_name);
+                } else {
+                    throw("failed to extract core key from database name: '$db_name'");
+                }
+            }
+
+            my $cmd_args = [$db_host, '-e', "SHOW DATABASES"];
+            my $cmd_opts = { die_on_failure => 1 };
+            my $run_cmd = Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd_args, $cmd_opts);
+            foreach my $db_name (split(/\n/, $run_cmd->out)) {
+                if ($db_name =~ /$core_db_pattern/) {
+                    $all_cores_by_key{$+{core_key}}{$db_name} += 1;
+                }
+            }
+        }
+
+        foreach my $core_key (keys %div_cores_by_key) {
+            my $db_name = $div_cores_by_key{$core_key}[0];
+            my @clashing_db_names = grep { $_ ne $db_name } keys %{$all_cores_by_key{$core_key}};
+            is_deeply(\@clashing_db_names, [], "$db_name has no database name clashes");
+        }
+
+        done_testing();
+
     };
 }
 
