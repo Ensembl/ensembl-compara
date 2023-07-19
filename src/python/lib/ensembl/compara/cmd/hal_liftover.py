@@ -23,7 +23,7 @@ from tempfile import TemporaryDirectory
 from typing import Any, Dict, Iterable, TextIO, Union
 
 import click
-from cmmodule.mapbed import crossmap_bed_file
+from cmmodule.mapregion import crossmap_region_file
 from cmmodule.utils import read_chain_file
 
 from ensembl.compara.utils.csv import UnquotedUnixTab
@@ -89,7 +89,7 @@ def liftover_via_chain(
         )
 
         dst_bed_file = tmp_dir_path / "dst_regions.bed"
-        crossmap_bed_file(map_tree, str(src_bed_file), str(dst_bed_file))
+        crossmap_region_file(map_tree, str(src_bed_file), str(dst_bed_file))
         dst_regions = extract_regions_from_bed(dst_bed_file)
 
         if not dst_regions:
