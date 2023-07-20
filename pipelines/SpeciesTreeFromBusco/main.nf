@@ -252,7 +252,7 @@ process runGffread {
     script:
     """
     mkdir -p cdna
-    ${params.gffread_exe} -x cdna/$genome -g $genome $busco_annot
+    ${params.gffread_exe} -w cdna/$genome -g $genome $busco_annot
     """
 }
 
