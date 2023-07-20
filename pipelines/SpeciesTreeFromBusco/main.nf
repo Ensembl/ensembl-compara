@@ -244,7 +244,7 @@ process buscoAnnot {
 *@output path to cDNA fasta
 */
 process runGffread {
-    label 'rc_4gb'
+    label 'rc_4Gb'
     input:
         tuple path(busco_annot), path(genome)
     output:
@@ -266,7 +266,7 @@ process runGffread {
 *@output path to taxon list TSV
 */
 process collateBusco {
-    label 'rc_16gb'
+    label 'rc_16Gb'
 
     publishDir "${params.results_dir}/busco_genes", pattern: "cdnas_fofn.txt", mode: "copy", overwrite: true
     publishDir "${params.results_dir}/busco_genes/prot", pattern: "gene_prot_*.fas", mode: "copy",  overwrite: true
@@ -420,7 +420,7 @@ process trimAlignments {
 *@output path to RAXML style partition file
 */
 process mergeProtAlns {
-    label 'rc_4gb'
+    label 'rc_4Gb'
 
     publishDir "${params.results_dir}/", pattern: "merged_protein_alns.fas", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "partitions.tsv", mode: "copy",  overwrite: true
