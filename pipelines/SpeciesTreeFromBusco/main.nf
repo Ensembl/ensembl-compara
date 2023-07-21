@@ -453,7 +453,7 @@ process mergeProtAlns {
 *@output path to merged alignments fasta
 */
 process mergeCodonAlns {
-    label 'rc_4gb'
+    label 'rc_4Gb'
 
     publishDir "${params.results_dir}/", pattern: "merged_codon_alns.fas", mode: "copy",  overwrite: true
 
@@ -482,7 +482,7 @@ process mergeCodonAlns {
 *@output fasta alignment with every third site.
 */
 process pickThirdCodonSite {
-    label 'rc_4gb'
+    label 'rc_4Gb'
 
     publishDir "${params.results_dir}/", pattern: "merged_third_sites_alns.fas", mode: "copy",  overwrite: true
 
@@ -554,7 +554,7 @@ process calcGeneTrees {
 *@output path to tree in newick format
 */
 process calcProtTrees {
-    label 'retry_with_8gb_mem_c1'
+    label 'retry_with_8gb_mem_c32'
 
     input:
         path aln
@@ -602,7 +602,7 @@ process runAstral {
 *@output path to iqtree2 log file
 */
 process calcCodonBranchesIqtree {
-    label 'retry_with_16gb_mem_c1'
+    label 'retry_with_16gb_mem_c32'
 
     publishDir "${params.results_dir}/", pattern: "species_tree_codon_bl.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_report_codon_bl.txt", mode: "copy",  overwrite: true
