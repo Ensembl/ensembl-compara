@@ -183,7 +183,6 @@ def make_src_region_file(
     start: int,
     end: int,
     strand: int,
-    genome: str,
     chrom_sizes: Mapping[str, int],
     bed_file: Union[Path, str],
     flank_length: int = 0,
@@ -195,7 +194,6 @@ def make_src_region_file(
         start: Region start position.
         end: Region end position.
         strand: Region strand; either '1' for plus strand or '-1' for minus strand.
-        genome: Genome for which the regions are specified.
         chrom_sizes: Mapping of genome sequence names to their lengths.
         bed_file: Path of BED file to output.
         flank_length: Length of upstream/downstream flanking regions to request.
@@ -216,7 +214,7 @@ def make_src_region_file(
         try:
             chrom_size = chrom_sizes[region.chrom]
         except KeyError as exc:
-            raise ValueError(f"chromosome ID '{region.chrom}' not found in genome '{genome}'") from exc
+            raise ValueError(f"chromosome ID '{region.chrom}' not found in genome chrom sizes") from exc
 
         if region.start < 0:
             raise ValueError(f"region start must be greater than or equal to 0: {region.start}")

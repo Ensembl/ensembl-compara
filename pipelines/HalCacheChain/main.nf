@@ -134,7 +134,6 @@ process MAKE_SOURCE_BED {
         ${task_params.source_start},
         ${task_params.source_end},
         ${task_params.source_strand},
-        "${task_params.source_genome}",
         source_chrom_sizes,
         "liftover_source.bed",
     )
