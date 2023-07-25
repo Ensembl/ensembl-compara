@@ -244,7 +244,7 @@ process buscoAnnot {
 *@output path to cDNA fasta
 */
 process runGffread {
-    label 'rc_4gb'
+    label 'rc_4Gb'
     input:
         tuple path(busco_annot), path(genome)
     output:
@@ -252,7 +252,7 @@ process runGffread {
     script:
     """
     mkdir -p cdna
-    ${params.gffread_exe} -x cdna/$genome -g $genome $busco_annot
+    ${params.gffread_exe} -w cdna/$genome -g $genome $busco_annot
     """
 }
 
@@ -266,7 +266,7 @@ process runGffread {
 *@output path to taxon list TSV
 */
 process collateBusco {
-    label 'rc_16gb'
+    label 'rc_16Gb'
 
     publishDir "${params.results_dir}/busco_genes", pattern: "cdnas_fofn.txt", mode: "copy", overwrite: true
     publishDir "${params.results_dir}/busco_genes/prot", pattern: "gene_prot_*.fas", mode: "copy",  overwrite: true
@@ -420,7 +420,7 @@ process trimAlignments {
 *@output path to RAXML style partition file
 */
 process mergeProtAlns {
-    label 'rc_4gb'
+    label 'rc_4Gb'
 
     publishDir "${params.results_dir}/", pattern: "merged_protein_alns.fas", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "partitions.tsv", mode: "copy",  overwrite: true
@@ -453,7 +453,7 @@ process mergeProtAlns {
 *@output path to merged alignments fasta
 */
 process mergeCodonAlns {
-    label 'rc_4gb'
+    label 'rc_4Gb'
 
     publishDir "${params.results_dir}/", pattern: "merged_codon_alns.fas", mode: "copy",  overwrite: true
 
@@ -482,7 +482,7 @@ process mergeCodonAlns {
 *@output fasta alignment with every third site.
 */
 process pickThirdCodonSite {
-    label 'rc_4gb'
+    label 'rc_4Gb'
 
     publishDir "${params.results_dir}/", pattern: "merged_third_sites_alns.fas", mode: "copy",  overwrite: true
 
@@ -554,7 +554,7 @@ process calcGeneTrees {
 *@output path to tree in newick format
 */
 process calcProtTrees {
-    label 'retry_with_8gb_mem_c1'
+    label 'retry_with_8gb_mem_c32'
 
     input:
         path aln
@@ -602,7 +602,7 @@ process runAstral {
 *@output path to iqtree2 log file
 */
 process calcCodonBranchesIqtree {
-    label 'retry_with_16gb_mem_c1'
+    label 'retry_with_16gb_mem_c32'
 
     publishDir "${params.results_dir}/", pattern: "species_tree_codon_bl.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "iqtree_report_codon_bl.txt", mode: "copy",  overwrite: true
