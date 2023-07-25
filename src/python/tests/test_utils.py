@@ -199,7 +199,7 @@ class TestHalUtils:
                 {"chr1": 33},
                 "a2b.unknown_chr.src.bed",
                 0,
-                raises(ValueError, match=r"chromosome ID 'chrN' not found in genome 'genomeA'"),
+                raises(ValueError, match=r"chromosome ID 'chrN' not found in genome chrom sizes"),
             ),
             (
                 ("chr1", 32, 34, 1),
