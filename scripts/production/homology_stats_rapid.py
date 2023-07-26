@@ -154,18 +154,11 @@ def main() -> None:
 
     rr_dbc = DBConnection(db_url)
 
-    ref_gdb, ref_species, ref_taxid, query_species, query_taxid = get_closest_ref(
-        rr_dbc, ref_db
-    )
+    ref_gdb, ref_species, _, _, _ = get_closest_ref(rr_dbc, ref_db)
 
     nr_homologs, nr_genes = query_rr_database(rr_dbc, ref_gdb, ref_db)
     json_data = {
-        "query_species": query_species,
-        "query_taxon_id": query_taxid,
-        "ref_species": ref_species,
-        "ref_taxon_id": ref_taxid,
-        "nr_query_genes": nr_genes,
-        "nr_homologies": nr_homologs,
+        "homologs_against_" + ref_species: round((nr_homologs * 100 / nr_genes), 1)
     }
     with open(args.output, "w", encoding="utf-8") as outfile:
         json.dump(json_data, outfile)
