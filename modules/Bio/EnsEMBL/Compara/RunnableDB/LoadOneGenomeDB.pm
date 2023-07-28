@@ -198,7 +198,24 @@ sub create_genome_db {
 
     my $locator         = $asked_locator || $core_dba->locator;
 
-    my $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new_from_DBAdaptor($core_dba, $asked_genome_component);
+    my $genome_db;
+    if ( UNIVERSAL::isa($core_dba, 'Bio::EnsEMBL::Compara::GenomeMF') ) {
+        $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new(
+            -name                  => $core_dba->get_production_name(),
+            -assembly              => $core_dba->assembly_name(),
+            -taxon_id              => $core_dba->get_taxonomy_id(),
+            -dbID                  => $self->dbc->db_handle->last_insert_id(undef, undef, 'genome_db', 'genome_db_id'),
+            -genebuild             => $core_dba->get_genebuild(),
+            -display_name          => $core_dba->get_production_name(),
+            -has_karyotype         => $core_dba->has_karyotype(),
+            -strain_name           => $core_dba->get_production_name(),
+            -is_good_for_alignment => $core_dba->is_good_for_alignment(),
+        );
+    }
+    else {
+        $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new_from_DBAdaptor($core_dba, $asked_genome_component);
+    }
+
     if ($master_object) {
         $genome_db->first_release($master_object->first_release);
         $genome_db->last_release($master_object->last_release);

@@ -117,7 +117,8 @@ sub pipeline_checks_pre_init {
         and ref $self->o('curr_file_sources_locs') and not scalar(@{$self->o('curr_file_sources_locs')});
 
     # The master db must be defined to allow mapping stable_ids and checking species for reuse
-    die "No master database provided" if not $self->o('master_db');
+    # ...but note that the master database is not required in the current QfO SOP.
+    #die "No master database provided" if not $self->o('master_db');
     die "Species reuse is only possible with a master database" if $self->o('reuse_member_db') and not $self->o('master_db');
     die "Species reuse is only possible with some previous core databases" if $self->o('reuse_member_db') and ref $self->o('prev_core_sources_locs') and not scalar(@{$self->o('prev_core_sources_locs')});
 }
@@ -179,7 +180,7 @@ sub core_pipeline_analyses {
         {   -logic_name    => 'copy_table_from_master',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
-                'src_db_conn'   => '#master_db#',
+                'src_db_conn'   => '#ncbi_db#',
                 'mode'          => 'overwrite',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
