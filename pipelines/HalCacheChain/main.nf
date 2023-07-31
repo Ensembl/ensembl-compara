@@ -57,6 +57,36 @@ if (!params.input || !params.hal) {
 def hal_cache = params.hal_cache ?: getDefaultHalCachePath(params.hal)
 
 
+process DUMP_VERSIONS {
+
+    publishDir "${hal_cache}/runs/${workflow.runName}", pattern: "software_versions.txt", mode: "copy", overwrite: true
+
+    output:
+    path "software_versions.txt", emit: versions
+
+    script:
+    out = "software_versions.txt"
+    """
+    echo "Software versions" >> $out
+    echo "-----------------" >> $out
+
+    echo "python:" >> $out
+    python --version >> $out
+
+    echo "kentUtils:" >> $out
+    brew info kent | grep -m 1 kent >> $out
+
+    echo "halLiftover:" >> $out
+    ${params.hal_liftover_exe} --help 2>&1 | grep -Po -m 1 'halLiftover [^:]+' >> $out
+
+    echo "halStats:" >> $out
+    ${params.hal_stats_exe} --help 2>&1 | grep -Po -m 1 'halStats [^:]+' >> $out
+
+    echo "hal2fasta:" >> $out
+    ${params.hal_to_fasta_exe} --help 2>&1 | grep -Po -m 1 'hal2fasta [^:]+' >> $out
+    """
+}
+
 process DUMP_HAL_CHROM_SIZES {
 
     publishDir "${hal_cache}/genome/chrom_sizes", mode: "copy",  overwrite: false
@@ -242,6 +272,8 @@ process MERGE_CHAINS {
 
 workflow {
     println(ensemblLogo())
+
+    DUMP_VERSIONS ( )
 
     channel.value(params.hal) \
         | set { input_hal }
