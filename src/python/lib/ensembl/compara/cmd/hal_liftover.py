@@ -20,7 +20,7 @@ import itertools
 import json
 import pathlib
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, Iterable, Optional, TextIO, Union
+from typing import Any, Dict, Iterable, TextIO, Union
 
 import click
 from cmmodule.mapregion import crossmap_region_file
@@ -45,7 +45,6 @@ def liftover_via_chain(
     map_tree: Dict,
     flank_length: int = 0,
     min_map_ratio: float = 0.85,
-    src_name: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Liftover a region using a pairwise assembly chain file.
 
@@ -59,7 +58,6 @@ def liftover_via_chain(
         flank_length: Length of upstream/downstream flanking regions to request.
         min_map_ratio: Minimum ratio of bases mapped to the destination region relative
             to the total number of bases in the source region. Passed to CrossMap.
-        src_name: Optional name of source region.
 
     Returns:
         Dictionary containing liftover parameters and results.
@@ -198,7 +196,6 @@ def main(
         source_regions = [SimpleRegion.from_1_based_region_string(src_region)]
     elif src_region_tsv is not None:
         reader = csv.DictReader(src_region_tsv, dialect=UnquotedUnixTab)
-        region_to_name = {}
         source_regions = []
         for row in reader:
             source_region_name = row["name"] if "name" in row and row["name"] else None
