@@ -89,6 +89,7 @@ addopts = [
     "-v",
     "--tb=native",
     "--server=mysql://ensadmin:${ENSADMIN_PSW}@mysql-ens-compara-prod-1:4485/",
+    "--ignore=src/python/tests/helpers.py",
     # CITest project is on hold and it needs to be updated before resuming its unit tests
     "--ignore=src/python/tests/test_citest.py",
 ]
@@ -114,4 +115,10 @@ disable = [
     "too-many-statements",
     "unspecified-encoding",
     "wildcard-import"
+]
+
+[tool.pylint.typecheck]
+signature-mutators = [
+    "click.decorators.argument",
+    "click.decorators.option",
 ]
