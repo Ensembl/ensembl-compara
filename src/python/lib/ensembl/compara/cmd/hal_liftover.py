@@ -20,7 +20,7 @@ import itertools
 import json
 import pathlib
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, Iterable, TextIO, Union
+from typing import Any, Dict, Iterable, Optional, TextIO, Union
 
 import click
 from cmmodule.mapregion import crossmap_region_file
@@ -44,6 +44,7 @@ def liftover_via_chain(
     dst_2bit_file: Union[pathlib.Path, str],
     map_tree: Dict,
     flank_length: int = 0,
+    src_name: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Liftover a region using a pairwise assembly chain file.
 
@@ -55,6 +56,7 @@ def liftover_via_chain(
         dst_2bit_file: 2bit file of destination genome sequences.
         map_tree: Dictionary mapping chromosome name to interval tree.
         flank_length: Length of upstream/downstream flanking regions to request.
+        src_name: Optional name of source region.
 
     Returns:
         Dictionary containing liftover parameters and results.
@@ -71,6 +73,9 @@ def liftover_via_chain(
         "flank": flank_length,
         "dest_genome": dst_genome,
     }
+
+    if src_region.name:
+        rec["params"]["src_name"] = src_region.name
 
     rec["results"] = []
     with TemporaryDirectory() as tmp_dir:
@@ -182,10 +187,14 @@ def main(
         source_regions = [SimpleRegion.from_1_based_region_string(src_region)]
     elif src_region_tsv is not None:
         reader = csv.DictReader(src_region_tsv, dialect=UnquotedUnixTab)
-        source_regions = [
-            SimpleRegion.from_1_based_region_attribs(row["chr"], row["start"], row["end"], row["strand"])
-            for row in reader
-        ]
+        region_to_name = {}
+        source_regions = []
+        for row in reader:
+            source_region_name = row["name"] if "name" in row and row["name"] else None
+            source_region = SimpleRegion.from_1_based_region_attribs(
+                row["chr"], row["start"], row["end"], row["strand"], name=source_region_name
+            )
+            source_regions.append(source_region)
     else:
         raise RuntimeError("one of '--src-region' or '--src-region-tsv' must be set")
 
@@ -228,6 +237,7 @@ def write_liftover_output(records: Iterable[Dict[str, Any]], output_format: str,
     elif output_format == "TSV":
         output_field_names = [
             "src_genome",
+            "src_name",
             "src_chr",
             "src_start",
             "src_end",
