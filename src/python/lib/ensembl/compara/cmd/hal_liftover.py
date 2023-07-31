@@ -44,6 +44,7 @@ def liftover_via_chain(
     dst_2bit_file: Union[pathlib.Path, str],
     map_tree: Dict,
     flank_length: int = 0,
+    min_map_ratio: float = 0.85,
     src_name: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Liftover a region using a pairwise assembly chain file.
@@ -56,6 +57,8 @@ def liftover_via_chain(
         dst_2bit_file: 2bit file of destination genome sequences.
         map_tree: Dictionary mapping chromosome name to interval tree.
         flank_length: Length of upstream/downstream flanking regions to request.
+        min_map_ratio: Minimum ratio of bases mapped to the destination region relative
+            to the total number of bases in the source region. Passed to CrossMap.
         src_name: Optional name of source region.
 
     Returns:
@@ -93,7 +96,7 @@ def liftover_via_chain(
         )
 
         dst_bed_file = tmp_dir_path / "dst_regions.bed"
-        crossmap_region_file(map_tree, str(src_bed_file), str(dst_bed_file))
+        crossmap_region_file(map_tree, str(src_bed_file), str(dst_bed_file), min_ratio=min_map_ratio)
         dst_regions = extract_regions_from_bed(dst_bed_file)
 
         if not dst_regions:
@@ -149,6 +152,13 @@ def liftover_via_chain(
     help="Linear gap parameter passed unmodified to axtChain.",
 )
 @click.option(
+    "--min-map-ratio",
+    metavar="FLOAT",
+    default=0.85,
+    help="Minimum ratio of bases mapped to the destination region relative to the"
+    " total number of bases in the source region. This is passed to CrossMap.",
+)
+@click.option(
     "--output-format",
     default="JSON",
     metavar="STR",
@@ -165,6 +175,7 @@ def main(
     hal_cache: pathlib.Path,
     flank: int,
     linear_gap: str,
+    min_map_ratio: float,
     output_format: str,
 ) -> None:
     """Do a liftover between two genome sequences in a HAL file."""
@@ -217,6 +228,7 @@ def main(
                 destination_2bit_file,
                 crossmap_tree,
                 flank_length=flank,
+                min_map_ratio=min_map_ratio,
             )
             records.append(record)
 
