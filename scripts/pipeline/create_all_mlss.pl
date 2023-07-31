@@ -424,7 +424,7 @@ foreach my $xml_msa (@{$division_node->findnodes('multiple_alignments/multiple_a
     }
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type($xml_msa->getAttribute('method'));
     my $species_set = make_named_species_set_from_XML_node($xml_msa, $method, $division_genome_dbs);
-    push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_multiple_wga_mlsss($compara_dba, $method, $species_set, ($xml_msa->getAttribute('gerp') // 0), $no_release) };
+    push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_multiple_wga_mlsss($compara_dba, $method, $species_set, ($xml_msa->getAttribute('gerp') // 0), $no_release), undef, ($xml_msa->getAttribute('url') // 0), $no_release) };
 }
 
 foreach my $xml_self_aln (@{$division_node->findnodes('self_alignments/genome')}) {
