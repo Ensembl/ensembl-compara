@@ -228,6 +228,9 @@
                   </choice>
                 </attribute>
               </optional>
+              <optional>
+                <attribute name="url" blockly:blockName="URL field for CACTUS_HAL"/>
+              </optional>
             </element>
           </oneOrMore>
         </element>
