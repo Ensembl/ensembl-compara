@@ -158,7 +158,7 @@ def main() -> None:
 
     nr_homologs, nr_genes = query_rr_database(rr_dbc, ref_gdb, ref_db)
     json_data = {
-        "homologs_against_" + ref_species: round((nr_homologs * 100 / nr_genes), 1)
+        f"homologs_against_{ref_species}": round((nr_homologs * 100 / nr_genes), 1)
     }
     with open(args.output, "w", encoding="utf-8") as outfile:
         json.dump(json_data, outfile)
