@@ -1,7 +1,8 @@
 ensembl-py@git+https://github.com/Ensembl/ensembl-py.git@1.0.0#egg=ensembl-py
 biopython>=1.76
+click>=8.1.4
+CrossMap>=0.6.5
 ete3>=3.1.1
 lxml>=4.9.2
 pandas>=0.24.2
-pybedtools==0.8.2
 sqlalchemy>=1.4.0

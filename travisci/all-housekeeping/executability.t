@@ -36,7 +36,7 @@ foreach my $f (@all_files) {
     $should_be_executable = '' if $f =~ /\bdocs\/conf\.py$/;
     $should_be_executable = '' if $f =~ /(production|dumps).*reg_conf.*\.pl$/;
     $should_be_executable = '' if $f =~ /\bsrc\/python\/.*\.py$/;
-    $should_be_executable = '' if $f =~ /\bpipelines\/.*\/scripts\/.*\.py$/;
+    $should_be_executable = '' if $f =~ /\bpipelines\/(.*)\/scripts\/.*\.py$/ && $1 ne 'HalCacheChain';
     $should_be_executable = '' if $f =~ /\/conftest\.py$/;
     $should_be_executable = '' if $f =~ /\bsetup\.py$/;
     # Test
