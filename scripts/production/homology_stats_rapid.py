@@ -154,7 +154,7 @@ def main() -> None:
 
     rr_dbc = DBConnection(db_url)
 
-    ref_gdb, ref_species, _, _, _ = get_closest_ref(rr_dbc, ref_db)
+    ref_gdb, ref_species, *_unused = get_closest_ref(rr_dbc, ref_db)
 
     nr_homologs, nr_genes = query_rr_database(rr_dbc, ref_gdb, ref_db)
     json_data = {
