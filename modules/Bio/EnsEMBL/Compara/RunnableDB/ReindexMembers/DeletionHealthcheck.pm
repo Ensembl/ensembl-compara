@@ -38,22 +38,10 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub param_defaults {
-
-}
-
-
-sub fetch_input {
-    my $self = shift @_;
-
-    $self->param('curr_db', $self);
-
-}
-
 sub run {
     my $self = shift @_;
     my $prev_dbc = $self->get_cached_compara_dba('prev_tree_db')->dbc;
-    my $curr_dbc = $self->param('curr_db')->dbc;
+    my $curr_dbc = $self->compara_dba->dbc;
     my $diff_limit = $self->param('diff_limit');
     
     my $tree_count = $self->count_gene_trees($curr_dbc);
@@ -63,7 +51,7 @@ sub run {
     if ($tree_diff < $diff_limit) {
         my $msg = sprintf("WARNING: The decrease in number of trees is higher than the limit: %.3f%% Current count: %d Previous count: %d!\n", abs($tree_diff), $tree_count, $tree_count_prev);
         print $msg;
-        $self->throw($msg)
+        $self->die_no_retry($msg)
     }
 
     my $hom_count = $self->count_homologies($curr_dbc);
@@ -73,7 +61,7 @@ sub run {
     if ($hom_diff < $diff_limit) {
         my $msg = sprintf("WARNING: The decrease in number of homologies is higher than the limit: %.3f%% Current count: %d Previous count: %d!\n", abs($hom_diff), $hom_count, $hom_count_prev);
         print $msg;
-        $self->throw($msg)
+        $self->die_no_retry($msg)
     }
 
 }
