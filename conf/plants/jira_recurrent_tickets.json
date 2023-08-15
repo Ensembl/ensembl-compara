@@ -57,7 +57,7 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Species-tree\n*GitHub*: [SpeciesTreeFromBusco|https://github.com/Ensembl/ensembl-compara/tree/main/pipelines/SpeciesTreeFromBusco](!) Only needs to be recomputed if there is a change to the rice {{species_set}}",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Species-tree\n*GitHub*: [SpeciesTreeFromBusco|https://github.com/Ensembl/ensembl-compara/tree/main/pipelines/SpeciesTreeFromBusco]",
             "summary": "Run BUSCO species-tree pipeline",
             "name_on_graph": "Species-tree"
          }
