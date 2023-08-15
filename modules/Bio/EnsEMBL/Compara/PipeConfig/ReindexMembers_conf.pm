@@ -342,6 +342,15 @@ sub core_pipeline_analyses {
             -flow_into      => {
                 '2->A' => 'exon_boundaries_prep',
                 'A->1' => 'pipeline_entry',
+                1      => 'hc_deletion',
+            },
+        },
+        {   -logic_name     => 'hc_deletion',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::DeletionHealthcheck',
+            -parameters     => {
+                'diff_limit'    => -2.5,
+            },
+            -flow_into      => {
             },
         },
 
