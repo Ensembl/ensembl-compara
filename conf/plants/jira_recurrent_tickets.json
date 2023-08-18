@@ -57,8 +57,8 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Species-tree\n*GitHub*: [CreateSpeciesTree_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/CreateSpeciesTree_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CreateSpeciesTree_conf -host mysql-ens-compara-prod-X -port XXXX -division plants -output_file $ENSEMBL_ROOT_DIR/ensembl-compara/conf/plants/species_tree.rice.branch_len.nw -species_set_id XXXXXX{code}\n(!) Only needs to be recomputed if there is a change to the rice {{species_set}}",
-            "summary": "Import the species-tree",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Species-tree\n*GitHub*: [SpeciesTreeFromBusco|https://github.com/Ensembl/ensembl-compara/tree/release/<version>/pipelines/SpeciesTreeFromBusco]",
+            "summary": "Run BUSCO species-tree pipeline",
             "name_on_graph": "Species-tree"
          }
       ],
