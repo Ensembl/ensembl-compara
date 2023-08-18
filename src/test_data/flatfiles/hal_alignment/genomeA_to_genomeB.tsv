@@ -1,2 +1,2 @@
-src_genome	src_chr	src_start	src_end	src_strand	flank	dest_genome	lifted_src_chr	lifted_src_start	lifted_src_end	lifted_src_strand	dest_chr	dest_start	dest_end	dest_strand	dest_sequence
-genomeA	chr1	16	18	1	0	genomeB					chr1	23	25	1	TAA
+src_genome	src_name	src_chr	src_start	src_end	src_strand	flank	dest_genome	lifted_src_chr	lifted_src_start	lifted_src_end	lifted_src_strand	dest_chr	dest_start	dest_end	dest_strand	dest_sequence
+genomeA		chr1	16	18	1	0	genomeB					chr1	23	25	1	TAA

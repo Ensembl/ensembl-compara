@@ -44,6 +44,7 @@ def liftover_via_chain(
     dst_2bit_file: Union[pathlib.Path, str],
     map_tree: Dict,
     flank_length: int = 0,
+    min_map_ratio: float = 0.85,
 ) -> Dict[str, Any]:
     """Liftover a region using a pairwise assembly chain file.
 
@@ -55,6 +56,8 @@ def liftover_via_chain(
         dst_2bit_file: 2bit file of destination genome sequences.
         map_tree: Dictionary mapping chromosome name to interval tree.
         flank_length: Length of upstream/downstream flanking regions to request.
+        min_map_ratio: Minimum ratio of bases mapped to the destination region relative
+            to the total number of bases in the source region. Passed to CrossMap.
 
     Returns:
         Dictionary containing liftover parameters and results.
@@ -72,6 +75,9 @@ def liftover_via_chain(
         "dest_genome": dst_genome,
     }
 
+    if src_region.name:
+        rec["params"]["src_name"] = src_region.name
+
     rec["results"] = []
     with TemporaryDirectory() as tmp_dir:
         tmp_dir_path = pathlib.Path(tmp_dir)
@@ -88,7 +94,7 @@ def liftover_via_chain(
         )
 
         dst_bed_file = tmp_dir_path / "dst_regions.bed"
-        crossmap_region_file(map_tree, str(src_bed_file), str(dst_bed_file))
+        crossmap_region_file(map_tree, str(src_bed_file), str(dst_bed_file), min_ratio=min_map_ratio)
         dst_regions = extract_regions_from_bed(dst_bed_file)
 
         if not dst_regions:
@@ -144,6 +150,13 @@ def liftover_via_chain(
     help="Linear gap parameter passed unmodified to axtChain.",
 )
 @click.option(
+    "--min-map-ratio",
+    metavar="FLOAT",
+    default=0.85,
+    help="Minimum ratio of bases mapped to the destination region relative to the"
+    " total number of bases in the source region. This is passed to CrossMap.",
+)
+@click.option(
     "--output-format",
     default="JSON",
     metavar="STR",
@@ -160,6 +173,7 @@ def main(
     hal_cache: pathlib.Path,
     flank: int,
     linear_gap: str,
+    min_map_ratio: float,
     output_format: str,
 ) -> None:
     """Do a liftover between two genome sequences in a HAL file."""
@@ -182,10 +196,13 @@ def main(
         source_regions = [SimpleRegion.from_1_based_region_string(src_region)]
     elif src_region_tsv is not None:
         reader = csv.DictReader(src_region_tsv, dialect=UnquotedUnixTab)
-        source_regions = [
-            SimpleRegion.from_1_based_region_attribs(row["chr"], row["start"], row["end"], row["strand"])
-            for row in reader
-        ]
+        source_regions = []
+        for row in reader:
+            source_region_name = row["name"] if "name" in row and row["name"] else None
+            source_region = SimpleRegion.from_1_based_region_attribs(
+                row["chr"], row["start"], row["end"], row["strand"], name=source_region_name
+            )
+            source_regions.append(source_region)
     else:
         raise RuntimeError("one of '--src-region' or '--src-region-tsv' must be set")
 
@@ -208,6 +225,7 @@ def main(
                 destination_2bit_file,
                 crossmap_tree,
                 flank_length=flank,
+                min_map_ratio=min_map_ratio,
             )
             records.append(record)
 
@@ -228,6 +246,7 @@ def write_liftover_output(records: Iterable[Dict[str, Any]], output_format: str,
     elif output_format == "TSV":
         output_field_names = [
             "src_genome",
+            "src_name",
             "src_chr",
             "src_start",
             "src_end",

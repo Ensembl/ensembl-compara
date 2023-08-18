@@ -29,7 +29,7 @@ from pathlib import Path
 import re
 import subprocess
 from tempfile import TemporaryDirectory
-from typing import Iterable, List, Mapping, Union
+from typing import Iterable, List, Mapping, Optional, Union
 
 from Bio.SeqIO.FastaIO import SimpleFastaParser
 
@@ -43,6 +43,7 @@ class SimpleRegion:
     end: int
     strand: str
     validate: InitVar[bool] = True
+    name: Optional[str] = None
 
     def __post_init__(self, validate):
         if validate:
@@ -58,7 +59,7 @@ class SimpleRegion:
                 raise ValueError(f"0-based region has invalid strand: '{self.strand}'")
 
     @classmethod
-    def from_1_based_region_string(cls, region_string: str) -> SimpleRegion:
+    def from_1_based_region_string(cls, region_string: str, name: Optional[str] = None) -> SimpleRegion:
         """Create a region object from a 1-based region string.
 
         Args:
@@ -76,7 +77,11 @@ class SimpleRegion:
 
         if match := seq_region_regex.fullmatch(region_string):
             region = cls.from_1_based_region_attribs(
-                match["chrom"], match["start"], match["end"], match["strand"]
+                match["chrom"],
+                match["start"],
+                match["end"],
+                match["strand"],
+                name=name,
             )
         else:
             raise ValueError(f"failed to tokenise 1-based region string: '{region_string}'")
@@ -90,6 +95,7 @@ class SimpleRegion:
         start: Union[int, str],
         end: Union[int, str],
         strand: Union[int, str],
+        name: Optional[str] = None,
     ) -> SimpleRegion:
         """Create a region object from 1-based region attributes.
 
@@ -123,7 +129,7 @@ class SimpleRegion:
         except (KeyError, ValueError) as exc:
             raise ValueError(f"1-based region has invalid strand: '{strand}'") from exc
 
-        return cls(chrom, start - 1, end, strand, validate=False)
+        return cls(chrom, start - 1, end, strand, name=name, validate=False)
 
     def to_1_based_region_string(self):
         """Get the 1-based region string corresponding to this region."""
