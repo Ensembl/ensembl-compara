@@ -55,6 +55,7 @@ sub default_options {
             'default_protein_db'        => 'compara_ptrees',
             'protostomes_protein_db'    => 'protostomes_ptrees',
             'insects_protein_db'        => 'insects_ptrees',
+            'drosophila_protein_db'     => 'drosophila_ptrees',
             'members_db'                => 'compara_members',
         },
 
@@ -81,6 +82,7 @@ sub default_options {
             'default_protein_db'        => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
             'protostomes_protein_db'    => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
             'insects_protein_db'        => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
+            'drosophila_protein_db'     => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
         }
     }
 }
