@@ -80,6 +80,7 @@ my $compara_dbs = {
     'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', 'sbhurji_default_metazoa_protein_trees_110' ],
     'protostomes_ptrees' => [ 'mysql-ens-compara-prod-6', 'twalsh_protostomes_metazoa_protein_trees_20230209_110' ],
     'insects_ptrees'   => [ 'mysql-ens-compara-prod-8', 'twalsh_insects_metazoa_protein_trees_20230624_111' ],
+    #'drosophila_ptrees'  => [ 'mysql-ens-compara-prod-X', '' ],
 
     # LastZ dbs
     # 'lastz_batch_1' => [ 'mysql-ens-compara-prod-X', '' ],

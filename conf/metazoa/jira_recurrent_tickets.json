@@ -75,9 +75,21 @@
          },
          {
             "component": "Production tasks",
+            "description": "*GitHub*: [<Division>/DrosophilaProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/DrosophilaProteinTrees_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::DrosophilaProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "summary": "Run the Drosophila Protein-trees pipeline",
+            "name_on_graph": "Protein-trees:Drosophila"
+         },
+         {
+            "component": "Production tasks",
             "description": "Mark as done when all LastZs have been merged into the new release database.",
             "summary": "Merge all LastZ",
             "name_on_graph": "Merge all LastZ"
+         },
+         {
+            "component": "Production tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+CACTUS+HAL+Alignment+to+Compara",
+            "summary": "Register HAL alignment data",
+            "name_on_graph": "Register HAL alignment data"
          },
          {
             "component": "Production tasks",
