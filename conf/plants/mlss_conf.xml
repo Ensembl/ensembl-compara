@@ -10,23 +10,110 @@
         <!-- But exclude all triticum_aestivum cultivars -->
         <ref_for_taxon name="triticum_aestivum"/>
       </taxonomic_group>
+      <genome name="oryza_sativa_arc" exclude="1"/>
+      <genome name="oryza_sativa_azucena" exclude="1"/>
+      <genome name="oryza_sativa_chaomeo" exclude="1"/>
+      <genome name="oryza_sativa_gobolsailbalam" exclude="1"/>
+      <genome name="oryza_sativa_ir64" exclude="1"/>
+      <genome name="oryza_sativa_ketannangka" exclude="1"/>
+      <genome name="oryza_sativa_khaoyaiguang" exclude="1"/>
+      <genome name="oryza_sativa_larhamugad" exclude="1"/>
+      <genome name="oryza_sativa_lima" exclude="1"/>
+      <genome name="oryza_sativa_liuxu" exclude="1"/>
+      <genome name="oryza_sativa_mh63" exclude="1"/>
+      <genome name="oryza_sativa_n22" exclude="1"/>
+      <genome name="oryza_sativa_natelboro" exclude="1"/>
+      <genome name="oryza_sativa_pr106" exclude="1"/>
+      <genome name="oryza_sativa_zs97" exclude="1"/>
     </collection>
-
+    
     <!-- Rice species tree including nearest grass relative -->
     <!-- used to compute branch lengths for EPO below -->
     <collection name="rice-with-outgroup" no_release="1">
-      <taxonomic_group taxon_name="Oryza"/>
+      <genome name="oryza_barthii"/>
+      <genome name="oryza_brachyantha"/>
+      <genome name="oryza_glaberrima"/>
+      <genome name="oryza_glumipatula"/>
+      <genome name="oryza_indica"/>
+      <genome name="oryza_longistaminata"/>
+      <genome name="oryza_meridionalis"/>
+      <genome name="oryza_nivara"/>
+	  <genome name="oryza_punctata"/>
+      <genome name="oryza_rufipogon"/>
+      <genome name="oryza_sativa"/>
       <genome name="leersia_perrieri"/>
     </collection>
 
     <!-- Wheat cultivars -->
     <collection name="wheat_cultivars">
-      <taxonomic_group taxon_name="Triticum"/>
       <genome name="aegilops_tauschii"/>
       <genome name="hordeum_vulgare"/>
       <genome name="secale_cereale"/>
+      <genome name="triticum_aestivum"/>
+      <genome name="triticum_aestivum_arinalrfor"/>
+      <genome name="triticum_aestivum_jagger"/>
+      <genome name="triticum_aestivum_julius"/>
+      <genome name="triticum_aestivum_lancer"/>
+      <genome name="triticum_aestivum_landmark"/>
+      <genome name="triticum_aestivum_mace"/>
+      <genome name="triticum_aestivum_norin61"/>
+      <genome name="triticum_aestivum_stanley"/>
+      <genome name="triticum_dicoccoides"/>
+      <genome name="triticum_urartu"/>
+      <genome name="triticum_turgidum"/>
       <!-- Outgroup -->
       <genome name="brachypodium_distachyon"/>
+    </collection>
+
+    <!-- Wheat CACTUS collection -->
+    <collection name="wheat">
+      <genome name="aegilops_tauschii"/>
+      <genome name="brachypodium_distachyon"/>
+      <genome name="hordeum_vulgare"/>
+      <genome name="secale_cereale"/>
+      <genome name="triticum_aestivum"/>
+      <genome name="triticum_aestivum_arinalrfor"/>
+      <genome name="triticum_aestivum_jagger"/>
+      <genome name="triticum_aestivum_julius"/>
+      <genome name="triticum_aestivum_lancer"/>
+      <genome name="triticum_aestivum_landmark"/>
+      <genome name="triticum_aestivum_mace"/>
+      <genome name="triticum_aestivum_mattis"/>
+      <genome name="triticum_aestivum_norin61"/>
+      <genome name="triticum_aestivum_stanley"/>
+      <genome name="triticum_dicoccoides"/>
+      <genome name="triticum_urartu"/>
+    </collection>
+
+    <!-- Rice Cultivars -->
+    <collection name="rice_cultivars">
+      <genome name="oryza_glaberrima"/>
+      <genome name="oryza_brachyantha"/>
+      <genome name="oryza_sativa"/>
+      <genome name="oryza_barthii"/>
+      <genome name="oryza_glumipatula"/>
+      <genome name="oryza_nivara"/>
+      <genome name="oryza_punctata"/>
+      <genome name="oryza_rufipogon"/>
+      <genome name="oryza_meridionalis"/>
+      <genome name="oryza_longistaminata"/>
+      <genome name="oryza_sativa_arc"/>
+      <genome name="oryza_sativa_azucena"/>
+      <genome name="oryza_sativa_chaomeo"/>
+      <genome name="oryza_sativa_gobolsailbalam"/>
+      <genome name="oryza_sativa_ir64"/>
+      <genome name="oryza_sativa_ketannangka"/>
+      <genome name="oryza_sativa_khaoyaiguang"/>
+      <genome name="oryza_sativa_larhamugad"/>
+      <genome name="oryza_sativa_lima"/>
+      <genome name="oryza_sativa_liuxu"/>
+      <genome name="oryza_sativa_mh63"/>
+      <genome name="oryza_sativa_n22"/>
+      <genome name="oryza_sativa_natelboro"/>
+      <genome name="oryza_sativa_pr106"/>
+      <genome name="oryza_sativa_zs97"/>
+      <!--Outgroup -->
+      <genome name="leersia_perrieri"/>
     </collection>
 
   </collections>
@@ -59,6 +146,13 @@
       </species_set>
     </one_vs_all>
 
+    <!-- Reference rice vs all rice cultivars and related species -->
+    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa">
+      <species_set in_collection="rice_cultivars">
+        <taxonomic_group taxon_name="Eukaryota"/> <!-- I.e. everything in the collection -->
+      </species_set>
+    </one_vs_all>
+
     <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="saccharum_spontaneum"/>
     <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="setaria_italica"/>
     <pairwise_alignment method="LASTZ_NET" ref_genome="triticum_aestivum" target_genome="sorghum_bicolor"/>
@@ -67,8 +161,9 @@
     <!-- Other relevant PWAs -->
     <pairwise_alignment method="LASTZ_NET" ref_genome="zea_mays" target_genome="sorghum_bicolor"/>
     <pairwise_alignment method="LASTZ_NET" ref_genome="zea_mays" target_genome="brachypodium_distachyon"/>
-    <!-- pairwise_alignment method="LASTZ_NET" ref_genome="avena_sativa_sang" target_genome="avena_sativa_ot3098"/> -->
-
+    <pairwise_alignment method="LASTZ_NET" ref_genome="avena_sativa_sang" target_genome="avena_sativa_ot3098"/>
+    <pairwise_alignment method="LASTZ_NET" ref_genome="avena_sativa_sang" target_genome="triticum_aestivum"/>
+    <pairwise_alignment method="LASTZ_NET" ref_genome="avena_sativa_sang" target_genome="hordeum_vulgare"/>
   </pairwise_alignments>
 
   <multiple_alignments>
@@ -100,7 +195,8 @@
         <genome name="oryza_sativa"/>
       </species_set>
     </multiple_alignment>
-
+    <multiple_alignment method="CACTUS_HAL" collection="rice_cultivars"/>
+    <multiple_alignment method="CACTUS_HAL" collection="wheat"/>
   </multiple_alignments>
 
   <!-- DFW work -->
@@ -112,6 +208,7 @@
   <gene_trees>
     <protein_trees collection="default"/>
     <protein_trees collection="wheat_cultivars"/>
+    <protein_trees collection="rice_cultivars"/>
   </gene_trees>
 
   <species_trees>
