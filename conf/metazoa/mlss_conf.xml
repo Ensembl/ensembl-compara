@@ -298,12 +298,64 @@
       <genome name="zootermopsis_nevadensis"/>
     </collection>
 
+    <!-- Drosophila pan genome-->
+    <collection name="pangenome_drosophila">
+      <genome name="drosophila_melangoaster"/>
+      <genome name="drosophila_erecta_gca003286155v2rs"/>
+      <genome name="drosophila_grimshawi_gca018153295v1rs"/>
+      <genome name="drosophila_gunungcola_gca025200985v1rs"/>
+      <genome name="drosophila_innubila_gca004354385v1rs"/>
+      <genome name="drosophila_mojavensis_gca018153725v1rs"/>
+      <genome name="drosophila_persimilis_gca003286085v2rs"/>
+      <genome name="drosophila_sechellia_gca004382195v2rs"/>
+      <genome name="drosophila_virilis_gca003285735v2rs"/>
+      <genome name="drosophila_albomicans_gca009650485v2rs"/>
+      <genome name="drosophila_ananassae_gca017639315v2rs"/>
+      <genome name="drosophila_arizonae_gca001654025v1rs"/>
+      <genome name="drosophila_biarmipes_gca025231255v1rs"/>
+      <genome name="drosophila_bipectinata_gca000236285v2rs"/>
+      <genome name="drosophila_busckii_gca011750605v1rs"/>
+      <genome name="drosophila_elegans_gca000224195v2rs"/>
+      <genome name="drosophila_eugracilis_gca018153835v1rs"/>
+      <genome name="drosophila_ficusphila_gca018152265v1rs"/>
+      <genome name="drosophila_guanche_gca900245975v1rs"/>
+      <genome name="drosophila_hydei_gca003285905v2rs"/>
+      <genome name="drosophila_kikkawai_gca018152535v1rs"/>
+      <genome name="drosophila_mauritiana_gca004382145v1rs"/>
+      <genome name="drosophila_miranda_gca003369915v2rs"/>
+      <genome name="drosophila_navojoa_gca001654015v2rs"/>
+      <genome name="drosophila_obscura_gca018151105v1rs"/>
+      <genome name="drosophila_pseudoobscura_gca009870125v2rs"/>
+      <genome name="drosophila_rhopaloa_gca000236305v2rs"/>
+      <genome name="drosophila_santomea_gca016746245v2rs"/>
+      <genome name="drosophila_simulans_gca016746395v2rs"/>
+      <genome name="drosophila_subobscura_gca008121235v1rs"/>
+      <genome name="drosophila_subpulchrella_gca014743375v2rs"/>
+      <genome name="drosophila_suzukii_gca013340165v1rs"/>
+      <genome name="drosophila_takahashii_gca018152695v1rs"/>
+      <genome name="drosophila_teissieri_gca016746235v2rs"/>
+      <genome name="drosophila_willistoni_gca018902025v2rs"/>
+      <genome name="drosophila_yakuba_gca016746365v2rs"/>
+      <!--Outgroup -->
+      <genome name="bactrocera_neohumeralis_gca024586455v2rs"/>
+      <genome name="coremacera_marginata_gca914767935v1"/>
+      <genome name="machimus_atricapillus_gca933228815v1"/>
+      <genome name="myopa_tessellatipennis_gca943737955v1"/>
+    </collection>
+
   </collections>
+
+  <multiple_alignments>
+    <!-- Drosophila pan genome -->
+    <multiple_alignment method="CACTUS_HAL" collection="pangenome_drosophila"/>
+
+  </multiple_alignments>
 
   <gene_trees>
     <protein_trees collection="default"/>
     <protein_trees collection="protostomes"/>
     <protein_trees collection="insects"/>
+    <protein_trees collection="pangenome_drosophila"/>
   </gene_trees>
 
 </compara_db>
