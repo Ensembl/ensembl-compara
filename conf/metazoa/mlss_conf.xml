@@ -300,7 +300,7 @@
 
     <!-- Drosophila pan genome-->
     <collection name="pangenome_drosophila">
-      <genome name="drosophila_melangoaster"/>
+      <genome name="drosophila_melanogaster"/>
       <genome name="drosophila_erecta_gca003286155v2rs"/>
       <genome name="drosophila_grimshawi_gca018153295v1rs"/>
       <genome name="drosophila_gunungcola_gca025200985v1rs"/>
