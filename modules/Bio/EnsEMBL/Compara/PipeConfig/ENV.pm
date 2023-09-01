@@ -425,22 +425,27 @@ sub resource_classes_multi_thread {
 
         '8Gb_4c_mpi' => {
             'LSF'   => '-q mpi -n 4 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=4]"',
+            'SLURM' => '--partition=standard --cpus-per-task=4 --mem=8g',
         },
 
         '8Gb_8c_mpi' => {
             'LSF'    => '-q mpi -n 8 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=8]"',
+            'SLURM'  => '--partition=standard --cpus-per-task=8 --mem=8g',
         },
 
         '8Gb_16c_mpi' => {
             'LSF'    => '-q mpi -n 16 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"',
+            'SLURM'  => '--partition=standard --cpus-per-task=16 --mem=8g',
         },
 
         '8Gb_24c_mpi' => {
             'LSF'    => '-q mpi -n 24 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=12]"',
+            'SLURM'  => '--partition=standard --cpus-per-task=24 --mem=8g',
         },
 
         '8Gb_32c_mpi' => {
             'LSF'    => '-q mpi -n 32 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"',
+            'SLURM'  => '--partition=standard --cpus-per-task=32 --mem=8g',
         },
 
         '8Gb_64c_mpi' => {
@@ -449,42 +454,52 @@ sub resource_classes_multi_thread {
 
         '16Gb_4c_mpi' => {
             'LSF'    => '-q mpi -n 4 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"',
+            'SLURM'  => '--partition=standard --cpus-per-task=4 --mem=16g',
         },
 
         '16Gb_8c_mpi' => {
-            'LSF' => '-q mpi -n 8 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=8]"',
+            'LSF'    => '-q mpi -n 8 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=8]"',
+            'SLURM'  => '--partition=standard --cpus-per-task=8 --mem=16g',
         },
 
         '16Gb_16c_mpi' => {
             'LSF'    => '-q mpi -n 16 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=16]"',
+            'SLURM'  => '--partition=standard --cpus-per-task=16 --mem=16g',
         },
 
         '16Gb_24c_mpi' => {
             'LSF'    => '-q mpi -n 24 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=12]"',
+            'SLURM'  => '--partition=standard --cpus-per-task=24 --mem=16g',
         },
 
         '16Gb_32c_mpi' => {
             'LSF'    => '-q mpi -n 32 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=16]"',
+            'SLURM'  => '--partition=standard --cpus-per-task=3 --mem=16g',
         },
 
         '32Gb_4c_mpi' => {
             'LSF'    => '-q mpi -n 4 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=4]"',
+            'SLURM'  => '--partition=standard --cpus-per-task=4 --mem=32g',
         },
 
         '32Gb_8c_mpi' => {
             'LSF'    => '-q mpi -n 8 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=8]"',
+            'SLURM'  => '--partition=standard --cpus-per-task=8 --mem=32g',
         },
 
         '32Gb_16c_mpi' => {
             'LSF'    => '-q mpi -n 16 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"',
+            'SLURM'  => '--partition=standard --cpus-per-task=16 --mem=32g',
         },
 
         '32Gb_24c_mpi' => {
             'LSF'    => '-q mpi -n 24 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=12]"',
+            'SLURM'  => '--partition=standard --cpus-per-task=24 --mem=32g',
         },
 
         '32Gb_32c_mpi' => {
             'LSF'    => '-q mpi -n 32 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"',
+            'SLURM'  => '--partition=standard --cpus-per-task=32 --mem=32g',
         },
 
         '32Gb_64c_mpi' => {
@@ -493,6 +508,7 @@ sub resource_classes_multi_thread {
 
         '64Gb_4c_mpi' => {
             'LSF'    => '-q mpi -n 4 -M64000 -R"select[mem>64000] rusage[mem=64000] same[model] span[ptile=4]"',
+            'SLURM'  => '--partition=standard --cpus-per-task=4 --mem=64g',
         },
     };
 
