@@ -1426,7 +1426,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
           }
       }
 
-      my %mlss_sp_tree_gdb_ids = map { $_ => 1 } keys %{$mlss->species_tree->get_genome_db_id_2_node_hash()};
+      my %mlss_sp_tree_gdb_ids = map { $_ => 1 } keys %{$mlss_with_mapping->species_tree->get_genome_db_id_2_node_hash()};
 
       my %hal_species_map;
       my %group_key_map;
