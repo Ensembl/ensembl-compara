@@ -340,7 +340,7 @@ sub toString {
     my $txt = sprintf('MethodLinkSpeciesSet dbID=%s', $self->dbID || '?');
     $txt .= ' ' . ($self->name ? sprintf('"%s"', $self->name) : '(unnamed)');
     $txt .= sprintf(' {method "%s"} x {species-set "%s"}', $self->method->type, $self->species_set->name || $self->species_set->dbID);
-    $txt .= ', found in '.$self->url if $self->url;
+    $txt .= ', located at ' . $self->get_original_url if $self->get_original_url;
     $txt .= ' ' . $self->SUPER::toString();
     return $txt;
 }
