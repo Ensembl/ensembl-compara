@@ -103,7 +103,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'cleanup_strains_clusters',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingClusters',
-            -analysis_capacity => 700,
+            -analysis_capacity => 100,
         },
 
         {
