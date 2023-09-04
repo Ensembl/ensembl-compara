@@ -448,8 +448,9 @@ sub resource_classes_multi_thread {
             'SLURM'  => '--partition=standard --cpus-per-task=32 --mem=8g',
         },
 
-        '8Gb_64c_mpi' => {
-            'LSF'    => '-q mpi -n 64 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"',
+        '8Gb_48c_mpi' => {
+            'LSF'    => '-q mpi -n 48 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"',
+            'SLURM'  => '--partition=standard --cpus-per-task=48 --mem=8g',
         },
 
         '16Gb_4c_mpi' => {
@@ -502,8 +503,9 @@ sub resource_classes_multi_thread {
             'SLURM'  => '--partition=standard --cpus-per-task=32 --mem=32g',
         },
 
-        '32Gb_64c_mpi' => {
-            'LSF'    => '-q mpi -n 64 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"',
+        '32Gb_48c_mpi' => {
+            'LSF'    => '-q mpi -n 48 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"',
+            'SLURM'  => '--partition=standard --cpus-per-task=48 --mem=32g',
         },
 
         '64Gb_4c_mpi' => {

@@ -2491,7 +2491,7 @@ sub core_pipeline_analyses {
                     '(#raxml_cores# >  16) && (#raxml_cores# <= 32)'    => 'examl_8_cores',
                     '(#raxml_cores# >  32) && (#raxml_cores# <= 48)'    => 'examl_16_cores',
                     '(#raxml_cores# >  48) && (#raxml_cores# <= 128)'   => 'examl_32_cores',
-                    '(#raxml_cores# >  128)'                            => 'examl_64_cores',
+                    '(#raxml_cores# >  128)'                            => 'examl_48_cores',
                 ),
             },
         },
@@ -2554,7 +2554,7 @@ sub core_pipeline_analyses {
             -rc_name => '8Gb_32c_mpi',
             -flow_into => {
                -1 => [ 'examl_32_cores_himem' ],  # MEMLIMIT
-               -2 => [ 'examl_64_cores' ],  	  # RUNTIME
+               -2 => [ 'examl_48_cores' ],  	  # RUNTIME
             }
         },
 
@@ -2568,7 +2568,7 @@ sub core_pipeline_analyses {
             -rc_name => '32Gb_32c_mpi',
         },
 
-        {   -logic_name => 'examl_64_cores',
+        {   -logic_name => 'examl_48_cores',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExaML',
             -parameters => {
                 %examl_parameters,
@@ -2576,15 +2576,15 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -2,
             },
             -hive_capacity        => $self->o('examl_capacity'),
-            -rc_name => '8Gb_64c_mpi',
-            -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 64 cores. It will probably not converge.
+            -rc_name => '8Gb_48c_mpi',
+            -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 48 cores. It will probably not converge.
             -flow_into => {
-               -1 => [ 'examl_64_cores_himem' ],  # MEMLIMIT
+               -1 => [ 'examl_48_cores_himem' ],  # MEMLIMIT
                -2 => [ 'fasttree' ],  # RUNLIMIT
             }
         },
 
-        {   -logic_name => 'examl_64_cores_himem',
+        {   -logic_name => 'examl_48_cores_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExaML',
             -parameters => {
                 %examl_parameters,
@@ -2592,7 +2592,7 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -2,
             },
             -hive_capacity        => $self->o('examl_capacity'),
-            -rc_name => '32Gb_64c_mpi',
+            -rc_name => '32Gb_48c_mpi',
             -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 64 cores. It will probably not converge.
             -flow_into => {
                -2 => [ 'fasttree' ],  # RUNLIMIT
