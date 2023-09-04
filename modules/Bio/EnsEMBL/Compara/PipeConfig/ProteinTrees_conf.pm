@@ -2593,7 +2593,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('examl_capacity'),
             -rc_name => '32Gb_48c_mpi',
-            -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 64 cores. It will probably not converge.
+            -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 48 cores. It will probably not converge.
             -flow_into => {
                -2 => [ 'fasttree' ],  # RUNLIMIT
             }
