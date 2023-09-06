@@ -421,7 +421,7 @@
       </species_set>
     </multiple_alignment>
 
-    <multiple_alignment method="CACTUS_HAL">
+    <multiple_alignment method="CACTUS_HAL" url="#base_dir#/multi/hal_files/Mammals-100-way_20230606.hal">
       <species_set name="mammals">
         <genome name="anolis_carolinensis"/>
         <genome name="aotus_nancymaae"/>
