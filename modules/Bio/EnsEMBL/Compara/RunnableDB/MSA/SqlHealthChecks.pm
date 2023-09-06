@@ -52,7 +52,7 @@ our $config = {
             },
             {
                 description => 'All current genome_dbs (for the MLSS if specified) should be in the species tree',
-                query => 'SELECT gdb.* FROM genome_db gdb JOIN species_set ss USING(genome_db_id) JOIN method_link_species_set USING(species_set_id) LEFT JOIN species_tree_node stn ON gdb.genome_db_id = stn.genome_db_id AND stn.root_id = #species_tree_root_id# WHERE (method_link_species_set_id = #mlss_id# OR NOT #mlss_id#) AND gdb.name != "ancestral_sequences" AND stn.node_id IS NULL',
+                query => 'SELECT gdb.* FROM genome_db gdb JOIN species_set ss USING(genome_db_id) JOIN method_link_species_set USING(species_set_id) LEFT JOIN species_tree_node stn ON gdb.genome_db_id = stn.genome_db_id AND stn.root_id = #species_tree_root_id# WHERE method_link_species_set_id = #mlss_id# AND gdb.name != "ancestral_sequences" AND stn.node_id IS NULL',
                 expected_size => '= #n_missing_species_in_tree#',
             },
             {
