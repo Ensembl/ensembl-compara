@@ -137,7 +137,17 @@ sub pipeline_analyses {
 
         {   -logic_name => 'fire_hal_file_registration',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => [ 'find_pairwise_mlss_ids', 'set_name_mapping_tag' ],
+            -flow_into  => {
+                '1->A' => [ 'hal_registration_entry_point' ],
+                'A->1' => [ 'fire_hal_coverage' ],
+            },
+        },
+
+        {   -logic_name => 'hal_registration_entry_point',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                1 => [ 'find_pairwise_mlss_ids', 'set_name_mapping_tag' ],
+            },
         },
 
         {   -logic_name => 'find_pairwise_mlss_ids',
@@ -180,14 +190,24 @@ sub pipeline_analyses {
             },
             -flow_into  => [
                 'load_species_tree',
-                'pairwise_coverage_factory',
-                'per_genome_coverage_factory',
                 'synonyms_genome_factory'
             ],
         },
 
         {   -logic_name => 'load_species_tree',
 	        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadSpeciesTree',
+            -flow_into  => {
+                2 => { 'hc_species_tree' => { 'mlss_id' => '#mlss_id#', 'species_tree_root_id' => '#species_tree_root_id#' } },
+            },
+        },
+
+        {   -logic_name => 'hc_species_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MSA::SqlHealthChecks',
+            -parameters => {
+                'mode'                      => 'species_tree',
+                'binary'                    => 0,
+                'n_missing_species_in_tree' => 0,
+            },
         },
 
         {   -logic_name => 'synonyms_genome_factory',
@@ -213,6 +233,11 @@ sub pipeline_analyses {
                 'sql' => [ q/REPLACE INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#mlss_id#, "alt_synonyms", '#expr(stringify(#e2u_synonyms#))expr#')/ ],
             },
 	    -rc_name    => '1Gb_job',
+        },
+
+        {   -logic_name => 'fire_hal_coverage',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => [ 'pairwise_coverage_factory', 'per_genome_coverage_factory' ],
         },
 
         {   -logic_name => 'pairwise_coverage_factory',

@@ -255,8 +255,20 @@ sub pipeline_analyses {
                                'species_tree_input_file' => $self->o('binary_species_tree'),
                               },
             -flow_into => {
-                           1 => [ 'set_gerp_neutral_rate' ],
+                           2 => [ 'hc_species_tree' ],
                           },
+        },
+
+        {   -logic_name => 'hc_species_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MSA::SqlHealthChecks',
+            -parameters => {
+                'mode'                      => 'species_tree',
+                'binary'                    => 0,
+                'n_missing_species_in_tree' => 0,
+            },
+            -flow_into  => {
+                1 => [ 'set_gerp_neutral_rate' ],
+            },
         },
 
         {   -logic_name => 'set_gerp_neutral_rate',

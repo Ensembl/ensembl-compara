@@ -222,6 +222,17 @@ sub core_pipeline_analyses {
             -parameters => {
                 'species_tree_input_file' => $self->o('binary_species_tree'),
             },
+            -flow_into  => {
+                2 => { 'hc_species_tree' => { 'mlss_id' => '#mlss_id#', 'species_tree_root_id' => '#species_tree_root_id#' } },
+            },
+        },
+        {   -logic_name => 'hc_species_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MSA::SqlHealthChecks',
+            -parameters => {
+                'mode'                      => 'species_tree',
+                'binary'                    => 0,
+                'n_missing_species_in_tree' => 0,
+            },
         },
         # Copy data from the previous ancestral core database and update the ancestor names with new MLSS id
         {   -logic_name => 'copy_ancestral_data',
