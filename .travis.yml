@@ -144,8 +144,7 @@ jobs:
       python: 3.8
       name: "Python unit tests on the minimum version"
       install:
-        - pip install -r requirements.txt -r requirements-test.txt
-        - pip install .
+        - pip install .[test]
       script:
         - pytest --server=mysql://travis@127.0.0.1:3306/
 
@@ -154,8 +153,7 @@ jobs:
       name: "Python unit tests on the latest version, with code coverage"
       install:
         - pip install codecov
-        - pip install -r requirements.txt -r requirements-test.txt
-        - pip install .
+        - pip install .[test]
       script:
         # yamllint disable rule:line-length
         - pytest --cov=./ --cov-report=term-missing --server=mysql://travis@127.0.0.1:3306/
@@ -167,8 +165,6 @@ jobs:
       python: 3.9
       name: "Python linter"
       install:
-        - pip freeze | grep -v -f requirements.txt - | grep -v '^#' | xargs pip uninstall -y
         - pip install pylint mypy
-        - pip install -r requirements.txt
         - pip install .
       script: ./travisci/python-linter_harness.sh
