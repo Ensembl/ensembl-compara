@@ -64,6 +64,7 @@
       <genome name="acanthaster_planci_gca001949145v1"/>
       <genome name="anneissia_japonica_gca011630105v1"/>
       <genome name="asterias_rubens_gca902459465v3"/>
+      <genome name="lytechinus_pictus_gca015342785v2rs"/>
       <genome name="lytechinus_variegatus_gca018143015v1"/>
       <genome name="strongylocentrotus_purpuratus"/>
       <!-- Included species from Hemichordata -->
