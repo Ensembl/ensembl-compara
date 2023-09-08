@@ -144,6 +144,7 @@
       <genome name="mizuhopecten_yessoensis_gca002113885v2"/>
       <genome name="octopus_bimaculoides_gca001194135v2rs"/>
       <genome name="octopus_sinensis_gca006345805v1"/>
+      <genome name="pecten_maximus_gca902652985v1rs"/>
       <genome name="pomacea_canaliculata_gca003073045v1"/>
       <!-- Included species from Nematoda -->
       <genome name="ascaris_suum"/>
