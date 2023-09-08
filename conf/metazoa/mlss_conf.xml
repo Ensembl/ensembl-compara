@@ -92,6 +92,7 @@
       <genome name="adineta_vaga"/>
       <!-- Included species from Tardigrada -->
       <genome name="hypsibius_exemplaris_gca002082055v1"/>
+      <genome name="paramacrobiotus_metropolitanus_gca019649055v1rs"/>
       <!-- Included species from Xenacoelomorpha -->
       <genome name="hofstenia_miamia"/>
     </collection>
