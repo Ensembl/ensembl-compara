@@ -26,6 +26,7 @@
       <genome name="drosophila_melanogaster"/>
       <genome name="eurytemora_affinis_gca000591075v2"/>
       <genome name="homarus_americanus_gca018991925v1"/>
+      <genome name="homarus_gammarus_gca958450375v1"/>
       <genome name="hyalella_azteca_gca000764305v2"/>
       <genome name="ixodes_scapularis_gca016920785v2"/>
       <genome name="lepeophtheirus_salmonis_gca016086655v3rs"/>
