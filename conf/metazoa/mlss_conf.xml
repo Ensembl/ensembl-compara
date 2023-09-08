@@ -18,6 +18,7 @@
       <genome name="anopheles_gambiae"/>
       <genome name="apis_mellifera"/>
       <genome name="bombus_terrestris"/>
+      <genome name="bombus_terrestris_gca910591885v2"/>
       <genome name="bombyx_mori"/>
       <genome name="cimex_lectularius"/>
       <genome name="daphnia_magna_gca020631705v2"/>
