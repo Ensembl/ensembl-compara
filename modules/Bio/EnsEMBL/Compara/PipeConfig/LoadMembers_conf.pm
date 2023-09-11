@@ -263,6 +263,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'create_reuse_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CreateReuseSpeciesSets',
+            -rc_name    => '2Gb_job',
             -flow_into  => [ 'compare_non_reused_genome_list' ],
         },
 
