@@ -93,8 +93,20 @@ return
 	-parameters    => {
 			'species_tree_input_file' => $self->o('binary_species_tree'),
 	},
-        -flow_into     => WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ],
-                                ELSE [ 'dump_mappings_to_file' ] ),
+    -flow_into     => {
+        2 => { 'hc_species_tree' => { 'mlss_id' => '#mlss_id#', 'species_tree_root_id' => '#species_tree_root_id#' } },
+    },
+},
+{
+    -logic_name => 'hc_species_tree',
+    -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MSA::SqlHealthChecks',
+    -parameters => {
+        'mode'                      => 'species_tree',
+        'binary'                    => 0,
+        'n_missing_species_in_tree' => 0,
+    },
+    -flow_into  => WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ],
+                         ELSE [ 'dump_mappings_to_file' ] ),
 },
 # ------------------------------------- run enredo
 {
