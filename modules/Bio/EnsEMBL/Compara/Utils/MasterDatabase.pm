@@ -811,7 +811,7 @@ sub create_mlsss_on_pairs {
     my @input_genome_dbs = @$genome_dbs;
     while (my $gdb1 = shift @input_genome_dbs) {
         foreach my $gdb2 (@input_genome_dbs) {
-            push @mlsss, create_mlss($method, [$gdb1, $gdb2], undef, $source, $url);
+            push @mlsss, create_mlss($method, [$gdb1, $gdb2], $source, $url);
         }
     }
     return \@mlsss;

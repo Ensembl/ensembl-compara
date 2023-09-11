@@ -96,14 +96,25 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '2->A' => [ 'cleanup_strains_clusters' ],
-                'A->1' => [ 'hc_clusters' ],
+                'A->1' => [ 'hc_clusters_again' ],
             },
             -rc_name    => '1Gb_job',
         },
 
         {   -logic_name => 'cleanup_strains_clusters',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingClusters',
-            -analysis_capacity => 700,
+            -analysis_capacity => 100,
+        },
+
+        {   -logic_name         => 'hc_clusters_again',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters         => {
+                mode            => 'global_tree_set',
+            },
+            -flow_into          => [ 'clusterset_backup' ],
+            -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
+            -batch_size         => 20,
         },
 
         {
@@ -127,7 +138,12 @@ sub tweak_analyses {
     my $analyses_by_name = shift;
 
     # wire up complementary collection-specific analyses
-    $analyses_by_name->{'remove_blocklisted_genes'}->{'-flow_into'} = ['find_overlapping_genomes'];
+    $analyses_by_name->{'run_qc_tests'}->{'-flow_into'} = {
+        '2->A' => [ 'per_genome_qc' ],
+        '1->A' => [ 'overall_qc' ],
+        'A->1' => [ 'find_overlapping_genomes' ],
+    };
+
     push @{$analyses_by_name->{'backbone_pipeline_finished'}->{'-flow_into'}}, 'remove_overlapping_homologies';
 }
 

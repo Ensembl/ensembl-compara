@@ -168,6 +168,18 @@ sub pipeline_analyses_db_prepare{
                 'species_tree_input_file' => $self->o('binary_species_tree'),
             },
             -rc_name => '1Gb_job',
+            -flow_into => {
+                2 => { 'hc_species_tree' => { 'mlss_id' => '#mlss_id#', 'species_tree_root_id' => '#species_tree_root_id#' } },
+            },
+        },
+
+        {   -logic_name => 'hc_species_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MSA::SqlHealthChecks',
+            -parameters => {
+                'mode'                      => 'species_tree',
+                'binary'                    => 0,
+                'n_missing_species_in_tree' => 0,
+            },
             -flow_into => 'create_default_pairwise_mlss',
         },
     ];

@@ -237,7 +237,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters => {
                 'db_conn'     => '#master_db#',
-                'input_query' => 'UPDATE method_link_species_set SET url = "" WHERE source = "ensembl"',
+                'input_query' => 'UPDATE method_link_species_set SET url = "" WHERE source = "ensembl" AND method_link_id != 22 AND method_link_id != 23',
             },
             -flow_into  => [ 'dc_master' ],
         },

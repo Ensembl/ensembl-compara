@@ -54,9 +54,9 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 # Ensure we're using the correct cores for species that overlap with other divisions
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
 my $overlap_cores = {
-    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_110_10" ],
-    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_110_282" ],
-    'saccharomyces_cerevisiae' => [ 'mysql-ens-vertannot-staging', "saccharomyces_cerevisiae_core_110_4" ],
+    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_${curr_release}_10" ],
+    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_${curr_release}_282" ],
+    'saccharomyces_cerevisiae' => [ 'mysql-ens-vertannot-staging', "saccharomyces_cerevisiae_core_${curr_release}_4" ],
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 
@@ -94,15 +94,16 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'        => [ 'mysql-ens-compara-prod-5', ''],
-    #'compara_ptrees'         => [ 'mysql-ens-compara-prod-5', '' ],
-    #'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-5', 'jalvarez_wheat_cultivars_plants_protein_trees_106' ],
+    'compara_members'        => [ 'mysql-ens-compara-prod-5', 'sbhurji_plants_load_members_111_take3'],
+    'rice_cultivars_ptrees'  => [ 'mysql-ens-compara-prod-6', 'sbhurji_rice_cultivars_plants_protein_trees_111'],
+    'compara_ptrees'         => [ 'mysql-ens-compara-prod-6', 'twalsh_default_plants_protein_trees_111_take2' ],
+    'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-5', 'jalvarez_wheat_cultivars_plants_protein_trees_106' ],
 
     # LASTZ dbs
-    #'lastz_batch_1'  => [ 'mysql-ens-compara-prod-5', '' ],
+    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-5', 'sbhurji_plants_lastz_batch1_111' ],
 
     # synteny
-    #'compara_syntenies' => [ 'mysql-ens-compara-prod-5', '' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'sbhurji_plants_synteny_111' ],
 
     # EPO dbs
     ## rice

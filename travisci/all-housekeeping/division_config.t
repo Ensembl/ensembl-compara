@@ -59,7 +59,7 @@ sub test_division {
     # Load the species-tree if there is one
     my %species_in_tree;
     my $species_tree_file;
-    foreach my $tree_type (qw(topology branch_len)) {
+    foreach my $tree_type (qw(topology)) {
         $species_tree_file = File::Spec->catfile($division_dir, "species_tree.$tree_type.nw");
         if ($species_tree_file && -e $species_tree_file) {
             my $content = slurp($species_tree_file);

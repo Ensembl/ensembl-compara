@@ -696,7 +696,7 @@ sub core_pipeline_analyses {
                 'output_file'   => '#dump_dir#/snapshot_4_pipeline_finished.sql.gz',
             },
             -flow_into  => [
-                'generate_tree_stats_report',
+                WHEN( '#gene_tree_stats_shared_dir#' => 'generate_tree_stats_report' ),
                 'wga_expected_dumps',
                 WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ),
             ],
@@ -1722,7 +1722,7 @@ sub core_pipeline_analyses {
             -flow_into  => [
                     WHEN('#do_stable_id_mapping#' => 'stable_id_mapping'),
                     WHEN('#do_treefam_xref#' => 'treefam_xref_idmap'),
-                    { 'datacheck_trees' => { 'db_type' => $self->o('db_type'), 'compara_db' => '#ref_db#', 'registry_file' => undef, 'datacheck_names' => ['CheckFlatProteinTrees'] } },
+                    { 'datacheck_trees' => { 'db_type' => $self->o('db_type'), 'compara_db' => $self->pipeline_url(), 'registry_file' => undef, 'datacheck_names' => ['CheckFlatProteinTrees'] } },
                 ],
             %hc_analysis_params,
         },

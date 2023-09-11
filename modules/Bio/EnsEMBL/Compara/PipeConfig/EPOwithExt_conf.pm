@@ -272,7 +272,7 @@ sub tweak_analyses {
     # flow 2 "make_species_tree" jobs and add semaphore
     $analyses_by_name->{'create_mlss_ss'}->{'-flow_into'} = 'make_species_tree';
     delete $analyses_by_name->{'create_mlss_ss'}->{'-parameters'};
-    delete $analyses_by_name->{'make_species_tree'}->{'-flow_into'};
+    delete $analyses_by_name->{'hc_species_tree'}->{'-flow_into'};
 
     # Rewire "create_default_pairwise_mlss" and "dump_mappings_to_file" after having trimmed the anchors
     $analyses_by_name->{'trim_anchor_align_factory'}->{'-flow_into'} = {
