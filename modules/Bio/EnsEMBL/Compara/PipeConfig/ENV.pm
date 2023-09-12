@@ -475,7 +475,7 @@ sub resource_classes_multi_thread {
 
         '16Gb_32c_mpi' => {
             'LSF'    => '-q mpi -n 32 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=16]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=3 --mem=16g',
+            'SLURM'  => '--partition=standard --cpus-per-task=32 --mem=16g',
         },
 
         '32Gb_4c_mpi' => {
