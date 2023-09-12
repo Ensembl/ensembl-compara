@@ -134,6 +134,14 @@
                 </attribute>
               </optional>
               <optional>
+                <attribute name="no_components" blockly:blockName="Omit polyploid subgenome components">
+                  <choice>
+                    <value blockly:blockName="Yes">1</value>
+                    <value blockly:blockName="No">0</value>
+                  </choice>
+                </attribute>
+              </optional>
+              <optional>
                   <element name="base_collection" blockly:blockName="Include collection as base">
                     <attribute name="name" blockly:blockName="Collection name"/>
                   </element>
