@@ -16,6 +16,7 @@
       <genome name="drosophila_melanogaster"/>
       <genome name="saccharomyces_cerevisiae"/>
       <!-- Exclude species that are currently Cactus-only -->
+      <!-- from 100-way Mammals Cactus alignment -->
       <genome name="castor_canadensis" exclude="1"/>
       <genome name="cavia_aperea" exclude="1"/>
       <genome name="colobus_angolensis_palliatus" exclude="1"/>
@@ -29,6 +30,41 @@
       <genome name="theropithecus_gelada" exclude="1"/>
       <genome name="ursus_thibetanus_thibetanus" exclude="1"/>
       <genome name="zalophus_californianus" exclude="1"/>
+      <!-- from 59-way Aves Cactus alignment -->
+      <genome name="amazona_collaria" exclude="1"/>
+      <genome name="anas_platyrhynchos" exclude="1"/>
+      <genome name="apteryx_haastii" exclude="1"/>
+      <genome name="apteryx_owenii" exclude="1"/>
+      <genome name="apteryx_rowi" exclude="1"/>
+      <genome name="athene_cunicularia" exclude="1"/>
+      <genome name="cairina_moschata_domestica" exclude="1"/>
+      <genome name="calidris_pugnax" exclude="1"/>
+      <genome name="calidris_pygmaea" exclude="1"/>
+      <genome name="camarhynchus_parvulus" exclude="1"/>
+      <genome name="catharus_ustulatus" exclude="1"/>
+      <genome name="chelydra_serpentina" exclude="1"/>
+      <genome name="corvus_moneduloides" exclude="1"/>
+      <genome name="cyanistes_caeruleus" exclude="1"/>
+      <genome name="dromaius_novaehollandiae" exclude="1"/>
+      <genome name="erythrura_gouldiae" exclude="1"/>
+      <genome name="gallus_gallus_gca000002315v5" exclude="1"/>
+      <genome name="gallus_gallus_gca016700215v2" exclude="1"/>
+      <genome name="junco_hyemalis" exclude="1"/>
+      <genome name="lepidothrix_coronata" exclude="1"/>
+      <genome name="lonchura_striata_domestica" exclude="1"/>
+      <genome name="malurus_cyaneus_samueli" exclude="1"/>
+      <genome name="manacus_vitellinus" exclude="1"/>
+      <genome name="melopsittacus_undulatus" exclude="1"/>
+      <genome name="nothoprocta_perdicaria" exclude="1"/>
+      <genome name="numida_meleagris" exclude="1"/>
+      <genome name="otus_sunia" exclude="1"/>
+      <genome name="pavo_cristatus" exclude="1"/>
+      <genome name="pelusios_castaneus" exclude="1"/>
+      <genome name="phasianus_colchicus" exclude="1"/>
+      <genome name="stachyris_ruficeps" exclude="1"/>
+      <genome name="strix_occidentalis_caurina" exclude="1"/>
+      <genome name="varanus_komodoensis" exclude="1"/>
+      <genome name="zonotrichia_albicollis" exclude="1"/>   
     </collection>
 
     <!-- Default gene-tree collection -->
