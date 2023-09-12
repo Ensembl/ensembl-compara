@@ -18,6 +18,7 @@
       <genome name="anopheles_gambiae"/>
       <genome name="apis_mellifera"/>
       <genome name="bombus_terrestris"/>
+      <genome name="bombus_terrestris_gca910591885v2"/>
       <genome name="bombyx_mori"/>
       <genome name="cimex_lectularius"/>
       <genome name="daphnia_magna_gca020631705v2"/>
@@ -26,6 +27,7 @@
       <genome name="drosophila_melanogaster"/>
       <genome name="eurytemora_affinis_gca000591075v2"/>
       <genome name="homarus_americanus_gca018991925v1"/>
+      <genome name="homarus_gammarus_gca958450375v1"/>
       <genome name="hyalella_azteca_gca000764305v2"/>
       <genome name="ixodes_scapularis_gca016920785v2"/>
       <genome name="lepeophtheirus_salmonis_gca016086655v3rs"/>
@@ -63,6 +65,7 @@
       <genome name="acanthaster_planci_gca001949145v1"/>
       <genome name="anneissia_japonica_gca011630105v1"/>
       <genome name="asterias_rubens_gca902459465v3"/>
+      <genome name="lytechinus_pictus_gca015342785v2rs"/>
       <genome name="lytechinus_variegatus_gca018143015v1"/>
       <genome name="strongylocentrotus_purpuratus"/>
       <!-- Included species from Hemichordata -->
@@ -75,7 +78,7 @@
       <genome name="haliotis_rufescens_gca023055435v1rs"/>
       <genome name="lottia_gigantea"/>
       <genome name="mizuhopecten_yessoensis_gca002113885v2"/>
-      <genome name="octopus_bimaculoides"/>
+      <genome name="octopus_bimaculoides_gca001194135v2rs"/>
       <!-- Included species from Nematoda -->
       <genome name="caenorhabditis_elegans"/>
       <genome name="loa_loa"/>
@@ -92,6 +95,7 @@
       <genome name="adineta_vaga"/>
       <!-- Included species from Tardigrada -->
       <genome name="hypsibius_exemplaris_gca002082055v1"/>
+      <genome name="paramacrobiotus_metropolitanus_gca019649055v1rs"/>
       <!-- Included species from Xenacoelomorpha -->
       <genome name="hofstenia_miamia"/>
     </collection>
@@ -119,7 +123,7 @@
       <genome name="haemaphysalis_longicornis_gca013339765v1"/>
       <genome name="ixodes_scapularis_gca016920785v2"/>
       <genome name="parasteatoda_tepidariorum_gca000365465v3"/>
-      <genome name="rhipicephalus_sanguineus_gca013339695v1"/>
+      <genome name="rhipicephalus_sanguineus_gca013339695v2rs"/>
       <genome name="schistocerca_americana_gca021461395v2rs"/>
       <genome name="stegodyphus_dumicola_gca010614865v2rs"/>
       <genome name="stegodyphus_mimosarum"/>
@@ -140,8 +144,9 @@
       <genome name="lottia_gigantea"/>
       <genome name="mercenaria_mercenaria_gca014805675v2"/>
       <genome name="mizuhopecten_yessoensis_gca002113885v2"/>
-      <genome name="octopus_bimaculoides"/>
+      <genome name="octopus_bimaculoides_gca001194135v2rs"/>
       <genome name="octopus_sinensis_gca006345805v1"/>
+      <genome name="pecten_maximus_gca902652985v1rs"/>
       <genome name="pomacea_canaliculata_gca003073045v1"/>
       <!-- Included species from Nematoda -->
       <genome name="ascaris_suum"/>
@@ -169,6 +174,7 @@
       <genome name="adineta_vaga"/>
       <!-- Included species from Tardigrada -->
       <genome name="hypsibius_exemplaris_gca002082055v1"/>
+      <genome name="paramacrobiotus_metropolitanus_gca019649055v1rs"/>
     </collection>
     
     
@@ -298,12 +304,64 @@
       <genome name="zootermopsis_nevadensis"/>
     </collection>
 
+    <!-- Drosophila pan genome-->
+    <collection name="pangenome_drosophila">
+      <genome name="drosophila_melanogaster"/>
+      <genome name="drosophila_erecta_gca003286155v2rs"/>
+      <genome name="drosophila_grimshawi_gca018153295v1rs"/>
+      <genome name="drosophila_gunungcola_gca025200985v1rs"/>
+      <genome name="drosophila_innubila_gca004354385v1rs"/>
+      <genome name="drosophila_mojavensis_gca018153725v1rs"/>
+      <genome name="drosophila_persimilis_gca003286085v2rs"/>
+      <genome name="drosophila_sechellia_gca004382195v2rs"/>
+      <genome name="drosophila_virilis_gca003285735v2rs"/>
+      <genome name="drosophila_albomicans_gca009650485v2rs"/>
+      <genome name="drosophila_ananassae_gca017639315v2rs"/>
+      <genome name="drosophila_arizonae_gca001654025v1rs"/>
+      <genome name="drosophila_biarmipes_gca025231255v1rs"/>
+      <genome name="drosophila_bipectinata_gca000236285v2rs"/>
+      <genome name="drosophila_busckii_gca011750605v1rs"/>
+      <genome name="drosophila_elegans_gca000224195v2rs"/>
+      <genome name="drosophila_eugracilis_gca018153835v1rs"/>
+      <genome name="drosophila_ficusphila_gca018152265v1rs"/>
+      <genome name="drosophila_guanche_gca900245975v1rs"/>
+      <genome name="drosophila_hydei_gca003285905v2rs"/>
+      <genome name="drosophila_kikkawai_gca018152535v1rs"/>
+      <genome name="drosophila_mauritiana_gca004382145v1rs"/>
+      <genome name="drosophila_miranda_gca003369915v2rs"/>
+      <genome name="drosophila_navojoa_gca001654015v2rs"/>
+      <genome name="drosophila_obscura_gca018151105v1rs"/>
+      <genome name="drosophila_pseudoobscura_gca009870125v2rs"/>
+      <genome name="drosophila_rhopaloa_gca000236305v2rs"/>
+      <genome name="drosophila_santomea_gca016746245v2rs"/>
+      <genome name="drosophila_simulans_gca016746395v2rs"/>
+      <genome name="drosophila_subobscura_gca008121235v1rs"/>
+      <genome name="drosophila_subpulchrella_gca014743375v2rs"/>
+      <genome name="drosophila_suzukii_gca013340165v1rs"/>
+      <genome name="drosophila_takahashii_gca018152695v1rs"/>
+      <genome name="drosophila_teissieri_gca016746235v2rs"/>
+      <genome name="drosophila_willistoni_gca018902025v2rs"/>
+      <genome name="drosophila_yakuba_gca016746365v2rs"/>
+      <!--Outgroup -->
+      <genome name="bactrocera_neohumeralis_gca024586455v2rs"/>
+      <genome name="coremacera_marginata_gca914767935v1"/>
+      <genome name="machimus_atricapillus_gca933228815v1"/>
+      <genome name="myopa_tessellatipennis_gca943737955v1"/>
+    </collection>
+
   </collections>
+
+  <multiple_alignments>
+    <!-- Drosophila pan genome -->
+    <multiple_alignment method="CACTUS_HAL" collection="pangenome_drosophila"/>
+
+  </multiple_alignments>
 
   <gene_trees>
     <protein_trees collection="default"/>
     <protein_trees collection="protostomes"/>
     <protein_trees collection="insects"/>
+    <protein_trees collection="pangenome_drosophila"/>
   </gene_trees>
 
 </compara_db>
