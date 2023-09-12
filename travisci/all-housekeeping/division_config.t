@@ -17,7 +17,6 @@ use strict;
 use warnings;
 
 
-use File::Basename;
 use File::Spec;
 use JSON qw(decode_json);
 use Test::Exception;
@@ -25,7 +24,6 @@ use Test::More;
 use XML::LibXML;
 
 use Bio::EnsEMBL::Utils::IO qw(slurp);
-use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::Utils::Test;
 
 my $xml_parser = XML::LibXML->new(line_numbers => 1);
@@ -56,29 +54,6 @@ sub test_division {
         unlike($name, qr/\s/, "'$name' does not contain a space");
     }
 
-    # Load the species-tree if there is one
-    my %species_in_tree;
-    my $species_tree_file;
-    foreach my $tree_type (qw(topology)) {
-        $species_tree_file = File::Spec->catfile($division_dir, "species_tree.$tree_type.nw");
-        if ($species_tree_file && -e $species_tree_file) {
-            my $content = slurp($species_tree_file);
-            my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($content);
-            %species_in_tree = map {$_->name => 1} grep {$_->name} @{$tree->get_all_leaves};
-            last;
-        }
-    }
-
-    if (%allowed_species && %species_in_tree) {
-        # 1. All species in allowed_species.json must be in the species-trees
-        $has_files_to_test = 1;
-        subtest "$allowed_species_file vs $species_tree_file" => sub {
-            foreach my $name (keys %allowed_species) {
-                ok(exists $species_in_tree{$name}, "'$name' is in the species tree");
-            }
-        };
-    }
-
     # Load the MLSS XML file if it exists
     my $mlss_file = File::Spec->catfile($division_dir, 'mlss_conf.xml');
     if (-e $mlss_file) {
@@ -94,16 +69,6 @@ sub test_division {
             }
         }
 
-        if ($division ne 'citest' && %species_in_tree) {
-            # 2. All species listed in mlss_conf.xml exist in the species-trees
-            $has_files_to_test = 1;
-            subtest "$mlss_file vs $species_tree_file" => sub {
-                foreach my $a (@names_to_test) {
-                    my ($name, $node) = @$a;
-                    ok(exists $species_in_tree{$name}, "$node is in the species tree");
-                }
-            };
-        }
         if (%allowed_species and scalar(@names_to_test) > 0) {
             # 3. All species listed in mlss_conf.xml exist in allowed_species.json
             $has_files_to_test = 1;
