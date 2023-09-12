@@ -1,5 +1,5 @@
 1	\N	schema_type	core
-2	\N	schema_version	111
+2	\N	schema_version	112
 3	\N	patch	patch_61_62_a.sql|schema_version
 4	\N	patch	patch_61_62_b.sql|synonym_field_extension
 5	\N	patch	patch_61_62_c.sql|db_name_db_release_idx
@@ -216,3 +216,5 @@
 757	\N	patch	patch_109_110_b.sql|Add IS_PAR relationship to link X- and Y-PAR genes
 758	\N	patch	patch_109_110_c.sql|Allow gene id to belong to multiple alt allele groups
 759	\N	patch	patch_110_111_a.sql|schema_version
+760	\N	patch	patch_111_112_a.sql|schema_version
+761	\N	patch	patch_111_112_b.sql|Allow meta_value to be null
