@@ -533,6 +533,12 @@ sub core_pipeline_analyses {
             -batch_size         => 20,
     );
 
+    my %semaphore_check_params = (
+        'compara_db' => $self->pipeline_url(),
+        'datacheck_names' => [ 'TimelySemaphoreRelease' ],
+        'db_type' => $self->o('db_type'),
+        'registry_file' => undef,
+    );
 
     #-------------------------------------------------------------------------------
     # This boundaries are based on RAxML and ExaML manuals.
@@ -650,6 +656,12 @@ sub core_pipeline_analyses {
                 'output_file'   => '#dump_dir#/snapshot_1_before_clustering.sql.gz',
             },
             -rc_name       => '1Gb_job',
+            -flow_into  => [ { 'pre_clustering_semaphore_check' => \%semaphore_check_params } ],
+        },
+
+        {   -logic_name        => 'pre_clustering_semaphore_check',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+            -max_retry_count   => 0,
             -flow_into  => {
                 '1->A'  => WHEN(
                     '#are_all_species_reused# and (#reuse_level# eq "clusters")' => 'copy_clusters',
@@ -666,6 +678,12 @@ sub core_pipeline_analyses {
                 'exclude_list'  => 1,
                 'output_file'   => '#dump_dir#/snapshot_2_before_tree_building.sql.gz',
             },
+            -flow_into  => [ { 'pre_tree_building_semaphore_check' => \%semaphore_check_params } ],
+        },
+
+        {   -logic_name        => 'pre_tree_building_semaphore_check',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+            -max_retry_count   => 0,
             -flow_into  => {
                 '1->A'  => [ 'cluster_factory' ],
                 'A->1'  => [ 'backbone_fire_homology_dumps' ],
@@ -674,6 +692,12 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'backbone_fire_homology_dumps',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => [ { 'pre_homology_dump_semaphore_check' => \%semaphore_check_params } ],
+        },
+
+        {   -logic_name        => 'pre_homology_dump_semaphore_check',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+            -max_retry_count   => 0,
             -flow_into  => {
                 '1->A' => [ 'snapshot_posttree', 'homology_dumps_mlss_id_factory', 'gene_dumps_genome_db_factory' ],
                 'A->1' => [ 'backbone_fire_posttree' ],
@@ -682,6 +706,12 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'backbone_fire_posttree',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => [ { 'posttree_semaphore_check' => \%semaphore_check_params } ],
+        },
+
+        {   -logic_name        => 'posttree_semaphore_check',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+            -max_retry_count   => 0,
             -flow_into  => {
                 '1->A'  => [ 'rib_group_1' ],
                 'A->1'  => [ 'backbone_pipeline_finished' ],
@@ -695,6 +725,12 @@ sub core_pipeline_analyses {
                 'exclude_list'  => 1,
                 'output_file'   => '#dump_dir#/snapshot_4_pipeline_finished.sql.gz',
             },
+            -flow_into  => [ { 'final_semaphore_check' => \%semaphore_check_params } ],
+        },
+
+        {   -logic_name        => 'final_semaphore_check',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+            -max_retry_count   => 0,
             -flow_into  => [
                 WHEN( '#gene_tree_stats_shared_dir#' => 'generate_tree_stats_report' ),
                 'wga_expected_dumps',

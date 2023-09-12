@@ -135,7 +135,7 @@ sub tweak_analyses {
 
     # wire up strain-specific analyses
     $analyses_by_name->{'remove_blocklisted_genes'}->{'-flow_into'} = ['find_overlapping_genomes'];
-    push @{$analyses_by_name->{'backbone_pipeline_finished'}->{'-flow_into'}}, 'remove_overlapping_homologies';
+    push @{$analyses_by_name->{'final_semaphore_check'}->{'-flow_into'}}, 'remove_overlapping_homologies';
 }
 
 

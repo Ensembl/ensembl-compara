@@ -297,6 +297,13 @@ sub core_pipeline_analyses {
                      -batch_size        => $self->o('hc_batch_size'),
                     );
 
+    my %semaphore_check_params = (
+        'compara_db' => $self->pipeline_url(),
+        'datacheck_names' => [ 'TimelySemaphoreRelease' ],
+        'db_type' => $self->o('db_type'),
+        'registry_file' => undef,
+    );
+
     my %raxml_decision_params = (
         # The number of cores is based on the number of "alignment patterns"
         # Here we don't have that exact value so approximate it with half
@@ -355,14 +362,26 @@ sub core_pipeline_analyses {
                 -parameters  => {
                                   'output_file'          => $self->o('dump_dir').'/snapshot_before_tree_building.sql',
                                  },
+                -flow_into  => [ { 'pre_tree_building_semaphore_check' => \%semaphore_check_params } ],
+            },
+
+            {   -logic_name => 'pre_tree_building_semaphore_check',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+                -max_retry_count => 0,
                 -flow_into  => {
                                 '1->A'  => [ 'clusters_factory' ],
                                 'A->1'  => [ 'backbone_fire_posttree' ],
                                },
             },
-            
+
             {   -logic_name => 'backbone_fire_posttree',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+                -flow_into  => [ { 'posttree_semaphore_check' => \%semaphore_check_params } ],
+            },
+
+            {   -logic_name => 'posttree_semaphore_check',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+                -max_retry_count => 0,
                 -flow_into  => {
                     '1->A' => ['rib_fire_posttree_processing'],
                     'A->1' => ['backbone_pipeline_finished'],
