@@ -80,7 +80,7 @@ my $compara_dbs = {
     'compara_ptrees'          => [ 'mysql-ens-compara-prod-2',  'twalsh_default_vertebrates_protein_trees_111' ],
     'compara_ptrees_prev'     => [ 'mysql-ens-compara-prod-1',  'sbotond_default_vertebrates_protein_trees_110' ],
     'compara_nctrees'         => [ 'mysql-ens-compara-prod-4',  'twalsh_default_vertebrates_ncrna_trees_111' ],
-    'murinae_ptrees'          => [ 'mysql-ens-compara-prod-7',  'thiagogenez_murinae_vertebrates_protein_trees_111' ],
+    'murinae_ptrees'          => [ 'mysql-ens-compara-prod-7',  'thiagogenez_murinae_vertebrates_protein_trees_111_take2' ],
     'murinae_nctrees'         => [ 'mysql-ens-compara-prod-7',  'thiagogenez_murinae_vertebrates_ncrna_trees_111' ],
     'murinae_ptrees_prev'     => [ 'mysql-ens-compara-prod-9',  'sbotond_vertebrates_murinae_protein_reindexed_trees_110' ],
     'murinae_nctrees_prev'    => [ 'mysql-ens-compara-prod-9',  'sbotond_vertebrates_murinae_ncrna_reindexed_trees_110' ],
@@ -137,7 +137,7 @@ my $compara_dbs = {
     # other alignments
     'amniotes_pecan'      => [ 'mysql-ens-compara-prod-1', 'twalsh_amniotes_pecan_update_111' ],
     'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-4', 'jalvarez_amniotes_mercator_pecan_107' ],
-
+    'mammals_cactus'      => [ 'mysql-ens-compara-prod-3' , 'thiagogenez_thiagogenez_vertebrates_register_halfile_111_take2' ],
     'compara_syntenies'   => [ 'mysql-ens-compara-prod-4', 'twalsh_vertebrates_synteny_111' ],
 
     # miscellaneous
