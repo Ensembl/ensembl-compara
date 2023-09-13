@@ -63,10 +63,7 @@ sub tweak_analyses {
 
     my $analyses_by_name = shift;
 
-    $analyses_by_name->{'patch_master_db'}->{'-parameters'}{'cmd'} = [
-        $self->o('patch_db_exe'), '--reg_conf', $self->o('reg_conf'), '--reg_alias', '#master_db#',
-        '--fix', '--oldest', $self->o('prev_release'), '--nointeractive'
-    ];
+    $analyses_by_name->{'patch_master_db'}->{'-parameters'}{'oldest_patch_release'} = $self->o('prev_release');
 }
 
 1;

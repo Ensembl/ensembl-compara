@@ -57,4 +57,14 @@ sub default_options {
     };
 }
 
+sub tweak_analyses {
+    my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
+    my $analyses_by_name = shift;
+
+    $analyses_by_name->{'patch_master_db'}->{'-parameters'}{'oldest_patch_release'} = $self->o('prev_release');
+}
+
 1;
