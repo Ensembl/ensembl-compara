@@ -47,10 +47,10 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'collection'          => 'drosophila',
+        'collection'          => 'pangenome_drosophila',
         'dbID_range_index'    => 30,
         'ref_collection_list' => ['default', 'protostomes', 'insects'],
-        'label_prefix'        => 'drosophila_',
+        'label_prefix'        => 'pangenome_drosophila_',
 
         # GOC parameters:
         'goc_taxlevels' => ['Diptera', 'Hemiptera'],
