@@ -1426,7 +1426,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
           }
       }
 
-      my %mlss_sp_tree_gdb_ids = map { $_ => 1 } keys %{$mlss->species_tree->get_genome_db_id_2_node_hash()};
+      my %mlss_sp_tree_gdb_ids = map { $_ => 1 } keys %{$mlss_with_mapping->species_tree->get_genome_db_id_2_node_hash()};
 
       my %hal_species_map;
       my %group_key_map;
@@ -1471,6 +1471,10 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my $num_targets  = scalar @$targets_gdb;
     my $min_gab_len = !$mlss->has_tag('no_filter_small_blocks') && int(abs($end-$start)/1000);
     my $min_ga_len  = !$mlss->has_tag('no_filter_small_blocks') && $min_gab_len/4;
+
+    # Min GAB and GA lengths must always be greater than zero.
+    $min_gab_len = max(1, $min_gab_len);
+    $min_ga_len = max(1, $min_ga_len);
 
     if ( !$target_dnafrag or ($num_targets > 1) ){ # multiple sequence alignment, or unfiltered pairwise alignment
       my %hal_target_set;
@@ -1521,7 +1525,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
         my %species_found;
         my $block_len = length($aln_block->[0]->{seq});
 
-        next if ( $block_len <= $min_gab_len );
+        next if ( $block_len < $min_gab_len );
 
         my $gab = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
           -length => $block_len,
