@@ -1807,8 +1807,18 @@ sub count_by_mlss_id {
 
     my $mlss = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
     my $msa_mlss = $mlss->get_linked_mlss_by_tag('msa_mlss_id');
-    my $sql = 'SELECT COUNT(*) FROM conservation_score cs JOIN genomic_align_block gab USING(genomic_align_block_id) WHERE gab.method_link_species_set_id = ?';
-    return $self->db->dbc->sql_helper->execute_single_result( -SQL => $sql, -PARAMS => [$msa_mlss->dbID] );
+
+    # Some production databases can have a conservation-score MLSS without
+    # the 'msa_mlss_id' MLSS tag or indeed conservation scores, causing this
+    # MLSS entry count query to fail. To circumvent this, we assume the entry
+    # count is zero and only execute the query if the MSA MLSS is defined.
+    my $entry_count = 0;
+    if (defined $msa_mlss) {
+        my $sql = 'SELECT COUNT(*) FROM conservation_score cs JOIN genomic_align_block gab USING(genomic_align_block_id) WHERE gab.method_link_species_set_id = ?';
+        $entry_count = $self->db->dbc->sql_helper->execute_single_result( -SQL => $sql, -PARAMS => [$msa_mlss->dbID] );
+    }
+
+    return $entry_count
 }
 
 
