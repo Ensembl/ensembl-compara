@@ -260,6 +260,13 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines#Mergethehomologypipelines-Preliminaries",
+            "summary": "Backup release database",
+            "name_on_graph": "Backup the release database before merging the homology data"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Creation+of+a+new+ancestral+database",
             "summary": "Build a new ancestral sequence core database"
          },
