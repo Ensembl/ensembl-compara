@@ -48,36 +48,24 @@ sub default_options {
         'division'   => 'metazoa',
 
         # homology_dnds parameters:
-        'taxlevels' => ['Drosophila' ,'Hymenoptera', 'Nematoda'],
+        'taxlevels' => ['Eukaryota'],
 
         # GOC parameters:
-        'goc_taxlevels' => ['Diptera', 'Hymenoptera', 'Nematoda'],
+        'goc_taxlevels' => ['Eukaryota'],
 
         # HighConfidenceOrthologs parameters:
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
+
         'threshold_levels' => [
             {
-                'taxa'          => [ 'Euteleostomi', 'Ciona' ],
+        'taxa'          => [ 'Penaeus', 'Thoracicalcarea', 'Dhapnia', 'Apinae', 'Haliotis', 'Echinacea', 'Asteroidea', 'Anthozoa', 'Scleractinia' ],
                 'thresholds'    => [ 50, 50, 25 ],
             },
             {
-                'taxa'          => [ 'Aculeata', 'Anophelinae', 'Caenorhabditis', 'Drosophila', 'Glossinidae', 'Onchocercidae' ],
-                'thresholds'    => [ 50, 50, 25 ],
-            },
-            {
-                'taxa'          => [ 'Brachycera', 'Culicinae', 'Hemiptera', 'Phlebotominae' ],
+                'taxa'          => ['Decapoda', 'Neoptera', 'Deuterostomia', 'Mollusca' ],
                 'thresholds'    => [ 25, 25, 25 ],
             },
-            {
-                'taxa'          => [ 'Chelicerata', 'Diptera', 'Hymenoptera', 'Nematoda' ],
-                'thresholds'    => [ undef, undef, 25 ],
-            },
-            {
-                'taxa'          => [ 'all' ],
-                'thresholds'    => [ undef, undef, 25 ],
-            },
         ],
-
         # Extra analyses:
         # Gain/loss analysis?
         'do_cafe'                => 0,
