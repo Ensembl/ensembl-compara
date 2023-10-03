@@ -58,12 +58,16 @@ sub default_options {
 
         'threshold_levels' => [
             {
-        'taxa'          => [ 'Penaeus', 'Thoracicalcarea', 'Dhapnia', 'Apinae', 'Haliotis', 'Echinacea', 'Asteroidea', 'Anthozoa', 'Scleractinia' ],
+                'taxa'          => [ 'Penaeus', 'Thoracicalcarea', 'Dhapnia', 'Apinae', 'Haliotis', 'Echinacea', 'Asteroidea', 'Anthozoa', 'Scleractinia' ],
                 'thresholds'    => [ 50, 50, 25 ],
             },
             {
                 'taxa'          => ['Decapoda', 'Neoptera', 'Deuterostomia', 'Mollusca' ],
                 'thresholds'    => [ 25, 25, 25 ],
+            },
+            {
+                'taxa'          => [ 'all' ],
+                'thresholds'    => [ undef, undef, 25 ],
             },
         ],
         # Extra analyses:
