@@ -52,7 +52,7 @@ sub default_options {
         'label_prefix' => 'protostomes_',
 
         #GOC parameters:
-        'goc_taxlevels' => [ 'Cyclophyllidea', 'Entelegynae' , 'Ixoididae' ,'Mollusca' ,'Nematoda' ,'Neoptera', 'Schistosoma' ],
+        'goc_taxlevels' => [ 'Cyclophyllidea', 'Entelegynae' , 'Ixodidae' ,'Mollusca' ,'Nematoda' ,'Neoptera', 'Schistosoma' ],
 
         'threshold_levels' => [
             {
@@ -60,7 +60,7 @@ sub default_options {
                 'thresholds'    => [ 50, 50, 25 ],
             },
             {
-                'taxa'          => [ 'Entelegynae' , 'Ixoididae' ,'Mollusca' ,'Neoptera' ],
+                'taxa'          => [ 'Entelegynae' , 'Ixodidae' ,'Mollusca' ,'Neoptera' ],
                 'thresholds'    => [ 25, 25, 25 ],
             },
             {

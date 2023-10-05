@@ -57,11 +57,11 @@ sub default_options {
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
             {
-                'taxa'          => [ 'Anthozoa', 'Apinae', 'Asteroidea', 'Daphnia', 'Echinozoa', 'Haliotis', 'Penaeus', 'Scleractinia', 'Thoracicalcarea' ],
+                'taxa'          => [ 'Apinae', 'Asteroidea', 'Daphnia', 'Echinozoa', 'Haliotis', 'Parachela', 'Penaeus', 'Scleractinia', 'Thoracicalcarea' ],
                 'thresholds'    => [ 50, 50, 25 ],
             },
             {
-                'taxa'          => [ 'Decapoda', 'Deuterostomia', 'Mollusca', 'Neoptera' ],
+                'taxa'          => [ 'Anthozoa', 'Decapoda', 'Deuterostomia', 'Mollusca', 'Neoptera' ],
                 'thresholds'    => [ 25, 25, 25 ],
             },
             {
@@ -69,7 +69,7 @@ sub default_options {
                 'thresholds'    => [ undef, undef, 25 ],
             },
         ],
-        
+
         # Extra analyses:
         # Gain/loss analysis?
         'do_cafe'                => 0,
