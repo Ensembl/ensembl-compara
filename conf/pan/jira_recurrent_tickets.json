@@ -102,6 +102,12 @@
             "component": "Relco tasks",
             "description": "Update the jira_recurrent_tickets.json with any changes to the release process or tasks that has taken during the current release",
             "summary": "Update conf/<division>/jira_recurrent_tickets.json"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "Clean up any <division> database backups that are no longer needed",
+            "summary": "Clean up unneeded <division> database backups"
          }
       ],
       "labels": ["Merge_anchor"],

@@ -405,7 +405,7 @@ process trimAlignments {
     id = (full_aln =~ /.*prot_(.*)\.fas$/)[0][1]
     """
     mkdir -p trimmed_alignments
-    trimal -gappyout -in $full_aln -out trimmed_alignments/trim_${id}.fas
+    trimal -keepseqs -in $full_aln -out trimmed_alignments/trim_${id}.fas
     """
 
 }
@@ -420,7 +420,7 @@ process trimAlignments {
 *@output path to RAXML style partition file
 */
 process mergeProtAlns {
-    label 'rc_4Gb'
+    label 'rc_8Gb'
 
     publishDir "${params.results_dir}/", pattern: "merged_protein_alns.fas", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "partitions.tsv", mode: "copy",  overwrite: true
@@ -453,7 +453,7 @@ process mergeProtAlns {
 *@output path to merged alignments fasta
 */
 process mergeCodonAlns {
-    label 'rc_4Gb'
+    label 'rc_8Gb'
 
     publishDir "${params.results_dir}/", pattern: "merged_codon_alns.fas", mode: "copy",  overwrite: true
 
@@ -654,7 +654,7 @@ process calcNeutralBranchesAstral {
     script:
     if (params.dir == "")
     """
-    ${params.iqtree_exe} -s $aln -m GTR+G -g $input_tree --fast -T ${params.cores}
+    ${params.iqtree_exe} -s $aln --mem 100G -m GTR+G -g $input_tree --fast -T ${params.cores}
     mv *.treefile astral_species_tree_neutral_bl.nwk
     mv *.iqtree astral_iqtree_report_neutral_bl.txt
     mv *.log astral_iqtree_log_neutral_bl.txt
@@ -663,7 +663,7 @@ process calcNeutralBranchesAstral {
     """
     else
     """
-    ${params.iqtree_exe} -s $aln -m GTR+G -g $input_tree --fast -T ${params.cores}
+    ${params.iqtree_exe} -s $aln --mem 100G -m GTR+G -g $input_tree --fast -T ${params.cores}
     mv *.treefile astral_species_tree_neutral_bl.nwk
     mv *.iqtree astral_iqtree_report_neutral_bl.txt
     mv *.log astral_iqtree_log_neutral_bl.txt
@@ -732,7 +732,7 @@ process calcProtBranchesAstral {
     script:
     if (params.dir == "")
     """
-    ${params.iqtree_exe} -s $aln -p $partitions -g $input_tree --fast -T ${params.cores}
+    ${params.iqtree_exe} -s $aln --mem 100G -m LG+F+G -g $input_tree --fast -T ${params.cores}
     mv *.treefile astral_species_tree_prot_bl.nwk
     mv *.iqtree astral_iqtree_report_prot_bl.txt
     mv *.log astral_iqtree_log_prot_bl.txt
@@ -741,7 +741,7 @@ process calcProtBranchesAstral {
     """
     else
     """
-    ${params.iqtree_exe} -s $aln -p $partitions -g $input_tree --fast -T ${params.cores}
+    ${params.iqtree_exe} -s $aln --mem 100G -m LG+F+G -g $input_tree --fast -T ${params.cores}
     mv *.treefile astral_species_tree_prot_bl.nwk
     mv *.iqtree astral_iqtree_report_prot_bl.txt
     mv *.log astral_iqtree_log_prot_bl.txt
