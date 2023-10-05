@@ -51,7 +51,7 @@ sub default_options {
         'taxlevels' => ['Drosophila' ,'Hymenoptera', 'Nematoda'],
 
         # GOC parameters:
-        'goc_taxlevels' => ['Decapoda', 'Daphnia', 'Thoracicalcarea', 'Neoptera', 'Mollusca', 'Deuterostomia', 'Anthozoa'],
+        'goc_taxlevels' => ['Decapoda', 'Daphnia','Parachela', 'Thoracicalcarea', 'Neoptera', 'Mollusca', 'Deuterostomia', 'Anthozoa'],
 
         # HighConfidenceOrthologs parameters:
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
