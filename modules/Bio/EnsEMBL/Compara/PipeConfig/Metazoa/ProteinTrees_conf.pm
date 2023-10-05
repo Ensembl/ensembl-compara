@@ -51,26 +51,18 @@ sub default_options {
         'taxlevels' => ['Drosophila' ,'Hymenoptera', 'Nematoda'],
 
         # GOC parameters:
-        'goc_taxlevels' => ['Diptera', 'Hymenoptera', 'Nematoda'],
+        'goc_taxlevels' => ['Decapoda', 'Daphnia','Parachela', 'Thoracicalcarea', 'Neoptera', 'Mollusca', 'Deuterostomia', 'Anthozoa'],
 
         # HighConfidenceOrthologs parameters:
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
             {
-                'taxa'          => [ 'Euteleostomi', 'Ciona' ],
+                'taxa'          => [ 'Apinae', 'Asteroidea', 'Daphnia', 'Echinozoa', 'Haliotis', 'Parachela', 'Penaeus', 'Scleractinia', 'Thoracicalcarea' ],
                 'thresholds'    => [ 50, 50, 25 ],
             },
             {
-                'taxa'          => [ 'Aculeata', 'Anophelinae', 'Caenorhabditis', 'Drosophila', 'Glossinidae', 'Onchocercidae' ],
-                'thresholds'    => [ 50, 50, 25 ],
-            },
-            {
-                'taxa'          => [ 'Brachycera', 'Culicinae', 'Hemiptera', 'Phlebotominae' ],
+                'taxa'          => [ 'Anthozoa', 'Decapoda', 'Deuterostomia', 'Mollusca', 'Neoptera' ],
                 'thresholds'    => [ 25, 25, 25 ],
-            },
-            {
-                'taxa'          => [ 'Chelicerata', 'Diptera', 'Hymenoptera', 'Nematoda' ],
-                'thresholds'    => [ undef, undef, 25 ],
             },
             {
                 'taxa'          => [ 'all' ],
