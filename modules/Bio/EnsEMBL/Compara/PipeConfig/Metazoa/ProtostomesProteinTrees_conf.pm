@@ -52,15 +52,15 @@ sub default_options {
         'label_prefix' => 'protostomes_',
 
         #GOC parameters:
-        'goc_taxlevels' => ['Eukaryota'],
+        'goc_taxlevels' => [ 'Cyclophyllidea', 'Entelegynae' , 'Ixoididae' ,'Mollusca' ,'Nematoda' ,'Neoptera', 'Schistosoma' ],
 
         'threshold_levels' => [
             {
-		        'taxa'          => [ 'Rhipicephalinae', 'Caenorhabditis', 'Spirurina', 'Haliotis', 'Crassostrea', 'Octopus', 'Cyclophyllidea', 'Schistosoma' ],
+		        'taxa'          => [ 'Caenorhabditis', 'Crassostrea', 'Cyclophyllidea', 'Haliotis', 'Octopus', 'Rhipicephalinae', 'Schistosoma', 'Spirurina' ],
                 'thresholds'    => [ 50, 50, 25 ],
             },
             {
-                'taxa'          => [ 'Ixoididae' , 'Entelegynae' , 'Neoptera' , 'Mollusca' ],
+                'taxa'          => [ 'Entelegynae' , 'Ixoididae' ,'Mollusca' ,'Neoptera' ],
                 'thresholds'    => [ 25, 25, 25 ],
             },
             {
@@ -74,7 +74,6 @@ sub default_options {
         ],
     };
 }
-
 
 
 1;

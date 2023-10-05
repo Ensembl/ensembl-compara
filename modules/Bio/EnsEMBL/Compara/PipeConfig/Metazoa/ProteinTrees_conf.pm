@@ -48,21 +48,20 @@ sub default_options {
         'division'   => 'metazoa',
 
         # homology_dnds parameters:
-        'taxlevels' => ['Eukaryota'],
+        'taxlevels' => ['Drosophila' ,'Hymenoptera', 'Nematoda'],
 
         # GOC parameters:
-        'goc_taxlevels' => ['Eukaryota'],
+        'goc_taxlevels' => ['Decapoda', 'Daphnia', 'Thoracicalcarea', 'Neoptera', 'Mollusca', 'Deuterostomia', 'Anthozoa'],
 
         # HighConfidenceOrthologs parameters:
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
-
         'threshold_levels' => [
             {
-                'taxa'          => [ 'Penaeus', 'Thoracicalcarea', 'Daphnia', 'Apinae', 'Haliotis', 'Echinacea', 'Asteroidea', 'Anthozoa', 'Scleractinia' ],
+                'taxa'          => [ 'Anthozoa', 'Apinae', 'Asteroidea', 'Daphnia', 'Echinozoa', 'Haliotis', 'Penaeus', 'Scleractinia', 'Thoracicalcarea' ],
                 'thresholds'    => [ 50, 50, 25 ],
             },
             {
-                'taxa'          => ['Decapoda', 'Neoptera', 'Deuterostomia', 'Mollusca' ],
+                'taxa'          => [ 'Decapoda', 'Deuterostomia', 'Mollusca', 'Neoptera' ],
                 'thresholds'    => [ 25, 25, 25 ],
             },
             {
@@ -70,6 +69,7 @@ sub default_options {
                 'thresholds'    => [ undef, undef, 25 ],
             },
         ],
+        
         # Extra analyses:
         # Gain/loss analysis?
         'do_cafe'                => 0,
