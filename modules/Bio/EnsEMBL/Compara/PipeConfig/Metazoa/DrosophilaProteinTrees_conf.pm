@@ -53,7 +53,7 @@ sub default_options {
         'label_prefix'        => 'pangenome_drosophila_',
 
         # GOC parameters:
-        'goc_taxlevels' => ['Diptera', 'Hemiptera'],
+        'goc_taxlevels' => ['Brachycera'],
 
         # HighConfidenceOrthologs parameters:
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
