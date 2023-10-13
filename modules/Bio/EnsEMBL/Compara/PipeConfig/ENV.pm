@@ -207,7 +207,7 @@ sub resource_classes_single_thread {
 
         '512Gb_job' => {
             'LSF'   => '-q bigmem -C0 -M512000 -R"select[mem>512000] rusage[mem=512000]"',
-            'SLURM' => '--partition=bigmem --mem=512g',
+            'SLURM' => '--partition=standard --mem=512g',
         },
     };
 
