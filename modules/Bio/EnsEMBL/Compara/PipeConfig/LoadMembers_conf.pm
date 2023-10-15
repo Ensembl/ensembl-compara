@@ -180,7 +180,7 @@ sub core_pipeline_analyses {
         {   -logic_name    => 'copy_table_from_master',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
-                'src_db_conn'   => '#ncbi_db#',
+                'src_db_conn'   => '#master_db#',
                 'mode'          => 'overwrite',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
