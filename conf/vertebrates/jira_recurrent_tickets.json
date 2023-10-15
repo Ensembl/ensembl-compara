@@ -106,6 +106,12 @@
          },
          {
             "component": "Production tasks",
+            "description": "Review the gene-tree stats for each gene-tree pipeline, and address any issues.",
+            "summary": "Check gene-tree stats",
+            "name_on_graph": "Check gene-tree stats"
+         },
+         {
+            "component": "Production tasks",
             "description": "*GitHub*: [StrainsReindexMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Vertebrates/StrainsReindexMembers_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX -collection murinae -member_type protein{code}\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::StrainsReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX -collection murinae -member_type ncrna{code}",
             "summary": "Reindex murinae gene trees",
             "name_on_graph": "Gene-tree reindexing:Murinae"

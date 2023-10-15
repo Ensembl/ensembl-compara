@@ -86,7 +86,12 @@
             "summary": "Run the rice cultivars Protein-trees pipeline",
             "name_on_graph": "Protein-trees:Rice cultivars"
          },
-         
+         {
+            "component": "Production tasks",
+            "description": "Review the gene-tree stats for each gene-tree pipeline, and address any issues.",
+            "summary": "Check gene-tree stats",
+            "name_on_graph": "Check gene-tree stats"
+         },
          {
             "component": "Production tasks",
             "description": "Mark as done when all LastZs have been merged into the new release database.",
