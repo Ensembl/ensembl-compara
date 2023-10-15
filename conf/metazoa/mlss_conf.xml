@@ -353,7 +353,7 @@
 
   <multiple_alignments>
     <!-- Drosophila pan genome -->
-    <multiple_alignment method="CACTUS_HAL" collection="pangenome_drosophila"/>
+    <multiple_alignment method="CACTUS_HAL" collection="pangenome_drosophila" url="#base_dir#/multi/hal_files/Drosophila-40-way_20230928.hal"/>
 
   </multiple_alignments>
 
