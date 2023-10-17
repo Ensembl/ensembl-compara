@@ -207,8 +207,8 @@
 
   <gene_trees>
     <protein_trees collection="default"/>
-    <protein_trees collection="wheat_cultivars"/>
-    <protein_trees collection="rice_cultivars"/>
+    <protein_trees collection="wheat_cultivars" url="#base_dir#/multi/hal_files/Wheat_37-way_20221206.hal"/>
+    <protein_trees collection="rice_cultivars" url="#base_dir#/multi/hal_files/Rice_27-way_202208.hal"/>
   </gene_trees>
 
   <species_trees>
