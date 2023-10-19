@@ -40,16 +40,21 @@ my @overlap_species = qw(saccharomyces_cerevisiae drosophila_melanogaster caenor
 
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1-b:4685/$curr_release");
-# But remove the non-vertebrates species
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
+
+# Ensure we are using the correct cores for species that overlap with vertebrates
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
-Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
-# Non-Vertebrates server
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3-b:4686/$curr_release");
-# Bacteria server: all species used in Pan happen to be in this database
+my $overlap_cores = {
+    'caenorhabditis_elegans'   => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_${curr_eg_release}_${curr_release}_282" ],
+    'drosophila_melanogaster'  => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_${curr_eg_release}_${curr_release}_10" ],
+    'saccharomyces_cerevisiae' => [ 'mysql-ens-vertannot-staging', "saccharomyces_cerevisiae_core_${curr_eg_release}_${curr_release}_4" ],
+};
+Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
+
+# Bacteria: all species used in Pan happen to be in this database
 Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-    -host   => 'mysql-ens-sta-4',
-    -port   => 4494,
+    -host   => 'mysql-ens-vertannot-staging',
+    -port   => 4573,
     -user   => 'ensro',
     -pass   => '',
     -dbname => "bacteria_0_collection_core_${curr_eg_release}_${curr_release}_1",
@@ -60,8 +65,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-1',
-        -port   => 4519,
+        -host   => 'mysql-ens-sta-1-b',
+        -port   => 4685,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -70,8 +75,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
     Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
     Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-3',
-        -port   => 4160,
+        -host   => 'mysql-ens-sta-3-b',
+        -port   => 4686,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -94,12 +99,12 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-7', 'ensembl_compara_master_pan' ],
-    'compara_curr'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${curr_eg_release}_${curr_release}" ],
+    #'compara_curr'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${curr_eg_release}_${curr_release}" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-7', 'sbhurji_pan_load_members_111_take2' ],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-7', 'sbhurji_default_pan_protein_trees_111' ],
+    #'compara_members'  => [ 'mysql-ens-compara-prod-7', '' ],
+    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-7', '' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
