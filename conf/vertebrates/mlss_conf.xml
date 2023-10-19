@@ -164,7 +164,6 @@
     <one_vs_all method="LASTZ_NET" ref_genome="oryzias_latipes">
       <species_set>
         <taxonomic_group taxon_name="Actinopterygii"/>
-        <genome name="xiphophorus_couchianus" exclude="1"/>
       </species_set>
     </one_vs_all>
 
@@ -562,6 +561,69 @@
       </species_set>
     </multiple_alignment>
 
+    <multiple_alignment method="CACTUS_HAL" url="#base_dir#/multi/hal_files/Aves-59-way_20230814.hal">
+      <species_set name="aves">
+        <genome name="amazona_collaria"/>
+        <genome name="anas_platyrhynchos"/>
+        <genome name="anas_platyrhynchos_platyrhynchos"/>
+        <genome name="anolis_carolinensis"/>
+        <genome name="anser_brachyrhynchus"/>
+        <genome name="apteryx_haastii"/>
+        <genome name="apteryx_owenii"/>
+        <genome name="apteryx_rowi"/>
+        <genome name="aquila_chrysaetos_chrysaetos"/>
+        <genome name="athene_cunicularia"/>
+        <genome name="cairina_moschata_domestica"/>
+        <genome name="calidris_pugnax"/>
+        <genome name="calidris_pygmaea"/>
+        <genome name="camarhynchus_parvulus"/>
+        <genome name="catharus_ustulatus"/>
+        <genome name="chelonoidis_abingdonii"/>
+        <genome name="chelydra_serpentina"/>
+        <genome name="corvus_moneduloides"/>
+        <genome name="coturnix_japonica"/>
+        <genome name="cyanistes_caeruleus"/>
+        <genome name="danio_rerio"/>
+        <genome name="dromaius_novaehollandiae"/>
+        <genome name="erythrura_gouldiae"/>
+        <genome name="ficedula_albicollis"/>
+        <genome name="gallus_gallus"/>
+        <genome name="gallus_gallus_gca000002315v5"/>
+        <genome name="gallus_gallus_gca016700215v2"/>
+        <genome name="gopherus_evgoodei"/>
+        <genome name="homo_sapiens"/>
+        <genome name="junco_hyemalis"/>
+        <genome name="lepidothrix_coronata"/>
+        <genome name="lepisosteus_oculatus"/>
+        <genome name="leptobrachium_leishanense"/>
+        <genome name="lonchura_striata_domestica"/>
+        <genome name="malurus_cyaneus_samueli"/>
+        <genome name="manacus_vitellinus"/>
+        <genome name="melopsittacus_undulatus"/>
+        <genome name="mus_musculus"/>
+        <genome name="naja_naja"/>
+        <genome name="nothoprocta_perdicaria"/>
+        <genome name="numida_meleagris"/>
+        <genome name="oryzias_latipes"/>
+        <genome name="otus_sunia"/>
+        <genome name="parus_major"/>
+        <genome name="pavo_cristatus"/>
+        <genome name="pelusios_castaneus"/>
+        <genome name="phasianus_colchicus"/>
+        <genome name="podarcis_muralis"/>
+        <genome name="pseudonaja_textilis"/>
+        <genome name="salvator_merianae"/>
+        <genome name="serinus_canaria"/>
+        <genome name="stachyris_ruficeps"/>
+        <genome name="strigops_habroptila"/>
+        <genome name="strix_occidentalis_caurina"/>
+        <genome name="taeniopygia_guttata"/>
+        <genome name="terrapene_carolina_triunguis"/>
+        <genome name="varanus_komodoensis"/>
+        <genome name="xenopus_tropicalis"/>
+        <genome name="zonotrichia_albicollis"/>
+      </species_set>
+    </multiple_alignment>
   </multiple_alignments>
 
   <self_alignments>
