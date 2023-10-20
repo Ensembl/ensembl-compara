@@ -26,10 +26,10 @@ my $curr_eg_release = $ENV{'CURR_EG_RELEASE'};
 # Core databases:
 # Load from the expected server species found on both vertebrates and non-vertebrates servers
 my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster saccharomyces_cerevisiae);
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1:4685/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1:4519/$curr_release");
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
 Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3-b:4686/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
 Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
     -host   => 'mysql-ens-sta-4',
     -port   => 4494,
