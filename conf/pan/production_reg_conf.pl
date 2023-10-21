@@ -84,8 +84,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
     );
     # Bacteria server: all species used in Pan happen to be in this database
     Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-        -host   => 'mysql-ens-mirror-4',
-        -port   => 4495,
+        -host   => 'mysql-ens-sta-4',
+        -port   => 4494,
         -user   => 'ensro',
         -pass   => '',
         -dbname => "bacteria_0_collection_core_${prev_eg_release}_${prev_release}_1",
