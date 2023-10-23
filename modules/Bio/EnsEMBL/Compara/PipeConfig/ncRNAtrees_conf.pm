@@ -368,6 +368,11 @@ sub core_pipeline_analyses {
             {   -logic_name => 'pre_tree_building_semaphore_check',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
                 -max_retry_count => 0,
+                -flow_into  => [ { 'fire_tree_building_analyses' => '{}' } ],
+            },
+
+            {   -logic_name => 'fire_tree_building_analyses',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -flow_into  => {
                                 '1->A'  => [ 'clusters_factory' ],
                                 'A->1'  => [ 'backbone_fire_posttree' ],
@@ -383,8 +388,8 @@ sub core_pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
                 -max_retry_count => 0,
                 -flow_into  => {
-                    '1->A' => ['rib_fire_posttree_processing'],
-                    'A->1' => ['backbone_pipeline_finished'],
+                    '1->A' => [ { 'rib_fire_posttree_processing' => '{}' } ],
+                    'A->1' => [ { 'backbone_pipeline_finished' => '{}' } ],
                 },
             },
 

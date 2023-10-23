@@ -129,7 +129,7 @@ sub tweak_analyses {
 
     # Wire up cultivar-specific analyses
     $analyses_by_name->{'remove_blocklisted_genes'}->{'-flow_into'} = ['find_overlapping_genomes'];
-    push @{$analyses_by_name->{'final_semaphore_check'}->{'-flow_into'}}, 'remove_overlapping_homologies';
+    push @{$analyses_by_name->{'fire_final_analyses'}->{'-flow_into'}}, 'remove_overlapping_homologies';
 }
 
 
