@@ -144,7 +144,7 @@ sub tweak_analyses {
         'A->1' => [ 'find_overlapping_genomes' ],
     };
 
-    push @{$analyses_by_name->{'final_semaphore_check'}->{'-flow_into'}}, 'remove_overlapping_homologies';
+    push @{$analyses_by_name->{'fire_final_analyses'}->{'-flow_into'}}, 'remove_overlapping_homologies';
 }
 
 
