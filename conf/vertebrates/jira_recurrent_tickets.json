@@ -31,6 +31,12 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Checkcoredatabases",
+            "summary": "Check the core databases"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
             "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141\n*GitHub*: [<Division>/PrepareMasterDatabaseForRelease_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/PrepareMasterDatabaseForRelease_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-1 -port 4485{code}",
             "summary": "Prepare the master database"
          },
