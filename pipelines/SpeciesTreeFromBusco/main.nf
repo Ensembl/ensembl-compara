@@ -420,7 +420,7 @@ process trimAlignments {
 *@output path to RAXML style partition file
 */
 process mergeProtAlns {
-    label 'rc_8Gb'
+    label 'retry_with_16gb_mem_c1'
 
     publishDir "${params.results_dir}/", pattern: "merged_protein_alns.fas", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "partitions.tsv", mode: "copy",  overwrite: true
@@ -453,7 +453,7 @@ process mergeProtAlns {
 *@output path to merged alignments fasta
 */
 process mergeCodonAlns {
-    label 'rc_8Gb'
+    label 'retry_with_16gb_mem_c1'
 
     publishDir "${params.results_dir}/", pattern: "merged_codon_alns.fas", mode: "copy",  overwrite: true
 
@@ -482,7 +482,7 @@ process mergeCodonAlns {
 *@output fasta alignment with every third site.
 */
 process pickThirdCodonSite {
-    label 'rc_4Gb'
+    label 'retry_with_8gb_mem_c1'
 
     publishDir "${params.results_dir}/", pattern: "merged_third_sites_alns.fas", mode: "copy",  overwrite: true
 
@@ -576,7 +576,7 @@ process calcProtTrees {
 *@output path to astral log file
 */
 process runAstral {
-    label 'retry_with_8gb_mem_c1'
+    label 'retry_with_16gb_mem_c1'
 
     publishDir "${params.results_dir}/", pattern: "astral_species_tree.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "astral.log", mode: "copy",  overwrite: true
