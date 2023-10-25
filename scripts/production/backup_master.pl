@@ -130,11 +130,7 @@ my @params = (
     '--host'    => $dba->dbc->host,
     '--port'    => $dba->dbc->port,
     '--user'    => 'ensro',
-<<<<<<< Updated upstream
     '--column-statistics=0',  # avoid error due to absence of COLUMN_STATISTICS table
-=======
-    '--column-statistics=0',
->>>>>>> Stashed changes
 );
 
 $dump_path //= $ENV{'COMPARA_WAREHOUSE'} . '/master_db_dumps';
