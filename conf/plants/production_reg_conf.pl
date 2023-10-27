@@ -100,7 +100,9 @@ my $compara_dbs = {
     'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-5', 'jalvarez_wheat_cultivars_plants_protein_trees_106' ],
 
     # LASTZ dbs
-    #'lastz_batch_1'  => [ 'mysql-ens-compara-prod-5', '' ],
+    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_lastz_batch1_112' ],
+    'lastz_batch_2'  => [ 'mysql-ens-compara-prod-7', 'twalsh_plants_lastz_batch2_112' ],
+    'lastz_batch_3'  => [ 'mysql-ens-compara-prod-8', 'twalsh_plants_lastz_batch3_112' ],
 
     # synteny
     #'compara_syntenies' => [ 'mysql-ens-compara-prod-7', '' ],
