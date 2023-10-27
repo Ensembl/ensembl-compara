@@ -510,8 +510,8 @@ sub store_gene_link_as_homology {
           $type      =~ s/ortholog/homoeolog/;
           $gdbs      = [$gdb1];
           #### temp fix triticum_aestivum
-          if ( (($gdb1->name eq 'triticum_aestivum') and ($gene1->genome_db->genome_component eq 'U')) or
-               (($gdb2->name eq 'triticum_aestivum') and ($gene2->genome_db->genome_component eq 'U')) ) {
+          if ( (($gdb1->name =~ m/^(triticum_aestivum|triticum_turgidum).*$/) and ($gene1->genome_db->genome_component eq 'U')) or
+               (($gdb2->name =~ m/^(triticum_aestivum|triticum_turgidum).*$/) and ($gene2->genome_db->genome_component eq 'U')) ) {
               $mlss_type = 'ENSEMBL_PARALOGUES';
               $type      = 'within_species_paralog';
           }
