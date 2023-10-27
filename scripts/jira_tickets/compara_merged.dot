@@ -12,6 +12,10 @@ digraph {
     "Merge all alignments for WGA Orthology QC" -> "ncRNA-trees" [fontsize="8", label="Orthologues\nonly"];
     "LastZ" -> "Merge all LastZ" -> "Synteny";
 
+    { "Protein-trees", "ncRNA-trees" } -> "Check gene-tree stats";
+    { "Check gene-tree stats", "Gene-tree reindexing", "Alt-alleles import" } -> "Backup the release database before merging the homology data";
+    "Backup the release database before merging the homology data" -> "Merge the homology pipelines";
+
     "Gene-tree reindexing" -> "ncRNA-trees" [style="dashed", dir=none, fontsize="8", label="XOR"];
     "Gene-tree reindexing" -> "Protein-trees" [style="dashed", dir=none, fontsize="8", label="XOR"];
     "EPOwithExt" -> "EPOwithExt" [style="dashed", fontsize="8", label="Anchor\nmapping\nonly", headport="Primates:e", tailport="Mammals:e"];

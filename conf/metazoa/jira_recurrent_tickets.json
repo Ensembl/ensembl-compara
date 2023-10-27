@@ -87,6 +87,12 @@
          },
          {
             "component": "Production tasks",
+            "description": "Review the gene-tree stats for each gene-tree pipeline, and address any issues.",
+            "summary": "Check gene-tree stats",
+            "name_on_graph": "Check gene-tree stats"
+         },
+         {
+            "component": "Production tasks",
             "description": "Mark as done when all LastZs have been merged into the new release database.",
             "summary": "Merge all LastZ",
             "name_on_graph": "Merge all LastZ"
