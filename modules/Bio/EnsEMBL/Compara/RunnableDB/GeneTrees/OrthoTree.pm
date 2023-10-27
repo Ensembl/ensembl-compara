@@ -514,7 +514,6 @@ sub store_gene_link_as_homology {
                (($gdb2->name =~ m/^(triticum_aestivum|triticum_turgidum).*$/) and ($gene2->genome_db->genome_component eq 'U')) ) {
               $mlss_type = 'ENSEMBL_PARALOGUES';
               $type      = 'within_species_paralog';
-          } else {
           }
           ####
       } else {
