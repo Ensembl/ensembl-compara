@@ -129,7 +129,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
 
 # FORMAT: species/alias name => [ host, db_name ]
 my $compara_dbs = {
-    'compara_references' => [ 'mysql-ens-compara-prod-6', 'ensembl_compara_references_mvp' ],
+    'compara_references' => [ 'mysql-ens-compara-prod-8', 'ensembl_compara_references_mvp' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -138,7 +138,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-meta-prod-1', "ncbi_taxonomy" ],
 });
 
 # -------------------------------------------------------------------
