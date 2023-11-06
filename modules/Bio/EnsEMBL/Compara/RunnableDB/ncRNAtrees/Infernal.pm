@@ -110,6 +110,7 @@ sub fetch_input {
     my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or $self->die_no_retry("Could not fetch nc_tree with id=$nc_tree_id");
+    $nc_tree->expand_subtrees if ($nc_tree->tree_type eq 'supertree');
     $self->param('gene_tree', $nc_tree);
 
     my %model_id_hash = ();
