@@ -376,6 +376,38 @@ sub count_all_by_source_taxon {
     return $self->generic_count('source_name=? AND taxon_id=?');
 }
 
+=head2 count_all_by_GenomeDB
+
+  Arg [1]    : integer $genome_db_id or Bio::EnsEMBL::Compara::GenomeDB object
+  Example    : my $gdb_gene_count = $member_adaptor->count_all_by_GenomeDB($genome_db);
+  Description: Returns the number of members for the given GenomeDB
+  Returntype : int
+  Exceptions : argument undefined or of inappropriate type
+
+=cut
+
+sub count_all_by_GenomeDB {
+  my ($self,$genome_db) = @_;
+
+    if (!$genome_db) {
+        throw("MemberAdaptor::count_all_by_GenomeDB() must have a genome_db");
+    }
+
+    my $genome_db_id;
+    if ( $genome_db and ($genome_db =~ /^\d+$/) ) {
+        $genome_db_id = $genome_db;
+    }
+    else {
+        assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
+        $genome_db_id = $genome_db->dbID;
+        if (!$genome_db_id) {
+            throw( "[$genome_db] does not have a dbID" );
+        }
+    }
+
+    $self->bind_param_generic_fetch($genome_db_id, SQL_INTEGER);
+    return $self->generic_count('genome_db_id=?');
+}
 
 =head2 get_source_breakdown_by_member_ids
 

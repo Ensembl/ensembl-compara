@@ -124,6 +124,20 @@ sub fetch_input {
     } elsif ($self->param('all_current')) {
         $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all_current();
 
+    } elsif ($self->param('all_in_current_gene_trees')) {
+        my %id_to_gdb;
+        my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor();
+        foreach my $method_type ('PROTEIN_TREES', 'NC_TREES') {
+            foreach my $mlss (@{$mlss_adaptor->fetch_all_by_method_link_type($method_type)}) {
+                next unless $mlss->is_current;
+                foreach my $genome_db (@{$mlss->species_set->genome_dbs}) {
+                    next unless $genome_db->is_current;
+                    $id_to_gdb{$genome_db->dbID} = $genome_db;
+                }
+            }
+        }
+        $genome_dbs = [values %id_to_gdb];
+
     } else {
         $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
     }
