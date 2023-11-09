@@ -518,16 +518,21 @@ sub resource_classes_multi_thread {
         '2Gb_2c_job',
         '4Gb_4c_job',
         '8Gb_8c_job',
+        '8Gb_8c_mpi',
         '64Gb_8c_job',
         '96Gb_8c_job',
         '8Gb_16c_job',
+        '16Gb_16c_mpi',
         '32Gb_16c_job',
         '64Gb_16c_job',
         '128Gb_16c_job',
+        '8Gb_32c_mpi',
         '16Gb_32c_job',
         '32Gb_32c_job',
+        '32Gb_32c_mpi',
         '64Gb_32c_job',
         '128Gb_32c_job',
+        '8Gb_48c_mpi',
         '16Gb_48c_job',
         '64Gb_48c_job',
         '128Gb_48c_job',
@@ -587,8 +592,7 @@ sub _generate_resource_classes {
 
             my $rc_name = $rc_key;
             if ($time_limit_name ne '24_hour') {
-                next if ($rc_key =~ /_mpi$/);
-                $rc_name =~ s/(?=_job$)/_${time_limit_name}/;
+                $rc_name =~ s/(?=_job|_mpi$)/_${time_limit_name}/;
             }
 
             while (my ($meadow_name, $submission_cmd_args) = each %{$submission_cmd_config}) {
