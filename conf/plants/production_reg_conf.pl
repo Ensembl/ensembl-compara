@@ -95,8 +95,8 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'        => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_load_members_112'],
-    #'rice_cultivars_ptrees'  => [ 'mysql-ens-compara-prod-7', ''],
-    #'compara_ptrees'         => [ 'mysql-ens-compara-prod-5', '' ],
+    'compara_ptrees'         => [ 'mysql-ens-compara-prod-5', 'twalsh_default_plants_protein_trees_112' ],
+    'rice_cultivars_ptrees'  => [ 'mysql-ens-compara-prod-7', 'twalsh_rice_cultivars_plants_protein_trees_lsf_112' ],
     'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-5', 'jalvarez_wheat_cultivars_plants_protein_trees_106' ],
 
     # LASTZ dbs
