@@ -90,20 +90,22 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_master_plants' ],
-    #'compara_curr'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${curr_eg_release}_${curr_release}" ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${curr_eg_release}_${curr_release}" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'        => [ 'mysql-ens-compara-prod-5', ''],
-    #'rice_cultivars_ptrees'  => [ 'mysql-ens-compara-prod-7', ''],
-    #'compara_ptrees'         => [ 'mysql-ens-compara-prod-5', '' ],
+    'compara_members'        => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_load_members_112'],
+    'compara_ptrees'         => [ 'mysql-ens-compara-prod-5', 'twalsh_default_plants_protein_trees_112' ],
+    'rice_cultivars_ptrees'  => [ 'mysql-ens-compara-prod-7', 'twalsh_rice_cultivars_plants_protein_trees_lsf_112' ],
     'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-5', 'jalvarez_wheat_cultivars_plants_protein_trees_106' ],
 
     # LASTZ dbs
-    #'lastz_batch_1'  => [ 'mysql-ens-compara-prod-5', '' ],
+    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_lastz_batch1_112' ],
+    'lastz_batch_2'  => [ 'mysql-ens-compara-prod-7', 'twalsh_plants_lastz_batch2_112' ],
+    'lastz_batch_3'  => [ 'mysql-ens-compara-prod-8', 'twalsh_plants_lastz_batch3_112' ],
 
     # synteny
-    #'compara_syntenies' => [ 'mysql-ens-compara-prod-7', '' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-8', 'twalsh_plants_synteny_112' ],
 
     # EPO dbs
     ## rice

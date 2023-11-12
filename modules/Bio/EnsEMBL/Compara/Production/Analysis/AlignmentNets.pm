@@ -44,7 +44,6 @@ package Bio::EnsEMBL::Compara::Production::Analysis::AlignmentNets;
 use warnings ;
 use strict;
 
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing');
 
 
@@ -300,6 +299,10 @@ sub parse_Net_file {
       
       my ($score)    = $rest =~ /score\s+(\d+)/;
       my ($chain_id) = $rest =~ /id\s+(\d+)/;
+
+      if (exists $new_chains{$chain_id}) {
+        $self->die_no_retry("Not expecting multiple instances of chain ID '$chain_id' in net file");
+      }
 
       $new_chain_scores{$chain_id} += $score;
 

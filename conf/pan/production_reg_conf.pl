@@ -84,8 +84,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
     );
     # Bacteria server: all species used in Pan happen to be in this database
     Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-        -host   => 'mysql-ens-mirror-4',
-        -port   => 4495,
+        -host   => 'mysql-ens-sta-4',
+        -port   => 4494,
         -user   => 'ensro',
         -pass   => '',
         -dbname => "bacteria_0_collection_core_${prev_eg_release}_${prev_release}_1",
@@ -99,12 +99,12 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-7', 'ensembl_compara_master_pan' ],
-    #'compara_curr'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${curr_eg_release}_${curr_release}" ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${curr_eg_release}_${curr_release}" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'  => [ 'mysql-ens-compara-prod-7', '' ],
-    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-7', '' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-7', 'twalsh_pan_load_members_112' ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-7', 'twalsh_default_pan_protein_trees_112' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );

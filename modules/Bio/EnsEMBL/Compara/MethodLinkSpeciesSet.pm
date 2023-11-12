@@ -302,7 +302,7 @@ sub url {
 sub get_original_url {
     my $self = shift;
 
-    return $self->{'original_url'};
+    return ($self->{'original_url'} || $self->{'url'});
 }
 
 

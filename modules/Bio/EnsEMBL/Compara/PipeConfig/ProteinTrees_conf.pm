@@ -662,6 +662,11 @@ sub core_pipeline_analyses {
         {   -logic_name        => 'pre_clustering_semaphore_check',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
             -max_retry_count   => 0,
+            -flow_into         => [ { 'fire_clustering_analyses' => '{}' } ],
+        },
+
+        {   -logic_name => 'fire_clustering_analyses',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A'  => WHEN(
                     '#are_all_species_reused# and (#reuse_level# eq "clusters")' => 'copy_clusters',
@@ -684,6 +689,11 @@ sub core_pipeline_analyses {
         {   -logic_name        => 'pre_tree_building_semaphore_check',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
             -max_retry_count   => 0,
+            -flow_into         => [ { 'fire_tree_building_analyses' => '{}' } ],
+        },
+
+        {   -logic_name => 'fire_tree_building_analyses',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A'  => [ 'cluster_factory' ],
                 'A->1'  => [ 'backbone_fire_homology_dumps' ],
@@ -698,6 +708,11 @@ sub core_pipeline_analyses {
         {   -logic_name        => 'pre_homology_dump_semaphore_check',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
             -max_retry_count   => 0,
+            -flow_into         => [ { 'fire_homology_dump_analyses' => '{}' } ],
+        },
+
+        {   -logic_name => 'fire_homology_dump_analyses',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => [ 'snapshot_posttree', 'homology_dumps_mlss_id_factory', 'gene_dumps_genome_db_factory' ],
                 'A->1' => [ 'backbone_fire_posttree' ],
@@ -712,6 +727,11 @@ sub core_pipeline_analyses {
         {   -logic_name        => 'posttree_semaphore_check',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
             -max_retry_count   => 0,
+            -flow_into         => [ { 'fire_posttree_analyses' => '{}' } ],
+        },
+
+        {   -logic_name => 'fire_posttree_analyses',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A'  => [ 'rib_group_1' ],
                 'A->1'  => [ 'backbone_pipeline_finished' ],
@@ -731,6 +751,11 @@ sub core_pipeline_analyses {
         {   -logic_name        => 'final_semaphore_check',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
             -max_retry_count   => 0,
+            -flow_into         => [ { 'fire_final_analyses' => '{}' } ],
+        },
+
+        {   -logic_name => 'fire_final_analyses',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => [
                 WHEN( '#gene_tree_stats_shared_dir#' => 'generate_tree_stats_report' ),
                 'wga_expected_dumps',
