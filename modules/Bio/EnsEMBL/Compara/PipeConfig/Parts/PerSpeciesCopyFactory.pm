@@ -98,10 +98,22 @@ sub pipeline_analyses_create_and_copy_per_species_db {
                 data_category  => 'homology',
                 analysis_types => ['Homologies'],
             },
-            -flow_into         => {
-                '3' => [{'dump_species_db_to_tsv'=> INPUT_PLUS()}]
+            -flow_into  => {
+                '3->A' => [{'dump_species_db_to_tsv' => INPUT_PLUS()}],
+                'A->3' => [{'dump_homology_stats' => INPUT_PLUS()}],
             },
         },
+
+        {   -logic_name => 'dump_homology_stats',
+            -module => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DumpHomologyStats',
+            -parameters => {
+                'ref_dbname' => $self->o('ref_dbname'),
+            },
+            -flow_into => {
+            },
+            -rc_name       => "4Gb_job",
+        },
+
 
         {   -logic_name => 'dump_species_db_to_tsv',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DumpSpeciesDBToTsv',
