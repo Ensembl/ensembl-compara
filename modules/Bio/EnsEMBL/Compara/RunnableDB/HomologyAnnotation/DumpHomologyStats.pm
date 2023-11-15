@@ -17,7 +17,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DumpSpeciesDBToTsv
+Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::DumpHomologyStats
 
 =head1 DESCRIPTION
 
@@ -69,7 +69,7 @@ sub write_output {
     my $self = shift;
     my $output_id = {
         filepath    => $self->param_required('filepath'),
-        homology_stats => $self->param_required('homology_stats'),
+        homology_stats => decode_json($self->_slurp( $self->param('filepath') )),
     };
     $self->dataflow_output_id( $output_id, 1 );
 }
