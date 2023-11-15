@@ -60,9 +60,6 @@ sub run {
 
     my $cmd = "python $homology_stats_script -x -d '$db' -r $refdb -o '$filepath'";
     my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1});
-
-    my $stats = decode_json($self->_slurp( $filepath ));
-    $self->param('homology_stats', $stats);
 }
 
 sub write_output {
