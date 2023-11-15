@@ -111,7 +111,7 @@ sub pipeline_analyses_create_and_copy_per_species_db {
             },
             -flow_into => {
             },
-            -rc_name       => "4Gb_job",
+            -rc_name => "4Gb_job",
         },
 
 
