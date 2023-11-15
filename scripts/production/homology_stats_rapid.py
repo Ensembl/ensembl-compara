@@ -26,7 +26,7 @@ Usage example::
 
 import argparse
 import json
-from typing import Tuple, List
+from typing import Tuple, List, Dict, Any
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
