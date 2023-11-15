@@ -161,7 +161,7 @@ def main() -> None:
 
     nr_homologs, nr_genes = query_rr_database(rr_dbc, ref_gdb, ref_db)
     perc_homologs = round((nr_homologs * 100 / nr_genes), 1)
-    json_data = {
+    json_data: Dict[str, Any] = {
         f"homologs_against_{ref_species}": perc_homologs,
     }
     if args.detailed:
