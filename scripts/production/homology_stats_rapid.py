@@ -26,7 +26,7 @@ Usage example::
 
 import argparse
 import json
-from typing import Tuple, List
+from typing import Tuple, List, Dict, Any
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
@@ -45,6 +45,9 @@ def parse_arguments() -> argparse.Namespace:
         description="Query gene and homology counts from an Ensembl compara rapid release database."
     )
     parser.add_argument("-d", "--database", required=True, help="Database URL")
+    parser.add_argument(
+        "-x", "--detailed", action="store_true", help="Enable detailed output."
+    )
     parser.add_argument(
         "-r",
         "--ref_db",
@@ -154,12 +157,20 @@ def main() -> None:
 
     rr_dbc = DBConnection(db_url)
 
-    ref_gdb, ref_species, *_unused = get_closest_ref(rr_dbc, ref_db)
+    ref_gdb, ref_species, _, query_species, _ = get_closest_ref(rr_dbc, ref_db)
 
     nr_homologs, nr_genes = query_rr_database(rr_dbc, ref_gdb, ref_db)
-    json_data = {
-        f"homologs_against_{ref_species}": round((nr_homologs * 100 / nr_genes), 1)
+    perc_homologs = round((nr_homologs * 100 / nr_genes), 1)
+    json_data: Dict[str, Any] = {
+        f"homologs_against_{ref_species}": perc_homologs,
     }
+    if args.detailed:
+        json_data = {
+            "production_name": query_species,
+            "homology_coverage": perc_homologs,
+            "reference_species": ref_species,
+        }
+
     with open(args.output, "w", encoding="utf-8") as outfile:
         json.dump(json_data, outfile)
 

@@ -130,6 +130,7 @@ sub default_options {
 
         #Dump script location
         'dump_homologies_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/dumps/dump_homologies.py'),
+        'homology_stats_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/homology_stats_rapid.py'),
 
         #Dump dir path for GenomeDirectoryPath module
         'dump_dir' => $self->o('work_dir') . '/homology_tsv_dump_dir',
@@ -206,6 +207,7 @@ sub pipeline_wide_parameters {  # These parameter values are visible to all anal
         'db_name'          => $self->o('db_name'),
 
         'dump_homologies_script' => $self->o('dump_homologies_script'),
+        'homology_stats_script' => $self->o('homology_stats_script'),
         'dump_dir' => $self->o('dump_dir'),
         'ftp_root' => $self->o('ftp_root'),
         'ref_dbname' => $self->o('ref_dbname'),
