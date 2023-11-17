@@ -644,9 +644,10 @@ sub store {
 
 =cut
 
-sub update_genetic_distance {
+sub update_genetic_distance { ## DEPRECATED
   my $self = shift;
   my $hom = shift;
+  deprecate("DBSQL::HomologyAdaptor::update_genetic_distance() is deprecated and will be removed in e115.");
 
   assert_ref($hom, 'Bio::EnsEMBL::Compara::Homology', 'hom');
 
