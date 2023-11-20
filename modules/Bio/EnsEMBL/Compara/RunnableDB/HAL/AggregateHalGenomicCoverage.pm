@@ -69,6 +69,10 @@ sub run {
         # A dnafrag that is not in the HAL file cannot have alignment coverage,
         # but we still include its length in the total length of the genome.
         if (!exists $hal_sequence_names{$dnafrag_name}) {
+            # Exclude if it is not a reference:
+            if (!$dnafrag->is_reference()){
+                next;
+            }
             $num_positions_in_genome += $dnafrag_length;
             next;
         }
