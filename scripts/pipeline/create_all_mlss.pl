@@ -113,6 +113,7 @@ use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+use JSON;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
@@ -594,6 +595,21 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
 my $current_version = software_version();
 my %methods_not_worth_reporting = map {$_ => 1} qw(SYNTENY ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES ENSEMBL_HOMOEOLOGUES ENSEMBL_PROJECTIONS CACTUS_HAL_PW GERP_CONSTRAINED_ELEMENT GERP_CONSERVATION_SCORE);
 
+sub mlss2hash {
+    my $self = shift;
+    my $res = {
+        db_id            => $self->dbID,
+        name             => ($self->name ? $self->name : '(unnamed)'),
+        method_type      => $self->method->type,
+        species_set_name => $self->species_set->name,
+        species_set_id   => $self->species_set->dbID
+    };
+    if ($self->{'url'}) {
+        $res->{url} = $self->{'url'};
+    }
+    return $res;
+}
+
 my $mlss_ids_fh;
 if ($output_file) {
     open($mlss_ids_fh, '>', $output_file) or die "Cannot open file '$output_file'\n";
@@ -601,36 +617,52 @@ if ($output_file) {
     $mlss_ids_fh = \*STDOUT;
 }
 
-print $mlss_ids_fh "\nWhat has ".($dry_run ? '(not) ' : '')."been created ?\n-----------------------".($dry_run ? '------' : '')."\n";
+my $mlss_summary;
+
+$mlss_summary .= "\nWhat has ".($dry_run ? '(not) ' : '')."been created ?\n-----------------------".($dry_run ? '------' : '')."\n";
 my $n = 0;
+my $summary_created = [];
 foreach my $mlss (@mlsss_created) {
+    push @$summary_created, mlss2hash($mlss);
     unless ($methods_not_worth_reporting{$mlss->method->type}) {
-        print $mlss_ids_fh $mlss->toString, "\n";
+        $mlss_summary .= $mlss->toString ."\n";
     } else {
         $n++
     }
 }
-print $mlss_ids_fh "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
+$mlss_summary .= "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
 
-print $mlss_ids_fh "\nWhat has ".($dry_run ? '(not) ' : '')."been retired ?\n-----------------------".($dry_run ? '------' : '')."\n";
+$mlss_summary .= "\nWhat has ".($dry_run ? '(not) ' : '')."been retired ?\n-----------------------".($dry_run ? '------' : '')."\n";
+my $summary_retired = [];
 $n = 0;
 foreach my $mlss (@mlsss_retired) {
+    push @$summary_retired, mlss2hash($mlss);
     unless ($methods_not_worth_reporting{$mlss->method->type}) {
-        print $mlss_ids_fh $mlss->toString, "\n";
+        $mlss_summary .= $mlss->toString . "\n";
     } else {
         $n++
     }
 }
-print $mlss_ids_fh "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
+$mlss_summary .= "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
 
-print $mlss_ids_fh "\nWhat else is new in e$current_version ?\n-------------------------\n";
+$mlss_summary .= "\nWhat else is new in e$current_version ?\n-------------------------\n";
+my $summary_existing = [];
 $n = 0;
 foreach my $mlss (@mlsss_existing) {
     next if !$mlss->first_release || $mlss->first_release != $current_version;
+    push @$summary_existing, mlss2hash($mlss);
     unless ($methods_not_worth_reporting{$mlss->method->type}) {
-        print $mlss_ids_fh $mlss->toString, "\n";
+        $mlss_summary .= $mlss->toString . "\n";
     } else {
         $n++
     }
 }
-print $mlss_ids_fh "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
+$mlss_summary .= "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
+
+my $out = [ {"mlss_summary" => $mlss_summary},
+            {"created" => $summary_created, "retired" => $summary_retired, "existing" => $summary_existing}
+          ];
+
+my $json = JSON->new->utf8;
+my $encoded = $json->pretty->encode( $out );
+print $mlss_ids_fh $encoded;
