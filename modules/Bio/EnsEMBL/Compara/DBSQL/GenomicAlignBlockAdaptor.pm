@@ -697,7 +697,9 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
         my $ref = $dnafrag->genome_db;
         my @targets = grep { $_->dbID != $ref->dbID } @{ $method_link_species_set->species_set->genome_dbs };
 
-        if ($ref->is_polyploid()) {
+        # With a Cactus multiple alignment MLSS, we would miss homoeological alignments
+        # if we did not add here the other subgenome components of the reference genome.
+        if ($method_link_species_set->method->class eq 'GenomicAlignBlock.multiple_alignment' && $ref->is_polyploid()) {
           my @all_ref_comp_gdbs = ($ref, @{$ref->component_genome_dbs()});
           my $comp_dnafrag = map_dnafrag_to_genome_component($dnafrag);
           my $ref_comp_gdb = defined $comp_dnafrag ? $comp_dnafrag->genome_db : $ref;
@@ -1445,7 +1447,12 @@ sub _get_GenomicAlignBlocks_from_HAL {
           # grouping by the principal GenomeDB if present in the MLSS species tree. Polypoid alignment
           # sequences may therefore be grouped by principal or component GenomeDB, depending on whether
           # they are represented at the genome or subgenome level (respectively) in the MLSS species tree.
-          if (exists $mlss_sp_tree_gdb_ids{$map_gdb_id}) {
+          # If the Cactus MLSS is pairwise, aligned sequences are always grouped by principal GenomeDB,
+          # to guarantee the resulting alignment is pairwise even if the initial alignment retrieved
+          # from the HAL file includes aligned sequences from multiple subgenomes of the target genome.
+          if ($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment' && defined $principal) {
+            $group_key_map{$hal_genome_name} = $principal->dbID;
+          } elsif (exists $mlss_sp_tree_gdb_ids{$map_gdb_id}) {
             $group_key_map{$hal_genome_name} = $map_gdb_id;
           } elsif (defined $principal && exists $mlss_sp_tree_gdb_ids{$principal->dbID}) {
             $group_key_map{$hal_genome_name} = $principal->dbID;
