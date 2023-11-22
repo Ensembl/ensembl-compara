@@ -803,7 +803,7 @@ sub core_pipeline_analyses {
                                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
                                },
                 -analysis_capacity  => $self->o('quick_tree_break_capacity'),
-                -rc_name        => '8Gb_job',
+                -rc_name        => '8Gb_168_hour_job',
                 -priority       => 50,
                 -flow_into      => [ 'other_paralogs', 'subcluster_factory' ],
             },
@@ -816,7 +816,7 @@ sub core_pipeline_analyses {
                 },
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
                 -priority           => 40,
-                -rc_name            => '1Gb_job',
+                -rc_name            => '1Gb_168_hour_job',
                 -max_retry_count    => 3,
                 -flow_into     => {
                                    -1 => [ 'other_paralogs_himem' ],
@@ -1095,7 +1095,7 @@ sub core_pipeline_analyses {
             -flow_into => {
                            -1 => ['fast_trees_himem'],
                           },
-             -rc_name => '8Gb_4c_mpi',
+             -rc_name => '8Gb_4c_168_hour_mpi',
             },
             {
              -logic_name => 'fast_trees_himem',
@@ -1158,7 +1158,7 @@ sub core_pipeline_analyses {
                             'genome_dumps_dir' => $self->o('genome_dumps_dir'),
                             'inhugemem' => 1,
                            },
-         -rc_name => '32Gb_8c_job',
+         -rc_name => '32Gb_8c_168_hour_job',
          -flow_into => {
                         3 => [ 'fast_trees_himem' ],
                         2 => [ 'genomic_tree_himem' ],
