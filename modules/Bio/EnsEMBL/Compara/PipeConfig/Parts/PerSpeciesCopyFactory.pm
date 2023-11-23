@@ -83,7 +83,7 @@ sub pipeline_analyses_create_and_copy_per_species_db {
             -max_retry_count => 1,
             -analysis_capacity => 20,
             -parameters => {
-                'genome_name' => '#genome_name#',
+                species_list => [ '#genome_name#' ],
             },
             -flow_into => {
                 '2' => [{'GenomeDirectoryPaths'=> INPUT_PLUS()}],
