@@ -77,9 +77,9 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'         => [ 'mysql-ens-compara-prod-1',  'sbhurji_vertebrates_load_members_112' ],
-    #'compara_ptrees'          => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_ptrees'          => [ 'mysql-ens-compara-prod-2',  'twalsh_default_vertebrates_protein_trees_112' ],
     'compara_ptrees_prev'     => [ 'mysql-ens-compara-prod-2',  'twalsh_default_vertebrates_protein_trees_111' ],
-    #'compara_nctrees'         => [ 'mysql-ens-compara-prod-X',  '' ],
+    'compara_nctrees'         => [ 'mysql-ens-compara-prod-3',  'twalsh_default_vertebrates_ncrna_trees_112' ],
     'murinae_ptrees'          => [ 'mysql-ens-compara-prod-4',  'sbhurji_vertebrates_murinae_protein_reindexed_trees_112' ],
     'murinae_nctrees'         => [ 'mysql-ens-compara-prod-4',  'sbhurji_vertebrates_murinae_ncrna_reindexed_trees_112' ],
     'murinae_ptrees_prev'     => [ 'mysql-ens-compara-prod-7',  'thiagogenez_murinae_vertebrates_protein_trees_111_take2' ],
