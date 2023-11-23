@@ -44,13 +44,13 @@ sub fetch_input {
     my $self = shift;
     my $filename = $self->param('species_name') . '-' . $self->param('assembly') . '-' . $self->param('geneset') . '-' . 'homology_stats' . '.json';
     $self->param('filename', $filename);
-    my $filepath = $self->param_required('output_dir') .'/'. $self->param('filename');
+    my $filepath = $self->param_required('dump_dir') .'/homology_stats/'. $self->param('filename');
     $self->param('filepath', $filepath);
 }
 
 sub run {
     my $self = shift;
-    my $out_dir = $self->param_required('output_dir');
+    my $out_dir = $self->param_required('dump_dir') .'/homology_stats';
     my $filepath = $self->param_required('filepath');
     mkpath($out_dir, 1, oct("755"));
 
