@@ -94,7 +94,7 @@ my $compara     = 'compara_curr';
 my $mlss_id;
 my $ss_id;
 my $size        = 5000;
-my $nr          = 3;
+my $nr          = 10;
 
 GetOptions(
     'help'          => \$help,
@@ -164,11 +164,12 @@ sub get_random_region {
     my $size    = shift;
     my $frags   = shift;
     my $probs   = shift;
+    my $coords  = shift;
     
     my $frag    = prob_choice(%$probs);
     my $start   = int(rand($frags->{$frag} - $size)) + 1; # Use one-based coordinates.
     my $end     = $start + $size - 1;
-    return [$gdb->name, $frag, $start, $end];
+    return [$gdb->name, $coords->{$frag}, $frag, $start, $end];
 }
 
 # Sample multiple regions from a genome:
@@ -182,23 +183,24 @@ sub get_random_regions {
     # Calculate the total length:
     my $sum = sum( map {$_->length} @$all_dnafrags );
     # Build a hash of normalised dnafrag lengths/probabilities:
-    my %probs = ( map { $_->name, $_->length/$sum} @$all_dnafrags );
+    my %probs = ( map { $_->name, $_->length/$sum } @$all_dnafrags );
+    my %coords = ( map { $_->name, $_->coord_system_name } @$all_dnafrags );
     # Build a hash of dnafrag lengths:
     my %frags = ( map { $_->name, $_->length} @$all_dnafrags );
 
-    my $regions = [ map { get_random_region($gdb, $size, \%frags, \%probs) } (1..$nr) ];
+    my $regions = [ map { get_random_region($gdb, $size, \%frags, \%probs, \%coords) } (1..$nr) ];
 }
 
 # Print out regions:
 sub print_regions {
     my $regions = shift;
     for my $reg (@$regions) {
-        print "$reg->[0]\t$reg->[1]\t$reg->[2]\t$reg->[3]\n";
+        print "$reg->[0]\t$reg->[1]\t$reg->[2]\t$reg->[3]\t$reg->[4]\n";
     }
 }
 
 # Print out header:
-print "Species\tDnaFrag\tStart\tEnd\n";
+print "Species\tCoordSys\tDnaFrag\tStart\tEnd\n";
 
 # Generate all regions:
 for my $gdb (@$genome_dbs) {
