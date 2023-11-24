@@ -20,12 +20,13 @@ dump_hive_rc_config.pl
 
 =head1 DESCRIPTION
 
-Dumps the current Compara Hive resource-class configuration to a JSON file.
+Dumps the current Hive resource-class configuration
+for a given Compara division to a JSON file.
 
 =head1 EXAMPLE
 
     perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/production/dump_hive_rc_config.pl \
-        --outfile compara_hive_rc_config.json
+        --division $COMPARA_DIV --outfile compara_hive_rc_config.${COMPARA_DIV}.json
 
 =head1 OPTIONS
 
@@ -34,6 +35,10 @@ Dumps the current Compara Hive resource-class configuration to a JSON file.
 =item B<[--help]>
 
 Prints help message and exits.
+
+=item B<[--division division_name]>
+
+Name of Ensembl division.
 
 =item B<[--outfile file_path]>
 
@@ -51,24 +56,40 @@ use Getopt::Long;
 use JSON;
 use Pod::Usage;
 
+use Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf;
 use Bio::EnsEMBL::Compara::PipeConfig::ENV;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 
-my ( $help, $outfile, $genome_db_id, $mlss_id );
+my ( $help, $division, $outfile );
 GetOptions(
     "help|?"    => \$help,
+    "division=s" => \$division,
     "outfile=s" => \$outfile,
 ) or pod2usage(-verbose => 2);
 
 pod2usage(-exitvalue => 0, -verbose => 1) if $help;
-pod2usage(-verbose => 1) if !$outfile;
+pod2usage(-verbose => 1) if !$division or !$outfile;
 
+{
+    no warnings 'redefine';
+    my $base_default_options = \&Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf::default_options;
+    *Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf::default_options = sub {
+        my ($self) = @_;
+        return {
+            %{$base_default_options->($self)},
+            'division' => $division,
+        };
+    };
+}
+
+my $pipe_config = Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf->new();
+$pipe_config->process_options();
 
 my $hive_rc_config;
 
-$hive_rc_config->{'resource_classes_single_thread'} = Bio::EnsEMBL::Compara::PipeConfig::ENV::resource_classes_single_thread();
-$hive_rc_config->{'resource_classes_multi_thread'} = Bio::EnsEMBL::Compara::PipeConfig::ENV::resource_classes_multi_thread();
+$hive_rc_config->{'resource_classes_single_thread'} = Bio::EnsEMBL::Compara::PipeConfig::ENV::resource_classes_single_thread($pipe_config);
+$hive_rc_config->{'resource_classes_multi_thread'} = Bio::EnsEMBL::Compara::PipeConfig::ENV::resource_classes_multi_thread($pipe_config);
 
 open(my $fh, '>', $outfile) or throw("Could not open file [$outfile]");
 print $fh JSON->new->pretty->encode($hive_rc_config) . "\n";
