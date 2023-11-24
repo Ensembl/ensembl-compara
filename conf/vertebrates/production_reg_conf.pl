@@ -77,14 +77,14 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'         => [ 'mysql-ens-compara-prod-1',  'sbhurji_vertebrates_load_members_112' ],
-    #'compara_ptrees'          => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_ptrees'          => [ 'mysql-ens-compara-prod-2',  'twalsh_default_vertebrates_protein_trees_112' ],
     'compara_ptrees_prev'     => [ 'mysql-ens-compara-prod-2',  'twalsh_default_vertebrates_protein_trees_111' ],
-    #'compara_nctrees'         => [ 'mysql-ens-compara-prod-X',  '' ],
+    'compara_nctrees'         => [ 'mysql-ens-compara-prod-3',  'twalsh_default_vertebrates_ncrna_trees_112' ],
     'murinae_ptrees'          => [ 'mysql-ens-compara-prod-4',  'sbhurji_vertebrates_murinae_protein_reindexed_trees_112' ],
     'murinae_nctrees'         => [ 'mysql-ens-compara-prod-4',  'sbhurji_vertebrates_murinae_ncrna_reindexed_trees_112' ],
     'murinae_ptrees_prev'     => [ 'mysql-ens-compara-prod-7',  'thiagogenez_murinae_vertebrates_protein_trees_111_take2' ],
     'murinae_nctrees_prev'    => [ 'mysql-ens-compara-prod-7',  'thiagogenez_murinae_vertebrates_ncrna_trees_111' ],
-    #'pig_breeds_ptrees'       => [ 'mysql-ens-compara-prod-X',  '' ],
+    'pig_breeds_ptrees'       => [ 'mysql-ens-compara-prod-1',  'twalsh_pig_breeds_vertebrates_protein_trees_111' ],
     'pig_breeds_nctrees'      => [ 'mysql-ens-compara-prod-4',  'sbhurji_pig_breeds_vertebrates_ncrna_trees_112' ],
     'pig_breeds_ptrees_prev'  => [ 'mysql-ens-compara-prod-1',  'twalsh_pig_breeds_vertebrates_protein_trees_111' ],
     'pig_breeds_nctrees_prev' => [ 'mysql-ens-compara-prod-3',  'thiagogenez_pig_breeds_vertebrates_ncrna_trees_111' ],
@@ -139,7 +139,7 @@ my $compara_dbs = {
     'aves_cactus'         => [ 'mysql-ens-compara-prod-3', 'sbhurji_vertebrates_register_halfile_112'],
 
     # miscellaneous
-    #'alt_allele_projection' => [ 'mysql-ens-compara-prod-X', '' ],
+    'alt_allele_projection' => [ 'mysql-ens-compara-prod-4', 'sbhurji_vertebrates_alt_allele_import_112' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
