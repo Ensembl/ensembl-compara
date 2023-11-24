@@ -204,7 +204,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'compara_db'        => '#master_db#',   # that's where genome_db_ids come from
-                'all_current'       => 1,
+                'all_in_current_gene_trees' => 1,
                 'extra_parameters'  => [ 'locator' ],
             },
             -rc_name => '2Gb_job',
