@@ -263,6 +263,6 @@ $res->{MemoryUsage} = $memsize;
 my $json = JSON->new->utf8;
 my $encoded = $json->pretty->encode( $res );
 
-open my $outfh, ">$outfile";
+open my $outfh, ">", $outfile  or die "Can't open $outfile: $!\n";
 print $outfh $encoded;
 close $outfh;
