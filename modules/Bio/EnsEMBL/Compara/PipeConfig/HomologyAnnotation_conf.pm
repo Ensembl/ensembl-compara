@@ -282,7 +282,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'create_mlss_and_batch_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::CreateSuperficialMLSS',
-            -rc_name    => '4Gb_job',
+            -rc_name    => '8Gb_job',
             -flow_into  => {
                 2 => { 'parse_paf_for_rbbh' => { 'member_id_list' => '#member_id_list#', 'target_genome_db_id' => '#ref_genome_db_id#', 'genome_db_id' => '#genome_db_id#' } },
             }
