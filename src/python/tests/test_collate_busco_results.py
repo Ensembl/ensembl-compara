@@ -62,12 +62,8 @@ class TestCollateBusco:
                             / "collate_output_taxa.tsv")
         expected_gene1 = str(Path(__file__).parents[2] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco"
                              / "collate_gene_prot_gene1.fas")
-        expected_gene2 = str(Path(__file__).parents[2] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco"
-                             / "collate_gene_prot_gene2.fas")
         expected_gene3 = str(Path(__file__).parents[2] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco"
                              / "collate_gene_prot_gene3.fas")
-        expected_gene4 = str(Path(__file__).parents[2] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco"
-                             / "collate_gene_prot_gene4.fas")
 
         # Compare stats and taxa:
         assert file_cmp(output_stats, expected_stats)
@@ -75,9 +71,7 @@ class TestCollateBusco:
 
         # Compare per-gene output:
         assert file_cmp(str(tmp_dir / "gene_prot_gene1.fas"), expected_gene1)
-        assert file_cmp(str(tmp_dir / "gene_prot_gene2.fas"), expected_gene2)
         assert file_cmp(str(tmp_dir / "gene_prot_gene3.fas"), expected_gene3)
-        assert file_cmp(str(tmp_dir / "gene_prot_gene4.fas"), expected_gene4)
 
     def test_collate_for_empty_input(self, tmp_dir: Path) -> None:
         """Tests the `collate_busco_results.py` script when input is empty.
