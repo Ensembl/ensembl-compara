@@ -56,7 +56,7 @@ sub pipeline_analyses_datacheck_factory {
             -analysis_capacity => 1,
             -batch_size        => 100,
             -max_retry_count   => 0,
-            -rc_name           => '2Gb_job',
+            -rc_name           => '2Gb_1_hour_job',
             -flow_into         => [ 'store_results' ],
         },
 

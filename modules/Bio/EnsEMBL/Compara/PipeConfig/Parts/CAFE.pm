@@ -83,7 +83,7 @@ sub pipeline_analyses_cafe {
                              'cafe_species' => $self->o('cafe_species'),
                              'label'        => $self->o('full_species_tree_label')
                             },
-             -rc_name => '16Gb_job',
+             -rc_name => '16Gb_1_hour_job',
              -flow_into     => {
                  2 => [ 'hc_cafe_species_tree' ],
              }
@@ -115,7 +115,6 @@ sub pipeline_analyses_cafe {
                              'cafe_shell'   => $self->o('cafe_shell'),
                             },
              -rc_name => '4Gb_job',
-             -meadow_type => 'LSF',
              -flow_into => {
                  '2->A' => [ 'CAFE_analysis' ],
                  'A->1' => [ 'hc_cafe_results' ],
@@ -134,7 +133,6 @@ sub pipeline_analyses_cafe {
                             },
              -rc_name => '1Gb_8c_job',
              -hive_capacity => $self->o('cafe_capacity'),
-             -meadow_type => 'LSF',
              -flow_into => {
                  -1 => 'CAFE_analysis_himem',
                  2 => 'CAFE_json',
@@ -153,7 +151,6 @@ sub pipeline_analyses_cafe {
                             },
              -rc_name => '4Gb_48c_job',
              -hive_capacity => $self->o('cafe_capacity'),
-             -meadow_type => 'LSF',
              -flow_into => {
                  2 => 'CAFE_json_himem',
              },
@@ -163,7 +160,7 @@ sub pipeline_analyses_cafe {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeCAFE',
             -hive_capacity => $self->o('cafe_capacity'),
             -batch_size    => 20,
-            -rc_name       => '1Gb_job',
+            -rc_name       => '1Gb_1_hour_job',
             -flow_into  => {
                 -1 => [ 'CAFE_json_himem' ],
             }
@@ -173,7 +170,7 @@ sub pipeline_analyses_cafe {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeCAFE',
             -hive_capacity => $self->o('cafe_capacity'),
             -batch_size    => 20,
-            -rc_name       => '2Gb_job',
+            -rc_name       => '2Gb_1_hour_job',
         },
 
         {   -logic_name         => 'hc_cafe_results',
