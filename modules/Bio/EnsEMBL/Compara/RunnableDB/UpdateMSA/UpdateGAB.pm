@@ -180,7 +180,7 @@ sub _register_gab_for_rm {
     $gab_ids_to_rm{$gab->dbID} = 1;
     if ( my $gat = $gat_adaptor->fetch_by_GenomicAlignBlock($gab) ) {
         # Mark all the nodes in the GAT as to be removed (including the ancestral GAB and its GAs)
-        foreach my $node ( @{ $gat->root->get_all_nodes() } ) {
+        foreach my $node ( @{ $gat->root->get_all_nodes_from_leaves_to_this() } ) {
             push @node_ids_to_rm, $node->dbID;
             if (! $node->is_leaf ) {
                 my $node_gas = $node->get_all_genomic_aligns_for_node();
@@ -214,7 +214,7 @@ sub _register_gab_for_update {
         $gat_root = $gat->root;
         # Get all the GAT inner nodes that are going to lose at least one child
         my %children_to_rm;
-        foreach my $ga_id ( keys %ga_ids_to_rm ) {
+        foreach my $ga_id ( sort { $a <=> $b } keys %ga_ids_to_rm ) {
             my $leaf_id = $ga_adaptor->fetch_by_dbID($ga_id)->node_id;
             $node_ids_to_rm{$leaf_id} = 1;
             my $inner_node = $gat_adaptor->fetch_by_dbID($leaf_id)->parent;
@@ -226,9 +226,9 @@ sub _register_gab_for_update {
         }
         # Each inner node in a GAT must have two children: if at least one is removed, the inner node has to
         # be removed as well
-        $node_ids_to_rm{$_} = 1 for keys %children_to_rm;
+        $node_ids_to_rm{$_} = 1 for sort { $a <=> $b } keys %children_to_rm;
         # Get the list of ancestral GAs, dnafrags and nodes to remove, plus the nodes to relocate in the GAT
-        foreach my $node ( @{ $gat_root->get_all_nodes() } ) {
+        foreach my $node ( @{ $gat_root->get_all_nodes_from_leaves_to_this() } ) {
             my $node_gas = $node->get_all_genomic_aligns_for_node();
             if ( exists $node_ids_to_rm{$node->dbID} ) {
                 foreach my $ga ( @$node_gas ) {
