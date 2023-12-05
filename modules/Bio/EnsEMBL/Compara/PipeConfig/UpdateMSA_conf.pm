@@ -140,6 +140,13 @@ sub pipeline_wide_parameters {
 sub core_pipeline_analyses {
     my $self = shift;
 
+    my %semaphore_check_params = (
+        'compara_db' => $self->pipeline_url(),
+        'datacheck_names' => [ 'CheckNonMinimisedGATs' ],
+        'db_type' => 'compara',
+        'registry_file' => undef,
+    );
+
     return [
         {   -logic_name => 'load_mlss_ids',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMLSSids',
@@ -281,18 +288,29 @@ sub core_pipeline_analyses {
             -parameters => {
                 'method_type' => $self->o('method_type'),
             },
-            -flow_into  => [ 'affected_gabs_factory' ],
+            -flow_into  => [ 'fire_gab_analyses' ],
         },
-        {   -logic_name => 'affected_gabs_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::UpdateMSA::UpdateGABFactory',
+        {   -logic_name => 'fire_gab_analyses',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '2->A' => [ 'update_gab' ],
+                '1->A' => [ 'affected_gabs_factory' ],
                 'A->1' => WHEN(
                     '#method_type# eq "epo"' => [ 'sync_ancestral_database' ],
                     ELSE                        [ 'remove_prev_mlss' ],
                 ),
             },
         },
+        {   -logic_name => 'affected_gabs_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::UpdateMSA::UpdateGABFactory',
+            -flow_into  => {
+                '2->A' => [ 'update_gab' ],
+                'A->1' => [ { 'minimize_gab_check' => \%semaphore_check_params } ]
+            }
+        },
+        {   -logic_name        => 'minimize_gab_check',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+            -max_retry_count   => 0,
+		},
         {   -logic_name     => 'update_gab',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::UpdateMSA::UpdateGAB',
             -rc_name        => '1Gb_job',
