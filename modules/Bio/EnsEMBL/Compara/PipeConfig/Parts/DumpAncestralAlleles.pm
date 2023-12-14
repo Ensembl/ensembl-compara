@@ -42,6 +42,7 @@ sub pipeline_analyses_dump_anc_alleles {
 
     	{	-logic_name => 'mk_ancestral_dump_dir',
     		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name    => '1Gb_1_hour_job',
     		-parameters => {
                     cmd => 'mkdir -p #anc_output_dir# #anc_tmp_dir#'
     		},
@@ -51,6 +52,7 @@ sub pipeline_analyses_dump_anc_alleles {
 
         {   -logic_name     => 'fetch_genome_dbs',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpAncestralAlleles::GenomeDBFactory',
+            -rc_name        => '1Gb_1_hour_job',
             -parameters     => {
                 compara_db => $self->o('compara_db'),
                 reg_conf   => $self->o('reg_conf'),
@@ -84,6 +86,7 @@ sub pipeline_analyses_dump_anc_alleles {
 
         {   -logic_name => 'remove_empty_files',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name    => '1Gb_1_hour_job',
             -parameters => {
                 species_outdir  => '#anc_tmp_dir#/#species_dir#',
                 cmd             => 'find #species_outdir# -empty -type f -delete',
@@ -93,6 +96,7 @@ sub pipeline_analyses_dump_anc_alleles {
 
         {   -logic_name => 'generate_anc_stats',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name    => '1Gb_1_hour_job',
             -parameters => {
                 species_outdir  => '#anc_tmp_dir#/#species_dir#',
                 cmd             => 'cd #species_outdir#; perl #ancestral_stats_program# > summary.txt',
@@ -102,6 +106,7 @@ sub pipeline_analyses_dump_anc_alleles {
 
         {	-logic_name => 'tar',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name    => '1Gb_1_hour_job',
         	-parameters => {
         		cmd => join( '; ',
                                     'cd #anc_tmp_dir#',
@@ -112,6 +117,7 @@ sub pipeline_analyses_dump_anc_alleles {
 
         {	-logic_name => 'md5sum',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name    => '1Gb_1_hour_job',
         	-parameters => {
         		cmd => join( '; ',
         			'cd #anc_output_dir#',
