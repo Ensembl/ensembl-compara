@@ -135,6 +135,10 @@ use Bio::EnsEMBL::Compara::Utils::Projection;
 
 use List::Util qw( max );
 
+use Bio::EnsEMBL::Utils::IO qw(slurp);
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
+use File::Spec::Functions qw(catfile rel2abs splitdir splitpath);
+
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 =head2 new
@@ -1428,7 +1432,17 @@ sub _get_GenomicAlignBlocks_from_HAL {
           }
       }
 
-      my %mlss_sp_tree_gdb_ids = map { $_ => 1 } keys %{$mlss_with_mapping->species_tree->get_genome_db_id_2_node_hash()};
+      my %mlss_sp_tree_gdb_ids;
+      if ($mlss_with_mapping->dbID == 313160 && $mlss_with_mapping->name eq '16 wheat Cactus') {
+          my ($volume, $dir_path) = splitpath(rel2abs(__FILE__));
+          my @path_parts = splitdir($dir_path);
+          pop @path_parts until $path_parts[$#path_parts] eq 'ensembl-compara';
+          my $species_tree_file_path = catfile(@path_parts, 'conf', 'plants', 'species_tree.wheat.placeholder.nw');
+          my $species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree(slurp($species_tree_file_path));
+          %mlss_sp_tree_gdb_ids = map { $_->name => 1 } @{$species_tree->get_all_sorted_leaves()};
+      } else {
+          %mlss_sp_tree_gdb_ids = map { $_ => 1 } keys %{$mlss_with_mapping->species_tree->get_genome_db_id_2_node_hash()};
+      }
 
       my %hal_species_map;
       my %group_key_map;
