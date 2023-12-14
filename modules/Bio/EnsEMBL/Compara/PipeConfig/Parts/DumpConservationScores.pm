@@ -42,11 +42,13 @@ sub pipeline_analyses_dump_conservation_scores {
 
         {   -logic_name     => 'mkdir_conservation_scores',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MkDirConservationScores',
+            -rc_name        => '1Gb_1_hour_job',
             -flow_into      => [ 'genomedb_factory_cs' ],
         },
 
         {   -logic_name     => 'genomedb_factory_cs',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -rc_name        => '1Gb_1_hour_job',
             -parameters     => {
                 'extra_parameters'      => [ 'name', 'assembly' ],
             },
@@ -79,6 +81,7 @@ sub pipeline_analyses_dump_conservation_scores {
 
         {   -logic_name     => 'concatenate_bedgraph_files',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::ConcatenateBedGraphFiles',
+            -rc_name        => '1Gb_job',
             -flow_into      => 'convert_to_bigwig',
         },
 
@@ -92,6 +95,7 @@ sub pipeline_analyses_dump_conservation_scores {
 
         {   -logic_name     => 'md5sum_cs',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name        => '1Gb_job',
             -parameters     => {
                 'cmd'   => 'cd #cs_output_dir#; md5sum *.bw > MD5SUM',
             },
@@ -100,6 +104,7 @@ sub pipeline_analyses_dump_conservation_scores {
 
         {   -logic_name     => 'readme_cs',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name        => '1Gb_1_hour_job',
             -parameters     => {
                 'cmd'   => [qw(cp -af #cs_readme# #cs_output_dir#/README)],
             },
