@@ -148,10 +148,7 @@ sub pipeline_analyses_dump_multi_align {
         {   -logic_name     => 'md5sum_aln_factory',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MD5SUMFactory',
             -rc_name        => '1Gb_1_hour_job',
-            -flow_into     => {
-                '2->A' => [ 'md5sum_aln' ],
-                'A->1' => [ 'pipeline_end' ],
-            },
+            -flow_into     => [ 'md5sum_aln' ],
         },
         {   -logic_name     => 'md5sum_aln',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
@@ -175,11 +172,6 @@ sub pipeline_analyses_dump_multi_align {
             -parameters     => {
                 'cmd'           => 'cd #export_dir#; tar czf #base_filename#.tar.gz #base_filename#; rm -r #base_filename#',
             },
-        },
-
-        {   -logic_name     => 'pipeline_end',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -rc_name        => '1Gb_1_hour_job',
         },
     ];
 }
