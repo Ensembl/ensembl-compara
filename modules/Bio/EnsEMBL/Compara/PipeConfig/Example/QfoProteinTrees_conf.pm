@@ -132,7 +132,7 @@ sub tweak_analyses {
     }
 
     $analyses_by_name->{'backbone_fire_db_prepare'}->{'-parameters'} = { 'manual_ok' => 1 };
-    $analyses_by_name->{'cluster_factory'}->{'-rc_name'} = '1Gb_job';
+    $analyses_by_name->{'cluster_factory'}->{'-rc_name'} = '1Gb_1_hour_job';
     $analyses_by_name->{'load_mlss_id'}->{'-parameters'}->{'species_set_name'} = "qfo";
 }
 

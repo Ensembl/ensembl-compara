@@ -111,7 +111,7 @@ sub tweak_analyses {
     my %overriden_rc_names = (
         'mcoffee'           => '8Gb_job',
         'mcoffee_himem'     => '32Gb_job',
-        'mafft'             => '8Gb_2c_job',
+        'mafft'             => '8Gb_2c_1_hour_job',
         'mafft_himem'       => '32Gb_4c_job',
         'treebest'          => '4Gb_job',
         'members_against_allspecies_factory'        => '2Gb_job',

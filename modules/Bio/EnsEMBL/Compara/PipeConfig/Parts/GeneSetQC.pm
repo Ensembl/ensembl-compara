@@ -56,7 +56,7 @@ sub pipeline_analyses_GeneSetQC {
                 'A->2'   =>  ['store_tags'],
             },
             -hive_capacity  => $self->o('genesetQC_capacity'),
-            -rc_name => '2Gb_job',
+            -rc_name => '2Gb_1_hour_job',
         },
 
         {
@@ -83,7 +83,7 @@ sub pipeline_analyses_GeneSetQC {
                 '-1' => ['get_long_short_orth_genes_himem'],
             },
             -analysis_capacity  => 250,
-            -rc_name => '1Gb_job',
+            -rc_name => '1Gb_1_hour_job',
         },
         
         {
@@ -119,7 +119,7 @@ sub pipeline_analyses_GeneSetQC {
         {
             -logic_name     =>  'get_ambiguous',
             -module         =>  'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindGeneFragments',
-            -rc_name        =>  '1Gb_job',
+            -rc_name        =>  '1Gb_1_hour_job',
             -parameters     =>  {
                 'gene_status'                   => 'ambiguous_sequence',
                 'missing_sequence_threshold'    => $self->o('missing_sequence_threshold'),

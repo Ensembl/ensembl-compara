@@ -135,6 +135,10 @@ use Bio::EnsEMBL::Compara::Utils::Projection;
 
 use List::Util qw( max );
 
+use Bio::EnsEMBL::Utils::IO qw(slurp);
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
+use File::Spec::Functions qw(catfile rel2abs splitdir splitpath);
+
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 =head2 new
@@ -697,7 +701,9 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
         my $ref = $dnafrag->genome_db;
         my @targets = grep { $_->dbID != $ref->dbID } @{ $method_link_species_set->species_set->genome_dbs };
 
-        if ($ref->is_polyploid()) {
+        # With a Cactus multiple alignment MLSS, we would miss homoeological alignments
+        # if we did not add here the other subgenome components of the reference genome.
+        if ($method_link_species_set->method->class eq 'GenomicAlignBlock.multiple_alignment' && $ref->is_polyploid()) {
           my @all_ref_comp_gdbs = ($ref, @{$ref->component_genome_dbs()});
           my $comp_dnafrag = map_dnafrag_to_genome_component($dnafrag);
           my $ref_comp_gdb = defined $comp_dnafrag ? $comp_dnafrag->genome_db : $ref;
@@ -1426,7 +1432,17 @@ sub _get_GenomicAlignBlocks_from_HAL {
           }
       }
 
-      my %mlss_sp_tree_gdb_ids = map { $_ => 1 } keys %{$mlss_with_mapping->species_tree->get_genome_db_id_2_node_hash()};
+      my %mlss_sp_tree_gdb_ids;
+      if ($mlss_with_mapping->dbID == 313160 && $mlss_with_mapping->name eq '16 wheat Cactus') {
+          my ($volume, $dir_path) = splitpath(rel2abs(__FILE__));
+          my @path_parts = splitdir($dir_path);
+          pop @path_parts until $path_parts[$#path_parts] eq 'ensembl-compara';
+          my $species_tree_file_path = catfile(@path_parts, 'conf', 'plants', 'species_tree.wheat.placeholder.nw');
+          my $species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree(slurp($species_tree_file_path));
+          %mlss_sp_tree_gdb_ids = map { $_->name => 1 } @{$species_tree->get_all_sorted_leaves()};
+      } else {
+          %mlss_sp_tree_gdb_ids = map { $_ => 1 } keys %{$mlss_with_mapping->species_tree->get_genome_db_id_2_node_hash()};
+      }
 
       my %hal_species_map;
       my %group_key_map;
@@ -1445,7 +1461,12 @@ sub _get_GenomicAlignBlocks_from_HAL {
           # grouping by the principal GenomeDB if present in the MLSS species tree. Polypoid alignment
           # sequences may therefore be grouped by principal or component GenomeDB, depending on whether
           # they are represented at the genome or subgenome level (respectively) in the MLSS species tree.
-          if (exists $mlss_sp_tree_gdb_ids{$map_gdb_id}) {
+          # If the Cactus MLSS is pairwise, aligned sequences are always grouped by principal GenomeDB,
+          # to guarantee the resulting alignment is pairwise even if the initial alignment retrieved
+          # from the HAL file includes aligned sequences from multiple subgenomes of the target genome.
+          if ($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment' && defined $principal) {
+            $group_key_map{$hal_genome_name} = $principal->dbID;
+          } elsif (exists $mlss_sp_tree_gdb_ids{$map_gdb_id}) {
             $group_key_map{$hal_genome_name} = $map_gdb_id;
           } elsif (defined $principal && exists $mlss_sp_tree_gdb_ids{$principal->dbID}) {
             $group_key_map{$hal_genome_name} = $principal->dbID;

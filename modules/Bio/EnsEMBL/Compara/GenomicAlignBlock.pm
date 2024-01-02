@@ -170,6 +170,9 @@ use Bio::EnsEMBL::Compara::Utils::Polyploid qw(map_dnafrag_to_genome_component);
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
+use Bio::EnsEMBL::Utils::IO qw(slurp);
+use File::Spec::Functions qw(catfile rel2abs splitdir splitpath);
+
 our @ISA = qw(Bio::EnsEMBL::Compara::BaseGenomicAlignSet Bio::EnsEMBL::Storable);
 
 =head2 new (CONSTRUCTOR)
@@ -1507,6 +1510,12 @@ sub get_GenomicAlignTree {
         #Create species_tree in newick format. Do not get the branch lengths.
         $species_tree_string = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree(-compara_dba => $self->adaptor->db,
                                                                                               -species_set => $species_set)->newick_format('ryo', '%{g}');
+    } elsif ($self->method_link_species_set->dbID == 313160 && $self->method_link_species_set->name eq '16 wheat Cactus') {
+        my ($volume, $dir_path) = splitpath(rel2abs(__FILE__));
+        my @path_parts = splitdir($dir_path);
+        pop @path_parts until $path_parts[$#path_parts] eq 'ensembl-compara';
+        my $species_tree_file_path = catfile(@path_parts, 'conf', 'plants', 'species_tree.wheat.placeholder.nw');
+        $species_tree_string = slurp($species_tree_file_path);
     } else {
         #Multiple alignment
         $species_tree_string = $self->method_link_species_set->species_tree->root->newick_format('ryo', '%{g}');

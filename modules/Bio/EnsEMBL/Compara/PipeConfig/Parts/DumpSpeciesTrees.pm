@@ -42,6 +42,7 @@ sub pipeline_analyses_dump_species_trees {
     return [
         {   -logic_name => 'mk_species_trees_dump_dir',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name    => '1Gb_1_hour_job',
             -parameters => {
                 'cmd'           => ['mkdir', '-p', '#dump_dir#'],
             },
@@ -51,6 +52,7 @@ sub pipeline_analyses_dump_species_trees {
 
         {   -logic_name => 'dump_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -rc_name    => '1Gb_1_hour_job',
             -parameters => {
                 'db_conn'       => '#compara_db#',
                 'inputquery'    => 'SELECT root_id, label, method_link_id, replace(name, " ", "_") as name FROM species_tree_root JOIN method_link_species_set USING (method_link_species_set_id)',
@@ -64,6 +66,7 @@ sub pipeline_analyses_dump_species_trees {
 
         {   -logic_name => 'dump_one_tree_with_distances',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name    => '1Gb_1_hour_job',
             -parameters => {
                 'cmd'           => '#dump_species_tree_exe# -compara_db #compara_db# -reg_conf #reg_conf# --stn_root_id #root_id# -with_distances > "#dump_dir#/#name#_#label#.nh"',
             },
@@ -72,6 +75,7 @@ sub pipeline_analyses_dump_species_trees {
 
         {   -logic_name => 'dump_one_tree_without_distances',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name    => '1Gb_1_hour_job',
             -parameters => {
                 'cmd'           => '#dump_species_tree_exe# -compara_db #compara_db# -reg_conf #reg_conf# --stn_root_id #root_id# > "#dump_dir#/#name#_#label#.nh"',
             },
@@ -80,6 +84,7 @@ sub pipeline_analyses_dump_species_trees {
 
         {   -logic_name => 'sanitize_file',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name    => '1Gb_1_hour_job',
             -parameters => {
                 'cmd'           => ['sed', '-i', 's/  */_/g', '#dump_dir#/#name#_#label#.nh'],
             },
