@@ -124,7 +124,7 @@ if __name__ == '__main__':
                 continue
             # Filter out sequences with multiple stop
             # codons:
-            if str(y.seq).count("*") > 1:
+            if y.seq.count("*") > 1:
                 continue
             y.id = x.id     # type: ignore
             y.description = ""

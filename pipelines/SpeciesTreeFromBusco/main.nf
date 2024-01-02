@@ -232,7 +232,7 @@ process buscoAnnot {
         fi
         ${params.miniprot_exe} \$SENS -t ${params.cores} -d genome.mpi $genome
         ${params.miniprot_exe} -N 0 -Iu -t ${params.cores} --gff genome.mpi $busco_prot | grep -v '##PAF' \
-        | awk '/mRNA/{split(\$9,a,/ID=|;/); split(\$9,b,/Target=|\s/)}{sub(a[2], b[2]); print}' > annotation.gtf
+        | awk -F "\t" '$3=="mRNA" {match($9, /Target=([^; ]+)/, m)} {sub(/ID=[^; ]+/, sprintf("ID=%s", m[1]), $9); print}' > annotation.gtf
         rm -f genome.mpi
     """
     else
@@ -251,7 +251,6 @@ process buscoAnnot {
         --busco_protein_file $busco_prot
         
         mv anno_res/busco_output/annotation.gtf .
-    fi
     """
 }
 
