@@ -33,12 +33,16 @@ my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
 
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-6:4695/$curr_release");
 
+
+
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
+#------------------------COMPARA DATABASE LOCATIONS----------------------------------
+my $homology_reference_host = $ENV{'homology_reference_host'} || 'mysql-ens-sta-6';
 # FORMAT: alias name => [ host, db_name ]
 my $compara_dbs = {
     # necessary compara dbs
-    'compara_references' => [ 'mysql-ens-sta-6', 'ensembl_compara_references_mvp' ],
+    'compara_references' => [ $homology_reference_host, 'ensembl_compara_references_mvp' ],
 
 };
 
