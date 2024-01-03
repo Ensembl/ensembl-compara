@@ -36,13 +36,18 @@ my $prev_release = $curr_release - 1;
 my $curr_eg_release = $curr_release - 53;
 my $prev_eg_release = $curr_eg_release - 1;
 
+# ---------------------- DATABASE HOSTS -----------------------------------------
+
+my $curr_nv_host = $curr_release % 2 == 0 ? 'mysql-ens-sta-3' : 'mysql-ens-sta-3-b';
+
+my ($prev_nv_host, $prev_nv_port) = $prev_release % 2 == 0
+    ? ('mysql-ens-sta-3', 4160)
+    : ('mysql-ens-sta-3-b', 4686);
+
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
 # Use our mirror (which has all the databases)
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
-
-# Or use the official staging servers
-#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
 
 # Ensure we are using the correct cores for species that overlap with vertebrates
 my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster);
@@ -58,8 +63,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-3',
-        -port   => 4160,
+        -host   => $prev_nv_host,
+        -port   => $prev_nv_port,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -95,7 +100,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 # ----------------------NON-COMPARA DATABASES------------------------
 # NCBI taxonomy database (maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-3-b', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ $curr_nv_host, "ncbi_taxonomy_$curr_release" ],
 });
 
 # -------------------------------------------------------------------

@@ -33,19 +33,23 @@ use Bio::EnsEMBL::Compara::Utils::Registry;
 my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
 my $prev_release = $curr_release - 1;
 
+# ---------------------- DATABASE HOSTS -----------------------------------------
+
+my $curr_vert_host = $curr_release % 2 == 0 ? 'mysql-ens-sta-1' : 'mysql-ens-sta-1-b';
+
+my ($prev_vert_host, $prev_vert_port) = $prev_release % 2 == 0
+    ? ('mysql-ens-sta-1', 4519)
+    : ('mysql-ens-sta-1-b', 4685);
+
 # ---------------------- CURRENT CORE DATABASES---------------------------------
 
 # All the core databases live on the Vertebrates staging server or our mirror
-#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1-b:4685/$curr_release");
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
 
 # Ensure we're using the correct cores for species that overlap with other divisions
 my @overlap_species = qw(drosophila_melanogaster caenorhabditis_elegans saccharomyces_cerevisiae);
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
 my $overlap_cores = {
-    #'drosophila_melanogaster' => [ 'mysql-ens-sta-1-b', "drosophila_melanogaster_core_" . $curr_release . "_10" ],
-    #'caenorhabditis_elegans'  => [ 'mysql-ens-sta-1-b', "caenorhabditis_elegans_core_" . $curr_release . "_282" ],
-    #'saccharomyces_cerevisiae' => [ 'mysql-ens-sta-1-b', "saccharomyces_cerevisiae_core_" . $curr_release . "_4" ],
     'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_" . $curr_release . "_10" ],
     'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_" . $curr_release . "_282" ],
     'saccharomyces_cerevisiae' => [ 'mysql-ens-vertannot-staging', "saccharomyces_cerevisiae_core_" . $curr_release . "_4" ],
@@ -57,8 +61,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 # previous release core databases will be required by PrepareMasterDatabaseForRelease, LoadMembers and MercatorPecan
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-1-b',
-        -port   => 4685,
+        -host   => $prev_vert_host,
+        -port   => $prev_vert_port,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -161,7 +165,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ $curr_vert_host, "ncbi_taxonomy_$curr_release" ],
 });
 
 # -------------------------------------------------------------------

@@ -35,6 +35,13 @@ my $prev_release = $curr_release - 1;
 my $curr_eg_release = $ENV{'CURR_EG_RELEASE'};
 my $prev_eg_release = $curr_eg_release - 1;
 
+# ---------------------- DATABASE HOSTS -----------------------------------------
+
+my $curr_nv_host = $curr_release % 2 == 0 ? 'mysql-ens-sta-3' : 'mysql-ens-sta-3-b';
+
+my ($prev_nv_host, $prev_nv_port) = $prev_release % 2 == 0
+    ? ('mysql-ens-sta-3', 4160)
+    : ('mysql-ens-sta-3-b', 4686);
 
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
@@ -72,8 +79,8 @@ foreach my $group ( @collection_groups ) {
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-3',
-        -port   => 4160,
+        -host   => $prev_nv_host,
+        -port   => $prev_nv_port,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -82,8 +89,8 @@ foreach my $group ( @collection_groups ) {
     # Protist Collections
     foreach my $group ( @collection_groups ) {
         Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-            -host   => 'mysql-ens-sta-3',
-            -port   => 4160,
+            -host   => $prev_nv_host,
+            -port   => $prev_nv_port,
             -user   => 'ensro',
             -pass   => '',
             -dbname => "protists_${group}_collection_core_${prev_eg_release}_${prev_release}_1",
@@ -119,7 +126,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-3-b', "ncbi_taxonomy_${curr_release}" ],
+    'ncbi_taxonomy' => [ $curr_nv_host, "ncbi_taxonomy_${curr_release}" ],
 });
 
 # -------------------------------------------------------------------

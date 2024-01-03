@@ -38,6 +38,16 @@ my $prev_eg_release = $curr_eg_release - 1;
 # Species found on both vertebrates and non-vertebrates servers
 my @overlap_species = qw(saccharomyces_cerevisiae drosophila_melanogaster caenorhabditis_elegans);
 
+# ---------------------- DATABASE HOSTS -----------------------------------------
+
+my ($prev_vert_host, $prev_vert_port) = $prev_release % 2 == 0
+    ? ('mysql-ens-sta-1', 4519)
+    : ('mysql-ens-sta-1-b', 4685);
+
+my ($prev_nv_host, $prev_nv_port) = $prev_release % 2 == 0
+    ? ('mysql-ens-sta-3', 4160)
+    : ('mysql-ens-sta-3-b', 4686);
+
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
@@ -65,8 +75,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-1-b',
-        -port   => 4685,
+        -host   => $prev_vert_host,
+        -port   => $prev_vert_port,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -75,8 +85,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
     Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
     Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-3-b',
-        -port   => 4686,
+        -host   => $prev_nv_host,
+        -port   => $prev_nv_port,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -84,8 +94,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
     );
     # Bacteria server: all species used in Pan happen to be in this database
     Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-        -host   => 'mysql-ens-sta-4',
-        -port   => 4494,
+        -host   => 'mysql-ens-mirror-4',
+        -port   => 4495,
         -user   => 'ensro',
         -pass   => '',
         -dbname => "bacteria_0_collection_core_${prev_eg_release}_${prev_release}_1",
