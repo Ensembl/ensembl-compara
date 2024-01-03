@@ -101,6 +101,8 @@ process dumpVersions {
     (java -jar $params.astral_jar 2>&1| grep "This is") >> $out
     echo "macse:" >> $out
     (java -jar $params.macse_jar -help 2>&1| grep "This is") >> $out
+    echo "miniprot:" >> $out
+    ${params.miniprot_exe} --version >> $out
     """
 
 }
@@ -132,7 +134,7 @@ process prepareGenome {
 *@output path to input genomes info csv
 */
 process prepareGenomeFromDb {
-    label 'retry_with_8gb_mem_c1'
+    label 'retry_with_16gb_mem_c1'
 
     publishDir "${params.results_dir}", pattern: "input_genomes.csv", mode: "copy", overwrite: true
 
@@ -211,7 +213,7 @@ process linkAnnoCache {
 *@output tuple of path to annotation GTF and genome fasta
 */
 process buscoAnnot {
-    label 'retry_with_32gb_mem_c32'
+    label 'retry_with_128gb_mem_c32'
 
     publishDir "${params.results_dir}/anno_cache/$genome", pattern: "annotation.gtf", mode: "copy",  overwrite: true
 
@@ -221,21 +223,34 @@ process buscoAnnot {
     output:
         tuple path("annotation.gtf"), path(genome), emit: busco_annot
     script:
+    if (params.use_anno == "")
     """
-    mkdir -p anno_res
-    export ENSCODE=$params.enscode
-    ln -s `which tblastn` .
-
-    python3 $params.anno_exe \
-    --output_dir anno_res \
-    --genome_file $genome \
-    --num_threads ${params.cores} \
-    --max_intron_length 100000 \
-    --run_busco \
-    --genblast_timeout  64800\
-    --busco_protein_file $busco_prot
-
-    mv anno_res/busco_output/annotation.gtf .
+        SENS=""
+        if [ "${params.sensitive}" != "" ];
+        then
+            SENS="-M0 -k5"
+        fi
+        ${params.miniprot_exe} \$SENS -t ${params.cores} -d genome.mpi $genome
+        ${params.miniprot_exe} -N 0 -Iu -t ${params.cores} --gff genome.mpi $busco_prot | grep -v '##PAF' \
+        | awk -F "\t" '\$3=="mRNA" {match(\$9, /Target=([^; ]+)/, m)} {sub(/ID=[^; ]+/, sprintf("ID=%s", m[1]), \$9); print}' > annotation.gtf
+        rm -f genome.mpi
+    """
+    else
+    """
+        mkdir -p anno_res
+        export ENSCODE=$params.enscode
+        ln -s `which tblastn` .
+        
+        python3 $params.anno_exe \
+        --output_dir anno_res \
+        --genome_file $genome \
+        --num_threads ${params.cores} \
+        --max_intron_length 100000 \
+        --run_busco \
+        --genblast_timeout  64800\
+        --busco_protein_file $busco_prot
+        
+        mv anno_res/busco_output/annotation.gtf .
     """
 }
 
@@ -252,7 +267,8 @@ process runGffread {
     script:
     """
     mkdir -p cdna
-    ${params.gffread_exe} -w cdna/$genome -g $genome $busco_annot
+    ${params.gffread_exe} $busco_annot > anno_clean.gtf
+    ${params.gffread_exe} --adj-stop -w cdna/$genome -g $genome anno_clean.gtf
     """
 }
 
@@ -305,7 +321,7 @@ process collateBusco {
 *@output path to cDNA fasta
 */
 process alignProt {
-    label 'retry_with_4gb_mem_c1'
+    label 'retry_with_8gb_mem_c1'
 
     input:
         val protFas
