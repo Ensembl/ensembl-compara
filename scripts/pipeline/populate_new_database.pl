@@ -277,22 +277,15 @@ my $rerun_tag = 'rerun_in_'.software_version();
 $skipped_mlss_ids{$_->dbID} = 1 for grep {$_->has_tag($rerun_tag)} @$all_default_method_link_species_sets;
 
 if($only_show_intentions) {
-    my $out;
-    $out .= "GenomeDB entries to be copied:\n";
     my $copied_genome_db = {};
     foreach my $genome_db (@$all_default_genome_dbs) {
-        $out .= "\t".$genome_db->dbID.": ".$genome_db->_get_unique_name."\n";
         $copied_genome_db->{$genome_db->dbID} = $genome_db->_get_unique_name;
     }
-    $out .= "MethodLinkSpeciesSet entries to be copied:\n";
     my $copied_mlss = {};
     my $copied_mlss_entry = {};
     my %counts;
     foreach my $mlss (sort {$a->method->dbID <=> $b->method->dbID} @$all_default_method_link_species_sets) {
         $counts{$mlss->method->type}++;
-        $out .= "\t".$mlss->dbID.": ".$mlss->name;
-        $out .= " (mlss entry only)" if $skipped_mlss_ids{$mlss->dbID};
-        $out .= "\n";
         if ($skipped_mlss_ids{$mlss->dbID}) {
             $copied_mlss_entry->{$mlss->dbID} = $mlss->name;
         } else {
@@ -301,30 +294,22 @@ if($only_show_intentions) {
 
     }
     my $copied_mlss_all = {"copied" => $copied_mlss, "entry_only" => $copied_mlss_entry};
-    $out .= "Additional SpeciesSet entries to be copied:\n";
     my $additional = {};
     foreach my $ss (@$all_default_species_sets) {
-        $out .= "\t".$ss->dbID.": ".join(', ', map { $_->_get_unique_name} @{$ss->genome_dbs})."\n";
         $additional->{$ss->dbID} = [ map { $_->_get_unique_name} @{$ss->genome_dbs} ];
     }
-    $out .= "\nSummary:\n";
     my $summary = {};
-    $out .= "\t" . scalar(@$all_default_genome_dbs) . " GenomeDBs\n";
     $summary->{genome_dbs} = scalar(@$all_default_genome_dbs);
-    $out .= "\t" . scalar(@$all_default_method_link_species_sets) . " MethodLinkSpeciesSets\n";
     $summary->{method_link_species_sets} = {};
-    $out .= sprintf("\t\t%5d %s\n", $counts{$_}, $_) for sort keys %counts;
     foreach my $key (keys %counts) {
         $summary->{method_link_species_sets}->{$key} = $counts{$key};
     }
-    $out .= "\t" . scalar(@$all_default_species_sets) . " SpeciesSets\n";
     $summary->{species_sets} = scalar(@$all_default_species_sets);
 
-    my $out_json = [ {"text_summary" => $out},
-            {"summary" => $summary, "additional_copied" => $additional,
-             "copied_mlss" => $copied_mlss_all, "copied_genome_db" => $copied_genome_db
-            }
-          ];
+    my $out_json = {
+              "summary" => $summary, "additional_copied" => $additional,
+              "copied_mlss" => $copied_mlss_all, "copied_genome_db" => $copied_genome_db
+          };
 
     my $json = JSON->new->utf8;
     my $encoded = $json->pretty->encode( $out_json );
