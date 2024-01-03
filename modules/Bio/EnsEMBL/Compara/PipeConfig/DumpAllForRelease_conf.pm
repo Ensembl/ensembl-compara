@@ -38,6 +38,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf;
 use strict;
 use warnings;
 
+use File::Basename qw(dirname);
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpTrees;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpMultiAlign;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpSpeciesTrees;
@@ -60,6 +61,13 @@ sub default_options {
         # Where to put the new dumps and the symlinks
         'dump_root'    => $self->o('pipeline_dir'),
         'work_dir'     => $self->o('dump_root') . '/dump_hash/',
+
+        # Dump registry options
+        'reg_conf'            => $self->o('work_dir') . '/' . 'dump_reg_conf.pm',
+        'compara_dump_host'   => undef,
+        'ancestral_dump_host' => undef,
+        'core_dump_hosts'     => undef,
+
         # Location of the previous dumps
         'ftp_root'     => '/nfs/production/flicek/ensembl/production/ensemblftp/',
 
@@ -169,14 +177,31 @@ sub hive_meta_table {
 sub pipeline_create_commands {
     my $self = shift;
 
+    $self->{'_skip_reg_conf_file_check'} = 1;
+
     return [
         @{ $self->SUPER::pipeline_create_commands },
 
         $self->pipeline_create_commands_rm_mkdir(['dump_root', 'work_dir', 'dump_dir'], undef, $self->o('no_remove_existing_files')),
+        $self->pipeline_create_commands_reg_conf_stub(),
 
         $self->db_cmd( 'CREATE TABLE other_gab (genomic_align_block_id bigint NOT NULL, PRIMARY KEY (genomic_align_block_id) )' ),
         $self->db_cmd( 'CREATE TABLE healthcheck (filename VARCHAR(400) NOT NULL, expected INT NOT NULL, dumped INT NOT NULL)' ),
     ];
+}
+
+sub pipeline_create_commands_reg_conf_stub {
+    my ($self) = @_;
+
+    my $reg_conf_file = $self->o('reg_conf');
+    my $reg_conf_dir = dirname($reg_conf_file);
+
+    my @cmd_args = (
+        "mkdir -p $reg_conf_dir",
+        "echo '1;' > $reg_conf_file",  # Even a registry stub must return a true value.
+    );
+
+    return @cmd_args;
 }
 
 sub pipeline_wide_parameters {
@@ -184,7 +209,6 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        'registry'        => '#reg_conf#',
         'dump_root'       => $self->o('dump_root' ),
         'dump_dir'        => $self->o('dump_dir'),
         'work_dir'        => $self->o('work_dir'),
@@ -246,6 +270,10 @@ sub pipeline_wide_parameters {
         'output_file_gen'     => '#output_dir#/#base_filename#.#region_name#.#format#',
         'output_file'         => '#output_dir#/#base_filename#.#region_name##filename_suffix#.#format#',
 
+        'compara_dump_host'   => $self->o('compara_dump_host'),
+        'ancestral_dump_host' => $self->o('ancestral_dump_host'),
+        'core_dump_hosts'     => $self->o('core_dump_hosts'),
+
         'clean_intermediate_files' => $self->o('clean_intermediate_files'),
     }
 }
@@ -255,8 +283,8 @@ sub core_pipeline_analyses {
     my ($self) = @_;
 
     my @all_pa = (
-        {   -logic_name => 'create_all_dump_jobs',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::CreateDumpJobs',
+        {   -logic_name => 'init_dump_registry',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::InitDumpRegistry',
             -input_ids  => [ {
                     'compara_db'           => $self->o('compara_db'),
                     'curr_release'         => $self->o('ensembl_release'),
@@ -268,6 +296,15 @@ sub core_pipeline_analyses {
                     'default_dump_options' => $self->o('default_dump_options'),
                     'ancestral_db'         => $self->o('ancestral_db'),
                 } ],
+            -parameters => {
+                'init_dump_registry_exe' => $self->o('init_dump_registry_exe'),
+            },
+            -flow_into  => [ 'create_all_dump_jobs' ],
+            -rc_name    => '1Gb_1_hour_job',
+        },
+
+        {   -logic_name => 'create_all_dump_jobs',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::CreateDumpJobs',
             -flow_into  => {
                 '9->A' => [ 'DumpMultiAlign_start'          ],
                 '2->A' => [ 'DumpTrees_start','add_hmm_lib' ],
@@ -365,6 +402,12 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'final_funnel_check',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -rc_name    => '1Gb_1_hour_job',
+            -flow_into  => [ { 'final_registry_backup' => INPUT_PLUS() } ],
+        },
+
+        {   -logic_name => 'final_registry_backup',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LogRegistry',
             -rc_name    => '1Gb_1_hour_job',
             -flow_into  => [ { 'clean_files_decision' => { 'clean_intermediate_files' => $self->o('clean_intermediate_files') } } ],
         },

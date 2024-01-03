@@ -127,6 +127,7 @@ sub executable_locations {
         'DumpGFFAlignmentsForSynteny_exe'   => $self->check_exe_in_ensembl('ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl'),
         'DumpGFFHomologuesForSynteny_exe'   => $self->check_exe_in_ensembl('ensembl-compara/scripts/synteny/DumpGFFHomologuesForSynteny.pl'),
         'emf2maf_program'                   => $self->check_exe_in_ensembl('ensembl-compara/scripts/dumps/emf2maf.pl'),
+        'init_dump_registry_exe'            => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/init_dump_registry.pl'),
         'list_must_reuse_species_exe'       => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/list_must_reuse_species.py'),
         'msa_stats_report_exe'              => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/msa_stats.pl'),
         'patch_db_exe'                      => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/patch_database.pl'),

@@ -115,6 +115,9 @@ sub pipeline_analyses_dump_multi_align {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
             -hive_capacity => $self->o('dump_aln_capacity'),
             -rc_name       => '2Gb_168_hour_job',
+            -parameters    => {
+                'registry' => '#reg_conf#',
+            },
             -max_retry_count    => 0,
             -flow_into => {
               1 => WHEN(
@@ -129,6 +132,9 @@ sub pipeline_analyses_dump_multi_align {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
             -hive_capacity => $self->o('dump_aln_capacity'),
             -rc_name       => '8Gb_168_hour_job',
+            -parameters    => {
+                'registry' => '#reg_conf#',
+            },
             -max_retry_count    => 0,
             -flow_into => [ WHEN(
                 '#run_emf2maf#' => [ 'emf2maf' ],
