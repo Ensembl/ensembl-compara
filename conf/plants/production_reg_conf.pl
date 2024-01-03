@@ -38,18 +38,22 @@ my $prev_eg_release = $curr_eg_release - 1;
 # Species found on both vertebrates and non-vertebrates servers
 my @overlap_species = qw(saccharomyces_cerevisiae drosophila_melanogaster caenorhabditis_elegans);
 
+# ---------------------- DATABASE HOSTS -----------------------------------------
+
+my $curr_nv_host = $curr_release % 2 == 0 ? 'mysql-ens-sta-3' : 'mysql-ens-sta-3-b';
+
+my ($prev_vert_host, $prev_vert_port) = $prev_release % 2 == 0
+    ? ('mysql-ens-sta-1', 4519)
+    : ('mysql-ens-sta-1-b', 4685);
+
+my ($prev_nv_host, $prev_nv_port) = $prev_release % 2 == 0
+    ? ('mysql-ens-sta-3', 4160)
+    : ('mysql-ens-sta-3-b', 4686);
+
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
 # Use our mirror (which has all the databases)
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
-
-# Or use the official staging servers
-#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
-# and remove the Non-Vertebrates version of the shared species
-#Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
-#Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
-# before loading the Vertebrates version
-#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1:4519/$curr_release");
 
 # Ensure we're using the correct cores for species that overlap with other divisions
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
@@ -66,8 +70,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-3-b',
-        -port   => 4686,
+        -host   => $prev_nv_host,
+        -port   => $prev_nv_port,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -76,8 +80,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
     Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
     Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-1-b',
-        -port   => 4685,
+        -host   => $prev_vert_host,
+        -port   => $prev_vert_port,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -128,7 +132,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-3', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ $curr_nv_host, "ncbi_taxonomy_$curr_release" ],
 });
 
 # -------------------------------------------------------------------
