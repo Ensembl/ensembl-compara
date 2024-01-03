@@ -140,7 +140,7 @@ sub pipeline_wide_parameters {
 sub core_pipeline_analyses {
     my $self = shift;
 
-    my %semaphore_check_params = (
+    my %dc_analysis_params = (
         'compara_db' => $self->pipeline_url(),
         'datacheck_names' => [ 'CheckNonMinimisedGATs' ],
         'db_type' => 'compara',
@@ -304,7 +304,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::UpdateMSA::UpdateGABFactory',
             -flow_into  => {
                 '2->A' => [ 'update_gab' ],
-                'A->1' => [ { 'minimize_gab_check' => \%semaphore_check_params } ]
+                'A->1' => [ { 'minimize_gab_check' => \%dc_analysis_params } ]
             }
         },
         {   -logic_name        => 'minimize_gab_check',
