@@ -61,12 +61,6 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Updatingdatadumpregistryfiles",
-            "summary": "Update Compara data dump registry files"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
             "summary": "Fungi data dump server usage"
          },
