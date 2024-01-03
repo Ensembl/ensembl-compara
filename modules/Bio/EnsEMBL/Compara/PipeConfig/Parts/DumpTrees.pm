@@ -227,19 +227,15 @@ sub pipeline_analyses_dump_trees {
                                       JOIN (
                                             homology_member hm1
                                             JOIN gene_member gm1 USING (gene_member_id)
-                                            JOIN genome_db gdb1 USING (genome_db_id)
-                                            JOIN seq_member sm1 USING (seq_member_id)
                                       ) USING (homology_id)
                                       JOIN (
                                             homology_member hm2
                                             JOIN gene_member gm2 USING (gene_member_id)
-                                            JOIN genome_db gdb2 USING (genome_db_id)
-                                            JOIN seq_member sm2 USING (seq_member_id)
                                       ) USING (homology_id)
                                   WHERE
                                       homology_id BETWEEN #min_hom_id# AND #max_hom_id#
                                       AND hm1.gene_member_id > hm2.gene_member_id
-                                      AND gdb1.genome_db_id = #genome_db_id#/,
+                                      AND gm1.genome_db_id = #genome_db_id#/,
                 'column_names' => 1,
             },
             -hive_capacity => $self->o('dump_per_genome_cap'),
