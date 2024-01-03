@@ -596,16 +596,16 @@ my $current_version = software_version();
 my %methods_not_worth_reporting = map {$_ => 1} qw(SYNTENY ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES ENSEMBL_HOMOEOLOGUES ENSEMBL_PROJECTIONS CACTUS_HAL_PW GERP_CONSTRAINED_ELEMENT GERP_CONSERVATION_SCORE);
 
 sub mlss2hash {
-    my $self = shift;
+    my $mlss = shift;
     my $res = {
-        db_id            => $self->dbID,
-        name             => ($self->name ? $self->name : '(unnamed)'),
-        method_type      => $self->method->type,
-        species_set_name => $self->species_set->name,
-        species_set_id   => $self->species_set->dbID
+        db_id            => $mlss->dbID,
+        name             => ($mlss->name ? $mlss->name : '(unnamed)'),
+        method_type      => $mlss->method->type,
+        species_set_name => $mlss->species_set->name,
+        species_set_id   => $mlss->species_set->dbID
     };
-    if ($self->{'url'}) {
-        $res->{url} = $self->{'url'};
+    if ($mlss->{url}) {
+        $res->{url} = $mlss->{url};
     }
     return $res;
 }
