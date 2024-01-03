@@ -55,7 +55,7 @@ sub pipeline_analyses_dump_species_trees {
             -rc_name    => '1Gb_1_hour_job',
             -parameters => {
                 'db_conn'       => '#compara_db#',
-                'inputquery'    => 'SELECT root_id, label, method_link_id, replace(name, " ", "_") as name FROM species_tree_root JOIN method_link_species_set USING (method_link_species_set_id)',
+                'inputquery'    => 'SELECT root_id, replace(label, " ", "_") as label, method_link_id, replace(name, " ", "_") as name FROM species_tree_root JOIN method_link_species_set USING (method_link_species_set_id)',
             },
             -flow_into => {
                 2 => WHEN( '((#method_link_id# eq "401") || (#method_link_id# eq "402")) && (#label# ne "cafe")' => {'dump_one_tree_without_distances' => INPUT_PLUS() },
