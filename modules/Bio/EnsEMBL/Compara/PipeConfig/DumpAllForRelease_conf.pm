@@ -86,11 +86,10 @@ sub default_options {
         # the following options should remain largely unchanged #
         # ----------------------------------------------------- #
         # capacities for heavy-hitting jobs
-        'dump_aln_capacity'   => 400,
+        'dump_aln_capacity'   => 150,
 		'dump_trees_capacity' => 10,
 		'dump_ce_capacity'    => 10,
     	'dump_cs_capacity'    => 20,
-        'dump_hom_capacity'   => 10,
         'dump_per_genome_cap' => 10,
 
 
@@ -198,7 +197,6 @@ sub pipeline_wide_parameters {
 
         # tree params
         'dump_trees_capacity' => $self->o('dump_trees_capacity'),
-        'dump_hom_capacity'   => $self->o('dump_hom_capacity'),
         'dump_per_genome_cap' => $self->o('dump_per_genome_cap'),
         'basename'            => '#member_type#_#clusterset_id#',
         'name_root'           => 'Compara.#curr_release#.#basename#',

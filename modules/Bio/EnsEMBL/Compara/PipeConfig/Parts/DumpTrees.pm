@@ -324,7 +324,7 @@ sub pipeline_analyses_dump_trees {
                 'cmd'           => '[[ ! -e #filename# ]] || #xmllint_exe# --noout --schema /homes/compara_ensembl/warehouse/xml_schema/#schema#.xsd #filename#',
             },
             -batch_size    => $self->o('batch_size'),
-            # -hive_capacity => $self->o('dump_aln_capacity'),
+            -analysis_capacity => $self->o('dump_trees_capacity'),
             -rc_name       => '2Gb_job',
         },
 
