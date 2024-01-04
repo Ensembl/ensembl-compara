@@ -80,6 +80,7 @@ Name of the output JSON file.
 
 =cut
 
+use English;
 use Getopt::Long;
 use Text::CSV qw(csv);
 use Proc::ProcessTable;
@@ -122,7 +123,13 @@ if ($hal_dir && $ENV{COMPARA_HAL_DIR}) {
     $ENV{COMPARA_HAL_DIR} = $hal_dir;
 }
 
-$reg_conf = $ENV{COMPARA_REG_PATH} if !$reg_conf;
+if (!$reg_conf) {
+    if ($ENV{COMPARA_REG_PATH}) {
+        $reg_conf = $ENV{COMPARA_REG_PATH};
+    } else {
+        die("At least one of the 'reg_conf' option or COMPARA_REG_PATH environment variable must be set!");
+    }
+}
 
 # Load all test regions from TSV file:
 sub load_regions {
@@ -140,15 +147,7 @@ sub load_regions {
 our $registry = 'Bio::EnsEMBL::Registry';
 $registry->load_all($reg_conf, 0, 0, 0, 'throw_if_missing') if $reg_conf;
 
-my $compara_dba;
-if ($compara =~ /mysql:\/\//) {
-    $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url=>$compara);
-} else {
-    $compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, 'compara');
-}
-if (!$compara_dba) {
-  die "Cannot connect to compara database <$compara>.";
-}
+my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($compara);
 
 our $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor();
 our $gab_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor();
@@ -168,8 +167,9 @@ sub test_slice_access {
     my $reg = shift;
     my $res = shift;
 
-    my $sliceAdaptor = $registry->get_adaptor($reg->{Species}, 'Core', 'Slice');
-    my $slice = $sliceAdaptor->fetch_by_region($reg->{CoordSys}, $reg->{DnaFrag}, $reg->{Start}, $reg->{End});
+    my $slice_adaptor = $registry->get_adaptor($reg->{Species}, 'Core', 'Slice');
+    my $coord_sys = $reg->{CoordSys} || 'toplevel';
+    my $slice = $slice_adaptor->fetch_by_region($coord_sys, $reg->{DnaFrag}, $reg->{Start}, $reg->{End});
 
     my @slice_gabs = @{$gab_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($cactus_mlss, $slice)};
 
@@ -240,19 +240,19 @@ for my $reg (@$test_regions) {
 my $t = Proc::ProcessTable->new();
 my $memsize = 0;
 foreach my $p (@{$t->table}) {
-    if($p->pid() == $$) {
+    if($p->pid() == $PROCESS_ID) {
         $memsize = $p->size();
         last;
     }
 }
 $memsize = $memsize / (1024 ** 3);
-$res->{MemoryUsage} = $memsize;
+$res->{MemoryUsageGB} = $memsize;
 
 # Encode results in JSON and dump to
 # output file:
 my $json = JSON->new->utf8;
 my $encoded = $json->pretty->encode($res);
 
-open my $outfh, ">", $outfile  or die "Can't open $outfile: $!\n";
+open my $outfh, ">", $outfile  or die("Can't open $outfile: $!");
 print $outfh $encoded;
 close $outfh;
