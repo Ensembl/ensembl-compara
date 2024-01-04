@@ -29,7 +29,7 @@ Both access via a slices and pairwise access via dnafrags is tested.
 
 =head1 SYNOPSIS
 
-	test_hal_gab_access.pl --regions regions.tsv --mlss 312167 --out output.json
+    test_hal_gab_access.pl --regions regions.tsv --mlss 312167 --out output.json
 
 =head1 OPTIONS
 
