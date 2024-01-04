@@ -124,8 +124,6 @@ if ($hal_dir && $ENV{COMPARA_HAL_DIR}) {
 
 $reg_conf = $ENV{COMPARA_REG_PATH} if !$reg_conf;
 
-use Data::Dumper;
-
 # Load all test regions from TSV file:
 sub load_regions {
     my $infile = shift;
