@@ -50,6 +50,7 @@ dependencies = [
     "pandas>=0.24.2",
     "pybedtools==0.8.2",
     "sqlalchemy>=1.4.0",
+    "xmlschema>=2.5.1",
 ]
 
 [project.optional-dependencies]
