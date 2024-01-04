@@ -35,6 +35,7 @@ use warnings;
 no warnings 'qw';
 
 use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;  # For INPUT_PLUS
 
 sub pipeline_analyses_dump_constrained_elems {
     my ($self) = @_;
@@ -54,8 +55,14 @@ sub pipeline_analyses_dump_constrained_elems {
             },
             -flow_into      => {
                 '2->A' => [ 'dump_constrained_elements' ],
-                'A->1' => [ 'md5sum_ce' ],
+                'A->1' => [ 'ce_funnel_check' ],
             },
+        },
+
+        {   -logic_name => 'ce_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -rc_name    => '1Gb_1_hour_job',
+            -flow_into  => [ { 'md5sum_ce' => INPUT_PLUS() } ],
         },
 
         {   -logic_name     => 'dump_constrained_elements',

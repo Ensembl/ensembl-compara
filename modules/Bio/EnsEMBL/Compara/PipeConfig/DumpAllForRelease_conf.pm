@@ -44,7 +44,7 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpSpeciesTrees;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpAncestralAlleles;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConstrainedElements;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConservationScores;
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf; # for conditional dataflow
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf; # for conditional dataflow and INPUT_PLUS
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -277,7 +277,7 @@ sub core_pipeline_analyses {
                 '6->A' => [ 'DumpAncestralAlleles_start'    ],
                 '7->A' => [ 'DumpMultiAlignPatches_start'   ],
                 '8->A' => [ 'create_ftp_skeleton'           ],
-                'A->1' => { 'clean_files_decision' => { 'clean_intermediate_files' => $self->o('clean_intermediate_files') } },
+                'A->1' => [ 'final_funnel_check'            ],
             },
             -rc_name    => '1Gb_job',
         },
@@ -321,7 +321,7 @@ sub core_pipeline_analyses {
             -rc_name    => '1Gb_1_hour_job',
         	-flow_into  => {
         		'1->A' => [ 'DumpMultiAlign_MLSSJobFactory' ],
-                        'A->1' => [ 'patch_lastz_dump' ],
+                        'A->1' => [ 'patch_lastz_funnel_check' ],
         	},
         },
 
@@ -340,6 +340,12 @@ sub core_pipeline_analyses {
                 -flow_into => { 2 => 'create_all_dump_jobs' }, # to top up any missing dumps
         },
 
+        {   -logic_name => 'patch_lastz_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -rc_name    => '1Gb_1_hour_job',
+            -flow_into  => [ { 'patch_lastz_dump' => INPUT_PLUS() } ],
+        },
+
         {   -logic_name => 'patch_lastz_dump',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::PatchLastzDump',
             -rc_name    => '1Gb_1_hour_job',
@@ -355,6 +361,12 @@ sub core_pipeline_analyses {
                 'ref_tar_path_templ' => '#warehouse_dir#/hmms/treefam/multi_division_hmm_lib.%s.tar.gz',
                 'tar_ftp_path'       => '#dump_dir#/compara/multi_division_hmm_lib.tar.gz',
             },
+        },
+
+        {   -logic_name => 'final_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -rc_name    => '1Gb_1_hour_job',
+            -flow_into  => [ { 'clean_files_decision' => { 'clean_intermediate_files' => $self->o('clean_intermediate_files') } } ],
         },
 
         {   -logic_name => 'clean_files_decision',

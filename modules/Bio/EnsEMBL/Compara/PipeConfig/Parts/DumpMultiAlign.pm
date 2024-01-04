@@ -33,7 +33,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpMultiAlign;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;  # Allow this particular config to use conditional dataflow and INPUT_PLUS
 
 sub pipeline_analyses_dump_multi_align {
     my ($self) = @_;
@@ -48,8 +48,14 @@ sub pipeline_analyses_dump_multi_align {
             -rc_name        => '1Gb_1_hour_job',
             -flow_into      => {
                 '2->A' => [ 'count_blocks' ],
-                'A->2' => [ 'md5sum_aln_factory' ],
+                'A->2' => [ 'aln_funnel_check' ],
             },
+        },
+
+        {   -logic_name => 'aln_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -rc_name    => '1Gb_1_hour_job',
+            -flow_into  => [ { 'md5sum_aln_factory' => INPUT_PLUS() } ],
         },
 
         {  -logic_name  => 'count_blocks',
