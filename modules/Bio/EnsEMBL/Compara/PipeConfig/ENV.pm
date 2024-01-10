@@ -591,7 +591,7 @@ sub _generate_resource_classes {
             }
 
             my $rc_name = $rc_key;
-            if ($time_limit_name ne '24_hour') {
+            if ($time_limit_name ne '1_hour') {
                 $rc_name =~ s/(?=_job|_mpi$)/_${time_limit_name}/;
             }
 
