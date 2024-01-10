@@ -89,6 +89,7 @@ sub default_options {
           '6243'   => 0.65, # Clade V nematodes
           '6199'   => 0.65, # Tapeworms
           '6179'   => 0.65, # Flukes
+          '2761626' => 0.49 # bunonema_rgd898_prjna655932
       },
 
       'ortho_tree_capacity'     => 50,
