@@ -171,6 +171,7 @@ sub tweak_analyses {
   $analyses_by_name->{'mlss_id_for_high_confidence_factory'}->{'-rc_name'} = '8Gb_job';
   $analyses_by_name->{'flag_high_confidence_orthologs'}->{'-rc_name'} = '2Gb_job';
   $analyses_by_name->{'write_stn_tags'}->{'-rc_name'} = '8Gb_job';
+  $analyses_by_name->{'dump_unannotated_members'}->{'-rc_name'} = '16Gb_job';
 }
 
 
