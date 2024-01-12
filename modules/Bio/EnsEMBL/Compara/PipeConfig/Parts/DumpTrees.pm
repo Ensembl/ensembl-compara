@@ -294,17 +294,11 @@ sub pipeline_analyses_dump_trees {
             -parameters    => {
                 'dump_script'       => $self->o('dump_gene_tree_exe'),
                 'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
-                'base_filename'     => '#hash_dir#/#hashed_id#/#tree_id#',
-                'cmd'               => '#dump_script# --reg_conf #reg_conf# --reg_alias #rel_db# --dirpath #hash_dir#/#hashed_id# --tree_id #tree_id# #tree_args#',
+                'dataflow_file'     => '#hash_dir#/#hashed_id#/tree.#tree_id#.dataflow.json',
+                'cmd'               => '#dump_script# --reg_conf #reg_conf# --reg_alias #rel_db# --dirpath #hash_dir#/#hashed_id# --tree_id #tree_id# --dataflow_file #dataflow_file# #tree_args#',
             },
             -flow_into     => {
-                1 => {
-                    'validate_xml' => [
-                        { 'schema' => 'orthoxml', 'filename' => '#base_filename#.orthoxml.xml' },
-                        { 'schema' => 'phyloxml', 'filename' => '#base_filename#.phyloxml.xml' },
-                        { 'schema' => 'phyloxml', 'filename' => '#base_filename#.cafe_phyloxml.xml' },
-                    ],
-                },
+                1  => [ 'validate_xml' ],
                 -1 => [ 'dump_a_tree_himem' ],
             },
             -hive_capacity => $self->o('dump_trees_capacity'),       # allow several workers to perform identical tasks in parallel
@@ -317,17 +311,11 @@ sub pipeline_analyses_dump_trees {
             -parameters    => {
                 'dump_script'       => $self->o('dump_gene_tree_exe'),
                 'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
-                'base_filename'     => '#hash_dir#/#hashed_id#/#tree_id#',
-                'cmd'               => '#dump_script# --reg_conf #reg_conf# --reg_alias #rel_db# --dirpath #hash_dir#/#hashed_id# --tree_id #tree_id# #tree_args#',
+                'dataflow_file'     => '#hash_dir#/#hashed_id#/tree.#tree_id#.dataflow.json',
+                'cmd'               => '#dump_script# --reg_conf #reg_conf# --reg_alias #rel_db# --dirpath #hash_dir#/#hashed_id# --tree_id #tree_id# --dataflow_file #dataflow_file# #tree_args#',
             },
             -flow_into     => {
-                1 => {
-                    'validate_xml' => [
-                        { 'schema' => 'orthoxml', 'filename' => '#base_filename#.orthoxml.xml' },
-                        { 'schema' => 'phyloxml', 'filename' => '#base_filename#.phyloxml.xml' },
-                        { 'schema' => 'phyloxml', 'filename' => '#base_filename#.cafe_phyloxml.xml' },
-                    ],
-                },
+                1  => [ 'validate_xml' ],
             },
             -hive_capacity => $self->o('dump_trees_capacity'),       # allow several workers to perform identical tasks in parallel
             -rc_name       => '16Gb_1_hour_job',
@@ -336,8 +324,9 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name    => 'validate_xml',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'xmllint_exe'   => $self->o('xmllint_exe'),
-                'cmd'           => '[[ ! -e #filename# ]] || #xmllint_exe# --noout --schema /homes/compara_ensembl/warehouse/xml_schema/#schema#.xsd #filename#',
+                'xmllint_exe'   => $self->o('xmlschema_validate_exe'),
+                'cmd'           => '#xmllint_exe# --noout --schema #schema_file# #filename#',
+                'schema_file'   => $self->o('shared_hps_dir') . '/xml_schema/#schema#.xsd',
             },
             -batch_size    => $self->o('batch_size'),
             -analysis_capacity => $self->o('dump_trees_capacity'),
