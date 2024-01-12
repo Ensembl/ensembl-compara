@@ -73,7 +73,7 @@ sub pipeline_analyses_dump_conservation_scores {
         {   -logic_name        => 'dump_conservation_scores',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::DumpConservationScores',
             -hive_capacity     => $self->o('dump_cs_capacity'),
-            -rc_name           => '2Gb_job',
+            -rc_name           => '2Gb_24_hour_job',
             -flow_into         => {
                 1 => '?accu_name=all_bedgraph_files&accu_address=[chunkset_id]&accu_input_variable=this_bedgraph',
             },
@@ -90,7 +90,7 @@ sub pipeline_analyses_dump_conservation_scores {
             -parameters     => {
                 'cmd'   => [ $self->o('big_wig_exe'), '#bedgraph_file#', '#chromsize_file#', '#bigwig_file#' ],
             },
-            -rc_name        => '16Gb_job',
+            -rc_name        => '16Gb_24_hour_job',
         },
 
         {   -logic_name     => 'md5sum_cs',

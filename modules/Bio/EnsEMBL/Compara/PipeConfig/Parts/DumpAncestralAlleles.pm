@@ -79,7 +79,7 @@ sub pipeline_analyses_dump_anc_alleles {
                     '--step #step_size#'
                 ),
             },
-            -rc_name            => '2Gb_job',
+            -rc_name            => '2Gb_24_hour_job',
             -flow_into => [ 'remove_empty_files' ],
             -hive_capacity => 400,
         },

@@ -103,7 +103,7 @@ sub pipeline_analyses_dump_multi_align {
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
-            -rc_name => '2Gb_job',
+            -rc_name => '2Gb_24_hour_job',
         },
         {  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
@@ -132,7 +132,7 @@ sub pipeline_analyses_dump_multi_align {
         },
         {   -logic_name     => 'emf2maf',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Emf2Maf',
-            -rc_name        => '2Gb_job',
+            -rc_name        => '2Gb_24_hour_job',
             -flow_into => [
                 WHEN( '!#make_tar_archive#' => { 'compress_aln' => [ undef, { 'format' => 'maf'} ] } ),
             ],
@@ -168,7 +168,7 @@ sub pipeline_analyses_dump_multi_align {
         },
         {   -logic_name     => 'targz',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -rc_name        => '1Gb_job',
+            -rc_name        => '1Gb_24_hour_job',
             -parameters     => {
                 'cmd'           => 'cd #export_dir#; tar czf #base_filename#.tar.gz #base_filename#; rm -r #base_filename#',
             },

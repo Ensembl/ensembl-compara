@@ -328,7 +328,7 @@ sub pipeline_analyses_dump_trees {
             },
             -batch_size    => $self->o('batch_size'),
             # -hive_capacity => $self->o('dump_aln_capacity'),
-            -rc_name       => '2Gb_job',
+            -rc_name       => '2Gb_24_hour_job',
         },
 
         {   -logic_name => 'generate_collations',
@@ -424,7 +424,7 @@ sub pipeline_analyses_dump_trees {
 
         {   -logic_name => 'archive_long_files',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -rc_name    => '1Gb_job',
+            -rc_name    => '1Gb_24_hour_job',
             -parameters => {
                 'cmd'         => 'gzip -f #full_name#',
             },
