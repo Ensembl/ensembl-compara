@@ -291,36 +291,36 @@ sub core_pipeline_analyses {
         {	-logic_name => 'DumpMultiAlign_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         	-flow_into  => [ 'DumpMultiAlign_MLSSJobFactory' ],
-            -rc_name    => '1Gb_1_hour_job',
+            -rc_name    => '1Gb_job',
         },
         {	-logic_name => 'DumpTrees_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         	-flow_into => [ 'dump_trees_pipeline_start' ],
-            -rc_name    => '1Gb_1_hour_job',
+            -rc_name    => '1Gb_job',
         },
         {	-logic_name => 'DumpConstrainedElements_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         	-flow_into  => [ 'mkdir_constrained_elems' ],
-            -rc_name    => '1Gb_1_hour_job',
+            -rc_name    => '1Gb_job',
         },
         {	-logic_name => 'DumpConservationScores_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         	-flow_into => [ 'mkdir_conservation_scores' ],
-            -rc_name    => '1Gb_1_hour_job',
+            -rc_name    => '1Gb_job',
         },
         {	-logic_name => 'DumpSpeciesTrees_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         	-flow_into  => ['mk_species_trees_dump_dir' ],
-            -rc_name    => '1Gb_1_hour_job',
+            -rc_name    => '1Gb_job',
         },
         {	-logic_name => 'DumpAncestralAlleles_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         	-flow_into  => [ 'mk_ancestral_dump_dir' ],
-            -rc_name    => '1Gb_1_hour_job',
+            -rc_name    => '1Gb_job',
         },
         {	-logic_name => 'DumpMultiAlignPatches_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -rc_name    => '1Gb_1_hour_job',
+            -rc_name    => '1Gb_job',
         	-flow_into  => {
         		'1->A' => [ 'DumpMultiAlign_MLSSJobFactory' ],
                         'A->1' => [ 'patch_lastz_dump' ],
@@ -332,19 +332,19 @@ sub core_pipeline_analyses {
 
         {	-logic_name => 'create_ftp_skeleton',
         	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::FTPSkeleton',
-            -rc_name    => '1Gb_1_hour_job',
+            -rc_name    => '1Gb_job',
         	-flow_into => [ 'symlink_prev_dumps' ],
         },
 
         {	-logic_name => 'symlink_prev_dumps',
         	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::SymlinkPreviousDumps',
-            -rc_name    => '1Gb_1_hour_job',
+            -rc_name    => '1Gb_job',
                 -flow_into => { 2 => 'create_all_dump_jobs' }, # to top up any missing dumps
         },
 
         {   -logic_name => 'patch_lastz_dump',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::PatchLastzDump',
-            -rc_name    => '1Gb_1_hour_job',
+            -rc_name    => '1Gb_job',
             -parameters => {
             	'lastz_dump_path' => $self->o('lastz_dump_path'),
             },
@@ -352,7 +352,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'add_hmm_lib',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::AddHMMLib',
-            -rc_name    => '1Gb_1_hour_job',
+            -rc_name    => '1Gb_job',
             -parameters => {
                 'ref_tar_path_templ' => '#warehouse_dir#/hmms/treefam/multi_division_hmm_lib.%s.tar.gz',
                 'tar_ftp_path'       => '#dump_dir#/compara/multi_division_hmm_lib.tar.gz',
@@ -361,7 +361,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'clean_files_decision',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -rc_name    => '1Gb_1_hour_job',
+            -rc_name    => '1Gb_job',
             -flow_into  => {
                 1 => WHEN('#clean_intermediate_files#' => [ 'clean_dump_hash' ])
             },
@@ -369,7 +369,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name     => 'clean_dump_hash',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -rc_name        => '1Gb_job',
+            -rc_name        => '1Gb_24_hour_job',
             -parameters     => {
                 'cmd' => 'rm -rf #work_dir#',
             },
@@ -398,7 +398,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name     => 'remove_uniprot_file',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -rc_name        => '1Gb_1_hour_job',
+            -rc_name        => '1Gb_job',
             -parameters     => {
                 'clusterset_id' => 'default',
                 'cmd'           => 'rm #dump_root#/#division#.#uniprot_file#.gz',

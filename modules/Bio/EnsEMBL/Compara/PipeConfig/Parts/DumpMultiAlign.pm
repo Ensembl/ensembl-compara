@@ -45,7 +45,7 @@ sub pipeline_analyses_dump_multi_align {
                 'from_first_release' => $self->o('ensembl_release'),
                 'species_priority'   => $self->o('epo_reference_species'),
             },
-            -rc_name        => '1Gb_1_hour_job',
+            -rc_name        => '1Gb_job',
             -flow_into      => {
                 '2->A' => [ 'count_blocks' ],
                 'A->2' => [ 'md5sum_aln_factory' ],
@@ -54,7 +54,7 @@ sub pipeline_analyses_dump_multi_align {
 
         {  -logic_name  => 'count_blocks',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -rc_name    => '1Gb_1_hour_job',
+            -rc_name    => '1Gb_job',
             -parameters => {
                 'db_conn'       => '#compara_db#',
                 'inputquery'    => 'SELECT COUNT(*) AS num_blocks FROM genomic_align_block WHERE method_link_species_set_id = #mlss_id#',
@@ -70,7 +70,7 @@ sub pipeline_analyses_dump_multi_align {
 
         {  -logic_name  => 'initJobs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs',
-            -rc_name    => '1Gb_1_hour_job',
+            -rc_name    => '1Gb_job',
             -hive_capacity => $self->o('dump_aln_capacity'),
             -flow_into => {
                 2 => [ 'createChrJobs' ],
@@ -85,12 +85,12 @@ sub pipeline_analyses_dump_multi_align {
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
-            -rc_name => '1Gb_1_hour_job',
+            -rc_name => '1Gb_job',
         },
         # Generates DumpMultiAlign jobs from genomic_align_blocks on supercontigs (1 job per coordinate-system)
         {  -logic_name    => 'createSuperJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateSuperJobs',
-            -rc_name       => '1Gb_1_hour_job',
+            -rc_name       => '1Gb_job',
             -hive_capacity => $self->o('dump_aln_capacity'),
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
@@ -103,7 +103,7 @@ sub pipeline_analyses_dump_multi_align {
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
-            -rc_name => '2Gb_job',
+            -rc_name => '2Gb_24_hour_job',
         },
         {  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
@@ -132,14 +132,14 @@ sub pipeline_analyses_dump_multi_align {
         },
         {   -logic_name     => 'emf2maf',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Emf2Maf',
-            -rc_name        => '2Gb_job',
+            -rc_name        => '2Gb_24_hour_job',
             -flow_into => [
                 WHEN( '!#make_tar_archive#' => { 'compress_aln' => [ undef, { 'format' => 'maf'} ] } ),
             ],
         },
         {   -logic_name     => 'compress_aln',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -rc_name        => '1Gb_1_hour_job',
+            -rc_name        => '1Gb_job',
             -parameters     => {
                 'cmd'           => 'gzip -f -9 #output_file#',
             },
@@ -147,12 +147,12 @@ sub pipeline_analyses_dump_multi_align {
 
         {   -logic_name     => 'md5sum_aln_factory',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MD5SUMFactory',
-            -rc_name        => '1Gb_1_hour_job',
+            -rc_name        => '1Gb_job',
             -flow_into     => [ 'md5sum_aln' ],
         },
         {   -logic_name     => 'md5sum_aln',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -rc_name        => '1Gb_job',
+            -rc_name        => '1Gb_24_hour_job',
             -parameters     => {
                 'cmd'           => 'cd #output_dir#; md5sum *.#format#* > MD5SUM',
             },
@@ -163,12 +163,12 @@ sub pipeline_analyses_dump_multi_align {
             -parameters    => {
                 'readme_file' => '#output_dir#/README.#base_filename#',
             },
-            -rc_name       => '1Gb_1_hour_job',
+            -rc_name       => '1Gb_job',
             -flow_into     => WHEN( '#make_tar_archive#' => [ 'targz' ] ),
         },
         {   -logic_name     => 'targz',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -rc_name        => '1Gb_job',
+            -rc_name        => '1Gb_24_hour_job',
             -parameters     => {
                 'cmd'           => 'cd #export_dir#; tar czf #base_filename#.tar.gz #base_filename#; rm -r #base_filename#',
             },
