@@ -89,6 +89,7 @@ sub default_options {
           '6243'   => 0.65, # Clade V nematodes
           '6199'   => 0.65, # Tapeworms
           '6179'   => 0.65, # Flukes
+          '2761626' => 0.49 # bunonema_rgd898_prjna655932
       },
 
       'ortho_tree_capacity'     => 50,
@@ -170,6 +171,7 @@ sub tweak_analyses {
   $analyses_by_name->{'mlss_id_for_high_confidence_factory'}->{'-rc_name'} = '8Gb_job';
   $analyses_by_name->{'flag_high_confidence_orthologs'}->{'-rc_name'} = '2Gb_job';
   $analyses_by_name->{'write_stn_tags'}->{'-rc_name'} = '8Gb_job';
+  $analyses_by_name->{'dump_unannotated_members'}->{'-rc_name'} = '16Gb_job';
 }
 
 

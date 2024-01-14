@@ -1509,6 +1509,7 @@ sub get_GenomicAlignTree {
         
         #Create species_tree in newick format. Do not get the branch lengths.
         $species_tree_string = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree(-compara_dba => $self->adaptor->db,
+                                                                                              -allow_subtaxa => 1,
                                                                                               -species_set => $species_set)->newick_format('ryo', '%{g}');
     } elsif ($self->method_link_species_set->dbID == 313160 && $self->method_link_species_set->name eq '16 wheat Cactus') {
         my ($volume, $dir_path) = splitpath(rel2abs(__FILE__));
