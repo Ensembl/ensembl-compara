@@ -34,7 +34,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;  # Allow this particular config to use conditional dataflow and INPUT_PLUS
 
 sub pipeline_analyses_dump_anc_alleles {
     my ($self) = @_;
@@ -59,8 +59,14 @@ sub pipeline_analyses_dump_anc_alleles {
             },
             -flow_into => {
             	'2->A' => [ 'get_ancestral_sequence' ],
-            	'A->1' => [ 'md5sum' ],
+                'A->1' => [ 'anc_funnel_check' ],
             }
+        },
+
+        {   -logic_name => 'anc_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -rc_name    => '1Gb_job',
+            -flow_into  => [ { 'md5sum' => INPUT_PLUS() } ],
         },
 
         {   -logic_name => 'get_ancestral_sequence',

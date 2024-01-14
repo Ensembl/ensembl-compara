@@ -54,8 +54,14 @@ sub pipeline_analyses_dump_conservation_scores {
             },
             -flow_into      => {
                 '2->A' => { 'region_factory' => INPUT_PLUS() },
-                'A->1' => [ 'md5sum_cs' ],
+                'A->1' => [ 'md5sum_cs_funnel_check' ],
             },
+        },
+
+        {   -logic_name => 'md5sum_cs_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -rc_name    => '1Gb_job',
+            -flow_into  => [ { 'md5sum_cs' => INPUT_PLUS() } ],
         },
 
         {   -logic_name     => 'region_factory',
@@ -66,8 +72,14 @@ sub pipeline_analyses_dump_conservation_scores {
             -rc_name           => '2Gb_job',
             -flow_into      => {
                 '2->A' => { 'dump_conservation_scores' => INPUT_PLUS() },
-                'A->1' => [ 'concatenate_bedgraph_files' ],
+                'A->1' => [ 'cs_funnel_check' ],
             },
+        },
+
+        {   -logic_name => 'cs_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -rc_name    => '1Gb_job',
+            -flow_into  => [ { 'concatenate_bedgraph_files' => INPUT_PLUS() } ],
         },
 
         {   -logic_name        => 'dump_conservation_scores',

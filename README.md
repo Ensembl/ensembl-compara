@@ -2,7 +2,6 @@
 
 [![Build Status](https://travis-ci.org/Ensembl/ensembl-compara.svg?branch=main)](https://travis-ci.org/Ensembl/ensembl-compara)
 [![Codecov Status](https://codecov.io/gh/ensembl/ensembl-compara/branch/main/graph/badge.svg)](https://codecov.io/github/Ensembl/ensembl-compara)
-[![Code Climate](https://api.codeclimate.com/v1/badges/2dd3c490030a5af7ff21/maintainability.svg)](https://codeclimate.com/github/Ensembl/ensembl-compara)
 
 The Ensembl Compara API (Application Programme Interface) serves as a
 middle layer between the underlying MySQL database and the user's script.
@@ -10,9 +9,9 @@ It aims to encapsulate the database layout by providing high level access
 to the database.
 
 Find more information (including the installation guide and a tutorial) on
-the Ensembl website: <http://www.ensembl.org/info/docs/api/compara/>
+the Ensembl website: <https://www.ensembl.org/info/docs/api/compara/>
 
-See [the main Ensembl repository](https://github.com/Ensembl/ensembl/blob/main/CONTRIBUTING.md)
+See [the Ensembl core repository](https://github.com/Ensembl/ensembl/blob/main/CONTRIBUTING.md)
 for the guidelines on user contributions.
 
 ## Installation
@@ -76,9 +75,9 @@ can skip `path/to/cactus` on the Makefile command-line, e.g.:
 	perl Makefile-progressiveCactus.PL
 	make
 
-On the EBI main cluster, *do not* load
-`/nfs/software/ensembl/latest/envs/basic.sh` in your `.bashrc`, and replace
-`perl` with `/nfs/software/ensembl/latest/linuxbrew/bin/perl` when invoking
+On the EBI Codon cluster, *do not* load
+`/hps/software/users/ensembl/ensw/latest/envs/basic.sh` in your `.bashrc`, and do remember to replace
+`perl` with `$LINUXBREW_HOME/bin/perl` when invoking
 `Makefile-progressiveCactus.PL`.
 
 #### Installation via Linuxbrew
@@ -123,7 +122,8 @@ And run this makefile
 
 Alignments using the _method_ `CACTUS_HAL` or `CACTUS_HAL_PW` require extra
 files to be downloaded from
-<https://ftp.ensembl.org/pub/data_files/multi/hal_files/> in order to be fetched with the
+<https://ftp.ensembl.org/pub/data_files/multi/hal_files/> or
+<https://ftp.ensembl.org/pub/rapid-release/data_files/multi/hal_files/> in order to be fetched with the
 API. The files must have the same name as on the FTP and must be placed
 under `multi/hal_files/` within your directory of choice.
 Finally, you need to define the environment variable `COMPARA_HAL_DIR` to
@@ -132,9 +132,9 @@ the latter.
 ## Contact us
 
 Please email comments or questions to the public Ensembl developers list at
-<http://lists.ensembl.org/mailman/listinfo/dev>
+<https://lists.ensembl.org/mailman/listinfo/dev>
 
 Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>
+<https://www.ensembl.org/Help/Contact>
 
 ![e!Compara word cloud](docs/ebang-wordcloud.png)

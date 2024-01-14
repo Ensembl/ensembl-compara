@@ -34,7 +34,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;  # Allow this particular config to use conditional dataflow and INPUT_PLUS
 
 sub pipeline_analyses_dump_trees {
     my ($self) = @_;
@@ -61,8 +61,14 @@ sub pipeline_analyses_dump_trees {
             -rc_name    => '1Gb_job',
             -flow_into => {
                 '2->A' => [ 'mk_work_dir' ],
-                'A->1' => [ 'md5sum_tree_factory' ],
+                'A->1' => [ 'md5sum_tree_funnel_check' ],
             },
+        },
+
+        {   -logic_name => 'md5sum_tree_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -rc_name    => '1Gb_job',
+            -flow_into  => [ { 'md5sum_tree_factory' => INPUT_PLUS() } ],
         },
 
         {   -logic_name => 'mk_work_dir',
@@ -123,7 +129,6 @@ sub pipeline_analyses_dump_trees {
                 'inputquery'            => 'SELECT MIN(homology_id) AS min_hom_id, MAX(homology_id) AS max_hom_id FROM homology JOIN gene_tree_root ON gene_tree_root_id = root_id WHERE clusterset_id = "#clusterset_id#" AND member_type = "#member_type#"',
             },
             -hive_capacity => $self->o('dump_trees_capacity'),
-            -rc_name       => '1Gb_168_hour_job',
             -flow_into => { 2 => 'factory_per_genome_homology_range_dumps' },
         },
 
@@ -137,8 +142,14 @@ sub pipeline_analyses_dump_trees {
             -rc_name       => '1Gb_24_hour_job',
             -flow_into => {
                 '2->A' => [ 'fetch_exp_line_count_per_genome' ],
-                'A->1' => [ 'concatenate_genome_homologies_tsv' ],
+                'A->1' => [ 'per_genome_homology_funnel_check' ],
             },
+        },
+
+        {   -logic_name => 'per_genome_homology_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -rc_name    => '1Gb_job',
+            -flow_into  => [ { 'concatenate_genome_homologies_tsv' => INPUT_PLUS() } ],
         },
 
         {   -logic_name => 'dump_all_trees_orthoxml',
@@ -184,12 +195,14 @@ sub pipeline_analyses_dump_trees {
                         {'tsv_file' => '#output_file#', 'xml_file' => '#xml_dir#/#name_root#.allhomologies_strict.orthoxml.xml', 'high_confidence' => 1},
                     ],
                 },
-                'A->1' => {
-                    'archive_long_files' => [
-                        { 'full_name' => '#output_file#', },
-                    ]
-                }
+                'A->1' => { 'concatenated_homology_funnel_check' => { 'full_name' => '#output_file#' } }
             },
+        },
+
+        {   -logic_name => 'concatenated_homology_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -rc_name    => '1Gb_job',
+            -flow_into  => [ { 'archive_long_files' => INPUT_PLUS() } ],
         },
 
         {   -logic_name => 'archive_per_genome_homologies_tsv_factory',
@@ -229,23 +242,18 @@ sub pipeline_analyses_dump_trees {
                                       JOIN (
                                             homology_member hm1
                                             JOIN gene_member gm1 USING (gene_member_id)
-                                            JOIN genome_db gdb1 USING (genome_db_id)
-                                            JOIN seq_member sm1 USING (seq_member_id)
                                       ) USING (homology_id)
                                       JOIN (
                                             homology_member hm2
                                             JOIN gene_member gm2 USING (gene_member_id)
-                                            JOIN genome_db gdb2 USING (genome_db_id)
-                                            JOIN seq_member sm2 USING (seq_member_id)
                                       ) USING (homology_id)
                                   WHERE
                                       homology_id BETWEEN #min_hom_id# AND #max_hom_id#
                                       AND hm1.gene_member_id > hm2.gene_member_id
-                                      AND gdb1.genome_db_id = #genome_db_id#/,
+                                      AND gm1.genome_db_id = #genome_db_id#/,
                 'column_names' => 1,
             },
             -hive_capacity => $self->o('dump_per_genome_cap'),
-            -rc_name       => '1Gb_168_hour_job',
             -flow_into => {
                 2 => [ 'dump_per_genome_homologies_tsv' ],
             },
@@ -259,7 +267,6 @@ sub pipeline_analyses_dump_trees {
                 'output_file'   => '#tsv_dir#/#species_name#/#name_root#.homologies.tsv',
             },
             -hive_capacity => $self->o('dump_per_genome_cap'),
-            -rc_name       => '1Gb_168_hour_job',
           },
 
         {   -logic_name => 'create_dump_jobs',
@@ -271,9 +278,15 @@ sub pipeline_analyses_dump_trees {
             -hive_capacity => $self->o('dump_trees_capacity'),
             -rc_name   => '1Gb_job',
             -flow_into => {
-                'A->1' => 'generate_collations',
                 '2->A' => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hashed_id' => '#expr(dir_revhash(#tree_id#))expr#' } },
+                'A->1' => 'tree_dump_funnel_check',
             },
+        },
+
+        {   -logic_name => 'tree_dump_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -rc_name    => '1Gb_job',
+            -flow_into  => [ { 'generate_collations' => INPUT_PLUS() } ],
         },
 
         {   -logic_name    => 'dump_a_tree',
@@ -281,17 +294,11 @@ sub pipeline_analyses_dump_trees {
             -parameters    => {
                 'dump_script'       => $self->o('dump_gene_tree_exe'),
                 'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
-                'base_filename'     => '#hash_dir#/#hashed_id#/#tree_id#',
-                'cmd'               => '#dump_script# --reg_conf #reg_conf# --reg_alias #rel_db# --dirpath #hash_dir#/#hashed_id# --tree_id #tree_id# #tree_args#',
+                'dataflow_file'     => '#hash_dir#/#hashed_id#/tree.#tree_id#.dataflow.json',
+                'cmd'               => '#dump_script# --reg_conf #reg_conf# --reg_alias #rel_db# --dirpath #hash_dir#/#hashed_id# --tree_id #tree_id# --dataflow_file #dataflow_file# #tree_args#',
             },
             -flow_into     => {
-                1 => {
-                    'validate_xml' => [
-                        { 'schema' => 'orthoxml', 'filename' => '#base_filename#.orthoxml.xml' },
-                        { 'schema' => 'phyloxml', 'filename' => '#base_filename#.phyloxml.xml' },
-                        { 'schema' => 'phyloxml', 'filename' => '#base_filename#.cafe_phyloxml.xml' },
-                    ],
-                },
+                1  => [ 'validate_xml' ],
                 -1 => [ 'dump_a_tree_himem' ],
             },
             -hive_capacity => $self->o('dump_trees_capacity'),       # allow several workers to perform identical tasks in parallel
@@ -304,17 +311,11 @@ sub pipeline_analyses_dump_trees {
             -parameters    => {
                 'dump_script'       => $self->o('dump_gene_tree_exe'),
                 'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
-                'base_filename'     => '#hash_dir#/#hashed_id#/#tree_id#',
-                'cmd'               => '#dump_script# --reg_conf #reg_conf# --reg_alias #rel_db# --dirpath #hash_dir#/#hashed_id# --tree_id #tree_id# #tree_args#',
+                'dataflow_file'     => '#hash_dir#/#hashed_id#/tree.#tree_id#.dataflow.json',
+                'cmd'               => '#dump_script# --reg_conf #reg_conf# --reg_alias #rel_db# --dirpath #hash_dir#/#hashed_id# --tree_id #tree_id# --dataflow_file #dataflow_file# #tree_args#',
             },
             -flow_into     => {
-                1 => {
-                    'validate_xml' => [
-                        { 'schema' => 'orthoxml', 'filename' => '#base_filename#.orthoxml.xml' },
-                        { 'schema' => 'phyloxml', 'filename' => '#base_filename#.phyloxml.xml' },
-                        { 'schema' => 'phyloxml', 'filename' => '#base_filename#.cafe_phyloxml.xml' },
-                    ],
-                },
+                1  => [ 'validate_xml' ],
             },
             -hive_capacity => $self->o('dump_trees_capacity'),       # allow several workers to perform identical tasks in parallel
             -rc_name       => '16Gb_job',
@@ -323,11 +324,12 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name    => 'validate_xml',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'xmllint_exe'   => $self->o('xmllint_exe'),
-                'cmd'           => '[[ ! -e #filename# ]] || #xmllint_exe# --noout --schema /homes/compara_ensembl/warehouse/xml_schema/#schema#.xsd #filename#',
+                'xmllint_exe'   => $self->o('xmlschema_validate_exe'),
+                'cmd'           => '#xmllint_exe# --noout --schema #schema_file# #filename#',
+                'schema_file'   => $self->o('shared_hps_dir') . '/xml_schema/#schema#.xsd',
             },
             -batch_size    => $self->o('batch_size'),
-            # -hive_capacity => $self->o('dump_aln_capacity'),
+            -analysis_capacity => $self->o('dump_trees_capacity'),
             -rc_name       => '2Gb_24_hour_job',
         },
 
@@ -381,8 +383,14 @@ sub pipeline_analyses_dump_trees {
             },
             -flow_into => {
                 '2->A' => [ 'tar_dumps' ],
-                'A->1' => [ 'tar_list' ],
+                'A->1' => [ 'tar_dump_funnel_check' ],
             },
+        },
+
+        {   -logic_name => 'tar_dump_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -rc_name    => '1Gb_job',
+            -flow_into  => [ { 'tar_list' => INPUT_PLUS() } ],
         },
 
         {   -logic_name => 'tar_dumps',

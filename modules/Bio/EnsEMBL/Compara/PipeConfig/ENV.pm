@@ -127,6 +127,7 @@ sub executable_locations {
         'DumpGFFAlignmentsForSynteny_exe'   => $self->check_exe_in_ensembl('ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl'),
         'DumpGFFHomologuesForSynteny_exe'   => $self->check_exe_in_ensembl('ensembl-compara/scripts/synteny/DumpGFFHomologuesForSynteny.pl'),
         'emf2maf_program'                   => $self->check_exe_in_ensembl('ensembl-compara/scripts/dumps/emf2maf.pl'),
+        'init_dump_registry_exe'            => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/init_dump_registry.pl'),
         'list_must_reuse_species_exe'       => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/list_must_reuse_species.py'),
         'msa_stats_report_exe'              => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/msa_stats.pl'),
         'patch_db_exe'                      => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/patch_database.pl'),
@@ -135,6 +136,7 @@ sub executable_locations {
         'copy_ancestral_core_exe'           => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/copy_ancestral_core.pl'),
         'gene_tree_stats_report_exe'        => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/gene_tree_stats.pl'),
         'hal_cov_one_seq_chunk_exe'         => $self->check_exe_in_ensembl('ensembl-compara/scripts/hal_alignment/hal_cov_one_seq_chunk.py'),
+        'xmlschema_validate_exe'            => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/xmlschema_validate.py'),
 
         # Other dependencies (non executables)
         'core_schema_sql'                   => $self->check_file_in_ensembl('ensembl/sql/table.sql'),
