@@ -113,7 +113,6 @@ sub tweak_analyses {
 
     $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;  # We have sub-species
     $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = $self->o('multifurcation_deletes_all_subnodes');
-    $analyses_by_name->{'expand_clusters_with_projections'}->{'-rc_name'} = '500Mb_job';
     $analyses_by_name->{'split_genes'}->{'-hive_capacity'} = 300;
 
     # datacheck specific tweaks for pipelines
@@ -121,7 +120,7 @@ sub tweak_analyses {
     $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
 
     # Wire up cultivar-specific analyses
-    $analyses_by_name->{'remove_blacklisted_genes'}->{'-flow_into'} = ['check_strains_cluster_factory'];
+    $analyses_by_name->{'remove_blocklisted_genes'}->{'-flow_into'} = ['check_strains_cluster_factory'];
     push @{$analyses_by_name->{'backbone_pipeline_finished'}->{'-flow_into'}}, 'remove_overlapping_homologies';
 }
 

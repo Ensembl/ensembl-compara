@@ -15,11 +15,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+=head1 NAME
+
+HALXS - Compara XS HAL module
+
 =cut
 
 package HALXS;
 
-use 5.014002;
+use v5.26.2;
 use strict;
 use warnings;
 

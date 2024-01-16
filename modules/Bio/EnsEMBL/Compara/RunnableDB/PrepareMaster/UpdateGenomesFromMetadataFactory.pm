@@ -138,8 +138,9 @@ sub fetch_input {
                 }
             }
             # check if they've been updated this release too
-            my ($updated_add_species, $renamed_add_species, $updated_gen_add_species) = $self->fetch_genome_report($release, $additional_div);
+            my ($updated_add_species, $renamed_add_species, $updated_gen_add_species, $add_meta_report) = $self->fetch_genome_report($release, $additional_div);
             foreach my $add_species_name ( @add_species_for_div ) {
+                $meta_report->{$add_species_name} = $add_meta_report->{$add_species_name};
                 push( @$genomes_to_update, $add_species_name ) if grep { $add_species_name eq $_ } @$updated_add_species;
                 push( @$updated_annotations, $add_species_name ) if grep { $add_species_name eq $_ } @$updated_gen_add_species;
                 if (my $old_name = $renamed_add_species->{$add_species_name}) {
@@ -205,6 +206,17 @@ sub fetch_input {
 
     print "GENOMES_TO_VERIFY!! ";
     print Dumper \@genomes_to_verify;
+
+    if ($self->param_is_defined('compara_updates_file')) {
+        my $compara_updates = {
+            'genomes_to_update'     => {map { $_ => $meta_report->{$_} } @{$genomes_to_update}},
+            'annotations_to_update' => {map { $_ => $meta_report->{$_} } @{$updated_annotations}},
+            'genomes_to_rename'     => {map { $_ => $meta_report->{$_} } keys %{$renamed_genomes}},
+            'genomes_to_verify'     => [map { $_->{'species_name'} } @genomes_to_verify],
+            'genomes_to_retire'     => \@to_retire,
+        };
+        $self->_spurt($self->param('compara_updates_file'), JSON->new->pretty->encode($compara_updates));
+    }
 
     my $perc_to_retire = (scalar @to_retire/scalar @release_genomes)*100;
     die "Percentage of genomes to retire seems too high ($perc_to_retire\%)" if $perc_to_retire >= $self->param_required('perc_threshold');

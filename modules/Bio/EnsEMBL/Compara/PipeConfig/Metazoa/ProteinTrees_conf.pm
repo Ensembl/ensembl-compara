@@ -110,6 +110,9 @@ sub default_options {
 
 sub tweak_analyses {
     my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
     my $analyses_by_name = shift;
 
     # Extend this section to redefine the resource names of some analysis
@@ -121,8 +124,6 @@ sub tweak_analyses {
         'treebest'          => '4Gb_job',
         'members_against_allspecies_factory'        => '2Gb_job',
         'members_against_nonreusedspecies_factory'  => '2Gb_job',
-        'homology_dumps_mlss_id_factory'            => '500Mb_job',
-        'ortholog_mlss_factory'                     => '500Mb_job',
     );
 
     foreach my $logic_name (keys %overriden_rc_names) {

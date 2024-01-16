@@ -1,0 +1,4 @@
+../../test_data/flatfiles/SpeciesTreeFromBusco/collate_gene_prot_gene1.fas
+../../test_data/flatfiles/SpeciesTreeFromBusco/collate_gene_prot_gene2.fas
+../../test_data/flatfiles/SpeciesTreeFromBusco/collate_gene_prot_gene3.fas
+../../test_data/flatfiles/SpeciesTreeFromBusco/collate_gene_prot_gene4.fas

@@ -95,7 +95,6 @@ return
 	},
         -flow_into     => WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ],
                                 ELSE [ 'dump_mappings_to_file' ] ),
-        -rc_name       => '500Mb_job',
 },
 # ------------------------------------- run enredo
 {

@@ -61,6 +61,9 @@ sub default_options {
         # The target database
         'curr_rel_db'   => 'compara_curr',  # Again this is a URL or a registry name
 
+        # Do we want to move member data on genome components to their principal GenomeDB ?
+        'move_components' => 0,
+
         # How many tables can be dumped and re-created in parallel (too many will slow the process down)
         'copying_capacity'  => 5,
 
@@ -163,9 +166,7 @@ sub pipeline_analyses {
             -rc_name    => '2Gb_job',
             -input_ids  => [ {} ],
             -flow_into  => {
-                'A->1'  => WHEN(
-                            '#move_components#' => 'polyploid_move_back_factory'
-                        ),
+                'A->1'  => [ 'fire_post_merge_processing' ],
                 '2->A'  => [ 'copy_table'  ],
                 '3->A'  => WHEN(
                             '#backup_tables#' => 'backup_table',
@@ -271,6 +272,11 @@ sub pipeline_analyses {
                 ]
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
+        },
+
+        {   -logic_name => 'fire_post_merge_processing',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => WHEN( '#move_components#' => 'polyploid_move_back_factory' ),
         },
 
         {   -logic_name => 'polyploid_move_back_factory',

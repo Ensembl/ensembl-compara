@@ -81,7 +81,6 @@ sub default_options {
             'sequence'                => 'members_db',
             'hmm_annot'               => 'protein_db',
             'peptide_align_feature%'  => 'protein_db',
-            'method_link_species_set_attr'    => 'protein_db',
         },
 
         # In these databases, ignore these tables

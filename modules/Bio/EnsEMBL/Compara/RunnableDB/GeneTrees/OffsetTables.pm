@@ -56,6 +56,7 @@ sub param_defaults {
                     'ALTER TABLE gene_align        AUTO_INCREMENT=#offset#',
                     'ALTER TABLE gene_tree_node    AUTO_INCREMENT=#offset#',
                     'ALTER TABLE CAFE_gene_family  AUTO_INCREMENT=#offset#',
+                    'ALTER TABLE peptide_align_feature  AUTO_INCREMENT=#offset#',
                     'INSERT IGNORE INTO id_generator (label, next_id) VALUES ("homology", #offset#)',
                 ],
     }

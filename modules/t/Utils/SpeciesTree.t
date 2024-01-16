@@ -435,8 +435,8 @@ sub get ($) {   ## no critic
     <h1 style="margin-bottom: 0px;">%s</h1> Million Years Ago
 BLABLA};
     warn $url;
-    return '' if $url =~ /Bos/;
-    return sprintf($html_template, '') if $url =~ /Equus/;
+    return '' if $url =~ /\D9913(\D|$)/;
+    return sprintf($html_template, '') if $url =~ /\D9796(\D|$)/;
     return sprintf($html_template, '16394');
 }
 

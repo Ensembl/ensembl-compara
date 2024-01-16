@@ -1379,6 +1379,15 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my $dnafrag_adaptor = $self->db->get_DnaFragAdaptor;
     my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
 
+    require Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor;
+    unless ($mlss->{'_hal_adaptor'}) {
+        my $hal_file = $mlss->url;  # Substitution automatically done in the MLSS object
+        throw( "Path to file not found in MethodLinkSpeciesSet URL field\n" ) unless ( defined $hal_file );
+
+        $mlss->{'_hal_adaptor'} = Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor->new($hal_file);
+    }
+
+    my $hal_adaptor = $mlss->{'_hal_adaptor'};
     unless (defined $mlss->{'_hal_species_name_mapping'}) {
 
       # Since pairwise HAL MLSSs are just proxies, find the overall MLSS
@@ -1398,27 +1407,37 @@ sub _get_GenomicAlignBlocks_from_HAL {
           $species_map = eval $map_tag;
       }
       # Make sure that all the genomes that are needed for this MLSS are represented
+      my @all_hal_genome_names = $hal_adaptor->genomes();
       foreach my $genome_db (@{$mlss->species_set->genome_dbs}) {
-          $species_map->{$genome_db->dbID} ||= $genome_db->name;    # By default we assume the HAL file is using the production names
+          # By default we assume the HAL file is using the production name of a genome, if present.
+          my $gdb_id_in_species_map = exists $species_map->{$genome_db->dbID};
+          my $gdb_name_in_hal = grep { $genome_db->name eq $_ } @all_hal_genome_names;
+          if (!$gdb_id_in_species_map && $gdb_name_in_hal) {
+              $species_map->{$genome_db->dbID} = $genome_db->name;
+          }
       }
-      my %hal_species_map = reverse %$species_map;
+
+      my %hal_species_map;
+      while (my ($map_gdb_id, $hal_genome_name) = each %{$species_map}) {
+          my $genome_db = $genome_db_adaptor->fetch_by_dbID($map_gdb_id);
+
+          # Though the HAL mapping may contain the polyploid subgenome component GenomeDB,
+          # mapping back to the principal GenomeDB simplifies the reverse mapping process.
+          my $principal = $genome_db->principal_genome_db();
+          $hal_species_map{$hal_genome_name} = defined $principal ? $principal->dbID : $map_gdb_id;
+      }
+
       $mlss->{'_hal_species_name_mapping'} = $species_map;
       $mlss->{'_hal_species_name_mapping_reverse'} = \%hal_species_map;
     }
 
-    require Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor;
-    my $ref = $mlss->{'_hal_species_name_mapping'}->{ $ref_gdb->dbID };
+    my ($linking_ref_gdb, $linking_dnafrag) = @{$self->_get_hal_linking_genome_dnafrag($dnafrag_adaptor, $ref_gdb, $dnafrag, $mlss->{'_hal_species_name_mapping'})};
+    return [] if (!defined $linking_ref_gdb);
 
+    my $hal_ref_name = $mlss->{'_hal_species_name_mapping'}->{ $linking_ref_gdb->dbID };
 
-    unless ($mlss->{'_hal_adaptor'}) {
-        my $hal_file = $mlss->url;  # Substitution automatically done in the MLSS object
-        throw( "Path to file not found in MethodLinkSpeciesSet URL field\n" ) unless ( defined $hal_file );
-
-        $mlss->{'_hal_adaptor'} = Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor->new($hal_file);
-    }
-    my $hal_adaptor = $mlss->{'_hal_adaptor'};
     my $e2u_mappings = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{ $dnafrag->genome_db_id };
-    my $hal_seq_reg = $e2u_mappings->{ $dnafrag->name } || $dnafrag->name;
+    my $hal_seq_reg = $e2u_mappings->{ $dnafrag->name } || $linking_dnafrag->name;
 
     my $num_targets  = scalar @$targets_gdb;
     my $id_base      = $mlss->dbID * 10000000000;
@@ -1426,15 +1445,36 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my $min_gab_len = !$mlss->has_tag('no_filter_small_blocks') && int(abs($end-$start)/1000);
     my $min_ga_len  = !$mlss->has_tag('no_filter_small_blocks') && $min_gab_len/4;
 
+    # Min GAB and GA lengths must always be greater than zero.
+    $min_gab_len = max(1, $min_gab_len);
+    $min_ga_len = max(1, $min_ga_len);
+
     if ( !$target_dnafrag or ($num_targets > 1) ){ # multiple sequence alignment, or unfiltered pairwise alignment
-      my @hal_targets = map { $mlss->{'_hal_species_name_mapping'}->{ $_->dbID } } @$targets_gdb;
-      shift @hal_targets unless ( defined $hal_targets[0] );
+      my %hal_target_set;
+      foreach my $target_gdb (@$targets_gdb) {
+        my @hal_target_gdbs;
+
+        if (exists $mlss->{'_hal_species_name_mapping'}->{ $target_gdb->dbID }) {
+          push(@hal_target_gdbs, $target_gdb);
+        } elsif ($target_gdb->is_polyploid()) {
+          my $target_comp_gdbs = $target_gdb->component_genome_dbs();
+          my @hal_target_comp_gdbs = grep { exists $mlss->{'_hal_species_name_mapping'}->{ $_->dbID } } @{$target_comp_gdbs};
+          push(@hal_target_gdbs, @hal_target_comp_gdbs);
+        }
+
+        foreach my $hal_target_gdb (@hal_target_gdbs) {
+          my $hal_target = $mlss->{'_hal_species_name_mapping'}->{ $hal_target_gdb->dbID };
+          $hal_target_set{$hal_target} = 1 if (defined $hal_target);
+        }
+      }
+
+      my @hal_targets = keys %hal_target_set;
       my $targets_str = join(',', @hal_targets);
 
       # Default values for Ensembl
       my $max_ref_gap = $num_targets > 1 ? 500 : 50;
       my $max_block_length = $num_targets > 1 ? 1_000_000 : 500_000;
-      my $maf_file_str = $hal_adaptor->msa_blocks( $targets_str, $ref, $hal_seq_reg, $start-1, $end, $max_ref_gap, $max_block_length );
+      my $maf_file_str = $hal_adaptor->msa_blocks( $targets_str, $hal_ref_name, $hal_seq_reg, $start-1, $end, $max_ref_gap, $max_block_length );
 
       # check if MAF is empty
       unless ( $maf_file_str =~ m/[A-Za-z]/ ){
@@ -1447,13 +1487,16 @@ sub _get_GenomicAlignBlocks_from_HAL {
       my @maf_lines = <$maf_fh>;
       close($maf_fh);
       my $maf_info = $self->_parse_maf( \@maf_lines );
-      
+
+      my @hal_genome_names = keys %hal_target_set;
+      push(@hal_genome_names, $hal_ref_name) if (!exists $hal_target_set{$hal_ref_name});
+
       for my $aln_block ( @$maf_info ) {
         my $duplicates_found = 0;
         my %species_found;
-        my $block_len = $aln_block->[0]->{length};
+        my $block_len = length($aln_block->[0]->{seq});
 
-        next if ( $block_len <= $min_gab_len );
+        next if ( $block_len < $min_gab_len );
 
         my $gab = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
           -length => $block_len,
@@ -1461,14 +1504,32 @@ sub _get_GenomicAlignBlocks_from_HAL {
           -adaptor => $self,
           # -dbID => $id_base + $gab_id_count,
         );
-        $gab->reference_slice_strand( $dnafrag->slice->strand );
+        $gab->reference_slice_strand( $linking_dnafrag->slice->strand );
         $gab_id_count++;
 
         my $ga_adaptor = $self->db->get_GenomicAlignAdaptor;
         my (@genomic_align_array, $ref_genomic_align);
         foreach my $seq (@$aln_block) {
           # find dnafrag for the region
-          my ( $species_id, $chr ) = split(/\./, $seq->{display_id}, 2);
+          my ( $species_id, $chr );
+
+          # In a UCSC MAF file, the src field can be of the form '<genome>.<seqid>', which is useful for storing
+          # both the genome and sequence name; these can then be extracted by taking the substrings before and
+          # after the dot character ('.'), respectively. However, this cannot be done unambiguously if there is
+          # a dot in either the genome or sequence name (e.g. genome 'oryza_sativa.IRGSP-1.0', sequence 'KN549081.1').
+          # So we check the MAF src against patterns prefixed by the names of the genomes known to be in the HAL file,
+          # in order to allow the HAL genome and sequence names to be extracted.
+          my $maf_src_id = $seq->{display_id};
+          my @matching_genome_names = grep { $maf_src_id =~ /^\Q$_\E[.].+/ } @hal_genome_names;
+          if ( scalar(@matching_genome_names) == 1 ) {
+              my $matching_genome_name = $matching_genome_names[0];
+              $species_id = substr($maf_src_id, 0, length($matching_genome_name));
+              $chr = substr($maf_src_id, length($matching_genome_name) + 1);
+          } elsif ( scalar(@matching_genome_names) == 0 ) {
+              throw("Cannot map MAF src field '$maf_src_id' to any HAL genome name");
+          } else {
+              throw("Cannot map MAF src field '$maf_src_id' to a unique HAL genome name");
+          }
 
           my $this_gdb = $genome_db_adaptor->fetch_by_dbID( $mlss->{'_hal_species_name_mapping_reverse'}->{$species_id} );
 
@@ -1559,9 +1620,18 @@ sub _get_GenomicAlignBlocks_from_HAL {
     else { # pairwise alignment
       my $ref_slice_adaptor = $ref_gdb->db_adaptor->get_SliceAdaptor;
 
+      my $target_dnafrag_gdb = $target_dnafrag->genome_db;
+      my ($linking_target_gdb, $linking_target_dnafrag) = @{$self->_get_hal_linking_genome_dnafrag($dnafrag_adaptor, $target_dnafrag_gdb, $target_dnafrag, $mlss->{'_hal_species_name_mapping'})};
+      return [] if (!defined $linking_target_gdb);
+
       foreach my $target_gdb (@$targets_gdb) {
           my $nonref_slice_adaptor = $target_gdb->db_adaptor->get_SliceAdaptor;
-          my $target = $mlss->{'_hal_species_name_mapping'}->{ $target_gdb->dbID };
+
+          if ($target_gdb->dbID != $target_dnafrag_gdb->dbID) {
+            throw( 'target DnaFrag genome_db_id (' . $target_dnafrag_gdb->dbID . ') does not match target GenomeDB genome_db_id (' . $target_gdb->dbID . ')' );
+          }
+
+          my $target = $mlss->{'_hal_species_name_mapping'}->{ $linking_target_gdb->dbID };
 
           # print "hal_file is $hal_file\n";
           # print "ref is $ref\n";
@@ -1571,8 +1641,8 @@ sub _get_GenomicAlignBlocks_from_HAL {
           # print "start is $start\n";
           # print "end is $end\n";
 
-          my $t_hal_seq_reg = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{ $target_dnafrag->genome_db_id }->{ $target_dnafrag->name } || $target_dnafrag->name;
-          my $blocks = $hal_adaptor->pairwise_blocks($target, $ref, $hal_seq_reg, $start-1, $end, $t_hal_seq_reg);
+          my $t_hal_seq_reg = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{ $target_dnafrag->genome_db_id }->{ $target_dnafrag->name } || $linking_target_dnafrag->name;
+          my $blocks = $hal_adaptor->pairwise_blocks($target, $hal_ref_name, $hal_seq_reg, $start-1, $end, $t_hal_seq_reg);
           
           foreach my $entry (@$blocks) {
   	        if (defined $entry) {
@@ -1652,6 +1722,54 @@ sub _get_GenomicAlignBlocks_from_HAL {
     }
 
     return \@gabs;
+}
+
+# Get a 'linking' GenomeDB and DnaFrag. For accessing per-subgenome Cactus alignments, these are
+# are the polyploid component GenomeDB and DnaFrag corresponding to the input principal GenomeDB
+# and DnaFrag. Otherwise the input GenomeDB and DnaFrag are returned.
+sub _get_hal_linking_genome_dnafrag {
+    my ($self, $dnafrag_adaptor, $genome_db, $dnafrag, $hal_species_map) = @_;
+
+    my $linking_genome_db;
+    my $linking_dnafrag;
+
+    if (exists $hal_species_map->{ $genome_db->dbID }) {
+
+        $linking_dnafrag = $dnafrag;
+        $linking_genome_db = $genome_db;
+
+    } elsif ($genome_db->is_polyploid()) {
+
+        my $comp_gdbs = $genome_db->component_genome_dbs();
+        my @comp_dnafrags = grep { defined } map { $dnafrag_adaptor->fetch_by_GenomeDB_and_name($_, $dnafrag->name) } @{$comp_gdbs};
+
+        if (scalar(@comp_dnafrags) == 1) {
+
+            my $comp_dnafrag = $comp_dnafrags[0];
+            my $comp_gdb = $comp_dnafrag->genome_db;
+
+            # It's possible for a polyploid subgenome GenomeDB to be excluded from a Cactus alignment,
+            # so we should only set it as a linking GenomeDB if it is present in the HAL mapping.
+            if (exists $hal_species_map->{ $comp_gdb->dbID }) {
+                $linking_dnafrag = $comp_dnafrag;
+                $linking_genome_db = $comp_gdb;
+            }
+
+        } elsif (scalar(@comp_dnafrags) == 0) {
+            # If a dnafrag is present in the polyploid principal GenomeDB but not in any
+            # subgenome (e.g. scaffold_v5_108365 in triticum_aestivum_landmark), it will
+            # not be present in a per-component Cactus alignment, so there is no linking
+            # DnaFrag or GenomeDB.
+            warning('Cannot map dnafrag ' . $dnafrag->name . ' to any subgenome of ' . $genome_db->name);
+        } else {
+            throw('Cannot map dnafrag ' . $dnafrag->name . ' to a unique subgenome of ' . $genome_db->name);
+        }
+
+    } else {
+        throw('genome_db_id ' . $genome_db->dbID . ' not in HAL mapping');
+    }
+
+    return [$linking_genome_db, $linking_dnafrag];
 }
 
 ### !! e87 HACK ###

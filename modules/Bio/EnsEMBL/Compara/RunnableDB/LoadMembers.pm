@@ -187,7 +187,31 @@ sub loadMembersFromCoreSlices {
 
   my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
   my $all_dnafrags_by_name = $self->param('all_dnafrags_by_name');
-  my $gene_adaptor;
+
+  my $core_dba = $self->param('core_dba');
+  my $gene_adaptor = $core_dba->get_GeneAdaptor;
+
+  my $alt_allele_group_adaptor = $core_dba->get_AltAlleleGroupAdaptor;
+  my $par_alt_allele_groups = $alt_allele_group_adaptor->fetch_all('IS_PAR');
+
+  my %y_par_gene_id_set;
+  foreach my $alt_allele_group (@{$par_alt_allele_groups}) {
+
+      # PAR alt-allele groups fetched by the AltAlleleGroupAdaptor may still have
+      # members lacking the 'IS_PAR' attribute, so we filter by 'IS_PAR' type here.
+      my @par_gene_ids = map {$_->[0]} @{$alt_allele_group->get_all_members_with_type('IS_PAR')};
+
+      my @par_gene_group = map {$gene_adaptor->fetch_by_dbID($_)} @par_gene_ids;
+
+      foreach my $par_gene (@par_gene_group) {
+          my $seq_region = $par_gene->seq_region_name;
+          if ($seq_region eq 'Y') {
+              $y_par_gene_id_set{$par_gene->dbID} = 1;
+          } elsif ($seq_region ne 'X') {
+              $self->throw("Unexpected ${seq_region}-PAR gene found");
+          }
+      }
+  }
 
   foreach my $slice (@$slices) {
     # Reference slices are excluded if $self->param('include_reference') is off
@@ -211,7 +235,6 @@ sub loadMembersFromCoreSlices {
 
     # Heuristic: it usually takes several seconds to load more than 500 genes,
     # so let's disconnect from compara
-    $gene_adaptor ||= $slice->adaptor->db->get_GeneAdaptor;
     $self->compara_dba->dbc->disconnect_if_idle() if $gene_adaptor->count_all_by_Slice($slice) > 500;
 
     my @relevant_genes = grep {!$excluded_logic_names{$_->analysis->logic_name}} sort {$a->seq_region_start <=> $b->seq_region_start} @{$slice->get_all_Genes(undef, undef, 1)};
@@ -236,6 +259,16 @@ sub loadMembersFromCoreSlices {
 
     if ($n2 != scalar(@relevant_genes)) {
         $self->warning("Discarded " . ($n2 - scalar(@relevant_genes)) . " genes because they have a readthrough canonical transcipt");
+    }
+
+    if (scalar(keys %y_par_gene_id_set) > 0) {
+        my $n3 = scalar(@relevant_genes);
+
+        @relevant_genes = grep {not exists $y_par_gene_id_set{$_->dbID}} @relevant_genes;
+
+        if ($n3 != scalar(@relevant_genes)) {
+            $self->warning("Discarded " . ($n3-scalar(@relevant_genes)) . " genes because they are Y-PAR alleles");
+        }
     }
 
     $self->param('geneCount', $self->param('geneCount') + scalar(@relevant_genes) );

@@ -76,6 +76,7 @@ sub _remove_homologies {
     $self->compara_dba->dbc->do('DELETE homology_member FROM homology_member JOIN homology USING (homology_id) WHERE method_link_species_set_id = ?', undef, $mlss_id);
     $self->compara_dba->dbc->do('DELETE FROM homology WHERE method_link_species_set_id = ?',                                                          undef, $mlss_id);
     $self->compara_dba->dbc->do('DELETE FROM method_link_species_set_tag WHERE method_link_species_set_id = ?',                                       undef, $mlss_id);
+    $self->compara_dba->dbc->do('DELETE FROM method_link_species_set_attr WHERE method_link_species_set_id = ?',                                      undef, $mlss_id);
 }
 
 1;

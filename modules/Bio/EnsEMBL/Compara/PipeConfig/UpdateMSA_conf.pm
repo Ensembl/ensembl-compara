@@ -150,7 +150,6 @@ sub core_pipeline_analyses {
                 'add_sister_mlsss' => 1,
                 'branch_code'      => 2,
             },
-            -rc_name    => '500Mb_job',
             -flow_into  => {
                 '2->A'  => WHEN(
                     '#method_type# eq "epo" && #run_gerp#'  => { 'populate_new_database' => {
@@ -221,7 +220,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'species_tree_input_file' => $self->o('binary_species_tree'),
             },
-            -rc_name    => '500Mb_job',
         },
         # Copy data from the previous ancestral core database and update the ancestor names with new MLSS id
         {   -logic_name => 'copy_ancestral_data',
@@ -250,7 +248,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'fan_branch_code'   => 1,
             },
-            -rc_name    => '500Mb_job',
             -flow_into  => {
                 1 => { 'copy_anchor_align' => INPUT_PLUS() },
             },
@@ -297,7 +294,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'ancestral_db' => $self->o('ancestral_db'),
             },
-            -rc_name => '500Mb_job',
             -flow_into  => [ 'remove_prev_mlss' ],
         },
         {   -logic_name => 'remove_prev_mlss',

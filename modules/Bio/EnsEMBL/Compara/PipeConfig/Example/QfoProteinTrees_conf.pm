@@ -107,7 +107,6 @@ sub tweak_analyses {
         $analyses_by_name->{$logic_name}->{'-parameters'}{'store_filtered_align'} = 0;
         $analyses_by_name->{$logic_name}->{'-parameters'}{'store_tree_support'} = 0;
     }
-    $analyses_by_name->{'cluster_factory'}->{'-rc_name'} = '500Mb_job';
 }
 
 1;

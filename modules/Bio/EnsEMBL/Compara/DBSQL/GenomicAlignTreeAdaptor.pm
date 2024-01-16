@@ -795,6 +795,7 @@ sub delete {
     return;
   }
 
+  $self->dbc->sql_helper->transaction( -CALLBACK => sub {
     # first, delete genomic_align and genomic_align_block
     # objects (FK constraint)
     my $ga_sth = $self->prepare(
@@ -818,11 +819,29 @@ sub delete {
             right_node_id = NULL
         WHERE root_id = ?"
     );
+
+    my @node_ids = map { $_->node_id } @{$root->get_all_nodes()};
+    my @node_id_placeholders = (('?') x scalar(@node_ids));
+    my $node_id_placeholder_string = '(' . join(',', @node_id_placeholders) . ')';
+    my $nullify_inbound_left_links_sth = $self->prepare(
+        "UPDATE genomic_align_tree SET
+            left_node_id = NULL
+        WHERE left_node_id IN $node_id_placeholder_string"
+    );
+    my $nullify_inbound_right_links_sth = $self->prepare(
+        "UPDATE genomic_align_tree SET
+            right_node_id = NULL
+        WHERE right_node_id IN $node_id_placeholder_string"
+    );
+
     my $tree_delete_sth = $self->prepare(
       "DELETE FROM genomic_align_tree WHERE root_id = ?"
     );
     $tree_update_sth->execute($root->node_id);
+    $nullify_inbound_left_links_sth->execute(@node_ids);
+    $nullify_inbound_right_links_sth->execute(@node_ids);
     $tree_delete_sth->execute($root->node_id);
+  } );
 }
 
 

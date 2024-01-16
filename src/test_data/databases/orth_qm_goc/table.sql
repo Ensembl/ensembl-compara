@@ -138,7 +138,7 @@ CREATE TABLE `gene_align_member` (
 
 CREATE TABLE `gene_member` (
   `gene_member_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `stable_id` varchar(128) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
+  `stable_id` varchar(128) NOT NULL,
   `version` int(10) unsigned DEFAULT '0',
   `source_name` enum('ENSEMBLGENE','EXTERNALGENE') NOT NULL,
   `taxon_id` int(10) unsigned NOT NULL,
@@ -547,7 +547,7 @@ CREATE TABLE `peptide_align_feature` (
 
 CREATE TABLE `seq_member` (
   `seq_member_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `stable_id` varchar(128) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
+  `stable_id` varchar(128) NOT NULL,
   `version` int(10) unsigned DEFAULT '0',
   `source_name` enum('ENSEMBLPEP','ENSEMBLTRANS','Uniprot/SPTREMBL','Uniprot/SWISSPROT','EXTERNALPEP','EXTERNALTRANS','EXTERNALCDS') NOT NULL,
   `taxon_id` int(10) unsigned NOT NULL,
