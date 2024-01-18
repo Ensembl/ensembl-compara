@@ -57,27 +57,15 @@ sub pipeline_analyses_dump_species_trees {
                 'db_conn'       => '#compara_db#',
                 'inputquery'    => 'SELECT root_id, replace(label, " ", "_") as label, method_link_id, replace(name, " ", "_") as name FROM species_tree_root JOIN method_link_species_set USING (method_link_species_set_id)',
             },
-            -flow_into => {
-                2 => WHEN( '((#method_link_id# eq "401") || (#method_link_id# eq "402")) && (#label# ne "cafe")' => {'dump_one_tree_without_distances' => INPUT_PLUS() },
-                           ELSE { 'dump_one_tree_with_distances' => INPUT_PLUS() },
-                ),
-            },
+            -flow_into => { 2 => { 'dump_one_species_tree' => INPUT_PLUS() } },
         },
 
-        {   -logic_name => 'dump_one_tree_with_distances',
+        {   -logic_name => 'dump_one_species_tree',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -rc_name    => '1Gb_1_hour_job',
             -parameters => {
-                'cmd'           => '#dump_species_tree_exe# -compara_db #compara_db# -reg_conf #reg_conf# --stn_root_id #root_id# -with_distances > "#dump_dir#/#name#_#label#.nh"',
-            },
-            -flow_into  => [ 'sanitize_file' ],
-        },
-
-        {   -logic_name => 'dump_one_tree_without_distances',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -rc_name    => '1Gb_1_hour_job',
-            -parameters => {
-                'cmd'           => '#dump_species_tree_exe# -compara_db #compara_db# -reg_conf #reg_conf# --stn_root_id #root_id# > "#dump_dir#/#name#_#label#.nh"',
+                'cmd'           => '#dump_species_tree_exe# -compara_db #compara_db# -reg_conf #reg_conf# --stn_root_id #root_id# #tree_dist_arg# > "#dump_dir#/#name#_#label#.nh"',
+                'tree_dist_arg' => '#expr(((#method_link_id# eq "401") || (#method_link_id# eq "402")) && (#label# ne "cafe") ? "" : "-with_distances")expr#',
             },
             -flow_into  => [ 'sanitize_file' ],
         },
