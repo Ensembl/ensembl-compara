@@ -86,6 +86,9 @@ sub pipeline_analyses_dump_conservation_scores {
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::DumpConservationScores',
             -hive_capacity     => $self->o('dump_cs_capacity'),
             -rc_name           => '2Gb_job',
+            -parameters        => {
+                'registry'     => '#reg_conf#',
+            },
             -flow_into         => {
                 1 => '?accu_name=all_bedgraph_files&accu_address=[chunkset_id]&accu_input_variable=this_bedgraph',
             },
