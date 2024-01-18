@@ -79,13 +79,6 @@ sub default_options {
         'no_remove_existing_files' => undef, # on by default
         'clean_intermediate_files' => 0, # off by default
 
-        # were there lastz patches this release? pass hive pipeline urls if yes, pass undef if no
-        #  'lastz_patch_dbs' => [
-        #  	'mysql://ensro@mysql-ens-compara-prod-3:4523/carlac_lastz_human_patches_92',
-		#   'mysql://ensro@mysql-ens-compara-prod-3:4523/carlac_lastz_mouse_patches_92',
-        #  ],
-        'lastz_patch_dbs' => undef,
-
         ######################################################
         ######################################################
 
@@ -102,7 +95,6 @@ sub default_options {
 
 
     	# general settings
-		'lastz_dump_path' => 'maf/ensembl-compara/pairwise_alignments', # where, from the FTP root, is the LASTZ dumps?
         'reuse_prev_rel'  => 1, # copy symlinks from previous release dumps
         #'updated_mlss_ids' => [1142,1143,1134,1141], #the list of mlss_ids that we have re_ran/updated and cannot be detected through first_release
         'updated_mlss_ids' => [],
@@ -258,7 +250,7 @@ sub pipeline_wide_parameters {
         # species trees
         'dump_species_tree_exe'  => $self->o('dump_species_tree_exe'),
 
-        # dump alignments + aln patches
+        # dump alignments
         'dump_aln_capacity'   => $self->o('dump_aln_capacity'),
         'split_size'          => $self->o('split_size'),
         'masked_seq'          => $self->o('masked_seq'),
@@ -291,7 +283,6 @@ sub core_pipeline_analyses {
                     'reuse_prev_rel'       => $self->o('reuse_prev_rel'),
                     'reg_conf'             => $self->o('reg_conf'),
                     'updated_mlss_ids'     => $self->o('updated_mlss_ids'),
-                    'lastz_patch_dbs'      => $self->o('lastz_patch_dbs'),
                     'alignment_dump_options' => $self->o('alignment_dump_options'),
                     'default_dump_options' => $self->o('default_dump_options'),
                     'ancestral_db'         => $self->o('ancestral_db'),
@@ -353,14 +344,6 @@ sub core_pipeline_analyses {
         	-flow_into  => [ 'mk_ancestral_dump_dir' ],
             -rc_name    => '1Gb_1_hour_job',
         },
-        {	-logic_name => 'DumpMultiAlignPatches_start',
-        	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -rc_name    => '1Gb_1_hour_job',
-        	-flow_into  => {
-        		'1->A' => [ 'DumpMultiAlign_MLSSJobFactory' ],
-                        'A->1' => [ 'patch_lastz_funnel_check' ],
-        	},
-        },
 
        #------------------------------------------------------------------#
 
@@ -375,20 +358,6 @@ sub core_pipeline_analyses {
         	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::SymlinkPreviousDumps',
             -rc_name    => '1Gb_1_hour_job',
                 -flow_into => { 2 => 'create_all_dump_jobs' }, # to top up any missing dumps
-        },
-
-        {   -logic_name => 'patch_lastz_funnel_check',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
-            -rc_name    => '1Gb_1_hour_job',
-            -flow_into  => [ { 'patch_lastz_dump' => INPUT_PLUS() } ],
-        },
-
-        {   -logic_name => 'patch_lastz_dump',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::PatchLastzDump',
-            -rc_name    => '1Gb_1_hour_job',
-            -parameters => {
-            	'lastz_dump_path' => $self->o('lastz_dump_path'),
-            },
         },
 
         {   -logic_name => 'add_hmm_lib',
