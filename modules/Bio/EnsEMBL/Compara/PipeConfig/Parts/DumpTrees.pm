@@ -123,12 +123,12 @@ sub pipeline_analyses_dump_trees {
 
         {   -logic_name => 'factory_homology_range_dumps',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -rc_name   => '1Gb_168_hour_job',
             -parameters => {
                 'db_conn'               => '#rel_db#',
                 'inputquery'            => 'SELECT MIN(homology_id) AS min_hom_id, MAX(homology_id) AS max_hom_id FROM homology JOIN gene_tree_root ON gene_tree_root_id = root_id WHERE clusterset_id = "#clusterset_id#" AND member_type = "#member_type#"',
             },
             -hive_capacity => $self->o('dump_trees_capacity'),
-            -rc_name       => '1Gb_168_hour_job',
             -flow_into => { 2 => 'factory_per_genome_homology_range_dumps' },
         },
 
@@ -232,6 +232,7 @@ sub pipeline_analyses_dump_trees {
 
         {   -logic_name => 'fetch_exp_line_count_per_genome',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -rc_name   => '1Gb_168_hour_job',
             -parameters => {
                 'db_conn' => '#rel_db#',
                 'inputquery' => q/SELECT
@@ -253,7 +254,6 @@ sub pipeline_analyses_dump_trees {
                 'column_names' => 1,
             },
             -hive_capacity => $self->o('dump_per_genome_cap'),
-            -rc_name       => '1Gb_168_hour_job',
             -flow_into => {
                 2 => [ 'dump_per_genome_homologies_tsv' ],
             },
@@ -261,12 +261,12 @@ sub pipeline_analyses_dump_trees {
 
           { -logic_name => 'dump_per_genome_homologies_tsv',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpHomologiesTSV',
+            -rc_name   => '1Gb_168_hour_job',
             -parameters => {
                 'db_conn'       => '#rel_db#',
                 'output_file'   => '#tsv_dir#/#species_name#/#name_root#.homologies.tsv',
             },
             -hive_capacity => $self->o('dump_per_genome_cap'),
-            -rc_name       => '1Gb_168_hour_job',
           },
 
         {   -logic_name => 'create_dump_jobs',
