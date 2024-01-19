@@ -166,7 +166,6 @@ use Bio::SimpleAlign;
 use Bio::EnsEMBL::Compara::BaseGenomicAlignSet;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::GenomicAlignTree;
-use Bio::EnsEMBL::Compara::Utils::Polyploid qw(map_dnafrag_to_genome_component);
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
@@ -1414,8 +1413,7 @@ sub restrict_between_alignment_positions {
   Example    : $genomic_align_block->get_GenomicAlignTree
   Description: Return a Bio::EnsEMBL::Compara::GenomicAlignTree object either from a GenomicAlignTreeAdaptor, a SpeciesTreeAdaptor or from the species set.
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignTree
-  Exceptions : throw if no GenomicAlignTree object in the database and either a duplicate species is found, or a
-               GenomicAlign maps to both its polyploid principal and component genome on the GenomicAlignTree
+  Exceptions : throw if duplicate species found but no GenomicAlignTree object in the database
   Status     : At risk
 
 =cut
@@ -1455,50 +1453,15 @@ sub get_GenomicAlignTree {
     }
 
     #Create lookup of names to GenomicAlign objects
+    my $leaf_names;
     my $genomic_aligns = $self->get_all_GenomicAligns();
-    my $gdb_id_to_ga;
-    my %gdb_id_to_gdb;
-    my %polyploid_gdb_id_map;
-    foreach my $genomic_align (@{$genomic_aligns}) {
 
-        my $ga_gdb = $genomic_align->genome_db;
-        $gdb_id_to_gdb{$ga_gdb->dbID} = $ga_gdb;
-
-        my $comp_gdb;
-        if ($ga_gdb->is_polyploid()) {
-
-            my $comp_dnafrag = map_dnafrag_to_genome_component($genomic_align->dnafrag);
-
-            # We don't have the species tree yet, so we don't know whether it represents polyploids as genomes
-            # or subgenomes. But to avoid a duplicate GenomicAlign error, we assume that they are represented
-            # as subgenomes and map each polyploid to its component GenomeDB if possible.
-            if (defined($comp_dnafrag)) {
-                $comp_gdb = $comp_dnafrag->genome_db;
-                $gdb_id_to_gdb{$comp_gdb->dbID} = $comp_gdb;
-                push(@{$polyploid_gdb_id_map{$ga_gdb->dbID}}, $comp_gdb->dbID);
-            }
-        }
-
-        my $ga_gdb_id = defined($comp_gdb) ? $comp_gdb->dbID : $ga_gdb->dbID;
-
+    foreach my $genomic_align (@$genomic_aligns) {
         #Throw if duplicates are found (and no GenomicAlignTree has been found)
-        if (defined($gdb_id_to_ga->{$ga_gdb_id})) {
-            throw("Duplicate genomic_align found for genome_db_id $ga_gdb_id");
+        if (defined  $leaf_names->{$genomic_align->genome_db->dbID}) {
+            throw ("Duplicate found for species " . $genomic_align->genome_db->dbID);
         }
-        $gdb_id_to_ga->{$ga_gdb_id} = $genomic_align;
-    }
-
-    while (my ($princ_gdb_id, $comp_gdb_ids) = each %polyploid_gdb_id_map) {
-        # We hedge our bets with polyploids whose GenomicAligns have been linked to their
-        # component GenomeDB, by also linking them to the principal GenomeDB, except where
-        # this would result in mapping multiple GenomicAligns to the same principal GenomeDB.
-        if (!defined($gdb_id_to_ga->{$princ_gdb_id}) && scalar(@{$comp_gdb_ids}) == 1) {
-            my $comp_gdb_id = $comp_gdb_ids->[0];
-            $polyploid_gdb_id_map{$princ_gdb_id} = $comp_gdb_id;
-            $gdb_id_to_ga->{$princ_gdb_id} = $gdb_id_to_ga->{$comp_gdb_id};
-        } else {
-            delete $polyploid_gdb_id_map{$princ_gdb_id};
-        }
+        $leaf_names->{$genomic_align->genome_db->dbID} = $genomic_align;
     }
 
     #Create a tree as a newick format string
@@ -1530,25 +1493,15 @@ sub get_GenomicAlignTree {
 
     #Prune the tree to just contain the species in this GenomicAlignBlock and add GenomicAlignGroup objects on the leaves
     my $all_leaves = $genomic_align_tree->get_all_leaves;
-    my %leaf_gdb_ids_seen;
     foreach my $this_leaf (@$all_leaves) {        
-        my $leaf_gdb_id = $this_leaf->name;
+        my $this_leaf_name = $this_leaf->name;
 
-        if ($gdb_id_to_ga->{$leaf_gdb_id}) {
-            $leaf_gdb_ids_seen{$leaf_gdb_id} = 1;
+        if ($leaf_names->{$this_leaf_name}) {
             #add GenomicAlignGroup populated with GenomicAlign to leaf
-            my $this_genomic_align = $gdb_id_to_ga->{$leaf_gdb_id};
-
-            my $leaf_gdb = $gdb_id_to_gdb{$leaf_gdb_id};
-            $this_leaf->name($leaf_gdb->get_distinct_name);
-            if ($leaf_gdb_id != $this_genomic_align->genome_db->dbID) {
-                # The leaf GenomeDB can differ from that of the GenomicAlign
-                # if, for example, it is a polyploid component GenomeDB.
-                $this_leaf->{_genome_db} = $leaf_gdb;
-            }
-
+	    my $this_genomic_align = $leaf_names->{$this_leaf_name};
+            $this_leaf->name($this_genomic_align->genome_db->name);
             my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup();
-            $genomic_align_group->add_GenomicAlign($this_genomic_align);
+            $genomic_align_group->add_GenomicAlign($leaf_names->{$this_leaf_name});
             $this_leaf->genomic_align_group($genomic_align_group);
 	    if ($this_genomic_align->genome_db->name eq $ref_genomic_align->genome_db->name and
 		$this_genomic_align->dnafrag->name eq $ref_genomic_align->dnafrag->name and
@@ -1566,13 +1519,6 @@ sub get_GenomicAlignTree {
     }
     $genomic_align_tree->root->reference_genomic_align($ref_genomic_align);
     $genomic_align_tree->root->reference_genomic_align_node($ref_genomic_align_node);
-
-    while (my ($princ_gdb_id, $comp_gdb_id) = each %polyploid_gdb_id_map) {
-        if (exists $leaf_gdb_ids_seen{$princ_gdb_id} && exists $leaf_gdb_ids_seen{$comp_gdb_id}) {
-            throw(sprintf('GenomicAlign %s mapped to both its polyploid principal and component genome on GenomicAlignTree',
-                          $gdb_id_to_ga->{$princ_gdb_id}->display_id));
-        }
-    }
 
     # Copy the adaptor if there is one
     $genomic_align_tree->adaptor( $self->adaptor->db->get_GenomicAlignTreeAdaptor ) if $self->adaptor;

@@ -69,6 +69,7 @@ sub pipeline_analyses_dump_constrained_elems {
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
                 'cmd'   => '#dump_features_exe# --feature ce_#mlss_id# --compara_db #compara_db# --species #name# --lex_sort --reg_conf "#registry#" | tail -n+2 > #bed_file#',
+                'registry' => '#reg_conf#',
             },
             -rc_name        => '1Gb_24_hour_job',
             -hive_capacity => $self->o('dump_ce_capacity'),

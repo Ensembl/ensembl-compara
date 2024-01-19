@@ -160,7 +160,7 @@ sub pipeline_analyses_dump_multi_align {
         {   -logic_name     => 'md5sum_aln_factory',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MD5SUMFactory',
             -rc_name        => '1Gb_job',
-            -flow_into     => [ 'md5sum_aln' ],
+            -flow_into      => { 2 => 'md5sum_aln' },
         },
         {   -logic_name     => 'md5sum_aln',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
