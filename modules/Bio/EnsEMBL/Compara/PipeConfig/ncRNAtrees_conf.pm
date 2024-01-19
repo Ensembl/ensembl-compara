@@ -707,7 +707,7 @@ sub core_pipeline_analyses {
                     1 => 'hc_epo_removed_members',
                     -1 => 'recover_epo_himem',
                 },
-                -rc_name => '2Gb_job',
+                -rc_name => '2Gb_24_hour_job',
             },
 
             {   -logic_name    => 'recover_epo_himem',
@@ -717,7 +717,7 @@ sub core_pipeline_analyses {
                     1 => 'hc_epo_removed_members',
                     -1 => 'recover_epo_hugemem',
                 },
-                -rc_name => '16Gb_job',
+                -rc_name => '16Gb_24_hour_job',
             },
 
             {   -logic_name    => 'recover_epo_hugemem',
@@ -763,7 +763,7 @@ sub core_pipeline_analyses {
                     1 => ['quick_tree_break' ],
                     -1 => [ 'aligner_for_tree_break_himem' ],
                 },
-                -rc_name => '2Gb_job',
+                -rc_name => '2Gb_24_hour_job',
             },
 
             {   -logic_name    => 'aligner_for_tree_break_himem',
@@ -786,7 +786,7 @@ sub core_pipeline_analyses {
                                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
                                },
                 -analysis_capacity  => $self->o('quick_tree_break_capacity'),
-                -rc_name        => '2Gb_job',
+                -rc_name        => '2Gb_24_hour_job',
                 -priority       => 50,
                 -flow_into      => {
                    1   => ['other_paralogs', 'subcluster_factory'],
@@ -863,7 +863,7 @@ sub core_pipeline_analyses {
                                   -1 => [ 'infernal_himem' ],
                                    1 => [ 'pre_secondary_structure_decision', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
                                   },
-                -rc_name       => '1Gb_job',
+                -rc_name       => '1Gb_24_hour_job',
             },
 
             {   -logic_name    => 'infernal_himem',
@@ -939,6 +939,7 @@ sub core_pipeline_analyses {
                             2 => [ 'secondary_structure_decision' ],
                             3 => [ 'pre_sec_struct_tree_2_cores' ], #After trying to restart RAxML we should escalate the capacity.
                            },
+              -rc_name       => '1Gb_24_hour_job',
         },
 
         {   -logic_name    => 'pre_sec_struct_tree_2_cores', ## pre_sec_struct_tree
@@ -1032,7 +1033,7 @@ sub core_pipeline_analyses {
                            -1 => [ 'sec_struct_model_tree_4_cores' ],   # This analysis has more cores *and* more memory
                             3 => [ 'sec_struct_model_tree_4_cores' ],
                        },
-            -rc_name => '1Gb_2c_job',
+            -rc_name => '1Gb_2c_24_hour_job',
         },
 
         {   -logic_name    => 'sec_struct_model_tree_4_cores', ## sec_struct_model_tree
@@ -1078,7 +1079,7 @@ sub core_pipeline_analyses {
                            3  => ['fast_trees'],
                            2  => ['genomic_tree'],
                           },
-            -rc_name => '2Gb_4c_job',
+            -rc_name => '2Gb_4c_24_hour_job',
             -priority      => $self->o('genomic_alignment_priority'),
         },
 
@@ -1110,7 +1111,7 @@ sub core_pipeline_analyses {
             -flow_into => {
                            -1 => ['fast_trees_hugemem'],
                           },
-             -rc_name => '16Gb_4c_mpi',
+             -rc_name => '16Gb_4c_24_hour_mpi',
             },
             {
              -logic_name => 'fast_trees_hugemem',
@@ -1138,7 +1139,7 @@ sub core_pipeline_analyses {
                             'genome_dumps_dir' => $self->o('genome_dumps_dir'),
                             'inhugemem' => 1,
                            },
-         -rc_name => '8Gb_8c_job',
+         -rc_name => '8Gb_8c_24_hour_job',
          -priority  => $self->o('genomic_alignment_himem_priority'),
          -flow_into => {
                         3 => [ 'fast_trees' ],
@@ -1176,7 +1177,7 @@ sub core_pipeline_analyses {
                 'inhugemem'             => 1,
             },
             -analysis_capacity => $self->o('genomic_alignment_capacity'),
-            -rc_name           => '96Gb_8c_job',
+            -rc_name           => '96Gb_8c_24_hour_job',
             -flow_into         => {
                 3 => [ 'fast_trees_himem' ],
                 2 => [ 'genomic_tree_himem' ],
@@ -1203,7 +1204,7 @@ sub core_pipeline_analyses {
              -parameters => {
                              'treebest_exe' => $self->o('treebest_exe'),
                             },
-             -rc_name => '1Gb_job',
+             -rc_name => '1Gb_24_hour_job',
             },
 
         {   -logic_name    => 'treebest_mmerge',
@@ -1247,7 +1248,7 @@ sub core_pipeline_analyses {
                             'treebest_exe'  => $self->o('treebest_exe'),
                             'ktreedist_exe' => $self->o('ktreedist_exe'),
                            },
-            -rc_name => '2Gb_job',
+            -rc_name => '2Gb_24_hour_job',
         },
 
         {   -logic_name     => 'consensus_cigar_line_prep',

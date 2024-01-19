@@ -49,6 +49,7 @@ sub pipeline_analyses_datacheck_fan {
                     WHEN( '#do_jira_ticket_creation#' => 'jira_ticket_creation' )
                 ],
             },
+            -rc_name           => '1Gb_24_hour_job',
         },
 
         {
