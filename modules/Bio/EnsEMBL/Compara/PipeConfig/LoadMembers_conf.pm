@@ -489,7 +489,7 @@ sub core_pipeline_analyses {
                 'store_others'                  => $self->o('store_others'),
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
-            -rc_name => '4Gb_job',
+            -rc_name => '4Gb_24_hour_job',
             -flow_into => [ 'hc_members_per_genome' ],
         },
 
