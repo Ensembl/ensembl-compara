@@ -103,12 +103,12 @@ if __name__ == "__main__":
     if prev_mlss_file_paths:
         curr_to_prev_root_path = Path(os.path.relpath(prev_ftp_pub_root, start=curr_ftp_pub_root))
         curr_mlss_dir_path = curr_ftp_dump_root / root_to_mlss_dir_path
-        mlss_dir_to_root_parent = os.path.relpath(curr_ftp_dump_root, start=curr_mlss_dir_path)
+        mlss_dir_to_root_path = os.path.relpath(curr_ftp_dump_root, start=curr_mlss_dir_path)
 
         symlink_pairs = []
         for prev_mlss_file_path in prev_mlss_file_paths:
             root_to_mlss_file_path = root_to_mlss_dir_path / prev_mlss_file_path.name
-            new_symlink_target = mlss_dir_to_root_parent / curr_to_prev_root_path / root_to_mlss_file_path
+            new_symlink_target = mlss_dir_to_root_path / curr_to_prev_root_path / root_to_mlss_file_path
 
             if prev_mlss_file_path.is_symlink():
                 prev_symlink_target = Path(os.readlink(prev_mlss_file_path))
