@@ -252,7 +252,7 @@ sub pipeline_analyses_epo_ext_alignment {
                 2  => WHEN( '#run_gerp#' => [ 'gerp' ] ),
                 -1 => [ 'extended_genome_alignment_himem' ],
             },
-            -rc_name => '2Gb_job',
+            -rc_name => '2Gb_24_hour_job',
         },
         #If fail due to MEMLIMIT, probably due to memory leak, and rerunning with extra memory.
         {   -logic_name => 'extended_genome_alignment_himem',
@@ -269,7 +269,7 @@ sub pipeline_analyses_epo_ext_alignment {
                 2  => WHEN( '#run_gerp#' => [ 'gerp' ] ),
                 -1 => [ 'extended_genome_alignment_hugemem' ],
             },
-            -rc_name => '4Gb_job',
+            -rc_name => '4Gb_24_hour_job',
         },
 
         #Super MEM analysis, there is a small amount of jobs still failing with current RAM limits
@@ -286,7 +286,7 @@ sub pipeline_analyses_epo_ext_alignment {
             -flow_into => {
                 2 => WHEN( '#run_gerp#' => [ 'gerp' ] ),
             },
-            -rc_name => '8Gb_job',
+            -rc_name => '8Gb_24_hour_job',
         },
 
         # ---------------------------------------------------------------[Gerp]-------------------------------------------------------------------
@@ -349,7 +349,7 @@ sub pipeline_analyses_db_complete {
                 '2->A' => [ 'set_neighbour_nodes' ],
                 'A->1' => [ 'update_max_alignment_length' ],
             },
-            -rc_name => '2Gb_job',
+            -rc_name => '2Gb_24_hour_job',
         },
         {   -logic_name => 'set_neighbour_nodes',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoExtended::SetNeighbourNodes',
@@ -404,6 +404,7 @@ sub pipeline_analyses_healthcheck {
 
         {   -logic_name => 'conservation_score_healthcheck',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
+            -rc_name => '2Gb_24_hour_job',
         },
 
         {   -logic_name  => 'end_pipeline',

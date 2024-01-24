@@ -55,12 +55,13 @@ sub pipeline_analyses_multiple_aligner_stats {
                 'ensembl_release'   => $self->o('ensembl_release'),
                 'output_dir'        => $self->o('output_dir'),
             },
-            -rc_name => '4Gb_job',
+            -rc_name => '4Gb_24_hour_job',
             -hive_capacity  => 100,
         },
 
         {   -logic_name => 'block_size_distribution',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
+            -rc_name => '1Gb_24_hour_job',
             -flow_into  => [ 'generate_msa_stats_report' ],
         },
 
@@ -110,7 +111,7 @@ sub pipeline_analyses_multiple_aligner_stats {
 
         {   -logic_name =>  'per_block_stats',
             -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::CalculateBlockStats',
-            -rc_name    => '2Gb_job',
+            -rc_name    => '2Gb_24_hour_job',
             -flow_into  => {
                 2 => [
                     '?accu_name=num_of_positions&accu_address={genome_db_id}[]',
