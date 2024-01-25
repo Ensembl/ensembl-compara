@@ -58,9 +58,10 @@ sub default_options {
         # Review these options prior to running each release #
         ######################################################
 
-        # Where to put the new dumps and the symlinks
+        # Where to put the new dumps and associated files
         'dump_root'    => $self->o('pipeline_dir'),
         'work_dir'     => $self->o('dump_root') . '/dump_hash/',
+        'dataflow_dir' => $self->o('work_dir') . '/dataflows/',
 
         # Dump registry options
         'reg_conf'            => $self->o('work_dir') . '/' . 'dump_reg_conf.pm',
@@ -68,10 +69,10 @@ sub default_options {
         'ancestral_dump_host' => undef,
         'core_dump_hosts'     => undef,
 
-        # Location of the previous dumps
-        'ftp_root'     => '/nfs/production/flicek/ensembl/production/ensemblftp/',
-
-        'prev_rel_ftp_root' => $self->o('ftp_root') . '/release-' . $self->o('prev_release'),
+        # Dump location parameters
+        'prev_rel_ftp_root' => undef,  # current location of the previous dumps (required)
+        'curr_ftp_pub_root' => undef,  # final location of dumps for current release (required)
+        'prev_ftp_pub_root' => undef,  # final location of dumps for previous release (required)
 
         'compara_db'   => 'compara_curr', # can be URL or reg alias
         'ancestral_db' => undef,
@@ -166,6 +167,15 @@ sub hive_meta_table {
     }
 }
 
+sub pipeline_checks_pre_init {
+    my ($self) = @_;
+
+    die "Pipeline parameter 'dump_dir' is undefined, but must be specified" unless $self->o('dump_dir');
+    die "Pipeline parameter 'prev_rel_ftp_root' is undefined, but must be specified" unless $self->o('prev_rel_ftp_root');
+    die "Pipeline parameter 'curr_ftp_pub_root' is undefined, but must be specified" unless $self->o('curr_ftp_pub_root');
+    die "Pipeline parameter 'prev_ftp_pub_root' is undefined, but must be specified" unless $self->o('prev_ftp_pub_root');
+}
+
 sub pipeline_create_commands {
     my $self = shift;
 
@@ -174,7 +184,7 @@ sub pipeline_create_commands {
     return [
         @{ $self->SUPER::pipeline_create_commands },
 
-        $self->pipeline_create_commands_rm_mkdir(['dump_root', 'work_dir', 'dump_dir'], undef, $self->o('no_remove_existing_files')),
+        $self->pipeline_create_commands_rm_mkdir(['dataflow_dir', 'dump_dir', 'dump_root', 'work_dir'], undef, $self->o('no_remove_existing_files')),
         $self->pipeline_create_commands_reg_conf_stub(),
 
         $self->db_cmd( 'CREATE TABLE other_gab (genomic_align_block_id bigint NOT NULL, PRIMARY KEY (genomic_align_block_id) )' ),
@@ -204,12 +214,14 @@ sub pipeline_wide_parameters {
         'dump_root'       => $self->o('dump_root' ),
         'dump_dir'        => $self->o('dump_dir'),
         'work_dir'        => $self->o('work_dir'),
-        'ftp_root'        => $self->o('ftp_root'),
+        'dataflow_dir'    => $self->o('dataflow_dir'),
         'division'        => $self->o('division'),
         'genome_dumps_dir'=> $self->o('genome_dumps_dir'),
         'warehouse_dir'   => $self->o('warehouse_dir'),
         'uniprot_file'    => $self->o('uniprot_file'),
         'prev_rel_ftp_root' => $self->o('prev_rel_ftp_root'),
+        'curr_ftp_pub_root' => $self->o('curr_ftp_pub_root'),
+        'prev_ftp_pub_root' => $self->o('prev_ftp_pub_root'),
 
         # tree params
         'dump_trees_capacity' => $self->o('dump_trees_capacity'),
@@ -351,13 +363,54 @@ sub core_pipeline_analyses {
         {	-logic_name => 'create_ftp_skeleton',
         	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::FTPSkeleton',
             -rc_name    => '1Gb_1_hour_job',
-        	-flow_into => [ 'symlink_prev_dumps' ],
+            -flow_into => {
+                '2->A' => [ 'symlink_prev_dumps' ],
+                'A->1' => [ 'symlink_funnel_check' ],
+            },
         },
 
-        {	-logic_name => 'symlink_prev_dumps',
-        	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::SymlinkPreviousDumps',
+        {   -logic_name => 'symlink_prev_dumps',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name    => '1Gb_datamover_job',
+            -parameters => {
+                'cmd'                   => join(' ', (
+                    '#symlink_prev_dump_exe#',
+                    '--curr_ftp_dump_root',
+                    '#dump_dir#',
+                    '--prev_ftp_dump_root',
+                    '#prev_rel_ftp_root#',
+                    '--curr_ftp_pub_root',
+                    '#curr_ftp_pub_root#',
+                    '--prev_ftp_pub_root',
+                    '#prev_ftp_pub_root#',
+                    '--mlss_path_type',
+                    '#mlss_path_type#',
+                    '--mlss_path',
+                    '#mlss_path#',
+                    '--mlss_id',
+                    '#mlss_id#',
+                    '--dataflow_file',
+                    '#dataflow_file#',
+                )),
+                'dataflow_file'         => '#dataflow_dir#/symlink_prev_dumps/#hashed_mlss_id#/#mlss_id#.dataflow.json',
+                'hashed_mlss_id'        => '#expr(dir_revhash(#mlss_id#))expr#',
+                'symlink_prev_dump_exe' => $self->o('symlink_prev_dump_exe'),
+            },
+            -flow_into => {
+                2 => [ '?accu_name=missing_mlss_id&accu_address=[]&accu_input_variable=missing_mlss_id' ],
+            },
+        },
+
+        {   -logic_name => 'symlink_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -rc_name    => '1Gb_1_hour_job',
-                -flow_into => { 2 => 'create_all_dump_jobs' }, # to top up any missing dumps
+            -flow_into  => [ { 'flow_any_missing_mlsses' => INPUT_PLUS() } ],
+        },
+
+        {   -logic_name => 'flow_any_missing_mlsses',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::FlowAnyMissingMLSSes',
+            -rc_name    => '1Gb_1_hour_job',
+            -flow_into  => { 2 => 'create_all_dump_jobs' },
         },
 
         {   -logic_name => 'add_hmm_lib',

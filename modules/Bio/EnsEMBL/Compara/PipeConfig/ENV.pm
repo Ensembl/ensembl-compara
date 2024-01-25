@@ -136,6 +136,7 @@ sub executable_locations {
         'copy_ancestral_core_exe'           => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/copy_ancestral_core.pl'),
         'gene_tree_stats_report_exe'        => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/gene_tree_stats.pl'),
         'hal_cov_one_seq_chunk_exe'         => $self->check_exe_in_ensembl('ensembl-compara/scripts/hal_alignment/hal_cov_one_seq_chunk.py'),
+        'symlink_prev_dump_exe'             => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/symlink_prev_dump.py'),
         'xmlschema_validate_exe'            => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/xmlschema_validate.py'),
 
         # Other dependencies (non executables)
