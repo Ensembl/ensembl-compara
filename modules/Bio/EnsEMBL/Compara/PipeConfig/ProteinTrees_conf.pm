@@ -745,6 +745,7 @@ sub core_pipeline_analyses {
                 'exclude_list'  => 1,
                 'output_file'   => '#dump_dir#/snapshot_4_pipeline_finished.sql.gz',
             },
+            -rc_name    => '1Gb_24_hour_job',
             -flow_into  => [ { 'final_semaphore_check' => \%semaphore_check_params } ],
         },
 
@@ -1175,7 +1176,7 @@ sub core_pipeline_analyses {
                              'hmmer_path'          => $self->o('hmmer2_home'),
                             },
              -hive_capacity => $self->o('HMMer_classifyPantherScore_capacity'),
-             -rc_name => '4Gb_job',
+             -rc_name => '4Gb_24_hour_job',
              -flow_into => {
                            -1 => [ 'HMMer_classifyPantherScore_himem' ],  # MEMLIMIT
                            },
@@ -1344,6 +1345,7 @@ sub core_pipeline_analyses {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 %blastp_parameters,
             },
+            -rc_name   => '1Gb_24_hour_job',
             -flow_into => {
                -1 => [ 'blastp_unannotated_himem_no_runlimit' ],  # MEMLIMIT
             },
@@ -1821,7 +1823,7 @@ sub core_pipeline_analyses {
                 'output_gini_file'   => '#plots_dir#/gini_coefficient.out',
                 'output_gini_pdf'    => '#plots_dir#/gini_coefficient.pdf',
             },
-            -rc_name       => '2Gb_job',
+            -rc_name       => '2Gb_24_hour_job',
         },
 
 # ---------------------------------------------[Pluggable MSA steps]----------------------------------------------------------
@@ -1837,6 +1839,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_short_capacity'),
             -batch_size           => 20,
+            -rc_name   => '1Gb_24_hour_job',
             -flow_into => {
                -1 => [ 'mcoffee' ],  # MEMLIMIT
                -2 => [ 'mafft' ],
@@ -1852,7 +1855,7 @@ sub core_pipeline_analyses {
                 'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -1,
             },
-            -rc_name    => '2Gb_job',
+            -rc_name    => '2Gb_24_hour_job',
             -priority   => $self->o('mcoffee_priority'),
             -flow_into => {
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
@@ -1894,7 +1897,7 @@ sub core_pipeline_analyses {
                 'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -2,
             },
-            -rc_name    => '8Gb_job',
+            -rc_name    => '8Gb_24_hour_job',
             -priority   => $self->o('mcoffee_himem_priority'),
             -flow_into => {
                -1 => [ 'mafft_himem' ],
@@ -1909,7 +1912,7 @@ sub core_pipeline_analyses {
                 'mafft_threads'              => 4,
             },
             -hive_capacity        => $self->o('mafft_himem_capacity'),
-            -rc_name    => '8Gb_4c_job',
+            -rc_name    => '8Gb_4c_24_hour_job',
             -priority   => $self->o('mafft_himem_priority'),
             -flow_into     => {
                 -1 => [ 'mafft_huge' ],
@@ -1926,7 +1929,7 @@ sub core_pipeline_analyses {
                 'tmp_dir'                    => $self->o('tmp_dir'),
             },
             -hive_capacity        => $self->o('mafft_himem_capacity'),
-            -rc_name    => '16Gb_8c_job',
+            -rc_name    => '16Gb_8c_24_hour_job',
             -priority   => $self->o('mafft_himem_priority'),
             -flow_into  => {
                 -1 => [ 'mafft_mammoth' ],
@@ -1942,7 +1945,7 @@ sub core_pipeline_analyses {
                 'tmp_dir'       => $self->o('tmp_dir'),
             },
             -hive_capacity => $self->o('mafft_himem_capacity'),
-            -rc_name       => '128Gb_16c_job',
+            -rc_name       => '128Gb_16c_24_hour_job',
             -priority      => $self->o('mafft_himem_priority'),
         },
 
@@ -2278,7 +2281,7 @@ sub core_pipeline_analyses {
                 'treebest_exe'              => $self->o('treebest_exe'),
             },
             -hive_capacity        => $self->o('treebest_capacity'),
-            -rc_name    => '2Gb_job',
+            -rc_name    => '2Gb_24_hour_job',
             -flow_into  => {
                 -1 => 'treebest_long_himem',
                 -2 => 'treebest_long_himem',
@@ -2749,7 +2752,7 @@ sub core_pipeline_analyses {
                 'raxml_number_of_cores'     => 2,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name 		=> '4Gb_2c_job',
+            -rc_name 		=> '4Gb_2c_24_hour_job',
             -flow_into  => {
                 -1 => [ 'raxml_2_cores_himem' ],
                 -2 => [ 'raxml_4_cores' ],
@@ -2773,7 +2776,7 @@ sub core_pipeline_analyses {
                 'raxml_number_of_cores'     => 4,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name 		=> '8Gb_4c_job',
+            -rc_name 		=> '8Gb_4c_24_hour_job',
             -flow_into  => {
                 -1 => [ 'raxml_4_cores_himem' ],
                 -2 => [ 'raxml_8_cores' ],
@@ -3117,6 +3120,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -priority       => -10,
+            -rc_name        => '1Gb_24_hour_job',       
             -flow_into      => {
                 1   => [ 'final_tree_steps' ],
                 -1  => 'ortho_tree_himem',
@@ -3133,7 +3137,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -priority       => 20,
-            -rc_name        => '4Gb_job',
+            -rc_name        => '4Gb_24_hour_job',
             -flow_into      => [ 'final_tree_steps' ],
         },
 
@@ -3150,6 +3154,7 @@ sub core_pipeline_analyses {
                               },
             -hive_capacity => $self->o('ktreedist_capacity'),
             -batch_size    => 5,
+            -rc_name       => '1Gb_24_hour_job',
             -flow_into     => {
                 -1 => [ 'ktreedist_himem' ],
             },
@@ -3162,13 +3167,14 @@ sub core_pipeline_analyses {
                                'ktreedist_exe' => $self->o('ktreedist_exe'),
                               },
             -hive_capacity => $self->o('ktreedist_capacity'),
-            -rc_name       => '4Gb_job',
+            -rc_name       => '4Gb_24_hour_job',
         },
 
         {   -logic_name     => 'consensus_cigar_line_prep',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnConsensusCigarLine',
             -hive_capacity  => $self->o('ktreedist_capacity'),
             -batch_size     => 20,
+            -rc_name        => '1Gb_24_hour_job',
             -flow_into      => {
                 -1  => [ 'consensus_cigar_line_prep_himem' ],
             },
@@ -3238,7 +3244,7 @@ sub core_pipeline_analyses {
                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
-            -rc_name   => '2Gb_job',
+            -rc_name   => '2Gb_24_hour_job',
             -flow_into => {
                 1 => [ 'other_paralogs', 'subcluster_factory' ],
                 -1 => 'quick_tree_break_himem',
@@ -3253,7 +3259,7 @@ sub core_pipeline_analyses {
                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
-            -rc_name   => '4Gb_job',
+            -rc_name   => '8Gb_24_hour_job',
             -flow_into => [ 'other_paralogs_himem', 'subcluster_factory' ],
         },
 
@@ -3264,6 +3270,7 @@ sub core_pipeline_analyses {
                 'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
+            -rc_name        => '1Gb_24_hour_job',
             -flow_into      => {
                 -1 => [ 'other_paralogs_himem', ],
                 3 => [ 'other_paralogs' ],
@@ -3277,7 +3284,7 @@ sub core_pipeline_analyses {
                 'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
-            -rc_name        => '2Gb_job',
+            -rc_name        => '2Gb_24_hour_job',
             -flow_into      => {
                 3 => [ 'other_paralogs_himem' ],
             }
@@ -3327,6 +3334,7 @@ sub core_pipeline_analyses {
                 'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
+            -rc_name        => '1Gb_1_hour_job',
             -flow_into      => {
                 -1 => [ 'panther_paralogs_himem', ],
                 3 => [ 'panther_paralogs' ],
@@ -3340,7 +3348,7 @@ sub core_pipeline_analyses {
                 'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
-            -rc_name        => '4Gb_job',
+            -rc_name        => '4Gb_24_hour_job',
             -flow_into      => {
                 3 => [ 'panther_paralogs_himem' ],
             }

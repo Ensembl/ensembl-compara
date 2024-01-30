@@ -93,7 +93,7 @@ sub pipeline_analyses_goc {
             -flow_into => {
                -1 => 'compute_goc_himem',
            },
-           -rc_name => '1Gb_job',
+           -rc_name => '1Gb_24_hour_job',
            -hive_capacity  =>  $self->o('goc_capacity'),
         },
         

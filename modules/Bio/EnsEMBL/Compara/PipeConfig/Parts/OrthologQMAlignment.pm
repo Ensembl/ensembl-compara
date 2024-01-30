@@ -98,7 +98,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
             -flow_into  => {
                 3 => [ '?table_name=ortholog_quality' ],
             },
-            -rc_name => '2Gb_job',
+            -rc_name => '2Gb_24_hour_job',
         },
 
         {   -logic_name  => 'check_file_copy',
