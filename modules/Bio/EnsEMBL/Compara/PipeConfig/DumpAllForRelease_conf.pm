@@ -315,7 +315,6 @@ sub core_pipeline_analyses {
                 '4->A' => [ 'DumpConservationScores_start'  ],
                 '5->A' => [ 'DumpSpeciesTrees_start'        ],
                 '6->A' => [ 'DumpAncestralAlleles_start'    ],
-                '7->A' => [ 'DumpMultiAlignPatches_start'   ],
                 '8->A' => [ 'create_ftp_skeleton'           ],
                 'A->1' => [ 'final_funnel_check'            ],
             },
