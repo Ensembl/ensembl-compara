@@ -232,7 +232,7 @@ sub pipeline_analyses_dump_trees {
 
         {   -logic_name => 'fetch_exp_line_count_per_genome',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -rc_name   => '1Gb_168_hour_job',
+            -rc_name   => '1Gb_job',
             -parameters => {
                 'db_conn' => '#rel_db#',
                 'inputquery' => q/SELECT
@@ -261,7 +261,7 @@ sub pipeline_analyses_dump_trees {
 
           { -logic_name => 'dump_per_genome_homologies_tsv',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpHomologiesTSV',
-            -rc_name   => '1Gb_168_hour_job',
+            -rc_name   => '1Gb_job',
             -parameters => {
                 'db_conn'       => '#rel_db#',
                 'output_file'   => '#tsv_dir#/#species_name#/#name_root#.homologies.tsv',
@@ -303,7 +303,7 @@ sub pipeline_analyses_dump_trees {
             },
             -hive_capacity => $self->o('dump_trees_capacity'),       # allow several workers to perform identical tasks in parallel
             -batch_size    => $self->o('batch_size'),
-            -rc_name       => '2Gb_168_hour_job',
+            -rc_name       => '2Gb_job',
         },
 
         {   -logic_name    => 'dump_a_tree_himem',
