@@ -1,0 +1,29 @@
+-- See the NOTICE file distributed with this work for additional information
+-- regarding copyright ownership.
+-- 
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+-- 
+--      http://www.apache.org/licenses/LICENSE-2.0
+-- 
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
+# patch_112_113_b.sql
+#
+# Title: Change Compara SQL schema to make meta_value nullable
+#
+# Description:
+#    For consistency with the Ensembl core SQL schema, 
+#    the Compara SQL schema is to be changed in Ensembl 113 so that 
+#    the 'meta_value' column of the Compara 'meta' table is nullable.
+
+ALTER TABLE meta MODIFY meta_value VARCHAR(255) DEFAULT NULL;
+
+# Patch identifier
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_112_113_b.sql|make_meta_value_nullable')
