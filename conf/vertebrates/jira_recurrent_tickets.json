@@ -154,7 +154,7 @@
          },
          {
             "component": "Production tasks",
-            "description": "*GitHub*: [EPO_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name murinae -run_gerp 0{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "description": "*GitHub*: [EPO_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/EPO_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name murinae{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Murinae EPO pipeline",
             "name_on_graph": "EPOwithExt:Murinae"
          },
