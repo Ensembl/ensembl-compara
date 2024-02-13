@@ -47,8 +47,8 @@ CREATE TABLE IF NOT EXISTS meta (
 
   meta_id                     INT NOT NULL AUTO_INCREMENT,
   species_id                  INT UNSIGNED DEFAULT 1,
-  meta_key                    VARCHAR(40) NOT NULL,
-  meta_value                  TEXT NOT NULL,
+  meta_key                    VARCHAR(64) NOT NULL,
+  meta_value                  VARCHAR(255) DEFAULT NULL,
 
   PRIMARY   KEY (meta_id),
   UNIQUE    KEY species_key_value_idx (species_id, meta_key, meta_value(255)),
@@ -2286,10 +2286,10 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_108_109_a.sql|schema_version');
-
+  VALUES (NULL, 'patch', 'patch_109_110_a.sql|schema_version');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_108_109_b.sql|gene_member_qc_key');
-
+  VALUES (NULL, 'patch', 'patch_109_110_b.sql|case_insensitive_stable_id_again');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_108_109_g.sql|ncbi_taxa_name_varchar500');
+  VALUES (NULL, 'patch', 'patch_109_110_c.sql|ncbi_taxa_name_varchar500');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_109_110_d.sql|meta_table_updates');
