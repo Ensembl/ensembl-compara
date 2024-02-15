@@ -317,7 +317,7 @@ sub core_pipeline_analyses {
             },
             -analysis_capacity => $self->o('pair_aligner_analysis_capacity'),
             -batch_size        => $self->o('pair_aligner_batch_size'),
-            -rc_name           => '2Gb_job',
+            -rc_name           => '2Gb_24_hour_job',
         },
 
         {   -logic_name        => $self->o('pair_aligner_logic_name') . '_himem',
@@ -327,7 +327,7 @@ sub core_pipeline_analyses {
             },
             -analysis_capacity => $self->o('pair_aligner_analysis_capacity'),
             -batch_size        => $self->o('pair_aligner_batch_size'),
-            -rc_name           => '8Gb_job',
+            -rc_name           => '8Gb_24_hour_job',
         },
 
         {   -logic_name => 'check_no_partial_gabs',
@@ -421,7 +421,7 @@ sub core_pipeline_analyses {
             },
             -batch_size      => $self->o('chain_batch_size'),
             -hive_capacity   => $self->o('chain_hive_capacity'),
-            -rc_name         => '4Gb_job',
+            -rc_name         => '4Gb_24_hour_job',
             -max_retry_count => 10,
         },
 
@@ -433,7 +433,7 @@ sub core_pipeline_analyses {
             },
             -batch_size      => 1,
             -hive_capacity   => $self->o('chain_hive_capacity'),
-            -rc_name         => '8Gb_job',
+            -rc_name         => '8Gb_24_hour_job',
             -max_retry_count => 10,
         },
 
@@ -442,7 +442,7 @@ sub core_pipeline_analyses {
             -parameters      => $self->o('chain_parameters'),
             -batch_size      => 1,
             -hive_capacity   => $self->o('chain_hive_capacity'),
-            -rc_name         => '16Gb_job',
+            -rc_name         => '16Gb_24_hour_job',
             -max_retry_count => 10,
         },
 
