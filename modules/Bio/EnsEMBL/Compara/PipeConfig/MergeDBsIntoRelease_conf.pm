@@ -163,7 +163,7 @@ sub pipeline_analyses {
                 'src_db_aliases'    => [ref($self->o('src_db_aliases')) ? keys %{$self->o('src_db_aliases')} : ()],
                 'die_if_unknown_table'  => $self->o('die_if_unknown_table'),
             },
-            -rc_name    => '2Gb_job',
+            -rc_name    => '2Gb_24_hour_job',
             -input_ids  => [ {} ],
             -flow_into  => {
                 'A->1'  => [ 'fire_post_merge_processing' ],
@@ -183,6 +183,7 @@ sub pipeline_analyses {
                 'filter_cmd'    => 'sed "s/ENGINE=InnoDB/ENGINE=MyISAM/"',
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
+            -rc_name => '1Gb_24_hour_job',
             -flow_into     => WHEN( '#analyze_optimize#' => ['analyze_optimize'] ),
         },
 
@@ -202,6 +203,7 @@ sub pipeline_analyses {
                 'skip_disable_vars' => 1,
             },
             -hive_capacity => $self->o('copying_capacity'),
+            -rc_name => '1Gb_24_hour_job',
         },
 
         {   -logic_name => 'check_size',
@@ -212,6 +214,7 @@ sub pipeline_analyses {
                 'query'         => 'SELECT #key# FROM #table#',
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
+            -rc_name => '1Gb_24_hour_job',
             -flow_into     => [
                 WHEN( '#analyze_optimize#' => ['analyze_optimize'] ),
                 WHEN( '#backup_tables#' => ['drop_backup'] ),
@@ -252,6 +255,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => $self->o('copying_capacity'),
             -flow_into => [ 'check_size' ],
+            -rc_name => '1Gb_24_hour_job',
         },
 
         {   -logic_name => 'drop_backup',
