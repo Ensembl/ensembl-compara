@@ -65,7 +65,23 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'master_db' => 'compara_master',
+
+        'collection'    => undef,
+        'method_type'   => 'CACTUS_HAL',
+        'pipeline_name' => $self->o('collection') . '_' . $self->o('division') . '_register_halfile_' . $self->o('rel_with_suffix'),
+
+        'do_alt_mlss'   => 1,
+
+        'species_name_mapping' => undef,
     };
+}
+
+
+
+sub pipeline_checks_pre_init {
+    my ($self) = @_;
+
+    die "Pipeline parameter 'collection' is undefined, but must be specified" unless $self->o('collection');
 }
 
 
@@ -76,6 +92,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
         'master_db'     => $self->o('master_db'),
         'halStats_exe'  => $self->o('halStats_exe'),
+        'do_alt_mlss'   => $self->o('do_alt_mlss'),
     };
 }
 
@@ -84,6 +101,17 @@ sub pipeline_analyses {
     my ($self) = @_;
 
     return [
+
+        {   -logic_name => 'load_mlss_id',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMLSSids',
+            -input_ids  => [ {
+                'method_type'      => $self->o('method_type'),
+                'species_set_name' => $self->o('collection'),
+                'release'          => $self->o('ensembl_release'),
+            } ],
+            -flow_into  => [ 'copy_mlss' ],
+        },
+
         {   -logic_name => 'copy_mlss',
 	    -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithFK',
             -parameters => {
@@ -91,10 +119,6 @@ sub pipeline_analyses {
                 'method_link_species_set_id'    => '#mlss_id#',
             },
             -flow_into => [ 'load_component_genomedb_factory' ],
-            -input_ids => [ {
-                'mlss_id'   => $self->o('mlss_id'),
-                'species_name_mapping'  => $self->o('species_name_mapping'),
-            } ],
         },
 
         {   -logic_name => 'load_component_genomedb_factory',
@@ -145,9 +169,10 @@ sub pipeline_analyses {
 
         {   -logic_name => 'hal_registration_entry_point',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                1 => [ 'find_pairwise_mlss_ids', 'set_name_mapping_tag' ],
-            },
+            -flow_into  => [
+                    WHEN('#do_alt_mlss#' => 'find_pairwise_mlss_ids'),
+                    'load_hal_mapping',
+            ]
         },
 
         {   -logic_name => 'find_pairwise_mlss_ids',
@@ -183,11 +208,12 @@ sub pipeline_analyses {
             -analysis_capacity  => 1,
         },
 
-        {   -logic_name => 'set_name_mapping_tag',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+        {   -logic_name => 'load_hal_mapping',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadHalMapping',
             -parameters => {
-                'sql' => [ 'INSERT IGNORE INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#mlss_id#, "HAL_mapping", "#species_name_mapping#")' ],
+                'species_name_mapping' => $self->o('species_name_mapping'),
             },
+            -rc_name    => '4Gb_job',
             -flow_into  => [
                 'load_species_tree',
                 'synonyms_genome_factory'
