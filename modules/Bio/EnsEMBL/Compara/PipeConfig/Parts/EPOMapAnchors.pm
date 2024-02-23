@@ -267,7 +267,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                 -flow_into => {
                                2 => { 'trim_anchor_align' => INPUT_PLUS() },
                               },  
-		-rc_name => '4Gb_job',
+		-rc_name => '4Gb_24_hour_job',
             },  
 
 	    {   -logic_name => 'trim_anchor_align',			

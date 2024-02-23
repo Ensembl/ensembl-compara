@@ -234,6 +234,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 method_link_species_set_id => '#ext_mlss_id#',
             },
+            -rc_name => '1Gb_24_hour_job',
             -flow_into => [ 'alignment_mlss_factory' ],
         },
 
