@@ -20,6 +20,9 @@ Unknown options are ignored.
 """
 
 import argparse
+import sys
+from warnings import warn
+
 import xmlschema
 
 
@@ -32,4 +35,22 @@ if __name__ == "__main__":
     known_args, other_args = parser.parse_known_args()
 
     schema = xmlschema.XMLSchema(known_args.schema_file)
-    schema.validate(known_args.data_file)
+
+    max_attempts = 3
+    default_recursion_limit = sys.getrecursionlimit()
+    for attempt in range(1, max_attempts + 1):
+        # A few trees hit the default recursion limit, so
+        # bump it up if we are retrying after a RecursionError.
+        curr_recursion_limit = attempt * default_recursion_limit
+        sys.setrecursionlimit(curr_recursion_limit)
+
+        try:
+            schema.validate(known_args.data_file)
+        except RecursionError as exc:
+            if attempt < max_attempts:
+                warn(
+                    f"XML schema validation hit recursion limit {curr_recursion_limit}"
+                    f" in attempt {attempt}, retrying"
+                )
+                continue
+            raise exc
