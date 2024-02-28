@@ -217,22 +217,35 @@
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Non-vertebratesdivisionswithanancestraldatabase(e.g.Plants)",
             "summary": "Handover of ancestral DB"
+         }
+      ],
+      "labels": ["Merge_anchor"],
+      "summary": "<Division> Release <version> Database merge and handover"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Post-handover+tasks",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "Clean up any <division> database backups that are no longer needed",
+            "summary": "Clean up unneeded <division> database backups"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Post-handover+tasks#Posthandovertasks-MovepipelinedirectoriestoNFS",
+            "summary": "Move pipeline directories to NFS"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "Update the jira_recurrent_tickets.json with any changes to the release process or tasks that has taken during the current release",
             "summary": "Update conf/<division>/jira_recurrent_tickets.json"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "Clean up any <division> database backups that are no longer needed",
-            "summary": "Clean up unneeded <division> database backups"
          }
       ],
-      "labels": ["Merge_anchor"],
-      "summary": "<Division> Release <version> Database merge and handover"
+      "summary": "<Division> Release <version> Post-handover tasks"
    },
    {
       "assignee": "<RelCo>",
