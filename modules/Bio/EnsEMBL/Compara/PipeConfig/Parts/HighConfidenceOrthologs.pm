@@ -142,6 +142,7 @@ sub pipeline_analyses_high_confidence {
                 replace      => 0,
             },
             -hive_capacity   => $self->o('import_homologies_capacity'),
+            -rc_name        => '1Gb_24_hour_job',
             -max_retry_count => 0,
             -flow_into       => {
                 -1 => [ 'import_homology_table_himem' ],

@@ -3120,7 +3120,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -priority       => -10,
-            -rc_name        => '1Gb_24_hour_job',       
+            -rc_name        => '1Gb_24_hour_job', 
             -flow_into      => {
                 1   => [ 'final_tree_steps' ],
                 -1  => 'ortho_tree_himem',
@@ -3334,7 +3334,7 @@ sub core_pipeline_analyses {
                 'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
-            -rc_name        => '1Gb_1_hour_job',
+            -rc_name        => '1Gb_24_hour_job',
             -flow_into      => {
                 -1 => [ 'panther_paralogs_himem', ],
                 3 => [ 'panther_paralogs' ],
@@ -3532,6 +3532,7 @@ sub core_pipeline_analyses {
                 'output_file'   => '#dump_dir#/snapshot_3_after_tree_building.sql.gz',
             },
             -hive_capacity => 9, # this prevents too many competing `dump_per_mlss_homologies_tsv` jobs being spawned
+            -rc_name        => '1Gb_24_hour_job',
         },
 
         {   -logic_name => 'rib_fire_cafe',
