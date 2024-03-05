@@ -500,7 +500,6 @@ try{
         $nh = process_nh_get($server."/cafe/genetree/id/$gene_tree_id?content-type=text/x-nh;nh_format=simple".($extra_params ? ";$extra_params" : ''));
         ok(scalar $nh->get_leaf_nodes, "check cafe tree nh simple format validity");
 
-        
         print "\nTesting GET Cafe tree by member\/id\/\:species\/\:id \n\n";
 
         $ext = "/cafe/genetree/member/id/$member_species/$gene_member_id";
