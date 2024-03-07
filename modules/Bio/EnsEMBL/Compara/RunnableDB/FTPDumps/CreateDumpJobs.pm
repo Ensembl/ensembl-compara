@@ -75,7 +75,9 @@ sub fetch_input {
 	} else {
 		@release_mlsses = @{ $mlssa->fetch_all };
 		foreach my $mlss (@release_mlsses) {
-                    if (($mlss->first_release == $curr_release) || $mlss->has_tag("rerun_in_${curr_release}")) {
+                    if (($mlss->first_release == $curr_release)
+                            || $mlss->has_tag("patched_in_${curr_release}")
+                            || $mlss->has_tag("rerun_in_${curr_release}")) {
                         $mlss_id_to_dump{$mlss->dbID} = 1;
                     }
                 }
@@ -131,12 +133,6 @@ sub fetch_input {
 		$all_dump_jobs{DumpSpeciesTrees}        = $self->_dump_speciestree_job; # doesn't require mlsses
 		$all_dump_jobs{DumpAncestralAlleles}    = $self->_dump_anc_allele_jobs if $self->param('dump_ancestral_alleles'); 
 	}
-	
-	if ( !$mlss_ids && $self->param('lastz_patch_dbs') ) {
-		my ( $lastz_patch_jobs, $copy_jobs_no_patches ) = $self->_add_lastz_patches( \@copy_jobs );
-		$all_dump_jobs{DumpMultiAlignPatches} = $lastz_patch_jobs;
-		@copy_jobs = @$copy_jobs_no_patches;
-	}
 
 	$self->param('dump_jobs', \%all_dump_jobs);
 	@copy_jobs = sort { $a <=> $b } @copy_jobs;
@@ -155,8 +151,6 @@ sub write_output {
 	$self->dataflow_output_id( $dump_jobs->{DumpConservationScores},  4 ) if $dump_jobs->{DumpConservationScores};
 	$self->dataflow_output_id( $dump_jobs->{DumpSpeciesTrees}, 5 ) if $dump_jobs->{DumpSpeciesTrees};
 	$self->dataflow_output_id( $dump_jobs->{DumpAncestralAlleles}, 6 ) if $dump_jobs->{DumpAncestralAlleles};
-
-	$self->dataflow_output_id( $dump_jobs->{DumpMultiAlignPatches}, 7 ) if ( $dump_jobs->{DumpMultiAlignPatches} && $self->param('lastz_patch_dbs'));
 
 	return 1 unless ( $self->param_required('reuse_prev_rel') );
 
@@ -286,32 +280,6 @@ sub _member_type_clusterset_from_mlss {
 	$clusterset_id =~ s/collection-//;
 
 	return ( $member_type, $clusterset_id );
-}
-
-sub _add_lastz_patches {
-	my ( $self, $copy_jobs ) = @_;
-
-	my (@patch_dump_jobs, %pruned_copy_jobs);
-	foreach my $patch_db ( @{$self->param('lastz_patch_dbs')} ) {
-		my $patch_mlss_ids = $self->_find_mlsses_with_alignment( $patch_db );
-		foreach my $mlss_id ( @$patch_mlss_ids ) {
-			my %this_job = %{$self->param('default_dump_options')->{DumpMultiAlign}};
-			$this_job{compara_db} = $patch_db;
-			$this_job{mlss_id} = $mlss_id->[0];
-			$this_job{format} = 'maf'; # don't add make_tar_archive - will be adding to dir and tarring later
-			push( @patch_dump_jobs, \%this_job );
-		}
-
-		# remove MLSSes from copy jobs if adding patches
-		# don't want to copy directly from prev FTP - need to top up the tar.gz first
-		my %patch_mlss_hash = map { $_ => 1 } @$patch_mlss_ids;
-		foreach my $copy_mlss_id ( @$copy_jobs ) {
-			$pruned_copy_jobs{$copy_mlss_id} = 1 unless $patch_mlss_hash{$copy_mlss_id};
-		}
-	}
-
-	my @new_copy_mlsses = keys %pruned_copy_jobs;
-	return ( \@patch_dump_jobs, \@new_copy_mlsses );	
 }
 
 sub _find_mlsses_with_alignment {

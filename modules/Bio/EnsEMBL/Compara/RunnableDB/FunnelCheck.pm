@@ -30,6 +30,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck;
 use strict;
 use warnings;
 
+use List::Util qw(min);
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -52,9 +54,29 @@ sub run {
         $self->die_no_retry("cannot check semaphore of job - job_id undefined");
     }
 
-    my $sql = q/
+    my $helper = $self->db->dbc->sql_helper;
+
+    my $factory_sql = q/
         SELECT
-            job.job_id AS job_id
+            factory_job.status IN ('DONE', 'PASSED_ON')
+        FROM
+            job AS funnel_job
+        JOIN
+            job AS factory_job ON factory_job.job_id = funnel_job.prev_job_id
+        WHERE
+            funnel_job.job_id = ?
+    /;
+
+    my $factory_job_resolved = $helper->execute_single_result(-SQL => $factory_sql, -PARAMS => [$job_id]);
+
+    if (!$factory_job_resolved) {
+        $self->die_no_retry("funnel check failure - unresolved factory job");
+    }
+
+    my $fan_sql = q/
+        SELECT
+            job.job_id AS job_id,
+            job.status AS status
         FROM
             job
         JOIN
@@ -67,15 +89,47 @@ sub run {
             job.status NOT IN ('DONE', 'PASSED_ON')
     /;
 
-    my $helper             = $self->db->dbc->sql_helper;
-    my $result             = $helper->execute_simple(-SQL => $sql, -PARAMS => [$job_id]);
-    my @unresolved_job_ids = @{$result};
+    # We may need to retry to ensure all fan jobs are resolved.
+    my $max_retry_count = $self->input_job->analysis->max_retry_count // 3;
+
+    my @unresolved_job_ids;
+    my $time_before_next_retry;
+    foreach my $attempt_index (0 .. $max_retry_count) {
+
+        my $results = $helper->execute(-SQL => $fan_sql, -PARAMS => [$job_id], -USE_HASHREFS => 1);
+
+        @unresolved_job_ids = map { $_->{'job_id'} } @$results;
+        if (scalar(@unresolved_job_ids) == 0) {
+            last;
+        } else {
+            my @failed_job_ids = map { $_->{'job_id'} } grep { $_->{'status'} eq 'FAILED' } @$results;
+            if (scalar(@failed_job_ids) > 0) {
+                $self->die_no_retry(
+                    sprintf(
+                        "apparent semaphore failure - %d failed fan jobs (e.g. %s)",
+                        scalar(@failed_job_ids), join(', ', @failed_job_ids[0 .. 2])
+                    )
+                );
+            }
+        }
+
+        if ($attempt_index < $max_retry_count) {
+            $time_before_next_retry = min(30 * (2 ** $attempt_index), 3600);
+            $self->warning(
+                sprintf(
+                    "%d unresolved fan jobs found on attempt %d, retrying in %d seconds",
+                    scalar(@unresolved_job_ids), ($attempt_index + 1), $time_before_next_retry
+                )
+            );
+            sleep($time_before_next_retry);
+        }
+    }
 
     if (scalar(@unresolved_job_ids) > 0) {
         $self->die_no_retry(
             sprintf(
-                "apparent semaphore failure - %d unresolved fan jobs: %s",
-                scalar(@unresolved_job_ids), join(', ', @unresolved_job_ids)
+                "apparent semaphore failure - %d unresolved fan jobs: (e.g. %s)",
+                scalar(@unresolved_job_ids), join(', ', @unresolved_job_ids[0 .. 2])
             )
         );
     }
