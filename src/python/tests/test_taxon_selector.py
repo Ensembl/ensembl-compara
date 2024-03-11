@@ -60,8 +60,8 @@ class TestTaxonomySelection:
             db: Generator of unit test database (fixture).
         """
         type(self).dbc = db.dbc
-        # pylint: disable=no-member # type: ignore[attr-defined]
-        type(self).dir = pytest.files_dir
+        # pylint: disable=no-member
+        type(self).dir = pytest.files_dir # type: ignore[attr-defined]
 
     @pytest.mark.parametrize(
         "subdir, exp_out, expectation",
