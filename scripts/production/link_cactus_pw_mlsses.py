@@ -18,118 +18,19 @@
 
 import argparse
 from collections import defaultdict
-from collections.abc import MutableMapping, Set
 from itertools import combinations
 import re
 import sys
+from typing import DefaultDict, Dict, FrozenSet, List, Sequence
 import warnings
 
+import sqlalchemy
 from sqlalchemy import create_engine, text
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--url",
-        help="URL of Compara database in which pairwise Cactus MLSSes are to be linked.",
-    )
-    parser.add_argument(
-        "--release",
-        type=int,
-        required=True,
-        help="Current Ensembl release.",
-    )
-    parser.add_argument(
-        "--on-missing-ref-mlss",
-        default="warn",
-        choices=["raise", "warn"],
-        help="What to do if a pairwise Cactus MLSS has no suitable reference MLSS.",
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Print how pairwise Cactus MLSSes would be linked, but do not update the database.",
-    )
-
-    args = parser.parse_args()
-
-    engine = create_engine(args.url)
-
-    cactus_pw_mlss_query = text(
-        """\
-            SELECT
-                method_link_species_set_id
-            FROM
-                method_link_species_set
-            JOIN
-                method_link USING(method_link_id)
-            WHERE
-                method_link.type = 'CACTUS_HAL_PW'
-            AND
-                (first_release IS NOT NULL AND first_release <= :release)
-            AND
-                (last_release IS NULL OR last_release >= :release)
-            ORDER BY
-                method_link_species_set_id
-        """
-    )
-    cactus_pw_mlss_ids = []
-    with engine.connect() as conn:
-        for (mlss_id,) in conn.execute(cactus_pw_mlss_query, {"release": args.release}):
-            cactus_pw_mlss_ids.append(mlss_id)
-
-    if not cactus_pw_mlss_ids:
-        print("No pairwise Cactus MLSSes found; exiting")
-        sys.exit(0)
-
-    cactus_msa_mlss_query = text(
-        """\
-            SELECT
-                method_link_species_set_id,
-                url
-            FROM
-                method_link_species_set
-            JOIN
-                method_link USING(method_link_id)
-            WHERE
-                method_link.type = 'CACTUS_HAL'
-            AND
-                (first_release IS NOT NULL AND first_release <= :release)
-            AND
-                (last_release IS NULL OR last_release >= :release)
-            ORDER BY
-                method_link_species_set_id
-        """
-    )
-    cactus_msa_mlss_to_url = {}
-    with engine.connect() as conn:
-        for mlss_id, mlss_url in conn.execute(cactus_msa_mlss_query, {"release": args.release}):
-            cactus_msa_mlss_to_url[mlss_id] = mlss_url
-
-    cactus_msa_mlss_ids = sorted(cactus_msa_mlss_to_url, reverse=True)
-
-    mlss_gdb_query = text(
-        """\
-            SELECT
-                genome_db_id
-            FROM
-                method_link_species_set
-            JOIN
-                species_set USING(species_set_id)
-            WHERE
-                method_link_species_set_id = :mlss_id
-        """
-    )
-    mlss_to_size = {}
-    mlss_to_gdb_set: MutableMapping[int, Set] = {}
-    with engine.connect() as conn:
-        for mlss_id in cactus_msa_mlss_ids + cactus_pw_mlss_ids:
-            gdb_set = set()
-            for (genome_db_id,) in conn.execute(mlss_gdb_query, {"mlss_id": mlss_id}):
-                gdb_set.add(genome_db_id)
-            mlss_to_gdb_set[mlss_id] = frozenset(gdb_set)
-            mlss_to_size[mlss_id] = len(gdb_set)
-
+def _calculate_pairwise_genomic_coverage(
+    connection: sqlalchemy.engine.Connection, msa_mlss_ids: Sequence[int], mlss_to_gdbs: Dict[int, FrozenSet]
+) -> Dict:
     pw_cov_query = text(
         """\
             SELECT
@@ -151,94 +52,127 @@ if __name__ == "__main__":
 
     pw_cov_tag_re = re.compile("genome_coverage_(?P<gdb_id>[0-9]+)")
 
-    mlss_pw_cov_info: MutableMapping[int, MutableMapping[Set, float]] = {}
-    with engine.connect() as conn:
-        for mlss_id in cactus_msa_mlss_ids:
-            mlss_pw_cov_info[mlss_id] = {}
-            gdb_to_length = {}
-            gdb_to_pw_cov: MutableMapping[int, MutableMapping[int, int]] = defaultdict(
-                lambda: defaultdict(int)
+    pairwise_coverage: Dict = {}
+
+    for mlss_id in msa_mlss_ids:
+        pairwise_coverage[mlss_id] = {}
+        gdb_to_length = {}
+        genome_db_to_pairwise_coverage: DefaultDict = defaultdict(lambda: defaultdict(int))
+        for gdb1_id, tag, value in connection.execute(pw_cov_query, {"mlss_id": mlss_id}):
+            if match := pw_cov_tag_re.fullmatch(tag):
+                gdb2_id = int(match["gdb_id"])
+                genome_db_to_pairwise_coverage[gdb1_id][gdb2_id] = float(value)
+            else:  # tag == 'total_genome_length'
+                gdb_to_length[gdb1_id] = float(value)
+        gdb_to_pw_cov = {k: dict(x) for k, x in genome_db_to_pairwise_coverage.items()}
+        for gdb1_id, gdb2_id in combinations(mlss_to_gdbs[mlss_id], 2):
+            try:
+                pw_cov_on_gdb1 = gdb_to_pw_cov[gdb1_id][gdb2_id]
+                pw_cov_on_gdb2 = gdb_to_pw_cov[gdb2_id][gdb1_id]
+                gdb1_genome_length = gdb_to_length[gdb1_id]
+                gdb2_genome_length = gdb_to_length[gdb2_id]
+            except KeyError:  # any key error here would prevent calculation of pairwise coverage
+                continue
+
+            gdb_pair = frozenset([gdb1_id, gdb2_id])
+            pairwise_coverage[mlss_id][gdb_pair] = (pw_cov_on_gdb1 + pw_cov_on_gdb2) / (
+                gdb1_genome_length + gdb2_genome_length
             )
-            for gdb1_id, tag, value in conn.execute(pw_cov_query, {"mlss_id": mlss_id}):
-                if match := pw_cov_tag_re.fullmatch(tag):
-                    gdb2_id = int(match["gdb_id"])
-                    gdb_to_pw_cov[gdb1_id][gdb2_id] = int(value)
-                else:  # tag == 'total_genome_length'
-                    gdb_to_length[gdb1_id] = int(value)
-            gdb_to_pw_cov = {k: dict(x) for k, x in gdb_to_pw_cov.items()}
-            for gdb1_id, gdb2_id in combinations(mlss_to_gdb_set[mlss_id], 2):
-                try:
-                    pw_cov_on_gdb1 = gdb_to_pw_cov[gdb1_id][gdb2_id]
-                    pw_cov_on_gdb2 = gdb_to_pw_cov[gdb2_id][gdb1_id]
-                    gdb1_genome_length = gdb_to_length[gdb1_id]
-                    gdb2_genome_length = gdb_to_length[gdb2_id]
-                except KeyError:  # any key error here would prevent calculation of pairwise coverage
-                    continue
 
-                gdb_pair: Set = frozenset([gdb1_id, gdb2_id])
-                mlss_pw_cov_info[mlss_id][gdb_pair] = (pw_cov_on_gdb1 + pw_cov_on_gdb2) / (
-                    gdb2_genome_length + gdb2_genome_length
-                )
+    return pairwise_coverage
 
-    pw_to_ref_mlss = {}
-    ref_mlss_reason = {}
-    for pw_mlss_id in cactus_pw_mlss_ids:
-        cand_ref_mlss_ids = [
-            msa_mlss_id
-            for msa_mlss_id in cactus_msa_mlss_ids
-            if mlss_to_gdb_set[pw_mlss_id] <= mlss_to_gdb_set[msa_mlss_id]
-        ]
 
-        if len(cand_ref_mlss_ids) == 0:
-            msg = f"no candidate reference MLSS found for pairwise Cactus MLSS {pw_mlss_id}"
-            if args.on_missing_ref_mlss == "warn":
-                warnings.warn(msg)
-                continue
-            raise RuntimeError(msg)  # args.on_missing_ref_mlss == "raise"
+def _fetch_all_current_mlsses_by_method_link_type(
+    connection: sqlalchemy.engine.Connection, method_link_type: str, current_release: int
+) -> List[int]:
+    query = text(
+        """\
+            SELECT
+                method_link_species_set_id
+            FROM
+                method_link_species_set
+            JOIN
+                method_link USING(method_link_id)
+            WHERE
+                method_link.type = :method_link_type
+            AND
+                (first_release IS NOT NULL AND first_release <= :release)
+            AND
+                (last_release IS NULL OR last_release >= :release)
+            ORDER BY
+                method_link_species_set_id
+        """
+    )
 
-        if len(cand_ref_mlss_ids) == 1:
-            ref_mlss_reason[pw_mlss_id] = "a single candidate"
-            pw_to_ref_mlss[pw_mlss_id] = cand_ref_mlss_ids[0]
-            continue
+    mlss_ids = []
+    params = {"method_link_type": method_link_type, "release": current_release}
+    for (mlss_id,) in connection.execute(query, params):
+        mlss_ids.append(mlss_id)
 
-        gdb_pair = mlss_to_gdb_set[pw_mlss_id]
-        if all(
-            mlss_id in mlss_pw_cov_info and gdb_pair in mlss_pw_cov_info[mlss_id]
-            for mlss_id in cand_ref_mlss_ids
-        ):
-            max_pw_cov = max(mlss_pw_cov_info[mlss_id][gdb_pair] for mlss_id in cand_ref_mlss_ids)
-            cand_ref_mlss_ids = [
-                mlss_id for mlss_id in cand_ref_mlss_ids if mlss_pw_cov_info[mlss_id][gdb_pair] == max_pw_cov
-            ]
-            if len(cand_ref_mlss_ids) == 1:
-                ref_mlss_reason[pw_mlss_id] = "pairwise coverage"
-                pw_to_ref_mlss[pw_mlss_id] = cand_ref_mlss_ids[0]
-                continue
+    return mlss_ids
 
-        min_mlss_size = min(mlss_to_size[mlss_id] for mlss_id in cand_ref_mlss_ids)
-        cand_ref_mlss_ids = [
-            mlss_id for mlss_id in cand_ref_mlss_ids if mlss_to_size[mlss_id] == min_mlss_size
-        ]
 
-        if len(cand_ref_mlss_ids) == 1:
-            ref_mlss_reason[pw_mlss_id] = "MLSS size"
-            pw_to_ref_mlss[pw_mlss_id] = cand_ref_mlss_ids[0]
-        else:
-            ref_mlss_reason[pw_mlss_id] = "MLSS ID"
-            pw_to_ref_mlss[pw_mlss_id] = max(cand_ref_mlss_ids)
+def _fetch_mlss_gdb_map(connection: sqlalchemy.engine.Connection, mlss_ids: Sequence[int]) -> Dict:
+    query = text(
+        """\
+            SELECT
+                genome_db_id
+            FROM
+                method_link_species_set
+            JOIN
+                species_set USING(species_set_id)
+            WHERE
+                method_link_species_set_id = :mlss_id
+        """
+    )
 
-    tag_insert_statements = text(
+    mlss_gdb_map = {}
+    for mlss_id in mlss_ids:
+        gdb_set = set()
+        for (genome_db_id,) in connection.execute(query, {"mlss_id": mlss_id}):
+            gdb_set.add(genome_db_id)
+        mlss_gdb_map[mlss_id] = frozenset(gdb_set)
+
+    return mlss_gdb_map
+
+
+def _get_original_url(connection: sqlalchemy.engine.Connection, mlss_id: int) -> str:
+    mlss_url_query = text(
+        """\
+            SELECT
+                url
+            FROM
+                method_link_species_set
+            JOIN
+                method_link USING(method_link_id)
+            WHERE
+                method_link_species_set_id = :mlss_id
+        """
+    )
+
+    return connection.execute(mlss_url_query, {"mlss_id": mlss_id}).scalar()
+
+
+def _link_cactus_pairwise_mlsses(
+    connection: sqlalchemy.engine.Connection, reference_mlsses: Dict, mlss_to_url: Dict, dry_run: bool = False
+) -> None:
+    tag_delete_statement = text(
         """\
             DELETE FROM
                 method_link_species_set_tag
             WHERE
                 method_link_species_set_id = :pw_mlss_id
             AND
-                tag = 'alt_hal_mlss';
+                tag = 'alt_hal_mlss'
+        """
+    )
+
+    tag_insert_statement = text(
+        """\
             INSERT INTO
                 method_link_species_set_tag (method_link_species_set_id, tag, value)
             VALUES
-                (:pw_mlss_id, 'alt_hal_mlss', :ref_mlss_id);
+                (:pw_mlss_id, 'alt_hal_mlss', :ref_mlss_id)
         """
     )
 
@@ -249,37 +183,168 @@ if __name__ == "__main__":
             SET
                 url = :mlss_url
             WHERE
-                method_link_species_set_id = :mlss_id
+                method_link_species_set_id = :mlss_id;
         """
     )
 
-    if args.dry_run:
-        num_singletons = 0
-        for pw_mlss_id, ref_mlss_id in pw_to_ref_mlss.items():
-            if ref_mlss_reason[pw_mlss_id] == "a single candidate":
-                num_singletons += 1
+    num_singletons = 0
+    action = "Would link" if dry_run else "Linking"
+    for pw_mlss_id, ref_mlss_info in reference_mlsses.items():
+        ref_mlss_id = ref_mlss_info["ref_mlss_id"]
+        reason = ref_mlss_info["reason"]
+
+        if reason == "a single candidate":
+            num_singletons += 1
+        else:
+            print(
+                f"{action} pairwise Cactus MLSS {pw_mlss_id} to reference MLSS {ref_mlss_id}"
+                f" on the basis of {reason} ..."
+            )
+
+        if dry_run:
+            continue
+
+        connection.execute(
+            tag_delete_statement,
+            {"pw_mlss_id": pw_mlss_id},
+        )
+        connection.execute(
+            tag_insert_statement,
+            {"pw_mlss_id": pw_mlss_id, "ref_mlss_id": ref_mlss_id},
+        )
+        connection.execute(
+            url_update_statement,
+            {"mlss_id": pw_mlss_id, "mlss_url": mlss_to_url[ref_mlss_id]},
+        )
+
+    if num_singletons > 0:
+        quantifier = "all" if num_singletons == len(reference_mlsses) else "remaining"
+        print(
+            f"{action} {quantifier} {num_singletons} pairwise Cactus MLSSes"
+            f" to their single available reference MLSS ..."
+        )
+
+
+def _select_reference_mlsses(
+    pairwise_mlss_ids: Sequence[int],
+    msa_mlss_ids: Sequence[int],
+    mlss_to_gdbs: Dict,
+    pairwise_coverage: Dict,
+    on_missing_ref_mlss: str = "raise",
+) -> Dict:
+    reference_mlsses = {}
+    for pw_mlss_id in pairwise_mlss_ids:
+        cand_ref_mlss_ids = [
+            msa_mlss_id
+            for msa_mlss_id in msa_mlss_ids
+            if mlss_to_gdbs[pw_mlss_id] <= mlss_to_gdbs[msa_mlss_id]
+        ]
+
+        if len(cand_ref_mlss_ids) == 0:
+            msg = f"no candidate reference MLSS found for pairwise Cactus MLSS {pw_mlss_id}"
+            if on_missing_ref_mlss == "warn":
+                warnings.warn(msg)
                 continue
-            print(
-                f"Would link pairwise Cactus MLSS {pw_mlss_id} to reference MLSS {ref_mlss_id}"
-                f" on the basis of {ref_mlss_reason[pw_mlss_id]} ..."
-            )
-        if num_singletons > 0:
-            print(
-                f"Would link the remaining {num_singletons} pairwise Cactus MLSSes"
-                f" to their single available reference MLSS ..."
-            )
-    else:
-        with engine.connect() as conn:
-            for pw_mlss_id, ref_mlss_id in pw_to_ref_mlss.items():
-                print(
-                    f"Linking pairwise Cactus MLSS {pw_mlss_id} to reference MLSS {ref_mlss_id}"
-                    f" on the basis of {ref_mlss_reason[pw_mlss_id]} ..."
-                )
-                conn.execute(
-                    tag_insert_statements,
-                    {"pw_mlss_id": pw_mlss_id, "ref_mlss_id": ref_mlss_id},
-                )
-                conn.execute(
-                    url_update_statement,
-                    {"mlss_id": pw_mlss_id, "mlss_url": cactus_msa_mlss_to_url[ref_mlss_id]},
-                )
+            if on_missing_ref_mlss == "raise":
+                raise RuntimeError(msg)
+            raise RuntimeError(f"'on_missing_ref_mlss' has unsupported value : {on_missing_ref_mlss}")
+
+        if len(cand_ref_mlss_ids) == 1:
+            reference_mlsses[pw_mlss_id] = {
+                "ref_mlss_id": cand_ref_mlss_ids[0],
+                "reason": "a single candidate",
+            }
+            continue
+
+        gdb_pair = mlss_to_gdbs[pw_mlss_id]
+        if all(
+            mlss_id in pairwise_coverage and gdb_pair in pairwise_coverage[mlss_id]
+            for mlss_id in cand_ref_mlss_ids
+        ):
+            max_pw_cov = max(pairwise_coverage[mlss_id][gdb_pair] for mlss_id in cand_ref_mlss_ids)
+            cand_ref_mlss_ids = [
+                mlss_id for mlss_id in cand_ref_mlss_ids if pairwise_coverage[mlss_id][gdb_pair] == max_pw_cov
+            ]
+            if len(cand_ref_mlss_ids) == 1:
+                reference_mlsses[pw_mlss_id] = {
+                    "ref_mlss_id": cand_ref_mlss_ids[0],
+                    "reason": "pairwise coverage",
+                }
+                continue
+
+        min_mlss_size = min(len(mlss_to_gdbs[mlss_id]) for mlss_id in cand_ref_mlss_ids)
+        cand_ref_mlss_ids = [
+            mlss_id for mlss_id in cand_ref_mlss_ids if len(mlss_to_gdbs[mlss_id]) == min_mlss_size
+        ]
+
+        if len(cand_ref_mlss_ids) == 1:
+            reference_mlsses[pw_mlss_id] = {
+                "ref_mlss_id": cand_ref_mlss_ids[0],
+                "reason": "MLSS size",
+            }
+        else:
+            reference_mlsses[pw_mlss_id] = {
+                "ref_mlss_id": max(cand_ref_mlss_ids),
+                "reason": "MLSS ID",
+            }
+
+    return reference_mlsses
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--url",
+        help="URL of Compara database in which pairwise Cactus MLSSes are to be linked.",
+    )
+    parser.add_argument(
+        "--release",
+        type=int,
+        required=True,
+        help="Current Ensembl release.",
+    )
+    parser.add_argument(
+        "--on-missing-ref-mlss",
+        default="raise",
+        choices=["raise", "warn"],
+        help="What to do if a pairwise Cactus MLSS has no suitable reference MLSS.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print how pairwise Cactus MLSSes would be linked, but do not update the database.",
+    )
+
+    args = parser.parse_args()
+
+    engine = create_engine(args.url)
+
+    with engine.connect() as conn:
+        cactus_pw_mlss_ids = _fetch_all_current_mlsses_by_method_link_type(
+            conn, "CACTUS_HAL_PW", args.release
+        )
+
+        if not cactus_pw_mlss_ids:
+            print("No pairwise Cactus MLSSes found; exiting")
+            sys.exit(0)
+
+        cactus_msa_mlss_ids = _fetch_all_current_mlsses_by_method_link_type(conn, "CACTUS_HAL", args.release)
+
+        cactus_msa_mlss_to_url = {
+            mlss_id: _get_original_url(conn, mlss_id) for mlss_id in cactus_msa_mlss_ids
+        }
+
+        mlss_to_gdb_set = _fetch_mlss_gdb_map(conn, cactus_msa_mlss_ids + cactus_pw_mlss_ids)
+
+        mlss_pw_cov_info = _calculate_pairwise_genomic_coverage(conn, cactus_msa_mlss_ids, mlss_to_gdb_set)
+
+        pw_to_ref_mlss_info = _select_reference_mlsses(
+            cactus_pw_mlss_ids,
+            cactus_msa_mlss_ids,
+            mlss_to_gdb_set,
+            mlss_pw_cov_info,
+            on_missing_ref_mlss=args.on_missing_ref_mlss,
+        )
+
+    with engine.begin() as conn:
+        _link_cactus_pairwise_mlsses(conn, pw_to_ref_mlss_info, cactus_msa_mlss_to_url, dry_run=args.dry_run)
