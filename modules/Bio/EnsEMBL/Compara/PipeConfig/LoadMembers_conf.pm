@@ -518,7 +518,7 @@ sub core_pipeline_analyses {
         {   -logic_name      => 'datachecks',
             -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RunDataChecks',
             -parameters      => {
-                'datacheck_names'  => ['BlankEnums', 'CheckSequenceTable'],
+                'datacheck_names'  => ['BlankEnums', 'CanonicalMemberCore', 'CheckSequenceTable'],
                 'work_dir'         => $self->o('work_dir'),
                 'history_file'     => '#work_dir#/datacheck.compara_load_members.history.json',
                 'output_file'      => '#work_dir#/datacheck.compara_load_members.tap.txt',
