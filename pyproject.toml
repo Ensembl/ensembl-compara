@@ -110,3 +110,6 @@ disable = [
     "unspecified-encoding",
     "wildcard-import"
 ]
+extension-pkg-allow-list = [
+    "lxml"
+]
