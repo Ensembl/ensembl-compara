@@ -132,6 +132,12 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
+            "description": "Ensure that the division production_reg_conf.pl is up to date on GitHub",
+            "summary": "Update conf/<division>/production_reg_conf.pl"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
             "description": "Update the jira_recurrent_tickets.json with any changes to the release process or tasks that has taken during the current release",
             "summary": "Update conf/<division>/jira_recurrent_tickets.json"
          }
