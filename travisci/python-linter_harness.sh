@@ -48,7 +48,7 @@ run_pylint() {
   # Cleanup
   rm "$pylint_output_file" "$pylint_errors"
 
-  return $result
+  return "$result"
 }
 
 # Function to run mypy, excluding certain files and paths, and capturing the outcome
