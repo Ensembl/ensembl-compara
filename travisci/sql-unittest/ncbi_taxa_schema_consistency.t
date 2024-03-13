@@ -17,12 +17,28 @@
 use strict;
 use warnings;
 
-use File::Basename qw(dirname);
 use File::Spec::Functions qw(catfile);
+use HTTP::Tiny;
+use JSON qw(decode_json);
 use Test::More;
 
+use Bio::EnsEMBL::ApiVersion qw(software_version);
 use Bio::EnsEMBL::Compara::Utils::Test;
 
+my $compara_branch = Bio::EnsEMBL::Compara::Utils::Test::get_repository_branch();
+unless ($compara_branch =~ m|^release/[0-9]+$|) {
+    plan skip_all => 'NCBI schema consistency test is only run on Ensembl release branches';
+}
+
+my $response = HTTP::Tiny->new->get('https://api.github.com/repos/Ensembl/ensembl-compara');
+if ($response->{'success'}) {
+    my $content = decode_json($response->{'content'});
+    if ($content->{'default_branch'} =~ m|^release/(?<live_version>[0-9]+)$|) {
+        if (software_version() <= $+{'live_version'}) {
+            plan skip_all => 'NCBI schema consistency test is not run on an Ensembl version after it has been released';
+        }
+    }
+}
 
 ## Check that the NCBI Taxonomy tables of the Compara schema are in sync with those of the Ensembl Taxonomy schema
 

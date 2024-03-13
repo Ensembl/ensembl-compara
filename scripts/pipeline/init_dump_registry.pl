@@ -85,6 +85,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::IO qw(slurp spurt);
 use Bio::EnsEMBL::Compara::Utils::Registry;
 use Bio::EnsEMBL::Compara::Utils::RunCommand;
+use Bio::EnsEMBL::Compara::Utils::Test;
 
 
 sub get_adaptor_init_text {
@@ -102,15 +103,6 @@ sub get_adaptor_init_text {
     $text .= ");\n\n";
 
     return $text;
-}
-
-sub get_compara_branch {
-    my $cmd_args = ["git", "-C", dirname(__FILE__), "branch", "--show-current"];
-    my $cmd_opts = { die_on_failure => 1 };
-    my $run_cmd = Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd_args, $cmd_opts);
-    my $compara_branch = $run_cmd->out;
-    chomp $compara_branch;
-    return $compara_branch;
 }
 
 sub get_host_name {
@@ -186,7 +178,7 @@ if ($software_version != $release) {
     throw("Ensembl software version ($software_version) does not match Ensembl release ($release)");
 }
 
-my $compara_branch = get_compara_branch();
+my $compara_branch = Bio::EnsEMBL::Compara::Utils::Test::get_repository_branch();
 my $branch_version;
 if ($compara_branch =~ m|^release/(?<ensembl_version>[0-9]+)$|) {
     $branch_version = $+{ensembl_version};
