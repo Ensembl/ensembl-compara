@@ -39,7 +39,6 @@ run_pylint() {
   grep -E '^.+:[0-9]+:[0-9]+: [A-Z]+[0-9]+: .+ (\(.*\))?$' "$pylint_output_file" >"$pylint_errors"
 
   # Return 1 if errors were found, otherwise 0
-  ! [ -s "$pylint_errors" ]
   local result=$(
     ! [ -s "$pylint_errors" ]
     echo $?
