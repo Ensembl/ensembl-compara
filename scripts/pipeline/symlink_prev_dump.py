@@ -113,7 +113,9 @@ if __name__ == "__main__":
             if prev_mlss_file_path.is_symlink():
                 prev_symlink_target = Path(os.readlink(prev_mlss_file_path))
                 if not prev_symlink_target.is_absolute():
-                    new_symlink_target = Path(os.path.normpath(new_symlink_target.parent / prev_symlink_target))
+                    new_symlink_target = Path(
+                        os.path.normpath(new_symlink_target.parent / prev_symlink_target)
+                    )
 
             curr_mlss_file_path = curr_ftp_dump_root / root_to_mlss_file_path
             symlink_pairs.append((new_symlink_target, curr_mlss_file_path))
