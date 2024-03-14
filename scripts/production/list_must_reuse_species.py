@@ -78,7 +78,7 @@ if __name__ == "__main__":
     reused_collection_names = sorted(itertools.chain.from_iterable(reused_collection_conf.values()))
 
     with open(args.mlss_conf_file) as in_file_obj:
-        xml_tree = etree.parse(in_file_obj)
+        xml_tree = etree.parse(in_file_obj)  # pylint: disable=c-extension-no-member
 
     xml_root = xml_tree.getroot()
 
