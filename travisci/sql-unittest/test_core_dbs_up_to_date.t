@@ -26,18 +26,29 @@ use Bio::EnsEMBL::Compara::Utils::Test;
 
 
 my $compara_branch = Bio::EnsEMBL::Compara::Utils::Test::get_repository_branch();
-unless ($compara_branch =~ m|^release/[0-9]+$|) {
-    plan skip_all => 'test core database schema update check is only run on Ensembl release branches';
-}
+fail('Can get active branch of Compara repo') unless defined $compara_branch;
 
+my $software_version = software_version();
+fail('Can get local Ensembl software version') unless defined $software_version;
+
+my $live_version;
 my $response = HTTP::Tiny->new->get('https://api.github.com/repos/Ensembl/ensembl-compara');
 if ($response->{'success'}) {
     my $content = decode_json($response->{'content'});
-    if ($content->{'default_branch'} =~ m|^release/(?<live_version>[0-9]+)$|) {
-        if (software_version() <= $+{'live_version'}) {
-            plan skip_all => 'test core database schema update check is not run on an Ensembl version after it has been released';
-        }
+    if (exists $content->{'default_branch'}
+            && $content->{'default_branch'} =~ m|^release/(?<live_version>[0-9]+)$|) {
+        $live_version = $+{'live_version'};
     }
+}
+fail('Can get live Ensembl release version') unless defined $live_version;
+
+
+if (defined $compara_branch && !($compara_branch =~ m|^release/[0-9]+$|)) {
+    plan skip_all => 'test core schema update check is only run on Ensembl release branches';
+}
+
+if (defined $software_version && defined $live_version && $software_version <= $live_version) {
+    plan skip_all => 'test core schema update check is not run on an Ensembl version after it has been released';
 }
 
 
