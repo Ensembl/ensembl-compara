@@ -7,7 +7,8 @@ digraph {
     "Species-tree" -> { "EPOwithExt", "Protein-trees", "Update MSA", "Mercator Pecan" };
     "Merge all LastZ" -> "EPOwithExt";
     "Member loading" -> { "Protein-trees", "ncRNA-trees", "Gene-tree reindexing", "Alt-alleles import" };
-    {"Merge all LastZ", "EPOwithExt", "Update MSA"} -> "Merge all alignments for WGA Orthology QC";
+    { "EPOwithExt", "Update MSA" } -> "Check MSA stats";
+    { "Merge all LastZ", "Check MSA stats" } -> "Merge all alignments for WGA Orthology QC";
     "Merge all alignments for WGA Orthology QC" -> "Protein-trees" [fontsize="8", label="Orthologues\nonly"];
     "Merge all alignments for WGA Orthology QC" -> "ncRNA-trees" [fontsize="8", label="Orthologues\nonly"];
     "LastZ" -> "Merge all LastZ" -> "Synteny";

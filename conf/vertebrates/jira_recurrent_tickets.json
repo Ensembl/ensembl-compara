@@ -202,6 +202,12 @@
          },
          {
             "component": "Production tasks",
+            "description": "Review the stats for each MSA pipeline, and address any issues.",
+            "summary": "Check MSA stats",
+            "name_on_graph": "Check MSA stats"
+         },
+         {
+            "component": "Production tasks",
             "description": "*GitHub*: [ImportAltAlleGroupsAsHomologies_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/ImportAltAlleGroupsAsHomologies_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportAltAlleGroupsAsHomologies_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
             "summary": "Import the Alt-allele groups",
             "name_on_graph": "Alt-alleles import"
