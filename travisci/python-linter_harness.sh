@@ -32,7 +32,7 @@ run_pylint() {
     ! -name "*citest*.py" \
     ! -path "*/citest/*" -print0 |
     xargs -0 pylint --rcfile=pyproject.toml --verbose \
-      --msg-template='{path}:{line}:{column}: {msg_id}: {msg} ({symbol})' |
+      --msg-template='COMPARA_PYLINT_MSG:{path}:{line}:{column}: {msg_id}: {msg} ({symbol})' |
     tee "$pylint_output_file"
 
   # Keep only lines with pylint messages
