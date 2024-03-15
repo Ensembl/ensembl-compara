@@ -36,6 +36,7 @@ run_pylint() {
     tee "$pylint_output_file"
 
   # Return 1 if pylint messages were found, otherwise 0
+  #  -c option counts the number of matches, -m 1 stops after the first match to optimize performance,
   local result=$(grep -c -m 1 -E '^COMPARA_PYLINT_MSG:' "$pylint_output_file")
 
   # Cleanup
