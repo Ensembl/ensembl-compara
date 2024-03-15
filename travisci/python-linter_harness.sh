@@ -57,9 +57,6 @@ run_mypy() {
     \! -name "*citest*.py" \
     \! -path "*/citest/*" -print0 |
     xargs -0 mypy --config-file pyproject.toml --namespace-packages --explicit-package-bases
-
-  # Return the exit status of mypy
-  return $?
 }
 
 # Define Python source locations
