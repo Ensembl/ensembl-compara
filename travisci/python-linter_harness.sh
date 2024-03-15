@@ -24,7 +24,6 @@ export MYPYPATH=$MYPYPATH:src/python/lib
 # Function to run pylint
 run_pylint() {
   local pylint_output_file=$(mktemp)
-  local pylint_errors=$(mktemp)
 
   # Run pylint, excluding specific files and directories
   find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \
@@ -40,7 +39,7 @@ run_pylint() {
   local result=$(grep -c -m 1 -E '^COMPARA_PYLINT_MSG:' "$pylint_output_file")
 
   # Cleanup
-  rm "$pylint_output_file" "$pylint_errors"
+  rm "$pylint_output_file"
 
   return "$result"
 }
