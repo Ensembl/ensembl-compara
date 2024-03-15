@@ -35,14 +35,8 @@ run_pylint() {
       --msg-template='COMPARA_PYLINT_MSG:{path}:{line}:{column}: {msg_id}: {msg} ({symbol})' |
     tee "$pylint_output_file"
 
-  # Keep only lines with pylint messages
-  grep -E '^.+:[0-9]+:[0-9]+: [A-Z]+[0-9]+: .+ (\(.*\))?$' "$pylint_output_file" >"$pylint_errors"
-
-  # Return 1 if errors were found, otherwise 0
-  local result=$(
-    ! [ -s "$pylint_errors" ]
-    echo $?
-  )
+  # Return 1 if pylint messages were found, otherwise 0
+  local result=$(grep -c -m 1 -E '^COMPARA_PYLINT_MSG:' "$pylint_output_file")
 
   # Cleanup
   rm "$pylint_output_file" "$pylint_errors"
