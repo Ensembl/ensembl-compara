@@ -27,9 +27,9 @@ run_pylint() {
 
   # Run pylint, excluding specific files and directories
   find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \
-    ! -name "Ortheus.py" \
-    ! -name "*citest*.py" \
-    ! -path "*/citest/*" -print0 |
+    \! -name "Ortheus.py" \
+    \! -name "*citest*.py" \
+    \! -path "*/citest/*" -print0 |
     xargs -0 pylint --rcfile=pyproject.toml --verbose \
       --msg-template='COMPARA_PYLINT_MSG:{path}:{line}:{column}: {msg_id}: {msg} ({symbol})' |
     tee "$pylint_output_file"
