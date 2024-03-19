@@ -524,6 +524,7 @@ sub core_pipeline_analyses {
                 'output_file'      => '#work_dir#/datacheck.compara_load_members.tap.txt',
                 'failures_fatal'   => 1,
                 'pdbname'          => $self->o('pipeline_name'),
+                'registry_file'    => $self->o('reg_conf'),
                 'dbtype'           => 'compara',
             },
             -max_retry_count => 0,
