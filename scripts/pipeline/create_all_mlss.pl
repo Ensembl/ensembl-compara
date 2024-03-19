@@ -274,6 +274,25 @@ sub make_species_set_from_XML_node {
         next unless $gdb->is_current;
         # Matching GenomeDB by name ensures we draw its genome components from the pool.
         $some_genome_dbs = [grep {$_->name eq $gdb->name} @$pool];
+        # Matching by genome_component allows us to work with an
+        # individual polyploid principal or component genome.
+        if ($child->hasAttribute('genome_component')) {
+            my $genome_component = $child->getAttribute('genome_component');
+            my $component_description;
+            if ($genome_component) {
+                $some_genome_dbs = [grep {$_->genome_component eq $genome_component} @$some_genome_dbs];
+                $component_description = "component GenomeDB $genome_component";
+            } else {
+                # If the genome_component attribute is an empty string,
+                # we treat it as NULL and take the principal genome_db.
+                $some_genome_dbs = [grep {!$_->genome_component} @$some_genome_dbs];
+                $component_description = 'principal GenomeDB';
+            }
+            if (scalar(@$some_genome_dbs) != 1) {
+                my $quantifier = scalar(@$some_genome_dbs) > 1 ? 'unique' : 'any';
+                throw(sprintf("Cannot find %s %s of genome %s (assembly %s)", $quantifier, $component_description, $gdb->name, $gdb->assembly));
+            }
+        }
       } elsif ($child->nodeName =~ /^#(comment|text)$/) {
         next;
       } elsif ($child->nodeName eq 'base_collection') {

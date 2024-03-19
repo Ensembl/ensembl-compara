@@ -108,10 +108,18 @@ sub find_reusable_genomes {
         # Component GenomeDBs are missing, we need to add them
         map {$_->{is_reused} = $gdb->{is_reused}} @{$gdb->component_genome_dbs};
 
-        # If component genomes are used, they must *all* be there
+        # If component genomes are used, they must *all* be there, no exceptions ...
         my $components_in_core_db = $gdb->db_adaptor->get_GenomeContainer->get_genome_components;
         my $components_in_compara = $gdb->component_genome_dbs;
-        die sprintf("Some %s genome components are missing from the species set !\n", $gdb->name) if scalar(@$components_in_core_db) != scalar(@$components_in_compara);
+        if (scalar(@$components_in_core_db) != scalar(@$components_in_compara)) {
+
+            # ... unless the missing component genome is Triticum aestivum Sy Mattis (component U)
+            my %compara_component_set = map {$_->genome_component => 1} @$components_in_compara;
+            my @missing_components = grep {!exists $compara_component_set{$_}} @$components_in_core_db;
+            unless ($gdb->name eq 'triticum_aestivum_mattis' && scalar(@missing_components) == 1 && $missing_components[0] eq 'U') {
+                die sprintf("Some %s genome components are missing from the species set !\n", $gdb->name);
+            }
+        }
     }
 
     die "Some genome_dbs are missing from reused_gdb_ids and nonreused_gdb_ids\n" if grep {not defined $_->{is_reused}} @{$self->param('genome_dbs')};
