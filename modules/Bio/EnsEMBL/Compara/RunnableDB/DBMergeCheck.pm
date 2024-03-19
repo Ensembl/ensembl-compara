@@ -78,9 +78,14 @@ package Bio::EnsEMBL::Compara::RunnableDB::DBMergeCheck;
 use strict;
 use warnings;
 use Data::Dumper;
+use File::Spec::Functions;
+use JSON ('encode_json');
+use List::Util ('sum');
 
 use Bio::EnsEMBL::DBSQL::DBConnection;
-use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc', 'stringify');
+use Bio::EnsEMBL::Hive::HivePipeline;
+use Bio::EnsEMBL::Hive::Utils ('destringify', 'go_figure_dbc', 'stringify');
+use Bio::EnsEMBL::Compara::Utils::Database ('table_exists');
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -114,6 +119,9 @@ sub param_defaults {
             split_genes
             statistics
         )],
+
+        # Configurable list of tables to merge per MLSS
+        'per_mlss_merge_tables' => [],
 
         # Do we want to be very picky and die if a table hasn't been listed
         # above / isn't in the target database ?
@@ -228,6 +236,9 @@ sub run {
     my $only_tables = $self->param_required('only_tables');
     my $src_db_aliases = $self->param_required('src_db_aliases');
     my $dbconnections = $self->param('dbconnections');
+    my $per_mlss_merge_tables = $self->param('per_mlss_merge_tables') // [];
+
+    my $master_dba = $self->get_cached_compara_dba('master_db');
 
     # Structures the information per table
     my $all_tables = {};
@@ -262,6 +273,89 @@ sub run {
         die "'$table' should be non-empty in '", $exclusive_tables->{$table}, "'" unless exists $all_tables->{$table};
     }
 
+    my %src_db_to_mlss_info;
+    if (scalar(@{$per_mlss_merge_tables}) > 0) {
+
+        my %hom_mlss_to_db;
+        foreach my $db (@{$src_db_aliases}) {
+            my $src_dbc = $dbconnections->{$db};
+
+            if (!table_exists($src_dbc, 'job')) { # following example of Bio::EnsEMBL::DataCheck::Utils::is_compara_ehive_db
+                next;
+            }
+
+            my $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
+                -no_sql_schema_version_check => 1,
+                -dbconn => $src_dbc,
+            );
+
+            my $pipeline_param_dba = $hive_pipeline->hive_dba->get_PipelineWideParametersAdaptor();
+
+            my $collection_name = destringify(
+                $pipeline_param_dba->fetch_all("param_name = 'collection'", 'one_per_key', undef, 'param_value')
+            );
+
+            my $member_type;
+            my $mlss_info;
+            if (defined $collection_name) {
+
+                my $ref_collection = destringify(
+                    $pipeline_param_dba->fetch_all("param_name = 'ref_collection'", 'one_per_key', undef, 'param_value')
+                );
+
+                my $ref_collection_list = destringify(
+                    $pipeline_param_dba->fetch_all("param_name = 'ref_collection_list'", 'one_per_key', undef, 'param_value')
+                );
+
+                my $ref_collection_names;
+                if (defined $ref_collection && defined $ref_collection_list) {
+                    $self->die_no_retry("Only one of pipeline-wide parameters 'ref_collection' or 'ref_collection_list' can be defined, but $db has both");
+                } elsif (defined $ref_collection) {
+                    $ref_collection_names = [$ref_collection];
+                } elsif (defined $ref_collection_list) {
+                    $ref_collection_names = $ref_collection_list;
+                } else {
+                    $ref_collection_names = [];
+                }
+
+                $mlss_info = $self->_fetch_complementary_mlss_info(
+                    $master_dba,
+                    $collection_name,
+                    $ref_collection_names,
+                );
+
+            } else {
+                my $src_db_helper = $src_dbc->sql_helper;
+
+                my $src_db_method_types = $src_db_helper->execute_simple( -SQL => 'SELECT type fROM method_link' );
+                if (scalar(@$src_db_method_types) == 1 && $src_db_method_types->[0] eq 'ENSEMBL_PROJECTIONS') {
+                    my $alt_allele_mlss_ids = $src_db_helper->execute_simple( -SQL => 'SELECT DISTINCT method_link_species_set_id FROM homology' );
+                    my $alt_allele_gdb_ids = $src_db_helper->execute_simple( -SQL => 'SELECT genome_db_id FROM genome_db' );
+                    $mlss_info = { 'genome_db_id' => $alt_allele_mlss_ids, 'mlss_id' => $alt_allele_gdb_ids };
+                    $member_type = 'alt_allele';
+                } else {
+                    next;
+                }
+            }
+
+            my @src_db_mlss_ids = @{$mlss_info->{'mlss_id'}};
+            foreach my $mlss_id (@src_db_mlss_ids) {
+                my $hom_mlss_key = $member_type . ' homology MLSS ' . $mlss_id;
+                if (exists $hom_mlss_to_db{$hom_mlss_key}) {
+                    $self->die_no_retry(
+                        " -ERROR- %s will be merged from both '%s' and '%s', so cannot merge per MLSS",
+                        $hom_mlss_key, $db, $hom_mlss_to_db{$hom_mlss_key}
+                    );
+                }
+                $hom_mlss_to_db{$hom_mlss_key} = $db;
+            }
+
+            if (scalar(@src_db_mlss_ids) > 0) {
+                $src_db_to_mlss_info{$db} = $mlss_info;
+            }
+        }
+    }
+
     my %copy = ();
     my %merge = ();
     # We decide whether the table needs to be copied or merged (and if the IDs don't overlap)
@@ -270,6 +364,8 @@ sub run {
     foreach my $table (@table_order) { # start with smallest tables
         #Record all the errors then die after all the values were checked, reporting the list of errors:
         my %error_list;
+
+        my $merging_table_per_mlss = scalar(grep {$_ eq $table} @{$per_mlss_merge_tables}) ? 1 : 0;
 
         unless (exists $table_size->{'curr_rel_db'}->{$table} or exists $exclusive_tables->{$table}) {
             if ($self->param('die_if_unknown_table')) {
@@ -299,11 +395,19 @@ sub run {
             push @dbs, 'curr_rel_db' if $table_size->{'curr_rel_db'}->{$table};
             print "$table is merged from ", join(" and ", @dbs), "\n" if $self->debug;
 
-            my $sql = "SELECT MIN($key), MAX($key), COUNT($key) FROM $table";
+            my $sql = "SELECT MIN($key), MAX($key) FROM $table";
             my $min_max = {map {$_ => $dbconnections->{$_}->db_handle->selectrow_arrayref($sql) } @dbs};
             my $bad = 0;
+
             # Since the counts may not be accurate, we need to update the hash
-            map { $table_size->{$_}->{$table} = $min_max->{$_}->[2] } @dbs;
+            foreach my $db (@dbs) {
+                my $mlss_info_param = $merging_table_per_mlss ? $src_db_to_mlss_info{$db} : undef;
+                $table_size->{$db}->{$table} = $self->_get_effective_table_size($dbconnections->{$db}, $table, $mlss_info_param);
+
+                if ($merging_table_per_mlss && $table_size->{$db}->{$table} > 0 && !exists $src_db_to_mlss_info{$db}) {
+                    $self->die_no_retry("MLSS info could not be obtained for database '$db', so cannot merge table '$table' per MLSS");
+                }
+            }
             # and re-filter the list of databases
             @dbs = grep {$table_size->{$_}->{$table}} @dbs;
 
@@ -335,7 +439,12 @@ sub run {
             }
             if ($bad) {
 
-                unless (grep { $table_size->{$_}->{$table} > $self->param('max_nb_elements_to_fetch') } @dbs) {
+                if ($merging_table_per_mlss && $key eq 'method_link_species_set_id') {
+                    # If we're merging a database table by MLSS, there cannot be a key clash
+                    # involving a table with 'method_link_species_set_id' as its primary key.
+                    print " -INFO- merging $table by MLSS, skipping range check of key 'method_link_species_set_id'\n" if $self->debug;
+
+                } elsif (grep { $table_size->{$_}->{$table} <= $self->param('max_nb_elements_to_fetch') } @dbs) {
 
                     print " -INFO- comparing the actual values of the primary key\n" if $self->debug;
                     my $keys = join(",", @$full_key);
@@ -369,6 +478,7 @@ sub run {
     }
     $self->param('copy', \%copy);
     $self->param('merge', \%merge);
+    $self->param('src_db_to_mlss_info', \%src_db_to_mlss_info);
 }
 
 
@@ -378,6 +488,19 @@ sub write_output {
     my $table_size = $self->param('table_size');
     my $primary_keys = $self->param('primary_keys');
 
+    my $per_mlss_merge_tables = $self->param('per_mlss_merge_tables') // [];
+    my $src_db_to_mlss_info = $self->param('src_db_to_mlss_info');
+
+    if (scalar(@{$per_mlss_merge_tables}) > 0) {
+        my $mlss_info_dir = $self->param_required('mlss_info_dir');
+
+        while (my ($db, $mlss_info) = each %{$src_db_to_mlss_info}) {
+            my $registry_name = $self->param_required($db);
+            my $mlss_info_file = catfile($mlss_info_dir, "${registry_name}.json");
+            $self->_spurt($mlss_info_file, encode_json($mlss_info));
+        }
+    }
+
     # If in write_output, it means that there are no ID conflict. We can safely dataflow the copy / merge operations.
 
     while ( my ($table, $db) = each(%{$self->param('copy')}) ) {
@@ -386,6 +509,7 @@ sub write_output {
     }
 
     while ( my ($table, $dbs) = each(%{$self->param('merge')}) ) {
+        my $merging_table_per_mlss = scalar(grep {$_ eq $table} @{$per_mlss_merge_tables}) ? 1 : 0;
         my $n_total_rows = $table_size->{'curr_rel_db'}->{$table} || 0;
         # my @inputlist = ();
         my @input_id_list = ();
@@ -395,7 +519,13 @@ sub write_output {
             $n_total_rows += $table_size->{$db}->{$table};
         }
         warn "ACTION: merge '$table' from ".join(", ", map {"'$_'"} @$dbs)."\n" if $self->debug;
-        $self->dataflow_output_id( {'table' => $table, 'input_id_list' => \@input_id_list, 'n_total_rows' => $n_total_rows, 'key' => $primary_keys->{$table}->[0]}, 3);
+        $self->dataflow_output_id( {
+            'table'          => $table,
+            'input_id_list'  => \@input_id_list,
+            'n_total_rows'   => $n_total_rows,
+            'key'            => $primary_keys->{$table}->[0],
+            'merge_per_mlss' => $merging_table_per_mlss,
+        }, 3);
     }
 
 }
@@ -417,5 +547,145 @@ sub _assert_same_table_schema {
     die sprintf("'%s' has a different schema in '%s' and '%s'\n", $table, $src_dbc->dbname, $dest_dbc->dbname) if stringify($src_schema) ne stringify($dest_schema);
 }
 
+sub _fetch_complementary_mlss_info {
+    my ($self, $compara_dba, $collection_name, $ref_collection_names) = @_;
+
+    my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
+    my $species_set_adaptor = $compara_dba->get_SpeciesSetAdaptor();
+    my $method_adaptor = $compara_dba->get_MethodAdaptor();
+
+    my $homology_methods = $method_adaptor->fetch_all_by_class_pattern('^Homology\.homology$');
+    my @homology_method_types = map { $_->type } @{$homology_methods};
+
+    my %collection_to_gdb_ids;
+    my %collection_to_mlss_ids;
+    foreach my $species_set_name (($collection_name, @{$ref_collection_names})) {
+        my $collection = $species_set_adaptor->fetch_collection_by_name($species_set_name);
+        $self->die_no_retry("Cannot find collection '$species_set_name' in database") unless $collection;
+        $collection_to_gdb_ids{$species_set_name} = [map { $_->dbID } @{ $collection->genome_dbs }];
+        foreach my $method_type (@homology_method_types) {
+            foreach my $gdb1 ( @{ $collection->genome_dbs } ) {
+                foreach my $gdb2 ( @{ $collection->genome_dbs } ) {
+                    my $mlss = $mlss_adaptor->fetch_by_method_link_type_GenomeDBs($method_type, [$gdb1, $gdb2]);
+                    next unless defined $mlss and $mlss->is_current;
+                    push(@{$collection_to_mlss_ids{$species_set_name}}, $mlss->dbID);
+                }
+            }
+        }
+    }
+
+    my %complementary_gdb_id_set = map { $_ => 1 } @{$collection_to_gdb_ids{$collection_name}};
+    foreach my $ref_collection_name (@{$ref_collection_names}) {
+        foreach my $gdb_id (@{$collection_to_gdb_ids{$ref_collection_name}}) {
+            if (exists $complementary_gdb_id_set{$gdb_id}) {
+                delete $complementary_gdb_id_set{$gdb_id};
+            }
+        }
+    }
+
+    my %complementary_mlss_id_set = map { $_ => 1 } @{$collection_to_mlss_ids{$collection_name}};
+    foreach my $ref_collection_name (@{$ref_collection_names}) {
+        foreach my $mlss_id (@{$collection_to_mlss_ids{$ref_collection_name}}) {
+            if (exists $complementary_mlss_id_set{$mlss_id}) {
+                delete $complementary_mlss_id_set{$mlss_id};
+            }
+        }
+    }
+
+    return {
+        'genome_db_id' => [keys %complementary_gdb_id_set],
+        'mlss_id' => [keys %complementary_mlss_id_set],
+    };
+}
+
+sub _get_effective_table_size {
+    my ($self, $src_dbc, $table_name, $mlss_info) = @_;
+    my $helper = $src_dbc->sql_helper;
+
+    my $n_rows;
+    if (defined $mlss_info) {
+
+        my $sql;
+        if ($table_name =~ /^(homology|homology_member|method_link_species_set_attr|method_link_species_set_tag)$/) {
+
+            my $table_queried = $table_name;
+            my $multiplier = 1;
+
+            # To save time getting the effective table size of the homology_member table,
+            # we query the homology table and multiply the number of homologies by two.
+            if ($table_name eq 'homology_member') {
+                $table_queried = 'homology';
+                $multiplier = 2;
+            }
+
+            my $sql = qq/
+                SELECT
+                    method_link_species_set_id AS mlss_id,
+                    COUNT(*) AS n_rows
+                FROM
+                    $table_queried
+                GROUP BY
+                    method_link_species_set_id
+            /;
+
+            my $mlss_query_results = $helper->execute( -SQL => $sql, -USE_HASHREFS => 1 );
+            my %mlss_to_row_count = map { $_->{'mlss_id'} => $_->{'n_rows'} } @$mlss_query_results;
+
+            $n_rows = sum map { $mlss_to_row_count{$_} // 0 } @{$mlss_info->{'mlss_id'}};
+            $n_rows *= $multiplier;
+
+
+        } elsif ($table_name =~ /^(hmm_annot|peptide_align_feature)$/) {
+
+            my $mlss_set_gdb_ids = '(' . join(',', @{$mlss_info->{'genome_db_id'}}) . ')';
+
+            my $sql;
+            if ($table_name eq 'hmm_annot') {
+                $sql = qq/
+                    SELECT
+                        COUNT(*)
+                    FROM
+                        hmm_annot
+                    JOIN
+                        seq_member
+                    USING
+                        (seq_member_id)
+                    WHERE
+                        seq_member.genome_db_id IN $mlss_set_gdb_ids
+                /;
+            } else {
+                $sql = qq/
+                    SELECT
+                        COUNT(*)
+                    FROM
+                        peptide_align_feature
+                    JOIN
+                        seq_member qmember
+                    ON
+                        qmember_id = qmember.seq_member_id
+                    JOIN
+                        seq_member hmember
+                    ON
+                        hmember_id = hmember.seq_member_id
+                    WHERE
+                        qmember.genome_db_id IN $mlss_set_gdb_ids
+                    AND
+                        hmember.genome_db_id IN $mlss_set_gdb_ids
+                /;
+            }
+
+            $n_rows = $helper->execute_single_result( -SQL => $sql );
+
+        } else {
+            $self->die_no_retry("Effective table size calculation of $table_name has not been implemented");
+        }
+
+    } else {
+        my $sql = qq/SELECT COUNT(*) FROM $table_name/;
+        $n_rows = $helper->execute_single_result( -SQL => $sql );
+    }
+
+    return $n_rows;
+}
 
 1;

@@ -116,16 +116,6 @@ sub core_pipeline_analyses {
             -priority           => $self->o('hc_priority'),
             -batch_size         => 20,
         },
-
-        {
-             -logic_name => 'remove_overlapping_homologies',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveOverlappingHomologies',
-             -flow_into  => [ 'remove_overlapping_data_by_member' ],
-        },
-        {
-             -logic_name => 'remove_overlapping_data_by_member',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingDataByMember',
-        },
     ]
 }
 
@@ -143,8 +133,6 @@ sub tweak_analyses {
         '1->A' => [ 'overall_qc' ],
         'A->1' => [ 'find_overlapping_genomes' ],
     };
-
-    push @{$analyses_by_name->{'fire_final_analyses'}->{'-flow_into'}}, 'remove_overlapping_homologies';
 }
 
 

@@ -104,11 +104,24 @@ sub default_options {
             'protein_db'    => [qw(ortholog_quality datacheck_results)],
         },
 
+        # Tables to merge per MLSS
+        'per_mlss_merge_tables' => [],
+
+        # Dump directory
+        'work_dir'      => $self->o('pipeline_dir'),
+        'mlss_info_dir' => $self->o('work_dir') . '/' . 'mlsses',
    };
 }
 
 sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
+sub pipeline_create_commands {
+    my ($self) = @_;
+    return [
+        @{$self->SUPER::pipeline_create_commands},
+        $self->pipeline_create_commands_rm_mkdir(['mlss_info_dir', 'work_dir']),
+    ];
+}
 
 sub pipeline_wide_parameters {
     my $self = shift @_;
@@ -124,6 +137,7 @@ sub pipeline_wide_parameters {
         'analyze_optimize'  => $self->o('analyze_optimize'),
         'backup_tables'     => $self->o('backup_tables'),
         'move_components'   => $self->o('move_components'),
+        'mlss_info_dir'     => $self->o('mlss_info_dir'),
     }
 }
 
@@ -160,6 +174,7 @@ sub pipeline_analyses {
                 'exclusive_tables'  => $self->o('exclusive_tables'),
                 'only_tables'       => $self->o('only_tables'),
                 'src_db_aliases'    => [ref($self->o('src_db_aliases')) ? keys %{$self->o('src_db_aliases')} : ()],
+                'per_mlss_merge_tables' => $self->o('per_mlss_merge_tables'),
                 'die_if_unknown_table'  => $self->o('die_if_unknown_table'),
             },
             -rc_name    => '2Gb_24_hour_job',
@@ -190,8 +205,12 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::Examples::Factories::RunnableDB::GrabN',
             -flow_into => {
                 '2->A' => { 'merge_table' => INPUT_PLUS },
-                'A->1' => WHEN( '#_list_exhausted#' => [ 'enable_keys' ], ELSE [ 'merge_factory_recursive' ] ),
+                'A->1' => WHEN( '#_list_exhausted#' => [ 'merge_end' ], ELSE [ 'merge_factory_recursive' ] ),
             },
+        },
+
+        {   -logic_name => 'merge_end',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         },
 
         {   -logic_name    => 'merge_table',
@@ -241,7 +260,36 @@ sub pipeline_analyses {
                     'ALTER TABLE #table# DISABLE KEYS',
                 ]
             },
-            -flow_into => [ 'merge_factory_recursive' ],
+            -flow_into  => {
+                '1->A' => [ 'fire_merge' ],
+                'A->1' => [ 'enable_keys' ],
+            },
+        },
+
+        {   -logic_name => 'fire_merge',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into     => WHEN(
+                '#merge_per_mlss#' => 'per_mlss_merge_factory',
+                ELSE 'merge_factory_recursive'
+            )
+        },
+
+        {   -logic_name => 'per_mlss_merge_factory',
+            -module     => 'Bio::EnsEMBL::Hive::Examples::Factories::RunnableDB::GrabN',
+            -flow_into => {
+                '2->A' => { 'merge_per_mlss' => INPUT_PLUS },
+                'A->1' => WHEN( '#_list_exhausted#' => [ 'merge_end' ], ELSE [ 'per_mlss_merge_factory' ] ),
+            },
+        },
+
+        {   -logic_name => 'merge_per_mlss',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DBMerge::CopyHomologiesByMLSS',
+            -parameters => {
+                'dest_db_conn'      => '#curr_rel_db#',
+                'mode'              => 'ignore',
+                'skip_disable_vars' => 1,
+            },
+            -hive_capacity => $self->o('copying_capacity'),
         },
 
         {   -logic_name => 'enable_keys',

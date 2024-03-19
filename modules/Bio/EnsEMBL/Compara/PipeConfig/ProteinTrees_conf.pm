@@ -458,6 +458,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'db_name'       => $self->o('db_name'),
 
         'ensembl_release' => $self->o('ensembl_release'),
+        'collection'      => $self->o('collection'),
 
         'reg_conf'      => $self->o('reg_conf'),
         'member_type'   => $self->o('member_type'),
