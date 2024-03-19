@@ -79,10 +79,10 @@ sub default_options {
         'ignored_tables' => {
             # Mapping 'db_alias' => Arrayref of table names
             'members_db'                => [qw(hmm_annot)],
-            'default_protein_db'        => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
-            'protostomes_protein_db'    => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
-            'insects_protein_db'        => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
-            'drosophila_protein_db'     => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
+            'default_protein_db'        => [qw(ortholog_quality datacheck_results)],
+            'protostomes_protein_db'    => [qw(ortholog_quality datacheck_results)],
+            'insects_protein_db'        => [qw(ortholog_quality datacheck_results)],
+            'drosophila_protein_db'     => [qw(ortholog_quality datacheck_results)],
         }
     }
 }
