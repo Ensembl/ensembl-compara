@@ -94,6 +94,7 @@ my $nb_genes_unassigned = $nb_genes - $nb_genes_in_tree;
 my $tree_dba = $dba->get_SpeciesTreeAdaptor();
 my $species_tree = $tree_dba->fetch_by_method_link_species_set_id_label($mlss_id, 'default');
 my $species_tree_node = $species_tree->root->find_leaves_by_field('genome_db_id', $genome_db_id)->[0];
+throw("all genes unassigned for genome_db $genome_db_id in  MLSS $mlss_id") if $nb_genes_in_tree == 0;
 $species_tree_node->store_tag('nb_genes_in_tree', $nb_genes_in_tree);
 $species_tree_node->store_tag('nb_genes_unassigned', $nb_genes_unassigned);
 

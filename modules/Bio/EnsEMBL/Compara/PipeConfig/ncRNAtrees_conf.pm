@@ -1359,7 +1359,8 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -rc_name    => '1Gb_job',
             -parameters => {
-                'component_genomes' => 0,
+                'component_genomes' => 1,
+                'polyploid_genomes' => 0,
                 'fan_branch_code' => 1,
             },
             -flow_into  => [ 'count_genes_in_tree' ],
