@@ -17,12 +17,15 @@
 use strict;
 use warnings;
 
+use Cwd qw(abs_path);
+use File::Find;
+use File::Spec::Functions qw(splitdir splitpath);
 use Test::More;
 
 use Bio::EnsEMBL::Compara::Utils::Test;
 
 
-## Check that the schemas test databases are fully compliant with the SQL standard
+## Check that the test Compara database schemas are up to date
 
 my $compara_dir = Bio::EnsEMBL::Compara::Utils::Test::get_repository_root();
 my $multitestdb = Bio::EnsEMBL::Compara::Utils::Test::create_multitestdb();
@@ -49,34 +52,34 @@ foreach my $table_name (keys %$compara_schema) {
     }
 }
 
-# Load the Core schema for reference
-my $core_db_name = $multitestdb->create_db_name('core_schema');
-my $core_statements = Bio::EnsEMBL::Compara::Utils::Test::read_sqls("$ENV{ENSEMBL_ROOT_DIR}/ensembl/sql/table.sql");
-my $core_db = Bio::EnsEMBL::Compara::Utils::Test::load_statements($multitestdb, $core_db_name, $core_statements, 'Can load the reference Core schema');
-my $core_schema = Bio::EnsEMBL::Compara::Utils::Test::get_schema_from_database($core_db, $core_db_name);
-Bio::EnsEMBL::Compara::Utils::Test::drop_database($multitestdb, $core_db_name);
+
+my $db_dir = "${compara_dir}/modules/t/test-genome-DBs";
+my @test_file_names = map { abs_path($_) } glob "${db_dir}/*/*/table.sql";
+
+my @compara_test_file_names;
+foreach my $test_file_name (@test_file_names) {
+    my ($volume, $dir_path, $file_name) = splitpath($test_file_name);
+    next if grep { $_ eq 'core' } splitdir($dir_path);
+    push( @compara_test_file_names, $test_file_name );
+}
 
 my $test_db_name = $multitestdb->create_db_name('test_schema');
-my $db_dir = "${compara_dir}/modules/t/test-genome-DBs";
-foreach my $test_file_name (glob "${db_dir}/*/*/table.sql") {
+foreach my $test_file_name (@compara_test_file_names) {
     my $short_name = $test_file_name;
     $short_name =~ s{${db_dir}/}{};
     subtest $short_name, sub {
         my $test_statements = Bio::EnsEMBL::Compara::Utils::Test::read_sqls($test_file_name);
         my $test_db = Bio::EnsEMBL::Compara::Utils::Test::load_statements($multitestdb, $test_db_name, $test_statements, 'Can load the test schema');
         my $test_schema = Bio::EnsEMBL::Compara::Utils::Test::get_schema_from_database($test_db, $test_db_name);
-        if ($short_name =~ /\/core\/table.sql$/) {
-            is_deeply($test_schema, $core_schema, 'Test schema identical to the Core schema');
-        } else {
-            # Pretend the missing optional indexes are there
-            foreach my $a (@optional_indexes) {
-                my ($table_name, $index_name) = @$a;
-                if (not exists $test_schema->{$table_name}->{'INDEXES'}->{$index_name}) {
-                    $test_schema->{$table_name}->{'INDEXES'}->{$index_name} = $compara_schema_with_fk->{$table_name}->{'INDEXES'}->{$index_name};
-                }
+
+        # Pretend the missing optional indexes are there
+        foreach my $a (@optional_indexes) {
+            my ($table_name, $index_name) = @$a;
+            if (not exists $test_schema->{$table_name}->{'INDEXES'}->{$index_name}) {
+                $test_schema->{$table_name}->{'INDEXES'}->{$index_name} = $compara_schema_with_fk->{$table_name}->{'INDEXES'}->{$index_name};
             }
-            is_deeply($test_schema, $compara_schema_with_fk, 'Test schema identical to the Compara schema');
         }
+        is_deeply($test_schema, $compara_schema_with_fk, 'Test schema identical to the Compara schema');
     };
 }
 
