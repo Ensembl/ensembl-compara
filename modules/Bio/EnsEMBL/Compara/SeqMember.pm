@@ -172,6 +172,8 @@ sub new_from_Transcript {
     my ($start, $end) = ($transcript->seq_region_start, $transcript->seq_region_end);
     my $stable_id = $transcript->stable_id ||
       throw("COREDB error: does not contain transcript stable id for transcript_id ".$transcript->dbID."\n");
+    my $stable_id_version = $transcript->version;
+
 
     if ($translate) {
         my ($start, $end) = ($transcript->coding_region_start, $transcript->coding_region_end);
@@ -182,6 +184,7 @@ sub new_from_Transcript {
 
         $stable_id = $transcript->translation->stable_id ||
             throw("COREDB error: does not contain translation stable id for translation_id ".$transcript->translation->dbID."\n");
+        $stable_id_version = $transcript->translation->version;
 
         $seq_string = $transcript->translation->seq;
 
@@ -205,7 +208,7 @@ sub new_from_Transcript {
 
     my $seq_member = Bio::EnsEMBL::Compara::SeqMember->new_fast({
         _stable_id => $stable_id,
-        _version => $transcript->version,
+        _version => $stable_id_version,
         _display_label => ($transcript->display_xref ? $transcript->display_xref->display_id : undef),
         dnafrag_start => $start,
         dnafrag_end => $end,
