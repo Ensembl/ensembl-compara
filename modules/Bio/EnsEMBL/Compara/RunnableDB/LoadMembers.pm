@@ -65,8 +65,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::LoadMembers;
 use strict;
 use warnings;
 
-use Try::Tiny;
-
 use Bio::EnsEMBL::Compara::SeqMember;
 use Bio::EnsEMBL::Compara::GeneMember;
 
