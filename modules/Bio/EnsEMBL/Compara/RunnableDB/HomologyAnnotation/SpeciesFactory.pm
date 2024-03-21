@@ -49,6 +49,9 @@ sub fetch_input {
     if ( defined $species_list && scalar(@$species_list) > 0 ) {
         $self->param( 'species' => \@$species_list );
     }
+    elsif ( $self->param_is_defined('species') ) {
+        $self->param( 'species' => $self->param('species') );
+    }
     elsif ( $species_file ) {
         open ( my $f, "<", $species_file ) or die "Cannot open production list of species $!";
         chomp( my @species_list  = <$f> );
