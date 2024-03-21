@@ -65,6 +65,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::LoadMembers;
 use strict;
 use warnings;
 
+use Try::Tiny;
+
 use Bio::EnsEMBL::Compara::SeqMember;
 use Bio::EnsEMBL::Compara::GeneMember;
 
@@ -251,6 +253,7 @@ sub loadMembersFromCoreSlices {
     my %readthrough_genes;
     foreach my $gene (@relevant_genes){
         my $canonical_transcript = $gene->canonical_transcript();
+        $self->die_no_retry(sprintf("%s has no canonical transcript", $gene->stable_id)) unless defined $canonical_transcript;
         my @tr_attribs = @{$canonical_transcript->get_all_Attributes()};
         my @readthrough = grep {$_->value() eq 'readthrough'} @tr_attribs;
         $readthrough_genes{$gene} = undef if scalar(@readthrough) > 0;
