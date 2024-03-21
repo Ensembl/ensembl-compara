@@ -291,7 +291,8 @@ def _select_reference_mlsses(
     return reference_mlsses
 
 
-if __name__ == "__main__":
+def main():
+    """Main function to link each pairwise Cactus MLSS to a suitable reference Cactus MLSS."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--url",
@@ -348,3 +349,7 @@ if __name__ == "__main__":
 
     with engine.begin() as conn:
         _link_cactus_pairwise_mlsses(conn, pw_to_ref_mlss_info, cactus_msa_mlss_to_url, dry_run=args.dry_run)
+
+
+if __name__ == "__main__":
+    main()
