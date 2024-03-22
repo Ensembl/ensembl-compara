@@ -118,6 +118,12 @@
          },
          {
             "component": "Production tasks",
+            "description": "Review the stats for each MSA pipeline, and address any issues.",
+            "summary": "Check MSA stats",
+            "name_on_graph": "Check MSA stats"
+         },
+         {
+            "component": "Production tasks",
             "description": "*GitHub*: [Synteny_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
             "name_on_graph": "Synteny",
             "summary": "Run the Synteny pipeline"
