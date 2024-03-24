@@ -633,17 +633,6 @@ sub store {
   return $hom->dbID;
 }
 
-
-=head2 update_genetic_distance
-
- Arg [1]    : Bio::EnsEMBL::Compara::Homology $homology
- Example    : $HomologyAdaptor->update_genetic_distance($homology)
- Description: updates the n,s,dn,ds,lnl values from a homology object into a compara database
- Exceptions : when isa if Arg [1] is not Bio::EnsEMBL::Compara::Homology
- Caller     : Bio::EnsEMBL::Compara::Runnable::Homology_dNdS
-
-=cut
-
 sub update_genetic_distance { ## DEPRECATED
   my $self = shift;
   my $hom = shift;
