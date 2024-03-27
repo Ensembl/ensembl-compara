@@ -61,6 +61,9 @@
       <genome name="triticum_dicoccoides"/>
       <genome name="triticum_urartu"/>
       <genome name="triticum_turgidum"/>
+      <!-- Include T. aestivum Mattis, but exclude its U-component. -->
+      <genome name="triticum_aestivum_mattis"/>
+      <genome name="triticum_aestivum_mattis" genome_component="U" exclude="1"/>
       <!-- Outgroup -->
       <genome name="brachypodium_distachyon"/>
     </collection>
