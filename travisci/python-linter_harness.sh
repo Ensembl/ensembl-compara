@@ -15,29 +15,61 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PYTHON_SOURCE_LOCATIONS=('scripts' 'src/python')
-
 # Setup the environment variables
 # shellcheck disable=SC2155
 export PYTHONPATH=$PYTHONPATH:$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')
 # more info: https://mypy.readthedocs.io/en/stable/running_mypy.html#mapping-file-paths-to-modules
 export MYPYPATH=$MYPYPATH:src/python/lib
 
-PYLINT_OUTPUT_FILE=$(mktemp)
-PYLINT_ERRORS=$(mktemp)
-# CITest project is on hold and it needs to be updated before resuming its linter checker
-find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \! -name "Ortheus.py" \! -name "*citest*.py" \! -path "*/citest/*" -print0 | xargs -0 pylint --rcfile pyproject.toml --verbose | tee "$PYLINT_OUTPUT_FILE"
-grep -v "\-\-\-\-\-\-\-\-\-" "$PYLINT_OUTPUT_FILE" | grep -v "Your code has been rated" | grep -v "\n\n" | sed '/^$/d' > "$PYLINT_ERRORS"
-! [ -s "$PYLINT_ERRORS" ]
-rt1=$?
-rm "$PYLINT_OUTPUT_FILE" "$PYLINT_ERRORS"
+# Function to run pylint
+run_pylint() {
+  local pylint_output_file=$(mktemp)
 
-# CITest project is on hold and it needs to be updated before resuming its static type checker
-find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \! -name "Ortheus.py" \! -name "*citest*.py" \! -path "*/citest/*" -print0 | xargs -0 mypy --config-file pyproject.toml --namespace-packages --explicit-package-bases
+  # Run pylint, excluding specific files and directories
+  find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \
+    \! -name "Ortheus.py" \
+    \! -name "*citest*.py" \
+    \! -path "*/citest/*" -print0 |
+    xargs -0 pylint --rcfile=pyproject.toml --verbose \
+      --msg-template='COMPARA_PYLINT_MSG:{path}:{line}:{column}: {msg_id}: {msg} ({symbol})' |
+    tee "$pylint_output_file"
+
+  # Return 1 if pylint messages were found, otherwise 0
+  #  -c option counts the number of matches, -m 1 stops after the first match to optimize performance,
+  local result=$(grep -c -m 1 -E '^COMPARA_PYLINT_MSG:' "$pylint_output_file")
+
+  # Cleanup
+  rm "$pylint_output_file"
+
+  return "$result"
+}
+
+# Function to run mypy, excluding certain files and paths, and capturing the outcome
+run_mypy() {
+  find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \
+    \! -name "Ortheus.py" \
+    \! -name "*citest*.py" \
+    \! -path "*/citest/*" -print0 |
+    xargs -0 mypy --config-file pyproject.toml --namespace-packages --explicit-package-bases
+}
+
+# Define Python source locations
+PYTHON_SOURCE_LOCATIONS=('scripts' 'src/python')
+
+# Run pylint and mypy, capturing their return codes
+run_pylint
+rt1=$?
+
+run_mypy
 rt2=$?
 
-if [[ ($rt1 -eq 0) && ($rt2 -eq 0) ]]; then
-  exit 0
+# Determine exit code based on results
+if [[ $rt1 -eq 0 && $rt2 -eq 0 ]]; then
+  exit 0 # success
+elif [[ $rt1 -ne 0 ]]; then
+  exit 1 # pylint error
+elif [[ $rt2 -ne 0 ]]; then
+  exit 2 # mypy error
 else
-  exit 255
+  exit 3 # error on both
 fi
