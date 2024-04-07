@@ -50,9 +50,11 @@ It works by:
  2. Deciding for each table whether they have to be copied over or merged
     - a table is copied (replaced) if there is a single source
     - a table is merged if there are multiple sources (perhaps the target as well)
+    - some tables may be merged per MLSS if configured
  3. When merging, the runnable checks that the data does not overlap
     - first by comparing the interval of the primary key
     - then comparing the actual values if needed
+    - additionally by comparing method_link_species_set_ids or genome_db_ids, if merging per MLSS
  4. If everything is fine, the jobs are all dataflown
 
 Primary keys can most of the time be guessed from the schema.
@@ -62,6 +64,13 @@ They don't have to be the whole primary key on their own, they can simply be a
 representative column that can be used to check for overlap between databases.
 Currently, only INT anc CHAR columns are allowed.
 
+Some tables can be configured to be merged per MLSS, assuming that certain constraints are satisfied.
+The main constraint is that per-MLSS merge is intended for merging homology data from gene-tree pipeline
+databases with a defined member type and collection. It cannot be used for merging from a prevous release
+database, nor can it be used for incremental merging of homology data into the current release database,
+since a release database could have homologies involving genes of various member types and collections,
+and the current implementation of per-MLSS merge does not have a mechanism for disentangling them.
+
 The Runnable will complain if:
  - no primary key is defined / can be found for a table that needs to be merged
  - the primary key is not INT or CHAR
@@ -70,6 +79,7 @@ The Runnable will complain if:
  - all the non-production and non-eHive tables of the source databases should
    exist in the target database
  - some tables that need to be merged share a value of their primary key
+ - the constraints of a per-MLSS merge are violated (if using per-MLSS merge)
 
 =cut
 
@@ -276,82 +286,154 @@ sub run {
     my %src_db_to_mlss_info;
     if (scalar(@{$per_mlss_merge_tables}) > 0) {
 
-        my %hom_mlss_to_db;
-        foreach my $db (@{$src_db_aliases}) {
+        my %src_db_to_table_set;
+        while (my ($table, $db_aliases) = each %{$all_tables}) {
+            foreach my $db (@{$db_aliases}) {
+                $src_db_to_table_set{$db}{$table} = 1;
+            }
+        }
+
+        my %gdb_id_to_db;
+        my %gdb_pair_to_db;
+        my %mlss_id_to_dbs;
+        my %db_to_nr_mlss_ids;
+        my %hom_mlss_key_to_db;
+        foreach my $db (@{$src_db_aliases}, 'curr_rel_db') {
             my $src_dbc = $dbconnections->{$db};
+            my $src_db_helper = $src_dbc->sql_helper;
 
-            if (!table_exists($src_dbc, 'job')) { # following example of Bio::EnsEMBL::DataCheck::Utils::is_compara_ehive_db
-                next;
-            }
-
-            my $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-                -no_sql_schema_version_check => 1,
-                -dbconn => $src_dbc,
-            );
-
-            my $pipeline_param_dba = $hive_pipeline->hive_dba->get_PipelineWideParametersAdaptor();
-
-            my $collection_name = destringify(
-                $pipeline_param_dba->fetch_all("param_name = 'collection'", 'one_per_key', undef, 'param_value')
-            );
-
-            my $member_type;
-            my $mlss_info;
-            if (defined $collection_name) {
-
-                my $ref_collection = destringify(
-                    $pipeline_param_dba->fetch_all("param_name = 'ref_collection'", 'one_per_key', undef, 'param_value')
-                );
-
-                my $ref_collection_list = destringify(
-                    $pipeline_param_dba->fetch_all("param_name = 'ref_collection_list'", 'one_per_key', undef, 'param_value')
-                );
-
-                my $ref_collection_names;
-                if (defined $ref_collection && defined $ref_collection_list) {
-                    $self->die_no_retry("Only one of pipeline-wide parameters 'ref_collection' or 'ref_collection_list' can be defined, but $db has both");
-                } elsif (defined $ref_collection) {
-                    $ref_collection_names = [$ref_collection];
-                } elsif (defined $ref_collection_list) {
-                    $ref_collection_names = $ref_collection_list;
-                } else {
-                    $ref_collection_names = [];
-                }
-
-                $mlss_info = $self->_fetch_complementary_mlss_info(
-                    $master_dba,
-                    $collection_name,
-                    $ref_collection_names,
-                );
-
+            my @relevant_per_mlss_merge_tables;
+            if ($db eq 'curr_rel_db') {
+                @relevant_per_mlss_merge_tables = grep { exists $table_size->{$db}->{$_} && $table_size->{$db}->{$_} > 0 } @{$per_mlss_merge_tables};
             } else {
-                my $src_db_helper = $src_dbc->sql_helper;
+                @relevant_per_mlss_merge_tables = grep { exists $src_db_to_table_set{$db}{$_} } @{$per_mlss_merge_tables};
+            }
 
-                my $src_db_method_types = $src_db_helper->execute_simple( -SQL => 'SELECT type fROM method_link' );
-                if (scalar(@$src_db_method_types) == 1 && $src_db_method_types->[0] eq 'ENSEMBL_PROJECTIONS') {
-                    my $alt_allele_mlss_ids = $src_db_helper->execute_simple( -SQL => 'SELECT DISTINCT method_link_species_set_id FROM homology' );
-                    my $alt_allele_gdb_ids = $src_db_helper->execute_simple( -SQL => 'SELECT genome_db_id FROM genome_db' );
-                    $mlss_info = { 'genome_db_id' => $alt_allele_mlss_ids, 'mlss_id' => $alt_allele_gdb_ids };
-                    $member_type = 'alt_allele';
-                } else {
-                    next;
+            next unless(@relevant_per_mlss_merge_tables);
+
+            my %rel_per_mlss_merge_table_set = map { $_ => 1 } @relevant_per_mlss_merge_tables;
+
+            my $mlss_info;
+            my @supported_per_mlss_merge_tables;
+            if (table_exists($src_dbc, 'job')) {  # following example of Bio::EnsEMBL::DataCheck::Utils::is_compara_ehive_db
+
+                my $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
+                    -no_sql_schema_version_check => 1,
+                    -dbconn => $src_dbc,
+                );
+
+                my $pipeline_param_dba = $hive_pipeline->hive_dba->get_PipelineWideParametersAdaptor();
+
+                my $collection_name = destringify(
+                    $pipeline_param_dba->fetch_all("param_name = 'collection'", 'one_per_key', undef, 'param_value')
+                );
+
+                if (defined $collection_name) {
+
+                    my $member_type = destringify(
+                        $pipeline_param_dba->fetch_all("param_name = 'member_type'", 'one_per_key', undef, 'param_value')
+                    );
+
+                    my $ref_collection = destringify(
+                        $pipeline_param_dba->fetch_all("param_name = 'ref_collection'", 'one_per_key', undef, 'param_value')
+                    );
+
+                    my $ref_collection_list = destringify(
+                        $pipeline_param_dba->fetch_all("param_name = 'ref_collection_list'", 'one_per_key', undef, 'param_value')
+                    );
+
+                    my $ref_collection_names;
+                    if (defined $ref_collection && defined $ref_collection_list) {
+                        $self->die_no_retry(" -ERROR- Only one of pipeline-wide parameters 'ref_collection' or 'ref_collection_list' can be defined, but $db has both");
+                    } elsif (defined $ref_collection) {
+                        $ref_collection_names = [$ref_collection];
+                    } elsif (defined $ref_collection_list) {
+                        $ref_collection_names = $ref_collection_list;
+                    } else {
+                        $ref_collection_names = [];
+                    }
+
+                    $mlss_info = $self->_fetch_collection_mlss_info(
+                        $master_dba,
+                        $collection_name,
+                        $ref_collection_names,
+                    );
+
+                    # Pipelines with collections can be merged per homology MLSS and member type.
+                    # This allows for merging protein and ncRNA homologies in the same MLSS from
+                    # a protein-tree and ncRNA-tree pipeline database, respectively.
+                    foreach my $mlss_id (@{$mlss_info->{'complementary_mlss_ids'}}) {
+                        my $hom_mlss_key = $member_type . ' homology MLSS ' . $mlss_id;
+                        if (exists $hom_mlss_key_to_db{$hom_mlss_key}) {
+                            $self->die_no_retry(
+                                sprintf(
+                                    " -ERROR- %s would be merged from both '%s' and '%s', so it cannot be merged per MLSS",
+                                    $hom_mlss_key, $db, $hom_mlss_key_to_db{$hom_mlss_key}
+                                )
+                            );
+                        }
+                        $hom_mlss_key_to_db{$hom_mlss_key} = $db;
+                        push(@{$mlss_id_to_dbs{$mlss_id}}, $db);
+                    }
+
+                } else {  # database lacks collection info
+
+                    # MLSS IDs in the homology table are used indirectly for homology_member.
+                    @supported_per_mlss_merge_tables = ('homology', 'method_link_species_set_attr', 'method_link_species_set_tag');
+
+                    foreach my $table ('hmm_annot', 'peptide_align_feature') {
+                        if (exists $rel_per_mlss_merge_table_set{$table}) {
+                            $self->die_no_retry(" -ERROR- Without a collection parameter, cannot merge table '$table' of database '$db' per MLSS");
+                        }
+                    }
+                }
+
+            } else {  # database is not a Hive pipeline
+
+                @supported_per_mlss_merge_tables = ('method_link_species_set_attr', 'method_link_species_set_tag');
+
+                foreach my $table ('hmm_annot', 'homology', 'homology_member', 'peptide_align_feature') {
+                    if (exists $rel_per_mlss_merge_table_set{$table}) {
+                        $self->die_no_retry(" -ERROR- Cannot merge table '$table' of non-Hive database '$db' per MLSS");
+                    }
                 }
             }
 
-            my @src_db_mlss_ids = @{$mlss_info->{'mlss_id'}};
-            foreach my $mlss_id (@src_db_mlss_ids) {
-                my $hom_mlss_key = $member_type . ' homology MLSS ' . $mlss_id;
-                if (exists $hom_mlss_to_db{$hom_mlss_key}) {
+            if (!defined $mlss_info) {
+                my @usable_per_mlss_merge_tables = grep { exists $rel_per_mlss_merge_table_set{$_} } @supported_per_mlss_merge_tables;
+                next unless(@usable_per_mlss_merge_tables);
+
+                # Without collection info, all we can do is take all method_link_species_set_ids from
+                # usable tables and check later that they do not clash with any other source database.
+                my @mlss_id_queries = map { qq/SELECT DISTINCT method_link_species_set_id FROM $_/ } @usable_per_mlss_merge_tables;
+                my $mlss_id_union_query = join(' UNION ', @mlss_id_queries);
+                my $db_mlss_ids = $src_db_helper->execute_simple( -SQL => $mlss_id_union_query );
+                $mlss_info = { 'complementary_mlss_ids' => $db_mlss_ids, 'complementary_gdb_ids' => [], 'overlap_gdb_ids' => [] };
+
+                $db_to_nr_mlss_ids{$db} = $db_mlss_ids;
+                foreach my $mlss_id (@{$db_mlss_ids}) {
+                    push(@{$mlss_id_to_dbs{$mlss_id}}, $db);
+                }
+            }
+
+            if (scalar(@{$mlss_info->{'complementary_mlss_ids'}}) > 0) {
+                $src_db_to_mlss_info{$db} = $mlss_info;
+            }
+        }
+
+        # At this point we should have MLSS info for all source databases, so we can
+        # check for any MLSS ID clashes involving databases lacking collection info.
+        while (my ($db, $nr_mlss_ids) = each %db_to_nr_mlss_ids) {
+            foreach my $nr_mlss_id (@{$nr_mlss_ids}) {
+                my @other_dbs_with_mlss_id = grep { $_ ne $db } @{$mlss_id_to_dbs{$nr_mlss_id}};
+                if (scalar(@other_dbs_with_mlss_id) > 0) {
                     $self->die_no_retry(
-                        " -ERROR- %s will be merged from both '%s' and '%s', so cannot merge per MLSS",
-                        $hom_mlss_key, $db, $hom_mlss_to_db{$hom_mlss_key}
+                        sprintf(
+                            " -ERROR- MLSS %s would be merged from database '%s' and %d other databases (e.g. '%s'), so it cannot be merged per MLSS",
+                            $nr_mlss_id, $db, scalar(@other_dbs_with_mlss_id), $other_dbs_with_mlss_id[0]
+                        )
                     );
                 }
-                $hom_mlss_to_db{$hom_mlss_key} = $db;
-            }
-
-            if (scalar(@src_db_mlss_ids) > 0) {
-                $src_db_to_mlss_info{$db} = $mlss_info;
             }
         }
     }
@@ -405,7 +487,7 @@ sub run {
                 $table_size->{$db}->{$table} = $self->_get_effective_table_size($dbconnections->{$db}, $table, $mlss_info_param);
 
                 if ($merging_table_per_mlss && $table_size->{$db}->{$table} > 0 && !exists $src_db_to_mlss_info{$db}) {
-                    $self->die_no_retry("MLSS info could not be obtained for database '$db', so cannot merge table '$table' per MLSS");
+                    $self->die_no_retry("Per-MLSS merge info could not be obtained for database '$db', so cannot merge table '$table' per MLSS");
                 }
             }
             # and re-filter the list of databases
@@ -438,6 +520,12 @@ sub run {
                 last if $bad;
             }
             if ($bad) {
+
+                if ($merging_table_per_mlss && $table eq 'peptide_align_feature') {
+                    # Per-MLSS merge of the peptide_align_feature table requires
+                    # that there is no overlap between peptide_align_feature_ids.
+                    $self->die_no_retry(" -ERROR- ranges of the key '$key' overlap, so cannot merge table 'peptide_align_feature' per MLSS");
+                }
 
                 if ($merging_table_per_mlss && $key eq 'method_link_species_set_id') {
                     # If we're merging a database table by MLSS, there cannot be a key clash
@@ -547,7 +635,7 @@ sub _assert_same_table_schema {
     die sprintf("'%s' has a different schema in '%s' and '%s'\n", $table, $src_dbc->dbname, $dest_dbc->dbname) if stringify($src_schema) ne stringify($dest_schema);
 }
 
-sub _fetch_complementary_mlss_info {
+sub _fetch_collection_mlss_info {
     my ($self, $compara_dba, $collection_name, $ref_collection_names) = @_;
 
     my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
@@ -563,10 +651,22 @@ sub _fetch_complementary_mlss_info {
         my $collection = $species_set_adaptor->fetch_collection_by_name($species_set_name);
         $self->die_no_retry("Cannot find collection '$species_set_name' in database") unless $collection;
         $collection_to_gdb_ids{$species_set_name} = [map { $_->dbID } @{ $collection->genome_dbs }];
+        my @collection_gdb_ids = map { $_->dbID } @{ $collection->genome_dbs };
+
         foreach my $method_type (@homology_method_types) {
-            foreach my $gdb1 ( @{ $collection->genome_dbs } ) {
-                foreach my $gdb2 ( @{ $collection->genome_dbs } ) {
-                    my $mlss = $mlss_adaptor->fetch_by_method_link_type_GenomeDBs($method_type, [$gdb1, $gdb2]);
+            foreach my $i ( 0 .. $#collection_gdb_ids ) {
+                my $gdb1_id = $collection_gdb_ids[$i];
+                foreach my $j ( $i .. $#collection_gdb_ids ) {
+                    my $gdb2_id = $collection_gdb_ids[$j];
+
+                    my @homology_mlss_gdb_ids;
+                    if ($gdb2_id == $gdb1_id) {  # e.g. homoeology MLSS
+                        @homology_mlss_gdb_ids = ($gdb1_id);
+                    } else {  # e.g. orthology MLSS
+                        @homology_mlss_gdb_ids = ($gdb1_id, $gdb2_id);
+                    }
+
+                    my $mlss = $mlss_adaptor->fetch_by_method_link_type_GenomeDBs($method_type, \@homology_mlss_gdb_ids);
                     next unless defined $mlss and $mlss->is_current;
                     push(@{$collection_to_mlss_ids{$species_set_name}}, $mlss->dbID);
                 }
@@ -574,27 +674,38 @@ sub _fetch_complementary_mlss_info {
         }
     }
 
-    my %complementary_gdb_id_set = map { $_ => 1 } @{$collection_to_gdb_ids{$collection_name}};
+    my %agg_ref_collection_gdb_id_set;
+    my %agg_ref_collection_mlss_id_set;
     foreach my $ref_collection_name (@{$ref_collection_names}) {
         foreach my $gdb_id (@{$collection_to_gdb_ids{$ref_collection_name}}) {
-            if (exists $complementary_gdb_id_set{$gdb_id}) {
-                delete $complementary_gdb_id_set{$gdb_id};
-            }
+            $agg_ref_collection_gdb_id_set{$gdb_id} = 1;
+        }
+        foreach my $mlss_id (@{$collection_to_mlss_ids{$ref_collection_name}}) {
+            $agg_ref_collection_mlss_id_set{$mlss_id} = 1;
         }
     }
 
-    my %complementary_mlss_id_set = map { $_ => 1 } @{$collection_to_mlss_ids{$collection_name}};
-    foreach my $ref_collection_name (@{$ref_collection_names}) {
-        foreach my $mlss_id (@{$collection_to_mlss_ids{$ref_collection_name}}) {
-            if (exists $complementary_mlss_id_set{$mlss_id}) {
-                delete $complementary_mlss_id_set{$mlss_id};
-            }
+    my @overlap_gdb_ids;
+    my @complementary_gdb_ids;
+    foreach my $gdb_id (@{$collection_to_gdb_ids{$collection_name}}) {
+        if (exists $agg_ref_collection_gdb_id_set{$gdb_id}) {
+            push(@overlap_gdb_ids, $gdb_id);
+        } else {
+            push(@complementary_gdb_ids, $gdb_id);
+        }
+    }
+
+    my @complementary_mlss_ids;
+    foreach my $mlss_id (@{$collection_to_mlss_ids{$collection_name}}) {
+        if (!exists $agg_ref_collection_mlss_id_set{$mlss_id}) {
+            push(@complementary_mlss_ids, $mlss_id);
         }
     }
 
     return {
-        'genome_db_id' => [keys %complementary_gdb_id_set],
-        'mlss_id' => [keys %complementary_mlss_id_set],
+        'complementary_gdb_ids' => \@complementary_gdb_ids,
+        'complementary_mlss_ids' => \@complementary_mlss_ids,
+        'overlap_gdb_ids' => \@overlap_gdb_ids,
     };
 }
 
@@ -602,7 +713,7 @@ sub _get_effective_table_size {
     my ($self, $src_dbc, $table_name, $mlss_info) = @_;
     my $helper = $src_dbc->sql_helper;
 
-    my $n_rows;
+    my $n_rows = 0;
     if (defined $mlss_info) {
 
         my $sql;
@@ -631,17 +742,17 @@ sub _get_effective_table_size {
             my $mlss_query_results = $helper->execute( -SQL => $sql, -USE_HASHREFS => 1 );
             my %mlss_to_row_count = map { $_->{'mlss_id'} => $_->{'n_rows'} } @$mlss_query_results;
 
-            $n_rows = sum map { $mlss_to_row_count{$_} // 0 } @{$mlss_info->{'mlss_id'}};
+            $n_rows = sum map { $mlss_to_row_count{$_} // 0 } @{$mlss_info->{'complementary_mlss_ids'}};
             $n_rows *= $multiplier;
 
+        } elsif ($table_name eq 'hmm_annot') {
 
-        } elsif ($table_name =~ /^(hmm_annot|peptide_align_feature)$/) {
+            my @complementary_gdb_ids = @{$mlss_info->{'complementary_gdb_ids'}};
 
-            my $mlss_set_gdb_ids = '(' . join(',', @{$mlss_info->{'genome_db_id'}}) . ')';
+            if (@complementary_gdb_ids) {
+                my $compl_gdb_id_placeholders = '(' . join(',', ('?') x @complementary_gdb_ids) . ')';
 
-            my $sql;
-            if ($table_name eq 'hmm_annot') {
-                $sql = qq/
+                my $sql = qq/
                     SELECT
                         COUNT(*)
                     FROM
@@ -651,10 +762,22 @@ sub _get_effective_table_size {
                     USING
                         (seq_member_id)
                     WHERE
-                        seq_member.genome_db_id IN $mlss_set_gdb_ids
+                        seq_member.genome_db_id IN $compl_gdb_id_placeholders
                 /;
-            } else {
-                $sql = qq/
+
+                $n_rows = $helper->execute_single_result( -SQL => $sql, -PARAMS => \@complementary_gdb_ids );
+            }
+
+        } elsif ($table_name eq 'peptide_align_feature') {
+
+            my $sql_total = q/SELECT COUNT(*) FROM peptide_align_feature/;
+            $n_rows = $helper->execute_single_result( -SQL => $sql_total );
+
+            my @overlap_gdb_ids = @{$mlss_info->{'overlap_gdb_ids'}};
+            if (@overlap_gdb_ids) {
+                my $overlap_gdb_id_placeholders = '(' . join(',', ('?') x @overlap_gdb_ids) . ')';
+
+                my $sql_overlap = qq/
                     SELECT
                         COUNT(*)
                     FROM
@@ -668,13 +791,13 @@ sub _get_effective_table_size {
                     ON
                         hmember_id = hmember.seq_member_id
                     WHERE
-                        qmember.genome_db_id IN $mlss_set_gdb_ids
+                        qmember.genome_db_id IN $overlap_gdb_id_placeholders
                     AND
-                        hmember.genome_db_id IN $mlss_set_gdb_ids
+                        hmember.genome_db_id IN $overlap_gdb_id_placeholders
                 /;
-            }
 
-            $n_rows = $helper->execute_single_result( -SQL => $sql );
+                $n_rows -= $helper->execute_single_result( -SQL => $sql_overlap, -PARAMS => \@overlap_gdb_ids );
+            }
 
         } else {
             $self->die_no_retry("Effective table size calculation of $table_name has not been implemented");

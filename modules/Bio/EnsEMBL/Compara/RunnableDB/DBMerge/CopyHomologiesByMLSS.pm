@@ -15,13 +15,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::DBMerge::CopyHomologiesByMLSS
+
+=head1 DESCRIPTION
+
+Given MLSS info for a particular source database, this runnable facilitates copying of data
+per MLSS from that source database (src_db_conn) to the target database (dest_db_conn).
+
+Most tables are merged by method_link_species_set_id. Some are merged by genome_db_id,
+where the set of genome_db_ids corresponds in some way to the species set associated
+with the relevant MLSS (or MLSSes).
 
 =cut
 
@@ -33,7 +38,6 @@ use warnings;
 use File::Spec::Functions;
 use JSON qw(decode_json);
 
-use Bio::EnsEMBL::Utils::IO qw(slurp_to_array);
 use Bio::EnsEMBL::Compara::Utils::CopyData qw(:table_copy);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -67,7 +71,7 @@ sub run {
 
     if ($table_name =~ /^(homology|homology_member|method_link_species_set_attr|method_link_species_set_tag)$/) {
 
-        foreach my $mlss_id (@{$mlss_info->{'mlss_id'}}) {
+        foreach my $mlss_id (@{$mlss_info->{'complementary_mlss_ids'}}) {
             $self->warning("Copying data for MLSS $mlss_id") if $self->debug;
 
             my $query;
@@ -98,13 +102,13 @@ sub run {
             copy_data($from_dbc, $to_dbc, $table_name, $query, $replace, $self->param('skip_disable_vars'), $self->debug);
         }
 
-    } elsif ($table_name =~ /^(hmm_annot|peptide_align_feature)$/) {
+    } elsif ($table_name eq 'hmm_annot') {
 
-        my $mlss_set_gdb_ids = '(' . join(',', @{$mlss_info->{'genome_db_id'}}) . ')';
+        my @complementary_gdb_ids = @{$mlss_info->{'complementary_gdb_ids'}};
+        if (@complementary_gdb_ids) {
+            my $complementary_gdb_id_str = '(' . join(',', @complementary_gdb_ids) . ')';
 
-        my $query;
-        if ($table_name eq 'hmm_annot') {
-            $query = qq/
+            my $query = qq/
                 SELECT
                     hmm_annot.*
                 FROM
@@ -114,12 +118,32 @@ sub run {
                 USING
                     (seq_member_id)
                 WHERE
-                    seq_member.genome_db_id IN $mlss_set_gdb_ids
+                    seq_member.genome_db_id IN $complementary_gdb_id_str
             /;
-        } else {
-            $query = qq/
-                SELECT
-                    peptide_align_feature.*
+
+            copy_data($from_dbc, $to_dbc, $table_name, $query, $replace, $self->param('skip_disable_vars'), $self->debug);
+        }
+
+    } elsif ($table_name eq 'peptide_align_feature') {
+
+        # It's simpler (and faster) to copy everything from the
+        # source database and then remove any overlapping data.
+        copy_table($from_dbc, $to_dbc, $table_name, undef, $replace, $self->param('skip_disable_vars'), $self->debug);
+
+        my @overlap_gdb_ids = @{$mlss_info->{'overlap_gdb_ids'}};
+        if (@overlap_gdb_ids) {
+            my $overlap_gdb_id_placeholders = '(' . join(',', ('?') x @overlap_gdb_ids) . ')';
+
+            # The peptide_align_feature_id range is used here to ensure that rows representing overlapping data
+            # are only deleted from those rows which have been copied from src_db_conn. This assumes that DBMergeCheck
+            # has already verified the peptide_align_feature_ids do not overlap between the various source databases.
+            my $paf_id_range_sql = q/SELECT MIN(peptide_align_feature_id), MAX(peptide_align_feature_id) FROM peptide_align_feature/;
+            my $paf_id_range_results = $from_dbc->sql_helper->execute( -SQL => $paf_id_range_sql );
+            my ($min_paf_id, $max_paf_id) = @{$paf_id_range_results->[0]};
+
+            my $delete_statement = qq/
+                DELETE
+                    peptide_align_feature
                 FROM
                     peptide_align_feature
                 JOIN
@@ -131,13 +155,16 @@ sub run {
                 ON
                     hmember_id = hmember.seq_member_id
                 WHERE
-                    qmember.genome_db_id IN $mlss_set_gdb_ids
+                    qmember.genome_db_id IN $overlap_gdb_id_placeholders
                 AND
-                    hmember.genome_db_id IN $mlss_set_gdb_ids
+                    hmember.genome_db_id IN $overlap_gdb_id_placeholders
+                AND
+                    peptide_align_feature_id BETWEEN ? AND ?
             /;
-        }
 
-        copy_data($from_dbc, $to_dbc, $table_name, $query, $replace, $self->param('skip_disable_vars'), $self->debug);
+            my @delete_params = (@overlap_gdb_ids, @overlap_gdb_ids, $min_paf_id, $max_paf_id);
+            $to_dbc->sql_helper->execute_update( -SQL => $delete_statement, -PARAMS => \@delete_params );
+        }
 
     } else {
         $self->die_no_retry("Per-MLSS merge of $table_name has not been implemented");

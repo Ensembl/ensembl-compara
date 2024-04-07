@@ -83,7 +83,16 @@ sub default_options {
             'protostomes_protein_db'    => [qw(ortholog_quality datacheck_results)],
             'insects_protein_db'        => [qw(ortholog_quality datacheck_results)],
             'drosophila_protein_db'     => [qw(ortholog_quality datacheck_results)],
-        }
+        },
+
+        'per_mlss_merge_tables' => [
+            'hmm_annot',
+            'homology',
+            'homology_member',
+            'method_link_species_set_attr',
+            'method_link_species_set_tag',
+            'peptide_align_feature',
+        ],
     }
 }
 1;
