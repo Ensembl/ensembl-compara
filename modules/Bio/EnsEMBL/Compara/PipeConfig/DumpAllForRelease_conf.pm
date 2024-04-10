@@ -363,7 +363,7 @@ sub core_pipeline_analyses {
 
         {	-logic_name => 'create_ftp_skeleton',
         	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::FTPSkeleton',
-            -rc_name    => '1Gb_1_hour_job',
+            -rc_name    => '1Gb_job',
             -flow_into => {
                 '2->A' => [ 'symlink_prev_dumps' ],
                 'A->1' => [ 'symlink_funnel_check' ],
@@ -410,7 +410,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'flow_any_missing_mlsses',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::FlowAnyMissingMLSSes',
-            -rc_name    => '1Gb_1_hour_job',
+            -rc_name    => '1Gb_job',
             -flow_into  => { 2 => 'create_all_dump_jobs' },
         },
 

@@ -101,7 +101,7 @@ sub core_pipeline_analyses {
                 '2->A' => [ 'cleanup_strains_clusters' ],
                 'A->1' => [ 'hc_clusters' ],
             },
-            -rc_name    => '1Gb_1_hour_job',
+            -rc_name    => '1Gb_job',
         },
 
         {   -logic_name => 'cleanup_strains_clusters',

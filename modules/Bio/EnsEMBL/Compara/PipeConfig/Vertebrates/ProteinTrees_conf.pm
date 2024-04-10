@@ -108,10 +108,10 @@ sub tweak_analyses {
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
         'CAFE_table'                => '24Gb_job',
-        'hcluster_run'              => '1Gb_1_hour_job',
-        'hcluster_parse_output'     => '1Gb_1_hour_job',
+        'hcluster_run'              => '1Gb_job',
+        'hcluster_parse_output'     => '1Gb_job',
         'split_genes'               => 'default',   # This is 250Mb
-        'CAFE_species_tree'         => '24Gb_1_hour_job',
+        'CAFE_species_tree'         => '24Gb_job',
         'get_long_short_orth_genes_himem'  => '4Gb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
