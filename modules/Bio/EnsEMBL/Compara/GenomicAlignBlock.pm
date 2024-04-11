@@ -1474,12 +1474,8 @@ sub get_GenomicAlignTree {
         $species_tree_string = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree(-compara_dba => $self->adaptor->db,
                                                                                               -allow_subtaxa => 1,
                                                                                               -species_set => $species_set)->newick_format('ryo', '%{g}');
-    } elsif ($self->method_link_species_set->dbID == 313160 && $self->method_link_species_set->name eq '16 wheat Cactus') {
-        my ($volume, $dir_path) = splitpath(rel2abs(__FILE__));
-        my @path_parts = splitdir($dir_path);
-        pop @path_parts until $path_parts[$#path_parts] eq 'ensembl-compara';
-        my $species_tree_file_path = catfile(@path_parts, 'conf', 'plants', 'species_tree.wheat.placeholder.nw');
-        $species_tree_string = slurp($species_tree_file_path);
+    } elsif ($self->method_link_species_set->dbID == 313160 && $self->method_link_species_set->name eq '16 wheat Cactus') {  # hack for e112
+        $species_tree_string = '(((((((((((((((2195,2107),2199),2120),2198),2116),2211),2208),2205),2203),2207),2274),2209),2202),2210),2102);';
     } else {
         #Multiple alignment
         $species_tree_string = $self->method_link_species_set->species_tree->root->newick_format('ryo', '%{g}');
