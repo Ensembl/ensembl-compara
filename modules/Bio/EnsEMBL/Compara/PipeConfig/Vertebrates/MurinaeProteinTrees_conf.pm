@@ -89,7 +89,7 @@ sub tweak_analyses {
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
         'expand_clusters_with_projections'  => '1Gb_job',
-        'overall_qc'    => '8Gb_1_hour_job',
+        'overall_qc'    => '8Gb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};

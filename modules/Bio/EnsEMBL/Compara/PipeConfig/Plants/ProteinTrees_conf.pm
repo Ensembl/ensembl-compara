@@ -107,14 +107,14 @@ sub tweak_analyses {
     ## Here we adjust the resource class of some analyses to the Plants division
     $analyses_by_name->{'mcoffee'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'mcoffee_himem'}->{'-rc_name'} = '32Gb_job';
-    $analyses_by_name->{'mafft'}->{'-rc_name'} = '8Gb_2c_1_hour_job';
+    $analyses_by_name->{'mafft'}->{'-rc_name'} = '8Gb_2c_job';
     $analyses_by_name->{'mafft_himem'}->{'-rc_name'} = '32Gb_4c_job';
     $analyses_by_name->{'treebest'}->{'-rc_name'} = '4Gb_job';
     $analyses_by_name->{'members_against_allspecies_factory'}->{'-rc_name'} = '2Gb_job';
     $analyses_by_name->{'members_against_nonreusedspecies_factory'}->{'-rc_name'} = '2Gb_job';
-    $analyses_by_name->{'hcluster_run'}->{'-rc_name'} = '1Gb_1_hour_job';
-    $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '2Gb_1_hour_job';
-    $analyses_by_name->{'exon_boundaries_prep_himem'}->{'-rc_name'} = '8Gb_1_hour_job';
+    $analyses_by_name->{'hcluster_run'}->{'-rc_name'} = '1Gb_job';
+    $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '2Gb_job';
+    $analyses_by_name->{'exon_boundaries_prep_himem'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'homology_factory'}->{'-rc_name'}         = '1Gb_job';
     $analyses_by_name->{'copy_homology_dNdS'}->{'-rc_name'}       = '1Gb_job';
     $analyses_by_name->{'copy_homology_dNdS'}->{'-hive_capacity'} = '50';
@@ -128,7 +128,7 @@ sub tweak_analyses {
     $analyses_by_name->{'hc_cafe_species_tree'}->{'-rc_name'}   = '2Gb_job';
     $analyses_by_name->{'get_split_genes'}->{'-rc_name'}   = '2Gb_job';
     $analyses_by_name->{'import_homology_table'}->{'-rc_name'}   = '1Gb_job';
-    $analyses_by_name->{'check_file_copy'}->{'-rc_name'}   = '1Gb_1_hour_job';
+    $analyses_by_name->{'check_file_copy'}->{'-rc_name'}   = '1Gb_job';
 
 
 }
