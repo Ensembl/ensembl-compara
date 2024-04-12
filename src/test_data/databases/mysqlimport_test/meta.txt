@@ -27,3 +27,4 @@
 45	\N	patch	patch_110_111_a.sql|schema_version
 47	\N	patch	patch_111_112_a.sql|schema_version
 49	\N	patch	patch_112_113_a.sql|schema_version
+50	\N	patch	patch_112_113_b.sql|meta_key_64
