@@ -35,6 +35,7 @@ use warnings;
 
 use Data::Dumper;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
@@ -363,6 +364,159 @@ sub fetch_all_removed_seq_member_ids_by_root_id {
     my ( $self, $root_id ) = @_;
 
     return $self->dbc->db_handle->selectcol_arrayref( 'SELECT seq_member_id FROM gene_tree_backup WHERE is_removed = 1 AND root_id = ? ;', undef, $root_id );
+}
+
+# Fetch consensus-tree LCA nodes for the given member in the form of
+# a mapping of target seq_member_id to clusterset-ancestor pairs.
+sub _fetch_all_ref_lca_node_ids_by_Member {
+    my ($self, $member) = @_;
+
+    assert_ref_or_dbID($member, 'Bio::EnsEMBL::Compara::Member', 'member');
+    my $seq_member_id;
+    if (ref($member)) {
+
+        if ($member->isa('Bio::EnsEMBL::Compara::GeneMember')) {
+            $seq_member_id = $member->canonical_member_id;
+        } else {  # $member->isa('Bio::EnsEMBL::Compara::SeqMember')
+            $seq_member_id = $member->dbID;
+        }
+
+    } else {
+        $seq_member_id = $member
+    }
+
+    my $dbh = $self->dbc->db_handle;
+
+    # With this query of trees containing the relevant member, ordering by root_id allows us to
+    # fetch trees in order of clusterset precedence (e.g. 'default', 'protostomes', 'insects').
+    my $tree_query = q/
+        SELECT
+            node_id,
+            root_id,
+            clusterset_id
+        FROM
+            gene_tree_node
+        JOIN
+            gene_tree_root gtr
+        USING
+            (root_id)
+        WHERE
+            seq_member_id = ?
+        AND
+            ref_root_id IS NULL
+        ORDER BY
+            root_id;
+    /;
+
+    my $tree_query_results = $dbh->selectall_hashref($tree_query, 'root_id', undef, $seq_member_id);
+
+    my @tree_root_ids;
+    my %root_to_clusterset_id;
+    my %root_to_query_node_id;
+    while (my ($root_id, $row) = each %$tree_query_results) {
+        $root_to_clusterset_id{$root_id} = $row->{'clusterset_id'};
+        $root_to_query_node_id{$root_id} = $row->{'node_id'};
+        push(@tree_root_ids, $root_id);
+    }
+
+    my @root_id_placeholders = ('?') x @tree_root_ids;
+    my $root_id_placeholder_str = '(' . join(',', @root_id_placeholders) . ')';
+
+    my $node_query = qq/
+        SELECT
+            node_id,
+            root_id,
+            left_index,
+            right_index,
+            seq_member_id
+        FROM
+            gene_tree_node
+        WHERE
+            root_id IN $root_id_placeholder_str;
+    /;
+
+    my $results_by_node = $dbh->selectall_hashref($node_query, 'node_id', undef, @tree_root_ids);
+
+    my %results_by_tree;
+    while (my ($node_id, $row) = each %$results_by_node) {
+        $results_by_tree{$row->{'root_id'}}{$node_id} = $row;
+    }
+
+    my %ref_lca_node_map;
+    foreach my $root_id (@tree_root_ids) {
+        my $clusterset_id = $root_to_clusterset_id{$root_id};
+        my $tree_results = $results_by_tree{$root_id};
+
+        my @tree_idxs;
+        my %node_to_idxs;
+        my $query_left_idx;
+        my $query_right_idx;
+        my %node_to_seq_member_id;
+
+        # To find LCA nodes using tree indices, we create an array
+        # of the tree indices in which the values are node IDs ...
+        while (my ($node_id, $row) = each %$tree_results) {
+            my $left_idx = $row->{'left_index'};
+            my $right_idx = $row->{'right_index'};
+
+            $tree_idxs[$left_idx] = $node_id;
+            $tree_idxs[$right_idx] = $node_id;
+
+            $node_to_idxs{$node_id} = {
+                'left_index' => $left_idx,
+                'right_index' => $right_idx,
+            };
+
+            if (defined $row->{'seq_member_id'}) {
+                $node_to_seq_member_id{$node_id} = $row->{'seq_member_id'};
+                if ($node_id == $root_to_query_node_id{$root_id}) {
+                    $query_left_idx = $left_idx;
+                    $query_right_idx = $right_idx;
+                }
+            }
+        }
+
+        # ... then we check the tree-index array to the left of the query ...
+        my @left_node_stack;
+        for (my $i = $query_left_idx - 1 ; $i > 0; $i--) {
+            my $node_id = $tree_idxs[$i];
+            if (exists $node_to_seq_member_id{$node_id}) {
+                next if @left_node_stack && $left_node_stack[-1] == $node_id;
+                push(@left_node_stack, $node_id);
+            } elsif ($node_to_idxs{$node_id}{'right_index'} > $query_right_idx) {
+                while (@left_node_stack) {
+                    my $target_node_id = pop(@left_node_stack);
+                    my $target_member_id = $node_to_seq_member_id{$target_node_id};
+                    push(@{$ref_lca_node_map{$target_member_id}}, [$clusterset_id, $node_id]);
+                }
+            }
+        }
+
+        # ... and finally we check the tree-index array to the right of the query.
+        my @right_node_stack;
+        for (my $j = $query_right_idx + 1 ; $j < scalar(@tree_idxs); $j++) {
+            my $node_id = $tree_idxs[$j];
+            if (exists $node_to_seq_member_id{$node_id}) {
+                next if @right_node_stack && $right_node_stack[-1] == $node_id;
+                push(@right_node_stack, $node_id);
+            } elsif ($node_to_idxs{$node_id}{'left_index'} < $query_left_idx) {
+                while (@right_node_stack) {
+                    my $target_node_id = pop(@right_node_stack);
+                    my $target_member_id = $node_to_seq_member_id{$target_node_id};
+                    push(@{$ref_lca_node_map{$target_member_id}}, [$clusterset_id, $node_id]);
+                }
+            }
+        }
+
+        # After checking the tree-index array, we should have
+        # found the LCA node of the query and each target.
+        my $num_targets_without_lca = scalar(@left_node_stack) + scalar(@right_node_stack);
+        if ($num_targets_without_lca > 0) {
+            throw("LCA node not found for $num_targets_without_lca target members in indexed tree with ID $root_id");
+        }
+    }
+
+    return \%ref_lca_node_map
 }
 
 
