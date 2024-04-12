@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS meta (
 
   meta_id                     INT NOT NULL AUTO_INCREMENT,
   species_id                  INT UNSIGNED DEFAULT 1,
-  meta_key                    VARCHAR(40) NOT NULL,
+  meta_key                    VARCHAR(64) NOT NULL,
   meta_value                  TEXT NOT NULL,
 
   PRIMARY   KEY (meta_id),
@@ -2284,3 +2284,5 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_112_113_a.sql|schema_version');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_112_113_b.sql|meta_key_64');
