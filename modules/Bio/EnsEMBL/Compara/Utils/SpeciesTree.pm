@@ -299,7 +299,15 @@ sub new_from_newick {
             my $component_name = $2;
             my $pgdb = $all_genome_dbs{lc $species_name};
             if ($pgdb and $pgdb->is_polyploid and ($component_name =~ /^[A-Z][0-9]?$/)) {
-                $gdb = $pgdb->component_genome_dbs($component_name) or die "No component named '$component_name' in '$species_name'\n";
+                $gdb = $pgdb->component_genome_dbs($component_name);
+
+                # If this node appears to represent the component of a polyploid genome, it must be present in the genome_db table ...
+                if (!$gdb) {
+                    # ... unless the missing component genome is Triticum aestivum Sy Mattis (component U)
+                    unless ($species_name eq 'triticum_aestivum_mattis' && $component_name eq 'U') {
+                        die "No component named '$component_name' in '$species_name'\n";
+                    }
+                }
             }
         }
         if ($gdb) {
