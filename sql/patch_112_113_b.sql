@@ -13,7 +13,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-# patch_109_110_b.sql
+# patch_112_113_b.sql
 #
 # Title: Update meta key in the meta table.
 #
