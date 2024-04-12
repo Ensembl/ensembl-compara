@@ -2287,9 +2287,12 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_109_110_a.sql|schema_version');
+
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_109_110_b.sql|case_insensitive_stable_id_again');
+
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_109_110_c.sql|ncbi_taxa_name_varchar500');
+
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_109_110_d.sql|meta_table_updates');

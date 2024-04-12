@@ -62,7 +62,7 @@ sub fetch_input {
         }
         else {
             # We have a hard limit to prevent overlapping ids between reference database and pipeline database
-            $self->warning( "The hard limit of" . $spec_hard_limit . "genomes in this pipeline has been exceeded: " . $species_name . " has been discarded." );
+            $self->die_no_retry( "The hard limit of" . $spec_hard_limit . "genomes in this pipeline has been exceeded with species " . $species_name . "." );
         }
     }
 
