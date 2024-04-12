@@ -481,7 +481,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name     => 'clean_dump_hash',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -rc_name        => '1Gb_job',
+            -rc_name        => '1Gb_registryless_job',
             -parameters     => {
                 'cmd' => 'rm -rf #work_dir#',
             },
