@@ -88,11 +88,37 @@ use JSON;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor;
+use Bio::EnsEMBL::Hive::Utils qw(destringify);
+
+
+my %MODE_TO_FUNCS = (
+    'all' => [
+        \&test_dnafrag_access,
+        \&test_slice_access,
+        \&test_align_slice_access,
+        \&test_msa_blocks_access,
+    ],
+    'dnafrag' => [
+        \&test_dnafrag_access,
+    ],
+    'slice' => [
+        \&test_slice_access,
+    ],
+    'align_slice' => [
+        \&test_align_slice_access,
+    ],
+    'msa_blocks' => [
+        \&test_msa_blocks_access,
+    ],
+);
+
 
 my $help;
 my $reg_conf;
 my $compara = 'compara_curr';
 my $mlss_id;
+my $mode = 'all';
 my $regions_tsv;
 my $outfile = "test_hal_gab_access.json";
 my $hal_dir;
@@ -102,6 +128,7 @@ GetOptions(
     'reg_conf=s'    => \$reg_conf,
     'compara=s'     => \$compara,
     'mlss=i'        => \$mlss_id,
+    'mode=s'        => \$mode,
     'regions=s'     => \$regions_tsv,
     'hal_dir=s'     => \$hal_dir,
     'out=s'         => \$outfile,
@@ -131,6 +158,13 @@ if (!$reg_conf) {
     }
 }
 
+my $access_funcs;
+if (exists $MODE_TO_FUNCS{$mode}) {
+    $access_funcs = $MODE_TO_FUNCS{$mode};
+} else {
+    die("Unknown access mode: '$mode'");
+}
+
 # Load all test regions from TSV file:
 sub load_regions {
     my $infile = shift;
@@ -151,21 +185,54 @@ my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba
 
 our $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor();
 our $gab_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor();
+our $align_slice_adaptor = $compara_dba->get_AlignSliceAdaptor();
 our $gdb_adaptor = $compara_dba->get_GenomeDBAdaptor();
 our $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 
 # Get MLSS obejct by ID:
 our $cactus_mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
 
+our $hal_adaptor;
+if ($mode eq 'all' || $mode eq 'msa_blocks') {
+    my $hal_file = $cactus_mlss->url;
+    $hal_adaptor = Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor->new($hal_file);
+}
+
 # Load test regions:
 my $test_regions =  load_regions($regions_tsv);
 
 my $res = {};
 
+# Test access via an align_slice:
+sub test_align_slice_access {
+    my $reg = shift;
+    my $res = shift;
+
+    print "Testing align_slice access on region $reg->{Region}\n";
+
+    my $slice_adaptor = $registry->get_adaptor($reg->{Species}, 'Core', 'Slice');
+    my $coord_sys = $reg->{CoordSys} || 'toplevel';
+    my $slice = $slice_adaptor->fetch_by_region($coord_sys, $reg->{DnaFrag}, $reg->{Start}, $reg->{End});
+
+    my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $cactus_mlss, 'expanded', 'restrict');
+    my @align_slice_gabs = @{$align_slice->get_all_GenomicAlignBlocks()};
+
+    my $align_slice_gab_count = scalar(@align_slice_gabs);
+    print "In region $reg->{Region} found $align_slice_gab_count GABs\n";
+    $res->{AlignSliceSummary}->{GabCount}->{$align_slice_gab_count}++;
+
+    foreach my $i (0 .. $#align_slice_gabs) {
+        my $gab = $align_slice_gabs[$i];
+        $res->{AlignSliceSummary}->{GabLength}->{$gab->length}++;
+    }
+}
+
 # Test access via a slice:
 sub test_slice_access {
     my $reg = shift;
     my $res = shift;
+
+    print "Testing slice access on region $reg->{Region}\n";
 
     my $slice_adaptor = $registry->get_adaptor($reg->{Species}, 'Core', 'Slice');
     my $coord_sys = $reg->{CoordSys} || 'toplevel';
@@ -191,15 +258,21 @@ sub test_dnafrag_access {
     my $min_gab_len_cutoff = int(abs($reg->{End} - $reg->{Start}) / 1000);
     my $min_ga_len_cutoff  = $min_gab_len_cutoff / 4;
 
-    print "Testing pairwise access on region $reg->{Region}\n";
+    print "Testing dnafrag access on region $reg->{Region}\n";
 
     my $genome_db1 = $gdb_adaptor->fetch_by_name_assembly($reg->{Species});
     my $dnafrag1 = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($genome_db1, $reg->{DnaFrag});
     my @dnafrag_gabs = @{$gab_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($cactus_mlss, $dnafrag1, $reg->{Start}, $reg->{End})};
+
+    my $dnafrag_gab_count = scalar(@dnafrag_gabs);
+    print "In region $reg->{Region} found $dnafrag_gab_count GABs\n";
+    $res->{DnaFragSummary}->{GabCount}->{$dnafrag_gab_count}++;
+
     my $dnafrag2;
     my $greatest_ga_dnafrag_length = 0;
     foreach my $i (0 .. $#dnafrag_gabs) {
         my $gab = $dnafrag_gabs[$i];
+        $res->{DnaFragSummary}->{GabLength}->{$gab->length}++;
         if ($gab->length >= $min_gab_len_cutoff) {
             foreach my $ga (@{$gab->get_all_non_reference_genomic_aligns}) {
                 my $ga_dnafrag_length = $ga->dnafrag_end - $ga->dnafrag_start + 1;
@@ -212,6 +285,8 @@ sub test_dnafrag_access {
     }
 
     if (defined $dnafrag2) {
+
+        print "Testing pairwise access on region $reg->{Region}\n";
 
         my $genome_db2 = $gdb_adaptor->fetch_by_name_assembly($dnafrag2->genome_db->name);
         $dnafrag2 = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($genome_db2, $dnafrag2->name);
@@ -230,10 +305,55 @@ sub test_dnafrag_access {
 
 }
 
+sub test_msa_blocks_access {
+    my $reg = shift;
+    my $res = shift;
+
+    my $ref_mlss;
+    if (my $ref_mlss_id = $cactus_mlss->get_value_for_tag('alt_hal_mlss')) {
+        $ref_mlss = $mlss_adaptor->fetch_by_dbID($ref_mlss_id);
+    } else {
+        $ref_mlss = $cactus_mlss;
+    }
+    my $hal_mapping = destringify($ref_mlss->get_tagvalue('hal_mapping'));
+
+    my @hal_targets = values %{$hal_mapping};
+    my $num_targets = scalar(@hal_targets);
+    my $targets_str = join(',', @hal_targets);
+
+    # Default values for Ensembl
+    my $max_ref_gap = $num_targets > 1 ? 500 : 50;
+    my $max_block_length = $num_targets > 1 ? 1_000_000 : 500_000;
+
+    print "Testing msa_blocks access on region $reg->{Region}\n";
+
+    my $maf_file_str = $hal_adaptor->msa_blocks( $targets_str, $reg->{HalGenomeName}, $reg->{DnaFrag}, $reg->{Start}-1, $reg->{End}, $max_ref_gap, $max_block_length );
+
+    unless ( $maf_file_str =~ m/[A-Za-z]/ ){
+        warn "!! MAF is empty !!\n";
+        return;
+    }
+
+    # use open ':encoding(iso-8859-7)';
+    open( my $maf_fh, '<', \$maf_file_str) or die "Can't open MAF file in memory";
+    my @maf_lines = <$maf_fh>;
+    close($maf_fh);
+    my $maf_info = $gab_adaptor->_parse_maf( \@maf_lines );
+
+    my $maf_block_count = scalar(@$maf_info);
+    $res->{MsaBlockSummary}->{BlockCount}->{$maf_block_count}++;
+
+    for my $maf_block (@$maf_info) {
+        my $maf_block_length = length($maf_block->[0]->{seq});
+        $res->{MsaBlockSummary}->{BlockLength}->{$maf_block_length}++;
+    }
+}
+
 # Run tests on all regions:
 for my $reg (@$test_regions) {
-    test_slice_access($reg, $res);
-    test_dnafrag_access($reg, $res);
+    foreach my $access_func (@$access_funcs) {
+        $access_func->($reg, $res);
+    }
 }
 
 # Get process memory usage:
