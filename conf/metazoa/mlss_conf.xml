@@ -190,7 +190,8 @@
       <genome name="amblyteles_armatorius_gca933228735v1"/>
       <genome name="amyelois_transitella_gca001186105v1rs"/>
       <genome name="ancistrocerus_nigricornis_gca916049575v1"/>
-      <genome name="anopheles_coluzzii_ngousso"/>
+      <genome name="anopheles_coluzzii_gca943734685v1rs"/>
+      <genome name="anopheles_funestus_gca943734845v1rs"/>
       <genome name="anopheles_gambiae"/>
       <genome name="anopheles_sinensis"/>
       <genome name="anoplophora_glabripennis"/>
@@ -199,7 +200,7 @@
       <genome name="apis_dorsata_gca000469605v1rs"/>
       <genome name="apis_florea_gca000184785v2rs"/>
       <genome name="apis_mellifera"/>
-      <genome name="athalia_rosae_gca000344095v2"/>
+      <genome name="athalia_rosae_gca917208135v1"/>
       <genome name="atta_cephalotes"/>
       <genome name="bactrocera_dorsalis_gca000789215v2"/>
       <genome name="bactrocera_latifrons_gca001853355v1"/>
@@ -214,7 +215,7 @@
       <genome name="bicyclus_anynana_gca900239965v1rs"/>
       <genome name="bombus_huntii_gca024542735v1rs"/>
       <genome name="bombus_impatiens"/>
-      <genome name="bombus_terrestris"/>
+      <genome name="bombus_terrestris_gca910591885v2"/>
       <genome name="bombus_vancouverensis_gca011952275v1rs"/>
       <genome name="bombyx_mandarina_gca003987935v1rs"/>
       <genome name="bombyx_mori"/>
@@ -226,7 +227,7 @@
       <genome name="copidosoma_floridanum_gca000648655v2"/>
       <genome name="cotesia_glomerata_gca020080835v1"/>
       <genome name="cryptotermes_secundus_gca002891405v2rs"/>
-      <genome name="culex_quinquefasciatus_gca015732765v1"/>
+      <genome name="culex_quinquefasciatus_gca015732765v1vb"/>
       <genome name="culicoides_sonorensis"/>
       <genome name="daktulosphaira_vitifoliae_gca025091365v1rs"/>
       <genome name="danaus_plexippus"/>
@@ -234,7 +235,6 @@
       <genome name="diabrotica_virgifera_gca917563875v2rs"/>
       <genome name="diuraphis_noxia_gca001186385v1"/>
       <genome name="drosophila_melanogaster"/>
-      <genome name="drosophila_yakuba"/>
       <genome name="dufourea_novaeangliae_gca001272555v1rs"/>
       <genome name="eufriesea_mexicana_gca001483705v1rs"/>
       <genome name="folsomia_candida"/>
@@ -256,13 +256,13 @@
       <genome name="limnephilus_rhombicus_gca929108145v2"/>
       <genome name="linepithema_humile_gca000217595v1rs"/>
       <genome name="lucilia_cuprina_gca022045245v1rs"/>
-      <genome name="lutzomyia_longipalpis"/>
+      <genome name="lutzomyia_longipalpis_gca024334085v1rs"/>
       <genome name="macrosteles_quadrilineatus_gca028750875v1rs"/>
       <genome name="manduca_sexta_gca014839805v1rs"/>
       <genome name="mayetiola_destructor"/>
       <genome name="megachile_rotundata_gca000220905v1rs"/>
       <genome name="megaselia_scalaris"/>
-      <genome name="melitaea_cinxia"/>
+      <genome name="melitaea_cinxia_gca905220565v1"/>
       <genome name="monomorium_pharaonis_gca013373865v2"/>
       <genome name="musca_domestica"/>
       <genome name="nasonia_vitripennis"/>
@@ -275,7 +275,7 @@
       <genome name="orussus_abietinus_gca000612105v2"/>
       <genome name="pectinophora_gossypiella_gca024362695v1rs"/>
       <genome name="pediculus_humanus"/>
-      <genome name="phlebotomus_papatasi"/>
+      <genome name="phlebotomus_papatasi_gca024763615v2rs"/>
       <genome name="phlebotomus_perniciosus_gca918844115v2"/>
       <genome name="pogonomyrmex_barbatus_gca000187915v1rs"/>
       <genome name="polistes_canadensis_gca001313835v1rs"/>
