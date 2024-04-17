@@ -211,6 +211,14 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'report_file'         => $self->o('report_file'),
                 'cmd'                 => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #master_db# -xml #xml_file# --release --output_file #report_file# --verbose',
             },
+            -flow_into  => [ 'tag_alignments_being_patched' ],
+        },
+
+        {   -logic_name => 'tag_alignments_being_patched',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::TagAlignmentsBeingPatched',
+            -parameters => {
+                'work_dir' => $self->o('work_dir'),
+            },
             -flow_into  => [ 'retire_old_species_sets' ],
         },
 
