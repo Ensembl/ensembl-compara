@@ -38,7 +38,7 @@ rt1=$?
 # Check that all the Perl files can be compiled
 find docs modules scripts sql travisci -iname '*.t' -print0 | xargs -0 -n 1 perl -c
 rt2=$?
-find docs modules scripts sql travisci -iname '*.pl' -print0 | xargs -0 -n 1 perl -c
+find docs modules scripts sql travisci -iname '*.pl' \! -name 'sample_genomic_regions.pl' \! -name 'test_hal_gab_access.pl' -print0 | xargs -0 -n 1 perl -c
 rt3=$?
 find docs modules scripts sql travisci -iname '*.pm' \! -name 'LoadHalMapping.pm' \! -name 'LoadSynonyms.pm' \! -name 'HALAdaptor.pm' \! -name 'HALXS.pm' -print0 | xargs -0 -n 1 perl -c
 rt4=$?

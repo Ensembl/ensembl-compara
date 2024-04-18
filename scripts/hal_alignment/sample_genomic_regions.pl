@@ -86,7 +86,10 @@ use Getopt::Long;
 use List::Util qw(sum first);
 
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Hive::Utils qw(destringify);
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor;
+use Bio::EnsEMBL::Compara::Utils::Polyploid qw(map_dnafrag_to_genome_component);
 
 my $help;
 my $reg_conf;
@@ -133,18 +136,44 @@ if (!$compara_dba) {
 }
 my $genome_dba      = $compara_dba->get_GenomeDBAdaptor;
 my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor();
+my $mlss_adaptor    = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 
 # Fetch the species set and genome DBs:
+our $hal_adaptor;
+our $hal_mapping;
+our %gdb_hal_name_map;
+my $cactus_mlss;
 my $species_set;
 if ($mlss_id) {
-my $mlss_adaptor    = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
-my $cactus_mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
+    $cactus_mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
     $species_set = $cactus_mlss->species_set();
 } else {
     my $ss_adaptor    = $compara_dba->get_SpeciesSetAdaptor();
     $species_set = $ss_adaptor->fetch_by_dbID($ss_id);
+    $cactus_mlss = $mlss_adaptor->fetch_by_method_link_type_species_set_name('CACTUS_HAL', $species_set->name);
 }
 my $genome_dbs  = $species_set->genome_dbs();
+
+
+if (defined $cactus_mlss) {
+    my $ref_mlss;
+    if (my $ref_mlss_id = $cactus_mlss->get_value_for_tag('alt_hal_mlss')) {
+        $ref_mlss = $mlss_adaptor->fetch_by_dbID($ref_mlss_id);
+    } else {
+        $ref_mlss = $cactus_mlss;
+    }
+    $hal_mapping = destringify($ref_mlss->get_tagvalue('hal_mapping'));
+
+    if ($ENV{COMPARA_HAL_DIR}) {
+        my $hal_file = $cactus_mlss->url;
+        $hal_adaptor = Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor->new($hal_file);
+
+        while (my ($gdb_id, $hal_genome_name) = each %$hal_mapping) {
+            my $hal_gdb = $genome_dba->fetch_by_dbID($gdb_id);
+            push(@{$gdb_hal_name_map{$hal_gdb->name}}, $hal_genome_name);
+        }
+    }
+}
 
 # Subroutine to sample from a hash in proportion to its values:
 sub prob_choice {
@@ -167,9 +196,21 @@ sub get_random_region {
     my $coords  = shift;
     
     my $frag    = prob_choice(%$probs);
-    my $start   = int(rand($frags->{$frag} - $size)) + 1; # Use one-based coordinates.
+    my $start   = int(rand($frags->{$frag}->length - $size)) + 1; # Use one-based coordinates.
     my $end     = $start + $size - 1;
-    return [$gdb->name, $coords->{$frag}, $frag, $start, $end];
+    my @region = ($gdb->name, $coords->{$frag}, $frag, $start, $end);
+
+    if (defined $hal_mapping) {
+        my $linking_gdb = $gdb;
+        if ($linking_gdb->is_polyploid()) {
+            my $comp_dnafrag = map_dnafrag_to_genome_component($frags->{$frag});
+            $linking_gdb = $comp_dnafrag->genome_db;
+        }
+        my $hal_genome_name = $hal_mapping->{$linking_gdb->dbID};
+        push(@region, $hal_genome_name);
+    }
+
+    return \@region;
 }
 
 # Sample multiple regions from a genome:
@@ -178,15 +219,31 @@ sub get_random_regions {
     my $size    = shift;
     my $nr      = shift;
 
-    # Filter for all dnafrags of suitable size:
-    my $all_dnafrags = [ grep {$_->length >= $size} @{$dnafrag_adaptor->fetch_all_by_GenomeDB($gdb)} ];
+    # Fetch all relevant dnafrags, filtering by size:
+    my $all_dnafrags;
+    if (%gdb_hal_name_map) {
+
+        foreach my $hal_genome_name (@{$gdb_hal_name_map{$gdb->name}}) {
+            my @hal_seq_names = $hal_adaptor->seqs_in_genome($hal_genome_name);
+            foreach my $hal_seq_name (@hal_seq_names) {
+                my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($gdb, $hal_seq_name);
+                if ($dnafrag->length >= $size) {
+                    push(@$all_dnafrags, $dnafrag);
+                }
+            }
+        }
+
+    } else {
+        $all_dnafrags = [ grep {$_->length >= $size} @{$dnafrag_adaptor->fetch_all_by_GenomeDB($gdb)} ];
+    }
+
     # Calculate the total length:
     my $sum = sum( map {$_->length} @$all_dnafrags );
     # Build a hash of normalised dnafrag lengths/probabilities:
     my %probs = ( map { $_->name, $_->length/$sum } @$all_dnafrags );
     my %coords = ( map { $_->name, $_->coord_system_name } @$all_dnafrags );
     # Build a hash of dnafrag lengths:
-    my %frags = ( map { $_->name, $_->length} @$all_dnafrags );
+    my %frags = ( map { $_->name, $_ } @$all_dnafrags );
 
     my $regions = [ map { get_random_region($gdb, $size, \%frags, \%probs, \%coords) } (1..$nr) ];
 }
@@ -195,12 +252,14 @@ sub get_random_regions {
 sub print_regions {
     my $regions = shift;
     for my $reg (@$regions) {
-        print "$reg->[0]\t$reg->[1]\t$reg->[2]\t$reg->[3]\t$reg->[4]\n";
+        print join("\t", @$reg) . "\n";
     }
 }
 
 # Print out header:
-print "Species\tCoordSys\tDnaFrag\tStart\tEnd\n";
+my @header = ('Species', 'CoordSys', 'DnaFrag', 'Start', 'End');
+push(@header, 'HalGenomeName') if (defined $hal_mapping);
+print join("\t", @header) . "\n";
 
 # Generate all regions:
 for my $gdb (@$genome_dbs) {
