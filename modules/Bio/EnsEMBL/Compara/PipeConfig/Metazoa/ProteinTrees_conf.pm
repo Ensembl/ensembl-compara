@@ -111,10 +111,10 @@ sub tweak_analyses {
     # Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
         'mcoffee'           => '8Gb_job',
-        'mcoffee_himem'     => '32Gb_job',
+        'mcoffee_himem'     => '32Gb_24_hour_job',
         'mafft'             => '8Gb_2c_job',
-        'mafft_himem'       => '32Gb_4c_job',
-        'treebest'          => '4Gb_job',
+        'mafft_himem'       => '32Gb_4c_24_hour_job',
+        'treebest'          => '4Gb_24_hour_job',
         'members_against_allspecies_factory'        => '2Gb_job',
         'members_against_nonreusedspecies_factory'  => '2Gb_job',
     );
