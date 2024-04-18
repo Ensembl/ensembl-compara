@@ -75,54 +75,63 @@
       "component": "Relco tasks",
       "description": "*Intentions for release*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Intentions+for+release+<version>\n*Production pipelines brief*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+Pipelines+Brief",
       "subtasks": [{
+            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "*GitHub*: [<Division>/ProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/ProteinTrees_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the Protein-trees pipeline",
             "name_on_graph": "Protein-trees"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "*GitHub*: [WheatCultivarsProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/WheatCultivarsProteinTrees_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::WheatCultivarsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the wheat cultivars Protein-trees pipeline",
             "name_on_graph": "Protein-trees:Wheat cultivars"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "*GitHub*: [RiceCultivarsProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/RiceCultivarsProteinTrees_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::RiceCultivarsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the rice cultivars Protein-trees pipeline",
             "name_on_graph": "Protein-trees:Rice cultivars"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "Review the gene-tree stats for each gene-tree pipeline, and address any issues.",
             "summary": "Check gene-tree stats",
             "name_on_graph": "Check gene-tree stats"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "Mark as done when all LastZs have been merged into the new release database.",
             "summary": "Merge all LastZ",
             "name_on_graph": "Merge all LastZ"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+CACTUS+HAL+Alignment+to+Compara",
             "summary": "Register HAL alignment data",
             "name_on_graph": "Register HAL alignment data"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "*GitHub*: [Plants/EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/EPOwithExt_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name rice{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Rice EPOwithExt pipeline",
             "name_on_graph": "EPOwithExt:Rice"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "Review the stats for each MSA pipeline, and address any issues.",
             "summary": "Check MSA stats",
             "name_on_graph": "Check MSA stats"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "*GitHub*: [Synteny_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
             "name_on_graph": "Synteny",
@@ -192,21 +201,25 @@
             "summary": "Ask the <Division> team to test the staging server"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-DNAside",
             "summary": "Test the DNA data"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Homologyside",
             "summary": "Test the homologies data"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Downloads",
             "summary": "Test the downloads"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Documentation&Statistics",
             "summary": "Test the documentation and statistics"
