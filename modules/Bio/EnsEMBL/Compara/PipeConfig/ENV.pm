@@ -240,6 +240,11 @@ sub resource_classes_single_thread {
             'LSF'   => ['-q datamover -C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"'],
             'SLURM' => ['--partition=datamover --mem=1g --time=24:00:00'],
         },
+
+        '1Gb_registryless_job' => {
+            'LSF'   => ['-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"'],
+            'SLURM' => ['--mem=1g --time=24:00:00'],
+        },
     );
     %{$resource_classes} = (%{$resource_classes}, %additional_resource_classes);
 
@@ -553,9 +558,13 @@ sub _apply_common_rc_config {
     my ($pipe_config, $resource_classes) = @_;
 
     my $local_submission_cmd_args = '';
-    my $worker_cmd_args = sprintf('--reg_conf %s', $pipe_config->o('reg_conf'));
+    my $empty_reg_conf = $pipe_config->o('ensembl_root_dir') . '/ensembl-compara/conf/none/production_reg_conf.pl';
+
     while (my ($rc_name, $rc_config) = each %{$resource_classes}) {
         $rc_config->{'LOCAL'} = [$local_submission_cmd_args];
+
+        my $reg_conf = $rc_name =~ /_registryless_job$/ ? $empty_reg_conf : $pipe_config->o('reg_conf');
+        my $worker_cmd_args = "--reg_conf $reg_conf";
 
         while (my ($meadow_name, $meadow_config) = each %{$rc_config}) {
             push(@{$meadow_config}, $worker_cmd_args);

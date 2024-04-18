@@ -439,16 +439,12 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -rc_name    => '1Gb_job',
             -flow_into  => {
-                1 => WHEN('#clean_intermediate_files#' => [ 'clean_dump_hash' ])
+                1 => WHEN('#clean_intermediate_files#' => [ 'start_file_cleanup' ])
             },
         },
 
-        {   -logic_name     => 'clean_dump_hash',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -rc_name        => '1Gb_24_hour_job',
-            -parameters     => {
-                'cmd' => 'rm -rf #work_dir#',
-            },
+        {   -logic_name => 'start_file_cleanup',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into =>  {
                 1 => WHEN(
                     '#division# eq "vertebrates"' => 'move_uniprot_file',
@@ -470,6 +466,7 @@ sub core_pipeline_analyses {
                 ))
             },
             -rc_name       => '1Gb_datamover_job',
+            -flow_into  => [ 'clean_dump_hash' ],
         },
 
         {   -logic_name     => 'remove_uniprot_file',
@@ -478,6 +475,15 @@ sub core_pipeline_analyses {
             -parameters     => {
                 'clusterset_id' => 'default',
                 'cmd'           => 'rm #dump_root#/#division#.#uniprot_file#.gz',
+            },
+            -flow_into  => [ 'clean_dump_hash' ],
+        },
+
+        {   -logic_name     => 'clean_dump_hash',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name        => '1Gb_registryless_job',
+            -parameters     => {
+                'cmd' => 'rm -rf #work_dir#',
             },
         },
 
