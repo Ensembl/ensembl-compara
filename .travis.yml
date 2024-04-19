@@ -141,9 +141,10 @@ jobs:
       script: ./travisci/perl-linter_harness.sh
 
     - language: python
-      python: 3.8
+      python: 3.9
       name: "Python unit tests on the minimum version"
       install:
+        - pip install --upgrade pip
         - pip install .[test]
       script:
         - pytest --server=mysql://travis@127.0.0.1:3306/
