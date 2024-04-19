@@ -2276,13 +2276,11 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '113');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '114');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_112_113_a.sql|schema_version');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_112_113_b.sql|meta_key_64');
+  VALUES (NULL, 'patch', 'patch_113_114_a.sql|schema_version');
