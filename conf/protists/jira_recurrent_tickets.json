@@ -200,6 +200,12 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Post-handover+tasks#Posthandovertasks-Cleanupgenomedumps",
+            "summary": "Clean up genome dumps"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
             "description": "Ensure that the division production_reg_conf.pl is up to date on GitHub",
             "summary": "Update conf/<division>/production_reg_conf.pl"
          },
