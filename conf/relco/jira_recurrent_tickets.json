@@ -38,6 +38,12 @@
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Code+branching",
             "summary": "Code branching"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Ensembl+repositories+configuration#Ensemblrepositoriesconfiguration-Preparingeverythingforarelease",
+            "summary": "Prepare the shared repositories"
          }
       ],
       "summary": "Release <version> preparation"
