@@ -38,7 +38,9 @@ my $prev_eg_release = $curr_eg_release - 1;
 
 # ---------------------- DATABASE HOSTS -----------------------------------------
 
-my $curr_nv_host = $curr_release % 2 == 0 ? 'mysql-ens-sta-3' : 'mysql-ens-sta-3-b';
+my ($curr_nv_host, $curr_nv_port) = $curr_release % 2 == 0
+    ? ('mysql-ens-sta-3', 4160)
+    : ('mysql-ens-sta-3-b', 4686);
 
 my ($prev_nv_host, $prev_nv_port) = $prev_release % 2 == 0
     ? ('mysql-ens-sta-3', 4160)
@@ -57,6 +59,12 @@ my $overlap_cores = {
     'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_${curr_eg_release}_${curr_release}_10" ],
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
+
+# ---------------------- CURRENT CORE DATABASES : ALTERNATE HOSTS ----------------
+
+# Official staging servers
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@$curr_nv_host:$curr_nv_port/$curr_release");
+#Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
@@ -86,13 +94,6 @@ my $compara_dbs = {
     'protostomes_ptrees' => [ 'mysql-ens-compara-prod-9', 'thiagogenez_protostomes_metazoa_protein_trees_112' ],
     'insects_ptrees'     => [ 'mysql-ens-compara-prod-8', '' ],
     'drosophila_ptrees'  => [ 'mysql-ens-compara-prod-9', 'thiagogenez_pangenome_drosophila_metazoa_protein_trees_112' ],
-
-    # LastZ dbs
-    # 'lastz_batch_1' => [ 'mysql-ens-compara-prod-X', '' ],
-    # 'lastz_batch_2' => [ 'mysql-ens-compara-prod-X', '' ],
-
-    # synteny
-    # 'compara_syntenies' => [ 'mysql-ens-compara-prod-X', '' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
