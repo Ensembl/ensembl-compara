@@ -119,7 +119,7 @@ elsif($division eq "plants"){
     # rice
     $cactus_species           = 'oryza_sativa';
     $cactus_region            = '5:20683551-20684336';
-    $cactus_species_set       = 'collection-rice';
+    $cactus_species_set       = 'collection-rice_cultivars';
 
     $extra_params             = 'compara=plants';
     $skip_cactus              = 0;
