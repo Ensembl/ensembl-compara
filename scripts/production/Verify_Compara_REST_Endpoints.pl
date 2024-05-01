@@ -89,11 +89,11 @@ if ($division eq "vertebrates"){
     $homology_type            = 'orthologues';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
 
-    $cactus_species           = 'rattus_norvegicus';
-    $cactus_region            = '2:56040000-56040100:1';
-    $cactus_species_set       = 'murinae';
+    $cactus_species           = 'gallus_gallus';
+    $cactus_region            = '5:38111022-38265293';
+    $cactus_species_set       = 'collection-fowl';
 
-    $skip_cactus              = 1;
+    $skip_cactus              = 0;
 }
 elsif($division eq "plants"){
     $gene_member_id           = "AT3G52430";
