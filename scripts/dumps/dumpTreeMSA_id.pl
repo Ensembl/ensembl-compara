@@ -175,6 +175,11 @@ foreach my $tree_id (@tree_ids) {
            ;
 
   my $root = $tree->root;
+
+  if ($root->is_supertree()) {
+      $tree->expand_subtrees;
+  }
+
   my $cafe_tree = $dba->get_CAFEGeneFamilyAdaptor->fetch_by_GeneTree($tree);
 
   $tree_id = "tree.".$tree_id;
