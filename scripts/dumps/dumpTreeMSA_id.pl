@@ -21,6 +21,7 @@ use Bio::AlignIO;
 use File::Spec;
 use Getopt::Long;
 use JSON qw (encode_json);
+use Scalar::Util qw(looks_like_number);
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::IO qw (slurp spurt);
@@ -52,7 +53,7 @@ $| = 1;
 
 GetOptions('help'           => \$help,
            'tree_id_file|infile=s' => \$tree_id_file,
-           'tree_id=i'      => \$one_tree_id,
+           'tree_id=s'      => \$one_tree_id,
            'dataflow_file=s' => \$dataflow_file,
 
            'reg_conf=s'     => \$reg_conf,
@@ -75,8 +76,8 @@ if ($help) {
   print "
 $0 [--tree_id id | --tree_id_file file.txt] [--url mysql://ensro\@compara1:3306/kb3_ensembl_compara_59 | -reg_conf reg_file.pm -reg_alias alias ]
 
---tree_id         the root_id of the tree to be dumped
---tree_id_file    a file with a list of tree_ids
+--tree_id         the root_id (or stable_id) of the tree to be dumped
+--tree_id_file    a file with a list of tree root_id or tree stable_id values
 --dataflow_file   a JSONL file with a list of dataflow events, one per line
 --url string      database url location of the form,
                   mysql://username[:password]\@host[:port]/[release_version]
@@ -168,7 +169,11 @@ foreach my $tree_id (@tree_ids) {
 
   system("mkdir -p $dirpath") && die "Could not make directory '$dirpath: $!";
 
-  my $tree = $adaptor->fetch_by_root_id($tree_id);
+  my $tree = looks_like_number($tree_id)
+           ? $adaptor->fetch_by_root_id($tree_id)
+           : $adaptor->fetch_by_stable_id($tree_id)
+           ;
+
   my $root = $tree->root;
   my $cafe_tree = $dba->get_CAFEGeneFamilyAdaptor->fetch_by_GeneTree($tree);
 
