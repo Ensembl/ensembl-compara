@@ -97,6 +97,13 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Non-vertebratesdivisionswithoutanancestraldatabase(e.g.Pan,Metazoa)",
+            "labels": ["Handover_anchor"],
+            "summary": "Handover of release DB"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Homologyside",
             "summary": "test the homologies data"
          },
@@ -111,7 +118,7 @@
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Non-vertebratesdivisionswithoutanancestraldatabase(e.g.Pan,Metazoa)",
             "labels": ["Handover_anchor"],
-            "summary": "Handover of release DB"
+            "summary": "Resubmit handover of updated release DB if needed"
          }
       ],
       "labels": ["Merge_anchor"],
