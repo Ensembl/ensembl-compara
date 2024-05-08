@@ -566,7 +566,7 @@ process runAstral {
 *@output path to iqtree2 report
 *@output path to iqtree2 log file
 */
-process calcProtBranchesAstral {
+process refineProtTree {
     label 'retry_with_128gb_mem_c32'
 
     publishDir "${params.results_dir}/", pattern: "astral_species_tree_prot_bl.nwk", mode: "copy",  overwrite: true
@@ -587,7 +587,7 @@ process calcProtBranchesAstral {
     script:
     if (params.dir == "")
     """
-    ${params.iqtree_exe} -s $aln --mem 100G -m LG+F+G -g $input_tree --fast -T ${params.cores}
+    ${params.iqtree_exe} -s $aln --mem 100G -m LG+F+G -t $input_tree --fast -T ${params.cores}
     mv *.treefile astral_species_tree_prot_bl.nwk
     mv *.iqtree astral_iqtree_report_prot_bl.txt
     mv *.log astral_iqtree_log_prot_bl.txt
@@ -596,7 +596,7 @@ process calcProtBranchesAstral {
     """
     else
     """
-    ${params.iqtree_exe} -s $aln --mem 100G -m LG+F+G -g $input_tree --fast -T ${params.cores}
+    ${params.iqtree_exe} -s $aln --mem 100G -m LG+F+G -t $input_tree --fast -T ${params.cores}
     mv *.treefile astral_species_tree_prot_bl.nwk
     mv *.iqtree astral_iqtree_report_prot_bl.txt
     mv *.log astral_iqtree_log_prot_bl.txt
@@ -610,7 +610,7 @@ process calcProtBranchesAstral {
 *@output path to iqtree2 report
 *@output path to iqtree2 log file
 */
-process calcNeutralBranchesAstral {
+process calcNeutralBranches {
     label 'retry_with_128gb_mem_c32'
 
     publishDir "${params.results_dir}/", pattern: "astral_species_tree_neutral_bl.nwk", mode: "copy",  overwrite: true
@@ -781,14 +781,14 @@ workflow {
     // Pick out every third site from the merged codon alignment:
     pickThirdCodonSite(mergeCodonAlns.out.merged_aln)
 
-    // Calculate branch lenghts based on the third codon sites:
-    calcNeutralBranchesAstral(pickThirdCodonSite.out.third_aln, runAstral.out.tree, genCsvChan)
-
     // Calculate branch lenghts from protein alignment:
-    calcProtBranchesAstral(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions, runAstral.out.tree, genCsvChan)
+    refineProtTree(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions, runAstral.out.tree, genCsvChan)
+
+    // Calculate branch lenghts based on the third codon sites:
+    calcNeutralBranches(pickThirdCodonSite.out.third_aln, refineProtTree.out.newick, genCsvChan)
 
     // Perform outgroup rooting for tree with neutral branch lengths:
-    outgroupRootingNeutral(calcNeutralBranchesAstral.out.newick)
+    outgroupRootingNeutral(calcNeutralBranches.out.newick)
     // Perform outgroup rooting for tree with protein alignment based branch lengths:
-    outgroupRootingProt(calcProtBranchesAstral.out.newick)
+    outgroupRootingProt(refineProtTree.out.newick)
 }
