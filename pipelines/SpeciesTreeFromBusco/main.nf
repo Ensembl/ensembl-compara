@@ -54,6 +54,14 @@ if (!params.dir && !params.url) {
     exit 0
 }
 
+// Set up constraint tree path if present:
+consNwk = params.cons_nwk
+if(consNwk) {
+    File consTmp = new File(consNwk)
+    consAbsPath = consTmp.getCanonicalPath();
+    consNwk = " -g ${consAbsPath}";
+}
+
 File fileResDir = new File(params.results_dir);
 absResPath = fileResDir.getCanonicalPath();
 
@@ -570,6 +578,7 @@ process refineProtTree {
     label 'retry_with_128gb_mem_c32'
 
     publishDir "${params.results_dir}/", pattern: "astral_species_tree_prot_bl.nwk", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/", pattern: "astral_species_tree_prot_bl_fullid.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "astral_iqtree_report_prot_bl.txt", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "astral_iqtree_log_prot_bl.txt", mode: "copy",  overwrite: true
 
@@ -581,25 +590,28 @@ process refineProtTree {
 
     output:
         path "astral_species_tree_prot_bl.nwk", emit: newick
+        path "astral_species_tree_prot_bl_fullid.nwk", emit: newick_fullid
         path "astral_iqtree_report_prot_bl.txt", emit: iqrtree_report
         path "astral_iqtree_log_prot_bl.txt", emit: iqtree_log
 
     script:
     if (params.dir == "")
     """
-    ${params.iqtree_exe} -s $aln --mem 100G -m LG+F+G -t $input_tree --fast -T ${params.cores}
+    ${params.iqtree_exe} -s $aln --mem 100G -m LG+F+G $consNwk -t $input_tree --fast -T ${params.cores}
     mv *.treefile astral_species_tree_prot_bl.nwk
     mv *.iqtree astral_iqtree_report_prot_bl.txt
     mv *.log astral_iqtree_log_prot_bl.txt
+    cp astral_species_tree_prot_bl.nwk astral_species_tree_prot_bl_fullid.nwk
     python ${params.fix_leaf_names_exe} -t astral_species_tree_prot_bl.nwk -c ${genomes_csv} -o TMP.nwk
     mv TMP.nwk astral_species_tree_prot_bl.nwk
     """
     else
     """
-    ${params.iqtree_exe} -s $aln --mem 100G -m LG+F+G -t $input_tree --fast -T ${params.cores}
+    ${params.iqtree_exe} -s $aln --mem 100G -m LG+F+G $consNwk -t $input_tree --fast -T ${params.cores}
     mv *.treefile astral_species_tree_prot_bl.nwk
     mv *.iqtree astral_iqtree_report_prot_bl.txt
     mv *.log astral_iqtree_log_prot_bl.txt
+    cp astral_species_tree_prot_bl.nwk astral_species_tree_prot_bl_fullid.nwk
     """
 }
 
@@ -608,7 +620,7 @@ process refineProtTree {
 *@input path to input newick tree
 *@output path to output tree in newick format
 *@output path to iqtree2 report
-*@output path to iqtree2 log file
+*@output path to iqtree4 log file
 */
 process calcNeutralBranches {
     label 'retry_with_128gb_mem_c32'
@@ -785,7 +797,7 @@ workflow {
     refineProtTree(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions, runAstral.out.tree, genCsvChan)
 
     // Calculate branch lenghts based on the third codon sites:
-    calcNeutralBranches(pickThirdCodonSite.out.third_aln, refineProtTree.out.newick, genCsvChan)
+    calcNeutralBranches(pickThirdCodonSite.out.third_aln, refineProtTree.out.newick_fullid, genCsvChan)
 
     // Perform outgroup rooting for tree with neutral branch lengths:
     outgroupRootingNeutral(calcNeutralBranches.out.newick)
