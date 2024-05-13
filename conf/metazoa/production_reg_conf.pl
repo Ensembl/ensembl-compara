@@ -81,10 +81,10 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'    => [ 'mysql-ens-compara-prod-6', 'thiagogenez_metazoa_load_members_112' ],
+    'compara_members'    => [ 'mysql-ens-compara-prod-6', '' ],
     'compara_ptrees'     => [ 'mysql-ens-compara-prod-6', 'thiagogenez_default_metazoa_protein_trees_112' ],
     'protostomes_ptrees' => [ 'mysql-ens-compara-prod-9', 'thiagogenez_protostomes_metazoa_protein_trees_112' ],
-    'insects_ptrees'     => [ 'mysql-ens-compara-prod-8', 'twalsh_insects_metazoa_protein_trees_20230624_111' ],
+    'insects_ptrees'     => [ 'mysql-ens-compara-prod-8', '' ],
     'drosophila_ptrees'  => [ 'mysql-ens-compara-prod-9', 'thiagogenez_pangenome_drosophila_metazoa_protein_trees_112' ],
 
     # LastZ dbs
