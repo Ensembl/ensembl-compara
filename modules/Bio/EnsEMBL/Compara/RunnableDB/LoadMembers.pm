@@ -376,6 +376,14 @@ sub store_protein_coding_gene_and_all_transcripts {
         }
     }
 
+    if (defined $canonical_transcript) {
+        my $canonical_translation = $canonical_transcript->translation;
+        if (defined $canonical_translation && $canonical_translation->seq =~ /[*].+$/) {
+            $self->warning($gene->stable_id . " cannot be loaded because its canonical translation contains one or more internal stop symbols");
+            return;
+        }
+    }
+
     foreach my $transcript (@{$gene->get_all_Transcripts}) {
         my $translation = $transcript->translation;
         next unless (defined $translation);
