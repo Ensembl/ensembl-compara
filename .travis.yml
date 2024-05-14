@@ -142,6 +142,7 @@ jobs:
         - pip install setuptools==58.1.0
         - pip install codecov
         - pip install -r requirements.txt -r requirements-test.txt
+        - pip install .
       script:
         # yamllint disable rule:line-length
         - pytest --cov=./ --cov-report=term-missing --server=mysql://travis@127.0.0.1:3306/
