@@ -169,3 +169,19 @@ jobs:
         - pip install pylint mypy
         - pip install .
       script: ./travisci/python-linter_harness.sh
+
+    - language: python
+      dist: bionic
+      python: "3.10"
+      name: "Python unit tests on the latest version, with code coverage"
+      install:
+        - pip install --upgrade pip
+        - pip install setuptools==58.1.0
+        - pip install codecov
+        - pip install .[test]
+      script:
+        # yamllint disable rule:line-length
+        - pytest --cov=./ --cov-report=term-missing --server=mysql://travis@127.0.0.1:3306/
+        # yamllint enable rule:line-length
+      after_success:
+        - codecov
