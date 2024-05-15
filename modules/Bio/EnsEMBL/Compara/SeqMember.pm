@@ -492,8 +492,8 @@ sub gene_member_id {
 sub bioseq {
 
     my $self = shift;
-    my ($seq_type, $id_type, $with_description, $append_sp_name) =
-        rearrange([qw(SEQ_TYPE ID_TYPE WITH_DESCRIPTION APPEND_SP_NAME)], @_);
+    my ($seq_type, $id_type, $with_description, $append_sp_name, $hide_stop_codons) =
+        rearrange([qw(SEQ_TYPE ID_TYPE WITH_DESCRIPTION APPEND_SP_NAME HIDE_STOP_CODONS)], @_);
 
     throw("Member stable_id undefined") unless defined($self->stable_id());
 
@@ -517,6 +517,10 @@ sub bioseq {
         my $species = $self->genome_db->name;
         $species =~ s/\s/_/g;
         $seqname .= "|" . $species;
+    }
+
+    if ($hide_stop_codons) {
+        $sequence =~ tr/*/X/;
     }
 
     return Bio::Seq->new(
