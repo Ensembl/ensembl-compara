@@ -53,14 +53,18 @@
       <genome name="triticum_aestivum_arinalrfor"/>
       <genome name="triticum_aestivum_jagger"/>
       <genome name="triticum_aestivum_julius"/>
+      <genome name="triticum_aestivum_kariega"/>
       <genome name="triticum_aestivum_lancer"/>
       <genome name="triticum_aestivum_landmark"/>
       <genome name="triticum_aestivum_mace"/>
       <genome name="triticum_aestivum_norin61"/>
+      <genome name="triticum_aestivum_paragon"/>
+      <genome name="triticum_aestivum_renan"/>
       <genome name="triticum_aestivum_stanley"/>
       <genome name="triticum_dicoccoides"/>
+      <genome name="triticum_spelta"/>
+      <genome name="triticum_timopheevii"/>
       <genome name="triticum_urartu"/>
-      <genome name="triticum_turgidum"/>
       <!-- Include T. aestivum Mattis, but exclude its U-component. -->
       <genome name="triticum_aestivum_mattis"/>
       <genome name="triticum_aestivum_mattis" genome_component="U" exclude="1"/>
@@ -78,13 +82,18 @@
       <genome name="triticum_aestivum_arinalrfor"/>
       <genome name="triticum_aestivum_jagger"/>
       <genome name="triticum_aestivum_julius"/>
+      <genome name="triticum_aestivum_kariega"/>
       <genome name="triticum_aestivum_lancer"/>
       <genome name="triticum_aestivum_landmark"/>
       <genome name="triticum_aestivum_mace"/>
       <genome name="triticum_aestivum_mattis"/>
       <genome name="triticum_aestivum_norin61"/>
+      <genome name="triticum_aestivum_paragon"/>
+      <genome name="triticum_aestivum_renan"/>
       <genome name="triticum_aestivum_stanley"/>
       <genome name="triticum_dicoccoides"/>
+      <genome name="triticum_spelta"/>
+      <genome name="triticum_timopheevii"/>
       <genome name="triticum_urartu"/>
     </collection>
 
