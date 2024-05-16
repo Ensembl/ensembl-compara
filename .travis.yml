@@ -151,7 +151,7 @@ jobs:
 
     - language: python
       dist: bionic
-      python: 3.10
+      python: "3.10"
       name: "Python unit tests on the latest version, with code coverage"
       install:
         - pip install --upgrade pip
