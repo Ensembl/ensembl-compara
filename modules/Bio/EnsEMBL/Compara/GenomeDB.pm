@@ -190,7 +190,7 @@ sub db_adaptor {
             $self->genebuild( $genebuild );
             $self->has_karyotype( $genome_container->has_karyotype );
             $self->is_good_for_alignment( 0 );  # Cannot be inferred without the dnafrags
-            $self->strain_name( $strain_name );
+            $self->strain_name( $strain_name ) if $strain_name;
             # we would prefer to use the full_display_name if it is available
             my $display_name = $meta_container->single_value_by_key('species.full_display_name');
             $self->display_name( $display_name ? $display_name : $meta_container->get_display_name );
