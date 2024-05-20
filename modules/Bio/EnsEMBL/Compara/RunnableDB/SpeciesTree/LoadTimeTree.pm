@@ -60,7 +60,7 @@ sub run {
         print "Querying ", $node->name, " ..." if $self->debug;
         my $mya = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate_for_node($node);
         printf(" %s mya\n", $mya // 'N/A') if $self->debug;
-        push @timetree_data, [$node, $mya];
+        push @timetree_data, [$node, $mya] if defined $mya;
     }
     $self->param('timetree_data', \@timetree_data);
 }
