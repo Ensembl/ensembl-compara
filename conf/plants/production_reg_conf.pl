@@ -40,15 +40,23 @@ my @overlap_species = qw(saccharomyces_cerevisiae drosophila_melanogaster caenor
 
 # ---------------------- DATABASE HOSTS -----------------------------------------
 
-my $curr_nv_host = $curr_release % 2 == 0 ? 'mysql-ens-sta-3' : 'mysql-ens-sta-3-b';
+my ($curr_vert_host, $curr_vert_port, $curr_nv_host, $curr_nv_port);
+if ($curr_release % 2 == 0) {
+    ($curr_vert_host, $curr_vert_port) = ('mysql-ens-sta-1', 4519);
+    ($curr_nv_host, $curr_nv_port)     = ('mysql-ens-sta-3', 4160);
+} else {
+    ($curr_vert_host, $curr_vert_port) = ('mysql-ens-sta-1-b', 4685);
+    ($curr_nv_host, $curr_nv_port)     = ('mysql-ens-sta-3-b', 4686);
+}
 
-my ($prev_vert_host, $prev_vert_port) = $prev_release % 2 == 0
-    ? ('mysql-ens-sta-1', 4519)
-    : ('mysql-ens-sta-1-b', 4685);
-
-my ($prev_nv_host, $prev_nv_port) = $prev_release % 2 == 0
-    ? ('mysql-ens-sta-3', 4160)
-    : ('mysql-ens-sta-3-b', 4686);
+my ($prev_vert_host, $prev_vert_port, $prev_nv_host, $prev_nv_port);
+if ($prev_release % 2 == 0) {
+    ($prev_vert_host, $prev_vert_port) = ('mysql-ens-sta-1', 4519);
+    ($prev_nv_host, $prev_nv_port)     = ('mysql-ens-sta-3', 4160);
+} else {
+    ($prev_vert_host, $prev_vert_port) = ('mysql-ens-sta-1-b', 4685);
+    ($prev_nv_host, $prev_nv_port)     = ('mysql-ens-sta-3-b', 4686);
+}
 
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
@@ -64,6 +72,15 @@ my $overlap_cores = {
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 
+# ---------------------- CURRENT CORE DATABASES : ALTERNATE HOSTS ----------------
+
+# Use the official staging servers
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@$curr_nv_host:$curr_nv_port/$curr_release");
+# and remove the Non-Vertebrates version of the shared species
+#Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
+#Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
+# before loading the Vertebrates version
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@$curr_vert_host:$curr_vert_port/$curr_release");
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 

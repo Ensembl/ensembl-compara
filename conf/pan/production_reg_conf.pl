@@ -40,13 +40,23 @@ my @overlap_species = qw(saccharomyces_cerevisiae drosophila_melanogaster caenor
 
 # ---------------------- DATABASE HOSTS -----------------------------------------
 
-my ($prev_vert_host, $prev_vert_port) = $prev_release % 2 == 0
-    ? ('mysql-ens-sta-1', 4519)
-    : ('mysql-ens-sta-1-b', 4685);
+my ($curr_vert_host, $curr_vert_port, $curr_nv_host, $curr_nv_port);
+if ($curr_release % 2 == 0) {
+    ($curr_vert_host, $curr_vert_port) = ('mysql-ens-sta-1', 4519);
+    ($curr_nv_host, $curr_nv_port)     = ('mysql-ens-sta-3', 4160);
+} else {
+    ($curr_vert_host, $curr_vert_port) = ('mysql-ens-sta-1-b', 4685);
+    ($curr_nv_host, $curr_nv_port)     = ('mysql-ens-sta-3-b', 4686);
+}
 
-my ($prev_nv_host, $prev_nv_port) = $prev_release % 2 == 0
-    ? ('mysql-ens-sta-3', 4160)
-    : ('mysql-ens-sta-3-b', 4686);
+my ($prev_vert_host, $prev_vert_port, $prev_nv_host, $prev_nv_port);
+if ($prev_release % 2 == 0) {
+    ($prev_vert_host, $prev_vert_port) = ('mysql-ens-sta-1', 4519);
+    ($prev_nv_host, $prev_nv_port)     = ('mysql-ens-sta-3', 4160);
+} else {
+    ($prev_vert_host, $prev_vert_port) = ('mysql-ens-sta-1-b', 4685);
+    ($prev_nv_host, $prev_nv_port)     = ('mysql-ens-sta-3-b', 4686);
+}
 
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
@@ -69,6 +79,24 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
     -pass   => '',
     -dbname => "bacteria_0_collection_core_${curr_eg_release}_${curr_release}_1",
 );
+
+# ---------------------- CURRENT CORE DATABASES : ALTERNATE HOSTS ----------------
+
+# Vertebrates server
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@$curr_vert_host:$curr_vert_port/$curr_release");
+# But remove the non-vertebrates species
+#Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
+#Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
+# Non-Vertebrates server
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@$curr_nv_host:$curr_nv_port/$curr_release");
+# Bacteria server is not alternated between releases
+#Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+#    -host   => 'mysql-ens-sta-4',
+#    -port   => 4494,
+#    -user   => 'ensro',
+#    -pass   => '',
+#    -dbname => "bacteria_0_collection_core_${curr_eg_release}_${curr_release}_1",
+#);
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 

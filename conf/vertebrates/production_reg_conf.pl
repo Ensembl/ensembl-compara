@@ -35,7 +35,10 @@ my $prev_release = $curr_release - 1;
 
 # ---------------------- DATABASE HOSTS -----------------------------------------
 
-my $curr_vert_host = $curr_release % 2 == 0 ? 'mysql-ens-sta-1' : 'mysql-ens-sta-1-b';
+my ($curr_vert_host, $curr_vert_port) = $curr_release % 2 == 0
+    ? ('mysql-ens-sta-1', 4519)
+    : ('mysql-ens-sta-1-b', 4685);
+
 
 my ($prev_vert_host, $prev_vert_port) = $prev_release % 2 == 0
     ? ('mysql-ens-sta-1', 4519)
@@ -55,6 +58,12 @@ my $overlap_cores = {
     'saccharomyces_cerevisiae' => [ 'mysql-ens-vertannot-staging', "saccharomyces_cerevisiae_core_" . $curr_release . "_4" ],
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
+
+# ---------------------- CURRENT CORE DATABASES : ALTERNATE HOSTS ----------------
+
+# Vertebrates staging server
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@$curr_vert_host:$curr_vert_port/$curr_release");
+#Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
