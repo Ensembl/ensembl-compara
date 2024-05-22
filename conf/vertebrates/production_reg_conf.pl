@@ -89,7 +89,7 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],
 
     # homology dbs
-    #'compara_members'         => [ 'mysql-ens-compara-prod-X',  '' ],
+    'compara_members'         => [ 'mysql-ens-compara-prod-1',  'twalsh_vertebrates_load_members_113' ],
     #'compara_ptrees'          => [ 'mysql-ens-compara-prod-X',  '' ],
     'compara_ptrees_prev'     => [ 'mysql-ens-compara-prod-2',  'twalsh_default_vertebrates_protein_trees_112' ],
     #'compara_nctrees'         => [ 'mysql-ens-compara-prod-X',  '' ],
