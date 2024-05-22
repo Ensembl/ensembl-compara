@@ -73,8 +73,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 
 # Bacteria: all species used in Pan happen to be in this database
 Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-    -host   => 'mysql-ens-vertannot-staging',
-    -port   => 4573,
+    -host   => 'mysql-ens-sta-4',
+    -port   => 4494,
     -user   => 'ensro',
     -pass   => '',
     -dbname => "bacteria_0_collection_core_${curr_eg_release}_${curr_release}_1",
