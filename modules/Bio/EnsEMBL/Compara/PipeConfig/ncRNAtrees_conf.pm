@@ -956,7 +956,7 @@ sub core_pipeline_analyses {
                             2 => [ 'secondary_structure_decision' ],
                             3 => [ 'pre_sec_struct_tree_4_cores' ],
                           },
-            -rc_name => '1Gb_2c_job',
+            -rc_name => '1Gb_2c_24_hour_job',
         },
 
         {   -logic_name    => 'pre_sec_struct_tree_4_cores', ## pre_sec_struct_tree
@@ -973,7 +973,7 @@ sub core_pipeline_analyses {
                             2 => [ 'secondary_structure_decision' ],
                             3 => [ 'pre_sec_struct_tree_8_cores' ],
                            },
-            -rc_name => '1Gb_4c_job',
+            -rc_name => '1Gb_4c_24_hour_job',
         },
 
         {   -logic_name    => 'pre_sec_struct_tree_8_cores', ## pre_sec_struct_tree
@@ -1018,6 +1018,7 @@ sub core_pipeline_analyses {
                            -1 => [ 'sec_struct_model_tree_2_cores' ],   # This analysis has more cores *and* more memory
                             3 => [ 'sec_struct_model_tree_2_cores' ],
                           },
+            -rc_name => '1Gb_24_hour_job',
         },
 
         {   -logic_name    => 'sec_struct_model_tree_2_cores', ## sec_struct_model_tree
@@ -1049,7 +1050,7 @@ sub core_pipeline_analyses {
                            -1 => [ 'sec_struct_model_tree_8_cores' ],   # This analysis has more cores *and* more memory
                             3 => [ 'sec_struct_model_tree_8_cores' ],
                        },
-            -rc_name => '1Gb_4c_job',
+            -rc_name => '1Gb_4c_24_hour_job',
         },
 
         {   -logic_name    => 'sec_struct_model_tree_8_cores', ## sec_struct_model_tree
@@ -1060,7 +1061,7 @@ sub core_pipeline_analyses {
                             'cmd_max_runtime'       => '86400',
                             'raxml_number_of_cores' => 8,
                            },
-            -rc_name => '2Gb_8c_job',
+            -rc_name => '2Gb_8c_24_hour_job',
         },
 
         {   -logic_name    => 'genomic_alignment',
