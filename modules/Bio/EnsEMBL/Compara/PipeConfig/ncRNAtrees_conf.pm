@@ -142,6 +142,7 @@ sub default_options {
             # misc parameters
             'species_tree_input_file'  => '',  # empty value means 'create using genome_db+ncbi_taxonomy information'; can be overriden by a file with a tree in it
             'binary_species_tree_input_file'   => undef, # you can define your own species_tree for 'CAFE'. It *has* to be binary
+            'model_name_blocklist'     => [],
             'skip_epo'                 => 0,   # Never tried this one. It may fail
             'create_ss_picts'          => 0,
 
@@ -597,6 +598,7 @@ sub core_pipeline_analyses {
             {   -logic_name    => 'rfam_classify',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify',
                 -parameters    => {
+                    'model_name_blocklist' => $self->o('model_name_blocklist'),
                     'mirbase_url'   => $self->o('mirbase_url'),
                 },
                 -flow_into     => [ 'expand_clusters_with_projections' ],
