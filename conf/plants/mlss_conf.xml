@@ -208,7 +208,7 @@
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="CACTUS_HAL" collection="rice_cultivars" url="#base_dir#/multi/hal_files/Rice_27-way_202208.hal"/>
-    <multiple_alignment method="CACTUS_HAL" collection="wheat" url="#base_dir#/multi/hal_files/Wheat_37-way_20221206.hal"/>
+    <multiple_alignment method="CACTUS_HAL" collection="wheat"/>
   </multiple_alignments>
 
   <!-- DFW work -->
