@@ -244,7 +244,7 @@ sub pipeline_analyses {
                               'output_file' => '#synteny_dir#/#seq_region_name#.#maxDist1#.#minSize1#.BuildSynteny.out',
                               },
               -rc_name => '2Gb_job',
-              -meadow_type  => 'LSF',   # The head nodes cannot run Java programs
+              -meadow_type  => 'SLURM',   # The head nodes cannot run Java programs
               -flow_into => {
                   -1 => 'build_synteny_himem',
               },
@@ -257,7 +257,7 @@ sub pipeline_analyses {
                               'output_file' => '#synteny_dir#/#seq_region_name#.#maxDist1#.#minSize1#.BuildSynteny.out',
                               },
               -rc_name => '4Gb_job',
-              -meadow_type  => 'LSF',   # The head nodes cannot run Java programs
+              -meadow_type  => 'SLURM',   # The head nodes cannot run Java programs
             },
             #Concatenate into single file
             { -logic_name => 'concat_files',
