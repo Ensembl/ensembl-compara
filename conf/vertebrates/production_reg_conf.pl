@@ -147,7 +147,7 @@ my $compara_dbs = {
     #'mammals_cactus'      => [ 'mysql-ens-compara-prod-X', ''],
 
     # miscellaneous
-    #'alt_allele_projection' => [ 'mysql-ens-compara-prod-X', '' ],
+    'alt_allele_projection' => [ 'mysql-ens-compara-prod-1', 'twalsh_vertebrates_alt_allele_import_113' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
