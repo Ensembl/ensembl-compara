@@ -111,7 +111,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_master_plants' ],
-    #'compara_curr'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${curr_eg_release}_${curr_release}" ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${curr_eg_release}_${curr_release}" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
