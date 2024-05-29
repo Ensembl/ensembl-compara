@@ -56,6 +56,7 @@ sub default_options {
         'species_trees'          => [
             $self->o('config_dir') . '/species_tree.branch_len.nw',
             $self->o('config_dir') . '/species_tree.rice.branch_len.nw'
+            $self->o('config_dir') . '/species_tree.topology.nw',
         ],
     };
 }
