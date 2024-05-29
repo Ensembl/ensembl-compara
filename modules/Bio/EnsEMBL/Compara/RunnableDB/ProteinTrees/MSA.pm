@@ -253,7 +253,12 @@ sub dumpProteinTreeToWorkdir {
   print("fastafile = '$fastafile'\n") if ($self->debug);
 
   $tree->expand_subtrees;   # In case we are given a supertree
-  my $num_pep = $tree->print_sequences_to_file($fastafile, -uniq_seq => 1, -id_type => 'SEQUENCE');
+  my $num_pep = $tree->print_sequences_to_file(
+      $fastafile,
+      -uniq_seq => 1,
+      -id_type => 'SEQUENCE',
+      -hide_stop_codons => 1,  # Sequences with internal stop symbols shouldn't get this far, but if any slip through, hide the stop codons.
+  );
 
   if ($num_pep <= 1) {
     $self->update_single_peptide_tree($tree);

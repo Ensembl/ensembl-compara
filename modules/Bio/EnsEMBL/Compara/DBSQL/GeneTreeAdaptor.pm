@@ -404,8 +404,6 @@ sub _fetch_all_ref_lca_node_ids_by_Member {
             seq_member_id = ?
         AND
             ref_root_id IS NULL
-        ORDER BY
-            root_id;
     /;
 
     my $tree_query_results = $dbh->selectall_hashref($tree_query, 'root_id', undef, $seq_member_id);
@@ -418,6 +416,7 @@ sub _fetch_all_ref_lca_node_ids_by_Member {
         $root_to_query_node_id{$root_id} = $row->{'node_id'};
         push(@tree_root_ids, $root_id);
     }
+    @tree_root_ids = sort { $a <=> $b } @tree_root_ids;
 
     my @root_id_placeholders = ('?') x @tree_root_ids;
     my $root_id_placeholder_str = '(' . join(',', @root_id_placeholders) . ')';

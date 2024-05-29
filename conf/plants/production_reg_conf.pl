@@ -40,15 +40,23 @@ my @overlap_species = qw(saccharomyces_cerevisiae drosophila_melanogaster caenor
 
 # ---------------------- DATABASE HOSTS -----------------------------------------
 
-my $curr_nv_host = $curr_release % 2 == 0 ? 'mysql-ens-sta-3' : 'mysql-ens-sta-3-b';
+my ($curr_vert_host, $curr_vert_port, $curr_nv_host, $curr_nv_port);
+if ($curr_release % 2 == 0) {
+    ($curr_vert_host, $curr_vert_port) = ('mysql-ens-sta-1', 4519);
+    ($curr_nv_host, $curr_nv_port)     = ('mysql-ens-sta-3', 4160);
+} else {
+    ($curr_vert_host, $curr_vert_port) = ('mysql-ens-sta-1-b', 4685);
+    ($curr_nv_host, $curr_nv_port)     = ('mysql-ens-sta-3-b', 4686);
+}
 
-my ($prev_vert_host, $prev_vert_port) = $prev_release % 2 == 0
-    ? ('mysql-ens-sta-1', 4519)
-    : ('mysql-ens-sta-1-b', 4685);
-
-my ($prev_nv_host, $prev_nv_port) = $prev_release % 2 == 0
-    ? ('mysql-ens-sta-3', 4160)
-    : ('mysql-ens-sta-3-b', 4686);
+my ($prev_vert_host, $prev_vert_port, $prev_nv_host, $prev_nv_port);
+if ($prev_release % 2 == 0) {
+    ($prev_vert_host, $prev_vert_port) = ('mysql-ens-sta-1', 4519);
+    ($prev_nv_host, $prev_nv_port)     = ('mysql-ens-sta-3', 4160);
+} else {
+    ($prev_vert_host, $prev_vert_port) = ('mysql-ens-sta-1-b', 4685);
+    ($prev_nv_host, $prev_nv_port)     = ('mysql-ens-sta-3-b', 4686);
+}
 
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
@@ -64,6 +72,15 @@ my $overlap_cores = {
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 
+# ---------------------- CURRENT CORE DATABASES : ALTERNATE HOSTS ----------------
+
+# Use the official staging servers
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@$curr_nv_host:$curr_nv_port/$curr_release");
+# and remove the Non-Vertebrates version of the shared species
+#Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
+#Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
+# before loading the Vertebrates version
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@$curr_vert_host:$curr_vert_port/$curr_release");
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
@@ -98,18 +115,22 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'        => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_load_members_112'],
-    'compara_ptrees'         => [ 'mysql-ens-compara-prod-5', 'twalsh_default_plants_protein_trees_112' ],
+    'compara_members'        => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_load_members_113'],
+    #'compara_ptrees'         => [ 'mysql-ens-compara-prod-5', '' ],
     'rice_cultivars_ptrees'  => [ 'mysql-ens-compara-prod-7', 'twalsh_rice_cultivars_plants_protein_trees_lsf_112' ],
-    'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-5', 'jalvarez_wheat_cultivars_plants_protein_trees_106' ],
+    #'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-X', '' ],
 
     # LASTZ dbs
-    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_lastz_batch1_112' ],
-    'lastz_batch_2'  => [ 'mysql-ens-compara-prod-7', 'twalsh_plants_lastz_batch2_112' ],
-    'lastz_batch_3'  => [ 'mysql-ens-compara-prod-8', 'twalsh_plants_lastz_batch3_112' ],
+    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-8', 'twalsh_plants_lastz_batch1_113' ],
+    'lastz_batch_2'  => [ 'mysql-ens-compara-prod-7', 'twalsh_plants_lastz_batch2_113' ],
+    'lastz_batch_3'  => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_lastz_batch3_113' ],
+    'lastz_batch_4'  => [ 'mysql-ens-compara-prod-4', 'twalsh_plants_lastz_batch4_113' ],
+    'lastz_batch_5'  => [ 'mysql-ens-compara-prod-3', 'twalsh_plants_lastz_batch5_113' ],
+    'lastz_batch_6'  => [ 'mysql-ens-compara-prod-4', 'twalsh_plants_lastz_batch6_113' ],
+    'lastz_batch_7'  => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_lastz_batch7_113' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-8', 'twalsh_plants_synteny_112' ],
+    #'compara_syntenies' => [ 'mysql-ens-compara-prod-X', '' ],
 
     # EPO dbs
     ## rice

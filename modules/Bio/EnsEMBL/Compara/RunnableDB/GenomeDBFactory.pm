@@ -208,7 +208,9 @@ sub fetch_input {
     foreach my $genome_db (@$genome_dbs) {
         my $mlsss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_GenomeDB($genome_db);
         my %method_hash;
-        $method_hash{$_->method->type}++ for @$mlsss;
+        foreach my $mlss (@$mlsss) {
+            $method_hash{$mlss->method->type}++ if $mlss->is_current;
+        }
         $extra_data{$genome_db->dbID}->{'methods'} = \%method_hash;
     }
 

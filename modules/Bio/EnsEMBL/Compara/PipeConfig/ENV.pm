@@ -160,57 +160,57 @@ sub resource_classes_single_thread {
         # 1 Gb seems to be the minimum we need nowadays
         '1Gb_job' => {
             'LSF'   => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"',
-            'SLURM' => '--partition=standard --mem=1g',
+            'SLURM' => '--mem=1g',
         },
 
         '2Gb_job' => {
             'LSF'   => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"',
-            'SLURM' => '--partition=standard --mem=2g',
+            'SLURM' => '--mem=2g',
         },
 
         '4Gb_job' => {
             'LSF'   => '-C0 -M4000 -R"select[mem>4000] rusage[mem=4000]"',
-            'SLURM' => '--partition=standard --mem=4g',
+            'SLURM' => '--mem=4g',
         },
 
         '8Gb_job' => {
             'LSF'   => '-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"',
-            'SLURM' => '--partition=standard --mem=8g',
+            'SLURM' => '--mem=8g',
         },
 
         '16Gb_job' => {
             'LSF'   => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"',
-            'SLURM' => '--partition=standard --mem=16g',
+            'SLURM' => '--mem=16g',
         },
 
         '24Gb_job' => {
             'LSF'   => '-C0 -M24000 -R"select[mem>24000] rusage[mem=24000]"',
-            'SLURM' => '--partition=standard --mem=24g',
+            'SLURM' => '--mem=24g',
         },
 
         '32Gb_job' => {
             'LSF'   => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"',
-            'SLURM' => '--partition=standard --mem=32g',
+            'SLURM' => '--mem=32g',
         },
 
         '48Gb_job' => {
             'LSF'   => '-C0 -M48000 -R"select[mem>48000] rusage[mem=48000]"',
-            'SLURM' => '--partition=standard --mem=48g',
+            'SLURM' => '--mem=48g',
         },
 
         '64Gb_job' => {
             'LSF'   => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"',
-            'SLURM' => '--partition=standard --mem=64g',
+            'SLURM' => '--mem=64g',
         },
 
         '96Gb_job' => {
             'LSF'   => '-C0 -M96000 -R"select[mem>96000] rusage[mem=96000]"',
-            'SLURM' => '--partition=standard --mem=96g',
+            'SLURM' => '--mem=96g',
         },
 
         '512Gb_job' => {
             'LSF'   => '-q bigmem -C0 -M512000 -R"select[mem>512000] rusage[mem=512000]"',
-            'SLURM' => '--partition=standard --mem=512g',
+            'SLURM' => '--mem=512g',
         },
     };
 
@@ -227,13 +227,13 @@ sub resource_classes_single_thread {
     my %additional_resource_classes = (
 
         '1Gb_6_hour_job' => {
-            'LSF'   => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]" -W 6:00'],
-            'SLURM' => ['--partition=standard --mem=500m --time=6:00:00'],
+            'LSF'   => ['-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]" -W 6:00'],
+            'SLURM' => ['--mem=1g --time=6:00:00'],
         },
 
         '2Gb_6_hour_job' => {
             'LSF'   => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]" -W 6:00'],
-            'SLURM' => ['--partition=standard --mem=2g --time=6:00:00'],
+            'SLURM' => ['--mem=2g --time=6:00:00'],
         },
 
         '1Gb_datamover_job' => {
@@ -262,263 +262,263 @@ sub resource_classes_multi_thread {
 
         '1Gb_2c_job' => {
             'LSF'   => '-C0 -n 2 -M1000 -R"span[hosts=1] select[mem>1000] rusage[mem=1000]"',
-            'SLURM' => '--partition=standard --cpus-per-task=2 --mem=1g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=2 --mem=1g',
         },
 
         '2Gb_2c_job' => {
             'LSF'   => '-C0 -n 2 -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"',
-            'SLURM' => '--partition=standard --cpus-per-task=2 --mem=2g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=2 --mem=2g',
         },
 
         '4Gb_2c_job' => {
             'LSF'   => '-C0 -n 2 -M4000 -R"span[hosts=1] select[mem>4000] rusage[mem=4000]"',
-            'SLURM' => '--partition=standard --cpus-per-task=2 --mem=4g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=2 --mem=4g',
         },
 
         '8Gb_2c_job' => {
             'LSF'   => '-C0 -n 2 -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"',
-            'SLURM' => '--partition=standard --cpus-per-task=2 --mem=8g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=2 --mem=8g',
         },
 
         '1Gb_4c_job' => {
             'LSF'   => '-n 4 -C0 -M1000 -R"select[mem>1000] rusage[mem=1000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=4 --mem=1g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=4 --mem=1g',
         },
 
         '2Gb_4c_job' => {
             'LSF'   => '-n 4 -C0 -M2000 -R"select[mem>2000] rusage[mem=2000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=4 --mem=2g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=4 --mem=2g',
         },
 
         '4Gb_4c_job' => {
             'LSF'   => '-n 4 -C0 -M4000 -R"select[mem>4000] rusage[mem=4000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=4 --mem=4g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=4 --mem=4g',
         },
 
         '8Gb_4c_job' => {
             'LSF'   => '-n 4 -C0 -M8000 -R"select[mem>8000] rusage[mem=8000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=4 --mem=8g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=4 --mem=8g',
         },
 
         '16Gb_4c_job' => {
             'LSF'   => '-n 4 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=4 --mem=16g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=4 --mem=16g',
         },
 
         '32Gb_4c_job' => {
             'LSF'   => '-n 4 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=4 --mem=32g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=4 --mem=32g',
         },
 
         '1Gb_8c_job' => {
             'LSF'   => '-n 8 -C0 -M1000 -R"select[mem>1000] rusage[mem=1000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=8 --mem=1g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=8 --mem=1g',
         },
 
         '2Gb_8c_job' => {
             'LSF'   => '-n 8 -C0 -M2000 -R"select[mem>2000] rusage[mem=2000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=8 --mem=2g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=8 --mem=2g',
         },
 
         '2Gb_8c_job' => {
             'LSF'   => '-n 8 -C0 -M2000 -R"select[mem>2000] rusage[mem=2000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=8 --mem=2g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=8 --mem=2g',
         },
 
         '4Gb_8c_job' => {
             'LSF'   => '-n 8 -C0 -M4000 -R"select[mem>4000] rusage[mem=4000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=8 --mem=4g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=8 --mem=4g',
         },
 
         '8Gb_8c_job' => {
             'LSF'   => '-n 8 -C0 -M8000 -R"select[mem>8000] rusage[mem=8000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=8 --mem=8g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=8 --mem=8g',
         },
 
         '16Gb_8c_job' => {
             'LSF'   => '-n 8 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=8 --mem=16g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=8 --mem=16g',
         },
 
         '32Gb_8c_job' => {
             'LSF'   => '-n 8 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=8 --mem=32g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=8 --mem=32g',
         },
 
         '64Gb_8c_job' => {
             'LSF'   => '-n 8 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=8 --mem=64g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=8 --mem=64g',
         },
 
         '96Gb_8c_job' => {
             'LSF'   => '-n 8 -C0 -M96000 -R"select[mem>96000] rusage[mem=96000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=8 --mem=96g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=8 --mem=96g',
         },
 
         '8Gb_16c_job' => {
             'LSF'   => '-n 16 -C0 -M8000 -R"select[mem>8000] rusage[mem=8000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=16 --mem=8g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=16 --mem=8g',
         },
 
         '16Gb_16c_job' => {
             'LSF'   => '-n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=16 --mem=16g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=16 --mem=16g',
         },
 
         '32Gb_16c_job' => {
             'LSF'   => '-n 16 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=16 --mem=32g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=16 --mem=32g',
         },
 
         '64Gb_16c_job' => {
             'LSF'   => '-n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=16 --mem=64g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=16 --mem=64g',
         },
 
         '128Gb_16c_job' => {
             'LSF'   => '-n 16 -C0 -M128000 -R"select[mem>128000] rusage[mem=128000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=16 --mem=128g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=16 --mem=128g',
         },
 
         '16Gb_32c_job' => {
             'LSF'   => '-n 32 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=32 --mem=16g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=32 --mem=16g',
         },
 
         '32Gb_32c_job' => {
             'LSF'   => '-n 32 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=32 --mem=32g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=32 --mem=32g',
         },
 
         '64Gb_32c_job' => {
             'LSF'   => '-n 32 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=32 --mem=64g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=32 --mem=64g',
         },
 
         '128Gb_32c_job' => {
             'LSF'   => '-n 32 -C0 -M128000 -R"select[mem>128000] rusage[mem=128000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=32 --mem=128g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=32 --mem=128g',
         },
 
         '4Gb_48c_job' => {
             'LSF'   => '-n 48 -C0 -M4000 -R"span[hosts=1] select[mem>4000] rusage[mem=4000]"',
-            'SLURM' => '--partition=standard --cpus-per-task=48 --mem=4g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=48 --mem=4g',
         },
 
         '16Gb_48c_job' => {
             'LSF'   => '-n 48 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=48 --mem=16g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=48 --mem=16g',
         },
 
         '32Gb_48c_job' => {
             'LSF'   => '-n 48 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=48 --mem=32g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=48 --mem=32g',
         },
 
         '64Gb_48c_job' => {
             'LSF'   => '-n 48 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=48 --mem=64g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=48 --mem=64g',
         },
 
         '128Gb_48c_job' => {
             'LSF'   => '-n 48 -C0 -M128000 -R"select[mem>128000] rusage[mem=128000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=48 --mem=128g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=48 --mem=128g',
         },
 
         '256Gb_48c_job' => {
             'LSF'   => '-n 48 -C0 -M256000 -R"select[mem>256000] rusage[mem=256000] span[hosts=1]"',
-            'SLURM' => '--partition=standard --cpus-per-task=48 --mem=256g',
+            'SLURM' => '--nodes=1 --ntasks 1 --cpus-per-task=48 --mem=256g',
         },
 
 
         '8Gb_4c_mpi' => {
             'LSF'   => '-q mpi -n 4 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=4]"',
-            'SLURM' => '--partition=standard --cpus-per-task=4 --mem=8g',
+            'SLURM' => '--ntasks=4 --ntasks-per-node=4 --mem=8g',
         },
 
         '8Gb_8c_mpi' => {
             'LSF'    => '-q mpi -n 8 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=8]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=8 --mem=8g',
+            'SLURM'  => '--ntasks=8 --ntasks-per-node=8 --mem=8g',
         },
 
         '8Gb_16c_mpi' => {
             'LSF'    => '-q mpi -n 16 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=16 --mem=8g',
+            'SLURM'  => '--ntasks=16 --ntasks-per-node=16 --mem=8g',
         },
 
         '8Gb_24c_mpi' => {
             'LSF'    => '-q mpi -n 24 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=12]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=24 --mem=8g',
+            'SLURM'  => '--ntasks=24 --ntasks-per-node=12 --mem=8g',
         },
 
         '8Gb_32c_mpi' => {
             'LSF'    => '-q mpi -n 32 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=32 --mem=8g',
+            'SLURM'  => '--ntasks=32 --ntasks-per-node=16 --mem=8g',
         },
 
         '8Gb_48c_mpi' => {
             'LSF'    => '-q mpi -n 48 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=48 --mem=8g',
+            'SLURM'  => '--ntasks=48 --ntasks-per-node=16 --mem=8g',
         },
 
         '16Gb_4c_mpi' => {
             'LSF'    => '-q mpi -n 4 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=4 --mem=16g',
+            'SLURM'  => '--ntasks=4 --ntasks-per-node=4 --mem=16g',
         },
 
         '16Gb_8c_mpi' => {
             'LSF'    => '-q mpi -n 8 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=8]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=8 --mem=16g',
+            'SLURM'  => '--ntasks=8 --ntasks-per-node=8 --mem=16g',
         },
 
         '16Gb_16c_mpi' => {
             'LSF'    => '-q mpi -n 16 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=16]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=16 --mem=16g',
+            'SLURM'  => '--ntasks=16 --ntasks-per-node=16 --mem=16g',
         },
 
         '16Gb_24c_mpi' => {
             'LSF'    => '-q mpi -n 24 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=12]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=24 --mem=16g',
+            'SLURM'  => '--ntasks=24 --ntasks-per-node=12 --mem=16g',
         },
 
         '16Gb_32c_mpi' => {
             'LSF'    => '-q mpi -n 32 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=16]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=32 --mem=16g',
+            'SLURM'  => '--ntasks=32 --ntasks-per-node=16 --mem=16g',
         },
 
         '32Gb_4c_mpi' => {
             'LSF'    => '-q mpi -n 4 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=4]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=4 --mem=32g',
+            'SLURM'  => '--ntasks=4 --ntasks-per-node=4 --mem=32g',
         },
 
         '32Gb_8c_mpi' => {
             'LSF'    => '-q mpi -n 8 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=8]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=8 --mem=32g',
+            'SLURM'  => '--ntasks=8 --ntasks-per-node=8 --mem=32g',
         },
 
         '32Gb_16c_mpi' => {
             'LSF'    => '-q mpi -n 16 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=16 --mem=32g',
+            'SLURM'  => '--ntasks=16 --ntasks-per-node=16 --mem=32g',
         },
 
         '32Gb_24c_mpi' => {
             'LSF'    => '-q mpi -n 24 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=12]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=24 --mem=32g',
+            'SLURM'  => '--ntasks=24 --ntasks-per-node=12 --mem=32g',
         },
 
         '32Gb_32c_mpi' => {
             'LSF'    => '-q mpi -n 32 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=32 --mem=32g',
+            'SLURM'  => '--ntasks=32 --ntasks-per-node=16 --mem=32g',
         },
 
         '32Gb_48c_mpi' => {
             'LSF'    => '-q mpi -n 48 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=48 --mem=32g',
+            'SLURM'  => '--ntasks=48 --ntasks-per-node=16 --mem=32g',
         },
 
         '64Gb_4c_mpi' => {
             'LSF'    => '-q mpi -n 4 -M64000 -R"select[mem>64000] rusage[mem=64000] same[model] span[ptile=4]"',
-            'SLURM'  => '--partition=standard --cpus-per-task=4 --mem=64g',
+            'SLURM'  => '--ntasks=4 --ntasks-per-node=4 --mem=64g',
         },
     };
 

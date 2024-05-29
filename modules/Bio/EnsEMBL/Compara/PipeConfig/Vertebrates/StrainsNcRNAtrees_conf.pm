@@ -49,6 +49,9 @@ sub default_options {
             # collection in master that will have overlapping data
             'ref_collection'   => 'default',
 
+            # misc parameters
+            'model_name_blocklist' => [],
+
             # CAFE parameters
             'do_cafe'  => 0,
 

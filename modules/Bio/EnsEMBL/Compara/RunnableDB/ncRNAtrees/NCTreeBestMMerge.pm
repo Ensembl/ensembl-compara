@@ -76,6 +76,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCTreeBestMMerge;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Compara::AlignedMember;
+use Bio::EnsEMBL::Compara::AlignedMemberSet;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
@@ -187,7 +189,37 @@ sub run {
 sub write_output {
     my ($self) = @_;
 
-    $self->store_genetree($self->param('gene_tree')) if defined $self->param('inputtrees_unrooted');
+    if (defined $self->param('inputtrees_unrooted')) {
+        my $gene_tree = $self->param('gene_tree');
+
+        if ($gene_tree->gene_align_id
+                && $gene_tree->has_tag('genomic_alignment_gene_align_id')) {
+            my $genomic_alignment_gene_align_id = $gene_tree->get_value_for_tag('genomic_alignment_gene_align_id');
+            if ($gene_tree->gene_align_id == $genomic_alignment_gene_align_id) {
+
+                my @tree_leaves = @{$gene_tree->get_all_leaves()};
+                my $num_members = scalar(@tree_leaves);
+                my %tree_seq_id_set = map { $_->sequence_id => 1 } @tree_leaves;
+                my $num_distinct_sequences = scalar keys %tree_seq_id_set;
+                if ($num_distinct_sequences == 1) {
+
+                    my $trivial_aln = $self->generate_trivial_alignment($gene_tree);
+                    $trivial_aln->dbID( $gene_tree->get_value_for_tag('trivial_alignment_gene_align_id') );
+                    $self->compara_dba->get_GeneAlignAdaptor->store($trivial_aln);
+
+                    $gene_tree->store_tag('trivial_alignment_gene_align_id', $trivial_aln->dbID);
+                    $gene_tree->store_tag('aln_num_residues', $trivial_aln->aln_length * $num_members);
+                    $gene_tree->store_tag('aln_length', $trivial_aln->aln_length);
+                    $gene_tree->store_tag('aln_percent_identity', 100.0);
+
+                    $gene_tree->alignment($trivial_aln);
+                }
+            }
+        }
+
+        $self->store_genetree($gene_tree);
+    }
+
     $self->call_one_hc('alignment');
     $self->call_one_hc('tree_content');
     $self->call_one_hc('tree_attributes');
@@ -213,6 +245,35 @@ sub post_cleanup {
 #
 ##########################################
 
+# Generate a trivial alignment for a gene tree in
+# which all the member sequences are identical.
+sub generate_trivial_alignment {
+    my ($self, $gene_tree) = @_;
+    my $aligned_member_adaptor = $self->compara_dba->get_AlignedMemberAdaptor();
+
+    my $trivial_alignment = $gene_tree->deep_copy();
+    bless $trivial_alignment, 'Bio::EnsEMBL::Compara::AlignedMemberSet';
+    $trivial_alignment->aln_method('identical_seq');
+    $trivial_alignment->seq_type(undef);
+
+    my $aln_length;
+    my $trivial_cigar;
+    foreach my $member (@{$trivial_alignment->get_all_Members()}) {
+        bless $member, 'Bio::EnsEMBL::Compara::AlignedMember';
+        $member->adaptor($aligned_member_adaptor);
+
+        if (!defined $trivial_cigar) {
+            $trivial_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($member->sequence);
+            $aln_length = $member->seq_length;
+        }
+
+        $member->cigar_line($trivial_cigar);
+    }
+
+    $trivial_alignment->aln_length($aln_length);
+
+    return $trivial_alignment;
+}
 
 sub reroot_inputtrees {
   my $self = shift;

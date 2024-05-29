@@ -37,7 +37,9 @@ my $prev_eg_release = $curr_eg_release - 1;
 
 # ---------------------- DATABASE HOSTS -----------------------------------------
 
-my $curr_nv_host = $curr_release % 2 == 0 ? 'mysql-ens-sta-3' : 'mysql-ens-sta-3-b';
+my ($curr_nv_host, $curr_nv_port) = $curr_release % 2 == 0
+    ? ('mysql-ens-sta-3', 4160)
+    : ('mysql-ens-sta-3-b', 4686);
 
 my ($prev_nv_host, $prev_nv_port) = $prev_release % 2 == 0
     ? ('mysql-ens-sta-3', 4160)
@@ -73,6 +75,23 @@ foreach my $group ( @collection_groups ) {
         -dbname => "protists_${group}_collection_core_${curr_eg_release}_${curr_release}_1",
     );
 }
+
+# ---------------------- CURRENT CORE DATABASES : ALTERNATE HOSTS ----------------
+
+# Protists single-species cores
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@$curr_nv_host:$curr_nv_port/$curr_release");
+#Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
+
+# Protists collection cores
+#foreach my $group ( @collection_groups ) {
+#    Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+#        -host   => $curr_nv_host,
+#        -port   => $curr_nv_port,
+#        -user   => 'ensro',
+#        -pass   => '',
+#        -dbname => "protists_${group}_collection_core_${curr_eg_release}_${curr_release}_1",
+#    );
+#}
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 

@@ -127,7 +127,8 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
-            "summary": "Merge the homology pipelines"
+            "summary": "Merge the homology pipelines",
+            "name_on_graph": "Merge the homology pipelines"
          },
          {
             "assignee": "<RelCo>",
