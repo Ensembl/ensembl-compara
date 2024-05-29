@@ -130,7 +130,7 @@ my $compara_dbs = {
     'lastz_batch_7'  => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_lastz_batch7_113' ],
 
     # synteny
-    #'compara_syntenies' => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_synteny_113' ],
 
     # EPO dbs
     ## rice
