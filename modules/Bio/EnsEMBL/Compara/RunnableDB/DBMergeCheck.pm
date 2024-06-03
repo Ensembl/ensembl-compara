@@ -797,7 +797,7 @@ sub _get_effective_table_size {
                         hmember.genome_db_id IN $overlap_gdb_id_placeholders
                 /;
 
-                $n_rows -= $helper->execute_single_result( -SQL => $sql_overlap, -PARAMS => \@overlap_gdb_ids );
+                $n_rows -= $helper->execute_single_result( -SQL => $sql_overlap, -PARAMS => [@overlap_gdb_ids, @overlap_gdb_ids] );
             }
 
         } else {
