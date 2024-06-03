@@ -290,6 +290,7 @@ sub pipeline_analyses {
                 'skip_disable_vars' => 1,
             },
             -hive_capacity => $self->o('copying_capacity'),
+            -rc_name => '1Gb_24_hour_job',
         },
 
         {   -logic_name => 'enable_keys',
