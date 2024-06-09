@@ -92,7 +92,7 @@ Method_caller : "C(" string ( "," string )(s?) ")"
     "C";
 }
 
-Letter_code : "n" | "c" | "d" | "t" | "r" | "l" | "L" | "h" | "s" | "p" | "m" | "g" | "i" | "o" | "x" | "X" | "S" | "N" | "P" | "E" | Tag_reader | Method_caller
+Letter_code : "n" | "c" | "d" | "t" | "r" | "l" | "L" | "h" | "s" | "p" | "m" | "g" | "i" | "o" | "x" | "y" | "X" | "S" | "N" | "P" | "E" | Tag_reader | Method_caller
 
 preliteral  : string
 {
@@ -235,7 +235,12 @@ my $sp_short_name_cb = sub {
 my $transcriptid_cb = sub {
     my ($self) = @_;
     $self->{tree}->description =~ /Transcript:(\w+)/;
-    return $1;
+    my $transcript_id = $1;
+    if (!defined $transcript_id && $self->{tree}->can('get_Transcript')) {
+        my $transcript = $self->{tree}->get_Transcript();
+        $transcript_id = $transcript->stable_id;
+    }
+    return $transcript_id;
 };
 
 # C(gene_member,stable_id)
@@ -266,6 +271,15 @@ my $taxon_id_cb = sub {
     return $self->{tree}->species_tree_node->taxon_id;
   }
   return $self->{tree}->taxon_id;
+};
+
+# C(taxon_name)
+my $taxon_name_cb = sub {
+  my ($self) = @_;
+  if (not $self->{tree}->can('taxon_id') and $self->{tree}->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+    return $self->{tree}->species_tree_node->taxon->scientific_name;
+  }
+  return $self->{tree}->taxon->scientific_name;
 };
 
 my $stn_id_cb = sub {
@@ -352,6 +366,7 @@ my %callbacks = (
         'p' => $prot_id_cb,
         'm' => $seq_member_id_cb,
         'x' => $taxon_id_cb,
+        'y' => $taxon_name_cb,
         'X' => $stn_id_cb,
         'S' => $sp_name_cb,
         'N' => $n_members_cb, # Used in cafe trees (number of members)
@@ -447,7 +462,7 @@ sub _internal_format_newick {
                     $itemstr = uc $itemstr if exists $token->{upper};
 
                     my $str_to_append = ($token->{preliteral} || '').$itemstr.($token->{postliteral} || '');
-                    $str_to_append = substr($str_to_append, 0, $token->{len_limit}) if exists $token->{Len_limit};
+                    $str_to_append = substr($str_to_append, 0, $token->{len_limit}) if exists $token->{len_limit};
                     $header .= $str_to_append;
                     last;
                 }
