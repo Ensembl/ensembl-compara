@@ -237,8 +237,10 @@ my $transcriptid_cb = sub {
     $self->{tree}->description =~ /Transcript:(\w+)/;
     my $transcript_id = $1;
     if (!defined $transcript_id && $self->{tree}->can('get_Transcript')) {
-        my $transcript = $self->{tree}->get_Transcript();
-        $transcript_id = $transcript->stable_id;
+        eval {
+            my $transcript = $self->{tree}->get_Transcript();
+            $transcript_id = $transcript->stable_id;
+        };
     }
     return $transcript_id;
 };
