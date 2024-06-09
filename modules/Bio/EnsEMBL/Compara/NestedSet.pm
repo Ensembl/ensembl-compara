@@ -1033,7 +1033,7 @@ my %ryo_modes = (
     'species_short_name' => '%{^-s|p}',
     'otu_id' => '%{-s"|"}%{-l"|"}%{n}:%{d}',
     'int_node_id' => '%{-n}%{o-}:%{d}',
-    'full_web' => '%{n-}%{-n|p}%{"_"-s"_"}%{":"d}',
+    'full_web' => '%{n-}%{-n|p}%{"_"-s}%{":"d}',
     'phylip' => '%21{n}:%{d}',
 );
 
@@ -1048,8 +1048,8 @@ my %nhx_ryo_modes_1 = (
     'gene_id' => '%{-i}:%{d}',
     'full' => $nhx0,
     'full_web' => $nhx0,
-    'display_label' => '%{-l,|i}%{"_"-s}'.$nhx0,
-    'display_label_composite' => '%{-l,"_"}%{-i}%{"_"-s}'.$nhx0,
+    'display_label' => '%{-l,|i}%{"_"-s"_"}'.$nhx0,
+    'display_label_composite' => '%{-l,"_"}%{-i}%{"_"-s"_"}'.$nhx0,
     'treebest_ortho' => '%{-m}%{"_"-x}'.$nhx0,
     'simple' => $ryo_modes{'simple'},
     'phylip' => $ryo_modes{'phylip'},
