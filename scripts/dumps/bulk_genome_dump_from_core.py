@@ -6,15 +6,25 @@ import argparse
 import subprocess
 import os
 import sys
+import logging
 
 try:
     import yaml
     from yaml.loader import SafeLoader  # For older PyYAML versions
 except ModuleNotFoundError:
-    print(
+    logging.critical(
         "Error: The 'PyYAML' module is not installed. Please install it using 'pip install PyYAML'."
     )
     sys.exit(1)  # Exit with an error code
+
+
+def setup_logging():
+    """
+    Sets up logging configuration.
+    """
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
 
 
 def detect_job_scheduler():
@@ -45,7 +55,7 @@ def detect_job_scheduler():
     return "NONE"  # Return 'NONE' if no scheduler is found
 
 
-def subprocess_call(command, work_dir=None, shell=False):
+def subprocess_call(command, work_dir=None, shell=False, use_job_scheduler=False):
     """
     Subprocess function to execute the given command line.
 
@@ -53,29 +63,31 @@ def subprocess_call(command, work_dir=None, shell=False):
         command (list): The command that the subprocess will execute.
         work_dir (str): The location where the command should be run.
         shell (bool): If True, the specified command will be executed through the shell.
+        use_job_scheduler (bool): If True, the command will be submitted to a job scheduler.
 
     Returns:
         str: The subprocess output or None otherwise.
     """
-    job_scheduler = detect_job_scheduler()
+    if use_job_scheduler:
+        job_scheduler = detect_job_scheduler()
 
-    if job_scheduler == "NONE":
-        print("Error: No job scheduler detected.")
-        sys.exit(1)
+        if job_scheduler == "NONE":
+            logging.error("No job scheduler detected.")
+            sys.exit(1)
 
-    if job_scheduler == "SLURM":
-        command = [
-            "sbatch",
-            "--time=1-00",
-            "--mem-per-cpu=4gb",
-            "--cpus-per-task=1",
-            "--export=ALL",
-            f"--wrap={' '.join(command)}",
-        ]
-    elif job_scheduler == "LSF":
-        command = ["bsub", "-W", "1:00", "-R", "rusage[mem=4096]"] + command
+        if job_scheduler == "SLURM":
+            command = [
+                "sbatch",
+                "--time=1-00",
+                "--mem-per-cpu=4gb",
+                "--cpus-per-task=1",
+                "--export=ALL",
+                f"--wrap=\"{' '.join(command)}\"",
+            ]
+        elif job_scheduler == "LSF":
+            command = ["bsub", "-W", "1:00", "-R", "rusage[mem=4096]"] + command
 
-    print(f"Running: {' '.join(command)}")
+    logging.info("Running: %s", " ".join(command))
     with subprocess.Popen(
         command,
         shell=shell,
@@ -88,15 +100,20 @@ def subprocess_call(command, work_dir=None, shell=False):
 
         if process.returncode != 0:
             out = f"stdout={output}, stderr={stderr}"
+            logging.error(
+                "Command %s exited %d: %s", " ".join(command), process.returncode, out
+            )
             raise RuntimeError(
                 f"Command {' '.join(command)} exited {process.returncode}: {out}"
             )
 
-        print(f"Successfully ran: {' '.join(command)}")
+        logging.info("Successfully ran: %s", " ".join(command))
         return output.strip()
 
 
-def download_file(host, port, core_db, fasta_filename, mask="soft"):
+def download_file(
+    host, port, core_db, fasta_filename, genome_component="", mask="soft"
+):
     """
     Download the FASTA file from the core DB using a PERL script `dump_genome_from_core.pl`.
 
@@ -110,24 +127,46 @@ def download_file(host, port, core_db, fasta_filename, mask="soft"):
     Returns:
         str: The output of the subprocess call to download the FASTA file.
     """
-    work_dir = f"{os.environ['ENSEMBL_ROOT_DIR']}/main/ensembl-compara/scripts/dumps"
-    script = "dump_genome_from_core.pl"
+    try:
+        work_dir = os.path.join(
+            os.environ["ENSEMBL_ROOT_DIR"],
+            "ensembl-compara",
+            "scripts",
+            "dumps",
+        )
+        script = "dump_genome_from_core.pl"
 
-    perl_call = [
-        "perl",
-        f"{work_dir}/{script}",
-        "--core_db",
-        core_db,
-        "--host",
-        host,
-        "--port",
-        port,
-        "--mask",
-        mask,
-        "--outfile",
-        fasta_filename,
-    ]
-    return subprocess_call(command=perl_call)
+        perl_call = [
+            "perl",
+            os.path.join(work_dir, script),
+            "--core_db",
+            core_db,
+            "--host",
+            host,
+            "--port",
+            str(port),
+            "--mask",
+            mask,
+            "-user",
+            "ensro",
+            "--outfile",
+            fasta_filename,
+        ]
+
+        # Conditionally add the genome component argument
+        if genome_component:
+            perl_call += ["--genome-component", genome_component]
+
+        logging.info("perl_call=%s", perl_call)
+        return subprocess_call(command=perl_call, use_job_scheduler=True)
+
+    except KeyError as e:
+        logging.error("Environment variable not set: %s", e)
+        raise
+
+    except Exception as e:
+        logging.error("An unexpected error occurred: %s", e)
+        raise
 
 
 def query_coredb(host, core_db, query):
@@ -142,7 +181,7 @@ def query_coredb(host, core_db, query):
     Returns:
         str: The output of the subprocess call to query the database.
     """
-    mysql_call = ["mysql", "-h", host, core_db, "-ss", "-e", query]
+    mysql_call = [host, core_db, "-N", "-e", query]
     return subprocess_call(command=mysql_call)
 
 
@@ -158,6 +197,7 @@ def parse_yaml(file, dest):
     for data in content:
         host = data["host"]
         port = data["port"]
+        include_gca_number = data["gca_number"]
 
         for core_db in data["core_db"]:
             fasta_file_name = query_coredb(
@@ -166,7 +206,7 @@ def parse_yaml(file, dest):
                 query="SELECT meta_value FROM meta WHERE meta_key='species.production_name';",
             )
 
-            if "_gca" not in fasta_file_name:
+            if include_gca_number:
                 gca_number = query_coredb(
                     host=host,
                     core_db=core_db,
@@ -175,21 +215,51 @@ def parse_yaml(file, dest):
                 gca_number = gca_number.replace(".", "v").replace("_", "").lower()
                 fasta_file_name = f"{fasta_file_name}_{gca_number}"
 
-            if fasta_file_name:
+            # Query the genome components and split the result
+            genome_components = [
+                component
+                for component in query_coredb(
+                    host=host,
+                    core_db=core_db,
+                    query=(
+                        "SELECT DISTINCT value FROM seq_region_attrib "
+                        "JOIN attrib_type USING (attrib_type_id) "
+                        "WHERE attrib_type.code='genome_component';"
+                    ),
+                ).split("\n")
+                if component
+            ]
+
+            # Generate dump filenames
+            dump_filenames = (
+                [
+                    (f"{fasta_file_name}_{component}", component)
+                    for component in genome_components
+                ]
+                if genome_components
+                else [(fasta_file_name, "")]
+            )
+
+            # Process each filename
+            for filename, genome_component in dump_filenames:
+                logging.info("fasta_file_name=%s", filename)
+                logging.info("genome_component=%s", genome_component)
+
                 download_file(
                     host=host,
                     port=port,
                     core_db=core_db,
-                    fasta_filename=f"{dest}/{fasta_file_name}.fa",
+                    genome_component=genome_component,
+                    fasta_filename=os.path.join(dest, f"{filename}.fa"),
                 )
-            else:
-                raise ValueError(f"Problem with {fasta_file_name}")
 
 
 def main():
     """
     Main function to parse arguments and handle the processing of a YAML file to dump a list of FASTA files.
     """
+    setup_logging()
+
     parser = argparse.ArgumentParser(
         description="Wrapper of dump_genome_from_core.pl to dump a list of FASTA files."
     )
@@ -210,7 +280,9 @@ def main():
             args.output = os.path.abspath(args.output)
 
         if not os.path.isdir(args.output):
-            print(f"{args.output} does not exist for output, please create it first")
+            logging.error(
+                "%s does not exist for output, please create it first", args.output
+            )
             sys.exit(1)
 
         parse_yaml(file=f, dest=args.output)
