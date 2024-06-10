@@ -55,7 +55,9 @@ def detect_job_scheduler():
     return "NONE"  # Return 'NONE' if no scheduler is found
 
 
-def subprocess_call(command, work_dir=None, shell=False, use_job_scheduler=False):
+def subprocess_call(
+    command, work_dir=None, shell=False, use_job_scheduler=False, job_name=None
+):
     """
     Subprocess function to execute the given command line.
 
@@ -82,10 +84,19 @@ def subprocess_call(command, work_dir=None, shell=False, use_job_scheduler=False
                 "--mem-per-cpu=4gb",
                 "--cpus-per-task=1",
                 "--export=ALL",
-                f"--wrap=\"{' '.join(command)}\"",
+                f"--job-name={job_name}",
+                f"--wrap={' '.join(command)}",
             ]
         elif job_scheduler == "LSF":
-            command = ["bsub", "-W", "1:00", "-R", "rusage[mem=4096]"] + command
+            command = [
+                "bsub",
+                "-W",
+                "1:00",
+                "-R",
+                "rusage[mem=4096]",
+                "-J",
+                job_name,
+            ] + command
 
     logging.info("Running: %s", " ".join(command))
     with subprocess.Popen(
@@ -158,7 +169,11 @@ def download_file(
             perl_call += ["--genome-component", genome_component]
 
         logging.info("perl_call=%s", perl_call)
-        return subprocess_call(command=perl_call, use_job_scheduler=True)
+        return subprocess_call(
+            command=perl_call,
+            use_job_scheduler=True,
+            job_name=f"{core_db}_{genome_component}",
+        )
 
     except KeyError as e:
         logging.error("Environment variable not set: %s", e)
