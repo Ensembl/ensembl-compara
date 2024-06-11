@@ -82,8 +82,11 @@ my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( -user   => $user,
                                                -port   => $port,
                                                -driver => 'mysql');
 
-# validate the genome component, if specified
+my $slice_adaptor = $dba->get_SliceAdaptor();
+
+my $slices;
 if (defined $genome_component) {
+    # validate the genome component, if specified
     my @core_db_components = @{$dba->get_GenomeContainer->get_genome_components()};
     if (!@core_db_components) {
         die "ERROR: invalid option '--genome-component' - no components found in core database '$dbname'\n";
@@ -91,9 +94,12 @@ if (defined $genome_component) {
     elsif (! grep { $_ eq $genome_component } @core_db_components) {
         die "ERROR: genome component '$genome_component' not found in core database '$dbname'\n";
     }
+    # If the core has passed the PolyploidAttribs datacheck,
+    # only top-level regions will have genome components.
+    $slices = $slice_adaptor->fetch_all_by_genome_component($genome_component);
+} else {
+    $slices = $slice_adaptor->fetch_all("toplevel");
 }
-
-my $slices = $dba->get_SliceAdaptor->fetch_all("toplevel");
 
 open(my $filehandle, '>', $genome_dump_file) or die "can't open $genome_dump_file for writing\n";
 
@@ -109,9 +115,6 @@ my $serializer = Bio::EnsEMBL::Utils::IO::FASTASerializer->new(
 
 # dump the slices
 foreach my $slice (@$slices){
-    if (defined $genome_component && $slice->get_genome_component() ne $genome_component) {
-        next;
-    }
     if (defined $mask && $mask eq "soft"){
         $slice = $slice->get_repeatmasked_seq(undef, 1);
     }
@@ -121,3 +124,5 @@ foreach my $slice (@$slices){
     my $padded_slice = Bio::EnsEMBL::PaddedSlice->new(-SLICE => $slice);
     $serializer->print_Seq($padded_slice);
 }
+
+close($filehandle) or die "can't close $genome_dump_file\n";
