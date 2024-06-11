@@ -153,6 +153,7 @@ jobs:
         - codecov
 
     - language: python
+      dist: bionic
       python: "3.10"
       name: "Python linter"
       install:
