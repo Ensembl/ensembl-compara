@@ -95,7 +95,7 @@ def subprocess_call(
             command = [
                 "sbatch",
                 "--time=1-00",
-                "--mem-per-cpu=4gb",
+                "--mem-per-cpu=16gb",
                 "--cpus-per-task=1",
                 "--export=ALL",
                 f"--job-name={job_name}",
@@ -107,7 +107,7 @@ def subprocess_call(
                 "-W",
                 "1:00",
                 "-R",
-                "rusage[mem=4096]",
+                "rusage[mem=16384]",
                 "-J",
                 job_name,
             ] + command
